@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.157 2003/11/27 23:02:40 fvdl Exp $ */
+/*	$NetBSD: wdc.c,v 1.158 2003/11/29 16:17:31 he Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.157 2003/11/27 23:02:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.158 2003/11/29 16:17:31 he Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -730,7 +730,7 @@ __wdcprobe(chp, poll)
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
 	delay(10);	/* 400ns delay */
 	/* ACK interrupt in case there is one pending left (Promise ATA100) */
-	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+	if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_IRQACK))
 		chp->wdc->irqack(chp);
 	splx(s);
 
