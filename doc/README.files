@@ -1,8 +1,8 @@
-#	$NetBSD: README.files,v 1.1 2002/09/21 08:17:39 lukem Exp $
+#	$NetBSD: README.files,v 1.2 2002/09/23 08:02:34 lukem Exp $
 
 What's in this directory:
 
-CHANGES		Changes between the 1.5 and 1.6 releases.
+CHANGES		Changes between the XXX.XXX-1 and XXX.XXX releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
@@ -24,7 +24,7 @@ source/patches/	Post-release source code patches.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 1.6 has a binary distribution.  The contents of each
+NetBSD XXX.XXX has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
