@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.8 1997/07/07 00:13:56 jonathan Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.9 1998/05/28 13:57:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.8 1997/07/07 00:13:56 jonathan Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.9 1998/05/28 13:57:12 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -112,7 +112,7 @@ LEAF(_longjmp)
 	lw	ra, (2 * 4)(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
 
-	addu	sp, sp, 32			# don't matter, sanity
+	addu	sp, sp, 32			# does not matter, sanity
 	lw	s0, ((S0 + 3) * 4)(a0)
 	lw	s1, ((S1 + 3) * 4)(a0)
 	lw	s2, ((S2 + 3) * 4)(a0)
