@@ -1,35 +1,43 @@
-#	$NetBSD: Makefile,v 1.6 1999/07/19 12:04:03 tron Exp $
+#	$NetBSD: Makefile,v 1.7 1999/11/20 19:47:46 veego Exp $
 
-.PATH:		${.CURDIR}/../man
+.include "../Makefile.inc"
+.PATH:		${BIND_DIST_DIR}/bin/named \
+		${BIND_DIST_DIR}/bin/named-bootconf \
+		${BIND_DIST_DIR}/man
 
-WARNS=		0
 PROG=		named
 HDRS=		db_defs.h db_glob.h ns_defs.h ns_glob.h named.h pathnames.h
 SRCS=		db_dump.c db_load.c db_lookup.c db_save.c db_update.c \
-		db_glue.c ns_parser.y ns_lexer.c ns_parseutil.c \
+		db_glue.c db_ixfr.c db_sec.c db_tsig.c \
+		ns_parser.y ns_lexer.c ns_parseutil.c ns_ctl.c \
 		ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \
 		ns_resp.c ns_stats.c ns_ncache.c ns_xfr.c ns_glue.c \
-		ns_udp.c ns_config.c ns_update.c tmp_version.c
+		ns_udp.c ns_config.c ns_update.c ns_ixfr.c ns_signal.c \
+		ns_sort.c ns_notify.c tmp_version.c
 CPPFLAGS+=	${INCLUDE}
 LDADD=		${LIBRARY}
-CLEANFILES+=	y.tab.h named-bootconf tmp_version.c
-MAN=		${PROG}.8 named.conf.5 named-bootconf.8
-SCRIPTS=	named-bootconf.sh
-
-.include <bsd.own.mk>
-
-.if ${MKSHARE} != "no"
-FILES=		named.conf
-FILESDIR=	/usr/share/examples/named
-.endif
+CLEANFILES+=	y.tab.h named-bootconf tmp_version.c pathnames.h
+MAN=		${PROG}.8 named.conf.5
 
 HOSTNAMECMD=	hostname
 
-tmp_version.c: ${.CURDIR}/version.c Makefile ../Makefile
+tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < ${.CURDIR}/version.c > tmp_version.c)
+	    < ${BIND_DIST_DIR}/bin/named/version.c > tmp_version.c)
+
+pathnames.h: ${BIND_DIST_DIR}/bin/named/pathtemplate.h
+	sed -e "s|%DESTETC%|/etc|" -e "s|%DESTSBIN%|/usr/sbin|" \
+	    -e "s|%DESTRUN%|/var/run|" -e "s|%DESTEXEC%|/usr/libexec|" \
+	    < ${BIND_DIST_DIR}/bin/named/pathtemplate.h > pathnames.h
+
+CLEANFILES+=pathnames.h
+
+# mention explicit dependency, so pathnames.h will appear timely
+db_dump.c: pathnames.h
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
+
+${OBJS}: pathnames.h
