@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.28 1997/03/15 18:10:37 is Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.29 1997/03/15 22:13:55 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1894,7 +1894,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->memcopy)(LLADDR(ifp->if_sadl),
+		(sc->memcopy)(LLADDR(sc->sc_ethercom.ec_if.if_sadl),
 		      (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
