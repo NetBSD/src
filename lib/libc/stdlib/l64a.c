@@ -29,10 +29,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: l64a.c,v 1.2 1994/01/28 20:36:57 jtc Exp $";
+static char *rcsid = "$Id: l64a.c,v 1.3 1995/02/28 01:46:44 jtc Exp $";
 #endif
 
-#include <stddef.h>
 #include <stdlib.h>
 
 char *
