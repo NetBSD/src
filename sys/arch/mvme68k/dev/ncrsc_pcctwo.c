@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.1 1999/02/20 00:11:59 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.2 1999/02/21 13:59:35 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,10 +80,17 @@ static struct scsipi_device ncrsc_pcctwo_scsidev = {
 
 extern struct cfdriver ncrsc_cd;
 
-
 /*
- * if we are an MacroSystemsUS Warp Engine
+ * Define 'scsi_nosync = 0x00' to enable sync SCSI mode.
+ * (Required by the main SIOP driver. This was also used by
+ * the 147's SBIC driver, but sync scsi is so unreliable on
+ * that board that I disabled it permanently. '167 sync.
+ * scsi appears to work very well, on the other hand.)
  */
+u_long      scsi_nosync  = 0;
+int         shift_nosync = 0;
+
+
 int
 ncrsc_pcctwo_match(parent, cf, args)
 	struct device *parent;
@@ -108,23 +115,29 @@ ncrsc_pcctwo_attach(parent, self, args)
 {
 	struct siop_softc *sc = (struct siop_softc *)self;
 	struct pcc_attach_args *pa = args;
-	int clk;
+	int clk, ctest7;
 	int tmp;
 
 	/*
 	 * On the '177 the siop's clock is the same as the cpu clock.
 	 * On the other boards, the siop runs at twice the cpu clock.
+	 * Also, the 177 cannot do proper bus-snooping (the 68060 is
+	 * lame in this repspect) so don't enable it on that board.
 	 */
-	clk = cpuspeed * ((machineid == MVME_177) ? 1 : 2);
+	if ( machineid == MVME_177 ) {
+		clk = cpuspeed;
+		ctest7 = 0;
+	} else {
+		clk = cpuspeed * 2;
+		ctest7 = SIOP_CTEST7_SC0;
+	}
+
 	printf(": %dMHz ncr53C710 SCSI I/O Processor\n", clk);
 
-	/*
-	 * CTEST7 = SC0, TT1
-	 */
-	sc->sc_ctest7 = SIOP_CTEST7_SC0 | SIOP_CTEST7_TT1;
-	sc->sc_dcntl = SIOP_DCNTL_EA;
 	sc->sc_siopp = (siop_regmap_p) PCCTWO_VADDR(pa->pa_offset);
 	sc->sc_clock_freq = clk;
+	sc->sc_ctest7 = ctest7 | SIOP_CTEST7_TT1;
+	sc->sc_dcntl = SIOP_DCNTL_EA;
 
 	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
 	sc->sc_adapter.scsipi_minphys = siop_minphys;
@@ -139,8 +152,10 @@ ncrsc_pcctwo_attach(parent, self, args)
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
+	/* Chip-specific initialisation */
 	siopinitialize(sc);
 
+	/* Hook the chip's interrupt */
 	sys_pcctwo->scsi_icr = 0;
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
 	sys_pcctwo->scsi_icr = pa->pa_ipl | PCCTWO_ICR_IEN;
@@ -167,17 +182,19 @@ ncrsc_pcctwo_intr(arg)
 	siop_regmap_p rp;
 	u_char istat;
 
+	/*
+	 * Catch any errors which can happen when the SIOP is
+	 * local bus master...
+	 */
 	if ( (sys_pcctwo->scsi_err_sr & PCCTWO_ERR_SR_MASK) != 0 ) {
 		printf("%s: Local bus error: 0x%02x\n",
 			sc->sc_dev.dv_xname, sys_pcctwo->scsi_err_sr);
 		sys_pcctwo->scsi_err_sr |= PCCTWO_ERR_SR_SCLR;
 	}
 
-#if 0
 	/* This is potentially nasty, since the IRQ is level triggered... */
 	if ( sc->sc_flags & SIOP_INTSOFF )
 		return 0;
-#endif
 
 	rp = sc->sc_siopp;
 	istat = rp->siop_istat;
@@ -185,13 +202,12 @@ ncrsc_pcctwo_intr(arg)
 	if ( (istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0 )
 		return 0;
 
-	/*
-	 * Save interrupt details for the back-end interrupt handler
-	 */
+	/* Save interrupt details for the back-end interrupt handler */
 	sc->sc_sstat0 = rp->siop_sstat0;
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
 
+	/* Deal with the interrupt */
 	siopintr(sc);
 
 	return 1;
