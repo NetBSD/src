@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: sort.c,v 1.4 2000/10/07 21:12:19 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
+__RCSID("$NetBSD: sort.c,v 1.4 2000/10/07 21:12:19 bjh21 Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ main(argc, argv)
 				argv[i] = devstdin;
 			}
 		} else if ((ch = access(argv[i], R_OK)))
-			err(2, "%s", argv[i]);
+			err(2, argv[i]);
 	}
 	if (!(fldtab->flags & (I|D) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
@@ -254,7 +254,7 @@ main(argc, argv)
 		fsort(-1, 0, filelist, argc-optind, outfp, fldtab);
 	if (outfile != outpath) {
 		if (access(outfile, 0))
-			err(2, "%s", outfile);
+			err(2, outfile);
 		(void)unlink(outpath);
 		if (link(outfile, outpath))
 			err(2, "cannot link %s: output left in %s",
