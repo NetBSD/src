@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $";
+    "$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,11 +696,10 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
-	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+	dc = malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dc == NULL)
 		return (ENOMEM);
 
-	memset(dc, 0, sizeof(struct hpcfb_devconfig));
 	dc->dc_sc = sc;
 	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0)
 		return (EINVAL);
@@ -733,12 +732,11 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
 	dc->dc_tvram = malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
-	    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dc->dc_tvram == NULL){
 		free(dc, M_DEVBUF);
 		return (ENOMEM);
 	}
-	memset(dc->dc_tvram, 0, sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 				
 	*curxp = 0;
 	*curyp = 0;
