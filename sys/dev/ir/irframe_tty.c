@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.2 2001/12/04 19:56:43 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.3 2001/12/04 20:53:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -248,14 +248,6 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	splx(s);
 
-	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
-	sc->sc_maxsize = 0;
-	sc->sc_framestate = FRAME_OUTSIDE;
-	sc->sc_nframes = 0;
-	sc->sc_framei = 0;
-	sc->sc_frameo = 0;
-	callout_init(&sc->sc_timeout);
-
 	return (0);
 }
 
@@ -270,23 +262,8 @@ irframetclose(struct tty *tp, int flag)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
-	int i;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
-
-	callout_stop(&sc->sc_timeout);
-	s = splir();
-	if (sc->sc_inbuf != NULL) {
-		free(sc->sc_inbuf, M_DEVBUF);
-		sc->sc_inbuf = NULL;
-	}
-	for (i = 0; i < MAXFRAMES; i++) {
-		if (sc->sc_frames[i].buf != NULL) {
-			free(sc->sc_frames[i].buf, M_DEVBUF);
-			sc->sc_frames[i].buf = NULL;
-		}
-	}
-	splx(s);
 
 	s = spltty();
 	ttyflush(tp, FREAD | FWRITE);
@@ -461,9 +438,18 @@ int
 irframet_open(void *h, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
-	tp = tp;
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+
+	sc->sc_ebofs = IRDA_DEFAULT_EBOFS;
+	sc->sc_maxsize = 0;
+	sc->sc_framestate = FRAME_OUTSIDE;
+	sc->sc_nframes = 0;
+	sc->sc_framei = 0;
+	sc->sc_frameo = 0;
+	callout_init(&sc->sc_timeout);
+
 	return (0);
 }
 
@@ -471,9 +457,25 @@ int
 irframet_close(void *h, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = h;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	int i, s;
 
-	tp = tp;
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+
+	callout_stop(&sc->sc_timeout);
+	s = splir();
+	if (sc->sc_inbuf != NULL) {
+		free(sc->sc_inbuf, M_DEVBUF);
+		sc->sc_inbuf = NULL;
+	}
+	for (i = 0; i < MAXFRAMES; i++) {
+		if (sc->sc_frames[i].buf != NULL) {
+			free(sc->sc_frames[i].buf, M_DEVBUF);
+			sc->sc_frames[i].buf = NULL;
+		}
+	}
+	splx(s);
+
 	return (0);
 }
 
@@ -636,6 +638,7 @@ irframet_poll(void *h, int events, struct proc *p)
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 
 	s = splir();
+	/* XXX should check with tty */
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -656,12 +659,26 @@ int
 irframet_set_params(void *h, struct irda_params *p)
 {
 	struct tty *tp = h;
-	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
+	struct termios tt;
 	int i;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
-	/* XXX speed */
+	switch (p->speed) {
+	case   2400:
+	case   9600:
+	case  19200:
+	case  38400:
+	case  57600:
+	case 115200:
+		break;
+	default: return (EINVAL);
+	}
+	ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
+	tt.c_ispeed = tt.c_ospeed = p->speed;
+	ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
+
 	sc->sc_ebofs = p->ebofs;
 	if (sc->sc_maxsize != p->maxsize) {
 		sc->sc_maxsize = p->maxsize;
