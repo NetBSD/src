@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *	from: @(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
- *	$Id: hpux_compat.c,v 1.4 1994/01/07 00:43:46 mycroft Exp $
+ *	$Id: hpux_compat.c,v 1.5 1994/04/26 22:33:28 mycroft Exp $
  */
 
 /*
@@ -1586,10 +1586,10 @@ ohpux_utime(p, uap, retval)
 	ndp->ni_segflg = UIO_USERSPACE;
 	ndp->ni_dirp = uap->fname;
 	vattr_null(&vattr);
-	vattr.va_atime.tv_sec = tv[0];
-	vattr.va_atime.tv_usec = 0;
-	vattr.va_mtime.tv_sec = tv[1];
-	vattr.va_mtime.tv_usec = 0;
+	vattr.va_atime.ts_sec = tv[0];
+	vattr.va_atime.ts_nsec = 0;
+	vattr.va_mtime.ts_sec = tv[1];
+	vattr.va_mtime.ts_nsec = 0;
 	if (error = namei(ndp, p))
 		return (error);
 	vp = ndp->ni_vp;
@@ -1685,9 +1685,9 @@ ohpux_stat1(vp, ub)
 	ds.ohst_gid = (short)vattr.va_gid;
 	ds.ohst_rdev = (dev_t)vattr.va_rdev;
 	ds.ohst_size = (int)vattr.va_size;
-	ds.ohst_atime = (int)vattr.va_atime.tv_sec;
-	ds.ohst_mtime = (int)vattr.va_mtime.tv_sec;
-	ds.ohst_ctime = (int)vattr.va_ctime.tv_sec;
+	ds.ohst_atime = (int)vattr.va_atime.ts_sec;
+	ds.ohst_mtime = (int)vattr.va_mtime.ts_sec;
+	ds.ohst_ctime = (int)vattr.va_ctime.ts_sec;
 	return (copyout((caddr_t)&ds, (caddr_t)ub, sizeof(ds)));
 }
 /* #endif */
