@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.11 2003/02/21 00:31:08 igy Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.12 2003/02/21 01:53:35 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -137,8 +137,10 @@ u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 static struct ixpcom_cons_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_addr_t		sc_baseaddr;
 	int			sc_ospeed;
 	tcflag_t		sc_cflag;
+	int			sc_attached;
 } ixpcomcn_sc;
 
 static struct cnm_state ixpcom_cnm_state;
@@ -199,7 +201,9 @@ ixpcom_attach_subr(sc)
 	ixpcom_sc = sc;
 
 	/* force to use ixpcom0 for console */
-	if (sc->sc_dev.dv_unit == 0) {
+	if (sc->sc_iot == ixpcomcn_sc.sc_iot
+	    && sc->sc_baseaddr == ixpcomcn_sc.sc_baseaddr) {
+		ixpcomcn_sc.sc_attached = 1;
 		sc->sc_speed = IXPCOMSPEED2BRD(ixpcomcn_sc.sc_ospeed);
 
 		/* Make sure the console is always "hardwired". */
@@ -878,7 +882,7 @@ ixpcomcnattach(iot, iobase, ospeed, cflag)
 	cn_set_magic("\047\001\047\001");
 
 	ixpcomcn_sc.sc_iot = iot;
-	ixpcomcn_sc.sc_ioh = iobase;
+	ixpcomcn_sc.sc_ioh = ixpcomcn_sc.sc_baseaddr = iobase;
 	ixpcomcn_sc.sc_ospeed = ospeed;
 	ixpcomcn_sc.sc_cflag = cflag;
 
