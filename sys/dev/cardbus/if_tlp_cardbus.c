@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.25 2001/01/16 18:55:00 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.26 2001/03/14 01:41:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,6 +146,9 @@ const struct tulip_cardbus_product {
 	  TULIP_CHIP_AN985 },
 
 	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500,
+	  TULIP_CHIP_AN985 },
+
+	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_PCM200,
 	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,

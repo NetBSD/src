@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.16 2001/03/08 04:24:41 thorpej Exp $
+$NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -99,6 +99,7 @@ product	XIRCOM	MODEM56		0x0103	56k Modem
 
 /* AboCom products */
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
+product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
 
 /* Intel products */
 product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
