@@ -17,31 +17,9 @@ FONTMODE?=	444
 
 all:	$(FONTFILES)
 
-.if !target(obj)
-.if defined(NOOBJ)
-obj:
-.else
-obj:
-	@cd ${.CURDIR}; rm -rf obj; \
-	here=`pwd`; dest=/usr/obj/`echo $$here | sed 's,/usr/src/,,'`; \
-	echo "$$here -> $$dest"; ln -s $$dest obj; \
-	if test -d /usr/obj -a ! -d $$dest; then \
-		mkdir -p $$dest; \
-	else \
-		true; \
-	fi;
-.endif
-.endif
-
 .if !target(clean)
-clean:
+clean cleandir:
 	-rm -f $(FONTFILES)
-.endif
-
-.if !target(cleandir)
-cleandir:
-	-rm -f $(FONTFILES)
-	cd ${.CURDIR}; rm -rf obj;
 .endif
 
 .if !target(install)
@@ -56,3 +34,5 @@ install:
 			$(DEVICEDIR)/$$f; \
 	done
 .endif
+
+.include <bsd.prog.mk>
