@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.10 1998/08/27 18:03:42 ross Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.11 1998/08/30 01:40:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.10 1998/08/27 18:03:42 ross Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.11 1998/08/30 01:40:15 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,11 +272,12 @@ dump_ifile(fd, lfsp, do_ientries)
 		if (i < lfsp->lfs_segtabsz) {
 			inum = dump_ipage_segusage(lfsp, inum, ipage, 
 			    lfsp->lfs_sepb);
-			if (!inum)
+			if (!inum) {
 				if(!do_ientries)
 					goto e1;
 				else
 					print_iheader;
+			}
 		} else
 			inum = dump_ipage_ifile(inum, ipage, lfsp->lfs_ifpb);
 	}
