@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.3 2001/12/17 21:31:26 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.4 2001/12/28 06:12:21 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -680,13 +680,6 @@ struct saframe {
 	int		sa_interrupted;
 	void*		sa_arg;
 };
-
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	/* Implement me! */
-	return (NULL);
-}
 
 /*
  * cpu_upcall:

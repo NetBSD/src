@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.9 2001/12/17 22:00:31 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.10 2001/12/28 06:12:20 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -171,31 +171,6 @@ cpu_dumpconf()
 		dumpsize = dtoc(nblks - dumplo);
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
-}
-
-ucontext_t *
-cpu_stashcontext(struct lwp *lwp)
-{
-	ucontext_t u, *up;
-	void *stack;
-	struct trapframe *tf;
- 
-	tf = trapframe(lwp);
-	stack = (char *) tf->fixreg[1] - sizeof(ucontext_t);
-	getucontext(lwp, &u);
-	up = stack;
-
-	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    lwp->l_proc->p_pid, lwp->l_lid);
-#endif   
-		sigexit(lwp, SIGILL);
-		/* NOTREACHED */
-	}
- 
-	return up;
 }
 
 void 

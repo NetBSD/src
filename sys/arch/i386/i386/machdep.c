@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.13 2001/12/17 20:49:14 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.14 2001/12/28 06:12:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1768,31 +1768,6 @@ sendsig(catcher, sig, mask, code)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-/* Save the user-level ucontext_t on the LWP's own stack. */
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	ucontext_t u, *up;
-	struct trapframe *tf;
-	void *stack;
-
-	tf = l->l_md.md_regs;
-	stack = (char *)tf->tf_esp - sizeof(ucontext_t);
-	getucontext(l, &u);
-	up = stack;
-
-	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	return up;
-}
 
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)

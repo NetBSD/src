@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.10 2001/12/28 05:49:27 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.11 2001/12/28 06:12:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,8 +84,5 @@ void	sa_switchcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
-
-ucontext_t *cpu_stashcontext(struct lwp *);
-
 
 #endif /* !_SYS_SAVAR_H */

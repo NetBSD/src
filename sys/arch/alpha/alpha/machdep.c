@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.9 2001/12/17 21:00:23 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.10 2001/12/28 06:12:16 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.9 2001/12/17 21:00:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.10 2001/12/28 06:12:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1624,41 +1624,6 @@ sendsig(catcher, sig, mask, code)
 #endif
 }
 
-
-/* Save the user-level ucontext_t on the LWP's own stack. */
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	ucontext_t u, *up;
-	void *stack;
-	unsigned long usp;
-
-	/* XXX if there's a better, general way to get the USP of
-	 * an LWP that might or might not be curproc, I'd like to know
-	 * about it.
-	 */
-	if (l == curproc)
-		usp = alpha_pal_rdusp();
-	else
-		usp = l->l_addr->u_pcb.pcb_hw.apcb_usp;
-
-	stack = (void *)(usp - sizeof(ucontext_t));
-
-	getucontext(l, &u);
-	up = stack;
-
-		if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	return up;
-}
 
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)

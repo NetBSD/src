@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.8 2001/12/17 21:31:25 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.9 2001/12/28 06:12:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.8 2001/12/17 21:31:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.9 2001/12/28 06:12:18 nathanw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -155,38 +155,6 @@ upcallret(struct lwp *l)
 {
 
 	userret(l);
-}
-
-/*
- * cpu_stashcontext:
- *
- *	Save the user-level ucontext_t on the LWP's own stack.
- */
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	struct trapframe *tf;
-	ucontext_t u, *up;
-	void *stack;
-
-	tf = process_frame(l);
-
-	stack = (void *)(tf->tf_usr_sp - sizeof(ucontext_t));
-
-	getucontext(l, &u);
-	up = stack;
-
-	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work.  Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	return (up);
 }
 
 /*
