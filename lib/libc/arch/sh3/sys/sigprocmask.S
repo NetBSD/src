@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.3 2001/04/09 16:08:41 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.2 2000/08/04 08:47:05 tsubai Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.3 2001/04/09 16:08:41 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -75,7 +75,7 @@ err:
 
 	.align 2
 LSYS_sigprocmask13:
-	.long	SYS_compat_13_sigprocmask
+	.long	SYS_compat_13_sigprocmask13
 Lcerror:
 	.long	cerror
 
