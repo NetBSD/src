@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $	*/
+/*	$NetBSD: logwtmpx.c,v 1.1 2002/09/27 20:42:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,39 +36,45 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $");
+__RCSID("$NetBSD: logwtmpx.c,v 1.1 2002/09/27 20:42:50 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
-#include <util.h>
 #include <utmp.h>
+#include <utmpx.h>
+#include <util.h>
 
 void
-login(const struct utmp *ut)
+logwtmpx(const char *line, const char *name, const char *host, int status,
+    int type)
 {
-	int fd;
-	int tty;
+	struct utmpx ut;
 
-	_DIAGASSERT(ut != NULL);
+	_DIAGASSERT(line != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(host != NULL);
 
-	tty = ttyslot();
-	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
-	}
-	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
-	}
+	(void)memset(&ut, 0, sizeof(ut));
+	(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
+	(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
+	(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
+	ut.ut_type = type;
+	if (WIFEXITED(status))
+		ut.ut_exit.e_exit = (uint16_t)WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		ut.ut_exit.e_termination = (uint16_t)WTERMSIG(status);
+	(void)gettimeofday(&ut.ut_tv, NULL);
+	(void)updwtmpx(_PATH_WTMPX, &ut);
 }

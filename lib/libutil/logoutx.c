@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $	*/
+/*	$NetBSD: logoutx.c,v 1.1 2002/09/27 20:42:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,39 +36,42 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.15 2002/09/27 20:42:47 jdolecek Exp $");
+__RCSID("$NetBSD: logoutx.c,v 1.1 2002/09/27 20:42:48 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <utmpx.h>
 
-void
-login(const struct utmp *ut)
+int
+logoutx(const char *line, int status, int type)
 {
-	int fd;
-	int tty;
-
-	_DIAGASSERT(ut != NULL);
-
-	tty = ttyslot();
-	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
+	struct utmpx *utp, ut;
+	(void)strlcpy(ut.ut_line, line, sizeof(ut.ut_line));
+	if ((utp = getutxline(&ut)) == NULL) {
+		endutxent();
+		return 0;
 	}
-	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
-		(void)write(fd, ut, sizeof(struct utmp));
-		(void)close(fd);
-	}
+	utp->ut_type = type;
+	if (WIFEXITED(status))
+		utp->ut_exit.e_exit = (uint16_t)WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		utp->ut_exit.e_termination = (uint16_t)WTERMSIG(status);
+	(void)gettimeofday(&utp->ut_tv, NULL);
+	(void)pututxline(utp);
+	endutxent();
+	return 1;
 }
