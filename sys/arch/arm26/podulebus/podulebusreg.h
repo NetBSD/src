@@ -1,4 +1,4 @@
-/* $NetBSD: podulebusreg.h,v 1.2 2001/01/12 00:13:26 bjh21 Exp $ */
+/* $NetBSD: podulebusreg.h,v 1.3 2001/06/11 19:07:14 bjh21 Exp $ */
 
 /*
  * 2000 Ben Harris
@@ -10,7 +10,7 @@
 #define _PODULEBUSREG_H_
 
 #define MAX_PODULES 4
-#define PODULE_GAP 0x4000 >> 2
+#define PODULE_GAP (0x4000 >> 2)
 
 /* Podule identity byte (ECId) flags */
 #define ECID_IRQING	0x01
