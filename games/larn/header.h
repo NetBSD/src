@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.11 1997/10/18 20:03:22 christos Exp $	 */
+/* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -359,13 +359,13 @@ extern short    nobeep, oldx, oldy, playerx, playery, level;
 extern int      dayplay, enable_scroll, srcount, yrepcount, userid, wisid,
                 lfd, fd;
 extern uid_t    uid, euid;
-extern long     initialtime, outstanding_taxes, skill[], gltime, c[], cbak[];
+extern long     outstanding_taxes, skill[], gltime, c[], cbak[];
+extern time_t	initialtime;
 extern unsigned long randx;
 extern struct cel *cell;
 extern struct monst monster[];
 extern struct sphere *spheres;
 extern struct _itm itm[];
-extern long 	initialtime;
 extern int      rmst, maxitm, lasttime;
 
 /* macro to create scroll #'s with probability of occurrence */
