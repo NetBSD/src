@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.34 1999/07/02 08:07:42 itojun Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.35 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -168,6 +168,7 @@ int	retry_connect;		/* seconds between retrying connection */
 int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
 FILE   *ttyout;			/* stdout, or stderr if retrieving to stdout */
+int	epsv4;			/* use EPSV/EPRT on IPv4 connections */
 
 #ifndef NO_EDITCOMPLETE
 int	  editing;		/* command line editing enabled */
@@ -187,15 +188,9 @@ char   *hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 
-#if 0
-in_port_t	ftpport;	/* port number to use for FTP connections */
-in_port_t	httpport;	/* port number to use for HTTP connections */
-in_port_t	gateport;	/* port number to use for gateftp connections */
-#else
 char 	*ftpport;		/* port number to use for FTP connections */
 char	*httpport;		/* port number to use for HTTP connections */
 char	*gateport;		/* port number to use for gateftp connections */
-#endif
 
 const char	*ftpproxy;	/* ftp:// proxy server */
 const char	*httpproxy;	/* http:// proxy server */

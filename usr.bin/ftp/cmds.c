@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.54 1999/07/02 08:07:40 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.55 1999/07/11 20:37:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.54 1999/07/02 08:07:40 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.55 1999/07/11 20:37:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -763,6 +763,7 @@ status(argc, argv)
 	    "Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
 	    onoff(rate_put), rate_put, rate_put_incr);
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
+	fprintf(ttyout, "Use of EPSV/EPRT cmds on IPv4: %s.\n", onoff(epsv4));
 #ifndef NO_EDITCOMPLETE
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
 #endif /* !NO_EDITCOMPLETE */
@@ -2471,4 +2472,14 @@ rcvbuf(argc, argv)
 		rcvbuf_manual = 1;
 	else
 		rcvbuf_manual = 0;
+}
+
+void
+setepsv4(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	code = togglevar(argc, argv, &epsv4,
+	    verbose ? "EPSV/EPRT on IPv4" : NULL);
 }
