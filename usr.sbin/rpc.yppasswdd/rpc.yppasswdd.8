@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.yppasswdd.8,v 1.2 1996/10/23 04:58:50 phil Exp $
+.\"	$NetBSD: rpc.yppasswdd.8,v 1.3 1997/10/17 16:12:03 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,18 +36,18 @@
 .Nm rpc.yppasswdd
 .Nd YP update password file daemon
 .Sh SYNOPSIS
-.Nm rpc.yppasswdd
+.Nm
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
 .Op Fl m Ar arg1 arg2 ... 
 .Sh DESCRIPTION
-.Nm rpc.yppasswdd
+.Nm
 must be running on the YP master server to allow users to change information
 in the password file.
 .Pp
 If the file
-.Nm /var/yp/yppasswdd.log
+.Pa /var/yp/yppasswdd.log
 exists then messages will be written to the file.
 .Pp
 The options are as follows:
