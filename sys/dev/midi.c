@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.6 1998/09/13 06:30:25 mycroft Exp $	*/
+/*	$NetBSD: midi.c,v 1.7 1998/10/05 09:21:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -295,8 +295,8 @@ deliver:
 	sc->in_state = MIDI_IN_START;
 #if NSEQUENCER > 0
 	if (sc->seqopen) {
-		extern void midiseq_in __P((struct midi_softc *,u_char *,int));
-		midiseq_in(sc, sc->in_msg, sc->in_pos);
+		extern void midiseq_in __P((struct midi_dev *,u_char *,int));
+		midiseq_in(sc->seq_md, sc->in_msg, sc->in_pos);
 		return;
 	}
 #endif
@@ -400,6 +400,7 @@ midiclose(dev, flags, ifmt, p)
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
 	sc->seqopen = 0;
+	sc->seq_md = 0;
 #endif
 	return 0;
 }
