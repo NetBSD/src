@@ -1,7 +1,13 @@
-/*	$NetBSD: private.h,v 1.2 1995/03/09 23:41:19 jtc Exp $	*/
+/*	$NetBSD: private.h,v 1.3 1995/03/14 18:49:49 jtc Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
+
+/* NetBSD defaults */
+#define TM_GMTOFF	tm_gmtoff
+#define TM_ZONE		tm_zone
+#define STD_INSPIRED	1
+#define HAVE_LONG_DOUBLE 1
 
 /*
 ** This header is for use ONLY with the time conversion code.
