@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.c,v 1.5 2004/05/13 21:32:36 christos Exp $	*/
+/*	$NetBSD: resolv.c,v 1.6 2004/05/23 16:59:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resolv.c,v 1.5 2004/05/13 21:32:36 christos Exp $");
+__RCSID("$NetBSD: resolv.c,v 1.6 2004/05/23 16:59:11 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -126,8 +126,11 @@ static void *
 resolvloop(void *p)
 {
 	int *nhosts = (int *)p;
-	while (--(*nhosts))
+	if (*nhosts == 0)
+		return;
+	do
 		resolvone(*nhosts);
+	while (--(*nhosts));
 	return NULL;
 }
 
@@ -149,7 +152,7 @@ main(int argc, char *argv[])
 
 	srandom(1234);
 
-	while ((c = getopt(argc, argv, "dh:t:")) != -1)
+	while ((c = getopt(argc, argv, "dh:n:")) != -1)
 		switch (c) {
 		case 'd':
 			debug++;
@@ -157,7 +160,7 @@ main(int argc, char *argv[])
 		case 'h':
 			nhosts = atoi(optarg);
 			break;
-		case 't':
+		case 'n':
 			nthreads = atoi(optarg);
 			break;
 		default:
@@ -172,9 +175,9 @@ main(int argc, char *argv[])
 
 	if ((nleft = malloc(nthreads * sizeof(int))) == NULL)
 		err(1, "malloc");
-	if ((ask = calloc(nhosts, sizeof(int))) == NULL)
+	if ((ask = calloc(hosts->sl_cur, sizeof(int))) == NULL)
 		err(1, "calloc");
-	if ((got = calloc(nhosts, sizeof(int))) == NULL)
+	if ((got = calloc(hosts->sl_cur, sizeof(int))) == NULL)
 		err(1, "calloc");
 
 
