@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1996/09/05 15:46:56 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 1996/10/22 15:58:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -145,12 +145,19 @@ cdev_decl(pts);
 cdev_decl(ptc);
 
 /* frame-buffer devices */
+#define fbpoll seltrue
 cdev_decl(fb);
+
 #include "bwtwo.h"
+#define bw2poll seltrue
 cdev_decl(bw2);
+
 #include "cgtwo.h"
+#define cg2poll seltrue
 cdev_decl(cg2);
+
 #include "cgfour.h"
+#define cg4poll seltrue
 cdev_decl(cg4);
 
 cdev_decl(log);
