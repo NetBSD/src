@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.9 2003/01/04 15:15:01 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.10 2003/02/02 19:07:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ typedef struct {
 
 typedef struct {
 	mach_msg_header_t req_msgh;
-} mach_host_get_io_master_repquest_t;
+} mach_host_get_io_master_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.21 2003/01/21 04:06:07 matt Exp $ */
+/*	$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.21 2003/01/21 04:06:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.22 2003/02/02 19:07:17 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -197,17 +197,13 @@ int
 mach_host_get_io_master(args)
 	struct mach_trap_args *args;
 {
-	mach_host_get_clock_service_request_t *req = args->smsg;
-	mach_host_get_clock_service_reply_t *rep = args->rmsg;
+	mach_host_get_io_master_request_t *req = args->smsg;
+	mach_host_get_io_master_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct mach_right *mr;
 
-	/*
-	 * XXX Find out what this is supposed
-	 * to do and implement it
-	 */
-	printf("pid %d.%d: unimplemented mach_host_get_io_master\n",
-	    l->l_proc->p_pid, l->l_lid);
+	mr = mach_right_get(mach_io_master_port, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -215,6 +211,9 @@ mach_host_get_io_master(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
+	rep->rep_iomaster.name = (mach_port_t)mr->mr_name;
+	rep->rep_iomaster.disposition = 0x11; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);

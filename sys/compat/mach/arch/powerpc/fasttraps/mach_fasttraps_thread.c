@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_thread.c,v 1.5 2003/01/30 19:14:20 manu Exp $ */
+/*	$NetBSD: mach_fasttraps_thread.c,v 1.6 2003/02/02 19:06:31 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.5 2003/01/30 19:14:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.6 2003/02/02 19:06:31 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -72,6 +72,19 @@ mach_sys_cthread_self(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct mach_emuldata *med;
+
+	/*
+	 * After a fork or exec, l_private is not initialized.
+	 * We have no way of setting it before, so we keep track
+	 * of it being uninitialized with med_dirty_thid.
+	 * XXX This is probably not the most efficient way
+	 */
+	med = l->l_proc->p_emuldata;
+	if (med->med_dirty_thid != 0) {
+		l->l_private = NULL;
+		med->med_dirty_thid = 0;
+	}
 
 	*retval = (register_t)l->l_private;
 	return 0;
