@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.107 2001/03/10 18:14:18 kent Exp $
+.\"	$NetBSD: main,v 1.108 2001/03/12 05:56:15 zuntum Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1232,6 +1232,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
+.It Ta Tomasz Luchowski Ta Mt zuntum@netbsd.org
 .
 .El
 .
