@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2002/03/27 04:47:31 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2002/04/03 10:37:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2579,6 +2579,7 @@ pmap_collect(struct pmap *pmap)
 	pmap_update(pmap);
 }
 
+#if 0
 /*
  * pmap_transfer: transfer (move or copy) mapping from one pmap
  * 	to another.
@@ -3038,6 +3039,7 @@ pmap_transfer_ptes(struct pmap *srcpmap, struct pmap_transfer_location *srcl,
 /*
  * defined as macro call to pmap_transfer in pmap.h
  */
+#endif
 
 /*
  * pmap_enter: enter a mapping into a pmap
