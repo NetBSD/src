@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.5 1998/06/22 09:37:43 jonathan Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.6 1998/08/29 16:16:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.5 1998/06/22 09:37:43 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6 1998/08/29 16:16:37 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.5 1998/06/22 09:37:43 jonathan Exp $"
 
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/dec_3max_subr.h>
-
 
 /*
  * forward declarations
