@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
+/*	$NetBSD: disksubr.c,v 1.17 1996/06/29 22:38:11 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -167,19 +167,20 @@ readdisklabel(dev, strat, lp, clp)
 	if (error)
 		return ("disk label read error");
 
+	/* Check for a NetBSD disk label. */
+	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC) {
+		if (dkcksum(dlp))
+			return ("NetBSD disk label corrupted");
+		*lp = *dlp;
+		return (NULL);
+	}
+
 	/* Check for a Sun disk label (for PROM compatibility). */
 	slp = (struct sun_disklabel *) clp->cd_block;
 	if (slp->sl_magic == SUN_DKMAGIC)
 		return (disklabel_sun_to_bsd(clp->cd_block, lp));
 
-	/* Check for a NetBSD disk label (PROM can not boot it). */
-	dlp = (struct disklabel *) (clp->cd_block + LABELOFFSET);
-	if (dlp->d_magic == DISKMAGIC) {
-		if (dkcksum(dlp))
-			return ("NetBSD disk label corrupted");
-		*lp = *dlp;	/* struct assignment */
-		return (NULL);
-	}
 
 	bzero(clp->cd_block, sizeof(clp->cd_block));
 	return ("no disk label");
@@ -241,18 +242,24 @@ writedisklabel(dev, strat, lp, clp)
 {
 	struct buf *bp;
 	int error;
+	struct disklabel *dlp;
+	struct sun_disklabel *slp;
 
+	/*
+	 * Embed native label in a piece of wasteland.
+	 */
+	if (sizeof(struct disklabel) > sizeof slp->sl_bsdlabel)
+		return EFBIG;
+
+	slp = (struct sun_disklabel *)clp->cd_block;
+	bzero(slp->sl_bsdlabel, sizeof(slp->sl_bsdlabel));
+	dlp = (struct disklabel *)slp->sl_bsdlabel;
+	*dlp = *lp;
+
+	/* Build a SunOS compatible label around the native label */
 	error = disklabel_bsd_to_sun(lp, clp->cd_block);
 	if (error)
 		return (error);
-
-#if 0	/* XXX - Allow writing NetBSD disk labels? */
-	{
-		struct disklabel *dlp;
-		dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-		*dlp = *lp;	/* struct assignment */
-	}
-#endif
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
@@ -441,7 +448,9 @@ disklabel_bsd_to_sun(lp, cp)
 
 	sl = (struct sun_disklabel *)cp;
 
-	/* Format conversion. */
+	/*
+	 * Format conversion.
+	 */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
 	sl->sl_rpm = lp->d_rpm;
 	sl->sl_pcylinders   = lp->d_ncylinders + lp->d_acylinders; /* XXX */
@@ -457,6 +466,12 @@ disklabel_bsd_to_sun(lp, cp)
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
 
+		/*
+		 * SunOS partitions must start on a cylinder boundary.
+		 * Note this restriction is forced upon NetBSD/sparc
+		 * labels too, since we want to keep both labels
+		 * synchronised.
+		 */
 		if (npp->p_offset % secpercyl)
 			return (EINVAL);
 		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
@@ -464,7 +479,7 @@ disklabel_bsd_to_sun(lp, cp)
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 
-	/* Correct the XOR check. */
+	/* Compute the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
 	sl->sl_cksum = cksum = 0;
