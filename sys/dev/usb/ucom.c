@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.24 2000/06/01 14:28:59 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.24.2.1 2000/09/04 17:53:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,8 @@ struct ucom_softc {
 	usbd_xfer_handle	sc_oxfer;	/* write request */
 	u_char			*sc_obuf;	/* write buffer */
 	u_int			sc_obufsize;	/* write buffer size */
-	u_int			sc_obufsizepad;	/* write buffer size padded */
+	u_int			sc_opkthdrlen;	/* header length of
+						 * output packet */
 
 	struct ucom_methods     *sc_methods;
 	void                    *sc_parent;
@@ -161,7 +162,7 @@ USB_ATTACH(ucom)
 	sc->sc_ibufsize = uca->ibufsize;
 	sc->sc_ibufsizepad = uca->ibufsizepad;
 	sc->sc_obufsize = uca->obufsize;
-	sc->sc_obufsizepad = uca->obufsizepad;
+	sc->sc_opkthdrlen = uca->opkthdrlen;
 	sc->sc_methods = uca->methods;
 	sc->sc_parent = uca->arg;
 	sc->sc_portno = uca->portno;
@@ -399,7 +400,8 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (ENOMEM);
 		}
 		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer,
-						sc->sc_obufsizepad);
+						sc->sc_obufsize +
+						sc->sc_opkthdrlen);
 		if (sc->sc_obuf == NULL) {
 			usbd_free_xfer(sc->sc_oxfer);
 			usbd_free_xfer(sc->sc_ixfer);
@@ -912,6 +914,8 @@ ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 	DPRINTFN(5,("ucomwritecb: cc=%d\n", cc));
+	/* convert from USB bytes to tty bytes */
+	cc -= sc->sc_opkthdrlen;
 
 	s = spltty();
 	CLR(tp->t_state, TS_BUSY);
