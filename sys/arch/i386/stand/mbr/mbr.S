@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.2.2.5 2004/09/21 13:17:18 skrll Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2.2.6 2004/10/24 07:10:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -181,7 +181,7 @@ next_ptn:
 	/* output menu item */
 	movw	$prefix, %si
 	incb	(%si)
-	/*call	message*/			/* menu number */
+	call	message			/* menu number */
 	mov	(%si), %si		/* ':' << 8 | '1' + count */
 	shl	$2, %si			/* const + count * 4 */
 #define	CONST	(4 * ((':' << 8) + '1' - ((SCAN_1 - SCAN_F1) & 0xff)))
