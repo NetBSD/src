@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.47 2001/05/01 02:19:14 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.48 2001/05/01 02:53:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ extern u_long		kernel_pmap_store[];
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  */
 typedef struct pv_entry {
-	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
+	struct pv_entry	*pv_next;	/* next pv_entry on list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */

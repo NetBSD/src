@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.22 2001/05/01 02:19:14 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.23 2001/05/01 02:53:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,18 +134,16 @@
 /*
  * pmap-specific data store in the vm_page structure.
  */
-#include <sys/queue.h>
-
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	LIST_HEAD(, pv_entry) pvh_list;		/* pv_entry list */
+	struct pv_entry *pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	LIST_INIT(&(pg)->mdpage.pvh_list);				\
+	(pg)->mdpage.pvh_list = NULL;					\
 	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 } while (/*CONSTCOND*/0)
 

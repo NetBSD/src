@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.175 2001/05/01 02:19:13 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.176 2001/05/01 02:53:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2001/05/01 02:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2001/05/01 02:53:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1481,8 +1481,8 @@ pmap_page_protect(vm_page_t pg, vm_prot_t prot)
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pvh_slock);
-	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL; pv = nextpv) {
-		nextpv = LIST_NEXT(pv, pv_list);
+	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = nextpv) {
+		nextpv = pv->pv_next;
 		pmap = pv->pv_pmap;
 
 		PMAP_LOCK(pmap);
@@ -2691,8 +2691,7 @@ pmap_changebit(vm_page_t pg, u_long set, u_long mask, long cpu_id)
 	/*
 	 * Loop over all current mappings setting/clearing as appropos.
 	 */
-	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
-	     pv = LIST_NEXT(pv, pv_list)) {
+	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		va = pv->pv_va;
 
 		/*
@@ -2876,8 +2875,7 @@ pmap_pv_dump(paddr_t pa)
 	simple_lock(&pg->mdpage.pvh_slock);
 
 	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->mdpage.pvh_attrs);
-	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
-	     pv = LIST_NEXT(pv, pv_list))
+	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next)
 		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
 	printf("\n");
@@ -2944,24 +2942,25 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
 		simple_lock(&pg->mdpage.pvh_slock);
 
 #ifdef DEBUG
-	{
+    {
 	pv_entry_t pv;
 	/*
 	 * Make sure the entry doesn't already exist.
 	 */
-	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
-	     pv = LIST_NEXT(pv, pv_list))
+	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		if (pmap == pv->pv_pmap && va == pv->pv_va) {
 			printf("pmap = %p, va = 0x%lx\n", pmap, va);
 			panic("pmap_pv_enter: already in pv table");
 		}
 	}
+    }
 #endif
 
 	/*
 	 * ...and put it in the list.
 	 */
-	LIST_INSERT_HEAD(&pg->mdpage.pvh_list, newpv, pv_list);
+	newpv->pv_next = pg->mdpage.pvh_list;
+	pg->mdpage.pvh_list = newpv;
 
 	if (dolock)
 		simple_unlock(&pg->mdpage.pvh_slock);
@@ -2977,7 +2976,7 @@ pmap_pv_enter(pmap_t pmap, vm_page_t pg, vaddr_t va, pt_entry_t *pte,
 void
 pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
 {
-	pv_entry_t pv;
+	pv_entry_t pv, *pvp;
 
 	if (dolock)
 		simple_lock(&pg->mdpage.pvh_slock);
@@ -2985,8 +2984,8 @@ pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
 	/*
 	 * Find the entry to remove.
 	 */
-	for (pv = LIST_FIRST(&pg->mdpage.pvh_list); pv != NULL;
-	     pv = LIST_NEXT(pv, pv_list))
+	for (pvp = &pg->mdpage.pvh_list, pv = *pvp;
+	     pv != NULL; pvp = &pv->pv_next, pv = *pvp)
 		if (pmap == pv->pv_pmap && va == pv->pv_va)
 			break;
 
@@ -2995,7 +2994,7 @@ pmap_pv_remove(pmap_t pmap, vm_page_t pg, vaddr_t va, boolean_t dolock)
 		panic("pmap_pv_remove: not in pv table");
 #endif
 
-	LIST_REMOVE(pv, pv_list);
+	*pvp = pv->pv_next;
 
 	if (dolock)
 		simple_unlock(&pg->mdpage.pvh_slock);
