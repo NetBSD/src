@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.6 1996/05/06 00:41:55 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.7 1996/06/03 22:04:40 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -58,33 +58,33 @@
 
 /* In setcpsr.S */
 
-u_int SetCPSR __P((u_int, u_int));
-u_int GetCPSR __P((void));
+u_int SetCPSR		__P((u_int, u_int));
+u_int GetCPSR		__P((void));
 
 /* In coproc15.S */
 
-void tlbflush __P((void));
-void tlbpurge __P((u_int));
-void idcflush __P((void));
-void cpu_control __P((u_int));
-void cpu_domains __P((u_int));
-void setttb __P((u_int));
+void tlbflush		__P((void));
+void tlbpurge		__P((u_int));
+void idcflush		__P((void));
+void cpu_control	__P((u_int));
+void cpu_domains	__P((u_int));
+void setttb		__P((u_int));
 
-u_int cpu_id __P((void));
-u_int cpu_faultstatus __P((void));
-u_int cpu_faultaddress __P((void));
+u_int cpu_id		__P((void));
+u_int cpu_faultstatus	__P((void));
+u_int cpu_faultaddress	__P((void));
 
 /* In setstack.S */
 
-void set_stackptr __P((u_int, u_int));
-u_int get_stackptr __P((u_int));
+void set_stackptr	__P((u_int, u_int));
+u_int get_stackptr	__P((u_int));
 
 /* In blockio.S */
 
-void insw __P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
-void outsw __P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
-void insw16 __P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
-void outsw16 __P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
+void insw	__P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
+void outsw	__P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
+void insw16	__P((u_int /*io*/, u_int /*dest*/, u_int /*size*/));
+void outsw16	__P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
 
 /* Macros for reading and writing words, shorts, bytes */
 
@@ -117,17 +117,22 @@ void outsw16 __P((u_int /*io*/, u_int /*src*/, u_int /*size*/));
 
 /* Prototypes that are wandering the streets */
 
-#ifdef _ARM32_FRAME_H
-void postmortem __P((trapframe_t */*frame*/));
+#ifdef _ARM32_FRAME_H_
+void postmortem		__P((trapframe_t */*frame*/));
 #endif
-u_int traceback __P(());
-u_int simpletraceback __P(());
-u_int irqtraceback __P((u_int, u_int));
-int shell __P(());
-void kstack_stuff __P((struct proc */*p*/));
-void boot0 __P((void))
+u_int traceback		__P(());
+u_int simpletraceback	__P(());
+u_int irqtraceback	__P((u_int, u_int));
+u_int user_traceback	__P((u_int));
+int shell		__P(());
+void kstack_stuff	__P((struct proc */*p*/));
+void bootsync		__P((void));
+void boot0		__P((void))
     __attribute__((__noreturn__));
-void bootsync __P((void));
+
+char *strstr	__P((char */*s1*/, char */*s2*/));
+void userret	__P((register struct proc *p, int pc, u_quad_t oticks));
+void memset	__P((void *address, int byte, int count));
 #endif
 
 /* End of katelib.h */
