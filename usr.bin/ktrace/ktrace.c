@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.14 2000/04/10 07:59:22 jdolecek Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.15 2000/04/10 09:32:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.14 2000/04/10 07:59:22 jdolecek Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.15 2000/04/10 09:32:03 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,12 +56,16 @@ __RCSID("$NetBSD: ktrace.c,v 1.14 2000/04/10 07:59:22 jdolecek Exp $");
 #include <sys/ktrace.h>
 
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include "ktrace.h"
+
+#ifdef KTRUSS
+#include <string.h>
+#include "setemul.h"
+#endif
 
 int	main __P((int, char **));
 int	rpid __P((char *));
@@ -81,6 +85,9 @@ main(argc, argv)
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int append, ch, fd, inherit, ops, pid, pidset, trpoints;
 	char *infile, *outfile;
+#ifdef KTRUSS
+	const char *emul_name = "netbsd";
+#endif
 
 	clear = NOTSET;
 	append = ops = pidset = inherit = 0;
@@ -113,7 +120,7 @@ main(argc, argv)
 			break;
 #ifdef KTRUSS
 		case 'e':
-			setemul(optarg, 0, 0);
+			emul_name = strdup(optarg); /* it's safer to copy it */
 			break;
 		case 'f':
 			infile = optarg;
@@ -174,7 +181,10 @@ main(argc, argv)
 		dumpfile(infile, 0, trpoints);
 		exit(0);
 	}
+
+	setemul(emul_name, 0, 0);
 #endif
+
 	if (inherit)
 		trpoints |= KTRFAC_INHERIT;
 
