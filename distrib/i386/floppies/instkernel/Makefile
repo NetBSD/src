@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.22 2002/05/08 21:44:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.1 2002/10/14 16:20:41 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 #	create ${RAMDISK_*} variables
 #
-RAMDISKS=	RAMDISK_B	ramdisk-big	\
-		RAMDISK_S	ramdisk-small	\
-		RAMDISK_T	ramdisk-tiny
+RAMDISKS=	RAMDISK_B	ramdisk-big		\
+		RAMDISK_S	ramdisk-small		\
+		RAMDISK_T	ramdisk-tiny		\
+		RESCUE_S	ramdisk-rescuesmall	\
+		RESCUE_T	ramdisk-rescuetiny
 
 .for V F in ${RAMDISKS}
 ${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
@@ -18,7 +20,10 @@ MDSETTARGETS=		INSTALL		${RAMDISK_B}	-	\
 			INSTALL_LAPTOP	${RAMDISK_B}	-	\
 			INSTALL_SMALL	${RAMDISK_S}	-	\
 			INSTALL_TINY	${RAMDISK_T}	-	\
-			INSTALL_PS2	${RAMDISK_S}	-
+			INSTALL_PS2	${RAMDISK_S}	-	\
+			INSTALL_SMALL	${RESCUE_S}	netbsd.RESCUE_SMALL \
+			INSTALL_TINY	${RESCUE_T}	netbsd.RESCUE_TINY
+
 MDSET_RELEASEDIR=	binary/kernel
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
