@@ -1,5 +1,6 @@
-#
-# magic.hp: Hewlett Packard Magic
+
+#------------------------------------------------------------------------------
+# hp:  file(1) magic for Hewlett Packard machines (see also "printer")
 #
 # XXX - somebody should figure out whether any byte order needs to be
 # applied to the "TML" stuff; I'm assuming the Apollo stuff is
@@ -17,6 +18,15 @@
 #
 # I'm guessing that the 200 series was 68K-based; the 300 and 400 series
 # are.
+#
+# Daniel Quinlan (quinlan@yggdrasil.com): hp200 machines are 68010
+# based; hp300 are 68020+68881 based.  I think the following "basic"
+# magic should probably be integrated and the various flavors of
+# binaries be implemented with ">2" in case some flavors have been missed.
+# 0	beshort		200	hp200 (68010) BSD binary
+# 0	beshort		300	hp300 (68020+68881) BSD binary
+# 0	beshort		0x20c	hp200/300 HP-UX binary
+# 0	beshort		0x20b	hp800 HP-UX binary
 #
 # The "misc" stuff needs a byte order; the archives look suspiciously
 # like the old 177545 archives (0xff65 = 0177545).
@@ -146,8 +156,47 @@
 0	string		Bitmapfile	HP Bitmapfile
 
 0	string		IMGfile	CIS 	compimg HP Bitmapfile
+# XXX - see "lif"
 0	short		0x8000		lif file
 0	long		0x020c010c	compiled Lisp
 
 0	string		msgcat01	HP NLS message catalog,
 >8	long		>0		%d messages
+
+# addendum to /etc/magic with HP-48sx file-types by phk@data.fls.dk 1jan92
+0	string		HPHP48-		HP48 binary
+>7	byte		>0		- Rev %c
+>8	short		0x1129		(ADR)
+>8	short		0x3329		(REAL)
+>8	short		0x5529		(LREAL)
+>8	short		0x7729		(COMPLX)
+>8	short		0x9d29		(LCOMPLX)
+>8	short		0xbf29		(CHAR)
+>8	short		0xe829		(ARRAY)
+>8	short		0x0a2a		(LNKARRAY)
+>8	short		0x2c2a		(STRING)
+>8	short		0x4e2a		(HXS)
+>8	short		0x742a		(LIST)
+>8	short		0x962a		(DIR)
+>8	short		0xb82a		(ALG)
+>8	short		0xda2a		(UNIT)
+>8	short		0xfc2a		(TAGGED)
+>8	short		0x1e2b		(GROB)
+>8	short		0x402b		(LIB)
+>8	short		0x622b		(BACKUP)
+>8	short		0x882b		(LIBDATA)
+>8	short		0x9d2d		(PROG)
+>8	short		0xcc2d		(CODE)
+>8	short		0x482e		(GNAME)
+>8	short		0x6d2e		(LNAME)
+>8	short		0x922e		(XLIB)
+0	string		%%HP:		HP48 text
+>6	string		T(0)		- T(0)
+>6	string		T(1)		- T(1)
+>6	string		T(2)		- T(2)
+>6	string		T(3)		- T(3)
+>10	string		A(D)		A(D)
+>10	string		A(R)		A(R)
+>10	string		A(G)		A(G)
+>14	string		F(.)		F(.);
+>14	string		F(,)		F(,);
