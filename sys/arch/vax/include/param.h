@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.26 1997/10/19 20:48:47 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.26.2.1 1997/11/05 04:24:51 thorpej Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -161,7 +161,7 @@
 #define splx(reg)                                       \
 ({                                                      \
         register int val;                               \
-        asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
+        __asm__ __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
                         : "&=g" (val)                   \
                         : "g" (reg));                   \
         val;                                            \
