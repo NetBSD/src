@@ -1,4 +1,4 @@
-.\"   $NetBSD: wss.4,v 1.17 2001/09/11 22:52:54 wiz Exp $
+.\"   $NetBSD: wss.4,v 1.18 2003/01/05 20:58:40 jmcneill Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Sh SYNOPSIS
 .Cd "wss0   at isa? port 0x530 irq 10 drq 0 drq2 1"
 .Cd "wss0   at isa? port 0x530 irq 10 drq 0 flags 1"
+.Cd "wss*   at acpi?"
 .Cd "wss*   at isapnp?"
 .Cd "wss*   at pnpbios? index ?"
 .Cd "audio* at wss?"
@@ -60,6 +61,7 @@ the OAK OTI-601D.  Setting bit 1 (value 2) in
 .Cm flags
 disables the joystick port on MAD16 hardware.
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr audio 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,

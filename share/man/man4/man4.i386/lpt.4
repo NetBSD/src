@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.16 2001/04/02 20:42:19 wiz Exp $
+.\" $NetBSD: lpt.4,v 1.17 2003/01/05 20:58:42 jmcneill Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,6 +43,7 @@ Parallel port driver
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
 .Cd "lpt1 at isa? port" \&"IO_LPT2\&"
+.Cd "lpt* at acpi?"
 .Cd "lpt* at ofisa?"
 .Cd "lpt* at pnpbios? index ?"
 .Cd "lpt* at puc? port ?"
@@ -65,6 +66,7 @@ first interrupt-driven parallel port device
 first polled parallel port device
 .El
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr isa 4 ,
 .Xr ofisa 4 ,
 .Xr pnpbios 4 ,
