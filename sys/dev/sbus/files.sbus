@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.6 1998/08/29 20:32:10 pk Exp $
+#	$NetBSD: files.sbus,v 1.7 1998/09/21 21:02:23 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -40,6 +40,11 @@ device	esp: scsi, ncr53c9x
 attach	esp at sbus with esp_sbus
 attach	esp at dma with esp_dma
 file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma
+
+# LSI64854 based bi-directional parallel port
+device	bpp {}: lsi64854
+attach	bpp at sbus
+file	dev/sbus/bpp.c			bpp	needs-flag
 
 # Efficient Networks, Inc. ATM interface
 # device declaration in sys/conf/files
