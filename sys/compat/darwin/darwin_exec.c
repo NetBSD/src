@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.8 2002/12/24 12:15:45 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.9 2002/12/28 00:15:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.8 2002/12/24 12:15:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.9 2002/12/28 00:15:23 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,17 @@ darwin_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
+	struct darwin_emuldata *ded;
+
 	darwin_e_proc_init(p, p->p_vmspace);
 
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+	if (p->p_pid == darwin_init_pid)
+		ded->ded_fakepid = 1;
+
+#ifdef DEBUG_DARWIN
+	printf("pid %d exec'd: fakepid = %d\n", p->p_pid, ded->ded_fakepid);
+#endif
 	return;
 }
 
@@ -218,6 +227,16 @@ darwin_e_proc_fork(p, parent)
 
 	(void)memcpy(ded1, ded2, sizeof(struct darwin_emuldata));
 
+	if (ded2->ded_fakepid == 1) {
+		darwin_init_pid = 0;
+		ded1->ded_fakepid = 2;
+	} else {
+		ded1->ded_fakepid = 0;
+	}
+#ifdef DEBUG_DARWIN
+	printf("pid %d fork'd: fakepid = %d\n", p->p_pid, ded1->ded_fakepid);
+#endif
+
 	return;
 }
 
@@ -226,9 +245,15 @@ darwin_e_proc_init(p, vmspace)
 	struct proc *p;
 	struct vmspace *vmspace;
 {
-	if (!p->p_emuldata)
+	struct darwin_emuldata *ded;
+
+	if (!p->p_emuldata) {
 		p->p_emuldata = malloc(sizeof(struct darwin_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
+
+		ded = (struct darwin_emuldata *)p->p_emuldata;
+		ded->ded_fakepid = 0;
+	}
 
 	mach_e_proc_init(p, vmspace);
 
