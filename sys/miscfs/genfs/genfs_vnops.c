@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.59 2002/05/09 07:22:09 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.60 2002/05/10 02:51:44 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.59 2002/05/09 07:22:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.60 2002/05/10 02:51:44 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -991,10 +991,10 @@ genfs_putpages(void *v)
 	off_t endoff = ap->a_offhi;
 	off_t off;
 	int flags = ap->a_flags;
-	int n = MAXBSIZE >> PAGE_SHIFT;
+	const int maxpages = MAXBSIZE >> PAGE_SHIFT;
 	int i, s, error, npages, nback;
 	int freeflag;
-	struct vm_page *pgs[n], *pg, *nextpg, *tpg, curmp, endmp;
+	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	boolean_t wasclean, by_list, needs_clean, yield;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
@@ -1150,7 +1150,7 @@ genfs_putpages(void *v)
 			 * first look backward.
 			 */
 
-			npages = MIN(n >> 1, off >> PAGE_SHIFT);
+			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
@@ -1163,7 +1163,6 @@ genfs_putpages(void *v)
 				else
 					memset(&pgs[npages - nback], 0,
 					    nback * sizeof(pgs[0]));
-				n -= nback;
 			}
 
 			/*
@@ -1177,7 +1176,7 @@ genfs_putpages(void *v)
 			 * the array of pages.
 			 */
 
-			npages = n - 1;
+			npages = maxpages - nback - 1;
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
