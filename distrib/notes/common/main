@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.268 2004/10/14 01:16:30 snj Exp $
+.\"	$NetBSD: main,v 1.269 2004/10/20 16:41:38 peter Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1632,6 +1632,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
 .It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
 .It Ta Adrian Portelli Ta Mt adrianp@NetBSD.org
+.It Ta Peter Postma Ta Mt peter@NetBSD.org
 .It Ta Dante Profeta Ta Mt dante@NetBSD.org
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.org
 .It Ta Niels Provos Ta Mt provos@NetBSD.org
