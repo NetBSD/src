@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.38 1994/10/20 14:10:18 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.39 1994/10/20 20:31:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -774,7 +774,7 @@ cdioctl(dev, cmd, addr, flag)
 	default:
 		if (part != RAW_PART)
 			return ENOTTY;
-		return scsi_do_ioctl(cd->sc_link, cmd, addr, flag);
+		return scsi_do_ioctl(cd->sc_link, dev, cmd, addr, flag);
 	}
 #ifdef DIAGNOSTIC
 	panic("cdioctl: impossible");
