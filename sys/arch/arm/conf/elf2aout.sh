@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: elf2aout.sh,v 1.4 2002/03/05 21:26:11 thorpej Exp $
+# $NetBSD: elf2aout.sh,v 1.4.8.1 2003/02/03 05:24:12 jmc Exp $
 #
 # Shell script to convert an ARM ELF kernel into a bootable a.out kernel by
 # changing the header block on the kernel, and shuffling bits around in the
@@ -27,7 +27,7 @@ outfile=${2}
 
 trap "rm -f ${infile}.text ${infile}.data" 0 1 2 3 15
 
-${OBJCOPY} -O binary -j .text ${infile} ${infile}.text || exit 1
+${OBJCOPY} -O binary -j .text -j .rodata ${infile} ${infile}.text || exit 1
 ${OBJCOPY} -O binary -j .data ${infile} ${infile}.data || exit 1
 
 set -- `${SIZE} ${infile} | tail +2`
