@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.26 2001/01/18 20:28:19 jdolecek Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.27 2001/01/19 12:22:56 martin Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -170,7 +170,7 @@ echo '#include "opt_vnode_op_noinline.h"'
 echo '#endif'
 echo '#endif /* _KERNEL */'
 echo '
-extern const struct vnodeop_desc vop_default_desc;
+extern struct vnodeop_desc vop_default_desc;
 '
 
 # Body stuff
@@ -179,12 +179,12 @@ sed -e "$sed_prep" $src | $awk "$toupper"'
 function doit() {
 	# Declare arg struct, descriptor.
 	printf("\nstruct %s_args {\n", name);
-	printf("\tconst struct vnodeop_desc * a_desc;\n");
+	printf("\tstruct vnodeop_desc * a_desc;\n");
 	for (i=0; i<argc; i++) {
 		printf("\t%s a_%s;\n", argtype[i], argname[i]);
 	}
 	printf("};\n");
-	printf("extern const struct vnodeop_desc %s_desc;\n", name);
+	printf("extern struct vnodeop_desc %s_desc;\n", name);
 	# Prototype it.
 	printf("#ifndef VNODE_OP_NOINLINE\n");
 	printf("static __inline\n");
@@ -277,7 +277,7 @@ echo '
 #include <sys/buf.h>
 #include <sys/vnode.h>
 
-const struct vnodeop_desc vop_default_desc = {
+struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
@@ -316,7 +316,7 @@ function doit() {
 	print "\tVDESC_NO_OFFSET";
 	print "};";
 	# Define F_desc
-	printf("const struct vnodeop_desc %s_desc = {\n", name);
+	printf("struct vnodeop_desc %s_desc = {\n", name);
 	# offset
 	printf ("\t0,\n");
 	# printable name
@@ -400,7 +400,7 @@ echo '
 # Add the vfs_op_descs array to the C file.
 # Begin stuff
 echo '
-const struct vnodeop_desc *vfs_op_descs[] = {
+struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_default_desc,	/* MUST BE FIRST */
 	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
