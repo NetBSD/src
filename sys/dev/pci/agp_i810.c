@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.16 2003/03/24 09:12:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16 2003/03/24 09:12:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,8 +249,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
-
-	aprint_normal("%s", sc->as_dev.dv_xname);
 
 	return 0;
 }
