@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.8 2003/12/26 15:15:49 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.8 2003/12/26 15:15:49 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.9 2003/12/28 13:42:28 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -68,7 +68,10 @@ __RCSID("$NetBSD: gzip.c,v 1.8 2003/12/26 15:15:49 mrg Exp $");
 
 #define BUFLEN 4096
 
-#define ORIG_NAME 0x08
+#define GZIP_MAGIC0	0x1F
+#define GZIP_MAGIC1	0x2B
+
+#define ORIG_NAME 	0x08
 
 /* Define this if you have the NetBSD gzopenfull(3) extension to zlib(3) */
 #define HAVE_ZLIB_GZOPENFULL 0
@@ -93,6 +96,7 @@ static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(int rv, const char *fmt, ...);
+static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
 static	void	usage(void);
@@ -274,6 +278,20 @@ maybe_err(int rv, const char *fmt, ...)
 	if (qflag == 0) {
 		va_start(ap, fmt);
 		vwarn(fmt, ap);
+		va_end(ap);
+	}
+	exit(rv);
+}
+
+/* maybe print a warning */
+void
+maybe_errx(int rv, const char *fmt, ...)
+{
+	va_list ap;
+
+	if (qflag == 0) {
+		va_start(ap, fmt);
+		vwarnx(fmt, ap);
 		va_end(ap);
 	}
 	exit(rv);
@@ -485,6 +503,8 @@ file_uncompress(char *file)
 	gzFile in;
 	off_t size;
 	ssize_t len = strlen(file);
+	int fd;
+	unsigned char header1[10], name[PATH_MAX + 1];
 
 	if (cflag == 0 || lflag) {
 		s = &file[len - suffix_len + 1];
@@ -493,59 +513,59 @@ file_uncompress(char *file)
 			outfile[len - suffix_len + 1] = '\0';
 		} else
 			maybe_err(1, "unknown suffix %s", s);
+	}
 
-		/* gather the old name info */
-		if (Nflag || lflag) {
-			int fd;
-			unsigned char header1[10], name[PATH_MAX + 1];
+	/* gather the old name info */
 
-			fd = open(file, O_RDONLY);
-			if (fd < 0)
-				maybe_err(1, "can't open %s", file);
-			if (read(fd, header1, 10) != 10)
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		maybe_err(1, "can't open %s", file);
+	if (read(fd, header1, 10) != 10)
+		maybe_err(1, "can't read %s", file);
+
+	if (fflag == 0 &&
+	    (header1[0] != GZIP_MAGIC0 || header1[1] != GZIP_MAGIC1))
+		maybe_errx(1, "%s: not in gzip format", file);
+
+	if (Nflag || lflag) {
+		if (header1[3] & ORIG_NAME) {
+			size_t rbytes;
+			int i;
+
+			rbytes = read(fd, name, PATH_MAX + 1);
+			if (rbytes < 0)
 				maybe_err(1, "can't read %s", file);
-
-			if (header1[3] & ORIG_NAME) {
-				size_t rbytes;
-				int i;
-
-				rbytes = read(fd, name, PATH_MAX + 1);
-				if (rbytes < 0)
-					maybe_err(1, "can't read %s", file);
-				for (i = 0; i < rbytes && name[i]; i++)
-					;
-				if (i < rbytes) {
-					name[i] = 0;
-					/* now maybe merge old dirname */
-					if (strchr(outfile, '/') == 0)
-						outfile = name;
-					else {
-						char *dir = dirname(outfile);
-						if (asprintf(&outfile, "%s/%s",
-						    dir, name) == -1)
-							maybe_err(1, "malloc");
-					}
+			for (i = 0; i < rbytes && name[i]; i++)
+				;
+			if (i < rbytes) {
+				name[i] = 0;
+				/* now maybe merge old dirname */
+				if (strchr(outfile, '/') == 0)
+					outfile = name;
+				else {
+					char *dir = dirname(outfile);
+					if (asprintf(&outfile, "%s/%s", dir,
+					    name) == -1)
+						maybe_err(1, "malloc");
 				}
 			}
-			close(fd);
 		}
+	}
+	close(fd);
 
-		if (fflag == 0) {
-			if (lflag == 0 && stat(outfile, &osb) == 0) {
-				maybe_warnx("%s already exists -- skipping",
-					    outfile);
+	if ((cflag == 0 || lflag) && fflag == 0) {
+		if (lflag == 0 && stat(outfile, &osb) == 0) {
+			maybe_warnx("%s already exists -- skipping", outfile);
+			goto lose;
+		}
+		if (stat(file, &isb) == 0) {
+			if (isb.st_nlink > 1 && lflag == 0) {
+				maybe_warnx("%s has %d other links -- skipping",
+				    file, isb.st_nlink - 1);
 				goto lose;
 			}
-			if (stat(file, &isb) == 0) {
-				if (isb.st_nlink > 1 && lflag == 0) {
-					maybe_warnx("%s has %d other link%s -- "
-					    "skipping", file, isb.st_nlink-1,
-					    isb.st_nlink == 1 ? "" : "s");
-					goto lose;
-				}
-			} else
-				goto lose;
-		}
+		} else
+			goto lose;
 	}
 
 	if (lflag) {
