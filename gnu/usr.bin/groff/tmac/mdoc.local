@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.3 2003/07/01 09:59:50 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.4 2003/07/01 10:30:22 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,6 +145,8 @@
 .ds operating-system-NetBSD-1.5.1  1.5.1
 .ds operating-system-NetBSD-1.5.2  1.5.2
 .ds operating-system-NetBSD-1.5.3  1.5.3
+.\" for pfil(9)
+.ds operating-system-NetBSD-1.5K   1.5K
 .ds operating-system-NetBSD-1.6.1  1.6.1
 .ds operating-system-NetBSD-2.0    2.0
 .ds str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
