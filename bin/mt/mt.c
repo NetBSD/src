@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.29 1998/07/30 00:56:11 mjacob Exp $	*/
+/*	$NetBSD: mt.c,v 1.30 1999/03/02 21:02:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.29 1998/07/30 00:56:11 mjacob Exp $");
+__RCSID("$NetBSD: mt.c,v 1.30 1999/03/02 21:02:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-#ifdef sun
+#if defined(sun) && !defined(__SVR4)
 #include <sundev/tmreg.h>
 #include <sundev/arreg.h>
 #endif
@@ -231,7 +231,7 @@ const struct tape_desc {
 	const	char *t_dsbits;	/* "drive status" register */
 	const	char *t_erbits;	/* "error" register */
 } tapes[] = {
-#ifdef sun
+#if defined(sun) && !defined(__SVR4)
 	{ MT_ISCPC,	"TapeMaster",	TMS_BITS,	0 },
 	{ MT_ISAR,	"Archive",	ARCH_CTRL_BITS,	ARCH_BITS },
 #endif
