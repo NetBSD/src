@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.92 2004/12/05 05:42:19 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.93 2004/12/05 13:32:03 he Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.92 2004/12/05 05:42:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.93 2004/12/05 13:32:03 he Exp $");
 
 #include "ppp.h"
 
@@ -1286,7 +1286,7 @@ pppnetisr(void)
 {
 	struct ppp_softc *sc;
 
-	for (sc = LIST_FIRST(&ppp_softc_list); scf != NULL; 
+	for (sc = LIST_FIRST(&ppp_softc_list); sc != NULL; 
 	    sc = LIST_NEXT(sc, sc_iflist))
 		pppintr(sc);
 }
