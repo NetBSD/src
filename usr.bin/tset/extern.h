@@ -1,6 +1,8 @@
+/*	$NetBSD: extern.h,v 1.3 1994/12/07 05:08:06 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	5.2 (Berkeley) 12/24/91
- *	$Id: extern.h,v 1.2 1993/08/01 18:04:21 mycroft Exp $
+ *	@(#)extern.h	8.1 (Berkeley) 6/9/93
  */
 
 /* This should be in <termcap.h> instead. */

@@ -1,6 +1,8 @@
+/*	$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wrterm.c	5.2 (Berkeley) 12/24/91";*/
-static char rcsid[] = "$Id: wrterm.c,v 1.2 1993/08/01 18:04:22 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
+#endif
+static char rcsid[] = "$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
