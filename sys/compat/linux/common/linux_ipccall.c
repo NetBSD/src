@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.1 1995/02/28 23:25:03 fvdl Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.2 1995/03/08 17:27:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -481,7 +481,15 @@ linux_shmctl(p, uap, retval)
 			SCARG(&bsa, cmd) = SHM_UNLOCK;
 			break;
 		}
-		SCARG(&bsa, buf) = (struct shmid_ds *) SCARG(uap, ptr);
+		if ((error = copyin(SCARG(uap, ptr), (caddr_t) &lseg,
+		     sizeof lseg)))
+			return error;
+		linux_to_bsd_shmid_ds(&lseg, &bs);
+		sg = stackgap_init();
+		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
+		if ((error = copyout((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
+			return error;
+		SCARG(&bsa, buf) = bsp;
 		return shmctl(p, &bsa, retval);
 	case LINUX_IPC_INFO:
 	case LINUX_SHM_STAT:
