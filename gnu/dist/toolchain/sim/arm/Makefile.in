@@ -31,10 +31,10 @@ armos.o: armos.c armdefs.h armos.h armfpe.h
 armcopro.o: armcopro.c armdefs.h 
 
 armemu26.o: armemu.c armdefs.h armemu.h 
-	$(CC) -c $< -o armemu26.o $(ALL_CFLAGS)
+	$(CC) -c $(srcdir)/armemu.c -o armemu26.o $(ALL_CFLAGS)
 
 armemu32.o: armemu.c armdefs.h armemu.h
-	$(CC) -c $< -o armemu32.o -DMODE32 $(ALL_CFLAGS)
+	$(CC) -c $(srcdir)/armemu.c -o armemu32.o -DMODE32 $(ALL_CFLAGS)
 
 arminit.o: arminit.c armdefs.h armemu.h
 
