@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.14 2002/06/07 08:22:36 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.15 2002/09/18 20:48:55 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -169,6 +169,10 @@ static struct kfilter *
 kfilter_byname_user(const char *name)
 {
 	int i;
+
+	/* user_kfilters[] could be NULL if no filters were registered */
+	if (!user_kfilters)
+		return (NULL);
 
 	for (i = 0; user_kfilters[i].name != NULL; i++) {
 		if (user_kfilters[i].name != '\0' &&
