@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.189 2001/10/20 06:11:21 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.190 2001/10/21 23:08:59 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,7 +44,7 @@ CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/compile_et
 CONFIG=		${TOOLDIR}/bin/config
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CRUNCHGEN=	${TOOLDIR}/bin/crunchgen
+CRUNCHGEN=	MAKE=${.MAKE} ${TOOLDIR}/bin/crunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 #EQN=		${TOOLDIR}/bin/eqn
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
