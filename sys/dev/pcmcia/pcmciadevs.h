@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.127 2001/05/20 09:16:14 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.128 2001/05/20 09:54:48 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.127 2001/05/18 06:05:52 jhawk Exp 
+ *	NetBSD: pcmciadevs,v 1.128 2001/05/20 09:15:54 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -301,9 +301,9 @@
 #define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
 
 /* National Instruments */
-#define	PCMCIA_CIS_NI_PCMCIA-GPIB	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_NI_PCMCIA-GPIB	0x4882
-#define	PCMCIA_STR_NI_PCMCIA-GPIB	"National Instruments PCMCIA-GPIB"
+#define	PCMCIA_CIS_NI_PCMCIA_GPIB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NI_PCMCIA_GPIB	0x4882
+#define	PCMCIA_STR_NI_PCMCIA_GPIB	"National Instruments PCMCIA-GPIB"
 
 /* Nokia Products */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }

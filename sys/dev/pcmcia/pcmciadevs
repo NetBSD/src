@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.128 2001/05/20 09:15:54 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.129 2001/05/20 09:54:47 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -190,7 +190,7 @@ product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
 
 /* National Instruments */
-product NI PCMCIA-GPIB	 	0x4882 National Instruments PCMCIA-GPIB
+product NI PCMCIA_GPIB	 	0x4882 National Instruments PCMCIA-GPIB
 
 /* Nokia Products */
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card

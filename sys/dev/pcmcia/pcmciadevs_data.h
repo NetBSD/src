@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.127 2001/05/20 09:16:15 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.128 2001/05/20 09:54:48 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.127 2001/05/18 06:05:52 jhawk Exp 
+ *	NetBSD: pcmciadevs,v 1.128 2001/05/20 09:15:54 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -410,8 +410,8 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Melco LPC3-TX"	},
 	},
 	{
-	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA-GPIB,
-	    PCMCIA_CIS_NI_PCMCIA-GPIB,
+	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
+	    PCMCIA_CIS_NI_PCMCIA_GPIB,
 	    0,
 	    "National Instruments",
 	    "National Instruments PCMCIA-GPIB"	},
