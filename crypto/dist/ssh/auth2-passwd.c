@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-passwd.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$NetBSD: auth2-passwd.c,v 1.2 2002/12/06 03:39:07 thorpej Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -45,7 +45,7 @@ userauth_passwd(Authctxt *authctxt)
 	u_int len;
 	change = packet_get_char();
 	if (change)
-		log("password change not supported");
+		logit("password change not supported");
 	password = packet_get_string(&len);
 	packet_check_eom();
 	if (authctxt->valid &&

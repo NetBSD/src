@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.18 2002/10/01 14:07:38 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.19 2002/12/06 03:39:10 thorpej Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -504,7 +504,7 @@ do_lstat(struct sftp_conn *conn, char *path, int quiet)
 		if (quiet)
 			debug("Server version does not support lstat operation");
 		else
-			log("Server version does not support lstat operation");
+			logit("Server version does not support lstat operation");
 		return(do_stat(conn, path, quiet));
 	}
 

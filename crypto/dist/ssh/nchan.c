@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.1.1.12 2002/06/24 05:25:51 itojun Exp $	*/
+/*	$NetBSD: nchan.c,v 1.2 2002/12/06 03:39:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -452,7 +452,7 @@ chan_shutdown_write(Channel *c)
 			    c->self, c->sock, strerror(errno));
 	} else {
 		if (channel_close_fd(&c->wfd) < 0)
-			log("channel %d: chan_shutdown_write: "
+			logit("channel %d: chan_shutdown_write: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->wfd, strerror(errno));
 	}
@@ -471,7 +471,7 @@ chan_shutdown_read(Channel *c)
 			    strerror(errno));
 	} else {
 		if (channel_close_fd(&c->rfd) < 0)
-			log("channel %d: chan_shutdown_read: "
+			logit("channel %d: chan_shutdown_read: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->rfd, strerror(errno));
 	}
