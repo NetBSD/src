@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.3 2001/04/10 08:08:01 itojun Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.4 2001/05/15 14:50:52 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -52,7 +52,15 @@ static struct {
 	int fd_out;
 } cur;
 
-static void *fudge_opendir(const char *path)
+/* prototypes */
+void *fudge_opendir(const char *);
+struct dirent *fudge_readdir(struct SFTP_OPENDIR *);
+void fudge_closedir(struct SFTP_OPENDIR *);
+void attrib_to_stat(Attrib *, struct stat *);
+int fudge_lstat(const char *, struct stat *);
+int fudge_stat(const char *, struct stat *);
+
+void *fudge_opendir(const char *path)
 {
 	struct SFTP_OPENDIR *r;
 	
@@ -66,7 +74,7 @@ static void *fudge_opendir(const char *path)
 	return((void*)r);
 }
 
-static struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
+struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
 {
 	static struct dirent ret;
 	
@@ -80,13 +88,13 @@ static struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
 	return(&ret);
 }
 
-static void fudge_closedir(struct SFTP_OPENDIR *od)
+void fudge_closedir(struct SFTP_OPENDIR *od)
 {
 	free_sftp_dirents(od->dir);
 	xfree(od);
 }
 
-static void attrib_to_stat(Attrib *a, struct stat *st)
+void attrib_to_stat(Attrib *a, struct stat *st)
 {
 	memset(st, 0, sizeof(*st));
 	
@@ -104,7 +112,7 @@ static void attrib_to_stat(Attrib *a, struct stat *st)
 	}
 }
 
-static int fudge_lstat(const char *path, struct stat *st)
+int fudge_lstat(const char *path, struct stat *st)
 {
 	Attrib *a;
 	
@@ -116,7 +124,7 @@ static int fudge_lstat(const char *path, struct stat *st)
 	return(0);
 }
 
-static int fudge_stat(const char *path, struct stat *st)
+int fudge_stat(const char *path, struct stat *st)
 {
 	Attrib *a;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.6 2001/04/10 08:07:54 itojun Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.7 2001/05/15 14:50:49 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -26,13 +26,16 @@ RCSID("$OpenBSD: auth-rhosts.c,v 1.22 2001/04/06 21:00:06 markus Exp $");
 #include "canohost.h"
 #include "auth.h"
 
+int check_rhosts_file(const char *, const char *, const char *, const char *,
+    const char *);
+
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
  * /etc/hosts.equiv).  This returns true if authentication can be granted
  * based on the file, and returns zero otherwise.
  */
 
-static int
+int
 check_rhosts_file(const char *filename, const char *hostname,
 		  const char *ipaddr, const char *client_user,
 		  const char *server_user)

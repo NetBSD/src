@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.8 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.9 2001/05/15 14:50:52 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -52,7 +52,17 @@ RCSID("$OpenBSD: sftp-client.c,v 1.16 2001/04/05 10:42:52 markus Exp $");
 /* Message ID */
 static u_int msg_id = 1;
 
-static void
+/* prototypes */
+void send_msg(int, Buffer *);
+void get_msg(int, Buffer *);
+void send_string_request(int, u_int, u_int, char *, u_int);
+void send_string_attrs_request(int, u_int, u_int, char *, u_int, Attrib *);
+u_int get_status(int, int);
+char *get_handle(int, u_int, u_int *);
+Attrib *get_decode_stat(int, u_int, int);
+int do_lsreaddir(int, int, char *, int, SFTP_DIRENT ***);
+
+void
 send_msg(int fd, Buffer *m)
 {
 	int mlen = buffer_len(m);
@@ -71,7 +81,7 @@ send_msg(int fd, Buffer *m)
 	buffer_free(&oqueue);
 }
 
-static void
+void
 get_msg(int fd, Buffer *m)
 {
 	u_int len, msg_len;
@@ -99,7 +109,7 @@ get_msg(int fd, Buffer *m)
 	}
 }
 
-static void
+void
 send_string_request(int fd, u_int id, u_int code, char *s,
     u_int len)
 {
@@ -114,7 +124,7 @@ send_string_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-static void
+void
 send_string_attrs_request(int fd, u_int id, u_int code, char *s,
     u_int len, Attrib *a)
 {
@@ -130,7 +140,7 @@ send_string_attrs_request(int fd, u_int id, u_int code, char *s,
 	buffer_free(&msg);
 }
 
-static u_int
+u_int
 get_status(int fd, int expected_id)
 {
 	Buffer msg;
@@ -155,7 +165,7 @@ get_status(int fd, int expected_id)
 	return(status);
 }
 
-static char *
+char *
 get_handle(int fd, u_int expected_id, u_int *len)
 {
 	Buffer msg;
@@ -184,7 +194,7 @@ get_handle(int fd, u_int expected_id, u_int *len)
 	return(handle);
 }
 
-static Attrib *
+Attrib *
 get_decode_stat(int fd, u_int expected_id, int quiet)
 {
 	Buffer msg;
@@ -284,7 +294,7 @@ do_close(int fd_in, int fd_out, char *handle, u_int handle_len)
 }
 
 
-static int
+int
 do_lsreaddir(int fd_in, int fd_out, char *path, int printflag,
     SFTP_DIRENT ***dir)
 {
