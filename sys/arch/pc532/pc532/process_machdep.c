@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 1994/10/26 08:25:16 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5 1995/04/27 07:16:44 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -153,7 +153,7 @@ process_set_pc(p, addr)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	p->p_md.md_regs[REG_PC] = addr;
+	p->p_md.md_regs[REG_PC] = (int)addr;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1995/04/21 20:20:15 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1995/04/27 07:16:37 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -303,6 +303,10 @@ int _get_ptb0();
 extern int bootdev;
 extern cyloffset;
 
+/* pmap_enter prototype */
+void pmap_enter __P((register pmap_t, vm_offset_t, register vm_offset_t,
+	vm_prot_t, boolean_t));
+
 void
 cpu_startup(void)
 {
@@ -323,8 +327,8 @@ cpu_startup(void)
 
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
+		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
+			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 #ifdef KDB
@@ -677,35 +681,7 @@ boot(arghowto)
 		int iter, nbusy;
 
 		waittime = 0;
-		(void) splnet();
-		printf("syncing disks... ");
-		/*
-		 * Release inodes held by texts before update.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-		sync(&proc0, (void *)0, (int *)0);
-
-		/*
-		 * Unmount filesystems
-		 */
-		if (panicstr == 0)
-			vfs_unmountall();
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			DELAY(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
-
+		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now. (non panic!)
@@ -812,7 +788,7 @@ cpu_exec_aout_makecmds()
 void
 setregs(p, entry, stack, retval)
 	struct proc *p;
-	u_long entry;
+	struct exec_package *entry;
 	u_long stack;
 	register_t *retval;
 {
@@ -825,7 +801,7 @@ setregs(p, entry, stack, retval)
 	/* Start fp at stack also! */
 	r->pcb_usp = stack;
 	r->pcb_fp = stack;
-	r->pcb_pc = entry;
+	r->pcb_pc = entry->ep_entry;
 	r->pcb_psr = PSL_USERSET;
 	for (i=0; i<8; i++) r->pcb_reg[i] = 0;
 
