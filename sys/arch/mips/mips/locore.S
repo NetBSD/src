@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.96 2000/04/30 23:01:24 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.97 2000/05/10 01:34:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -311,7 +311,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	addu	t0, t0, 1
 	sw	t0, uvmexp+UVMEXP_SWTCH
 	bne	t1, zero, 1f
-	lw	t2, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
 	nop					# for r2000/r3000
 	jal	ra, t2
 	nop
@@ -330,7 +330,7 @@ cpu_switch_queuescan:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	bne	t0, zero, 1f
-	lw	t3, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
 	nop					# for r2000/r3000
 	jal	ra, t3
 	nop
@@ -365,7 +365,7 @@ cpu_switch_queuescan:
 /*
  * Switch to new context.
  */
-	lw      t2, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
+	lw      t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
 	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
 	move	s7, a0				# -BDSLOT-

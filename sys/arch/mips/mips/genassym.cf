@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2000/04/30 22:56:12 simonb Exp $
+#	$NetBSD: genassym.cf,v 1.17 2000/05/10 01:34:14 nisimura Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -81,8 +81,8 @@ define	SIGILL		 	SIGILL
 define	SIGSEGV			SIGSEGV
 
 define	MIPSX_FLUSHICACHE	offsetof(mips_locore_jumpvec_t, flushICache)
-define	MIPSX_CPU_SWITCH_RESUME	offsetof(mips_locore_jumpvec_t, cpu_switch_resume)
-define	MIPSX_CPU_IDLE		offsetof(mips_locore_jumpvec_t, cpu_idle)
+define	MIPSX_CPU_SWITCH_RESUME	sizeof(long *) * 0
+define	MIPSX_CPU_IDLE		sizeof(long *) * 2
 
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V

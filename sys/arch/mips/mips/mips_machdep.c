@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.76 2000/04/12 01:05:35 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.77 2000/05/10 01:34:15 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.76 2000/04/12 01:05:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.77 2000/05/10 01:34:15 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -101,6 +101,10 @@ static void	mips3_vector_init __P((void));
 
 mips_locore_jumpvec_t mips_locore_jumpvec;
 
+long *mips_locoresw[3];
+extern long *mips1_locoresw[];	/* locore_mips1.S */
+extern long *mips3_locoresw[];	/* locore_mips3.S */
+
 int cpu_mhz;
 int mips_num_tlb_entries;
 
@@ -136,11 +140,9 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_SetPID,
 	mips1_TBIAP,
 	mips1_TBIS,
+	mips1_TBRPL,
 	mips1_TLBUpdate,
 	mips1_wbflush,
-	mips1_proc_trampoline,
-	mips1_cpu_switch_resume,
-	mips_idle
 };
 
 static void
@@ -194,11 +196,9 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_SetPID,
 	mips3_TBIAP,
 	mips3_TBIS,
+	mips3_TBRPL,
 	mips3_TLBUpdate,
 	mips3_wbflush,
-	mips3_proc_trampoline,
-	mips3_cpu_switch_resume,
-	mips_idle
 };
 
 /*----------------------------------------------------------------------------
@@ -441,6 +441,7 @@ mips_vector_init()
 	case 1:
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
+		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
 		break;
 #endif
 #if (MIPS3 + MIPS4) > 0
@@ -450,6 +451,7 @@ mips_vector_init()
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
 		mips3_vector_init();
+		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
 		break;
 #endif
 	default:

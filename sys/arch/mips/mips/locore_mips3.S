@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.26 2000/05/09 09:50:17 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.27 2000/05/10 01:34:15 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2606,6 +2606,12 @@ _C_LABEL(mips3_cacheflush_bug):
 	.word	0
 
 	.data
+	.globl _C_LABEL(mips3_locoresw)
+_C_LABEL(mips3_locoresw):
+	.word _C_LABEL(mips3_cpu_switch_resume)
+	.word _C_LABEL(mips3_proc_trampoline)
+	.word _C_LABEL(mips_idle)
+
 _C_LABEL(mips3_excpt_sw):
 	####
 	#### The kernel exception handlers.
