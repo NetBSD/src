@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.111 2003/03/31 14:47:03 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.112 2003/04/01 11:59:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.111 2003/03/31 14:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.112 2003/04/01 11:59:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2478,6 +2478,8 @@ nfs_merge_commit_ranges(vp)
 	struct vnode *vp;
 {
 	struct nfsnode *np = VTONFS(vp);
+
+	KASSERT(np->n_commitflags & NFS_COMMIT_PUSH_VALID);
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
 		np->n_pushedlo = np->n_pushlo;
