@@ -1,7 +1,7 @@
-/*	$NetBSD: tulipreg.h,v 1.19 2000/05/25 22:18:07 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.20 2000/05/25 22:50:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,9 +115,27 @@
  *		- SIA is not 21143-like, and all media attachments
  *		  are MII-on-SIO.
  *
+ *	- Davicom DM9102 and DM9102A
+ *
+ *	  Pretty similar to the 21140A, with a few differences:
+ *
+ *		- Wake-On-LAN support
+ *		- DM9102 has built-in 10/100 PHY on MII interface.
+ *		- DM9102A has built-in 10/100 PHY on MII interface,
+ *		  as well as a HomePNA 1 PHY on an alternate MII
+ *		  interface (selected by clearing OPMODE_PS).
+ *		- The chip has a bug in the transmit DMA logic,
+ *		  requiring that the packet be comprised of only
+ *		  one DMA segment.
+ *		- The bus interface is buggy, and the BUSMODE register
+ *		  must be initialized to 0.
+ *		- There seems to be an interrupt logic bug, requiring
+ *		  that interrupts be disabled on the chip during the
+ *		  interrupt handler.
+ *
  * Some of the clone chips have different registers, and some have
  * different bits in the same registers.  These will be denoted by
- * PMAC, PNICII, PNIC, WINB, and ADM in the register/bit names.
+ * PMAC, PNICII, PNIC, DM, WINB, and ADM in the register/bit names.
  */
 
 /*
@@ -410,6 +428,7 @@ struct tulip_desc {
 		 * Transmit auto-polling not supported on:
 		 *	Winbond 89C040F
 		 *	Xircom X3201-3
+		 *	Davicom DM9102 (buggy BUSMODE register)
 		 */
 #define	BUSMODE_TAP_NONE	0x00000000	/*     no auto-polling */
 #define	BUSMODE_TAP_200us	0x00020000	/*   200 uS */
@@ -485,6 +504,20 @@ struct tulip_desc {
 #define	STATUS_RS_QUEUE		0x000e0000	/* Running - queue current
 						   frame from FIFO into
 						   buffer */
+#define	STATUS_DM_RS_STOPPED	0x00000000	/* Stopped */
+#define	STATUS_DM_RS_FETCH	0x00020000	/* Running - fetch receive
+						   descriptor */
+#define	STATUS_DM_RS_WAIT	0x00040000	/* Running - wait for packet */
+#define	STATUS_DM_RS_QUEUE	0x00060000	/* Running - queue current
+						   frame from FIFO into
+						   buffer */
+#define	STATUS_DM_RS_CLOSE_OWN	0x00080000	/* Running - close receive
+						   descriptor, clear own */
+#define	STATUS_DM_RS_CLOSE_ST	0x000a0000	/* Running - close receive
+						   descriptor, write status */
+#define	STATUS_DM_RS_SUSPENDED	0x000c0000	/* Suspended */
+#define	STATUS_DM_RS_FLUSH	0x000e0000	/* Running - flush current
+						   frame from FIFO */
 #define	STATUS_TS		0x00700000	/* transmit process state */
 #define	STATUS_TS_STOPPED	0x00000000	/* Stopped */
 #define	STATUS_TS_FETCH		0x00100000	/* Running - fetch transmit
@@ -499,6 +532,20 @@ struct tulip_desc {
 #define	STATUS_TS_SUSPENDED	0x00600000	/* Suspended */
 #define	STATUS_TS_CLOSE		0x00700000	/* Running - close transmit
 						   descriptor */
+#define	STATUS_DM_TS_STOPPED	0x00000000	/* Stopped */
+#define	STATUS_DM_TS_FETCH	0x00100000	/* Running - fetch transmit
+						   descriptor */
+#define	STATUS_DM_TS_SETUP	0x00200000	/* Running - Setup packet */
+#define	STATUS_DM_TS_READING	0x00300000	/* Running - read buffer from
+						   memory and queue into
+						   FIFO */
+#define	STATUS_DM_TS_CLOSE_OWN	0x00400000	/* Running - close transmit
+						   descriptor, clear own */
+#define	STATUS_DM_TS_WAIT	0x00500000	/* Running - wait for end
+						   of transmission */
+#define	STATUS_DM_TS_CLOSE_ST	0x00600000	/* Running - close transmit
+						   descriptor, write status */
+#define	STATUS_DM_TS_SUSPENDED	0x00700000	/* Suspended */
 #define	STATUS_EB		0x03800000	/* error bits */
 #define	STATUS_EB_PARITY	0x00000000	/* parity errror */
 #define	STATUS_EB_MABT		0x00800000	/* master abort */
@@ -1429,5 +1476,30 @@ struct tulip_desc {
 #define	X3201_PMR_WOLPS		0x08000000	/* WOL process status */
 #define	X3201_PMR_GP0ES		0x10000000	/* GP0 event status */
 #define	X3201_PMR_LCES		0x20000000	/* LC event status */
+
+/*
+ * Davicom DM9102 registers.
+ */
+
+/* PHY Status Register */
+#define	CSR_DM_PHYSTAT		TULIP_CSR12
+#define	DM_PHYSTAT_10		0x00000001	/* 10Mb/s */
+#define	DM_PHYSTAT_100		0x00000002	/* 100Mb/s */
+#define	DM_PHYSTAT_FDX		0x00000004	/* full-duplex */
+#define	DM_PHYSTAT_LINK		0x00000008	/* link up */
+#define	DM_PHYSTAT_RXLOCK	0x00000010	/* RX-lock */
+#define	DM_PHYSTAT_SIGNAL	0x00000020	/* signal detection */
+#define	DM_PHYSTAT_UTPSIG	0x00000040	/* UTP SIG */
+#define	DM_PHYSTAT_GPED		0x00000080	/* general PHY reset control */
+#define	DM_PHYSTAT_GEPC		0x00000100	/* GPED bits control */
+
+
+/* Sample Frame Access Register */
+#define	CSR_DM_SFAR		TULIP_CSR13
+
+
+/* Sample Frame Data Register */
+#define	CSR_DM_SFDR		TULIP_CSR14
+	/* See 21143 SIAGEN register */
 
 #endif /* _DEV_IC_TULIPREG_H_ */
