@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.56 2002/03/25 17:51:40 he Exp $
+.\"	$NetBSD: main,v 1.61.2.57 2002/03/25 18:00:18 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -448,7 +448,7 @@ driver has been extended to support some more pcmcia cards.
 .It
 Support for more
 .Xr pciide 4
-controllers added: HPT-370A, Acard ATP-850/860.
+controllers added: HPT-370A, Acard ATP-850/860, and AMD-768.
 Ultra-DMA 100 support added for CMD 0649.
 .It
 A problem with the NFS server code, exposed on NetBSD/alpha,
