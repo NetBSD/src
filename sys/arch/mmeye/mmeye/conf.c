@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1999/09/13 16:26:19 msaitoh Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1999/09/14 11:20:53 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -96,8 +96,6 @@ cdev_decl(ptc);
 cdev_decl(log);
 #include "com.h"
 cdev_decl(com);
-#include "sci.h"
-cdev_decl(sci);
 cdev_decl(fd);
 cdev_decl(sd);
 cdev_decl(st);
@@ -146,7 +144,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 	cdev_notdef(),			/* 9 (was floppy disk) */
 	cdev_notdef(),			/* 10 (was QIC-02/QIC-36 tape) */
-	cdev_tty_init(NSCI,sci),	/* 11: */
+	cdev_notdef(),			/* 11: */
 	cdev_notdef(),			/* 12: (was PC console) */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mmeye,v 1.1 1999/09/13 10:30:50 itojun Exp $
+#	$NetBSD: Makefile.mmeye,v 1.2 1999/09/14 11:20:52 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,6 @@ MMEYE=	$S/arch/mmeye
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|2\.9|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmmeye -Dsh3
-CPPFLAGS+=	-D__NetBSD__
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
 .if (${HAVE_GCC28} != "")
@@ -62,8 +61,6 @@ LINKFLAGS=	-e start -T ../../../mmeye/conf/sh.x
 LINKFLAGS=	-N -Ttext 8c010000 -e start
 .endif
 STRIPFLAGS=	--strip-debug
-MACHINE=mmeye
-MACHINE_ARCH=sh3
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
