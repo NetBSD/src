@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 2003/08/30 04:07:56 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.64 2003/10/15 05:16:36 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63 2003/08/30 04:07:56 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2003/10/15 05:16:36 petrov Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -727,7 +727,7 @@ cpu_initclocks()
 	stxa((vaddr_t)&timerreg_4u.t_timer[0].t_limit, ASI_NUCLEUS,
 	     tmr_ustolim(tick)|TMR_LIM_IEN|TMR_LIM_PERIODIC|TMR_LIM_RELOAD); 
 	stxa((vaddr_t)&timerreg_4u.t_mapintr[0], ASI_NUCLEUS, 
-	     timerreg_4u.t_mapintr[0]|INTMAP_V); 
+	     timerreg_4u.t_mapintr[0]|INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT)); 
 
 #ifdef DEBUG
 	if (intrdebug)
@@ -739,7 +739,7 @@ cpu_initclocks()
 		stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
 		     tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
 	stxa((vaddr_t)&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, 
-	     timerreg_4u.t_mapintr[1]|INTMAP_V); 
+	     timerreg_4u.t_mapintr[1]|INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT));
 
 	statmin = statint - (statvar >> 1);
 	
