@@ -1,8 +1,8 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 1999/10/25 13:55:08 kleink Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4 1999/10/30 22:56:29 frueauf Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
-		case EM_68k:						\
+		case EM_68K:						\
 			break;
 
 #define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
