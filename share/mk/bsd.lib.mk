@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.48 1994/03/24 16:11:38 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.49 1994/06/30 05:21:30 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -82,7 +82,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 PICFLAG=-fpic
 .endif
 
-all: ${_LIBS} # llib-l${LIB}.ln
+all: ${_LIBS} _SUBDIRUSE # llib-l${LIB}.ln
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
@@ -116,7 +116,7 @@ llib-l${LIB}.ln: ${SRCS}
 	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
 
 .if !target(clean)
-clean:
+clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f ${OBJS}
 	rm -f ${POBJS} profiled/*.o
@@ -125,7 +125,7 @@ clean:
 	rm -f lib${LIB}.so.*.*
 .endif
 
-cleandir: clean
+cleandir: _SUBDIRUSE clean
 
 .if defined(SRCS)
 afterdepend:
@@ -175,7 +175,7 @@ realinstall:
 	done; true
 .endif
 
-install: maninstall
+install: maninstall _SUBDIRUSE
 maninstall: afterinstall
 afterinstall: realinstall
 realinstall: beforeinstall
@@ -187,3 +187,4 @@ realinstall: beforeinstall
 
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
+.include <bsd.subdir.mk>
