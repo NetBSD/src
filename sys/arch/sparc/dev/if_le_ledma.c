@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.3 1998/08/15 10:51:16 mycroft Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.4 1998/08/28 20:07:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,8 +129,8 @@ struct	le_softc {
 	u_long	sc_laddr;		/* LANCE DMA address */
 };
 
-#define MEMSIZE 0x4000		/* LANCE memory size */
-
+#define MEMSIZE		(16*1024)	/* LANCE memory size */
+#define LEDMA_BOUNDARY	(16*1024*1024)	/* must not cross 16MB boundary */
 
 int	lematch_ledma __P((struct device *, struct cfdata *, void *));
 void	leattach_ledma __P((struct device *, struct device *, void *));
@@ -406,7 +406,7 @@ leattach_ledma(parent, self, aux)
 
 	/* Allocate buffer memory */
 	sc->sc_memsize = MEMSIZE;
-	error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
+	error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, LEDMA_BOUNDARY,
 				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("leattach_ledma: DMA buffer alloc error %d\n", error);
@@ -421,11 +421,6 @@ leattach_ledma(parent, self, aux)
 		return;
 	}
 
-#if defined (SUN4M)
-	if ((seg.ds_addr & 0xffffff) >=
-	    (seg.ds_addr & 0xffffff) + MEMSIZE)
-		panic("leattach_ledma: Lance buffer crosses 16MB boundary");
-#endif
 	sc->sc_addr = seg.ds_addr & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
