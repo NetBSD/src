@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.26.4.1 2000/10/18 00:39:44 tv Exp $	*/
+/*	$NetBSD: utilities.c,v 1.26.4.2 2001/11/24 22:09:14 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.26.4.1 2000/10/18 00:39:44 tv Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.26.4.2 2001/11/24 22:09:14 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: utilities.c,v 1.26.4.1 2000/10/18 00:39:44 tv Exp $");
 long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror __P((char *, ufs_daddr_t));
+
+extern int returntosingle;
 
 int
 ftypeok(dp)
@@ -240,18 +242,19 @@ flush(fd, bp)
 		 * u_int32_t's
 		 */
 		if (needswap) {
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
 			int k;
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 		}
 		bwrite(fswritefd, (char *)sblock->fs_csp[j],
 		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
-		    sblock->fs_cssize - i < sblock->fs_bsize ?
-		    sblock->fs_cssize - i : sblock->fs_bsize);
+		    size);
 		if (needswap) {
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
 			int k;
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 		}
@@ -543,8 +546,6 @@ void
 catchquit(sig)
 	int sig;
 {
-	extern int returntosingle;
-
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
@@ -689,7 +690,7 @@ swap_cg(o, n)
 			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_clustersumoff);
 			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_clustersumoff);
 		}
-		for (i = 0; i < sblock->fs_contigsumsize + 1; i++)
+		for (i = 1; i < sblock->fs_contigsumsize + 1; i++)
 			n32[i] = bswap32(o32[i]);
 	}
 }
