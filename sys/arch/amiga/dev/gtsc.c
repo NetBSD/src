@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gtsc.c,v 1.4 1994/05/25 21:55:04 chopps Exp $
+ *	$Id: gtsc.c,v 1.5 1994/06/16 14:28:48 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ gtscattach(pdp, dp, auxp)
 		sc->sc_dmamask = ~0x01ffffff;
 	else
 		sc->sc_dmamask = ~0x07ffffff;
-	printf(" dmamask 0x%x", ~sc->sc_dmamask);
+	printf(": dmamask 0x%x", ~sc->sc_dmamask);
 	
 	if ((gap->flags & GVP_NOBANK) == 0)
 		sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.4 1994/06/15 19:05:55 chopps Exp $
+ *	$Id: clock.c,v 1.5 1994/06/16 14:28:45 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ clockattach(pdp, dp, auxp)
 		
 	CLK_INTERVAL = (eclockfreq / 100);
 
-	printf(": system hz %d hardware hz %d \n", hz, eclockfreq);
+	printf(": system hz %d hardware hz %d\n", hz, eclockfreq);
 
 	/*
 	 * stop timer A 

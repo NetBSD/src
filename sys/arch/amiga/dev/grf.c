@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.13 1994/06/05 07:45:10 chopps Exp $
+ *	$Id: grf.c,v 1.14 1994/06/16 14:28:47 chopps Exp $
  */
 
 /*
@@ -152,7 +152,7 @@ grfattach(pdp, dp, auxp)
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
 	if (dp != NULL) {
-		printf(" width %d height %d", gp->g_display.gd_dwidth,
+		printf(": width %d height %d", gp->g_display.gd_dwidth,
 		    gp->g_display.gd_dheight);
 		if (gp->g_display.gd_colors == 2)
 			printf(" monochrome\n");
