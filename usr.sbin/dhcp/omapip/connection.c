@@ -44,79 +44,128 @@
 #include <omapip/omapip_p.h>
 #include <arpa/inet.h>
 
+OMAPI_OBJECT_ALLOC (omapi_connection,
+		    omapi_connection_object_t, omapi_type_connection)
+
 isc_result_t omapi_connect (omapi_object_t *c,
 			    const char *server_name,
 			    unsigned port)
 {
 	struct hostent *he;
-	int hix;
+	unsigned i, hix;
+	omapi_addr_list_t *addrs = (omapi_addr_list_t *)0;
+	struct in_addr foo;
+	isc_result_t status;
+
+	if (!inet_aton (server_name, &foo)) {
+		/* If we didn't get a numeric address, try for a domain
+		   name.  It's okay for this call to block. */
+		he = gethostbyname (server_name);
+		if (!he)
+			return ISC_R_HOSTUNKNOWN;
+		for (i = 0; he -> h_addr_list [i]; i++)
+			;
+		if (i == 0)
+			return ISC_R_HOSTUNKNOWN;
+		hix = i;
+
+		status = omapi_addr_list_new (&addrs, hix, MDL);
+		if (status != ISC_R_SUCCESS)
+			return status;
+		for (i = 0; i < hix; i++) {
+			addrs -> addresses [i].addrtype = he -> h_addrtype;
+			addrs -> addresses [i].addrlen = he -> h_length;
+			memcpy (addrs -> addresses [i].address,
+				he -> h_addr_list [i],
+				(unsigned)he -> h_length);
+			addrs -> addresses [i].port = port;
+		}
+	} else {
+		status = omapi_addr_list_new (&addrs, 1, MDL);
+		if (status != ISC_R_SUCCESS)
+			return status;
+		addrs -> addresses [0].addrtype = AF_INET;
+		addrs -> addresses [0].addrlen = sizeof foo;
+		memcpy (addrs -> addresses [0].address, &foo, sizeof foo);
+		addrs -> addresses [0].port = port;
+		hix = 1;
+	}
+	status = omapi_connect_list (c, addrs, (omapi_addr_t *)0);
+	omapi_addr_list_dereference (&addrs, MDL);
+	return status;
+}
+
+isc_result_t omapi_connect_list (omapi_object_t *c,
+				 omapi_addr_list_t *remote_addrs,
+				 omapi_addr_t *local_addr)
+{
 	isc_result_t status;
 	omapi_connection_object_t *obj;
 	int flag;
-	SOCKLEN_T sl;
+	struct sockaddr_in local_sin;
 
-	obj = (omapi_connection_object_t *)dmalloc (sizeof *obj, MDL);
-	if (!obj)
-		return ISC_R_NOMEMORY;
-	memset (obj, 0, sizeof *obj);
-	obj -> refcnt = 1;
-	rc_register_mdl (&obj, obj, obj -> refcnt);
-	obj -> type = omapi_type_connection;
+	obj = (omapi_connection_object_t *)0;
+	status = omapi_connection_allocate (&obj, MDL);
+	if (status != ISC_R_SUCCESS)
+		return status;
 
 	status = omapi_object_reference (&c -> outer, (omapi_object_t *)obj,
 					 MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		return status;
 	}
 	status = omapi_object_reference (&obj -> inner, c, MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		return status;
 	}
-
-	/* Set up all the constants in the address... */
-	obj -> remote_addr.sin_port = htons (port);
-
-	/* First try for a numeric address, since that's easier to check. */
-	if (!inet_aton (server_name, &obj -> remote_addr.sin_addr)) {
-		/* If we didn't get a numeric address, try for a domain
-		   name.  It's okay for this call to block. */
-		he = gethostbyname (server_name);
-		if (!he) {
-			omapi_object_dereference ((omapi_object_t **)&obj,
-						  MDL);
-			return ISC_R_HOSTUNKNOWN;
-		}
-		hix = 1;
-		memcpy (&obj -> remote_addr.sin_addr,
-			he -> h_addr_list [0],
-			sizeof obj -> remote_addr.sin_addr);
-	} else
-		he = (struct hostent *)0;
-
-#if defined (HAVE_SA_LEN)
-	obj -> remote_addr.sin_len =
-		sizeof (struct sockaddr_in);
-#endif
-	obj -> remote_addr.sin_family = AF_INET;
-	memset (&(obj -> remote_addr.sin_zero), 0,
-		sizeof obj -> remote_addr.sin_zero);
 
 	/* Create a socket on which to communicate. */
 	obj -> socket =
 		socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (obj -> socket < 0) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		if (errno == EMFILE || errno == ENFILE || errno == ENOBUFS)
 			return ISC_R_NORESOURCES;
 		return ISC_R_UNEXPECTED;
 	}
 
+	/* Set up the local address, if any. */
+	if (local_addr) {
+		/* Only do TCPv4 so far. */
+		if (local_addr -> addrtype != AF_INET) {
+			omapi_connection_dereference (&obj, MDL);
+			return ISC_R_INVALIDARG;
+		}
+		local_sin.sin_port = htons (local_addr -> port);
+		memcpy (&local_sin.sin_addr,
+			local_addr -> address,
+			local_addr -> addrlen);
+#if defined (HAVE_SA_LEN)
+		local_sin.sin_len = sizeof local_addr;
+#endif
+		local_sin.sin_family = AF_INET;
+		memset (&local_sin.sin_zero, 0, sizeof local_sin.sin_zero);
+
+		if (bind (obj -> socket, (struct sockaddr *)&local_sin,
+			  sizeof local_sin) < 0) {
+			omapi_object_dereference ((omapi_object_t **)&obj,
+						  MDL);
+			if (errno == EADDRINUSE)
+				return ISC_R_ADDRINUSE;
+			if (errno == EADDRNOTAVAIL)
+				return ISC_R_ADDRNOTAVAIL;
+			if (errno == EACCES)
+				return ISC_R_NOPERM;
+			return ISC_R_UNEXPECTED;
+		}
+	}
+
 #if defined (HAVE_SETFD)
 	if (fcntl (obj -> socket, F_SETFD, 1) < 0) {
 		close (obj -> socket);
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		return ISC_R_UNEXPECTED;
 	}
 #endif
@@ -125,57 +174,30 @@ isc_result_t omapi_connect (omapi_object_t *c,
 	flag = 1;
 	if (setsockopt (obj -> socket, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof flag) < 0) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		return ISC_R_UNEXPECTED;
 	}
 	
-	/* Try to connect to the one IP address we were given, or any of
-	   the IP addresses listed in the host's A RR. */
-	while (connect (obj -> socket,
-			((struct sockaddr *)
-			 &obj -> remote_addr),
-			sizeof obj -> remote_addr)) {
-		if (!he || !he -> h_addr_list [hix]) {
-			omapi_object_dereference ((omapi_object_t **)&obj,
-						  MDL);
-			if (errno == ECONNREFUSED)
-				return ISC_R_CONNREFUSED;
-			if (errno == ENETUNREACH)
-				return ISC_R_NETUNREACH;
-			return ISC_R_UNEXPECTED;
-		}
-		memcpy (&obj -> remote_addr.sin_addr,
-			he -> h_addr_list [hix++],
-			sizeof obj -> remote_addr.sin_addr);
-	}
-
-	obj -> state = omapi_connection_connected;
-
-	/* I don't know why this would fail, so I'm tempted not to test
-	   the return value. */
-	sl = sizeof (obj -> local_addr);
-	if (getsockname (obj -> socket,
-			 ((struct sockaddr *)
-			  &obj -> local_addr), &sl) < 0) {
-	}
-
+	/* Set the file to nonblocking mode. */
 	if (fcntl (obj -> socket, F_SETFL, O_NONBLOCK) < 0) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
+		omapi_connection_dereference (&obj, MDL);
 		return ISC_R_UNEXPECTED;
 	}
 
-	status = omapi_register_io_object ((omapi_object_t *)obj,
-					   omapi_connection_readfd,
-					   omapi_connection_writefd,
-					   omapi_connection_reader,
-					   omapi_connection_writer,
-					   omapi_connection_reaper);
-	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&obj, MDL);
-		return status;
-	}
+	/* Store the address list on the object. */
+	omapi_addr_list_reference (&obj -> connect_list, remote_addrs, MDL);
+	obj -> cptr = 0;
 
-	return ISC_R_SUCCESS;
+	status = (omapi_register_io_object
+		  ((omapi_object_t *)obj,
+		   0, omapi_connection_writefd,
+		   0, omapi_connection_connect,
+		   omapi_connection_reaper));
+
+	obj -> state = omapi_connection_unconnected;
+	omapi_connection_connect ((omapi_object_t *)obj);
+	omapi_connection_dereference (&obj, MDL);
+	return status;
 }
 
 /* Disconnect a connection object from the remote end.   If force is nonzero,
@@ -212,8 +234,11 @@ isc_result_t omapi_disconnect (omapi_object_t *h,
 	c -> state = omapi_connection_closed;
 
 	/* Disconnect from I/O object, if any. */
-	if (h -> outer)
+	if (h -> outer) {
+		if (h -> outer -> inner)
+			omapi_object_dereference (&h -> outer -> inner, MDL);
 		omapi_object_dereference (&h -> outer, MDL);
+	}
 
 	/* If whatever created us registered a signal handler, send it
 	   a disconnect signal. */
@@ -263,10 +288,102 @@ int omapi_connection_writefd (omapi_object_t *h)
 	if (h -> type != omapi_type_connection)
 		return -1;
 	c = (omapi_connection_object_t *)h;
+	if (c -> state == omapi_connection_connecting)
+		return c -> socket;
 	if (c -> out_bytes)
 		return c -> socket;
 	else
 		return -1;
+}
+
+isc_result_t omapi_connection_connect (omapi_object_t *h)
+{
+	int error;
+	omapi_connection_object_t *c;
+	SOCKLEN_T sl;
+	isc_result_t status;
+
+	if (h -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+	c = (omapi_connection_object_t *)h;
+
+	if (c -> state == omapi_connection_connecting) {
+		sl = sizeof error;
+		if (getsockopt (c -> socket, SOL_SOCKET, SO_ERROR,
+				(char *)&error, &sl) < 0) {
+			omapi_disconnect (h, 1);
+			return ISC_R_SUCCESS;
+		}
+		if (!error)
+			c -> state = omapi_connection_connected;
+	}
+	if (c -> state == omapi_connection_connecting ||
+	    c -> state == omapi_connection_unconnected) {
+		if (c -> cptr >= c -> connect_list -> count) {
+			omapi_disconnect (h, 1);
+			return ISC_R_SUCCESS;
+		}
+
+		if (c -> connect_list -> addresses [c -> cptr].addrtype !=
+		    AF_INET) {
+			omapi_disconnect (h, 1);
+			return ISC_R_SUCCESS;
+		}
+
+		memcpy (&c -> remote_addr.sin_addr,
+			&c -> connect_list -> addresses [c -> cptr].address,
+			sizeof c -> remote_addr.sin_addr);
+		c -> remote_addr.sin_family = AF_INET;
+		c -> remote_addr.sin_port =
+		       htons (c -> connect_list -> addresses [c -> cptr].port);
+#if defined (HAVE_SA_LEN)
+		c -> remote_addr.sin_len = sizeof c -> remote_addr;
+#endif
+		memset (&c -> remote_addr.sin_zero, 0,
+			sizeof c -> remote_addr.sin_zero);
+		++c -> cptr;
+
+		error = connect (c -> socket,
+				 (struct sockaddr *)&c -> remote_addr,
+				 sizeof c -> remote_addr);
+		if (error < 0) {
+			error = errno;
+			if (error != EINPROGRESS) {
+				omapi_disconnect (h, 1);
+				return ISC_R_UNEXPECTED;
+			}
+			c -> state = omapi_connection_connecting;
+			return ISC_R_SUCCESS;
+		}
+		c -> state = omapi_connection_connected;
+	}
+	
+	/* I don't know why this would fail, so I'm tempted not to test
+	   the return value. */
+	sl = sizeof (c -> local_addr);
+	if (getsockname (c -> socket,
+			 (struct sockaddr *)&c -> local_addr, &sl) < 0) {
+	}
+
+	/* Disconnect from I/O object, if any. */
+	if (h -> outer)
+		omapi_unregister_io_object (h);
+
+	status = omapi_register_io_object (h,
+					   omapi_connection_readfd,
+					   omapi_connection_writefd,
+					   omapi_connection_reader,
+					   omapi_connection_writer,
+					   omapi_connection_reaper);
+
+	if (status != ISC_R_SUCCESS) {
+		omapi_disconnect (h, 1);
+		return status;
+	}
+
+	omapi_signal_in (h, "connect");
+	omapi_addr_list_dereference (&c -> connect_list, MDL);
+	return ISC_R_SUCCESS;
 }
 
 /* Reaper function for connection - if the connection is completely closed,
@@ -328,7 +445,9 @@ isc_result_t omapi_connection_destroy (omapi_object_t *h,
 	if (c -> state == omapi_connection_connected)
 		omapi_disconnect (h, 1);
 	if (c -> listener)
-		omapi_object_dereference (&c -> listener, file, line);
+		omapi_listener_dereference (&c -> listener, file, line);
+	if (c -> connect_list)
+		omapi_addr_list_dereference (&c -> connect_list, file, line);
 	return ISC_R_SUCCESS;
 }
 

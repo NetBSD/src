@@ -43,19 +43,15 @@
 
 #include <omapip/omapip_p.h>
 
+OMAPI_OBJECT_ALLOC (omapi_generic,
+		    omapi_generic_object_t, omapi_type_generic)
+
 isc_result_t omapi_generic_new (omapi_object_t **gen,
 				const char *file, int line)
 {
-	omapi_generic_object_t *obj;
-
-	obj = dmalloc (sizeof *obj, file, line);
-	if (!obj)
-		return ISC_R_NOMEMORY;
-	memset (obj, 0, sizeof *obj);
-	obj -> refcnt = 0;
-	obj -> type = omapi_type_generic;
-
-	return omapi_object_reference (gen, (omapi_object_t *)obj, file, line);
+	/* Backwards compatibility. */
+	return omapi_generic_allocate ((omapi_generic_object_t **)gen,
+				       file, line);
 }
 
 isc_result_t omapi_generic_set_value (omapi_object_t *h,

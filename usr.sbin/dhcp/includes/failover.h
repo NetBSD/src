@@ -60,6 +60,7 @@ typedef struct {
 
 #define FM_OFFSET(x) (long)(&(((failover_message_t *)0) -> x))
 
+/* Failover message options: */
 #define FTO_BINDING_STATUS		1
 #define FTB_BINDING_STATUS			0x00000002
 #define FTO_ASSIGNED_IP_ADDRESS		2
@@ -118,6 +119,7 @@ typedef struct {
 #define FTB_REPLY_OPTIONS			0x40000000
 #define FTO_MAX				FTO_REPLY_OPTIONS
 
+/* Failover protocol message types: */
 #define FTM_POOLREQ		1
 #define FTM_POOLRESP		2
 #define FTM_BNDUPD		3
@@ -130,6 +132,42 @@ typedef struct {
 #define FTM_STATE		10
 #define FTM_CONTACT		11
 #define FTM_DISCONNECT		12
+
+/* Reject reasons: */
+
+#define FTR_ILLEGAL_IP_ADDR	1
+#define FTR_FATAL_CONFLICT	2
+#define FTR_MISSING_BINDINFO	3
+#define FTR_TIMEMISMATCH	4
+#define FTR_INVALID_MCLT	5
+#define FTR_MISC_REJECT		6
+#define FTR_DUP_CONNECTION	7
+#define FTR_INVALID_PARTNER	8
+#define FTR_TLS_UNSUPPORTED	9
+#define FTR_TLS_UNCONFIGURED	10
+#define FTR_TLS_REQUIRED	11
+#define FTR_DIGEST_UNSUPPORTED	12
+#define FTR_DIGEST_UNCONFIGURED	13
+#define FTR_VERSION_MISMATCH	14
+#define FTR_MISSING_BIND_INFO	15
+#define FTR_OUTDATED_BIND_INFO	16
+#define FTR_LESS_CRIT_BIND_INFO	17
+#define FTR_NO_TRAFFIC		18
+#define FTR_HBA_CONFLICT	19
+#define FTR_UNKNOWN		254
+
+/* Lease states: */
+typedef enum {
+	FTS_FREE = 1,
+	FTS_ACTIVE = 2,
+	FTS_EXPIRED = 3,
+	FTS_RELEASED = 4,
+	FTS_ABANDONED = 5,
+	FTS_RESET = 6,
+	FTS_BACKUP = 7,
+	FTS_RESERVED = 8,
+	FTS_BOOTP = 9
+} binding_state_t;
 
 #define DHCP_FAILOVER_MAX_MESSAGE_SIZE	2048
 
@@ -197,10 +235,11 @@ typedef struct {
 
 /* A failover peer. */
 enum failover_state {
-	invalid_state,
+	unknown_state,
 	partner_down,
 	normal,
 	communications_interrupted,
+	potential_conflict_nic,
 	potential_conflict,
 	recover
 };
@@ -211,17 +250,23 @@ typedef struct _dhcp_failover_state {
 	struct _dhcp_failover_state *next;
 	char *name;			/* Name of this failover instance. */
 	struct option_cache *address;	/* Partner's IP address or hostname. */
-	int listen_port;
 	int port;			/* Partner's TCP port. */
-	struct iaddr server_addr;
+	struct option_cache *server_addr; /* IP address on which to listen. */
+	struct data_string server_identifier; /* Server identifier (IP addr) */
+	int listen_port;		/* Port on which to listen. */
 	u_int32_t max_flying_updates;
 	u_int32_t mclt;
-	u_int8_t *hba;
+
+	u_int8_t *hba;	/* Hash bucket array for load balancing. */
+	int load_balance_max_secs;
 
 	enum failover_state partner_state;
 	TIME partner_stos;
 	enum failover_state my_state;
 	TIME my_stos;
+
+	dhcp_failover_link_t *link_to_peer;	/* Currently-established link
+						   to peer. */
 
 	enum {
 		primary, secondary
@@ -238,16 +283,13 @@ typedef struct _dhcp_failover_state {
 					   last packet we received is older
 					   than this, communications have been
 					   interrupted. */
-	/* The ack queue and update queue are circular lists, so you can
-	   tell whether or not a lease is on one of the lists by looking
-	   at its next pointer.   Or maybe we should just flag it as
-	   UPDATE_PENDING or ACK_PENDING.    But anyway, two seperate
-	   queues.   Hm. Maybe these should be hash tables, with no pointer
-	   from the peer to the lease. */
-	struct lease *update_queue;	/* List of leases we haven't sent
-					   to peer. */
-	struct lease *ack_queue;	/* List of lease updates the peer
+	struct lease *update_queue_head; /* List of leases we haven't sent
+					    to peer. */
+	struct lease *update_queue_tail;
+
+	struct lease *ack_queue_head;	/* List of lease updates the peer
 					   hasn't yet acked. */
+	struct lease *ack_queue_tail;
 	int cur_unacked_updates;	/* Number of updates we've sent
 					   that have not yet been acked. */
 } dhcp_failover_state_t;
