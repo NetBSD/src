@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.114 1999/02/14 14:03:16 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.115 1999/02/18 17:21:14 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ bootstrap()
 		int i;
 		extern void setpte4m __P((u_int, u_int));
 
-		if ((node = prom_opennode("/obio/interrupt")) == 0 ||
+		if ((node = prom_opennode("/obio/interrupt")) == 0 &&
 		    (node = prom_finddevice("/obio/interrupt")) == 0)
 			panic("bootstrap: could not get interrupt "
 			      "node from prom");
