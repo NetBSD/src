@@ -87,7 +87,7 @@ main(argc, argv)
 		(void) signal(SIGHUP, cleanup);
         }
         
-        openlog("rpc.rusersd", LOG_PID, LOG_DAEMON);
+        openlog("rpc.rusersd", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
