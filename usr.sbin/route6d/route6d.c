@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.43 2002/09/27 14:43:00 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.44 2002/10/26 20:10:02 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.43 2002/09/27 14:43:00 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.44 2002/10/26 20:10:02 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -2661,16 +2661,16 @@ addroute(struct riprt *rrt, const struct in6_addr *gw, struct ifc *ifcp)
 
 	if (errno == EEXIST) {
 		trace(0, "ADD: Route already exists %s/%d gw %s\n",
-			inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1);
+		    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1);
 		if (rtlog)
 			fprintf(rtlog, "ADD: Route already exists %s/%d gw %s\n",
-				inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1);
+			    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf1);
 	} else {
 		trace(0, "Can not write to rtsock (addroute): %s\n",
-			strerror(errno));
+		    strerror(errno));
 		if (rtlog)
 			fprintf(rtlog, "\tCan not write to rtsock: %s\n",
-				strerror(errno));
+			    strerror(errno));
 	}
 	return -1;
 }
@@ -2726,16 +2726,16 @@ delroute(struct netinfo6 *np, struct in6_addr *gw)
 
 	if (errno == ESRCH) {
 		trace(0, "RTDEL: Route does not exist: %s/%d gw %s\n",
-			inet6_n2p(&np->rip6_dest), np->rip6_plen, buf2);
+		    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf2);
 		if (rtlog)
 			fprintf(rtlog, "RTDEL: Route does not exist: %s/%d gw %s\n",
-				inet6_n2p(&np->rip6_dest), np->rip6_plen, buf2);
+			    inet6_n2p(&np->rip6_dest), np->rip6_plen, buf2);
 	} else {
 		trace(0, "Can not write to rtsock (delroute): %s\n",
-			strerror(errno));
+		    strerror(errno));
 		if (rtlog)
 			fprintf(rtlog, "\tCan not write to rtsock: %s\n",
-				strerror(errno));
+			    strerror(errno));
 	}
 	return -1;
 }
@@ -2948,13 +2948,14 @@ void
 filterconfig(void)
 {
 	int i;
-	char *p, *ap, *iflp, *ifname;
+	char *p, *ap, *iflp, *ifname, *ep;
 	struct iff ftmp, *iff_obj;
 	struct ifc *ifcp;
 	struct riprt *rrt;
 #if 0
 	struct in6_addr gw;
 #endif
+	u_long plen;
 
 	for (i = 0; i < nfilter; i++) {
 		ap = filter[i];
@@ -2977,7 +2978,14 @@ filterconfig(void)
 			fatal("invalid prefix specified for '%s'", ap);
 			/*NOTREACHED*/
 		}
-		ftmp.iff_plen = atoi(p);
+		errno = 0;
+		ep = NULL;
+		plen = strtoul(p, &ep, 10);
+		if (errno || !*p || *ep || plen > sizeof(ftmp.iff_addr) * 8) {
+			fatal("invalid prefix length specified for '%s'", ap);
+			/*NOTREACHED*/
+		}
+		ftmp.iff_plen = plen;
 		ftmp.iff_next = NULL;
 		applyplen(&ftmp.iff_addr, ftmp.iff_plen);
 ifonly:
@@ -3261,7 +3269,10 @@ fatal(const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	perror(buf);
-	syslog(LOG_ERR, "%s: %s", buf, strerror(errno));
+	if (errno)
+		syslog(LOG_ERR, "%s: %s", buf, strerror(errno));
+	else
+		syslog(LOG_ERR, "%s", buf);
 	rtdexit();
 }
 
