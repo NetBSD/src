@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2002/04/09 23:44:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2002/04/10 00:45:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2002/04/09 23:44:01 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2002/04/10 00:45:43 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1734,8 +1734,9 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
  * StrongARM accesses to non-cached pages are non-burst making writing
  * _any_ bulk data very slow.
  */
+#if ARM_MMU_GENERIC == 1
 void
-pmap_zero_page(paddr_t phys)
+pmap_zero_page_generic(paddr_t phys)
 {
 #ifdef DEBUG
 	struct vm_page *pg = PHYS_TO_VM_PAGE(phys);
@@ -1757,6 +1758,34 @@ pmap_zero_page(paddr_t phys)
 	bzero_page(cdstp);
 	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
+#endif /* ARM_MMU_GENERIC == 1 */
+
+#if ARM_MMU_XSCALE == 1
+void
+pmap_zero_page_xscale(paddr_t phys)
+{
+#ifdef DEBUG
+	struct vm_page *pg = PHYS_TO_VM_PAGE(phys);
+
+	if (pg->mdpage.pvh_list != NULL)
+		panic("pmap_zero_page: page has mappings");
+#endif
+
+	KDASSERT((phys & PGOFSET) == 0);
+
+	/*
+	 * Hook in the page, zero it, and purge the cache for that
+	 * zeroed page. Invalidate the TLB as needed.
+	 */
+	*cdst_pte = L2_S_PROTO | phys |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
+	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	cpu_tlb_flushD_SE(cdstp);
+	cpu_cpwait();
+	bzero_page(cdstp);
+	xscale_cache_clean_minidata();
+}
+#endif /* ARM_MMU_XSCALE == 1 */
 
 /* pmap_pageidlezero()
  *
@@ -1819,8 +1848,9 @@ pmap_pageidlezero(paddr_t phys)
  * hook points. The same comment regarding cachability as in
  * pmap_zero_page also applies here.
  */
+#if ARM_MMU_GENERIC == 1
 void
-pmap_copy_page(paddr_t src, paddr_t dst)
+pmap_copy_page_generic(paddr_t src, paddr_t dst)
 {
 	struct vm_page *src_pg = PHYS_TO_VM_PAGE(src);
 #ifdef DEBUG
@@ -1858,6 +1888,50 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
 	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
+#endif /* ARM_MMU_GENERIC == 1 */
+
+#if ARM_MMU_XSCALE == 1
+void
+pmap_copy_page_xscale(paddr_t src, paddr_t dst)
+{
+	struct vm_page *src_pg = PHYS_TO_VM_PAGE(src);
+#ifdef DEBUG
+	struct vm_page *dst_pg = PHYS_TO_VM_PAGE(dst);
+
+	if (dst_pg->mdpage.pvh_list != NULL)
+		panic("pmap_copy_page: dst page has mappings");
+#endif
+
+	KDASSERT((src & PGOFSET) == 0);
+	KDASSERT((dst & PGOFSET) == 0);
+
+	/*
+	 * Clean the source page.  Hold the source page's lock for
+	 * the duration of the copy so that no other mappings can
+	 * be created while we have a potentially aliased mapping.
+	 */
+	simple_lock(&src_pg->mdpage.pvh_slock);
+	(void) pmap_clean_page(src_pg->mdpage.pvh_list, TRUE);
+
+	/*
+	 * Map the pages into the page hook points, copy them, and purge
+	 * the cache for the appropriate page. Invalidate the TLB
+	 * as required.
+	 */
+	*csrc_pte = L2_S_PROTO | src |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
+	*cdst_pte = L2_S_PROTO | dst |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) |
+	    L2_C | L2_XSCALE_T_TEX(TEX_XSCALE_X);	/* mini-data */
+	cpu_tlb_flushD_SE(csrcp);
+	cpu_tlb_flushD_SE(cdstp);
+	cpu_cpwait();
+	bcopy_page(csrcp, cdstp);
+	cpu_dcache_inv_range(csrcp, NBPG);
+	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
+	xscale_cache_clean_minidata();
+}
+#endif /* ARM_MMU_XSCALE == 1 */
 
 #if 0
 void
@@ -3633,6 +3707,9 @@ pt_entry_t	pte_l1_s_proto;
 pt_entry_t	pte_l1_c_proto;
 pt_entry_t	pte_l2_s_proto;
 
+void		(*pmap_copy_page_func)(paddr_t, paddr_t);
+void		(*pmap_zero_page_func)(paddr_t);
+
 #if ARM_MMU_GENERIC == 1
 void
 pmap_pte_init_generic(void)
@@ -3654,6 +3731,9 @@ pmap_pte_init_generic(void)
 	pte_l1_s_proto = L1_S_PROTO_generic;
 	pte_l1_c_proto = L1_C_PROTO_generic;
 	pte_l2_s_proto = L2_S_PROTO_generic;
+
+	pmap_copy_page_func = pmap_copy_page_generic;
+	pmap_zero_page_func = pmap_zero_page_generic;
 }
 
 #if defined(CPU_ARM9)
@@ -3695,6 +3775,9 @@ pmap_pte_init_xscale(void)
 	pte_l1_s_proto = L1_S_PROTO_xscale;
 	pte_l1_c_proto = L1_C_PROTO_xscale;
 	pte_l2_s_proto = L2_S_PROTO_xscale;
+
+	pmap_copy_page_func = pmap_copy_page_xscale;
+	pmap_zero_page_func = pmap_zero_page_xscale;
 }
 
 #if defined(CPU_XSCALE_80200)

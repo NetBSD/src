@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.50 2002/04/09 23:44:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.51 2002/04/10 00:45:43 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -271,6 +271,9 @@ extern vaddr_t	pmap_curmaxkvaddr;
     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
 #define	ARM_MMU_GENERIC		1
 
+void	pmap_copy_page_generic(paddr_t, paddr_t);
+void	pmap_zero_page_generic(paddr_t);
+
 void	pmap_pte_init_generic(void);
 #if defined(CPU_ARM9)
 void	pmap_pte_init_arm9(void);
@@ -281,6 +284,9 @@ void	pmap_pte_init_arm9(void);
 
 #if defined(_LKM) || defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 #define	ARM_MMU_XSCALE		1
+
+void	pmap_copy_page_xscale(paddr_t, paddr_t);
+void	pmap_zero_page_xscale(paddr_t);
 
 void	pmap_pte_init_xscale(void);
 #if defined(CPU_XSCALE_80200)
@@ -313,6 +319,9 @@ extern pt_entry_t		pte_l2_s_prot_mask;
 extern pt_entry_t		pte_l1_s_proto;
 extern pt_entry_t		pte_l1_c_proto;
 extern pt_entry_t		pte_l2_s_proto;
+
+extern void (*pmap_copy_page_func)(paddr_t, paddr_t);
+extern void (*pmap_zero_page_func)(paddr_t);
 
 /*****************************************************************************/
 
@@ -380,6 +389,9 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L1_S_PROTO		pte_l1_s_proto
 #define	L1_C_PROTO		pte_l1_c_proto
 #define	L2_S_PROTO		pte_l2_s_proto
+
+#define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
+#define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
 #elif ARM_MMU_GENERIC == 1
 #define	L2_S_PROT_U		L2_S_PROT_U_generic
 #define	L2_S_PROT_W		L2_S_PROT_W_generic
@@ -392,6 +404,9 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
 #define	L2_S_PROTO		L2_S_PROTO_generic
+
+#define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
+#define	pmap_zero_page(d)	pmap_zero_page_generic((d))
 #elif ARM_MMU_XSCALE == 1
 #define	L2_S_PROT_U		L2_S_PROT_U_xscale
 #define	L2_S_PROT_W		L2_S_PROT_W_xscale
@@ -404,6 +419,9 @@ extern pt_entry_t		pte_l2_s_proto;
 #define	L1_S_PROTO		L1_S_PROTO_xscale
 #define	L1_C_PROTO		L1_C_PROTO_xscale
 #define	L2_S_PROTO		L2_S_PROTO_xscale
+
+#define	pmap_copy_page(s, d)	pmap_copy_page_xscale((s), (d))
+#define	pmap_zero_page(d)	pmap_zero_page_xscale((d))
 #endif /* ARM_NMMUS > 1 */
 
 /*
