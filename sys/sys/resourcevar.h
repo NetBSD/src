@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.9 1994/06/29 06:45:07 cgd Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.10 1994/12/24 14:36:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,7 +86,10 @@ struct plimit {
 #ifdef KERNEL
 void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
 void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
+void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
+	    struct timeval *ip));
 struct plimit
 	*limcopy __P((struct plimit *lim));
+void	 ruadd __P((struct rusage *ru, struct rusage *ru2));
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */
