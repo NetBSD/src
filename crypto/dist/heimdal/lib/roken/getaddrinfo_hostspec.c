@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: getaddrinfo_hostspec.c,v 1.1.1.1.2.1 2000/08/22 14:54:57 fvdl Exp $");
+RCSID("$Id: getaddrinfo_hostspec.c,v 1.1.1.1.2.2 2001/04/05 23:28:35 he Exp $");
 #endif
 
 #include "roken.h"
@@ -41,9 +41,10 @@ RCSID("$Id: getaddrinfo_hostspec.c,v 1.1.1.1.2.1 2000/08/22 14:54:57 fvdl Exp $"
 /* getaddrinfo via string specifying host and port */
 
 int
-roken_getaddrinfo_hostspec(const char *hostspec, 
-			   int port,
-			   struct addrinfo **ai)
+roken_getaddrinfo_hostspec2(const char *hostspec, 
+			    int socktype,
+			    int port,
+			    struct addrinfo **ai)
 {
     const char *p;
     char portstr[NI_MAXSERV];
@@ -66,7 +67,7 @@ roken_getaddrinfo_hostspec(const char *hostspec,
 
     memset(&hints, 0, sizeof(hints));
 
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = socktype;
 	
     for(hstp = hst; hstp->prefix; hstp++) {
 	if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
@@ -92,4 +93,12 @@ roken_getaddrinfo_hostspec(const char *hostspec,
     
     snprintf (host, sizeof(host), "%.*s", hostspec_len, hostspec);
     return getaddrinfo (host, portstr, &hints, ai);
+}
+
+int
+roken_getaddrinfo_hostspec(const char *hostspec, 
+			   int port,
+			   struct addrinfo **ai)
+{
+    return roken_getaddrinfo_hostspec2(hostspec, 0, port, ai);
 }
