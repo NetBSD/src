@@ -1,7 +1,7 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 3/1/92
-#	$Id: Makefile,v 1.6 1994/01/28 00:23:30 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/2/93
+#	$Id: Makefile,v 1.7 1994/09/23 06:14:39 mycroft Exp $
 
 PROG=	ls
-SRCS=	cmp.c ls.c print.c util.c
+SRCS=	cmp.c stat_flags.c ls.c print.c util.c
 
 .include <bsd.prog.mk>

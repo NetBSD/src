@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -35,14 +35,16 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmp.c	5.7 (Berkeley) 3/1/92";*/
-static char rcsid[] = "$Id: cmp.c,v 1.6 1993/12/05 21:35:20 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)cmp.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: cmp.c,v 1.7 1994/09/23 06:14:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <fts.h>
 #include <string.h>
+
 #include "ls.h"
 #include "extern.h"
 
@@ -106,12 +108,20 @@ int
 sizecmp(a, b)
 	const FTSENT *a, *b;
 {
-	return (b->fts_statp->st_size - a->fts_statp->st_size);
+	if (b->fts_statp->st_size > a->fts_statp->st_size)
+		return 1;
+	if (b->fts_statp->st_size < a->fts_statp->st_size)
+		return -1;
+	return 0;
 }
 
 int
 revsizecmp(a, b)
 	const FTSENT *a, *b;
 {
-	return (a->fts_statp->st_size - b->fts_statp->st_size);
+	if (a->fts_statp->st_size > b->fts_statp->st_size)
+		return 1;
+	if (a->fts_statp->st_size < b->fts_statp->st_size)
+		return -1;
+	return 0;
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Michael Fischbein.
@@ -35,29 +35,30 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)util.c	5.12 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: util.c,v 1.7 1994/01/25 20:45:17 cgd Exp $";
+/*static char sccsid[] = "from: @(#)util.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: util.c,v 1.8 1994/09/23 06:14:59 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
+
 #include <ctype.h>
 #include <fts.h>
-#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include "ls.h"
 #include "extern.h"
 
 void
 prcopy(src, dest, len)
-	register char *src, *dest;
-	register int len;
+	char *src, *dest;
+	int len;
 {
-	register int ch;
+	int ch;
 
-	while(len--) {
+	while (len--) {
 		ch = *src++;
 		*dest++ = isprint(ch) ? ch : '?';
 	}
@@ -66,7 +67,6 @@ prcopy(src, dest, len)
 void
 usage()
 {
-	(void)fprintf(stderr,
-	    "usage: ls [-1ACFLRSTacdfiklqrstu] [file ...]\n");
+	(void)fprintf(stderr, "usage: ls [-1ACFLRSTacdfiklqrstu] [file ...]\n");
 	exit(1);
 }
