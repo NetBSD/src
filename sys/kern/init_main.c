@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.82 1996/02/09 18:59:21 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.83 1996/04/04 00:26:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -179,6 +179,7 @@ main(framep)
 	vm_mem_init();
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
+	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
 	/*
