@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.30 1997/05/19 16:28:03 pk Exp $	*/
+/*	$NetBSD: savecore.c,v 1.31 1997/08/25 19:31:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.30 1997/05/19 16:28:03 pk Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.31 1997/08/25 19:31:53 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -445,7 +445,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	}
 
 	/* Seek to the start of the core. */
-	Lseek(ifd, (off_t)dumplo, L_SET);
+	Lseek(ifd, (off_t)dumplo, SEEK_SET);
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.9 1996/09/07 21:12:57 explorer Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.10 1997/08/25 19:32:07 kleink Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,7 +296,7 @@ onalrm(signo)
 				goto done;
 			}
 		}
-		(void) lseek(utmpf, (off_t)0, L_SET);
+		(void)lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
 		if (cc < 0) {
 			fprintf(stderr, "rwhod: %s: %s\n",
