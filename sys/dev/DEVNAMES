@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.44 2001/04/16 20:14:04 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.45 2001/04/17 10:33:21 reinoud Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -834,6 +834,7 @@ rd			vax
 rk			vax
 rl			vax
 rlc			vax
+rpckbd			arm32
 rtc			arm26
 rtc			arm32
 rtc			pc532
@@ -1037,6 +1038,7 @@ viaenv			MI
 viapm			MI
 vidc			arm32
 vidcaudio		arm32
+vidcconsole		arm32
 vidcvideo		arm32
 vme			MI		
 vme			atari
@@ -1090,6 +1092,7 @@ wsmouse			MI
 wsmousedev		MI		Attribute
 wsrasteremulops		MI		Attribute
 wss			MI		
+wsqms			arm32
 wstsc			amiga
 wstsc			amigappc
 wt			MI		
