@@ -1,4 +1,4 @@
-/*	$NetBSD: report.h,v 1.2 1998/01/09 08:09:15 perry Exp $	*/
+/*	$NetBSD: report.h,v 1.3 1998/07/26 15:33:34 mycroft Exp $	*/
 
 /* report.h */
 
@@ -10,6 +10,6 @@
 
 extern void report_init P((int nolog));
 extern void report P((int, char *, ...));
-extern char *get_errmsg P((void));
+extern const char *get_errmsg P((void));
 
 #undef P
