@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.529 2002/05/21 03:01:02 augustss Exp $
+#	$NetBSD: files,v 1.530 2002/05/21 03:05:00 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -842,8 +842,8 @@ device	cpctim
 attach	cpctim at cpcbus
 file	dev/ic/timer_cpcbus.c		cpctim
 
-device	iic
-attach	iic at cpcbus with iic_cpcbus
+device	cpciic
+attach	cpciic at cpcbus with iic_cpcbus
 file	dev/ic/iic_cpcbus.c		iic_cpcbus
 
 
