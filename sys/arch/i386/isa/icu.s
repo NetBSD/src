@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.6 1993/10/09 10:34:13 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.7 1993/10/12 23:33:57 mycroft Exp $
  */
 
 /*
@@ -48,12 +48,6 @@
  * related to the hardware icu is that the bit numbering is the same in the
  * soft priority masks as in the hard ones.
  */
-
-#ifdef notyet
-#include "sio.h"
-#else
-#define NSIO 0
-#endif
 
 /*
  * All spl levels include ASTMASK; this forces ipl to be non-zero when
@@ -112,18 +106,9 @@ INTRLOCAL(unpend_v):
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
 	movl    Vresume(,%eax,4),%eax
-	testl   %eax,%eax
-	je      INTRLOCAL(noresume)
 	jmp     %eax
   
 	ALIGN_TEXT
-/*
- * XXX - must be some fastintr, need to register those too.
- */
-INTRLOCAL(noresume):
-#if NSIO > 0
-	call    _softsio1
-#endif
 INTRLOCAL(unpend_v_next):
 	movl	_cpl,%eax
 	movl	%eax,%edx
@@ -304,26 +289,15 @@ INTRLOCAL(unpend_V):
 	bsfl    %eax,%eax
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_V_next)
-	movl    Vresume(,%eax,4),%edx
-	testl   %edx,%edx
-	je      INTRLOCAL(noresumeV)
 /*
- * XXX
  * We would prefer to call the intr handler directly here but that doesn't
- * work for badly behaved handlers that want the interrupt frame.  Also,
- * there's a problem determining the unit number.  We should change the
- * interface so that the unit number is not determined at config time.
+ * work for badly behaved handlers that want the interrupt frame.
+ *
+ *	movl    Vresume(,%eax,4),%edx
  */
 	jmp     *vec(,%eax,4)
 
 	ALIGN_TEXT
-/*
- * XXX - must be some fastintr, need to register those too.
- */
-INTRLOCAL(noresumeV):
-#if NSIO > 0
-	call    _softsio1
-#endif
 INTRLOCAL(unpend_V_next):
 	movl	_cpl,%eax
 	notl	%eax
