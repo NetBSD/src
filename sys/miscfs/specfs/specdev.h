@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.9 1994/12/13 20:14:47 mycroft Exp $	*/
+/*	$NetBSD: specdev.h,v 1.9.2.1 1995/10/15 05:19:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -127,4 +127,3 @@ int	spec_advlock __P((struct vop_advlock_args *));
 #define spec_vfree ((int (*) __P((struct  vop_vfree_args *)))spec_badop)
 #define spec_truncate ((int (*) __P((struct  vop_truncate_args *)))nullop)
 #define spec_update ((int (*) __P((struct  vop_update_args *)))nullop)
-#define spec_bwrite ((int (*) __P((struct  vop_bwrite_args *)))nullop)
