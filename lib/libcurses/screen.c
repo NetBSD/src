@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.10 2003/01/27 21:09:21 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.11 2003/02/02 17:52:29 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.10 2003/01/27 21:09:21 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.11 2003/02/02 17:52:29 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -160,6 +160,8 @@ newterm(char *type, FILE *outfd, FILE *infd)
 		delwin(new_screen->curscr);
 		goto error_exit;
 	}
+
+	clearok(new_screen->stdscr, 1);
 
 	if ((new_screen->__virtscr = __newwin(new_screen, new_screen->LINES,
 	    new_screen->COLS, 0, 0, FALSE)) == ERR) {
