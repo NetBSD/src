@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.276 1998/01/24 13:19:50 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.277 1998/01/27 03:31:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -309,6 +309,9 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 
 int	i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
+
+int	_bus_dmamap_load_buffer __P((bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int, vm_offset_t *, int *, int));
 
 void cyrix6x86_cpu_setup __P((void));
 
@@ -2293,11 +2296,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr;
-	caddr_t vaddr = buf;
-	int first, seg;
-	pmap_t pmap;
+	vm_offset_t lastaddr;
+	int seg, error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -2307,76 +2307,52 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
-
-	lastaddr = ~0;		/* XXX gcc */
-	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
-		/*
-		 * Get the physical address for this segment.
-		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
-
-		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
-		 */
-		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-			first = 0;
-		} else {
-			if (curaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz)
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				seg++;
-				map->dm_segs[seg].ds_addr = curaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-			}
-		}
-
-		lastaddr = curaddr + sgsize;
-		vaddr += sgsize;
-		buflen -= sgsize;
-	}
-
-	/*
-	 * Did we fit?
-	 */
-	if (buflen != 0)
-		return (EFBIG);		/* XXX better return value here? */
-
-	map->dm_nsegs = seg + 1;
-	return (0);
+	seg = 0;
+	error = _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
+	    &lastaddr, &seg, 1);
+	if (error == 0)
+		map->dm_nsegs = seg + 1;
+	return (error);
 }
 
 /*
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
-_bus_dmamap_load_mbuf(t, map, m, flags)
+_bus_dmamap_load_mbuf(t, map, m0, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	struct mbuf *m;
+	struct mbuf *m0;
 	int flags;
 {
+	vm_offset_t lastaddr;
+	int seg, error, first;
+	struct mbuf *m;
 
-	panic("_bus_dmamap_load: not implemented");
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("_bus_dmamap_load_mbuf: no packet header");
+#endif
+
+	if (m0->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
+	first = 1;
+	seg = 0;
+	error = 0;
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		error = _bus_dmamap_load_buffer(map, m->m_data, m->m_len,
+		    NULL, flags, &lastaddr, &seg, first);
+		first = 0;
+	}
+	if (error == 0)
+		map->dm_nsegs = seg + 1;
+	return (error);
 }
 
 /*
@@ -2600,6 +2576,85 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 /**********************************************************************
  * DMA utility functions
  **********************************************************************/
+
+/*
+ * Utility function to load a linear buffer.  lastaddrp holds state
+ * between invocations (for multiple-buffer loads).  segp contains
+ * the starting segment on entrace, and the ending segment on exit.
+ * first indicates if this is the first invocation of this function.
+ */
+int
+_bus_dmamap_load_buffer(map, buf, buflen, p, flags, lastaddrp, segp, first)
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+	vm_offset_t *lastaddrp;
+	int *segp;
+	int first;
+{
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr;
+	caddr_t vaddr = buf;
+	int seg;
+	pmap_t pmap;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	lastaddr = *lastaddrp;
+
+	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz)
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				seg++;
+				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+	return (0);
+}
 
 /*
  * Allocate physical memory from the given physical address range.
