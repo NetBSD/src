@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.2 1997/02/12 23:37:38 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -99,7 +99,8 @@ sb_isa_match(parent, match, aux)
 	 */
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
-	sc->sc_drq = ia->ia_drq;
+	sc->sc_drq8 = ia->ia_drq;
+	sc->sc_drq16 = -1;	/* XXX */
 	sc->sc_ic = ia->ia_ic;
 
 	if (!sbmatch(sc)) {
