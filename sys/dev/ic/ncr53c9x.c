@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.103 2002/10/06 21:35:33 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.104 2003/01/30 11:03:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.103 2002/10/06 21:35:33 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.104 2003/01/30 11:03:45 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1554,8 +1554,6 @@ ncr53c9x_msgin(sc)
 		sc->sc_imlen = 0;
 	}
 
-	NCR_TRACE(("<msgbyte:0x%02x>", sc->sc_imess[0]));
-
 	/*
 	 * If we're going to reject the message, don't bother storing
 	 * the incoming bytes.  But still, we need to ACK them.
@@ -1760,21 +1758,10 @@ gotit:
 						    SEND_SDTR);
 					}
 				} else {
-#if 0
-					int r = 250/ti->period;
-					int s = (100*250)/ti->period - 100*r;
-#endif
 					int p;
 
 					p = ncr53c9x_stp2cpb(sc, ti->period);
 					ti->period = ncr53c9x_cpb2stp(sc, p);
-#if 0
-#ifdef NCR53C9X_DEBUG
-					scsipi_printaddr(ecb->xs->xs_periph);
-					printf("max sync rate %d.%02dMB/s\n",
-					    r, s);
-#endif
-#endif
 					if ((sc->sc_flags&NCR_SYNCHNEGO) == 0) {
 						/*
 						 * target initiated negotiation
@@ -2354,23 +2341,11 @@ again:
 		/*
 		 * we must be continuing a message ?
 		 */
-		if (sc->sc_phase != MESSAGE_IN_PHASE) {
-			printf("%s: target didn't identify\n",
-			    sc->sc_dev.dv_xname);
-			ncr53c9x_init(sc, 1);
-			return (1);
-		}
-printf("<<RESELECT CONT'd>>");
-#if XXXX
-		ncr53c9x_msgin(sc);
-		if (sc->sc_state != NCR_CONNECTED) {
-			/* IDENTIFY fail?! */
-			printf("%s: identify failed\n",
-			    sc->sc_dev.dv_xname, sc->sc_state);
-			ncr53c9x_init(sc, 1);
-			return (1);
-		}
-#endif
+		printf("%s: unhandled reselect continuation, "
+			"state %d, intr %02x\n",
+			sc->sc_dev.dv_xname, sc->sc_state, sc->sc_espintr);
+		ncr53c9x_init(sc, 1);
+		return (1);
 		break;
 
 	case NCR_IDENTIFIED:
@@ -2425,19 +2400,36 @@ printf("<<RESELECT CONT'd>>");
 				return (1);
 			}
 			/*
-			 * The C90 only inhibits FIFO writes until
-			 * reselection is complete, instead of
-			 * waiting until the interrupt status register
-			 * has been read. So, if the reselect happens
-			 * while we were entering a command bytes (for
-			 * another target) some of those bytes can
-			 * appear in the FIFO here, after the
-			 * interrupt is taken.
+			 * The C90 only inhibits FIFO writes until reselection
+			 * is complete, instead of waiting until the interrupt
+			 * status register has been read.  So, if the reselect
+			 * happens while we were entering command bytes (for
+			 * another target) some of those bytes can appear in
+			 * the FIFO here, after the interrupt is taken.
+			 *
+			 * To remedy this situation, pull the Selection ID
+			 * and Identify message from the FIFO directly, and
+			 * ignore any extraneous fifo contents. Also, set
+			 * a flag that allows one Illegal Command Interrupt
+			 * to occur which the chip also generates as a result
+			 * of writing to the FIFO during a reselect.
 			 */
-			nfifo = ncr53c9x_rdfifo(sc, NCR_RDFIFO_START);
+			if (sc->sc_rev == NCR_VARIANT_ESP100) {
+				nfifo = NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
+				sc->sc_imess[0] = NCR_READ_REG(sc, NCR_FIFO);
+				sc->sc_imess[1] = NCR_READ_REG(sc, NCR_FIFO);
+				sc->sc_imlen = 2;
+				if (nfifo != 2) {
+					/* Flush the rest */
+					NCRCMD(sc, NCRCMD_FLUSH);
+				}
+				sc->sc_flags |= NCR_EXPECT_ILLCMD;
+				if (nfifo > 2)
+					nfifo = 2; /* We fixed it.. */
+			} else
+				nfifo = ncr53c9x_rdfifo(sc, NCR_RDFIFO_START);
 
-			if (nfifo < 2 ||
-			    (nfifo > 2 && sc->sc_rev != NCR_VARIANT_ESP100)) {
+			if (nfifo != 2) {
 				printf("%s: RESELECT: %d bytes in FIFO! "
 				    "[intr %x, stat %x, step %d, "
 				    "prevphase %x]\n",
@@ -2455,17 +2447,6 @@ printf("<<RESELECT CONT'd>>");
 
 			/* Handle identify message */
 			ncr53c9x_msgin(sc);
-			if (nfifo != 2) {
-				/*
-				 * Note: this should not happen
-				 * with `dmaselect' on.
-				 */
-				sc->sc_flags |= NCR_EXPECT_ILLCMD;
-				NCRCMD(sc, NCRCMD_FLUSH);
-			} else if (sc->sc_features & NCR_F_DMASELECT &&
-			    sc->sc_rev == NCR_VARIANT_ESP100) {
-				sc->sc_flags |= NCR_EXPECT_ILLCMD;
-			}
 
 			if (sc->sc_state != NCR_CONNECTED &&
 			    sc->sc_state != NCR_IDENTIFIED) {
