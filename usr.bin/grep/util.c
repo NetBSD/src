@@ -1,3 +1,5 @@
+/*	$NetBSD: util.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -23,8 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: util.c,v 1.1.1.1 2004/01/02 14:58:43 cjep Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: util.c,v 1.1.1.2 2004/01/02 15:00:34 cjep Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,37 +52,42 @@
  * Process a file line by line...
  */
 
-static int	linesqueued;
-static int	procline(str_t *l);
+static int linesqueued, newfile;
+static int procline(str_t *l, int nottext);
 
 int 
 grep_tree(char **argv)
 {
-	FTS	       *fts;
-	FTSENT	       *p;
-	int		c, fts_flags;
+	FTS *fts;
+	FTSENT *p;
+	int c, fts_flags;
 
 	c = fts_flags = 0;
 
-	if (Hflag)
+/* 	if (linkbehave == LINK_EXPLICIT)
 		fts_flags = FTS_COMFOLLOW;
-	if (Pflag)
+	if (linkbehave == LINK_SKIP)
 		fts_flags = FTS_PHYSICAL;
-	if (Sflag)
-		fts_flags = FTS_LOGICAL;
+	if (linkbehave == LINK_FOLLOW)
+		fts_flags = FTS_LOGICAL;*/
 
-	fts_flags |= FTS_NOSTAT | FTS_NOCHDIR;
+	fts_flags |= FTS_NOSTAT | FTS_NOCHDIR | FTS_LOGICAL;
 
-	if (!(fts = fts_open(argv, fts_flags, (int (*) ()) NULL)))
-		err(1, NULL);
+	if ((fts = fts_open(argv, fts_flags, NULL)) == NULL)
+		err(2, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
 		case FTS_DNR:
 			break;
 		case FTS_ERR:
-			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
+			errx(2, "%s: %s", p->fts_path, strerror(p->fts_errno));
 			break;
 		case FTS_DP:
+		case FTS_D:
+			break;
+		case FTS_DC:
+			warnx("warning: %s: recursive directory loop\n",
+				p->fts_path);
 			break;
 		default:
 			c += procfile(p->fts_path);
@@ -92,12 +103,36 @@ procfile(char *fn)
 {
 	str_t ln;
 	file_t *f;
-	int c, t, z;
+	struct stat sb;
+	mode_t s;
+	int c, t, z, nottext, skip;
+	
+	tail = 0;
+	newfile = 1;
 
 	if (fn == NULL) {
-		fn = "(standard input)";
+		fn = stdin_label;
 		f = grep_fdopen(STDIN_FILENO, "r");
 	} else {
+		skip = 1;
+		if (dirbehave == GREP_SKIP || devbehave == GREP_SKIP) {
+			if (stat(fn, &sb)) {
+				fprintf(stderr, "Cannot stat %s %d\n",
+					fn, errno);
+				/* XXX record error variable */
+			} else {
+				s = sb.st_mode & S_IFMT;
+				if (s == S_IFDIR && dirbehave == GREP_SKIP)
+					skip = 0;
+				if (   (s == S_IFIFO || s == S_IFCHR ||
+					s == S_IFBLK || s == S_IFSOCK)
+					&& devbehave == GREP_SKIP)
+							skip = 0;
+			}
+		}
+		if (skip == 0)
+			return 0;
+		
 		f = grep_open(fn, "r");
 	}
 	if (f == NULL) {
@@ -105,7 +140,11 @@ procfile(char *fn)
 			warn("%s", fn);
 		return 0;
 	}
-	if (aflag && grep_bin_file(f)) {
+
+	nottext = grep_bin_file(f);
+
+	if (nottext && binbehave == BIN_FILE_SKIP) {
+		/* Skip this file as it is binary */
 		grep_close(f);
 		return 0;
 	}
@@ -121,31 +160,40 @@ procfile(char *fn)
 		ln.off += ln.len + 1;
 		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL)
 			break;
-		if (ln.len > 0 && ln.dat[ln.len - 1] == '\n')
+		if (ln.len > 0 && ln.dat[ln.len - 1] == line_endchar)
 			--ln.len;
 		ln.line_no++;
 
 		z = tail;
 		
-		if ((t = procline(&ln)) == 0 && Bflag > 0 && z == 0) {
+		if ((t = procline(&ln, nottext)) == 0 && Bflag > 0 && z == 0) {
 			enqueue(&ln);
 			linesqueued++;
 		}
 		c += t;
+		
+		/* If we have a maximum number of matches, stop processing */
+		if (mflag && c >= maxcount)
+			break;
 	}
 	if (Bflag > 0)
 		clearqueue();
 	grep_close(f);
 
 	if (cflag) {
-		if (!hflag)
-			printf("%s:", ln.file);
+		if (output_filenames)
+			printf("%s%c", ln.file, fn_colonchar);
 		printf("%u\n", c);
-	}
+	} 
+		
 	if (lflag && c != 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, fn_endchar);
 	if (Lflag && c == 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, fn_endchar);
+	if (c && !cflag && !lflag && !Lflag && 
+		binbehave == BIN_FILE_BIN && nottext && !qflag)
+			printf("Binary file %s matches\n", fn); 
+		
 	return c;
 }
 
@@ -157,10 +205,12 @@ procfile(char *fn)
 #define isword(x) (isalnum(x) || (x) == '_')
 
 static int
-procline(str_t *l)
+procline(str_t *l, int nottext)
 {
-	regmatch_t	pmatch;
-	int		c, i, r, t;
+	regmatch_t pmatch;
+	regmatch_t matches[MAX_LINE_MATCHES];
+	int c = 0, i, r, t, m = 0;
+	regoff_t st = 0;
 
 	if (matchall) {
 		c = !vflag;
@@ -168,44 +218,70 @@ procline(str_t *l)
 	}
 	
 	t = vflag ? REG_NOMATCH : 0;
-	pmatch.rm_so = 0;
-	pmatch.rm_eo = l->len;
-	for (c = i = 0; i < patterns; i++) {
-		r = regexec(&r_pattern[i], l->dat, 0, &pmatch,  eflags);
-		if (r == REG_NOMATCH && t == 0)
-			continue;
-		if (r == 0) {
-			if (wflag) {
-				if ((pmatch.rm_so != 0 && isword(l->dat[pmatch.rm_so - 1]))
-				    || (pmatch.rm_eo != l->len && isword(l->dat[pmatch.rm_eo])))
-					r = REG_NOMATCH;
+
+	while (st <= l->len) {
+		pmatch.rm_so = st;
+		pmatch.rm_eo = l->len;
+		for (i = 0; i < patterns; i++) {
+			r = regexec(&r_pattern[i], l->dat, 1, &pmatch, eflags);
+			if (r == REG_NOMATCH && t == 0)
+				continue;
+			if (r == 0) {
+				if (wflag) {
+					if ((pmatch.rm_so != 0 && isword(l->dat[pmatch.rm_so - 1]))
+					    || (pmatch.rm_eo != l->len && isword(l->dat[pmatch.rm_eo])))
+						r = REG_NOMATCH;
+				}
+				if (xflag) {
+					if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
+						r = REG_NOMATCH;
+				}
 			}
-			if (xflag) {
-				if (pmatch.rm_so != 0 || pmatch.rm_eo != l->len)
-					r = REG_NOMATCH;
+			if (r == t) {
+				if (m == 0)
+					c++;
+				if (m < MAX_LINE_MATCHES) {
+					matches[m] = pmatch;
+					m++;
+				}
+				st = pmatch.rm_eo;
+				break;
 			}
 		}
-		if (r == t) {
-			c++;
+
+		/* One pass if we are not recording matches */
+		if (!oflag && !colours)
 			break;
-		}
+
+		if (st == pmatch.rm_so)
+			break; 	/* No matches */
+		
 	}
 	
 print:
+
+	if (c && binbehave == BIN_FILE_BIN && nottext) 
+		return c;	/* Binary file */
+	
 	if ((tail > 0 || c) && !cflag && !qflag) {
 		if (c) {
-			if (first > 0 && tail == 0 && (Bflag < linesqueued) && (Aflag || Bflag))
-				printf("--\n");
+						
+			if ( (Aflag || Bflag) && first > 0 && 
+			   ( (Bflag <= linesqueued && tail == 0) || newfile) ) 
+						printf("--\n");
+									
 			first = 1;
+			newfile = 0;
 			tail = Aflag;
 			if (Bflag > 0)
 				printqueue();
 			linesqueued = 0;
-			printline(l, ':');
+			printline(l, fn_colonchar, matches, m);
 		} else {
-			printline(l, '-');
+			printline(l, fn_dashchar, matches, m);
 			tail--;
 		}
+
 	}
 	return c;
 }
@@ -213,10 +289,10 @@ print:
 void *
 grep_malloc(size_t size)
 {
-	void	       *ptr;
+	void *ptr;
 
 	if ((ptr = malloc(size)) == NULL)
-		err(1, "malloc");
+		err(2, "malloc");
 	return ptr;
 }
 
@@ -224,17 +300,17 @@ void *
 grep_realloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
-		err(1, "realloc");
+		err(2, "realloc");
 	return ptr;
 }
 
 void
-printline(str_t *line, int sep)
+printline(str_t *line, int sep, regmatch_t *matches, int m)
 {
-	int n;
-	
-	n = 0;
-	if (!hflag) {
+	int i, n = 0;
+	size_t a = 0;
+
+	if (output_filenames) {
 		fputs(line->file, stdout);
 		++n;
 	}
@@ -251,6 +327,35 @@ printline(str_t *line, int sep)
 	}
 	if (n)
 		putchar(sep);
-	fwrite(line->dat, line->len, 1, stdout);
-	putchar('\n');
+
+	if ((oflag || colours) && m > 0) {
+
+		for (i = 0; i < m; i++) {
+			
+			if (!oflag)
+				fwrite(line->dat + a, matches[i].rm_so - a, 1, stdout);
+			
+			if (colours) 
+				fprintf(stdout, "\33[%sm", grep_colour);
+			fwrite(line->dat + matches[i].rm_so, 
+				matches[i].rm_eo - matches[i].rm_so, 1, stdout);
+			
+			if (colours) 
+				fprintf(stdout, "\33[00m");
+			a = matches[i].rm_eo;
+			if (oflag)
+				putchar('\n');
+		}
+		if (!oflag) {
+			if (line->len - a > 0)
+				fwrite(line->dat + a, line->len - a, 1, stdout);
+			putchar('\n');
+		}
+		
+		
+	} else {
+		fwrite(line->dat, line->len, 1, stdout);
+		putchar(line_endchar);
+	}
+			
 }
