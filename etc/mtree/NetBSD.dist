@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: NetBSD.dist,v 1.15 1995/11/30 23:57:58 pk Exp $
+#	$Id: NetBSD.dist,v 1.16 1995/12/14 18:40:38 ghudson Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1304,7 +1304,7 @@ backups
 ..
 
 # ./var/crash
-crash		mode=775
+crash		mode=770
 # ./var/crash
 ..
 
