@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2003/05/21 06:46:52 jdc Exp $
+#	$NetBSD: Makefile,v 1.45 2003/05/21 21:19:52 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -12,25 +12,26 @@ CPPFLAGS+=-DDEBUG
 .endif
 .endif
 LIB=	curses
-SRCS=	acs.c addbytes.c addch.c addnstr.c attributes.c background.c bell.c \
-	border.c box.c clear.c clearok.c clrtobot.c clrtoeol.c color.c \
-	copywin.c cr_put.c ctrace.c cur_hash.c curs_set.c curses.c delch.c \
-	deleteln.c delwin.c erase.c flushok.c fullname.c getch.c getstr.c \
-	getyx.c id_subwins.c idlok.c idcok.c inch.c inchstr.c initscr.c \
-	insch.c insdelln.c insertln.c instr.c keypad.c leaveok.c line.c \
-	longname.c meta.c move.c mvwin.c newwin.c nodelay.c notimeout.c \
-	overlay.c overwrite.c pause.c printw.c putchar.c refresh.c resize.c \
-	scanw.c screen.c scroll.c scrollok.c setterm.c standout.c timeout.c \
-	toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c underscore.c
+SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
+	background.c bell.c border.c box.c clear.c clearok.c clrtobot.c \
+	clrtoeol.c color.c copywin.c cr_put.c ctrace.c cur_hash.c curs_set.c \
+	curses.c delch.c deleteln.c delwin.c erase.c flushok.c fullname.c \
+	getch.c getstr.c getyx.c id_subwins.c idlok.c idcok.c inch.c \
+	inchstr.c initscr.c insch.c insdelln.c insertln.c instr.c keypad.c \
+	leaveok.c line.c longname.c meta.c move.c mvwin.c newwin.c nodelay.c \
+	notimeout.c overlay.c overwrite.c pause.c printw.c putchar.c \
+	refresh.c resize.c scanw.c screen.c scroll.c scrollok.c setterm.c \
+	standout.c timeout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c \
+	unctrl.c underscore.c
 
-MAN=	curses.3 curses_addch.3 curses_addstr.3 curses_attributes.3 \
-	curses_background.3 curses_border.3 curses_clear.3 curses_color.3 \
-	curses_cursor.3 curses_default_colors.3 curses_delch.3 \
-	curses_deleteln.3 curses_inch.3 curses_input.3 curses_insertch.3 \
-	curses_insertln.3 curses_insdelln.3 curses_line.3 curses_pad.3 \
-	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
-	curses_scroll.3 curses_standout.3 curses_termcap.3 curses_touch.3 \
-	curses_tty.3 curses_underscore.3 curses_window.3
+MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
+	curses_attributes.3 curses_background.3 curses_border.3 \
+	curses_clear.3 curses_color.3 curses_cursor.3 curses_default_colors.3 \
+	curses_delch.3 curses_deleteln.3 curses_inch.3 curses_input.3 \
+	curses_insertch.3 curses_insertln.3 curses_insdelln.3 curses_line.3 \
+	curses_pad.3 curses_print.3 curses_refresh.3 curses_scanw.3 \
+	curses_screen.3 curses_scroll.3 curses_standout.3 curses_termcap.3 \
+	curses_touch.3 curses_tty.3 curses_underscore.3 curses_window.3
 INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 
@@ -38,7 +39,8 @@ CPPFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS+=	termcap.c tgoto.c tputs.c
 .PATH: ${NETBSDSRCDIR}/lib/libterm
 
-MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addnstr.3 \
+MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
+	 curses_addchstr.3 addchstr.3 curses_addstr.3 addnstr.3 \
 	 curses_addstr.3 addstr.3 \
 	 curses_default_colors.3 assume_default_colors.3 \
 	 curses_attributes.3 attr_get.3 curses_attributes.3 attr_off.3 \
@@ -85,14 +87,15 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addnstr.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
 	 curses_refresh.3 leaveok.3 curses_termcap.3 longname.3 \
 	 curses_tty.3 meta.3 curses_cursor.3 move.3 \
-	 curses_addch.3 mvaddch.3 curses_addstr.3 mvaddnstr.3 \
+	 curses_addch.3 mvaddch.3 curses_addchstr.3 mvaddchnstr.3 \
+	 curses_addchstr.3 mvaddchstr.3 curses_addstr.3 mvaddnstr.3 \
 	 curses_addstr.3 mvaddstr.3 \
 	 curses_cursor.3 mvcur.3 curses_window.3 mvderwin.3 \
 	 curses_input.3 mvgetnstr.3 curses_input.3 mvgetstr.3 \
 	 curses_line.3 mvhline.3 curses_print.3 mvprintw.3 \
-	 curses_line.3 mvvline.3 \
-	 curses_addch.3 mvwaddch.3 curses_addstr.3 mvwaddnstr.3 \
-	 curses_addstr.3 mvwaddstr.3 \
+	 curses_line.3 mvvline.3 curses_addch.3 mvwaddch.3 \
+	 curses_addchstr.3 mvwaddchnstr.3 curses_addchstr.3 mvwaddchstr.3 \
+	 curses_addstr.3 mvwaddnstr.3 curses_addstr.3 mvwaddstr.3 \
 	 curses_input.3 mvwgetnstr.3 curses_input.3 mvwgetstr.3 \
 	 curses_line.3 mvwhline.3 curses_print.3 mvwprintw.3 \
 	 curses_line.3 mvwvline.3 \
@@ -120,7 +123,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addnstr.3 \
 	 curses_underscore.3 underend.3 curses_underscore.3 underscore.3 \
 	 curses_input.3 ungetch.3 curses_touch.3 untouchwin.3 \
 	 curses_default_colors.3 use_default_colors.3 curses_line.3 vline.3 \
-	 curses_addch.3 waddch.3 curses_addstr.3 waddnstr.3 \
+	 curses_addch.3 waddch.3 curses_addchstr.3 waddchnstr.3 \
+	 curses_addchstr.3 waddchstr.3 curses_addstr.3 waddnstr.3 \
 	 curses_addstr.3 waddstr.3 \
 	 curses_attributes.3 wattr_get.3 curses_attributes.3 wattr_off.3 \
 	 curses_attributes.3 wattr_on.3 curses_attributes.3 wattr_set.3 \
