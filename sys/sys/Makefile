@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/01/11 10:53:01 kleink Exp $
+#	$NetBSD: Makefile,v 1.20 2000/05/28 19:42:31 ragge Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -20,7 +20,7 @@ INCS=	acct.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h cdefs_aout.h \
 	tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
 	tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h ttydev.h \
 	types.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h \
-	vadvise.h vmmeter.h vnode.h vnode_if.h vsio.h wait.h
+	vadvise.h vmmeter.h vnode.h vnode_if.h wait.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
