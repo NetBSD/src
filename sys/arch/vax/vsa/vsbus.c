@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.16 1999/03/13 15:16:48 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.17 1999/04/14 23:14:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,6 +47,8 @@
 #include <sys/syslog.h>
 #include <sys/stat.h>
 
+#define	_VAX_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
@@ -70,6 +72,28 @@ int	vsbus_search	__P((struct device *, struct cfdata *, void *));
 
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
+
+struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
 
 struct	vsbus_softc {
 	struct	device sc_dev;
@@ -156,6 +180,7 @@ vsbus_search(parent, cf, aux)
 
 	va.va_paddr = cf->cf_loc[0];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
+	va.va_dmat = &vsbus_bus_dma_tag;
 
 	sc->sc_cpu->vc_intmsk = 0;
 	sc->sc_cpu->vc_intclr = 0xff;
