@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.39 1996/03/17 00:53:37 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.40 1996/03/27 04:03:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -414,10 +414,12 @@ leattach(parent, self, aux)
 #if NPCI > 0
 	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
+		pcireg_t csr;
 
-		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		    pci_conf_read(pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-		    PCI_COMMAND_MASTER_ENABLE);
+		csr = pci_conf_read(pa->pa_bc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		    csr | PCI_COMMAND_MASTER_ENABLE);
 
 		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, leintr, sc);
 	}
