@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12.2.5 1997/12/15 00:24:16 mellon Exp $
+#	$NetBSD: MAKEDEV,v 1.12.2.6 1998/05/09 00:21:09 mycroft Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -116,7 +116,7 @@ tz*)
 bpf*|tun*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=12;;
-	tun*) name=tun;	unit=${i#tun};	chr=90;;
+	tun*) name=tun;	unit=${i#tun};	chr=93;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
