@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 1998/12/14 16:18:46 kleink Exp $ */
+/*	$NetBSD: trap.c,v 1.79 1999/01/20 00:15:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -374,6 +374,7 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
+	case T_UNIMPLFLUSH:
 		if ((n = emulinstr(pc, tf)) == 0) {
 			ADVANCE;
 			break;
@@ -415,8 +416,37 @@ badtrap:
 			fpu_cleanup(p, fs);
 			break;
 		}
+#if NEW
+		simple_lock(&cpuinfo.fplock);
 		if (cpuinfo.fpproc != p) {		/* we do not have it */
-			int mid = p->p_md.md_fpumid;
+			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
+				cpuinfo.fpproc->p_md.md_fpumid = -1;
+			}
+			/*
+			 * On MP machines, some of the other FPUs might
+			 * still have our state. Tell the owning processor
+			 * to save the process' FPU state.
+			 */
+			cpi = p->p_md.md_fpumid;
+			if (cpi != NULL) {
+				if (cpi->mid == cpuinfo.mid)
+					panic("FPU on module %d\n", mid);
+				simple_lock(&cpi->fplock);
+				simple_lock(&cpi->msg.lock);
+				cpi->msg.tag = XPMSG_SAVEFPU;
+				raise_ipi(cpi);
+			}
+			loadfpstate(fs);
+			cpuinfo.fpproc = p;		/* now we do have it */
+			p->p_md.md_fpumid = cpuinfo.mid;
+		}
+		simple_unlock(&cpuinfo.fplock);
+#else
+		if (cpuinfo.fpproc != p) {		/* we do not have it */
+			int mid;
+
+			mid = p->p_md.md_fpumid;
 			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
 				cpuinfo.fpproc->p_md.md_fpumid = -1;
@@ -437,6 +467,7 @@ badtrap:
 			cpuinfo.fpproc = p;		/* now we do have it */
 			p->p_md.md_fpumid = cpuinfo.mid;
 		}
+#endif
 		tf->tf_psr |= PSR_EF;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.10 1996/12/01 23:19:00 pk Exp $ */
+/*	$NetBSD: trap.h,v 1.11 1999/01/20 00:15:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
 /*			0x20	   unused */
 /*	through		0x23	   unused */
 #define	T_CPDISABLED	0x24	/* (5) coprocessor instr while disabled */
-/*			0x25	   unused */
+#define	T_UNIMPLFLUSH	0x25	/* Unimplemented FLUSH */
 /*	through		0x27	   unused */
 #define	T_CPEXCEPTION	0x28	/* (9) coprocessor exception */
 /*			0x29	   unused */
