@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.19 1998/05/21 17:19:46 tv Exp $	*/
+/*	$NetBSD: make.h,v 1.20 1998/10/18 14:23:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -64,11 +64,13 @@
 #   define	__P(protos)	()		/* traditional C preprocessor */
 #  endif
 # endif
-# ifndef const
-#  define const
-# endif
-# ifndef volatile
-#  define volatile
+# ifndef __STDC__
+#  ifndef const
+#   define const
+#  endif
+#  ifndef volatile
+#   define volatile
+#  endif
 # endif
 #endif
 
