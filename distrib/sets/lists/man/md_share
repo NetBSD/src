@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.88 2000/05/03 22:58:40 augustss Exp $
+# $NetBSD: md_share,v 1.89 2000/05/10 16:46:06 groo Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -47,6 +47,10 @@
 ./usr/share/man/cat4/amiga/ser.0
 ./usr/share/man/cat4/amiga/wesc.0
 ./usr/share/man/cat4/amiga/zssc.0
+./usr/share/man/cat4/arm26/arckbd.0
+./usr/share/man/cat4/arm26/cpu.0
+./usr/share/man/cat4/arm26/dtide.0
+./usr/share/man/cat4/arm26/ei.0
 ./usr/share/man/cat4/arm32/asc.0
 ./usr/share/man/cat4/arm32/autoconf.0
 ./usr/share/man/cat4/arm32/beep.0
@@ -387,6 +391,10 @@
 ./usr/share/man/man4/amiga/ser.4
 ./usr/share/man/man4/amiga/wesc.4
 ./usr/share/man/man4/amiga/zssc.4
+./usr/share/man/man4/arm26/arckbd.4
+./usr/share/man/man4/arm26/cpu.4
+./usr/share/man/man4/arm26/dtide.4
+./usr/share/man/man4/arm26/ei.4
 ./usr/share/man/man4/arm32/asc.4
 ./usr/share/man/man4/arm32/autoconf.4
 ./usr/share/man/man4/arm32/beep.4
