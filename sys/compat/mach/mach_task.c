@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.37 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.38 2003/11/22 17:17:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.37 2003/11/20 07:12:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.38 2003/11/22 17:17:55 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.37 2003/11/20 07:12:34 manu Exp $");
 #ifdef COMPAT_DARWIN
 #include <compat/darwin/darwin_exec.h>
 #endif
+
+#define ISSET(t, f)     ((t) & (f))
 
 int 
 mach_task_get_special_port(args)
@@ -668,34 +670,41 @@ mach_sys_task_for_pid(l, v, retval)
 	} */ *uap = v;
 	struct mach_right *mr;
 	struct mach_emuldata *med;
-	struct lwp *tl;
-	struct proc *tp;
-	struct proc *p;
+	struct proc *p = l->l_proc;
+	struct proc *t;
 	int error;
 
+	/* 
+	 * target_tport is used because the task may be on
+	 * a different host. (target_tport, pid) is unique.
+	 * We don't support multiple-host configuration 
+	 * yet, so this parameter should be useless. 
+	 * However, we still validate it.
+	 */
 	if ((mr = mach_right_check(SCARG(uap, target_tport), 
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return EPERM;
 
-	if (mr->mr_port->mp_datatype != MACH_MP_PROC)	
-		return EINVAL;
-	tp = (struct proc *)mr->mr_port->mp_data;
-	tl = LIST_FIRST(&tp->p_lwps);
-
-	if ((p = pfind(SCARG(uap, pid))) == NULL)
+	if ((t = pfind(SCARG(uap, pid))) == NULL)
 		return ESRCH;
+	
+	/* Allowed only if the UID match, if setuid, or if superuser */
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||  
+		ISSET(t->p_flag, P_SUGID)) &&
+		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			    return (error);
 
 	/* This will only work on a Mach process */
-	if ((p->p_emul != &emul_mach) &&
+	if ((t->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
-	    (p->p_emul != &emul_darwin) &&
+	    (t->p_emul != &emul_darwin) &&
 #endif
 	    1)
 		return EINVAL;
 
-	med = p->p_emuldata;
+	med = t->p_emuldata;
 
-	if ((mr = mach_right_get(med->med_kernel, tl, 
+	if ((mr = mach_right_get(med->med_kernel, l, 
 	    MACH_PORT_TYPE_SEND, 0)) == NULL)
 		return EINVAL;
 
