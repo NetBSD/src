@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.14 1994/03/07 22:30:30 mycroft Exp $
+ *	$Id: pmap.c,v 1.15 1994/04/29 04:41:02 cgd Exp $
  */
 
 /*
@@ -202,7 +202,7 @@ void pmap_changebit __P((vm_offset_t, int, int));
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-struct pte	*CMAP1, *CMAP2, *mmap;
+struct pte	*CMAP1, *CMAP2, *XXX_mmap;
 caddr_t		CADDR1, CADDR2, vmmap;
 struct pte	*msgbufmap;
 #endif	/* BSDVM_COMPAT */
@@ -287,7 +287,7 @@ pmap_bootstrap(virtual_start)
 
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
-	SYSMAP(caddr_t		,mmap		,vmmap	   ,1		)
+	SYSMAP(caddr_t		,XXX_mmap	,vmmap	   ,1		)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
 	virtual_avail = va;
 #endif
