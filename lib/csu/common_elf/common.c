@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.10 2000/06/16 20:52:49 christos Exp $ */
+/* $NetBSD: common.c,v 1.11 2000/07/03 23:01:01 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -67,9 +67,9 @@ _rtld_setup(cleanup, obj)
 {
 
 	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
-		_FATAL("Corrupt Obj_Entry pointer in GOT");
+		_FATAL("Corrupt Obj_Entry pointer in GOT\n");
 	if (obj->version != RTLD_VERSION)
-		_FATAL("Dynamic linker version mismatch");
+		_FATAL("Dynamic linker version mismatch\n");
 
 	atexit(cleanup);
 }
