@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.8 1994/07/26 19:42:40 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.9 1994/10/09 16:44:01 mycroft Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
@@ -8,7 +8,7 @@
 _SUBDIRUSE: .USE
 .if defined(SUBDIR)
 	@for entry in ${SUBDIR}; do \
-		(if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
+		(set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
 			echo "===> $${entry}.${MACHINE}"; \
 			cd ${.CURDIR}/$${entry}.${MACHINE}; \
 		else \
@@ -19,7 +19,7 @@ _SUBDIRUSE: .USE
 	done
 
 ${SUBDIR}::
-	@if test -d ${.TARGET}.${MACHINE}; then \
+	@set -e; if test -d ${.CURDIR}/${.TARGET}.${MACHINE}; then \
 		cd ${.CURDIR}/${.TARGET}.${MACHINE}; \
 	else \
 		cd ${.CURDIR}/${.TARGET}; \
