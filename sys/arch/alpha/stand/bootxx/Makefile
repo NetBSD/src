@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/09/23 04:33:03 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/10/18 06:02:02 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -28,7 +28,7 @@ ${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
 	dd if=${BOOT_PROG}.nohdr of=${BOOT_PROG} bs=`expr 15 \* 512` conv=sync
 
 install:
-	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
+	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
 	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
 clean: _SUBDIRUSE

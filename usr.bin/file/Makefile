@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1996/10/05 20:20:24 christos Exp $
+#	$Id: Makefile,v 1.8 1996/10/18 06:14:17 thorpej Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	bin
@@ -22,7 +22,7 @@ magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
 
 afterinstall:
-	install ${COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
+	${INSTALL} ${COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
 		$(DESTDIR)$(MAGIC)
 
 .include <bsd.prog.mk>
