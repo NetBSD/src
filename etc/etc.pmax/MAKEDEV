@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 1997/11/28 03:11:58 mhitch Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1997/12/01 22:42:20 mhitch Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -51,6 +51,7 @@ case $i in
 
 all)
 	sh $0 std fd rz0 rz1 rz2 rz3 rz4 tz0 tz1
+	sh $0 rz8 rz9 rz10 rz11 rz12 tz2 tz3
 	sh $0 dc0 scc0 
 	sh $0 pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	sh $0 tun0 tun1 tun2 tun3
