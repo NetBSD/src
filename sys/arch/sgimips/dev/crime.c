@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.9 2003/01/03 09:09:21 rafal Exp $	*/
+/*	$NetBSD: crime.c,v 1.10 2003/01/06 06:19:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -49,6 +49,7 @@
 
 #include <dev/pci/pcivar.h>
 
+#include <sgimips/dev/macereg.h>
 #include <sgimips/dev/crimereg.h>
 
 #include "locators.h"
@@ -60,6 +61,13 @@ void		crime_intr(u_int);
 
 CFATTACH_DECL(crime, sizeof(struct device),
     crime_match, crime_attach, NULL, NULL);
+
+#define CRIME_NINTR 32 	/* XXX */
+
+struct {
+	int	(*func)(void *);
+	void	*arg;
+} crime[CRIME_NINTR];
 
 static int
 crime_match(parent, match, aux)
@@ -92,6 +100,8 @@ crime_attach(parent, self, aux)
 	id = (crm_id & 0xf0) >> 4;
 	rev = crm_id & 0x0f;
 
+	aprint_naive(": system ASIC");
+
 	switch (id) {
 	case 0x0b:
 		aprint_normal(": rev 1.5");
@@ -116,24 +126,19 @@ crime_attach(parent, self, aux)
 	}
 
 	aprint_normal(" (CRIME_ID: %llx)\n", crm_id);
-#if 0
-	*(volatile u_int64_t *)0xb4000018 = 0xffffffffffffffff;
-#else
-	/* enable all mace interrupts, but no crime devices */
-	*(volatile u_int64_t *)0xb4000018 = 0x000000000000ffff;
-#endif
+
+	/* All interrupts off.  Turned on as we register devices */
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTSTAT) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_SOFTINT) = 0;
+	*(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_HARDINT) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_STATUS) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = 0;
 }
 
 /*
- * XXX
+ * XXX: sharing interrupts?
  */
-
-#define CRIME_NINTR 32 	/* XXX */
-
-struct {
-	int	(*func)(void *);
-	void	*arg;
-} crime[CRIME_NINTR];
 
 void *
 crime_intr_establish(irq, type, level, func, arg)
@@ -143,21 +148,13 @@ crime_intr_establish(irq, type, level, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
-	int i;
+	if (crime[irq].func != NULL)
+		return NULL;	/* panic("Cannot share CRIME interrupts!"); */
 
-	for (i = 0; i <= CRIME_NINTR; i++) {
-		if (i == CRIME_NINTR)
-			panic("too many IRQs");
+	crime[irq].func = func;
+	crime[irq].arg = arg;
 
-		if (crime[i].func != NULL)
-			continue;
-
-		crime[i].func = func;
-		crime[i].arg = arg;
-		break;
-	}
-
-	return (void *)-1;
+	return (void *)&crime[irq];
 }
 
 void
