@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.4 2001/11/13 20:00:30 briggs Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.5 2001/11/17 22:14:17 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,12 +39,15 @@
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
 #include <sys/user.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
+
+extern struct pool siginfo_pool;
 
 /*
  * Set set up registers on exec.
@@ -207,10 +210,10 @@ cpu_upcall(struct lwp *lwp)
 	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
 	struct trapframe *tf;
+	void *ap;
 	void *stack;
 	ucontext_t u, *up;
 	int i, nsas, nevents, nint;
-	int x, y;
 
 	tf = trapframe(lwp);
 
@@ -253,7 +256,7 @@ cpu_upcall(struct lwp *lwp)
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout activation ucontext"
 		    " for %d.%d\n", lwp->l_proc->p_pid, lwp->l_lid);
@@ -269,23 +272,35 @@ cpu_upcall(struct lwp *lwp)
 	for (i = nsas - 1; i >= 0; i--) {
 		sap--;
 		sapp--;
-		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
-		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
+		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
+		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
 			/* Copying onto the stack didn't work.  Die. */
-			pool_put(&saupcall_pool, sau);
+			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 			printf("cpu_upcall: couldn't copyout sa_t %d for "
-			    "%d.%d (x=%d, y=%d)\n",
-			    i, lwp->l_proc->p_pid, lwp->l_lid, x, y);
+			    "%d.%d\n", i, lwp->l_proc->p_pid, lwp->l_lid);
 #endif
 			sigexit(lwp, SIGILL);
 			/* NOTREACHED */
 		}
 	}
 
-	sf = (struct saframe *)sapp - 1;
+	/* Copy out the sau_arg onto the stack */
+	if (sau->sau_arg) {
+		ap = (char *) sapp - sau->sau_argsize;
+		sf = (struct saframe *) ap - 1;
+		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
+			/* Copying onto the stack didn't work.  Die. */
+			sadata_upcall_free(sau);
+			sigexit(lwp, SIGILL);
+			/* NOTREACHED */
+		}
+	} else {
+		ap = 0;
+		sf = (struct saframe *) sapp - 1;
+	}
 
-	frame.r1 = (int)sapp - 16;
+	frame.r1 = (int)sapp - sizeof(struct saframe);
 	frame.lr = 0; /* used by callee */
 	frame.fill[0] = frame.fill[1] = 0;
 
@@ -298,12 +313,9 @@ cpu_upcall(struct lwp *lwp)
 	tf->fixreg[4] = (int)sapp;
 	tf->fixreg[5] = (int)nevents;
 	tf->fixreg[6] = (int)nint;
-	tf->fixreg[7] = (int)sau->sau_sig;
-	tf->fixreg[8] = (int)sau->sau_code;
-	tf->fixreg[9] = (int)sau->sau_arg;
+	tf->fixreg[7] = (int)ap;
 	tf->srr0 = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
 	    (caddr_t)upcallcode - (caddr_t)sigcode));
 
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.2 2001/11/05 19:46:18 briggs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.3 2001/11/17 22:14:17 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,14 +61,6 @@ sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
-
-	if (p->p_flag & P_SA) {
-		if (code)
-			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code, NULL);
-		else
-			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
-		return;
-	}
 
 	tf = trapframe(l);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.2 2001/11/05 19:46:19 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.3 2001/11/17 22:14:17 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -447,9 +447,9 @@ brain_damage2:
 		frame->srr1 &= ~PSL_VEC;
 #endif
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
@@ -717,19 +717,17 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(arg)
-	void *arg;
+upcallret(struct lwp *l)
 {
-	struct lwp *l = curproc;
 	int sig;
 
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	/* If our process is on the way out, die. */
-	if (l->l_proc->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (l->l_proc->p_userret)
+		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
