@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.3 1999/02/02 23:47:35 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.4 1999/02/10 16:05:13 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -729,6 +729,11 @@ _intiotrap:
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _lev1intr:
