@@ -1,9 +1,9 @@
-/*	$NetBSD: pmap.c,v 1.118 2002/09/27 15:35:42 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2002/11/11 08:58:05 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
  * Copyright (c) 2001 Richard Earnshaw
- * Copyright (c) 2001 Christopher Gilbert
+ * Copyright (c) 2001-2002 Christopher Gilbert
  * All rights reserved.
  *
  * 1. Redistributions of source code must retain the above copyright
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2002/09/27 15:35:42 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2002/11/11 08:58:05 chris Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -1414,7 +1414,6 @@ static int
 pmap_allocpagedir(struct pmap *pmap)
 {
 	vaddr_t vptpt;
-	paddr_t pa;
 	struct l1pt *pt;
 	u_int gen;
 
@@ -1439,9 +1438,6 @@ pmap_allocpagedir(struct pmap *pmap)
 
 	/* Store the pointer to the l1 descriptor in the pmap. */
 	pmap->pm_l1pt = pt;
-
-	/* Get the physical address of the start of the l1 */
-	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pt->pt_plist));
 
 	/* Store the virtual address of the l1 in the pmap. */
 	pmap->pm_pdir = (pd_entry_t *)pt->pt_va;
