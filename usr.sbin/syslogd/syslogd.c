@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.13 1997/09/13 07:53:10 enami Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.14 1997/09/15 03:25:42 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -654,7 +654,6 @@ fprintlog(f, flags, msg)
 			     (struct sockaddr *)&f->f_un.f_forw.f_addr,
 			     sizeof(f->f_un.f_forw.f_addr)) != l)) {
 			int e = errno;
-			(void)close(f->f_file);
 			f->f_type = F_UNUSED;
 			errno = e;
 			logerror("sendto");
@@ -902,7 +901,6 @@ init(signo)
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
-		case F_FORW:
 			(void)close(f->f_file);
 			break;
 		}
