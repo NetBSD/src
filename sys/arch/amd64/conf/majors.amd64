@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.7 2003/10/15 18:27:20 jdolecek Exp $
+#	$NetBSD: majors.amd64,v 1.8 2003/10/22 16:53:22 jdolecek Exp $
 #
 # Device majors for amd64
 #
@@ -80,6 +80,7 @@ device-major	agp		char 82			agp
 device-major	pci		char 83			pci
 device-major	irframe		char 84			irframe
 device-major	ksyms		char 85			ksyms
+device-major	wsfont		char 86			wsfont
 
 device-major	nsmb		char 98			nsmb		
 
