@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.6 1998/07/01 17:16:47 mjacob Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.7 1998/07/11 00:52:09 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -79,7 +79,7 @@ atapi_interpret_sense(xs)
 	}
 	/* otherwise use the default */
 	switch (key) {
-		case SKEY_RECOVERABLE_ERROR:
+		case SKEY_RECOVERED_ERROR:
 			msg = "soft error (corrected)";
 		case SKEY_NO_SENSE:
 			if (xs->resid == xs->datalen)
