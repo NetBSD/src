@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.9 2000/01/25 19:29:19 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.10 2000/01/25 21:50:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,6 @@
  * TODO:
  *
  *	- power management
- *	- add support for the Xircom clone
  */
 
 #include "opt_inet.h"
@@ -138,9 +137,14 @@ const struct tulip_cardbus_product {
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
 	  TULIP_CHIP_21142,		0xe0 },
 
+	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	  TULIP_CHIP_X3201_3,		0xe0 },
+
 	{ 0,				0,
 	  TULIP_CHIP_INVALID,		0 },
 };
+
+void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
 
 const struct tulip_cardbus_product *tlp_cardbus_lookup
     __P((const struct cardbus_attach_args *));
@@ -210,6 +214,13 @@ tlp_cardbus_attach(parent, self, aux)
 	sc->sc_regshift = 3;
 
 	/*
+	 * Some chips have a 128 byte SROM (6 address bits), and some
+	 * have a 512 byte SROM (8 address bits).  Default to 6; we'll
+	 * adjust below.
+	 */
+	sc->sc_srom_addrbits = 6;
+
+	/*
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
@@ -217,6 +228,12 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_21143;
+		if (sc->sc_rev >= 0x41) {
+			/*
+			 * 21143 rev. 4.1 has a larger SROM.
+			 */
+			sc->sc_srom_addrbits = 8;
+		}
 		break;
 
 	default:
@@ -234,6 +251,7 @@ tlp_cardbus_attach(parent, self, aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
+	case TULIP_CHIP_X3201_3:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -315,28 +333,34 @@ tlp_cardbus_attach(parent, self, aux)
 	}
 
 	/*
-	 * Read the contents of the Ethernet Address ROM/SROM.  Some
-	 * chips have a 128 byte SROM (6 address bits), and some
-	 * have a 512 byte SROM (8 address bits).
+	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
-	sc->sc_srom_addrbits = 6;
- try_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
-	tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
-	    sc->sc_srom);
-#if 0
-	{
-		int i;
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_X3201_3:
+		/*
+		 * No SROM on this chip.
+		 */
+		break;
 
-		printf("SROM CONTENTS:");
-		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
-			if ((i % 8) == 0)
-				printf("\n\t");
-			printf("0x%02x ", sc->sc_srom[i]);
+	default:
+		tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
+		    sc->sc_srom);
+#if 0
+		{
+			int i;
+
+			printf("SROM CONTENTS:");
+			for (i = 0; i <
+			    TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
+				if ((i % 8) == 0)
+					printf("\n\t");
+				printf("0x%02x ", sc->sc_srom[i]);
+			}
+			printf("\n");
 		}
-		printf("\n");
-	}
 #endif
+	}
 
 	/*
 	 * Deal with chip/board quirks.  This includes setting up
@@ -368,17 +392,19 @@ tlp_cardbus_attach(parent, self, aux)
 			goto cant_cope;
 		break;
 
+	case TULIP_CHIP_X3201_3:
+		/*
+		 * The X3201 doens't have an SROM.  Lift the MAC address
+		 * from the CIS.  Also, we have a special media switch:
+		 * MII-on-SIO, plus some special GPIO setup.
+		 */
+		memcpy(enaddr, ca->ca_cis.funce.network.netid, sizeof(enaddr));
+		sc->sc_reset = tlp_cardbus_x3201_reset;
+		sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		break;
+
 	default:
  cant_cope:
-		/*
-		 * Try reading it again, with larger SROM
-		 * size, if we haven't already.
-		 */
-		if (sc->sc_srom_addrbits != 8) {
-			sc->sc_srom_addrbits = 8;
-			goto try_again;
-		}
-
 		printf("%s: sorry, unable to handle your board\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -401,4 +427,18 @@ tlp_cardbus_attach(parent, self, aux)
 	 * Finish off the attach.
 	 */
 	tlp_attach(sc, enaddr);
+}
+
+void
+tlp_cardbus_x3201_reset(sc)
+	struct tulip_softc *sc;
+{
+	u_int32_t reg;
+
+	reg = TULIP_READ(sc, CSR_SIAGEN);
+
+	/* make GP[2,0] outputs */
+	TULIP_WRITE(sc, CSR_SIAGEN, (reg & ~SIAGEN_MD) | SIAGEN_CWE |
+	    0x00050000);
+	TULIP_WRITE(sc, CSR_SIAGEN, (reg & ~SIAGEN_CWE) | SIAGEN_MD);
 }
