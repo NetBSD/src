@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.4 1993/11/27 01:06:20 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.5 1993/11/28 11:26:01 mycroft Exp $
  */
 
 /*
@@ -116,24 +116,22 @@ struct aha_cmd_buf {
 /*
  * Mail box defs 
  */
-
 #define AHA_MBX_SIZE		16	/* mail box size */
 
 struct aha_mbx {
 	struct aha_mbx_out {
-		unsigned char cmd;
-		unsigned char ccb_addr[3];
+		u_char cmd;
+		u_char ccb_addr[3];
 	} mbo[AHA_MBX_SIZE];
 	struct aha_mbx_in {
-		unsigned char stat;
-		unsigned char ccb_addr[3];
+		u_char stat;
+		u_char ccb_addr[3];
 	} mbi[AHA_MBX_SIZE];
 };
 
 /*
  * mbo.cmd values
  */
-
 #define AHA_MBO_FREE	0x0	/* MBO entry is free */
 #define AHA_MBO_START	0x1	/* MBO activate entry */
 #define AHA_MBO_ABORT	0x2	/* MBO abort entry */
@@ -141,7 +139,6 @@ struct aha_mbx {
 /*
  * mbi.stat values
  */
-
 #define AHA_MBI_FREE	0x0	/* MBI entry is free */
 #define AHA_MBI_OK	0x1	/* completed without error */
 #define AHA_MBI_ABORT	0x2	/* aborted ccb */
@@ -153,25 +150,25 @@ struct aha_mbx {
 				/* allow 64 K i/o (min) */
 
 struct aha_ccb {
-	unsigned char opcode;
-	unsigned char lun:3;
-	unsigned char data_in:1;	/* must be 0 */
-	unsigned char data_out:1;	/* must be 0 */
-	unsigned char target:3;
-	unsigned char scsi_cmd_length;
-	unsigned char req_sense_length;
-	unsigned char data_length[3];
-	unsigned char data_addr[3];
-	unsigned char link_addr[3];
-	unsigned char link_id;
-	unsigned char host_stat;
-	unsigned char target_stat;
-	unsigned char reserved[2];
+	u_char opcode;
+	u_char lun:3;
+	u_char data_in:1;	/* must be 0 */
+	u_char data_out:1;	/* must be 0 */
+	u_char target:3;
+	u_char scsi_cmd_length;
+	u_char req_sense_length;
+	u_char data_length[3];
+	u_char data_addr[3];
+	u_char link_addr[3];
+	u_char link_id;
+	u_char host_stat;
+	u_char target_stat;
+	u_char reserved[2];
 	struct scsi_generic scsi_cmd;
 	struct scsi_sense_data scsi_sense;
 	struct aha_scat_gath {
-		unsigned char seg_len[3];
-		unsigned char seg_addr[3];
+		u_char seg_len[3];
+		u_char seg_addr[3];
 	} scat_gath[AHA_NSEG];
 	struct aha_ccb *next;
 	struct scsi_xfer *xfer;	/* the scsi_xfer for this cmd */
@@ -271,7 +268,6 @@ struct	aha_extbios
 
 #define PHYSTOKV(x)	(((long int)(x)) ^ aha->kv_phys_xor)
 #define KVTOPHYS(x)	vtophys(x)
-#define	AHA_DMA_PAGES	AHA_NSEG
 
 u_char  aha_scratch_buf[256];
 #ifdef	AHADEBUG
@@ -294,21 +290,28 @@ struct aha_data {
 	struct aha_mbx aha_mbx;			/* all the mailboxes */
 	struct aha_ccb *aha_ccb_free;		/* the next free ccb */
 	struct aha_ccb aha_ccb[AHA_MBX_SIZE];	/* all the CCBs */
-	int     aha_int;			/* our irq level */
-	int     aha_dma;			/* out DMA req channel */
-	int     aha_scsi_dev;			/* ourscsi bus address */
+	int aha_int;				/* our irq level */
+	int aha_dma;				/* out DMA req channel */
+	int aha_scsi_dev;			/* ourscsi bus address */
 	struct scsi_link sc_link;		/* prototype for subdevs */
-} *ahadata[NAHA];
+}	*ahadata[NAHA];
 
-struct aha_ccb *aha_get_ccb();
-int	ahaprobe();
-void	aha_done();
-void	ahaattach();
-int	ahaintr();
-int	aha_scsi_cmd();
-void	aha_timeout();
-void	ahaminphys();
-u_int	aha_adapter_info();
+int aha_cmd();	/* XXX must be varargs to prototype */
+int ahaprobe __P((struct device *, struct cfdata *, void *));
+void ahaattach __P((struct device *, struct device *, void *));
+u_int aha_adapter_info __P((struct aha_data *));
+int ahaintr __P((void *));
+void aha_free_ccb __P((struct aha_data *, struct aha_ccb *, int));
+struct aha_ccb *aha_get_ccb __P((struct aha_data *, int));
+void aha_done __P((struct aha_data *, struct aha_ccb *));
+int aha_find __P((struct aha_data *));
+void aha_init __P((struct aha_data *));
+void ahaminphys __P((struct buf *));
+int aha_scsi_cmd __P((struct scsi_xfer *));
+int aha_poll __P((struct aha_data *, struct scsi_xfer *, struct aha_ccb *));
+int aha_set_bus_speed __P((struct aha_data *));
+int aha_bus_speed_check __P((struct aha_data *, int));
+void aha_timeout __P((caddr_t));
 
 struct scsi_adapter aha_switch =
 {
@@ -430,7 +433,7 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 				break;
 			delay(50);
 		}
-		if (i == 0) {
+		if (!i) {
 			printf("%s: aha_cmd, cmd/data port full\n",
 				aha->sc_dev.dv_xname);
 			outb(AHA_CTRL_STAT_PORT, AHA_SRST);
@@ -450,7 +453,7 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 				break;
 			delay(50);
 		}
-		if (i == 0) {
+		if (!i) {
 			printf("%s: aha_cmd, cmd/data port empty %d\n",
 				aha->sc_dev.dv_xname, ocnt);
 			return ENXIO;
@@ -465,12 +468,11 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 	i = 20000;
 	while (--i) {
 		sts = inb(AHA_INTR_PORT);
-		if (sts & AHA_HACC) {
+		if (sts & AHA_HACC)
 			break;
-		}
 		delay(50);
 	}
-	if (i == 0) {
+	if (!i) {
 		printf("%s: aha_cmd, host not finished(0x%x)\n",
 			aha->sc_dev.dv_xname, sts);
 		return ENXIO;
@@ -638,11 +640,12 @@ aha_adapter_info(aha)
  * Catch an interrupt from the adaptor
  */
 int
-ahaintr(aha)
-	struct aha_data *aha;
+ahaintr(arg)
+	void *arg;
 {
+	struct aha_data *aha = arg;
 	struct aha_ccb *ccb;
-	unsigned char stat;
+	u_char stat;
 	register i;
 
 #ifdef	AHADEBUG
@@ -726,7 +729,7 @@ aha_free_ccb(aha, ccb, flags)
 	struct aha_ccb *ccb;
 	int flags;
 {
-	unsigned int opri;
+	int opri;
 
 	if (!(flags & SCSI_NOMASK))
 		opri = splbio();
@@ -735,11 +738,12 @@ aha_free_ccb(aha, ccb, flags)
 	aha->aha_ccb_free = ccb;
 	ccb->flags = CCB_FREE;
 	/*
-	 * If there were none, wake anybody waiting for
-	 * one to come free, starting with queued entries
+	 * If there were none, wake anybody waiting for one to come free,
+	 * starting with queued entries.
 	 */
 	if (!ccb->next)
 		wakeup((caddr_t)&aha->aha_ccb_free);
+
 	if (!(flags & SCSI_NOMASK))
 		splx(opri);
 }
@@ -752,7 +756,7 @@ aha_get_ccb(aha, flags)
 	struct aha_data *aha;
 	int flags;
 {
-	unsigned opri;
+	int opri;
 	struct aha_ccb *rc;
 
 	if (!(flags & SCSI_NOMASK))
@@ -794,8 +798,8 @@ aha_done(aha, ccb)
 		printf("%s: exiting but not in use!\n", aha->sc_dev.dv_xname);
 		Debugger();
 	}
-	if (((ccb->host_stat != AHA_OK) || (ccb->target_stat != SCSI_OK))
-	    && ((xs->flags & SCSI_ERR_OK) == 0)) {
+	if ((ccb->host_stat != AHA_OK || ccb->target_stat != SCSI_OK)
+	    && (!(xs->flags & SCSI_ERR_OK))) {
 		/*
 		 * We have an error, that we cannot ignore.
 		 */
@@ -850,11 +854,11 @@ int
 aha_find(aha)
 	struct aha_data *aha;
 {
-	unsigned char ad[3];
+	u_char ad[3];
 	volatile int i, sts;
-	struct	aha_config conf;
-	struct	aha_inquire inquire;
-	struct	aha_extbios extbios;
+	struct aha_config conf;
+	struct aha_inquire inquire;
+	struct aha_extbios extbios;
 
 	/*
 	 * reset board, If it doesn't respond, assume 
@@ -869,7 +873,7 @@ aha_find(aha)
 			break;
 		delay(1000);	/* calibrated in msec */
 	}
-	if (i == 0) {
+	if (!i) {
 #ifdef	AHADEBUG
 		if (aha_debug)
 			printf("aha_find: No answer from adaptec board\n");
@@ -945,9 +949,10 @@ aha_find(aha)
 		aha->aha_dma = 7;
 		break;
 	default:
-		printf("illegal dma jumper setting\n");
+		printf("illegal dma setting %x\n", conf.chan);
 		return EIO;
 	}
+
 	switch (conf.intr) {
 	case INT9:
 		aha->aha_int = 9;
@@ -968,7 +973,7 @@ aha_find(aha)
 		aha->aha_int = 15;
 		break;
 	default:
-		printf("illegal int jumper setting\n");
+		printf("illegal int setting %x\n", conf.intr);
 		return EIO;
 	}
 
@@ -1000,7 +1005,7 @@ void
 aha_init(aha)
 	struct aha_data *aha;
 {
-	unsigned char ad[4];
+	u_char ad[4];
 	volatile int i;
 
 	/*
@@ -1037,9 +1042,8 @@ ahaminphys(bp)
 }
 
 /*
- * start a scsi operation given the command and
- * the data address. Also needs the unit, target
- * and lu
+ * start a scsi operation given the command and the data address. Also needs
+ * the unit, target and lu.
  */
 int 
 aha_scsi_cmd(xs)
@@ -1059,7 +1063,7 @@ aha_scsi_cmd(xs)
 	struct iovec *iovp;
 	int s;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
+	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
 	/*
 	 * get a ccb (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -1103,9 +1107,8 @@ aha_scsi_cmd(xs)
 			while ((datalen) && (seg < AHA_NSEG)) {
 				lto3b(iovp->iov_base, sg->seg_addr);
 				lto3b(iovp->iov_len, sg->seg_len);
-				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)"
-					,iovp->iov_len
-					,iovp->iov_base));
+				SC_DEBUGN(sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)",
+					iovp->iov_len, iovp->iov_base));
 				sg++;
 				iovp++;
 				seg++;
@@ -1118,7 +1121,7 @@ aha_scsi_cmd(xs)
 			 * Set up the scatter gather block
 			 */
 
-			SC_DEBUG(xs->sc_link, SDEV_DB4,
+			SC_DEBUG(sc_link, SDEV_DB4,
 				("%d @0x%x:- ", xs->datalen, xs->data));
 			datalen = xs->datalen;
 			thiskv = (int) xs->data;
@@ -1130,7 +1133,7 @@ aha_scsi_cmd(xs)
 				/* put in the base address */
 				lto3b(thisphys, sg->seg_addr);
 
-				SC_DEBUGN(xs->sc_link, SDEV_DB4,
+				SC_DEBUGN(sc_link, SDEV_DB4,
 					("0x%x", thisphys));
 
 				/* do it at least once */
@@ -1151,8 +1154,7 @@ aha_scsi_cmd(xs)
 						return HAD_ERROR;
 					}
 					/** how far to the end of the page ***/
-					nextphys = (thisphys & ~PGOFSET) +
-						   NBPG;
+					nextphys = (thisphys & ~PGOFSET) + NBPG;
 					bytes_this_page = nextphys - thisphys;
 					/**** or the data ****/
 					bytes_this_page = min(bytes_this_page,
@@ -1160,7 +1162,7 @@ aha_scsi_cmd(xs)
 					bytes_this_seg += bytes_this_page;
 					datalen -= bytes_this_page;
 
-					/**** get more ready for the next page ****/
+					/* get more ready for the next page */
 					thiskv = (thiskv & ~PGOFSET) + NBPG;
 					if (datalen)
 						thisphys = KVTOPHYS(thiskv);
@@ -1168,7 +1170,7 @@ aha_scsi_cmd(xs)
 				/*
 				 * next page isn't contiguous, finish the seg
 				 */
-				SC_DEBUGN(xs->sc_link, SDEV_DB4,
+				SC_DEBUGN(sc_link, SDEV_DB4,
 					("(0x%x)", bytes_this_seg));
 				lto3b(bytes_this_seg, sg->seg_len);
 				sg++;
@@ -1176,9 +1178,12 @@ aha_scsi_cmd(xs)
 			}
 		}
 		lto3b(seg * sizeof(struct aha_scat_gath), ccb->data_length);
-		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
+		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
 
-		if (datalen) {	/* there's still data, must have run out of segs! */
+		if (datalen) {
+			/*
+			 * there's still data, must have run out of segs!
+			 */
 			printf("%s: aha_scsi_cmd, more than %d DMA segs\n",
 				aha->sc_dev.dv_xname, AHA_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1190,6 +1195,7 @@ aha_scsi_cmd(xs)
 		lto3b(0, ccb->data_length);
 	}
 	lto3b(0, ccb->link_addr);
+
 	/*
 	 * Put the scsi command in the ccb and start it
 	 */
@@ -1203,11 +1209,11 @@ aha_scsi_cmd(xs)
 		 * Usually return SUCCESSFULLY QUEUED
 		 */
 		splx(s);
-		SC_DEBUG(xs->sc_link, SDEV_DB3, ("sent\n"));
+		SC_DEBUG(sc_link, SDEV_DB3, ("sent\n"));
 		return SUCCESSFULLY_QUEUED;
 	}
 	aha_startmbx(ccb->mbx);
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd sent, waiting\n"));
+	SC_DEBUG(sc_link, SDEV_DB3, ("cmd sent, waiting\n"));
 
 	/*
 	 * If we can't use interrupts, poll on completion
@@ -1228,7 +1234,7 @@ aha_poll(aha, xs, ccb)
 	int count = xs->timeout;
 	u_char stat;
 
-	/*timeouts are in msec, so we loop in 1000uSec cycles */
+	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
 		/*
 		 * If we had interrupts enabled, would we
@@ -1242,18 +1248,17 @@ aha_poll(aha, xs, ccb)
 		delay(1000);	/* only happens in boot so ok */
 		count--;
 	}
-	if (count == 0) {
+	if (!count) {
 		/*
-		 * We timed out, so call the timeout handler
-		 * manually, accout  for the fact that the
-		 * clock is not running yet by taking out the 
-		 * clock queue entry it makes
+		 * We timed out, so call the timeout handler manually,
+		 * accounting for the fact that the clock is not running yet
+		 * by taking out the clock queue entry it makes.
 		 */
 		aha_timeout((caddr_t)ccb);
 
 		/*
-		 * because we are polling,
-		 * take out the timeout entry aha_timeout made
+		 * because we are polling, take out the timeout entry
+		 * aha_timeout made
 		 */
 		untimeout(aha_timeout, (caddr_t)ccb);
 		count = 2000;
@@ -1269,7 +1274,7 @@ aha_poll(aha, xs, ccb)
 			delay(1000);	/* only happens in boot so ok */
 			count--;
 		}
-		if (count == 0) {
+		if (!count) {
 			/*
 			 * We timed out again.. this is bad
 			 * Notice that this time there is no
@@ -1297,7 +1302,7 @@ static	struct bus_speed
 {
 	char	arg;
 	int	nsecs;
-}aha_bus_speeds[] =
+}	aha_bus_speeds[] =
 {
 	{0x88,100},
 	{0x99,150},
@@ -1426,6 +1431,7 @@ aha_timeout(arg)
 		printf("\nadapter not taking commands.. frozen?!\n");
 		Debugger();
 	}
+
 	/*
 	 * If it has been through before, then
 	 * a previous abort has failed, don't
@@ -1433,7 +1439,7 @@ aha_timeout(arg)
 	 */
 	if (ccb->flags == CCB_ABORTED) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		printf("AGAIN\n");
 		ccb->xfer->retries = 0;		/* I MEAN IT ! */
 		ccb->host_stat = AHA_ABORTED;
 		aha_done(aha, ccb);
@@ -1442,7 +1448,8 @@ aha_timeout(arg)
 		printf("\n");
 		aha_abortmbx(ccb->mbx);
 		/* 4 secs for the abort */
-		timeout(aha_timeout, (caddr_t)ccb, 4 * hz);
+		timeout(aha_timeout, (caddr_t)ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
-	} splx(s);
+	}
+	splx(s);
 }
