@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)devname.c	5.14 (Berkeley) 5/6/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/Attic/devname.c,v 1.3 1993/03/23 00:26:25 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/Attic/devname.c,v 1.4 1993/04/21 08:14:39 proven Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ devname(dev, type)
 	DBT data, key;
 
 	if (!db && !failure &&
-	    !(db = hash_open(_PATH_DEVDB, O_RDONLY, 0, NULL))) {
+	    !(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
 		(void)fprintf(stderr,
 		    "warning: no device database %s\n", _PATH_DEVDB);
 		failure = 1;
