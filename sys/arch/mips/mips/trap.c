@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 1997/06/17 04:11:33 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 1997/06/20 05:15:36 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1052,6 +1052,7 @@ trapDump(msg)
 {
 	register int i;
 	int s;
+	int cause;
 
 	s = splhigh();
 	printf("trapDump(%s)\n", msg);
@@ -1062,10 +1063,10 @@ trapDump(msg)
 			trp--;
 		if (trp->cause == 0)
 			break;
-		/* XXX mips3 cause is strictly bigger than mips1 */
+		cause = (trp->cause & ((CPUISMIPS3) ?
+		    MIPS3_CR_EXC_CODE : MIPS1_CR_EXC_CODE);
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
-				MACH_CR_EXC_CODE_SHIFT],
+			trap_type[cause >> MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
