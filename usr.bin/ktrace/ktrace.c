@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.5 1997/07/23 05:42:55 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: ktrace.c,v 1.5 1997/07/23 05:42:55 mikel Exp $");
 #endif
-static char *rcsid = "$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,13 +57,17 @@ static char *rcsid = "$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $";
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "ktrace.h"
 
-void no_ktrace __P((int));
-void usage __P((void));
+int	main __P((int, char **));
+int	rpid __P((char *));
+void	usage __P((void));
+void	no_ktrace __P((int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -73,9 +78,12 @@ main(argc, argv)
 
 	clear = NOTSET;
 	append = ops = pidset = inherit = 0;
+#ifdef __GNUC__
+	pid = 0;		/* XXX gcc -Wuninitialized */
+#endif
 	trpoints = DEF_POINTS;
 	tracefile = DEF_TRACEFILE;
-	while ((ch = getopt(argc,argv,"aCcdf:g:ip:t:")) != EOF)
+	while ((ch = getopt(argc,argv,"aCcdf:g:ip:t:")) != -1)
 		switch((char)ch) {
 		case 'a':
 			append = 1;
@@ -117,7 +125,7 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 	
-	if (pidset && *argv || !pidset && !*argv)
+	if ((pidset && *argv) || (!pidset && !*argv))
 		usage();
 			
 	if (inherit)
@@ -153,6 +161,7 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 rpid(p)
 	char *p;
 {
