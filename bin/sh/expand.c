@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.35 1998/02/05 08:32:00 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.36 1998/02/17 00:16:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.35 1998/02/05 08:32:00 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.36 1998/02/17 00:16:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,13 +144,12 @@ expandarg(arg, arglist, flag)
 {
 	struct strlist *sp;
 	char *p;
-	int recorded;
 
 	argbackq = arg->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
 	ifslastp = NULL;
-	recorded = argstr(arg->narg.text, flag);
+	(void)argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		return;			/* here document expanded */
 	}
@@ -161,10 +160,6 @@ expandarg(arg, arglist, flag)
 	 * TODO - EXP_REDIR
 	 */
 	if (flag & EXP_FULL) {
-		if (!recorded && (flag & EXP_RECORD)) {
-			ifsfree();
-			recordregion(0, expdest - p - 1, 0);
-		}
 		ifsbreakup(p, &exparg);
 		*exparg.lastp = NULL;
 		exparg.lastp = &exparg.list;
@@ -578,7 +573,10 @@ again: /* jump here after setting a variable with ${var=text} */
 			set = 1;
 	}
 	varlen = 0;
-	startloc = expdest - stackblock();
+	if (flag & EXP_RECORD)
+		startloc = 0;
+	else
+		startloc = expdest - stackblock();
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
