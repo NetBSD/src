@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.7 2003/01/08 20:26:41 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.8 2003/01/08 20:41:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 
 #define	condattr_t		pthread_condattr_t
 
-#define	rwlock_t		pthread_mutex_t
+#define	rwlock_t		pthread_rwlock_t
 #define	RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
 
 #define	rwlockattr_t		pthread_rwlockattr_t
