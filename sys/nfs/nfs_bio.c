@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.17 1994/07/20 04:16:01 mycroft Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.18 1995/01/10 06:50:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -283,6 +283,8 @@ again:
 		on = 0;
 		break;
 	    case VDIR:
+		if (uio->uio_resid < NFS_DIRBLKSIZ)
+			return (0);
 		nfsstats.biocache_readdirs++;
 		bn = (daddr_t)uio->uio_offset;
 		bp = nfs_getcacheblk(vp, bn, NFS_DIRBLKSIZ, p);
