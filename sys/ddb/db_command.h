@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.5 1994/06/29 06:31:03 cgd Exp $	*/
+/*	$NetBSD: db_command.h,v 1.6 1994/10/09 08:19:34 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,10 +36,10 @@
 #include <sys/proc.h>
 #include <machine/db_machdep.h>
 
-extern void	db_command_loop();
-extern void	db_skip_to_eol();
+void db_command_loop __P((void));
+void db_skip_to_eol __P((void));
 
-extern void	db_error(/* char * */);	/* report error */
+void db_error __P((char *));	/* report error */
 
 extern db_addr_t	db_dot;		/* current location */
 extern db_addr_t	db_last_addr;	/* last explicit address typed */
