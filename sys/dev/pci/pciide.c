@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.172 2002/09/30 20:37:58 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.173 2002/10/02 16:51:51 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.172 2002/09/30 20:37:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.173 2002/10/02 16:51:51 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -630,7 +630,7 @@ int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
-    pciide_match, pciide_attach, NULL, NULL)
+    pciide_match, pciide_attach, NULL, NULL);
 
 int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
 int	pciide_mapregs_compat __P(( struct pci_attach_args *,

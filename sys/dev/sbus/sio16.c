@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.9 2002/09/30 23:07:08 thorpej Exp $	*/
+/*	$NetBSD: sio16.c,v 1.10 2002/10/02 16:52:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.9 2002/09/30 23:07:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.10 2002/10/02 16:52:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,7 +92,7 @@ struct sio16_softc {
 };
 
 CFATTACH_DECL(siosixteen, sizeof(struct sio16_softc),
-    sio16_match, sio16_attach, NULL, NULL)
+    sio16_match, sio16_attach, NULL, NULL);
 
 struct sio16_attach_args {
 	bus_space_tag_t		cd_tag;
@@ -281,7 +281,7 @@ static int	clcd_match(struct device *, struct cfdata *, void *);
 static void	clcd_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
-    clcd_match, clcd_attach, NULL, NULL)
+    clcd_match, clcd_attach, NULL, NULL);
 
 static int
 clcd_match(parent, cf, aux)

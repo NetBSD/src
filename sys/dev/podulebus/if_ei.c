@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.7 2002/09/30 22:33:19 thorpej Exp $ */
+/* $NetBSD: if_ei.c,v 1.8 2002/10/02 16:52:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.7 2002/09/30 22:33:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.8 2002/10/02 16:52:24 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -86,7 +86,7 @@ struct ei_softc {
 };
 
 CFATTACH_DECL(ei, sizeof(struct ei_softc),
-    ei_match, ei_attach, NULL, NULL)
+    ei_match, ei_attach, NULL, NULL);
 
 static inline void
 ei_setpage(struct ei_softc *sc, int page)

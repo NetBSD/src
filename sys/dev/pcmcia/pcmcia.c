@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.33 2002/09/30 22:27:01 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.34 2002/10/02 16:52:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.33 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.34 2002/10/02 16:52:20 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -81,7 +81,7 @@ int pcmcia_card_intrdebug __P((void *));
 #endif
 
 CFATTACH_DECL(pcmcia, sizeof(struct pcmcia_softc),
-    pcmcia_match, pcmcia_attach, NULL, NULL)
+    pcmcia_match, pcmcia_attach, NULL, NULL);
 
 int
 pcmcia_ccr_read(pf, ccr)

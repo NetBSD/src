@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.15 2002/09/30 20:37:53 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.16 2002/10/02 16:51:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.15 2002/09/30 20:37:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.16 2002/10/02 16:51:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ void	neo_set_mixer(struct neo_softc *sc, int a, int d);
 void	neo_power(int why, void *arg);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
-    neo_match, neo_attach, NULL, NULL)
+    neo_match, neo_attach, NULL, NULL);
 
 struct audio_device neo_device = {
 	"NeoMagic 256",

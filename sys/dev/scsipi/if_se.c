@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.42 2002/09/30 23:12:51 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.43 2002/10/02 16:52:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.42 2002/09/30 23:12:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.43 2002/10/02 16:52:51 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -243,7 +243,7 @@ int	se_enable __P((struct se_softc *));
 void	se_disable __P((struct se_softc *));
 
 CFATTACH_DECL(se, sizeof(struct se_softc),
-    sematch, seattach, NULL, NULL)
+    sematch, seattach, NULL, NULL);
 
 extern struct cfdriver se_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.11 2002/09/30 23:07:09 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.12 2002/10/02 16:52:45 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.11 2002/09/30 23:07:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.12 2002/10/02 16:52:45 thorpej Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -118,7 +118,7 @@ static int	tcxmatch __P((struct device *, struct cfdata *, void *));
 static void	tcx_unblank __P((struct device *));
 
 CFATTACH_DECL(tcx, sizeof(struct tcx_softc),
-    tcxmatch, tcxattach, NULL, NULL)
+    tcxmatch, tcxattach, NULL, NULL);
 
 extern struct cfdriver tcx_cd;
 
