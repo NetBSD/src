@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.200 2004/04/17 11:26:36 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.201 2004/04/17 11:55:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2528,10 +2528,10 @@ softintr_common:
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(sparc_interrupt4m))
 #if !defined(MSIIEP)	/* "normal" sun4m */
-	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
-	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
+	sethi	%hi(CPUINFO_VA), %l6
+	ld	[%l6 + CPUINFO_INTREG], %l7
 	mov	1, %l4
-	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
+	ld	[%l7 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
 	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
 
 	btst	%l4, %l5	! has pending hw intr at this level?
@@ -2542,20 +2542,20 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	! their respective registers so shift the test bit in %l4 up there
 	sll	%l4, 16, %l4
 
+	st	%l4, [%l7 + ICR_PI_CLR_OFFSET]	! ack soft intr
 #if defined(MULTIPROCESSOR)
 	cmp	%l3, 14
 	be	lev14_softint
 #endif
-	 st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
+	/* Drain hw reg; might be necessary for Ross CPUs */
+	 ld	[%l7 + ICR_PI_PEND_OFFSET], %g0
 
 #ifdef DIAGNOSTIC
 	btst	%l4, %l5	! make sure softint pending bit is set
 	bnz	softintr_common
-	 !st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
 	/* FALLTHROUGH to sparc_interrupt4m_bogus */
 #else
 	b	softintr_common
-	 !st	%l4, [%l6 + ICR_PI_CLR_OFFSET]
 #endif
 	 nop
 
@@ -2719,6 +2719,9 @@ sparc_interrupt_common:
 #if defined(MULTIPROCESSOR)
 /*
  * Level 14 software interrupt: fast IPI
+ * <%l0,%l1,%l2> = <psr, pc, npc>
+ * %l3 = int level
+ * %l6 = &cpuinfo
  */
 lev14_softint:
 	sll	%l3, 2, %l5
@@ -2727,7 +2730,6 @@ lev14_softint:
 	inc	%l7
 	st	%l7, [%l4 + %l5]
 
-	sethi	%hi(CPUINFO_VA), %l6
 	ld	[%l6 + CPUINFO_XMSG_TRAP], %l7
 #ifdef DIAGNOSTIC
 	tst	%l7
