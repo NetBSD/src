@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/06/24 17:49:47 deberg Exp $
+#	$NetBSD: Makefile,v 1.14 2001/10/13 14:46:00 bjh21 Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -22,7 +22,8 @@ SUBDIR+= hpc
 SUBDIR+= sun68k
 .endif
 
-.if ${ARCHSUBDIR} == arm && ${MACHINE} != arm32 && ${MACHINE} != arm26
+.if ${ARCHSUBDIR} == arm && ${MACHINE} != acorn32 && ${MACHINE} != arm32 && \
+	${MACHINE} != arm26
 SUBDIR+= cats dnard netwinder
 .endif
 
@@ -34,7 +35,8 @@ SUBDIR+= cats dnard netwinder
 # For true arm ports, we point machine at the architecture directory
 # since all the user include are there and are common.
 #
-.if ${ARCHSUBDIR} == arm && ${MACHINE} != arm32 && ${MACHINE} != arm26
+.if ${ARCHSUBDIR} == arm && ${MACHINE} != acorn32 && ${MACHINE} != arm32 && \
+	${MACHINE} != arm26
 SYMLINKS= ${ARCHSUBDIR} /usr/include/machine
 .else
 SYMLINKS= ${MACHINE} /usr/include/machine
