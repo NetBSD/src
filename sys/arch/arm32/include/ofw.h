@@ -1,3 +1,5 @@
+/*	$NetBSD: ofw.h,v 1.3 1998/07/08 07:56:13 thorpej Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
