@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.40 1997/08/24 22:31:31 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.41 1997/08/26 19:27:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1720,5 +1720,8 @@ int
 ad1848_get_props(addr)
 	void *addr;
 {
-	return AUDIO_PROP_MMAP;
+	struct ad1848_softc *sc = addr;
+
+	return AUDIO_PROP_MMAP |
+	       (sc->sc_drq != sc->sc_recdrq ? AUDIO_PROP_FULLDUPLEX : 0);
 }

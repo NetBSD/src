@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.35 1997/08/25 22:17:26 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.36 1997/08/26 19:27:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -334,7 +334,7 @@ wssattach(parent, self, aux)
 
     madattach(sc);
 
-    sc->sc_ad1848.sc_recdrq = ia->ia_drq;
+    sc->sc_ad1848.sc_recdrq = sc->sc_ad1848.mode > 1 && ia->ia_drq2 != -1 ? ia->ia_drq2 : ia->ia_drq;
     sc->sc_ad1848.sc_isa = parent;
 
 #ifdef NEWCONFIG

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.35 1997/07/31 22:33:25 augustss Exp $
+#	$NetBSD: files.isa,v 1.36 1997/08/26 19:27:20 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -10,7 +10,7 @@
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
-	     [irq = -1], [drq = -1]}
+	     [irq = -1], [drq = -1], [drq2 = -1]}
 attach	isa at isabus
 file	dev/isa/isa.c			isa needs-flag
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.12 1997/08/25 22:17:25 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.13 1997/08/26 19:27:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,7 +120,7 @@ sbfind(parent, sc, ia)
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_drq8 = ia->ia_drq;
-	sc->sc_drq16 = 5;	/* XXX */
+	sc->sc_drq16 = ia->ia_drq2;
 	sc->sc_ic = ia->ia_ic;
 
 	if (!sbmatch(sc))
