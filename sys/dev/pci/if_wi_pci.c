@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.22 2003/03/29 20:49:04 jdc Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.23 2003/04/12 08:17:45 christos Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.22 2003/03/29 20:49:04 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.23 2003/04/12 08:17:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.22 2003/03/29 20:49:04 jdc Exp $");
 #define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
 #define WI_PCI_LOMEM		0x18	/* ISA membase */
 #define WI_PCI_LOIO		0x1C	/* ISA iobase */
+
+#define CHIP_PLX_OTHER		0x01
+#define CHIP_PLX_9052		0x02
 
 #define WI_PLX_COR_OFFSET       0x3E0
 #define WI_PLX_COR_VALUE        0x41
@@ -108,21 +111,21 @@ const struct wi_pci_product {
 	int			wpp_plx;	/* uses PLX chip */
 } wi_pci_products[] = {
 	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ PCI_VENDOR_GLOBALSUN,		PCI_PRODUCT_GLOBALSUN_GL24110P02,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ PCI_VENDOR_EUMITCOM,		PCI_PRODUCT_EUMITCOM_WL11000P,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRWE777A,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ PCI_VENDOR_NETGEAR,		PCI_PRODUCT_NETGEAR_MA301,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ PCI_VENDOR_INTERSIL,		PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
 	  "Intersil Prism2.5", 0 },
 	{ PCI_VENDOR_NDC,		PCI_PRODUCT_NDC_NCP130,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_9052 },
 	{ PCI_VENDOR_USR2,		PCI_PRODUCT_USR2_2415,
-	  NULL, 1 },
+	  NULL, CHIP_PLX_OTHER },
 	{ 0,				0,
 	  NULL, 0},
 };
@@ -255,11 +258,16 @@ wi_pci_attach(parent, self, aux)
 			printf(": can't map I/O space\n");
 			return;
 		}
-		/* Map PLX. */
-		if (pci_mapreg_map(pa, WI_PCI_PLX_LOIO, PCI_MAPREG_TYPE_IO, 0,
-		    &plxt, &plxh, NULL, NULL) != 0) {
-			printf(": can't map PLX\n");
-			return;
+
+		if (wpp->wpp_plx == CHIP_PLX_OTHER) {
+			/* The PLX 9052 doesn't have IO at 0x14.  Perhaps
+			   other chips have, so we'll make this conditional. */
+			if (pci_mapreg_map(pa, WI_PCI_PLX_LOIO,
+				PCI_MAPREG_TYPE_IO, 0, &plxt,
+				&plxh, NULL, NULL) != 0) {
+					printf(": can't map PLX\n");
+					return;
+				}
 		}
 	} else {
 		if (pci_mapreg_map(pa, WI_PCI_CBMA,
@@ -294,7 +302,7 @@ wi_pci_attach(parent, self, aux)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 
-	if (wpp->wpp_plx) {
+	if (wpp->wpp_plx == CHIP_PLX_OTHER) {
 		uint32_t command;
 #define	WI_LOCAL_INTCSR		0x4c
 #define	WI_LOCAL_INTEN		0x40	/* poke this into INTCSR */
