@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6.2.1 2004/05/29 08:58:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,14 +36,47 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.6 2003/08/07 16:42:20 agc Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.6.2.1 2004/05/29 08:58:00 tron Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
+#ifdef _REENTRANT
+
+
+	.globl	_C_LABEL(__errno)
+
 	.align	2
+cerror:
+	mov.l	L__errno, r1
+	sts.l   pr, @-sp
+#ifdef PIC
+1:	bsrf	r1
+#else
+	jsr	@r1
+#endif
+	 mov.l	r0, @-sp	! save error code
+	mov.l	@sp+, r2	! restore error code
+	lds.l   @sp+, pr
+	mov.l	r2, @r0
+	mov	#-1, r1
+	rts
+	 mov	#-1, r0
+
+	.align	2
+L__errno:
+#ifdef PIC
+	.long	_C_LABEL(__errno) - (1b + 4)
+#else
+	.long	_C_LABEL(__errno)
+#endif
+
+#else /* !_REENTRANT */
+
 
 	.globl	_C_LABEL(errno)
+
+	.align	2
 cerror:
 #ifdef PIC
 	mov	r0, r2
@@ -57,9 +90,9 @@ cerror:
 	mov.l	L_errno, r1
 	mov.l	r0, @r1
 #endif
-	mov	#0xff, r0
+	mov	#-1, r0
 	rts
-	mov	#0xff, r1
+	 mov	#-1, r1
 
 	.align	2
 #ifdef PIC
@@ -68,3 +101,5 @@ L_errno:	.long	_C_LABEL(errno)@GOT
 #else
 L_errno:	.long	_C_LABEL(errno)
 #endif
+
+#endif /* !_REENTRANT */
