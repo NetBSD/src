@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.45 2003/05/13 08:35:58 dyoung Exp $	*/
+/*	$NetBSD: wireg.h,v 1.46 2003/10/16 10:57:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -543,6 +543,12 @@ struct wi_frame {
 	u_int16_t		wi_dat_len;	/* 0x2c */
 	struct ether_header	wi_ehdr;	/* 0x2e */
 } __attribute__((__packed__));
+
+/* Software support fields are returned untouched by TxOK, TxExc events. */
+#define	wi_tx_swsup0		wi_rx_silence
+#define	wi_tx_swsup1		wi_rx_signal
+#define	wi_tx_swsup2		wi_rx_rate
+#define	wi_tx_idx		wi_rx_flow
 
 /* Tx Status Field */
 #define	WI_TXSTAT_RET_ERR	0x0001

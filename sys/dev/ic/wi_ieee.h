@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.20 2003/04/08 04:31:25 kml Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.21 2003/10/16 10:57:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -236,6 +236,7 @@ struct wi_counters {
 #define WI_RID_WEP_MAPTABLE	0xFC29
 #define WI_RID_CNFAUTHMODE	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
+#define	WI_RID_ALT_RETRY_COUNT	0xFC32 /* retry count if WI_TXCNTL_ALTRTRY */
 #define WI_RID_OWN_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
 #define WI_RID_SET_TIM		0xFC40
 #define WI_RID_DBM_ADJUST	0xFC46 /* RSSI - WI_RID_DBM_ADJUST ~ dBm */
