@@ -1,3 +1,4 @@
+# $NetBSD: md.atari,v 1.7 2000/08/06 22:39:04 wiz Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/kbd_mode

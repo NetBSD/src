@@ -1,3 +1,4 @@
+# $NetBSD: md.evbsh3,v 1.7 2000/08/06 22:37:18 wiz Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
