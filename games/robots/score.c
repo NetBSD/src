@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.12 2000/01/20 13:24:11 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.13 2000/04/09 23:02:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.12 2000/01/20 13:24:11 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.13 2000/04/09 23:02:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ score(score_wfd)
 		move((scp - Top) + 2, 15);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score)
 			standout();
-		printw("%5.5d %5.5d %-8.8s %-9.9s %5.5d",
+		printw("%5d %5d %-8.8s %-9.9s %5d",
 		    (scp - Top) + 1, scp->s_score, scp->s_name,
 		    scp->s_auto ? "(autobot)" : "", scp->s_level);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score) {
@@ -237,7 +237,7 @@ show_score()
 	    " ", "Level");
 	for (scp = Top; scp < &Top[MAXSCORES]; scp++)
 		if (scp->s_score > 0)
-			printf("%5.5d %5.5d %-8.8s %-9.9s %5.5d\n",
+			printf("%5d %5d %-8.8s %-9.9s %5d\n",
 			    inf++, scp->s_score, scp->s_name,
 			    scp->s_auto ? "(autobot)" :  "", scp->s_level);
 }
