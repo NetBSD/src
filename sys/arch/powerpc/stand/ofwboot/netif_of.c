@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.2 1997/04/28 18:36:35 mycroft Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.3 1997/07/22 17:41:06 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -48,9 +48,9 @@
 #endif
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <lib/libsa/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.3 1997/07/15 12:45:25 drochner Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.4 1997/07/22 17:44:31 drochner Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -45,9 +45,9 @@
 #endif
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <net/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>

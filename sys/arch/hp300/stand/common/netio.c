@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.2 1997/03/15 18:09:50 is Exp $	*/
+/*	$NetBSD: netio.c,v 1.3 1997/07/22 17:41:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe
@@ -54,7 +54,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <lib/libsa/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
