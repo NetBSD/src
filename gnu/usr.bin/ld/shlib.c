@@ -1,5 +1,5 @@
 /*
- * $Id: shlib.c,v 1.1 1993/10/16 21:52:35 pk Exp $
+ * $Id: shlib.c,v 1.2 1993/10/21 00:53:00 pk Exp $
  */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ std_search_dirs()
 
 #define MAXDEWEY 8
 
-static int
+int
 getdewey(dewey, cp)
 int	dewey[];
 char	*cp;
@@ -85,6 +85,36 @@ char	*cp;
 	}
 
 	return n;
+}
+
+/*
+ * Compare two dewey arrays.
+ * Return -1 if `d1' represents a smaller value than `d2'.
+ * Return  1 if `d1' represents a greater value than `d2'.
+ * Return  0 if equal.
+ */
+int
+cmpndewey(d1, n1, d2, n2)
+int	d1[], d2[];
+int	n1, n2;
+{
+	int	i;
+
+	for (i = 0; i < n1 && i < n2; i++) {
+		if (d1[i] < d2[i])
+			return -1;
+		if (d1[i] > d2[i])
+			return 1;
+	}
+
+	if (n1 == n2)
+		return 0;
+
+	if (i == n1)
+		return -1;
+
+	if (i == n2)
+		return 1;
 }
 
 /*
@@ -155,14 +185,7 @@ int	*majorp, *minorp;
 			if (!might_take_it)
 				continue;
 
-			for (j = 0; j < n; j++) {
-				if (j >= ndewey || tmp[j] > dewey[j])
-					break;
-				if (tmp[j] < dewey[j])
-					j = n;
-			}
-
-			if (j >= n)
+			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
 				continue;
 
 			/* We have a better version */

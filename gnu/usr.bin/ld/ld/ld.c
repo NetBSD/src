@@ -35,7 +35,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    version. (pk) */
 
 /*
- *	$Id: ld.c,v 1.6 1993/10/16 21:52:29 pk Exp $
+ *	$Id: ld.c,v 1.7 1993/10/21 00:52:56 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -380,6 +380,8 @@ decode_command(argc, argv)
 				link_mode |= SYMBOLIC;
 			else if (strcmp(string, "forcearchive") == 0)
 				link_mode |= FORCEARCHIVE;
+			else if (strcmp(string, "shareable") == 0)
+				link_mode |= 0;
 		}
 		if (argv[i][1] == 'A') {
 			if (p != file_table)
@@ -471,6 +473,8 @@ decode_option(swt, arg)
 	if (!strcmp(swt + 1, "Bsymbolic"))
 		return;
 	if (!strcmp(swt + 1, "Bforcearchive"))
+		return;
+	if (!strcmp(swt + 1, "Bshareable"))
 		return;
 	if (!strcmp(swt + 1, "assert"))
 		return;
@@ -1351,8 +1355,10 @@ printf("bssstart = %#x, bsssize = %#x\n",
 	if (bss_size < 0)
 		bss_size = 0;
 
+#if 0
 	if (magic == ZMAGIC)
 		bss_size = PALIGN(bss_size, page_size);
+#endif
 
 	data_size += data_pad;
 }
