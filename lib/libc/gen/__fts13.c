@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.17 1999/08/26 20:24:59 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.18 1999/08/26 20:28:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.17 1999/08/26 20:24:59 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.18 1999/08/26 20:28:53 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -710,7 +710,7 @@ fts_build(sp, type)
 #endif
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
-		if (dlen + 1 > maxlen) {
+		if (dlen >= maxlen) {	/* include space for NUL */
 			if (fts_palloc(sp, dlen)) {
 				/*
 				 * No more memory for path or structures.  Save
