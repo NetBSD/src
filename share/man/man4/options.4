@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.252 2004/10/27 00:01:34 dan Exp $
+.\"	$NetBSD: options.4,v 1.253 2004/11/11 13:38:18 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -340,6 +340,19 @@ It also enables
 support for some older pre
 .Bx 4.4
 socket calls.
+.It Cd options COMPAT_BSDPTY
+This option is currenty on by default and enables the pty multiplexor
+.Xr ptm 4
+and
+.Xr ptmx 4
+to find and use ptys named 
+.Dq /dev/ptyXX
+(master) and
+.Dq /dev/ttyXX
+(slave).
+Eventually this option will become optional as ptyfs based pseudo-ttys become
+the default, see
+.Xr mount_ptyfs 8 .
 .It Cd options COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
