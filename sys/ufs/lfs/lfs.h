@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77 2005/03/08 00:18:19 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.78 2005/04/01 21:59:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ typedef struct lfs_res_blk {
 struct lfs_log_entry {
 	char *op;
 	char *file;
+	int pid;
 	int line;
 	daddr_t block;
 	unsigned long flags;
@@ -220,23 +221,26 @@ struct lfs_log_entry {
 extern int lfs_lognum;
 extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
-#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags) do {	\
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
 	int _s;								\
 									\
+	simple_lock(&lfs_subsys_lock);					\
 	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
 	lfs_log[lfs_lognum].line = (theline);				\
+	lfs_log[lfs_lognum].pid = (thepid);				\
 	lfs_log[lfs_lognum].block = (lbn);				\
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
 	splx(_s);							\
+	simple_unlock(&lfs_subsys_lock);				\
 } while (0)
 
 #  define LFS_BCLEAN_LOG(fs, bp) do {					\
 	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
 		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
-			      bp->b_lblkno, bp->b_flags);		\
+			      bp->b_lblkno, bp->b_flags, curproc->p_pid);\
 } while (0)
 
 /* Must match list in lfs_vfsops.c ! */
@@ -329,7 +333,9 @@ struct lfid {
 			_ifp->if_atime_sec = (acc)->tv_sec;		\
 			_ifp->if_atime_nsec = (acc)->tv_nsec;		\
 			LFS_BWRITE_LOG(_ibp);				\
+			simple_lock(&_fs->lfs_interlock);		\
 			_fs->lfs_flags |= LFS_IFDIRTY;			\
+			simple_unlock(&_fs->lfs_interlock);		\
 		} else {						\
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
 		}							\
@@ -502,21 +508,32 @@ typedef struct _cleanerinfo {
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 } while (0)
 
-/* Synchronize the Ifile cleaner info with current avail and bfree */
+/*
+ * Synchronize the Ifile cleaner info with current avail and bfree.
+ */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
+    simple_lock(&(fs)->lfs_interlock);					\
     if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 	\
 	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail - 		\
 	(fs)->lfs_favail) {	 					\
 	(cip)->bfree = (fs)->lfs_bfree;				 	\
 	(cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail -		\
 		(fs)->lfs_favail;				 	\
-	if (((bp)->b_flags & B_GATHERED) == 0)			 	\
+	if (((bp)->b_flags & B_GATHERED) == 0) {		 	\
 		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
+	}								\
+        simple_unlock(&(fs)->lfs_interlock);				\
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
-    } else							 	\
+    } else {							 	\
+        simple_unlock(&(fs)->lfs_interlock);				\
 	brelse(bp);						 	\
+    }									\
 } while (0)
 
+/*
+ * Get the head of the inode free list.
+ * Always caled with the segment lock held.
+ */
 #define LFS_GET_HEADFREE(FS, CIP, BP, FREEP) do {			\
 	if ((FS)->lfs_version > 1) {					\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
@@ -532,7 +549,9 @@ typedef struct _cleanerinfo {
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		(CIP)->free_head = (VAL);				\
 		LFS_BWRITE_LOG(BP);					\
+		simple_lock(&fs->lfs_interlock);			\
 		(FS)->lfs_flags |= LFS_IFDIRTY;				\
+		simple_unlock(&fs->lfs_interlock);			\
 	}								\
 } while (0)
 
@@ -546,7 +565,9 @@ typedef struct _cleanerinfo {
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	(CIP)->free_tail = (VAL);					\
 	LFS_BWRITE_LOG(BP);						\
+	simple_lock(&fs->lfs_interlock);				\
 	(FS)->lfs_flags |= LFS_IFDIRTY;					\
+	simple_unlock(&fs->lfs_interlock);				\
 } while (0)
 
 /*
@@ -1030,5 +1051,28 @@ struct lfs_fcntl_markv {
 #define	LFS_SEGLOCK_HELD(fs) \
 	((fs)->lfs_seglock != 0 && (fs)->lfs_lockpid == curproc->p_pid)
 #endif /* _KERNEL */
+
+/* Debug segment lock */
+#ifdef notyet
+# define ASSERT_SEGLOCK(fs) KASSERT(LFS_SEGLOCK_HELD(fs))
+# define ASSERT_NO_SEGLOCK(fs) KASSERT(!LFS_SEGLOCK_HELD(fs))
+# define ASSERT_DUNNO_SEGLOCK(fs)
+# define ASSERT_MAYBE_SEGLOCK(fs)
+#else /* !notyet */
+# define ASSERT_DUNNO_SEGLOCK(fs) \
+	DLOG((DLOG_SEG, "lfs func %s seglock wrong (%d)\n", __func__, \
+		LFS_SEGLOCK_HELD(fs)))
+# define ASSERT_SEGLOCK(fs) do {					\
+	if (!LFS_SEGLOCK_HELD(fs)) {					\
+		DLOG((DLOG_SEG, "lfs func %s seglock wrong (0)\n", __func__)); \
+	}								\
+} while(0)
+# define ASSERT_NO_SEGLOCK(fs) do {					\
+	if (LFS_SEGLOCK_HELD(fs)) {					\
+		DLOG((DLOG_SEG, "lfs func %s seglock wrong (1)\n", __func__)); \
+	}								\
+} while(0)
+# define ASSERT_MAYBE_SEGLOCK(x)
+#endif /* !notyet */
 
 #endif /* !_UFS_LFS_LFS_H_ */

@@ -1,15 +1,10 @@
-#   $NetBSD: TODO,v 1.8 2005/02/26 05:40:42 perseant Exp $
-
-- Lock audit.  Need to check locking for multiprocessor case in particular.
-
-- Get rid of lfs_segclean(); the kernel should clean a dirty segment IFF it
-  has passed two checkpoints containing zero live bytes.
+#   $NetBSD: TODO,v 1.9 2005/04/01 21:59:46 perseant Exp $
 
 - Now that our cache is basically all of physical memory, we need to make
   sure that segwrite is not starving other important things.  Need a way
   to prioritize which blocks are most important to write, and write only
-  those before giving up the seglock to do the rest.  How does this change
-  our notion of what a checkpoint is?
+  those, saving the rest for later.  Does this change our notion of what
+  a checkpoint is?
 
 - Investigate alternate inode locking strategy: Inode locks are useful
   for locking against simultaneous changes to inode size (balloc,

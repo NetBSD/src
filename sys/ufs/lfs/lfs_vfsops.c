@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.168 2005/03/29 02:41:06 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.169 2005/04/01 21:59:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.168 2005/03/29 02:41:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.169 2005/04/01 21:59:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -212,12 +212,14 @@ lfs_writerd(void *arg)
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 				    MFSNAMELEN) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
+				simple_lock(&fs->lfs_interlock);
 				if (fs->lfs_pdflush ||
 				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
 					lfs_flush_fs(fs, 0);
 				}
+				simple_unlock(&fs->lfs_interlock);
 			}
 
 			simple_lock(&mountlist_slock);
@@ -1388,8 +1390,11 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	fs->lfs_pflags |= LFS_PF_CLEAN;
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
 	lfs_writesuper(fs, fs->lfs_sboffs[1]);
+	simple_lock(&fs->lfs_interlock);
 	while (fs->lfs_iocount)
-		tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0);
+		ltsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0,
+			&fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
 
 	/* Finish with the Ifile, now that we're done with it */
 	vrele(fs->lfs_ivnode);
@@ -1418,6 +1423,9 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 /*
  * Get file system statistics.
+ *
+ * NB: We don't lock to access the superblock here, because it's not
+ * really that important if we get it wrong.
  */
 int
 lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
@@ -1511,8 +1519,11 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * If the filesystem is not completely mounted yet, suspend
 	 * any access requests (wait for roll-forward to complete).
 	 */
+	simple_lock(&fs->lfs_interlock);
 	while ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
-		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
+		ltsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0,
+			&fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
 
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
@@ -1600,6 +1611,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 #ifdef DEBUG
 			/* If the seglock is held look at the bpp to see
 			   what is there anyway */
+			simple_lock(&fs->lfs_interlock);
 			if (fs->lfs_seglock > 0) {
 				struct buf **bpp;
 				struct ufs1_dinode *dp;
@@ -1620,11 +1632,18 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 					}
 				}
 			}
+			simple_unlock(&fs->lfs_interlock);
 #endif /* DEBUG */
 			panic("lfs_vget: dinode not found");
 		}
-		DLOG((DLOG_VNODE, "lfs_vget: dinode %d not found, retrying...\n", ino));
-		(void)tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs ifind", 1);
+		simple_lock(&fs->lfs_interlock);
+		if (fs->lfs_iocount) {
+			DLOG((DLOG_VNODE, "lfs_vget: dinode %d not found, retrying...\n", ino));
+			(void)ltsleep(&fs->lfs_iocount, PRIBIO + 1,
+				      "lfs ifind", 1, &fs->lfs_interlock);
+		} else
+			retries = LFS_IFIND_RETRIES;
+		simple_unlock(&fs->lfs_interlock);
 		goto again;
 	}
 	*ip->i_din.ffs1_din = *dip;
@@ -1911,6 +1930,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	struct segment *sp = fs->lfs_sp;
 	UVMHIST_FUNC("lfs_gop_write"); UVMHIST_CALLED(ubchist);
 
+	ASSERT_SEGLOCK(fs);
+
 	/* The Ifile lives in the buffer cache */
 	KASSERT(vp != fs->lfs_ivnode);
 
@@ -1930,7 +1951,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	 *
 	 * XXXUBC that last statement is an oversimplification of course.
 	 */
-	if (!(fs->lfs_seglock) || fs->lfs_lockpid != curproc->p_pid ||
+	if (!LFS_SEGLOCK_HELD(fs) ||
 	    (ip->i_lfs_iflags & LFSI_NO_GOP_WRITE) ||
 	    (pgs[0]->offset & fs->lfs_bmask) != 0) {
 		goto tryagain;
@@ -2242,7 +2263,9 @@ warn_ifile_size(struct lfs *fs)
 	KASSERT(LFS_MAX_BYTES > 0);
 	if (((fs->lfs_ivnode->v_size >> fs->lfs_bshift) - fs->lfs_segtabsz) >
 	    LFS_MAX_BUFS) {
+		simple_lock(&fs->lfs_interlock);
 		fs->lfs_flags |= LFS_WARNED;
+		simple_unlock(&fs->lfs_interlock);
 		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
 				 PRId64 " cannot fit in %d buffers\n",
 				 fs->lfs_ivnode->v_size -
@@ -2255,7 +2278,9 @@ warn_ifile_size(struct lfs *fs)
 						      fs->lfs_segtabsz));
 	} else if ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) > LFS_MAX_BUFS) {
 		/* Same thing but LOG_NOTICE */
+		simple_lock(&fs->lfs_interlock);
 		fs->lfs_flags |= LFS_WARNED;
+		simple_unlock(&fs->lfs_interlock);
 		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %"
 				PRId64 " cannot fit in %d buffers\n",
 				fs->lfs_ivnode->v_size, LFS_MAX_BUFS);
@@ -2267,7 +2292,9 @@ warn_ifile_size(struct lfs *fs)
 
 	if (fs->lfs_ivnode->v_size - (fs->lfs_segtabsz << fs->lfs_bshift) >
 	    LFS_MAX_BYTES) {
+		simple_lock(&fs->lfs_interlock);
 		fs->lfs_flags |= LFS_WARNED;
+		simple_unlock(&fs->lfs_interlock);
 		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
 				 PRId64 " cannot fit in %lu bytes\n",
 				 fs->lfs_ivnode->v_size - (fs->lfs_segtabsz <<
@@ -2280,7 +2307,9 @@ warn_ifile_size(struct lfs *fs)
 							fs->lfs_bshift)) >>
 				 PAGE_SHIFT);
 	} else if(fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
+		simple_lock(&fs->lfs_interlock);
 		fs->lfs_flags |= LFS_WARNED;
+		simple_unlock(&fs->lfs_interlock);
 		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %" PRId64
 				" cannot fit in %lu buffer bytes\n",
 				fs->lfs_ivnode->v_size, LFS_MAX_BYTES);

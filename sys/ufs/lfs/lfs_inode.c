@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.90 2005/03/08 00:18:19 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.91 2005/04/01 21:59:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.90 2005/03/08 00:18:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.91 2005/04/01 21:59:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -107,6 +107,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	struct ufs1_dinode *dip = (struct ufs1_dinode *)bp->b_data;
 	struct ufs1_dinode *ldip, *fin;
 
+	ASSERT_NO_SEGLOCK(fs);
 	/*
 	 * Read the inode block backwards, since later versions of the
 	 * inode will supercede earlier ones.  Though it is unlikely, it is
@@ -143,6 +144,7 @@ lfs_update(void *v)
 	int s;
 	int flags;
 
+	ASSERT_NO_SEGLOCK(fs);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(vp);
@@ -155,12 +157,14 @@ lfs_update(void *v)
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
 	s = splbio();
+	simple_lock(&vp->v_interlock);
 	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
 		      " (in progress)\n", ip->i_number));
-		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
+		ltsleep(vp, (PRIBIO+1), "lfs_update", 0, &vp->v_interlock);
 	}
+	simple_unlock(&vp->v_interlock);
 	splx(s);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip,
@@ -176,6 +180,7 @@ lfs_update(void *v)
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
+		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_diropwait;
 		while (vp->v_flag & VDIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
@@ -185,12 +190,13 @@ lfs_update(void *v)
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
-				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
-				       0);
+				ltsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
+					0, &fs->lfs_interlock);
 			/* XXX KS - by falling out here, are we writing the vn
 			twice? */
 		}
 		--fs->lfs_diropwait;
+		simple_unlock(&fs->lfs_interlock);
 		return lfs_vflush(vp);
 	}
 	return 0;
@@ -272,6 +278,7 @@ lfs_truncate(void *v)
 	ioflag = ap->a_flags;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 
+	ASSERT_NO_SEGLOCK(fs);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -372,8 +379,11 @@ lfs_truncate(void *v)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
-		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
+			simple_lock(&lfs_subsys_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
+			simple_unlock(&lfs_subsys_lock);
+		}
 		if (bp->b_flags & B_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
 		(void) VOP_BWRITE(bp);
@@ -563,7 +573,9 @@ done:
 	oip->i_size = oip->i_ffs1_size = length;
 	oip->i_lfs_effnblks -= blocksreleased;
 	oip->i_ffs1_blocks -= real_released;
+	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree += blocksreleased;
+	simple_unlock(&fs->lfs_interlock);
 #ifdef DIAGNOSTIC
 	if (oip->i_size == 0 &&
 	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
@@ -592,6 +604,7 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 	long seg;
 	int error = 0;
 
+	ASSERT_SEGLOCK(fs);
 	bsize = fragroundup(fs, bsize);
 	if (daddr > 0) {
 		if (*lastseg != (seg = dtosn(fs, daddr))) {
@@ -611,6 +624,7 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 	SEGUSE *sup;
 	struct buf *bp;
 
+	ASSERT_SEGLOCK(fs);
 	if (lastseg < 0 || num == 0)
 		return 0;
 
@@ -652,6 +666,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	int nblocks, blocksreleased = 0, real_released = 0;
 	int error = 0, allerror = 0;
 
+	ASSERT_SEGLOCK(fs);
 	/*
 	 * Calculate index in current block of last
 	 * block to be kept.  -1 indicates the entire
@@ -787,6 +802,7 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	fs = VTOI(vp)->i_lfs;
 	s = splbio();
 
+	ASSERT_SEGLOCK(fs);
 restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
