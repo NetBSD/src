@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.139 1999/01/19 10:57:11 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.140 1999/01/26 13:59:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/scsiio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -273,10 +274,11 @@ sdopen(dev, flag, fmt, p)
 		return (ENXIO);
 
 	sc_link = sd->sc_link;
+	part = SDPART(dev);
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sd_cd.cd_ndevs, SDPART(dev)));
+	    sd_cd.cd_ndevs, part));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -289,12 +291,13 @@ sdopen(dev, flag, fmt, p)
 	if ((error = sdlock(sd)) != 0)
 		goto bad4;
 
-	if (sd->sc_dk.dk_openmask != 0) {
+	if ((sc_link->flags & SDEV_OPEN) != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
-		 * disallow further opens.
+		 * disallow further opens of non-raw partition
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
+		    part != RAW_PART) {
 			error = EIO;
 			goto bad3;
 		}
@@ -306,12 +309,20 @@ sdopen(dev, flag, fmt, p)
 		if (error)
 			goto bad3;
 
-		/* Start the pack spinning if necessary. */
+		/*
+		 * Start the pack spinning if necessary. Always allow the
+		 * raw parition to be opened, for raw IOCTLs. Data transfers
+		 * will check for SDEV_MEDIA_LOADED.
+		 */
 		error = scsipi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-		if (error)
-			goto bad3;
+		if (error) {
+			if (part != RAW_PART)
+				goto bad3;
+			else
+				goto out;
+		}
 
 		sc_link->flags |= SDEV_OPEN;
 
@@ -345,8 +356,6 @@ sdopen(dev, flag, fmt, p)
 		}
 	}
 
-	part = SDPART(dev);
-
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sd->sc_dk.dk_label->d_npartitions ||
@@ -355,7 +364,7 @@ sdopen(dev, flag, fmt, p)
 		goto bad;
 	}
 
-	/* Insure only one open at a time. */
+out:	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
 		sd->sc_dk.dk_copenmask |= (1 << part);
@@ -430,7 +439,7 @@ sdclose(dev, flag, fmt, p)
 
 		scsipi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
-		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
+		sd->sc_link->flags &= ~SDEV_OPEN;
 
 		scsipi_wait_drain(sd->sc_link);
 
@@ -457,17 +466,17 @@ sdstrategy(bp)
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
 	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
-	 * The transfer must be a whole number of blocks.
-	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-	/*
 	 * If the device has been made invalid, error out
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		bp->b_error = EIO;
+		goto bad;
+	}
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
+		bp->b_error = EINVAL;
 		goto bad;
 	}
 	/*
@@ -737,10 +746,25 @@ sdioctl(dev, cmd, addr, flag, p)
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
 
 	/*
-	 * If the device is not valid.. abandon ship
+	 * If the device is not valid, some IOCTLs can still be
+	 * handled on the raw partition. Check this here.
 	 */
-	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
-		return (EIO);
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		switch (cmd) {
+		case DIOCWLABEL:
+		case DIOCLOCK:
+		case DIOCEJECT:
+		case SCIOCIDENTIFY:
+		case OSCIOCIDENTIFY:
+		case SCIOCCOMMAND:
+		case SCIOCDEBUG:
+			if (SDPART(dev) == RAW_PART)
+				break;
+		/* FALLTHROUGH */
+		default:
+			return (EIO);
+		}
+	}
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -937,7 +961,7 @@ sd_interpret_sense(xs)
 	/*
 	 * If the device is not open yet, let the generic code handle it.
 	 */
-	if ((sc_link->flags & SDEV_OPEN) == 0) {
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		return (retval);
 	}
 
@@ -1005,7 +1029,9 @@ sdsize(dev)
 
 	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
-	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+		size = -1;
+	else if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size *
@@ -1057,16 +1083,9 @@ sddump(dev, blkno, va, size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	/*
-	 * XXX Can't do this check, since the media might have been
-	 * XXX marked `invalid' by successful unmounting of all
-	 * XXX filesystems.
-	 */
-#if 0
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return (ENXIO);
-#endif
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = sd->sc_dk.dk_label;
