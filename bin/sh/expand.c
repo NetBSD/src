@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.13 1995/01/23 06:33:03 christos Exp $";
+static char *rcsid = "$Id: expand.c,v 1.14 1995/02/28 22:46:12 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -829,7 +829,6 @@ recordregion(start, end, nulonly)
  * strings to the argument list.  The regions of the string to be
  * searched for IFS characters have been stored by recordregion.
  */
-
 STATIC void
 ifsbreakup(string, arglist)
 	char *string;
@@ -841,6 +840,8 @@ ifsbreakup(string, arglist)
 	register char *p;
 	char *q;
 	char *ifs;
+	int ifsspc;
+
 
 	start = string;
 	if (ifslastp != NULL) {
@@ -848,19 +849,20 @@ ifsbreakup(string, arglist)
 		do {
 			p = string + ifsp->begoff;
 			ifs = ifsp->nulonly? nullstr : ifsval();
+			ifsspc = strchr(ifs, ' ') != NULL;
 			while (p < string + ifsp->endoff) {
 				q = p;
 				if (*p == CTLESC)
 					p++;
 				if (strchr(ifs, *p++)) {
-					if (q > start || *ifs != ' ') {
+					if (q > start || ifsspc) {
 						*q = '\0';
 						sp = (struct strlist *)stalloc(sizeof *sp);
 						sp->text = start;
 						*arglist->lastp = sp;
 						arglist->lastp = &sp->next;
 					}
-					if (*ifs == ' ') {
+					if (ifsspc) {
 						for (;;) {
 							if (p >= string + ifsp->endoff)
 								break;
@@ -877,7 +879,7 @@ ifsbreakup(string, arglist)
 				}
 			}
 		} while ((ifsp = ifsp->next) != NULL);
-		if (*start || (*ifs != ' ' && start > string)) {
+		if (*start || (!ifsspc && start > string)) {
 			sp = (struct strlist *)stalloc(sizeof *sp);
 			sp->text = start;
 			*arglist->lastp = sp;
