@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.36 1994/02/17 22:52:46 hpeyerl Exp $
+#	$Id: files.i386,v 1.37 1994/02/18 19:56:58 mycroft Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/db_disasm.c	optional ddb
@@ -35,7 +35,6 @@ arch/i386/isa/if_is.c		optional is device-driver requires ether isa
 arch/i386/isa/if_ix.c		optional ix device-driver requires ether isa
 arch/i386/isa/isa.c		optional isa device-driver
 arch/i386/isa/lms.c		optional lms device-driver requires isa
-arch/i386/isa/lpa.c		optional lpa device-driver requires isa
 arch/i386/isa/lpt.c		optional lpt device-driver requires isa
 arch/i386/isa/mcd.c		optional mcd device-driver requires isa
 arch/i386/isa/mms.c		optional mms device-driver requires isa
