@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1999/07/17 19:57:03 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2001/02/05 00:22:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -110,7 +110,9 @@ int		too_close __P((const PLANE *p1, const PLANE *p2, int));
 void		update __P((int));
 int		yyerror __P((const char *));
 int		yylex __P((void));
+#ifndef YYEMPTY
 int		yyparse __P((void));
+#endif
 const char     *Left __P((char));
 const char     *Right __P((char));
 const char     *airport __P((char));
