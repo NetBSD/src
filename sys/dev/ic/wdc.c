@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172.2.6 2004/09/11 18:32:01 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.7 2004/09/17 04:04:57 jmc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.6 2004/09/11 18:32:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.7 2004/09/17 04:04:57 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -985,11 +985,12 @@ __wdc_reset_channel(struct wdc_channel *chp, int flags)
 		if (xfer && xfer->c_chp != chp)
 			__wdc_reset_channel(xfer->c_chp, flags);
 		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-		    xfer != 0; ) {
-			if (xfer->c_chp != chp)
-				continue;
+		    xfer != 0;
+		    xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) {
 			if ((flags & AT_RST_EMERG) == 0)
 				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
+			else
+				wdc_free_xfer(chp, xfer);
 		}
 	}
 	if ((flags & AT_POLL) == 0) {
