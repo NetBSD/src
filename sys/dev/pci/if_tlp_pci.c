@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.73 2003/06/27 12:25:38 itohy Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.74 2003/11/03 03:05:25 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.73 2003/06/27 12:25:38 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.74 2003/11/03 03:05:25 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -350,7 +350,7 @@ tlp_pci_attach(parent, self, aux)
 	int ioh_valid, memh_valid, i, j;
 	const struct tulip_pci_product *tpp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	u_int32_t val;
+	u_int32_t val = 0;
 	pcireg_t reg;
 	int pmreg;
 
