@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.287 2001/11/10 23:04:04 wiz Exp $
+# $NetBSD: mi,v 1.288 2001/11/19 09:46:09 martin Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -616,6 +616,7 @@
 ./usr/sbin/hlfsd		base-amd-bin
 ./usr/sbin/hprop		base-krb5-bin
 ./usr/sbin/ifmcstat		base-netutil-bin
+./usr/sbin/ifwatchd		base-netutil-bin
 ./usr/sbin/inetd		base-netutil-bin
 ./usr/sbin/iopctl		base-sysutil-bin
 ./usr/sbin/iostat		base-sysutil-bin
