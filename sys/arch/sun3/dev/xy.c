@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.3 1996/01/13 03:50:09 chuck Exp $ */
+/* $NetBSD: xy.c,v 1.4 1996/02/16 20:36:11 gwr Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.3 1996/01/13 03:50:09 chuck Exp $
+ * id: $Id: xy.c,v 1.4 1996/02/16 20:36:11 gwr Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -353,8 +353,8 @@ xycattach(parent, self, aux)
 			return;
 		}
 	}
+	bzero(tmp, pbsz);
 	xyc->iopbase = tmp;
-	bzero(xyc->iopbase, pbsz);
 	xyc->dvmaiopb = (struct xy_iopb *)
 		dvma_kvtopa((long) xyc->iopbase, BUS_VME16);
 	xyc->reqs = (struct xy_iorq *)
@@ -1621,9 +1621,10 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
 			    iorq->xy->xyq.b_actf =
-				iorq->buf->b_actf;
+					iorq->buf->b_actf;
 			    disk_unbusy(&iorq->xy->sc_dk,
-				(iorq->buf->b_bcount - iorq->buf->b_resid));
+					        (iorq->buf->b_bcount -
+					         iorq->buf->b_resid));
 			    biodone(iorq->buf);
 			    iorq->mode = XY_SUB_FREE;
 			    break;
