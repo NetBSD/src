@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/01/09 06:55:26 perry Exp $
+#	$NetBSD: Makefile,v 1.10.12.1 2002/06/05 05:55:59 lukem Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 7/27/93
 
@@ -8,6 +8,7 @@ FILES=	${SRCS}
 MACROS=	-ms
 
 paper.ps: ${SRCS}
-	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | \
+	    ${ROFF} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>
