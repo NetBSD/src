@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.11 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.12 2000/11/29 15:36:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.11 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.12 2000/11/29 15:36:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,6 +80,17 @@ fdopen(fd, mode)
 	if (tmp != O_RDWR && (tmp != (oflags & O_ACCMODE))) {
 		errno = EINVAL;
 		return (NULL);
+	}
+
+	if (oflags & O_NONBLOCK) {
+		struct stat st;
+		if (fstat(fd, &st) == -1) {
+			return (NULL);
+		}
+		if (!S_ISREG(st.st_mode)) {
+			errno = EFTYPE;
+			return (NULL);
+		}
 	}
 
 	if ((fp = __sfp()) == NULL)
