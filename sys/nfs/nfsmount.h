@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.11 1996/12/02 22:55:47 thorpej Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.12 1996/12/03 00:22:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -120,6 +120,11 @@ int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct mbuf *nam,
 int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp));
 int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, struct ucred *,
 			struct proc *));
+void	nfs_vfs_init __P((void));
+
+/*
+ * Prototypes for miscellaneous exported NFS functions.
+ */
 void	nfs_init __P((void));
 
 #endif
