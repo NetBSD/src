@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp 
+ *	NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp 
  */
 
 /*
@@ -117,6 +117,7 @@
 
 #define	PODULE_ANT_ETHER3	0x00a4		/* ether 3/5 interface */
 #define	PODULE_ANT_ETHERB	0x00e4		/* ether B network slot interface */
+#define	PODULE_ANT_ETHERM	0x00d8		/* ether M dual interface NIC */
 
 #define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI II host adapter */
 
