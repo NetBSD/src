@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.65 2003/06/03 16:59:48 fair Exp $
+#	$NetBSD: services,v 1.66 2003/07/07 01:26:15 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -331,3 +331,5 @@ ms-sql-s        1433/tcp   		# Microsoft-SQL-Server
 ms-sql-s        1433/udp   		# Microsoft-SQL-Server
 ms-sql-m        1434/tcp   		# Microsoft-SQL-Monitor
 ms-sql-m        1434/udp   		# Microsoft-SQL-Monitor 
+http-alt	8080/tcp		# HTTP Alternate (see port 80)
+http-alt	8080/udp		# HTTP Alternate (see port 80)
