@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.31 1997/09/16 20:34:42 is Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.32 1997/09/23 23:15:46 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -26,10 +26,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.31 1997/09/16 20:34:42 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.32 1997/09/23 23:15:46 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,22 +61,35 @@ __KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.31 1997/09/16 20:34:42 is Exp $"
 #endif
 static int comcnrate = CONSPEED;
 
-const char *
-dec_axppci_33_model_name()
-{
-
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case 0:						/* XXX */
-		return "Alpha PC AXPpci33 (\"NoName\")";
-		
-	default:
-		printf("unknown system variation %lx\n",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
-	}
-}
+void dec_axppci_33_init __P((void));
+static void dec_axppci_33_cons_init __P((void));
+static void dec_axppci_33_device_register __P((struct device *, void *));
 
 void
+dec_axppci_33_init()
+{
+	platform.family = "DEC AXPpci";
+	switch (hwrpb->rpb_variation & SV_ST_MASK) {
+	case 0:
+		platform.model = "Alpha PC AXPpci33 (\"NoName\")";
+		break;
+
+	default:
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
+		    hwrpb->rpb_variation & SV_ST_MASK);
+		platform.model = (const char *) s;
+		break;
+	}
+	}
+	platform.iobus = "lca";
+	platform.cons_init = dec_axppci_33_cons_init;
+	platform.device_register = dec_axppci_33_device_register;
+}
+
+static void
 dec_axppci_33_cons_init()
 {
 	struct ctb *ctb;
@@ -126,14 +141,7 @@ dec_axppci_33_cons_init()
 	}
 }
 
-const char *
-dec_axppci_33_iobus_name()
-{
-
-	return ("lca");
-}
-
-void
+static void
 dec_axppci_33_device_register(dev, aux)
 	struct device *dev;
 	void *aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.18 1997/09/02 13:18:03 thorpej Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.19 1997/09/23 23:15:45 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,13 @@
  * rights to redistribute these changes.
  */
 
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.18 1997/09/02 13:18:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.19 1997/09/23 23:15:45 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,44 +51,45 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.18 1997/09/02 13:18:03 thorpej Ex
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-const char *
-dec_3000_300_model_name()
-{
+void dec_3000_300_init __P((void));
+static void dec_3000_300_device_register __P((struct device *, void *));
 
+void
+dec_3000_300_init()
+{
+	platform.family = "DEC 3000/300 (\"Pelican\")";
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
 	case SV_ST_PELICAN:
-		return "DEC 3000/300 (\"Pelican\")";
+		platform.model = "DEC 3000/300 (\"Pelican\")";
+		break;
 
 	case SV_ST_PELICA:
-		return "DEC 3000/300L (\"Pelica\")";
+		platform.model = "DEC 3000/300L (\"Pelica\")";
+		break;
 
 	case SV_ST_PELICANPLUS:
-		return "DEC 3000/300X (\"Pelican+\")";
+		platform.model = "DEC 3000/300X (\"Pelican+\")";
+		break;
 
 	case SV_ST_PELICAPLUS:
-		return "DEC 3000/300LX (\"Pelica+\")";
+		platform.model = "DEC 3000/300LX (\"Pelica+\")";
+		break;
 
 	default:
-		printf("unknown system variation %lx\n",
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
 		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
+		platform.model = (const char *) s;
+		break;
 	}
+	}
+	platform.iobus = "tcasic";
+	platform.device_register = dec_3000_300_device_register;
 }
 
-void
-dec_3000_300_cons_init()
-{
-
-}
-
-const char *
-dec_3000_300_iobus_name()
-{
-
-	return ("tcasic");
-}
-
-void
+static void
 dec_3000_300_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
