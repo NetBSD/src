@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.1 1996/01/31 23:16:01 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.2 1996/02/02 19:42:24 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,18 +35,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: genassym.c,v 1.1 1996/01/31 23:16:01 mark Exp $
+ *	$Id: genassym.c,v 1.2 1996/02/02 19:42:24 mycroft Exp $
  */
-
-#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 #include <sys/user.h>
 #include <sys/signal.h>
+
+#include <vm/vm.h>
+
 #include <machine/pmap.h>
 #include <machine/frame.h>
 #include <machine/vmparam.h>

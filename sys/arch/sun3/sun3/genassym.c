@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.29 1995/09/26 04:02:19 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.30 1996/02/02 19:43:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -37,8 +37,6 @@
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
  */
-
-#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/types.h>
