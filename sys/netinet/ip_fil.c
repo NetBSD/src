@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.15 1997/05/26 17:57:21 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.15 1997/05/26 17:57:21 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.16 1997/05/27 01:15:21 thorpej Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -190,8 +190,24 @@ iplattach(count)
 # endif /* __NetBSD__ */
 	int count;
 {
+
+	/*
+	 * Nothing to do here, really.  The filter will be enabled
+	 * by the SIOCFRENB ioctl.
+	 */
+}
+
+
+/*
+ * Enable the filter by hooking it into the IP input/output stream.
+ */
+int ipl_enable()
+{
 	char *defpass;
-	int s, i;
+	int s;
+# ifdef IPFILTER_LOG
+	int i;
+# endif
 
 	SPLNET(s);
 	if (ipl_inited || (fr_checkp == fr_check)) {
@@ -858,7 +874,7 @@ void
 #  endif
 iplinit()
 {
-	(void) ipfilterattach();
+	(void) ipl_enable();
 	ip_init();
 }
 # endif /* ! __NetBSD__ */
