@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.32 1999/06/26 00:07:35 augustss Exp $
+a$NetBSD: usbdevs,v 1.33 1999/06/26 15:20:53 tron Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ vendor EIZO		0x056d	EIZO
 vendor AGILER		0x056e	Elecom Co., Ltd.
 vendor IOMEGA		0x059b	Iomega Corporation
 vendor BELKIN		0x05ab	In-System Design
-vendor LOGITECH		0x05ac	Apple Computer
+vendor LOGITECH		0x05ac	Logitech
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
