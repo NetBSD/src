@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.115 2001/03/06 13:39:22 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.116 2001/03/16 10:26:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1623,3 +1624,33 @@ fsrtoname(impl, vers, fver)
 	}
 	return (NULL);
 }
+
+#ifdef DDB
+
+#include <ddb/db_output.h>
+#include <machine/db_machdep.h>
+
+#include "ioconf.h"
+
+void cpu_debug_dump(void);
+
+/*
+ * Dump cpu information from ddb.
+ */
+void
+cpu_debug_dump(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	db_printf("addr		cpuid	flags	curproc		fpproc\n");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		db_printf("%p	%d	%x	%10p	%10p\n",
+		    ci,
+		    ci->ci_cpuid,
+		    ci->flags,
+		    ci->ci_curproc,
+		    ci->fpproc);
+	}
+}
+#endif
