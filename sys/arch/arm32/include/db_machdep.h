@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 1996/10/12 18:29:32 mark Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 1996/11/23 03:20:18 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -59,9 +59,6 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-/*#define	db_clear_single_step(regs)	(0)
-#define	db_set_single_step(regs)	(0)*/
-
 #define T_BREAKPOINT			(1)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
@@ -80,5 +77,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define DB_MACHINE_COMMANDS
 
 #define SOFTWARE_SSTEP
+
+u_int branch_taken __P((u_int insn, u_int pc, u_int reg, db_regs_t *db_regs));
 
 #endif	/* _ARM32_DB_MACHDEP_H_ */
