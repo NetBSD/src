@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.48 2000/10/19 20:23:00 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.49 2001/09/10 04:24:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,6 +111,7 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -142,28 +143,30 @@ int	tcp_keepcnt = TCPTV_KEEPCNT;		/* max idle probes */
 int	tcp_maxpersistidle = TCPTV_KEEP_IDLE;	/* max idle time in persist */
 int	tcp_maxidle;
 
-struct tcp_delack_head tcp_delacks;
+/*
+ * Time to delay the ACK.  This is initialized in tcp_init(), unless
+ * its patched.
+ */
+int	tcp_delack_ticks = 0;
 
 /*
- * Fast timeout routine for processing delayed acks
+ * Callout to process delayed ACKs for a TCPCB.
  */
 void
-tcp_fasttimo()
+tcp_delack(void *arg)
 {
-	struct tcpcb *tp, *ntp;
+	struct tcpcb *tp = arg;
 	int s;
 
+	/*
+	 * If tcp_output() wasn't able to transmit the ACK
+	 * for whatever reason, it will restart the delayed
+	 * ACK callout.
+	 */
+
 	s = splsoftnet();
-	for (tp = tcp_delacks.lh_first; tp != NULL; tp = ntp) {
-		/*
-		 * If tcp_output() can't transmit the ACK for whatever
-		 * reason, it will remain on the queue for the next
-		 * time the heartbeat ticks.
-		 */
-		ntp = tp->t_delack.le_next;
-		tp->t_flags |= TF_ACKNOW;
-		(void) tcp_output(tp);
-	}
+	tp->t_flags |= TF_ACKNOW;
+	(void) tcp_output(tp);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.10 1998/09/10 10:47:00 mouse Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.11 2001/09/10 04:24:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -107,6 +107,8 @@
 #define	TCP_LINGERTIME	120			/* linger at most 2 minutes */
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
+
+#define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
 
 #ifdef	TCPTIMERS
 char *tcptimers[] =
