@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $	*/
+/*	$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $");
+__RCSID("$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -579,7 +579,6 @@ Make_Update (cgn)
     time_t mtime = -1;
     char *p1;
 
-    Job_TokenReturn();
     cname = Var_Value (TARGET, cgn, &p1);
     if (p1)
 	free(p1);
@@ -867,7 +866,7 @@ MakeStartJobs ()
 		 */
 		Make_DoAllVar (gn);
 	    }
-
+	    Job_TokenReturn();
 	    Make_Update (gn);
 	}
     }
