@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.21 1996/02/09 21:48:22 christos Exp $ */
+/*	$NetBSD: nfs_boot.c,v 1.22 1996/02/10 22:55:16 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -427,9 +427,13 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 
 	/* client name (hostname) */
 	m  = xdr_string_encode(hostname, hostnamelen);
+	if (m == NULL)
+		return (ENOMEM);
 
 	/* key name (root or swap) */
 	m->m_next = xdr_string_encode(key, strlen(key));
+	if (m->m_next == NULL)
+		return (ENOMEM);
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
@@ -503,6 +507,8 @@ md_mount(mdsin, path, fhp)
 	if (error) return error;
 
 	m = xdr_string_encode(path, strlen(path));
+	if (m == NULL)
+		return (ENOMEM);
 
 	/* Do RPC to mountd. */
 	error = krpc_call(mdsin, RPCPROG_MNT, RPCMNT_VER1,
@@ -518,7 +524,7 @@ md_mount(mdsin, path, fhp)
 	rdata = mtod(m, struct rdata *);
 	error = fxdr_unsigned(u_int32_t, rdata->errno);
 	if (error)
-		goto bad;
+		goto out;
 	bcopy(rdata->fh, fhp, NFS_FHSIZE);
 
 	/* Set port number for NFS use. */
