@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscall.h,v 1.44 2001/11/13 02:09:34 lukem Exp $ */
+/* $NetBSD: ultrix_syscall.h,v 1.45 2002/11/01 21:24:19 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -429,3 +429,4 @@
 #define	ULTRIX_SYS_setsysinfo	257
 
 #define	ULTRIX_SYS_MAXSYSCALL	258
+#define	ULTRIX_SYS_NSYSENT	512
