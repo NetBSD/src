@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2003/02/23 02:44:44 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2003/02/25 00:48:00 fvdl Exp $	*/
 
 /*
  *
@@ -3334,6 +3334,8 @@ pmap_alloc_level(pdes, kva, lvl, needed_ptps)
  *	the pmaps on the system.
  */
 
+static vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS;
+
 vaddr_t
 pmap_growkernel(maxkvaddr)
 	vaddr_t maxkvaddr;
@@ -3341,12 +3343,11 @@ pmap_growkernel(maxkvaddr)
 	struct pmap *kpm = pmap_kernel(), *pm;
 	int s, i;
 	unsigned newpdes;
-	vaddr_t curmax;
 	long needed_kptp[PTP_LEVELS], target_nptp, old;
 
-	curmax = VM_MIN_KERNEL_ADDRESS + nkptp[1] * NBPD_L2;
-	if (maxkvaddr <= curmax)
-		return curmax;
+	if (maxkvaddr <= pmap_maxkvaddr)
+		return pmap_maxkvaddr;
+
 	maxkvaddr = round_pdr(maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
@@ -3367,7 +3368,7 @@ pmap_growkernel(maxkvaddr)
 
 	s = splhigh();	/* to be safe */
 	simple_lock(&kpm->pm_lock);
-	pmap_alloc_level(normal_pdes, curmax, PTP_LEVELS,
+	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS,
 	    needed_kptp);
 
 	/*
@@ -3389,6 +3390,7 @@ pmap_growkernel(maxkvaddr)
 
 		simple_unlock(&pmaps_lock);
 	}
+	pmap_maxkvaddr = maxkvaddr;
 	simple_unlock(&kpm->pm_lock);
 	splx(s);
 
