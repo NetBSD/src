@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200reg.h,v 1.4 2000/03/03 19:54:35 uch Exp $ */
+/*	$NetBSD: ucb1200reg.h,v 1.5 2000/03/12 15:36:11 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -215,7 +215,12 @@
 /*
  * ID register
  */
+/* PHILIPS products */
+/* Version 3, Device 0, Supplier 1 */
+#define UCB1100_ID	0x1003
 /* Version 4, Device 0, Supplier 1 */
 #define UCB1200_ID	0x1004
+/* Version 10, Device 0, Supplier 1 */
+#define UCB1300_ID	0x100a
 /* TOSHIBA TC35413F */
 #define TC35413F_ID	0x9712
