@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.15 1994/02/14 19:07:27 ws Exp $
+ *	$Id: procfs_vnops.c,v 1.16 1994/02/14 19:08:36 ws Exp $
  */
 
 /*
@@ -79,7 +79,7 @@ static struct pfsnames {
 	/* namlen, nam, type */
 	{  N("."),	Pproc },
 	{  N(".."),	Proot },
-	{  N("file"),   Pfile },
+	{  N("a.out"),	Pfile },
 	{  N("mem"),    Pmem },
 	{  N("regs"),   Pregs },
 	{  N("fpregs"), Pfpregs },
