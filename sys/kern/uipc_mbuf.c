@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_mbuf.c	7.19 (Berkeley) 4/20/91
- *	$Id: uipc_mbuf.c,v 1.4.2.1 1993/09/24 08:51:51 mycroft Exp $
+ *	$Id: uipc_mbuf.c,v 1.4.2.2 1993/10/26 12:54:57 mycroft Exp $
  */
 
 #include "param.h"
@@ -78,7 +78,7 @@ bad:
  * Must be called at splimp.
  */
 /* ARGSUSED */
-m_clalloc(ncl, how)				/* 31 Aug 92*/
+m_clalloc(ncl, nowait)
 	register int ncl;
 {
 	int npg, mbx;
@@ -87,8 +87,7 @@ m_clalloc(ncl, how)				/* 31 Aug 92*/
 	static int logged;
 
 	npg = ncl * CLSIZE;
-	/* 31 Aug 92*/
-	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !(how&M_DONTWAIT));
+	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !nowait);
 	if (p == NULL) {
 		if (logged == 0) {
 			logged++;
@@ -160,32 +159,32 @@ m_reclaim()
  * for critical paths.
  */
 struct mbuf *
-m_get(how, type)				/* 31 Aug 92*/
-	int how, type;
+m_get(nowait, type)
+	int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGET(m, how, type);
+	MGET(m, nowait, type);
 	return (m);
 }
 
 struct mbuf *
-m_gethdr(how, type)				/* 31 Aug 92*/
-	int how, type;
+m_gethdr(nowait, type)
+	int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGETHDR(m, how, type);
+	MGETHDR(m, nowait, type);
 	return (m);
 }
 
 struct mbuf *
-m_getclr(how, type)				/* 31 Aug 92*/
-	int how, type;
+m_getclr(nowait, type)
+	int nowait, type;
 {
 	register struct mbuf *m;
 
-	MGET(m, how, type);
+	MGET(m, nowait, type);
 	if (m == 0)
 		return (0);
 	bzero(mtod(m, caddr_t), MLEN);
@@ -224,13 +223,13 @@ m_freem(m)
  * copy junk along.
  */
 struct mbuf *
-m_prepend(m, len, how)
+m_prepend(m, len, nowait)
 	register struct mbuf *m;
-	int len, how;
+	int len, nowait;
 {
 	struct mbuf *mn;
 
-	MGET(mn, how, m->m_type);
+	MGET(mn, nowait, m->m_type);
 	if (mn == (struct mbuf *)NULL) {
 		m_freem(m);
 		return ((struct mbuf *)NULL);
