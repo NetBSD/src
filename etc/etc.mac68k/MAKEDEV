@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.70 2003/03/31 03:59:05 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.71 2003/04/14 05:45:41 wiz Exp $
 #
 ###########################################################################
 #
@@ -52,7 +52,7 @@
 #	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #
 # Terminal ports:
-#	ttye*	ite consoles
+#	ttye*	ITE consoles
 #	tty*	standard built-in serial ports (2)
 #	ttyE*	wscons
 #
