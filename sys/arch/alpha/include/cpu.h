@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.26 1998/09/29 07:07:36 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.27 1998/10/06 20:50:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,8 +159,7 @@ int	alpha_pa_access __P((u_long));
 void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
 int	badaddr_read __P((void *, size_t, void *));
-void	child_return __P((struct proc *p));
-void	configure __P((void));
+void	child_return __P((struct proc *p, void *));
 u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
 void	do_sir __P((void));
 void	dumpconf __P((void));
@@ -194,6 +193,8 @@ void	cpu_hatch __P((struct cpu_softc *));
 void	cpu_run_spinup_queue __P((void));
 void	cpu_halt_secondary __P((unsigned long));
 void	cpu_spinup_trampoline __P((void));			/* MAGIC */
+void	cpu_pause __P((unsigned long));
+void	cpu_resume __P((unsigned long));
 
 #endif /* _KERNEL */
 

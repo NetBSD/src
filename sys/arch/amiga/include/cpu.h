@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 1998/09/05 21:10:55 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 1998/10/06 20:50:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,7 +152,6 @@ void	*alloc_z2mem __P((long));
 /*
  * Prototypes from autoconf.c
  */
-void	configure __P((void));
 int	is_a1200 __P((void));
 int	is_a3000 __P((void));
 int	is_a4000 __P((void));
@@ -243,6 +242,11 @@ void	setredzone __P((u_int *, caddr_t));
  * Prototypes from pmap.c:
  */
 void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+
+/*
+ * Prototypes from trap.c:
+ */
+void	child_return __P((struct proc *, void *));
 
 #endif /* _KERNEL */
 
