@@ -1,77 +1,22 @@
-#	$NetBSD: Makefile,v 1.1 2002/10/09 11:55:02 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/09 16:13:07 itojun Exp $
 
-.include <bsd.own.mk>		# for MKDYNAMICROOT definition
+.include <bsd.own.mk>
 
-DIST=	${NETBSDSRCDIR}/gnu/dist/tar
+.include "Makefile.defs"
 
 PROG=	tar
 # tar/src
 SRCS+=	buffer.c compare.c create.c delete.c extract.c \
 	incremen.c list.c mangle.c misc.c names.c rtapelib.c tar.c update.c
-# tar/lib
-SRCS+=	addext.c argmatch.c backupfile.c basename.c dirname.c error.c \
-	exclude.c full-write.c getdate.c getopt.c getopt1.c getstr.c \
-	hash.c human.c modechange.c msleep.c prepargs.c print-copyr.c \
-	quotearg.c safe-read.c save-cwd.c savedir.c \
-	unicodeio.c xgetcwd.c xmalloc.c xstrdup.c \
-	xstrtoimax.c xstrtoul.c xstrtoumax.c
-#SRCS+=	getdate.y
-SRCS+=	fnmatch.c getline.c mktime.c
-CPPFLAGS+=-DDEFAULT_ARCHIVE=\"-\" -DDEFAULT_BLOCKING=20 \
-	-DD_INO_IN_DIRENT=1 -DENABLE_NLS=1 -DHAVE_ALARM=1 \
-	-DHAVE_ALLOCA=1 -DHAVE_CLOCK_GETTIME=1 -DHAVE_C_BACKSLASH_A=1 \
-	-DHAVE_DCGETTEXT=1 -DHAVE_DECL_FREE=0 -DHAVE_DECL_GETENV=0 \
-	-DHAVE_DECL_GETGRGID=0 -DHAVE_DECL_GETPWUID=0 \
-	-DHAVE_DECL_MALLOC=0 -DHAVE_DECL_STRERROR_R=0 \
-	-DHAVE_DECL_STRTOUL=0 -DHAVE_DECL_STRTOULL=0 \
-	-DHAVE_DECL_STRTOUMAX=1 -DHAVE_DIRENT_H=1 \
-	-DHAVE_DONE_WORKING_MALLOC_CHECK=1 \
-	-DHAVE_DONE_WORKING_REALLOC_CHECK=1 -DHAVE_FCHDIR=1 \
-	-DHAVE_FCNTL_H=1 -DHAVE_FSYNC=1 -DHAVE_FTRUNCATE=1 \
-	-DHAVE_GETCWD=1 -DHAVE_GETCWD_NULL=1 -DHAVE_GETEGID=1 \
-	-DHAVE_GETEUID=1 -DHAVE_GETGID=1 -DHAVE_GETPAGESIZE=1 \
-	-DHAVE_GETTEXT=1 -DHAVE_GETUID=1 -DHAVE_INTTYPES_H=1 \
-	-DHAVE_ISASCII=1 -DHAVE_ISWPRINT=1 -DHAVE_LANGINFO_CODESET=1 \
-	-DHAVE_LCHOWN=1 -DHAVE_LC_MESSAGES=1 -DHAVE_LIMITS_H=1 \
-	-DHAVE_LOCALE_H=1 -DHAVE_LOCALTIME_R=1 \
-	-DHAVE_LONG_FILE_NAMES=1 -DHAVE_LONG_LONG=1 \
-	-DHAVE_LSTAT=1 -DHAVE_MALLOC_H=1 -DHAVE_MBRTOWC=1 \
-	-DHAVE_MBSINIT=1 -DHAVE_MEMORY_H=1 -DHAVE_MEMSET=1 \
-	-DHAVE_MKFIFO=1 -DHAVE_MKNOD=1 -DHAVE_MMAP=1 \
-	-DHAVE_MUNMAP=1 -DHAVE_NL_TYPES_H=1 -DHAVE_PATHCONF=1 \
-	-DHAVE_POLL=1 -DHAVE_POLL_H=1 -DHAVE_PUTENV=1 \
-	-DHAVE_READLINK=1 -DHAVE_RENAME=1 -DHAVE_RMDIR=1 \
-	-DHAVE_SELECT=1 -DHAVE_SETENV=1 -DHAVE_SETLOCALE=1 \
-	-DHAVE_SGTTY_H=1 -DHAVE_STDDEF_H=1 -DHAVE_STDINT_H=1 \
-	-DHAVE_STDLIB_H=1 -DHAVE_STRCASECMP=1 -DHAVE_STRCHR=1 \
-	-DHAVE_STRDUP=1 -DHAVE_STRERROR=1 -DHAVE_STRINGS_H=1 \
-	-DHAVE_STRING_H=1 -DHAVE_STRNCASECMP=1 -DHAVE_STRSTR=1 \
-	-DHAVE_STRTOL=1 -DHAVE_STRTOUL=1 -DHAVE_STRTOUMAX=1 \
-	-DHAVE_STRUCT_STAT_ST_BLKSIZE=1 -DHAVE_STRUCT_STAT_ST_BLOCKS=1 \
-	-DHAVE_STRUCT_TM_TM_ZONE=1 -DHAVE_ST_BLKSIZE=1 \
-	-DHAVE_ST_BLOCKS=1 -DHAVE_SYMLINK=1 -DHAVE_SYS_BUF_H=1 \
-	-DHAVE_SYS_DEVICE_H=1 -DHAVE_SYS_IOCCOM_H=1 \
-	-DHAVE_SYS_MTIO_H=1 -DHAVE_SYS_PARAM_H=1 \
-	-DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TIMEB_H=1 \
-	-DHAVE_SYS_TIME_H=1 -DHAVE_SYS_TPRINTF_H=1 \
-	-DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_TM_ZONE=1 \
-	-DHAVE_TSEARCH=1 -DHAVE_UNISTD_H=1 -DHAVE_UNSIGNED_LONG_LONG=1 \
-	-DHAVE_USLEEP=1 -DHAVE_UTIME_H=1 -DHAVE_VPRINTF=1 \
-	-DHAVE_WAITPID=1 -DHAVE_WCHAR_H=1 -DHAVE_WCTYPE_H=1 \
-	-DMTIO_CHECK_FIELD=mt_type -DPACKAGE=\"tar\" -DPROTOTYPES=1 \
-	-DREMOTE_SHELL=\"/usr/bin/rsh\" -DRETSIGTYPE=void \
-	-DSTDC_HEADERS=1 -DTIME_WITH_SYS_TIME=1 -DVERSION=\"1.13.25\" \
-	-D_GNU_SOURCE=1 -Dmajor_t=int -Dminor_t=int \
-	-Dmktime=rpl_mktime
-CPPFLAGS+=-I${DIST}/lib -I${DIST}/src -I${.CURDIR} -I.
+SUBDIR=	libtar
+
+LIBTARDIR!=	cd ${.CURDIR}/libtar; ${MAKE} print-objdir
+
+CPPFLAGS+=	-I${DIST}/lib -I${DIST}/src -I${.CURDIR}/libtar -I${LIBTARDIR}
 
 LDADD+=	-lintl
 DPADD+=	${LIBINTL}
-
-.depend: fnmatch.h
-fnmatch.h: fnmatch.hin
-	cp $> fnmatch.h
-CLEANFILES+=	fnmatch.h
+LDADD+=	${LIBTARDIR}/libtar.a
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?= -static
@@ -92,7 +37,8 @@ INFOFLAGS=	-I${DIST}/doc
 
 MAN=tar.1
 
-.PATH:	${.CURDIR} ${DIST}/lib ${DIST}/src ${DIST}/po ${DIST}/doc
+.PATH:	${.CURDIR} ${DIST}/src ${DIST}/po ${DIST}/doc
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
