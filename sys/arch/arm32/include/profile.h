@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 1997/10/14 09:20:28 mark Exp $	*/
+/*	$NetBSD: profile.h,v 1.6.2.1 1997/11/05 00:35:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -37,34 +37,34 @@
  * prologue.
  */
 #define	MCOUNT								\
-	asm(".text");							\
-	asm(".align	0");						\
-	asm(".type	mcount,@function");				\
-	asm(".global	mcount");					\
-	asm("mcount:");							\
+	__asm__(".text");						\
+	__asm__(".align	0");						\
+	__asm__(".type	mcount,@function");				\
+	__asm__(".global	mcount");				\
+	__asm__("mcount:");						\
 	/*								\
 	 * Preserve registers that are trashed during mcount		\
 	 */								\
-	asm("stmfd	sp!, {r0-r3, lr}");				\
+	__asm__("stmfd	sp!, {r0-r3, lr}");				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("mov	r0, ip");					\
+	__asm__("mov	r0, ip");					\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("mov	r1, lr");					\
+	__asm__("mov	r1, lr");					\
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	asm("bl	__mcount");						\
+	__asm__("bl	__mcount");					\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	asm("ldmfd	sp!, {r0-r3, pc}");
+	__asm__("ldmfd	sp!, {r0-r3, pc}");
 
 #ifdef _KERNEL
 /*
