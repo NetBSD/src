@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.243 2003/01/06 14:47:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.244 2003/01/09 16:57:45 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -276,7 +276,7 @@ install-etc-files: check_DESTDIR
 .if (${MKCRYPTO} != "no")
 	(cd ${NETBSDSRCDIR}/usr.bin/ssh; ${MAKE} distribution)
 .endif
-.if !defined(NO_SENDMAIL)
+.if !defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no"
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
