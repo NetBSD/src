@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.98 1998/10/22 01:03:08 briggs Exp $
+# $NetBSD: files.alpha,v 1.99 1998/11/26 15:35:59 pk Exp $
 #
 # alpha-specific configuration info
 
@@ -451,7 +451,7 @@ defopt	PCIC_ISA_ALLOC_IOBASE
 defopt	PCIC_ISA_ALLOC_IOSIZE
 defopt	PCIC_ISA_INTR_ALLOC_MASK
 
-device	pcic {[controller = -1], [socket = -1]}
+device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia contoller
