@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_lock.c	7.4 (Berkeley) 4/21/91
- *	$Id: kern_lock.c,v 1.4 1993/12/20 12:39:58 cgd Exp $
+ *	$Id: kern_lock.c,v 1.5 1994/01/07 22:22:20 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -218,7 +218,7 @@ void lock_write(l)
 
 		if (l->can_sleep && l->want_write) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock, FALSE);
+			thread_sleep((int) l, &l->interlock);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -237,7 +237,7 @@ void lock_write(l)
 
 		if (l->can_sleep && (l->read_count != 0 || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock, FALSE);
+			thread_sleep((int) l, &l->interlock);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -293,7 +293,7 @@ void lock_read(l)
 
 		if (l->can_sleep && (l->want_write || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock, FALSE);
+			thread_sleep((int) l, &l->interlock);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -357,7 +357,7 @@ boolean_t lock_read_to_write(l)
 
 		if (l->can_sleep && l->read_count != 0) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock, FALSE);
+			thread_sleep((int) l, &l->interlock);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -496,7 +496,7 @@ boolean_t lock_try_read_to_write(l)
 
 	while (l->read_count != 0) {
 		l->waiting = TRUE;
-		thread_sleep((int) l, &l->interlock, FALSE);
+		thread_sleep((int) l, &l->interlock);
 		simple_lock(&l->interlock);
 	}
 
