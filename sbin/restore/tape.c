@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.31 1997/10/19 13:29:30 mycroft Exp $	*/
+/*	$NetBSD: tape.c,v 1.31.2.1 1997/11/18 07:14:10 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.31 1997/10/19 13:29:30 mycroft Exp $");
+__RCSID("$NetBSD: tape.c,v 1.31.2.1 1997/11/18 07:14:10 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,17 +578,17 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mknod(name, mode, (int)curfile.dip->di_rdev) < 0) {
+		if (mknod(name, 0600, (int)curfile.dip->di_rdev) < 0) {
 			fprintf(stderr, "%s: cannot create special file: %s\n",
 			    name, strerror(errno));
 			skipfile();
 			return (FAIL);
 		}
+		skipfile();
 		(void) utimes(name, timep);
-		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
 		(void) chflags(name, flags);
-		skipfile();
 		return (GOOD);
 
 	case IFIFO:
@@ -597,17 +597,17 @@ extractfile(name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mkfifo(name, mode) < 0) {
+		if (mkfifo(name, 0600) < 0) {
 			fprintf(stderr, "%s: cannot create fifo: %s\n",
 			    name, strerror(errno));
 			skipfile();
 			return (FAIL);
 		}
+		skipfile();
 		(void) utimes(name, timep);
-		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
 		(void) chflags(name, flags);
-		skipfile();
 		return (GOOD);
 
 	case IFREG:
@@ -617,17 +617,17 @@ extractfile(name)
 			return (GOOD);
 		}
 		if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC,
-		    0666)) < 0) {
+		    0600)) < 0) {
 			fprintf(stderr, "%s: cannot create file: %s\n",
 			    name, strerror(errno));
 			skipfile();
 			return (FAIL);
 		}
+		getfile(xtrfile, xtrskip);
 		(void) futimes(ofile, timep);
-		(void) fchown(ofile, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void) fchown(ofile, uid, gid);
 		(void) fchmod(ofile, mode);
 		(void) fchflags(ofile, flags);
-		getfile(xtrfile, xtrskip);
 		(void) close(ofile);
 		return (GOOD);
 	}
