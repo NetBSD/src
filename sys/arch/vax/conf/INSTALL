@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.26 2002/04/25 15:06:39 atatat Exp $
+#	$NetBSD: INSTALL,v 1.27 2002/06/07 14:48:11 ragge Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -143,12 +143,12 @@ uba0		at ibus?	# Q-Bus adapter
 #asc0		at ibus?	# VAX 4000/105A SCSI ctlr
 
 # Disk controllers at Unibus
-uda0		at uba?	csr 0172150	# UDA50/RQDX?
-uda1		at uba?	csr 0160334
+uda*		at uba?	csr 0172150	# UDA50/RQDX?
+uda*		at uba?	csr 0160334
 mscpbus*	at uda?
 
 # Tape drivers
-mtc0		at uba? csr 0174500	# Tape MSCP ctlr
+mtc*		at uba? csr 0174500	# Tape MSCP ctlr
 mscpbus*	at mtc?
 
 # MSCP devices
@@ -157,7 +157,7 @@ rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 
 # Unibus tapes
-#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+#ts*		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
@@ -180,19 +180,19 @@ cd*		at scsibus? target? lun?
 #uk*		at scsibus? target? lun?
 
 # Ethernet cards
-de0		at uba? csr 0174510	# DELUA/DEUNA
-qe0		at uba? csr 0174440	# DEQNA/DELQA
-qe1		at uba? csr 0174460	# DEQNA/DELQA
+de*		at uba? csr 0174510	# DELUA/DEUNA
+qe*		at uba? csr 0174440	# DEQNA/DELQA
+qe*		at uba? csr 0174460	# DEQNA/DELQA
 le0		at vsbus0 csr 0x200e0000# LANCE
 ze0		at vsbus0 csr 0x20008000# SGEC ethernet
 ze0		at ibus0		# SGEC on-board ethernet
 
 # Terminal lines
-dhu0		at uba? csr 0160440	# DHU-11
-dz0		at uba? csr 0160100	# DZ-11
+dhu*		at uba? csr 0160440	# DHU-11
+dz*		at uba? csr 0160100	# DZ-11
 dz0		at vsbus0 csr 0x200a0000# DC-367
 dz0		at vsbus0 csr 0x25000000# VS4000/90 and VAX 4000/10x serial lines
-dl0		at uba? csr 0176500	# DL-11
+dl*		at uba? csr 0176500	# DL-11
 
 # VAXstation graphics support
 #qd0		at uba? csr 0177400
