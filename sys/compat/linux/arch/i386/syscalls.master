@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65.2.3 2004/09/21 13:25:26 skrll Exp $
+	$NetBSD: syscalls.master,v 1.65.2.4 2004/09/24 10:53:18 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -416,8 +416,10 @@
 265	UNIMPL		clock_gettime
 266	UNIMPL		clock_getres
 267	UNIMPL		clock_nanosleep
-268	UNIMPL		statfs64
-269	UNIMPL		fstatfs64
+268	STD		{ int linux_sys_statfs64(const char *path, \
+			    size_t sz, struct linux_statfs64 *sp); }
+269	STD		{ int linux_sys_fstatfs64(int fd, \
+			    size_t sz, struct linux_statfs64 *sp); }
 270	UNIMPL		tgkill
 271	UNIMPL		utimes
 272	UNIMPL		fadvise64_64

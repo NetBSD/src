@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30.2.3 2004/09/21 13:20:41 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -54,10 +54,10 @@ struct cache_info {
 #include <machine/intr.h>
 #include <sys/device.h>
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct device *ci_dev;		/* device of corresponding cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 
@@ -113,10 +113,6 @@ struct cpu_info {
 	struct evcnt ci_ev_vec;		/* Altivec traps */
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
 	struct evcnt ci_ev_umchk;	/* user MCHK events */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 };
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.90.2.5 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.90.2.6 2004/09/24 10:53:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.5 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.90.2.6 2004/09/24 10:53:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,7 +858,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
 		printf(" dev 0x%x(u%lu): cbp %p bn %" PRId64 " addr %p"
-		       " bcnt %ld\n",
+		       " bcnt %d\n",
 		    ci->ci_dev, (unsigned long) (ci-cs->sc_cinfo), cbp,
 		    cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		    cbp->cb_buf.b_bcount);
@@ -903,10 +903,10 @@ ccdiodone(struct buf *vbp)
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdiodone(%p)\n", cbp);
 	if (ccddebug & CCDB_IO) {
-		printf("ccdiodone: bp %p bcount %ld resid %ld\n",
+		printf("ccdiodone: bp %p bcount %d resid %d\n",
 		       bp, bp->b_bcount, bp->b_resid);
 		printf(" dev 0x%x(u%d), cbp %p bn %" PRId64 " addr %p"
-		       " bcnt %ld\n",
+		       " bcnt %d\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 		       cbp->cb_buf.b_bcount);

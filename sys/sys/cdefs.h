@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.48.2.3 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.48.2.4 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -144,7 +144,11 @@
  * explicit about unsigned long so that we don't have additional
  * dependencies.
  */
+#ifdef __GNUC__
+#define	__UNCONST(p)	((__typeof__(*(p)) *)(unsigned long)(p))
+#else
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+#endif
 
 /*
  * GCC2 provides __extension__ to suppress warnings for various GNU C

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.61.2.3 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: buf.h,v 1.61.2.4 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,12 +154,12 @@ struct bio_ops {
 struct buf {
 	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
 	struct simplelock b_interlock;	/* Lock for b_flags changes */
-	volatile long	b_flags;	/* B_* flags. */
+	volatile int b_flags;		/* B_* flags. */
 	int	b_error;		/* Errno value. */
 	int	b_prio;			/* Hint for buffer queue discipline. */
-	long	b_bufsize;		/* Allocated buffer size. */
-	long	b_bcount;		/* Valid bytes in buffer. */
-	long	b_resid;		/* Remaining I/O. */
+	int	b_bufsize;		/* Allocated buffer size. */
+	int	b_bcount;		/* Valid bytes in buffer. */
+	int	b_resid;		/* Remaining I/O. */
 	dev_t	b_dev;			/* Device associated with buffer. */
 	struct {
 		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
@@ -195,6 +195,7 @@ struct buf {
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
 	daddr_t	b_lblkno;		/* Logical block number. */
+	int b_freelistindex;		/* Free list index. (BQ_) */
 };
 
 #define	BUF_INIT(bp)							\

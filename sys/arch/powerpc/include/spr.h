@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.29.2.3 2004/09/21 13:20:41 skrll Exp $	*/
+/*	$NetBSD: spr.h,v 1.29.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -131,7 +131,7 @@
 #define	SPR_IBAT6L		0x235	/* .6. Instruction BAT Reg 6 Lower */
 #define	SPR_IBAT7U		0x236	/* .6. Instruction BAT Reg 7 Upper */
 #define	SPR_IBAT7L		0x237	/* .6. Instruction BAT Reg 7 Lower */
-#define SPR_DC_CST		0x230	/* ..8 Data Cache CSR */
+#define SPR_DC_CST		0x238	/* ..8 Data Cache CSR */
 #define  DC_CST_DEN		0x80000000 /* D cache ENabled (RO) */
 #define  DC_CST_DFWT		0x40000000 /* D cache Force Write-Thru (RO) */
 #define  DC_CST_LES		0x20000000 /* D cache Little Endian Swap (RO) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.6 2004/09/21 13:39:09 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.7 2004/09/24 10:53:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.6 2004/09/21 13:39:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.7 2004/09/24 10:53:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -576,8 +576,8 @@ ffs_reload(mp, cred, l)
 		else
 			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
-	ump->um_maxfilesize = fs->fs_maxfilesize;
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	ump->um_maxfilesize = fs->fs_maxfilesize;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
@@ -819,8 +819,8 @@ ffs_mountfs(devvp, mp, l)
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
 
-	ump->um_maxfilesize = fs->fs_maxfilesize;
 	ffs_oldfscompat_read(fs, ump, sblockloc);
+	ump->um_maxfilesize = fs->fs_maxfilesize;
 
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
@@ -1417,6 +1417,8 @@ ffs_vget(mp, ino, vpp)
 			return (0);
 		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
+	vp->v_flag |= VLOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we

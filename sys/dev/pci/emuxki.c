@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.26.2.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.26.2.4 2004/09/24 10:53:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.3 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26.2.4 2004/09/24 10:53:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,7 +172,7 @@ static int  emuxki_intr(void *);
 static int  emuxki_ac97_attach(void *, struct ac97_codec_if *);
 static int  emuxki_ac97_read(void *, u_int8_t, u_int16_t *);
 static int  emuxki_ac97_write(void *, u_int8_t, u_int16_t);
-static void emuxki_ac97_reset(void *);
+static int  emuxki_ac97_reset(void *);
 static enum ac97_host_flags emuxki_ac97_flags(void *);
 
 /*
@@ -2484,9 +2484,10 @@ emuxki_ac97_write(void *arg, u_int8_t reg, u_int16_t val)
 	return (0);
 }
 
-static void
+static int
 emuxki_ac97_reset(void *arg)
 {
+	return 0;
 }
 
 enum ac97_host_flags

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23.2.4 2004/09/21 13:15:16 skrll Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.5 2004/09/24 10:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.4 2004/09/21 13:15:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.5 2004/09/24 10:53:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,7 @@ mtstrategy(struct buf *bp)
 		}
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record (%ld) too big: limit (%d)\n",
+				"%s: write record (%d) too big: limit (%d)\n",
 				sc->sc_dev.dv_xname, bp->b_bcount, s);
 #if 0 /* XXX see above */
 	    error:
@@ -898,11 +898,11 @@ mtintr(void *arg)
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
-			dlog(LOG_DEBUG, "%s intr: bcount %ld, resid %ld",
+			dlog(LOG_DEBUG, "%s intr: bcount %d, resid %d",
 			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
-				"%s: record (%d) larger than wanted (%ld)\n",
+				"%s: record (%d) larger than wanted (%d)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
     error:
 			sc->sc_flags &= ~MTF_IO;

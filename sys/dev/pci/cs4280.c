@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.26.2.4 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26.2.5 2004/09/24 10:53:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.4 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.5 2004/09/24 10:53:27 skrll Exp $");
 
 #include "midi.h"
 
@@ -102,7 +102,7 @@ int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
                           void *, struct audio_params *);
 
-void cs4280_reset_codec(void *);
+int cs4280_reset_codec(void *);
 
 /* For PowerHook */
 void cs4280_power(int, void *);
@@ -948,7 +948,7 @@ cs4280_power(why, v)
 }
 
 /* control AC97 codec */
-void
+int
 cs4280_reset_codec(void *addr)
 {
 	struct cs428x_softc *sc;
@@ -979,9 +979,10 @@ cs4280_reset_codec(void *addr)
 		delay(1000);
 		if (++n > 1000) {
 			printf("reset_codec: AC97 inputs slot ready timeout\n");
-			return;
+			return ETIMEDOUT;
 		}
 	}
+	return 0;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.6 2004/09/21 13:25:39 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.7 2004/09/24 10:53:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.6 2004/09/21 13:25:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.7 2004/09/24 10:53:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,7 @@ const int linux_ptrace_request_map[] = {
 	-1
 };
 
-static const struct mnttypes {
-	char *bsd;
-	int linux;
-} fstypes[] = {
+const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_FFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NFS,		LINUX_NFS_SUPER_MAGIC 		},
 	{ MOUNT_MFS,		LINUX_DEFAULT_SUPER_MAGIC	},
@@ -159,7 +156,7 @@ static const struct mnttypes {
 	{ MOUNT_NTFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_SMBFS,		LINUX_SMB_SUPER_MAGIC		}
 };
-#define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
+const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
@@ -296,10 +293,9 @@ linux_sys_brk(l, v, retval)
 }
 
 /*
- * Convert BSD statfs structure to Linux statfs structure.
- * The Linux structure has less fields, and it also wants
- * the length of a name in a dir entry in a field, which
- * we fake (probably the wrong way).
+ * Convert NetBSD statvfs structure to Linux statfs structure.
+ * Linux doesn't have f_flag, and we can't set f_frsize due
+ * to glibc statvfs() bug (see below).
  */
 static void
 bsd_to_linux_statfs(bsp, lsp)
@@ -308,19 +304,33 @@ bsd_to_linux_statfs(bsp, lsp)
 {
 	int i;
 
-	for (i = 0; i < FSTYPESSIZE; i++)
-		if (strcmp(bsp->f_fstypename, fstypes[i].bsd) == 0)
+	for (i = 0; i < linux_fstypes_cnt; i++) {
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].linux;
 			break;
+		}
+	}
 
-	if (i == FSTYPESSIZE) {
+	if (i == linux_fstypes_cnt) {
 		DPRINTF(("unhandled fstype in linux emulation: %s\n",
 		    bsp->f_fstypename));
 		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
-	} else {
-		lsp->l_ftype = fstypes[i].linux;
 	}
 
+	/*
+	 * The sizes are expressed in number of blocks. The block
+	 * size used for the size is f_frsize for POSIX-compliant
+	 * statvfs. Linux statfs uses f_bsize as the block size
+	 * (f_frsize used to not be available in Linux struct statfs).
+	 * However, glibc 2.3.3 statvfs() wrapper fails to adjust the block
+	 * counts for different f_frsize if f_frsize is provided by the kernel.
+	 * POSIX conforming apps thus get wrong size if f_frsize
+	 * is different to f_bsize. Thus, we just pretend we don't
+	 * support f_frsize.
+	 */
+
 	lsp->l_fbsize = bsp->f_frsize;
+	lsp->l_ffrsize = 0;			/* compat */
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
