@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.6 2005/03/11 15:45:54 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.7 2005/03/17 15:30:45 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -334,6 +334,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	unmask(num)							;\
 	jmp	6b
 
+#if 0
 #ifdef DOM0OPS
 #define hypervisor_asm_unmask(num)			\
 	movl	irq_to_evtchn + (num) * 4,%ecx		;\
@@ -351,6 +352,15 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	HYPERVISOR_shared_info,%eax		;\
 	lock						;\
 	btrl	%ecx,EVENTS_MASK(%eax)
+#endif
+#else
+# Just unmasking the event isn't enouth, we also need to
+# reassert the event pending bit if needed. For now just call
+# the C function doing it, maybe rewrite in inline assembly ?
+#define hypervisor_asm_unmask(num)			\
+	pushl $num					;\
+	call _C_LABEL(hypervisor_enable_irq)		;\
+	addl	$4,%esp
 #endif
 
 XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
