@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.4 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.5 2001/02/04 10:13:08 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+
+#include <m68k/m68k.h>
 
 extern short exframesize[];
 extern void	m68881_restore __P((struct fpframe *));
