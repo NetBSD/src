@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 1995/10/07 06:28:38 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.29 1995/10/10 01:32:53 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -52,7 +52,7 @@
 6	STD		{ int sys_close(int fd); }
 7	STD		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	COMPAT_43	{ int sys_creat(char *path, int mode); }
+8	COMPAT_43	{ int sys_creat(char *path, int mode); } ocreat
 9	STD		{ int sys_link(char *path, char *link); }
 10	STD		{ int sys_unlink(char *path); }
 11	OBSOL		execv
@@ -64,7 +64,8 @@
 17	STD		{ int sys_obreak(char *nsize); } break
 18	STD		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
-19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); }
+19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
+			    olseek
 20	STD		{ pid_t sys_getpid(void); }
 21	STD		{ int sys_mount(char *type, char *path, int flags, \
 			    caddr_t data); }
@@ -89,9 +90,9 @@
 35	STD		{ int sys_fchflags(int fd, int flags); }
 36	STD		{ int sys_sync(void); }
 37	STD		{ int sys_kill(int pid, int signum); }
-38	COMPAT_43	{ int sys_stat(char *path, struct ostat *ub); }
+38	COMPAT_43	{ int sys_stat(char *path, struct ostat *ub); } ostat
 39	STD		{ pid_t sys_getppid(void); }
-40	COMPAT_43	{ int sys_lstat(char *path, struct ostat *ub); }
+40	COMPAT_43	{ int sys_lstat(char *path, struct ostat *ub); } olstat
 41	STD		{ int sys_dup(u_int fd); }
 42	STD		{ int sys_pipe(void); }
 43	STD		{ gid_t sys_getegid(void); }
@@ -122,10 +123,10 @@
 			    char **envp); }
 60	STD		{ int sys_umask(int newmask); }
 61	STD		{ int sys_chroot(char *path); }
-62	COMPAT_43	{ int sys_fstat(int fd, struct ostat *sb); }
+62	COMPAT_43	{ int sys_fstat(int fd, struct ostat *sb); } ofstat
 63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
-			    int arg); }
-64	COMPAT_43	{ int sys_getpagesize(void); }
+			    int arg); } ogetkerninfo
+64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
 65	STD		{ int sys_msync(caddr_t addr, size_t len); }
 66	STD		{ int sys_vfork(void); }
 67	OBSOL		vread
@@ -133,7 +134,7 @@
 69	STD		{ int sys_sbrk(int incr); }
 70	STD		{ int sys_sstk(int incr); }
 71	COMPAT_43	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
-			    int flags, int fd, long pos); }
+			    int flags, int fd, long pos); } ommap
 72	STD		{ int sys_ovadvise(int anom); } vadvise
 73	STD		{ int sys_munmap(caddr_t addr, size_t len); }
 74	STD		{ int sys_mprotect(caddr_t addr, size_t len, \
@@ -150,13 +151,15 @@
 82	STD		{ int sys_setpgid(int pid, int pgid); }
 83	STD		{ int sys_setitimer(u_int which, \
 			    struct itimerval *itv, struct itimerval *oitv); }
-84	COMPAT_43	{ int sys_wait(void); }
+84	COMPAT_43	{ int sys_wait(void); } owait
 85	STD		{ int sys_swapon(char *name); }
 86	STD		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
-87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); }
-88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); }
-89	COMPAT_43	{ int sys_getdtablesize(void); }
+87	COMPAT_43	{ int sys_gethostname(char *hostname, u_int len); } \
+			    ogethostname
+88	COMPAT_43	{ int sys_sethostname(char *hostname, u_int len); } \
+			    osethostname
+89	COMPAT_43	{ int sys_getdtablesize(void); } ogetdtablesize
 90	STD		{ int sys_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	STD		{ int sys_fcntl(int fd, int cmd, void *arg); }
@@ -167,12 +170,13 @@
 96	STD		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	COMPAT_43	{ int sys_accept(int s, caddr_t name, int *anamelen); }
+99	COMPAT_43	{ int sys_accept(int s, caddr_t name, int *anamelen); } \
+			    oaccept
 100	STD		{ int sys_getpriority(int which, int who); }
 101	COMPAT_43	{ int sys_send(int s, caddr_t buf, int len, \
-			    int flags); }
+			    int flags); } osend
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
-			    int flags); }
+			    int flags); } orecv
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 104	STD		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
@@ -180,15 +184,16 @@
 106	STD		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int sys_sigvec(int signum, struct sigvec *nsv, \
-			    struct sigvec *osv); }
-109	COMPAT_43	{ int sys_sigblock(int mask); }
-110	COMPAT_43	{ int sys_sigsetmask(int mask); }
+			    struct sigvec *osv); } osigvec
+109	COMPAT_43	{ int sys_sigblock(int mask); } osigblock
+110	COMPAT_43	{ int sys_sigsetmask(int mask); } osigsetmask
 111	STD		{ int sys_sigsuspend(int mask); }
 112	COMPAT_43	{ int sys_sigstack(struct sigstack *nss, \
-			    struct sigstack *oss); }
+			    struct sigstack *oss); } osigstack
 113	COMPAT_43	{ int sys_recvmsg(int s, struct omsghdr *msg, \
-			    int flags); }
-114	COMPAT_43	{ int sys_sendmsg(int s, caddr_t msg, int flags); }
+			    int flags); } orecvmsg
+114	COMPAT_43	{ int sys_sendmsg(int s, caddr_t msg, int flags); } \
+			    osendmsg
 #ifdef TRACE
 115	STD		{ int sys_vtrace(int request, int value); }
 #else
@@ -209,12 +214,14 @@
 123	STD		{ int sys_fchown(int fd, int uid, int gid); }
 124	STD		{ int sys_fchmod(int fd, int mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
-			    int flags, caddr_t from, int *fromlenaddr); }
-126	COMPAT_43	{ int sys_setreuid(int ruid, int euid); }
-127	COMPAT_43	{ int sys_setregid(int rgid, int egid); }
+			    int flags, caddr_t from, int *fromlenaddr); } \
+			    orecvfrom
+126	COMPAT_43	{ int sys_setreuid(int ruid, int euid); } osetreuid
+127	COMPAT_43	{ int sys_setregid(int rgid, int egid); } osetregid
 128	STD		{ int sys_rename(char *from, char *to); }
-129	COMPAT_43	{ int sys_truncate(char *path, long length); }
-130	COMPAT_43	{ int sys_ftruncate(int fd, long length); }
+129	COMPAT_43	{ int sys_truncate(char *path, long length); } \
+			    otruncate
+130	COMPAT_43	{ int sys_ftruncate(int fd, long length); } oftruncate
 131	STD		{ int sys_flock(int fd, int how); }
 132	STD		{ int sys_mkfifo(char *path, int mode); }
 133	STD		{ int sys_sendto(int s, caddr_t buf, size_t len, \
@@ -229,20 +236,20 @@
 140	STD		{ int sys_adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	COMPAT_43	{ int sys_getpeername(int fdes, caddr_t asa, \
-			    int *alen); }
-142	COMPAT_43	{ int32_t sys_gethostid(void); }
-143	COMPAT_43	{ int sys_sethostid(int32_t hostid); }
+			    int *alen); } ogetpeername
+142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
+143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
 144	COMPAT_43	{ int sys_getrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
+			    struct ogetrlimit *rlp); } ogetrlimit
 145	COMPAT_43	{ int sys_setrlimit(u_int which, \
-			    struct ogetrlimit *rlp); }
-146	COMPAT_43	{ int sys_killpg(int pgid, int signum); }
+			    struct ogetrlimit *rlp); } osetrlimit
+146	COMPAT_43	{ int sys_killpg(int pgid, int signum); } okillpg
 147	STD		{ int sys_setsid(void); }
 148	STD		{ int sys_quotactl(char *path, int cmd, int uid, \
 			    caddr_t arg); }
-149	COMPAT_43	{ int sys_quota(void); }
+149	COMPAT_43	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int sys_getsockname(int fdec, caddr_t asa, \
-			    int *alen); }
+			    int *alen); } ogetsockname
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
 ; system calls.  (This includes various calls added for compatibity
@@ -258,7 +265,7 @@
 155	UNIMPL
 #endif
 156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
-			    u_int count, long *basep); }
+			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int sys_statfs(char *path, struct statfs *buf); }
 158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
@@ -268,9 +275,11 @@
 #else
 161	UNIMPL		getfh
 #endif
-162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); }
-163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); }
-164	COMPAT_09	{ int sys_uname(struct outsname *name); }
+162	COMPAT_09	{ int sys_getdomainname(char *domainname, int len); } \
+			    ogetdomainname
+163	COMPAT_09	{ int sys_setdomainname(char *domainname, int len); } \
+			    osetdomainname
+164	COMPAT_09	{ int sys_uname(struct outsname *name); } ouname
 165	STD		{ int sys_sysarch(int op, char *parms); }
 166	UNIMPL
 167	UNIMPL
@@ -278,20 +287,21 @@
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVSEM) && !defined(alpha)
 169	COMPAT_10	{ int sys_semsys(int which, int a2, int a3, int a4, \
-			    int a5); }
+			    int a5); } osemsys
 #else
 169	UNIMPL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVMSG) && !defined(alpha)
 170	COMPAT_10	{ int sys_msgsys(int which, int a2, int a3, int a4, \
-			    int a5, int a6); }
+			    int a5, int a6); } omsgsys
 #else
 170	UNIMPL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVSHM) && !defined(alpha)
-171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, int a4); }
+171	COMPAT_10	{ int sys_shmsys(int which, int a2, int a3, int a4); } \
+			    oshmsys
 #else
 171	UNIMPL		1.0 shmsys
 #endif
