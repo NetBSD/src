@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2002/06/04 15:45:05 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2002/06/05 20:54:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ syscall_fancy(frame)
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
+		ktrsyscall(p, code, callp->sy_argsize, argp);
 #endif /* KTRACE */
 
 	rval[0] = 0;
