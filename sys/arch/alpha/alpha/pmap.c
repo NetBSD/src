@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.126 2000/03/01 01:32:45 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.127 2000/03/01 18:29:04 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2000/03/01 01:32:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2000/03/01 18:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ int	pmap_physpage_delref __P((void *));
 	/*								\
 	 * XXX This test is not MP-safe.				\
 	 */								\
-	int isactive_ = PMAP_ISACTIVE_TEST(pm);				\
+	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
 	if (curproc != NULL && curproc->p_vmspace != NULL &&		\
 	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
@@ -629,6 +629,27 @@ do {									\
 		 */							\
 		(void) alpha_pal_swpctx((u_long)p->p_md.md_pcbpaddr);	\
 	}								\
+} while (0)
+
+/*
+ * PMAP_SYNC_ISTREAM:
+ *
+ *	Synchronize the I-stream for the specified pmap.  For user
+ *	pmaps, this is deferred until a process using the pmap returns
+ *	to userspace.
+ *
+ *	XXX Need MULTIPROCESSOR versions of these.
+ */
+#define	PMAP_SYNC_ISTREAM_KERNEL()	alpha_pal_imb()
+
+#define	PMAP_SYNC_ISTREAM_USER(pmap)	(pmap)->pm_needisync = ~0UL
+
+#define	PMAP_SYNC_ISTREAM(pmap)						\
+do {									\
+	if ((pmap) == pmap_kernel())					\
+		PMAP_SYNC_ISTREAM_KERNEL();				\
+	else								\
+		PMAP_SYNC_ISTREAM_USER(pmap);				\
 } while (0)
 
 /*
@@ -1322,12 +1343,8 @@ pmap_remove(pmap, sva, eva)
 		PMAP_UNLOCK(pmap);
 		PMAP_MAP_TO_HEAD_UNLOCK();
 
-		if (needisync) {
-			alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-			alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-		}
+		if (needisync)
+			PMAP_SYNC_ISTREAM_KERNEL();
 		return;
 	}
 
@@ -1422,7 +1439,7 @@ pmap_remove(pmap, sva, eva)
 	pmap_l1pt_delref(pmap, saved_l1pte, cpu_id);
 
 	if (needisync)
-		alpha_pal_imb();
+		PMAP_SYNC_ISTREAM_USER(pmap);
 
  out:
 	PMAP_UNLOCK(pmap);
@@ -1462,12 +1479,12 @@ pmap_page_protect(pg, prot)
 
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
-		alpha_pal_imb();
+		alpha_pal_imb();	/* XXX XXX XXX */
 	case VM_PROT_READ|VM_PROT_WRITE:
 		return;
 	/* copy_on_write */
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		alpha_pal_imb();
+		alpha_pal_imb();	/* XXX XXX XXX */
 	case VM_PROT_READ:
 		pvh = pa_to_pvh(pa);
 		PMAP_HEAD_TO_MAP_LOCK();
@@ -1592,14 +1609,8 @@ pmap_protect(pmap, sva, eva, prot)
 		}
 	}
 
-	if (prot & VM_PROT_EXECUTE) {
-		if (isactive)
-			alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-		if (pmap->pm_cpus & ~(1UL << cpu_id))
-			alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-	}
+	if (prot & VM_PROT_EXECUTE)
+		PMAP_SYNC_ISTREAM(pmap);
 
 	PMAP_UNLOCK(pmap);
 }
@@ -1908,12 +1919,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
 #endif
 	}
-	if (needisync) {
-		alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-		alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-	}
+	if (needisync)
+		PMAP_SYNC_ISTREAM(pmap);
 
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1983,12 +1990,8 @@ pmap_kenter_pa(va, pa, prot)
 #if defined(MULTIPROCESSOR) && 0
 	pmap_tlb_shootdown(pmap, va, PG_ASM);
 #endif
-	if (needisync) {
-		alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-		alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-	}
+	if (needisync)
+		PMAP_SYNC_ISTREAM_KERNEL();
 }
 
 /*
@@ -2070,12 +2073,8 @@ pmap_kremove(va, size)
 		}
 	}
 
-	if (needisync) {
-		alpha_pal_imb();
-#if defined(MULTIPROCESSOR) && 0
-		alpha_broadcast_ipi(ALPHA_IPI_IMB);
-#endif
-	}
+	if (needisync)
+		PMAP_SYNC_ISTREAM_KERNEL();
 }
 
 /*
@@ -3979,6 +3978,14 @@ pmap_asn_alloc(pmap, cpu_id)
 	if (pmapdebug & PDB_ASN)
 		printf("pmap_asn_alloc: assigning %u to pmap %p\n",
 		    pmap->pm_asn[cpu_id], pmap);
+#endif
+
+#if 0	/* XXX Not sure if this is safe yet.  --thorpej */
+	/*
+	 * Have a new ASN, so there's no need to sync the I-stream
+	 * on the way back out to userspace.
+	 */
+	alpha_atomic_clearbits_q(&pmap->pm_needisync, (1UL << cpu_id));
 #endif
 }
 
