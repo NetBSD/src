@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43 2000/02/21 20:38:50 erh Exp $ */
+/*	$NetBSD: intr.c,v 1.44 2000/03/19 13:38:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,6 @@
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #endif
-#include "kbd.h"
 #include "com.h"
 #if NCOM > 0
 extern void comsoft __P((void));
@@ -144,13 +143,7 @@ int
 soft01intr(fp)
 	void *fp;
 {
-#if	NKBD > 0
-	extern int cnrom __P((void));
-	extern int rom_console_input;
 
-	if (rom_console_input && cnrom())
-		cnrint();
-#endif
 	if (sir.sir_any) {
 		/*
 		 * XXX	this is bogus: should just have a list of
