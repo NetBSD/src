@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.11 1995/03/18 15:00:15 cgd Exp $	*/
+/*	$NetBSD: route.c,v 1.12 1995/04/18 03:14:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.11 1995/03/18 15:00:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.12 1995/04/18 03:14:18 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -449,7 +449,6 @@ netname(sa)
 
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
-		break;
 
 	case AF_LINK:
 		return (link_ntoa((struct sockaddr_dl *)sa));
