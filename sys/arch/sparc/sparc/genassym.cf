@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2003/01/12 06:11:01 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.41 2003/01/18 06:45:03 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,13 +115,15 @@ define	BSD		BSD
 define	USRSTACK	USRSTACK
 
 # proc fields and values
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_WCHAN		offsetof(struct proc, p_wchan)
+define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_PROC		offsetof(struct lwp, l_proc)
+define	L_STAT		offsetof(struct lwp, l_stat)
+define	L_WCHAN		offsetof(struct lwp, l_wchan)
+define	L_CPU		offsetof(struct lwp, l_cpu)
+define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_CPU		offsetof(struct proc, p_cpu)
-define	SRUN		SRUN
-define	SONPROC		SONPROC
+define	LSRUN		LSRUN
+define	LSONPROC	LSONPROC
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
@@ -151,7 +153,7 @@ define	CPUINFO_REDZONE		offsetof(struct cpu_info, redzone)
 define	REDSIZE			REDSIZE
 define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
-define	CPUINFO_CURPROC		offsetof(struct cpu_info, ci_curproc)
+define	CPUINFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
 define	CPUINFO_WANT_AST	offsetof(struct cpu_info, want_ast)

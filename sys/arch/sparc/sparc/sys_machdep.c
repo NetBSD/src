@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 2000/12/13 18:13:10 jdolecek Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.11 2003/01/18 06:45:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,17 +49,17 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
 sys_sysarch(p, v, retval)
-	struct proc *p;
+	struct lwp *p;
 	void *v;
 	register_t *retval;
 {
