@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.1 1996/05/18 00:00:51 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.2 1996/05/20 03:14:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -119,6 +119,8 @@ tc_mem_read_1(v, memh, off)
 {
 	volatile u_int8_t *p;
 
+	wbflush();
+
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_1 not implemented for sparse space");
 
@@ -133,6 +135,8 @@ tc_mem_read_2(v, memh, off)
 	bus_mem_size_t off;
 {
 	volatile u_int16_t *p;
+
+	wbflush();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_2 not implemented for sparse space");
@@ -149,6 +153,8 @@ tc_mem_read_4(v, memh, off)
 {
 	volatile u_int32_t *p;
 
+	wbflush();
+
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		/* Nothing special to do for 4-byte sparse space accesses */
 		p = (u_int32_t *)(memh + (off << 1));
@@ -164,6 +170,8 @@ tc_mem_read_8(v, memh, off)
 	bus_mem_size_t off;
 {
 	volatile u_int64_t *p;
+
+	wbflush();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_8 not implemented for sparse space");
@@ -199,6 +207,7 @@ tc_mem_write_1(v, memh, off, val)
 		p = (u_int8_t *)(memh + off);
 		*p = val;
 	}
+        wbflush();
 }
 
 void
@@ -228,6 +237,7 @@ tc_mem_write_2(v, memh, off, val)
 		p = (u_int16_t *)(memh + off);
 		*p = val;
 	}
+        wbflush();
 }
 
 void
@@ -245,6 +255,7 @@ tc_mem_write_4(v, memh, off, val)
 	else
 		p = (u_int32_t *)(memh + off);
 	*p = val;
+        wbflush();
 }
 
 void
@@ -261,4 +272,5 @@ tc_mem_write_8(v, memh, off, val)
 
 	p = (u_int64_t *)(memh + off);
 	*p = val;
+        wbflush();
 }
