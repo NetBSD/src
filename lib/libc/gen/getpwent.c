@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.57 2004/10/05 04:45:54 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.58 2004/10/05 12:09:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.57 2004/10/05 04:45:54 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.58 2004/10/05 12:09:23 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1268,7 +1268,7 @@ _nis_getpwent(void *nsrv, void *nscb, va_list ap)
 	rv = NS_NOTFOUND;
 
 	if (_nis_state.current) {			/* already searching */
-		nisr = yp_next(_nis_state.domain, "passwd.byname",
+		nisr = yp_next(_nis_state.domain, PASSWD_BYNAME(&_nis_state),
 		    _nis_state.current, _nis_state.currentlen,
 		    &key, &keylen, &data, &datalen);
 		free(_nis_state.current);
@@ -1287,7 +1287,7 @@ _nis_getpwent(void *nsrv, void *nscb, va_list ap)
 			goto nisent_out;
 		}
 	} else {					/* new search */
-		if (yp_first(_nis_state.domain, "passwd.byname",
+		if (yp_first(_nis_state.domain, PASSWD_BYNAME(&_nis_state),
 		    &_nis_state.current, &_nis_state.currentlen,
 		    &data, &datalen)) {
 			rv = NS_UNAVAIL;
@@ -1330,7 +1330,8 @@ _nis_getpwuid(void *nsrv, void *nscb, va_list ap)
 		return rv;
 	snprintf(_nis_passwdbuf, sizeof(_nis_passwdbuf), "%u", (unsigned int)uid);
 	rv = _nis_pwscan(&rerror, &_nis_passwd,
-	    _nis_passwdbuf, sizeof(_nis_passwdbuf), &_nis_state, "passwd.byuid");
+	    _nis_passwdbuf, sizeof(_nis_passwdbuf),
+	    &_nis_state, PASSWD_BYUID(&_nis_state));
 	if (!_nis_state.stayopen)
 		_nis_end(&_nis_state);
 	if (rv == NS_SUCCESS && uid == _nis_passwd.pw_uid)
@@ -1360,7 +1361,8 @@ _nis_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 	*result = NULL;
 	memset(&state, 0, sizeof(state));
 	snprintf(buffer, buflen, "%u", (unsigned int)uid);
-	rv = _nis_pwscan(retval, pw, buffer, buflen, &state, "passwd.byuid");
+	rv = _nis_pwscan(retval, pw, buffer, buflen,
+	    &state, PASSWD_BYUID(&state));
 	_nis_end(&state);
 	if (rv != NS_SUCCESS)
 		return rv;
@@ -1388,7 +1390,8 @@ _nis_getpwnam(void *nsrv, void *nscb, va_list ap)
 		return rv;
 	snprintf(_nis_passwdbuf, sizeof(_nis_passwdbuf), "%s", name);
 	rv = _nis_pwscan(&rerror, &_nis_passwd,
-	    _nis_passwdbuf, sizeof(_nis_passwdbuf), &_nis_state, "passwd.byname");
+	    _nis_passwdbuf, sizeof(_nis_passwdbuf),
+	    &_nis_state, PASSWD_BYNAME(&_nis_state));
 	if (!_nis_state.stayopen)
 		_nis_end(&_nis_state);
 	if (rv == NS_SUCCESS && strcmp(name, _nis_passwd.pw_name) == 0)
@@ -1418,7 +1421,8 @@ _nis_getpwnam_r(void *nsrv, void *nscb, va_list ap)
 	*result = NULL;
 	snprintf(buffer, buflen, "%s", name);
 	memset(&state, 0, sizeof(state));
-	rv = _nis_pwscan(retval, pw, buffer, buflen, &state, "passwd.byname");
+	rv = _nis_pwscan(retval, pw, buffer, buflen,
+	    &state, PASSWD_BYNAME(&state));
 	_nis_end(&state);
 	if (rv != NS_SUCCESS)
 		return rv;
