@@ -1,9 +1,11 @@
 # Makefile for groff macros
 
+# XXX -- this depends on ../include/defs.h
+TMACDIR?=	/usr/share/tmac
+
 TMACOWN?=	bin
 TMACGRP?=	bin
 TMACMODE?=	444
-TMACDIR?=	/usr/share/tmac
 
 MAN7=		groff_ms.0 
 MLINKS=		groff_ms.7 ms.7
@@ -18,7 +20,7 @@ afterinstall:
 			${.CURDIR}/$$f ${DESTDIR}${TMACDIR}; \
 	done
 	install -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
-		${.CURDIR}/tmac.s ${DESTDIR}${TMACDIR}/tmac.${tmac_s}
+		${.CURDIR}/tmac.s ${DESTDIR}${TMACDIR}/tmac.s
 	install -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
 		${.CURDIR}/tmac.an ${DESTDIR}${TMACDIR}/tmac.an.old
 
