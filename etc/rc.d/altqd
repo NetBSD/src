@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: altqd,v 1.2 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: altqd,v 1.3 2003/03/10 18:17:06 lukem Exp $
 #
 
 # PROVIDE: altqd
-# REQUIRE: network mountcritlocal dhclient
-# BEFORE:  NETWORKING
+# REQUIRE: mountcritremote
+# BEFORE:  SERVERS
 # KEYWORD: shutdown
 
 . /etc/rc.subr
