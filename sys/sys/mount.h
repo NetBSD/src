@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.17 1993/09/07 15:41:55 ws Exp $
+ *	$Id: mount.h,v 1.17.2.1 1993/09/24 08:57:54 mycroft Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
 
-typedef quad fsid_t;			/* file system id type */
+typedef struct { long val[2]; } fsid_t;		/* file system id type */
 
 /*
  * File identifier.
