@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.52 2001/10/26 20:48:47 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.53 2001/10/27 00:35:48 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.52 2001/10/26 20:48:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.53 2001/10/27 00:35:48 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -676,6 +676,10 @@ wskbd_enable(struct wskbd_softc *sc, int on)
 		))
 		return (EBUSY);
 #endif
+#if NWSDISPLAY > 0
+	if (sc->sc_base.me_dispdv != NULL)
+		return (0);
+#endif
 
 	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
 	DPRINTF(("wskbd_enable: sc=%p on=%d res=%d\n", sc, on, error));
@@ -1129,9 +1133,9 @@ wskbd_set_display(struct device *dv, struct wsevsrc *me)
 	}
 
 	odisplaydv = sc->sc_base.me_dispdv;
-	sc->sc_base.me_dispdv = displaydv;
-
+	sc->sc_base.me_dispdv = NULL;
 	error = wskbd_enable(sc, displaydv != NULL);
+	sc->sc_base.me_dispdv = displaydv;
 	if (error) {
 		sc->sc_base.me_dispdv = odisplaydv;
 		return (error);
