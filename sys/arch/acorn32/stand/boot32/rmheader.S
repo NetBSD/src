@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.1 2002/12/28 23:57:37 reinoud Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.2 2003/01/08 15:29:09 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -68,8 +68,16 @@ LDsync_loop:
 	ldr	r0, Lstart
 	mov	pc, r0
 
+	/*
+	 * The size of the code/data to be moved is not `end - rmbase' but
+	 * `__bss_start__ - rmbase' for the module is loaded into RISC OS
+	 * based on the filesize where as NetBSD doesn't have to include all
+	 * the bss space into the file itself. In some odd cases the
+	 * relocatable module area can be smaller than the module + bss and
+	 * thus bomb out.
+	 */
 Lsize:
-	.word	end - rmbase
+	.word	__bss_start__ - rmbase
 Lstart:
 	.word	_start
 
