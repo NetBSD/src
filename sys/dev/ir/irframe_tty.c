@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.13 2001/12/12 17:52:06 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.14 2001/12/13 15:09:07 augustss Exp $	*/
 
 /*
  * TODO
@@ -83,7 +83,8 @@ int irframetdebug = 0;
 
 /*****/
 
-#define MAX_IRDA_FRAME 5000	/* XXX what is it? */
+/* Max size with framing. */
+#define MAX_IRDA_FRAME (2*IRDA_MAX_FRAME_SIZE + IRDA_MAX_EBOFS + 4)
 
 struct frame {
 	u_char *buf;
@@ -662,21 +663,14 @@ irframet_set_params(void *h, struct irda_params *p)
 		 __FUNCTION__, tp, p->speed, p->ebofs, p->maxsize));
 
 	if (p->speed != sc->sc_speed) {
-		switch (p->speed) {
-		case   2400:
-		case   9600:
-		case  19200:
-		case  38400:
-		case  57600:
-		case 115200:
-			break;
-		default: return (EINVAL);
-		}
+		/* Checked in irframe.c */
 		irt_dongles[sc->sc_dongle].setspeed(tp, p->speed);
 		sc->sc_speed = p->speed;
 	}
 
+	/* Max size checked in irframe.c */
 	sc->sc_ebofs = p->ebofs;
+	/* Max size checked in irframe.c */
 	if (sc->sc_maxsize != p->maxsize) {
 		sc->sc_maxsize = p->maxsize;
 		if (sc->sc_inbuf != NULL)

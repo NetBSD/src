@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.10 2001/12/13 00:33:58 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.11 2001/12/13 15:09:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	(void)sc->sc_methods->im_get_speeds(sc->sc_handle, &speeds);
+	sc->sc_speedmask = speeds;
 	delim = ":";
 	if (speeds & IRDA_SPEEDS_SIR) {
 		printf("%s SIR", delim);
@@ -182,6 +183,9 @@ irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 			return (error);
 	}
 	sc->sc_open = 1;
+#ifdef DIAGNOSTIC
+	sc->sc_speed = IRDA_DEFAULT_SPEED;
+#endif
 	(void)irf_reset_params(sc);
 	return (0);
 }
@@ -213,6 +217,8 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
+	if (uio->uio_resid < sc->sc_params.maxsize)
+		return (EINVAL);
 	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
 }
 
@@ -226,6 +232,8 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (EIO);
+	if (uio->uio_resid > sc->sc_params.maxsize)
+		return (EINVAL);
 	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
 
@@ -245,6 +253,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
+	struct irda_params *parms = vaddr;
 	int error;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
@@ -261,13 +270,20 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case IRDA_SET_PARAMS:
 #ifdef DIAGNOSTIC
-		if (((struct irda_params *)vaddr)->speed != sc->sc_speed) {
-			sc->sc_speed = ((struct irda_params *)vaddr)->speed;
+		if (parms->speed != sc->sc_speed) {
+			sc->sc_speed = parms->speed;
 			printf("%s: set speed %u\n", sc->sc_dev.dv_xname,
 			       sc->sc_speed);
 		}
 #endif
+		if (parms->maxsize > IRDA_MAX_FRAME_SIZE)
+			return (EINVAL);
+		if (parms->ebofs > IRDA_MAX_EBOFS)
+			return (EINVAL);
+		/* XXX check speed */
 		error = sc->sc_methods->im_set_params(sc->sc_handle, vaddr);
+		if (!error)
+			sc->sc_params = *parms;
 		break;
 
 	case IRDA_RESET_PARAMS:
