@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.280 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.281 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -468,6 +468,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	amiga: added wsmouse support to mouse driver.  [jandberg 20030922]
 	powerpc: Switch to GCC 3.3.1.  [matt 20030923]
 	powerpc: Switch to GDB 5.3.  [matt 20030923]
+	m68k: Switch to GDB 5.3.  [christos 20030923]
 	alpha: Switch to GDB 5.3.  [matt 20030924]
 	sgimips: Add haltwo(4), a driver for the SGI HAL2 audio controller
 		[lonewolf 20030925]
