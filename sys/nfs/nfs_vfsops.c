@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.113 2002/07/25 19:03:27 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.114 2002/07/26 01:36:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.113 2002/07/25 19:03:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.114 2002/07/26 01:36:30 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -560,9 +560,9 @@ nfs_mount(mp, path, data, ndp, p)
 	struct nfs_args args;
 	struct mbuf *nam;
 	struct vnode *vp;
-	char *pth=NULL, *hst=NULL;
+	char *pth, *hst;
 	size_t len;
-	u_char *nfh=NULL;
+	u_char *nfh;
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
 	if (error)
@@ -591,35 +591,35 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
-	/* sockargs() call must be after above copyin() calls */
-	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
-	if (error)
-		return (error);
 	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
 	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
 	if (error)
-		goto out;
+		return (error);
 	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
-	error = copyinstr(path, pth, MNAMELEN-1, &len);
+	error = copyinstr(path, pth, MNAMELEN - 1, &len);
 	if (error)
-		goto out;
+		goto free_nfh;
 	memset(&pth[len], 0, MNAMELEN - len);
 	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
-	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
+	error = copyinstr(args.hostname, hst, MNAMELEN - 1, &len);
 	if (error)
-		goto out;
+		goto free_pth;
 	memset(&hst[len], 0, MNAMELEN - len);
+	/* sockargs() call must be after above copyin() calls */
+	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
+	if (error)
+		goto free_hst;
 	args.fh = nfh;
 	error = mountnfs(&args, mp, nam, pth, hst, &vp, p);
 
-    out:
+free_hst:
+	FREE(hst, M_TEMP);
+free_pth:
+	FREE(pth, M_TEMP);
+free_nfh:
 	FREE(nfh, M_TEMP);
-	if (pth)
-		FREE(pth, M_TEMP);
-	if (hst)
-		FREE(hst, M_TEMP);
 
 	return (error);
 }
