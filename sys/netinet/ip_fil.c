@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.64 2000/12/28 21:42:49 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.65 2001/02/05 11:16:31 chs Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.64 2000/12/28 21:42:49 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.65 2001/02/05 11:16:31 chs Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
@@ -115,9 +115,6 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 da
 #include "netinet/ip_auth.h"
 #if defined(__FreeBSD_version) && (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
-#endif
-#ifndef	MIN
-# define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 #if !SOLARIS && defined(_KERNEL) && !defined(__sgi)
 # include <sys/kernel.h>
