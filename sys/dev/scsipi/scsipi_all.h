@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.12 1998/12/30 11:17:34 dbj Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.12.8.1 1999/10/19 17:39:35 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -150,22 +150,6 @@ struct scsipi_sense_data_unextended {
 /* 4*/	u_int8_t block[3];
 }; 
 
-#define	T_DIRECT	0x00	/* direct access device */
-#define	T_SEQUENTIAL	0x01	/* sequential access device */
-#define	T_PRINTER	0x02	/* printer device */
-#define	T_PROCESSOR	0x03	/* processor device */
-#define	T_WORM		0x04	/* write once, read many device */
-#define	T_CDROM		0x05	/* cd-rom device */
-#define	T_SCANNER 	0x06	/* scanner device */
-#define	T_OPTICAL 	0x07	/* optical memory device */
-#define	T_CHANGER	0x08	/* medium changer device */
-#define	T_COMM		0x09	/* communication device */
-#define	T_IT8_1		0x0a	/* ??? */
-#define	T_IT8_2		0x0b	/* ??? */
-#define	T_STORARRAY	0x0c	/* storage array device */
-#define	T_ENCLOSURE	0x0d	/* enclosure services device */
-#define	T_NODEVICE	0x1F
-
 #define	T_REMOV		1	/* device is removable */
 #define	T_FIXED		0	/* device is not removable */
 
@@ -177,20 +161,43 @@ struct scsipi_sense_data_unextended {
 
 struct scsipi_inquiry_data {
 	u_int8_t device;
-#define	SID_TYPE	0x1F
-#define	SID_QUAL	0xE0
-#define	SID_QUAL_LU_OK	0x00
-#define	SID_QUAL_LU_OFFLINE	0x20
-#define	SID_QUAL_RSVD	0x40
-#define	SID_QUAL_BAD_LU	0x60
+#define	SID_TYPE		0x1f	/* device type mask */
+#define	SID_QUAL		0xe0	/* device qualifier mask */
+#define	SID_QUAL_LU_PRESENT	0x00	/* logical unit present */
+#define	SID_QUAL_LU_NOTPRESENT	0x20	/* logical unit not present */
+#define	SID_QUAL_reserved	0x40
+#define	SID_QUAL_LU_NOT_SUPP	0x60	/* logical unit not supported */
+
+#define	T_DIRECT		0x00	/* direct access device */
+#define	T_SEQUENTIAL		0x01	/* sequential access device */
+#define	T_PRINTER		0x02	/* printer device */
+#define	T_PROCESSOR		0x03	/* processor device */
+#define	T_WORM			0x04	/* write once, read many device */
+#define	T_CDROM			0x05	/* cd-rom device */
+#define	T_SCANNER 		0x06	/* scanner device */
+#define	T_OPTICAL 		0x07	/* optical memory device */
+#define	T_CHANGER		0x08	/* medium changer device */
+#define	T_COMM			0x09	/* communication device */
+#define	T_IT8_1			0x0a	/* ??? */
+#define	T_IT8_2			0x0b	/* ??? */
+#define	T_STORARRAY		0x0c	/* storage array device */
+#define	T_ENCLOSURE		0x0d	/* enclosure services device */
+#define	T_NODEVICE		0x1f
+
 	u_int8_t dev_qual2;
-#define	SID_QUAL2	0x7F
-#define	SID_REMOVABLE	0x80
+#define	SID_QUAL2		0x7F
+#define	SID_REMOVABLE		0x80
+
 	u_int8_t version;
 #define	SID_ANSII	0x07
 #define	SID_ECMA	0x38
 #define	SID_ISO		0xC0
+
 	u_int8_t response_format;
+#define	SID_FORMAT_SCSI1	0x00	/* SCSI-1 format */
+#define	SID_FORMAT_CCS		0x01	/* SCSI CCS format */
+#define	SID_FORMAT_ISO		0x02	/* ISO format */
+
 	u_int8_t additional_length;
 	u_int8_t unused[2];
 	u_int8_t flags;
@@ -201,6 +208,7 @@ struct scsipi_inquiry_data {
 #define	SID_WBus16	0x20
 #define	SID_WBus32	0x40
 #define	SID_RelAdr	0x80
+
 	char	vendor[8];
 	char	product[16];
 	char	revision[4];

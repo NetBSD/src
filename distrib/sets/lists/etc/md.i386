@@ -1,3 +1,0 @@
-# $NetBSD: md.i386,v 1.5 1999/07/05 09:02:55 fvdl Exp $
-./etc/fstab.sd
-./etc/fstab.wd

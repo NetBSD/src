@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.27 1998/12/08 00:19:28 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.27.10.1 1999/10/19 17:39:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 struct uk_softc {
 	struct device sc_dev;
 
-	struct scsipi_link *sc_link;	/* all the inter level info */
+	struct scsipi_periph *sc_periph; /* all the inter level info */
 };
 
 int ukmatch __P((struct device *, struct cfdata *, void *));
@@ -73,16 +73,6 @@ struct cfattach uk_atapibus_ca = {
 };
 
 extern struct cfdriver uk_cd;
-
-/*
- * This driver is so simple it uses all the default services
- */
-struct scsipi_device uk_switch = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
 
 cdev_decl(uk);
 
@@ -107,17 +97,15 @@ ukattach(parent, self, aux)
 {
 	struct uk_softc *uk = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
 
 	/*
 	 * Store information needed to contact our base driver
 	 */
-	uk->sc_link = sc_link;
-	sc_link->device = &uk_switch;
-	sc_link->device_softc = uk;
-	sc_link->openings = 1;
+	uk->sc_periph = periph;
+	periph->periph_dev = &uk->sc_dev;
 
 	printf("\n");
 	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
@@ -134,7 +122,8 @@ ukopen(dev, flag, fmt, p)
 {
 	int unit, error;
 	struct uk_softc *uk;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
 
 	unit = UKUNIT(dev);
 	if (unit >= uk_cd.cd_ndevs)
@@ -143,7 +132,8 @@ ukopen(dev, flag, fmt, p)
 	if (uk == NULL)
 		return (ENXIO);
 
-	sc_link = uk->sc_link;
+	periph = uk->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("ukopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
@@ -152,14 +142,14 @@ ukopen(dev, flag, fmt, p)
 	/*
 	 * Only allow one at a time
 	 */
-	if (sc_link->flags & SDEV_OPEN) {
+	if (periph->periph_flags & PERIPH_OPEN) {
 		printf("%s: already open\n", uk->sc_dev.dv_xname);
 		return (EBUSY);
 	}
 
-	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+	if ((error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
-	sc_link->flags |= SDEV_OPEN;
+	periph->periph_flags |= PERIPH_OPEN;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	return (0);
@@ -176,13 +166,15 @@ ukclose(dev, flag, fmt, p)
 	struct proc *p;
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct scsipi_periph *periph = uk->sc_periph;
+	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 
-	scsipi_wait_drain(uk->sc_link);
+	scsipi_wait_drain(periph);
 
-	scsipi_adapter_delref(uk->sc_link);
-	uk->sc_link->flags &= ~SDEV_OPEN;
+	scsipi_adapter_delref(adapt);
+	periph->periph_flags &= ~PERIPH_OPEN;
 
 	return (0);
 }
@@ -201,5 +193,5 @@ ukioctl(dev, cmd, addr, flag, p)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return (scsipi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
+	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, p));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.11 1999/09/23 11:04:34 enami Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.11.2.1 1999/10/19 17:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -43,11 +43,14 @@ struct cd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
-	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
+
+	struct scsipi_periph *sc_periph;
+
 	struct cd_parms {
 		int blksize;
 		u_long disksize;	/* total number sectors */
 	} params;
+
 	struct buf buf_queue;
 	char name[16]; /* product name, for default disklabel */
 	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
@@ -67,7 +70,7 @@ struct cd_ops {
 	int	(*cdo_load_unload) __P((struct cd_softc *, int, int));
 };
 
-void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
+void cdattach __P((struct device *, struct cd_softc *, struct scsipi_periph *,
     const struct cd_ops *));
 int cdactivate __P((struct device *, enum devact));
 int cddetach __P((struct device *, int));

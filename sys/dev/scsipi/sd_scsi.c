@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.11 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.11.2.1 1999/10/19 17:39:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ sd_scsibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (sa->sa_sc_link->type != BUS_SCSI)
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
@@ -139,7 +139,7 @@ sd_scsibus_attach(parent, self, aux)
 {
 	struct sd_softc *sd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sd_scsibus_attach: "));
 
@@ -149,10 +149,10 @@ sd_scsibus_attach(parent, self, aux)
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if ((sa->scsipi_info.scsi_version & SID_ANSII) == 0)
+	if (periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
 
-	sdattach(parent, sd, sc_link, &sd_scsibus_ops);
+	sdattach(parent, sd, periph, &sd_scsibus_ops);
 }
 
 static int
@@ -178,7 +178,7 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
-	return (scsipi_command(sd->sc_link,
+	return (scsipi_command(sd->sc_periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
 	    SDRETRIES, 6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
@@ -196,7 +196,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	int error;
 
 	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_link, flags)) == 0)
+	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	/* XXX
@@ -211,7 +211,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
 	    sizeof(struct scsi_blk_desc);
 
-	if ((error = scsipi_command(sd->sc_link,  
+	if ((error = scsipi_command(sd->sc_periph,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
 	    6000, NULL, flags | XS_CTL_DATA_IN)) != 0)
@@ -282,7 +282,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = scsipi_size(sd->sc_link, flags);
+		sectors = scsipi_size(sd->sc_periph, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -307,7 +307,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
+	if ((sd->sc_periph->periph_quirks & PQUIRK_NOMODESENSE) == 0) {
 		if (error == 0)
 			printf("%s: mode sense (%d) returned nonsense",
 			    sd->sc_dev.dv_xname, page);
@@ -321,7 +321,7 @@ fake_it:
 	 * this depends on which controller (e.g. 1542C is
 	 * different. but we have to put SOMETHING here..)
 	 */
-	sectors = scsipi_size(sd->sc_link, flags);
+	sectors = scsipi_size(sd->sc_periph, flags);
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = sectors / (64 * 32);
@@ -335,7 +335,7 @@ sd_scsibus_flush(sd, flags)
 	struct sd_softc *sd;
 	int flags;
 {
-	struct scsipi_link *sc_link = sd->sc_link;
+	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsi_synchronize_cache sync_cmd;
 
 	/*
@@ -352,13 +352,13 @@ sd_scsibus_flush(sd, flags)
 	 *
 	 * XXX What about older devices?
 	 */
-	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) >= 2 &&
-	    (sc_link->quirks & SDEV_NOSYNCCACHE) == 0) {
+	if (periph->periph_version >= 2 &&
+	    (periph->periph_quirks & PQUIRK_NOSYNCCACHE) == 0) {
 		sd->flags |= SDF_FLUSHING;
 		bzero(&sync_cmd, sizeof(sync_cmd));
 		sync_cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
-		return(scsipi_command(sc_link,
+		return(scsipi_command(periph,
 		       (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
 		       NULL, 0, SDRETRIES, 100000, NULL,
 		       flags|XS_CTL_IGNORE_ILLEGAL_REQUEST));

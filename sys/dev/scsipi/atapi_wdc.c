@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27 1999/09/30 22:57:52 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.1 1999/10/19 17:39:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -90,7 +90,8 @@ int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_reset	 __P((struct channel_softc *, struct wdc_xfer *));
-int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
+void  wdc_atapi_scsipi_request __P((struct scsipi_channel *,
+	scsipi_adapter_req_t, void *));
 
 #define MAX_SIZE MAXPHYS
 
@@ -99,43 +100,59 @@ wdc_atapibus_attach(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc;
-	int channel = chp->channel;
-	struct ata_atapi_attach aa_link;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter;
+	struct scsipi_channel *chan = &chp->ch_atapi_channel;
+	struct ata_atapi_attach aa;
 
 	/*
-	 * Fill in the adapter.
+	 * Fill in the scsipi_adapter.
 	 */
-	wdc->sc_atapi_adapter.scsipi_cmd = wdc_atapi_send_cmd;
-	wdc->sc_atapi_adapter.scsipi_minphys = wdc_atapi_minphys;
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &wdc->sc_dev;
+	adapt->adapt_nchannels = wdc->nchannels;
+	adapt->adapt_request = wdc_atapi_scsipi_request;
+	adapt->adapt_minphys = wdc_atapi_minphys;
 
-	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
-	aa_link.aa_type = T_ATAPI;
-	aa_link.aa_channel = channel;
-	aa_link.aa_openings = 1;
-	aa_link.aa_drv_data = chp->ch_drive; /* pass the whole array */
-	aa_link.aa_bus_private = &wdc->sc_atapi_adapter;
-	chp->atapibus = config_found(&wdc->sc_dev, (void *)&aa_link,
-	    atapi_print);
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &atapi_bustype;
+	chan->chan_channel = chp->channel;
+	chan->chan_flags = SCSIPI_CHAN_OPENINGS;
+	chan->chan_openings = 1;
+	chan->chan_max_periph = 1;
+	chan->chan_ntargets = 2;
+	chan->chan_nluns = 1;
+
+	memset(&aa, 0, sizeof(aa));
+	aa.aa_type = T_ATAPI;
+	aa.aa_channel = chan->chan_channel;
+	aa.aa_openings = chan->chan_openings;
+	aa.aa_drv_data = chp->ch_drive; /* pass the whole array */
+	aa.aa_bus_private = chan;
+	chp->atapibus = config_found(&wdc->sc_dev, &aa, atapi_print);
 }
 
 void
-wdc_atapi_minphys (struct buf *bp)
+wdc_atapi_minphys(bp)
+	struct buf *bp;
 {
-	if(bp->b_bcount > MAX_SIZE)
+
+	if (bp->b_bcount > MAX_SIZE)
 		bp->b_bcount = MAX_SIZE;
 	minphys(bp);
 }
 
 int
-wdc_atapi_get_params(ab_link, drive, flags, id)
-	struct scsipi_link *ab_link;
-	u_int8_t drive;
-	int flags;
+wdc_atapi_get_params(chan, drive, flags, id)
+	struct scsipi_channel *chan;
+	int drive, flags;
 	struct ataparams *id;
 {
-	struct wdc_softc *wdc = (void*)ab_link->adapter_softc;
-	struct channel_softc *chp =
-	    wdc->channels[ab_link->scsipi_atapi.channel];
+	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
+	struct channel_softc *chp = wdc->channels[chan->chan_channel];
 	struct wdc_command wdc_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
@@ -180,48 +197,64 @@ wdc_atapi_get_params(ab_link, drive, flags, id)
 		    wdc_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
-	return COMPLETE;
+	return 0;
 }
 
-int
-wdc_atapi_send_cmd(sc_xfer)
-	struct scsipi_xfer *sc_xfer;
+void
+wdc_atapi_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct wdc_softc *wdc = (void*)sc_xfer->sc_link->adapter_softc;
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+	struct scsipi_periph *periph;
+	struct scsipi_xfer *sc_xfer;
+	struct wdc_softc *wdc = (void *)adapt->adapt_dev;
 	struct wdc_xfer *xfer;
-	int flags = sc_xfer->xs_control;
-	int channel = sc_xfer->sc_link->scsipi_atapi.channel;
-	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
-	int s, ret;
+	int channel = chan->chan_channel;
+	int flags, drive, s;
 
-	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
-	    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		sc_xfer = arg;
+		periph = sc_xfer->xs_periph;
+		flags = sc_xfer->xs_control;
+		drive = periph->periph_target;
 
-	xfer = wdc_get_xfer((flags & XS_CTL_NOSLEEP) ?
-	    WDC_NOSLEEP : WDC_CANSLEEP);
-	if (xfer == NULL) {
-		return TRY_AGAIN_LATER;
-	}
-	if (sc_xfer->xs_control & XS_CTL_POLL)
-		xfer->c_flags |= C_POLL;
-	xfer->drive = drive;
-	xfer->c_flags |= C_ATAPI;
-	xfer->cmd = sc_xfer;
-	xfer->databuf = sc_xfer->data;
-	xfer->c_bcount = sc_xfer->datalen;
-	xfer->c_start = wdc_atapi_start;
-	xfer->c_intr = wdc_atapi_intr;
-	s = splbio();
-	wdc_exec_xfer(wdc->channels[channel], xfer);
+		WDCDEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
+		    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
+
+		xfer = wdc_get_xfer((flags & XS_CTL_NOSLEEP) ?
+		    WDC_NOSLEEP : WDC_CANSLEEP);
+		if (xfer == NULL) {
+			sc_xfer->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(sc_xfer);
+			return;
+		}
+
+		if (sc_xfer->xs_control & XS_CTL_POLL)
+			xfer->c_flags |= C_POLL;
+		xfer->drive = drive;
+		xfer->c_flags |= C_ATAPI;
+		xfer->cmd = sc_xfer;
+		xfer->databuf = sc_xfer->data;
+		xfer->c_bcount = sc_xfer->datalen;
+		xfer->c_start = wdc_atapi_start;
+		xfer->c_intr = wdc_atapi_intr;
+		s = splbio();
+		wdc_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
-	if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
-	    (sc_xfer->xs_status & XS_STS_DONE) == 0)
-		panic("wdc_atapi_send_cmd: polled command not done");
+		if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
+		    (sc_xfer->xs_status & XS_STS_DONE) == 0)
+			panic("wdc_atapi_scsipi_request: polled command "
+			    "not done");
 #endif
-	ret = (sc_xfer->xs_status & XS_STS_DONE) ?
-	    COMPLETE : SUCCESSFULLY_QUEUED;
-	splx(s);
-	return ret;
+		splx(s);
+		return;
+
+	default:
+		/* Not supported, nothing to do. */
+	}
 }
 
 void
@@ -284,7 +317,7 @@ wdc_atapi_start(chp, xfer)
 	 * the interrupt routine. If it is a polled command, call the interrupt
 	 * routine until command is done.
 	 */
-	if ((sc_xfer->sc_link->scsipi_atapi.cap  & ATAPI_CFG_DRQ_MASK) !=
+	if ((sc_xfer->xs_periph->periph_cap & ATAPI_CFG_DRQ_MASK) !=
 	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL)) {
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
@@ -638,8 +671,8 @@ again:
 				/* save the short sense */
 				sc_xfer->error = XS_SHORTSENSE;
 				sc_xfer->sense.atapi_sense = chp->ch_error;
-				if ((sc_xfer->sc_link->quirks &
-				    ADEV_NOSENSE) == 0) {
+				if ((sc_xfer->xs_periph->periph_quirks &
+				    PQUIRK_NOSENSE) == 0) {
 					/*
 					 * let the driver issue a
 					 * 'request sense'
@@ -813,7 +846,6 @@ wdc_atapi_done(chp, xfer)
 	untimeout(wdctimeout, chp);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
-	sc_xfer->xs_status |= XS_STS_DONE;
 	if (drvp->n_dmaerrs ||
 	  (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
 	  sc_xfer->error != XS_SHORTSENSE)) {

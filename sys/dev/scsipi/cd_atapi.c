@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.11 1999/09/23 11:04:34 enami Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.11.2.1 1999/10/19 17:39:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -111,7 +111,7 @@ cd_atapibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (sa->sa_sc_link->type != BUS_ATAPI)
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_ATAPI)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
@@ -132,13 +132,13 @@ cd_atapibus_attach(parent, self, aux)
 {
 	struct cd_softc *cd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
-	cdattach(parent, cd, sc_link, &cd_atapibus_ops);
+	cdattach(parent, cd, periph, &cd_atapibus_ops);
 
 	/* XXX should I get the ATAPI_CAP_PAGE here ? */
 }
@@ -151,7 +151,7 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
+	if ((error = atapi_mode_sense(cd->sc_periph, ATAPI_AUDIO_PAGE,
 	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -159,7 +159,7 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	data.pages.audio.port[RIGHT_PORT].channels = p1;
 	data.pages.audio.port[2].channels = p2;
 	data.pages.audio.port[3].channels = p3;
-	return (atapi_mode_select(cd->sc_link,
+	return (atapi_mode_select(cd->sc_periph,
 	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000));
 }
@@ -173,7 +173,7 @@ cd_atapibus_getvol(cd, arg, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
+	if ((error = atapi_mode_sense(cd->sc_periph, ATAPI_AUDIO_PAGE,
 	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -193,11 +193,11 @@ cd_atapibus_setvol(cd, arg, flags)
 	struct atapi_cd_mode_data data, mask;
 	int error;
 
-	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
+	if ((error = atapi_mode_sense(cd->sc_periph, ATAPI_AUDIO_PAGE,
 	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
-	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE_MASK,
+	if ((error = atapi_mode_sense(cd->sc_periph, ATAPI_AUDIO_PAGE_MASK,
 	    (struct atapi_mode_header *)&mask, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
@@ -211,7 +211,7 @@ cd_atapibus_setvol(cd, arg, flags)
 	data.pages.audio.port[3].volume = arg->vol[3] &
 	    mask.pages.audio.port[3].volume;
 
-	return (atapi_mode_select(cd->sc_link,
+	return (atapi_mode_select(cd->sc_periph,
 	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE,
 	    flags, CDRETRIES, 20000));
 }
@@ -237,7 +237,7 @@ cd_atapibus_load_unload(cd, options, slot)
 	atapi_cmd.opcode = ATAPI_LOAD_UNLOAD;
 	atapi_cmd.options = options;    /* ioctl uses ATAPI values */
 	atapi_cmd.slot = slot;
-	return (scsipi_command(cd->sc_link,
+	return (scsipi_command(cd->sc_periph,
 		(struct scsipi_generic *)&atapi_cmd, sizeof(atapi_cmd),
 		0, 0, CDRETRIES, 200000, NULL, 0));
 }

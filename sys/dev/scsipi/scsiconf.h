@@ -1,11 +1,12 @@
-/*	$NetBSD: scsiconf.h,v 1.47 1998/12/05 19:39:24 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.47.10.1 1999/10/19 17:39:34 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,40 +56,21 @@
 
 #include <dev/scsipi/scsipiconf.h>
 
-/*
- * Other definitions used by autoconfiguration.
- */
-#define	SCSI_CHANNEL_ONLY_ONE	-1	/* only one channel on controller */
-
 int	scsiprint __P((void *, const char *));
 
-/*
- * One of these is allocated and filled in for each scsi bus.
- * it holds pointers to allow the scsi bus to get to the driver
- * That is running each LUN on the bus
- * it also has a template entry which is the prototype struct
- * supplied by the adapter driver, this is used to initialise
- * the others, before they have the rest of the fields filled in
- */
 struct scsibus_softc {
 	struct device sc_dev;
-	struct scsipi_link *adapter_link; /* prototype supplied by adapter */
-	struct scsipi_link ***sc_link;		/* dynamically allocated */
+	struct scsipi_channel *sc_channel;	/* our scsipi_channel */
 	int	sc_flags;
-	int16_t	sc_maxtarget;
-	int16_t	sc_maxlun;
 };
 
 /* sc_flags */
 #define	SCSIBUSF_OPEN	0x00000001	/* bus is open */
 
-#define SCSI_OP_TARGET	0x0001
-#define	SCSI_OP_RESET	0x0002
-#define	SCSI_OP_BDINFO	0x0003
+extern const struct scsipi_bustype scsi_bustype;
 
-int	scsi_change_def __P((struct scsipi_link *, int));
-void	scsi_print_addr __P((struct scsipi_link *));
-int	scsi_probe_busses __P((int, int, int));
-int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
-	    int cmdlen, u_char *data_addr, int datalen, int retries,
-	    int timeout, struct buf *bp, int flags));
+int	scsi_change_def __P((struct scsipi_periph *, int));
+void	scsi_print_addr __P((struct scsipi_periph *));
+int	scsi_probe_bus __P((struct scsibus_softc *, int, int));
+int	scsi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
+	    int, void *, size_t, int, int, struct buf *, int));
