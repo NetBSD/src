@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.4 2004/03/13 19:27:40 bjh21 Exp $
+#	$NetBSD: EB7500ATX,v 1.4.2.1 2004/07/15 20:17:01 he Exp $
 #
 #	EB7500ATX kernel
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.4 $"
+#ident		"EB7500ATX-$Revision: 1.4.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -124,6 +124,7 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options		SYMTAB_SPACE=250000
 
 # Development and Debugging options
