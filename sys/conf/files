@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.388 2000/09/13 16:10:50 thorpej Exp $
+#	$NetBSD: files,v 1.389 2000/09/18 20:51:14 bjh21 Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -351,6 +351,10 @@ file	dev/ic/i82586.c			i82586
 # Intel 82557/82558/82559 Ethernet Controller
 device	fxp: ether, ifnet, arp, mii
 file	dev/ic/i82557.c			fxp
+
+# SEEQ 8005 Advanced Ethernet Data Link Controller
+define	seeq8005
+file	dev/ic/seeq8005.c		seeq8005
 
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet, mii, mii_bitbang
