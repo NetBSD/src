@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.68.4.1 1996/06/02 09:08:08 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2040,6 +2040,15 @@ tty_init()
 
 /*
  * Attach a tty to the tty list.
+ *
+ * This should be called ONLY once per real tty (including pty's).
+ * eg, on the sparc, the keyboard and mouse have struct tty's that are
+ * distinctly NOT usable as tty's, and thus should not be attached to
+ * the ttylist.  This is why this call is not done from ttymalloc().
+ *
+ * Device drivers should attach tty's at a similar time that they are
+ * ttymalloc()'ed, or, for the case of statically allocated struct tty's
+ * either in the attach or (first) open routine.
  */
 void
 tty_attach(tp)
@@ -2086,6 +2095,9 @@ ttymalloc()
 
 /*
  * Free a tty structure and its buffers.
+ *
+ * Be sure to call tty_detach() for any tty that has been
+ * tty_attach()ed.
  */
 void
 ttyfree(tp)
@@ -2095,6 +2107,5 @@ ttyfree(tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	tty_detach(tp);
 	FREE(tp, M_TTYS);
 }
