@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.5 1998/08/09 20:15:39 perry Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.6 1999/09/14 04:50:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -39,6 +39,10 @@
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+#if !defined(_KERNEL)
+#include <string.h>
+#endif
 
 void
 ffs_sb_swap(o, n, ns)
