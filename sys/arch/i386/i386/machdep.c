@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.417 2000/11/16 10:19:02 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.418 2000/11/16 17:00:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -570,7 +570,7 @@ char	cpu_model[120];
  * Note: these are just the ones that may not have a cpuid instruction.
  * We deal with the rest in a different way.
  */
-struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
 		NULL},				/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
@@ -601,7 +601,7 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
 		CPUVENDOR_INTEL,
@@ -878,7 +878,7 @@ identifycpu()
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
-	struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup) __P((void));
 
 	if (cpuid_level == -1) {
