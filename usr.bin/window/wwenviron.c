@@ -1,4 +1,4 @@
-/*	$NetBSD: wwenviron.c,v 1.6 1998/12/20 15:02:57 christos Exp $	*/
+/*	$NetBSD: wwenviron.c,v 1.7 2002/06/14 01:06:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwenviron.c,v 1.6 1998/12/20 15:02:57 christos Exp $");
+__RCSID("$NetBSD: wwenviron.c,v 1.7 2002/06/14 01:06:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ __RCSID("$NetBSD: wwenviron.c,v 1.6 1998/12/20 15:02:57 christos Exp $");
  * Set up the environment of this process to run in window 'wp'.
  */
 int
-wwenviron(wp)
-	struct ww *wp;
+wwenviron(struct ww *wp)
 {
 	int i;
 #ifndef TIOCSCTTY

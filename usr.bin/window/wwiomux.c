@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.6 1997/11/21 08:37:30 lukem Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.7 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwiomux.c,v 1.6 1997/11/21 08:37:30 lukem Exp $");
+__RCSID("$NetBSD: wwiomux.c,v 1.7 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: wwiomux.c,v 1.6 1997/11/21 08:37:30 lukem Exp $");
  * The history of this routine is interesting.
  */
 void
-wwiomux()
+wwiomux(void)
 {
 	struct ww *w;
 	fd_set imask;

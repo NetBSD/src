@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.4 1997/11/21 08:36:00 lukem Exp $	*/
+/*	$NetBSD: error.c,v 1.5 2002/06/14 01:06:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: error.c,v 1.4 1997/11/21 08:36:00 lukem Exp $");
+__RCSID("$NetBSD: error.c,v 1.5 2002/06/14 01:06:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,28 +52,17 @@ __RCSID("$NetBSD: error.c,v 1.4 1997/11/21 08:36:00 lukem Exp $");
 #define ERRLINES 10			/* number of lines for errwin */
 
 void
-#if __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	verror(fmt, ap);
 	va_end(ap);
 }
 
 void
-verror(fmt, ap)
-	const char *fmt;
-	va_list ap;
+verror(const char *fmt, va_list ap)
 {
 	struct context *x;
 	struct ww *w;
@@ -112,7 +101,7 @@ verror(fmt, ap)
 }
 
 void
-err_end()
+err_end(void)
 {
 	if (cx.x_type == X_FILE && cx.x_errwin != 0) {
 		if (!cx.x_noerr)

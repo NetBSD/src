@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdelete.c,v 1.5 1997/11/21 08:37:11 lukem Exp $	*/
+/*	$NetBSD: wwdelete.c,v 1.6 2002/06/14 01:06:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwdelete.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwdelete.c,v 1.5 1997/11/21 08:37:11 lukem Exp $");
+__RCSID("$NetBSD: wwdelete.c,v 1.6 2002/06/14 01:06:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,7 @@ __RCSID("$NetBSD: wwdelete.c,v 1.5 1997/11/21 08:37:11 lukem Exp $");
  * Pull w free from the cover list.
  */
 void
-wwdelete(w)
-	struct ww *w;
+wwdelete(struct ww *w)
 {
 	int i;
 
@@ -89,9 +88,7 @@ wwdelete(w)
 }
 
 void
-wwdelete1(w, t, b, l, r)
-	struct ww *w;
-	int t, b, l, r;
+wwdelete1(struct ww *w, int t, int b, int l, int r)
 {
 	int i;
 	int tt, bb, ll, rr;

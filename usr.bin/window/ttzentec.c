@@ -1,4 +1,4 @@
-/*	$NetBSD: ttzentec.c,v 1.4 1997/11/21 08:36:44 lukem Exp $	*/
+/*	$NetBSD: ttzentec.c,v 1.5 2002/06/14 01:06:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzentec.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttzentec.c,v 1.4 1997/11/21 08:36:44 lukem Exp $");
+__RCSID("$NetBSD: ttzentec.c,v 1.5 2002/06/14 01:06:56 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ short zentec_frame[16] = {
 };
 
 int
-tt_zentec()
+tt_zentec(void)
 {
 	if (tt_generic() < 0)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mloop.c,v 1.6 1997/11/21 08:36:08 lukem Exp $	*/
+/*	$NetBSD: mloop.c,v 1.7 2002/06/14 01:06:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mloop.c,v 1.6 1997/11/21 08:36:08 lukem Exp $");
+__RCSID("$NetBSD: mloop.c,v 1.7 2002/06/14 01:06:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: mloop.c,v 1.6 1997/11/21 08:36:08 lukem Exp $");
 #include "defs.h"
 
 void
-mloop()
+mloop(void)
 {
 	while (!quit) {
 		if (incmd) {
