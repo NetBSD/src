@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.15 1996/02/09 22:36:13 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.16 1996/02/09 23:30:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -656,7 +656,7 @@ ufs_link(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *tdvp = ap->a_dvp;
+	register struct vnode *dvp = ap->a_dvp;
 	register struct vnode *vp = ap->a_vp;
 	register struct componentname *cnp = ap->a_cnp;
 	register struct inode *ip;
