@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.16 2000/04/14 06:03:40 simonb Exp $   */
+/*      $NetBSD: raidctl.c,v 1.17 2000/05/23 00:33:13 thorpej Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 extern  char *__progname;
 
 int     main __P((int, char *[]));
-void do_ioctl __P((int, unsigned long, void *, char *));
+void	do_ioctl __P((int, unsigned long, void *, const char *));
 static  void rf_configure __P((int, char*, int));
 static  char *device_status __P((RF_DiskStatus_t));
 static  void rf_get_device_status __P((int));
@@ -82,7 +82,7 @@ static  void remove_hot_spare __P((int, char *));
 static  void rebuild_in_place __P((int, char *));
 static  void check_status __P((int,int));
 static  void check_parity __P((int,int,char *));
-static  void do_meter __P((int, int));
+static  void do_meter __P((int, u_long));
 static  void get_bar __P((char *, double, int));
 static  void get_time_string __P((char *, int));
 
@@ -331,7 +331,7 @@ do_ioctl(fd, command, arg, ioctl_name)
 	int fd;
 	unsigned long command;
 	void *arg;
-	char *ioctl_name;
+	const char *ioctl_name;
 {
 	if (ioctl(fd, command, arg) < 0) {
 		warn("ioctl (%s) failed", ioctl_name);
@@ -796,9 +796,9 @@ check_status( fd, meter )
 char *tbits = "|/-\\";
 
 static void
-do_meter( fd, option )
+do_meter(fd, option)
 	int fd;
-	int option;
+	u_long option;
 {
 	int percent_done;
 	int last_percent;
@@ -823,7 +823,7 @@ do_meter( fd, option )
 		exit(errno);
 	}
 	percent_done = 0;
-	do_ioctl( fd, option, &percent_done, "");
+	do_ioctl(fd, option, &percent_done, "");
 	last_percent = percent_done;
 	start_percent = percent_done;
 	last_time = start_time;
