@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.109 2000/12/12 22:38:43 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.110 2000/12/13 07:42:47 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -8,7 +8,7 @@
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
 	sbrk.S __semctl.S setlogin.S shmat.S shmctl.S sigaction.S \
 	sigpending.S sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S \
-	syscall.S
+	syscall.S __syscall.S
 SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
