@@ -395,7 +395,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 
 	.globl _Crtat
 	movl	_Crtat,%eax
-	subl	$0xfe0a0000,%eax
+	subl	$(KERNBASE|IOM_BEGIN),%eax
 	movl	_atdevphys,%edx	# get pte PA
 	subl	_KPTphys,%edx	# remove base of ptes, now have phys offset
 	shll	$PGSHIFT-2,%edx	# corresponding to virt offset
@@ -416,7 +416,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	$_gdt+8*9,%eax		# adjust slots 9-17
 	movl	$9,%ecx
 reloc_gdt:
-	movb	$0xfe,7(%eax)		# top byte of base addresses, was 0,
+	movb	$(KERNBASE>>24),7(%eax)	# top byte of base addresses, was 0,
 	addl	$8,%eax			# now KERNBASE>>24
 	loop	reloc_gdt
 
