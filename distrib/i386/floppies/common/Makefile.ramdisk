@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.21 2003/10/08 04:25:43 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.22 2004/04/18 20:04:26 dsl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -27,7 +27,11 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
 .if defined(USE_SYSINST)
+.if ${USE_SYSINST} != yes
+LISTS+=		${DISTRIBDIR}/common/list.sysinst.${USE_SYSINST}
+.else
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
+.endif
 MAKEFS_FLAGS+=	-f 14
 .endif
 

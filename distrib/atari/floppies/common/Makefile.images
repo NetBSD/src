@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.images,v 1.5 2003/01/03 15:34:32 lukem Exp $
+#	$NetBSD: Makefile.images,v 1.6 2004/04/18 20:04:26 dsl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ IMAGEDEPENDS+=	${CRUNCHBIN} \
 IMAGE_RELEASEDIR=	installation/miniroot
 
 .if defined(USE_SYSINST)
-LISTS+=		${DISTRIBDIR}/common/list.sysinst
+LISTS+=		${DISTRIBDIR}/common/list.sysinst.en
 .endif
 
 # Use stubs to eliminate some large stuff from libc
