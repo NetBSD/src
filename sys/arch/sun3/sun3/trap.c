@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 1995/02/24 05:03:47 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.41 1995/03/01 05:10:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -104,7 +104,11 @@ char	*trap_type[] = {
 	"Format error",
 	"68881 exception",
 	"Coprocessor violation",
-	"Async system trap"
+	"Async system trap",
+	"Unused? (14)",
+	"Breakpoint",
+	"FPU instruction",
+	"FPU data format",
 };
 u_int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
 
@@ -316,14 +320,13 @@ trap(type, code, v, frame)
 
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
-		/* XXX - Need to attach FPU emulator here. */
-		/* XXX need to FSAVE */
-		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
-		       p->p_pid, p->p_comm,
-		       frame.f_format == 2 ? "instruction" : "data type",
-		       frame.f_pc, frame.f_fmt2.f_iaddr);
-		/* XXX need to FRESTORE */
-		sig = SIGFPE;
+#ifdef	FPU_EMULATE
+		sig = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
+#else
+		uprintf("pid %d killed: no floating point support\n", p->p_pid);
+		sig = SIGILL;
+#endif
 		break;
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
