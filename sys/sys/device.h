@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.23 1998/01/12 08:04:55 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.24 1998/01/12 21:21:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,10 +160,6 @@ struct pdevinit {
 };
 
 #ifdef _KERNEL
-
-#ifndef _LKM
-#include "ioconf.h"			/* cfdriver externs */
-#endif
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
