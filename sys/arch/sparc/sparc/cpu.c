@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130 2002/08/23 18:00:47 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.131 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -276,7 +276,7 @@ cpu_mainbus_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 static void
@@ -306,7 +306,7 @@ cpu_cpuunit_match(parent, cf, aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, cpua->cpua_type) == 0);
+	return (strcmp(cf->cf_name, cpua->cpua_type) == 0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.13 2002/03/20 17:52:41 eeh Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.14 2002/09/27 02:24:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.13 2002/03/20 17:52:41 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.14 2002/09/27 02:24:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ lebufmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

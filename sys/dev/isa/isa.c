@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.110 2002/01/07 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.111 2002/09/27 02:24:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.110 2002/01/07 21:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.111 2002/09/27 02:24:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ isamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isabus_attach_args *iba = aux;
 
-	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
+	if (strcmp(iba->iba_busname, cf->cf_name))
 		return (0);
 
 	/* XXX check other indicators */

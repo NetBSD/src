@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2002/08/23 15:01:08 scw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2002/09/27 02:24:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct plb_attach_args *paa = aux;
 
 	/* make sure that we're looking for a CPU */
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return (0);
 
 	return !cpufound;

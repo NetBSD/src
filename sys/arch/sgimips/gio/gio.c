@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.2 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: gio.c,v 1.3 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -64,7 +64,7 @@ gio_match(parent, match, aux)
 {
 	struct giobus_attach_args *gba = aux;
 
-	if (strcmp(gba->gba_busname, match->cf_driver->cd_name) != 0)
+	if (strcmp(gba->gba_busname, match->cf_name) != 0)
 		return 0;
 
 	return 1;

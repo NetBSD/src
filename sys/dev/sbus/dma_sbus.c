@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.11 2002/03/21 00:16:15 eeh Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.11 2002/03/21 00:16:15 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ dmamatch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	return (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 		strcmp("espdma", sa->sa_name) == 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.41 2002/06/01 23:50:56 lukem Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.42 2002/09/27 02:24:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.41 2002/06/01 23:50:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.42 2002/09/27 02:24:29 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -103,9 +103,9 @@ cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cbslot_attach_args *cba = aux;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
+	if (strcmp(cba->cba_busname, cf->cf_name)) {
 		DPRINTF(("cardbusmatch: busname differs %s <=> %s\n",
-		    cba->cba_busname, cf->cf_driver->cd_name));
+		    cba->cba_busname, cf->cf_name));
 		return (0);
 	}
 

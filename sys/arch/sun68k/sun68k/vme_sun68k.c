@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.2 2001/11/30 17:49:10 fredette Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.3 2002/09/27 02:24:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ sun68kvme_match(parent, cf, aux)
 {
         struct mainbus_attach_args *ma = aux;
 
-        return (cpu_has_vme && (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0));
+        return (cpu_has_vme && (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.48 2002/08/25 17:54:58 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.49 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ sbus_match_mainbus(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 int
@@ -233,7 +233,7 @@ sbus_match_iommu(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
+	return (strcmp(cf->cf_name, ia->iom_name) == 0);
 }
 
 int
@@ -247,7 +247,7 @@ sbus_match_xbox(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, xa->xa_name) == 0);
+	return (strcmp(cf->cf_name, xa->xa_name) == 0);
 }
 
 /*

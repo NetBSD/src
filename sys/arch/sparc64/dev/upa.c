@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.9 2002/05/16 20:05:39 wiz Exp $ */
+/*	$NetBSD: upa.c,v 1.10 2002/09/27 02:24:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ upa_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 int
@@ -179,7 +179,7 @@ upa_match_iommu(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
+	return (strcmp(cf->cf_name, ia->iom_name) == 0);
 }
 
 int
@@ -193,7 +193,7 @@ upa_match_xbox(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, xa->xa_name) == 0);
+	return (strcmp(cf->cf_name, xa->xa_name) == 0);
 }
 
 /*

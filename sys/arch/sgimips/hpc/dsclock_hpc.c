@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock_hpc.c,v 1.3 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: dsclock_hpc.c,v 1.4 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -80,7 +80,7 @@ dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.7 2002/09/26 04:07:35 thorpej Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.8 2002/09/27 02:24:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.7 2002/09/26 04:07:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.8 2002/09/27 02:24:34 thorpej Exp $");
 
 #include "opt_userconf.h"
 
@@ -113,7 +113,7 @@ userconf_init()
 	struct cfdata *cf;
 
 	i = 0;
-	for (cf = cfdata; cf->cf_driver; cf++)
+	for (cf = cfdata; cf->cf_name; cf++)
 		i++;
 
 	userconf_maxdev = i - 1;
@@ -203,7 +203,7 @@ userconf_pdevnam(dev)
 	struct cfdata *cd;
 
 	cd = &cfdata[dev];
-	printf("%s", cd->cf_driver->cd_name);
+	printf("%s", cd->cf_name);
 	switch (cd->cf_fstate) {
 	case FSTATE_NOTFOUND:
 	case FSTATE_DNOTFOUND:
@@ -607,7 +607,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 	}
 
 	while (cfdata[i].cf_attach != 0) {
-		if (strlen(cfdata[i].cf_driver->cd_name) == len) {
+		if (strlen(cfdata[i].cf_name) == len) {
 
 			/*
 			 * Ok, if device name is correct
@@ -615,7 +615,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 			 *  If state == FSTATE_STAR, look for "dev*"
 			 *  If state == FSTATE_NOTFOUND, look for "dev0"
 			 */
-			if (strncasecmp(dev, cfdata[i].cf_driver->cd_name,
+			if (strncasecmp(dev, cfdata[i].cf_name,
 					len) == 0 &&
 			    (state == FSTATE_FOUND ||
 			     (state == FSTATE_STAR &&
@@ -688,7 +688,7 @@ userconf_add_read(prompt, field, dev, len, val)
 					printf("Unknown devno (max is %d)\n",
 					    userconf_maxdev);
 				} else if (strncasecmp(dev,
-				    cfdata[a].cf_driver->cd_name, len) != 0 &&
+				    cfdata[a].cf_name, len) != 0 &&
 					field == 'a') {
 					printf("Not same device type\n");
 				} else {

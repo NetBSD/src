@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2002/09/25 22:21:22 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.61 2002/09/27 02:24:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -157,7 +157,7 @@ matchbyname(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	printf("%s: WARNING: matchbyname\n", cf->cf_driver->cd_name);
+	printf("%s: WARNING: matchbyname\n", cf->cf_name);
 	return (0);
 }
 
@@ -1111,7 +1111,7 @@ dev_compatible(dev, aux, bpname)
 	 * match.  This is a nasty O(n^2) operation.
 	 */
 	for (i = 0; dev_compat_tab[i].name != NULL; i++) {
-		if (strcmp(dev->dv_cfdata->cf_driver->cd_name, 
+		if (strcmp(dev->dv_cfdata->cf_name, 
 			dev_compat_tab[i].name) == 0) {
 			DPRINTF(ACDB_BOOTDEV,
 				("\n%s: dev_compatible: translating %s\n",
@@ -1145,7 +1145,7 @@ bus_class(dev)
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_driver->cd_name;
+	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
 		if (strcmp(name, bus_class_tab[i].name) == 0) {
 			class = bus_class_tab[i].class;
@@ -1265,7 +1265,7 @@ device_register(dev, aux)
 	 * that.
 	 */
 	bpname = bp->name;
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
+	dvname = dev->dv_cfdata->cf_name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
 	    dev->dv_xname, dvname, dev->dv_xname, bpname));

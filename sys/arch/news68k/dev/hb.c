@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.5 2001/07/07 06:24:00 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.6 2002/09/27 02:24:18 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -87,7 +87,7 @@ hb_search(parent, cf, aux)
 {
 	struct hb_attach_args *ha = aux;
 
-	ha->ha_name = cf->cf_driver->cd_name;
+	ha->ha_name = cf->cf_name;
 	ha->ha_address = cf->cf_addr;
 	ha->ha_ipl = cf->cf_ipl;
 	ha->ha_vect = cf->cf_vect;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.2 2002/07/29 16:25:03 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.3 2002/09/27 02:24:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2 2002/07/29 16:25:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.3 2002/09/27 02:24:17 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -218,7 +218,7 @@ aumac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
-	if (strcmp(aa->aa_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

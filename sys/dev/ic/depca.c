@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.4 2001/11/13 13:14:36 lukem Exp $	*/
+/*	$NetBSD: depca.c,v 1.5 2002/09/27 02:24:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.4 2001/11/13 13:14:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.5 2002/09/27 02:24:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ le_depca_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct depca_attach_args *da = aux;
 
-	return (strcmp(da->da_name, match->cf_driver->cd_name) == 0);
+	return (strcmp(da->da_name, match->cf_name) == 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 2002/09/26 20:21:14 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.4 2002/09/27 02:24:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 	struct aubus_attach_args *aa = aux;
 
 	/*

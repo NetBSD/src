@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.61 2002/09/25 22:21:39 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.62 2002/09/27 02:24:31 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.61 2002/09/25 22:21:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.62 2002/09/27 02:24:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -286,7 +286,7 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 
 fail:
 	printf("%s%d at %s csr %o %s\n",
-	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 
 forgetit:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.26 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.27 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -171,7 +171,7 @@ cgfourteenmatch(parent, cf, aux)
 		return (0);
 
 	/* Check driver name */
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.7 2002/08/03 00:59:00 soren Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.8 2002/09/27 02:24:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.7 2002/08/03 00:59:00 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.8 2002/09/27 02:24:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ cgthreematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

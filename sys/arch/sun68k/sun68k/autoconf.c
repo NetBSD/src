@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2002/05/24 09:51:07 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2002/09/27 02:24:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ int sun68k_bus_search(parent, cf, aux)
 	cfmatch_t mf;
 
 	/* Check whether we're looking for a specifically named device */
-	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_driver->cd_name) != 0)
+	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_name) != 0)
 		return (0);
 
 #ifdef	DIAGNOSTIC
@@ -224,7 +224,7 @@ int sun68k_bus_search(parent, cf, aux)
 #ifdef	DIAGNOSTIC
 #define BAD_LOCATOR(ma_loc, what) panic("sun68k_bus_search: %s %s for: %s%d\n", \
 				     map-> ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
-				     what, cf->cf_driver->cd_name, cf->cf_unit)
+				     what, cf->cf_name, cf->cf_unit)
 #else
 #define BAD_LOCATOR(ma_loc, what) return (0)
 #endif

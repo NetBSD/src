@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.51 2002/09/26 04:07:36 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.52 2002/09/27 02:24:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -178,8 +178,8 @@ struct cfparent {
  * Configuration data (i.e., data placed in ioconf.c).
  */
 struct cfdata {
+	const char *cf_name;		/* driver name */
 	struct	cfattach *cf_attach;	/* config attachment */
-	struct	cfdriver *cf_driver;	/* config driver */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
 	int	*cf_loc;		/* locators (machine dependent) */
@@ -233,12 +233,14 @@ struct cfattach {
 #define	DETACH_QUIET	0x02		/* don't print a notice */
 
 struct cfdriver {
+	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
 	void	**cd_devs;		/* devices found */
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
 	const char * const *cd_attrs;	/* attributes for this device */
 };
+LIST_HEAD(cfdriverlist, cfdriver);
 
 /*
  * Configuration printing functions, and their return codes.  The second
@@ -261,6 +263,7 @@ struct pdevinit {
 
 #ifdef _KERNEL
 
+extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
@@ -269,6 +272,10 @@ extern struct device *booted_device;	/* the device we booted from */
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
 void configure(void);
+
+int	config_cfdriver_attach(struct cfdriver *);
+int	config_cfdriver_detach(struct cfdriver *);
+
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
 struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2002/09/26 20:45:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2002/09/26 20:45:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ device_register(dev, aux)
 	static struct device *ioasicdev;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;

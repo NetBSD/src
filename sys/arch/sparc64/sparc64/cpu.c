@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2002/09/22 07:19:47 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.21 2002/09/27 02:24:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -212,7 +212,7 @@ cpu_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: wdog.c,v 1.8 2002/09/27 02:24:23 thorpej Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -89,7 +89,7 @@ static int
 wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "wdog"))
+	if (strcmp(cfp->cf_name, "wdog"))
 		return (0);
 
 	return (1);

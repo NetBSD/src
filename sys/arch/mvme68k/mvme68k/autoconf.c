@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2002/09/26 20:30:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 2002/09/27 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,13 +118,13 @@ device_register(dev, aux)
 	static struct device *controller;
 	static int foundboot;
 	struct device *parent = dev->dv_parent;
-	const char *name = dev->dv_cfdata->cf_driver->cd_name;
+	const char *name = dev->dv_cfdata->cf_name;
 
 	if (foundboot)
 		return;
 
 	if (controller == NULL && parent) {
-		const char *pname = parent->dv_cfdata->cf_driver->cd_name;
+		const char *pname = parent->dv_cfdata->cf_name;
 
 		switch (machineid) {
 #ifdef MVME147

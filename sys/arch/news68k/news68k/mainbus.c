@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2000/02/08 16:17:34 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2002/09/27 02:24:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -88,7 +88,7 @@ mainbus_search(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	ma->ma_name = cf->cf_driver->cd_name;
+	ma->ma_name = cf->cf_name;
 	ma->ma_systype = cf->cf_systype;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, ma) > 0)

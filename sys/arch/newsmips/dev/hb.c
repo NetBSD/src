@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.5 2000/12/03 01:42:30 matt Exp $	*/
+/*	$NetBSD: hb.c,v 1.6 2002/09/27 02:24:19 thorpej Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ hb_search(parent, cf, aux)
 	struct confargs *ca = aux;
 
 	ca->ca_addr = cf->cf_addr;
-	ca->ca_name = cf->cf_driver->cd_name;
+	ca->ca_name = cf->cf_name;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, ca) > 0)
 		config_attach(parent, cf, ca, hb_print);

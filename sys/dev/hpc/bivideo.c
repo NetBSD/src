@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.13 2002/03/17 19:40:56 atatat Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.14 2002/09/27 02:24:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.13 2002/03/17 19:40:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.14 2002/09/27 02:24:29 thorpej Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -141,7 +141,7 @@ bivideomatch(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
     
 	if (bivideo_dont_attach ||
-	    strcmp(ma->ma_name, match->cf_driver->cd_name))
+	    strcmp(ma->ma_name, match->cf_name))
 		return 0;
 
 	return (1);

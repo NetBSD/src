@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.33 2002/08/23 02:53:10 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.34 2002/09/27 02:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.33 2002/08/23 02:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.34 2002/09/27 02:24:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -228,7 +228,7 @@ bematch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.2 2002/07/03 06:25:54 simonb Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.3 2002/09/27 02:24:30 thorpej Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.2 2002/07/03 06:25:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.3 2002/09/27 02:24:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an 'url' device.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "url") != 0)
+	if (strcmp(parent->dv_cfdata->cf_name, "url") != 0)
 		return(0);
 
 	return (10);

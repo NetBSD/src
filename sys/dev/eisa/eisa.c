@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.25 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: eisa.c,v 1.26 2002/09/27 02:24:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.25 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.26 2002/09/27 02:24:29 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -69,7 +69,7 @@ eisamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 
-	if (strcmp(eba->eba_busname, cf->cf_driver->cd_name))
+	if (strcmp(eba->eba_busname, cf->cf_name))
 		return (0);
 
 	/* XXX check other indicators */

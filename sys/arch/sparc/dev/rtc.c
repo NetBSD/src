@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2002/04/04 17:45:24 uwe Exp $ */
+/*	$NetBSD: rtc.c,v 1.5 2002/09/27 02:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -116,7 +116,7 @@ rtcmatch_ebus(parent, cf, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ea->ea_name) == 0);
+	return (strcmp(cf->cf_name, ea->ea_name) == 0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.68 2002/07/05 00:16:26 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.69 2002/09/27 02:24:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.68 2002/07/05 00:16:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.69 2002/09/27 02:24:30 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -98,7 +98,7 @@ pcimatch(parent, cf, aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name))
+	if (strcmp(pba->pba_busname, cf->cf_name))
 		return (0);
 
 	/* Check the locators */

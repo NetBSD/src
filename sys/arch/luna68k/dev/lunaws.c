@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
+/* $NetBSD: lunaws.c,v 1.7 2002/09/27 02:24:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.7 2002/09/27 02:24:16 thorpej Exp $");
 
 #include "wsmouse.h"
 
@@ -197,7 +197,7 @@ ws_submatch_kbd(parent, cf, aux)
         void *aux;
 {
 
-        if (strcmp(cf->cf_driver->cd_name, "wskbd"))
+        if (strcmp(cf->cf_name, "wskbd"))
                 return (0);
         return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
@@ -211,7 +211,7 @@ ws_submatch_mouse(parent, cf, aux)
         void *aux;
 {
 
-        if (strcmp(cf->cf_driver->cd_name, "wsmouse"))
+        if (strcmp(cf->cf_name, "wsmouse"))
                 return (0);
         return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }

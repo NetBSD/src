@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.139 2002/09/23 03:31:51 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.140 2002/09/27 02:24:31 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.139 2002/09/23 03:31:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.140 2002/09/27 02:24:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2667,21 +2667,21 @@ rf_find_raid_components()
 			continue;
 
 		/* we don't care about floppies... */
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
+		if (!strcmp(dv->dv_cfdata->cf_name,"fd")) {
 			continue;
 		}
 
 		/* we don't care about CD's... */
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"cd")) {
+		if (!strcmp(dv->dv_cfdata->cf_name,"cd")) {
 			continue;
 		}
 
 		/* hdfd is the Atari/Hades floppy driver */
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
+		if (!strcmp(dv->dv_cfdata->cf_name,"hdfd")) {
 			continue;
 		}
 		/* fdisa is the Atari/Milan floppy driver */
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fdisa")) {
+		if (!strcmp(dv->dv_cfdata->cf_name,"fdisa")) {
 			continue;
 		}
 		

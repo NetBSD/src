@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.2 2001/09/16 05:32:20 uch Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.3 2002/09/27 02:24:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ plumisabmatch(struct device *parent, struct cfdata *match, void *aux)
 	struct plumiobus_attach_args *pba = aux;
 	platid_mask_t mask;
     
-	if (strcmp(pba->pba_busname, match->cf_driver->cd_name)) {
+	if (strcmp(pba->pba_busname, match->cf_name)) {
 		return (0);
 	}
 

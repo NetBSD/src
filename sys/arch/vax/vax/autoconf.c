@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 2002/09/19 17:41:58 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73 2002/09/27 02:24:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -254,7 +254,7 @@ jmfr(char *n, struct device *dev, int nr)
 {
 	if (rpb.devtyp != nr)
 		return 1;
-	return strcmp(n, dev->dv_cfdata->cf_driver->cd_name);
+	return strcmp(n, dev->dv_cfdata->cf_name);
 }
 
 #include <dev/qbus/ubavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.30 2002/07/03 06:25:50 simonb Exp $	*/
+/*	$NetBSD: exphy.c,v 1.31 2002/09/27 02:24:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.30 2002/07/03 06:25:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.31 2002/09/27 02:24:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an `ex'.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ex") != 0)
+	if (strcmp(parent->dv_cfdata->cf_name, "ex") != 0)
 		return (0);
 
 	return (10);

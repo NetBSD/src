@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.12 2002/08/23 02:53:10 thorpej Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.13 2002/09/27 02:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.12 2002/08/23 02:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.13 2002/09/27 02:24:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ hmematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	return (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 	    strcmp("SUNW,qfe", sa->sa_name) == 0 ||
 	    strcmp("SUNW,hme", sa->sa_name) == 0);
 }

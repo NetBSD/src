@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.11 2001/12/27 02:23:25 wiz Exp $	*/
+/*	$NetBSD: intio.c,v 1.12 2002/09/27 02:24:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ intio_search(parent, cf, aux)
 
 	ia->ia_bst = sc->sc_bst;
 	ia->ia_dmat = sc->sc_dmat;
-	ia->ia_name = cf->cf_driver->cd_name;
+	ia->ia_name = cf->cf_name;
 	ia->ia_addr = cf->cf_addr;
 	ia->ia_intr = cf->cf_intr;
 	ia->ia_dma = cf->cf_dma;

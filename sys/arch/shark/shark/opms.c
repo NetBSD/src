@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $        */
+/*      $NetBSD: opms.c,v 1.3 2002/09/27 02:24:23 thorpej Exp $        */
 
 /*
  * Copyright 1997
@@ -268,8 +268,8 @@ opmsprobe(parent, match, aux)
     ** child of a real keyboard controller driver.)
     */
     if ((parent != NULL) &&
-        (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") ||
-         (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt"))))
+        (!strcmp(parent->dv_cfdata->cf_name, "pc") ||
+         (!strcmp(parent->dv_cfdata->cf_name, "vt"))))
     {
         /* 
         ** The mouse shares registers with the parent, so

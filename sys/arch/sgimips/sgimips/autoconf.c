@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2002/09/26 20:47:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -162,7 +162,7 @@ device_register(dev, aux)
 	static int found, initted, scsiboot, netboot;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;

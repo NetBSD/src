@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.2 2002/08/12 02:06:21 simonb Exp $ */
+/* $NetBSD: wdog.c,v 1.3 2002/09/27 02:24:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@ wdog_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only watchdog devices */
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);

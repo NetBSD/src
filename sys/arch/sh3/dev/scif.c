@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.28 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: scif.c,v 1.29 2002/09/27 02:24:23 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -421,7 +421,7 @@ static int
 scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "scif")
+	if (strcmp(cfp->cf_name, "scif")
 	    || cfp->cf_unit >= SCIF_MAX_UNITS)
 		return 0;
 

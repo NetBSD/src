@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.3 2002/08/13 06:15:16 simonb Exp $ */
+/* $NetBSD: pbus.c,v 1.4 2002/09/27 02:24:27 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@ pbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct pbus_attach_args *pba = aux;
 
 	/* match only pbus devices */
-	if (strcmp(pba->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(pba->pb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);

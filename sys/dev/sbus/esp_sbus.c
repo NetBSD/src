@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.22 2002/09/25 05:19:23 mycroft Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.22 2002/09/25 05:19:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ espmatch_sbus(parent, cf, aux)
 	if (strcmp("SUNW,fas", sa->sa_name) == 0)
 	        return 1;
 
-	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	rv = (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 	    strcmp("ptscII", sa->sa_name) == 0);
 	return (rv);
 }

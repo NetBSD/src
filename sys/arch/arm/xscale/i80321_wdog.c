@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.1 2002/07/29 18:40:04 thorpej Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.2 2002/09/27 02:24:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@ iopwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ia->ia_name) == 0)
+	if (strcmp(cf->cf_name, ia->ia_name) == 0)
 		return (1);
 
 	return (0);

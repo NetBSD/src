@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.6 2002/09/26 19:04:59 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.7 2002/09/27 02:24:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.6 2002/09/26 19:04:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.7 2002/09/27 02:24:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: scr.c,v 1.3 2002/09/27 02:24:23 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -709,9 +709,9 @@ int scrprobe(parent, match, aux)
     int                     rv = 0;           
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
-                                               parent->dv_cfdata->cf_driver->cd_name));
+                                               parent->dv_cfdata->cf_name));
 
-    if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr") == 0 &&
+    if (strcmp(parent->dv_cfdata->cf_name, "ofisascr") == 0 &&
         devices == 0)
     {
         /* set "devices" to ensure that we respond only once */
@@ -775,7 +775,7 @@ void scrattach(parent, self, aux)
     struct scr_softc       *sc = (void *)self;
 
     printf("\n");
-    if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr"))
+    if (!strcmp(parent->dv_cfdata->cf_name, "ofisascr"))
     {
         KERN_DEBUG (scrdebug, SCRATTACH_DEBUG_INFO,("scrattach: called \n"));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.3 2002/09/27 02:24:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.3 2002/09/27 02:24:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ com_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct jensenio_attach_args *ja = aux;
 
 	/* Always present. */
-	if (strcmp(ja->ja_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ja->ja_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

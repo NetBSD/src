@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 2002/09/12 16:01:06 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.22 2002/09/12 16:01:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.23 2002/09/27 02:24:32 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -160,7 +160,7 @@ lematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.87 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.88 2002/09/27 02:24:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ zs_match_mainbus(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return (0);
 
 	return (1);
@@ -238,7 +238,7 @@ zs_match_obio(parent, cf, aux)
 	if (uoba->uoba_isobio4 == 0) {
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
-		if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+		if (strcmp(cf->cf_name, sa->sa_name) != 0)
 			return (0);
 
 		return (1);
@@ -258,7 +258,7 @@ zs_match_bootbus(parent, cf, aux)
 {
 	struct bootbus_attach_args *baa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, baa->ba_name) == 0);
+	return (strcmp(cf->cf_name, baa->ba_name) == 0);
 }
 #endif /* SUN4D */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.8 2002/01/29 18:53:20 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.9 2002/09/27 02:24:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ txcsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct csbus_attach_args *cba = aux;
 	platid_mask_t mask;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name))
+	if (strcmp(cba->cba_busname, cf->cf_name))
 		return (0);
 
 	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == TXCSBUSIFCF_PLATFORM_DEFAULT)

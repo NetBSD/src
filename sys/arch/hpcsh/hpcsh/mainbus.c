@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2002/02/11 17:32:35 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2002/09/27 02:24:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 	    !platid_match(&platid, PLATID_DEREFP(locator)))
 		return (0);
 
-	maa.ma_name = cf->cf_driver->cd_name;
+	maa.ma_name = cf->cf_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &maa))
 		config_attach(parent, cf, &maa, mainbus_print);
 	
