@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.37 1999/08/05 18:08:14 thorpej Exp $    */
+/*      $NetBSD: param.h,v 1.38 1999/08/05 18:48:55 thorpej Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -165,27 +165,41 @@
 
 #ifdef _KERNEL
 #ifndef lint
-#define splx(reg)                                       \
-({                                                      \
-        register int val;                               \
-        __asm__ __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
-                        : "&=g" (val)                   \
-                        : "g" (reg));                   \
-        val;                                            \
+#define splx(reg)						\
+({								\
+	register int val;					\
+	__asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
+				: "&=g" (val)			\
+				: "g" (reg));			\
+	val;							\
+})
+
+#define	_splraise(reg)						\
+({								\
+	register int val;					\
+	__asm __volatile ("mfpr $0x12,%0"			\
+				: "&=g" (val)			\
+				: );				\
+	if ((reg) > val) {					\
+		__asm __volatile ("mtpr %0,$0x12"		\
+				:				\
+				: "g" (reg));			\
+	}							\
+	val;							\
 })
 #endif
 
 #define	spl0()		splx(0)		/* IPL0  */
 #define spllowersoftclock() splx(8)	/* IPL08 */
-#define splsoftclock()  splx(8)		/* IPL08 */	/* XXX XXX XXX */
-#define splsoftnet()    splx(0xc)	/* IPL0C */
-#define	splddb()	splx(0xf)	/* IPL0F */
-#define splbio()        splx(0x15)	/* IPL15 */
-#define splnet()        splx(0x15)	/* IPL15 */
-#define spltty()        splx(0x15)	/* IPL15 */
-#define splimp()        splx(0x17)	/* IPL17 */
-#define splclock()      splx(0x18)	/* IPL18 */
-#define splhigh()       splx(0x1f)	/* IPL1F */
+#define splsoftclock()	_splraise(8)	/* IPL08 */
+#define splsoftnet()	_splraise(0xc)	/* IPL0C */
+#define	splddb()	_splraise(0xf)	/* IPL0F */
+#define splbio()	_splraise(0x15)	/* IPL15 */
+#define splnet()	_splraise(0x15)	/* IPL15 */
+#define spltty()	_splraise(0x15)	/* IPL15 */
+#define splimp()	_splraise(0x17)	/* IPL17 */
+#define splclock()	_splraise(0x18)	/* IPL18 */
+#define splhigh()	_splraise(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()
 
 /* These are better to use when playing with VAX buses */
