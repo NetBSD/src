@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.41 2002/03/14 16:08:37 pk Exp $	*/
+/*	$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.41 2002/03/14 16:08:37 pk Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.41 2002/03/14 16:08:37 pk Exp $");
+__RCSID("$NetBSD: compat.c,v 1.42 2002/03/21 01:24:43 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -117,7 +117,7 @@ CompatInterrupt (signo)
 	char 	  *file = Var_Value (TARGET, curTarg, &p1);
 
 	if (!noExecute && eunlink(file) != -1) {
-	    Error("*** %s removed\n", file);
+	    Error("*** %s removed", file);
 	}
 	if (p1)
 	    free(p1);
@@ -496,7 +496,7 @@ CompatMake (gnp, pgnp)
 	}
 	switch(gn->made) {
 	    case BEINGMADE:
-		Error("Graph cycles through %s\n", gn->name);
+		Error("Graph cycles through %s", gn->name);
 		gn->made = ERROR;
 		pgn->flags &= ~REMAKE;
 		break;
