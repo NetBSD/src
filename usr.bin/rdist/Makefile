@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.3 1994/03/07 05:05:16 cgd Exp $
+#	$Id: Makefile,v 1.4 1996/07/12 00:38:50 thorpej Exp $
 
 PROG=	rdist
 CFLAGS+=-I${.CURDIR}
@@ -8,8 +8,5 @@ OBJS+=	gram.o
 BINOWN=	root
 BINMODE=4555
 CLEANFILES=y.tab.h
-
-LDADD=	-lcompat
-DPADD=	${LIBCOMPAT}
 
 .include <bsd.prog.mk>
