@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/13 02:10:48 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -14,7 +14,7 @@ PROG=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c #net.c netif_of.c 
 .PATH:		${S}/arch/sparc64/sparc64
 #SRCS+=		ofwmagic.S
-CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CFLAGS+=	-DDEBUG -DNETIF_DEBUG -D__ELF__ -nostdinc
 NOMAN=
 STRIPFLAG=
 BINMODE=	444

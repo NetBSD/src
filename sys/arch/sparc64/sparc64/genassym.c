@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.2 1998/07/07 03:05:04 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.3 1998/08/13 02:10:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ main()
 	/* general constants */
 	def("BSD", BSD);
 	def("USRSTACK", USRSTACK);
+	def("PADDRT", sizeof(paddr_t));
 
 	/* proc fields and values */
 	off("P_ADDR", struct proc, p_addr);

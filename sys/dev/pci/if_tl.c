@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.15 1998/08/11 00:09:26 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.16 1998/08/13 02:10:54 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -1219,7 +1219,7 @@ tbdinit:
 				break;
 			size += m->m_len;
 			Tx->hw_list.seg[segment].data_addr =
-				vtophys(mtod(m, vm_offset_t));
+				vtophys(mtod(m, vaddr_t));
 			Tx->hw_list.seg[segment].data_count = m->m_len;
 			segment++;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.2 1998/08/13 02:10:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,9 +164,9 @@ clockmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct sbus_attach_args *sa = aux;
 
-	return (strcmp("eeprom", ma->ma_name) == 0);
+	return (strcmp("eeprom", sa->sa_name) == 0);
 }
 
 static struct clockreg *
@@ -176,7 +176,7 @@ clock_map(bh, model)
 {
 	struct clockreg *cl;
 
-	pmap_changeprot(pmap_kernel(), (vm_offset_t)bh, VM_PROT_READ, 1);
+	pmap_changeprot(pmap_kernel(), (vaddr_t)bh, VM_PROT_READ, 1);
 	cl = (struct clockreg *)((int)bh + CLK_MK48T08_OFF);
 
 	return (cl);
@@ -208,7 +208,7 @@ clockattach(parent, self, aux)
 	 * the MK48T08 is 8K, and the MK48T59 is supposed to be identical to it
 	 */
 	sz = 8192;
-	printf(": %s (eeprom)\n", model);
+	printf(": %s (eeprom)", model);
 
 	/*
 	 * We ignore any existing virtual address as we need to map
@@ -244,6 +244,7 @@ clockattach(parent, self, aux)
 	h |= idp->id_hostid[1] << 8;
 	h |= idp->id_hostid[2];
 	hostid = h;
+	printf(" hostid %x\n", hostid);
 	clockreg = cl;
 }
 
@@ -296,12 +297,10 @@ timerattach(parent, self, aux)
 	/* Get address property */
 	if (getpropA(ma->ma_node, "address", sizeof(*va),
 		     &nreg, (void **)&va) == 0) {
-printf("timerattach: using PROM mappings\n");
 		timerreg_4u.t_timer = (struct timer_4u *)(int)va[0];
 		timerreg_4u.t_clrintr = (int64_t *)(int)va[1];
 		timerreg_4u.t_mapintr = (int64_t *)(int)va[2];
 	} else {
-printf("timerattach: using new mappings\n");
 		/* Map the system timer -- Not an SBUS device */
 		if (bus_space_map2(ma->ma_bustag, 0,
 				 ur[0].ur_paddr,
@@ -320,11 +319,6 @@ printf("timerattach: using new mappings\n");
 			(TIMERREG_VA + (((int)ur[2].ur_paddr)&PGOFSET));
 	}
 
-
-#ifdef DEBUG
-	printf("timerattach: timer=%x clrintr=%x mapintr=%x\n",
-	       timerreg_4u.t_timer, timerreg_4u.t_clrintr, timerreg_4u.t_mapintr);
-#endif  
 	cnt = &(timerreg_4u.t_timer[0].t_count);
 	lim = &(timerreg_4u.t_timer[0].t_limit);
 
@@ -333,6 +327,7 @@ printf("timerattach: using new mappings\n");
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
 	intr_establish(14, &level14);
+	printf(" irq vectors %x and %x\n", level10.ih_number, level14.ih_number);
 
 	timerok = 1;
 
@@ -401,7 +396,7 @@ clk_wenable(onoff)
 	splx(s);
 	if (prot)
 		pmap_changeprot(pmap_kernel(),
-				(vm_offset_t)clockreg & ~(NBPG-1),
+				(vaddr_t)clockreg & ~(NBPG-1),
 				prot, 1);
 }
 
@@ -519,14 +514,6 @@ clockintr(cap)
 #if	NKBD	> 0
 	extern int cnrom __P((void));
 	extern int rom_console_input;
-#endif
-#ifdef NOTDEF_DEBUG
-	static int deadman = 0;
-
-	if (deadman++ > 100) {
-		deadman = 0;
-		Debugger();
-	}
 #endif
 
 	/*

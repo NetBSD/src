@@ -54,6 +54,7 @@
 #define TRAPSTATS
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
+#define HWREF
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -732,7 +733,11 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7]				! DEBUG
 0:							! DEBUG
+#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
+#else
+	ba,a,pt	%xcc, winfault
+#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps
@@ -971,7 +976,11 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7]				! DEBUG
 0:							! DEBUG
+#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
+#else
+	ba,a,pt	%xcc, winfault
+#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps
@@ -1253,7 +1262,7 @@ traceit:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -1910,11 +1919,19 @@ dmmu_write_fault:
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
 	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
-	ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
+
+	/* Need to check for and handle large pages. */
+	srlx	%g4, 61, %g5				! Isolate the size bits
+	andcc	%g5, 0x3, %g5				! 8K?
+	bnz,pn	%icc, winfix				! We punt to the pmap code since we can't handle policy
+	
+	 ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1			! Hard coded for unified 8K TSB		Load DMMU tag target register
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
+
+
 	set	trapbase, %g6	! debug
 	stx	%g1, [%g6+0x40]	! debug
 	set	0x88, %g5	! debug
@@ -1985,6 +2002,7 @@ data_miss:
 #if DEBUG
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
+	brnz,pt	%g6, Ludata_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	set	0x0400000, %g6				! 4MB
 	sub	%g3, %g5, %g5
@@ -2156,6 +2174,7 @@ winfixfill:
 	inc	%g7
 	stw	%g7, [%g4]
 #endif
+	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
 	set	return_from_trap, %g4
 	set	CTX_PRIMARY, %g7
 	wrpr	%g4, 0, %tpc
@@ -2212,7 +2231,7 @@ winfixspill:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	movnz	%icc, %g0, %g3
 	
@@ -2531,7 +2550,7 @@ winfixsave:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	movnz	%icc, %g0, %g3
 	
@@ -2792,6 +2811,7 @@ instr_miss:
 #if 1
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
+	brnz,pt	%g6, Lutext_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	set	0x0400000, %g6				! 4MB
 	sub	%g3, %g5, %g5
@@ -4182,7 +4202,7 @@ return_from_trap:
 	ldx	[%g6 + CCFSZ + TF_PC], %g2
 	ldx	[%g6 + CCFSZ + TF_NPC], %g3
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	ldub	[%g6 + CCFSZ + TF_PIL], %g5		! restore %pil
 	wrpr	%g5, %pil				! DEBUG
 #endif
@@ -4229,7 +4249,7 @@ rft_kernel:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -4281,6 +4301,7 @@ rft_user:
 !	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
 	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
 	/* This is probably necessary */
+	wrpr	%g0, 1, %tl			! Sometimes we get here w/TL=0 (How?)
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
@@ -4332,12 +4353,11 @@ rft_user:
 2:
 #endif
 
-
 #ifdef TRAPWIN
 	/*
 	 * First: blast away our caches
 	 */
-	call	_C_LABEL(blast_vcache)
+!	call	_C_LABEL(blast_vcache)		! Clear any possible cache conflict
 	/*
 	 * NB: only need to do this after a cache miss
 	 */
@@ -4573,7 +4593,7 @@ badregs:
 	mov	%g0, %g5
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
-	ldsw	[%g6+P_PID], %g5
+!	ldsw	[%g6+P_PID], %g5	! Load PID
 2:	
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
@@ -4923,7 +4943,7 @@ dostart:
 	 * Set supervisor mode, interrupt level >= 13, traps enabled
 	 */
 	wrpr	%g0, 13, %pil
-	wrpr	%g0, PSTATE_INTR, %pstate
+	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 #ifdef DDB
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument 
@@ -5354,8 +5374,8 @@ _C_LABEL(openfirmware):
 	ld	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
-	wrpr	%g0, 15, %pil
-#if 1
+	wrpr	%g0, PIL_IMP, %pil
+#if 0
 !!!
 !!! Since prom addresses overlap user addresses
 !!! we need to clear out the dcache on the way
@@ -5384,7 +5404,7 @@ _C_LABEL(openfirmware):
 	mov	%l5, %g5
 	mov	%l6, %g6
 	mov	%l7, %g7
-#if 1
+#if 0
 !!!
 !!! Since prom addresses overlap user addresses
 !!! we need to clear out the dcache on the way
@@ -5406,7 +5426,7 @@ _C_LABEL(openfirmware):
 	mov	%o5, %o7
 #endif
 	save	%sp, -CC64FSZ, %sp			! Get a new 64-bit stack frame
-#if 1
+#if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
 #endif
@@ -5420,16 +5440,16 @@ _C_LABEL(openfirmware):
 	mov	%g1, %l1
 	mov	%g2, %l2
 	mov	%g3, %l3
-	wrpr	%g0, 12, %pil
+	wrpr	%g0, PIL_IMP, %pil
 	mov	%g4, %l4
 	mov	%g5, %l5
 	mov	%g6, %l6
 	mov	%g7, %l7
 	jmpl	%o1, %o7
-	 wrpr	%g0, PSTATE_PROM, %pstate	! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate	! Enable 64-bit addresses for the prom
 	wrpr	%l0, 0, %pstate
 	wrpr	%i2, 0, %pil
-#if 1
+#if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
 #endif
@@ -5444,7 +5464,7 @@ _C_LABEL(openfirmware):
 	 restore	%o0, %g0, %o0
 	
 /*
- * tlb_flush_pte(vm_offset_t va, int ctx)
+ * tlb_flush_pte(vaddr_t va, int ctx)
  * 
  * Flush tte from both IMMU and DMMU.
  *
@@ -5471,7 +5491,7 @@ _C_LABEL(tlb_flush_pte):
 	mov	%i1, %o1
 	andn	%i0, 0xfff, %o3
 	or	%o3, 0x010, %o3
-	call	printf
+	call	db_printf
 	 mov	%i0, %o2
 	restore
 	set	KERNBASE, %o4
@@ -7180,7 +7200,7 @@ Lsw_havectx:
 	mov	%g0, %o5
 	brz,pn	%o0, 2f
 	 andncc	%o3, (TRACESIZ-1), %g0
-	ldsw	[%o0+P_PID], %o5
+!	ldsw	[%o0+P_PID], %o5	!  Load PID
 2:	
 	movnz	%icc, %g0, %o3
 	
@@ -7563,6 +7583,14 @@ ENTRY(_remque)
  * to sync the I$.
  */
 ENTRY(pmap_zero_page)
+	!!
+	!! If we have 64-bit physical addresses (and we do now)
+	!! we need to move the pointer from %o0:%o1 to %o0
+	!!
+#if PADDRT == 8
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+#endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
 	ld	[%o4], %o4
@@ -7622,6 +7650,17 @@ ENTRY(pmap_zero_page)
  * pmap_zero_page.
  */
 ENTRY(pmap_copy_page)
+	!!
+	!! If we have 64-bit physical addresses (and we do now)
+	!! we need to move the pointer from %o0:%o1 to %o0 and
+	!! %o2:%o3 to %o1
+	!!
+#if PADDRT == 8
+	sllx	%o0, 32, %o0
+	or	%o0, %o1, %o0
+	sllx	%o2, 32, %o1
+	or	%o3, %o1, %o1
+#endif
 #ifdef DEBUG
 	set	pmapdebug, %o4
 	ld	[%o4], %o4
@@ -7757,7 +7796,7 @@ ENTRY(pmap_copy_page)
 #endif
 	
 /*
- * extern int64_t pseg_get(struct pmap* %o0, vm_offset_t addr %o1);
+ * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
  *
  * Return TTE at addr in pmap.  Uses physical addressing only.
  * pmap->pm_physaddr must by the physical address of pm_segs
@@ -7765,7 +7804,11 @@ ENTRY(pmap_copy_page)
  */
 ENTRY(pseg_get)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
+#if PADDRT == 8	
+	ldx	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
+#else
 	lduw	[%o0 + PM_PHYS], %o0			! pmap->pm_segs
+#endif
 	srlx	%o1, 32, %o2
 	brnz,pn	%o2, 1f					! >32 bits? not here
 	 srlx	%o1, STSHIFT-2, %o3
@@ -7788,7 +7831,7 @@ ENTRY(pseg_get)
 	 clr	%o0
 
 /*
- * extern void pseg_set(struct pmap* %o0, vm_offset_t addr %o1, int64_t tte %o2:%o3);
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success, else the pointer
  * to the empty pseg entry.  Allocate a page, put the phys addr in the returned location,
@@ -7797,8 +7840,11 @@ ENTRY(pseg_get)
  */
 ENTRY(pseg_set)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
-	
+#if PADDRT == 8	
+	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+#else
 	lduw	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+#endif
 #ifdef DEBUG
 	mov	%o0, %g1				! DEBUG
 #endif
