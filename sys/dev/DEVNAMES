@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.62 2001/06/13 06:01:45 simonb Exp $
+#	$NetBSD: DEVNAMES,v 1.63 2001/06/27 19:47:17 fredette Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -125,6 +125,7 @@ btvmeii			MI
 button			hpcmips
 bwtwo			sparc
 bwtwo			sparc64
+bwtwo			sun2
 bwtwo			sun3
 bzivsc			amiga
 bzivsc			amigappc
@@ -175,6 +176,7 @@ clock			news68k
 clock			pc532
 clock			sparc
 clock			sparc64
+clock			sun2
 clock			sun3
 clock			x68k
 cmi			vax
@@ -255,6 +257,7 @@ eap			MI
 eb			MI
 ebus			sparc64
 ec			MI		
+ec			sun2
 eccmemctl		sparc
 ed			amiga
 ed			amigappc
@@ -301,6 +304,7 @@ fb			luna68k
 fb			news68k
 fb			newsmips
 fb			sparc		Attribute
+fb			sun2		Attribute
 fb			sun3		Attribute
 fcom			arm32
 fd			alpha
@@ -515,6 +519,7 @@ kbd			arm32
 kbd			atari
 kbd			sparc
 kbd			sparc64
+kbd			sun2
 kbd			sun3
 kbd			x68k
 kdb			MI		
@@ -591,6 +596,7 @@ mainbus			sh3		Attribute
 mainbus			sparc
 mainbus			sparc64
 mainbus			sparc64		Attribute
+mainbus			sun2
 mainbus			sun3
 mainbus			vax
 mainbus			walnut
@@ -599,6 +605,8 @@ mb86960			MI		Attribute
 mba			vax
 mbe			MI		
 mbpp			MI		
+mbio			sun2
+mbmem			sun2
 mc			mac68k
 mc			macppc
 mca			i386
@@ -651,6 +659,7 @@ ms			news68k
 ms			newsmips
 ms			sparc
 ms			sparc64
+ms			sun2
 ms			sun3
 ms			x68k
 msc			amiga
@@ -698,9 +707,11 @@ obio			macppc
 obio			macppc		Attribute
 obio			mipsco
 obio			sparc
+obio			sun2
 obio			sun3
 obio_norm		mac68k		Attribute
 obio_scsi5380		mac68k		Attribute
+obmem			sun2
 obmem			sun3
 oclock			sparc
 oclock			sun3
@@ -877,6 +888,7 @@ sbic			arm26		Attribute
 sbic			arm32		Attribute
 sbic			mvme68k		Attribute
 sbus			MI		
+sc			MI
 sc			newsmips
 sc			vax
 scc			alpha
@@ -975,6 +987,7 @@ tlphy			MI
 tlsb			alpha
 tlsbmem			alpha
 tms320av110		MI		Attribute
+tod			sun2
 todclock		arm32
 todservice		arm32		Attribute
 token			MI		Attribute
@@ -1170,5 +1183,6 @@ zstty			next68k
 zstty			sgimips
 zstty			sparc
 zstty			sparc64
+zstty			sun2
 zstty			sun3
 zstty			x68k
