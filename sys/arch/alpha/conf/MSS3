@@ -34,8 +34,10 @@ options 	COMPAT_43
 options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
-options 	SYSVSHM
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	LKM
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
