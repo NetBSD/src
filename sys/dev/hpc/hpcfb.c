@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.7 2001/07/07 09:19:40 toshii Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.8 2001/07/13 10:23:41 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.7 2001/07/07 09:19:40 toshii Exp $";
+    "$NetBSD: hpcfb.c,v 1.8 2001/07/13 10:23:41 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,8 +663,11 @@ hpcfb_power(int why, void *arg)
 		} else {
 			sc->sc_screen_resumed = WSDISPLAY_NULLSCREEN;
 		}
+
+		sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
 		break;
 	case PWR_SOFTRESUME:
+		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		if (sc->sc_screen_resumed != WSDISPLAY_NULLSCREEN)
 			wsdisplay_switch(sc->sc_wsdisplay,
 			    sc->sc_screen_resumed,
