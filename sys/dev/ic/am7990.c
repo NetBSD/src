@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.52 1998/07/24 13:41:52 drochner Exp $	*/
+/*	$NetBSD: am7990.c,v 1.53 1998/08/08 23:51:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -478,7 +478,7 @@ am7990_intr(arg)
  * Setup output on interface.
  * Get another datagram to send off of the interface queue, and map it to the
  * interface before starting the output.
- * Called only at splimp or interrupt level.
+ * Called only at splnet or interrupt level.
  */
 void
 am7990_start(ifp)
