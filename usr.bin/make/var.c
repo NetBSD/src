@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.78 2003/07/29 09:06:29 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.79 2003/07/31 13:48:11 scw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.78 2003/07/29 09:06:29 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.79 2003/07/31 13:48:11 scw Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.78 2003/07/29 09:06:29 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.79 2003/07/31 13:48:11 scw Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1357,7 +1357,7 @@ VarModify(GNode *ctx, const char *str,
 static int
 VarWordCompare(const void *a, const void *b)
 {
-	int r = strcmp(*(const char **)a, *(const char **)b);
+	int r = strcmp(*(const char * const *)a, *(const char * const *)b);
 	return r;
 }
 
