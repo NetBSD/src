@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.15 1993/09/16 03:24:24 brezak Exp $
+ *	$Id: trap.c,v 1.16 1993/09/19 19:00:51 brezak Exp $
  */
 
 /*
@@ -43,6 +43,7 @@
 
 #include "npx.h"
 
+#include "signal.h"
 #include "machine/cpu.h"
 #include "machine/psl.h"
 #include "machine/reg.h"
