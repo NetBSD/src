@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.25 2000/06/05 08:09:48 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.26 2000/06/08 13:51:33 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.45 2000/06/05 00:41:58 itojun Exp $	*/
 
 /*
@@ -307,6 +307,7 @@ in6_pcbconnect(in6p, nam)
 	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
 	struct in6_addr mapped;
+	struct sockaddr_in6 tmp;
 
 	(void)&in6a;				/* XXX fool gcc */
 
@@ -327,6 +328,10 @@ in6_pcbconnect(in6p, nam)
 		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
 			return EINVAL;
 	}
+
+	/* protect *sin6 from overwrites */
+	tmp = *sin6;
+	sin6 = &tmp;
 
 	/*
 	 * If the scope of the destination is link-local, embed the interface
