@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.42 1997/03/14 00:14:17 jtk Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.43 1997/03/14 22:54:08 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -196,7 +196,7 @@ cf_locnames_print(name, value, arg)
 			if (fprintf(fp, "\"%s\", ", nv->nv_name) < 0)
 				return (1);
 		}
-		if (fprintf(fp, "};\n") < 0)
+		if (fprintf(fp, "NULL};\n") < 0)
 			return (1);
 	}
 	return 0;
@@ -214,7 +214,8 @@ static int loc[%d] = {", locators.used) < 0)
 	for (i = 0; i < locators.used; i++)
 		if (fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]) < 0)
 			return (1);
-	if (fprintf(fp, "\n};\n") < 0)
+	if (fprintf(fp,
+		    "\n};\n\nconst char *nullcf_locnames[] = {NULL};\n") < 0)
 		return (1);
 	return ht_enumerate(attrtab, cf_locnames_print, fp);
 }
@@ -257,7 +258,8 @@ emitcfdata(fp)
 #define STAR FSTATE_STAR\n\
 \n\
 struct cfdata cfdata[] = {\n\
-    /* attachment       driver        unit state loc   flags parents */\n") < 0)
+    /* attachment       driver        unit state loc   flags parents\n\
+       locnames */\n") < 0)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
@@ -295,10 +297,12 @@ struct cfdata cfdata[] = {\n\
 		} else
 			loc = "loc";
 		if (fprintf(fp, "\
-    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#6x, pv+%2d},\n",
+    {&%s_ca,%s&%s_cd,%s%2d, %s, %7s, %#6x, pv+%2d,\n\
+     %scf_locnames},\n",
 		    attachment, strlen(attachment) < 6 ? "\t\t" : "\t",
 		    basename, strlen(basename) < 3 ? "\t\t" : "\t", unit,
-		    state, loc, i->i_cfflags, i->i_pvoff) < 0)
+		    state, loc, i->i_cfflags, i->i_pvoff,
+		    a->a_locs ? a->a_name : "null") < 0)
 			return (1);
 	}
 	return (fputs("    {0}\n};\n", fp) < 0);
