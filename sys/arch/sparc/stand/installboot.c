@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.8 1995/09/18 22:36:19 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.9 1995/09/27 09:03:15 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -34,6 +34,7 @@
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
@@ -48,15 +49,22 @@
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
+
 struct nlist nl[] = {
-#define X_BLOCKNUM	0
-	{"_blocknum"},
-#define X_MAXBLOCKNUM	1
-	{"_maxblocknum"},
+#define X_BLOCKTABLE	0
+	{"_block_table"},
+#define X_BLOCKCOUNT	1
+	{"_block_count"},
+#define X_BLOCKSIZE	2
+	{"_block_size"},
 	{NULL}
 };
-daddr_t	*blocknums;		/* block number array in prototype image */
-int	maxblocknum;		/* size of this array */
+daddr_t	*block_table;		/* block number array in prototype image */
+int32_t	*block_count_p;		/* size of this array */
+int32_t	*block_size_p;		/* filesystem block size */
+int32_t	max_block_count;
+
+char	cpumodel[100];
 
 
 char		*loadprotoblocks __P((char *, long *));
@@ -83,6 +91,8 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
+	int	mib[2];
+	size_t	size;
 
 	while ((c = getopt(argc, argv, "vnh")) != EOF) {
 		switch (c) {
@@ -116,6 +126,16 @@ main(argc, argv)
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
 	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_MODEL;
+	size = sizeof(cpumodel);
+	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
+		err(1, "sysctl");
+
+	if (size < 5 || strncmp(cpumodel, "SUN/4", 5) != 0) /*XXX*/ 
+		/* Assume a sun4c/sun4m */
+		hflag = 1;
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
@@ -169,12 +189,16 @@ loadprotoblocks(fname, size)
 		warnx("nlist: %s: symbols not found", fname);
 		return NULL;
 	}
-	if (nl[X_BLOCKNUM].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_BLOCKNUM].n_un.n_name);
+	if (nl[X_BLOCKTABLE].n_type != N_DATA + N_EXT) {
+		warnx("nlist: %s: wrong type", nl[X_BLOCKTABLE].n_un.n_name);
 		return NULL;
 	}
-	if (nl[X_MAXBLOCKNUM].n_type != N_DATA + N_EXT) {
-		warnx("nlist: %s: wrong type", nl[X_MAXBLOCKNUM].n_un.n_name);
+	if (nl[X_BLOCKCOUNT].n_type != N_DATA + N_EXT) {
+		warnx("nlist: %s: wrong type", nl[X_BLOCKCOUNT].n_un.n_name);
+		return NULL;
+	}
+	if (nl[X_BLOCKSIZE].n_type != N_DATA + N_EXT) {
+		warnx("nlist: %s: wrong type", nl[X_BLOCKSIZE].n_un.n_name);
 		return NULL;
 	}
 
@@ -206,15 +230,39 @@ loadprotoblocks(fname, size)
 
 	/* Calculate the symbols' location within the proto file */
 	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
-	blocknums = (daddr_t *) (bp + nl[X_BLOCKNUM].n_value + off);
-	bcopy(bp + nl[X_MAXBLOCKNUM].n_value + off,
-	      &maxblocknum, sizeof(maxblocknum));
+	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value + off);
+	block_count_p = (int32_t *)(bp + nl[X_BLOCKCOUNT].n_value + off);
+	block_size_p = (int32_t *) (bp + nl[X_BLOCKSIZE].n_value + off);
+	if ((int)block_table & 3) {
+		warn("%s: invalid address: block_table = %x",
+		     fname, block_table);
+		free(bp);
+		close(fd);
+		return NULL;
+	}
+	if ((int)block_count_p & 3) {
+		warn("%s: invalid address: block_count_p = %x",
+		     fname, block_count_p);
+		free(bp);
+		close(fd);
+		return NULL;
+	}
+	if ((int)block_size_p & 3) {
+		warn("%s: invalid address: block_size_p = %x",
+		     fname, block_size_p);
+		free(bp);
+		close(fd);
+		return NULL;
+	}
+	max_block_count = *block_count_p;
 
 	if (verbose) {
 		printf("%s: entry point %#x\n", fname, hp->a_entry);
+		printf("%s: a.out header %s\n", fname,
+			hflag?"left on":"stripped off");
 		printf("proto bootblock size %ld\n", sz);
 		printf("room for %d filesystem blocks at %#x\n",
-			maxblocknum, nl[X_BLOCKNUM].n_value);
+			max_block_count, nl[X_BLOCKTABLE].n_value);
 	}
 
 	*size = sz;
@@ -286,15 +334,34 @@ int	devfd;
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
+	 * Register filesystem block size.
+	 */
+	*block_size_p = fs->fs_bsize;
+
+	/*
 	 * Get the block numbers; we don't handle fragments
 	 */
 	ndb = howmany(ip->di_size, fs->fs_bsize);
+	if (ndb > max_block_count)
+		errx(1, "%s: Too many blocks", boot);
+
+	/*
+	 * Register block count.
+	 */
+	*block_count_p = ndb;
+
+	if (verbose)
+		printf("%s: block numbers: ", boot);
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
-		if (i >= maxblocknum)
-			errx(1, "Too many blocks");
-		*blocknums++ = *ap;
+		blk = fsbtodb(fs, *ap);
+		block_table[i] = blk;
+		if (verbose)
+			printf("%d ", blk);
 	}
+	if (verbose)
+		printf("\n");
+
 	if (ndb == 0)
 		return 0;
 
@@ -302,16 +369,21 @@ int	devfd;
 	 * Just one level of indirections; there isn't much room
 	 * for more in the 1st-level bootblocks anyway.
 	 */
+	if (verbose)
+		printf("%s: block numbers (indirect): ", boot);
 	blk = ip->di_ib[0];
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
-		if (i >= maxblocknum)
-			errx(1, "Too many blocks");
-		*blocknums++ = *ap;
+		blk = fsbtodb(fs, *ap);
+		block_table[i] = blk;
+		if (verbose)
+			printf("%d ", blk);
 	}
+	if (verbose)
+		printf("\n");
 
 	if (ndb)
-		errx(1, "Too many blocks");
+		errx(1, "%s: Too many blocks", boot);
 	return 0;
 }
