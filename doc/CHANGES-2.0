@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.476 2004/10/01 03:48:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.477 2004/10/01 03:53:01 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7677,3 +7677,11 @@ sys/dev/ata/wd.c				1.295
 	Use it for ST3200822A, which has a broken firmware and return an error
 	when accessing sector 0xfffffff with a LBA command.
 	[bouyer, ticket #882]
+
+
+distrib/notes/i386/whatis			patch
+distrib/notes/common/main			patch
+
+	Correct a few minor issue and add a new section about important notes"
+	where the sendmail default startup is explained.
+	[he, ticket #883]
