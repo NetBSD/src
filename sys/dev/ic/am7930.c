@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.39 1998/06/24 11:09:23 jonathan Exp $	*/
+/*	$NetBSD: am7930.c,v 1.40 1998/08/28 08:59:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -58,10 +58,8 @@
 #define AUDIO_ROM_NAME "audio"
 
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-
 int     am7930debug = 0;
-#define DPRINTF(x)      if (am7930debug) Dprintf x
+#define DPRINTF(x)      if (am7930debug) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -207,7 +205,7 @@ am7930_open(addr, flags)
 	/* tell attach layer about open */
 	sc->sc_onopen(sc);
 
-	DPRINTF(("saopen: ok -> sc=0x%x\n",sc));
+	DPRINTF(("saopen: ok -> sc=%p\n", sc));
 
 	return (0);
 }
@@ -218,7 +216,7 @@ am7930_close(addr)
 {
 	register struct am7930_softc *sc = addr;
 
-	DPRINTF(("sa_close: sc=0x%x\n", sc));
+	DPRINTF(("sa_close: sc=%p\n", sc));
 	/*
 	 * halt i/o, clear open flag, and done.
 	 */
