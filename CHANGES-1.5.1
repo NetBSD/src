@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.35 2001/03/20 18:43:39 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.36 2001/03/22 03:04:22 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2014,3 +2014,78 @@ sys/dev/pci/siop_pci_common.c			1.4
 
   Fix c896 support related to PCI configuration and handling of
   64-bit BARs.
+
+sys/dev/pci/puc.c				1.10-1.11
+sys/dev/pci/pucvar.h				1.3-1.4
+sys/dev/pci/pucdata.c				1.11-1.18
+
+  Add support for NetMos NM9835, Titan PCI-800H, Lava 8-port,
+  Actiontec 56K PCI Master.  This also adds a ``flags'' member
+  to two structs in this driver.
+
+lib/libc/hash/sha1.c				1.7
+
+  Fix workspace alignment problems.  Fixes PR#12417.
+
+usr.bin/vi/vi/vs_refresh.c			1.6
+
+  Pull in a patch from nvi 1.79 to prevent the repainting code from
+  messing up.  Fixes annoying ``Error: move: l(4294967295) c(0)
+  o(0)" core dumps.
+
+sys/dev/pci/com_puc.c				1.2
+
+  Allow attaching ``com'' devices at frequency other than the
+  standard COM_FREQ.
+
+sys/arch/atari/stand/ahdilabel/read.c		1.2
+sys/arch/atari/stand/ahdilabel/Makefile		1.3-1.4
+sys/arch/atari/stand/ahdilabel/ahdilabel.c	1.2-1.3
+sys/arch/atari/stand/ahdilabel/write.c		1.2
+sys/arch/atari/stand/ahdilabel/ahdilabel.8	delete
+share/man/man8/man8.atari/ahdilabel.8		1.1-1.2 (new)
+share/man/man8/man8.atari/Makefile		1.6
+
+  Several changes:
+   o make compile cleanly with -DDEBUG
+   o make it easy to compile with -DDEBUG
+   o ignore sometimes-invalid root sector checksums
+   o if we clear root sector, make sure the checksum is invalid
+   o by default preserve boot sector and bad sector list
+   o improve user interface to specify partitions
+   o move manual page to proper place
+
+sys/arch/macppc/dev/awacs.c			1.5-1.7
+
+  Round up block size to at least NBPG bytes.
+  Return EINVAL if specified sample rate is not available.
+  Fix 16bit ulinear bug, and enable ulinear.
+
+sys/arch/macppc/macppc/locore.S			patch
+
+  Fix a bug in cpu_switch().
+
+sys/dev/pci/if_fxp_pci.c			1.11
+sys/dev/pci/pcidevs				1.311
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+  Make the Intel Pro/100 as e.g. found on Toshiba Satellite Pro
+  4600s work.
+
+usr.sbin/syslogd/syslogd.c			1.44
+
+  Plug memory leak.  Fixes PR#12444.
+
+share/misc/na.phone				1.14
+
+  A few corrections for abbreviations.  Fixes PR#11314.
+
+crypto/dist/openssl/crypto/rand/randfile.c	1.3
+
+  Don't use /dev/urandom if no value can be found; it is not
+  a normal file and there will be no EOF.
+
+share/man/man7/mdoc.7				1.21
+
+  Remove reference to non-installed README file.  Fixes PR#10992.
