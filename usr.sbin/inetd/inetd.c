@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.35 1997/10/05 16:16:13 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.36 1997/10/05 16:40:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -33,17 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.35 1997/10/05 16:16:13 mrg Exp $";
+__RCSID("$NetBSD: inetd.c,v 1.36 1997/10/05 16:40:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,6 +169,7 @@ static char rcsid[] = "$NetBSD: inetd.c,v 1.35 1997/10/05 16:16:13 mrg Exp $";
 #include <arpa/inet.h>
 #ifdef RPC
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #endif
 
 #include <errno.h>
@@ -311,13 +309,23 @@ char	       *sskip __P((char **));
 char	       *skip __P((char **));
 void		tcpmux __P((int, struct servtab *));
 void		usage __P((void));
+void		logpid __P((void));
+void		register_rpc __P((struct servtab *sep));
+void		unregister_rpc __P((struct servtab *sep));
+void		bump_nofile __P((void));
+void		inetd_setproctitle __P((char *, int));
+void		initring __P((void));
+long		machtime __P((void));
+static int	getline __P((int, char *, int));
+int		main __P((int, char *[], char *[]));
 
 struct biltin {
 	char	*bi_service;		/* internally provided service name */
 	int	bi_socktype;		/* type of socket supported */
 	short	bi_fork;		/* 1 if should fork before call */
 	short	bi_wait;		/* 1 if should wait for child */
-	void	(*bi_fn)();		/* function which performs it */
+	void	(*bi_fn) __P((int, struct servtab *));
+					/* function which performs it */
 } biltins[] = {
 	/* Echo received data */
 	{ "echo",	SOCK_STREAM,	1, 0,	echo_stream },
@@ -362,15 +370,15 @@ _rpc_dtablesize()
 }
 #endif
 
+int
 main(argc, argv, envp)
 	int argc;
 	char *argv[], *envp[];
 {
 	struct servtab *sep, *nsep;
 	struct sigvec sv;
-	int tmpint, ch, dofork;
+	int ch, dofork;
 	pid_t pid;
-	char buf[50];
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -553,11 +561,11 @@ run_service(ctrl, sep)
 	struct servtab *sep;
 {
 	struct passwd *pwd;
-	struct group *grp;
+	struct group *grp = NULL;	/* XXX gcc */
 #ifdef LIBWRAP
 	struct request_info req;
 	int denied;
-	char buf[7], *service;
+	char buf[7], *service = NULL;	/* XXX gcc */
 #endif
 
 #ifdef LIBWRAP
@@ -699,7 +707,6 @@ config(signo)
 	int signo;
 {
 	struct servtab *sep, *cp, **sepp;
-	struct passwd *pwd;
 	long omask;
 	int n;
 
@@ -709,7 +716,7 @@ config(signo)
 	}
 	for (sep = servtab; sep; sep = sep->se_next)
 		sep->se_checked = 0;
-	while (cp = getconfigent()) {
+	while ((cp = getconfigent())) {
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (strcmp(sep->se_service, cp->se_service) == 0 &&
 			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
@@ -861,7 +868,7 @@ config(signo)
 	 */
 	omask = sigblock(SIGBLOCK);
 	sepp = &servtab;
-	while (sep = *sepp) {
+	while ((sep = *sepp)) {
 		if (sep->se_checked) {
 			sepp = &sep->se_next;
 			continue;
@@ -906,7 +913,7 @@ void
 goaway(signo)
 	int signo;
 {
-	register struct servtab *sep;
+	struct servtab *sep;
 
 	for (sep = servtab; sep; sep = sep->se_next) {
 		if (sep->se_fd == -1)
@@ -1003,8 +1010,9 @@ close_sep(sep)
 		sep->se_wait = 1;
 }
 
+void
 register_rpc(sep)
-	register struct servtab *sep;
+	struct servtab *sep;
 {
 #ifdef RPC
 	int n;
@@ -1037,8 +1045,9 @@ register_rpc(sep)
 #endif /* RPC */
 }
 
+void
 unregister_rpc(sep)
-	register struct servtab *sep;
+	struct servtab *sep;
 {
 #ifdef RPC
 	int n;
@@ -1278,7 +1287,7 @@ more:
 		}
 	}
 	sep->se_user = newstr(sskip(&cp));
-	if (sep->se_group = strchr(sep->se_user, '.'))
+	if ((sep->se_group = strchr(sep->se_user, '.')))
 		*sep->se_group++ = '\0';
 	sep->se_server = newstr(sskip(&cp));
 	if (strcmp(sep->se_server, "internal") == 0) {
@@ -1397,7 +1406,7 @@ again:
 		c = getc(fconfig);
 		(void) ungetc(c, fconfig);
 		if (c == ' ' || c == '\t')
-			if (cp = nextline(fconfig))
+			if ((cp = nextline(fconfig)))
 				goto again;
 		*cpp = (char *)0;
 		return ((char *)0);
@@ -1429,7 +1438,7 @@ char *
 newstr(cp)
 	char *cp;
 {
-	if (cp = strdup(cp ? cp : ""))
+	if ((cp = strdup(cp ? cp : "")))
 		return (cp);
 	syslog(LOG_ERR, "strdup: %m");
 	exit(-1);
@@ -1458,6 +1467,7 @@ inetd_setproctitle(a, s)
 		*cp++ = ' ';
 }
 
+void
 logpid()
 {
 	FILE *fp;
@@ -1468,6 +1478,7 @@ logpid()
 	}
 }
 
+void
 bump_nofile()
 {
 #ifdef RLIMIT_NOFILE
@@ -1478,27 +1489,27 @@ bump_nofile()
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
-		return -1;
+		return;
 	}
 	rl.rlim_cur = MIN(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
 	if (rl.rlim_cur <= rlim_ofile_cur) {
 		syslog(LOG_ERR,
 		    "bump_nofile: cannot extend file limit, max = %d",
-		    rl.rlim_cur);
-		return -1;
+		    (int)rl.rlim_cur);
+		return;
 	}
 
 	if (setrlimit(RLIMIT_NOFILE, &rl) < 0) {
 		syslog(LOG_ERR, "setrlimit: %m");
-		return -1;
+		return;
 	}
 
 	rlim_ofile_cur = rl.rlim_cur;
-	return 0;
+	return;
 
 #else
 	syslog(LOG_ERR, "bump_nofile: cannot extend file limit");
-	return -1;
+	return;
 #endif
 }
 
