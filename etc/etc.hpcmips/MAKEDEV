@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 2000/09/27 10:33:27 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.15 2001/01/08 22:26:26 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,7 @@
 #	std	standard devices
 #	local	configuration specific devices
 #	usbs	make USB devices
+#	isdn	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -79,6 +80,13 @@
 #	uscanner*	Scanners
 #	ttyU*	Modem
 #
+# ISDN devices:
+#	i4b	comunication between userland isdnd and kernel
+#	i4bctl	control device
+#	i4brbch* raw b-channel access
+#	i4btel*	telephonie device
+#	i4btrc*	trace device
+#
 # Special purpose devices:
 #	fd	file descriptors
 #	bpf*	packet filter
@@ -111,7 +119,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 lpt0 lpt1 lpt2 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	sh $0 usbs
+	sh $0 usbs isdn
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
 	sh $0 ttyTX0 ttyTX1 ucbsnd
@@ -134,6 +142,10 @@ usbs)
 	sh $0 ttyU0 ttyU1
 	sh $0 urio0
 	sh $0 uscanner0 uscanner1
+	;;
+
+isdn)
+	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
@@ -512,6 +524,39 @@ scsibus*)
 	mknod scsibus$unit c 16 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+i4b)
+	rm -f i4b
+	mknod i4b c 41 0
+	chmod 600 i4b
+	;;
+
+i4bctl)
+	rm -f i4bctl
+	mknod i4bctl c 42 0
+	chmod 600 i4bctl
+	;;
+
+i4brbch*)
+	unit=${i#i4brbch};
+	rm -f i4brbch$unit
+	mknod i4brbch$unit c 43 $unit
+	chmod 600 i4brbch$unit
+	;;
+
+i4btel*)
+	unit=${i#i4btel};
+	rm -f i4btel$unit
+	mknod i4btel$unit c 45 $unit
+	chmod 600 i4btel$unit
+	;;
+
+i4btrc*)
+	unit=${i#i4btrc};
+	rm -f i4btrc$unit
+	mknod i4btrc$unit c 44 $unit
+	chmod 600 i4btrc$unit
 	;;
 
 local)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.59 2000/10/29 13:03:39 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2001/01/08 22:26:28 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,6 +45,7 @@
 # Device "make" file.  Valid arguments:
 #	std	standard devices
 #	local	configuration specific devices
+#	isdn	make ISDN devices
 # Tapes:
 #	st*	SCSI tape
 # Disks:
@@ -60,6 +61,12 @@
 #	md*	memory pseudo-disk devices
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+# ISDN devices:
+#	i4b	comunication between userland isdnd and kernel
+#	i4bctl	control device
+#	i4brbch* raw b-channel access
+#	i4btel*	telephonie device
+#	i4btrc*	trace device
 # Special purpose devices:
 #	audio*	Audio devices.
 #	openprom	OPENPROM and EEPROM interface
@@ -102,12 +109,17 @@ all)
 	sh -$- $0 cgtwo0 cgfour0 cgeight0
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh -$- $0 lkm random local ipl cfs0 apm apmctl tctrl0
+	sh -$- $0 isdn
 	;;
 
 floppy|ramdisk)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
 	sh -$- $0 sd0 sd1 sd2 sd3 sd4 sd5 md0
 	sh -$- $0 cd0 cd1 st0 st1 fd0
+	;;
+
+isdn)
+	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
@@ -463,6 +475,39 @@ tctrl*)
 	mknod tctrl$unit	c 71 $unit
 	chown root:wheel tctrl$unit
 	chmod 666 tctrl$unit
+	;;
+
+i4b)
+	rm -f i4b
+	mknod i4b c 72 0
+	chmod 600 i4b
+	;;
+
+i4bctl)
+	rm -f i4bctl
+	mknod i4bctl c 73 0
+	chmod 600 i4bctl
+	;;
+
+i4brbch*)
+	unit=${i#i4brbch};
+	rm -f i4brbch$unit
+	mknod i4brbch$unit c 74 $unit
+	chmod 600 i4brbch$unit
+	;;
+
+i4btel*)
+	unit=${i#i4btel};
+	rm -f i4btel$unit
+	mknod i4btel$unit c 76 $unit
+	chmod 600 i4btel$unit
+	;;
+
+i4btrc*)
+	unit=${i#i4btrc};
+	rm -f i4btrc$unit
+	mknod i4btrc$unit c 75 $unit
+	chmod 600 i4btrc$unit
 	;;
 
 local)
