@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.4 1993/08/01 05:40:51 mycroft Exp $
+#	$Id: Makefile.inc,v 1.5 1993/08/31 19:00:11 jtc Exp $
 
 # net sources
 .PATH: ${.CURDIR}/${MACHINE}/net ${.CURDIR}/net
@@ -21,6 +21,8 @@ SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 .elif (${MACHINE} == "vax")
 SRCS+=	htonl.s htons.s ntohl.s ntohs.s
+.else 
+SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .endif
 
 MAN3+=	byteorder.0 gethostbyname.0 getnetent.0 getprotoent.0 getservent.0 \
