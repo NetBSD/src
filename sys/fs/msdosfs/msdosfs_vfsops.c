@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.22 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.23 2005/03/29 02:41:05 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.22 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.23 2005/03/29 02:41:05 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -138,6 +138,7 @@ struct vfsops msdosfs_vfsops = {
 	vfs_stdextattrctl,
 	msdosfs_vnodeopv_descs,
 };
+VFS_ATTACH(msdosfs_vfsops);
 
 static int
 update_mp(mp, argp)
