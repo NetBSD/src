@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.80 2003/02/07 21:44:45 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.81 2003/05/20 18:16:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.80 2003/02/07 21:44:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.81 2003/05/20 18:16:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ sys_ptrace(l, v, retval)
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
-	int s, error, write, tmp;
+	struct ptrace_lwpinfo pl;
+	int s, error, write, tmp, size;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -179,6 +180,7 @@ sys_ptrace(l, v, retval)
 	case  PT_IO:
 	case  PT_KILL:
 	case  PT_DETACH:
+	case  PT_LWPINFO:
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -422,6 +424,36 @@ sys_ptrace(l, v, retval)
 		}
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
+
+	case PT_LWPINFO:
+		size = SCARG(uap, data);
+		if (size < sizeof(lwpid_t))
+			return (EINVAL);
+		error = copyin(SCARG(uap, addr), &pl, sizeof(lwpid_t));
+		if (error)
+			return (error);
+		tmp = pl.pl_lwpid;
+		if (tmp == 0)
+			lt = LIST_FIRST(&t->p_lwps);
+		else {
+			LIST_FOREACH(lt, &t->p_lwps, l_sibling)
+			    if (lt->l_lid == tmp)
+				    break;
+			if (lt == NULL)
+				return (ESRCH);
+			lt = LIST_NEXT(lt, l_sibling);
+		}
+		pl.pl_lwpid = 0;
+		pl.pl_event = 0;
+		if (lt) {
+			pl.pl_lwpid = lt->l_lid;
+			if (lt->l_lid == t->p_sigctx.ps_lwp)
+				pl.pl_event = PL_EVENT_SIGNAL;
+		}
+
+		error = copyout(&pl, SCARG(uap, addr), SCARG(uap, data));
+
+		return (0);
 
 #ifdef PT_SETREGS
 	case  PT_SETREGS:
