@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.5 2000/01/09 23:12:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,8 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $ ");
-
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.5 2000/01/09 23:12:31 ad Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
