@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.1 1996/05/05 06:17:00 briggs Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.1.4.1 1996/06/01 06:15:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -29,7 +29,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static volatile u_char	*scsi_enable		= NULL;
+static volatile u_char	*scsi_enable = NULL;
+static volatile u_char	*scsi_flag   = NULL;
+
+static __inline__ void
+scsi_clear_drq __P((void))
+{
+	int	s;
+
+	s = splhigh();
+	*scsi_flag = 0x80 | V2IF_SCSIDRQ;
+	splx(s);
+}
+
+static __inline__ void
+scsi_clear_irq __P((void))
+{
+	int	s;
+
+	s = splhigh();
+	*scsi_flag = 0x80 | V2IF_SCSIIRQ;
+	splx(s);
+}
 
 static __inline__ void
 scsi_ienable __P((void))
@@ -53,7 +74,5 @@ scsi_idisable __P((void))
 
 void	pdma_stat __P((void));
 void	pdma_cleanup __P((void));
-void	ncr5380_irq_intr __P((void *p));
-void	ncr5380_drq_intr __P((void *p));
 void	scsi_show __P((void));
 
