@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.22 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.23 2004/04/21 19:01:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -560,7 +560,7 @@ extern void	logbad(int, const char *, ...) PATTRIB(2,3);
 #define	DBGERR(dump,msg) LOGERR(msg)
 #endif
 extern	char	*naddr_ntoa(naddr);
-extern const char *saddr_ntoa(struct sockaddr *);
+extern const char *saddr_ntoa(const struct sockaddr *);
 
 extern void	*rtmalloc(size_t, const char *);
 extern void	timevaladd(struct timeval *, struct timeval *);
