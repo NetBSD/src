@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.14 2003/04/20 18:50:38 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.15 2003/06/03 12:53:47 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -282,8 +282,10 @@ void prepare_and_check_relocation_system(void) {
 
 void get_memory_configuration(void) {
 	int loop, current_page_type, page_count, phys_page;
-	int page, count, bank;
+	int page, count, bank, top_bank, video_bank;
 	int mapped_screen_memory;
+	int one_mb_pages;
+	u_long top;
 
 	printf("Getting memory configuration ");
 
@@ -366,12 +368,39 @@ void get_memory_configuration(void) {
 		DRAM_pages[0]	-= videomem_pages;
 #else
 		mapped_screen_memory = display_size;
-		bank = dram_blocks-1;				/* pick last SIMM		*/
 		videomem_pages   = (mapped_screen_memory / nbpp);
+		one_mb_pages	 = (1024*1024)/nbpp;
 
-		/* Map video memory at the end of the SIMM	*/
-		videomem_start   = DRAM_addr[bank] + (DRAM_pages[bank] - videomem_pages)*nbpp;
-		DRAM_pages[bank]-= videomem_pages;
+		/*
+		 * OK... we need one Mb at the top for compliance with current
+		 * kernel structure. This ought to be abolished one day IMHO.
+		 * Also we have to take care that the kernel needs to be in
+		 * DRAM0a and even has to start there.
+		 * XXX one Mb simms are the smallest supported XXX
+		 */
+		top_bank = dram_blocks-1;
+		video_bank = top_bank;
+		if (DRAM_pages[top_bank] == one_mb_pages) video_bank--;
+
+		if (DRAM_pages[video_bank] < videomem_pages)
+			panic("Weird memory configuration found; please contact acorn32 portmaster.");
+
+		/* split off the top 1Mb */
+		DRAM_addr [top_bank+1]  = DRAM_addr[top_bank] + (DRAM_pages[top_bank] - one_mb_pages)*nbpp;
+		DRAM_pages[top_bank+1]  = one_mb_pages;
+		DRAM_pages[top_bank  ] -= one_mb_pages;
+		dram_blocks++;
+
+		/* Map video memory at the end of the choosen DIMM */
+		videomem_start          = DRAM_addr[video_bank] + (DRAM_pages[video_bank] - videomem_pages)*nbpp;
+		DRAM_pages[video_bank] -= videomem_pages;
+
+		/* sanity */
+		if (DRAM_pages[top_bank] == 0) {
+			DRAM_addr [top_bank] = DRAM_addr [top_bank+1];
+			DRAM_pages[top_bank] = DRAM_pages[top_bank+1];
+			dram_blocks--;
+		};
 #endif
 	} else {
 		/* use VRAM */
@@ -386,17 +415,19 @@ void get_memory_configuration(void) {
 		printf("at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
 	};
 
-	/* find top of DRAM pages */
+	/* find top of (PO)DRAM pages */
 	top_physdram = 0;
-	
-	for (loop = podram_blocks-1; (loop >= 0) && (PODRAM_addr[loop] == 0); loop++);
-	if (loop >= 0) top_physdram = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
-	if (top_physdram == 0) {
-		for (loop = dram_blocks-1; (loop >= 0) && (DRAM_addr[loop] == 0); loop++);
-		if (loop >= 0) top_physdram = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
+	for (loop = 0; loop < podram_blocks; loop++) {
+		top = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
+		if (top > top_physdram) top_physdram = top;
+	};
+	for (loop = 0; loop < dram_blocks; loop++) {
+		top = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
+		if (top > top_physdram) top_physdram = top;
 	};
 	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
-
+	if (((top_physdram >> 20) << 20) != top_physdram)
+		panic("Top is not not aligned on a Mb; remove very small DIMMS?");
 
 	videomem_start_ro = vdu_var(os_VDUVAR_DISPLAY_START);
 
@@ -504,8 +535,9 @@ void create_initial_page_tables(void) {
 
 	/* video memory is mapped 1:1 in the DRAM section or in VRAM section	*/
 
-	/* map 1Mb from top of memory to bottom 1Mb of virtual memmap		*/
+	/* map 1Mb from top of DRAM memory to bottom 1Mb of virtual memmap	*/
 	top_1Mb_dram = (((top_physdram - 1024*1024) >> 20) << 20);
+
 	initial_page_tables[0] = top_1Mb_dram | section;
 
 	/* map 16 Mb of kernel space to KERNEL_BASE i.e. marks[KERNEL_START]	*/
@@ -683,7 +715,7 @@ int main(int argc, char **argv) {
 	pv_offset = ((u_long) marks[MARK_START] - kernel_physical_start);
 	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);		/* round on a page	*/
 
-	/* we seem to be forced to clear the marks() ? */
+	/* we seem to be forced to clear the marks[] ? */
 	bzero(marks, sizeof(marks[MARK_MAX]));
 
 	/* really load it ! */
