@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.4 1997/10/12 17:45:26 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec.c,v 1.4 1997/10/12 17:45:26 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include "monop.ext"
 
 static char	*perc[]	= {
 	"10%", "ten percent", "%", "$200", "200", 0
@@ -51,10 +51,10 @@ static char	*perc[]	= {
 void
 inc_tax()
 {			/* collect income tax			*/
+	int worth, com_num;
 
-	int	worth, com_num;
-
-	com_num = getinp("Do you wish to lose 10%% of your total worth or $200? ", perc);
+	com_num = getinp("Do you wish to lose 10%% of your total worth or "
+	    "$200? ", perc);
 	worth = cur_p->money + prop_worth(cur_p);
 	printf("You were worth $%d", worth);
 	worth /= 10;
@@ -80,14 +80,12 @@ inc_tax()
 void
 goto_jail()
 {			/* move player to jail			*/
-
 	cur_p->loc = JAIL;
 }
 
 void
 lux_tax()
 {			/* landing on luxury tax		*/
-
 	printf("You lose $75\n");
 	cur_p->money -= 75;
 }
@@ -95,13 +93,11 @@ lux_tax()
 void
 cc()
 {				/* draw community chest card		*/
-
 	get_card(&CC_D);
 }
 
 void
 chance()
 {			/* draw chance card			*/
-
 	get_card(&CH_D);
 }
