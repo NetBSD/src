@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.27 2004/07/23 09:22:15 mycroft Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.28 2004/07/23 10:15:13 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.27 2004/07/23 09:22:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.28 2004/07/23 10:15:13 mycroft Exp $");
 #endif
 
 /*
@@ -195,7 +195,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
 
 	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
-	ieee80211_node_attach(ifp);
+	ieee80211_node_attach(ic);
 	ieee80211_proto_attach(ifp);
 }
 
@@ -206,7 +206,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 
 	ieee80211_proto_detach(ifp);
 	ieee80211_crypto_detach(ifp);
-	ieee80211_node_detach(ifp);
+	ieee80211_node_detach(ic);
 	LIST_REMOVE(ic, ic_list);
 #ifdef __FreeBSD__
 	ifmedia_removeall(&ic->ic_media);
@@ -313,7 +313,7 @@ ieee80211_media_init(struct ifnet *ifp,
 	 * Do late attach work that must wait for any subclass
 	 * (i.e. driver) work such as overriding methods.
 	 */
-	ieee80211_node_lateattach(ifp);
+	ieee80211_node_lateattach(ic);
 
 	/*
 	 * Fill in media characteristics.

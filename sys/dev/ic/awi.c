@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.63 2004/07/23 08:34:11 mycroft Exp $	*/
+/*	$NetBSD: awi.c,v 1.64 2004/07/23 10:15:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.63 2004/07/23 08:34:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.64 2004/07/23 10:15:13 mycroft Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -524,7 +524,7 @@ awi_intr(void *arg)
 		if (status & AWI_INT_SCAN_CMPLT) {
 			if (sc->sc_ic.ic_state == IEEE80211_S_SCAN &&
 			    sc->sc_substate == AWI_ST_NONE)
-				ieee80211_next_scan(&sc->sc_ic.ic_if);
+				ieee80211_next_scan(&sc->sc_ic);
 		}
 	}
 	sc->sc_cansleep = ocansleep;
@@ -1927,7 +1927,7 @@ awi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			case IEEE80211_S_AUTH:
 			case IEEE80211_S_ASSOC:
 			case IEEE80211_S_INIT:
-				ieee80211_begin_scan(ifp);
+				ieee80211_begin_scan(ic);
 				/* FALLTHRU */
 			case IEEE80211_S_SCAN:
 				/* scan next */
