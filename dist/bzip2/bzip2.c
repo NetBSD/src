@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.3 2002/12/06 02:21:45 thorpej Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.4 2004/06/06 06:39:27 christos Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -894,6 +894,7 @@ void mySignalCatcher ( IntNative n )
 
 
 /*---------------------------------------------*/
+#ifndef SMALL
 static 
 void mySIGSEGVorSIGBUScatcher ( IntNative n )
 {
@@ -947,6 +948,7 @@ void mySIGSEGVorSIGBUScatcher ( IntNative n )
       cleanUpAndFail( 3 ); else
       { cadvise(); cleanUpAndFail( 2 ); }
 }
+#endif
 
 
 /*---------------------------------------------*/
@@ -1876,6 +1878,7 @@ IntNative main ( IntNative argc, Char *argv[] )
    exitValue               = 0;
    i = j = 0; /* avoid bogus warning from egcs-1.1.X */
 
+#ifndef SMALL
    /*-- Set up signal handlers for mem access errors --*/
    signal (SIGSEGV, mySIGSEGVorSIGBUScatcher);
 #  if BZ_UNIX
@@ -1883,6 +1886,7 @@ IntNative main ( IntNative argc, Char *argv[] )
    signal (SIGBUS,  mySIGSEGVorSIGBUScatcher);
 #  endif
 #  endif
+#endif
 
    copyFileName ( inName,  "(none)" );
    copyFileName ( outName, "(none)" );
