@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.491 2002/10/18 00:51:22 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.492 2002/10/20 10:35:41 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.491 2002/10/18 00:51:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.492 2002/10/20 10:35:41 kanaoka Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2728,6 +2728,7 @@ add_mem_cluster(seg_start, seg_end, type)
 	u_int32_t type;
 {
 	extern struct extent *iomem_ex;
+	int i;
 
 	if (seg_end > 0x100000000ULL) {
 		printf("WARNING: skipping large "
@@ -2749,6 +2750,17 @@ add_mem_cluster(seg_start, seg_end, type)
 	if (seg_end <= seg_start)
 		return;
 
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if ((mem_clusters[i].start == round_page(seg_start))
+		    && (mem_clusters[i].size
+			    == trunc_page(seg_end) - mem_clusters[i].start)) {
+#ifdef DEBUG_MEMLOAD
+			printf("WARNING: skipping duplicate segment entry\n");
+#endif
+			return;
+		}
+	}
+
 	/*
 	 * Allocate the physical addresses used by RAM
 	 * from the iomem extent map.  This is done before
@@ -2763,6 +2775,7 @@ add_mem_cluster(seg_start, seg_end, type)
 		    "(0x%qx/0x%qx/0x%x) FROM "
 		    "IOMEM EXTENT MAP!\n",
 		    seg_start, seg_end - seg_start, type);
+		return;
 	}
 
 	/*
@@ -2917,6 +2930,10 @@ init386(first_avail)
 		realmode_reserved_start = avail_start;
 		avail_start += realmode_reserved_size;
 	}
+
+#ifdef DEBUG_MEMLOAD
+	printf("mem_cluster_count: %d\n", mem_cluster_cnt);
+#endif
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -3106,14 +3123,18 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end;
+
+				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start, tmp,
-				    atop(seg_start), atop(tmp));
+					printf("loading 0x%qx-0x%qx "
+					    "(0x%lx-0x%lx)\n",
+				    	    seg_start, tmp,
+				  	    atop(seg_start), atop(tmp));
 #endif
-				uvm_page_physload(atop(seg_start),
-				    atop(tmp), atop(seg_start),
-				    atop(tmp), first16q);
+					uvm_page_physload(atop(seg_start),
+				    	    atop(tmp), atop(seg_start),
+				    	    atop(tmp), first16q);
+				}
 				seg_start = tmp;
 			}
 
@@ -3139,14 +3160,18 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end1;
+
+				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    seg_start1, tmp,
-				    atop(seg_start1), atop(tmp));
+					printf("loading 0x%qx-0x%qx "
+					    "(0x%lx-0x%lx)\n",
+				    	    seg_start1, tmp,
+				    	    atop(seg_start1), atop(tmp));
 #endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(tmp), atop(seg_start1),
-				    atop(tmp), first16q);
+					uvm_page_physload(atop(seg_start1),
+				    	    atop(tmp), atop(seg_start1),
+				    	    atop(tmp), first16q);
+				}
 				seg_start1 = tmp;
 			}
 
