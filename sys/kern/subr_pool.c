@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.15 1998/09/29 18:09:29 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.16 1998/12/16 04:28:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,6 @@ static void	pr_rmpage __P((struct pool *, struct pool_item_header *));
 static int	pool_prime_page __P((struct pool *, caddr_t));
 static void	*pool_page_alloc __P((unsigned long, int, int));
 static void	pool_page_free __P((void *, unsigned long, int));
-int pool_chk __P((struct pool *, char *));
 
 
 #ifdef POOL_DIAGNOSTIC
@@ -324,7 +323,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	void		(*release) __P((void *, unsigned long, int));
 	int		mtype;
 {
-	int off, slack;
+	int off, slack, i;
 
 	/*
 	 * Check arguments and construct default values.
@@ -387,7 +386,9 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 		/* The page header will be taken from our page header pool */
 		pp->pr_phoffset = 0;
 		off = pagesz;
-		memset(pp->pr_hashtab, 0, sizeof(pp->pr_hashtab));
+		for (i = 0; i < PR_HASHTABSIZE; i++) {
+			LIST_INIT(&pp->pr_hashtab[i]);
+		}
 	}
 
 	/*
@@ -1034,11 +1035,11 @@ pool_chk(pp, label)
 		caddr_t page;
 
 		page = (caddr_t)((u_long)ph & pp->pr_pagemask);
-		if (page != ph->ph_page) {
+		if (page != ph->ph_page && (pp->pr_flags & PR_PHINPAGE) != 0) {
 			if (label != NULL)
 				printf("%s: ", label);
-			printf("pool(%s): page inconsistency: page %p;"
-			       " at page head addr %p (p %p)\n",
+			printf("pool(%p:%s): page inconsistency: page %p;"
+			       " at page head addr %p (p %p)\n", pp,
 				pp->pr_wchan, ph->ph_page,
 				ph, page);
 			r++;
@@ -1067,8 +1068,8 @@ pool_chk(pp, label)
 
 			if (label != NULL)
 				printf("%s: ", label);
-			printf("pool(%s): page inconsistency: page %p;"
-			       " item ordinal %d; addr %p (p %p)\n",
+			printf("pool(%p:%s): page inconsistency: page %p;"
+			       " item ordinal %d; addr %p (p %p)\n", pp,
 				pp->pr_wchan, ph->ph_page,
 				n, pi, page);
 			r++;
