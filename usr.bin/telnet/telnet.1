@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.8 1997/05/13 04:15:06 mikel Exp $
+.\"	$NetBSD: telnet.1,v 1.9 1997/06/03 06:31:20 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -538,9 +538,9 @@ command.
 .El
 .It Xo
 .Ic open Ar host
-.Oo Op Fl l
-.Ar user
-.Oc Ns Oo Fl
+.Op Fl l Ar user
+.Op Fl a
+.Oo Op \&- Ns
 .Ar port Oc
 .Xc
 Open a connection to the named host.
@@ -551,11 +551,11 @@ will attempt to contact a
 .Tn TELNET
 server at the default port.
 The host specification may be either a host name (see
-.Xr hosts  5  )
+.Xr hosts 5 )
 or an Internet address specified in the \*(Lqdot notation\*(Rq (see
 .Xr inet 3 ) .
 The
-.Op Fl l
+.Fl l
 option may be used to specify the user name
 to be passed to the remote system via the
 .Ev ENVIRON
@@ -569,7 +569,7 @@ the initial option negotiation is done.
 After establishing a connection, the file
 .Pa \&.telnetrc
 in the
-users home directory is opened.  Lines beginning with a # are
+user's home directory is opened.  Lines beginning with a # are
 comment lines.  Blank lines are ignored.  Lines that begin
 without white space are the start of a machine entry.  The
 first thing on the line is the name of the machine that is
@@ -749,7 +749,7 @@ is enabled, and the status character is typed, a
 .Dv TELNET AYT
 sequence (see
 .Ic send ayt
-preceding) is sent to the
+above) is sent to the
 remote host.  The initial value for the "Are You There"
 character is the terminal's status character.
 .It Ic echo
@@ -934,7 +934,9 @@ escape character is ignored unless it is
 preceded by this character at the beginning of a line.
 This character, at the beginning of a line followed by
 a "."  closes the connection; when followed by a ^Z it
-suspends the telnet command.  The initial state is to
+suspends the
+.Nm telnet
+command.  The initial state is to
 disable the rlogin escape character.
 .It Ic start
 If the
@@ -944,7 +946,7 @@ then this character is taken to
 be the terminal's
 .Ic start
 character.
-The initial value for the kill character is taken to be
+The initial value for the start character is taken to be
 the terminal's
 .Ic start
 character.
@@ -956,7 +958,7 @@ then this character is taken to
 be the terminal's
 .Ic stop
 character.
-The initial value for the kill character is taken to be
+The initial value for the stop character is taken to be
 the terminal's
 .Ic stop
 character.
@@ -1258,11 +1260,11 @@ is sent as
 .Ic abort  ,
 and
 .Ic eof and
-.B suspend
+.Ic suspend
 are sent as
 .Ic eof and
-.Ic susp ,
-see
+.Ic susp
+(see
 .Ic send
 above).
 .It Ic netdata
@@ -1308,7 +1310,7 @@ When the
 .Ic verbose_encrypt
 toggle is
 .Dv TRUE ,
-.Tn TELNET
+.Nm telnet
 prints out a message each time encryption is enabled or
 disabled.  The initial value for this toggle is
 .Dv FALSE.
@@ -1327,7 +1329,7 @@ This command only works when the user is using the
 .It Ic \&! Op Ar command 
 Execute a single command in a subshell on the local
 system.  If
-.Ic command
+.Ar command
 is omitted, then an interactive
 subshell is invoked.
 .It Ic \&? Op Ar command 
