@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16.6.5 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.16.6.6 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.16.6.5 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.16.6.6 2005/02/04 07:09:16 skrll Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -170,7 +170,7 @@ kbdenable(int mode)
 extern struct cfdriver kbd_cd;
 
 int 
-kbdopen(dev_t dev, int flags, int mode, struct proc *p)
+kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
 	int unit = minor(dev);
@@ -183,14 +183,14 @@ kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (k->sc_events.ev_io)
 		return (EBUSY);
-	k->sc_events.ev_io = p;
+	k->sc_events.ev_io = l->l_proc;
 	ev_init(&k->sc_events);
 
 	return (0);
 }
 
 int 
-kbdclose(dev_t dev, int flags, int mode, struct proc *p)
+kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 
@@ -219,7 +219,7 @@ void opm_bell_off(void);
 #endif
 
 int 
-kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 	int cmd_data;
@@ -291,12 +291,12 @@ kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 
 int 
-kbdpoll(dev_t dev, int events, struct proc *p)
+kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
 
 	k = kbd_cd.cd_devs[minor(dev)];
-	return (ev_poll(&k->sc_events, events, p));
+	return (ev_poll(&k->sc_events, events, l));
 }
 
 int

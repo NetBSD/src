@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.17.6.5 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: par.c,v 1.17.6.6 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.17.6.5 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.17.6.6 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -190,7 +190,7 @@ parattach(struct device *pdp, struct device *dp, void *aux)
 }
 
 int 
-paropen(dev_t dev, int flags, int mode, struct proc *p)
+paropen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc;
@@ -216,7 +216,7 @@ paropen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-parclose(dev_t dev, int flags, int mode, struct proc *p)
+parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int s;
@@ -401,7 +401,7 @@ parrw(dev_t dev, struct uio *uio)
 }
 
 int 
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
 	struct parparam *pp, *upp;

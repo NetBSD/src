@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.6.6.4 2005/01/24 08:34:34 skrll Exp $	*/
+/*	$NetBSD: pcons.c,v 1.6.6.5 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.6.6.4 2005/01/24 08:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.6.6.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,7 +116,7 @@ static int pconsparam(struct tty *, struct termios *);
 static void pcons_poll(void *);
 
 int 
-pconsopen(dev_t dev, int flag, int mode, struct proc *p)
+pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pconssoftc *sc;
 	int unit = minor(dev);
@@ -142,7 +142,8 @@ pconsopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	
@@ -155,7 +156,7 @@ pconsopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int 
-pconsclose(dev_t dev, int flag, int mode, struct proc *p)
+pconsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -186,24 +187,24 @@ pconswrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int 
-pconspoll(dev_t dev, int events, struct proc *p)
+pconspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int 
-pconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+pconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, cmd, data, flag, l)) >= 0)
 		return error;
 	return ENOTTY;
 }

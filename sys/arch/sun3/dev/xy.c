@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.46.2.5 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: xy.c,v 1.46.2.6 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.5 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.46.2.6 2005/02/04 07:09:16 skrll Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -692,7 +692,7 @@ done:
  * xyclose: close device
  */
 int 
-xyclose(dev_t dev, int flag, int fmt, struct proc *p)
+xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
 	int     part = DISKPART(dev);
@@ -751,7 +751,7 @@ xydump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
+xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -826,7 +826,7 @@ xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
@@ -839,7 +839,7 @@ xyioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct proc *p)
  * xyopen: open drive
  */
 int 
-xyopen(dev_t dev, int flag, int fmt, struct proc *p)
+xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, unit, part, s;
 	struct xy_softc *xy;
