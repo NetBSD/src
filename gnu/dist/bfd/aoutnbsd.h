@@ -122,12 +122,9 @@ DESCRIPTION
 
 #include <string.h>		/* For strchr and friends */
 #include <ctype.h>
-#include "bfd.h"
 #include <sysdep.h>
 #include "bfdlink.h"
 
-#include "libaout.h"
-#include "libbfd.h"
 #include "aout/aout64.h"
 #include "aout/stab_gnu.h"
 #include "aout/ar.h"
@@ -248,6 +245,11 @@ HOWTO(10,	       0,  2,   32, false, 0, complain_overflow_bitfield,0,"BASE32",	f
 { -1 },
 { -1 },
   HOWTO(40,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"BASEREL",   false,         0,0x00000000, false),
+
+  /* XXX These should probably live somewhere in the middle of the table,
+     but keep them last for now. */
+  HOWTO(16,              0,  2,  32, true, 0, complain_overflow_bitfield, 0,"PLT32", false, 0xffffffff, 0xffffffff, false),
+  HOWTO(0,	       0,  2,	 0, true, 0, complain_overflow_bitfield,0,"GOTPC",  false,         0,0x00000000, false),
 };
 
 #define TABLE_SIZE(TABLE)	(sizeof(TABLE)/sizeof(TABLE[0]))
@@ -299,6 +301,10 @@ NAME(aout,reloc_type_lookup) (abfd,code)
 	STD (BFD_RELOC_32_PCREL, 6);
 	STD (BFD_RELOC_16_BASEREL, 9);
 	STD (BFD_RELOC_32_BASEREL, 10);
+	STD (BFD_RELOC_386_GOT32, 10);
+	STD (BFD_RELOC_386_PLT32, 41);
+	STD (BFD_RELOC_386_GOTPC, 42);
+	STD (BFD_RELOC_386_GOTOFF, 10);
       default: return (reloc_howto_type *) NULL;
       }
 }
@@ -1418,93 +1424,17 @@ translate_from_native_sym_flags (abfd, cache_ptr)
       cache_ptr->symbol.flags = visible;
       break;
 
+    case N_SIZE: case N_SIZE | N_EXT:
+      cache_ptr->symbol.section = bfd_abs_section_ptr;
+      /* Set BSF_DEBUGGING so we don't link against this symbol. */
+      cache_ptr->symbol.flags = BSF_DEBUGGING | visible;
+      break;
+
     case N_SETA: case N_SETA | N_EXT:
     case N_SETT: case N_SETT | N_EXT:
     case N_SETD: case N_SETD | N_EXT:
     case N_SETB: case N_SETB | N_EXT:
       {
-	/* This code is no longer needed.  It used to be used to make
-           the linker handle set symbols, but they are now handled in
-           the add_symbols routine instead.  */
-#if 0
-	asection *section;
-	arelent_chain *reloc;
-	asection *into_section;
-
-	/* This is a set symbol.  The name of the symbol is the name
-	   of the set (e.g., __CTOR_LIST__).  The value of the symbol
-	   is the value to add to the set.  We create a section with
-	   the same name as the symbol, and add a reloc to insert the
-	   appropriate value into the section.
-
-	   This action is actually obsolete; it used to make the
-	   linker do the right thing, but the linker no longer uses
-	   this function.  */
-
-	section = bfd_get_section_by_name (abfd, cache_ptr->symbol.name);
-	if (section == NULL)
-	  {
-	    char *copy;
-
-	    copy = bfd_alloc (abfd, strlen (cache_ptr->symbol.name) + 1);
-	    if (copy == NULL)
-	      return false;
-
-	    strcpy (copy, cache_ptr->symbol.name);
-	    section = bfd_make_section (abfd, copy);
-	    if (section == NULL)
-	      return false;
-	  }
-
-	reloc = (arelent_chain *) bfd_alloc (abfd, sizeof (arelent_chain));
-	if (reloc == NULL)
-	  return false;
-
-	/* Build a relocation entry for the constructor.  */
-	switch (cache_ptr->type & N_TYPE)
-	  {
-	  case N_SETA:
-	    into_section = bfd_abs_section_ptr;
-	    cache_ptr->type = N_ABS;
-	    break;
-	  case N_SETT:
-	    into_section = obj_textsec (abfd);
-	    cache_ptr->type = N_TEXT;
-	    break;
-	  case N_SETD:
-	    into_section = obj_datasec (abfd);
-	    cache_ptr->type = N_DATA;
-	    break;
-	  case N_SETB:
-	    into_section = obj_bsssec (abfd);
-	    cache_ptr->type = N_BSS;
-	    break;
-	  }
-
-	/* Build a relocation pointing into the constructor section
-	   pointing at the symbol in the set vector specified.  */
-	reloc->relent.addend = cache_ptr->symbol.value;
-	cache_ptr->symbol.section = into_section;
-	reloc->relent.sym_ptr_ptr = into_section->symbol_ptr_ptr;
-
-	/* We modify the symbol to belong to a section depending upon
-	   the name of the symbol, and add to the size of the section
-	   to contain a pointer to the symbol. Build a reloc entry to
-	   relocate to this symbol attached to this section.  */
-	section->flags = SEC_CONSTRUCTOR | SEC_RELOC;
-
-	section->reloc_count++;
-	section->alignment_power = 2;
-
-	reloc->next = section->constructor_chain;
-	section->constructor_chain = reloc;
-	reloc->relent.address = section->_raw_size;
-	section->_raw_size += BYTES_IN_WORD;
-
-	reloc->relent.howto = CTOR_TABLE_RELOC_HOWTO(abfd);
-
-#endif /* 0 */
-
 	switch (cache_ptr->type & N_TYPE)
 	  {
 	  case N_SETA:
@@ -1541,35 +1471,10 @@ translate_from_native_sym_flags (abfd, cache_ptr)
       cache_ptr->symbol.flags = BSF_DEBUGGING | BSF_INDIRECT | visible;
       cache_ptr->symbol.section = bfd_ind_section_ptr;
       break;
-
-    case N_WEAKU:
-      cache_ptr->symbol.section = bfd_und_section_ptr;
-      cache_ptr->symbol.flags = BSF_WEAK;
-      break;
-
-    case N_WEAKA:
-      cache_ptr->symbol.section = bfd_abs_section_ptr;
-      cache_ptr->symbol.flags = BSF_WEAK;
-      break;
-
-    case N_WEAKT:
-      cache_ptr->symbol.section = obj_textsec (abfd);
-      cache_ptr->symbol.value -= cache_ptr->symbol.section->vma;
-      cache_ptr->symbol.flags = BSF_WEAK;
-      break;
-
-    case N_WEAKD:
-      cache_ptr->symbol.section = obj_datasec (abfd);
-      cache_ptr->symbol.value -= cache_ptr->symbol.section->vma;
-      cache_ptr->symbol.flags = BSF_WEAK;
-      break;
-
-    case N_WEAKB:
-      cache_ptr->symbol.section = obj_bsssec (abfd);
-      cache_ptr->symbol.value -= cache_ptr->symbol.section->vma;
-      cache_ptr->symbol.flags = BSF_WEAK;
-      break;
     }
+
+  if (((cache_ptr->other >> 4) & 0xf) == BIND_WEAK)
+     cache_ptr->symbol.flags |= BSF_WEAK;
 
   return true;
 }
@@ -1585,7 +1490,10 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
   bfd_vma value = cache_ptr->value;
   asection *sec;
   bfd_vma off;
+  boolean is_size_symbol;
 
+  is_size_symbol = (sym_pointer->e_type[0] & N_TYPE) == N_SIZE;
+  
   /* Mask out any existing type bits in case copying from one section
      to another.  */
   sym_pointer->e_type[0] &= ~N_TYPE;
@@ -1611,7 +1519,9 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
       sec = sec->output_section;
     }
 
-  if (bfd_is_abs_section (sec))
+  if (is_size_symbol)
+    sym_pointer->e_type[0] |= N_SIZE;
+  else if (bfd_is_abs_section (sec))
     sym_pointer->e_type[0] |= N_ABS;
   else if (sec == obj_textsec (abfd))
     sym_pointer->e_type[0] |= N_TEXT;
@@ -1660,18 +1570,10 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
 
   if ((cache_ptr->flags & BSF_WEAK) != 0)
     {
-      int type;
+      sym_pointer->e_other[0] |= 0x20;  /* BIND_WEAK */
 
-      switch (sym_pointer->e_type[0] & N_TYPE)
-	{
-	default:
-	case N_ABS:	type = N_WEAKA; break;
-	case N_TEXT:	type = N_WEAKT; break;
-	case N_DATA:	type = N_WEAKD; break;
-	case N_BSS:	type = N_WEAKB; break;
-	case N_UNDF:	type = N_WEAKU; break;
-	}
-      sym_pointer->e_type[0] = type;
+      /* Weak symbols are always extern. */
+      sym_pointer->e_type[0] |= N_EXT;
     }
 
   PUT_WORD(abfd, value, sym_pointer->e_value);
@@ -2020,8 +1922,24 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
   else
     {
       /* Just an ordinary section */
-      r_extern = 0;
-      r_index  = output_section->target_index;
+      if (((abfd->flags & BFD_PIC) != 0)
+	  && r_baserel)
+	{
+	  r_extern = (sym->flags & BSF_GLOBAL) != 0;
+	  r_index = (*(g->sym_ptr_ptr))->KEEPIT;
+	}
+      else if (((abfd->flags & BFD_PIC) != 0)
+	       && (g->howto->type == 2)
+	       && ((sym->flags & BSF_GLOBAL) != 0))
+	{
+	  r_extern = 1;
+	  r_index = (*(g->sym_ptr_ptr))->KEEPIT;
+	}
+      else
+	{
+	  r_extern = 0;
+	  r_index  = output_section->target_index;
+	}
     }
 
   /* now the fun stuff */
