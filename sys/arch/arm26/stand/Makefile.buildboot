@@ -1,0 +1,64 @@
+#	$NetBSD: Makefile.buildboot,v 1.1 2001/07/26 22:16:26 bjh21 Exp $
+
+S?=	${.CURDIR}/../../../..
+
+.PATH: ${.CURDIR}/../lib
+
+COMMONSOURCE=	srt0.S
+
+SRCS=	${COMMONSOURCE} ${PROGSOURCE}
+MKMAN=no
+BINMODE=444
+
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+
+CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x10000
+CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR}/../lib
+CFLAGS=		-O2
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+.ifdef INCLUDE_LIBZ
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+.endif
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
+SAMISCCPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=riscos
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+### find out what to use for libriscos
+RISCOS_AS=		library
+.include "${S}/arch/arm26/stand/lib/Makefile.inc"
+LIBRISCOS=		${RISCOSLIB}
+
+RELOC=8000
+OBJCOPY?=objcopy
+
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
+	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS} ${LIBSA}
+	${SIZE} ${.TARGET}
+
+${PROG},ff8: ${PROG}
+	${OBJCOPY} --output-target=binary ${.ALLSRC} ${.TARGET}
+
+all: ${PROG},ff8
+
+CLEANFILES+=	${PROG},ff8
+
+.include <bsd.prog.mk>
