@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.6 2002/09/19 03:15:43 mycroft Exp $	*/
+/*	$NetBSD: timer.c,v 1.7 2002/09/19 21:26:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-__RCSID("$NetBSD: timer.c,v 1.6 2002/09/19 03:15:43 mycroft Exp $");
+__RCSID("$NetBSD: timer.c,v 1.7 2002/09/19 21:26:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: timer.c,v 1.6 2002/09/19 03:15:43 mycroft Exp $");
 #include "bog.h"
 #include "extern.h"
 
-static int waitch __P((long));
+static int waitch __P((int));
 
 extern int tlimit;
 extern time_t start_t;
@@ -79,7 +79,7 @@ timerch()
 	getyx(stdscr, row, col);
 	prevt = 0L;
 	for (;;) {
-		if (waitch(1000L) == 1)
+		if (waitch(1) == 1)
 			break;
 		time(&t);
 		if (t == prevt)
@@ -104,13 +104,13 @@ timerch()
  */
 static int
 waitch(delay)
-	long delay;
+	int delay;
 {
 	struct pollfd set[1];
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	return (poll(set, 1, delay / 1000));
+	return (poll(set, 1, delay));
 }
 
 void
