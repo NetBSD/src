@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.58 1995/06/24 08:27:37 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.59 1995/06/26 00:19:44 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -132,12 +132,10 @@ llib-l${LIB}.ln: ${LOBJS}
 .if !target(clean)
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
-	rm -f ${OBJS}
-	rm -f ${POBJS} profiled/*.o
-	rm -f ${SOBJS} shared/*.o
-	rm -f ${LOBJS}
-	rm -f lib${LIB}.a lib${LIB}_p.a lib${LIB}_pic.a llib-l${LIB}.ln
-	rm -f lib${LIB}.so.*.*
+	rm -f lib${LIB}.a ${OBJS}
+	rm -f lib${LIB}_p.a ${POBJS}
+	rm -f lib${LIB}_pic.a $lib${LIB}.so.*.* {SOBJS}
+	rm -f llib-l${LIB}.ln ${LOBJS}
 .endif
 
 cleandir: _SUBDIRUSE clean
