@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.12 2002/06/24 22:04:52 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.13 2002/07/03 23:31:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2113,11 +2113,11 @@ preempt_search:
 
 	/* Skip context switch if same process. */
 	cmpl	%edi,%esi
-	je	switch_return
+	je	preempt_return
 
 	/* If old process exited, don't bother. */
 	testl	%esi,%esi
-	jz	switch_exited
+	jz	preempt_exited
 
 	/*
 	 * Second phase: save old context.
@@ -2151,12 +2151,6 @@ preempt_exited:
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-
-#if 0
-	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);  XXX NJWLWP lwp's don't have P_SYSTEM!
-	jnz	switch_restored
-#endif
 
 	/*
 	 * Activate the address space.  We're curlwp, so %cr3 will
