@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.19 2002/02/18 17:25:50 wiz Exp $
+#	$NetBSD: airport,v 1.20 2003/02/17 12:19:27 simonb Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -238,6 +238,7 @@ RDU:Raleigh-Durham, North Carolina, USA
 RIC:Richmond International/Byrd Field, Virginia, USA
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
 RNO:Reno Cannon International, Nevada, USA
+ROA:Roanoke Regional, Virginia, USA
 ROC:Rochester International, New York, USA
 ROM:All Airports around Roma, Italy
 RSW:Ft. Meyers Southwest Florida Regional, Florida, USA
