@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.16 2000/01/09 15:34:44 ad Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.17 2000/02/29 04:41:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -82,7 +82,7 @@ typedef int32_t		tc_offset_t;
 #define TC_BUS_MATCHNAME(ta, name) \
 		(strncmp( (ta)->ta_modname, (name), TC_ROM_LLEN+1) == 0)
 
-#define TC_KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
-#define TC_C(x)	 ((void *)(u_long)(x))
+#define KV(x)	((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+#define C(x)	((void *)(u_long)(x))
 
 #endif	/* !_PMAX_TC_MACHDEP_H_ */

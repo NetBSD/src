@@ -1,4 +1,4 @@
-/*	$NetBSD: maxine.h,v 1.7 1999/03/25 01:17:53 simonb Exp $	*/
+/*	$NetBSD: maxine.h,v 1.8 2000/02/29 04:41:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,14 +93,12 @@
 /*
  * MAXine's Physical address space
  */
-
 #define XINE_PHYS_MIN		0x00000000	/* 512 Meg */
 #define XINE_PHYS_MAX		0x1fffffff
 
 /*
  * Memory map
  */
-
 #define XINE_PHYS_MEMORY_START	0x00000000
 #define XINE_PHYS_MEMORY_END	0x027fffff	/* 40 Meg in 2 slots
 						   and baseboard */
@@ -108,7 +106,6 @@
 /*
  * I/O map
  */
-
 #define	XINE_PHYS_CFB_START	0x08000000	/* Color Frame Buffer */
 #define	XINE_PHYS_CFB_END	0x0bffffff	/*  64 Meg */
 
@@ -136,58 +133,30 @@
 #define	XINE_TC_MIN		0
 #define XINE_TC_MAX		1		/* only option slots */
 
-/* Pseudo-TCslots */
-#define	XINE_FLOPPY_SLOT	2
-#define	XINE_SCSI_SLOT		3
-#define	XINE_LANCE_SLOT		4
-#define	XINE_SCC0_SLOT		5
-#define	XINE_DTOP_SLOT		6
-#define	XINE_ISDN_SLOT		7
-#define	XINE_CFB_SLOT		8
-#define	XINE_ASIC_SLOT		9
-#define	XINE_FRC_SLOT		10
-
 /*
  * System module space
  */
-
 #define	XINE_SYS_ASIC		(XINE_PHYS_TC_3_START + 0x0000000)
-
 #define	XINE_SYS_ROM_START	(XINE_SYS_ASIC + IOASIC_SLOT_0_START)
-
 #define XINE_SYS_ASIC_REGS	(XINE_SYS_ASIC + IOASIC_SLOT_1_START)
-
 #define	XINE_SYS_ETHER_ADDRESS	(XINE_SYS_ASIC + IOASIC_SLOT_2_START)
-
 #define	XINE_SYS_LANCE		(XINE_SYS_ASIC + IOASIC_SLOT_3_START)
-
 #define	XINE_SYS_SCC_0		(XINE_SYS_ASIC + IOASIC_SLOT_4_START)
-
 #define	XINE_SYS_VDAC_HI	(XINE_SYS_ASIC + IOASIC_SLOT_5_START)
-
 #define	XINE_SYS_VDAC_LO	(XINE_SYS_ASIC + IOASIC_SLOT_7_START)
-
 #define	XINE_SYS_CLOCK		(XINE_SYS_ASIC + IOASIC_SLOT_8_START)
-
 #define	XINE_SYS_ISDN		(XINE_SYS_ASIC + IOASIC_SLOT_9_START)
-
 #define	XINE_SYS_DTOP		(XINE_SYS_ASIC + IOASIC_SLOT_10_START)
-
 #define	XINE_SYS_FLOPPY		(XINE_SYS_ASIC + IOASIC_SLOT_11_START)
-
 #define	XINE_SYS_SCSI		(XINE_SYS_ASIC + IOASIC_SLOT_12_START)
-
 #define	XINE_SYS_FLOPPY_DMA	(XINE_SYS_ASIC + IOASIC_SLOT_13_START)
-
 #define	XINE_SYS_SCSI_DMA	(XINE_SYS_ASIC + IOASIC_SLOT_14_START)
-
 #define	XINE_SYS_BOOT_ROM_START	(XINE_PHYS_TC_3_START + 0x3c00000)
 #define	XINE_SYS_BOOT_ROM_END	(XINE_PHYS_TC_3_START + 0x3c40000)
 
 /*
  * Interrupts
  */
-
 #define XINE_INT_FPA		IP_LEV7		/* Floating Point coproc */
 #define XINE_INT_HALTB		IP_LEV6		/* Halt keycode (DTOP) */
 #define XINE_INT_TC3		IP_LEV5		/* TC slot 3, system */
@@ -198,7 +167,6 @@
 /*
  *  System registers addresses (MREG and CREG space, and IO Control ASIC)
  */
-
 #define	XINE_REG_CMR		0x0c000000	/* Color mask register */
 #define	XINE_REG_MER		0x0c400000	/* Memory error register */
 #define	XINE_REG_MSR		0x0c800000	/* Memory size register */
@@ -208,7 +176,6 @@
 #define	XINE_REG_CNFG		0x0e000000	/* Config mem timeouts */
 #define	XINE_REG_AER		0x0e000004	/* Address error register */
 #define	XINE_REG_TIMEOUT	0x0e00000c	/* I/O write timeout reg */
-
 
 #define	XINE_REG_SCSI_DMAPTR	( XINE_SYS_ASIC + IOASIC_SCSI_DMAPTR )
 #define	XINE_REG_SCSI_DMANPTR	( XINE_SYS_ASIC + IOASIC_SCSI_NEXTPTR )
@@ -247,9 +214,7 @@
 /*
  *  System registers defines (MREG and CREG)
  */
-
 /* Memory error register */
-
 #define	XINE_MER_xxx		0xf7fe30ff	/* undefined */
 #define	XINE_MER_10_1_MS_IP	0x08000000	/* rw: Periodic interrupt */
 #define	XINE_MER_PAGE_BRY	0x00010000	/* rw: Page boundary error */
@@ -262,7 +227,6 @@
 #	define	XINE_LASTB07	0x00000100	/* .. lower byte */
 
 /* Memory size register */
-
 #define	XINE_MSR_xxx		0xffffdfff	/* undefined */
 #define	XINE_MSR_10_1_MS_EN	0x04000000	/* rw: enable periodic intr */
 #define	XINE_MSR_10_1_MS	0x02000000	/* rw: intr. freq. (0->1ms) */
@@ -275,7 +239,6 @@
 #define	XINE_MSR_SIZE_16Mb	0x00002000	/* rw: using 16Mb mem banks */
 
 /* FI register */
-
 #define	XINE_FI_VALUE		0x00001000
 
 /* NOTES
@@ -297,24 +260,19 @@
  */
 
 /* Timeout config register */
-
 #define	XINE_CNFG_VALUE		121
 
 /* Address error register */
-
 #define	XINE_AER_ADDR_MASK	0x1ffffffc	/* ro: phys addr in error */
 
 /* Memory access timeout interrupt register */
-
 #define	XINE_TIMEO_INTR		0x00000001	/* rc: intr pending */
 
 /*
  * More system registers defines (IO Control ASIC)
  */
-
 /* (re)defines for the system Status and Control register (SSR) */
-/* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
-
+/* high-order 16 bits 0xFFFF0000 same on all DECstation IOASICs */
 #define XINE_CSR_DIAGDN		0x00008000	/* rw */
 #define XINE_CSR_ISDN_ENABLE	0x00001000	/* rw */
 #define XINE_CSR_SCC_ENABLE	0x00000800	/* rw */
@@ -327,9 +285,7 @@
 #define XINE_CSR_LED		0x00000001	/* rw */
 
 /* (re)defines for the System Interrupt and Mask Registers */
-/* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
-
-
+/* high-order 16 bits 0xFFFF0000 same on all DECstation IOASICs */
 #define	XINE_INTR_xxxx		0x00002808	/* ro */
 #define	XINE_INTR_FLOPPY	0x00008000	/* ro */
 #define	XINE_INTR_NVR_JUMPER	0x00004000	/* ro */
