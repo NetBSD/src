@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1 2001/05/06 18:01:43 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.2 2001/05/13 13:50:01 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -1007,6 +1007,8 @@ arm7_dataabt_fixup(arg)
  * CPU Setup code
  */
 
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM8) || \
+ 	defined(CPU_SA110)
 int cpuctrl;
 
 #define IGN	0
@@ -1047,6 +1049,7 @@ parse_cpu_options(args, optlist, cpuctrl)
 	}
 	return(cpuctrl);
 }
+#endif
 
 #if defined (CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM8)
 struct cpu_option arm678_options[] = {
