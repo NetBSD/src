@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58 2003/08/07 16:30:22 agc Exp $	*/
+/*	$NetBSD: fd.c,v 1.59 2003/11/01 12:41:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2003/08/07 16:30:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2003/11/01 12:41:59 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -518,7 +518,6 @@ fdprobe(parent, cf, aux)
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
-	int n;
 	int found = 0;
 	int i;
 
@@ -542,8 +541,18 @@ retry:
 	i = 25000;
 	while (--i > 0) {
 		if ((intio_get_sicilian_intr() & SICILIAN_STAT_FDC)) {
+			int n;
+
 			out_fdc(iot, ioh, NE7CMD_SENSEI);
 			n = fdcresult(fdc);
+
+			if (n == 2) {
+				if ((fdc->sc_status[0] & 0xf0) == 0x20)
+					found = 1;
+				else if ((fdc->sc_status[0] & 0xf0) == 0xc0)
+					goto retry;
+			}
+
 			break;
 		}
 		DELAY(100);
@@ -558,14 +567,6 @@ retry:
 		DPRINTF(("\n"));
 	}
 #endif
-
-	if (n == 2) {
-		if ((fdc->sc_status[0] & 0xf0) == 0x20) {
-			found = 1;
-		} else if ((fdc->sc_status[0] & 0xf0) == 0xc0) {
-			goto retry;
-		}
-	}
 
 	/* turn off motor */
 	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh,
@@ -1265,6 +1266,12 @@ loop:
 	case DOCOPY:
 	docopy:
 		DPRINTF(("fdcintr: DOCOPY:\n"));
+		type = fd->sc_type;
+		head = (fd->sc_blkno
+			% (type->seccyl * (1 << (type->secsize - 2))))
+			 / (type->sectrac * (1 << (type->secsize - 2)));
+		pos = fd->sc_blkno % (type->sectrac * (1 << (type->secsize - 2)));
+		sec = pos / (1 << (type->secsize - 2));
 		fdc_dmastart(fdc, B_READ, fd->sc_copybuf, 1024);
 		out_fdc(iot, ioh, NE7CMD_READ);		/* READ */
 		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
@@ -1284,7 +1291,6 @@ loop:
 	doiohalf:
 		DPRINTF((" DOIOHALF:\n"));
 
-#ifdef DIAGNOSTIC
 		type = fd->sc_type;
 		sectrac = type->sectrac;
 		pos = fd->sc_blkno % (sectrac * (1 << (type->secsize - 2)));
@@ -1292,6 +1298,7 @@ loop:
 		head = (fd->sc_blkno
 			% (type->seccyl * (1 << (type->secsize - 2))))
 			 / (type->sectrac * (1 << (type->secsize - 2)));
+#ifdef DIAGNOSTIC
 		{int block;
 		 block = ((fd->sc_cylin * type->heads + head) *
 			 type->sectrac + sec)
