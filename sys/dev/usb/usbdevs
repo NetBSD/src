@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.369 2004/03/12 13:31:28 drochner Exp $
+$NetBSD: usbdevs,v 1.370 2004/03/15 11:08:34 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -742,6 +742,7 @@ product EPSON GT9700F		0x0112	GT-9700F scanner
 product EPSON 2400		0x011b	Perfection 2400 scanner
 product EPSON 1260		0x011d	Perfection 1260 scanner
 product EPSON 1660		0x011e	Perfection 1660 scanner
+product EPSON 1670		0x011f	Perfection 1670 scanner
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial port
