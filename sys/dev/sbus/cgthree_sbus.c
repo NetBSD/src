@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.5 2001/11/13 06:58:17 lukem Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.6 2002/03/11 16:00:55 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.5 2001/11/13 06:58:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.6 2002/03/11 16:00:55 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ cgthreeattach_sbus(parent, self, args)
 
 	/* Remember cookies for cgthree_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	fb->fb_device = &sc->sc_dev;
@@ -179,12 +178,11 @@ cgthreeattach_sbus(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
 			 sa->sa_offset + CG3REG_REG,
 			 sizeof(struct fbcontrol),
-			 BUS_SPACE_MAP_LINEAR,
-			 0,
-			 &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}
@@ -197,12 +195,11 @@ cgthreeattach_sbus(parent, self, args)
 		fb->fb_pixels = (caddr_t)(u_long)sa->sa_promvaddrs[0];
 	if (isconsole && fb->fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot,
 				 sa->sa_offset + CG3REG_MEM,
 				 ramsize,
-				 BUS_SPACE_MAP_LINEAR,
-				 0,
-				 &bh) != 0) {
+				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
