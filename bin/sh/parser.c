@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.34 1997/01/26 18:05:34 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.35 1997/03/14 01:42:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.34 1997/01/26 18:05:34 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.35 1997/03/14 01:42:23 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$NetBSD: parser.c,v 1.34 1997/01/26 18:05:34 christos Exp
 #include "mystring.h"
 #include "alias.h"
 #include "show.h"
-#ifndef NO_HISTORY
+#ifndef SMALL
 #include "myhistedit.h"
 #endif
 
@@ -1513,7 +1513,7 @@ setprompt(which)
 	{
 	whichprompt = which;
 
-#ifndef NO_HISTORY
+#ifndef SMALL
 	if (!el)
 #endif
 		out2str(getprompt(NULL));

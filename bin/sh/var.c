@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.16 1997/01/11 02:04:48 tls Exp $	*/
+/*	$NetBSD: var.c,v 1.17 1997/03/14 01:42:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.16 1997/01/11 02:04:48 tls Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.17 1997/03/14 01:42:24 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static char rcsid[] = "$NetBSD: var.c,v 1.16 1997/01/11 02:04:48 tls Exp $";
 #include "error.h"
 #include "mystring.h"
 #include "parser.h"
-#ifndef NO_HISTORY
+#ifndef SMALL
 #include "myhistedit.h"
 #endif
 
@@ -84,7 +84,7 @@ struct varinit {
 #if ATTY
 struct var vatty;
 #endif
-#ifndef NO_HISTORY
+#ifndef SMALL
 struct var vhistsize;
 #endif
 struct var vifs;
@@ -104,7 +104,7 @@ const struct varinit varinit[] = {
 	{ &vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY=",
 	  NULL },
 #endif
-#ifndef NO_HISTORY
+#ifndef SMALL
 	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
 	  sethistsize },
 #endif
