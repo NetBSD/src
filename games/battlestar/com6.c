@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.17 2000/09/17 23:03:43 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.18 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.17 2000/09/17 23:03:43 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.18 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -153,41 +153,33 @@ rate()
 	if (score == pleasure) {
 		if (score < 5)
 			return ("novice");
+		else if (score < 20)
+			return ("junior voyeur");
+		else if (score < 35)
+			return ("Don Juan");
 		else
-			if (score < 20)
-				return ("junior voyeur");
-			else
-				if (score < 35)
-					return ("Don Juan");
-				else
-					return ("Marquis De Sade");
-	} else
-		if (score == power) {
-			if (score < 5)
-				return ("serf");
-			else
-				if (score < 8)
-					return ("Samurai");
-				else
-					if (score < 13)
-						return ("Klingon");
-					else
-						if (score < 22)
-							return ("Darth Vader");
-						else
-							return ("Sauron the Great");
-		} else {
-			if (score < 5)
-				return ("Polyanna");
-			else
-				if (score < 10)
-					return ("philanthropist");
-				else
-					if (score < 20)
-						return ("Tattoo");
-					else
-						return ("Mr. Roarke");
-		}
+			return ("Marquis De Sade");
+	} else if (score == power) {
+		if (score < 5)
+			return ("serf");
+		else if (score < 8)
+			return ("Samurai");
+		else if (score < 13)
+			return ("Klingon");
+		else if (score < 22)
+			return ("Darth Vader");
+		else
+			return ("Sauron the Great");
+	} else {
+		if (score < 5)
+			return ("Polyanna");
+		else if (score < 10)
+			return ("philanthropist");
+		else if (score < 20)
+			return ("Tattoo");
+		else
+			return ("Mr. Roarke");
+	}
 }
 
 int
@@ -218,14 +210,12 @@ ride()
 		setbit(location[position].objects, HORSE);
 		if (location[position].north)
 			position = location[position].north;
+		else if (location[position].south)
+			position = location[position].south;
+		else if (location[position].east)
+			position = location[position].east;
 		else
-			if (location[position].south)
-				position = location[position].south;
-			else
-				if (location[position].east)
-					position = location[position].east;
-				else
-					position = location[position].west;
+			position = location[position].west;
 		return (0);
 	} else
 		puts("There is no horse here.");

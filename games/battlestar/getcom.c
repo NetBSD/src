@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.6 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: getcom.c,v 1.7 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.6 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.7 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,19 +84,18 @@ getword(buf1, buf2, flag)
 			return (0);
 		}
 		while (*buf1 && !isspace(*buf1) && *buf1 != ',')
-			if (flag < 0)
+			if (flag < 0) {
 				if (isupper(*buf1))
 					*buf2++ = tolower(*buf1++);
 				else
 					*buf2++ = *buf1++;
-			else
-				if (flag > 0)
-					if (islower(*buf1))
-						*buf2++ = toupper(*buf1++);
-					else
-						*buf2++ = *buf1++;
+			} else if (flag > 0) {
+				if (islower(*buf1))
+					*buf2++ = toupper(*buf1++);
 				else
 					*buf2++ = *buf1++;
+			} else
+				*buf2++ = *buf1++;
 	} else
 		*buf2++ = *buf1++;
 	*buf2 = 0;

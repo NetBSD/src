@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.9 2000/09/10 10:51:16 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.10 2000/09/17 23:04:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.9 2000/09/10 10:51:16 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.10 2000/09/17 23:04:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -159,20 +159,16 @@ use()
 		ourtime++;
 		notes[CANTSEE] = 0;
 		return (0);
-	} else
-		if (position == FINAL)
-			puts("The amulet won't work in here.");
-		else
-			if (wordvalue[wordnumber] == COMPASS && testbit(inven, COMPASS))
-				printf("Your compass points %s.\n", truedirec(NORTH, '-'));
-			else
-				if (wordvalue[wordnumber] == COMPASS)
-					puts("You aren't holding the compass.");
-				else
-					if (wordvalue[wordnumber] == AMULET)
-						puts("You aren't holding the amulet.");
-					else
-						puts("There is no apparent use.");
+	} else if (position == FINAL)
+		puts("The amulet won't work in here.");
+	else if (wordvalue[wordnumber] == COMPASS && testbit(inven, COMPASS))
+		printf("Your compass points %s.\n", truedirec(NORTH, '-'));
+	else if (wordvalue[wordnumber] == COMPASS)
+		puts("You aren't holding the compass.");
+	else if (wordvalue[wordnumber] == AMULET)
+		puts("You aren't holding the amulet.");
+	else
+		puts("There is no apparent use.");
 	return (-1);
 }
 
