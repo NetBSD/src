@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.177 2005/02/16 00:30:28 elric Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.178 2005/02/20 19:43:46 heas Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.177 2005/02/16 00:30:28 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.178 2005/02/20 19:43:46 heas Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -117,7 +117,7 @@ struct sysctllog {
 /*
  * the "root" of the new sysctl tree
  */
-static struct sysctlnode sysctl_root = {
+struct sysctlnode sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|
 	    CTLFLAG_ROOT|CTLFLAG_READWRITE|
 	    CTLTYPE_NODE,
