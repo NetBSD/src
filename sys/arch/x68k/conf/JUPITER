@@ -1,4 +1,4 @@
-#	$NetBSD: JUPITER,v 1.6 1997/05/08 16:39:37 oki Exp $
+#	$NetBSD: JUPITER,v 1.7 1997/06/12 18:42:26 mrg Exp $
 
 #
 #	JUPITER
@@ -91,7 +91,7 @@ options 	EIOMAPSIZE=0		# do not mapping PCI address space
 #options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
 #options 	KGDBDEV=15*256+2	# device for kernel gdb
 
-#config		netbsd root on sd6a type ffs swap on sd6b
+#config		netbsd root on sd6a type ffs 
 config		netbsd root on ? type ?
 
 mainbus0	at root

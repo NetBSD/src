@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.12 1997/01/31 01:59:16 thorpej Exp $
+# 	$NetBSD: NEWCONF,v 1.13 1997/06/12 18:42:20 mrg Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -63,8 +63,8 @@ options		COMPAT_ULTRIX	# ultrix compatibility
 options		"HZ=256"	# RTC rate required
 
 # Note that this configuration is unlikely to work, yet...
-config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
-config		rz1netbsd root on rz1a swap on rz0b and rz1b dumps on rz0b
+config		netbsd root on rz0a  dumps on rz0b
+config		rz1netbsd root on rz1a  dumps on rz0b
 #config		gennetbsd	root on ? type ?
 
 
