@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.19 1998/12/29 05:08:57 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.20 1998/12/30 18:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -920,7 +920,7 @@ ohci_waitintr(sc, reqh)
 
 	reqh->status = USBD_IN_PROGRESS;
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
-		usbd_delay_ms(&sc->sc_bus, 1);
+		usb_delay_ms(&sc->sc_bus, 1);
 		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs;
 		DPRINTFN(10,("ohci_waitintr: 0x%04x\n", intrs));
 #ifdef USB_DEBUG
@@ -1680,7 +1680,7 @@ ohci_root_ctrl_start(reqh)
 				    index));
 			OWRITE4(sc, port, UPS_RESET);
 			for (i = 0; i < 10; i++) {
-				usbd_delay_ms(&sc->sc_bus, 10);
+				usb_delay_ms(&sc->sc_bus, 10);
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
 			}
@@ -1831,7 +1831,7 @@ ohci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is donw */
+	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is donw */
 	/* XXX call done */
 }
 
@@ -1848,7 +1848,7 @@ ohci_device_ctrl_close(pipe)
 	s = splusb();
 	sed->ed->ed_flags |= LE(OHCI_ED_SKIP);
 	if ((LE(sed->ed->ed_tailp) & OHCI_TAILMASK) != LE(sed->ed->ed_headp))
-		usbd_delay_ms(&sc->sc_bus, 2);
+		usb_delay_ms(&sc->sc_bus, 2);
 	ohci_rem_ed(sed, sc->sc_ctrl_head);
 	splx(s);
 	ohci_free_std(sc, opipe->tail);
@@ -1964,10 +1964,10 @@ ohci_device_bulk_abort(reqh)
 #if 0
 	sed->ed->ed_flags |= LE(OHCI_ED_SKIP);
 	if ((LE(sed->ed->ed_tailp) & OHCI_TAILMASK) != LE(sed->ed->ed_headp))
-		usbd_delay_ms(reqh->pipe->device->bus, 2);
+		usb_delay_ms(reqh->pipe->device->bus, 2);
 #endif
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
+	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	/* XXX call done */
 }
 
@@ -2106,7 +2106,7 @@ ohci_device_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
 	/* XXX inactivate */
-	usbd_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
+	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
 	if (reqh->pipe->intrreqh == reqh) {
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		reqh->pipe->intrreqh = 0;
@@ -2132,7 +2132,7 @@ ohci_device_intr_close(pipe)
 	s = splusb();
 	sed->ed->ed_flags |= LE(OHCI_ED_SKIP);
 	if ((sed->ed->ed_tailp & LE(OHCI_TAILMASK)) != sed->ed->ed_headp)
-		usbd_delay_ms(&sc->sc_bus, 2);
+		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
 		;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.13 1998/12/29 16:02:55 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.14 1998/12/30 18:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ void usbd_init __P((void));
 
 /* Routines from usb_subr.c */
 int		usbctlprint __P((void *, const char *));
-void		usbd_delay_ms __P((usbd_bus_handle, int));
+void		usb_delay_ms __P((usbd_bus_handle, u_int));
 void		usbd_devinfo_vp __P((usbd_device_handle, char *, char *));
 usbd_status	usbd_set_config_no __P((usbd_device_handle, int, int));
 usbd_status	usbd_reset_port __P((usbd_device_handle dev,
