@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.36 2001/06/10 15:51:33 wiz Exp $
+.\" $NetBSD: usb.4,v 1.37 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,7 +107,6 @@ boot process, e.g., the console keyboard.  To achieve this use
 a
 .Va flags
 value of 1.
-.Pp
 .Sh SUPPORTED DEVICES
 .Nx
 includes machine-independent
@@ -451,16 +450,13 @@ Note that that there is a separation between device and device
 driver events.  A driver event is generated when a physical
 USB device is attached or detached.  A single USB device may
 have zero, one, or many device drivers associated with it.
-.Sh BUGS
-There should be a serial number locator, but
-.Nx
-does not have string valued locators.
 .Sh SEE ALSO
 The
 .Tn USB
 specifications can be found at:
 .D1 http://www.usb.org/developers/docs.html
 .Pp
+.Xr usb 3 ,
 .Xr aue 4 ,
 .Xr cardbus 4 ,
 .Xr cue 4 ,
@@ -478,7 +474,6 @@ specifications can be found at:
 .Xr urio 4 ,
 .Xr uscanner 4 ,
 .Xr uvisor 4 ,
-.Xr usb 3 ,
 .Xr usbdevs 8
 .Sh HISTORY
 The
@@ -486,3 +481,7 @@ The
 driver
 appeared in
 .Nx 1.4 .
+.Sh BUGS
+There should be a serial number locator, but
+.Nx
+does not have string valued locators.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.11 2001/06/10 15:43:56 wiz Exp $
+.\"	$NetBSD: we.4,v 1.12 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,7 @@
 .Os
 .Sh NAME
 .Nm we
-.Nd Western Digital/SMC WD80x3, SMC Elite Ultra,
-and SMC EtherEZ Ethernet cards device driver
+.Nd "Western Digital/SMC WD80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet cards device driver"
 .Sh SYNOPSIS
 .Cd "we0 at isa? port 0x280 iomem 0xd0000 irq 9"
 .Cd "we1 at isa? port 0x300 iomem 0xcc000 irq 10"
@@ -122,13 +121,13 @@ address.
 .It we0: warning - receiver ring buffer overrun
 The DP8390 Ethernet chip used by this board implements a shared-memory
 ring-buffer to store incoming packets.
-
+.Pp
 The 16bit boards (8013 series) have 16k of memory as well as
 fast memory access speed.  Typical memory access speed on these
 boards is about 4MB/second.  These boards generally have no
 problems keeping up with full Ethernet speed and the ring-buffer
 seldom overfills.
-
+.Pp
 However, the 8bit boards (8003) usually have only 8k bytes of shared
 memory.  This is only enough room for about 4 full-size (1500 byte)
 packets.  This can sometimes be a problem, especially on the original

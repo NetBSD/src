@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.15 2001/09/11 00:08:32 wiz Exp $
+.\"	$NetBSD: vlan.4,v 1.16 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,11 +109,6 @@ The
 .Nm
 device first appeared in
 .Nx 1.5.1 .
-.Sh BUGS
-The
-.Nm
-interfaces do not currently inherit changes made to the physical
-interfaces's MTU.
 .Sh AUTHORS
 The
 .Nm
@@ -127,3 +122,8 @@ It was derived from a VLAN implementation that appeared in
 .Fx
 and
 .Ox .
+.Sh BUGS
+The
+.Nm
+interfaces do not currently inherit changes made to the physical
+interfaces's MTU.

@@ -1,4 +1,4 @@
-.\" $NetBSD: xi.4,v 1.4 2001/09/11 22:52:54 wiz Exp $
+.\" $NetBSD: xi.4,v 1.5 2001/09/11 23:18:56 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,6 +77,18 @@ Media selection is done using
 using the standard
 .Xr ifmedia 4
 mechanism.  Refer to those manual pages for more information.
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr netintro 4 ,
+.Xr pcmcia 4 ,
+.Xr tlp 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 1.5 .
 .Sh BUGS
 The driver suffers from poor performance.  Even with the 10/100 cards,
 do not expect more than ~450KB/s.  Some 10/100 cards may not autonegotiate
@@ -85,15 +97,3 @@ reliably and require manual media selection.
 The Xircom multifunction cards which contain both ethernet and modem
 interfaces are known to have problems.  This is due to the card not
 reporting itself correctly as a multifunction card.
-.Sh SEE ALSO
-.Xr ifconfig 8 ,
-.Xr ifmedia 4 ,
-.Xr mii 4 ,
-.Xr netintro 4 ,
-.Xr pcmcia 4 ,
-.Xr tlp 4
-.Sh HISTORY
-The
-.Nm
-device driver appeared in
-.Nx 1.5 .

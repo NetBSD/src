@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.16 2000/12/26 13:02:18 hubertf Exp $
+.\" $NetBSD: wscons.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,13 +51,12 @@
 .Cd options WSDISPLAY_COMPAT_SYSCONS
 .Cd options WSDISPLAY_COMPAT_USL
 .Cd options WSDISPLAY_COMPAT_RAWKBD
-
+.Pp
 .Cd "wsdisplay* at ..."
 .Cd "wskbd*     at ... mux N"
 .Cd "wsmouse*   at ... mux N"
-
-.Cd pseudo-device  wsmux    N
 .Pp
+.Cd pseudo-device  wsmux    N
 .Sh DESCRIPTION
 The
 .Nm
@@ -88,7 +87,7 @@ codes in terms of
 Instead a
 .Dq terminal emulation
 is assigned to each virtual screen when the screen is created (see
-.Xr wsconscfg 8 ).
+.Xr wsconscfg 8 ) .
 Different terminal emulations can be active at the same time on one display.
 The following choices are available:
 .Bl -tag -width xxxxxx
@@ -175,7 +174,7 @@ for the operating system console or additional screens allocated
 through the
 .Va WSDISPLAY_DEFAULTSCREENS
 option (see
-.Xr wsdisplay 4 ),
+.Xr wsdisplay 4 ) ,
 or if no emulation type was passed to the
 .Xr wsconscfg 8
 utility.
@@ -227,7 +226,7 @@ than output from user level programs (via
 .Pa /dev/console
 or the specific tty
 device like
-.Pa /dev/ttyE0 Ns ).
+.Pa /dev/ttyE0 ) .
 .Dq WS_KERNEL_FG
 and
 .Dq WS_KERNEL_BG

@@ -1,4 +1,4 @@
-.\" $NetBSD: umodem.4,v 1.5 2001/06/10 15:51:02 wiz Exp $
+.\" $NetBSD: umodem.4,v 1.6 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,6 @@
 .Sh SYNOPSIS
 .Cd "umodem* at uhub?"
 .Cd "ucom*   at umodem?"
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,9 +58,6 @@ The device is accessed through the
 .Xr ucom 4
 driver which makes it behave like a
 .Xr tty 4 .
-.Sh BUGS
-Only modems with multiplexed commands and data are supported
-at the moment.
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr ucom 4 ,
@@ -72,3 +68,6 @@ The
 driver
 appeared in
 .Nx 1.5 .
+.Sh BUGS
+Only modems with multiplexed commands and data are supported
+at the moment.

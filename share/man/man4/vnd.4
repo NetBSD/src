@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnd.4,v 1.8 1999/12/15 22:07:34 abs Exp $
+.\"	$NetBSD: vnd.4,v 1.9 2001/09/11 23:18:55 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,20 +69,15 @@ In this example, no more than 4
 may be configured.
 .Pp
 There is a run-time utility that is used for configuring
-.Nm vnd Ns s.
+.Nm vnd Ns s .
 See
 .Xr vnconfig 8
 for more information.
-.Sh BUGS
-The
-.Nm
-driver does not work if the file does not reside in a local filesystem.
 .Sh FILES
 .Bl -tag -width /dev/XXrXvndX -compact
 .It Pa /dev/{,r}vnd*
 vnd device special files.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,
 .Xr config 8 ,
@@ -93,3 +88,7 @@ vnd device special files.
 .Sh HISTORY
 The vnode disk driver was originally written at the University of
 Utah.
+.Sh BUGS
+The
+.Nm
+driver does not work if the file does not reside in a local filesystem.

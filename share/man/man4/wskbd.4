@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.7 2000/10/03 15:18:07 bjh21 Exp $
+.\" $NetBSD: wskbd.4,v 1.8 2001/09/11 23:18:56 wiz Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSKBD 4
@@ -35,7 +35,7 @@ The common keyboard support consists of:
 .It
 Mapping from keycodes (defined by the specific keyboard driver) to
 keysyms (hardware independent, defined in
-.Pa /usr/include/dev/wscons/wsksymdef.h Ns ).
+.Pa /usr/include/dev/wscons/wsksymdef.h ) .
 .It
 Handling of
 .Dq compose
@@ -93,8 +93,8 @@ wskbd device instance.
 .Pa /usr/include/dev/wscons/wsconsio.h .
 .El
 .Sh SEE ALSO
-.Xr wscons 4 ,
-.Xr wsconsctl 8 ,
-.Xr wsmux 4 ,
 .Xr pckbd 4 ,
-.Xr ukbd 4
+.Xr ukbd 4 ,
+.Xr wscons 4 ,
+.Xr wsmux 4 ,
+.Xr wsconsctl 8
