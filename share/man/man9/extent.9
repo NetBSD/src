@@ -1,6 +1,6 @@
-.\"	$NetBSD: extent.9,v 1.9 1998/02/06 06:16:22 perry Exp $
+.\"	$NetBSD: extent.9,v 1.10 1998/06/06 02:32:28 thorpej Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -239,6 +239,12 @@ Print out information about extent
 .Fa ex .
 This function always succeeds.  Behavior is undefined if invalid
 arguments are provided.
+.Sh LOCKING
+The extent manager performs all necessary locking on the extent map
+itself, and any other data structures internal to the extent manager.
+The locks used by the extent manager are spin locks, and will never sleep.
+This should be taken into account when designing the locking protocol
+for users of the extent manager.
 .Sh RETURN VALUES
 The behavior of all extent manager functions is undefined if given
 invalid arguments.
