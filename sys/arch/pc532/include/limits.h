@@ -31,8 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
- *
- *	limits.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
+ *	$Id: limits.h,v 1.5 1994/10/05 17:16:42 jtc Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -60,12 +59,25 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE)
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 
-#endif /* !_POSIX_SOURCE */
+#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
+
+#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#define LONG_BIT	32
+#define WORD_BIT	32
+
+#define DBL_DIG		16
+#define DBL_MAX		1.701411834604692294E+38
+#define DBL_MIN		2.938735877055718770E-39
+
+#define FLT_DIG		6
+#define FLT_MAX		1.70141173E+38F
+#define FLT_MIN		2.93873588E-39F
+#endif

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	8.3 (Berkeley) 1/4/94
- *      $Id: limits.h,v 1.4 1994/05/27 09:01:15 glass Exp $
+ *      $Id: limits.h,v 1.5 1994/10/05 17:16:45 jtc Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -72,7 +72,7 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE)
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
 /* GCC requires that quad constants be written as expressions. */
@@ -81,5 +81,18 @@
 #define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 
-#endif /* !_POSIX_SOURCE */
+#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
+
+#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#define LONG_BIT	32
+#define WORD_BIT	32
+
+#define DBL_DIG		15
+#define DBL_MAX		1.797693134862316E+308
+#define DBL_MIN		2.225073858507201E-308
+
+#define FLT_DIG		6
+#define FLT_MAX		3.40282347E+38F
+#define FLT_MIN		1.17549435E-38F
+#endif

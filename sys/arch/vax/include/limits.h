@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)limits.h    7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.1 1994/08/02 20:20:32 ragge Exp $
+ *	$Id: limits.h,v 1.2 1994/10/05 17:16:54 jtc Exp $
  */
 
 #define CHAR_BIT        8               /* number of bits in a char */
@@ -56,3 +56,16 @@
 #define ULONG_MAX       0xffffffff      /* max value for an unsigned long */
 #define LONG_MAX        0x7fffffff      /* max value for a long */
 #define LONG_MIN        0x80000000      /* min value for a long */
+
+#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#define LONG_BIT	32
+#define WORD_BIT	32
+
+#define DBL_DIG         16
+#define DBL_MAX         1.701411834604692294E+38
+#define DBL_MIN         2.938735877055718770E-39
+
+#define FLT_DIG         6
+#define FLT_MAX         1.70141173E+38F
+#define FLT_MIN         2.93873588E-39F
+#endif
