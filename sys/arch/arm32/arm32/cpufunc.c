@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.2 1997/10/14 10:05:39 mark Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.2.2.1 1997/11/06 22:27:36 mellon Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -1061,6 +1061,8 @@ sa110_prefetchabt_fixup(arg)
  * CPU Setup code
  */
 
+int cpuctrl;
+
 #define IGN	0
 #define OR	1
 #define BIC	2
@@ -1112,6 +1114,7 @@ struct cpu_option arm678_options[] = {
 	{ "cpu.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
 	{ NULL,			IGN, IGN, 0 }
 };
+
 #endif	/* CPU_ARM6 || CPU_ARM7 || CPU_ARM8 */
 
 #ifdef CPU_ARM6
@@ -1127,7 +1130,6 @@ void
 arm6_setup(args)
 	char *args;
 {
-	int cpuctrl;
 	int cpuctrlmask;
 
 	/* Set up default control registers bits */
@@ -1172,8 +1174,6 @@ void
 arm7_setup(args)
 	char *args;
 {
-	int integer;
-	int cpuctrl;
 	int cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
@@ -1216,7 +1216,6 @@ arm8_setup(args)
 	char *args;
 {
 	int integer;
-	int cpuctrl;
 	int cpuctrlmask;
 	int clocktest;
 	int setclock = 0;
@@ -1297,7 +1296,6 @@ void
 sa110_setup(args)
 	char *args;
 {
-	int cpuctrl;
 	int cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
