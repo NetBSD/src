@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.54 1997/11/11 17:21:42 augustss Exp $
+#	$NetBSD: Makefile,v 1.55 1997/11/15 04:00:34 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
-MAN=	ahb.4 ahc.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 ddb.4 \
-	drum.4 eisa.4 en.4 ep.4 esis.4 fd.4 fpa.4 icmp.4 idp.4 inet.4 ip.4 \
-	iso.4 lc.4 lkm.4 lo.4 md.4 ncr.4 ne.4 netintro.4 ns.4 nsip.4 null.4 \
-	options.4 ppp.4 pty.4 rnd.4 route.4 sd.4 sl.4 sm.4 spp.4 st.4 \
+MAN=	ahb.4 ahc.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 \
+	ddb.4 drum.4 eisa.4 en.4 ep.4 esis.4 fd.4 fpa.4 icmp.4 idp.4 inet.4 \
+	ip.4 iso.4 lc.4 lkm.4 lo.4 md.4 ncr.4 ne.4 netintro.4 ns.4 nsip.4 \
+	null.4 options.4 ppp.4 pty.4 rnd.4 route.4 sd.4 sl.4 sm.4 spp.4 st.4 \
 	strip.4 tb.4 tcp.4 termios.4 tl.4 tp.4 tty.4 tun.4 udp.4 uha.4 uk.4 \
 	unix.4 vnd.4 zstty.4
 
