@@ -1,3 +1,5 @@
+#	$NetBSD: master.cf,v 1.2 2002/12/24 21:37:43 perry Exp $
+#
 #
 # Postfix master process configuration file.  Each line describes how
 # a mailer component program should be run. The fields that make up

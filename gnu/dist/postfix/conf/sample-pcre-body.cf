@@ -1,3 +1,5 @@
+#	$NetBSD: sample-pcre-body.cf,v 1.2 2002/12/24 21:37:45 perry Exp $
+#
 #
 #	Sample pcre (PERL-compatible regular expression) map file for
 #	mail body filtering. See pcre_table(5) for syntax description.

@@ -1,3 +1,5 @@
+#	$NetBSD: sample-regexp-body.cf,v 1.2 2002/12/24 21:37:45 perry Exp $
+#
 # Sample regexp message body filter lookup "table". See regexp_table(5)
 # for a description of the syntax.
 #
