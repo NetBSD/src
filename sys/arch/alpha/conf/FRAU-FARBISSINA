@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.14 2002/04/12 08:10:47 gmcgarry Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.15 2002/04/17 02:22:43 mycroft Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.14 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.15 $"
 
 maxusers 64
 
@@ -185,7 +185,6 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -212,10 +211,6 @@ sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 #ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet

@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.55 2002/04/14 01:42:52 mycroft Exp $
+#	$NetBSD: CARDBUS,v 1.56 2002/04/17 02:22:48 mycroft Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.55 $"
+#ident		"CARDBUS-$Revision: 1.56 $"
 
 maxusers	32		# estimated number of users
 
@@ -577,7 +577,6 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 #an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -593,11 +592,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # EISA network interfaces

@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.9 2002/04/16 11:49:54 wiz Exp $
+#	$NetBSD: INTEGRATOR,v 1.10 2002/04/17 02:22:47 mycroft Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -188,10 +188,8 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # PCI network interfaces
 fxp*		at pci? dev ? function ?	# I82557/I82558 ethernet cards
-#de*		at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #ne*		at pci? dev ? function ?	# NE2000 compat ethernet
-#tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21142
+#tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 inphy*		at mii? phy ?			# Intel 82555 PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.9 2002/04/12 08:11:29 gmcgarry Exp $
+#	$NetBSD: SIMICS,v 1.10 2002/04/17 02:22:55 mycroft Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -381,7 +381,6 @@ fd0	at fdc0 drive 0
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -389,6 +388,7 @@ fd0	at fdc0 drive 0
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -434,6 +434,7 @@ le*	at nele?
 # MII PHY network interfaces
 #tlphy*	at mii? dev ?			# ThunderLAN PHYs
 #nsphy*	at mii? dev ?			# NS and compatible PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
 # Audio Devices

@@ -1,9 +1,9 @@
-# $NetBSD: MVME1600,v 1.5 2002/04/16 11:49:55 wiz Exp $
+# $NetBSD: MVME1600,v 1.6 2002/04/17 02:22:54 mycroft Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
-#ident		"MVME1600-$Revision: 1.5 $"
+#ident		"MVME1600-$Revision: 1.6 $"
 
 maxusers	8
 
@@ -109,7 +109,7 @@ options 	NFS_BOOT_DHCP
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
-#config	netbsd	root on de0 type nfs
+#config	netbsd	root on tlp0 type nfs
 #config	netbsd	root on le0 type nfs
 
 
@@ -191,9 +191,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-tlp*	at pci? dev ? function ?
-options 	TLP_MATCH_21040
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 ukphy*	at mii? phy ?			# generic unknown PHYs

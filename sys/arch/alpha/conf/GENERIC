@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2002/04/12 08:10:47 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.207 2002/04/17 02:22:44 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.206 $"
+#ident 		"GENERIC-$Revision: 1.207 $"
 
 maxusers 32
 
@@ -246,7 +246,6 @@ cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
-de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -277,10 +276,6 @@ tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
