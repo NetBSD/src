@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.20 2002/12/11 06:51:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.21 2002/12/15 18:23:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.20 2002/12/11 06:51:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.21 2002/12/15 18:23:18 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -688,7 +688,7 @@ uvm_swapout(l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	addr = (vaddr_t)l->l_addr;
-	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
+	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !L_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
