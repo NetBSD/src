@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1995/03/10 23:45:02 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1995/03/17 05:00:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -673,8 +673,8 @@ pmeg_print(pmegp)
 #endif
 
 /*
- * Allocate a PMEG by whatever mean necessary
- * (invalidating some mappings if necessary).
+ * Allocate a PMEG by whatever means necessary.
+ * (May invalidate some mappings!)
  */
 static pmeg_t
 pmeg_allocate(pmap, va)
@@ -709,6 +709,7 @@ pmeg_allocate(pmap, va)
 		 * XXX - Should this call up into the VM layer
 		 * to notify it when pages are deactivated?
 		 * See: vm_page.c:vm_page_deactivate(vm_page_t)
+		 * XXX - Skip this one if it is wired?
 		 */
 		pmap_remove_range(pmegp->pmeg_owner,
 						  pmegp->pmeg_va,
@@ -1811,8 +1812,10 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	if (pmegp->pmeg_vpages <= 0) {
 		/* We are done with this pmeg. */
 		if (is_pmeg_wired(pmegp)) {
-			printf("pmap: removing wired pmeg: 0x%x\n", pmegp);
-			Debugger(); /* XXX */
+			if (pmap_debug & PMD_WIRING) {
+				printf("pmap: removing wired pmeg: 0x%x\n", pmegp);
+				Debugger(); /* XXX */
+			}
 		}
 
 		/* First, remove it from the MMU. */
