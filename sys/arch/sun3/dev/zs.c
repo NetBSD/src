@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46.2.1 1997/03/12 14:04:44 is Exp $	*/
+/*	$NetBSD: zs.c,v 1.46.2.2 1997/03/13 02:26:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ zsc_print(aux, name)
 	return UNCONF;
 }
 
-static int zssoftpending;
+static volatile int zssoftpending;
 
 /*
  * Our ZS chips all share a common, autovectored interrupt,
@@ -392,26 +392,22 @@ zshard(arg)
 	void *arg;
 {
 	register struct zsc_softc *zsc;
-	register int unit, rval;
+	register int unit, rval, softreq;
 
-	/* Do ttya/ttyb first, because they go faster. */
-	rval = 0;
-	unit = zsc_cd.cd_ndevs;
-	while (--unit >= 0) {
+	rval = softreq = 0;
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
-		if ((zsc->zsc_cs[0]->cs_softreq) ||
-			(zsc->zsc_cs[1]->cs_softreq))
-		{
-			/* zsc_req_softint(zsc); */
-			/* We are at splzs here, so no need to lock. */
-			if (zssoftpending == 0) {
-				zssoftpending = ZSSOFT_PRI;
-				isr_soft_request(ZSSOFT_PRI);
-			}
-		}
+		softreq |= zsc->zsc_cs[0]->cs_softreq;
+		softreq |= zsc->zsc_cs[1]->cs_softreq;
+	}
+
+	/* We are at splzs here, so no need to lock. */
+	if (softreq && (zssoftpending == 0)) {
+		zssoftpending = ZSSOFT_PRI;
+		isr_soft_request(ZSSOFT_PRI);
 	}
 	return (rval);
 }
@@ -424,7 +420,7 @@ zssoft(arg)
 	void *arg;
 {
 	register struct zsc_softc *zsc;
-	register int unit;
+	register int s, unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -439,14 +435,15 @@ zssoft(arg)
 	isr_soft_clear(ZSSOFT_PRI);
 	zssoftpending = 0;
 
-	/* Do ttya/ttyb first, because they go faster. */
-	unit = zsc_cd.cd_ndevs;
-	while (--unit >= 0) {
+	/* Make sure we call the tty layer at spltty. */
+	s = spltty();
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		(void) zsc_intr_soft(zsc);
 	}
+	splx(s);
 	return (1);
 }
 

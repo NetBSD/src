@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44.2.1 1997/03/12 14:05:14 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.44.2.2 1997/03/13 02:26:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -104,9 +104,11 @@ L_high_code:
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
 | Pass the struct exec at tmpstk-32 to __bootstrap().
+| Also, make sure the initial frame pointer is zero so that
+| the backtrace algorithm used by KGDB terminates nicely.
 	lea	tmpstk-32, sp
 	movl	#0,a6
-	jsr	__bootstrap		| See sun3_startup.c
+	jsr	__bootstrap		| See _startup.c
 
 | Now that __bootstrap() is done using the PROM setcxsegmap
 | we can safely set the sfc/dfc to something != FC_CONTROL
@@ -144,9 +146,9 @@ L_high_code:
 	lea	_proc0,a0		| proc0.p_md.md_regs = 
 	movl	a1,a0@(P_MDREGS)	|   trapframe
 	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
-	pea	a1@			|
+	pea	a1@			| push &trapframe
 	jbsr	_main			| main(&trapframe)
-	addql	#4,sp			| help backtrace work
+	addql	#4,sp			| help DDB backtrace
 	trap	#15			| should not get here
 
 | This is used by cpu_fork() to return to user mode.
@@ -443,66 +445,50 @@ _trap0:
 	jra	rei			| all done
 
 /*
- * Trap 1 is either:
- * sigreturn (native NetBSD executable)
- * breakpoint (HPUX executable)
+ * Trap 1 action depends on the emulation type:
+ * NetBSD: sigreturn "syscall"
+ *   HPUX: user breakpoint
  */
 _trap1:
 #if 0 /* COMPAT_HPUX */
 	/* If process is HPUX, this is a user breakpoint. */
-	jne	trap15			| breakpoint
+	jne	_trap15			| HPUX user breakpoint
 #endif
-	/* fall into sigreturn */
+	jra	sigreturn		| NetBSD
 
 /*
- * The sigreturn() syscall comes here.  It requires special handling
- * because we must open a hole in the stack to fill in the (possibly much
- * larger) original stack frame.
- */
-sigreturn:
-	lea	sp@(-84),sp		| leave enough space for largest frame
-	movl	sp@(84),sp@		| move up current 8 byte frame
-	movl	sp@(88),sp@(4)
-	movl	#84,sp@-		| default: adjust by 84 bytes
-	moveml	#0xFFFF,sp@-		| save user registers
-	movl	usp,a0			| save the user SP
-	movl	a0,sp@(FR_SP)		|   in the savearea
-	movl	#SYS_sigreturn,sp@-	| push syscall number
-	jbsr	_syscall		| handle it
-	addql	#4,sp			| pop syscall#
-	movl	sp@(FR_SP),a0		| grab and restore
-	movl	a0,usp			|   user SP
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
-	moveq	#92,d1			| total size
-	subw	d0,d1			|  - hole size = frame size
-	lea	a1@(92),a0		| destination
-	addw	d1,a1			| source
-	lsrw	#1,d1			| convert to word count
-	subqw	#1,d1			| minus 1 for dbf
-Lsigrlp:
-	movw	a1@-,a0@-		| copy a word
-	dbf	d1,Lsigrlp		| continue
-	movl	a0,a1			| new HW frame base
-Lsigr1:
-	movl	a1,sp@(FR_SP)		| new SP value
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	rei			| all done
-
-/*
- * Trap 2 is one of:
- * NetBSD: not used (ignore)
- * SunOS:  Some obscure FPU operation
- * HPUX:   sigreturn
+ * Trap 2 action depends on the emulation type:
+ * NetBSD: user breakpoint -- See XXX below...
+ *  SunOS: cache flush
+ *   HPUX: sigreturn
  */
 _trap2:
 #if 0 /* COMPAT_HPUX */
-	/* XXX:	If HPUX, this is a user breakpoint. */
+	/* If process is HPUX, this is a sigreturn call */
 	jne	sigreturn
 #endif
-	/* fall into trace (NetBSD or SunOS) */
+	jra	_trap15			| NetBSD user breakpoint
+| XXX - Make NetBSD use trap 15 for breakpoints?
+| XXX - That way, we can allow this cache flush...
+| XXX SunOS trap #2 (and NetBSD?)
+| Flush on-chip cache (leave it enabled)
+|	movl	#IC_CLEAR,d0
+|	movc	d0,cacr
+|	rte
+
+/*
+ * Trap 12 is the entry point for the cachectl "syscall"
+ *	cachectl(command, addr, length)
+ * command in d0, addr in a1, length in d1
+ */
+	.globl	_cachectl
+_trap12:
+	movl	d1,sp@-			| push length
+	movl	a1,sp@-			| push addr
+	movl	d0,sp@-			| push command
+	jbsr	_cachectl		| do it
+	lea	sp@(12),sp		| pop args
+	jra	rei			| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
@@ -512,9 +498,8 @@ _trace:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
-	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	kbrkpt			| yes, kernel breakpoint
+	btst	#5,sp@(FR_HW)		| was supervisor mode?
+	jne	kbrkpt			|  yes, kernel brkpt
 	jra	fault			| no, user-mode fault
 
 /*
@@ -522,18 +507,18 @@ _trace:
  *	- GDB breakpoints (in user programs)
  *	- KGDB breakpoints (in the kernel)
  *	- trace traps for SUN binaries (not fully supported yet)
- * User mode traps are passed simply passed to trap()
+ * User mode traps are simply passed to trap().
  */
 _trap15:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRAP15,d0
-	movw	sp@(FR_HW),d1		| get PSW
-	andw	#PSL_S,d1		| from system mode?
-	jne	kbrkpt			| yes, kernel breakpoint
+	btst	#5,sp@(FR_HW)		| was supervisor mode?
+	jne	kbrkpt			|  yes, kernel brkpt
 	jra	fault			| no, user-mode fault
 
-kbrkpt:	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+kbrkpt:
+	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
 	| Save the system sp rather than the user sp.
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	lea	sp@(FR_SIZE),a6		| Save stack pointer
@@ -555,7 +540,7 @@ Lbrkpt1:
 	bgt	Lbrkpt1
 
 Lbrkpt2:
-	| Call the special kernel debugger trap handler.
+	| Call the trap handler for the kernel debugger.
 	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
@@ -576,19 +561,8 @@ Lbrkpt2:
 	movl	sp@,sp			| ... and sp
 	rte				| all done
 
-/*
- * Trap 12 is the entry point for the cachectl "syscall"
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-	.globl	_cachectl
-_trap12:
-	movl	d1,sp@-			| push length
-	movl	a1,sp@-			| push addr
-	movl	d0,sp@-			| push command
-	jbsr	_cachectl		| do it
-	lea	sp@(12),sp		| pop args
-	jra	rei			| all done
+/* Use common m68k sigreturn */
+#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.  Most are auto-vectored,
@@ -1030,22 +1004,31 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 
-	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a2	| a2 = p->p_vmspace
+	/*
+	 * Load the new VM context (new MMU root pointer)
+	 */
+	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
 #ifdef DIAGNOSTIC
 	tstl	a2			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
-
-| Important note:  We MUST call pmap_activate to set the
-| MMU context register (like setting a root table pointer).
-| XXX - Eventually, want to do that here, inline.
-	lea	a2@(VM_PMAP),a2		| pmap = &vmspace.vm_pmap
+#if 1	/* XXX: PMAP_DEBUG */
+	/*
+	 * Just call pmap_activate() for now.  Later on,
+	 * use the in-line version below (for speed).
+	 */
+	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
 	pea	a2@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap)
 	addql	#4,sp
 	movl	_curpcb,a1		| restore p_addr
 | Note: pmap_activate will clear the cache if needed.
+#else
+	/* XXX - Later, use this unfinished inline.. */
+	XXX	XXX	(PM_CTXNUM)
+	movl	#IC_CLEAR,d0
+	movc	d0,cacr			| invalidate cache(s)
+#endif
 
 	/*
 	 * Reload the registers for the new process.

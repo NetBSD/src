@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.8.2.1 1997/03/12 14:04:29 is Exp $
+#	$NetBSD: KGDB,v 1.8.2.2 1997/03/13 02:26:03 gwr Exp $
 
 #
 # GENERIC_KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -45,7 +45,7 @@ options 	FIFO		# FIFOs; RECOMMENDED
 options 	INET		# IP prototol stack support
 #options	GATEWAY		# IP packet forwarding
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
+# XXX - Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
@@ -57,7 +57,7 @@ options 	COMPAT_12	# NetBSD 1.2
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
-options 	PMAP_DEBUG
+#options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
@@ -91,29 +91,27 @@ le0 at obio0 addr   0x120000 level 3
 #
 
 # Sun3 "si" SCSI controller (NCR 5380)
-# This driver has several flags which may be enabled by OR'ing
-# the values and using the "flags" directive.  (PR#1929)
-# Valid flags are:
-#
-#	0x01		Use DMA (may be polled)
-#	0x02		Use DMA completion interrupts
-#	0x04		Allow disconnect/reselect
-#
-# E.g. "flags 0x07" would enable DMA, interrupts, and reselect.
-# Note: these values are quite a bit paranoid...
 si0 at obio0 addr   0x140000 level 2
 si0 at vmes0 addr 0xff200000 level 2 vect 0x40
 si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
-# Xylogics 7053 controllers
-# xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
-# xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
-# xd* at xdc? drive ?
-
 # Xylogics 450/451 controllers
 # xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
 # xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
-# xy* at xyc? drive ?
+# Just wire-down the units so bootdev match is easy.
+# xy0 at xyc0 drive 0
+# xy1 at xyc0 drive 1
+# xy2 at xyc1 drive 0
+# xy3 at xyc1 drive 1
+
+# Xylogics 7053 controllers
+# xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
+# xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
+# Just wire-down the units so bootdev match is easy.
+# xd0 at xdc0 drive 0
+# xd1 at xdc0 drive 1
+# xd2 at xdc1 drive 0
+# xd3 at xdc1 drive 1
 
 # Xylogics 472 tape controllers?
 
@@ -152,21 +150,12 @@ cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 #
 scsibus* at scsi?
 
-# Sun compatible scsi device mappings
-sd0 at scsibus? target 0 lun 0
-sd1 at scsibus? target 0 lun 1
-sd2 at scsibus? target 1 lun 0
-sd3 at scsibus? target 1 lun 1
-sd* at scsibus? target ? lun ?
-
-st0 at scsibus? target 4 lun 0
-st1 at scsibus? target 5 lun 0
-st* at scsibus? target ? lun ?
-
-cd0 at scsibus? target 6 lun 0
-cd* at scsibus? target ? lun ?
-
-#ch* at scsibus? target ? lun ?
+sd* at scsibus? target ? lun ?		# SCSI disks
+st* at scsibus? target ? lun ?		# SCSI tapes
+cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
+ch* at scsibus? target ? lun ?		# SCSI changer devices
+ss* at scsibus? target ? lun ?		# SCSI scanners
+uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Memory-disk drivers
 pseudo-device	md	2
@@ -177,6 +166,7 @@ pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	vnd	4		# paging to files
