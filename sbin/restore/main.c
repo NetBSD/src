@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2004/10/22 22:38:38 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2004/10/24 17:01:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2004/10/22 22:38:38 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2004/10/24 17:01:07 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -307,19 +307,19 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage: %s -i [-cdhmvyN] [-b bsize] [-D algorithm] "
-	    "[-f file] [-s fileno] [-M mtreefile]\n", progname);
+	    "[-f file] [-M mtreefile] [-s fileno]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -R [-cdvyN] [-b bsize] [-D algorithm] [-f file] "
-	    "[-s fileno] [-M mtreefile]\n", progname);
+	    "[-M mtreefile] [-s fileno]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -r [-cdvyN] [-b bsize] [-D algorithm] [-f file] "
-	    "[-s fileno] [-M mtreefile]\n", progname);
+	    "[-M mtreefile] [-s fileno]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -t [-cdhvy] [-b bsize] [-D algorithm] [-f file]\n"
 	    "           [-s fileno] [file ...]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -x [-cdhmvyN] [-b bsize] [-D algorithm] [-f file]\n"
-	    "           [-s fileno] [-M mtreefile] [file ...]\n", progname);
+	    "           [-M mtreefile] [-s fileno] [file ...]\n", progname);
 	exit(1);
 }
 
