@@ -1,8 +1,16 @@
-/*	$NetBSD: proc.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 1998/08/28 23:05:53 dbj Exp $	*/
 
 /*
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * This file was taken from from mvme68k/include/proc.h and
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id: NetBSD: proc.h,v 1.1.1.1 1995/07/25 23:12:16 chuck Exp 
+ */
+
+
+/*
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +40,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
- * Machine-dependent part of the proc structure for next68k.
- * @@@ not yet updated.. jewell
+ * Machine-dependent part of the proc structure for mvme68k.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
 	int	*md_regs;		/* registers on current frame */
+	int	md_flags;		/* machine-dependent flags */
 };
 
 /* md_flags */
-#define	MDP_STACKADJ	0x0001	/* Frame SP adjusted, might have to
-				   undo when system call returns
-				   ERESTART. */
+#define MDP_STACKADJ    0x0002  /* frame SP adjusted, might have to
+                                   undo when system call returns
+                                   ERESTART. */
+#define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
+#define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
+#define	MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
+#define	MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
