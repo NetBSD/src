@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.491 2002/11/26 18:10:10 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.492 2002/11/26 18:13:29 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.488 2002/11/26 18:09:27 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
  */
 
 /*
@@ -1322,6 +1322,7 @@
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
 #define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
+#define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* Conexant (iCompression, GlobeSpan) products */
