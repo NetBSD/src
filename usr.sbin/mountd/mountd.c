@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.71 2000/06/21 02:48:31 enami Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.72 2000/06/27 20:32:28 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.71 2000/06/21 02:48:31 enami Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.72 2000/06/27 20:32:28 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
@@ -494,13 +494,18 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case MOUNTPROC_MNT:
+		if (debug)
+			fprintf(stderr,
+			    "got mount request from %s\n", numerichost);
 		if (!svc_getargs(transp, xdr_dir, rpcpath)) {
+			if (debug)
+				fprintf(stderr, "-> garbage args\n");
 			svcerr_decode(transp);
 			return;
 		}
 		if (debug)
 			fprintf(stderr,
-			    "got mount request from %s\n", numerichost);
+			    "-> rpcpath: %s\n", rpcpath);
 		/*
 		 * Get the real pathname and make sure it is a file or
 		 * directory that exists.
@@ -511,12 +516,15 @@ mntsrv(rqstp, transp)
 		    statfs(dirpath, &fsb) < 0) {
 			(void)chdir("/"); /* Just in case realpath doesn't */
 			if (debug)
-				(void)fprintf(stderr, "stat failed on %s\n",
+				(void)fprintf(stderr, "-> stat failed on %s\n",
 				    dirpath);
 			if (!svc_sendreply(transp, xdr_long, (caddr_t) &bad))
 				syslog(LOG_ERR, "Can't send reply");
 			return;
 		}
+		if (debug)
+			fprintf(stderr,
+			    "-> dirpath: %s\n", dirpath);
 		/* Check in the exports list */
 		(void)sigprocmask(SIG_BLOCK, &sighup_mask, NULL);
 		ep = ex_search(&fsb.f_fsid);
