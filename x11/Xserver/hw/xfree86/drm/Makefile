@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2004/03/06 11:36:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2004/11/21 10:01:26 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../../../Makefile.servermod"
 
 LIB=	drm
 

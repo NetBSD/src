@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:38 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2004/11/21 10:01:25 rtr Exp $
 
-.include <bsd.own.mk>
+.include "../../Makefile.serverlib"
 
 .if ${X11LOADABLE} != "no"
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
@@ -8,5 +8,5 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 SRCS=		glxmodule.c
 .endif
 
-.include "../../Makefile.serverlib"
+.include "../../Makefile.servermod"
 .include "Makefile.glx"

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:42 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2004/11/21 10:01:27 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
 
 LIB=	pcidata
 

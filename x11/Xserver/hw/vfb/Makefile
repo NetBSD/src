@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.6 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2004/11/21 10:01:26 rtr Exp $
 
 .include "../../Makefile.serverlib"
+.include "../../Makefile.servermod"
 
 LIB=		vfb
+
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/vfb
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xi
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
-
 SRCS=		InitInput.c InitOutput.c dpmsstubs.c miinitext.c stubs.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \

@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile.iplan,v 1.1 2004/03/28 14:06:26 jdc Exp $
+#	$NetBSD: Makefile.iplan,v 1.1.4.1 2004/11/21 10:01:27 rtr Exp $
 
-.include <bsd.own.mk>
-
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/iplan2p4
 
 IPLANES?=	4
 
 LIB=		iplan2p${IPLANES}
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/iplan2p4
 SRCS=		iplgc.c iplrrop.c iplwindow.c \
 		iplpntwin.c iplmskbits.c iplpixmap.c iplbitblt.c \
 		iplfillsp.c iplsetsp.c iplscrinit.c iplallpriv.c \

@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2004/11/15 09:12:38 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2004/11/21 10:01:26 rtr Exp $
+
+.include "../../Makefile.serverlib"
+.include "../../Makefile.servermod"
 
 LIB=		ext
+
 SRCS=		EVI.c appgroup.c bigreq.c cup.c dpms.c fontcache.c mitmisc.c \
 		panoramiX.c panoramiXSwap.c panoramiXprocs.c sampleEVI.c \
 		saver.c security.c shape.c shm.c sleepuntil.c sync.c \
@@ -14,5 +18,4 @@ SRCS+=	xf86vmode.c xf86misc.c xf86dga.c xf86dga2.c
 CONFIGFILES=	SecurityPolicy
 FILESDIR=	${X11ETCDIR}/xserver
 
-.include "../../Makefile.serverlib"
 .include "../Makefile.ext"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.drivermod,v 1.4.2.1 2004/11/15 09:12:39 rtr Exp $
+# $NetBSD: Makefile.drivermod,v 1.4.2.2 2004/11/21 10:01:26 rtr Exp $
 .include <bsd.init.mk>
 
 # most of this file was cribbed from existing bsd.*.mk files most
@@ -60,3 +60,5 @@ moduleclean: .PHONY
 .include <bsd.obj.mk>
 .include <bsd.inc.mk>
 .include <bsd.man.mk>
+
+.include "../../Makefile.servermod"

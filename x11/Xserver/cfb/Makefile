@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2004/11/21 10:01:26 rtr Exp $
 
-NOLINT=	1 # cfb8bit.c
-
-.include <bsd.own.mk>
+.include "../Makefile.serverlib"
 
 .if ${X11LOADABLE} != "no"
 PIXELSIZE=	8
@@ -10,5 +8,5 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 SRCS=		cfbcmap.c cfbmodule.c
 .endif
 
-.include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 .include "Makefile.cfb"

@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2004/11/15 09:12:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2004/11/21 10:01:28 rtr Exp $
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../../Makefile.servermod"
 
 LIB=		pcl-mono
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xprint/pcl
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xprint/pcl
 SRCS=		PclArc.c PclArea.c PclAttVal.c PclAttr.c PclColor.c \
 		PclCursor.c PclFonts.c PclGC.c PclInit.c PclLine.c \
 		PclMisc.c PclPixel.c PclPixmap.c PclPolygon.c \

@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2004/03/28 14:06:26 jdc Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2004/11/21 10:01:27 rtr Exp $
 
 .include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 
 .include "Makefile.iplan"

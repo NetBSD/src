@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2004/11/15 09:12:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2004/11/21 10:01:28 rtr Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../Makefile.servermod"
 
 SUBDIR=		raster pcl ps pcl-mono
 
 LIB=		printer
-#.PATH:		${X11SRCDIR.xc}/lib/X11
 
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xprint
 SRCS=		Init.c spooler.c attributes.c Util.c mediaSizes.c \

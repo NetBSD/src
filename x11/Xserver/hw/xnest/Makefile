@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.6.4.1 2004/11/15 09:12:43 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.4.2 2004/11/21 10:01:27 rtr Exp $
 
 .include "../../Makefile.serverlib"
+.include "../../Makefile.servermod"
 
 LIB=		xnest
+
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/xnest
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xi
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
-
 SRCS=		Args.c Color.c Cursor.c Display.c Events.c Font.c \
 		GC.c GCOps.c GetTime.c Handlers.c Init.c Keyboard.c \
 		Pixmap.c Pointer.c Screen.c TestExt.c Visual.c \

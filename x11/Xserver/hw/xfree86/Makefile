@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2004/11/15 09:12:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2004/11/21 10:01:26 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -54,5 +54,3 @@ FILESDIR=	${X11LIBDIR}
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
-
-XTODO=	#remove X11FLAGS.LOADABLE everywhere use the one in Makefile.serverlib

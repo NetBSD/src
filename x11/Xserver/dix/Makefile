@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.9.4.1 2004/11/15 09:12:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.9.4.2 2004/11/21 10:01:26 rtr Exp $
 
 .include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 
 LIB=		dix
 
