@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.6 2002/09/06 14:16:54 gehenna Exp $
+.\"     $NetBSD: driver.9,v 1.7 2002/09/06 15:45:28 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 16, 2001
+.Dd September 6, 2002
 .Dt DRIVER 9
 .Os
 .Sh NAME
@@ -64,9 +64,7 @@ autoconfiguration interface.  This interface is provided by the
 .Em cfattach
 structure.  The interface to the driver is constant and is defined
 statically inside the driver.  For example, the interface to driver
-.Do
-foo
-.Dc
+.Dq foo
 is defined with:
 .Pp
 .Bd -literal
@@ -82,9 +80,7 @@ struct cfattach foo_ca = {
 The structure variable must be named
 .Va foo_ca
 by appending the letters
-.Do
-_ca
-.Dc
+.Dq _ca
 to the driver's base name.  This convention is mandated by the
 autoconfiguration framework.
 .Pp
@@ -105,9 +101,7 @@ structure should adopt the standard
 configuration and naming conventions.  For example, the
 .Em softc
 structure for driver
-.Do
-foo
-.Dc
+.Dq foo
 is defined with:
 .Pp
 .Bd -literal
@@ -132,9 +126,7 @@ structure. The structure is constant and is defined inside the driver. For
 example, the
 .Em cdevsw
 structure for driver
-.Do
-foo
-.Dc
+.Dq foo
 is defined with:
 .Pp
 .Bd -literal
@@ -152,25 +144,19 @@ const struct cdevsw foo_cdevsw {
 .Ed
 .Pp
 The structure variable must be named foo_cdevsw by appending the letters
-.Do
-_cdevsw
-.Dc
+.Dq _cdevsw
 to the driver's base name. This convention is mandated by the
 autoconfiguration framework.
 .Pp
 If the driver
-.Do
-foo
-.Dc
+.Dq foo
 has also block device interfaces, the driver must define the
 .Em bdevsw
 structure. The structure is constant and is defined inside the driver. For
 example, the
 .Em bdevsw
 structure for driver
-.Do
-foo
-.Dc
+.Dq foo
 is defined with:
 .Pp
 .Bd -literal
@@ -186,9 +172,7 @@ const struct bdevsw foo_bdevsw {
 .Ed
 .Pp
 The structure variable must be named foo_bdevsw by appending the letters
-.Do
-_bdevsw
-.Dc
+.Dq _bdevsw
 to the driver's base name. This convention is mandated by the
 autoconfiguration framework.
 .Pp
@@ -220,9 +204,7 @@ The match function would type-cast the
 argument to its appropriate attachment structure and use its contents
 to determine whether it supports the device.  Depending on the device
 hardware, the contents of the attachment structure may contain
-.Do
-locators
-.Dc
+.Dq locators
 to locate the device instance so that the driver can probe it for its
 identity.  If the probe process identifies additional device
 properties, it may modify the members of the attachment structure.
@@ -326,13 +308,9 @@ handler and a driver-specific argument to be specified.  This argument
 is usually a pointer to the device-instance-specific softc structure.
 When a hardware interrupt for the device occurs the handler is called
 with the argument.  Interrupt handlers should return 0 for
-.Do
-interrupt not for me
-.Dc ,
+.Dq interrupt not for me ,
 1 for
-.Do
-I took care of it
-.Dc ,
+.Dq I took care of it ,
 or -1 for
 .Do
 I guess it was mine, but I wasn't expecting it
@@ -343,17 +321,11 @@ For a driver to be compiled into the kernel,
 must be aware of its existence.  This is done by including an entry in
 files.\*[Lt]bus\*[Gt] in the directory containing the driver.  For example, the
 driver
-.Do
-foo
-.Dc
+.Dq foo
 attaching to bus
-.Do
-bar
-.Dc
+.Dq bar
 with dependency on kernel module
-.Do
-baz
-.Dc
+.Dq baz
 has the entry:
 .Bd -literal
 device	foo: baz
@@ -370,30 +342,20 @@ For device interfaces of a driver to be compiled into the kernel,
 .Xr config 8
 must be aware of its existence. This is done by including an entry in
 majors.<arch>. For example, the driver
-.Do
-foo
-.Dc
+.Dq foo
 with character device interfaces, a character major device number
-.Do
-cmaj
-.Dc
-, block device interfaces, a block device major number
-.Do
-bmaj
-.Dc
+.Dq cmaj ,
+block device interfaces, a block device major number
+.Dq bmaj
 and dependency on kernel module
-.Do
-baz
-.Dc
+.Dq baz
 has the entry:
 .Bd -literal
 device-major	foo	char cmaj block bmaj	baz
 .Ed
 .Pp
 For a detailed description of the machine description file and the
-.Do
-device definition
-.Dc
+.Dq device definition
 language see
 .Xr config 9 .
 .Sh SEE ALSO
