@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.5 1998/10/13 02:34:31 kim Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.6 1998/10/13 02:55:18 kim Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -57,7 +57,7 @@
 #define	ETHERTYPE_MOPDL		0x6001	/* DEC MOP dump/load */
 #define	ETHERTYPE_MOPRC		0x6002	/* DEC MOP remote console */
 #define	ETHERTYPE_DECnet	0x6003	/* DEC DECNET Phase IV route */
-#define	ETHERTYPE_DN		ETHERTYPE_DECnet
+#define	ETHERTYPE_DN		ETHERTYPE_DECnet	/* libpcap, tcpdump */
 #define	ETHERTYPE_LAT		0x6004	/* DEC LAT */
 #define ETHERTYPE_SCA		0x6007	/* DEC LAVC, SCA */
 #define ETHERTYPE_HP		0x8005	/* HP Probe */
@@ -72,6 +72,8 @@
 #define	ETHERTYPE_VEXP		0x805B	/* Stanford V Kernel exp. */
 #define	ETHERTYPE_VPROD		0x805C	/* Stanford V Kernel prod. */
 #define	ETHERTYPE_ATALK		0x809B	/* AppleTalk */
+#define ETHERTYPE_AT		ETHERTYPE_ATALK		/* old NetBSD */
+#define ETHERTYPE_APPLETALK	ETHERTYPE_ATALK		/* HP-UX */
 #define	ETHERTYPE_AARP		0x80F3	/* AppleTalk AARP */
 #define	ETHERTYPE_IPX		0x8137	/* Novell IPX */
 #define ETHERTYPE_XTP		0x817D	/* Protocol Engines XTP */
@@ -79,7 +81,7 @@
 #define	ETHERTYPE_IPV6		0x86DD	/* IP protocol version 6 */
 #define	ETHERTYPE_PPP		0x880B	/* PPP */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
-#define ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK
+#define ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
 #define	ETHERTYPE_MAX		0xFFFF	/* Maximum valid ethernet type */
 
 /*
