@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.5 2001/01/28 00:50:04 thorpej Exp $	*/
+/*	$NetBSD: yacc.y,v 1.6 2001/10/20 06:01:53 jmc Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.5 2001/01/28 00:50:04 thorpej Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.6 2001/10/20 06:01:53 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -294,7 +294,7 @@ main(ac, av)
 	mapupper.map[x] = x;
 	maplower.map[x] = x;
     }
-    new_locale.__invalid_rune = _INVALID_RUNE;
+    new_locale.__invalid_rune = _DEFAULT_INVALID_RUNE;
     memcpy(new_locale.__magic, _RUNE_MAGIC_1, sizeof(new_locale.__magic));
 
     yyparse();
