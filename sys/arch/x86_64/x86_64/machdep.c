@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2002/07/14 12:20:45 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2002/08/25 20:21:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_64_bus_space_mallocok();
@@ -375,7 +375,7 @@ x86_64_proc0_tss_ldt_init()
 void
 x86_64_bufinit()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
