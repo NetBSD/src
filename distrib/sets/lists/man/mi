@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.145 1999/06/18 14:26:39 ad Exp $
+# $NetBSD: mi,v 1.146 1999/06/27 18:38:24 augustss Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -412,6 +412,7 @@
 ./usr/share/man/cat4/md.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
+./usr/share/man/cat4/mixer.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/netintro.0
@@ -449,6 +450,7 @@
 ./usr/share/man/cat4/si.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
+./usr/share/man/cat4/sound.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
@@ -1529,6 +1531,7 @@
 ./usr/share/man/man4/md.4
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
+./usr/share/man/man4/mixer.4
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/netintro.4
@@ -1566,6 +1569,7 @@
 ./usr/share/man/man4/si.4
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
+./usr/share/man/man4/sound.4
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
