@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.31 2000/02/21 03:55:22 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.32 2000/04/01 17:52:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -339,7 +339,8 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
 
 	/* We can enable and disable the controller. */
-	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
+	sc->sc_wdcdev.sc_atapi_adapter._generic.scsipi_enable =
+	    wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);	/* should return an error XXX */
