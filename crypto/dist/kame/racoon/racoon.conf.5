@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.69 2001/01/24 05:46:25 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.73 2001/01/26 10:16:26 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -43,10 +43,10 @@ is the configuration file for the
 .Xr racoon 8
 ISAKMP daemon.
 .Xr racoon 8
-negotiates security association for itself (ISAKMP SA)
+negotiates security associations for itself (ISAKMP SA)
 and for kernel IPsec (IPsec SA).
 The file consists of a sequence of directives and statements.
-Each directives are composed by a tag, and statements enclosed by
+Each directive is composed by a tag, and statements are enclosed by
 .Ql {
 and
 .Ql } .
@@ -62,8 +62,7 @@ font.
 Parameters are specified with
 .Ar this
 font.
-Parameters shown in
-square brackets
+Square brackets
 .Po
 .Ql \*(lB
 and
@@ -71,16 +70,16 @@ and
 .Pc
 are used to show optional keywords and parameters.
 Note that
-you have to pay attention to describing
+you have to pay attention when this manual is describing
 .Ar port
-number.
+numbers.
 The
 .Ar port
-number always are enclosed by
+number is always enclosed by
 .Ql \*(lB
 and
 .Ql \*(rB .
-They are not optional keyword.
+In this case, the port number is not an optional keyword.
 If it is possible to omit
 .Ar port
 number,
@@ -89,7 +88,7 @@ the expression becomes
 The vertical bar
 .Pq Ql \*(Ba
 is used to indicate
-between a choice of optional parameters.
+a choice between optional parameters.
 Parentheses
 .Po
 .Ql \*(lP
@@ -114,7 +113,7 @@ means any string enclosed
 means IPv6 and IPv4 address.
 .It Ar port
 means TCP/UDP port number.
-The port number always are enclosed by
+The port number is always enclosed by
 .Ql \*(lB
 and
 .Ql \*(rB .
@@ -130,52 +129,52 @@ is one of following:
 .Ss Path Specification
 .Bl -tag -width Ds -compact
 .It Ic path include Ar path ;
-specifies a path to include file.
+specifies a path to include a file.
 See
 .Sx File Include .
 .It Ic path pre_shared_key Ar file ;
-specifies a file including pre-shared key for various ID.
+specifies a file containing pre-shared key(s) for various ID(s).
 See
 .Sx Pre-shared key File .
 .It Ic path certificate Ar path ;
 .Xr racoon 8
-will search this directory if the certificate or certificate request
+will search this directory if a certificate or certificate request
 is received.
 .El
 .\"
 .Ss File Include
 .Bl -tag -width Ds -compact
 .It Ic include Ar file
-other configuration file can be included.
+other configuration files can be included.
 .El
 .\"
 .Ss Identifier Specification
-is obsoleted.
+is obsolete.
 It must be defined at each
 .Ic remote
-directives.
+directive.
 .\"
 .Ss Timer Specification
 .Bl -tag -width Ds -compact
 .It Ic timer { Ar statements Ic }
-specifies various timer.
+specifies various timer values.
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic counter Ar number ;
-maximum trying count to send.
-Default count is 5.
+the maximum number of retries to send.
+The default is 5.
 .It Ic interval Ar number Ar timeunit ;
-interval to resend.
-This unit is second.
-Default timer is 10 second.
+the interval to resend, in seconds.
+The default time is 10 seconds.
 .It Ic persend Ar number ;
-the number of packets per a send.
-Default is 1 time.
+the number of packets per send.
+The default is 1.
 .It Ic phase1 Ar number Ar timeunit ;
-Default timer is 15 seconds.
+the maximum time it should take to complete phase 1.
+The default time is 15 seconds.
 .It Ic phase2 Ar number Ar timeunit ;
-Default timer is 10 seconds.
-timer for waiting to complete each phase.
+the maximum time it should take to complete phase 2.
+The default time is 10 seconds.
 .El
 .El
 .\"
@@ -186,25 +185,26 @@ If no
 .Ar listen
 directive is specified,
 .Xr racoon 8
-will listen to all available interface addresses.
-The followings are the list of statements.
+will listen on all of the available interface addresses.
+The following is the list of valid statements:
 .Pp
 .Bl -tag -width Ds -compact
 .\" How do I express bold brackets; `[' and `]' .
 .\" Is the "Bq Ic [ Ar port ] ;" buggy ?
 .It Ic isakmp Ar address Bq Bq Ar port ;
-If it is specified,
+If this is specified,
 .Xr racoon 8
-will only listen to its address.
-Default port is 500 as IANA defines.
-You can define more than one definition.
+will only listen on
+.Ar address .
+The default port is 500, which is specified by IANA.
+You can provide more than one address definition.
 .\".It Ic admin Ic [ Ar port ] ;
 .\"specify the port for connecting to
 .\".Xr kmpstat 8 .
-.\"Default port is 61225.
+.\"The default port is 61225.
 .It Ic strict_address ;
-require all addresses for ISAKMP must be bound.
-It will be ignored when you don't specify any addresses.
+require that all addresses for ISAKMP must be bound.
+This statement will be ignored if you do not specify any addresses.
 .El
 .El
 .\"
@@ -215,46 +215,58 @@ It will be ignored when you don't specify any addresses.
 .Bq Bq Ar port
 .Ic { Ar statements Ic }
 .Xc
-defines the parameters of IKE phase 1 per remote node.
-Default port is 500.
-The followings are the list of statements.
+specifies the parameters for IKE phase 1 for each remote node.
+The default port is 500.
+If 
+.Ic anonymous
+is specified, the statements apply to all peers which do not match 
+any other
+.Ic remote
+directive.
+.Pp
+The following are valid statements.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
 .It Ic exchange_mode ( main \*(Ba aggressive \*(Ba base ) ;
-defined exchange mode of phase 1.
+defines the exchange mode for phase 1 when racoon is the initiator.
+Also it means the acceptable exchange mode when racoon is responder.
+More than one mode can be specified by separating them with a comma.
+All of the modes are acceptable.
+The first exchange mode is what racoon uses when it is the initiator.
 .\"
 .It Ic doi Ic ipsec_doi ;
-means to use IPSEC-DOI specified RFC 2407.
-You can omit it.
+means to use IPSEC-DOI as specified RFC 2407.
+You can omit this statement.
 .\"
 .It Ic situation Ic identity_only ;
-means to use SIT_IDENTITY_ONLY specified RFC 2407.
-You can omit it.
+means to use SIT_IDENTITY_ONLY as specified RFC 2407.
+You can omit this statement.
 .\"
 .It Ic identifier Ar idtype ;
-is obsoleted.
+is obsolete.
 Instead, use
 .Ic my_identifier .
 .\"
 .It Ic my_identifier Ar idtype ... ;
-specifies my identifier and its type to use in phase 1 negotiation.
+specifies the identifier sent to the remote host
+and the type to use in the phase 1 negotiation.
 .Ic address, fqdn , user_fqdn , keyid and asn1dn
-can be used as
+can be used as an
 .Ar idtype .
-Each usage are the following.
+they are used like:
 .Bl -tag -width Ds -compact
-.It Ic my_identifier Ic address ;
-declares to use the type of IP address.
-It is default if you don't specify the identifier.
+.It Ic my_identifier Ic address Bq Ar address ;
+the type is the IP address.
+This is the default type if you do not specify an identifier to use.
 .It Ic my_identifier Ic user_fqdn Ar string ;
-defines the type of USER_FQDN.
+the type is a USER_FQDN (user fully-qualified domain name).
 .It Ic my_identifier Ic fqdn Ar string ;
-defines the type of FQDN.
+the type is a FQDN (fully-qualified domain name).
 .It Ic my_identifier Ic keyid Ar file ;
-defines the type of KEY_ID.
+the type is a KEY_ID.
 .It Ic my_identifier Ic asn1dn Bq Ar string ;
-defines the type of ASN.1 distinguished name.
+the type is an ASN.1 distinguished name.
 If
 .Ar string
 is omitted,
@@ -263,7 +275,7 @@ will get DN from the certificate.
 .El 
 .\"
 .It Ic peers_identifier Ar idtype ... ;
-specifies peer's identifier like
+specifies the peer's identifier as it is specified with
 .Ic my_identifier .
 If it is not defined then
 .Xr racoon 8
@@ -284,78 +296,81 @@ means a file name of secret key.
 .El
 .\"
 .It Ic peers_certfile Ar certfile ;
-When the peer don't send any certificate,
+When the peer does not send a certificate,
 .Xr racoon 8
-can use this certificate as peer's.
+can use this certificate as the peer's certificate.
 .\"
 .It Ic send_cert (on \(ba off) ;
-If you don't want to send any certificate in some reasons, you may set off.
-default is on.
+If you do not want to send a certificate for some reason, set this to off.
+The default is on.
 .\"
 .It Ic send_cr (on \(ba off) ;
-If you don't want to send any certificate request in some reasons, you may set off.
-Default is on.
+If you do not want to send a certificate request for some reason, set this to off.
+The default is on.
 .\"
 .It Ic verify_cert (on \(ba off) ;
-If you don't want to verify the certificate in some reasons, you may set off.
-default is on.
+If you do not want to verify the remote peer's certificate for some reason,
+set this to off.
+The default is on.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
 .It Ic lifetime byte Ar number Ar byteunit ;
-define each lifetime of time or bytes which are to be proposed on phase 1.
+define a lifetime of a certain time or certain number of bytes
+which will be proposed in the phase 1 negotiations.
 Any proposal will be accepted, and the attribute(s) will be not proposed to
-the peer if you don't specify it(them).
-Their individually can be specified in each proposals.
-Note that the lifetime of bytes is useless at the moment.
+the peer if you do not specify it(them).
+They can be individually specified in each proposal.
+Note that the lifetime of bytes is unused right now.
 .\"
 .It Ic initial_contact (on \(ba off) ;
-enable to send INITIAL-CONTACT message.
-default value is
+enable this to send an INITIAL-CONTACT message.
+The default value is
 .Ic on .
 .\"
 .It Ic proposal_check Ar level ;
-specifies the action of lifetime length and PFS of phase 2 selection on the responder side.
-default level is
+specifies the action of lifetime length and PFS of the phase 2
+selection on the responder side.
+The default level is
 .Ic strict .
 If the
 .Ar level
 is;
 .Bl -tag -width Ds -compact
 .It Ic obey
-the responder obey the initiator anytime.
+the responder will obey the initiator anytime.
 .It Ic strict
 If the responder's length is longer than the initiator's one, the
 responder uses the initiator's one.
-Otherwise rejects the proposal.
-If PFS is not required by the responder, the responder obeys the proposal.
+Otherwise it rejects the proposal.
+If PFS is not required by the responder, the responder will obey the proposal.
 If PFS is required by both sides and if the responder's group is not equal to
-the initiator's one, then the responder reject the proposal.
+the initiator's one, then the responder will reject the proposal.
 .It Ic claim
 If the responder's length is longer than the initiator's one, the
-responder use the initiator's one.
+responder will use the initiator's one.
 If the responder's length is
-shorter than the initiator's one, the responder uses own length
-AND send RESPONDER-LIFETIME notify message to a initiator in the
+shorter than the initiator's one, the responder uses its own length
+AND sends a RESPONDER-LIFETIME notify message to an initiator in the
 case of lifetime.
 About PFS, this directive is same as
 .Ic strict .
 .It Ic exact
 If the initiator's length is not equal to the responder's one, the
-responder rejects the proposal.
+responder will reject the proposal.
 If PFS is required by both sides and if the responder's group is not equal to
-the initiator's one, then the responder reject the proposal.
+the initiator's one, then the responder will reject the proposal.
 .El
 .\"
 .It Ic support_mip6 (on \(ba off) ;
 If this value is set on then both values of ID payloads in phase 2 exchange
 are always used as the addresses of end-point of IPsec-SAs.
-Default is off.
+The default is off.
 .\"
 .It Ic nonce_size Ar number ;
 define the byte size of nonce value.
 Racoon can send any value although
 RFC2409 specifies that the value MUST be between 8 and 256 bytes.
-Default size is 16 bytes.
+The default size is 16 bytes.
 .\"
 .It Xo
 .Ic proposal { Ar sub-substatements Ic }
@@ -363,17 +378,17 @@ Default size is 16 bytes.
 .Bl -tag -width Ds -compact
 .\"
 .It Ic encryption_algorithm Ar algorithm ;
-define encryption algorithm for phase 1 negotiation.
+specify the encryption algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
 .Ic des , 3des , blowfish , cast
 .\".Ic rc5 , idea
 for oakley.
-In the case of other transform, must not use this statement.
+For other transforms, this statement should not be used.
 .\"
 .It Ic hash_algorithm Ar algorithm;
-define hash algorithm for phase 1 negotiation.
+define the hash algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
@@ -381,25 +396,25 @@ is one of following:
 for oakley.
 .\"
 .It Ic authentication_method Ar type ;
-define the authentication method for phase 1 negotiation.
+defines the authentication method used for the phase 1 negotiation.
 This directive must be defined.
 .Ar type
-is only one:
+is one of:
 .Ic pre_shared_key, rsasig , dsssig , rsaenc , rsarev, gssapi_krb .
 .\"
 .It Ic dh_group Ar group ;
-define the group of Diffie-Hellman exponentiations.
+define the group used for the Diffie-Hellman exponentiations.
 This directive must be defined.
 .Ar group
 is one of following:
 .Ic modp768 , modp1024 , modp1536 .
 Or you can define 1, 2, or 5 as the DH group number.
 When you want to use aggressive mode,
-you must define same DH group in each proposals.
+you must define same DH group in each proposal.
 .It Ic lifetime time Ar number Ar timeunit ;
 .It Ic lifetime byte Ar number Ar byteunit ;
-define lifetime of phase 1 SA eay proposal.
-Refer to the above description of
+define lifetime of the phase 1 SA proposal.
+Refer to the description of
 .Ic lifetime
 directive immediately defined in
 .Ic remote
@@ -416,7 +431,7 @@ is used, where hostname is the FQDN of the interface being used.
 .El
 .\"
 .Ss Policy Specifications
-The policy directive is obsoleted, policies are now in the SPD.
+The policy directive is obsolete, policies are now in the SPD.
 .Xr racoon 8
 will obey the policy configured into the kernel by
 .Xr setkey 8 ,
@@ -432,9 +447,11 @@ and policies in the kernel.
 .Ic sainfo ( Ar source_id destination_id \*(Ba Ic anonymous )
 .Ic { Ar statements Ic }
 .Xc
-defines the parameters of IKE phase 2 (IPsec-SA establishment).
-.Ar source_id destination_id
-are constructed like the following.
+defines the parameters of the IKE phase 2 (IPSec-SA establishment).
+.Ar source_id
+and
+.Ar destination_id
+are constructed like:
 .Pp
 .Ic address Ar address
 .Bq Ic / Ar prefix
@@ -446,17 +463,17 @@ or
 .Ar idtype Ar string
 .Pp
 It means exactly the content of ID payload.
-It is not like a filter rule.
+This is not like a filter rule.
 For example, if you define 3ffe:501:4819::/48 as
 .Ar source_id .
-3ffe:501:4819:1000:/64 is not match with it.
+3ffe:501:4819:1000:/64 will not match.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
 .It Ic pfs_group Ar group ;
 define the group of Diffie-Hellman exponentiations.
-If you don't require PFS then you can omit this directive.
-Any proposal will be accepted if you don't specify it.
+If you do not require PFS then you can omit this directive.
+Any proposal will be accepted if you do not specify one.
 .Ar group
 is one of following:
 .Ic modp768 , modp1024 , modp1536 .
@@ -464,30 +481,31 @@ Or you can define 1, 2, or 5 as the DH group number.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
 .It Ic lifetime byte Ar number Ar byteunit ;
-define each lifetime of time or bytes which are to be used IPsec-SA.
-Any proposal will be accepted, and the attribute(s) will be not proposed to
-the peer if you don't specify it(them).
-See
-.Sx proposal_check
+define the lifetime of amount of time or number of bytes
+which are to be used IPsec-SA.
+Any proposal will be accepted, and no attribute(s) will be proposed to
+the peer if you do not specify it(them).
+See the
+.Ic proposal_check
 directive.
 .\"
 .It Ic identifier Ar idtype ;
-is obsoleted.
+is obsolete.
 Instead use
 .Ic my_identifier
 directives.
 .\"
 .It Ic my_identifier Ar idtype ... ;
-specifies ID type to use phase 2 negotiation.
-The type of address is used as default.
-See
-.Sx my_identifier
-directive in
+specifies ID type to use for the phase 2 negotiation.
+address is used as the default.
+See the
+.Ic my_identifier
+directive above in
 .Ic remote
 for its usage.
-It is always for initiator, not responder.
+This is always for the initiator, not the responder.
 .Xr racoon
-as responder can handle only IP address type.
+as the responder can handle only the IP address type.
 .El
 .\"
 .Pp
@@ -495,18 +513,20 @@ as responder can handle only IP address type.
 does not have the list of security protocols to be negotiated.
 The list of security protocols are passed by SPD in the kernel.
 Therefore you have to define all of the potential algorithms
-in phase 2 proposals even if there is a algorithm which will not be used.
-These algorithms are define by using the following three directives.
+in the phase 2 proposals even if there is a algorithm which will not be used.
+These algorithms are define by using the following three directives,
+and they are lined with single comma as the separator.
 .Xr racoon 8
-will compute actual phase 2 proposals by computing permutation of the specified
-algorithms, and then combining them with security protocol specified by SPD.
+will compute the actual phase 2 proposals by computing
+the permutation of the specified algorithms,
+and then combining them with the security protocol specified by the SPD.
 For example, if
 .Ic des, 3des, hmac_md5,
 and
 .Ic hmac_sha1
-are specified, we have four combination for use with ESP,
+are specified as algorithms, we have four combinations for use with ESP,
 and two for AH.
-Then, based on SPD settings,
+Then, based on the SPD settings,
 .Xr racoon 8
 will construct the actual proposals.
 If the SPD entry asks for ESP only, there will be 4 proposals.
@@ -537,11 +557,11 @@ Note that the kernel may not support the algorithm you have specified.
 .It Ic log Ar level ;
 define logging level.
 .Ar level
-is one of the following:
+is one of following:
 .Ic notify , debug
 and
 .Ic debug2 .
-Default is
+The default is
 .Ic notify .
 .El
 .\"
@@ -549,25 +569,25 @@ Default is
 .Bl -tag -width Ds -compact
 .It Ic padding { Ar statements Ic }
 specified padding format.
-The followings are the list of statements.
+The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic randomize (on \(ba off) ;
-enable to randomize a value in padding.
-Default is on.
+enable using a randomized value for padding.
+The default is on.
 .It Ic randomize_length (on \(ba off) ;
-enable to randomize length of padding.
-Default is off.
+the pad length is random.
+The default is off.
 .It Ic maximum_length Ar number ;
-define a maximum length of padding.
+define a maximum padding length.
 If
-.Ic randomize_length is off, it is ignored.
-Default is 20 bytes.
+.Ic randomize_length is off, this is ignored.
+The default is 20 bytes.
 .It Ic exclusive_tail (on \(ba off) ;
-means to set the number of pad bytes minus one into last part of the padding.
-Default is on.
+means to put the number of pad bytes minus one into last part of the padding.
+The default is on.
 .It Ic strict_check (on \(ba off) ;
 means to be constrained the peer to set the number of pad bytes.
-Default is off.
+The default is off.
 .El
 .El
 .\"
@@ -593,16 +613,16 @@ are interpreted as a secret key.
 Lines start with
 .Ql #
 are ignored.
-Key start with
+Keys which start with
 .Ql 0x
-means hexa-decimal string.
+are hexa-decimal strings.
 Note that the file must be owned by the user ID running
 .Xr racoon 8
 .Pq usually privileged user ,
 and must not be accessible by others.
 .\"
 .Sh EXAMPLE
-The following is a sample of the configuration file.
+The following shows how the remote directive should be configured.
 .Bd -literal -offset
 path pre_shared_key "/usr/local/v6/etc/psk.txt" ;
 remote anonymous
@@ -642,6 +662,7 @@ foo.kame.net    hoge
 .Sh SEE ALSO
 .\".Xr kmpstat 8 ,
 .Xr racoon 8
+.Xr setkey 8
 .\"
 .Sh HISTORY
 The
@@ -651,5 +672,5 @@ configuration file first appeared in
 Yokogawa IPsec implementation.
 .\"
 .Sh BUGS
-Some statements may not be implemented.
-These will be worked in the future.
+Some statements may not yet be implemented.
+These will be added in the future.
