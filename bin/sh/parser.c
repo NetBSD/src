@@ -52,8 +52,9 @@ static char sccsid[] = "@(#)parser.c	8.1 (Berkeley) 5/31/93";
 #include "memalloc.h"
 #include "mystring.h"
 #include "alias.h"
+#ifndef NO_HISTORY
 #include "myhistedit.h"
-
+#endif
 
 /*
  * Shell command parser.
@@ -1339,7 +1340,9 @@ setprompt(which)
 	{
 	whichprompt = which;
 
+#ifndef NO_HISTORY
 	if (!el)
+#endif
 		out2str(getprompt(NULL));
 }
 
