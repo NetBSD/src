@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.18 2004/09/15 03:24:09 minoura Exp $ */
+/* $NetBSD: setup.c,v 1.19 2005/02/26 05:45:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ setup(const char *dev)
 	lfdir = 0;
 
 	bufinit();
-	fs = lfs_init(fsreadfd, bflag, idaddr, debug);
+	fs = lfs_init(fsreadfd, bflag, idaddr, 0, debug);
 	if (fs == NULL) {
 		if (preen)
 			printf("%s: ", cdevname());
@@ -190,7 +190,6 @@ setup(const char *dev)
 	else
 		dev_bsize = secsize = DEV_BSIZE;
 
-#if 0
 	if (fs->lfs_pflags & LFS_PF_CLEAN) {
 		if (doskipclean) {
 			pwarn("%sile system is clean; not checking\n",
@@ -200,7 +199,6 @@ setup(const char *dev)
 		if (!preen)
 			pwarn("** File system is already clean\n");
 	}
-#endif
 
 	if (debug) {
 		printf("idaddr    = 0x%lx\n", idaddr ? (unsigned long)idaddr :

@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.17 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: pass0.c,v 1.18 2005/02/26 05:45:54 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -202,5 +202,8 @@ pass0(void)
 			writeit = 1;
 		}
 	}
-	LFS_SYNC_CLEANERINFO(cip, fs, bp, writeit);
+	if (writeit)
+		LFS_SYNC_CLEANERINFO(cip, fs, bp, writeit);
+	else
+		brelse(bp);
 }

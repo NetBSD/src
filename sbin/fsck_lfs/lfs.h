@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.h,v 1.2 2003/04/02 10:39:28 fvdl Exp $ */
+/* $NetBSD: lfs.h,v 1.3 2005/02/26 05:45:54 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@ int lfs_vop_bwrite(struct ubuf *);
 int lfs_vop_bmap(struct uvnode *, daddr_t, daddr_t *);
 
 struct uvnode *lfs_raw_vget(struct lfs *, ino_t, int, ufs_daddr_t);
-struct lfs *lfs_init(int, daddr_t, daddr_t, int);
+struct lfs *lfs_init(int, daddr_t, daddr_t, int, int);
 struct lfs *lfs_verify(struct lfs *, struct lfs *, struct uvnode *, int);
 int check_summary(struct lfs *, struct segsum *, ufs_daddr_t, int, struct uvnode *, void (*)(ufs_daddr_t, struct finfo *));
 ufs_daddr_t try_verify(struct lfs *, struct uvnode *, ufs_daddr_t, int);

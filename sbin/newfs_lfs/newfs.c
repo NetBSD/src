@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.14 2004/10/29 19:04:39 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.15 2005/02/26 05:45:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.14 2004/10/29 19:04:39 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.15 2005/02/26 05:45:54 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ caddr_t	membase;		/* start address of memory based filesystem */
 char	*disktype;
 int	unlabeled;
 #endif
+int	preen = 0;		/* Coexistence with fsck_lfs */
 
 char	device[MAXPATHLEN];
 char	*progname, *special;
@@ -100,6 +101,7 @@ static struct disklabel *debug_readlabel(int);
 #ifdef notdef
 static void rewritelabel(char *, int, struct disklabel *);
 #endif
+static int64_t strsuftoi64(const char *, const char *, int64_t, int64_t, int *);
 static void usage(void);
 
 /* CHUNKSIZE should be larger than MAXPHYS */
@@ -166,6 +168,7 @@ main(int argc, char **argv)
 	uint secsize = 0;
 	daddr_t start;
 	char *cp, *opstring;
+	int byte_sized = 0;
 
 	version = DFL_VERSION;		/* what version of lfs to make */
 
@@ -178,7 +181,7 @@ main(int argc, char **argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "AB:b:DFf:I:i:LM:m:NO:r:Ss:v:";
+	opstring = "AB:b:DFf:I:i:LM:m:NO:r:S:s:v:";
 
 	debug = force = segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
@@ -187,8 +190,7 @@ main(int argc, char **argv)
 			segsize = -1;
 			break;
 		case 'B':	/* LFS segment size */
-			if ((segsize = atoi(optarg)) < LFS_MINSEGSIZE)
-				fatal("%s: bad segment size", optarg);
+		        segsize = strsuftoi64("segment size", optarg, LFS_MINSEGSIZE, INT64_MAX, NULL);
 			break;
 		case 'D':
 			debug = 1;
@@ -197,21 +199,21 @@ main(int argc, char **argv)
 			force = 1;
 			break;
 		case 'I':
-			interleave = atoi(optarg);
+		        interleave = strsuftoi64("interleave", optarg, 0, INT64_MAX, NULL);
 			break;
 		case 'L':	/* Compatibility only */
 			break;
 		case 'M':
-			minfreeseg = atoi(optarg);
+		  	minfreeseg = strsuftoi64("minfreeseg", optarg, 0, INT64_MAX, NULL);
 			break;
 		case 'N':
 			Nflag++;
 			break;
 		case 'O':
-			start = atoi(optarg);
+		  	start = strsuftoi64("start", optarg, 0, INT64_MAX, NULL);
 			break;
 		case 'S':
-			secsize = atoi(optarg);
+		  	secsize = strsuftoi64("sector size", optarg, 1, INT64_MAX, NULL);
 			if (secsize <= 0 || (secsize & (secsize - 1)))
 				fatal("%s: bad sector size", optarg);
 			break;
@@ -221,33 +223,25 @@ main(int argc, char **argv)
 			break;  
 #endif 
 		case 'b':
-			if ((bsize = atoi(optarg)) < LFS_MINBLOCKSIZE)
-				fatal("%s: bad block size", optarg);
+		  	bsize = strsuftoi64("block size", optarg, LFS_MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
 		case 'f':
-			if ((fsize = atoi(optarg)) <= 0)
-				fatal("%s: bad frag size", optarg);
+		  	fsize = strsuftoi64("fragment size", optarg, LFS_MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
 		case 'i':
-			if ((ibsize = atoi(optarg)) <= 0)
-				fatal("%s: bad inode block size", optarg);
+		  	ibsize = strsuftoi64("inode block size", optarg, LFS_MINBLOCKSIZE, INT64_MAX, NULL);
 			break;
 		case 'm':
-			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
-				fatal("%s: bad free space %%\n", optarg);
+		  	minfree = strsuftoi64("free space %", optarg, 0, 99, NULL);
 			break;
 		case 'r':
-			if ((roll_id = strtoul(optarg, NULL, 0)) == 0)
-				fatal("%s: bad roll-forward id\n", optarg);
+		  	roll_id = strsuftoi64("roll-forward id", optarg, 1, UINT_MAX, NULL);
 			break;
 		case 's':
-			if ((fssize = atoi(optarg)) <= 0)
-				fatal("%s: bad file system size", optarg);
+		        fssize = strsuftoi64("file system size", optarg, 0, INT64_MAX, &byte_sized);
 			break;
 		case 'v':
-			version = atoi(optarg);
-			if (version <= 0 || version > LFS_VERSION)
-				fatal("%s: bad version", optarg);
+		        version = strsuftoi64("file system version", optarg, 1, LFS_VERSION, NULL);
 			break;
 		case '?':
 		default:
@@ -274,7 +268,7 @@ main(int argc, char **argv)
 	}
 	if (!Nflag) {
 		fso = open(special,
-		    (debug ? O_CREAT : 0) | O_WRONLY, DEFFILEMODE);
+		    (debug ? O_CREAT : 0) | O_RDWR, DEFFILEMODE);
 		if (fso < 0)
 			fatal("%s: %s", special, strerror(errno));
 	} else
@@ -324,6 +318,11 @@ main(int argc, char **argv)
 
 	if (secsize == 0)
 		secsize = lp->d_secsize;
+
+	/* From here on out fssize is in sectors */
+	if (byte_sized) {
+		fssize /= secsize;
+	}
 
 	/* If force, make the partition look like an LFS */
 	if (force) {
@@ -452,6 +451,51 @@ rewritelabel(char *s, int fd, struct disklabel *lp)
 #endif /* vax */
 }
 #endif /* notdef */
+
+static int64_t
+strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max, int *num_suffix)
+{
+	int64_t result, r1;
+	int shift = 0;
+	char	*ep;
+
+	errno = 0;
+	r1 = strtoll(arg, &ep, 10);
+	if (ep[0] != '\0' && ep[1] != '\0')
+		errx(1, "%s `%s' is not a valid number.", desc, arg);
+	switch (ep[0]) {
+	case '\0':
+	case 's': case 'S':
+		if (num_suffix != NULL)
+			*num_suffix = 0;
+		break;
+	case 'g': case 'G':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'm': case 'M':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'k': case 'K':
+		shift += 10;
+		/* FALLTHROUGH */
+	case 'b': case 'B':
+		if (num_suffix != NULL)
+			*num_suffix = 1;
+		break;
+	default:
+		errx(1, "`%s' is not a valid suffix for %s.", ep, desc);
+	}
+	result = r1 << shift;
+	if (errno == ERANGE || result >> shift != r1)
+		errx(1, "%s `%s' is too large to convert.", desc, arg);
+	if (result < min)
+		errx(1, "%s `%s' (%" PRId64 ") is less than the minimum (%" PRId64 ").",
+		    desc, arg, result, min);
+	if (result > max)
+		errx(1, "%s `%s' (%" PRId64 ") is greater than the maximum (%" PRId64 ").",
+		    desc, arg, result, max);
+	return result;
+}
 
 void
 usage()

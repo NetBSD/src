@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.2 2003/03/31 19:56:59 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.3 2005/02/26 05:45:54 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -174,6 +174,9 @@ struct ubuf *
 getblk(struct uvnode * vp, daddr_t lbn, int size)
 {
 	struct ubuf *bp;
+#ifdef DEBUG
+	static int warned;
+#endif
 
 	/*
 	 * First check the buffer cache lists.
@@ -199,7 +202,7 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 		if (bp == NULL) {
 			bp = TAILQ_FIRST(&bufqueues[BQ_LRU]);
 			if (bp)
-				TAILQ_REMOVE(&bufqueues[BQ_AGE], bp,
+				TAILQ_REMOVE(&bufqueues[BQ_LRU], bp,
 				    b_freelist);
 		}
 		if (bp) {
@@ -209,8 +212,11 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 		}
 #ifdef DEBUG
 		else {
-			warnx("no free buffers, allocating more than %d",
-			    maxbufs);
+			if (!warned)
+				warnx("allocating more than %d buffers",
+					maxbufs);
+			++warned;
+			break;
 		}
 #endif
 	}
@@ -315,3 +321,20 @@ reassignbuf(struct ubuf * bp, struct uvnode * vp)
 		LIST_INSERT_HEAD(&vp->v_cleanblkhd, bp, b_vnbufs);
 	}
 }
+
+#ifdef DEBUG
+void
+dump_free_lists(void)
+{
+	struct ubuf *bp;
+	int i;
+
+	for (i = 0; i <= BQ_LOCKED; i++) {
+		printf("==> free list %d:\n", i);
+		TAILQ_FOREACH(bp, &bufqueues[i], b_freelist) {
+			printf("vp %p lbn %" PRId64 " flags %lx\n",
+				bp->b_vp, bp->b_lblkno, bp->b_flags);
+		}
+	}
+}
+#endif
