@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.265 2004/06/25 15:54:31 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.266 2004/07/12 23:55:33 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -559,6 +559,8 @@
 ./usr/share/locale/ko_KR.UTF-8
 ./usr/share/locale/lt_LT.ISO8859-4
 ./usr/share/locale/lt_LT.ISO8859-13
+./usr/share/locale/nb
+./usr/share/locale/nb/LC_MESSAGES
 ./usr/share/locale/nl
 ./usr/share/locale/nl/LC_MESSAGES
 ./usr/share/locale/nl_BE.ISO8859-1
