@@ -1,4 +1,4 @@
-/*	$NetBSD: __syscall.S,v 1.1 2001/01/04 08:53:50 itojun Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.2 2001/01/17 05:15:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,14 +40,14 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __syscall.S,v 1.1 2001/01/04 08:53:50 itojun Exp $")
+	RCSID("$NetBSD: __syscall.S,v 1.2 2001/01/17 05:15:02 itojun Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(__syscall)
-	sts	pr,r2	/* rta */
-	mov	r4,r0	/* syscall number = r5:r4 */
+	sts	pr,r2		/* rta */
+	mov.l	L__syscall,r0	/* syscall number */
 	trapa	#0x80
 	bf	err
 	rts
@@ -59,3 +59,4 @@ err:
 
 	.align 2
 Lcerror:	.long	cerror
+L__syscall:	.long	SYS___syscall
