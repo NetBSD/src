@@ -1,5 +1,5 @@
-/*	$NetBSD: if_efreg.h,v 1.1 1998/02/27 23:51:52 pk Exp $	*/
-/* 	$Id: if_efreg.h,v 1.1 1998/02/27 23:51:52 pk Exp $	*/
+/*	$NetBSD: if_efreg.h,v 1.2 1998/02/28 01:14:15 pk Exp $	*/
+/* 	$Id: if_efreg.h,v 1.2 1998/02/28 01:14:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define EF_DOM_MY	4	/* offset of date of manf: month, year in BCD */
 
 /*
- * Definitions for non-bankswitched registers 
+ * Definitions for non-bankswitched registers
  */
 
 /* General control register */
@@ -100,18 +100,18 @@
 #define EF_IRQ_MASK	0x0f	/* irq = (EF_IRQ register) & EF_IRQ_MASK */
 
 /*
- * Definitions for Bank 0 registers 
+ * Definitions for Bank 0 registers
  */
 #define EF_SIG_LEN	6	/* signature length */
 #define EF_SIGNATURE	"*3COM*"
 
 /*
- * Definitions for Bank 1 registers 
+ * Definitions for Bank 1 registers
  */
 #define EF_ADDR_LEN	6	/* ether address length */
 
 /*
- * Definitions for Bank 2 registers 
+ * Definitions for Bank 2 registers
  */
 #define EF_TYPE_LEN	3	/* card part # length */
 
@@ -122,9 +122,9 @@
 #define EF_IOBASE_HIGH	0x3e0
 #define EF_IOSIZE	16
 
-/* 
- * XXX: It seems that the 3C507-TP is differentiated from AUI/BNC 3C507 
- * by part numbers, but I'm not sure how accurate this test is, seeing 
+/*
+ * XXX: It seems that the 3C507-TP is differentiated from AUI/BNC 3C507
+ * by part numbers, but I'm not sure how accurate this test is, seeing
  * as it's based on the sample of 3 cards I own (2AUI/BNC, 1 TP).
  */
 #define EF_IS_TP(type)	((type)[EF_TYPE_MID] > 0x70)
