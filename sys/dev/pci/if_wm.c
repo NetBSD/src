@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.99 2005/03/09 19:06:19 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100 2005/03/11 17:07:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.99 2005/03/09 19:06:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100 2005/03/11 17:07:51 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1404,6 +1404,11 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 			m_copydata(m0, offset, sizeof(ip), &ip);
 			m_copydata(m0, hlen, sizeof(th), &th);
 
+			ip.ip_len = 0;
+
+			m_copyback(m0, hlen + offsetof(struct ip, ip_len),
+			    sizeof(ip.ip_len), &ip.ip_len);
+
 			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
 			    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
 
@@ -1421,6 +1426,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 			struct tcphdr *th =
 			    (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
 
+			ip->ip_len = 0;
 			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
 			    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
 

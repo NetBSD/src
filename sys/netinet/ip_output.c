@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.148 2005/03/10 06:03:00 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.149 2005/03/11 17:07:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.148 2005/03/10 06:03:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.149 2005/03/11 17:07:51 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -789,13 +789,7 @@ spd_done:
 		 */
 		ip->ip_sum = 0;
 
-		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
-			/*
-			 * The len field is meaningless at this point.
-			 * Clear it now, since some HW requires this.
-			 */
-			ip->ip_len = 0;
-		} else {
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
 			/*
 			 * Perform any checksums that the hardware can't do
 			 * for us.
