@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.88 2001/02/24 18:08:27 lukem Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89 2001/02/24 18:10:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,10 +85,10 @@ LIST_HEAD(buflists, buf);
  */
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
-#define	v_flag v_uvm.u_flags
-#define	v_usecount v_uvm.u_obj.uo_refs
-#define	v_interlock v_uvm.u_obj.vmobjlock
-#define	v_numoutput v_uvm.u_nio
+#define	v_flag		v_uvm.u_flags
+#define	v_usecount	v_uvm.u_obj.uo_refs
+#define	v_interlock	v_uvm.u_obj.vmobjlock
+#define	v_numoutput	v_uvm.u_nio
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
 	daddr_t		v_lastr;		/* last read (read-ahead) */
