@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.2 2001/11/21 08:56:25 wdk Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.3 2001/12/28 05:46:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -128,5 +128,7 @@ typedef struct {
 #else
 #define _OFFSETOF_UC_GREGS	56
 #endif
+
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 
 #endif	/* _MIPS_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.4 2001/12/17 20:57:18 nathanw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.5 2001/12/28 05:46:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,5 +97,7 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+
+#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 
 #endif	/* !_ALPHA_MCONTEXT_H_ */
