@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.46 1994/12/27 19:13:21 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.47 1994/12/29 22:16:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -627,10 +627,11 @@ nfs_lookup(ap)
 			if (vpid == vdp->v_id) {
 			   if (nmp->nm_flag & NFSMNT_NQNFS) {
 				if ((nmp->nm_flag & NFSMNT_NQLOOKLEASE) == 0) {
+				cachehit:
 					nfsstats.lookupcache_hits++;
 					if (cnp->cn_nameiop != LOOKUP &&
 					    (flags & ISLASTCN))
-					    cnp->cn_flags |= SAVENAME;
+						cnp->cn_flags |= SAVENAME;
 					return (0);
 			        } else if (NQNFS_CKCACHABLE(dvp, NQL_READ)) {
 					if (np->n_lrev != np->n_brev ||
@@ -643,22 +644,12 @@ nfs_lookup(ap)
 						if (error == EINTR)
 							return (error);
 						np->n_brev = np->n_lrev;
-					} else {
-						nfsstats.lookupcache_hits++;
-						if (cnp->cn_nameiop != LOOKUP &&
-						    (flags & ISLASTCN))
-						    cnp->cn_flags |= SAVENAME;
-						return (0);
-					}
+					} else
+						goto cachehit;
 				}
 			   } else if (!VOP_GETATTR(vdp, &vattr, cnp->cn_cred, cnp->cn_proc) &&
-			       vattr.va_ctime.ts_sec == VTONFS(vdp)->n_ctime) {
-				nfsstats.lookupcache_hits++;
-				if (cnp->cn_nameiop != LOOKUP &&
-				    (flags & ISLASTCN))
-					cnp->cn_flags |= SAVENAME;
-				return (0);
-			   }
+			       vattr.va_ctime.ts_sec == VTONFS(vdp)->n_ctime)
+				goto cachehit;
 			   cache_purge(vdp);
 			}
 			vrele(vdp);
