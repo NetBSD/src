@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.16 1996/10/13 02:10:06 christos Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.17 1998/01/28 02:35:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,12 +81,9 @@
 
 
 LIST_HEAD(, llinfo_x25) llinfo_x25;
-#ifndef _offsetof
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-#endif
 struct sockaddr *x25_dgram_sockmask;
 struct sockaddr_x25 x25_dgmask = {
-	_offsetof(struct sockaddr_x25, x25_udata[1]),	/* _len */
+	offsetof(struct sockaddr_x25, x25_udata[1]),	/* _len */
 	0,		/* _family */
 	0,		/* _net */
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* _addr */

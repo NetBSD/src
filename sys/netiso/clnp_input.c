@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.15 1997/03/15 18:12:37 is Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.16 1998/01/28 02:38:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -198,7 +198,7 @@ next:
 		bcopy(sizeof(u_long) + mtod(m, caddr_t),
 		      (caddr_t) sh.snh_shost, sizeof(u_long));
 		sh.snh_dhost[4] = mtod(m, u_char *)[sizeof(struct ip) +
-				     _offsetof(struct eon_hdr, eonh_class)];
+				     offsetof(struct eon_hdr, eonh_class)];
 		m->m_data += EONIPLEN;
 		m->m_len -= EONIPLEN;
 		m->m_pkthdr.len -= EONIPLEN;

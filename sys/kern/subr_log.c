@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.13 1997/09/19 13:56:40 leo Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.14 1998/01/28 02:35:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -82,9 +82,7 @@ initmsgbuf(buf, bufsize)
 
 	mbp = msgbufp = (struct kern_msgbuf *)buf;
 
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 	new_bufs = bufsize - offsetof(struct kern_msgbuf, msg_bufc);
-#undef offsetof
 	if ((mbp->msg_magic != MSG_MAGIC) || (mbp->msg_bufs != new_bufs) ||
 	    (mbp->msg_bufr < 0) || (mbp->msg_bufr >= mbp->msg_bufs) ||
 	    (mbp->msg_bufx < 0) || (mbp->msg_bufx >= mbp->msg_bufs)) {

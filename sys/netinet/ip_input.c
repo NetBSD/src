@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.55 1998/01/12 03:02:51 scottr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.56 1998/01/28 02:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -65,9 +65,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-
-/* XXX should really put this in libkern.h */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
