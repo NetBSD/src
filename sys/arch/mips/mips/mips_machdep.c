@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.130 2002/06/01 12:27:04 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.131 2002/06/01 13:45:46 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.130 2002/06/01 12:27:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.131 2002/06/01 13:45:46 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -231,7 +231,7 @@ struct pridtab {
  *  - All MIPS3+ have a count register.  MIPS_HAS_CLOCK in <mips/cpu.h>
  *    will need to be revised if this is false.
  */
-#define	MIPS32_FLAGS	CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV
+#define	MIPS32_FLAGS	CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_USE_WAIT
 #define	MIPS64_FLAGS	MIPS32_FLAGS	/* same as MIPS32 flags (for now) */
 
 static const struct pridtab *mycpu;
@@ -313,8 +313,8 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
 						"MIPS R5000 CPU"	},
 	{ 0, MIPS_RM5200, -1,			CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT,
-						"QED RM5200 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_USE_WAIT,			"QED RM5200 CPU"	},
 
 	/* XXX
 	 * The rm7000 rev 2.0 can have 64 tlbs, and has 6 extra interrupts.  See
@@ -322,8 +322,8 @@ static const struct pridtab cputab[] = {
 	 * for more details.
 	 */
 	{ 0, MIPS_RM7000, -1,			CPU_ARCH_MIPS4, 48,
-	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT,
-						"QED RM7000 CPU"	},
+	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
+	  CPU_MIPS_USE_WAIT,			"QED RM7000 CPU"	},
 
 	/* 
 	 * IDT RC32300 core is a 32 bit MIPS2 processor with
@@ -364,9 +364,9 @@ static const struct pridtab cputab[] = {
 	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R1, -1, -1, 0,
-	  MIPS32_FLAGS,				"Au1000 (Rev 1)"	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU1000_R2, -1, -1, 0,
-	  MIPS32_FLAGS,				"Au1000 (Rev 2)" 	},
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2)" 	},
 
 	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
 	{ MIPS_PRID_CID_SIBYTE, MIPS_SB1, -1,	-1, 0,
@@ -880,35 +880,11 @@ mips_vector_init(void)
 	/*
 	 * Install power-saving idle routines.
 	 */
-	switch (MIPS_PRID_CID(cpu_id)) {
-	case MIPS_PRID_CID_PREHISTORIC:
-		switch (MIPS_PRID_IMPL(cpu_id)) {
-#if defined(MIPS3) && !defined(MIPS3_5900)
-		case MIPS_RM5200:
-		case MIPS_RM7000:
-		    {
-			void rm52xx_idle(void);
+	if ((mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
+	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT)) {
+		void mips_wait_idle(void);	/* XXX prototype */
 
-			CPU_IDLE = (long *) rm52xx_idle;
-			break;
-		    }
-#endif /* MIPS3 && !MIPS3_5900 */
-		default:
-			/* Nothing. */
-			break;
-		}
-#if defined(MIPS32) || defined(MIPS64)
-	default:
-	    {
-		/*
-		 * XXX: wait is valid on all mips32/64, but do we
-		 *	always want to use it?
-		 */
-		void mipsNN_idle(void);
-
-		CPU_IDLE = (long *) mipsNN_idle;
-	    }
-#endif
+		CPU_IDLE = (long *)mips_wait_idle;
 	}
 }
 
