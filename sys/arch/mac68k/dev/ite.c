@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.7 1994/09/12 03:38:30 briggs Exp $
+ *	$Id: ite.c,v 1.8 1994/09/29 03:33:13 briggs Exp $
  */
 
 /*
@@ -64,6 +64,7 @@
 #include <dev/cons.h>
 
 #include "../mac68k/via.h"
+#include <machine/cpu.h>
 #include <machine/frame.h>
 
 #define KEYBOARD_ARRAY
@@ -896,13 +897,16 @@ itecngetc(dev_t dev)
 
 itecnputc(dev_t dev, int c)
 {
-	int s;
+extern	dev_t	mac68k_serdev;
+	int 	s;
 
 /* 	s = splhigh (); */
 
 	erasecursor ();
 	ite_putchar (c);
 	drawcursor ();
+	if (mac68k_machine.serial_boot_echo)
+		sercnputc(mac68k_serdev, c);
 
 /* 	splx (s); */
 }
