@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.490 2002/11/26 18:13:29 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.491 2002/12/03 06:08:36 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.490 2002/12/03 06:08:00 explorer Exp 
  */
 
 /*
@@ -5744,6 +5744,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ricoh",
 	    "5C478 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C552,
+	    0,
+	    "Ricoh",
+	    "5C552 PCI-CardBus bridge/Firewire",
 	},
 	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
