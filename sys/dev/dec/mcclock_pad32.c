@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.c,v 1.4 1996/12/08 00:22:21 cgd Exp $	*/
+/* $NetBSD: mcclock_pad32.c,v 1.5 1997/04/06 22:31:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/kernel.h>

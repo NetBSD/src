@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.18 1997/02/27 01:27:54 thorpej Exp $	*/
+/* $NetBSD: tcds.c,v 1.19 1997/04/06 22:32:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
