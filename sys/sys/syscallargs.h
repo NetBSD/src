@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallargs.h,v 1.91 2000/08/18 19:26:56 cgd Exp $	*/
+/* $NetBSD: syscallargs.h,v 1.92 2000/08/18 19:35:26 cgd Exp $ */
 
 /*
  * System call argument lists.
