@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.1 2002/01/01 21:51:38 augustss Exp $ */
+/* $NetBSD: radio.c,v 1.2 2002/01/02 02:44:02 augustss Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -29,13 +29,18 @@
 
 /* This is the /dev/radio driver from OpenBSD */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.2 2002/01/02 02:44:02 augustss Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 #include <sys/radioio.h>
+#include <sys/conf.h>
 
 #include <dev/radio_if.h>
 #include <dev/radiovar.h>
@@ -46,6 +51,8 @@ int	radioopen(dev_t, int, int, struct proc *);
 int	radioclose(dev_t, int, int, struct proc *);
 int	radioioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	radioprint(void *, const char *);
+int	radiodetach(struct device *, int);
+int	radioactivate(struct device *, enum devact);
 
 struct cfattach radio_ca = {
 	sizeof(struct radio_softc), radioprobe, radioattach,
@@ -144,7 +151,7 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
  * Called from hardware driver. This is where the MI radio driver gets
  * probed/attached to the hardware driver
  */
-struct device  *
+struct device *
 radio_attach_mi(struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 {
 	struct radio_attach_args arg;
@@ -157,5 +164,42 @@ radio_attach_mi(struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 int
 radioprint(void *aux, const char *pnp)
 {
-	return UNCONF;
+	if (pnp != NULL)
+		printf("radio at %s", pnp);
+	return (UNCONF);
+}
+
+int
+radiodetach(struct device *self, int flags)
+{
+	/*struct radio_softc *sc = (struct radio_softc *)self;*/
+	int maj, mn;
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == radioopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close). */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	return (0);
+}
+
+int
+radioactivate(struct device *self, enum devact act)
+{
+	struct radio_softc *sc = (struct radio_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
+	return (0);
 }
