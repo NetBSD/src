@@ -1,7 +1,6 @@
-#	@(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-#Missing: index iso papers ps2 ucs
-SUBDIR=	ps1 smm usd
+SUBDIR=	psd smm usd
 
 all depend lint tags:
 
