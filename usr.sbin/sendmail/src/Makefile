@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 1997/10/25 06:58:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 1998/09/27 17:22:14 lukem Exp $
 #
 #  NetBSD Makefile
 #
@@ -40,8 +40,10 @@ BINDIR=	/usr/sbin
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
+.if !defined(NOSHARE)
 FILES=sendmail.hf
 FILESDIR=/usr/share/misc
+.endif
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
