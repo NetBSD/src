@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.32 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.32 2001/10/22 07:07:46 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,8 @@ typeerr:		LABEL;
 		}
 		break;
 	}
+	if (Wflag)
+		goto afterpermwhack;
 	if (iflag && !uflag) {
 		if (s->flags & F_FLAGS)
 		    SETFLAGS(p->fts_accpath, s->st_flags,
@@ -333,6 +335,12 @@ typeerr:		LABEL;
 			(void)printf(")\n");
 		tab = "\t";
 	}
+
+	/*
+	 * from this point, no more permission checking or whacking
+	 * occurs, only checking of stuff like checksums and symlinks.
+	 */
+ afterpermwhack:
 	if (s->flags & F_CKSUM) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {
 			LABEL;

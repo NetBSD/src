@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2001/10/25 03:00:14 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2001/10/25 14:47:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,7 @@ const char *rlink(const char *);
 int	 verify(void);
 
 extern int	dflag, eflag, iflag, lflag, mflag, rflag, sflag, tflag, uflag;
+extern int	Wflag;
 extern size_t	lineno;
 extern int	crc_total, ftsoptions, keys;
 extern char	fullpath[];
