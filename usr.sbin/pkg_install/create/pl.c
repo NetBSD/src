@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.11.2.1 1999/08/22 17:46:25 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.11 1999/03/02 10:32:23 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.11.2.1 1999/08/22 17:46:25 he Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 static int
 dircmp(const void *vp1, const void *vp2)
 {
-	return strcmp(vp2, vp1);
+	return strcmp((const char *)vp2, (const char *)vp1);
 }
 
 /* re-order the PLIST_DIR_RM entries into reverse alphabetic order */
@@ -139,16 +139,11 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * starts, it's ok to do this somewhere here 
 			 */
 			{
-			    char *s, t[FILENAME_MAX], *u;
+			    char *s, t[FILENAME_MAX];
 			    
-			    if (p->name[0] == '/')
-				u=p->name;
-			    else {
-				snprintf(t, FILENAME_MAX, "%s/%s", cwd, p->name);
-				u=t;
-			    }
+			    (void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
 			    
-			    s=pkgdb_retrieve(u);
+			    s=pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
  fprintf(stderr, "pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
 #endif
