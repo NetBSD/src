@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.16 1996/07/20 18:56:58 ragge Exp $
+#	$NetBSD: GENERIC,v 1.17 1996/08/20 14:05:16 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -59,6 +59,8 @@ options		SYSVSHM
 options		COMPAT_43
 options		COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
+options		COMPAT_12
 #options		COMPAT_ULTRIX
 options		TCP_COMPAT_42
 
@@ -72,15 +74,22 @@ config          netbsd          swap generic
 cpu0		at backplane0	# Only one CPU so far.
 sbi*		at backplane0	# SBI's are always at backplane (Abus).
 mem*		at backplane0	# Some machines have memory at backplane.
-vsbus0		at backplane0	# Internal "virtual" VAXstation bus
 bi*		at backplane0	# VAXBI bus
+cmi0		at backplane0	# 11/750 internal bus.
+uba0		at backplane0	# MicroVAXen only have QBUS.
+vsbus0		at backplane0	# Internal "virtual" VAXstation bus
 
 # Devices connected at VAXBI
 cpu0		at bi? node?	# KA820/KA825 cpu
-mem*		at bi? node?	# MS820 memory
+mem*		at bi? node?	# Memory subsystems
+#ni*		at bi? node?	# DEBNA/DEBNT ethernet adapter
 kdb*		at bi? node?	# KDB50 MSCP disk ctlr
 mscpbus*	at kdb?
-#ni*		at bi? node?	# DEBNA/DEBNK ethernet adapter
+
+# Devices connected at cmi
+mem*		at cmi? tr?	# Memory subsystems
+uba*		at cmi? tr?	# Unibus adapters
+mba*		at cmi? tr?	# Massbus adapters
 
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems
@@ -108,9 +117,7 @@ ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
 hdc0		at vsbus0		# The strange builtin MFM controller
-rd0		at hdc0 drive 0		# first RD??-disk in system cabinet
-rd1		at hdc0 drive 1		# second RD??-disk in external box
-rd2		at hdc0 drive 2		# RX33-floppy
+rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
 
 # VAXstation builtin SCSI-controller (NCR5380)
 ncr0		at vsbus0		# 1st built-in SCSI interface
