@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.52 2000/01/22 09:48:52 mjl Exp $       */
+/*     $NetBSD: login.c,v 1.53 2000/02/04 02:17:14 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.52 2000/01/22 09:48:52 mjl Exp $");
+__RCSID("$NetBSD: login.c,v 1.53 2000/02/04 02:17:14 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -547,6 +547,11 @@ main(argc, argv)
 	if (krbtkfile_env)
 		dofork();
 #endif
+
+	/* Destroy environment unless user has requested its preservation. */
+	if (!pflag)
+		environ = envinit;
+
 #ifdef LOGIN_CAP
 	if (setusercontext(lc, pwd, pwd->pw_uid, 
 	    LOGIN_SETALL & ~LOGIN_SETPATH) != 0) {
@@ -580,9 +585,6 @@ main(argc, argv)
 	}
 #endif
 	
-	/* Destroy environment unless user has requested its preservation. */
-	if (!pflag)
-		environ = envinit;
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0') {
