@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.3 2001/10/18 03:48:48 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.4 2001/10/18 03:55:07 thorpej Exp $ */
 
 /*
  * 
@@ -67,6 +67,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+/* XXX Should use Properties when that's fleshed out. */
+#ifdef macppc
+#include <dev/ofw/openfirm.h>
+#endif /* macppc */
 
 struct gem_pci_softc {
 	struct	gem_softc	gsc_gem;	/* GEM device */
@@ -151,7 +156,22 @@ gem_attach_pci(parent, self, aux)
 		extern void myetheraddr __P((u_char *));
 		myetheraddr(sc->sc_enaddr);
 	}
-#endif
+#endif /* __sparc__ */
+#ifdef macppc
+	{
+		int node;
+
+		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+		if (node == 0) {
+			printf("%s: unable to locate OpenFirmware node\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		OF_getprop(node, "local-mac-address", sc->sc_enaddr,
+		    sizeof(sc->sc_enaddr));
+	}
+#endif /* macppc */
 
 	sc->sc_burst = 16;	/* XXX */
 
