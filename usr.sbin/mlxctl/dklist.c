@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.1 2001/02/04 17:30:37 ad Exp $	*/
+/*	$NetBSD: dklist.c,v 1.2 2001/04/17 13:32:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.1 2001/02/04 17:30:37 ad Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.2 2001/04/17 13:32:39 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,9 +96,9 @@ __RCSID("$NetBSD: dklist.c,v 1.1 2001/02/04 17:30:37 ad Exp $");
 static SIMPLEQ_HEAD(, mlx_disk) mlx_disks;
 
 static struct nlist namelist[] = {
-#define X_DISK_COUNT	4
+#define X_DISK_COUNT	0
 	{ "_disk_count" },	/* number of disks */
-#define X_DISKLIST	5
+#define X_DISKLIST	1
 	{ "_disklist" },	/* TAILQ of disks */
 	{ NULL },
 };
