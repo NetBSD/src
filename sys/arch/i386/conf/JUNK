@@ -1,4 +1,4 @@
-#	$NetBSD: JUNK,v 1.1 1995/02/19 03:44:21 glass Exp $
+#	$NetBSD: JUNK,v 1.2 1995/02/19 04:26:16 glass Exp $
 #
 #	JUNK -- Adam's Compaq SLT 386/20
 #
@@ -61,6 +61,8 @@ wd0	at wdc0 drive 0
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd0	at fdc0 drive 0
+
+ed0	at isa? port 0x250 iomem 0xd8000 irq 9 # ethernet
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 6		# packet filter
