@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.11 1997/10/19 14:26:21 fvdl Exp $	*/
+/*	$NetBSD: comreg.h,v 1.12 2003/06/05 13:40:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -47,6 +47,9 @@
 #define	IER_EMSC	0x8	/* Enable modem status interrupt */
 #define	IER_ERTS	0x40	/* Enable RTS interrupt */
 #define	IER_ECTS	0x80	/* Enable CTS interrupt */
+/* PXA2X0's ns16550 ports have extra bits in this register */
+#define	IER_ERXTOUT	0x10	/* Enable rx timeout interrupt */
+#define	IER_EUART	0x40	/* Enable UART */
 
 /* interrupt identification register */
 #define	IIR_IMASK	0xf
