@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.111 2001/07/31 23:27:35 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.112 2001/08/08 21:22:35 david Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.111 2001/07/31 23:27:35 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.112 2001/08/08 21:22:35 david Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,6 +139,7 @@ char	name[30];
 int	flags, metric, mtu, setaddr, setipdst, doalias;
 int	clearaddr, s;
 int	newaddr = -1;
+int	conflicting = 0;
 int	nsellength = 1;
 int	af;
 int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag;
@@ -597,6 +598,12 @@ main(argc, argv)
 		}
 		argc--, argv++;
 	}
+
+	/* See if multiple alias, -alias, or delete commands were
+	specified. More than one constitutes an invalid command line */
+
+	if (conflicting > 1) 
+		err(1, "Only one use of alias, -alias or delete is valid.");
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands();
@@ -1085,8 +1092,10 @@ notealias(addr, param)
 	if (param < 0) {
 		clearaddr = 1;
 		newaddr = 0;
+		conflicting++;
 	} else
 		clearaddr = 0;
+		conflicting++;
 }
 
 /*ARGSUSED*/
