@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.36 1998/04/30 18:27:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.37 1998/05/02 01:00:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ tcp_output(tp)
 		 * Hughes/Touch/Heidemann Congestion Window Monitoring.
 		 * Count the number of packets currently pending
 		 * acknowledgement, and limit our congestion window
-		 * to the initial congestion window plus that count.
+		 * to a pre-determined allowed burst size plus that count.
 		 * This prevents bursting once all pending packets have
 		 * been acknowledged (i.e. transmission is idle).
 		 */
