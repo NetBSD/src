@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2002/02/03 16:22:27 lukem Exp $
+#	$NetBSD: list,v 1.8 2002/02/03 16:58:47 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/i386/stand
 
@@ -40,7 +40,6 @@ PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/more	usr/bin/less
 PROG	usr/bin/sed
-# XXX: added more
 
 PROG	usr/mdec/installboot
 
