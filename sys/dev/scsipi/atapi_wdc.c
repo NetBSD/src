@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.7 1998/09/20 13:16:17 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.8 1998/09/20 17:08:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -200,7 +200,6 @@ wdc_atapi_send_cmd(sc_xfer)
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->drive = sc_xfer->sc_link->scsipi_atapi.drive;
-	xfer->channel = sc_xfer->sc_link->scsipi_atapi.channel;
 	xfer->c_flags |= C_ATAPI;
 	xfer->cmd = sc_xfer;
 	xfer->databuf = sc_xfer->data;
