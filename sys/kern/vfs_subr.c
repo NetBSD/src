@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.4.1 1999/10/19 12:50:07 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.4.2 1999/10/21 19:21:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -212,6 +212,9 @@ vfs_busy(mp, flags, interlkp)
 		
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
+		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
+		    && mp->mnt_unmounter == curproc)
+			return (EDEADLK);
 		if (interlkp)
 			simple_unlock(interlkp);
 		/*
@@ -416,7 +419,7 @@ getnewvnode(tag, mp, vops, vpp)
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
-	int error;
+	int error = 0;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
@@ -430,8 +433,8 @@ getnewvnode(tag, mp, vops, vpp)
 		 * (This puts the per-mount vnode list logically under
 		 * the protection of the vfs_busy lock).
 		 */
-		error = vfs_busy(mp, 0, 0);
-		if (error)
+		error = vfs_busy(mp, LK_RECURSEFAIL, 0);
+		if (error && error != EDEADLK)
 			return error;
 	}
 
@@ -483,7 +486,8 @@ getnewvnode(tag, mp, vops, vpp)
 		 */
 		if (vp == NULLVP) {
 			simple_unlock(&vnode_free_list_slock);
-			if (mp) vfs_unbusy(mp);
+			if (mp && error != EDEADLK)
+				vfs_unbusy(mp);
 			tablefull("vnode");
 			*vpp = 0;
 			return (ENFILE);
@@ -528,7 +532,8 @@ getnewvnode(tag, mp, vops, vpp)
 	vp->v_usecount = 1;
 	vp->v_data = 0;
 	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
-	if (mp) vfs_unbusy(mp);
+	if (mp && error != EDEADLK)
+		vfs_unbusy(mp);
 	return (0);
 }
 
@@ -543,7 +548,8 @@ insmntque(vp, mp)
 
 #ifdef DIAGNOSTIC
 	if ((mp != NULL) &&
-	    (mp->mnt_flag & MNT_UNMOUNT)) {
+	    (mp->mnt_flag & MNT_UNMOUNT) &&
+	    !(mp->mnt_flag & MNT_SOFTDEP)) {
 		panic("insmntque into dying filesystem");
 	}
 #endif
