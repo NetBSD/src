@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.16 1998/03/24 09:51:23 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.17 1998/11/16 00:10:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -397,6 +397,69 @@ rconsmmap (dev, off, prot)
 {
 	return 0;
 }
+
+
+#ifdef notyet
+void
+rconsstart(tp)
+	struct tty *tp;
+{
+	struct clist *cl;
+	register int s;
+
+	s = spltty();
+	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
+		goto out;
+
+	cl = &tp->t_outq;
+	if (cl->c_cc) {
+		tp->t_state |= TS_BUSY;
+		if (0 /* hardware prio */) {
+			/* called at level zero - update screen now. */
+			(void) splsoftclock();
+			/*kd_putfb(tp);*/
+			(void) spltty();
+			tp->t_state &= ~TS_BUSY;
+		} else {
+			/* called at interrupt level - do it later */
+			timeout(rcons_later, (void*)tp, 0);
+		}
+	}
+	if (cl->c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)cl);
+		}
+		selwakeup(&tp->t_wsel);
+	}
+out:
+	splx(s);
+}
+
+
+/*
+ * Timeout function to do delayed writes to the screen.
+ * Called at splsoftclock when requested by rconssstart.
+ */
+static void
+rcons_later(tpaddr)
+	void *tpaddr;
+{
+	struct tty *tp = tpaddr;
+	register int s;
+
+#if 0
+	/*XXX*/printf("rcons_later\n");
+#endif
+
+	s = spltty();
+	(*(fbconstty->t_oproc)) (tp);	/* XXX */
+
+	tp->t_state &= ~TS_BUSY;
+	(*linesw[tp->t_line].l_start)(tp);
+	splx(s);
+}
+#endif	/* notyet */
 
 
 /*
