@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.19 2004/09/25 12:27:35 lukem Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.20 2004/09/28 10:46:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.19 2004/09/25 12:27:35 lukem Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.20 2004/09/28 10:46:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,6 +104,7 @@ __weak_alias(getgrouplist,_getgrouplist)
 static int
 _nss_dns_getgrouplist(void *retval, void *cb_data, va_list ap)
 {
+	int		*result	= va_arg(ap, int *);
 	const char 	*uname	= va_arg(ap, const char *);
 	gid_t		 agroup	= va_arg(ap, gid_t);
 	gid_t		*groups	= va_arg(ap, gid_t *);
@@ -160,7 +161,7 @@ _nss_dns_getgrouplist(void *retval, void *cb_data, va_list ap)
 		ngroups++;
 	}
 
-	*(int *)retval = ret;
+	*result = ret;
 	*grpcnt = ngroups;
 	rv = NS_SUCCESS;
 
@@ -177,7 +178,7 @@ int
 getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
 	struct group *grp;
-	int i, ngroups, maxgroups, ret, glretval;
+	int i, ngroups, maxgroups, ret;
 
 	static const ns_dtab dtab[] = {
 		NS_DNS_CB(_nss_dns_getgrouplist, NULL)
@@ -185,15 +186,15 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	};
 
 	_DIAGASSERT(uname != NULL);
-	_DIAGASSERT(groups != NULL);
+	/* groups may be NULL if just sizing when invoked with *grpcnt = 0 */
 	_DIAGASSERT(grpcnt != NULL);
 
 			/* first, try source-specific optimized getgrouplist */
-	ret = nsdispatch(&glretval, dtab, NSDB_GROUP, "getgrouplist",
+	i = nsdispatch(NULL, dtab, NSDB_GROUP, "getgrouplist",
 	    __nsdefaultsrc,
-	    uname, agroup, groups, grpcnt);
-	if (ret == NS_SUCCESS)
-		return glretval;
+	    &ret, uname, agroup, groups, grpcnt);
+	if (i == NS_SUCCESS)
+		return ret;
 
 			/* fallback to scan the group(5) database */
 	ret = 0;
