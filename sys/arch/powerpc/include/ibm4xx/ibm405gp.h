@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.4 2001/08/14 04:32:56 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.5 2001/10/21 15:09:36 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -341,7 +341,7 @@
 #define	  STACR_OPBC_83MHZ	  0x00000800	/* OPB bus clock freq -  83MHz */
 #define	  STACR_OPBC_100MHZ	  0x00000c00	/* OPB bus clock freq - 100MHz */
 #define	  STACR_PCDA		  0x000003e0	/* PHY cmd dest address mask */
-#define	  STACR_PDCASHIFT	  5
+#define	  STACR_PCDASHIFT	  5
 #define	  STACR_PRA		  0x0000001f	/* PHY register address mask */
 #define	  STACR_PRASHIFT	  0
 
