@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.217 2003/10/26 00:37:43 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.218 2003/10/26 13:35:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2658,3 +2658,10 @@ lib/libutil/shlib_version			diff
 	Added two functions disklabel_dkcksum() and disklabel_scan() to libutil
 	so that they can be shared by disklabel(8) and cgdconfig(8).
 	[jmc, ticket #1461]
+
+share/termcap/termcap.src			1.84
+
+	Added xterm-color entry from ESR's / ncurses termcap.src for,
+	primarily, Mac OS X 10.3.
+	[jklos, ticket #1539]
+
