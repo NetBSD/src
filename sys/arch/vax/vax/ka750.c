@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.12 1996/04/08 18:32:42 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.13 1996/07/20 18:14:53 ragge Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ka750.c	7.4 (Berkeley) 5/9/91
- *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
+ *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
 
 #include <sys/param.h>
@@ -48,8 +48,10 @@
 #include <machine/ka750.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/mtpr.h>
 #include <machine/scb.h>
+
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
 
@@ -60,14 +62,14 @@ void	ctuattach __P((void));
  */
 void
 ka750_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	extern	char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
-	    V750HARDW(cpu_type), V750UCODE(cpu_type));
+	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
 	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
 		printf("FPA present, enabling.\n");
@@ -79,28 +81,6 @@ ka750_conf(parent, self, aux)
 	ctuattach();
 }
 
-/*
- * ka750_clock() makes the 11/750 interrupt clock and todr
- * register start counting.
- */
-int
-ka750_clock()
-{
-
-	mtpr(-10000, PR_NICR); /* Load in count register */
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	if (mfpr(PR_TODR)) {
-		/* todr running */
-		return 0;
-	} else {
-		/* Start TODR register. */
-		mtpr(1, PR_TODR);
-		return 1;
-	}
-
-}
-
-
 extern volatile caddr_t mcraddr[];
 
 struct	mcr750 {
@@ -109,17 +89,17 @@ struct	mcr750 {
 	int	mc_inf;			/* info bits */
 };
 
-#define	M750_ICRD	0x10000000	/* inhibit crd interrupts, in [1] */
-#define	M750_UNCORR	0xc0000000	/* uncorrectable error, in [0] */
-#define	M750_CORERR	0x20000000	/* correctable error, in [0] */
+#define M750_ICRD	0x10000000	/* inhibit crd interrupts, in [1] */
+#define M750_UNCORR	0xc0000000	/* uncorrectable error, in [0] */
+#define M750_CORERR	0x20000000	/* correctable error, in [0] */
 
-#define	M750_INH(mcr)	((mcr)->mc_inh = 0)
-#define	M750_ENA(mcr)	((mcr)->mc_err = (M750_UNCORR|M750_CORERR), \
+#define M750_INH(mcr)	((mcr)->mc_inh = 0)
+#define M750_ENA(mcr)	((mcr)->mc_err = (M750_UNCORR|M750_CORERR), \
 			 (mcr)->mc_inh = M750_ICRD)
-#define	M750_ERR(mcr)	((mcr)->mc_err & (M750_UNCORR|M750_CORERR))
+#define M750_ERR(mcr)	((mcr)->mc_err & (M750_UNCORR|M750_CORERR))
 
-#define	M750_SYN(err)	((err) & 0x7f)
-#define	M750_ADDR(err)	(((err) >> 9) & 0x7fff)
+#define M750_SYN(err)	((err) & 0x7f)
+#define M750_ADDR(err)	(((err) >> 9) & 0x7fff)
 
 /* enable crd interrupts */
 void
@@ -209,7 +189,7 @@ struct mc750frame {
 };
 
 #define MC750_TBERR	2		/* type code of cp tbuf par */
-#define	MC750_TBPAR	4		/* tbuf par bit in mcesr */
+#define MC750_TBPAR	4		/* tbuf par bit in mcesr */
 
 int
 ka750_mchk(cmcf)
