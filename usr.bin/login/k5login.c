@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.12 2000/05/30 06:56:16 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.13 2000/08/02 05:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.12 2000/05/30 06:56:16 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.13 2000/08/02 05:58:35 thorpej Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: k5login.c,v 1.12 2000/05/30 06:56:16 aidan Exp $");
 krb5_context kcontext;
 
 int notickets;
+int krb5_configured;
 char *krb5tkfile_env;
 extern char *tty;
 extern int login_krb5_forwardable_tgt;
@@ -194,6 +195,8 @@ k5login(pw, instance, localhost, password)
 	char *realm, *client_name;
 	char *principal;
 
+	krb5_configured = 1;
+
 	if (login_krb5_forwardable_tgt)
 		options |= KDC_OPT_FORWARDABLE;
 
@@ -206,8 +209,10 @@ k5login(pw, instance, localhost, password)
 	 * without issuing any tickets.
 	 */
 	if (strcmp(pw->pw_name, "root") == 0 ||
-	    krb5_get_default_realm(kcontext, &realm))
+	    krb5_get_default_realm(kcontext, &realm)) {
+		krb5_configured = 0;
 		return (1);
+	}
 
 	/*
 	 * get TGT for local realm
