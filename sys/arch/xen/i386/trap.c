@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $	*/
 /*	NetBSD: trap.c,v 1.202 2004/08/28 17:53:01 jdolecek Exp		*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.5 2005/03/09 22:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2005/03/11 20:39:39 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -690,7 +690,7 @@ copyfault:
 		}
 		break;
 
-#if	NISA > 0 || NMCA > 0
+#if	XXXNISA > 0 || NMCA > 0
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -713,13 +713,13 @@ copyfault:
 			goto we_re_toast;
 		else
 			return;
-#else /* NISA > 0 */
+#else /* XXXNISA > 0 */
 		if (x86_nmi() != 0)
 			goto we_re_toast;
 		else
 			return;
 #endif /* NMCA > 0 */
-#endif /* NISA > 0 || NMCA > 0 */
+#endif /* XXXNISA > 0 || NMCA > 0 */
 	}
 
 	if ((type & T_USER) == 0)
