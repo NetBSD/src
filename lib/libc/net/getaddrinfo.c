@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.67 2004/04/14 04:37:06 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.68 2004/04/14 04:45:28 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.67 2004/04/14 04:37:06 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.68 2004/04/14 04:45:28 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -588,17 +588,6 @@ explore_fqdn(pai, hostname, servname, res)
 	_DIAGASSERT(res != NULL);
 
 	result = NULL;
-
-#if 0
-	/*
-	 * If AI_ADDRCONFIG is specified, check if we are expected to
-	 * return the address family or not.
-	 * XXX does not handle PF_UNSPEC - should filter out result from
-	 * nsdispatch()
-	 */
-	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai))
-		return 0;
-#endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
