@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.11 1997/09/15 01:56:08 lukem Exp $
+.\"	$NetBSD: init.8,v 1.12 1997/10/11 03:02:36 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,12 +81,12 @@ then
 .Nm
 will require that the superuser password be
 entered before the system will start a single-user shell.
-The password check is skipped if the 
+The password check is skipped if the
 .Sq console
 is marked as ``secure''.
 .Pp
 The kernel runs with four different levels of security.
-Any superuser process can raise the security level, but only 
+Any superuser process can raise the security level, but only
 .Nm
 can lower it.
 Security levels are defined as follows:
@@ -133,7 +133,7 @@ and
 .Xr config 8
 for details.
 .Pp
-In multi-user operation, 
+In multi-user operation,
 .Nm
 maintains
 processes for the terminal ports found in the file
@@ -198,7 +198,7 @@ executes a new
 to enable a new login.
 If the getty or window field for a line is changed,
 the change takes effect at the end of the current
-login session (e.g., the next time 
+login session (e.g., the next time
 .Nm
 starts a process on the line).
 If a line is commented out or deleted from
@@ -288,9 +288,9 @@ System startup commands.
 .Xr config 8 ,
 .Xr crash 8 ,
 .Xr getty 8 ,
+.Xr halt 8 ,
 .Xr rc 8 ,
 .Xr reboot 8 ,
-.Xr halt 8 ,
 .Xr shutdown 8
 .Sh HISTORY
 A
