@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $ */
+/* $NetBSD: dtide.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.15 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -108,6 +108,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 		for (j = 0; j < WDC_NREG; j++)
 			bus_space_subregion(ch->cmd_iot, ch->cmd_baseioh,
 			    j, j == 0 ? 4 : 1, &ch->cmd_iohs[j]);
+		wdc_init_shadow_regs(ch);
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_ctloffsets[i], 0, 8,
 		    &ch->ctl_ioh);

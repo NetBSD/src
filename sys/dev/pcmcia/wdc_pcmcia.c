@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.67 2004/01/03 22:56:53 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.68 2004/05/25 20:42:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.67 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.68 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -361,6 +361,7 @@ wdc_pcmcia_attach(parent, self, aux)
 			goto mapaux_failed;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 	sc->sc_wdcdev.PIO_cap = 0;
