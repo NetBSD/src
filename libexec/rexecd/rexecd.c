@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.17 2003/08/07 09:46:46 agc Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.18 2004/05/11 08:07:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.17 2003/08/07 09:46:46 agc Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.18 2004/05/11 08:07:37 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,11 @@ void doit __P((int, struct sockaddr *));
 void getstr __P((char *, int, char *));
 
 char	username[32 + 1] = "USER=";
+char	logname[32 + 3 + 1] = "LOGNAME=";
 char	homedir[PATH_MAX + 1] = "HOME=";
 char	shell[PATH_MAX + 1] = "SHELL=";
 char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
-char	*envinit[] = { homedir, shell, path, username, 0 };
+char	*envinit[] = { homedir, shell, path, username, logname, 0 };
 char	**environ;
 int	dolog;
 
@@ -274,6 +275,7 @@ doit(f, fromp)
 	strlcat(homedir, pwd->pw_dir, sizeof(homedir));
 	strlcat(shell, pwd->pw_shell, sizeof(shell));
 	strlcat(username, pwd->pw_name, sizeof(username));
+	strlcat(logname, pwd->pw_name, sizeof(logname));
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
