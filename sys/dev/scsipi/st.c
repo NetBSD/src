@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.102 1998/08/31 22:28:07 cgd Exp $ */
+/*	$NetBSD: st.c,v 1.103 1998/09/02 02:18:48 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2297,7 +2297,7 @@ st_interpret_sense(xs)
 #else
 	if (doprint) {
 		xs->sc_link->sc_print_addr(xs->sc_link);
-		printf("Sense Key 0x%02X", key);
+		printf("Sense Key 0x%02x", key);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			switch (key) { 
 			case SKEY_NOT_READY:
