@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.5 2003/01/24 01:54:02 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.6 2003/03/08 08:03:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sem.c,v 1.6 2003/03/08 08:03:36 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
