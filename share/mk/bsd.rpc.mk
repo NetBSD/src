@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.8 2003/07/29 02:42:49 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.9 2003/10/19 06:10:41 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -11,6 +11,8 @@ RPC_XDIR?=	${.CURDIR}/
 
 .for I in ${RPC_INCS}
 ${I}: ${I:.h=.x}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${TOOL_RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
 .endfor
 
@@ -24,6 +26,8 @@ CLEANFILES+=	${RPC_INCS}
 
 .for I in ${RPC_XDRFILES}
 ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${TOOL_RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
@@ -42,6 +46,8 @@ _RPCS += -s ${I}
 .for I in ${RPC_SVCFILES}
 
 ${I}: ${RPC_XDIR}${I:_svc.c=.x}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	${TOOL_RPCGEN} -C ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
 		-o ${.TARGET}
 .endfor
