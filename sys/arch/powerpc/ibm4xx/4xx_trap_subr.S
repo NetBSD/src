@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.3 2003/03/11 10:40:16 hannken Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.4 2003/08/03 23:26:55 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,18 +79,18 @@ _C_LABEL(errata51size) = .-_C_LABEL(errata51handler)
 	.globl _C_LABEL(tlbdmiss4xx),_C_LABEL(tlbdm4size)
 _C_LABEL(tlbdmiss4xx):
 	STANDARD_PROLOG(tlbsave)
-	mfdear	r30		/* Get fault address */
-	mfesr	r31
-	stmw	r30,16+tlbsave(0)
+	mfdear	%r30		/* Get fault address */
+	mfesr	%r31
+	stmw	%r30,16+tlbsave(0)
 	bla	s4xx_miss
 _C_LABEL(tlbdm4size) = .-_C_LABEL(tlbdmiss4xx)
 
 	.globl _C_LABEL(tlbimiss4xx),_C_LABEL(tlbim4size)
 _C_LABEL(tlbimiss4xx):
 	STANDARD_PROLOG(tlbsave)
-	mfsrr0	r30		/* XXX Get fault address */
-	mfesr	r31
-	stmw	r30,16+tlbsave(0)
+	mfsrr0	%r30		/* XXX Get fault address */
+	mfesr	%r31
+	stmw	%r30,16+tlbsave(0)
 	bla	s4xx_miss
 _C_LABEL(tlbim4size) = .-_C_LABEL(tlbimiss4xx)
 
@@ -98,12 +98,12 @@ s4xx_miss:
 	.globl	_C_LABEL(pmap_tlbmiss)
 
 	/* If the kernel stack would fault, don't use it. */
-	mfpid	r30
-	li	r31,KERNEL_PID
-	mtpid	r31
-	li	r31,-FRAMELEN
-	tlbsx.	r31,r31,r1
-	mtpid	r30
+	mfpid	%r30
+	li	%r31,KERNEL_PID
+	mtpid	%r31
+	li	%r31,-FRAMELEN
+	tlbsx.	%r31,%r31,%r1
+	mtpid	%r30
 	beq	1f
 
 	/*
@@ -117,22 +117,22 @@ s4xx_miss:
 	 */
 
 	/* Switch to tlbstack */
-	addi	r30,r1,-FRAMELEN
-	lis	r1,tlbstack@ha
-	addi	r1,r1,tlbstack@l
-	stw	r30,4(1)
+	addi	%r30,%r1,-FRAMELEN
+	lis	%r1,tlbstack@ha
+	addi	%r1,%r1,tlbstack@l
+	stw	%r30,4(1)
 
 	FRAME_SETUP(tlbsave)
 
 	/* Take an explicit fault at (kernelstack,pid) */
-	lwz	r3, tlbstack+4(0)
-	li	r4,KERNEL_PID
+	lwz	%r3, tlbstack+4(0)
+	li	%r4,KERNEL_PID
 	bl	_C_LABEL(pmap_tlbmiss)
 	/*
 	 * We can retry the old fault or switch stacks and
 	 * take it now.  It's easier to retry.
 	 */
-	mr.	r3,r3
+	mr.	%r3,%r3
 	beq	2f
 
 	/* kernel stack not in the pmap? we should panic */
@@ -140,15 +140,15 @@ s4xx_miss:
 	ba	trapagain
 1:
 	FRAME_SETUP(tlbsave)
-	lwz	r3,FRAME_DEAR+8(1)
-	lwz	r4,FRAME_PID+8(1)
+	lwz	%r3,FRAME_DEAR+8(1)
+	lwz	%r4,FRAME_PID+8(1)
 	bl	_C_LABEL(pmap_tlbmiss)
-	mr.	r3,r3
+	mr.	%r3,%r3
 	beq	2f
 
 	/* XXX DEBUG -- make sure we're not on tlbstack */
-	addi	r7,r1,-tlbsave
-	twllei	r7,(tlbstacksize)
+	addi	%r7,%r1,-tlbsave
+	twllei	%r7,(tlbstacksize)
 
 	/* PTE not found, time to cause a fault */
 	ba	trapagain
