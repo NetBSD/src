@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.58 2003/04/18 05:38:40 thorpej Exp $
+# $NetBSD: postinstall,v 1.59 2003/05/10 10:20:31 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -657,7 +657,7 @@ do_obsolete()
 
 	failed=0
 
-	for obssrcfile in ${DEST_DIR}/var/db/obsolete/*; do
+	sort -ru ${DEST_DIR}/var/db/obsolete/* |
 		while read ofile; do
 			ofile=${DEST_DIR}${ofile#.}
 			cmd="rm"
@@ -679,8 +679,7 @@ do_obsolete()
 			else
 				msg "Removed obsolete ${ftype} ${ofile}"
 			fi
-		done < ${obssrcfile}
-	done
+		done
 
 	return ${failed}
 }
