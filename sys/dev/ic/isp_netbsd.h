@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.25 2000/06/28 17:12:58 mrg Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.26 2000/07/05 22:25:06 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -53,9 +53,16 @@
 #include <dev/scsipi/scsipi_debug.h>
 
 #include "opt_isp.h"
+/*
+ * We always support fabric now
+ */
+#ifndef	ISP2100_FABRIC
+#define	ISP2100_FABRIC
+#endif
+
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	997
+#define	ISP_PLATFORM_VERSION_MINOR	998
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
@@ -71,7 +78,6 @@ struct isposinfo {
 #define	seed		un._seed
 #define	discovered	un._discovered
 	TAILQ_HEAD(, scsipi_xfer) waitq; 
-	struct callout _watchdog;
 	struct callout _restart;
 };
 
@@ -121,6 +127,22 @@ struct isposinfo {
 #define	ISP_ILOCK		ISP_LOCK
 #define	ISP_IUNLOCK		ISP_UNLOCK
 
+#define	MBOX_WAIT_COMPLETE(isp)		\
+	{ \
+		int j; \
+		for (j = 0; j < 60 * 2000; j++) { \
+			if (isp_intr(isp) == 0) { \
+				SYS_DELAY(500); \
+			} \
+			if (isp->isp_mboxbsy == 0) \
+				break; \
+		} \
+		if (isp->isp_mboxbsy != 0) \
+			printf("%s: mailbox timeout\n", isp->isp_name); \
+	}
+
+#define	MBOX_NOTIFY_COMPLETE(isp)	isp->isp_mboxbsy = 0
+
 
 #define	XS_NULL(xs)		xs == NULL || xs->sc_link == NULL
 #define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
@@ -156,13 +178,30 @@ struct isposinfo {
 #define	XS_SNS_IS_VALID(xs)	(xs)->error = XS_SENSE
 #define	XS_IS_SNS_VALID(xs)	((xs)->error == XS_SENSE)
 
-#define	XS_INITERR(xs)		(xs)->error = 0
+#define	XS_PSTS_INWDOG		0x10000000
+#define	XS_PSTS_GRACE		0x20000000
+#define	XS_PSTS_ALL		0x30000000
+
+#define	XS_CMD_S_WDOG(xs)	(xs)->xs_status |= XS_PSTS_INWDOG
+#define	XS_CMD_C_WDOG(xs)	(xs)->xs_status &= ~XS_PSTS_INWDOG
+#define	XS_CMD_WDOG_P(xs)	(((xs)->xs_status & XS_PSTS_INWDOG) != 0)
+
+#define	XS_CMD_S_GRACE(xs)	(xs)->xs_status |= XS_PSTS_GRACE
+#define	XS_CMD_C_GRACE(xs)	(xs)->xs_status &= ~XS_PSTS_GRACE
+#define	XS_CMD_GRACE_P(xs)	(((xs)->xs_status & XS_PSTS_GRACE) != 0)
+
+#define	XS_CMD_S_DONE(xs)	(xs)->xs_status |= XS_STS_DONE
+#define	XS_CMD_C_DONE(xs)	(xs)->xs_status &= ~XS_STS_DONE
+#define	XS_CMD_DONE_P(xs)	(((xs)->xs_status & XS_STS_DONE) != 0)
+
+#define	XS_CMD_S_CLEAR(xs)	(xs)->xs_status &= ~XS_PSTS_ALL
+
+#define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 #define	XS_SETERR(xs, v)	(xs)->error = v
 #define	XS_ERR(xs)		(xs)->error
 #define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
 
-#define	XS_CMD_DONE(xs)		(xs)->xs_status |= XS_STS_DONE, scsipi_done(xs)
-#define	XS_IS_CMD_DONE(xs)	(((xs)->xs_status & XS_STS_DONE) != 0)
+#define	XS_CMD_DONE		isp_done
 
 /*
  * We use whether or not we're a polled command to decide about tagging.
@@ -217,6 +256,28 @@ extern void isp_uninit __P((struct ispsoftc *));
 #endif
 #define	ISP_SWIZZLE_SNS_REQ(a, b)
 #define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
+
+extern void isp_done	__P((ISP_SCSI_XFER_T *));
+#define	STRNCAT			strncat
+static inline char *strncat(char *, const char *, size_t);
+static inline char *
+strncat(char *d, const char *s, size_t c)
+{
+        char *t = d;
+
+        if (c) {
+                while (*d)
+                        d++;
+                while ((*d++ = *s++)) {
+                        if (--c == 0) {
+                                *d = '\0';
+                                break;
+                        }
+                }
+        }
+        return (t);
+}
+
 
 #define	INLINE	inline
 #include <dev/ic/isp_inline.h>
