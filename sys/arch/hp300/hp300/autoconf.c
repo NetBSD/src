@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: autoconf.c 1.31 91/01/21
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.6 1993/08/14 14:26:19 mycroft Exp $
+ *	$Id: autoconf.c,v 1.7 1994/05/23 06:13:52 mycroft Exp $
  */
 
 /*
@@ -948,7 +948,7 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev; swp++)
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
 			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
