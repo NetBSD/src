@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14.8.5 2002/06/20 13:36:41 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.6 2002/07/15 02:15:51 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,6 @@ static int	fixsel(const char *, void *);
 static int	expr_eval(struct nvlist *,
 		    int (*)(const char *, void *), void *);
 static void	expr_free(struct nvlist *);
-
-static struct devm *dupdevm(struct devm *);
 
 void
 initfiles(void)
@@ -338,10 +336,13 @@ fixdevsw(void)
 	struct devm *dm, *res;
 	char mstr[16];
 
-	TAILQ_INIT(&fixdevms);
 	fixdevmtab = ht_new();
 
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (dm->dm_opts != NULL &&
+		    !expr_eval(dm->dm_opts, fixsel, NULL))
+			continue;
+
 		res = ht_lookup(fixdevmtab, intern(dm->dm_name));
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
@@ -362,12 +363,8 @@ fixdevsw(void)
 				      dm->dm_name, dm->dm_cmajor,
 				      dm->dm_bmajor);
 			}
-			TAILQ_INSERT_TAIL(&fixdevms, dupdevm(dm), dm_next);
 		}
 
-		if (dm->dm_opts != NULL &&
-		    !expr_eval(dm->dm_opts, fixsel, NULL))
-			continue;
 		if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
 			xerror(dm->dm_srcfile, dm->dm_srcline,
 			       "device-major of character device '%s' is "
@@ -409,19 +406,6 @@ fixdevsw(void)
 	}
 
 	return (0);
-}
-
-static struct devm *
-dupdevm(struct devm *src_dm)
-{
-	struct devm *dst_dm;
-
-	dst_dm = emalloc(sizeof(*src_dm));
-	dst_dm->dm_name = src_dm->dm_name;
-	dst_dm->dm_cmajor = src_dm->dm_cmajor;
-	dst_dm->dm_bmajor = src_dm->dm_bmajor;
-
-	return (dst_dm);
 }
 
 /*
