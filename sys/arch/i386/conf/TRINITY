@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.27 1994/02/17 03:35:08 mycroft Exp $
+#	$Id: TRINITY,v 1.28 1994/02/18 17:23:50 mycroft Exp $
 #
 
 machine		"i386"
@@ -72,6 +72,7 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
 
 device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 #device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
