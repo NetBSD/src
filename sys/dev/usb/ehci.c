@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.10 2004/06/24 08:40:04 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.11 2004/07/02 17:12:34 he Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.10 2004/06/24 08:40:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.11 2004/07/02 17:12:34 he Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -477,7 +477,7 @@ ehci_intr(void *v)
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("ehci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("ehci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
@@ -2167,7 +2167,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 			next = ehci_alloc_sqtd(sc);
 			if (next == NULL)
 				goto nomem;
-			nextphys = next->physaddr;
+			nextphys = htole32(next->physaddr);
 		} else {
 			next = NULL;
 			nextphys = EHCI_NULL;
@@ -2187,7 +2187,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 #endif
 		}
 		cur->nextqtd = next;
-		cur->qtd.qtd_next = cur->qtd.qtd_altnext = htole32(nextphys);
+		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
 		cur->qtd.qtd_status =
 		    qtdstatus | htole32(EHCI_QTD_SET_BYTES(curlen));
 		cur->xfer = xfer;
