@@ -1,5 +1,0 @@
-#	$NetBSD: ftpchroot,v 1.3 1997/01/04 14:03:34 mrg Exp $
-#
-# list of users given ftp access to a chrooted area.
-# read by ftpd(8).
-#joeuser

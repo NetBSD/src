@@ -1,8 +1,0 @@
-# $NetBSD: std.next68k,v 1.9 2001/05/12 22:35:29 chs Exp $
-
-# Standard information for next68k
-machine	next68k m68k
-
-# Standard defines
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT

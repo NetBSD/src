@@ -1,6 +1,0 @@
-# $NetBSD: obsolete.amiga,v 1.4 2002/09/07 12:48:54 gehenna Exp $
-/usr/include/amiga/conf.h
-/usr/include/amiga/fbio.h
-/usr/include/amiga/svr4_machdep.h
-/usr/lib/c++rt0.o
-/usr/lib/scrt0.o
