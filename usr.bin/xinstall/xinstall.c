@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.82 2003/12/16 20:51:57 heas Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.83 2003/12/29 02:01:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.82 2003/12/16 20:51:57 heas Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.83 2003/12/29 02:01:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,7 @@ __RCSID("$NetBSD: xinstall.c,v 1.82 2003/12/16 20:51:57 heas Exp $");
 #define STRIP_ARGS_MAX 32
 #define BACKUP_SUFFIX ".old"
 
-int	dobackup, docopy, dodir, dostrip, dolink, dopreserve, dorename,
-	    dounpriv;
+int	dobackup, dodir, dostrip, dolink, dopreserve, dorename, dounpriv;
 int	numberedbackup;
 int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
@@ -160,7 +159,7 @@ main(int argc, char *argv[])
 			dobackup = 1;
 			break;
 		case 'c':
-			docopy = 1;
+			/* ignored; was "docopy" which is now the default. */
 			break;
 		case 'd':
 			dodir = 1;
@@ -671,9 +670,6 @@ install(char *from_name, char *to_name, u_int flags)
 			err(1, "%s: rename", to_name);
 		to_name = oto_name;
 	}
-
-	if (!docopy && !devnull && unlink(from_name))
-		err(1, "%s: unlink", from_name);
 
 	/*
 	 * If provided a set of flags, set them, otherwise, preserve the
