@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.83 1997/04/04 21:02:28 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.84 1997/04/04 21:05:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2108,11 +2108,11 @@ ttymalloc()
 
 	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
 	bzero(tp, sizeof *tp);
-	/* XXX: default to 4096 chars for now */
-	clalloc(&tp->t_rawq, 4096, 1);
-	clalloc(&tp->t_canq, 4096, 1);
+	/* XXX: default to 1024 chars for now */
+	clalloc(&tp->t_rawq, 1024, 1);
+	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
-	clalloc(&tp->t_outq, 4096, 0);
+	clalloc(&tp->t_outq, 1024, 0);
 	return(tp);
 }
 
