@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.2 2001/06/01 15:57:31 thorpej Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.3 2001/06/14 18:52:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -313,6 +313,17 @@ __C(CHIP,_bus_io_init)(t, v)
 	extent_alloc_region(ex, 0, 0xffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_IO_W1_BUS_START
+	/*
+	 * The window may be disabled.  We notice this by seeing
+	 * -1 as the bus base address.
+	 */
+	if (CHIP_IO_W1_BUS_START(v) == (bus_addr_t) -1) {
+#ifdef EXTENT_DEBUG
+		printf("io: this space is disabled\n");
+#endif
+		return;
+	}
+
 #ifdef EXTENT_DEBUG
 	printf("io: freeing from 0x%lx to 0x%lx\n", CHIP_IO_W1_BUS_START(v),
 	    CHIP_IO_W1_BUS_END(v));
