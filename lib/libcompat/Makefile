@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1994/05/06 06:49:32 cgd Exp $
+#	$Id: Makefile,v 1.8 1994/05/19 06:20:17 jtc Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -39,8 +39,11 @@ MAN3+=	insque.0 lsearch.0 re_comp.0 rexec.0
 MLINKS+=insque.3 remque.3
 MLINKS+=re_comp.3 re_exec.3
 
+
 # compat 4.4 sources
 SRCS+=	cuserid.c
+MAN3+=	cuserid.0
+
 
 # regexp sources
 SRCS+=	regerror.c regexp.c regsub.c
