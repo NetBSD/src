@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.59 2003/01/10 23:37:34 jmmv Exp $ */
+/*	$NetBSD: fdisk.c,v 1.60 2003/04/01 19:39:13 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.59 2003/01/10 23:37:34 jmmv Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.60 2003/04/01 19:39:13 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ struct disklabel disklabel;		/* disk parameters */
 int cylinders, sectors, heads, cylindersectors, disksectors;
 
 struct mboot {
-	u_int8_t	padding[2]; /* force the longs to be long alligned */
+	u_int8_t	padding[2]; /* force the longs to be long aligned */
 	u_int8_t	bootinst[MBR_PARTOFF];
 	struct mbr_partition parts[NMBRPART];
 	u_int16_t	signature;
@@ -837,7 +837,10 @@ editentries:
 		strcpy(&mbs->nametab[item][0], desc);
 		entry_changed = bootsel_modified = 1;
 
-		item++;
+		if (item < NMBRPART -1)
+			item++;
+		else
+			item = -1;
 	}
 
 	if (entry_changed)
@@ -893,13 +896,14 @@ editentries:
 	else
 		item = mbs->defkey - SCAN_F1;
 
-	if (item < 0 || item > 10 || mbs->nametab[item][0] == 0)
+	if (item < 0 || item > 10 ||
+	    (item < NMBRPART && mbs->nametab[item][0] == 0))
 		item = 10;
 
 	do {
 		decimal("Default boot option", &item);
 	} while (item < 0 || item > 10 ||
-		    (item <= 3 && mbs->nametab[item][0] == 0));
+		    (item < NMBRPART && mbs->nametab[item][0] == 0));
 
 	if (item == 10)
 		mbs->defkey = SCAN_ENTER;
