@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.218 2004/06/28 16:43:49 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.219 2004/06/28 20:24:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.218 2004/06/28 16:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.219 2004/06/28 20:24:16 martin Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -113,6 +113,11 @@ int	sd_get_simplifiedparms __P((struct sd_softc *, struct disk_parms *,
 	    int));
 int	sd_get_capacity __P((struct sd_softc *, struct disk_parms *, int));
 int	sd_get_parms __P((struct sd_softc *, struct disk_parms *, int));
+int	sd_get_parms_page4 __P((struct sd_softc *, struct disk_parms *, 
+	    int));
+int	sd_get_parms_page5 __P((struct sd_softc *, struct disk_parms *, 
+	    int));
+
 int	sd_flush __P((struct sd_softc *, int));
 int	sd_getcache __P((struct sd_softc *, int *));
 int	sd_setcache __P((struct sd_softc *, int));
