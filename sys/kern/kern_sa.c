@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.40 2002/11/25 21:44:45 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.41 2002/12/05 01:59:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.40 2002/11/25 21:44:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.41 2002/12/05 01:59:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -967,6 +967,7 @@ sa_vp_repossess(struct lwp *l)
 			break;
 		case LSSLEEP:
 			unsleep(l2);
+			l2->l_flag &= ~L_SINTR;
 			break;
 #ifdef DIAGNOSTIC
 		default:
