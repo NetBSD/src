@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.3 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.4 2002/03/14 12:30:10 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -237,7 +237,7 @@ static int ipl_load()
 	 */
 	(void)ipl_remove();
 
-	error = iplattach();
+	error = ipl_enable();
 	if (error)
 		return error;
 

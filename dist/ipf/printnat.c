@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.1 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.2 2002/03/14 12:30:10 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,6 +7,9 @@
  *
  * Added redirect stuff and a variety of bug fixes. (mcn@EnGarde.com)
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -57,7 +60,7 @@ extern	char	*sys_errlist[];
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.1.2.4 2002/01/02 03:45:07 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.1.2.6 2002/02/22 15:32:56 darrenr Exp";
 #endif
 
 
@@ -227,7 +230,7 @@ int opts;
 
 	printf(" [%s", inet_ntoa(nat->nat_oip));
 	if ((nat->nat_flags & IPN_TCPUDP) != 0)
-		printf(" %hu]", ntohs(nat->nat_oport));
+		printf(" %hu", ntohs(nat->nat_oport));
 	printf("]");
 
 	if (opts & OPT_VERBOSE) {

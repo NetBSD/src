@@ -1,10 +1,13 @@
-/*	$NetBSD: printstate.c,v 1.1.1.1 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.2 2002/03/14 12:30:10 martti Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>

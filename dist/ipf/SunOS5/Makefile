@@ -60,7 +60,7 @@ IPF=$(OBJ)/ipf.o $(OBJ)/parse.o $(OBJ)/common.o $(OBJ)/opt.o \
 IPT=$(OBJ)/ipt.o $(OBJ)/parse.o $(OBJ)/common.o $(OBJ)/fil.o $(OBJ)/ipft_sn.o \
     $(OBJ)/ipft_ef.o $(OBJ)/ipft_td.o $(OBJ)/ipft_pc.o  $(OBJ)/opt.o \
     $(OBJ)/ipft_tx.o $(OBJ)/misc.o $(OBJ)/ip_state_u.o $(OBJ)/ip_frag_u.o \
-    $(OBJ)/ip_nat_u.o $(OBJ)/inet_addr.o $(OBJ)/ip_fil_u.o \
+    $(OBJ)/ip_nat_u.o $(OBJ)/inet_addr.o $(OBJ)/ip_fil_u.o $(OBJ)/ip_log_u.o \
     $(OBJ)/ipft_hx.o $(OBJ)/ip_proxy_u.o $(OBJ)/ip_auth_u.o \
     $(OBJ)/natparse.o $(OBJ)/facpri.o $(OBJ)/printnat.o $(OBJ)/printstate.o
 IPNAT=$(OBJ)/ipnat.o $(OBJ)/kmem.o $(OBJ)/natparse.o $(OBJ)/inet_addr.o \
@@ -219,6 +219,9 @@ $(OBJ)/ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h
 $(OBJ)/ip_sfil.o: $(TOP)/ip_sfil.c $(TOP)/ip_fil.h
 	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_sfil.c -o $@
 
+$(OBJ)/ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_log.c -o $@
+
 $(OBJ)/ip_log.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h
 	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
 
@@ -239,6 +242,11 @@ $(OBJ)/facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 $(OBJ)/ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
+	/bin/rm -f $(TOP)/ipmon $(TOP)/$(OBJ)/ipmon
+	if [ -f /usr/lib/isaexec -a "$(OBJ)" != . ] ; then \
+		ln $(TOP)/ipf $(TOP)/ipmon; \
+	fi
+	ln -s `pwd`/$(OBJ)/ipmon $(TOP)/$(OBJ)/ipmon
 
 clean:
 	if [ `basename \`pwd\`` != SunOS5 ] ; then \

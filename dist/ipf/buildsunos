@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.5.2.10 2001/05/18 14:19:38 darrenr Exp
+# Id: buildsunos,v 2.5.2.12 2002/03/13 03:59:06 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -54,7 +54,14 @@ if [ $rev = 5 ] ; then
 
 	case "$CC" in
 	*gcc*)	# gcc
-		XARCH32=""
+		case `uname -p` in
+		sparc)
+			XARCH32="-m32"
+			;;
+		*)
+			XARCH32=""
+			;;
+		esac
 		XARCH64="-m64 -mcmodel=medlow"
 		;;
 	*)	# Sun C

@@ -12,6 +12,7 @@
 # Automatically determine compiler switches and defines for kernel compilation
 # based on our current CPU:
 #
+SGIREV=-DIRIX=$(SGI)
 DCPU=`uname -m`
 # workaround minor Makefile.kernio IP22 bug
 #if defined(DCPU) && ( $(DCPU) == "IP22" )
@@ -47,7 +48,7 @@ MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
 	"SOLARIS2=$(SOLARIS2)" "DEBUG=$(DEBUG)" "DCPU=$(CPU)" \
 	"CPUDIR=$(CPUDIR)"
 #
-CCARGS=-D_STANDALONE $(DEBUG) $(CFLAGS)
+CCARGS=$(SGIREV) -D_STANDALONE $(DEBUG) $(CFLAGS) $(IPFLOG)
 #
 ########## ########## ########## ########## ########## ########## ##########
 #
@@ -58,12 +59,13 @@ INSTALL=/sbin/install
 #
 MODOBJS=ip_fil.o fil_k.o ml_ipl.o ip_nat.o ip_frag.o ip_state.o ip_proxy.o \
 	ip_auth.o ip_log.o
-DFLAGS=$(IPFLKM) $(IPFLOG) $(KFLAGS) $(MLFLAGS) -jalr #-D_MP_NETLOCKS -DMP
+DFLAGS=$(IPFLKM) $(KFLAGS) $(MLFLAGS) -jalr $(SGIREV) \
+	#-D_MP_NETLOCKS -DMP
 IPF=ipf.o parse.o common.o opt.o inet_addr.o facpri.o
 IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
     opt.o ipft_tx.o misc.o ip_frag_u.o ip_state_u.o ip_nat_u.o ip_proxy_u.o \
-    ip_auth_u.o ipft_hx.o ip_fil_u.o inet_addr.o natparse.o facpri.o \
-    printnat.o printstate.o
+    ip_log_u.o ip_auth_u.o ipft_hx.o ip_fil_u.o inet_addr.o natparse.o \
+    facpri.o printnat.o printstate.o
 IPNAT=ipnat.o kmem.o natparse.o common.o inet_addr.o printnat.o
 FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o printstate.o
 
@@ -71,7 +73,7 @@ build all: ipf ipfstat ipftest ipmon ipnat $(LKM)
 
 ipfstat: $(FILS)
 	$(CC) $(CCARGS) $(STATETOP_CFLAGS) $(STATETOP_INC) $(FILS) \
-	-o $@ $(LIBS) $(STATETOP_LIB)
+	-o $@ $(LIBS) $(STATETOP_LIB) -lelf
 
 ipf: $(IPF)
 	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS)
@@ -84,7 +86,7 @@ ipftest: $(IPT)
 	ln -s `pwd`/ipftest $(TOP)
 
 ipnat: $(IPNAT)
-	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS)
+	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lelf
 
 tests:
 	(cd test; make )
@@ -159,6 +161,9 @@ ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
 ip_fil_u.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) -c $(TOP)/$(IPFILC) -o $@
 
+ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
+	$(CC) $(CCARGS) -c $(TOP)/ip_log.c -o $@
+
 $(LKM): $(MODOBJS) 
 	ld $(MLFLAGS) -r -d $(MODOBJS) -o $(LKM)
 
@@ -203,6 +208,8 @@ facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 ipmon: $(TOP)/ipmon.c
 	$(CC) $(CCARGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
+	${RM} -f $(TOP)/ipmon
+	ln -s `pwd`/ipmon $(TOP)
 
 natparse.o: $(TOP)/natparse.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_proxy.h $(TOP)/ip_nat.h
@@ -222,7 +229,7 @@ clean:
 	-(for i in *; do \
 		if [ -d $${i} -a -f $${i}/Makefile ] ; then \
 			cd $${i}; (make clean); cd ..; \
-			${RM} $${i}/Makefile* ; \
+			${RM} $${i}/Makefile* $${i}/Makefile.ipsend*; \
 			rmdir $${i}; \
 		fi \
 	done)

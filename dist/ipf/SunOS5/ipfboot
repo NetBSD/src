@@ -24,7 +24,7 @@ block_default_workaround() {
 	for NS in $NAMESERVERS ; do
 		IF_TO_NS=`/usr/sbin/route -n get $NS  2>/dev/null| \
 			  nawk '$1 == "interface:" { print $NF ; exit }' \
-			  2>dev/null`
+			  2>/dev/null`
 		if [ -z "$IF_TO_NS" ] ; then
 			continue
 		fi
@@ -33,7 +33,7 @@ block_default_workaround() {
 		if [ -z "$IP_TO_NS" ] ; then
 			continue
 		fi
-		echo "pass out on $IF_TO_NS quick proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
+		echo "pass out quick on $IF_TO_NS proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
 		ipf -f -
 	done
 }

@@ -10,6 +10,7 @@ SBINDEST=/sbin
 MANDIR=/usr/share/man
 CC=/usr/5bin/cc
 CFLAGS=-I..
+TOP=..
 #
 # For SunOS 4.1.x
 #
@@ -38,17 +39,17 @@ INSTALL=install
 #
 MODOBJS=ip_fil.o fil_k.o mls_ipl.o ip_nat.o ip_state.o ip_frag.o ip_proxy.o \
 	ip_auth.o ip_log.o
-DFLAGS=$(IPFLKM) $(IPFLOG) $(DEF)
+DFLAGS=$(IPFLKM) $(DEF)
 IPF=ipf.o common.o parse.o opt.o inet_addr.o facpri.o
 IPT=ipt.o common.o parse.o fil.o opt.o ipft_sn.o ipft_ef.o ipft_td.o \
-    ipft_pc.o ipft_tx.o misc.o ip_nat_u.o ip_frag_u.o ip_state_u.o \
+    ipft_pc.o ipft_tx.o misc.o ip_nat_u.o ip_frag_u.o ip_state_u.o ip_log_u.o \
     inet_addr.o ipft_hx.o ip_fil_u.o ip_proxy_u.o ip_auth_u.o natparse.o \
     facpri.o printnat.o printstate.o
 IPNAT=ipnat.o kmem.o common.o natparse.o inet_addr.o printnat.o
 FILS=fils.o parse.o common.o kmem.o opt.o inet_addr.o facpri.o printstate.o
 
 all:
-	(cd ..; $(MAKE) $(MFLAGS) sunos4; )
+	(cd $(TOP) $(MAKE) $(MFLAGS) sunos4; )
 
 sunos4 solaris1 build: ipf ipfstat ipftest ipmon ipnat ipfs if_ipl.o
 
@@ -59,7 +60,7 @@ ipfstat: $(FILS)
 ipf: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
 	/bin/rm -f $(TOP)/ipf
-	ln -s `pwd`/ipf ..
+	ln -s `pwd`/ipf $(TOP)
 
 ipfs: ipfs.o
 	$(CC) $(DEBUG) $(CFLAGS) ipfs.o -o $@ $(LIBS)
@@ -67,7 +68,7 @@ ipfs: ipfs.o
 ipftest: $(IPT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPT) -o $@ $(LIBS)
 	/bin/rm -f $(TOP)/ipftest
-	ln -s `pwd`/ipftest ..
+	ln -s `pwd`/ipftest $(TOP)
 
 ipnat: $(IPNAT)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPNAT) -o $@ $(LIBS) -lkvm
@@ -176,6 +177,9 @@ ip_proxy_u.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
 ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_auth.c -o $@
 
+ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_log.c -o $@
+
 ip_fil.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ip_nat.h
 	$(CC) $(DEBUG) $(CFLAGS) $(DFLAGS) -c $(TOP)/$(IPFILC) -o $@
 
@@ -209,10 +213,12 @@ facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
+	/bin/rm -f $(TOP)/ipmon
+	ln -s `pwd`/ipmon $(TOP)
 
 clean:
 	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \
-		$(LKM) y.tab.? lex.yy.c
+		ipfs $(LKM) y.tab.? lex.yy.c
 	${MAKE} -f Makefile.ipsend clean
 
 

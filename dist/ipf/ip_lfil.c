@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lfil.c,v 1.1.1.4 2002/01/24 08:18:29 martti Exp $	*/
+/*	$NetBSD: ip_lfil.c,v 1.1.1.5 2002/03/14 12:30:08 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_lfil.c,v 2.6.2.3 2001/09/30 14:09:29 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lfil.c,v 2.6.2.4 2002/03/06 09:44:11 darrenr Exp";
 #endif
 
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -18,7 +18,6 @@ static const char rcsid[] = "@(#)Id: ip_lfil.c,v 2.6.2.3 2001/09/30 14:09:29 dar
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/uio.h>
 #include <sys/dir.h>
 #include <sys/socket.h>
 #ifndef	_KERNEL

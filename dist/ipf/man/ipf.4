@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.1.1.3 2002/01/24 08:18:33 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.1.1.4 2002/03/14 12:30:15 martti Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -124,7 +124,7 @@ Flags which are recognised in fr_flags:
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR_RETICMP      0x000100   /* return an ICMP packet if blocked */
      FR_FAKEICMP     0x00180    /* Return ICMP unreachable with fake source */
-     FR_NOMATCH      0x000200   /* no match occured */
+     FR_NOMATCH      0x000200   /* No match occurred */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */

@@ -39,12 +39,12 @@ INSTALL=install
 #
 MODOBJS=ip_fil.o fil_k.o ml_ipl.o ip_nat.o ip_frag.o ip_state.o ip_proxy.o \
 	ip_auth.o ip_log.o
-DFLAGS=$(IPFLKM) $(IPFLOG) $(DEF) $(DLKM)
+DFLAGS=$(IPFLKM) $(DEF) $(DLKM)
 IPF=ipf.o parse.o common.o opt.o facpri.o
 IPT=ipt.o parse.o common.o fil.o ipft_sn.o ipft_ef.o ipft_td.o ipft_pc.o \
     opt.o ipft_tx.o misc.o ip_frag_u.o ip_state_u.o ip_nat_u.o ip_proxy_u.o \
-    ip_auth_u.o ipft_hx.o ip_fil_u.o natparse.o facpri.o printnat.o \
-    printstate.o
+    ip_auth_u.o ipft_hx.o ip_fil_u.o ip_log_u.o natparse.o facpri.o \
+    printnat.o printstate.o
 IPNAT=ipnat.o kmem.o natparse.o common.o printnat.o
 FILS=fils.o parse.o kmem.o opt.o facpri.o common.o printstate.o
 
@@ -158,6 +158,9 @@ ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
 ip_fil_u.o: $(TOP)/$(IPFILC) $(TOP)/ip_fil.h $(TOP)/ip_compat.h
 	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/$(IPFILC) -o $@
 
+ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ip_log.c -o $@
+
 if_ipl.o: $(MODOBJS) 
 	ld -r $(MODOBJS) -o $(LKM)
 	${RM} -f if_ipl
@@ -217,6 +220,8 @@ facpri.o: $(TOP)/facpri.c $(TOP)/facpri.h
 
 ipmon: $(TOP)/ipmon.c
 	$(CC) $(DEBUG) $(CFLAGS) $(LOGFAC) $(TOP)/ipmon.c -o $@ $(LIBS)
+	/bin/rm -f $(TOP)/ipmon
+	ln -s `pwd`/ipmon $(TOP)
 
 clean:
 	${RM} -f *.core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl ipnat \
@@ -241,10 +246,20 @@ install:
 	-if [ -d /modules -a -f ipf.ko ] ; then \
 		cp ipf.ko /modules; \
 	fi
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipf $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipfs $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipnat $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipfstat $(SBINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipmon $(BINDEST)
-	-$(INSTALL) -cs -g wheel -m 755 -o root ipftest $(BINDEST)
+	@for i in ipf:$(SBINDEST) ipfs:$(SBINDEST) ipnat:$(SBINDEST) \
+	    ipfstat:$(SBINDEST) ipftest:$(SBINDEST) ipmon:$(BINDEST); do \
+		def="`expr $$i : '[^:]*:\(.*\)'`"; \
+		p="`expr $$i : '\([^:]*\):.*'`"; \
+		for d in $(BINDEST) $(SBINDEST); do \
+			if [ -f $$d/$$i ] ; then \
+				echo "$(INSTALL) -cs -g wheel -m 755 -o root $$p $$d"; \
+				$(INSTALL) -cs -g wheel -m 755 -o root $$p $$d; \
+				dd=$$d; \
+			fi; \
+		done; \
+		if [ -z "$$dd" ] ; then \
+			echo $(INSTALL) -cs -g wheel -m 755 -o root $$p $$def; \
+			$(INSTALL) -cs -g wheel -m 755 -o root $$p $$def; \
+		fi \
+	done
 	(cd $(TOP)/man; make INSTALL=$(INSTALL) MANDIR=$(MANDIR) install; cd $(TOP))
