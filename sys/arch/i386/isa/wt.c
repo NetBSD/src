@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.6 1993/12/20 09:06:57 mycroft Exp $
+ *	$Id: wt.c,v 1.7 1994/02/09 21:13:58 mycroft Exp $
  */
 
 /*
@@ -480,10 +480,11 @@ struct buf	*bp;
  * ioctl routine
  *  for user level QIC commands only
  */
-wtioctl(dev, cmd, arg, mode)
+wtioctl(dev, cmd, arg, mode, p)
 int dev, cmd;
 unsigned long arg;
 int mode;
+struct proc *p;
 {
 	if (cmd == WTQICMD)
 	{
