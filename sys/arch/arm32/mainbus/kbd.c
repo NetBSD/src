@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.1 1996/01/31 23:24:44 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.2 1996/02/15 23:24:44 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 09/10/94
  * Last updated : 21/05/95
  *
- *    $Id: kbd.c,v 1.1 1996/01/31 23:24:44 mark Exp $
+ *    $Id: kbd.c,v 1.2 1996/02/15 23:24:44 mark Exp $
  */
 
 #include <sys/param.h>
@@ -1010,6 +1010,113 @@ WaitForKey(ident)
 }
 
 
+int
+getkey_polled()
+{
+	int code;
+	int key;
+	int up;
+	key_struct *ks;
+	int s;
+	
+	s = splhigh();
+
+	key = 0;
+
+	do {
+		while ((ReadByte(IOMD_KBDCR) & (1<<5)) == 0) ;
+
+/* Read the IOMD keyboard register and process the key */
+
+		code = PollKeyboard(ReadByte(IOMD_KBDDAT));
+
+		if (code != 0) {
+			up = (code & 0x100);
+			key = code & 0xff;
+
+	printf("code=%04x mod=%04x\n", code, modifiers);
+
+/* By default we use the main keycode lookup table */
+
+			ks = keys;
+
+/* If we have an E0 or E1 sqeuence we use the extended table */
+
+			if (code > 0x1ff)
+				ks = E0keys;
+
+/* Is the key a temporary modifier ? */
+
+			if (ks[key].flags & MODIFIER_MASK) {
+				if (up)
+					modifiers &= ~ks[key].flags;
+				else
+					modifiers |= ks[key].flags;
+				key = 0;
+				continue;
+			}
+
+/* Is the key a locking modifier ? */
+
+			if (ks[key].flags & MODIFIER_LOCK_MASK) {
+				if (!up) {
+					modifiers ^= ks[key].flags;
+					kbdsetleds((modifiers >> 3) & 7);
+				}
+				key = 0;
+				continue;
+			}
+
+/* Lookup the correct key code */
+
+			if (modifiers & 0x01)
+				key = ks[key].ctrl_code;
+			else if (modifiers & 0x02)
+				key = ks[key].shift_code;
+			else if (modifiers & 0x04)
+				key = ks[key].alt_code;
+			else
+				key = ks[key].base_code;
+
+			if (modifiers & MODIFIER_CAPS) {
+				if ((key >= 'A' && key < 'Z') || (key >= 'a' && key <= 'z'))
+					key ^= 0x20;
+			}
+
+			if (up)
+				key = 0;
+			if (!up && key >= 0x200) {
+
+#if (NVT > 0)
+				if ((key & ~0x0f) == 0x480)
+					console_switch((key & 0x0f) - 1);
+				else
+#endif
+				switch (key) {
+#if (NVT > 0)
+				case 0x201:
+					console_scrollforward();
+					break;
+				case 0x200:
+					console_scrollback();
+					break;
+#endif
+				default:
+					break;
+				}
+				key = 0;
+			}
+		}
+	} while (key == 0);
+
+	if (key == '\r')
+		key = '\n';
+
+	splx(s);
+	return(key);
+}
+
+
 /* Keyboard IRQ handler */
 
 int
@@ -1300,8 +1407,12 @@ kbddecodekey(sc, code)
 					break;
 	
 				case 0x21b:
+#ifdef DDB
+					Debugger();
+#else
 					printf("Kernel interruption\n");
 					boot(RB_HALT);
+#endif
 					break;
 				case 0x209:
 					printf("Kernel interruption - nosync\n");
