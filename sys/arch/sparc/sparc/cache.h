@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.18 1998/09/22 13:39:21 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.19 1998/10/08 22:27:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -197,6 +197,16 @@ extern void sparc_noop __P((void));
 	(void (*)__P((void))) sparc_noop
 #define noop_cache_flush_all \
 	(void (*)__P((void))) sparc_noop
+
+/*
+ * The SMP versions of the cache flush functions. These functions
+ * send a "cache flush" message to each processor.
+ */
+void	smp_vcache_flush_context __P((void));	/* flush current context */
+void	smp_vcache_flush_region __P((int));	/* flush region in cur ctx */
+void	smp_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
+void	smp_vcache_flush_page __P((int va));	/* flush page in cur ctx */
+void	smp_cache_flush __P((caddr_t, u_int));	/* flush region */
 
 
 #define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
