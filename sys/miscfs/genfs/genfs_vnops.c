@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.43 2001/12/18 07:49:36 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.44 2001/12/31 06:40:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.43 2001/12/18 07:49:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.44 2001/12/31 06:40:08 chs Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1037,7 +1037,9 @@ genfs_putpages(v)
 	 */
 
 	error = 0;
-	wasclean = TRUE;
+	s = splbio();
+	wasclean = (vp->v_numoutput == 0);
+	splx(s);
 	off = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
