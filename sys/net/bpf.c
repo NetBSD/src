@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.8 1993/12/18 00:40:49 mycroft Exp $
+ *	$Id: bpf.c,v 1.9 1994/01/12 00:38:50 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -165,7 +165,7 @@ bpf_movein(uio, linktype, mp, sockp)
 	if ((unsigned)len > MCLBYTES)
 		return (EIO);
 
-	MGET(m, M_WAIT, MT_DATA);
+	MGETHDR(m, M_WAIT, MT_DATA);
 	if (m == 0)
 		return (ENOBUFS);
 	if (len > MLEN) {
@@ -181,6 +181,7 @@ bpf_movein(uio, linktype, mp, sockp)
 		}
 	}
 	m->m_len = len;
+	m->m_pkthdr.len = len + hlen;
 	*mp = m;
 	/*
 	 * Make room for link header.
