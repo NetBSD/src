@@ -166,7 +166,7 @@ case $basic_machine in
 		| arme[lb] | pyramid | mn10300 \
 		| tron | a29k | 580 | i960 | h8300 | hppa | hppa1.0 | hppa1.1 \
 		| alpha | we32k | ns16k | clipper | i370 | sh \
-		| powerpc | powerpcle | 1750a | dsp16xx | mips64 | mipsel \
+		| powerpc | powerpcle | 1750a | dsp16xx | mips64 | mipsel | mipseb \
 		| pdp11 | mips64el | mips64orion | mips64orionel \
 		| sparc | sparclet | sparclite | sparc64)
 		basic_machine=$basic_machine-unknown
@@ -215,7 +215,7 @@ case $basic_machine in
 	      | none-* | 580-* | cray2-* | h8300-* | i960-* | xmp-* | ymp-* \
 	      | hppa-* | hppa1.0-* | hppa1.1-* | alpha-* | we32k-* | cydra-* | ns16k-* \
 	      | pn-* | np1-* | xps100-* | clipper-* | orion-* | sparclite-* \
-	      | pdp11-* | sh-* | powerpc-* | powerpcle-* | sparc64-* | mips64-* | mipsel-* \
+	      | pdp11-* | sh-* | powerpc-* | powerpcle-* | sparc64-* | mips64-* | mipsel-* | mipseb-* \
 	      | mips64el-* | mips64orion-* | mips64orionel-* | f301-*)
 		;;
 	m88110-* | m680[01234]0-* | m683?2-* | m68360-* | z8k-* | h8500-* | d10v-*) # CYGNUS LOCAL
