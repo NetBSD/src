@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.1 1998/09/06 02:20:35 mark Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.2 1998/11/10 04:29:21 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -116,7 +116,7 @@ struct bus_space footbridge_bs_tag = {
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
+	footbridge_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io_asm.S,v 1.1 1998/09/06 02:20:35 mark Exp $	*/
+/*	$NetBSD: footbridge_io_asm.S,v 1.2 1998/11/10 04:29:21 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -188,5 +188,21 @@ Lfootbridge_bs_sr_2_loop:
 	strh	r1, [r0], #2		/*.word e0c010b2*/
 	subs	r2, r2, #1
 	bne	Lfootbridge_bs_sr_2_loop
+
+	mov	pc, lr
+
+ENTRY(footbridge_bs_c_2)
+	add	r0, r1, r2
+	ldr	r2, [sp, #0]
+	add	r1, r2, r3
+	ldr	r2, [sp, #4]
+	teq	r2, #0
+	moveq	pc, lr
+
+Lfootbridge_bs_c_2_loop:
+	ldrh	r3, [r0], #2
+	strh	r3, [r1], #2
+	subs	r2, r2, #1
+	bne	Lfootbridge_bs_c_2_loop
 
 	mov	pc, lr
