@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.28 1998/10/11 23:21:02 chuck Exp $ */
+/*	$NetBSD: iommu.c,v 1.29 1998/10/18 16:02:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -575,7 +575,7 @@ iommu_dmamap_unload(t, map)
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
-	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
+	addr = map->dm_segs[0].ds_addr;
 	len = map->dm_segs[0].ds_len;
 	len = ((addr & PGOFSET) + len + PGOFSET) & ~PGOFSET;
 	addr &= ~PGOFSET;
