@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.12 1996/10/07 21:43:03 cgd Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.13 1997/12/04 15:34:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -52,8 +52,8 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-#include <compat/sunos/exec.h>
 #include <compat/sunos/sunos.h>
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
 
 #ifdef sparc
@@ -62,7 +62,6 @@
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
 
-int sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
 int sunos_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
 int sunos_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
@@ -99,7 +98,7 @@ struct emul emul_sunos = {
 };
 
 int
-sunos_exec_aout_makecmds(p, epp)
+exec_sunos_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 1997/11/26 22:11:53 mjacob Exp $ */
+/*	$NetBSD: machdep.c,v 1.94 1997/12/04 15:33:42 tv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -470,11 +470,7 @@ int sigpid = 0;
 struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-#ifdef COMPAT_SUNOS
-	struct	sigcontext *sf_scp;	/* points to user addr of sigcontext */
-#else
-	int	sf_xxx;			/* placeholder */
-#endif
+	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 };
@@ -967,14 +963,7 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	int error = ENOEXEC;
-
-#ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
-	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-		return 0;
-#endif
-	return error;
+	return (ENOEXEC);
 }
 
 #ifdef SUN4

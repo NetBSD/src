@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 1997/10/18 23:18:40 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 1997/12/04 15:33:17 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2063,14 +2063,6 @@ cpu_exec_aout_makecmds(p, epp)
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
 		return(exec_aout_prep_zmagic(p, epp));
-#endif
-#ifdef COMPAT_SUNOS
-	{
-		extern sunos_exec_aout_makecmds
-		    __P((struct proc *, struct exec_package *));
-		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return(0);
-	}
 #endif
 	return(error);
 }

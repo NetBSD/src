@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 1997/10/16 18:16:08 carrel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 1997/12/04 15:33:29 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1330,13 +1330,5 @@ cpu_exec_aout_makecmds(p, epp)
 	}
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
-#ifdef COMPAT_SUNOS
-	{
-		extern sunos_exec_aout_makecmds __P((struct proc *,
-						     struct exec_package *));
-		error = sunos_exec_aout_makecmds(p, epp);
-		return(error);
-	}
-#endif /* COMPAT_SUNOS */
 	return ENOEXEC;
 }
