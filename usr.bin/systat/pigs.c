@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.15 1999/07/22 18:18:27 thorpej Exp $	*/
+/*	$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.15 1999/07/22 18:18:27 thorpej Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -72,6 +72,10 @@ long stime[CPUSTATES];
 long	mempages;
 int     fscale;
 double  lccpu;
+
+#ifndef P_ZOMBIE
+#define P_ZOMBIE(p)	((p)->p_stat == SZOMB)
+#endif
 
 WINDOW *
 openpigs()
