@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.6 2000/07/13 03:13:05 matt Exp $ */
+/*	$NetBSD: srt0.s,v 1.7 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,31 +41,33 @@
  * position set in a.out header.
  */
 
-nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
-	.globl	nisse
+	.globl	nisse		# pass -e nisse to ld gives OK start addr
 
 ALTENTRY(start)
+nisse:
 	nop;nop;
 	movl	$_C_LABEL(start), sp	# Probably safe place for stack
 	pushr	$0x1fff		# save for later usage
 
 	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
-	movab	_C_LABEL(start), r1
-	movl	$_C_LABEL(start), r3
-	movc3	r0,(r1),(r3)	# Kopiera text + data
+	movab	_C_LABEL(start), r1 # get where we are
+	movl	$_C_LABEL(start), r3 # get where we want to be
+	cmpl	r1,r3		# are we where we want to be?
+	beql	relocated	# already relocated, skip copy
+	movc3	r0,(r1),(r3)	# copy
 	subl3	$_C_LABEL(edata), $_C_LABEL(end), r2
-	movc5	$0,(r3),$0,r2,(r3) # Nolla bss också.
+	movc5	$0,(r3),$0,r2,(r3) # Zero bss
 
 	movpsl	-(sp)
-	movl	$relocated, -(sp)
+	pushl	$relocated
 	rei
 relocated:	                # now relocation is done !!!
-	movl	sp,_bootregs	# *bootregs
-	calls	$0, _Xmain	# Were here!
+	movl	sp,_C_LABEL(bootregs)	# *bootregs
+	calls	$0, _C_LABEL(Xmain)	# Were here!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
-	calls	$0,_niclose	# Evil hack to shutdown DEBNA.
+	calls	$0,_C_LABEL(niclose)	# Evil hack to shutdown DEBNA.
 	mtpr	$0x1f,$0x12	# Block all interrupts
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6

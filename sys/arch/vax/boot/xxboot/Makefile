@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/03 04:24:13 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/19 00:58:25 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -30,11 +30,13 @@ KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
 
+.if ${MACHINE} == "vax"
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .NOPATH: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
+.endif
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}

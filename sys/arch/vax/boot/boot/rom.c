@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.2 2000/05/20 13:30:04 ragge Exp $ */
+/*	$NetBSD: rom.c,v 1.3 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,7 +61,8 @@ romopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
 	struct disklabel *lp = &romlabel;
-	int i,err;
+	size_t i;
+	int err;
 
 	bqo = (void *)bootrpb.iovec;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2000/07/10 10:45:21 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.15 2000/07/19 00:58:24 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -192,19 +192,30 @@ rtimer(void *arg)
 	}
 }
 
+#ifdef __ELF__
+#define	IDSPTCH "idsptch"
+#define	EIDSPTCH "eidsptch"
+#define	CMN_IDSPTCH "cmn_idsptch"
+#else
+#define	IDSPTCH "_idsptch"
+#define	EIDSPTCH "_eidsptch"
+#define	CMN_IDSPTCH "_cmn_idsptch"
+#endif
+
 asm("
+	.text
 	.align	2
-	.globl  _idsptch, _eidsptch
-_idsptch:
+	.globl  " IDSPTCH ", " EIDSPTCH "
+" IDSPTCH ":
 	pushr   $0x3f
 	.word	0x9f16
-	.long   _cmn_idsptch
+	.long   " CMN_IDSPTCH "
 	.long	0
 	.long	0
 	.long	0
-_eidsptch:
+" EIDSPTCH ":
 
-_cmn_idsptch:
+" CMN_IDSPTCH ":
 	movl	(sp)+,r0
 	pushl	4(r0)
 	calls	$1,*(r0)
