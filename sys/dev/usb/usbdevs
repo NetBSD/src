@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.104 2000/07/03 01:07:04 augustss Exp $
+$NetBSD: usbdevs,v 1.105 2000/07/17 13:06:54 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451	Texas Instruments
 vendor ANALOGDEVICES	0x0456	Analog Devices, Inc.
 vendor KYE		0x0458	KYE Systems Corp.
+vendor SUPRA		0x045a	Supra
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
 vendor AMP		0x0464	AMP, Inc.
@@ -229,6 +230,7 @@ vendor BROADCOM		0x0a5c	Broadcom Corp.
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
+vendor BELKIN2		0x1293  Belkin Components (2nd)
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics, Inc.
@@ -288,6 +290,7 @@ product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
+product ANCHOR EZLINK		0x2720	EZLINK
 
 /* AOX, Inc. products */
 product AOX USB101		0x0008	USB ethernet controller engine
@@ -298,6 +301,7 @@ product ATEN UC10T		0x2002	10Mbps ethernet adapter
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
+product BELKIN2 F5U002		0x0002  F5U002 Parallel printer adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
@@ -423,6 +427,7 @@ product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 product INSYSTEM F5U002		0x0002	Parallel printer adapter
 product INSYSTEM ISD110		0x0200  IDE adapter ISD110
 product INSYSTEM ISD105		0x0202  IDE adapter ISD105
+product INSYSTEM USBCABLE	0x081a	USB cable
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
@@ -608,6 +613,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 product SUN KEYBOARD		0x0005	Type 6 USB
 /* XXX The above is a North American PC style keyboard possibly */
 
+/* Supra products */
+product SUPRA SUPRAEXPRESS56K	0x07da	Supra Express 56K modem
+ 
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB floppy
 
