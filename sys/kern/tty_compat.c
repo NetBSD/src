@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.24 1995/10/05 08:38:55 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.25 1995/10/05 08:50:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -442,7 +442,7 @@ ttcompatsetlflags(tp, t)
 	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE|PARENB);
+		CLR(cflag, CSIZE);
 		SET(cflag, CS8);
 		if (!ISSET(flags, RAW|PASS8))
 			SET(iflag, ISTRIP);
@@ -454,7 +454,7 @@ ttcompatsetlflags(tp, t)
 			CLR(oflag, OPOST);
 	} else {
 		CLR(cflag, CSIZE);
-		SET(cflag, CS7|PARENB);
+		SET(cflag, CS7);
 		SET(iflag, ISTRIP);
 		SET(oflag, OPOST);
 	}
