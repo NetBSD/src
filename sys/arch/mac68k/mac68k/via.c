@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.44 1996/05/25 16:31:04 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.45 1996/06/01 06:10:34 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -223,9 +223,8 @@ via2_intr(fp)
 
 	bitnum = 0;
 	do {
-		if (intbits & mask) {
+		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
-		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
 }
@@ -249,9 +248,8 @@ rbv_intr(fp)
 
 	bitnum = 0;
 	do {
-		if (intbits & mask) {
+		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
-		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
 }
