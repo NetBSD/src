@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.28 1997/06/06 23:43:59 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.29 1997/07/27 01:17:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -155,8 +155,7 @@ struct pcd_softc {
 #endif
 
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-#define DPRINTF(x)	if (pssdebug) Dprintf x
+#define DPRINTF(x)	if (pssdebug) printf x
 int	pssdebug = 0;
 #else
 #define DPRINTF(x)
@@ -243,6 +242,8 @@ struct audio_hw_if pss_audio_if = {
 	pss_set_in_port,
 	pss_get_in_port,
 	ad1848_commit_settings,
+	NULL,
+	NULL,
 	ad1848_dma_output,
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
@@ -255,7 +256,10 @@ struct audio_hw_if pss_audio_if = {
 	pss_mixer_set_port,
 	pss_mixer_get_port,
 	pss_query_devinfo,
-	0,	/* not full-duplex */
+	ad1848_malloc,
+	ad1848_free,
+	ad1848_round,
+	0,
 	0
 };
 
@@ -1348,7 +1352,7 @@ pssintr(arg)
     
     sr = inw(sc->sc_iobase+PSS_STATUS);
     
-    DPRINTF(("pssintr: sc=%x st=%x\n", sc, sr));
+    DPRINTF(("pssintr: sc=%p st=%x\n", sc, sr));
 
     /* Acknowledge intr */
     outw(sc->sc_iobase+PSS_IRQ_ACK, 0);
@@ -1384,7 +1388,7 @@ pss_getdev(addr, retp)
     void *addr;
     struct audio_device *retp;
 {
-    DPRINTF(("pss_getdev: retp=0x%x\n", retp));
+    DPRINTF(("pss_getdev: retp=%p\n", retp));
 
     *retp = pss_device;
     return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.10 1997/04/29 21:01:47 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.11 1997/07/27 01:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,52 +42,38 @@
 #define AUDIO_BLK_MS	20	/* 20 ms */
 #endif
 
-#ifndef AUDIO_BACKLOG
-#define AUDIO_BACKLOG	3	/* 60 ms */
-#endif
-
-/*
- * Use a single page as the size of the audio ring buffers, so that
- * the data won't cross a page boundary.  This way the dma carried out
- * in the hardware module will be efficient (i.e., at_dma() won't have
- * to make a copy).
- */
 #ifndef AU_RING_SIZE
-#define AU_RING_SIZE		NBPG
+#define AU_RING_SIZE		65536
 #endif
 
-#define AU_RING_MOD(k)		((k) & (AU_RING_SIZE - 1))
-#define AU_RING_EMPTY(rp) 	((rp)->hp == (rp)->tp)
-#define AU_RING_FULL(rp)	(AU_RING_MOD((rp)->tp + 1) == (rp)->hp)
-#define AU_RING_LEN(rp)		(AU_RING_MOD((rp)->tp - (rp)->hp))
-#define AU_RING_INIT(rp)	{					  \
-					 (rp)->nblk = (rp)->au_stamp = 0; \
-					 (rp)->hp = (rp)->tp = (rp)->bp;  \
-				}
-
-struct audio_buffer {
-	u_char	*hp;		/* head */
-	u_char	*tp;		/* tail */
-	u_char	*bp;		/* start of buffer */
-	u_char	*ep;		/* end of buffer */
-	
-	int	nblk;		/* number of active blocks in buffer */
-	int	maxblk;		/* max # of active blocks in buffer */
-	u_long	au_stamp;	/* number of audio samples read/written */
-
-	u_short	cb_pause;	/* io paused */
-	u_long	cb_drops;	/* missed samples from over/underrun */
-	u_long	cb_pdrops;	/* paused samples */
-
-	int	fill;		/* number of silence pad bytes */
-	u_char	*otp;		/* point where silence padding started */
+#define AUMINBUF 512
+#define AUMINNOBLK 3
+struct audio_ringbuffer {
+	int	bufsize;	/* allocated memory */
+	int	blksize;	/* I/O block size */
+	int	maxblks;	/* no of blocks in ring */
+	u_char	*start;		/* start of buffer area */
+	u_char	*end;		/* end of buffer area */
+	u_char	*inp;		/* input pointer (to buffer) */
+	u_char	*outp;		/* output pointer (from buffer) */
+	int	used;		/* no of used bytes */
+	int	usedlow;	/* start writer when used falls below this */
+	int	usedhigh;	/* stop writer when used goes above this */
+	u_long	stamp;		/* bytes transferred */
+	u_long	stamp_last;	/* old value of bytes transferred */
+	u_long	drops;		/* missed samples from over/underrun */
+	u_long	pdrops;		/* paused samples */
+	char	pause;		/* transfer is paused */
+	char	copying;	/* data is being copied */
+	char	needfill;	/* buffer needs filling when copying is done */
+	char	mmapped;	/* device is mmap()-ed */
 };
 
 /*
  * Software state, per audio device.
  */
 struct audio_softc {
-	void	*hw_hdl;		/* Hardware driver handle */
+	void	*hw_hdl;	/* Hardware driver handle */
 	struct	audio_hw_if *hw_if; /* Hardware interface */
 	u_char	sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
@@ -103,26 +89,32 @@ struct audio_softc {
 	int	sc_wchan;
 
 	/* Ring buffers, separate for record and play. */
-	struct	audio_buffer rr; /* Record ring */
-	struct	audio_buffer pr; /* Play ring */
+	struct	audio_ringbuffer sc_rr; /* Record ring */
+	struct	audio_ringbuffer sc_pr; /* Play ring */
 
-	u_char	*auzero_block;	/* a block of silence */
-	
+	u_char	*sc_sil_start;	/* start of silence in buffer */
+	int	sc_sil_count;	/* # of silence bytes */
+
 	u_char	sc_rbus;	/* input dma in progress */
 	u_char	sc_pbus;	/* output dma in progress */
 
-	u_long	sc_wseek;	/* timestamp of last frame written */
-	u_long	sc_rseek;	/* timestamp of last frame read */
-
-	int	sc_blksize;	/* recv block (chunk) size in bytes */
-	int	sc_smpl_in_blk;	/* # samples in a block  */
-	int	sc_50ms;	/* # of samples for 50ms? */
-	int	sc_backlog;	/* # blks of xmit backlog to generate */
-	int	sc_lowat;	/* xmit low water mark (for wakeup) */
-	int	sc_hiwat;	/* xmit high water mark (for wakeup) */
-
-	int	sc_rblks;	/* number of phantom record blocks */
-	int	sc_wblks;	/* number of output silence blocks */
 	struct	audio_params sc_pparams;	/* play encoding parameters */
 	struct	audio_params sc_rparams;	/* record encoding parameters */
+
+	int	sc_eof;		/* EOF, i.e. zero sixed write, counter */
+	u_long	sc_wstamp;
+	u_long	sc_playdrop;
+
+	int	sc_full_duplex;	/* device in full duplex mode */
+
+#ifdef AUDIO_INTR_TIME
+	u_long	sc_pfirstintr;	/* first time we saw a xmit interrupt */
+	int	sc_pnintr;	/* number of interrupts */
+	u_long	sc_plastintr;	/* last time we saw a xmit interrupt */
+	long	sc_pblktime;	/* nominal time between interrupts */
+	u_long	sc_rfirstintr;	/* first time we saw a rec interrupt */
+	int	sc_rnintr;	/* number of interrupts */
+	u_long	sc_rlastintr;	/* last time we saw a xrec interrupt */
+	long	sc_rblktime;	/* nominal time between interrupts */
+#endif
 };
