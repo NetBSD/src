@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 1996/09/27 06:55:29 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 1996/10/07 04:05:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1761,12 +1761,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4000c5cc,	/* InitUtil */
 		(caddr_t) 0x4000b186,	/* ReadXPRam */
 		(caddr_t) 0x4000b190,	/* WriteXPRam */
-		(caddr_t) 0x0,		/* jClkNoMem */
+		(caddr_t) 0x400b3c08,	/* jClkNoMem */
 		(caddr_t) 0x4000a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x40009ae6,	/* Egret */ /* From PB520 */
 		(caddr_t) 0x400147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x400a7a5c,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4007eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4001c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4001c312,	/* FixMul, wild guess */
 	},
@@ -2220,10 +2220,10 @@ setmachdep()
 
 	/*
 	 * Get the console buffer physical address.  If we can't, we
-	 * punt and set it to 0.
+	 * assume that videoaddr is already a physical address.
 	 */
 	if (!get_physical(videoaddr, &conspa))
-		conspa = 0;
+		conspa = videoaddr;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2451,9 +2451,8 @@ get_physical(u_int addr, u_long * phys)
 
 	numbits = 0;
 	psr &= 0x0007;		/* Number of levels we went */
-	for (i = 0; i < psr; i++) {
+	for (i = 0; i < psr; i++)
 		numbits += (macos_tc >> (12 - i * 4)) & 0x0f;
-	}
 
 	/*
 	 * We have to take the most significant "numbits" from
