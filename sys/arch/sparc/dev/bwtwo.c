@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.40 1998/09/07 07:15:51 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.41 1999/05/19 08:31:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -618,7 +618,14 @@ bwtwo_set_video_sun4c(sc, enable)
 {
 
 	if (enable)
-		sc->sc_reg->fbc_ctrl |= FBC_VENAB;
+		/*
+		 * If the we're the console the PROM will have taken care
+		 * of the FBC_TIMING bit and video control parameters. We
+		 * simply turn on FBC_TIMING; in case other video parameters
+		 * are necessary, here is a set read from an ELC:
+		 * [0xbb,0x2b,0x4,0x14,0xae,0x3,0xa8,0x24,0x1,0x5,0xff,0x1]
+		 */
+		sc->sc_reg->fbc_ctrl |= FBC_VENAB | FBC_TIMING;
 	else
 		sc->sc_reg->fbc_ctrl &= ~FBC_VENAB;
 }
