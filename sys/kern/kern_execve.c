@@ -417,7 +417,6 @@ dont_bother:
 	}
 
 	/* build a new address space */
-	addr = 0;
 
 	/* screwball mode -- special case of 413 to save space for floppy */
 	if (exdata.ex_hdr.a_text == 0) {
@@ -437,6 +436,11 @@ dont_bother:
 	bsize = roundup(exdata.ex_hdr.a_bss + dsize, NBPG);
 	bsize -= dsize;
 
+	/*
+	 * QMAGIC starts at one page, ZMAGIC at 0.
+	 */
+	addr = (magic == QMAGIC ? NBPG : 0);
+
 	/* map text & data in file, as being "paged in" on demand */
 	rv = vm_mmap(&vs->vm_map, &addr, tsize+dsize, VM_PROT_ALL, VM_PROT_DEFAULT,
 		MAP_FILE|MAP_COPY|MAP_FIXED, (caddr_t)ndp->ni_vp, foff);
@@ -445,10 +449,6 @@ dont_bother:
 
 	/* mark pages r/w data, r/o text */
 	if (tsize) {
-		/*
-		 * QMAGIC starts at one page, ZMAGIC at 0.
-		 */
-		addr = (magic == QMAGIC ? NBPG : 0);
 		rv = vm_protect(&vs->vm_map, addr, tsize, FALSE,
 			VM_PROT_READ|VM_PROT_EXECUTE);
 		if (rv)
