@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.35 1997/02/22 02:59:08 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.36 1997/04/08 17:57:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -637,13 +637,10 @@ nfs_reply(myrep)
 		 * race conditions during a reconnect.
 		 */
 		error = nfs_rcvlock(myrep);
+		if (error == EALREADY)
+			return (0);
 		if (error)
 			return (error);
-		/* Already received, bye bye */
-		if (myrep->r_mrep != NULL) {
-			nfs_rcvunlock(&nmp->nm_flag);
-			return (0);
-		}
 		/*
 		 * Get the next Rpc reply off the socket
 		 */
@@ -1443,6 +1440,13 @@ nfs_rcvlock(rep)
 		*flagp |= NFSMNT_WANTRCV;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsrcvlk",
 			slptimeo);
+		/* If our reply was received while we were sleeping,
+		 * then just return without taking the lock to avoid a
+		 * situation where a single iod could 'capture' the
+		 * receive lock.
+		 */
+		if (rep->r_mrep != NULL)
+			return (EALREADY);
 		if (slpflag == PCATCH) {
 			slpflag = 0;
 			slptimeo = 2 * hz;
