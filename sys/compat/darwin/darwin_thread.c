@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.1 2002/12/08 21:53:18 manu Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.2 2002/12/26 14:41:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.1 2002/12/08 21:53:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.2 2002/12/26 14:41:06 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,5 +88,23 @@ darwin_sys_vfork(p, v, retval)
 	    darwin_fork_child_return, NULL, retval, NULL)) != 0);
 		return error;
 
+	return 0;
+}
+
+int
+darwin_sys_pthread_exit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef notyet
+	struct darwin_sys_pthread_exit_args /* {
+		syscallarg(void *) value_ptr;
+	} */ *uap = v;
+#endif
+	/* 
+	 * This is called on thread termination. We should make value_ptr
+	 * available to other threads doing a join operation. 
+	 */
 	return 0;
 }
