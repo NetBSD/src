@@ -98,9 +98,17 @@
 #define mutex_lock(m)		pthread_mutex_lock(m)
 #define mutex_unlock(m)		pthread_mutex_unlock(m)
 
+#define FLOCKFILE(fp)		flockfile(fp)
+#define FUNLOCKFILE(fp)		funlockfile(fp)
+
+#define
+
 #else
 
 #define mutex_lock(m)		do { } while(0)
 #define mutex_unlock(m)		do { } while(0)
+
+#define FLOCKFILE(fp)		do { } while(0)
+#define FUNLOCKFILE(fp)		do { } while(0)
 
 #endif
