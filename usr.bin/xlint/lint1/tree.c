@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.2 1995/07/03 21:24:33 cgd Exp $	*/
+/*	$NetBSD: tree.c,v 1.3 1995/07/04 01:53:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.2 1995/07/03 21:24:33 cgd Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.3 1995/07/04 01:53:09 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2671,6 +2671,22 @@ plength(tp)
 	return (getinode(st, (quad_t)(elem * elsz / CHAR_BIT)));
 }
 
+#ifdef XXX_BROKEN_GCC
+static int
+quad_t_eq(x, y)
+	quad_t x, y;
+{
+	return (x == y);
+}
+
+static int
+u_quad_t_eq(x, y)
+	u_quad_t x, y;
+{
+	return (x == y);
+}
+#endif
+
 /*
  * Do only as much as necessary to compute constant expressions.
  * Called only if the operator allows folding and (both) operands
@@ -2776,7 +2792,11 @@ fold(tn)
 		q = utyp ? ul > ur : sl > sr;
 		break;
 	case EQ:
+#ifdef XXX_BROKEN_GCC
+		q = utyp ? u_quad_t_eq(ul, ur) : quad_t_eq(sl, sr);
+#else
 		q = utyp ? ul == ur : sl == sr;
+#endif
 		break;
 	case NE:
 		q = utyp ? ul != ur : sl != sr;
@@ -2810,6 +2830,15 @@ fold(tn)
 	return (cn);
 }
 
+#ifdef XXX_BROKEN_GCC
+int
+ldbl_t_neq(x, y)
+	ldbl_t x, y;
+{
+	return (x != y);
+}
+#endif
+
 /*
  * Same for operators whose operands are compared with 0 (test context).
  */
@@ -2826,14 +2855,22 @@ foldtst(tn)
 		lerror("foldtst() 1");
 
 	if (isftyp(tn->tn_left->tn_type->t_tspec)) {
+#ifdef XXX_BROKEN_GCC
+		l = ldbl_t_neq(tn->tn_left->tn_val->v_ldbl, 0.0);
+#else
 		l = tn->tn_left->tn_val->v_ldbl != 0.0;
+#endif
 	} else {
 		l = tn->tn_left->tn_val->v_quad != 0;
 	}
 
 	if (modtab[tn->tn_op].m_binary) {
 		if (isftyp(tn->tn_right->tn_type->t_tspec)) {
+#ifdef XXX_BROKEN_GCC
+			r = ldbl_t_neq(tn->tn_right->tn_val->v_ldbl, 0.0);
+#else
 			r = tn->tn_right->tn_val->v_ldbl != 0.0;
+#endif
 		} else {
 			r = tn->tn_right->tn_val->v_quad != 0;
 		}
