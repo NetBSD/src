@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.403 2002/02/02 11:30:04 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.404 2002/02/02 11:58:28 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.399 2002/02/02 11:56:43 tsutsui Exp 
  */
 
 /*
@@ -438,7 +438,7 @@
 #define	PCI_VENDOR_DENSAN	0x1192		/* Densan */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
 #define	PCI_VENDOR_TOUCAN	0x1194		/* Toucan Technology */
-#define	PCI_VENDOR_RATOC	0x1195		/* Ratoc System */
+#define	PCI_VENDOR_RATOC	0x1195		/* Ratoc Systems */
 #define	PCI_VENDOR_HYTEC	0x1196		/* Hytec Electronic */
 #define	PCI_VENDOR_GAGE	0x1197		/* Gage Applied Sciences */
 #define	PCI_VENDOR_LAMBDA	0x1198		/* Lambda Systems */
@@ -1232,6 +1232,8 @@
 
 /* Initio products */
 #define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
+#define	PCI_PRODUCT_INITIO_I850	0x0850		/* INIC-850 SCSI */
+#define	PCI_PRODUCT_INITIO_I1060	0x1060		/* INIC-1060 SCSI */
 #define	PCI_PRODUCT_INITIO_I940	0x9400		/* INIC-940 SCSI */
 #define	PCI_PRODUCT_INITIO_I935	0x9401		/* INIC-935 SCSI */
 #define	PCI_PRODUCT_INITIO_I950	0x9500		/* INIC-950 SCSI */
@@ -1658,6 +1660,9 @@
 
 /* Rainbow Technologies products */
 #define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
+
+/* RATOC Systems products */
+#define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
