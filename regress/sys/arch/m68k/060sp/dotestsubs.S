@@ -5,24 +5,23 @@
 Lprint_str:	jmp _C_LABEL(print_str)
 Lprint_num:	jmp _C_LABEL(print_num)
 
-_060FPSP_TEST:
-        .long    Lprint_str - _060FPSP_TEST      
-	.long    Lprint_num - _060FPSP_TEST
+L060FPSP_TEST:
+        .long    Lprint_str - L060FPSP_TEST      
+	.long    Lprint_num - L060FPSP_TEST
 	.space   120
 #include "ftest.S"
 
-_060ISP_TEST:
-        .long    Lprint_str - _060ISP_TEST      
-	.long    Lprint_num - _060ISP_TEST
+L060ISP_TEST:
+        .long    Lprint_str - L060ISP_TEST      
+	.long    Lprint_num - L060ISP_TEST
 	.space   120
 #include "itest.S"
 
 ENTRY_NOPROFILE(itest)
-	bra	_060ISP_TEST+128+0
+	bra	L060ISP_TEST+128+0
 ENTRY_NOPROFILE(ftest1)
-	bra	_060FPSP_TEST+128+0
+	bra	L060FPSP_TEST+128+0
 ENTRY_NOPROFILE(ftest2)
-	bra	_060FPSP_TEST+128+8
+	bra	L060FPSP_TEST+128+8
 ENTRY_NOPROFILE(ftest3)
-	bra	_060FPSP_TEST+128+16
-
+	bra	L060FPSP_TEST+128+16
