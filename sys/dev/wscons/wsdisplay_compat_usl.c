@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.2 1998/06/13 14:36:32 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.3 1998/06/16 13:31:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -61,7 +61,8 @@ struct usl_syncdata {
 	void *s_cbarg;
 };
 
-static int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **));
+static int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
+			      struct proc *, int, int, int));
 static void usl_sync_done __P((struct usl_syncdata *));
 static int usl_sync_check __P((struct usl_syncdata *));
 static struct usl_syncdata *usl_sync_get __P((struct wsscreen *));
@@ -83,9 +84,11 @@ static const struct wscons_syncops usl_syncops = {
 };
 
 static int
-usl_sync_init(scr, sdp)
+usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	struct wsscreen *scr;
 	struct usl_syncdata **sdp;
+	struct proc *p;
+	int acqsig, relsig, frsig;
 {
 	struct usl_syncdata *sd;
 	int res;
@@ -94,7 +97,12 @@ usl_sync_init(scr, sdp)
 	if (!sd)
 		return (ENOMEM);
 	sd->s_scr = scr;
+	sd->s_proc = p;
+	sd->s_pid = p->p_pid;
 	sd->s_flags = 0;
+	sd->s_acqsig = acqsig;
+	sd->s_relsig = relsig;
+	sd->s_frsig = frsig;
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -276,14 +284,10 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 	    case VT_SETMODE:
 #define newmode ((struct vt_mode *)data)
 		if (newmode->mode == VT_PROCESS) {
-			res = usl_sync_init(scr, &sd);
+			res = usl_sync_init(scr, &sd, p, newmode->acqsig,
+					    newmode->relsig, newmode->frsig);
 			if (res)
 				return (res);
-			sd->s_proc = p;
-			sd->s_pid = p->p_pid;
-			sd->s_relsig = newmode->relsig;
-			sd->s_acqsig = newmode->acqsig;
-			sd->s_frsig = newmode->frsig;
 		} else {
 			sd = usl_sync_get(scr);
 			if (sd)
