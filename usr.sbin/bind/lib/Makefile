@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.4 2001/01/28 17:09:52 he Exp $
+#	$NetBSD: Makefile,v 1.2.2.5 2001/01/28 17:24:02 he Exp $
 
 LIB=bind
 
@@ -36,7 +36,7 @@ SRCS+=	ns_parse.c ns_print.c ns_netint.c ns_ttl.c ns_name.c \
 	ns_sign.c ns_verify.c ns_date.c ns_samedomain.c
 # ${BIND_DIST_DIR}/lib/dst
 SRCS+=	dst_api.c prandom.c rsaref_link.c support.c bsafe_link.c \
-	cylink_link.c hmac_link.c eay_dss_link.c
+	cylink_link.c hmac_link.c eay_dss_link.c md5_dgst.c
 # ${BIND_DIST_DIR}/lib/irs
 SRCS+=	dns.c dns_gr.c dns_ho.c dns_nw.c dns_pr.c dns_pw.c \
 	dns_sv.c gai_strerror.c gen.c gen_gr.c gen_ho.c \
