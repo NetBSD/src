@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.h,v 1.1.1.2 2005/02/23 14:54:19 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.h,v 1.1.1.3 2005/03/16 23:52:42 manu Exp $	*/
 
 /*	$KAME$ */
 
@@ -162,6 +162,7 @@ int isakmp_cfg_putport(struct ph1handle *, unsigned int);
 
 #ifdef HAVE_LIBRADIUS
 struct rad_handle;
+extern struct rad_handle *radius_acct_state;
 int isakmp_cfg_radius_common(struct rad_handle *, int); 
 #endif
 

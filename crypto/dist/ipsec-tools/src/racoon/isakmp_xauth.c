@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.1.1.3 2005/03/14 08:14:31 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4 2005/03/16 23:52:55 manu Exp $	*/
 
-/* Id: isakmp_xauth.c,v 1.17.2.2 2005/03/09 14:12:31 manubsd Exp */
+/* Id: isakmp_xauth.c,v 1.17.2.3 2005/03/16 00:13:38 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -90,7 +90,8 @@
 #ifdef HAVE_LIBRADIUS
 #include <radlib.h>
 
-static struct rad_handle *radius_state = NULL;
+struct rad_handle *radius_auth_state = NULL;
+struct rad_handle *radius_acct_state = NULL;
 #endif
 
 #ifdef HAVE_LIBPAM
@@ -425,26 +426,39 @@ xauth_sendstatus(iph1, status, id)
 int
 xauth_radius_init(void)
 {
-	/* If it's not required in the config, don't initialize it */
-	if ((isakmp_cfg_config.authsource != ISAKMP_CFG_AUTH_RADIUS) &&
-	    (isakmp_cfg_config.accounting != ISAKMP_CFG_ACCT_RADIUS) &&
-	    (isakmp_cfg_config.confsource != ISAKMP_CFG_CONF_RADIUS))
-		return 0;
-
 	/* For first time use, initialize Radius */
-	if (radius_state == NULL) {
-		if ((radius_state = rad_auth_open()) == NULL) {
+	if ((isakmp_cfg_config.authsource == ISAKMP_CFG_AUTH_RADIUS) &&
+	    (radius_auth_state == NULL)) {
+		if ((radius_auth_state = rad_auth_open()) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Cannot init libradius\n");
 			return -1;
 		}
 
-		if (rad_config(radius_state, NULL) != 0) {
+		if (rad_config(radius_auth_state, NULL) != 0) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Cannot open librarius config file: %s\n", 
-			    rad_strerror(radius_state));
-			rad_close(radius_state);
-			radius_state = NULL;
+			    rad_strerror(radius_auth_state));
+			rad_close(radius_auth_state);
+			radius_auth_state = NULL;
+			return -1;
+		}
+	}
+
+	if ((isakmp_cfg_config.accounting == ISAKMP_CFG_ACCT_RADIUS) &&
+	    (radius_acct_state == NULL)) {
+		if ((radius_acct_state = rad_auth_open()) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot init libradius\n");
+			return -1;
+		}
+
+		if (rad_config(radius_acct_state, NULL) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot open librarius config file: %s\n", 
+			    rad_strerror(radius_acct_state));
+			rad_close(radius_acct_state);
+			radius_acct_state = NULL;
 			return -1;
 		}
 	}
@@ -463,33 +477,33 @@ xauth_login_radius(iph1, usr, pwd)
 	size_t len;
 	int type;
 
-	if (rad_create_request(radius_state, RAD_ACCESS_REQUEST) != 0) {
+	if (rad_create_request(radius_auth_state, RAD_ACCESS_REQUEST) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_create_request failed: %s\n", 
-		    rad_strerror(radius_state));
+		    rad_strerror(radius_auth_state));
 		return -1;
 	}
 	
-	if (rad_put_string(radius_state, RAD_USER_NAME, usr) != 0) {
+	if (rad_put_string(radius_auth_state, RAD_USER_NAME, usr) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_put_string failed: %s\n", 
-		    rad_strerror(radius_state));
+		    rad_strerror(radius_auth_state));
 		return -1;
 	}
 
-	if (rad_put_string(radius_state, RAD_USER_PASSWORD, pwd) != 0) {
+	if (rad_put_string(radius_auth_state, RAD_USER_PASSWORD, pwd) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_put_string failed: %s\n", 
-		    rad_strerror(radius_state));
+		    rad_strerror(radius_auth_state));
 		return -1;
 	}
 
-	if (isakmp_cfg_radius_common(radius_state, iph1->mode_cfg->port) != 0)
+	if (isakmp_cfg_radius_common(radius_auth_state, iph1->mode_cfg->port) != 0)
 		return -1;
 
-	switch (res = rad_send_request(radius_state)) {
+	switch (res = rad_send_request(radius_auth_state)) {
 	case RAD_ACCESS_ACCEPT:
-		while ((type = rad_get_attr(radius_state, &data, &len)) != 0) {
+		while ((type = rad_get_attr(radius_auth_state, &data, &len)) != 0) {
 			switch (type) {
 			case RAD_FRAMED_IP_ADDRESS:
 				iph1->mode_cfg->addr4 = rad_cvt_addr(data);
@@ -520,7 +534,7 @@ xauth_login_radius(iph1, usr, pwd)
 	case -1:
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "rad_send_request failed: %s\n", 
-		    rad_strerror(radius_state));
+		    rad_strerror(radius_auth_state));
 		return -1;
 		break;
 	default:
