@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.1.4.3 1999/01/14 06:57:37 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.1.4.4 1999/01/15 12:40:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ Lines
 
 Entry
 	: NL
+	| Database ':' NL
 	| Database ':' Srclist NL
 		{
 			_nsdbtput(&curdbt);
@@ -141,23 +142,25 @@ static void
 _nsaddsrctomap(elem)
 	const char *elem;
 {
-	int i;
+	int		i, lineno;
+	extern int	_nsyylineno;
+	extern char *	_nsyytext;
 
-
+	lineno = _nsyylineno - (*_nsyytext == '\n' ? 1 : 0);
 	if (curdbt.srclistsize > 0) {
 		if ((strcasecmp(elem, NSSRC_COMPAT) == 0) ||
 		    (strcasecmp(curdbt.srclist[0].name, NSSRC_COMPAT) == 0)) {
 				/* XXX: syslog the following */
-			warnx("'compat' used with other sources in '%s'",
-			    curdbt.name);
+			warnx("%s line %d: 'compat' used with other sources",
+			    _PATH_NS_CONF, lineno);
 			return;
 		}
 	}
 	for (i = 0; i < curdbt.srclistsize; i++) {
 		if (strcasecmp(curdbt.srclist[i].name, elem) == 0) {
 				/* XXX: syslog the following */
-			warnx("duplicate source '%s' for '%s'", elem,
-			    curdbt.name);
+			warnx("%s line %d: duplicate source '%s'",
+			    _PATH_NS_CONF, lineno, elem);
 			return;
 		}
 	}

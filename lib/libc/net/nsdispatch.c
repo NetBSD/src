@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.1.4.4 1999/01/14 06:57:37 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.1.4.5 1999/01/15 12:40:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ _nscmp(a, b)
 	const void *a;
 	const void *b;
 {
-	return strcasecmp(((ns_dbt *)a)->name, ((ns_dbt *)b)->name);
+	return (strcasecmp(((ns_dbt *)a)->name, ((ns_dbt *)b)->name));
 }
 
 
