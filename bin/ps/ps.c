@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.13 1995/03/21 09:08:10 cgd Exp $	*/
+/*	$NetBSD: ps.c,v 1.14 1995/05/18 14:37:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: ps.c,v 1.13 1995/03/21 09:08:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: ps.c,v 1.14 1995/05/18 14:37:03 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ main(argc, argv)
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, fmt, lineno, nentries;
+	int all, ch, flag, i, ofmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[256];
 
@@ -131,7 +131,7 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	all = fmt = prtheader = wflag = xflg = 0;
+	all = ofmt = prtheader = wflag = xflg = 0;
 	pid = -1;
 	uid = (uid_t) -1;
 	ttydev = NODEV;
@@ -158,7 +158,7 @@ main(argc, argv)
 			break;
 		case 'j':
 			parsefmt(jfmt);
-			fmt = 1;
+			ofmt = 1;
 			jfmt[0] = '\0';
 			break;
 		case 'L':
@@ -166,7 +166,7 @@ main(argc, argv)
 			exit(0);
 		case 'l':
 			parsefmt(lfmt);
-			fmt = 1;
+			ofmt = 1;
 			lfmt[0] = '\0';
 			break;
 		case 'M':
@@ -183,11 +183,11 @@ main(argc, argv)
 			parsefmt(optarg);
 			parsefmt(o2);
 			o1[0] = o2[0] = '\0';
-			fmt = 1;
+			ofmt = 1;
 			break;
 		case 'o':
 			parsefmt(optarg);
-			fmt = 1;
+			ofmt = 1;
 			break;
 		case 'p':
 			pid = atol(optarg);
@@ -224,13 +224,13 @@ main(argc, argv)
 		case 'u':
 			parsefmt(ufmt);
 			sortby = SORTCPU;
-			fmt = 1;
+			ofmt = 1;
 			ufmt[0] = '\0';
 			break;
 		case 'v':
 			parsefmt(vfmt);
 			sortby = SORTMEM;
-			fmt = 1;
+			ofmt = 1;
 			vfmt[0] = '\0';
 			break;
 		case 'W':
@@ -275,7 +275,7 @@ main(argc, argv)
 	if (kd == 0)
 		errx(1, "%s", errbuf);
 
-	if (!fmt)
+	if (!ofmt)
 		parsefmt(dfmt);
 
 	if (!all && ttydev == NODEV && pid == -1)  /* XXX - should be cleaner */
@@ -328,11 +328,32 @@ main(argc, argv)
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		if (xflg == 0 && (KI_EPROC(&kinfo[i])->e_tdev == NODEV ||
-		    (KI_PROC(&kinfo[i])->p_flag & P_CONTROLT ) == 0))
+		KINFO *ki = &kinfo[i];
+
+		if (xflg == 0 && (KI_EPROC(ki)->e_tdev == NODEV ||
+		    (KI_PROC(ki)->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			(vent->var->oproc)(&kinfo[i], vent);
+			/*
+			 * get arguments if needed
+			 */
+			if (needcomm) {
+				if (commandonly)
+					ki->ki_args =
+					    strdup(KI_PROC(ki)->p_comm);
+				else
+					ki->ki_args =
+					    fmt(kvm_getargv, ki,
+					    KI_PROC(ki)->p_comm, MAXCOMLEN);
+			} else
+				ki->ki_args = NULL;
+			if (needenv)
+				ki->ki_env =
+				    fmt(kvm_getenvv, ki, (char *)NULL, 0);
+			else
+				ki->ki_env = NULL;
+
+			(vent->var->oproc)(ki, vent);
 			if (vent->next != NULL)
 				(void)putchar(' ');
 		}
@@ -404,21 +425,6 @@ saveuser(ki)
 		usp->u_valid = 1;
 	} else
 		usp->u_valid = 0;
-	/*
-	 * save arguments if needed
-	 */
-	if (needcomm) {
-		if (commandonly)
-			ki->ki_args = strdup(KI_PROC(ki)->p_comm);
-		else
-			ki->ki_args = fmt(kvm_getargv, ki, KI_PROC(ki)->p_comm,
-			    MAXCOMLEN);
-	} else
-		ki->ki_args = NULL;
-	if (needenv)
-		ki->ki_env = fmt(kvm_getenvv, ki, (char *)NULL, 0);
-	else
-		ki->ki_env = NULL;
 }
 
 static int
