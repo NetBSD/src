@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.2.1 2002/03/10 21:39:48 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.2.2 2002/03/11 17:08:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.1 2002/03/10 21:39:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.2.2 2002/03/11 17:08:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -245,4 +245,19 @@ mutex_vector_exit(kmutex_t *mtx)
 		turnstile_exit(mtx);
 	else
 		turnstile_wakeup(ts, TS_WRITER_Q, ts->ts_waiters);
+}
+
+/*
+ * mutex_owner:
+ *
+ *	Return the owner of the mutex.
+ */
+struct proc *
+mutex_owner(kmutex_t *mtx)
+{
+
+	/*
+	 * Only adaptive mutexes are owned by threads.
+	 */
+	return (MUTEX_ADAPTIVE_P(mtx) ? MUTEX_OWNER(mtx) : NULL);
 }
