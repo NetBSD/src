@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/12/23 10:15:06 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/02/19 13:08:16 simonb Exp $
 
-SRCS+=	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.c modf.c nanf.c
+SRCS+=	fabs.S 
+
+# Common ieee754 constants and functions
+SRCS+=	ieee754_infinity.c ieee754_nanf.c
+SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c ieee754_ldexp.c
+SRCS+=	ieee754_modf.c
+
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c
 SRCS+=	_setjmp.S
