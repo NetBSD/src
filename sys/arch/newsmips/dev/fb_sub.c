@@ -300,7 +300,7 @@ fbdolock()
 	for (i = 0; i < segind; i++)
 		if (mseg[i].len && mseg[i].adrs && mseg[i].adrs
 		    < (caddr_t)KERNBASE)
-			vslock(mseg[i].adrs, mseg[i].len);
+			vslock(curproc, mseg[i].adrs, mseg[i].len);
 
 	/* make map */
 	for (i = 0; i < segind; i++)
@@ -316,7 +316,7 @@ fbunlock()
 	for (i = 0; i < segind; i++) {
 		if (mseg[i].len && mseg[i].adrs && mseg[i].adrs
 		    < (caddr_t)KERNBASE) {
-			vsunlock(mseg[i].adrs, mseg[i].len, mseg[i].rw);
+			vsunlock(curproc, mseg[i].adrs, mseg[i].len, mseg[i].rw);
 #if defined(mips) && defined(CPU_DOUBLE)
 			if (mseg[i].rw == B_READ)
 				clean_kudcache(curproc,
