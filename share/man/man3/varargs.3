@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdarg.3,v 1.12 2002/02/04 20:09:46 kleink Exp $
+.\"	$NetBSD: varargs.3,v 1.1 2002/02/04 20:09:46 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,68 +35,73 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)stdarg.3	8.1 (Berkeley) 6/5/93
+.\"	From:
+.\"	 (#)stdarg.3	8.1 (Berkeley) 6/5/93
+.\"	 NetBSD: stdarg.3,v 1.11 2002/02/04 18:27:38 kleink Exp  
 .\"
-.Dd April 14, 2001
-.Dt STDARG 3
+.Dd February 4, 2002
+.Dt VARARGS 3
 .Os
 .Sh NAME
-.Nm stdarg ,
-.Nm va_arg  ,
-.Nm va_copy  ,
-.Nm va_end ,
-.Nm va_start
+.Nm varargs
 .Nd variable argument lists
 .Sh SYNOPSIS
-.Fd #include <stdarg.h>
+.Fd #include <varargs.h>
 .Ft void
-.Fn va_start "va_list ap" last
+.Fn va_start "va_list ap"
 .Ft type
 .Fn va_arg "va_list ap" type
 .Ft void
-.Fn va_copy "va_list dest" "va_list src"
-.Ft void
 .Fn va_end "va_list ap"
 .Sh DESCRIPTION
+.Bf -symbolic
+These historic interfaces are provided to support compilation of
+existing programs only.
+New code should use the
+.Xr stdarg 3
+interfaces.
+.Ef
+.Pp
 A function may be called with a varying number of arguments of varying
 types.
 The include file
-.Aq Pa stdarg.h
+.Aq Pa varargs.h
 declares a type
 .Pq Em va_list
 and defines three macros for stepping
 through a list of arguments whose number and types are not known to
 the called function.
 .Pp
-The called function must declare an object of type
+The called function must name an argument
+.Fa va_alist ,
+which marks the start of the variable argument list,
+and which is naturally the last argument named.
+It is declared by
+.Fa va_dcl ,
+which should not be followed by a semicolon.
+The called function also must declare an object of type
 .Em va_list
 which is used by the macros
 .Fn va_start ,
 .Fn va_arg ,
-.Fn va_end ,
-and, optionally,
-.Fn va_copy .
+and
+.Fn va_end .
 .Pp
 The
 .Fn va_start
 macro initializes
 .Fa ap
 for subsequent use by
-.Fn va_arg ,
-.Fn va_copy
+.Fn va_arg
 and
 .Fn va_end ,
 and must be called first.
 .Pp
-The parameter
-.Fa last
-is the name of the last parameter before the variable argument list,
-i.e. the last parameter of which the calling function knows the type.
-.Pp
-Because the address of this parameter is used in the
-.Fn va_start
-macro, it should not be declared as a register variable, or as a
-function or an array type.
+It is possible for
+.Fa va_alist
+to be the only parameter to a function, resulting in it being possible
+for a function to have no fixed arguments preceeding the variable
+argument list.
 .Pp
 The
 .Fn va_start
@@ -141,29 +146,10 @@ Successive invocations return the values of the remaining
 arguments.
 .Pp
 The
-.Fn va_copy
-macro makes
-.Fa dest
-a copy of
-.Fa src
-as if the
-.Fn va_start
-macro had been applied to it followed by the same sequence of uses of the
-.Fn va_arg
-macro as had previously been used to reach the present state of
-.Fa src .
-.Pp
-The
-.Fn va_copy
-macro returns no value.
-.Pp
-The
 .Fn va_end
 macro handles a normal return from the function whose variable argument
 list was initialized by
-.Fn va_start
-or
-.Fn va_copy .
+.Fn va_start .
 .Pp
 The
 .Fn va_end
@@ -174,13 +160,15 @@ The function
 takes a string of format characters and prints out the argument
 associated with each format character based on the type.
 .Bd -literal -offset indent
-void foo(char *fmt, ...)
+void foo(fmt, va_alist)
+	char *fmt;
+	va_dcl
 {
 	va_list ap;
 	int d;
 	char c, *p, *s;
 
-	va_start(ap, fmt);
+	va_start(ap);
 	while (*fmt)
 		switch (*fmt++) {
 		case 's':			/* string */
@@ -199,49 +187,20 @@ void foo(char *fmt, ...)
 	va_end(ap);
 }
 .Ed
+.Sh SEE ALSO
+.Xr stdarg 3
 .Sh STANDARDS
-The
-.Fn va_start ,
-.Fn va_arg ,
-.Fn va_copy ,
-and
-.Fn va_end
-macros conform to
-.St -isoC99 .
-.Sh HISTORY
-The
-.Fn va_start ,
-.Fn va_arg
-and
-.Fn va_end
-macros were introduced in
-.St -ansiC .
-The
-.Fn va_copy
-macro was introduced in
-.St -isoC99 .
+These historic macros were replaced in
+.St -ansiC
+by the include file
+.Aq Pa stdarg.h ;
+see
+.Xr stdarg 3
+for its description.
 .Sh COMPATIBILITY
 These macros are
 .Em not
-compatible with the historic macros they replace.
-A backward compatible version can be found in the include
-file
-.Aq Pa varargs.h .
-.Sh BUGS
-Unlike the
-.Em varargs
-macros, the
-.Nm stdarg
-macros do not permit programmers to
-code a function with no fixed arguments.
-This problem generates work mainly when converting
-.Em varargs
-code to
-.Nm stdarg
-code,
-but it also creates difficulties for variadic functions that
-wish to pass all of their arguments on to a function
-that takes a
-.Em va_list
-argument, such as
-.Xr vfprintf 3 .
+compatible with the new macros they were replaced by.
+In particular, it is not possible for a
+.Em stdarg
+function to have no fixed arguments.
