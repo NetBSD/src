@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.41 2003/08/07 10:04:21 agc Exp $	*/
+/*	$NetBSD: utilities.c,v 1.42 2003/12/29 11:42:09 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.41 2003/08/07 10:04:21 agc Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.42 2003/12/29 11:42:09 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,10 +186,9 @@ getdatablk(blkno, size)
 			break;
 	if (bp == &bufhead)
 		errx(EEXIT, "deadlocked buffer pool");
-	getblk(bp, blkno, size);
 	/* fall through */
 foundit:
-	totalreads++;
+	getblk(bp, blkno, size);
 	bp->b_prev->b_next = bp->b_next;
 	bp->b_next->b_prev = bp->b_prev;
 	bp->b_prev = &bufhead;
@@ -209,6 +208,7 @@ getblk(bp, blk, size)
 	daddr_t dblk;
 
 	dblk = fsbtodb(sblock, blk);
+	totalreads++;
 	if (bp->b_bno != dblk) {
 		flush(fswritefd, bp);
 		diskreads++;
