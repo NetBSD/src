@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.17 2000/12/12 15:11:57 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.18 2000/12/14 18:10:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -140,6 +140,10 @@ __END_DECLS
 #define LINUX_IOCTL_MIN_PASS	LINUX_VMWARE_NONE
 #define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
 
+#ifdef _KERNEL
+__BEGIN_DECLS
 void linux_syscall_intern __P((struct proc *));
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* _I386_LINUX_MACHDEP_H */
