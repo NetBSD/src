@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.20 1998/12/30 18:06:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.21 1999/01/01 15:15:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -701,14 +701,26 @@ ohci_process_done(sc, done)
 			else
 				len = LE(std->td->td_be) - 
 				      LE(std->td->td_cbp) + 1;
-			reqh->actlen += len;
-			reqh->status = USBD_NORMAL_COMPLETION;
 			/* 
 			 * Only do a callback on the last stage of a transfer.
 			 * Others have hcpriv = 0.
 			 */
-			if (reqh->hcpriv == std)
-				ohci_ii_done(sc, reqh);
+			if ((reqh->pipe->endpoint->edesc->bmAttributes & 
+			     UE_XFERTYPE) == UE_CONTROL) {
+				/* For a control transfer the length is in
+				 * the xfer stage */
+				if (reqh->hcpriv == std) {
+					reqh->status = USBD_NORMAL_COMPLETION;
+					ohci_ii_done(sc, reqh);
+				} else
+					reqh->actlen = len;
+			} else {
+				if (reqh->hcpriv == std) {
+					reqh->actlen = len;
+					reqh->status = USBD_NORMAL_COMPLETION;
+					ohci_ii_done(sc, reqh);
+				}
+			}
 		} else {
 			ohci_soft_td_t *p, *n;
 			struct ohci_pipe *opipe = 
@@ -830,9 +842,6 @@ ohci_intr_done(sc, reqh)
 		xfer->td->td_be = LE(LE(xfer->td->td_cbp) + reqh->length - 1);
 		xfer->len = reqh->length;
 		xfer->reqh = reqh;
-
-		reqh->actlen = 0;
-		reqh->hcpriv = xfer;
 
 		ohci_hash_add_td(sc, xfer);
 		sed->ed->ed_tailp = LE(tail->physaddr);
@@ -1049,7 +1058,6 @@ ohci_device_request(reqh)
 	stat->len = 0;
 	stat->reqh = reqh;
 
-	reqh->actlen = 0;
 	reqh->hcpriv = stat;
 
 #if USB_DEBUG
@@ -1930,7 +1938,6 @@ ohci_device_bulk_start(reqh)
 	xfer->len = len;
 	xfer->reqh = reqh;
 
-	reqh->actlen = 0;
 	reqh->hcpriv = xfer;
 
 	if (!isread)
@@ -2057,7 +2064,6 @@ ohci_device_intr_start(reqh)
 	xfer->len = len;
 	xfer->reqh = reqh;
 
-	reqh->actlen = 0;
 	reqh->hcpriv = xfer;
 
 #if USB_DEBUG
