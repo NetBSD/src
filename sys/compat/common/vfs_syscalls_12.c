@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.3 1997/10/19 01:52:51 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.4 1999/03/30 00:13:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
 static void cvtstat __P((struct stat *, struct stat12 *));
 
 /*
- * Convert from an old to a new stat structure.
+ * Convert from a new to an old stat structure.
  */
 static void
 cvtstat(st, ost)
@@ -70,7 +70,7 @@ cvtstat(st, ost)
 
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
-	ost->st_mode = st->st_mode;
+	ost->st_mode = st->st_mode & 0xffff;
 	if (st->st_nlink >= (1 << 15))
 		ost->st_nlink = (1 << 15) - 1;
 	else
