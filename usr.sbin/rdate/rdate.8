@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdate.8,v 1.7 1997/10/18 03:51:00 lukem Exp $
+.\"	$NetBSD: rdate.8,v 1.8 1999/03/10 08:26:51 erh Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -57,10 +57,12 @@ Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
 remote time rather than just hopping.
+.El
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /var/log/wtmp
 A record of date resets and time changes.
+.El
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr gettimeofday 2 ,
