@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.31 2002/02/27 01:20:51 christos Exp $ */
+/* $NetBSD: mem.c,v 1.31.8.1 2002/05/16 16:00:53 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.31 2002/02/27 01:20:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.31.8.1 2002/05/16 16:00:53 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.31 2002/02/27 01:20:51 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 #include <sys/mman.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 #include <machine/alpha.h>
 
 #include <uvm/uvm_extern.h>
@@ -66,27 +66,14 @@ caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
 extern caddr_t msgbufaddr;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int
