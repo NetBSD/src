@@ -30,7 +30,7 @@
  *
  *	dp.h:  defines for the dp driver.
  *
- *	$Id: dpreg.h,v 1.2 1993/10/01 22:59:44 phil Exp $
+ *	dpreg.h,v 1.2 1993/10/01 22:59:44 phil Exp
  */
 
 /* Most of this comes from the Minix dp driver by Bruce Culbertson. */
@@ -39,7 +39,7 @@
  */
 #define DP_CTL		0xffd00000	/* base for control registers */
 #define DP_DMA		0xffe00000	/* base for data registers */
-#define DP_DMA_EOP	(DP_DMA | 0xe0000) /* SCSI DMA with EOP asserted */
+#define DP_DMA_EOP	(DP_DMA | 0xf0000) /* SCSI DMA with EOP asserted */
 #define DP_CURDATA	(DP_CTL+0)
 #define DP_OUTDATA	(DP_CTL+0)
 #define DP_ICMD		(DP_CTL+1)
