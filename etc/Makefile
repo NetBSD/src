@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.209 2002/04/09 18:07:24 matt Exp $
+#	$NetBSD: Makefile,v 1.210 2002/04/10 12:05:20 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -355,17 +355,18 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES}"; \
-	cd $${kerndir} && \
-		tarlist=`for kernel in $${kernlist}; do \
-			echo "$${kernel}"; \
+	cd $${kerndir} && ( \
+		echo ". type=dir uname=root gname=wheel"; \
+		for kernel in $${kernlist}; do \
+			echo "./$${kernel} type=file uname=root gname=wheel"; \
 			for s in $${kernsuffixes}; do \
 				if [ -f $${kernel}.$${s} ]; then \
-					echo "$${kernel}.$${s}"; \
+					echo \
+		    "./$${kernel}.$${s} type=file uname=root gname=wheel"; \
 				fi; \
 			done; \
-		done`; \
-		GZIP=-9 ${PAX} -zwf \
-		    ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz $${tarlist}
+		done ) | GZIP=-9 ${PAX} -zwM \
+		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
 .endfor # make kernel sets
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
