@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 1997/10/15 01:21:00 jtk Exp $
+#	$NetBSD: genassym.cf,v 1.3.2.1 1997/11/13 07:49:27 mellon Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -115,6 +115,8 @@ define	PCB_TSS_SEL		offsetof(struct pcb, pcb_tss_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
+define	TF_EIP			offsetof(struct trapframe, tf_eip)
+define	TF_ERR			offsetof(struct trapframe, tf_err)
 define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
 define	TF_EFLAGS		offsetof(struct trapframe, tf_eflags)
 
