@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1996/03/04 03:26:19 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1996/03/08 20:26:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,9 +34,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#ifdef notyet
 #include <machine/bus.h>
-#endif
 
 #if 0 /* XXX eisavar.h includes isavar.h, which is not idempotent */
 #include <dev/isa/isavar.h>
@@ -93,9 +91,7 @@ mainbus_attach(parent, self, aux)
 		struct pcibus_attach_args pba;
 
 		pba.pba_busname = "pci";
-#ifdef notyet
 		pba.pba_bc = NULL;
-#endif
 		pba.pba_bus = 0;
 		pba.pba_maxndevs = pci_mode == 2 ? 16 : 32;
 		config_found(self, &pba, mainbus_print);
@@ -106,9 +102,7 @@ mainbus_attach(parent, self, aux)
 		struct eisabus_attach_args eba;
 
 		eba.eba_busname = "eisa";
-#ifdef notyet
 		eba.eba_bc = NULL;
-#endif
 		config_found(self, &eba, mainbus_print);
 	}
 
@@ -116,9 +110,7 @@ mainbus_attach(parent, self, aux)
 		struct isabus_attach_args iba;
 
 		iba.iba_busname = "isa";
-#ifdef notyet
 		iba.iba_bc = NULL;
-#endif
 		config_found(self, &iba, mainbus_print);
 	}
 }
