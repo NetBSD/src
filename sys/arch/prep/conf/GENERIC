@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2004/06/28 21:07:49 bouyer Exp $
+# $NetBSD: GENERIC,v 1.81 2004/07/15 03:53:51 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.80 $"
+#ident		"GENERIC-$Revision: 1.81 $"
 
 maxusers	32
 
@@ -60,6 +60,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

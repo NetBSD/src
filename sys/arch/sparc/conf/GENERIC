@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2004/07/10 12:05:35 uwe Exp $
+# $NetBSD: GENERIC,v 1.161 2004/07/15 03:53:51 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 maxusers	32
 
@@ -87,6 +87,7 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.31 2004/06/28 21:07:48 bouyer Exp $
+#	$NetBSD: GENERICSBC,v 1.32 2004/07/15 03:53:49 atatat Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.31 $"
+#ident 		"GENERICSBC-$Revision: 1.32 $"
 
 maxusers	16		# estimated number of users
 
@@ -42,6 +42,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
