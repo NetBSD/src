@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.6 2001/05/16 14:33:21 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7 2001/06/02 15:49:17 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,13 +111,19 @@
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define bus_space_write_stream_2	bus_space_write_2
+#define bus_space_write_multi_stream_2	bus_space_write_multi_2
 #define bus_space_read_stream_2		bus_space_read_2
+#define bus_space_read_multi_stream_2		bus_space_read_multi_2
 #endif
 
 #define CSR_WRITE_STREAM_2(sc, reg, val)	\
 	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh, reg, val)
+#define CSR_WRITE_MULTI_STREAM_2(sc, reg, val, count)	\
+	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh, reg, val, count)
 #define CSR_READ_STREAM_2(sc, reg)		\
 	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, reg)
+#define CSR_READ_MULTI_STREAM_2(sc, reg, buf, count)		\
+	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh, reg, buf, count)
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent
