@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.8 2000/08/02 09:06:56 tsubai Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9 2001/06/13 06:01:48 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,6 +37,10 @@
 #include <uvm/uvm_param.h>
 #include <machine/trap.h>
 
+#ifdef _KERNEL
+#include "opt_ppcarch.h"
+#endif
+
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
@@ -46,6 +50,13 @@ struct powerpc_saved_state {
 	u_int32_t	r[32];		/* data registers */
 	u_int32_t	iar;
 	u_int32_t	msr;
+	u_int32_t	lr;
+	u_int32_t	ctr;
+	u_int32_t	cr;
+	u_int32_t	xer;
+	u_int32_t	dear;
+	u_int32_t	esr;
+	u_int32_t	pid;
 };
 typedef struct powerpc_saved_state db_regs_t;
 db_regs_t	ddb_regs;		/* register state */
@@ -94,6 +105,13 @@ db_regs_t	ddb_regs;		/* register state */
 
 void	kdb_kintr __P((void *));
 int	kdb_trap __P((int, void *));
+
+#ifdef PPC_IBM4XX
+/*
+ * We have machine-dependent commands.
+ */
+#define	DB_MACHINE_COMMANDS
+#endif
 
 #endif /* _KERNEL */
 

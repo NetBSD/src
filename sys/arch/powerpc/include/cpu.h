@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2001/06/06 17:36:02 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2001/06/13 06:01:48 simonb Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 #ifndef	_POWERPC_CPU_H_
 #define	_POWERPC_CPU_H_
 
-extern void __syncicache __P((void *, int));
+void __syncicache(void *, int);
 
 /*
  * CTL_MACHDEP definitions.
