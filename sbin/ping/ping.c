@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.13 1995/03/18 14:59:16 cgd Exp $	*/
+/*	$NetBSD: ping.c,v 1.14 1995/03/21 13:59:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.13 1995/03/18 14:59:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.14 1995/03/21 13:59:39 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,6 @@ char *pr_addr __P((u_long));
 void pr_icmph __P((struct icmp *));
 void pr_pack __P((char *, int, struct sockaddr_in *));
 void pr_retip __P((struct ip *));
-void tvsub __P((struct timeval *, struct timeval *));
 void usage();
 
 int
@@ -520,7 +519,7 @@ pr_pack(buf, cc, from)
 #else
 			tp = (struct timeval *)icp->icmp_data;
 #endif
-			tvsub(&tv, tp);
+			timersub(&tv, tp, &tv);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
@@ -695,22 +694,6 @@ in_cksum(addr, len)
 	sum += (sum >> 16);			/* add carry */
 	answer = ~sum;				/* truncate to 16 bits */
 	return(answer);
-}
-
-/*
- * tvsub --
- *	Subtract 2 timeval structs:  out = out - in.  Out is assumed to
- * be >= in.
- */
-void
-tvsub(out, in)
-	register struct timeval *out, *in;
-{
-	if ((out->tv_usec -= in->tv_usec) < 0) {
-		--out->tv_sec;
-		out->tv_usec += 1000000;
-	}
-	out->tv_sec -= in->tv_sec;
 }
 
 /*
