@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.5 1997/09/28 00:44:15 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.6 1997/09/28 00:56:00 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -509,10 +509,12 @@ MTREE_FILE=	/etc/mtree/BSD.local.dist
 MTREE_CMD?=	/usr/sbin/mtree
 MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -p
 
+.if (${OPSYS} == "NetBSD")
+.include <bsd.own.mk>
+.endif
 .if (${OPSYS} == "OpenBSD")
 .include <bsd.own.mk>
-# XXX Do we need this? - hubertf
-#MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
+MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
 .endif
 
 # A few aliases for *-install targets
