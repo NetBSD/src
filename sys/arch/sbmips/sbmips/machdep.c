@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12 2002/11/09 05:36:50 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.13 2002/11/09 05:49:30 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -111,6 +111,11 @@
 
 #include <dev/cons.h>
 
+#ifdef DDB
+/* start and end of kernel symbol table */
+void	*ksym_start, *ksym_end;
+#endif
+
 /* For sysctl_hw. */
 extern char cpu_model[];
 
@@ -164,22 +169,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	config |= 0x05;				/* XXX.  cacheable coherent */
 	mips3_cp0_config_write(config);
 
-	/*
-	 * Clear the BSS segment.
-	 */
-#ifdef DDB
-	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
-	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
-		esym = end;
-		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
-	} else
-#endif
-	{
-		kernend = (caddr_t)mips_round_page(end);
-		memset(edata, 0, kernend - edata);
-	}
+	/* Zero BSS.  XXXCGD: uh, is this really necessary still?  */
+	memset(edata, 0, end - edata);
 
 	/*
 	 * Copy the bootinfo structure from the boot loader.
@@ -198,6 +189,14 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		bootinfo.fwhandle = fwhandle;
 		bootinfo.fwentry = bootdata;
 	}
+
+#ifdef DDB
+        ksym_start = (void *)bootinfo.ssym;
+        ksym_end   = (void *)bootinfo.esym;
+        kernend = (caddr_t)mips_round_page((vaddr_t)ksym_end);
+#else
+        kernend = (caddr_t)mips_round_page((vaddr_t)end);
+#endif
 
 	consinit();
 
@@ -289,13 +288,6 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 				i++;
 			}
 		}
-		if (memcmp("single", &bootinfo.boot_flags[i], 5) == 0)
-			boothowto |= RB_SINGLE;
-		if (memcmp("nfsroot=", &bootinfo.boot_flags[i], 8) == 0)
-			netboot = 1;
-		/*
-		 * XXX Select root device from 'root=/dev/hd[abcd][1234]' too.
-		 */
 	}
 
 	/*
@@ -346,7 +338,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
 #if defined(DDB)
-	ddb_init(0, 0, 0);
+	ddb_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+	    ksym_start, ksym_end);
 #endif
 
 	if (boothowto & RB_KDB) {
