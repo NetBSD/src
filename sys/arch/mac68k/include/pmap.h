@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1997/06/10 19:13:36 veego Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 1998/01/01 19:53:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -126,14 +126,13 @@ typedef struct pmap	*pmap_t;
 /*
  * Macros for speed
  */
-#define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
-	if ((pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = m68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
-		if (iscurproc) \
-			loadustp((pcbp)->pcb_ustp); \
-		(pmapp)->pm_stchanged = FALSE; \
-	}
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+#define	PMAP_ACTIVATE(pmap, pcb, iscurproc)				\
+{									\
+	(pcb)->pcb_ustp = m68k_btop((vm_offset_t)(pmap)->pm_stpa);	\
+	if ((iscurproc))						\
+		loadustp((pcb)->pcb_ustp);				\
+	(pmap)->pm_stchanged = FALSE;					\
+}
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -176,6 +175,9 @@ struct pmap	kernel_pmap_store;
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define	active_user_pmap(pm) \
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_entry *pv_table;	/* array of entries, one per page */
 
@@ -197,8 +199,10 @@ void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
 void	pmap_pvdump          __P((vm_offset_t));
 void	pmap_check_wiring    __P((char *, vm_offset_t));
 void	pmap_collect_pv __P((void));
-void	pmap_activate __P((register pmap_t, struct pcb *));
-void	pmap_deactivate __P((register pmap_t, struct pcb *));
+
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 
 /* pmap_bootstrap.c */
 void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));
