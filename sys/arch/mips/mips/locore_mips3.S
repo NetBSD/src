@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.38 2000/06/26 02:55:47 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.39 2000/07/19 20:46:00 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1220,9 +1220,13 @@ LEAF_NOPROFILE(mips3_TLBMissException)
 
 outofworld:
 	/* Ensure we have a valid sp so panic has a chance */
+	dmfc0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
+	sll	k0, k0, PGSHIFT
+	li	k1, VM_MIN_KERNEL_ADDRESS
+	addu	a3, k0, k1
 	la	sp, start			# set sp to a valid place
-	PANIC("TLB out of universe: ksp was %p")
+	PANIC("TLB out of universe: ksp was %p, exc PC %p, vaddr %p")
 
 	.set	at
 END(mips3_TLBMissException)
@@ -1789,7 +1793,6 @@ LEAF(mips3_FlushCache_2way)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
-#if 1
         lw      t2, mips_L2CacheSize
         beq     t2, zero, 2f
         nop
@@ -1804,7 +1807,6 @@ LEAF(mips3_FlushCache_2way)
         bne     t0, t1, 1b
         addu    t0, t0, 128
 2:      
-#endif
         j       ra 
         nop
 END(mips3_FlushCache_2way)
@@ -2388,16 +2390,6 @@ LEAF_NOPROFILE(mips3_TBIA)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips3_TBIA)
-
-LEAF(mips3_Set64bit)
-	mfc0	v0, MIPS_COP_0_STATUS
-	lui	v1, (MIPS3_SR_XX >> 16)
-	or	v0, v0, v1
-	or	v0, v0, MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX
-	mtc0	v0, MIPS_COP_0_STATUS
-	j	ra
-	nop
-END(mips3_Set64bit)
 
 LEAF(mips3_read_config)
 	mfc0	v0, MIPS_COP_0_CONFIG
