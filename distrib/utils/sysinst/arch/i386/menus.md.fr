@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.16 1999/05/18 18:07:26 bouyer Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.17 1999/06/19 01:23:53 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -194,7 +194,7 @@ menu md_distcustom, x=30, y=3, exit, title " Sélection des composants";
 	option  "X11 développement",	 action { toggle_getit (12); };
 
 menu biosonematch;
-	option "C'est le bon disque", exit, action {
+	option "C'est le bon géométrie", exit, action {
 		extern struct disklist *disklist;
 		extern struct nativedisk_info *nativedisk;
 		struct biosdisk_info *bip;
