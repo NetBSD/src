@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.2 1996/05/18 19:01:31 jtc Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.3 1996/05/20 15:17:34 cgd Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,9 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_order.c,v 1.2 1996/05/18 19:01:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_order.c,v 1.3 1996/05/20 15:17:34 cgd Exp $";
 #endif
 
+#include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
