@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.31 2003/06/19 16:04:57 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.32 2003/09/14 21:48:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.31 2003/06/19 16:04:57 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.32 2003/09/14 21:48:54 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -94,7 +94,22 @@ char *rl_completer_word_break_characters = NULL;
 char *rl_completer_quote_characters = NULL;
 CPFunction *rl_completion_entry_function = NULL;
 CPPFunction *rl_attempted_completion_function = NULL;
+Function *rl_pre_input_hook = NULL;
+Function *rl_startup1_hook = NULL;
+Function *rl_getc_function = NULL;
+char *rl_terminal_name = NULL;
+int rl_already_prompted = 0;
+int rl_filename_completion_desired = 0;
+int rl_ignore_completion_duplicates = 0;
+VFunction *rl_redisplay_function = NULL;
+Function *rl_completion_display_matches_hook = NULL;
+Function *rl_prep_term_function = NULL;
+Function *rl_deprep_term_function = NULL;
 
+/*
+ * The current prompt string.
+ */
+char *rl_prompt = NULL;
 /*
  * This is set to character indicating type of completion being done by
  * rl_complete_internal(); this is available for application completion
@@ -141,17 +156,13 @@ static char		*_rl_compat_sub(const char *, const char *,
 static int		 rl_complete_internal(int);
 static int		 _rl_qsort_string_compare(const void *, const void *);
 
-/*
- * needed for prompt switching in readline()
- */
-static char *el_rl_prompt = NULL;
-
 
 /* ARGSUSED */
 static char *
 _get_prompt(EditLine *el __attribute__((__unused__)))
 {
-	return (el_rl_prompt);
+	rl_already_prompted = 1;
+	return (rl_prompt);
 }
 
 
@@ -221,8 +232,8 @@ rl_initialize(void)
 	el_set(e, EL_HIST, history, h);
 
 	/* for proper prompt printing in readline() */
-	el_rl_prompt = strdup("");
-	if (el_rl_prompt == NULL) {
+	rl_prompt = strdup("");
+	if (rl_prompt == NULL) {
 		history_end(h);
 		el_end(e);
 		return -1;
@@ -233,6 +244,10 @@ rl_initialize(void)
 	/* set default mode to "emacs"-style and read setting afterwards */
 	/* so this can be overriden */
 	el_set(e, EL_EDITOR, "emacs");
+	if (rl_terminal_name != NULL)
+		el_set(e, EL_TERMINAL, rl_terminal_name);
+	else
+		el_get(e, EL_TERMINAL, &rl_terminal_name);
 
 	/*
 	 * Word completition - this has to go AFTER rebinding keys
@@ -242,7 +257,6 @@ rl_initialize(void)
 	    "ReadLine compatible completition function",
 	    _el_rl_complete);
 	el_set(e, EL_BIND, "^I", "rl_complete", NULL);
-
 	/*
 	 * Find out where the rl_complete function was added; this is
 	 * used later to detect that lastcmd was also rl_complete.
@@ -266,6 +280,9 @@ rl_initialize(void)
 	rl_line_buffer = memchr(li->buffer, *li->buffer, 1);
 	rl_point = rl_end = 0;
 
+	if (rl_startup_hook)
+		(*rl_startup_hook)(NULL, 0);
+
 	return (0);
 }
 
@@ -288,12 +305,18 @@ readline(const char *prompt)
 	/* update prompt accordingly to what has been passed */
 	if (!prompt)
 		prompt = "";
-	if (strcmp(el_rl_prompt, prompt) != 0) {
-		free(el_rl_prompt);
-		el_rl_prompt = strdup(prompt);
-		if (el_rl_prompt == NULL)
+	if (strcmp(rl_prompt, prompt) != 0) {
+		free(rl_prompt);
+		rl_prompt = strdup(prompt);
+		if (rl_prompt == NULL)
 			return NULL;
 	}
+
+	if (rl_pre_input_hook)
+		(*rl_pre_input_hook)(NULL, 0);
+
+	rl_already_prompted = 0;
+
 	/* get one line from input stream */
 	ret = el_gets(e, &count);
 

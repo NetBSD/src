@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.37 2003/08/07 16:44:34 agc Exp $	*/
+/*	$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.37 2003/08/07 16:44:34 agc Exp $");
+__RCSID("$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -352,6 +352,7 @@ term_init(EditLine *el)
 	term_init_arrow(el);
 	return (0);
 }
+
 /* term_end():
  *	Clean up the terminal stuff
  */
@@ -873,6 +874,12 @@ term_clear_to_bottom(EditLine *el)
 }
 #endif
 
+protected void
+term_get(EditLine *el, const char **term)
+{
+	*term = el->el_term.t_name;
+}
+
 
 /* term_set():
  *	Read in the terminal capabilities from the requested terminal
@@ -954,6 +961,7 @@ term_set(EditLine *el, const char *term)
 		return (-1);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	term_bind_arrow(el);
+	el->el_term.t_name = term;
 	return (i <= 0 ? -1 : 0);
 }
 
