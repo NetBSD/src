@@ -1,6 +1,6 @@
-#	$NetBSD: DEFAULT,v 1.17 1998/06/26 01:54:04 lukem Exp $
+#	$NetBSD: GENERIC,v 1.1 1999/03/10 13:35:33 jonb Exp $
 #
-# DEFAULT: default install kernel
+# GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
