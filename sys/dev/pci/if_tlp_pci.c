@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.45 2000/07/17 18:12:00 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.46 2000/08/03 03:07:31 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -406,6 +406,8 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98715:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_MX98715A;
+ 		if (sc->sc_rev >= 0x25)
+ 			sc->sc_chip = TULIP_CHIP_MX98715AEC_X;
 		if (sc->sc_rev >= 0x30)
 			sc->sc_chip = TULIP_CHIP_MX98725;
 		break;
@@ -465,6 +467,7 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
@@ -784,6 +787,7 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		/*
 		 * The MX98713A has an MII as well as an internal Nway block,
