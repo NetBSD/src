@@ -19,7 +19,7 @@ If everything builds ok, su and type "make install". This will install
 tcpdump and the manual entry. By default, tcpdump is installed with
 group execute permissions. The group used depends on your os. In
 addition, BPF packet access is controlled by permissions to
-/dev/bpf0. In any case, DO NOT give untrusted users the capability of
+/dev/bpf. In any case, DO NOT give untrusted users the capability of
 running tcpdump. Tcpdump can capture any traffic on your net,
 including passwords.
 
