@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.114 1999/07/29 19:14:36 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.115 1999/08/16 22:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
+#include "umodem.h"
+cdev_decl(umodem);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
 
@@ -357,6 +359,7 @@ struct cdevsw	cdevsw[] =
 	cdev_esh_init(NESH, esh_fp),	/* 63: HIPPI (esh) raw device */
 	cdev_ugen_init(NUGEN,ugen),	/* 64: USB generic driver */
 	cdev_mouse_init(NWSMUX,	wsmux), /* 65: ws multiplexor */
+	cdev_tty_init(NUMODEM,umodem),	/* 66: USB modem */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -464,6 +467,7 @@ static int chrtoblktbl[] = {
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
 	/* 65 */	NODEV,
+	/* 66 */	NODEV,
 };
 
 /*
