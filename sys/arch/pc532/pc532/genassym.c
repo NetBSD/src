@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1996/04/04 06:36:59 phil Exp $	*/
+/*	$NetBSD: genassym.c,v 1.12 1996/12/28 09:15:27 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -73,7 +73,6 @@ main()
 
 	def("PTDPTDI", PTDPTDI);
 	def("KPTDI", KPTDI);
-	def("NKPDE", NKPDE);
 	def("APTDPTDI", APTDPTDI);
 	def("KERNBASE", KERNBASE);
 
@@ -113,6 +112,8 @@ main()
 	def("IV_ARG", &iv->iv_arg);
 	def("IV_CNT", &iv->iv_cnt);
 	def("IV_USE", &iv->iv_use);
+	def("IV_MASK", &iv->iv_mask);
+	def("IV_SIZE", sizeof(struct iv));
 
 	exit(0);
 }
