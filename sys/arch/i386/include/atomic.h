@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1.2.3 2000/08/18 03:11:55 sommerfeld Exp $ */
+/* $NetBSD: atomic.h,v 1.1.2.4 2000/12/31 00:32:51 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,8 +62,7 @@ i386_atomic_setbits_l (volatile u_int32_t *ptr, unsigned long bits) {
 
 static __inline void 
 i386_atomic_clearbits_l (volatile u_int32_t *ptr, unsigned long bits) {
-    bits = ~bits;
-    __asm __volatile("lock ; and %1,%0" :  "=m" (*ptr) : "ir" (bits));
+    __asm __volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
 #endif
