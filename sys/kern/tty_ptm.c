@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.2 2004/11/13 08:46:46 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.3 2004/11/24 22:19:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.2 2004/11/13 08:46:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.3 2004/11/24 22:19:27 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -224,11 +224,7 @@ pty_grant_slave(struct proc *p, dev_t dev)
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
 		struct ucred *cred;
-		/* get real uid */
-		VATTR_NULL(&vattr);
-		vattr.va_uid = p->p_cred->p_ruid;
-		vattr.va_gid = _TTY_GID;
-		vattr.va_mode = S_IRUSR|S_IWUSR|S_IWGRP;
+		(*ptm->getvattr)(ptm, p, &vattr);
 		/* Get a fake cred to pretend we're root. */
 		cred = crget();
 		error = VOP_SETATTR(vp, &vattr, cred, p);
