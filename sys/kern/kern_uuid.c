@@ -1,5 +1,4 @@
-/* $NetBSD: kern_uuid.c,v 1.1 2004/01/29 02:00:03 tsarna Exp $ */
-/* $FreeBSD: /repoman/r/ncvs/src/sys/kern/kern_uuid.c,v 1.7 2004/01/12 13:34:11 rse Exp $ */
+/*	$NetBSD: kern_uuid.c,v 1.2 2004/08/30 02:56:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -25,10 +24,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $FreeBSD: /repoman/r/ncvs/src/sys/kern/kern_uuid.c,v 1.7 2004/01/12 13:34:11 rse Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1 2004/01/29 02:00:03 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.2 2004/08/30 02:56:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -48,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1 2004/01/29 02:00:03 tsarna Exp $")
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-
-
-int sys_uuidgen(struct lwp *, void *, register_t *);
 
 /*
  * See also:
@@ -148,6 +146,35 @@ uuid_time(void)
 	return (time & ((1LL << 60) - 1LL));
 }
 
+/*
+ * Internal routine to actually generate the UUID.
+ */
+static void
+uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
+{
+	uint64_t time;
+
+	simple_lock(&uuid_mutex);
+
+	uuid_node(uuid->node);
+	time = uuid_time();
+	*timep = time;
+
+	if (uuid_last.time.ll == 0LL || uuid_last.node[0] != uuid->node[0] ||
+	    uuid_last.node[1] != uuid->node[1] ||
+	    uuid_last.node[2] != uuid->node[2])
+		uuid->seq = (uint16_t)arc4random() & 0x3fff;
+	else if (uuid_last.time.ll >= time)
+		uuid->seq = (uuid_last.seq + 1) & 0x3fff;
+	else
+		uuid->seq = uuid_last.seq;
+
+	uuid_last = *uuid;
+	uuid_last.time.ll = (time + count - 1) & ((1LL << 60) - 1LL);
+
+	simple_unlock(&uuid_mutex);
+}
+
 int
 sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 {
@@ -167,24 +194,8 @@ sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 
 	/* XXX: pre-validate accessibility to the whole of the UUID store? */
 
-	simple_lock(&uuid_mutex);
-
-	uuid_node(uuid.node);
-	time = uuid_time();
-
-	if (uuid_last.time.ll == 0LL || uuid_last.node[0] != uuid.node[0] ||
-	    uuid_last.node[1] != uuid.node[1] ||
-	    uuid_last.node[2] != uuid.node[2])
-		uuid.seq = (uint16_t)arc4random() & 0x3fff;
-	else if (uuid_last.time.ll >= time)
-		uuid.seq = (uuid_last.seq + 1) & 0x3fff;
-	else
-		uuid.seq = uuid_last.seq;
-
-	uuid_last = uuid;
-	uuid_last.time.ll = (time + SCARG(uap,count) - 1) & ((1LL << 60) - 1LL);
-
-	simple_unlock(&uuid_mutex);
+	/* Generate the base UUID. */
+	uuid_generate(&uuid, &time, SCARG(uap, count));
 
 	/* Set sequence and variant and deal with byte order. */
 	uuid.seq = htobe16(uuid.seq | 0x8000);
@@ -196,22 +207,21 @@ sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 		uuid.time.x.mid = (uint16_t)(time >> 32);
 		uuid.time.x.hi = ((uint16_t)(time >> 48) & 0xfff) | (1 << 12);
 		error = copyout(&uuid, SCARG(uap,store), sizeof(uuid));
-		SCARG(uap,store)++;
-		SCARG(uap,count)--;
+		SCARG(uap, store)++;
+		SCARG(uap, count)--;
 		time++;
-	} while (SCARG(uap,count) > 0 && !error);
+	} while (SCARG(uap, count) > 0 && error == 0);
 
 	return (error);
 }
 
-#ifdef notyet
 int
-snprintf_uuid(char *buf, size_t sz, struct uuid *uuid)
+uuid_snprintf(char *buf, size_t sz, const struct uuid *uuid)
 {
-	struct uuid_private *id;
+	const struct uuid_private *id;
 	int cnt;
 
-	id = (struct uuid_private *)uuid;
+	id = (const struct uuid_private *)uuid;
 	cnt = snprintf(buf, sz, "%08x-%04x-%04x-%04x-%04x%04x%04x",
 	    id->time.x.low, id->time.x.mid, id->time.x.hi, be16toh(id->seq),
 	    be16toh(id->node[0]), be16toh(id->node[1]), be16toh(id->node[2]));
@@ -219,17 +229,17 @@ snprintf_uuid(char *buf, size_t sz, struct uuid *uuid)
 }
 
 int
-printf_uuid(struct uuid *uuid)
+uuid_printf(const struct uuid *uuid)
 {
-	char buf[38];
+	char buf[UUID_STR_LEN];
 
-	snprintf_uuid(buf, sizeof(buf), uuid);
+	(void) uuid_snprintf(buf, sizeof(buf), uuid);
 	printf("%s", buf);
-	return 0;
+	return (0);
 }
 
 /*
- * Encode/Decode UUID into byte-stream.
+ * Encode/Decode UUID into octet-stream.
  *   http://www.opengroup.org/dce/info/draft-leach-uuids-guids-01.txt
  *
  * 0                   1                   2                   3
@@ -245,13 +255,84 @@ printf_uuid(struct uuid *uuid)
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-void
-le_uuid_enc(void *buf, struct uuid const *uuid)
+static void
+be16enc(void *buf, uint16_t u)
 {
-	u_char *p;
+	uint8_t *p = buf;
+
+	p[0] = (u >> 8) & 0xff;
+	p[1] = u & 0xff;
+}
+
+static void
+le16enc(void *buf, uint16_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = u & 0xff;
+	p[1] = (u >> 8) & 0xff;
+}
+
+static uint16_t
+be16dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[0] << 8) | p[1]);
+}
+
+static uint16_t
+le16dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[1] << 8) | p[0]);
+}
+
+static void
+be32enc(void *buf, uint32_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = (u >> 24) & 0xff;
+	p[1] = (u >> 16) & 0xff;
+	p[2] = (u >> 8) & 0xff;
+	p[3] = u & 0xff;
+}
+
+static void
+le32enc(void *buf, uint32_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = u & 0xff;
+	p[1] = (u >> 8) & 0xff;
+	p[2] = (u >> 16) & 0xff;
+	p[3] = (u >> 24) & 0xff;
+}
+
+static uint32_t
+be32dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+}
+
+static uint32_t
+le32dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
+}
+
+void
+uuid_enc_le(void *buf, const struct uuid *uuid)
+{
+	uint8_t *p = buf;
 	int i;
 
-	p = buf;
 	le32enc(p, uuid->time_low);
 	le16enc(p + 4, uuid->time_mid);
 	le16enc(p + 6, uuid->time_hi_and_version);
@@ -262,12 +343,11 @@ le_uuid_enc(void *buf, struct uuid const *uuid)
 }
 
 void
-le_uuid_dec(void const *buf, struct uuid *uuid)
+uuid_dec_le(void const *buf, struct uuid *uuid)
 {
-	u_char const *p;
+	const uint8_t *p = buf;
 	int i;
 
-	p = buf;
 	uuid->time_low = le32dec(p);
 	uuid->time_mid = le16dec(p + 4);
 	uuid->time_hi_and_version = le16dec(p + 6);
@@ -276,13 +356,13 @@ le_uuid_dec(void const *buf, struct uuid *uuid)
 	for (i = 0; i < _UUID_NODE_LEN; i++)
 		uuid->node[i] = p[10 + i];
 }
+
 void
-be_uuid_enc(void *buf, struct uuid const *uuid)
+uuid_enc_be(void *buf, const struct uuid *uuid)
 {
-	u_char *p;
+	uint8_t *p = buf;
 	int i;
 
-	p = buf;
 	be32enc(p, uuid->time_low);
 	be16enc(p + 4, uuid->time_mid);
 	be16enc(p + 6, uuid->time_hi_and_version);
@@ -293,12 +373,11 @@ be_uuid_enc(void *buf, struct uuid const *uuid)
 }
 
 void
-be_uuid_dec(void const *buf, struct uuid *uuid)
+uuid_dec_be(void const *buf, struct uuid *uuid)
 {
-	u_char const *p;
+	const uint8_t *p = buf;
 	int i;
 
-	p = buf;
 	uuid->time_low = be32dec(p);
 	uuid->time_mid = le16dec(p + 4);
 	uuid->time_hi_and_version = be16dec(p + 6);
@@ -307,4 +386,3 @@ be_uuid_dec(void const *buf, struct uuid *uuid)
 	for (i = 0; i < _UUID_NODE_LEN; i++)
 		uuid->node[i] = p[10 + i];
 }
-#endif
