@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.21 1996/10/02 18:04:59 ws Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.22 1996/12/22 23:01:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -642,8 +642,7 @@ ibcs2_sys_setgroups(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	SCARG(&sa, gidset) = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
-					    sizeof(gid_t *));
+	gp = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) * sizeof(gid_t *));
 	iset = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
 			      sizeof(ibcs2_gid_t *));
 	if (SCARG(&sa, gidsetsize)) {
@@ -652,8 +651,9 @@ ibcs2_sys_setgroups(p, v, retval)
 		if (error)
 			return error;
 	}
-	for (i = 0, gp = SCARG(&sa, gidset); i < SCARG(&sa, gidsetsize); i++)
-		*gp++ = (gid_t)iset[i];
+	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
+		gp[i]= (gid_t)iset[i];
+	SCARG(&sa, gidset) = gp;
 	return sys_setgroups(p, &sa, retval);
 }
 
@@ -963,14 +963,16 @@ ibcs2_sys_stime(p, v, retval)
 	int error;
 	struct sys_settimeofday_args sa;
 	caddr_t sg = stackgap_init(p->p_emul);
+	struct timeval *tvp;
 
-	SCARG(&sa, tv) = stackgap_alloc(&sg, sizeof(*SCARG(&sa, tv)));
+	tvp = stackgap_alloc(&sg, sizeof(*SCARG(&sa, tv)));
 	SCARG(&sa, tzp) = NULL;
 	error = copyin((caddr_t)SCARG(uap, timep),
-	    &(SCARG(&sa, tv)->tv_sec), sizeof(long));
+		       (void *)&tvp->tv_sec, sizeof(long));
 	if (error)
 		return error;
-	SCARG(&sa, tv)->tv_usec = 0;
+	tvp->tv_usec = 0;
+	SCARG(&sa, tv) = tvp;
 	if ((error = sys_settimeofday(p, &sa, retval)) != 0)
 		return EPERM;
 	return 0;
@@ -1000,14 +1002,12 @@ ibcs2_sys_utime(p, v, retval)
 		    sizeof(ubuf));
 		if (error)
 			return error;
-		SCARG(&sa, tptr) = stackgap_alloc(&sg,
-						  2 * sizeof(struct timeval *));
-		tp = (struct timeval *)SCARG(&sa, tptr);
-		tp->tv_sec = ubuf.actime;
-		tp->tv_usec = 0;
-		tp++;
-		tp->tv_sec = ubuf.modtime;
-		tp->tv_usec = 0;
+		tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
+		tp[0].tv_sec = ubuf.actime;
+		tp[0].tv_usec = 0;
+		tp[1].tv_sec = ubuf.modtime;
+		tp[1].tv_usec = 0;
+		SCARG(&sa, tptr) = tp;
 	} else
 		SCARG(&sa, tptr) = NULL;
 	return sys_utimes(p, &sa, retval);
