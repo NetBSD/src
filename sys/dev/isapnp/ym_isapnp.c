@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.1 1998/05/20 16:19:43 augustss Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.2 1998/05/21 19:07:10 augustss Exp $ */
 
 
 /*
@@ -106,31 +106,38 @@ ym_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-  struct ym_softc *sc = (struct ym_softc *)self;
-  struct isapnp_attach_args *ipa = aux;
+	struct ym_softc *sc = (struct ym_softc *)self;
+	struct isapnp_attach_args *ipa = aux;
 
-  if (ipa->ipa_nio < 5) {
-    printf ("Insufficient I/O ports... not really attached\n");
-    return;
-  }
+	printf("\n");
 
-  sc->sc_iot = ipa->ipa_iot;
-  sc->sc_ioh = ipa->ipa_io[1].h;
-  sc->sc_ic = ipa->ipa_ic;
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n", 
+		       sc->sc_dev.dv_xname);
+		return;
+	}
 
-  sc->ym_irq = ipa->ipa_irq[0].num;
-  sc->ym_drq = ipa->ipa_drq[0].num;
-  sc->ym_recdrq = ipa->ipa_drq[1].num;
+	sc->sc_iot = ipa->ipa_iot;
+	sc->sc_ic = ipa->ipa_ic;
+	sc->sc_ioh = ipa->ipa_io[1].h;
 
-  sc->sc_controlioh = ipa->ipa_io[4].h; 
+	sc->ym_irq = ipa->ipa_irq[0].num;
+	sc->ym_drq = ipa->ipa_drq[0].num;
+	sc->ym_recdrq = ipa->ipa_drq[1].num;
+	
+	sc->sc_controlioh = ipa->ipa_io[4].h; 
+	
+	sc->sc_ad1848.sc_iot = sc->sc_iot;
+	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
+	sc->sc_ad1848.sc_isa = parent->dv_parent;
+	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
+	sc->sc_ad1848.mode = 2;
+	sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;
+	sc->sc_ad1848.chip_name = "OPL3-SA3";
 
-  sc->sc_ad1848.sc_iobase = ipa->ipa_io[1].base + WSS_CODEC;
-  sc->sc_ad1848.sc_isa = parent->dv_parent;
-  sc->sc_ad1848.sc_iot = sc->sc_iot;
-  sc->sc_ad1848.sc_iooffs = WSS_CODEC;
-  sc->sc_ad1848.mode = 2;
-  sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;
+	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	       ipa->ipa_devclass);
 
-  ym_attach(sc);
+	ym_attach(sc);
 }
 
