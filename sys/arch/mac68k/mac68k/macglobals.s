@@ -1,4 +1,4 @@
-/*	$NetBSD: macglobals.s,v 1.1 1994/12/03 23:34:53 briggs Exp $	*/
+/*	$NetBSD: macglobals.s,v 1.2 1995/08/16 13:18:24 briggs Exp $	*/
 
 /* Copyright 1994 by Bradley A. Grantham, All rights reserved */
 
@@ -9,5 +9,9 @@
 
 	.text
 	.space 0xF00	/* did I miss something? this is a bad fix for
-	.space 0x1000	/* did I miss something? this is a bad fix for
 			   someone who is writing over low mem */
+/*
+ * This has not been included for some time and things seem to still
+ * be working.
+	.space 0x1000
+ */
