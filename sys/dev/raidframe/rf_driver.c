@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.16 1999/12/03 03:18:45 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.17 1999/12/07 02:13:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -201,10 +201,6 @@ rf_BootRaidframe()
 		return (EBUSY);
 	raidframe_booted = 1;
 
-#if RF_DEBUG_ATOMIC > 0
-	rf_atent_init();
-#endif				/* RF_DEBUG_ATOMIC > 0 */
-
 	rf_setup_threadid();
 	rf_assign_threadid();
 
@@ -243,9 +239,6 @@ rf_UnbootRaidframe()
 		    __LINE__, rc);
 		RF_PANIC();
 	}
-#if RF_DEBUG_ATOMIC > 0
-	rf_atent_shutdown();
-#endif				/* RF_DEBUG_ATOMIC > 0 */
 	return (0);
 }
 /*
