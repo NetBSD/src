@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_ftpusers.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001 Networks Associates Technology, Inc.
  * All rights reserved.
@@ -33,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ftpusers/pam_ftpusers.c,v 1.1 2002/05/08 00:30:10 des Exp $");
+#else
+__RCSID("$NetBSD: pam_ftpusers.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+#endif
 
 #include <ctype.h>
 #include <grp.h>
@@ -77,7 +83,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 	while (!found && (line = fgetln(f, &len)) != NULL) {
 		if (*line == '#')
 			continue;
-		while (len > 0 && isspace(line[len - 1]))
+		while (len > 0 && isspace((unsigned char)line[len - 1]))
 			--len;
 		if (len == 0)
 			continue;

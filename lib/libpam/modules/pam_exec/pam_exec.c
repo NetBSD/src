@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_exec.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001,2003 Networks Associates Technology, Inc.
  * All rights reserved.
@@ -33,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_exec/pam_exec.c,v 1.3 2003/02/06 12:56:51 des Exp $");
+#else
+__RCSID("$NetBSD: pam_exec.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -65,7 +71,8 @@ _pam_exec(pam_handle_t *pamh __unused, int flags __unused,
 	envlist = pam_getenvlist(pamh);
 	childerr = 0;
 	if ((pid = vfork()) == 0) {
-		execve(argv[0], argv, envlist);
+		/*LINTED const cast*/
+		execve(argv[0], (char **)__UNCONST(argv), envlist);
 		childerr = errno;
 		_exit(1);
 	}

@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_deny.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+
 /*-
  * Copyright 2001 Mark R V Murray
  * All rights reserved.
@@ -25,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_deny/pam_deny.c,v 1.9 2002/04/12 22:27:19 des Exp $");
+#else
+__RCSID("$NetBSD: pam_deny.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+#endif
 
 #include <stddef.h>
 

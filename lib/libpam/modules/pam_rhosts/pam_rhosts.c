@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_rhosts.c,v 1.2 2004/12/12 08:18:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002 Danny Braniss
  * All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_rhosts/pam_rhosts.c,v 1.3 2003/12/11 13:55:16 des Exp $");
+#else
+__RCSID("$NetBSD: pam_rhosts.c,v 1.2 2004/12/12 08:18:47 christos Exp $");
+#endif
 
 #include <pwd.h>
 #include <stddef.h>
