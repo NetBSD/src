@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.450 2002/07/04 21:00:33 rjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.451 2002/07/05 14:03:33 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.448 2002/07/04 20:51:35 rjs Exp 
+ *	NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp 
  */
 
 /*
@@ -1700,6 +1700,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Avance Logic (2nd PCI Vendor ID)",
 	    "ALS4000 Audio",
+	},
+	{
+	    PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S,
+	    0,
+	    "Avlab Technology, Inc.",
+	    "Low Profile PCI 4 Serial",
 	},
 	{
 	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
@@ -10627,6 +10633,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TITAN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Titan Electronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AVLAB, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Avlab Technology, Inc.",
 	    NULL,
 	},
 	{

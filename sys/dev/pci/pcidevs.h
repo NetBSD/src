@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.452 2002/07/04 21:00:32 rjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.453 2002/07/05 14:03:33 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.448 2002/07/04 20:51:35 rjs Exp 
+ *	NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp 
  */
 
 /*
@@ -548,6 +548,7 @@
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics, Inc. */
 #define	PCI_VENDOR_TITAN	0x14d2		/* Titan Electronics, Inc. */
+#define	PCI_VENDOR_AVLAB	0x14db		/* Avlab Technology, Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom Corporation */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
@@ -935,6 +936,9 @@
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
 #define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 Audio */
+
+/* Avlab Technology products */
+#define	PCI_PRODUCT_AVLAB_LPPCI4S	0x2150		/* Low Profile PCI 4 Serial */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
