@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.24 1998/11/04 00:30:14 fvdl Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.25 1999/04/20 22:07:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -256,17 +256,16 @@ ep_isa_probe(parent, match, aux)
 		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
 
 		/*
-		 * XXX: this should probably not be done here
-		 * because it enables the drq/irq lines from
-		 * the board. Perhaps it should be done after
-		 * we have checked for irq/drq collisions?
-		 */
-		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
-
-		/*
 		 * Don't attach a 3c509 in PnP mode.
 		 */
 		if ((model & 0xfff0) == PROD_ID_3C509) {
+			int promhigh;
+			promhigh = htons(epreadeeprom(iot, ioh, EEPROM_CONFIG_HIGH));
+			if (promhigh & 0x08) {
+				printf(
+				 "3COM 3C509 Ethernet card in PnP mode\n");
+				continue;
+			}
 			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
 				printf(
 				"ep_isa_probe: can't map Etherlink iobase\n");
@@ -275,11 +274,20 @@ ep_isa_probe(parent, match, aux)
 			if (bus_space_read_2(iot, ioh2, ELINK_W0_EEPROM_COMMAND)
 			    & EEPROM_TST_MODE) {
 				printf(
-				 "3COM 3C509 Ethernet card in PnP mode\n");
+				 "3COM 3C509 Ethernet card in TST/PnP mode\n");
 				continue;
 			}
 			bus_space_unmap(iot, ioh2, 1);
 		}
+
+		/*
+		 * XXX: this should probably not be done here
+		 * because it enables the drq/irq lines from
+		 * the board. Perhaps it should be done after
+		 * we have checked for irq/drq collisions?
+		 */
+		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
+
 		epaddcard(bus, iobase, irq, model);
 	}
 	/* XXX should we sort by ethernet address? */
