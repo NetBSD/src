@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.13 2003/04/30 18:05:47 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.14 2003/04/30 18:38:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.13 2003/04/30 18:05:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.14 2003/04/30 18:38:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,7 @@ mach_io_iterator_next(args)
 	switch (mr->mr_port->mp_datatype) {
 	case MACH_MP_IOKIT_DEVCLASS:
 		/* Do not come here again */
-		mr->mr_port->mp_datatype = MACH_MP_NONE;
+		mr->mr_port->mp_datatype = MACH_MP_IOKIT_DEVCLASS_DONE;
 
 		mp = mach_port_get();
 		mp->mp_flags |= MACH_MP_INKERNEL;
@@ -782,10 +782,20 @@ mach_io_iterator_reset(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 	
-	if (mr->mr_port->mp_datatype == MACH_MP_DEVICE_ITERATOR) {
+	switch(mr->mr_port->mp_datatype) {
+	case MACH_MP_DEVICE_ITERATOR:
 		mdi = mr->mr_port->mp_data;
 		mdi->mdi_parent = mr->mr_port->mp_data;
 		mdi->mdi_current = TAILQ_FIRST(&alldevs);
+		break;
+	
+	case MACH_MP_IOKIT_DEVCLASS_DONE:
+		mr->mr_port->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
+		break;
+
+	case MACH_MP_IOKIT_DEVCLASS:
+	default:
+		printf("mach_io_iterator_reset: unknown type\n");
 	}
 
 	rep->rep_msgh.msgh_bits = 
