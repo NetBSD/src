@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              xRevision: 69 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
-
 #define __DSMTHDAT_C__
 
 #include "acpi.h"
@@ -165,8 +162,8 @@ AcpiDsMethodDataInit (
 
     for (i = 0; i < ACPI_METHOD_NUM_ARGS; i++)
     {
-        ACPI_MOVE_UNALIGNED32_TO_32 (&WalkState->Arguments[i].Name,
-                                NAMEOF_ARG_NTE);
+        ACPI_MOVE_32_TO_32 (&WalkState->Arguments[i].Name,
+                            NAMEOF_ARG_NTE);
         WalkState->Arguments[i].Name.Integer |= (i << 24);
         WalkState->Arguments[i].Descriptor    = ACPI_DESC_TYPE_NAMED;
         WalkState->Arguments[i].Type          = ACPI_TYPE_ANY;
@@ -177,8 +174,8 @@ AcpiDsMethodDataInit (
 
     for (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++)
     {
-        ACPI_MOVE_UNALIGNED32_TO_32 (&WalkState->LocalVariables[i].Name,
-                                NAMEOF_LOCAL_NTE);
+        ACPI_MOVE_32_TO_32 (&WalkState->LocalVariables[i].Name,
+                            NAMEOF_LOCAL_NTE);
 
         WalkState->LocalVariables[i].Name.Integer |= (i << 24);
         WalkState->LocalVariables[i].Descriptor    = ACPI_DESC_TYPE_NAMED;
@@ -395,7 +392,6 @@ AcpiDsMethodDataSetValue (
 {
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node;
-    ACPI_OPERAND_OBJECT     *NewDesc = Object;
 
 
     ACPI_FUNCTION_TRACE ("DsMethodDataSetValue");
@@ -415,31 +411,16 @@ AcpiDsMethodDataSetValue (
     }
 
     /*
-     * If the object has just been created and is not attached to anything,
-     * (the reference count is 1), then we can just store it directly into
-     * the arg/local.  Otherwise, we must copy it.
+     * Increment ref count so object can't be deleted while installed.
+     * NOTE: We do not copy the object in order to preserve the call by
+     * reference semantics of ACPI Control Method invocation.
+     * (See ACPI Specification 2.0C)
      */
-    if (Object->Common.ReferenceCount > 1)
-    {
-        Status = AcpiUtCopyIobjectToIobject (Object, &NewDesc, WalkState);
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-
-       ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Object Copied %p, new %p\n",
-           Object, NewDesc));
-    }
-    else
-    {
-        /* Increment ref count so object can't be deleted while installed */
-
-        AcpiUtAddReference (NewDesc);
-    }
+    AcpiUtAddReference (Object);
 
     /* Install the object */
 
-    Node->Object = NewDesc;
+    Node->Object = Object;
     return_ACPI_STATUS (Status);
 }
 
@@ -744,8 +725,8 @@ AcpiDsStoreObjectToLocal (
              */
             if (ACPI_GET_DESCRIPTOR_TYPE (CurrentObjDesc) != ACPI_DESC_TYPE_OPERAND)
             {
-                ACPI_REPORT_ERROR (("Invalid descriptor type while storing to method arg: %X\n",
-                    CurrentObjDesc->Common.Type));
+                ACPI_REPORT_ERROR (("Invalid descriptor type while storing to method arg: [%s]\n",
+                        AcpiUtGetDescriptorName (CurrentObjDesc)));
                 return_ACPI_STATUS (AE_AML_INTERNAL);
             }
 
@@ -757,8 +738,8 @@ AcpiDsStoreObjectToLocal (
                 (CurrentObjDesc->Reference.Opcode == AML_REF_OF_OP))
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-                    "Arg (%p) is an ObjRef(Node), storing in node %p\n",
-                    ObjDesc, CurrentObjDesc));
+                        "Arg (%p) is an ObjRef(Node), storing in node %p\n",
+                        ObjDesc, CurrentObjDesc));
 
                 /*
                  * Store this object to the Node

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              xRevision: 99 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
 
 #define __EXCREATE_C__
 
@@ -370,7 +367,7 @@ AcpiExCreateRegion (
     ACPI_FUNCTION_TRACE ("ExCreateRegion");
 
 
-    /* Get the Node from the object stack  */
+    /* Get the Namespace Node */
 
     Node = WalkState->Op->Common.Node;
 
@@ -396,7 +393,6 @@ AcpiExCreateRegion (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_LOAD, "Region Type - %s (%X)\n",
                     AcpiUtGetRegionName (RegionSpace), RegionSpace));
-
 
     /* Create the region descriptor */
 
@@ -462,6 +458,7 @@ AcpiExCreateTableRegion (
 
     ACPI_FUNCTION_TRACE ("ExCreateTableRegion");
 
+
     /* Get the Node from the object stack  */
 
     Node = WalkState->Op->Common.Node;
@@ -480,7 +477,6 @@ AcpiExCreateTableRegion (
     Status = AcpiTbFindTable (Operand[1]->String.Pointer,
                               Operand[2]->String.Pointer,
                               Operand[3]->String.Pointer, &Table);
-
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -584,7 +580,6 @@ AcpiExCreateProcessor (
     Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) Operand[0],
                     ObjDesc, ACPI_TYPE_PROCESSOR);
 
-
     /* Remove local reference to the object */
 
     AcpiUtRemoveReference (ObjDesc);
@@ -635,7 +630,6 @@ AcpiExCreatePowerResource (
 
     Status = AcpiNsAttachObject ((ACPI_NAMESPACE_NODE *) Operand[0],
                     ObjDesc, ACPI_TYPE_POWER);
-
 
     /* Remove local reference to the object */
 
@@ -707,7 +701,6 @@ AcpiExCreateMethod (
         ObjDesc->Method.Concurrency = (UINT8)
                         (((MethodFlags & METHOD_FLAGS_SYNCH_LEVEL) >> 4) + 1);
     }
-
     else
     {
         ObjDesc->Method.Concurrency = INFINITE_CONCURRENCY;

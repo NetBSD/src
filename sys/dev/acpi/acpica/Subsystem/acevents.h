@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acevents.h - Event subcomponent prototypes and defines
- *       xRevision: 83 $
+ *       $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -182,37 +182,44 @@ AcpiEvNotifyDispatch (
  * Evgpe - GPE handling and dispatch
  */
 
+ACPI_STATUS
+AcpiEvWalkGpeList (
+    ACPI_GPE_CALLBACK       GpeWalkCallback);
+
+BOOLEAN
+AcpiEvValidGpeEvent (
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
+
 ACPI_GPE_EVENT_INFO *
 AcpiEvGetGpeEventInfo (
+    ACPI_HANDLE             GpeDevice,
     UINT32                  GpeNumber);
 
 ACPI_STATUS
 AcpiEvGpeInitialize (
     void);
 
-UINT32
-AcpiEvGpeDispatch (
-    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
-
-UINT32
-AcpiEvGpeDetect (
-    void);
-
-ACPI_STATUS
-AcpiEvInstallGpeBlock (
-    ACPI_GPE_BLOCK_INFO     *GpeBlock);
-
-ACPI_STATUS
-AcpiEvCreateGpeInfoBlocks (
-    ACPI_GPE_BLOCK_INFO     *GpeBlock);
-
 ACPI_STATUS
 AcpiEvCreateGpeBlock (
-    char                    *Pathname,
+    ACPI_NAMESPACE_NODE     *GpeDevice,
     ACPI_GENERIC_ADDRESS    *GpeBlockAddress,
     UINT32                  RegisterCount,
     UINT8                   GpeBlockBaseNumber,
-    UINT32                  InterruptLevel);
+    UINT32                  InterruptLevel,
+    ACPI_GPE_BLOCK_INFO     **ReturnGpeBlock);
+
+ACPI_STATUS
+AcpiEvDeleteGpeBlock (
+    ACPI_GPE_BLOCK_INFO     *GpeBlock);
+
+UINT32
+AcpiEvGpeDispatch (
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo,
+    UINT32                  GpeNumber);
+
+UINT32
+AcpiEvGpeDetect (
+    ACPI_GPE_XRUPT_INFO     *GpeXruptList);
 
 /*
  * Evregion - Address Space handling
@@ -231,7 +238,7 @@ AcpiEvAddressSpaceDispatch (
     void                    *Value);
 
 ACPI_STATUS
-AcpiEvAddrHandlerHelper (
+AcpiEvInstallHandler (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,
     void                    *Context,
@@ -304,6 +311,10 @@ AcpiEvInitializeRegion (
 /*
  * Evsci - SCI (System Control Interrupt) handling/dispatch
  */
+
+UINT32 ACPI_SYSTEM_XFACE
+AcpiEvGpeXruptHandler (
+    void                    *Context);
 
 UINT32
 AcpiEvInstallSciHandler (

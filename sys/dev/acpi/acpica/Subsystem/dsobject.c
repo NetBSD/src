@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              xRevision: 114 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsobject.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
 
 #define __DSOBJECT_C__
 
@@ -274,7 +271,7 @@ AcpiDsBuildInternalBufferObj (
             return (AE_TYPE);
         }
 
-        ByteListLength = ByteList->Common.Value.Integer32;
+        ByteListLength = (UINT32) ByteList->Common.Value.Integer;
     }
 
     /*
@@ -293,7 +290,8 @@ AcpiDsBuildInternalBufferObj (
     if (ObjDesc->Buffer.Length == 0)
     {
         ObjDesc->Buffer.Pointer = NULL;
-        ACPI_REPORT_WARNING (("Buffer created with zero length in AML\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "Buffer defined with zero length in AML, creating\n"));
     }
     else
     {
