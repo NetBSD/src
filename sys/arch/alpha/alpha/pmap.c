@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.205 2003/10/29 04:48:40 mycroft Exp $ */
+/* $NetBSD: pmap.c,v 1.206 2003/12/30 12:33:14 pk Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2003/10/29 04:48:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2003/12/30 12:33:14 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,6 +795,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	vsize_t lev2mapsize, lev3mapsize;
 	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
+	vsize_t bufsz;
 	int i;
 
 #ifdef DEBUG
@@ -812,8 +813,14 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * kernel.  We also reserve space for kmem_alloc_pageable()
 	 * for vm_fork().
 	 */
-	lev3mapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
+
+	/* Get size of buffer cache and set an upper limit */
+	bufsz = buf_memcalc();
+	buf_setvalimit(bufsz);
+
+	lev3mapsize =
+		(VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
+		 bufsz + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM

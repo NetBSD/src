@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.11 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.12 2003/12/30 12:33:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.11 2003/10/05 17:48:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.12 2003/12/30 12:33:24 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ ext2fs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
+#if 0
 	struct buf *ebp, *ep;
 	daddr_t start, last;
 	struct vnode *vp;
@@ -145,5 +146,8 @@ ext2fs_checkoverlap(bp, ip)
 			ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
 	}
+#else
+	printf("ext2fs_checkoverlap disabled due to buffer cache implementation changes\n");
+#endif
 }
 #endif

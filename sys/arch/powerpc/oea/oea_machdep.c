@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.12 2003/11/21 18:07:29 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.13 2003/12/30 12:33:19 pk Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.12 2003/11/21 18:07:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.13 2003/12/30 12:33:19 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -609,11 +609,10 @@ void
 oea_startup(const char *model)
 {
 	uintptr_t sz;
-	u_int i;
-	u_long base, residual;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+	u_int i;
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
@@ -651,57 +650,6 @@ oea_startup(const char *model)
 	printf("total memory = %s\n", pbuf);
 
 	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (uintptr_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 * Allocate the buffer starting at the top of the kernel VM space.
-	 */
-	sz = MAXBSIZE * nbuf;
-	minaddr = VM_MAX_KERNEL_ADDRESS - round_page(sz);
-	if (uvm_map(kernel_map, &minaddr, round_page(sz),
-		NULL, UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	buffers = (char *)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
-	/*
 	 * Allocate away the pages that map to 0xDEA[CDE]xxxx.  Do this after
 	 * the bufpages are allocated in case they overlap since it's not
 	 * fatal if we can't allocate these.
@@ -717,8 +665,8 @@ oea_startup(const char *model)
 			printf("oea_startup: failed to allocate DEAD "
 			    "ZONE: error=%d\n", error);
 	}
-	minaddr = 0;
  
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time. These
@@ -745,13 +693,6 @@ oea_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers.
-	 */
-	bufinit();
 }
 
 /*

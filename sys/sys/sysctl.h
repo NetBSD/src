@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.103 2003/12/26 11:43:24 itohy Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.104 2003/12/30 12:33:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -248,7 +248,8 @@ struct ctlname {
 #define	KERN_SOMAXKVA		73	/* int: max socket kernel virtual mem */
 #define	KERN_ROOT_PARTITION	74	/* int: root partition */
 #define	KERN_DRIVERS		75	/* struct: driver names and majors #s */
-#define	KERN_MAXID		76	/* number of valid kern ids */
+#define	KERN_BUF		76	/* struct: buffers */
+#define	KERN_MAXID		77	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \

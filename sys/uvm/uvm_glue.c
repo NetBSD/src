@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.73 2003/11/13 03:09:30 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.74 2003/12/30 12:33:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.73 2003/11/13 03:09:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.74 2003/12/30 12:33:24 pk Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -103,10 +103,6 @@ struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
  * XXXCDC: do these really belong here?
  */
 
-int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
-				/* XXX: see uvm_kernacc */
-
-
 /*
  * uvm_kernacc: can the kernel access a region of memory
  *
@@ -129,18 +125,6 @@ uvm_kernacc(addr, len, rw)
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
 
-	/*
-	 * XXX there are still some things (e.g. the buffer cache) that
-	 * are managed behind the VM system's back so even though an
-	 * address is accessible in the mind of the VM system, there may
-	 * not be physical pages where the VM thinks there is.  This can
-	 * lead to bogus allocation of pages in the kernel address space
-	 * or worse, inconsistencies at the pmap level.  We only worry
-	 * about the buffer cache for now.
-	 */
-	if (!readbuffers && rv && (eaddr > (vaddr_t)buffers &&
-			     saddr < (vaddr_t)buffers + MAXBSIZE * nbuf))
-		rv = FALSE;
 	return(rv);
 }
 
