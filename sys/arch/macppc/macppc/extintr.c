@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.22 2001/01/15 20:19:54 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.23 2001/02/02 06:11:53 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -51,7 +51,7 @@
 #include <machine/psl.h>
 #include <machine/pio.h>
 
-#include <macppc/macppc/openpicreg.h>
+#include <powerpc/openpic.h>
 
 #define NIRQ 32
 #define HWIRQ_MAX (NIRQ - 4 - 1)
@@ -66,14 +66,6 @@ static __inline int read_irq __P((void));
 static __inline int mapirq __P((int));
 static void enable_irq __P((int));
 
-static __inline u_int openpic_read __P((int));
-static __inline void openpic_write __P((int, u_int));
-void openpic_enable_irq __P((int, int));
-void openpic_disable_irq __P((int));
-void openpic_set_priority __P((int, int));
-static __inline int openpic_read_irq __P((int));
-static __inline void openpic_eoi __P((int));
-
 static void do_pending_int __P((void));
 
 unsigned int imen = 0xffffffff;
@@ -85,7 +77,7 @@ struct intrhand *intrhand[NIRQ];
 static u_char hwirq[NIRQ], virq[ICU_LEN];
 static int virq_max = 0;
 
-static u_char *obio_base, *openpic_base;
+static u_char *obio_base, *macppc_openpic_base;
 
 extern u_int *heathrow_FCR;
 
@@ -107,7 +99,7 @@ volatile int cpl, ipending;
 #define INT_CLEAR_REG_L  (interrupt_reg + 0x18)
 #define INT_LEVEL_REG_L  (interrupt_reg + 0x1c)
 
-#define have_openpic	(openpic_base != NULL)
+#define have_openpic	(macppc_openpic_base != NULL)
 
 /*
  * Map 64 irqs into 32 (bits).
@@ -203,78 +195,6 @@ enable_irq(x)
 	out32rb(INT_ENABLE_REG_L, lo);
 	if (heathrow_FCR)
 		out32rb(INT_ENABLE_REG_H, hi);
-}
-
-u_int
-openpic_read(reg)
-	int reg;
-{
-	char *addr = openpic_base + reg;
-
-	return in32rb(addr);
-}
-
-void
-openpic_write(reg, val)
-	int reg;
-	u_int val;
-{
-	char *addr = openpic_base + reg;
-
-	out32rb(addr, val);
-}
-
-void
-openpic_enable_irq(irq, type)
-	int irq, type;
-{
-	u_int x;
-
-	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
-	x &= ~(OPENPIC_IMASK | OPENPIC_SENSE_LEVEL | OPENPIC_SENSE_EDGE);
-	if (type == IST_LEVEL)
-		x |= OPENPIC_SENSE_LEVEL;
-	else
-		x |= OPENPIC_SENSE_EDGE;
-	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-}
-
-void
-openpic_disable_irq(irq)
-	int irq;
-{
-	u_int x;
-
-	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
-	x |= OPENPIC_IMASK;
-	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-}
-
-void
-openpic_set_priority(cpu, pri)
-	int cpu, pri;
-{
-	u_int x;
-
-	x = openpic_read(OPENPIC_CPU_PRIORITY(cpu));
-	x &= ~OPENPIC_CPU_PRIORITY_MASK;
-	x |= pri;
-	openpic_write(OPENPIC_CPU_PRIORITY(cpu), x);
-}
-
-int
-openpic_read_irq(cpu)
-	int cpu;
-{
-	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
-}
-
-void
-openpic_eoi(cpu)
-	int cpu;
-{
-	openpic_write(OPENPIC_EOI(cpu), 0);
-	openpic_read(OPENPIC_EOI(cpu));
 }
 
 /*
@@ -756,47 +676,9 @@ softintr(ipl)
 }
 
 void
-openpic_init()
+macppc_openpic_init()
 {
-	int irq;
-	u_int x;
-
-	/* disable all interrupts */
-	for (irq = 0; irq < 256; irq++)
-		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
-
-	openpic_set_priority(0, 15);
-
-	/* we don't need 8259 pass through mode */
-	x = openpic_read(OPENPIC_CONFIG);
-	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
-	openpic_write(OPENPIC_CONFIG, x);
-
-	/* send all interrupts to cpu 0 */
-	for (irq = 0; irq < ICU_LEN; irq++)
-		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
-
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		x = irq;
-		x |= OPENPIC_IMASK;
-		x |= OPENPIC_POLARITY_POSITIVE;
-		x |= OPENPIC_SENSE_LEVEL;
-		x |= 8 << OPENPIC_PRIORITY_SHIFT;
-		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-	}
-
-	/* XXX set spurious intr vector */
-
-	openpic_set_priority(0, 0);
-
-	/* clear all pending interrunts */
-	for (irq = 0; irq < 256; irq++) {
-		openpic_read_irq(0);
-		openpic_eoi(0);
-	}
-
-	for (irq = 0; irq < ICU_LEN; irq++)
-		openpic_disable_irq(irq);
+	openpic_init(macppc_openpic_base);
 
 	install_extint(ext_intr_openpic);
 }
@@ -821,7 +703,7 @@ init_interrupt()
 	int32_t ictlr;
 	char type[32];
 
-	openpic_base = NULL;
+	macppc_openpic_base = NULL;
 
 	mac_io = OF_finddevice("mac-io");
 	if (mac_io == -1)
@@ -860,7 +742,7 @@ init_interrupt()
 		if (OF_getprop(ictlr, "reg", reg, sizeof(reg)) < 8)
 			goto failed;
 
-		openpic_base = (void *)(obio_base + reg[0]);
+		macppc_openpic_base = (void *)(obio_base + reg[0]);
 		openpic_init();
 		return;
 	}
