@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1995/05/16 07:30:40 phil Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:55:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,10 +53,8 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)			/* nothing */
 #define cpu_swapin(p)           	/* nothing */
 #define cpu_set_init_frame(p,fp)	(p)->p_md.md_regs = fp
-#define	BROKEN_SWAP
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*  XXX needed?  PAN
