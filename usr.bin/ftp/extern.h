@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.49 1999/11/11 02:53:03 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.50 1999/11/12 02:50:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int	foregroundproc __P((void));
+void	formatbuf __P((char *, size_t, const char *));
 void	ftpvis __P((char *, size_t, const char *, size_t));
 int	ftp_login __P((const char *, const char *, const char *));
 void	get __P((int, char **));
@@ -197,6 +198,7 @@ void	reset __P((int, char **));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
+char   *rprompt __P((void));
 int	ruserpass __P((const char *, const char **, const char **,
 	    const char **));
 void	sendrequest __P((const char *, const char *, const char *, int));

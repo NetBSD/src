@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.81 1999/11/11 02:53:03 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.82 1999/11/12 02:50:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.81 1999/11/11 02:53:03 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.82 1999/11/12 02:50:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1117,7 +1117,8 @@ controlediting()
 		el_set(el, EL_HIST, history, hist);	/* use history */
 
 		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
-		el_set(el, EL_PROMPT, prompt);	/* set the prompt function */
+		el_set(el, EL_PROMPT, prompt);	/* set the prompt functions */
+		el_set(el, EL_RPROMPT, rprompt);
 
 		/* add local file completion, bind to TAB */
 		el_set(el, EL_ADDFN, "ftp-complete",
@@ -1234,6 +1235,122 @@ ftpvis(dst, dstlen, src, srclen)
 		}
 	}
 	dst[di] = '\0';
+}
+
+/*
+ * Copy src into buf (which is len bytes long), expanding % sequences.
+ */
+void
+formatbuf(buf, len, src)
+	char		*buf;
+	size_t		 len;
+	const char	*src;
+{
+	const char	*p;
+	char		*p2, *q;
+	int		 i, op, updirs, pdirs;
+
+#define ADDBUF(x) do { \
+		if (i >= len - 1) \
+			goto endbuf; \
+		buf[i++] = (x); \
+	} while (0)
+
+	p = src;
+	for (i = 0; *p; p++) {
+		if (*p != '%') {
+			ADDBUF(*p);
+			continue;
+		}
+		p++;
+
+		switch (op = *p) {
+
+		case '/':
+		case '.':
+		case 'c':
+			p2 = connected ? remotepwd : "";
+			updirs = pdirs = 0;
+
+			/* option to determine fixed # of dirs from path */
+			if (op == '.' || op == 'c') {
+				int skip;
+
+				q = p2;
+				while (*p2)		/* calc # of /'s */
+					if (*p2++ == '/')
+						updirs++;
+				if (p[1] == '0') {	/* print <x> or ... */
+					pdirs = 1;
+					p++;
+				}
+				if (p[1] >= '1' && p[1] <= '9') {
+							/* calc # to skip  */
+					skip = p[1] - '0';
+					p++;
+				} else
+					skip = 1;
+
+				updirs -= skip;
+				while (skip-- > 0) {
+					while ((p2 > q) && (*p2 != '/'))
+						p2--;	/* back up */
+					if (skip && p2 > q)
+						p2--;
+				}
+				if (*p2 == '/' && p2 != q)
+					p2++;
+			}
+
+			if (updirs > 0 && pdirs) {
+				if (i >= len - 5)
+					break;
+				if (op == '.') {
+					ADDBUF('.');
+					ADDBUF('.');
+					ADDBUF('.');
+				} else {
+					ADDBUF('/');
+					ADDBUF('<');
+					if (updirs > 9) {
+						ADDBUF('9');
+						ADDBUF('+');
+					} else
+						ADDBUF('0' + updirs);
+					ADDBUF('>');
+				}
+			}
+			for (; *p2; p2++)
+				ADDBUF(*p2);
+			break;
+
+		case 'M':
+		case 'm':
+			for (p2 = connected ? hostname : "-"; *p2; p2++) {
+				if (op == 'm' && *p2 == '.')
+					break;
+				ADDBUF(*p2);
+			}
+			break;
+
+		case 'n':
+			for (p2 = connected ? username : "-"; *p2 ; p2++)
+				ADDBUF(*p2);
+			break;
+
+		case '%':
+			ADDBUF('%');
+			break;
+
+		default:		/* display unknown codes literally */
+			ADDBUF('%');
+			ADDBUF(op);
+			break;
+
+		}
+	}
+ endbuf:
+	buf[i] = '\0';
 }
 
 /*

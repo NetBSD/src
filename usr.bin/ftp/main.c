@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 1999/11/11 02:53:03 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.67 1999/11/12 02:50:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 1999/11/11 02:53:03 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 1999/11/12 02:50:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,12 +412,17 @@ main(argc, argv)
 	(void)strlcpy(anonpass, anonuser, len);
 	(void)strlcat(anonpass, "@",	  len);
 
+			/*
+			 * set all the defaults for options defined in
+			 * struct option optiontab[]  declared in cmdtab.c
+			 */
 	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
 	setupoption("ftp_proxy",	getenv(FTP_PROXY),	"");
 	setupoption("http_proxy",	getenv(HTTP_PROXY),	"");
 	setupoption("no_proxy",		getenv(NO_PROXY),	"");
 	setupoption("pager",		getenv("PAGER"),	DEFAULTPAGER);
-	setupoption("prompt",		DEFAULTPROMPT,		NULL);
+	setupoption("prompt",		getenv("FTPPROMPT"),	DEFAULTPROMPT);
+	setupoption("rprompt",		getenv("FTPRPROMPT"),	DEFAULTRPROMPT);
 
 	free(anonpass);
 
@@ -486,8 +491,6 @@ prompt()
 {
 	static char	**prompt;
 	static char	  buf[MAXPATHLEN];
-	char		 *p, *p2;
-	int		  i;
 
 	if (prompt == NULL) {
 		struct option *o;
@@ -497,50 +500,28 @@ prompt()
 			errx(1, "no such option `prompt'");
 		prompt = &(o->value);
 	}
+	formatbuf(buf, sizeof(buf), *prompt ? *prompt : DEFAULTPROMPT);
+	return (buf);
+}
 
-#define ADDBUF(x) do { \
-		if (i >= sizeof(buf) - 1) \
-			goto endbuf; \
-		buf[i++] = (x); \
-	} while (0)
+/*
+ * Generate an rprompt
+ */
+char *
+rprompt()
+{
+	static char	**rprompt;
+	static char	  buf[MAXPATHLEN];
 
-	p = *prompt ? *prompt : DEFAULTPROMPT;
-	for (i = 0; *p; p++) {
-		if (*p == '%') {
-			p++;
-			switch (*p) {
-			case '%':
-				ADDBUF('%');
-				break;
-			case '/':
-				for (p2 = connected ? remotepwd : "/";
-				    *p2; p2++)
-					ADDBUF(*p2);
-				break;
-			case 'M':
-				for (p2 = connected ? hostname : "-";
-				    *p2; p2++)
-					ADDBUF(*p2);
-				break;
-			case 'm':
-				for (p2 = connected ? hostname : "-";
-				    *p2 && *p2 != '.'; p2++)
-					ADDBUF(*p2);
-				break;
-			case 'n':
-				for (p2 = connected ? username : "-";
-				    *p2 && *p2 != '.'; p2++)
-					ADDBUF(*p2);
-				break;
-			default:
-				/* XXX: ignore for now. maybe barf ? */
-				break;
-			}
-		} else
-			ADDBUF(*p);
+	if (rprompt == NULL) {
+		struct option *o;
+
+		o = getoption("rprompt");
+		if (o == NULL)
+			errx(1, "no such option `rprompt'");
+		rprompt = &(o->value);
 	}
- endbuf:
-	buf[i] = '\0';
+	formatbuf(buf, sizeof(buf), *rprompt ? *rprompt : DEFAULTRPROMPT);
 	return (buf);
 }
 
@@ -550,8 +531,9 @@ prompt()
 void
 cmdscanner()
 {
-	struct cmd *c;
-	int num;
+	struct cmd	*c;
+	char		*p;
+	int		 num;
 
 	for (;;) {
 #ifndef NO_EDITCOMPLETE
@@ -559,6 +541,9 @@ cmdscanner()
 #endif /* !NO_EDITCOMPLETE */
 			if (fromatty) {
 				fputs(prompt(), ttyout);
+				p = rprompt();
+				if (*p)
+					fprintf(ttyout, "%s ", p);
 				(void)fflush(ttyout);
 			}
 			if (fgets(line, sizeof(line), stdin) == NULL) {
@@ -860,12 +845,13 @@ help(argc, argv)
 	char *argv[];
 {
 	struct cmd *c;
-	char *nargv[1], *p;
+	char *nargv[1], *p, *cmd;
 	int isusage;
 
-	isusage = (strcmp(argv[0], "usage") == 0);
+	cmd = argv[0];
+	isusage = (strcmp(cmd, "usage") == 0);
 	if (argc == 0 || (isusage && argc == 1)) {
-		fprintf(ttyout, "usage: %s [command [...]]\n", argv[0]);
+		fprintf(ttyout, "usage: %s [command [...]]\n", cmd);
 		return;
 	}
 	if (argc == 1) {
@@ -892,10 +878,10 @@ help(argc, argv)
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
 			fprintf(ttyout, "?Ambiguous %s command `%s'\n",
-			    argv[0], arg);
+			    cmd, arg);
 		else if (c == NULL)
 			fprintf(ttyout, "?Invalid %s command `%s'\n",
-			    argv[0], arg);
+			    cmd, arg);
 		else {
 			if (isusage) {
 				nargv[0] = arg;
