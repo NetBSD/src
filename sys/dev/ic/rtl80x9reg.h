@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9reg.h,v 1.1 1998/10/31 00:27:43 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9reg.h,v 1.2 1998/10/31 00:31:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  *	http://www.realtek.com.tw
  */
+
+#ifndef _DEV_IC_RTL80x9_REG_H_
+#define	_DEV_IC_RTL80x9_REG_H_
 
 /*
  * Page 0 register offsets.
@@ -155,3 +158,5 @@
 #define	NERTL_RTL3_8029ID0	0x0e	/* ID register 0 */
 
 #define	NERTL_RTL3_8029ID1	0x0f	/* ID register 1 */
+
+#endif /* _DEV_IC_RTL80x9_REG_H_ */
