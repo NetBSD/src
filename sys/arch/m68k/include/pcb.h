@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 1997/03/31 21:32:26 gwr Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 1998/01/06 06:46:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,13 +46,11 @@
 
 /*
  * m68k process control block
- *
- * XXX: pcb_ustp should really be part of struct pmap.
  */
 struct pcb {
 	short	pcb_flags;	/* misc. process flags */
 	short	pcb_ps; 	/* processor status word */
-	int	pcb_ustp;	/* user segment table pointer */
+	int	__pcb_spare0;
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
@@ -67,4 +65,3 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for HP-UX core dumps */
 };
-
