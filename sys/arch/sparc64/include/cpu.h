@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2002/11/27 18:00:28 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.34 2003/01/18 06:55:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,11 +98,11 @@
 
 struct cpu_info {
 	/* Most important fields first */
-	struct proc		*ci_curproc;
+	struct lwp		*ci_curlwp;
 	struct pcb		*ci_cpcb;
 	struct cpu_info		*ci_next;
 
-	struct proc		*ci_fpproc;
+	struct lwp		*ci_fplwp;
 	int			ci_number;
 	int			ci_upaid;
 	struct schedstate_percpu ci_schedstate;
@@ -138,6 +138,9 @@ extern struct cpu_info cpu_info_store;
 #else
 #define	cpu_number()	(curcpu()->ci_number)
 #endif
+
+/* This really should be somewhere else. */
+#define	cpu_proc_fork(p1, p2)	/* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -232,7 +235,7 @@ int	want_resched;		/* resched() was called */
  *
  * XXX this must be per-cpu (eventually)
  */
-struct	proc *fpproc;		/* FPU owner */
+struct	lwp *fplwp;		/* FPU owner */
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
@@ -296,8 +299,8 @@ void	switchtoctx __P((int));
 /* locore2.c */
 void	remrq __P((struct proc *));
 /* trap.c */
-void	kill_user_windows __P((struct proc *));
-int	rwindow_save __P((struct proc *));
+void	kill_user_windows __P((struct lwp *));
+int	rwindow_save __P((struct lwp *));
 /* amd7930intr.s */
 void	amd7930_trap __P((void));
 /* cons.c */
@@ -316,7 +319,7 @@ void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
 /* emul.c */
-int	fixalign __P((struct proc *, struct trapframe64 *));
+int	fixalign __P((struct lwp *, struct trapframe64 *));
 int	emulinstr __P((vaddr_t, struct trapframe64 *));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2002/10/20 02:37:34 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2003/01/18 07:03:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -92,6 +92,8 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
 
+void	cpu_proc_fork(struct proc *, struct proc *);
+
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  One the sun3, we use
@@ -171,7 +173,8 @@ int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 struct pcb;
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 
 #ifdef _SUN3_
 #define M68K_VAC

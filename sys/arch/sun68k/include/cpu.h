@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2002/10/20 02:37:39 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2003/01/18 07:04:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,6 +86,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define	cpu_number()			0
 #define	cpu_wait(p)			/* nothing */
+#define	cpu_proc_fork(p1, p2)		/* nothing */
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
 
@@ -159,7 +160,8 @@ void	netintr __P((void));
 struct pcb;
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 
 #define M68K_VAC
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.40 2003/01/01 02:29:39 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.41 2003/01/18 07:10:35 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -309,7 +309,10 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	pte = uvtopte(trunc_page((vaddr_t)to), &p->p_addr->u_pcb);
+	if ((long)to & 0x40000000)
+		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[((long)to & ~0x40000000)];
+	else
+		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[(long)to];
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
@@ -340,7 +343,10 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	pte = uvtopte(trunc_page((vaddr_t)from), &p->p_addr->u_pcb);
+	if ((long)to & 0x40000000)
+		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[((long)to & ~0x40000000)];
+	else
+		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[(long)to];
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 

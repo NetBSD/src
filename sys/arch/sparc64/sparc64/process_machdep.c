@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.11 2003/01/18 06:55:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -75,11 +75,11 @@
 
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-process_read_regs(p, regs)
-	struct proc *p;
+process_read_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe64* tf = p->p_md.md_tf;
+	struct trapframe64* tf = l->l_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
 	int i;
 
@@ -111,11 +111,11 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
+process_write_regs(l, regs)
+	struct lwp *l;
 	struct reg *regs;
 {
-	struct trapframe64* tf = p->p_md.md_tf;
+	struct trapframe64* tf = l->l_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
 	int i;
 
@@ -150,8 +150,8 @@ process_write_regs(p, regs)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
+process_sstep(l, sstep)
+	struct lwp *l;
 	int sstep;
 {
 	if (sstep)
@@ -160,19 +160,19 @@ process_sstep(p, sstep)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
+process_set_pc(l, addr)
+	struct lwp *l;
 	caddr_t addr;
 {
-	p->p_md.md_tf->tf_pc = (vaddr_t)addr;
-	p->p_md.md_tf->tf_npc = (vaddr_t)addr + 4;
+	l->l_md.md_tf->tf_pc = (vaddr_t)addr;
+	l->l_md.md_tf->tf_npc = (vaddr_t)addr + 4;
 	return (0);
 }
 
 int
-process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+process_read_fpregs(l, regs)
+	struct lwp *l;
+	struct fpreg *regs;
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
@@ -182,14 +182,14 @@ struct fpreg	*regs;
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
 		/* NOTE: struct fpreg == struct fpstate */
-		if (p->p_md.md_fpstate)
-			statep = p->p_md.md_fpstate;
+		if (l->l_md.md_fpstate)
+			statep = l->l_md.md_fpstate;
 		bcopy(statep, regs, sizeof(struct fpreg64));
 		return 0;
 	}
 	/* 32-bit mode -- copy out & convert 32-bit fregs */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
+	if (l->l_md.md_fpstate)
+		statep = l->l_md.md_fpstate;
 	for (i=0; i<32; i++)
 		regp->fr_regs[i] = statep->fs_regs[i];
 
@@ -197,9 +197,9 @@ struct fpreg	*regs;
 }
 
 int
-process_write_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+process_write_fpregs(l, regs)
+	struct lwp *l;
+	struct fpreg *regs;
 {
 
 	extern struct fpstate64	initfpstate;
@@ -209,18 +209,18 @@ struct fpreg	*regs;
 
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
-		if (p->p_md.md_fpstate == NULL)
+		if (l->l_md.md_fpstate == NULL)
 			return EINVAL;
 
 		/* NOTE: struct fpreg == struct fpstate */
-		bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg64));
-		statep = p->p_md.md_fpstate;
+		bcopy(regs, l->l_md.md_fpstate, sizeof(struct fpreg64));
+		statep = l->l_md.md_fpstate;
 		statep->fs_qsize = 0;
 		return 0;
 	}
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
+	if (l->l_md.md_fpstate)
+		statep = l->l_md.md_fpstate;
 	for (i=0; i<32; i++)
 		statep->fs_regs[i] = regp->fr_regs[i];
 	statep->fs_fsr = regp->fr_fsr;

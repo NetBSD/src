@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2002/12/01 21:20:32 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.119 2003/01/18 07:10:35 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -516,7 +516,7 @@ update_pcbs(struct pmap *pm)
 		ps = ps->ps_next;
 	}
 
-	/* If curproc uses this pmap update the regs too */ 
+	/* If curlwp uses this pmap update the regs too */ 
 	if (pm == curproc->p_vmspace->vm_map.pmap) {
 		mtpr(pm->pm_p0br, PR_P0BR);
 		mtpr(pm->pm_p0lr|AST_PCB, PR_P0LR);
@@ -620,55 +620,55 @@ rmspace(struct pmap *pm)
  */
 
 #undef swappable
-#define swappable(p, pm)						\
-	(((p)->p_flag & (P_SYSTEM | P_INMEM | P_WEXIT)) == P_INMEM &&	\
-	((p)->p_holdcnt == 0) && ((p)->p_vmspace->vm_map.pmap != pm))
+#define swappable(l, pm)						\
+	(((l)->l_flag & (P_SYSTEM | L_INMEM | P_WEXIT)) == L_INMEM &&	\
+	((l)->l_holdcnt == 0) && ((l)->l_proc->p_vmspace->vm_map.pmap != pm))
 
 static int
 pmap_rmproc(struct pmap *pm)
 {
 	struct pmap *ppm;
-	struct proc *p;
-	struct proc *outp, *outp2;
+	struct lwp *l;
+	struct lwp *outl, *outl2;
 	int outpri, outpri2;
 	int didswap = 0;
 	extern int maxslp;
 
-	outp = outp2 = NULL;
+	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
 	proclist_lock_read();
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (!swappable(p, pm))
+	LIST_FOREACH(l, &alllwp, l_list) {
+		if (!swappable(l, pm))
 			continue;
-		ppm = p->p_vmspace->vm_map.pmap;
+		ppm = l->l_proc->p_vmspace->vm_map.pmap;
 		if (ppm->pm_p0lr == 0 && ppm->pm_p1lr == NPTEPERREG)
 			continue; /* Already swapped */
-		switch (p->p_stat) {
-		case SRUN:
-		case SONPROC:
-			if (p->p_swtime > outpri2) {
-				outp2 = p;
-				outpri2 = p->p_swtime;
+		switch (l->l_stat) {
+		case LSRUN:
+		case LSONPROC:
+			if (l->l_swtime > outpri2) {
+				outl2 = l;
+				outpri2 = l->l_swtime;
 			}
 			continue;
-		case SSLEEP:
-		case SSTOP:
-			if (p->p_slptime >= maxslp) {
-				rmspace(p->p_vmspace->vm_map.pmap);
+		case LSSLEEP:
+		case LSSTOP:
+			if (l->l_slptime >= maxslp) {
+				rmspace(l->l_proc->p_vmspace->vm_map.pmap);
 				didswap++;
-			} else if (p->p_slptime > outpri) {
-				outp = p;
-				outpri = p->p_slptime;
+			} else if (l->l_slptime > outpri) {
+				outl = l;
+				outpri = l->l_slptime;
 			}
 			continue;
 		}
 	}
 	proclist_unlock_read();
 	if (didswap == 0) {
-		if ((p = outp) == NULL)
-			p = outp2;
-		if (p) {
-			rmspace(p->p_vmspace->vm_map.pmap);
+		if ((l = outl) == NULL)
+			l = outl2;
+		if (l) {
+			rmspace(l->l_proc->p_vmspace->vm_map.pmap);
 			didswap++;
 		}
 	}
@@ -1605,7 +1605,7 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
  * the current process will have wrong pagetables.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
 	struct pm_share *ps;
 	pmap_t pmap;
@@ -1613,8 +1613,8 @@ pmap_activate(struct proc *p)
 
 	PMDEBUG(("pmap_activate: p %p\n", p));
 
-	pmap = p->p_vmspace->vm_map.pmap;
-	pcb = &p->p_addr->u_pcb;
+	pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	pcb = &l->l_addr->u_pcb;
 
 	pcb->P0BR = pmap->pm_p0br;
 	pcb->P0LR = pmap->pm_p0lr|AST_PCB;
@@ -1626,7 +1626,7 @@ pmap_activate(struct proc *p)
 	pmap->pm_share = ps;
 	ps->ps_pcb = pcb;
 
-	if (p == curproc) {
+	if (l == curlwp) {
 		mtpr(pmap->pm_p0br, PR_P0BR);
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
 		mtpr(pmap->pm_p1br, PR_P1BR);
@@ -1636,8 +1636,9 @@ pmap_activate(struct proc *p)
 }
 
 void	
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct pm_share *ps, *ops;
 	pmap_t pmap;
 	struct pcb *pcb;
@@ -1645,7 +1646,7 @@ pmap_deactivate(struct proc *p)
 	PMDEBUG(("pmap_deactivate: p %p\n", p));
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	pcb = &p->p_addr->u_pcb;
+	pcb = &l->l_addr->u_pcb;
 
 	ps = pmap->pm_share;
 	if (ps->ps_pcb == pcb) {
@@ -1761,15 +1762,16 @@ more_pventries()
  * Called when a process is about to be swapped, to remove the page tables.
  */
 void
-cpu_swapout(struct proc *p)
+cpu_swapout(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	pmap_t pm;
 
 	PMDEBUG(("Swapout pid %d\n", p->p_pid));
 
 	pm = p->p_vmspace->vm_map.pmap;
 	rmspace(pm);
-	pmap_deactivate(p);
+	pmap_deactivate(l);
 }
 
 /*
@@ -1777,17 +1779,17 @@ cpu_swapout(struct proc *p)
  * Be sure that all pages are valid.
  */
 void
-cpu_swapin(struct proc *p)
+cpu_swapin(struct lwp *l)
 {
 	struct pte *pte;
 	int i;
 
-	PMDEBUG(("Swapin pid %d\n", p->p_pid));
+	PMDEBUG(("Swapin pid %d.%d\n", l->l_proc->p_pid, l->l_lid));
 
-	pte = kvtopte((vaddr_t)p->p_addr);
+	pte = kvtopte((vaddr_t)l->l_addr);
 	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
 		pte[i].pg_v = 1;
-	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
-	pmap_activate(p);
+	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
+	pmap_activate(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.8 2002/08/23 02:46:37 thorpej Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.9 2003/01/18 06:55:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -601,7 +601,7 @@ kgdb_trap(type, tf)
 }
 
 extern char *kernel_map;			/* XXX! */
-extern char *curproc;				/* XXX! */
+extern char *curlwp;				/* XXX! */
 
 /*
  * XXX do kernacc and useracc calls if safe, otherwise use PTE protections.
@@ -631,7 +631,7 @@ kgdb_acc(addr, len, rw, usertoo)
 	if (kernel_map != NULL) {
 		if (kernacc(addr, len, rw))
 			return (1);
-		if (usertoo && curproc && useracc(addr, len, rw))
+		if (usertoo && curlwp && useracc(addr, len, rw))
 			return (1);
 	}
 	addr = (caddr_t)((int)addr & ~PGOFSET);
