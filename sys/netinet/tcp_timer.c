@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.9 1994/10/14 16:01:52 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.10 1995/04/13 06:36:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -98,7 +98,7 @@ tcp_slowtimo()
 	register struct inpcb *ip, *ipnxt;
 	register struct tcpcb *tp;
 	int s = splnet();
-	register int i;
+	register long i;
 
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.20 1995/04/11 04:30:56 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.21 1995/04/13 06:35:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -269,7 +269,7 @@ ip_output(m0, opt, ro, flags, imo)
 			goto bad;
 		}
 		/* don't allow broadcast messages to be fragmented */
-		if ((u_short)ip->ip_len > ifp->if_mtu) {
+		if ((u_int16_t)ip->ip_len > ifp->if_mtu) {
 			error = EMSGSIZE;
 			goto bad;
 		}
@@ -281,9 +281,9 @@ sendit:
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
-	if ((u_short)ip->ip_len <= ifp->if_mtu) {
-		ip->ip_len = htons((u_short)ip->ip_len);
-		ip->ip_off = htons((u_short)ip->ip_off);
+	if ((u_int16_t)ip->ip_len <= ifp->if_mtu) {
+		ip->ip_len = htons((u_int16_t)ip->ip_len);
+		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 		error = (*ifp->if_output)(ifp, m,
@@ -315,7 +315,7 @@ sendit:
 	 */
 	m0 = m;
 	mhlen = sizeof (struct ip);
-	for (off = hlen + len; off < (u_short)ip->ip_len; off += len) {
+	for (off = hlen + len; off < (u_int16_t)ip->ip_len; off += len) {
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
@@ -333,11 +333,11 @@ sendit:
 		mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
 		if (ip->ip_off & IP_MF)
 			mhip->ip_off |= IP_MF;
-		if (off + len >= (u_short)ip->ip_len)
-			len = (u_short)ip->ip_len - off;
+		if (off + len >= (u_int16_t)ip->ip_len)
+			len = (u_int16_t)ip->ip_len - off;
 		else
 			mhip->ip_off |= IP_MF;
-		mhip->ip_len = htons((u_short)(len + mhlen));
+		mhip->ip_len = htons((u_int16_t)(len + mhlen));
 		m->m_next = m_copy(m0, off, len);
 		if (m->m_next == 0) {
 			(void) m_free(m);
@@ -347,7 +347,7 @@ sendit:
 		}
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
-		mhip->ip_off = htons((u_short)mhip->ip_off);
+		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
@@ -359,10 +359,10 @@ sendit:
 	 * and updating header, then send each fragment (in order).
 	 */
 	m = m0;
-	m_adj(m, hlen + firstlen - (u_short)ip->ip_len);
+	m_adj(m, hlen + firstlen - (u_int16_t)ip->ip_len);
 	m->m_pkthdr.len = hlen + firstlen;
-	ip->ip_len = htons((u_short)m->m_pkthdr.len);
-	ip->ip_off = htons((u_short)(ip->ip_off | IP_MF));
+	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
+	ip->ip_off = htons((u_int16_t)(ip->ip_off | IP_MF));
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(m, hlen);
 sendorfree:
@@ -405,7 +405,7 @@ ip_insertoptions(m, opt, phlen)
 	unsigned optlen;
 
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
-	if (optlen + (u_short)ip->ip_len > IP_MAXPACKET)
+	if (optlen + (u_int16_t)ip->ip_len > IP_MAXPACKET)
 		return (m);		/* XXX should fail */
 	if (p->ipopt_dst.s_addr)
 		ip->ip_dst = p->ipopt_dst;
@@ -656,7 +656,7 @@ ip_pcbopts(pcbopt, m)
 	}
 
 #ifndef	vax
-	if (m->m_len % sizeof(long))
+	if (m->m_len % sizeof(int32_t))
 		goto bad;
 #endif
 	/*
@@ -1056,8 +1056,8 @@ ip_mloopback(ifp, m, dst)
 		 * than the interface's MTU.  Can this possibly matter?
 		 */
 		ip = mtod(copym, struct ip *);
-		ip->ip_len = htons((u_short)ip->ip_len);
-		ip->ip_off = htons((u_short)ip->ip_off);
+		ip->ip_len = htons((u_int16_t)ip->ip_len);
+		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
 		(void) looutput(ifp, copym, (struct sockaddr *)dst, NULL);

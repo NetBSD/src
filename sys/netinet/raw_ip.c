@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.16 1995/03/02 09:33:40 glass Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.17 1995/04/13 06:36:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -261,7 +261,7 @@ rip_usrreq(so, req, m, nam, control)
 		    (error = in_pcballoc(so, &rawinpcb)))
 			break;
 		inp = (struct inpcb *)so->so_pcb;
-		inp->inp_ip.ip_p = (int)nam;
+		inp->inp_ip.ip_p = (long)nam;
 		break;
 
 	case PRU_DISCONNECT:
@@ -341,7 +341,7 @@ rip_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_SEND:
 	    {
-		register u_long dst;
+		register u_int32_t dst;
 
 		if (so->so_state & SS_ISCONNECTED) {
 			if (nam) {
