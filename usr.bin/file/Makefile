@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2000/01/23 18:00:38 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 2000/05/14 22:53:37 christos Exp $
 
 .include <bsd.own.mk>
 
 MFILESDIR=	/usr/share/misc
-MFILES=		magic
-MAGIC=		${MFILESDIR}/${MFILES}
+MFILES=		magic magic.mime
+MAGIC=		${MFILESDIR}/magic
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
 FILES=		${MFILES}

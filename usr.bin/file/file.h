@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.18 2000/01/21 17:08:35 mycroft Exp $	*/
+/*	$NetBSD: file.h,v 1.19 2000/05/14 22:53:38 christos Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.29 1999/02/14 17:16:06 christos Exp 
+ * @(#)Id: file.h,v 1.31 2000/04/11 02:32:35 christos Exp 
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -85,6 +85,15 @@ struct magic {
 	char desc[MAXDESC];	/* description */
 };
 
+#define BIT(A)   (1 << (A))
+#define STRING_IGNORE_LOWERCASE		BIT(0)
+#define STRING_COMPACT_BLANK		BIT(1)
+#define STRING_COMPACT_OPTIONAL_BLANK	BIT(2)
+#define CHAR_IGNORE_LOWERCASE		'c'
+#define CHAR_COMPACT_BLANK		'B'
+#define CHAR_COMPACT_OPTIONAL_BLANK	'b'
+
+
 #include <stdio.h>	/* Include that here, to make sure __P gets defined */
 #include <errno.h>
 
@@ -117,7 +126,6 @@ extern uint32 signextend	__P((struct magic *, unsigned int32));
 extern int internatmagic	__P((unsigned char *, int));
 extern void tryelf		__P((int, unsigned char *, int));
 
-
 extern char *progname;		/* the program name 			*/
 extern const char *magicfile;	/* name of the magic file		*/
 extern int lineno;		/* current line number in magic file	*/
@@ -130,6 +138,7 @@ extern int debug;		/* enable debugging?			*/
 extern int zflag;		/* process compressed files?		*/
 extern int lflag;		/* follow symbolic links?		*/
 extern int sflag;		/* read/analyze block special files?	*/
+extern int iflag;		/* Output types as mime-types		*/
 
 extern int optind;		/* From getopt(3)			*/
 extern char *optarg;
