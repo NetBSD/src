@@ -179,21 +179,7 @@ static reloc_howto_type howto_table[] = {
 
   EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
-
-  HOWTO (R_VAX_GOT32O,		/* type */
-	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_VAX_GOT32O",	/* name */
-	 false,			/* partial_inplace */
-	 0,			/* src_mask */
-	 0xffffffff,		/* dst_mask */
-	 false),		/* pcrel_offset */
-
+  EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
 
@@ -213,21 +199,7 @@ static reloc_howto_type howto_table[] = {
 
   EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
-
-  HOWTO (R_VAX_PLT32O,		/* type */
-	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
-	 false,			/* pc_relative */
-	 0,			/* bitpos */
-	 complain_overflow_bitfield, /* complain_on_overflow */
-	 bfd_elf_generic_reloc,	/* special_function */
-	 "R_VAX_PLT32O",	/* name */
-	 false,			/* partial_inplace */
-	 0,			/* src_mask */
-	 0xffffffff,		/* dst_mask */
-	 false),		/* pcrel_offset */
-
+  EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
   EMPTY_HOWTO (-1),
 
@@ -343,9 +315,7 @@ static const struct
   { BFD_RELOC_16_PCREL, R_VAX_PC16 },
   { BFD_RELOC_8_PCREL, R_VAX_PC8 },
   { BFD_RELOC_32_GOT_PCREL, R_VAX_GOT32 },
-  { BFD_RELOC_32_GOTOFF, R_VAX_GOT32O },
   { BFD_RELOC_32_PLT_PCREL, R_VAX_PLT32 },
-  { BFD_RELOC_32_PLTOFF, R_VAX_PLT32O },
   { BFD_RELOC_NONE, R_VAX_COPY },
   { BFD_RELOC_VAX_GLOB_DAT, R_VAX_GLOB_DAT },
   { BFD_RELOC_VAX_JMP_SLOT, R_VAX_JMP_SLOT },
@@ -650,8 +620,7 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 	  if (h != NULL
 	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
 	    break;
-	  /* Fall through.  */
-	case R_VAX_GOT32O:
+
 	  /* This symbol requires a global offset table entry.  */
 
 	  if (dynobj == NULL)
@@ -736,32 +705,6 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 	     creating a procedure linkage table entry.  */
 	  if (h == NULL)
 	    continue;
-
-	  h->elf_link_hash_flags |= ELF_LINK_HASH_NEEDS_PLT;
-	  if (h->plt.refcount == -1)
-	    h->plt.refcount = 1;
-	  else
-	    h->plt.refcount++;
-	  break;
-
-	case R_VAX_PLT32O:
-	  /* This symbol requires a procedure linkage table entry.  */
-
-	  if (h == NULL)
-	    {
-	      /* It does not make sense to have this relocation for a
-		 local symbol.  FIXME: does it?  How to handle it if
-		 it does make sense?  */
-	      bfd_set_error (bfd_error_bad_value);
-	      return false;
-	    }
-
-	  /* Make sure this symbol is output as a dynamic symbol.  */
-	  if (h->dynindx == -1)
-	    {
-	      if (!bfd_elf32_link_record_dynamic_symbol (info, h))
-		return false;
-	    }
 
 	  h->elf_link_hash_flags |= ELF_LINK_HASH_NEEDS_PLT;
 	  if (h->plt.refcount == -1)
@@ -1003,7 +946,6 @@ elf_vax_gc_sweep_hook (abfd, info, sec, relocs)
       switch (ELF32_R_TYPE (rel->r_info))
 	{
 	case R_VAX_GOT32:
-	case R_VAX_GOT32O:
 	  r_symndx = ELF32_R_SYM (rel->r_info);
 	  if (r_symndx >= symtab_hdr->sh_info)
 	    {
@@ -1036,7 +978,6 @@ elf_vax_gc_sweep_hook (abfd, info, sec, relocs)
 	  break;
 
 	case R_VAX_PLT32:
-	case R_VAX_PLT32O:
 	case R_VAX_PC8:
 	case R_VAX_PC16:
 	case R_VAX_PC32:
@@ -1566,14 +1507,12 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	      || h->root.type == bfd_link_hash_defweak)
 	    {
 	      sec = h->root.u.def.section;
-	      if (((r_type == R_VAX_PLT32
-		    || r_type == R_VAX_PLT32O)
+	      if ((r_type == R_VAX_PLT32
 		   && h->plt.offset != (bfd_vma) -1
 		   && elf_hash_table (info)->dynamic_sections_created)
-		  || ((r_type == R_VAX_GOT32O
-		       || ((r_type == R_VAX_GOT32)
-			   && strcmp (h->root.root.string,
-				      "_GLOBAL_OFFSET_TABLE_") != 0))
+		  || (r_type == R_VAX_GOT32
+		      && strcmp (h->root.root.string,
+				 "_GLOBAL_OFFSET_TABLE_") != 0
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && (! info->shared
 			  || (! info->symbolic && h->dynindx != -1)
@@ -1601,22 +1540,8 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 			      + sec->output_section->vma
 			      + sec->output_offset);
 	    }
-	  else if (h->root.type == bfd_link_hash_undefweak)
-	    {
-	      relocation = 0;
-#if 0
-	      if (howto->pc_relative)
-		{
-		  relocation = - (input_section->output_section->vma
-			+ input_section->output_offset)
-		}
-	      else
-		{
-		  relocation = 0;
-		}
-#endif
-	    }
-	  else if (info->shared && !info->symbolic && !info->no_undefined)
+	  else if (h->root.type == bfd_link_hash_undefweak
+		   || (info->shared && !info->symbolic && !info->no_undefined))
 	    relocation = 0;
 	  else
 	    {
@@ -1637,8 +1562,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	  if (h != NULL
 	      && strcmp (h->root.root.string, "_GLOBAL_OFFSET_TABLE_") == 0)
 	    break;
-	  /* Fall through.  */
-	case R_VAX_GOT32O:
+
 	  /* Relocation is the offset of the entry for this symbol in
 	     the global offset table.  */
 
@@ -1760,24 +1684,6 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		      h->root.root.string,
 		      bfd_get_section_name (input_bfd, input_section));
 	  rel->r_addend = 0;
-	  break;
-
-	case R_VAX_PLT32O:
-	  /* Relocation is the offset of the entry for this symbol in
-	     the procedure linkage table.  */
-	  BFD_ASSERT (h != NULL && h->plt.offset != (bfd_vma) -1);
-
-	  if (splt == NULL)
-	    {
-	      splt = bfd_get_section_by_name (dynobj, ".plt");
-	      BFD_ASSERT (splt != NULL);
-	    }
-
-	  relocation = h->plt.offset;
-
-	  /* This relocation does not use the addend.  */
-	  rel->r_addend = 0;
-
 	  break;
 
 	case R_VAX_PC8:
