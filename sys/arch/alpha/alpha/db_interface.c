@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.12 2000/11/22 08:39:47 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.13 2001/01/18 10:55:29 jdolecek Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2000/11/22 08:39:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2001/01/18 10:55:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,11 +101,11 @@ struct db_command db_machine_cmds[] = {
 	{ (char *)0, },
 };
 
-int	db_alpha_regop __P((struct db_variable *, db_expr_t *, int));
+static int db_alpha_regop __P((const struct db_variable *, db_expr_t *, int));
 
 #define	dbreg(xx)	((long *)(xx))
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{	"v0",	dbreg(FRAME_V0),	db_alpha_regop	},
 	{	"t0",	dbreg(FRAME_T0),	db_alpha_regop	},
 	{	"t1",	dbreg(FRAME_T1),	db_alpha_regop	},
@@ -142,10 +142,10 @@ struct db_variable db_regs[] = {
 	{	"ai",	dbreg(FRAME_T11),	db_alpha_regop	},
 	{	"pv",	dbreg(FRAME_T12),	db_alpha_regop	},
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
-int
-db_alpha_regop(struct db_variable *vp, db_expr_t *val, int opcode)
+static int
+db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 
 	switch (opcode) {

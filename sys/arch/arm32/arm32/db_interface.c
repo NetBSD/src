@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2000/11/21 16:34:52 chs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33 2001/01/18 10:55:30 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -56,12 +56,12 @@
 
 static int nil;
 
-int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
-int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
+int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
 	{ "r0", (long *)&DDB_REGS->tf_r0, FCN_NULL, },
 	{ "r1", (long *)&DDB_REGS->tf_r1, FCN_NULL, },
@@ -86,14 +86,14 @@ struct db_variable db_regs[] = {
 	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
 };
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 extern label_t	*db_recover;
 
 int	db_active = 0;
 
 int db_access_und_sp(vp, valp, rw)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t *valp;
 	int rw;
 {
@@ -103,7 +103,7 @@ int db_access_und_sp(vp, valp, rw)
 }
 
 int db_access_abt_sp(vp, valp, rw)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t *valp;
 	int rw;
 {
@@ -113,7 +113,7 @@ int db_access_abt_sp(vp, valp, rw)
 }
 
 int db_access_irq_sp(vp, valp, rw)
-	struct db_variable *vp;
+	const struct db_variable *vp;
 	db_expr_t *valp;
 	int rw;
 {
