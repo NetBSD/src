@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.227 2000/06/09 05:59:43 onoe Exp $
+#	$NetBSD: mi,v 1.228 2000/06/12 19:49:17 mycroft Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -86,6 +86,7 @@
 ./usr/include/dev/ic/ad1848reg.h	comp-c-include
 ./usr/include/dev/ic/ahareg.h	comp-c-include
 ./usr/include/dev/ic/ahavar.h	comp-c-include
+./usr/include/dev/ic/awictl.h	comp-c-include
 ./usr/include/dev/ic/aic6360reg.h	comp-c-include
 ./usr/include/dev/ic/aic6360var.h	comp-c-include
 ./usr/include/dev/ic/aic77xxreg.h	comp-c-include
