@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -224,6 +224,8 @@ scan_option(s)
 			 * All processing of STRING options is done by 
 			 * the handling function.
 			 */
+			while (*s == ' ')
+				s++;
 			s = optstring(s, &str, printopt, o->odesc[1]);
 			break;
 		case NUMBER:
@@ -380,7 +382,7 @@ toggle_option(c, s, how_toggle)
 			switch (how_toggle)
 			{
 			case OPT_TOGGLE:
-				num = getnum(&s, '\0', &err);
+				num = getnum(&s, NULL, &err);
 				if (!err)
 					*(o->ovar) = num;
 				break;
@@ -611,8 +613,11 @@ getnum(sp, printopt, errp)
 			*errp = TRUE;
 			return (-1);
 		}
-		parg.p_string = printopt;
-		error("Number is required after %s", &parg);
+		if (printopt != NULL)
+		{
+			parg.p_string = printopt;
+			error("Number is required after %s", &parg);
+		}
 		quit(QUIT_ERROR);
 	}
 

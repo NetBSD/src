@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -64,25 +64,25 @@ struct mlist
  */
 struct mlist mlist_search =  
 	{ &mlist_search,  &mlist_search,  &mlist_search,  NULL };
-public void constant *ml_search = (void *) &mlist_search;
+public void * constant ml_search = (void *) &mlist_search;
 
 struct mlist mlist_examine = 
 	{ &mlist_examine, &mlist_examine, &mlist_examine, NULL };
-public void constant *ml_examine = (void *) &mlist_examine;
+public void * constant ml_examine = (void *) &mlist_examine;
 
 #if SHELL_ESCAPE || PIPEC
 struct mlist mlist_shell =   
 	{ &mlist_shell,   &mlist_shell,   &mlist_shell,   NULL };
-public void constant *ml_shell = (void *) &mlist_shell;
+public void * constant ml_shell = (void *) &mlist_shell;
 #endif
 
 #else /* CMD_HISTORY */
 
 /* If CMD_HISTORY is off, these are just flags. */
-public void constant *ml_search = (void *)1;
-public void constant *ml_examine = (void *)2;
+public void * constant ml_search = (void *)1;
+public void * constant ml_examine = (void *)2;
 #if SHELL_ESCAPE || PIPEC
-public void constant *ml_shell = (void *)3;
+public void * constant ml_shell = (void *)3;
 #endif
 
 #endif /* CMD_HISTORY */
@@ -1030,10 +1030,15 @@ cmd_char(c)
 /*
  * Return the number currently in the command buffer.
  */
-	public int
+	public LINENUM
 cmd_int()
 {
-	return (atoi(cmdbuf));
+	register char *p;
+	LINENUM n = 0;
+
+	for (p = cmdbuf;  *p != '\0';  p++)
+		n = (10 * n) + (*p - '0');
+	return (n);
 }
 
 /*
