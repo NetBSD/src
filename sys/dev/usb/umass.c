@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.114 2004/06/25 14:14:34 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.115 2004/06/26 02:17:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.114 2004/06/25 14:14:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.115 2004/06/26 02:17:00 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1660,8 +1660,11 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			    (sc->transfer_dir == DIR_IN? "in":"out"),
 			    usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
-		} else
-			umass_cbi_reset(sc, STATUS_CMD_FAILED);
+		} else {
+			sc->transfer_state = TSTATE_IDLE;
+			sc->transfer_cb(sc, sc->transfer_priv,
+			    sc->transfer_datalen, STATUS_CMD_FAILED);
+		}
 		return;
 
 	case TSTATE_CBI_SCLEAR:
@@ -1669,8 +1672,11 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			printf("%s: CBI intr-in stall clear failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
-		} else
-			umass_cbi_reset(sc, STATUS_CMD_FAILED);
+		} else {
+			sc->transfer_state = TSTATE_IDLE;
+			sc->transfer_cb(sc, sc->transfer_priv,
+			    sc->transfer_datalen, STATUS_CMD_FAILED);
+		}
 		return;
 
 	/***** CBI Reset *****/
