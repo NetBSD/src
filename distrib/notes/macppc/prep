@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 2000/10/29 14:08:08 lukem Exp $
+.\"	$NetBSD: prep,v 1.6 2000/11/01 07:00:49 mbw Exp $
 .
 .Ss2 Open Firmware System Preparation
 .
@@ -22,11 +22,11 @@ Make sure you click the
 .Dq Save
 button, or the patches will not be saved to NVRAM.
 .(Note
-NVRAM patches will be erased if you
+NVRAM patches and Open Firmware settings will be erased if you
 .Sq zap your PRAM
 by holding down
-.Key COMMAND-OPTION-P-R
-during the boot chimes
+.Dq COMMAND-OPTION-P-R
+keys during the boot chimes
 .Note)
 .Pp
 .
@@ -43,7 +43,22 @@ and install the most recent version for your model.
 .Ss2 Getting to the Open Firmware Prompt
 .
 There are various methods to get to the Open Firmware prompt. They may
-or may not work, depending on which system model you have
+or may not work, depending on which system model you have.  Most models
+can use the on-board video and an ADB or USB keyboard to access Open
+Firmware.  Those that cannot must use a serial console.  Likewise, most
+systems can be set up to use a serial console if you do not wish to use
+the on-board video.
+.Pp
+Open Firmware has two variables,
+.Sq input-device
+and
+.Sq output-device No Ns ,
+which specify which devices to use for input and output.  Most early models
+(Open Firmware versions 1.x and 2.0.x) will default to using a serial
+console.  The later models (Open Firmware versions 2.4 and 3) will default
+to using the on-board video and keyboard.  The instructions below describe
+how to set your system up to access Open Firmware from the on-board video 
+and keyboard.
 .
 .Ss2 Getting to the Open Firmware Prompt (Easy method using MacOS)
 .
@@ -61,21 +76,29 @@ Click the
 .Dq Save
 button and reboot your system.
 .Pp
+If your
+.Sq output-device
+is
+.Sq Li /chaos/control
+(i.e. you have a PowerMacintosh 7300 - 8600 system), there is a chance that
+your monitor will not sync. See
+.Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
+.Pp
 You should now see the Open Firmware command prompt:
 .Pp
 .Dl 0 >
 .Pp
-If your screen is black, then your model does not support using the screen in
+If your screen is black, then your model does not support using the 
+on-board video in
 Open Firmware. You will need to connect up a serial console
 (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
 .(Note
-This setting is persistent until you disable
+The
 .Dq Stop Boot at Open Firmware prompt
-or tell Open Firmware
+setting is persistent.  Your system will always stop at the Open Firmware
+prompt unless you uncheck this checkbox or tell Open Firmware
 .Pp
 .Dl 0 > Ic "setenv auto-boot? true
-.Pp
-your system will always stop at the Open Firmware prompt.
 .Note)
 .(Note
 Unfortunately, there are a few models that are better off without the System
@@ -91,7 +114,10 @@ If System Disk doesn't work because your version of
 .Tn MacOS
 is too old or because
 System Disk says that it doesn't support your model, then you may try using
-the BootVars tool.
+the 
+.Tn MacOS
+BootVars tool on your Open Firmware 1 or 2 system (it will crash 
+Open Firmware 3 systems).
 .Pp
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/bootvars/bootvars.sit.hqx
 .(Note
@@ -107,20 +133,31 @@ for your model on the
 .Nx*M
 Model Support webpage.
 .Lk http://www.netbsd.org/Ports/macppc/models.html
+If the 
+.Nx*M
+Model support webpage does not list an 
+.Sq output-device
+for your model, then your system will default to using the on-board
+video.  You needn't fill in the
+.Sq output-device
+and
+.Sq input-device
+variables.
 .Pp
 Launch the
 .Tn MacOS
-BootVars tool. Click on the
+BootVars tool.  Click on the
 .Dq auto-boot?
 checkbox, then click on the
 .Dq All Variables
 checkbox and type
 .Ic kbd
 into the
-.Dq input-device
+.Sq input-device
 box, and the proper device name into the
-.Dq output-device
-box. Click on the
+.Sq output-device
+box. 
+Click on the
 .Dq write
 button, and restart.
 .Pp
@@ -136,13 +173,18 @@ You should now see the Open Firmware command prompt:
 .Pp
 .Dl 0 >
 .Pp
-If your model does not have an
-.Sq output-device
-listed, or its screen is black when you restart your system, then it
-has defaulted to using a serial console because the internal video does not
-work.  This is fairly common on these models if you do not use
-the System Disk tool to set up Open Firmware. You must hook up a serial
+If your screen is black, then your model has defaulted to using a serial 
+console.  This is fairly common on Open Firmware 1 and 2 models if you do not
+use the System Disk tool to set up Open Firmware. You must hook up a serial
 console (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
+.(Note
+The
+.Dq auto-boot?
+setting is persistent.  Your system will always stop at the Open Firmware
+prompt unless you uncheck this checkbox or tell Open Firmware
+.Pp
+.Dl 0 > Ic "setenv auto-boot? true
+.Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Without using MacOS)
 .
@@ -150,18 +192,18 @@ If you don't have
 .Tn MacOS ,
 then you need to hold down a special key combination when your system boots.
 .(Note
-Your system will
+Your Open Firmware 1 or 2 system will
 .Em not
 have the (possibly critical) NVRAM patches that System Disk applies.
 Expect devices to not work.
 .Note)
 .Pp
 After the chime starts, but before it stops, hold down the
-.Key COMMAND-OPTION-O-F
+.Dq COMMAND-OPTION-O-F
 keys (the
-.Key COMMAND
+.Dq COMMAND
 key looks like a four-leaf clover or an open apple, and the
-.Key OPTION
+.Dq OPTION
 key may look like a two-way switch with four straight line segments).
 .Pp
 You should now see the Open Firmware command prompt:
@@ -169,22 +211,33 @@ You should now see the Open Firmware command prompt:
 .Dl 0 >
 .Pp
 If your screen is black, then your system has defaulted to using a serial
-console. This is fairly common on these models if you do not use the System
+console. This is fairly common on Open Firmware 1 and 2 models if you do
+not use the System
 Disk tool to set up Open Firmware. You must hook up a serial console
 (38400 bps, 8 bits, no parity, 1 stop bit, no handshaking).
+.Pp
 The Apple Network Server uses
 .Sq Port 2
 (the
 .Sq Li ttya
 device in Open Firmware) as the console port.
 .Pp
-Look up the proper
+Now, set your system to always stop at the Open Firmware prompt.
+.Pp
+.Dl 0 > Ic "setenv auto-boot? false
+.Pp
+To allow Open Firmware to automatically boot the specified operating
+system when the system is booted, type:
+.Pp
+.Dl 0 > Ic "setenv auto-boot? true
+.Pp
+To use your on-board video and keyboard, look up the proper
 .Sq output-device
 for your model on the
 .Nx*M
 webpage
 .Lk http://www.netbsd.org/Ports/macppc/models.html
-Run the following commands to set this variable to use your screen instead of
+Run the following commands to use your screen instead of
 a serial console
 (replace
 .Sq Li screen
@@ -205,11 +258,6 @@ is
 (i.e. you have a PowerMacintosh 7300 - 8600 system), there is a chance that
 your monitor will not sync. See
 .Lk http://www.netbsd.org/Ports/macppc/SystemDisk-tutorial/of105patch.html
-.Pp
-.(Note
-You must install the patches from System Disk before the beige G3 will boot
-.Nx
-.Note)
 .
 .Ss2 Setting Open Firmware up to boot NetBSD
 .
@@ -219,10 +267,13 @@ to make decisions further on:
 .Dl 0 > Ic "dev /openprom"
 .Dl 0 > Ic ".properties"
 .Pp
-If your version of Open Firmware is prior to version 3, then you must set
+If your system has Open Firmware prior to version 3, then you must set
 some Open Firmware variables before
 .Nx
-can boot.
+can boot.  Do
+.Em not
+run these commands on Open Firmware 3 machines, as you may overwrite your
+firmware requiring a trip to Apple for repairs.
 .Pp
 .Dl 0 > Ic "setenv load-base 600000"
 .Dl 0 > Ic "setenv real-base F00000"
@@ -266,36 +317,50 @@ Open Firmware 3
 .Dl 0 > Ic mac-boot
 .bullet)
 .(Note
-Open Firmware 1.0.5 settings will be erased if you boot into
+Open Firmware 1.0.5 settings and nvram patches will be erased if you boot into
 .Tn MacOS .
 You will need to re-enter them before booting
 .Nx
-again. Open Firmware 2.0.x does not appear to suffer from this problem.
+again.
 .Note)
 .
 .Ss2 Available Boot Media
 .
-In order to boot and run
-.Nx ,
-you need a method to load and run the
+Each version of Open Firmware is capable of booting from a variety of
+media.  To boot the
 .Nx
-kernel.
-.Pp
-Whilst Open Firmware 3 can load the kernel directly, older versions need a
+kernel, Open Firmware must first open a
 .Sq bootloader
-which can then bootstrap the kernel.
-Unfortunately, some kernels do not
+which knows how to load the
+.Nx
+kernel.  There are two approaches, the 
+.Pa ofwboot.xcf
+bootloader and the
+.Sq partition zero
+bootloader.  In the former case, the user tells Open Firmware to
+load
+.Pa ofwboot.xcf
+and it will load the kernel.  In the latter case, the user tells Open
+Firmware to boot from a particular device, and a primary bootloader
+.Pa bootxx
+is loaded, which then loads the secondary bootloader
+.Pa ofwboot
+which then loads the kernel.
+.Pp
+Open Firmware 3 systems can load the kernel without the use of a
+bootloader, although, some kernels do not
 .Dq just work ,
-and you will need
-to load the bootloader to load the kernel.
+and you will need to load the bootloader to load the kernel.
 Feel free to experiment and load the kernel with the command you use to load
-the bootloader, bypassing this step.
+the bootloader, bypassing a step, however we recommend using a bootloader.
 .Pp
 The following bootable media are available for loading the bootloader
 .Pq Pa ofwboot No or Pa ofwboot.xcf :
 .(bullet -offset indent
 .
 .Em "Partition zero"
+.br
+(Open Firmware 1.x, Open Firmware 2.x)
 .Pp
 This method loads a primary bootloader called
 .Pa bootxx
@@ -309,57 +374,65 @@ This is the method used by the boot floppies, and when you're
 installing
 .Nx
 on the entire disk.
-Unfortunately, it appears that the floppy disk driver on Open Firmware 2.4
-machines is broken.
+Unfortunately, it appears that the Open Firmare 2.4 floppy disk driver
+is broken.
 .
 .It
-.Em "Whole partition"
+.Em "Partition zero"
 .br
 (Open Firmware 3)
 .Pp
-Unfortunately,
+While Open Firmware 3 supports this boot method, 
 .Nx*M
-does not yet support the
-.Sq whole partition
-method yet.
+does not yet support it on these systems.
 .Pp
 .It
-.Em "HFS(+) file system"
+.Em "HFS or HFS+ file system"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
 Whilst you can load
 .Pa ofwboot.xcf
-from an HFS(+) partition, you will not be able to load the kernel from it.
+from an HFS or HFS+ partition, you will not be able to load the kernel
+from HFS or HFS+ filesystems. This will be resolved in a future release of
+.Nx*M
 .
 .It
 .Em "MS-DOS file system"
+.br
+(All Open Firmware versions)
 .Pp
 This cannot be used, as neither the
 .Pa ofwboot.xcf
 bootloader nor the kernel can read files directly from a
 .Tn MS-DOS
 file system.
-This should be resolved in a future release.
 .
 .It
 .Em "Ethernet (network boot)"
+.br
+(All Open Firmware versions)
 .Pp
 You can run your entire system diskless or netboot only the files necessary
 to boot (i.e. the bootloader and the installation kernel),
 but you must have root access on another
-.Ul
+.Ux
 machine on your subnet.
-.Pp
+.(Note
 Some Open Firmware 1.0.5 machines do not retrieve the BOOTP information
 correctly. These machines cannot netboot.
+.Note)
 .
 .It
 .Em "ISO9660 CD-ROM file system"
+.br
+(Open Firmware 1.x, Open Firmware 2.x)
 .Pp
 Load the
 .Pa ofwboot.xcf
-from an ISO 9660 CD-ROM.
+bootloader from an ISO 9660 CD-ROM.  It can then load a
+.Nx
+kernel from the ISO 9660 CD-ROM.
 .Pp
 Open Firmware 1.0.5 and 2.0.x machines will
 .Em not
@@ -367,6 +440,27 @@ boot from the ISO 9660 file system if you create a hybrid HFS/ISO
 format CD-R. Make sure that it the CD
 .Em only
 has ISO 9660 data and does not have an Apple Partition Map.
+.(Note
+Open Firmware can only open files on the first session of a multi-session
+CD-R
+.Note)
+.
+.It
+.Em "Hybrid HFS/ISO 9660 CD-ROM file system"
+.br
+(Open Firmware 2.4, Open Firmware 3)
+.Pp
+Load the
+.Pa ofwboot.xcf
+bootloader from the CD-ROM's HFS filesystem.  It can then load a
+.Nx
+kernel from the ISO 9660 filesystem.
+.Pp
+Make sure that the CD has an Apple Partition Map.
+.(Note
+Open Firmware can only open files on the first session of a multi-session
+CD-R
+.Note)
 .bullet)
 .Pp
 Once
@@ -397,31 +491,92 @@ file system with an installation kernel.
 .
 .Ss2 Installation techniques
 .
-If you will be running your system diskless (i.e. entirely over NFS, not
-using any local hard drives), then you do not need to run the installer
-although you may still do so.
-.Pp
 Run the installer to place
 .Nx
 on a hard drive on your \*M system.
 .Pp
-The common installation techniques:
+If you will be running your system diskless (i.e. entirely over NFS, not
+using any local hard drives), then you do not need to run the installer
+although you may still do so.
+.Pp
+Here are some common techniques for booting the
+.Nx
+install kernel:
 .Pp
 .(bullet
 .
-.Em "Create a boot floppy"
-.br (Not supported for Open Firmware 2.4)
+.Em "Boot off a floppy"
+.br
+(Open Firmware 1.x, Open Firmware 2.0.x)
 .Pp
-Use some tool to write the boot floppy image to a floppy disk, and boot
+Use some tool to write the boot floppy image 
+.Pa installation/boot.fs
+to a floppy disk, and boot
 from that.
 The primary bootloader (in
 .Sq "partition zero" )
 will load
 .Pa ofwboot
 which will load the installation kernel.
+.Pp
+.(bullet -compact
+.Em From a UNIX machine
+.Pp
+.Dl # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.Pp
+.It
+.Em From a Windows machine
+.Pp
+Get either the
+.Nm rawrite.exe
+program from the NetBSD/i386 distribution or
+.Nm rawrite32.exe
+from
+.Lk http://www.duskware.com/rawrite32/
+.Pp
+.It
+.Em From a MacOS machine
+.Pp
+Get
+.Nm suntar
+from 
+.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
+.(enum
+Open the 
+.Sq Preferences
+menu and pick
+.Sq Expert Mode
+.Pp
+.It
+Open the 
+.Sq Special
+menu and pick
+.Sq Overwrite Sectors ...
+.Pp
+.It
+Insert a floppy disk
+.Pp
+.It
+Hit return (i.e. start at sector number zero)
+.Pp
+.It
+Select
+.Pa boot.fs
+and click
+.Dq Open
+.Pp
+.It
+Open the
+.Sq File
+menu and pick
+.Sq Eject
+.enum)
+.bullet)
 .
 .It
-.Em "Create an ISO 9660 CD-ROM"
+.Em "Boot off an ISO 9660 CD-ROM"
+.br
+(Open Firmware 1.x, Open Firmware 2.x)
 .Pp
 Place
 .Pa ofwboot.xcf
@@ -432,11 +587,59 @@ distribution sets on the disk.
 Have Open Firmware load
 .Pa ofwboot.xcf
 from the disk, and it will then load the installation kernel.
+.Pp
+.(bullet
+.Em From a UNIX machine
+.Pp
+.Dl # Ic "mkhybrid -o output.iso -a -l -J -r -L /cdsources"
+.Pp
+See the 
+.Nx 
+Bootable CD-ROM HOW-TO for more detail:
+.Lk http://www.netbsd.org/Documentation/bootcd.html
+.Pp
+.It
+.Em From a MacOS machine (using Toast)
+.Pp
+.(enum
+Open the
+.Sq Format
+menu and pick
+.Sq ISO 9660
+.Pp
+.It
+Click the
+.Dq Data...
+button and drag
+.Pa installation/ofwboot.xcf
+and
+.Pa installation/netbsd.ram.gz
+into the window
+.Pp
+.It
+Click the
+.Dq Settings
+tab, open the 
+.Dq Naming
+popup menu, and pick
+.Dq Macintosh Names
+.Pp
+.It
+Click the 
+.Dq Done
+button
+.Pp
+.It
+Click the
+.Dq Write CD...
+button
+.enum)
+.bullet)
 .
 .It
-.Em "Create a hybrid HFS/ISO 9660 CD-ROM"
+.Em "Boot off a hybrid HFS/ISO 9660 CD-ROM"
 .br
-(Open Firmware 3)
+(Open Firmware 2.4, Open Firmware 3)
 .Pp
 Place
 .Pa ofwboot.xcf
@@ -448,18 +651,96 @@ distribution sets on the ISO partition. Have Open Firmware load
 .Pa ofwboot.xcf
 from the HFS partition, and it will load the installation kernel from the
 ISO partition.
+.Pp
+.(bullet
+.Em From a UNIX machine
+.Pp
+.Dl # Ic "mkhybrid -o output.iso -hfs -part -a -l -J -r -L /cdsources"
+.Pp
+See the 
+.Nx 
+Bootable CD-ROM HOW-TO for more detail:
+.Lk http://www.netbsd.org/Documentation/bootcd.html
+.Pp
+.It
+.Em From a MacOS machine (using Toast)
+.Pp
+.(enum
+Open the
+.Sq Format
+menu and pick
+.Sq Mac/ISO Hybrid
+.Pp
+.It
+Open the
+.Sq Utilities
+menu and pick
+.Sq Create Temporary Partition...
+.Pp
+.It
+Make this temporary partition large enough for all of the files you will
+be placing on the HFS portion of the CD (only 
+.Pa ofwboot.xcf
+is necessary).
+.Pp
+.It
+Copy
+.Pa installation/ofwboot.xcf
+to the temporary partition
+.Pp
+.It
+Click the
+.Dq Data...
+button and select the temporary partition you just created
+.Pp
+.It
+Click the
+.Dq ISO...
+button and drag
+.Pa installation/netbsd.ram.gz
+into the window
+.Pp
+.It
+Click the
+.Dq Settings
+tab, open the 
+.Dq Naming
+popup menu, and pick
+.Dq Macintosh Names
+.Pp
+.It
+Click the 
+.Dq Done
+button
+.Pp
+.It
+Click the
+.Dq Write CD...
+button
+.enum)
+.bullet)
 .
 .It
-.Em "Boot off an HFS(+) partition"
+.Em "Boot off an HFS or HFS+ partition"
 .br
 (Open Firmware 3)
 .Pp
-Download the install kernel and place it at the top level of any partition.
-Get to the Open Firmware prompt. Boot the kernel and use it to install
+Download the install kernel 
+.Pa installation/netbsd.ram.gz
+and place it at the top level of any partition.
+Use a
+.Tn MacOS
+utility such as 
+.Nm Stuffit Expander
+to uncompress the kernel.
+Get to the Open Firmware prompt. Boot the kernel directly (i.e. without 
+the use of a bootloader) and use it to install
 .Nx
 on your hard drive.
 .It
 .Em "Boot over the ethernet"
+.br
+(All Open Firmware versions)
 .Pp
 Set up the DHCP daemon in BOOTP compatable mode, the TFTP daemon, and
 the NFS daemons on your netboot server.
@@ -468,45 +749,261 @@ request, which will tell Open Firmware what your system's IP address
 is, and where its bootloader can be downloaded via TFTP.
 Once Open FIrmware has downloaded the bootloader via TFTP, it will
 then load the installation kernel via an NFS connection.
+.Pp
+Follow these instructions to configure a
+.Nx
+machine as your netboot server.  We will use 
+.Sq Li CC:CC:CC:CC:CC:CC
+as the MAC address (ethernet hardware address) of your netboot client machine
+that you wish to install
+.Nx
+on.  We use 
+.Sq Li 192.168.1.10
+as the IP address of your client, and
+.Sq Li client.test.net
+as the name.  The server name is
+.Sq Li server.test.net ,
+and the path on the server to the NFS exported directory is 
+.Pa /export/client/root
+although you may choose to use a different path.
+.Pp
+Now, set up your 
+.Ic dhcpd
+server.  Make sure the following lines are in
+.Pa /etc/dhcpd.conf :
+.Dl allow bootp;                        #allow bootp requests, thus the dhcp
+.Dl                                     #server will act as a bootp server
+.Dl
+.Dl # which network interface the server will listen on
+.Dl subnet 192.168.1.0 netmask 255.255.255.0 { #the zeros indicate which range of
+.Dl }                                       #addresses are allowed to connect
+.Dl
+.Dl #set of parameters common to all clients
+.Dl group {                                
+.Dl  option broadcast-address 192.168.1.255;
+.Dl  option domain-name "test.net";
+.Dl  option domain-name-servers dns.test.net;
+.Dl  option routers router.test.net;
+.Dl  option subnet-mask 255.255.255.0;
+.Dl
+.Dl  host client.test.net {
+.Dl   hardware ethernet CC:CC:CC:CC:CC:CC;
+.Dl   fixed-address 192.168.1.10;
+.Dl   option host-name "client";        #name of the host (if the fixed address
+.Dl                                     #doesn't resolve to a simple name)
+.Dl   filename "ofwboot.xcf";           #name of the bootloader or kernel
+.Dl                                     #to download via tftp
+.Dl   option root-path "/export/client/root"; #the path on the NFS server.
+.Dl  }
+.Dl }
+.Pp
+You will need to make sure that the
+.Pa dhcpd.leases
+file exists.
+.Pp
+.Dl # Ic "touch /var/db/dhcpd.leases"
+.Pp
+You will need to 
+.Ic kill
+the
+.Ic dhcpd
+and restart it to get it to re-read its configuration file.
+.Pp
+.Dl # Ic "usr/sbin/dhcpd"
+.Pp
+Now, place a copy of the
+.Pa installation/ofwboot.xcf
+bootloader in 
+.Pa /tftpboot
+.Pp
+.Dl # Ic "cp ofwboot.xcf /tftpboot"
+.Pp
+Now, you should edit
+.Pa /etc/inetd.conf
+and make sure that the line starting with 
+.Li tftp
+is uncommented.  You will need to
+.Ic kill -HUP
+the
+.Ic inetd
+process to enable tftp if this line was previously commented out.  The next
+step is to set up NFS exports.  Create the directory you are exporting for
+the netboot client:
+.Pp
+.Dl # Ic "mkdir -p /export/client/root"
+.Pp
+Put the following line in
+.Pa /etc/exports
+to enable NFS sharing:
+.Pp
+.Dl "/export/client/root -maproot=root client.test.net"
+.Pp
+If your server is currently running NFS services, you only need to 
+.Ic "kill -HUP"
+the
+.Ic mountd
+process.  Otherwise, you need to run:
+.Pp
+.Dl # Ic "/sbin/mountd"
+.Dl # Ic "/sbin/nfsd -tun 4"
+.Pp
+Now, you need to place the files your netboot client will need.
+As noted above in the section
+.Pa Preparing your System for NetBSD Installation
+you have several options when choosing a location to store the
+distribution
+filesets. However, the easiest way is to put the distribution
+files into the exported directory for your client on the server.
+.Pp
+.Dl # Ic "mv *.tgz /export/client/root"
+.Pp
+Your client will need a kernel to boot (use 
+.Pa installation/netbsd.ram.gz ) .
+.Pp
+.Dl # Ic "gunzip netbsd.ram.gz"
+.Dl # Ic "mv netbsd.ram /export/client/root/netbsd"
 .
 .It
 .Em "Boot the floppy image off a bootable hard drive"
+.br
+(Open Firmware 1.x, Open Firmware 2.x)
 .Pp
 Find a spare bootable drive (i.e. SCSI or IDE), and use some tool to write
-the floppy disk image to your spare drive, and boot from that drive.
+the floppy disk image 
+.Pa installation/boot.fs
+to your spare drive, and boot from that drive.
 The floppy image has a
 .Sq partition zero
-bootloader which ultimately loads the installation kernel.
+bootloader which ultimately loads the installation kernel from the FFS
+filesystem from the disk image.
+.Pp
+.(bullet -compact
+.Em From a UNIX machine
+.Pp
+.Dl # Ic "dd if=boot.fs of=/dev/rsd0c"
+where 
+.Pa /dev/rsd0c
+is the 
+.Sq whole disk
+partition for the drive you will be using.  Be certain you have typed this
+correctly, as it will erase the disk.
+.Pp
+.It
+.Em From a Windows machine
+.Pp
+Get
+.Nm rawrite32.exe
+from
+.Lk http://www.duskware.com/rawrite32/
+.Pp
+Be certain you have selected the correct disk, as it will erase the
+contents.
+.Pp
+.It
+.Em From a MacOS machine
+.Pp
+Get
+.Nm suntar
+from 
+.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
+.(enum
+Open the 
+.Sq Preferences
+menu and pick
+.Sq Expert Mode
+.Pp
+.It
+Open the 
+.Sq File
+menu and pick
+.Sq Open Device ...
+.Pp
+.It
+Click on the
+.Dq scan SCSI
+button to get a list of which drives are attached.
+.Pp
+.It
+Pick the correct drive.  Be certain you have selected the correct disk, as
+it will erase the contents.
+.Pp
+.It
+Open the
+.Sq Special
+menu and pick
+.Sq Overwrite Sectors ...
+.Pp
+.It
+Hit return (i.e. start at sector number zero)
+.Pp
+.It
+Select
+.Pa boot.fs
+and click
+.Dq Open
+.Pp
+.It
+Open the
+.Sq File
+menu and pick
+.Sq Close Device
+.enum)
+.bullet)
 .bullet)
 .
 .Ss2 Partitioning the drive NetBSD will be installed on
 .
-You have two options. You may use the
+You have two options.  You may use the 
 .Nx
-installer to partition your drive and make it bootable (with a
+installer to partition your drive, in which case you may use a
 .Sq partition zero
-bootloader), in which case
-you cannot share this drive with
+bootloader, but you cannot have HFS or HFS+ filesystems; or you may use a
 .Tn MacOS
-(i.e. cannot have any HFS partitions on it).
-Alternatively, you may share this drive with
-.Tn MacOS ,
-in which case the drive will not be bootable. You will need to load
+tool to partition your drive, in which case you cannot use a
+.Sq partition zero
+bootloader, but you can have HFS and HFS+ filesystems.
+.Pp
+If you have an Open Firmware 1.x or 2.0.x system, you must use the
+.Nx
+installer to partition your drive if you wish it to be bootable.  You may
+partition your drive in 
+.Tn MacOS
+but you will have to load
 .Pa ofwboot.xcf
-from some other media (such as over the network, from a floppy, or from
+from some other media (such as over the network, from a floppy, or from a
+CD-ROM).
+.Pp
+If you have an Open Firmware 2.4 system, either partitioning method will
+produce a bootable disk.  If you use a 
+.Tn MacOS
+tool, you must manually place
+.Pa ofwboot.xcf
+on one of your HFS or HFS+ partitions.
+.Pp
+If you have an Open Firmware 3 system, you must use a 
+.Tn MacOS
+tool to create a bootable disk.  You will need to manually place
+.Pa ofwboot.xcf
+on one of your HFS or HFS+ partitions.  If you use the
+.Nx
+installer to partition your drive, you will need to load
+.Pa ofwboot.xcf
+from some other media (such as over the network or from
 a CD-ROM).
 .Pp
 Unfortunately, the partitioning tools for
 .Nx
-are not advanced enough to create an HFS(+) file system. Therefore,
+are not advanced enough to create HFS or HFS+ file systems. Therefore,
 if you wish to share this drive with
 .Tn MacOS ,
-you will need to use the MacOS Drive Setup tool (versions 1.9.1 and later are
+you will need to use the 
+.Tn MacOS
+Drive Setup tool (versions 1.9.1 and later are
 known to work) to divide the hard drive you will be using for
 .Nx
 into the following partitions:
 .(tag "A/UX_Rootxxx" -offset indent
-.It Em HFS(+)
+.It Em HFS No or Em HFS+
 Must be large enough to hold the bootloader, over 100 KB.
 .It Em A/UX Root
 Must be at least 20 MB. Alternatively, you may decide to use one partition for
