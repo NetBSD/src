@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.6 1998/02/22 06:37:54 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1998/02/22 07:01:11 mycroft Exp $
 
 KMINCLUDES= arch/i386/SYS.h
 KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S \
 	memchr.S memcpy.S memset.S \
-	strcat.S strcmp.S strcpy.S strlen.S \
+	strcat.S strchr.S strcmp.S strcpy.S strlen.S strrchr.S \
 	htonl.S htons.S ntohl.S ntohs.S
