@@ -1,0 +1,1725 @@
+#!/bin/sh -
+#	$NetBSD: MAKEDEV.tmpl,v 1.1 2003/10/13 09:37:45 jdolecek Exp $
+#
+# Copyright (c) 2003 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#
+# Device "make" file.  Valid arguments:
+#	all	makes all known devices, including local devices.
+#		Tries to make the 'standard' number of each type.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
+#	floppy	devices to be put on install floppies
+#	ramdisk	devices to be put into INSTALL kernel ramdisks.
+#	std	standard devices
+#	local	configuration specific devices
+#	usbs	make USB devices
+#	isdns	make ISDN devices
+#
+# Tapes:
+#	st*	SCSI tapes
+#	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
+#	ht*	MASSBUS TM03 and TU??
+#	mt*	MSCP tapes (e.g. TU81, TK50)
+#	tm*	UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11)
+#	ts*	UNIBUS TS11
+#	ut*	UNIBUS TU45 emulations (e.g. si 9700)
+#	uu*	TU58 cassettes on DL11 controller
+#
+# Disks:
+#	ccd*	concatenated disk devices
+#	cd*	SCSI or ATAPI CD-ROM
+#	cgd*	cryptographic disk devices
+#	raid*	RAIDframe disk devices
+#	sd*	SCSI disks
+#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	bmd*	Nereid bank memory disks
+#	ed*	IBM PS/2 ESDI disk devices
+#	fd*	"floppy" disk drives (3 1/2", 5 1/4")
+#	gdrom*	Dreamcast "gigadisc" CD-ROM drive
+#	hk*	UNIBUS RK06 and RK07
+#	hp*	MASSBUS RM??
+#	ld*	Logical disk devices (e.g., hardware RAID)
+#	mcd*	Mitsumi CD-ROM
+#	md*	memory pseudo-disk devices
+#	ofdisk*	OpenFirmware disk devices
+#	ra*	MSCP disks (RA??, RD??)
+#	rb*	730 IDC w/ RB80 and/or RB02
+#	rd*	HDC9224 RD disks on VS2000
+#	rl*	UNIBUS RL02
+#	rx*	MSCP floppy disk (RX33/50/...)
+#	up*	other UNIBUS devices (e.g. on Emulex SC-21V controller)
+#	vnd*	"file" pseudo-disks
+#	xd*	Xylogic 753/7053 disks
+#	xy*	Xylogic 450/451 disks
+#
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#	lms*	Logitech bus mouse
+#	mms*	Microsoft bus mouse
+#	qms*	"quadrature mouse"
+#	pms*	PS/2 mouse
+#	mouse	mouse (provides events, for X11)
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
+#	kbd	raw keyboard (provides events, for X11)
+#	kbdctl	keyboard control
+#
+# Terminals/Console ports:
+#	tty[01]*	standard serial ports
+#	tty0*	SB1250 ("sbscn") serial ports (sbmips)
+#	ttyE*	wscons - Workstation console ("wscons") glass-tty emulators
+#	ttyCZ?	Cyclades-Z multiport serial boards.  Each "unit"
+#		makes 64 ports.
+#	ttyCY?	Cyclom-Y multiport serial boards. Each "unit" makes
+#		32 ports.
+#	ttye*	ITE bitmapped consoles
+#	ttyv0	pccons
+#	ttyC?	NS16550 ("com") serial ports
+#	ttyS*	SA1110 serial port (hpcarm)
+#	ttyTX?	TX39 internal serial ports (hpcmips)
+#	ttyB?	DEC 3000 ZS8530 ("scc") serial ports (alpha)
+#	ttyA*	mfc serial ports (amiga)
+#	ttyB*	msc serial ports (amiga)
+#	ttyC*	com style serial ports (DraCo, HyperCom) (amiga)
+#		On the DraCo, units 0 and 1 are the built-in "modem" and
+#		"mouse" ports, if configured.
+#	ttyA0   8530 Channel A (formerly ser02) (atari)
+#	ttyA1	8530 Channel B (formerly mdm02) (atari)
+#	ttyB0	UART on first 68901 (formerly mdm01) (atari)
+#	ixpcom	IXP12x0 COM ports
+#	dca*	HP200/300 single port serial interface
+#	dcm*	HP200/300 4 port serial mux interface
+#	apci*	HP400     4 port serial mux interface
+#	ttya	'ttya' system console (luna68k)
+#	ttyb	second system serial port (luna68k)
+#	tty*	Onboard serial ports (mvme68k)
+#		On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
+#		On the mvme167, and '177: ttyC1, ttyC2 and ttyC3.
+#		Note that tty[CZ]0 is grabbed by the console device
+#		so is not created by default
+#	dc*	PMAX 4 channel serial interface (kbd, mouse, modem, printer)
+#	scc*	82530 serial interface (pmax)
+#	ttyZ*	Zilog 8530 ("zstty") serial ports
+#	tty[abcd]	Built-in serial ports (sparc)
+#	tty*	Z88530 serial controllers (sparc64)
+#	ttyh*	SAB82532 serial controllers (sparc64)
+#	tty[a-j]	Built-in serial ports (sun2, sun3)
+#	ttyC?	pccons (arc)
+#	dz*	UNIBUS DZ11 and DZ32 (vax)
+#	dh*	UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11) (vax)
+#	dmf*	UNIBUS DMF32 (vax)
+#	dhu*    UNIBUS DHU11 (vax)
+#	dmz*    UNIBUS DMZ32 (vax)
+#	dl*	UNIBUS DL11 (vax)
+#
+# Terminal multiplexors:
+#	apci*	HP400     4 port serial mux interface
+#	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
+#	dca*	HP200/300 single port serial interface
+#	dcm*	HP200/300 4 port serial mux interface
+#	dh*	UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11)
+#	dhu*	UNIBUS DHU11
+#	dl*	UNIBUS DL11
+#	dmf*	UNIBUS DMF32
+#	dmz*	UNIBUS DMZ32
+#	dz*	UNIBUS DZ11 and DZ32
+#	scc*	82530 serial interface
+#
+# Call units:
+#	dn*	UNIBUS DN11 and emulations (e.g. Able Quadracall)
+#
+# Pseudo terminals:
+#	pty*	set of 62 master and slave pseudo terminals
+#	opty	first 16 ptys, to save inodes on install media
+#	ipty	first 2 ptys, for install media use only
+#
+# Printers:
+#	arcpp*	Archimedes parallel port
+#	lpt*	stock lp
+#	lpa*	interruptless lp
+#	par*	Amiga motherboard parallel port
+#
+# USB devices:
+#	usb*	USB control devices
+#	uhid*	USB generic HID devices
+#	ulpt*	USB printer devices
+#	ugen*	USB generic devices
+#	urio*	USB Diamond Rio 500 devices
+#	uscanner*	USB scanners
+#	ttyU*	USB modems
+#
+# ISDN devices:
+#	isdn	communication between userland isdnd and kernel
+#	isdnctl	control device
+#	isdnbchan* raw b-channel access
+#	isdntel*	telephony device
+#	isdnteld*	telephony dialout device
+#	isdntrc*	trace device
+#
+# Video devices:
+#	bwtwo*	monochromatic frame buffer
+#	cgtwo*	8-bit color frame buffer
+#	cgthree*	8-bit color frame buffer
+#	cgfour*	8-bit color frame buffer
+#	cgsix*	accelerated 8-bit color frame buffer
+#	cgeight*	24-bit color frame buffer
+#	etvme	Tseng et-compatible cards on VME
+#	ik*	UNIBUS interface to Ikonas frame buffer
+#	leo	Circad Leonardo VME-bus true color
+#	ps*	UNIBUS interface to Picture System 2
+#	qv*	QVSS (MicroVAX) display
+#	tcx*	accelerated 8/24-bit color frame buffer
+#
+# Maple bus devices:
+#	maple	Maple bus control devices
+#	mlcd*	Maple bus LCD devices
+#	mmem*	Maple bus storage devices
+#
+# Special purpose devices:
+#	ad*	UNIBUS interface to Data Translation A/D converter
+#	agp*	AGP GART devices
+#	altq	ALTQ control interface
+#	apm	power management device
+#	audio*	audio devices
+#	beep	PC speaker
+#	bell*	OPM bell device (x86k)
+#	bktr	Brooktree 848/849/878/879 based TV cards
+#	bpf*	packet filter
+#	cfs*	Coda file system device
+#	ch*	SCSI media changer
+#	cir*	Consumer IR
+#	clockctl clock control for non root users
+#	crypto	hardware crypto access driver
+#	dmoverio hardware-assisted data movers
+#	dpt*	DPT/Adaptec EATA RAID management interface
+#	dpti*	DPT/Adaptec I2O RAID management interface
+#	fb*	generic framebuffer pseudo-device
+#	fd	file descriptors
+#	grf*	graphics frame buffer device
+#	hil	HP300 HIL input devices
+#	icp	ICP-Vortex/Intel RAID control interface
+#	iic*	IIC bus device
+#	iop*	I2O IOP control interface
+#	ipl	IP Filter
+#	irframe* IrDA physical frame
+#	ite*	terminal emulator interface to HP300 graphics devices
+#	joy*	joystick device
+#	kttcp	kernel ttcp helper device
+#	lkm	loadable kernel modules interface
+#	magma*	Magma multiport serial/parallel cards
+#	midi*	MIDI
+#	mlx*	Mylex DAC960 control interface
+#	mly*	Mylex AcceleRAID/eXtremeRAID control interface
+#	np*	UNIBUS Ethernet co-processor interface, for downloading.
+#	nsmb*	SMB requester
+#	openfirm OpenFirmware accessor
+#	pci*	PCI bus access devices
+#	pf	PF packet filter
+#	pow*	power management device (x86k)
+#	px*	PixelStamp Xserver access
+#	radio*	radio devices
+#	random	Random number generator, see rnd(4)
+#	rtc*	Atari RealTimeClock
+#	satlink* PlanetConnect satellite receiver driver
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	se*	SCSI Ethernet
+#	ses*	SES/SAF-TE SCSI Devices
+#	speaker	PC speaker		(XXX - installed)
+#	sram	battery backuped memory (x86k)
+#	ss*	SCSI scanner
+#	stic*	PixelStamp interface chip
+#	sysmon	System Monitoring hardware
+#	systrace syscall tracer
+#	tun*	network tunnel driver
+#	twe	3ware Escalade control interface
+#	uk*	unknown SCSI device
+#	veriexec verified executable fingerprint loader
+#	vmegen*	generic VME access
+#	view*	generic interface to graphic displays (Amiga)
+#	wsfont*	console font control
+#	wsmux*	wscons event multiplexor
+
+dialin=0
+dialout=524288
+callunit=262144
+
+# Keep /usr/etc so SunOS can find chown
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/etc
+
+# only allow read&write for owner by default
+umask 077
+
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+        case "`df fd`" in
+        *fdesc*) nofdesc=false;;
+        *) nofdesc=true;;
+        esac
+else
+        nofdesc=true
+fi
+
+# called from makedev, with params
+# mkdev name b/c major minor [mode] [group]
+mkdev() {
+	rm -f $1
+	mknod $1 $2 $3 $4
+	test -n "$5" && chmod $5 $1
+	test -n "$6" && chgrp $6 $1
+}
+
+makedev()
+{
+
+for i
+do
+
+case $i in
+
+%MD_DEVICES%
+
+%MI_DEVICES_BEGIN%
+audio)
+	makedev audio0 audio1 audio2 audio3
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer
+	ln -fs audioctl0 audioctl
+	;;
+
+radio)
+	makedev radio0 radio1
+	ln -fs radio0 radio
+	;;
+
+ramdisk)
+	makedev floppy md0
+	;;
+
+usbs)
+	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	makedev uhid0 uhid1 uhid2 uhid3
+	makedev ulpt0 ulpt1
+	makedev ttyU0 ttyU1
+	makedev urio0
+	makedev uscanner0 uscanner1
+	makedev ugen0
+	;;
+
+isdns)
+	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdnteld0 isdnteld1 isdntrc0 isdntrc1
+	;;
+
+std)
+	rm -f console constty drum mem kmem null zero io klog ksyms
+	mknod console		c %cons_chr% 0
+	mknod constty		c %cons_chr% 1
+	mknod drum		c %swap_chr% 0	; chmod 640 drum ; chgrp kmem drum
+	mknod kmem		c %mem_chr% 1	; chmod 640 kmem ; chgrp kmem kmem
+	mknod mem		c %mem_chr% 0	; chmod 640 mem	; chgrp kmem mem
+	mknod null		c %mem_chr% 2	; chmod 666 null
+	mknod zero		c %mem_chr% 12	; chmod 666 zero
+	mknod klog		c %log_chr% 0	; chmod 600 klog
+	mknod ksyms		c %ksyms_chr% 0	; chmod 444 ksyms
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c %ctty_chr% 0	; chmod 666 tty
+		mknod stdin	c %filedesc_chr% 0	; chmod 666 stdin
+		mknod stdout	c %filedesc_chr% 1	; chmod 666 stdout
+		mknod stderr	c %filedesc_chr% 2	; chmod 666 stderr
+	fi
+	;;
+
+usb*)
+	unit=${i#usb}
+	if [ "$unit" = "" ]; then
+	    unit=255
+	    usb=usb
+	else
+	    usb=usb$unit
+	fi
+	major=%usb_chr%
+	rm -f $usb
+	mknod $usb c $major $unit
+	chmod 600 $usb
+	;;
+
+uhid*)
+	unit=${i#uhid}
+	uhid=uhid$unit
+	major=%uhid_chr%
+	rm -f $uhid
+	mknod $uhid c $major $unit
+	chmod 666 $uhid
+	;;
+
+ulpt*)
+	unit=${i#ulpt}
+	ulpt=ulpt$unit
+	ulpn=ulpn$unit
+	major=%ulpt_chr%
+	rm -f $ulpt $ulpn
+	mknod $ulpt c $major $unit
+	mknod $ulpn c $major $(($unit + 64))
+	chmod 600 $ulpt $ulpn
+	;;
+
+urio*)
+	unit=${i#urio}
+	urio=urio$unit
+	major=%urio_chr%
+	rm -f $urio
+	mknod $urio c $major $unit
+	chmod 666 $urio
+	;;
+
+uscanner*)
+	unit=${i#uscanner}
+	uscanner=uscanner$unit
+	major=%uscanner_chr%
+	rm -f $uscanner
+	mknod $uscanner c $major $unit
+	chmod 600 $uscanner
+	;;
+
+ttyU*)
+	unit=${i#ttyU}
+	ttyU=ttyU$unit
+	dtyU=dtyU$unit
+	ctyU=ctyU$unit
+	major=%ucom_chr%
+	rm -f $ttyU $dtyU $ctyU
+	mknod $ttyU c $major $(($unit + $dialin  ))
+	mknod $dtyU c $major $(($unit + $dialout ))
+	mknod $ctyU c $major $(($unit + $callunit))
+	chown uucp $ttyU $dtyU $ctyU
+	chmod 600 $ttyU $dtyU $ctyU
+	;;
+
+ugen*)
+	unit=${i#ugen}
+	ugen=ugen$unit
+	major=%ugen_chr%
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		ugenj=$ugen.$j
+		rm -f $ugenj
+		mknod $ugenj c $major $(($unit * 16 + ${j#0}))
+		chmod 600 $ugenj
+	done
+	;;
+
+wscons)
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg ttyEstat
+	makedev wsfont
+	;;
+
+wsmouse)
+	rm -f wsmouse
+	mknod wsmouse c %wsmouse_chr% 0
+	chmod 600 wsmouse
+	;;
+
+wskbd)
+	rm -f wskbd
+	mknod wskbd c %wskbd_chr% 1
+	chmod 600 wskbd
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	unitctl=$(($unit + 128))
+	wsmux=wsmux$unit
+	wsmuxctl=wsmuxctl$unit
+	major=%wsmux_chr%
+	rm -f $wsmux $wsmuxctl
+	mknod $wsmux c $major $unit
+	chmod 600 $wsmux
+	mknod $wsmuxctl c $major $unitctl
+	chmod 200 $wsmuxctl
+	;;
+
+ttyEstat)
+	chr=%wsdisplay_chr%
+	rm -f ttyEstat
+	mknod ttyEstat c $chr 254
+	chmod 600 ttyEstat
+	;;
+
+ttyEcfg)
+	chr=%wsdisplay_chr%
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	chr=%wsdisplay_chr%; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=%wsmouse_chr%
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chmod 600 $wsmouse
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=%wskbd_chr%
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chmod 600 $wskbd
+	;;
+
+fd)
+	if $nofdesc; then
+		rm -f fd/*
+		mkdir fd 2>/dev/null
+		n=0
+		while [ $n -lt 64 ]; do
+			mknod fd/$n c 22 $n
+			n=$(($n + 1))
+		done
+		chmod 755 fd
+		chmod 666 fd/*
+	fi
+	;;
+
+wt*)
+	case $i in
+	wt*) name=wt;  unit=${i#wt};	chr=%wt_chr%;	blk=%wt_blk%;;
+	esac
+	for sub in $unit $(($unit+8)) $(($unit+16))
+	do
+	    rm -f $name$sub n$name$sub r$name$sub nr$name$sub
+	    mknod $name$sub	b $blk $(($sub + 0))
+	    mknod n$name$sub	b $blk $(($sub + 4))
+	    mknod r$name$sub	c $chr $(($sub + 0))
+	    mknod nr$name$sub	c $chr $(($sub + 4))
+	    chgrp operator $name$sub n$name$sub r$name$sub nr$name$sub
+	    chmod 660 $name$sub n$name$sub r$name$sub nr$name$sub
+	done
+	;;
+
+md*)
+	unit=${i#md}; blk=%md_blk%; chr=%md_chr%
+	rm -f md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}d  b $blk $(($unit * 8 + 3))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}d c $chr $(($unit * 8 + 3))
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
+	;;
+
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=%ss_chr%;;
+	esac
+	rm -f $name$unit n$name$unit en$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
+	;;
+
+ccd*|cgd*|raid*|sd*|vnd*)
+	case $i in
+	ccd*) name=ccd;	unit=${i#ccd};	blk=%ccd_blk%;	chr=%ccd_chr%;;
+	cgd*) name=cgd;	unit=${i#cgd};	blk=%cgd_blk%;	chr=%cgd_chr%;;
+	raid*) name=raid; unit=${i#raid}; blk=%raid_blk%; chr=%raid_chr%;;
+	sd*) name=sd;	unit=${i#sd};	blk=%sd_blk%;	chr=%sd_chr%;;
+	vnd*) name=vnd;	unit=${i#vnd};	blk=%vnd_blk%;	chr=%vnd_chr%;;
+	esac
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+wd*)
+	name=wd; unit=${i#wd}; blk=%wd_blk%; chr=%wd_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+fd*)
+	name=fd; unit=${i#fd}; blk=%fd_blk%; chr=%fd_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+ld*)
+	name=ld; unit=${i#ld}; blk=%ld_blk%; chr=%ld_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+ed*)
+	name=ed; unit=${i#ed}; blk=%ed_blk%; chr=%ed_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+ofdisk*)
+	name=ofdisk; unit=${i#ofdisk}; blk=%ofdisk_blk%; chr=%ofdisk_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+ttyCZ*)
+	unit=${i#ttyCZ}
+	major=%cz_chr%
+	minor=$(($unit * 64))
+	eminor=$(($minor + 64))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=000$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 1000 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCZ$nminor dtyCZ$nminor
+		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
+		chown uucp ttyCZ$nminor dtyCZ$nminor
+		chmod 600 ttyCZ$nminor dtyCZ$nminor
+		minor=$(($minor + 1))
+	done
+	;;
+
+ttyCY*)
+	unit=${i#ttyCY}
+	major=%cy_chr%
+	minor=$(($unit * 32))
+	eminor=$(($minor + 32))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCY$nminor dtyCY$nminor
+		mknod ttyCY$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCY$nminor c $major $(($minor + $dialout ))
+		chown uucp ttyCY$nminor dtyCY$nminor
+		chmod 600 ttyCY$nminor dtyCY$nminor
+		minor=$(($minor + 1))
+	done
+	;;
+
+tty0*|tty1*)
+	ounit=${i#tty}
+	ounit=$(($ounit + 0))
+	if [ $ounit -lt 10 ]; then
+		unit=0$ounit
+	else
+		unit=$ounit
+	fi
+	rm -f tty$unit dty$unit
+	mknod tty$unit c %com_chr% $(($ounit + $dialin ))
+	mknod dty$unit c %com_chr% $(($ounit + $dialout))
+	chown uucp tty$unit dty$unit
+	;;
+
+ttyC*)
+	# some archs call it ttyC traditionally
+	unit=${i#ttyC}
+	rm -f ttyC$unit dtyC$unit
+	mknod ttyC$unit c %com_chr% $(($unit + $dialin))
+	mknod dtyC$unit c %com_chr% $(($unit + $dialout))
+	chown uucp ttyC$unit dtyC$unit
+	;;
+
+ttyh*)
+	unit=${i#ttyh}
+	rm -f ttyh$unit dtyh$unit
+	mknod ttyh$unit c %sabtty_chr% $(($unit + $dialin ))
+	mknod dtyh$unit c %sabtty_chr% $(($unit + $dialout))
+	chown uucp ttyh$unit dtyh$unit
+	;;
+
+ttyZ*)
+	name=ttyZ; dname=dtyZ; unit=${i#ttyZ}; chr=%zstty_chr%
+	rm -f $name$unit $dname$unit
+	mknod  $name$unit c $chr $(($unit + $dialin ))
+	mknod $dname$unit c $chr $(($unit + $dialout))
+	chown uucp $name$unit $dname$unit
+	;;
+
+opty)
+	rm -f ttyp[0-9a-f] ptyp[0-9a-f]
+	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		case $j in
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
+		esac
+		mknod ttyp$j c %pts_chr% $jn
+		mknod ptyp$j c %ptc_chr% $jn
+	done
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
+	;;
+
+pty*)
+	class=${i#pty}
+	set -- p q r s t u v w x y z P Q R S T
+	if [ "$class" -ge $# ]; then
+		echo "$MAKEDEV: $i: pty unit must be between 0 and 15"
+		continue
+	fi
+	shift $class
+	name=$1
+	if [ "$name" = v ]; then
+		echo "$MAKEDEV: $i: pty unit conflicts with console ttyv0 device."
+		continue
+	fi
+	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	jn=0
+	unit=$(($class * 16))
+	names=
+	set -- - 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+	while
+		shift
+		j=$1
+		[ -n "$j" ]
+	do
+		if [ $j = g ]; then
+			unit=$(($unit + $class * 30 + 256 - 16))
+		fi
+		mknod tty$name$j c %pts_chr% $unit
+		mknod pty$name$j c %ptc_chr% $unit
+		names="$names tty$name$j pty$name$j"
+		unit=$(($unit + 1))
+	done
+	chmod 666 $names
+	unset names
+	;;
+
+st*)
+	case $i in
+	st*) name=st;	unit=${i#st};	chr=%st_chr%;	blk=%st_blk%;;
+	esac
+	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
+	mknod $name$unit	b $blk $(($unit * 16 + 0))
+	mknod n$name$unit	b $blk $(($unit * 16 + 1))
+	mknod e$name$unit	b $blk $(($unit * 16 + 2))
+	mknod en$name$unit	b $blk $(($unit * 16 + 3))
+	mknod r$name$unit	c $chr $(($unit * 16 + 0))
+	mknod nr$name$unit	c $chr $(($unit * 16 + 1))
+	mknod er$name$unit	c $chr $(($unit * 16 + 2))
+	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
+	;;
+
+ses*|ch*|uk*)
+	case $i in
+	ch*) name=ch;	unit=${i#ch};	chr=%ch_chr%;;
+	uk*) name=uk;	unit=${i#uk};	chr=%uk_chr%;;
+	ses*) name=ses;	unit=${i#ses};	chr=%ses_chr%;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
+	;;
+
+cd*|mcd*)
+	case $i in
+	cd*) name=cd;	unit=${i#cd};	chr=%cd_chr%;	blk=%cd_chr%;;
+	mcd*) name=mcd;	unit=${i#mcd};	chr=%mcd_chr%;	blk=%mcd_chr%;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	;;
+
+gdrom*)
+	case $i in
+	gdrom*) name=gdrom; unit=${i#gdrom}; chr=%gdrom_chr%; blk=%gdrom_blk%;;
+	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
+	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
+	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	;;
+
+lpt*|lpa*)
+	case $i in
+	lpt*) name=lpt;	unit=${i#lpt};	chr=%lpt_chr%;	flags=0;;
+	lpa*) name=lpa;	unit=${i#lpa};	chr=%lpt_chr%;	flags=128;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $(($unit + $flags))
+	;;
+
+bpf*|tun*)
+	case $i in
+	bpf*) name=bpf;	unit=${i#bpf};	chr=%bpf_chr%;;
+	tun*) name=tun;	unit=${i#tun};	chr=%tun_chr%;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	;;
+
+joy*)
+	case $i in
+	joy*) name=joy;	unit=${i#joy};	chr=%joy_chr%;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	;;
+
+ipl)
+	rm -f ipl ipnat ipstate ipauth
+	mknod ipl c %ipl_chr% 0
+	mknod ipnat c %ipl_chr% 1
+	mknod ipstate c %ipl_chr% 2
+	mknod ipauth c %ipl_chr% 3
+	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c %pf_chr% 0
+	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c %crypto_chr% 0
+	chmod 666 crypto
+	;;
+
+speaker)
+	rm -f speaker
+	mknod speaker c %spkr_chr% 0
+	;;
+
+lkm)
+	rm -f lkm
+	mknod lkm c %lkm_chr% 0
+	chgrp kmem lkm
+	chmod 640 lkm
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=%audio_chr%
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=%midi_chr%
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=%sequencer_chr%
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chmod 666 $music $sequencer
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=%radio_chr%
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chmod 666 $radio
+	;;
+
+apm*)
+	rm -f apm apmctl
+	mknod apm c %apm_chr% 0
+	mknod apmctl c %apm_chr% 8
+	chmod 644 apm apmctl
+	;;
+
+satlink*)
+	unit=${i#satlink}
+	rm -f satlink$unit
+	mknod satlink$unit c %satlink_chr% $unit
+	chmod 444 satlink$unit
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c %rnd_chr% 0
+	mknod urandom c %rnd_chr% 1
+	chmod 444 random
+	chmod 644 urandom
+	;;
+
+cfs*)
+	unit=${i#cfs}
+	cfs=cfs$unit
+	major=%vcoda_chr%
+	rm -f $cfs
+	mknod $cfs c $major $unit
+	chmod 600 $cfs
+	;;
+
+sysmon)
+	major=%sysmon_chr%
+	rm -f sysmon
+	mknod sysmon c $major 0
+	chmod 644 sysmon
+
+	rm -f watchdog
+	mknod watchdog c $major 1
+	chmod 644 watchdog
+
+	rm -f power
+	mknod power c $major 2
+	chmod 640 power
+	;;
+
+scsibus*)
+	unit=${i#scsibus}
+	rm -f scsibus$unit
+	mknod scsibus$unit c %scsibus_chr% $unit
+	chmod 644 scsibus$unit
+	;;
+
+bktr)
+	makedev bktr0 bktr1
+	ln -fs bktr0 bktr
+	ln -fs tuner0 tuner
+	ln -fs vbi0 vbi
+	;;
+
+bktr*)
+	major=%bktr_chr%
+	unit=${i#bktr}
+	rm -f bktr$unit tuner$unit vbi$unit
+	mknod bktr$unit c $major $(($unit + 0))
+	mknod tuner$unit c $major $(($unit + 16))
+	mknod vbi$unit c $major $(($unit + 32))
+	chmod 444 bktr$unit tuner$unit vbi$unit
+	;;
+
+iop*)
+	unit=${i#iop}
+	rm -f iop$unit
+	mknod iop$unit c %iop_chr% $unit
+	chmod 600 iop$unit
+	;;
+
+mlx*)
+	unit=${i#mlx}
+	rm -f mlx$unit
+	mknod mlx$unit c %mlx_chr% $unit
+	chmod 600 mlx$unit
+	;;
+
+mly*)
+	unit=${i#mly}
+	rm -f mly$unit
+	mknod mly$unit c %mly_chr% $unit
+	chmod 600 mly$unit
+	;;
+
+twe*)
+	unit=${i#twe}
+	rm -f twe$unit
+	mknod twe$unit c %twe_chr% $unit
+	chmod 600 twe$unit
+	;;
+
+icp*)
+	unit=${i#icp}
+	rm -f icp$unit
+	mknod icp$unit c %icp_chr% $unit
+	chmod 600 icp$unit
+	;;
+
+agp*)
+	unit=${i#agp}
+	rm -f agp$unit
+	mknod agp$unit c %agp_chr% $unit
+	if [ "$unit" = "0" ]; then ln -fs agp$unit agpgart; fi
+	chmod 644 agp$unit
+	;;
+
+pci*)
+	unit=${i#pci}
+	rm -f pci$unit
+	mknod pci$unit c %pci_chr% $unit
+	chmod 644 pci$unit
+	;;
+
+dpti*)
+	unit=${i#dpti}
+	rm -f dpti$unit
+	mknod dpti$unit c %dpti_chr% $unit
+	chmod 600 dpti$unit
+	;;
+
+dpt*)
+	unit=${i#dpt}
+	rm -f dpt$unit
+	mknod dpt$unit c %dpt_chr% $unit
+	chmod 600 dpt$unit
+	;;
+
+altq)
+	mkdir altq 2>/dev/null
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c %altq_chr% $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
+	;;
+
+isdn)
+	rm -f isdn
+	mknod isdn c %isdn_chr% 0
+	chmod 600 isdn
+	;;
+
+isdnctl)
+	rm -f isdnctl
+	mknod isdnctl c %isdnctl_chr% 0
+	chmod 600 isdnctl
+	;;
+
+isdnbchan*)
+	unit=${i#isdnbchan}
+	rm -f isdnbchan$unit
+	mknod isdnbchan$unit c %isdnbchan_chr% $unit
+	chmod 600 isdnbchan$unit
+	;;
+
+isdnteld*)
+	unit=${i#isdnteld}
+	rm -f isdnteld$unit
+	mknod isdnteld$unit c %isdntel_chr% $(($unit + 64))
+	chmod 600 isdnteld$unit
+	;;
+
+isdntel*)
+	unit=${i#isdntel}
+	rm -f isdntel$unit
+	mknod isdntel$unit c %isdntel_chr% $unit
+	chmod 600 isdntel$unit
+	;;
+
+isdntrc*)
+	unit=${i#isdntrc}
+	rm -f isdntrc$unit
+	mknod isdntrc$unit c %isdntrc_chr% $unit
+	chmod 600 isdntrc$unit
+	;;
+
+vmegen)
+	makedev vmegen0 vmegen1 vmegen2 vmegen3
+	;;
+
+vmegen*)
+	unit=${i#vmegen}
+	rm -f vmegen$unit
+	mknod vmegen$unit c %vmegeneric_chr% $(($unit * 16 + 0))
+	chmod 600 vmegen$unit
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c %wsfont_chr% 0
+	chmod 600 wsfont
+	;;
+
+cir*)
+	unit=${i#cir}
+	cir=cir$unit
+	major=%cir_chr%
+	rm -f $cir
+	mknod $cir c $major $unit
+	chmod 666 $cir
+	;;
+
+irframe*)
+	unit=${i#irframe}
+	irframe=irframe$unit
+	major=%irframe_chr%
+	rm -f $irframe
+	mknod $irframe c $major $unit
+	chmod 600 $irframe
+	;;
+
+fcom*)
+	unit=${i#fcom}
+	fcom=fcom$unit
+	rm -f $fcom
+	mknod $fcom c %fcom_chr% $unit
+	chown uucp $fcom
+	chmod 600 $fcom
+	;;
+
+beep)
+	rm -f beep
+	mknod beep c %beep_chr% 0
+	;;
+
+openfirm)
+	rm -f openfirm
+	mknod openfirm c %openfirm_chr% 0
+	chmod 444 openfirm
+	;;
+
+nvram)
+	rm -f nvram
+	mknod nvram c %nvram_chr% 0
+	chmod 644 nvram
+	;;
+
+rtc)
+	mknod rtc c %rtc_chr% 3
+	chmod 644 rtc
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c %clockctl_chr% 0
+	chgrp ntpd clockctl
+	chmod 660 clockctl
+	;;
+
+nsmb)
+	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	;;
+
+nsmb*)
+	unit=${i#nsmb}
+	nsmb=nsmb$unit
+	major=%nsmb_chr%
+	rm -f $nsmb
+	mknod $nsmb c $major $unit
+	chmod 644 $nsmb
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c %systrace_chr% 0
+	chmod 644 systrace
+	;;
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c %kttcp_chr% 0
+	chmod 600 kttcp
+	;;
+
+dmoverio)
+	rm -f dmoverio
+	mknod dmoverio c %dmoverio_chr% 0
+	chmod 644 dmoverio
+	;;
+
+veriexec)
+	rm -f veriexec
+	mknod veriexec c %veriexec_chr% 0
+	chmod 644 veriexec
+	;;
+
+ttyv*)
+	chr=%pc_chr%; unit=${i#ttyv}
+	rm -f ttyv$unit
+	mknod ttyv$unit c $chr $unit
+	;;
+
+arcpp*)
+	chr=%arcpp_chr%; unit=${i#arcpp}
+	mkdev arcpp c $chr $unit
+	;;
+
+par*)
+	unit=${i#par};	chr=%par_chr%
+	rm -f par$unit
+	case $unit in
+	0)
+		mknod par$unit	c $chr $unit
+		;;
+	*)
+		echo bad unit for par in: $i
+		;;
+	esac
+	;;
+
+ite*|ttye*)
+	unit=${i#ttye};	chr=%ite_chr%
+	rm -f ttye$unit
+	rm -f ite*
+	mknod ttye$unit	c $chr $unit
+	;;
+
+pms*)
+	major=%pms_chr%
+	unit=${i#qms}
+	rm -f $name$unit
+	mknod $name$unit c $major $unit
+	;;
+
+qms*)
+	major=%qms_chr%
+	unit=${i#qms}
+	rm -f $name$unit
+	mknod $name$unit c $major $unit
+	;;
+
+lms*)
+	major=%lms_chr%
+	unit=${i#lms}
+	rm -f $name$unit
+	mknod $name$unit c $major $unit
+	;;
+
+mms*)
+	major=%mms_chr%
+	unit=${i#mms}
+	rm -f $name$unit
+	mknod $name$unit c $major $unit
+	;;
+
+mouse-*)
+	case $i in
+	mouse-pms*) name=pms;	unit=${i#mouse-pms};;
+	mouse-qms*) name=qms;	unit=${i#mouse-qms};;
+	esac
+	ln -fs $name$unit mouse
+	;;
+
+kbd)
+	rm -f kbd
+	mknod kbd c %kbd_chr% 0
+	;;
+
+view*)
+	unit=${i#view};	chr=%view_chr%
+	rm -f view$unit
+	mknod view$unit	c $chr $unit
+	chmod 666 view$unit
+	;;
+
+mouse*)
+	unit=${i#mouse};	chr=%ms_chr%
+	rm -f mouse$unit
+	case $unit in
+	0|1)
+		mknod mouse$unit c	$chr $unit
+		chmod 666 mouse$unit
+		if [ $unit = 0 ]
+		then
+			ln -fs mouse$unit mouse
+		fi
+		;;
+	*)
+		echo bad unit for mouse in: $i
+		;;
+	esac
+	;;
+
+panel)
+	rm -f panel0
+	mknod panel0 c %panel_chr% 0
+	chmod 660 panel0
+	;;
+
+ipty)
+	rm -f ttyp0 ttyp1 ptyp0 ptyp1
+	mknod ttyp0 c %pts_chr% 0
+	mknod ttyp1 c %pts_chr% 1
+	mknod ptyp0 c %ptc_chr% 0
+	mknod ptyp1 c %ptc_chr% 1
+	chmod 666 ttyp0 ttyp1 ptyp0 ptyp1
+	;;
+
+grf*)
+	major=%grf_chr%
+	unit=${i#grf}
+	rm -f grf${unit}
+	mknod grf${unit} c 11 ${unit}
+	chmod 666 grf${unit}
+	;;
+
+etvme)
+	rm -f etvme
+	mknod etvme c %etvme_chr% 0
+	chmod 600 etvme
+	;;
+
+leo*)
+	unit=${i#leo}
+	rm -f leo$unit
+	mknod leo$unit c %leo_chr% $unit
+	chmod 600 leo$unit
+	;;
+
+scif*)
+	chr=%scif_chr%; unit=${i#scif}
+	name=scif
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown uucp $name$unit
+	;;
+
+sci*)
+	chr=%scif_chr%; unit=${i#scif}
+	name=sci
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown uucp $name$unit
+	;;
+
+maple*)
+	chr=%maple_chr%
+	case $i in
+	mapleA*) name="mapleA"; unit=0;;
+	mapleB*) name="mapleB"; unit=1;;
+	mapleC*) name="mapleC"; unit=2;;
+	mapleD*) name="mapleD"; unit=3;;
+	esac
+	subunit=${i#$name}
+	rm -f $name$subunit
+	mknod $name$subunit c $chr $(($unit * 8 + 0$subunit))
+	chmod 600 $name$subunit
+	;;
+
+mmem*)
+	name=mmem;	unit=${i#mmem};	chr=%mmem_chr%;	blk=%mmem_blk%
+	rm -f $name$unit.* r$name$unit.*
+	for pt in 0	# 1 2 3 4 ... 255
+	do
+	#mknod ${name}${unit}.${pt}a	b $blk $(($unit * 4096 + $pt * 16 + 0))
+	mknod ${name}${unit}.${pt}c	b $blk $(($unit * 4096 + $pt * 16 + 2))
+	#mknod r${name}${unit}.${pt}a	c $chr $(($unit * 4096 + $pt * 16 + 0))
+	mknod r${name}${unit}.${pt}c	c $chr $(($unit * 4096 + $pt * 16 + 2))
+	done
+	chgrp operator $name$unit.* r$name$unit.*
+	chmod 640 $name$unit.* r$name$unit.*
+	;;
+
+mlcd*)
+	name=mlcd;	unit=${i#mlcd};	chr=%mlcd_chr%
+	rm -f $name$unit.*
+	for pt in 0	# 1 2 3 4 ... 255
+	do
+	mknod ${name}${unit}.${pt}	c $chr $(($unit * 256 + $pt))
+	done
+	chgrp operator $name$unit.*
+	chmod 640 $name$unit.*
+	;;
+
+ixpcom*)
+	unit=${i#ixpcom}
+	rm -f ixpcom$unit
+	mknod ixpcom$unit c %ixpcom_chr% $unit
+	chown uucp ixpcom$unit
+	;;
+
+ucbsnd)
+	rm -f ucbsnd
+	mknod ucbsnd c %ucbsnd_chr% 0
+	chmod 666 ucbsnd
+	;;
+
+ttyTX*)
+	unit=${i#ttyTX}
+	name=ttyTX0
+	dname=dtyTX0
+
+	rm -f $name$unit $dname$unit
+	mknod $name$unit c %txcom_chr% $(($unit + $dialin ))
+	mknod $dname$unit c %txcom_chr% $(($unit + $dialout))
+	chown uucp $name$unit $dname$unit
+	;;
+
+adb)
+	rm -f adb
+	mknod adb c %aed_chr% 0
+	chmod 666 adb
+	;;
+
+asc*)
+	unit=${i#asc}
+	rm -f asc$unit
+	mknod asc$unit c %asc_chr% $unit
+	chmod 666 asc$unit
+	;;
+
+bwtwo*)
+	unit=${i#bwtwo}
+	rm -f bwtwo$unit
+	mknod bwtwo$unit c %bwtwo_chr% $unit
+	chmod 666 bwtwo$unit
+	;;
+
+cgtwo*)
+	unit=${i#cgtwo}
+	rm -f cgtwo$unit
+	mknod cgtwo$unit c %cgtwo_chr% $unit
+	chmod 666 cgtwo$unit
+	;;
+
+cgthree*)
+	unit=${i#cgthree}
+	rm -f cgthree$unit
+	mknod cgthree$unit c %cgthree_chr% $unit
+	chmod 666 cgthree$unit
+	;;
+
+cgfour*)
+	unit=${i#cgfour}
+	rm -f cgfour$unit
+	mknod cgfour$unit c %cgfour_chr% $unit
+	chmod 666 cgfour$unit
+	;;
+
+cgsix*)
+	unit=${i#cgsix}
+	rm -f cgsix$unit
+	mknod cgsix$unit c %cgfix_chr% $unit
+	chmod 666 cgsix$unit
+	;;
+
+cgeight*)
+	unit=${i#cgeight}
+	rm -f cgeight$unit
+	mknod cgeight$unit c %cgeight_chr% $unit
+	chmod 666 cgeight$unit
+	;;
+
+tcx*)
+	unit=${i#tcx}
+	rm -f tcx$unit
+	mknod tcx$unit c %tcx_chr% $unit
+	chmod 666 tcx$unit
+	;;
+
+xd*|xy*)
+	case $i in
+	xd*)	name=xd; unit=${i#xd}; blk=%xd_blk%;	chr=%xd_chr%;;
+	xy*)	name=xy; unit=${i#xy}; blk=%xy_blk%;	chr=%xy_chr%;;
+	esac
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+magma*)
+	unit=${i#magma}
+	if [ 0$unit -gt 3 ]
+	then
+		echo "bad unit for $i: $unit"
+		break
+	fi
+
+	rm -f tty$unit[0-9a-f] bpp$unit[01]
+	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		case $j in
+		[0-9])	jn=$j ;;
+		a)	jn=10 ;;
+		b)	jn=11 ;;
+		c)	jn=12 ;;
+		d)	jn=13 ;;
+		e)	jn=14 ;;
+		f)	jn=15 ;;
+		esac
+		mknod tty$unit$j c %mtty_chr% $(($unit * 64 + $jn))
+	done
+
+	mknod bpp${unit}0 c %mbpp_chr% $(($unit * 64 + 0))
+	mknod bpp${unit}1 c %mbpp_chr% $(($unit * 64 + 1))
+	;;
+
+clcd*)
+	unit=${i#clcd}
+	if [ 0$unit -gt 7 ]
+	then
+		echo "bad unit for $i: $unit"
+		break
+	fi
+
+	rm -f ttyA$unit[0-7] dtyA$unit[0-7]
+	for j in 0 1 2 3 4 5 6 7
+	do
+		mknod ttyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialin))
+		mknod dtyA$unit$j c %clcd_chr% $(($unit * 8 + $j + $dialout))
+	done
+	chown uucp ttyA$unit[0-9a-f] dtyA$unit[0-9a-f]
+
+	;;
+
+bpp*)
+	unit=${i#bpp}
+	rm -f bpp$unit
+	mknod bpp$unit c %bpp_chr% $(($unit + 0))
+	chmod 600 bpp$unit
+	;;
+
+tctrl*)
+	unit=${i#tctrl}
+	rm -f tctrl$unit
+	mknod tctrl$unit c %tctrl_chr% $unit
+	chmod 666 tctrl$unit
+	;;
+
+bmd*)
+	unit=${i#bmd}; blk=%bmd_blk%; chr=%bmd_chr%
+	rm -f bmd${unit}? rbmd${unit}?
+	mknod bmd${unit}a  b $blk $(($unit * 8 + 0))
+	mknod bmd${unit}c  b $blk $(($unit * 8 + 2))
+	mknod rbmd${unit}a c $chr $(($unit * 8 + 0))
+	mknod rbmd${unit}c c $chr $(($unit * 8 + 2))
+	chgrp operator bmd${unit}? rbmd${unit}?
+	chmod 640 bmd${unit}? rbmd${unit}?
+	;;
+
+sram)
+	rm -f sram
+	mknod sram c %sram_chr% 0
+	chmod 644 sram
+	;;
+
+pow*)
+	unit=${i#pow}
+	rm -f pow${unit}
+	case $unit in
+	0|1)
+		mknod pow${unit} c %pow_chr% ${unit}
+		chmod 644 pow${unit}
+		if [ $unit = 0 ]
+		then
+			ln -fs pow${unit} pow
+		fi
+		;;
+	*)
+		echo bad unit for pow in: $i
+		;;
+	esac
+	;;
+
+ttyS*)
+	unit=${i#ttyS}
+	rm -f ttyS$unit dtyS$unit
+	mknod ttyS$unit c %sacom_chr% $(($unit + $dialin ))
+	mknod dtyS$unit c %sacom_chr% $(($unit + $dialout))
+	chown uucp ttyS$unit dtyS$unit
+	;;
+
+midevend)
+%MI_DEVICES_END%
+local)
+	if [ -f "$0.local" ]; then
+		umask 0
+		sh $0.local all
+		umask 077
+	fi
+	;;
+
+*)
+	echo $i: unknown device
+	;;
+
+esac
+done
+
+}
+
+# three variants of disk partitions - max 8, max 16, max 16 with highpartoffset
+# hack
+# routine is called as:
+# makedisk name unit blk chr
+makedisk_p8() {
+	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+}
+
+makedisk_p16() {
+	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 16 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 16 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 16 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 16 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 16 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 16 + 7))
+	mknod ${name}${unit}i	b $blk $(($unit * 16 + 8))
+	mknod ${name}${unit}j	b $blk $(($unit * 16 + 9))
+	mknod ${name}${unit}k	b $blk $(($unit * 16 + 10))
+	mknod ${name}${unit}l	b $blk $(($unit * 16 + 11))
+	mknod ${name}${unit}m	b $blk $(($unit * 16 + 12))
+	mknod ${name}${unit}n	b $blk $(($unit * 16 + 13))
+	mknod ${name}${unit}o	b $blk $(($unit * 16 + 14))
+	mknod ${name}${unit}p	b $blk $(($unit * 16 + 15))
+	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 16 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 16 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 16 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 16 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 16 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 16 + 7))
+	mknod r${name}${unit}i	c $chr $(($unit * 16 + 8))
+	mknod r${name}${unit}j	c $chr $(($unit * 16 + 9))
+	mknod r${name}${unit}k	c $chr $(($unit * 16 + 10))
+	mknod r${name}${unit}l	c $chr $(($unit * 16 + 11))
+	mknod r${name}${unit}m	c $chr $(($unit * 16 + 12))
+	mknod r${name}${unit}n	c $chr $(($unit * 16 + 13))
+	mknod r${name}${unit}o	c $chr $(($unit * 16 + 14))
+	mknod r${name}${unit}p	c $chr $(($unit * 16 + 15))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+}
+
+makedisk_p16high() {
+	highpartoffset=524280	# offset for partition 9 to 16
+	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+	mknod ${name}${unit}i	b $blk $(($unit * 8 + $highpartoffset + 8))
+	mknod ${name}${unit}j	b $blk $(($unit * 8 + $highpartoffset + 9))
+	mknod ${name}${unit}k	b $blk $(($unit * 8 + $highpartoffset + 10))
+	mknod ${name}${unit}l	b $blk $(($unit * 8 + $highpartoffset + 11))
+	mknod ${name}${unit}m	b $blk $(($unit * 8 + $highpartoffset + 12))
+	mknod ${name}${unit}n	b $blk $(($unit * 8 + $highpartoffset + 13))
+	mknod ${name}${unit}o	b $blk $(($unit * 8 + $highpartoffset + 14))
+	mknod ${name}${unit}p	b $blk $(($unit * 8 + $highpartoffset + 15))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
+	mknod r${name}${unit}i	c $chr $(($unit * 8 + $highpartoffset + 8))
+	mknod r${name}${unit}j	c $chr $(($unit * 8 + $highpartoffset + 9))
+	mknod r${name}${unit}k	c $chr $(($unit * 8 + $highpartoffset + 10))
+	mknod r${name}${unit}l	c $chr $(($unit * 8 + $highpartoffset + 11))
+	mknod r${name}${unit}m	c $chr $(($unit * 8 + $highpartoffset + 12))
+	mknod r${name}${unit}n	c $chr $(($unit * 8 + $highpartoffset + 13))
+	mknod r${name}${unit}o	c $chr $(($unit * 8 + $highpartoffset + 14))
+	mknod r${name}${unit}p	c $chr $(($unit * 8 + $highpartoffset + 15))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+}
+
+makedev $*
