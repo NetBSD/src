@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.28 2003/08/24 18:07:03 chs Exp $ */
+/*	$NetBSD: gem.c,v 1.29 2003/10/26 18:20:43 christos Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.28 2003/08/24 18:07:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.29 2003/10/26 18:20:43 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -721,41 +721,29 @@ gem_meminit(struct gem_softc *sc)
 static int
 gem_ringsize(int sz)
 {
-	int v;
-
 	switch (sz) {
 	case 32:
-		v = GEM_RING_SZ_32;
-		break;
+		return GEM_RING_SZ_32;
 	case 64:
-		v = GEM_RING_SZ_64;
-		break;
+		return GEM_RING_SZ_64;
 	case 128:
-		v = GEM_RING_SZ_128;
-		break;
+		return GEM_RING_SZ_128;
 	case 256:
-		v = GEM_RING_SZ_256;
-		break;
+		return GEM_RING_SZ_256;
 	case 512:
-		v = GEM_RING_SZ_512;
-		break;
+		return GEM_RING_SZ_512;
 	case 1024:
-		v = GEM_RING_SZ_1024;
-		break;
+		return GEM_RING_SZ_1024;
 	case 2048:
-		v = GEM_RING_SZ_2048;
-		break;
+		return GEM_RING_SZ_2048;
 	case 4096:
-		v = GEM_RING_SZ_4096;
-		break;
+		return GEM_RING_SZ_4096;
 	case 8192:
-		v = GEM_RING_SZ_8192;
-		break;
+		return GEM_RING_SZ_8192;
 	default:
-		printf("gem: invalid Receive Descriptor ring size\n");
-		break;
+		printf("gem: invalid Receive Descriptor ring size %d\n", sz);
+		return GEM_RING_SZ_32;
 	}
-	return (v);
 }
 
 /*
