@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1995/05/19 06:57:41 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.17 1995/06/28 02:56:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)	/* nothing */
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
