@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.49 1994/06/29 06:33:20 cgd Exp $	*/
+/*	$NetBSD: tty.c,v 1.50 1994/08/02 08:45:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -167,6 +167,9 @@ ttyopen(device, tp)
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
 		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+		tp->t_flags = 0;
+#endif
 	}
 	CLR(tp->t_state, TS_WOPEN);
 	splx(s);
