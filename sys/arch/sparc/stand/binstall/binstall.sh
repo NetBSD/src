@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.3 1999/03/01 01:05:51 kim Exp $
+#	$NetBSD: binstall.sh,v 1.4 2000/02/15 16:15:07 pk Exp $
 #
 
 vecho () {
@@ -24,6 +24,7 @@ Help () {
 	echo "the appropriate filesystem partition."
 	echo "Options:"
 	echo "	-h		- display this message"
+	echo "	-b<bootprog>	- second-stage boot program to install"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-v		- verbose mode"
 	echo "	-t		- test mode (implies -v)"
@@ -38,12 +39,13 @@ Secure () {
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
+BOOTPROG=${BOOTPROG:-boot}
 
 if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
 	Secure
 fi
 
-set -- `getopt "hm:tv" "$@"`
+set -- `getopt "b:hm:tv" "$@"`
 if [ $? -gt 0 ]; then
 	Usage
 fi
@@ -52,6 +54,7 @@ for a in $*
 do
 	case $1 in
 	-h) Help; shift ;;
+	-b) BOOTPROG=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
@@ -100,7 +103,7 @@ case $WHAT in
 	TARGET=$DEST/boot
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
-	$DOIT dd if=${MDEC}/boot of=$TARGET bs=32 skip=$SKIP
+	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
 	vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
