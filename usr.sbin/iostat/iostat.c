@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.29 2002/11/01 12:47:55 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.30 2002/11/01 14:02:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.29 2002/11/01 12:47:55 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.30 2002/11/01 14:02:21 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,6 +368,12 @@ disk_statsx(double etime)
 					/* average write megabytes (per second) */
 		(void)printf(" %8.2f",
 		    cur.dk_wbytes[dn] / (1024.0 * 1024) / etime);
+		/*
+		 * Our caller prints a newline; we need one for every line
+		 * except the last.
+		 */
+		if (dn < dk_ndrive -1)
+			(void)printf("\n");
 	}
 }
 
