@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.65.2.4 2004/09/21 13:25:10 skrll Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.65.2.5 2004/11/02 07:51:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.4 2004/09/21 13:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65.2.5 2004/11/02 07:51:06 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -324,6 +324,7 @@ hpux_sys_read(l, v, retval)
 
 	error = sys_read(l, (struct sys_read_args *) uap, retval);
 	if (error == EWOULDBLOCK) {
+		/* sys_read validates fd before this indexing */
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
 		if (*fp & HPUX_UF_NONBLOCK_ON) {
@@ -349,6 +350,7 @@ hpux_sys_write(l, v, retval)
 
 	error = sys_write(l, (struct sys_write_args *) uap, retval);
 	if (error == EWOULDBLOCK) {
+		/* sys_write validates fd before this indexing */
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
 		if (*fp & HPUX_UF_NONBLOCK_ON) {
@@ -374,6 +376,7 @@ hpux_sys_readv(l, v, retval)
 
 	error = sys_readv(l, (struct sys_readv_args *) uap, retval);
 	if (error == EWOULDBLOCK) {
+		/* sys_readv validates fd before this indexing */
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
 		if (*fp & HPUX_UF_NONBLOCK_ON) {
@@ -397,8 +400,12 @@ hpux_sys_writev(l, v, retval)
 	struct hpux_sys_writev_args *uap = v;
 	int error;
 
+	if (SCARG(uap, fd) < 0)
+		return EBADF;
+
 	error = sys_writev(l, (struct sys_writev_args *) uap, retval);
 	if (error == EWOULDBLOCK) {
+		/* sys_writev validates fd before this indexing */
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
 		if (*fp & HPUX_UF_NONBLOCK_ON) {
@@ -829,6 +836,7 @@ hpux_sys_ioctl(l, v, retval)
 
 	case HPUXFIOSNBIO:
 	{
+		/* This array index is validated by fd_getfile */
 		char *ofp = &fdp->fd_ofileflags[SCARG(uap, fd)];
 		int tmp;
 

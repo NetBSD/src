@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62.2.4 2004/09/21 13:15:25 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62.2.5 2004/11/02 07:50:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.4 2004/09/21 13:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.5 2004/11/02 07:50:24 skrll Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -220,10 +220,6 @@ static int	dio_scode_probe(int,
 
 extern	caddr_t internalhpib;
 extern	char *extiobase;
-
-/* The boot device. */
-struct	device *booted_device;
-int	booted_partition;
 
 /* How we were booted. */
 u_int	bootdev;

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.9.2.5 2004/09/21 13:26:25 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.9.2.6 2004/11/02 07:51:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.9.2.5 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.9.2.6 2004/11/02 07:51:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.9.2.5 2004/09/21 13:26:25 skrll Exp $")
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>

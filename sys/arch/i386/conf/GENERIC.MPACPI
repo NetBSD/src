@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.3.2.6 2004/10/19 15:56:36 skrll Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.3.2.7 2004/11/02 07:50:35 skrll Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3.2.6 $"
+#ident 		"GENERIC-$Revision: 1.3.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -922,9 +922,9 @@ irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-uax*	at uhub? port ?		# ASIX AX88172 based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 

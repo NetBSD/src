@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.27.2.4 2004/10/19 15:56:53 skrll Exp $ */
+/*	$NetBSD: gem.c,v 1.27.2.5 2004/11/02 07:51:31 skrll Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.4 2004/10/19 15:56:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.5 2004/11/02 07:51:31 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1846,9 +1846,11 @@ gem_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
+			if (ifp->if_flags & IFF_RUNNING) {
 if (gem_ioctldebug) printf("reset1\n");
-			gem_init(ifp);
-			delay(50000);
+				gem_init(ifp);
+				delay(50000);
+			}
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.31.2.5 2004/10/19 15:56:57 skrll Exp $	*/
+/*	$NetBSD: auvia.c,v 1.31.2.6 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31.2.5 2004/10/19 15:56:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31.2.6 2004/11/02 07:52:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 
 #define TIMEOUT	50
 
-struct audio_hw_if auvia_hw_if = {
+const struct audio_hw_if auvia_hw_if = {
 	auvia_open,
 	auvia_close,
 	NULL, /* drain */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.4.28.3 2004/09/21 13:19:14 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4.28.4 2004/11/02 07:50:45 skrll Exp $	*/
 
 /*
  *
@@ -42,7 +42,5 @@ extern void	*bootaddr;	/* PA of boot device */
 extern int	bootctrllun;	/* ctrl_lun of boot device */
 extern int	bootdevlun;	/* dev_lun of boot device */
 extern int	bootpart;	/* boot partition (disk) */
-
-extern struct device *booted_device;	/* boot device */
 
 #endif /* _MVME68K_AUTOCONF_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.26.2.6 2004/10/19 15:56:44 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.26.2.7 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.6 2004/10/19 15:56:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.7 2004/11/02 07:51:19 skrll Exp $");
 
 #include "rnd.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26.2.6 2004/10/19 15:56:44 skrll Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -482,6 +483,19 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else if (sc->sc_flush)
+			error = (*sc->sc_flush)(sc);
+		else
+			error = 0;	/* XXX Error out instead? */
+		break;
 
 	case DIOCAWEDGE:
 	    {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.1.2.3 2004/10/19 15:58:30 skrll Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.1.2.4 2004/11/02 07:53:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,6 +41,10 @@
 #ifndef _CPU_DATA_H_
 #define	_CPU_DATA_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_multiprocessor.h"
+#endif
+
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
 
@@ -59,6 +63,9 @@ struct lwp;
 struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
+#if defined(MULTIPROCESSOR)
+	int cpu_biglock_count;
+#endif /* defined(MULTIPROCESSOR) */
 	/*
 	 * for LOCKDEBUG
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 2002/09/25 22:21:10 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.3.6.1 2004/11/02 07:50:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2002/09/25 22:21:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.6.1 2004/11/02 07:50:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,13 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2002/09/25 22:21:10 thorpej Exp $")
 #include <machine/cpu.h>
 
 #include <luna68k/luna68k/isr.h>
-
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-struct device *booted_device;	/* set by device drivers (if found) */
 
 static struct device *find_dev_byname __P((char *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.101.2.6 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.101.2.7 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.6 2004/09/24 10:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.7 2004/11/02 07:51:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -145,6 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.101.2.6 2004/09/24 10:53:27 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>

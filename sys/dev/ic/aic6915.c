@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.9.2.4 2004/09/21 13:27:50 skrll Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.4 2004/09/21 13:27:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -545,7 +545,8 @@ sf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			sf_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				sf_set_filter(sc);
 			error = 0;
 		}
 		break;

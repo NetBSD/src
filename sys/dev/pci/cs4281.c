@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16.2.4 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16.2.5 2004/11/02 07:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.4 2004/09/24 10:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.5 2004/11/02 07:52:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ int      cs4281_init(struct cs428x_softc *, int);
 /* Power Management */
 void cs4281_power(int, void *);
 
-struct audio_hw_if cs4281_hw_if = {
+const struct audio_hw_if cs4281_hw_if = {
 	cs428x_open,
 	cs428x_close,
 	NULL,
@@ -142,7 +142,7 @@ int	cs4281_midi_open(void *, int, void (*)(void *, int),
 			      void (*)(void *), void *);
 int	cs4281_midi_output(void *, int);
 
-struct midi_hw_if cs4281_midi_hw_if = {
+const struct midi_hw_if cs4281_midi_hw_if = {
 	cs4281_midi_open,
 	cs4281_midi_close,
 	cs4281_midi_output,

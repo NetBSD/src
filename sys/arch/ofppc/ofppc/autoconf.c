@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.6.3 2004/09/21 13:19:44 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.6.4 2004/11/02 07:50:46 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.6.3 2004/09/21 13:19:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.6.4 2004/11/02 07:50:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,8 +50,6 @@ static void canonicalize_bootpath(void);
 
 extern char bootpath[];
 char cbootpath[256];
-struct device *booted_device;	/* boot device */
-int booted_partition;		/* ...and partition on that device */
 
 /*
  * Determine device configuration for a machine.

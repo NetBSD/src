@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65.6.3 2004/09/21 13:18:19 skrll Exp $
+#	$NetBSD: INSTALL,v 1.65.6.4 2004/11/02 07:50:36 skrll Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -12,9 +12,6 @@ makeoptions	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
 maxusers	12
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-
-# Change base address to 0x800000 to use large memory disk.
-makeoptions	TEXTADDR=0x800000
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS

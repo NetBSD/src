@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.10.2.4 2004/09/21 13:32:19 skrll Exp $	*/
+/*	$NetBSD: esl.c,v 1.10.2.5 2004/11/02 07:52:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10.2.4 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.10.2.5 2004/11/02 07:52:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct audio_device esl_device = {
 	"esl"
 };
 
-struct audio_hw_if esl_hw_if = {
+const struct audio_hw_if esl_hw_if = {
 	esl_open,
 	esl_close,
 	NULL,

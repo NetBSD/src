@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.39.2.4 2004/09/21 13:28:07 skrll Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.39.2.5 2004/11/02 07:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.4 2004/09/21 13:28:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.5 2004/11/02 07:51:31 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.4 2004/09/21 13:28:07 skrll Exp $
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

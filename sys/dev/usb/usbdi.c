@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.103.6.3 2004/09/21 13:33:52 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.103.6.4 2004/11/02 07:53:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.103.6.3 2004/09/21 13:33:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.103.6.4 2004/11/02 07:53:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.103.6.3 2004/09/21 13:33:52 skrll Exp $"
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
+#include <dev/usb/usb_quirks.h>
 
 #if defined(__FreeBSD__)
 #include "usb_if.h"
@@ -1139,6 +1140,86 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		tbl = (const struct usb_devno *)((const char *)tbl + sz);
 	}
 	return (NULL);
+}
+
+
+void
+usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
+{
+	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
+
+        iter->cur = (uByte *)cd;
+        iter->end = (uByte *)cd + UGETW(cd->wTotalLength);
+}
+
+const usb_descriptor_t *
+usb_desc_iter_next(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
+		if (iter->cur != iter->end)
+			printf("usb_desc_iter_next: bad descriptor\n");
+		return NULL;
+	}
+	desc = (usb_descriptor_t *)iter->cur;
+	if (desc->bLength == 0) {
+		printf("usb_desc_iter_next: descriptor length = 0\n");
+		return NULL;
+	}
+	iter->cur += desc->bLength;
+	if (iter->cur > iter->end) {
+		printf("usb_desc_iter_next: descriptor length too large\n");
+		return NULL;
+	}
+	return desc;
+}
+
+usbd_status
+usbd_get_string(usbd_device_handle dev, int si, char *buf)
+{
+	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
+	usb_string_descriptor_t us;
+	char *s;
+	int i, n;
+	u_int16_t c;
+	usbd_status err;
+	int size;
+
+	buf[0] = '\0';
+	if (si == 0)
+		return (USBD_INVAL);
+	if (dev->quirks->uq_flags & UQ_NO_STRINGS)
+		return (USBD_STALLED);
+	if (dev->langid == USBD_NOLANG) {
+		/* Set up default language */
+		err = usbd_get_string_desc(dev, USB_LANGUAGE_TABLE, 0, &us,
+		    &size);
+		if (err || size < 4) {
+			DPRINTFN(-1,("usbd_get_string: getting lang failed, using 0\n"));
+			dev->langid = 0; /* Well, just pick something then */
+		} else {
+			/* Pick the first language as the default. */
+			dev->langid = UGETW(us.bString[0]);
+		}
+	}
+	err = usbd_get_string_desc(dev, si, dev->langid, &us, &size);
+	if (err)
+		return (err);
+	s = buf;
+	n = size / 2 - 1;
+	for (i = 0; i < n; i++) {
+		c = UGETW(us.bString[i]);
+		/* Convert from Unicode, handle buggy strings. */
+		if ((c & 0xff00) == 0)
+			*s++ = c;
+		else if ((c & 0x00ff) == 0 && swap)
+			*s++ = c >> 8;
+		else
+			*s++ = '?';
+	}
+	*s++ = 0;
+	return (USBD_NORMAL_COMPLETION);
 }
 
 #if defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58.6.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58.6.4 2004/11/02 07:50:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.4 2004/11/02 07:50:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58.6.3 2004/09/21 13:18:06 skrll Exp 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-struct device	*booted_device;
-int		booted_partition;
 
 static void findbootdev __P((void));
 static int target_to_unit __P((u_long, u_long, u_long));

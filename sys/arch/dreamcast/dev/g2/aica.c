@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.4.4.4 2004/09/21 13:14:39 skrll Exp $	*/
+/*	$NetBSD: aica.c,v 1.4.4.5 2004/11/02 07:50:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.4 2004/09/21 13:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.5 2004/11/02 07:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ int aica_query_devinfo(void *, mixer_devinfo_t *);
 void aica_encode(int, int, int, int, u_char *, u_short **);
 int aica_get_props(void *);
 
-struct audio_hw_if aica_hw_if = {
+const struct audio_hw_if aica_hw_if = {
 	aica_open,
 	aica_close,
 	NULL,				/* aica_drain */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.6 2004/10/19 15:56:59 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.7 2004/11/02 07:52:11 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.656 2004/10/13 18:42:17 augustss Exp 
+ *	NetBSD: pcidevs,v 1.661 2004/10/28 07:26:09 martti Exp 
  */
 
 /*
@@ -2172,6 +2172,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "Sandburst, Inc.",
 	},
 	{
+	    PCI_VENDOR_I4,
+	    "I4",
+	},
+	{
 	    PCI_VENDOR_S2IO,
 	    "S2io Technologies",
 	},
@@ -2300,7 +2304,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 565;
+const int pci_nvendors = 566;
 
 const struct pci_product pci_products[] = {
 	{
@@ -2354,6 +2358,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
 	    "3c555 10/100 Mini-PCI Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C154G72,
+	    "3CRWE154G72 Wireless LAN adapter",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
@@ -3944,8 +3952,16 @@ const struct pci_product pci_products[] = {
 	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750,
+	    "BCM5750 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751,
 	    "BCM5751 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M,
+	    "BCM5750M 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
@@ -4586,6 +4602,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
 	    "PERC 4/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4ESI,
+	    "PERC 4e/Si",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
@@ -5985,11 +6005,23 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
-	    "82915P Host",
+	    "82915P/G/GL Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_EXP,
-	    "82915P PCI Express Bridge",
+	    "82915P/G/GL PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD,
+	    "82915G/GL Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_HB,
+	    "82925X Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EXP,
+	    "82925X PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
@@ -6036,6 +6068,10 @@ const struct pci_product pci_products[] = {
 	    "82801FB LPC Interface Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
+	    "82801FB Serial ATA Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FR_SATA,
 	    "82801FR Serial ATA Controller",
 	},
@@ -6078,6 +6114,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE,
 	    "82801FB/FR IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
+	    "82915G/GL IGD Companion",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -6288,8 +6328,12 @@ const struct pci_product pci_products[] = {
 	    "PRISM2.5 Mini-PCI WLAN",
 	},
 	{
-	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_P54,
-	    "PRISM-54 Mini-PCI WLAN",
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3877,
+	    "PRISM Indigo Mini-PCI WLAN",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3890,
+	    "PRISM Duette Mini-PCI WLAN",
 	},
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
@@ -6878,6 +6922,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929X,
 	    "FC929X",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
+	    "PERC 4/SC",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -9728,4 +9776,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1856;
+const int pci_nproducts = 1867;

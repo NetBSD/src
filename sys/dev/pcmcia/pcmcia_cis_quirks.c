@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.4 2004/10/19 15:57:27 skrll Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.5 2004/11/02 07:52:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.4 2004/10/19 15:57:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.20.6.5 2004/11/02 07:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,15 +273,11 @@ pcmcia_check_cis_quirks(sc)
 			goto match;
 
 		for (j = 0; j < 2; j++)
-			if (card->cis1_info[j] == NULL) {
-				if (quirk->cis1_info[j] != NULL)
-					goto nomatch;
-			} else {
-				if (quirk->cis1_info[j] == NULL ||
-				    strcmp(card->cis1_info[j],
-				    quirk->cis1_info[j]) != 0)
-					goto nomatch;
-			}
+			if (card->cis1_info[j] == NULL ||
+			    quirk->cis1_info[j] == NULL ||
+			    strcmp(card->cis1_info[j],
+			    quirk->cis1_info[j]) != 0)
+				goto nomatch;
 
 match:
 		if (!wiped) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.3 2004/09/21 13:11:20 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.4 2004/11/02 07:50:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.3 2004/09/21 13:11:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.4 2004/11/02 07:50:21 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.3 2004/09/21 13:11:20 skrll Exp $
 
 #include "podulebus.h"
 
-int booted_partition;
-struct device *booted_device;
 extern char *booted_kernel;
 
 extern dev_t dumpdev;

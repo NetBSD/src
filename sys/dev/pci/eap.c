@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66.2.5 2004/09/24 10:53:27 skrll Exp $	*/
+/*	$NetBSD: eap.c,v 1.66.2.6 2004/11/02 07:52:09 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.5 2004/09/24 10:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.6 2004/11/02 07:52:09 skrll Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -234,7 +234,7 @@ int	eap_midi_open(void *, int, void (*)(void *, int),
 int	eap_midi_output(void *, int);
 #endif
 
-struct audio_hw_if eap1370_hw_if = {
+const struct audio_hw_if eap1370_hw_if = {
 	eap_open,
 	eap_close,
 	NULL,
@@ -264,7 +264,7 @@ struct audio_hw_if eap1370_hw_if = {
 	NULL,
 };
 
-struct audio_hw_if eap1371_hw_if = {
+const struct audio_hw_if eap1371_hw_if = {
 	eap_open,
 	eap_close,
 	NULL,
@@ -295,7 +295,7 @@ struct audio_hw_if eap1371_hw_if = {
 };
 
 #if NMIDI > 0
-struct midi_hw_if eap_midi_hw_if = {
+const struct midi_hw_if eap_midi_hw_if = {
 	eap_midi_open,
 	eap_midi_close,
 	eap_midi_output,
@@ -581,7 +581,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	struct eap_softc *sc = (struct eap_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	struct audio_hw_if *eap_hw_if;
+	const struct audio_hw_if *eap_hw_if;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;

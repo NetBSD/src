@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.3 2004/09/21 13:13:54 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.4 2004/11/02 07:50:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.3 2004/09/21 13:13:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.4 2004/11/02 07:50:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,6 @@ static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
-
-struct device *booted_device;
-int booted_partition;
 
 int atari_realconfig;
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.50.2.3 2004/09/21 13:33:43 skrll Exp $
+#	$NetBSD: files.usb,v 1.50.2.4 2004/11/02 07:53:02 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -152,6 +152,11 @@ device	aue: arp, ether, ifnet, mii, mii_phy
 attach	aue at uhub
 file	dev/usb/if_aue.c		aue
 
+# CDC Ethernet
+device  cdce: arp, ether, ifnet
+attach  cdce at uhub
+file    dev/usb/if_cdce.c                cdce
+
 # CATC USB-EL1201A
 device	cue: arp, ether, ifnet
 attach	cue at uhub
@@ -173,9 +178,9 @@ attach	url at uhub
 file	dev/usb/if_url.c		url
 
 # ASIX AX88172
-device	uax: arp, ether, ifnet, mii, mii_phy
-attach	uax at uhub
-file	dev/usb/if_uax.c		uax
+device	axe: arp, ether, ifnet, mii, mii_phy
+attach	axe at uhub
+file	dev/usb/if_axe.c		axe
 
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy

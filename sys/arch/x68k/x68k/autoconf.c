@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37.6.3 2004/09/21 13:24:21 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37.6.4 2004/11/02 07:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.3 2004/09/21 13:24:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37.6.4 2004/11/02 07:50:57 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -61,9 +61,6 @@ int x68k_config_found __P((struct cfdata *, struct device *,
 
 static struct device *scsi_find __P((dev_t));
 static struct device *find_dev_byname __P((const char *));
-
-struct device *booted_device;
-int booted_partition;
 
 int x68k_realconfig;
 
@@ -157,7 +154,6 @@ config_console()
 }
 
 dev_t	bootdev = 0;
-struct device *booted_device;
 
 static void
 findroot(void)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564.2.8 2004/10/19 15:56:35 skrll Exp $
+# $NetBSD: GENERIC,v 1.564.2.9 2004/11/02 07:50:34 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.564.2.8 $"
+#ident 		"GENERIC-$Revision: 1.564.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -376,6 +376,9 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
 					# L2/L3 work, but should not be enabled
+					# on anything else.
+#options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
+					# work, but should not be enabled for
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
@@ -946,9 +949,10 @@ irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-uax*	at uhub? port ?		# ASIX AX88172 based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
@@ -1017,7 +1021,7 @@ irframe* at oboe?
 # Audio Devices
 
 # PCI audio devices
-auacer*	at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio

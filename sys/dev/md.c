@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.2.5 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.36.2.6 2004/11/02 07:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.5 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.6 2004/11/02 07:51:19 skrll Exp $");
 
 #include "opt_md.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36.2.5 2004/09/21 13:26:25 skrll Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.21.2.3 2004/09/21 13:24:09 skrll Exp $	*/
+/*	$NetBSD: vs.c,v 1.21.2.4 2004/11/02 07:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.21.2.3 2004/09/21 13:24:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.21.2.4 2004/11/02 07:50:57 skrll Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -108,7 +108,7 @@ extern struct cfdriver vs_cd;
 CFATTACH_DECL(vs, sizeof(struct vs_softc),
     vs_match, vs_attach, NULL, NULL);
 
-static struct audio_hw_if vs_hw_if = {
+static const struct audio_hw_if vs_hw_if = {
 	vs_open,
 	vs_close,
 	NULL,			/* drain */

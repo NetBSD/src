@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.40.2.4 2004/09/21 13:38:44 skrll Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.40.2.5 2004/11/02 07:53:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,7 +80,6 @@ struct nfsdircache {
 	off_t		dc_blkcookie;		/* Offset of block we're in */
 	LIST_ENTRY(nfsdircache) dc_hash;	/* Hash chain */
 	TAILQ_ENTRY(nfsdircache) dc_chain;	/* Least recently entered chn */
-	daddr_t		dc_blkno;		/* Number of block we're in */
 	u_int32_t	dc_cookie32;		/* Key for 64<->32 xlate case */
 	int		dc_entry;		/* Entry number within block */
 	int		dc_refcnt;		/* Reference count */
@@ -89,6 +88,10 @@ struct nfsdircache {
 
 #define	NFSDC_INVALID	1
 
+/*
+ * NFSDC_BLKNO: get buffer cache index
+ */
+#define	NFSDC_BLKNO(ndp)	((daddr_t)(ndp)->dc_blkcookie)
 
 /*
  * The nfsnode is the nfs equivalent to ufs's inode. Any similarity
@@ -116,7 +119,6 @@ struct nfsnode_reg {
 struct nfsnode_dir {
 	off_t ndir_direof;		/* EOF offset cache */
 	nfsuint64 ndir_cookieverf;	/* Cookie verifier */
-	daddr_t ndir_dblkno;		/* faked dir blkno */
 	struct nfsdirhashhead *ndir_dircache; /* offset -> cache hash heads */
 	struct nfsdirchainhead ndir_dirchain; /* Chain of dir cookies */
 	struct timespec ndir_nctime;	/* Last neg cache entry */
@@ -146,7 +148,6 @@ struct nfsnode {
 
 #define n_direofoffset	n_un1.nu_dir.ndir_direof
 #define n_cookieverf	n_un1.nu_dir.ndir_cookieverf
-#define	n_dblkno	n_un1.nu_dir.ndir_dblkno
 #define n_dircache	n_un1.nu_dir.ndir_dircache
 #define	n_dirchain	n_un1.nu_dir.ndir_dirchain
 #define	n_nctime	n_un1.nu_dir.ndir_nctime

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.19.2.4 2004/09/24 10:53:28 skrll Exp $	*/
+/*	$NetBSD: neo.c,v 1.19.2.5 2004/11/02 07:52:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.19.2.4 2004/09/24 10:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.19.2.5 2004/11/02 07:52:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ static const int samplerates[9] = {
 
 /* -------------------------------------------------------------------- */
 
-struct audio_hw_if neo_hw_if = {
+const struct audio_hw_if neo_hw_if = {
 	neo_open,
 	neo_close,
 	NULL,				/* drain */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2.2.3 2004/09/21 13:12:07 skrll Exp $	*/
+/*	$NetBSD: vector.S,v 1.2.2.4 2004/11/02 07:50:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -369,13 +369,6 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
-#ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	movq %rsp,%rdi ; call _C_LABEL(x86_intlock)
-#define UNLOCK_KERNEL	movq %rsp,%rdi ; call _C_LABEL(x86_intunlock)
-#else
-#define LOCK_KERNEL
-#define UNLOCK_KERNEL
-#endif
 
 #define voidop(num)
 
@@ -418,7 +411,6 @@ IDTVEC(intr_/**/name/**/num)						;\
 	sti								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
-	LOCK_KERNEL							;\
 6:									\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
@@ -430,14 +422,12 @@ IDTVEC(intr_/**/name/**/num)						;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
 5:									\
-	UNLOCK_KERNEL							;\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
-	UNLOCK_KERNEL							;\
 	cli								;\
 	orl     $(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\

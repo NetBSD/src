@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.2.4 2004/10/19 15:56:42 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.5 2004/11/02 07:50:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.4 2004/10/19 15:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.5 2004/11/02 07:50:47 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -52,9 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.4 2004/10/19 15:56:42 skrll Exp 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-struct device	*booted_device = NULL;
 static struct device *booted_controller = NULL;
-static int	booted_slot, booted_unit, booted_partition;
+static int	booted_slot, booted_unit;
 static char	*booted_protocol = NULL;
 
 extern struct platform platform;

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.22.2.3 2004/09/21 13:16:00 skrll Exp $
+# 	$NetBSD: MPC303,v 1.22.2.4 2004/11/02 07:50:24 skrll Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22.2.3 $"
+#ident 		"GENERIC-$Revision: 1.22.2.4 $"
 
 maxusers	16
 
@@ -199,7 +199,7 @@ ugen*	at uhub? port ?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-#uax*	at uhub? port ?		# ASIX AX88172 based adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # MII/PHY support

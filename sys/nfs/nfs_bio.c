@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.105.2.5 2004/10/30 07:37:39 skrll Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.105.2.6 2004/11/02 07:53:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.5 2004/10/30 07:37:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.6 2004/11/02 07:53:24 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -287,7 +287,7 @@ diragain:
 			return (0);
 		}
 
-		bp = nfs_getcacheblk(vp, ndp->dc_blkno, NFS_DIRBLKSIZ, l);
+		bp = nfs_getcacheblk(vp, NFSDC_BLKNO(ndp), NFS_DIRBLKSIZ, l);
 		if (!bp)
 		    return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
@@ -445,7 +445,7 @@ diragain:
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
 		    np->n_direofoffset == 0 && !(np->n_flag & NQNFSNONCACHE)) {
-			rabp = nfs_getcacheblk(vp, nndp->dc_blkno,
+			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, l);
 			if (rabp) {
 			    if ((rabp->b_flags & (B_DONE | B_DELWRI)) == 0) {

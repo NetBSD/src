@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.58.2.4 2004/09/21 13:29:43 skrll Exp $	*/
+/*	$NetBSD: ess.c,v 1.58.2.5 2004/11/02 07:51:55 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58.2.4 2004/09/21 13:29:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58.2.5 2004/11/02 07:51:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ struct audio_device ess_device = {
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if ess_1788_hw_if = {
+const struct audio_hw_if ess_1788_hw_if = {
 	ess_open,
 	ess_close,
 	ess_drain,
@@ -242,7 +242,7 @@ struct audio_hw_if ess_1788_hw_if = {
 	NULL,
 };
 
-struct audio_hw_if ess_1888_hw_if = {
+const struct audio_hw_if ess_1888_hw_if = {
 	ess_open,
 	ess_close,
 	ess_drain,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.8 2001/02/16 20:15:57 kenh Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.8.24.1 2004/11/02 07:53:03 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
 /*
@@ -51,6 +51,13 @@
 #define UDESCSUB_CDC_CS		7 /* Country Selection */
 #define UDESCSUB_CDC_TOM	8 /* Telephone Operational Modes */
 #define UDESCSUB_CDC_USBT	9 /* USB Terminal */
+#define UDESCSUB_CDC_NCT	10
+#define UDESCSUB_CDC_PUF	11
+#define UDESCSUB_CDC_EUF	12
+#define UDESCSUB_CDC_MCMF	13
+#define UDESCSUB_CDC_CCMF	14
+#define UDESCSUB_CDC_ENF	15
+#define UDESCSUB_CDC_ANF	16
 
 typedef struct {
 	uByte		bLength;
@@ -87,6 +94,17 @@ typedef struct {
 	uByte		bMasterInterface;
 	uByte		bSlaveInterface[1];
 } UPACKED usb_cdc_union_descriptor_t;
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		iMacAddress;
+	uDWord		bmEthernetStatistics;
+	uWord		wMaxSegmentSize;
+	uWord		wNumberMCFikters;
+	uByte		bNumberPowerFilters;
+} UPACKED usb_cdc_ethernet_descriptor_t;
 
 #define UCDC_SEND_ENCAPSULATED_COMMAND	0x00
 #define UCDC_GET_ENCAPSULATED_RESPONSE	0x01

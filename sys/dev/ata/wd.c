@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.8 2004/10/19 15:56:44 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.9 2004/11/02 07:51:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.8 2004/10/19 15:56:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.9 2004/11/02 07:51:19 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.8 2004/10/19 15:56:44 skrll Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.74.2.3 2004/09/21 13:29:48 skrll Exp $	*/
+/*	$NetBSD: sb.c,v 1.74.2.4 2004/11/02 07:51:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.3 2004/09/21 13:29:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.4 2004/11/02 07:51:55 skrll Exp $");
 
 #include "midi.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.3 2004/09/21 13:29:48 skrll Exp $");
 #include <dev/isa/sbdspvar.h>
 
 #if NMPU > 0
-struct midi_hw_if sb_midi_hw_if = {
+const struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
 	sbdsp_midi_close,
 	sbdsp_midi_output,
@@ -80,7 +80,7 @@ int	sb_getdev __P((void *, struct audio_device *));
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if sb_hw_if = {
+const struct audio_hw_if sb_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
 	0,

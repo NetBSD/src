@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.6 2004/10/19 15:58:30 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.7 2004/11/02 07:53:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -335,6 +335,8 @@ extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern struct device *booted_device;	/* the device we booted from */
+extern struct device *booted_wedge;	/* the wedge on that device */
+extern int booted_partition;		/* or the partition on that device */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 

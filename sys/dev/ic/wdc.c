@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.123.2.5 2004/09/21 13:28:09 skrll Exp $ */
+/*	$NetBSD: wdc.c,v 1.123.2.6 2004/11/02 07:51:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.123.2.5 2004/09/21 13:28:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.123.2.6 2004/11/02 07:51:31 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -125,14 +125,14 @@ extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
 /* A fake one, the autoconfig will print "wd at foo ... not configured */
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
-	NULL,		/* wdc_ata_bio */
-	NULL,		/* wdc_reset_drive */
-	NULL,		/* wdc_reset_channel */
-	NULL,		/* wdc_exec_command */
-	NULL,		/* ata_get_params */
-	NULL,		/* wdc_ata_addref */
-	NULL,		/* wdc_ata_delref */
-	NULL		/* ata_kill_pending */
+	NULL,				/* wdc_ata_bio */
+	NULL,				/* wdc_reset_drive */
+	wdc_reset_channel,
+	wdc_exec_command,
+	NULL,				/* ata_get_params */
+	NULL,				/* wdc_ata_addref */
+	NULL,				/* wdc_ata_delref */
+	NULL				/* ata_kill_pending */
 };
 #endif
 
@@ -292,7 +292,12 @@ wdc_drvprobe(struct ata_channel *chp)
 		if (chp->ch_flags & ATACH_SHUTDOWN)
 			return;
 
-		/* issue an identify, to try to detect ghosts */
+		/*
+		 * Issue an identify, to try to detect ghosts.
+		 * Note that we can't use interrupts here, because if there
+		 * is no devices, we will get a command aborted without
+		 * interrupts.
+		 */
 		error = ata_get_params(&chp->ch_drive[i],
 		    AT_WAIT | AT_POLL, &params);
 		if (error != CMD_OK) {
@@ -1269,6 +1274,8 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 		ata_c->flags |= AT_POLL;
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
+	if (ata_c->flags & AT_WAIT)
+		xfer->c_flags |= C_WAIT;
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
@@ -1652,7 +1659,7 @@ static void
 __wdcerror(struct ata_channel *chp, char *msg) 
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", atac->atac_dev.dv_xname, chp->ch_channel,

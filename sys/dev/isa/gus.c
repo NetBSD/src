@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81.2.3 2004/09/21 13:29:43 skrll Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.4 2004/11/02 07:51:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.3 2004/09/21 13:29:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.4 2004/11/02 07:51:55 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -582,7 +582,7 @@ static const unsigned short gus_log_volumes[512] = {
  * Interface to higher level audio driver
  */
 
-struct audio_hw_if gus_hw_if = {
+const struct audio_hw_if gus_hw_if = {
 	gusopen,
 	gusclose,
 	NULL,				/* drain */
@@ -619,7 +619,7 @@ struct audio_hw_if gus_hw_if = {
 	NULL,
 };
 
-static struct audio_hw_if gusmax_hw_if = {
+static const struct audio_hw_if gusmax_hw_if = {
 	gusmaxopen,
 	gusmax_close,
 	NULL,				/* drain */
@@ -844,6 +844,7 @@ gusattach(parent, self, aux)
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
  	int		iobase, i;
 	unsigned char	c,d,m;
+	const struct audio_hw_if *hwif;
 
 	callout_init(&sc->sc_dmaout_ch);
 
@@ -993,8 +994,10 @@ gusattach(parent, self, aux)
  		sc->sc_flags |= GUS_MIXER_INSTALLED;
  		gus_init_ics2101(sc);
 	}
+	hwif = &gus_hw_if;
 	if (sc->sc_revision >= 10)
-		gus_init_cs4231(sc);
+		if (gus_init_cs4231(sc))
+			hwif = &gusmax_hw_if;
 
  	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
  	/*
@@ -1088,7 +1091,8 @@ gusattach(parent, self, aux)
 	 * Attach to the generic audio layer
 	 */
 
-	audio_attach_mi(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
+	audio_attach_mi(hwif,
+	    HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
 }
 
 int
@@ -2950,7 +2954,6 @@ gus_init_cs4231(sc)
 		sc->sc_codec.sc_play_maxsize = sc->sc_req_maxsize;
 		sc->sc_codec.sc_recdrq = sc->sc_playdrq;
 		sc->sc_codec.sc_rec_maxsize = sc->sc_play_maxsize;
-		gus_hw_if = gusmax_hw_if;
 		/* enable line in and mic in the GUS mixer; the codec chip
 		   will do the real mixing for them. */
 		sc->sc_mixcontrol &= ~GUSMASK_LINE_IN; /* 0 enables. */

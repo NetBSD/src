@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.21.2.3 2004/09/21 13:11:36 skrll Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.21.2.4 2004/11/02 07:50:21 skrll Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.21.2.3 2004/09/21 13:11:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.21.2.4 2004/11/02 07:50:21 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -4016,8 +4016,10 @@ tulip_ifioctl(
 		error = ether_delmulti(ifr, TULIP_ETHERCOM(sc));
 
 	    if (error == ENETRESET) {
-		tulip_addr_filter(sc);		/* reset multicast filtering */
-		tulip_init(sc);
+		if (ifp->if_flags & IFF_RUNNING) {
+		    tulip_addr_filter(sc);	/* reset multicast filtering */
+		    tulip_init(sc);
+		}
 		error = 0;
 	    }
 	    break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.18.6.4 2004/09/21 13:23:57 skrll Exp $ */
+/*	$NetBSD: ctu.c,v 1.18.6.5 2004/11/02 07:50:57 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,13 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.18.6.4 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.18.6.5 2004/11/02 07:50:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>

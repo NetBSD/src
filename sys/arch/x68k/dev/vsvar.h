@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.2.26.3 2004/09/21 13:24:09 skrll Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.2.26.4 2004/11/02 07:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -97,7 +97,7 @@ struct vs_softc {
 		int dmap;
 	} sc_current;
 
-	struct audio_hw_if *sc_hw_if;
+	const struct audio_hw_if *sc_hw_if;
 
 	void (*sc_pintr) __P((void *));
 	void (*sc_rintr) __P((void *));

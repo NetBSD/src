@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.39.2.4 2004/09/21 13:38:35 skrll Exp $	*/
+/*	$NetBSD: nfs.h,v 1.39.2.5 2004/11/02 07:53:24 skrll Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -129,7 +129,6 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 /*
  * Oddballs
  */
-#define	NMOD(a)		((a) % nfs_asyncdaemons)
 #define NFS_CMPFH(n, f, s) \
 	((n)->n_fhsize == (s) && !memcmp((caddr_t)(n)->n_fhp,  (caddr_t)(f),  (s)))
 #ifdef NFS_V2_ONLY
@@ -140,16 +139,6 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 #define NFS_SRVMAXDATA(n) \
 		(((n)->nd_flag & ND_NFSV3) ? (((n)->nd_nam2) ? \
 		 NFS_MAXDGRAMDATA : NFS_MAXDATA) : NFS_V2MAXDATA)
-
-/*
- * The VA_EXCLUSIVE flag should be added for va_vaflags and set for an
- * exclusive create.
- */
-#if 0
-#ifndef VA_EXCLUSIVE
-#define VA_EXCLUSIVE	0
-#endif
-#endif
 
 /*
  * Use the vm_page flag reserved for pager use to indicate pages

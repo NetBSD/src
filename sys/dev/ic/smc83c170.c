@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.53.2.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.53.2.4 2004/11/02 07:51:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.3 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.53.2.4 2004/11/02 07:51:31 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -590,8 +590,10 @@ epic_ioctl(ifp, cmd, data)
 			 * accordingly.  Update our idea of the current media;
 			 * epic_set_mchash() needs to know what it is.
 			 */
-			mii_pollstat(&sc->sc_mii);
-			epic_set_mchash(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				mii_pollstat(&sc->sc_mii);
+				epic_set_mchash(sc);
+			}
 			error = 0;
 		}
 		break;

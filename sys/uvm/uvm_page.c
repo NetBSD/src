@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.89.2.4 2004/09/21 13:39:29 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.89.2.5 2004/11/02 07:53:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.89.2.4 2004/09/21 13:39:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.89.2.5 2004/11/02 07:53:37 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1550,32 +1550,29 @@ uvm_pageidlezero()
 	int free_list, s, firstbucket;
 	static int nextbucket;
 
+	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
 	s = uvm_lock_fpageq();
 	firstbucket = nextbucket;
 	do {
-		if (sched_whichqs != 0) {
-			uvm_unlock_fpageq(s);
-			return;
-		}
+		if (sched_whichqs != 0)
+			goto quit;
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
 			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq(s);
-			return;
+			goto quit;
 		}
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
 			pgfl = &uvm.page_free[free_list];
 			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_whichqs != 0) {
-					uvm_unlock_fpageq(s);
-					return;
-				}
+				if (sched_whichqs != 0)
+					goto quit;
 
 				TAILQ_REMOVE(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
 				    pg, pageq);
 				uvmexp.free--;
 				uvm_unlock_fpageq(s);
+				KERNEL_UNLOCK();
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1586,20 +1583,22 @@ uvm_pageidlezero()
 					 * process now ready to run.
 					 */
 
+					KERNEL_LOCK(
+					    LK_EXCLUSIVE | LK_CANRECURSE);
 					s = uvm_lock_fpageq();
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
 					    PGFL_UNKNOWN], pg, pageq);
 					uvmexp.free++;
 					uvmexp.zeroaborts++;
-					uvm_unlock_fpageq(s);
-					return;
+					goto quit;
 				}
 #else
 				pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
+				KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
 				s = uvm_lock_fpageq();
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
@@ -1610,5 +1609,7 @@ uvm_pageidlezero()
 		}
 		nextbucket = (nextbucket + 1) & uvmexp.colormask;
 	} while (nextbucket != firstbucket);
+quit:
 	uvm_unlock_fpageq(s);
+	KERNEL_UNLOCK();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.11.6.3 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: iopl.c,v 1.11.6.4 2004/11/02 07:51:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.3 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11.6.4 2004/11/02 07:51:30 skrll Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -1896,7 +1896,10 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Flags and/or multicast list has changed; need to
 			 * set the hardware filter accordingly.
 			 */
-			rv = iopl_filter_ether(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				rv = iopl_filter_ether(sc);
+			else
+				rv = 0;
 		}
 		break;
 
@@ -1954,9 +1957,12 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				rv = ether_addmulti(ifr, &sc->sc_if.sci_ec);
 			else
 				rv = ether_delmulti(ifr, &sc->sc_if.sci_ec);
-			if (rv == ENETRESET &&
-			    (ifp->if_flags & IFF_RUNNING) != 0)
-				rv = iopl_filter_ether(sc);
+			if (rv == ENETRESET) {
+				if (ifp->if_flags & IFF_RUNNING)
+					rv = iopl_filter_ether(sc);
+				else
+					rv = 0;
+			}
 			break;
 
 		case SIOCSIFMTU:

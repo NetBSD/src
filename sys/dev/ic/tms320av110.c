@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.12.2.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.12.2.4 2004/11/02 07:51:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12.2.3 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12.2.4 2004/11/02 07:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ int tav_get_port __P((void *, mixer_ctrl_t *));
 int tav_query_devinfo __P((void *, mixer_devinfo_t *));
 int tav_get_props __P((void *));
 
-struct audio_hw_if tav_audio_if = {
+const struct audio_hw_if tav_audio_if = {
 	tav_open,
 	tav_close,
 	0 /* tav_drain*/,		/* optional */

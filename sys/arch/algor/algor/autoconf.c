@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.24.3 2004/09/21 13:11:35 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.24.4 2004/11/02 07:50:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.3 2004/09/21 13:11:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.4 2004/11/02 07:50:21 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -52,9 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.3 2004/09/21 13:11:35 skrll Exp 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-
-struct device	*booted_device;
-int		booted_partition;
 
 void
 cpu_configure(void)

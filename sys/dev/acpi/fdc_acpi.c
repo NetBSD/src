@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.9.2.3 2004/09/21 13:26:40 skrll Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.9.2.4 2004/11/02 07:51:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.3 2004/09/21 13:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.4 2004/11/02 07:51:19 skrll Exp $");
 
 #include "rnd.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.3 2004/09/21 13:26:40 skrll Exp $
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/queue.h>
 #include <sys/disk.h>
 #if NRND > 0

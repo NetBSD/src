@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187.2.7 2004/10/19 15:56:58 skrll Exp $
+#	$NetBSD: files.pci,v 1.187.2.8 2004/11/02 07:52:09 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -213,7 +213,7 @@ attach	aceride at pci
 file	dev/pci/aceride.c		aceride
 
 # Intel i31244 SATA controller
-device	artsata {[channel = -1]}: ata, pciide_common, wdc_common
+device	artsata {[channel = -1]}: ata, pciide_common, wdc_common, sata
 attach	artsata at pci
 file	dev/pci/artsata.c		artsata
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.163.2.6 2004/10/19 15:57:31 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.163.2.7 2004/11/02 07:52:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.6 2004/10/19 15:57:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.7 2004/11/02 07:52:46 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.6 2004/10/19 15:57:31 skrll Exp $");
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mtio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.2.8.3 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.2.8.4 2004/11/02 07:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.2.8.3 2004/09/21 13:14:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.2.8.4 2004/11/02 07:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
