@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.12 2003/08/07 16:33:01 agc Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.13 2004/04/26 01:41:15 matt Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.12 2003/08/07 16:33:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.13 2004/04/26 01:41:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,13 +344,7 @@ llcintr()
  *                 are then enacted accordingly.
  */
 int
-#if __STDC__
 llc_input(struct mbuf *m, ...)
-#else
-llc_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int frame_kind;
 	int pollfinal;
