@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.44 1997/11/24 19:09:19 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.45 1997/11/25 17:57:37 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -173,7 +173,7 @@ int	 syscall __P((int, ...));
 quad_t	 __syscall __P((quad_t, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
-u_int	 ualarm __P((u_int, u_int));
+useconds_t ualarm __P((useconds_t, useconds_t));
 int	 undelete __P((const char *));
 int	 usleep __P((useconds_t));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
