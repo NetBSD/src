@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.14 2004/05/28 18:55:20 wrstuden Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.15 2004/05/29 23:48:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -93,6 +93,8 @@ int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	layerfs_vptofh __P((struct vnode *, struct fid *));
+int	layerfs_snapshot __P((struct mount *, struct vnode *,
+			    struct timespec *));
 
 /* VOP routines */
 int	layer_bypass __P((void *));

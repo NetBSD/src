@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.50 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.51 2004/05/29 23:48:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.50 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.51 2004/05/29 23:48:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,6 +319,6 @@ struct vfsops nullfs_vfsops = {
 	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	layerfs_snapshot,
 	nullfs_vnodeopv_descs,
 };
