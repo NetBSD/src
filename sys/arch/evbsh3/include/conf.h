@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 2000/02/24 17:07:36 msaitoh Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 2001/03/26 12:33:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -37,11 +37,5 @@ cdev_decl(mm);
 
 bdev_decl(fd);
 cdev_decl(fd);
-
-/* open, close, ioctl */
-#define cdev_wdog_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
 
 cdev_decl(wdog);

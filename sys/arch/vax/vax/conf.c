@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 2001/02/04 20:36:32 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -212,36 +212,36 @@ struct	consdev constab[]={
 /* Special for console storage */
 #define dev_type_rw(n)	int n __P((dev_t, int, int, struct proc *))
 
-/* plotters - open, close, write, ioctl, poll */
+/* plotters */
+/* open, close, write, ioctl, poll */
 #define cdev_plotter_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
+	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev) }
 
-/* console mass storage - open, close, read/write */
+/* console mass storage */
+/* open, close, read, write */
 #define cdev_cnstore_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
+	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
 
+/* open, close, write */
 #define cdev_lp_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
+	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
+	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
 
 /* graphic display adapters */
-#define cdev_graph_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+/* open, close, read, write, ioctl, stop, poll */
+#define cdev_graph_init(c,n)	cdev__ocrwisp_init(c,n)
 
 /* Ingres */
+/* open, close, (read), (write), ioctl */
 #define cdev_ingres_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) nullop, \
-	(dev_type_mmap((*))) enodev }
+	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,nullop), \
+	dev_noimpl(write,nullop), dev_init(c,n,ioctl), \
+	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev) }
 
 
 
