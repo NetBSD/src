@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.38 1997/03/15 18:12:20 is Exp $	*/
+/*	$NetBSD: if.c,v 1.39 1997/03/17 02:55:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -491,8 +491,11 @@ ifioctl(so, cmd, data, p)
 	case SIOCSIFMTU:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCSIFMEDIA:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
+		/* FALLTHROUGH */
+	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
