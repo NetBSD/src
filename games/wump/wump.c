@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.8 1999/02/10 01:44:34 hubertf Exp $	*/
+/*	$NetBSD: wump.c,v 1.9 1999/07/14 22:49:27 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.8 1999/02/10 01:44:34 hubertf Exp $");
+__RCSID("$NetBSD: wump.c,v 1.9 1999/07/14 22:49:27 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -720,7 +720,7 @@ int
 int_compare(a, b)
 	const void *a, *b;
 {
-	return(*(int *)a < *(int *)b ? -1 : 1);
+	return(*(const int *)a < *(const int *)b ? -1 : 1);
 }
 
 void
