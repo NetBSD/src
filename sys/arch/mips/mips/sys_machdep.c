@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1996/04/10 17:38:28 jonathan Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1997/06/09 02:15:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -3,4 +3,5 @@ file	arch/mips/mips/mem.c
 file	arch/mips/mips/trap.c			# interrupt, trap hanlders
 file	arch/mips/mips/minidebug.c	kdb # MIPS-III TLB prettyprinter
 file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
+file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
 file	arch/mips/mips/process_machdep.c	# shared process_machdep
