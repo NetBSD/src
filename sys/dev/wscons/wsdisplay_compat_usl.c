@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.12.4.1 2000/09/10 10:47:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -375,11 +375,11 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int res;
-	struct usl_syncdata *sd;
-	int req, intarg;
-	struct wskbd_bell_data bd;
+	int intarg, res;
+	u_long req;
 	void *arg;
+	struct usl_syncdata *sd;
+	struct wskbd_bell_data bd;
 
 	switch (cmd) {
 	    case VT_SETMODE:
