@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.1 2002/08/02 00:41:53 thorpej Exp $
+.\"	$NetBSD: dmover.9,v 1.2 2002/08/02 06:50:05 thorpej Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -276,6 +276,15 @@ structure.
 .It Dq copy
 Copy a memory region from one location to another.  This algorithm has an
 input count of 1.
+.It Dq xor2
+Perform an XOR operation on 2 inputs.  This algorithm has an input count
+of 2.
+.It Dq xor3
+Perform an XOR operation on 3 inputs.  This algorithm has an input count
+of 3.
+.It Dq xor4
+Perform an XOR operation on 4 inputs.  This algorithm has an input count
+of 4.
 .El
 .Pp
 Users of the
@@ -293,6 +302,15 @@ errors:
 .It DMOVER_FUNC_COPY
 .Dq copy
 .Pq Va dmover_funcname_copy
+.It DMOVER_FUNC_XOR2
+.Dq xor2
+.Pq Va dmover_funcname_xor2
+.It DMOVER_FUNC_XOR3
+.Dq xor3
+.Pq Va dmover_funcname_xor3
+.It DMOVER_FUNC_XOR4
+.Dq xor4
+.Pq Va dmover_funcname_xor4
 .El
 .It void Fn dmover_session_destroy "struct dmover_session *session"
 .Pp
