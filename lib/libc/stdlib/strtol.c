@@ -1,4 +1,4 @@
-/*	$NetBSD: strtol.c,v 1.11 1998/01/30 23:38:07 perry Exp $	*/
+/*	$NetBSD: strtol.c,v 1.12 1998/02/03 01:46:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtol.c,v 1.11 1998/01/30 23:38:07 perry Exp $");
+__RCSID("$NetBSD: strtol.c,v 1.12 1998/02/03 01:46:27 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,12 +58,12 @@ long
 strtol(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
-	register const char *s;
-	register long acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	long acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
