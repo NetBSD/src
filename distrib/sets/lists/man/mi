@@ -261,6 +261,7 @@
 ./usr/share/man/cat1/units.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
+./usr/share/man/cat1/usbhidctl.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uucp.0
 ./usr/share/man/cat1/uudecode.0
@@ -351,6 +352,7 @@
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/iso.0
+./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/lkm.0
@@ -732,6 +734,8 @@
 ./usr/share/man/cat8/tunefs.0
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/update.0
+./usr/share/man/cat8/usbd.0
+./usr/share/man/cat8/usbdevs.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
 ./usr/share/man/cat8/uugetty.0
@@ -1276,6 +1280,7 @@
 ./usr/share/man/man1/units.1
 ./usr/share/man/man1/unvis.1
 ./usr/share/man/man1/uptime.1
+./usr/share/man/man1/usbhidctl.1
 ./usr/share/man/man1/users.1
 ./usr/share/man/man1/uucp.1
 ./usr/share/man/man1/uudecode.1
@@ -1366,6 +1371,7 @@
 ./usr/share/man/man4/isa.4
 ./usr/share/man/man4/isapnp.4
 ./usr/share/man/man4/iso.4
+./usr/share/man/man4/isp.4
 ./usr/share/man/man4/iy.4
 ./usr/share/man/man4/lc.4
 ./usr/share/man/man4/lkm.4
@@ -1747,6 +1753,8 @@
 ./usr/share/man/man8/tunefs.8
 ./usr/share/man/man8/umount.8
 ./usr/share/man/man8/update.8
+./usr/share/man/man8/usbd.8
+./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/uucico.8
 ./usr/share/man/man8/uucpd.8
 ./usr/share/man/man8/uugetty.8
