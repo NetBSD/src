@@ -59,9 +59,17 @@
 #ifndef HEADER_SHA_H
 #define HEADER_SHA_H
 
+#include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
+/*
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
+ * ! SHA_LONG_LOG2 has to be defined along.                        !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
 
 #include <sys/types.h>
 #define SHA_LONG	u_int32_t
@@ -81,14 +89,14 @@ typedef struct SHAstate_st
 	int num;
 	} SHA_CTX;
 
-void SHA_Init(SHA_CTX *c);
-void SHA_Update(SHA_CTX *c, const void *data, unsigned long len);
-void SHA_Final(unsigned char *md, SHA_CTX *c);
+int SHA_Init(SHA_CTX *c);
+int SHA_Update(SHA_CTX *c, const void *data, unsigned long len);
+int SHA_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA(const unsigned char *d, unsigned long n,unsigned char *md);
 void SHA_Transform(SHA_CTX *c, const unsigned char *data);
-void SHA1_Init(SHA_CTX *c);
-void SHA1_Update(SHA_CTX *c, const void *data, unsigned long len);
-void SHA1_Final(unsigned char *md, SHA_CTX *c);
+int SHA1_Init(SHA_CTX *c);
+int SHA1_Update(SHA_CTX *c, const void *data, unsigned long len);
+int SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(const unsigned char *d, unsigned long n,unsigned char *md);
 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 #ifdef  __cplusplus

@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: verify_mic.c,v 1.18.2.2 2003/05/05 18:59:42 lha Exp $"
-        "$NetBSD: verify_mic.c,v 1.8 2003/05/15 21:36:45 lha Exp $");
+        "$NetBSD: verify_mic.c,v 1.9 2003/07/24 14:16:55 itojun Exp $");
 
 static OM_uint32
 verify_mic_des
@@ -50,9 +50,9 @@ verify_mic_des
   u_char *p;
   MD5_CTX md5;
   u_char hash[16], seq_data[8];
-  des_key_schedule schedule;
-  des_cblock zero;
-  des_cblock deskey;
+  DES_key_schedule schedule;
+  DES_cblock zero;
+  DES_cblock deskey;
   int32_t seq_number;
   OM_uint32 ret;
 
@@ -83,12 +83,12 @@ verify_mic_des
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));
 
-  des_set_key (&deskey, schedule);
-  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
-		 schedule, &zero);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
+		 &schedule, &zero);
   if (memcmp (p - 8, hash, 8) != 0) {
     memset (deskey, 0, sizeof(deskey));
-    memset (schedule, 0, sizeof(schedule));
+    memset (&schedule, 0, sizeof(schedule));
     *minor_status = 0;
     return GSS_S_BAD_MIC;
   }
@@ -107,12 +107,12 @@ verify_mic_des
 	  4);
 
   p -= 16;
-  des_set_key (&deskey, schedule);
-  des_cbc_encrypt ((void *)p, (void *)p, 8,
-		   schedule, (des_cblock *)hash, DES_DECRYPT);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_encrypt ((void *)p, (void *)p, 8,
+		   &schedule, (DES_cblock *)hash, DES_DECRYPT);
 
   memset (deskey, 0, sizeof(deskey));
-  memset (schedule, 0, sizeof(schedule));
+  memset (&schedule, 0, sizeof(schedule));
 
   if (memcmp (p, seq_data, 8) != 0) {
     *minor_status = 0;

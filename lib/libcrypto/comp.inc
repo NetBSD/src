@@ -1,4 +1,4 @@
-#	$NetBSD: comp.inc,v 1.3 2000/07/16 07:16:21 mrg Exp $
+#	$NetBSD: comp.inc,v 1.4 2003/07/24 14:16:31 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,5 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/comp
 
-SRCS+=	comp_lib.c \
+SRCS+=	comp_lib.c comp_err.c \
 	c_rle.c c_zlib.c
-
-

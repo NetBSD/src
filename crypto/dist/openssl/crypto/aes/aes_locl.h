@@ -54,10 +54,7 @@
 
 #include <openssl/e_os2.h>
 
-#ifdef OPENSSL_NO_AES
-#error AES is disabled.
-#endif
-
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,9 +68,9 @@
 # define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 #endif
 
-typedef unsigned long u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+typedef u_int32_t u32;
+typedef u_int16_t u16;
+typedef u_int8_t u8;
 
 #define MAXKC   (256/32)
 #define MAXKB   (256/8)
