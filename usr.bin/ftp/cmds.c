@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28 1997/09/13 09:05:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28 1997/09/13 09:05:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -887,6 +887,7 @@ setgate(argc, argv)
 				gateport = htons(port);
 			}
 			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
+			gsbuf[sizeof(gsbuf) - 1] = '\0';
 			gateserver = gsbuf;
 			gatemode = 1;
 		}
