@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.1,v 1.4 1997/06/09 09:15:49 mrg Exp $
+.\"	$NetBSD: rcmd.1,v 1.5 1997/10/20 08:53:05 enami Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green.
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 .Nd backend driver for
 .Xr rcmd 3 .
 .Sh SYNOPSIS
-.Nm rcmd
+.Nm
 .Op Fl Kdnx
 .Op Fl k Ar realm
 .Op Fl l Ar username
@@ -57,7 +57,7 @@ executes
 on
 .Ar host  .
 .Pp
-.Nm Rcmd
+.Nm
 copies its standard input to the remote command, the standard
 output of the remote command to its standard output, and the
 standard error of the remote command to its standard error.

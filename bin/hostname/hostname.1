@@ -1,4 +1,4 @@
-.\"	$NetBSD: hostname.1,v 1.12 1997/06/23 20:37:42 pk Exp $
+.\"	$NetBSD: hostname.1,v 1.13 1997/10/20 08:52:03 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nm hostname
 .Nd set or print name of current host system
 .Sh SYNOPSIS
-.Nm hostname
+.Nm
 .Op Fl s
 .Op Ar name-of-host
 .Sh DESCRIPTION
-.Nm Hostname
+.Nm
 prints the name of the current host.  The super-user can
 set the host name by supplying an argument; this is usually done in the
 network initialization script
@@ -64,6 +64,6 @@ name.
 .Xr sethostname 3
 .Sh HISTORY
 The
-.Nm hostname
+.Nm
 utility appeared in
 .Bx 4.2 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
+.\"	$NetBSD: mkdir.1,v 1.10 1997/10/20 08:52:35 enami Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,12 +43,12 @@
 .Nm mkdir
 .Nd make directories
 .Sh SYNOPSIS
-.Nm mkdir
+.Nm
 .Op Fl p
 .Op Fl m Ar mode
 .Ar directory_name  ...
 .Sh DESCRIPTION
-.Nm Mkdir
+.Nm
 creates the directories named as operands, in the order specified,
 using mode
 .Li rwxrwxrwx (\&0777)
@@ -83,7 +83,7 @@ argument directory already exists.
 .Pp
 The user must have write permission in the parent directory.
 .Pp
-.Nm Mkdir
+.Nm
 exits 0 if successful, and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr chmod 1 ,
@@ -91,7 +91,7 @@ exits 0 if successful, and >0 if an error occurred.
 .Xr umask 2
 .Sh STANDARDS
 The
-.Nm mkdir
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

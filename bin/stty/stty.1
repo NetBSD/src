@@ -1,4 +1,4 @@
-.\"	$NetBSD: stty.1,v 1.15 1997/10/20 08:08:10 scottr Exp $
+.\"	$NetBSD: stty.1,v 1.16 1997/10/20 08:53:29 enami Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,13 @@
 .Nm stty
 .Nd set the options for a terminal device interface
 .Sh SYNOPSIS
-.Nm stty
+.Nm
 .Op Fl a | Fl e | Fl g
 .Op Fl f Ar file
 .Op operands
 .Sh DESCRIPTION
 The
-.Nm stty
+.Nm
 utility sets or reports on terminal
 characteristics for the device that is its standard input.
 If no options or operands are specified, it reports the settings of a subset
@@ -85,7 +85,7 @@ block on the open.
 .It Fl g
 Display all the current settings for the terminal to standard output
 in a form that may be used as an argument to a subsequent invocation of
-.Nm stty
+.Nm
 to restore the current terminal state as per
 .St -p1003.2 .
 .El
@@ -578,13 +578,13 @@ Same as the control character
 .El
 .Pp
 The
-.Nm stty
+.Nm
 utility exits with a value of 0 if successful, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr termios 4
 .Sh STANDARDS
 The
-.Nm stty
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.  The flags

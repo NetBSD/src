@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmdir.1,v 1.10 1995/07/25 19:37:35 jtc Exp $
+.\"	$NetBSD: rmdir.1,v 1.11 1997/10/20 08:53:22 enami Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm rmdir
 .Nd remove directories
 .Sh SYNOPSIS
-.Nm rmdir
+.Nm
 .Op Fl p
 .Ar directory ...
 .Sh DESCRIPTION
@@ -57,7 +57,7 @@ In order to remove both a parent directory and a subdirectory
 of that parent, the subdirectory
 must be specified first so the parent directory
 is empty when
-.Nm rmdir
+.Nm
 tries to remove it.
 .Pp
 The following option is available:
@@ -74,7 +74,7 @@ for fully non-discriminant recursive removal.)
 .El
 .Pp
 The
-.Nm rmdir
+.Nm
 utility exits with one of the following values:
 .Bl -tag -width Ds
 .It Li \&0
@@ -88,7 +88,7 @@ An error occurred.
 .Xr rm 1
 .Sh STANDARDS
 The
-.Nm rmdir
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

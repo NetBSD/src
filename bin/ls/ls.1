@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.15 1997/09/09 07:31:13 jtc Exp $
+.\"	$NetBSD: ls.1,v 1.16 1997/10/20 08:52:26 enami Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm ls
 .Nd list directory contents
 .Sh SYNOPSIS
-.Nm ls
+.Nm
 .Op Fl ACFLRSTWacdfikloqrstu1
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -51,13 +51,13 @@ For each operand that names a
 .Ar file
 of a type other than
 directory,
-.Nm ls
+.Nm
 displays its name as well as any requested,
 associated information.
 For each operand that names a
 .Ar file
 of type directory,
-.Nm ls
+.Nm
 displays the names of files contained
 within that directory, as well as any requested, associated
 information.
@@ -167,7 +167,7 @@ options override each other; the last one specified determines
 the file time used.
 .Pp
 By default,
-.Nm ls
+.Nm
 lists one entry per line to standard
 output; the exceptions are to terminals or when the
 .Fl C
@@ -292,11 +292,11 @@ or
 .El
 .Pp
 The
-.Nm ls
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh ENVIRONMENT VARIABLES
 The following environment variables affect the execution of
-.Nm ls :
+.Nm "" :
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 If the environment variable
@@ -313,7 +313,7 @@ decimal integer, it is used as the
 column position width for displaying
 multiple-text-column output.
 The
-.Nm ls
+.Nm
 utility calculates how
 many pathname text columns to display
 based on the width provided.
@@ -336,12 +336,12 @@ specification.
 .Xr sticky 8
 .Sh STANDARDS
 The
-.Nm ls
+.Nm
 utility is expected to be a superset of the
 .St -p1003.2
 specification.
 .Sh HISTORY
 An
-.Nm ls
+.Nm
 utility appeared in
 .At v6 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.13 1997/10/04 12:32:31 hannken Exp $
+.\"	$NetBSD: mt.1,v 1.14 1997/10/20 08:52:42 enami Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,15 +40,15 @@
 .Nm mt
 .Nd magnetic tape manipulating program
 .Sh SYNOPSIS
-.Nm mt
+.Nm
 .Op Fl f Ar tapename
 .Ar command
 .Op Ar count
 .Sh DESCRIPTION
-.Nm Mt
+.Nm
 is used to give commands to a magnetic tape drive.
 By default
-.Nm mt
+.Nm
 performs the requested operation once.  Operations
 may be performed multiple times by specifying
 .Ar count  .
@@ -62,7 +62,7 @@ is of the form
 .Dq host:tapename ,
 or
 .Dq user@host:tapename ,
-.Nm mt
+.Nm
 writes to the named tape device on the remote host using
 .Xr rmt 8 .
 .Pp
@@ -147,19 +147,19 @@ drives support this feature).
 If a tape name is not specified, and the environment variable
 .Ev TAPE
 is not set, then
-.Nm mt
+.Nm
 uses the device
 .Pa /dev/nrst0 .
 .Pp
-.Nm Mt
+.Nm
 returns a 0 exit status when the operation(s) were successful,
 1 if the command was unrecognized, and 2 if an operation failed.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
-.Nm mt .
+.Nm "" .
 .Bl -tag -width Fl
 .It Ev TAPE
-.Nm Mt
+.Nm
 checks the
 .Ev TAPE
 environment variable if the
@@ -182,7 +182,7 @@ List of SCSI2 density codes
 .Xr environ 7
 .Sh HISTORY
 The
-.Nm mt
+.Nm
 utility appeared in
 .Bx 4.3 .
 .\" mt.1: mtio(4) missing
