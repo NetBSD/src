@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.48 2002/02/03 12:55:26 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.49 2002/04/16 01:59:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.48 2002/02/03 12:55:26 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.49 2002/04/16 01:59:37 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -639,14 +639,14 @@ single_user(void)
 	if (requested_transition)
 		return (state_func_t)requested_transition;
 
-	if (!WIFEXITED(status)) {
-		if (WTERMSIG(status) == SIGKILL) { 
-			/* 
-			 *  reboot(8) killed shell? 
-			 */
-			warning("single user shell terminated.");
-			(void)sleep(STALL_TIMEOUT);
-			_exit(0);
+	if (WIFSIGNALED(status)) {
+		if (WTERMSIG(status) == SIGKILL) {
+			/* executed /sbin/reboot; wait for the end quietly */
+			sigset_t s;
+	
+			(void)sigfillset(&s);
+			for (;;)
+				(void)sigsuspend(&s);
 		} else {	
 			warning("single user shell terminated, restarting");
 			return (state_func_t) single_user;
