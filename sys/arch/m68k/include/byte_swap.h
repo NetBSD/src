@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2 2001/04/04 19:53:05 is Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.3 2001/04/09 05:35:32 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #ifndef	M68K_BYTE_SWAP_H_
 #define	M68K_BYTE_SWAP_H_
 
-#if defined(_KERNEL)
-
 #define __byte_swap_word(var)				\
         ({ u_int16_t    __var = (var);  		\
         	__asm__ __volatile ("rorw #8, %0"	\
@@ -53,7 +51,5 @@
         	__asm__ __volatile ("rorw #8, %0; swap %0; rorw #8, %0"	\
 					: "=d" (__var) : "0" (__var));	\
             __var; })
-
-#endif /* defined(_KERNEL) */
 
 #endif /* !M68K_BYTE_SWAP_H_ */
