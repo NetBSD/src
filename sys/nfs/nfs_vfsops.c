@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.19 1994/05/13 06:12:51 mycroft Exp $
+ *	$Id: nfs_vfsops.c,v 1.20 1994/05/18 00:35:17 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -583,8 +583,6 @@ nfs_root(mp, vpp)
 	return (0);
 }
 
-extern int syncprt;
-
 /*
  * Flush out the buffer cache
  */
@@ -593,8 +591,6 @@ nfs_sync(mp, waitfor)
 	struct mount *mp;
 	int waitfor;
 {
-	if (syncprt)
-		bufstats();
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
