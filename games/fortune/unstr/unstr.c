@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.6 1999/09/08 21:57:17 jsm Exp $	*/
+/*	$NetBSD: unstr.c,v 1.7 1999/09/18 19:38:50 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: unstr.c,v 1.6 1999/09/08 21:57:17 jsm Exp $");
+__RCSID("$NetBSD: unstr.c,v 1.7 1999/09/18 19:38:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ void
 order_unstr(tbl)
 	STRFILE	*tbl;
 {
-	int	i;
+	unsigned int	i;
 	char	*sp;
 	off_t	pos;
 	char	buf[BUFSIZ];
