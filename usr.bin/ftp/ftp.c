@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.74 1999/10/01 08:01:12 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.75 1999/10/01 09:23:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.74 1999/10/01 08:01:12 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.75 1999/10/01 09:23:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,6 @@ int	abrtflag = 0;
 jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
-off_t	restart_point = 0;
 char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 
 static int empty __P((FILE *, FILE *, int));
