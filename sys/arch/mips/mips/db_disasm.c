@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 1999/12/27 21:12:25 castor Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6 2000/07/17 07:04:19 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,6 +74,10 @@ static char *spec_name[64] = {
 /*40 */ "spec50","spec51","slt","sltu", "dadd","daddu","dsub","dsubu",
 /*48 */ "tge","tgeu","tlt","tltu","teq","spec65","tne","spec67",
 /*56 */ "dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
+};
+
+static char *spec2_name[4] = {		/* QED RM4650, R5000, etc. */
+/* 0 */ "mad", "madu", "mul", "spec3"
 };
 
 static char *bcond_name[32] = {
@@ -251,6 +255,21 @@ db_disasm_insn(insn, loc, altfmt)
 		}
 		break;
 
+	case OP_SPECIAL2:
+		if (i.RType.func == OP_MUL)
+			db_printf("%s\t%s,%s,%s",
+				spec2_name[i.RType.func & 0x3],
+		    		reg_name[i.RType.rd],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt]);
+		else
+			db_printf("%s\t%s,%s",
+				spec2_name[i.RType.func & 0x3],
+		    		reg_name[i.RType.rs],
+		    		reg_name[i.RType.rt]);
+			
+		break;
+
 	case OP_BCOND:
 		db_printf("%s\t%s,", bcond_name[i.IType.rt],
 		    reg_name[i.IType.rs]);
@@ -412,6 +431,14 @@ db_disasm_insn(insn, loc, altfmt)
 		    i.IType.imm);
 		break;
 
+	case OP_CACHE:
+		db_printf("%s\t0x%x,0x%x(%s)",
+		    op_name[i.IType.op],
+		    i.IType.rt,
+		    i.IType.imm,
+		    reg_name[i.IType.rs]);
+		break;
+
 	case OP_ADDI:
 	case OP_DADDI:
 	case OP_ADDIU:
@@ -432,7 +459,7 @@ db_disasm_insn(insn, loc, altfmt)
 	db_printf("\n");
 	if (bdslot) {
 		db_printf("\t\tbdslot:\t");
-		db_print_loc_and_inst(loc+4);
+		db_disasm(loc+4, FALSE);
 		return (loc + 8);
 	}
 	return (loc + 4);
