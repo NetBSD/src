@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.98 2005/01/01 21:08:02 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.99 2005/01/01 21:09:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.98 2005/01/01 21:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.99 2005/01/01 21:09:56 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -99,6 +99,8 @@ static struct pool	*drainpp;
 /* This spin lock protects both pool_head and drainpp. */
 struct simplelock pool_head_slock = SIMPLELOCK_INITIALIZER;
 
+typedef uint8_t pool_item_freelist_t;
+
 struct pool_item_header {
 	/* Page headers */
 	LIST_ENTRY(pool_item_header)
@@ -117,8 +119,12 @@ struct pool_item_header {
 		struct {
 			uint16_t
 				phu_off;	/* start offset in page */
-			uint16_t
+			pool_item_freelist_t
 				phu_firstfree;	/* first free item */
+			/*
+			 * XXX it might be better to use
+			 * a simple bitmap and ffs(3)
+			 */
 		} phu_notouch;
 	} ph_u;
 	uint16_t		ph_nmissing;	/* # of chunks in use */
@@ -317,17 +323,18 @@ pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
 	return idx;
 }
 
-#define	PR_FREELIST_ALIGN(p)	roundup((uintptr_t)(p), sizeof(uint16_t))
-#define	PR_FREELIST(ph)	((uint16_t *)PR_FREELIST_ALIGN((ph) + 1))
-#define	PR_INDEX_USED	((uint16_t)-1)
-#define	PR_INDEX_EOL	((uint16_t)-2)
+#define	PR_FREELIST_ALIGN(p) \
+	roundup((uintptr_t)(p), sizeof(pool_item_freelist_t))
+#define	PR_FREELIST(ph)	((pool_item_freelist_t *)PR_FREELIST_ALIGN((ph) + 1))
+#define	PR_INDEX_USED	((pool_item_freelist_t)-1)
+#define	PR_INDEX_EOL	((pool_item_freelist_t)-2)
 
 static __inline void
 pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
     void *obj)
 {
 	int idx = pr_item_notouch_index(pp, ph, obj);
-	uint16_t *freelist = PR_FREELIST(ph);
+	pool_item_freelist_t *freelist = PR_FREELIST(ph);
 
 	KASSERT(freelist[idx] == PR_INDEX_USED);
 	freelist[idx] = ph->ph_firstfree;
@@ -338,7 +345,7 @@ static __inline void *
 pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 {
 	int idx = ph->ph_firstfree;
-	uint16_t *freelist = PR_FREELIST(ph);
+	pool_item_freelist_t *freelist = PR_FREELIST(ph);
 
 	KASSERT(freelist[idx] != PR_INDEX_USED);
 	ph->ph_firstfree = freelist[idx];
@@ -453,6 +460,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	int off, slack;
 	size_t trysize, phsize;
 	int s;
+
+	KASSERT((1UL << (CHAR_BIT * sizeof(pool_item_freelist_t))) - 2 >=
+	    PHPOOL_FREELIST_NELEM(PHPOOL_MAX - 1));
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -654,7 +664,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			sz = sizeof(struct pool_item_header);
 			if (nelem) {
 				sz = PR_FREELIST_ALIGN(sz)
-				    + nelem * sizeof(uint16_t);
+				    + nelem * sizeof(pool_item_freelist_t);
 			}
 			pool_init(&phpool[idx], sz, 0, 0, 0,
 			    phpool_names[idx], &pool_allocator_meta);
@@ -1280,12 +1290,11 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	n = pp->pr_itemsperpage;
 	pp->pr_nitems += n;
 
-	ph->ph_off = cp - storage;
-
 	if (pp->pr_roflags & PR_NOTOUCH) {
-		uint16_t *freelist = PR_FREELIST(ph);
+		pool_item_freelist_t *freelist = PR_FREELIST(ph);
 		int i;
 
+		ph->ph_off = cp - storage;
 		ph->ph_firstfree = 0;
 		for (i = 0; i < n - 1; i++)
 			freelist[i] = i + 1;
