@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.3 1998/10/13 08:59:46 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.4 1998/10/13 09:34:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -193,7 +193,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
 	int s, ret;
 
-	WDCDEBUG_PRINT(("wdc_atapi_send_cmd\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("wdc_atapi_send_cmd\n"), DEBUG_XFERS);
 
 	xfer = wdc_get_xfer(flags & SCSI_NOSLEEP ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
@@ -233,7 +233,7 @@ wdc_atapi_start(chp, xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_start, scsi flags 0x%x \n",sc_xfer->flags),
-	    DEBUG_FUNCS);
+	    DEBUG_XFERS);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != PIOMODE) {
@@ -591,9 +591,10 @@ wdc_atapi_ctrl(chp, xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
 
-	WDCDEBUG_PRINT(("wdc_atapi_ctrl state %d\n", drvp->state), DEBUG_INTR);
 	/* Ack interrupt done in wait_for_unbusy */
 again:
+	WDCDEBUG_PRINT(("wdc_atapi_ctrl state %d\n", drvp->state),
+	    DEBUG_INTR | DEBUG_FUNCS);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
 	switch (drvp->state) {
@@ -679,18 +680,18 @@ wdc_atapi_done(chp, xfer)
 	int need_done =  xfer->c_flags & C_NEEDDONE;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done: flags 0x%x\n", (u_int)xfer->c_flags),
-	    DEBUG_FUNCS);
+	    DEBUG_XFERS);
 	sc_xfer->resid = xfer->c_bcount;
 	/* remove this command from xfer queue */
 	xfer->c_skip = 0;
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
 	if (need_done) {
-		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_FUNCS);
+		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 		scsipi_done(sc_xfer);
 	}
 	WDCDEBUG_PRINT(("wdcstart from wdc_atapi_done, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_FUNCS);
+	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(wdc, chp->channel);
 }
 
