@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.16 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.17 2000/06/07 18:27:39 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -293,6 +293,8 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 		servtype = nconf->nc_semantics;
 		if (!__rpc_fd2sockinfo(fd, &si))
 			goto err;
+
+		bindresvport(fd, NULL);
 	} else {
 		if (!__rpc_fd2sockinfo(fd, &si))
 			goto err;
