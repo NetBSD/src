@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.69 2003/05/14 16:57:03 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.70 2003/05/14 17:18:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.69 2003/05/14 16:57:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.70 2003/05/14 17:18:36 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -830,7 +830,7 @@ add_mfc(m)
 	/* If an entry already exists, just update the fields */
 	if (rt) {
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc update o %x g %x p %x\n",
+			log(LOG_DEBUG, "add_mfc update o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
@@ -861,7 +861,7 @@ add_mfc(m)
 				    mfccp->mfcc_parent, rt->mfc_stall);
 
 			if (mrtdebug & DEBUG_MFC)
-				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p\n",
+				log(LOG_DEBUG, "add_mfc o %x g %x p %x dbg %p\n",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
@@ -894,7 +894,7 @@ add_mfc(m)
 		 * No mfc; make a new one
 		 */
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc no upcall o %x g %x p %x\n",
+			log(LOG_DEBUG, "add_mfc no upcall o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
@@ -1318,7 +1318,7 @@ ip_mdq(m, ifp, rt)
  * input, they shouldn't get counted on output, so statistics keeping is
  * separate.
  */
-#define MC_SEND(ip,vifp,m) do {				\
+#define MC_SEND(ip, vifp, m) do {			\
 	if ((vifp)->v_flags & VIFF_TUNNEL)		\
 		encap_send((ip), (vifp), (m));		\
 	else						\
@@ -1345,7 +1345,8 @@ ip_mdq(m, ifp, rt)
 		/* came in the wrong interface */
 		if (mrtdebug & DEBUG_FORWARD)
 			log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
-			    ifp, vifi, viftable[vifi].v_ifp);
+			    ifp, vifi,
+			    vifi >= numvifs ? 0 : viftable[vifi].v_ifp);
 		++mrtstat.mrts_wrong_if;
 		++rt->mfc_wrong_if;
 		/*
@@ -1915,7 +1916,7 @@ ip_rsvp_vif_init(so, m)
 	i = *(mtod(m, int *));
 
 	if (rsvpdebug)
-		printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",i,rsvp_on);
+		printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n", i, rsvp_on);
 
 	s = splsoftnet();
 
@@ -2041,7 +2042,7 @@ rsvp_input(m, ifp)
 	int s;
 
 	if (rsvpdebug)
-		printf("rsvp_input: rsvp_on %d\n",rsvp_on);
+		printf("rsvp_input: rsvp_on %d\n", rsvp_on);
 
 	/*
 	 * Can still get packets with rsvp_on = 0 if there is a local member
@@ -2106,7 +2107,7 @@ rsvp_input(m, ifp)
 
 	if (rsvpdebug && m)
 		printf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
-		    m->m_len,sbspace(&viftable[vifi].v_rsvpd->so_rcv));
+		    m->m_len, sbspace(&viftable[vifi].v_rsvpd->so_rcv));
 
 	if (socket_send(viftable[vifi].v_rsvpd, m, &rsvp_src) < 0)
 		if (rsvpdebug)
