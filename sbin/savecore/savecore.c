@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.52 2001/06/13 23:16:27 wiz Exp $	*/
+/*	$NetBSD: savecore.c,v 1.53 2001/09/12 02:58:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.52 2001/06/13 23:16:27 wiz Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.53 2001/09/12 02:58:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ time_t	now;				/* current date */
 char	panic_mesg[1024];
 long	panicstr;
 char	vers[1024];
+char	gzmode[3];
 
 static int	clear, compress, force, verbose;	/* flags */
 
@@ -152,14 +153,16 @@ void	Write(int, void *, int);
 int
 main(int argc, char *argv[])
 {
-	int ch;
+	int ch, level;
+	char *ep;
 
 	dirname = NULL;
 	kernel = NULL;
+	gzmode[0] = 'w';
 
 	openlog("savecore", LOG_PERROR, LOG_DAEMON);
 
-	while ((ch = getopt(argc, argv, "cdfN:vz")) != -1)
+	while ((ch = getopt(argc, argv, "cdfN:vzZ:")) != -1)
 		switch(ch) {
 		case 'c':
 			clear = 1;
@@ -176,6 +179,15 @@ main(int argc, char *argv[])
 			break;
 		case 'z':
 			compress = 1;
+			break;
+		case 'Z':
+			level = (int)strtol(optarg, &ep, 10);
+			if (level < 0 || level > 9) {
+				(void)syslog(LOG_ERR, "invalid compression %s",
+				    optarg);
+				usage();
+			}
+			gzmode[1] = level + '0';
 			break;
 		case '?':
 		default:
@@ -499,7 +511,7 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d.core%s",
 	    dirname, bounds, compress ? ".gz" : "");
 	if (compress) {
-		if ((fp = zopen(path, "w")) == NULL) {
+		if ((fp = zopen(path, gzmode)) == NULL) {
 			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
@@ -561,7 +573,7 @@ err2:			syslog(LOG_WARNING,
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s",
 	    dirname, bounds, compress ? ".gz" : "");
 	if (compress) {
-		if ((fp = zopen(path, "w")) == NULL) {
+		if ((fp = zopen(path, gzmode)) == NULL) {
 			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
@@ -774,6 +786,7 @@ Write(int fd, void *bp, int size)
 void
 usage(void)
 {
-	(void)syslog(LOG_ERR, "usage: savecore [-cfvz] [-N system] directory");
+	(void)syslog(LOG_ERR,
+	    "usage: savecore [-cfvz] [-N system] [-Z level] directory");
 	exit(1);
 }
