@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.2 1998/11/10 04:32:03 mark Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.3 2000/01/10 07:43:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -76,6 +76,9 @@ struct cfattach footbridge_ca = {
 
 /* Various bus space tags */
 extern struct bus_space footbridge_bs_tag;
+extern void footbridge_create_io_bs_tag(bus_space_tag_t t, void *cookie);
+extern void footbridge_create_mem_bs_tag(bus_space_tag_t t, void *cookie);
+struct bus_space footbridge_csr_tag;
 struct bus_space footbridge_pci_io_bs_tag;
 struct bus_space footbridge_pci_mem_bs_tag;
 extern struct arm32_pci_chipset footbridge_pci_chipset;
@@ -92,10 +95,10 @@ void
 footbridge_pci_bs_tag_init(void)
 {
 	/* Set up the PCI bus tags */
-	footbridge_pci_io_bs_tag = footbridge_bs_tag;
-	footbridge_pci_io_bs_tag.bs_cookie = (void *)DC21285_PCI_IO_VBASE;
-	footbridge_pci_mem_bs_tag = footbridge_bs_tag;
-	footbridge_pci_mem_bs_tag.bs_cookie = (void *)DC21285_PCI_MEM_VBASE;
+	footbridge_create_io_bs_tag(&footbridge_pci_io_bs_tag,
+	    (void *)DC21285_PCI_IO_VBASE);
+	footbridge_create_mem_bs_tag(&footbridge_pci_mem_bs_tag,
+	    (void *)DC21285_PCI_MEM_BASE);
 }
 
 /*
@@ -188,10 +191,10 @@ footbridge_attach(parent, self, aux)
 	    "parity", footbridge_intr, sc);
 
 	/* Set up the PCI bus tags */
-	footbridge_pci_io_bs_tag = footbridge_bs_tag;
-	footbridge_pci_io_bs_tag.bs_cookie = (void *)DC21285_PCI_IO_VBASE;
-	footbridge_pci_mem_bs_tag = footbridge_bs_tag;
-	footbridge_pci_mem_bs_tag.bs_cookie = (void *)DC21285_PCI_MEM_VBASE;
+	footbridge_create_io_bs_tag(&footbridge_pci_io_bs_tag,
+	    (void *)DC21285_PCI_IO_VBASE);
+	footbridge_create_mem_bs_tag(&footbridge_pci_mem_bs_tag,
+	    (void *)DC21285_PCI_MEM_BASE);
 
 	/* Attach the PCI bus */
 	fba.fba_pba.pba_busname = "pci";
