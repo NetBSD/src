@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.6 2002/01/18 13:51:01 shin Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.7 2002/01/20 03:34:27 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -276,9 +276,9 @@ int	config_connected_call(config_call_tag, void *);
 #define PCIINTR_ID(bus, dev, func)	CONFIG_HOOK_PCIINTR_ID(bus, dev, func)
 #define PCIINTR_00_00_00	PCIINTR_ID(0,  0, 0)
 #define PCIINTR_00_01_00	PCIINTR_ID(0,  1, 0)
-#define PCIINTR_00_12_00	PCIINTR_ID(0, 12, 0)
+#define PCIINTR_00_12_02	PCIINTR_ID(0, 12, 2)
 #define PCIINTR_00_16_00	PCIINTR_ID(0, 16, 0)
-#define PCIINTR_00_19_00	PCIINTR_ID(0, 19, 0)
+#define PCIINTR_00_19_02	PCIINTR_ID(0, 19, 2)
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
 
 /*
