@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.16 1998/10/01 03:33:18 erh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.17 1998/10/03 20:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,14 +94,15 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_socket.h>
+#include <compat/linux/common/linux_socketcall.h>
+#include <compat/linux/common/linux_sockio.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_ioctl.h>
-#include <compat/linux/linux_socket.h>
-#include <compat/linux/linux_socketcall.h>
-#include <compat/linux/linux_sockio.h>
 
 /*
  * The calls in this file are entered either via the linux_socketcall()

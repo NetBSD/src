@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.23 1998/10/01 03:22:11 erh Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.24 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,11 +76,12 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_fcntl.h>
+#include <compat/linux/common/linux_util.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_fcntl.h>
-#include <compat/linux/linux_util.h>
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc */
 /* Not used on: alpha, sparc64 */

@@ -1,8 +1,11 @@
-/*	$NetBSD: linux_cdrom.h,v 1.2 1998/10/01 02:30:37 erh Exp $ */
+/*	$NetBSD: linux_cdrom.h,v 1.3 1998/10/03 20:17:40 christos Exp $	*/
 
-/*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -33,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_CDROM_H
-#define _COMMON_LINUX_CDROM_H
+#ifndef _LINUX_CDROM_H
+#define _LINUX_CDROM_H
 
 #define LINUX_CDROMPAUSE	0x5301
 #define LINUX_CDROMRESUME	0x5302
@@ -116,4 +119,4 @@ struct linux_cdrom_volctrl {
 	u_char	channel3;
 };
 
-#endif /* !_COMMON_LINUX_CDROM_H */
+#endif /* !_LINUX_CDROM_H */

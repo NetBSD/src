@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.4 1998/10/01 01:19:07 erh Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.5 1998/10/03 20:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,10 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Note: Machine dependant portions of this file exist. */
-
-#ifndef _COMMON_LINUX_SOCKET_H
-#define _COMMON_LINUX_SOCKET_H
+#ifndef _LINUX_SOCKET_H
+#define _LINUX_SOCKET_H
 
 /*
  * Various Linux socket defines. Everything that is not re-defined here
@@ -156,4 +154,12 @@
 #define	LINUX_TCP_NODELAY	1
 #define	LINUX_TCP_MAXSEG	2
 
-#endif /* !_COMMON_LINUX_SOCKET_H */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_socket.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_socket.h>
+#else
+#error Undefined linux_socket.h machine type.
+#endif
+
+#endif /* !_LINUX_SOCKET_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dirent.h,v 1.4 1998/10/01 03:37:51 erh Exp $	*/
+/*	$NetBSD: linux_dirent.h,v 1.5 1998/10/03 20:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_DIRENT_H
-#define _COMMON_LINUX_DIRENT_H
+#ifndef _LINUX_DIRENT_H
+#define _LINUX_DIRENT_H
 
 #define LINUX_MAXNAMLEN	255
 
@@ -82,4 +82,4 @@ struct linux_dirent {
 #define LINUX_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
 #define LINUX_RECLEN(de,namlen) ALIGN((LINUX_NAMEOFF(de) + (namlen) + 1))
 
-#endif /* !_COMMON_LINUX_DIRENT_H */
+#endif /* !_LINUX_DIRENT_H */

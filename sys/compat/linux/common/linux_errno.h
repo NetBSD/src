@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.2 1998/10/01 01:03:37 erh Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.3 1998/10/03 20:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_ERRNO_H
-#define _COMMON_LINUX_ERRNO_H
+#ifndef _LINUX_ERRNO_H
+#define _LINUX_ERRNO_H
 
 #define LINUX_EPERM		 1
 #define LINUX_ENOENT		 2
@@ -106,7 +106,15 @@
 #define LINUX_ERANGE		34
 #define LINUX_EDEADLK		35
 
+
 /* Error numbers after here vary wildly    */
 /* depending on the machine architechture. */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_errno.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_errno.h>
+#else
+#error Undefined linux_errno.h machine type.
+#endif
 
-#endif /* !_COMMON_LINUX_ERRNO_H */
+#endif /* !_LINUX_ERRNO_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.2 1998/10/01 03:34:50 erh Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.3 1998/10/03 20:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,9 +67,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MULTIARCH_LINUX_SOCKETCALL_H
-#define _MULTIARCH_LINUX_SOCKETCALL_H
+#ifndef _LINUX_SOCKETCALL_H
+#define _LINUX_SOCKETCALL_H
 
+/* Alpha does not use the socketcall multiplexer */
+#if !defined(__alpha__)
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
 /* Not used on: alpha */
 
@@ -225,7 +227,7 @@ struct linux_sys_recvmsg_args {
 	syscallarg(u_int) flags;
 };
 
-#ifdef _KERNEL
+# ifdef _KERNEL
 __BEGIN_DECLS
 int linux_sys_socket __P((struct proc *, void *, register_t *));
 int linux_sys_socketpair __P((struct proc *, void *, register_t *));
@@ -234,6 +236,8 @@ int linux_sys_recvfrom __P((struct proc *, void *, register_t *));
 int linux_sys_setsockopt __P((struct proc *, void *, register_t *));
 int linux_sys_getsockopt __P((struct proc *, void *, register_t *));
 __END_DECLS
-#endif /* !_KERNEL */
+# endif /* !_KERNEL */
 
-#endif /* !_MULTIARCH_LINUX_SOCKETCALL_H */
+# endif
+
+#endif /* !_LINUX_SOCKETCALL_H */
