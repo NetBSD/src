@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.13 1999/01/29 11:36:20 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.14 1999/02/08 15:22:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -472,8 +472,7 @@ wdc_ata_bio_intr(chp, xfer)
 
 	/* If this was a read and not using DMA, fetch the data. */
 	if ((ata_bio->flags & ATA_READ) != 0) {
-		if ((chp->ch_status & (WDCS_DRDY | WDCS_DSC | WDCS_DRQ)) !=
-		    (WDCS_DRDY | WDCS_DSC | WDCS_DRQ)) {
+		if ((chp->ch_status & WDCS_DRQ) != WDCS_DRQ) {
 			printf("%s:%d:%d: read intr before drq\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive);
