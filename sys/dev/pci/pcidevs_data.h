@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.382 2002/01/01 21:47:34 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.383 2002/01/03 05:27:39 rafal Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp 
+ *	NetBSD: pcidevs,v 1.380 2002/01/03 05:25:48 rafal Exp 
  */
 
 /*
@@ -4562,6 +4562,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Quantum Designs",
 	    "8580",
+	},
+	{
+	    PCI_VENDOR_RAINBOW, PCI_PRODUCT_RAINBOW_CS200,
+	    0,
+	    "Rainbow Technologies",
+	    "CryptoSwift 200 PKI Accelerator",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
@@ -9577,6 +9583,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_RAINBOW, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Rainbow Technologies",
 	    NULL,
 	},
 	{
