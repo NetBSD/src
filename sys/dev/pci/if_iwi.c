@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.3 2005/01/11 18:54:18 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.4 2005/01/15 13:27:23 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.3 2005/01/11 18:54:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.4 2005/01/15 13:27:23 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -146,9 +146,6 @@ int iwi_debug = 0;
 
 CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
-
-#define PCI_PRODUCT_INTEL_PRO_WL_2200BG		0x4220
-#define PCI_PRODUCT_INTEL_PRO_WL_2915ABG	0x4223
 
 static int
 iwi_match(struct device *parent, struct cfdata *match, void *aux)
