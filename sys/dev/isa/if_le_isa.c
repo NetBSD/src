@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.5 1996/10/13 01:37:52 christos Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.6 1996/12/02 05:44:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -59,12 +59,11 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/isa_machdep.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
@@ -91,14 +90,21 @@ int le_isa_intredge __P((void *));
 hide void le_isa_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_isa_rdcsr __P((struct am7990_softc *, u_int16_t));  
 
+void	depca_copytobuf __P((struct am7990_softc *, void *, int, int));
+void	depca_copyfrombuf __P((struct am7990_softc *, void *, int, int));
+void	depca_zerobuf __P((struct am7990_softc *, int, int));
+
 hide void
 le_isa_wrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
+	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t iot = lesc->sc_iot;
+	bus_space_handle_t ioh = lesc->sc_ioh;
 
-	outw(((struct le_softc *)sc)->sc_rap, port);
-	outw(((struct le_softc *)sc)->sc_rdp, val);
+	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
+	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
 hide u_int16_t
@@ -106,10 +112,13 @@ le_isa_rdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
 {
+	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t iot = lesc->sc_iot;
+	bus_space_handle_t ioh = lesc->sc_ioh; 
 	u_int16_t val;
 
-	outw(((struct le_softc *)sc)->sc_rap, port);
-	val = inw(((struct le_softc *)sc)->sc_rdp);
+	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
+	val = bus_space_read_2(iot, ioh, lesc->sc_rdp); 
 	return (val);
 }
 
@@ -138,20 +147,38 @@ depca_isa_probe(lesc, ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase, port;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
+	bus_space_handle_t memh;
 #if 0
-	u_long sum, rom_sum;
-	u_char x;
+	u_int32_t sum, rom_sum;
+	u_int8_t x;
 #endif
 	int i;
 
-	lesc->sc_rap = iobase + DEPCA_RAP;
-	lesc->sc_rdp = iobase + DEPCA_RDP;
+	/* Map i/o space. */
+	if (bus_space_map(iot, iobase, 16, 0, &ioh))
+		return 0;
+
+	if (ia->ia_maddr == MADDRUNK || ia->ia_msize == -1)
+		goto bad;
+
+	/* Map card RAM. */
+	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize,
+	    0, &memh))
+		goto bad;
+
+	/* Just needed to check mapability; don't need it anymore. */
+	bus_space_unmap(ia->ia_memt, ia->ia_maddr, ia->ia_msize);
+
+	lesc->sc_rap = DEPCA_RAP;
+	lesc->sc_rdp = DEPCA_RDP;
 	lesc->sc_card = DEPCA;
 
 	if (lance_isa_probe(sc) == 0)
-		return 0;
+		goto bad;
 
-	outb(iobase + DEPCA_CSR, DEPCA_CSR_DUM);
+	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_DUM);
 
 	/*
 	 * Extract the physical MAC address from the ROM.
@@ -166,26 +193,34 @@ depca_isa_probe(lesc, ia)
 	 * It appears that the PROM can be at one of two locations, so
 	 * we just try both.
 	 */
-	port = iobase + DEPCA_ADP;
+	port = DEPCA_ADP;
 	for (i = 0; i < 32; i++)
-		if (inb(port) == 0xff && inb(port) == 0x00 &&
-		    inb(port) == 0x55 && inb(port) == 0xaa &&
-		    inb(port) == 0xff && inb(port) == 0x00 &&
-		    inb(port) == 0x55 && inb(port) == 0xaa)
+		if (bus_space_read_1(iot, ioh, port) == 0xff &&
+		    bus_space_read_1(iot, ioh, port) == 0x00 &&
+		    bus_space_read_1(iot, ioh, port) == 0x55 &&
+		    bus_space_read_1(iot, ioh, port) == 0xaa &&
+		    bus_space_read_1(iot, ioh, port) == 0xff &&
+		    bus_space_read_1(iot, ioh, port) == 0x00 &&
+		    bus_space_read_1(iot, ioh, port) == 0x55 &&
+		    bus_space_read_1(iot, ioh, port) == 0xaa)
 			goto found;
-	port = iobase + DEPCA_ADP + 1;
+	port = DEPCA_ADP + 1;
 	for (i = 0; i < 32; i++)
-		if (inb(port) == 0xff && inb(port) == 0x00 &&
-		    inb(port) == 0x55 && inb(port) == 0xaa &&
-		    inb(port) == 0xff && inb(port) == 0x00 &&
-		    inb(port) == 0x55 && inb(port) == 0xaa)
+		if (bus_space_read_1(iot, ioh, port) == 0xff &&
+		    bus_space_read_1(iot, ioh, port) == 0x00 &&
+		    bus_space_read_1(iot, ioh, port) == 0x55 &&
+		    bus_space_read_1(iot, ioh, port) == 0xaa &&
+		    bus_space_read_1(iot, ioh, port) == 0xff &&
+		    bus_space_read_1(iot, ioh, port) == 0x00 &&
+		    bus_space_read_1(iot, ioh, port) == 0x55 &&
+		    bus_space_read_1(iot, ioh, port) == 0xaa)
 			goto found;
 	printf("%s: address not found\n", sc->sc_dev.dv_xname);
-	return 0;
+	goto bad;
 
 found:
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(port);
+		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, port);
 
 #if 0
 	sum =
@@ -198,21 +233,32 @@ found:
 	sum = (sum & 0xffff) + (sum >> 16);
 	sum = (sum & 0xffff) + (sum >> 16);
 
-	rom_sum = inb(port);
-	rom_sum |= inb(port) << 8;
+	rom_sum = bus_space_read_1(iot, ioh, port);
+	rom_sum |= bus_space_read_1(iot, ioh, port) << 8;
 
 	if (sum != rom_sum) {
 		printf("%s: checksum mismatch; calculated %04x != read %04x",
 		    sc->sc_dev.dv_xname, sum, rom_sum);
-		return 0;
+		goto bad;
 	}
 #endif
 
-	outb(iobase + DEPCA_CSR, DEPCA_CSR_NORMAL);
+	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_NORMAL);
+
+	/*
+	 * XXX INDIRECT BROKENNESS!
+	 * XXX Should always unmap, and re-map in if_le_isa_attach().
+	 */
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 16;
 	ia->ia_drq = DRQUNK;
 	return 1;
+
+ bad:
+	bus_space_unmap(iot, ioh, 16);
+	return 0;
 }
 
 int
@@ -222,20 +268,35 @@ ne2100_isa_probe(lesc, ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int i;
 
-	lesc->sc_rap = iobase + NE2100_RAP;
-	lesc->sc_rdp = iobase + NE2100_RDP;
+	/* Map i/o space. */
+	if (bus_space_map(iot, iobase, 24, 0, &ioh))
+		return 0;
+
+	lesc->sc_rap = NE2100_RAP;
+	lesc->sc_rdp = NE2100_RDP;
 	lesc->sc_card = NE2100;
 
-	if (lance_isa_probe(sc) == 0)
+	if (lance_isa_probe(sc) == 0) {
+		bus_space_unmap(iot, ioh, 24);
 		return 0;
+	}
 
 	/*
 	 * Extract the physical MAC address from the ROM.
 	 */
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
+		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
+
+	/*
+	 * XXX INDIRECT BROKENNESS!
+	 * XXX Should always unmap, and re-map in if_le_isa_attach().
+	 */
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 24;
 	return 1;
@@ -248,20 +309,35 @@ bicc_isa_probe(lesc, ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int i;
 
-	lesc->sc_rap = iobase + BICC_RAP;
-	lesc->sc_rdp = iobase + BICC_RDP;
+	/* Map i/o space. */
+	if (bus_space_map(iot, iobase, 16, 0, &ioh))
+		return 0;
+
+	lesc->sc_rap = BICC_RAP;
+	lesc->sc_rdp = BICC_RDP;
 	lesc->sc_card = BICC;
 
-	if (lance_isa_probe(sc) == 0)
+	if (lance_isa_probe(sc) == 0) {
+		bus_space_unmap(iot, ioh, 16);
 		return 0;
+	}
 
 	/*
 	 * Extract the physical MAC address from the ROM.
 	 */
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i * 2);
+		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i * 2);
+
+	/*
+	 * XXX INDIRECT BROKENNESS!
+	 * XXX Should always unmap, and re-map in if_le_isa_attach().
+	 */
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
 
 	ia->ia_iosize = 16;
 	return 1;
@@ -294,21 +370,38 @@ le_isa_attach(parent, self, aux)
 	struct le_softc *lesc = (void *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_tag_t memt = ia->ia_memt;
+	bus_space_handle_t memh;
 
 	printf(": %s Ethernet\n", card_type[lesc->sc_card]);
 
+	lesc->sc_iot = iot;
+	lesc->sc_memt = memt;
+
+	/* XXX SHOULD RE-MAP I/O SPACE HERE. */
+
 	if (lesc->sc_card == DEPCA) {
-		u_char *mem, val;
+		u_char val;
 		int i;
 
-		mem = sc->sc_mem = ISA_HOLE_VADDR(ia->ia_maddr);
+		/* Map shared memory. */
+		if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize,
+		    0, &memh))
+			panic("le_isa_attach: can't map shared memory");
+
+		lesc->sc_memh = memh;
 
 		val = 0xff;
 		for (;;) {
+#if 0	/* XXX !! */
+			bus_space_set_region_1(memt, memh, 0, val);
+#else
 			for (i = 0; i < ia->ia_msize; i++)
-				mem[i] = val;
+				bus_space_write_1(memt, memh, i, val);
+#endif
 			for (i = 0; i < ia->ia_msize; i++)
-				if (mem[i] != val) {
+				if (bus_space_read_1(memt, memh, 1) != val) {
 					printf("%s: failed to clear memory\n",
 					    sc->sc_dev.dv_xname);
 					return;
@@ -319,6 +412,7 @@ le_isa_attach(parent, self, aux)
 		}
 
 		sc->sc_conf3 = LE_C3_ACON;
+		sc->sc_mem = 0;			/* Not used. */
 		sc->sc_addr = 0;
 		sc->sc_memsize = ia->ia_msize;
 	} else {
@@ -330,15 +424,23 @@ le_isa_attach(parent, self, aux)
 		}
 
 		sc->sc_conf3 = 0;
-		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_addr = kvtop(sc->sc_mem);	/* XXX !! */
 		sc->sc_memsize = 16384;
 	}
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	if (lesc->sc_card == DEPCA) {
+		sc->sc_copytodesc = depca_copytobuf;
+		sc->sc_copyfromdesc = depca_copyfrombuf;
+		sc->sc_copytobuf = depca_copytobuf;
+		sc->sc_copyfrombuf = depca_copyfrombuf;
+		sc->sc_zerobuf = depca_zerobuf;
+	} else {
+		sc->sc_copytodesc = am7990_copytobuf_contig;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+		sc->sc_copytobuf = am7990_copytobuf_contig;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+		sc->sc_zerobuf = am7990_zerobuf_contig;
+	}
 
 	sc->sc_rdcsr = le_isa_rdcsr;
 	sc->sc_wrcsr = le_isa_wrcsr;
@@ -367,4 +469,48 @@ le_isa_intredge(arg)
 	for (;;)
 		if (am7990_intr(arg) == 0)
 			return (1);
+}
+
+/*
+ * DEPCA shared memory access functions.
+ */
+
+void
+depca_copytobuf(sc, from, boff, len)
+	struct am7990_softc *sc;
+	void *from;
+	int boff, len;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	bus_space_write_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	    from, len);
+}
+
+void
+depca_copyfrombuf(sc, to, boff, len)
+	struct am7990_softc *sc;  
+	void *to;
+	int boff, len;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	bus_space_read_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	    to, len);
+}
+
+void
+depca_zerobuf(sc, boff, len)
+	struct am7990_softc *sc;
+	int boff, len;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+#if 0	/* XXX !! */
+	bus_space_set_region_1(lesc->sc_memt, lesc->sc_memh, boff,
+	    0x00, len);
+#else
+	for (; len != 0; boff++, len--)
+		bus_space_write_1(lesc->sc_memt, lesc->sc_memh, boff, 0x00);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.6 1996/10/21 22:41:06 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.7 1996/12/02 05:44:18 thorpej Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -48,7 +48,9 @@ struct le_softc {
 
 	void	*sc_ih;
 	bus_space_tag_t sc_iot;
+	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_memh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
 };
