@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.8 2004/12/29 15:02:28 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.9 2004/12/29 19:55:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -153,8 +153,8 @@ typedef struct stream_filter_list {
 	int req_size;
 	struct stream_filter_req {
 		stream_filter_factory_t *factory;
-		audio_params_t param; /* output-param for recording,
-					 input-param for playing */
+		audio_params_t param; /* from-param for recording,
+					 to-param for playing */
 	} filters[AUDIO_MAX_FILTERS];
 } stream_filter_list_t;
 

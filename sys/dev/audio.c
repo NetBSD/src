@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.14 2004/12/29 18:17:38 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.15 2004/12/29 19:55:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.14 2004/12/29 18:17:38 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.15 2004/12/29 19:55:16 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2879,7 +2879,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 							    to_param);
 			if (pf[i] == NULL)
 				break;
-			if (audio_stream_ctor(&ps[i], to_param, AU_RING_SIZE))
+			if (audio_stream_ctor(&ps[i], from_param, AU_RING_SIZE))
 				break;
 			if (i > 0)
 				pf[i]->set_fetcher(pf[i], &pf[i - 1]->base);
@@ -2901,7 +2901,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 							    to_param);
 			if (rf[i] == NULL)
 				break;
-			if (audio_stream_ctor(&rs[i], from_param, AU_RING_SIZE))
+			if (audio_stream_ctor(&rs[i], to_param, AU_RING_SIZE))
 				break;
 			if (i > 0) {
 				rf[i]->set_fetcher(rf[i], &rf[i - 1]->base);
