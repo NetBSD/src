@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.69 1999/05/03 09:45:01 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.70 1999/06/03 01:58:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.69 1999/05/03 09:45:01 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.70 1999/06/03 01:58:51 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -881,6 +881,20 @@ makebootarea(boot, dp, f)
 	lp = (struct disklabel *)
 		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
 	(void) memset(lp, 0, sizeof *lp);
+#ifdef SAVEBOOTAREA
+	/*
+	 * We must read the current bootarea so we don't clobber the
+	 * existing boot block, if any.
+	 */
+	if (rflag) {
+		off_t sectoffset = 0;
+
+		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
+		    read(f, boot, BBSIZE) < BBSIZE)
+			err(4, "%s", specname);
+		(void) memset(lp, 0, sizeof *lp);
+	}
+#endif
 #if NUMBOOT > 0
 	/*
 	 * If we are not installing a boot program but we are installing a
