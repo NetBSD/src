@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2000/04/30 21:29:16 pk Exp $
+#	$NetBSD: genassym.cf,v 1.26 2000/05/08 03:09:55 mycroft Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,8 +108,7 @@ include <sparc/dev/zsvar.h>
 endif
 
 include <machine/bus.h>
-include <dev/ic/am7930reg.h>
-include <dev/ic/am7930var.h>
+include <sparc/dev/audioamdvar.h>
 
 include <sparc/dev/fdreg.h>
 include <sparc/dev/fdvar.h>
@@ -214,10 +213,6 @@ define	AU_REND		offsetof(struct auio, au_rend)
 define	AU_PDATA	offsetof(struct auio, au_pdata)
 define	AU_PEND		offsetof(struct auio, au_pend)
 define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
-
-define	AMD_IR		offsetof(struct am7930, ir)
-define	AMD_BBRB	offsetof(struct am7930, bbrb)
-define	AMD_BBTB	offsetof(struct am7930, bbtb)
 
 define	PROM_BASE	PROM_BASE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.16 1999/03/24 05:51:10 mrg Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.17 2000/05/08 03:09:54 mycroft Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <machine/asm.h>
 #include <sparc/sparc/intreg.h>
 #include <machine/psl.h>
+#include <dev/ic/am7930reg.h>
 
 #define AUDIO_SET_SWINTR_4C				\
 	sethi	%hi(INTRREG_VA), %l5;			\
@@ -111,7 +112,7 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	st	%l6, [%l7 + AU_EVCNT]
 
 	ld	[%l7 + AU_BH], R_amd
-	ldub    [R_amd + AMD_IR], %g0		! clear interrupt
+	ldub    [R_amd + AM7930_DREG_IR], %g0	! clear interrupt
 
 	! receive incoming data
 	ld	[%l7 + AU_RDATA], R_data
@@ -123,8 +124,9 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	bgu	1f
 	 nop
 
-	ldub	[R_amd + AMD_BBRB], %l6		! *d = amd->bbrb
-	stb	%l6, [ R_data ]
+	ldub	[R_amd + AM7930_DREG_BBRB], %l6	! *d = amd->bbrb
+	stb	%l6, [R_data]
+
 	cmp	R_data, R_end
 	inc	R_data				! au->au_rdata++
 	bne	1f				! if (d == e)
@@ -143,8 +145,8 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	bgu	2f
 	 nop
 
-	ldub	[ R_data ], %l6			! amd->bbtb = *d
-	stb	%l6, [ R_amd + AMD_BBTB ]
+	ldub	[R_data], %l6			! amd->bbtb = *d
+	stb	%l6, [R_amd + AM7930_DREG_BBTB]
 
 	cmp	R_data, R_end
 	inc	R_data				! au->au_pdata++
