@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.2 2002/07/21 04:35:49 lukem Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.3 2002/07/21 04:42:30 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.2 2002/07/21 04:35:49 lukem Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.3 2002/07/21 04:42:30 lukem Exp $");
 #endif
 
 /*
@@ -606,7 +606,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		}
 		(void) fclose(f);
 		
-		if (matches == 0)
+		if (matches == 0 && Verbose)
 			warnx("nothing appropriate found\n");
 	}
 
@@ -617,6 +617,8 @@ expandURL(char *expandedurl, const char *wildcardurl)
 			printf("best match: '%s%s'\n", base, best);
 		snprintf(expandedurl, FILENAME_MAX, "%s%s", base, best);
 	}
+	else
+		return -1;
     }
 
     return 0;
@@ -645,7 +647,7 @@ unpackURL(const char *url, const char *dir)
 			return -1;
 		}
 		if (strcmp(exp, url) != 0) {
-			warnx("unpackURL: verificatinon expandURL failed, '%s'!='%s'",
+			warnx("unpackURL: verification expandURL failed, '%s'!='%s'",
 			      exp, url);
 			return -1;
 		}
@@ -665,6 +667,7 @@ unpackURL(const char *url, const char *dir)
 	/* Leave a hint for any depending pkgs that may need it */
 	if (getenv("PKG_PATH") == NULL) {
 		setenv("PKG_PATH", pkg_path, 1);
+		path_create(pkg_path); /* XXX */
 		printf("setenv PKG_PATH='%s'\n",pkg_path);
 	}
 	
