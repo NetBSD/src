@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.1 1999/01/27 20:42:19 thorpej Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.2 1999/01/27 21:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -36,11 +36,15 @@
 /*
  * From i386 disklabel.h rev 1.6, with cleanups and modifications to
  * make it easier to use as MI code.
+ *
+ * Note, all fields (including magic number) are little-endian!
  */
 
 /* MBR ("Master Boot Record"; DOS) partition table -- located in boot block */
 #define	MBR_BBSECTOR	0		/* MBR relative sector # */
-#define	MBR_PARTOFF	446
+#define	MBR_PARTOFF	446		/* offset of MBR partition table */
+#define	MBR_MAGICOFF	510		/* offset of magic number */
+#define	MBR_MAGIC	0xaa55		/* MBR magic number */
 #define	NMBRPART	4
 
 #ifndef __ASSEMBLER__
