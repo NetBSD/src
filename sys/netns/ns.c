@@ -31,25 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns.c	7.8 (Berkeley) 6/27/91
- *	$Id: ns.c,v 1.2.4.1 1993/09/24 08:56:02 mycroft Exp $
+ *	$Id: ns.c,v 1.2.4.2 1993/11/08 20:36:52 mycroft Exp $
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "ioctl.h"
-#include "protosw.h"
-#include "errno.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/ioctl.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "machine/cpu.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
-#include "../net/af.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 
-#include "ns.h"
-#include "ns_if.h"
+#include <machine/cpu.h>
 
 #ifdef NS
 
