@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.75 2000/12/04 09:37:06 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.76 2001/01/09 10:44:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -445,6 +445,7 @@ ffs_reload(mountp, cred, p)
 	 */
 	memcpy(&newfs->fs_csp[0], &fs->fs_csp[0], sizeof(fs->fs_csp));
 	newfs->fs_maxcluster = fs->fs_maxcluster;
+	newfs->fs_ronly = fs->fs_ronly;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
