@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.8 1998/05/29 20:24:37 veego Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.9 1998/07/12 15:27:46 veego Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -128,10 +128,7 @@ nat_t *nat;
 #if	SOLARIS
 	mb_t *m1;
 
-	/* skip any leading M_PROTOs */
-	while(m && (MTYPE(m) != M_DATA))
-		m = m->b_cont;
-	PANIC((!m),("ippr_ftp_out: no M_DATA"));
+	m = fin->fin_qfm;
 
 	dlen = msgdsize(m) - off;
 	bzero(portbuf, sizeof(portbuf));

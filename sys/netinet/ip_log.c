@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.4 1998/05/17 17:07:25 veego Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.5 1998/07/12 15:24:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.13.2.3 1997/11/20 12:41:40 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13.2.4 1998/06/07 16:27:09 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
@@ -462,6 +462,7 @@ int unit;
 	iplog_t *ipl;
 	int used;
 
+	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit])) {
 		iplt[unit] = ipl->ipl_next;
 		KFREES((caddr_t)ipl, ipl->ipl_dsize);
@@ -470,6 +471,7 @@ int unit;
 	used = iplused[unit];
 	iplused[unit] = 0;
 	iplcrc[unit] = 0;
+	MUTEX_EXIT(&ipl_mutex);
 	return used;
 }
 #endif /* IPFILTER_LOG */
