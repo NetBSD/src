@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.27 2001/08/25 18:04:01 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.28 2001/11/13 07:41:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * MII bus layer, glues MII-capable network interface drivers to sharable
  * PHY drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.28 2001/11/13 07:41:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
