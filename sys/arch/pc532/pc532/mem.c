@@ -1,14 +1,13 @@
-/*	$NetBSD: mem.c,v 1.9 1995/01/18 08:14:35 phil Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1995/04/10 11:55:01 mycroft Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of
- * California.  All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department, and code derived from software contributed to
- * Berkeley by William Jolitz.
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,28 +37,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.13 89/10/08$
- *
- *	@(#)mem.c	7.2 (Berkeley) 5/9/91
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
  * Memory special file
  */
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/fcntl.h>
 
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
 
-extern        char *vmmap;		/* poor name! */
+extern char *vmmap;		/* poor name! */
+caddr_t zeropage;
 
 #ifndef NO_RTC
 int have_rtc = 1;			/* For access to rtc. */
@@ -78,7 +75,7 @@ void rw_rtc (unsigned char *buffer, int rw)
     {0xc5, 0x3a, 0xa3, 0x5c, 0xc5, 0x3a, 0xa3, 0x5c};
   volatile unsigned char * const rom_p = (unsigned char *)ROM_ORIGIN;
   unsigned char *bp;
-  unsigned char dummy;         /* To defeat optimization */
+  unsigned char dummy;	/* To defeat optimization */
 
   /* Read or write to the real time chip. Address line A0 functions as
    * data input, A2 is used as the /write signal. Accesses to the RTC
@@ -106,7 +103,7 @@ void rw_rtc (unsigned char *buffer, int rw)
       dummy = rom_p[ (*bp>>i) & 0x01 ];
   }
 
-  if (rw == 0) {			
+  if (rw == 0) {
 	/* Read the time from the RTC. Do this even this is
 	   a write, since the user might have only given
 	   partial data and the RTC must always be written
@@ -130,23 +127,52 @@ void rw_rtc (unsigned char *buffer, int rw)
   }
 }
 
+/*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
-
+	static int physlock;
 	/* /dev/rtc support. */
 	unsigned char buffer[8];
 
-
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmmap */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -161,32 +187,31 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
-			pmap_enter(kernel_pmap, vmmap, v,
-				uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
-				TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(kernel_pmap, vmmap, &vmmap[NBPG]);
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			c = iov->iov_len;
-			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
+			v = uio->uio_offset;
+			c = min(iov->iov_len, MAXPHYS);
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return(EFAULT);
-			error = uiomove((caddr_t)(long)uio->uio_offset, (int)c, uio);
+				return (EFAULT);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
-			if (uio->uio_rw == UIO_READ)
-				return (0);
-			c = iov->iov_len;
-			break;
+			if (uio->uio_rw == UIO_WRITE)
+				uio->uio_resid = 0;
+			return (0);
 
 #ifdef DEV_RTC
 /* minor device 3 is the realtime clock. */
@@ -196,18 +221,20 @@ mmrw(dev, uio, flags)
 
 			/* Calc offsets and lengths. */
 			v = uio->uio_offset;
-			if (v > 8) return(0);  /* EOF */
+			if (v > 8)
+				return (0);  /* EOF */
 			c = iov->iov_len;
-			if (v+c > 8) c = 8-v;
+			if (v+c > 8)
+				c = 8-v;
 
-			rw_rtc ( buffer, 0 );   /* Read the rtc. */
+			rw_rtc(buffer, 0);   /* Read the rtc. */
 
-			error = uiomove((caddr_t)&buffer[v], (int)c, uio);
+			error = uiomove((caddr_t)&buffer[v], c, uio);
 
 			if (uio->uio_rw == UIO_READ || error)
 				return (error);
 
-			rw_rtc ( buffer, 1 );   /* Write the rtc. */
+			rw_rtc(buffer, 1);   /* Write the rtc. */
 
 			return (error);
 #endif
@@ -218,13 +245,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zbuf == NULL) {
-				zbuf = (caddr_t)
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -237,17 +264,29 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
+	if (minor(dev) == 0) {
+unlock:
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
+	}
 	return (error);
 }
 
+int
+mmmmap(dev, off, prot)
+	dev_t dev;
+	int off, prot;
+{
+
+	return (EOPNOTSUPP);
+}
 
 /* Ram disk stuff.... */
 #ifdef RAMD_SIZE
 
 #ifndef RAMD_ADR
-#define RAMD_ADR	0x200000	
+#define RAMD_ADR	0x200000
 #endif
 
 /* config stuff .... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1994/10/26 02:32:54 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 1995/04/10 11:54:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,8 +37,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.14 90/10/12$
- *
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
@@ -50,30 +48,60 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
 
 extern u_int lowram;
 caddr_t zeropage;
 
 /*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	int kernloc;
+	static int physlock;
 
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmmap */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -90,29 +118,29 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram)
-				return (EFAULT);
+			if (v >= 0xFFFFFFFC || v < lowram) {
+				error = EFAULT;
+				goto unlock;
+			}
 #endif
 			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
-			    (vm_offset_t)&vmmap[NBPG]);
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			kernloc = uio->uio_offset;
+			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)kernloc, c,
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)kernloc, (int)c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -140,12 +168,12 @@ mmrw(dev, uio, flags)
 				zeropage = Segtabzero;
 #else
 				zeropage = (caddr_t)
-					malloc(CLBYTES, M_TEMP, M_WAITOK);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zeropage, CLBYTES);
 #endif
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -158,10 +186,17 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
+	if (minor(dev) == 0) {
+unlock:
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
+	}
 	return (error);
 }
 
-mmmap(dev, off, prot)
+int
+mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {

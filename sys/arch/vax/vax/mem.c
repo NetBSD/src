@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1995/04/10 04:02:53 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,14 +86,14 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
 	static int physlock;
 
 	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmempage */
+		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
 			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
@@ -124,9 +124,9 @@ mmrw(dev, uio, flags)
 			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (u_int)(NBPG - o));
-			error = uiomove((caddr_t)vmmap + o, (int)c, uio);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
 			continue;
@@ -138,7 +138,7 @@ mmrw(dev, uio, flags)
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove(v, (int)c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -159,7 +159,7 @@ mmrw(dev, uio, flags)
 				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
