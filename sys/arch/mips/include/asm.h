@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 1999/01/14 18:45:46 castor Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 1999/01/31 00:55:41 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -253,6 +253,17 @@ _C_LABEL(x): ;				\
 _C_LABEL(x): ;				\
 	.frame sp, fsize, retpc
 
+/* 
+ *  standard callframe {
+ *  	register_t cf_args[4];		arg0 - arg3
+ *  	register_t cf_sp;		frame pointer
+ *  	register_t cf_ra;		return address
+ *  };
+ */
+#define	CALLFRAME_SIZ	(4 * (4 + 2))
+#define	CALLFRAME_SP	(4 * 4)
+#define	CALLFRAME_RA	(4 * 5)
+
 /*
  * While it would be nice to be compatible with the SGI 
  * REG_L and REG_S macros, because they do not take parameters, it
@@ -263,24 +274,20 @@ _C_LABEL(x): ;				\
  * ABI calls.
  */
 
-#if	defined(_MIPS_BSD_SIM) && _MIPS_BSD_SIM_ != _MIPS_SIM_ABI32
-#define	REG_L	ld
-#define REG_S	sd
-#define	REG_LI	dli
-#define	REG_PROLOGUE	.set push ; .set mips3
-#define	REG_EPILOGUE	.set pop
-#define SZREG	8
-#else
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 #define	REG_L	lw
 #define REG_S	sw
 #define	REG_LI	li
 #define	REG_PROLOGUE	.set push 
 #define	REG_EPILOGUE	.set pop
 #define SZREG	4
-#endif	/* _MIPS_BSD_SIM */
-
-#ifndef _KERNEL
-#include <machine/pubassym.h>
-#endif
+#else
+#define	REG_L	ld
+#define REG_S	sd
+#define	REG_LI	dli
+#define	REG_PROLOGUE	.set push ; .set mips3
+#define	REG_EPILOGUE	.set pop
+#define SZREG	8
+#endif	/* _MIPS_BSD_API */
 
 #endif /* _MIPS_ASM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.8 1999/01/14 18:45:46 castor Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.9 1999/01/31 00:55:41 castor Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,6 +35,12 @@
 #define _MIPS_SIM_ABI64		3
 #define _MIPS_SIM_NABI32	2	/* 64bit safe, ILP32 n32 model */
 #define _MIPS_SIM_ABI32		1
+
+#define _MIPS_BSD_API_LP32	_MIPS_SIM_ABI32
+#define	_MIPS_BSD_API_LP32_64CLEAN	_MIPS_SIM_ABIX32
+#define	_MIPS_BSD_API_N32	_MIPS_SIM_NABI32
+#define	_MIPS_BSD_API_LP64	_MIPS_SIM_ABI64
+
 
 #define	_C_LABEL(x)	x
 

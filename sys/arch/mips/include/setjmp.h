@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.4 1999/01/15 03:43:56 castor Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5 1999/01/31 00:55:41 castor Exp $	*/
 
 /*
  * mips/setjmp.h: machine dependent setjmp-related information.
@@ -7,6 +7,8 @@
  * struct sigcontext to restore it.
  */
 
-#ifndef _JBLEN		/* Size in longs of jmp_buf */
-#include <machine/pubassym.h> 
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#define _JBLEN 87		/* XXX Naively 84; 87 for compatibility */
+#else
+#define _JBLEN	120
 #endif
