@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2001/06/25 23:22:39 chris Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -79,9 +79,10 @@ typedef	int	pt_entry_t;		/* page table entry */
 /* Page R/M attributes (in pmseg.attrs). */
 #define PT_M		0x01	/* Virt - Modified */
 #define PT_H		0x02	/* Virt - Handled (Used) */
-/* Mapping wired/writeable attributes (in pv_flags). */
+/* Mapping wired/writeable/cacheable attributes (in pv_flags). */
 #define PT_W		0x04	/* Virt - Wired */
 #define PT_Wr		0x08	/* Virt / Phys Write */
+#define PT_NC		0x10	/* Cacheing disabled (multi-mapped page) */
 
 /* access permissions for L2 pages (all sub pages have the same perms) */
 #define PT_AP(x)	((x << 10) | (x << 8) | (x << 6)  | (x << 4))
