@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.4 1998/05/25 20:59:01 kleink Exp $ */
+/* $NetBSD: signal.h,v 1.5 1998/09/13 01:51:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -44,10 +44,11 @@ typedef long	sig_atomic_t;
  * Note that sc_regs[] and sc_fpregs[]+sc_fpcr are inline
  * representations of 'struct reg' and 'struct fpreg', respectively.
  */
-struct  sigcontext {
-	long	sc_onstack;             /* sigstack state to restore */
-	long	sc_mask;                /* signal mask to restore */
-	long	sc_pc;                  /* pc to restore */
+#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+struct sigcontext13 {
+	long	sc_onstack;		/* sigstack state to restore */
+	long	sc_mask;		/* signal mask to restore (old style) */
+	long	sc_pc;			/* pc to restore */
 	long	sc_ps;			/* ps to restore */
 	unsigned long sc_regs[32];	/* integer register set (see above) */
 #define	sc_sp	sc_regs[R_SP]
@@ -57,6 +58,23 @@ struct  sigcontext {
 	unsigned long sc_fp_control;	/* FP software control word */
 	long	sc_reserved[2];		/* XXX */
 	long	sc_xxx[8];		/* XXX */
+};
+#endif /* __LIBC12_SOURCE__ || _KERNEL */
+
+struct sigcontext {
+	long	sc_onstack;		/* sigstack state to restore */
+	long	__sc_mask13;		/* signal mask to restore (old style) */
+	long	sc_pc;			/* pc to restore */
+	long	sc_ps;			/* ps to restore */
+	unsigned long sc_regs[32];	/* integer register set (see above) */
+#define	sc_sp	sc_regs[R_SP]
+	long	sc_ownedfp;		/* fp has been used */
+	unsigned long sc_fpregs[32];	/* FP register set (see above) */
+	unsigned long sc_fpcr;		/* FP control register (see above) */
+	unsigned long sc_fp_control;	/* FP software control word */
+	long	sc_reserved[2];		/* XXX */
+	long	sc_xxx[8];		/* XXX */
+	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
