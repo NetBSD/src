@@ -1,6 +1,6 @@
-.\"	$NetBSD: mk48txx.4,v 1.7 2002/02/13 08:17:41 ross Exp $
+.\"	$NetBSD: mk48txx.4,v 1.8 2002/02/25 23:21:15 kleink Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2000
+.Dd February 25, 2002
 .Dt MK48TXX 4
 .Os
 .Sh NAME
@@ -57,10 +57,17 @@ interface defined in
 .Xr todr 9 .
 .Pp
 To tie in instance of this device to the system, use
+.Bd -literal
+typedef uint8_t (*mk48txx_nvrd_t)(bus_space_tag_t bus_tag,
+    bus_space_handle_t bus_handle, int off);
+typedef void (*mk48txx_nvwr_t)(bus_space_tag_t bus_tag,
+    bus_space_handle_t bus_handle, int off, uint8_t datum);
+.Ed
 .nr nS 1
 .Ft "todr_chip_handle_t"
 .Fn mk48txx_attach "bus_space_tag_t bus_tag" "bus_space_handle_t bus_handle" \
-"const char *model" "int year0"
+"const char *model" "int year0" \
+"mk48txx_nvrd_t nvread" "mk48txx_nvwr_t nvwrite"
 .Pp
 .Bl -tag -width Dv -offset indent
 .It Fa bus_tag
@@ -80,6 +87,21 @@ The actual year represented by the clock's
 counter. This is generally dependent on the system configuration in which
 the clock device is mounted. For instance, on Sun Microsystems machines
 the convention is to have clock's two-digit year represent the year 1968.
+.It Fa nvread
+.It Fa nvwrite
+Specify alternate access methods for reading resp. writing clock
+device registers.  The default, when
+.Dv NULL
+is passed as an access method, is to access the chip memory
+.Pq and clock registers
+as if they were direct-mapped with using the specified bus space.
+.Pp
+Otherwise, the driver will call the respective function to perform the
+access, passing it the specified bus space and the offset
+.Va off
+of the chip memory
+.Pq or clock register
+location to be read from or written to, respectively.
 .El
 .Pp
 Note that if the resulting date retrieved with the todr_gettime() method
