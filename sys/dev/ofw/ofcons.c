@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.4 1997/04/16 23:32:56 thorpej Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.5 1997/04/28 18:33:57 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -311,11 +311,11 @@ int
 ofccngetc(dev)
 	dev_t dev;
 {
-	unsigned char ch;
+	unsigned char ch = '\0';
 	int l;
 	
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2)
+		if (l != -2 && l != 0)
 			return -1;
 	return ch;
 }
