@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.21 2002/09/28 00:56:26 dbj Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.22 2003/06/07 10:03:39 dsl Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.21 2002/09/28 00:56:26 dbj Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.22 2003/06/07 10:03:39 dsl Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -82,6 +82,7 @@ getlabel(int sd)
 void
 setlabel(int sd, int doraw)
 {
+	int one = 1;
 
 	label.d_checksum = 0;
 	label.d_checksum = dkcksum(&label);
@@ -89,6 +90,10 @@ setlabel(int sd, int doraw)
 		perror("set label");
 		exit(1);
 	}
+	if (!doraw)
+		/* If we haven't written to the disk, don't discard on close */
+		ioctl(sd, DIOCKLABEL, &one);
+
 }
 
 static struct typetab {
