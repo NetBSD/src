@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: scsiconf.c,v 1.7 1993/05/20 03:46:36 cgd Exp $
+ *	$Id: scsiconf.c,v 1.8 1993/05/25 07:27:35 deraadt Exp $
  */
 
 #include "sys/types.h"
@@ -79,13 +79,16 @@ struct scsidevs knowndevs[] = {
 	{
 		SC_TCD, T_READONLY, T_REMOV, "SONY    ", "CD-ROM CDU-8012 ", "3.1a",
 		cdattach, "cd", SC_ONE_LU
+	}, {
+		SC_TCD, T_READONLY, T_REMOV, "PIONEER ", "CD-ROM DRM-600  ", "any",
+		cdattach, "cd", SC_MORE_LUS
 	},
 #endif NCD
 #if NCALS > 0
 	{
 		-1, T_PROCESSOR, T_FIXED, "standard" , "any" ,"any",
 		calsattach, "cals", SC_MORE_LUS
-	},
+	}
 #endif NCALS
 #if NCH > 0
 	{
