@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 1995/04/24 06:24:19 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153 1995/05/01 04:48:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -244,6 +244,12 @@ cpu_startup()
 	 * Configure the system.
 	 */
 	configure();
+
+	/*
+	 * After configuring npx, etc., save the value of cr0 so it can
+	 * be reloaded quickly.
+	 */
+	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
 }
 
 /*
@@ -795,6 +801,7 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	register struct trapframe *tf;
+	register struct pcb *pcb;
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 	tf->tf_ebp = 0;	/* bottom of the fp chain */
@@ -806,10 +813,9 @@ setregs(p, pack, stack, retval)
 	tf->tf_cs = _ucodesel;
 	tf->tf_eflags = PSL_USERSET | (tf->tf_eflags & PSL_T);
 
-	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
-#if NNPX > 0
-	npxinit();
-#endif
+	pcb = &p->p_addr->u_pcb;
+	lcr0(pcb->pcb_cr0 |= CR0_EM);
+	pcb->pcb_flags = 0;
 
 	retval[1] = 0;
 }
