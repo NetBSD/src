@@ -1,5 +1,5 @@
 # from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.5 1994/02/04 16:19:23 deraadt Exp $
+# $Id: Makefile.sparc,v 1.6 1994/02/04 17:27:28 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -116,11 +116,11 @@ genassym: genassym.o
 genassym.o: ${SPARC}/sparc/genassym.c
 	${CC} -c ${CFLAGS} -I/tmp/usr/include -I/usr/include ${PARAM} $<
 
-SRCS= ${CFILES} ${SPARC}/sparc/locore.s ${SPARC}/sparc/bsd_audiointr.s \
-	${SPARC}/sparc/genassym.c ioconf.c param.c
+SRCS= ${CFILES} ioconf.c param.c
 depend: .depend
 .depend: ${SRCS} assym.s
 	mkdep ${COPTS} ${SRCS}
+	mkdep -a -p ${COPTS} ${SPARC}/sparc/genassym.c 
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
