@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.3 2000/07/03 03:38:03 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <err.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "wsconsctl.h"
 

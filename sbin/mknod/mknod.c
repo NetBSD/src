@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.18 1998/11/24 22:56:26 christos Exp $	*/
+/*	$NetBSD: mknod.c,v 1.19 2000/07/03 03:38:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.18 1998/11/24 22:56:26 christos Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.19 2000/07/03 03:38:02 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mknod.c,v 1.18 1998/11/24 22:56:26 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 int main __P((int, char *[]));
 static void usage __P((void));

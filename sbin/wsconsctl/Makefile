@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/01/10 18:05:49 augustss Exp $
+#	$NetBSD: Makefile,v 1.3 2000/07/03 03:38:02 matt Exp $
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
@@ -6,7 +6,7 @@ SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
 MAN=	wsconsctl.8
 
 YHEADER=	1
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I. -I${.CURDIR}
 CLEANFILES+=	keysym.h
 
 .depend keysym.c: keysym.h
