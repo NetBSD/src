@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.18 2000/04/05 18:39:09 phil Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.19 2000/06/27 17:53:44 mrg Exp $	*/
 
 /*
  * 
@@ -66,7 +66,6 @@ symlink
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/user.h>
-#include <vm/vm.h>
 #include <miscfs/genfs/genfs.h>
 
 #include <coda/coda.h>
