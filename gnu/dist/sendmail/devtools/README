@@ -136,7 +136,7 @@ confMAN1EXT	    1			The extension on files in confMAN1.
 confMAN1SRC	    0			The source for man pages installed
 					in confMAN1.
 confMAN3	    confMANROOT 3	The location of man3 files.
-confMAN3EXT	    4			The extension on files in confMAN3.
+confMAN3EXT	    3			The extension on files in confMAN3.
 confMAN3SRC	    0			The source for man pages installed
 					in confMAN3.
 confMAN4	    confMANROOT 4	The location of man4 files.
@@ -358,4 +358,4 @@ files that make up the library.
 bldINSTALLABLE - This should be set if the library should be installed in
 confLIBDIR.
 
-Revision: 8.65.4.8, Last updated Date: 2001/04/23 12:42:51
+Revision: 8.65.4.9, Last updated Date: 2001/05/30 19:50:37
