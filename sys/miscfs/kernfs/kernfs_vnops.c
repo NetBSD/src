@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.80 2002/07/05 02:02:00 lukem Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.81 2002/07/05 03:24:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.80 2002/07/05 02:02:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.81 2002/07/05 03:24:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,10 +469,12 @@ kernfs_getattr(v)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
+	/*
+	 * Make all times be current TOD.
+	 */
 	microtime(&tv);
-	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
-	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_atime;
+	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_ctime);
+	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
