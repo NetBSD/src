@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10 2001/06/19 12:02:58 simonb Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.11 2001/09/24 13:22:33 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -358,10 +358,14 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	for (ip = args.args_n_results + (n = nargs); --n >= 0;)
 		*--ip = va_arg(ap, int);
 	ofw_stack();
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return -1;
-	if (args.args_n_results[nargs])
+	}
+	if (args.args_n_results[nargs]) {
+		va_end(ap);
 		return args.args_n_results[nargs];
+	}
 	for (ip = args.args_n_results + nargs + (n = args.nreturns); --n > 0;)
 		*va_arg(ap, int *) = *--ip;
 	va_end(ap);

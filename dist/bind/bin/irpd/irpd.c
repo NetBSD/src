@@ -1,4 +1,4 @@
-/*	$NetBSD: irpd.c,v 1.2 2001/01/27 07:21:57 itojun Exp $	*/
+/*	$NetBSD: irpd.c,v 1.3 2001/09/24 13:22:27 wiz Exp $	*/
 
 /*
  * Copyright(c) 1999 by Internet Software Consortium.
@@ -1975,6 +1975,7 @@ logger(enum ctl_severity sev, const char *fmt, ...) {
 #else
 	if (vsprintf(buffer, fmt, ap) > (sizeof (buffer) - 1)) {
 		syslog(LOG_CRIT, "Buffer overrun in logger");
+		va_end(ap);
 		abort();
 	}
 	syslog(level, "%s", buffer);

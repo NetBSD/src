@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.28 2001/09/16 16:34:44 wiz Exp $	*/
+/*	$NetBSD: printjob.c,v 1.29 2001/09/24 13:22:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.28 2001/09/16 16:34:44 wiz Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.29 2001/09/24 13:22:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1593,11 +1593,6 @@ pstatus(msg, va_alist)
 	int fd;
 	char *buf;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 
 	umask(0);
 	fd = open(ST, O_WRONLY|O_CREAT, 0664);
@@ -1606,6 +1601,11 @@ pstatus(msg, va_alist)
 		exit(1);
 	}
 	ftruncate(fd, 0);
+#ifdef __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
 	(void)vasprintf(&buf, msg, ap);
 	va_end(ap);
 	/* XXX writev */

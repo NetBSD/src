@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.29 2001/09/05 01:17:31 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.30 2001/09/24 13:22:38 wiz Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.29 2001/09/05 01:17:31 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.30 2001/09/24 13:22:38 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -3334,10 +3334,10 @@ fatal(fmt, va_alist)
 	va_start(ap);
 #endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 	perror(buf);
 	syslog(LOG_ERR, "%s: %s", buf, strerror(errno));
 	rtdexit();
-	va_end(ap);
 }
 
 void

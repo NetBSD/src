@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.17 2001/04/06 11:13:49 wiz Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.18 2001/09/24 13:22:37 wiz Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.17 2001/04/06 11:13:49 wiz Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.18 2001/09/24 13:22:37 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1711,11 +1711,6 @@ check_vif_state()
 #ifdef __STDC__
 void
 log(int severity, int syserr, const char *format, ...)
-{
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap, format);
 #else
 /*VARARGS3*/
 void 
@@ -1723,12 +1718,10 @@ log(severity, syserr, format, va_alist)
 	int     severity, syserr;
 	const char   *format;
 	va_dcl
-{
-	va_list ap;
-	char    fmt[100];
-
-	va_start(ap);
 #endif
+{
+    va_list ap;
+    char    fmt[100];
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
@@ -1739,7 +1732,13 @@ log(severity, syserr, format, va_alist)
 	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
 	    strncat(fmt, format, 80);
 	    format = fmt;
+#ifdef __STDC__
+	    va_start(ap, format);
+#else
+	    va_start(ap);
+#endif
 	    vfprintf(stderr, format, ap);
+	    va_end(ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
 	    else

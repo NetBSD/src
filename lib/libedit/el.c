@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.21 2001/01/05 22:45:30 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.22 2001/09/24 13:22:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.21 2001/01/05 22:45:30 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.22 2001/09/24 13:22:30 wiz Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -146,10 +146,11 @@ el_set(EditLine *el, int op, ...)
 {
 	va_list va;
 	int rv;
-	va_start(va, op);
 
 	if (el == NULL)
 		return (-1);
+	va_start(va, op);
+
 	switch (op) {
 	case EL_PROMPT:
 	case EL_RPROMPT:
