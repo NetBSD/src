@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2002/08/04 00:44:58 gmcgarry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2003/11/13 15:53:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -151,6 +151,10 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 {
     int *argp, i;
     char *s, *args[4];
+
+    /* get device name */                    
+    for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
+	;
 
     /* first form */
     if (*s == '(') {
