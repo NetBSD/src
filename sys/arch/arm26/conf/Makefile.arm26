@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.1 2000/05/09 21:55:58 bjh21 Exp $
+#	$NetBSD: Makefile.arm26,v 1.2 2000/07/20 20:26:32 bjh21 Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -166,9 +166,8 @@ SRCS=	${ARM26}/arm26/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM26}/arm26/locore.S
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${ARM26}/arm26/locore.S ${SFILES}
 #	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${ARM26}/arm26/genassym.c
 
 # depend on root or device configuration
