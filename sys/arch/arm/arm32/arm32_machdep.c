@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.22 2002/04/03 23:33:28 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.23 2002/04/10 21:45:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -122,24 +122,7 @@ arm32_vector_init(vaddr_t va, int which)
 	extern unsigned int page0[], page0_data[];
 	unsigned int *vectors = (int *) va;
 	unsigned int *vectors_data = vectors + (page0_data - page0);
-	unsigned int ctrl;
 	int vec;
-
-	/* Make sure we have a legal vector page VA. */
-	switch (va) {
-	case ARM_VECTORS_LOW:
-		ctrl = 0;
-		break;
-
-	case ARM_VECTORS_HIGH:
-		ctrl = CPU_CONTROL_VECRELOC;
-		break;
-
-	default:
-		panic("arm32_vector_init: invalid vector address: 0x%08lx\n",
-		    va);
-		/* NOTREACHED */
-	}
 
 	/*
 	 * Loop through the vectors we're taking over, and copy the
@@ -158,7 +141,6 @@ arm32_vector_init(vaddr_t va, int which)
 	cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
 
 	vector_page = va;
-	cpu_control(CPU_CONTROL_VECRELOC, ctrl);
 }
 
 /*
