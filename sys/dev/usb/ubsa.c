@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.7 2003/11/12 11:29:12 augustss Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.8 2004/01/05 13:28:18 augustss Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.7 2003/11/12 11:29:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.8 2004/01/05 13:28:18 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.7 2003/11/12 11:29:12 augustss Exp $");
 #include <sys/select.h>
 #endif
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
