@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.51.2.1 2004/08/03 10:31:55 skrll Exp $ */
+/*	$NetBSD: zbus.c,v 1.51.2.2 2004/09/18 14:31:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.51.2.1 2004/08/03 10:31:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.51.2.2 2004/09/18 14:31:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3.10.1 2004/08/03 10:40:07 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3.10.2 2004/09/18 14:39:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,6 +55,9 @@ struct sgimips_pci_chipset {
 	pcireg_t	(*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void		(*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int,
 				pcireg_t);
+	void		*(*intr_establish)(int , int, int (*)(void *), void *); 
+	void		(*intr_disestablish)(void *ih);
+
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 };

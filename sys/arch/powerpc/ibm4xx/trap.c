@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.2.2 2004/09/03 12:45:05 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.3 2004/09/18 14:39:11 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.2 2004/09/03 12:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.3 2004/09/18 14:39:11 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.1 2004/08/03 10:38:40 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.2 2004/09/18 14:38:18 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

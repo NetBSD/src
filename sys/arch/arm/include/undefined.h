@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.4.18.2 2004/08/25 06:57:17 skrll Exp $	*/
+/*	$NetBSD: undefined.h,v 1.4.18.3 2004/09/18 14:32:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.

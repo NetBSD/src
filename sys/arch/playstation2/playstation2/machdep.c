@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:39:06 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.2 2004/09/18 14:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:39:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.2 2004/09/18 14:38:48 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"

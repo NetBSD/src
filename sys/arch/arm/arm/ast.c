@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.4.2.1 2004/08/03 10:32:28 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.4.2.2 2004/09/18 14:32:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.4.2.1 2004/08/03 10:32:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.4.2.2 2004/09/18 14:32:16 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8.2.1 2004/08/03 10:38:23 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.2.2 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8.2.1 2004/08/03 10:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8.2.2 2004/09/18 14:38:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,7 @@ CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
 static int mainbus_found;
 
 static int
-mainbus_match(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 
 	if (mainbus_found)
@@ -69,10 +66,7 @@ mainbus_match(parent, cfdata, aux)
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
 
@@ -83,10 +77,7 @@ mainbus_attach(parent, self, aux)
 }
 
 static int
-mainbus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -100,14 +91,12 @@ mainbus_search(parent, cf, aux)
 }
 
 static int
-mainbus_print(aux, cp)
-	void *aux;
-	const char *cp;
+mainbus_print(void *aux, const char *cp)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (cp)
 		aprint_normal("%s at %s", ma->ma_name, cp);
 
-	return (UNCONF);
+	return UNCONF;
 }

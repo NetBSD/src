@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.15.6.1 2004/08/03 10:37:20 skrll Exp $	*/
+/*	$NetBSD: ams.c,v 1.15.6.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.6.1 2004/08/03 10:37:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.6.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

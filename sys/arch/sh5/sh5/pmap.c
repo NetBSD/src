@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33.2.1 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33.2.2 2004/09/18 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.1 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33.2.2 2004/09/18 14:40:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2.20.1 2004/08/03 10:34:01 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2.20.2 2004/09/18 14:33:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

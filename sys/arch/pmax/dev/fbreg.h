@@ -1,4 +1,4 @@
-/*	$NetBSD: fbreg.h,v 1.8.28.1 2004/08/03 10:39:10 skrll Exp $	*/
+/*	$NetBSD: fbreg.h,v 1.8.28.2 2004/09/18 14:38:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtvar.h,v 1.1.12.1 2004/08/03 10:39:21 skrll Exp $	*/
+/*	$NetBSD: dtvar.h,v 1.1.12.2 2004/09/18 14:39:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.

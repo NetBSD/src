@@ -1,4 +1,4 @@
-/*	$NetBSD: 7709a.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
+/*	$NetBSD: 7709a.h,v 1.1.18.2 2004/09/18 14:34:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

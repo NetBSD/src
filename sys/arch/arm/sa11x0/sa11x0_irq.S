@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.5.2.1 2004/08/03 10:32:58 skrll Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.5.2.2 2004/09/18 14:32:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.

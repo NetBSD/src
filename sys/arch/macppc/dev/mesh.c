@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.18.2.1 2004/08/03 10:37:21 skrll Exp $	*/
+/*	$NetBSD: mesh.c,v 1.18.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.18.2.1 2004/08/03 10:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.18.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

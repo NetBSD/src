@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.2 2004/08/12 11:41:03 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.3 2004/09/18 14:32:17 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.2 2004/08/12 11:41:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.3 2004/09/18 14:32:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

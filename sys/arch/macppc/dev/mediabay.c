@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.8.2.1 2004/08/03 10:37:21 skrll Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.8.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.8.2.1 2004/08/03 10:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.8.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

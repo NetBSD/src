@@ -1,4 +1,4 @@
-; $NetBSD: grf_ultms.g,v 1.7.6.1 2004/08/03 10:31:52 skrll Exp $
+; $NetBSD: grf_ultms.g,v 1.7.6.2 2004/09/18 14:31:34 skrll Exp $
 ;
 ; ite support for A2410.
 

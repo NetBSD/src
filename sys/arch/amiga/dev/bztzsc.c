@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.20.2.1 2004/08/03 10:31:50 skrll Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.20.2.2 2004/09/18 14:31:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.20.2.1 2004/08/03 10:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.20.2.2 2004/09/18 14:31:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

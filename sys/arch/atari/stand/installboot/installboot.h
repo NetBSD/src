@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.6.24.1 2004/08/03 10:33:26 skrll Exp $	*/
+/*	$NetBSD: installboot.h,v 1.6.24.2 2004/09/18 14:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.27.2.1 2004/08/03 10:39:22 skrll Exp $
+#	$NetBSD: Makefile.powerpc,v 1.27.2.2 2004/09/18 14:39:04 skrll Exp $
 #
 # Makefile for NetBSD
 #

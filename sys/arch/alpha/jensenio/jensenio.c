@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.8.2.1 2004/09/03 12:44:28 skrll Exp $ */
+/* $NetBSD: jensenio.c,v 1.8.2.2 2004/09/18 14:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.8.2.1 2004/09/03 12:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.8.2.2 2004/09/18 14:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.8.2.1 2004/09/03 12:44:28 skrll Exp $
 
 #include <alpha/jensenio/jensenioreg.h>
 #include <alpha/jensenio/jenseniovar.h>
+
+#include "locators.h"
 
 #include "eisa.h"
 

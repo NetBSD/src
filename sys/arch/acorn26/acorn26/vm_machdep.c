@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.4.2.2 2004/09/18 14:30:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4.2.2 2004/09/18 14:30:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

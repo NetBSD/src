@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.6.14.1 2004/08/03 10:32:10 skrll Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.6.14.2 2004/09/18 14:31:56 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.6.14.1 2004/08/03 10:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.6.14.2 2004/09/18 14:31:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.8.2.1 2004/08/03 10:34:08 skrll Exp $
+#	$NetBSD: Makefile.gzboot,v 1.8.2.2 2004/09/18 14:33:51 skrll Exp $
 
 NOMAN=  # defined
 

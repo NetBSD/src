@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.9.16.1 2004/08/03 10:31:19 skrll Exp $ */
+/* $NetBSD: sysarch.h,v 1.9.16.2 2004/09/18 14:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

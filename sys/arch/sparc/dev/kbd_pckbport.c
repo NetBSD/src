@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbport.c,v 1.1.4.2 2004/08/03 10:40:45 skrll Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.1.4.3 2004/09/18 14:40:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -97,7 +97,7 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.1.4.2 2004/08/03 10:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.1.4.3 2004/09/18 14:40:27 skrll Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.290.2.2 2004/08/03 10:37:09 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.290.2.3 2004/09/18 14:36:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.290.2.2 2004/08/03 10:37:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.290.2.3 2004/09/18 14:36:44 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -993,8 +993,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
@@ -1002,7 +1002,7 @@ cpu_exec_aout_makecmds(l, epp)
 #ifdef COMPAT_NOMID
 	/* Check to see if MID == 0. */
 	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(l->l_proc, epp);
+		return exec_aout_prep_oldzmagic(p, epp);
 #endif
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.9.2.1 2004/08/03 10:37:38 skrll Exp $	*/
+/*	$NetBSD: aucom.c,v 1.9.2.2 2004/09/18 14:37:17 skrll Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.9.2.1 2004/08/03 10:37:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.9.2.2 2004/09/18 14:37:17 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"

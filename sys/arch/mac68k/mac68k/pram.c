@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.18.36.1 2004/08/03 10:37:10 skrll Exp $	*/
+/*	$NetBSD: pram.c,v 1.18.36.2 2004/09/18 14:36:44 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.1 2004/08/03 10:37:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pram.c,v 1.18.36.2 2004/09/18 14:36:44 skrll Exp $");
 
 #include "opt_adb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.4.2.1 2004/08/03 10:36:20 skrll Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.4.2.2 2004/09/18 14:35:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999

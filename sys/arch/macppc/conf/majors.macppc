@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.10.2.1 2004/08/03 10:37:20 skrll Exp $
+#	$NetBSD: majors.macppc,v 1.10.2.2 2004/09/18 14:36:56 skrll Exp $
 #
 # Device majors for macppc
 #

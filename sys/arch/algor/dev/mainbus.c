@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13.2.1 2004/08/03 10:31:02 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13.2.2 2004/09/18 14:30:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.2.1 2004/08/03 10:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.2.2 2004/09/18 14:30:43 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"

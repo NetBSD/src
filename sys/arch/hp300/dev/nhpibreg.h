@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpibreg.h,v 1.5.66.1 2004/08/03 10:34:24 skrll Exp $	*/
+/*	$NetBSD: nhpibreg.h,v 1.5.66.2 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

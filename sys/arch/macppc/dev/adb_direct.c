@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.24.10.1 2004/08/03 10:37:20 skrll Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.24.10.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.24.10.1 2004/08/03 10:37:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.24.10.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>

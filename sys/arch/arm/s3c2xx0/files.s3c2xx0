@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2xx0,v 1.3.2.1 2004/08/03 10:32:50 skrll Exp $
+#	$NetBSD: files.s3c2xx0,v 1.3.2.2 2004/09/18 14:32:38 skrll Exp $
 #
 # Configuration info common to Samsung S3C2800/S3C24[10]0
 #

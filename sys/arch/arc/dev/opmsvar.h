@@ -1,4 +1,4 @@
-/*	$NetBSD: opmsvar.h,v 1.1.26.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: opmsvar.h,v 1.1.26.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 

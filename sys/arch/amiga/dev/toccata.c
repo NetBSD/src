@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.6.2.1 2004/08/03 10:31:54 skrll Exp $ */
+/* $NetBSD: toccata.c,v 1.6.2.2 2004/09/18 14:31:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.1 2004/08/03 10:31:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.2 2004/09/18 14:31:35 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

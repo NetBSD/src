@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230.2.2 2004/08/12 11:41:02 skrll Exp $
+# $NetBSD: GENERIC,v 1.230.2.3 2004/09/18 14:31:02 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230.2.2 $"
+#ident 		"GENERIC-$Revision: 1.230.2.3 $"
 
 maxusers 32
 
@@ -95,6 +95,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
@@ -322,6 +323,7 @@ mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
+ehci*	at	pci? dev ? function ?		# USB-2 Host controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?		# Acard IDE controllers
@@ -508,6 +510,7 @@ ld*	at	mlx? unit ?
 # USB bus support
 usb*	at uhci?
 usb*	at ohci?
+usb*	at ehci?
 
 # USB Hubs
 uhub*	at usb?
@@ -523,6 +526,7 @@ wsmouse*	at ums?
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
+options         WSDISPLAY_COMPAT_RAWKBD
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -615,6 +619,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
+pseudo-device	wsmux			# mouse and keyboad multiplexing
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

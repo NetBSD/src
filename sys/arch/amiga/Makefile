@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.1 2004/08/25 06:57:17 skrll Exp $
+#	$NetBSD: Makefile,v 1.16.2.2 2004/09/18 14:31:22 skrll Exp $
 
 # Makefile for amiga tags file and boot blocks
 

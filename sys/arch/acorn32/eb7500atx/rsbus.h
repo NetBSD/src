@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.h,v 1.1.4.2 2004/08/03 10:30:49 skrll Exp $ */
+/* $NetBSD: rsbus.h,v 1.1.4.3 2004/09/18 14:30:37 skrll Exp $ */
 
 #ifndef _RSBUS_H_
 #define _RSBUS_H_

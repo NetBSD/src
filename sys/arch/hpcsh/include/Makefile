@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2004/08/03 10:35:29 skrll Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2004/09/18 14:35:13 skrll Exp $
 
 INCSDIR= /usr/include/hpcsh
 

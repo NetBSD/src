@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6.2.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6.2.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
 /*	NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp 	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.3.2.2 2004/09/18 14:32:47 skrll Exp $ */
 
 /* Derived from i80321_intr.h */
 

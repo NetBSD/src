@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.1.2.2 2004/09/18 14:32:47 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.1.2.2 2004/09/18 14:32:47 skrll Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 

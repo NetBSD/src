@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.4.2 2004/08/03 10:39:28 skrll Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.4.3 2004/09/18 14:39:11 skrll Exp $	*/
 /*	Original:	src/sys/arch/acorn26/ioc/rtc.c	*/
 /*	Original Tag:	rtc.c,v 1.7 2003/09/30 00:35:30 thorpej Exp	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1.4.2 2004/08/03 10:39:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1.4.3 2004/09/18 14:39:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $	*/
+/*	$NetBSD: cmu.c,v 1.11.6.2 2004/09/18 14:35:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.11.6.2 2004/09/18 14:35:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

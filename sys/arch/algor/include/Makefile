@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.1 2004/08/03 10:31:02 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.2.2 2004/09/18 14:30:43 skrll Exp $
 
 INCSDIR=/usr/include/algor
 

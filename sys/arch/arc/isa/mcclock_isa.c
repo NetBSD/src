@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4.6.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.6.2 2004/09/18 14:32:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,20 +119,20 @@ mcclock_isa_match(parent, match, aux)
 	bus_space_handle_t ioh;
 
 	if (ia->ia_nio < 1 ||
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x70))
 		return (0);
 
 	if (ia->ia_niomem > 0 &&
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
 		return (0);
 
 	if (ia->ia_ndrq > 0 &&
-	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
+	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
 		return (0);
 
 	if (!mcclock_isa_conf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.2.6.1 2004/08/03 10:34:55 skrll Exp $	*/
+/*	$NetBSD: libsa.h,v 1.2.6.2 2004/09/18 14:34:32 skrll Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 

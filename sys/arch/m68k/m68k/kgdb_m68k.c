@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_m68k.c,v 1.2.56.1 2004/08/03 10:36:59 skrll Exp $	*/
+/*	$NetBSD: kgdb_m68k.c,v 1.2.56.2 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.2.56.1 2004/08/03 10:36:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.2.56.2 2004/09/18 14:36:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.8.24.1 2004/08/12 11:41:05 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.8.24.2 2004/09/18 14:34:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

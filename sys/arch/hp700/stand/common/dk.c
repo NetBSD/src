@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2.6.1 2004/08/03 10:34:55 skrll Exp $	*/
+/*	$NetBSD: dk.c,v 1.2.6.2 2004/09/18 14:34:32 skrll Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 

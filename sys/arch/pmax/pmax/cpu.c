@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22.6.1 2004/08/03 10:39:13 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.22.6.2 2004/09/18 14:38:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.6.1 2004/08/03 10:39:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.6.2 2004/09/18 14:38:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dioreg.h,v 1.1.4.3 2004/09/03 12:44:30 skrll Exp $	*/
+/*	$NetBSD: com_dioreg.h,v 1.1.4.4 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

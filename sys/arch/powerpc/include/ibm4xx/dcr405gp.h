@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405gp.h,v 1.1.16.1 2004/08/03 10:39:36 skrll Exp $	*/
+/*	$NetBSD: dcr405gp.h,v 1.1.16.2 2004/09/18 14:39:19 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

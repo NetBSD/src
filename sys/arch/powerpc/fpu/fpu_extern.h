@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_extern.h,v 1.1.24.1 2004/08/03 10:39:22 skrll Exp $	*/
+/*	$NetBSD: fpu_extern.h,v 1.1.24.2 2004/09/18 14:39:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.

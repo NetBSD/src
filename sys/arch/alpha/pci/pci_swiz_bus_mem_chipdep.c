@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.1 2004/08/03 10:31:20 skrll Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.2 2004/09/18 14:31:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.1 2004/08/03 10:31:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37.6.2 2004/09/18 14:31:13 skrll Exp $");
 
 #include <sys/extent.h>
 

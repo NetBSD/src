@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.1.10.2 2004/09/18 14:35:14 skrll Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.7 2001/06/29 20:28:54 mickey Exp $	*/
 

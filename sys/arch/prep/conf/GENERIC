@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66.2.1 2004/08/03 10:39:48 skrll Exp $
+# $NetBSD: GENERIC,v 1.66.2.2 2004/09/18 14:39:30 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.66.2.1 $"
+#ident		"GENERIC-$Revision: 1.66.2.2 $"
 
 maxusers	32
 
@@ -118,6 +118,7 @@ options 	INET6		# IPv6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP

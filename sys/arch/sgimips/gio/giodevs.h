@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs.h,v 1.2.4.2 2004/08/03 10:40:05 skrll Exp $	*/
+/*	$NetBSD: giodevs.h,v 1.2.4.3 2004/09/18 14:39:43 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

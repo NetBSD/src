@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.46.2.1 2004/08/03 10:32:21 skrll Exp $
+#	$NetBSD: files.arc,v 1.46.2.2 2004/09/18 14:32:08 skrll Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}

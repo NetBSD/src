@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: lubbock_reg.h,v 1.1.2.1 2004/09/18 14:33:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -36,7 +36,7 @@
 #include <arm/xscale/pxa2x0reg.h>
 
 /* lubbock on-board IOs */
-#define LUBBOCK_OBIO_PBASE PXA2X0_CS2_START /* Phisical address */
+#define LUBBOCK_OBIO_PBASE PXA2X0_CS2_START /* Physical address */
 #define LUBBOCK_OBIO_SIZE  0x00000100
 
 #define LUBBOCK_SRAM_PBASE (PXA2X0_CS2_START+0x02000000)

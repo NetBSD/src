@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.11.6.1 2004/08/03 10:37:00 skrll Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.11.6.2 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

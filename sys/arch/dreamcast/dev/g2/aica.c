@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.4.4.2 2004/08/03 10:33:53 skrll Exp $	*/
+/*	$NetBSD: aica.c,v 1.4.4.3 2004/09/18 14:33:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.2 2004/08/03 10:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.3 2004/09/18 14:33:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.13.50.2 2004/09/03 12:44:30 skrll Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.13.50.3 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2004/08/03 10:40:33 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2004/09/18 14:40:16 skrll Exp $
 
 INCSDIR= /usr/include/shark
 

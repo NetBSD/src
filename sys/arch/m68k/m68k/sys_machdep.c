@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.2.2 2004/09/03 12:44:57 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3.2.3 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

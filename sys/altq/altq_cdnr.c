@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.4.16.3 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.4.16.3 2004/09/18 14:30:29 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -76,9 +76,9 @@ int altq_cdnr_enabled = 0;
 /* cdnr_list keeps all cdnr's allocated. */
 static LIST_HEAD(, top_cdnr) tcb_list;
 
-int cdnropen __P((dev_t, int, int, struct lwp *));
-int cdnrclose __P((dev_t, int, int, struct lwp *));
-int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct lwp *));
+int cdnropen __P((dev_t, int, int, struct proc *));
+int cdnrclose __P((dev_t, int, int, struct proc *));
+int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
 
 static int altq_cdnr_input __P((struct mbuf *, int));
 static struct top_cdnr *tcb_lookup __P((char *ifname));
@@ -1202,10 +1202,10 @@ cdnrcmd_get_stats(ap)
  * conditioner device interface
  */
 int
-cdnropen(dev, flag, fmt, l)
+cdnropen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1220,10 +1220,10 @@ cdnropen(dev, flag, fmt, l)
 }
 
 int
-cdnrclose(dev, flag, fmt, l)
+cdnrclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct top_cdnr *top;
 	int err, error = 0;
@@ -1240,16 +1240,15 @@ cdnrclose(dev, flag, fmt, l)
 }
 
 int
-cdnrioctl(dev, cmd, addr, flag, l)
+cdnrioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct top_cdnr *top;
 	struct cdnr_interface *ifacep;
-	struct proc *p = l->l_proc;
 	int	s, error = 0;
 
 	/* check super-user privilege */

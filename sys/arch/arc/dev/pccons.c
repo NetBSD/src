@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.35.2.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: pccons.c,v 1.35.2.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.35.2.1 2004/08/03 10:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.35.2.2 2004/09/18 14:32:08 skrll Exp $");
 
 #include "opt_ddb.h"
 

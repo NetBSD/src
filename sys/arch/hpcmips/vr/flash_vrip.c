@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.1.2.2 2004/09/18 14:35:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.1.2.2 2004/09/18 14:35:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

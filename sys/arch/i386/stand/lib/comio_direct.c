@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.5.2.1 2004/08/03 10:36:19 skrll Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.5.2.2 2004/09/18 14:35:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997

@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.10.8.2 2004/08/25 06:57:17 skrll Exp $	*/
+/*	$NetBSD: icside.c,v 1.10.8.3 2004/09/18 14:30:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10.8.2 2004/08/25 06:57:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10.8.3 2004/09/18 14:30:38 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>

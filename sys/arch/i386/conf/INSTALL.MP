@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.2.8.1 2004/08/03 10:35:47 skrll Exp $
+#	$NetBSD: INSTALL.MP,v 1.2.8.2 2004/09/18 14:35:22 skrll Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.

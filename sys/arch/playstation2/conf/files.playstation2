@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.10.6.1 2004/08/03 10:39:06 skrll Exp $
+#	$NetBSD: files.playstation2,v 1.10.6.2 2004/09/18 14:38:42 skrll Exp $
 
 maxpartitions 8
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.9 2003/01/01 02:00:13 thorpej Exp $	*/
+/*	$NetBSD: ibus.c,v 1.9.2.1 2004/09/18 14:38:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.9 2003/01/01 02:00:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.9.2.1 2004/09/18 14:38:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.9 2003/01/01 02:00:13 thorpej Exp $");
 
 #include "locators.h"
 
-static int	ibussubmatch __P((struct device *, struct cfdata *, void *));
+static int	ibussubmatch __P((struct device *, struct cfdata *,
+				  const locdesc_t *, void *));
 
 void
 ibusattach(parent, self, aux)
@@ -52,6 +53,8 @@ ibusattach(parent, self, aux)
 	struct ibus_dev_attach_args *ida = aux;
 	struct ibus_attach_args *ia;
 	int i;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf("\n");
 
@@ -65,23 +68,25 @@ ibusattach(parent, self, aux)
 		if (ia->ia_basz != 0 &&
 		    badaddr((caddr_t)ia->ia_addr, ia->ia_basz) != 0)
 			continue;
-		config_found_sm(self, ia, ibusprint, ibussubmatch);
+
+		ldesc->len = 1;
+		ldesc->locs[IBUSCF_ADDR] = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
+
+		config_found_sm_loc(self, "ibus", ldesc, ia,
+				    ibusprint, ibussubmatch);
 	}
 }
 
 static int
-ibussubmatch(parent, cf, aux)
+ibussubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct ibus_attach_args *ia = aux;
-	paddr_t pa;
-
-	pa = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
 
 	if (cf->cf_loc[IBUSCF_ADDR] != IBUSCF_ADDR_DEFAULT &&
-	    cf->cf_loc[IBUSCF_ADDR] != pa)
+	    cf->cf_loc[IBUSCF_ADDR] != ldesc->locs[IBUSCF_ADDR])
 		return (0);
 
 	return (config_match(parent, cf, aux));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.9.8.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: fusu.S,v 1.9.8.2 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiicvar.h,v 1.1.4.2 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: iomdiicvar.h,v 1.1.4.3 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

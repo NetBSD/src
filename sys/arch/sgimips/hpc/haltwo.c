@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.3.4.2 2004/08/03 10:40:06 skrll Exp $ */
+/* $NetBSD: haltwo.c,v 1.3.4.3 2004/09/18 14:39:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.3.4.2 2004/08/03 10:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.3.4.3 2004/09/18 14:39:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

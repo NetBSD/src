@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.3.2.2 2004/08/03 10:35:28 skrll Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.3.2.3 2004/09/18 14:35:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3.2.2 2004/08/03 10:35:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3.2.3 2004/09/18 14:35:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

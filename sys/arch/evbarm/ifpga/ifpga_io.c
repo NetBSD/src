@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.5.2.1 2004/08/03 10:33:55 skrll Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.5.2.2 2004/09/18 14:33:45 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.5.2.1 2004/08/03 10:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.5.2.2 2004/09/18 14:33:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.2.4.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.2.4.2 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited

@@ -1,3 +1,3 @@
-/*	$NetBSD: atomic.h,v 1.1.4.2 2004/08/03 10:37:30 skrll Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.4.3 2004/09/18 14:37:08 skrll Exp $	*/
 
 #include <powerpc/atomic.h>

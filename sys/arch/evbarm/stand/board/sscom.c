@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.3.4.2 2004/08/03 10:34:08 skrll Exp $ */
+/*	$NetBSD: sscom.c,v 1.3.4.3 2004/09/18 14:33:51 skrll Exp $ */
 
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: files.ioc,v 1.1.4.2 2004/08/03 10:40:07 skrll Exp $
+# $NetBSD: files.ioc,v 1.1.4.3 2004/09/18 14:39:49 skrll Exp $
 
 device ioc {[offset = -1], [intr = -1] }
 attach ioc at mainbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52.2.3 2004/09/03 12:45:05 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52.2.4 2004/09/18 14:39:20 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52.2.3 2004/09/03 12:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52.2.4 2004/09/18 14:39:20 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -276,11 +276,11 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 			    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, l)) != 0)
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL)) != 0)
 		return error;
 	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
 			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, l)) != 0)
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL)) != 0)
 		return error;
 
 	chdr->c_nseg++;

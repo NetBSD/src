@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.6.6.1 2004/08/03 10:37:38 skrll Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.6.6.2 2004/09/18 14:37:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

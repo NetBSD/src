@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.6.2.2 2004/09/03 12:44:30 skrll Exp $	*/
+/*	$NetBSD: gt.c,v 1.6.2.3 2004/09/18 14:33:58 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.6.2.2 2004/09/03 12:44:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.6.2.3 2004/09/18 14:33:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

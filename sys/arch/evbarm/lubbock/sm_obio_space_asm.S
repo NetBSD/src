@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_obio_space_asm.S,v 1.1.2.1 2004/08/03 10:34:03 skrll Exp $ */
+/*	$NetBSD: sm_obio_space_asm.S,v 1.1.2.2 2004/09/18 14:33:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sm_obio_space_asm.S,v 1.1.2.1 2004/08/03 10:34:03 skrll Exp $")
+RCSID("$NetBSD: sm_obio_space_asm.S,v 1.1.2.2 2004/09/18 14:33:46 skrll Exp $")
 
 /*
  * bus_space I/O functions with offset*4, 8-bit access.

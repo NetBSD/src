@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.13.2.1 2004/08/03 10:32:09 skrll Exp $
+# $NetBSD: NULL,v 1.13.2.2 2004/09/18 14:31:56 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -42,6 +42,7 @@ options 	PPC603E
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	MROUTING	# Multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.2.2 2004/09/18 14:34:02 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

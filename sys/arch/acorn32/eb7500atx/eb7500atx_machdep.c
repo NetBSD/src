@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.1.4.2 2004/08/03 10:30:49 skrll Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.1.4.3 2004/09/18 14:30:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.1.4.2 2004/08/03 10:30:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.1.4.3 2004/09/18 14:30:37 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.24.1 2004/08/03 10:39:55 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.24.2 2004/09/18 14:39:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

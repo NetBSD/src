@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.2.48.1 2004/08/03 10:31:20 skrll Exp $ */
+/* $NetBSD: a12cvar.h,v 1.2.48.2 2004/09/18 14:31:12 skrll Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.

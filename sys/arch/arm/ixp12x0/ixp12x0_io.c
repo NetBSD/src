@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.7.2.1 2004/08/03 10:32:49 skrll Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.7.2.2 2004/09/18 14:32:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.7.2.1 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.7.2.2 2004/09/18 14:32:32 skrll Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0

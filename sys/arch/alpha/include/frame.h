@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.4.56.1 2004/08/03 10:31:19 skrll Exp $ */
+/* $NetBSD: frame.h,v 1.4.56.2 2004/09/18 14:31:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

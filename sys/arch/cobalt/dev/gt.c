@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $	*/
+/*	$NetBSD: gt.c,v 1.8.2.3 2004/09/18 14:33:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.2.2 2004/09/03 12:44:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.2.3 2004/09/18 14:33:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

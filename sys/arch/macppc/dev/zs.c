@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26.2.1 2004/08/03 10:37:21 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.26.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.1 2004/08/03 10:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.2.1 2004/08/03 10:34:22 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.2 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* SH5 Evaluation Board Mainbus */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.2.1 2004/08/03 10:34:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.2.2 2004/09/18 14:34:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.6.2.1 2004/08/03 10:34:16 skrll Exp $
+#	$NetBSD: EV64260,v 1.6.2.2 2004/09/18 14:33:58 skrll Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -110,6 +110,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP

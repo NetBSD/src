@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $ */
+/* $NetBSD: arckbd.c,v 1.5.6.2 2004/09/18 14:30:30 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.5.6.2 2004/09/18 14:30:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: endian_machdep.h,v 1.3.8.1 2004/08/03 10:40:23 skrll Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.3.8.2 2004/09/18 14:40:08 skrll Exp $	*/
 
 #ifdef __LITTLE_ENDIAN__
 #define _BYTE_ORDER     _LITTLE_ENDIAN

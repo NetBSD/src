@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.11.2.2 2004/08/03 10:32:49 skrll Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.11.2.3 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.2 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.3 2004/09/18 14:32:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -169,7 +169,7 @@ int		vidcrender_setbgcol(struct vconsole *, int);
 int		vidcrender_sgr(struct vconsole *, int);
 int		vidcrender_scrollregion(struct vconsole *, int, int);
 int		vidcrender_ioctl(struct vconsole *, dev_t, int, caddr_t, int,
-				 struct lwp *);
+				 struct proc *);
 int		vidcrender_attach(struct vconsole *, struct device *,
 				  struct device *, void *);
 
@@ -1485,7 +1485,7 @@ vidcrender_blank(vc, type)
 }
 
 int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
-			int flag, struct lwp *l )
+			int flag, struct proc *p )
 {
 	int error;
 	int bpp, log2_bpp;
@@ -1516,10 +1516,10 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
     		vc->MODECHANGE ( vc );
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
-		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, l);
+		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		if (error != EPASSTHROUGH)
 			return (error);
-		return ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, l);
+		return ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		break;
 
 	case CONSOLE_RESETSCREEN:

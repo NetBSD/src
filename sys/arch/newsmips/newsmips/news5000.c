@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.10.2.1 2004/08/03 10:38:29 skrll Exp $	*/
+/*	$NetBSD: news5000.c,v 1.10.2.2 2004/09/18 14:38:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.10.2.1 2004/08/03 10:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.10.2.2 2004/09/18 14:38:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.9.6.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.9.6.2 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.9.6.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.9.6.2 2004/09/18 14:30:29 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"

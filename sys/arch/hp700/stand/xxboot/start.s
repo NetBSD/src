@@ -1,4 +1,4 @@
-;	$NetBSD: start.s,v 1.1.2.2 2004/08/03 10:34:55 skrll Exp $
+;	$NetBSD: start.s,v 1.1.2.3 2004/09/18 14:34:32 skrll Exp $
 
 ; Copyright (c) 2003 ITOH Yasufumi.
 ; All rights reserved.
