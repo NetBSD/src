@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.62 2003/09/11 12:51:51 dsl Exp $	*/
+/*	$NetBSD: init.c,v 1.63 2003/10/03 13:31:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.62 2003/09/11 12:51:51 dsl Exp $");
+__RCSID("$NetBSD: init.c,v 1.63 2003/10/03 13:31:32 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,10 @@ single_user(void)
 		/*
 		 * Start the single user session.
 		 */
-		setctty(_PATH_CONSOLE);
+		if (access(_PATH_CONSTTY, F_OK) == 0)
+			setctty(_PATH_CONSTTY);
+		else
+			setctty(_PATH_CONSOLE);
 
 #ifdef SECURE
 		/*
