@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.2 1995/03/28 06:35:40 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.3 1995/04/28 11:34:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -45,7 +45,7 @@
 /*
  * Function decls
  */
-static dmode_t    *get_best_display_mode __P((int, int, int));
+static dmode_t    *get_best_display_mode __P((dimen_t *, int, dmode_t *));
 static view_t     *alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
 static bmap_t	  *alloc_bitmap __P((u_long, u_long, u_char, int));
@@ -67,12 +67,12 @@ static long		con_colors[MAX_CENTRIES];
 static LIST_HEAD(modelist, display_mode) modes;
 
 static dmode_t vid_modes[] = {
-	{ { NULL, NULL }, "stlow",  { 320,  200 },  4, RES_STLOW  },
-	{ { NULL, NULL }, "stmid",  { 640,  200 },  2, RES_STMID  },
 	{ { NULL, NULL }, "sthigh", { 640,  400 },  1, RES_STHIGH },
-	{ { NULL, NULL }, "ttlow",  { 320,  480 },  8, RES_TTLOW  },
-	{ { NULL, NULL }, "ttmid",  { 640,  480 },  4, RES_TTMID  },
 	{ { NULL, NULL }, "tthigh", { 1280, 960 },  1, RES_TTHIGH },
+	{ { NULL, NULL }, "stmid",  { 640,  200 },  2, RES_STMID  },
+	{ { NULL, NULL }, "stlow",  { 320,  200 },  4, RES_STLOW  },
+	{ { NULL, NULL }, "ttmid",  { 640,  480 },  4, RES_TTMID  },
+	{ { NULL, NULL }, "ttlow",  { 320,  480 },  8, RES_TTLOW  },
 	{ { NULL, NULL }, NULL,  }
 };
 
@@ -153,7 +153,7 @@ dimen_t	*dim;
 u_char	depth;
 {
 	if(!d)
-		d = get_best_display_mode(dim->width, dim->height, depth);
+		d = get_best_display_mode(dim, depth, NULL);
 	if(d) 
 		return(alloc_view(d, dim, depth));
 	return(NULL);
@@ -287,8 +287,10 @@ colormap_t	*cm;
 }
 
 static dmode_t *
-get_best_display_mode(width, height, depth)
-int	width, height, depth;
+get_best_display_mode(dim, depth, curr_mode)
+int	depth;
+dimen_t	*dim;
+dmode_t	*curr_mode;
 {
 	dmode_t		*save;
 	dmode_t		*dm;
@@ -297,20 +299,8 @@ int	width, height, depth;
 	save = NULL;
 	dm = modes.lh_first;
 	while(dm != NULL) {
-		if(depth > dm->depth) {
-			dm = dm->link.le_next;
-			continue;
-		}
-		else if(width > dm->size.width || height > dm->size.height) {
-			dm = dm->link.le_next;
-			continue;
-		}
-		else if (width < dm->size.width || height < dm->size.height) {
-			dm = dm->link.le_next;
-			continue;
-		}
-		dx = abs(dm->size.width  - width);
-		dy = abs(dm->size.height - height);
+		dx = abs(dm->size.width  - dim->width);
+		dy = abs(dm->size.height - dim->height);
 		ct = dx + dy;
 
 		if (ct < dt || save == NULL) {
@@ -318,6 +308,16 @@ int	width, height, depth;
 			dt = ct;
 		}
 		dm = dm->link.le_next;
+	}
+	/*
+	 * Did we do better than the current mode?
+	 */
+	if((save != NULL) && (curr_mode != NULL)) {
+		dx = abs(curr_mode->size.width  - dim->width);
+		dy = abs(curr_mode->size.height - dim->height);
+		ct = dx + dy;
+		if(ct <= dt)
+			return(NULL);
 	}
 	return (save);
 }
