@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2003/07/10 10:34:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2004/03/23 22:35:30 matt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -12,9 +12,9 @@ INSTALLATION_DIRS+=	installation/bootfs	\
 			installation/netboot
 
 iso-image-md-pre:
-	cp -f ${RELEASEDIR}/${MACHINE}/installation/netboot/netbsd.ram.gz \
-	    ${CDROM.work}/netbsd
-	cp -f ${DESTDIR}/usr/mdec/boot ${CDROM.work}
+	cp -f ${RELEASEDIR}/${MACHINE}/installation/netboot/install.ram.gz \
+	    ${CDROM.dir}/netbsd
+	cp -f ${DESTDIR}/usr/mdec/boot ${CDROM.dir}
 
 iso-image-md-post:
 	${TOOL_INSTALLBOOT} -m ${MACHINE} ${CDROM.image} ${DESTDIR}/usr/mdec/xxboot
