@@ -1,7 +1,7 @@
-/*	$NetBSD: ifconfig.c,v 1.63 2000/01/25 00:59:39 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.64 2000/01/25 01:03:21 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.63 2000/01/25 00:59:39 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.64 2000/01/25 01:03:21 thorpej Exp $");
 #endif
 #endif /* not lint */
 
