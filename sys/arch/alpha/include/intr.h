@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.20 1999/08/05 18:08:08 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.21 1999/08/10 18:53:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -87,9 +87,11 @@ extern u_int64_t ssir;
 #define	SIR_CLOCK	0x2
 #define	SIR_SERIAL	0x4
 
-#define	setsoftnet()	ssir |= SIR_NET
-#define	setsoftclock()	ssir |= SIR_CLOCK
-#define	setsoftserial()	ssir |= SIR_SERIAL
+#define	setsoft(x)	alpha_atomic_setbits_q(&ssir, (x))
+
+#define	setsoftnet()	setsoft(SIR_NET)
+#define	setsoftclock()	setsoft(SIR_CLOCK)
+#define	setsoftserial()	setsoft(SIR_SERIAL)
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.
