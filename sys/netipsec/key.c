@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.16 2004/05/25 04:00:33 atatat Exp $	*/
+/*	$NetBSD: key.c,v 1.17 2004/05/26 22:14:18 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.16 2004/05/25 04:00:33 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.17 2004/05/26 22:14:18 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -131,7 +131,7 @@ static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
 static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
 static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
 static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
-static int key_prefered_oldsa = 1;	/* prefered old sa rather than new sa.*/
+static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 
 static u_int32_t acq_seq = 0;
 static int key_tick_init_random = 0;
