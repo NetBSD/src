@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.670 2004/12/05 21:01:43 bouyer Exp $
+$NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -941,6 +941,7 @@ product ATI RADEON_A3		0x4136	Radeon Mobility A3
 product ATI MACH32		0x4158	Mach32
 product ATI RADEON_IGP_320M	0x4336	Radeon IGP 320M
 product ATI RADEON_M6_U2	0x4337	Radeon Mobility M6
+product ATI IXP_IDE		0x4349	IXP IDE Controller
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP)
