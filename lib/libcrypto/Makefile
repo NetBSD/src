@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/06/15 02:01:23 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2002/06/16 17:57:29 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -41,13 +41,17 @@ AFLAGS+=-DELF
 AFLAGS+=-DOUT
 .endif
 
-# XXX
+OS_VERSION!= sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
+# XXX CFLAGS: While it would be nice to know which compiler flags
+# XXX the library was built with, we don't want pathname information
+# XXX for the host toolchain embedded in the image.
 ${SRCS}: buildinf.h
-buildinf.h:
+buildinf.h: Makefile
 	@echo "#ifndef MK1MF_BUILD" >buildinf.h
-	@echo "#define CFLAGS \"${CC} ${CFLAGS}\"" >>buildinf.h
+	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep version`\"" >>buildinf.h
 	@echo "#define PLATFORM \"NetBSD-${MACHINE_ARCH}\"" >>buildinf.h
-	@echo "#define DATE \"`date`\"" >>buildinf.h
+	@echo "#define DATE \"NetBSD ${OS_VERSION}\"" >>buildinf.h
 	@echo "#endif" >>buildinf.h
 
 CLEANFILES+= buildinf.h
