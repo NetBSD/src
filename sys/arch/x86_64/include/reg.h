@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
+/*	$NetBSD: reg.h,v 1.3 2003/03/16 16:26:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,8 @@
 #ifndef _X86_64_REG_H_
 #define _X86_64_REG_H_
 
+#include <machine/mcontext.h>
+
 /*
  * XXX
  * The #defines aren't used in the kernel, but some user-level code still
@@ -72,40 +74,27 @@
 #define	tSS	21
 
 /*
- * Registers accessible to ptrace(2) syscall for debugger
- * The machine-dependent code for PT_{SET,GET}REGS needs to
- * use whichver order, defined above, is correct, so that it
- * is all invisible to the user.
+ * Registers accessible to ptrace(2) syscall for debugger use.
+ * Same as mcontext.__gregs and struct trapframe, they must
+ * remain synced (XXX should use common structure).
  */
 struct reg {
-	u_int64_t	r_r15;
-	u_int64_t	r_r14;
-	u_int64_t	r_r13;
-	u_int64_t	r_r12;
-	u_int64_t	r_r11;
-	u_int64_t	r_r10;
-	u_int64_t	r_r9;
-	u_int64_t	r_r8;
-	u_int64_t	r_rdi;
-	u_int64_t	r_rsi;
-	u_int64_t	r_rbp;
-	u_int64_t	r_rbx;
-	u_int64_t	r_rdx;
-	u_int64_t	r_rcx;
-	u_int64_t	r_rax;
-	u_int64_t	r_rsp;
-	u_int64_t	r_rip;
-	u_int64_t	r_rflags;
-	u_int64_t	r_cs;
-	u_int64_t	r_ss;
-	u_int64_t	r_ds;
-	u_int64_t	r_es;
-	u_int64_t	r_fs;
-	u_int64_t	r_gs;
+	long	regs[_NGREG];
 };
 
 struct fpreg {
 	struct fxsave64 fxstate;
 };
+
+#define fp_fcw		fxstate.fx_fcw
+#define fp_fsw		fxstate.fx_fsw
+#define fp_ftw		fxstate.fx_ftw
+#define fp_fop		fxstate.fx_fop
+#define fp_rip		fxstate.fx_rip
+#define fp_rdp		fxstate.fx_rdp
+#define fp_mxcsr	fxstate.fx_mxcsr
+#define fp_mxcsr_mask	fxstate.fx_mxcsr_mask
+#define fp_st		fxstate.fx_st
+#define fp_xmm		fxstate.fx_xmm
 
 #endif /* !_X86_64_REG_H_ */
