@@ -1,7 +1,7 @@
-/*	$NetBSD: pcib.c,v 1.6 1998/02/12 05:19:04 sakamoto Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 1998/06/09 00:10:27 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,8 +55,13 @@
 int	pcibmatch __P((struct device *, struct cfdata *, void *));
 void	pcibattach __P((struct device *, struct device *, void *));
 
+struct pcib_softc {
+	struct device sc_dev;
+	struct bebox_isa_chipset sc_chipset;
+};
+
 struct cfattach pcib_ca = {
-	sizeof(struct device), pcibmatch, pcibattach
+	sizeof(struct pcib_softc), pcibmatch, pcibattach
 };
 
 void	pcib_callback __P((void *));
@@ -105,7 +110,7 @@ void
 pcib_callback(arg)
 	void *arg;
 {
-	struct device *self = arg;
+	struct pcib_softc *sc = arg;
 	struct isabus_attach_args iba;
 
 	/*
@@ -113,19 +118,24 @@ pcib_callback(arg)
 	 */
 	bzero(&iba, sizeof(iba));
 	iba.iba_busname = "isa";
+	iba.iba_ic = &sc->sc_chipset;
 	iba.iba_iot = (bus_space_tag_t)BEBOX_BUS_SPACE_IO;
 	iba.iba_memt = (bus_space_tag_t)BEBOX_BUS_SPACE_MEM;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 
 #if 0
+/*
+ * XXX THIS WILL NOT WORK, BUT ADDING SUPPORT FOR HIGHPAGE MIGHT BE
+ * XXX WORTH WHILE EVENTUALLY.
+ */
 #define SIO_DMAHIGHPAGE	0x480
 	if (bus_space_map(iba.iba_iot, SIO_DMAHIGHPAGE, 0xf, 0,
 	    (bus_space_handle_t *)&iba.iba_ic))
 		panic("pcib_callback: can't map DMA high page registers");
 #endif
 #endif
-	config_found(self, &iba, pcib_print);
+	config_found(&sc->sc_dev, &iba, pcib_print);
 }
 
 int
