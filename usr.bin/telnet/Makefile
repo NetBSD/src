@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1999/07/02 15:09:10 itojun Exp $
+#	$NetBSD: Makefile,v 1.18 1999/07/12 22:11:38 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,22 +34,17 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
-
-# XXX Keep telnet(1) and libtelnet from getting out of sync during the build
-# XXX process.
-.if (!exists(${.CURDIR}/../../domestic/usr.bin/telnet) && \
-     !exists(${.CURDIR}/../../crypto-us/usr.bin/telnet)) || \
-    defined(EXPORTABLE_SYSTEM) || \
-    make(obj) || make(clean) || make(cleandir) || make(distclean)
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 PROG=	telnet
 
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
 CPPFLAGS+=-DENV_HACK
-CPPFLAGS+=-I${.CURDIR}/../../lib
+CPPFLAGS+=-I${.CURDIR}
+
 LDADD+= -ltermcap -ltelnet
-DPADD=	${LIBTERMCAP} ${LIBTELNET}
+DPADD+=	${LIBTERMCAP} ${LIBTELNET}
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c
@@ -59,20 +54,17 @@ CRYPT_SRC= authenc.c commands.c externs.h main.c network.c
 CRYPT_SRC+= ring.c ring.h telnet.c terminal.c utilities.c Makefile
 NOCRYPT_DIR=${.CURDIR}/Nocrypt
 
-.include <bsd.prog.mk>
-
-.else	# EXPORTABLE_SYSTEM
-
-MAN=	telnet.1
-
-.include <bsd.man.mk>
-
-.endif	# EXPORTABLE_SYSTEM
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.bin/telnet/Makefile.frag"
+.endif
 
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CPPFLAGS+=-DINET6
 
-nocrypt:
-	@echo "Encryption code already removed."
+LIBTELNETINCS?=-I${.CURDIR}/../../lib
+
+CPPFLAGS+=${LIBTELNETINCS}
+
+.include <bsd.prog.mk>
