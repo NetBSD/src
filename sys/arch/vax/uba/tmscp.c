@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.4 1995/07/05 08:24:45 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.4.2.1 1995/10/15 13:57:40 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -211,6 +211,8 @@ struct tmscp {
 	struct mscp	tmscp_rsp[NRSP];  /* response packets */
 	struct mscp	tmscp_cmd[NCMD];  /* command packets */
 } tmscp[NTMSCP];
+
+void tmscpstrategy(struct buf *);
 
 /*
  * Per drive-unit info
@@ -1703,6 +1705,7 @@ errinfo(st)
  * Manage buffers and perform block mode read and write operations.
  */
 
+void
 tmscpstrategy (bp)
 	register struct buf *bp;
 {
