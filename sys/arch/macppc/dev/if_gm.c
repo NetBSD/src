@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.7 2000/06/16 14:18:56 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.7.2.1 2001/06/18 16:49:10 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -132,7 +132,8 @@ gmac_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
 		return 1;
 
 	return 0;
