@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.36.2.2 2001/12/27 12:29:40 he Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.36.2.3 2002/02/09 17:39:10 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -480,9 +480,15 @@ wdc_atapi_intr(chp, xfer, irq)
 	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 		chp->wdc->irqack(chp);
 
-	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
+	/*
+	 * If we missed an IRQ and were using DMA, flag it as a DMA error
+	 * and reset device.
+	 */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
 		ata_dmaerr(drvp);
+		sc_xfer->error = XS_RESET;
+		wdc_atapi_reset(chp, xfer);
+		return (1);
 	}
 	/* 
 	 * if the request sense command was aborted, report the short sense
