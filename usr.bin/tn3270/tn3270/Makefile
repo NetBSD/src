@@ -1,6 +1,7 @@
-#	$Id: Makefile,v 1.14 1996/06/09 16:09:56 jtk Exp $
+#	$Id: Makefile,v 1.15 1996/06/14 17:24:48 cgd Exp $
 
 .include "../../Makefile.inc"
+.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 CFLAGS += -I${.CURDIR} -I.
 .if !defined(EXPORTABLE_SYSTEM) && exists(${.CURDIR}/../../../domestic/lib/libtelnet)
