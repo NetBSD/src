@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.127 2001/07/08 16:18:57 abs Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.128 2001/09/10 15:23:09 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1252,7 +1252,7 @@ after_listen:
 	 * Segment received on connection.
 	 * Reset idle time and keep-alive timer.
 	 */
-	tp->t_idle = 0;
+	tp->t_rcvtime = tcp_now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
@@ -1306,9 +1306,10 @@ after_listen:
 				if (opti.ts_present && opti.ts_ecr)
 					tcp_xmit_timer(tp,
 					  TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
-				else if (tp->t_rtt &&
+				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
-					tcp_xmit_timer(tp, tp->t_rtt);
+					tcp_xmit_timer(tp,
+					tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
@@ -1459,8 +1460,8 @@ after_listen:
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
 			 */
-			if (tp->t_rtt)
-				tcp_xmit_timer(tp, tp->t_rtt);
+			if (tp->t_rtttime)
+				tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 		} else
 			tp->t_state = TCPS_SYN_RECEIVED;
 
@@ -1789,7 +1790,7 @@ after_listen:
 					tp->snd_ssthresh = win * tp->t_segsz;
 					tp->snd_recover = tp->snd_max;
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
-					tp->t_rtt = 0;
+					tp->t_rtttime = 0;
 					tp->snd_nxt = th->th_ack;
 					tp->snd_cwnd = tp->t_segsz;
 					(void) tcp_output(tp);
@@ -1849,8 +1850,8 @@ after_listen:
 		 */
 		if (opti.ts_present && opti.ts_ecr)
 			tcp_xmit_timer(tp, TCP_TIMESTAMP(tp) - opti.ts_ecr + 1);
-		else if (tp->t_rtt && SEQ_GT(th->th_ack, tp->t_rtseq))
-			tcp_xmit_timer(tp,tp->t_rtt);
+		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
+			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
 		/*
 		 * If all outstanding data is acked, stop retransmit
@@ -2425,13 +2426,11 @@ tcp_pulloutofband(so, th, m, off)
 void
 tcp_xmit_timer(tp, rtt)
 	struct tcpcb *tp;
-	short rtt;
+	uint32_t rtt;
 {
-	short delta;
-	short rttmin;
+	int32_t delta;
 
 	tcpstat.tcps_rttupdated++;
-	--rtt;
 	if (tp->t_srtt != 0) {
 		/*
 		 * srtt is stored as fixed point with 3 bits after the
@@ -2467,7 +2466,7 @@ tcp_xmit_timer(tp, rtt)
 		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
 		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT + 2 - 1);
 	}
-	tp->t_rtt = 0;
+	tp->t_rtttime = 0;
 	tp->t_rxtshift = 0;
 
 	/*
@@ -2481,11 +2480,8 @@ tcp_xmit_timer(tp, rtt)
 	 * statistical, we have to test that we don't drop below
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
-	if (tp->t_rttmin > rtt + 2)
-		rttmin = tp->t_rttmin;
-	else
-		rttmin = rtt + 2;
-	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp), rttmin, TCPTV_REXMTMAX);
+	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
+	    max(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
 	
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
@@ -2519,7 +2515,7 @@ tcp_newreno(tp, th)
 		 * offset in tcp_output().
 		 */
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-	        tp->t_rtt = 0;
+	        tp->t_rtttime = 0;
 	        tp->snd_nxt = th->th_ack;
 		/*
 		 * Set snd_cwnd to one segment beyond ACK'd offset.  snd_una
