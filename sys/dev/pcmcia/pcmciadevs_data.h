@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.8 1998/08/15 18:56:17 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.9 1998/08/15 18:58:32 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.7 1998/08/15 18:55:25 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.8 1998/08/15 18:58:05 thorpej Exp 
  */
 
 /*
@@ -122,6 +122,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Linksys Corporation",
 	    "Linksys Combo EthernetCard"	},
+	},
+	{
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
+	    PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
+	    0,
+	    "Linksys Corporation",
+	    "Trust (Linksys) Combo EthernetCard"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4288,
