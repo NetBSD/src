@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.31 2004/05/11 17:09:58 christos Exp $	*/
+/*	$NetBSD: mknod.c,v 1.32 2004/06/17 21:09:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,12 +43,13 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.31 2004/05/11 17:09:58 christos Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.32 2004/06/17 21:09:01 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -69,6 +70,15 @@ static portdev_t callPack(pack_t *, int, u_long *);
 	int	main(int, char *[]);
 static	void	usage(void);
 
+#ifdef KERN_DRIVERS
+static struct kinfo_drivers *kern_drivers;
+static int num_drivers;
+
+static void get_device_info(void);
+static void print_device_info(char **);
+static int major_from_name(const char *, mode_t);
+#endif
+
 #define	MAXARGS	3		/* 3 for bsdos, 2 for rest */
 
 int
@@ -81,6 +91,10 @@ main(int argc, char **argv)
 	u_long	 numbers[MAXARGS];
 	int	 n, ch, fifo, hasformat;
 	int	 r_flag = 0;		/* force: delete existing entry */
+#ifdef KERN_DRIVERS
+	int	 l_flag = 0;		/* list device names and numbers */
+	int	 major;
+#endif
 	void	*modes = 0;
 	uid_t	 uid = -1;
 	gid_t	 gid = -1;
@@ -90,8 +104,18 @@ main(int argc, char **argv)
 	fifo = hasformat = 0;
 	pack = pack_native;
 
+#ifdef KERN_DRIVERS
+	while ((ch = getopt(argc, argv, "lrRF:g:m:u:")) != -1) {
+#else
 	while ((ch = getopt(argc, argv, "rRF:g:m:u:")) != -1) {
+#endif
 		switch (ch) {
+
+#ifdef KERN_DRIVERS
+		case 'l':
+			l_flag = 1;
+			break;
+#endif
 
 		case 'r':
 			r_flag = 1;
@@ -148,6 +172,13 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+#ifdef KERN_DRIVERS
+	if (l_flag) {
+		print_device_info(argv);
+		return 0;
+	}
+#endif
+
 	if (argc < 2 || argc > 10)
 		usage();
 
@@ -196,6 +227,17 @@ main(int argc, char **argv)
 		numbers[n] = strtoul(argv[n], &p, 0);
 		if (*p == 0 && errno == 0)
 			continue;
+#ifdef KERN_DRIVERS
+		if (n == 0) {
+			major = major_from_name(argv[0], mode);
+			if (major != -1) {
+				numbers[0] = major;
+				continue;
+			}
+			if (!isdigit(*(unsigned char *)argv[0]))
+				errx(1, "unknown driver: %s", argv[0]);
+		}
+#endif
 		errx(1, "invalid number: %s", argv[n]);
 	}
 
@@ -215,10 +257,6 @@ main(int argc, char **argv)
 
 	if (modes != NULL)
 		mode = getmode(modes, mode);
-#if 0
-	printf("name: %s\nmode: %05o\ndev:  %08x\nuid: %5d\ngid: %5d\n",
-		name, mode, dev, uid, gid);
-#endif
 	umask(0);
 	rval = fifo ? mkfifo(name, mode) : mknod(name, mode, dev);
 	if (rval < 0 && errno == EEXIST && r_flag) {
@@ -258,10 +296,17 @@ usage(void)
 	    "usage: %s [-rR] [-F format] [-m mode] [-u user] [-g group]\n",
 	    progname);
 	(void)fprintf(stderr,
+#ifdef KERN_DRIVERS
+	    "                   [ name [b | c] [major | driver] minor\n"
+#else
 	    "                   [ name [b | c] major minor\n"
+#endif
 	    "                   | name [b | c] major unit subunit\n"
 	    "                   | name [b | c] number\n"
 	    "                   | name p ]\n");
+#ifdef KERN_DRIVERS
+	(void)fprintf(stderr, "       %s -l [driver] ...\n", progname);
+#endif
 	exit(1);
 }
 
@@ -288,3 +333,66 @@ callPack(pack_t *f, int n, u_long *numbers)
 		errx(1, "%s", error);
 	return d;
 }
+
+#ifdef KERN_DRIVERS
+static void
+get_device_info(void)
+{
+	static int mib[2] = {CTL_KERN, KERN_DRIVERS};
+	size_t len;
+
+	if (sysctl(mib, 2, NULL, &len, NULL, 0) != 0)
+		err(1, "kern.drivers" );
+	kern_drivers = malloc(len);
+	if (kern_drivers == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 2, kern_drivers, &len, NULL, 0) != 0)
+		err(1, "kern.drivers" );
+
+	num_drivers = len / sizeof *kern_drivers;
+}
+
+static void
+print_device_info(char **names)
+{
+	int i;
+	struct kinfo_drivers *kd;
+
+	if (kern_drivers == NULL)
+		get_device_info();
+
+	do {
+		kd = kern_drivers;
+		for (i = 0; i < num_drivers; kd++, i++) {
+			if (*names && strcmp(*names, kd->d_name))
+				continue;
+			printf("%s", kd->d_name);
+			if (kd->d_cmajor != -1)
+				printf(" character major %d", kd->d_cmajor);
+			if (kd->d_bmajor != -1)
+				printf(" block major %d", kd->d_bmajor);
+			printf("\n");
+		}
+	} while (*names && *++names);
+}
+
+static int
+major_from_name(const char *name, mode_t mode)
+{
+	int i;
+	struct kinfo_drivers *kd;
+
+	if (kern_drivers == NULL)
+		get_device_info();
+
+	kd = kern_drivers;
+	for (i = 0; i < num_drivers; kd++, i++) {
+		if (strcmp(name, kd->d_name))
+			continue;
+		if (mode & S_IFCHR)
+			return kd->d_cmajor;
+		return kd->d_bmajor;
+	}
+	return -1;
+}
+#endif
