@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.13 1997/07/14 23:35:02 kleink Exp $
+.\"	$NetBSD: ctime.3,v 1.14 1998/03/19 16:26:35 tv Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -144,7 +144,7 @@ includes the following fields:
 .PP
 .nf
 .ta .5i +\w'long tm_gmtoff;\0\0'u
-	int tm_sec;	/\(** seconds (0 - 60) \(**/
+	int tm_sec;	/\(** seconds (0 - 61) \(**/
 	int tm_min;	/\(** minutes (0 - 59) \(**/
 	int tm_hour;	/\(** hours (0 - 23) \(**/
 	int tm_mday;	/\(** day of month (1 - 31) \(**/
