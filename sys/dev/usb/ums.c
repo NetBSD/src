@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.53 2001/12/28 17:32:36 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.54 2001/12/29 16:15:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.53 2001/12/28 17:32:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.54 2001/12/29 16:15:42 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,8 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 	u_int32_t buttons = 0;
 	int i;
 	int s;
+
+	DPRINTFN(5,("ums_intr: len=%d\n", len));
 
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
