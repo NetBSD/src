@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2002/03/04 02:25:22 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2002/03/25 13:47:26 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2002/03/04 02:25:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2002/03/25 13:47:26 shin Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2002/03/04 02:25:22 simonb Exp $");
 #include "fs_nfs.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,6 +665,10 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #ifdef KLOADER_KERNEL_PATH
+#ifdef MEMORY_DISK_HOOKS
+#undef KLOADER_KERNEL_PATH
+#define KLOADER_KERNEL_PATH	"/mnt/netbsd"	/*XXX*/
+#endif
 	if ((howto & RB_HALT) == 0)
 		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
