@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29.2.2 2000/04/17 01:43:24 sommerfeld Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.2.3 2000/06/25 19:37:05 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,6 +45,7 @@
 #include "pci.h"
 #include "eisa.h"
 #include "isa.h"
+#include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
 #include "mpbios.h"
@@ -62,6 +63,10 @@
 #include <arch/i386/pnpbios/pnpbiosvar.h>
 #endif
 
+#if NMCA > 0
+#include <dev/mca/mcavar.h>
+#endif
+
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
@@ -76,6 +81,9 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct eisabus_attach_args mba_eba;
 	struct isabus_attach_args mba_iba;
+#if NMCA > 0
+	struct mcabus_attach_args mba_mba;
+#endif
 #if NAPM > 0
 	struct apm_attach_args mba_aaa;
 #endif
@@ -174,6 +182,19 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);
+	}
+#endif
+
+#if NMCA > 0
+	/* note MCA bus probe is done in i386/machdep.c */
+	if (MCA_system) {
+		mba.mba_mba.mba_busname = "mca";
+		mba.mba_mba.mba_iot = I386_BUS_SPACE_IO;
+		mba.mba_mba.mba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
+		mba.mba_mba.mba_mc = NULL;
+		mba.mba_mba.mba_bus = 0;
+		config_found(self, &mba.mba_mba, mainbus_print);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.1 2000/02/20 17:41:33 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.2 2000/06/25 19:37:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
 #define	SIR_NET		30
 #define	SIR_SERIAL	29
 
+/* Hack for CLKF_INTR(). */
+#define	IPL_TAGINTR	28
+
 #ifndef _LOCORE
 
 #ifdef MULTIPROCESSOR
@@ -102,8 +105,7 @@ int iunmask[NIPL];
 extern void Xspllower __P((void));
 
 static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
+static __inline void spllower __P((int));
 static __inline void softintr __P((int, int));
 
 /*
@@ -125,33 +127,15 @@ splraise(ncpl)
  * interrupts are pending, call Xspllower() to process them.
  */
 static __inline void
-splx(ncpl)
-	register int ncpl;
-{
-	register int cmask;
-
-	lapic_tpr = ncpl;
-	cmask = IUNMASK(ncpl);
-	if (ipending & cmask)
-		Xspllower();
-}
-
-/*
- * Same as splx(), but we return the old value of spl, for the
- * benefit of some splsoftclock() callers.
- */
-static __inline int
 spllower(ncpl)
 	register int ncpl;
 {
-	register int ocpl = lapic_tpr;
 	register int cmask;
-	
+
 	lapic_tpr = ncpl;
 	cmask = IUNMASK(ncpl);
 	if (ipending & cmask)
 		Xspllower();
-	return (ocpl);
 }
 
 /*
@@ -185,6 +169,7 @@ spllower(ncpl)
 #define	splimp()	splraise(IPL_IMP)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
+#define	splx(x)		spllower(x)
 
 /*
  * Software interrupt registration

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.2 2000/05/03 14:42:31 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.3 2000/06/25 19:37:03 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ include <machine/isa_machdep.h>
 endif
 
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE

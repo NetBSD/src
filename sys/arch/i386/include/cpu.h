@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.5 2000/04/22 16:05:20 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.6 2000/06/25 19:37:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,13 +53,13 @@
 #include <machine/segments.h>
 
 #ifdef MULTIPROCESSOR
-
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
+#include <sys/sched.h>
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -67,6 +67,7 @@
 
 struct cpu_info {
 	struct device ci_dev;		/* pointer to our device */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	/*
 	 * Public members.
@@ -143,6 +144,12 @@ extern void need_resched __P((void));
 
 #else /* !MULTIPROCESSOR */
 
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()			(&cpu_info_store)
+#endif
+
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -171,7 +178,7 @@ int want_resched;
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 
 
 /*
