@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.10 1995/09/23 01:11:42 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.11 1995/09/27 03:38:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -195,7 +195,6 @@ pdma_stat()
 	printf("pdma_5380_state = %s.\n", pdma_5380_state);
 }
 #endif
-#endif
 
 void
 pdma_cleanup(void)
@@ -244,10 +243,16 @@ pdma_cleanup(void)
 	 */
 	run_main(cur_softc);
 }
+#endif
 
 static __inline__ int
 pdma_ready()
 {
+#if USE_PDMA
+	SC_REQ	*reqp = connected;
+	int	dmstat, idstat;
+extern	u_char	ncr5380_no_parchk;
+
 	if (pdma_5380_dir) {
 #if DEBUG
 		pdma_5380_state = "got irq interrupt in xfer.";
@@ -256,7 +261,8 @@ pdma_ready()
 		 * If Mr. IRQ isn't set one might wonder how we got
 		 * here.  It does happen, though.
 		 */
-		if (!(GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET)) {
+		dmstat = GET_5380_REG(NCR5380_DMSTAT);
+		if (!(dmstat & SC_IRQ_SET)) {
 			return 0;
 		}
 		/*
@@ -266,9 +272,27 @@ pdma_ready()
 		 * REQ.  Since we're just checking that this interrupt isn't a
 		 * reselection or a reset, we just check for either.
 		 */
-		if (   ((GET_5380_REG(NCR5380_DMSTAT) & (0xff & ~SC_ATN_STAT))
-			== SC_IRQ_SET)
-		    && (GET_5380_REG(NCR5380_IDSTAT) & (SC_S_BSY|SC_S_REQ))) {
+		idstat = GET_5380_REG(NCR5380_IDSTAT);
+		if (   ((dmstat & (0xff & ~SC_ATN_STAT)) == SC_IRQ_SET)
+		    && ((idstat & (SC_S_BSY|SC_S_REQ))
+			== (SC_S_BSY | SC_S_REQ)) ) {
+			pdma_cleanup();
+			return 1;
+		} else if (PH_IN(reqp->phase) && (dmstat & SC_PAR_ERR)) {
+			if (!(ncr5380_no_parchk & (1 << reqp->targ_id)))
+				/* XXX: Should be parity error ???? */
+				reqp->xs->error = XS_DRIVER_STUFFUP;
+			/* XXX: is this the right reaction? */
+			pdma_cleanup();
+			return 1;
+		} else if (   !(idstat & SC_S_REQ)
+			   || (((idstat>>2) & 7) != reqp->phase)) {
+#ifdef DIAGNOSTIC
+			/* XXX: is this the right reaction? Can this happen? */
+			scsi_show();
+			printf("Unexpected phase change.\n");
+#endif
+			reqp->xs->error = XS_DRIVER_STUFFUP;
 			pdma_cleanup();
 			return 1;
 		} else {
@@ -276,6 +300,7 @@ pdma_ready()
 			panic("Spurious interrupt during PDMA xfer.\n");
 		}
 	}
+#endif
 	return 0;
 }
 
@@ -285,9 +310,11 @@ ncr5380_irq_intr(p)
 {
 	struct ncr_softc	*sc = p;
 
+#if USE_PDMA
 	if (pdma_ready()) {
 		return;
 	}
+#endif
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
 		ncr_ctrl_intr(cur_softc);
@@ -387,7 +414,10 @@ extern	int			*nofault, mac68k_buserr_addr;
 		/*
 		 * Get ready to start the transfer.
 		 */
-		count = pending_5380_count;
+		while (pending_5380_count) {
+		int dcount;
+
+		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
 
@@ -432,6 +462,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 			R1; count--;
 #undef R1
 		}
+		pending_5380_count -= dcount;
+		}
 	} else {
 		int	resid;
 
@@ -454,14 +486,17 @@ extern	int			*nofault, mac68k_buserr_addr;
 		/*
 		 * Get ready to start the transfer.
 		 */
-		count = pending_5380_count;
+		while (pending_5380_count) {
+		int dcount;
+
+		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
 
 #define W4	*long_drq++ = *long_data++
 		while ( count >= 64 ) {
 			W4; W4; W4; W4; W4; W4; W4; W4;
-			W4; W4; W4; W4; W4; W4; W4; W4;
+			W4; W4; W4; W4; W4; W4; W4; W4; /*  64 */
 			count -= 64;
 		}
 		while (count >= 4) {
@@ -473,8 +508,10 @@ extern	int			*nofault, mac68k_buserr_addr;
 		while (count) {
 #define W1	*drq++ = *data++
 			W1; count--;
-		}
 #undef W1
+		}
+		pending_5380_count -= dcount;
+		}
 	}
 
 	/*
