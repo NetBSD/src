@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.31 2001/08/03 14:47:17 enami Exp $
+$NetBSD: UPDATING,v 1.32 2001/08/22 03:11:09 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,10 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010814:
+	TOOLDIR must be set in /etc/mk.conf.
+	http://mail-index.netbsd.org/current-users/2001/08/14/0002.html
 
 20010803:
 	grep.info is now built from grep.texi using makeinfo.  Since it
