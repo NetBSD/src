@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.1 1995/09/02 04:39:51 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.2 1995/09/21 07:27:53 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -71,6 +71,7 @@ device		grf0	at scode?
 
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ite			# terminal emulation on grf
 pseudo-device	loop			# loopback network interface
 pseudo-device	ether			# basic ethernet support
