@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.2 2005/01/09 15:48:51 joff Exp $ */
+/* $NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.2 2005/01/09 15:48:51 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.3 2005/01/11 00:59:06 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.2 2005/01/09 15:48:51 joff Exp $");
 
 #include <arm/ep93xx/ep93xxreg.h>
 #include <dev/ic/hd44780reg.h>
-#include <dev/ic/hd44780_subr.h>
+#include <dev/ic/hd44780var.h>
 #include <evbarm/tsarm/tspldvar.h>
 #include <evbarm/tsarm/tsarmreg.h>
 
