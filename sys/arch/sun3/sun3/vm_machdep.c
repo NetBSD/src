@@ -1,11 +1,11 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 1995/05/30 15:36:58 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 1995/09/26 04:02:30 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
- *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
 
 #include <sys/param.h>
@@ -55,13 +55,16 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_map.h>
+/* #include <vm/vm_map.h> */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
+
 #include "cache.h"
+
+extern int fpu_type;
 
 /* XXX - Put this in some header file? */
 void cpu_set_kpc __P((struct proc *p, u_long func));
@@ -183,9 +186,10 @@ cpu_set_kpc(proc, func)
 /*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
- * block context switches and then call switch_exit() which will
- * free our stack and user area and switch to another process
- * thus we never return.
+ * including the memory for the user structure and kernel stack.
+ * Once finished, we call switch_exit, which switches to a temporary
+ * pcb and stack and never returns.  We block memory allocation
+ * until switch_exit has made things safe again.
  */
 void
 cpu_exit(p)
@@ -194,7 +198,7 @@ cpu_exit(p)
 
 	vmspace_free(p->p_vmspace);
 
-	(void)splimp();	/* XXX - splhigh() ? */
+	(void) splimp();
 	cnt.v_swtch++;
 	switch_exit(p);
 	/* NOTREACHED */
@@ -233,12 +237,12 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	int error;
 	struct md_core md_core;
 	struct coreseg cseg;
-	register struct user *up = p->p_addr;
+	int error;
 	register i;
-	extern int fpu_type;
+
+	/* XXX: Make sure savectx() was done? */
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
@@ -246,30 +250,14 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Save integer registers. */
-	{
-		register struct frame *f;
+	error = process_read_regs(p, &md_core.intreg);
+	if (error)
+		return error;
 
-		f = (struct frame*) p->p_md.md_regs;
-		for (i = 0; i < 16; i++) {
-			md_core.intreg.r_regs[i] = f->f_regs[i];
-		}
-		md_core.intreg.r_sr = f->f_sr;
-		md_core.intreg.r_pc = f->f_pc;
-	}
-	if (fpu_type) {
-		register struct fpframe *f;
-
-		f = &up->u_pcb.pcb_fpregs;
-		m68881_save(f);
-		for (i = 0; i < (8*3); i++) {
-			md_core.freg.r_regs[i] = f->fpf_regs[i];
-		}
-		md_core.freg.r_fpcr  = f->fpf_fpcr;
-		md_core.freg.r_fpsr  = f->fpf_fpsr;
-		md_core.freg.r_fpiar = f->fpf_fpiar;
-	} else {
-		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
-	}
+	/* Save floating point registers. */
+	error = process_read_fpregs(p, &md_core.freg);
+	if (error)
+		return error;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
 	cseg.c_addr = 0;
@@ -277,26 +265,57 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
+	if (error)
+		return error;
 
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
+	chdr->c_nseg++;
+	return (0);
 }
 
+/*
+ * Move pages from one kernel virtual address to another.
+ * Both addresses are assumed to reside in the kernel map,
+ * and size must be a multiple of CLSIZE.
+ */
+pagemove(from, to, size)
+	register caddr_t from, to;
+	int size;
+{
+	register vm_offset_t pa;
+
+#ifdef DIAGNOSTIC
+	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
+		panic("pagemove 1");
+#endif
+	while (size > 0) {
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
+#ifdef DIAGNOSTIC
+		if (pa == 0)
+			panic("pagemove 2");
+#endif
+		/* this does the cache flush work itself */
+		pmap_remove(pmap_kernel(),
+			(vm_offset_t)from, (vm_offset_t)from + NBPG);
+		pmap_enter(pmap_kernel(),
+			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		from += NBPG;
+		to += NBPG;
+		size -= NBPG;
+	}
+}
 
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
+ * Map an IO request into kernel virtual address space.
+ * Requests fall into one of five catagories:
  *
  *	B_PHYS|B_UAREA:	User u-area swap.
  *			Address is relative to start of u-area (p_addr).
@@ -309,8 +328,11 @@ extern vm_map_t phys_map;
  *	B_PHYS:		User "raw" IO request.
  *			Address is VA in user's address space.
  *
- * All requests are (re)mapped into kernel VA space via the useriomap
+ * All requests are (re)mapped into kernel VA space via the phys_map
  * (a name with only slightly more meaning than "kernelmap")
+ *
+ * This routine has user context and can sleep
+ * (called only by physio).
  *
  * XXX we allocate KVA space by using kmem_alloc_wait which we know
  * allocates space without backing physical memory.  This implementation
@@ -359,6 +381,9 @@ vmapbuf(bp)
  * The mappings in the I/O map (phys_map) were non-cached,
  * so there are no write-back modifications to flush.
  * Also note, kmem_free_wakeup will remove the mappings.
+ *
+ * This routine has user context and can sleep
+ * (called only by physio).
  */
 vunmapbuf(bp)
 	register struct buf *bp;
@@ -377,142 +402,5 @@ vunmapbuf(bp)
 	kmem_free_wakeup(phys_map, pgva, ctob(npf));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the kernel map,
- * and size must be a multiple of CLSIZE.
- */
-void pagemove(from, to, size)
-	register caddr_t from, to;
-	int size;
-{
-	register vm_offset_t pa;
-
-#ifdef DIAGNOSTIC
-	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
-		panic("pagemove 1");
-#endif
-	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
-#ifdef DIAGNOSTIC
-		if (pa == 0)
-			panic("pagemove 2");
-#endif
-		/* this does the cache flush work itself */
-		pmap_remove(pmap_kernel(),
-			(vm_offset_t)from, (vm_offset_t)from + NBPG);
-		pmap_enter(pmap_kernel(),
-			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
-	}
-}
-
-/*
- * Allocate actual memory pages in DVMA space.
- * (idea for implementation borrowed from Chris Torek.)
- */
-caddr_t dvma_malloc(bytes)
-     size_t bytes;
-{
-    caddr_t new_mem;
-    vm_size_t new_size;
-
-    if (!bytes)
-		return NULL;
-    new_size = sun3_round_page(bytes);
-    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
-    if (!new_mem)
-		panic("dvma_malloc: no space in phys_map");
-    /* The pmap code always makes DVMA pages non-cached. */
-    return new_mem;
-}
-
-/*
- * Allocate virtual space from the DVMA map,
- * but do not map anything into that space.
- */
-caddr_t dvma_vm_alloc(bytes)
-     int bytes;
-{
-	vm_offset_t va;
-
-	if (bytes <= 0 || bytes > DVMA_SPACE_SIZE)
-		return NULL;
-	if (bytes & PGOFSET)
-		panic("dvma_vm_alloc");
-
-	va = kmem_alloc_wait(phys_map, bytes);
-    return (caddr_t) va;
-}
-
-/*
- * Free virtual space from the DVMA map.
- */
-void dvma_vm_free(caddr_t va, int bytes)
-{
-	kmem_free_wakeup(phys_map, (vm_offset_t)va, bytes);
-}
-
-/*
- * Given a DVMA address, return the physical address that
- * would be used by some OTHER bus-master besides the CPU.
- * (Examples: on-board ie/le, VME xy board).
- */
-long dvma_kvtopa(long kva)
-{
-	if (kva < DVMA_SPACE_START || kva >= DVMA_SPACE_END)
-		panic("dvma_kvtopa: bad dmva addr=0x%x\n", kva);
-
-	return(kva - DVMA_SLAVE_BASE);
-}
-
-/*
- * Given a range of kernel virtual space, remap all the
- * pages found there into the DVMA space (dup mappings).
- * XXX - Perhaps this should take a list of pages...
- */
-caddr_t dvma_remap(char *kva, int len)
-{
-	vm_offset_t phys, dvma;
-	caddr_t dvma1st;
-
-	/* Get sufficient DVMA space. */
-	dvma1st = dvma_vm_alloc(len);
-	if (dvma1st == NULL)
-		return(NULL);	/* EAGAIN? */
-
-	dvma = (vm_offset_t) dvma1st;
-	while (len > 0) {
-		phys = pmap_extract(pmap_kernel(), (vm_offset_t)kva);
-		if (phys == 0)
-			panic("dvma_remap: phys=0");
-#ifdef	HAVECACHE
-		/* flush write-back on old mappings */
-		if (cache_size)
-			cache_flush_page((vm_offset_t)kva);
-#endif
-
-		/* Duplicate the mapping */
-		pmap_enter(pmap_kernel(), dvma,
-				   phys | PMAP_NC,
-				   VM_PROT_ALL, FALSE);
-
-		kva  += NBPG;
-		dvma += NBPG;
-		len  -= NBPG;
-	}
-
-	return(dvma1st);
-}
-
-void dvma_unmap(caddr_t dvma_addr, int len)
-{
-	pmap_remove(pmap_kernel(), (vm_offset_t)dvma_addr,
-			(vm_offset_t)dvma_addr + len);
-	dvma_vm_free(dvma_addr, len);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1995/08/15 17:41:38 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 1995/09/26 04:02:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -76,6 +76,7 @@
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/vmparam.h>
+#include <machine/dvma.h>
 #include <machine/pmap.h>
 
 #include "cache.h"
@@ -584,7 +585,7 @@ sun3_reserve_pmeg(sme)
 		mon_panic("sun3_reserve_pmeg: already owned\n");
 
 	/* XXX - Owned by kernel, but not really usable... */
-	pmegp->pmeg_owner = NULL;
+	pmegp->pmeg_owner = kernel_pmap;
 	pmegp->pmeg_reserved++;	/* keep count, just in case */
 	TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
 	pmegp->pmeg_qstate = PMEGQ_NONE;
@@ -1576,7 +1577,9 @@ pmap_init()
 }
 
 /*
- * Record the mapping for kernel text/data/bss
+ * Map a range of kernel virtual address space.
+ * This might be used for device mappings, or to
+ * record the mapping for kernel text/data/bss.
  */
 vm_offset_t
 pmap_map(virt, start, end, prot)
@@ -2120,7 +2123,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	pmegp = pmeg_p(sme);
 #ifdef	DIAGNOSTIC
 	/* Make sure it is ours. */
-	if (pmegp->pmeg_owner && (pmegp->pmeg_owner != kernel_pmap))
+	if (pmegp->pmeg_owner != kernel_pmap)
 		panic("pmap_enter_kernel: MMU has bad pmeg %x", sme);
 #endif
 
@@ -2439,6 +2442,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/* ...and finally the page-frame number. */
 	pte_proto |= PA_PGNUM(pa);
 
+	/* Remove spec bits from pa (now in pte_proto) */
+	pa &= ~PMAP_SPEC;
+
 	/*
 	 * treatment varies significantly:
 	 *  kernel ptes are in all contexts, and are always in the mmu
@@ -2733,6 +2739,7 @@ pmap_extract(pmap, va)
 	vm_offset_t va;
 {
 	int s, sme, segnum, ptenum, pte;
+	vm_offset_t pa;
 
 	pte = 0;
 	PMAP_LOCK();
@@ -2756,7 +2763,13 @@ pmap_extract(pmap, va)
 #endif
 		pte = 0;
 	}
-	return PG_PA(pte);
+	pa = PG_PA(pte);
+#ifdef	DIAGNOSTIC
+	if (pte & PG_TYPE) {
+		panic("pmap_extract: not main mem, va=0x%x\n", va);
+	}
+#endif
+	return (pa);
 }
 
 /*
