@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2004/06/06 06:07:01 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.21 2004/06/12 14:44:42 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,7 +65,7 @@ typedef struct {
  *    This should match the definitions in include/machine/disklabel.h
  *    and must conform to the matching rules in arch/mac68k/mac68k/disksubr.c
  */
-MAP_TYPE map_types[];
+extern MAP_TYPE map_types[];
 
 /*
  * Define NetBSD partition types
@@ -177,7 +177,7 @@ typedef struct {
  *  Has minimal entry for an old Apple SCSI driver, a newer 43 SCSI
  *  driver and an IDE driver (for those Macs with IDE). 
  */
-struct apple_part_map_entry new_map[];
+extern struct apple_part_map_entry new_map[];
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
