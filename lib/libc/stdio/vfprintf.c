@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.13 1994/10/20 03:56:56 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.14 1995/01/25 11:20:41 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -188,7 +188,6 @@ vfprintf(fp, fmt0, ap)
 	u_quad_t _uquad;	/* integer arguments %[diouxX] */
 	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
-	int fieldsz;		/* field size expanded by sign, etc */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
 	char *xdigs;		/* digits for [xX] conversion */
@@ -599,14 +598,13 @@ number:			if ((dprec = prec) >= 0)
 		 * floating precision; finally, if LADJUST, pad with blanks.
 		 *
 		 * Compute actual size, so we know how much to pad.
-		 * fieldsz excludes decimal prec; realsz includes it.
+		 * size excludes decimal prec; realsz includes it.
 		 */
-		fieldsz = size;
+		realsz = dprec > size ? dprec : size;
 		if (sign)
-			fieldsz++;
+			realsz++;
 		else if (flags & HEXPREFIX)
-			fieldsz += 2;
-		realsz = dprec > fieldsz ? dprec : fieldsz;
+			realsz+= 2;
 
 		/* right-adjusting blank padding */
 		if ((flags & (LADJUST|ZEROPAD)) == 0)
