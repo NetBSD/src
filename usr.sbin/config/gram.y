@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.5 1996/03/17 05:19:33 cgd Exp $	*/
+/*	$NetBSD: gram.y,v 1.6 1996/03/17 11:50:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,14 +68,16 @@ static	struct	config conf;	/* at most one active at a time */
 /* the following is used to recover nvlist space after errors */
 static	struct	nvlist *alloc[1000];
 static	int	adepth;
-#define	new0(n,s,p,i)	(alloc[adepth++] = newnv(n, s, p, i))
-#define	new_n(n)	new0(n, NULL, NULL, 0)
-#define	new_ns(n, s)	new0(n, s, NULL, 0)
-#define	new_si(s, i)	new0(NULL, s, NULL, i)
-#define	new_nsi(n,s,i)	new0(n, s, NULL, i)
-#define	new_np(n, p)	new0(n, NULL, p, 0)
-#define	new_s(s)	new0(NULL, s, NULL, 0)
-#define	new_p(p)	new0(NULL, NULL, p, 0)
+#define	new0(n,s,p,i,x)	(alloc[adepth++] = newnv(n, s, p, i, x))
+#define	new_n(n)	new0(n, NULL, NULL, 0, NULL)
+#define	new_nx(n, x)	new0(n, NULL, NULL, 0, x)
+#define	new_ns(n, s)	new0(n, s, NULL, 0, NULL)
+#define	new_si(s, i)	new0(NULL, s, NULL, i, NULL)
+#define	new_nsi(n,s,i)	new0(n, s, NULL, i, NULL)
+#define	new_np(n, p)	new0(n, NULL, p, 0, NULL)
+#define	new_s(s)	new0(NULL, s, NULL, 0, NULL)
+#define	new_p(p)	new0(NULL, NULL, p, 0, NULL)
+#define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
 
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
@@ -165,7 +167,7 @@ file:
 
 /* order of options is important, must use right recursion */
 fopts:
-	WORD fopts			= { ($$ = new_n($1))->nv_next = $2; } |
+	WORD fopts			= { $$ = new_nx($1, $2); } |
 	/* empty */			= { $$ = NULL; };
 
 fflgs:
@@ -205,7 +207,7 @@ one_def:
 	MAJOR '{' majorlist '}';
 
 atlist:
-	atlist ',' atname		= { ($$ = new_n($3))->nv_next = $1; } |
+	atlist ',' atname		= { $$ = new_nx($3, $1); } |
 	atname				= { $$ = new_n($1); };
 
 atname:
@@ -218,7 +220,7 @@ veclist_opt:
 
 /* veclist order matters, must use right recursion */
 veclist:
-	WORD veclist			= { ($$ = new_n($1))->nv_next = $2; } |
+	WORD veclist			= { $$ = new_nx($1, $2); } |
 	WORD				= { $$ = new_n($1); };
 
 devbase:
@@ -229,7 +231,7 @@ devattach_opt:
 	/* empty */			= { $$ = NULL; };
 
 interface_opt:
-	'{' loclist_opt '}'		= { ($$ = new_n(""))->nv_next = $2; } |
+	'{' loclist_opt '}'		= { $$ = new_nx("", $2); } |
 	/* empty */			= { $$ = NULL; };
 
 loclist_opt:
@@ -265,7 +267,7 @@ attrs_opt:
 	/* empty */			= { $$ = NULL; };
 
 attrs:
-	attrs ',' attr			= { ($$ = new_p($3))->nv_next = $1; } |
+	attrs ',' attr			= { $$ = new_px($3, $1); } |
 	attr				= { $$ = new_p($1); };
 
 attr:

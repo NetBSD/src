@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.21 1996/03/17 06:29:21 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.22 1996/03/17 11:50:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,6 +307,7 @@ char	*path __P((const char *));
 void	error __P((const char *, ...));			/* immediate errs */
 void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
 __dead void panic __P((const char *, ...));
-struct nvlist *newnv __P((const char *, const char *, void *, int));
+struct nvlist *newnv __P((const char *, const char *, void *, int,
+	    struct nvlist *));
 void	nvfree __P((struct nvlist *));
 void	nvfreel __P((struct nvlist *));
