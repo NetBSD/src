@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.21 2003/09/06 20:11:18 wiz Exp $
+.\"	$NetBSD: pppoectl.8,v 1.22 2003/10/02 06:25:28 itojun Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.21 2003/09/06 20:11:18 wiz Exp $
+.\" $Id: pppoectl.8,v 1.22 2003/10/02 06:25:28 itojun Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -357,7 +357,7 @@ pppoectl pppoe0 \\
 # Configure the pppoe0 interface itself.  These addresses are magic,
 # meaning we don't care about either address and let the remote
 # ppp choose them.
-ifconfig pppoe0 0.0.0.0 0.0.0.1 up
+ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff up
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
