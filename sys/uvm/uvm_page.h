@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.26 2001/05/25 04:06:16 chs Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.27 2001/06/28 00:26:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,11 +112,6 @@
  * seperated things back out again.
  *
  * note the page structure has no lock of its own.
- *
- * XXX the use of locked u_short fields is dangerous, as they are not
- *     addressable on all architectures and hence cannot be individually
- *     locked. Right now it works because each aligned pair uses the same
- *     lock and all current ports can lock an int32_t.
  */
 
 #include <uvm/uvm_extern.h>
@@ -132,10 +127,13 @@ struct vm_page {
 	struct uvm_object	*uobject;	/* object (O,P) */
 	voff_t			offset;		/* offset into object (O,P) */
 
-	u_short			flags;		/* object flags [O] */
-	u_short			version;	/* version count [O] */
-	u_short			wire_count;	/* wired down map refs [P] */
-	u_short			pqflags;	/* page queue flags [P] */
+	u_int			flags:      16,	/* object flags [O] */
+				version:    16;	/* version count [O] */
+
+	u_int			wire_count: 16,	/* wired down map refs [P] */
+				pqflags:    8,	/* page queue flags [P] */
+				       :    8;
+
 	u_int			loan_count;	/* number of active loans
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
@@ -179,12 +177,12 @@ struct vm_page {
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
-#define PQ_FREE		0x0001		/* page is on free list */
-#define PQ_INACTIVE	0x0002		/* page is in inactive list */
-#define PQ_ACTIVE	0x0004		/* page is in active list */
-#define PQ_ANON		0x0010		/* page is part of an anon, rather
+#define PQ_FREE		0x01		/* page is on free list */
+#define PQ_INACTIVE	0x02		/* page is in inactive list */
+#define PQ_ACTIVE	0x04		/* page is in active list */
+#define PQ_ANON		0x10		/* page is part of an anon, rather
 					   than an uvm_object */
-#define PQ_AOBJ		0x0020		/* page is part of an anonymous
+#define PQ_AOBJ		0x20		/* page is part of an anonymous
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 
