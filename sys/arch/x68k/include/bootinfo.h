@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 1998/12/14 15:22:04 itohy Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 1999/09/23 15:14:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 ITOH, Yasufumi
@@ -44,6 +44,7 @@
 /* major */
 #define X68K_MAJOR_FD	2	/* floppy disk */
 #define X68K_MAJOR_MD	8	/* memory disk */
+#define X68K_MAJOR_NE	255	/* network interface: ne */
 
 #define X68K_MAKEBOOTDEV(major, unit, part) \
 	MAKEBOOTDEV(major, 0, 0, unit, part)
@@ -111,5 +112,14 @@
 
 #define X68K_BOOT_SCSIIF_STRINGS	\
 	NULL, "spc", "mha"
+
+#define X68K_BOOT_NETIF_LIST		\
+	{ "ne", X68K_MAJOR_NE }
+
+#define X68K_BOOT_NETIF_STRINGS		\
+	"ne"
+
+#define X68K_BOOT_DEV_IS_NETIF(major)	\
+	((major) == X68K_MAJOR_NE)
 
 #endif /* _X68K_BOOTINFO_H_ */
