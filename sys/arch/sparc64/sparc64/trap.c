@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2003/11/01 01:38:46 cl Exp $ */
+/*	$NetBSD: trap.c,v 1.99 2003/11/04 14:14:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2003/11/01 01:38:46 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2003/11/04 14:14:28 pk Exp $");
 
 #define NEW_FPSTATE
 
@@ -944,11 +944,7 @@ badtrap:
 	if (sig != 0) {
 		KERNEL_PROC_LOCK(l);
 		ksi.ksi_signo = sig;
-#ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
-#else
-		trapsignal(l, sig, ksi.ksi_code);
-#endif
 		KERNEL_PROC_UNLOCK(l);
 	}
 	userret(l, pc, sticks);
@@ -1316,11 +1312,7 @@ kfault:
 		}
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
-#ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
-#endif
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		l->l_flag &= ~L_SA_PAGEFAULT;
@@ -1494,11 +1486,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_trap = type;
 	ksi.ksi_addr = (void *)afva;
-#ifdef __HAVE_SIGINFO
 	trapsignal(l, &ksi);
-#else
-	trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
-#endif
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(l, pc, sticks);
@@ -1633,11 +1621,7 @@ text_access_fault(tf, type, pc, sfsr)
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)pc;
-#ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
-#endif
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(l, pc, sticks);
@@ -1741,11 +1725,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		ksi.ksi_code = BUS_OBJERR;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)pc;
-#ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
-#endif
 	}
 
 	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0)
@@ -1830,11 +1810,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)pc;
-#ifdef __HAVE_SIGINFO
 		trapsignal(l, &ksi);
-#else
-		trapsignal(l, ksi.ksi_signo, (u_long)ksi.ksi_addr);
-#endif
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
