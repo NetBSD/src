@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 1995/02/13 23:07:29 cgd Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 1995/02/16 03:08:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,11 +54,7 @@
 #define	_BSD_TIME_T_	int			/* time() */
 struct __va_list {
 	char *base;
-#ifdef __GNUC__
 	long offset;
-#else
-	int offset;
-#endif
 };
 #define	_BSD_VA_LIST_	struct __va_list	/* va_list */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.1 1995/02/13 23:07:56 cgd Exp $	*/
+/*	$NetBSD: signal.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 
 typedef long	sig_atomic_t;
 
+#ifndef _ANSI_SOURCE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -57,4 +58,5 @@ struct  sigcontext {
 	long	sc_xxx[8];		/* XXX */
 };
 
+#endif /* !_ANSI_SOURCE */
 #endif /* !_ALPHA_SIGNAL_H_*/

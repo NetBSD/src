@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.1 1995/02/13 23:07:57 cgd Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,26 +47,6 @@ typedef _BSD_VA_LIST_	va_list;
  * ones.  On the alpha, all arguments are passed as 64 bit quantities.
  */
 
-#ifndef __GNUC__
-
-#define	va_start(a, last) \
-	__builtin_va_start(a, last, 1)
-
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
-
-#define	__va_arg_offset(a, type)					\
-	((__builtin_isfloat(type) && (a).offset <= (6 * 8) ?		\
-	    -(6 * 8) : 0) - __va_size(type))
-
-#define	va_arg(a, type)							\
-	(*((a).offset += __va_size(type),				\
-	    (type *)((a).base + (a).offset + __va_arg_offset(a, type))))
-
-#define	va_end(a)
-
-#else /* __GNUC__ */
-
 #define	va_start(a, last) \
 	(__builtin_next_arg(last), (a) = *(va_list *)__builtin_saveregs())
 
@@ -82,8 +62,6 @@ typedef _BSD_VA_LIST_	va_list;
 	(*((a).offset += __va_size(type),				\
 	    (type *)((a).base + (a).offset + __va_arg_offset(a, type))))
 
-#define	va_end(a)
-
-#endif /* __GNUC__ */
+#define	va_end(a)	((void) 0)
 
 #endif /* !_STDARG_H_ */
