@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.46 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.47 2001/04/03 15:00:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.46 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.47 2001/04/03 15:00:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ parsecmd(int interact)
 {
 	int t;
 
+	tokpushback = 0;
 	doprompt = interact;
 	if (doprompt)
 		setprompt(1);
