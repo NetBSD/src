@@ -11,7 +11,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * $Id: if_tun.c,v 1.9 1993/12/24 03:20:59 deraadt Exp $
+ * $Id: if_tun.c,v 1.10 1994/02/28 07:16:10 andrew Exp $
  */
 
 #include "tun.h"
@@ -148,7 +148,7 @@ tunclose(dev, flag)
 	struct ifnet	*ifp = &tp->tun_if;
 	struct mbuf	*m;
 
-	tp->tun_flags &= TUN_OPEN;
+	tp->tun_flags &= ~TUN_OPEN;
 
 	/*
 	 * junk all pending output
