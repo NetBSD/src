@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.62 2000/03/23 06:30:11 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.63 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -113,7 +113,7 @@ sys___vfork14(p, v, retval)
 
 int
 fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
-	register struct proc *p1;
+	struct proc *p1;
 	int flags;
 	int exitsig;
 	void *stack;
@@ -121,8 +121,8 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	register_t *retval;
 	struct proc **rnewprocp;
 {
-	register struct proc *p2;
-	register uid_t uid;
+	struct proc *p2;
+	uid_t uid;
 	struct proc *newproc;
 	int count, s;
 	vaddr_t uaddr;

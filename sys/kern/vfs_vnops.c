@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.40 2000/03/30 02:15:09 simonb Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.41 2000/03/30 09:27:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -73,12 +73,12 @@ struct 	fileops vnops =
  */
 int
 vn_open(ndp, fmode, cmode)
-	register struct nameidata *ndp;
+	struct nameidata *ndp;
 	int fmode, cmode;
 {
-	register struct vnode *vp;
-	register struct proc *p = ndp->ni_cnd.cn_proc;
-	register struct ucred *cred = p->p_ucred;
+	struct vnode *vp;
+	struct proc *p = ndp->ni_cnd.cn_proc;
+	struct ucred *cred = p->p_ucred;
 	struct vattr va;
 	int error;
 
@@ -172,7 +172,7 @@ bad:
  */
 int
 vn_writechk(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 
 	/*
@@ -192,7 +192,7 @@ vn_writechk(vp)
  */
 int
 vn_close(vp, flags, cred, p)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int flags;
 	struct ucred *cred;
 	struct proc *p;
@@ -419,7 +419,7 @@ vn_write(fp, offset, uio, cred, flags)
 int
 vn_stat(vp, sb, p)
 	struct vnode *vp;
-	register struct stat *sb;
+	struct stat *sb;
 	struct proc *p;
 {
 	struct vattr va;
@@ -486,7 +486,7 @@ vn_fcntl(fp, com, data, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -505,7 +505,7 @@ vn_ioctl(fp, com, data, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = ((struct vnode *)fp->f_data);
 	struct vattr vattr;
 	int error;
 

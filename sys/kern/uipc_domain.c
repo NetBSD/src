@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.30 2000/03/23 06:30:13 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.31 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,8 +79,8 @@ u_int	pffasttimo_now;
 void
 domaininit()
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 #undef unix
 	/*
@@ -254,8 +254,8 @@ pfctlinput(cmd, sa)
 	int cmd;
 	struct sockaddr *sa;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
@@ -267,8 +267,8 @@ void
 pfslowtimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	pfslowtimo_now++;
 
@@ -283,8 +283,8 @@ void
 pffasttimo(arg)
 	void *arg;
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 
 	pffasttimo_now++;
 
