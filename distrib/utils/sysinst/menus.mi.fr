@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.1.2.8 1998/11/26 02:57:09 cgd Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.1.2.9 1998/11/29 03:05:25 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@
 #include "menu_defs.h"
 }
 
-default x=20, y=12, no exit, scrollable;
+default x=20, y=12, no exit;
 
 menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	display action  { toplevel(); };
@@ -158,8 +158,8 @@ menu fspartok, title "  Partitions ok?", y=15;
 		msg_display(MSG_fspart, multname);
 		disp_cur_fspart(-1, 0);
 	};
-	option "Les Partitions sont ok", exit;
 	option "Changer une partition", sub menu editfsparts;
+	option "Les Partitions sont ok", exit;
 
 menu edfspart, title "  Changer quoi? ", exit, y=15;
 	display action  {
