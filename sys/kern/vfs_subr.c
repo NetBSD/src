@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.154 2001/06/28 08:12:08 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.155 2001/07/08 10:32:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1908,7 +1908,7 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* Not generic: goes to file system. */
 	if (name[0] != VFS_GENERIC) {
-		static const struct ctlname vfsnames[] = CTL_VFS_NAMES;
+		static const struct ctlname vfsnames[VFS_MAXID+1]=CTL_VFS_NAMES;
 		const char *vfsname;
 
 		if (name[0] < 0 || name[0] > VFS_MAXID
