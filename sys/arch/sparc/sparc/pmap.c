@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.266 2003/08/14 11:00:02 hannken Exp $ */
+/*	$NetBSD: pmap.c,v 1.267 2003/08/16 19:21:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2003/08/14 11:00:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2003/08/16 19:21:21 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -864,8 +864,8 @@ setpte4m(va, pte)
 	int pte;
 {
 	struct pmap *pm;
-	struct regmap *rm;
-	struct segmap *sm;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	if (getcontext4m() != 0)
 		panic("setpte4m: user context");
@@ -877,20 +877,18 @@ setpte4m(va, pte)
 	if (pm->pm_regmap == NULL)
 		panic("setpte4m: no regmap entry");
 #endif
-	rm = &pm->pm_regmap[VA_VREG(va)];
-	sm = &rm->rg_segmap[VA_VSEG(va)];
+	rp = &pm->pm_regmap[VA_VREG(va)];
+	sp = &rp->rg_segmap[VA_VSEG(va)];
 
 #ifdef DEBUG
-	if (rm->rg_segmap == NULL)
-		panic("setpte4m: no segmap for va %p (rp=%p)",
-			(caddr_t)va, (caddr_t)rm);
+	if (rp->rg_segmap == NULL)
+		panic("setpte4m: no segmap for va %lx (rp=%p)", va, rp);
 
-	if (sm->sg_pte == NULL)
-		panic("setpte4m: no pte for va %p (rp=%p, sp=%p)",
-		      (caddr_t)va, rm, sm);
+	if (sp->sg_pte == NULL)
+		panic("setpte4m: no pte for va %lx (rp=%p,sp=%p)", va, rp, sp);
 #endif
 	tlb_flush_page(va, 0, CPUSET_ALL);
-	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
+	setpgt4m(sp->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
 /*
@@ -1551,10 +1549,12 @@ mmu_setup4m_L3(pagtblptd, sp)
 /*
  * MMU management.
  */
-int	me_alloc(struct mmuq *, struct pmap *, int, int);
+static int	me_alloc(struct mmuq *, struct pmap *, int, int);
 static void	me_free(struct pmap *, u_int);
-int	region_alloc(struct mmuq *, struct pmap *, int);
-void	region_free(struct pmap *, u_int);
+#if defined(SUN4_MMU3L)
+static int	region_alloc(struct mmuq *, struct pmap *, int);
+static void	region_free(struct pmap *, u_int);
+#endif
 
 
 /*
@@ -1571,7 +1571,7 @@ void	region_free(struct pmap *, u_int);
  * since it implements the dynamic allocation of MMU entries.
  */
 
-int
+static __inline__ int
 me_alloc(mh, newpm, newvreg, newvseg)
 	struct mmuq *mh;
 	struct pmap *newpm;
@@ -1579,7 +1579,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 {
 	struct mmuentry *me;
 	struct pmap *pm;
-	int i, va, *pte, tpte;
+	int i, va, *ptep, pte;
 	int ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1647,7 +1647,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 
 	rp = &pm->pm_regmap[me->me_vreg];
 	sp = &rp->rg_segmap[me->me_vseg];
-	pte = sp->sg_pte;
+	ptep = sp->sg_pte;
 
 #ifdef DEBUG
 	if (sp->sg_pmeg != me->me_cookie)
@@ -1712,13 +1712,14 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	i = NPTESG;
 	do {
-		tpte = getpte4(va);
-		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
+		int swbits = *ptep & PG_MBZ;
+		pte = getpte4(va);
+		if ((pte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
 			struct vm_page *pg;
-			if ((pg = pvhead4_4c(tpte)) != NULL)
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
+			if ((pg = pvhead4_4c(pte)) != NULL)
+				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(pte);
 		}
-		*pte++ = tpte & ~(PG_U|PG_M);
+		*ptep++ = swbits | (pte & ~(PG_U|PG_M));
 		va += NBPG;
 	} while (--i > 0);
 
@@ -1977,7 +1978,7 @@ mmu_pagein_reg(struct pmap *pm, struct regmap *rp, vaddr_t va,
 }
 #endif /* SUN4_MMU3L */
 
-static __inline__ void
+static void
 mmu_pmeg_lock(int pmeg)
 {
 	struct mmuentry *me = &mmusegments[pmeg];
@@ -1985,7 +1986,15 @@ mmu_pmeg_lock(int pmeg)
 	MMUQ_INSERT_TAIL(&segm_locked, me, me_list);
 }
 
-static __inline__ void
+static void
+mmu_pmeg_unlock(int pmeg)
+{
+	struct mmuentry *me = &mmusegments[pmeg];
+	MMUQ_REMOVE(me, me_list);
+	MMUQ_INSERT_TAIL(&segm_lru, me, me_list);
+}
+
+static void
 mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
 		int vr, int vs, struct mmuq *mh)
 {
@@ -2011,7 +2020,7 @@ mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
 	pte = sp->sg_pte;
 	i = NPTESG;
 	do {
-		setpte4(va, *pte++);
+		setpte4(va, *pte++ & ~PG_MBZ);
 		va += NBPG;
 	} while (--i > 0);
 	splx(s);
@@ -2320,7 +2329,7 @@ pv_changepte4_4c(pg, bis, bic)
 	struct vm_page *pg;
 	int bis, bic;
 {
-	int *pte;
+	int pte, *ptep;
 	struct pvlist *pv;
 	struct pmap *pm;
 	int va, vr, vs;
@@ -2344,20 +2353,17 @@ pv_changepte4_4c(pg, bis, bic)
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		sp = &rp->rg_segmap[vs];
-		pte = sp->sg_pte;
+		ptep = &sp->sg_pte[VA_VPG(va)];
 
 		if (sp->sg_pmeg == seginval) {
 			/* not in hardware: just fix software copy */
-			pte += VA_VPG(va);
-			*pte = (*pte | bis) & ~bic;
+			*ptep = (*ptep | bis) & ~bic;
 		} else {
-			int tpte;
-
 			/* in hardware: fix hardware copy */
 			if (CTX_USABLE(pm,rp)) {
 				setcontext4(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
-				tpte = getpte4(va);
+				pte = getpte4(va);
 				/*
 				 * XXX: always flush cache; conservative, but
 				 * needed to invalidate cache tag protection
@@ -2371,14 +2377,13 @@ pv_changepte4_4c(pg, bis, bic)
 					setregmap(0, tregion);
 				setsegmap(0, sp->sg_pmeg);
 				va = VA_VPG(va) << PGSHIFT;
-				tpte = getpte4(va);
+				pte = getpte4(va);
 			}
-			if (tpte & PG_V)
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
-			tpte = (tpte | bis) & ~bic;
-			setpte4(va, tpte);
-			if (pte != NULL)	/* update software copy */
-				pte[VA_VPG(va)] = tpte;
+			if (pte & PG_V)
+				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(pte);
+			pte = (pte | bis) & ~bic;
+			setpte4(va, pte);
+			*ptep = (*ptep & PG_MBZ) | pte;
 		}
 	}
 	setcontext4(ctx);
@@ -2398,7 +2403,7 @@ pv_syncflags4_4c(pg)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int tpte, va, vr, vs, pmeg, flags;
+	int pte, va, vr, vs, pmeg, flags;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -2424,8 +2429,8 @@ pv_syncflags4_4c(pg)
 		if (CTX_USABLE(pm,rp)) {
 			setcontext4(pm->pm_ctxnum);
 			/* XXX should flush only when necessary */
-			tpte = getpte4(va);
-			if (tpte & PG_M)
+			pte = getpte4(va);
+			if (pte & PG_M)
 				cache_flush_page(va, pm->pm_ctxnum);
 		} else {
 			/* Make temp map in ctx 0 to access the PTE */
@@ -2434,12 +2439,12 @@ pv_syncflags4_4c(pg)
 				setregmap(0, tregion);
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
-			tpte = getpte4(va);
+			pte = getpte4(va);
 		}
-		if (tpte & (PG_M|PG_U) && tpte & PG_V) {
-			flags |= MR4_4C(tpte);
-			tpte &= ~(PG_M|PG_U);
-			setpte4(va, tpte);
+		if (pte & (PG_M|PG_U) && pte & PG_V) {
+			flags |= MR4_4C(pte);
+			pte &= ~(PG_M|PG_U);
+			setpte4(va, pte);
 		}
 	}
 
@@ -3101,7 +3106,8 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 #if defined(SUN4_MMU3L)
 	struct mmuentry *mmureg;
 #endif
-	struct   regmap *rp;
+	struct regmap *rp;
+	struct segmap *sp;
 	int i, j;
 	int npte, zseg, vr, vs;
 	int startscookie, scookie;
@@ -3238,9 +3244,9 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		kernel_regmap_store[i].rg_segmap =
 			&kernel_segmap_store[i * NSEGRG];
 		for (j = NSEGRG; --j >= 0;) {
-			kernel_segmap_store[i * NSEGRG + j].sg_pmeg = seginval;
-			kernel_segmap_store[i * NSEGRG + j].sg_pte =
-				&kptes[(i * NSEGRG + j) * NPTESG];
+			sp = &kernel_segmap_store[i * NSEGRG + j];
+			sp->sg_pmeg = seginval;
+			sp->sg_pte = &kptes[(i * NSEGRG + j) * NPTESG];
 		}
 	}
 
@@ -3391,13 +3397,14 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		mmuseg->me_pmap = pmap_kernel();
 		mmuseg->me_vreg = vr;
 		mmuseg->me_vseg = vs % NSEGRG;
-		rp->rg_segmap[vs % NSEGRG].sg_pmeg = scookie;
+		sp = &rp->rg_segmap[vs % NSEGRG];
+		sp->sg_pmeg = scookie;
 		npte = ++scookie < zseg ? NPTESG : lastpage;
-		rp->rg_segmap[vs % NSEGRG].sg_npte = npte;
+		sp->sg_npte = npte;
+		sp->sg_nwired = npte;
 		rp->rg_nsegmap += 1;
 		for (i = 0; i < npte; i++)
-			rp->rg_segmap[vs % NSEGRG].sg_pte[i] =
-				getpte4(p + i * NBPG);
+			sp->sg_pte[i] = getpte4(p + i * NBPG) | PG_WIRED;
 		mmuseg++;
 		vs++;
 		if (scookie < zseg) {
@@ -3517,7 +3524,10 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		 */
 		for (p = etext_gap_start; p < etext_gap_end; p += NBPG) {
 			rp = &pmap_kernel()->pm_regmap[VA_VREG(p)];
-			rp->rg_segmap[VA_VSEG(p)].sg_pte[VA_VPG(p)] = 0;
+			sp = &rp->rg_segmap[VA_VSEG(p)];
+			sp->sg_nwired--;
+			sp->sg_npte--;
+			sp->sg_pte[VA_VPG(p)] = 0;
 			setpte4(p, 0);
 		}
 
@@ -4434,6 +4444,7 @@ static void pgt_lvl23_remove4_4c(struct pmap *pm, struct regmap *rp,
 		panic("pgt_rm: pm %p: nsegmap = %d\n", pm, rp->rg_nsegmap);
 
 	if (--rp->rg_nsegmap == 0) {
+#if defined(SUN4_MMU3L)
 		if (HASSUN4_MMU3L) {
 			if (rp->rg_smeg != reginval) {
 				if (pm == pmap_kernel()) {
@@ -4452,6 +4463,7 @@ static void pgt_lvl23_remove4_4c(struct pmap *pm, struct regmap *rp,
 				rp->rg_smeg = reginval;
 			}
 		}
+#endif /* SUN4_MMU3L */
 		/* Free software tables for non-kernel maps */
 		if (pm != pmap_kernel()) {
 			GAP_WIDEN(pm,vr);
@@ -4612,6 +4624,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		return;
 	pmeg = sp->sg_pmeg;
 	inmmu = pmeg != seginval;
+	ptep = &sp->sg_pte[VA_VPG(va)];
 
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
@@ -4626,7 +4639,6 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		perpage = (CACHEINFO.c_vactype != VAC_NONE);
 	}
 
-	ptep = sp->sg_pte + VA_VPG(va);
 	for (; va < endva; va += NBPG, ptep++) {
 		pte = *ptep;
 		if (inmmu)
@@ -4654,13 +4666,25 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			panic("pmap_rmk: too many PTEs in segment; "
 			      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
+
 		if (inmmu)
 			setpte4(va, 0);
 		*ptep = 0;
 	}
 
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+		panic("pmap_rmk: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, nleft, sp->sg_nwired);
+#endif
 	if ((sp->sg_npte = nleft) == 0)
 		pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+	else if (sp->sg_nwired == 0) {
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
+	}
 }
 
 #endif /* SUN4 || SUN4C */
@@ -4742,7 +4766,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int *ptep, pteva, tpte, perpage, npg;
+	int *ptep, pteva, pte, perpage, npg;
 	struct vm_page *pg;
 	int nleft, pmeg, inmmu;
 	struct regmap *rp;
@@ -4789,23 +4813,23 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	ptep = sp->sg_pte + VA_VPG(va);
 	for (; va < endva; ptep++, pteva += NBPG, va += NBPG) {
 		int mmupte;
-		tpte = *ptep;
+		pte = *ptep;
 		if (inmmu)
 			mmupte = getpte4(pteva);
 
-		if ((tpte & PG_V) == 0) {
+		if ((pte & PG_V) == 0) {
 #ifdef DIAGNOSTIC
 			if (inmmu && (mmupte & PG_V) != 0)
-				printf("pmap_rmu: tpte=%x, mmupte=%x\n",
-					tpte, getpte4(pteva));
+				printf("pmap_rmu: pte=%x, mmupte=%x\n",
+					pte, getpte4(pteva));
 #endif
 			continue;
 		}
-		if ((tpte & PG_TYPE) == PG_OBMEM) {
+		if ((pte & PG_TYPE) == PG_OBMEM) {
 			/* if cacheable, flush page as needed */
 			if (perpage && (mmupte & PG_NC) == 0)
 				cache_flush_page(va, pm->pm_ctxnum);
-			if ((pg = pvhead4_4c(tpte)) != NULL) {
+			if ((pg = pvhead4_4c(pte)) != NULL) {
 				if (inmmu)
 					VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(mmupte);
 				pv_unlink4_4c(pg, pm, va);
@@ -4819,11 +4843,23 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 #endif
 		if (inmmu)
 			setpte4(pteva, 0);
+
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
 		*ptep = 0;
 	}
 
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+		panic("pmap_rmu: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, nleft, sp->sg_nwired);
+#endif
 	if ((sp->sg_npte = nleft) == 0)
 		pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+	else if (sp->sg_nwired == 0) {
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
+	}
 }
 
 #endif /* SUN4 || SUN4C */
@@ -4930,7 +4966,8 @@ pmap_page_protect4_4c(pg, prot)
 {
 	struct pvlist *pv, *npv;
 	struct pmap *pm;
-	int va, vr, vs, pteva, tpte;
+	vaddr_t va;
+	int vr, vs, pteva, pte, *ptep;
 	int flags, nleft, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -4981,41 +5018,48 @@ pmap_page_protect4_4c(pg, prot)
 		if ((nleft = sp->sg_npte) <= 0)
 			panic("pmap_page_protect: empty vseg");
 		sp->sg_npte = --nleft;
+		ptep = &sp->sg_pte[VA_VPG(va)];
 
-		if (sp->sg_pmeg == seginval) {
-			sp->sg_pte[VA_VPG(va)] = 0;
-			if (nleft == 0)
-				pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
-			goto nextpv;
-		}
+		if (*ptep & PG_WIRED)
+			sp->sg_nwired--;
 
-		if (CTX_USABLE(pm,rp)) {
-			setcontext4(pm->pm_ctxnum);
-			pteva = va;
-			cache_flush_page(va, pm->pm_ctxnum);
-		} else {
-			setcontext4(0);
-			/* XXX use per-cpu pteva? */
-			if (HASSUN4_MMU3L)
-				setregmap(0, tregion);
-			setsegmap(0, sp->sg_pmeg);
-			pteva = VA_VPG(va) << PGSHIFT;
-		}
+		if (sp->sg_pmeg != seginval) {
+			/* Update PV flags */
+			if (CTX_USABLE(pm,rp)) {
+				setcontext4(pm->pm_ctxnum);
+				pteva = va;
+				cache_flush_page(va, pm->pm_ctxnum);
+			} else {
+				setcontext4(0);
+				/* XXX use per-cpu pteva? */
+				if (HASSUN4_MMU3L)
+					setregmap(0, tregion);
+				setsegmap(0, sp->sg_pmeg);
+				pteva = VA_VPG(va) << PGSHIFT;
+			}
 
-		tpte = getpte4(pteva);
-#ifdef	DIAGNOSTIC
-		if ((tpte & PG_V) == 0)
-			panic("pmap_page_protect !PG_V: "
-			      "ctx %d, va 0x%x, pte 0x%x",
-			      pm->pm_ctxnum, va, tpte);
+			pte = getpte4(pteva);
+#ifdef DIAGNOSTIC
+			if ((pte & PG_V) == 0)
+				panic("pmap_page_protect !PG_V: "
+				      "ctx %d, va 0x%lx, pte 0x%x",
+				      pm->pm_ctxnum, va, pte);
 #endif
-		flags |= MR4_4C(tpte);
+			flags |= MR4_4C(pte);
 
-		setpte4(pteva, 0);
-		sp->sg_pte[VA_VPG(pteva)] = 0;
+			setpte4(pteva, 0);
+#ifdef DIAGNOSTIC
+			if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+				panic("pmap_page_protect: pm %p, va %lx: nleft=%d, nwired=%d",
+					pm, va, nleft, sp->sg_nwired);
+#endif
+			if (sp->sg_nwired == 0)
+				mmu_pmeg_unlock(sp->sg_pmeg);
+		}
+
+		*ptep = 0;
 		if (nleft == 0)
 			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
-	nextpv:
 		npv = pv->pv_next;
 		if (pv != VM_MDPAGE_PVHEAD(pg))
 			pool_put(&pv_pool, pv);
@@ -5084,15 +5128,15 @@ pmap_protect4_4c(pm, sva, eva, prot)
 			panic("pmap_protect: no pages");
 #endif
 		if (sp->sg_pmeg == seginval) {
-			int *pte = &sp->sg_pte[VA_VPG(va)];
+			int *ptep = &sp->sg_pte[VA_VPG(va)];
 
 			/* not in MMU; just clear PG_W from core copies */
 			for (; va < nva; va += NBPG)
-				*pte++ &= ~PG_W;
+				*ptep++ &= ~PG_W;
 		} else {
 			/* in MMU: take away write bits from MMU PTEs */
 			if (CTX_USABLE(pm,rp)) {
-				int tpte;
+				int pte;
 
 				/*
 				 * Flush cache so that any existing cache
@@ -5103,12 +5147,12 @@ pmap_protect4_4c(pm, sva, eva, prot)
 					(nva - va) >> PGSHIFT;
 				setcontext4(pm->pm_ctxnum);
 				for (; va < nva; va += NBPG) {
-					tpte = getpte4(va);
-					if ((tpte & (PG_W|PG_TYPE)) ==
+					pte = getpte4(va);
+					if ((pte & (PG_W|PG_TYPE)) ==
 					    (PG_W|PG_OBMEM)) {
 						pmap_stats.ps_npg_prot_actual++;
 						cache_flush_page(va, pm->pm_ctxnum);
-						setpte4(va, tpte & ~PG_W);
+						setpte4(va, pte & ~PG_W);
 					}
 				}
 			} else {
@@ -5146,7 +5190,8 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	int vr, vs, tpte, newprot, ctx;
+	int vr, vs, newprot, ctx, pte, *ptep;
+	int pmeg;
 	struct regmap *rp;
 	struct segmap *sp;
 
@@ -5164,15 +5209,24 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
+
 	pmap_stats.ps_changeprots++;
 
-	/* update PTEs in software or hardware */
-	if (sp->sg_pmeg == seginval) {
-		int *pte = &sp->sg_pte[VA_VPG(va)];
+	pte = *ptep;
+	if (pte & PG_WIRED && (flags & PMAP_WIRED) == 0) {
+		pte &= ~PG_WIRED;
+		sp->sg_nwired--;
+	} else if ((pte & PG_WIRED) == 0 && flags & PMAP_WIRED) {
+		pte |= PG_WIRED;
+		sp->sg_nwired++;
+	}
+	pte = (pte & ~PG_PROT) | newprot;
+	/* Update S/W pte entry */
+	*ptep = pte;
 
-		/* update in software */
-		*pte = (*pte & ~PG_PROT) | newprot;
-	} else {
+	/* update PTEs in software or hardware */
+	if ((pmeg = sp->sg_pmeg) != seginval) {
 		/* update in hardware */
 		ctx = getcontext4();
 		if (CTX_USABLE(pm,rp)) {
@@ -5182,21 +5236,30 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 			 * avoid stale protection bits in the cache tags.
 			 */
 			setcontext4(pm->pm_ctxnum);
-			tpte = getpte4(va);
-			if ((tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
+			pte = getpte4(va);
+			if ((pte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page(va, pm->pm_ctxnum);
 		} else {
 			setcontext4(0);
 			/* XXX use per-cpu va? */
 			if (HASSUN4_MMU3L)
 				setregmap(0, tregion);
-			setsegmap(0, sp->sg_pmeg);
+			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
-			tpte = getpte4(va);
+			pte = getpte4(va);
 		}
-		tpte = (tpte & ~PG_PROT) | newprot;
-		setpte4(va, tpte);
+		pte = (pte & ~PG_PROT) | newprot;
+		setpte4(va, pte);
 		setcontext4(ctx);
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+			panic("pmap_protect: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+		if (sp->sg_nwired == 0)
+			mmu_pmeg_unlock(pmeg);
+		else
+			mmu_pmeg_lock(pmeg);
 	}
 }
 
@@ -5523,6 +5586,9 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
 
+	if ((flags & PMAP_WIRED) != 0)
+		pteproto |= PG_WIRED;
+
 	write_user_windows();
 	ctx = getcontext4();
 	if (pm == pmap_kernel())
@@ -5543,7 +5609,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 	struct vm_page *pg;
 	int pteproto;
 {
-	int vr, vs, tpte, s, inmmu;
+	int vr, vs, pte, s, inmmu;
 	int *ptep;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -5561,10 +5627,10 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 #endif
 
 	inmmu = sp->sg_pmeg != seginval;
-	if ((tpte = *ptep) & PG_V) {
+	if ((pte = *ptep) & PG_V) {
 
 		/* old mapping exists, and is of the same pa type */
-		if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+		if ((pte & (PG_PFNUM|PG_TYPE)) ==
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			pmap_changeprot4_4c(pm, va, prot, flags);
@@ -5572,7 +5638,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 			return (0);
 		}
 
-		if ((tpte & PG_TYPE) == PG_OBMEM) {
+		if ((pte & PG_TYPE) == PG_OBMEM) {
 			struct vm_page *opg;
 
 			/*
@@ -5580,13 +5646,15 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			if ((opg = pvhead4_4c(tpte)) != NULL)
+			if ((opg = pvhead4_4c(pte)) != NULL)
 				pv_unlink4_4c(opg, pm, va);
-			if (inmmu && (tpte & PG_NC) == 0) {
+			if (inmmu && (pte & PG_NC) == 0) {
 				setcontext4(0);	/* ??? */
 				cache_flush_page(va, 0);
 			}
 		}
+		if (pte & PG_WIRED)
+			sp->sg_nwired--;
 	} else {
 		/* adding new entry */
 		if (sp->sg_npte++ == 0) {
@@ -5610,15 +5678,22 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 
 	/* Update S/W page table */
 	*ptep = pteproto;
+	if (pteproto & PG_WIRED)
+		sp->sg_nwired++;
 
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_enk: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
 	if (sp->sg_pmeg == seginval)
 		mmu_pagein_seg(pm, sp, va, vr, vs,
-			(flags & PMAP_WIRED) != 0 ? &segm_locked : &segm_lru);
-	else if ((flags & PMAP_WIRED) != 0)
+			(pteproto & PG_WIRED) != 0 ? &segm_locked : &segm_lru);
+	else if ((pteproto & PG_WIRED) != 0)
 		mmu_pmeg_lock(sp->sg_pmeg);
 
 	/* Update H/W page table */
-	setpte4(va, pteproto);
+	setpte4(va, pteproto & ~PG_MBZ);
 	splx(s);
 	return (0);
 }
@@ -5633,7 +5708,7 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	struct vm_page *pg;
 	int pteproto;
 {
-	int vr, vs, *pte, tpte, pmeg, s;
+	int vr, vs, *ptep, pte, pmeg, s;
 	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -5692,14 +5767,14 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 
 	sp = &rp->rg_segmap[vs];
 
-	if ((pte = sp->sg_pte) == NULL) {
+	if ((ptep = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
-		int size = NPTESG * sizeof *pte;
+		int size = NPTESG * sizeof *ptep;
 		int mflag = PR_NOWAIT;
 
 	sretry:
-		pte = (int *)pool_get(&pte_pool, mflag);
-		if (pte == NULL) {
+		ptep = (int *)pool_get(&pte_pool, mflag);
+		if (ptep == NULL) {
 			if ((flags & PMAP_CANFAIL) != 0) {
 				error = ENOMEM;
 				goto out;
@@ -5713,16 +5788,16 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
 #endif
-		qzero((caddr_t)pte, size);
-		sp->sg_pte = pte;
+		qzero((caddr_t)ptep, size);
+		sp->sg_pte = ptep;
 		sp->sg_npte = 1;
 		rp->rg_nsegmap++;
 	} else {
 		/* might be a change: fetch old pte */
-		tpte = pte[VA_VPG(va)];
-		if (tpte & PG_V) {
+		pte = ptep[VA_VPG(va)];
+		if (pte & PG_V) {
 			/* old mapping exists, and is of the same pa type */
-			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
+			if ((pte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
 				/* just changing prot and/or wiring */
 				/* caller should call this directly: */
@@ -5744,9 +5819,9 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 				"va(0x%lx)=>pa entry\n",
 				curproc->p_comm, curproc->p_pid, va);
 #endif
-			if ((tpte & PG_TYPE) == PG_OBMEM) {
+			if ((pte & PG_TYPE) == PG_OBMEM) {
 				struct vm_page *opg;
-				if ((opg = pvhead4_4c(tpte)) != NULL)
+				if ((opg = pvhead4_4c(pte)) != NULL)
 					pv_unlink4_4c(opg, pm, va);
 				if (CACHEINFO.c_vactype != VAC_NONE &&
 				    (pmeg = sp->sg_pmeg) != seginval) {
@@ -5763,6 +5838,8 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 					cache_flush_page(va, pm->pm_ctxnum);
 				}
 			}
+			if (pte & PG_WIRED)
+				sp->sg_nwired--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5778,11 +5855,20 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 	if (pg != NULL)
 		pteproto |= pv_link4_4c(pg, pm, va, pteproto & PG_NC);
 
-	/*
-	 * Update hardware & software PTEs.
-	 */
+	/* Update S/W page table */
+	ptep += VA_VPG(va);
+	*ptep = pteproto;
+	if (pteproto & PG_WIRED)
+		sp->sg_nwired++;
+
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_enu: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+
 	if ((pmeg = sp->sg_pmeg) != seginval) {
-		/* ptes are in hardware */
+		/* Update H/W page table */
 		if (CTX_USABLE(pm,rp))
 			setcontext4(pm->pm_ctxnum);
 		else {
@@ -5792,11 +5878,8 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			setsegmap(0, pmeg);
 			va = VA_VPG(va) << PGSHIFT;
 		}
-		setpte4(va, pteproto);
+		setpte4(va, pteproto & ~PG_MBZ);
 	}
-	/* update software copy */
-	pte += VA_VPG(va);
-	*pte = pteproto;
 
 out:
 	splx(s);
@@ -5828,6 +5911,11 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	sp = &rp->rg_segmap[vs];
 	ptep = &sp->sg_pte[VA_VPG(va)];
 
+	if (lockit) {
+		pteproto |= PG_WIRED;
+		sp->sg_nwired++;
+	}
+
 	KASSERT((*ptep & PG_V) == 0);
 
 	s = splvm();
@@ -5851,6 +5939,12 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	/* Update S/W page table */
 	*ptep = pteproto;
 
+#ifdef DIAGNOSTIC
+	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+		panic("pmap_kenter: pm %p, va %lx: nleft=%d, nwired=%d",
+			pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+
 	if (sp->sg_pmeg == seginval) {
 		mmu_pagein_seg(pm, sp, va, vr, vs,
 				lockit ? &segm_locked : &segm_lru);
@@ -5858,7 +5952,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 		mmu_pmeg_lock(sp->sg_pmeg);
 
 	/* Update H/W page table */
-	setpte4(va, pteproto);
+	setpte4(va, pteproto & ~PG_MBZ);
 	splx(s);
 }
 
@@ -5938,6 +6032,7 @@ pmap_kremove4_4c(va, len)
 			continue;
 		pmeg = sp->sg_pmeg;
 		inmmu = (pmeg != seginval);
+		ptep = &sp->sg_pte[VA_VPG(va)];
 
 		/* decide how to flush cache */
 		npg = (nva - va) >> PGSHIFT;
@@ -5955,7 +6050,6 @@ pmap_kremove4_4c(va, len)
 			perpage = (CACHEINFO.c_vactype != VAC_NONE);
 		}
 
-		ptep = sp->sg_pte + VA_VPG(va);
 		for (; va < nva; va += NBPG, ptep++) {
 			pte = *ptep;
 			if (inmmu)
@@ -5978,13 +6072,26 @@ pmap_kremove4_4c(va, len)
 				panic("pmap_kremove: too many PTEs in segment; "
 				      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
+			if (pte & PG_WIRED)
+				sp->sg_nwired--;
+
 			if (inmmu)
 				setpte4(va, 0);
 			*ptep = 0;
 		}
 
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > nleft || sp->sg_nwired < 0)
+			panic("pmap_kremove: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, nleft, sp->sg_nwired);
+#endif
+
 		if ((sp->sg_npte = nleft) == 0)
 			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+		else if (sp->sg_nwired == 0) {
+			if (sp->sg_pmeg != seginval)
+				mmu_pmeg_unlock(sp->sg_pmeg);
+		}
 	}
 	simple_unlock(&pm->pm_lock);
 	setcontext4(ctx);
@@ -6551,14 +6658,40 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 /*
  * Clear the wiring attribute for a map/virtual-address pair.
  */
+int printunwire=0;
 /* ARGSUSED */
 void
 pmap_unwire(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
+	int vr, vs, pte, *ptep;
+	struct regmap *rp;
+	struct segmap *sp;
 
-	pmap_stats.ps_useless_changewire++;
+	vr = VA_VREG(va);
+	vs = VA_VSEG(va);
+	rp = &pm->pm_regmap[vr];
+	sp = &rp->rg_segmap[vs];
+	ptep = &sp->sg_pte[VA_VPG(va)];
+	pte = *ptep;
+	if ((pte & PG_WIRED) == 0) {
+		pmap_stats.ps_useless_changewire++;
+		return;
+	}
+if (printunwire) printf("pmap_unwire: pm %p, va %lx\n", pm, va);
+
+	pte &= ~PG_WIRED;
+	*ptep = pte;
+	if (--sp->sg_nwired <= 0) {
+#ifdef DIAGNOSTIC
+		if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
+			panic("pmap_unwire: pm %p, va %lx: nleft=%d, nwired=%d",
+				pm, va, sp->sg_npte, sp->sg_nwired);
+#endif
+		if (sp->sg_pmeg != seginval)
+			mmu_pmeg_unlock(sp->sg_pmeg);
+	}
 }
 
 /*
@@ -6698,8 +6831,8 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vaddr_t src_addr;
 {
 #if notyet
-	struct regmap *rm;
-	struct segmap *sm;
+	struct regmap *rp;
+	struct segmap *sp;
 
 	if (pmap_copy_disabled)
 		return;
@@ -6720,17 +6853,17 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		npg = len >> PGSHIFT;
 		for (i = 0; i < npg; i++) {
 			tlb_flush_page(src_addr, getcontext4m(), PMAP_CPUSET(src_map));
-			if ((rm = src_pmap->pm_regmap) == NULL)
+			if ((rp = src_pmap->pm_regmap) == NULL)
 				continue;
-			rm += VA_VREG(src_addr);
+			rp += VA_VREG(src_addr);
 
-			if ((sm = rm->rg_segmap) == NULL)
+			if ((sp = rp->rg_segmap) == NULL)
 				continue;
-			sm += VA_VSEG(src_addr);
-			if (sm->sg_npte == 0)
+			sp += VA_VSEG(src_addr);
+			if (sp->sg_npte == 0)
 				continue;
 
-			pte = sm->sg_pte[VA_SUN4M_VPG(src_addr)];
+			pte = sp->sg_pte[VA_SUN4M_VPG(src_addr)];
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
 
@@ -7949,3 +8082,57 @@ void print_fe_map(void)
 	printf("done\n");
 }
 #endif /* EXTREME_DEBUG */
+
+#ifdef DDB
+int pmap_dump(struct pmap *pm);
+int pmap_dump(struct pmap *pm)
+{
+	int startvr, endvr, vr, vs, i, n;
+	struct regmap *rp;
+	struct segmap *sp;
+
+	if (pm == NULL)
+		pm = pmap_kernel();
+
+	if (pm == pmap_kernel()) {
+		startvr = NUREG;
+		endvr = 256;
+	} else {
+		startvr = 0;
+		endvr = NUREG;
+	}
+
+	for (vr = startvr; vr < endvr; vr++) {
+		rp = &pm->pm_regmap[vr];
+		if (rp->rg_nsegmap == 0)
+			continue;
+		printf("vr %d: %d segments", vr, rp->rg_nsegmap);
+		if (rp->rg_segmap == NULL) {
+			printf("[no segments]\n");
+			continue;
+		}
+		for (vs = 0; vs < NSEGRG; vs++) {
+			sp = &rp->rg_segmap[vs];
+			if (sp->sg_npte == 0)
+				continue;
+			if ((vs & 3) == 0)
+				printf("\n   ");
+			printf(" %d: n %d w %d p %d,", vs,
+				sp->sg_npte, sp->sg_nwired, sp->sg_pmeg);
+			if (sp->sg_pte == NULL) {
+				printf("[no ptes]");
+				continue;
+			}
+			for (n = 0, i = 0; i < NPTESG; i++) {
+				if (sp->sg_pte[i] & PG_WIRED)
+					n++;
+			}
+			if (n != sp->sg_nwired)
+				printf("[wired count %d]", n);
+		}
+		printf("\n");
+	}
+
+	return (0);
+}
+#endif /* DDB */

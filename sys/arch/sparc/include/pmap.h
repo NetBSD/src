@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.69 2003/08/12 15:13:13 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.70 2003/08/16 19:21:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -174,6 +174,7 @@ struct segmap {
 	int	*sg_pte;		/* points to NPTESG PTEs */
 	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
 	u_char	sg_npte;		/* number of valid PTEs per seg */
+	int8_t	sg_nwired;		/* number of wired pages */
 };
 
 typedef struct pmap *pmap_t;
