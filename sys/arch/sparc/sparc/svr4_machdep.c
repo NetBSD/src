@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 1998/09/11 13:31:39 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.30 1998/09/13 11:34:05 pk Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -232,7 +232,6 @@ svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	sigset_t mask;
