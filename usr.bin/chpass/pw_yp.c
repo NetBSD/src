@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.7 1996/11/26 23:38:44 thorpej Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.8 1997/02/11 08:26:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.7 1996/11/26 23:38:44 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.8 1997/02/11 08:26:27 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,7 @@ ypgetpwnam(nam)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	(void)strncpy(line, val, sizeof(line) - 1);
 	free(val);
 
 	return(interpret(&pwent, line));
@@ -280,7 +280,7 @@ ypgetpwuid(uid)
 		errx(1, "can't get local YP domain. Reason: %s\n",
 		    yperr_string(reason));
 
-	sprintf(namebuf, "%d", uid);
+	(void)snprintf(namebuf, sizeof namebuf, "%d", uid);
 	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
 	    &val, &vallen);
 	switch(reason) {
@@ -291,7 +291,7 @@ ypgetpwuid(uid)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	(void)strncpy(line, val, sizeof(line) - 1);
 	free(val);
 
 	return(interpret(&pwent, line));
