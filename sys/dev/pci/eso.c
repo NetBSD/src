@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.15 1999/12/28 01:39:38 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.16 1999/12/28 19:26:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -1577,10 +1577,21 @@ eso_round_buffersize(hdl, direction, bufsize)
 	int direction;
 	size_t bufsize;
 {
+	size_t maxsize;
 
-	/* 64K restriction: ISA at eleven? */
-	if (bufsize > 65536)
-		bufsize = 65536;
+	/*
+	 * The playback DMA buffer size on the Solo-1 is limited to 2^16 -
+	 * 1 bytes.  This is because A2DMAC is a two byte value indicating
+	 * the literal byte count, and zero does not appear to be used as
+	 * a special case for 2^16.
+	 *
+	 * For recording, DMAC_DMAC is the byte count - 1, so 2^16 can be
+	 * represented.
+	 */
+	maxsize = (direction == AUMODE_PLAY) ? 65535 : 65536;
+
+	if (bufsize > maxsize)
+		bufsize = maxsize;
 
 	return (bufsize);
 }
