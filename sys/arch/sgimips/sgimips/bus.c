@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.32 2004/09/29 04:06:52 sekiya Exp $	*/
+/*	$NetBSD: bus.c,v 1.33 2004/10/01 07:16:57 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.32 2004/09/29 04:06:52 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.33 2004/10/01 07:16:57 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ sgimips_bus_dma_init(void)
 		break;
 #endif
 
-#ifdef MIPS3
+#if defined(MIPS3) || defined(MIPS64)
 	/* >=R4000*/
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
@@ -235,7 +235,7 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 	}
 }
 
-#ifdef MIPS3
+#if defined(MIPS3) || defined(MIPS64)
 u_int64_t
 bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 {
@@ -275,7 +275,7 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			break;
 	}
 }
-#endif /* MIPS3 */
+#endif /* MIPS3 || MIPS64 */
 
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
@@ -767,7 +767,7 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 }	
 #endif /* MIPS1 */
 
-#ifdef MIPS3
+#if defined(MIPS3) || defined(MIPS64)
 /*
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
@@ -922,7 +922,7 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		len -= minlen;
 	}
 }
-#endif /* MIPS3 */
+#endif /* MIPS3 || MIPS64 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called
