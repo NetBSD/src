@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.25 1998/07/28 18:54:02 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.26 1999/01/04 16:37:28 kim Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.25 1998/07/28 18:54:02 mycroft Exp $");
+__RCSID("$NetBSD: ps.c,v 1.26 1999/01/04 16:37:28 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(argc, argv)
 	int ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
-	const char *ttname;
+	char *ttname;
 
 	(void)setegid(getgid());
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
@@ -212,13 +212,13 @@ main(argc, argv)
 			struct stat sb;
 			char *ttypath, pathbuf[MAXPATHLEN];
 
-			if (strcmp(optarg, "co") == 0)
+			if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;
-			else if (*optarg != '/')
+			else if (*ttname != '/')
 				(void)snprintf(ttypath = pathbuf,
-				    sizeof(pathbuf), "%s%s", _PATH_TTY, optarg);
+				    sizeof(pathbuf), "%s%s", _PATH_TTY, ttname);
 			else
-				ttypath = optarg;
+				ttypath = ttname;
 			if (stat(ttypath, &sb) == -1)
 				err(1, "%s", ttypath);
 			if (!S_ISCHR(sb.st_mode))
