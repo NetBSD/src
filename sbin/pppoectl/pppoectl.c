@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.16 2004/09/01 19:38:09 jdolecek Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.17 2005/02/19 18:26:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.16 2004/09/01 19:38:09 jdolecek Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.17 2005/02/19 18:26:09 christos Exp $");
 #endif
 
 
@@ -296,7 +296,8 @@ main(int argc, char **argv)
 
 	/* first load the config file, then parse command line args */
 	if (configname && (fp = fopen(configname, "r")))
-		while ((line = fparseln(fp, NULL, NULL, NULL, 0)))
+		while ((line = fparseln(fp, NULL, NULL, NULL,
+					FPARSELN_UNESCALL)))
 			pppoectl_argument(line);
        
 	while (argc > 0) {
