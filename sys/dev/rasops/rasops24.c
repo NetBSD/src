@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.10 2000/02/12 21:58:58 ad Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.11 2000/02/12 22:06:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.10 2000/02/12 21:58:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.11 2000/02/12 22:06:54 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -541,6 +541,7 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
+#endif	/* !RASOPS_SMALL */
 
 /*
  * Erase rows. This is nice and easy due to alignment.
@@ -766,4 +767,3 @@ rasops24_erasecols(cookie, row, col, num, attr)
 		}	
 	}
 }
-#endif	/* !RASOPS_SMALL */
