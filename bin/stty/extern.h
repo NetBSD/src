@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1996/05/07 18:20:06 jtc Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/07/28 11:40:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@ int	c_cchars __P((const void *, const void *));
 int	c_modes __P((const void *, const void *));
 int	csearch __P((char ***, struct info *));
 void	checkredirect __P((void));
-void	gprint __P((struct termios *, struct winsize *, int));
+void	gprint __P((struct termios *));
 void	gread __P((struct termios *, char *));
 int	ksearch __P((char ***, struct info *));
 int	msearch __P((char ***, struct info *));
