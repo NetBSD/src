@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.95 2002/09/13 02:16:08 simonb Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.96 2002/09/15 17:43:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.95 2002/09/13 02:16:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.96 2002/09/15 17:43:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,10 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+    { PCMCIA_STR_ACCTON_EN2216,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_ACCTON_EN2216,
+      0, -1, { 0x00, 0x00, 0xe8 } },
 
     { PCMCIA_STR_SVEC_COMBOCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
