@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.29 2004/04/23 02:58:30 simonb Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.30 2004/12/21 16:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1536,6 +1536,8 @@ Hinsert(HASH ** table, int num1, int num2, char *name, TREE * tree)
 	int hno;
 	hno = HASHFUNC(num1, num2);
 	h = (HASH *) malloc(sizeof(HASH));
+	if (h == NULL)
+		goaway("Cannot allocate memory");
 	h->Hnum1 = num1;
 	h->Hnum2 = num2;
 	h->Hname = name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.13 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.14 2004/12/21 16:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -172,6 +172,8 @@ Linsert(LIST ** table, char *name, int number)
 	int lno;
 	lno = Lhash(name);
 	l = (LIST *) malloc(sizeof(LIST));
+	if (l == NULL)
+		goaway("Cannot allocate memory");
 	l->Lname = name;
 	l->Lnumber = number;
 	l->Lnext = table[lno];
