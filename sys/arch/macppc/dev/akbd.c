@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.15 2001/07/12 04:16:58 nathanw Exp $	*/
+/*	$NetBSD: akbd.c,v 1.16 2001/07/17 12:33:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -43,16 +43,17 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
 
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/pm_direct.h>
 #include <macppc/dev/aedvar.h>
 #include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
+#include <macppc/dev/pm_direct.h>
 
 #include "aed.h"
 
@@ -104,6 +105,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 };
 
 static int akbd_is_console;
+static int pcmcia_soft_eject;
 
 static int
 akbdmatch(parent, cf, aux)
@@ -131,6 +133,10 @@ akbdattach(parent, self, aux)
 	short cmd;
 	u_char buffer[9];
 	struct wskbddev_attach_args a;
+
+	/* ohare based models have soft ejectable card slot. */
+	if (OF_finddevice("/bandit/ohare") != -1)
+		pcmcia_soft_eject = 1;
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -482,10 +488,12 @@ kbd_intr(arg)
 		type = WSCONS_EVENT_KEY_UP;
 		break;
 	case 245:
-		pm_eject_pcmcia(0);
+		if (pcmcia_soft_eject)
+			pm_eject_pcmcia(0);
 		break;
 	case 244:
-		pm_eject_pcmcia(1);
+		if (pcmcia_soft_eject)
+			pm_eject_pcmcia(1);
 		break;
 	}
 
