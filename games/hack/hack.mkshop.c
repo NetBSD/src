@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mkshop.c,v 1.6 2001/03/25 20:44:01 jsm Exp $	*/
+/*	$NetBSD: hack.mkshop.c,v 1.7 2002/08/22 01:49:34 chuck Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mkshop.c,v 1.6 2001/03/25 20:44:01 jsm Exp $");
+__RCSID("$NetBSD: hack.mkshop.c,v 1.7 2002/08/22 01:49:34 chuck Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -70,7 +70,7 @@ gottype:
 #ifdef WIZARD
 		    (wizard && getenv("SHOPTYPE") && sroom->doorct != 0) ||
 #endif	/* WIZARD */
-		    (sroom->doorct <= 2 && sroom->doorct > 0))
+		    sroom->doorct == 1)
 			break;
 	}
 
