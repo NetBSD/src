@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.125 2004/03/07 00:47:18 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.125.2.1 2004/04/18 02:26:13 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -206,7 +206,7 @@ message ptnheaders
 }
 
 message askfsmount
-{Mount pount?}
+{Mount point?}
 
 message askfssize
 {Size for %s in %s?}
