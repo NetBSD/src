@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.56 2000/02/07 20:16:52 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.57 2000/03/03 17:51:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,15 +39,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.56 2000/02/07 20:16:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.57 2000/03/03 17:51:28 mhitch Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
  * NOTE: The name was changed from "sd" to "rz" for DEC naming compatibility.
  * I guess I can't avoid confusion someplace.
  */
-
-#include "opt_compat_ultrix.h"
 
 #include "rz.h"
 #include "rnd.h"		/* is random device-driver configured? */
@@ -153,15 +151,6 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	{ 1032912,  RZ_END },	/* G -- F to end of disk */
 	{  196608,  RZ_END }	/* H -- B to end of disk */
 };
-
-
-/*
- * Ultrix disklabel declarations
- */
-#ifdef COMPAT_ULTRIX
-char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-	    struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
-#endif	/* COMPAT_ULTRIX */
 
 struct rzstats {
 	long	rzresets;
@@ -938,6 +927,7 @@ rzgetinfo(dev)
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[part].p_offset = 0;
 	lp->d_partitions[part].p_size = sc->sc_blks;
+	rz_setlabelgeom(lp, &sc->params);
 
 	/*
 	 * Now try to read the disklabel
@@ -972,22 +962,6 @@ rzgetinfo(dev)
 	if (msg == NULL)
 		return;
 	printf("rz%d: WARNING: %s\n", unit, msg);
-
-
-#ifdef	COMPAT_ULTRIX
-	/*
-	 * No native label, try and substitute  Ultrix label
-	 */
-	msg = compat_label(dev, rzstrategy, lp, &cd);
-	if (msg == NULL) {
-	  	printf("rz%d: WARNING: using ULTRIX partition information",
-		       unit);
-		/* Ultrix labels have no geom info. Use softc params. */
-		rz_setlabelgeom(lp, &sc->params);
-		return;
-	}
-	printf("rz%d: WARNING: trying Ultrix label, %s\n", unit, msg);
-#endif	/* COMPAT_ULTRIX */
 
 	/*
 	 * No label found. Concoct one from compile-time default.

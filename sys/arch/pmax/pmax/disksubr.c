@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2000/02/19 09:43:40 nisimura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 2000/03/03 17:51:26 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -45,6 +45,8 @@
 
 #ifdef COMPAT_ULTRIX
 #include <machine/dec_boot.h>
+#include <ufs/ufs/dinode.h>		/* XXX for fs.h */
+#include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
 char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 	    struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
@@ -103,6 +105,20 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
+#ifdef COMPAT_ULTRIX
+	/*
+	 * If no NetBSD label was found, check for an Ultrix label and
+	 * construct tne incore label from the Ultrix partition information.
+	 */
+	if (msg != NULL) {
+		msg = compat_label(dev, strat, lp, osdep);
+		if (msg == NULL) {
+			printf("WARNING: using Ultrix partition information\n");
+			/* set geometry? */
+		}
+	}
+#endif
+/* XXX If no NetBSD label or Ultrix label found, generate default label here */
 	return (msg);
 }
 
@@ -153,6 +169,12 @@ compat_label(dev, strat, lp, osdep)
 
 		lp->d_magic = DEC_LABEL_MAGIC;
 		lp->d_npartitions = 0;
+		strncpy(lp->d_packname, "Ultrix label", 16);
+		lp->d_rpm = 3600;
+		lp->d_interleave = 1;
+		lp->d_flags = 0;
+		lp->d_bbsize = BBSIZE;
+		lp->d_sbsize = SBSIZE;
 		for (part = 0;
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
