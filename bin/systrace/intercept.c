@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.11 2002/11/02 19:57:02 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.12 2002/11/25 06:25:09 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.11 2002/11/02 19:57:02 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.12 2002/11/25 06:25:09 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -876,4 +876,19 @@ intercept_ugid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 
 	icpid->uid = uid;
 	icpid->gid = gid;
+}
+
+/*
+ * Checks if the given emulation has a certain system call.
+ * This is a very slow function.
+ */
+
+int
+intercept_isvalidsystemcall(char *emulation, char *name)
+{
+	int res;
+
+	res = intercept.getsyscallnumber(emulation, name);
+
+	return (res != -1);
 }
