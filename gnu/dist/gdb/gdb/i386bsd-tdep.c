@@ -46,6 +46,8 @@ i386bsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
    Note: This function is used for Solaris 2 too, so don't make it
    static.  */
 
+/* XXX NetBSD: This function returns the adress of a ucontext_t
+   which happens to be the third argument to the signal handler. */
 CORE_ADDR
 i386bsd_sigcontext_addr (struct frame_info *frame)
 {
