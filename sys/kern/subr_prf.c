@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.42 1997/06/26 00:43:10 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.43 1997/06/26 05:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -440,6 +440,9 @@ kprintf(fmt, oflags, tp, ap)
 		}
 		flags = 0;
 reswitch:	switch (ch = *(const u_char *)fmt++) {
+		case '\0':
+			/* XXX Print the last format character? */
+			return;
 		case '0':
 		case '.':
 			padc = '0';
@@ -608,6 +611,10 @@ sprintf(buf, cfmt, va_alist)
 
 		flags = 0;
 reswitch:	switch (ch = *(const u_char *)fmt++) {
+		case '\0':
+			/* XXX Store the last format character? */
+			*bp++ = '\0';
+			return ((bp - buf) - 1);
 		case '0':
 			padc = '0';
 			goto reswitch;
