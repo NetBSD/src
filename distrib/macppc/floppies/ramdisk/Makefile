@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/01/13 10:54:16 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,8 +20,8 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		2048k
-GEOM=		512/16/2/128
+SIZE=		1536k
+GEOM=		512/16/2/96
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
