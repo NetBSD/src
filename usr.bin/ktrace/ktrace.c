@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.18 2000/07/03 02:51:21 matt Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.19 2000/07/07 15:13:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.18 2000/07/03 02:51:21 matt Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.19 2000/07/07 15:13:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(argc, argv)
 	if (outfile && strcmp(outfile, "-")) {
 		if ((fd = open(outfile, O_CREAT | O_WRONLY |
 		    (append ? 0 : O_TRUNC), DEFFILEMODE)) < 0)
-			err(1, outfile);
+			err(1, "%s", outfile);
 		(void)close(fd);
 	}
 
@@ -356,6 +356,6 @@ do_ktrace(tracefile, ops, trpoints, pid)
 	} else
 		ret = ktrace(tracefile, ops, trpoints, pid);
 	if (ret < 0)
-		err(1, tracefile);
+		err(1, "%s", tracefile);
 	return 1;
 }

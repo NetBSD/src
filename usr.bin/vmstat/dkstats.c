@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.8 2000/06/04 16:10:17 thorpej Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.9 2000/07/07 15:13:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -83,8 +83,8 @@ int		*dk_select;
 char		**dr_name;
 
 #define	KVM_ERROR(_string) {						\
-	warnx((_string));						\
-	errx(1, kvm_geterr(kd));					\
+	warnx("%s", (_string));						\
+	errx(1, "%s", kvm_geterr(kd));					\
 }
 
 /*

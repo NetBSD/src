@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/10/18 08:40:49 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2000/07/07 15:11:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.8 1997/10/18 08:40:49 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2000/07/07 15:11:45 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -271,7 +271,7 @@ action(line)
 		 * the generic op_handler.
 		 */
 		if ((cp = op_handler(keyword, arg)) != NULL)
-			warnx(cp);
+			warnx("%s", cp);
 		return;
 	} else
 #endif /* __sparc__ */

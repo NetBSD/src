@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.17 2000/01/23 19:59:33 mycroft Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.18 2000/07/07 15:11:46 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -503,7 +503,7 @@ error(name)
 	char *name;
 {
 
-	warn(name);
+	warn("%s", name);
 	cleanup();
 #ifdef think_about_this_a_while_longer
 	fputs("NOTE: possible inconsistencies between text files and databases\n", stderr);

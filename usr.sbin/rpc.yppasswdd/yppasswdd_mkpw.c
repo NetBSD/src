@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.5 2000/07/04 20:27:39 matt Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.6 2000/07/07 15:11:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -108,7 +108,7 @@ make_passwd(argp, rqstp, transp)
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0) {
 		pw_abort();
-		warnx(_PATH_MASTERPASSWD);
+		warnx("%s", _PATH_MASTERPASSWD);
 		RETURN(1);
 	}
 
