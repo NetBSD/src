@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.46 1999/10/04 19:05:42 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.47 1999/10/05 20:09:44 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -243,6 +243,7 @@
 
 /* In-System products */
 #define	USB_PRODUCT_INSYSTEM_F5U002	0x0002		/* Parallel printer adapter */
+#define	USB_PRODUCT_INSYSTEM_ISD110	0x0200		/* IDE adapter */
 
 /* Qtronix products */
 #define	USB_PRODUCT_QTRONIX_980N	0x2011		/* Scorpion-980N keyboard */
