@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.3 1995/09/17 00:49:38 pk Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.4 1995/09/18 21:19:22 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,14 +52,8 @@
 #include "rpc.h"
 #include "bootparam.h"
 
-n_long  bp_server_addr;	/* net order */
-n_short bp_server_port;	/* net order */
-
-int hostnamelen;
-char hostname[FNAME_SIZE];
-
-int domainnamelen;
-char domainname[FNAME_SIZE];
+struct in_addr	bp_server_addr;	/* net order */
+n_short		bp_server_port;	/* net order */
 
 /*
  * RPC definitions for bootparamd
@@ -78,8 +72,8 @@ struct xdr_inaddr {
 	int32_t	addr[4];
 };
 
-int xdr_inaddr_encode __P((void **p, n_long ia));
-int xdr_inaddr_decode __P((void **p, n_long *ia));
+int xdr_inaddr_encode __P((void **p, struct in_addr ia));
+int xdr_inaddr_decode __P((void **p, struct in_addr *ia));
 
 int xdr_string_encode __P((void **p, char *str, int len));
 int xdr_string_decode __P((void **p, char *str, int *len_p));
@@ -131,12 +125,12 @@ bp_whoami(sockfd)
 	int len, x;
 
 #ifdef	RPC_DEBUG
-	printf("bp_whoami: myip=0x%x\n", myip);
+	printf("bp_whoami: myip=%s\n", inet_ntoa(myip));
 #endif
 
 	if (!(d = socktodesc(sockfd))) {
 		printf("bp_whoami: bad socket. %d\n", sockfd);
-		return (EBADF);
+		return (-1);
 	}
 	args = &sdata.d;
 	repl = &rdata.d;
@@ -158,7 +152,7 @@ bp_whoami(sockfd)
 
 	/* RPC: portmap/callit */
 	d->myport = htons(--rpc_port);
-	d->destip = htonl(INADDR_BROADCAST);	/* XXX: subnet bcast? */
+	d->destip.s_addr = INADDR_BROADCAST;	/* XXX: subnet bcast? */
 	/* rpc_call will set d->destport */
 
 	len = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_CALLIT,
@@ -166,7 +160,7 @@ bp_whoami(sockfd)
 				  repl, sizeof(*repl));
 	if (len < 8) {
 		printf("bootparamd: 'whoami' call failed\n");
-		return(-1);
+		return (-1);
 	}
 
 	/* Save bootparam server address (from IP header). */
@@ -181,7 +175,7 @@ bp_whoami(sockfd)
 
 #ifdef	RPC_DEBUG
 	printf("bp_whoami: server at %s:%d\n",
-		   intoa(bp_server_addr), ntohs(bp_server_port));
+		   inet_ntoa(bp_server_addr), ntohs(bp_server_port));
 #endif
 
 	/* We have just done a portmap call, so cache the portnum. */
@@ -196,7 +190,7 @@ bp_whoami(sockfd)
 	x = ntohl(repl->encap_len);
 	if (len < x) {
 		printf("bp_whoami: short reply, %d < %d\n", len, x);
-		return(-1);
+		return (-1);
 	}
 	recv_head = repl->capsule;
 
@@ -206,7 +200,7 @@ bp_whoami(sockfd)
 #ifdef	RPC_DEBUG
 		printf("bp_whoami: bad hostname\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* domain name */
@@ -215,7 +209,7 @@ bp_whoami(sockfd)
 #ifdef	RPC_DEBUG
 		printf("bp_whoami: bad domainname\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* gateway address */
@@ -223,7 +217,7 @@ bp_whoami(sockfd)
 #ifdef	RPC_DEBUG
 		printf("bp_whoami: bad gateway\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* success */
@@ -243,7 +237,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 	int sockfd;
 	char *key;
 	char *pathname;
-	n_long *serv_addr;
+	struct in_addr *serv_addr;
 {
 	struct {
 		n_long	h[RPC_HEADER_WORDS];
@@ -261,7 +255,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 
 	if (!(d = socktodesc(sockfd))) {
 		printf("bp_getfile: bad socket. %d\n", sockfd);
-		return (EBADF);
+		return (-1);
 	}
 
 	send_tail = sdata.d;
@@ -300,7 +294,8 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 #ifdef	RPC_DEBUG
 		printf("bp_getfile: short reply\n");
 #endif
-		return(-1);
+		errno = EBADRPC;
+		return (-1);
 	}
 	recv_head = rdata.d;
 
@@ -314,7 +309,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 #ifdef	RPC_DEBUG
 		printf("bp_getfile: bad server name\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* server IP address (mountd/NFS) */
@@ -322,7 +317,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 #ifdef	RPC_DEBUG
 		printf("bp_getfile: bad server addr\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* server pathname */
@@ -331,7 +326,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 #ifdef	RPC_DEBUG
 		printf("bp_getfile: bad server path\n");
 #endif
-		return(-1);
+		return (-1);
 	}
 
 	/* success */
@@ -398,7 +393,7 @@ xdr_string_decode(pkt, str, len_p)
 int
 xdr_inaddr_encode(pkt, ia)
 	void **pkt;
-	n_long ia;		/* host order */
+	struct in_addr ia;
 {
 	struct xdr_inaddr *xi;
 	u_char *cp;
@@ -411,13 +406,13 @@ xdr_inaddr_encode(pkt, ia)
 	xi = *pkt;
 	*(char**)pkt += sizeof(*xi);
 	xi->atype = htonl(1);
-	uia.l = htonl(ia);
+	uia.l = ia.s_addr;
 	cp = uia.c;
 	ip = xi->addr;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
-	*ip++ = *cp++;
+	*ip++ = htonl((unsigned int)*cp++);
+	*ip++ = htonl((unsigned int)*cp++);
+	*ip++ = htonl((unsigned int)*cp++);
+	*ip++ = htonl((unsigned int)*cp++);
 
 	return (0);
 }
@@ -425,7 +420,7 @@ xdr_inaddr_encode(pkt, ia)
 int
 xdr_inaddr_decode(pkt, ia)
 	void **pkt;
-	n_long *ia;		/* host order */
+	struct in_addr *ia;		/* host order */
 {
 	struct xdr_inaddr *xi;
 	u_char *cp;
@@ -445,14 +440,13 @@ xdr_inaddr_decode(pkt, ia)
 		return(-1);
 	}
 
-
 	cp = uia.c;
 	ip = xi->addr;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
-	*cp++ = *ip++;
-	*ia = ntohl(uia.l);
+	*cp++ = ntohl(*ip++);
+	*cp++ = ntohl(*ip++);
+	*cp++ = ntohl(*ip++);
+	*cp++ = ntohl(*ip++);
+	ia->s_addr = uia.l;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.8 1995/09/17 00:49:44 pk Exp $	*/
+/*	$NetBSD: rpc.c,v 1.9 1995/09/18 21:19:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -101,6 +101,7 @@ struct rpc_reply {
 
 /* Local forwards */
 static	ssize_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
+static	int rpc_getport __P((struct iodesc *, n_long, n_long));
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */
@@ -125,14 +126,19 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	char *send_head, *send_tail;
 	char *recv_head, *recv_tail;
 	n_long x;
+	int p;
 
 #ifdef RPC_DEBUG
 	if (debug)
 		printf("rpc_call: prog=0x%x vers=%d proc=%d\n",
-			   prog, vers, proc);
+			prog, vers, proc);
 #endif
 
-	d->destport = rpc_getport(d, prog, vers);
+	p = rpc_getport(d, prog, vers);
+	if (p == htonl(-1))
+		return (-1);
+
+	d->destport = htons((short)ntohl(p));
 
 	/*
 	 * Prepend authorization stuff and headers.
@@ -182,6 +188,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	cc = sendrecv(d,
 	    sendudp, send_head, ((int)send_tail - (int)send_head),
 	    recvrpc, recv_head, ((int)recv_tail - (int)recv_head));
+
 #ifdef RPC_DEBUG
 	if (debug)
 		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
@@ -284,7 +291,10 @@ recvrpc(d, pkt, len, tleft)
  * dig out the IP address/port from the headers.
  */
 void
-rpc_fromaddr(void *pkt, n_long *addr, u_short *port)
+rpc_fromaddr(pkt, addr, port)
+	void		*pkt;
+	struct in_addr	*addr;
+	u_short		*port;
 {
 	struct hackhdr {
 		/* Tail of IP header: just IP addresses */
@@ -300,46 +310,46 @@ rpc_fromaddr(void *pkt, n_long *addr, u_short *port)
 	} *hhdr;
 
 	hhdr = ((struct hackhdr *)pkt) - 1;
-	*addr = hhdr->ip_src;
+	addr->s_addr = hhdr->ip_src;
 	*port = hhdr->uh_sport;
 }
 
 /*
  * RPC Portmapper cache
  */
-
 #define PMAP_NUM 8			/* need at most 5 pmap entries */
 
 int rpc_pmap_num;
 struct pmap_list {
-	u_long	addr;		/* server, net order */
+	struct in_addr	addr;	/* server, net order */
 	u_long	prog;		/* host order */
 	u_long	vers;		/* host order */
-	u_short	port;		/* net order */
+	n_short	port;		/* net order */
 	u_short _pad;
 } rpc_pmap_list[PMAP_NUM];
 
 /* return port number in net order */
 int
 rpc_pmap_getcache(addr, prog, vers)
-	u_long	addr;	/* server, net order */
-	u_long	prog;	/* host order */
-	u_long	vers;	/* host order */
+	struct in_addr	addr;	/* server, net order */
+	u_long		prog;	/* host order */
+	u_long		vers;	/* host order */
 {
 	struct pmap_list *pl;
 
 	for (pl = rpc_pmap_list; pl < &rpc_pmap_list[rpc_pmap_num]; pl++)
-		if (pl->addr == addr &&	pl->prog == prog &&	pl->vers == vers)
+		if (pl->addr.s_addr == addr.s_addr && pl->prog == prog &&
+		    pl->vers == vers)
 			return ((int) pl->port);
-	return (-1);
+	return (htonl(-1));
 }
 
 void
 rpc_pmap_putcache(addr, prog, vers, port)
-	n_long	addr;	/* net order */
-	n_long	prog;	/* host order */
-	n_long	vers;	/* host order */
-	int port;		/* net order */
+	struct in_addr	addr;	/* server, net order */
+	u_long		prog;	/* host order */
+	u_long		vers;	/* host order */
+	n_long		port;	/* net order */
 {
 	struct pmap_list *pl;
 
@@ -374,13 +384,13 @@ rpc_getport(d, prog, vers)
 	n_long vers;	/* host order */
 {
 	struct args {
-		u_long	prog;		/* call program */
-		u_long	vers;		/* call version */
-		u_long	proto;		/* call protocol */
-		u_long	port;		/* call port (unused) */
+		n_long	prog;		/* call program */
+		n_long	vers;		/* call version */
+		n_long	proto;		/* call protocol */
+		n_long	port;		/* call port (unused) */
 	} *args;
 	struct res {
-		u_long port;
+		n_long port;
 	} *res;
 	struct {
 		n_long	h[RPC_HEADER_WORDS];
@@ -391,20 +401,21 @@ rpc_getport(d, prog, vers)
 		struct res d;
 		n_long  pad;
 	} rdata;
-	int cc, port;
+	ssize_t cc;
+	n_long port;
 
 #ifdef RPC_DEBUG
 	if (debug)
-	    printf("getport: prog=0x%x vers=%d\n", prog, vers);
+		printf("getport: prog=0x%x vers=%d\n", prog, vers);
 #endif
 
 	/* This one is fixed forever. */
 	if (prog == PMAPPROG)
-		return PMAPPORT;
+		return (htons(PMAPPORT));
 
 	/* Try for cached answer first */
 	port = rpc_pmap_getcache(d->destip, prog, vers);
-	if (port >= 0)
+	if (port != htonl(-1))
 		return (port);
 
 	args = &sdata.d;
@@ -418,9 +429,10 @@ rpc_getport(d, prog, vers)
 		args, sizeof(*args), res, sizeof(*res));
 	if (cc < sizeof(*res)) {
 		printf("getport: %s", strerror(errno));
-		return(-1);
+		errno = EBADRPC;
+		return (htonl(-1));
 	}
-	port = (u_short)res->port;
+	port = res->port;
 
 	rpc_pmap_putcache(d->destip, prog, vers, port);
 

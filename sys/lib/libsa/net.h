@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.6 1995/09/14 23:45:27 pk Exp $	*/
+/*	$NetBSD: net.h,v 1.7 1995/09/18 21:19:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -38,12 +38,17 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _KERNEL	/* XXX - see <netinet/in.h> */
+#undef __IPADDR
+#define __IPADDR(x)	htonl((u_int32_t)(x))
+#endif
+
 #include "iodesc.h"
 
 #define BA { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
 /* Returns true if n_long's on the same net */
-#define	SAMENET(a1, a2, m) ((a1 & m) == (a2 & m))
+#define	SAMENET(a1, a2, m) ((a1.s_addr & m) == (a2.s_addr & m))
 
 #define MACPY(s, d) bcopy((char *)s, (char *)d, 6)
 
@@ -68,25 +73,28 @@ extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];
 extern	char bootfile[FNAME_SIZE];
 extern	char hostname[FNAME_SIZE];
+extern	int hostnamelen;
 extern	char domainname[FNAME_SIZE];
+extern	int domainnamelen;
 extern	char ifname[IFNAME_SIZE];
 
-extern	n_long myip;
-extern	n_long rootip;
-extern	n_long swapip;
-extern	n_long gateip;
-extern	n_long nameip;
-extern	n_long mask;
+extern	struct in_addr myip;
+extern	struct in_addr rootip;
+extern	struct in_addr swapip;
+extern	struct in_addr gateip;
+extern	struct in_addr nameip;
+extern	n_long netmask;
 
 extern	int debug;			/* defined in the machdep sources */
 
 extern struct iodesc sockets[SOPEN_MAX];
 
-/* ARP functions: */
-
-u_char	*arpwhohas __P((struct iodesc *, n_long));
+/* ARP/RevARP functions: */
+u_char	*arpwhohas __P((struct iodesc *, struct in_addr));
 void	arp_reply __P((struct iodesc *, void *));
+int	rarp_getipaddress __P((int));
 
+/* Link functions: */
 ssize_t sendether __P((struct iodesc *d, void *pkt, size_t len,
 			u_char *dea, int etype));
 ssize_t readether __P((struct iodesc *d, void *pkt, size_t len,
@@ -100,12 +108,11 @@ ssize_t	sendrecv __P((struct iodesc *,
 		      ssize_t (*)(struct iodesc *, void *, size_t, time_t),
 			void *, size_t));
 
-/* utilities: */
-
+/* Utilities: */
 char	*ether_sprintf __P((u_char *));
 int	in_cksum __P((void *, int));
-char	*intoa __P((n_long));			/* similar to inet_ntoa */
+char	*inet_ntoa __P((struct in_addr));
+char	*intoa __P((n_long));		/* similar to inet_ntoa */
 
 /* Machine-dependent functions: */
-
 time_t	getsecs __P((void));
