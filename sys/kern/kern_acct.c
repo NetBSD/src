@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.48 2000/03/10 01:13:18 enami Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.49 2000/05/08 19:06:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -265,12 +265,25 @@ acct_process(p)
 	struct rusage *r;
 	struct timeval ut, st, tmp;
 	int s, t, error = 0;
+	struct plimit *oplim = NULL;
 
 	ACCT_LOCK();
 
 	/* If accounting isn't enabled, don't bother */
 	if (acct_state != ACCT_ACTIVE)
 		goto out;
+
+	/*
+	 * Raise the file limit so that accounting can't be stopped by
+	 * the user.
+	 *
+	 * XXX We should think about the CPU limit, too.
+	 */
+	if (p->p_limit->p_refcnt > 1) {
+		oplim = p->p_limit;
+		p->p_limit = limcopy(p->p_limit);
+	}
+	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 
 	/*
 	 * Get process accounting information.
@@ -325,6 +338,11 @@ acct_process(p)
 	    acct_ucred, NULL, p);
 	if (error != 0)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
+
+	if (oplim) {
+		limfree(p->p_limit);
+		p->p_limit = oplim;
+	}
 
  out:
 	ACCT_UNLOCK();
