@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2005/01/20 12:31:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.2 2005/02/16 13:46:29 bouyer Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2005/01/20 12:31:35 bouyer Exp $
  * SUCH DAMAGE.
  */
 
+#include "opt_xen.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -101,6 +103,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 2005/01/20 12:31:35 bouyer Exp $
 
 #define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+
+#ifdef DOM0OPS
+#include <machine/xen_shm.h>
+#endif
 
 #ifdef notyet
 #include <dev/isa/isareg.h>
@@ -140,7 +146,7 @@ static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	    void *buf, bus_size_t buflen, struct proc *p, int flags);
 static __inline int _bus_dmamap_load_paddr(bus_dma_tag_t, bus_dmamap_t,
-    paddr_t, int);
+    paddr_t, int, int);
 
 
 /*
@@ -332,15 +338,19 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 static __inline int
 _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    paddr_t paddr, int size)
+    paddr_t paddr, int size, int ismaddr)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	int nseg = map->dm_nsegs;
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
 	bus_addr_t lastaddr = 0xdead; /* XXX gcc */
-	paddr_t maddr = xpmap_ptom(paddr); /* xen machine address */
+	paddr_t maddr; /* xen machine address */
 	int sgsize;
 	int error = 0;
+	if (ismaddr)
+		maddr = paddr;
+	else
+		maddr = xpmap_ptom(paddr);
 
 	if (nseg > 0)
 		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
@@ -384,7 +394,10 @@ again:
 	paddr += sgsize;
 	size -= sgsize;
 	if (size > 0) {
-		maddr = xpmap_ptom(paddr);
+		if (ismaddr)
+			maddr = paddr;
+		else
+			maddr = xpmap_ptom(paddr);
 		goto again;
 	}
 
@@ -436,7 +449,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size, 0);
 			break;
 
 		case M_EXT|M_EXT_PAGES:
@@ -465,7 +478,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 				paddr = VM_PAGE_TO_PHYS(pg) + offset;
 
 				error = _bus_dmamap_load_paddr(t, map,
-				    paddr, size);
+				    paddr, size, 0);
 				if (error)
 					break;
 				offset = 0;
@@ -477,7 +490,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size, 0);
 			break;
 
 		default:
@@ -1139,11 +1152,22 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	while (buflen > 0) {
 		int error;
+		int ismaddr = 1;
 
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+#ifdef DOM0OPS
+		if (xen_shm_vaddr2ma(vaddr, &curaddr) == -1)
+#endif
+		{
+			/*
+			 * not a shared memory page, get the physical
+			 * address the usual way
+			 */
+			(void) pmap_extract(pmap, vaddr, &curaddr);
+			ismaddr = 0;
+		}
 
 		/*
 		 * If we're beyond the bounce threshold, notify
@@ -1160,7 +1184,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
+		error =
+		    _bus_dmamap_load_paddr(t, map, curaddr, sgsize, ismaddr);
 		if (error)
 			return error;
 
