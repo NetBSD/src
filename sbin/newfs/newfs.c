@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.68 2003/08/21 15:47:26 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.69 2003/09/03 19:29:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.68 2003/08/21 15:47:26 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.69 2003/09/03 19:29:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,8 +200,6 @@ int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfpdir = AFPDIR;	/* expected number of files per directory */
-int	bbsize = BBSIZE;	/* boot block size */
-int	sbsize = SBLOCKSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
@@ -433,7 +431,7 @@ main(int argc, char *argv[])
 		if (Fflag && !Nflag) {	/* creating image in a regular file */
 			if (fssize == 0)
 				errx(1, "need to specify size when using -F");
-			fso = open(special, O_RDWR | O_CREAT | O_TRUNC, 0777);
+			fso = open(special, O_RDWR | O_CREAT, 0777);
 			if (fso == -1)
 				err(1, "can't open file %s", special);
 			if ((fsi = dup(fso)) == -1)
@@ -443,7 +441,7 @@ main(int argc, char *argv[])
 				err(1, "can't resize %s to %lld",
 				    special, (long long)fssize);
 
-			if (Zflag) {	/* pre-zero the file */
+			if (Zflag) {	/* pre-zero (and de-sparce) the file */
 				char	*buf;
 				int	bufsize, i;
 				off_t	bufrem;
@@ -620,10 +618,6 @@ main(int argc, char *argv[])
 		else
 			maxbpg = MAXBLKPG_UFS2(bsize);
 	}
-#ifdef notdef /* label may be 0 if faked up by kernel */
-	bbsize = lp->d_bbsize;
-	sbsize = lp->d_sbsize;
-#endif
 	oldpartition = *pp;
 	mkfs(pp, special, fsi, fso, mfsmode, mfsuid, mfsgid);
 	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)) && !Fflag)
