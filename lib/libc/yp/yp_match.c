@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.2 1996/05/18 19:01:27 jtc Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_match.c,v 1.2 1996/05/18 19:01:27 jtc Exp $";
+static char rcsid[] = "$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $";
 #endif
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$NetBSD: yp_match.c,v 1.2 1996/05/18 19:01:27 jtc Exp $";
 #define YPMATCHCACHE
 
 extern struct timeval _yplib_timeout;
+extern int _yplib_nerrs;
 extern char _yp_domain[];
 
 #ifdef YPMATCHCACHE
@@ -167,7 +168,7 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct dom_binding *ysd;
 	struct ypresp_val yprv;
 	struct ypreq_key yprk;
-	int             r;
+	int r, nerrs = 0;
 
 
 	if (indomain == NULL || *indomain == '\0'
@@ -209,7 +210,10 @@ again:
 		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_match: clnt_call");
+		if (++nerrs == _yplib_nerrs) {
+			clnt_perror(ysd->dom_client, "yp_match: clnt_call");
+			nerrs = 0;
+		}
 		ysd->dom_vers = -1;
 		goto again;
 	}
