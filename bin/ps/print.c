@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.68 2001/08/24 01:48:22 enami Exp $	*/
+/*	$NetBSD: print.c,v 1.69 2001/08/24 06:37:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.68 2001/08/24 01:48:22 enami Exp $");
+__RCSID("$NetBSD: print.c,v 1.69 2001/08/24 06:37:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ command(ki, ve, mode)
 			} else {
 				/*
 				 * Commands that don't set an argv vector
-				 * are printed with angled brackets if they
+				 * are printed with square brackets if they
 				 * are system commands.  Otherwise they are
 				 * printed within parentheses.
 				 */
