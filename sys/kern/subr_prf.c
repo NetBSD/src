@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)subr_prf.c	7.30 (Berkeley) 6/29/91
- *	$Id: subr_prf.c,v 1.13 1994/05/12 10:26:19 mycroft Exp $
+ *	from: @(#)subr_prf.c	8.3 (Berkeley) 1/21/94
+ *	$Id: subr_prf.c,v 1.14 1994/05/13 06:02:45 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -70,81 +70,60 @@
 
 struct	tty *constty;			/* pointer to console "window" tty */
 
-#if defined(KADB) || defined(PANICWAIT)
-extern	cngetc();			/* standard console getc */
-#endif
-#ifdef KADB
-int	(*v_getc)() = cngetc;		/* "" getc from virtual console */
-extern	cnpoll();
-int	(*v_poll)() = cnpoll;		/* kdb hook to enable input polling */
-#endif
 extern	cnputc();			/* standard console putc */
 int	(*v_putc)() = cnputc;		/* routine to putc on virtual console */
 
 static void  putchar __P((int ch, int flags, struct tty *tp));
 static char *ksprintn __P((u_long num, int base, int *len));
-void  kprintf __P((const char *fmt, int flags, struct tty *tp, va_list));
-volatile void boot(int bootopt);
+void kprintf __P((const char *fmt, int flags, struct tty *tp, va_list ap));
+
+int consintr = 1;			/* Ok to handle console interrupts? */
 
 /*
- * Variable panicstr contains argument to first call to panic; used
- * as flag to indicate that the kernel has already called panic.
+ * Variable panicstr contains argument to first call to panic; used as flag
+ * to indicate that the kernel has already called panic.
  */
-const char	*panicstr;
-
-/*
- * Message buffer
- */
-struct msgbuf *msgbufp;
-int msgbufmapped;
+const char *panicstr;
 
 /*
  * Panic is called on unresolvable fatal errors.  It prints "panic: mesg",
  * and then reboots.  If we are called twice, then we avoid trying to sync
  * the disks as this often leads to recursive panics.
  */
+#ifdef __GNUC__
+volatile void boot(int flags);	/* boot() does not return */
+volatile			/* panic() does not return */
+#endif
+void
 #ifdef __STDC__
-volatile void
 panic(const char *fmt, ...)
 #else
-void
-panic(fmt)
+panic(fmt, va_alist)
 	char *fmt;
 #endif
 {
+	int bootopt;
 	va_list ap;
-	int bootopt = RB_AUTOBOOT | RB_DUMP;
-	char buf[256];
 
+	bootopt = RB_AUTOBOOT | RB_DUMP;
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
 	else
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	sprintf(buf, "panic: %s\n", fmt);
-	kprintf(buf, TOCONS | TOLOG, NULL, ap);
+	printf("panic: %r\n", fmt, ap);
 	va_end(ap);
 
 #ifdef KGDB
 	kgdb_panic();
 #endif
 #ifdef KADB
-	if (boothowto & RB_KDB) {
-		int s;
-
-		s = splnet();	/* below kdb pri */
-		setsoftkdb();
-		splx(s);
-	}
+	if (boothowto & RB_KDB)
+		kdbpanic();
 #endif
 #ifdef DDB
 	Debugger();
-#else
-#ifdef PANICWAIT
-	printf("hit any key to boot/dump...\n>");
-	cngetc();
-#endif
 #endif
 	boot(bootopt);
 }
@@ -169,7 +148,7 @@ void
 #ifdef __STDC__
 uprintf(const char *fmt, ...)
 #else
-uprintf(fmt /*, va_alist */)
+uprintf(fmt, va_alist)
 	char *fmt;
 #endif
 {
@@ -212,7 +191,7 @@ void
 #ifdef __STDC__
 tprintf(tpr_t tpr, const char *fmt, ...)
 #else
-tprintf(tpr, fmt /*, va_alist */)
+tprintf(tpr, fmt, va_alist)
 	tpr_t tpr;
 	char *fmt;
 #endif
@@ -242,7 +221,7 @@ void
 #ifdef __STDC__
 ttyprintf(struct tty *tp, const char *fmt, ...)
 #else
-ttyprintf(tp, fmt /*, va_alist */)
+ttyprintf(tp, fmt, va_alist)
 	struct tty *tp;
 	char *fmt;
 #endif
@@ -265,7 +244,7 @@ void
 #ifdef __STDC__
 log(int level, const char *fmt, ...)
 #else
-log(level, fmt /*, va_alist */)
+log(level, fmt, va_alist)
 	int level;
 	char *fmt;
 #endif
@@ -304,7 +283,7 @@ void
 #ifdef __STDC__
 addlog(const char *fmt, ...)
 #else
-addlog(fmt /*, va_alist */)
+addlog(fmt, va_alist)
 	char *fmt;
 #endif
 {
@@ -323,8 +302,6 @@ addlog(fmt /*, va_alist */)
 	}
 	logwakeup();
 }
-
-int	consintr = 1;			/* ok to handle console interrupts? */
 
 void
 #ifdef __STDC__
@@ -363,22 +340,22 @@ printf(fmt, va_alist)
  * the next characters (up to a control character, i.e. a character <= 32),
  * give the name of the register.  Thus:
  *
- *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
+ *	kprintf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
  *
  * would produce output:
  *
  *	reg=3<BITTWO,BITONE>
  *
- * The format %r is supposed to pass an additional format string and argument
- * list recursively.
- * Its usage is:
+ * The format %r passes an additional format string and argument list
+ * recursively.  Its usage is:
  *
- * fn(otherstuff, char *fmt, ...)
+ * fn(char *fmt, ...)
  * {
  *	va_list ap;
  *	va_start(ap, fmt);
- *	printf("prefix: %r, other stuff\n", fmt, ap);
+ *	printf("prefix: %r: suffix\n", fmt, ap);
  *	va_end(ap);
+ * }
  *
  * Space or zero padding and a field width are supported for the numeric
  * formats only.
@@ -390,7 +367,7 @@ kprintf(fmt, flags, tp, ap)
 	struct tty *tp;
 	va_list ap;
 {
-	register char *p, *p2;
+	register char *p, *q;
 	register int ch, n;
 	u_long ul;
 	int base, lflag, tmp, width;
@@ -424,7 +401,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (p2 = ksprintn(ul, *p++, NULL); ch = *p2--;)
+			for (q = ksprintn(ul, *p++, NULL); ch = *q--;)
 				putchar(ch, flags, tp);
 
 			if (!ul)
@@ -437,7 +414,8 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 						putchar(n, flags, tp);
 					tmp = 1;
 				} else
-					for (; *p > ' '; ++p);
+					for (; *p > ' '; ++p)
+						continue;
 			}
 			if (tmp)
 				putchar('>', flags, tp);
@@ -502,6 +480,7 @@ putchar(c, flags, tp)
 	int flags;
 	struct tty *tp;
 {
+	extern int msgbufmapped;
 	register struct msgbuf *mbp;
 
 	if (panicstr)
@@ -532,11 +511,9 @@ putchar(c, flags, tp)
  * Scaled down version of sprintf(3).
  */
 #ifdef __STDC__
-int
 sprintf(char *buf, const char *cfmt, ...)
 #else
-int
-sprintf(buf, cfmt /*, va_alist */)
+sprintf(buf, cfmt, va_alist)
 	char *buf, *cfmt;
 #endif
 {
@@ -564,7 +541,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 's':
 			p = va_arg(ap, char *);
 			while (*bp++ = *p++)
-				;
+				continue;
 			--bp;
 			break;
 		case 'd':
