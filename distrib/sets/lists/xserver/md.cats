@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.11 2005/03/24 09:16:10 martin Exp $
+# $NetBSD: md.cats,v 1.12 2005/03/26 21:33:48 tron Exp $
 ./var/db/obsolete/xserver			xbase-sys-root
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
@@ -139,6 +139,7 @@
 ./usr/X11R6/lib/modules/fonts/libspeedo.a
 ./usr/X11R6/lib/modules/fonts/libtype1.a
 ./usr/X11R6/lib/modules/fonts/libxtt.a
+./usr/X11R6/lib/modules/input/acecad_drv.o
 ./usr/X11R6/lib/modules/input/calcomp_drv.o
 ./usr/X11R6/lib/modules/input/citron_drv.o
 ./usr/X11R6/lib/modules/input/digitaledge_drv.o
@@ -193,6 +194,7 @@
 ./usr/X11R6/man/cat1/scanpci.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86config.0		-unknown-		.cat
+./usr/X11R6/man/cat4/acecad.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/apm.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/ati.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/chips.0			-unknown-		.cat
@@ -242,6 +244,7 @@
 ./usr/X11R6/man/man1/scanpci.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
+./usr/X11R6/man/man4/acecad.4			-unknown-		.man
 ./usr/X11R6/man/man4/apm.4			-unknown-		.man
 ./usr/X11R6/man/man4/ati.4			-unknown-		.man
 ./usr/X11R6/man/man4/chips.4			-unknown-		.man
