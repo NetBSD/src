@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.18 2003/05/16 14:36:34 itojun Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.19 2003/05/17 01:35:54 nakayama Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.18 2003/05/16 14:36:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.19 2003/05/17 01:35:54 nakayama Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -838,7 +838,6 @@ sunos32_sys_mmap(l, v, retval)
 		syscallarg(netbsd32_long) pos;
 	} */ *uap = v;
 	struct sys_mmap_args ua;
-	void *rt;
 	int error;
 
 	/*
@@ -858,10 +857,12 @@ sunos32_sys_mmap(l, v, retval)
 	SCARG(&ua, pad) = 0;
 	SUNOS32TOX_UAP(pos, off_t);
 
-	error = sys_mmap(l, &ua, (register_t *)&rt);
-	if ((long)rt > (long)UINT_MAX)
-		printf("sunos32_mmap: retval out of range: %p", rt);
-	*retval = (netbsd32_voidp)(u_long)rt;
+	error = sys_mmap(l, &ua, retval);
+	if ((u_long)*retval > (u_long)UINT_MAX) {
+		printf("sunos32_mmap: retval out of range: 0x%lx",
+		       (u_long)*retval);
+		/* Should try to recover and return an error here. */
+	}
 	return (error);
 }
 
