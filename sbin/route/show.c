@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.12 1999/09/03 03:47:39 itojun Exp $	*/
+/*	$NetBSD: show.c,v 1.13 1999/09/03 04:17:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.12 1999/09/03 03:47:39 itojun Exp $");
+__RCSID("$NetBSD: show.c,v 1.13 1999/09/03 04:17:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,7 +326,7 @@ p_sockaddr(sa, flags, width)
 	    {
 		u_char *s = (u_char *)sa->sa_data, *slim;
 
-		slim = ROUNDUP(sa->sa_len) + (u_char *) sa;
+		slim = sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += snprintf(cp, cplim - cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
