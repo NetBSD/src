@@ -17,7 +17,7 @@ BIN1=	aliases csh.cshrc csh.login csh.logout dm.conf \
 # -rw-rw-rw-
 BIN2=	motd
 
-# -rwxr-xr-x root.wheel, for the new f***ing cron root.wheel, for the new f***ing cron root.wheel, for the new f***ing cron root.wheel, for the new f***ing cron
+# -rwxr-xr-x root.wheel, for the new f***ing cron root.wheel
 BIN3=	daily weekly monthly
 
 MTREE=	BSD.root.dist BSD.usr.dist BSD.var.dist
