@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.83 2001/01/10 02:58:58 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.84 2001/01/26 06:23:56 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -964,8 +964,14 @@ remote_statement
 			prspec->lifetime = oakley_get_defaultlifetime();
 			insprspec(prspec, &prhead);
 		}
-		BOC remote_specs EOC
+		BOC remote_specs
 		{
+			/* check a exchange mode */
+			if (cur_rmconf->etypes == NULL) {
+				yyerror("no exchange mode specified.\n");
+				return -1;
+			}
+
 			if (cur_rmconf->idvtype == IDTYPE_ASN1DN
 			 && cur_rmconf->mycertfile == NULL) {
 				yyerror("id type mismatched due to "
@@ -1011,6 +1017,7 @@ remote_statement
 
 			cleanprhead();
 		}
+		EOC
 	;
 remote_index
 	:	ANONYMOUS ike_port
