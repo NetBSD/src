@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.1 2003/04/17 10:16:14 wiz Exp $
+.\" $NetBSD: lpt.4,v 1.2 2003/04/17 10:32:40 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Mark Brinicombe
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -36,7 +36,9 @@
 .Nm lpt
 .Nd parallel port driver
 .Sh SYNOPSIS
-.Cd "lpt0 at mainbus? base 0x002109e0 irq 0"
+.Cd lpt* at pioc? offset 0x0278 irq 0
+.Cd lpt* at pioc? offset 0x0378 irq -1
+.Cd lpt* at pioc? offset 0x03bc irq -1
 .Sh DESCRIPTION
 This driver provides access to parallel ports.  The highest bit in the minor
 number selects whether to do polling or wait for interrupts.  If no IRQ is
