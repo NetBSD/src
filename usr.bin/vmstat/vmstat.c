@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.38 1997/10/20 03:11:57 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.39 1997/11/01 06:51:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.38 1997/10/20 03:11:57 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.39 1997/11/01 06:51:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ main(argc, argv)
 
 	memf = nlistf = NULL;
 	interval = reps = todo = 0;
-	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != EOF) {
+	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);

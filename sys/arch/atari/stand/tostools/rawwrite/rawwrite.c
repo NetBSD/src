@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.3 1996/01/09 09:55:17 leo Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.4 1997/11/01 06:49:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.3 $";
+const char version[] = "$Revision: 1.4 $";
 
 int
 main(argc, argv)
@@ -71,7 +71,7 @@ char	*argv[];
 	progname = argv[0];
 	init_toslib(argv[0]);
 
-	while ((ch = getopt(argc, argv, "hvVwo:")) != EOF) {
+	while ((ch = getopt(argc, argv, "hvVwo:")) != -1) {
 		switch (ch) {
 			case 'h':
 				h_flag = 1;
