@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.9 2001/06/08 00:32:01 matt Exp $	*/
+/*	$NetBSD: adb.c,v 1.10 2002/06/18 04:33:36 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -71,8 +71,6 @@ int	adb_debug = 0;		/* Output debugging messages */
 struct cfattach adb_ca = {
 	sizeof(struct adb_softc), adbmatch, adbattach
 };
-
-extern int adbHardware;
 
 static int
 adbmatch(parent, cf, aux)
