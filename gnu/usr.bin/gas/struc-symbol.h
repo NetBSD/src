@@ -17,7 +17,7 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
- * $Id: struc-symbol.h,v 1.5 1993/11/20 22:20:54 pk Exp $
+ * $Id: struc-symbol.h,v 1.6 1994/06/24 13:35:04 pk Exp $
  */
 
 
@@ -84,8 +84,6 @@ extern struct broken_word *broken_words;
 
 #define	SEGMENT_TO_SYMBOL_TYPE(seg)  (seg_N_TYPE[(int) (seg)])
 extern const short seg_N_TYPE[]; /* subseg.c */
-
-#define	N_REGISTER	30	/* Fake N_TYPE value for SEG_REGISTER */
 
 #ifdef SYMBOLS_NEED_BACKPOINTERS
 #if __STDC__ == 1
