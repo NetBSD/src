@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/11 21:18:01 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 02:42:17 tv Exp $
 
 HOSTPROGNAME=	nbmkdep
 HOST_SRCDIR=	usr.bin/mkdep
@@ -13,7 +13,7 @@ SRCS=		mkdep.c setprogname.c
 MKDEP=		touch $@ || true
 
 # This is the only program that comes before binstall.
-INSTALL=	@true
+INSTALL=	true
 ${HOST_BINDIR}/${HOSTPROGNAME}:: mkdep
 	-rm -f $@
 	cp mkdep $@
