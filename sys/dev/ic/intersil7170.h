@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.2 2000/07/25 22:33:02 pk Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.3 2000/11/03 05:23:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,5 +109,7 @@ struct intersil7170 {
 
 #define INTERSIL_INTER_BITS "\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
 
+#ifndef sun3 /* XXX sun3 does not use MI driver, which needs bus_space(9) */
 todr_chip_handle_t intersil7170_attach(bus_space_tag_t, bus_space_handle_t, int);
+#endif
 #endif	/* _INTERSIL7170_H */
