@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.17 1997/10/07 23:02:17 pk Exp $	*/
+/*	$NetBSD: fts.c,v 1.18 1997/10/08 19:56:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.17 1997/10/07 23:02:17 pk Exp $");
+__RCSID("$NetBSD: fts.c,v 1.18 1997/10/08 19:56:59 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,8 +139,11 @@ fts_open(argv, options, compar)
 		 * Special case of "/" at the end of the path so that
 		 * slashes aren't appended which would cause paths to
 		 * be written as "....//foo".
+		 * Note that we cannot handle a single '/' here. That
+		 * case is dealt with specially later (sigh); see the
+		 * NAPPEND() macro below.
 		 */
-		if ((*argv)[len-1] == '/')
+		if (len > 1 && (*argv)[len-1] == '/')
 			len--;
 
 		p = fts_alloc(sp, *argv, len);
@@ -272,6 +275,15 @@ fts_close(sp)
 	}
 	return (0);
 }
+
+/*
+ * Special case a root of "/" so that slashes aren't appended which would
+ * cause paths to be written as "//foo". Note, this is a special case
+ * of the special cases that are dealt with in fts_open()...
+ */
+#define	NAPPEND(p)						\
+	(p->fts_level == FTS_ROOTLEVEL && p->fts_pathlen == 1 &&\
+	 p->fts_path[0] == '/' ? 0 : p->fts_pathlen)
 
 FTSENT *
 fts_read(sp)
@@ -406,7 +418,7 @@ next:	tmp = p;
 			p->fts_instr = FTS_NOINSTR;
 		}
 
-name:		t = sp->fts_path + p->fts_parent->fts_pathlen;
+name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 		*t++ = '/';
 		memmove(t, p->fts_name, p->fts_namelen + 1);
 		return (sp->fts_cur = p);
@@ -659,7 +671,7 @@ fts_build(sp, type)
 	 * each new name into the path.
 	 */
 	maxlen = sp->fts_pathlen - cur->fts_pathlen - 1;
-	len = cur->fts_pathlen;
+	len = NAPPEND(cur);
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
 		*cp++ = '/';
