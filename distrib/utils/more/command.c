@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/param.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <less.h>
 #include "pathnames.h"
@@ -259,7 +260,6 @@ static
 exec_mca()
 {
 	extern int file;
-	extern char *tagfile;
 	register char *p;
 	char *glob();
 
@@ -275,14 +275,6 @@ exec_mca()
 	case A_EXAMINE:
 		for (p = cmdbuf; isspace(*p); ++p);
 		(void)edit(glob(p));
-		break;
-	case A_TAGFILE:
-		for (p = cmdbuf; isspace(*p); ++p);
-		findtag(p);
-		if (tagfile == NULL)
-			break;
-		if (edit(tagfile))
-			(void)tagsearch();
 		break;
 	}
 }
@@ -510,11 +502,6 @@ again:		if (sigs)
 			CMD_EXEC;
 			help();
 			break;
-		case A_TAGFILE:			/* tag a new file */
-			CMD_RESET;
-			start_mca(A_TAGFILE, "Tag: ");
-			c = getcc();
-			goto again;
 		case A_FILE_LIST:		/* show list of file names */
 			CMD_EXEC;
 			showlist();
