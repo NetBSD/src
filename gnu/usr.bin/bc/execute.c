@@ -1,9 +1,7 @@
-/* 	$NetBSD: execute.c,v 1.5 1996/06/07 19:42:49 phil Exp $  */
-
 /* execute.c - run a bc program. */
 
-/*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/*  This file is part of GNU bc.
+    Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -208,25 +206,25 @@ execute ()
       case 'O' : /* Write a string to the output with processing. */
 	while ((ch = byte(&pc)) != '"')
 	  if (ch != '\\')
-	    out_char (ch);
+	    out_schar (ch);
 	  else
 	    {
 	      ch = byte(&pc);
 	      if (ch == '"') break;
 	      switch (ch)
 		{
-		case 'a':  out_char (007); break;
-		case 'b':  out_char ('\b'); break;
-		case 'f':  out_char ('\f'); break;
-		case 'n':  out_char ('\n'); break;
-		case 'q':  out_char ('"'); break;
-		case 'r':  out_char ('\r'); break;
-		case 't':  out_char ('\t'); break;
-		case '\\': out_char ('\\'); break;
+		case 'a':  out_schar (007); break;
+		case 'b':  out_schar ('\b'); break;
+		case 'f':  out_schar ('\f'); break;
+		case 'n':  out_schar ('\n'); break;
+		case 'q':  out_schar ('"'); break;
+		case 'r':  out_schar ('\r'); break;
+		case 't':  out_schar ('\t'); break;
+		case '\\': out_schar ('\\'); break;
 		default:  break;
 		}
 	    }
-	if (interactive) fflush (stdout);
+	fflush (stdout);
 	break;
 
       case 'R' : /* Return from function */
@@ -260,8 +258,8 @@ execute ()
       case 'P' : /* Write the value on the top of the stack.  No newline. */
 	out_num (ex_stack->s_num, o_base, out_char);
 	if (inst == 'W') out_char ('\n');
-	store_var (3);  /* Special variable "last". */
-	if (interactive) fflush (stdout);
+	store_var (4);  /* Special variable "last". */
+	fflush (stdout);
 	pop ();
 	break;
 
@@ -336,8 +334,8 @@ execute ()
 	break;
 
       case 'w' : /* Write a string to the output. */
-	while ((ch = byte(&pc)) != '"') out_char (ch);
-	if (interactive) fflush (stdout);
+	while ((ch = byte(&pc)) != '"') out_schar (ch);
+	fflush (stdout);
 	break;
 		   
       case 'x' : /* Exchange Top of Stack with the one under the tos. */
