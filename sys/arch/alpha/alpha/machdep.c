@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1996/11/16 23:07:40 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1996/11/17 01:59:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -378,10 +378,9 @@ unknown_cputype:
 		printf("\n");
 		printf("Support for system type %d (%s family) is\n", cputype,
 		    cpu_fn_switch->family);
-		printf("not present in this kernel.  Build a kernel with\n");
-		printf("\"options %s\" to include support for this system\n",
+		printf("not present in this kernel.  Build a kernel with \"options %s\"\n",
 		    cpu_fn_switch->option);
-		printf("type.\n");
+		printf("to include support for this system type.\n");
 		printf("\n");
 		panic("support for system not present");
 	}
