@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.475 2002/06/23 22:18:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.476 2002/07/04 10:22:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.475 2002/06/23 22:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.476 2002/07/04 10:22:20 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2688,7 +2688,7 @@ add_mem_cluster(seg_start, seg_end, type)
 
 void
 init386(first_avail)
-	vaddr_t first_avail;
+	paddr_t first_avail;
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
