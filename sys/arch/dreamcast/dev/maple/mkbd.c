@@ -1,6 +1,6 @@
-/*	$NetBSD: mkbd.c,v 1.1 2001/01/16 00:33:01 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.2 2001/01/21 22:44:40 marcus Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 Marcus Comstedt
  * All rights reserved.
  *
@@ -14,20 +14,22 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Colin Wood.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by Marcus Comstedt.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -242,7 +244,7 @@ mkbd_intr(sc, kbddata, sz)
 	  for (i=0, j=0; i<6; i++)
 	    if (sc->sc_condition.key[i] < 4)
 	      break;
-	    else if(sc->sc_condition.key[i] == kbddata->key[i])
+	    else if(sc->sc_condition.key[i] == kbddata->key[j])
 	      j++;
 	    else
 	      KEY_UP(sc->sc_condition.key[i]);
@@ -267,11 +269,13 @@ mkbd_cngetc(v, type, data)
 
 	polledkey = -1;
 	maple_polling = 1;
-	while (polledkey == -1) {
+	while (polledkey == -1)
 	  if (mkbd_console_softc != NULL ||
-	      mkbd_console_softc->sc_parent != NULL)
+	      mkbd_console_softc->sc_parent != NULL) {
+	    int t;
+	    for(t=0; t<1000000; t++);
 	    maple_run_polling(mkbd_console_softc->sc_parent);
-	}
+	  }
 	maple_polling = 0;
 	key = polledkey;
 
