@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.31 2003/07/09 20:14:15 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.32 2003/09/18 22:37:38 cl Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.31 2003/07/09 20:14:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.32 2003/09/18 22:37:38 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,8 +469,14 @@ we_re_toast:
 			return;
 		}
 		map = kernel_map;
-	} else
+	} else {
 		map = &vm->vm_map;
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)fault_address;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+	}
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -526,6 +532,8 @@ we_re_toast:
 	pcb->pcb_onfault = NULL;
 	rv = uvm_fault(map, va, 0, ftype);
 	pcb->pcb_onfault = onfault;
+	if (map != kernel_map)
+		l->l_flag &= ~L_SA_PAGEFAULT;
 	if (rv == 0) {
 		if (user != 0) /* Record any stack growth... */
 			uvm_grow(p, trunc_page(va));
