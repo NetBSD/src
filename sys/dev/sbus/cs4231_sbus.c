@@ -1,4 +1,40 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.1 1998/08/27 20:51:17 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.2 1998/08/28 08:58:24 pk Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -36,33 +72,30 @@
 #endif
 
 /*---*/
-#define CSAUDIO_DAC_LVL	0
+#define CSAUDIO_DAC_LVL		0
 #define CSAUDIO_LINE_IN_LVL	1
 #define CSAUDIO_MONO_LVL	2
 #define CSAUDIO_CD_LVL		3
 #define CSAUDIO_MONITOR_LVL	4
-#define CSAUDIO_OUT_LVL	5
+#define CSAUDIO_OUT_LVL		5
 #define CSAUDIO_LINE_IN_MUTE	6
 #define CSAUDIO_DAC_MUTE	7
-#define CSAUDIO_CD_MUTE	8
+#define CSAUDIO_CD_MUTE		8
 #define CSAUDIO_MONO_MUTE	9
 #define CSAUDIO_MONITOR_MUTE	10
-#define CSAUDIO_REC_LVL	11
+#define CSAUDIO_REC_LVL		11
 #define CSAUDIO_RECORD_SOURCE	12
 
-#define CSAUDIO_INPUT_CLASS    13
-#define CSAUDIO_OUTPUT_CLASS   14
-#define CSAUDIO_RECORD_CLASS   15
-#define CSAUDIO_MONITOR_CLASS  16
+#define CSAUDIO_INPUT_CLASS	13
+#define CSAUDIO_OUTPUT_CLASS	14
+#define CSAUDIO_RECORD_CLASS	15
+#define CSAUDIO_MONITOR_CLASS	16
 
-#define AUDIO_ROM_NAME "SUNW,CS4231"
+#define AUDIO_ROM_NAME		"SUNW,CS4231"
 
-#define Dprintf printf
 #ifdef AUDIO_DEBUG
-extern void Dprintf __P((const char *, ...));
-
 int     cs4231debug = 0;
-#define DPRINTF(x)      if (cs4231debug) Dprintf x
+#define DPRINTF(x)      if (cs4231debug) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -90,16 +123,16 @@ struct cs4231_reg {
  * meaning of some of these bits.
  */
 struct apc_dma {
-	volatile u_long	dmacsr;		/* APC CSR */
-	volatile u_long	lpad[3];	/* */
-	volatile u_long	dmacva;		/* Capture Virtual Address */
-	volatile u_long	dmacc;		/* Capture Count */
-	volatile u_long	dmacnva;	/* Capture Next Virtual Address */
-	volatile u_long	dmacnc;		/* Capture next count */
-	volatile u_long	dmapva;		/* Playback Virtual Address */
-	volatile u_long	dmapc;		/* Playback Count */
-	volatile u_long	dmapnva;	/* Playback Next VAddress */
-	volatile u_long	dmapnc;		/* Playback Next Count */
+	volatile u_int32_t dmacsr;	/* APC CSR */
+	volatile u_int32_t lpad[3];	/* */
+	volatile u_int32_t dmacva;	/* Capture Virtual Address */
+	volatile u_int32_t dmacc;	/* Capture Count */
+	volatile u_int32_t dmacnva;	/* Capture Next Virtual Address */
+	volatile u_int32_t dmacnc;	/* Capture next count */
+	volatile u_int32_t dmapva;	/* Playback Virtual Address */
+	volatile u_int32_t dmapc;	/* Playback Count */
+	volatile u_int32_t dmapnva;	/* Playback Next VAddress */
+	volatile u_int32_t dmapnc;	/* Playback Next Count */
 };
 
 /*
@@ -366,14 +399,14 @@ cs4231_regdump(label, sc)
 	volatile struct apc_dma *dma = sc->sc_dmareg;
 
 	printf("cs4231regdump(%s): regs:", label);
-	printf("dmapva: 0x%lx; ", dma->dmapva);
-	printf("dmapc: 0x%lx; ", dma->dmapc);
-	printf("dmapnva: 0x%lx; ", dma->dmapnva);
-	printf("dmapnc: 0x%lx\n", dma->dmapnc);
-	printf("dmacva: 0x%lx; ", dma->dmacva);
-	printf("dmacc: 0x%lx; ", dma->dmacc);
-	printf("dmacnva: 0x%lx; ", dma->dmacnva);
-	printf("dmacnc: 0x%lx\n", dma->dmacnc);
+	printf("dmapva: 0x%lx; ", (u_long)dma->dmapva);
+	printf("dmapc: 0x%lx; ", (u_long)dma->dmapc);
+	printf("dmapnva: 0x%lx; ", (u_long)dma->dmapnva);
+	printf("dmapnc: 0x%lx\n", (u_long)dma->dmapnc);
+	printf("dmacva: 0x%lx; ", (u_long)dma->dmacva);
+	printf("dmacc: 0x%lx; ", (u_long)dma->dmacc);
+	printf("dmacnva: 0x%lx; ", (u_long)dma->dmacnva);
+	printf("dmacnc: 0x%lx\n", (u_long)dma->dmacnc);
 
 	printf("apc_dmacsr=%s\n",
 		bitmask_snprintf(dma->dmacsr, APC_BITS, bits, sizeof(bits)) );
@@ -933,7 +966,8 @@ cs4231_intr(arg)
 	DPRINTF((
 	    "intr: csr=%s; dmapva=0x%lx,dmapc=%lu;dmapnva=0x%lx,dmapnc=%lu\n",
 		bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits)),
-		dma->dmapva, dma->dmapc, dma->dmapnva, dma->dmapnc));
+		(u_long)dma->dmapva, (u_long)dma->dmapc,
+		(u_long)dma->dmapnva, (u_long)dma->dmapnc));
 
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
 	DPRINTF(("%s: status: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
@@ -1000,7 +1034,8 @@ if (ret == 0) {
 	printf(
 	    "oops: csr=%s; dmapva=0x%lx,dmapc=%lu;dmapnva=0x%lx,dmapnc=%lu\n",
 		bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits)),
-		dma->dmapva, dma->dmapc, dma->dmapnva, dma->dmapnc);
+		(u_long)dma->dmapva, (u_long)dma->dmapc,
+		(u_long)dma->dmapnva, (u_long)dma->dmapnc);
 	ret = 1;
 }
 #endif
