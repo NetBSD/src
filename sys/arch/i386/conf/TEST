@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.21 1993/11/14 17:42:19 mycroft Exp $
+#	$Id: TEST,v 1.22 1993/11/14 17:58:12 mycroft Exp $
 #
 
 # standard options
@@ -16,7 +16,6 @@ options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device memory mapping
 options		DDB			# kernel debugger
 options		DIAGNOSTIC		# internal consistency checking
-options		PARANOID
 
 options		KTRACE			# system call tracing, a la ktrace(1)
 options		FIFO			# fifos; recommended
