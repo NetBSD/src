@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.12 1997/01/23 14:01:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.11 1995/06/07 13:14:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.12 1997/01/23 14:01:51 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,11 +121,11 @@ getdiskbyname(name)
 	getnumdflt(dp->d_trkseek, "ts", 0);
 	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
 	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
-	strcpy(psize, "px");
-	strcpy(pbsize, "bx");
-	strcpy(pfsize, "fx");
-	strcpy(poffset, "ox");
-	strcpy(ptype, "tx");
+	(void)strncpy(psize, "px", sizeof(psize) - 1);
+	(void)strncpy(pbsize, "bx", sizeof(pbsize) - 1);
+	(void)strncpy(pfsize, "fx", sizeof(pfsize) - 1);
+	(void)strncpy(poffset, "ox", sizeof(poffset) - 1);
+	(void)strncpy(ptype, "tx", sizeof(ptype) - 1);
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
@@ -153,7 +153,7 @@ getdiskbyname(name)
 		}
 	}
 	dp->d_npartitions = max + 1 - 'a';
-	(void)strcpy(psize, "dx");
+	(void)strncpy(psize, "dx", sizeof(psize) - 1);
 	dx = dp->d_drivedata;
 	for (p = '0'; p < '0' + NDDATA; p++, dx++) {
 		psize[1] = p;

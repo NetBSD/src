@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.15 1996/12/20 20:16:05 sommerfe Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.16 1997/01/23 14:01:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.15 1996/12/20 20:16:05 sommerfe Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.16 1997/01/23 14:01:56 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -672,7 +672,7 @@ getpwuid(uid)
 		int s = -1;
 		const char *host, *user, *dom;
 
-		sprintf(uidbuf, "%d", uid);
+		snprintf(uidbuf, sizeof uidbuf, "%d", uid);
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
 			bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));

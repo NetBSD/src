@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.8 1996/02/02 15:22:27 mrg Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.9 1997/01/23 14:02:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_debug.c,v 8.7 1995/12/22 10:20:39 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_debug.c,v 1.8 1996/02/02 15:22:27 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_debug.c,v 1.9 1997/01/23 14:02:06 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -166,7 +166,9 @@ dewks(wks)
 	case 161: return "snmp";
 	case 162: return "snmp-trap";
 	case 170: return "print-srv";
-	default: (void) sprintf(nbuf, "%d", wks); return (nbuf);
+	default:
+		(void)snprintf(nbuf, sizeof nbuf, "%d", wks);
+		return (nbuf);
 	}
 }
 
@@ -190,7 +192,9 @@ deproto(protonum)
 	case 12: return "pup";
 	case 16: return "chaos";
 	case 17: return "udp";
-	default: (void) sprintf(nbuf, "%d", protonum); return (nbuf);
+	default:
+		(void)snprintf(nbuf, sizeof nbuf, "%d", protonum);
+		return (nbuf);
 	}
 }
 
@@ -732,7 +736,9 @@ __p_type(type)
 #ifdef ALLOW_T_UNSPEC
 	case T_UNSPEC:	return "UNSPEC";
 #endif /* ALLOW_T_UNSPEC */
-	default:	(void)sprintf(nbuf, "%d", type); return (nbuf);
+	default:	
+		snprintf(nbuf, sizeof nbuf, "%d", type);
+		return (nbuf);
 	}
 }
 
@@ -749,7 +755,9 @@ __p_class(class)
 	case C_IN:	return "IN";
 	case C_HS:	return "HS";
 	case C_ANY:	return "ANY";
-	default:	(void)sprintf(nbuf, "%d", class); return (nbuf);
+	default:
+		(void)snprintf(nbuf, sizeof nbuf, "%d", class);
+		return (nbuf);
 	}
 }
 
@@ -775,8 +783,9 @@ __p_option(option)
 	case RES_DNSRCH:	return "dnsrch";
 	case RES_INSECURE1:	return "insecure1";
 	case RES_INSECURE2:	return "insecure2";
-	default:		sprintf(nbuf, "?0x%lx?", (u_long)option);
-				return (nbuf);
+	default:	
+		(void)snprintf(nbuf, sizeof nbuf, "?0x%lx?", (u_long)option);
+		return (nbuf);
 	}
 }
 
@@ -788,11 +797,11 @@ __p_time(value)
 	u_int32_t value;
 {
 	static char nbuf[40];
-	int secs, mins, hours, days;
+	int secs, mins, hours, days, len = sizeof nbuf;
 	register char *p;
 
 	if (value == 0) {
-		strcpy(nbuf, "0 secs");
+		strncpy(nbuf, "0 secs", sizeof(nbuf) - 1);
 		return(nbuf);
 	}
 
@@ -808,25 +817,34 @@ __p_time(value)
 #define	PLURALIZE(x)	x, (x == 1) ? "" : "s"
 	p = nbuf;
 	if (days) {
-		(void)sprintf(p, "%d day%s", PLURALIZE(days));
-		while (*++p);
+		len -= snprintf(p, len, "%d day%s", PLURALIZE(days));
+		while (*++p)
+			len--;
 	}
 	if (hours) {
-		if (days)
+		if (days) {
 			*p++ = ' ';
-		(void)sprintf(p, "%d hour%s", PLURALIZE(hours));
-		while (*++p);
+			len--;
+		}
+		len -= snprintf(p, len, "%d hour%s", PLURALIZE(hours));
+		while (*++p)
+			len--;
 	}
 	if (mins) {
-		if (days || hours)
+		if (days || hours) {
 			*p++ = ' ';
-		(void)sprintf(p, "%d min%s", PLURALIZE(mins));
-		while (*++p);
+			len--;
+		}
+		len -= snprintf(p, len, "%d min%s", PLURALIZE(mins));
+		while (*++p)
+			len--;
 	}
 	if (secs || ! (days || hours || mins)) {
-		if (days || hours || mins)
+		if (days || hours || mins) {
 			*p++ = ' ';
-		(void)sprintf(p, "%d sec%s", PLURALIZE(secs));
+			len--;
+		}
+		(void)snprintf(p, len, "%d sec%s", PLURALIZE(secs));
 	}
 	return(nbuf);
 }

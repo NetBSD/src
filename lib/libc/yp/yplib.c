@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.26 1997/01/21 20:40:07 thorpej Exp $	 */
+/*	$NetBSD: yplib.c,v 1.27 1997/01/23 14:02:35 mrg Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.26 1997/01/21 20:40:07 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.27 1997/01/23 14:02:35 mrg Exp $";
 #endif
 
 #include <sys/param.h>
@@ -221,7 +221,7 @@ trynet:
 			bn->ypbind_binding_port;
 gotit:
 		ysd->dom_vers = YPVERS;
-		(void)strcpy(ysd->dom_domain, dom);
+		(void)strncpy(ysd->dom_domain, dom, sizeof(ysd->dom_domain)-1);
 	}
 	if (ysd->dom_client)
 		clnt_destroy(ysd->dom_client);

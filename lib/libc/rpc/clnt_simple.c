@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.6 1996/03/29 23:00:51 jtc Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.7 1997/01/23 14:02:16 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_simple.c,v 1.6 1996/03/29 23:00:51 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_simple.c,v 1.7 1997/01/23 14:02:16 mrg Exp $";
 #endif
 
 /* 
@@ -105,7 +105,7 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		crp->valid = 1;
 		crp->oldprognum = prognum;
 		crp->oldversnum = versnum;
-		(void) strcpy(crp->oldhost, host);
+		(void)strncpy(crp->oldhost, host, 256 - 1);
 	}
 	tottimeout.tv_sec = 25;
 	tottimeout.tv_usec = 0;
