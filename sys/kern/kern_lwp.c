@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.15 2002/08/29 17:46:01 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.16 2002/10/22 17:25:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 		l->l_proc->p_stats->p_ru.ru_nvcsw++; 
 		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
+		splx(s);
 	} else {
 		switch (t->l_stat) {
 		case LSSUSPENDED:
