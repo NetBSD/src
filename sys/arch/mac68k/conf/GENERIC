@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 1996/09/10 22:30:26 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.41 1996/09/12 05:33:41 scottr Exp $
 #
 # GENERIC
 
@@ -86,10 +86,12 @@ ncrscsi0	at obio?		# SCSI NCR 5380
 ncr96scsi0	at obio?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
-ch*	at scsibus? target ? lun ?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
