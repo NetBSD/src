@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.1 1998/10/20 14:59:16 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.2 1999/06/16 07:43:58 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -44,4 +44,22 @@ typedef	struct	{
 	char	data[32];	/* data buffer (is it too much?)	*/
 }	PMData;
 
-int		pmgrop(PMData *);
+int	pmgrop(PMData *);
+
+/* PMU commands */
+#define PMU_POWER_OFF		0x7e	/* Turn Power off */
+#define PMU_RESET_CPU		0xd0	/* Reset CPU */
+
+#define PMU_SET_RTC		0x30	/* Set realtime clock */
+#define PMU_READ_RTC		0x38	/* Read realtime clock */
+
+#define PMU_WRITE_PRAM		0x32	/* Write PRAM */
+#define PMU_READ_PRAM		0x3a	/* Read PRAM */
+
+#define PMU_WRITE_NVRAM		0x33	/* Write NVRAM */
+#define PMU_READ_NVRAM		0x3b	/* Read NVRAM */
+
+#define PMU_EJECT_PCMCIA	0x4c	/* Eject PCMCIA slot */
+
+#define PMU_SET_BRIGHTNESS	0x41	/* Set backlight brightness */
+#define PMU_READ_BRIGHTNESS	0xd9	/* Read brightness button position */
