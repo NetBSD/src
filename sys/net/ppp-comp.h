@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.9 2003/03/27 17:50:28 christos Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.10 2003/07/08 07:13:52 itojun Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -66,36 +66,32 @@ struct compressor {
 	int	compress_proto;	/* CCP compression protocol number */
 
 	/* Allocate space for a compressor (transmit side) */
-	void	*(*comp_alloc) __P((u_char *options, int opt_len));
+	void	*(*comp_alloc) __P((u_char *, int));
 	/* Free space used by a compressor */
-	void	(*comp_free) __P((void *state));
+	void	(*comp_free) __P((void *));
 	/* Initialize a compressor */
-	int	(*comp_init) __P((void *state, u_char *options, int opt_len,
-				  int unit, int hdrlen, int debug));
+	int	(*comp_init) __P((void *, u_char *, int, int, int, int));
 	/* Reset a compressor */
-	void	(*comp_reset) __P((void *state));
+	void	(*comp_reset) __P((void *));
 	/* Compress a packet */
-	int	(*compress) __P((void *state, PACKETPTR *mret,
-				 PACKETPTR mp, int orig_len, int max_len));
+	int	(*compress) __P((void *, PACKETPTR *, PACKETPTR, int, int));
 	/* Return compression statistics */
-	void	(*comp_stat) __P((void *state, struct compstat *stats));
+	void	(*comp_stat) __P((void *, struct compstat *));
 
 	/* Allocate space for a decompressor (receive side) */
-	void	*(*decomp_alloc) __P((u_char *options, int opt_len));
+	void	*(*decomp_alloc) __P((u_char *, int));
 	/* Free space used by a decompressor */
-	void	(*decomp_free) __P((void *state));
+	void	(*decomp_free) __P((void *));
 	/* Initialize a decompressor */
-	int	(*decomp_init) __P((void *state, u_char *options, int opt_len,
-				    int unit, int hdrlen, int mru, int debug));
+	int	(*decomp_init) __P((void *, u_char *, int, int, int, int, int));
 	/* Reset a decompressor */
-	void	(*decomp_reset) __P((void *state));
+	void	(*decomp_reset) __P((void *));
 	/* Decompress a packet. */
-	int	(*decompress) __P((void *state, PACKETPTR mp,
-				   PACKETPTR *dmpp));
+	int	(*decompress) __P((void *, PACKETPTR, PACKETPTR *));
 	/* Update state for an incompressible packet received */
-	void	(*incomp) __P((void *state, PACKETPTR mp));
+	void	(*incomp) __P((void *, PACKETPTR));
 	/* Return decompression statistics */
-	void	(*decomp_stat) __P((void *state, struct compstat *stats));
+	void	(*decomp_stat) __P((void *, struct compstat *));
 };
 #endif /* PACKETPTR */
 
