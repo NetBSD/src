@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.15 2000/02/04 01:27:12 cgd Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.16 2000/02/04 09:31:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -134,7 +134,7 @@ aic_pcmcia_attach(parent, self, aux)
 
 	if (cfe == 0) {
 		printf(": can't alloc i/o space\n");
-		return;
+		goto no_config_entry;
 	}
 
 	sc->sc_iot = psc->sc_pcioh.iot;
@@ -144,19 +144,19 @@ aic_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(pf, cfe);
 	if (pcmcia_function_enable(pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
 	/* Map in the io space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto iomap_failed;
 	}
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
 		printf(": unable to detect chip!\n");
-		return;
+		goto no_aic_found;
 	}
 
 	pp = pcmcia_product_lookup(pa, aic_pcmcia_products,
@@ -174,6 +174,22 @@ aic_pcmcia_attach(parent, self, aux)
 	psc->sc_flags |= AIC_PCMCIA_ATTACH;
 	aicattach(sc);
 	psc->sc_flags &= ~AIC_PCMCIA_ATTACH;
+	return;
+
+ no_aic_found:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+ iomap_failed:
+	/* Disable the device. */
+	pcmcia_function_disable(psc->sc_pf);
+
+ enable_failed:
+	/* Unmap our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ no_config_entry:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -183,6 +199,10 @@ aic_pcmcia_detach(self, flags)
 {
 	struct aic_pcmcia_softc *sc = (struct aic_pcmcia_softc *)self;
 	int error;
+
+	if (sc->sc_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
 
 	if ((error = aic_detach(self, flags)) != 0)
 		return (error);
