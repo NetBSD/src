@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83.2.2 1997/09/22 06:32:35 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.83.2.3 1997/09/29 07:20:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,6 +152,20 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 
+	/*
+	 * Map the message buffer (physical location 0).
+	 */
+	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0,
+		   VM_PROT_READ|VM_PROT_WRITE, 1);
+
+	/*
+	 * XXX - sun4
+	 * Some boot programs mess up physical page 0, which
+	 * is where we want to put the msgbuf. There's some
+	 * room, so shift it over half a page.
+	 */
+	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
+
 	proc0.p_addr = proc0paddr;
 
 	/*
@@ -280,15 +294,6 @@ cpu_startup()
 	 */
 	bzero(proc0paddr, sizeof(struct user));
 
-	/*
-	 * fix message buffer mapping, note phys addr of msgbuf is 0
-	 */
-
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
-	if (CPU_ISSUN4)
-		msgbufaddr = (caddr_t)(MSGBUF_VA + 4096);
-	else
-		msgbufaddr = (caddr_t)MSGBUF_VA;
 	pmap_redzone();
 }
 

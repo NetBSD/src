@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.35 1997/06/09 11:57:48 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.35.4.1 1997/09/29 07:20:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -151,7 +151,7 @@ extern char *ultrix_syscallnames[];
 
 
 extern void ULTRIX_EXEC_SETREGS __P((struct proc *, struct exec_package *,
-					u_long, register_t *));
+					u_long));
 extern char sigcode[], esigcode[];
 
 struct emul emul_ultrix = {

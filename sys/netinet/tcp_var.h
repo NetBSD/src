@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.21.2.1 1997/09/01 21:00:42 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.21.2.2 1997/09/29 07:21:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -49,7 +49,8 @@ struct tcpcb {
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	short	t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
-	u_short	t_maxseg;		/* maximum segment size */
+	u_short	t_maxseg;		/* peer's maximum segment size */
+	u_short	t_ourmss;		/* our's maximum segment size */
 	char	t_force;		/* 1 if forcing out a byte */
 	u_short	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
@@ -143,6 +144,10 @@ struct tcp_opt_info {
  * This structure should not exceed 32 bytes.
  * XXX On the Alpha, it's already 36-bytes, which rounds to 40.
  * XXX Need to eliminate the pointer.
+ *
+ * XXX We've blown 32 bytes on non-Alpha systems, too, since we're
+ * XXX storing the maxseg we advertised to the peer.  Should we
+ * XXX create another malloc bucket?  Should we care?
  */
 struct syn_cache {
 	struct syn_cache *sc_next;
@@ -155,6 +160,7 @@ struct syn_cache {
 	u_int16_t sc_sport;
 	u_int16_t sc_dport;
 	u_int16_t sc_peermaxseg;
+	u_int16_t sc_ourmaxseg;
 	u_int8_t sc_timer;
 	u_int8_t sc_request_r_scale	: 4,
 		 sc_requested_s_scale	: 4;
@@ -328,10 +334,12 @@ struct tcpcb *
 void	 tcp_dooptions __P((struct tcpcb *,
 	    u_char *, int, struct tcpiphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
+void	 tcp_established __P((struct tcpcb *));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
 void	 tcp_input __P((struct mbuf *, ...));
-int	 tcp_mss __P((struct tcpcb *, u_int));
+int	 tcp_mss_to_advertise __P((const struct tcpcb *));
+void	 tcp_mss_from_peer __P((struct tcpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));
@@ -342,6 +350,7 @@ void	 tcp_quench __P((struct inpcb *, int));
 int	 tcp_reass __P((struct tcpcb *, struct tcpiphdr *, struct mbuf *));
 int	 tcp_respond __P((struct tcpcb *,
 	    struct tcpiphdr *, struct mbuf *, tcp_seq, tcp_seq, int));
+void	 tcp_rmx_rtt __P((struct tcpcb *));
 void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
 struct tcpiphdr *

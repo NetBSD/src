@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1997/05/05 21:11:59 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.4.1 1997/09/29 07:20:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -225,13 +225,11 @@ mainbussearch(parent, cf, aux)
 }
 
 struct devnametobdevmaj hp300_nam2blk[] = {
-	{ "ct",		0 },
-	{ "rd",		2 },
-	{ "sd",		4 },
-#ifdef notyet
-	{ "md",		0 },
-#endif
-	{ NULL,		0 },
+	{ "ct",		 0 },
+	{ "rd",		 2 },
+	{ "sd",		 4 },
+	{ "md",		14 },
+	{ NULL,		 0 },
 };
 
 /*

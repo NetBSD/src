@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73.2.1 1997/09/22 06:32:26 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.73.2.2 1997/09/29 07:20:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -61,6 +61,7 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/msgbuf.h>
 
 #include <net/if.h>
 
@@ -181,19 +182,10 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 void
 bootstrap()
 {
-	extern int msgbufmapped;
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd __P((u_long, char *));
-		extern caddr_t	msgbufaddr;
-		/*
-		 * XXX
-		 * Some boot programs mess up physical page 0, which
-		 * is where we want to put the msgbuf. There's some
-		 * room, so shift it over half a page.
-		 */
-		msgbufaddr = (caddr_t) msgbufaddr + 4096;
 
 		/*
 		 * XXX:
@@ -232,7 +224,7 @@ bootstrap()
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
-	initmsgbuf(msgbufaddr, MSGBUFSIZE);
+
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
 #endif

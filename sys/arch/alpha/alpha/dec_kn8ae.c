@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.8.4.2 1997/09/04 00:52:31 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.8.4.3 1997/09/29 07:19:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.4.2 1997/09/04 00:52:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.4.3 1997/09/29 07:19:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,56 +57,44 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.8.4.2 1997/09/04 00:52:31 thorpej Ex
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-const char *
-dec_kn8ae_model_name()
-{
-	static const char *srv = "AlphaServer 8400";
-
-	if ((hwrpb->rpb_variation & SV_ST_MASK) != 0) {
-		static char s[80];
-		sprintf(s, "%s, System Variation %lx\n", srv,
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		return ((const char *)s);
-	} else {
-		return (srv);
-	}
-}
+void dec_kn8ae_init __P((void));
+static void dec_kn8ae_device_register __P((struct device *, void *));
 
 void
-dec_kn8ae_cons_init()
+dec_kn8ae_init()
 {
-	struct ctb *ctb;
+	platform.family = "AlphaServer 8400";
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
-
-	/*
-	 * The AXP 8X00 seems to encode the
-	 * type of console in the ctb_type field,
-	 * not the ctb_term_type field.
-	 */
-	if (ctb->ctb_type != 2) {
-		panic("consinit: unsupported console type %d\n",
-		    ctb->ctb_term_type);
-		/* NOTREACHED */
-	} else {
-		/*
-		 * XXX: We don't know what kind of Console this is
-		 * XXX: yet, so we won't change anything and let
-		 * XXX: the prom cnputc routine remap the prom in
-		 * XXX: as needed.
-		 */
+	switch (hwrpb->rpb_variation & SV_ST_MASK) {
+	case 0:
+		platform.model = platform.family;
+		break;
+	default:
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
+		    hwrpb->rpb_variation & SV_ST_MASK);
+		platform.model = (const char *) s;
+		break;
 	}
+	}
+	platform.iobus = "tlsb";
+	platform.device_register = dec_kn8ae_device_register;
 }
 
-const char *
-dec_kn8ae_iobus_name()
-{
-
-	return ("tlsb");
-}
+/*
+ * dec_kn8ae_cons_init- not needed right now.
+ *
+ * Info to retain:
+ *
+ *	The AXP 8X00 seems to encode the
+ *	type of console in the ctb_type field,
+ *	not the ctb_term_type field.
+ */
 
 /* #define	BDEBUG	1 */
-void
+static void
 dec_kn8ae_device_register(dev, aux)
 	struct device *dev;
 	void *aux;

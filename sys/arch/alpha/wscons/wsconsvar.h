@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsvar.h,v 1.7 1997/07/17 01:33:04 jtk Exp $ */
+/* $NetBSD: wsconsvar.h,v 1.7.2.1 1997/09/29 07:19:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -50,6 +50,8 @@ struct wscons_emulfuncs {
 	void	(*wef_copyrows) __P((void *c, int srcrow, int dstrow,
 		    int nrows));
 	void	(*wef_eraserows) __P((void *c, int row, int nrows));
+	/* XXX this isn't really a function, but... */
+	int	wef_scrollskip;	/* skip this many lines per scroll */
 };
 
 struct wscons_odev_spec {

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.45 1997/07/12 22:08:05 leo Exp $
+# 	$NetBSD: Makefile.sparc,v 1.45.2.1 1997/09/29 07:20:31 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -p -Ttext F8004000 -e start
+LINKFLAGS=	-N -p -Ttext F0004000 -e start
 STRIPFLAGS=	-d
 
 ### find out what to use for libkern

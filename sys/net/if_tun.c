@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.30 1997/03/15 18:12:29 is Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.30.4.1 1997/09/29 07:21:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -243,6 +243,36 @@ tun_ioctl(ifp, cmd, data)
 	case SIOCSIFBRDADDR:
 		TUNDEBUG("%s: broadcast address set\n", ifp->if_xname);
 		break;
+	case SIOCSIFMTU: {
+		struct ifreq *ifr = (struct ifreq *) data;
+		if (ifr->ifr_mtu > TUNMTU || ifr->ifr_mtu < 576) {
+		    error = EINVAL;
+		    break;
+		}
+		TUNDEBUG("%s: interface mtu set\n", ifp->if_xname);
+		ifp->if_mtu = ifr->ifr_mtu;
+		break;
+	}
+	case SIOCADDMULTI:
+	case SIOCDELMULTI: {
+		struct ifreq *ifr = (struct ifreq *) data;
+		if (ifr == 0) {
+	        	error = EAFNOSUPPORT;           /* XXX */
+			break;
+		}
+		switch (ifr->ifr_addr.sa_family) {
+
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
+		break;
+	}
 	default:
 		error = EINVAL;
 	}
@@ -362,7 +392,7 @@ tunioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TUNSIFMODE:
-		switch (*(int *)data) {
+		switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
 		case IFF_POINTOPOINT:
 		case IFF_BROADCAST:
 			s = splimp();
@@ -371,7 +401,7 @@ tunioctl(dev, cmd, data, flag, p)
 				return (EBUSY);
 			}
 			tp->tun_if.if_flags &=
-				~(IFF_BROADCAST|IFF_POINTOPOINT);
+				~(IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST);
 			tp->tun_if.if_flags |= *(int *)data;
 			splx(s);
 			break;
