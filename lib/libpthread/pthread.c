@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.17 2002/02/21 05:07:09 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.18 2002/03/01 01:20:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,8 +112,8 @@ pthread__start(void)
 
 	self = pthread__self(); /* should be the "main()" thread */
 
+	/* Create idle threads */
 	for (i = 0; i < NIDLETHREADS; i++) {
-		/* Create idle threads */
 		ret = pthread__stackalloc(&idle);
 		if (ret != 0)
 			err(1, "Couldn't allocate stack for idle thread!");
