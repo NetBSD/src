@@ -1,4 +1,4 @@
-/*	$NetBSD: diskbuf.c,v 1.2 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: diskbuf.c,v 1.3 2003/04/02 10:39:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -54,8 +54,10 @@ alloc_diskbuf(const void *user)
 	diskbuf_user = user;
 	if (!diskbufp) {
 		diskbufp = alloc(DISKBUFSIZE);
-		if (((int)diskbufp & 0xffff) + DISKBUFSIZE > 0x10000)
+		if (((int)diskbufp & 0xffff) + DISKBUFSIZE > 0x10000) {
+			printf("diskbufp %x\n", (unsigned)diskbufp);
 			panic("diskbuf crosses 64k boundary");
+		}
 	}
 	return diskbufp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.22 2003/01/24 21:55:11 fvdl Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.23 2003/04/02 10:39:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.22 2003/01/24 21:55:11 fvdl Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.23 2003/04/02 10:39:29 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,12 +77,13 @@ static int dolookup __P((char *));
 static int chinumfunc __P((struct inodesc *));
 static int chnamefunc __P((struct inodesc *));
 static int dotime __P((char *, int32_t *, int32_t *));
-/* XXX ondisk32 */
-static void print_blks __P((int32_t *buf, int size, int *blknum));
-static void print_indirblks __P((daddr_t blk, int ind_level, int *blknum));
+static void print_blks32 __P((int32_t *buf, int size, int *blknum));
+static void print_blks64 __P((int64_t *buf, int size, int *blknum));
+static void print_indirblks32 __P((daddr_t blk, int ind_level, int *blknum));
+static void print_indirblks64 __P((daddr_t blk, int ind_level, int *blknum));
 
 int     returntosingle = 0;
-struct dinode *curinode;
+union dinode *curinode;
 ino_t   curinum;
 
 static void
@@ -343,7 +344,7 @@ CMDFUNCSTART(back)
 CMDFUNCSTART(zapi)
 {
 	ino_t   inum;
-	struct dinode *dp;
+	union dinode *dp;
 	char   *cp;
 
 	GETINUM(1, inum);
@@ -368,22 +369,28 @@ CMDFUNCSTART(quit)
 
 CMDFUNCSTART(uplink)
 {
+	int16_t nlink;
+
 	if (!checkactive())
 		return 1;
-	curinode->di_nlink = iswap16(iswap16(curinode->di_nlink) + 1);
-	printf("inode %d link count now %d\n", curinum,
-		iswap16(curinode->di_nlink));
+	nlink = iswap16(DIP(curinode, nlink));
+	nlink++;
+	DIP(curinode, nlink) = iswap16(nlink);
+	printf("inode %d link count now %d\n", curinum, nlink);
 	inodirty();
 	return 0;
 }
 
 CMDFUNCSTART(downlink)
 {
+	int16_t nlink;
+
 	if (!checkactive())
 		return 1;
-	curinode->di_nlink = iswap16(iswap16(curinode->di_nlink) - 1);
-	printf("inode %d link count now %d\n", curinum,
-		iswap16(curinode->di_nlink));
+	nlink = iswap16(DIP(curinode, nlink));
+	nlink--;
+	DIP(curinode, nlink) = iswap16(nlink);
+	printf("inode %d link count now %d\n", curinum, nlink);
 	inodirty();
 	return 0;
 }
@@ -445,33 +452,50 @@ CMDFUNCSTART(blks)
 		warnx("no current inode");
 		return 0;
 	}
-	type = iswap16(curinode->di_mode) & IFMT;
+	type = iswap16(DIP(curinode, mode)) & IFMT;
 	if (type != IFDIR && type != IFREG) {
 		warnx("inode %d not a file or directory", curinum);
 		return 0;
 	}
-	printf("I=%d %d block%c\n", curinum,
-		(iswap32(curinode->di_blocks) + NSPB(sblock) -1) /
-		    NSPB(sblock),
-		(iswap32(curinode->di_blocks) > NSPB(sblock)) ? 's' : ' ');
+	if (is_ufs2) {
+		printf("I=%d %lld blocks\n", curinum,
+		    (long long)(iswap64(curinode->dp2.di_blocks)));
+	} else {
+		printf("I=%d %d blocks\n", curinum,
+		    iswap32(curinode->dp1.di_blocks));
+	}
 	printf("Direct blocks:\n");
-	print_blks(curinode->di_db, NDADDR, &blkno);
-	for (i = 0; i < NIADDR; i++) {
-		if (curinode->di_ib[i] != 0)
-			print_indirblks(iswap32(curinode->di_ib[i]), i,
-			    &blkno);
+	if (is_ufs2)
+		print_blks32(curinode->dp1.di_db, NDADDR, &blkno);
+	else
+		print_blks64(curinode->dp2.di_db, NDADDR, &blkno);
+
+	if (is_ufs2) {
+		for (i = 0; i < NIADDR; i++) {
+			if (curinode->dp2.di_ib[i] != 0)
+				print_indirblks64(
+				    iswap64(curinode->dp2.di_ib[i]), i,
+				    &blkno);
+		}
+	} else {
+		for (i = 0; i < NIADDR; i++) {
+			if (curinode->dp1.di_ib[i] != 0)
+				print_indirblks32(
+				    iswap32(curinode->dp1.di_ib[i]), i,
+				    &blkno);
+		}
 	}
 	return 0;
 }
 
+#define CHARS_PER_LINES 70
+
 static void
-print_blks(buf, size, blknum)
-	/* XXX ondisk32 */
+print_blks32(buf, size, blknum)
 	int32_t *buf;
 	int size;
 	int *blknum;
 {
-#define CHARS_PER_LINES 70
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
 	int blk;
@@ -491,16 +515,44 @@ print_blks(buf, size, blknum)
 		chars += strlen(prbuf);
 	}
 	printf("\n");
-#undef CHARS_PER_LINES
 }
 
 static void
-print_indirblks(blk,ind_level, blknum)
+print_blks64(buf, size, blknum)
+	int64_t *buf;
+	int size;
+	int *blknum;
+{
+	int chars;
+	char prbuf[CHARS_PER_LINES+1];
+	int blk;
+ 
+	chars = 0;
+	for(blk = 0; blk < size; blk++, (*blknum)++) {
+		if (buf[blk] == 0)
+			continue;
+		snprintf(prbuf, CHARS_PER_LINES, "%lld ",
+		    (long long)iswap64(buf[blk]));
+		if ((chars + strlen(prbuf)) > CHARS_PER_LINES) {
+			printf("\n");
+			chars = 0;
+		}
+		if (chars == 0)
+			printf("%d: ", *blknum);
+		printf("%s", prbuf);
+		chars += strlen(prbuf);
+	}
+	printf("\n");
+}
+
+#undef CHARS_PER_LINES
+
+static void
+print_indirblks32(blk,ind_level, blknum)
 	daddr_t blk;
 	int ind_level;
 	int *blknum;
 {
-/* XXX ondisk32 */
 #define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
 	int32_t idblk[MAXNINDIR];
 	int i;
@@ -510,14 +562,39 @@ print_indirblks(blk,ind_level, blknum)
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		/* XXX ondisk32 */
-		print_blks(idblk, sblock->fs_bsize / sizeof(int32_t), blknum);
+		print_blks32(idblk, sblock->fs_bsize / sizeof(int32_t), blknum);
 	} else {
 		ind_level--;
-		/* XXX ondisk32 */
 		for (i = 0; i < sblock->fs_bsize / sizeof(int32_t); i++) {
 			if(idblk[i] != 0)
-				print_indirblks(iswap32(idblk[i]),
+				print_indirblks32(iswap32(idblk[i]),
+				    ind_level, blknum);
+		}
+	}
+#undef MAXNINDIR
+}
+
+static void
+print_indirblks64(blk,ind_level, blknum)
+	daddr_t blk;
+	int ind_level;
+	int *blknum;
+{
+#define MAXNINDIR	(MAXBSIZE / sizeof(int64_t))
+	int64_t idblk[MAXNINDIR];
+	int i;
+ 
+	printf("Indirect block %lld (level %d):\n", (long long)blk,
+	    ind_level+1);
+	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	    (int)sblock->fs_bsize);
+	if (ind_level <= 0) {
+		print_blks64(idblk, sblock->fs_bsize / sizeof(int64_t), blknum);
+	} else {
+		ind_level--;
+		for (i = 0; i < sblock->fs_bsize / sizeof(int64_t); i++) {
+			if(idblk[i] != 0)
+				print_indirblks64(iswap64(idblk[i]),
 				    ind_level, blknum);
 		}
 	}
@@ -726,13 +803,15 @@ static struct typemap {
 CMDFUNCSTART(newtype)
 {
 	int     type;
+	uint16_t mode;
 	struct typemap *tp;
 
 	if (!checkactive())
 		return 1;
-	type = iswap16(curinode->di_mode) & IFMT;
+	mode = iswap16(DIP(curinode, mode));
+	type = mode & IFMT;
 	for (tp = typenamemap;
-	    tp < &typenamemap[sizeof(typemap) / sizeof(*typemap)];
+	    tp < &typenamemap[sizeof(typenamemap) / sizeof(*typenamemap)];
 	    tp++) {
 		if (!strcmp(argv[1], tp->typename)) {
 			printf("setting type to %s\n", tp->typename);
@@ -740,12 +819,12 @@ CMDFUNCSTART(newtype)
 			break;
 		}
 	}
-	if (tp == &typenamemap[sizeof(typemap) / sizeof(*typemap)]) {
+	if (tp == &typenamemap[sizeof(typenamemap) / sizeof(*typenamemap)]) {
 		warnx("type `%s' not known", argv[1]);
 		warnx("try one of `file', `dir', `socket', `fifo'");
 		return 1;
 	}
-	curinode->di_mode  = iswap16((iswap16(curinode->di_mode) & ~IFMT) | type);
+	DIP(curinode, mode)  = iswap16((mode & ~IFMT) | type);
 	inodirty();
 	printactive();
 	return 0;
@@ -755,6 +834,7 @@ CMDFUNCSTART(chmode)
 {
 	long    modebits;
 	char   *cp;
+	uint16_t mode;
 
 	if (!checkactive())
 		return 1;
@@ -764,8 +844,8 @@ CMDFUNCSTART(chmode)
 		warnx("bad modebits `%s'", argv[1]);
 		return 1;
 	}
-	curinode->di_mode =
-		iswap16((iswap16(curinode->di_mode) & ~07777) | modebits);
+	mode = iswap16(DIP(curinode, mode));
+	DIP(curinode, mode) = iswap16((mode & ~07777) | modebits);
 	inodirty();
 	printactive();
 	return 0;
@@ -784,7 +864,7 @@ CMDFUNCSTART(chlen)
 		warnx("bad length '%s'", argv[1]);
 		return 1;
 	}
-	curinode->di_size = iswap64(len);
+	DIP(curinode, size) = iswap64(len);
 	inodirty();
 	printactive();
 	return 0;
@@ -808,7 +888,7 @@ CMDFUNCSTART(chaflags)
 		    flags);
 		return (1);
 	}
-	curinode->di_flags = iswap32(flags);
+	DIP(curinode, flags) = iswap32(flags);
 	inodirty();
 	printactive();
 	return 0;
@@ -831,7 +911,7 @@ CMDFUNCSTART(chgen)
 		warnx("gen set beyond 32-bit range of field (0x%lx)", gen);
 		return (1);
 	}
-	curinode->di_gen = iswap32(gen);
+	DIP(curinode, gen) = iswap32(gen);
 	inodirty();
 	printactive();
 	return 0;
@@ -854,7 +934,7 @@ CMDFUNCSTART(linkcount)
 		warnx("max link count is %d", USHRT_MAX);
 		return 1;
 	}
-	curinode->di_nlink = iswap16(lcnt);
+	DIP(curinode, nlink) = iswap16(lcnt);
 	inodirty();
 	printactive();
 	return 0;
@@ -879,7 +959,7 @@ CMDFUNCSTART(chowner)
 			return 1;
 		}
 	}
-	curinode->di_uid = iswap32(uid);
+	DIP(curinode, uid) = iswap32(uid);
 	inodirty();
 	printactive();
 	return 0;
@@ -903,7 +983,7 @@ CMDFUNCSTART(chgroup)
 			return 1;
 		}
 	}
-	curinode->di_gid = iswap32(gid);
+	DIP(curinode, gid) = iswap32(gid);
 	inodirty();
 	printactive();
 	return 0;
@@ -967,8 +1047,12 @@ badformat:
 
 CMDFUNCSTART(chmtime)
 {
-	if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP(curinode, mtime) = rsec;
+	DIP(curinode, mtimensec) = nsec;
 	inodirty();
 	printactive();
 	return 0;
@@ -976,8 +1060,12 @@ CMDFUNCSTART(chmtime)
 
 CMDFUNCSTART(chatime)
 {
-	if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP(curinode, atime) = rsec;
+	DIP(curinode, atimensec) = nsec;
 	inodirty();
 	printactive();
 	return 0;
@@ -985,8 +1073,12 @@ CMDFUNCSTART(chatime)
 
 CMDFUNCSTART(chctime)
 {
-	if (dotime(argv[1], &curinode->di_ctime, &curinode->di_ctimensec))
+	int32_t rsec, nsec;
+
+	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
+	DIP(curinode, ctime) = rsec;
+	DIP(curinode, ctimensec) = nsec;
 	inodirty();
 	printactive();
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.29 2003/03/27 13:56:47 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.30 2003/04/02 10:39:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.29 2003/03/27 13:56:47 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.30 2003/04/02 10:39:24 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: optr.c,v 1.29 2003/03/27 13:56:47 lukem Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+
+#include <ufs/ufs/dinode.h>
 
 #include "dump.h"
 #include "pathnames.h"

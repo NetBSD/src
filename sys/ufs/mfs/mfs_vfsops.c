@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.44 2003/02/01 06:23:54 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.45 2003/04/02 10:39:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.44 2003/02/01 06:23:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.45 2003/04/02 10:39:43 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -203,10 +203,10 @@ int
 mfs_initminiroot(base)
 	caddr_t base;
 {
-	struct fs *fs = (struct fs *)(base + SBOFF);
+	struct fs *fs = (struct fs *)(base + SBLOCK_UFS1);
 
 	/* check for valid super block */
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
+	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs))
 		return (0);
 	mountroot = mfs_mountroot;

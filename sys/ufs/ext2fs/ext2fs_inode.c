@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.30 2003/01/25 16:40:28 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.31 2003/04/02 10:39:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.30 2003/01/25 16:40:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.31 2003/04/02 10:39:35 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ ext2fs_truncate(v)
 		if (length != 0)
 			panic("ext2fs_truncate: partial truncate of symlink");
 #endif
-		memset((char *)&oip->i_din.e2fs_din.e2di_shortlink, 0,
+		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;

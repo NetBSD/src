@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2003/01/24 21:55:08 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2003/04/02 10:39:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -32,16 +32,17 @@ void		blkerror __P((ino_t, char *, daddr_t));
 int		bread __P((int, char *, daddr_t, long));
 void		bufinit __P((void));
 void		bwrite __P((int, char *, daddr_t, long));
-void		cacheino __P((struct dinode *, ino_t));
+void		cacheino __P((union dinode *, ino_t));
 void		catch __P((int));
 void		catchquit __P((int));
 int		changeino __P((ino_t, char *, ino_t));
 int		chkrange __P((daddr_t, int));
 void		ckfini __P((void));
-int		ckinode __P((struct dinode *, struct inodesc *));
+int		ckinode __P((union dinode *, struct inodesc *));
+int		clearentry __P((struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
 int		cmpsblks __P((const struct fs *, struct fs *));
-struct		dinode * getnextinode __P((ino_t));
+union		dinode * getnextinode __P((ino_t));
 void		direrror __P((ino_t, char *));
 int		dirscan __P((struct inodesc *));
 int		dofix __P((struct inodesc *, char *));
@@ -52,16 +53,17 @@ void		flush __P((int, struct bufarea *));
 void		freeblk __P((daddr_t, long));
 void		freeino __P((ino_t));
 void		freeinodebuf __P((void));
-int		ftypeok __P((struct dinode *));
+int		ftypeok __P((union dinode *));
 void		getblk __P((struct bufarea *, daddr_t, long));
 struct bufarea *getdatablk __P((daddr_t, long));
 struct inoinfo *getinoinfo __P((ino_t));
-struct dinode  *ginode __P((ino_t));
+union dinode  *ginode __P((ino_t));
 void		getpathname __P((char *, ino_t, ino_t));
 void		infohandler __P((int sig));
 void		inocleanup __P((void));
 void		inodirty __P((void));
-int		linkup __P((ino_t, ino_t));
+struct inostat *inoinfo __P((ino_t));
+int		linkup __P((ino_t, ino_t, char *));
 int		makeentry __P((ino_t, ino_t, char *));
 void		pass1 __P((void));
 void		pass1b __P((void));
@@ -74,7 +76,7 @@ void		pass5 __P((void));
 void		pinode __P((ino_t));
 void		propagate __P((ino_t));
 int		reply __P((char *));
-void		resetinodebuf __P((void));
+void		setinodebuf __P((ino_t));
 int		setup __P((const char *));
 void		voidquit __P((int));
 

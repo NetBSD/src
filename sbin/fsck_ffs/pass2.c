@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.32 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: pass2.c,v 1.33 2003/04/02 10:39:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.32 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.33 2003/04/02 10:39:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,14 +66,17 @@ static int pass2check __P((struct inodesc *));
 void
 pass2()
 {
-	struct dinode *dp;
+	union dinode *dp;
 	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
+	struct inostat *rinfo, *info;
 	struct inodesc curino;
-	struct dinode dino;
+	union dinode dino;
+	int i, maxblk;
 	char pathbuf[MAXPATHLEN + 1];
 
-	switch (statemap[ROOTINO]) {
+	rinfo = inoinfo(ROOTINO);
+	switch (rinfo->ino_state) {
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
@@ -116,7 +119,8 @@ pass2()
 			exit(EEXIT);
 		}
 		dp = ginode(ROOTINO);
-		dp->di_mode = iswap16((iswap16(dp->di_mode) & ~IFMT) | IFDIR);
+		DIP(dp, mode) =
+		    iswap16((iswap16(DIP(dp, mode)) & ~IFMT) | IFDIR);
 		inodirty();
 		break;
 
@@ -124,11 +128,12 @@ pass2()
 		break;
 
 	default:
-		errx(EEXIT, "BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE", rinfo->ino_state);
 	}
 	if (newinofmt) {
-		statemap[WINO] = FSTATE;
-		typemap[WINO] = DT_WHT;
+		info = inoinfo(WINO);
+		info->ino_state = FSTATE;
+		info->ino_type = DT_WHT;
 	}
 	/*
 	 * Sort the directory list into disk block order.
@@ -157,7 +162,7 @@ pass2()
 			inp->i_isize = roundup(MINDIRSIZE, dirblksiz);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = iswap64(inp->i_isize);
+				DIP(dp, size) = iswap64(inp->i_isize);
 				inodirty();
 			} else
 				markclean = 0;
@@ -176,21 +181,35 @@ pass2()
 			inp->i_isize = roundup(inp->i_isize, dirblksiz);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = iswap64(inp->i_isize);
+				DIP(dp, size) = iswap64(inp->i_isize);
 				inodirty();
 			} else
 				markclean = 0;
 			}
-		memset(&dino, 0, DINODE_SIZE);
-		dino.di_mode = iswap16(IFDIR);
-		dino.di_size = iswap64(inp->i_isize);
-		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
+		memset(&dino, 0, sizeof dino);
+		dp = &dino;
+		if (!is_ufs2) {
+			dp->dp1.di_mode = iswap16(IFDIR);
+			dp->dp1.di_size = iswap64(inp->i_isize);
+			maxblk = inp->i_numblks < NDADDR ? inp->i_numblks :
+			    NDADDR;
+			for (i = 0; i < maxblk; i++)
+				dp->dp1.di_db[i] = inp->i_blks[i];
+		} else {
+			dp->dp2.di_mode = iswap16(IFDIR);
+			dp->dp2.di_size = iswap64(inp->i_isize);
+			maxblk = inp->i_numblks < NDADDR ? inp->i_numblks :
+			    NDADDR;
+			for (i = 0; i < maxblk; i++)
+				dp->dp2.di_db[i] = inp->i_blks[i];
+		}
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
 		(void)ckinode(&dino, &curino);
-		}
+	}
 
-	/* byte swapping in direcoties entries, if needed, have been done.
+	/*
+	 * Byte swapping in directory entries, if needed, has been done.
 	 * Now rescan dirs for pass2check()
 	 */
 	if (do_dirswap) { 
@@ -199,14 +218,22 @@ pass2()
 			inp = *inpp;
 			if (inp->i_isize == 0)
 				continue;
-		memset(&dino, 0, DINODE_SIZE);
-			dino.di_mode = iswap16(IFDIR);
-			dino.di_size = iswap64(inp->i_isize);
-		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
-		curino.id_number = inp->i_number;
-		curino.id_parent = inp->i_parent;
-		(void)ckinode(&dino, &curino);
-	}
+			memset(&dino, 0, sizeof dino);
+			if (!is_ufs2) {
+				dino.dp1.di_mode = iswap16(IFDIR);
+				dino.dp1.di_size = iswap64(inp->i_isize);
+				for (i = 0; i < inp->i_numblks; i++)
+					dino.dp1.di_db[i] = inp->i_blks[i];
+			} else {
+				dino.dp2.di_mode = iswap16(IFDIR);
+				dino.dp2.di_size = iswap64(inp->i_isize);
+				for (i = 0; i < inp->i_numblks; i++)
+					dino.dp2.di_db[i] = inp->i_blks[i];
+			}
+			curino.id_number = inp->i_number;
+			curino.id_parent = inp->i_parent;
+			(void)ckinode(&dino, &curino);
+		}
 	}
 
 	/*
@@ -220,6 +247,7 @@ pass2()
 		if (inp->i_dotdot == inp->i_parent ||
 		    inp->i_dotdot == (ino_t)-1)
 			continue;
+		info = inoinfo(inp->i_parent);
 		if (inp->i_dotdot == 0) {
 			inp->i_dotdot = inp->i_parent;
 			fileerror(inp->i_parent, inp->i_number, "MISSING '..'");
@@ -228,7 +256,7 @@ pass2()
 				continue;
 			}
 			(void)makeentry(inp->i_number, inp->i_parent, "..");
-			lncntp[inp->i_parent]--;
+			info->ino_linkcnt--;
 			continue;
 		}
 		fileerror(inp->i_parent, inp->i_number,
@@ -237,8 +265,8 @@ pass2()
 			markclean = 0;
 			continue;
 		}
-		lncntp[inp->i_dotdot]++;
-		lncntp[inp->i_parent]--;
+		inoinfo(inp->i_dotdot)->ino_linkcnt++;
+		info->ino_linkcnt--;
 		inp->i_dotdot = inp->i_parent;
 		(void)changeino(inp->i_number, "..", inp->i_parent);
 	}
@@ -248,9 +276,10 @@ pass2()
 	inpend = &inpsort[inplast];
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
+		info = inoinfo(inp->i_number);
 		inp->i_child = inp->i_sibling = inp->i_parentp = 0;
-		if (statemap[inp->i_number] == DFOUND)
-			statemap[inp->i_number] = DSTATE;
+		if (info->ino_state == DFOUND)
+			info->ino_state = DSTATE;
 	}
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
@@ -274,8 +303,9 @@ pass2check(idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
+	struct inostat *info;
 	int n, entrysize, ret = 0;
-	struct dinode *dp;
+	union dinode *dp;
 	char *errmsg;
 	struct direct proto;
 	char namebuf[MAXPATHLEN + 1];
@@ -284,8 +314,9 @@ pass2check(idesc)
 	/*
 	 * If converting, set directory entry type.
 	 */
-	if (doinglevel2 && iswap32(dirp->d_ino) > 0 && iswap32(dirp->d_ino) < maxino) {
-		dirp->d_type = typemap[iswap32(dirp->d_ino)];
+	if (!is_ufs2 && doinglevel2 && iswap32(dirp->d_ino) > 0 &&
+	    iswap32(dirp->d_ino) < maxino) {
+		dirp->d_type = inoinfo(iswap32(dirp->d_ino))->ino_type;
 		ret |= ALTERED;
 	}
 	/* 
@@ -351,7 +382,7 @@ pass2check(idesc)
 		proto.d_reclen = iswap16(entrysize);
 		memmove(dirp, &proto, (size_t)entrysize);
 		idesc->id_entryno++;
-		lncntp[iswap32(dirp->d_ino)]--;
+		inoinfo(iswap32(dirp->d_ino))->ino_linkcnt--;
 		dirp = (struct direct *)((char *)(dirp) + entrysize);
 		memset(dirp, 0, (size_t)n);
 		dirp->d_reclen = iswap16(n);
@@ -390,7 +421,7 @@ chk1:
 		proto.d_reclen = iswap16(iswap16(dirp->d_reclen) - n);
 		dirp->d_reclen = iswap16(n);
 		idesc->id_entryno++;
-		lncntp[iswap32(dirp->d_ino)]--;
+		inoinfo(iswap32(dirp->d_ino))->ino_linkcnt--;
 		dirp = (struct direct *)((char *)(dirp) + n);
 		memset(dirp, 0, (size_t)iswap16(proto.d_reclen));
 		dirp->d_reclen = proto.d_reclen;
@@ -433,7 +464,7 @@ chk1:
 	}
 	idesc->id_entryno++;
 	if (dirp->d_ino != 0)
-		lncntp[iswap32(dirp->d_ino)]--;
+		inoinfo(iswap32(dirp->d_ino))->ino_linkcnt--;
 	return (ret|KEEPON);
 chk2:
 	if (dirp->d_ino == 0)
@@ -479,7 +510,8 @@ chk2:
 			markclean = 0;
 	} else {
 again:
-		switch (statemap[iswap32(dirp->d_ino)]) {
+		info = inoinfo(iswap32(dirp->d_ino));
+		switch (info->ino_state) {
 		case USTATE:
 			if (idesc->id_entryno <= 2)
 				break;
@@ -493,7 +525,7 @@ again:
 		case FCLEAR:
 			if (idesc->id_entryno <= 2)
 				break;
-			if (statemap[iswap32(dirp->d_ino)] == FCLEAR)
+			if (info->ino_state == FCLEAR)
 				errmsg = "DUP/BAD";
 			else if (!preen && !usedsoftdep)
 				errmsg = "ZERO LENGTH DIRECTORY";
@@ -505,9 +537,9 @@ again:
 			if ((n = reply("REMOVE")) == 1)
 				break;
 			dp = ginode(iswap32(dirp->d_ino));
-			statemap[iswap32(dirp->d_ino)] =
-			    (iswap16(dp->di_mode) & IFMT) == IFDIR ? DSTATE : FSTATE;
-			lncntp[iswap32(dirp->d_ino)] = iswap16(dp->di_nlink);
+			info->ino_state =
+			    (iswap16(DIP(dp, mode)) & IFMT) == IFDIR ? DSTATE : FSTATE;
+			info->ino_linkcnt = iswap16(DIP(dp, nlink));
 			goto again;
 
 		case DSTATE:
@@ -531,21 +563,21 @@ again:
 			/* fall through */
 
 		case FSTATE:
-			if (newinofmt && dirp->d_type != typemap[iswap32(dirp->d_ino)]) {
+			if (newinofmt && dirp->d_type != info->ino_type) {
 				fileerror(idesc->id_number, iswap32(dirp->d_ino),
 				    "BAD TYPE VALUE");
-				dirp->d_type = typemap[iswap32(dirp->d_ino)];
+				dirp->d_type = info->ino_type;
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
 				else
 					markclean = 0;
 			}
-			lncntp[iswap32(dirp->d_ino)]--;
+			info->ino_linkcnt--;
 			break;
 
 		default:
 			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
-			    statemap[iswap32(dirp->d_ino)], iswap32(dirp->d_ino));
+			    info->ino_state, iswap32(dirp->d_ino));
 		}
 	}
 	if (n == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.16 2003/02/24 08:48:17 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.17 2003/04/02 10:39:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -153,7 +153,7 @@ __BEGIN_DECLS
 int		 dump_summary(struct lfs *, SEGSUM *, u_long, int32_t **, daddr_t);
 int		 fs_getmntinfo(struct statfs **, char *, const char *);
 void		 get(int, off_t, void *, size_t);
-struct dinode	*get_dinode (FS_INFO *, ino_t);
+struct ufs1_dinode	*get_dinode (FS_INFO *, ino_t);
 int		 get_rawblock(FS_INFO *, char *, size_t, daddr_t);
 FS_INFO		*get_fs_info(struct statfs *, int);
 int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.31 2003/02/17 23:48:23 perseant Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.32 2003/04/02 10:39:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -133,10 +133,10 @@ int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ufs_quota.c */
 int getinoquota __P((struct inode *));
-int chkdq __P((struct inode *, long, struct ucred *, int));
-int chkdqchg __P((struct inode *, long, struct ucred *, int));
-int chkiq __P((struct inode *, long, struct ucred *, int));
-int chkiqchg __P((struct inode *, long, struct ucred *, int));
+int chkdq __P((struct inode *, int64_t, struct ucred *, int));
+int chkdqchg __P((struct inode *, int64_t, struct ucred *, int));
+int chkiq __P((struct inode *, int32_t, struct ucred *, int));
+int chkiqchg __P((struct inode *, int32_t, struct ucred *, int));
 void chkdquot __P((struct inode *));
 int quotaon __P((struct proc *, struct mount *, int, caddr_t));
 int quotaoff __P((struct proc *, struct mount *, int));
@@ -173,13 +173,13 @@ int ufs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
  * Soft dependency function prototypes.
  */
 int   softdep_setup_directory_add __P((struct buf *, struct inode *, off_t,
-                                      long, struct buf *, int));
+                                      ino_t, struct buf *, int));
 void  softdep_change_directoryentry_offset __P((struct inode *, caddr_t,
                                       caddr_t, caddr_t, int));
 void  softdep_setup_remove __P((struct buf *,struct inode *, struct inode *,
                               int));
 void  softdep_setup_directory_change __P((struct buf *, struct inode *,
-                              struct inode *, long, int));
+                              struct inode *, ino_t, int));
 void  softdep_change_linkcnt __P((struct inode *));
 void  softdep_releasefile __P((struct inode *));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.1 2003/03/28 08:09:55 perseant Exp $ */
+/* $NetBSD: vnode.c,v 1.2 2003/04/02 10:39:28 fvdl Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,6 +144,7 @@ vnode_destroy(struct uvnode *tossvp)
 		buf_destroy(bp);
 	}
 	free(VTOI(tossvp)->inode_ext.lfs);
+	free(VTOI(tossvp)->i_din.ffs1_din);
 	memset(VTOI(tossvp), 0, sizeof(struct inode));
 	free(tossvp->v_data);
 	memset(tossvp, 0, sizeof(*tossvp));

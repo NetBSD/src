@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.31 2003/02/25 10:35:11 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.32 2003/04/02 10:39:32 fvdl Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,12 +42,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl AFN
-.Op Fl a Ar maxcontig
-.Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
 .Op Fl g Ar avgfilesize
 .Op Fl h Ar avgfpdir
-.Op Fl k Ar trackskew
 .Op Fl m Ar minfree
 .Bk -words
 .\" .Op Fl n Ar soft_dependency_enabling
@@ -85,21 +82,6 @@ will be accessed
 Display all the settable options
 (after any changes from the tuning options)
 but do not cause any of them to be changed.
-.It Fl a Ar maxcontig
-This specifies the maximum number of contiguous blocks that will
-be laid out before forcing a rotational delay (see
-.Fl d
-below).
-The default value is one, since most device drivers require
-an interrupt per disk transfer.
-Device drivers that can chain several buffers together in a single
-transfer should set this to the maximum chain length.
-.It Fl d Ar rotdelay
-This specifies the expected time (in milliseconds)
-to service a transfer completion
-interrupt and initiate a new transfer on the same disk.
-It is used to decide how much rotational spacing to place between
-successive blocks in a file.
 .It Fl e Ar maxbpg
 This indicates the maximum number of blocks any single file can
 allocate out of a cylinder group before it is forced to begin
@@ -119,10 +101,6 @@ this parameter should be set higher.
 This specifies the expected average file size.
 .It Fl h Ar avgfpdir
 This specifies the expected number of files per directory.
-.It Fl k Ar trackskew
-This specifies the skew in sectors from one track to the next in a cylinder.
-The default value is zero, indicating that each track in a cylinder begins at
-the same rotational position.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.

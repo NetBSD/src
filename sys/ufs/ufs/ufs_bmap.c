@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.20 2003/03/21 15:46:32 fvdl Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.21 2003/04/02 10:39:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.20 2003/03/21 15:46:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.21 2003/04/02 10:39:44 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,18 +142,34 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	if (bn >= 0 && bn < NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
-		*bnp = blkptrtodb(ump, (int32_t)ufs_rw32(ip->i_ffs_db[bn],
-		    UFS_MPNEEDSWAP(vp->v_mount)));
+		if (ip->i_ump->um_fstype == UFS1)
+			*bnp = blkptrtodb(ump,
+			    (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
+			    UFS_MPNEEDSWAP(vp->v_mount)));
+		else
+			*bnp = blkptrtodb(ump, ufs_rw64(ip->i_ffs2_db[bn],
+			    UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
 			*bnp = -1;
-		else if (runp)
-			for (++bn; bn < NDADDR && *runp < maxrun &&
-			    is_sequential(ump,
-			        ufs_rw32(ip->i_ffs_db[bn - 1],
-			            UFS_MPNEEDSWAP(vp->v_mount)),
-			        ufs_rw32(ip->i_ffs_db[bn],
-			            UFS_MPNEEDSWAP(vp->v_mount)));
-			    ++bn, ++*runp);
+		else if (runp) {
+			if (ip->i_ump->um_fstype == UFS1) {
+				for (++bn; bn < NDADDR && *runp < maxrun &&
+				    is_sequential(ump,
+				        ufs_rw32(ip->i_ffs1_db[bn - 1],
+				            UFS_MPNEEDSWAP(vp->v_mount)),
+				        ufs_rw32(ip->i_ffs1_db[bn],
+				            UFS_MPNEEDSWAP(vp->v_mount)));
+				    ++bn, ++*runp);
+			} else {
+				for (++bn; bn < NDADDR && *runp < maxrun &&
+				    is_sequential(ump,
+				        ufs_rw64(ip->i_ffs2_db[bn - 1],
+				            UFS_MPNEEDSWAP(vp->v_mount)),
+				        ufs_rw64(ip->i_ffs2_db[bn],
+				            UFS_MPNEEDSWAP(vp->v_mount)));
+				    ++bn, ++*runp);
+			}
+		}
 		return (0);
 	}
 
@@ -166,8 +182,12 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	num = *nump;
 
 	/* Get disk address out of indirect block array */
-	daddr = ufs_rw32(ip->i_ffs_ib[xap->in_off],
-	    UFS_MPNEEDSWAP(vp->v_mount));
+	if (ip->i_ump->um_fstype == UFS1)
+		daddr = ufs_rw32(ip->i_ffs1_ib[xap->in_off],
+		    UFS_MPNEEDSWAP(vp->v_mount));
+	else
+		daddr = ufs_rw64(ip->i_ffs2_ib[xap->in_off],
+		    UFS_MPNEEDSWAP(vp->v_mount));
 
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* 
@@ -216,19 +236,33 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 				return (error);
 			}
 		}
-		/* XXX ondisk32 */
-		daddr = ufs_rw32(((int32_t *)bp->b_data)[xap->in_off],
-		    UFS_MPNEEDSWAP(mp));
-		/* XXX ondisk32 */
-		if (num == 1 && daddr && runp)
-			for (bn = xap->in_off + 1;
-			    bn < MNINDIR(ump) && *runp < maxrun &&
-			    is_sequential(ump,
-			        ufs_rw32(((int32_t *)bp->b_data)[bn - 1],
-			            UFS_MPNEEDSWAP(mp)),
-			        ufs_rw32(((int32_t *)bp->b_data)[bn],
-			            UFS_MPNEEDSWAP(mp)));
-			    ++bn, ++*runp);
+		if (ip->i_ump->um_fstype == UFS1) {
+			daddr = ufs_rw32(((int32_t *)bp->b_data)[xap->in_off],
+			    UFS_MPNEEDSWAP(mp));
+			if (num == 1 && daddr && runp) {
+				for (bn = xap->in_off + 1;
+				    bn < MNINDIR(ump) && *runp < maxrun &&
+				    is_sequential(ump,
+				        ufs_rw32(((int32_t *)bp->b_data)[bn-1],
+				            UFS_MPNEEDSWAP(mp)),
+				        ufs_rw32(((int32_t *)bp->b_data)[bn],
+				            UFS_MPNEEDSWAP(mp)));
+				    ++bn, ++*runp);
+			}
+		} else {
+			daddr = ufs_rw64(((int64_t *)bp->b_data)[xap->in_off],
+			    UFS_MPNEEDSWAP(mp));
+			if (num == 1 && daddr && runp) {
+				for (bn = xap->in_off + 1;
+				    bn < MNINDIR(ump) && *runp < maxrun &&
+				    is_sequential(ump,
+				        ufs_rw64(((int64_t *)bp->b_data)[bn-1],
+				            UFS_MPNEEDSWAP(mp)),
+				        ufs_rw64(((int64_t *)bp->b_data)[bn],
+				            UFS_MPNEEDSWAP(mp)));
+				    ++bn, ++*runp);
+			}
+		}
 	}
 	if (bp)
 		brelse(bp);
@@ -244,7 +278,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
  * contains the logical block number of the appropriate single, double or
  * triple indirect block and the offset into the inode indirect block array.
  * Note, the logical block number of the inode single/double/triple indirect
- * block appears twice in the array, once with the offset into the i_ffs_ib and
+ * block appears twice in the array, once with the offset into the i_ffs1_ib and
  * once with the offset into the page itself.
  */
 int
