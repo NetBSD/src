@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.40 1997/10/01 18:08:23 drochner Exp $
+$NetBSD: pcidevs,v 1.41 1997/10/06 06:18:07 lonhyn Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -523,7 +523,10 @@ product	3COM 3C905TX	0x9050	3c905 100Base-TX
 product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
 /* 3D Labs products */
-product 3DLABS 300SX	0x0001	300SX (\"Glint\")
+product 3DLABS 300SX	0x0001	GLINT 300SX
+product 3DLABS 500TX	0x0002	GLINT 500TX
+product 3DLABS DELTA	0x0003	GLINT DELTA
+product 3DLABS 500MX	0x0006	GLINT 500MX
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
