@@ -321,7 +321,7 @@ USE_COLLECT2 = @will_use_collect2@
 MAYBE_USE_COLLECT2 = @maybe_use_collect2@
 # It is convenient for configure to add the assignment at the beginning,
 # so don't override it here.
-USE_COLLECT2 = ld
+#USE_COLLECT2 = ld
 
 # List of extra C and assembler files to add to libgcc1.a.
 # Assembler files should have names ending in `.asm'.
