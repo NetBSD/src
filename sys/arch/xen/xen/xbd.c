@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.1 2004/04/17 12:56:27 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.2 2004/04/24 16:47:29 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.1 2004/04/17 12:56:27 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.2 2004/04/24 16:47:29 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,6 +172,8 @@ SLIST_HEAD(,xbdreq) xbdreqs =
 	SLIST_HEAD_INITIALIZER(xbdreqs);
 static SIMPLEQ_HEAD(, xbdreq) xbdr_suspended =
 	SIMPLEQ_HEAD_INITIALIZER(xbdr_suspended);
+
+#define	CANGET_XBDREQ() (!SLIST_EMPTY(&xbdreqs))
 
 #define	GET_XBDREQ(_xr) do {				\
 	(_xr) = SLIST_FIRST(&xbdreqs);			\
@@ -573,79 +575,83 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	struct xbdreq *pxr, *xr;
 	struct	partition *pp;
 	daddr_t	bn;
+	int ret, runqueue;
 
 	DPRINTF_FOLLOW(("xbdstart(%p, %p)\n", dksc, bp));
 
-	/* XXXcl:
-	 * Normally dk_start processes the work queue for us, but we
-	 * want to only signal Xen once we have queued as many
-	 * requests as possible.
+	runqueue = 1;
+	ret = -1;
+
+	GETXBD_SOFTC(xs, bp->b_dev);
+	dksc = &xs->sc_dksc;
+	/* XXXrcd:
+	 * Translate partition relative blocks to absolute blocks,
+	 * this probably belongs (somehow) in dksubr.c, since it
+	 * is independant of the underlying code...  This will require
+	 * that the interface be expanded slightly, though.
 	 */
-	while ((bp = BUFQ_PEEK(&bufq)) != NULL) {
-		GETXBD_SOFTC(xs, bp->b_dev);
-		dksc = &xs->sc_dksc;
-		/* XXXrcd:
-		 * Translate partition relative blocks to absolute blocks,
-		 * this probably belongs (somehow) in dksubr.c, since it
-		 * is independant of the underlying code...  This will require
-		 * that the interface be expanded slightly, though.
-		 */
-		bn = bp->b_blkno;
-		if (DISKPART(bp->b_dev) != RAW_PART) {
-			pp = &xs->sc_dksc.sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-			bn += pp->p_offset;
-		}
-
-		DPRINTF(XBDB_IO, ("xbdstart: addr %p, sector %llu, "
-		    "count %ld [%s]\n", bp->b_data, (unsigned long long)bn,
-		    bp->b_bcount, bp->b_flags & B_READ ? "read" : "write"));
-
-		GET_XBDREQ(pxr);
-		if (__predict_false(pxr == NULL))
-			break;
-
-		disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
-		/* we have a request slot, remove bp from the work queue */
-		(void) BUFQ_GET(&bufq);
-
-		pxr->xr_bp = bp;
-		pxr->xr_parent = pxr;
-		pxr->xr_bn = bn;
-		pxr->xr_bqueue = bp->b_bcount;
-		pxr->xr_bdone = bp->b_bcount;
-		pxr->xr_data = (vaddr_t)bp->b_data;
-		pxr->xr_sc = xs;
-
-		if (pxr->xr_data & (XEN_BSIZE - 1))
-			map_align(pxr);
-
-		fill_ring(pxr);
-
-		while (__predict_false(pxr->xr_bqueue > 0)) {
-			GET_XBDREQ(xr);
-			if (__predict_false(xr == NULL))
-				break;
-			xr->xr_parent = pxr;
-			fill_ring(xr);
-		}
-
-		if (__predict_false(pxr->xr_bqueue > 0)) {
-			SIMPLEQ_INSERT_TAIL(&xbdr_suspended, pxr,
-			    xr_suspended);
-			DPRINTF(XBDB_IO, ("xbdstart: suspended xbdreq %p "
-			    "for bp %p\n", pxr, bp));
-			break;
-		}
+	bn = bp->b_blkno;
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		pp = &xs->sc_dksc.sc_dkdev.dk_label->
+			d_partitions[DISKPART(bp->b_dev)];
+		bn += pp->p_offset;
 	}
 
-	if (blk_ring->req_prod != req_prod)
+	DPRINTF(XBDB_IO, ("xbdstart: addr %p, sector %llu, "
+	    "count %ld [%s]\n", bp->b_data, (unsigned long long)bn,
+	    bp->b_bcount, bp->b_flags & B_READ ? "read" : "write"));
+
+	GET_XBDREQ(pxr);
+	if (__predict_false(pxr == NULL))
+		goto out;
+
+	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
+	/*
+	 * We have a request slot, return 0 to make dk_start remove
+	 * the bp from the work queue.
+	 */
+	ret = 0;
+
+	pxr->xr_bp = bp;
+	pxr->xr_parent = pxr;
+	pxr->xr_bn = bn;
+	pxr->xr_bqueue = bp->b_bcount;
+	pxr->xr_bdone = bp->b_bcount;
+	pxr->xr_data = (vaddr_t)bp->b_data;
+	pxr->xr_sc = xs;
+
+	if (pxr->xr_data & (XEN_BSIZE - 1))
+		map_align(pxr);
+
+	fill_ring(pxr);
+
+	while (__predict_false(pxr->xr_bqueue > 0)) {
+		GET_XBDREQ(xr);
+		if (__predict_false(xr == NULL))
+			break;
+		xr->xr_parent = pxr;
+		fill_ring(xr);
+	}
+
+	if (__predict_false(pxr->xr_bqueue > 0)) {
+		SIMPLEQ_INSERT_TAIL(&xbdr_suspended, pxr,
+		    xr_suspended);
+		DPRINTF(XBDB_IO, ("xbdstart: suspended xbdreq %p "
+		    "for bp %p\n", pxr, bp));
+	} else if (CANGET_XBDREQ() && BUFQ_PEEK(&bufq) != NULL) {
+		/* 
+		 * We have enough resources to start another bp and
+		 * there are additional bps on the queue, dk_start
+		 * will call us again and we'll run the queue then.
+		 */
+		runqueue = 0;
+	}
+
+ out:
+	if (runqueue && blk_ring->req_prod != req_prod)
 		signal_requests_to_xen();
 
-	/* XXXcl:
-	 * always signal -1 to dk_start since we have done all the
-	 * work we can and dequeued all the requests we've handled.
-	 */
-	return -1;
+	return ret;
 }
 
 static int
