@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.680 2005/01/13 20:52:20 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.681 2005/01/15 08:33:19 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.681 2005/01/13 20:51:49 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.682 2005/01/15 08:32:53 jdolecek Exp 
  */
 
 /*
@@ -7189,31 +7189,31 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PCIB,
-	    "nForce2 PCI-ISA bridge",
+	    "nForce2 Ultra 400 PCI-ISA bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS,
-	    "nForce2 400 SMBus Controller",
+	    "nForce2 Ultra 400 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133,
-	    "nForce2 400 ATA133 IDE",
+	    "nForce2 Ultra 400 ATA133 IDE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI,
-	    "nForce2 400 USB Host Controller",
+	    "nForce2 Ultra 400 USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI,
-	    "nForce2 400 USB2 Host Controller",
+	    "nForce2 Ultra 400 USB2 Host Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
-	    "nForce2 PCI-PCI bridge",
+	    "nForce2 Ultra 400 PCI-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
-	    "nForce2 400 Serial ATA Controller",
+	    "nForce2 Ultra 400 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
