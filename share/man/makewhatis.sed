@@ -1,4 +1,6 @@
-#!/bin/sh -
+#!/usr/bin/sed -nf
+#
+#	$NetBSD: makewhatis.sed,v 1.8 1995/02/23 17:23:54 jtc Exp $
 #
 # Copyright (c) 1988 The Regents of the University of California.
 # All rights reserved.
@@ -31,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)makewhatis.sed	5.5 (Berkeley) 4/17/91
+#	@(#)makewhatis.sed      8.4 (Berkeley) 4/3/94
 #
 
 /^[a-zA-Z][a-zA-Z0-9\._+\-]*(\([a-zA-Z0-9\._+\-]*\).*/ {
