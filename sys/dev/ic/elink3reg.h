@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.26 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.27 2004/08/09 00:25:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -134,8 +134,7 @@
 #define ELINK_W1_TX_PIO_WR_1	0x00
 	/* Read */
 #define ELINK_W1_FREE_TX	0x0c
-#define ELINK_W1_TX_STATUS	0x0b    /* byte */
-#define ELINK_W1_TIMER		0x0a    /* byte */
+#define ELINK_W1_TX_STATUS	0x0a
 #define ELINK_W1_RX_STATUS	0x08
 #define	ELINK_W1_RX_ERRORS	0x04
 #define ELINK_W1_RX_PIO_RD_2	0x02
@@ -378,12 +377,13 @@
  *     1-0:    Undefined.
  *
  */
-#define TXS_COMPLETE		0x80
-#define TXS_INTR_REQ		0x40
-#define TXS_JABBER		0x20
-#define TXS_UNDERRUN		0x10
-#define TXS_MAX_COLLISION	0x08
-#define TXS_STATUS_OVERFLOW	0x04
+#define TXS_COMPLETE		0x8000
+#define TXS_INTR_REQ		0x4000
+#define TXS_JABBER		0x2000
+#define TXS_UNDERRUN		0x1000
+#define TXS_MAX_COLLISION	0x0800
+#define TXS_STATUS_OVERFLOW	0x0400
+#define	TXS_TIMER		0x00ff
 
 /*
  * RX status
