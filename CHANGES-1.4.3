@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.8 2000/05/05 03:07:40 cgd Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.9 2000/05/05 13:25:34 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -231,3 +231,29 @@ sys/netinet/ip.h				1.20-1.21
   Add "__attribute__((__packed__))" to structures used to describe
   on-the-wire data, to prevent egcs from making unwarranted assumptions
   about the alignment of these structures.
+
+sys/kern/kern_subr.c				patch
+
+  Allow this to compile without DIAGNOSTIC defined.
+
+sys/ufs/lfs/lfs_vfsops.c			1.50
+
+  Sanity check the superblock before trying to use it to find the
+  alt superblock; sanity check the disk address of the alt superblock
+  to avoid deadlocking when trying to read it with the primary
+  superblock buffer still busy.  Fixes PR#10001.
+
+lib/libc/arch/i386/sys/syscall.S		1.9
+lib/libc/arch/i386/sys/brk.S			1.13
+lib/libc/arch/i386/sys/exect.S			1.10
+lib/libc/arch/i386/sys/ptrace.S			1.13
+lib/libc/arch/i386/sys/sbrk.S			1.11
+lib/libc/arch/i386/sys/sigprocmask.S		1.14
+lib/libc/arch/i386/sys/sigsuspend.S		1.12
+
+  Repair syscall stubs which were not adapted when the cerror
+  interface was changed.
+
+usr.bin/at/at.c					1.14
+
+  Correct wrong variable being tested in env parsing loop.
