@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.2 1997/06/06 23:58:04 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.3 1997/09/02 20:11:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.2 1997/06/06 23:58:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.3 1997/09/02 20:11:24 thorpej Exp $");
 
 int
 __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -120,7 +120,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 		 * Get the physical address for this segment.
 		 */
 		if (p != NULL)
-			pa = pmap_extract(&p->p_vmspace->vm_pmap, va);
+			pa = pmap_extract(p->p_vmspace->vm_map.pmap, va);
 		else
 			pa = vtophys(va);
 
