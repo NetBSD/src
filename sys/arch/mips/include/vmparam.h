@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2000/04/07 21:50:08 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 2000/04/13 22:02:54 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,7 @@
  * offset is calculated.
  */
 #define	USRTEXT		0x00001000		/* Start of user text */
-#define	USRSTACK	0x7fff0000		/* Start of user stack */
+#define	USRSTACK	0x7ffff000		/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
