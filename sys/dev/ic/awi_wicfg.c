@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.5 2001/06/25 04:29:19 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.6 2001/06/25 04:43:33 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -239,6 +239,14 @@ awi_cfgget(ifp, cmd, data)
 		wreq.wi_val[0] = sc->sc_start_bss;
 		wreq.wi_len = 1;
 		break;
+	case WI_RID_MICROWAVE_OVEN:
+		wreq.wi_val[0] = 0;	/* no ... not supported */
+		wreq.wi_len = 1;
+		break;
+	case WI_RID_ROAMING_MODE:
+		wreq.wi_val[0] = 1;	/* enabled ... not supported */
+		wreq.wi_len = 1;
+		break;
 	case WI_RID_SYSTEM_SCALE:
 		wreq.wi_val[0] = 1;	/* low density ... not supported */
 		wreq.wi_len = 1;
@@ -253,6 +261,10 @@ awi_cfgget(ifp, cmd, data)
 		break;
 	case WI_RID_WEP_AVAIL:
 		wreq.wi_val[0] = 1;
+		wreq.wi_len = 1;
+		break;
+	case WI_RID_AUTH_CNTL:
+		wreq.wi_val[0] = 1;	/* open system authentication only */
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_ENCRYPTION:
@@ -535,6 +547,22 @@ awi_cfgset(ifp, cmd, data)
 		sc->sc_start_bss = wreq.wi_val[0] ? 1 : 0;
 		error = ENETRESET;
 		break;
+	case WI_RID_MICROWAVE_OVEN:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 0)
+			error = EINVAL;		/* not supported */
+		break;
+	case WI_RID_ROAMING_MODE:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 1)
+			error = EINVAL;		/* not supported */
+		break;
 	case WI_RID_SYSTEM_SCALE:
 		if (wreq.wi_len != 1) {
 			error = EINVAL;
@@ -556,6 +584,14 @@ awi_cfgset(ifp, cmd, data)
 		break;
 	case WI_RID_WEP_AVAIL:
 		error = EPERM;
+		break;
+	case WI_RID_AUTH_CNTL:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 1)
+			error = EINVAL;		/* not implmented */
 		break;
 	case WI_RID_ENCRYPTION:
 		if (wreq.wi_len != 1) {
