@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.25 1998/08/18 06:47:53 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.26 1998/08/18 18:15:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -181,11 +181,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	struct buf *bp;
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
-
-#ifdef __GNUC__
-	/* XXX bogus -Wuninitialized */
-	request = 0;
-#endif
 
 	*bpp = 0;
 	fs = ip->i_fs;
