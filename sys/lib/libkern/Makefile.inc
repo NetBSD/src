@@ -1,22 +1,20 @@
-#	$NetBSD: Makefile.inc,v 1.15 1996/05/20 17:23:25 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 1996/08/08 15:06:43 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 KERNDIR=	$S/lib/libkern
 
-KERNDST=	lib/kern
-KERNREL?=	../../
-KERNLIB?=	${KERNDST}/libkern.o
+KERNDST?=	${.OBJDIR}/lib/kern
+KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
 
 KERNMAKE= \
-	cd ${KERNDST} && ${MAKE} -f ${KERNREL}${KERNDIR}/Makefile \
+	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
 	    AS='${AS}' AFLAGS='${AFLAGS}' \
 	    LD='${LD}' \
 	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
 	    KERNCPPFLAGS='${CPPFLAGS}' \
-	    KERNREL='${KERNREL}' \
 	    KERNDIR='${KERNDIR}'
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
