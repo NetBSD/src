@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.8 2000/03/18 13:05:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 2000/03/20 18:07:59 ad Exp $
 
 INCSDIR= /usr/include/dev/ic
 
 INCS=	ad1848reg.h ahareg.h ahavar.h aic6360reg.h aic6360var.h \
-	aic77xxreg.h aic77xxvar.h				\
-	aic7xxxvar.h am7930reg.h am7990reg.h am7990var.h 	\
-	bhareg.h bhavar.h bt431reg.h bt459reg.h bt463reg.h bt485reg.h \
-	cd1190reg.h cd1400reg.h comreg.h comvar.h cs4231reg.h cyreg.h \
+	aic77xxreg.h aic77xxvar.h aic7xxxvar.h am7930reg.h am7990reg.h \
+	am7990var.h bhareg.h bhavar.h bt431reg.h bt459reg.h bt463reg.h \
+	bt485reg.h cacreg.h cacvar.h cd1190reg.h cd1400reg.h comreg.h \
+	comvar.h cs4231reg.h cyreg.h \
 	cyvar.h dc21040reg.h dp8390reg.h dp8390var.h dptreg.h dptvar.h ds.h \
 	elink3reg.h elink3var.h hayespreg.h i8042reg.h i82365reg.h \
 	i82365var.h i8237reg.h i8253reg.h i82586reg.h i82586var.h \
