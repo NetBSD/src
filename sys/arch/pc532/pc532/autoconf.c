@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1997/01/11 10:58:47 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1997/01/31 01:57:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,6 +65,16 @@
 
 extern int cold;	/* cold start flag initialized in locore.s */
 
+void	findroot __P((struct device **, int *));
+
+struct devnametobdevmaj pc532_nam2blk[] = {
+	{ "sd",		0 },
+	{ "st",		2 },
+	{ "md",		3 },
+	{ "cd",		4 },
+	{ NULL,		0 },
+};
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -72,7 +82,8 @@ void
 configure()
 {
 	extern int safepri;
-	int i;
+	struct device *booted_device;
+	int i, booted_partition;
 	static const char *ipl_names[] = IPL_NAMES;
 
 	/* Start the clocks. */
@@ -90,13 +101,12 @@ configure()
 	safepri = imask[IPL_ZERO];
 	spl0();
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
-	setroot();
-#endif
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, pc532_nam2blk);
 
 	/*
 	 * Configure swap area and related system
@@ -107,97 +117,54 @@ configure()
 	cold = 0;
 }
 
-/*
- * Configure swap space and related parameters.
- */
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev > 0; swp++)
-	{
-		unsigned d = major(swp->sw_dev);
-
-		if (d >= nblkdev) break;
-		if (bdevsw[d].d_psize) {
-			nblks = (*bdevsw[d].d_psize)(swp->sw_dev);
-			if (nblks > 0 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			else
-				swp->sw_nblks = 0;
-		}
-		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-
-	}
-}
-
-#define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	's','d',	/* 0 = sd */
-	's','w',	/* 1 = sw */
-	's','t',	/* 2 = st */
-	'r','d',	/* 3 = rd */
-	'c','d',	/* 4 = cd */
-};
 
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
-setroot()
+void
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-	int  majdev, mindev, unit, part, adaptor;
-	dev_t temp, orootdev;
-	struct swdevt *swp;
+	int i, majdev, unit, part;
+	struct device *dv;
+	char buf[32];
 
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+	*partp = 0;
+
+#if 0
+	printf("howto %x bootdev %x ", boothowto, bootdev);
+#endif
+
+	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
+
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
+	for (i = 0; pc532_nam2blk[i].d_name != NULL; i++)
+		if (majdev == pc532_nam2blk[i].d_maj)
+			break;
+	if (pc532_nam2blk[i].d_name == NULL)
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
+
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	mindev = (unit * MAXPARTITIONS) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	if (rootdev == orootdev)
-		return;
-	printf("changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		unit, part + 'a');
 
-#ifdef DOSWAP
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    (mindev / MAXPARTITIONS)
-		    == (minor(swp->sw_dev) / MAXPARTITIONS)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
+	sprintf(buf, "%s%d", pc532_nam2blk[i].d_name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL;
+	    dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
+			*devpp = dv;
+			*partp = part;
+			return;
 		}
 	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
 }
 
 /* mem bus stuff */
