@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/01/03 15:34:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/04/08 21:26:59 thorpej Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,8 +9,13 @@
 #	TARGETS is a list of:
 #		KERNEL_name	GZBOOT_name	RELOC_ADDR	WHICH_kernel
 #	
-TARGETS=	IQ80310		IQ80310		0x00080000	netbsd     \
-		IQ80321		IQ80321		0xf0080000	netbsd
+TARGETS=	ADI_BRH		ADI_BRH_sd0	0x00140000	netbsd-sd0   \
+		ADI_BRH		ADI_BRH_wd0	0x00140000	netbsd-wd0   \
+		IQ80310		IQ80310_sd0	0x00080000	netbsd-sd0   \
+		IQ80310		IQ80310_wd0	0x00080000	netbsd-wd0   \
+		IQ80321		IQ80321_sd0	0xf0080000	netbsd-sd0   \
+		IQ80321		IQ80321_wd0	0xf0080000	netbsd-wd0   \
+		TEAMASA_NPWR	TEAMASA_NPWR_sd0 0x00080000	netbsd-sd0
 
 .for K G R W in ${TARGETS}				# {
 
