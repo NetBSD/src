@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/08/24 15:11:18 he Exp $
+#	$NetBSD: Makefile,v 1.33 2003/10/25 03:14:33 mhitch Exp $
 
 ### what we need:
 
@@ -57,7 +57,7 @@ INCPATH += -I${.CURDIR}/../aout2bb -I${DESTDIR}/usr/include
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
-COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:
