@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.2.2.2 2002/12/11 06:00:58 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.2.2.3 2002/12/11 16:00:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,14 @@ _C_LABEL(splx):
  *   ebx - cpl
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
+ *
+ * It is important that the bit scan instruction is bsr, it will get
+ * the highest 2 bits (currently the IPI and clock handlers) first,
+ * to avoid deadlocks where one CPU sends an IPI, another one is at
+ * splipi() and defers it, lands in here via splx(), and handles
+ * a lower-prio one first, which needs to take the kernel lock -->
+ * the sending CPU will never see the that CPU accept the IPI
+ * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
 #ifdef DDB
@@ -92,18 +100,27 @@ IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-	movl	CPUVAR(ILEVEL),%ebx		# save priority
+#ifdef DDB
+	movl	8(%ebp),%ebx
+#else
+	movl	16(%esp),%ebx
+#endif
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	cli
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
-	bsfl	%eax,%eax
+	sti
+	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
 	jnc	1b
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
-2:	popl	%edi
+2:
+	movl	%ebx,CPUVAR(ILEVEL)
+	sti
+	popl	%edi
 	popl	%esi
 	popl	%ebx
 #ifdef DDB
@@ -121,20 +138,23 @@ IDTVEC(spllower)
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-	movl	%ebx,CPUVAR(ILEVEL)
 	decl	CPUVAR(IDEPTH)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	bsfl    %eax,%eax               # slow, but not worth optimizing
+	sti
+	bsrl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,CPUVAR(IPENDING)
 	jnc     1b			# some intr cleared the in-memory bit
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
-	CHECK_ASTPENDING(%eax)
+	movl	%ebx,CPUVAR(ILEVEL)
+	sti
+5:	CHECK_ASTPENDING(%eax)
 	cli
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
@@ -149,6 +169,6 @@ IDTVEC(doreti)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
 	cli
-	jmp	2b
+	jmp	5b
 3:
 	INTRFASTEXIT
