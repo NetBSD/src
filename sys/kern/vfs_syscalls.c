@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.103 1997/10/19 03:29:20 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.104 1997/10/19 17:18:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -799,10 +799,12 @@ sys_open(p, v, retval)
 	struct nameidata nd;
 	extern struct fileops vnops;
 
+	flags = FFLAGS(SCARG(uap, flags));
+	if ((flags & (FREAD | FWRITE)) == 0)
+		return (EINVAL);
 	if ((error = falloc(p, &nfp, &indx)) != 0)
 		return (error);
 	fp = nfp;
-	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
