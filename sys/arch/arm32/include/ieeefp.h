@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.2 1996/10/15 00:06:47 mark Exp $ */
+/*	$NetBSD: ieeefp.h,v 1.2.10.1 1997/10/15 05:35:51 thorpej Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995

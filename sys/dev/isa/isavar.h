@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.28.2.1 1997/08/27 23:31:47 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.28.2.2 1997/10/15 05:36:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 struct isabus_attach_args;
 
-#if (alpha + atari + i386 != 1)
+#if (alpha + atari + bebox + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if alpha
@@ -96,6 +96,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
 #if atari
 #include <atari/isa/isa_machdep.h>
+#endif
+#if bebox
+#include <bebox/isa/isa_machdep.h>
 #endif
 #if i386
 #include <i386/isa/isa_machdep.h>

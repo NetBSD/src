@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.10 1997/01/26 01:42:48 mark Exp $ */
+/*	$NetBSD: katelib.h,v 1.10.8.1 1997/10/15 05:36:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -48,6 +48,10 @@
  * Created      : 18/09/94
  *
  * Based on kate/katelib/prototypes.h
+ */
+
+/*
+ * USE OF THIS FILE IS DEPRECATED
  */
 
 #include <sys/types.h>
@@ -116,7 +120,6 @@ u_int traceback		__P((void));
 u_int simpletraceback	__P((void));
 u_int irqtraceback	__P((u_int, u_int));
 u_int user_traceback	__P((u_int));
-int shell		__P((void));
 void kstack_stuff	__P((struct proc */*p*/));
 void bootsync		__P((void));
 void boot0		__P((void))

@@ -1,4 +1,4 @@
-/* $NetBSD: io.h,v 1.4 1996/05/16 17:45:10 mark Exp $ */
+/*	$NetBSD: io.h,v 1.4.12.1 1997/10/15 05:36:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.

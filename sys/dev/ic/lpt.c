@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.45.2.2 1997/10/14 10:22:47 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.45.2.3 1997/10/15 05:36:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -95,15 +95,6 @@ struct cfdriver lpt_cd = {
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
-
-#define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
-#define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((bus_space_read_1(iot, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(bus_space_read_1(iot, ioh, lpt_status), sc)
-static int not_ready __P((u_char, struct lpt_softc *));
-
-static void lptwakeup __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
 
 void
 lpt_attach_subr(sc)
@@ -209,7 +200,7 @@ lptopen(dev, flag, mode, p)
 }
 
 int
-not_ready(status, sc)
+lptnotready(status, sc)
 	u_char status;
 	struct lpt_softc *sc;
 {
@@ -259,7 +250,7 @@ lptclose(dev, flag, mode, p)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_count)
-		(void) pushbytes(sc);
+		(void) lptpushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		untimeout(lptwakeup, sc);
@@ -274,7 +265,7 @@ lptclose(dev, flag, mode, p)
 }
 
 int
-pushbytes(sc)
+lptpushbytes(sc)
 	struct lpt_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -354,7 +345,7 @@ lptwrite(dev, uio, flags)
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
-		error = pushbytes(sc);
+		error = lptpushbytes(sc);
 		if (error) {
 			/*
 			 * Return accurate residual if interrupted or timed

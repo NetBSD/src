@@ -1,4 +1,4 @@
-/* $NetBSD: setcpsr.S,v 1.2 1996/06/03 21:21:37 mark Exp $ */
+/*	$NetBSD: setcpsr.S,v 1.2.10.1 1997/10/15 05:27:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -47,6 +47,8 @@
  * Based of kate/display/setcpsr.s
  */
 
+#include <machine/asm.h>
+
 fp      .req    r11
 ip      .req    r12
 sp      .req    r13
@@ -55,7 +57,6 @@ pc	.req	r15
 
 .text
 
-        .global _SetCPSR
 
 /* Sets and clears bits in the CPSR register
  *
@@ -63,11 +64,7 @@ pc	.req	r15
  *  r1 - eor mask
  */
 
-_SetCPSR:
-/*	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	sub	fp, ip, #4*/
-
+ENTRY(SetCPSR)
         mrs     r3, cpsr_all		/* Set the CPSR */
 	bic	r2, r3, r0
         eor     r2, r2, r1
@@ -75,17 +72,15 @@ _SetCPSR:
 
         mov	r0, r3			/* Return the old CPSR */
 
-/*	ldmea	fp, {fp, sp, pc}*/
 	mov	pc, lr
 
-        .global _GetCPSR
 
 /* Gets the CPSR register
  *
  * Returns the CPSR in r0
  */
 
-_GetCPSR:
+ENTRY(GetCPSR)
         mrs     r0, cpsr_all		/* Get the CPSR */
 
 	mov	pc, lr
