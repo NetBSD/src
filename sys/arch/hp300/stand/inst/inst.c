@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.5 1997/12/15 23:17:19 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.6 1997/12/29 07:15:10 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -421,8 +421,13 @@ disklabel_edit(lp)
 	GETNUM("Bytes/sector? [%d] ", lp->d_secsize);
 	GETNUM("Sectors/track? [%d] ", lp->d_nsectors);
 	GETNUM("Tracks/cylinder? [%d] ", lp->d_ntracks);
+	if (lp->d_secpercyl == 0)
+		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	GETNUM("Sectors/cylinder? [%d] ", lp->d_secpercyl);
 	GETNUM("Cylinders? [%d] ", lp->d_ncylinders);
+	if (lp->d_secperunit == 0)
+		lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
+	GETNUM("Total sectors? [%d] ", lp->d_secperunit);
 
 	printf("
 Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
@@ -483,6 +488,7 @@ disklabel_show(lp)
 	printf("tracks/cylinder: %d\n", lp->d_ntracks);
 	printf("sectors/cylinder: %d\n", lp->d_secpercyl);
 	printf("cylinders: %d\n", lp->d_ncylinders);
+	printf("total sectors: %d\n", lp->d_secperunit);
 
 	printf("\n%d partitions:\n", lp->d_npartitions);
 	printf("     size   offset\n");
