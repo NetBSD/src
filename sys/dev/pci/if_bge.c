@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.16 2002/07/13 22:21:20 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.17 2002/07/13 22:31:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -119,8 +119,6 @@
 
 #include <uvm/uvm_extern.h>
 
-/* #define BGE_CHECKSUM */
-
 int bge_probe(struct device *, struct cfdata *, void *);
 void bge_attach(struct device *, struct device *, void *);
 void bge_release_resources(struct bge_softc *);
@@ -194,6 +192,9 @@ int	bgedebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+/* Various chip quirks. */
+#define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 
 struct cfattach bge_ca = {
 	sizeof(struct bge_softc), bge_probe, bge_attach
@@ -1501,7 +1502,7 @@ bge_blockinit(sc)
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (BGE_IS_5700_Ax_Bx(sc->bge_asicrev))
+		if (sc->bge_quirks & BGE_QUIRK_LINK_STATE_BROKEN)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -1518,27 +1519,28 @@ static const struct bge_revision {
 	const char		*br_name;
 } bge_revisions[] = {
 	{ BGE_ASICREV_BCM5700_A0,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A0" },
 
 	{ BGE_ASICREV_BCM5700_A1,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A1" },
 
 	{ BGE_ASICREV_BCM5700_B0,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 B0" },
 
 	{ BGE_ASICREV_BCM5700_B1,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 B1" },
 
 	{ BGE_ASICREV_BCM5700_B2,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 B2" },
 
+	/* This is treated like a BCM5700 Bx */
 	{ BGE_ASICREV_BCM5700_ALTIMA,
-	  0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 Altima" },
 
 	{ BGE_ASICREV_BCM5700_C0,
@@ -2289,7 +2291,7 @@ bge_intr(xsc)
 	 * the interrupt handler.
 	 */
 
-	if (BGE_IS_5700_Ax_Bx(sc->bge_asicrev)) {
+	if (sc->bge_quirks & BGE_QUIRK_LINK_STATE_BROKEN) {
 		u_int32_t		status;
 
 		status = CSR_READ_4(sc, BGE_MAC_STS);
