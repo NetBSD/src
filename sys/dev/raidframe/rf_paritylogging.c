@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.12 2001/11/13 07:11:15 lukem Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.13 2002/09/14 17:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.12 2001/11/13 07:11:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.13 2002/09/14 17:53:58 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -240,8 +240,7 @@ rf_ConfigureParityLogging(
 	lHeapPtr = raidPtr->parityLogBufferHeap;
 	rc = rf_mutex_init(&raidPtr->parityLogPool.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs * 
 			raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
 		return (ENOMEM);
@@ -312,14 +311,12 @@ rf_ConfigureParityLogging(
 	/* build pool of region buffers */
 	rc = rf_mutex_init(&raidPtr->regionBufferPool.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (ENOMEM);
 	}
 	rc = rf_cond_init(&raidPtr->regionBufferPool.cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		rf_mutex_destroy(&raidPtr->regionBufferPool.mutex);
 		return (ENOMEM);
 	}
@@ -382,14 +379,12 @@ rf_ConfigureParityLogging(
 	parityBufferCapacity = maxRegionParityRange;
 	rc = rf_mutex_init(&raidPtr->parityBufferPool.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_cond_init(&raidPtr->parityBufferPool.cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		rf_mutex_destroy(&raidPtr->parityBufferPool.mutex);
 		return (ENOMEM);
 	}
@@ -453,14 +448,12 @@ rf_ConfigureParityLogging(
 	rc = rf_create_managed_mutex(listp, 
 				     &raidPtr->parityLogDiskQueue.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_create_managed_cond(listp, &raidPtr->parityLogDiskQueue.cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", 
-			     __FILE__, __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	raidPtr->parityLogDiskQueue.flushQueue = NULL;
@@ -487,8 +480,7 @@ rf_ConfigureParityLogging(
 	for (i = 0; i < rf_numParityRegions; i++) {
 		rc = rf_mutex_init(&raidPtr->regionInfo[i].mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
 			RF_Free(raidPtr->regionInfo, 
@@ -498,8 +490,7 @@ rf_ConfigureParityLogging(
 		}
 		rc = rf_mutex_init(&raidPtr->regionInfo[i].reintMutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			rf_mutex_destroy(&raidPtr->regionInfo[i].mutex);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.15 2002/07/14 03:04:02 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.16 2002/09/14 17:53:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.15 2002/07/14 03:04:02 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.16 2002/09/14 17:53:59 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -163,8 +163,7 @@ rf_ConfigureEngine(
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownEngine(NULL);
 	}
 	return (rc);

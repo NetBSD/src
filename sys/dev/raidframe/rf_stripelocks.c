@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.13 2002/09/11 02:52:33 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.14 2002/09/14 17:53:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.13 2002/09/11 02:52:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.14 2002/09/14 17:53:59 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -157,8 +157,7 @@ rf_ConfigureStripeLockFreeList(listp)
 	    RF_STRIPELOCK_INITIAL, sizeof(RF_StripeLockDesc_t));
 	rc = rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownStripeLockFreeList(NULL);
 		return (rc);
 	}
@@ -186,8 +185,7 @@ rf_MakeLockTable()
 	for (i = 0; i < rf_lockTableSize; i++) {
 		rc = rf_mutex_init(&lockTable[i].mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			/* XXX clean up other mutexes */
 			return (NULL);
 		}
@@ -232,8 +230,7 @@ rf_ConfigureStripeLocks(
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_RaidShutdownStripeLocks, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownStripeLocks(raidPtr->lockTable);
 		return (rc);
 	}

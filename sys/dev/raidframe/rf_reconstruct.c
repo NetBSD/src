@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.35 2002/09/09 02:44:17 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.36 2002/09/14 17:53:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.35 2002/09/09 02:44:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.36 2002/09/14 17:53:59 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.35 2002/09/09 02:44:17 oster Ex
 #include "rf_etimer.h"
 #include "rf_dag.h"
 #include "rf_desc.h"
+#include "rf_debugprint.h"
 #include "rf_general.h"
 #include "rf_freelist.h"
-#include "rf_debugprint.h"
 #include "rf_driver.h"
 #include "rf_utils.h"
 #include "rf_shutdown.h"
@@ -215,8 +215,7 @@ rf_ConfigureReconstruction(listp)
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownReconstruction(NULL);
 		return (rc);
 	}
