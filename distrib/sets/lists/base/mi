@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.283 2001/10/17 05:20:20 jmc Exp $
+# $NetBSD: mi,v 1.284 2001/10/20 06:13:27 jmc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -484,7 +484,6 @@
 ./usr/libexec			base-sys-usr
 ./usr/libexec/atrun		base-cron-bin
 ./usr/libexec/comsat		base-mail-bin
-./usr/libexec/cpp		base-util-bin
 ./usr/libexec/dnskeygen		base-bind-bin
 ./usr/libexec/fingerd		base-netutil-bin
 ./usr/libexec/ftpd		base-netutil-bin
