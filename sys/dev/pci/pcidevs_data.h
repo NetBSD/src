@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.352 2001/08/27 14:10:20 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.353 2001/08/28 23:54:14 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.349 2001/08/27 14:04:47 enami Exp 
+ *	NetBSD: pcidevs,v 1.350 2001/08/28 23:53:14 tsubai Exp 
  */
 
 /*
@@ -958,6 +958,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MAC-IO I/O Controller (Pangea)",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_USB,
+	    0,
+	    "Apple Computer",
+	    "Pangea USB Controller",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP,
 	    0,
 	    "Apple Computer",
@@ -976,22 +982,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Pangea Host-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_AGP,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP2,
 	    0,
 	    "Apple Computer",
-	    "Uni-N AGP Interface",
+	    "UniNorth AGP Interface",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI1,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH3,
 	    0,
 	    "Apple Computer",
-	    "Uni-N Host-External PCI Bridge",
+	    "UniNorth Host-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI2,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH4,
 	    0,
 	    "Apple Computer",
-	    "Uni-N Host-Internal PCI Bridge",
+	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW,
+	    0,
+	    "Apple Computer",
+	    "Pangea Firewire",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
