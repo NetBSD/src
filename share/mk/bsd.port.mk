@@ -1,8 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.13.2.4 1997/11/07 23:54:47 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.5 1997/11/10 08:05:53 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
