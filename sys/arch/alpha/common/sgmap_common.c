@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.9 1998/03/23 07:51:25 mjacob Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.10 1998/06/06 01:31:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.9 1998/03/23 07:51:25 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.10 1998/06/06 01:31:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,10 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	size_t ptsize;
 	int rseg;
 
-	if (sgvasize & PGOFSET)
-		panic("alpha_sgmap_init: size botch");
+	if (sgvasize & PGOFSET) {
+		printf("size botch for sgmap `%s'\n", name);
+		goto die;
+	}
 
 	sgmap->aps_wbase = wbase;
 	sgmap->aps_sgvabase = sgvabase;
@@ -105,8 +107,11 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 		} else
 			minptalign = ptsize;
 		if (bus_dmamem_alloc(t, ptsize, minptalign, 0, &seg, 1, &rseg,
-		    BUS_DMA_NOWAIT))
-			panic("alpha_sgmap_init: can't allocate page table");
+		    BUS_DMA_NOWAIT)) {
+			panic("unable to allocate page table for sgmap `%s'\n",
+			    name);
+			goto die;
+		}
 		sgmap->aps_ptpa = seg.ds_addr;
 		sgmap->aps_pt = (caddr_t)ALPHA_PHYS_TO_K0SEG(sgmap->aps_ptpa);
 	}
@@ -117,21 +122,31 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	 */
 	sgmap->aps_ex = extent_create((char *)name, sgvabase, sgvasize - 1,
 	    M_DMAMAP, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
-	if (sgmap->aps_ex == NULL)
-		panic("alpha_sgmap_init: can't create extent map");
+	if (sgmap->aps_ex == NULL) {
+		printf("unable to create extent map for sgmap `%s'\n",
+		    name);
+		goto die;
+	}
 
 	/*
 	 * Allocate a spill page if that hasn't already been done.
 	 */
 	if (alpha_sgmap_prefetch_spill_page_va == 0) {
 		if (bus_dmamem_alloc(t, NBPG, 0, 0, &seg, 1, &rseg,
-		    BUS_DMA_NOWAIT))
-			panic("alpha_sgmap_init: can't allocate spill page");
+		    BUS_DMA_NOWAIT)) {
+			printf("unable to allocate spill page for sgmap `%s'\n",
+			    name);
+			goto die;
+		}
 		alpha_sgmap_prefetch_spill_page_pa = seg.ds_addr;
 		alpha_sgmap_prefetch_spill_page_va =
 		    ALPHA_PHYS_TO_K0SEG(alpha_sgmap_prefetch_spill_page_pa);
 		bzero((caddr_t)alpha_sgmap_prefetch_spill_page_va, NBPG);
 	}
+	
+	return;
+ die:
+	panic("alpha_sgmap_init");
 }
 
 int
