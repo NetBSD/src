@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.172 2002/06/08 18:02:08 martin Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.173 2002/06/17 07:40:32 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.172 2002/06/08 18:01:14 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.173 2002/06/17 07:38:42 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -349,6 +349,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Elsa",
 	    "XI800 CF Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	    PCMCIA_CIS_ELSA_XI325_IEEE,
+	    0,
+	    "Elsa",
+	    "XI325 Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,

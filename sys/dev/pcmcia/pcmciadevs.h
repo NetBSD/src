@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.172 2002/06/08 18:02:08 martin Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.173 2002/06/17 07:40:31 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.172 2002/06/08 18:01:14 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.173 2002/06/17 07:38:42 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -277,6 +277,9 @@
 #define	PCMCIA_CIS_ELSA_XI800_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
 #define	PCMCIA_STR_ELSA_XI800_IEEE	"XI800 CF Wireless LAN"
+#define	PCMCIA_CIS_ELSA_XI325_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI325_IEEE	0x0005
+#define	PCMCIA_STR_ELSA_XI325_IEEE	"XI325 Wireless LAN"
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
