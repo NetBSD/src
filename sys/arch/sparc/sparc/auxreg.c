@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.12 1996/03/17 02:01:37 thorpej Exp $ */
+/*	$NetBSD: auxreg.c,v 1.13 1996/03/31 23:43:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,9 +98,16 @@ auxregmatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-	if (cputyp==CPU_SUN4)
+	switch (cputyp) {
+	    case CPU_SUN4:
 		return (0);
-	return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
+	    case CPU_SUN4C:
+		return (strcmp("auxiliary-io", ca->ca_ra.ra_name) == 0);
+	    case CPU_SUN4M:
+		return (strcmp("auxio", ca->ca_ra.ra_name) == 0);
+	    default:
+		panic("auxregmatch");
+	}
 }
 
 /* ARGSUSED */
