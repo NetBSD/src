@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_sym.h,v 1.2 1993/05/20 03:39:32 cgd Exp $
+ * $Id: db_sym.h,v 1.3 1993/07/22 13:03:01 brezak Exp $
  *
  * HISTORY
  * $Log: db_sym.h,v $
- * Revision 1.2  1993/05/20 03:39:32  cgd
+ * Revision 1.3  1993/07/22 13:03:01  brezak
+ * Allow adding more than one symbol table at runtime. For LKM.
+ *
+ * Revision 1.2  1993/05/20  03:39:32  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -95,8 +98,11 @@ extern boolean_t	db_qualify_ambiguous_names;
 /*
  * Functions exported by the symtable module
  */
-extern void	db_add_symbol_table();
+extern int	db_add_symbol_table();
 					/* extend the list of symbol tables */
+
+extern void	db_del_symbol_table(/* char * */);
+					/* remove a symbol table from list */
 
 extern int	db_value_of_name(/* char*, db_expr_t* */);
 					/* find symbol value given name */
