@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.18 2003/10/19 01:26:11 wiz Exp $
+.\"	$NetBSD: editrc.5,v 1.19 2003/11/01 23:35:33 christos Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -230,8 +230,24 @@ causes messages to be verbose.
 Enable or disable the
 .Nm editline
 functionality in a program.
-.It Ic history
-List the history.
+.It Ic history Ar list | Ar size Dv n | Ar unique Dv n
+The 
+.Ar list
+command lists all entries in the history.
+The
+.Ar size
+command sets the history size to
+.Dv n
+entries.
+The
+.Ar unique
+command controls if history should keep duplicate entries.
+If
+.Dv n
+is non zero, only keep unique history entries.
+If
+.Dv n
+is zero, then keep all entries (the default).
 .It Ic telltc
 List the values of all the terminal capabilities (see
 .Xr termcap 5 ) .
