@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.30 1999/11/07 00:12:53 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.31 1999/11/07 08:07:20 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -120,6 +120,7 @@ adb_config_interrupts(self)
 	int adbindex, adbaddr;
 
 	printf("%s", self->dv_xname);
+	adb_polling = 1;
 
 #ifdef MRG_ADB
 	/* 
@@ -151,7 +152,6 @@ adb_config_interrupts(self)
 	JADBProc = adb_jadbproc;
 
 	/* Initialize ADB */
-	adb_polling = 1;
 #ifdef ADB_DEBUG
 	if (adb_debug)
 		printf("adb: calling ADBAlternateInit.\n");
