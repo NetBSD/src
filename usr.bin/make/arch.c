@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1064,7 +1064,7 @@ Arch_LibOODate (gn)
 	    oodate = TRUE;
 	}
 #else
-	oodata = FALSE;
+	oodate = FALSE;
 #endif
     }
     return (oodate);
