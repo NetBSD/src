@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.26 2003/08/07 16:44:32 agc Exp $	*/
+/*	$NetBSD: read.c,v 1.27 2003/09/13 04:18:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.26 2003/08/07 16:44:32 agc Exp $");
+__RCSID("$NetBSD: read.c,v 1.27 2003/09/13 04:18:00 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: read.c,v 1.26 2003/08/07 16:44:32 agc Exp $");
  *	   Terminal read functions
  */
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include "el.h"
