@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.18 2001/05/22 00:43:12 jhawk Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.19 2001/07/20 21:03:41 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,8 +79,9 @@ int	uplcomdebug = 0;
 #define	UPLCOM_CONFIG_INDEX	0
 #define	UPLCOM_IFACE_INDEX	0
 #define	UPLCOM_SECOND_IFACE_INDEX	1
-#define	UPLCOM_RESET		0
 
+#define	UPLCOM_SET_REQUEST	0x01
+#define	UPLCOM_SET_CRTSCTS	0x41
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
 
@@ -118,6 +119,7 @@ struct	uplcom_softc {
 Static	usbd_status uplcom_reset(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
 					   usb_cdc_line_state_t *state);
+Static	usbd_status uplcom_set_crtscts(struct uplcom_softc *);
 Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static	void uplcom_set(void *, int, int, int);
@@ -400,16 +402,15 @@ uplcom_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-
 usbd_status
 uplcom_reset(struct uplcom_softc *sc)
 {
         usb_device_request_t req;
 	usbd_status err;
 
-        req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-        req.bRequest = UPLCOM_RESET;
-        USETW(req.wValue, UPLCOM_RESET);
+        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+        req.bRequest = UPLCOM_SET_REQUEST;
+        USETW(req.wValue, 0);
         USETW(req.wIndex, sc->sc_iface_number);
         USETW(req.wLength, 0); 
  
@@ -500,6 +501,30 @@ uplcom_break(struct uplcom_softc *sc, int onoff)
 }
 
 usbd_status
+uplcom_set_crtscts(struct uplcom_softc *sc)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	DPRINTF(("uplcom_set_crtscts: on\n"));
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = UPLCOM_SET_REQUEST;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, UPLCOM_SET_CRTSCTS);
+	USETW(req.wLength, 0);
+
+	err = usbd_do_request(sc->sc_udev, &req, 0);
+	if (err) {
+		DPRINTF(("uplcom_set_crtscts: failed, err=%s\n",
+			usbd_errstr(err)));
+		return (err);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
 uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 {
 	usb_device_request_t req;
@@ -573,6 +598,15 @@ uplcom_param(void *addr, int portno, struct termios *t)
 		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
 		return (EIO);
 	}
+
+	if (ISSET(t->c_cflag, CRTSCTS))
+		uplcom_set_crtscts(sc);
+
+	if (err) {
+		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
+		return (EIO);
+	}
+
 	return (0);
 }
 
