@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28.2.6 2002/10/19 15:13:23 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.28.2.7 2002/10/24 21:25:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -157,6 +157,12 @@ ASENTRY_NP(idle)
 
 	/* Non-powersave idle. */
 1:	/* should maybe do uvm pageidlezero stuff here */
+#ifdef MULTIPROCESSOR
+	/* XXX This will thrash the data bus.  We need a better way. */
+	ldr	r4, .Lcpufuncs
+	mov	lr, pc
+	ldr	pc, [r4, #(CF_IDCACHE_WBINV_ALL)]
+#endif
 	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
 	bne	.Lswitch_search
