@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.10 2003/04/22 16:17:39 david Exp $
+.\"	$NetBSD: grep.1,v 1.11 2004/11/11 01:39:25 wiz Exp $
 .\"
 .\" grep man page
 .if !\n(.g \{\
@@ -81,14 +81,6 @@ Places a line containing
 .B \-\^\-
 between contiguous groups of matches.
 .TP
-.BI \-C " NUM" "\fR,\fP \-\^\-context=" NUM
-Print
-.I NUM
-lines of output context.
-Places a line containing
-.B \-\^\-
-between contiguous groups of matches.
-.TP
 .BR \-b ", " \-\^\-byte-offset
 Print the byte offset within the input file before
 each line of output.
@@ -128,10 +120,13 @@ might output binary garbage,
 which can have nasty side effects if the output is a terminal and if the
 terminal driver interprets some of it as commands.
 .TP
-.BI \-\^\-colour[=\fIWHEN\fR] ", " \-\^\-color[=\fIWHEN\fR]
-Surround the matching string with the marker find in
-.B GREP_COLOR
-environment variable. WHEN may be `never', `always', or `auto'
+.BI \-C " NUM" "\fR,\fP \-\^\-context=" NUM
+Print
+.I NUM
+lines of output context.
+Places a line containing
+.B \-\^\-
+between contiguous groups of matches.
 .TP
 .BR \-c ", " \-\^\-count
 Suppress normal output; instead print a count of
@@ -139,6 +134,11 @@ matching lines for each input file.
 With the
 .BR \-v ", " \-\^\-invert-match
 option (see below), count non-matching lines.
+.TP
+.BI \-\^\-colour[=\fIWHEN\fR] ", " \-\^\-color[=\fIWHEN\fR]
+Surround the matching string with the marker find in
+.B GREP_COLOR
+environment variable. WHEN may be `never', `always', or `auto'
 .TP
 .BI \-D " ACTION" "\fR,\fP \-\^\-devices=" ACTION
 If an input file is a device, FIFO or socket, use
@@ -194,10 +194,6 @@ Interpret
 .I PATTERN
 as a list of fixed strings, separated by newlines,
 any of which is to be matched.
-.BR \-P ", " \-\^\-perl-regexp
-Interpret
-.I PATTERN
-as a Perl regular expression.
 .TP
 .BI \-f " FILE" "\fR,\fP \-\^\-file=" FILE
 Obtain patterns from
@@ -242,6 +238,15 @@ Suppress normal output; instead print
 the name of each input file from which output
 would normally have been printed.  The scanning will
 stop on the first match.
+.TP
+.BI \-\^\-label= LABEL
+Displays input actually coming from standard input as input coming from file
+.I LABEL.
+This is especially useful for tools like zgrep, e.g.
+.B "gzip -cd foo.gz |grep --label=foo something"
+.TP
+.BR \-\^\-line-buffering
+Use line buffering, it can be a performance penality.
 .TP
 .BI \-m " NUM" "\fR,\fP \-\^\-max-count=" NUM
 Stop reading a file after
@@ -299,14 +304,10 @@ within its input file.
 Show only the part of a matching line that matches
 .I PATTERN.
 .TP
-.BI \-\^\-label= LABEL
-Displays input actually coming from standard input as input coming from file
-.I LABEL.
-This is especially useful for tools like zgrep, e.g.
-.B "gzip -cd foo.gz |grep --label=foo something"
-.TP
-.BR \-\^\-line-buffering
-Use line buffering, it can be a performance penality.
+.BR \-P ", " \-\^\-perl-regexp
+Interpret
+.I PATTERN
+as a Perl regular expression.
 .TP
 .BR \-q ", " \-\^\-quiet ", " \-\^\-silent
 Quiet; do not write anything to standard output.
