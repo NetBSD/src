@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.7 1998/12/04 20:18:05 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.8 1999/01/08 18:10:35 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 * its section type Elf_sht_null so that it will be ignored
 	 * later.
 	 */
-	shp = (Elf_Shdr *)(symtab + elf->e_shoff);
+	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
 	for (i = 0; i < elf->e_shnum; i++) {
 		switch (shp[i].sh_type) {
 		case Elf_sht_strtab:
@@ -167,17 +167,18 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 			}
 			if (strtab_start != NULL)
 				goto multiple_strtab;
-			strtab_start = (char *)(symtab + shp[i].sh_offset);
-			strtab_end = (char *)(symtab + shp[i].sh_offset +
-			    shp[i].sh_size);
+			strtab_start = (char *)symtab + shp[i].sh_offset;
+			strtab_end = (char *)symtab + shp[i].sh_offset +
+			    shp[i].sh_size;
 			break;
 		
 		case Elf_sht_symtab:
 			if (symtab_start != NULL)
 				goto multiple_symtab;
-			symtab_start = (Elf_Sym *)(symtab + shp[i].sh_offset);
-			symtab_end = (Elf_Sym *)(symtab + shp[i].sh_offset +
-			    shp[i].sh_size);
+			symtab_start = (Elf_Sym *)((char *)symtab + 
+			    shp[i].sh_offset);
+			symtab_end = (Elf_Sym *)((char *)symtab + 
+			    shp[i].sh_offset + shp[i].sh_size);
 			break;
 
 		default:
@@ -203,7 +204,8 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1) {
 		printf("[ preserving %lu bytes of %s ELF symbol table ]\n",
-		    (u_long)roundup((esymtab - symtab), sizeof(u_long)), name);
+		    (u_long)roundup(((char *)esymtab - (char *)symtab), 
+				    sizeof(u_long)), name);
 		return (TRUE);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.88 1998/08/17 21:16:15 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.89 1999/01/08 18:10:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1238,7 +1238,8 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop input start=%p end=%p chan=%d\n", 
 	    start, end, sc->sc_i.dmachan));
-	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, start, end - start, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, start, 
+	    (char *)end - (char *)start, NULL,
 	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_input(addr);
@@ -1373,7 +1374,8 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	DPRINTF(("sbdsp: dma start loop output start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_o.dmachan));
-	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, start, end - start, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, start, 
+	    (char *)end - (char *)start, NULL,
 	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_output(addr);
