@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.68 1999/10/20 06:40:26 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.69 2000/01/23 21:08:16 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -60,6 +60,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/drcustom.h>
+#include <amiga/amiga/gayle.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/zbusvar.h>
 
@@ -380,7 +381,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	} else
 #endif
 	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int) +
-	    btoc(RELOC(ZBUSAVAIL, u_int));
+	    btoc(RELOC(ZBUSAVAIL, u_int)) + NPCMCIAPG;
 	/*
 	 * if kernel shadow mapping will overlap any initial mapping
 	 * of Zorro I/O space or the page table map, we need to
