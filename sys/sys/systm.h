@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.8 2001/11/17 18:45:56 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.9 2001/11/24 19:55:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -395,8 +395,8 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif /* _KERNEL */
 
 #ifdef SYSCALL_DEBUG
-void scdebug_call __P((struct proc *, register_t, register_t[]));
-void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
+void scdebug_call __P((struct lwp *, register_t, register_t[]));
+void scdebug_ret __P((struct lwp *, register_t, int, register_t[]));
 #endif /* SYSCALL_DEBUG */
 
 #if defined(MULTIPROCESSOR)
