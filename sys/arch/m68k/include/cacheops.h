@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.6 1999/09/27 04:43:40 itohy Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.7 2000/01/15 17:08:03 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define	DCIA()		DCIA_20()
 #define	DCIS()		DCIS_20()
 #define	DCIU()		DCIU_20()
-#define	DCIAS()		DCIAS_20()
+#define	DCIAS(pa)	DCIAS_20((pa))
 #define	PCIA()		PCIA_20()
 
 #elif defined(M68030) && !(defined(M68020)||defined(M68040)||defined(M68060))
@@ -73,7 +73,7 @@
 #define	DCIA()		DCIA_30()
 #define	DCIS()		DCIS_30()
 #define	DCIU()		DCIU_30()
-#define	DCIAS()		DCIAS_30()
+#define	DCIAS(pa)	DCIAS_30((pa))
 #define	PCIA()		PCIA_30()
 
 #elif defined(M68040) && !(defined(M68020)||defined(M68030)||defined(M68060))
