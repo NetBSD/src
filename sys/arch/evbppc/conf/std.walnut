@@ -1,4 +1,4 @@
-#	$NetBSD: std.walnut,v 1.3 2003/03/04 07:50:57 matt Exp $
+#	$NetBSD: std.walnut,v 1.4 2003/08/12 05:15:42 matt Exp $
 #
 # Standard/required options for NetBSD/walnut.
 
@@ -21,7 +21,6 @@ options 	PPC_PCI_MACHDEP_IMPL="<powerpc/ibm4xx/pci_machdep.h>"
 options 	KERNBASE=0x25000
 
 options 	INTSTK=16384
-options 	SPILLSTK=1024
 
 include		"arch/powerpc/conf/files.ibm4xx"
 include		"arch/evbppc/conf/files.walnut"

@@ -1,8 +1,8 @@
-#	$NetBSD: files.powerpc,v 1.52 2003/08/11 01:33:30 matt Exp $
+#	$NetBSD: files.powerpc,v 1.53 2003/08/12 05:15:45 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
-defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK SPILLSTK CLOCKBASE
+defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA64 PPC_MPC8XX PPC_IBM4XX PPC_IBM403
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 defparam opt_pmap.h	PTEGCOUNT

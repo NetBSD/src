@@ -1,4 +1,4 @@
-#	$NetBSD: std.prep,v 1.6 2003/02/03 17:10:12 matt Exp $
+#	$NetBSD: std.prep,v 1.7 2003/08/12 05:15:44 matt Exp $
 #
 # standard, required NetBSD/prep 'options'
 
@@ -12,4 +12,3 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_AOUT	# exec a.out binaries
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800

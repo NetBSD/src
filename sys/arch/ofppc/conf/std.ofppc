@@ -1,4 +1,4 @@
-#	$NetBSD: std.ofppc,v 1.9 2003/02/03 17:09:58 matt Exp $
+#	$NetBSD: std.ofppc,v 1.10 2003/08/12 05:15:43 matt Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
@@ -11,4 +11,3 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800

@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmppc,v 1.4 2003/02/03 17:09:59 matt Exp $
+#	$NetBSD: std.pmppc,v 1.5 2003/08/12 05:15:44 matt Exp $
 #
 # standard, required NetBSD/pmppc 'options'
 
@@ -12,7 +12,6 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800
 
 makeoptions	TEXTADDR=0x40000
 

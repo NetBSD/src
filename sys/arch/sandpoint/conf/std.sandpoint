@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.8 2003/02/03 17:10:13 matt Exp $
+#	$NetBSD: std.sandpoint,v 1.9 2003/08/12 05:15:44 matt Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
@@ -14,7 +14,6 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options 	OPENPIC
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800
 
 makeoptions	TEXTADDR=0x90000
 makeoptions	NEED_SREC=yes

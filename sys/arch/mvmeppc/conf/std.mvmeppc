@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvmeppc,v 1.6 2003/02/03 17:09:57 matt Exp $
+#	$NetBSD: std.mvmeppc,v 1.7 2003/08/12 05:15:43 matt Exp $
 #
 # standard, required NetBSD/mvmeppc 'options'
 
@@ -11,6 +11,5 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	INTSTK=0x2000
-options 	SPILLSTK=0x800
 
 makeoptions	TEXTADDR=0x4000
