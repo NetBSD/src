@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2000/08/12 22:58:11 wdk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2000/08/17 21:26:34 wdk Exp $	*/
 
 #ifndef _MIPSCO_CPU_H_
 #define _MIPSCO_CPU_H_
@@ -10,10 +10,6 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
 #endif
-
-#include <mips/locore.h>
-
-extern int systype;
 
 #include <sys/sched.h>
 struct cpu_info {
@@ -30,6 +26,6 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()		(&cpu_info_store)
 #define	cpu_number()		0
 #endif /* _KERNEL */
+#endif /* !_LOCORE */
 
-#endif /* _LOCORE */
 #endif /* !_MIPSCO_CPU_H_ */
