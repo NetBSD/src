@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.11 2002/01/31 21:01:40 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.12 2002/01/31 22:46:40 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -120,6 +120,7 @@ BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
 char *boot_args = NULL;
+char *boot_file = NULL;
 char  booted_kernel[80];
 
 extern int       *vidc_base;
