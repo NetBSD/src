@@ -1,9 +1,16 @@
-#	$NetBSD: defs.mk.in,v 1.5 2002/09/15 16:46:23 thorpej Exp $
+#	$NetBSD: defs.mk.in,v 1.6 2003/03/13 05:15:49 thorpej Exp $
 
 COMPATOBJ:=	${.PARSEDIR}
 HOSTEXEEXT=	@EXEEXT@
 
 HOST_BSHELL=	@BSHELL@
+
+BUILD_OSTYPE!=  uname -s
+
+# Disable use of pre-compiled headers on Darwin.
+.if ${BUILD_OSTYPE} == "Darwin"
+HOST_CPPFLAGS+=	-no-cpp-precomp
+.endif
 
 HOST_CPPFLAGS+=	-I${COMPATOBJ} -I${COMPATOBJ}/include \
 		-I${.CURDIR}/../compat -DHAVE_CONFIG_H \
