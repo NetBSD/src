@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 2000/01/23 21:01:55 soda Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 2001/06/13 14:58:43 soda Exp $	*/
 /*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
@@ -56,8 +56,6 @@ struct abus {
 #define	BUS_MAIN	1		/* mainbus */
 #define	BUS_PICA	2		/* PICA Bus */
 #define	BUS_ISABR	3		/* ISA Bridge Bus */
-#define	BUS_ALGOR	4		/* Algorithmics local bus */
-#define	BUS_PCIBR	5		/* Algorithmics PCI bridge */
 
 #define	BUS_INTR_ESTABLISH(ca, handler, val)				\
 	    (*(ca)->ca_bus->ab_intr_establish)((ca), (handler), (val))
@@ -75,9 +73,12 @@ struct confargs {
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
-void	set_clockintr __P((void (*)(struct clockframe *)));
-void	set_iointr __P((void (*)(void *, int)));
-
-void	initcpu __P((void));
 void	makebootdev __P((char *cp));
+
+/* serial console related variables */
+extern int com_freq;
+extern int com_console;
+extern int com_console_address;
+extern int com_console_speed;
+extern int com_console_mode;
 #endif /* _ARC_AUTOCONF_H_ */
