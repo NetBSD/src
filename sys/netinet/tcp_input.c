@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27 1996/12/10 18:20:19 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.28 1997/07/06 07:04:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -550,7 +550,7 @@ findpcb:
 	win = sbspace(&so->so_rcv);
 	if (win < 0)
 		win = 0;
-	tp->rcv_wnd = max(win, (int)(tp->rcv_adv - tp->rcv_nxt));
+	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
 
 	switch (tp->t_state) {
