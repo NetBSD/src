@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.5 1993/06/27 06:01:49 andrew Exp $
+ *	$Id: kern_xxx.c,v 1.6 1993/07/17 15:24:37 mycroft Exp $
  */
 
 #include "param.h"
@@ -53,13 +53,15 @@ gethostid(p, uap, retval)
 	return (0);
 }
 
+struct sethostid_args {
+	long	hostid;
+};
+
 /* ARGSUSED */
 int
 sethostid(p, uap, retval)
 	struct proc *p;
-	struct args {
-		long	hostid;
-	} *uap;
+	struct sethostid_args *uap;
 	int *retval;
 {
 	int error;
@@ -70,14 +72,16 @@ sethostid(p, uap, retval)
 	return (0);
 }
 
+struct gethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+
 /* ARGSUSED */
 int
 gethostname(p, uap, retval)
 	struct proc *p;
-	struct args {
-		char	*hostname;
-		u_int	len;
-	} *uap;
+	struct gethostname_args *uap;
 	int *retval;
 {
 
@@ -86,14 +90,16 @@ gethostname(p, uap, retval)
 	return (copyout((caddr_t)hostname, (caddr_t)uap->hostname, uap->len));
 }
 
+struct sethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+
 /* ARGSUSED */
 int
 sethostname(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		char	*hostname;
-		u_int	len;
-	} *uap;
+	register struct sethostname_args *uap;
 	int *retval;
 {
 	int error;
@@ -108,14 +114,16 @@ sethostname(p, uap, retval)
 	return (error);
 }
 
+struct getdomainname_args {
+	char	*domainname;
+	u_int	len;
+};
+
 /* ARGSUSED */
 int
 getdomainname(p, uap, retval)
 	struct proc *p;
-	struct args {
-		char	*domainname;
-		u_int	len;
-	} *uap;
+	struct getdomainname_args *uap;
 	int *retval;
 {
 	if (uap->len > domainnamelen + 1)
@@ -123,14 +131,16 @@ getdomainname(p, uap, retval)
 	return (copyout((caddr_t)domainname, (caddr_t)uap->domainname, uap->len));
 }
 
+struct setdomainname_args {
+	char	*domainname;
+	u_int	len;
+};
+
 /* ARGSUSED */
 int
 setdomainname(p, uap, retval)
 	struct proc *p;
-	struct args {
-		char	*domainname;
-		u_int	len;
-	} *uap;
+	struct setdomainname_args *uap;
 	int *retval;
 {
 	int error;
@@ -145,13 +155,15 @@ setdomainname(p, uap, retval)
 	return (error);
 }
 
+struct uname_args {
+	struct utsname	*name;
+};
+
 /* ARGSUSED */
 int
 uname(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct utsname	*name;
-	} *uap;
+	struct uname_args *uap;
 	int *retval;
 {
 	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
@@ -159,13 +171,15 @@ uname(p, uap, retval)
 	return (copyout((caddr_t)&utsname, (caddr_t)uap->name, sizeof(struct utsname)));
 }
 
+struct reboot_args {
+	int	opt;
+};
+
 /* ARGSUSED */
 int
 reboot(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	opt;
-	} *uap;
+	struct reboot_args *uap;
 	int *retval;
 {
 	int error;
