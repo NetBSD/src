@@ -59,6 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "regs.h"
 #include "insn-config.h"
 #include "insn-flags.h"
+#include "insn-attr.h"
 #include "recog.h"
 #include "expr.h"
 #include "real.h"
@@ -3650,6 +3651,17 @@ delete_computation (insn)
     }
 #endif
 
+#ifdef INSN_SCHEDULING
+  /* ?!? The schedulers do not keep REG_DEAD notes accurate after
+     reload has completed.  The schedulers need to be fixed.  Until
+     they are, we must not rely on the death notes here.  */
+  if (reload_completed && flag_schedule_insns_after_reload)
+    {
+      delete_insn (insn);
+      return;
+    }
+#endif
+
   for (note = REG_NOTES (insn); note; note = next)
     {
       rtx our_prev;
@@ -4344,6 +4356,10 @@ rtx_renumbered_equal_p (x, y)
 
     case SYMBOL_REF:
       return XSTR (x, 0) == XSTR (y, 0);
+
+    case CODE_LABEL:
+      /* If we didn't match EQ equality above, they aren't the same.  */
+      return 0;
 
     default:
       break;

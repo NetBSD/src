@@ -1,4 +1,4 @@
-/* Copyright (C) 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1997, 1999 Free Software Foundation, Inc.
  * This is part of the G77 manual.
  * For copying conditions, see the file g77.texi. */
 
@@ -285,7 +285,7 @@ be zero.
 
 @xref{Exp Intrinsic}, for the inverse of this function.
 
-@xref{Log10 Intrinsic}, for the base-10 logarithm function.
+@xref{Log10 Intrinsic}, for the `common' (base-10) logarithm function.
 ")
 
 DEFDOC (ALOG, "Natural logarithm (archaic).", ARCHAIC (LOG, Log))
@@ -296,19 +296,18 @@ DEFDOC (DLOG, "Natural logarithm (archaic).", ARCHAIC (LOG, Log))
 
 DEFDOC (CDLOG, "Natural logarithm (archaic).", ARCHAIC (LOG, Log))
 
-DEFDOC (LOG10, "Natural logarithm.", "\
-Returns the natural logarithm of @var{@1@}, which must
-be greater than zero or, if type @code{COMPLEX}, must not
-be zero.
+DEFDOC (LOG10, "Common logarithm.", "\
+Returns the common logarithm (base 10) of @var{@1@}, which must
+be greater than zero.
 
 The inverse of this function is @samp{10. ** LOG10(@var{@1@})}.
 
 @xref{Log Intrinsic}, for the natural logarithm function.
 ")
 
-DEFDOC (ALOG10, "Natural logarithm (archaic).", ARCHAIC (LOG10, Log10))
+DEFDOC (ALOG10, "Common logarithm (archaic).", ARCHAIC (LOG10, Log10))
 
-DEFDOC (DLOG10, "Natural logarithm (archaic).", ARCHAIC (LOG10, Log10))
+DEFDOC (DLOG10, "Common logarithm (archaic).", ARCHAIC (LOG10, Log10))
 
 DEFDOC (MAX, "Maximum value.", "\
 Returns the argument with the largest value.
@@ -1263,6 +1262,13 @@ DEFDOC (MCLOCK8, "Get number of clock ticks for process.", "\
 Returns the number of clock ticks since the start of the process.
 Supported on systems with @code{clock(3)} (q.v.).
 
+@emph{Warning:} this intrinsic does not increase the range
+of the timing values over that returned by @code{clock(3)}.
+On a system with a 32-bit @code{clock(3)},
+@code{@0@} will return a 32-bit value,
+even though converted to an @samp{INTEGER(KIND=2)} value.
+That means overflows of the 32-bit value can still occur.
+
 No Fortran implementations other than GNU Fortran are
 known to support this intrinsic at the time of this
 writing.
@@ -1288,7 +1294,7 @@ DEFDOC (SECOND_subr, "Get CPU time for process@99@in seconds.", "\
 Returns the process's runtime in seconds in @var{@1@}---the same value
 as the UNIX function @code{etime} returns.
 
-This routine is known from Cray Fortran.  @xref{CPU_Time Intrinsic}
+This routine is known from Cray Fortran.  @xref{CPU_Time Intrinsic},
 for a standard equivalent.
 ")
 
@@ -1314,6 +1320,13 @@ Returns the current time encoded as a long integer
 (in the manner of the UNIX function @code{time(3)}).
 This value is suitable for passing to @code{CTIME},
 @code{GMTIME}, and @code{LTIME}.
+
+@emph{Warning:} this intrinsic does not increase the range
+of the timing values over that returned by @code{time(3)}.
+On a system with a 32-bit @code{time(3)},
+@code{@0@} will return a 32-bit value,
+even though converted to an @samp{INTEGER(KIND=2)} value.
+That means overflows of the 32-bit value can still occur.
 
 No Fortran implementations other than GNU Fortran are
 known to support this intrinsic at the time of this
@@ -1538,16 +1551,13 @@ extracted from the @code{stat} structure as returned by
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1557,6 +1567,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1571,10 +1585,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -1592,16 +1606,13 @@ extracted from the @code{stat} structure as returned by
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1611,6 +1622,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1625,10 +1640,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -1656,16 +1671,13 @@ The values in this array are extracted from the
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1675,6 +1687,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1689,10 +1705,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -1716,16 +1732,13 @@ The values in this array are extracted from the
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1735,6 +1748,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1749,10 +1766,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -1778,16 +1795,13 @@ The values in this array are extracted from the
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1797,6 +1811,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1811,10 +1829,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -1834,16 +1852,13 @@ The values in this array are extracted from the
 
 @enumerate
 @item
-File mode
+Device ID
 
 @item
 Inode number
 
 @item
-ID of device containing directory entry for file
-
-@item
-Device id (if relevant)
+File mode
 
 @item
 Number of links
@@ -1853,6 +1868,10 @@ Owner's uid
 
 @item
 Owner's gid
+
+@item
+ID of device containing directory entry for file
+(0 if not available)
 
 @item
 File size (bytes)
@@ -1867,10 +1886,10 @@ Last modification time
 Last file status change time
 
 @item
-Preferred I/O block size
+Preferred I/O block size (-1 if not available)
 
 @item
-Number of blocks allocated
+Number of blocks allocated (-1 if not available)
 @end enumerate
 
 Not all these elements are relevant on all systems.
@@ -2396,18 +2415,18 @@ DEFDOC (TIME_vxt, "Get the time as a character value.", "\
 Returns in @var{@1@} a character representation of the current time as
 obtained from @code{ctime(3)}.
 
-@xref{Fdate Intrinsic (subroutine)} for an equivalent routine.
+@xref{Fdate Intrinsic (subroutine)}, for an equivalent routine.
 ")
 
 DEFDOC (IBCLR, "Clear a bit.", "\
 Returns the value of @var{@1@} with bit @var{@2@} cleared (set to
 zero).
-@xref{BTest Intrinsic} for information on bit positions.
+@xref{BTest Intrinsic}, for information on bit positions.
 ")
 
 DEFDOC (IBSET, "Set a bit.", "\
 Returns the value of @var{@1@} with bit @var{@2@} set (to one).
-@xref{BTest Intrinsic} for information on bit positions.
+@xref{BTest Intrinsic}, for information on bit positions.
 ")
 
 DEFDOC (IBITS, "Extract a bit subfield of a variable.", "\
@@ -2430,7 +2449,7 @@ Bits shifted out from the left end or the right end, as the case may be,
 are lost.
 Zeros are shifted in from the opposite end.
 
-@xref{IShftC Intrinsic} for the circular-shift equivalent.
+@xref{IShftC Intrinsic}, for the circular-shift equivalent.
 ")
 
 DEFDOC (ISHFTC, "Circular bit shift.", "\
@@ -2446,7 +2465,7 @@ must be less than or equal to @var{@3@}.
 The value of @var{@3@} must be greater than or equal to one and less than 
 or equal to @samp{BIT_SIZE(@var{@1@})}.
 
-@xref{IShft Intrinsic} for the logical shift equivalent.
+@xref{IShft Intrinsic}, for the logical shift equivalent.
 ")
 
 DEFDOC (MVBITS, "Moving a bit field.", "\
@@ -2490,7 +2509,8 @@ The difference between local time and UTC (GMT) in the form @var{Shhmm}:
 sign, hours and minutes, e.g.@: @samp{-0500} (winter in New York);
 @item @4@
 The year, month of the year, day of the month, time difference in
-minutes from UTC, hour of the day, minutes of the hour and milliseconds
+minutes from UTC, hour of the day, minutes of the hour, seconds
+of the minute, and milliseconds
 of the second in successive values of the array.
 @end table
 

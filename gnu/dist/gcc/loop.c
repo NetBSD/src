@@ -195,6 +195,9 @@ static rtx loop_store_mems[NUM_STORES];
 /* Index of first available slot in above array.  */
 static int loop_store_mems_idx;
 
+/* The insn where the first of these was found.  */
+static rtx first_loop_store_insn;
+
 /* Nonzero if we don't know what MEMs were changed in the current loop.
    This happens if the loop contains a call (in which case `loop_has_call'
    will also be set) or if we store into more than NUM_STORES MEMs.  */
@@ -790,10 +793,10 @@ scan_loop (loop_start, end, nregs, unroll_p)
 	     (1) it is used only in the same basic block as the set
 	     (2) the set is guaranteed to be executed once the loop starts,
 	         and the reg is not used until after that.  */
-	  else if (! ((! maybe_never
-		       && ! loop_reg_used_before_p (set, p, loop_start,
-						    scan_start, end))
-		      || reg_in_basic_block_p (p, SET_DEST (set))))
+	  else if (! (reg_in_basic_block_p (p, SET_DEST (set))
+		      || (! maybe_never
+			  && ! loop_reg_used_before_p (set, p, loop_start,
+						       scan_start, end))))
 	    ;
 	  else if ((tem = invariant_p (src))
 		   && (dependencies == 0
@@ -2288,6 +2291,7 @@ prescan_loop (start, end)
   unknown_address_altered = 0;
   loop_has_call = 0;
   loop_has_volatile = 0;
+  first_loop_store_insn = NULL_RTX;
   loop_store_mems_idx = 0;
 
   num_mem_sets = 0;
@@ -2334,6 +2338,9 @@ prescan_loop (start, end)
 		loop_has_volatile = 1;
 
 	      note_stores (PATTERN (insn), note_addr_stored);
+	      if (! first_loop_store_insn && loop_store_mems_idx != 0)
+		first_loop_store_insn = insn;
+
 	    }
 	}
     }
@@ -2694,6 +2701,11 @@ mark_loop_jump (x, loop_num)
       mark_loop_jump (XEXP (x, 1), loop_num);
       return;
 
+    case LO_SUM:
+      /* This may refer to a LABEL_REF or SYMBOL_REF.  */
+      mark_loop_jump (XEXP (x, 1), loop_num);
+      return;
+
     case SIGN_EXTEND:
     case ZERO_EXTEND:
       mark_loop_jump (XEXP (x, 0), loop_num);
@@ -2781,21 +2793,21 @@ mark_loop_jump (x, loop_num)
       return;
 
     default:
-      /* Treat anything else (such as a symbol_ref)
-	 as a branch out of this loop, but not into any loop.  */
-
+      /* Strictly speaking this is not a jump into the loop, only a possible
+	 jump out of the loop.  However, we have no way to link the destination
+	 of this jump onto the list of exit labels.  To be safe we mark this
+	 loop and any containing loops as invalid.  */
       if (loop_num != -1)
 	{
-#ifdef HAIFA
-	  LABEL_OUTSIDE_LOOP_P (x) = 1;
-	  LABEL_NEXTREF (x) = loop_number_exit_labels[loop_num];
-#endif  /* HAIFA */
-
-	  loop_number_exit_labels[loop_num] = x;
-
 	  for (outer_loop = loop_num; outer_loop != -1;
 	       outer_loop = loop_outer_loop[outer_loop])
-	    loop_number_exit_count[outer_loop]++;
+	    {
+	      if (loop_dump_stream && ! loop_invalid[outer_loop])
+		fprintf (loop_dump_stream,
+			 "\nLoop at %d ignored due to unknown exit jump.\n",
+			 INSN_UID (loop_number_loop_starts[outer_loop]));
+	      loop_invalid[outer_loop] = 1;
+	    }
 	}
       return;
     }
@@ -6274,9 +6286,26 @@ check_dbra_loop (loop_end, insn_count, loop_start)
 	 case, the insn should have been moved out of the loop.  */
 
       if (num_mem_sets == 1)
-	reversible_mem_store
-	  = (! unknown_address_altered
-	     && ! invariant_p (XEXP (loop_store_mems[0], 0)));
+	{
+	  struct induction *v;
+
+	  reversible_mem_store
+	    = (! unknown_address_altered
+	       && ! invariant_p (XEXP (loop_store_mems[0], 0)));
+
+	  /* If the store depends on a register that is set after the
+	     store, it depends on the initial value, and is thus not
+	     reversible.  */
+	  for (v = bl->giv; reversible_mem_store && v; v = v->next_iv)
+	    {
+	      if (v->giv_type == DEST_REG
+		  && reg_mentioned_p (v->dest_reg, loop_store_mems[0])
+		  && (INSN_UID (v->insn) >= max_uid_for_loop
+		      || (INSN_LUID (v->insn)
+			  > INSN_LUID (first_loop_store_insn))))
+		reversible_mem_store = 0;
+	    }
+	}
 
       /* This code only acts for innermost loops.  Also it simplifies
 	 the memory address check by only reversing loops with
