@@ -1,6 +1,8 @@
+/*	$NetBSD: inet_network.c,v 1.4 1995/02/25 06:20:45 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)inet_network.c	5.8 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: inet_network.c,v 1.3 1993/08/26 00:46:06 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: inet_network.c,v 1.4 1995/02/25 06:20:45 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

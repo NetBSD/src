@@ -1,6 +1,8 @@
+/*	$NetBSD: getprotoent.c,v 1.4 1995/02/25 06:20:35 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getprotoent.c	5.8 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: getprotoent.c,v 1.3 1993/08/26 00:45:55 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: getprotoent.c,v 1.4 1995/02/25 06:20:35 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

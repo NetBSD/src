@@ -1,6 +1,8 @@
+/*	$NetBSD: inet_addr.c,v 1.5 1995/02/25 06:20:41 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)inet_addr.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: inet_addr.c,v 1.4 1994/04/07 07:00:15 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
+#else
+static char rcsid[] = "$NetBSD: inet_addr.c,v 1.5 1995/02/25 06:20:41 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -63,14 +68,16 @@ inet_addr(cp)
  * This replaces inet_addr, the return value from which
  * cannot distinguish between failure and a local broadcast address.
  */
-
+int
 inet_aton(cp, addr)
-	const register char *cp;
+	register const char *cp;
 	struct in_addr *addr;
 {
-	register u_long val, base, n;
+	register u_long val;
+	register int base, n;
 	register char c;
-	u_long parts[4], *pp = parts;
+	u_int parts[4];
+	register u_int *pp = parts;
 
 	for (;;) {
 		/*

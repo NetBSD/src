@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_ntoa.c,v 1.4 1995/02/25 06:20:51 cgd Exp $	*/
+
 /*
- * Copyright (c) 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ns_ntoa.c	6.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: ns_ntoa.c,v 1.3 1993/08/26 00:46:11 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: ns_ntoa.c,v 1.4 1995/02/25 06:20:51 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

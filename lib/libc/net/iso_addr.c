@@ -1,6 +1,8 @@
+/*	$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)iso_addr.c	5.4 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: iso_addr.c,v 1.3 1993/08/26 00:46:08 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: iso_addr.c,v 1.4 1995/02/25 06:20:47 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,10 +1,10 @@
+/*	$NetBSD: ethers.c,v 1.5 1995/02/25 06:20:28 cgd Exp $	*/
+
 /* 
  * ethers(3N) a la Sun.
  *
  * Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Public domain.
- *
- * $Id: ethers.c,v 1.4 1993/12/30 04:21:05 deraadt Exp $
  */
 
 #include <sys/types.h>

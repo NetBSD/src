@@ -1,6 +1,8 @@
+/*	$NetBSD: res_init.c,v 1.7 1995/02/25 06:20:57 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1985, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +31,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)res_init.c	6.15 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: res_init.c,v 1.6 1994/10/15 07:59:01 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
+static char rcsid[] = "$Id: res_init.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
+#else
+static char rcsid[] = "$NetBSD: res_init.c,v 1.7 1995/02/25 06:20:57 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -83,7 +109,11 @@ res_init()
 	int nsort = 0;
 	u_long mask;
 
+#ifdef USELOOPBACK
+	_res.nsaddr.sin_addr = inet_makeaddr(IN_LOOPBACKNET, 1);
+#else
 	_res.nsaddr.sin_addr.s_addr = INADDR_ANY;
+#endif
 	_res.nsaddr.sin_family = AF_INET;
 	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
 	_res.nscount = 1;
@@ -94,6 +124,8 @@ res_init()
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
 		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
+			*cp = '\0';
 		haveenv++;
 
 		/*
@@ -142,8 +174,9 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    if ((cp = strpbrk(_res.defdname, "\t\n")) != NULL)
+		    (void)strncpy(_res.defdname, cp,
+				  sizeof(_res.defdname) - 1);
+		    if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
 		    continue;
@@ -184,7 +217,8 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		    (void)strncpy(_res.defdname, cp,
+				  sizeof(_res.defdname) - 1);
 		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
@@ -214,16 +248,16 @@ res_init()
 		/* read nameservers to query */
 		if (!strncmp(buf, "nameserver", sizeof("nameserver") - 1) &&
 		   nserv < MAXNS) {
-		    struct in_addr a;
+		   struct in_addr a;
 
 		    cp = buf + sizeof("nameserver") - 1;
 		    while (*cp == ' ' || *cp == '\t')
-			    cp++;
+			cp++;
 		    if ((*cp != '\0') && (*cp != '\n') && inet_aton(cp, &a)) {
 			_res.nsaddr_list[nserv].sin_addr = a;
 			_res.nsaddr_list[nserv].sin_family = AF_INET;
 			_res.nsaddr_list[nserv].sin_port =
-			    htons(NAMESERVER_PORT);
+				htons(NAMESERVER_PORT);
 			nserv++;
 		    }
 		    continue;
@@ -275,7 +309,20 @@ res_init()
 	if (havesearch == 0) {
 		pp = _res.dnsrch;
 		*pp++ = _res.defdname;
+#ifndef SEARCH_LOCAL_DOMAINS
 		*pp = NULL;
+#else
+		for (cp = _res.defdname, n = 0; *cp; cp++)
+			if (*cp == '.')
+				n++;
+		cp = _res.defdname;
+		for (; n >= LOCALDOMAINPARTS && pp < _res.dnsrch + MAXDFLSRCH;
+		    n--) {
+			cp = strchr(cp, '.');
+			*pp++ = ++cp;
+		}
+		*pp++ = 0;
+#endif
 	}
 
 	if ((cp = getenv("RES_OPTIONS")) != NULL)

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1987, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: gethostbyname.3,v 1.6 1995/02/25 06:20:28 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1987, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)gethostbyname.3	6.14 (Berkeley) 7/31/91
-.\"	$Id: gethostbyname.3,v 1.5 1994/04/07 07:00:10 deraadt Exp $
+.\"     @(#)gethostbyname.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 31, 1991
+.Dd April 19, 1994
 .Dt GETHOSTBYNAME 3
 .Os BSD 4.2
 .Sh NAME
@@ -217,17 +218,20 @@ opening the file if necessary.
 The
 .Fn sethostent
 function
-is redefined to open and rewind the file.  If the
+opens and/or rewinds the file
+.Pa /etc/hosts .
+If the
 .Fa stayopen
 argument is non-zero,
-the hosts data base will not be closed after each call to
+the file will not be closed after each call to
 .Fn gethostbyname
 or
 .Fn gethostbyaddr .
+.Pp
 The
 .Fn endhostent
 function
-is redefined to close the file.
+closes the file.
 .Sh HISTORY
 The
 .Fn herror
