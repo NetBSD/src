@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.57 1998/03/18 19:12:57 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.58 1998/03/18 19:21:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.57 1998/03/18 19:12:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.58 1998/03/18 19:21:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2788,6 +2788,11 @@ pmap_create_lev1map(pmap)
 	pt_entry_t pte;
 	int i;
 
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_create_lev1map: got kernel pmap");
+#endif
+
 	/*
 	 * Allocate a page for the level 1 table.
 	 */
@@ -2834,6 +2839,11 @@ pmap_destroy_lev1map(pmap)
 {
 	struct pv_head *pvh;
 	vm_offset_t ptpa;
+
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_destroy_lev1map: got kernel pmap");
+#endif
 
 	ptpa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)pmap->pm_lev1map);
 
@@ -2986,7 +2996,7 @@ pmap_ptpage_delref(pte)
 
 #ifdef DIAGNOSTIC
 	if ((pvh->pvh_attrs & PMAP_ATTR_PTPAGE) == 0)
-		panic("pmap_ptpage_addref: not a PT page");
+		panic("pmap_ptpage_delref: not a PT page");
 #endif
 
 	pvh->pvh_ptref--;
