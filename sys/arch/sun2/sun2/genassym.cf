@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2003/01/18 06:58:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.4 2003/09/21 14:41:33 cl Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -108,6 +108,7 @@ define	SUN2_CLK_TIMER_CLEAR_OUTPUT	AM9513_CMD_CLEAR_OUTPUT(AM9513_TIMER2)
 # kernel-isms
 define	KERNBASE			KERNBASE
 define	USPACE				USPACE
+define	PAGE_SIZE			PAGE_SIZE
 define	NBPG				NBPG
 define	NBSG				NBSG
 
