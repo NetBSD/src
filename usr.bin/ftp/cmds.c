@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.95 2001/12/26 09:40:15 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.96 2002/05/06 14:36:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.95 2001/12/26 09:40:15 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.96 2002/05/06 14:36:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1346,7 +1346,7 @@ mls(int argc, char *argv[])
 	sigfunc oldintr;
 	int ointer, i;
 	int dolist;
-	char mode[1], *dest, *odest;
+	char *mode, *dest, *odest;
 
 	if (argc == 0)
 		goto usage;
@@ -1373,7 +1373,7 @@ mls(int argc, char *argv[])
 	if (sigsetjmp(jabort, 1))
 		mabort();
 	for (i = 1; mflag && i < argc-1 && connected; i++) {
-		*mode = (i == 1) ? 'w' : 'a';
+		mode = (i == 1) ? "w" : "a";
 		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
 		    0, 0);
 		if (!mflag && fromatty) {
