@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)externs.h	5.3 (Berkeley) 3/22/91
- *	$Id: externs.h,v 1.2 1993/08/01 18:07:31 mycroft Exp $
+ *	from: @(#)externs.h	8.1 (Berkeley) 6/6/93
+ *	$Id: externs.h,v 1.3 1994/02/25 03:00:25 cgd Exp $
  */
 
 #ifndef	BSD
 # define BSD 43
 #endif
 
-#if (BSD > 43 || defined(SYSV_TERMIO)) && !defined(USE_TERMIO)
-# define USE_TERMIO
+/*
+ * ucb stdio.h defines BSD as something wierd
+ */
+#if defined(sun) && defined(__svr4__)
+#define BSD 43
+#endif
+
+#ifndef	USE_TERMIO
+# if BSD > 43 || defined(SYSV_TERMIO)
+#  define USE_TERMIO
+# endif
 #endif
 
 #include <stdio.h>
 #include <setjmp.h>
+#if defined(CRAY) && !defined(NO_BSD_SETJMP)
+#include <bsdsetjmp.h>
+#endif
 #ifndef	FILIO_H
 #include <sys/ioctl.h>
 #else
 #include <sys/filio.h>
 #endif
+#ifdef CRAY
+# include <errno.h>
+#endif /* CRAY */
 #ifdef	USE_TERMIO
 # ifndef	VINTR
 #  ifdef SYSV_TERMIO
@@ -85,7 +100,9 @@ typedef unsigned char cc_t;
 
 #define	SUBBUFSIZE	256
 
+#ifndef CRAY
 extern int errno;		/* outside this world */
+#endif /* !CRAY */
 
 #if	!defined(P)
 # ifdef	__STDC__
@@ -105,6 +122,7 @@ extern int
     In3270,			/* Are we in 3270 mode? */
     telnetport,		/* Are we connected to the telnet port? */
     localflow,		/* Flow control handled locally */
+    restartany,		/* If flow control, restart output on any character */
     localchars,		/* we recognize interrupt/quit */
     donelclchars,		/* the user has set "localchars" */
     showoptions,
@@ -145,10 +163,6 @@ extern char
     wont[],
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
-#if	defined(ENCRYPT)
-extern void (*encrypt_output) P((unsigned char *, int));
-extern int (*decrypt_input) P((int));
-#endif
 
 /*
  * We keep track of each side of the option negotiation.
@@ -247,6 +261,12 @@ extern void
     wontoption P((int));
 
 extern void
+    send_do P((int, int)),
+    send_dont P((int, int)),
+    send_will P((int, int)),
+    send_wont P((int, int));
+
+extern void
     lm_will P((unsigned char *, int)),
     lm_wont P((unsigned char *, int)),
     lm_do P((unsigned char *, int)),
@@ -276,7 +296,7 @@ extern void
     env_opt_end P((int));
 
 extern unsigned char
-    *env_default P((int)),
+    *env_default P((int, int)),
     *env_getvalue P((unsigned char *));
 
 extern int
@@ -450,12 +470,9 @@ extern char
     tline[],
     *transcom;		/* Transparent command */
 
-extern void
+extern int
     settranscom P((int, char**));
 
-extern int
-    shell P((int, char**));
-
 extern void
-    inputAvailable P((void));
+    inputAvailable P((int));
 #endif	/* defined(TN3270) */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sys_bsd.c	5.2 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: sys_bsd.c,v 1.4 1993/12/02 22:58:58 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)sys_bsd.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$Id: sys_bsd.c,v 1.5 1994/02/25 03:00:39 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,10 @@ static char rcsid[] = "$Id: sys_bsd.c,v 1.4 1993/12/02 22:58:58 mycroft Exp $";
 #define	SIG_FUNC_RET	void
 #else
 #define	SIG_FUNC_RET	int
+#endif
+
+#ifdef	SIGINFO
+extern SIG_FUNC_RET ayt_status();
 #endif
 
 int
@@ -106,6 +110,9 @@ extern struct termio new_tc;
 #   define	cfgetispeed(ptr)	cfgetospeed(ptr)
 #  endif
 # endif /* TCSANOW */
+# ifdef	sysV88
+# define TIOCFLUSH TC_PX_DRAIN
+# endif
 #endif	/* USE_TERMIO */
 
 static fd_set ibits, obits, xbits;
@@ -172,14 +179,12 @@ extern int kludgelinemode;
  *	1	Do add this character
  */
 
-void intp(), sendbrk(), sendabort();
+extern void xmitAO(), xmitEL(), xmitEC(), intp(), sendbrk();
 
     int
 TerminalSpecialChars(c)
     int	c;
 {
-    void xmitAO(), xmitEL(), xmitEC();
-
     if (c == termIntChar) {
 	intp();
 	return 0;
@@ -378,7 +383,6 @@ TerminalRestoreState()
  *		local/no signal mapping
  */
 
-SIG_FUNC_RET ayt_status();
 
     void
 TerminalNewMode(f)
@@ -469,9 +473,16 @@ TerminalNewMode(f)
 	tc.t_startc = _POSIX_VDISABLE;
 	tc.t_stopc = _POSIX_VDISABLE;
 #else
-	tmp_tc.c_iflag &= ~(IXANY|IXOFF|IXON);
+	tmp_tc.c_iflag &= ~(IXOFF|IXON);	/* Leave the IXANY bit alone */
     } else {
-	tmp_tc.c_iflag |= IXANY|IXOFF|IXON;
+	if (restartany < 0) {
+		tmp_tc.c_iflag |= IXOFF|IXON;	/* Leave the IXANY bit alone */
+	} else if (restartany > 0) {
+		tmp_tc.c_iflag |= IXOFF|IXON|IXANY;
+	} else {
+		tmp_tc.c_iflag |= IXOFF|IXON;
+		tmp_tc.c_iflag &= ~IXANY;
+	}
 #endif
     }
 
@@ -601,18 +612,18 @@ TerminalNewMode(f)
 
     if (f != -1) {
 #ifdef	SIGTSTP
-	static SIG_FUNC_RET susp();
+	SIG_FUNC_RET susp();
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
-	static SIG_FUNC_RET ayt();
-#endif	SIGINFO
+	SIG_FUNC_RET ayt();
+#endif
 
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, susp);
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
 	(void) signal(SIGINFO, ayt);
-#endif	SIGINFO
+#endif
 #if	defined(USE_TERMIO) && defined(NOKERNINFO)
 	tmp_tc.c_lflag |= NOKERNINFO;
 #endif
@@ -653,8 +664,10 @@ TerminalNewMode(f)
 #endif
     } else {
 #ifdef	SIGINFO
+	SIG_FUNC_RET ayt_status();
+
 	(void) signal(SIGINFO, ayt_status);
-#endif	SIGINFO
+#endif
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
 	(void) sigsetmask(sigblock(0) & ~(1<<(SIGTSTP-1)));
@@ -679,8 +692,10 @@ TerminalNewMode(f)
 #endif
 
 #if	(!defined(TN3270)) || ((!defined(NOT43)) || defined(PUTCHAR))
+# if	!defined(sysV88)
     ioctl(tin, FIONBIO, (char *)&onoff);
     ioctl(tout, FIONBIO, (char *)&onoff);
+# endif
 #endif	/* (!defined(TN3270)) || ((!defined(NOT43)) || defined(PUTCHAR)) */
 #if	defined(TN3270)
     if (noasynchtty == 0) {
@@ -690,31 +705,12 @@ TerminalNewMode(f)
 
 }
 
-#if defined(USE_TERMIO) && !defined(SYSV_TERMIO)
-    void
-TerminalSpeeds(ispeed, ospeed)
-    long *ispeed;
-    long *ospeed;
-{
-
-    *ispeed = cfgetispeed(&old_tc);
-    *ospeed = cfgetospeed(&old_tc);
-}
-#else /* USE_TERMIO && !SYSV_TERMIO */
 #ifndef	B19200
 # define B19200 B9600
 #endif
 
 #ifndef	B38400
 # define B38400 B19200
-#endif
-
-#ifndef B57600
-# define B57600 B38400
-#endif
-
-#ifndef B115200
-# define B115200 B57600
 #endif
 
 /*
@@ -726,13 +722,12 @@ struct termspeeds {
 	long speed;
 	long value;
 } termspeeds[] = {
-	{ 0,      B0 },      { 50,     B50 },    { 75,     B75 },
-	{ 110,    B110 },    { 134,    B134 },   { 150,    B150 },
-	{ 200,    B200 },    { 300,    B300 },   { 600,    B600 },
-	{ 1200,   B1200 },   { 1800,   B1800 },  { 2400,   B2400 },
-	{ 4800,   B4800 },   { 9600,   B9600 },  { 19200,  B19200 },
-	{ 38400,  B38400 },  { 57600,  B57600 }, { 115200, B115200 },
-	{ -1,     B115200 }
+	{ 0,     B0 },     { 50,    B50 },   { 75,    B75 },
+	{ 110,   B110 },   { 134,   B134 },  { 150,   B150 },
+	{ 200,   B200 },   { 300,   B300 },  { 600,   B600 },
+	{ 1200,  B1200 },  { 1800,  B1800 }, { 2400,  B2400 },
+	{ 4800,  B4800 },  { 9600,  B9600 }, { 19200, B19200 },
+	{ 38400, B38400 }, { -1,    B38400 }
 };
 
     void
@@ -758,7 +753,6 @@ TerminalSpeeds(ispeed, ospeed)
 	tp++;
     *ospeed = tp->speed;
 }
-#endif /* USE_TERMIO && !SYSV_TERMIO */
 
     int
 TerminalWindowSize(rows, cols)
@@ -817,7 +811,7 @@ NetSetPgrp(fd)
  */
 
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 deadpeer(sig)
     int sig;
 {
@@ -826,7 +820,7 @@ deadpeer(sig)
 }
 
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 intr(sig)
     int sig;
 {
@@ -839,7 +833,7 @@ intr(sig)
 }
 
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 intr2(sig)
     int sig;
 {
@@ -856,7 +850,7 @@ intr2(sig)
 
 #ifdef	SIGTSTP
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 susp(sig)
     int sig;
 {
@@ -869,7 +863,7 @@ susp(sig)
 
 #ifdef	SIGWINCH
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 sendwin(sig)
     int sig;
 {
@@ -881,7 +875,7 @@ sendwin(sig)
 
 #ifdef	SIGINFO
     /* ARGSUSED */
-    static SIG_FUNC_RET
+    SIG_FUNC_RET
 ayt(sig)
     int sig;
 {
@@ -1120,7 +1114,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	}
 	settimer(didnetreceive);
 #else	/* !defined(SO_OOBINLINE) */
-	c = recv(net, netiring.supply, canread, 0);
+	c = recv(net, (char *)netiring.supply, canread, 0);
 #endif	/* !defined(SO_OOBINLINE) */
 	if (c < 0 && errno == EWOULDBLOCK) {
 	    c = 0;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)terminal.c	5.3 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: terminal.c,v 1.2 1993/08/01 18:07:17 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)terminal.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$Id: terminal.c,v 1.3 1994/02/25 03:00:47 cgd Exp $";
 #endif /* not lint */
 
 #include <arpa/telnet.h>
@@ -206,29 +206,12 @@ getconnmode()
 setconnmode(force)
     int force;
 {
-#ifdef	ENCRYPT
-    static int enc_passwd = 0;
-#endif
     register int newmode;
 
     newmode = getconnmode()|(force?MODE_FORCE:0);
 
     TerminalNewMode(newmode);
 
-#ifdef  ENCRYPT
-    if ((newmode & (MODE_ECHO|MODE_EDIT)) == MODE_EDIT) {
-	if (my_want_state_is_will(TELOPT_ENCRYPT)
-				&& (enc_passwd == 0) && !encrypt_output) {
-	    encrypt_request_start(0, 0);
-	    enc_passwd = 1;
-	}
-    } else {
-	if (enc_passwd) {
-	    encrypt_request_end();
-	    enc_passwd = 0;
-	}
-    }
-#endif
 
 }
 

@@ -30,15 +30,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	from: @(#)Makefile	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.2 1993/07/30 23:50:34 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.3 1994/02/25 03:00:16 cgd Exp $
 #
 
 PROG=	telnet
 
 CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO
+CFLAGS+=-DENV_HACK
 CFLAGS+=-I${.CURDIR}/../../lib
-
 
 LDADD=	-ltermcap -ltelnet
 DPADD=	${LIBTERMCAP}
@@ -46,4 +46,12 @@ DPADD=	${LIBTERMCAP}
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c
 
+# These are the sources that have encryption stuff in them.
+CRYPT_SRC= authenc.c commands.c externs.h main.c network.c
+CRYPT_SRC+= ring.c ring.h telnet.c terminal.c utilities.c Makefile
+NOCRYPT_DIR=${.CURDIR}/Nocrypt
+
 .include <bsd.prog.mk>
+
+nocrypt:
+	@echo "Encryption code already removed."
