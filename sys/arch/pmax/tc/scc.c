@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.44 1998/11/15 11:21:53 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.45 1999/01/28 10:28:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.44 1998/11/15 11:21:53 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.45 1999/01/28 10:28:43 jonathan Exp $");
 
 #include "opt_ddb.h"
 
@@ -232,9 +232,9 @@ struct speedtab sccspeedtab[] = {
 	{ 28800,	6,	},	/* non-POSIX */
 	{ 38400,	4,	},	/* non-POSIX */
 	{ 57600,	2,	},	/* non-POSIX */
-#ifdef SCC_HIGHSPEED
+#ifndef SCC_NO_HIGHSPEED
 	{ 76800,	1,	},	/* non-POSIX, doesn't work reliably */
-	{ 115200, 	0	},	/* non-POSIX doesn't work reliably */
+	{ 115200, 	0	},	/* non-POSIX, doesn't work reliably */
 #endif
 	{ -1,		-1,	},
 };
@@ -959,7 +959,7 @@ cold_sccparam(tp, t, sc)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 
-	if (ospeed == 0) {
+	if (t->c_ospeed == 0) {
 		(void) sccmctl(tp->t_dev, 0, DMSET);	/* hang up line */
 		return (0);
 	}
