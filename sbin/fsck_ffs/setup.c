@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.59 2003/04/05 13:45:21 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.60 2003/04/06 17:23:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.59 2003/04/05 13:45:21 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.60 2003/04/06 17:23:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -696,17 +696,25 @@ out:
         /*
          * If not yet done, update UFS1 superblock with new wider fields.
          */
-        if (sblock->fs_magic == FS_UFS1_MAGIC &&
-	    sblock->fs_maxbsize != sblock->fs_bsize) {
-		sblock->fs_maxbsize = sblock->fs_bsize;
-		sblock->fs_time = sblock->fs_old_time;
-		sblock->fs_size = sblock->fs_old_size;
-		sblock->fs_dsize = sblock->fs_old_dsize;
-		sblock->fs_csaddr = sblock->fs_old_csaddr;
-		sblock->fs_cstotal.cs_ndir = sblock->fs_old_cstotal.cs_ndir;
-		sblock->fs_cstotal.cs_nbfree = sblock->fs_old_cstotal.cs_nbfree;
-		sblock->fs_cstotal.cs_nifree = sblock->fs_old_cstotal.cs_nifree;
-		sblock->fs_cstotal.cs_nffree = sblock->fs_old_cstotal.cs_nffree;
+        if (sblock->fs_magic == FS_UFS1_MAGIC) {
+		if (sblock->fs_maxbsize != sblock->fs_bsize ||
+		    sblock->fs_time < sblock->fs_old_time) {
+			sblock->fs_cstotal.cs_ndir =
+			    sblock->fs_old_cstotal.cs_ndir;
+			sblock->fs_cstotal.cs_nbfree =
+			    sblock->fs_old_cstotal.cs_nbfree;
+			sblock->fs_cstotal.cs_nifree =
+			    sblock->fs_old_cstotal.cs_nifree;
+			sblock->fs_cstotal.cs_nffree =
+			    sblock->fs_old_cstotal.cs_nffree;
+		}
+		if (sblock->fs_maxbsize != sblock->fs_bsize) {
+			sblock->fs_maxbsize = sblock->fs_bsize;
+			sblock->fs_time = sblock->fs_old_time;
+			sblock->fs_size = sblock->fs_old_size;
+			sblock->fs_dsize = sblock->fs_old_dsize;
+			sblock->fs_csaddr = sblock->fs_old_csaddr;
+		}
 	}
 
 	/* Now we know the SB is valid, we can write it back if needed */

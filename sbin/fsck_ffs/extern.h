@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2003/04/02 10:39:25 fvdl Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2003/04/06 17:23:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -82,3 +82,4 @@ void		voidquit __P((int));
 
 void	swap_cg __P((struct cg *, struct cg *));
 void copyback_cg __P((struct bufarea *));
+void sb_oldfscompat_write(struct fs *);
