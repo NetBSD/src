@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.18 2000/03/13 01:46:45 sato Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.19 2000/03/31 13:01:17 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -347,6 +347,8 @@ vrkiu_initkeymap(void)
 		{ &platid_mask_MACH_NEC_MCR_500A,
 		  mobilepro750c_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCR_700A,
+		  mobilepro_keytrans, KB_US },
+		{ &platid_mask_MACH_NEC_MCR_MPRO700,
 		  mobilepro_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCR,
 		  mcr_jp_keytrans, KB_JP },
