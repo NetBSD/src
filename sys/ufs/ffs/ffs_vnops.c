@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.13 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.14 1998/06/22 22:01:09 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,6 +37,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_uvm.h"
+#include "opt_fifo.h"
 #endif
 
 #include <sys/param.h>
