@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.10 2000/04/13 08:52:44 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.11 2001/02/05 02:37:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.10 2000/04/13 08:52:44 itojun Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.11 2001/02/05 02:37:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,9 @@ BpfGetIntfName(errmsg)
 	char *cp;
 	static char device[IFNAMSIZ + 1];
 	static char errbuf[128] = "No Error!";
+
+	if (errmsg != NULL)
+		*errmsg = errbuf;
 
 	if (getifaddrs(&ifap) != 0) {
 		(void) strcpy(errbuf, "bpf: getifaddrs: %m");
