@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.48 1997/06/15 16:27:47 mhitch Exp $
+#	$NetBSD: Makefile.pmax,v 1.49 1997/06/23 02:40:29 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ CWARNFLAGS=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitia
 GP?=		-G 0
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T ${MIPS}/conf/kern.ldscript -e start ${GP}
+LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript -e start ${GP}
 STRIPFLAGS=	-d
 
 ### find out what to use for libkern
