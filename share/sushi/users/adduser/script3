@@ -1,5 +1,0 @@
-#!/bin/sh
-# $NetBSD: script3,v 1.2 2004/03/09 20:06:42 garbled Exp $
-
-echo "NONE"
-cut -f 1 -d ':' /etc/group

@@ -1,5 +1,0 @@
-# Host: Motorola m68k running NetBSD
-NATDEPFILES= infptrace.o inftarg.o fork-child.o m68knbsd-nat.o \
-	kcore-nbsd.o nbsd-thread.o
-XM_FILE= xm-nbsd.h
-NAT_FILE= nm-nbsd.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.1 2004/12/31 11:30:48 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -8,8 +8,8 @@
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
  * Id: ip_state.h,v 2.68.2.1 2004/06/30 11:26:12 darrenr Exp
  */
-#ifndef	__IP_STATE_H__
-#define	__IP_STATE_H__
+#ifndef _NETINET_IP_STATE_H_
+#define _NETINET_IP_STATE_H_
 
 #if defined(__STDC__) || defined(__GNUC__)
 # define	SIOCDELST	_IOW('r', 61, struct ipfobj)
@@ -255,4 +255,4 @@ extern	void	fr_updatestate __P((fr_info_t *, ipstate_t *, ipftq_t *));
 extern	void	fr_statederef __P((fr_info_t *, ipstate_t **));
 extern	void	fr_setstatequeue __P((ipstate_t *, int));
 
-#endif /* __IP_STATE_H__ */
+#endif /* _NETINET_IP_STATE_H_ */
