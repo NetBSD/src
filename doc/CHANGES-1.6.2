@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.184 2003/10/16 12:38:24 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.185 2003/10/19 08:15:45 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2367,3 +2367,34 @@ distrib/sets/lists/xcomp4/mi			patch
 
 	remove bdftruncate.pl which was missed in a previous pullup.
 	[tron, ticket #1443]
+
+distrib/sets/lists/xbase/md.i386		1.12
+distrib/sets/lists/xbase/md.macppc		1.5
+distrib/sets/lists/xbase/obsolete.mi		1.3
+distrib/sets/lists/xbase4/md.i386		1.1,1.3
+distrib/sets/lists/xbase4/md.macpcc		1.1-1.2
+distrib/sets/lists/xbase4/mi			1.8
+distrib/sets/lists/xbase4/shl.elf		1.3
+distrib/sets/lists/xbase4/shl.mi		1.3
+distrib/sets/lists/xcomp/obsolete.mi		1.2
+distrib/sets/lists/xcomp4/md.cats		1.2-1.3
+distrib/sets/lists/xcomp4/md.i386		1.2-1.3
+distrib/sets/lists/xcomp4/md.macppc		1.2-1.3
+distrib/sets/lists/xcomp4/md.sparc		1.1
+distrib/sets/lists/xcomp4/mi			1.4
+distrib/sets/lists/xfont4/md.sparc		1.1
+distrib/sets/lists/xserver/md.sparc		1.9
+distrib/sets/lists/xserver/obsolete.alpha	1.2
+distrib/sets/lists/xserver/obsolete.mi		1.3
+distrib/sets/lists/xserver3/md.sparc		1.1
+distrib/sets/lists/xserver4/md.sparc		1.1
+
+	The manual page "scanpci" is only include in XFree86 4.x.
+	Add a leading `.' to all pathnames, to be more consistent with the
+	other sets, and to prepare for an upcoming feature addition to
+	postinstall...
+	support XF4 on sparc.
+	Sync with .so additions.
+	sort
+	[taca, ticket #1523]
+
