@@ -1,14 +1,16 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_principal_get_realm.3,v 1.1.1.1 2001/09/17 12:25:04 assar Exp $
+.\" $Id: krb5_principal_get_realm.3,v 1.2 2001/11/08 19:47:38 gmcgarry Exp $
 .Dd June 20, 2001
 .Dt KRB5_PRINCIPAL_GET_REALM 3
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm krb5_principal_get_realm ,
 .Nm krb5_principal_get_comp_string
 .Nd decompose a principal
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.Fd #include <krb5/krb5.h>
 .Ft "const char *"
 .Fn krb5_principal_get_realm "krb5_context context" "krb5_principal principal"
 .Ft "const char *"

@@ -1,12 +1,14 @@
-.\" $Id: krb5_timeofday.3,v 1.1.1.1 2001/09/17 12:25:04 assar Exp $
+.\" $Id: krb5_timeofday.3,v 1.2 2001/11/08 19:47:38 gmcgarry Exp $
 .Dd July  1, 2001
 .Dt KRB5_TIMEOFDAY 3
 .Sh NAME
 .Nm krb5_timeofday ,
 .Nm krb5_us_timeofday
 .Nd whatever these functions do
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.Fd #include <krb5/krb5.h>
 .Ft "krb5_error_code"
 .Fn krb5_timeofday "krb5_context context" "krb5_timestamp *timeret" 
 .Ft "krb5_error_code"
