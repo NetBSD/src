@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.7 1999/09/18 19:38:54 jsm Exp $	*/
+/*	$NetBSD: save.c,v 1.7.10.1 2002/10/01 23:45:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.7 1999/09/18 19:38:54 jsm Exp $");
+__RCSID("$NetBSD: save.c,v 1.7.10.1 2002/10/01 23:45:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,8 +102,8 @@ save_into_file(sfile)
 			}
 		}
 	}
-	if (	((fp = fopen(sfile, "w")) == NULL) ||
-			((file_id = md_get_file_id(sfile)) == -1)) {
+	if (((fp = fopen(sfile, "w")) == NULL) ||
+	    ((file_id = md_get_file_id(sfile)) == -1)) {
 		message("problem accessing the save file", 0);
 		return;
 	}
@@ -166,8 +166,8 @@ restore(fname)
 	int new_file_id, saved_file_id;
 
 	fp = NULL;
-	if (	((new_file_id = md_get_file_id(fname)) == -1) ||
-			((fp = fopen(fname, "r")) == NULL)) {
+	if (((new_file_id = md_get_file_id(fname)) == -1) ||
+	    ((fp = fopen(fname, "r")) == NULL)) {
 		clean_up("cannot open file");
 	}
 	if (md_link_count(fname) > 1) {
@@ -177,10 +177,10 @@ restore(fname)
 	r_read(fp, (char *) &detect_monster, sizeof(detect_monster));
 	r_read(fp, (char *) &cur_level, sizeof(cur_level));
 	r_read(fp, (char *) &max_level, sizeof(max_level));
-	read_string(hunger_str, fp);
+	read_string(hunger_str, fp, sizeof hunger_str);
 
-	(void) strcpy(tbuf, login_name);
-	read_string(login_name, fp);
+	(void) strlcpy(tbuf, login_name, sizeof tbuf);
+	read_string(login_name, fp, sizeof login_name);
 	if (strcmp(tbuf, login_name)) {
 		clean_up("you're not the original player");
 	}
@@ -269,9 +269,9 @@ read_pack(pack, fp, is_rogue)
 		*new_obj = read_obj;
 		if (is_rogue) {
 			if (new_obj->in_use_flags & BEING_WORN) {
-					do_wear(new_obj);
+				do_wear(new_obj);
 			} else if (new_obj->in_use_flags & BEING_WIELDED) {
-					do_wield(new_obj);
+				do_wield(new_obj);
 			} else if (new_obj->in_use_flags & (ON_EITHER_HAND)) {
 				do_put_on(new_obj,
 					((new_obj->in_use_flags & ON_LEFT_HAND) ? 1 : 0));
@@ -326,7 +326,7 @@ rw_id(id_table, fp, n, wr)
 			r_read(fp, (char *) &(id_table[i].value), sizeof(short));
 			r_read(fp, (char *) &(id_table[i].id_status),
 				sizeof(unsigned short));
-			read_string(id_table[i].title, fp);
+			read_string(id_table[i].title, fp, MAX_ID_TITLE_LEN);
 		}
 	}
 }
@@ -345,13 +345,16 @@ write_string(s, fp)
 }
 
 void
-read_string(s, fp)
+read_string(s, fp, len)
 	char *s;
 	FILE *fp;
+	size_t len;
 {
 	short n;
 
 	r_read(fp, (char *) &n, sizeof(short));
+	if (n > len)
+		clean_up("read_string: corrupt game file");
 	r_read(fp, s, n);
 	xxxx(s, n);
 }
