@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.80 1995/07/23 22:12:16 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.81 1995/07/23 23:42:47 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -96,8 +96,8 @@ struct ed_softc {
 	caddr_t	mem_ring;	/* start of RX ring-buffer (in NIC mem) */
 
 	u_char	mem_shared;	/* NIC memory is shared with host */
-	u_char	xmit_busy;	/* number of transmit buffers active */
 	u_char	txb_cnt;	/* number of transmit buffers */
+	u_char	txb_inuse;	/* number of transmit buffers active */
 
 	u_char 	txb_new;	/* pointer to where new buffer will be added */
 	u_char	txb_next_tx;	/* pointer to next buffer ready to xmit */
@@ -1167,7 +1167,7 @@ ed_init(sc)
 	/* Reset transmitter flags. */
 	sc->sc_arpcom.ac_if.if_timer = 0;
 
-	sc->xmit_busy = 0;
+	sc->txb_inuse = 0;
 	sc->txb_new = 0;
 	sc->txb_next_tx = 0;
 
@@ -1348,7 +1348,7 @@ ed_start(ifp)
 
 outloop:
 	/* See if there is room to put another packet in the buffer. */
-	if (sc->xmit_busy == sc->txb_cnt) {
+	if (sc->txb_inuse == sc->txb_cnt) {
 		/* No room.  Indicate this to the outside world and exit. */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
@@ -1429,13 +1429,13 @@ outloop:
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
 
 	/* Start the first packet transmitting. */
-	if (sc->xmit_busy == 0)
+	if (sc->txb_inuse == 0)
 		ed_xmit(sc);
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
 		sc->txb_new = 0;
-	sc->xmit_busy++;
+	sc->txb_inuse++;
 
 	/* Loop back to the top to possibly buffer more packets. */
 	goto outloop;
@@ -1625,7 +1625,7 @@ edintr(arg)
 			}
 
 			/* Done with the buffer. */
-			sc->xmit_busy--;
+			sc->txb_inuse--;
 
 			/* Clear watchdog timer. */
 			ifp->if_timer = 0;
@@ -1644,7 +1644,7 @@ edintr(arg)
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.
 			 */
-			if (sc->xmit_busy > 0)
+			if (sc->txb_inuse > 0)
 				ed_xmit(sc);
 		}
 
