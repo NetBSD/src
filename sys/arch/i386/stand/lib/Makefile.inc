@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2000/09/08 05:37:59 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2000/09/08 19:45:45 tron Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -20,8 +20,8 @@ I386DST?=		${.OBJDIR}/lib/i386
 I386LIB=		${I386DST}/libi386.a
 
 I386MAKE= \
-	cd ${I386DIR} && unset MAKEOBJDIRPREFIX && \
-	  MAKEOBJDIR=${I386DST} ${MAKE} \
+	cd ${I386DIR} && (unset MAKEOBJDIRPREFIX || true) && \
+	  ${MAKE} MAKEOBJDIR=${I386DST} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
@@ -31,23 +31,23 @@ I386MAKE= \
 	    ${I386MISCMAKEFLAGS}
 
 ${I386LIB}:		.NOTMAIN __always_make_i386lib
-	@echo making sure the i386 library is up to date...
-	@${I386MAKE} libi386.a
+	echo making sure the i386 library is up to date...
+	${I386MAKE} libi386.a
 
 clean:			.NOTMAIN cleani386lib
 cleani386lib:		.NOTMAIN __always_make_i386lib
-	@echo cleaning the i386 library objects
-	@${I386MAKE} clean
+	echo cleaning the i386 library objects
+	${I386MAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandiri386lib
 cleandiri386lib:		.NOTMAIN __always_make_i386lib
-	@echo cleandiring the i386 library objects
-	@${I386MAKE} cleandir
+	echo cleandiring the i386 library objects
+	${I386MAKE} cleandir
 
 depend:			.NOTMAIN dependi386lib
 dependi386lib:		.NOTMAIN __always_make_i386lib
-	@echo depending the i386 library objects
-	@${I386MAKE} depend
+	echo depending the i386 library objects
+	${I386MAKE} depend
 
 __always_make_i386lib:	.NOTMAIN
-	@mkdir -p ${I386DST}
+	mkdir -p ${I386DST}
