@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.40 2002/08/02 12:27:32 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.41 2002/08/03 06:12:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.40 2002/08/02 12:27:32 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.41 2002/08/03 06:12:30 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,11 +98,6 @@ static char current_categories[_LC_LAST][32] = {
  * The locales we are going to try and load
  */
 static char new_categories[_LC_LAST][32];
-
-/*
- * Backup area to back out changes on failure
- */
-static char saved_categories[_LC_LAST][32];
 
 static char current_locale_string[_LC_LAST * 33];
 char *_PathLocale;
@@ -196,8 +191,6 @@ __setlocale(category, locale)
 
 	loadlocale_success = 0;
 	for (i = 1; i < _LC_LAST; ++i) {
-		(void)strlcpy(saved_categories[i], current_categories[i],
-		    sizeof(saved_categories[i]));
 		if (loadlocale(i) != NULL)
 			loadlocale_success = 1;
 	}
