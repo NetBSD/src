@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.72 2003/05/07 08:19:21 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.73 2003/05/07 08:24:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -337,7 +337,9 @@ cpu_exit(l, proc)
 #endif
 			cpi->fplwp = NULL;
 		}
+		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
+		l->l_md.md_fpstate = NULL;
 		free((void *)fs, M_SUBPROC);
 	}
 	switchexit(l, proc ? exit2 : lwp_exit2);
