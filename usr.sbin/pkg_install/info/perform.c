@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31.4.2 2000/12/15 04:06:53 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.31.4.3 2001/03/20 18:04:56 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31.4.2 2000/12/15 04:06:53 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.31.4.3 2001/03/20 18:04:56 he Exp $");
 #endif
 #endif
 
@@ -78,7 +78,7 @@ pkg_do(char *pkg)
 	}
 
 	if (cp) {
-		if (IS_URL(cp)) {
+		if (IS_URL(pkg)) {
 			/* file is already unpacked by fileGetURL() */
 			strcpy(PlayPen, cp);
 		} else {
@@ -200,6 +200,9 @@ pkg_do(char *pkg)
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
 			show_file("De-Install script:\n", DEINSTALL_FNAME);
 		}
+		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
+			show_file("Require script:\n", REQUIRE_FNAME);
+		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
 			show_file("mtree file:\n", MTREE_FNAME);
 		}
@@ -239,30 +242,40 @@ bail:
 static int
 foundpkg(const char *found, char *data)
 {
+	char buf[FILENAME_MAX+1];
+
+	/* we only want to display this if it really is a directory */
+	snprintf(buf, sizeof(buf), "%s/%s", data, found);
+	if (!isdir(buf)) {
+		/* return value seems to be ignored for now */
+		return -1;
+	}
+
 	if (!Quiet) {
 		printf("%s\n", found);
 	}
+
 	return 0;
 }
 
 /*
  * Check if a package "pkgspec" (which can be a pattern) is installed.
+ * dbdir contains the return value of _pkgdb_getPKGDB_DIR(), for reading only.
  * Return 0 if found, 1 otherwise (indicating an error).
  */
 static int
 CheckForPkg(char *pkgspec, char *dbdir)
 {
-	struct stat st;
 	char    buf[FILENAME_MAX];
 	int     error;
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
 		/* expensive (pattern) match */
-		return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
+		return !findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = (stat(buf, &st) < 0);
+	error = !isdir(buf);
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
 	}
@@ -271,8 +284,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		
 		char    try[FILENAME_MAX];
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
-		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-			foundpkg, NULL) != 0) {
+		if (findmatchingname(dbdir, try, foundpkg, dbdir) != 0) {
 			error = 0;
 		}
 	}
@@ -296,9 +308,8 @@ pkg_perform(lpkg_head_t *pkgs)
 
 	signal(SIGINT, cleanup);
 
-	if ((tmp = getenv(PKG_DBDIR)) == (char *) NULL) {
-		tmp = DEF_LOG_DIR;
-	}
+	tmp = _pkgdb_getPKGDB_DIR();
+
 	/* Overriding action? */
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, tmp);
