@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.80 2000/05/21 04:25:57 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.80 2000/05/21 04:25:57 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -129,14 +129,13 @@ int	default_pg_mask = 0x00001800;
 int	r3900_icache_direct;
 #endif
 /*
- * MIPS-I (r2000 and r3000) locore-function vector.
+ * MIPS-I locore function vector
  */
 mips_locore_jumpvec_t mips1_locore_vec =
 {
 	mips1_FlushCache,
 	mips1_FlushDCache,
 	mips1_FlushICache,
-	/*mips1_FlushICache*/ mips1_FlushCache,
 	mips1_SetPID,
 	mips1_TBIAP,
 	mips1_TBIS,
@@ -178,21 +177,13 @@ mips1_vector_init()
 
 #ifdef MIPS3
 /*
- * MIPS-III (r4000) locore-function vector.
+ * MIPS III locore function vector
  */
 mips_locore_jumpvec_t mips3_locore_vec =
 {
 	mips3_FlushCache,
 	mips3_FlushDCache,
 	mips3_FlushICache,
-#if 0
-	 /*
-	  * No such vector exists, perhaps it was meant to be HitFlushDCache?
-	  */
-	mips3_ForceCacheUpdate,
-#else
-	mips3_FlushCache,
-#endif
 	mips3_SetPID,
 	mips3_TBIAP,
 	mips3_TBIS,
@@ -331,7 +322,7 @@ mips3_vector_init()
  * variable cpu_id, into which the kernel locore start code
  * writes the cpu ID register, and to then copy appropriate
  * cod into the CPU exception-vector entries and the jump tables
- * used to  hide the differences in cache and TLB handling in
+ * used to hide the differences in cache and TLB handling in
  * different MIPS CPUs.
  *
  * This should be the very first thing called by each port's
@@ -388,36 +379,28 @@ mips_vector_init()
 		cpu_arch = 3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 0;
-		mips3_cacheflush_bug = 0;
-#if 1  /* XXX FIXME: avoid hangs in mips3_vector_init() */
-		mips3_cacheflush_bug = 1;
-#endif
 		break;
 	case MIPS_R4100:
 		cpu_arch = 3;
 		mips_num_tlb_entries = 32;
 		mips3_L1TwoWayCache = 0;
-		mips3_cacheflush_bug = 0;
 		break;
 	case MIPS_R4300:
 		cpu_arch = 3;
 		mips_num_tlb_entries = MIPS_R4300_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 0;
-		mips3_cacheflush_bug = 0;
 		break;
 	case MIPS_R4600:
 		cpu_arch = 3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		/* disable interrupt while cacheflush to workaround the bug */
-		mips3_cacheflush_bug = 1;	/* R4600 only??? */
 		break;
 #ifdef ENABLE_MIPS_R4700 /* ID conflict */
 	case MIPS_R4700:
 		cpu_arch = 3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
-		mips3_cacheflush_bug = 0;
 		break;
 #endif
 #ifndef ENABLE_MIPS_R3NKK /* ID conflict */
@@ -428,14 +411,12 @@ mips_vector_init()
 		cpu_arch = 4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
-		mips3_cacheflush_bug = 0;
 		break;
 
 	case MIPS_R10000:
 		cpu_arch = 4;
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
-		mips3_cacheflush_bug = 0;
 		break;
 #endif /* MIPS3 */
 

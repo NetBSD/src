@@ -1,4 +1,4 @@
-/*	$NetBSD: r3900regs.h,v 1.1 1999/11/29 11:13:11 uch Exp $ */
+/*	$NetBSD: r3900regs.h,v 1.2 2000/05/23 04:21:40 soren Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -138,5 +138,3 @@
 
 #define	CPUREG_A0	4	
 #define CPUREG_T0	8
-
-
