@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.34 1999/02/23 18:19:29 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.35 1999/03/09 21:02:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -36,6 +36,7 @@
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
+#include "opt_compat_m68k4k.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sparc32.h"
 #include "opt_compat_aout.h"
