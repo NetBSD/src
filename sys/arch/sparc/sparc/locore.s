@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 1997/04/22 07:48:31 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 1997/06/28 19:59:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4574,15 +4574,17 @@ Lsw_load:
 	 * zero so it is safe to have interrupts going here.)
 	 */
 	ld	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
-	ld	[%o3 + VM_PMAP_CTX], %o0! if (vm->vm_pmap.pm_ctx != NULL)
+	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
+	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + VM_PMAP_CTXNUM], %o0	! load context number
+	 ld	[%o3 + PMAP_CTXNUM], %o0	! load context number
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
-	call	_ctx_alloc		! ctx_alloc(&vm->vm_pmap);
-	 add	%i3, VM_PMAP, %o0
+	call	_ctx_alloc		! ctx_alloc(pm);
+	 mov	%i3, %o0
+
 	ret
 	 restore
 
