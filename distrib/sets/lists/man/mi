@@ -6,6 +6,7 @@
 ./usr/share/man/cat1/at.0
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
+./usr/share/man/cat1/audioctl.0
 ./usr/share/man/cat1/awk.0
 ./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
@@ -137,6 +138,7 @@
 ./usr/share/man/cat1/md5.0
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
+./usr/share/man/cat1/mixerctl.0
 ./usr/share/man/cat1/mkdep.0
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
@@ -170,6 +172,7 @@
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
+./usr/share/man/cat1/rcmd.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
 ./usr/share/man/cat1/rcsclean.0
@@ -460,6 +463,7 @@
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
+./usr/share/man/cat8/chrtbl.0
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_linux.0
@@ -630,6 +634,7 @@
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
+./usr/share/man/cat8/strfile.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
 ./usr/share/man/cat8/sysctl.0
@@ -676,7 +681,6 @@
 ./usr/share/man/cat9/arp_ifinit.0
 ./usr/share/man/cat9/arpintr.0
 ./usr/share/man/cat9/arpresolve.0
-./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
 ./usr/share/man/cat9/copy.0
@@ -723,7 +727,9 @@
 ./usr/share/man/cat9/fuword.0
 ./usr/share/man/cat9/gsignal.0
 ./usr/share/man/cat9/inittodr.0
+./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/kernacc.0
+./usr/share/man/cat9/log.0
 ./usr/share/man/cat9/malloc.0
 ./usr/share/man/cat9/mi_switch.0
 ./usr/share/man/cat9/mono_time.0
