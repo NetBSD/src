@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.4 2003/01/21 23:29:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.5 2003/02/15 04:39:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
  */
 
 /* Functions and structures dealing with thread-specific data */
-#include <assert.h>
 #include <errno.h>
 #include <sys/cdefs.h>
 
