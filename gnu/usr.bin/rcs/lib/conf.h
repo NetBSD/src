@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.10 1996/10/15 07:00:05 veego Exp $	*/
+/*	$NetBSD: conf.h,v 1.11 1997/03/25 13:56:36 lukem Exp $	*/
 
 /* example RCS compile-time configuration */
 
@@ -174,6 +174,7 @@ typedef void *malloc_type; /* type returned by malloc() */
 /* #define has_getwd ? */ /* Does getwd() work?  */
 #define needs_getabsname 0 /* Must we define getabsname?  */
 #define has_mktemp 1 /* Does mktemp() work?  */
+#define has_mkstemp 1 /* Does mkstemp() work? (needs has_mktemp=1 too) */
 #define has_NFS 1 /* Might NFS be used?  */
 #define has_psiginfo 0 /* Does psiginfo() work?  */
 #define has_psignal 1 /* Does psignal() work?  */

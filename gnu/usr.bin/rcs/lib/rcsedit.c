@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsedit.c,v 1.7 1996/10/21 07:00:07 veego Exp $	*/
+/*	$NetBSD: rcsedit.c,v 1.8 1997/03/25 13:56:38 lukem Exp $	*/
 
 /* RCS stream editor */
 
@@ -38,6 +38,14 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
+ * Revision 1.8  1997/03/25 13:56:38  lukem
+ * Add "#define has_mkstemp 1" (which needs "#define has_mktemp 1"),
+ * and hack to use mkstemp() instead of mktemp(). This *does* cause the
+ * tempfile to be created at name generation time, but that's ok because
+ * the code will fopen(tempname), use it, and the unlink it. Kinda cute
+ * (``ugly but interesting'' :), but seems to work, and passes
+ * 'sh ./rcstest' as well as rudimentary tests by me.
+ *
  * Revision 1.7  1996/10/21 07:00:07  veego
  * Fix missing "#ifdef LOCALID" from pr#2876
  *
@@ -1514,6 +1522,9 @@ makedirtemp(isworkfile)
 	register size_t dl;
 	register struct buf *bn;
 	register char const *name = isworkfile ? workname : RCSname;
+#	if has_mkstemp
+	int fd;
+#	endif
 
 	dl = basefilename(name) - name;
 	bn = &dirtpname[newRCSdirtp_index + isworkfile];
@@ -1532,10 +1543,17 @@ makedirtemp(isworkfile)
 	catchints();
 #	if has_mktemp
 		VOID strcpy(tp, "XXXXXX");
+#		if has_mkstemp
+		if ((fd = mkstemp(np)) == -1)
+#		else
 		if (!mktemp(np) || !*np)
+#		endif
 		    faterror("can't make temporary pathname `%.*s_%cXXXXXX'",
 			(int)dl, name, '0'+isworkfile
 		    );
+#		if has_mkstemp
+		close(fd);
+#		endif
 #	else
 		/*
 		 * Posix 1003.1-1990 has no reliable way
