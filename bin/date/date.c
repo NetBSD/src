@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.21 1998/01/21 00:07:44 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.22 1998/04/01 13:54:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.21 1998/01/21 00:07:44 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.22 1998/04/01 13:54:44 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: date.c,v 1.21 1998/01/21 00:07:44 mycroft Exp $");
 #include <string.h>
 #include <locale.h>
 #include <syslog.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
