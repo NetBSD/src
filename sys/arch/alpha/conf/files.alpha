@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.4 1995/04/22 12:45:08 cgd Exp $
+#	$NetBSD: files.alpha,v 1.5 1995/06/27 01:02:23 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -14,7 +14,7 @@ maxusers 2 8 64
 
 device mainbus at root { }              # no locators (yet?)
 
-device cpu at mainbus			# not really optional
+device	cpu at mainbus { }		# not really optional; can be a 'bus'
 file	arch/alpha/alpha/cpu.c		cpu
 
 #
@@ -41,8 +41,8 @@ device asic at tc { offset = -1 }	# not really optional
 file	arch/alpha/tc/asic.c		asic
 
 # the TurboChannel clock (XXX)
-device clock at asic 			# not really optional
-file	arch/alpha/alpha/clock.c	clock
+# device clock at asic 			# not really optional
+#file	arch/alpha/alpha/clock.c	clock
 
 # Smart Frame buffer (XXX NOT YET SUPPORTED)
 device sfb at tc
@@ -66,30 +66,52 @@ device le at asic: ifnet, ether
 file	arch/alpha/tc/if_le.c		le		needs-count
 
 #
+# PCI-bearing chipsets and "necessary" files.
+#
+
+device	apecs at mainbus { }
+file	arch/alpha/pci/apecs.c		apecs
+file	arch/alpha/pci/apecs_isa.c	apecs
+file	arch/alpha/pci/apecs_pci.c	apecs
+
+device	lca at cpu { }
+file	arch/alpha/pci/lca.c		lca
+file	arch/alpha/pci/lca_pio.c	lca
+
+file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
+
+#
+# PCI devices
+#
+
+device	pci at apecs, lca {[bus = -1], [dev = -1]}
+
+include "../../../dev/pci/files.pci"
+file	arch/alpha/pci/pci_machdep.c	pci
+
+device	sio at pci { }
+file	arch/alpha/pci/sio.c		sio
+file	arch/alpha/pci/sio_pic.c	sio
+
+#
 # ISA Devices
 #
 
-#device	isa at mainbus {[port = -1], [size = 0],	# XXX
-#			[iomem = -1], [iosiz = 0],
-#			[irq = -1], [drq = -1]}
-#include "../../../dev/isa/files.isa"
-#file	arch/alpha/isa/isa_machdep.c	isa		needs-flag # XXX
-#file	arch/alpha/isa/isa_xxx.c	isa
+device	isa at sio {[port = -1], [size = 0],	# XXX
+			[iomem = -1], [iosiz = 0],
+			[irq = -1], [drq = -1]}
+device clock at isa, asic				# not really optional
+
+include "../../../dev/isa/files.isa"
+file	arch/alpha/isa/isa_machdep.c	isa		needs-flag # XXX
+
+#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
 #
 # EISA Devices
 #
 
 #include "../../../dev/eisa/files.eisa"
-
-#
-# PCI devices
-#
-
-device	pci at mainbus {[bus = -1], [dev = -1]}
-
-include "../../../dev/pci/files.pci"
-file	arch/alpha/pci/pci_machdep.c	pci
 
 #
 # Standard files
@@ -123,3 +145,10 @@ file	compat/osf1/osf1_misc.c		compat_osf1
 file	compat/osf1/osf1_mount.c	compat_osf1
 file	compat/osf1/osf1_syscalls.c	compat_osf1
 file	compat/osf1/osf1_sysent.c	compat_osf1
+
+file	arch/alpha/alpha/clock.c	clock
+file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
+					dec_2100_a50
+
+# XXX
+file	arch/alpha/alpha/promcons.c
