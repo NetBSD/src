@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.15 1996/12/22 13:37:30 pk Exp $
+#	$NetBSD: libg++2netbsd,v 1.16 1996/12/22 20:46:06 cgd Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -482,21 +482,13 @@ SUBDIR = src genclass
 %% NetBSD
 # Makefile for g++ library genclass 
 
-PROG=		genclass
-%% srcs genclass
-NOMAN=
-NOLING=
-STRIP=
+BINDIR?= /usr/bin
 
-SRCDIR=${.CURDIR}
-
-BINDIR ?= /usr/bin
-
-genclass:	genclass.sh
-	cp $(SRCDIR)/genclass.sh genclass
+beforeinstall:
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${.CURDIR}/genclass.sh ${DESTDIR}${BINDIR}/genclass
 
 .include <bsd.prog.mk>
-
 %% file libg++/src/Makefile
 %% NetBSD
 
