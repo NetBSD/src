@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.15 2001/11/28 05:55:35 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2002/01/27 05:14:34 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
+#include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +74,7 @@
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <hpcsh/hpcsh/clockvar.h>
+#include <hpcsh/hpcsh/kloader.h>
 
 #include <sh3/intcreg.h>
 
@@ -159,7 +161,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	extern char MonTrap100[], MonTrap100_end[];
 	extern char MonTrap600[], MonTrap600_end[];
 	extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
-	static struct bootinfo __bootinfo;
 	vaddr_t proc0_sp;
 	vaddr_t kernend;
 	psize_t sz;
@@ -168,6 +169,12 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 	char *p;
 	size_t symbolsize;
+	/* 
+	 * this routines stack is never polluted since stack pointer
+	 * is lower than kernel text segment, and at exiting, stack pointer
+	 * is changed to proc0.
+	 */
+	struct kloader_bootinfo kbi;
 
 	/* symbol table size */
 	symbolsize = 0;
@@ -194,7 +201,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
 	/* setup bootinfo */
-	bootinfo = &__bootinfo;
+	bootinfo = &kbi.bootinfo;
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
 
 	/* setup bootstrap options */
@@ -243,14 +250,8 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	}
 	consinit();
 
-	/* print kernel option */
-	for (i = 0; i < argc; i++)
-		DPRINTF(("option [%d]: %s\n", i, argv[i]));
-	DPRINTF(("platid(cpu/machine) = %08lx/%08lx\n",
-	    bootinfo->platid_cpu, bootinfo->platid_machine));
-	DPRINTF(("display=%dx%d-(%d) %p type=%d \n",
-	    bootinfo->fb_width, bootinfo->fb_height,
-	    bootinfo->fb_line_bytes, bootinfo->fb_addr, bootinfo->fb_type));
+	/* copy boot parameter for kloader */
+	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
 
 	uvm_setpagesize(); /* default page size (4KB) */
 
@@ -423,8 +424,13 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* If "always halt" was specified as a boot flag, obey. */
-	if ((boothowto & RB_HALT) != 0)
+	if ((boothowto & RB_HALT) != 0) {
 		howto |= RB_HALT;
+	} else {
+#ifdef KLOADER_KERNEL_PATH
+		kloader_reboot_setup(KLOADER_KERNEL_PATH);
+#endif
+	}
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
@@ -454,7 +460,14 @@ cpu_reboot(int howto, char *bootstr)
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	if (howto & RB_HALT) {
+		printf("halted.\n");
+	} else {
+#ifdef KLOADER_KERNEL_PATH
+		kloader_reboot();
+		/* NOTREACHED */
+#endif
+	}
 
 	goto *(u_int32_t *)0xa0000000;
 	while (1)
@@ -518,6 +531,7 @@ mem_cluster_init(paddr_t addr)
 		DPRINTF(("\n"));
 #endif /* NARLY_MEMORY_PROBE */
 	}
+
 	DPRINTF(("total memory = %dMbyte\n", (int)(ptoa(npages) >> 20)));
 
 	return (npages);
