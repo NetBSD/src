@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.60 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.61 2001/05/01 19:36:56 thorpej Exp $	*/
 
 /*
  *
@@ -310,6 +310,7 @@ struct uvmexp {
 				   aborted */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
+	int ncolors;		/* number of page color buckets */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -435,6 +436,7 @@ struct uvmexp_sysctl {
 	int64_t	vtextpages;
 	int64_t colorhit;
 	int64_t colormiss;
+	int64_t ncolors;
 };
 
 #ifdef _KERNEL
