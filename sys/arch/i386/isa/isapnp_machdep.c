@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.2 1997/02/24 22:13:55 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.3 1997/08/07 19:44:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -94,20 +94,31 @@ int
 isapnp_map_readport(sc)
 	struct isapnp_softc *sc;
 {
+	int error;
+
 	if (sc->sc_iot != I386_BUS_SPACE_IO)
 		panic("isapnp_map_readport: bogus bus space tag");
 
 	/* Check if some other device has already claimed this port. */
-	return bus_space_map(sc->sc_iot, sc->sc_read_port, 1, 0,
-	    &sc->sc_read_ioh);
+	if ((error = bus_space_map(sc->sc_iot, sc->sc_read_port, 1, 0,
+	    &sc->sc_read_ioh)) != 0)
+		return error;
+
+	/*
+	 * XXX: We unmap the port because it can and will be used by other
+	 *	devices such as a joystick. We need a better port accounting
+	 *	scheme with read and write ports.
+	 */
+	bus_space_unmap(sc->sc_iot, sc->sc_read_ioh, 1);
+	return 0;
 }
 
 /* isapnp_unmap_readport():
- *	Unmap a previously mapped `read port'.
+ *	Pretend to unmap a previously mapped `read port'.
  */
 void
 isapnp_unmap_readport(sc)
 	struct isapnp_softc *sc;
 {
-	bus_space_unmap(sc->sc_iot, sc->sc_read_ioh, 1);
+	/* Do nothing */
 }
