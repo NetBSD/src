@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	5.26 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: savecore.c,v 1.4 1993/08/01 18:24:08 mycroft Exp $";
+static char rcsid[] = "$Id: savecore.c,v 1.5 1993/12/08 16:43:16 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,6 +296,11 @@ read_kmem()
 	kmem = Open(_PATH_KMEM, O_RDONLY);
 	Lseek(kmem, (long)current_nl[X_DUMPDEV].n_value, L_SET);
 	Read(kmem, (char *)&dumpdev, sizeof (dumpdev));
+	if (dumpdev == NODEV) {
+		if (verbose)
+			printf("dumpdev = NODEV\n");
+		exit(2);
+	}
 	Lseek(kmem, (long)current_nl[X_DUMPLO].n_value, L_SET);
 	Read(kmem, (char *)&dumplo, sizeof (dumplo));
 	if (verbose)
