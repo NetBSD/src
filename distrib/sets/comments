@@ -84,6 +84,7 @@ base-locale-zh Chinese language locale support
 base-lpr-bin utilities for printing support
 base-lpr-root root file system support for printing utilities
 base-lpr-usr /usr file system support for printing
+base-magic-share shared files for the file(1) utility
 base-mail-bin mail utilities
 base-mail-root root file system support for mail utilities
 base-mailwrapper-bin the mailwrapper(8) program for multiple mailer support
@@ -112,9 +113,11 @@ base-postfix-examples example configuration files for the Postfix mailer
 base-postfix-root root file system support for the Postfix mailer
 base-postfix-usr /usr file system support for the Postfix mailer
 base-ppp-bin utilities for the PPP point-to-point remote access protocol
+base-ppp-lkm object files for loadable kernel modules for the PPP point-to-point remote access protocol
 base-psd-share directory structure for the Programmer's Supplementary Documentation
 base-rcs-bin utilities for the RCS Revision Control System
 base-reference-share directory structure for miscellaneous reference documents
+base-rescue-root statically-linked binaries which can be used in extremis
 base-router-bin network routing utilities
 base-router-examples base directories for network routing utilities
 base-router-root root file system support for network routing utilities
@@ -144,6 +147,7 @@ base-sysutil-examples example configuration files for miscellaneous system utili
 base-sysutil-root root file system support for system utilities
 base-sysutil-share shared data files for system utilities
 base-sysutil_locale-share shared locale support for system utilities
+base-termcap-share shared files for terminal capability database
 base-texinfo-bin the GNU texinfo software
 base-texinfo-share shared data files for the GNU texinfo software
 base-texinfo_locale-cs Czech language support for the GNU texinfo software
@@ -181,6 +185,7 @@ base-util_locale-ja	Japanese language support for standard utilities
 base-util_locale-sv Swedish language support for standard utilities
 base-uucp-bin utilities for the UUCP UNIX-to-UNIX Communication Protocol
 base-uucp-root root file system support for the UUCP UNIX-to-UNIX Communication Protocol
+base-vfs-lkm loadable kernel modules for filesystems
 comp-c-bin compilers and tools for the C programming language
 comp-c-catman formatted manual pages
 comp-c-include header files for the C programming language
@@ -191,6 +196,7 @@ comp-c-piclib PIC libraries for C language shared library generation
 comp-c-proflib profiling libraries for the C programming language
 comp-c-root root file system symlinks for software development
 comp-c-share reference files for C language programmers
+comp-c-shlib	shared libraries for binary file utilities and machine opcodes
 comp-c_locale-da Danish language locale support for development utilities
 comp-c_locale-de German language locale support for development utilities
 comp-c_locale-es Spanish language locale support for development utilities
@@ -222,6 +228,7 @@ comp-fortran-lib static libraries and shared library links for the FORTRAN progr
 comp-fortran-man manual pages source for the FORTRAN programming language
 comp-fortran-piclib PIC libraries for the FORTRAN language shared library generation
 comp-fortran-proflib profiling libraries for the FOTRAN programming language
+comp-fortran-shlib shared libraries for the FORTRAN programming language
 comp-i18n-lib static libraries and shared library links for compiling applications with internationalisation support
 comp-krb4-catman formatted manual pages for Kerberos 4 support
 comp-krb4-include header files for Kerberos 4 support
