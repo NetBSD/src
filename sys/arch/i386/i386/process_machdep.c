@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.4 1994/01/28 21:23:49 cgd Exp $
+ *	$Id: process_machdep.c,v 1.5 1994/04/03 22:50:14 mycroft Exp $
  */
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/ptrace.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include <machine/frame.h>
 
 extern int kstack[];		/* XXX */
 
