@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.2.2.2 2002/12/07 00:35:21 he Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.2.2.2 2002/12/07 00:35:21 he Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $");
 #endif
 #endif
 
@@ -114,7 +114,7 @@ void			usage(void);
 
 /* to shut up -Wstrict-prototypes */
 int			main(int argc, char *argv[]);
-/* log() prototyped in defs.h */
+/* logit() prototyped in defs.h */
 
 
 char   *
@@ -140,7 +140,7 @@ inet_name(u_int32_t addr)
  * worse, terminate the program.
  */
 void
-log(int severity, int syserr, const char *format, ...)
+logit(int severity, int syserr, const char *format, ...)
 {
 	va_list ap;
 
@@ -327,7 +327,7 @@ main(int argc, char *argv[])
 	}
 	init_igmp();
 	if (setuid(getuid()) == -1)
-		log(LOG_ERR, errno, "setuid");
+		logit(LOG_ERR, errno, "setuid");
 
 	setlinebuf(stderr);
 
@@ -366,10 +366,10 @@ main(int argc, char *argv[])
 		hp->h_length = sizeof(target_addr);
 		hp->h_addr_list = (char **)malloc(2 * sizeof(char *));
 		if (hp->h_addr_list == NULL)
-			log(LOG_ERR, errno, "malloc");
+			logit(LOG_ERR, errno, "malloc");
 		hp->h_addr_list[0] = malloc(hp->h_length);
 		if (hp->h_addr_list[0] == NULL)
-			log(LOG_ERR, errno, "malloc");
+			logit(LOG_ERR, errno, "malloc");
 		memcpy(hp->h_addr_list[0], &target_addr, sizeof(hp->h_addr_list[0]));
 		hp->h_addr_list[1] = NULL;
 	} else
@@ -451,7 +451,7 @@ main(int argc, char *argv[])
 				perror("select");
 			continue;
 		} else if (count == 0) {
-			log(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
+			logit(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
 			if (++tries > retries)
 				break;
 			/* If we've tried ASK_NEIGHBORS2 twice with
@@ -476,7 +476,7 @@ main(int argc, char *argv[])
 		}
 
 		if (recvlen < sizeof(struct ip)) {
-			log(LOG_WARNING, 0,
+			logit(LOG_WARNING, 0,
 			    "packet too short (%u bytes) for IP header",
 			    recvlen);
 			continue;
@@ -489,7 +489,7 @@ main(int argc, char *argv[])
 		iphdrlen = ip->ip_hl << 2;
 		ipdatalen = ip->ip_len;
 		if (iphdrlen + ipdatalen != recvlen) {
-		    log(LOG_WARNING, 0,
+		    logit(LOG_WARNING, 0,
 		      "packet shorter (%u bytes) than hdr+data length (%u+%u)",
 		      recvlen, iphdrlen, ipdatalen);
 		    continue;
@@ -498,7 +498,7 @@ main(int argc, char *argv[])
 		group = igmp->igmp_group.s_addr;
 		igmpdatalen = ipdatalen - IGMP_MINLEN;
 		if (igmpdatalen < 0) {
-		    log(LOG_WARNING, 0,
+		    logit(LOG_WARNING, 0,
 			"IP data field too short (%u bytes) for IGMP, from %s",
 			ipdatalen, inet_fmt(src, s1));
 		    continue;

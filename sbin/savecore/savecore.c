@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.57.2.1 2004/07/23 15:03:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.57.2.1 2004/07/23 15:03:58 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,6 @@ int	dump_exists(void);
 char	*find_dev(dev_t, int);
 int	get_crashtime(void);
 void	kmem_setup(void);
-void	log(int, char *, ...);
 void	Lseek(int, off_t, int);
 int	main(int, char *[]);
 int	Open(const char *, int rw);

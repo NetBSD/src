@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.14 2002/04/17 15:26:13 drochner Exp $ 
+ *	$Id: rc_config.c,v 1.14.2.1 2004/07/23 15:03:58 tron Exp $ 
  *
  * $FreeBSD$
  *
@@ -90,7 +90,7 @@ configure(char *filename, int reread)
 
 	if (yyin == NULL)
 	{
-		log(LL_ERR, "cannot fopen file [%s]", filename);
+		logit(LL_ERR, "cannot fopen file [%s]", filename);
 		exit(1);
 	}
 
@@ -106,7 +106,7 @@ configure(char *filename, int reread)
 	{
 		if(config_error_flag)
 		{
-			log(LL_ERR, "there were %d error(s) in the configuration file, terminating!", config_error_flag);
+			logit(LL_ERR, "there were %d error(s) in the configuration file, terminating!", config_error_flag);
 			exit(1);
 		}
 		print_config();
@@ -120,7 +120,7 @@ configure(char *filename, int reread)
 void
 yyerror(const char *msg)
 {
-	log(LL_ERR, "configuration error: %s at line %d, token \"%s\"", msg, lineno+1, yytext);
+	logit(LL_ERR, "configuration error: %s at line %d, token \"%s\"", msg, lineno+1, yytext);
 	config_error_flag++;
 }
 
@@ -281,13 +281,13 @@ set_isppp_auth(struct cfg_entry *cep)
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		log(LL_ERR, "ERROR opening control socket at line %d!", lineno);
+		logit(LL_ERR, "ERROR opening control socket at line %d!", lineno);
 		config_error_flag++;
 		return;
 	}
 
 	if (ioctl(s, SPPPGETAUTHCFG, &spcfg) == -1) {
-		log(LL_ERR, "ERROR fetching active PPP authentication info for %s at line %d!", spcfg.ifname, lineno);
+		logit(LL_ERR, "ERROR fetching active PPP authentication info for %s at line %d!", spcfg.ifname, lineno);
 		close(s);
 		config_error_flag++;
 		return;
@@ -340,7 +340,7 @@ set_isppp_auth(struct cfg_entry *cep)
 	}
 
 	if (ioctl(s, SPPPSETAUTHCFG, &spcfg) == -1) {
-		log(LL_ERR, "ERROR setting new PPP authentication parameters for %s at line %d!", spcfg.ifname, lineno);
+		logit(LL_ERR, "ERROR setting new PPP authentication parameters for %s at line %d!", spcfg.ifname, lineno);
 		config_error_flag++;
 	}
 	close(s);
@@ -358,96 +358,96 @@ cfg_setval(int keyword)
 	{
 		case ACCTALL:
 			acct_all = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "system: acctall = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: acctall = %d", yylval.booln)));
 			break;
 			
 		case ACCTFILE:
 			strcpy(acctfile, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: acctfile = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: acctfile = %s", yylval.str)));
 			break;
 
 		case ALERT:
 			if(yylval.num < MINALERT)
 			{
 				yylval.num = MINALERT;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: alert < %d, min = %d", current_cfe->name, MINALERT, yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: alert < %d, min = %d", current_cfe->name, MINALERT, yylval.num)));
 			}
 			else if(yylval.num > MAXALERT)
 			{
 				yylval.num = MAXALERT;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: alert > %d, min = %d", current_cfe->name, MAXALERT, yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: alert > %d, min = %d", current_cfe->name, MAXALERT, yylval.num)));
 			}
 				
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: alert = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: alert = %d", current_cfe->name, yylval.num)));
 			current_cfe->alert = yylval.num;
 			break;
 
 		case ALIASING:
-			DBGL(DL_RCCF, (log(LL_DBG, "system: aliasing = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: aliasing = %d", yylval.booln)));
 			aliasing = yylval.booln;
 			break;
 
 		case ALIASFNAME:
 			strcpy(aliasfile, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: aliasfile = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: aliasfile = %s", yylval.str)));
 			break;
 
 		case ANSWERPROG:
 			if((current_cfe->answerprog = malloc(strlen(yylval.str)+1)) == NULL)
 			{
-				log(LL_ERR, "entry %s: answerstring, malloc failed!", current_cfe->name);
+				logit(LL_ERR, "entry %s: answerstring, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
 			strcpy(current_cfe->answerprog, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: answerprog = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: answerprog = %s", current_cfe->name, yylval.str)));
 			break;
 			
 		case B1PROTOCOL:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: b1protocol = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: b1protocol = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "raw")))
 				current_cfe->b1protocol = BPROT_NONE;
 			else if(!(strcmp(yylval.str, "hdlc")))
 				current_cfe->b1protocol = BPROT_RHDLC;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"b1protocol\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"b1protocol\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case BEEPCONNECT:
 			do_bell = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "system: beepconnect = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: beepconnect = %d", yylval.booln)));
 			break;
 
 		case BUDGETCALLBACKPERIOD:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-callbackperiod = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbackperiod = %d", current_cfe->name, yylval.num)));
 			current_cfe->budget_callbackperiod = yylval.num;
 			break;
 
 		case BUDGETCALLBACKNCALLS:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-callbackncalls = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbackncalls = %d", current_cfe->name, yylval.num)));
 			current_cfe->budget_callbackncalls = yylval.num;
 			break;
 			
 		case BUDGETCALLOUTPERIOD:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-calloutperiod = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-calloutperiod = %d", current_cfe->name, yylval.num)));
 			current_cfe->budget_calloutperiod = yylval.num;
 			break;
 
 		case BUDGETCALLOUTNCALLS:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-calloutncalls = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-calloutncalls = %d", current_cfe->name, yylval.num)));
 			current_cfe->budget_calloutncalls = yylval.num;
 			break;
 
 		case AUTOUPDOWN:
 			current_cfe->autoupdown = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: autoupdown = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: autoupdown = %d", current_cfe->name, yylval.booln)));
 			break;
 
 		case BUDGETCALLBACKSFILEROTATE:
 			current_cfe->budget_callbacksfile_rotate = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-callbacksfile-rotate = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbacksfile-rotate = %d", current_cfe->name, yylval.booln)));
 			break;
 			
 		case BUDGETCALLBACKSFILE:
@@ -455,13 +455,13 @@ cfg_setval(int keyword)
 				FILE *fp;
 				int s, l;
 				int n;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-callbacksfile = %s", yylval.str)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-callbacksfile = %s", yylval.str)));
 				fp = fopen(yylval.str, "r");
 				if(fp != NULL)
 				{
 					if((fscanf(fp, "%d %d %d", (int *)&s, (int *)&l, &n)) != 3)
 					{
-						DBGL(DL_RCCF, (log(LL_DBG, "entry %d: initializing budget-callbacksfile %s", current_cfe->name, yylval.str)));
+						DBGL(DL_RCCF, (logit(LL_DBG, "entry %d: initializing budget-callbacksfile %s", current_cfe->name, yylval.str)));
 						fclose(fp);
 						fp = fopen(yylval.str, "w");
 						if(fp != NULL)
@@ -471,7 +471,7 @@ cfg_setval(int keyword)
 				}
 				else
 				{
-					DBGL(DL_RCCF, (log(LL_DBG, "entry %s: creating budget-callbacksfile %s", current_cfe->name, yylval.str)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: creating budget-callbacksfile %s", current_cfe->name, yylval.str)));
 					fp = fopen(yylval.str, "w");
 					if(fp != NULL)
 						fprintf(fp, "%d %d %d", (int)time(NULL), (int)time(NULL), 0);
@@ -485,11 +485,11 @@ cfg_setval(int keyword)
 					{
 						if((current_cfe->budget_callbacks_file = malloc(strlen(yylval.str)+1)) == NULL)
 						{
-							log(LL_ERR, "entry %s: budget-callbacksfile, malloc failed!", current_cfe->name);
+							logit(LL_ERR, "entry %s: budget-callbacksfile, malloc failed!", current_cfe->name);
 							do_exit(1);
 						}
 						strcpy(current_cfe->budget_callbacks_file, yylval.str);
-						DBGL(DL_RCCF, (log(LL_DBG, "entry %s: using callbacksfile %s", current_cfe->name, yylval.str)));
+						DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: using callbacksfile %s", current_cfe->name, yylval.str)));
 					}
 					fclose(fp);
 				}
@@ -498,7 +498,7 @@ cfg_setval(int keyword)
 
 		case BUDGETCALLOUTSFILEROTATE:
 			current_cfe->budget_calloutsfile_rotate = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-calloutsfile-rotate = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-calloutsfile-rotate = %d", current_cfe->name, yylval.booln)));
 			break;
 
 		case BUDGETCALLOUTSFILE:
@@ -506,13 +506,13 @@ cfg_setval(int keyword)
 				FILE *fp;
 				int s, l;
 				int n;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-calloutsfile = %s", current_cfe->name, yylval.str)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: budget-calloutsfile = %s", current_cfe->name, yylval.str)));
 				fp = fopen(yylval.str, "r");
 				if(fp != NULL)
 				{
 					if((fscanf(fp, "%d %d %d", (int *)&s, (int *)&l, &n)) != 3)
 					{
-						DBGL(DL_RCCF, (log(LL_DBG, "entry %s: initializing budget-calloutsfile %s", current_cfe->name, yylval.str)));
+						DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: initializing budget-calloutsfile %s", current_cfe->name, yylval.str)));
 						fclose(fp);
 						fp = fopen(yylval.str, "w");
 						if(fp != NULL)
@@ -522,7 +522,7 @@ cfg_setval(int keyword)
 				}
 				else
 				{
-					DBGL(DL_RCCF, (log(LL_DBG, "entry %s: creating budget-calloutsfile %s", current_cfe->name, yylval.str)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: creating budget-calloutsfile %s", current_cfe->name, yylval.str)));
 					fp = fopen(yylval.str, "w");
 					if(fp != NULL)
 						fprintf(fp, "%d %d %d", (int)time(NULL), (int)time(NULL), 0);
@@ -536,11 +536,11 @@ cfg_setval(int keyword)
 					{
 						if((current_cfe->budget_callouts_file = malloc(strlen(yylval.str)+1)) == NULL)
 						{
-							log(LL_ERR, "entry %s: budget-calloutsfile, malloc failed!", current_cfe->name);
+							logit(LL_ERR, "entry %s: budget-calloutsfile, malloc failed!", current_cfe->name);
 							do_exit(1);
 						}
 						strcpy(current_cfe->budget_callouts_file, yylval.str);
-						DBGL(DL_RCCF, (log(LL_DBG, "entry %s: using calloutsfile %s", current_cfe->name, yylval.str)));
+						DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: using calloutsfile %s", current_cfe->name, yylval.str)));
 					}
 					fclose(fp);
 				}
@@ -551,10 +551,10 @@ cfg_setval(int keyword)
 			if(yylval.num < CALLBACKWAIT_MIN)
 			{
 				yylval.num = CALLBACKWAIT_MIN;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: callbackwait < %d, min = %d", current_cfe->name, CALLBACKWAIT_MIN, yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: callbackwait < %d, min = %d", current_cfe->name, CALLBACKWAIT_MIN, yylval.num)));
 			}
 
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: callbackwait = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: callbackwait = %d", current_cfe->name, yylval.num)));
 			current_cfe->callbackwait = yylval.num;
 			break;
 			
@@ -562,48 +562,48 @@ cfg_setval(int keyword)
 			if(yylval.num < CALLEDBACKWAIT_MIN)
 			{
 				yylval.num = CALLEDBACKWAIT_MIN;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: calledbackwait < %d, min = %d", current_cfe->name, CALLEDBACKWAIT_MIN, yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: calledbackwait < %d, min = %d", current_cfe->name, CALLEDBACKWAIT_MIN, yylval.num)));
 			}
 
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: calledbackwait = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: calledbackwait = %d", current_cfe->name, yylval.num)));
 			current_cfe->calledbackwait = yylval.num;
 			break;
 
 		case CONNECTPROG:
 			if((current_cfe->connectprog = malloc(strlen(yylval.str)+1)) == NULL)
 			{
-				log(LL_ERR, "entry %s: connectprog, malloc failed!", current_cfe->name);
+				logit(LL_ERR, "entry %s: connectprog, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
 			strcpy(current_cfe->connectprog, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: connectprog = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: connectprog = %s", current_cfe->name, yylval.str)));
 			break;
 			
 		case DIALOUTTYPE:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: dialouttype = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: dialouttype = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "normal")))
 				current_cfe->dialouttype = DIALOUT_NORMAL;
 			else if(!(strcmp(yylval.str, "calledback")))
 				current_cfe->dialouttype = DIALOUT_CALLEDBACK;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"dialout-type\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"dialout-type\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case DIALRETRIES:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: dialretries = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: dialretries = %d", current_cfe->name, yylval.num)));
 			current_cfe->dialretries = yylval.num;
 			break;
 
 		case DIALRANDINCR:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: dialrandincr = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: dialrandincr = %d", current_cfe->name, yylval.booln)));
 			current_cfe->dialrandincr = yylval.booln;
 			break;
 
 		case DIRECTION:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: direction = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: direction = %s", current_cfe->name, yylval.str)));
 
 			if(!(strcmp(yylval.str, "inout")))
 				current_cfe->inout = DIR_INOUT;
@@ -613,7 +613,7 @@ cfg_setval(int keyword)
 				current_cfe->inout = DIR_OUTONLY;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"direction\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"direction\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
@@ -621,11 +621,11 @@ cfg_setval(int keyword)
 		case DISCONNECTPROG:
 			if((current_cfe->disconnectprog = malloc(strlen(yylval.str)+1)) == NULL)
 			{
-				log(LL_ERR, "entry %s: disconnectprog, malloc failed!", current_cfe->name);
+				logit(LL_ERR, "entry %s: disconnectprog, malloc failed!", current_cfe->name);
 				do_exit(1);
 			}
 			strcpy(current_cfe->disconnectprog, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: disconnectprog = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: disconnectprog = %s", current_cfe->name, yylval.str)));
 			break;
 
 		case DOWNTRIES:
@@ -634,7 +634,7 @@ cfg_setval(int keyword)
 			else if(yylval.num < DOWN_TRIES_MIN)
 				yylval.num = DOWN_TRIES_MIN;
 		
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: downtries = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: downtries = %d", current_cfe->name, yylval.num)));
 			current_cfe->downtries = yylval.num;
 			break;
 
@@ -644,27 +644,27 @@ cfg_setval(int keyword)
 			else if(yylval.num < DOWN_TIME_MIN)
 				yylval.num = DOWN_TIME_MIN;
 		
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: downtime = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: downtime = %d", current_cfe->name, yylval.num)));
 			current_cfe->downtime = yylval.num;
 			break;
 
 		case EARLYHANGUP:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: earlyhangup = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: earlyhangup = %d", current_cfe->name, yylval.num)));
 			current_cfe->earlyhangup = yylval.num;
 			break;
 
 		case EXTCALLATTR:
-			DBGL(DL_RCCF, (log(LL_DBG, "system: extcallattr = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: extcallattr = %d", yylval.booln)));
 			extcallattr = yylval.booln;
 			break;
 
 		case HOLIDAYFILE:
 			strcpy(holidayfile, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: holidayfile = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: holidayfile = %s", yylval.str)));
 			break;
 
 		case IDLE_ALG_OUT:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: idle-algorithm-outgoing = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: idle-algorithm-outgoing = %s", current_cfe->name, yylval.str)));
 
 			if(!(strcmp(yylval.str, "fix-unit-size")))
 			{
@@ -676,24 +676,24 @@ cfg_setval(int keyword)
 			}
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"idle-algorithm-outgoing\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"idle-algorithm-outgoing\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case IDLETIME_IN:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: idle_time_in = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: idle_time_in = %d", current_cfe->name, yylval.num)));
 			current_cfe->idle_time_in = yylval.num;
 			break;
 			
 		case IDLETIME_OUT:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: idle_time_out = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: idle_time_out = %d", current_cfe->name, yylval.num)));
 			current_cfe->idle_time_out = yylval.num;
 			break;
 
 		case ISDNCONTROLLER:
 			current_cfe->isdncontroller = yylval.num;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdncontroller = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdncontroller = %d", current_cfe->name, yylval.num)));
 			break;
 
 		case ISDNCHANNEL:
@@ -702,83 +702,83 @@ cfg_setval(int keyword)
 				case 0:
 				case -1:
 					current_cfe->isdnchannel = CHAN_ANY;
-					DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdnchannel = any", current_cfe->name)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = any", current_cfe->name)));
 					break;
 				case 1:
 					current_cfe->isdnchannel = CHAN_B1;
-					DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdnchannel = one", current_cfe->name)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = one", current_cfe->name)));
 					break;
 				case 2:
 					current_cfe->isdnchannel = CHAN_B2;
-					DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdnchannel = two", current_cfe->name)));
+					DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = two", current_cfe->name)));
 					break;
 				default:
-					log(LL_DBG, "entry %s: isdnchannel value out of range", current_cfe->name);
+					logit(LL_DBG, "entry %s: isdnchannel value out of range", current_cfe->name);
 					config_error_flag++;
 					break;
 			}
 			break;
 
 		case ISDNTIME:
-			DBGL(DL_RCCF, (log(LL_DBG, "system: isdntime = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: isdntime = %d", yylval.booln)));
 			isdntime = yylval.booln;
 			break;
 
 		case ISDNTXDELIN:
 			current_cfe->isdntxdelin = yylval.num;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdntxdel-incoming = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdntxdel-incoming = %d", current_cfe->name, yylval.num)));
 			break;
 
 		case ISDNTXDELOUT:
 			current_cfe->isdntxdelout = yylval.num;
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: isdntxdel-outgoing = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdntxdel-outgoing = %d", current_cfe->name, yylval.num)));
 			break;
 
 		case LOCAL_PHONE_DIALOUT:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: local_phone_dialout = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: local_phone_dialout = %s", current_cfe->name, yylval.str)));
 			strcpy(current_cfe->local_phone_dialout, yylval.str);
 			break;
 
 		case LOCAL_PHONE_INCOMING:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: local_phone_incoming = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: local_phone_incoming = %s", current_cfe->name, yylval.str)));
 			strcpy(current_cfe->local_phone_incoming, yylval.str);
 			break;
 
 		case MAILER:
 			strcpy(mailer, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: mailer = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: mailer = %s", yylval.str)));
 			break;
 
 		case MAILTO:
 			strcpy(mailto, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: mailto = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: mailto = %s", yylval.str)));
 			break;
 
 		case MONITORPORT:
 			monitorport = yylval.num;
-			DBGL(DL_RCCF, (log(LL_DBG, "system: monitorport = %d", yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: monitorport = %d", yylval.num)));
 			break;
 
 		case MONITORSW:
 			if (yylval.booln && inhibit_monitor)
 			{
 				do_monitor = 0;
-				DBGL(DL_RCCF, (log(LL_DBG, "system: monitor-enable overriden by command line flag")));
+				DBGL(DL_RCCF, (logit(LL_DBG, "system: monitor-enable overriden by command line flag")));
 			}
 			else
 			{
 				do_monitor = yylval.booln;
-				DBGL(DL_RCCF, (log(LL_DBG, "system: monitor-enable = %d", yylval.booln)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "system: monitor-enable = %d", yylval.booln)));
 			}
 			break;
 
 		case NAME:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: name = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: name = %s", current_cfe->name, yylval.str)));
 			strcpy(current_cfe->name, yylval.str);
 			break;
 
 		case PPP_AUTH_RECHALLENGE:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-auth-rechallenge = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-auth-rechallenge = %d", current_cfe->name, yylval.booln)));
 			if(yylval.booln)
 				current_cfe->ppp_auth_flags |= AUTH_RECHALLENGE;
 			else
@@ -786,7 +786,7 @@ cfg_setval(int keyword)
 			break;
 
 		case PPP_AUTH_PARANOID:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-auth-paranoid = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-auth-paranoid = %d", current_cfe->name, yylval.booln)));
 			if(yylval.booln)
 				current_cfe->ppp_auth_flags |= AUTH_REQUIRED;
 			else
@@ -794,7 +794,7 @@ cfg_setval(int keyword)
 			break;
 
 		case PPP_EXPECT_AUTH:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-expect-auth = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-expect-auth = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "none")))
 				current_cfe->ppp_expect_auth = AUTH_NONE;
 			else if(!(strcmp(yylval.str, "pap")))
@@ -803,28 +803,28 @@ cfg_setval(int keyword)
 				current_cfe->ppp_expect_auth = AUTH_CHAP;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"ppp-expect-auth\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"ppp-expect-auth\" at line %d!", lineno);
 				config_error_flag++;
 				break;
 			}
 			break;
 
 		case PPP_EXPECT_NAME:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-expect-name = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-expect-name = %s", current_cfe->name, yylval.str)));
 			if (current_cfe->ppp_expect_name)
 			    free(current_cfe->ppp_expect_name);
 			current_cfe->ppp_expect_name = strdup(yylval.str);
 			break;
 
 		case PPP_EXPECT_PASSWORD:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-expect-password = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-expect-password = %s", current_cfe->name, yylval.str)));
 			if (current_cfe->ppp_expect_password)
 			    free(current_cfe->ppp_expect_password);
 			current_cfe->ppp_expect_password = strdup(yylval.str);
 			break;
 
 		case PPP_SEND_AUTH:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-send-auth = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-send-auth = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "none")))
 				current_cfe->ppp_send_auth = AUTH_NONE;
 			else if(!(strcmp(yylval.str, "pap")))
@@ -833,41 +833,41 @@ cfg_setval(int keyword)
 				current_cfe->ppp_send_auth = AUTH_CHAP;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"ppp-send-auth\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"ppp-send-auth\" at line %d!", lineno);
 				config_error_flag++;
 				break;
 			}
 			break;
 
 		case PPP_SEND_NAME:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-send-name = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-send-name = %s", current_cfe->name, yylval.str)));
 			if (current_cfe->ppp_send_name)
 			    free(current_cfe->ppp_send_name);
 			current_cfe->ppp_send_name = strdup(yylval.str);
 			break;
 
 		case PPP_SEND_PASSWORD:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ppp-send-password = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ppp-send-password = %s", current_cfe->name, yylval.str)));
 			if (current_cfe->ppp_send_password)
 			    free(current_cfe->ppp_send_password);
 			current_cfe->ppp_send_password = strdup(yylval.str);
 			break;
 
 		case PROTOCOL:
-			DBGL(DL_RCCF, (log(LL_DBG, "controller %d: protocol = %s", cur_ctrl->bri, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: protocol = %s", cur_ctrl->bri, yylval.str)));
 			if(!(strcmp(yylval.str, "dss1")))
 				cur_ctrl->protocol = PROTOCOL_DSS1;
 			else if(!(strcmp(yylval.str, "d64s")))
 				cur_ctrl->protocol = PROTOCOL_D64S;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"protocol\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"protocol\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case REACTION:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: dialin_reaction = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: dialin_reaction = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "accept")))
 				current_cfe->dialin_reaction = REACT_ACCEPT;
 			else if(!(strcmp(yylval.str, "reject")))
@@ -880,7 +880,7 @@ cfg_setval(int keyword)
 				current_cfe->dialin_reaction = REACT_CALLBACK;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"dialin_reaction\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"dialin_reaction\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
@@ -888,12 +888,12 @@ cfg_setval(int keyword)
 		case REMOTE_PHONE_DIALOUT:
 			if(current_cfe->remote_numbers_count >= MAXRNUMBERS)
 			{
-				log(LL_ERR, "ERROR parsing config file: too many remote numbers at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: too many remote numbers at line %d!", lineno);
 				config_error_flag++;
 				break;
 			}				
 			
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: remote_phone_dialout #%d = %s",
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: remote_phone_dialout #%d = %s",
 				current_cfe->name, current_cfe->remote_numbers_count, yylval.str)));
 
 			strcpy(current_cfe->remote_numbers[current_cfe->remote_numbers_count].number, yylval.str);
@@ -904,7 +904,7 @@ cfg_setval(int keyword)
 			break;
 
 		case REMOTE_NUMBERS_HANDLING:			
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: remdial_handling = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: remdial_handling = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "next")))
 				current_cfe->remote_numbers_handling = RNH_NEXT;
 			else if(!(strcmp(yylval.str, "last")))
@@ -913,7 +913,7 @@ cfg_setval(int keyword)
 				current_cfe->remote_numbers_handling = RNH_FIRST;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"remdial_handling\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"remdial_handling\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
@@ -924,11 +924,11 @@ cfg_setval(int keyword)
 				n = current_cfe->incoming_numbers_count;
 				if (n >= MAX_INCOMING)
 				{
-					log(LL_ERR, "ERROR parsing config file: too many \"remote_phone_incoming\" entries at line %d!", lineno);
+					logit(LL_ERR, "ERROR parsing config file: too many \"remote_phone_incoming\" entries at line %d!", lineno);
 					config_error_flag++;
 					break;
 				}
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: remote_phone_incoming #%d = %s", current_cfe->name, n, yylval.str)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: remote_phone_incoming #%d = %s", current_cfe->name, n, yylval.str)));
 				strcpy(current_cfe->remote_phone_incoming[n].number, yylval.str);
 				current_cfe->incoming_numbers_count++;
 			}
@@ -936,11 +936,11 @@ cfg_setval(int keyword)
 
 		case RATESFILE:
 			strcpy(ratesfile, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: ratesfile = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: ratesfile = %s", yylval.str)));
 			break;
 
 		case RATETYPE:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: ratetype = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: ratetype = %d", current_cfe->name, yylval.num)));
 			current_cfe->ratetype = yylval.num;
 			break;
 		
@@ -948,17 +948,17 @@ cfg_setval(int keyword)
 			if(yylval.num < RECOVERYTIME_MIN)
 			{
 				yylval.num = RECOVERYTIME_MIN;
-				DBGL(DL_RCCF, (log(LL_DBG, "entry %s: recoverytime < %d, min = %d", current_cfe->name, RECOVERYTIME_MIN, yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: recoverytime < %d, min = %d", current_cfe->name, RECOVERYTIME_MIN, yylval.num)));
 			}
 
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: recoverytime = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: recoverytime = %d", current_cfe->name, yylval.num)));
 			current_cfe->recoverytime = yylval.num;
 			break;
 		
 		case REGEXPR:
 			if(nregexpr >= MAX_RE)
 			{
-				log(LL_ERR, "system: regexpr #%d >= MAX_RE", nregexpr);
+				logit(LL_ERR, "system: regexpr #%d >= MAX_RE", nregexpr);
 				config_error_flag++;
 				break;
 			}
@@ -967,7 +967,7 @@ cfg_setval(int keyword)
 		        {
                 		char buf[256];
                 		regerror(i, &(rarr[nregexpr].re), buf, sizeof(buf));
-				log(LL_ERR, "system: regcomp error for %s: [%s]", yylval.str, buf);
+				logit(LL_ERR, "system: regcomp error for %s: [%s]", yylval.str, buf);
 				config_error_flag++;
                 		break;
 			}
@@ -975,13 +975,13 @@ cfg_setval(int keyword)
 			{
 				if((rarr[nregexpr].re_expr = malloc(strlen(yylval.str)+1)) == NULL)
 				{
-					log(LL_ERR, "system: regexpr malloc error error for %s", yylval.str);
+					logit(LL_ERR, "system: regexpr malloc error error for %s", yylval.str);
 					config_error_flag++;
 					break;
 				}
 				strcpy(rarr[nregexpr].re_expr, yylval.str);
 
-				DBGL(DL_RCCF, (log(LL_DBG, "system: regexpr %s stored into slot %d", yylval.str, nregexpr)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "system: regexpr %s stored into slot %d", yylval.str, nregexpr)));
 				
 				if(rarr[nregexpr].re_prog != NULL)
 					rarr[nregexpr].re_flg = 1;
@@ -994,19 +994,19 @@ cfg_setval(int keyword)
 		case REGPROG:
 			if(nregprog >= MAX_RE)
 			{
-				log(LL_ERR, "system: regprog #%d >= MAX_RE", nregprog);
+				logit(LL_ERR, "system: regprog #%d >= MAX_RE", nregprog);
 				config_error_flag++;
 				break;
 			}
 			if((rarr[nregprog].re_prog = malloc(strlen(yylval.str)+1)) == NULL)
 			{
-				log(LL_ERR, "system: regprog malloc error error for %s", yylval.str);
+				logit(LL_ERR, "system: regprog malloc error error for %s", yylval.str);
 				config_error_flag++;
 				break;
 			}
 			strcpy(rarr[nregprog].re_prog, yylval.str);
 
-			DBGL(DL_RCCF, (log(LL_DBG, "system: regprog %s stored into slot %d", yylval.str, nregprog)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: regprog %s stored into slot %d", yylval.str, nregprog)));
 			
 			if(rarr[nregprog].re_expr != NULL)
 				rarr[nregprog].re_flg = 1;
@@ -1016,7 +1016,7 @@ cfg_setval(int keyword)
 
 		case ROTATESUFFIX:
 			strcpy(rotatesuffix, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: rotatesuffix = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: rotatesuffix = %s", yylval.str)));
 			break;
 
 		case RTPRIO:
@@ -1025,11 +1025,11 @@ cfg_setval(int keyword)
 			if(rt_prio < RTP_PRIO_MIN || rt_prio > RTP_PRIO_MAX)
 			{
 				config_error_flag++;
-				log(LL_ERR, "system: error, rtprio (%d) out of range!", yylval.num);
+				logit(LL_ERR, "system: error, rtprio (%d) out of range!", yylval.num);
 			}
 			else
 			{
-				DBGL(DL_RCCF, (log(LL_DBG, "system: rtprio = %d", yylval.num)));
+				DBGL(DL_RCCF, (logit(LL_DBG, "system: rtprio = %d", yylval.num)));
 			}
 #else
 			rt_prio = RTPRIO_NOTUSED;
@@ -1038,16 +1038,16 @@ cfg_setval(int keyword)
 
 		case TINAINITPROG:
 			strcpy(tinainitprog, yylval.str);
-			DBGL(DL_RCCF, (log(LL_DBG, "system: tinainitprog = %s", yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: tinainitprog = %s", yylval.str)));
 			break;
 
 		case UNITLENGTH:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: unitlength = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: unitlength = %d", current_cfe->name, yylval.num)));
 			current_cfe->unitlength = yylval.num;
 			break;
 
 		case UNITLENGTHSRC:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: unitlengthsrc = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: unitlengthsrc = %s", current_cfe->name, yylval.str)));
 			if(!(strcmp(yylval.str, "none")))
 				current_cfe->unitlengthsrc = ULSRC_NONE;
 			else if(!(strcmp(yylval.str, "cmdl")))
@@ -1060,44 +1060,44 @@ cfg_setval(int keyword)
 				current_cfe->unitlengthsrc = ULSRC_DYN;
 			else
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"unitlengthsrc\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"unitlengthsrc\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case USRDEVICENAME:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: usrdevicename = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: usrdevicename = %s", current_cfe->name, yylval.str)));
 			strncpy(current_cfe->usrdevicename, yylval.str, sizeof(current_cfe->usrdevicename));
 			current_cfe->usrdevice = lookup_l4_driver(yylval.str);
 			if (current_cfe->usrdevice < 0)
 			{
-				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"usrdevicename\" at line %d!", lineno);
+				logit(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"usrdevicename\" at line %d!", lineno);
 				config_error_flag++;
 			}
 			break;
 
 		case USRDEVICEUNIT:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: usrdeviceunit = %d", current_cfe->name, yylval.num)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: usrdeviceunit = %d", current_cfe->name, yylval.num)));
 			current_cfe->usrdeviceunit = yylval.num;
 			break;
 
 		case USEACCTFILE:
 			useacctfile = yylval.booln;
-			DBGL(DL_RCCF, (log(LL_DBG, "system: useacctfile = %d", yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "system: useacctfile = %d", yylval.booln)));
 			break;
 
 		case USEDOWN:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: usedown = %d", current_cfe->name, yylval.booln)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: usedown = %d", current_cfe->name, yylval.booln)));
 			current_cfe->usedown = yylval.booln;
 			break;
 
 		case VALID:
-			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: valid = %s", current_cfe->name, yylval.str)));
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: valid = %s", current_cfe->name, yylval.str)));
 			parse_valid(yylval.str);
 			break;
 
 		default:
-			log(LL_ERR, "ERROR parsing config file: unknown keyword at line %d!", lineno);
+			logit(LL_ERR, "ERROR parsing config file: unknown keyword at line %d!", lineno);
 			config_error_flag++;
 			break;			
 	}
@@ -1137,7 +1137,7 @@ parse_valid(char *dt)
 			ret = sscanf(dt, "%d:%d-%d:%d", &fromhr, &frommin, &tohr, &tomin);
 			if(ret !=4)
 			{
-				log(LL_ERR, "ERROR parsing config file: timespec [%s] error at line %d!", *dt, lineno);
+				logit(LL_ERR, "ERROR parsing config file: timespec [%s] error at line %d!", *dt, lineno);
 				config_error_flag++;
 				return;
 			}
@@ -1145,7 +1145,7 @@ parse_valid(char *dt)
 			if(fromhr < 0 || fromhr > 24 || tohr < 0 || tohr > 24 ||
 			   frommin < 0 || frommin > 59 || tomin < 0 || tomin > 59)
 			{
-				log(LL_ERR, "ERROR parsing config file: invalid time [%s] at line %d!", *dt, lineno);
+				logit(LL_ERR, "ERROR parsing config file: invalid time [%s] at line %d!", *dt, lineno);
 				config_error_flag++;
 				return;
 			}
@@ -1172,7 +1172,7 @@ parse_valid(char *dt)
 		else
 		{
 			/* dt points to illegal character */
-			log(LL_ERR, "ERROR parsing config file: illegal character [%c=0x%x] in date/time spec at line %d!", *dt, *dt, lineno);
+			logit(LL_ERR, "ERROR parsing config file: illegal character [%c=0x%x] in date/time spec at line %d!", *dt, *dt, lineno);
 			config_error_flag++;
 			return;
 		}
@@ -1208,12 +1208,12 @@ check_config(void)
 	{
 		if((rarr[i].re_expr != NULL) && (rarr[i].re_prog == NULL))
 		{
-			log(LL_ERR, "check_config: regular expression %d without program!", i);
+			logit(LL_ERR, "check_config: regular expression %d without program!", i);
 			error++;
 		}
 		if((rarr[i].re_prog != NULL) && (rarr[i].re_expr == NULL))
 		{
-			log(LL_ERR, "check_config: regular expression program %d without expression!", i);
+			logit(LL_ERR, "check_config: regular expression program %d without expression!", i);
 			error++;
 		}
 	}
@@ -1228,12 +1228,12 @@ check_config(void)
 		{
 			if(cep->remote_numbers_count == 0)
 			{
-				log(LL_ERR, "check_config: remote-phone-dialout not set in entry %d!", i);
+				logit(LL_ERR, "check_config: remote-phone-dialout not set in entry %d!", i);
 				error++;
 			}
 			if(strlen(cep->local_phone_dialout) == 0)
 			{
-				log(LL_ERR, "check_config: local-phone-dialout not set in entry %d!", i);
+				logit(LL_ERR, "check_config: local-phone-dialout not set in entry %d!", i);
 				error++;
 			}
 		}
@@ -1244,19 +1244,19 @@ check_config(void)
 		{
 			if(strlen(cep->local_phone_incoming) == 0)
 			{
-				log(LL_ERR, "check_config: local-phone-incoming not set in entry %d!", i);
+				logit(LL_ERR, "check_config: local-phone-incoming not set in entry %d!", i);
 				error++;
 			}
 			if(cep->incoming_numbers_count == 0)
 			{
-				log(LL_ERR, "check_config: remote-phone-incoming not set in entry %d!", i);
+				logit(LL_ERR, "check_config: remote-phone-incoming not set in entry %d!", i);
 				error++;
 			}
 		}
 
 		if((cep->dialin_reaction == REACT_ANSWER) && (cep->b1protocol != BPROT_NONE))
 		{
-			log(LL_ERR, "check_config: b1protocol not raw for telephony in entry %d!", i);
+			logit(LL_ERR, "check_config: b1protocol not raw for telephony in entry %d!", i);
 			error++;
 		}
 
@@ -1264,12 +1264,12 @@ check_config(void)
 		{
 			if(cep->ppp_send_name == NULL)
 			{
-				log(LL_ERR, "check_config: no remote authentification name in entry %d!", i);
+				logit(LL_ERR, "check_config: no remote authentification name in entry %d!", i);
 				error++;
 			}
 			if(cep->ppp_send_password == NULL)
 			{
-				log(LL_ERR, "check_config: no remote authentification password in entry %d!", i);
+				logit(LL_ERR, "check_config: no remote authentification password in entry %d!", i);
 				error++;
 			}
 		}
@@ -1277,12 +1277,12 @@ check_config(void)
 		{
 			if(cep->ppp_expect_name == NULL)
 			{
-				log(LL_ERR, "check_config: no local authentification name in entry %d!", i);
+				logit(LL_ERR, "check_config: no local authentification name in entry %d!", i);
 				error++;
 			}
 			if(cep->ppp_expect_password == NULL)
 			{
-				log(LL_ERR, "check_config: no local authentification secret in entry %d!", i);
+				logit(LL_ERR, "check_config: no local authentification secret in entry %d!", i);
 				error++;
 			}
 		}
@@ -1299,7 +1299,7 @@ check_config(void)
 			set_autoupdown(cep);
 	}
 	if (error) {
-		log(LL_ERR, "check_config: %d error(s) in configuration file, exit!", error);
+		logit(LL_ERR, "check_config: %d error(s) in configuration file, exit!", error);
 		do_exit(1);
 	}
 }

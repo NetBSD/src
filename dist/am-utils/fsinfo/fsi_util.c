@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.4 2002/05/09 02:09:52 simonb Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.4.2.1 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -172,7 +172,7 @@ fatal(char *fmt, ...)
  * Debug log
  */
 void
-log(char *fmt, ...)
+logit(char *fmt, ...)
 {
   va_list ap;
 
@@ -279,7 +279,7 @@ pref_open(char *pref, char *hn, void (*hdr) (FILE *, char *), char *arg)
   FILE *ef;
 
   sprintf(p, "%s%s", pref, hn);
-  log("Writing %s info for %s to %s", pref, hn, p);
+  logit("Writing %s info for %s to %s", pref, hn, p);
   ef = fopen(p, "w");
   if (ef) {
     (*hdr) (ef, arg);

@@ -30,7 +30,7 @@
  *	NOTE:	this has to stay in sync with isdntel/alias.c to be able
  *		to share a common aliasfile!
  *		
- *      $Id: alias.c,v 1.1.1.1 2001/01/06 13:00:12 martin Exp $
+ *      $Id: alias.c,v 1.1.1.1.2.1 2004/07/23 15:03:58 tron Exp $
  *
  * $FreeBSD$
  *
@@ -64,7 +64,7 @@ init_alias(char *filename)
 	
 	if((fp = fopen(filename, "r")) == NULL)
 	{
-		log(LL_ERR, "init_alias: error opening aliasfile %s: %s!", filename, strerror(errno));
+		logit(LL_ERR, "init_alias: error opening aliasfile %s: %s!", filename, strerror(errno));
 		exit(1);
 	}
 
@@ -98,19 +98,19 @@ init_alias(char *filename)
 		{
 			if((newa = (struct alias *) malloc(sizeof(struct alias))) == NULL)
 			{
-				log(LL_ERR, "init_alias: malloc failed for struct alias!\n");
+				logit(LL_ERR, "init_alias: malloc failed for struct alias!\n");
 				exit(1);
 			}
 
 			if((newa->number = (char *) malloc(strlen(number)+1)) == NULL)
 			{
-				log(LL_ERR, "init_alias: malloc failed for number alias!\n");
+				logit(LL_ERR, "init_alias: malloc failed for number alias!\n");
 				exit(1);
 			}
 
 			if((newa->name = (char *) malloc(strlen(name)+1)) == NULL)
 			{
-				log(LL_ERR, "init_alias: malloc failed for name alias!\n");
+				logit(LL_ERR, "init_alias: malloc failed for name alias!\n");
 				exit(1);
 			}
 

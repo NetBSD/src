@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.3.2.1 2002/06/26 16:54:36 tv Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.3.2.2 2004/07/23 15:03:57 tron Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -118,7 +118,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		if (fd >= 0) {
 			lseek(fd, (off_t) ((long) uid * sizeof(ll)), SEEK_SET);
 			if (write(fd, &ll, sizeof(ll)) != sizeof(ll))
-				log("Could not write %.100s: %.100s", lastlog, strerror(errno));
+				logit("Could not write %.100s: %.100s", lastlog, strerror(errno));
 			close(fd);
 		}
 	}

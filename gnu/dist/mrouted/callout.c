@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.c,v 1.2.2.2 2002/12/07 00:35:22 he Exp $	*/
+/*	$NetBSD: callout.c,v 1.2.2.3 2004/07/23 15:03:57 tron Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -70,7 +70,7 @@ age_callout_queue(void)
 	else {
 	    ptr->time --;
 #ifdef IGMP_DEBUG
-	    log(LOG_DEBUG,0,"[callout, age_callout_queue] -- time (%d)", ptr->time);
+	    logit(LOG_DEBUG,0,"[callout, age_callout_queue] -- time (%d)", ptr->time);
 #endif /* IGMP_DEBUG */
 	    in_callout = 0; return;
 	}
@@ -100,7 +100,7 @@ timer_setTimer(int delay, cfunc_t action, char *data)
     /* create a node */	
     node = (struct timeout_q *)malloc(sizeof(struct timeout_q));
     if (node == 0) {
-	log(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
+	logit(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
 	in_callout = 0;
 	return -1;
     }
@@ -207,7 +207,7 @@ print_Q(void)
     struct timeout_q  *ptr;
     
     for(ptr = Q; ptr; ptr = ptr->next)
-	log(LOG_DEBUG,0,"(%d,%d) ", ptr->id, ptr->time);
+	logit(LOG_DEBUG,0,"(%d,%d) ", ptr->id, ptr->time);
 }
 #endif /* IGMP_DEBUG */
 

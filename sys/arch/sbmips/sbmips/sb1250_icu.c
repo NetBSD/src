@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.2 2002/03/06 07:51:02 simonb Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.2.8.1 2004/07/23 15:03:58 tron Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -82,7 +82,7 @@ sb1250_icu_init(void)
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_line, 0, sizeof ints_for_line);
-	imr_all = 0xffffffffffffffff;
+	imr_all = 0xffffffffffffffffULL;
 	memset(sb1250_ihands, 0, sizeof sb1250_ihands);
 
 	systemsw.s_cpu_intr = sb1250_cpu_intr;

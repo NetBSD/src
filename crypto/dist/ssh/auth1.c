@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.17.2.1 2002/06/26 16:52:45 tv Exp $	*/
+/*	$NetBSD: auth1.c,v 1.17.2.2 2004/07/23 15:03:55 tron Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -282,7 +282,7 @@ do_authloop(Authctxt *authctxt)
 			 * Any unknown messages will be ignored (and failure
 			 * returned) during authentication.
 			 */
-			log("Unknown message during authentication: type %d", type);
+			logit("Unknown message during authentication: type %d", type);
 			break;
 		}
 #ifdef BSD_AUTH
