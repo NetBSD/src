@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.60 1998/08/25 22:34:30 pk Exp $	*/
+/*	$NetBSD: gus.c,v 1.61 1998/09/01 18:48:38 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2897,7 +2897,7 @@ gus_init_cs4231(sc)
 		sc->sc_mixcontrol |= GUSMASK_MIC_IN; /* 1 enables. */
 		bus_space_write_1(iot, ioh1, GUS_MIX_CONTROL, sc->sc_mixcontrol);
 		
-		ad1848_attach(&sc->sc_codec.sc_ad1848);
+		ad1848_isa_attach(&sc->sc_codec);
 		/* turn on pre-MUX microphone gain. */
 		ad1848_set_mic_gain(&sc->sc_codec.sc_ad1848, &vol);
 
