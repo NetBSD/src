@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.22 1999/09/20 04:39:18 lukem Exp $	*/
+/*	$NetBSD: res_send.c,v 1.23 2000/01/22 23:37:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.22 1999/09/20 04:39:18 lukem Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.23 2000/01/22 23:37:14 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -202,7 +202,7 @@ res_isourserver(inp)
 	const struct sockaddr_in *inp;
 {
 #ifdef INET6
-	struct sockaddr_in6 *in6p = (struct sockaddr_in6 *)inp;
+	const struct sockaddr_in6 *in6p = (const struct sockaddr_in6 *)inp;
 	const struct sockaddr_in6 *srv6;
 	const struct sockaddr_in *srv;
 #else /* INET6 */
@@ -463,7 +463,7 @@ res_send(buf, buflen, ans, anssiz)
 				}
 				errno = 0;
 				if (connect(s, (struct sockaddr *)(void *)nsap,
-					    nsap->sa_len) < 0) {
+					    (socklen_t)nsap->sa_len) < 0) {
 					terrno = errno;
 					Aerror(stderr, "connect/vc",
 					       errno, (struct sockaddr *)nsap);
@@ -629,8 +629,7 @@ read_len:
 				if (!connected) {
 					if (connect(s,
 					    (struct sockaddr *)(void *)nsap,
-					    nsap->sa_len
-						    ) < 0) {
+					    (socklen_t)nsap->sa_len) < 0) {
 						Aerror(stderr,
 						       "connect(dg)",
 						       errno,
@@ -679,8 +678,7 @@ read_len:
 				}
 				if (sendto(s, buf, (size_t)buflen, 0,
 					   (struct sockaddr *)(void *)nsap,
-					   nsap->sa_len)
-				    != buflen) {
+					   (socklen_t)nsap->sa_len) != buflen) {
 					Aerror(stderr, "sendto", errno,
 					    (struct sockaddr *)nsap);
 					badns |= (1 << ns);
