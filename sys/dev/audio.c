@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.121 1999/12/15 12:09:34 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.122 2000/03/01 00:44:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -107,13 +107,13 @@ int	audio_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	audio_close __P((struct audio_softc *, int, int, struct proc *));
 int	audio_read __P((struct audio_softc *, struct uio *, int));
 int	audio_write __P((struct audio_softc *, struct uio *, int));
-int	audio_ioctl __P((struct audio_softc *, int, caddr_t, int, struct proc *));
+int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 int	audio_poll __P((struct audio_softc *, int, struct proc *));
 int	audio_mmap __P((struct audio_softc *, int, int));
 
 int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	mixer_close __P((struct audio_softc *, int, int, struct proc *));
-int	mixer_ioctl __P((struct audio_softc *, int, caddr_t, int, struct proc *));
+int	mixer_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 static	void mixer_remove __P((struct audio_softc *, struct proc *p));
 static	void mixer_signal __P((struct audio_softc *));
     
@@ -1584,7 +1584,7 @@ audio_write(sc, uio, ioflag)
 int
 audio_ioctl(sc, cmd, addr, flag, p)
 	struct audio_softc *sc;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -1594,8 +1594,8 @@ audio_ioctl(sc, cmd, addr, flag, p)
 	int error = 0, s, offs, fd;
         int rbus, pbus;
 
-	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
+	          IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
@@ -1741,8 +1741,8 @@ audio_ioctl(sc, cmd, addr, flag, p)
 		error = EINVAL;
 		break;
 	}
-	DPRINTF(("audio_ioctl(%d,'%c',%d) result %d\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("audio_ioctl(%lu,'%c',%lu) result %d\n",
+	          IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 
@@ -2945,7 +2945,7 @@ mixer_close(sc, flags, ifmt, p)
 int
 mixer_ioctl(sc, cmd, addr, flag, p)
 	struct audio_softc *sc;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -2953,8 +2953,8 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 	struct audio_hw_if *hw = sc->hw_if;
 	int error = EINVAL;
 
-	DPRINTF(("mixer_ioctl(%d,'%c',%d)\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("mixer_ioctl(%lu,'%c',%lu)\n",
+		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 
 	switch (cmd) {
 	case FIOASYNC:
@@ -2998,8 +2998,8 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 		error = EINVAL;
 		break;
 	}
-	DPRINTF(("mixer_ioctl(%d,'%c',%d) result %d\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("mixer_ioctl(%lu,'%c',%lu) result %d\n",
+		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 #endif /* NAUDIO > 0 */
