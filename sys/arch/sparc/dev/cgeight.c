@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.1 1996/02/27 22:09:24 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.2 1996/02/28 20:53:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -133,7 +133,7 @@ cgeightmatch(parent, vcf, aux)
 	/*
 	 * Only exists on a sun4.
 	 */
-	if (cputyp != CPU_SUN4)
+	if (!CPU_ISSUN4)
 		return (0);
 
 	/*
