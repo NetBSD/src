@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.8 1994/06/29 06:33:28 cgd Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.8.2.1 1994/07/18 07:55:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -204,7 +204,7 @@ ndqb(clp, flag)
 
 	if (flag == 0) {
 		count = clp->c_cl - clp->c_cf;
-		if (count < 0)
+		if (count <= 0)
 			count = clp->c_ce - clp->c_cf;
 		goto out;
 	}
