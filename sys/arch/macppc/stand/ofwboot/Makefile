@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/03/30 07:17:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.32 2002/04/13 13:31:40 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -11,6 +11,7 @@ CFLAGS+=	-Wno-main -msoft-float -mmultiple
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DSUPPORT_USTARFS -DHAVE_CHANGEDISK_HOOK
+CPPFLAGS+=	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 DBG=		-Os
 
 .PATH:		${S}/arch/powerpc/powerpc
