@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.20 2002/05/04 18:11:06 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.21 2002/05/04 18:43:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -139,6 +139,7 @@ struct siop_common_softc {
 	int dt_minsync;
 	int st_maxsync;			/* as sent in or PPR messages */
 	int dt_maxsync;
+	int mode;			/* current SE/LVD/HVD mode */
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */

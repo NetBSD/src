@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.26 2002/05/04 18:11:06 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.27 2002/05/04 18:43:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.26 2002/05/04 18:11:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.27 2002/05/04 18:43:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,8 @@ siop_common_reset(sc)
 		/* reset SCNTL4 */
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL4, 0);
 	}
+	sc->mode = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST4) &
+	    STEST4_MODE_MASK;
 	sc->sc_reset(sc);
 }
 
@@ -281,7 +283,8 @@ siop_setuptables(siop_cmd)
 	}
 	siop_cmd->siop_tables->t_msgout.count= htole32(msgoffset);
 	if (sc->targets[target]->status == TARST_ASYNC) {
-		if (sc->targets[target]->flags & TARF_DT) {
+		if ((sc->targets[target]->flags & TARF_DT) &&
+			(sc->mode == STEST4_MODE_LVD)) {
 			sc->targets[target]->status = TARST_PPR_NEG;
 			 siop_ppr_msg(siop_cmd, msgoffset, sc->dt_minsync,
 			    sc->maxoff);
@@ -813,7 +816,7 @@ siop_modechange(sc)
 	struct siop_common_softc *sc;
 {
 	int retry;
-	int sist0, sist1, stest2, stest4;
+	int sist0, sist1, stest2;
 	for (retry = 0; retry < 5; retry++) {
 		/*
 		 * datasheet says to wait 100ms and re-read SIST1,
@@ -826,10 +829,10 @@ siop_modechange(sc)
 		sist1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST1);
 		if (sist1 & SIEN1_SBMC)
 			continue; /* we got an irq again */
-		stest4 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST4) &
+		sc->mode = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST4) &
 		    STEST4_MODE_MASK;
 		stest2 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2);
-		switch(stest4) {
+		switch(sc->mode) {
 		case STEST4_MODE_DIF:
 			printf("%s: switching to differential mode\n",
 			    sc->sc_dev.dv_xname);
@@ -850,11 +853,9 @@ siop_modechange(sc)
 			break;
 		default:
 			printf("%s: invalid SCSI mode 0x%x\n",
-			    sc->sc_dev.dv_xname, stest4);
+			    sc->sc_dev.dv_xname, sc->mode);
 			return 0;
 		}
-		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST0,
-		    stest4 >> 2);
 		return 1;
 	}
 	printf("%s: timeout waiting for DIFFSENSE to stabilise\n",
