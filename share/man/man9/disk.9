@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.14 2001/09/10 23:36:57 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.15 2001/11/28 16:49:02 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -230,7 +230,7 @@ switch.  This switch currently includes a pointer to the disk's
 routine.  This switch needs to have global scope and should be initialized
 as follows:
 .Bd -literal
-void	foostrategy __P((struct buf *));
+void	foostrategy(struct buf *);
 struct	dkdriver foodkdriver = { foostrategy };
 .Ed
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.6 2001/10/14 21:12:52 bouyer Exp $
+.\"	$NetBSD: scsipi.9,v 1.7 2001/11/28 16:49:02 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -61,7 +61,7 @@
 .Ft int
 .Fn scsipi_target_detach "struct scsipi_channel *chan" "int target" "int lun" "int flags"
 .Ft int
-.Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback) __P((struct scsipi_channel *, void *))" "void *arg"
+.Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback)(struct scsipi_channel *, void *)" "void *arg"
 .Sh DESCRIPTION
 The
 .Nm
@@ -543,7 +543,7 @@ is passed to
 .Fn config_detach ""
 \&.
 Returns 0 if successfull, or error code if a device couldn't be removed.
-.It Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback) __P((struct scsipi_channel *, void *))" "void *arg"
+.It Fn scsipi_thread_call_callback "struct scsipi_channel *chan" "void (*callback)(struct scsipi_channel *, void *)" "void *arg"
 .Fn callback
 will be called with
 .Fa chan
