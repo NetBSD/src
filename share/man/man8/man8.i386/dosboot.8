@@ -1,3 +1,4 @@
+.\"	$NetBSD: dosboot.8,v 1.2.2.1 1997/11/01 04:27:04 mellon Exp $
 .Dd June 20, 1997
 .Os
 .Dt DOSBOOT 8 i386
@@ -75,6 +76,10 @@ Boot
 .Nx .
 .It mode { dos | ufs }
 Switch filesystem type.
+.It dev Op device
+Set the default device and partition for subsequent filesystem operations.
+Without an operand, print the current setting.
+This setting doesn't apply to MS-DOS mode.
 .El
 
 .Sh EXAMPLES
