@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.7 2000/12/22 05:24:03 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.8 2000/12/22 05:31:42 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -113,8 +113,6 @@ wchar_t	*wcsrchr __P((const wchar_t *, wchar_t));
 size_t	wcsrtombs __P((char *, const wchar_t **, size_t, mbstate_t *));
 size_t	wcsspn __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
-int	wcswidth __P((const wchar_t *, size_t));
-int	wcwidth __P((wchar_t));
 wchar_t	*wmemchr __P((const wchar_t *, wchar_t, size_t));
 int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t *, const wchar_t *, size_t));
@@ -123,6 +121,8 @@ wchar_t	*wmemset __P((wchar_t *, wchar_t, size_t));
 
 size_t	wcslcat __P((wchar_t *, const wchar_t *, size_t));
 size_t	wcslcpy __P((wchar_t *, const wchar_t *, size_t));
+int	wcswidth __P((const wchar_t *, size_t));
+int	wcwidth __P((wchar_t));
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */
