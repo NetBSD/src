@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.4 1993/10/10 08:43:39 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.5 1993/10/10 09:35:59 mycroft Exp $
  */
 
 /*
@@ -297,8 +297,7 @@ pmap_bootstrap(virtual_start)
 #endif
 
 	*(int *)PTD = 0;
-	lcr3(rcr3());
-
+	tlbflush();
 }
 
 void pmap_virtual_space(startp, endp)
