@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.1.2.4 1997/07/01 22:08:22 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.1.2.5 1997/07/01 22:23:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -76,7 +76,7 @@ int	cd_scsibus_get_mode __P((struct cd_softc *,
 int	cd_scsibus_set_mode __P((struct cd_softc *,
 	    struct scsi_cd_mode_data *));
 
-struct cfattach cd_scsi_ca = {
+struct cfattach cd_scsibus_ca = {
 	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach
 };
 
