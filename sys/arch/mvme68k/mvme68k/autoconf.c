@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2001/04/25 17:53:18 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 2001/05/03 17:58:45 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,7 +167,7 @@ device_register(dev, aux)
 				return;
 
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_NCRSC_OFF) &&
-			    strcmp(cd->cd_name, "ncrsc") == 0) {
+			    strcmp(cd->cd_name, "osiop") == 0) {
 				controller = dev;
 				return;
 			}
