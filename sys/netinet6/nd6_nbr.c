@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.50 2003/08/22 22:00:40 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.51 2003/09/05 23:20:48 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.50 2003/08/22 22:00:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.51 2003/09/05 23:20:48 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -498,7 +498,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
 	}
 
-	ip6->ip6_plen = htons((u_short)icmp6len);
+	ip6->ip6_plen = htons((u_int16_t)icmp6len);
 	nd_ns->nd_ns_cksum = 0;
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
@@ -962,7 +962,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
-	ip6->ip6_plen = htons((u_short)icmp6len);
+	ip6->ip6_plen = htons((u_int16_t)icmp6len);
 	nd_na->nd_na_flags_reserved = flags;
 	nd_na->nd_na_cksum = 0;
 	nd_na->nd_na_cksum =
