@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.14 2001/06/14 23:09:23 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.15 2001/08/20 23:09:12 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.14 2001/06/14 23:09:23 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.15 2001/08/20 23:09:12 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -257,6 +257,8 @@ int
 podulebus_initloader(struct podulebus_attach_args *pa)
 {
 
+	if (pa->pa_loader != NULL)
+		return 0;
 	pa->pa_loader = podulebus_get_chunk(pa, CHUNK_RISCOS_LOADER);
 	if (pa->pa_loader == NULL)
 		return -1;
