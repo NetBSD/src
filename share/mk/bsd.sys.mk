@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.85 2003/05/08 20:39:01 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.86 2003/05/18 08:09:25 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -79,6 +79,7 @@ CAT?=		cat
 CKSUM?=		cksum
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
+TOOL_DB?=	db
 ELF2ECOFF?=	elf2ecoff
 FGEN?=		fgen
 GROFF?=		groff
