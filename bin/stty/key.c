@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.10 1995/03/21 09:11:21 cgd Exp $	*/
+/*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
+static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$NetBSD: key.c,v 1.10 1995/03/21 09:11:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,13 +196,14 @@ f_extproc(ip)
 	struct info *ip;
 {
 
-	if (ip->set) {
-		int tmp = 1;
-		(void)ioctl(ip->fd, TIOCEXT, &tmp);
-	} else {
+	if (ip->off) {
 		int tmp = 0;
 		(void)ioctl(ip->fd, TIOCEXT, &tmp);
+	} else {
+		int tmp = 1;
+		(void)ioctl(ip->fd, TIOCEXT, &tmp);
 	}
+	ip->set = 1;
 }
 
 void
