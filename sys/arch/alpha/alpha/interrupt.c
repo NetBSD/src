@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.31 1998/09/29 07:02:04 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.32 1998/09/29 15:55:47 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.31 1998/09/29 07:02:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.32 1998/09/29 15:55:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,15 @@ interrupt(a0, a1, a2, framep)
 
 	default:
 		printf("unexpected interrupt: type 0x%lx vec 0x%lx "
-		    "a2 0x%lx cpu %lu\n", a0, a1, a2, cpu_id);
+		    "a2 0x%lx"
+#if defined(MULTIPROCESSOR)
+		    " cpu %lu"
+#endif
+		    "\n", a0, a1, a2
+#if defined(MULTIPROCESSOR)
+		    , cpu_id
+#endif
+		    );
 		panic("interrupt");
 		/* NOTREACHED */
 	}
