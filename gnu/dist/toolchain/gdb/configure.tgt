@@ -46,6 +46,7 @@ a29k-*-vxworks*)        gdb_target=vx29k ;;
 
 alpha*-*-osf*)		gdb_target=alpha-osf1 ;;
 alpha*-*-linux*)	gdb_target=alpha-linux ;;
+alpha*-*-netbsd*)	gdb_target=nbsd ;;
 
 arc-*-*)		gdb_target=arc ;;
 
