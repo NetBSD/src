@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 1996/12/22 06:23:38 cgd Exp $
+	$NetBSD: syscalls.master,v 1.43 1996/12/22 06:46:50 cgd Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -16,6 +16,8 @@
 ;	UNIMPL	unimplemented, not included in system
 ;	NODEF	included, but don't define the syscall number
 ;	NOARGS	included, but don't define the syscall args structure
+;	INDIR	included, but don't define the syscall args structure,
+;		and allow it to be "really" varargs.
 ;
 ; The compat options are defined in the syscalls.conf file, and the
 ; compat option name is prefixed to the syscall name.  Other than
@@ -43,7 +45,7 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	STD		{ int sys_nosys(void); } syscall
+0	INDIR		{ int sys_syscall(int number, ...); }
 1	STD		{ int sys_exit(int rval); }
 2	STD		{ int sys_fork(void); }
 3	STD		{ int sys_read(int fd, char *buf, u_int nbyte); }
@@ -344,7 +346,7 @@
 			    u_int count, long *basep); }
 197	STD		{ caddr_t sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
-198	STD		{ int sys_nosys(void); } __syscall
+198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
 199	STD		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
 200	STD		{ int sys_truncate(char *path, int pad, off_t length); }
