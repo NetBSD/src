@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.5 1998/08/27 20:31:02 ross Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.6 1998/10/04 18:43:21 kleink Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -694,6 +694,7 @@ loop_config(item, lfp_value)
 		ntv.constant = sys_poll - 4;
 #ifdef SIGSYS
 		newsigsys.sa_handler = pll_trap;
+		sigemptyset(&newsigsys.sa_mask);
 		newsigsys.sa_flags = 0;
 		if ((sigaction(SIGSYS, &newsigsys, &sigsys)))
 		msyslog(LOG_ERR,
