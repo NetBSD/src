@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.55 1998/03/18 19:02:49 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.56 1998/03/18 19:04:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.55 1998/03/18 19:02:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.56 1998/03/18 19:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,11 +453,8 @@ pmap_bootstrap(ptaddr, maxasn)
 	    pmap_steal_memory(sizeof(pt_entry_t) * Lev3mapsize, NULL, NULL);
 
 	/*
-	 * Allocate memory for page attributes and pv_table entries.
-	 * (A few more entries are allocated than are needed.)
-	 * They're allocated together to avoid wasting space (which
-	 * would be wasted by page rounding if they were allocated
-	 * separately).
+	 * Allocate memory for the pv_heads.  (A few more of the latter
+	 * are allocated than are needed.)
 	 *
 	 * We could do this in pmap_init when we know the actual
 	 * managed page pool size, but its better to use kseg0
