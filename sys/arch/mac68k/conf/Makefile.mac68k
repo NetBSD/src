@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.83 2001/12/09 05:00:45 atatat Exp $
+#	$NetBSD: Makefile.mac68k,v 1.84 2002/06/04 21:39:10 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -33,10 +33,11 @@ GENASSYM=	${MAC68K}/mac68k/genassym.cf
 ##
 CPPFLAGS+=	-Dmac68k
 CFLAGS+=	-msoft-float
-AFLAGS+=	-traditional
-
-NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's/^\#.*//' | \
-		${AS} -o ${.TARGET}
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat
