@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.7 1994/12/18 07:20:34 glass Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.8 1994/12/29 22:48:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -85,7 +85,7 @@ union_list_lock(ix)
 {
 
 	if (unvplock[ix] & UN_LOCKED) {
-		unvplock[ix] |= UN_WANT;
+		unvplock[ix] |= UN_WANTED;
 		sleep((caddr_t) &unvplock[ix], PINOD);
 		return (1);
 	}
@@ -102,8 +102,8 @@ union_list_unlock(ix)
 
 	unvplock[ix] &= ~UN_LOCKED;
 
-	if (unvplock[ix] & UN_WANT) {
-		unvplock[ix] &= ~UN_WANT;
+	if (unvplock[ix] & UN_WANTED) {
+		unvplock[ix] &= ~UN_WANTED;
 		wakeup((caddr_t) &unvplock[ix]);
 	}
 }
@@ -382,8 +382,8 @@ loop:
 		} else {
 			if (un->un_flags & UN_LOCKED) {
 				vrele(UNIONTOV(un));
-				un->un_flags |= UN_WANT;
-				sleep((caddr_t) &un->un_flags, PINOD);
+				un->un_flags |= UN_WANTED;
+				sleep((caddr_t)un, PINOD);
 				goto loop;
 			}
 			un->un_flags |= UN_LOCKED;

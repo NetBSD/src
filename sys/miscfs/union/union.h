@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.5 1994/12/14 16:31:17 mycroft Exp $	*/
+/*	$NetBSD: union.h,v 1.6 1994/12/29 22:48:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -89,7 +89,7 @@ struct union_node {
 #endif
 };
 
-#define UN_WANT		0x01
+#define UN_WANTED	0x01
 #define UN_LOCKED	0x02
 #define UN_ULOCK	0x04		/* Upper node is locked */
 #define UN_KLOCK	0x08		/* Keep upper node locked on vput */
