@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1999/07/08 18:08:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1999/08/30 07:59:19 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -367,8 +367,10 @@ pmap_bootstrap(kernelstart, kernelend)
 		/*
 		 * Now page align the start and size of the region.
 		 */
-		s = s & ~PGOFSET;
-		e = e & ~PGOFSET;
+		s = round_page(s);
+		e = trunc_page(e);
+		if (e < s)
+			e = s;
 		sz = e - s;
 		/*
 		 * Check whether some memory is left here.
