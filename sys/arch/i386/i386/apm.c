@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.16 1996/11/13 17:42:45 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.17 1996/11/14 12:39:55 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -702,7 +702,7 @@ apmprobe(parent, match, aux)
 		bioscall(APM_SYSTEM_BIOS, &regs);
 		DPRINTF(("apm: bioscall return: %x %x %x %x %s %x %x\n",
 			 regs.ax, regs.bx, regs.cx, regs.dx,
-			 butmask_snprintf(regs.flags, I386_FLAGBITS,
+			 bitmask_snprintf(regs.flags, I386_FLAGBITS,
 			 bits, sizeof(bits)), regs.si, regs.di));
 
 		apminfo.apm_code32_seg_base = regs.ax << 4;
