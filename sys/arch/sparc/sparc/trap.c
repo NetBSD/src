@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.19 1994/05/21 08:23:04 deraadt Exp $
+ * $Id: trap.c,v 1.20 1994/08/26 10:57:27 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -748,7 +748,7 @@ syscall(code, tf, pc)
 			if (i > 8)
 				panic("syscall nargs");
 			error = copyin((caddr_t)tf->tf_out[6] +
-				    offsetof(struct frame, fr_argx),
+			    offsetof(struct frame, fr_argx),
 			    (caddr_t)&args.i[nap], (i - nap) * sizeof(int));
 			if (error) {
 #ifdef KTRACE
