@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1996/08/20 23:05:10 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.14 1996/09/07 22:26:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -362,7 +362,7 @@ panic("foo");
 				goto dopanic;
 			}
 			ucode = a0;
-			i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+			i = SIGSEGV;
 			break;
 		    }
 

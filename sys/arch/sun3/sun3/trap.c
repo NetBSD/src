@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 1996/06/17 15:41:05 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 1996/09/07 22:26:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -529,7 +529,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		ucode = v;
-		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		sig = SIGSEGV;
 		break;
 	} /* T_MMUFLT */
 	} /* switch */

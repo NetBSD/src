@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1996/04/04 06:37:12 phil Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1996/09/07 22:26:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -377,8 +377,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, T_ABT);
+		trapsignal(p, SIGSEGV, T_ABT);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 1996/09/07 20:26:09 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 1996/09/07 22:26:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -418,11 +418,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE
-#ifdef COMPAT_LINUX
-		    && p->p_emul != &emul_linux_aout && p->p_emul != &emul_linux_elf
-#endif
-		    ) ? SIGBUS : SIGSEGV, T_PAGEFLT);
+		trapsignal(p, SIGSEGV, T_PAGEFLT);
 		break;
 	}
 
