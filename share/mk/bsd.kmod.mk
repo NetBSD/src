@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.58 2003/02/27 11:09:59 fvdl Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.59 2003/03/27 17:05:14 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -24,6 +24,8 @@ CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
 CLEANFILES+=	sun68k
 .elif ${MACHINE} == "sparc64"
 CLEANFILES+=	sparc
+.elif ${MACHINE} == "i386" || ${MACHINE} == "x86_64"
+CLEANFILES+=	x86
 .elif ${MACHINE_ARCH} == "powerpc"
 CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
 .endif
