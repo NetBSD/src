@@ -1,4 +1,4 @@
-/*	$NetBSD: btvar.h,v 1.2 1994/11/20 20:51:56 deraadt Exp $ */
+/*	$NetBSD: btvar.h,v 1.3 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -63,6 +63,7 @@ union bt_cmap {
  */
 int	bt_getcmap __P((struct fbcmap *, union bt_cmap *, int));
 int	bt_putcmap __P((struct fbcmap *, union bt_cmap *, int));
+void	bt_initcmap __P((union bt_cmap *, int));
 
 /*
  * Compute (x / 4) * 3 and (x / 4) * 4.  These are used in turning

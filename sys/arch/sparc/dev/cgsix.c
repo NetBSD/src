@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.44 1999/07/30 18:11:38 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.45 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,8 +158,6 @@ cg6attach(sc, name, isconsole, isfb)
 	int isconsole;
 	int isfb;
 {
-	int i;
-	volatile struct bt_regs *bt = sc->sc_bt;
 	struct fbdevice *fb = &sc->sc_fb;
 
 	fb->fb_driver = &cg6_fbdriver;
@@ -180,10 +178,9 @@ cg6attach(sc, name, isconsole, isfb)
 	/* reset cursor & frame buffer controls */
 	cg6_reset(sc);
 
-	/* grab initial (current) color map (DOES THIS WORK?) */
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3; i++)
-		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
+	/* initialize to the default color map */
+	bt_initcmap(&sc->sc_cmap, 256);
+	cg6_loadcmap(sc, 0, 256);
 
 	/* enable video */
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.40 1998/11/19 15:38:24 mrg Exp $ */
+/*	$NetBSD: cgthree.c,v 1.41 1999/08/26 22:53:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,13 +353,14 @@ cgthreeattach(sc, name, isconsole, isfb)
 	struct fbdevice *fb = &sc->sc_fb;
 	volatile struct bt_regs *bt;
 
+	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
 	printf(": %s, %d x %d", name,
 		fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 
 	/* Transfer video magic to board, if it's not running */
-	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
+	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0) {
 		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
 		     i++) {
 			volatile struct fbcontrol *fbc = sc->sc_fbc;
@@ -374,13 +375,11 @@ cgthreeattach(sc, name, isconsole, isfb)
 				break;
 			}
 		}
+	}
 
-	/* grab initial (current) color map */
-	fb->fb_type.fb_cmsize = 256;
-	bt = &sc->sc_fbc->fbc_dac;
-	bt->bt_addr = 0;
-	for (i = 0; i < 256 * 3 / 4; i++)
-		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
+	/* Initialize the default color map. */
+	bt_initcmap(&sc->sc_cmap, 256);
+	cgthreeloadcmap(sc, 0, 256);
 
 	/* make sure we are not blanked */
 	cgthree_set_video(sc, 1);
