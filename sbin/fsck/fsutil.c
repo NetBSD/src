@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 1996/09/23 16:11:35 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.1 1996/09/27 22:38:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef lint
+static char rcsid[] = "$NetBSD: fsutil.c,v 1.1 1996/09/27 22:38:41 christos Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
@@ -48,7 +51,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "util.h"
+#include "fsutil.h"
 
 static const char *dev = NULL;
 static int hot = 0;
@@ -112,7 +115,7 @@ vmsg(fatal, fmt, ap)
 
 	(void) vprintf(fmt, ap);
 
-	if (!fatal && preen)
+	if (fatal && preen)
 		(void) printf("\n");
 
 	if (fatal && preen) {

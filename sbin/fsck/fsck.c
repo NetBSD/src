@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.3 1996/09/27 21:51:03 cgd Exp $	*/
+/*	$NetBSD: fsck.c,v 1.4 1996/09/27 22:38:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.3 1996/09/27 21:51:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.4 1996/09/27 22:38:40 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -55,8 +55,7 @@ static char rcsid[] = "$NetBSD: fsck.c,v 1.3 1996/09/27 21:51:03 cgd Exp $";
 #include <unistd.h>
 
 #include "pathnames.h"
-#include "extern.h"
-#include "util.h"
+#include "fsutil.h"
 
 static enum { IN_LIST, NOT_IN_LIST } which = NOT_IN_LIST;
 
@@ -68,13 +67,13 @@ struct entry {
 	TAILQ_ENTRY(entry) entries;
 };
 
-static int preen = 0, maxrun = 0;
-int debug = 0, verbose = 0;
+static int maxrun = 0;
 static char *options = NULL;
+static int flags = 0;
 
 int main __P((int, char *[]));
 
-static int checkfs __P((const char *, const char *, pid_t *));
+static int checkfs __P((const char *, const char *, const char *, void *));
 static int selected __P((const char *));
 static void addoption __P((char *));
 static const char *getoptions __P((const char *));
@@ -83,7 +82,7 @@ static void maketypelist __P((char *));
 static char *catopt __P((char *, const char *, int));
 static void mangle __P((char *, int *, const char **));
 static void usage __P((void));
-static int isok __P((struct fstab *));
+static void *isok __P((struct fstab *));
 
 
 int
@@ -100,17 +99,12 @@ main(argc, argv)
 
 	while ((i = getopt(argc, argv, "dvpnyl:t:T:")) != -1)
 		switch (i) {
-#ifdef DEBUG
-# define DEBUGOPT "d"
 		case 'd':
-			debug++;
+			flags |= CHECK_DEBUG;
 			break;
-#else
-# define DEBUGOPT ""
-#endif
 
 		case 'v':
-			verbose++;
+			flags |= CHECK_VERBOSE;
 			break;
 
 		case 'y':
@@ -140,7 +134,7 @@ main(argc, argv)
 
 		case 'p':
 			options = catopt(options, "-p", 1);
-			preen++;
+			flags |= CHECK_PREEN;
 			break;
 
 		case '?':
@@ -153,7 +147,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc == 0)
-		return checkfstab(preen, maxrun, isok, checkfs);
+		return checkfstab(flags, maxrun, isok, checkfs);
 
 #define	BADTYPE(type)							\
 	(strcmp(type, FSTAB_RO) &&					\
@@ -180,35 +174,36 @@ main(argc, argv)
 				    *argv);
 		}
 
-		rval |= checkfs(type, blockcheck(spec), NULL);
+		rval |= checkfs(type, blockcheck(spec), *argv, NULL);
 	}
 
 	return rval;
 }
 
 
-static int
+static void *
 isok(fs)
 	struct fstab *fs;
 {
 	if (fs->fs_passno == 0)
-		return 0;
+		return NULL;
 
 	if (BADTYPE(fs->fs_type))
-		return 0;
+		return NULL;
 
 	if (!selected(fs->fs_vfstype))
-		return 0;
+		return NULL;
 
-	return 1;
+	return fs;
 }
 
 
 static int
-checkfs(vfstype, spec, pidp)
-	const char *vfstype, *spec;
-	pid_t *pidp;
+checkfs(vfstype, spec, mntpt, ap)
+	const char *vfstype, *spec, *mntpt;
+	void *ap;
 {
+	pid_t *pidp = ap;
 	/* List of directories containing fsck_xxx subcommands. */
 	static const char *edirs[] = {
 		_PATH_SBIN,
@@ -246,9 +241,9 @@ checkfs(vfstype, spec, pidp)
 
 	argv[argc++] = spec;
 
-	if (debug || verbose) {
-		(void)printf("start %swait fsck_%s", pidp ? "no" : "",
-		    vfstype);
+	if (flags & (CHECK_DEBUG|CHECK_VERBOSE)) {
+		(void)printf("start %s %swait fsck_%s", mntpt, 
+			pidp ? "no" : "", vfstype);
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
@@ -262,10 +257,8 @@ checkfs(vfstype, spec, pidp)
 		return (1);
 
 	case 0:					/* Child. */
-#ifdef DEBUG
-		if (debug)
+		if (flags & CHECK_DEBUG)
 			_exit(0);
-#endif
 
 		/* Go find an executable. */
 		edir = edirs;
@@ -460,9 +453,9 @@ usage()
 {
 	extern char *__progname;
 	static const char common[] =
-	    "pvlyn] [-T fstype:fsoptions] [-t fstype]";
+	    "[-dpvlyn] [-T fstype:fsoptions] [-t fstype]";
 
-	(void)fprintf(stderr, "Usage: %s [-%s%s [special|node]...\n",
-	    __progname, DEBUGOPT, common);
+	(void)fprintf(stderr, "Usage: %s %s [special|node]...\n",
+	    __progname, common);
 	exit(1);
 }
