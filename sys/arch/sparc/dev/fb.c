@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.19 1996/10/04 20:34:39 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.20 1996/10/11 00:46:38 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ fb_attach(fb, isconsole)
 	 */
 	if (seen_force) {
 		if (devfb) {	/* sanity */
-			printf("%s: /dev/fb already full\n",
+			kprintf("%s: /dev/fb already full\n",
 				fb->fb_device->dv_xname);
 			return;
 		} else
@@ -101,7 +101,7 @@ fb_attach(fb, isconsole)
 	 */
 	if (fb->fb_flags & FB_FORCE) {
 		if (devfb)
-			printf("%s: forcefully replacing %s\n",
+			kprintf("%s: forcefully replacing %s\n",
 				fb->fb_device->dv_xname,
 				devfb->fb_device->dv_xname);
 		devfb = fb;
@@ -115,7 +115,7 @@ fb_attach(fb, isconsole)
 	 */
 	if (isconsole) {
 		if (devfb)
-			printf("%s: replacing %s\n", fb->fb_device->dv_xname,
+			kprintf("%s: replacing %s\n", fb->fb_device->dv_xname,
 				devfb->fb_device->dv_xname);
 		devfb = fb;
 		no_replace = 1;
@@ -128,7 +128,7 @@ fb_attach(fb, isconsole)
 	 */
 	if (no_replace) {
 		if (devfb) {	/* sanity */
-			printf("%s: /dev/fb already full\n",
+			kprintf("%s: /dev/fb already full\n",
 				fb->fb_device->dv_xname);
 			return;
 		} else
@@ -136,12 +136,12 @@ fb_attach(fb, isconsole)
 	}
 
 	if (devfb)
-		printf("%s: replacing %s\n", fb->fb_device->dv_xname,
+		kprintf("%s: replacing %s\n", fb->fb_device->dv_xname,
 			devfb->fb_device->dv_xname);
 	devfb = fb;
 
  attached:
-	printf("%s: attached to /dev/fb\n", devfb->fb_device->dv_xname);
+	kprintf("%s: attached to /dev/fb\n", devfb->fb_device->dv_xname);
 }
 
 int

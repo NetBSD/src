@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.9 1996/10/04 20:34:34 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.10 1996/10/11 00:46:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -201,7 +201,7 @@ cgfourattach(parent, self, args)
 	 */
 	if ((ca->ca_bustype != BUS_OBIO) ||
 	    ((fb->fb_flags & FB_PFOUR) == 0)) {
-		printf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
+		kprintf("%s: ignoring; not a pfour\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -216,7 +216,7 @@ cgfourattach(parent, self, args)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	printf(": cgfour/p4, %d x %d", fb->fb_type.fb_width,
+	kprintf(": cgfour/p4, %d x %d", fb->fb_type.fb_width,
 	    fb->fb_type.fb_height);
 
 	isconsole = 0;
@@ -272,13 +272,13 @@ cgfourattach(parent, self, args)
 
 #if 0	/* See above. */
 	if (isconsole) {
-		printf(" (console)\n");
+		kprintf(" (console)\n");
 #if defined(RASTERCONSOLE) && 0	/* XXX been told it doesn't work well. */
 		fbrcons_init(fb);
 #endif
 	} else
 #endif /* 0 */
-		printf("\n");
+		kprintf("\n");
 
 	/*
 	 * Even though we're not using rconsole, we'd still like

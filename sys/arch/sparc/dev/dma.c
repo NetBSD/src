@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.32 1996/08/27 21:57:00 cgd Exp $ */
+/*	$NetBSD: dma.c,v 1.33 1996/10/11 00:46:32 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -90,8 +90,8 @@ dmaprint(aux, name)
 	register struct confargs *ca = aux;
 
 	if (name)
-		printf("[%s at %s]", ca->ca_ra.ra_name, name);
-	printf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
+		kprintf("[%s at %s]", ca->ca_ra.ra_name, name);
+	kprintf(" slot 0x%x offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
 
@@ -182,30 +182,30 @@ dmaattach(parent, self, aux)
 			sc->sc_regs->csr |= D_BURST_0;
 #ifdef DIAGNOSTIC
 		} else {
-			printf(" <unknown burst size 0x%x>", sc->sc_burst);
+			kprintf(" <unknown burst size 0x%x>", sc->sc_burst);
 #endif
 		}
 	}
 
-	printf(": rev ");
+	kprintf(": rev ");
 	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
 	switch (sc->sc_rev) {
 	case DMAREV_0:
-		printf("0");
+		kprintf("0");
 		break;
 	case DMAREV_1:
-		printf("1");
+		kprintf("1");
 		break;
 	case DMAREV_PLUS:
-		printf("1+");
+		kprintf("1+");
 		break;
 	case DMAREV_2:
-		printf("2");
+		kprintf("2");
 		break;
 	default:
-		printf("unknown");
+		kprintf("unknown");
 	}
-	printf("\n");
+	kprintf("\n");
 
 	/* indirect functions */
 	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
@@ -404,7 +404,7 @@ espdmaintr(sc)
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+		kprintf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
 			csr, DMACSRBITS);
 		return 0;
 	}
@@ -466,7 +466,7 @@ espdmaintr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("%s: xfer (%d) > req (%d)\n",
+		kprintf("%s: xfer (%d) > req (%d)\n",
 		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}
@@ -515,10 +515,10 @@ ledmaintr(sc)
 	csr = DMACSR(sc);
 
 	if (csr & D_ERR_PEND) {
-		printf("Lance DMA error, see your doctor!\n");
+		kprintf("Lance DMA error, see your doctor!\n");
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+		kprintf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
 			(u_int)csr, DMACSRBITS);
 	}
 	return 1;

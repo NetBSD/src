@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.3 1996/10/04 20:35:53 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.4 1996/10/11 00:46:56 christos Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ tcxattach(parent, self, args)
 
 	case BUS_OBIO:
 	default:
-		printf("TCX on bus %x?\n", ca->ca_bustype);
+		kprintf("TCX on bus %x?\n", ca->ca_bustype);
 		return;
 	}
 
@@ -223,13 +223,13 @@ tcxattach(parent, self, args)
 	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", OBPNAME,
+	kprintf(": %s, %d x %d", OBPNAME,
 		fb->fb_type.fb_width,
 		fb->fb_type.fb_height);
 
 	isconsole = node == fbnode && fbconstty != NULL;
 
-	printf(", id %d, rev %d, sense %d",
+	kprintf(", id %d, rev %d, sense %d",
 		(sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
 		(sc->sc_thc->thc_config & THC_CFG_REV) >> THC_CFG_REV_SHIFT,
 		(sc->sc_thc->thc_config & THC_CFG_SENSE) >> THC_CFG_SENSE_SHIFT
@@ -247,9 +247,9 @@ tcxattach(parent, self, args)
 	sc->sc_thc->thc_hcmisc |= THC_MISC_VIDEN;
 
 	if (isconsole) {
-		printf(" (console)\n");
+		kprintf(" (console)\n");
 	} else
-		printf("\n");
+		kprintf("\n");
 
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);

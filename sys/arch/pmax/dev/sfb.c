@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.15 1996/09/21 03:25:15 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.16 1996/10/11 00:44:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@
 #include "sfb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>					/* printf() */
+#include <sys/systm.h>					/* kprintf() */
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
@@ -219,7 +219,7 @@ sfbattach(parent, self, aux)
 		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 				  sfb_intr, fi);
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 
@@ -245,7 +245,7 @@ sfbinit(fi, base, unit, silent)
 	else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("sfb%d: no memory for cmap\n", unit);
+			kprintf("sfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
@@ -308,7 +308,7 @@ sfbinit(fi, base, unit, silent)
 	 * Initialize the color map, the screen, and the mouse.
 	 */
 	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
+		kprintf(" (mouse/keyboard config failed)");
 		return (0);
 	}
 

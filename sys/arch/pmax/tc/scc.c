@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.15 1996/09/07 01:25:37 mhitch Exp $	*/
+/*	$NetBSD: scc.c,v 1.16 1996/10/11 00:45:26 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -307,7 +307,7 @@ sccmatch(parent, match, aux)
 	}
 	else {
 #ifdef DIAGNOSTIC
-		printf("Cannot attach scc on %s\n", parent->dv_xname);
+		kprintf("Cannot attach scc on %s\n", parent->dv_xname);
 #endif
 		return 0;
 	}
@@ -379,7 +379,7 @@ sccattach(parent, self, aux)
 	/* serial console debugging */
 #if defined(DEBUG) && defined(HAVE_RCONS) && 0
 	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
-		printf("\nattaching scc%d, currently PROM console\n", unit);
+		kprintf("\nattaching scc%d, currently PROM console\n", unit);
 #endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
 
 	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
@@ -395,7 +395,7 @@ sccattach(parent, self, aux)
 #if defined(DEBUG) && defined(HAVE_RCONS) && 0 /*XXX*/
 	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE)) {
 		DELAY(10000);
-		printf("(attached interrupt, delaying)\n");
+		kprintf("(attached interrupt, delaying)\n");
 	}
 #endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
 
@@ -467,9 +467,9 @@ sccattach(parent, self, aux)
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV,
 		    sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
-		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
-	 	printf(" (Unit = %d)", unit);
-		printf(": console");
+		kprintf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
+	 	kprintf(" (Unit = %d)", unit);
+		kprintf(": console");
 		pending_remcons = 0;
 		/*
 		 * XXX We should support configurations where the PROM
@@ -540,14 +540,14 @@ sccattach(parent, self, aux)
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
 
-		printf(": console\n");
+		kprintf(": console\n");
 
 		/* wire carrier for console. */
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
-		printf("\n");
+		kprintf("\n");
 #endif /* !alpha */
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -1453,7 +1453,7 @@ rr(msg, regs)
 	u_char value;
 	int r0, r1, r2, r3, r10, r15;
 
-	printf("%s: register: %lx\n", msg, regs);
+	kprintf("%s: register: %lx\n", msg, regs);
 #define	L(reg, r) {							\
 	SCC_READ_REG(regs, SCC_CHANNEL_A, reg, value);			\
 	r = value;							\
@@ -1464,7 +1464,7 @@ rr(msg, regs)
 	L(ZSRR_IPEND, r3);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
-	printf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
+	kprintf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
 	    r0, r1, r2, r3, r10, r15);
 #undef L
 #define	L(reg, r) {							\
@@ -1476,7 +1476,7 @@ rr(msg, regs)
 	L(ZSRR_IVEC, r2);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
-	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
+	kprintf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
 	    r0, r1, r2, r10, r15);
 }
 #endif /* SCC_DEBUG */
