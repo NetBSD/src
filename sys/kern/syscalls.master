@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.85 1998/10/19 22:17:41 tron Exp $
+	$NetBSD: syscalls.master,v 1.86 1998/11/26 16:07:05 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -399,7 +399,7 @@
 205	STD		{ int sys_undelete(const char *path); }
 206	STD		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
-207	STD		{ int sys_getpgid(pid_t pid); }
+207	STD		{ pid_t sys_getpgid(pid_t pid); }
 208	STD		{ int sys_reboot(int opt, char *bootstr); }
 209	STD		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
