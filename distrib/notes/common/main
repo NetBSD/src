@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.191 2002/07/08 16:27:05 lukem Exp $
+.\"	$NetBSD: main,v 1.192 2002/07/08 18:00:29 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -665,7 +665,7 @@ is available for doing arbitrary cross-builds; see
 .Pa src/BUILDING
 for more information.
 At least 38 ports for the
-.Nx*V
+.Nx \*V
 release were cross-built on a
 .Nx Ns /i386
 system using this mechanism.
@@ -852,22 +852,19 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.br
-.Em 22.3 MB gzipped, 98.8 MB uncompressed
+.setsize 55 247
 .It Sy pkgsrc
 This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
-.br
-.Em 7.4 MB gzipped, 73.0 MB uncompressed
+.setsize 12 94
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.br
-.Em 3.3 MB gzipped, 13.2 MB uncompressed
+.setsize 4 16
 .It Sy src
 This set contains all of the base
 .Nx \*V
@@ -876,8 +873,7 @@ sources which are not in
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.br
-.Em 24.8 MB gzipped, 123.1 MB uncompressed
+.setsize 27 136
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
@@ -885,12 +881,10 @@ kernel for all architectures;
 .Xr config 8 ;
 and
 .Xr dbsym 8 .
-.br
-.Em 18.0 MB gzipped, 90.9 MB uncompressed
+.setsize 22 114
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.br
-.Em 78.1 MB gzipped, 393.6 MB uncompressed
+.setsize 78 394
 .tag)
 .Pp
 All the above source sets are located in the
