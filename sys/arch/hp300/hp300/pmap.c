@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1995/04/10 12:41:56 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1995/04/12 08:18:56 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -377,7 +377,7 @@ pmap_init(phys_start, phys_end)
 	addr = (vm_offset_t) kstack;
 	vm_object_reference(kernel_object);
 	(void) vm_map_find(kernel_map, kernel_object, addr,
-			   &addr, hp300_ptob(UPAGES), FALSE);
+			   &addr, USPACE, FALSE);
 	if (addr != (vm_offset_t)kstack)
 bogons:
 		panic("pmap_init: bogons in the VM system!\n");
