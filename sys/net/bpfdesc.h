@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.13 1997/10/09 18:58:12 christos Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.14 1998/02/09 17:43:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -42,9 +42,10 @@
  * @(#) Header: bpfdesc.h,v 1.14 96/06/16 22:28:07 leres Exp  (LBL)
  */
 
-#if BSD >= 199103
+#ifndef _NET_BPFDESC_H_
+#define _NET_BPFDESC_H_
+
 #include <sys/select.h>
-#endif
 
 /*
  * Descriptor associated with each open bpf file.
@@ -104,3 +105,5 @@ struct bpf_if {
 #ifdef _KERNEL
 int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
 #endif
+
+#endif /* _NET_BPFDESC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.17 1997/03/27 20:36:17 thorpej Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.18 1998/02/09 17:43:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)if_slvar.h	8.3 (Berkeley) 2/1/94
  */
+
+#ifndef _NET_IF_SLVAR_H_
+#define _NET_IF_SLVAR_H_
 
 /*
  * Definitions for SLIP interface data structures
@@ -86,3 +89,5 @@ int	sloutput __P((struct ifnet *,
 void	slstart __P((struct tty *));
 int	sltioctl __P((struct tty *, u_long, caddr_t, int));
 #endif /* _KERNEL */
+
+#endif /* _NET_IF_SLVAR_H_ */

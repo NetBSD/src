@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.14 1997/05/17 21:12:02 christos Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.15 1998/02/09 17:43:51 perry Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -20,8 +20,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef _IF_PPP_H_
-#define _IF_PPP_H_
+#ifndef _NET_IF_PPP_H_
+#define _NET_IF_PPP_H_
 
 /*
  * Bit definitions for flags.
@@ -130,4 +130,4 @@ struct ifpppcstatsreq {
 void pppattach __P((void));
 void pppintr __P((void));
 #endif
-#endif /* _IF_PPP_H_ */
+#endif /* _NET_IF_PPP_H_ */

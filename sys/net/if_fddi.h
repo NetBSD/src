@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.4 1997/03/24 00:35:02 thorpej Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.5 1998/02/09 17:43:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -26,8 +26,8 @@
  * Id: if_fddi.h,v 1.5 1997/03/21 13:46:50 thomas Exp
  */
 
-#ifndef _NETINET_IF_FDDI_H_
-#define _NETINET_IF_FDDI_H_
+#ifndef _NET_IF_FDDI_H_
+#define _NET_IF_FDDI_H_
 
 /*
  * Structure of an 100Mb/s FDDI header.
