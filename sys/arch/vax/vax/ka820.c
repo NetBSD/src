@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.23 2000/06/10 14:59:38 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.24 2000/06/11 07:50:12 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h> 
 #include <vm/vm_kern.h>
@@ -62,6 +63,7 @@
 #include <machine/bus.h>
 
 #include <dev/clock_subr.h>
+#include <dev/cons.h>
 
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>
@@ -90,6 +92,9 @@ static void ka820_txrx(int, char *, int);
 static void ka820_sendstr(int, char *);
 static void ka820_sergeant(int);
 static int rxchar(void);
+static void ka820_putc(int);
+static void ka820_cnintr(void);
+cons_decl(gen);
 #endif
 
 struct	cpu_dep ka820_calls = {
@@ -162,11 +167,12 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	if (ba->ba_nodenr != mastercpu) {
 #if defined(MULTIPROCESSOR)
 		sc->sc_ci = cpu_slavesetup(self);
+		v_putc = ka820_putc;	/* Need special console handling */
 #endif
 		return;
 	}
 
-	curcpu()->ci_cpunumber = sc->sc_dev.dv_unit;
+	curcpu()->ci_dev = self;
 	/* reset the console and enable the RX50 */
 	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
 	csr = ka820port_ptr->csr;
@@ -427,6 +433,12 @@ rxcdintr(void *arg)
 		return;
 
 #if defined(MULTIPROCESSOR)
+	if ((c & 0xff) == 0) {
+		if (curcpu()->ci_flags & CI_MASTERCPU)
+			ka820_cnintr();
+		return;
+	}
+
 	if (expect == ((c >> 8) & 0xf))
 		rxbuf[got++] = c & 0xff;
 
@@ -527,11 +539,9 @@ ka820_startslave(struct device *dev, struct cpu_info *ci)
 	for (i = 0; i < 10000; i++)
 		if ((volatile)ci->ci_flags & CI_RUNNING)
 			break;
-	printf("%s: (ID %d) ", dev->dv_xname, sc->sc_binid);
 	if (i == 10000)
-		printf("failed starting??!!??\n");
-	else
-		printf("now running\n");
+		printf("%s: (ID %d) failed starting??!!??\n",
+		    dev->dv_xname, sc->sc_binid);
 }
 
 void
@@ -589,5 +599,35 @@ ka820_sergeant(int id)
 			break;
 	}
 	/* What to do now??? */
+}
+
+/*
+ * Write to master console.
+ * Need no locking here; done in the print functions.
+ */
+static volatile int ch = 0;
+
+void
+ka820_putc(int c)
+{
+	if (curcpu()->ci_flags & CI_MASTERCPU) {
+		gencnputc(0, c);
+		return;
+	}
+	ch = c;
+	mtpr(mastercpu << 8, PR_RXCD); /* Send IPI to mastercpu */
+	while (ch != 0)
+		; /* Wait for master to handle */
+}
+
+/*
+ * Got character IPI.
+ */
+void
+ka820_cnintr()
+{
+	if (ch != 0)
+		gencnputc(0, ch);
+	ch = 0; /* Release slavecpu */
 }
 #endif
