@@ -1,4 +1,4 @@
-/*	$NetBSD: ualarm.c,v 1.7 1997/11/25 18:02:36 kleink Exp $	*/
+/*	$NetBSD: ualarm.c,v 1.8 1998/11/13 11:57:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ualarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ualarm.c,v 1.7 1997/11/25 18:02:36 kleink Exp $");
+__RCSID("$NetBSD: ualarm.c,v 1.8 1998/11/13 11:57:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,8 @@ ualarm(usecs, reload)
 	new.it_value.tv_sec = usecs / USPS;
 
 	if (setitimer(ITIMER_REAL, &new, &old) == 0)
-		return (old.it_value.tv_sec * USPS + old.it_value.tv_usec);
-	/* else */
-		return (-1);
+		return (useconds_t)(old.it_value.tv_sec * USPS +
+		    old.it_value.tv_usec);
+
+	return (useconds_t)-1;
 }
