@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.8 2000/04/15 22:02:16 tsarna Exp $
+# $NetBSD: obsolete.mi,v 1.9 2000/04/25 05:38:00 mellon Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -38,6 +38,8 @@
 /usr/share/man/cat8/nfsiod.0
 /usr/share/man/cat8/pppd.cbcp.0
 /usr/share/man/cat8/rdconfig.0
+/usr/share/man/cat8/statmsg.0
+/usr/share/man/cat8/sysconfd.0
 /usr/share/man/cat8/sun3x
 /usr/share/man/cat8/sun3x/installboot.0
 /usr/share/man/cat8/usbd.0
@@ -81,6 +83,8 @@
 /usr/share/man/cat8/nfsiod.8
 /usr/share/man/man8/pppd.cbcp.8
 /usr/share/man/man8/rdconfig.8
+/usr/share/man/man8/statmsg.8
+/usr/share/man/man8/sysconfd.8
 /usr/share/man/man8/sun3x
 /usr/share/man/man8/sun3x/installboot.8
 /usr/share/man/man8/usbd.8
