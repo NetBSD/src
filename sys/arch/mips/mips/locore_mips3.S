@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.21 2000/04/11 04:42:59 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.22 2000/04/12 01:05:35 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -157,7 +157,7 @@ VECTOR(mips3_TLBMiss, unknown)
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
 	bltz	k0, 4f			# Kernel address (KSEG) if bit 31 set
 	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
-	andi	k0, k0, 0x7fc		# index of segment table
+	and	k0, k0, 0x7fc		# index of segment table
 	dsra	k1, k1, 32		# Tricky -- The lower bit is
 					# actually part of KSU but we must
 					# be a user address
@@ -166,7 +166,7 @@ VECTOR(mips3_TLBMiss, unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	beq	k1, zero, 5f			# invalid segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
-	andi	k0, k0, ((NPTEPG/2) - 1) << 3
+	and	k0, k0, ((NPTEPG/2) - 1) << 3
 	addu	k1, k1, k0			# index into segment map
 	ld	k0, 0(k1)			# load both 32 bit pte's at once
 3:	dsll	k1, k0, 34			# Clear soft wired, ro bits
@@ -227,7 +227,7 @@ VECTOR(mips3_XTLBMiss, unknown)
 	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
 	bltz	k0, 4f			# Kernel address if bit 63 set.
 	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
-	andi	k0, k0, 0x7fc		# index of segment table
+	and	k0, k0, 0x7fc		# index of segment table
 	dsra	k1, k1, 32		# Tricky -- The lower bit is
 					# actually part of KSU but we must
 					# be a user address
@@ -236,7 +236,7 @@ VECTOR(mips3_XTLBMiss, unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	beq	k1, zero, 5f			# invalid segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
-	andi	k0, k0, ((NPTEPG/2) - 1) << 3
+	and	k0, k0, ((NPTEPG/2) - 1) << 3
 	addu	k1, k1, k0			# index into segment map
 	ld	k0, 0(k1)			# load both 32 bit pte's at once
 3:	dsll	k1, k0, 34			# Clear soft wired, ro bits
@@ -496,7 +496,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
  */
 	lw	k1, _C_LABEL(curpcb)
 	#nop					# -slip-
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
 	REG_S	v1, FRAME_V1(k1)
@@ -536,7 +536,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	REG_S	v0, FRAME_MULLO(k1)
 	REG_S	v1, FRAME_MULHI(k1)
 	REG_S	a3, FRAME_EPC(k1)
-	addiu	sp, k1, -CALLFRAME_SIZ	# switch to kernel SP
+	addu	sp, k1, -CALLFRAME_SIZ	# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
@@ -565,7 +565,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	nop					# 3 nop delay
 	nop
 	nop
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	t0, FRAME_MULLO(a1)
 	REG_L	t1, FRAME_MULHI(a1)
@@ -624,7 +624,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 	lw	k1, _C_LABEL(curpcb)
 	#nop					# -slip-
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
 	REG_S	v1, FRAME_V1(k1)
@@ -663,7 +663,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_S	v0, FRAME_MULLO(k1)
 	REG_S	v1, FRAME_MULHI(k1)
 	REG_S	a2, FRAME_EPC(k1)
-	addiu	sp, k1, -CALLFRAME_SIZ
+	addu	sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
@@ -700,7 +700,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return.
  */
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	t0, FRAME_MULLO(a1)
 	REG_L	t1, FRAME_MULHI(a1)
@@ -870,7 +870,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
  */
 	lw	k1, _C_LABEL(curpcb)
 	#nop					# -slip-
-	addiu	k1, k1, USPACE - FRAME_SIZ
+	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
 	REG_S	v1, FRAME_V1(k1)
@@ -901,7 +901,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_S	v1, FRAME_MULHI(k1)
 	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	REG_S	a2, FRAME_EPC(k1)
-	addiu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
+	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
@@ -934,7 +934,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	nop					# 3 nop hazard
 	nop
 	nop
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	lw	v0, _C_LABEL(astpending)	# any pending ast?
 	nop					# ???
@@ -975,7 +975,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	nop
 	nop
 
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	s0, FRAME_S0(a1)
 	REG_L	s1, FRAME_S1(a1)
@@ -1284,116 +1284,6 @@ END(mips3_GetWIRED)
 
 /*--------------------------------------------------------------------------
  *
- * mips3_TLBFlush --
- *
- *	Flush the "random" entries from the TLB.
- *	Uses "wired" register to determine what register to start with.
- *	Arg "tlbsize" is the number of entries to flush.
- *
- *	mips3_TLBFlush(tlbsize)
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The TLB is flushed.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_TLBFlush)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	li	v0, MIPS_KSEG0_START		# invalid address
-	mfc0	t1, MIPS_COP_0_TLB_WIRED
-	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
-
-	dmtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
-	dmtc0	zero, MIPS_COP_0_TLB_LO0	# Zero out low entry0.
-	dmtc0	zero, MIPS_COP_0_TLB_LO1	# Zero out low entry1.
-#ifdef MIPS3_4100				/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
-#else
-	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# Zero out mask entry.
-#endif	
-/*
- * Align the starting value (t1) and the upper bound (a0).
- */
-1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
-	addu	t1, t1, 1			# Increment index.
-	nop					# required for QED5230
-	tlbwi					# Write the TLB entry.
-	nop
-	nop
-	bne	t1, a0, 1b
-	nop
-
-	dmtc0	t0, MIPS_COP_0_TLB_HI		# Restore the PID
-	nop					# required for QED5230
-	nop					# required for QED5230
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
-END(mips3_TLBFlush)
-
-
-/*--------------------------------------------------------------------------
- *
- * mips3_TLBFlushAddr --
- *
- *	Flush any TLB entries for the given address and TLB PID.
- *
- *	mips3_TLBFlushAddr(TLBhi)
- *		unsigned TLBhi;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The process's page is flushed from the TLB.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_TLBFlushAddr)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS# Disable interrupts
-	nop
-	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
-	and	a0, a0, v0		# Make shure valid hi value.
-	dmfc0	t0, MIPS_COP_0_TLB_HI	# Get current PID
-	dmtc0	a0, MIPS_COP_0_TLB_HI	# look for addr & PID
-	nop
-	nop
-	nop
-	tlbp				# Probe for the entry.
-	nop
-	nop				# Delay for effect
-	nop
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
-	li	t1, MIPS_KSEG0_START	# Load invalid entry.
-	bltz	v0, 1f			# index < 0 => !found
-	nop
-	dmtc0	t1, MIPS_COP_0_TLB_HI	# Mark entry high as invalid
-
-	dmtc0	zero, MIPS_COP_0_TLB_LO0	# Zero out low entry.
-	dmtc0	zero, MIPS_COP_0_TLB_LO1	# Zero out low entry.
-	nop
-	nop					# required for QED5230
-	tlbwi
-	nop
-	nop
-	nop
-	nop
-1:
-	dmtc0	t0, MIPS_COP_0_TLB_HI	# restore PID
-	nop					# required for QED5230
-	nop
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
-END(mips3_TLBFlushAddr)
-
-/*--------------------------------------------------------------------------
- *
  * mips3_TLBUpdate --
  *
  *	Update the TLB if highreg is found; otherwise, enter the data.
@@ -1605,27 +1495,6 @@ LEAF(mips3_TLBRead)
 	sw	t5, 12(a1)
 END(mips3_TLBRead)
 
-/*--------------------------------------------------------------------------
- *
- * mips3_TLBGetPID --
- *
- *	mips3_TLBGetPID()
- *
- * Results:
- *	Returns the current TLB pid reg.
- *
- * Side effects:
- *	None.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(mips3_TLBGetPID)
-	dmfc0	v0, MIPS_COP_0_TLB_HI		# get PID
-	j	ra
-	and	v0, v0, MIPS3_TLB_PID		# mask off PID
-END(mips3_TLBGetPID)
-
-
 
 /*----------------------------------------------------------------------------
  *
@@ -1772,7 +1641,7 @@ END(mips3_FlushICache)
  */
 LEAF(mips3_FlushDCache)
 	lw	a2, mips_L1DCacheSize
-	addiu	a2, -1
+	addu	a2, -1
 	move	t0, a0		# copy start address
 	and	a0, a0, a2	# get index into primary cache
 	addu	a1, 127		# Align
@@ -1798,7 +1667,7 @@ LEAF(mips3_FlushDCache)
 
 	lw	a2, mips_L2CacheSize
 	beq	a2, zero, 2f	# no secondary cache
-	addiu	a2, -1
+	addu	a2, -1
 	and	t0,t0,a2	# secondary cache index
 	li	a0, 0x80000000
 	addu	a0, a0, t0	# reduce to kseg0 address
@@ -1867,6 +1736,7 @@ LEAF(mips3_HitFlushDCache)
 	j	ra
 	nop
 END(mips3_HitFlushDCache)
+
 /*----------------------------------------------------------------------------
  *
  * mips3_InvalidateDCache --
@@ -2008,7 +1878,7 @@ LEAF(mips5200_FlushICache)
 	li	t1, MIPS_KSEG0_START
 	addu	a1, 127		# Align (I $ inval of partials is ok)
 	srl	t0,1		# Two way set assoc offset
-	addiu	t2, t0, -1	# Cache index mask
+	addu	t2, t0, -1	# Cache index mask
 	and	a0, a0, t2	# Only keep index bits (avoid KSEG2, way 0)
 	or	a0, a0, t1	# Make KSEG0
 	srl	a1, a1, 7	# Number of unrolled loops
@@ -2052,7 +1922,7 @@ END(mips5200_FlushICache)
 LEAF(mips5200_FlushDCache)
 	lw	a2, mips_L1DCacheSize
 	srl	a3, a2, 1	# two way set associative cache
-	addiu	a2, a3, -1	# offset mask
+	addu	a2, a3, -1	# offset mask
 	and	a0, a0, a2	# get index into primary cache
 	addu	a1, a1, a0	# add offset to length
 	and	a0, a0, -128	# block align address
@@ -2209,9 +2079,9 @@ XLEAF(mips3_VCEI)	/* XXXX */
 1:
 	cache	1, 0(k0)			# flush 32 bytes
 	cache	1, 16(k0)
-	addiu	k1, 32
+	addu	k1, 32
 	bltz	k1, 1b
-	addiu	k0, 32
+	addu	k0, 32
 2:
 	lw	k0, vce_savek0			# get original address
 	cache	31, 0(k0)
@@ -2222,7 +2092,7 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	sw	k1, VCE_epc
 	la	k1, VCE_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
-	andi	k0, k0, 0x3c		# mask it off
+	and	k0, k0, 0x3c		# mask it off
 	add	k1, k0			# get address of count table
 	lw	k0, 0(k1)
 	addu	k0, 1
@@ -2289,7 +2159,7 @@ LEAF(mips3_proc_trampoline)
 	mtc0	a0, MIPS_COP_0_STATUS
 	nop
 	nop
-	addiu	a1, sp, CALLFRAME_SIZ
+	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	REG_L	t0, FRAME_MULLO(a1)
 	REG_L	t1, FRAME_MULHI(a1)
@@ -2351,7 +2221,7 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	blt	v0, s0, resume
 	nop
 
-	andi	s0, v0, MIPS3_PG_ODDPG
+	and	s0, v0, MIPS3_PG_ODDPG
 	beq	s0, zero, entry0
 	nop
 
@@ -2379,7 +2249,7 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 entry1set:
 	li	s0, 1
 	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB entry #1
-	ori	a2, MIPS3_PG_G
+	or	a2, MIPS3_PG_G
 	dmtc0	a2, MIPS_COP_0_TLB_LO0		# lo0: upte[1] | PG_G
 	dmtc0	zero, MIPS_COP_0_TLB_LO1	# lo1: none
 	nop
@@ -2413,9 +2283,9 @@ entry0:
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# set VPN again
 entry0set:
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB entry #0
-	ori	a1, MIPS3_PG_G
+	or	a1, MIPS3_PG_G
 	dmtc0	a1, MIPS_COP_0_TLB_LO0		# upte[0] | PG_G
-	ori	a2, MIPS3_PG_G
+	or	a2, MIPS3_PG_G
 	dmtc0	a2, MIPS_COP_0_TLB_LO1		# upte[1] | PG_G
 	nop
 	nop
@@ -2428,12 +2298,132 @@ resume:
 	nop
 	END(mips3_cpu_switch_resume)
 
+/*
+ * void mips3_TBIS(vaddr_t va)
+ *
+ * Invalidate a TLB entry which has the given vaddr and ASID if found.
+ */
+LEAF_NOPROFILE(mips3_TBIS)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
+	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
+	and	a0, a0, v0			# make sure valid entryHi
+	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
+	nop
+	nop
+	tlbp					# probe the entry in question
+	nop
+	nop
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
+	#nop					# -slip-
+	#nop					# -slip-
+	bltz	v0, 1f				# index < 0 then skip
+	li	t1, MIPS_KSEG0_START		# invalid address
+	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid 
+	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
+	dmtc0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
+	nop
+	nop
+	tlbwi
+	nop
+	nop
+1:
+	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
+	nop
+	nop
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	END(mips3_TBIS)
+
+/*
+ * void mips3_TBIAP(int sizeofTLB)
+ *
+ * Invalidate TLB entries belong to per process user spaces while
+ * leaving entries for kernel space marked global intact.
+ */
+LEAF_NOPROFILE(mips3_TBIAP)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
+	move	t2, a0
+	li	v0, MIPS_KSEG0_START		# invalid address
+
+	# do {} while (t1 < t2)
+1:
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
+	nop
+	nop
+	tlbr					# obtain an entry
+	dmfc0	a0, MIPS_COP_0_TLB_LO1
+	#nop					# -slip-
+	#nop					# -slip-
+	and	a0, a0, MIPS3_PG_G		# check to see it has G bit
+	bnez	a0, 2f
+	nop
+
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
+	dmtc0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
+	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out mask entry
+	nop
+	nop
+	tlbwi					# invalidate the TLB entry
+	#nop
+	#nop
+2:
+	addu	t1, t1, 1
+	bne	t1, t2, 1b
+	nop
+
+	j	ra				# new ASID will be set soon
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	END(mips3_TBIAP)
+
+/*
+ * void mips3_TBIA(int sizeofTLB)
+ *
+ * Invalidate all of non-wired TLB entries.
+ */
+LEAF_NOPROFILE(mips3_TBIA)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
+	li	v0, MIPS_KSEG0_START		# invalid address
+
+	dmtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
+	dmtc0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
+	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
+
+	# do {} while (t1 < a0)
+1:
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
+	nop
+	nop
+	tlbwi					# clear the entry
+	#nop
+	#nop
+	addu	t1, t1, 1			# increment index
+	bne	t1, a0, 1b
+	nop
+
+	dmtc0	t0, MIPS_COP_0_TLB_HI		# restore ASID
+	nop
+	nop
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# resiter status register
+	END(mips3_TBIA)
 
 LEAF(mips3_Set64bit)
 	mfc0	v0, MIPS_COP_0_STATUS
 	lui	v1, (MIPS3_SR_XX >> 16)
 	or	v0, v0, v1
-	ori	v0, v0, MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX
+	or	v0, v0, MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX
 	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra
 	nop
@@ -2555,8 +2545,8 @@ LEAF(mips3_FetchIcache)
 	cache	4, 0(t0)
 	mfc0	t4, MIPS_COP_0_TAG_LO
 	sw	t4, 0(a0)
-	addiu	a0, 4
-	addiu	v0, 1
+	addu	a0, 4
+	addu	v0, 1
 	addu	t0, t2
 	blt	t0, t3, 1b
 	nop
@@ -2574,8 +2564,8 @@ LEAF(mips3_FetchDcache)
 	cache	5, 0(t0)
 	mfc0	t4, MIPS_COP_0_TAG_LO
 	sw	t4, 0(a0)
-	addiu	a0, 4
-	addiu	v0, 1
+	addu	a0, 4
+	addu	v0, 1
 	addu	t0, t2
 	blt	t0, t3, 1b
 	nop
