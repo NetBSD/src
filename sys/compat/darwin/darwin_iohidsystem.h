@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.11 2003/11/01 18:41:25 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.12 2003/12/09 17:13:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -202,6 +202,15 @@ typedef union {
 	} proximity;
 } darwin_iohidsystem_event_data;
 
+typedef struct {
+	int dne_setcursor;
+	int dne_type;
+	darwin_iogpoint dne_location;
+	darwin_iohidsystem_event_data dne_data;
+	int dne_setflags;
+	int dne_flags;
+} darwin_nxll_event;
+
 typedef volatile struct {
 	int die_type;
 	int die_location_x;
@@ -269,12 +278,12 @@ struct  darwin_iohidsystem_shmem {
 };
 
 /* I/O selectors for io_connect_method_{scalar|struct}i_{scalar|struct}o */
-#define DARWIN_IOHIDCREATESHMEM 0
-#define DARWIN_IOHIDSETEVENTSENABLE 1
-#define DARWIN_IOHIDSETCURSORENABLE 2
-#define DARWIN_IOHIDPOSTEVENT 3
-#define DARWIN_IOHIDSETMOUSELOCATION 4
-#define DARWIN_IOHIDGETBUTTONEVENTNUM 5
+#define DARWIN_IOHIDCREATESHMEM		0
+#define DARWIN_IOHIDSETEVENTSENABLE	1
+#define DARWIN_IOHIDSETCURSORENABLE	2
+#define DARWIN_IOHIDPOSTEVENT		3
+#define DARWIN_IOHIDSETMOUSELOCATION	4
+#define DARWIN_IOHIDGETBUTTONEVENTNUM	5
 
 
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
