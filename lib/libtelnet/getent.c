@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.8 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: getent.c,v 1.9 2004/04/23 17:54:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: getent.c,v 1.8 2003/08/07 16:44:55 agc Exp $");
+__RCSID("$NetBSD: getent.c,v 1.9 2004/04/23 17:54:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ getent(cp, name)
 char *cp, *name;
 {
 #ifdef	HAS_CGETENT
-	char *dba[2];
+	const char *dba[2];
 
 	dba[0] = "/etc/gettytab";
 	dba[1] = 0;
