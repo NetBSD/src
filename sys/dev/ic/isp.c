@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.95 2002/06/15 00:16:26 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.96 2002/08/12 21:33:39 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.95 2002/06/15 00:16:26 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.96 2002/08/12 21:33:39 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -2841,12 +2841,6 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 	}
 
 	FC_SCRATCH_RELEASE(isp);
-	/*
-	 * XXX: Workaround for some bogus fabric registrants
-	 */
-	if (ftype) {
-		(void) isp_scan_fabric(isp, 0);
-	}
 	fcp->isp_loopstate = LOOP_FSCAN_DONE;
 	return (0);
 }
@@ -3919,9 +3913,20 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_async(isp, ISPASYNC_BUS_RESET, &bus);
 		break;
 	case ASYNC_SYSTEM_ERROR:
+#ifdef	ISP_FW_CRASH_DUMP
+		/*
+		 * If we have crash dumps enabled, it's up to the handler
+		 * for isp_async to reinit stuff and restart the firmware
+		 * after performing the crash dump. The reason we do things
+		 * this way is that we may need to activate a kernel thread
+		 * to do all the crash dump goop.
+		 */
+		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
+#else
 		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
 		isp_reinit(isp);
 		isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
+#endif
 		rval = -1;
 		break;
 
@@ -5959,8 +5964,9 @@ isp_parse_nvram_1020(struct ispsoftc *isp, u_int8_t *nvram_data)
 		ISP_NVRAM_FIFO_THRESHOLD(nvram_data) |
 		(ISP_NVRAM_FIFO_THRESHOLD_128(nvram_data) << 2);
 
-	sdp->isp_initiator_id =
-		ISP_NVRAM_INITIATOR_ID(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+			ISP_NVRAM_INITIATOR_ID(nvram_data);
 
 	sdp->isp_bus_reset_delay =
 		ISP_NVRAM_BUS_RESET_DELAY(nvram_data);
@@ -6085,8 +6091,9 @@ isp_parse_nvram_1080(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 	sdp->isp_fifo_threshold =
 	    ISP1080_NVRAM_FIFO_THRESHOLD(nvram_data);
 
-	sdp->isp_initiator_id =
-	    ISP1080_NVRAM_INITIATOR_ID(nvram_data, bus);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+		    ISP1080_NVRAM_INITIATOR_ID(nvram_data, bus);
 
 	sdp->isp_bus_reset_delay =
 	    ISP1080_NVRAM_BUS_RESET_DELAY(nvram_data, bus);
@@ -6176,8 +6183,9 @@ isp_parse_nvram_12160(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 	sdp->isp_fifo_threshold =
 	    ISP12160_NVRAM_FIFO_THRESHOLD(nvram_data);
 
-	sdp->isp_initiator_id =
-	    ISP12160_NVRAM_INITIATOR_ID(nvram_data, bus);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+		    ISP12160_NVRAM_INITIATOR_ID(nvram_data, bus);
 
 	sdp->isp_bus_reset_delay =
 	    ISP12160_NVRAM_BUS_RESET_DELAY(nvram_data, bus);
@@ -6492,6 +6500,7 @@ isp2200_fw_dump(struct ispsoftc *isp)
 	*ptr++ = isp->isp_mboxtmp[2];
 	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
+	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
 
 static void
@@ -6654,6 +6663,7 @@ isp2300_fw_dump(struct ispsoftc *isp)
 	*ptr++ = mbs.param[2];
 	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
+	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
 
 void
