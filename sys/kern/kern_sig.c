@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.156 2003/09/16 15:59:28 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.157 2003/09/19 22:51:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.156 2003/09/16 15:59:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.157 2003/09/19 22:51:31 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -156,6 +156,13 @@ ksiginfo_put(struct proc *p, ksiginfo_t *ksi)
 		}
 	}
 	kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+	if (kp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("Out of memory allocating siginfo for pid %d\n",
+		    p->p_pid);
+#endif
+		return;
+	}
 	*kp = *ksi;
 	CIRCLEQ_INSERT_TAIL(&p->p_sigctx.ps_siginfo, kp, ksi_list);
 	simple_unlock(&p->p_sigctx.ps_silock);
@@ -874,7 +881,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
-			    &p->p_sigctx.ps_sigmask, ksi->ksi_trap);
+			    &p->p_sigctx.ps_sigmask, ksi);
 #endif
 		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
 		(void) splsched();	/* XXXSMP */
@@ -1686,13 +1693,14 @@ postsig(int signum)
 
 	sigdelset(&p->p_sigctx.ps_siglist, signum);
 	action = SIGACTION_PS(ps, signum).sa_handler;
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_PSIG))
-		ktrpsig(p,
-		    signum, action, p->p_sigctx.ps_flags & SAS_OLDMASK ?
-		    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask, 0);
-#endif
 	if (action == SIG_DFL) {
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_PSIG))
+			ktrpsig(p, signum, action,
+			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
+			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
+			    NULL);
+#endif
 		/*
 		 * Default action, where the default is to kill
 		 * the process.  (Other cases were ignored above.)
@@ -1725,6 +1733,13 @@ postsig(int signum)
 			returnmask = &p->p_sigctx.ps_sigmask;
 		p->p_stats->p_ru.ru_nsignals++;
 		ksi = ksiginfo_get(p, signum);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_PSIG))
+			ktrpsig(p, signum, action,
+			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
+			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
+			    ksi);
+#endif
 		if (ksi == NULL) {
 			ksiginfo_t ksi1;
 			/*
