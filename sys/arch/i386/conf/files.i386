@@ -1,10 +1,11 @@
-#	$Id: files.i386,v 1.25 1993/12/10 05:38:37 hpeyerl Exp $
+#	$Id: files.i386,v 1.26 1993/12/22 13:11:03 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
 arch/i386/i386/db_disasm.c	optional ddb
 arch/i386/i386/db_interface.c	optional ddb
 arch/i386/i386/db_trace.c	optional ddb
+arch/i386/i386/disksubr.c	standard
 arch/i386/i386/in_cksum.c	optional inet
 arch/i386/i386/machdep.c	standard config-dependent
 arch/i386/i386/math_emulate.c	optional math_emulate
@@ -12,11 +13,11 @@ arch/i386/i386/mem.c		standard
 arch/i386/i386/microtime.s	standard
 arch/i386/i386/ns_cksum.c	optional ns
 arch/i386/i386/pmap.c		standard
+arch/i386/i386/procfs_machdep.c	optional procfs
 arch/i386/i386/random.s		optional multicast
 arch/i386/i386/sys_machdep.c	standard
 arch/i386/i386/trap.c		standard
 arch/i386/i386/vm_machdep.c	standard
-arch/i386/i386/disksubr.c	standard
 arch/i386/isa/aha1542.c		optional aha device-driver requires isa scsi
 arch/i386/isa/aha1742.c		optional ahb device-driver requires isa scsi not aha
 arch/i386/isa/bt742a.c		optional bt device-driver requires isa scsi not aha
@@ -28,15 +29,15 @@ arch/i386/isa/fd.c		optional fd device-driver requires isa
 arch/i386/isa/if_ec.c		optional ec device-driver requires ether isa
 arch/i386/isa/if_ed.c		optional ed device-driver requires ether isa
 arch/i386/isa/if_ep.c		optional ep device-driver requires ether isa
+arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa
 arch/i386/isa/if_is.c		optional is device-driver requires ether isa 
 arch/i386/isa/if_ix.c		optional ix device-driver requires ether isa
 arch/i386/isa/if_ne.c		optional ne device-driver requires ether isa
 arch/i386/isa/if_we.c		optional we device-driver requires ether isa
-arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa
 arch/i386/isa/isa.c		optional isa device-driver
 arch/i386/isa/lms.c		optional lms device-driver requires isa
-arch/i386/isa/lpt.c		optional lpt device-driver requires isa
 arch/i386/isa/lpa.c		optional lpa device-driver requires isa
+arch/i386/isa/lpt.c		optional lpt device-driver requires isa
 arch/i386/isa/mcd.c		optional mcd device-driver requires isa
 arch/i386/isa/mms.c		optional mms device-driver requires isa
 arch/i386/isa/npx.c		optional npx device-driver requires isa
