@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.367 2001/10/25 11:57:15 augustss Exp $
+$NetBSD: pcidevs,v 1.368 2001/11/07 18:53:51 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1017,6 +1017,9 @@ product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
 product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Cyclone Microsystems products */
+product CYCLONE PCI_700		0x0700	IQ80310 (PCI-700)
 
 /* Cyrix (now National) products */
 product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
