@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.76 2002/05/20 22:50:58 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.76.2.1 2002/06/02 15:30:23 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76 2002/05/20 22:50:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76.2.1 2002/06/02 15:30:23 tv Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -373,7 +373,7 @@ int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
 	int needs_unlock;
 
@@ -387,10 +387,12 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
  loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 	     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
 	     vp = LIST_NEXT(vp, v_mntvnodes));
-	for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+	for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
+		nvp = BACK_VP(vp);
 #else
 	loop:
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 #endif
 		/*
 		 * If the vnode that we are about to sync is no longer
@@ -1025,15 +1027,13 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 int
 lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp, int (*match)(struct lfs *, struct buf *))
 {
-	struct buf *bp;
+	struct buf *bp, *nbp;
 	int s, count = 0;
 	
 	sp->vp = vp;
 	s = splbio();
 
 #ifndef LFS_NO_BACKBUF_HACK
-loop:	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
-#else /* LFS_NO_BACKBUF_HACK */
 /* This is a hack to see if ordering the blocks in LFS makes a difference. */
 # define	BUF_OFFSET	(((caddr_t)&LIST_NEXT(bp, b_vnbufs)) - (caddr_t)bp)
 # define	BACK_BUF(BP)	((struct buf *)(((caddr_t)(BP)->b_vnbufs.le_prev) - BUF_OFFSET))
@@ -1041,7 +1041,11 @@ loop:	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
 /* Find last buffer. */
 loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp && LIST_NEXT(bp, b_vnbufs) != NULL;
 	    bp = LIST_NEXT(bp, b_vnbufs));
-	for (; bp && bp != BEG_OF_LIST; bp = BACK_BUF(bp)) {
+	for (; bp && bp != BEG_OF_LIST; bp = nbp) {
+		nbp = BACK_BUF(bp);
+#else /* LFS_NO_BACKBUF_HACK */
+loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 #endif /* LFS_NO_BACKBUF_HACK */
 		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp)) {
 #ifdef DEBUG_LFS
@@ -2106,7 +2110,27 @@ lfs_cluster_callback(struct buf *bp)
 		}
 #endif
 		if (tbp->b_flags & (B_BUSY | B_CALL)) {
+			/*
+			 * Prevent vp from being moved between hold list
+			 * and free list by giving it an extra hold,
+			 * and then inline HOLDRELE, minus the TAILQ
+			 * manipulation.
+			 *
+			 * lfs_vunref() will put the vnode back on the
+			 * appropriate free list the next time it is
+			 * called (in thread context).
+			 */
+			if (vp)
+				VHOLD(vp);
 			biodone(tbp);
+			if (vp) {
+        			simple_lock(&vp->v_interlock); 
+        			if (vp->v_holdcnt <= 0)
+                			panic("lfs_cluster_callback: "
+						"holdcnt vp %p", vp);
+        			vp->v_holdcnt--; 
+        			simple_unlock(&vp->v_interlock); 
+			}
 		}
 	}
 
@@ -2217,8 +2241,6 @@ lfs_vref(struct vnode *vp)
 void
 lfs_vunref(struct vnode *vp)
 {
-	int s;
-
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
 	 */
@@ -2244,12 +2266,10 @@ lfs_vunref(struct vnode *vp)
 	 * insert at tail of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
-	s = splbio();
 	if (vp->v_holdcnt > 0)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	splx(s);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
@@ -2265,8 +2285,6 @@ lfs_vunref(struct vnode *vp)
 void
 lfs_vunref_head(struct vnode *vp)
 {
-	int s;
-
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0) {
@@ -2282,9 +2300,10 @@ lfs_vunref_head(struct vnode *vp)
 	 * insert at head of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
-	s = splbio();
-	TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
-	splx(s);
+	if (vp->v_holdcnt > 0)
+		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+	else
+		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
