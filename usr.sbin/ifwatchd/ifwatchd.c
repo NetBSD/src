@@ -1,7 +1,7 @@
-/*	$NetBSD: ifwatchd.c,v 1.13 2003/05/17 19:14:25 itojun Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.14 2003/06/23 21:50:12 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,6 +64,7 @@
 #include <netdb.h>
 #include <err.h>
 #include <ifaddrs.h>
+#include <syslog.h>
 
 enum event { ARRIVAL, DEPARTURE, UP, DOWN };
 /* local functions */
@@ -90,7 +91,7 @@ static int if_is_connected(const char * ifname);
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /* global variables */
-static int verbose = 0;
+static int verbose = 0, quiet = 0;
 static int inhibit_initial = 0;
 static const char *arrival_script = NULL;
 static const char *departure_script = NULL;
@@ -119,7 +120,8 @@ main(int argc, char **argv)
 	int errs = 0;
 	char msg[2048], *msgp;
 
-	while ((c = getopt(argc, argv, "vhiu:d:A:D:")) != -1)
+	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
+	while ((c = getopt(argc, argv, "qvhiu:d:A:D:")) != -1)
 		switch (c) {
 		case 'h':
 			usage();
@@ -129,6 +131,9 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 
 		case 'u':
@@ -180,6 +185,7 @@ main(int argc, char **argv)
 
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
+		syslog(LOG_ERR, "error opening routing socket: %m");
 		perror("open routing socket");
 		exit(EXIT_FAILURE);
 	}
@@ -198,6 +204,7 @@ main(int argc, char **argv)
 
 	close(s);
 	free_interfaces();
+	closelog();
 
 	return EXIT_SUCCESS;
 }
@@ -207,7 +214,8 @@ usage()
 {
 	fprintf(stderr, 
 	    "usage:\n"
-	    "\tifwatchd [-hiv] [-A arrival-script] [-D departure-script] [-d down-script] [-u up-script] ifname(s)\n"
+	    "\tifwatchd [-hiv] [-A arrival-script] [-D departure-script]\n"
+	    "\t\t  [-d down-script] [-u up-script] ifname(s)\n"
 	    "\twhere:\n"
 	    "\t -A <cmd> specify command to run on interface arrival event\n"
 	    "\t -D <cmd> specify command to run on interface departure event\n"
@@ -216,7 +224,8 @@ usage()
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
-	    "\t -v       verbose/debug output, don't run in background\n");
+	    "\t -v       verbose/debug output, don't run in background\n"
+	    "\t -q       quiet mode, don't syslog informational messages\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -335,14 +344,21 @@ invoke_script(sa, dest, ev, ifindex, ifname_hint)
 	if (verbose)
 		(void) printf("calling: %s %s %s %s %s %s\n",
 		    script, ifname, DummyTTY, DummySpeed, addr, daddr);
+	if (!quiet)
+		syslog(LOG_INFO, "calling: %s %s %s %s %s %s\n",
+		    script, ifname, DummyTTY, DummySpeed, addr, daddr);
 
 	switch (vfork()) {
 	case -1:
 		fprintf(stderr, "cannot fork\n");
 		break;
 	case 0:
-		(void) execl(script, script, ifname, DummyTTY, DummySpeed,
-		    addr, daddr, NULL);
+		if (execl(script, script, ifname, DummyTTY, DummySpeed,
+		    addr, daddr, NULL) == -1) {
+			syslog(LOG_ERR, "could not execute \"%s\": %m",
+			    script);
+			perror(script);
+		}
 		_exit(EXIT_FAILURE);
 	default:
 		(void) wait(&status);
@@ -363,6 +379,8 @@ static void list_interfaces(const char *ifnames)
 		SLIST_INSERT_HEAD(&ifs, p, next);
 		p->ifname = strdup(name);
 		p->index = if_nametoindex(p->ifname);
+		if (!quiet)
+			syslog(LOG_INFO, "watching interface %s", p->ifname);
 		if (verbose)
 			printf("interface \"%s\" has index %d\n",
 			    p->ifname, p->index);

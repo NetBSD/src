@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.15 2003/04/16 09:06:55 wiz Exp $
+.\" $NetBSD: ifwatchd.8,v 1.16 2003/06/23 21:50:12 martin Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd "watch for addresses added to or deleted from interfaces and call up/down-scripts for them"
 .Sh SYNOPSIS
 .Nm
-.Op Fl hiv
+.Op Fl hivq
 .Op Fl A Ar arrival-script
 .Op Fl D Ar departure-script
 .Op Fl d Ar down-script
@@ -104,6 +104,8 @@ events (or: addition of an address to an interface).
 .It Fl v
 Output verbose progress messages and flag errors ignored during normal
 operation.
+.It Fl q
+Be quiet and don't log non-error messages to syslog.
 .It Ar ifname(s)
 The name of the interface to watch.  Multiple interfaces may be specified.
 Events for other interfaces are ignored.
@@ -165,6 +167,18 @@ usual dotted quad notation, for IPv6 the colon separated standard notation.
 For point to point interfaces, this is the remote address of the interface.
 For other interfaces it is the broadcast address.
 .El
+.Sh ERRORS
+The program logs to the syslog daemon as facility
+.Dq daemon .
+For detailed debugging use the
+.Fl v
+(verbose) option.
+.Sh CAVEATS
+Due to the nature of the program a lot of stupid errors can not easily be
+catched in advance without removing the provided facility for advanced uses.
+For example typing errors in the interface name can not be detected by
+checking against the list of installed interfaces, because
+it is possible for a pcmcia card with the name given to be inserted later.
 .Sh SEE ALSO
 .Xr pppoe 4 ,
 .Xr route 4 ,
