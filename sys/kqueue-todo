@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.5 2001/09/08 20:53:27 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.6 2001/09/08 21:49:16 thorpej Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- resolve si_klist (NetBSD) vs. si_note (FreeBSD)
@@ -20,10 +20,6 @@ items todo from bill sommerfeld/thorpej:
 		- arch/bebox/isa/mms.c
 		- arch/bebox/isa/pms.c
 		- arch/hp300/dev/hil.c
-		- arch/i386/i386/apm.c
-		- arch/i386/isa/olms.c
-		- arch/i386/isa/omms.c
-		- arch/i386/isa/pms.c
 		- arch/mac68k/dev/aed.c
 		- arch/macppc/dev/aed.c
 		- arch/pmax/dev/fb_usrreq.c
