@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.34 2000/07/02 10:01:30 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.35 2000/07/22 08:53:34 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -173,6 +173,11 @@ file arch/hpcmips/vr/vrpiu.c			vrpiu
 
 attach ohci at vrip with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
+
+device mqvideo: hpcfbif
+attach mqvideo at vrip with mqvideo_vrip
+file arch/hpcmips/vr/mq200_vrip.c		mqvideo_vrip
+file arch/hpcmips/dev/mq200.c			mqvideo
 
 #
 #	TOSHIBA TX3912/3922
