@@ -1,4 +1,5 @@
-/*	$NetBSD: i82586var.h,v 1.4 1997/08/01 20:33:03 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.5 1997/12/13 21:18:02 pk Exp $	*/
+/* 	$Id: i82586var.h,v 1.5 1997/12/13 21:18:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -62,8 +63,6 @@
  * This sun version based on i386 version 1.30.
  */
 
-#define IEDEBUG
-
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
 #define	IED_RNR		0x04
@@ -85,7 +84,12 @@
 #define	NTXBUF		2		/* number of transmit commands */
 #define	IE_TBUF_SIZE	ETHER_MAX_LEN	/* length of transmit buffer */
 
+#define INTR_ENTER	0		/* intr hook called on ISR entry */
+#define INTR_EXIT	1		/* intr hook called on ISR exit */
+#define INTR_LOOP	2		/* intr hook called on ISR loop */
 
+#define CHIP_PROBE	0		/* reset called from chip probe */
+#define CARD_RESET	1		/* reset called from card reset */
 /*
  * Ethernet status, per interface.
  *
@@ -125,17 +129,18 @@
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
+	bus_space_tag_t bt;	/* bus-space tag of card memory */
+	bus_space_handle_t bh;	/* bus-space handle of card memory */
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
 	u_int sc_msize;         /* how much RAM we have/use */
 	caddr_t sc_reg;         /* KVA of car's register */
 
-	struct ethercom sc_ethercom;/* system ethercom structure */
+	struct ethercom sc_ethercom;	/* system ethercom structure */
+	struct ifmedia sc_media;	/* supported media information */
 
-	void (*hwreset) __P((struct ie_softc *));
+	void (*hwreset) __P((struct ie_softc *, int));
 				/* card dependent reset function */
 	void (*hwinit) __P((struct ie_softc *));
 				/* card dependent "go on-line" function */
@@ -147,9 +152,15 @@ struct ie_softc {
 	                        /* card dependent memory zero function */
 	caddr_t (*align) __P((caddr_t));
 	                        /* arch dependent alignment function */
-	int (*intrhook) __P((struct ie_softc *));
+	int (*intrhook) __P((struct ie_softc *, int where));
 	                        /* card dependent interrupt handling */
 
+        int  (*sc_mediachange) __P((struct ie_softc *));
+				/* card dependent media change */
+        void (*sc_mediastatus) __P((struct ie_softc *, struct ifmediareq *));
+				/* card dependent media status */
+
+	int do_xmitnopchain;	/* Controls use of xmit NOP chains */
 	int want_mcsetup;       /* mcsetup flag */
 	int promisc;            /* are we in promisc mode? */
 
@@ -192,10 +203,13 @@ struct ie_softc {
 	int nframes;      /* number of frames in use */
 	int nrxbuf;       /* number of recv buffs in use */
 
-#ifdef IEDEBUG
+#ifdef I82586_DEBUG
 	int sc_debug;
 #endif
 };
 
-void ie_attach __P((struct ie_softc *, char *, u_int8_t *));
-int ieintr __P((void *));
+void 	ie_attach 	__P((struct ie_softc *, char *, u_int8_t *, 
+							int*, int, int));
+int 	ieintr 		__P((void *));
+void 	i82586_reset 	__P((struct ie_softc *, int));
+
