@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.8 2000/11/22 08:55:35 matt Exp $
+#	$NetBSD: files.prep,v 1.9 2000/11/27 17:03:12 matt Exp $
 #
 # prep-specific configuration info
 #
@@ -39,7 +39,7 @@ major	{wd = 0}
 #
 # Memory Disk for install floppy
 #
-file	arch/prep/prep/md_root.c	memory_disk_hooks
+file	dev/md_root.c		memory_disk_hooks
 major	{md = 17}
 
 #
