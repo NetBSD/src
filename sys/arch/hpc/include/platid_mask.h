@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.8 2001/05/05 05:45:31 takemura Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.9 2001/05/16 11:06:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -576,6 +576,10 @@ extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MP;
 extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define VICTOR_INTERLINK_MPC101 ((int)&platid_mask_MACH_VICTOR_INTERLINK_MPC101)
+#endif
+extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC303;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VICTOR_INTERLINK_MPC303 ((int)&platid_mask_MACH_VICTOR_INTERLINK_MPC303)
 #endif
 #endif /* hpcmips */
 #ifdef hpcmips
