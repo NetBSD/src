@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2003/02/10 23:59:48 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2003/05/28 20:17:14 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.31 2003/02/10 23:59:48 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2003/05/28 20:17:14 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -352,8 +352,8 @@ stop(int signo)
 	/* stop ourselves */
 	kill(0, SIGTSTP);
 	/* must have been restarted */
-	redraw(signo);
 	signal(SIGTSTP, stop);
+	redraw(signo);
 }
 
 void
