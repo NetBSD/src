@@ -1,8 +1,8 @@
 divert(-1)
 #
 # Copyright (c) 1983 Eric P. Allman
-# Copyright (c) 1988 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1988, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,13 +33,12 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
+# Mailer configuration for *.ihack.net.
+
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: trinity.mc,v 1.2 1997/10/18 04:38:17 lukem Exp $')
+VERSIONID(`$NetBSD: ihack.net.mc,v 1.1 1999/03/05 01:10:33 mycroft Exp $')
 OSTYPE(bsd4.4)dnl
-define(`UUCP_RELAY', life.ai.mit.edu)dnl
-define(`BITNET_RELAY', mitvma.mit.edu)dnl
-define(`LOCAL_RELAY', albert.gnu.ai.mit.edu)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-define(`confCHECKPOINT_INTERVAL', 4)dnl
-define(`confAUTO_REBUILD', True)dnl
+
+DOMAIN(ihack.net)dnl
