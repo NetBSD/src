@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.20 2002/01/14 19:37:30 kleink Exp $	*/
+/*	$NetBSD: compile.c,v 1.21 2002/01/23 19:07:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.20 2002/01/14 19:37:30 kleink Exp $");
+__RCSID("$NetBSD: compile.c,v 1.21 2002/01/23 19:07:34 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -439,7 +439,7 @@ compile_re(p, repp)
 		return (p);
 	}
 	*repp = xmalloc(sizeof(regex_t));
-	if (p && (eval = regcomp(*repp, re, 0)) != 0)
+	if (p && (eval = regcomp(*repp, re, ere)) != 0)
 		err(COMPILE, "RE error: %s", strregerror(eval, *repp));
 	if (maxnsub < (*repp)->re_nsub)
 		maxnsub = (*repp)->re_nsub;

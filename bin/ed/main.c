@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2000/04/04 17:07:29 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2002/01/23 19:07:33 atatat Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2000/04/04 17:07:29 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2002/01/23 19:07:33 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ int isglobal;			/* if set, doing a global command */
 int modified;			/* if set, buffer modified since last write */
 int mutex = 0;			/* if set, signals set "sigflags" */
 int red = 0;			/* if set, restrict shell/directory access */
+int ere = 0;			/* if set, use extended regexes */
 int scripted = 0;		/* if set, suppress diagnostics */
 int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
@@ -103,7 +104,7 @@ int lineno;			/* script line number */
 char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
 
-char *usage = "usage: %s [-] [-sx] [-p string] [name]\n";
+char *usage = "usage: %s [-] [-sxE] [-p string] [name]\n";
 
 int main __P((int, char *[]));
 
@@ -122,7 +123,7 @@ main(argc, argv)
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
-	while ((c = getopt(argc, argv, "p:sx")) != -1)
+	while ((c = getopt(argc, argv, "p:sxE")) != -1)
 		switch(c) {
 		case 'p':				/* set prompt */
 			prompt = optarg;
@@ -138,6 +139,9 @@ top:
 #endif
 			break;
 
+		case 'E':
+			ere = REG_EXTENDED;
+			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);

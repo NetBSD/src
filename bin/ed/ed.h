@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.28 2001/01/07 05:41:20 christos Exp $	*/
+/*	$NetBSD: ed.h,v 1.29 2002/01/23 19:07:33 atatat Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -293,6 +293,7 @@ extern long second_addr;
 extern long rows;
 extern int cols;
 extern int scripted;
+extern int ere;
 extern int des;
 extern int newline_added;	/* io.c */
 extern int patlock;
