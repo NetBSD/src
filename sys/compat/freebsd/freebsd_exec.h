@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.h,v 1.2 1998/01/05 17:51:27 perry Exp $	*/
+/*	$NetBSD: freebsd_exec.h,v 1.3 1998/01/24 12:39:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,6 +94,7 @@
 
 #define	FREEBSD_AOUT_HDR_SIZE	sizeof(struct exec)
 
+void freebsd_setregs __P((struct proc *, struct exec_package *, u_long));
 int exec_freebsd_aout_makecmds __P((struct proc *, struct exec_package *));
 
 extern char freebsd_sigcode[], freebsd_esigcode[];
