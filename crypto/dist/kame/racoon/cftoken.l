@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.47 2000/12/22 03:12:55 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.51 2001/02/22 01:11:42 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -117,11 +117,13 @@ octetstring	{octet}({dot}{octet})+
 
 	/* path */
 <S_INI>path		{ BEGIN S_PTH; YYDB; return(PATH); }
-<S_PTH>include		{ YYD; yylval.num = CF_PATHTYPE_INCLUDE;
+<S_PTH>include		{ YYD; yylval.num = LC_PATHTYPE_INCLUDE;
 				return(PATHTYPE); }
-<S_PTH>pre_shared_key	{ YYD; yylval.num = CF_PATHTYPE_PSK;
+<S_PTH>pre_shared_key	{ YYD; yylval.num = LC_PATHTYPE_PSK;
 				return(PATHTYPE); }
-<S_PTH>certificate	{ YYD; yylval.num = CF_PATHTYPE_CERT;
+<S_PTH>certificate	{ YYD; yylval.num = LC_PATHTYPE_CERT;
+				return(PATHTYPE); }
+<S_PTH>backupsa		{ YYD; yylval.num = LC_PATHTYPE_BACKUPSA;
 				return(PATHTYPE); }
 <S_PTH>{semi}		{ BEGIN S_INI; YYDB; return(EOS); }
 
@@ -131,6 +133,9 @@ octetstring	{octet}({dot}{octet})+
 	/* self information */
 <S_INI>identifier	{ BEGIN S_INF; YYDB; yywarn("it is obsoleted.  use \"my_identifier\" in each remote directives."); return(IDENTIFIER); }
 <S_INF>{semi}		{ BEGIN S_INI; return(EOS); }
+
+	/* special */
+<S_INI>complex_bundle	{ YYDB; return(COMPLEX_BUNDLE); }
 
 	/* logging */
 <S_INI>log		{ BEGIN S_LOG; YYDB; return(LOGGING); }
@@ -307,28 +312,6 @@ octetstring	{octet}({dot}{octet})+
 <S_RMTP>hash_algorithm	{ YYD; yylval.num = algclass_isakmp_hash; return(ALGORITHM_CLASS); }
 <S_RMTP>dh_group	{ YYD; return(DH_GROUP); }
 <S_RMTP>gssapi_id	{ YYD; return(GSSAPI_ID); }
-
-	/* static sa */
-<S_INI>static_sa	{
-				BEGIN S_SA; YYDB;
-				yywarn("staticsa directive don't work yet.");
-				return(STATICSA);
-			}
-<S_SA>{semi}		{ YYD; BEGIN S_INI; return(EOS); }
-<S_SA>[a-zA-Z0-9:\.\-_/ \n\t\"][a-zA-Z0-9:\.\-_/ \n\t\"]* {
-		yymore();
-
-		incstack[incstackp].lineno += yycf_count_nl(yytext);
-
-		yylval.val = vmalloc(yyleng + 1);
-		if (yylval.val == NULL) {
-			yyerror("vmalloc failed");
-			return -1;
-		}
-		memcpy(yylval.val->v, yytext, yylval.val->l);
-
-		return(STATICSA_STATEMENT);
-}
 
 	/* parameter */
 on		{ YYD; yylval.num = TRUE; return(SWITCH); }

@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.h,v 1.10 2001/01/31 05:45:23 sakane Exp $	*/
+/*	$KAME: backupsa.h,v 1.2 2001/01/31 05:38:44 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,18 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#define CF_LIFETYPE_TIME	0
-#define CF_LIFETYPE_BYTE	1
-
-#define CF_UNITTYPE_B	1
-#define CF_UNITTYPE_KB	1024
-#define CF_UNITTYPE_MB	(1024*1024)
-#define CF_UNITTYPE_TB	(1024*1024*1024)
-#define CF_UNITTYPE_S	1
-#define CF_UNITTYPE_M	60
-#define CF_UNITTYPE_H	(60*60)
-
-/* cfparse.y */
-extern int yyparse __P((void));
-extern int cfparse __P((void));
-extern int cfreparse __P((void));
+extern int backupsa_to_file __P((u_int, u_int,
+	struct sockaddr *, struct sockaddr *, u_int32_t, u_int32_t, u_int,
+	caddr_t, u_int, u_int, u_int, u_int, u_int,
+	u_int32_t, u_int64_t, u_int64_t, u_int64_t, u_int32_t));
+extern int backupsa_from_file __P((void));
+extern int backupsa_clean __P((void));

@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.23 2001/01/05 01:14:57 jinmei Exp $	*/
+/*	$KAME: session.c,v 1.24 2001/01/31 05:38:44 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,6 +77,7 @@
 #include "handler.h"
 #include "localconf.h"
 #include "remoteconf.h"
+#include "backupsa.h"
 
 static void close_session __P((void));
 static void check_rtsock __P((void *));
@@ -174,6 +175,7 @@ close_session()
 {
 	flushph1();
 	close_sockets();
+	backupsa_clean();
 
 	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown");
 	exit(0);
