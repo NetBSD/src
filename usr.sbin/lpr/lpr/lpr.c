@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.27 2003/04/16 11:56:11 wiz Exp $	*/
+/*	$NetBSD: lpr.c,v 1.28 2003/07/13 14:06:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.27 2003/04/16 11:56:11 wiz Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.28 2003/07/13 14:06:06 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -490,8 +490,8 @@ linked(char *file)
 			}
 			break;
 		}
-		strcat(buf, "/");	/* XXX: strcat is safe */
-		strcat(buf, file);	/* XXX: strcat is safe */
+		strlcat(buf, "/", sizeof(buf));
+		strlcat(buf, file, sizeof(buf));
 		file = buf;
 	}
 	seteuid(euid);

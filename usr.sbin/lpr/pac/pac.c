@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.17 2003/05/17 14:56:40 itojun Exp $	*/
+/*	$NetBSD: pac.c,v 1.18 2003/07/13 14:06:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.17 2003/05/17 14:56:40 itojun Exp $");
+__RCSID("$NetBSD: pac.c,v 1.18 2003/07/13 14:06:06 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,11 +433,9 @@ chkprinter(const char *s)
 	}
 	if (!pflag && (cgetnum(bp, "pc", &price100) == 0))
 		price = price100/10000.0;
-	sumfile = (char *) calloc(sizeof(char), strlen(acctfile)+5);
+	asprintf(&sumfile, "%s_sum", acctfile);
 	if (sumfile == NULL)
 		err(1, "pac");
-	strcpy(sumfile, acctfile);	/* XXX: strcpy is safe */
-	strcat(sumfile, "_sum");	/* XXX: strcat is safe */
 	return(1);
 }
 
