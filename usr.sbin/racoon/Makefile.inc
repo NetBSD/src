@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/12/29 03:16:40 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/02/22 02:33:06 itojun Exp $
 
 # point top of your KAME tree by ${KAMEROOT}
 LIBPFKEYSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/libipsec
@@ -12,5 +12,7 @@ FILESDIR?=	/usr/share/examples/racoon
 BINDIR?=        /sbin
 LDSTATIC?=      -static
 .endif
+
+DBG=	-g
 
 .include "../Makefile.inc"

@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.8,v 1.23 2000/12/16 15:19:00 itojun Exp $
+.\"	$KAME: racoon.8,v 1.25 2001/02/22 00:41:38 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm racoon
 .Bk -words
-.Op Fl dFv
+.Op Fl dFBv
 .Ek
 .Bk -words
 .Op Fl f Ar configfile
@@ -67,10 +67,14 @@ as the configuration file instead of the default.
 run
 .Nm racoon
 in the foreground.
+.It Fl B
+install SA(s) from the file which is specified in
+.Xr racoon.conf 5 .
 .It Fl l Ar logfile
 use
 .Ar logfile
-as the logging file.
+as the logging file instead of
+.Xr syslogd 8 .
 .It Fl p Ar isakmp-port
 listen for ISAKMP key exchange on port
 .Ar isakmp-port
@@ -89,8 +93,6 @@ at
 .Bl -tag -width /etc/racoon.conf -compact
 .It Pa /etc/racoon.conf
 default configuration file.
-.It Pa /var/log/racoon.log
-default log file.
 .El
 .\"
 .Sh RETURN VALUES
