@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.20 2002/01/05 05:09:15 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.21 2002/01/26 10:50:43 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <machine/platid_mask.h>
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
+#include <machine/bitdisp.h>
 
 #include <dev/hpc/hpciovar.h>
 

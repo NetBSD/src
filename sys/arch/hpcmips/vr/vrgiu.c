@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.28 2001/12/29 05:15:32 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.29 2002/01/26 10:50:44 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -43,6 +43,7 @@
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/bitdisp.h>
 
 #include <dev/hpc/hpciovar.h>
 

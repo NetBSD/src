@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.11 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.12 2002/01/26 10:50:44 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -33,6 +33,7 @@
 
 #include <machine/bus.h>
 #include <machine/config_hook.h>
+#include <machine/bitdisp.h>
 
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vripreg.h>

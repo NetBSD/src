@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.12 2001/09/16 05:32:20 uch Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.13 2002/01/26 10:50:44 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/reboot.h>
 
 #include <machine/bus.h>
+#include <machine/bitdisp.h>
 
 #include <mips/cpuregs.h>
 
