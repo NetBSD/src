@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.129 2004/02/26 22:41:36 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.130 2004/04/20 11:52:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.129 2004/02/26 22:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.130 2004/04/20 11:52:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1482,7 +1482,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 
 		if (checkfirst && any_dirty)
-			return any_dirty;
+			break;
 
 		if (by_list) {
 			curpg = TAILQ_NEXT(curpg, listq);
