@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1998/08/04 19:02:19 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1998/08/20 05:46:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -2327,7 +2327,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 		/* XXX should try and free up memory if alloc fails */
 		if (page == NULL)
-			panic("pmap_pinit: No more physical pages\n");
+			panic("pmap_enter: No more physical pages\n");
 
 		/* Wire this page table into the L1 */
 		l2pa = VM_PAGE_TO_PHYS(page);
