@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.51 1998/01/26 12:02:47 lukem Exp $
+#	$NetBSD: netstart,v 1.52 1998/05/11 18:59:23 fair Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -14,7 +14,7 @@ if [ -f /etc/rc.conf ]; then
 	. /etc/rc.conf
 fi
 
-# If $hostname is set, use it for my symbolic name, otherwise use /etc/myname
+# If $hostname is set, use it for my Internet name, otherwise use /etc/myname
 if [ -z "$hostname" -a -f /etc/myname ]; then
 	hostname=`cat /etc/myname`
 fi
@@ -23,7 +23,7 @@ if [ -n "$hostname" ]; then
 	hostname $hostname
 fi
 
-# Check $domainname first, then /etc/defaultdomain, for domain name
+# Check $domainname first, then /etc/defaultdomain, for NIS/YP domain name
 if [ -z "$domainname" -a -f /etc/defaultdomain ]; then
 	domainname=`cat /etc/defaultdomain`
 fi
