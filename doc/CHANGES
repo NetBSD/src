@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -99,3 +99,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		process (or processes).  [atatat 20020831]
 	zx(4): Add a driver for the Sun ZX/Leo framebuffer.  [ad 20020913]
 	ipf(8): updated to version 3.4.29. [martti 20020919]
+	mount(2): Add MNT_GETARGS support to retrieve mounted filesystem
+		specific arguments. [christos 20020921]
