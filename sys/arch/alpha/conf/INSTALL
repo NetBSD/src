@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.6 1998/02/01 00:24:26 thorpej Exp $
+# $NetBSD: INSTALL,v 1.7 1998/02/01 02:55:42 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -9,7 +9,7 @@ maxusers 8
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MINIROOTSIZE=4096	# 2 Megabytes
+options 	MINIROOTSIZE=6144	# 3 Megabytes
 
 # set kernel load address a bit higher to allow kernel to be netbooted.
 # if not netbooting, the "makeoptions LOADADDRESS" line can be commented
