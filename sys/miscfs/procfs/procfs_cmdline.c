@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.8 2000/06/01 13:43:08 simonb Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.9 2000/06/28 02:44:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -46,8 +46,6 @@
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
