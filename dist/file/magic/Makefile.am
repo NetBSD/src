@@ -38,7 +38,6 @@ Magdir/archive \
 Magdir/asterix \
 Magdir/att3b \
 Magdir/audio \
-Magdir/audio.orig \
 Magdir/bFLT \
 Magdir/blender \
 Magdir/blit \
@@ -105,7 +104,6 @@ Magdir/linux \
 Magdir/lisp \
 Magdir/mach \
 Magdir/macintosh \
-Magdir/macintosh.orig \
 Magdir/magic \
 Magdir/mail.news \
 Magdir/maple \
@@ -146,6 +144,7 @@ Magdir/plus5 \
 Magdir/printer \
 Magdir/project \
 Magdir/psdbms \
+Magdir/psion \
 Magdir/pulsar \
 Magdir/pyramid \
 Magdir/python \
@@ -188,7 +187,6 @@ Magdir/visx \
 Magdir/vms \
 Magdir/vmware \
 Magdir/vorbis \
-Magdir/vorbis.orig \
 Magdir/vxl \
 Magdir/wordprocessors \
 Magdir/xdelta \
