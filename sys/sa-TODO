@@ -1,10 +1,10 @@
-#	$NetBSD: sa-TODO,v 1.1.2.28 2002/12/16 18:14:24 perry Exp $
+#	$NetBSD: sa-TODO,v 1.1.2.29 2002/12/30 23:03:37 thorpej Exp $
 
 Things to do for scheduler activations/LWP code.
 
 Bugs:
  
-- MD bug: i386 npx handling. cpu_getcontext() may call npxsave(), which
+- MD bug: i386 npx handling. cpu_getmcontext() may call npxsave(), which
   can only be run at spl0, which is a problem. Options
    * Change npxsave to avoid that requirement.
    * Don't save FP context at getcontext() time, but do something
