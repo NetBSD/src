@@ -1,7 +1,11 @@
-/*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.12 1996/06/18 12:55:00 mycroft Exp $	*/
 
-#define AHADIAG
-#define integrate
+#undef AHADIAG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
