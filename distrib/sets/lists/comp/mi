@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.508 2002/12/31 17:49:15 thorpej Exp $
+#	$NetBSD: mi,v 1.509 2002/12/31 23:55:45 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3282,6 +3282,8 @@
 ./usr/share/man/cat9/access.0		comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
 ./usr/share/man/cat9/aprint_debug.0	comp-sys-catman
+./usr/share/man/cat9/aprint_error.0	comp-sys-catman
+./usr/share/man/cat9/aprint_get_error_count.0	comp-sys-catman
 ./usr/share/man/cat9/aprint_naive.0	comp-sys-catman
 ./usr/share/man/cat9/aprint_normal.0	comp-sys-catman
 ./usr/share/man/cat9/aprint_verbose.0	comp-sys-catman
@@ -3731,6 +3733,7 @@
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/preempt.0		comp-sys-catman
 ./usr/share/man/cat9/printf.0		comp-sys-catman
+./usr/share/man/cat9/printf_nolog.0		comp-sys-catman
 ./usr/share/man/cat9/proc_trampoline.0	comp-sys-catman
 ./usr/share/man/cat9/prop_copy.0	comp-sys-catman
 ./usr/share/man/cat9/prop_delete.0	comp-sys-catman
@@ -6276,6 +6279,8 @@
 ./usr/share/man/man9/access.9		comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
 ./usr/share/man/man9/aprint_debug.9	comp-sys-man
+./usr/share/man/man9/aprint_error.9	comp-sys-man
+./usr/share/man/man9/aprint_get_error_count.9	comp-sys-man
 ./usr/share/man/man9/aprint_naive.9	comp-sys-man
 ./usr/share/man/man9/aprint_normal.9	comp-sys-man
 ./usr/share/man/man9/aprint_verbose.9	comp-sys-man
@@ -6725,6 +6730,7 @@
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man
 ./usr/share/man/man9/preempt.9		comp-sys-man
 ./usr/share/man/man9/printf.9		comp-sys-man
+./usr/share/man/man9/printf_nolog.9		comp-sys-man
 ./usr/share/man/man9/proc_trampoline.9	comp-sys-man
 ./usr/share/man/man9/prop_copy.9		comp-sys-man
 ./usr/share/man/man9/prop_delete.9		comp-sys-man
