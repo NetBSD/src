@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1.1.1 1997/01/14 20:57:06 gwr Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 1997/01/17 16:22:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
  */
 
 #include <machine/frame.h>
+struct mmu_rootptr;
 
 /*
  * Sun3x process control block
@@ -49,7 +50,7 @@
 struct pcb {
 	short	pcb_flags;	/* misc. process flags */
 	short	pcb_ps; 	/* processor status word */
-	int	pcb_mmuctx;	/* MMU context number */
+	struct mmu_rootptr *pcb_mmucrp;	/* MMU Current Root Pointer */
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
