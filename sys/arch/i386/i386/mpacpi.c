@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.1 2003/01/07 18:54:08 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.2 2003/01/07 21:11:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -713,6 +713,5 @@ mpacpi_find_interrupts(void)
 	if (mp_verbose)
 		for (i = 0; i < mp_nintr; i++)
 			mpacpi_print_intr(&mp_intrs[i]);
-	mp_verbose = 1;
 	return 0;
 }
