@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.257 2000/09/04 22:49:11 christos Exp $
+#	$NetBSD: mi,v 1.258 2000/09/28 06:10:53 enami Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -653,6 +653,7 @@
 ./usr/include/net/if_token.h		comp-c-include
 ./usr/include/net/if_tun.h		comp-c-include
 ./usr/include/net/if_types.h		comp-c-include
+./usr/include/net/if_vlanvar.h		comp-c-include
 ./usr/include/net/netisr.h		comp-c-include
 ./usr/include/net/pfil.h		comp-c-include
 ./usr/include/net/pfkeyv2.h		comp-c-include
