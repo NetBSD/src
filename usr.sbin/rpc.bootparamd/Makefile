@@ -1,4 +1,5 @@
-#	$Id: Makefile,v 1.7 1994/12/22 11:40:50 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 11:40:50 cgd E
+xp $
 
 CFLAGS+=-DYP
 
