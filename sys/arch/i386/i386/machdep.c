@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.198 1996/04/18 08:36:25 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 1996/04/18 09:58:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -443,11 +443,10 @@ identifycpu()
 
 #if defined(I486_CPU) || defined(I586_CPU)
 	/*
-	 * On a 486 or above, enable ring 0 write protection and outer ring
-	 * alignment checking.
+	 * On a 486 or above, enable ring 0 write protection.
 	 */
 	if (cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP | CR0_AM);
+		lcr0(rcr0() | CR0_WP);
 #endif
 }
 
