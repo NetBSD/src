@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.2 1997/04/16 23:02:35 thorpej Exp $	*/
+/*	$NetBSD: varargs.h,v 1.3 1998/12/02 14:23:03 tsubai Exp $	*/
 
 #ifndef	_PPC_VARARGS_H_
 #define	_PPC_VARARGS_H_
@@ -8,7 +8,7 @@
 #ifndef	_VARARGS_H
 #define	_VARARGS_H
 #endif
-#include <machine/va-ppc.h>
+#include <powerpc/va-ppc.h>
 
 typedef	__gnuc_va_list	va_list;
 
