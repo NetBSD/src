@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_kern.h,v 1.3 1993/05/20 03:59:26 cgd Exp $
+ *	$Id: vm_kern.h,v 1.4 1993/07/07 06:04:13 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -84,6 +84,7 @@ void		kmem_free_wakeup();
 vm_map_t	kernel_map;
 vm_map_t	mb_map;
 vm_map_t	kmem_map;
+/* vm_map_t	exec_map;  -- not used - cgd */
 vm_map_t	phys_map;
 vm_map_t	buffer_map;
 
