@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1996/05/13 01:35:06 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -59,7 +59,7 @@
 #ifndef _LOCORE
 
 volatile int cpl, ipending, astpending;
-int imask[5];
+int imask[7];
 
 extern void Xspllower __P((void));
 
