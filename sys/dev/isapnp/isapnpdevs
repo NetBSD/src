@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.2 1998/07/30 09:45:16 drochner Exp $
+$NetBSD: isapnpdevs,v 1.3 1998/08/07 00:53:23 matt Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -37,6 +37,7 @@ $NetBSD: isapnpdevs,v 1.2 1998/07/30 09:45:16 drochner Exp $
 driver	aic	Adaptec SCSI
 driver	com	National Semiconductor Serial
 driver	ep	3Com 3CXXX Ethernet
+driver	ess	ESS Audio Drive
 driver	joy	Generic Joystick
 driver	gus	Gravis Ultrasound
 driver	le	Lance Ethernet
@@ -72,6 +73,12 @@ devlogic	ep	TCM5091		3Com 3c509B-1
 devlogic	ep	TCM5094		3Com 3c509B-4
 devlogic	ep	TCM5095		3Com 3c509B-5
 devlogic	ep	TCM5098		3Com 3c509B-8
+
+/*
+ * ess
+ */
+devlogic	ess	ESS1868		ESS1868
+devlogic	ess	ESS1869		ESS1869
 
 /*
  * joy
@@ -115,7 +122,6 @@ devlogic	sb	CTL0043		SB16 PnP (CT4170)
 devlogic	sb	CTL0042		SB AWE64 Value
 devlogic	sb	CTL0044		SB AWE64 Gold
 devlogic	sb	CTL0045		SB AWE64 Value
-devlogic	sb	ESS1868		ESS1868
 devlogic	sb	OPT9250		Televideo card, Opti
 devcompat	sb	PNPB000		Generic SB 1.5
 devcompat	sb	PNPB001		Generic SB 2.0

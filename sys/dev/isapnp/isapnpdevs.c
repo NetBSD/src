@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.c,v 1.2 1998/07/30 09:47:49 drochner Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.3 1998/08/07 00:53:23 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -88,6 +88,19 @@ const struct isapnp_devinfo isapnp_ep_devinfo = {
 	isapnp_ep_devlogic, isapnp_ep_devcompat
 };
 
+/* ESS Audio Drive */
+static const char *isapnp_ess_devlogic[] = {
+	"ESS1868",	/* ESS1868 */
+	"ESS1869",	/* ESS1869 */
+	NULL
+};
+static const char *isapnp_ess_devcompat[] = {
+	NULL
+};
+const struct isapnp_devinfo isapnp_ess_devinfo = {
+	isapnp_ess_devlogic, isapnp_ess_devcompat
+};
+
 /* Generic Joystick */
 static const char *isapnp_joy_devlogic[] = {
 	"CSCA801",	/* Terratec EWS64XL */
@@ -164,7 +177,6 @@ static const char *isapnp_sb_devlogic[] = {
 	"CTL0042",	/* SB AWE64 Value */
 	"CTL0044",	/* SB AWE64 Gold */
 	"CTL0045",	/* SB AWE64 Value */
-	"ESS1868",	/* ESS1868 */
 	"OPT9250",	/* Televideo card, Opti */
 	NULL
 };
