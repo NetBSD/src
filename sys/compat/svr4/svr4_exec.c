@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.28 1999/01/21 23:16:43 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.29 1999/02/09 20:46:40 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ svr4_elf32_probe(p, epp, eh, itp, pos)
 	char *itp;
 	Elf32_Addr *pos;
 {
-	char *bp;
+	const char *bp;
 	int error;
 	size_t len;
 
@@ -136,7 +136,7 @@ svr4_elf32_probe(p, epp, eh, itp, pos)
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
-		free(bp, M_TEMP);
+		free((void *)bp, M_TEMP);
 	}
 	epp->ep_emul = &emul_svr4;
 	*pos = SVR4_INTERP_ADDR;
