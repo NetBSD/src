@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.14 2000/07/05 11:46:42 ad Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.15 2000/12/19 23:09:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ttyaction.c,v 1.14 2000/07/05 11:46:42 ad Exp $");
+__RCSID("$NetBSD: ttyaction.c,v 1.15 2000/12/19 23:09:02 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: ttyaction.c,v 1.14 2000/07/05 11:46:42 ad Exp $");
 #endif
 
 static char *actfile = _PATH_TTYACTION;
-static char *pathenv = __CONCAT("PATH=",_PATH_STDPATH);
+static char *pathenv = "PATH=" _PATH_STDPATH;
 
 int
 ttyaction(const char *tty, const char *act, const char *user)
