@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.7 1999/07/02 15:21:26 simonb Exp $	*/
+/*	$NetBSD: readline.c,v 1.8 1999/07/03 11:55:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.7 1999/07/02 15:21:26 simonb Exp $");
+__RCSID("$NetBSD: readline.c,v 1.8 1999/07/03 11:55:51 lukem Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1345,7 +1345,6 @@ rl_complete_internal(what_to_do)
 		arr = (*rl_attempted_completion_function) (temp, (int)
 							   (end - len), end);
 	}
-	free(temp);		/* no more needed */
 
 	if (arr) {
 		int             i;
