@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.53 2004/12/15 17:17:51 wiz Exp $
+.\" $NetBSD: pkg_add.1,v 1.54 2004/12/15 17:20:25 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -357,8 +357,9 @@ if the missing package cannot be found or installed,
 the installation is terminated.
 If the
 .Fl u
-option was specified twice, required packages that are installed,
-but with too old of a version, are also updated.
+option was specified twice, any required packages that are installed,
+but which have a version number that is considered to be too old,
+are also updated.
 The dependant packages are found according to the normal
 .Ev PKG_PATH
 rules.
