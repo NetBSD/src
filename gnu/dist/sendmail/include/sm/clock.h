@@ -1,6 +1,6 @@
-/* $NetBSD: clock.h,v 1.1.1.2 2003/06/01 14:01:32 atatat Exp $ */
+/* $NetBSD: clock.h,v 1.1.1.3 2005/03/15 02:05:51 atatat Exp $ */
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001, 2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -10,7 +10,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: clock.h,v 1.11 2001/05/14 23:25:37 gshapiro Exp
+ *	Id: clock.h,v 1.12 2004/08/03 19:57:21 ca Exp
  */
 
 /*
@@ -53,9 +53,8 @@ typedef struct sm_event	SM_EVENT;
 /* functions */
 extern void	sm_clrevent __P((SM_EVENT *));
 extern void	sm_clear_events __P((void));
-extern SM_EVENT	*sm_setevent __P((time_t, void(*)(), int));
-extern SM_EVENT	*sm_seteventm __P((int, void(*)(), int));
-extern SM_EVENT	*sm_sigsafe_seteventm __P((int, void(*)(), int));
+extern SM_EVENT	*sm_seteventm __P((int, void(*)__P((int)), int));
+extern SM_EVENT	*sm_sigsafe_seteventm __P((int, void(*)__P((int)), int));
 extern SIGFUNC_DECL	sm_tick __P((int));
 
 /*

@@ -1,11 +1,11 @@
-/* $NetBSD: vfprintf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $ */
+/* $NetBSD: vfprintf.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vfprintf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.1.1.3 2005/03/15 02:05:56 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001, 2004 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.1.1.2 2003/06/01 14:01:38 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_IDSTR(id, "@(#)Id: vfprintf.c,v 1.52 2001/09/11 04:04:49 gshapiro Exp")
+SM_IDSTR(id, "@(#)Id: vfprintf.c,v 1.53 2004/08/03 20:54:49 ca Exp")
 
 /*
 **  Overall:
@@ -39,6 +39,7 @@ SM_IDSTR(id, "@(#)Id: vfprintf.c,v 1.52 2001/09/11 04:04:49 gshapiro Exp")
 #include "local.h"
 #include "fvwrite.h"
 
+static int	sm_bprintf __P((SM_FILE_T *, const char *, va_list));
 static void	sm_find_arguments __P((const char *, va_list , va_list **));
 static void	sm_grow_type_table_x __P((unsigned char **, int *));
 static int	sm_print __P((SM_FILE_T *, int, struct sm_uio *));
@@ -101,7 +102,7 @@ sm_print(fp, timeout, uio)
 
 static int
 sm_bprintf(fp, fmt, ap)
-	register SM_FILE_T *fp;
+	SM_FILE_T *fp;
 	const char *fmt;
 	SM_VA_LOCAL_DECL
 {

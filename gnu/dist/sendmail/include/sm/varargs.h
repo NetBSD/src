@@ -1,4 +1,4 @@
-/* $NetBSD: varargs.h,v 1.1.1.2 2003/06/01 14:01:33 atatat Exp $ */
+/* $NetBSD: varargs.h,v 1.1.1.3 2005/03/15 02:05:52 atatat Exp $ */
 /*
  * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: varargs.h,v 1.7.2.1 2002/07/29 21:43:20 gshapiro Exp
+ *	Id: varargs.h,v 1.8 2002/07/29 21:31:00 gshapiro Exp
  */
 
 /*
