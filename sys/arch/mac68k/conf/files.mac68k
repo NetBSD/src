@@ -1,12 +1,14 @@
-#	$NetBSD: files.mac68k,v 1.88.2.2 1999/03/08 02:06:13 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.3 1999/03/11 19:00:33 scottr Exp $
 
 # mac68k-specific configuration info
 
 # options understood by the mac68k-specific part of the kernel
 # (note, these are case-sensitive)
 defopt	opt_adb.h	ADB_DEBUG MRG_ADB ALTXBUTTONS 
-defopt	opt_grf.h	GRF_COMPAT
 defopt	opt_mac68k.h	DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
+
+defopt	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_GRF
+defopt	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITE WSDISPLAY_COMPAT_ITEFONT
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -61,14 +63,6 @@ file	arch/mac68k/obio/grf_obio.c	intvid
 device	macvid: grfbus
 attach	macvid at nubus
 file	arch/mac68k/nubus/grf_nubus.c	macvid
-
-device	grf { }
-attach	grf at grfbus
-file	arch/mac68k/dev/grf.c		grf needs-flag
-
-device	ite: tty
-attach	ite at grf
-file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	macfb: wsemuldisplaydev, wsrasteremulops
 attach	macfb at grfbus
