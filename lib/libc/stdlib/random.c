@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.9 1998/02/04 21:06:18 kleink Exp $	*/
+/*	$NetBSD: random.c,v 1.10 1998/02/06 14:35:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.9 1998/02/04 21:06:18 kleink Exp $");
+__RCSID("$NetBSD: random.c,v 1.10 1998/02/06 14:35:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -279,7 +279,8 @@ initstate(seed, arg_state, n)
 		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
 	if (n < BREAK_0) {
 		(void)fprintf(stderr,
-		    "random: not enough state (%ld bytes); ignored.\n", n);
+		    "random: not enough state (%ld bytes); ignored.\n",
+		    (long)n);
 		return(0);
 	}
 	if (n < BREAK_1) {
