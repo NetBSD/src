@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.3 2003/01/31 04:59:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -378,7 +378,7 @@ pthread_rwlock__callback(void *arg)
 int
 pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
-	pthread_t self, reader, writer;
+	pthread_t self, writer;
 	struct pthread_queue_t blockedq;
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
@@ -421,8 +421,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 	if (writer != NULL)
 		pthread__sched(self, writer);
 	else
-		PTQ_FOREACH(reader, &blockedq, pt_sleep)
-			pthread__sched(self, reader);
+		pthread__sched_sleepers(self, &blockedq);
 	
 	return 0;
 }
