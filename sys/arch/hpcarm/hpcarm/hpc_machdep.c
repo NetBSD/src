@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.24 2001/11/27 01:12:55 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.25 2001/12/28 01:41:54 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -124,10 +124,6 @@ paddr_t physical_end;
 u_int free_pages;
 int physmem = 0;
 
-#define biconscnpollc      nullcnpollc
-cons_decl(bicons);
-static struct consdev bicons = cons_init(bicons);
-
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
@@ -178,7 +174,7 @@ vaddr_t sa11x0_idle_mem;
 /* Prototypes */
 
 void physcon_display_base	__P((u_int addr));
-extern void consinit		__P((void));
+void consinit		__P((void));
 
 void map_section	__P((vaddr_t pt, vaddr_t va, vaddr_t pa,
 			     int cacheable));
@@ -670,14 +666,7 @@ initarm(argc, argv, bi)
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
 
-	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
-		consinit();
-	else {
-		/* XXX this isn't useful for normal use, but helps debuging */
-		biconscninit(&bicons);
-		cn_tab = &bicons;
-		cn_tab->cn_pri = CN_REMOTE;
-	}
+	consinit();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("freemempos=%08lx\n", freemempos);
@@ -741,7 +730,14 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
-	cninit();
+	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
+		cninit();
+	else {
+		/*
+		 * Nothing to do here.  Console initialization is done at
+		 * autoconf device attach time.
+		 */
+	}
 }
 
 #ifdef DEBUG_BEFOREMMU
