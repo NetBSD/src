@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.295 1998/03/06 14:53:06 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.296 1998/03/22 16:04:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -190,6 +190,17 @@ extern struct proc *npxproc;
 #include "vt.h"
 #if (NVT > 0)
 #include <i386/isa/pcvt/pcvt_cons.h>
+#endif
+
+#include "vga.h"
+#if (NVGA > 0)
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/isa/pckbcvar.h>
 #endif
 
 #include "com.h"
@@ -2074,22 +2085,34 @@ consinit()
 
 #ifndef CONS_OVERRIDE
 	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
-	if(!consinfo)
+	if (!consinfo)
 #endif
 		consinfo = &default_consinfo;
 
+#if (NPC > 0) || (NVT > 0) || (NVGA > 0)
+	if (!strcmp(consinfo->devname, "pc")) {
+#if (NVGA > 0)
+		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
+				  -1, 1))
+			goto dokbd;
+#endif
 #if (NPC > 0) || (NVT > 0)
-	if(!strcmp(consinfo->devname, "pc")) {
 		pccnattach();
+#endif
+		if (0) goto dokbd; /* XXX stupid gcc */
+dokbd:
+#if (NPCKBC > 0)
+		pckbc_cnattach(I386_BUS_SPACE_IO, PCKBC_KBD_SLOT);
+#endif
 		return;
 	}
-#endif
+#endif /* PC | VT | VGA */
 #if (NCOM > 0)
-	if(!strcmp(consinfo->devname, "com")) {
+	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
-		if(comcnattach(tag, consinfo->addr, consinfo->speed,
-			       COM_FREQ, comcnmode))
+		if (comcnattach(tag, consinfo->addr, consinfo->speed,
+				COM_FREQ, comcnmode))
 			panic("can't init serial console @%x", consinfo->addr);
 
 		return;
@@ -2097,6 +2120,24 @@ consinit()
 #endif
 	panic("invalid console device %s", consinfo->devname);
 }
+
+#if (NPCKBC > 0) && (NPCKBD == 0)
+/*
+ * glue code to support old console code with the
+ * mi keyboard controller driver
+ */
+int
+pckbc_machdep_cnattach(kbctag, kbcslot)
+	pckbc_tag_t kbctag;
+	pckbc_slot_t kbcslot;
+{
+#if (NPC > 0)
+	return (pcconskbd_cnattach(kbctag, kbcslot));
+#else
+	return (ENXIO);
+#endif
+}
+#endif
 
 #ifdef KGDB
 void
@@ -2186,6 +2227,11 @@ i386_memio_map(t, bpa, size, flags, bshp)
 	if (t == I386_BUS_SPACE_IO) {
 		*bshp = bpa;
 		return (0);
+	}
+
+	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
+		return(0);
 	}
 
 	/*
@@ -2377,6 +2423,13 @@ i386_memio_unmap(t, bsh, size)
 		bpa = bsh;
 	} else if (t == I386_BUS_SPACE_MEM) {
 		ex = iomem_ex;
+
+		if (bsh >= atdevbase &&
+		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
+			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+			goto ok;
+		}
+
 		va = i386_trunc_page(bsh);
 		endva = i386_round_page(bsh + size);
 
@@ -2398,6 +2451,7 @@ i386_memio_unmap(t, bsh, size)
 	} else
 		panic("i386_memio_unmap: bad bus space tag");
 
+ok:
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 		printf("i386_memio_unmap: %s 0x%lx, size 0x%lx\n",
