@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.23 2003/02/02 17:56:54 thomas Exp $	*/
+/*	$NetBSD: kbd.c,v 1.24 2003/02/04 21:32:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -486,7 +486,7 @@ void	*junk1, *junk2;
 			 */
 
 			if (kbd_softc.k_pollingmode == 0
-			    && kbd_softc.k_wskbddev != NUL
+			    && kbd_softc.k_wskbddev != NULL
 			    && k->k_event_mode == 0) {
 				wskbd_input(kbd_softc.k_wskbddev,
 					    KBD_RELEASED(code) ?
