@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.1 1996/06/26 17:44:35 thorpej Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.2 1996/10/06 19:07:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,9 +50,9 @@ extern int debug;
 /*
  * In-core open file.
  */
-struct file {
+struct rawfs_file {
 	daddr_t		fs_nextblk;	/* block number to read next */
-	int			fs_len;		/* amount left in f_buf */
+	int		fs_len;		/* amount left in f_buf */
 	char *		fs_ptr;		/* read pointer into f_buf */
 	char		fs_buf[RAWFS_BSIZE];
 };
@@ -60,60 +60,66 @@ struct file {
 static int
 rawfs_get_block __P((struct open_file *));
 
-int	rawfs_open(path, f)
+int
+rawfs_open(path, f)
 	char *path;
 	struct open_file *f;
 {
-	struct file *fs;
+	struct rawfs_file *fs;
 
 	/*
-	 * The actual PROM driver has already been opened.
+	 * The actual tape driver has already been opened.
 	 * Just allocate the I/O buffer, etc.
 	 */
-	fs = alloc(sizeof(struct file));
+	fs = alloc(sizeof(struct rawfs_file));
 	fs->fs_nextblk = 0;
 	fs->fs_len = 0;
 	fs->fs_ptr = fs->fs_buf;
 
 #ifdef	DEBUG_RAWFS
-	printf("rawfs_open: fs=0x%x\n", fs);
+	printf("rawfs_open: fs=0x%x\n", (u_long)fs);
 #endif
 
 	f->f_fsdata = fs;
 	return (0);
 }
 
-int	rawfs_close(f)
+int
+rawfs_close(f)
 	struct open_file *f;
 {
-	struct file *fs;
+	struct rawfs_file *fs;
 
-	fs = (struct file *) f->f_fsdata;
+	fs = (struct rawfs_file *) f->f_fsdata;
 	f->f_fsdata = (void *)0;
 
 #ifdef	DEBUG_RAWFS
-	if (debug) {
-		printf("rawfs_close: breakpoint...", fs->fs_buf);
-		__asm ("	trap #0");
-	}
+	printf("rawfs_close: fs=0x%x\n", (u_long)fs);
 #endif
 
-	if (fs != (struct file *)0)
+	if (fs != (struct rawfs_file *)0)
 		free(fs, sizeof(*fs));
 
 	return (0);
 }
 
-int	rawfs_read(f, start, size, resid)
+int
+rawfs_read(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	u_int size;
 	u_int *resid;
 {
-	struct file *fs = (struct file *)f->f_fsdata;
+	struct rawfs_file *fs = (struct rawfs_file *)f->f_fsdata;
 	char *addr = start;
 	int error = 0;
 	size_t csize;
+
+#ifdef DEBUG_RAWFS
+	printf("rawfs_read: file=0x%x, start=0x%x, size=%d, resid=0x%x\n",
+	    (u_long)f, (u_long)start, size, resid);
+	printf("            fs=0x%x\n", (u_long)fs);
+#endif
 
 	while (size != 0) {
 
@@ -139,35 +145,38 @@ int	rawfs_read(f, start, size, resid)
 	return (error);
 }
 
-int	rawfs_write(f, start, size, resid)
+int
+rawfs_write(f, start, size, resid)
 	struct open_file *f;
 	void *start;
 	size_t size;
 	size_t *resid;	/* out */
 {
 #ifdef	DEBUG_RAWFS
-	panic("rawfs_write");
+	printf("rawfs_write: YOU'RE NOT SUPPOSED TO GET HERE!\n");
 #endif
 	return (EROFS);
 }
 
-off_t	rawfs_seek(f, offset, where)
+off_t
+rawfs_seek(f, offset, where)
 	struct open_file *f;
 	off_t offset;
 	int where;
 {
 #ifdef	DEBUG_RAWFS
-	panic("rawfs_seek");
+	printf("rawfs_seek: YOU'RE NOT SUPPOSED TO GET HERE!\n");
 #endif
 	return (EFTYPE);
 }
 
-int	rawfs_stat(f, sb)
+int
+rawfs_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {
 #ifdef	DEBUG_RAWFS
-	panic("rawfs_stat");
+	printf("rawfs_stat: I'll let you live only because of exec.c\n");
 #endif
 	/*
 	 * Clear out the stat buffer so that the uid check
@@ -178,7 +187,6 @@ int	rawfs_stat(f, sb)
 	return (EFTYPE);
 }
 
-
 /*
  * Read a block from the underlying stream device
  * (In our case, a tape drive.)
@@ -187,15 +195,21 @@ static int
 rawfs_get_block(f)
 	struct open_file *f;
 {
-	struct file *fs;
+	struct rawfs_file *fs;
 	int error, len;
 
-	fs = (struct file *)f->f_fsdata;
+	fs = (struct rawfs_file *)f->f_fsdata;
 	fs->fs_ptr = fs->fs_buf;
 
 	twiddle();
+#ifdef DEBUG_RAWFS
+	printf("rawfs_get_block: calling strategy\n");
+#endif
 	error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		fs->fs_nextblk, RAWFS_BSIZE,	fs->fs_buf, &len);
+		fs->fs_nextblk, RAWFS_BSIZE, fs->fs_buf, &len);
+#ifdef DEBUG_RAWFS
+	printf("rawfs_get_block: strategy returned %d\n", error);
+#endif
 
 	if (!error) {
 		fs->fs_len = len;
@@ -204,4 +218,3 @@ rawfs_get_block(f)
 
 	return (error);
 }
-	
