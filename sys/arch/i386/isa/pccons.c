@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.164 2003/05/14 11:27:39 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.165 2003/05/14 12:10:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.164 2003/05/14 11:27:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.165 2003/05/14 12:10:04 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -118,10 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.164 2003/05/14 11:27:39 drochner Exp $"
 #endif
 #endif /* NPCCONSKBD */
 
-/* consistency check: pccons can't coexist with vga or pcdisplay */
+/* consistency check: pccons can't coexist with vga/ega or pcdisplay */
 #include "vga.h"
+#include "ega.h"
 #include "pcdisplay.h"
-#if (NVGA > 0) || (NPCDISPLAY > 0)
+#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
 #error "pc and (vga or pcdisplay) can't coexist"
 #endif
 
@@ -754,10 +755,8 @@ pcattach(parent, self, aux)
 	void *aux;
 {
 	struct pc_softc *sc = (void *)self;
-#if (NPCCONSKBD == 0)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
-#endif
 
 	if (crtat == 0)
 		pcinit();
@@ -770,6 +769,7 @@ pcattach(parent, self, aux)
 #else
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_TTY, pcintr, sc);
+#endif
 
 	/*
 	 * Reserve CRTC I/O ports to keep other devices such as PCMCIA
@@ -781,17 +781,6 @@ pcattach(parent, self, aux)
 	if (vs.color)
 		if (bus_space_map(ia->ia_iot, 0x3C0, 0x10, 0, &ioh))
 			printf("pc: mapping of VGA registers failed\n");
-
-	/*
-	 * Look for children of the keyboard controller.
-	 * XXX Really should decouple keyboard controller
-	 * from the console code.
-	 */
-	while (config_found(self, ia->ia_ic, NULL) != NULL) {	/* XXX */
-		/* Will break when no more children. */
-		;
-	}
-#endif
 
 	if (pccons_is_console) {
 		int maj;
