@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.6 1997/10/10 13:17:32 mrg Exp $
+.\"	$NetBSD: swapctl.2,v 1.7 1997/10/16 23:13:24 christos Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -43,16 +43,11 @@
 .Fd #include <vm/vm_swap.h>
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
-.Fn swapon "const char *name"
 .Sh DESCRIPTION
 The
 .Nm
 function is used to add and delete swap devices, and modify their
-configuration.  The
-.Fn swapon
-function is only retained as a backwards compatibility feature;
-it should never be used in new code, and should be
-removed from existing code.
+configuration.
 .Pp
 The
 .Fa cmd
@@ -212,11 +207,4 @@ and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
 The
 .Fn swapctl
 function call appeared in
-.Nx 1.3 .
-.Pp
-The
-.Fn swapon
-function call appeared in
-.Bx 4.0
-and was dropped in
 .Nx 1.3 .
