@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1998/09/02 05:51:37 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1998/09/05 23:57:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ int bus_space_probe __P((
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
-
+#if 0
 #define	bus_space_read_1(t, h, o)					\
 	    lduba((h) + (o), (t)->type)
 
@@ -363,7 +363,20 @@ int bus_space_probe __P((
 
 #define	bus_space_read_8(t, h, o)					\
 	    ldxa((h) + (o), (t)->type)
+#else
+	/* For the time being don't use address spaces */
+#define	bus_space_read_1(t, h, o)					\
+	    (*(volatile u_int8_t *)((h) + (o)))
 
+#define	bus_space_read_2(t, h, o)					\
+	    (*(volatile u_int16_t *)((h) + (o)))
+
+#define	bus_space_read_4(t, h, o)					\
+	    (*(volatile u_int32_t *)((h) + (o)))
+
+#define	bus_space_read_8(t, h, o)					\
+	    (*(volatile u_int64_t *)((h) + (o)))
+#endif
 /*
  *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -409,7 +422,7 @@ int bus_space_probe __P((
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
-
+#if 0
 #define	bus_space_write_1(t, h, o, v)					\
 	((void)(stba((h) + (o), (t)->type, (v))))
 
@@ -421,7 +434,24 @@ int bus_space_probe __P((
 
 #define	bus_space_write_8(t, h, o, v)					\
 	((void)(stxa((h) + (o), (t)->type, (v))))
+#else
+	/* Use primary ASI for now for debug */
+#define	bus_space_write_1(t, h, o, v)	do {				\
+	((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));		\
+} while (0)
 
+#define	bus_space_write_2(t, h, o, v)	do {				\
+	((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));		\
+} while (0)
+
+#define	bus_space_write_4(t, h, o, v)	do {				\
+	((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));		\
+} while (0)
+
+#define	bus_space_write_8(t, h, o, v)	do {				\
+	((void)(*(volatile u_int64_t *)((h) + (o)) = (v)));		\
+} while (0)
+#endif
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
@@ -699,5 +729,11 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high));
 #endif /* _SPARC_BUS_DMA_PRIVATE */
+
+/* 
+ * DVMA alloc/free until each bus gets its own map in 64-bit land.
+ */
+bus_addr_t dvmamap_alloc __P((int, int));
+void dvmamap_free __P((bus_addr_t, bus_size_t));
 
 #endif /* _SPARC_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.2 1998/09/05 23:57:25 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,8 +237,6 @@ void zs_kgdb_init __P((void));
 #endif
 /* fb.c */
 void	fb_unblank __P((void));
-/* cache.c */
-int cache_flush __P((caddr_t, u_int));
 /* kgdb_stub.c */
 #ifdef KGDB
 void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));

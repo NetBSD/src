@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: memreg.c,v 1.2 1998/09/05 23:57:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@
 
 #include <sparc64/sparc64/memreg.h>
 #include <sparc64/sparc64/vaddrs.h>
-#include <sparc64/sparc64/asm.h>
 
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
@@ -195,7 +194,7 @@ hardmemerr4m(issync, fsr, faddr)
 	    case 1:
 		if ((fsr & SFSR_FT) == SFSR_FT_NONE)
 		    return;
-		panic("mem err: sfsr=%b sfaddr=%x", fsr, SFSR_BITS, faddr);
+		panic("mem err: sfsr=%qb sfaddr=%x", fsr, SFSR_BITS, faddr);
 		break;
 	    case 0:
 		if (!(fsr & AFSR_AFO))
@@ -206,7 +205,7 @@ hardmemerr4m(issync, fsr, faddr)
 		break;
 	    default:	/* unknown; print both decodings*/
 		panic("Unknown mem err: if sync, fsr=%b fva=%x; if async, fsr"
-		      "=%b fa=%x pa=%x%x", fsr, SFSR_BITS, faddr, fsr,
+		      "=%qb fa=%x pa=%x%x", fsr, SFSR_BITS, faddr, fsr,
 		      AFSR_BITS, faddr, (fsr & AFSR_AFA) >> AFSR_AFA_RSHIFT,
 		      faddr);
 		break;
@@ -275,7 +274,7 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 
 		oldtype = T_DATAFAULT;
 	} else if (type == 0) {	/* NMI */
-		printf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, afsr=0x%b, "
+		printf("ERROR: got NMI with sfsr=0x%qb, sfva=0x%x, afsr=0x%b, "
 		       "afaddr=0x%x. Retrying...\n",
 			sfsr,SFSR_BITS,sfva,afsr, AFSR_BITS,afva);
 		if (oldtype == 0 || addrold == sfva)
@@ -285,8 +284,8 @@ memerr4m(type, sfsr, sfva, afsr, afva, tf)
 		oldtype = 0;
 		addrold = sfva;
 	} else 	/* something we don't know about?!? */ {
-		panic("memerr4m: unknown fatal memory error. type=%d, sfsr=%b,"
-		      " sfva=%x, afsr=%b, afaddr=%x",
+		panic("memerr4m: unknown fatal memory error. type=%d, sfsr=%qb,"
+		      " sfva=%x, afsr=%qb, afaddr=%x",
 		      type, sfsr, SFSR_BITS, sfva, afsr, AFSR_BITS, afva);
 	}
 

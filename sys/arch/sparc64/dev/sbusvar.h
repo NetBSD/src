@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.4 1998/09/05 16:44:39 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.5 1998/09/05 23:57:25 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,15 +108,16 @@ struct sbus_softc {
 	int	*sc_intr_compat;	/* `intr' property to sbus compat */
 
 	struct sysioreg* sc_sysio;	/* SBUS control registers */
-	u_int		sc_pagesize;
-	u_int		sc_dvmabase;
+	paddr_t		sc_ptsb;	/* TSB physaddr */
         int64_t		*sc_tsb;	/* TSB vaddr */
 	int		sc_tsbsize;
-	paddr_t		sc_ptsb;	/* TSB physaddr */
+	u_int		sc_pagesize;
+	u_int		sc_dvmabase;
 	int		sc_hasiocache;
 	int		sc_ign;		/* Interrupt group number for this sysio */
 
-	int32_t		sc_flushpa;	/* used to flush the SBUS */
+	paddr_t		sc_flushpa;	/* used to flush the SBUS */
+	volatile			/* Needs to be volatile or egcs optimizes away loads */
 	int64_t		sc_flush;
 };
 

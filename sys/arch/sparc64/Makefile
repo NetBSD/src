@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/13 02:10:40 eeh Exp $
+#	$NetBSD: Makefile,v 1.3 1998/09/05 23:57:24 eeh Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -16,6 +16,11 @@ tags:
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> tags
 	sort -o ${TSPARC64} ${TSPARC64}
+
+TAGS:
+	@find ../.. -name '*.[chsS]' -print | grep -v CVS >filist
+	etags `grep sparc64 filist` `grep -v arch filist`
+	-${RM} fillist
 
 links:
 	-for i in ${DSPARC64}; do \

@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.3 1998/09/05 16:23:09 pk Exp $ */
+/*	$NetBSD: upa.c,v 1.4 1998/09/05 23:57:25 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 
 #include <machine/bus.h>
 #include <sparc64/dev/upavar.h>
-#include <sparc64/sparc64/asm.h>
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.2 1998/08/13 02:10:46 eeh Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.3 1998/09/05 23:57:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,6 @@
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
 
-#include <sparc64/sparc64/asm.h>
 #include <sparc64/sparc64/kgdb_proto.h>
 
 #ifndef KGDBDEV

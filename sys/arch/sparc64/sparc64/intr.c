@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 1998/08/30 15:32:18 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.9 1998/09/05 23:57:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,14 +111,14 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
-	static int swallow_zsintrs;
+	extern int swallow_zsintrs;
 
 	/* If we're in polled mode ignore spurious interrupts */
-	if (swallow_zsintrs) return;
+	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %x pc=%x npc=%x pstate=%b\n",
-		fp->tf_pil, (int)fp->tf_pc, (int)fp->tf_npc, 
-	       (unsigned int)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
+	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%b\n",
+		fp->tf_pil, fp->tf_pc, fp->tf_npc, 
+	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
@@ -251,9 +251,9 @@ intr_establish(level, ih)
 	/*
 	 * Store in fast lookup table
 	 */
-#ifdef NOTDEF_DEBUG
+#ifdef NOT_DEBUG
 	if (!ih->ih_number) {
-		printf("intr_establish: NULL vector fun %p arg %p pil %p\n",
+		printf("\nintr_establish: NULL vector fun %p arg %p pil %p\n",
 			  ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil);
 		Debugger();
 	}
@@ -262,9 +262,9 @@ intr_establish(level, ih)
 		if (intrlev[ih->ih_number]) 
 			panic("intr_establish: intr reused %d", ih->ih_number);
 		intrlev[ih->ih_number] = ih;
-#ifdef NOTDEF_DEBUG
-		printf("intr_establish: vector %p ipl %d clrintr %p fun %p arg %p\n",
-		       ih->ih_number, ih->ih_pil, ih->ih_clr, ih->ih_fun, ih->ih_arg);
+#ifdef NOT_DEBUG
+		printf("\nintr_establish: vector %x ipl mask %x clrintr %p fun %p arg %p\n",
+		       ih->ih_number, ih->ih_pil, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
 		Debugger();
 #endif
 	} else
