@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.1 1999/07/08 01:19:00 wrstuden Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.2 1999/07/12 16:37:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -128,11 +128,11 @@ layer_node_find(mp, lowervp)
 	 */
 	hd = LAYER_NHASH(lmp, lowervp);
 loop:
-	simple_lock(&lmp->layerfs_hashlock);
+	simple_lock(&lmp->layerm_hashlock);
 	for (a = hd->lh_first; a != 0; a = a->layer_hash.le_next) {
 		if (a->layer_lowervp == lowervp && LAYERTOV(a)->v_mount == mp) {
 			vp = LAYERTOV(a);
-			simple_unlock(&lmp->layerfs_hashlock);
+			simple_unlock(&lmp->layerm_hashlock);
 			/*
 			 * We must be careful here as the fact the lower
 			 * vnode is locked will imply vp is locked unless
@@ -157,7 +157,7 @@ loop:
 		}
 	}
 
-	simple_unlock(&lmp->layerfs_hashlock);
+	simple_unlock(&lmp->layerm_hashlock);
 	return NULL;
 }
 
@@ -215,7 +215,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		return (0);
 	}
 
-	simple_lock(&lmp->layerfs_hashlock);
+	simple_lock(&lmp->layerm_hashlock);
 
 	/*
 	 * Now lock the new node. We rely on the fact that we were passed
@@ -260,7 +260,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	VREF(lowervp);	/* Take into account reference held in layer_node */
 	hd = LAYER_NHASH(lmp, lowervp);
 	LIST_INSERT_HEAD(hd, xp, layer_hash);
-	simple_unlock(&lmp->layerfs_hashlock);
+	simple_unlock(&lmp->layerm_hashlock);
 	return (0);
 }
 
