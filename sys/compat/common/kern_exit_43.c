@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.9 2002/09/25 22:21:33 thorpej Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.10 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.9 2002/09/25 22:21:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.10 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.9 2002/09/25 22:21:33 thorpej Exp
 #include <sys/acct.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -78,11 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.9 2002/09/25 22:21:33 thorpej Exp
 #endif
 
 int
-compat_43_sys_wait(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_wait(struct lwp *l, void *v, register_t *retval)
 {
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	int error;
 
@@ -94,12 +93,12 @@ compat_43_sys_wait(p, v, retval)
 	} */ a;
 
 #ifdef PSL_ALLCC
-	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
+	if ((GETPS(l->l_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
 		SCARG(&a, options) = 0;
 		SCARG(&a, rusage) = NULL;
 	} else {
-		SCARG(&a, options) = p->p_md.md_regs[R0];
-		SCARG(&a, rusage) = (struct rusage *)p->p_md.md_regs[R1];
+		SCARG(&a, options) = l->l_md.md_regs[R0];
+		SCARG(&a, rusage) = (struct rusage *)l->l_md.md_regs[R1];
 	}
 #else
 	SCARG(&a, options) = 0;
@@ -107,7 +106,7 @@ compat_43_sys_wait(p, v, retval)
 #endif
 	SCARG(&a, pid) = WAIT_ANY;
 	SCARG(&a, status) = stackgap_alloc(p, &sg, sizeof(SCARG(&a, status)));
-	if ((error = sys_wait4(p, &a, retval)) != 0)
+	if ((error = sys_wait4(l, &a, retval)) != 0)
 		return error;
 	return copyin(SCARG(&a, status), &retval[1], sizeof(retval[1]));
 }

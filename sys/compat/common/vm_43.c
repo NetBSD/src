@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.7 2001/11/13 02:08:06 lukem Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.8 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.7 2001/11/13 02:08:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.8 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.7 2001/11/13 02:08:06 lukem Exp $");
 #include <sys/mman.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
 
 /* ARGSUSED */
 int
-compat_43_sys_getpagesize(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_getpagesize(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = PAGE_SIZE;
@@ -76,10 +74,7 @@ compat_43_sys_getpagesize(p, v, retval)
 }
 
 int
-compat_43_sys_mmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
@@ -132,5 +127,5 @@ compat_43_sys_mmap(p, v, retval)
 		SCARG(&nargs, flags) |= MAP_INHERIT;
 	SCARG(&nargs, fd) = SCARG(uap, fd);
 	SCARG(&nargs, pos) = SCARG(uap, pos);
-	return (sys_mmap(p, &nargs, retval));
+	return (sys_mmap(l, &nargs, retval));
 }

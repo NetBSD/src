@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.6 2001/11/13 02:08:08 lukem Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.7 2003/01/18 07:33:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.6 2001/11/13 02:08:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.7 2003/01/18 07:33:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.6 2001/11/13 02:08:08 lukem Exp 
 #include <sys/mount.h>
 #include <sys/sockio.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <net/if.h>
@@ -112,8 +113,8 @@ freebsd_to_netbsd_ifioctl(uap, nap)
 }
 
 int
-freebsd_sys_ioctl(p, v, retval)
-	struct proc *p;
+freebsd_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -122,6 +123,7 @@ freebsd_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
         struct oss_sys_ioctl_args ap;
 	struct sys_ioctl_args nap;
 
@@ -146,8 +148,8 @@ freebsd_sys_ioctl(p, v, retval)
 		return oss_ioctl_audio(p, &ap, retval);
 	case 'i':
 		freebsd_to_netbsd_ifioctl(uap, &nap);
-		return sys_ioctl(p, &nap, retval);
+		return sys_ioctl(l, &nap, retval);
 	default:
-		return sys_ioctl(p, uap, retval);
+		return sys_ioctl(l, uap, retval);
 	}
 }
