@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1998/07/28 18:34:58 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.41 1998/09/09 11:17:33 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -284,14 +284,14 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 
 	tf = p->p_addr->u_pcb.framep;
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_VAX, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = sizeof(struct core);
 	chdr->c_seghdrsize = sizeof(struct coreseg);
 	chdr->c_cpusize = sizeof(struct md_coredump);
 
 	bcopy(tf, &state, sizeof(struct md_coredump));
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_VAX, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.38 1998/09/09 00:07:48 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.39 1998/09/09 11:17:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 1998/09/09 00:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 1998/09/09 11:17:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	extern struct proc *fpcurproc;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_ALPHA, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(cpustate);
@@ -86,7 +86,7 @@ cpu_coredump(p, vp, cred, chdr)
 	else
 		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ALPHA, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
