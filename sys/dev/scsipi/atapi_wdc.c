@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27.2.1 1999/10/19 17:39:26 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.2 1999/10/20 20:39:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -224,8 +224,7 @@ wdc_atapi_scsipi_request(chan, req, arg)
 		WDCDEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
 
-		xfer = wdc_get_xfer((flags & XS_CTL_NOSLEEP) ?
-		    WDC_NOSLEEP : WDC_CANSLEEP);
+		xfer = wdc_get_xfer(WDC_NOSLEEP);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
