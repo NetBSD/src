@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.3 2002/05/02 16:34:47 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.4 2002/05/08 17:53:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -175,6 +175,7 @@ struct wm_txsoft {
 	bus_dmamap_t txs_dmamap;	/* our DMA map */
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
+	int txs_ndesc;			/* # of descriptors used */
 };
 
 /*
@@ -227,7 +228,8 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
-	struct evcnt sc_ev_txintr;	/* Tx interrupts */
+	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
+	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
 	struct evcnt sc_ev_linkintr;	/* Link interrupts */
 
@@ -246,6 +248,7 @@ struct wm_softc {
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
+	int	sc_txwin;		/* Tx descriptors since last Tx int */
 
 	int	sc_txsfree;		/* number of free Tx jobs */
 	int	sc_txsnext;		/* next free Tx job */
@@ -842,8 +845,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
-	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txdw");
+	evcnt_attach_dynamic(&sc->sc_ev_txqe, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txqe");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_linkintr, EVCNT_TYPE_INTR,
@@ -926,9 +931,10 @@ wm_shutdown(void *arg)
  *	specified packet.
  */
 static int
-wm_tx_cksum(struct wm_softc *sc, struct mbuf *m0, uint32_t *cmdp,
+wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
     uint32_t *fieldsp)
 {
+	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t fields = 0, tcmd = 0, ipcs, tucs;
 	struct ip *ip;
@@ -984,6 +990,7 @@ wm_tx_cksum(struct wm_softc *sc, struct mbuf *m0, uint32_t *cmdp,
 	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
 	sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
+	txs->txs_ndesc++;
 
 	*cmdp = WTX_CMD_DEXT | WTC_DTYP_D;
 	*fieldsp = fields;
@@ -1112,15 +1119,29 @@ wm_start(struct ifnet *ifp)
 		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
 
 		/*
+		 * Store a pointer to the packet so that we can free it
+		 * later.
+		 *
+		 * Initially, we consider the number of descriptors the
+		 * packet uses the number of DMA segments.  This may be
+		 * incremented by 1 if we do checksum offload (a descriptor
+		 * is used to set the checksum context).
+		 */
+		txs->txs_mbuf = m0;
+		txs->txs_ndesc = dmamap->dm_nsegs;
+
+		/*
 		 * Set up checksum offload parameters for
 		 * this packet.
 		 */
 		if (m0->m_pkthdr.csum_flags &
 		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			if (wm_tx_cksum(sc, m0, &cksumcmd, &cksumfields) != 0) {
+			if (wm_tx_cksum(sc, txs, &cksumcmd,
+					&cksumfields) != 0) {
 				/* Error message already displayed. */
 				m_freem(m0);
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
+				txs->txs_mbuf = NULL;
 				continue;
 			}
 		} else {
@@ -1146,6 +1167,8 @@ wm_start(struct ifnet *ifp)
 			    cksumfields;
 			lasttx = nexttx;
 
+			sc->sc_txwin++;
+
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
 			    sc->sc_dev.dv_xname, nexttx,
@@ -1159,10 +1182,12 @@ wm_start(struct ifnet *ifp)
 		 * delay the interrupt.
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
-		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
-		if (sc->sc_txsnext & WM_TXINTR_MASK)
+		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RPS);
+		if (sc->sc_txwin < (WM_NTXDESC * 2 / 3))
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_IDE);
+		else
+			sc->sc_txwin = 0;
 
 #if 0 /* XXXJRT */
 		/*
@@ -1195,11 +1220,13 @@ wm_start(struct ifnet *ifp)
 		    ("%s: TX: TDT -> %d\n", sc->sc_dev.dv_xname, nexttx));
 
 		/*
-		 * Store a pointer to the packet so we can free it later,
-		 * and remember that txdirty will be once the packet is
+		 * Remember that txdirty will be once the packet is
 		 * done.
+		 *
+		 * Note: If we're doing checksum offload, we are actually
+		 * using one descriptor before firstdesc, but it doesn't
+		 * really matter.
 		 */
-		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_lastdesc = lasttx;
 
@@ -1208,7 +1235,7 @@ wm_start(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, sc->sc_txsnext));
 
 		/* Advance the tx pointer. */
-		sc->sc_txfree -= dmamap->dm_nsegs;
+		sc->sc_txfree -= txs->txs_ndesc;
 		sc->sc_txnext = nexttx;
 
 		sc->sc_txsfree--;
@@ -1331,11 +1358,16 @@ wm_intr(void *arg)
 			wm_rxintr(sc);
 		}
 
-		if (icr & ICR_TXDW) {
+		if (icr & (ICR_TXDW|ICR_TXQE)) {
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: got TXDW interrupt\n",
+			    ("%s: TX: got TDXW|TXQE interrupt\n",
 			    sc->sc_dev.dv_xname));
-			WM_EVCNT_INCR(&sc->sc_ev_txintr);
+#ifdef WM_EVENT_COUNTERS
+			if (icr & ICR_TXDW)
+				WM_EVCNT_INCR(&sc->sc_ev_txdw);
+			else if (icr & ICR_TXQE)
+				WM_EVCNT_INCR(&sc->sc_ev_txqe);
+#endif
 			wm_txintr(sc);
 		}
 
@@ -1424,7 +1456,7 @@ wm_txintr(struct wm_softc *sc)
 		} else
 			ifp->if_opackets++;
 
-		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
+		sc->sc_txfree += txs->txs_ndesc;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
@@ -1443,6 +1475,8 @@ wm_txintr(struct wm_softc *sc)
 	 */
 	if (sc->sc_txsfree == WM_TXQUEUELEN)
 		ifp->if_timer = 0;
+	if (sc->sc_txfree == WM_NTXDESC)
+		sc->sc_txwin = 0;
 }
 
 /*
@@ -1789,6 +1823,7 @@ wm_init(struct ifnet *ifp)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = WM_NTXDESC;
 	sc->sc_txnext = 0;
+	sc->sc_txwin = 0;
 
 	if (sc->sc_type < WM_T_LIVENGOOD) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, 0);
@@ -1926,7 +1961,7 @@ wm_init(struct ifnet *ifp)
 	 * Set up the interrupt registers.
 	 */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
+	sc->sc_icr = ICR_TXDW | ICR_TXQE | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
 	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
 		sc->sc_icr |= ICR_RXCFG;
