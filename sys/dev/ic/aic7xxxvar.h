@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.19.10.4 2001/04/02 07:41:57 bouyer Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.19.10.5 2001/04/02 16:22:57 bouyer Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -519,7 +519,6 @@ struct ahc_softc {
 #define AHC_NEG_PENDING		0x01
 #define AHC_NEG_SDTRDONE	0x02
 #define AHC_NEG_WDTRDONE	0x04
-	u_int8_t		inited_targets[16];
 	u_int8_t		inited_channels[2];
 
 	/*

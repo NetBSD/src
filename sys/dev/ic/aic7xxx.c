@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.12 2001/04/02 07:41:55 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.13 2001/04/02 16:22:55 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -283,8 +283,8 @@ static void	ahc_set_syncrate(struct ahc_softc *, struct ahc_devinfo *,
 				 u_int, int, int);
 static void	ahc_set_width(struct ahc_softc *, struct ahc_devinfo *,
 			      u_int, u_int, int, int);
-static void	ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *,
-			     int);
+static void	ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *, int);
+static void	ahc_update_xfer_mode(struct ahc_softc *, struct ahc_devinfo *);
 static void	ahc_construct_sdtr(struct ahc_softc *, u_int, u_int);
 
 static void	ahc_construct_wdtr(struct ahc_softc *, u_int);
@@ -325,9 +325,6 @@ static void ahcminphys(struct buf *);
 
 static __inline void ahc_swap_hscb(struct hardware_scb *);
 static __inline void ahc_swap_sg(struct ahc_dma_seg *);
-#ifndef AHC_NO_TAGS
-static void ahc_check_tags(struct ahc_softc *, struct scsipi_xfer *);
-#endif
 static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *, int);
 
 #if defined(AHC_DEBUG) && 0
@@ -1275,22 +1272,6 @@ ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 		ahc_update_pending_syncrates(ahc);
 	}
 
-	/*
-	 * Print messages if we're verbose and at the end of a negotiation
-	 * cycle.
-	 */
-	if (done) {
-		if (offset != 0) {
-			printf("%s: target %d synchronous at %sMHz, "
-			       "offset = 0x%x\n", ahc_name(ahc),
-			       devinfo->target, syncrate->rate, offset);
-		} else {
-			printf("%s: target %d using "
-			       "asynchronous transfers\n",
-			       ahc_name(ahc), devinfo->target);
-		}
-	}
-
 	if ((type & AHC_TRANS_GOAL) != 0) {
 		tinfo->goal.period = period;
 		tinfo->goal.offset = offset;
@@ -1335,12 +1316,6 @@ ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 		tinfo->current.width = width;
 	}
 
-	if (done) {
-		printf("%s: target %d using %dbit transfers\n",
-		       ahc_name(ahc), devinfo->target,
-		       8 * (0x01 << width));
-	}
-
 	if ((type & AHC_TRANS_GOAL) != 0)
 		tinfo->goal.width = width;
 	if ((type & AHC_TRANS_USER) != 0)
@@ -1359,12 +1334,37 @@ ahc_set_tags(struct ahc_softc *ahc, struct ahc_devinfo *devinfo, int enable)
 	tinfo = ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
 				    devinfo->target, &tstate);
 
-	if (enable)
+	if (enable) {
 		tstate->tagenable |= devinfo->target_mask;
-	else {
+	} else {
 		tstate->tagenable &= ~devinfo->target_mask;
 		tstate->tagdisable |= devinfo->target_mask;
 	}
+}
+
+static void
+ahc_update_xfer_mode(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
+{
+	struct scsipi_xfer_mode xm;
+	struct ahc_initiator_tinfo *tinfo;
+	struct tmode_tstate *tstate;
+
+	tinfo = ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
+				    devinfo->target, &tstate);
+
+	xm.xm_target = devinfo->target;
+	xm.xm_mode = 0;
+	xm.xm_period = tinfo->current.period;
+	xm.xm_offset = tinfo->current.offset;
+	if (tinfo->current.width == 1) 
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+	if (tinfo->current.period)
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+	if (tstate->tagenable & devinfo->target_mask)
+		xm.xm_mode |= PERIPH_CAP_TQING;
+	scsipi_async_event(
+	    devinfo->channel == 'B' ? &ahc->sc_channel_b : &ahc->sc_channel,
+	    ASYNC_EVENT_XFER_MODE, &xm);
 }
 
 /*
@@ -2512,7 +2512,8 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 			ahc_construct_sdtr(ahc, period, tinfo->goal.offset);
 			ahc->msgout_index = 0;
 			response = 1;
-		}
+		} else 
+			ahc_update_xfer_mode(ahc, devinfo);
 	} else if (ahc_sent_msg(ahc, MSG_EXT_SDTR, /*full*/FALSE)) {
 		/* note asynch xfers and clear flag */
 		ahc_set_syncrate(ahc, devinfo, /*syncrate*/NULL, /*period*/0,
@@ -2524,12 +2525,14 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		       ahc_name(ahc),
 		       devinfo->channel, devinfo->target);
 #endif
+		ahc_update_xfer_mode(ahc, devinfo);
 	} else if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0) {
 		printf("%s:%c:%d: refuses tagged commands.  Performing "
 		       "non-tagged I/O\n", ahc_name(ahc),
 		       devinfo->channel, devinfo->target);
 
 		ahc_set_tags(ahc, devinfo, FALSE);
+		ahc_update_xfer_mode(ahc, devinfo);
 
 		/*
 		 * Resend the identify for this CCB as the target
@@ -2947,6 +2950,7 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_periph *periph,
 					 syncrate, period, offset,
 					 AHC_TRANS_ACTIVE|AHC_TRANS_GOAL,
 					 /*paused*/TRUE, /*done*/TRUE);
+			ahc_update_xfer_mode(ahc, devinfo);
 
 			/*
 			 * See if we initiated Sync Negotiation
@@ -3070,7 +3074,8 @@ ahc_parse_msg(struct ahc_softc *ahc, struct scsipi_periph *periph,
 					ahc_construct_sdtr(ahc, period, offset);
 					ahc->msgout_index = 0;
 					response = TRUE;
-				}
+				} else 
+					ahc_update_xfer_mode(ahc, devinfo);
 			}
 			done = MSGLOOP_MSGCOMPLETE;
 			break;
@@ -3255,6 +3260,7 @@ ahc_handle_devreset(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 	ahc_set_syncrate(ahc, devinfo, /*syncrate*/NULL,
 			 /*period*/0, /*offset*/0, AHC_TRANS_CUR,
 			 /*paused*/TRUE, /*done*/FALSE);
+	ahc_update_xfer_mode(ahc, devinfo);
 
 	if (message != NULL && (verbose_level <= 0))
 		printf("%s: %s on %c:%d. %d SCBs aborted\n", ahc_name(ahc),
@@ -3379,10 +3385,6 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
 	if (requeue) {
 		xs->error = XS_REQUEUE;
-	} else {
-#ifndef AHC_NO_TAGS
-		ahc_check_tags(ahc, xs);
-#endif
 	}
 	scsipi_done(xs);
 }
@@ -3683,7 +3685,6 @@ ahc_init(struct ahc_softc *ahc)
 			 && (ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
 		}
-		tinfo->goal = tinfo->user; /* force negotiation */
 		tstate->ultraenb = ultraenb;
 		tstate->discenable = discenable;
 		tstate->tagenable = 0; /* Wait until the XPT says its okay */
@@ -3909,19 +3910,6 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		tinfo = ahc_fetch_transinfo(ahc,
 			    SIM_CHANNEL(ahc, xs->xs_periph),
 			    our_id, target_id, &tstate);
-		if (ahc->inited_targets[target_id] == 0) {
-			struct ahc_devinfo devinfo;
-
-			s = splbio();
-			ahc_compile_devinfo(&devinfo, our_id, target_id,
-			    periph->periph_lun, SIM_CHANNEL(ahc, periph),
-			    ROLE_INITIATOR);
-			ahc_update_target_msg_request(ahc, &devinfo, tinfo,
-							TRUE, FALSE);
-			ahc->inited_targets[target_id] = 1;
-			splx(s);
-		}
-
 		hscb->scsirate = tinfo->scsirate;
 		hscb->scsioffset = tinfo->current.offset;
 		if ((tstate->ultraenb & mask) != 0)
@@ -3940,9 +3928,41 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		ahc_setup_data(ahc, xs, scb);
 		return;
 	case ADAPTER_REQ_GROW_RESOURCES:
-	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX not supported */
 		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+	{
+		struct scsipi_xfer_mode *xm = arg;
+		struct ahc_devinfo devinfo;
+		int target_id, our_id;
+		char channel;
+
+		target_id = xm->xm_target;	
+		our_id = chan->chan_id;
+		channel = (chan->chan_channel == 1) ? 'B' : 'A';
+		s = splbio();
+		tinfo = ahc_fetch_transinfo(ahc, channel, our_id, target_id,
+		    &tstate);
+		ahc_compile_devinfo(&devinfo, our_id, target_id,
+		    0, channel, ROLE_INITIATOR);
+		if (xm->xm_mode & PERIPH_CAP_TQING &&
+		    (tstate->tagdisable & devinfo.target_mask) == 0) {
+			ahc_set_tags(ahc, &devinfo, TRUE);
+		}
+		if (xm->xm_mode & PERIPH_CAP_SYNC) {
+			tinfo->goal.period = tinfo->user.period;
+			tinfo->goal.offset = tinfo->user.offset;
+			ahc_update_target_msg_request(ahc, &devinfo, tinfo,
+				FALSE, FALSE);
+		}
+		if ((xm->xm_mode & PERIPH_CAP_WIDE16) &&
+		    tinfo->user.width == 1) {
+			tinfo->goal.width = 1;
+			ahc_update_target_msg_request(ahc, &devinfo, tinfo,
+				FALSE, FALSE);
+		}
+		splx(s);
+	}
 	}
 }
 
@@ -5208,6 +5228,7 @@ ahc_reset_channel(struct ahc_softc *ahc, char channel, int initiate_reset)
 					 /*syncrate*/NULL, /*period*/0,
 					 /*offset*/0, AHC_TRANS_CUR,
 					 /*paused*/TRUE, FALSE);
+			ahc_update_xfer_mode(ahc, &devinfo);
 		}
 	}
 
@@ -5500,46 +5521,6 @@ ahc_dumptinfo(struct ahc_softc *ahc, struct ahc_initiator_tinfo *tinfo)
 	printf("\t\twidth %u period %u offset %u flags %x\n",
 	    tinfo->user.width, tinfo->user.period,
 	    tinfo->user.offset, tinfo->user.ppr_flags);
-}
-#endif
-
-#ifndef AHC_NO_TAGS
-static void
-ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
-{
-	struct scsipi_inquiry_data *inq;
-	struct ahc_devinfo devinfo;
-	struct tmode_tstate *tstate;
-	int target_id, our_id;
-	char channel;
-
-	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
-		return;
-
-	target_id = xs->xs_periph->periph_target;
-	our_id = SIM_SCSI_ID(ahc, xs->xs_periph);
-	channel = SIM_CHANNEL(ahc, xs->xs_periph);
-
-	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
-	ahc_compile_devinfo(&devinfo, our_id, target_id,
-	    xs->xs_periph->periph_lun, channel, ROLE_INITIATOR);
-
-	if (tstate->tagdisable & devinfo.target_mask)
-		return;
-
-	/*
-	 * Sneak a look at the results of the SCSI Inquiry
-	 * command and see if we can do Tagged queing.  This
-	 * should really be done by the higher level drivers.
-	 */
-	inq = (struct scsipi_inquiry_data *)xs->data;
-	if ((inq->flags3 & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
-	        printf("%s: target %d using tagged queuing\n",
-			ahc_name(ahc), xs->xs_periph->periph_target);
-
-		ahc_set_tags(ahc, &devinfo, TRUE);
-
-	}
 }
 #endif
 
