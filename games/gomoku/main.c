@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1999/09/12 09:02:21 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/09/13 17:18:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1999/09/12 09:02:21 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/09/13 17:18:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ again:
 					ask("save file name? ");
 					(void)getline(buf, sizeof(buf));
 					if ((fp = fopen(buf, "w")) == NULL) {
-						log("cannot create save file");
+						glog("cannot create save file");
 						goto getinput;
 					}
 					for (i = 0; i < movenum - 1; i++)
@@ -273,7 +273,7 @@ again:
 				}
 				if (curmove != RESIGN &&
 				    board[curmove].s_occ != EMPTY) {
-					log("Illegal move");
+					glog("Illegal move");
 					goto getinput;
 				}
 			}
@@ -285,7 +285,7 @@ again:
 		}
 		if (interactive) {
 			sprintf(fmtbuf, fmt[color], movenum, stoc(curmove));
-			log(fmtbuf);
+			glog(fmtbuf);
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
 			break;
@@ -322,7 +322,7 @@ again:
 				ask("save file name? ");
 				(void)getline(buf, sizeof(buf));
 				if ((fp = fopen(buf, "w")) == NULL) {
-					log("cannot create save file");
+					glog("cannot create save file");
 					goto replay;
 				}
 				for (i = 0; i < movenum - 1; i++)
@@ -512,7 +512,7 @@ dlog(str)
 }
 
 void
-log(str)
+glog(str)
 	const char *str;
 {
 

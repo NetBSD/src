@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1999/07/28 01:45:42 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.13 1999/09/13 17:18:57 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -283,7 +283,7 @@ unsigned int wear[NUMOFWORDS];
 char    beenthere[NUMOFROOMS + 1];
 char    injuries[NUMOFINJURIES];
 
-char    uname[9];
+char    username[9];
 
 struct wlist {
 	const char   *string;
