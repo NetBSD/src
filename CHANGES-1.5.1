@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.84 2001/06/17 22:31:57 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.85 2001/06/18 17:02:07 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5353,3 +5353,13 @@ sys/arch/i386/i386/trap.c			 1.160 via patch
   This paves the way for the use of %fs for per-cpu data on multi-
   processor systems, and fixes an otherwise difficult-to-fix
   interaction between threads/clone(2) and USER_LDT.
+
+sys/dev/pci/pcidevs                             1.329
+sys/dev/pci/pcidevs.h                           regen
+sys/dev/pci/pcidevs_data.h                      regen  
+sys/arch/macppc/pci/pchb.c                      1.5
+sys/arch/macppc/dev/if_gm.c                     1.13
+sys/arch/macppc/dev/obio.c                      1.14
+distrib/notes/macppc/hardware                   1.15
+
+  Support the new dual USB iBook.
