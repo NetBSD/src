@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.34 2000/05/29 18:04:30 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.35 2000/05/30 17:23:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -107,12 +107,15 @@ ffs_update(v)
 	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 	if (flags == 0)
 		return (0);
-	ip->i_flag &= ~flags;
 	fs = ip->i_fs;
 
-	waitfor = ap->a_flags & UPDATE_WAIT;
-	if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
-		waitfor |= UPDATE_WAIT;
+	if ((flags & IN_MODIFIED) != 0 &&
+	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+		waitfor = ap->a_flags & UPDATE_WAIT;
+		if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
+			waitfor |= UPDATE_WAIT;
+	} else
+		waitfor = 0;
 
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
@@ -129,6 +132,7 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
+	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	if (DOINGSOFTDEP(ap->a_vp))
 		softdep_update_inodeblock(ip, bp, waitfor);
 	else if (ip->i_ffs_effnlink != ip->i_ffs_nlink)
@@ -141,8 +145,7 @@ ffs_update(v)
 	else
 #endif
 		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
-	if (waitfor && (flags & IN_MODIFIED) != 0 &&
-	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+	if (waitfor) {
 		return (bwrite(bp));
 	} else {
 		bdwrite(bp);
