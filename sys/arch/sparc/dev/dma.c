@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dma.c,v 1.3 1994/10/15 05:48:56 deraadt Exp $
+ *	$Id: dma.c,v 1.4 1994/10/15 08:57:24 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -171,8 +171,10 @@ dmaattach(parent, self, aux)
 	sc->intr = dmaintr;
 
 	sc->sc_node = ca->ca_ra.ra_node;
+#if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+#endif /* SUN4C || SUN4M */
 
 #ifdef notyet
 	/* return if we are a plain "dma" with no children */

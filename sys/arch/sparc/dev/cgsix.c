@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.7 1994/10/15 05:48:52 deraadt Exp $
+ * $Id: cgsix.c,v 1.8 1994/10/15 08:57:20 deraadt Exp $
  */
 
 /*
@@ -151,9 +151,13 @@ cgsixmatch(parent, cf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
+#ifdef SUN4
 	ra->ra_len = NBPG;
 	bus_tmp(&p->cg6_fhc_un.un_fhc, ca->ca_bustype);
 	return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
+#else
+	return (0);
+#endif
 }
 
 /*
