@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $	*/
+/*	$NetBSD: autri.c,v 1.18.2.1 2004/09/22 20:58:12 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.18 2003/10/29 03:46:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.18.2.1 2004/09/22 20:58:12 jmc Exp $");
 
 #include "midi.h"
 
@@ -101,7 +101,7 @@ static __inline void autri_reg_clear_4(struct autri_softc *, int, uint32_t);
 int	autri_attach_codec(void *sc, struct ac97_codec_if *);
 int	autri_read_codec(void *sc, u_int8_t a, u_int16_t *d);
 int	autri_write_codec(void *sc, u_int8_t a, u_int16_t d);
-void	autri_reset_codec(void *sc);
+int	autri_reset_codec(void *sc);
 enum ac97_host_flags	autri_flags_codec(void *sc);
 
 static void autri_powerhook(int why,void *addr);
@@ -366,7 +366,7 @@ autri_write_codec(void *sc_, u_int8_t index, u_int16_t data)
 	return 0;
 }
 
-void
+int
 autri_reset_codec(void *sc_)
 {
 	struct autri_codec_softc *codec = sc_;
@@ -425,7 +425,7 @@ autri_reset_codec(void *sc_)
 	default:
 		printf("%s: autri_reset_codec : unknown device\n",
 		       sc->sc_dev.dv_xname);
-		return;
+		return EOPNOTSUPP;
 	}
 
 	/* wait for 'Codec Ready' */
@@ -436,9 +436,12 @@ autri_reset_codec(void *sc_)
 		delay(1000);
 	}
 
-	if (count == 0)
+	if (count == 0) {
 		printf("%s: Codec timeout. AC'97 is not ready for operation.\n",
 		       sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
+	}
+	return 0;
 }
 
 enum ac97_host_flags
