@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)miscbltin.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: miscbltin.c,v 1.5 1993/08/01 18:57:56 mycroft Exp $";
+static char rcsid[] = "$Id: miscbltin.c,v 1.6 1994/04/06 19:08:14 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -89,7 +89,7 @@ readcmd(argc, argv)  char **argv; {
 		out2str(prompt);
 		flushall();
 	}
-	if ((ap = argptr) == NULL)
+	if (*(ap = argptr) == NULL)
 		error("arg count");
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = nullstr;
