@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.52 1997/10/09 12:50:00 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.53 1997/10/10 08:19:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -283,7 +283,7 @@ extern int nprocs, maxproc;		/* Current and max number of procs. */
 LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
-struct proc *initproc, *pageproc;	/* Process slots for init, pager. */
+struct proc *initproc;			/* Process slots for init, pager. */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */

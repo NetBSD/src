@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.45 1997/10/09 12:49:48 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.46 1997/10/10 08:19:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -223,8 +223,6 @@ schedcpu(arg)
 		splx(s);
 	}
 	vmmeter();
-	if (bclnlist != NULL)
-		wakeup((caddr_t)pageproc);
 	timeout(schedcpu, (void *)0, hz);
 }
 
