@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.13 1997/10/16 19:45:37 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.14 1997/10/16 19:59:13 thorpej Exp $	*/
 
 #include "bpfilter.h"
 
@@ -170,13 +170,15 @@ ep_pcmcia_attach(parent, self, aux)
 	 */
 
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		for (i = roundup(pa->pf->sc->iobase, 0x100); i < 0x1000;
+		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
+
+		for (i = roundup(pa->pf->sc->iobase, 0x100); i < maxaddr;
 		    i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
 				break;
 		}
-		if (i == 0x1000) {
+		if (i >= maxaddr) {
 			printf(": can't allocate i/o space\n");
 			return;
 		}
