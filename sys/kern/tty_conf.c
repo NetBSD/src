@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_conf.c	8.4 (Berkeley) 1/21/94
- *	$Id: tty_conf.c,v 1.11 1994/05/12 03:43:00 cgd Exp $
+ *	$Id: tty_conf.c,v 1.12 1994/06/16 17:54:52 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -96,8 +96,13 @@ struct	linesw linesw[] =
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 1- defunct */
 
+#ifdef COMPAT_43
+	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
+	  ttyinput, ttstart, ttymodem },		/* 2- old NTTYDISC */
+#else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },	/* 2- defunct */
+#endif
 
 #if NTB > 0
 	{ tbopen, tbclose, tbread, ttyerrio, tbtioctl,
