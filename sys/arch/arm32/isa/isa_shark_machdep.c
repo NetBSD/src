@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.3 1998/07/08 04:56:13 thorpej Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.4 1999/01/01 12:42:47 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -162,7 +162,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	    if (type != IST_LEVEL)
 	      printf("WARNING: irq %d not level triggered\n", irq);
 
-	    bzero(ih, sizeof *ih);
+	    memset(ih, 0, sizeof *ih);
 	    ih->ih_func = ih_fun;
 	    ih->ih_arg = ih_arg;
 	    ih->ih_level = level;
