@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.4 1998/10/08 02:31:40 eeh Exp $ */
+/*	$NetBSD: limits.h,v 1.5 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -60,7 +60,7 @@
 #endif
 #endif
 
-#ifdef _LP64
+#ifdef __arch64__
 #define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
@@ -87,7 +87,7 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
-#ifdef _LP64
+#ifdef __arch64__
 #define LONG_BIT	64
 #else
 #define LONG_BIT	32

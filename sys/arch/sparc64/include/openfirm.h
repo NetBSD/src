@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.5 1998/09/02 05:51:38 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.6 1999/01/31 09:21:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,7 @@
 
 /* All cells are 8 byte slots */
 typedef u_int64_t cell_t;
-#ifdef _LP64
+#ifdef __arch64__
 #define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
 #define ADR2CELL(x)	(cell_t)(x)
 #else
