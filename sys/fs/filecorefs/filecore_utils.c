@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.4 2001/11/12 23:04:11 lukem Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.4 2001/11/12 23:04:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.4 2001/11/12 23:04:11 lukem Exp
 #include <sys/vnode.h>
 #include <sys/dirent.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
-#include <filecorefs/filecore_mount.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore_mount.h>
 
 /*
  * int filecore_bbchecksum(u_char *bootblock)

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.17 2002/10/23 09:14:10 jdolecek Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.17 2002/10/23 09:14:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.17 2002/10/23 09:14:10 jdolecek
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
 
 /*
  * Check mode permission on inode pointer. Mode is READ, WRITE or EXEC.
