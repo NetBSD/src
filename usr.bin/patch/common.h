@@ -1,4 +1,4 @@
-/*	$Id: common.h,v 1.3 1994/03/28 09:19:18 cgd Exp $ */
+/*	$Id: common.h,v 1.4 1994/12/24 17:30:18 cgd Exp $ */
 
 #define DEBUGGING
 
@@ -26,6 +26,7 @@
 #define malloc system_malloc
 #define realloc system_realloc
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
