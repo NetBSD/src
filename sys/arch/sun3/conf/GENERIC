@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1995/02/24 04:58:21 gwr Exp $
+#	$NetBSD: GENERIC,v 1.15 1995/03/01 05:07:39 gwr Exp $
 
 #
 # GENERIC kernel - supports root on: ie0, le0, sd*, ...
@@ -12,8 +12,9 @@ options		"SUN3_60"
 options		"SUN3_110"
 options		"SUN3_160"
 options		"SUN3_260"
-options 	FPCOPROC
 options		GENERIC
+options 	FPCOPROC
+options 	FPU_EMULATE
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
