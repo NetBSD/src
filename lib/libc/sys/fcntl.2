@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.30 2004/01/05 00:34:34 christos Exp $
+.\"	$NetBSD: fcntl.2,v 1.31 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,7 +156,7 @@ Non-blocking I/O; if no data is available to a
 call, or if a
 .Xr write 2
 operation would block,
-the read or write call returns -1 with the error
+the read or write call returns \-1 with the error
 .Er EAGAIN .
 .It Dv O_APPEND
 Force each write to append at the end of file;
@@ -378,10 +378,10 @@ Value of file descriptor owner.
 .It Dv F_MAXFD
 Value of the highest file descriptor open by the process.
 .It other
-Value other than -1.
+Value other than \-1.
 .El
 .Pp
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

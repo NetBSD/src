@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.17 2003/04/16 13:34:55 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.18 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,11 +141,11 @@ bitmask.
 .Pp
 If
 .Fa timeout
-is neither zero nor INFTIM (-1), it specifies a maximum interval to
+is neither zero nor INFTIM (\-1), it specifies a maximum interval to
 wait for any file descriptor to become ready, in milliseconds.
 If
 .Fa timeout
-is INFTIM (-1), the poll blocks indefinitely.
+is INFTIM (\-1), the poll blocks indefinitely.
 If
 .Fa timeout
 is zero, then
@@ -153,7 +153,7 @@ is zero, then
 will return without blocking.
 .Sh RETURN VALUES
 .Fn poll
-returns the number of descriptors that are ready for I/O, or -1 if an
+returns the number of descriptors that are ready for I/O, or \-1 if an
 error occurred.
 If the time limit expires,
 .Fn poll
