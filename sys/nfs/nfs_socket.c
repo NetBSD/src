@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.102.2.2 2004/07/14 11:06:28 tron Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.102.2.3 2004/08/30 10:11:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.2 2004/07/14 11:06:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.3 2004/08/30 10:11:47 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -941,7 +941,7 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct nfsreq *rep;
 	u_int32_t *tl;
 	int i;
-	struct nfsmount *nmp;
+	struct nfsmount *nmp = VFSTONFS(np->n_vnode->v_mount);
 	struct mbuf *md, *mheadend;
 	char nickv[RPCX_NICKVERF];
 	time_t reqtime, waituntil;
@@ -957,9 +957,13 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	int nqlflag, cachable;
 	u_quad_t frev;
 #endif
+	struct mbuf *mrest_backup = NULL;
+	struct ucred *origcred = NULL; /* XXX: gcc */
+	boolean_t retry_cred = TRUE;
+	boolean_t use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
 
+tryagain_cred:
 	KASSERT(cred != NULL);
-	nmp = VFSTONFS(np->n_vnode->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
 	rep->r_procp = procp;
@@ -992,18 +996,53 @@ kerbauth:
 				return (error);
 			}
 		}
+		retry_cred = FALSE;
 	} else {
+		/* AUTH_UNIX */
+		uid_t uid;
+		gid_t gid;
+
+		/*
+		 * on the most unix filesystems, permission checks are
+		 * done when the file is open(2)'ed.
+		 * ie. once a file is successfully open'ed,
+		 * following i/o operations never fail with EACCES.
+		 * we try to follow the semantics as far as possible.
+		 *
+		 * note that we expect that the nfs server always grant
+		 * accesses by the file's owner.
+		 */
+		origcred = cred;
 		switch (procnum) {
 		case NFSPROC_READ:
 		case NFSPROC_WRITE:
 		case NFSPROC_COMMIT:
-			acred.cr_uid = np->n_vattr->va_uid;
-			acred.cr_gid = np->n_vattr->va_gid;
+			uid = np->n_vattr->va_uid;
+			gid = np->n_vattr->va_gid;
+			if (cred->cr_uid == uid && cred->cr_gid == gid) {
+				retry_cred = FALSE;
+				break;
+			}
+			if (use_opencred)
+				break;
+			acred.cr_uid = uid;
+			acred.cr_gid = gid;
 			acred.cr_ngroups = 0;
 			acred.cr_ref = 2;	/* Just to be safe.. */
 			cred = &acred;
 			break;
+		default:
+			retry_cred = FALSE;
+			break;
 		}
+		/*
+		 * backup mbuf chain if we can need it later to retry.
+		 *
+		 * XXX maybe we can keep a direct reference to
+		 * mrest without doing m_copym, but it's ...ugly.
+		 */
+		if (retry_cred)
+			mrest_backup = m_copym(mrest, 0, M_COPYALL, M_WAIT);
 		auth_type = RPCAUTH_UNIX;
 		auth_len = (((cred->cr_ngroups > nmp->nm_numgrps) ?
 			nmp->nm_numgrps : cred->cr_ngroups) << 2) +
@@ -1107,11 +1146,8 @@ tryagain:
 	mrep = rep->r_mrep;
 	md = rep->r_md;
 	dpos = rep->r_dpos;
-	if (error) {
-		m_freem(rep->r_mreq);
-		free((caddr_t)rep, M_NFSREQ);
-		return (error);
-	}
+	if (error)
+		goto nfsmout;
 
 	/*
 	 * break down the rpc header and check if ok
@@ -1132,9 +1168,7 @@ tryagain:
 		} else
 			error = EACCES;
 		m_freem(mrep);
-		m_freem(rep->r_mreq);
-		free((caddr_t)rep, M_NFSREQ);
-		return (error);
+		goto nfsmout;
 	}
 
 	/*
@@ -1154,6 +1188,20 @@ tryagain:
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		if (*tl != 0) {
 			error = fxdr_unsigned(int, *tl);
+			if (error == NFSERR_ACCES && retry_cred) {
+				m_freem(mrep);
+				m_freem(rep->r_mreq);
+				FREE(rep, M_NFSREQ);
+				use_opencred = !use_opencred;
+				if (mrest_backup == NULL)
+					return ENOMEM; /* m_copym failure */
+				mrest = mrest_backup;
+				mrest_backup = NULL;
+				cred = origcred;
+				error = 0;
+				retry_cred = FALSE;
+				goto tryagain_cred;
+			}
 			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 				error == NFSERR_TRYLATER) {
 				m_freem(mrep);
@@ -1187,10 +1235,16 @@ tryagain:
 				error |= NFSERR_RETERR;
 			} else
 				m_freem(mrep);
-			m_freem(rep->r_mreq);
-			free((caddr_t)rep, M_NFSREQ);
-			return (error);
+			goto nfsmout;
 		}
+
+		/*
+		 * note which credential worked to minimize number of retries.
+		 */
+		if (use_opencred)
+			np->n_flag |= NUSEOPENCRED;
+		else
+			np->n_flag &= ~NUSEOPENCRED;
 
 #ifndef NFS_V2_ONLY
 		/*
@@ -1214,15 +1268,16 @@ tryagain:
 		*mrp = mrep;
 		*mdp = md;
 		*dposp = dpos;
-		m_freem(rep->r_mreq);
-		FREE((caddr_t)rep, M_NFSREQ);
-		return (0);
+
+		KASSERT(error == 0);
+		goto nfsmout;
 	}
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
 	m_freem(rep->r_mreq);
 	free((caddr_t)rep, M_NFSREQ);
+	m_freem(mrest_backup);
 	return (error);
 }
 #endif /* NFS */
