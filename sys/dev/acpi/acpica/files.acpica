@@ -1,0 +1,135 @@
+#	$NetBSD: files.acpica,v 1.1.4.2 2001/10/08 21:18:07 nathanw Exp $
+
+file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
+file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
+file	dev/acpi/acpica/Osd/OsdInterrupt.c		acpi
+file	dev/acpi/acpica/Osd/OsdMemory.c			acpi
+file	dev/acpi/acpica/Osd/OsdMisc.c			acpi
+file	dev/acpi/acpica/Osd/OsdSchedule.c		acpi
+file	dev/acpi/acpica/Osd/OsdStream.c			acpi
+file	dev/acpi/acpica/Osd/OsdSynch.c			acpi
+
+# interpreter/debugger/
+file	dev/acpi/acpica/Subsystem/dbcmds.c		acpi
+file	dev/acpi/acpica/Subsystem/dbdisasm.c		acpi
+file	dev/acpi/acpica/Subsystem/dbdisply.c		acpi
+file	dev/acpi/acpica/Subsystem/dbexec.c		acpi
+file	dev/acpi/acpica/Subsystem/dbfileio.c		acpi
+file	dev/acpi/acpica/Subsystem/dbhistry.c		acpi
+file	dev/acpi/acpica/Subsystem/dbinput.c		acpi
+file	dev/acpi/acpica/Subsystem/dbstats.c		acpi
+file	dev/acpi/acpica/Subsystem/dbutils.c		acpi
+file	dev/acpi/acpica/Subsystem/dbxface.c		acpi
+
+# interpreter/dispatcher/
+file	dev/acpi/acpica/Subsystem/dsfield.c		acpi
+file	dev/acpi/acpica/Subsystem/dsmethod.c		acpi
+file	dev/acpi/acpica/Subsystem/dsmthdat.c		acpi
+file	dev/acpi/acpica/Subsystem/dsobject.c		acpi
+file	dev/acpi/acpica/Subsystem/dsopcode.c		acpi
+file	dev/acpi/acpica/Subsystem/dsutils.c		acpi
+file	dev/acpi/acpica/Subsystem/dswexec.c		acpi
+file	dev/acpi/acpica/Subsystem/dswload.c		acpi
+file	dev/acpi/acpica/Subsystem/dswscope.c		acpi
+file	dev/acpi/acpica/Subsystem/dswstate.c		acpi
+
+# events/
+file	dev/acpi/acpica/Subsystem/evevent.c		acpi
+file	dev/acpi/acpica/Subsystem/evmisc.c		acpi
+file	dev/acpi/acpica/Subsystem/evregion.c		acpi
+file	dev/acpi/acpica/Subsystem/evrgnini.c		acpi
+file	dev/acpi/acpica/Subsystem/evsci.c		acpi
+file	dev/acpi/acpica/Subsystem/evxface.c		acpi
+file	dev/acpi/acpica/Subsystem/evxfevnt.c		acpi
+file	dev/acpi/acpica/Subsystem/evxfregn.c		acpi
+
+# interpreter/executer/
+file	dev/acpi/acpica/Subsystem/exconfig.c		acpi
+file	dev/acpi/acpica/Subsystem/exconvrt.c		acpi
+file	dev/acpi/acpica/Subsystem/excreate.c		acpi
+file	dev/acpi/acpica/Subsystem/exdump.c		acpi
+file	dev/acpi/acpica/Subsystem/exdyadic.c		acpi
+file	dev/acpi/acpica/Subsystem/exfield.c		acpi
+file	dev/acpi/acpica/Subsystem/exfldio.c		acpi
+file	dev/acpi/acpica/Subsystem/exmisc.c		acpi
+file	dev/acpi/acpica/Subsystem/exmonad.c		acpi
+file	dev/acpi/acpica/Subsystem/exmutex.c		acpi
+file	dev/acpi/acpica/Subsystem/exnames.c		acpi
+file	dev/acpi/acpica/Subsystem/exprep.c		acpi
+file	dev/acpi/acpica/Subsystem/exregion.c		acpi
+file	dev/acpi/acpica/Subsystem/exresnte.c		acpi
+file	dev/acpi/acpica/Subsystem/exresolv.c		acpi
+file	dev/acpi/acpica/Subsystem/exresop.c		acpi
+file	dev/acpi/acpica/Subsystem/exstore.c		acpi
+file	dev/acpi/acpica/Subsystem/exstoren.c		acpi
+file	dev/acpi/acpica/Subsystem/exstorob.c		acpi
+file	dev/acpi/acpica/Subsystem/exsystem.c		acpi
+file	dev/acpi/acpica/Subsystem/exutils.c		acpi
+file	dev/acpi/acpica/Subsystem/exxface.c		acpi
+
+# hardware/
+file	dev/acpi/acpica/Subsystem/hwacpi.c		acpi
+file	dev/acpi/acpica/Subsystem/hwgpe.c		acpi
+file	dev/acpi/acpica/Subsystem/hwregs.c		acpi
+file	dev/acpi/acpica/Subsystem/hwsleep.c		acpi
+file	dev/acpi/acpica/Subsystem/hwtimer.c		acpi
+
+# namespace/
+file	dev/acpi/acpica/Subsystem/nsaccess.c		acpi
+file	dev/acpi/acpica/Subsystem/nsalloc.c		acpi
+file	dev/acpi/acpica/Subsystem/nsdump.c		acpi
+file	dev/acpi/acpica/Subsystem/nseval.c		acpi
+file	dev/acpi/acpica/Subsystem/nsinit.c		acpi
+file	dev/acpi/acpica/Subsystem/nsload.c		acpi
+file	dev/acpi/acpica/Subsystem/nsnames.c		acpi
+file	dev/acpi/acpica/Subsystem/nsobject.c		acpi
+file	dev/acpi/acpica/Subsystem/nssearch.c		acpi
+file	dev/acpi/acpica/Subsystem/nsutils.c		acpi
+file	dev/acpi/acpica/Subsystem/nswalk.c		acpi
+file	dev/acpi/acpica/Subsystem/nsxfname.c		acpi
+file	dev/acpi/acpica/Subsystem/nsxfobj.c		acpi
+
+# interpreter/parser/
+file	dev/acpi/acpica/Subsystem/psargs.c		acpi
+file	dev/acpi/acpica/Subsystem/psfind.c		acpi
+file	dev/acpi/acpica/Subsystem/psopcode.c		acpi
+file	dev/acpi/acpica/Subsystem/psparse.c		acpi
+file	dev/acpi/acpica/Subsystem/psscope.c		acpi
+file	dev/acpi/acpica/Subsystem/pstree.c		acpi
+file	dev/acpi/acpica/Subsystem/psutils.c		acpi
+file	dev/acpi/acpica/Subsystem/pswalk.c		acpi
+file	dev/acpi/acpica/Subsystem/psxface.c		acpi
+
+# resources/
+file	dev/acpi/acpica/Subsystem/rsaddr.c		acpi
+file	dev/acpi/acpica/Subsystem/rscalc.c		acpi
+file	dev/acpi/acpica/Subsystem/rscreate.c		acpi
+file	dev/acpi/acpica/Subsystem/rsdump.c		acpi
+file	dev/acpi/acpica/Subsystem/rsio.c		acpi
+file	dev/acpi/acpica/Subsystem/rsirq.c		acpi
+file	dev/acpi/acpica/Subsystem/rslist.c		acpi
+file	dev/acpi/acpica/Subsystem/rsmemory.c		acpi
+file	dev/acpi/acpica/Subsystem/rsmisc.c		acpi
+file	dev/acpi/acpica/Subsystem/rsutils.c		acpi
+file	dev/acpi/acpica/Subsystem/rsxface.c		acpi
+
+# tables/
+file	dev/acpi/acpica/Subsystem/tbconvrt.c		acpi
+file	dev/acpi/acpica/Subsystem/tbget.c		acpi
+file	dev/acpi/acpica/Subsystem/tbinstal.c		acpi
+file	dev/acpi/acpica/Subsystem/tbutils.c		acpi
+file	dev/acpi/acpica/Subsystem/tbxface.c		acpi
+file	dev/acpi/acpica/Subsystem/tbxfroot.c		acpi
+
+# utilities/
+file	dev/acpi/acpica/Subsystem/utalloc.c		acpi
+file	dev/acpi/acpica/Subsystem/utclib.c		acpi
+file	dev/acpi/acpica/Subsystem/utcopy.c		acpi
+file	dev/acpi/acpica/Subsystem/utdebug.c		acpi
+file	dev/acpi/acpica/Subsystem/utdelete.c		acpi
+file	dev/acpi/acpica/Subsystem/uteval.c		acpi
+file	dev/acpi/acpica/Subsystem/utglobal.c		acpi
+file	dev/acpi/acpica/Subsystem/utinit.c		acpi
+file	dev/acpi/acpica/Subsystem/utmisc.c		acpi
+file	dev/acpi/acpica/Subsystem/utobject.c		acpi
+file	dev/acpi/acpica/Subsystem/utxface.c		acpi
