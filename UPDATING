@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.70 2002/10/09 20:27:59 thorpej Exp $
+$NetBSD: UPDATING,v 1.71 2002/10/09 21:20:20 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -11,7 +11,7 @@ Recent changes:
 20021009:
 	A new attribute dependency syntax was introduced to config(8),
 	which is now used by the SCSI configuration description.  Users
-	must update and reinstall usr.sbin/config before bullding a new
+	must update and reinstall usr.sbin/config before building a new
 	kernel.
 
 20021003:
