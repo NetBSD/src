@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.41 1994/04/20 07:55:38 mycroft Exp $
+ *	$Id: fd.c,v 1.42 1994/04/22 22:58:55 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@
 #include <i386/isa/isa_device.h>
 #endif
 #include <i386/isa/isavar.h>
+#include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/fdreg.h>
 #ifdef NEWCONFIG
