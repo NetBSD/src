@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.6 2004/06/29 04:42:55 itojun Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.7 2004/07/26 13:43:14 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2809,7 +2809,7 @@ pfil_if_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		pfi_attach_ifnet(ifp);
 		break;
 	case SIOCSIFADDR:
-	case SIOCGIFALIAS:
+	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		pfi_kifaddr_update((struct ifnet *)arg);
 		break;
