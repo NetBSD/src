@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.103 2004/05/18 05:38:18 christos Exp $
+# $NetBSD: mi,v 1.104 2004/07/06 19:46:28 mycroft Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -448,10 +448,6 @@
 ./usr/share/doc/usd/19.memacros/intro.me	misc-usd-doc		doc
 ./usr/share/doc/usd/20.meref/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/20.meref/ref.me		misc-usd-doc		doc
-./usr/share/doc/usd/30.rogue/Makefile		misc-usd-doc		doc
-./usr/share/doc/usd/30.rogue/rogue.me		misc-usd-doc		doc
-./usr/share/doc/usd/31.trek/Makefile		misc-usd-doc		doc
-./usr/share/doc/usd/31.trek/trek.me		misc-usd-doc		doc
 ./usr/share/doc/usd/Makefile			misc-usd-doc		doc
 ./usr/share/doc/usd/Title			misc-usd-doc		doc
 ./usr/share/doc/xntp				misc-ntp-doc		obsolete
