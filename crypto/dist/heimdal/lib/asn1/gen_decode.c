@@ -33,8 +33,10 @@
 
 #include "gen_locl.h"
 
+#ifdef __RCSID
 __RCSID("$Heimdal: gen_decode.c,v 1.18 2002/08/09 15:37:34 joda Exp $"
-        "$NetBSD: gen_decode.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: gen_decode.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 static void
 decode_primitive (const char *typename, const char *name)
