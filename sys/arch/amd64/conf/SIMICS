@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.16 2005/03/11 16:44:31 matt Exp $
+#	$NetBSD: SIMICS,v 1.17 2005/03/25 23:28:44 cube Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -219,6 +219,7 @@ wsdisplay* 	at vga? console ?
 wskbd* 		at pckbd? console ?
 
 
+#attimer0	at isa?
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
 
