@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.470 2004/03/28 09:51:46 martti Exp $
+# $NetBSD: mi,v 1.470.2.1 2004/04/29 05:45:18 jmc Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -283,6 +283,7 @@
 ./usr/X11R6/lib/X11/locale/vi_VN.tcvn		base-x11-root
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN		base-x11-root
+./usr/X11R6/lib/X11/locale/zh_CN.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs	base-x11-root
@@ -307,6 +308,7 @@
 ./usr/X11R6/lib/X11/xkb/compiled		base-x11-root
 ./usr/X11R6/lib/X11/xkb/geometry		base-x11-root
 ./usr/X11R6/lib/X11/xkb/geometry/digital	base-x11-root
+./usr/X11R6/lib/X11/xkb/geometry/ibm		base-x11-root
 ./usr/X11R6/lib/X11/xkb/geometry/sgi		base-x11-root
 ./usr/X11R6/lib/X11/xkb/keycodes		base-x11-root
 ./usr/X11R6/lib/X11/xkb/keycodes/digital	base-x11-root
