@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.55 1997/10/08 23:10:06 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.56 1997/10/19 18:57:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -866,6 +866,10 @@ mcdprobe(parent, match, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int rv;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh))

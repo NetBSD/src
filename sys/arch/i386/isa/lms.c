@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.30 1996/10/21 22:27:41 thorpej Exp $	*/
+/*	$NetBSD: lms.c,v 1.31 1997/10/19 19:00:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -95,6 +95,10 @@ lmsprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv;
 	
+	/* Disallow wildcarded i/o base. */
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
+
 	/* Map the i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, LMS_NPORTS, 0, &ioh))
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.25 1997/10/16 00:29:30 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.26 1997/10/19 18:56:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,10 @@ bocaprobe(parent, self, aux)
 	 * means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	/* if the first port is in use as console, then it. */
 	if (com_is_console(iot, iobase, 0))

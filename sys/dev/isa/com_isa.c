@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.8 1997/10/16 00:29:32 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.9 1997/10/19 18:56:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -94,6 +94,10 @@ com_isa_probe(parent, match, aux)
 	int iobase;
 	int rv = 1;
 	struct isa_attach_args *ia = aux;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	iot = ia->ia_iot;
 	iobase = ia->ia_iobase;
