@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.491 2002/04/26 02:05:10 ad Exp $
+# $NetBSD: GENERIC,v 1.491.4.1 2002/06/10 17:14:20 tv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.491 $"
+#ident 		"GENERIC-$Revision: 1.491.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,6 +40,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
