@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/11/13 22:12:35 is Exp $
+#	$NetBSD: Makefile,v 1.16 1999/01/03 12:46:31 veego Exp $
 
 ### what we need:
 
@@ -14,7 +14,7 @@ DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
 .SUFFIXES:
 .SUFFIXES: .out .o .po .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
-FILES= xxboot 				# XXX fdboot
+FILES= xxboot fdboot
 BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
