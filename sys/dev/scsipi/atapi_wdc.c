@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.20.2.5 2000/01/23 12:27:03 he Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.20.2.6 2000/07/07 17:33:51 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -246,12 +246,13 @@ wdc_atapi_start(chp, xfer)
 		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
-		if (drvp->state != PIOMODE) {
+		if (drvp->state != RESET) {
 			printf("%s:%d:%d: bad state %d in wdc_atapi_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
 			panic("wdc_atapi_start: bad state");
 		}
+		drvp->state = PIOMODE;
 		wdc_atapi_ctrl(chp, xfer, 0);
 		return;
 	}
@@ -296,6 +297,10 @@ wdc_atapi_start(chp, xfer)
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
+			if (chp->ch_flags & WDCF_DMA_WAIT) {
+				wdc_dmawait(chp, xfer, sc_xfer->timeout);
+				chp->ch_flags &= ~WDCF_DMA_WAIT;
+			}
 			wdc_atapi_intr(chp, xfer, 0);
 		}
 	}
@@ -310,7 +315,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int len, phase, i, retries=0;
-	int ire, dma_err = 0;
+	int ire;
 	int dma_flags = 0;
 	struct scsipi_generic _cmd_reqsense;
 	struct scsipi_sense *cmd_reqsense =
@@ -353,6 +358,9 @@ wdc_atapi_intr(chp, xfer, irq)
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
+
 	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
 		ata_dmaerr(drvp);
@@ -374,7 +382,6 @@ wdc_atapi_intr(chp, xfer, irq)
 	if (xfer->c_flags & C_DMA) {
 		dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
 		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
-		dma_flags |= sc_xfer->flags & SCSI_POLL ? WDC_DMA_POLL : 0;
 	}
 again:
 	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
@@ -435,7 +442,8 @@ again:
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
+			    chp->channel, xfer->drive);
+			 chp->ch_flags |= WDCF_DMA_WAIT;
 		}
 
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
@@ -450,8 +458,6 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
 			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
 				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
@@ -528,8 +534,6 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
 			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
 				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
@@ -601,8 +605,6 @@ again:
 		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 		/* turn off DMA channel */
 		if (xfer->c_flags & C_DMA) {
-			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
 			if (xfer->c_flags & C_SENSE)
 				xfer->c_bcount -=
 				    sizeof(sc_xfer->sense.scsi_sense);
@@ -610,7 +612,9 @@ again:
 				xfer->c_bcount -= sc_xfer->datalen;
 		}
 		if (xfer->c_flags & C_SENSE) {
-			if ((chp->ch_status & WDCS_ERR) || dma_err < 0) {
+			if ((chp->ch_status & WDCS_ERR) ||
+			    (chp->wdc->dma_status &
+				(WDC_DMAST_NOIRQ | WDC_DMAST_ERR))) {
 				/*
 				 * request sense failed ! it's not suppossed
 				 * to be possible
@@ -652,7 +656,8 @@ again:
 					wdc_atapi_start(chp, xfer);
 					return 1;
 				}
-			} else if (dma_err < 0) {
+			} else if (chp->wdc->dma_status &
+			    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
 				ata_dmaerr(drvp);
 				sc_xfer->error = XS_RESET;
 				wdc_atapi_reset(chp, xfer);
@@ -734,6 +739,8 @@ piomode:
 		errstring = "piomode";
 		if (wait_for_unbusy(chp, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR) {
 			if (drvp->PIO_mode < 3) {
 				drvp->PIO_mode = 3;
@@ -760,6 +767,8 @@ piomode:
 		errstring = "dmamode";
 		if (wait_for_unbusy(chp, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR)
 			goto error;
 	/* fall through */
@@ -806,7 +815,6 @@ wdc_atapi_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
-	int need_done =  xfer->c_flags & C_NEEDDONE;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -816,10 +824,8 @@ wdc_atapi_done(chp, xfer)
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
 	    
-	if (need_done) {
-		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
-		scsipi_done(sc_xfer);
-	}
+	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
+	scsipi_done(sc_xfer);
 	WDCDEBUG_PRINT(("wdcstart from wdc_atapi_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);

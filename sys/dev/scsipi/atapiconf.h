@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.7 1998/10/12 16:09:24 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.7.6.1 2000/07/07 17:33:51 he Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -30,13 +30,6 @@
  */
 
 #include <dev/scsipi/scsipiconf.h>
-
-/* drive states stored in ata_drive_datas */
-#define PIOMODE		0
-#define PIOMODE_WAIT	1
-#define DMAMODE		2
-#define DMAMODE_WAIT	3
-#define READY		4
 
 struct atapi_mode_header;
 struct ataparams;
