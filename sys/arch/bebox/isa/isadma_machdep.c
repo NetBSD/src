@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.10 1998/06/03 21:55:26 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.11 1998/06/09 05:53:30 sakamoto Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -62,9 +62,9 @@
 extern vm_offset_t avail_end;		/* XXX temporary */
 
 /*
- * ISA can DMA to 0-2G.
+ * ISA can DMA to 0-16M.
  */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(2UL * 1024UL * 1024UL * 1024UL)
+#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -622,13 +622,13 @@ _isa_dma_alloc_bouncebuf(t, map, size, flags)
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
 	if (error)
 		goto out;
-	error = _isa_bus_dmamem_map(t, cookie->id_bouncesegs,
+	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
 	    (caddr_t *)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {
-		_isa_bus_dmamem_free(t, cookie->id_bouncesegs,
+		_bus_dmamem_free(t, cookie->id_bouncesegs,
 		    cookie->id_nbouncesegs);
 		cookie->id_bouncebuflen = 0;
 		cookie->id_nbouncesegs = 0;
@@ -649,9 +649,9 @@ _isa_dma_free_bouncebuf(t, map)
 
 	STAT_DECR(isa_dma_stats_nbouncebufs);
 
-	_isa_bus_dmamem_unmap(t, cookie->id_bouncebuf,
+	_bus_dmamem_unmap(t, cookie->id_bouncebuf,
 	    cookie->id_bouncebuflen);
-	_isa_bus_dmamem_free(t, cookie->id_bouncesegs,
+	_bus_dmamem_free(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs);
 	cookie->id_bouncebuflen = 0;
 	cookie->id_nbouncesegs = 0;
