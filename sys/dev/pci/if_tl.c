@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.32.4.1 2001/11/13 21:41:58 he Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.32.4.2 2002/03/09 16:52:53 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -397,6 +397,7 @@ tl_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	sc->tl_if.if_softc = sc;
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
 	if (sc->tl_ih == NULL) {
@@ -440,7 +441,6 @@ tl_pci_attach(parent, self, aux)
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
-	sc->tl_if.if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
@@ -1416,7 +1416,7 @@ tl_mediachange(ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
-		tl_init(ifp->if_softc);
+		tl_init(ifp);
 	return (0);
 }
 
