@@ -1,4 +1,4 @@
-/*	$NetBSD: ramd.c,v 1.1.1.1 1995/03/26 07:12:13 leo Exp $	*/
+/*	$NetBSD: ramd.c,v 1.2 1995/04/16 14:59:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -48,7 +48,7 @@
  * Misc. defines:
  */
 #define	RAMD_CHUNK	(9 * 512)	/* Chunk-size for auto-load	*/
-#define	RAMD_NDEV	1		/* Number of devices configured	*/
+#define	RAMD_NDEV	2		/* Number of devices configured	*/
 
 struct   ramd_info {
 	u_long	ramd_size;  /* Size of disk in bytes			*/
