@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.70 2003/11/23 23:28:03 simonb Exp $
+#	$NetBSD: services,v 1.71 2004/01/06 00:23:01 wrstuden Exp $
 #
 # Network services, Internet style
 #
@@ -139,6 +139,7 @@ acap		674/tcp		# Application Configuration Access Protocol
 acap		674/udp		# Application Configuration Access Protocol
 silc		706/tcp			# Secure Internet Live Conferencing
 silc		706/udp			# Secure Internet Live Conferencing
+iscsi-rfc	860/tcp			# RFC port used by iSCSI targets
 
 #
 # UNIX specific services
@@ -217,7 +218,12 @@ radius-acct	1813/tcp		radacct
 radius-acct	1813/udp		radacct
 cvspserver	2401/tcp
 cvspserver	2401/udp
-iscsi		3260/tcp
+isns		3205/tcp		# iSNS server port
+isns		3205/udp		# iSNS server port
+iscsi		3260/tcp		# Draft port used by iSCSI targets
+					# Will be moved to 860 after RFC
+					# is published
+iscsi-target	3260/tcp		# Draft port used by iSCSI targets
 mysql		3306/tcp		# MySQL
 mysql		3306/udp		# MySQL
 svn		3690/tcp		# Subversion
