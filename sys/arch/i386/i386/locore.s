@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.172.2.5 1998/05/05 09:51:54 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.172.2.6 1998/05/08 06:44:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -44,7 +44,6 @@
 #include "npx.h"
 #include "assym.h"
 #include "apm.h"
-#include "bioscall.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -460,12 +459,7 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
-#if NBIOSCALL > 0
-#define	BIOSCALL_PDE_SPACE	1
-#else
-#define	BIOSCALL_PDE_SPACE	0
-#endif
-#define	TABLESIZE	((1+UPAGES+BIOSCALL_PDE_SPACE) * NBPG) /* + nkpde * NBPG */
+#define	TABLESIZE	((1+UPAGES) * NBPG) /* + nkpde * NBPG */
 
 	/* Find end of kernel image. */
 	movl	$RELOC(_end),%edi
@@ -567,24 +561,18 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Construct a page table directory.
  */
-	/* Install a PDE for temporary double map of kernel text. */
+	/* Install PDEs for temporary double map of kernel. */
+	movl	RELOC(_nkpde),%ecx			# for this many pde s,
+	leal	(PROC0PDIR+0*4)(%esi),%ebx		# which is where temp maps!
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
-	movl	%eax,(PROC0PDIR+0*4)(%esi)		# which is where temp maps!
+	fillkpt
+
 	/* Map kernel PDEs. */
 	movl	RELOC(_nkpde),%ecx			# for this many pde s,
 	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
+	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
 	fillkpt
 
-#if NBIOSCALL > 0
-	/* set up special identity mapping page table to get to
-	   page 1 for BIOS trampoline.  store it in PTD 1 to start, though.... */
-	
-	/* use remaining page table page at %eax */
-	movl	$1,%ecx				# only add mapping for one PTDE
-	leal	(PROC0PDIR+1*4)(%esi),%ebx	# PTD entry address
-	fillkpt
-#endif
-	
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
@@ -605,14 +593,12 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/* Now running relocated at KERNBASE.  Remove double mapping. */
-#if NBIOSCALL > 0
-	/* move page table pointer for bios trampoline to final resting place */
-	movl	(PROC0PDIR+1*4)(%esi),%edx
-	movl	%edx,(PROC0PDIR+0*4)(%esi)
-	movl	$0,(PROC0PDIR+1*4)(%esi)
-#else
-	movl	$0,(PROC0PDIR+0*4)(%esi)
-#endif
+	movl	_nkpde,%ecx		# for this many pde s,
+	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
+	addl	$(KERNBASE), %ebx	# now use relocated address
+1:	movl	$0,(%ebx)
+	addl	$4,%ebx	# next pde
+	loop	1b
 
 	/* Relocate atdevbase. */
 	movl	_nkpde,%edx
