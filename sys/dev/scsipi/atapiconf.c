@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.14 1998/10/13 02:09:47 enami Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.15 1998/11/19 22:25:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -196,6 +196,7 @@ atapi_probe_bus(bus, target)
 {
 	int maxtarget, mintarget;
 	struct atapibus_softc *atapi;
+	int error;
 
 	if (bus < 0 || bus >= atapibus_cd.cd_ndevs)
 		return (ENXIO);
@@ -211,8 +212,11 @@ atapi_probe_bus(bus, target)
 			return (ENXIO);
 		maxtarget = mintarget = target;
 	}
+	if ((error = scsipi_adapter_addref(atapi->adapter_link)) != 0)
+		return (error);
 	for (target = mintarget; target <= maxtarget; target++)
 		atapi_probedev(atapi, target);
+	scsipi_adapter_delref(atapi->adapter_link);
 	return (0);
 }
 
