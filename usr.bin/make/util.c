@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $	*/
+/*	$NetBSD: util.c,v 1.26 2000/08/03 15:53:24 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.26 2000/08/03 15:53:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $");
+__RCSID("$NetBSD: util.c,v 1.26 2000/08/03 15:53:24 christos Exp $");
 #endif
 #endif
 
@@ -25,8 +25,6 @@ __RCSID("$NetBSD: util.c,v 1.25 2000/05/04 18:29:53 drochner Exp $");
 #endif
 
 #ifdef sun
-
-
 
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
@@ -70,7 +68,7 @@ strdup(str)
 
 #endif
 
-#if defined(sun) || defined(__hpux) || defined(__sgi)
+#if defined(sun) || defined(__hpux__) || defined(__sgi) || defined(__hpux)
 
 int
 setenv(name, value, dum)
@@ -105,6 +103,61 @@ setenv(name, value, dum)
 }
 #endif
 
+#if defined(__hpux__) || defined(__hpux)
+
+/* strrcpy():
+ *	Like strcpy, going backwards and returning the new pointer
+ */
+static char *
+strrcpy(ptr, str)
+    register char *ptr, *str;
+{
+    register int len = strlen(str);
+
+    while (len)
+	*--ptr = str[--len];
+
+    return (ptr);
+} /* end strrcpy */
+
+char    *sys_siglist[] = {
+        "Signal 0",
+        "Hangup",                       /* SIGHUP    */
+        "Interrupt",                    /* SIGINT    */
+        "Quit",                         /* SIGQUIT   */
+        "Illegal instruction",          /* SIGILL    */
+        "Trace/BPT trap",               /* SIGTRAP   */
+        "IOT trap",                     /* SIGIOT    */
+        "EMT trap",                     /* SIGEMT    */
+        "Floating point exception",     /* SIGFPE    */
+        "Killed",                       /* SIGKILL   */
+        "Bus error",                    /* SIGBUS    */
+        "Segmentation fault",           /* SIGSEGV   */
+        "Bad system call",              /* SIGSYS    */
+        "Broken pipe",                  /* SIGPIPE   */
+        "Alarm clock",                  /* SIGALRM   */
+        "Terminated",                   /* SIGTERM   */
+        "User defined signal 1",        /* SIGUSR1   */
+        "User defined signal 2",        /* SIGUSR2   */
+        "Child exited",                 /* SIGCLD    */
+        "Power-fail restart",           /* SIGPWR    */
+        "Virtual timer expired",        /* SIGVTALRM */
+        "Profiling timer expired",      /* SIGPROF   */
+        "I/O possible",                 /* SIGIO     */
+        "Window size changes",          /* SIGWINDOW */
+        "Stopped (signal)",             /* SIGSTOP   */
+        "Stopped",                      /* SIGTSTP   */
+        "Continued",                    /* SIGCONT   */
+        "Stopped (tty input)",          /* SIGTTIN   */
+        "Stopped (tty output)",         /* SIGTTOU   */
+        "Urgent I/O condition",         /* SIGURG    */
+        "Remote lock lost (NFS)",       /* SIGLOST   */
+        "Signal 31",                    /* reserved  */
+        "DIL signal"                    /* SIGDIL    */
+};
+#endif /* __hpux__ || __hpux */
+
+
 #ifdef __hpux
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +169,6 @@ setenv(name, value, dum)
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-
 
 int
 killpg(pid, sig)
@@ -158,6 +210,18 @@ signal(s, a)) __P((int))
     return (osv.sv_handler);
 }
 
+int
+utimes(file, tvp)
+    char *file;
+    struct timeval tvp[2];
+{
+    struct utimbuf t;
+
+    t.actime  = tvp[0].tv_sec;
+    t.modtime = tvp[1].tv_sec;
+    return(utime(file, &t));
+}
+
 #if !defined(BSD) && !defined(d_fileno)
 # define d_fileno d_ino
 #endif
@@ -167,23 +231,6 @@ signal(s, a)) __P((int))
 #endif
 #define ISDOT(c) ((c)[0] == '.' && (((c)[1] == '\0') || ((c)[1] == '/')))
 #define ISDOTDOT(c) ((c)[0] == '.' && ISDOT(&((c)[1])))
-
-
-/* strrcpy():
- *	Like strcpy, going backwards and returning the new pointer
- */
-static char *
-strrcpy(ptr, str)
-    register char *ptr, *str;
-{
-    register int len = strlen(str);
-
-    while (len)
-	*--ptr = str[--len];
-
-    return (ptr);
-} /* end strrcpy */
-
 
 char   *
 getwd(pathname)
@@ -283,57 +330,6 @@ getwd(pathname)
 	*cur_name_add = '\0';
     }
 } /* end getwd */
-
-
-char    *sys_siglist[] = {
-        "Signal 0",
-        "Hangup",                       /* SIGHUP    */
-        "Interrupt",                    /* SIGINT    */
-        "Quit",                         /* SIGQUIT   */
-        "Illegal instruction",          /* SIGILL    */
-        "Trace/BPT trap",               /* SIGTRAP   */
-        "IOT trap",                     /* SIGIOT    */
-        "EMT trap",                     /* SIGEMT    */
-        "Floating point exception",     /* SIGFPE    */
-        "Killed",                       /* SIGKILL   */
-        "Bus error",                    /* SIGBUS    */
-        "Segmentation fault",           /* SIGSEGV   */
-        "Bad system call",              /* SIGSYS    */
-        "Broken pipe",                  /* SIGPIPE   */
-        "Alarm clock",                  /* SIGALRM   */
-        "Terminated",                   /* SIGTERM   */
-        "User defined signal 1",        /* SIGUSR1   */
-        "User defined signal 2",        /* SIGUSR2   */
-        "Child exited",                 /* SIGCLD    */
-        "Power-fail restart",           /* SIGPWR    */
-        "Virtual timer expired",        /* SIGVTALRM */
-        "Profiling timer expired",      /* SIGPROF   */
-        "I/O possible",                 /* SIGIO     */
-        "Window size changes",          /* SIGWINDOW */
-        "Stopped (signal)",             /* SIGSTOP   */
-        "Stopped",                      /* SIGTSTP   */
-        "Continued",                    /* SIGCONT   */
-        "Stopped (tty input)",          /* SIGTTIN   */
-        "Stopped (tty output)",         /* SIGTTOU   */
-        "Urgent I/O condition",         /* SIGURG    */
-        "Remote lock lost (NFS)",       /* SIGLOST   */
-        "Signal 31",                    /* reserved  */
-        "DIL signal"                    /* SIGDIL    */
-};
-
-int
-utimes(file, tvp)
-    char *file;
-    struct timeval tvp[2];
-{
-    struct utimbuf t;
-
-    t.actime  = tvp[0].tv_sec;
-    t.modtime = tvp[1].tv_sec;
-    return(utime(file, &t));
-}
-
-
 #endif /* __hpux */
 
 #if defined(sun) && defined(__svr4__)
@@ -435,7 +431,7 @@ snprintf(va_alist)
 }
 
 #if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix) \
-	&& !defined(__sgi) && !defined(__osf__)
+	&& !defined(__sgi) && !defined(__osf__) && !defined(__hpux__)
 
 int
 strftime(buf, len, fmt, tm)
