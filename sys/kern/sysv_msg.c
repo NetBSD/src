@@ -19,12 +19,12 @@
 
 #ifdef SYSVMSG
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "msg.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/msg.h>
+#include <sys/malloc.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK

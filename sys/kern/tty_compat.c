@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.6 1993/06/27 06:01:57 andrew Exp $
+ *	$Id: tty_compat.c,v 1.7 1993/12/18 04:22:09 mycroft Exp $
  */
 
 /* 
@@ -39,17 +39,17 @@
  */
 #ifdef COMPAT_43
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "termios.h"
-#include "proc.h"
-#include "file.h"
-#include "conf.h"
-#include "dkstat.h"
-#include "kernel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/termios.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/dkstat.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
 int ttydebug = 0;
 

@@ -31,23 +31,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
- *	$Id: uipc_usrreq.c,v 1.6 1993/09/14 03:35:08 mycroft Exp $
+ *	$Id: uipc_usrreq.c,v 1.7 1993/12/18 04:22:34 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
-#include "filedesc.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "unpcb.h"
-#include "un.h"
-#include "namei.h"
-#include "vnode.h"
-#include "file.h"
-#include "stat.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/filedesc.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/unpcb.h>
+#include <sys/un.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/mbuf.h>
 
 void unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
 void unp_shutdown __P((struct unpcb *unp));
