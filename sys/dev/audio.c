@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.20 1996/02/20 11:47:22 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.21 1996/03/07 15:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -138,18 +138,36 @@ void	audio_init_record __P((struct audio_softc *));
 void	audio_init_play __P((struct audio_softc *));
 void	audiostartr __P((struct audio_softc *));
 void	audiostartp __P((struct audio_softc *));
-void	audio_rint __P((struct audio_softc *));
-void	audio_pint __P((struct audio_softc *));
-void	audio_rpint __P((struct audio_softc *));
+void	audio_rint __P((void *));
+void	audio_pint __P((void *));
+void	audio_rpint __P((void *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
 void	audio_silence_fill __P((struct audio_softc *, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 void	audio_alloc_auzero __P((struct audio_softc *, int));
 
+void	audio_printsc __P((struct audio_softc *));
+void	audioattach __P((int));
+int	audio_hardware_attach __P((struct audio_hw_if *, void *));
+int	audioopen __P((dev_t, int, int, struct proc *));
+int	audioclose __P((dev_t, int, int, struct proc *));
+int	audioread __P((dev_t, struct uio *, int));
+int	audiowrite __P((dev_t, struct uio *, int));
+int	audioioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	audioselect __P((dev_t, int, struct proc *));
+void	audio_init_ring __P((struct audio_buffer *, int));
+void	audio_initbufs __P((struct audio_softc *));
+static __inline int audio_sleep_timo __P((int *, char *, int));
+static __inline int audio_sleep __P((int *, char *));
+static __inline void audio_wakeup __P((int *));
+int	audio_drain __P((struct audio_softc *));
+void	audio_clear __P((struct audio_softc *));
+
 #ifdef AUDIO_DEBUG
 void
-audio_printsc(struct audio_softc *sc)
+audio_printsc(sc)
+	struct audio_softc *sc;
 {
 	printf("hwhandle %x hw_if %x ", sc->hw_hdl, sc->hw_if);
 	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
@@ -177,7 +195,6 @@ audio_hardware_attach(hwp, hdlp)
 	struct audio_hw_if *hwp;
 	void *hdlp;
 {
-	int *zp, i;
 	struct audio_softc *sc;
 
 	if (naudio >= NAUDIO) {
@@ -446,7 +463,7 @@ audio_initbufs(sc)
 	sc->sc_hiwat = nblk;
 }
 
-static inline int
+static __inline int
 audio_sleep_timo(chan, label, timo)
 	int *chan;
 	char *label;
@@ -466,7 +483,7 @@ audio_sleep_timo(chan, label, timo)
 	return (st);
 }
 
-static inline int
+static __inline int
 audio_sleep(chan, label)
 	int *chan;
 	char *label;
@@ -474,7 +491,7 @@ audio_sleep(chan, label)
     return audio_sleep_timo(chan, label, 0);
 }
 
-static inline void
+static __inline void
 audio_wakeup(chan)
 	int *chan;
 {
@@ -830,7 +847,6 @@ audio_silence_fill(sc, p, n)
         int n;
 {
 	struct audio_hw_if *hw = sc->hw_if;
-	int i;
 	u_int auzero;
 
 	auzero = hw->get_silence(sc->sc_pencoding);
@@ -839,6 +855,7 @@ audio_silence_fill(sc, p, n)
 	    *p++ = auzero;
 }
 
+int
 audio_silence_copyout(sc, n, uio)
 	struct audio_softc *sc;
 	int n;
@@ -994,7 +1011,7 @@ audio_write(dev, uio, ioflag)
 		if ((tp + towrite) > cb->ep) {
 			DPRINTF(("audio_write: overwrite tp=0x%x towrite=%d ep=0x%x bs=%d\n",
 			         tp, towrite, cb->ep, blocksize));
-			printf("audio_write: overwrite tp=0x%x towrite=%d ep=0x%x\n",
+			printf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
 			         tp, towrite, cb->ep);
 			tp = cb->bp;
 		}
@@ -1220,13 +1237,14 @@ void
 audiostartr(sc)
 	struct audio_softc *sc;
 {
-	int err;
+	int error;
     
     	DPRINTF(("audiostartr: tp=0x%x\n", sc->rr.tp));
 
-	if (err = sc->hw_if->start_input(sc->hw_hdl, sc->rr.tp, sc->sc_blksize,
-	    				 audio_rint, (void *)sc)) {
-		DPRINTF(("audiostartr failed: %d\n", err));
+	error = sc->hw_if->start_input(sc->hw_hdl, sc->rr.tp, sc->sc_blksize,
+	    			       audio_rint, (void *)sc);
+	if (error) {
+		DPRINTF(("audiostartr failed: %d\n", error));
 		audio_clear(sc);
 	}
 	else
@@ -1237,15 +1255,16 @@ void
 audiostartp(sc)
 	struct audio_softc *sc;
 {
-	int rval;
+	int error;
     
     	DPRINTF(("audiostartp: hp=0x%x nblk=%d\n", sc->pr.hp, sc->pr.nblk));
     
 	if (sc->pr.nblk > 0) {
 		u_char *hp = sc->pr.hp;
-		if (rval = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
-		    				   audio_rpint, (void *)sc)) {
-		    	DPRINTF(("audiostartp: failed: %d\n", rval));
+		error = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
+					        audio_rpint, (void *)sc);
+		if (error) {
+		    	DPRINTF(("audiostartp: failed: %d\n", error));
 		}
 		else {
 			sc->sc_pbus = 1;
@@ -1262,12 +1281,12 @@ audiostartp(sc)
  * account for user data and silence separately.
  */
 void
-audio_rpint(sc)
-	struct audio_softc *sc;
+audio_rpint(v)
+	void *v;
 {
-
+	struct audio_softc *sc = v;
 	sc->pr.nblk--;
-	audio_pint(sc);		/* 'twas a real audio block */
+	audio_pint(v);		/* 'twas a real audio block */
 }
 
 /*
@@ -1277,14 +1296,15 @@ audio_rpint(sc)
  * Do a wakeup if necessary.
  */
 void
-audio_pint(sc)
-	struct audio_softc *sc;
+audio_pint(v)
+	void *v;
 {
+	struct audio_softc *sc = v;
 	u_char *hp;
 	int cc = sc->sc_blksize;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_buffer *cb = &sc->pr;
-	int err;
+	int error;
 	
 	/*
 	 * XXX
@@ -1307,9 +1327,10 @@ audio_pint(sc)
 		    if (audiodebug > 1)
 		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
 #endif
-		    if (err = hw->start_output(sc->hw_hdl, hp, cc,
-					       audio_rpint, (void *)sc)) {
-			    DPRINTF(("audio_pint restart failed: %d\n", err));
+		    error = hw->start_output(sc->hw_hdl, hp, cc,
+					     audio_rpint, (void *)sc);
+		    if (error) {
+			    DPRINTF(("audio_pint restart failed: %d\n", error));
 			    audio_clear(sc);
 		    }
 		    else {
@@ -1330,10 +1351,11 @@ audio_pint(sc)
 		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
 #endif
  psilence:
-		if (err = hw->start_output(sc->hw_hdl,
-		    			   auzero_block, cc,
-					   audio_pint, (void *)sc)) {
-			DPRINTF(("audio_pint zero failed: %d\n", err));
+		error = hw->start_output(sc->hw_hdl,
+		    			 auzero_block, cc,
+					 audio_pint, (void *)sc);
+		if (error) {
+			DPRINTF(("audio_pint zero failed: %d\n", error));
 			audio_clear(sc);
 		} else
 			++sc->sc_wblks;
@@ -1371,14 +1393,15 @@ audio_pint(sc)
  * Do a wakeup if necessary.
  */
 void
-audio_rint(sc)
-	struct audio_softc *sc;
+audio_rint(v)
+	void *v;
 {
+	struct audio_softc *sc = v;
 	u_char *tp;
 	int cc = sc->sc_blksize;
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_buffer *cb = &sc->rr;
-	int err;
+	int error;
 	
 	tp = cb->tp;
 	if (cb->cb_pause) {
@@ -1394,9 +1417,11 @@ audio_rint(sc)
 		    	if (audiodebug > 1)
 				Dprintf("audio_rint: tp=0x%x cc=%d\n", tp, cc);
 #endif
-			if (err = hw->start_input(sc->hw_hdl, tp, cc,
-						  audio_rint, (void *)sc)) {
-				DPRINTF(("audio_rint: start failed: %d\n", err));
+			error = hw->start_input(sc->hw_hdl, tp, cc,
+						audio_rint, (void *)sc);
+			if (error) {
+				DPRINTF(("audio_rint: start failed: %d\n",
+					 error));
 				audio_clear(sc);
 			}
 			cb->au_stamp += sc->sc_smpl_in_blk;
