@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelintstub,v 1.4 1998/07/03 17:50:10 mycroft Exp $
+#	$NetBSD: makelintstub,v 1.5 1998/07/03 18:09:25 mycroft Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 #
@@ -101,65 +101,52 @@ syscall_stub()
 	$returntype
 	__EOF__
 
-	if [ "`eval echo -n \\$$#`" = "..." ]; then
-		varargs=YES
-		nargs=$(($# - 1))
-	else
-		varargs=NO
-		nargs=$#
-	fi
-	nargswithva=$#
-
 	# do ANSI C function header
-	if [ $varargs = YES ]; then
-		echo	"#ifdef __STDC__"
-
-		echo -n	"$funcname("
-		i=1
-		while [ $i -le $nargs ]; do
-			eval echo -n \""\$$i"\"
-			echo -n	" arg$i"
-			if [ $i -lt $nargswithva ]; then
-				echo -n	", "
-			fi
-			i=$(($i + 1))
-		done
-		if [ $varargs = YES ]; then
-			echo -n "..."
-		fi
-		echo	")"
-
-		# do K&R C function header
-		echo	"#else"
-	fi
+	echo	"#ifdef __STDC__"
 
 	echo -n	"$funcname("
-	i=1
-	while [ $i -le $nargs ]; do
-		echo -n	"arg$i"
-		if [ $i -lt $nargswithva ]; then
+	first=yes; i=1
+	for arg; do
+		if [ $first = yes ]; then
+			first=no
+		else
 			echo -n	", "
 		fi
-		i=$(($i + 1))
+		case "$arg" in
+		"...") echo -n "...";;
+		*) echo -n "$arg arg$i"; i=$(($i + 1));;
+		esac
 	done
-	if [ $varargs = YES ]; then
-		echo -n "va_alist"
-	fi
+	echo	")"
+
+	# do K&R C function header
+	echo	"#else"
+
+	echo -n	"$funcname("
+	first=yes; i=1
+	for arg; do
+		if [ $first = yes ]; then
+			first=no
+		else
+			echo -n	", "
+		fi
+		case "$arg" in
+		"...") echo -n "va_alist";;
+		*) echo -n "arg$i"; i=$(($i + 1));;
+		esac
+	done
 	echo	")"
 	i=1
-	while [ $i -le $nargs ]; do
-		eval echo -n \""        \$$i"\"
-		echo	" arg$i;"
-		i=$(($i + 1))
+	for arg; do
+		case "$arg" in
+		"...") echo "	va_dcl";;
+		*) echo "	$arg arg$i;"; i=$(($i + 1));;
+		esac
 	done
-	if [ $varargs = YES ]; then
-		echo	"        va_dcl"
-	fi
 
 	# do function body
-	if [ $varargs = YES ]; then
-		echo	"#endif"
-	fi
+	echo	"#endif"
+
 	echo	"{"
 	if [ "$returntype" != "void" ]; then
 		echo "        return (($returntype)0);"
