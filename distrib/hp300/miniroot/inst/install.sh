@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.2.2 1995/11/07 08:37:58 thorpej Exp $
+#	$NetBSD: install.sh,v 1.1.2.3 1995/11/07 10:33:25 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -1114,6 +1114,7 @@ get_timezone
 )
 
 # Unmount all filesystems and check their integrity.
+sync; sleep 2
 umount -a
 echo "Checking filesystem integrity..."
 fsck -pf
