@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.11 1997/10/16 17:30:34 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.12 1997/10/16 17:38:46 thorpej Exp $	*/
 
 #include "bpfilter.h"
 
@@ -85,15 +85,14 @@ ep_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
-	    (pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
-	    (pa->pf->number == 0))
-		return (1);
-
-	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
-	    (pa->product == PCMCIA_PRODUCT_3COM_3C589) &&
-	    (pa->pf->number == 0))
-		return (1);
+	if (pa->manufacturer == PCMCIA_MANUFACTURER_3COM) {
+		switch (pa->product) {
+		case PCMCIA_PRODUCT_3COM_3C562:
+		case PCMCIA_PRODUCT_3COM_3C589:
+			if (pa->pf->number == 0)
+				return (1);
+		}
+	}
 
 	return (0);
 }
