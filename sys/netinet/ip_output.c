@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.63 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.64 1999/12/13 17:04:11 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -275,10 +275,12 @@ ip_output(m0, va_alist)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	}
-	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
 		struct in_multi *inm;
 
-		m->m_flags |= M_MCAST;
+		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
+			M_BCAST : M_MCAST;
 		/*
 		 * IP destination address is multicast.  Make sure "dst"
 		 * still points to the address in "ro".  (It may have been
@@ -299,7 +301,10 @@ ip_output(m0, va_alist)
 		/*
 		 * Confirm that the outgoing interface supports multicast.
 		 */
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (((m->m_flags & M_MCAST) &&
+		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
+		    ((m->m_flags & M_BCAST) && 
+		     (ifp->if_flags & IFF_BROADCAST) == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
