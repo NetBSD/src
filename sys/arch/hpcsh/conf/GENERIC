@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2003/10/08 11:09:26 bouyer Exp $
+# $NetBSD: GENERIC,v 1.30 2003/11/09 22:36:17 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -122,6 +122,22 @@ wskbd*		at hpckbd? mux 1
 # don't need to define SCICONSOLE. you can select from bootloader.
 options 	SCIFCN_SPEED=19200
 scif0 at shb?
+
+adc*		at shb?			# analog->digital converter
+
+j6x0pwr*	at adc?			# '680 battery, on/off, etc
+
+j6x0tp*		at adc?			# '680 touch panel
+wsmouse*	at j6x0tp? mux 0	# - as a pointing device
+wskbd1		at j6x0tp? mux 1	# - "hard icons" as keys
+# Do not convert hard icons to key presses while serving mouse input.
+#options 	J6X0TP_WSMOUSE_EXCLUSIVE
+# Customization for the mini-keymap of hard icons.
+#options 	J6X0TP_SETTINGS_ICON_KEYSYM="KS_Home"
+#options 	J6X0TP_PGUP_ICON_KEYSYM="KS_Prior"
+#options 	J6X0TP_PGDN_ICON_KEYSYM="KS_Next"
+#options 	J6X0TP_SWITCH_ICON_KEYSYM="KS_End"
+
 
 hd64461if* at shb?
 hd64461pcmcia*	at hd64461if?
