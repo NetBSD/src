@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
+/*	$NetBSD: expand.c,v 1.6 1997/10/18 14:45:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $";
+__RCSID("$NetBSD: expand.c,v 1.6 1997/10/18 14:45:57 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,16 +57,17 @@ static char rcsid[] = "$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $";
 int	nstops;
 int	tabstops[100];
 
-static void getstops();
-static void usage();
+static	void	getstops __P((char *));
+	int	main __P((int, char **));
+static	void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int c, column;
-	register int n;
+	int c, column;
+	int n;
 
 	/* handle obsolete syntax */
 	while (argc > 1 && argv[1][0] && isdigit(argv[1][1])) {
@@ -151,9 +152,9 @@ main(argc, argv)
 
 static void
 getstops(cp)
-	register char *cp;
+	char *cp;
 {
-	register int i;
+	int i;
 
 	nstops = 0;
 	for (;;) {
