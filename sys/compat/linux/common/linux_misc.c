@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.122.2.3 2004/09/05 10:49:57 tron Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.122.2.4 2004/11/12 06:18:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122.2.3 2004/09/05 10:49:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.122.2.4 2004/11/12 06:18:59 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,9 @@ bsd_to_linux_wstat(st)
 }
 
 /*
- * This is very much the same as waitpid()
+ * wait4(2).  Passed on to the NetBSD call, surrounded by code to
+ * reserve some space for a NetBSD-style wait status, and converting
+ * it to what Linux wants.
  */
 int
 linux_sys_wait4(l, v, retval)
@@ -228,9 +230,7 @@ linux_sys_wait4(l, v, retval)
 
 	linux_options = SCARG(uap, options);
 	options = 0;
-	if (linux_options &
-	    ~(LINUX_WAIT4_WNOHANG|LINUX_WAIT4_WUNTRACED|LINUX_WAIT4_WALL|
-	      LINUX_WAIT4_WCLONE))
+	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return (EINVAL);
 
 	if (linux_options & LINUX_WAIT4_WNOHANG)
@@ -241,6 +241,13 @@ linux_sys_wait4(l, v, retval)
 		options |= WALLSIG;
 	if (linux_options & LINUX_WAIT4_WCLONE)
 		options |= WALTSIG;
+#ifdef DIAGNOSTIC
+	if (linux_options & LINUX_WAIT4_WNOTHREAD)
+		printf("WARNING: %s: linux process %d.%d called "
+		       "waitpid with __WNOTHREAD set!",
+		       __FILE__, p->p_pid, l->l_lid);
+
+#endif
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
