@@ -1,6 +1,8 @@
+/*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)display.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: display.c,v 1.2 1993/08/01 18:07:53 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -114,6 +118,7 @@ display(win, text, size)
 				waddch(win->x_win, ' ');
 			wmove(win->x_win, win->x_line, xcol + 1);
 			getyx(win->x_win, win->x_line, win->x_col);
+			text++;
 			continue;
 		}
 		/* line kill */

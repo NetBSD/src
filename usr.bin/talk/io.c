@@ -1,6 +1,8 @@
+/*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)io.c	5.6 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: io.c,v 1.3 1993/08/14 13:47:51 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -42,12 +46,12 @@ static char rcsid[] = "$Id: io.c,v 1.3 1993/08/14 13:47:51 mycroft Exp $";
  * ctl.c
  */
 
-#include <sys/time.h>
 #include <sys/ioctl.h>
-#include "talk.h"
+#include <sys/time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include "talk.h"
 
 #define A_LONG_TIME 10000000
 #define STDIN_MASK (1<<fileno(stdin))	/* the bit mask for standard
@@ -134,8 +138,10 @@ p_error(string)
 message(string)
 	char *string;
 {
-
-	wmove(my_win.x_win, current_line%my_win.x_nlines, 0);
-	wprintw(my_win.x_win, "[%s]\n", string);
+	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
+	wprintw(my_win.x_win, "[%s]", string);
+	wclrtoeol(my_win.x_win);
+	current_line++;
+	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
 	wrefresh(my_win.x_win);
 }
