@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1995/05/07 21:07:17 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 1995/08/06 05:33:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -187,6 +187,10 @@ cpu_exit(p)
 /*
  * Dump the machine specific segment at the start of a core dump.
  */     
+struct md_core {
+	struct reg intreg;
+	struct fpreg freg;
+};
 int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
@@ -194,48 +198,43 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	int error;
-	register struct user *up = p->p_addr;
-	struct cpustate {
-		struct trapframe regs;
-		struct save87 fpstate;
-	} cpustate;
+	struct md_core md_core;
 	struct coreseg cseg;
+	int error;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_I386, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
+	chdr->c_cpusize = sizeof(md_core);
 
-#if NNPX > 0
-	if (npxproc == p)
-		npxsave();
-#endif
+	/* Save integer registers. */
+	error = process_read_regs(p, &md_core.intreg);
+	if (error)
+		return error;
 
-	cpustate.regs = *p->p_md.md_regs;
-	if (p->p_addr->u_pcb.pcb_flags & PCB_USEDFPU)
-		cpustate.fpstate = p->p_addr->u_pcb.pcb_savefpu;
-	else
-		bzero(&cpustate.fpstate, sizeof(cpustate.fpstate));
+	/* Save floating point registers. */
+	error = process_read_fpregs(p, &md_core.freg);
+	if (error)
+		return error;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_I386, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
+	    (int *)0, p);
 	if (error)
 		return error;
 
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, p);
+	if (error)
+		return error;
 
-	if (!error)
-		chdr->c_nseg++;
-
-	return error;
+	chdr->c_nseg++;
+	return 0;
 }
 
 /*

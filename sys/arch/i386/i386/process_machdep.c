@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 1995/05/01 08:06:48 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 1995/08/06 05:33:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -89,6 +89,17 @@ process_frame(p)
 	return (ptr);
 }
 
+static inline struct save87 *
+process_fpframe(p)
+	struct proc *p;
+{
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (NULL);
+
+	return (&p->p_addr->u_pcb.pcb_savefpu);
+}
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -114,6 +125,30 @@ process_read_regs(p, regs)
 	regs->r_eflags = tf->tf_eflags;
 	regs->r_esp    = tf->tf_esp;
 	regs->r_ss     = tf->tf_ss;
+
+	return (0);
+}
+
+int
+process_read_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct save87 *frame;
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+#if NNPX > 0
+		if (npxproc == p)
+			npxsave();
+#endif
+
+		frame = process_fpframe(p);
+		if (frame == NULL)
+			return (EIO);
+
+		bcopy(frame, regs, sizeof(frame));
+	} else
+		bzero(regs, sizeof(regs));
 
 	return (0);
 }
@@ -150,6 +185,28 @@ process_write_regs(p, regs)
 	tf->tf_eflags = regs->r_eflags;
 	tf->tf_esp    = regs->r_esp;
 	tf->tf_ss     = regs->r_ss;
+
+	return (0);
+}
+
+int
+process_write_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct save87 *frame;
+
+#if NNPX > 0
+	if (npxproc == p)
+		npxdrop();
+#endif
+
+	frame = process_fpframe(p);
+	if (frame == NULL)
+		return (EIO);
+
+	p->p_md.md_flags |= MDP_USEDFPU;
+	bcopy(regs, frame, sizeof(frame));
 
 	return (0);
 }
