@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.80 2002/05/31 04:26:19 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.81 2002/06/08 20:06:44 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.80 2002/05/31 04:26:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.81 2002/06/08 20:06:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -728,7 +728,7 @@ icmp6_input(mp, offp, proto)
 			u_char *p;
 			int maxlen, maxhlen;
 
-			if ((icmp6_nodeinfo & 5) != 5) 
+			if ((icmp6_nodeinfo & 5) != 5)
 				break;
 
 			if (code != 0)
@@ -1232,7 +1232,7 @@ icmp6_mtudisc_update(ip6cp, validated)
 /*
  * Process a Node Information Query packet, based on
  * draft-ietf-ipngwg-icmp-name-lookups-07.
- * 
+ *
  * Spec incompatibilities:
  * - IPv6 Subject address handling
  * - IPv4 Subject address handling support missing
@@ -2991,6 +2991,9 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&icmp6_mtudisc_lowat);
 	case ICMPV6CTL_ND6_DEBUG:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_debug);
+	case ICMPV6CTL_ND6_DRLIST:
+	case ICMPV6CTL_ND6_PRLIST:
+		return nd6_sysctl(name[0], oldp, oldlenp, newp, newlen);
 	default:
 		return ENOPROTOOPT;
 	}
