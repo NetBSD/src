@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.297 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.298 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -11,3 +11,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	which(1): Removed.  Use the shell built-ins ``which'' or ``type'',
 		depending on your shell, instead.  [martin 20040401]
 	heimdal: import version 0.6.1 [lha 20040402]
+	powerpc: implement FP execption handling for OEA processors.
+		[matt 20040404]
