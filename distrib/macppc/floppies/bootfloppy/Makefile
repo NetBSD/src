@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2000/05/02 16:06:50 sjg Exp $
+#	$NetBSD: Makefile,v 1.8 2000/06/01 06:56:55 matt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 
 IMAGE=		boot.fs
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
