@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.22 2000/10/16 15:23:01 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.23 2000/10/25 09:27:47 is Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -320,7 +320,7 @@ includes shared library support, and excludes
 everything described below.
 .br
 .if r_alpha .Em 22.3 MB gzipped, ? MB uncompressed
-.if r_amiga .Em 15.3 MB gzipped, ? MB uncompressed
+.if r_amiga .Em 15.3 MB gzipped, 42.0 MB uncompressed
 .if r_arc .Em 19.1 MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 18.8 MB gzipped, ? MB uncompressed
 .if r_atari .Em 15.0 MB gzipped, ? MB uncompressed
@@ -352,7 +352,7 @@ all of the utilities it contains, as well as the
 system call and library manual pages.
 .br
 .if r_alpha .Em 17.7 MB gzipped, ? MB uncompressed
-.if r_amiga .Em 11.5 MB gzipped, ? MB uncompressed
+.if r_amiga .Em 11.5 MB gzipped, 41.0 MB uncompressed
 .if r_arc .Em 13.6 MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 13.5 MB gzipped, ? MB uncompressed
 .if r_atari .Em 11.3 MB gzipped, ? MB uncompressed
@@ -414,7 +414,7 @@ This set contains a
 install this distribution set.
 .br
 .if r_alpha .Em 2.0 MB gzipped, ? MB uncompressed
-.if r_amiga .Em 1.1 MB gzipped, ? MB uncompressed
+.if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
 .if r_arc .Em 1.5 MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 1.0 MB gzipped, ? MB uncompressed
 .if r_atari .Em ? MB gzipped, ? MB uncompressed
@@ -558,7 +558,7 @@ Fonts needed by X.
 .if r_amiga \{\
 .It Sy xserver
 .br
-.Em 1.6 MB gzipped, ? MB uncompressed
+.Em 1.6 MB gzipped, 4.0 MB uncompressed
 .\}
 .
 .if r_arm32 \{\
