@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.14 2000/05/22 12:42:47 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.15 2000/05/24 14:43:00 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -183,7 +183,7 @@ scr_init()
 		stop("you must set the TERM environment variable");
 	if (t_getent(&info, term) <= 0)
 		stop("cannot find your termcap");
-	*combuf = NULL;
+	combuf = NULL;
 	{
 		register struct tcsinfo *p;
 
