@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.6 1999/03/31 03:03:01 cgd Exp $ */
+/* $NetBSD: start.S,v 1.7 1999/03/31 03:04:21 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -68,20 +68,3 @@ XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)
-
-/*
- * cpu_number
- *	Return the cpu number, using the whami instruction.
- */
-LEAF(cpu_number, 0)
-	call_pal PAL_VMS_mfpr_whami
-	RET
-END(cpu_number)
-/*
- * Execute Instruction Memory Barrier operation from the Common
- * Palcode Architecture. Establishes I-Cache coherency point.
- */
-LEAF(alpha_pal_imb, 0)
-	imb
-	RET
-END(alpha_pal_imb);
