@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.66 2004/08/14 01:32:02 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.67 2004/08/14 02:26:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.66 2004/08/14 01:32:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.67 2004/08/14 02:26:57 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -196,6 +196,7 @@ ffs_truncate(v)
 	int i, ioflag, aflag, nblocks;
 	int error, allerror = 0;
 	off_t osize;
+	int sync;
 
 	if (length < 0)
 		return (EINVAL);
@@ -280,23 +281,22 @@ ffs_truncate(v)
 	 */
 
 	offset = blkoff(fs, length);
-	if (ovp->v_type == VREG && length < osize && offset != 0) {
+	if (ovp->v_type == VREG && offset != 0 && osize > length &&
+	    round_page(osize) > round_page(length)) {
 		voff_t eoz;
 
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 		    aflag);
-		if (error) {
+		if (error)
 			return error;
-		}
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		simple_lock(&ovp->v_interlock);
 		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
 		    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
-		if (error) {
+		if (error)
 			return error;
-		}
 	}
 
 	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
@@ -351,22 +351,28 @@ ffs_truncate(v)
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
+	sync = 0;
 	for (level = TRIPLE; level >= SINGLE; level--) {
 		blks[NDADDR + level] = DIP(oip, ib[level]);
-		if (lastiblock[level] < 0) {
+		if (lastiblock[level] < 0 && blks[NDADDR + level] != 0) {
+			sync = 1;
 			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
 	}
 	for (i = 0; i < NDADDR; i++) {
 		blks[i] = DIP(oip, db[i]);
-		if (i > lastblock)
+		if (i > lastblock && blks[i] != 0) {
+			sync = 1;
 			DIP_ASSIGN(oip, db[i], 0);
+		}
 	}
-	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
-	if (error && !allerror)
-		allerror = error;
+	if (sync) {
+		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+		if (error && !allerror)
+			allerror = error;
+	}
 
 	/*
 	 * Having written the new inode to disk, save its new configuration
@@ -493,6 +499,8 @@ done:
 	DIP_ADD(oip, blocks, -blocksreleased);
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
+	if (!sync)
+		oip->i_flag |= IN_UPDATE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
