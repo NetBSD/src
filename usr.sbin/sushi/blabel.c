@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.4 2001/01/09 19:01:57 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.5 2001/01/09 21:38:53 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,15 +102,21 @@ wrap_help(EObjectType cdktype, void *object, void *clientdata, chtype key)
 			p = searchpaths[i];   
 			rc = simple_lang_handler(p, HELPFILE, handle_help);
 		}
-		if (rc != -2)
+		if (rc != -2) {
+			eraseCDKScreen(cdkscreen);
+			refreshCDKScreen(cdkscreen);
 			return;
+		}
 	} else {
 		rc = simple_lang_handler((char *)clientdata, HELPFILE,
 		    handle_help);
-		if (rc != -2)
+		if (rc != -2) {
+			eraseCDKScreen(cdkscreen);
+			refreshCDKScreen(cdkscreen);
 			return;
+		}
 	}
-	/* now do something meaningful */
+	nohelp();
 }
 
 /*ARGSUSED*/
@@ -125,8 +131,8 @@ do_cancel(EObjectType cdktype, void *object, void *clientdata, chtype key)
 static void
 do_refresh(EObjectType cdktype, void *object, void *clientdata, chtype key)
 {
-	eraseCDKScreen (cdkscreen);
-	refreshCDKScreen (cdkscreen);
+	eraseCDKScreen(cdkscreen);
+	refreshCDKScreen(cdkscreen);
 }
 
 /*ARGSUSED*/
