@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.3 1997/01/23 22:15:41 gwr Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.4 1997/03/13 17:40:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 /* Rounding macros.
  * The MMU_ROUND macros are named misleadingly.  MMU_ROUND_A actually
  * rounds an address to the nearest B table boundary, and so on.
- * MMU_ROUND_C() is synonmous with sun3x_round_page().
+ * MMU_ROUND_C() is synonmous with _round_page().
  */
 #define	MMU_ROUND_A(pa)\
 	((unsigned long) (pa) & MMU_TIA_MASK)
