@@ -2,6 +2,13 @@ Things to do for scheduler activations/LWP code.
 
 - Document! Not everyone wants to read the thesis. Man pages, etc.
 
+- MAJOR BUG: Find out why u-area pages are becoming unwired before
+  uvm_swapout() gets to them. Causes systems to crash under memory
+  pressure with something like:
+   pmap_unwire: wiring for pmap 0xc03db220 va 0xcb120000 didn't change!
+   pmap_unwire: wiring for pmap 0xc03db220 va 0xcb121000 didn't change!
+   panic: kernel diagnostic assertion "pg->write_count == 0" failed: file "../../../uvm/uvm_page_i.h", line 214
+
 - Port to other architectures. I have alpha, m68k, arm32, mips, sparc.
   Other people will need to do the intimately MD parts for ppc, sh3, sparc64,
   pc532, vax. Documenting what is needed and what changes have been made
