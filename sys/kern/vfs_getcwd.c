@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.6 1999/04/30 18:43:00 thorpej Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.7 1999/06/19 18:01:26 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -481,7 +481,6 @@ int proc_isunder (p1, p2)
 		return vn_isunder(r1, r2, p2);
 }
 
-
 int sys___getcwd(p, v, retval) 
 	struct proc *p;
 	void   *v;
@@ -498,7 +497,9 @@ int sys___getcwd(p, v, retval)
 	int     len = SCARG(uap, length);
 	int	lenused;
 
-	if ((len < 2) || (len > MAXPATHLEN*4))
+	if (len > MAXPATHLEN*4)
+		len = MAXPATHLEN*4;
+	else if (len < 2)
 		return ERANGE;
 
 	path = (char *)malloc(len, M_TEMP, M_WAITOK);
