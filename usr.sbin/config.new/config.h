@@ -229,6 +229,7 @@ struct {			/* loc[] table for config */
 	int	used;
 } locators;
 
+#include "cdefs.h"
 /* files.c */
 void	initfiles __P((void));
 void	checkfiles __P((void));
