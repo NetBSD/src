@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.31 2002/09/30 11:09:18 grant Exp $
+.\"	$NetBSD: install.1,v 1.32 2002/12/19 08:30:39 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 20, 2002
+.Dd December 19, 2002
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -59,6 +59,9 @@
 .Ek
 .Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
+.Op Fl N Ar dbdir
 .Ek
 .Bk -words
 .Op Fl o Ar owner
@@ -94,6 +97,9 @@
 .Op Fl m Ar mode
 .Ek
 .Bk -words
+.Op Fl N Ar dbdir
+.Ek
+.Bk -words
 .Op Fl o Ar owner
 .Ek
 .Bk -words
@@ -121,6 +127,9 @@
 .Ek
 .Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
+.Op Fl N Ar dbdir
 .Ek
 .Bk -words
 .Op Fl o Ar owner
@@ -204,21 +213,6 @@ Specify the target's file flags.
 for a list of possible flags and their meanings.)
 .It Fl g Ar group
 Specify a group.
-.It Fl M Ar metalog
-Write the metadata associated with each item installed to
-.Ar metalog
-in an
-.Xr mtree 8
-.Dq full path
-specification line.
-The metadata includes: the file name and file type, and depending upon
-other options, the owner, group, file flags, modification time, and tags.
-.It Fl m Ar mode
-Specify an alternative mode.
-The default mode is set to rwxr-xr-x (0755).
-The specified mode may be either an octal or symbolic value; see
-.Xr chmod  1
-for a description of possible mode values.
 .It Fl l Ar linkflags
 Instead of copying the file make a link to the source.
 The type of the link is determined by the
@@ -240,6 +234,33 @@ are:
 Absolute and relative have effect only for symbolic links.
 Mixed links
 are hard links for files on the same filesystem, symbolic otherwise.
+.It Fl M Ar metalog
+Write the metadata associated with each item installed to
+.Ar metalog
+in an
+.Xr mtree 8
+.Dq full path
+specification line.
+The metadata includes: the file name and file type, and depending upon
+other options, the owner, group, file flags, modification time, and tags.
+.It Fl m Ar mode
+Specify an alternative mode.
+The default mode is set to rwxr-xr-x (0755).
+The specified mode may be either an octal or symbolic value; see
+.Xr chmod  1
+for a description of possible mode values.
+.It Fl N Ar dbdir
+Use the user database text file
+.Pa master.passwd
+and group database text file
+.Pa group
+from
+.Ar dbdir ,
+rather than using the results from the system's
+.Xr getpwnam 3
+and
+.Xr getgrnam 3
+(and related) library calls.
 .It Fl o Ar owner
 Specify an owner.
 .It Fl p
