@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.82 2000/05/09 00:56:28 hubertf Exp $
+# $NetBSD: Makefile.sun3,v 1.83 2000/12/07 17:51:06 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -147,17 +147,10 @@ LINKFLAGS+=	-S
 
 # LOAD-
 
-# Use awk to cross-build assym.h from the genassym.s file.
-assym.h: genassym.o $S/kern/genassym.awk
-	awk -f $S/kern/genassym.awk < genassym.s > assym.h.tmp
-	mv -f assym.h.tmp $@
-
-# The above rule lists genassym.o as a prerequisite so that the
-# generated .depend rule is effective, even though we actually
-# use genassym.s instead.   This always creates both.
-genassym.o: ${SUN3}/${MACHTYPE}/genassym.c
-	${CC} ${CPPFLAGS} -S $<
-	${CC} -c $*.s
+assym.h: $S/kern/genassym.sh ${SUN3}/${MACHTYPE}/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${SUN3}/${MACHTYPE}/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -207,7 +200,10 @@ SRCS=	${SUN3}/${MACHTYPE}/locore.s \
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${CPPFLAGS} ${SUN3}/${MACHTYPE}/genassym.c
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${SUN3}/${MACHTYPE}/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 dependall: depend all
 
