@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.11 2001/02/18 05:24:43 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.12 2001/07/07 15:27:20 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -78,9 +78,13 @@ mainbus0 at root
 hb0	at mainbus0 systype NEWS1700
 hb1	at mainbus0 systype NEWS1200
 
-# MK48T02 realtime clock
-clock0	at hb0 addr 0xe0d80000 ipl 6			# news1700
-clock0	at hb1 addr 0xe1420000 ipl 6			# news1200
+# interval timer
+timer0	at hb0 addr 0xe1000000 ipl 6			# news1700
+timer0	at hb1 addr 0xe1140000 ipl 6			# news1200
+
+# MK48T02 TOD clock
+mkclock0 at hb0 addr 0xe0d80000				# news1700
+mkclock0 at hb1 addr 0xe1420000				# news1200
 
 # onboard LANCE ethernet
 le0	at hb0 addr 0xe0f00000 ipl 4			# news1700

@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.13 2001/06/18 02:00:50 christos Exp $
+#	$NetBSD: files.news68k,v 1.14 2001/07/07 15:27:19 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -48,10 +48,15 @@ file arch/news68k/dev/hb.c			hb
 #attach iop at mainbus
 #file arch/news68k/dev/iop.c			iop
 
-# MK48T02 RTC and NVRAM
-device clock: mk48txx
-attach clock at hb with clock_hb
-file arch/news68k/dev/clock_hb.c		clock_hb
+# interval timer
+device timer
+attach timer at hb with timer_hb
+file arch/news68k/dev/timer_hb.c		timer_hb
+
+# MK48T02 TOD clock and NVRAM
+device mkclock: mk48txx
+attach mkclock at hb with mkclock_hb
+file arch/news68k/dev/mkclock_hb.c		mkclock_hb
 
 # Lance ethernet (device defined in sys/conf/files)
 #device le: ifnet, ether, arp

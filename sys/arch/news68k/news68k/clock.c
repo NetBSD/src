@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.5 2000/10/05 21:20:48 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.6 2001/07/07 15:27:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,20 +59,30 @@ static	todr_chip_handle_t todr_handle;
 static	void (*cpu_initclocks_hook) __P((int, int));
 
 /*
- * Common parts of clock autoconfiguration.
+ * Common parts of todclock autoconfiguration.
  */
 void
-clock_config(handle, initfunc)
+todclock_config(handle)
 	todr_chip_handle_t handle;
-	void (*initfunc) __P((int, int));
 {
 
 	if (todr_handle)
-		panic("clock_config: too many clocks configured");
+		panic("todclock_config: too many todclocks configured");
 
 	todr_handle = handle;
+}
+
+void
+timer_config(initfunc)
+	void (*initfunc)(int, int);
+{
+
+	if (cpu_initclocks_hook)
+		panic("clock_config: too many timers configured");
+
 	cpu_initclocks_hook = initfunc;
 }
+
 
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only
@@ -84,8 +94,11 @@ void
 cpu_initclocks()
 {
 
+	if (todr_handle == NULL)
+		panic("no todclock device configured");
+
 	if (cpu_initclocks_hook == NULL)
-		panic("clock not configured");
+		panic("no timer device configured");
 
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);

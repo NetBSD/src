@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.3 2001/07/07 15:27:21 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.1 2001/07/07 15:27:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,5 +36,74 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void todclock_config(todr_chip_handle_t);
-void timer_config(void (*)(int, int));
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+
+#include <machine/cpu.h>
+#include <machine/bus.h>
+
+#include <dev/clock_subr.h>
+#include <dev/ic/mk48txxreg.h>
+
+#include <news68k/news68k/clockvar.h>
+
+#include <news68k/dev/hbvar.h>
+
+int	mkclock_hb_match __P((struct device *, struct cfdata  *, void *));
+void	mkclock_hb_attach __P((struct device *, struct device *, void *));
+
+struct cfattach mkclock_hb_ca = {
+	sizeof(struct device), mkclock_hb_match, mkclock_hb_attach
+};
+
+extern struct cfdriver mkclock_cd;
+
+int
+mkclock_hb_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct hb_attach_args *ha = aux;
+	static int mkclock_hb_matched;
+
+	/* Only one clock, please. */
+	if (mkclock_hb_matched)
+		return (0);
+
+	if (strcmp(ha->ha_name, mkclock_cd.cd_name))
+		return (0);
+
+	ha->ha_size = MK48T02_CLKSZ;
+
+	mkclock_hb_matched = 1;
+
+	return 1;
+}
+
+void
+mkclock_hb_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct hb_attach_args *ha = aux;
+	bus_space_tag_t bst = ha->ha_bust;
+	bus_space_handle_t bsh;
+	todr_chip_handle_t handle;
+
+	if (bus_space_map(bst, (bus_addr_t)ha->ha_address, ha->ha_size,
+	    0, &bsh) != 0)
+		printf("can't map device space\n");
+
+	if ((handle = mk48txx_attach(bst, bsh, "mk48t02", 1900)) == NULL)
+		panic("can't attach tod clock");
+
+	printf("\n");
+
+	handle->bus_cookie = NULL;
+	handle->todr_setwen = NULL;
+
+        todclock_config(handle);
+}
