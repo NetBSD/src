@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.2.1 1997/10/23 22:42:40 chuck Exp $
+#	$NetBSD: Makefile,v 1.78.2.2 1997/11/12 01:47:38 mellon Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -8,6 +8,12 @@ LOCALTIME=	US/Pacific
 # an objdir would break the installation stuff below
 NOOBJ=	oobj
 
+# MD Makefile.inc may append MD targets to BIN[123].  Make sure all
+# are empty, to preserve the old semantics of setting them below with "=".
+BIN1=	
+BIN2=
+BIN3=
+
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
 .endif
@@ -15,7 +21,7 @@ NOOBJ=	oobj
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
+BIN1+=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
 	man.conf monthly monthly.conf mrouted.conf netstart networks \
@@ -25,10 +31,10 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	etc.${MACHINE}/disktab
 
 # -rw-rw-r--
-BIN2=	motd
+BIN2+=	motd
 
 # -rw-------
-BIN3=	hosts.equiv
+BIN3+=	hosts.equiv
 
 NAMEDB=	localhost.rev named.boot root.cache
 PCS=	pcs750.bin
