@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.3.12.1 2000/09/29 09:05:48 kleink Exp $	*/
+/*	$NetBSD: pipe.S,v 1.3.12.2 2000/10/03 09:43:46 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,10 +24,10 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: pipe.S,v 1.3.12.1 2000/09/29 09:05:48 kleink Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.3.12.2 2000/10/03 09:43:46 kleink Exp $")
 #endif
 
-_SYSCALL(pipe,_pipe)
+_SYSCALL(_pipe,pipe)
 	movd	S_ARG0,r2
 	movd	r0,0(r2)
 	movd	r1,4(r2)
