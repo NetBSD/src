@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.1 1995/02/13 23:09:11 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.2 1995/03/03 01:38:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -244,17 +244,17 @@ tcds_scsi_reset(unit)
 	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	switch (unit) {
 	case 0:
-		*cir &= ~TCDS_CIR_SCSI0_RESET;
+		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_RESET);
 		MB();
 		DELAY(1);			/* XXX */
-		*cir |= TCDS_CIR_SCSI0_RESET;
+		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_RESET);
 		MB();
 		break;
 	case 1:
-		*cir &= ~TCDS_CIR_SCSI1_RESET;
+		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_RESET);
 		MB();
 		DELAY(1);			/* XXX */
-		*cir |= TCDS_CIR_SCSI1_RESET;
+		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_RESET);
 		MB();
 		break;
 	default:
@@ -358,11 +358,11 @@ tcds_dma_enable(unit)
 	/* XXX Clear/set IOSLOT/PBS bits. */
 	switch (unit) {
 	case 0:
-		*cir |= TCDS_CIR_SCSI0_DMAENA;
+		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_DMAENA);
 		MB();
 		break;
 	case 1:
-		*cir |= TCDS_CIR_SCSI1_DMAENA;
+		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_DMAENA);
 		MB();
 		break;
 	default:
@@ -383,11 +383,11 @@ tcds_dma_disable(unit)
 	/* XXX Clear/set IOSLOT/PBS bits. */
 	switch (unit) {
 	case 0:
-		*cir &= ~TCDS_CIR_SCSI0_DMAENA;
+		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_DMAENA);
 		MB();
 		break;
 	case 1:
-		*cir &= ~TCDS_CIR_SCSI1_DMAENA;
+		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_DMAENA);
 		MB();
 		break;
 	default:
@@ -411,7 +411,7 @@ tcds_scsi_isintr(unit, clear)
 	case 0:
 		if (ir & TCDS_CIR_SCSI0_INT) {
 			if (clear) {
-				*cir &= ~TCDS_CIR_SCSI0_INT;
+				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_INT);
 				MB();
 			}
 			return (1);
@@ -420,7 +420,7 @@ tcds_scsi_isintr(unit, clear)
 	case 1:
 		if (ir & TCDS_CIR_SCSI1_INT) {
 			if (clear) {
-				*cir &= ~TCDS_CIR_SCSI1_INT;
+				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_INT);
 				MB();
 			}
 			return (1);
@@ -472,7 +472,7 @@ tcds_intr(val)
 	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 	ir = *cir;
 	MB();
-	*cir &= 0xffff;
+	TCDS_CIR_CLR(*cir, TCDS_CIR_ALLINTR);
 	MB();
 	MAGIC_READ;
 	MB();
