@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.13.2.2 2000/11/20 11:40:55 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.13.2.3 2000/12/14 13:09:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -39,7 +39,8 @@ TAILQ_HEAD(lunsw_list, siop_lunsw);
 /* Driver internal state */
 struct siop_softc {
 	struct device sc_dev;
-	struct scsipi_link sc_link;	/* link to upper level */
+	struct scsipi_channel sc_chan;
+	struct scsipi_adapter sc_adapt;
 	int features;			/* chip's features */
 	int ram_size;
 	int maxburst;
