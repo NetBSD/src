@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.41 2002/03/17 18:00:17 augustss Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.42 2002/03/17 18:12:15 augustss Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -517,7 +517,13 @@
 	{ KB_NO,	"no" }, \
 	{ KB_ES,	"es" }, \
 	{ KB_HU,	"hu" },	\
-	{ KB_PL,	"pl" }
+	{ KB_PL,	"pl" }, \
+	{ KB_RU,        "ru" }, \
+	{ KB_SG,        "sg" }, \
+	{ KB_SF,        "sf" }, \
+	{ KB_PT,        "pt" }, \
+	{ KB_UA,        "ua" }, \
+	{ KB_BE,        "be" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
