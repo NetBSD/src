@@ -21,7 +21,7 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas ${DEBUG}
-CC=	cc ${DEBUG}
+CC=	gcc ${DEBUG}
 CPP=	cpp
 LD=	ld
 TOUCH=	touch -f -c
