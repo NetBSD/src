@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.25 2000/10/21 07:30:34 takemura Exp $ */
+/* $Id: platid_mask.c,v 1.26 2000/12/28 07:10:15 sato Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
