@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.50 2003/09/05 23:02:40 itojun Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.51 2004/01/19 16:12:51 atatat Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.50 2003/09/05 23:02:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.51 2004/01/19 16:12:51 atatat Exp $");
 
 #include "strip.h"
 
@@ -270,8 +270,6 @@ int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
 void	strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
 void	strip_timeout __P((void *x));
-void	stripnetisr(void);
-void	stripintr(void *);
 
 #ifdef DEBUG
 #define DPRINTF(x)	printf x
