@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.27 2002/03/24 20:46:56 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.27 2002/03/24 20:46:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28 2002/05/14 02:58:33 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -110,7 +110,7 @@ struct mrt6stat	mrt6stat;
 #define RTE_FOUND	0x2
 
 struct mf6c	*mf6ctable[MF6CTBLSIZ];
-u_char		nexpire[MF6CTBLSIZ];
+u_char		nexpire6[MF6CTBLSIZ];
 static struct mif6 mif6table[MAXMIFS];
 #ifdef MRT6DEBUG
 u_int		mrt6debug = 0;	  /* debug level 	*/
@@ -407,7 +407,7 @@ ip6_mrouter_init(so, m, cmd)
 	ip6_mrouter_ver = cmd;
 
 	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
-	bzero((caddr_t)nexpire, sizeof(nexpire));
+	bzero((caddr_t)nexpire6, sizeof(nexpire6));
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
@@ -734,7 +734,7 @@ add_m6fc(mfccp)
 			rt->mf6c_wrong_if   = 0;
 
 			rt->mf6c_expire = 0;	/* Don't clean this guy up */
-			nexpire[hash]--;
+			nexpire6[hash]--;
 
 			/* free packets Qed at the end of this entry */
 			for (rte = rt->mf6c_stall; rte != NULL; ) {
@@ -781,7 +781,7 @@ add_m6fc(mfccp)
 				rt->mf6c_wrong_if   = 0;
 
 				if (rt->mf6c_expire)
-					nexpire[hash]--;
+					nexpire6[hash]--;
 				rt->mf6c_expire	   = 0;
 			}
 		}
@@ -1139,7 +1139,7 @@ ip6_mforward(ip6, ifp, m)
 			rt->mf6c_mcastgrp.sin6_len = sizeof(struct sockaddr_in6);
 			rt->mf6c_mcastgrp.sin6_addr = ip6->ip6_dst;
 			rt->mf6c_expire = UPCALL_EXPIRE;
-			nexpire[hash]++;
+			nexpire6[hash]++;
 			rt->mf6c_parent = MF6C_INCOMPLETE_PARENT;
 
 			/* link into table */
@@ -1193,7 +1193,7 @@ expire_upcalls(unused)
 
 	s = splsoftnet();
 	for (i = 0; i < MF6CTBLSIZ; i++) {
-		if (nexpire[i] == 0)
+		if (nexpire6[i] == 0)
 			continue;
 		nptr = &mf6ctable[i];
 		while ((mfc = *nptr) != NULL) {
@@ -1223,7 +1223,7 @@ expire_upcalls(unused)
 					rte = n;
 				} while (rte != NULL);
 				mrt6stat.mrt6s_cache_cleanups++;
-				nexpire[i]--;
+				nexpire6[i]--;
 
 				*nptr = mfc->mf6c_next;
 				free(mfc, M_MRTABLE);
