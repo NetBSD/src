@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.28 2005/04/04 14:19:55 christos Exp $
+.\"	$NetBSD: getpwent.3,v 1.29 2005/04/04 18:24:21 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,7 +148,7 @@ an error number will be returned and
 will point to null.
 Calling
 .Fn getpwent_r
-from multiple threads, will result in each thread reading a disjoint portion
+from multiple threads will result in each thread reading a disjoint portion
 of the password database.
 .Pp
 The
