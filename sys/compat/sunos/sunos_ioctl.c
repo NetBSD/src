@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.14 1994/10/31 05:18:10 deraadt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.15 1994/11/20 21:29:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -220,6 +220,10 @@ stios2btios(st, bt)
 	bt->c_cc[VWERASE]  = st->c_cc[14] ? st->c_cc[14] : _POSIX_VDISABLE;
 	bt->c_cc[VLNEXT]   = st->c_cc[15] ? st->c_cc[15] : _POSIX_VDISABLE;
 	bt->c_cc[VSTATUS]  = st->c_cc[16] ? st->c_cc[16] : _POSIX_VDISABLE;
+
+	/* if `raw mode', create native VMIN/VTIME from SunOS VEOF/VEOL */
+	bt->c_cc[VMIN]	   = (bt->c_lflag & ICANON) ? 1 : bt->c_cc[VEOF];
+	bt->c_cc[VTIME]	   = (bt->c_lflag & ICANON) ? 1 : bt->c_cc[VEOL];
 }
 
 
