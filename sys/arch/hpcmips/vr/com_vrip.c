@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.4 2000/07/20 21:03:38 jeffs Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.5 2000/10/27 08:12:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -74,8 +74,10 @@
 #ifdef COMVRIPDEBUG
 int	com_vrip_debug = 0;
 #define	DPRINTF(arg) if (com_vrip_debug) printf arg;
+#define	VPRINTF(arg) if (com_vrip_debug || bootverbose) printf arg;
 #else
 #define	DPRINTF(arg)
+#define	VPRINTF(arg) if (bootverbose) printf arg;
 #endif
 
 struct com_vrip_softc {
@@ -243,7 +245,6 @@ com_vrip_attach(parent, self, aux)
 	/* XXX, locale 'ID' must be need */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL, vsc->sc_pwctl, (void*)1);
 
-
 	DPRINTF(("Try to attach com.\n"));
 	com_attach_subr(sc);
 
@@ -251,4 +252,5 @@ com_vrip_attach(parent, self, aux)
 	vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY, comintr, self);
 
 	DPRINTF((":return()"));
+	VPRINTF(("%s: pwctl %d\n", vsc->sc_com.sc_dev.dv_xname, vsc->sc_pwctl));
 }
