@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.12 2002/05/03 05:18:14 mbw Exp $
+.\"	$NetBSD: prep,v 1.13 2002/05/04 20:40:25 mbw Exp $
 .
 There are two installation tools available.  The traditional miniroot
 installer is script-based and may be netbooted or may be dumped to a disk
@@ -29,7 +29,7 @@ HOW-TO.
 .Li SYS_UBOOT
 from a local disk, tape, or floppy
 and then runs the miniroot installation tools or a purely diskless
-installationf rom a 
+installation from a 
 .Nx
 server on the same subnet (you must have root access).  
 Other server platforms will work, but are described in the NetBSD Diskless
