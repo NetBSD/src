@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.7 1998/06/30 14:14:44 augustss Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.8 1998/07/13 07:37:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -68,12 +68,19 @@
 
 #define PCMCIA_MANUFACTURER_MOTOROLA		0x109
 #define PCMCIA_PRODUCT_MOTOROLA_POWER144	0x105
+#define PCMCIA_PRODUCT_MOTOROLA_PM100C		0x302
 
 #define	PCMCIA_MANUFACTURER_IBM			0xa4
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x2e
 
 #define	PCMCIA_MANUFACTURER_MEGAHERTZ		0x102
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ4288		0x23
+
+#define PCMCIA_MANUFACTURER_USROBOTICS		0x115
+#define PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
+
+#define PCMCIA_MANUFACTURER_SOCKET		0x104
+#define PCMCIA_PRODUCT_SOCKET_PAGECARD		0x3
 
 struct com_dev {
 	char *name;
@@ -97,7 +104,17 @@ static struct com_dev com_devs[] = {
 	  { NULL, NULL, NULL, NULL } },
 	{ "Megahertz XJ2288 Modem",
 	  0xffffffff, 0xffff,
-	  { "MEGAHERTZ", "XJ2288", NULL, NULL } }
+	  { "MEGAHERTZ", "XJ2288", NULL, NULL } },
+	{ "USRobotics WorldPort 14.4 Modem",
+	  PCMCIA_MANUFACTURER_USROBOTICS, 
+	  PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
+	  { NULL, NULL, NULL, NULL} },
+	{ "Socket Communications PageCard",
+	  PCMCIA_MANUFACTURER_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
+	  { NULL, NULL, NULL, NULL} },
+	{ "Motorola Personal Messenger 100C CDPD Modem",
+	  PCMCIA_MANUFACTURER_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_PM100C,
+	  { NULL, NULL, NULL, NULL} }
 };
 
 static struct com_dev generic = {
