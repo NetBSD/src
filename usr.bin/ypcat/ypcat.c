@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypcat.c,v 1.3 1994/05/25 09:54:51 deraadt Exp $";
+static char rcsid[] = "$Id: ypcat.c,v 1.4 1996/04/30 22:50:53 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -124,9 +124,11 @@ char **argv;
 		usage();
 
 	inmap = argv[optind];
-	for(i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
-		if( strcmp(inmap, ypaliases[i].alias) == 0)
-			inmap = ypaliases[i].name;
+	if (!notrans) {
+		for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			if( strcmp(inmap, ypaliases[i].alias) == 0)
+				inmap = ypaliases[i].name;
+	}
 	ypcb.foreach = printit;
 	ypcb.data = NULL;
 
