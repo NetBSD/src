@@ -1,4 +1,4 @@
-/*	$NetBSD: unimpl_emul.s,v 1.1 2000/08/08 16:48:12 ragge Exp $	*/
+/*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -119,7 +119,14 @@ getval_dfloat:
 	.word	1f-0b
 	.word	2f-0b		# 4 indexed
 	.word	3f-0b		# 5 register
+#ifdef EMULATE_INKERNEL
+2:	movab	0f,r0
+	movl	r2,r1
+	brw	die
+0:	.asciz	"getval_dfloat: missing address mode %d\n"
+#else
 2:	.word 	0xffff		# reserved operand
+#endif
 
 1:	insv	(r3),$0,$3,r0	# insert fraction
 	extzv	$3,$3,(r3),r2	# get exponent
@@ -153,7 +160,14 @@ getval_word:
 	.word	1f-0b
 	.word	2f-0b		# 4 indexed
 	.word	3f-0b		# 5 register
+#ifdef EMULATE_INKERNEL
+2:	movab	0f,r0
+	movl	r2,r1
+	brw	die
+0:	.asciz	"getval_word: missing address mode %d\n"
+#else
 2:	.word 	0xffff		# reserved operand
+#endif
 
 1:	movb	(r3)+,r0	# correct operand
 	brb 4f
@@ -230,6 +244,7 @@ polyd:	bsbw	touser		# go back to user mode
 	movl	r0,r4
 	bsbw	getaddr_byte
 	movl	r0,r3
+	clrq	r0
 # Ok, do the real calculation (Horner's method)
 0:	addd2	(r3)+,r0	# add constant
 	tstl	r4		# more?
