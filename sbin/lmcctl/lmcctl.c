@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.2 2000/04/14 06:03:39 simonb Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.3 2001/02/04 20:06:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -55,7 +55,6 @@
 
 #include "extern.h"
 
-void lmc_av9110_freq(u_int32_t, lmc_av9110_t *);
 static void dumpdata(char *, lmc_ctl_t *);
 
 void usage(char *);
