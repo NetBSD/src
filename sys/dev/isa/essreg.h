@@ -32,7 +32,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.2 $ (SHARK) $Date: 1998/07/31 15:17:18 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.3 $ (SHARK) $Date: 1998/08/04 13:14:42 $
 **
 **++
 **
@@ -242,7 +242,9 @@
 #define ESS_MREG_XFER_COUNTLO	0x74	/* low-byte of DMA transfer size */
 #define ESS_MREG_XFER_COUNTHI	0x76	/* high-byte of DMA transfer size */
 #define ESS_MREG_AUDIO2_CTRL1	0x78	/* control register 1 for Audio2: */
+#define   ESS_AUDIO2_CTRL1_TYPE_8BYTE	0xC0
 #define	  ESS_AUDIO2_CTRL1_XFER_SIZE	0x20	/* 0=8-bit/1=16-bit */
+#define   ESS_AUDIO2_CTRL1_AUTO_INIT	0x10
 #define	  ESS_AUDIO2_CTRL1_FIFO_ENABLE	0x02	/* 0=disable/1=enable */
 #define	  ESS_AUDIO2_CTRL1_DAC_ENABLE	0x01	/* 0=disable/1=enable */
 #define ESS_MREG_AUDIO2_CTRL2	0x7A	/* control register 2 for Audio2: */
