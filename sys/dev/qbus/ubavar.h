@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.29 2000/06/04 06:17:04 matt Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.30 2000/06/05 00:09:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -117,7 +117,8 @@ struct	uba_reset {
 struct uba_attach_args {
 	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
 	bus_addr_t	ua_ioh;		/* I/O regs addr */
-	bus_dma_tag_t	ua_dmat;
+	bus_dma_tag_t	ua_dmat;	/* DMA tag for this bus'es dma */
+	struct evcnt	*ua_evcnt;
 	void		*ua_icookie;	/* Cookie for interrupt establish */
 	int		ua_iaddr;	/* Full CSR address of device */
 	int		ua_br;		/* IPL this dev interrupted on */

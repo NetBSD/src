@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.41 2000/06/04 06:17:03 matt Exp $ */
+/*      $NetBSD: if_qe.c,v 1.42 2000/06/05 00:09:18 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -350,7 +350,8 @@ qeattach(parent, self, aux)
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
 		sc, &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
