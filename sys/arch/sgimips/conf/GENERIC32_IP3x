@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.3 2004/01/15 08:45:12 pooka Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.4 2004/01/15 08:53:42 pooka Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -22,11 +22,13 @@
 # Currently this config file supports O2 (IP32).
 #
 
-include		"arch/sgimips/conf/std.sgimips"
+include 	"arch/sgimips/conf/std.sgimips"
+
+makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.3 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.4 $"
 
 maxusers	32
 
