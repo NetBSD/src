@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.139 2001/06/27 13:25:25 darcy Exp $
+.\"	$NetBSD: options.4,v 1.140 2001/07/03 16:41:33 hubertf Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -88,7 +88,11 @@ This option also enables
 compatibility, without which programs using the old interface produce
 an
 .Dq inappropriate ioctl
-error.
+error, and
+.Pa /dev/io
+only works when this option is set in the kernel,
+see
+.Xr io 4 . 
 .It Cd options COMPAT_11
 Enable binary compatibility with
 .Nx 1.1 .
