@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.31 1998/03/18 19:39:23 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.32 1998/03/22 05:39:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-#define	PMAP_ASNGEN_INVALID	0	/* invalid generation; never matches */
+#define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
 
 extern struct pmap	kernel_pmap_store;
 
