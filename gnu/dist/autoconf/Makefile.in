@@ -430,9 +430,6 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 $(srcdir)/acversion.m4: $(srcdir)/acversion.in $(srcdir)/configure.ac
 	sed 's,@VERSION\@,$(VERSION),g' $(srcdir)/acversion.in >acversion.tm4
 	mv acversion.tm4 $(srcdir)/acversion.m4
-INSTALL.txt: $(top_srcdir)/doc/install.texi
-	$(MAKEINFO) $(top_srcdir)/doc/install.texi --output=$(srcdir)/INSTALL.txt
-	cp $(srcdir)/INSTALL.txt $(srcdir)/INSTALL
 
 maintainer-check: maintainer-check-tests
 maintainer-check-tests:
