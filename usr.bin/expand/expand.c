@@ -1,6 +1,8 @@
+/*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)expand.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: expand.c,v 1.4 1993/10/13 18:34:09 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
+#endif
+static char rcsid[] = "$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: ctags.c,v 1.3 1995/03/26 20:14:05 glass Exp $	*/
+/*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
- * Copyright (c) 1987, 1993, 1994
+ * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,15 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
+"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ctags.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$NetBSD: ctags.c,v 1.3 1995/03/26 20:14:05 glass Exp $";
+static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
+static char rcsid[] = "$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -137,7 +136,7 @@ main(argc, argv)
 	argc -= optind;
 	if (!argc) {
 usage:		(void)fprintf(stderr,
-			"usage: ctags [-BFadtuwvx] [-f tagsfile] file ...");
+			"usage: ctags [-BFadtuwvx] [-f tagsfile] file ...\n");
 		exit(1);
 	}
 
