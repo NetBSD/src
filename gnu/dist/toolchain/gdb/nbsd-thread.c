@@ -660,7 +660,7 @@ info_cb (th, s)
      void *s;
 {
   int ret;
-  td_thread_info_t ti;
+  td_thread_info_t ti, ti2;
   td_sync_t *ts;
   td_sync_info_t tsi;
 
@@ -696,13 +696,17 @@ info_cb (th, s)
 	      td_thr_sleepinfo(th, &ts);
 	      td_sync_info(ts, &tsi);
 	      if (tsi.sync_type == TD_SYNC_JOIN) {
-		td_thread_info_t ti2;
 		td_thr_info(tsi.sync_data.join.thread, &ti2);
 		printf("joining thread %d ", ti2.thread_id);
 	      } else {
-		printf_filtered("sleeping on %s at %p ",
-				syncnames[tsi.sync_type], 
+		printf_filtered("on %s at %p ",
+				syncnames[tsi.sync_type],
 				(void *)tsi.sync_addr);
+		if (tsi.sync_type == TD_SYNC_MUTEX &&
+		    tsi.sync_data.mutex.owner != 0) {
+			td_thr_info(tsi.sync_data.mutex.owner, &ti2);
+			printf_filtered("owned by %d ", ti2.thread_id);
+		}
 	      }
       }
 
