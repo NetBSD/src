@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.7 1995/05/01 08:06:49 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8 1995/05/01 14:15:20 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -73,15 +73,20 @@ svr4_getcontext(p, uc, mask, oonstack)
 	/*
 	 * Set the general purpose registers
 	 */
-#ifdef notyet
-        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
-	__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
-#else
-	r[SVR4_X86_GS] = 0;
-	r[SVR4_X86_FS] = 0;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		r[SVR4_X86_GS] = tf->tf_vm86_gs;
+		r[SVR4_X86_FS] = tf->tf_vm86_fs;
+		r[SVR4_X86_ES] = tf->tf_vm86_es;
+		r[SVR4_X86_DS] = tf->tf_vm86_ds;
+	} else
 #endif
-	r[SVR4_X86_ES] = tf->tf_es;
-	r[SVR4_X86_DS] = tf->tf_ds;
+	{
+	        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
+		__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
+		r[SVR4_X86_ES] = tf->tf_es;
+		r[SVR4_X86_DS] = tf->tf_ds;
+	}
 	r[SVR4_X86_EDI] = tf->tf_edi;
 	r[SVR4_X86_ESI] = tf->tf_esi;
 	r[SVR4_X86_EBP] = tf->tf_ebp;
@@ -170,14 +175,19 @@ svr4_setcontext(p, uc)
 	/*
 	 * Restore register context.
 	 */
-#ifdef notyet
-        __asm("movl %w0,%%gs" : "=r" (r[SVR4_X86_GS]));
-	__asm("movl %w0,%%fs" : "=r" (r[SVR4_X86_FS]));
-	tf->tf_vm86_gs = r[SVR4_X86_GS];
-	tf->tf_vm86_fs = r[SVR4_X86_FS];
+#ifdef VM86
+	if (r[SVR4_X86_EFL] & PSL_VM) {
+		tf->tf_vm86_gs = r[SVR4_X86_GS];
+		tf->tf_vm86_fs = r[SVR4_X86_FS];
+		tf->tf_vm86_es = r[SVR4_X86_ES];
+		tf->tf_vm86_ds = r[SVR4_X86_DS];
+	} else
 #endif
-	tf->tf_es = r[SVR4_X86_ES];
-	tf->tf_ds = r[SVR4_X86_DS];
+	{
+		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_es = r[SVR4_X86_ES];
+		tf->tf_ds = r[SVR4_X86_DS];
+	}
 	tf->tf_edi = r[SVR4_X86_EDI];
 	tf->tf_esi = r[SVR4_X86_ESI];
 	tf->tf_ebp = r[SVR4_X86_EBP];
