@@ -34,6 +34,7 @@ alpha*-*-osf1*)		gdb_host=alpha-osf1 ;;
 alpha*-*-osf2*)		gdb_host=alpha-osf2 ;;
 alpha*-*-osf[3456789]*)	gdb_host=alpha-osf3 ;;
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
+alpha*-*-netbsd*)	gdb_host=nbsd ;;
 
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsd*)		gdb_host=nbsd ;;
