@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.8 1996/06/20 18:47:08 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.9 1996/06/21 06:21:04 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,78 +90,76 @@ _catopen(name, oflag)
 					u = lang;
 					while (*u && t < tmppath + PATH_MAX)
 						*t++ = *u++;
-					s++;
 					break;
 				case 'N':	/* name */
 					u = name;
 					while (*u && t < tmppath + PATH_MAX)
 						*t++ = *u++;
-					s++;
 					break;
 				case 'l':	/* lang */
 				case 't':	/* territory */
 				case 'c':	/* codeset */
-					s++;
 					break;
 				default:
 					if (t < tmppath + PATH_MAX)
-						*t++ = *s++;
+						*t++ = *s;
 				}
 			} else {
 				if (t < tmppath + PATH_MAX)
-					*t++ = *s++;
+					*t++ = *s;
 			}
+			s++;
 		}
 
 		*t = '\0';
 		catd = load_msgcat(tmppath);
-		if (catd != (nl_catd) 0)
+		if (catd != (nl_catd) -1)
 			return catd;
 
-		s++;
+		if (*s)
+			s++;
 		t = tmppath;
 	} while (*s);
 
-	return (nl_catd) 0;
+	return (nl_catd) -1;
 }
 
 static nl_catd
 load_msgcat(path)
 	const char *path;
 {
-	struct _nls_cat_hdr *cat_hdr;
 	struct stat st;
 	nl_catd catd;
+	void *data;
 	int fd;
 
 	if ((fd = open (path, O_RDONLY)) == -1)
-		return (nl_catd) 0;
+		return (nl_catd) -1;
 
 	if (fstat(fd, &st) != 0) {
 		close (fd);
-		return (nl_catd) 0;
+		return (nl_catd) -1;
+	}
+
+	data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	close (fd);
+
+	if (data == (void *) -1) {
+		munmap(data, (size_t) st.st_size);
+		return (nl_catd) -1;
+	}
+
+	if (ntohl(((struct _nls_cat_hdr *) data)->__magic) != _NLS_MAGIC) {
+		munmap(data, (size_t) st.st_size);
+		return (nl_catd) -1;
 	}
 
 	if ((catd = malloc (sizeof (*catd))) == 0) {
-		close (fd);
-		return (nl_catd) 0;
+		munmap(data, (size_t) st.st_size);
+		return (nl_catd) -1;
 	}
 
-	catd->__data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	close (fd);
-
-	if (catd->__data == (void *) -1) {
-		free (catd);
-		return (nl_catd) 0;
-	}
+	catd->__data = data;
 	catd->__size = st.st_size;
-
-	cat_hdr = (struct _nls_cat_hdr *) catd->__data;
-	if (ntohl(cat_hdr->__magic) != _NLS_MAGIC) {
-		free (catd);
-		close (fd);
-		return (nl_catd) 0;
-	}
-
 	return catd;
 }
