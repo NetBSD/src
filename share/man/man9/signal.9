@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.9 2004/01/07 19:01:14 christos Exp $
+.\"	$NetBSD: signal.9,v 1.10 2004/01/08 09:14:35 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 25, 2003
+.Dd January 7, 2004
 .Dt SIGNAL 9
 .Os
 .Sh NAME
@@ -289,9 +289,10 @@ caused by a hardware trap to the process
 .Fa p .
 This function is meant to be called by machine-dependent trap handling
 code, through the 
-.Dv p->p_emul->e_trapsignal function pointer because some
-emulations define their own trapsignal functions that remap the signal
-information to what the emulation expects.
+.Dv p->p_emul->e_trapsignal
+function pointer because some emulations define their own trapsignal
+functions that remap the signal information to what the emulation
+expects.
 .It void Fn psignal "struct proc *p" "int signum"
 .Pp
 This is a wrapper function for
