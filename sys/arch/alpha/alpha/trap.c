@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.75 2001/07/14 05:10:38 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.76 2001/07/14 05:48:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2001/07/14 05:10:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2001/07/14 05:48:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2001/07/14 05:10:38 thorpej Exp $");
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+#include <machine/rpb.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
@@ -154,10 +155,12 @@ trap_init(void)
 	 * If this is the primary processor, initialize some trap
 	 * event counters.
 	 */
-	evcnt_attach_dynamic(&fpevent_use, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc use");
-	evcnt_attach_dynamic(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
-	    "FP", "proc re-use");
+	if (cpu_number() == hwrpb->rpb_primary_cpu_id) {
+		evcnt_attach_dynamic(&fpevent_use, EVCNT_TYPE_MISC, NULL,
+		    "FP", "proc use");
+		evcnt_attach_dynamic(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
+		    "FP", "proc re-use");
+	}
 }
 
 static void
