@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 1994/11/23 08:13:53 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 1994/12/12 18:59:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -32,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
- *	from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
+ *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
 
 #include "bpfilter.h"
@@ -94,7 +93,6 @@
  * (2) mask our CPU addresses down to 24 bits for the LANCE.
  */
 #define	LANCE_ADDR(x)	((u_int)(x) & 0xFFffff)
-#define ISQUADALIGN(a) (((a) & 0x3) == 0)
 
 /* console error messages */
 int	ledebug = 0;
@@ -105,12 +103,10 @@ long	lerpacketsizes[LEMTU+1];
 #endif
 
 /* autoconfiguration driver */
-void	leattach(struct device *, struct device *, void *);
-int 	le_md_match(struct device *, void *, void *args);
+void	le_attach(struct device *, struct device *, void *);
 
 struct	cfdriver lecd = {
-	NULL, "le",
-	le_md_match, leattach,
+	NULL, "le", le_md_match, le_attach,
 	DV_IFNET, sizeof(struct le_softc),
 };
 
@@ -119,7 +115,6 @@ void	lesetladrf(struct le_softc *);
 void	lereset(struct device *);
 int 	leinit(int);
 int 	lestart(struct ifnet *);
-int 	leintr(void *);
 void	lexint(struct le_softc *);
 void	lerint(struct le_softc *);
 void	leread(struct le_softc *, char *, int);
@@ -137,19 +132,20 @@ int 	lewatchdog(int);	/* XXX */
  * to accept packets.
  */
 void
-leattach(parent, self, args)
+le_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
-	void *args;
+	void *aux;
 {
-	struct le_softc *sc = (struct le_softc *)self;
+	struct le_softc *sc = (void *) self;
 	volatile struct lereg2 *ler2;
 	struct ifnet *ifp = &sc->sc_if;
 	int pri;
 	u_int a;
+	caddr_t dvma_malloc();
 
-	le_md_attach(parent, self, args);
-	printf(": ether address %s\n", ether_sprintf(sc->sc_addr));
+	le_md_attach(parent, self, aux);
+	printf(" hwaddr %s\n", ether_sprintf(sc->sc_addr));
 
 	/*
 	 * Setup for transmit/receive
@@ -167,17 +163,9 @@ leattach(parent, self, args)
 	ler2->ler2_padr[4] = sc->sc_addr[5];
 	ler2->ler2_padr[5] = sc->sc_addr[4];
 	a = LANCE_ADDR(ler2->ler2_rmd);
-#ifdef	DIAGNOSTIC
-	if (!ISQUADALIGN(a))
-	    panic("rdra not quad aligned");
-#endif
 	ler2->ler2_rlen = LE_RLEN | (a >> 16);
 	ler2->ler2_rdra = a;
 	a = LANCE_ADDR(ler2->ler2_tmd);
-#ifdef	DIAGNOSTIC
-	if (!ISQUADALIGN(a))
-	    panic("tdra not quad aligned");
-#endif
 	ler2->ler2_tlen = LE_TLEN | (a >> 16);
 	ler2->ler2_tdra = a;
 
@@ -187,8 +175,11 @@ leattach(parent, self, args)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 	evcnt_attach(&sc->sc_dev, "errs", &sc->sc_errcnt);
 
+	/*
+	 * Initialize and attach S/W interface
+	 */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = "le";
+	ifp->if_name = lecd.cd_name;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
@@ -198,11 +189,12 @@ leattach(parent, self, args)
 	/* XXX still compile when the blasted things are gone... */
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	if_attach(ifp);
 	ether_ifattach(ifp);
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
+			  sizeof(struct ether_header));
+#endif
 }
 
 /*
@@ -383,10 +375,9 @@ lewatchdog(unit)
 	int unit;
 {
 	struct le_softc *sc = lecd.cd_devs[unit];
-	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
-	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_if.if_oerrors++;
 
 #ifdef	DIAGNOSTIC
@@ -425,7 +416,7 @@ leinit(unit)
 				   unit, sc->sc_r1, sc->sc_r2);
 		ifp->if_flags |= IFF_RUNNING;
 		lereset(&sc->sc_dev);
-		lestart(ifp);		/* XXX */
+		lestart(ifp);
 		splx(s);
 	}
 	return (0);
@@ -489,20 +480,22 @@ lestart(ifp)
 }
 
 int
-leintr(dev)
-	register void *dev;
+le_intr(arg)
+	register void *arg;
 {
-	register struct le_softc *sc = dev;
+	register struct le_softc *sc = arg;
 	register volatile struct lereg1 *ler1 = sc->sc_r1;
 	register int csr0;
 
 	csr0 = ler1->ler1_rdp;
+
+	if ((csr0 & LE_C0_INTR) == 0)
+		return (0);
+
 	if (ledebug & 2)
 	    printf("[%s: intr, stat %b]\n",
 			   sc->sc_dev.dv_xname, csr0, LE_C0_BITS);
 
-	if ((csr0 & LE_C0_INTR) == 0)
-		return (0);
 	sc->sc_intrcnt.ev_count++;
 
 	if (csr0 & LE_C0_ERR) {

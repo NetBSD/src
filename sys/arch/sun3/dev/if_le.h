@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.h,v 1.4 1994/11/21 21:30:53 gwr Exp $	*/
+/*	$NetBSD: if_le.h,v 1.5 1994/12/12 18:59:14 gwr Exp $	*/
 
 /*
  * Ethernet software status per interface.
@@ -22,12 +22,14 @@ struct	lestats {
 
 struct	le_softc {
 	struct	device sc_dev;		/* base device */
-	void    *sc_machdep;		/* machine dependent pointer */
-	struct	evcnt sc_intrcnt;	/* # of interrupts, per le */
-	struct	evcnt sc_errcnt;	/* # of errors, per le */
+
 	struct	arpcom sc_ac;		/* common Ethernet structures */
 #define	sc_if	sc_ac.ac_if		/* network-visible interface */
 #define	sc_addr	sc_ac.ac_enaddr		/* hardware Ethernet address */
+
+	struct	evcnt sc_intrcnt;	/* # of interrupts, per le */
+	struct	evcnt sc_errcnt;	/* # of errors, per le */
+
 	volatile struct	lereg1 *sc_r1;	/* LANCE registers */
 	volatile struct	lereg2 *sc_r2;	/* dual-port RAM */
 	int	sc_rmd;			/* predicted next rmd to process */
