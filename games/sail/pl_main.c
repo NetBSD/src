@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pl_main.c	5.5 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pl_main.c,v 1.2 1993/08/01 18:51:34 mycroft Exp $";
+static char rcsid[] = "$Id: pl_main.c,v 1.3 1994/01/13 19:22:29 glass Exp $";
 #endif /* not lint */
 
 #include "player.h"
@@ -199,9 +199,11 @@ reprint:
 	else {
 		(void) printf("Your name, Captain? ");
 		(void) fflush(stdout);
-		(void) gets(captain);
+		(void) fgets(captain, sizeof captain, stdin);
 		if (!*captain)
 			(void) strcpy(captain, "no name");
+		else
+		    captain[strlen(captain) - 1] = '\0';
 	}
 	captain[sizeof captain - 1] = '\0';
 	Write(W_CAPTAIN, ms, 1, (int)captain, 0, 0, 0);
