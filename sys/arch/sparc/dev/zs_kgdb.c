@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.4 2000/02/12 12:51:04 pk Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.5 2000/03/21 12:48:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
+#include <machine/promlib.h>
 #include <sparc/dev/cons.h>
 
 /* Suns provide a 4.9152 MHz clock to the ZS chips. */
@@ -78,7 +79,11 @@ struct zsdevice {
 };
 
 static void zs_setparam __P((struct zs_chanstate *, int, int));
+static void *findzs __P((int));
 struct zsops zsops_kgdb;
+
+extern int  zs_getc __P((void *arg));
+extern void zs_putc __P((void *arg, int c));
 
 static u_char zs_kgdb_regs[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -293,3 +298,91 @@ struct zsops zsops_kgdb = {
 	zs_kgdb_txint,	/* xmit buffer empty */
 	zs_kgdb_softint,	/* process software interrupt */
 };
+
+/*
+ * findzs() should return the address of the given zs channel.
+ * Here we count on the PROM to map in the required zs chips.
+ */
+void *
+findzs(zs)
+	int zs;
+{
+
+#if defined(SUN4)
+	if (CPU_ISSUN4) {
+		/*
+		 * On sun4, we use hard-coded physical addresses
+		 */
+#define ZS0_PHYS	0xf1000000
+#define ZS1_PHYS	0xf0000000
+#define ZS2_PHYS	0xe0000000
+		bus_space_handle_t bh;
+		bus_addr_t paddr;
+
+		switch (zs) {
+		case 0:
+			paddr = ZS0_PHYS;
+			break;
+		case 1:
+			paddr = ZS1_PHYS;
+			break;
+		case 2:
+			paddr = ZS2_PHYS;
+			break;
+		default:
+			return (NULL);
+		}
+
+		if (cpuinfo.cpu_type == CPUTYP_4_100)
+			/* Clear top bits of physical address on 4/100 */
+			paddr &= ~0xf0000000;
+
+		/*
+		 * Have the obio module figure out which virtual
+		 * address the device is mapped to.
+		 */
+		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
+			return (NULL);
+
+		return ((void *)bh);
+	}
+#endif
+
+#if defined(SUN4C) || defined(SUN4M)
+	if (CPU_ISSUN4COR4M) {
+		int node;
+
+		node = firstchild(findroot());
+		if (CPU_ISSUN4M) {
+			/*
+			 * On sun4m machines zs is in "obio" tree.
+			 */
+			node = findnode(node, "obio");
+			if (node == 0)
+				panic("findzs: no obio node");
+			node = firstchild(node);
+		}
+		while ((node = findnode(node, "zs")) != 0) {
+			int nvaddrs, *vaddrs, vstore[10];
+
+			if (getpropint(node, "slave", -1) != zs) {
+				node = nextsibling(node);
+				continue;
+			}
+
+			/*
+			 * On some machines (e.g. the Voyager), the zs
+			 * device has multi-valued register properties.
+			 */
+			vaddrs = vstore;
+			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
+			if (getprop(node, "address", sizeof(int),
+				    &nvaddrs, (void **)&vaddrs) != 0)
+				return (NULL);
+
+			return ((void *)vaddrs[0]);
+		}
+	}
+#endif
+	return (NULL);
+}
