@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.3 1999/12/12 17:46:37 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.4 2000/01/25 22:31:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ fxp_pci_attach(parent, self, aux)
 	    pci_mapreg_info(pa->pa_pc, pa->pa_tag, FXP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,
 	    &addr, &size, &flags) == 0) {
-		flags &= ~BUS_SPACE_MAP_CACHEABLE;
+		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 		if (bus_space_map(memt, addr, size, flags, &memh) == 0)
 			memh_valid = 1;
 	}
