@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.9 2003/10/21 17:10:00 thorpej Exp $
+.\"	$NetBSD: wm.4,v 1.10 2005/03/09 22:52:56 matt Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -101,9 +101,10 @@ line of Gigabit Ethernet interfaces, these chips also appear on
 some server systems, processor evaluation boards, and in embedded
 systems.
 .Pp
-The i8254x supports IPv4/TCP/UDP checksumming in hardware.  The
+The i8254x supports IPv4/TCP/UDP checksumming and TCP segmentation in hardware.
+The
 .Nm
-driver supports this feature of the chip.  See
+driver supports these features of the chip.  See
 .Xr ifconfig 8
 for information on how to enable this feature.
 .\" .Sh DIAGNOSTICS
