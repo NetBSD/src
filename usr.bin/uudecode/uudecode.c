@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uudecode.c	5.10 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uudecode.c,v 1.3 1993/08/27 22:30:54 jtc Exp $";
+static char rcsid[] = "$Id: uudecode.c,v 1.4 1993/11/09 01:46:38 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -42,12 +42,14 @@ static char rcsid[] = "$Id: uudecode.c,v 1.3 1993/08/27 22:30:54 jtc Exp $";
  * create the specified file, decoding as you go.
  * used with uuencode.
  */
+#include <stdio.h>
+#include <string.h>
+#include <locale.h>
+#include <errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <pwd.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
+#include <unistd.h>
 
 static int decode();
 static void usage();
@@ -61,7 +63,14 @@ main(argc, argv)
 {
 	int rval;
 
-	if (*++argv) {
+	setlocale(LC_ALL, "");
+
+	while (getopt(argc, argv, "") != -1)
+		usage();
+	argc -= optind;
+	argv += optind;
+
+	if (*argv) {
 		rval = 0;
 		do {
 			if (!freopen(filename = *argv, "r", stdin)) {
