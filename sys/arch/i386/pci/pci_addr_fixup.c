@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.2 2000/05/17 09:50:34 uch Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.3 2000/05/31 16:38:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -52,13 +52,7 @@ int	pcibiosverbose = 1;
 #define DPRINTFN(n, arg)
 #endif
 
-struct pciaddr {
-	struct extent *extent_mem;
-	struct extent *extent_port;
-	bus_addr_t mem_alloc_start;
-	bus_addr_t port_alloc_start;
-	int nbogus;
-} pciaddr;
+struct pciaddr pciaddr;
 
 typedef int (*pciaddr_resource_manage_func_t) 
 	(pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
@@ -112,13 +106,13 @@ pci_addr_fixup(pc, bus)
 	}, *srp;
 	paddr_t start;
 	int error;
-
-	pciaddr.extent_mem = extent_create("PCI I/O memory addresses",
+	
+	pciaddr.extent_mem = extent_create("PCI I/O memory space",
 					   PCIADDR_MEM_START, 
 					   PCIADDR_MEM_END,
 					   M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(pciaddr.extent_mem);
-	pciaddr.extent_port = extent_create("PCI I/O port addresses",
+	pciaddr.extent_port = extent_create("PCI I/O port space",
 					    PCIADDR_PORT_START,
 					    PCIADDR_PORT_END,
 					    M_DEVBUF, 0, 0, EX_NOWAIT);
@@ -130,9 +124,6 @@ pci_addr_fixup(pc, bus)
 	DPRINTF((verbose_header, "System BIOS Setting"));
 	pci_device_foreach(pc, bus, pciaddr_resource_reserve);
 	DPRINTF((verbose_footer, pciaddr.nbogus));
-
-	if (pciaddr.nbogus == 0)
-		goto end; /* no need to fixup */
 
 	/* 
 	 * 2. reserve non-PCI area.
@@ -159,6 +150,9 @@ pci_addr_fixup(pc, bus)
 		 "space start: 0x%08x\n", (unsigned)avail_end, 
 		 (unsigned)pciaddr.mem_alloc_start));
 
+	if (pciaddr.nbogus == 0)
+		return; /* no need to fixup */
+
 	/* 
 	 * 4. do fixup 
 	 */
@@ -167,9 +161,6 @@ pci_addr_fixup(pc, bus)
 	pci_device_foreach(pc, bus, pciaddr_resource_allocate);
 	DPRINTF((verbose_footer, pciaddr.nbogus));
 
- end:
-	extent_destroy(pciaddr.extent_mem);
-	extent_destroy(pciaddr.extent_port);
 }
 
 void
