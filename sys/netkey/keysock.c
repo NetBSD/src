@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.4 1999/07/04 02:01:16 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5 1999/07/06 12:23:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: keysock.c,v 1.4 1999/07/04 02:01:16 itojun Exp $ */
+/* KAME Id: keysock.c,v 1.1.6.4.2.2 1999/07/04 02:06:39 itojun Exp */
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"

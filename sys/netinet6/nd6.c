@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.5 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.6 1999/07/06 12:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -617,6 +617,60 @@ nd6_lookup(addr6, create, ifp)
 		return(0);
 	}
 	return(rt);
+}
+
+/*
+ * Detect if a given IPv6 address identifies a neighbor on a given link.
+ * XXX: should take care of the destination of a p2p link? 
+ */
+int
+nd6_is_addr_neighbor(addr, ifp)
+	struct in6_addr *addr;
+	struct ifnet *ifp;
+{
+	register struct ifaddr *ifa;
+	int i;
+
+#define IFADDR6(a) ((((struct in6_ifaddr *)(a))->ia_addr).sin6_addr)
+#define IFMASK6(a) ((((struct in6_ifaddr *)(a))->ia_prefixmask).sin6_addr)
+
+	/* A link-local address is always a neighbor. */
+	if (IN6_IS_ADDR_LINKLOCAL(addr))
+		return(1);
+
+	/*
+	 * If the address matches one of our addresses,
+	 * it should be a neighbor.
+	 */
+#ifdef __bsdi__
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+#else
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
+#endif
+	{
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			next: continue;
+
+		for (i = 0; i < 4; i++) {
+			if ((IFADDR6(ifa).s6_addr32[i] ^ addr->s6_addr32[i]) &
+			    IFMASK6(ifa).s6_addr32[i])
+				goto next;
+		}
+		return(1);
+	}
+
+	/*
+	 * Even if the address matches none of our addresses, it might be
+	 * in the neighbor cache.
+	 */
+	if (nd6_lookup(addr, 0, ifp))
+		return(1);
+
+	return(0);
+#undef IFADDR6
+#undef IFMASK6
 }
 
 /*

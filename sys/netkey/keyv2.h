@@ -1,4 +1,4 @@
-/*	$NetBSD: keyv2.h,v 1.4 1999/07/03 21:32:49 thorpej Exp $	*/
+/*	$NetBSD: keyv2.h,v 1.5 1999/07/06 12:23:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keyv2.h,v 1.4 1999/07/03 21:32:49 thorpej Exp $ */
+/* KAME Id: keyv2.h,v 1.1.6.1.6.4 1999/06/08 05:33:39 itojun Exp */
 
 /*
  * This file has been derived rfc 2367,
