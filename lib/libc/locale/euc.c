@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $	*/
+/*	$NetBSD: euc.c,v 1.8 2001/03/26 20:06:46 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.7 2001/01/25 01:25:06 itojun Exp $");
+__RCSID("$NetBSD: euc.c,v 1.8 2001/03/26 20:06:46 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,7 +147,7 @@ _EUC_init(rl)
 		memcpy(rl->__rune_variable, ei, sizeof(_EucInfo));
 		free(ei);
 	} else {
-		rl->__rune_variable = &ei;
+		rl->__rune_variable = ei;
 	}
 	rl->__variable_len = sizeof(_EucInfo);
 
