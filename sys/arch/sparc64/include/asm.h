@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 2000/07/18 22:38:11 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.13 2000/07/23 06:57:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -43,6 +43,11 @@
 
 #ifndef _ASM_H_
 #define _ASM_H_
+
+#ifndef _LOCORE
+#define _LOCORE
+#endif
+#include <machine/frame.h>
 
 #ifdef __arch64__
 #ifndef __ELF__
