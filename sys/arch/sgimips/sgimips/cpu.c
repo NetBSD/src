@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2000/06/14 16:02:44 soren Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2000/06/29 15:18:41 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -63,9 +63,16 @@ cpu_attach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
+	u_int32_t config;
 
 	if (ma->ma_arch == 32)
 		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
+
+#if 1
+	config = mips3_read_config();
+	config &= ~MIPS3_CONFIG_SC;
+	mips3_write_config(config);
+#endif
 
 	printf(": ");
 	cpu_identify();
@@ -73,7 +80,7 @@ cpu_attach(parent, self, aux)
 	if (ma->ma_arch == 22) {			/* XXX Indy */
 		unsigned long tmp1, tmp2, tmp3;
 
-		printf("cpu0: disabling auxiliary L2 cache\n");
+		printf("cpu0: disabling IP22 SysAD L2 cache\n");
 
 	        __asm__ __volatile__("
                 .set noreorder
@@ -97,4 +104,9 @@ cpu_attach(parent, self, aux)
                 .set reorder
         	" : "=r" (tmp1), "=r" (tmp2), "=r" (tmp3));
 	}
+
+#if 1
+	mips_L2CacheSize = 0;
+	mips_L2CachePresent = 0;
+#endif
 }
