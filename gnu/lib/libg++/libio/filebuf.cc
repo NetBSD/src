@@ -95,6 +95,14 @@ filebuf* filebuf::open(const char *filename, ios::openmode mode, int prot)
     posix_mode = O_RDONLY, read_write = _IO_NO_WRITES;
   else
     posix_mode = 0, read_write = _IO_NO_READS+_IO_NO_WRITES;
+  if (mode & ios::binary)
+    {
+      mode &= ~ios::binary;
+#ifdef O_BINARY
+      /* This is a (mis-)feature of DOS/Windows C libraries. */
+      posix_mode |= O_BINARY;
+#endif
+    }
   if ((mode & (int)ios::trunc) || mode == (int)ios::out)
     posix_mode |= O_TRUNC;
   if (mode & ios::app)

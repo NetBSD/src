@@ -233,7 +233,13 @@ public:
 
 extern _IO_istream_withassign cin;
 // clog->rdbuf() == cerr->rdbuf()
-extern _IO_ostream_withassign cout, cerr, clog;
+extern _IO_ostream_withassign cout, cerr;
+
+extern _IO_ostream_withassign clog
+#if _G_CLOG_CONFLICT
+__asm__ ("__IO_clog")
+#endif
+;
 
 struct Iostream_init { } ;  // Compatibility hack for AT&T library.
 

@@ -5148,9 +5148,10 @@ rx_compile (pattern, size, syntax, rxb)
 	      if (!zero_times_ok)
 		{
 		  struct rexp_node * concat
-		    = rx_mk_r_concat (&rxb->rx, inner_exp,
+		    = rx_mk_r_concat (&rxb->rx,
 				      rx_copy_rexp (&rxb->rx,
-						    *last_expression));
+						    inner_exp),
+				      *last_expression);
 		  if (!concat)
 		    return REG_ESPACE;
 		  *last_expression = concat;
