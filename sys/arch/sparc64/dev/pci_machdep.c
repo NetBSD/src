@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.46 2004/04/04 11:53:40 nakayama Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47 2004/06/11 03:52:00 petrov Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2004/04/04 11:53:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2004/06/11 03:52:00 petrov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2004/04/04 11:53:40 nakayama Ex
 #define SPDB_CONF	0x01
 #define SPDB_INTR	0x04
 #define SPDB_INTMAP	0x08
-#define SPDB_INTFIX	0x10
 #define SPDB_PROBE	0x20
 int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
@@ -444,30 +443,38 @@ pci_find_ino(pa, ihp)
 	u_int dev;
 	u_int ino;
 
+	DPRINTF(SPDB_INTMAP, ("pci_find_ino: pa_tag: node %x, %d:%d:%d\n",
+			      PCITAG_NODE(pa->pa_tag), (int)PCITAG_BUS(pa->pa_tag),
+			      (int)PCITAG_DEV(pa->pa_tag),
+			      (int)PCITAG_FUN(pa->pa_tag)));
+	DPRINTF(SPDB_INTMAP,
+		("pci_find_ino: intrswiz %d, intrpin %d, intrline %d, rawintrpin %d\n",
+		 pa->pa_intrswiz, pa->pa_intrpin, pa->pa_intrline, pa->pa_rawintrpin));
+	DPRINTF(SPDB_INTMAP, ("pci_find_ino: pa_intrtag: node %x, %d:%d:%d\n",
+			      PCITAG_NODE(pa->pa_intrtag),
+			      (int)PCITAG_BUS(pa->pa_intrtag),
+			      (int)PCITAG_DEV(pa->pa_intrtag),
+			      (int)PCITAG_FUN(pa->pa_intrtag)));
+
 	ino = *ihp;
 
 	if ((ino & ~INTMAP_PCIINT) == 0) {
 
+		if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0) 
+			dev = PCITAG_DEV(pa->pa_intrtag);
+		else
+			dev = pa->pa_device;
+
 		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
 		    pp->pp_id == PSYCHO_PBM_B)
-			dev = pa->pa_device - 2;
+			dev -= 2;
 		else
-			dev = pa->pa_device - 1;
+			dev--;
 
-		DPRINTF(SPDB_CONF, ("pci_find_ino: mode %d, pbm %d, dev %d\n",
-		       sc->sc_mode, pp->pp_id, dev));
+		DPRINTF(SPDB_INTMAP, ("pci_find_ino: mode %d, pbm %d, dev %d, ino %d\n",
+		       sc->sc_mode, pp->pp_id, dev, ino));
 
-		if (ino == 0 || ino > 4) {
-			u_int32_t intreg;
-
-			intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			     PCI_INTERRUPT_REG);
-			
-			ino = PCI_INTERRUPT_PIN(intreg) - 1;
-		} else
-			ino -= 1;
-
-		ino &= INTMAP_PCIINT;
+		ino = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
 
 		ino |= sc->sc_ign;
 		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
