@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.18 1995/12/11 12:43:15 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.19 1996/02/19 00:15:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,8 @@ int		bwtwoclose __P((dev_t, int, int, struct proc *));
 int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		bwtwommap __P((dev_t, int, int));
 static void	bwtwounblank __P((struct device *));
+static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
+static int	bwtwo_get_video __P((struct bwtwo_softc *));
 
 struct cfdriver bwtwocd =
     { NULL, "bwtwo", bwtwomatch, bwtwoattach,
@@ -221,13 +223,7 @@ bwtwoattach(parent, self, args)
 			sizeof(struct bwtworeg), ca->ca_bustype);
 
 	/* Insure video is enabled */
-#if defined(SUN4)
-	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
-		stba(AC_SYSENABLE, ASI_CONTROL,
-		    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
-	else
-#endif
-		sc->sc_reg->bw_ctl |= CTL_VE;
+	bwtwo_set_video(sc, 1);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -284,32 +280,11 @@ bwtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-#if defined(SUN4)
-		if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
-			*(int *)data =
-			 (lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO) != 0;
-		else
-#endif
-			*(int *)data = (sc->sc_reg->bw_ctl & CTL_VE) != 0;
+		*(int *)data = bwtwo_get_video(sc);
 		break;
 
 	case FBIOSVIDEO:
-#if defined(SUN4)
-		if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
-			if (*(int *)data)
-				stba(AC_SYSENABLE, ASI_CONTROL,
-				    lduba(AC_SYSENABLE, ASI_CONTROL) |
-				    SYSEN_VIDEO);
-			else
-				stba(AC_SYSENABLE, ASI_CONTROL,
-				    lduba(AC_SYSENABLE, ASI_CONTROL) &
-				    ~SYSEN_VIDEO);
-		else
-#endif
-			if (*(int *)data)
-				sc->sc_reg->bw_ctl |= CTL_VE;
-			else
-				sc->sc_reg->bw_ctl &= ~CTL_VE;
+		bwtwo_set_video(sc, (*(int *)data));
 		break;
 
 	default:
@@ -324,7 +299,7 @@ bwtwounblank(dev)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
-	sc->sc_reg->bw_ctl |= CTL_VE;
+	bwtwo_set_video(sc, 1);
 }
 
 /*
@@ -347,4 +322,42 @@ bwtwommap(dev, off, prot)
 	 * getting horribly broken behaviour with it on.
 	 */
 	return (REG2PHYS(&sc->sc_phys, BWREG_MEM+off, sc->sc_bustype) | PMAP_NC);
+}
+
+static int
+bwtwo_get_video(sc)
+	struct bwtwo_softc *sc;
+{
+
+#if defined(SUN4)
+	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
+		return ((lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO) != 0);
+#endif
+
+	return ((sc->sc_reg->bw_ctl & CTL_VE) != 0);
+}
+
+static void
+bwtwo_set_video(sc, enable)
+	struct bwtwo_softc *sc;
+	int enable;
+{
+
+#if defined(SUN4)
+	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO)) {
+		if (enable)
+			stba(AC_SYSENABLE, ASI_CONTROL,
+			    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
+		else
+			stba(AC_SYSENABLE, ASI_CONTROL,
+			    lduba(AC_SYSENABLE, ASI_CONTROL) & ~SYSEN_VIDEO);
+
+		return;
+	}
+#endif
+
+	if (enable)
+		sc->sc_reg->bw_ctl |= CTL_VE;
+	else
+		sc->sc_reg->bw_ctl &= ~CTL_VE;
 }
