@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.1 1999/11/20 19:56:38 uch Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.2 1999/12/07 17:08:10 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -111,5 +111,9 @@ tx39uart_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+	struct tx39uart_attach_args *ua = aux;
+	
+	printf(" slot %d", ua->ua_slot);
+
+	return QUIET;
 }
