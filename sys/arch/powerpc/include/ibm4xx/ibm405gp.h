@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.5 2001/10/21 15:09:36 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.6 2002/08/11 13:32:20 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,13 +37,6 @@
 
 #ifndef _IBM4XX_IBM405GP_H_
 #define	_IBM4XX_IBM405GP_H_
-
-/* 405GP PVR */
-#define PVR_405GP      		0x40110000 
-#define PVR_405GP_PASS1 	0x40110000	/* RevA */ 
-#define PVR_405GP_PASS2 	0x40110040	/* RevB */ 
-#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */ 
-#define PVR_405GP_PASS3 	0x401100c4	/* RevD */ 
 
 /*
  * Memory and PCI addresses
