@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.49 2002/09/30 15:48:46 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.50 2002/10/01 03:27:04 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.49 2002/09/30 15:48:46 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.50 2002/10/01 03:27:04 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -505,6 +505,7 @@ awi_init(struct ifnet *ifp)
 		sc->sc_mib_local.Acting_as_AP = 1;
 		break;
 	}
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
 	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
 	sc->sc_mib_mac.aDesired_ESS_ID[1] = ic->ic_des_esslen;
