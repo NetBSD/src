@@ -1,8 +1,12 @@
-/*	$NetBSD: flt_rounds_softfloat.S,v 1.1 2001/05/17 21:46:26 fredette Exp $	*/
+/*	$NetBSD: flt_rounds_softfloat.S,v 1.2 2004/09/26 21:13:27 jmmv Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
+
+ * Broken by Bruce O'Neel Aug 4 2003
+	gcc no longer seems to export fpCCR so this fails.
+	for now just return 0.
  */
 
 #include <machine/asm.h>
@@ -18,10 +22,10 @@ _map:
 	.byte 3		/* round to negative infinity */
 
 ENTRY(__flt_rounds)
-	lea	_C_LABEL(_fpCCR),%a0	| check the rounding mode
-	movew	%a0@(6),%d0	| rounding mode in d0
-	lea	_map,%a0
-	moveb	%a0@(%d0:l:1),%d0
+	/* lea	_C_LABEL(_fpCCR),%a0	| check the rounding mode */
+	/* movew	%a0@(6),%d0	| rounding mode in d0 */
+	/* lea	_map,%a0 */
+	moveb	#0,%d0
 	rts
 
 
