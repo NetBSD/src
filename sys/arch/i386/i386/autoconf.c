@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.3 1993/04/10 21:58:52 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/autoconf.c,v 1.4 1993/05/18 12:42:44 cgd Exp $";
 
 /*
  * Setup the system to run on the current machine.
@@ -74,7 +74,7 @@ configure()
 	isa_configure();
 #endif
 
-#if GENERICxxx
+#if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
 		setroot();
 	setconf();
