@@ -1,4 +1,4 @@
-/*	$NetBSD: postmortem.c,v 1.12 1998/01/21 22:34:38 mark Exp $	*/
+/*	$NetBSD: postmortem.c,v 1.13 1998/06/04 17:44:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -199,7 +199,7 @@ postmortem(frame)
 {
 	u_int s;
 	u_int addr;
-	static	postmortem_active = 0;
+	static int postmortem_active = 0;
 
 	s = splhigh();
 
