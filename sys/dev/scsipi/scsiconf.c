@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.118 1998/11/26 13:39:14 leo Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.119 1998/12/05 19:39:23 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 /*
  * Declarations
  */
-void scsi_probedev __P((struct scsibus_softc *, int, int));
+int scsi_probedev __P((struct scsibus_softc *, int, int));
 int scsi_probe_bus __P((int bus, int target, int lun));
 
 struct scsipi_device probe_switch = {
@@ -173,18 +173,20 @@ scsibusattach(parent, self, aux)
 
 	sb->adapter_link = sc_link_proto;
 	sb->sc_maxtarget = sc_link_proto->scsipi_scsi.max_target;
-	printf(": %d targets\n", sb->sc_maxtarget + 1);
+	sb->sc_maxlun = sc_link_proto->scsipi_scsi.max_lun;
+	printf(": %d targets, %d luns per target\n",
+	    sb->sc_maxtarget + 1, sb->sc_maxlun + 1);
 
 	/* Initialize shared data. */
 	scsipi_init();
 
-	nbytes = sb->sc_maxtarget * sizeof(struct scsipi_link **);
+	nbytes = (sb->sc_maxtarget + 1) * sizeof(struct scsipi_link **);
 	sb->sc_link = (struct scsipi_link ***)malloc(nbytes, M_DEVBUF,
 	    M_NOWAIT);
 	if (sb->sc_link == NULL)
 		panic("scsibusattach: can't allocate target links");
 
-	nbytes = 8 * sizeof(struct scsipi_link *);
+	nbytes = (((int) sb->sc_maxlun) + 1) * sizeof(struct scsipi_link *);
 	for (i = 0; i <= sb->sc_maxtarget; i++) {
 		sb->sc_link[i] = (struct scsipi_link **)malloc(nbytes,
 		    M_DEVBUF, M_NOWAIT);
@@ -273,10 +275,10 @@ scsi_probe_bus(bus, target, lun)
 	}
 
 	if (lun == -1) {
-		maxlun = 7;
+		maxlun = scsi->sc_maxlun;
 		minlun = 0;
 	} else {
-		if (lun < 0 || lun > 7)
+		if (lun < 0 || lun > scsi->sc_maxlun)
 			return (EINVAL);
 		maxlun = minlun = lun;
 	}
@@ -290,9 +292,9 @@ scsi_probe_bus(bus, target, lun)
 			/*
 			 * See if there's a device present, and configure it.
 			 */
-			scsi_probedev(scsi, target, lun);
-			if ((scsi->moreluns & (1 << target)) == 0)
+			if (scsi_probedev(scsi, target, lun) == 0) {
 				break;
+			}
 			/* otherwise something says we should look further */
 		}
 	}
@@ -565,6 +567,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_CHANGER, T_REMOV,
 	 "SONY    ", "CDL1100         ", ""},     SDEV_NOLUNS},
+
+	{{T_ENCLOSURE, T_FIXED,
+	 "SUN     ", "SENA            ", "1.07"}, SDEV_NOLUNS},
 };
 
 /*
@@ -572,7 +577,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
  * it is, and find the correct driver table
  * entry.
  */
-void
+int
 scsi_probedev(scsi, target, lun)
 	struct scsibus_softc *scsi;
 	int target, lun;
@@ -580,13 +585,21 @@ scsi_probedev(scsi, target, lun)
 	struct scsipi_link *sc_link;
 	static struct scsipi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
-	int checkdtype, priority;
+	int checkdtype, priority, docontinue;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
 
+	/*
+	 * Assume no more luns to search after this one.
+	 * If we successfully get Inquiry data and after
+	 * merging quirks we find we can probe for more
+	 * luns, we will.
+	 */
+	docontinue = 0;
+
 	/* Skip this slot if it is already attached. */
 	if (scsi->sc_link[target][lun] != NULL)
-		return;
+		return (docontinue);
 
 	sc_link = malloc(sizeof(*sc_link), M_DEVBUF, M_NOWAIT);
 	*sc_link = *scsi->adapter_link;
@@ -662,7 +675,7 @@ scsi_probedev(scsi, target, lun)
 	sc_link->scsipi_scsi.scsi_version = inqbuf.version;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
-		scsi->moreluns |= (1 << target);
+		docontinue = 1;
 
 	/*
 	 * note what BASIC type of device it is
@@ -721,11 +734,11 @@ scsi_probedev(scsi, target, lun)
 		goto bad;
 	}
 
-	return;
+	return (docontinue);
 
 bad:
 	free(sc_link, M_DEVBUF);
-	return;
+	return (docontinue);
 }
 
 /****** Entry points for user control of the SCSI bus. ******/
