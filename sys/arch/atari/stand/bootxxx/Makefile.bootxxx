@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxxx,v 1.1 2003/05/23 21:56:36 leo Exp $
+#	$NetBSD: Makefile.bootxxx,v 1.2 2003/10/28 11:41:46 he Exp $
 
 NOMAN=	# defined
 
@@ -22,6 +22,7 @@ INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 CPPFLAGS+=	${DEFS} ${INCL}
 CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
+CFLAGS+=	-ffreestanding
 .if ${OBJECT_FMT} == "ELF"
 LDFLAGS=	-static -nostdlib -Wl,-x,-N,-e,bootxxx,-Ttext,${LOADADDR3}
 .else
