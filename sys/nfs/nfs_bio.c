@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.84 2002/10/23 09:14:48 jdolecek Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.85 2002/10/29 10:15:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.84 2002/10/23 09:14:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.85 2002/10/29 10:15:16 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -591,6 +591,8 @@ nfs_write(v)
 
 	origoff = uio->uio_offset;
 	do {
+		boolean_t extending; /* if we are extending whole pages */
+		u_quad_t oldsize;
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
@@ -616,13 +618,15 @@ nfs_write(v)
 #endif
 		nfsstats.biocache_writes++;
 
+		oldsize = np->n_size;
 		np->n_flag |= NMODIFIED;
 		if (np->n_size < uio->uio_offset + bytelen) {
 			np->n_size = uio->uio_offset + bytelen;
 		}
-		if ((uio->uio_offset & PAGE_MASK) == 0 &&
+		extending = ((uio->uio_offset & PAGE_MASK) == 0 &&
 		    (bytelen & PAGE_MASK) == 0 &&
-		    uio->uio_offset >= vp->v_size) {
+		    uio->uio_offset >= vp->v_size);
+		if (extending) {
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 			    UBC_WRITE | UBC_FAULTBUSY);
 		} else {
@@ -632,6 +636,14 @@ nfs_write(v)
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
+			if (extending) {
+				/*
+				 * backout size and free pages past eof.
+				 */
+				np->n_size = oldsize;
+				(void)VOP_PUTPAGES(vp, round_page(vp->v_size),
+				    0, PGO_SYNCIO | PGO_FREE);
+			}
 			break;
 		}
 		wrotedta = 1;
