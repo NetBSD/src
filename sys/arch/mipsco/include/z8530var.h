@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 2001/02/07 11:40:18 wdk Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3 2001/03/31 00:08:34 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -62,6 +62,7 @@ struct zsc_softc {
 	bus_space_tag_t		zsc_bustag;	/* Bus type */
 	bus_space_handle_t	zsc_base; 	/* Device base address */
         struct  evcnt		zs_intrcnt; 	/* Interrupt counter */
+	void		       *sc_si;		/* Softinterrupt handle */
 };
 
 /*
