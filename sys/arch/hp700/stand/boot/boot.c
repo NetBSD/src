@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2002/06/06 19:48:11 fredette Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,9 +73,6 @@
 #include <sys/boot_flag.h>
 
 #include <arch/hp700/stand/common/libsa.h>
-#if 0
-#include <lib/libsa/stand.h>
-#endif
 #include <lib/libsa/loadfile.h>
 
 #include <machine/pdc.h>
@@ -110,20 +107,20 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
-int main __P((void));
-void getbootdev __P((int *));
-void exec_hp700 __P((char *, u_long, int));
+int main(void);
+void getbootdev(int *);
+void exec_hp700(char *, u_long, int);
 
-int tgets __P((char *));
+int tgets(char *);
+void _rtt(void);
 
-typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
+typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
 
 int howto;
 
 void
-boot(bootdev)
-        dev_t        bootdev;
+boot(dev_t bootdev)
 {
         machdep();
 #ifdef	DEBUGBUG
@@ -134,7 +131,7 @@ boot(bootdev)
 }
 
 int
-main()
+main(void)
 {
 	int currname = 0;
 	char *filename, filename_buffer[100];
@@ -174,8 +171,7 @@ main()
 }
 
 void
-getbootdev(howto)
-	int *howto;
+getbootdev(int *howto)
 {
 	char c, *ptr = line;
 
@@ -184,7 +180,6 @@ getbootdev(howto)
 
 	if (tgets(line)) {
 		if (strcmp(line, "reset") == 0) {
-			void _rtt __P((void));
 			_rtt();
 			printf("panic: can't reboot\n");
 			return;
@@ -212,14 +207,11 @@ getbootdev(howto)
 	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
 
 void
-exec_hp700(file, loadaddr, howto)
-	char *file;
-	u_long loadaddr;
-	int howto;
+exec_hp700(char *file, u_long loadaddr, int howto)
 {
 #ifdef EXEC_DEBUG
 	extern int debug;
-	register int i;
+	int i;
 #endif
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
