@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.5 2002/08/06 23:00:09 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.6 2002/08/27 19:54:18 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -287,9 +287,10 @@ void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
-	struct proc *p = l->l_proc;
 	struct trapframe * const tf = trapframe(l);
-
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
 	KERNEL_PROC_UNLOCK(l);
 
 	tf->fixreg[FIRSTARG] = 0;
