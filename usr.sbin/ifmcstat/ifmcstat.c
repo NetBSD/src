@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.5 1999/12/09 15:34:19 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.6 2000/02/02 05:04:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,6 +65,10 @@ kvm_t	*kvmd;
 struct	nlist nl[] = {
 #define	N_IFNET	0
 	{ "_ifnet" },
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+#define N_IN6_MK 1
+	{ "_in6_mk" },
+#endif
 	{ "" },
 };
 
@@ -90,6 +94,14 @@ static char *ether_ntoa __P((struct ether_addr *));
 
 #define	KREAD(addr, buf, type) \
 	kread((u_long)addr, (void *)buf, sizeof(type))
+
+#ifdef N_IN6_MK
+struct multi6_kludge {
+	LIST_ENTRY(multi6_kludge) mk_entry;
+	struct ifnet *mk_ifp;
+	struct in6_multihead mk_head;
+};
+#endif
 
 const char *inet6_n2a(p)
 	struct in6_addr *p;
@@ -179,9 +191,13 @@ char *ifname(ifp)
 	struct ifnet *ifp;
 {
 	static char buf[BUFSIZ];
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	struct ifnet ifnet;
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	KREAD(ifp->if_xname, buf, IFNAMSIZ);
+	KREAD(ifp, &ifnet, struct ifnet);
+	strncpy(buf, ifnet.if_xname, BUFSIZ);
 #else
 	KREAD(ifp->if_name, buf, IFNAMSIZ);
 #endif
@@ -230,13 +246,9 @@ if6_addrlist(ifap)
 	struct sockaddr sa;
 	struct in6_ifaddr if6a;
 	struct in6_multi *mc = 0;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct ifaddr *ifap0;
-#endif /* __FreeBSD__ >= 3 */
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	ifap0 = ifap;
-#endif /* __FreeBSD__ >= 3 */
 	while (ifap) {
 		KREAD(ifap, &ifa, struct ifaddr);
 		if (ifa.ifa_addr == NULL)
@@ -296,6 +308,32 @@ if6_addrlist(ifap)
 #else
 	if (mc)
 		in6_multilist(mc);
+#endif
+#ifdef N_IN6_MK
+    {
+	LIST_HEAD(in6_mktype, multi6_kludge) in6_mk;
+	struct multi6_kludge *mkp, mk;
+	char *nam;
+
+	if (nl[N_IN6_MK].n_value == 0) {
+		printf("symbol %s not found\n", nl[N_IN6_MK].n_name);
+		exit(1);
+	}
+	KREAD(nl[N_IN6_MK].n_value, &in6_mk, struct in6_mktype);
+	KREAD(ifap0, &ifa, struct ifaddr);
+
+	nam = strdup(ifname(ifa.ifa_ifp));
+
+	for (mkp = in6_mk.lh_first; mkp; mkp = mk.mk_entry.le_next) {
+		KREAD(mkp, &mk, struct multi6_kludge);
+		if (strcmp(nam, ifname(mk.mk_ifp)) == 0 && mk.mk_head.lh_first) {
+			printf("    (on kludge entry for %s)\n", nam);
+			in6_multilist(mk.mk_head.lh_first);
+		}
+	}
+
+	free(nam);
+    }
 #endif
 }
 
