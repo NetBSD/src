@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.40 2004/03/21 10:24:01 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.41 2004/03/21 13:43:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.40 2004/03/21 10:24:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.41 2004/03/21 13:43:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1198,10 +1198,8 @@ smbfs_lookup(v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-#ifdef SMB_VNODE_DEBUG
 	SMBVDEBUG("%d '%.*s' in '%.*s' id=d\n", nameiop, nmlen, name, 
 	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
-#endif
 
 	islastcn = flags & ISLASTCN;
 	lockparent = flags & LOCKPARENT;
