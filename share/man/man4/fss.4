@@ -1,4 +1,4 @@
-.\"	$NetBSD: fss.4,v 1.1 2003/12/10 11:40:11 hannken Exp $	*/
+.\"	$NetBSD: fss.4,v 1.2 2003/12/11 17:00:16 wiz Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -53,18 +53,17 @@ Reading from a
 device gives the view of the file system when the snapshot was taken.
 It can be configured via
 .Xr ioctl 2 .
-
 .Sh IOCTLS
 The
 .Xr ioctl 2
 command codes below are defined in
 .Aq Pa sys/dev/fssvar.h .
 .Pp
-The (third) argument to the
+The (third) argument to
 .Xr ioctl 2
 should be a pointer to the type indicated.
-.Bl -tag -width indent -offset indent
-.It Dv FSSIOCSET (struct fss_set)
+.Bl -tag -width XFSSIOCSETXstructXfss_setX -offset indent
+.It Dv FSSIOCSET(struct fss_set)
 Configures a
 .Nm
 device.
@@ -75,6 +74,7 @@ struct fss_set {
 	blksize_t fss_csize;
 };
 .Ed
+.Pp
 The struct element
 .Va fss_mount
 is the mount point of the file system.
@@ -85,7 +85,7 @@ the file system will be saved.
 The struct element
 .Va fss_csize
 is the preferred size of this data.
-.It Dv FSSIOCGET (struct fss_get)
+.It Dv FSSIOCGET(struct fss_get)
 Gets the status of a
 .Nm
 device.
@@ -115,7 +115,7 @@ The struct element
 is the number of clusters written to the backing store.
 .It Dv FSSIOCCLR
 Unconfigures a
-.Nm 
+.Nm
 device.
 .El
 .Sh FILES
