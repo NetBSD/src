@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1997/10/17 11:49:17 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1997/11/06 00:27:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.4 1997/10/17 11:49:17 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.5 1997/11/06 00:27:58 lukem Exp $");
 #endif
 
 #include <err.h>
@@ -94,8 +94,12 @@ getline(fp, size)
 	}
 	if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
 	    s--;			/* forget newline */
-	if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
-	    s--;			/* forget \\ */
+	if (!s)
+	    cnt = 0;
+	else {
+	    if ((cnt = (ptr[s - 1] == '\\')) != 0)	/* check for \\ */
+	    	s--;					/* forget \\ */
+	}
 
 	buf = erealloc(buf, len + s + 1);
 	memcpy(buf + len, ptr, s);
