@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.31 2000/08/29 09:08:43 itojun Exp $	*/
-/*	$KAME: key.c,v 1.151 2000/08/28 05:24:02 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.32 2000/09/20 00:08:42 itojun Exp $	*/
+/*	$KAME: key.c,v 1.153 2000/09/19 23:55:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -404,6 +404,7 @@ static int key_get __P((struct socket *, struct mbuf *,
 static struct mbuf *key_getcomb_esp __P((void));
 #endif
 static struct mbuf *key_getcomb_ah __P((void));
+static struct mbuf *key_getcomb_ipcomp __P((void));
 static struct mbuf *key_getprop __P((const struct secasindex *));
 
 static int key_acquire __P((struct secasindex *, struct secpolicy *));
@@ -2474,25 +2475,38 @@ key_delsav(sav)
 	if (sav->key_auth != NULL) {
 		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
+		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
 		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
+		sav->key_enc = NULL;
 	}
 	if (sav->sched) {
 		bzero(sav->sched, sav->schedlen);
 		KFREE(sav->sched);
+		sav->sched = NULL;
 	}
-	if (sav->replay != NULL)
+	if (sav->replay != NULL) {
 		keydb_delsecreplay(sav->replay);
-	if (sav->lft_c != NULL)
+		sav->replay = NULL;
+	}
+	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
-	if (sav->lft_h != NULL)
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
 		KFREE(sav->lft_h);
-	if (sav->lft_s != NULL)
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
 		KFREE(sav->lft_s);
-	if (sav->iv != NULL)
+		sav->lft_s = NULL;
+	}
+	if (sav->iv != NULL) {
 		KFREE(sav->iv);
+		sav->iv = NULL;
+	}
 
 	KFREE(sav);
 
@@ -2855,22 +2869,38 @@ key_setsaval(sav, m, mhp)
 
  fail:
 	/* initialization */
-	if (sav->replay != NULL)
+	if (sav->replay != NULL) {
 		keydb_delsecreplay(sav->replay);
-	if (sav->key_auth != NULL)
+		sav->replay = NULL;
+	}
+	if (sav->key_auth != NULL) {
 		KFREE(sav->key_auth);
-	if (sav->key_enc != NULL)
+		sav->key_auth = NULL;
+	}
+	if (sav->key_enc != NULL) {
 		KFREE(sav->key_enc);
-	if (sav->sched)
+		sav->key_enc = NULL;
+	}
+	if (sav->sched) {
 		KFREE(sav->sched);
-	if (sav->iv != NULL)
+		sav->sched = NULL;
+	}
+	if (sav->iv != NULL) {
 		KFREE(sav->iv);
-	if (sav->lft_c != NULL)
+		sav->iv = NULL;
+	}
+	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
-	if (sav->lft_h != NULL)
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
 		KFREE(sav->lft_h);
-	if (sav->lft_s != NULL)
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
 		KFREE(sav->lft_s);
+		sav->lft_s = NULL;
+	}
 
 	return error;
 }
@@ -4971,6 +5001,7 @@ key_setident(sah, m, mhp)
 	KMALLOC(sah->identd, struct sadb_ident *, iddstlen);
 	if (sah->identd == NULL) {
 		KFREE(sah->idents);
+		sah->idents = NULL;
 #ifdef IPSEC_DEBUG
 		printf("key_setident: No more memory.\n");
 #endif
@@ -5370,6 +5401,16 @@ key_getcomb_ah()
 }
 
 /*
+ * XXX TBD
+ */
+static struct mbuf *
+key_getcomb_ipcomp()
+{
+
+	return NULL;
+}
+
+/*
  * XXX no way to pass mode (transport/tunnel) to userland
  * XXX replay checking?
  * XXX sysctl interface to ipsec_{ah,esp}_keymin
@@ -5391,6 +5432,9 @@ key_getprop(saidx)
 #endif
 	case IPPROTO_AH:
 		m = key_getcomb_ah();
+		break;
+	case IPPROTO_IPCOMP:
+		m = key_getcomb_ipcomp();
 		break;
 	default:
 		return NULL;
@@ -5426,7 +5470,9 @@ key_getprop(saidx)
  *   <base, src address, dst address, (SPI range)> with SADB_GETSPI
  * from KMD by PF_KEY.
  *
- * sensitivity is not supported.
+ * XXX sensitivity is not supported.
+ * XXX proposal is considered to be optional for now, due to the lack of
+ * ipcomp support in RFC2367.
  *
  * OUT:
  *    0     : succeed
@@ -5568,11 +5614,24 @@ key_acquire(saidx, sp)
 
 	/* create proposal/combination extension */
 	m = key_getprop(saidx);
+#if 0
+	/*
+	 * spec conformant: always attach proposal/combination extension,
+	 * the problem is that we have no way to attach it for ipcomp,
+	 * due to the way sadb_comb is declared in RFC2367.
+	 */
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
 	}
 	m_cat(result, m);
+#else
+	/*
+	 * outside of spec; make proposal/combination extension optional.
+	 */
+	if (m)
+		m_cat(result, m);
+#endif
 
 	if ((result->m_flags & M_PKTHDR) == 0) {
 		error = EINVAL;
