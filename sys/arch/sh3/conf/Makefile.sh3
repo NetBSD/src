@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.16 2001/12/09 05:00:50 atatat Exp $
+#	$NetBSD: Makefile.sh3,v 1.17 2002/02/24 18:19:44 uch Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISSH3=	$S/arch/${MACHINE}
 SH3=		$S/arch/sh3
-GENASSYM=	${THISSH3}/${MACHINE}/genassym.cf
+GENASSYM=	${SH3}/sh3/genassym.cf
 .-include "${THISSH3}/conf/Makefile.${MACHINE}.inc"
 
 ##
@@ -47,9 +47,9 @@ COPTS?=		-O1
 ##
 MD_OBJS=	locore.o
 MD_CFILES=
-MD_SFILES=	${THISSH3}/${MACHINE}/locore.s
+MD_SFILES=	${THISSH3}/${MACHINE}/locore.S
 
-locore.o: ${THISSH3}/${MACHINE}/locore.s assym.h
+locore.o: ${THISSH3}/${MACHINE}/locore.S assym.h
 	${NORMAL_S}
 
 # XXX compile ffs_inode.c always with -O0 to avoid egcs-1.1.2 bug.

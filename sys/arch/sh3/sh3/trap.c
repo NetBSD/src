@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 2002/02/19 17:21:18 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 2002/02/24 18:19:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -106,7 +106,7 @@ extern int cpu_debug_mode;
 int	trapdebug = 1;
 
 static __inline void userret(struct proc *, int, u_quad_t);
-void trap(int, int, int, int /* dummy 4 param*/, struct trapframe);
+void trap(struct trapframe *);
 int trapwrite(unsigned);
 void syscall(struct trapframe *);
 void tlb_handler(int, int, int, int /* dummy 4 param  */, struct trapframe);
@@ -155,10 +155,10 @@ userret(struct proc *p, int pc, u_quad_t oticks)
  */
 /*ARGSUSED*/
 void
-trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
+trap(struct trapframe *tf)
 {
 	register struct proc *p = curproc;
-	int type = frame.tf_trapno;
+	int type = tf->tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
 	int resume;
@@ -171,15 +171,15 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 #ifdef TRAPDEBUG
 	if (trapdebug) {
 		printf("trap %x spc %x ssr %x \n",
-			   frame.tf_trapno, frame.tf_spc, frame.tf_ssr);
+			   tf->tf_trapno, tf->tf_spc, tf->tf_ssr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
 
-	if (!KERNELMODE(frame.tf_r15, frame.tf_ssr)) {
+	if (!KERNELMODE(tf->tf_r15, tf->tf_ssr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = &frame;
+		p->p_md.md_regs = tf;
 	}
 	else
 		sticks = 0;
@@ -189,16 +189,16 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 	default:
 	we_re_toast:
 #ifdef DDB
-		if (kdb_trap(type, 0, &frame))
+		if (kdb_trap(type, 0, tf))
 			return;
 #endif
-		if (frame.tf_trapno >> 5 < trap_types)
-			printf("fatal %s", trap_type[frame.tf_trapno >> 5]);
+		if (tf->tf_trapno >> 5 < trap_types)
+			printf("fatal %s", trap_type[tf->tf_trapno >> 5]);
 		else
-			printf("unknown trap %x", frame.tf_trapno);
+			printf("unknown trap %x", tf->tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %x spc %x ssr %x \n",
-			   type, frame.tf_spc, frame.tf_ssr);
+			   type, tf->tf_spc, tf->tf_ssr);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -208,7 +208,7 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 			trapsignal(p, SIGTRAP, type &~ T_USER);
 			break;
 		} else {
-			syscall(&frame);
+			syscall(tf);
 			return;
 		}
 
@@ -227,11 +227,8 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 		/* Check for copyin/copyout fault. */
 		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
-#ifdef	TODO
-		copyfault:
-#endif
 			printf("copyin/copyout fault\n");
-			frame.tf_spc = (int)pcb->pcb_onfault;
+			tf->tf_spc = (int)pcb->pcb_onfault;
 			return;
 		}
 
@@ -250,24 +247,18 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 		 * at this point is the same as on exit from a `slow'
 		 * interrupt.
 		 */
-		switch (*(u_char *)frame.tf_spc) {
-#ifdef TODO
-		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame.tf_esp - 44);
-			resume = (int)resume_iret;
-			break;
-#endif
+		switch (*(u_char *)tf->tf_spc) {
 		default:
 			goto we_re_toast;
 		}
-		frame.tf_spc = resume;
+		tf->tf_spc = resume;
 		return;
 
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
 		printf("trap type %x spc %x ssr %x (%s)\n",
-			   type, frame.tf_spc, frame.tf_ssr, p->p_comm);
+			   type, tf->tf_spc, tf->tf_ssr, p->p_comm);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
@@ -287,99 +278,6 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 			ADDUPROF(p);
 		}
 		goto out;
-#ifdef	TODO
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
-			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
-		if (pcb->pcb_onfault == fusubail)
-			goto copyfault;
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame.tf_err & PGEX_P)
-			goto we_re_toast;
-#endif
-		/* FALLTHROUGH */
-
-	case T_PAGEFLT|T_USER: {	/* page fault */
-		register vaddrt_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map *map;
-		int rv;
-		vm_prot_t ftype;
-		extern struct vm_map *kernel_map;
-		unsigned nss, v;
-
-		va = trunc_page((vaddr_t)rcr2());
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. (type & T_USER) == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_WRITE;
-		else
-			ftype = VM_PROT_READ;
-
-#ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif
-
-		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr
-			&& (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-			&& map != kernel_map) {
-			nss = btoc(USRSTACK-(unsigned)va);
-			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				nss = 0;
-			}
-		}
-
-		/* Fault the original page in. */
-		rv = uvm_fault(map, va, 0, ftype);
-		if (rv == 0) {
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-
-			if (type == T_PAGEFLT)
-				return;
-			goto out;
-		}
-
-	nogo:
-		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
-				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-				   map, va, ftype, rv);
-			goto we_re_toast;
-		}
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
-		} else
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
-		break;
-	}
-
-#endif /* TODO */
 
 	case T_USERBREAK|T_USER:		/* bpt instruction fault */
 		trapsignal(p, SIGTRAP, type &~ T_USER);
@@ -389,7 +287,7 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 	if ((type & T_USER) == 0)
 		return;
  out:
-	userret(p, frame.tf_spc, sticks);
+	userret(p, tf->tf_spc, sticks);
 }
 
 /*

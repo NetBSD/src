@@ -1,4 +1,4 @@
-/*	$NetBSD: shl-coff.x,v 1.3 2001/11/20 12:56:28 lukem Exp $	*/
+/*	$NetBSD: shl-coff.x,v 1.4 2002/02/24 18:19:44 uch Exp $	*/
 
 OUTPUT_FORMAT("coff-shl")
 OUTPUT_ARCH(sh)
@@ -10,8 +10,6 @@ MEMORY
 
 SECTIONS
 {
-  _trap_base	= 0x8c000000;
-  PROVIDE (_trap_base = .);
   .text :
   {
     _ftext = . ;

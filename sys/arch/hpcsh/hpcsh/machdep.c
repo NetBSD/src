@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2002/02/22 19:44:01 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2002/02/24 18:19:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -121,13 +121,11 @@ extern int nfs_mountroot(void);
 extern int (*mountroot)(void);
 #endif
 
-/* curpcb is defined in locore.s */
 struct user *proc0paddr;
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
 
 paddr_t msgbuf_paddr;
-vaddr_t ram_start = SH3_PHYS_TO_P1SEG(DRAM_BANK0_START);
 extern int nkpde;
 extern char cpu_model[];
 extern paddr_t avail_start, avail_end;	// XXX
@@ -159,20 +157,16 @@ static int	__check_dram(paddr_t, paddr_t);
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 int		physmem;
-u_int32_t __sh_BBRA; //XXX
 
-void main(void);
-void machine_startup(int, char *[], struct bootinfo *);
+void main(void) __attribute__((__noreturn__));
+void machine_startup(int, char *[], struct bootinfo *)
+	__attribute__((__noreturn__));
 struct bootinfo *bootinfo;
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
 {
-	extern char trap_base[], edata[], end[];
-	/* exception handler */
-	extern char MonTrap100[], MonTrap100_end[];
-	extern char MonTrap600[], MonTrap600_end[];
-	extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
+	extern char edata[], end[];
 	vaddr_t proc0_sp;
 	vaddr_t kernend;
 	psize_t sz;
@@ -210,24 +204,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
 
-	/* CPU initialize */
-	if (platid_match(&platid, &platid_mask_CPU_SH_3))
-		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
-	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
-		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
-
-	__sh_BBRA = CPU_IS_SH3 ? 0xffffffb8 : 0xff200008; //XXX
-
 	/* ICU initiailze */
 	switch (cpu_product) {
-	case CPU_PRODUCT_7709:
-		/* FALLTHROUGH */
 	case CPU_PRODUCT_7709A:
-		_reg_write_2(0xfffffee2, 0); /* IPRA */
-		_reg_write_2(0xfffffee4, 0); /* IPRB */
 		_reg_write_2(0xa4000016, 0); /* IPRC */
 		_reg_write_2(0xa4000018, 0); /* IPRD */
 		_reg_write_2(0xa400001a, 0); /* IPRE */
+		/* FALLTHROUGH */
+	case CPU_PRODUCT_7709:
+		_reg_write_2(0xfffffee2, 0); /* IPRA */
+		_reg_write_2(0xfffffee4, 0); /* IPRB */
 		break;
 	case CPU_PRODUCT_7750:
 		_reg_write_2(0xffd00004, 0); /* IPRA */
@@ -238,6 +224,12 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #if NHD64465IF > 0
 	hd64465_intr_disable();
 #endif
+
+	/* CPU initialize */
+	if (platid_match(&platid, &platid_mask_CPU_SH_3))
+		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
+	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
+		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -343,13 +335,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* set PageDirReg */
 	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
 
-	/* install trap handler */
-	memcpy(trap_base + 0x100, MonTrap100, MonTrap100_end - MonTrap100);
-	memcpy(trap_base + 0x600, MonTrap600, MonTrap600_end - MonTrap600);
-	memcpy(trap_base + 0x400, tlbmisshandler_stub,
-	    tlbmisshandler_stub_end - tlbmisshandler_stub);
-	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(trap_base));
-
 	/* enable MMU */
 	sh_mmu_start();
 
@@ -396,8 +381,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	__asm__ __volatile__(
 		"jmp	@%0;"
 		"mov	%1, sp" :: "r"(main), "r"(proc0_sp));
-
 	/* NOTREACHED */
+	while (1)
+		;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2002/02/22 19:43:59 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2002/02/24 18:19:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -180,24 +180,11 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
+void main(void) __attribute__((__noreturn__));
+void dreamcast_startup(void) __attribute__((__noreturn__));
 void setup_bootinfo __P((void));
 void dumpsys __P((void));
-void identifycpu __P((void));
-void initSH3 __P((void *));
-void InitializeSci  __P((unsigned char));
-void sh3_cache_on __P((void));
-void LoadAndReset __P((char *));
-void XLoadAndReset __P((char *));
-void Sh3Reset __P((void));
-
-#ifdef SH4
-void sh4_cache_flush __P((vaddr_t));
-#endif
-
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-void	consinit __P((void));
+void consinit __P((void));
 
 /*
  * Machine-dependent startup code
@@ -241,7 +228,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	dev_t consdev;
 	struct btinfo_bootpath *bibp;
 	struct trapframe *tf;
-	char *osimage;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -277,16 +263,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_DEBUGMODE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				   &cpu_debug_mode));
-
-	case CPU_LOADANDRESET:
-		if (newp != NULL) {
-			osimage = (char *)(*(u_long *)newp);
-
-			LoadAndReset(osimage);
-			/* not reach here */
-		}
-		return (0);
-
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -524,21 +500,13 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)IOM_RAM_BEGIN)
-#define Trap100Vec	(VBRINIT + 0x100)
-#define Trap600Vec	(VBRINIT + 0x600)
-#define TLBVECTOR	(VBRINIT + 0x400)
 #define VADDRSTART	VM_MIN_KERNEL_ADDRESS
 
 extern int nkpde;
-extern char MonTrap100[], MonTrap100_end[];
-extern char MonTrap600[], MonTrap600_end[];
-extern char _start[], _etext[], _edata[], _end[];
-extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
+extern char start[], _etext[], _edata[], _end[];
 
 void
-initSH3(pc)
-	void *pc;	/* XXX return address */
+dreamcast_startup()
 {
 	paddr_t avail;
 	pd_entry_t *pagedir;
@@ -560,14 +528,6 @@ initSH3(pc)
 	memset(_edata, 0, p - _edata);
 
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
-
-	/*
-	 * install trap handler
-	 */
-	memcpy(Trap100Vec, MonTrap100, MonTrap100_end - MonTrap100);
-	memcpy(Trap600Vec, MonTrap600, MonTrap600_end - MonTrap600);
-	__asm ("ldc %0, vbr" :: "r"(VBRINIT));
-
 /*
  *                          edata  end
  *	+-------------+------+-----+----------+-------------+------------+
@@ -604,11 +564,6 @@ initSH3(pc)
 
 	/* set PageDirReg */
 	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
-
-	/* Set TLB miss handler */
-	p = tlbmisshandler_stub;
-	x = tlbmisshandler_stub_end - p;
-	memcpy(TLBVECTOR, p, x);
 
 	/*
 	 * Activate MMU
@@ -651,7 +606,7 @@ initSH3(pc)
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-#if 0
+#if 1
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 #endif
 
@@ -669,8 +624,8 @@ initSH3(pc)
 	u_short *p, sum;
 	int size;
 
-	size = _etext - _start;
-	p = (u_short *)_start;
+	size = _etext - start;
+	p = (u_short *)start;
 	sum = 0;
 	size >>= 1;
 	while (size--)
@@ -721,18 +676,16 @@ initSH3(pc)
 	 */
 	setup_bootinfo();
 
-#if 0
-	sh3_cache_on();
-#endif
-
 	/* setup proc0 stack */
 	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
 
-	/*
-	 * XXX We can't return here, because we change stack pointer.
-	 *     So jump to return address directly.
-	 */
-	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
+	/* jump to main */
+	__asm__ __volatile__(
+		"jmp	@%0;"
+		"mov	%1, sp" :: "r"(main), "r"(sp));
+	/* NOTREACHED */
+	while (1)
+		;
 }
 
 void
@@ -792,218 +745,7 @@ cpu_reset()
 
 	_cpu_exception_suspend();
 
-	Sh3Reset();
+	goto *(u_int32_t *)0xa0000000;
 	for (;;)
 		;
-}
-
-#if !defined(DONT_INIT_BSC)
-/*
- * InitializeBsc
- * : BSC(Bus State Controler)
- */
-void InitializeBsc __P((void));
-
-void
-InitializeBsc()
-{
-
-	/*
-	 * Drive RAS,CAS in stand by mode and bus release mode
-	 * Area0 = Normal memory, Area5,6=Normal(no burst)
-	 * Area2 = Normal memory, Area3 = SDRAM, Area5 = Normal memory
-	 * Area4 = Normal Memory
-	 * Area6 = Normal memory
-	 */
-	SHREG_BCR1 = BSC_BCR1_VAL;
-
-	/*
-	 * Bus Width
-	 * Area4: Bus width = 16bit
-	 * Area6,5 = 16bit
-	 * Area1 = 8bit
-	 * Area2,3: Bus width = 32bit
-	 */
-	SHREG_BCR2 = BSC_BCR2_VAL;
-
-	/*
-	 * Idle cycle number in transition area and read to write
-	 * Area6 = 3, Area5 = 3, Area4 = 3, Area3 = 3, Area2 = 3
-	 * Area1 = 3, Area0 = 3
-	 */
-	SHREG_WCR1 = BSC_WCR1_VAL;
-
-	/*
-	 * Wait cycle
-	 * Area 6 = 6
-	 * Area 5 = 2
-	 * Area 4 = 10
-	 * Area 3 = 3
-	 * Area 2,1 = 3
-	 * Area 0 = 6
-	 */
-	SHREG_WCR2 = BSC_WCR2_VAL;
-
-#if defined(SH4) && defined(BSC_WCR3_VAL)
-	SHREG_WCR3 = BSC_WCR3_VAL;
-#endif
-
-	/*
-	 * RAS pre-charge = 2cycle, RAS-CAS delay = 3 cycle,
-	 * write pre-charge=1cycle
-	 * CAS before RAS refresh RAS assert time = 3 cycle
-	 * Disable burst, Bus size=32bit, Column Address=10bit, Refresh ON
-	 * CAS before RAS refresh ON, EDO DRAM
-	 */
-	SHREG_MCR = BSC_MCR_VAL;
-
-#if defined(BSC_SDMR2_VAL)
-#define SDMR2	(*(volatile unsigned char  *)BSC_SDMR2_VAL)
-
-	SDMR2 = 0;
-#endif
-
-#if defined(BSC_SDMR3_VAL)
-#if !(defined(COMPUTEXEVB) && defined(SH7709A))
-#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
-
-	SDMR3 = 0;
-#else
-#define ADDSET	(*(volatile unsigned short *)0x1A000000)
-#define ADDRST	(*(volatile unsigned short *)0x18000000)
-#define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
-
-	ADDSET = 0;
-	SDMR3 = 0;
-	ADDRST = 0;
-#endif
-#endif
-
-	/*
-	 * PCMCIA Control Register
-	 * OE/WE assert delay 3.5 cycle
-	 * OE/WE negate-address delay 3.5 cycle
-	 */
-#ifdef BSC_PCR_VAL
-	SHREG_PCR = BSC_PCR_VAL;
-#endif
-
-	/*
-	 * Refresh Timer Control/Status Register
-	 * Disable interrupt by CMF, closk 1/16, Disable OVF interrupt
-	 * Count Limit = 1024
-	 * In following statement, the reason why high byte = 0xa5(a4 in RFCR)
-	 * is the rule of SH3 in writing these register.
-	 */
-	SHREG_RTCSR = BSC_RTCSR_VAL;
-
-
-	/*
-	 * Refresh Timer Counter
-	 * Initialize to 0
-	 */
-#ifdef BSC_RTCNT_VAL
-	SHREG_RTCNT = BSC_RTCNT_VAL;
-#endif
-
-	/* set Refresh Time Constant Register */
-	SHREG_RTCOR = BSC_RTCOR_VAL;
-
-	/* init Refresh Count Register */
-#ifdef BSC_RFCR_VAL
-	SHREG_RFCR = BSC_RFCR_VAL;
-#endif
-
-	/* Set Clock mode (make internal clock double speed) */
-
-	SHREG_FRQCR = FRQCR_VAL;
-
-#ifndef MMEYE_NO_CACHE
-	/* Cache ON */
-	SHREG_CCR = CCR_CE;
-#endif
-}
-#endif
-
-void
-sh3_cache_on(void)
-{
-#ifndef MMEYE_NO_CACHE
-	/* Cache ON */
-	SHREG_CCR = CCR_CE;
-	SHREG_CCR = CCR_CF | CCR_CE;	/* cache clear */
-	SHREG_CCR = CCR_CE;		/* cache on */
-#endif
-}
-
-#ifdef SH4
-void
-sh4_cache_flush(addr)
-	vaddr_t addr;
-{
-#if 1
-#define SH_ADDR_ARRAY_BASE_ADDR 0xf4000000
-#define WRITE_ADDR_ARRAY( entry ) \
-	(*(volatile u_int32_t *)(SH_ADDR_ARRAY_BASE_ADDR|(entry)|0x00))
-
-	int entry;
-
-	entry = ((u_int32_t)addr) & 0x3fe0;
-
-	WRITE_ADDR_ARRAY(entry) = 0;
-#else
-	volatile int *p = (int *)IOM_RAM_BEGIN;
-	int i;
-	/* volatile */int d;
-
-	for(i = 0; i < 512; i++){
-		d = *p;
-		p += 8;
-	}
-#endif
-}
-#endif
-
-#include <machine/mmeye.h>
-
- /* XXX This value depends on physical available memory */
-#define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
-
-void
-LoadAndReset(osimage)
-	char *osimage;
-{
-	void *buf_addr;
-	u_long size;
-	u_long *src;
-	u_long *dest;
-	u_long csum = 0;
-	u_long csum2 = 0;
-	u_long size2;
-
-	printf("LoadAndReset: copy start\n");
-	buf_addr = (void *)OSIMAGE_BUF_ADDR;
-
-	size = *(u_long *)osimage;
-	src = (u_long *)osimage;
-	dest = buf_addr;
-
-	size = (size + sizeof(u_long) * 2 + 3) >> 2;
-	size2 = size;
-
-	while (size--) {
-		csum += *src;
-		*dest++ = *src++;
-	}
-
-	dest = buf_addr;
-	while (size2--)
-		csum2 += *dest++;
-
-	printf("LoadAndReset: copy end[%lx,%lx]\n", csum, csum2);
-	printf("start XLoadAndReset\n");
-
-	/* mask all externel interrupt (XXX) */
-
-	XLoadAndReset(buf_addr);
 }
