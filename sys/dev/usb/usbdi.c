@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.72 2000/04/27 15:26:51 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.73 2000/05/31 16:14:42 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -639,6 +639,12 @@ usbd_endpoint_count(iface, count)
 	usbd_interface_handle iface;
 	u_int8_t *count;
 {
+#ifdef DIAGNOSTIC
+	if (iface == NULL || iface->idesc == NULL) {
+		printf("usbd_endpoint_count: NULL pointer\n");
+		return (USBD_INVAL);
+	}
+#endif
 	*count = iface->idesc->bNumEndpoints;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -692,18 +698,25 @@ usbd_set_interface(iface, altidx)
 {
 	usb_device_request_t req;
 	usbd_status err;
+	void *endpoints;
 
 	if (LIST_FIRST(&iface->pipes) != 0)
 		return (USBD_IN_USE);
 
-	if (iface->endpoints)
-		free(iface->endpoints, M_USB);
-	iface->endpoints = 0;
-	iface->idesc = 0;
-
 	err = usbd_fill_iface_data(iface->device, iface->index, altidx);
 	if (err)
 		return (err);
+
+	/* new setting work, we can free old endpoints */
+	if (endpoints != NULL)
+		free(endpoints, M_USB);
+
+#ifdef DIAGNOSTIC
+	if (iface->idesc == NULL) {
+		printf("usbd_set_interface: NULL pointer\n");
+		return (USBD_INVAL);
+	}
+#endif
 
 	req.bmRequestType = UT_WRITE_INTERFACE;
 	req.bRequest = UR_SET_INTERFACE;
