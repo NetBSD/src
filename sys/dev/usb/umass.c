@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.12 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.13 1999/09/09 12:26:46 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -412,14 +412,13 @@ umass_usb_transfer(usbd_interface_handle iface, usbd_pipe_handle pipe,
 	 * transfer and then wait for it to complete
 	 */
 
-	reqh = usbd_alloc_request();
+	reqh = usbd_alloc_request(usbd_pipe2device_handle(pipe));
 	if (!reqh) {
 		DPRINTF(UDMASS_USB, ("Not enough memory\n"));
 		return USBD_NOMEM;
 	}
 
-	(void) usbd_setup_request(reqh, pipe, 0, buf, buflen,
-				flags, 3000 /*ms*/, NULL);
+	usbd_setup_request(reqh, pipe, 0, buf, buflen,flags, 3000 /*ms*/, NULL);
 	err = usbd_sync_transfer(reqh);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("transfer failed, %s\n",
