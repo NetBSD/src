@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.91 2003/06/03 05:20:06 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.92 2003/06/06 08:13:43 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.91 2003/06/03 05:20:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.92 2003/06/06 08:13:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -649,11 +649,11 @@ icmp6_input(mp, offp, proto)
 			goto badcode;
 		break;
 
-	case MLD6_LISTENER_QUERY:
-	case MLD6_LISTENER_REPORT:
-		if (icmp6len < sizeof(struct mld6_hdr))
+	case MLD_LISTENER_QUERY:
+	case MLD_LISTENER_REPORT:
+		if (icmp6len < sizeof(struct mld_hdr))
 			goto badlen;
-		if (icmp6->icmp6_type == MLD6_LISTENER_QUERY) /* XXX: ugly... */
+		if (icmp6->icmp6_type == MLD_LISTENER_QUERY) /* XXX: ugly... */
 			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldquery);
 		else
 			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldreport);
@@ -667,14 +667,14 @@ icmp6_input(mp, offp, proto)
 		/* m stays. */
 		break;
 
-	case MLD6_LISTENER_DONE:
+	case MLD_LISTENER_DONE:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mlddone);
-		if (icmp6len < sizeof(struct mld6_hdr))	/* necessary? */
+		if (icmp6len < sizeof(struct mld_hdr))	/* necessary? */
 			goto badlen;
 		break;		/* nothing to be done in kernel */
 
-	case MLD6_MTRACE_RESP:
-	case MLD6_MTRACE:
+	case MLD_MTRACE_RESP:
+	case MLD_MTRACE:
 		/* XXX: these two are experimental.  not officially defined. */
 		/* XXX: per-interface statistics? */
 		break;		/* just pass it to applications */

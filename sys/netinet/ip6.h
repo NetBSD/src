@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6.h,v 1.14 2003/05/14 06:47:35 itojun Exp $	*/
-/*	$KAME: ip6.h,v 1.14 2000/10/09 01:04:09 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.15 2003/06/06 08:13:43 itojun Exp $	*/
+/*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,8 +141,11 @@ struct ip6_dest {
 #define IP6OPT_PAD1		0x00	/* 00 0 00000 */
 #define IP6OPT_PADN		0x01	/* 00 0 00001 */
 #define IP6OPT_JUMBO		0xC2	/* 11 0 00010 = 194 */
-#define IP6OPT_JUMBO_LEN	6
-#define IP6OPT_RTALERT		0x05	/* 00 0 00101 */
+#define IP6OPT_NSAP_ADDR	0xC3	/* 11 0 00011 */
+#define IP6OPT_TUNNEL_LIMIT	0x04	/* 00 0 00100 */
+#define IP6OPT_RTALERT		0x05	/* 00 0 00101 (KAME definition) */
+#define IP6OPT_ROUTER_ALERT	0x05	/* (2292bis def, recommended) */
+
 #define IP6OPT_RTALERT_LEN	4
 #define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
 #define IP6OPT_RTALERT_RSVP	1	/* Datagram contains an RSVP message */
@@ -156,6 +159,56 @@ struct ip6_dest {
 #define IP6OPT_TYPE_ICMP	0xC0
 
 #define IP6OPT_MUTABLE		0x20
+
+/* IPv6 options: common part */
+struct ip6_opt {
+	u_int8_t ip6o_type;
+	u_int8_t ip6o_len;
+} __attribute__((__packed__));
+
+/* Jumbo Payload Option */
+struct ip6_opt_jumbo {
+	u_int8_t ip6oj_type;
+	u_int8_t ip6oj_len;
+	u_int8_t ip6oj_jumbo_len[4];
+} __attribute__((__packed__));
+#define IP6OPT_JUMBO_LEN 6
+
+/* NSAP Address Option */
+struct ip6_opt_nsap {
+	u_int8_t ip6on_type;
+	u_int8_t ip6on_len;
+	u_int8_t ip6on_src_nsap_len;
+	u_int8_t ip6on_dst_nsap_len;
+	/* followed by source NSAP */
+	/* followed by destination NSAP */
+} __attribute__((__packed__));
+
+/* Tunnel Limit Option */
+struct ip6_opt_tunnel {
+	u_int8_t ip6ot_type;
+	u_int8_t ip6ot_len;
+	u_int8_t ip6ot_encap_limit;
+} __attribute__((__packed__));
+
+/* Router Alert Option */
+struct ip6_opt_router {
+	u_int8_t ip6or_type;
+	u_int8_t ip6or_len;
+	u_int8_t ip6or_value[2];
+} __attribute__((__packed__));
+/* Router alert values (in network byte order) */
+#if BYTE_ORDER == BIG_ENDIAN
+#define IP6_ALERT_MLD	0x0000
+#define IP6_ALERT_RSVP	0x0001
+#define IP6_ALERT_AN	0x0002
+#else
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define IP6_ALERT_MLD	0x0000
+#define IP6_ALERT_RSVP	0x0100
+#define IP6_ALERT_AN	0x0200
+#endif /* LITTLE_ENDIAN */
+#endif
 
 /* Routing header */
 struct ip6_rthdr {
@@ -172,9 +225,7 @@ struct ip6_rthdr0 {
 	u_int8_t  ip6r0_len;		/* length in units of 8 octets */
 	u_int8_t  ip6r0_type;		/* always zero */
 	u_int8_t  ip6r0_segleft;	/* segments left */
-	u_int8_t  ip6r0_reserved;	/* reserved field */
-	u_int8_t  ip6r0_slmap[3];	/* strict/loose bit map */
-	struct in6_addr  ip6r0_addr[1];	/* up to 23 addresses */
+	u_int32_t ip6r0_reserved;	/* reserved field */
 } __attribute__((__packed__));
 
 /* Fragment header */

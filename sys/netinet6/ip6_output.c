@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.60 2002/11/02 07:30:58 perry Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.61 2003/06/06 08:13:43 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.60 2002/11/02 07:30:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.61 2003/06/06 08:13:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -412,6 +412,7 @@ skip_ipsec2:;
 	if (exthdrs.ip6e_rthdr) {
 		struct ip6_rthdr *rh;
 		struct ip6_rthdr0 *rh0;
+		struct in6_addr *addr;
 
 		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
 		    struct ip6_rthdr *));
@@ -419,11 +420,11 @@ skip_ipsec2:;
 		switch (rh->ip6r_type) {
 		case IPV6_RTHDR_TYPE_0:
 			 rh0 = (struct ip6_rthdr0 *)rh;
-			 ip6->ip6_dst = rh0->ip6r0_addr[0];
-			 bcopy((caddr_t)&rh0->ip6r0_addr[1],
-			     (caddr_t)&rh0->ip6r0_addr[0],
+			 addr = (struct in6_addr *)(rh0 + 1);
+			 ip6->ip6_dst = addr[0];
+			 bcopy(&addr[1], &addr[0],
 			     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
-			 rh0->ip6r0_addr[rh0->ip6r0_segleft - 1] = finaldst;
+			 addr[rh0->ip6r0_segleft - 1] = finaldst;
 			 break;
 		default:	/* is it possible? */
 			 error = EINVAL;

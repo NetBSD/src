@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.9 2002/09/23 12:48:06 mycroft Exp $	*/
+/*	$NetBSD: mld6.c,v 1.10 2003/06/06 08:13:44 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -80,14 +80,14 @@ main(int argc, char *argv[])
 	u_int type;
 	int ch;
 
-	type = MLD6_LISTENER_QUERY;
+	type = MLD_LISTENER_QUERY;
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
 		case 'd':
-			type = MLD6_LISTENER_DONE;
+			type = MLD_LISTENER_DONE;
 			break;
 		case 'r':
-			type = MLD6_LISTENER_REPORT;
+			type = MLD_LISTENER_REPORT;
 			break;
 		default:
 			usage();
