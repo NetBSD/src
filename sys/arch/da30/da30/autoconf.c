@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: autoconf.c 1.31 91/01/21
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.1 1994/02/22 23:49:18 paulus Exp $
+ *	$Id: autoconf.c,v 1.2 1994/06/18 12:09:42 paulus Exp $
  */
 
 /*
@@ -62,9 +62,6 @@
 #include <machine/pte.h>
 #include <da30/da30/isr.h>
 #include <da30/da30/iio.h>
-
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
 
 /*
  * The following several variables are related to
@@ -198,29 +195,15 @@ swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks, swdev, i;
-	int bsize;
 
 	for( swp = swdevt; swp->sw_dev; swp++ ){
 	    swdev = major(swp->sw_dev);
 	    if( bdevsw[swdev].d_psize ){
-		bsize = 0;
-		nblks = (*bdevsw[swdev].d_psize)(swp->sw_dev, &bsize);
+		nblks = (*bdevsw[swdev].d_psize)(swp->sw_dev);
 		if( nblks <= 0 )
 		    continue;	/* ignore this device */
 		if( swp->sw_nblks > 0 && swp->sw_nblks < nblks )
 		    nblks = swp->sw_nblks;
-		if( bsize != 0 && bsize != DEV_BSIZE ){
-		    if( (bsize & (bsize - 1)) != 0 ){
-			printf("swap device %x: block size %x not power of 2\n",
-			       swp->sw_dev, bsize);
-			continue;
-		    }
-		    for( i = 0; bsize > 1; ++i, bsize >>= 1 )
-			;
-		    i -= DEV_BSHIFT;
-		    nblks = (i > 0)? nblks << i: nblks >> -i;
-		    swp->sw_bshift = -i;
-		}
 		swp->sw_nblks = nblks;
 		printf("swap device %x: %dkB\n", swp->sw_dev, nblks / 2);
 	    }

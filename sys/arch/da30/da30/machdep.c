@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah $Hdr: machdep.c 1.63 91/04/24$
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.1 1994/02/22 23:49:45 paulus Exp $
+ * from: Utah $Hdr: machdep.c 1.74 92/12/20$
+ *
+ *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
+ *	$Id: machdep.c,v 1.2 1994/06/18 12:09:56 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -54,29 +55,37 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/vnode.h>
+#include <sys/sysctl.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
 
-#include <sys/exec.h>
-#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <dev/cons.h>
 #include <da30/da30/isr.h>
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_object.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+
+/* the following is used externally (sysctl_hw) */
+char machine[] = "da30";		/* cpu "architecture" */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -105,6 +114,7 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
+extern	short exframesize[];
 
 /*
  * Console initialization: called early on from main,
@@ -125,6 +135,12 @@ consinit()
 	 * Initialize the console before we print anything out.
 	 */
 	cninit();
+
+#ifdef DDB
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
 /*
@@ -137,25 +153,27 @@ cpu_startup()
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
-	extern long Usrptsize;
-	extern struct map *useriomap;
+	vm_offset_t minaddr, maxaddr;
+	vm_size_t size;
+#ifdef BUFFERS_UNMANAGED
+	vm_offset_t bufmemp;
+	caddr_t buffermem;
+	int ix;
+#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
+
+	pmapdebug = 0;
 #endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size = 0;
 
 	/*
 	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
+		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	/*
@@ -193,6 +211,18 @@ again:
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 	
 	/*
 	 * Determine how many buffers to allocate.
@@ -201,8 +231,6 @@ again:
 	 */
 	if (bufpages == 0)
 		bufpages = physmem / 20 / CLSIZE;
-	if( bufpages > NKMEMCLUSTERS*2/5 )
-		bufpages = NKMEMCLUSTERS*2/5;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -225,6 +253,11 @@ again:
 		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
+#ifdef BUFFERS_UNMANAGED
+		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
+		if (buffermem == 0)
+			panic("startup: no room for buffers");
+#endif
 		goto again;
 	}
 	/*
@@ -239,17 +272,16 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, FALSE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+#ifdef BUFFERS_UNMANAGED
+	bufmemp = (vm_offset_t) buffermem;
+#endif
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -263,10 +295,36 @@ again:
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+#ifdef BUFFERS_UNMANAGED
+		/*
+		 * Move the physical pages over from buffermem.
+		 */
+		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
+			vm_offset_t pa;
+
+			pa = pmap_extract(kernel_pmap, bufmemp);
+			if (pa == 0)
+				panic("startup: unmapped buffer");
+			pmap_remove(kernel_pmap, bufmemp, bufmemp+CLBYTES);
+			pmap_enter(kernel_pmap,
+				   (vm_offset_t)(curbuf + ix * CLBYTES),
+				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			bufmemp += CLBYTES;
+		}
+#else
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif
 	}
-
+#ifdef BUFFERS_UNMANAGED
+#if 0
+	/*
+	 * We would like to free the (now empty) original address range
+	 * but too many bad things will happen if we try.
+	 */
+	kmem_free(kernel_map, (vm_offset_t)buffermem, bufpages*CLBYTES);
+#endif
+#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -295,11 +353,12 @@ again:
 	callfree = callout;
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
+	callout[i-1].c_next = NULL;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -330,8 +389,10 @@ setregs(p, entry, stack, retval)
 	u_long entry, stack;
 	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = stack;
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_pc = entry & ~1;
+	frame->f_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -339,10 +400,96 @@ setregs(p, entry, stack, retval)
 #endif
 }
 
+/*
+ * Info for CTL_HW
+ */
+char	cpu_model[120];
+extern	char version[];
+
 identifycpu()
 {
-	printf("DA30 (16.67 MHz MC68030 CPU + MC68881 FPU)\n");
+	strcpy(cpu_model, "DA30 (16.67 MHz MC68030 CPU+MMU, MC68881 FPU)");
+	printf("%s\n", cpu_model);
 }
+
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+#ifdef USELEDS
+#include <hp300/hp300/led.h>
+
+int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
+char *ledaddr;
+
+/*
+ * Map the LED page and setup the KVA to access it.
+ */
+ledinit()
+{
+	extern caddr_t ledbase;
+
+	pmap_enter(kernel_pmap, (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
+}
+
+/*
+ * Do lights:
+ *	`ons' is a mask of LEDs to turn on,
+ *	`offs' is a mask of LEDs to turn off,
+ *	`togs' is a mask of LEDs to toggle.
+ * Note we don't use splclock/splx for mutual exclusion.
+ * They are expensive and we really don't need to be that precise.
+ * Besides we would like to be able to profile this routine.
+ */
+ledcontrol(ons, offs, togs)
+	register int ons, offs, togs;
+{
+	static char currentleds;
+	register char leds;
+
+	inledcontrol = 1;
+	leds = currentleds;
+	if (ons)
+		leds |= ons;
+	if (offs)
+		leds &= ~offs;
+	if (togs)
+		leds ^= togs;
+	currentleds = leds;
+	*ledaddr = ~leds;
+	inledcontrol = 0;
+}
+#endif
 
 #define SS_RTEFRAME	1
 #define SS_FPSTATE	2
@@ -387,15 +534,14 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
-	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -403,10 +549,17 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
+#ifdef COMPAT_HPUX
+	if (p->p_emul == EMUL_HPUX)
+		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
+	else
+#endif
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+					 psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -451,9 +604,9 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
+	if (ft >= FMT7) {
 #ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
+		if (ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
@@ -545,7 +698,6 @@ sigreturn(p, uap, retval)
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
-	extern short exframesize[];
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
@@ -567,9 +719,12 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
@@ -654,9 +809,9 @@ sigreturn(p, uap, retval)
 }
 
 int	waittime = -1;
-int	dumping = 0;
+int	dumping;
 
-__dead void
+void
 boot(howto)
 	register int howto;
 {
@@ -667,7 +822,7 @@ boot(howto)
 		savectx(curproc->p_addr, 0);
 
 	boothowto = howto | (boothowto & (RB_DFLTROOT|RB_ASKNAME));
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
@@ -679,12 +834,6 @@ boot(howto)
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-#ifdef notdef
-#include "fd.h"
-#if NFD > 0
-		fdshutdown();
-#endif
-#endif
 		sync(&proc0, (void *)NULL, (int *)NULL);
 
 		for (iter = 0; iter < 20; iter++) {
@@ -726,31 +875,27 @@ long	dumplo = 0;
 
 dumpconf()
 {
-	int nblks, blksize;
+	int nblks;
 
 	dumpsize = physmem;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		blksize = 0;
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev, &blksize);
+		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if( nblks < 0 ){
 			dumplo = -1;
 			return;
 		}
-		printf("dumpdev(%x): %d blocks of %d bytes\n",
-		       dumpdev, nblks, blksize);
-		if (blksize == 0)
-			blksize = DEV_BSIZE;
-		if (dumpsize > btoc((nblks - dumplo) * blksize))
-			dumpsize = btoc((nblks - dumplo) * blksize);
+		printf("dumpdev(%x): %d blocks\n", dumpdev, nblks);
+		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - ctob(physmem) / blksize;
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < CLBYTES / blksize)
-		dumplo = CLBYTES / blksize;
+	if (dumplo < btodb(CLBYTES))
+		dumplo = btodb(CLBYTES);
 }
 
 /*
@@ -798,40 +943,19 @@ dumpsys()
 	}
 }
 
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt (clock.c:clkread).
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splhigh();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
 initcpu()
 {
+#ifdef MAPPEDCOPY
+	extern u_int mappedcopysize;
+
+	/*
+	 * Initialize lower bound for doing copyin/copyout using
+	 * page mapping (if not already set).
+	 */
+	if (mappedcopysize == 0) {
+		mappedcopysize = NBPG;
+	}
+#endif
 }
 
 straytrap(pc, evec)
@@ -885,6 +1009,10 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
+	if (netisr & (1 << NETISR_ARP)) {
+		netisr &= ~(1 << NETISR_ARP);
+		arpintr();
+	}
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
@@ -902,6 +1030,12 @@ netintr()
 		clnlintr();
 	}
 #endif
+#ifdef CCITT
+	if (netisr & (1 << NETISR_CCITT)) {
+		netisr &= ~(1 << NETISR_CCITT);
+		ccittintr();
+	}
+#endif
 }
 
 intrhand(sr)
@@ -911,6 +1045,7 @@ intrhand(sr)
 	register int found = 0;
 	register int ipl;
 	extern struct isr isrqueue[];
+	static int straycount;
 
 	ipl = (sr >> 8) & 7;
 	switch (ipl) {
@@ -929,18 +1064,25 @@ intrhand(sr)
 				break;
 			}
 		}
-		if (found == 0)
+		if (found)
+			straycount = 0;
+		else if (++straycount > 50)
+			panic("intrhand: stray interrupt");
+		else
 			printf("stray interrupt, sr 0x%x\n", sr);
 		break;
 
 	case 0:
 	case 7:
-		printf("intrhand: unexpected sr 0x%x\n", sr);
+		if (++straycount > 50)
+			panic("intrhand: unexpected sr");
+		else
+			printf("intrhand: unexpected sr 0x%x\n", sr);
 		break;
 	}
 }
 
-#if defined(DEBUG) && !defined(PANICBUTTON)
+#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
 #define PANICBUTTON
 #endif
 
@@ -949,8 +1091,11 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 
-candbtimer()
+void
+candbtimer(arg)
+	void *arg;
 {
+
 	crashandburn = 0;
 }
 #endif
@@ -965,9 +1110,9 @@ nmihand(frame)
 	printf("unexpected level 7 interrupt ignored\n");
 }
 
-regdump(rp, sbytes)
-  int *rp; /* must not be register */
-  int sbytes;
+regdump(fp, sbytes)
+	struct frame *fp; /* must not be register */
+	int sbytes;
 {
 	static int doingdump = 0;
 	register int i;
@@ -976,10 +1121,11 @@ regdump(rp, sbytes)
 
 	if (doingdump)
 		return;
-	s = spl7();
+	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
+	printf("pid = %d, pc = %s, ",
+	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
+	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
@@ -987,18 +1133,18 @@ regdump(rp, sbytes)
 		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
+		printf(" %s", hexstr(fp->f_regs[i], 8));
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
+		printf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
+		if (fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
+			       hexstr((int)(((int *)&fp)-1), 8));
+			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
+			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;
@@ -1055,6 +1201,24 @@ hexstr(val, len)
 	}
 	return(nbuf);
 }
+
+#ifdef DEBUG
+char oflowmsg[] = "k-stack overflow";
+char uflowmsg[] = "k-stack underflow";
+
+badkstack(oflow, fr)
+	int oflow;
+	struct frame fr;
+{
+	extern char kstackatbase[];
+
+	printf("%s: sp should be %x\n", 
+	       oflow ? oflowmsg : uflowmsg,
+	       kstackatbase - (exframesize[fr.f_format] + 8));
+	regdump(&fr, 0);
+	panic(oflow ? oflowmsg : uflowmsg);
+}
+#endif
 
 /*
  * cpu_exec_aout_makecmds():

@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: zs.c,v 1.1 1994/02/22 23:50:43 paulus Exp $
+ *	$Id: zs.c,v 1.2 1994/06/18 12:10:24 paulus Exp $
  */
 /*
  * Serial I/O via an SCC,
@@ -282,7 +282,6 @@ zsclose(dev, flag, mode, p)
     zp = &dv->zs[zsside(dev)];
     tp = zp->tty;
 
-    zp->nzs_open = 0;
     /*
      * Don't shut it down if it's the console: it might be open
      * as /dev/console.
@@ -297,6 +296,7 @@ zsclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
     }
+    zp->nzs_open = 0;
     return(0);
 }
 

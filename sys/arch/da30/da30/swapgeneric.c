@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.1 1994/02/22 23:49:56 paulus Exp $
+ *	$Id: swapgeneric.c,v 1.2 1994/06/18 12:10:06 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -39,7 +39,7 @@
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <machine/busses.h>
+#include <sys/device.h>
 
 /*
  * Generic configuration;  all in one
@@ -54,18 +54,23 @@ struct	swdevt swdevt[] = {
 };
 int	dmmin, dmmax, dmtext;
 
-extern	struct bus_driver sddriver;
-extern	struct bus_driver wddriver;
+extern	struct cfdriver sdcd;
+extern	struct cfdriver wdcd;
+extern	struct cfdriver idcd;
 
 struct	genericconf {
-    struct bus_driver *gc_driver;
+    struct cfdriver *gc_driver;
     char	*gc_name;
     dev_t	gc_root;
 } genericconf[] = {
-    { &sddriver,	"sd",	makedev(1, 0),	},
-    { &wddriver,	"wd",	makedev(2, 0),	},
+    { &sdcd,	"sd",	makedev(1, 0),	},
+    { &wdcd,	"wd",	makedev(2, 0),	},
+    { &idcd,	"id",	makedev(4, 0),	},
     { 0 },
 };
+
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 setconf()
 {
@@ -92,7 +97,8 @@ retry:
 		printf("\n");
 		goto retry;
 gotit:
-		if (*++cp < '0' || *cp > '9') {
+		cp = &name[2];
+		if (*cp < '0' || *cp > '9') {
 			printf("bad/missing unit number\n");
 			goto retry;
 		}
@@ -103,9 +109,9 @@ gotit:
 		goto found;
 	}
 	for (gc = genericconf; gc->gc_driver; gc++) {
-	    for( device = bus_device_init; device->driver; ++device ){
-		if( device->alive && device->unit == 0
-		   && device->driver == gc->gc_driver ){
+	    for (cfp = cfdata; cfp->cf_driver; ++cfp) {
+		if (cfp->state == FSTATE_FOUND && cfp->unit == 0
+		    && cfp->cf_driver == gc->gc_driver) {
 		    printf("root on %s0\n", device->name);
 		    goto found;
 		}

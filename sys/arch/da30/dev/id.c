@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: id.c,v 1.1 1994/02/22 23:50:21 paulus Exp $
+ *	$Id: id.c,v 1.2 1994/06/18 12:10:16 paulus Exp $
  */
 
 #include "id.h"
@@ -367,11 +367,11 @@ idustart(dv)
     bp = dp->b_actf;
     if (bp == NULL)
 	return;	
-    dp->b_forw = NULL;
+    dp->b_actf = NULL;
     if (cv->idc_actf  == NULL)	/* link unit into active list */
 	cv->idc_actf = dp;
     else
-	cv->idc_actl->b_forw = dp;
+	cv->idc_actl->b_actf = dp;
     cv->idc_actl = dp;
     dp->b_active = 1;		/* mark the drive as busy */
 }
@@ -402,7 +402,7 @@ idstart(cv)
 	return;
     bp = dp->b_actf;
     if (bp == NULL) {
-	cv->idc_actf = dp->b_forw;
+	cv->idc_actf = dp->b_actf;
 	goto loop;
     }
     unit = idunit(bp->b_dev);
@@ -729,7 +729,7 @@ iddone(cv)
     du = &dv->id_drive;
 
     du->dk_skip = 0;
-    cv->idc_actf = dp->b_forw;
+    cv->idc_actf = dp->b_actf;
     cv->idc_errcnt = 0;
     cv->idc_active = 0;
     dp->b_actf = bp->b_actf;

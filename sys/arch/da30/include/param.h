@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machparam.h 1.11 89/08/14
- *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.1 1994/02/22 23:51:09 paulus Exp $
+ * from: Utah $Hdr: machparam.h 1.16 92/12/20$
+ *
+ *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
+ *	$Id: param.h,v 1.2 1994/06/18 12:10:30 paulus Exp $
  */
 
 /*
@@ -60,7 +61,7 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof (struct pte)))
 
-#define NBSEG		(1024*NBPG)	/* bytes/segment */
+#define NBSEG		0x400000	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
@@ -89,8 +90,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	1024
-#define	MCLSHIFT	10
+#define	MCLBYTES	2048		/* large enough for ether MTU */
+#define	MCLSHIFT	11
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
@@ -118,6 +119,13 @@
 /* bytes to pages */
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
 
+#ifndef LABELSECTOR
+#define LABELSECTOR	(1024/DEV_BSIZE)
+#endif
+#ifndef LABELOFFSET
+#define LABELOFFSET	0
+#endif
+
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
 	((unsigned)(bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
@@ -134,12 +142,8 @@
 /*
  * Mach derived conversion macros
  */
-#define da30_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define da30_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
 #define da30_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define da30_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define da30_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define da30_stob(x)		((unsigned)(x) << SEGSHIFT)
 #define da30_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define da30_ptob(x)		((unsigned)(x) << PGSHIFT)
 
@@ -172,6 +176,7 @@
 #define splimp()        spl4()
 #define spltty()        spl4()
 #define splclock()      spl5()
+#define splstatclock()	spl5()
 #define splvm()         spl5()
 #define splsched()      spl5()
 #define splhigh()       spl5()
