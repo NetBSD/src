@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.14.4.1 2002/02/23 18:03:27 he Exp $ */
+/* $NetBSD: create.h,v 1.14.4.2 2003/03/15 20:12:01 he Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -41,6 +41,7 @@ extern char *BuildVersion;
 extern char *BuildInfo;
 extern char *SizePkg;
 extern char *SizeAll;
+extern char *Preserve;
 extern char *SrcDir;
 extern char *realprefix;
 extern char PlayPen[];
