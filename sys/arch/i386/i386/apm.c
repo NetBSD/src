@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.13 1996/11/04 23:04:45 jtc Exp $ */
+/*	$NetBSD: apm.c,v 1.14 1996/11/06 18:09:43 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #include "apm.h"
 #if NAPM > 1
 #error only one APM device may be configured
+#endif
+
+#ifdef APM_NOIDLE
+#error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
 #endif
 
 #include <sys/param.h>
@@ -350,18 +354,22 @@ struct apmregs *regs;
 	case APM_USER_STANDBY_REQ:
 		DPRINTF(("user wants STANDBY--fat chance\n"));
 		(void) apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_REJECTED);
+#ifndef APM_NO_STANDBY
 		(void) apm_record_event(sc, regs->bx);
 		apm_userstandbys++;
+#endif
 		break;
 	case APM_STANDBY_REQ:
 		DPRINTF(("standby requested\n"));
 		if (apm_standbys || apm_suspends)
 		    DPRINTF(("damn fool BIOS did not wait for answer\n"));
+#ifndef APM_NO_STANDBY
 		if (apm_record_event(sc, regs->bx)) {
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
 						APM_LASTREQ_INPROG);
 			apm_standbys++;
 		} else
+#endif
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
 						APM_LASTREQ_REJECTED);
 		break;
@@ -443,6 +451,7 @@ void *arg;
 {
 	struct apmregs regs;
 	struct apm_softc *sc = arg;
+
 	while (apm_get_event(&regs) == 0 && !apm_damn_fool_bios) {
 		apm_event_handle(sc, &regs);
 	};
@@ -524,7 +533,7 @@ u_int dev, state;
 	return 0;
 }
 
-#ifdef APM_NOIDLE
+#ifdef APM_NO_IDLE
 int apmidleon = 0;
 #else
 int apmidleon = 1;
@@ -1011,11 +1020,13 @@ apmioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 		/* some ioctl names from linux */
+#ifndef APM_NO_STANDBY
 	case APM_IOC_STANDBY:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		apm_userstandbys++;
 		return 0;
+#endif
 	case APM_IOC_SUSPEND:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
