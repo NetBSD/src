@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1995/07/25 23:11:56 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1995/08/17 17:40:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -60,6 +60,8 @@ bdev_decl(sd);
 bdev_decl(cd);
 #include "st.h"
 bdev_decl(st);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,6 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
+	bdev_disk_init(NCCD,ccd),	/* 15: concatenated disk driver */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -107,6 +110,7 @@ cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(st);
 cdev_decl(vnd);
+cdev_decl(ccd);
 
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -139,7 +143,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
-	cdev_notdef(),			/* 17: concatenated disk */
+	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
@@ -204,10 +208,12 @@ isdisk(dev, type)
 	case 2:
 	case 4:
 	case 6:
+	case 15:
 		return (type == VBLK);
 	case 8:
 	case 9:
 	case 10:
+	case 17:
 	case 19:
 		return (type == VCHR);
 	default:
@@ -235,7 +241,7 @@ static int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	NODEV,
+	/* 17 */	15,
 	/* 18 */	NODEV,
 	/* 19 */	6,
 	/* 20 */	NODEV,

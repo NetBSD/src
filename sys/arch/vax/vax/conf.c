@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1995/07/05 08:30:41 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1995/08/17 17:41:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -105,6 +105,9 @@ bdev_decl(uu);
 #include "rl.h"
 bdev_decl(rl);
 
+#include "ccd.h"
+bdev_decl(ccd);
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
@@ -124,6 +127,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
 	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
 	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
+	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -219,6 +223,7 @@ cdev_decl(gencn);
 cdev_decl(rx);
 cdev_decl(rl);
 cdev_decl(kdb);
+cdev_decl(ccd);
 
 #include "ct.h"
 cdev_decl(ct);
@@ -359,6 +364,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
 	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
+	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -430,6 +436,7 @@ int	chrtoblktbl[] = {
 	NODEV, 	/* 51 */
 	16,	/* 52 */
 	NODEV,	/* 53 */
+	17,	/* 54 */
 };
 
 chrtoblk(dev)

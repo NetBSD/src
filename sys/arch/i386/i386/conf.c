@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.66 1995/07/04 07:16:21 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.67 1995/08/17 17:40:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -66,6 +66,8 @@ bdev_decl(mcd);
 bdev_decl(vnd);
 #include "scd.h"
 bdev_decl(scd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -87,6 +89,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
+	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -166,6 +169,7 @@ cdev_decl(vnd);
 #include "audio.h"
 cdev_decl(audio);
 cdev_decl(svr4_net);
+cdev_decl(ccd);
 
 struct cdevsw	cdevsw[] =
 {
@@ -189,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
-	cdev_notdef(),			/* 18 */
+	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_notdef(),			/* 19 */
 	cdev_notdef(),			/* 20 */
 	cdev_notdef(),			/* 21 */
@@ -276,7 +280,7 @@ static int chrtoblktbl[] = {
 	/* 15 */	6,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	NODEV,
+	/* 18 */	16,
 	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
