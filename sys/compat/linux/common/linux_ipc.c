@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.28 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.28.2.1 2004/10/19 15:56:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.28 2003/01/18 08:02:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.28.2.1 2004/10/19 15:56:43 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -354,6 +354,27 @@ linux_sys_msgctl(l, v, retval)
 
 #ifdef SYSVSHM
 /*
+ * shmget(2). Just make sure the Linux-compatible shmat() semantics
+ * is enabled for the segment, so that shmat() succeeds even when
+ * the segment would be removed.
+ */
+int
+linux_sys_shmget(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct sys_shmget_args /* {
+		syscallarg(key_t) key;
+		syscallarg(size_t) size;
+		syscallarg(int) shmflg;
+	} */ *uap = v;
+
+	SCARG(uap, shmflg) |= _SHM_RMLINGER;
+	return sys_shmget(l, uap, retval);
+}
+
+/*
  * shmat(2). Very straightforward, except that Linux passes a pointer
  * in which the return value is to be passed. This is subsequently
  * handled by libc, apparently.
@@ -370,18 +391,12 @@ linux_sys_shmat(l, v, retval)
 		syscallarg(int) shmflg;
 		syscallarg(u_long *) raddr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
-	vaddr_t attach_va;
-	u_long raddr;
 
-	if ((error = shmat1(p, SCARG(uap, shmid), SCARG(uap, shmaddr),
-	     SCARG(uap, shmflg), &attach_va, 1)))
+	if ((error = sys_shmat(l, uap, retval)))
 		return error;
 
-	raddr = (u_long)attach_va;
-
-	if ((error = copyout(&raddr, (caddr_t) SCARG(uap, raddr),
+	if ((error = copyout(&retval[0], (caddr_t) SCARG(uap, raddr),
 	     sizeof retval[0])))
 		return error;
 	

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.3.4.4 2004/09/21 13:31:03 skrll Exp $ */
+/* $NetBSD: if_skvar.h,v 1.3.4.5 2004/10/19 15:56:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct sk_chain {
 
 struct sk_txmap_entry {
 	bus_dmamap_t			dmamap;
-	SLIST_ENTRY(sk_txmap_entry)	link;
+	SIMPLEQ_ENTRY(sk_txmap_entry)	link;
 };
 
 struct sk_chain_data {
@@ -198,6 +198,8 @@ struct sk_softc {
 	struct resource		*sk_irq;	/* IRQ resource handle */
 	struct resource		*sk_res;	/* I/O or shared mem handle */
 	u_int8_t		sk_type;
+	u_int8_t		sk_rev;
+  	char			*sk_name;
 	char			*sk_vpd_prodname;
 	char			*sk_vpd_readonly;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */
@@ -233,7 +235,7 @@ struct sk_if_softc {
 	int			sk_if_flags;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
-	SLIST_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_listhead;
+	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry) sk_txmap_head;
 };
 
 struct skc_attach_args {

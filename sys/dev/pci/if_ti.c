@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.57.2.4 2004/09/24 10:53:28 skrll Exp $ */
+/* $NetBSD: if_ti.c,v 1.57.2.5 2004/10/19 15:56:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.57.2.4 2004/09/24 10:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.57.2.5 2004/10/19 15:56:59 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -884,7 +884,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 	struct ti_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t			*buf = NULL;
+		caddr_t			buf = NULL;
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -904,7 +904,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		MEXTADD(m_new, (void *)buf, ETHER_MAX_LEN_JUMBO,
+		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO,
 		    M_DEVBUF, ti_jfree, sc);
 		m_new->m_flags |= M_EXT_RW;
 		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;

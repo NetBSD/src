@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71.2.4 2004/09/21 13:16:39 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.2.5 2004/10/19 15:56:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.4 2004/09/21 13:16:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.5 2004/10/19 15:56:36 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -329,7 +329,7 @@ match_harddisk(struct device *dv, struct btinfo_bootdisk *bid)
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -351,8 +351,8 @@ match_harddisk(struct device *dv, struct btinfo_bootdisk *bid)
 		 * XXX can't happen - open() would
 		 * have errored out (or faked up one)
 		 */
-		printf("can't get label for dev %s%c (%d)\n",
-		       dv->dv_xname, 'a' + bid->partition, error);
+		printf("can't get label for dev %s (%d)\n",
+		       dv->dv_xname, error);
 		goto closeout;
 	}
 

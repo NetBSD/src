@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.2.2.4 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: rf.c,v 1.2.2.5 2004/10/19 15:57:27 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -31,12 +31,12 @@
 /*
 TODO:
 - Better LBN bound checking, block padding for SD disks.
-- Formating / "Set Density"
-- Better error handling / detaild error reason reportnig.
+- Formatting / "Set Density"
+- Better error handling / detailed error reason reportnig.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.4 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.2.2.5 2004/10/19 15:57:27 skrll Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -103,7 +103,7 @@ static int rf_match(struct device *, struct cfdata *, void *);
 static void rf_attach(struct device *, struct device *, void *);
 static int rf_print(void *, const char *);
 
-/* device interfce functions / interface to disk(9) */
+/* device interface functions / interface to disk(9) */
 dev_type_open(rfopen);
 dev_type_close(rfclose);
 dev_type_read(rfread);
@@ -146,8 +146,8 @@ struct rfc_softc {
 	struct device *sc_childs[2];	/* child devices */
 	struct evcnt sc_intr_count;	/* Interrupt counter for statistics */
 	struct buf *sc_curbuf;		/* buf that is currently in work */
-	bus_space_tag_t sc_iot;		/* bus_space IO tag */
-	bus_space_handle_t sc_ioh;	/* bus_space IO handle */
+	bus_space_tag_t sc_iot;		/* bus_space I/O tag */
+	bus_space_handle_t sc_ioh;	/* bus_space I/O handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma DMA tag */
 	bus_dmamap_t sc_dmam;		/* bus_dma DMA map */
 	caddr_t sc_bufidx;		/* current position in buffer data */
@@ -401,8 +401,8 @@ rfc_attach(struct device *parent, struct device *self, void *aux)
 	 * interface. In this case we can not be sure that there are
 	 * bouth disk drievs. So we want to do a detection of attached
 	 * drives. This is done by reading a sector from disk. This means
-	 * that there must be a formated disk in the drive at boot time.
-	 * This is bad, but I did not find an other way to detect the
+	 * that there must be a formatted disk in the drive at boot time.
+	 * This is bad, but I did not find another way to detect the
 	 * (non)existence of a floppy drive.
 	 */
 	if (rfcprobedens(rfc_sc, 0) >= 0) {
@@ -570,7 +570,7 @@ rfstrategy(struct buf *buf)
 		return;
 	}
 	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
-	/* We are going to operate on a non open dev? PANIC! */
+	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(buf->b_dev) + RFS_OPEN_SHIFT)) 
 	    == 0)
 		panic("rfstrategy: can not operate on non-open drive %s "
@@ -610,7 +610,7 @@ rfstrategy(struct buf *buf)
 
 
 /*
- * Look if there is an other buffer in the bufferqueue of this drive
+ * Look if there is another buffer in the bufferqueue of this drive
  * and start to process it if there is one.
  * If the bufferqueue is empty, look at the bufferqueue of the other drive
  * that is attached to this controller. 
@@ -971,7 +971,7 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	dl = rf_sc->sc_disk.dk_label;
 	switch (DISKPART(dev)) {
 		case 0:			/* Part. a is single density. */
-			/* opening in single and double density is sensless */
+			/* opening in single and double density is senseless */
 			if ((rf_sc->sc_state & RFS_OPEN_B) != 0 ) 
 				return(ENXIO);
 			rf_sc->sc_state &= ~RFS_DENS;
@@ -980,9 +980,9 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		break;
 		case 1:			/* Part. b is double density. */
 			/*
-			 * Opening a singe density only drive in double 
+			 * Opening a single density only drive in double 
 			 * density or simultaneous opening in single and 
-			 * double density is sensless.
+			 * double density is senseless.
 			 */
 			if (rfc_sc->type == 1 
 			    || (rf_sc->sc_state & RFS_OPEN_A) != 0 ) 
@@ -1005,9 +1005,9 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		 * Controller is idle and density is not detected.
 		 * Start a density probe by issuing a read sector command
 		 * and sleep until the density probe finished.
-		 * Due to this it is imposible to open unformated media.
+		 * Due to this it is imposible to open unformatted media.
 		 * As the RX02/02 is not able to format its own media,
-		 * media must be purchased preformated. fsck DEC makreting!
+		 * media must be purchased preformatted. fsck DEC makreting!
 		 */
 		RFS_SETCMD(rf_sc->sc_state, RFS_PROBING);
 		disk_busy(&rf_sc->sc_disk);
@@ -1021,7 +1021,7 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		/* wait max. 2 sec for density probe to finish */
 		if (tsleep(rf_sc, PRIBIO | PCATCH, "density probe", 2 * hz)
 		    != 0 || (rf_sc->sc_state & RFS_CMDS) == RFS_NOTINIT) {
-			/* timeout elapsed and / or somthing went wrong */
+			/* timeout elapsed and / or something went wrong */
 			rf_sc->sc_state = 0;
 			return(ENXIO);
 		}
@@ -1059,7 +1059,7 @@ rfclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 		return(ENXIO);
 	}
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
-		panic("rfclose: can not close on non-open drive %s "
+		panic("rfclose: can not close non-open drive %s "
 		    "partition %d", rf_sc->sc_dev.dv_xname, DISKPART(dev));
 	else 
 		rf_sc->sc_state &= ~(1 << (DISKPART(dev) + RFS_OPEN_SHIFT));
@@ -1098,7 +1098,7 @@ rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 	if (unit >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[unit]) == NULL) {
 		return(ENXIO);
 	}
-	/* We are going to operate on a non open dev? PANIC! */
+	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfioctl: can not operate on non-open drive %s "
 		    "partition %d", rf_sc->sc_dev.dv_xname, DISKPART(dev));

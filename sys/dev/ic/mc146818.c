@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.4.4.4 2004/09/21 13:28:04 skrll Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.4.4.5 2004/10/19 15:56:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.4.4.4 2004/09/21 13:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.4.4.5 2004/10/19 15:56:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,7 @@ int mc146818_getcal(todr_chip_handle_t, int *);
 int mc146818_setcal(todr_chip_handle_t, int);
 
 void
-mc146818_attach(sc)
-	struct mc146818_softc *sc;
+mc146818_attach(struct mc146818_softc *sc)
 {
 	todr_chip_handle_t handle;
 
@@ -79,9 +78,7 @@ mc146818_attach(sc)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+mc146818_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mc146818_softc *sc;
 	struct clock_ymdhms dt;
@@ -145,9 +142,7 @@ mc146818_gettime(handle, tv)
  *  Return 0 on success, an error number othersize.
  */
 int
-mc146818_settime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+mc146818_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mc146818_softc *sc;
 	struct clock_ymdhms dt;
@@ -202,18 +197,14 @@ mc146818_settime(handle, tv)
 }
 
 int
-mc146818_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
+mc146818_getcal(todr_chip_handle_t handle, int *vp)
 {
 
 	return EOPNOTSUPP;
 }
 
 int
-mc146818_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
+mc146818_setcal(todr_chip_handle_t handle, int v)
 {
 
 	return EOPNOTSUPP;

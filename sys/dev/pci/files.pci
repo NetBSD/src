@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187.2.6 2004/09/21 13:31:02 skrll Exp $
+#	$NetBSD: files.pci,v 1.187.2.7 2004/10/19 15:56:58 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -402,6 +402,11 @@ file	dev/pci/eap.c			eap
 attach	joy at eap with joy_eap
 file	dev/pci/joy_eap.c		joy_eap needs-flag
 
+# Acer Labs M5455
+device	auacer: audiobus, auconv, mulaw, ac97
+attach	auacer at pci
+file	dev/pci/auacer.c		auacer
+
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auich at pci
@@ -640,6 +645,10 @@ file	dev/pci/if_an_pci.c		an_pci
 # ADMtek ADM8211 PCI/Mini-PCI
 attach	atw at pci with atw_pci
 file	dev/pci/if_atw_pci.c		atw_pci
+
+# Realtek RTL8180 PCI/Mini-PCI
+attach	rtw at pci with rtw_pci
+file	dev/pci/if_rtw_pci.c		rtw_pci
 
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci

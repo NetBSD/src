@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.26.2.4 2004/09/21 13:37:35 skrll Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.26.2.5 2004/10/19 15:58:18 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -233,7 +233,6 @@ extern time_t	ip6_log_time;
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */
 extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 
-extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
 extern int ip6_auto_linklocal;
 

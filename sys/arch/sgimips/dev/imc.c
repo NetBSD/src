@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.8.2.4 2004/09/21 13:21:13 skrll Exp $	*/
+/*	$NetBSD: imc.c,v 1.8.2.5 2004/10/19 15:56:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.8.2.4 2004/09/21 13:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.8.2.5 2004/10/19 15:56:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,10 +83,7 @@ struct imc_attach_args {
 struct imc_softc isc;
 
 static int
-imc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+imc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if ( (mach_type == MACH_SGI_IP22) || (mach_type == MACH_SGI_IP20) )
@@ -96,10 +93,7 @@ imc_match(parent, match, aux)
 }
 
 static void
-imc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+imc_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_int32_t reg;
 	struct imc_attach_args iaa;
@@ -118,11 +112,11 @@ imc_attach(parent, self, aux)
 
 	sysid = bus_space_read_4(isc.iot, isc.ioh, IMC_SYSID);
 
-	/* We can't trust the "EISA present" bit on Indys */
-	if (mach_subtype == MACH_SGI_IP22_GUINESS)
-		isc.eisa_present = 0;
-	else
+	/* EISA exists on IP22 only */
+	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
 		isc.eisa_present = (sysid & IMC_SYSID_HAVEISA);
+	else
+		isc.eisa_present = 0;
 
 	printf(": revision %d", (sysid & IMC_SYSID_REVMASK));
 
@@ -234,14 +228,12 @@ imc_attach(parent, self, aux)
 #if notyet
 		memset(&iaa, 0, sizeof(iaa));
 
-		iaa.iaa_name = "eisa";
-		config_found_ia(self, "eisabus", (void*)&iaa, imc_print);
+		config_found_ia(self, "eisabus", (void*)&iaa, eisabusprint);
 #endif
 	}
 
 	memset(&iaa, 0, sizeof(iaa));
 
-	iaa.iaa_name = "gio";
 	config_found_ia(self, "giobus", (void*)&iaa, imc_print);
 
 	imc_watchdog_enable();
@@ -249,14 +241,10 @@ imc_attach(parent, self, aux)
 
 
 static int
-imc_print(aux, name)
-	void *aux;
-	const char *name;
+imc_print(void *aux, const char *name)
 {
-	struct imc_attach_args* iaa = aux;
-
 	if (name)
-		aprint_normal("%s at %s", iaa->iaa_name, name);
+		aprint_normal("gio at %s", name);
 
 	return UNCONF;
 }

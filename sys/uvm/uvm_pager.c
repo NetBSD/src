@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.60.2.3 2004/09/21 13:39:29 skrll Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.60.2.4 2004/10/19 15:58:31 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.60.2.3 2004/09/21 13:39:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.60.2.4 2004/10/19 15:58:31 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -414,6 +414,7 @@ uvm_aio_aiodone(bp)
 		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
 			uvmexp.paging--;
+			uvmexp.pdfreed++;
 			pg->flags |= PG_RELEASED;
 		}
 

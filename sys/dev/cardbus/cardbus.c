@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.47.2.4 2004/09/21 13:27:25 skrll Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.47.2.5 2004/10/19 15:56:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.2.4 2004/09/21 13:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.47.2.5 2004/10/19 15:56:45 skrll Exp $");
 
 #include "opt_cardbus.h"
 
@@ -74,7 +74,7 @@ STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
 int cardbus_rescan(struct device *, const char *, const int *);
 void cardbus_childdetached(struct device *, struct device *);
 static int cardbussubmatch(struct device *, struct cfdata *,
-			   const locdesc_t *, void *);
+    const locdesc_t *, void *);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -130,7 +130,7 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
 	if (bootverbose)
 		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
-		       sc->sc_lattimer);
+		    sc->sc_lattimer);
 	printf("\n");
 
 	sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
@@ -241,10 +241,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 				    CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
 					bus_space_read_region_1(p->romt,
 					    p->romh, CARDBUS_CIS_ADDR(cis_ptr),
-					    tuples, 256);
+					    tuples, MIN(p->image_size, len));
 					found++;
+					break;
 				}
-				break;
 			}
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
@@ -262,7 +262,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
 			bus_space_read_region_1(ca->ca_memt, bar_memh,
-			    cis_ptr, tuples, 256);
+			    cis_ptr, tuples, MIN(bar_size, len));
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
@@ -426,8 +426,8 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	cf = sc->sc_cf;
 
 	/* XXX what a nonsense */
-	if ((locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT) &&
-	    (locators[CARDBUSCF_DEV] != sc->sc_device))
+	if (locators[CARDBUSCF_DEV] != CARDBUSCF_DEV_DEFAULT &&
+	    locators[CARDBUSCF_DEV] != sc->sc_device)
 		return (0);
 
 	/* inspect initial voltage */
@@ -480,8 +480,9 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		int help[3];
 		locdesc_t *ldesc = (void *)&help; /* XXX */
 
-		if ((locators[CARDBUSCF_FUNCTION] != CARDBUSCF_FUNCTION_DEFAULT)
-		    && (locators[CARDBUSCF_FUNCTION] != function))
+		if (locators[CARDBUSCF_FUNCTION] !=
+		    CARDBUSCF_FUNCTION_DEFAULT &&
+		    locators[CARDBUSCF_FUNCTION] != function)
 			continue;
 
 		if (sc->sc_funcs[function])
@@ -520,17 +521,21 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		    function, bhlc));
 		bhlc &= ~((CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT) |
 		    (CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT));
-		bhlc |= ((sc->sc_cacheline & CARDBUS_CACHELINE_MASK) << CARDBUS_CACHELINE_SHIFT);
-		bhlc |= ((sc->sc_lattimer & CARDBUS_LATTIMER_MASK) << CARDBUS_LATTIMER_SHIFT);
+		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
+		    CARDBUS_CACHELINE_SHIFT;
+		bhlc |= (sc->sc_lattimer & CARDBUS_LATTIMER_MASK) <<
+		    CARDBUS_LATTIMER_SHIFT;
 
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
 		
 		if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-			bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+			bhlc &= ~(CARDBUS_LATTIMER_MASK <<
+			    CARDBUS_LATTIMER_SHIFT);
 			bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
-			cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+			cardbus_conf_write(cc, cf, tag,
+			    CARDBUS_BHLC_REG, bhlc);
 		}
 
 		/*
@@ -573,13 +578,17 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ca.ca_intrline = sc->sc_intrline;
 
 		if (cis_ptr != 0) {
-			if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-				printf("cardbus_attach_card: failed to read CIS\n");
+			if (cardbus_read_tuples(&ca, cis_ptr,
+			    tuple, sizeof(tuple))) {
+				printf("cardbus_attach_card: "
+				    "failed to read CIS\n");
 			} else {
 #ifdef CARDBUS_DEBUG
-				decode_tuples(tuple, 2048, print_tuple, NULL);
+				decode_tuples(tuple, sizeof(tuple),
+				    print_tuple, NULL);
 #endif
-				decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+				decode_tuples(tuple, sizeof(tuple),
+				    parse_tuple, &ca.ca_cis);
 			}
 		}
 
@@ -588,7 +597,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ldesc->locs[CARDBUSCF_FUNCTION] = function;
 
 		if ((csc = config_found_sm_loc((void *)sc, "cardbus", ldesc,
-			&ca, cardbusprint, cardbussubmatch)) == NULL) {
+		    &ca, cardbusprint, cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			sc->sc_funcs[function] = NULL;
@@ -643,8 +652,8 @@ cardbusprint(void *aux, const char *pnp)
 			aprint_normal("%s", ca->ca_cis.cis1_info[i]);
 		}
 		aprint_verbose("%s(manufacturer 0x%x, product 0x%x)",
-		       i ? " " : "",
-		       ca->ca_cis.manufacturer, ca->ca_cis.product);
+		    i ? " " : "",
+		    ca->ca_cis.manufacturer, ca->ca_cis.product);
 		aprint_normal(" %s at %s", devinfo, pnp);
 	}
 	aprint_normal(" dev %d function %d", ca->ca_device, ca->ca_function);
@@ -675,7 +684,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		    ct->ct_device->dv_xname));
 		/* call device detach function */
 
-		if (0 != config_detach(ct->ct_device, 0)) {
+		if (config_detach(ct->ct_device, 0) != 0) {
 			printf("%s: cannot detach dev %s, function %d\n",
 			    sc->sc_dev.dv_xname, ct->ct_device->dv_xname,
 			    ct->ct_func);
@@ -870,7 +879,7 @@ cardbus_get_capability(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
  */
 
 static u_int8_t *
-decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data);
+decode_tuple(u_int8_t *, u_int8_t *, tuple_decode_func, void *);
 
 static int
 decode_tuples(u_int8_t *tuple, int buflen, tuple_decode_func func, void *data)
@@ -882,29 +891,39 @@ decode_tuples(u_int8_t *tuple, int buflen, tuple_decode_func func, void *data)
 		return (0);
 	}
 
-	while (NULL != (tp = decode_tuple(tp, func, data))) {
-		if (tuple + buflen < tp) {
-			break;
-		}
-	}
+	while ((tp = decode_tuple(tp, tuple + buflen, func, data)) != NULL)
+		;
 
 	return (1);
 }
 
 static u_int8_t *
-decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data)
+decode_tuple(u_int8_t *tuple, u_int8_t *end,
+    tuple_decode_func func, void *data)
 {
 	u_int8_t type;
 	u_int8_t len;
 
 	type = tuple[0];
-	len = tuple[1] + 2;
+	switch (type) {
+	case PCMCIA_CISTPL_NULL:
+	case PCMCIA_CISTPL_END:
+		len = 1;
+		break;
+	default:
+		if (tuple + 2 > end)
+			return (NULL);
+		len = tuple[1] + 2;
+		break;
+	}
+
+	if (tuple + len > end)
+		return (NULL);
 
 	(*func)(tuple, len, data);
 
-	if (type == PCMCIA_CISTPL_END) {
+	if (type == PCMCIA_CISTPL_END || tuple + len == end)
 		return (NULL);
-	}
 
 	return (tuple + len);
 }

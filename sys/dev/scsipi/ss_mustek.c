@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.18.16.4 2004/09/21 13:33:25 skrll Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.18.16.5 2004/10/19 15:57:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.4 2004/09/21 13:33:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.18.16.5 2004/10/19 15:57:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -257,11 +257,11 @@ mustek_minphys(struct ss_softc *ss, struct buf *bp)
 	struct scsipi_periph *periph = ss->sc_periph;
 #endif
 
-	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_minphys: before: %ld\n",
+	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_minphys: before: %d\n",
 	    bp->b_bcount));
 	bp->b_bcount -= bp->b_bcount %
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
-	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_minphys: after:  %ld\n",
+	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_minphys: after:  %d\n",
 	    bp->b_bcount));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.8.6.3 2004/09/21 13:23:57 skrll Exp $	*/
+/*	$NetBSD: ka680.c,v 1.8.6.4 2004/10/19 15:56:42 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.8.6.3 2004/09/21 13:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.8.6.4 2004/10/19 15:56:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -128,7 +128,8 @@ ka680_conf()
 		case VAX_BTYP_681: switch((vax_siedata & 0xff00) >> 8) {
 			case VAX_STYP_681: cpuname = "KA681"; break;
 			case VAX_STYP_691: cpuname = "KA691"; break;
-			case VAX_STYP_694: cpuname = "KA694"; break;
+			case VAX_STYP_694: cpuname = (vax_cpudata & 0x1000) ?
+				"KA694" : "KA692"; break;
 			default: cpuname = "unknown KA681-class";
 		} break;
 		default: cpuname = "unknown NVAX class";

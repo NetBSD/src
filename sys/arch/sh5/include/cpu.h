@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.4 2004/09/24 10:53:17 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.5 2004/10/19 15:56:42 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -82,7 +82,6 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <sys/cpu_data.h>
 #include <machine/frame.h>
 #include <sh5/conreg.h>
 #include <sh5/pte.h>
@@ -127,6 +126,7 @@
 
 
 #ifdef _KERNEL
+#include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 

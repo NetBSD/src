@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.6 2002/10/23 09:13:06 jdolecek Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.6.6.1 2004/10/19 15:56:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.6 2002/10/23 09:13:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.6.6.1 2004/10/19 15:56:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -174,7 +174,7 @@ arcbios_tty_param(struct tty *tp, struct termios *t)
 void
 arcbios_tty_start(struct tty *tp)
 {
-	uint32_t count;
+	unsigned long count;
 	int s;
 
 	s = spltty();
@@ -215,7 +215,7 @@ arcbios_tty_getchar(int *cp)
 {
 	char c;
 	int32_t q;
-	u_int32_t count;
+	unsigned long count;
 
 	q = ARCBIOS->GetReadStatus(ARCBIOS_STDIN);
 

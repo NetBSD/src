@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.39.2.5 2004/09/21 13:39:22 skrll Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.39.2.6 2004/10/19 15:58:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.5 2004/09/21 13:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39.2.6 2004/10/19 15:58:30 skrll Exp $");
 
 #include "opt_quota.h"
 
@@ -143,15 +143,11 @@ ufs_reclaim(vp, l)
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
-#ifdef DIAGNOSTIC
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
-		panic("ufs_reclaim: inactive inode has been touched");
-#endif
-	if (ip->i_flag & (IN_ACCESS | IN_MODIFY | IN_ACCESSED)) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-		vn_finished_write(mp, V_LOWER);
-	}
+
+	vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+	VOP_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+	vn_finished_write(mp, V_LOWER);
+
 	/*
 	 * Remove the inode from its hash chain.
 	 */

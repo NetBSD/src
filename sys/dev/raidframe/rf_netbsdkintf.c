@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.4 2004/09/21 13:32:53 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.5 2004/10/19 15:57:27 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.4 2004/09/21 13:32:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.5 2004/10/19 15:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2674,8 +2674,9 @@ rf_find_raid_components()
 			 * XXX can't happen - open() would
 			 * have errored out (or faked up one)
 			 */
-			printf("can't get label for dev %s%c (%d)!?!?\n",
-			       dv->dv_xname, 'a' + RAW_PART, error);
+			if (error != ENOTTY)
+				printf("RAIDframe: can't get label for dev "
+				    "%s (%d)\n", dv->dv_xname, error);
 		}
 
 		/* don't need this any more.  We'll allocate it again
@@ -2683,6 +2684,9 @@ rf_find_raid_components()
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
 		vput(vp);
+
+		if (error)
+			continue;
 
 		for (i=0; i < label.d_npartitions; i++) {
 			/* We only support partitions marked as RAID */
