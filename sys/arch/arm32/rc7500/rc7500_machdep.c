@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.11 1998/08/08 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.12 1998/08/25 22:03:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -91,6 +91,16 @@
 
 u_int cpu_reset_address = 0;
 
+/* Define various stack sizes in pages */
+#define FIQ_STACK_SIZE	1
+#define IRQ_STACK_SIZE	1
+#define ABT_STACK_SIZE	1
+#if NIPKDB > 0
+#define UND_STACK_SIZE	2
+#else
+#define UND_STACK_SIZE	1
+#endif
+
 BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
@@ -129,8 +139,6 @@ pv_addr_t kernelstack;
 pv_addr_t fiqstack;
 #endif
 
-pt_entry_t kernel_pt_table[15];
-
 char *boot_args;
 
 vm_offset_t msgbufphys;
@@ -143,21 +151,17 @@ extern u_int undefined_handler_address;
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
-#define KERNEL_PT_PAGEDIR   0	/* Page table for mapping proc0 pagetables */
-#define KERNEL_PT_PDE       1	/* Page table for mapping L1 page dirs */
-#define KERNEL_PT_PTE       2	/* */
-#define KERNEL_PT_VMEM      3	/* Page table for mapping video memory */
-#define KERNEL_PT_SYS       4	/* Page table for mapping proc0 zero page */
-#define KERNEL_PT_KERNEL    5	/* Page table for mapping kernel */
-#define KERNEL_PT_VMDATA0   6	/* Page tables for mapping kernel VM */
-#define KERNEL_PT_VMDATA1   7
-#define KERNEL_PT_VMDATA2   8
-#define KERNEL_PT_VMDATA3   9
-#define KERNEL_PT_VMDATA4  10
-#define KERNEL_PT_VMDATA5  11
-#define KERNEL_PT_VMDATA6  12
-#define KERNEL_PT_VMDATA7  13
-#define NUM_KERNEL_PTS	   14
+#define	KERNEL_PT_PAGEDIR	0	/* Page table for mapping proc0 pagetables */
+#define	KERNEL_PT_PDE		1	/* Page table for mapping L1 page dirs */
+#define	KERNEL_PT_PTE		2	/* */
+#define	KERNEL_PT_VMEM		3	/* Page table for mapping video memory */
+#define	KERNEL_PT_SYS		4	/* Page table for mapping proc0 zero page */
+#define	KERNEL_PT_KERNEL	5	/* Page table for mapping kernel */
+#define	KERNEL_PT_VMDATA	6	/* Page tables for mapping kernel VM */
+#define	KERNEL_PT_VMDATA_NUM	8
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
+
+pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
@@ -167,15 +171,16 @@ extern int cold;
 
 void physconputchar		__P((char));
 void physcon_display_base	__P((u_int addr));
-extern void consinit			__P((void));
+extern void consinit		__P((void));
 
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
 			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
+void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
 caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -345,12 +350,11 @@ initarm(prom_id)
 	u_int vdrambase;
 	u_int reserv_mem;
 	extern char page0[], page0_end[];
-/*	struct exec *kernexec = (struct exec *)KERNEL_BASE;*/
+/*	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;*/
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
-
 	set_cpufuncs();
 
 	/*
@@ -396,7 +400,7 @@ initarm(prom_id)
 	else
 		reserv_mem = prom_id->kstart - prom_id->physmem_start;
 
-	bootconfig.kernvirtualbase = KERNBASE;
+	bootconfig.kernvirtualbase = KERNEL_BASE;
 	bootconfig.kernphysicalbase = 0x10000000 + reserv_mem;
 	bootconfig.kernsize = (prom_id->ksize + NBPG - 1) & PG_FRAME;
 
@@ -437,14 +441,12 @@ initarm(prom_id)
 	init_prom_interface();
 
 	/* Talk to the user */
-
 	printf("initarm...\n");
 
 	printf("Kernel loaded from file %s\n", bootconfig.kernelname);
 #endif
 
 	/* Check to make sure the page size is correct */
-
 	if (NBPG != bootconfig.pagesize)
 		panic("Page size is not %d bytes\n", NBPG);
 
@@ -468,14 +470,13 @@ initarm(prom_id)
 
 	/*
 	 * We better check to make sure the booter has set up the scratch
-	 * area for us correctly. We use this area to create temporary pagetables
-	 * while we reorganise the memory map.
+	 * area for us correctly. We use this area to create temporary
+	 * pagetables while we reorganise the memory map.
 	 */
 
 	/*
 	 * Update the videomemory structure to reflect the mapping changes
 	 */
- 
 	videomemory.vidm_vbase = VMEM_VBASE;
 	videomemory.vidm_pbase = vdrambase;
 	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
@@ -493,16 +494,19 @@ initarm(prom_id)
 	 * we have a two stage booter.
 	 *
 	 * The secondary bootstrap has the responcibility to sort locating the
-	 * kernel to the correct address and for creating the kernel page tables.
-	 * It must also set up various memory pointers that are used by pmap etc.  
+	 * kernel to the correct address and for creating the kernel page
+	 * tables. It must also set up various memory pointers that are used
+	 * by pmap etc.  
 	 */
 
 #ifdef PROM_DEBUG
 	printf("initarm: Secondary bootstrap ... ");
 #endif
 
-	/* Set up the variables that define the availablilty of physcial memory */
-
+	/*
+	 * Set up the variables that define the availablilty of physcial
+	 * memory
+	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = physical_start + reserv_mem;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
@@ -517,9 +521,10 @@ initarm(prom_id)
 		physmem += bootconfig.dram[loop].pages;
 
 #ifdef PROM_DEBUG
-	printf("physical_start=%x, physical_freestart=%x, physical_end=%x, physical_freeend=%x, free_pages=%x\n",
-	    (u_int) physical_start, (u_int) physical_freestart,
-	    (u_int) physical_end, (u_int) physical_freeend, free_pages);
+	printf("physical_start=%lx, physical_freestart=%lx, physical_end=%x,"
+	    " physical_freeend=%lx, free_pages=%x\n",
+	    physical_start, physical_freestart,
+	    physical_end, physical_freeend, free_pages);
 #endif
 
 	/*
@@ -545,9 +550,10 @@ initarm(prom_id)
 #endif
 
 #ifdef PROM_DEBUG
-	printf("physical_start=%x, physical_freestart=%x, physical_end=%x, physical_freeend=%x, free_pages=%x\n",
-	    (u_int) physical_start, (u_int) physical_freestart,
-	    (u_int) physical_end, (u_int) physical_freeend, free_pages);
+	printf("physical_start=%lx, physical_freestart=%lx, physical_end=%lx,"
+	    " physical_freeend=%lx, free_pages=%x\n",
+	    physical_start, physical_freestart,
+	    physical_end, physical_freeend, free_pages);
 #endif
 
 	/* Right We have the bottom meg of memory mapped to 0x00000000
@@ -577,13 +583,15 @@ initarm(prom_id)
 	physical = physical_start + kerneldatasize + reserv_mem;
 
 #ifdef PROM_DEBUG
-	printf("physical=%08x next_phys=%08x\n", physical, pmap_next_phys_page(physical - NBPG));
+	printf("physical=%08x next_phys=%08x\n", physical,
+	    pmap_next_phys_page(physical - NBPG));
 #endif
 
 	loop1 = 1;
-	kernel_pt_table[0] = 0;
-	for (loop = 0; loop < 15; ++loop) {
-		if ((physical & (PD_SIZE-1)) == 0 && kernel_pt_table[0] == 0) {
+	kernel_pt_table[KERNEL_PT_PAGEDIR] = 0;
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+		if ((physical & (PD_SIZE-1)) == 0
+		    && kernel_pt_table[KERNEL_PT_PAGEDIR] == 0) {
 			kernel_pt_table[KERNEL_PT_PAGEDIR] = physical;
 			bzero((char *)(physical - physical_start), PD_SIZE);
 			physical += PD_SIZE; 
@@ -602,76 +610,59 @@ initarm(prom_id)
 #endif
 
 	/* This should never be able to happen but better confirm that. */
-
 	if ((kernel_pt_table[0] & (PD_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory\n");
 
 	/* Update the address of the first free page of physical memory */
-
 	physical_freestart = physical;
 
 #ifdef PROM_DEBUG
-	printf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
-	    (u_int)pmap_next_phys_page(physical_freestart - NBPG));
+	printf("physical_fs=%08lx next_phys=%08lx\n", physical_freestart,
+	    pmap_next_phys_page(physical_freestart - NBPG));
 #endif
 	free_pages -= (physical - physical_start - reserv_mem) / NBPG;
 
-	/* Allocate a page for the system page mapped to 0x00000000 */
-
-	systempage.physical = physical_freestart;
-	physical_freestart += NBPG;
-#ifdef PROM_DEBUG
-	printf("(0)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
-	    (u_int)pmap_next_phys_page(physical_freestart - NBPG));
-#endif
-	--free_pages;
+	/* Define a macro to simplfy memory allocation */
+#define alloc_pages(var, np)			\
+	(var) = physical_freestart;		\
+	physical_freestart += ((np) * NBPG);	\
+	free_pages -= (np);			\
+	bzero((char *)(var) - physical_start, ((np) * NBPG));
 
 	/*
-	 * Allocate a page for fiq.
+	 * Allocate a page for the system page mapped to V0x00000000
+	 * This page will just contain the system vectors and can be
+	 * shared by all processes.
 	 */
-	fiqstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	fiqstack.virtual = KERNEL_BASE + fiqstack.physical-physical_start;
-	free_pages--;
-
-	/* Allocate another 3 pages for the stacks in different CPU modes. */
-
-	irqstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	abtstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	undstack.physical = physical_freestart;
-	physical_freestart += NBPG;
-	bzero((char *)irqstack.physical - physical_start, 3*NBPG);
-	free_pages -= 3;
-	irqstack.virtual = KERNEL_BASE + irqstack.physical-physical_start;
-	abtstack.virtual = KERNEL_BASE + abtstack.physical-physical_start;
-	undstack.virtual = KERNEL_BASE + undstack.physical-physical_start;
-
+	alloc_pages(systempage.physical, 1);
 #ifdef PROM_DEBUG
-	printf("(1)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
-	    (u_int)pmap_next_phys_page(physical_freestart - NBPG));
+	printf("(0)physical_fs=%08lx next_phys=%08lx\n", physical_freestart,
+	    pmap_next_phys_page(physical_freestart - NBPG));
 #endif
 
-	kernelstack.physical = physical_freestart;
-	physical_freestart += UPAGES * NBPG;
-	bzero((char *)kernelstack.physical - physical_start, UPAGES * NBPG);
-	free_pages -= UPAGES;
+	/* Allocate stacks for all modes */
+	alloc_pages(fiqstack.physical, FIQ_STACK_SIZE);
+	alloc_pages(irqstack.physical, IRQ_STACK_SIZE);
+	alloc_pages(abtstack.physical, ABT_STACK_SIZE);
+	alloc_pages(undstack.physical, UND_STACK_SIZE);
+	alloc_pages(kernelstack.physical, UPAGES);
 
-#ifdef PROM_DEBUG
-	printf("(2)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
-	    (u_int)pmap_next_phys_page(physical_freestart - NBPG));
-#endif
-
+	fiqstack.virtual = KERNEL_BASE + fiqstack.physical - physical_start;
+	irqstack.virtual = KERNEL_BASE + irqstack.physical - physical_start;
+	abtstack.virtual = KERNEL_BASE + abtstack.physical - physical_start;
+	undstack.virtual = KERNEL_BASE + undstack.physical - physical_start;
 	kernelstack.virtual = KERNEL_BASE + kernelstack.physical - physical_start;
 
-	msgbufphys = physical_freestart;
-	physical_freestart += round_page(MSGBUFSIZE);
-	free_pages -= round_page(MSGBUFSIZE) / NBPG;
+#ifdef PROM_DEBUG
+	printf("(1)physical_fs=%08lx next_phys=%08lx\n", physical_freestart,
+	    (pmap_next_phys_page(physical_freestart - NBPG));
+#endif
+
+	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
 
 #ifdef PROM_DEBUG
-	printf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart,
-	    (u_int)pmap_next_phys_page(physical_freestart - NBPG));
+	printf("physical_fs=%08lx next_phys=%08lx\n", physical_freestart,
+	    pmap_next_phys_page(physical_freestart - NBPG));
 #endif
 
 	/*
@@ -684,10 +675,11 @@ initarm(prom_id)
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
 #ifdef PROM_DEBUG
 		printf("[ktext read-only] ");
-		printf("[%08x %08x %08x] \n", (u_int)kerneldatasize, (u_int)kernexec->a_text,
-		    (u_int)(kernexec->a_text+kernexec->a_data+kernexec->a_bss));
+		printf("[%08x %08x %08x] \n", kerneldatasize, kernexec->a_text,
+		    (kernexec->a_text+kernexec->a_data+kernexec->a_bss));
 #if 0
-		printf("physical start=%08x physical freestart=%08x\n", physical_start, physical_freestart);
+		printf("physical start=%08lx physical freestart=%08lx\n",
+		    physical_start, physical_freestart);
 #endif
 #endif
 
@@ -705,19 +697,18 @@ initarm(prom_id)
 			    + logical);
 
 	/* Map the stack pages */
-
-	map_entry(l2pagetable, fiqstack.physical-physical_start,
+	map_entry(l2pagetable, fiqstack.physical - physical_start,
 	    fiqstack.physical);
-	map_entry(l2pagetable, irqstack.physical-physical_start,
+	map_entry(l2pagetable, irqstack.physical - physical_start,
 	    irqstack.physical);
-	map_entry(l2pagetable, abtstack.physical-physical_start,
+	map_entry(l2pagetable, abtstack.physical - physical_start,
 	    abtstack.physical); 
-	map_entry(l2pagetable, undstack.physical-physical_start,
-	    undstack.physical); 
-	map_entry(l2pagetable, kernelstack.physical - physical_start,
-	    kernelstack.physical); 
-	map_entry(l2pagetable, kernelstack.physical + NBPG - physical_start,
-	    kernelstack.physical + NBPG); 
+ 	for (loop = 0; loop < UND_STACK_SIZE; ++loop)
+		map_entry(l2pagetable, undstack.physical - physical_start + NBPG * loop,
+		    undstack.physical + NBPG * loop); 
+	for (loop = 0; loop < UPAGES; ++loop)
+		map_entry(l2pagetable, kernelstack.physical - physical_start + NBPG * loop,
+		    kernelstack.physical + NBPG * loop); 
 
 	/* Now we fill in the L2 pagetable for the VRAM */
 
@@ -737,22 +728,24 @@ initarm(prom_id)
 	}
 
 	/* Map entries in the page table used to map PDE's */
-
 	l2pagetable = kernel_pt_table[KERNEL_PT_PDE] - physical_start;
-	map_entry(l2pagetable, 0x0000000,
+/*	map_entry(l2pagetable, 0x0000000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR]);
 	map_entry(l2pagetable, 0x0001000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x1000);
 	map_entry(l2pagetable, 0x0002000,
 	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x2000);
 	map_entry(l2pagetable, 0x0003000,
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);
+	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);*/
+	for (loop = 0; loop < 4; ++loop)
+		map_entry_nc(l2pagetable, loop * 0x1000,
+		    kernel_pt_table[KERNEL_PT_PAGEDIR] + loop * 0x1000);
 
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
 	 */
-
+	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	l2pagetable = kernel_pt_table[KERNEL_PT_PTE] - physical_start;
 	map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
@@ -764,31 +757,14 @@ initarm(prom_id)
 	    kernel_pt_table[KERNEL_PT_VMEM]);
 	map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x00000000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA0]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x00400000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA1]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x00800000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA2]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x00c00000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA3]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x01000000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA4]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x01400000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA5]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x01800000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA6]);
-	map_entry(l2pagetable, ((KERNEL_VM_BASE + 0x01c00000) >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_VMDATA7]);
-
-	map_entry(l2pagetable, (0xf5000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x0000);
-	map_entry(l2pagetable, (0xf5400000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x1000);
-	map_entry(l2pagetable, (0xf5800000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x2000);
-	map_entry(l2pagetable, (0xf5c00000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_PAGEDIR] + 0x3000);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
+		map_entry_nc(l2pagetable, ((KERNEL_VM_BASE +
+		    (loop * 0x00400000)) >> (PGSHIFT-2)),
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+	}
+	for (loop = 0; loop < 4; ++loop)
+		map_entry_nc(l2pagetable, ((CURRENT_PAGEDIR_HOLE + loop * 0x400000) >> (PGSHIFT-2)),
+		    kernel_pt_table[KERNEL_PT_PAGEDIR] + loop * 0x1000);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
@@ -821,22 +797,9 @@ initarm(prom_id)
 	    kernel_pt_table[KERNEL_PT_SYS]);
 	map_pagetable(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00000000,
-	    kernel_pt_table[KERNEL_PT_VMDATA0]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00400000,
-	    kernel_pt_table[KERNEL_PT_VMDATA1]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00800000,
-	    kernel_pt_table[KERNEL_PT_VMDATA2]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x00c00000,
-	    kernel_pt_table[KERNEL_PT_VMDATA3]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01000000,
-	    kernel_pt_table[KERNEL_PT_VMDATA4]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01400000,
-	    kernel_pt_table[KERNEL_PT_VMDATA5]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01800000,
-	    kernel_pt_table[KERNEL_PT_VMDATA6]);
-	map_pagetable(l1pagetable, KERNEL_VM_BASE + 0x01c00000,
-	    kernel_pt_table[KERNEL_PT_VMDATA7]);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
+		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 	map_pagetable(l1pagetable, PAGE_DIRS_BASE,
 	    kernel_pt_table[KERNEL_PT_PDE]);
 	map_pagetable(l1pagetable, PROCESS_PAGE_TBLS_BASE,
@@ -859,7 +822,7 @@ initarm(prom_id)
 	printf("V0xf6000000 - %08x\n", ReadWord(l1pagetable + 0x3d80));
 	printf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
 	printf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));
-promcngetc();
+	promcngetc();
 #endif
 
 	/*
@@ -874,7 +837,7 @@ promcngetc();
 	 */
 
 #if 0
-	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
+	bcopy((char *)KERNEL_TEXT_BASE, (char *)0x00000000, kerneldatasize);
 #endif
 
 	cpu_domains(DOMAIN_CLIENT);
@@ -897,7 +860,6 @@ promcngetc();
 	setleds(LEDOFF);
 
 	/* Right set up the vectors at the bottom of page 0 */
-
 	bcopy(page0, (char *)0x00000000, page0_end - page0);
 
 	/*
@@ -910,27 +872,27 @@ promcngetc();
 	 */
 
 #ifdef DIAGNOSTIC
-	printf("FIQ stack V%08x P%08x\n", (u_int) fiqstack.virtual,
-	    (u_int) fiqstack.physical);
-	printf("IRQ stack V%08x P%08x\n", (u_int) irqstack.virtual,
-	    (u_int) irqstack.physical);
-	printf("ABT stack V%08x P%08x\n", (u_int) abtstack.virtual,
-	    (u_int) abtstack.physical);
-	printf("UND stack V%08x P%08x\n", (u_int) undstack.virtual,
-	    (u_int) undstack.physical);
+	printf("FIQ stack V%08lx P%08lx\n", fiqstack.virtual,
+	    fiqstack.physical);
+	printf("IRQ stack V%08lx P%08lx\n", irqstack.virtual,
+	    irqstack.physical);
+	printf("ABT stack V%08lx P%08lx\n", abtstack.virtual,
+	    abtstack.physical);
+	printf("UND stack V%08lx P%08lx\n", undstack.virtual,
+	    undstack.physical);
 #endif
 
 	printf("init subsystems: stacks ");
 
-	set_stackptr(PSR_FIQ32_MODE, fiqstack.virtual + NBPG);
-	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
-	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
+	set_stackptr(PSR_FIQ32_MODE, fiqstack.virtual + FIQ_STACK_SIZE * NBPG);
+	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + IRQ_STACK_SIZE * NBPG);
+	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + ABT_STACK_SIZE * NBPG);
+	set_stackptr(PSR_UND32_MODE, undstack.virtual + UND_STACK_SIZE * NBPG);
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("kstack V%08x P%08x\n", (int) kernelstack.virtual,
-		    (int) kernelstack.physical);
+		printf("kstack V%08lx P%08lx\n", kernelstack.virtual,
+		    kernelstack.physical);
 #endif
 
 	/*
@@ -976,21 +938,24 @@ promcngetc();
 	 */
 
 	/* Initialise the undefined instruction handlers */
-
 	printf("undefined ");
 	undefined_init();
 
 	/* Boot strap pmap telling it where the kernel page table is */
-
 	printf("pmap ");
-
-	pmap_bootstrap(PAGE_DIRS_BASE);
+	pmap_bootstrap(PAGE_DIRS_BASE, kernel_pt_table[KERNEL_PT_PTE]);
 
 	/* Setup the IRQ system */
-
 	printf("irq ");
 	irq_init();
 	printf("done.\n");
+
+#if NIPKDB > 0
+	/* Initialise ipkdb */
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
 
 #ifdef DDB
 	printf("ddb: ");
