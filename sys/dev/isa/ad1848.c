@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.12 1996/10/13 01:37:32 christos Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.13 1996/10/16 01:12:25 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -241,6 +241,8 @@ wait_for_calibration(sc)
 }
 
 #ifdef AUDIO_DEBUG
+void ad1848_dump_regs __P((struct ad1848_softc *));
+
 void
 ad1848_dump_regs(sc)
     struct ad1848_softc *sc;

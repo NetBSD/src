@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.9 1996/10/13 03:19:40 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.10 1996/10/16 01:12:18 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -128,7 +128,7 @@ STATIC void apm_periodic_check __P((void *));
 STATIC void apm_disconnect __P((void *));
 #endif
 STATIC void apm_perror __P((const char *, struct apmregs *, ...))
-	    __printf_attribute__((__format__(__printf__,1,3)));
+	    __kprintf_attribute__((__format__(__printf__,1,3)));
 #if 0
 STATIC void apm_powmgt_enable __P((int));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.31 1996/10/13 01:37:04 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.32 1996/10/16 01:12:22 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -86,6 +86,8 @@
 
 #ifdef AUDIO_DEBUG
 #include <machine/stdarg.h>
+
+void Dprintf __P((const char *, ...));
 
 void
 #ifdef __STDC__
