@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.21 2001/02/19 23:03:48 cgd Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.22 2001/05/01 02:15:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.21 2001/02/19 23:03:48 cgd Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.22 2001/05/01 02:15:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,18 +286,12 @@ do_ktrace(tracefile, ops, trpoints, pid)
 
 	if (!tracefile || strcmp(tracefile, "-") == 0) {
 		int pi[2], dofork, fpid;
-		int large = 32768;
 		
 		if (pipe(pi) < 0)
 			err(1, "pipe(2)");
 		fcntl(pi[0], F_SETFD, FD_CLOEXEC|fcntl(pi[0], F_GETFD, 0));
 		fcntl(pi[1], F_SETFD, FD_CLOEXEC|fcntl(pi[1], F_GETFD, 0));
 
-		if (setsockopt(pi[1], SOL_SOCKET, SO_SNDBUF, &large, sizeof(large)) < 0)
-			err(1, "setsockopt(SO_SNDBUF)");
-		if (setsockopt(pi[0], SOL_SOCKET, SO_RCVBUF, &large, sizeof(large)) < 0)
-			err(1, "setsockopt(SO_RCVBUF)");
-		
 		dofork = (pid == getpid());
 
 #ifdef KTRUSS
