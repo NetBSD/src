@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.20 1999/01/21 07:43:32 msaitoh Exp $	*/
+/*	$NetBSD: i82365.c,v 1.21 1999/02/01 22:17:05 marc Exp $	*/
 
 #define	PCICDEBUG
 
@@ -239,6 +239,9 @@ pcic_attach(sc)
 		sc->handle[3].laststate = PCIC_LASTSTATE_EMPTY;
 
 		DPRINTF((" 0x%02x\n", reg));
+	} else {
+		sc->handle[2].flags = 0;
+		sc->handle[3].flags = 0;
 	}
 
 	if (count == 0)
@@ -249,15 +252,13 @@ pcic_attach(sc)
 	/* XXX block interrupts? */
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
-		SIMPLEQ_INIT(&sc->handle[i].events);
-#if 0
 		/*
 		 * this should work, but w/o it, setting tty flags hangs at
 		 * boot time.
 		 */
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
-#endif
 		{
+			SIMPLEQ_INIT(&sc->handle[i].events);
 			pcic_write(&sc->handle[i], PCIC_CSC_INTR, 0);
 			pcic_read(&sc->handle[i], PCIC_CSC);
 		}
@@ -897,6 +898,8 @@ pcic_chip_do_mem_map(h, win)
 	reg = pcic_read(h, PCIC_ADDRWIN_ENABLE);
 	reg |= (mem_map_index[win].memenable | PCIC_ADDRWIN_ENABLE_MEMCS16);
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, reg);
+
+	delay(100);
 
 #ifdef PCICDEBUG
 	{
