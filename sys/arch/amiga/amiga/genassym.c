@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.8 1994/02/23 10:15:08 chopps Exp $
+ *	$Id: genassym.c,v 1.9 1994/04/18 04:08:45 chopps Exp $
  */
 
 #define KERNEL
@@ -68,45 +68,25 @@ main()
 	printf("#define\tP_LINK %d\n", &p->p_link);
 	printf("#define\tP_RLINK %d\n", &p->p_rlink);
 	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
-	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
 	printf("#define\tP_PRI %d\n", &p->p_pri);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
-	printf("#define\tP_FLAG %d\n", &p->p_flag);
-	printf("#define\tSSLEEP %d\n", SSLEEP);
 	printf("#define\tSRUN %d\n", SRUN);
+	
+	printf("#define\tPM_STCHG %d\n", &pmap->pm_stchanged);
+
+	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
 	printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
-	printf("#define\tV_TRAP %d\n", &vm->v_trap);
-	printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
-	printf("#define\tV_SOFT %d\n", &vm->v_soft);
-	printf("#define\tV_PDMA %d\n", &vm->v_pdma);
-	printf("#define\tV_FAULTS %d\n", &vm->v_faults);
-	printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
-	printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
+	
 	printf("#define\tUPAGES %d\n", UPAGES);
-	printf("#define\tKUSER_AREA %d\n", KUSER_AREA);
-	printf("#define\tCLSIZE %d\n", CLSIZE);
 	printf("#define\tNBPG %d\n", NBPG);
-	printf("#define\tNPTEPG %d\n", NPTEPG);
 	printf("#define\tPGSHIFT %d\n", PGSHIFT);
-	printf("#define\tSYSPTSIZE %d\n", SYSPTSIZE);
-	printf("#define\tUSRPTSIZE %d\n", USRPTSIZE);
-	printf("#define\tUSRIOSIZE %d\n", USRIOSIZE);
-#ifdef SYSVSHM
-	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
-#endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
-	printf("#define\tUSRTEXT %d\n", USRTEXT);
-	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
-	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
-	printf("#define\tMCLBYTES %d\n", MCLBYTES);
-	printf("#define\tNKMEMCLUSTERS %d\n", NKMEMCLUSTERS);
+
 	printf("#define\tU_PROF %d\n", &up->u_stats.p_prof);
 	printf("#define\tU_PROFSCALE %d\n", &up->u_stats.p_prof.pr_scale);
-	printf("#define\tRU_MINFLT %d\n", &rup->ru_minflt);
 	printf("#define\tT_BUSERR %d\n", T_BUSERR);
 	printf("#define\tT_ADDRERR %d\n", T_ADDRERR);
 	printf("#define\tT_ILLINST %d\n", T_ILLINST);
@@ -135,7 +115,6 @@ main()
 	printf("#define\tSPL6 %d\n", PSL_S | PSL_IPL6);
 	printf("#define\tFC_USERD %d\n", FC_USERD);
 	printf("#define\tFC_SUPERD %d\n", FC_SUPERD);
-	printf("#define\tMAXADDR %d\n", MAXADDR);
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
@@ -166,10 +145,6 @@ main()
 	printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
 	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 	printf("#define\tSP %d\n", SP);
-	printf("#define\tB_READ %d\n", B_READ);
-	printf("#define\tENOENT %d\n", ENOENT);
-	printf("#define\tEFAULT %d\n", EFAULT);
-	printf("#define\tENAMETOOLONG %d\n", ENAMETOOLONG);
 	printf("#define\tSYS_exit %d\n", SYS_exit);
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
