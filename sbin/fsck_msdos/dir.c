@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.3 1996/05/28 19:51:17 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.4 1996/09/11 20:31:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.3 1996/05/28 19:51:17 ws Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.4 1996/09/11 20:31:24 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -166,7 +166,7 @@ fullpath(dir)
 			break;
 		memcpy(cp, np, nl);
 		*--cp = '/';
-	} while (dir = dir->parent);
+	} while ((dir = dir->parent) != NULL);
 	if (dir->parent)
 		*--cp = '?';
 	return cp;
@@ -237,7 +237,7 @@ finishDosDirSection()
 	}
 	pendingDirectories = 0;
 	for (d = rootDir; d; d = nd) {
-		if (nd = d->child) {
+		if ((nd = d->child) != NULL) {
 			d->child = 0;
 			continue;
 		}
@@ -412,7 +412,7 @@ readDosDirSection(f, boot, fat, dir)
 	u_char *p, *vallfn, *invlfn, *empty;
 	off_t off;
 	int i, j, k, last;
-	cl_t cl, valcl, invcl, empcl;
+	cl_t cl, valcl = ~0, invcl = ~0, empcl = ~0;
 	char *t;
 	u_int lidx = 0;
 	int shortSum;
@@ -497,7 +497,7 @@ readDosDirSection(f, boot, fat, dir)
 					vallfn = p;
 					valcl = cl;
 				} else if (shortSum != p[13]
-					   || lidx != *p & LRNOMASK) {
+					   || lidx != (*p & LRNOMASK)) {
 					if (!invlfn) {
 						invlfn = vallfn;
 						invcl = valcl;
