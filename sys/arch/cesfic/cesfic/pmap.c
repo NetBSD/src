@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2001/05/16 18:47:04 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2001/06/15 17:48:13 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -211,7 +211,7 @@ st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
-vm_map_t	st_map, pt_map;
+struct vm_map	*st_map, *pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
 paddr_t		avail_start;	/* PA of first available physical page */
@@ -2603,7 +2603,7 @@ void
 pmap_ptpage_addref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
 	m = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
@@ -2620,7 +2620,7 @@ int
 pmap_ptpage_delref(ptpva)
 	vaddr_t ptpva;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	int rv;
 
 	simple_lock(&uvm.kernel_object->vmobjlock);
@@ -2666,7 +2666,7 @@ pmap_check_wiring(str, va)
 {
 	pt_entry_t *pte;
 	paddr_t pa;
-	vm_page_t m;
+	struct vm_page *m;
 	int count;
 
 	if (!pmap_ste_v(pmap_kernel(), va) ||
