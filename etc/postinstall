@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.7 2002/04/29 08:31:01 lukem Exp $
+# $NetBSD: postinstall,v 1.8 2002/04/29 12:05:45 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,14 +43,6 @@
 
 #
 # checks to add:
-#	- convert ssh to ssh{,d}_config, and deprecate sshd_conf_dir
-#	- obsolete rc.conf variables
-#		- critical_filesystems{_beforenet,}
-#		- defcorename
-#		- nfsiod_flags
-#		- amd_master
-#		- ip6forwarding
-#	- function to check ${DEST_ETC}/rc.conf and ${DEST_ETC}/rc.conf.d/*
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
@@ -128,7 +120,7 @@ cmpdir()
 		if [ "${_op}" = "check" ]; then
 			msg ${error}
 			_cmpdir_rv=1
-		elif ! cp ${fs} ${fd}; then
+		elif ! cp -f ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
 			_cmpdir_rv=1
 		elif ! chmod ${_mode} ${fd}; then
@@ -250,21 +242,34 @@ do_rc()
 		xfs ypbind yppasswdd ypserv
 	rv=$(( ${rv} + $? ))
 
-	failed=0
+		# check for obsolete rc.d files
 	for f in NETWORK gated; do
 		fd=${DEST_ETC}/rc.d/${f}
 		[ ! -e "${fd}" ] && continue
 		if [ "${op}" = "check" ]; then
-			msg "Remove ${fd}"
-			failed=1
+			msg "Remove obsolete ${fd}"
+			rv=1
 		elif ! rm ${fd}; then
-			msg "Can't remove ${fd}"
-			failed=1
+			msg "Can't remove obsolete ${fd}"
+			rv=1
 		else
-			msg "Removed ${fd}"
+			msg "Removed obsolete ${fd}"
 		fi
 	done
-	rv=$(( ${rv} + ${failed} ))
+
+		# check for obsolete rc.conf(5) variables
+	set --	amd amd_master \
+		mountcritlocal critical_filesystems_beforenet \
+		mountcritremote critical_filesystems \
+		network ip6forwarding \
+		sysctl defcorename \
+		sysctl nfsiod_flags
+	while [ $# -gt 1 ]; do
+		if rcconf_isset $1 $2; then
+			rv=1
+		fi
+		shift 2
+	done
 
 	return ${rv}
 }
@@ -500,7 +505,7 @@ main()
 mkdtemp ()
 {
 	# Make sure we don't loop forever if mkdir will always fail.
-    	[ -d /tmp ] || err 1 /tmp is not a directory
+	[ -d /tmp ] || err 1 /tmp is not a directory
 	[ -w /tmp ] || err 1 /tmp is not writeable
 
 	_base=/tmp/_postinstall.$$
