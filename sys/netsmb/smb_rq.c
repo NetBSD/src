@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.18 2003/04/02 15:01:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.18 2003/04/02 15:01:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ static MALLOC_DEFINE(M_SMBRQ, "SMBRQ", "SMB request");
 MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
 #endif
 
-static int  smb_rq_reply(struct smb_rq *rqp);
-static int  smb_rq_enqueue(struct smb_rq *rqp);
 static int  smb_rq_getenv(struct smb_connobj *layer,
 		struct smb_vc **vcpp, struct smb_share **sspp);
 static int  smb_rq_new(struct smb_rq *rqp, u_char cmd);
@@ -173,7 +171,7 @@ smb_rq_simple(struct smb_rq *rqp)
 	return error;
 }
 
-static int
+int
 smb_rq_enqueue(struct smb_rq *rqp)
 {
 	struct smb_share *ssp = rqp->sr_share;
@@ -317,7 +315,7 @@ smb_rq_getenv(struct smb_connobj *layer,
 /*
  * Wait for reply on the request
  */
-static int
+int
 smb_rq_reply(struct smb_rq *rqp)
 {
 	struct mdchain *mdp = &rqp->sr_rp;
@@ -359,6 +357,14 @@ smb_rq_reply(struct smb_rq *rqp)
 	return (error);
 }
 
+void
+smb_rq_setcallback(struct smb_rq *rqp, void (*recvcallb)(void *), void *arg)
+{
+	SMBRQ_SLOCK(rqp);
+	rqp->sr_recvcallback = recvcallb;
+	rqp->sr_recvarg = arg;
+	SMBRQ_SLOCK(rqp);
+}
 
 #define ALIGN4(a)	(((a) + 3) & ~3)
 

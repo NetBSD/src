@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.7 2003/03/30 11:58:17 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.8 2003/04/07 11:23:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -50,6 +50,7 @@
 #define	SMBR_INTERNAL		0x0080	/* request is internal to smbrqd */
 #define	SMBR_XLOCK		0x0100	/* request locked and can't be moved */
 #define	SMBR_XLOCKWANT		0x0200	/* waiter on XLOCK */
+#define	SMBR_NOWAIT		0x0400	/* don't wait for reply */
 
 #define SMBT2_ALLSENT		0x0001	/* all data and params are sent */
 #define SMBT2_ALLRECV		0x0002	/* all data and params are received */
@@ -101,6 +102,9 @@ struct smb_rq {
 	u_int16_t		sr_rpmid;
 	struct smb_slock	sr_slock;	/* short term locks */
 	SIMPLEQ_ENTRY(smb_rq)	sr_link;
+
+	void			(*sr_recvcallback)(void *);
+	void			*sr_recvarg;
 };
 
 struct smb_t2rq {
@@ -136,6 +140,9 @@ void smb_rq_bstart(struct smb_rq *rqp);
 void smb_rq_bend(struct smb_rq *rqp);
 int  smb_rq_intr(struct smb_rq *rqp);
 int  smb_rq_simple(struct smb_rq *rqp);
+int  smb_rq_enqueue(struct smb_rq *rqp);
+int  smb_rq_reply(struct smb_rq *rqp);
+void smb_rq_setcallback(struct smb_rq *, void (*)(void *), void *);
 
 int  smb_t2_alloc(struct smb_connobj *layer, u_short setup, struct smb_cred *scred,
 	struct smb_t2rq **rqpp);

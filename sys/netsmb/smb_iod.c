@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.18 2003/04/05 11:12:23 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.18 2003/04/05 11:12:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.19 2003/04/07 11:23:02 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ smb_iod_rqprocessed(struct smb_rq *rqp, int error)
 	rqp->sr_state = SMBRQ_NOTIFIED;
 	wakeup(&rqp->sr_state);
 	callout_stop(&rqp->sr_timo_ch);
+	if (rqp->sr_recvcallback)
+		(*rqp->sr_recvcallback)(rqp->sr_recvarg);
 	SMBRQ_SUNLOCK(rqp);
 }
 
@@ -264,12 +266,18 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
 				smb_iod_rqtimedout, rqp);
 		}
+
+		if (rqp->sr_flags & SMBR_NOWAIT) {
+			/* caller doesn't want to wait, flag as processed */
+			smb_iod_rqprocessed(rqp, 0);
+			return (0);
+		}
+
 #if 0
 		iod->iod_lastrqsent = ts;
 #endif
 		rqp->sr_flags |= SMBR_SENT;
 		rqp->sr_state = SMBRQ_SENT;
-		smb_iod_wakeup(iod);
 		return 0;
 	}
 	/*
