@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.25 2001/07/28 06:59:02 matt Exp $
+#	$NetBSD: Makefile,v 1.26 2001/08/09 16:09:52 mrg Exp $
+
+.include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
