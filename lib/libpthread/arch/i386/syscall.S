@@ -57,7 +57,7 @@
 									\
 _machdep_sys_/**/x:;				\
 									\
-	lea	SYS_/**/x, %eax;			\
+	movl	$(SYS_/**/x),%eax;			\
 	.byte 0x9a; .long 0; .word 7;	\
 	jb	1b;							\
 	ret;							
