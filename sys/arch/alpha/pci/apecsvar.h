@@ -1,4 +1,4 @@
-/* $NetBSD: apecsvar.h,v 1.6 1997/04/07 01:59:52 cgd Exp $ */
+/* $NetBSD: apecsvar.h,v 1.7 1997/06/06 23:54:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
+#include <alpha/pci/pci_sgmap_pte64.h>
 
 /*
  * An APECS chipset's configuration.
@@ -46,6 +47,11 @@ struct apecs_config {
 	bus_space_tag_t ac_iot, ac_memt;
 	struct alpha_pci_chipset ac_pc;
 
+	struct alpha_bus_dma_tag ac_dmat_direct;
+	struct alpha_bus_dma_tag ac_dmat_sgmap;
+
+	struct alpha_sgmap ac_sgmap;
+
 	u_int32_t ac_haxr1, ac_haxr2;
 
 	struct extent *ac_io_ex, *ac_d_mem_ex, *ac_s_mem_ex;
@@ -60,6 +66,7 @@ struct apecs_softc {
 
 void	apecs_init __P((struct apecs_config *, int));
 void	apecs_pci_init __P((pci_chipset_tag_t, void *));
+void	apecs_dma_init __P((struct apecs_config *));
 
 bus_space_tag_t apecs_bus_io_init __P((void *));
 bus_space_tag_t apecs_bus_mem_init __P((void *));
