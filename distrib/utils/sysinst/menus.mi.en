@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.50 2002/04/16 02:06:09 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,7 @@ menu netbsd, title "NetBSD-@@VERSION@@ Install System",
 	option "Re-install sets or install additional sets",
 		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
-		action (endwin) { run_prog(0, NULL, "/sbin/reboot"); };
+		action (endwin) { run_prog(0, NULL, "/sbin/reboot -q"); };
 	option "Utility menu", sub menu utility;
 
 menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
@@ -91,7 +91,7 @@ menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
 /*	option "Partition a disk"; XXX add later.  */
 	option "Logging functions", action { do_logging(); };
 	option "Halt the system", exit,
-		action { run_prog(0, NULL, "/sbin/halt"); };
+		action (endwin) { run_prog(0, NULL, "/sbin/halt -q"); };
 
 menu yesno, title "yes or no?";
 	option "Yes", exit, action  {yesno = 1;};
