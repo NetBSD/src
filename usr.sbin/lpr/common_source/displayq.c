@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)displayq.c	5.13 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: displayq.c,v 1.2 1993/08/01 17:59:13 mycroft Exp $";
+static char rcsid[] = "$Id: displayq.c,v 1.3 1994/03/27 09:15:15 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -395,7 +395,7 @@ ldump(nfile, file, copies)
 	else
 		printf("%-32s", nfile);
 	if (*file && !stat(file, &lbuf))
-		printf(" %ld bytes", lbuf.st_size);
+		printf(" %qd bytes", lbuf.st_size);
 	else
 		printf(" ??? bytes");
 	putchar('\n');
