@@ -1,0 +1,176 @@
+.\"	$NetBSD: ntwoc.4,v 1.1 2000/01/05 00:17:25 chopps Exp $
+.\"
+.\" Copyright (c) 2000 Christian E. Hopps
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 2, 1998
+.Dt NTWOC 4
+.Os
+.Sh NAME
+.Nm ntwoc
+.Nd Riscom/N2, N2pci, WANic/400 synchronous serial interfaces
+.Sh SYNOPSIS
+.Cd "ntowc* at pci? dev ? function ? flags 0"
+.Cd "ntowc0 at isa? port 0x300 irq 5 iomem 0xc8000 flags 1"
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports bit-synchronous serial communication using
+Cisco HDLC framing.  The cards are capable of being driven by
+the line clock or from an internal baud rate generator.
+The devices all use the Hitachi hd64570 serial chip.
+The hd64570 supports 2 asynchronous/byte-synchronous/bit-synchronous
+serial ports, and has a 4-channel DMA controller for loading
+the serial port FIFOs.
+.Pp
+The isa Riscom/N2 card has a jumper block to set the irq and a DIP switch
+to set the port address the card will use.  The values programmed
+into the card must be specified with the
+.Cm port
+and
+.Cm irq
+locators in the kernel configuration line. 
+The
+.Cm iomem  
+locator must be specified and must occur on a 16k boundary.
+The driver utilizes a 16k region of io memory.  Bit 0 of the
+.Cm flags
+locator indicates if there is a second serial port available on the
+card.
+.Pp
+Currently
+clock source and speed information is specified with the
+.Cm flags
+locator in the kernel configuration file.  The flags field has the
+following format.
+.Bd -literal
+  3                   2                   1
+1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
++-------------+ +-----+ +-----+ + +---+ +-+     + +---+ +-+   +
+      tmc         tdiv    rdiv  e1 rxs1 ts1    e0 rxs0  txs0  np(*)
+.Ed
+.Bl -tag -width "rxs0 rxs1"
+.It Va tmc
+Defines the timer constant.  The base clock frequency is divided
+by
+.Va tmc
+to generate the main clock for receiving and sending.  Further
+division is possible with the
+.Va tdiv
+and
+.Va rdiv
+divisor options.  A value of 0 is treated as 256.
+.It Va tdiv
+Defines the transmit divisor as
+.Pf "2^(" Va tdiv ) .
+The internal transmit clock
+frequency is determined by dividing the base clock frequency by
+.Va tmc
+and then dividing by
+.Pf "2^(" Va tdiv ) .
+.It Va rdiv
+Defines the receive divisor as
+.Pf "2^(" Va rdiv ) .
+The internal receive clock
+frequency is determined by dividing the base clock frequency by
+.Va tmc
+and then dividing by
+.Pf "2^(" Va rdiv ) .
+.It Va e0 Va e1
+If true the internal clock source is used to drive the line clock for port 0
+or port 1 respectively.
+.It Va rxs0 Va rxs1
+Specifies which clock source to use for receiving data on port 0 and
+port 1 respectively.  The following values are accepted:
+.Pp
+.Bl -tag -width "000" -compact
+.It 0
+Line clock.
+.It 1
+Line clock with noise suppression.
+.It 2
+Internal clock.
+.El
+.It Va txs0 Va txs1
+Specifies which clock source to use for transmitting data on port 0
+and port 1 respectively.  The following values are accepted:
+.Pp
+.Bl -tag -width "000" -compact
+.It 0
+Line clock.
+.It 1
+Internal clock.
+.It 2
+Receive clock.
+.El
+.It Va np
+(For the isa card only) A value of 1 indicates there is a second serial
+port present on the card.  This is auto-detected on the pci card and need
+not be specified.
+.El
+.Pp
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -compact
+.It
+SDL Communications Riscom/N2
+.It
+SDL Communications N2pci
+.It
+SDL Communications WAN/ic 400 (untested)
+.El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "ntwo0: TXDMA underun - fifo depth maxed"
+Indicates that the serial port's FIFO is being drained faster
+than DMA can fill it.  The driver automatically increases the
+low-water mark at which to begin dma transfers when underruns
+occur.  This diagnostic is issued when the low-water mark is
+maximized (i.e., 1 less than the depth of the FIFO).
+.It "ntwo0: RXDMA buffer overflow"
+Indicates that a frame is being received by the card, but
+there are no free receive buffers.
+.El
+.Sh BUGS
+Use of the
+.Cm flags
+locator for setting the clock sources and speeds should be replaced with
+ioctl's and a control program.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The pci driver first appeared in
+.Nx 1.4 .
+Much of the isa driver was adapted from the
+.Fx
+.Nm sr
+driver and first appeared in
+.Nx 1.5 .
