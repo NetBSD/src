@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.41 1995/05/01 14:15:07 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.42 1995/05/01 14:19:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -134,7 +134,7 @@ main()
 	def("SVR4_SIGF_UC", &svr4_sigf->sf_uc);
 	def("SVR4_UC_FS", &svr4_uc->uc_mcontext.greg[SVR4_X86_FS]);
 	def("SVR4_UC_GS", &svr4_uc->uc_mcontext.greg[SVR4_X86_GS]);
-	def("SVR4_UC_EFLAGS", &svr4_uc->uc_mcontext.greg[SVR4_X86_EFLAGS]);
+	def("SVR4_UC_EFLAGS", &svr4_uc->uc_mcontext.greg[SVR4_X86_EFL]);
 #endif
 
 #ifdef COMPAT_LINUX
