@@ -1,4 +1,4 @@
-#	$NetBSD: MARINE,v 1.6 1997/02/03 22:19:36 oki Exp $
+#	$NetBSD: MARINE,v 1.7 1997/05/08 16:39:38 oki Exp $
 
 #
 #	MARINE
@@ -8,8 +8,8 @@
 machine		x68k m68k
 ident		MARINE
 
-options		EXEC_SCRIPT		# Support #!
-options		EXEC_AOUT		# a.out format executables
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
 #cpu		M68030
@@ -43,7 +43,7 @@ options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options		COMPAT_12
+options 	COMPAT_12
 #options 	"TCP_COMPAT_42"		# compatibility with 4.2BSD TCP/IP
 
 # file system options
