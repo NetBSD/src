@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.2 2000/06/14 16:32:22 soren Exp $	*/
+/*	$NetBSD: macepci.c,v 1.3 2000/06/14 22:32:20 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -87,37 +87,50 @@ macepci_attach(parent, self, aux)
 	struct mace_attach_args *maa = aux;
 	struct pcibus_attach_args pba;
 	pcitag_t devtag;
+	pcireg_t slot;
+	u_int32_t control;
 	int rev;
 
-	rev = bus_space_read_4(maa->maa_st, maa->maa_sh, PCI_REV_INFO_R);
+	rev = bus_space_read_4(maa->maa_st, maa->maa_sh, MACEPCI_REVISION);
 	printf(": rev %d\n", rev);
 
 #if 0
-	mace_intr_establish(maa->maa_intr, IPL_NONE , macepci_intr, sc);
+	mace_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
 #endif
 
 	pc->pc_conf_read = macepci_conf_read;
 	pc->pc_conf_write = macepci_conf_write;
 
 	/*
-	 * Fixup O2 PCI slot.
+	 * Fixup O2 PCI slot. Bad hack.
 	 */
 	devtag = pci_make_tag(0, 0, 3, 0);
-#if 1
-	macepci_conf_write(0, devtag, 0x4, 0x00000007);
-#endif
-#if 1	/* 1 for canuck */
-	macepci_conf_write(0, devtag, 0x10, 0x00001000);
-#endif
-#if 0	/* 1 for hut */
-	macepci_conf_write(0, devtag, 0x18, 0x00000000);
-#endif
 
-#if 1
-	printf("macepci0: ctrl %x\n", *(volatile u_int32_t *)0xbf080008);
-	*(volatile u_int32_t *)0xbf080008 |= 0x000000ff;
-	printf("macepci0: ctrl %x\n", *(volatile u_int32_t *)0xbf080008);
-#endif
+	slot = macepci_conf_read(0, devtag, PCI_COMMAND_STATUS_REG);
+	slot |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	macepci_conf_write(0, devtag, PCI_COMMAND_STATUS_REG, slot);
+
+	slot = macepci_conf_read(0, devtag, PCI_MAPREG_START);
+	if (slot == 0xffffffe1)
+		macepci_conf_write(0, devtag, PCI_MAPREG_START, 0x00001000);
+
+	slot = macepci_conf_read(0, devtag, PCI_MAPREG_START + (2 << 2));
+	if ((slot & 0xffff0000) == 0) {
+		slot += 0x00010000;
+		macepci_conf_write(0, devtag, PCI_MAPREG_START + (2 << 2),
+		    0x00000000);
+	}
+		
+	/*
+	 * Enable all MACE PCI interrupts. They will be masked by
+	 * the CRIME code.
+	 */
+	control = bus_space_read_4(maa->maa_st, maa->maa_sh, MACEPCI_CONTROL);
+	control |= CONTROL_INT_MASK;
+	bus_space_write_4(maa->maa_st, maa->maa_sh, MACEPCI_CONTROL, control);
+
+/* XXX */
+printf("macepci0: ctrl %x\n", *(volatile u_int32_t *)0xbf080008);
 
 #if NPCI > 0
 	memset(&pba, 0, sizeof pba);
@@ -130,8 +143,10 @@ macepci_attach(parent, self, aux)
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_pc = pc;
 
+#ifdef MACEPCI_IO_WAS_BUGGY
 	if (rev == 0)
 		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;		/* Buggy? */
+#endif
 
 	config_found(self, &pba, macepci_print);
 #endif
@@ -150,6 +165,9 @@ macepci_print(aux, pnp)
 	else
 		printf(" bus %d", pba->pba_bus);
 
+	/* Mega XXX */
+	*(volatile u_int32_t *)0xb4000034 = 0;  /* prime timer */
+
 	return UNCONF;
 }
 
@@ -164,13 +182,14 @@ macepci_conf_read(pc, tag, reg)
 {
 	pcireg_t data;
 
-	/* XXX more generic pci error checking */
 #if 1
+	/* XXX more generic pci error checking */
 	if ((*(volatile u_int32_t *)0xbf080004 & ~0x00100000) != 6)
 		panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 		    *(volatile u_int32_t *)0xbf080000);
 #endif
-	*PCI_CFG_ADDR = 0x80000000 | tag | reg;
+
+	*PCI_CFG_ADDR = tag | reg;
 	data = *PCI_CFG_DATA;
 	*PCI_CFG_ADDR = 0;
 
@@ -193,7 +212,7 @@ macepci_conf_write(pc, tag, reg, data)
 	if (tag == 0)
 		return;
 
-	*PCI_CFG_ADDR = 0x80000000 | tag | reg;
+	*PCI_CFG_ADDR = tag | reg;
 	*PCI_CFG_DATA = data;
 	*PCI_CFG_ADDR = 0;
 }
