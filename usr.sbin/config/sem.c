@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.28 2001/09/11 05:11:59 enami Exp $	*/
+/*	$NetBSD: sem.c,v 1.29 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 #include "sem.h"
 
 /*

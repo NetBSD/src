@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.15 2001/10/25 08:51:51 lukem Exp $	*/
+/*	$NetBSD: pax.c,v 1.16 2002/01/29 10:20:29 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.15 2001/10/25 08:51:51 lukem Exp $");
+__RCSID("$NetBSD: pax.c,v 1.16 2002/01/29 10:20:29 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,6 +332,7 @@ gen_init(void)
 		(void)setrlimit(RLIMIT_STACK , &reslimit);
 	}
 
+#ifdef RLIMIT_RSS
 	/*
 	 * not really needed, but doesn't hurt
 	 */
@@ -339,6 +340,7 @@ gen_init(void)
 		reslimit.rlim_cur = reslimit.rlim_max;
 		(void)setrlimit(RLIMIT_RSS , &reslimit);
 	}
+#endif
 
 	/*
 	 * signal handling to reset stored directory times and modes. Since

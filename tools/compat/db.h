@@ -1,3 +1,5 @@
-/*	$NetBSD: db.h,v 1.1 2002/01/21 20:04:36 tv Exp $	*/
+/*	$NetBSD: db.h,v 1.2 2002/01/29 10:20:32 tv Exp $	*/
 
+#include "config.h"
+#define __BIT_TYPES_DEFINED__
 #include "../../include/db.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.20 2001/10/25 05:33:32 lukem Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.21 2002/01/29 10:20:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.20 2001/10/25 05:33:32 lukem Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.21 2002/01/29 10:20:28 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: ar_io.c,v 1.20 2001/10/25 05:33:32 lukem Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <err.h>
 #include "pax.h"
 #include "extern.h"
 

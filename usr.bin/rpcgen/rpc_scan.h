@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.h,v 1.4 1997/10/11 21:01:50 christos Exp $	*/
+/*	$NetBSD: rpc_scan.h,v 1.5 2002/01/29 10:20:36 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -30,6 +30,12 @@
  */
 
 /*      @(#)rpc_scan.h  1.3  90/08/29  (C) 1987 SMI   */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
 
 /*
  * rpc_scan.h, Definitions for the RPCL scanner 
