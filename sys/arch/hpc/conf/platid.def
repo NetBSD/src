@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.9 2001/05/16 11:04:57 enami Exp $	*/
+/*	$NetBSD: platid.def,v 1.10 2001/07/11 09:43:07 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -235,6 +235,7 @@ Compaq {
 #ifdef hpcarm
   IPAQ " iPAQ" {
     CPU=ARM_STRONGARM_SA1110
+    H3100
     H3600
   }
 #endif /* hpcarm */
