@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.1.1.1 1996/05/19 19:43:38 leo Exp $
+#	$NetBSD: install.sub,v 1.2 1996/05/25 22:13:09 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,12 +45,6 @@ ROOTDISK=""				# filled in below
 ALLSETS="base comp etc games man misc text"	# default install sets
 UPGRSETS="base comp games man misc text"	# default upgrade sets
 
-if [ ! -x /usr/bin/vi ]; then
-	VI=ed
-else
-	VI=vi
-fi
-
 getresp() {
 	read resp
 	if [ "X$resp" = "X" ]; then
@@ -70,6 +64,8 @@ isin() {
 
 rmel() {
 # remove first argument from list formed by the remaining arguments
+	local	_a
+
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" != "$1" ]; then
@@ -79,13 +75,62 @@ rmel() {
 	done
 }
 
-getlast() {
-# read a line of data, return last element. Equiv. of awk '{print $NF}'.
+cutword () {
+# read a line of data, return Nth element.
+	local _a
+	local _n
+	local _oifs
+
+	# optional field separator
+	_oifs="$IFS"
+	case "$1" in
+		-t?*) IFS=${1#-t}; shift;;
+	esac
+
+	_n=$1
 	read _a; set -- $_a
-	if [ $# -gt 0 ]; then
-		shift `expr $# - 1`
-	fi
-	echo $1
+	IFS="$_oifs"
+	if [ "$1" = "" ]; then return; fi
+	eval echo \$$_n
+}
+
+cutlast () {
+# read a line of data, return last element. Equiv. of awk '{print $NF}'.
+	local _a
+	local _oifs
+
+	# optional field separator
+	_oifs="$IFS"
+	case "$1" in
+		-t?*) IFS=${1#-t}; shift;;
+	esac
+
+	read _a; set -- $_a
+	IFS="$_oifs"
+	if [ "$1" = "" ]; then return; fi
+	while [ "$#" -gt 10 ]; do shift 10; done
+	eval echo \$$#
+}
+
+firstchar () {
+# return first character of argument
+	local _a
+	_a=$1
+	while [ ${#_a} != 1 ]; do
+		_a=${_a%?}
+	done
+	echo $_a
+}
+
+basename () {
+	local _oifs
+	if [ "$1" = "" ]; then return; fi
+	_oifs="$IFS"
+	IFS="/"
+	set -- $1
+	IFS="$_oifs"
+	while [ "$#" -gt 10 ]; do shift 10; done
+	eval echo \$$#
 }
 
 twiddle() {
@@ -97,8 +142,6 @@ twiddle() {
 		sleep 1; echo -n "|";
 	done > /dev/tty & echo $!
 }
-
-. install.md
 
 do_mfs_mount() {
 	# $1 is the mount point
@@ -434,7 +477,7 @@ __install_ftp_2
 			break
 		fi
 
-		_ftp_file=`echo ${resp} | (read a b; echo $a)`
+		_ftp_file=`echo ${resp} | cutword 1'`
 		echo "get ${_ftp_file} |\"tar --unlink -zxvpf -\"" >> \
 		    /tmp/ftp-script.sh
 	done
@@ -457,7 +500,7 @@ install_common_nfs_cdrom() {
 	_sets=`(cd /mnt2/$1; ls *.tar.gz 2> /dev/null)`
 	if [ -z "$_sets" ]; then
 		# Try for stupid msdos convention
-		_sets=`(cd /mnt2/$1; ls *.tgz)`
+		_sets=`(cd /mnt2/$1; ls *.tgz 2> /dev/null)`
 	fi
 	if [ -z "$_sets" ]; then
 		echo "There are no NetBSD install sets available in \"$1\""
@@ -510,8 +553,110 @@ install_common_nfs_cdrom() {
 	done
 }
 
+install_cdrom() {
+	local _drive
+	local _partition
+	local _fstype
+	local _directory
+
+	# Get the cdrom device info
+	cat << \__install_cdrom_1
+
+The following CD-ROM devices are installed on your system; please select
+the CD-ROM device containing the partition with the installation sets:
+
+__install_cdrom_1
+	_CDDEVS=`md_get_cddevs`
+	echo    "$_CDDEVS"
+	echo	""
+	echo -n	"Which is the CD-ROM with the installation media? [abort] "
+	getresp "abort"
+	case "$resp" in
+		abort)
+			echo "Aborting."
+			return
+			;;
+
+		*)
+			if isin $resp $_CDDEVS ; then
+				_drive=$resp
+			else
+				echo ""
+				echo "The CD-ROM $resp does not exist."
+				echo "Aborting."
+				return
+			fi
+			;;
+	esac
+
+	# Get partition
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Partition? [c] "
+		getresp "c"
+		case "$resp" in
+			[a-p])
+				_partition=$resp
+				;;
+
+			*)
+				echo "Invalid response: $resp"
+				resp=""		# force loop to repeat
+				;;
+		esac
+	done
+
+	# Ask for filesystem type
+	cat << \__install_cdrom_2
+
+There are two CD-ROM filesystem types currently supported by this program:
+	1) ISO-9660 (cd9660)
+	2) Berkeley Fast Filesystem (ffs)
+
+__install_cdrom_2
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Which filesystem type? [cd9660] "
+		getresp "cd9660"
+		case "$resp" in
+			cd9660|ffs)
+				_fstype=$resp
+				;;
+
+			*)
+				echo "Invalid response: $resp"
+				resp=""		# force loop to repeat
+				;;
+		esac
+	done
+
+	# Mount the CD-ROM
+	if ! mount -t ${_filesystem} -o ro \
+	    /dev/${_drive}${_partition} /mnt2 ; then
+		echo "Cannot mount CD-ROM drive.  Aborting."
+		return
+	fi
+
+	# Get the directory where the file lives
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo "Enter the directory relative to the mount point that"
+		echo -n "contains the file. [${_directory}] "
+		getresp "${_directory}"
+	done
+	_directory=$resp
+
+	install_common_nfs_cdrom ${_directory}
+	umount -f /mnt2 > /dev/null 2>&1
+}
+
 install_disk() {
 	# Get the disk device info
+	local _drive
+	local _partition
+	local _fstype
+	local _fsopts
+	local _directory
 	local _md_fstype
 	local _md_fsopts
 
@@ -534,7 +679,7 @@ __install_disk_1
 
 		*)
 			if isin $resp $_DKDEVS ; then
-				_disk_drive=$resp
+				_drive=$resp
 			else
 				echo ""
 				echo "The disk $resp does not exist."
@@ -551,7 +696,7 @@ __install_disk_1
 		getresp "d"
 		case "$resp" in
 			[a-p])
-				_disk_partition=$resp
+				_partition=$resp
 				;;
 
 			*)
@@ -580,12 +725,12 @@ __install_disk_2
 		getresp "ffs"
 		case "$resp" in
 			ffs)
-				_disk_filesystem=$resp
-				_disk_fsopts="ro"
+				_fstype=$resp
+				_fsopts="ro"
 				;;
 			$_md_fstype)
-				_disk_filesystem=$resp
-				_disk_fsopts=$_md_fsopts
+				_fstype=$resp
+				_fsopts=$_md_fsopts
 				;;
 			*)
 				echo "Invalid response: $resp"
@@ -595,8 +740,8 @@ __install_disk_2
 	done
 
 	# Mount the disk
-	if ! mount -t ${_disk_filesystem} -o $_disk_fsopts \
-	    /dev/${_disk_drive}${_disk_partition} /mnt2 ; then
+	if ! mount -t ${_fstype} -o $_fsopts \
+	    /dev/${_drive}${_partition} /mnt2 ; then
 		echo "Cannot mount disk.  Aborting."
 		return
 	fi
@@ -605,104 +750,12 @@ __install_disk_2
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file. [${_cdrom_directory}] "
-		getresp "${_cdrom_directory}"
+		echo -n "contains the file. [${_directory}] "
+		getresp "${_directory}"
 	done
-	_cdrom_directory=$resp
+	_directory=$resp
 
-	install_common_nfs_cdrom ${_cdrom_directory}
-	umount -f /mnt2 > /dev/null 2>&1
-}
-
-install_cdrom() {
-	# Get the cdrom device info
-	cat << \__install_cdrom_1
-
-The following disk devices are installed on your system; please select
-the disk device containing the partition with the installation sets:
-
-__install_cdrom_1
-	_CDDEVS=`md_get_cddevs`
-	echo    "$_CDDEVS"
-	echo	""
-	echo -n	"Which is the CD-ROM with the installation media? [abort] "
-	getresp "abort"
-	case "$resp" in
-		abort)
-			echo "Aborting."
-			return
-			;;
-
-		*)
-			if isin $resp $_CDDEVS ; then
-				_cdrom_drive=$resp
-			else
-				echo ""
-				echo "The CD-ROM $resp does not exist."
-				echo "Aborting."
-				return
-			fi
-			;;
-	esac
-
-	# Get partition
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Partition? [c] "
-		getresp "c"
-		case "$resp" in
-			[a-h])
-				_cdrom_partition=$resp
-				;;
-
-			*)
-				echo "Invalid response: $resp"
-				resp=""		# force loop to repeat
-				;;
-		esac
-	done
-
-	# Ask for filesystem type
-	cat << \__install_cdrom_2
-
-There are two CD-ROM filesystem types currently supported by this program:
-	1) ISO-9660 (cd9660)
-	2) Berkeley Fast Filesystem (ffs)
-
-__install_cdrom_2
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Which filesystem type? [cd9660] "
-		getresp "cd9660"
-		case "$resp" in
-			cd9660|ffs)
-				_cdrom_filesystem=$resp
-				;;
-
-			*)
-				echo "Invalid response: $resp"
-				resp=""		# force loop to repeat
-				;;
-		esac
-	done
-
-	# Mount the CD-ROM
-	if ! mount -t ${_cdrom_filesystem} -o ro \
-	    /dev/${_cdrom_drive}${_cdrom_partition} /mnt2 ; then
-		echo "Cannot mount CD-ROM drive.  Aborting."
-		return
-	fi
-
-	# Get the directory where the file lives
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo "Enter the directory relative to the mount point that"
-		echo -n "contains the file. [${_disk_directory}] "
-		getresp "${_disk_directory}"
-	done
-	_disk_directory=$resp
-
-	install_common_nfs_cdrom ${_disk_directory}
+	install_common_nfs_cdrom ${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -765,13 +818,13 @@ The installation program needs to know which tape device to use.  Make
 sure you use a "no rewind on close" device.
 
 __install_tape_1
-	_tape=`echo $TAPE | sed 's/.*\///'`
+	_tape=`basename $TAPE`
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Name of tape device? [${_tape}]"
 		getresp "${_tape}"
 	done
-	_tape=`echo $resp | sed 's/.*\///'`
+	_tape=`basename $resp`
 	TAPE="/dev/${_tape}"
 	if [ ! -c $TAPE ]; then
 		echo "$TAPE does not exist or is not a character special file."
@@ -883,8 +936,8 @@ at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/timezone 2>/dev/null | getlast |
-			sed 's?/usr/share/zoneinfo/??'`
+		TZ=`ls -l /etc/timezone 2>/dev/null | cutlast`
+		TZ=${TZ#/usr/share/zoneinfo/}
 	fi
 	while :; do
 		echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
@@ -936,20 +989,20 @@ Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-if [ -f $RELDIR/$1.tar.gz ]; then
-	echo -n "Install from sets in the current root filesystem? [y] "
+if [ -f /mnt/$RELDIR/$1.tar.gz ]; then
+	echo -n "Are you sure to install sets from $RELDIR ? [y] "
 	getresp "y"
 	case "$resp" in
 	y*|Y*)
 		for _f do
-			if [ ! -f $RELDIR/${_f}.tar.gz ]; then
+			if [ ! -f /mnt/$RELDIR/${_f}.tar.gz ]; then
 				continue
 			fi
 			echo -n "Install \"$_f\" ? [y]"
 			getresp "y"
 			case "$resp" in
 			y*|Y*)
-			     cat $RELDIR/${_f}.tar.gz |
+			     cat /mnt/$RELDIR/${_f}.tar.gz |
 					(cd /mnt; tar --unlink -zxvpf -)
 				_yup="TRUE"
 				echo "Extraction complete."
@@ -1027,21 +1080,22 @@ munge_fstab()
 {
 	local _fstab
 	local _fstab_shadow
+	local _dev
+	local _mp
+	local _rest
+
 	# Now that the 'real' fstab is configured, we munge it into a 'shadow'
 	# fstab which we'll use for mounting and unmounting all of the target
 	# filesystems relative to /mnt.  Mount all filesystems.
 	_fstab=$1
 	_fstab_shadow=$2
-	(
-	    while read f1 f2 f3 f4 f5 f6
-	    do
-		if [ "$2 " = "/" ]; then
-		    printf "%s /mnt %s %s %s %s\n" $f1 $f3 $f4 $f5 $f6
+	( while read _dev _mp _rest; do
+		if [ "$_mp" = "/" ]; then
+			echo $_dev /mnt $_rest
 		else
-		    printf "%s /mnt%s %s %s %s %s\n" $f1 $f2 $f3 $f4 $f5 $f6
+			echo $_dev /mnt$_mp $_rest
 		fi
-	    done
-	) < $_fstab > $_fstab_shadow
+	    done ) < $_fstab > $_fstab_shadow
 }
 
 mount_fs()
