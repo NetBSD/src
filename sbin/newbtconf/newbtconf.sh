@@ -24,7 +24,7 @@ if [ $dir = init ] ; then
 	ln -s $dir etc.current
 	ln -s $dir etc.default
 	for i in ${FILES}; do
-		if [ -f $i ] ; then
+		if [ -f $i -o -d $i ] ; then
 			mv $i $dir
 			ln -s etc.current/$i .
 		fi
@@ -57,6 +57,7 @@ if [ ! -d /etc/$orig ] ; then
 	exit 1;
 fi
 mkdir -m 755 /etc/$dir
-cp -p /etc/$orig/* /etc/$dir
+cd /etc/$orig 
+pax -rw -pe . /etc/$dir
 echo "/etc/$dir has now been created and populated."
 exit 0
