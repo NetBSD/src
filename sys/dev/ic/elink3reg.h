@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.19 1998/11/04 00:29:29 fvdl Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.20 1999/04/28 22:47:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -55,6 +55,7 @@
 #define EEPROM_CAP		0x10
 #define EEPROM_CONFIG_LOW	0x12
 #define EEPROM_CONFIG_HIGH	0x13
+#define EEPROM_SSI		0x14
 #define EEPROM_CHECKSUM_EL3	0x17
 
 /*
