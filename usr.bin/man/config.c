@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.9 1998/11/06 22:33:47 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.9.2.1 2000/04/30 11:28:20 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: config.c,v 1.9 1998/11/06 22:33:47 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.9.2.1 2000/04/30 11:28:20 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,13 +110,14 @@ config(fname)
 			tp = addlist(p);
 
 		/*
-		 * Attach new records.  The keyword _build takes the rest of
-		 * the line as a single entity, everything else is white
-		 * space separated.  The reason we're not just using strtok(3)
-		 * for all of the parsing is so we don't get caught if a line
-		 * has only a single token on it.
+		 * Attach new records.  The keywords _build and _crunch takes
+		 * the rest of the line as a single entity, everything else is
+		 * whitespace separated.
+		 * The reason we're not just using strtok(3) for all of the
+		 * parsing is so we don't get caught if a line has only a
+		 * single token on it.
 		 */
-		if (!strcmp(p, "_build")) {
+		if (!strcmp(p, "_build") || !strcmp(p, "_crunch")) {
 			while (*++t && isspace((unsigned char)*t));
 			if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 			    (ep->s = strdup(t)) == NULL)
@@ -165,6 +166,38 @@ getlist(name)
 		if (!strcmp(name, tp->s))
 			return (tp);
 	return (NULL);
+}
+
+void
+removelist(name)
+	char *name;
+{
+	TAG *tp;
+	ENTRY *ep;
+
+	tp = getlist(name);
+	while ((ep = tp->list.tqh_first) != NULL) {
+		free(ep->s);
+		TAILQ_REMOVE(&tp->list, ep, q);
+	}
+	free(tp->s);
+	TAILQ_REMOVE(&head, tp, q);
+
+}
+
+TAG *
+renamelist(oldname, newname)
+	char *oldname;
+	char *newname;
+{
+	TAG *tp;
+
+	if(!(tp = getlist(oldname)))
+		return (NULL);
+	free(tp->s);
+	if(!(tp->s = strdup(newname)))
+		err(1, "malloc");
+	return (tp);
 }
 
 void
