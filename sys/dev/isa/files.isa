@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.128 2003/03/03 22:07:21 mycroft Exp $
+#	$NetBSD: files.isa,v 1.129 2003/06/02 03:57:16 gmcgarry Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -153,6 +153,14 @@ file	dev/isa/wdc_isa.c		wdc_isa
 device	wt: tape, isadma
 attach	wt at isa
 file	dev/isa/wt.c			wt			needs-flag
+
+#
+# GPIB controllers
+#
+
+device	cec: gpibdev
+attach	cec at isa
+file	dev/isa/cec.c			cec
 
 #
 # ISA networking drivers
