@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.46 2001/06/05 09:20:12 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.47 2001/06/16 12:08:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.46 2001/06/05 09:20:12 mrg Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.47 2001/06/16 12:08:05 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: fstat.c,v 1.46 2001/06/05 09:20:12 mrg Exp $");
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
+#include <sys/pipe.h>
 #define	_KERNEL
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
@@ -166,6 +167,7 @@ void	usage __P((void));
 char   *vfilestat __P((struct vnode *, struct filestat *));
 void	vtrans __P((struct vnode *, int, int));
 void	ftrans __P((struct file *, int));
+void	ptrans __P((struct file *, struct pipe *, int));
 
 int
 main(argc, argv)
@@ -391,6 +393,9 @@ ftrans (fp, i)
 	else if (file.f_type == DTYPE_SOCKET) {
 		if (checkfile == 0)
 			socktrans((struct socket *)file.f_data, i);
+	} else if (file.f_type == DTYPE_PIPE) {
+		if (checkfile == 0)
+			ptrans(&file, (struct pipe *)file.f_data, i);
 	} else {
 		dprintf("unknown file type %d for file %d of pid %d",
 		    file.f_type, i, Pid);
@@ -905,6 +910,31 @@ socktrans(sock, i)
 		/* print protocol number and socket address */
 		printf(" %d %lx", proto.pr_protocol, (long)sock);
 	}
+	printf("\n");
+	return;
+bad:
+	printf("* error\n");
+}
+
+void
+ptrans(fp, cpipe, i)
+	struct file *fp;
+	struct pipe *cpipe;
+	int i;
+{
+	struct pipe cp;
+
+	PREFIX(i);
+	
+	/* fill in socket */
+	if (!KVM_READ(cpipe, &cp, sizeof(struct pipe))) {
+		dprintf("can't read pipe at %p", cpipe);
+		goto bad;
+	}
+
+	printf("* pipe %p %s %p", cpipe,
+		(fp->f_flag == FWRITE) ? "->" : "<-",
+		cp.pipe_peer);
 	printf("\n");
 	return;
 bad:
