@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.28 2004/04/25 22:25:05 jonathan Exp $
+.\"	$NetBSD: setkey.8,v 1.29 2004/04/29 12:46:06 wiz Exp $
 .\"	$KAME: setkey.8,v 1.90 2003/09/08 06:10:43 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 21, 2003
+.Dd April 25, 2004
 .Dt SETKEY 8
 .Os
 .\"
@@ -656,7 +656,6 @@ spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 	-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
 add 10.1.10.34 10.1.10.36 tcp 0x1000 -A tcp-md5 "TCP-MD5 BGP secret" ;
-
 .Ed
 .\"
 .Sh SEE ALSO
