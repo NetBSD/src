@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36 2000/04/20 12:08:50 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.37 2000/04/20 12:25:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.36 2000/04/20 12:08:50 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.37 2000/04/20 12:25:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,8 @@ routename(sa)
 		sin6.sin6_family = AF_INET6;
 #ifdef __KAME__
 		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) &&
+		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
 		    sin6.sin6_scope_id == 0) {
 			sin6.sin6_scope_id =
 			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
@@ -582,7 +583,8 @@ netname(sa)
 		sin6.sin6_family = AF_INET6;
 #ifdef __KAME__
 		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) &&
+		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
 		    sin6.sin6_scope_id == 0) {
 			sin6.sin6_scope_id =
 			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
@@ -1055,7 +1057,8 @@ getaddr(which, s, hpp)
 		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 #ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) &&
+		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
 		    su->sin6.sin6_scope_id) {
 			*(u_int16_t *)&su->sin6.sin6_addr.s6_addr[2] =
 				htons(su->sin6.sin6_scope_id);
