@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.9 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: tty.4,v 1.10 2000/03/23 19:48:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,14 +45,25 @@
 This section describes the interface to the terminal drivers
 in the system.
 .Ss Terminal Special Files
-Each hardware terminal port on the system usually has a terminal special device
-file associated with it in the directory ``/dev/'' (for
-example, ``/dev/tty03'').
+Each hardware terminal port on the system usually has two terminal special
+device files associated with it in the directory ``/dev/'' (for
+example, ``/dev/tty03'' and ``/dev/dty03'').
+.Pp
+The ``/dev/ttyXX'' special file is used for dialin modems and terminals.
 When a user logs into
 the system on one of these hardware terminal ports, the system has already
 opened the associated device and prepared the line for normal interactive
 use (see
 .Xr getty 8 .)
+.Pp
+The ``/dev/dtyXX'' special file is a SunOS-compatible dialout device.  Unlike
+the dialin device, opening the dialout device never blocks.  If the
+corresponding dialin device is already opened (not blocked in the open waiting
+for carrier), then the dialout open will fail immediately; otherwise it will
+succeed immediately.  While the dialout device is open, the dialin device may
+not be opened.  If the dialin open is blocking, it will wait until the dialout
+device is closed (and carrier is detected); otherwise it will fail immediately.
+.Pp
 There is also a special case of a terminal file that connects not to
 a hardware terminal port, but to another program on the other side.
 These special terminal devices are called
@@ -416,6 +427,10 @@ Return the current state of the serial port as represented
 above in the integer pointed to by
 .Fa state .
 .El
+.Sh HISTORY
+Separate dialout device files were implemented in SunOS 4.  They were cloned
+by Charles M. Hannum for
+.Nx 1.4 .
 .Sh SEE ALSO
 .Xr getty 8 ,
 .Xr ioctl 2 ,
