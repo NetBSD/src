@@ -1,5 +1,5 @@
 .\" manual page [] for pppd 2.0
-.\" $Id: pppd.8,v 1.5 1994/02/22 00:12:04 paulus Exp $
+.\" $Id: pppd.8,v 1.6 1994/05/08 12:16:29 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -50,20 +50,23 @@ Set the async character map to <map>.
 This map describes which control characters cannot be successfully
 received over the serial line.
 .I pppd
-will ask the peer to send these characters as a 2-byte "escape" sequence.
+will ask the peer to send these characters as a 2-byte escape sequence.
 The argument is a 32 bit hex number
 with each bit representing a character to escape. 
 Bit 0 (00000001) represents the character 0x00;
 bit 31 (80000000) represents the character 0x1f or ^_.
-The default asyncmap is 0.  If multiple \fBasyncmap\fR options are
+If multiple \fBasyncmap\fR options are
 given, the values are ORed together.
+If no \fBasyncmap\fR option is given, no async character map will be
+negotiated for the receive direction; the peer will then escape
+\fIall\fR control characters.
 .TP
 .B auth
 Require the peer to authenticate itself before allowing network
 packets to be sent or received.
 .TP
 .B connect \fI<p>
-Use the executable or shell command specified by <p> to set up the
+Use the executable or shell command specified by \fI<p>\fR to set up the
 serial line.  This script would typically use the "chat" program to
 dial the modem and start the remote ppp session.
 .TP
@@ -76,14 +79,33 @@ Add a default route to the system routing tables, using the peer as
 the gateway, when IPCP negotiation is successfully completed.
 This entry is removed when the PPP connection is broken.
 .TP
+.B disconnect \fI<p>
+Run the executable or shell command specified by \fI<p>\fR after
+\fIpppd\fR has terminated the link.  This script could, for example,
+issue commands to the modem to cause it to hang up.
+.TP
+.B escape \fIxx,yy,...
+Specifies that certain characters should be escaped on transmission
+(regardless of whether the peer requests them to be escaped with its
+async control character map).  The characters to be escaped are
+specified as a list of hex numbers separated by commas.  Note that
+almost any character can be specified for the \fBescape\fR option,
+unlike the \fBasyncmap\fR option which only allows control characters
+to be specified.  The characters which may not be escaped are those
+with hex values 0x20 - 0x3f or 0x5e.
+.TP
 .B file \fI<f>
 Read options from file <f> (the format is described below).
+.TP
+.B lock
+Specifies that \fIpppd\fR should use a UUCP-style lock on the serial
+device to ensure exclusive access to the device.
 .TP
 .B mru \fI<n>
 Set the MRU [Maximum Receive Unit] value to <n> for negotiation.
 .I pppd
 will ask the peer to send packets of no more than <n> bytes.
- The minimum MRU value is 128. 
+The minimum MRU value is 128. 
 The default MRU value is 1500.  A value of 296 is recommended for slow
 links (40 bytes for TCP/IP header + 256 bytes of data).
 .TP
@@ -132,17 +154,18 @@ default values).
 .TP
 .B -ac
 Disable Address/Control compression negotiation (use default, i.e.
-disabled).
+address/control field disabled).
 .TP
 .B -am
-Disable asyncmap negotiation (use default, i.e. 0xffffffff).
+Disable asyncmap negotiation (use the default asyncmap, i.e. escape
+all control characters).
 .TP
 .B -as \fI<n>
 Same as
 .B asyncmap \fI<n>
 .TP
 .B -d
-Increase debugging level.
+Increase debugging level (same as the \fBdebug\fR option).
 .TP
 .B -detach
 Don't fork to become a background process (otherwise
@@ -168,7 +191,8 @@ Same as the
 option.
 .TP
 .B -pc
-Disable protocol field compression negotiation (use default, i.e. disabled).
+Disable protocol field compression negotiation (use default, i.e.
+protocol field compression disabled).
 .TP
 .B +ua \fI<p>
 Agree to authenticate using PAP [Password Authentication Protocol] if
@@ -196,9 +220,13 @@ Disable negotiation of Van Jacobson style IP header compression (use
 default, i.e. no compression).
 .TP
 .B debug
-Increase debugging level (same as
-.B -d
-).
+Increase debugging level (same as \fB\-d\fR).
+If this
+option is given, \fIpppd\fR will log the contents of all control
+packets sent or received in a readable form.  The packets are logged
+through syslog with facility \fIdaemon\fR and level \fIdebug\fR.  This
+information can be directed to a file by setting up /etc/syslog.conf
+appropriately (see syslog.conf(5)).
 .TP
 .B domain \fI<d>
 Append the domain name <d> to the local host name for authentication
@@ -209,8 +237,21 @@ domain option to set the domain name to Quotron.COM.
 .B modem
 Use the modem control lines.  (This option is not fully implemented.)
 .TP
+.B kdebug \fIn
+Enable debugging code in the kernel-level PPP driver.  The argument
+\fIn\fR is a number which is the sum of the following values: 1 to
+enable general debug messages, 2 to request that the contents of
+received packets be printed, and 4 to request that the contents of
+transmitted packets be printed.
+.TP
 .B local
 Don't use the modem control lines.
+.TP
+.B mtu \fI<n>
+Set the MTU [Maximum Transmit Unit] value to \fI<n>\fR.  Unless the
+peer requests a smaller value via MRU negotiation, \fIpppd\fR will
+request that the kernel networking code send data packets of no more
+than \fIn\fR bytes through the PPP network interface. 
 .TP
 .B name \fI<n>
 Set the name of the local system for authentication purposes to <n>.
@@ -429,6 +470,16 @@ other Network Control Protocol) can be started.  If authentication
 fails, \fIpppd\fR will terminated the link (by closing LCP).  If IPCP
 negotiates an unacceptable IP address for the remote host, IPCP will
 be closed.  IP packets can only be sent or received when IPCP is open.
+.LP
+In some cases it is desirable to allow some hosts which can't
+authenticate themselves to connect and use one of a restricted set of
+IP addresses, even when the local host generally requires
+authentication.  If the peer refuses to authenticate itself when
+requested, \fIpppd\fR takes that as equivalent to authenticating with
+PAP using the empty string for the username and password.  Thus, by
+adding a line to the pap-secrets file which specifies the empty string
+for the client and password, it is possible to allow restricted access
+to hosts which refuse to authenticate themselves.
 .SH ROUTING
 .LP
 When IPCP negotiation is completed successfully,
@@ -483,29 +534,34 @@ for example:
 pppd /dev/ttya 38400 connect 'chat "" "" "login:" "username"
 "Password:" "password" "% " "exec pppd passive"'
 .LP
+(Note however that running chat like this will leave the password
+visible in the parameter list of pppd and chat.)
+.LP
 If your serial connection is any more complicated than a piece of
 wire, you may need to arrange for some control characters to be
 escaped.  In particular, it is often useful to escape XON (^Q) and
 XOFF (^S), using \fBasyncmap a0000\fR.  If the path includes a telnet,
 you probably should escape ^] as well (\fBasyncmap 200a0000\fR).
-Don't use an rlogin in the path - many implementations are not
+If the path includes an rlogin, you will need to use the \fBescape
+ff\fR option on the end which is running the rlogin client, since many
+rlogin implementations are not
 transparent; they will remove the sequence [0xff, 0xff, 0x73, 0x73,
 followed by any 8 bytes] from the stream.
 .SH DIAGNOSTICS
 .LP
-Messages are sent to the syslog daemon using facility
-LOG_DAEMON unless
-.I pppd
-has been compiled with debugging code.  In this case the logging
-facility used will be LOG_LOCAL2 in order to allow separation of the debug
-output from the other daemons using the  LOG_DAEMON facility.  You can
-override this by defining the macro LOG_PPP to the desired facility
-and recompiling.  In order to see the error and debug messages, you
-will need to edit your /etc/syslog.conf file to direct the messages to
-the desired output device or file.
+Messages are sent to the syslog daemon using facility LOG_DAEMON.
+(This can be overriden by recompiling \fIpppd\fR with the macro
+LOG_PPP defined as the desired facility.)  In order to see the error
+and debug messages, you will need to edit your /etc/syslog.conf file
+to direct the messages to the desired output device or file.
 .LP
-If enabled at compile time, debugging printout can be enabled by
-setting the -d or debug flag on the command line, or by sending a
+The \fBdebug\fR option causes the contents of all control packets sent
+or received to be logged, that is, all LCP, PAP, CHAP or IPCP packets.
+This can be useful if the PPP negotiation does not succeed.
+If debugging is enabled at compile time, the \fBdebug\fR option also
+causes other debugging messages to be logged.
+.LP
+Debugging can also be enabled by sending a
 SIGUSR1 to the
 .I pppd
 process.
@@ -542,12 +598,6 @@ Rivest, R.
 .I The MD5 Message-Digest Algorithm.
 1992 April.
 .TP
-.B RFC1331
-Simpson, W.A.
-.I Point\-to\-Point Protocol (PPP) for the transmission of multi\-protocol
-.I datagrams over point\-to\-point links.
-1992 May.
-.TP
 .B RFC1332
 McGregor, G.
 .I PPP Internet Protocol Control Protocol (IPCP).
@@ -557,6 +607,16 @@ McGregor, G.
 Lloyd, B.; Simpson, W.A.
 .I PPP authentication protocols.
 1992 October.
+.TP
+.B RFC1548
+Simpson, W.A.
+.I The Point\-to\-Point Protocol (PPP).
+1993 December.
+.TP
+.B RFC1549
+Simpson, W.A.
+.I PPP in HDLC Framing.
+1993 December
 .SH NOTES
 The following signals have the specified effect when sent to the
 .I pppd

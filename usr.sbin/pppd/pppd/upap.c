@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: upap.c,v 1.3 1993/11/10 01:34:35 paulus Exp $";
+static char rcsid[] = "$Id: upap.c,v 1.4 1994/05/08 12:16:32 paulus Exp $";
 #endif
 
 /*
@@ -310,7 +310,7 @@ upap_rauthreq(u, inp, id, len)
 	return;
     }
     GETCHAR(ruserlen, inp);
-    len -= sizeof (u_char) + ruserlen + sizeof (u_char);;
+    len -= sizeof (u_char) + ruserlen + sizeof (u_char);
     if (len < 0) {
 	UPAPDEBUG((LOG_INFO, "upap_rauth: rcvd short packet."));
 	return;
@@ -481,4 +481,81 @@ upap_sresp(u, code, id, msg, msglen)
     output(u->us_unit, outpacket_buf, outlen + DLLHEADERLEN);
 
     UPAPDEBUG((LOG_INFO, "upap_sresp: Sent code %d, id %d.", code, id));
+}
+
+/*
+ * upap_printpkt - print the contents of a PAP packet.
+ */
+char *upap_codenames[] = {
+    "AuthReq", "AuthAck", "AuthNak"
+};
+
+int
+upap_printpkt(p, plen, printer, arg)
+    u_char *p;
+    int plen;
+    void (*printer) __ARGS((void *, char *, ...));
+    void *arg;
+{
+    int code, id, len;
+    int mlen, ulen, wlen;
+    char *user, *pwd, *msg;
+    u_char *pstart;
+
+    if (plen < UPAP_HEADERLEN)
+	return 0;
+    pstart = p;
+    GETCHAR(code, p);
+    GETCHAR(id, p);
+    GETSHORT(len, p);
+    if (len < UPAP_HEADERLEN || len > plen)
+	return 0;
+
+    if (code >= 1 && code <= sizeof(upap_codenames) / sizeof(char *))
+	printer(arg, " %s", upap_codenames[code-1]);
+    else
+	printer(arg, " code=0x%x", code);
+    printer(arg, " id=0x%x", id);
+    len -= UPAP_HEADERLEN;
+    switch (code) {
+    case UPAP_AUTHREQ:
+	if (len < 1)
+	    break;
+	ulen = p[0];
+	if (len < ulen + 2)
+	    break;
+	wlen = p[ulen + 1];
+	if (len < ulen + wlen + 2)
+	    break;
+	user = (char *) (p + 1);
+	pwd = (char *) (p + ulen + 2);
+	p += ulen + wlen + 2;
+	len -= ulen + wlen + 2;
+	printer(arg, " user=");
+	print_string(user, ulen, printer, arg);
+	printer(arg, " password=");
+	print_string(pwd, wlen, printer, arg);
+	break;
+    case UPAP_AUTHACK:
+    case UPAP_AUTHNAK:
+	if (len < 1)
+	    break;
+	mlen = p[0];
+	if (len < mlen + 1)
+	    break;
+	msg = (char *) (p + 1);
+	p += mlen + 1;
+	len -= mlen + 1;
+	printer(arg, "msg=");
+	print_string(msg, mlen, printer, arg);
+	break;
+    }
+
+    /* print the rest of the bytes in the packet */
+    for (; len > 0; --len) {
+	GETCHAR(code, p);
+	printer(arg, " %.2x", code);
+    }
+
+    return p - pstart;
 }

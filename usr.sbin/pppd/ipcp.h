@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.h,v 1.4 1994/02/22 00:11:59 paulus Exp $
+ * $Id: ipcp.h,v 1.5 1994/05/08 12:16:20 paulus Exp $
  */
 
 /*
@@ -65,3 +65,4 @@ void ipcp_lowerup __ARGS((int));
 void ipcp_lowerdown __ARGS((int));
 void ipcp_input __ARGS((int, u_char *, int));
 void ipcp_protrej __ARGS((int));
+int  ipcp_printpkt __ARGS((u_char *, int, void (*)(), void *));

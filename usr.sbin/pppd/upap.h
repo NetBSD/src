@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: upap.h,v 1.3 1993/11/10 01:34:38 paulus Exp $
+ * $Id: upap.h,v 1.4 1994/05/08 12:16:34 paulus Exp $
  */
 
 /*
@@ -87,3 +87,5 @@ void upap_lowerup __ARGS((int));
 void upap_lowerdown __ARGS((int));
 void upap_input __ARGS((int, u_char *, int));
 void upap_protrej __ARGS((int));
+int  upap_printpkt __ARGS((u_char *, int,
+			   void (*) __ARGS((void *, char *, ...)), void *));

@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.3 1993/11/10 01:34:15 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.4 1994/05/08 12:16:22 paulus Exp $";
 #endif
 
 /*
@@ -55,6 +55,7 @@ lcp_options lcp_wantoptions[NPPP];	/* Options that we want to request */
 lcp_options lcp_gotoptions[NPPP];	/* Options that peer ack'd */
 lcp_options lcp_allowoptions[NPPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NPPP];	/* Options that we ack'd */
+u_long xmit_accm[NPPP][8];		/* extended transmit ACCM */
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -129,7 +130,7 @@ lcp_init(unit)
 					   implementations */
     wo->neg_mru = 1;
     wo->mru = DEFMRU;
-    wo->neg_asyncmap = 1;
+    wo->neg_asyncmap = 0;
     wo->asyncmap = 0;
     wo->neg_chap = 0;			/* Set to 1 on server */
     wo->neg_upap = 0;			/* Set to 1 on server */
@@ -151,6 +152,8 @@ lcp_init(unit)
     ao->neg_accompression = 1;
     ao->neg_lqr = 0;			/* no LQR implementation yet */
 
+    memset(xmit_accm[unit], 0, sizeof(xmit_accm[0]));
+    xmit_accm[unit][3] = 0x60000000;
 }
 
 
@@ -192,9 +195,11 @@ lcp_lowerup(unit)
     int unit;
 {
     sifdown(unit);
+    ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, MTU, 0xffffffff, 0, 0);
     ppp_recv_config(unit, MTU, 0, 0, 0);
     peer_mru[unit] = MTU;
+    lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
 
     fsm_lowerup(&lcp_fsm[unit]);
 }
@@ -1219,7 +1224,7 @@ lcp_up(f)
      * set our MRU to the larger of value we wanted and
      * the value we got in the negotiation.
      */
-    ppp_send_config(f->unit, (ho->neg_mru? MIN(ao->mru, ho->mru): MTU),
+    ppp_send_config(f->unit, MIN(ao->mru, (ho->neg_mru? ho->mru: MTU)),
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): MTU),
@@ -1254,7 +1259,8 @@ lcp_down(f)
     ppp_send_config(f->unit, MTU, 0xffffffff, 0, 0);
     ppp_recv_config(f->unit, MTU, 0, 0, 0);
     peer_mru[f->unit] = MTU;
-    syslog(LOG_NOTICE, "Connection terminated.");
+
+    link_down(f->unit);
 }
 
 
@@ -1279,3 +1285,139 @@ lcp_finished(f)
     link_terminated(f->unit);
 }
 
+
+/*
+ * lcp_printpkt - print the contents of an LCP packet.
+ */
+char *lcp_codenames[] = {
+    "ConfReq", "ConfAck", "ConfNak", "ConfRej",
+    "TermReq", "TermAck", "CodeRej", "ProtRej",
+    "EchoReq", "EchoRep", "DiscReq"
+};
+
+int
+lcp_printpkt(p, plen, printer, arg)
+    u_char *p;
+    int plen;
+    void (*printer) __ARGS((void *, char *, ...));
+    void *arg;
+{
+    int code, id, len, olen;
+    u_char *pstart, *optend;
+    u_short cishort;
+    u_long cilong;
+
+    if (plen < HEADERLEN)
+	return 0;
+    pstart = p;
+    GETCHAR(code, p);
+    GETCHAR(id, p);
+    GETSHORT(len, p);
+    if (len < HEADERLEN || len > plen)
+	return 0;
+
+    if (code >= 1 && code <= sizeof(lcp_codenames) / sizeof(char *))
+	printer(arg, " %s", lcp_codenames[code-1]);
+    else
+	printer(arg, " code=0x%x", code);
+    printer(arg, " id=0x%x", id);
+    len -= HEADERLEN;
+    switch (code) {
+    case CONFREQ:
+    case CONFACK:
+    case CONFNAK:
+    case CONFREJ:
+	/* print option list */
+	while (len >= 2) {
+	    GETCHAR(code, p);
+	    GETCHAR(olen, p);
+	    p -= 2;
+	    if (olen < 2 || olen > len) {
+		break;
+	    }
+	    printer(arg, " <");
+	    len -= olen;
+	    optend = p + olen;
+	    switch (code) {
+	    case CI_MRU:
+		if (olen == CILEN_SHORT) {
+		    p += 2;
+		    GETSHORT(cishort, p);
+		    printer(arg, "mru %d", cishort);
+		}
+		break;
+	    case CI_ASYNCMAP:
+		if (olen == CILEN_LONG) {
+		    p += 2;
+		    GETLONG(cilong, p);
+		    printer(arg, "asyncmap 0x%x", cilong);
+		}
+		break;
+	    case CI_AUTHTYPE:
+		if (olen >= CILEN_SHORT) {
+		    p += 2;
+		    printer(arg, "auth ");
+		    GETSHORT(cishort, p);
+		    switch (cishort) {
+		    case UPAP:
+			printer(arg, "upap");
+			break;
+		    case CHAP:
+			printer(arg, "chap");
+			break;
+		    default:
+			printer(arg, "0x%x", cishort);
+		    }
+		}
+		break;
+	    case CI_QUALITY:
+		if (olen >= CILEN_SHORT) {
+		    p += 2;
+		    printer(arg, "quality ");
+		    GETSHORT(cishort, p);
+		    switch (cishort) {
+		    case LQR:
+			printer(arg, "lqr");
+			break;
+		    default:
+			printer(arg, "0x%x", cishort);
+		    }
+		}
+		break;
+	    case CI_MAGICNUMBER:
+		if (olen == CILEN_LONG) {
+		    p += 2;
+		    GETLONG(cilong, p);
+		    printer(arg, "magic 0x%x", cilong);
+		}
+		break;
+	    case CI_PCOMPRESSION:
+		if (olen == CILEN_VOID) {
+		    p += 2;
+		    printer(arg, "pcomp");
+		}
+		break;
+	    case CI_ACCOMPRESSION:
+		if (olen == CILEN_VOID) {
+		    p += 2;
+		    printer(arg, "accomp");
+		}
+		break;
+	    }
+	    while (p < optend) {
+		GETCHAR(code, p);
+		printer(arg, " %.2x", code);
+	    }
+	    printer(arg, ">");
+	}
+	break;
+    }
+
+    /* print the rest of the bytes in the packet */
+    for (; len > 0; --len) {
+	GETCHAR(code, p);
+	printer(arg, " %.2x", code);
+    }
+
+    return p - pstart;
+}

@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.4 1994/02/22 00:11:57 paulus Exp $";
+static char rcsid[] = "$Id: ipcp.c,v 1.5 1994/05/08 12:16:19 paulus Exp $";
 #endif
 
 /*
@@ -43,13 +43,17 @@ static char rcsid[] = "$Id: ipcp.c,v 1.4 1994/02/22 00:11:57 paulus Exp $";
 #include "ppp.h"
 #include "fsm.h"
 #include "ipcp.h"
-
+#include "pathnames.h"
 
 /* global vars */
 ipcp_options ipcp_wantoptions[NPPP];	/* Options that we want to request */
 ipcp_options ipcp_gotoptions[NPPP];	/* Options that peer ack'd */
 ipcp_options ipcp_allowoptions[NPPP];	/* Options we allow peer to request */
 ipcp_options ipcp_hisoptions[NPPP];	/* Options that we ack'd */
+
+extern char ifname[];
+extern char devname[];
+extern int baud_rate;
 
 /* local vars */
 static int cis_received[NPPP];		/* # Conf-Reqs received */
@@ -66,7 +70,7 @@ static int  ipcp_rejci __ARGS((fsm *, u_char *, int));	/* Peer rej'd our CI */
 static int  ipcp_reqci __ARGS((fsm *, u_char *, int *, int)); /* Rcv CI */
 static void ipcp_up __ARGS((fsm *));		/* We're UP */
 static void ipcp_down __ARGS((fsm *));		/* We're DOWN */
-
+static void ipcp_script __ARGS((fsm *, char *)); /* Run an up/down script */
 
 fsm ipcp_fsm[NPPP];		/* IPCP fsm structure */
 
@@ -885,6 +889,10 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 		}
 		ho->maxslotindex = maxslotindex;
 		ho->cflag = wo->cflag;
+	    } else {
+		ho->old_vj = 1;
+		ho->maxslotindex = MAX_STATES - 1;
+		ho->cflag = 1;
 	    }
 	    break;
 
@@ -988,7 +996,7 @@ ipcp_up(f)
     }
 
     /*
-     * Check that the peer is allowed to use the IP address he wants.
+     * Check that the peer is allowed to use the IP address it wants.
      */
     if (!auth_ip_addr(f->unit, ho->hisaddr)) {
 	syslog(LOG_ERR, "Peer is not authorized to use remote address %s",
@@ -1011,7 +1019,7 @@ ipcp_up(f)
     }
 
     /* set tcp compression */
-    sifvjcomp(f->unit, ho->neg_vj, ho->cflag);
+    sifvjcomp(f->unit, ho->neg_vj, ho->cflag, ho->maxslotindex);
 
     /* bring the interface up for IP */
     if (!sifup(f->unit)) {
@@ -1029,6 +1037,13 @@ ipcp_up(f)
     if (ipcp_wantoptions[f->unit].proxy_arp)
 	if (sifproxyarp(f->unit, ho->hisaddr))
 	    go->proxy_arp = 1;
+
+    /*
+     * Execute the ip-up script, like this:
+     *	/etc/ppp/ip-up interface tty speed local-IP remote-IP
+     */
+    ipcp_script(f, _PATH_IPUP);
+
 }
 
 
@@ -1054,4 +1069,138 @@ ipcp_down(f)
 	cifdefaultroute(f->unit, hisaddr);
     sifdown(f->unit);
     cifaddr(f->unit, ouraddr, hisaddr);
+
+    /* Execute the ip-down script */
+    ipcp_script(f, _PATH_IPDOWN);
+}
+
+
+/*
+ * ipcp_script - Execute a script with arguments
+ * interface-name tty-name speed local-IP remote-IP.
+ */
+static void
+ipcp_script(f, script)
+    fsm *f;
+    char *script;
+{
+    char strspeed[32], strlocal[32], strremote[32];
+    char *argv[8];
+
+    sprintf(strspeed, "%d", baud_rate);
+    strcpy(strlocal, ip_ntoa(ipcp_gotoptions[f->unit].ouraddr));
+    strcpy(strremote, ip_ntoa(ipcp_hisoptions[f->unit].hisaddr));
+
+    argv[0] = script;
+    argv[1] = ifname;
+    argv[2] = devname;
+    argv[3] = strspeed;
+    argv[4] = strlocal;
+    argv[5] = strremote;
+    argv[6] = NULL;
+    run_program(script, argv, 0);
+}
+
+/*
+ * ipcp_printpkt - print the contents of an IPCP packet.
+ */
+char *ipcp_codenames[] = {
+    "ConfReq", "ConfAck", "ConfNak", "ConfRej",
+    "TermReq", "TermAck", "CodeRej"
+};
+
+int
+ipcp_printpkt(p, plen, printer, arg)
+    u_char *p;
+    int plen;
+    void (*printer)();
+    void *arg;
+{
+    int code, id, len, olen;
+    u_char *pstart, *optend;
+    u_short cishort;
+    u_long cilong;
+
+    if (plen < HEADERLEN)
+	return 0;
+    pstart = p;
+    GETCHAR(code, p);
+    GETCHAR(id, p);
+    GETSHORT(len, p);
+    if (len < HEADERLEN || len > plen)
+	return 0;
+
+    if (code >= 1 && code <= sizeof(ipcp_codenames) / sizeof(char *))
+	printer(arg, " %s", ipcp_codenames[code-1]);
+    else
+	printer(arg, " code=0x%x", code);
+    printer(arg, " id=0x%x", id);
+    len -= HEADERLEN;
+    switch (code) {
+    case CONFREQ:
+    case CONFACK:
+    case CONFNAK:
+    case CONFREJ:
+	/* print option list */
+	while (len >= 2) {
+	    GETCHAR(code, p);
+	    GETCHAR(olen, p);
+	    p -= 2;
+	    if (olen < 2 || olen > len) {
+		break;
+	    }
+	    printer(arg, " <");
+	    len -= olen;
+	    optend = p + olen;
+	    switch (code) {
+	    case CI_ADDRS:
+		if (olen == CILEN_ADDRS) {
+		    p += 2;
+		    GETLONG(cilong, p);
+		    printer(arg, "addrs %s", ip_ntoa(htonl(cilong)));
+		    GETLONG(cilong, p);
+		    printer(arg, " %s", ip_ntoa(htonl(cilong)));
+		}
+		break;
+	    case CI_COMPRESSTYPE:
+		if (olen >= CILEN_COMPRESS) {
+		    p += 2;
+		    GETSHORT(cishort, p);
+		    printer(arg, "compress ");
+		    switch (cishort) {
+		    case IPCP_VJ_COMP:
+			printer(arg, "VJ");
+			break;
+		    case IPCP_VJ_COMP_OLD:
+			printer(arg, "old-VJ");
+			break;
+		    default:
+			printer(arg, "0x%x", cishort);
+		    }
+		}
+		break;
+	    case CI_ADDR:
+		if (olen == CILEN_ADDR) {
+		    p += 2;
+		    GETLONG(cilong, p);
+		    printer(arg, "addr %s", ip_ntoa(htonl(cilong)));
+		}
+		break;
+	    }
+	    while (p < optend) {
+		GETCHAR(code, p);
+		printer(arg, " %.2x", code);
+	    }
+	    printer(arg, ">");
+	}
+	break;
+    }
+
+    /* print the rest of the bytes in the packet */
+    for (; len > 0; --len) {
+	GETCHAR(code, p);
+	printer(arg, " %.2x", code);
+    }
+
+    return p - pstart;
 }
