@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.6 2002/12/28 10:19:06 jmcneill Exp $ */
+/* $NetBSD: com_acpi.c,v 1.7 2003/01/09 12:23:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.6 2002/12/28 10:19:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.7 2003/01/09 12:23:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	asc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq, 0,
-					IPL_SERIAL, comintr, sc);
+	asc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
+	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
+	    IPL_SERIAL, comintr, sc);
 }
