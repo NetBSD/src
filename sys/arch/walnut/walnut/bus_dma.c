@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2001/10/29 01:53:59 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2002/03/13 19:31:33 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -365,8 +365,9 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 bus_size_t len, int ops)
 {
-	bus_addr_t addr,startline,endline;
-	int i,minlen;
+	bus_addr_t addr, startline, endline, cachemask;
+	bus_size_t cachestride;
+	int i, minlen;
 
 	/*
 	 * Mixing PRE and POST operations is not allowed.
@@ -380,6 +381,13 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
 		return;
 #endif
+	cachestride = curcpu()->ci_ci.dcache_line_size;
+#ifdef DIAGNOSTIC
+	if (cachestride<4)
+		printf("_bus_dmamap_sync: WARNING line size %x\n", cachestride);
+#endif
+	if (cachestride < 4) cachestride = 4;
+	cachemask = ~(cachestride - 1);
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
@@ -406,9 +414,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		/* XXX does not deal with address wrap */
 
 		/* Cache line first byte belongs to */
-		startline = (addr + offset) & CACHELINEMASK; 
+		startline = (addr + offset) & cachemask; 
 		/* Cache line last byte belongs to */
-		endline = ( addr + offset + minlen - 1) & CACHELINEMASK; 
+		endline = ( addr + offset + minlen - 1) & cachemask; 
 
 		if (ops & BUS_DMASYNC_PREREAD) {
 			/*
@@ -416,14 +424,14 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			 * in memory now.
 			 */
 			for (addr = startline; addr <= endline;
-			    addr += CACHELINESIZE)
+			    addr += cachestride)
 				asm volatile("dcbf 0,%0"::"r"(addr));
 		} else if (ops & BUS_DMASYNC_PREWRITE) {
 			/*
 			 * Flush cache so memory contains correct data.
 			 */
 			for (addr = startline; addr <= endline;
-			    addr += CACHELINESIZE)
+			    addr += cachestride)
 				asm volatile("dcbst 0,%0"::"r"(addr));
 		} else if (ops & BUS_DMASYNC_POSTREAD){
 			/*
@@ -431,8 +439,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			 * in memory.
 			 */
 			for (addr = startline; addr <= endline;
-			    addr += CACHELINESIZE)
-			asm volatile("dcbi 0,%0"::"r"(addr));
+			    addr += cachestride)
+				asm volatile("dcbi 0,%0"::"r"(addr));
 		}
 
 		offset = 0;
