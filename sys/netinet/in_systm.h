@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.8 1995/04/13 06:29:22 cgd Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.9 1997/07/07 20:57:46 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)in_systm.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef __IN_SYSTM_H__
+#define __IN_SYSTM_H__
+
 /*
  * Miscellaneous internetwork
  * definitions for kernel.
@@ -56,3 +59,5 @@ typedef u_int32_t n_time;		/* ms since 00:00 GMT, byte rev */
 #ifdef _KERNEL
 n_time	 iptime __P((void));
 #endif
+
+#endif /* __IN_SYSTM_H__ */
