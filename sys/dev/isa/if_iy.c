@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.24 1998/07/28 14:44:46 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.25 1998/07/28 16:02:34 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -450,8 +450,19 @@ struct iy_softc *sc;
 	bus_space_write_1(iot, ioh, REG1,
 	    temp | XMT_CHAIN_INT | XMT_CHAIN_ERRSTOP | RCV_DISCARD_BAD);
 	
+#ifdef IYUSEOLD
 	temp = bus_space_read_1(iot, ioh, RECV_MODES_REG);
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp | MATCH_BRDCST);
+#else
+	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
+		temp = MATCH_ALL;
+	} else if (sc->sc_ethercom.ec_multicnt) {
+		temp = MATCH_MULTI;
+	} else 
+		temp = MATCH_ID;
+
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
+#endif
 #ifdef IYDEBUG
 	printf("%s: RECV_MODES were %b set to %b\n",
 	    sc->sc_dev.dv_xname, 
@@ -1206,27 +1217,48 @@ iy_mc_reset(sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	struct ethercom *ecp;
+	struct ifnet *ifp;
 
-	/*
-	 * Step through the list of addresses.
-	 */
-	sc->mcast_count = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
-	while (enm) {
-		if (sc->mcast_count >= MAXMCAST ||
-		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
-			iyioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS,
-			    (void *)0);
-			goto setflag;
+	ecp = &sc->sc_ethercom;
+	ifp = &ecp->ec_if;
+
+	if (ecp->ec_multicnt > 63) {
+		goto needallmulti;
+
+	} else if (ec->ec_multicnt > 0) {
+		/*
+		 * Step through the list of addresses.
+		 */
+		ETHER_FIRST_MULTI(step, ecp, enm);
+		while(enm) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+				goto needallmulti;
+			}
+			ETHER_NEXT_MULTI(step, enm);
+		} 
+		/* OK, we really need to do it now: */
+		ETHER_FIRST_MULTI(step, ecp, enm);
+		/*
+		 * XXX TBD: find a suitable place in the TX buffer for the
+		 * setup command, and write its header and our unicast address
+		 */
+		while(enm) {
+			/* XXX TBD: write the next multicast address */
+			ETHER_NEXT_MULTI(step, enm);
 		}
+		/* XXX TBD: write command and wait for the result */
 
-		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);
-		sc->mcast_count++;
-		ETHER_NEXT_MULTI(step, enm);
+	} else {
+		/* XXX TBD: setup for no multicasts */
 	}
-	setflag:
-	sc->want_mcsetup = 1;
+	return;
+
+needallmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	iyioctl(ifp, SIOCSIFFLAGS, (void *)0);
+	/* XXX TBD: and setup hardware for all multicasts */
+	return;
 }
 
 #ifdef IYDEBUG
