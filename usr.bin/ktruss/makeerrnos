@@ -1,0 +1,62 @@
+:
+cat <<__EOF__ > misc.c
+#include "misc.h"
+
+struct systab errnos[] = {
+__EOF__
+cat /usr/include/sys/errno.h | cpp -dM ${1+"$@"} |
+awk '
+/^#[ 	]*define[ 	]*E[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
+	for (i = 1; i <= NF; i++)
+		if ($i ~ /define/) 
+			break;
+	i++;
+	j = i + 1;
+	#
+	printf("\t{ \"%s\", %s },\n", $i, $j);
+}
+END {
+	print "	{ \"0\", 0 },\n";
+}
+' | sort -n +2 >> misc.c
+echo "	{ 0L, 0},
+};" >> misc.c
+lines=`wc -l misc.c|awk ' { print $1; } ' -`
+lines=`expr $lines - 4`
+
+cat <<__EOF__ >> misc.c
+
+struct systab signals[] = {
+__EOF__
+cat /usr/include/sys/signal.h | cpp -dM ${1+"$@"} |
+awk '
+/^#[ 	]*define[ 	]*S[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
+	for (i = 1; i <= NF; i++)
+		if ($i ~ /define/) 
+			break;
+	i++;
+	j = i + 1;
+	#
+	printf("\t{ \"%s\", %s },\n", $i, $j);
+}
+END {
+	print "	{ \"0\", 0 },\n";
+}
+' | sort -n +2 >> misc.c
+echo "	{ 0L, 0},
+};" >> misc.c
+elines=`grep '{ "SIG' misc.c | wc -l`
+elines=`expr $elines + 1`
+
+cat <<__EOF__ >misc.h
+struct	systab	{
+	char	*name;
+	int	value;
+};
+
+extern struct systab errnos[$lines + 1];
+extern struct systab signals[$elines + 1];
+
+#define	MAXERRNOS	$lines
+#define	MAXSIGNALS	$elines
+__EOF__
