@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.7 1997/07/20 20:32:45 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.8 1999/02/12 15:04:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.7 1997/07/20 20:32:45 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.8 1999/02/12 15:04:00 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: tables.c,v 1.7 1997/07/20 20:32:45 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <sys/fcntl.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
