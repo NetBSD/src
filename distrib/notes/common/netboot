@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.16 2003/07/26 17:07:00 salo Exp $
+.\"	$NetBSD: netboot,v 1.17 2003/09/02 05:40:26 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -566,6 +566,14 @@ If you are netbooting the installer, use
 .Pa binary/kernel/netbsd-GENERIC_MD.gz
 (this has the installation tools in a RAM disk).
 Also, copy the distribution files to the client's root directory.
+.Pp
+.(Note
+Some combinations of Open Firmware version and 
+.Pa ofwboot.xcf
+version have trouble loading compressed kernels.  If you have trouble loading
+a kernel, try uncompressing it with
+.Xr gunzip 1
+.Note)
 .Pp
 .(disp
 .No # Ic "cp *tgz /export/client/root"
