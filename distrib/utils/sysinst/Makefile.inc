@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2003/05/16 19:25:24 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2003/06/27 13:36:04 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -77,7 +77,7 @@ msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-menus.def: menus.mi menus.mi.${SYSINSTLANG} ${MENUS_MD} msgtouch
+menus.def: menus.mi ${MENUS_MD} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.99 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.100 2003/06/27 13:36:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -530,11 +530,11 @@ set_selected_sets(menudesc *menu, void *arg)
 	unsigned int set;
 
 	if (yes == NULL) {
-		yes = msg_string(MSG_yes);
-		no = msg_string(MSG_no);
-		all = msg_string(MSG_all);
-		some = msg_string(MSG_some);
-		none = msg_string(MSG_none);
+		yes = msg_string(MSG_Yes);
+		no = msg_string(MSG_No);
+		all = msg_string(MSG_All);
+		some = msg_string(MSG_Some);
+		none = msg_string(MSG_None);
 	}
 
 	msg_display(MSG_cur_distsets);
