@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.26 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: dvma.c,v 1.26.2.1 2005/02/12 12:26:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.26 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.26.2.1 2005/02/12 12:26:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,8 @@ dvma_init(void)
 	 * The remainder of phys_map is used for DVMA scratch
 	 * memory pages (i.e. driver control blocks, etc.)
 	 */
-	segmap_addr = uvm_km_valloc_wait(phys_map, dvma_segmap_size);
+	segmap_addr = uvm_km_alloc(phys_map, dvma_segmap_size, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (segmap_addr != DVMA_MAP_BASE)
 		panic("dvma_init: unable to allocate DVMA segments");
 
@@ -124,7 +125,7 @@ dvma_malloc(size_t bytes)
     if (!bytes)
 		return NULL;
     new_size = m68k_round_page(bytes);
-    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size);
+    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size, 0, UVM_KMF_WIRED);
     if (!new_mem)
 		panic("dvma_malloc: no space in phys_map");
     /* The pmap code always makes DVMA pages non-cached. */
@@ -139,7 +140,7 @@ dvma_free(void *addr, size_t size)
 {
 	vsize_t sz = m68k_round_page(size);
 
-	uvm_km_free(phys_map, (vaddr_t)addr, sz);
+	uvm_km_free(phys_map, (vaddr_t)addr, sz, UVM_KMF_WIRED);
 }
 
 /*
