@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.2 1999/01/31 19:56:56 tsubai Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.3 1999/02/04 15:41:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -134,6 +134,7 @@ devclose(of)
 	
 	if (op->type == OFDEV_NET)
 		net_close(op);
+	OF_call_method("dma-free", op->handle, 2, 0, op->dmabuf, MAXPHYS);
 	OF_close(op->handle);
 	op->handle = -1;
 }
@@ -299,6 +300,8 @@ devopen(of, name, file)
 		return ENXIO;
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
+	ofdev.dmabuf = NULL;
+	OF_call_method("dma-alloc", handle, 1, 1, MAXPHYS, &ofdev.dmabuf);
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
