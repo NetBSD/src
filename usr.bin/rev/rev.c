@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rev.c	5.2 (Berkeley) 3/21/92";*/
-static char rcsid[] = "$Id: rev.c,v 1.2 1993/08/01 18:09:32 mycroft Exp $";
+static char rcsid[] = "$Id: rev.c,v 1.3 1993/12/22 07:10:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,6 +85,8 @@ main(argc, argv)
 			filename = *argv++;
 		}
 		while (p = fgetline(fp, &len)) {
+			if (p[len-1] == '\n')
+				--len;
 			t = p + len - 1;
 			for (t = p + len - 1; t >= p; --t)
 				putchar(*t);
