@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2002/05/26 00:23:50 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2002/05/26 12:07:40 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1015,12 +1015,6 @@ sw1:	bsfl	%ecx,%r8d		# find a full q
 
 	movq	P_ADDR(%r13),%r13
 
-	/* Save segment registers. */
-	movl	%fs,%eax
-	movl	%gs,%ecx
-	movl	%eax,PCB_FS(%r13)
-	movl	%ecx,PCB_GS(%r13)
-
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%r13)
 	movq	%rbp,PCB_RBP(%r13)
@@ -1065,12 +1059,6 @@ switch_exited:
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
-
-	/* Restore segment registers. */
-	movl	PCB_FS(%r13),%eax
-	movl	PCB_GS(%r13),%ecx
-	movl	%eax,%fs
-	movl	%ecx,%gs
 
 switch_restored:
 	/* Restore cr0 (including FPU state). */
@@ -1165,12 +1153,6 @@ ENTRY(switch_exit)
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
-	/* Save segment registers. */
-	movl	%fs,%eax
-	movl	%gs,%ecx
-	movl	%eax,PCB_FS(%rdi)
-	movl	%ecx,PCB_GS(%rdi)
-
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%rdi)
 	movq	%rbp,PCB_RBP(%rdi)
