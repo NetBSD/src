@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.15 2003/03/10 09:55:10 he Exp $	*/
+/*	$NetBSD: vi.c,v 1.16 2003/03/10 11:09:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.15 2003/03/10 09:55:10 he Exp $");
+__RCSID("$NetBSD: vi.c,v 1.16 2003/03/10 11:09:25 dsl Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -913,10 +913,6 @@ vi_comment_out(EditLine *el, int c)
  * NB: posix impiles that we should enter insert mode, however
  * this is against historical precedent...
  */
-#ifdef __weak_extern
-__weak_extern(get_alias_text)
-#endif
-
 protected el_action_t
 /*ARGSUSED*/
 vi_alias(EditLine *el, int c)
@@ -925,6 +921,7 @@ vi_alias(EditLine *el, int c)
 	char alias_name[3];
 	char *alias_text;
 	extern char *get_alias_text(const char *);
+	__weak_extern(get_alias_text);
 
 	if (get_alias_text == 0) {
 		return CC_ERROR;
