@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.2 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.3 2001/06/12 22:05:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,11 +75,6 @@
 #ifdef INET
 #include <netinet/in.h> 
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>
