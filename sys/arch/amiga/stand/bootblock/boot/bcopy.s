@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.4 1999/02/16 23:34:11 is Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.5 2001/02/26 14:58:37 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,15 +40,17 @@
  * Small but possibly slow bcopy/memcpy combo.
  */
 
+#include <machine/asm.h>
+
 	.text
 	.even
-.globl _bcopy,_memcpy
 
-_memcpy:
+ENTRY_NOPROFILE(memcpy)
 	movel sp@(4),a0
 	movel sp@(8),a1
 	jra Lcpy
-_bcopy:
+
+ENTRY_NOPROFILE(bcopy)
 	movel sp@(4),a1
 	movel sp@(8),a0
 Lcpy:

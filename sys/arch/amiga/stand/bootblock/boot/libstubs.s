@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: libstubs.s,v 1.4 2001/02/26 14:58:37 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 /*
  * Exec.library functions.
  */
-	.comm _SysBase,4
+#include <machine/asm.h>
+	.comm _C_LABEL(SysBase),4
 
-	.globl _OpenLibrary
-_OpenLibrary:
+ENTRY_NOPROFILE(OpenLibrary)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -51,8 +51,7 @@ _OpenLibrary:
 	movl	sp@+,a6
 	rts
 #ifdef notyet
-	.globl _CloseLibrary
-_CloseLibrary:
+ENTRY_NOPROFILE(CloseLibrary)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -60,8 +59,7 @@ _CloseLibrary:
 	movl	sp@+,a6
 	rts
 #endif
-	.globl _CreateIORequest
-_CreateIORequest:
+ENTRY_NOPROFILE(CreateIORequest)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -70,8 +68,7 @@ _CreateIORequest:
 	movl	sp@+,a6
 	rts
 
-	.globl _CreateMsgPort
-_CreateMsgPort:
+ENTRY_NOPROFILE(CreateMsgPort)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	jsr	a6@(-0x29a)
@@ -79,8 +76,7 @@ _CreateMsgPort:
 	rts
 	
 #ifdef notyet
-	.globl _DeleteMsgPort
-_DeleteMsgPort:
+ENTRY_NOPROFILE(DeleteMsgPort)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -88,8 +84,7 @@ _DeleteMsgPort:
 	movl	sp@+,a6
 	rts
 	
-	.globl _DeleteIORequest
-_DeleteIORequest:
+ENTRY_NOPROFILE(DeleteIORequest)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -98,8 +93,7 @@ _DeleteIORequest:
 	rts
 #endif
 	
-	.globl	_OpenDevice
-_OpenDevice:
+ENTRY_NOPROFILE(OpenDevice)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -110,8 +104,7 @@ _OpenDevice:
 	movl	sp@+,a6
 	rts
 
-	.globl	_DoIO
-_DoIO:	
+ENTRY_NOPROFILE(DoIO)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -119,8 +112,7 @@ _DoIO:
 	movl	sp@+,a6
 	rts
 #ifdef nomore
-	.globl	_CheckIO
-_CheckIO:	
+ENTRY_NOPROFILE(CheckIO)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -128,8 +120,7 @@ _CheckIO:
 	movl	sp@+,a6
 	rts
 #endif
-	.globl	_WaitIO
-_WaitIO:	
+ENTRY_NOPROFILE(WaitIO)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -137,8 +128,7 @@ _WaitIO:
 	movl	sp@+,a6
 	rts
 
-	.globl	_SendIO
-_SendIO:	
+ENTRY_NOPROFILE(SendIO)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -146,8 +136,7 @@ _SendIO:
 	movl	sp@+,a6
 	rts
 
-	.globl	_AbortIO
-_AbortIO:	
+ENTRY_NOPROFILE(AbortIO)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -155,8 +144,7 @@ _AbortIO:
 	movl	sp@+,a6
 	rts
 
-	.globl	_WaitPort
-_WaitPort:	
+ENTRY_NOPROFILE(WaitPort)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -165,16 +153,14 @@ _WaitPort:
 	rts
 
 #ifndef DOINLINES
-	.globl _CacheClearU
-_CacheClearU:
+ENTRY_NOPROFILE(CacheClearU)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	jsr	a6@(-0x27c)
 	movl	sp@+,a6
 	rts
 #endif
-	.globl _CachePreDMA
-_CachePreDMA:
+ENTRY_NOPROFILE(CachePreDMA)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a0
@@ -184,8 +170,7 @@ _CachePreDMA:
 	movl	sp@+,a6
 	rts
 
-	.globl _FindResident
-_FindResident:
+ENTRY_NOPROFILE(FindResident)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -193,8 +178,7 @@ _FindResident:
 	movl	sp@+,a6
 	rts
 
-	.globl _OpenResource
-_OpenResource:
+ENTRY_NOPROFILE(OpenResource)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:w),a6
 	movl	sp@(8),a1
@@ -202,16 +186,14 @@ _OpenResource:
 	movl	sp@+,a6
 	rts
 #ifdef notyet
-	.globl _Forbid
-_Forbid:
+ENTRY_NOPROFILE(Forbid)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:W),a6
 	jsr	a6@(-0x84)
 	movl	sp@+,a6
 	rts
 
-	.globl _Permit
-_Permit:
+ENTRY_NOPROFILE(Permit)
 	movl	a6,sp@-
 	movl	pc@(_SysBase:W),a6
 	jsr	a6@(-0x8a)
@@ -225,8 +207,7 @@ _Permit:
 
 	.comm _IntuitionBase,4
 
-	.globl _OpenScreenTagList
-_OpenScreenTagList:
+ENTRY_NOPROFILE(OpenScreenTagList)
 	movl	a6,sp@-
 	movl	pc@(_IntuitionBase:w),a6
 	movl	sp@(8),a0
@@ -235,8 +216,7 @@ _OpenScreenTagList:
 	movl	sp@+,a6
 	rts
 
-	.globl _OpenWindowTagList
-_OpenWindowTagList:
+ENTRY_NOPROFILE(OpenWindowTagList)
 	movl	a6,sp@-
 	movl	pc@(_IntuitionBase:w),a6
 	movl	sp@(8),a0
@@ -245,8 +225,7 @@ _OpenWindowTagList:
 	movl	sp@+,a6
 	rts
 #ifdef nomore
-	.globl _mytime
-_mytime:
+ENTRY_NOPROFILE(mytime)
 	movl	a6,sp@-
 	movl	pc@(_IntuitionBase:w),a6
 	subql	#8,sp
@@ -259,8 +238,7 @@ _mytime:
 	rts
 #endif
 	.comm _ExpansionBase,4
-	.globl _FindConfigDev
-_FindConfigDev:
+ENTRY_NOPROFILE(FindConfigDev)
 	movl	a6,sp@-
 	movl	_ExpansionBase,a6
 	movl	sp@(8),a0

@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.s,v 1.4 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: alloc.s,v 1.5 2001/02/26 14:58:36 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,21 +40,20 @@
  * Memory allocation through exec library.
  */
 
-	.globl	_SysBase
-	.globl	_alloc
-_alloc:
+#include <machine/asm.h>
+
+ENTRY_NOPROFILE(alloc)
 	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
+	movl	pc@(_C_LABEL(SysBase):w),a6
 	movl	sp@(8),d0
 	movl	#0x50001,d1	| MEMF_CLEAR|MEMF_REVERSE|MEMF_PUBLIC for now.
 	jsr	a6@(-0x2ac)	| AllocVec
 	movl	sp@+,a6
 	rts
 
-	.globl	_free
-_free:
+ENTRY_NOPROFILE(free)
 	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
+	movl	pc@(_C_LABEL(SysBase):w),a6
 	movl	sp@(8),a1
 	jsr	a6@(-0x2b2)	| FreeVec
 	movl	sp@+,a6

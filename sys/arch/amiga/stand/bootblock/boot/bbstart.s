@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.5 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: bbstart.s,v 1.6 2001/02/26 14:58:36 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
 #include "aout2bb.h"
 
 #define LVOAllocMem	-0x0c6
@@ -49,8 +50,6 @@
 #define IOoff	44
 
 #define Cmd_Rd	2
-
-	.globl	_pain
 
 	.text
 Lzero:	.asciz "DOS"			| "DOS type"
@@ -66,8 +65,7 @@ Filesz:	.long 8192			| dummy
  * A1 points to an IOrequest, A6 points to ExecBase, we have a stack.
  * _must_ be at offset 12.
  */
-	.globl _start
-_start:
+ENTRY_NOPROFILE(start)
 #ifdef AUTOLOAD
 	jra	Lautoload
 #else
@@ -173,10 +171,10 @@ Lendtab:
 	movl	a6,_SysBase
 
 	movl	a1,sp@-
-	bsr	_pain
+	bsr	_C_LABEL(pain)
 
 Lerr:
 	movq	#1,d0
 	rts
 
-	.comm _SysBase,4
+	.comm _C_LABEL(SysBase),4
