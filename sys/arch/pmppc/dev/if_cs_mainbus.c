@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.4 2002/10/02 04:11:36 thorpej Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.5 2002/12/19 07:15:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -240,6 +240,7 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs_softc *sc = (struct cs_softc *)self;
 	struct mainbus_attach_args *maa = aux;
+	int media[1] = { IFM_ETHER | IFM_10_T };
 
 	printf("\n");
 
@@ -279,7 +280,8 @@ cs_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_irq = 10;
 
-	if (cs_attach(sc, NULL, NULL, 0, 0)) {
+	/* Use half duplex 10baseT. */
+	if (cs_attach(sc, NULL, media, 1, IFM_ETHER | IFM_10_T)) {
 		printf("%s: unable to attach\n", self->dv_xname);
 		goto fail;
 	}
