@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.16 2003/08/07 16:43:23 agc Exp $	*/
+/*	$NetBSD: fgets.c,v 1.17 2003/10/08 20:33:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.16 2003/08/07 16:43:23 agc Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.17 2003/10/08 20:33:17 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ fgets(buf, n, fp)
 	int n;
 	FILE *fp;
 {
-	int len;
+	size_t len;
 	char *s;
 	unsigned char *p, *t;
 
@@ -75,7 +75,7 @@ fgets(buf, n, fp)
 		/*
 		 * If the buffer is empty, refill it.
 		 */
-		if ((len = fp->_r) <= 0) {
+		if (fp->_r <= 0) {
 			if (__srefill(fp)) {
 				/* EOF/error: stop with partial or no line */
 				if (s == buf) {
@@ -86,6 +86,7 @@ fgets(buf, n, fp)
 			}
 			len = fp->_r;
 		}
+		len = fp->_r;
 		p = fp->_p;
 
 		/*
@@ -108,7 +109,7 @@ fgets(buf, n, fp)
 		}
 		fp->_r -= len;
 		fp->_p += len;
-		(void)memcpy((void *)s, (void *)p, (size_t)len);
+		(void)memcpy((void *)s, (void *)p, len);
 		s += len;
 		n -= len;
 	}
