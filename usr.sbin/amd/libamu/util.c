@@ -1,3 +1,5 @@
+/*	$NetBSD: util.c,v 1.1.1.2 1997/10/26 00:02:18 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: util.c,v 1.1.1.1 1997/07/24 21:20:08 christos Exp $
+ * Id: util.c,v 5.2.2.2 1992/03/07 17:52:06 jsp Exp 
  *
  */
 

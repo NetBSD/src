@@ -1,3 +1,5 @@
+/*	$NetBSD: tranputil.c,v 1.1.1.4 1997/10/26 00:02:23 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: tranputil.c,v 1.1.1.3 1997/09/26 16:06:09 christos Exp $
+ * Id: transp_sockets.c,v 5.2.2.2 1992/07/18 18:57:03 jsp Exp jsp 
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>

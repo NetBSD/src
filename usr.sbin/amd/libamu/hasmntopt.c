@@ -1,3 +1,5 @@
+/*	$NetBSD: hasmntopt.c,v 1.1.1.2 1997/10/26 00:02:15 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@ n * modification, are permitted provided that the following conditions
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hasmntopt.c,v 1.1.1.1 1997/07/24 21:20:07 christos Exp $
+ * Id: hasmntopt.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
  *
  */
 

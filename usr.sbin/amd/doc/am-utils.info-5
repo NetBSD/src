@@ -1,9 +1,28 @@
+$NetBSD: am-utils.info-5,v 1.1.1.3 1997/10/26 00:03:45 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: expn,  Next: fix-amd-map,  Prev: ctl-hlfsd,  Up: Assorted Tools
+
+expn
+====
+
+   A script to expand email addresses into their full name.  It is
+generally useful when using with the `lostaltmail' script, but is a
+useful tools otherwise.
+
+     $ expn -v ezk@cs.columbia.edu
+     ezk@cs.columbia.edu ->
+             ezk@shekel.mcl.cs.columbia.edu
+     ezk@shekel.mcl.cs.columbia.edu ->
+             Erez Zadok <"| /usr/local/mh/lib/slocal -user ezk || exit 75>
+             Erez Zadok <\ezk>
+             Erez Zadok </u/zing/ezk/.mailspool/backup>
 
 
 File: am-utils.info,  Node: fix-amd-map,  Next: fixmount,  Prev: expn,  Up: Assorted Tools

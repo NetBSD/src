@@ -1,3 +1,5 @@
+/*	$NetBSD: wire.c,v 1.1.1.2 1997/10/26 00:02:19 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wire.c,v 1.1.1.1 1997/07/24 21:20:09 christos Exp $
+ * Id: wire.c,v 5.2.2.2 1992/06/07 18:06:46 jsp Exp jsp 
  *
  */
 
@@ -67,10 +69,12 @@
 typedef struct addrlist addrlist;
 struct addrlist {
   addrlist *ip_next;
-  u_long ip_addr;
+  u_long ip_addr;		/* address of network */
   u_long ip_mask;
+  char *ip_net_num;		/* number of network */
+  char *ip_net_name;		/* name of network */
 };
-static addrlist *localnets = 0;
+static addrlist *localnets = NULL;
 
 #if defined(IFF_LOCAL_LOOPBACK) && !defined(IFF_LOOPBACK)
 # define IFF_LOOPBACK	IFF_LOCAL_LOOPBACK
@@ -89,7 +93,39 @@ static addrlist *localnets = 0;
 
 
 void
-getwire(char **name1, char **number1, char **name2, char **number2)
+print_wires(char *buf)
+{
+  addrlist *al;
+  char s[256];
+  int i;
+
+  if (!buf)
+    return;
+
+  if (!localnets) {
+    sprintf(buf, "No networks.\n");
+    return;
+  }
+  /* check if there's more than one network */
+  if (!localnets->ip_next) {
+    sprintf(buf,
+	    "Network: wire=\"%s\" (netnumber=%s).\n",
+	    localnets->ip_net_name, localnets->ip_net_num);
+    return;
+  }
+  i = 1;
+  for (al = localnets; al; al=al->ip_next) {
+    sprintf(s,
+	    "Network %d: wire=\"%s\" (netnumber=%s).\n",
+	    i, al->ip_net_name, al->ip_net_num);
+    strcat(buf, s);
+    i++;
+  }
+}
+
+
+void
+getwire(char **name1, char **number1)
 {
   struct hostent *hp;
   struct netent *np;
@@ -103,20 +139,14 @@ getwire(char **name1, char **number1, char **name2, char **number2)
   u_long mask;
   u_long subnetshift;
   char netNumberBuf[64];
+  addrlist *al = NULL, *tail = NULL;
 
 #ifndef SIOCGIFFLAGS
   /* if cannot get interface flags, return nothing */
-  *name1 = strdup("no_subnet_known");
-  *number1 = "0.0.0.0";
-  *name2 = 0;
-  *number2 = 0;
+  plog(XLOG_ERROR, "getwire unable to get interface flags");
+  localnets = NULL;
   return;
 #endif /* not SIOCGIFFLAGS */
-
-  *name1 = 0;
-  *number1 = 0;
-  *name2 = 0;
-  *number2 = 0;
 
   /*
    * Get suitable socket
@@ -153,7 +183,6 @@ getwire(char **name1, char **number1, char **name2, char **number2)
    * Scan the list looking for a suitable interface
    */
   for (cp = buf; cp < cplim; cp += SIZE(ifr)) {
-    addrlist *al;
     ifr = (struct ifreq *) cp;
 
     if (ifr->ifr_addr.sa_family != AF_INET)
@@ -190,13 +219,22 @@ getwire(char **name1, char **number1, char **name2, char **number2)
     netmask = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
 
     /*
-     * Add interface to local network list
+     * Add interface to local network singly linked list
      */
     al = ALLOC(struct addrlist);
     al->ip_addr = address;
     al->ip_mask = netmask;
-    al->ip_next = localnets;
-    localnets = al;
+    al->ip_net_name = NO_SUBNET; /* fill in a bit later */
+    al->ip_net_num = "0.0.0.0"; /* fill in a bit later */
+    al->ip_next = NULL;
+    /* append to the end of the list */
+    if (!localnets) {
+      localnets = tail = al;
+      tail->ip_next = NULL;
+    } else {
+      tail->ip_next = al;
+      tail = al;
+    }
 
     /*
      * Figure out the subnet's network address
@@ -255,13 +293,10 @@ getwire(char **name1, char **number1, char **name2, char **number2)
 	      C(subnet >> 24), C(subnet >> 16),
 	      C(subnet >> 8), C(subnet));
     }
-    if (!*number1) {
-      *number1 = strdup(netNumberBuf);
-    } else if (!*number2) {
-      *number2 = strdup(netNumberBuf);
-    } else {
-      plog(XLOG_INFO, "Another unused interface discovered: netnumber %s", netNumberBuf);
-    }
+
+    /* fill in network number (string) */
+    al->ip_net_num = strdup(netNumberBuf);
+
 #else /* not IN_CLASSA */
     /* This is probably very wrong. */
     np = getnetbyaddr(subnet, AF_INET);
@@ -277,26 +312,21 @@ getwire(char **name1, char **number1, char **name2, char **number2)
       else
 	s = inet_dquad(buf, subnet);
     }
-    if (!*name1) {
-      *name1 = strdup(s);
-    } else if (!*name2) {
-      *name2 = strdup(s);
-    } else {
-      plog(XLOG_INFO, "Another unused interface discovered: netname %s", s);
-    }
+
+    /* fill in network name (string) */
+    al->ip_net_name = strdup(s);
   }
 
 out:
   if (fd >= 0)
-    (void) close(fd);
-  if (!*name1)
-    *name1 = strdup(NO_SUBNET);
-  if (!*number1)
+    close(fd);
+  if (localnets) {
+    *name1 = localnets->ip_net_name;
+    *number1 = localnets->ip_net_num;
+  } else {
+    *name1 = NO_SUBNET;
     *number1 = "0.0.0.0";
-  if (!*name2)
-    *name2 = strdup(NO_SUBNET);
-  if (!*number2)
-    *number2 = "0.0.0.0";
+  }
 }
 
 
@@ -337,6 +367,23 @@ islocalnet(u_long addr)
 #ifdef DEBUG
     plog(XLOG_INFO, "%s is on a remote network", inet_dquad(buf, addr));
 #endif /* DEBUG */
+
+  return FALSE;
+}
+
+
+/*
+ * Determine whether a network name is one of the local networks
+ * of a host.
+ */
+int
+is_network_member(const char *net)
+{
+  addrlist *al;
+
+  for (al = localnets; al; al = al->ip_next)
+    if (STREQ(net, al->ip_net_name) || STREQ(net, al->ip_net_num))
+      return TRUE;
 
   return FALSE;
 }

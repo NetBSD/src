@@ -1,3 +1,5 @@
+/*	$NetBSD: xutil.c,v 1.1.1.4 1997/10/26 00:02:21 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: xutil.c,v 1.1.1.3 1997/09/26 16:06:06 christos Exp $
+ * Id: xutil.c,v 1.1 1997/01/11 21:06:22 ezk Exp ezk 
  *
  */
 
@@ -600,4 +602,50 @@ void
 set_amd_program_number(int program)
 {
   amd_program_number = program;
+}
+
+
+/*
+ * Release the controlling tty of the process pid.
+ *
+ * Algorithm: try these in order, if available, until one of them
+ * succeeds: setsid(), ioctl(fd, TIOCNOTTY, 0).
+ * Do not use setpgid(): on some OSs it may release the controlling tty,
+ * even if the man page does not mention it, but on other OSs it does not.
+ * Also avoid setpgrp(): it works on some systems, and on others it is
+ * identical to setpgid().
+ */
+void
+amu_release_controlling_tty(void)
+{
+#ifdef TIOCNOTTY
+  int fd;
+#endif /* TIOCNOTTY */
+
+#ifdef HAVE_SETSID
+  if (setsid() < 0) {
+    plog(XLOG_WARNING, "Could not release controlling tty using setsid(): %m");
+  } else {
+    plog(XLOG_INFO, "released controlling tty using setsid()");
+    return;
+  }
+#endif /* HAVE_SETSID */
+
+#ifdef TIOCNOTTY
+  fd = open("/dev/tty", O_RDWR);
+  if (fd < 0) {
+    /* not an error if already no controlling tty */
+    if (errno != ENXIO)
+      plog(XLOG_WARNING, "Could not open controlling tty: %m");
+  } else {
+    if (ioctl(fd, TIOCNOTTY, 0) < 0 && errno != ENOTTY)
+      plog(XLOG_WARNING, "Could not disassociate tty (TIOCNOTTY): %m");
+    else
+      plog(XLOG_INFO, "released controlling tty using ioctl(TIOCNOTTY)");
+    close(fd);
+  }
+  return;
+#endif /* not TIOCNOTTY */
+
+  plog(XLOG_ERROR, "unable to release controlling tty");
 }

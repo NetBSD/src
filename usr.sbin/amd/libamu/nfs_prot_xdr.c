@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_prot_xdr.c,v 1.1.1.2 1997/10/26 00:02:18 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_prot_xdr.c,v 1.1.1.1 1997/07/24 21:20:08 christos Exp $
+ * Id: nfs_prot_xdr.c,v 5.2.2.1 1992/02/09 15:09:32 jsp beta 
  *
  */
 

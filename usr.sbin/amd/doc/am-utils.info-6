@@ -1,3 +1,4 @@
+$NetBSD: am-utils.info-6,v 1.1.1.2 1997/10/26 00:03:46 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -23,8 +24,8 @@ Index
 * Alternate locations:                   Mounting a Volume.
 * am-eject:                              am-eject.
 * Amd command line options:              Amd Command Line Options.
-* Amd Configuration File:                Amd Configuration File.
 * Amd configuration file:                -F Option.
+* Amd Configuration File:                Amd Configuration File.
 * Amd configuration file; specifying name: -F Option.
 * Amd's PID:                             Amq -p option.
 * Amd's process ID:                      Amq -p option.
@@ -89,8 +90,8 @@ Index
 * Controlling Amd:                       Controlling Amd.
 * Controlling Hlfsd:                     Controlling Hlfsd.
 * Creating a pid file:                   -p Option.
-* ctl-amd <1>:                           ctl-amd.
-* ctl-amd:                               Starting Amd.
+* ctl-amd <1>:                           Starting Amd.
+* ctl-amd:                               ctl-amd.
 * ctl-hlfsd <1>:                         Controlling Hlfsd.
 * ctl-hlfsd:                             ctl-hlfsd.
 * Debug options:                         -D-Option.
@@ -103,9 +104,9 @@ Index
 * delay, mount option:                   delay Option.
 * Delaying mounts from specific locations: delay Option.
 * Determining the map type:              Map Types.
-* dev, mount option <1>:                 Unix Filesystem.
-* dev, mount option <2>:                 CD-ROM Filesystem.
-* dev, mount option:                     Floppy Filesystem.
+* dev, mount option <1>:                 Floppy Filesystem.
+* dev, mount option <2>:                 Unix Filesystem.
+* dev, mount option:                     CD-ROM Filesystem.
 * Direct automount filesystem:           Direct Automount Filesystem.
 * direct, filesystem type:               Direct Automount Filesystem.
 * Discovering version information:       -v Option.
@@ -236,6 +237,7 @@ Index
 * How to start a direct automount point: Direct Automount Filesystem.
 * How to start an indirect automount point: Automount Filesystem.
 * How variables are expanded:            Variable Expansion.
+* in_network, nomadic mount selector:    Selectors.
 * inherit, filesystem type:              Inheritance Filesystem.
 * Inheritance filesystem:                Inheritance Filesystem.
 * Interval before a filesystem times out: -c Option.
@@ -374,6 +376,7 @@ Index
 * Mount selector; false:                 Selectors.
 * Mount selector; host:                  Selectors.
 * Mount selector; hostd:                 Selectors.
+* Mount selector; in_network:            Selectors.
 * Mount selector; karch:                 Selectors.
 * Mount selector; key:                   Selectors.
 * Mount selector; map:                   Selectors.
@@ -383,10 +386,6 @@ Index
 * Mount selector; os:                    Selectors.
 * Mount selector; osver:                 Selectors.
 * Mount selector; path:                  Selectors.
-* Mount selector; primnetname:           Selectors.
-* Mount selector; primnetnum:            Selectors.
-* Mount selector; subsnetname:           Selectors.
-* Mount selector; subsnetnum:            Selectors.
 * Mount selector; true:                  Selectors.
 * Mount selector; wire:                  Selectors.
 * mount system call:                     opts Option.
@@ -458,8 +457,6 @@ Index
 * plock; using:                          -S Option.
 * portmap_program Parameter:             portmap_program Parameter.
 * Primary server:                        delay Option.
-* primnetname, mount selector:           Selectors.
-* primnetnum, mount selector:            Selectors.
 * print_pid Parameter:                   print_pid Parameter.
 * print_version Parameter:               print_version Parameter.
 * Process id:                            -p Option.
@@ -480,8 +477,8 @@ Index
 * restart_mounts Parameter:              restart_mounts Parameter.
 * Restarting Amd:                        Restarting Amd.
 * Restarting existing mounts:            -r Option.
-* rfs, mount option <1>:                 Loopback Filesystem.
-* rfs, mount option:                     Network Filesystem.
+* rfs, mount option <1>:                 Network Filesystem.
+* rfs, mount option:                     Loopback Filesystem.
 * rhost, mount option:                   Network Filesystem.
 * Root filesystem:                       Root Filesystem.
 * root, filesystem type:                 Root Filesystem.
@@ -503,6 +500,7 @@ Index
 * Selector; false:                       Selectors.
 * Selector; host:                        Selectors.
 * Selector; hostd:                       Selectors.
+* Selector; in_network:                  Selectors.
 * Selector; karch:                       Selectors.
 * Selector; key:                         Selectors.
 * Selector; map:                         Selectors.
@@ -512,10 +510,6 @@ Index
 * Selector; os:                          Selectors.
 * Selector; osver:                       Selectors.
 * Selector; path:                        Selectors.
-* Selector; primnetname:                 Selectors.
-* Selector; primnetnum:                  Selectors.
-* Selector; subsnetname:                 Selectors.
-* Selector; subsnetnum:                  Selectors.
 * Selector; true:                        Selectors.
 * Selector; wire:                        Selectors.
 * Selectors:                             Selectors.
@@ -559,8 +553,6 @@ Index
 * Stripping the local domain name:       Variable Expansion.
 * sublink:                               Filesystems and Volumes.
 * sublink, mount option:                 sublink Option.
-* subsnetname, mount selector:           Selectors.
-* subsnetnum, mount selector:            Selectors.
 * Supported Platforms:                   Supported Platforms.
 * Symbolic link filesystem:              Symbolic Link Filesystem.
 * Symbolic link filesystem II:           Symbolic Link Filesystem II.

@@ -1,3 +1,5 @@
+/*	$NetBSD: hlfsd.h,v 1.1.1.3 1997/10/26 00:03:14 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.h,v 1.1.1.2 1997/09/22 21:12:39 christos Exp $
+ * Id: hlfs.h,v 1.9 1993/09/13 15:11:00 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -133,6 +135,7 @@ extern char *alt_spooldir;
 extern char *home_subdir;
 extern char *homedir(int);
 extern char *mailbox(int, char *);
+extern char *passwdfile;
 extern char *slinkname;
 extern char mboxfile[];
 extern int cache_interval;

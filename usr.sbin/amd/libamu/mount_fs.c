@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_fs.c,v 1.1.1.4 1997/10/26 00:02:16 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mount_fs.c,v 1.1.1.3 1997/09/26 16:05:59 christos Exp $
+ * Id: mount_fs.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
  *
  */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: mtab.c,v 1.1.1.3 1997/10/26 00:02:17 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mtab.c,v 1.1.1.2 1997/09/26 16:06:00 christos Exp $
+ * Id: mtab.c,v 5.2.2.1 1992/02/09 15:08:45 jsp beta 
  *
  */
 

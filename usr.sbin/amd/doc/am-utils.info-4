@@ -1,3 +1,4 @@
+$NetBSD: am-utils.info-4,v 1.1.1.2 1997/10/26 00:03:44 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -1142,6 +1143,17 @@ Hlfsd Options
      SIGUSR1 sent to Hlfsd will cause it to dump its internal password
      map to the file `/tmp/hlfsdump'.
 
+-P PASSWORD-FILE
+     Read the user-name, user-id, and home directory information from
+     the file PASSWORD-FILE.  Normally, Hlfsd will use getpwent(3) to
+     read the password database.  This option allows you to override the
+     default database, and is useful if you want to map users' mail
+     files to a directory other than their home directory.  Only the
+     username, uid, and home-directory fields of the file PASSWORD-FILE
+     are read and checked.  All other fields are ignored.  The file
+     PASSWORD-FILE must otherwise be compliant with Unix System 7
+     colon-delimited format passwd(4).
+
 
 File: am-utils.info,  Node: Hlfsd Files,  Prev: Hlfsd Options,  Up: Using Hlfsd
 
@@ -1273,22 +1285,4 @@ ctl-hlfsd restart
      died cleanly.
 
    *Note Hlfsd:: for more details.
-
-
-File: am-utils.info,  Node: expn,  Next: fix-amd-map,  Prev: ctl-hlfsd,  Up: Assorted Tools
-
-expn
-====
-
-   A script to expand email addresses into their full name.  It is
-generally useful when using with the `lostaltmail' script, but is a
-useful tools otherwise.
-
-     $ expn -v ezk@cs.columbia.edu
-     ezk@cs.columbia.edu ->
-             ezk@shekel.mcl.cs.columbia.edu
-     ezk@shekel.mcl.cs.columbia.edu ->
-             Erez Zadok <"| /usr/local/mh/lib/slocal -user ezk || exit 75>
-             Erez Zadok <\ezk>
-             Erez Zadok </u/zing/ezk/.mailspool/backup>
 
