@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.20 2001/11/13 02:08:05 lukem Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.21 2002/11/25 02:32:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.20 2001/11/13 02:08:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.21 2002/11/25 02:32:51 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -322,7 +322,7 @@ compat_43_sys_lseek(p, v, retval)
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, offset) = SCARG(uap, offset);
 	SCARG(&nuap, whence) = SCARG(uap, whence);
-	error = sys_lseek(p, &nuap, (register_t *)&qret);
+	error = sys_lseek(p, &nuap, (void *)&qret);
 	*(long *)retval = qret;
 	return (error);
 }
