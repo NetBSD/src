@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.19 2003/11/05 16:03:27 fvdl Exp $	*/
+/*	$NetBSD: amr.c,v 1.20 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.19 2003/11/05 16:03:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.20 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,7 +619,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			i++;
 		}
 		if (i == sizeof(amr_typestr) / sizeof(amr_typestr[0])) {
-			sprintf(buf, "unknown ENQUIRY2 sig (0x%08x)", sig);
+			snprintf(buf, sizeof(buf),
+			    "unknown ENQUIRY2 sig (0x%08x)", sig);
 			prodstr = buf;
 		} else
 			prodstr = amr_typestr[i].at_str;
@@ -639,7 +640,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			prodstr = "Series 434";
 			break;
 		default:
-			sprintf(buf, "unknown PCI dev (0x%04x)",
+			snprintf(buf, sizeof(buf), "unknown PCI dev (0x%04x)",
 			    PCI_PRODUCT(pa->pa_id));
 			prodstr = buf;
 			break;

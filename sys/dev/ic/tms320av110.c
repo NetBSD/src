@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.12 2003/01/06 13:05:11 wiz Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.13 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.12 2003/01/06 13:05:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.13 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,10 +360,11 @@ tav_getdev(hdl, ret)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	strncpy(ret->name, "tms320av110", MAX_AUDIO_DEV_LEN);
-	sprintf(ret->version, "%u", /* guaranteed to be <= 4 in length */
+	strlcpy(ret->name, "tms320av110", sizeof(ret->name));
+	/* guaranteed to be <= 4 in length */
+	snprintf(ret->version, sizeof(ret->version), "%u",
 	    tav_read_byte(iot, ioh, TAV_VERSION));
-	strncpy(ret->config, sc->sc_dev.dv_xname, MAX_AUDIO_DEV_LEN);
+	strlcpy(ret->config, sc->sc_dev.dv_xname, sizeof(ret->config));
 
 	return 0;
 }

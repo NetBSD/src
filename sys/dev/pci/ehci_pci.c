@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.13 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.14 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.13 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.14 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,11 +172,10 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc.sc_vendor, vendor,
-			sizeof(sc->sc.sc_vendor) - 1);
+		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
-		sprintf(sc->sc.sc_vendor, "vendor 0x%04x",
-			PCI_VENDOR(pa->pa_id));
+		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	
 	/*
 	 * Find companion controllers.  According to the spec they always

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.39 2003/09/21 19:16:56 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.40 2004/04/22 00:17:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.39 2003/09/21 19:16:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.40 2004/04/22 00:17:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,7 +771,7 @@ kbd_input_funckey(k, keysym)
 	char str[12];
 
 	n = 0xC0 + (keysym & 0x3F);
-	sprintf(str, "\033[%dz", n);
+	snprintf(str, sizeof(str), "\033[%dz", n);
 	kbd_input_string(k, str);
 }
 
