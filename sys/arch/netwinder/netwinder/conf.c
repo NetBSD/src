@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/04/19 06:53:58 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2001/06/09 05:36:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -55,7 +55,6 @@
 #include <machine/conf.h>
 
 #include "wd.h"
-#include "fdc.h"
 #include "md.h"
 #include "sd.h"
 #include "st.h"
@@ -153,17 +152,12 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "lpt.h"
 #include "bpfilter.h"
 #include "tun.h"
-#include "opms.h"
-#include "beep.h"
 #include "audio.h"
 #include "midi.h"
 #include "sequencer.h"
-#include "iic.h"
-#include "rtc.h"
 #include "ipfilter.h"
 #include "rnd.h"
 #include "fcom.h"
-#include "profiler.h"
 #include "joy.h"
 #include "vcoda.h"			/* coda file system */
 #include "wsdisplay.h"
@@ -184,7 +178,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NPTY,pts),	/*  7: pseudo-tty slave */
 	cdev_lpt_init(NLPT,lpt),	/*  8: parallel printer */
 	cdev_lkm_dummy(),		/*  9: qms driver */
-	cdev_beep_init(NBEEP,beep),	/* 10: simple beep device */
+	cdev_lkm_dummy(),		/* 10: simple beep device */
 	cdev_lkm_dummy(),		/* 11: kbd device */
 	cdev_tty_init(NCOM,com),	/* 12: serial port */
 	cdev_lkm_dummy(),		/* 13: */
@@ -227,7 +221,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 50: Smart card reader  */
 	cdev_notdef(),			/* 51: reserved */
 	cdev_rnd_init(NRND,rnd),	/* 52: random source pseudo-device */
-	cdev_prof_init(NPROFILER,prof),	/* 53: fiq Profiler*/
+	cdev_lkm_dummy(),		/* 53: fiq Profiler*/
 	cdev_tty_init(NFCOM,fcom),	/* 54: FOOTBRIDGE console */
 	cdev_lkm_dummy(),		/* 55: Reserved for bypass device */	
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
