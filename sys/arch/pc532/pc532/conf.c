@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1994/12/14 19:11:44 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1994/12/22 08:33:41 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -248,6 +248,16 @@ cdev_decl(bpf);
 	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_map((*))) enodev, 0 }
 
+#include "tun.h"
+cdev_decl(tun);
+/* open, close, read, write, ioctl, select -- XXX should be generic device */
+#define cdev_tun_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
+	(dev_type_map((*))) enodev, 0 }
+
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -265,8 +275,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 12: concatenated disk */
 	cdev_disk_init(NVN,vn),		/* 13: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 14: berkeley packet filter */
-	cdev_notdef(),			/* 15 */
-	cdev_notdef(),			/* 16 */
+	cdev_tun_init(NTUN,tun),	/* 15: network tunnel */
+	cdev_notdef(),			/* 16: */
+	cdev_notdef()			/* 17: */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -348,7 +359,8 @@ static int chrtoblktbl[] = {
 	/* 13 */	5,
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
-	/* 16 */	NODEV
+	/* 16 */	NODEV,
+	/* 17 */	NODEV
 };
 
 /*
