@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.178 2000/12/05 22:18:30 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.179 2001/04/27 17:04:39 dmcmahill Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -89,6 +89,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
+# FPICFLAGS:		flags for ${FC} to compile .[fF] files to .so objects.
 # CPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
 # CPICFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
 # CAPICFLAGS		flags for {$CC} to compiling .[Ss] files
@@ -97,6 +98,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 .if ${MACHINE_ARCH} == "alpha"
 		# Alpha-specific shared library flags
+FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -119,6 +121,7 @@ MKPICLIB= no
 .elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
        ${OBJECT_FMT} == "ELF"
 
+FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -131,6 +134,7 @@ SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SOVERSION=${SHLIB_FULLVERSION}
 SHLIB_SHFLAGS=
+FPICFLAGS ?= -fPIC
 CPICFLAGS?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -149,6 +153,7 @@ SHLIB_LDENDFILE= ${DESTDIR}/usr/lib/crtendS.o
 .endif
 
 CFLAGS+=	${COPTS}
+FFLAGS+=	${FOPTS}
 
 .c.o:
 .if defined(COPTS) && !empty(COPTS:M*-g*)
@@ -212,6 +217,39 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
+
+.f.o:
+.if defined(FOPTS) && !empty(FOPTS:M*-g*)
+	${COMPILE.f} ${.IMPSRC}
+.else
+	@echo ${COMPILE.f:Q} ${.IMPSRC}
+	@${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
+
+.f.po:
+.if defined(FOPTS) && !empty(FOPTS:M*-g*)
+	${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}
+.else
+	@echo ${COMPILE.f:Q} -pg ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.f} -pg ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
+
+.f.so:
+.if defined(FOPTS) && !empty(FOPTS:M*-g*)
+	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.else
+	@echo ${COMPILE.f:Q} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
+
+.f.ln:
+	${ECHO} Skipping lint for Fortran libraries.
 
 .m.o:
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
@@ -288,16 +326,19 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif
 
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
-_LIBS+=llib-l${LIB}.ln
 LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+_LIBS+=llib-l${LIB}.ln
 .endif
 
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
 	|| ${MKLINKLIB} != "no"
-ALLOBJS=${OBJS} ${POBJS} ${SOBJS} ${LOBJS}
+ALLOBJS=${OBJS} ${POBJS} ${SOBJS}
 .else
-ALLOBJS=${POBJS} ${SOBJS} ${LOBJS}
+ALLOBJS=${POBJS} ${SOBJS} 
+.endif
+.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+ALLOBJS+=${LOBJS}
 .endif
 .NOPATH: ${ALLOBJS} ${_LIBS}
 
@@ -353,11 +394,13 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
 .endif
 
+.if !empty(LOBJS)
 LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
 	@rm -f llib-l${LIB}.ln
 	@${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
+.endif
 
 cleanlib:
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
@@ -453,7 +496,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULL
 .endif
 .endif
 
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
+.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .if !defined(UPDATE)
