@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2002/03/27 04:47:28 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136.4.1 2003/08/13 13:32:58 grant Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2002/03/27 04:47:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136.4.1 2003/08/13 13:32:58 grant Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2947,7 +2947,7 @@ pmap_growkernel(maxkvaddr)
 	int s;
 	paddr_t ptaddr;
 
-	needed_kpde = (int)(maxkvaddr - VM_MIN_KERNEL_ADDRESS + (NBPD-1))
+	needed_kpde = (u_int)(maxkvaddr - VM_MIN_KERNEL_ADDRESS + (NBPD-1))
 		/ NBPD;
 	if (needed_kpde <= nkpde)
 		goto out;		/* we are OK */
