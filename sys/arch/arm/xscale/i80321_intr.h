@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.1 2002/08/17 16:42:20 briggs Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.2 2002/10/09 00:03:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -43,8 +43,9 @@
 
 #include <arm/xscale/i80321reg.h>
 
-#if !defined(EVBARM_SPL_NOINLINE)
-static __inline void
+void i80321_do_pending(void);
+
+static __inline void __attribute__((__unused__))
 i80321_set_intrmask(void)
 {
 	extern __volatile uint32_t intr_enabled;
@@ -58,7 +59,7 @@ i80321_set_intrmask(void)
         ((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |                \
          (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
-static __inline void
+static __inline void __attribute__((__unused__))
 i80321_splx(int new)
 {
 	extern __volatile uint32_t intr_enabled;
@@ -81,7 +82,7 @@ i80321_splx(int new)
 		i80321_do_pending();
 }
 
-static __inline int
+static __inline int __attribute__((__unused__))
 i80321_splraise(int ipl)
 {
 	extern __volatile int current_spl_level;
@@ -94,7 +95,7 @@ i80321_splraise(int ipl)
 	return (old);
 }
 
-static __inline int
+static __inline int __attribute__((__unused__))
 i80321_spllower(int ipl)
 {
 	extern __volatile int current_spl_level;
@@ -105,20 +106,20 @@ i80321_spllower(int ipl)
 	return(old);
 }
 
+#if !defined(EVBARM_SPL_NOINLINE)
+
 #define splx(new)		i80321_splx(new)
 #define	_spllower(ipl)		i80321_spllower(ipl)
 #define	_splraise(ipl)		i80321_splraise(ipl)
 void	_setsoftintr(int);
 
-#undef INT_SWMASK
-
-#else	/* !EVBARM_SPL_NOINTR */
+#else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
 void	_setsoftintr(int);
 
-#endif	/* else !EVBARM_SPL_NOINTR */
+#endif /* ! EVBARM_SPL_NOINLINE */
 
 #endif _I80321_INTR_H_
