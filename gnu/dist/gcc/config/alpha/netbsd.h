@@ -97,7 +97,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
   %{mcpu=pca56:-mpca56} \
   %{mcpu=21164pc|mcpu=21164PC:-m21164pc} \
   %{mcpu=ev6:-mev6} \
-  %{mcpu=21264:-m21264}"
+  %{mcpu=21264:-m21264} \
+  %{mcpu=ev67:-mev6} \
+  %{mcpu=21264a:-m21264}"
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  Only
    the linker emulation and -O options are Alpha-specific.  The rest are
