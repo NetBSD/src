@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.25 1998/07/26 19:05:08 mycroft Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.26 1998/09/26 23:58:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.25 1998/07/26 19:05:08 mycroft Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.26 1998/09/26 23:58:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -145,14 +145,17 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	struct sockaddr_in sin, from;
 	struct pollfd reads[2];
-	int oldmask;
+	sigset_t nmask, omask;
 	pid_t pid;
 	int s, lport, timo;
 	int pollr;
 	char c;
 
 	pid = getpid();
-	oldmask = sigblock(sigmask(SIGURG));
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGURG);
+	if (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)
+		return -1;
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport(&lport);
 		if (s < 0) {
@@ -160,7 +163,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 				warnx("rcmd: socket: All ports in use");
 			else
 				warn("rcmd: socket");
-			sigsetmask(oldmask);
+			(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 			return (-1);
 		}
 		fcntl(s, F_SETOWN, pid);
@@ -195,7 +198,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			continue;
 		}
 		(void)fprintf(stderr, "%s: %s\n", hp->h_name, strerror(errno));
-		sigsetmask(oldmask);
+		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		return (-1);
 	}
 	lport--;
@@ -262,14 +265,14 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 		}
 		goto bad2;
 	}
-	sigsetmask(oldmask);
+	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	return (s);
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
 	(void)close(s);
-	sigsetmask(oldmask);
+	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 	return (-1);
 }
 
