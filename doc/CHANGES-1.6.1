@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.19 2002/11/03 16:47:59 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.20 2002/11/03 19:54:23 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -828,3 +828,16 @@ tools/compat/compat_defs.h			1.17
 	Add __restrict to the set of tokens we #define away: our
 	glob.h uses it.
 	[thorpej, ticket #802]
+
+libexec/makewhatis/makewhatis.c			1.25
+usr.bin/apropos/apropos.c			1.18-1.20
+usr.bin/apropos/Makefile			1.10
+usr.bin/man/man.c				1.28
+usr.bin/whatis/whatis.c				1.14-1.16
+usr.bin/whatis/Makefile				1.7
+usr.sbin/catman/catman.c			1.17-1.18
+usr.sbin/catman/Makefile			1.7
+
+	Make these compile again, after the changes in ticket
+	#787.
+	[he, ticket #787]
