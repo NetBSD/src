@@ -1,21 +1,20 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/16 03:37:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/17 20:03:11 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
 BASE?= pxeboot
-PROG= ${BASE}.pxe
+PROG= ${BASE}.bin
 MKMAN=	no
 NEWVERSWHAT=	"PXE Boot"
+STARTFILE=	${PXESTART}
+RELOC=		0x0
 
 #.PATH.c: ${.CURDIR}/../netboot
 
 SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 
-CLEANFILES+= ${PXESTART}
-
 # Various serial line configurations
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
-CPPFLAGS+= -DCONSPEED=19200
 #	or
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0KBD
 #	or
@@ -35,7 +34,7 @@ CPPFLAGS+= -DPASS_MEMMAP
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x30000
-#SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
+SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 
 I386MISCMAKEFLAGS= I386_INCLUDE_DISK=no
 
