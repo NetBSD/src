@@ -1,11 +1,11 @@
-/* $NetBSD: expr.y,v 1.20 2000/10/26 23:10:21 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.21 2000/10/27 21:40:02 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jaromir Dolecek <jdolecek@NetBSD.org>.
+ * by Jaromir Dolecek <jdolecek@NetBSD.org> and J.T. Conklin <jtc@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.20 2000/10/26 23:10:21 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.21 2000/10/27 21:40:02 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
