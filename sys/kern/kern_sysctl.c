@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.128 2003/03/01 05:41:56 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.129 2003/03/01 23:48:44 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.128 2003/03/01 05:41:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.129 2003/03/01 23:48:44 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -168,7 +168,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 2)
 		return (EINVAL);
 	error = copyin(SCARG(uap, name), &name,
-		       SCARG(uap, namelen) * sizeof(int));
+	    SCARG(uap, namelen) * sizeof(int));
 	if (error)
 		return (error);
 
@@ -178,8 +178,8 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	 * this is checked in proc_sysctl() (once we know the targer proc).
 	 */
 	if (SCARG(uap, new) != NULL && name[0] != CTL_PROC &&
-		    (error = suser(p->p_ucred, &p->p_acflag)))
-			return error;
+	    (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
 
 	switch (name[0]) {
 	case CTL_KERN:
@@ -238,7 +238,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		error = uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
-			return error;
+			return (error);
 		}
 		savelen = oldlen;
 	}
@@ -280,7 +280,7 @@ int defcorenamelen = sizeof(DEFCORENAME);
 
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
-extern  int	forkfsleep;
+extern	int	forkfsleep;
 extern	int	dumponpanic;
 
 #ifndef MULTIPROCESSOR
@@ -322,7 +322,7 @@ sysctl_ncpus(void)
 	int ncpus = 0;
 	for (CPU_INFO_FOREACH(cii, ci))
 		ncpus++;
-	return ncpus;
+	return (ncpus);
 }
 
 #endif
@@ -385,7 +385,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	    {
 		int nmaxproc = maxproc;
 
-		error = (sysctl_int(oldp, oldlenp, newp, newlen, &nmaxproc));
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmaxproc);
 
 		if (!error && newp) {
 			if (nmaxproc < 0 || nmaxproc >= PID_MAX - PID_SKIP)
@@ -427,7 +427,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (error);
 	case KERN_HOSTID:
 		inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
-		error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
 		if (newp && !error)
 			hostid = inthostid;
 		return (error);
@@ -474,10 +474,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_ntptime(oldp, oldlenp));
 #endif
 	case KERN_AUTONICETIME:
-	        old_autonicetime = autonicetime;
-	        error = sysctl_int(oldp, oldlenp, newp, newlen, &autonicetime);
+		old_autonicetime = autonicetime;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &autonicetime);
 		if (autonicetime < 0)
- 		        autonicetime = old_autonicetime;
+ 			autonicetime = old_autonicetime;
 		return (error);
 	case KERN_AUTONICEVAL:
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &autoniceval);
@@ -576,7 +576,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    sizeof consdev));
 #if NPTY > 0
 	case KERN_MAXPTYS:
-		return sysctl_pty(oldp, oldlenp, newp, newlen);
+		return (sysctl_pty(oldp, oldlenp, newp, newlen));
 #endif
 #ifndef PIPE_SOCKETPAIR
 	case KERN_PIPE:
@@ -621,7 +621,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		/* userland sees value in ms, internally is in ticks */
 		int timo, lsleep = forkfsleep * 1000 / hz;
 
-		error = (sysctl_int(oldp, oldlenp, newp, newlen, &lsleep));
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &lsleep);
 		if (newp && !error) {
 			/* refuse negative values, and overly 'long time' */
 			if (lsleep < 0 || lsleep > MAXSLP * 1000)
@@ -642,7 +642,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_POSIX_SEMAPHORES:	/* XXX _POSIX_VERSION */
 #ifdef P1003_1B_SEMAPHORE
 		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
-#else		
+#else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 	case KERN_POSIX_BARRIERS:	/* XXX _POSIX_VERSION */
@@ -783,7 +783,7 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	u_int i;
 
 	if (namelen < 2)
-		return EINVAL;
+		return (EINVAL);
 
 	if (name[0] == PROC_CURPROC) {
 		ptmp = p;
@@ -803,76 +803,76 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		proclist_unlock_read();
 		if (ptmp == NULL)
-			return(ESRCH);
+			return (ESRCH);
 		if (p->p_ucred->cr_uid != 0) {
-			if(p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
+			if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
 			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
-				return EPERM;
+				return (EPERM);
 			if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
-				return EPERM; /* sgid proc */
+				return (EPERM); /* sgid proc */
 			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
 				if (p->p_ucred->cr_groups[i] ==
 				    ptmp->p_cred->p_rgid)
 					break;
 			}
 			if (i == p->p_ucred->cr_ngroups)
-				return EPERM;
+				return (EPERM);
 		}
 	}
-	switch(name[1]) {
-	case PROC_PID_STOPFORK: 
+	switch (name[1]) {
+	case PROC_PID_STOPFORK:
 		if (namelen != 2)
-			return EINVAL;
+			return (EINVAL);
 		i = ((ptmp->p_flag & P_STOPFORK) != 0);
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
-			return error;
+			return (error);
 		if (i != 0)
 			ptmp->p_flag |= P_STOPFORK;
 		else
 			ptmp->p_flag &= ~P_STOPFORK;
-		return 0;
+		return (0);
 		break;
-	
-	case PROC_PID_STOPEXEC: 
+
+	case PROC_PID_STOPEXEC:
 		if (namelen != 2)
-			return EINVAL;
+			return (EINVAL);
 		i = ((ptmp->p_flag & P_STOPEXEC) != 0);
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
-			return error;
-		if (i != 0)	
+			return (error);
+		if (i != 0)
 			ptmp->p_flag |= P_STOPEXEC;
 		else
 			ptmp->p_flag &= ~P_STOPEXEC;
-		return 0;
+		return (0);
 		break;
 
 	case PROC_PID_CORENAME:
 		if (namelen != 2)
-			return EINVAL;
+			return (EINVAL);
 		/*
 		 * Can't use sysctl_string() here because we may malloc a new
 		 * area during the process, so we have to do it by hand.
 		 */
 		curlen = strlen(ptmp->p_limit->pl_corename) + 1;
-		if (oldlenp  && *oldlenp < curlen) {
+		if (oldlenp && *oldlenp < curlen) {
 			if (!oldp)
 				*oldlenp = curlen;
 			return (ENOMEM);
 		}
 		if (newp) {
 			if (securelevel > 2)
-				return EPERM;
+				return (EPERM);
 			if (newlen > MAXPATHLEN)
-				return ENAMETOOLONG;
+				return (ENAMETOOLONG);
 			tmps = malloc(newlen + 1, M_TEMP, M_WAITOK);
 			if (tmps == NULL)
-				return ENOMEM;
+				return (ENOMEM);
 			error = copyin(newp, tmps, newlen + 1);
 			tmps[newlen] = '\0';
 			if (error)
 				goto cleanup;
 			/* Enforce to be either 'core' for end with '.core' */
-			if (newlen < 4)  { /* c.o.r.e */
+			if (newlen < 4) {	/* c.o.r.e */
 				error = EINVAL;
 				goto cleanup;
 			}
@@ -920,7 +920,7 @@ cleanup:
 
 	case PROC_PID_LIMIT:
 		if (namelen != 4 || name[2] >= PROC_PID_LIMIT_MAXID)
-			return EINVAL;
+			return (EINVAL);
 		memcpy(&alim, &ptmp->p_rlimit[name[2] - 1], sizeof(alim));
 		if (name[3] == PROC_PID_LIMIT_TYPE_HARD)
 			error = sysctl_quad(oldp, oldlenp, newp, newlen,
@@ -928,16 +928,16 @@ cleanup:
 		else if (name[3] == PROC_PID_LIMIT_TYPE_SOFT)
 			error = sysctl_quad(oldp, oldlenp, newp, newlen,
 			    &alim.rlim_cur);
-		else 
-			error = EINVAL;
+		else
+			error = (EINVAL);
 
 		if (error)
-			return error;
+			return (error);
 
 		if (newp)
 			error = dosetrlimit(ptmp, p->p_cred,
 			    name[2] - 1, &alim);
-		return error;
+		return (error);
 		break;
 
 	default:
@@ -954,7 +954,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	static struct {
 		const char *name;
-		int  type;
+		int type;
 	} emulations[] = CTL_EMUL_NAMES;
 	const struct emul *e;
 	const char *ename;
@@ -980,7 +980,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	lockmgr(&exec_lock, LK_SHARED, NULL);
 	if ((e = emul_search(ename))) {
 		error = (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
-				newp, newlen, p);
+		    newp, newlen, p);
 	} else
 		error = EOPNOTSUPP;
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
@@ -988,17 +988,19 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	return (error);
 #else
 	for (i = 0; i < nexecs_builtin; i++) {
-	    e = execsw_builtin[i].es_emul;
-	    /*
-	     * In order to match e.g. e->e_name "irix o32" with ename "irix", 
-	     * we limit the comparison to the length of ename.
-	     */
-	    if (e == NULL || strncmp(ename, e->e_name, strlen(ename)) != 0 ||
-		e->e_sysctl == NULL)
-		continue;
+		e = execsw_builtin[i].es_emul;
+		/*
+		 * In order to match e.g. e->e_name "irix o32"
+		 * with ename "irix", we limit the comparison
+		 * to the length of ename.
+		 */
+		if (e == NULL ||
+		    strncmp(ename, e->e_name, strlen(ename)) != 0 ||
+		    e->e_sysctl == NULL)
+			continue;
 
-	    return (*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
-					newp, newlen, p);
+		return ((*e->e_sysctl)(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen, p));
 	}
 
 	return (EOPNOTSUPP);
@@ -1014,7 +1016,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			*oldlenp = len;					\
 		else {							\
 			if (*oldlenp < len)				\
-				return(ENOMEM);				\
+				return (ENOMEM);			\
 			*oldlenp = len;					\
 			error = copyout((caddr_t)valp, oldp, len);	\
 		}							\
@@ -1034,7 +1036,7 @@ emul_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if (error == 0 && newp)				\
 		error = copyin(newp, valp, len);
 
-#define SYSCTL_SCALAR_NEWPCOP_TYP(newp, valp, typ)      \
+#define SYSCTL_SCALAR_NEWPCOP_TYP(newp, valp, typ)	\
 	SYSCTL_SCALAR_NEWPCOP_LEN(newp, valp, sizeof(typ))
 
 #define SYSCTL_STRING_CORE(oldp, oldlenp, str)		\
@@ -1267,14 +1269,14 @@ sysctl_file(void *vwhere, size_t *sizep)
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #define	FILL_PERM(src, dst) do { \
-		(dst)._key = (src)._key; \
-		(dst).uid = (src).uid; \
-		(dst).gid = (src).gid; \
-		(dst).cuid = (src).cuid; \
-		(dst).cgid = (src).cgid; \
-		(dst).mode = (src).mode; \
-		(dst)._seq = (src)._seq; \
-	} while (/*CONSTCOND*/ 0);
+	(dst)._key = (src)._key; \
+	(dst).uid = (src).uid; \
+	(dst).gid = (src).gid; \
+	(dst).cuid = (src).cuid; \
+	(dst).cgid = (src).cgid; \
+	(dst).mode = (src).mode; \
+	(dst)._seq = (src)._seq; \
+} while (/*CONSTCOND*/ 0);
 #define	FILL_MSG(src, dst) do { \
 	FILL_PERM((src).msg_perm, (dst).msg_perm); \
 	(dst).msg_qnum = (src).msg_qnum; \
@@ -1285,13 +1287,13 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).msg_stime = (src).msg_stime; \
 	(dst).msg_rtime = (src).msg_rtime; \
 	(dst).msg_ctime = (src).msg_ctime; \
-	} while (/*CONSTCOND*/ 0)
+} while (/*CONSTCOND*/ 0)
 #define	FILL_SEM(src, dst) do { \
 	FILL_PERM((src).sem_perm, (dst).sem_perm); \
 	(dst).sem_nsems = (src).sem_nsems; \
 	(dst).sem_otime = (src).sem_otime; \
 	(dst).sem_ctime = (src).sem_ctime; \
-	} while (/*CONSTCOND*/ 0)
+} while (/*CONSTCOND*/ 0)
 #define	FILL_SHM(src, dst) do { \
 	FILL_PERM((src).shm_perm, (dst).shm_perm); \
 	(dst).shm_segsz = (src).shm_segsz; \
@@ -1301,7 +1303,7 @@ sysctl_file(void *vwhere, size_t *sizep)
 	(dst).shm_dtime = (src).shm_dtime; \
 	(dst).shm_ctime = (src).shm_ctime; \
 	(dst).shm_nattch = (src).shm_nattch; \
-	} while (/*CONSTCOND*/ 0)
+} while (/*CONSTCOND*/ 0)
 
 static int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
@@ -1380,7 +1382,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
 	memset(buf, 0, min(tsize, buflen));
 
-	switch (*name) { 
+	switch (*name) {
 #ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
@@ -1410,7 +1412,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 				ret = ENOMEM;
 				break;
 			}
-			switch (*name) { 
+			switch (*name) {
 #ifdef SYSVMSG
 			case KERN_SYSVIPC_MSG_INFO:
 				FILL_MSG(msqids[i], msgsi->msgids[i]);
@@ -1616,11 +1618,11 @@ again:
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, &eproc);
 				error = copyout((caddr_t)p, &dp->kp_proc,
-						sizeof(struct proc));
+				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
 				error = copyout((caddr_t)&eproc, &dp->kp_eproc,
-						sizeof(eproc));
+				    sizeof(eproc));
 				if (error)
 					goto cleanup;
 				dp++;
@@ -1757,7 +1759,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 
 		/* Pick a "representative" LWP */
 		l = proc_representative_lwp(p);
-		
+
 		if (l->l_wmesg)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 	}
@@ -1769,7 +1771,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	ep->e_sid = ep->e_sess->s_sid;
 	ep->e_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) &&
-	     (tp = ep->e_sess->s_ttyp)) {
+	    (tp = ep->e_sess->s_ttyp)) {
 		ep->e_tdev = tp->t_dev;
 		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		ep->e_tsess = tp->t_session;
@@ -1869,7 +1871,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
 
 	strncpy(ki->p_login, p->p_session->s_login,
-		min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
+	    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_nrlwps = p->p_nrlwps;
@@ -1966,6 +1968,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
+
 	kl->l_forw = PTRTOINT64(l->l_forw);
 	kl->l_back = PTRTOINT64(l->l_back);
 	kl->l_laddr = PTRTOINT64(l);
@@ -2116,7 +2119,7 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = sizeof(argv);
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_rw = UIO_READ; 
+	auio.uio_rw = UIO_READ;
 	auio.uio_procp = NULL;
 	error = uvm_io(&p->p_vmspace->vm_map, &auio);
 	if (error)
@@ -2206,13 +2209,10 @@ sysctl_pty(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 #endif /* NPTY > 0 */
 
 static int
-sysctl_dotkstat(name, namelen, where, sizep, newp)
-	int *name;
-	u_int namelen;
-	void *where;
-	size_t *sizep;
-	void *newp;
+sysctl_dotkstat(int *name, u_int namelen, void *where, size_t *sizep,
+    void *newp)
 {
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
