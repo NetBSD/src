@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.52 2000/02/25 07:11:38 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.53 2000/02/25 08:37:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -366,9 +366,6 @@ in_control(so, cmd, data, ifp, p)
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-		if (ifra->ifra_addr.sin_family != AF_INET)
-			return (EAFNOSUPPORT);
-		/* FALLTHROUGH */
 	case SIOCSIFNETMASK:
 		if (ifp == 0)
 			panic("in_control");
