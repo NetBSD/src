@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 1997/02/07 07:29:38 mikel Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 1997/05/14 16:12:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -96,23 +96,13 @@
 #define SIGUSR1 30	/* user defined signal 1 */
 #define SIGUSR2 31	/* user defined signal 2 */
 
-#if defined(_ANSI_SOURCE) || defined(__cplusplus) || defined(_KERNEL)
-/*
- * Language spec sez we must list exactly one parameter, even though we
- * actually supply three.  Ugh!
- */
-#define	SIG_DFL		(void (*)(int))0
-#define	SIG_IGN		(void (*)(int))1
-#define	SIG_ERR		(void (*)(int))-1
-#else
-#define	SIG_DFL		(void (*)())0
-#define	SIG_IGN		(void (*)())1
-#define	SIG_ERR		(void (*)())-1
-#endif
-
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 #endif
+
+#define	SIG_DFL		((void (*) __P((int)))  0)
+#define	SIG_IGN		((void (*) __P((int)))  1)
+#define	SIG_ERR		((void (*) __P((int))) -1)
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
@@ -122,11 +112,7 @@ typedef unsigned int sigset_t;
  */
 struct	sigaction {
 	void	(*sa_handler)		/* signal handler */
-#ifdef _KERNEL
 			    __P((int));
-#else
-			    __P(());
-#endif
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
@@ -170,11 +156,7 @@ struct	sigaltstack {
  */
 struct	sigvec {
 	void	(*sv_handler)		/* signal handler */
-#ifdef _KERNEL
 			    __P((int));
-#else
-			    __P(());
-#endif
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
