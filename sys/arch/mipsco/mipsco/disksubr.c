@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2002/02/19 17:09:45 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2002/03/05 09:40:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -158,7 +158,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
