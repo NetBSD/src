@@ -822,7 +822,7 @@ new_message(va_alist)
 #endif
 
     /* first, format the message */
-    (void) vsprintf(next_msg, msgfmt, ap);
+    (void) vsnprintf(next_msg, sizeof(next_msg), msgfmt, ap);
 
     va_end(ap);
 
