@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.19 1998/01/20 22:30:15 mycroft Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.20 1998/01/20 23:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.19 1998/01/20 22:30:15 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.20 1998/01/20 23:05:15 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,12 +148,15 @@ main(argc, argv)
 	if (argc < 1)
 		usage();
 
+	if (dodump && !dohalt && !doreboot)
+		doreboot = 1;
+
 	if (dofast && nosync) {
-		warnx("incompatible switches -f and -n\n");
+		warnx("incompatible switches -f and -n");
 		usage();
 	}
-	if (doreboot && dohalt) {
-		warnx("incompatible switches -h and -r\n");
+	if (dohalt && doreboot) {
+		warnx("incompatible switches -h and -r");
 		usage();
 	}
 
@@ -328,7 +331,7 @@ die_you_gravy_sucking_pig_dog()
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
-	    doreboot || dodump ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
+	    doreboot ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
@@ -338,32 +341,40 @@ die_you_gravy_sucking_pig_dog()
 	}
 	if (dofast)
 		doitfast();
-#ifdef DEBUG
-	if (doreboot || dodump)
-		(void)printf("reboot%s", dodump ? " -d" : "");
-	else if (dohalt)
-		(void)printf("halt");
-	if (nosync)
-		(void)printf(" no sync");
-	if (dofast)
-		(void)printf(" no fsck");
-	(void)printf("\nkill -HUP 1\n");
+	if (doreboot || dohalt) {
+		char *args[8], **arg, *path;
+
+		arg = &args[0];
+		if (doreboot) {
+			path = _PATH_REBOOT;
+			*arg++ = "reboot";
+		} else {
+			path = _PATH_HALT;
+			*arg++ = "halt";
+		}
+		if (dodump)
+			*arg++ = "-d";
+		if (nosync)
+			*arg++ = "-n";
+		*arg++ = "-l";
+		*arg++ = 0;
+#ifndef DEBUG
+		exect(path, args, (char **)0);
+		syslog(LOG_ERR, "shutdown: can't exec %s: %m", path);
+		perror("shutdown");
 #else
-	if (doreboot || dodump) {
-		execle(_PATH_REBOOT, "reboot",
-		       dodump ? (nosync ? "-ldn" : "-ld") :
-		       (nosync ? "-ln" : "-l"), 0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m", _PATH_REBOOT);
-		perror("shutdown");
-	}
-	else if (dohalt) {
-		execle(_PATH_HALT, "halt", nosync ? "-ln" : "-l",
-		    (char *)0, (char **)0);
-		syslog(LOG_ERR, "shutdown: can't exec %s: %m", _PATH_HALT);
-		perror("shutdown");
-	}
-	(void)kill(1, SIGTERM);		/* to single user */
+		printf("%s", path);
+		for (arg = &args[0]; *arg; arg++)
+			printf(" %s", *arg);
+		printf("\n");
 #endif
+	} else {
+#ifndef DEBUG
+		(void)kill(1, SIGTERM);		/* to single user */
+#else
+		printf("kill 1\n");
+#endif
+	}
 	finish(0);
 }
 
@@ -507,8 +518,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: shutdown [-dfhknr] [[[[[cc]yy]mm]dd]hh]mm [message|-]\n");
+	    "usage: shutdown [-dfhknr] [[[[[cc]yy]mm]dd]hh]mm [message | -]\n");
 	(void)fprintf(stderr,
-	    "       shutdown [-dfhknr] +time [message|-]\n");
+	    "       shutdown [-dfhknr] +time [message | -]\n");
 	exit(1);
 }
