@@ -79,6 +79,8 @@
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"
+#define	EISA_PRODUCT_TCM5920	"3Com 3C592 Ethernet /* XXX low-order bit*/"
+#define	EISA_PRODUCT_TCM5970	"3Com 3C592 Fast Ethernet /* XXX low-order bit*/"
 
 /* UltraStor products */
 #define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
