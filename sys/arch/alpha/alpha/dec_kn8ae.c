@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.5 1997/04/07 06:09:05 cgd Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.6 1997/04/07 06:24:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

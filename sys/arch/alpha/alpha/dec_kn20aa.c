@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.22 1997/04/07 06:09:05 cgd Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.23 1997/04/07 06:24:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
