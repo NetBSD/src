@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey.c,v 1.17 2003/08/26 03:37:25 itojun Exp $	*/
-/*	$KAME: pfkey.c,v 1.43 2003/06/27 07:09:00 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18 2003/08/26 03:49:05 itojun Exp $	*/
+/*	$KAME: pfkey.c,v 1.46 2003/08/26 03:37:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.17 2003/08/26 03:37:25 itojun Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.18 2003/08/26 03:49:05 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1765,7 +1765,9 @@ pfkey_align(msg, mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
+#ifdef SADB_X_EXT_TAG
 		case SADB_X_EXT_TAG:
+#endif
 			mhp[ext->sadb_ext_type] = (caddr_t)ext;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.15 2003/08/26 03:37:25 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.16 2003/08/26 03:49:05 itojun Exp $	*/
 /*	$KAME: pfkey_dump.c,v 1.44 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey_dump.c,v 1.15 2003/08/26 03:37:25 itojun Exp $");
+__RCSID("$NetBSD: pfkey_dump.c,v 1.16 2003/08/26 03:49:05 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,7 +326,9 @@ pfkey_spdump(m)
 	char pbuf[NI_MAXSERV];
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
+#ifdef SADB_X_EXT_TAG
 	struct sadb_x_tag *m_tag;
+#endif
 	struct sadb_x_policy *m_xpl;
 	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
@@ -344,7 +346,9 @@ pfkey_spdump(m)
 
 	m_saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	m_daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+#ifdef SADB_X_EXT_TAG
 	m_tag = (struct sadb_x_tag *)mhp[SADB_X_EXT_TAG];
+#endif
 	m_xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
 	m_lftc = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_CURRENT];
 	m_lfth = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
@@ -399,8 +403,10 @@ pfkey_spdump(m)
 		str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 	}
 
+#ifdef SADB_X_EXT_TAG
 	if (m_tag)
 		printf("tagged \"%s\" ", m_tag->sadb_x_tag_name);
+#endif
 
 	/* policy */
     {
@@ -451,11 +457,7 @@ str_ipaddr(sa)
 	struct sockaddr *sa;
 {
 	static char buf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 
 	if (sa == NULL)
 		return "";
