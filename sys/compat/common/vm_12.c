@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.7 1997/10/16 23:49:38 christos Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.8 1997/10/20 22:05:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -59,7 +59,7 @@ compat_12_sys_msync(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_msync_args ua;
+	struct sys___msync13_args ua;
 	struct compat_12_sys_msync_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
@@ -68,5 +68,5 @@ compat_12_sys_msync(p, v, retval)
 	SCARG(&ua, addr) = SCARG(uap, addr);;
 	SCARG(&ua, len) = SCARG(uap, len);;
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
-	return (sys_msync(p, &ua, retval));
+	return (sys___msync13(p, &ua, retval));
 }

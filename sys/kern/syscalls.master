@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 1997/10/19 03:25:55 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.63 1997/10/20 22:05:06 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -512,7 +512,7 @@
 			    gid_t gid); }
 276	STD		{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
-277	STD		{ int sys_msync(void *addr, size_t len, int flags); }
-278	STD		{ int sys_stat(const char *path, struct stat *ub); }
-279	STD		{ int sys_fstat(int fd, struct stat *sb); }
-280	STD		{ int sys_lstat(const char *path, struct stat *ub); }
+277	STD		{ int sys___msync13(void *addr, size_t len, int flags); }
+278	STD		{ int sys___stat13(const char *path, struct stat *ub); }
+279	STD		{ int sys___fstat13(int fd, struct stat *sb); }
+280	STD		{ int sys___lstat13(const char *path, struct stat *ub); }

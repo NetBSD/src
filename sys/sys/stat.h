@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.25 1997/10/19 02:21:58 mycroft Exp $	*/
+/*	$NetBSD: stat.h,v 1.26 1997/10/20 22:05:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,6 +63,7 @@ struct stat43 {				/* BSD-4.3 stat struct */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
+#endif /* !_KERNEL */
 
 struct stat12 {				/* NetBSD-1.2 stat struct */
 	dev_t	  st_dev;		/* inode's device */
@@ -83,7 +84,6 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
 	int32_t	  st_lspare;
 	int64_t	  st_qspare[2];
 };
-#endif /* !_KERNEL */
 
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
@@ -215,18 +215,26 @@ struct stat {
 
 __BEGIN_DECLS
 int	chmod __P((const char *, mode_t));
-int	fstat __P((int, struct stat *));
 int	mkdir __P((const char *, mode_t));
 int	mkfifo __P((const char *, mode_t));
-int	stat __P((const char *, struct stat *));
+int	stat __P((const char *, struct stat12 *));
+int	fstat __P((int, struct stat12 *));
+int	__stat13 __P((const char *, struct stat *));
+int	__fstat13 __P((int, struct stat *));
 mode_t	umask __P((mode_t));
 #ifndef _POSIX_SOURCE
 int	chflags __P((const char *, u_long));
 int	fchflags __P((int, u_long));
 int	fchmod __P((int, mode_t));
 int	lchmod __P((const char *, mode_t));
-int	lstat __P((const char *, struct stat *));
+int	lstat __P((const char *, struct stat12 *));
+int	__lstat13 __P((const char *, struct stat *));
 #endif
 __END_DECLS
+
+#define stat(f,b)  __stat13(f,b)
+#define fstat(f,b) __fstat13(f,b)
+#define lstat(f,b) __lstat13(f,b)
+
 #endif
 #endif /* !_SYS_STAT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.46 1997/10/19 01:50:33 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.47 1997/10/20 22:05:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -395,12 +395,12 @@ sys_close(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_fstat(p, v, retval)
+sys___fstat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fstat_args /* {
+	register struct sys___fstat13_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;

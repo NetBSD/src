@@ -1,7 +1,7 @@
-/*	$NetBSD: freebsd_misc.c,v 1.3 1997/10/20 22:05:23 thorpej Exp $	*/
+/*	$NetBSD: msync.c,v 1.1 1997/10/20 22:05:29 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Frank van der Linden
+ * Copyright (c) 1997 Frank van der Linden
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,76 +31,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
- */
+#include <sys/types.h>
+#include <sys/mman.h>
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-
-#include <sys/syscallargs.h>
-
-#include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
-#include <compat/freebsd/freebsd_rtprio.h>
-#include <compat/freebsd/freebsd_timex.h>
+#undef msync
 
 int
-freebsd_sys_msync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+msync(addr, size)
+	void *addr;
+	size_t size;
 {
-	struct freebsd_sys_msync_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) flags;
-	} */ *uap = v;
-	struct sys___msync13_args bma;
-
-	/*
-	 * FreeBSD-2.0-RELEASE's msync(2) is compatible with NetBSD's.
-	 * FreeBSD-2.0.5-RELEASE's msync(2) has addtional argument `flags',
-	 * but syscall number is not changed. :-<
-	 */
-	SCARG(&bma, addr) = SCARG(uap, addr);
-	SCARG(&bma, len) = SCARG(uap, len);
-	SCARG(&bma, flags) = SCARG(uap, flags);
-	return sys___msync13(p, &bma, retval);
-}
-
-/* just a place holder */
-
-int
-freebsd_sys_rtprio(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef notyet
-	struct freebsd_sys_rtprio_args /* {
-		syscallarg(int) function;
-		syscallarg(pid_t) pid;
-		syscallarg(struct freebsd_rtprio *) rtp;
-	} */ *uap = v;
-#endif
-
-	return ENOSYS;	/* XXX */
-}
-
-int
-freebsd_ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef notyet
-	struct freebsd_ntp_adjtime_args /* {
-		syscallarg(struct freebsd_timex *) tp;
-	} */ *uap = v;
-#endif
-
-	return ENOSYS;	/* XXX */
+	return __msync13(addr, size, MS_SYNC|MS_INVALIDATE);
 }
