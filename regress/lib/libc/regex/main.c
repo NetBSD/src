@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1995/04/20 22:39:51 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1997/11/01 06:20:49 lukem Exp $	*/
 
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +43,7 @@ char *argv[];
 
 	progname = argv[0];
 
-	while ((c = getopt(argc, argv, "c:e:S:E:x")) != EOF)
+	while ((c = getopt(argc, argv, "c:e:S:E:x")) != -1)
 		switch (c) {
 		case 'c':	/* compile options */
 			copts = options('c', optarg);
