@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.14 1998/10/29 09:49:51 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.15 1998/11/20 01:52:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct wdc_pcmcia_softc {
 	int sc_iowindow;
 	int sc_auxiowindow;
 	void *sc_ih;
+	struct pcmcia_function *sc_pf;
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
@@ -129,6 +130,8 @@ int	wdc_pcmcia_disk_device_interface_callback __P((struct pcmcia_tuple *,
 int	wdc_pcmcia_disk_device_interface __P((struct pcmcia_function *));
 struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
+
+int	wdc_pcmcia_enable __P((void *, int));
 
 int
 wdc_pcmcia_disk_device_interface_callback(tuple, arg)
@@ -242,6 +245,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct wdc_pcmcia_product *wpp;
 	int quirks;
 
+	sc->sc_pf = pa->pf;
+
 	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
 	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 		if (cfe->num_iospace != 1 && cfe->num_iospace != 2)
@@ -312,12 +317,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	printf("\n");
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, wdcintr,
-	    &sc->wdc_channel);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", self->dv_xname);
-		return;
-	}
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
 	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
@@ -340,5 +339,46 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
+
+	/* We can enable and disable the controller. */
+	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
+
+	/*
+	 * Disable the pcmcia function now; wdcattach() will enable
+	 * us again as it adds references to probe for children.
+	 */
+	pcmcia_function_disable(pa->pf);
+
 	wdcattach(&sc->wdc_channel);
+}
+
+int
+wdc_pcmcia_enable(arg, onoff)
+	void *arg;
+	int onoff;
+{
+	struct wdc_pcmcia_softc *sc = arg;
+
+	if (onoff) {
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
+		    &sc->wdc_channel);
+		if (sc->sc_ih == NULL) {
+			printf("%s: couldn't establish interrupt handler\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return (EIO);
+		}
+
+		if (pcmcia_function_enable(sc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			return (EIO);
+		}
+	} else {
+		pcmcia_function_disable(sc->sc_pf);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	}
+
+	return (0);
 }
