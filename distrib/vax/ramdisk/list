@@ -1,10 +1,16 @@
-#	$NetBSD: list,v 1.5 2000/03/04 16:06:41 ragge Exp $
+#	$NetBSD: list,v 1.6 2000/05/18 02:12:45 matt Exp $
 
 # Do this first in case spwd.db and pwd.db fill disk
 COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 SPECIAL	/bin/rm etc/spwd.db
 SPECIAL	/bin/rm etc/pwd.db
+
+# copy the MAKEDEV script and make some devices
+COPY	${CURDIR}/../../../etc/etc.vax/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0
+SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 sd2 md0 pty0
+SPECIAL	/bin/rm dev/MAKEDEV
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -66,12 +72,6 @@ SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
 SPECIAL	/bin/rm ramdiskbin
 
-# copy the MAKEDEV script and make some devices
-COPY	${CURDIR}/../../../etc/etc.vax/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0
-SPECIAL	cd dev; sh MAKEDEV ra0 ra1 hp0 hp1 sd0 sd1 sd2 md0 pty0
-SPECIAL	/bin/rm dev/MAKEDEV
-
 # we need the boot in /, and boot blocks in /usr/mdec
 COPY	${DESTDIR}/boot			boot
 COPY	${DESTDIR}/usr/mdec/xxboot	usr/mdec/xxboot
@@ -104,4 +104,4 @@ COPY	${CURDIR}/dot.profile		.profile
 # SPECIAL	chmod 755 start
 
 #the lists of obsolete files used by sysinst  
-SPECIAL sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist
+SPECIAL sh ${CURDIR}/../../sets/makeobsolete -b -s ${CURDIR}/../../sets -t ./dist

@@ -1,5 +1,59 @@
-#	$NetBSD: list,v 1.1 1999/03/12 18:36:52 ragge Exp $
+#	$NetBSD: list,v 1.2 2000/05/18 02:12:43 matt Exp $
+
+# Sparc extra's
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/sysctl
+
+SYMLINK	../../instbin		usr/bin/basename
+SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
+SYMLINK ../../instbin		usr/bin/getopt
+SYMLINK ../../instbin		usr/bin/netstat
+SYMLINK ../../instbin		usr/bin/rsh
+SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
+SYMLINK ../../instbin		usr/bin/vi
+SYMLINK	../../instbin		usr/bin/less usr/bin/more
+
+# crunchgen source directory specials
+CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
+CRUNCHSPECIAL	less srcdir usr.bin/less/less
+CRUNCHSPECIAL	sysinst srcdir distrib/utils/sysinst/vax/sparc
+
+# for /kern
+SPECIAL	mkdir kern
+
+# Minimize use of MFS
+SYMLINK	/tmp	var/tmp
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
+SPECIAL	cd dev; sh MAKEDEV all
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec
+COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+
+# the zoneinfo
+COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
+
+# and the termcap file
+COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${OBJDIR}/netbsd.ram.gz	netbsd.gz
-COPY	${DESTDIR}/boot		boot
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/vax/compile}/GENERIC/netbsd	netbsd
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+LINK	etc/spwd.db			etc/pwd.db
+SYMLINK	/tmp/disktab.shadow		etc/disktab
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
+
+# and the installation tools
+LINK	instbin				sysinst
+COPY	${ARCHDIR}/dot.profile		.profile
+COPY	${ARCHDIR}/../install.md	install.md
+COPY	${DESTDIR}/usr/mdec/boot	boot
