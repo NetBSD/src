@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.4 2002/05/03 21:28:11 rjs Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.4.4.1 2003/01/27 07:09:51 jmc Exp $	*/
 
 /*
  * Copyright 1997
@@ -392,10 +392,17 @@ ofw_device_register(struct device *dev, void *aux)
 			return;
 		cp = strrchr(boot_component, ':');
 		if (cp != NULL) {
+			int cplen;
 			*cp++ = '\0';
 			if (cp[0] == '\\')
 				cp++;
 			booted_kernel = cp; 
+
+			/* Zap ".aout" suffix, arm32 libkvm now requires ELF */
+			cplen = strlen(cp);
+			if (cplen > 5 && !strcmp(&cp[cplen-5], ".aout")) {
+				cp[cplen-5] = '\0';
+			}
 		}
 	}
 
