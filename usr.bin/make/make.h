@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.23 1999/09/16 19:57:54 kim Exp $	*/
+/*	$NetBSD: make.h,v 1.24 2000/04/20 11:23:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -395,5 +395,7 @@ int Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));
 Boolean Make_Run __P((Lst));
+char * Check_Cwd_Cmd __P((char *));
+void Check_Cwd __P((char **));
 
 #endif /* _MAKE_H_ */

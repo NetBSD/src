@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2000/04/20 11:23:26 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -140,6 +140,7 @@ Boolean			checkEnvFirst;	/* -e flag */
 Boolean			mkIncPath;	/* -m flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
+static char *		Check_Cwd_av __P((int, char **, int));
 static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
 static int		ReadMakefile __P((ClientData, ClientData));
@@ -512,7 +513,17 @@ main(argc, argv)
 	    exit(2);
 	}
 
-	if ((pwd = getenv("PWD")) != NULL) {
+	/*
+	 * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
+	 * since the value of curdir can very depending on how we got
+	 * here.  Ie sitting at a shell prompt (shell that provides $PWD)
+	 * or via subdir.mk in which case its likely a shell which does
+	 * not provide it.
+	 * So, to stop it breaking this case only, we ignore PWD if
+	 * MAKEOBJDIRPREFIX is set.
+	 */
+	if ((pwd = getenv("PWD")) != NULL &&
+	    getenv("MAKEOBJDIRPREFIX") == NULL) {
 	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
 		sa.st_dev == sb.st_dev)
 		(void) strcpy(curdir, pwd);
@@ -754,6 +765,9 @@ main(argc, argv)
 	if (p1)
 	    free(p1);
 
+	Check_Cwd_av(0, NULL, 0);	/* initialize it */
+	
+
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
 	 * and add them to the search path, if the variable is defined. The
@@ -933,6 +947,181 @@ found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
 	}
 	free(path);
 	return(TRUE);
+}
+
+
+/*
+ * If MAKEOBJDIRPREFIX is in use, make ends up not in .CURDIR
+ * in situations that would not arrise with ./obj (links or not).
+ * This tends to break things like:
+ *
+ * build:
+ * 	${MAKE} includes
+ *
+ * This function spots when ${.MAKE:T} or ${.MAKE} is a command (as
+ * opposed to an argument) in a command line and if so returns
+ * ${.CURDIR} so caller can chdir() so that the assumptions made by
+ * the Makefile hold true.
+ *
+ * If ${.MAKE} does not contain any '/', then ${.MAKE:T} is skipped.
+ *
+ * The chdir() only happens in the child process, and does nothing if
+ * MAKEOBJDIRPREFIX and MAKEOBJDIR are not in the environment so it
+ * should not break anything.  Also if NOCHECKMAKECHDIR is set we
+ * do nothing - to ensure historic semantics can be retained.
+ */
+static int  Check_Cwd_Off = 0;
+
+static char *
+Check_Cwd_av(ac, av, copy)
+     int ac;
+     char **av;
+     int copy;
+{
+    static char *make[4];
+    static char *curdir = NULL;
+    char *cp, **mp;
+    int is_cmd, next_cmd;
+    int i;
+    int n;
+
+    if (Check_Cwd_Off)
+	return NULL;
+    
+    if (make[0] == NULL) {
+	if (Var_Exists("NOCHECKMAKECHDIR", VAR_GLOBAL)) {
+	    Check_Cwd_Off = 1;
+	    return NULL;
+	}
+	    
+        make[1] = Var_Value(".MAKE", VAR_GLOBAL, &cp);
+        if ((make[0] = strrchr(make[1], '/')) == NULL) {
+            make[0] = make[1];
+            make[1] = NULL;
+        } else
+            ++make[0];
+        make[2] = NULL;
+        curdir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
+    }
+    if (ac == 0 || av == NULL)
+        return NULL;			/* initialization only */
+
+    if (getenv("MAKEOBJDIR") == NULL &&
+        getenv("MAKEOBJDIRPREFIX") == NULL)
+        return NULL;
+
+    
+    next_cmd = 1;
+    for (i = 0; i < ac; ++i) {
+	is_cmd = next_cmd;
+
+	n = strlen(av[i]);
+	cp = &(av[i])[n - 1];
+	if (strspn(av[i], "|&;") == n) {
+	    next_cmd = 1;
+	    continue;
+	} else if (*cp == ';' || *cp == '&' || *cp == '|' || *cp == ')') {
+	    next_cmd = 1;
+	    if (copy) {
+		do {
+		    *cp-- = '\0';
+		} while (*cp == ';' || *cp == '&' || *cp == '|' ||
+			 *cp == ')' || *cp == '}') ;
+	    } else {
+		/*
+		 * XXX this should not happen.
+		 */
+		fprintf(stderr, "WARNING: raw arg ends in shell meta '%s'\n",
+			av[i]);
+	    }
+	} else
+	    next_cmd = 0;
+
+	cp = av[i];
+	if (*cp == ';' || *cp == '&' || *cp == '|')
+	    is_cmd = 1;
+	
+#ifdef check_cwd_debug
+	fprintf(stderr, "av[%d] == %s '%s'",
+		i, (is_cmd) ? "cmd" : "arg", av[i]);
+#endif
+	if (is_cmd != 0) {
+	    while (*cp == '(' || *cp == '{' ||
+		   *cp == ';' || *cp == '&' || *cp == '|')
+		++cp;
+	    if (strcmp(cp, "cd") == 0 || strcmp(cp, "chdir") == 0) {
+#ifdef check_cwd_debug
+		fprintf(stderr, " == cd, done.\n");
+#endif
+		return NULL;
+	    }
+	    for (mp = make; *mp != NULL; ++mp) {
+		n = strlen(*mp);
+		if (strcmp(cp, *mp) == 0) {
+#ifdef check_cwd_debug
+		    fprintf(stderr, " %s == '%s', chdir(%s)\n",
+			    cp, *mp, curdir);
+#endif
+		    return curdir;
+		}
+	    }
+	}
+#ifdef check_cwd_debug
+	fprintf(stderr, "\n");
+#endif
+    }
+    return NULL;
+}
+
+char *
+Check_Cwd_Cmd(cmd)
+     char *cmd;
+{
+    char *cp, *bp, **av;
+    int ac;
+
+    if (Check_Cwd_Off)
+	return NULL;
+    
+    if (cmd) {
+	av = brk_string(cmd, &ac, TRUE, &bp);
+#ifdef check_cwd_debug
+	fprintf(stderr, "splitting: '%s' -> %d words\n",
+		cmd, ac);
+#endif
+    } else {
+	ac = 0;
+	av = NULL;
+	bp = NULL;
+    }
+    cp = Check_Cwd_av(ac, av, 1);
+    if (bp) {
+	free(av);
+	free(bp);
+    }
+    return cp;
+}
+
+void
+Check_Cwd(argv)
+    char **argv;
+{
+    char *cp;
+    int ac;
+    
+    if (Check_Cwd_Off)
+	return;
+    
+    for (ac = 0; argv[ac] != NULL; ++ac)
+	/* NOTHING */;
+    if (ac == 3 && *argv[1] == '-') {
+	cp =  Check_Cwd_Cmd(argv[2]);
+    } else {
+	cp = Check_Cwd_av(ac, argv, 0);
+    }
+    if (cp) {
+	chdir(cp);
+    }
 }
 
 /*-
