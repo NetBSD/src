@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.14 1998/06/24 01:14:55 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.15 1998/06/26 21:55:09 ross Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -263,7 +263,23 @@
 		ASCIZ "dec 1000a irq 28";				\
 		ASCIZ "dec 1000a irq 29";				\
 		ASCIZ "dec 1000a irq 30";				\
-/* 0x14b*/	ASCIZ "dec 1000a irq 31";
+/* 0x14b*/	ASCIZ "dec 1000a irq 31";				\
+		ASCIZ "dec 1000 irq 0";					\
+		ASCIZ "dec 1000 irq 1";					\
+		ASCIZ "dec 1000 irq 2";					\
+		ASCIZ "dec 1000 irq 3";					\
+/* 0x150 */	ASCIZ "dec 1000 irq 4";					\
+		ASCIZ "dec 1000 irq 5";					\
+		ASCIZ "dec 1000 irq 6";					\
+		ASCIZ "dec 1000 irq 7";					\
+		ASCIZ "dec 1000 irq 8";					\
+		ASCIZ "dec 1000 irq 9";					\
+		ASCIZ "dec 1000 irq 10";				\
+		ASCIZ "dec 1000 irq 11";				\
+		ASCIZ "dec 1000 irq 12";				\
+		ASCIZ "dec 1000 irq 13";				\
+		ASCIZ "dec 1000 irq 14";				\
+/* 0x15b */	ASCIZ "dec 1000 irq 15";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -280,7 +296,8 @@
 /* 0x110 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x120 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x130 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x140 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x140 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x150 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -314,6 +331,10 @@
 
 #define	INTRCNT_DEC_1000A_IRQ	(INTRCNT_DEC_550_IRQ + INTRCNT_DEC_550_IRQ_LEN)
 #define	INTRCNT_DEC_1000A_IRQ_LEN	32
+
+#define	INTRCNT_DEC_1000_IRQ	(INTRCNT_DEC_1000A_IRQ +	\
+					INTRCNT_DEC_1000A_IRQ_LEN)
+#define	INTRCNT_DEC_1000_IRQ_LEN	16
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];
