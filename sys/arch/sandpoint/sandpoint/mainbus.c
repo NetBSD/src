@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/02/04 18:32:18 briggs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/02/08 18:32:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -95,15 +95,18 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-#if defined(PCI_NETBSD_CONFIGURE)
+#if !defined(PCI_NETBSD_CONFIGURE)
+#error Sandpoint needs PCI_NETBSD_CONFIGURE if PCI busses are defined.
+#endif
 	ioext  = extent_create("pciio",  0x00000600, 0x0000ffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x80000000, 0x8fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
+
 	pci_configure_bus(0, ioext, memext, NULL);
+
 	extent_destroy(ioext);
 	extent_destroy(memext);
-#endif
 
 	mba.mba_pba.pba_busname = "pci";
 	mba.mba_pba.pba_iot = (bus_space_tag_t)SANDPOINT_BUS_SPACE_IO;
