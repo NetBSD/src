@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.60 2002/12/03 22:40:30 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.61 2002/12/07 00:51:21 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2008,3 +2008,90 @@ gnu/dist/toolchain/gcc/f/fini.c			1.2
 	Fix a bug with list handling which causes this to abort
 	with an ``extraneous <string>'' message when it should not.
 	[he, ticket #1025]
+
+bin/sh/Makefile					1.60
+
+	Use ``signed char'' instead of ``char'' to replace ``int8_t''.
+	Should fix cross-building problem introudced by the pull-up
+	in ticket #874.
+	[thorpej, ticket #1027]
+
+usr.sbin/user/user.c				1.60 via patch
+
+	Support MD5 and blowfish password encryption.  Fixes
+	PR#18474.
+	[itojun, ticket #882]
+
+
+gnu/dist/map-mbone/map-mbone.8			1.1 (new)
+gnu/dist/map-mbone/mapper.c			1.1 (new)
+gnu/dist/mrinfo/mrinfo.8			1.1 (new)
+gnu/dist/mrinfo/mrinfo.c			1.1 (new)
+gnu/dist/mrouted/LICENSE			1.1 (new)
+gnu/dist/mrouted/callout.c			1.1 (new)
+gnu/dist/mrouted/cfparse.y			1.1 (new)
+gnu/dist/mrouted/config.c			1.1 (new)
+gnu/dist/mrouted/defs.h				1.1 (new)
+gnu/dist/mrouted/dvmrp.h			1.1 (new)
+gnu/dist/mrouted/igmp.c				1.1 (new)
+gnu/dist/mrouted/inet.c				1.1 (new)
+gnu/dist/mrouted/kern.c				1.1 (new)
+gnu/dist/mrouted/main.c				1.1 (new)
+gnu/dist/mrouted/mrouted.8			1.1 (new)
+gnu/dist/mrouted/pathnames.h			1.1 (new)
+gnu/dist/mrouted/prune.c			1.1 (new)
+gnu/dist/mrouted/prune.h			1.1 (new)
+gnu/dist/mrouted/route.c			1.1 (new)
+gnu/dist/mrouted/route.h			1.1 (new)
+gnu/dist/mrouted/rsrr.c				1.1-1.2 (new)
+gnu/dist/mrouted/rsrr.h				1.1-1.2 (new)
+gnu/dist/mrouted/rsrr_var.h			1.1-1.2 (new)
+gnu/dist/mrouted/snmp.c				1.1 (new)
+gnu/dist/mrouted/snmp.h				1.1 (new)
+gnu/dist/mrouted/vif.c				1.1 (new)
+gnu/dist/mrouted/vif.h				1.1 (new)
+gnu/dist/mtrace/mtrace.8			1.1 (new)
+gnu/dist/mtrace/mtrace.c			1.1 (new)
+gnu/usr.sbin/Makefile				1.6
+gnu/usr.sbin/map-mbone/Makefile			1.1 (new)
+gnu/usr.sbin/mrinfo/Makefile			1.1 (new)
+gnu/usr.sbin/mrouted/Makefile			1.1 (new)
+gnu/usr.sbin/mtrace/Makefile			1.1 (new)
+usr.sbin/Makefile				1.180-1.181 via patch
+usr.sbin/map-mbone/Makefile			deleted
+usr.sbin/map-mbone/map-mbone.8			deleted
+usr.sbin/map-mbone/mapper.c			deleted
+usr.sbin/mrinfo/Makefile			deleted
+usr.sbin/mrinfo/mrinfo.8			deleted
+usr.sbin/mrinfo/mrinfo.c			deleted
+usr.sbin/mrouted/LICENSE			deleted
+usr.sbin/mrouted/Makefile			deleted
+usr.sbin/mrouted/callout.c			deleted
+usr.sbin/mrouted/cfparse.y			deleted
+usr.sbin/mrouted/config.c			deleted
+usr.sbin/mrouted/defs.h				deleted
+usr.sbin/mrouted/dvmrp.h			deleted
+usr.sbin/mrouted/igmp.c				deleted
+usr.sbin/mrouted/inet.c				deleted
+usr.sbin/mrouted/kern.c				deleted
+usr.sbin/mrouted/main.c				deleted
+usr.sbin/mrouted/mrouted.8			deleted
+usr.sbin/mrouted/pathnames.h			deleted
+usr.sbin/mrouted/prune.c			deleted
+usr.sbin/mrouted/prune.h			deleted
+usr.sbin/mrouted/route.c			deleted
+usr.sbin/mrouted/route.h			deleted
+usr.sbin/mrouted/rsrr.c				deleted
+usr.sbin/mrouted/rsrr.h				deleted
+usr.sbin/mrouted/rsrr_var.h			deleted
+usr.sbin/mrouted/snmp.c				deleted
+usr.sbin/mrouted/snmp.h				deleted
+usr.sbin/mrouted/vif.c				deleted
+usr.sbin/mrouted/vif.h				deleted
+usr.sbin/mtrace/Makefile			deleted
+usr.sbin/mtrace/mtrace.8			deleted
+usr.sbin/mtrace/mtrace.c			deleted
+
+	Move mrouted out of basesrc, as it carries a non-BSD
+	license.
+	[itojun, tickets #886, #887, #888]
