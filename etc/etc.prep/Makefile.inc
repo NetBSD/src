@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:59 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/31 16:07:56 bjh21 Exp $
 #
 #	etc.prep/Makefile.inc -- prep-specific etc Makefile targets
 #
@@ -19,4 +19,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/prep && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppy '*'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/floppy '*'
