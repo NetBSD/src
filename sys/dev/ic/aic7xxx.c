@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.45 2000/03/25 19:52:12 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.46 2000/03/25 21:09:08 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -5607,8 +5607,8 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 
 		if (ahc->scb_data->maxhscbs >= 16 ||
 		    (ahc->flags & AHC_PAGESCBS)) {
-			/* Default to 8 tags */
-			xs->sc_link->openings += 6;
+			/* Default to 16 tags */
+			xs->sc_link->openings += 14;
 		} else {
 			/*
 			 * Default to 4 tags on whimpy
