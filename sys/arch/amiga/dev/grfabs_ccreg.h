@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccreg.h,v 1.5 1994/12/28 09:25:17 chopps Exp $	*/
+/*	$NetBSD: grfabs_ccreg.h,v 1.6 1995/10/05 12:41:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -49,7 +49,7 @@ typedef struct display_mode_data {
     u_short    bplcon0;		/* bplcon0 data. */
     u_short    std_start_x;
     u_short    std_start_y;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
     /* ECS registers. */
     u_short   beamcon0;
     u_short   hbstart;		/* no modes use the rest of these */
@@ -143,7 +143,7 @@ extern u_short cc_a2024_default_colors[4];
 #define VDATA(v) ((vdata_t *)(v->data))
 #define RWDATA(r) ((rwdata_t *)(r->data))
 
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 #define CALC_DIWHIGH(hs, vs, he, ve) \
         ((u_short)((he&0x100)<<5)|(ve&0x700)|((hs&0x100)>>3)|((vs&0x700)>>8))
 #define USE_CON3 0x0001

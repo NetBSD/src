@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 1995/09/30 17:43:18 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 1995/10/05 12:40:57 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,7 +280,8 @@ trapmmufault(type, code, v, fp, p, sticks)
 	/*
 	 * Print out some data about the fault
 	 */
-/*page0*/if (v < NBPG) mmudebug |= 0x100;
+	if (v < NBPG)					/* XXX PAGE0 */
+		mmudebug |= 0x100;			/* XXX PAGE0 */
 	if (mmudebug && mmutype == MMU_68040) {
 		printf ("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
@@ -288,8 +289,11 @@ trapmmufault(type, code, v, fp, p, sticks)
 			printf (" curpcb %x ->pcb_ustp %x / %x\n",
 			    curpcb, curpcb->pcb_ustp, 
 			    curpcb->pcb_ustp << PG_SHIFT);
-/*page0*/if (v < NBPG) Debugger();
-/*page0*/mmudebug &= ~0x100;
+#ifdef DDB						/* XXX PAGE0 */
+		if (v < NBPG)				/* XXX PAGE0 */
+			Debugger();			/* XXX PAGE0 */
+#endif							/* XXX PAGE0 */
+		mmudebug &= ~0x100;			/* XXX PAGE0 */
 	}
 #endif
 
@@ -635,8 +639,7 @@ trap(type, code, v, frame)
 	 */
 	case T_MMUFLT:
 
-#ifdef DEBUG
-		/* watch for page zero access */
+#ifdef DEBUG					/* XXX PAGE0 */
 		if (v < NBPG) {
 			printf("page 0 access pc %x fa %x fp %x\n", frame.f_pc,
 			    v, &frame);
@@ -645,7 +648,7 @@ trap(type, code, v, frame)
 			Debugger();
 #endif
 		}
-#endif
+#endif						/* XXX PAGE0 */
 		if (p && p->p_addr &&
 		    (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.9 1995/09/29 13:51:53 chopps Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.10 1995/10/05 12:41:12 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -881,7 +881,7 @@ cc_init_ntsc_hires()
 		h_this_data->std_start_x = STANDARD_VIEW_X;
 		h_this_data->std_start_y = STANDARD_VIEW_Y;
 		h_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		h_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
 
@@ -954,7 +954,7 @@ display_hires_view(v)
 		h_this_data->current_view = v;
 
 		cp = h_this_data->frames[F_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
 #if defined GRF_AGA
@@ -1063,7 +1063,7 @@ cc_init_ntsc_hires_lace()
 		hl_this_data->std_start_x = STANDARD_VIEW_X;
 		hl_this_data->std_start_y = STANDARD_VIEW_Y;
 		hl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		hl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
 
@@ -1138,7 +1138,7 @@ display_hires_lace_view(v)
 		hl_this_data->current_view = v;
 
 		cp = hl_this_data->frames[F_LACE_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
 #if defined GRF_AGA
@@ -1271,7 +1271,7 @@ cc_init_ntsc_hires_dlace()
 		hdl_this_data->std_start_x = STANDARD_VIEW_X;
 		hdl_this_data->std_start_y = STANDARD_VIEW_Y;
 		hdl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		hdl_this_data->beamcon0 = STANDARD_NTSC_BEAMCON;
 #endif
 		LIST_INSERT_HEAD(&MDATA(cc_monitor)->modes, hdl_this, link);
@@ -1346,7 +1346,7 @@ display_hires_dlace_view(v)
 		hdl_this_data->current_view = v;
 
 		cp = hdl_this_data->frames[F_LACE_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
 #if defined GRF_AGA
@@ -1574,7 +1574,7 @@ display_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][full_line])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][full_line])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD1])));
@@ -1594,7 +1594,7 @@ display_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD2])));
@@ -1614,7 +1614,7 @@ display_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD3])));
@@ -1634,7 +1634,7 @@ display_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2000);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(a24_this_data->frames[F_QD_STORE_QUAD0])));
@@ -2030,7 +2030,7 @@ cc_init_pal_hires()
 		ph_this_data->std_start_x = STANDARD_VIEW_X;
 		ph_this_data->std_start_y = STANDARD_VIEW_Y;
 		ph_this_data->vbl_handler = (vbl_handler_func *) cc_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		ph_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
@@ -2102,7 +2102,7 @@ display_pal_hires_view(v)
 		ph_this_data->current_view = v;
 
 		cp = ph_this_data->frames[F_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 #if defined GRF_AGA
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
@@ -2208,7 +2208,7 @@ cc_init_pal_hires_lace()
 		phl_this_data->std_start_x = STANDARD_VIEW_X;
 		phl_this_data->std_start_y = STANDARD_VIEW_Y;
 		phl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		phl_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
@@ -2281,7 +2281,7 @@ display_pal_hires_lace_view(v)
 		phl_this_data->current_view = v;
 
 		cp = phl_this_data->frames[F_LACE_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 #if defined GRF_AGA
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
@@ -2411,7 +2411,7 @@ cc_init_pal_hires_dlace()
 		phdl_this_data->std_start_x = STANDARD_VIEW_X;
 		phdl_this_data->std_start_y = STANDARD_VIEW_Y;
 		phdl_this_data->vbl_handler = (vbl_handler_func *) cc_lace_mode_vbl_handler;
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		phdl_this_data->beamcon0 = STANDARD_PAL_BEAMCON;
 #endif
 
@@ -2485,7 +2485,7 @@ display_pal_hires_dlace_view(v)
 		phdl_this_data->current_view = v;
 
 		cp = phdl_this_data->frames[F_LACE_STORE_LONG];
-#if defined GRF_ECS
+#if defined (GRF_ECS) || defined (GRF_AGA)
 #if defined GRF_AGA
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
@@ -2715,7 +2715,7 @@ display_pal_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][full_line])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][full_line])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2100);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(p24_this_data->frames[F_QD_STORE_QUAD1])));
@@ -2735,7 +2735,7 @@ display_pal_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][full_line + HALF_2024_LINE])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2100);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(p24_this_data->frames[F_QD_STORE_QUAD2])));
@@ -2755,7 +2755,7 @@ display_pal_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2100);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(p24_this_data->frames[F_QD_STORE_QUAD3])));
@@ -2775,7 +2775,7 @@ display_pal_a2024_view(v)
 			CMOVE(tmp, R_BPL3PTH, HIADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
 			CMOVE(tmp, R_BPL3PTL, LOADDR(PREP_DMA_MEM(&plane[1][half_plane + full_line + HALF_2024_LINE])));
 		}
-#if defined (GRF_ECS)
+#if defined (GRF_ECS) || defined (GRF_AGA)
 		CMOVE(tmp, R_DIWHIGH, 0x2100);
 #endif
 		CMOVE(tmp, R_COP1LCH, HIADDR(PREP_DMA_MEM(p24_this_data->frames[F_QD_STORE_QUAD0])));

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43 1995/09/30 08:34:51 chopps Exp $
+#	$NetBSD: GENERIC,v 1.44 1995/10/05 12:41:02 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -180,6 +180,7 @@ mgnsc0		at zbus0		# Magnum scsi
 wesc0		at zbus0		# Warp Engine scsi
 idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
+aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 scsi
 

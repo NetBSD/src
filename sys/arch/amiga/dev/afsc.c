@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.8 1995/09/16 16:11:15 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.9 1995/10/05 12:41:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -77,9 +77,12 @@ struct scsi_device afsc_scsidev = {
 struct cfdriver afsccd = {
 	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
+struct cfdriver aftsccd = {
+	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
+	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*
- * if we are a Commodore Amiga A4091
+ * if we are a Commodore Amiga A4091 or possibly an A4000T
  */
 int
 afscmatch(pdp, cdp, auxp)
@@ -88,11 +91,39 @@ afscmatch(pdp, cdp, auxp)
 	void *auxp;
 {
 	struct zbus_args *zap;
+	siop_regmap_p rp;
+	u_long temp, scratch;
 
 	zap = auxp;
 	if (zap->manid == 514 && zap->prodid == 84)
-		return(1);
-	return(0);
+		return(1);		/* It's an A4091 SCSI card */
+	if (!is_a4000() || !matchname(auxp, "afsc"))
+		return(0);		/* Not on an A4000 or not A4000T SCSI */
+#ifdef DEBUG
+	printf("afscmatch: probing for A4000T\n");
+#endif
+	rp = ztwomap(0xdd0040);
+	if (badaddr(&rp->siop_scratch) || badaddr(&rp->siop_temp)) {
+#ifdef DEBUG
+		printf("afscmatch: A4000T probed bad address\n");
+#endif
+		return(0);
+	}
+	scratch = rp->siop_scratch;
+	temp = rp->siop_temp;
+	rp->siop_scratch = 0xdeadbeef;
+	rp->siop_temp = 0xaaaa5555;
+#ifdef DEBUG
+	printf("afscmatch: probe %x %x %x %X\n", scratch, temp,
+	    rp->siop_scratch, rp->siop_temp);
+#endif
+	if (rp->siop_scratch != 0xdeadbeef || rp->siop_temp != 0xaaaa5555)
+		return(0);
+	rp->siop_scratch = scratch;
+	rp->siop_temp = temp;
+	if (rp->siop_scratch != scratch || rp->siop_temp != temp)
+		return(0);
+	return(1);
 }
 
 void
@@ -109,7 +140,10 @@ afscattach(pdp, dp, auxp)
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;
-	sc->sc_siopp = rp = zap->va + 0x00800000;
+	if (zap->manid == 514 && zap->prodid == 84)
+		sc->sc_siopp = rp = zap->va + 0x00800000;
+	else
+		sc->sc_siopp = rp = ztwomap(0xdd0040);
 
 	/*
 	 * CTEST7 = 80 [disable burst]

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1995/04/10 13:08:42 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 1995/10/05 12:40:56 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,6 +141,19 @@ mmrw(dev, uio, flags)
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#ifdef DEBUG
+			if (v < NBPG) {
+				if (uio->uio_rw != UIO_READ)
+					return (EFAULT);
+				if (zeropage == NULL) {
+					zeropage = (caddr_t)
+					    malloc(CLBYTES, M_TEMP, M_WAITOK);
+					bzero(zeropage, CLBYTES);
+				}
+				c = min(c, NBPG - (int)v);
+				v = (vm_offset_t) zeropage;
+			}
+#endif
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

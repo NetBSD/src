@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.13 1995/09/16 16:11:18 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.14 1995/10/05 12:41:22 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -528,7 +528,8 @@ ide_scsidone(dev, stat)
 		panic("ide_scsidone");
 #endif
 #if 1
-	if (((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
+	if (xs->sc_link && xs->sc_link->device_softc &&
+	    ((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];
 #endif
 	/*
