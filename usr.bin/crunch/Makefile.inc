@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/08/02 21:30:07 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1997/10/18 13:05:22 lukem Exp $
 
-BINDIR?= /usr/bin
-WARNS?=  1
+.if exists(${.CURDIR}/../../Makefile.inc)
+.include "${.CURDIR}/../../Makefile.inc"
+.endif
