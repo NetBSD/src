@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.19 2000/12/20 18:38:30 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.20 2002/11/11 20:39:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.19 2000/12/20 18:38:30 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.20 2002/11/11 20:39:12 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,8 @@ setenv(name, value, rewrite)
 	static int alloced;			/* if allocated space before */
 	char *c;
 	const char *cc;
-	int l_value, offset;
+	size_t l_value;
+	int offset;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(value != NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.10 2002/11/08 00:13:07 fvdl Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.11 2002/11/11 20:34:10 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -537,7 +537,7 @@ __rpc_fd2sockinfo(int fd, struct __rpc_sockinfo *sip)
 int
 __rpc_nconf2sockinfo(const struct netconfig *nconf, struct __rpc_sockinfo *sip)
 {
-	int i;
+	size_t i;
 
 	_DIAGASSERT(nconf != NULL);
 	_DIAGASSERT(sip != NULL);
@@ -573,7 +573,7 @@ __rpc_nconf2fd(const struct netconfig *nconf)
 int
 __rpc_sockinfo2netid(struct __rpc_sockinfo *sip, const char **netid)
 {
-	int i;
+	size_t i;
 
 	_DIAGASSERT(sip != NULL);
 	/* netid may be NULL */
