@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: nm.h,v 1.4 1995/01/26 22:39:17 mycroft Exp $
+	$Id: nm.h,v 1.5 1995/11/22 00:25:52 pk Exp $
 */
 
 #ifndef NM_I386BSD_H
@@ -36,11 +36,5 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 /* This is the amount to subtract from u.u_ar0
    to get the offset in the core file of the register values.  */
 #define	KERNEL_U_ADDR	USRSTACK
-
-#define	REGISTER_U_ADDR(addr, blockend, regno)				\
-{									\
-  extern int tregmap[];							\
-  addr = blockend + 4 * tregmap[regno];					\
-}
 
 #endif /* NM_I386BSD_H */
