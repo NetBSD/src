@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.15 1999/02/13 20:56:57 pk Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.1 1999/02/13 20:56:58 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,21 +45,23 @@
 
 #include "stand.h"
 
-void
+int
 #ifdef __STDC__
-printf(const char *fmt, ...)
+sprintf(char *buf, const char *fmt, ...)
 #else
-printf(fmt, va_alist)
-	char *fmt;
+sprintf(buf, fmt, va_alist)
+	char *buf, *fmt;
 #endif
 {
 	va_list ap;
+	int len;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	vprintf(fmt, ap);
+	len = vsnprintf(buf, -(size_t)buf, fmt, ap);
 	va_end(ap);
+	return (len);
 }
