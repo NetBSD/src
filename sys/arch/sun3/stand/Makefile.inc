@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1995/08/08 21:02:04 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1995/09/23 03:42:17 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -17,15 +17,15 @@ LIBS?= ${LIBSA}/libsa.a
 MDEC_DIR?=/usr/mdec
 
 SRCS?=	${SA_PROG}.c
-OBJS?=	${SRTOBJ} ${SRCS:S/.c/.o/g}
+OBJS?=	${SRCS:S/.c/.o/g}
 
 ${SA_PROG}.bin : ${SA_PROG}
 	cp ${SA_PROG} a.out ; strip a.out
-	dd ibs=32 skip=1 if=a.out of=$@
+	tail -c +33 < a.out > $@
 	-rm -f a.out
 
-${SA_PROG} : ${OBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start -o $@ ${OBJS} ${LIBS}
+${SA_PROG} : ${SRTOBJ} ${OBJS} ${LIBS}
+	${LD} -N -T ${RELOC} -e start -o $@ ${SRTOBJ} ${OBJS} ${LIBS}
 	@size $@
 
 .if !target(clean)

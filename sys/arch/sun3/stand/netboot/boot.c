@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:48 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@ main()
 				file = line;
 		}
 		exec_sun(file, LOADADDR);
-		printf("boot: %s\n", strerror(errno));
+		printf("boot: %s: %s\n", file, strerror(errno));
 		prom_boothow |= RB_ASKNAME;
 	}
 }
