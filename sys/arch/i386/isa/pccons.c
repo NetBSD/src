@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.88 1995/05/03 20:46:32 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -868,8 +868,8 @@ sput(cp, n)
 		cursor_shape = 0x0012;
 #endif
 
-		Crtat = cp;
-		crtat = cp + cursorat;
+		Crtat = (u_short *)cp;
+		crtat = (u_short *)(cp + cursorat);
 
 		vs.ncol = COL;
 		vs.nrow = ROW;
