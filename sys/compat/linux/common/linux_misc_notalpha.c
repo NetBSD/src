@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.60.2.2 2001/11/14 19:13:11 nathanw Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.60.2.3 2001/11/17 01:16:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.2.2 2001/11/14 19:13:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.2.3 2001/11/17 01:16:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.2.2 2001/11/14 19:13:11
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 
 #include <sys/syscallargs.h>
@@ -90,28 +91,36 @@ linux_sys_alarm(l, v, retval)
 	int s;
 	struct itimerval *itp, it;
 
-	itp = &p->p_realtimer;
+	if (p->p_timers && p->p_timers[0])
+		itp = &p->p_timers[0]->pt_time;
+	else
+		itp = NULL;
 	s = splclock();
 	/*
 	 * Clear any pending timer alarms.
 	 */
-	callout_stop(&p->p_realit_ch);
-	timerclear(&itp->it_interval);
-	if (timerisset(&itp->it_value) &&
-	    timercmp(&itp->it_value, &time, >))
-		timersub(&itp->it_value, &time, &itp->it_value);
-	/*
-	 * Return how many seconds were left (rounded up)
-	 */
-	retval[0] = itp->it_value.tv_sec;
-	if (itp->it_value.tv_usec)
-		retval[0]++;
+	if (itp) {
+		callout_stop(&p->p_timers[0]->pt_ch);
+		timerclear(&itp->it_interval);
+		if (timerisset(&itp->it_value) &&
+		    timercmp(&itp->it_value, &time, >))
+			timersub(&itp->it_value, &time, &itp->it_value);
+		/*
+		 * Return how many seconds were left (rounded up)
+		 */
+		retval[0] = itp->it_value.tv_sec;
+		if (itp->it_value.tv_usec)
+			retval[0]++;
+	} else {
+		retval[0] = 0;
+	} 
 
 	/*
 	 * alarm(0) just resets the timer.
 	 */
 	if (SCARG(uap, secs) == 0) {
-		timerclear(&itp->it_value);
+		if (itp)
+			timerclear(&itp->it_value);
 		splx(s);
 		return 0;
 	}
@@ -127,16 +136,26 @@ linux_sys_alarm(l, v, retval)
 		return (EINVAL);
 	}
 
+	if (p->p_timers == NULL)
+		timers_alloc(p);
+	if (p->p_timers[0] == NULL) {
+		p->p_timers[0] = pool_get(&ptimer_pool, PR_WAITOK);
+		p->p_timers[0]->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		p->p_timers[0]->pt_ev.sigev_signo = SIGALRM;
+		p->p_timers[0]->pt_type = CLOCK_REALTIME;
+		callout_init(&p->p_timers[0]->pt_ch);
+	}
+
 	if (timerisset(&it.it_value)) {
 		/*
 		 * Don't need to check hzto() return value, here.
 		 * callout_reset() does it for us.
 		 */
 		timeradd(&it.it_value, &time, &it.it_value);
-		callout_reset(&p->p_realit_ch, hzto(&it.it_value),
-		    realitexpire, p);
+		callout_reset(&p->p_timers[0]->pt_ch, hzto(&it.it_value),
+		    realtimerexpire, p->p_timers[0]);
 	}
-	p->p_realtimer = it;
+	p->p_timers[0]->pt_time = it;
 	splx(s);
 
 	return 0;
