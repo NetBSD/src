@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.32 1999/06/26 22:58:06 cgd Exp $
+#	$NetBSD: MAKEDEV,v 1.33 1999/06/27 00:17:31 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -219,10 +219,11 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ccd*|fd*|raid*|sd*|vnd*|wd*)
+ccd*|fd*|md*|raid*|sd*|vnd*|wd*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=21;	chr=21;;
 	fd*) name=fd;	unit=${i#fd};	blk=17;	chr=17;;
+	md*) name=md;	unit=${i#md};	blk=18;	chr=18;;
 	raid*) name=raid;	unit=${i#raid};	blk=71;	chr=71;;
 	sd*) name=sd;	unit=${i#sd};	blk=24;	chr=24;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=19;	chr=19;;
@@ -353,16 +354,6 @@ cd*)
 	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
-	;;
-
-md*)
-	unit=${i#md}
-	rm -f md${unit}
-	rm -f md${unit}c
-	mknod md${unit} b 18 ${unit}
-	mknod md${unit}c c 18 $((($unit + 16) * 8))
-	chgrp operator md${unit} md${unit}c
-	chmod 640 md${unit} md${unit}c
 	;;
 
 lpt*|lpa*)
