@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.7 1994/02/23 03:18:34 hpeyerl Exp $
+ *	$Id: param.h,v 1.8 1994/02/23 19:07:57 chopps Exp $
  */
 
 /*
@@ -151,7 +151,19 @@
  */
 #include <machine/psl.h>
 
-#define _spl(s) \
+#define _debug_spl(s) \
+({ \
+        register int _spl_r; \
+\
+        asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+                "&=d" (_spl_r) : "di" (s)); \
+	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
+		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
+		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&s)>>8)); \
+        _spl_r; \
+})
+
+#define _spl_no_check(s) \
 ({ \
         register int _spl_r; \
 \
@@ -159,6 +171,11 @@
                 "&=d" (_spl_r) : "di" (s)); \
         _spl_r; \
 })
+#if defined (DEBUG)
+#define _spl _debug_spl
+#else
+#define _spl _spl_no_check
+#endif
 
 /* spl0 requires checking for software interrupts */
 #define spl1()  _spl(PSL_S|PSL_IPL1)
@@ -182,8 +199,7 @@
 #define splhigh()       spl7()
 #define splsched()      spl7()
 
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+#define splx(s)         (s & PSL_IPL ? _spl_no_check(s) : spl0())
 
 #ifdef KERNEL
 int	cpuspeed;
