@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.26 1999/01/13 10:08:59 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.27 1999/01/13 10:33:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,9 +157,9 @@ void		ohci_dump_ed __P((ohci_soft_ed_t *));
 #define OREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 #define OREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #elif defined(__FreeBSD__)
-#define OWRITE4(sc, r, x) *(unsigned int *) ((sc)->sc_iobase + (r)) = x
-#define OREAD4(sc, r) (*(unsigned int *) ((sc)->sc_iobase + (r)))
-#define OREAD2(sc, r) (*(unsigned short *) ((sc)->sc_iobase + (r)))
+#define OWRITE4(sc, r, x) *(u_int32_t *) ((sc)->sc_iobase + (r)) = x
+#define OREAD4(sc, r) (*(u_int32_t *) ((sc)->sc_iobase + (r)))
+#define OREAD2(sc, r) (*(u_int16_t *) ((sc)->sc_iobase + (r)))
 #endif
 
 /* Reverse the bits in a value 0 .. 31 */
@@ -575,6 +575,7 @@ ohci_intr(p)
 		return (0);
 	}
 
+        intrs = 0;
 	done = LE(sc->sc_hcca->hcca_done_head);
 	if (done != 0) {
 		sc->sc_hcca->hcca_done_head = 0;
@@ -604,7 +605,6 @@ ohci_intr(p)
 	}
 	if (eintrs & OHCI_WDH) {
 		ohci_process_done(sc, done &~ OHCI_DONE_INTRS);
-		sc->sc_hcca->hcca_done_head = 0;
 		intrs &= ~OHCI_WDH;
 	}
 	if (eintrs & OHCI_RD) {
@@ -694,7 +694,8 @@ ohci_process_done(sc, done)
 
 	for (std = sdone; std; std = std->dnext) {
 		reqh = std->reqh;
-		DPRINTFN(10, ("ohci_process_done: std=%p reqh=%p\n",std,reqh));
+		DPRINTFN(10, ("ohci_process_done: std=%p reqh=%p hcpriv=%p\n",
+				std, reqh, reqh->hcpriv));
 		cc = OHCI_TD_GET_CC(LE(std->td->td_flags));
 		if (cc == OHCI_CC_NO_ERROR) {
 			if (std->td->td_cbp == 0)
@@ -934,7 +935,7 @@ ohci_waitintr(sc, reqh)
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
 		usb_delay_ms(&sc->sc_bus, 1);
 		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs;
-		DPRINTFN(10,("ohci_waitintr: 0x%04x\n", intrs));
+		DPRINTFN(15,("ohci_waitintr: 0x%04x\n", intrs));
 #ifdef USB_DEBUG
 		if (ohcidebug > 15)
 			ohci_dumpregs(sc);
