@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.62 2004/04/09 10:49:06 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.63 2004/04/09 16:11:19 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -673,3 +673,11 @@ sys/arch/i386/i386/procfs_machdep.c		1.19
 	Closes PR 25076 by salo.
 	[salo, ticket #103]
 
+
+sys/sys/sysctl.h				1.118
+sys/sys/mbuf.h					1.91
+
+	Standalone programs should not use stddef.h.  They are more like the
+	kernel, so they must use sys/systm.h instead.
+
+	[atatat, ticket #105]
