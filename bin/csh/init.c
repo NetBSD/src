@@ -1,4 +1,4 @@
-/* $NetBSD: init.c,v 1.8 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: init.c,v 1.9 2002/05/25 23:29:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,15 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.8 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.9 2002/05/25 23:29:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
+#include <stdarg.h>
 
 #include "csh.h"
 #include "extern.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.23 2001/11/03 13:35:39 lukem Exp $ */
+/* $NetBSD: proc.c,v 1.24 2002/05/25 23:29:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.23 2001/11/03 13:35:39 lukem Exp $");
+__RCSID("$NetBSD: proc.c,v 1.24 2002/05/25 23:29:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,15 +46,10 @@ __RCSID("$NetBSD: proc.c,v 1.23 2001/11/03 13:35:39 lukem Exp $");
 #include <sys/wait.h>
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
 
 #include "csh.h"
 #include "dir.h"
