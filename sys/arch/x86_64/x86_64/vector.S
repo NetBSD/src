@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.19 2003/03/05 23:56:13 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.20 2003/03/06 20:58:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -322,6 +322,8 @@ IDTVEC(intr_lapic_ipi)
 #if defined(DDB)
 IDTVEC(intrddb)
 1:
+	pushq	$0
+	pushq	$T_BPTFLT
 	INTRENTRY
 	movl	$0xff,%eax
 	movq	%rax,%cr8
@@ -330,8 +332,7 @@ IDTVEC(intrddb)
 	call	_C_LABEL(ddb_ipi)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
-	iretq
-	jmp	1b
+	INTRFASTEXIT
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 	
