@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.9 1996/02/02 19:08:41 mycroft Exp $      */
+/*      $NetBSD: pte.h,v 1.10 1996/02/23 17:54:33 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -87,6 +87,6 @@ extern pt_entry_t *Sysmap;
 #define	kvtophys(va) \
 	(((kvtopte(va))->pg_pfn << PGSHIFT) | ((int)(va) & PGOFSET))
 #define	uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x40000000) ? \
+	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x80000000) ? \
 	&((pcb->P0BR)[(unsigned)va >> PGSHIFT]) : \
 	&((pcb->P1BR)[((unsigned)va & 0x3fffffff) >> PGSHIFT]))
