@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.52 2004/03/19 15:31:04 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.53 2004/03/19 15:42:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.52 2004/03/19 15:31:04 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53 2004/03/19 15:42:46 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -829,35 +829,29 @@ zs_console_flags(promunit, node, channel)
 	int channel;
 {
 	int cookie, flags = 0;
-	u_int options;
 	char buf[255];
 
 	/*
-	 * We'll just to the OBP grovelling down here since that's
+	 * We'll just do the OBP grovelling down here since that's
 	 * the only type of firmware we support.
 	 */
-	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(options, "input-device", buf, sizeof(buf)) != -1) {
-
-			if (!strcmp("ttyb", buf))
-				cookie = 1;
-		}
+		if (prom_getoption("input-device", buf, sizeof buf) != 0 &&
+		    strcmp("ttyb", buf) == 0)
+			cookie = 1;
 
 		if (channel == cookie)
 			flags |= ZS_HWFLAG_CONSOLE_INPUT;
 	}
 
 	if (node == OF_instance_to_package(OF_stdout())) { 
-		if (OF_getprop(options, "output-device", buf, sizeof(buf)) != -1) {
+		if (prom_getoption("output-device", buf, sizeof buf) != 0 &&
+		    strcmp("ttyb", buf) == 0)
+			cookie = 1;
 
-			if (!strcmp("ttyb", buf))
-				cookie = 1;
-		}
-		
 		if (channel == cookie)
 			flags |= ZS_HWFLAG_CONSOLE_OUTPUT;
 	}
