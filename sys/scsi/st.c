@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *      $Id: st.c,v 1.16.2.4 1993/11/25 07:48:54 mycroft Exp $
+ *      $Id: st.c,v 1.16.2.5 1993/11/25 10:17:40 mycroft Exp $
  */
 
 /*
@@ -273,10 +273,9 @@ stattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	if (st_mode_sense(st, SCSI_NOSLEEP | SCSI_NOMASK | SCSI_SILENT)) {
-		printf(": drive offline\n", st->sc_dev.dv_xname);
+		printf(": drive offline\n");
 	} else {
-		printf(": density code 0x%x, ", st->sc_dev.dv_xname,
-		       st->media_density);
+		printf(": density code 0x%x, ", st->media_density);
 		if (!scsi_test_unit_ready(sc_link, SCSI_NOSLEEP | SCSI_NOMASK | SCSI_SILENT)) {
 			if (st->media_blksiz)
 				printf("%d-byte", st->media_blksiz);
