@@ -319,7 +319,7 @@ main(argc, argv)
 		case 'f':
 			if (getuid()) {
 				errno = EPERM;
-				err(1, NULL);
+				errx(1, "Must be superuser to flood ping");
 			}
 			options |= F_FLOOD;
 			setbuf(stdout, (char *)NULL);
@@ -434,7 +434,7 @@ main(argc, argv)
 		timing = 1;
 	packlen = datalen + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	if (!(packet = (u_char *)malloc((u_int)packlen)))
-		err(1, NULL);
+		err(1, "Unable to allocate packet");
 	if (!(options & F_PINGFILLED))
 		for (i = 8; i < datalen; ++i)
 			*datap++ = i;
@@ -467,7 +467,7 @@ main(argc, argv)
 		if ((len = ipsec_set_policy(buf, len, policy)) < 0)
 			errx(1, ipsec_strerror());
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len) < 0)
-			err(1, NULL);
+			err(1, "Unable to set IPSec policy");
 		free(buf);
 	}
 #else
