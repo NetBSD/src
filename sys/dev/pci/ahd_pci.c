@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.8 2003/10/09 14:26:54 fvdl Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.9 2003/10/10 05:57:26 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.8 2003/10/09 14:26:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.9 2003/10/10 05:57:26 thorpej Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -427,66 +427,73 @@ ahd_pci_attach(parent, self, aux)
 	/*
 	 * Map PCI Registers
 	 */
-	if ((command & (PCI_COMMAND_MEM_ENABLE)) != 0) {
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHD_PCI_MEMADDR);
+	if ((ahd->bugs & AHD_PCIX_MMAPIO_BUG) == 0) {
+		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
+					  AHD_PCI_MEMADDR);
 		switch (memtype) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			memh_valid = (pci_mapreg_map(pa, AHD_PCI_MEMADDR,
 						     memtype, 0, &ahd->tags[0], 
-						     &ahd->bshs[0], NULL, NULL) == 0);
-	    
-			ahd->tags[1] = ahd->tags[0];	
-	    
-			bus_space_subregion(ahd->tags[0], ahd->bshs[0],
-					    /*offset*/0x100,
-					    /*size*/0x100,
-					    &ahd->bshs[1]);
+						     &ahd->bshs[0],
+						     NULL, NULL) == 0);
+			if (memh_valid) {
+				ahd->tags[1] = ahd->tags[0];
+				bus_space_subregion(ahd->tags[0], ahd->bshs[0],
+						    /*offset*/0x100,
+						    /*size*/0x100,
+						    &ahd->bshs[1]);
+			}
 			break;
 		default:	
-			printf("%s: unable to map memory registers\n", ahd_name(ahd));
-			return;
+			memh_valid = 0;
+			printf("%s: unknown memory type: 0x%x\n",
+			       ahd_name(ahd), memtype);
+			break;
 		}
 
 		if (memh_valid) {
 			command &= ~PCI_COMMAND_IO_ENABLE;
-                        pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+                        pci_conf_write(pa->pa_pc, pa->pa_tag,
+                        	       PCI_COMMAND_STATUS_REG, command);
 		}
 #ifdef AHD_DEBUG
-		printf("%s: doing memory mapping tag0 0x%x, tag1 0x%x, shs0 0x%lx, shs1 0x%lx\n", 
-			 ahd_name(ahd), ahd->tags[0], ahd->tags[1], ahd->bshs[0], ahd->bshs[1]);
+		printf("%s: doing memory mapping tag0 0x%x, tag1 0x%x, "
+		    "shs0 0x%lx, shs1 0x%lx\n",
+		    ahd_name(ahd), ahd->tags[0], ahd->tags[1],
+		    ahd->bshs[0], ahd->bshs[1]);
 #endif
 	}
 
-	if ((command & (PCI_COMMAND_IO_ENABLE)) != 0 &&
-	    !(ahd->bugs & AHD_PCIX_MMAPIO_BUG)) {
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHD_PCI_IOADDR);
-
+	if (command & PCI_COMMAND_IO_ENABLE) {
 		/* First BAR */	  
 		ioh_valid = (pci_mapreg_map(pa, AHD_PCI_IOADDR,
-					    memtype, 0, &ahd->tags[0],
-					    &ahd->bshs[0], NULL, NULL) == 0);
+					    PCI_MAPREG_TYPE_IO, 0,
+					    &ahd->tags[0], &ahd->bshs[0],
+					    NULL, NULL) == 0);
 
-		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHD_PCI_IOADDR1);
-		
 		/* 2nd BAR */	  
 		ioh2_valid = (pci_mapreg_map(pa, AHD_PCI_IOADDR1,
-					     memtype, 0, &ahd->tags[1],
-					     &ahd->bshs[1], NULL, NULL) == 0);
+					     PCI_MAPREG_TYPE_IO, 0,
+					     &ahd->tags[1], &ahd->bshs[1],
+					     NULL, NULL) == 0);
 
 		if (ioh_valid && ioh2_valid) {
+			KASSERT(memh_valid == 0);
 			command &= ~PCI_COMMAND_MEM_ENABLE;
-                        pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+                        pci_conf_write(pa->pa_pc, pa->pa_tag,
+                        	       PCI_COMMAND_STATUS_REG, command);
 		}		
 #ifdef AHD_DEBUG
-		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, shs0 0x%lx, shs1 0x%lx\n", 
-			 ahd_name(ahd), ahd->tags[0], ahd->tags[1], ahd->bshs[0], ahd->bshs[1]);
+		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, "
+		    "shs0 0x%lx, shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0],
+		    ahd->tags[1], ahd->bshs[0], ahd->bshs[1]);
 #endif
 
 	}
 
-	if ((memh_valid == 0) && ((ioh_valid == 0) || (ioh2_valid == 0))) {
-		printf("%s: unable to map memory registers\n", ahd_name(ahd));
+	if (memh_valid == 0 && (ioh_valid == 0 || ioh2_valid == 0)) {
+		printf("%s: unable to map registers\n", ahd_name(ahd));
 		return;
 	}
 
@@ -581,8 +588,6 @@ ahd_pci_attach(parent, self, aux)
 	 * Link this softc in with all other ahd instances.
 	 */
 	ahd_attach(ahd);
-
-	return;
 }
 
 
