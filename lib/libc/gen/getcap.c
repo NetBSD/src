@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getcap.c	5.15 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: getcap.c,v 1.6 1994/01/04 05:36:22 cgd Exp $";
+static char *rcsid = "$Id: getcap.c,v 1.7 1994/03/06 07:54:35 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -195,8 +195,8 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	DB *capdbp;
 	DBT key, data;
 	register char *r_end, *rp, **db_p;
-	int myfd, eof, foundit, retval;
-	char *record;
+	int myfd, eof, foundit, retval, clen;
+	char *record, *cbuf;
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
 	
@@ -251,11 +251,18 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			     != NULL) {
 				free(record);
 				retval = cdbget(capdbp, &record, name);
-				if (capdbp->close(capdbp) < 0)
+				clen = strlen(record);
+				if ((cbuf = malloc(clen + 1)) == NULL) {
+					errno = ENOMEM;
 					return (-2);
-				*len = strlen(record);
-				*cap = malloc(*len + 1);
-				memmove(*cap, record, *len + 1);
+				}
+				memmove(cbuf, record, clen + 1);
+				if (capdbp->close(capdbp) < 0) {
+					free(cbuf);
+					return (-2);
+				}
+				*len = clen;
+				*cap = cbuf;
 				return (retval);
 			} else {
 				fd = open(*db_p, O_RDONLY, 0);
