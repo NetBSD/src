@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.4 2001/07/27 17:27:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.5 2001/07/31 00:15:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@ void pthread__debug_init(void)
 	time_t t;
 
 	t = time(NULL);
-	debugbuf = pthread__debuglog_init();
+	debugbuf = pthread__debuglog_init(0);
 	DPRINTF(("Started debugging %s (pid %d) at %s\n", getprogname(), 
 	    getpid(), ctime(&t)));
 }
 
 struct pthread_msgbuf *
-pthread__debuglog_init(void)
+pthread__debuglog_init(int force)
 {
 	int debugshmid;
 	void *debuglog;
@@ -86,7 +86,7 @@ pthread__debuglog_init(void)
 
 	buf = (struct pthread_msgbuf *)debuglog;
 
-	if (buf->msg_magic != BUF_MAGIC) {
+	if (force || buf->msg_magic != BUF_MAGIC) {
 		/* Initialize */
 		buf->msg_magic = BUF_MAGIC;
 		buf->msg_bufw = 0;
