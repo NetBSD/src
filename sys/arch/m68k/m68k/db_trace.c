@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 1995/05/24 20:23:34 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13 1996/02/09 21:51:41 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,7 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <setjmp.h>
 
 #include <machine/db_machdep.h>
 
@@ -36,7 +35,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-jmp_buf	*db_recover;
+extern label_t	*db_recover;
 
 /*
  * Register list
@@ -263,8 +262,8 @@ findentry(sp)
 	register	instruc;
 	register	val;
 	db_addr_t	addr, calladdr, nextword;
-	jmp_buf		db_jmpbuf;
-	jmp_buf		*savejmp = db_recover;
+	label_t		db_jmpbuf;
+	label_t		*savejmp = db_recover;
 
 	if (setjmp(*(db_recover = &db_jmpbuf))) {
 		/* oops -- we touched something we ought not to have */

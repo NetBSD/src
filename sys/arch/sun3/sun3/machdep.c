@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1996/01/04 22:22:54 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1996/02/09 21:52:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -91,8 +91,6 @@
 #include <vm/vm_page.h>
 
 #include <net/netisr.h>
-
-#include <setjmp.h>
 
 #include "cache.h"
 
@@ -936,7 +934,7 @@ int
 peek_word(addr)
 	register caddr_t addr;
 {
-	jmp_buf		faultbuf;
+	label_t		faultbuf;
 	register int x;
 
 	nofault = (long*)&faultbuf;
@@ -954,7 +952,7 @@ int
 peek_byte(addr)
 	register caddr_t addr;
 {
-	jmp_buf 	faultbuf;
+	label_t 	faultbuf;
 	register int x;
 
 	nofault = (long*)&faultbuf;
