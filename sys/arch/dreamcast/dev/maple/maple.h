@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.h,v 1.5 2002/11/15 13:30:21 itohy Exp $	*/
+/*	$NetBSD: maple.h,v 1.6 2002/12/06 15:47:22 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,12 +115,15 @@ struct maple_devinfo {
 	u_int32_t di_func;		/* function code */
 	u_int32_t di_function_data[3];  /* function data */
 	u_int8_t di_area_code;		/* region settings */
-	u_int8_t di_connector_direction;	/* ? */
+	u_int8_t di_connector_direction; /* direction of expansion connector */
 	char di_product_name[30];	/* name of the device */
 	char di_product_license[60];	/* manufacturer info */
 	u_int16_t di_standby_power;	/* standby power consumption */
 	u_int16_t di_max_power;		/* maximum power consumption */
 };
+
+#define MAPLE_CONN_TOP		0	/* connector is to the top */
+#define MAPLE_CONN_BOTTOM	1	/* connector is to the bottom */
 
 struct maple_response {
 	u_int32_t	response_code;
