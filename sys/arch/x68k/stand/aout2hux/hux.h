@@ -4,7 +4,7 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: hux.h,v 1.2 1999/02/02 10:00:18 itohy Exp $
+ *	$NetBSD: hux.h,v 1.3 1999/03/16 16:30:21 minoura Exp $
  */
 /*
  * Human68k ".x" executable format

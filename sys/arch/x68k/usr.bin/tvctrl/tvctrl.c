@@ -1,4 +1,4 @@
-/*	$NetBSD: tvctrl.c,v 1.4 1999/01/13 10:23:40 itohy Exp $	*/
+/*	$NetBSD: tvctrl.c,v 1.5 1999/03/16 16:30:22 minoura Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
