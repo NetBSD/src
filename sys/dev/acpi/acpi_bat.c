@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.6 2002/09/30 20:41:17 thorpej Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.7 2002/10/02 16:33:36 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.6 2002/09/30 20:41:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.7 2002/10/02 16:33:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	acpibat_match(struct device *, struct cfdata *, void *);
 void	acpibat_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpibat, sizeof(struct acpibat_softc),
-    acpibat_match, acpibat_attach, NULL, NULL)
+    acpibat_match, acpibat_attach, NULL, NULL);
 
 static void acpibat_get_status(void *);
 static void acpibat_get_info(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.36 2002/09/30 20:52:28 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.37 2002/10/02 16:33:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.36 2002/09/30 20:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.37 2002/10/02 16:33:43 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -129,7 +129,7 @@ void	tlp_cardbus_attach __P((struct device *, struct device *, void *));
 int	tlp_cardbus_detach __P((struct device *, int));
 
 CFATTACH_DECL(tlp_cardbus, sizeof(struct tulip_cardbus_softc),
-    tlp_cardbus_match, tlp_cardbus_attach, tlp_cardbus_detach, tlp_activate)
+    tlp_cardbus_match, tlp_cardbus_attach, tlp_cardbus_detach, tlp_activate);
 
 const struct tulip_cardbus_product {
 	u_int32_t	tcp_vendor;	/* PCI vendor ID */

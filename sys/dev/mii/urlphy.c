@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.5 2002/09/30 21:57:51 thorpej Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.6 2002/10/02 16:34:23 thorpej Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.5 2002/09/30 21:57:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.6 2002/10/02 16:34:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ int urlphy_match(struct device *, struct cfdata *, void *);
 void urlphy_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(urlphy, sizeof(struct mii_softc),
-    urlphy_match, urlphy_attach, mii_phy_detach, mii_phy_activate)
+    urlphy_match, urlphy_attach, mii_phy_detach, mii_phy_activate);
 
 int urlphy_service(struct mii_softc *, struct mii_data *, int);
 void urlphy_status(struct mii_softc *);

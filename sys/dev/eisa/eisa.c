@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.29 2002/09/30 21:04:25 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.30 2002/10/02 16:33:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.29 2002/09/30 21:04:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.30 2002/10/02 16:33:47 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -57,7 +57,7 @@ int	eisamatch(struct device *, struct cfdata *, void *);
 void	eisaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eisa, sizeof(struct device),
-    eisamatch, eisaattach, NULL, NULL)
+    eisamatch, eisaattach, NULL, NULL);
 
 int	eisasubmatch(struct device *, struct cfdata *, void *);
 int	eisaprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.22 2002/09/30 21:31:53 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.23 2002/10/02 16:34:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.22 2002/09/30 21:31:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.23 2002/10/02 16:34:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ int le_isapnp_match __P((struct device *, struct cfdata *, void *));
 void le_isapnp_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(le_isapnp, sizeof(struct le_softc),
-    le_isapnp_match, le_isapnp_attach, NULL, NULL)
+    le_isapnp_match, le_isapnp_attach, NULL, NULL);
 
 int	le_isapnp_intredge __P((void *));
 static void le_isapnp_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));

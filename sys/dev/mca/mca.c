@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.11 2002/09/30 21:36:46 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.12 2002/10/02 16:34:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.11 2002/09/30 21:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.12 2002/10/02 16:34:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ int	mca_match __P((struct device *, struct cfdata *, void *));
 void	mca_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(mca, sizeof(struct device),
-    mca_match, mca_attach, NULL, NULL)
+    mca_match, mca_attach, NULL, NULL);
 
 int	mca_submatch __P((struct device *, struct cfdata *, void *));
 int	mca_print __P((void *, const char *));
