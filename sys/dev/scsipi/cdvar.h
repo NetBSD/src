@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.6 1998/02/13 04:19:17 enami Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.7 1998/02/13 08:28:25 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_CDVAR_H_
-#define _DEV_SCSIPI_CDVAR_H_
 
 #define	CDRETRIES	1
 
@@ -70,5 +67,3 @@ struct cd_ops {
 
 void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
     const struct cd_ops *));
-
-#endif /* _DEV_SCSIPI_CDVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_all.h,v 1.2 1998/02/13 04:19:13 enami Exp $	*/
+/*	$NetBSD: atapi_all.h,v 1.3 1998/02/13 08:28:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -28,9 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_SCSIPI_ATAPI_ALL_H_
-#define _DEV_SCSIPI_ATAPI_ALL_H_
 
 #define ATAPI_MODE_SELECT	0x55
 struct atapi_mode_select {
@@ -70,5 +67,3 @@ struct atapi_mode_header {
 #define MDT_FMT_ERROR	0x72
 	u_int8_t reserved[5];
 };
-
-#endif /* _DEV_SCSIPI_ATAPI_ALL_H_ */
