@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.16 1994/03/28 02:11:53 cgd Exp $
+ *	$Id: rtld.c,v 1.17 1994/04/07 19:46:30 pk Exp $
  */
 
 #include <sys/param.h>
@@ -1128,7 +1128,7 @@ dlopen(name, mode)
 		return NULL;
 	}
 
-	sodp->sod_name = (long)name;
+	sodp->sod_name = (long)strdup(name);
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
@@ -1166,6 +1166,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 	init_map(smp, "_fini");
 #if 0
 	unmap_object(smp);
+	free(smp->som_sod->sod_name);
 	free(smp->som_sod);
 	free(smp);
 #endif
