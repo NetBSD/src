@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.1 2002/06/26 23:13:09 christos Exp $
+.\" $NetBSD: wsmoused.8,v 1.2 2002/06/27 15:12:23 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,11 +69,11 @@ continue its job when you return to any other terminal.
 .El
 .Sh FILES
 .Bl -tag -width /dev/wsmouse0
-.It Pa /dev/ttyE*
+.It Pa /dev/ttyE[0-n]
 tty devices
 .It Pa /dev/wsmouse0
 mouse control device
-.It Pa /dev/wsdisplay
+.It Pa /dev/ttyEstat
 wsdisplay status notification device
 .El
 .Sh EXAMPLES
