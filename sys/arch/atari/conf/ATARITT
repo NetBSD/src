@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.17 1996/11/17 13:33:36 leo Exp $
+#	$NetBSD: ATARITT,v 1.18 1996/12/16 21:24:16 leo Exp $
 #
 # ATARI-TT
 #
@@ -19,8 +19,6 @@ maxusers	16
 options		"M68030"	# support for 030
 # options	"M68040"	# support for 040
 
-options		TIMEZONE=0	# Set the timezone that the kernel will use
-options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
 #
