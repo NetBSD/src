@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.96 2001/01/10 16:24:57 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.97 2001/01/26 10:14:12 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -871,7 +871,7 @@ pk_recvgetspi(mhp)
 
 	iph2 = getph2byseq(msg->sadb_msg_seq);
 	if (iph2 == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
+		plog(LLV_DEBUG, LOCATION, NULL,
 			"seq %d of %s message not interesting.\n",
 			msg->sadb_msg_seq,
 			s_pfkey_type(msg->sadb_msg_type));
@@ -1044,7 +1044,7 @@ pk_recvupdate(mhp)
 
 	iph2 = getph2byseq(msg->sadb_msg_seq);
 	if (iph2 == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
+		plog(LLV_DEBUG, LOCATION, NULL,
 			"seq %d of %s message not interesting.\n",
 			msg->sadb_msg_seq,
 			s_pfkey_type(msg->sadb_msg_type));
@@ -1231,7 +1231,7 @@ pk_recvadd(mhp)
 
 	iph2 = getph2byseq(msg->sadb_msg_seq);
 	if (iph2 == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
+		plog(LLV_DEBUG, LOCATION, NULL,
 			"seq %d of %s message not interesting.\n",
 			msg->sadb_msg_seq,
 			s_pfkey_type(msg->sadb_msg_type));
