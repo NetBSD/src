@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.31 2001/01/12 19:03:24 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.32 2001/01/12 19:26:49 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -88,9 +88,6 @@
  * pinging you can use up all your bandwidth).  Made low clist behavior
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
- * 
- * Note that splimp() is used throughout to block both (tty) input
- * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
 #include "strip.h"
@@ -504,24 +501,29 @@ stripclose(tp)
 	int s;
 
 	ttywflush(tp);
+	sc = tp->t_sc;
 
-	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_linesw = linesw[0]; /* default line discipline */
-	sc = (struct strip_softc *)tp->t_sc;
 	if (sc != NULL) {
+		s = splnet();
 		/*
 		 * Cancel watchdog timer, which stops the "probe-for-death"/
 		 * reset machine.
 		 */
 		sc->sc_if.if_timer = 0;
-
 		if_down(&sc->sc_if);
+		IF_PURGE(&sc->sc_fastq);
+		splx(s);
+
+		s = spltty();
+		tp->t_linesw = linesw[0];	/* default line disc. */
+		tp->t_state = 0;
+
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
+
 		m_freem(sc->sc_mbuf);
 		sc->sc_mbuf = NULL;
 		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
-		IF_PURGE(&sc->sc_fastq);
 		IF_PURGE(&sc->sc_inq);
 
 		/* XXX */
@@ -536,15 +538,18 @@ stripclose(tp)
 			callout_stop(&sc->sc_timo_ch);
 			sc->sc_flags &= ~SC_TIMEOUT;
 		}
+
+		/*
+		 * If necessary, install a new outq buffer of the
+		 * appropriate size.
+		 */
+		if (sc->sc_oldbufsize != 0) {
+			clfree(&tp->t_outq);
+			clalloc(&tp->t_outq, sc->sc_oldbufsize,
+			    sc->sc_oldbufquot);
+		}
+		splx(s);
 	}
-#ifdef __NetBSD__
-	/* if necessary, install a new outq buffer of the appropriate size */
-	if (sc->sc_oldbufsize != 0) {
-		clfree(&tp->t_outq);
-		clalloc(&tp->t_outq, sc->sc_oldbufsize, sc->sc_oldbufquot);
-	}
-#endif
-	splx(s);
 }
 
 /*
@@ -773,11 +778,9 @@ stripoutput(ifp, m, dst, rt)
 	  	return(ENOBUFS);
 	}
 
-
 	/*
 	 * Unpack BCD route entry into an ASCII starmode address.
 	 */
-
 	dl_addrbuf[0] = '*';
 
 	dl_addrbuf[1] = ((dldst[0] >> 4) & 0x0f) + '0';
@@ -805,8 +808,7 @@ stripoutput(ifp, m, dst, rt)
  	bcopy((const char *)dldst, (caddr_t)shp->starmode_addr,
 		sizeof (shp->starmode_addr));
 
-
-	s = splimp();
+	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
 		struct timeval tv;
 
@@ -818,6 +820,9 @@ stripoutput(ifp, m, dst, rt)
 			stripstart(sc->sc_ttyp);
 		}
 	}
+	splx(s);
+
+	s = splnet();
 	if (ifq != NULL) {
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
@@ -835,17 +840,12 @@ stripoutput(ifp, m, dst, rt)
 		return (error);
 	}
 	sc->sc_if.if_lastchange = time;
-	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
-		stripstart(sc->sc_ttyp);
-	}
-
-	/*
-	 * slip doesn't call its start routine unconditionally (again)
-	 * here, but doing so apepars to reduce latency.
-	 */
-	stripstart(sc->sc_ttyp);
-
 	splx(s);
+
+	s = spltty();
+	stripstart(sc->sc_ttyp);
+	splx(s);
+
 	return (0);
 }
 
@@ -1075,7 +1075,7 @@ stripintr(void)
 			/*
 			 * Get a packet and send it to the radio.
 			 */
-			s = splimp();
+			s = splnet();
 			IF_DEQUEUE(&sc->sc_fastq, m);
 			if (m)
 				sc->sc_if.if_omcasts++;	/* XXX */
@@ -1288,7 +1288,7 @@ stripioctl(ifp, cmd, data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

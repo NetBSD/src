@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.68 2001/01/11 22:43:02 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.69 2001/01/12 19:26:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -61,9 +61,6 @@
  * pinging you can use up all your bandwidth).  Made low clist behavior
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
- * 
- * Note that splimp() is used throughout to block both (tty) input
- * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
 #include "sl.h"
@@ -311,28 +308,36 @@ slclose(tp)
 	int s;
 
 	ttywflush(tp);
-	s = splimp();		/* actually, max(spltty, splsoftnet) */
-	tp->t_linesw = linesw[0]; /* default line discipline */
-	tp->t_state = 0;
-	sc = (struct sl_softc *)tp->t_sc;
+	sc = tp->t_sc;
+
 	if (sc != NULL) {
+		s = splnet();
 		if_down(&sc->sc_if);
+		IF_PURGE(&sc->sc_fastq);
+		splx(s);
+
+		s = spltty();
+		tp->t_linesw = linesw[0];	/* default line disc. */
+		tp->t_state = 0;
+
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
+
 		m_freem(sc->sc_mbuf);
-		sc->sc_mbuf = NULL;
 		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
-		IF_PURGE(&sc->sc_fastq);
 		IF_PURGE(&sc->sc_inq);
+
+		/*
+		 * If necessary, install a new outq buffer of the
+		 * appropriate size.
+		 */
+		if (sc->sc_oldbufsize != 0) {
+			clfree(&tp->t_outq);
+			clalloc(&tp->t_outq, sc->sc_oldbufsize,
+			    sc->sc_oldbufquot);
+		}
+		splx(s);
 	}
-#ifdef __NetBSD__
-	/* if necessary, install a new outq buffer of the appropriate size */
-	if (sc->sc_oldbufsize != 0) {
-		clfree(&tp->t_outq);
-		clalloc(&tp->t_outq, sc->sc_oldbufsize, sc->sc_oldbufquot);
-	}
-#endif
-	splx(s);
 }
 
 /*
@@ -407,7 +412,8 @@ sloutput(ifp, m, dst, rtp)
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
-	s = splimp();
+
+	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
 		struct timeval tv;
 
@@ -418,6 +424,9 @@ sloutput(ifp, m, dst, rtp)
 			slstart(sc->sc_ttyp);
 		}
 	}
+	splx(s);
+
+	s = splnet();
 	if ((ip->ip_tos & IPTOS_LOWDELAY) != 0
 #ifdef ALTQ
 	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
@@ -439,9 +448,13 @@ sloutput(ifp, m, dst, rtp)
 		return (error);
 	}
 	sc->sc_if.if_lastchange = time;
+	splx(s);
+
+	s = spltty();
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0)
 		slstart(sc->sc_ttyp);
 	splx(s);
+
 	return (0);
 }
 
@@ -668,7 +681,7 @@ slintr(void)
 			/*
 			 * Get a packet and send it to the interface.
 			 */
-			s = splimp();
+			s = splnet();
 			IF_DEQUEUE(&sc->sc_fastq, m);
 			if (m)
 				sc->sc_if.if_omcasts++;	/* XXX */
@@ -959,7 +972,7 @@ slioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int s = splimp(), error = 0;
+	int s = splnet(), error = 0;
 	struct sl_softc *sc = ifp->if_softc;
 
 	switch (cmd) {
