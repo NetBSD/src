@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.24 2002/01/31 22:44:06 tv Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.25 2003/05/17 19:18:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.24 2002/01/31 22:44:06 tv Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.25 2003/05/17 19:18:59 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -149,8 +149,7 @@ main(int argc, char *argv[])
 			lorder = LITTLE_ENDIAN;
 			break;
 		case 'd':			/* set prefix */
-			strncpy(prefix, optarg, sizeof(prefix));
-			prefix[sizeof(prefix)-1] = '\0';
+			strlcpy(prefix, optarg, sizeof(prefix));
 			break;
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
