@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.28 1998/01/09 08:27:09 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.29 1998/01/29 05:44:57 ross Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.28 1998/01/09 08:27:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.29 1998/01/29 05:44:57 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1679,7 +1679,7 @@ pmap_clear_reference(pa)
 	attr = pa_to_attribute(pa);
 	if (*attr & PMAP_ATTR_REF) {
 		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
-		*attr = PMAP_ATTR_REF;
+		*attr &= ~PMAP_ATTR_REF;
 	}
 }
 
