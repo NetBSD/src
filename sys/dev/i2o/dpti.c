@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.2 2001/09/27 18:43:37 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.3 2001/11/13 12:24:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
 /*
  * Adaptec/DPT I2O control interface.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.3 2001/11/13 12:24:58 lukem Exp $");
 
 #include "opt_i2o.h"
 
