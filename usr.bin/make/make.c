@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.28 2000/06/10 21:44:08 mycroft Exp $	*/
+/*	$NetBSD: make.c,v 1.29 2000/06/10 22:24:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.28 2000/06/10 21:44:08 mycroft Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.29 2000/06/10 22:24:21 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.28 2000/06/10 21:44:08 mycroft Exp $");
+__RCSID("$NetBSD: make.c,v 1.29 2000/06/10 22:24:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -378,10 +378,6 @@ Make_HandleUse (cgn, pgn)
 {
     register LstNode	ln; 	/* An element in the children list */
 
-    if (cgn->type & OP_MARK)
-	return (0);
-    cgn->type |= OP_MARK;
-
     if (cgn->type & (OP_USE|OP_TRANSFORM)) {
 	if ((cgn->type & OP_USE) || Lst_IsEmpty(pgn->commands)) {
 	    /*
@@ -440,11 +436,17 @@ Make_HandleUse (cgn, pgn)
     return (0);
 }
 static int
-MakeHandleUse (pgn, cgn)
-    ClientData pgn;	/* the current parent */
-    ClientData cgn;	/* the child we've just examined */
+MakeHandleUse (pgnp, cgnp)
+    ClientData pgnp;	/* the current parent */
+    ClientData cgnp;	/* the child we've just examined */
 {
-    return Make_HandleUse((GNode *) pgn, (GNode *) cgn);
+    GNode	*cgn = (GNode *) cgnp;
+
+    if (cgn->type & OP_MARK)
+	return (0);
+    cgn->type |= OP_MARK;
+
+    return Make_HandleUse((GNode *) pgnp, cgn);
 }
 
 
