@@ -1,0 +1,79 @@
+#	$NetBSD: files.walnut,v 1.1 2001/06/13 06:01:51 simonb Exp $
+#
+# walnut-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 16
+
+maxusers 2 8 64
+
+define	mainbus {[addr=-1], [irq=-1]}
+device	mainbus : pcibus, mainbus
+attach	mainbus at root
+file	arch/walnut/walnut/mainbus.c		mainbus
+
+device	cpu 
+attach	cpu at mainbus
+file	arch/walnut/walnut/cpu.c
+
+attach	com at mainbus with com_mainbus
+file	arch/walnut/dev/com_mainbus.c		com_mainbus
+
+include "arch/powerpc/fpu/files.fpu"
+
+file	arch/walnut/walnut/autoconf.c
+file	arch/walnut/walnut/bus_dma.c
+file	arch/walnut/walnut/clock.c
+file	arch/walnut/walnut/consinit.c
+file	arch/walnut/walnut/conf.c
+file	arch/walnut/walnut/disksubr.c		disk
+file	arch/walnut/walnut/extintr.c
+file	arch/walnut/walnut/machdep.c
+file	arch/walnut/dev/ibm405gp.c
+file	arch/walnut/walnut/procfs_machdep.c	procfs
+file	dev/cons.c
+file	dev/md_root.c				memory_disk_hooks
+major	{md = 9}
+
+
+include	"dev/i2o/files.i2o"
+
+define	todservice {}
+
+device	todclock
+attach	todclock at todservice
+file	arch/walnut/dev/todclock.c		todclock	needs-count
+
+device	dsrtc: todservice
+attach	dsrtc at mainbus
+file	arch/walnut/dev/ds1743.c		dsrtc
+
+device	emac: ether, ifnet, arp, mii
+attach	emac at mainbus
+file	arch/walnut/dev/if_emac.c		emac
+
+attach	pckbc at mainbus with pckbc_mainbus
+file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+
+include	"dev/pci/files.pci"
+file	arch/walnut/pci/pci_machdep.c		pci
+
+device	pchb : pcibus
+attach	pchb at pci
+file	arch/walnut/pci/pchb.c			pchb
+
+include	"dev/mii/files.mii"
+include	"dev/scsipi/files.scsipi"
+major	{sd = 4}
+major	{cd = 6}
+
+include	"dev/ata/files.ata"
+major	{wd = 10}
+
+major	{raid = 12}
+
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+include "dev/pckbc/files.pckbc"
