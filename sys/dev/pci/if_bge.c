@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.27 2003/01/17 00:24:29 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.28 2003/01/17 08:11:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2379,12 +2379,13 @@ bge_rxeof(sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (have_tag) {
-			struct mbuf *n;
+			struct m_tag *mtag;
 
-			n = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
-			if (n != NULL) {
-				*mtod(n, int *) = vlan_tag;
-				n->m_len = sizeof(int);
+			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
+			if (mtag != NULL) {
+				*(u_int *)(mtag + 1) = vlan_tag;
+				m_tag_prepend(m, mtag);
 				have_tag = vlan_tag = 0;
 			} else {
 				printf("%s: no mbuf for tag\n", ifp->if_xname);
@@ -2721,8 +2722,8 @@ doit:
 	    BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
-	n = sc->ethercom.ec_nvlans ?
-	    m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN) : NULL;
+	mtag = sc->ethercom.ec_nvlans ?
+	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
@@ -2732,9 +2733,9 @@ doit:
 		f->bge_len = dmamap->dm_segs[i].ds_len;
 		f->bge_flags = csum_flags;
 
-		if (n != NULL) {
+		if (mtag != NULL) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = *mtod(n, int *);
+			f->bge_vlan_tag = *(u_int *)(mtag + 1);
 		} else {
 			f->bge_vlan_tag = 0;
 		}

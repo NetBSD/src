@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.29 2002/12/23 02:58:38 tsutsui Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.30 2003/01/17 08:11:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1109,7 +1109,10 @@ void
 wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
-	struct mbuf *m0/*, *m*/;
+	struct mbuf *m0;
+#if 0 /* XXXJRT */
+	struct m_tag *mtag;
+#endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, ofree, seg;
@@ -1299,7 +1302,7 @@ wm_start(struct ifnet *ifp)
 		 * This is only valid on the last descriptor of the packet.
 		 */
 		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (m = m_aux_find(m0, AF_LINK, ETHERTYPE_VLAN)) != NULL) {
+		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_fields.wtxu_vlan
@@ -1725,9 +1728,10 @@ wm_rxintr(struct wm_softc *sc)
 		 */
 		if (sc->sc_ethercom.ec_nvlans != 0 &&
 		    (status & WRX_ST_VP) != 0) {
-			struct mbuf *vtag;
+			struct m_tag *vtag;
 
-			vtag = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
+			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
 			if (vtag == NULL) {
 				ifp->if_ierrors++;
 				printf("%s: unable to allocate VLAN tag\n",
@@ -1736,9 +1740,8 @@ wm_rxintr(struct wm_softc *sc)
 				continue;
 			}
 
-			*mtod(m, int *) =
+			*(u_int *)(vtag + 1) =
 			    le16toh(sc->sc_rxdescs[i].wrx_special);
-			vtag->m_len = sizeof(int);
 		}
 #endif /* XXXJRT */
 
