@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.2 2000/02/14 07:01:46 scottr Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.3 2001/01/22 07:31:44 scottr Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -43,6 +43,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/ttycom.h>
 
 #include <dev/cons.h>
 
@@ -75,7 +76,6 @@ iteattach(n)
 	if (maj != major(cn_tab->cn_dev))
 		return;
 
-	cn_tab->cn_dev = cn_tab->cn_dev;
 	ite_initted = 1;
 #endif
 }
@@ -92,8 +92,7 @@ iteopen(dev, mode, devtype, p)
 	int devtype;
 	struct proc *p;
 {
-	return ite_initted ?
-	    wsdisplayopen(cn_tab->cn_dev, mode, devtype, p) : (ENXIO);
+	return ite_initted ? (0) : (ENXIO);
 }
 
 /*ARGSUSED*/
@@ -104,8 +103,7 @@ iteclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	return ite_initted ?
-	    wsdisplayclose(cn_tab->cn_dev, flag, mode, p) : (ENXIO);
+	return ite_initted ? (0) : (ENXIO);
 }
 
 /*ARGSUSED*/
