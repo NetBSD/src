@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2001/07/09 02:00:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -72,8 +72,9 @@ mainbus_attach(parent, self, aux)
 {
 	struct mainbus_attach_args ma;
 
-	printf(": %s [%s, %s]", arcbios_system_identifier,
-	    arcbios_sysid_vendor, arcbios_sysid_product);
+	printf(": %s [%s, %s], %d processor%s", arcbios_system_identifier,
+	    arcbios_sysid_vendor, arcbios_sysid_product,
+	    ncpus, ncpus == 1 ? "" : "s");
 
 	printf("\n");
 

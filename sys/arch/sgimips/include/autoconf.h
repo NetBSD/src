@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 2001/07/09 02:00:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -40,3 +40,5 @@ struct mainbus_attach_args {
 	bus_space_tag_t	ma_iot;
 	bus_space_handle_t ma_ioh;
 };
+
+extern int ncpus;
