@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.14 1998/07/08 17:47:42 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.15 1999/01/29 18:47:58 christos Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -9,10 +9,10 @@ I386_STAND_DIR?= $S/arch/i386/stand
 .PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
 BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o bios_disk.o diskbuf.o
 .PATH: ${I386_STAND_DIR}/lib/crt/rom
-ROMSTART= start_rom.o
+ROMSTART= start_rom.o exec.o
 GENPROMDIR= ${I386_STAND_DIR}/genprom
 .PATH: ${I386_STAND_DIR}/lib/crt/dos
-DOSSTART= start_dos.o doscommain.o exec_fromdos.o
+DOSSTART= start_dos.o doscommain.o exec.o
 
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
