@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.3 2003/08/04 12:37:43 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.4 2003/08/05 11:32:35 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.3 2003/08/04 12:37:43 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.4 2003/08/05 11:32:35 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1051,3 +1051,33 @@ copy_io_area_map(pd_entry_t * new_pd)
 	}
 	cpu_drain_writebuf();
 }
+
+
+static struct arm32_dma_range smdk2410_dma_ranges[1];
+
+bus_dma_tag_t
+s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
+{
+	extern paddr_t physical_start, physical_end;
+	struct arm32_bus_dma_tag *dmat;
+
+	smdk2410_dma_ranges[0].dr_sysbase = physical_start;
+	smdk2410_dma_ranges[0].dr_busbase = physical_start;
+	smdk2410_dma_ranges[0].dr_len = physical_end - physical_start;
+
+#if 1
+	dmat = dma_tag_template;
+#else
+	dmat = malloc(sizeof *dmat, M_DEVBUF, M_NOWAIT);
+	if (dmat == NULL)
+		return NULL;
+	*dmat =  *dma_tag_template;
+#endif
+
+	dmat->_ranges = smdk2410_dma_ranges;
+	dmat->_nranges = 1;
+
+	return dmat;
+}
+
+int wdcdebug_wd_mask=0;
