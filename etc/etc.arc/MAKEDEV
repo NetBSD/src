@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.32 2003/08/30 11:00:23 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.33 2003/09/01 08:10:19 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -368,6 +368,30 @@ pty*)
 	done
 	chmod 666 $names
 	unset names
+	;;
+
+st*)
+	case $i in
+	st*) name=st;	unit=${i#st};	chr=10;	blk=5;;
+	esac
+	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
+	r$name$unit nr$name$unit er$name$unit enr$name$unit
+	mknod ${name}${unit}	b $blk $(($unit * 16+ 0))
+	mknod n${name}${unit}	b $blk $(($unit * 16+ 1))
+	mknod e${name}${unit}	b $blk $(($unit * 16+ 2))
+	mknod en${name}${unit}	b $blk $(($unit * 16+ 3))
+	mknod r${name}${unit}	c $chr $(($unit * 16+ 0))
+	mknod nr${name}${unit}	c $chr $(($unit * 16+ 1))
+	mknod er${name}${unit}	c $chr $(($unit * 16+ 2))
+	mknod enr${name}${unit} c $chr $(($unit * 16+ 3))
+	chgrp operator ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit}
+	chmod 660 ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit}
 	;;
 
 ch*|uk*)
