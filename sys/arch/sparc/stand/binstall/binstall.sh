@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.12 2003/07/10 04:48:34 lukem Exp $
+#	$NetBSD: binstall.sh,v 1.13 2003/12/07 23:16:28 mrg Exp $
 #
 
 vecho () {
@@ -100,7 +100,7 @@ fi
 if [ "$ULTRASPARC" = "1" ]; then
 	machine=sparc64
 	targ=ofwboot
-	netboot=ofwboot.net
+	netboot=ofwboot
 	BOOTPROG=$OFWBOOTBLK
 	BOOTXX=${MDEC}/bootblk
 else
