@@ -150,6 +150,12 @@ if [ X${rwhod} != X"YES" ]; then
 	echo -n ' rwhod';	rwhod
 fi
 
+# $rwalld is imported from /etc/netstart;
+# if $rwalld == YES, rwalld is run.
+if [ X${rwalld} != X"YES" ]; then
+	echo -n ' rwalld';	rwalld
+fi
+
 echo -n ' printer';		lpd
 
 
