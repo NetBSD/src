@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.17 1994/06/11 16:12:28 mycroft Exp $";
+static char *rcsid = "$Id: parser.c,v 1.18 1994/06/14 05:49:25 jtc Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -104,6 +104,7 @@ STATIC union node *andor __P((void));
 STATIC union node *pipeline __P((void));
 STATIC union node *command __P((void));
 STATIC union node *simplecmd __P((union node **, union node *));
+STATIC union node *makename __P((void));
 STATIC void parsefname __P((void));
 STATIC void parseheredoc __P((void));
 STATIC int readtoken __P((void));
@@ -540,6 +541,40 @@ simplecmd(rpp, redir)
 	return n;
 }
 
+STATIC union node *
+makename() {
+	union node *n;
+
+	n = (union node *)stalloc(sizeof (struct narg));
+	n->type = NARG;
+	n->narg.next = NULL;
+	n->narg.text = wordtext;
+	n->narg.backquote = backquotelist;
+	return n;
+}
+
+void fixredir(n, text, err)
+	union node *n;
+	const char *text;
+	int err;
+	{
+	TRACE(("Fix redir %s %d\n", text, err));
+	if (!err)
+		n->ndup.vname = NULL;
+
+	if (is_digit(text[0]) && text[1] == '\0')
+		n->ndup.dupfd = digit_val(text[0]);
+	else if (text[0] == '-' && text[1] == '\0')
+		n->ndup.dupfd = -1;
+	else {
+		
+		if (err)
+			synerror("Bad fd number");
+		else
+			n->ndup.vname = makename();
+	}
+}
+
 
 STATIC void
 parsefname() {
@@ -571,23 +606,9 @@ parsefname() {
 			p->next = here;
 		}
 	} else if (n->type == NTOFD || n->type == NFROMFD) {
-		if (is_digit(wordtext[0]))
-			n->ndup.dupfd = digit_val(wordtext[0]);
-		else if (wordtext[0] == '-')
-			n->ndup.dupfd = -1;
-		else
-			goto bad;
-		if (wordtext[1] != '\0') {
-bad:
-			synerror("Bad fd number");
-		}
+		fixredir(n, wordtext, 0);
 	} else {
-		n->nfile.fname = (union node *)stalloc(sizeof (struct narg));
-		n = n->nfile.fname;
-		n->type = NARG;
-		n->narg.next = NULL;
-		n->narg.text = wordtext;
-		n->narg.backquote = backquotelist;
+		n->nfile.fname = makename();
 	}
 }
 

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)eval.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: eval.c,v 1.13 1994/06/12 02:31:28 jtc Exp $";
+static char *rcsid = "$Id: eval.c,v 1.14 1994/06/14 05:49:19 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -434,13 +434,22 @@ expredir(n)
 	register union node *redir;
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
-		if (redir->type == NFROM
-		 || redir->type == NTO
-		 || redir->type == NAPPEND) {
-			struct arglist fn;
-			fn.lastp = &fn.list;
+		struct arglist fn;
+		fn.lastp = &fn.list;
+		switch (redir->type) {
+		case NFROM:
+		case NTO:
+		case NAPPEND:
 			expandarg(redir->nfile.fname, &fn, EXP_TILDE | EXP_REDIR);
 			redir->nfile.expfname = fn.list->text;
+			break;
+		case NFROMFD:
+		case NTOFD:
+			if (redir->ndup.vname) {
+				expandarg(redir->ndup.vname, &fn, EXP_FULL | EXP_TILDE);
+				fixredir(redir, fn.list->text, 1);
+			}
+			break;
 		}
 	}
 }

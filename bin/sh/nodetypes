@@ -34,7 +34,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)nodetypes	8.1 (Berkeley) 5/31/93
-#	$Id: nodetypes,v 1.5 1994/06/11 16:12:22 mycroft Exp $
+#	$Id: nodetypes,v 1.6 1994/06/14 05:49:24 jtc Exp $
 
 # This file describes the nodes used in parse trees.  Unindented lines
 # contain a node type followed by a structure tag.  Subsequent indented
@@ -131,6 +131,7 @@ NFROMFD ndup			# fd>&dupfd
 	next	  nodeptr		# next redirection in list
 	fd	  int			# file descriptor being redirected
 	dupfd	  int			# file descriptor to duplicate
+	vname	  nodeptr		# file name if fd>&$var
 
 NHERE nhere			# fd<<\!
 NXHERE nhere			# fd<<!
