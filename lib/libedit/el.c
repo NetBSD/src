@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.29 2002/03/18 16:00:52 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.30 2002/11/12 00:00:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.29 2002/03/18 16:00:52 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.30 2002/11/12 00:00:23 thorpej Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -280,11 +280,11 @@ el_get(EditLine *el, int op, void *ret)
 	switch (op) {
 	case EL_PROMPT:
 	case EL_RPROMPT:
-		rv = prompt_get(el, (el_pfunc_t *) & ret, op);
+		rv = prompt_get(el, (void *) &ret, op);
 		break;
 
 	case EL_EDITOR:
-		rv = map_get_editor(el, (const char **) &ret);
+		rv = map_get_editor(el, (void *) &ret);
 		break;
 
 	case EL_SIGNAL:
