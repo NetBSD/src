@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2002/09/27 02:46:05 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2002/09/27 03:34:22 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -60,15 +60,23 @@ ENTRY(_rtld_start, 0)
 
 /*
  * Lazy binding entry point, called via PLT.
+ *
+ * Note: Some functions rely on there not being an additional call frame;
+ * hence the `optimization' to avoid the callg opportunistically.
  */
 ALTENTRY(_rtld_bind_start)
-	pushr	$0xff		/* save R0-R7 */
-	movq	32(%sp),%r0	/* get addresses of plt.got & reloc index */
+	pushr	$0xbf		/* save R0-R5,R7 */
+	movq	28(%sp),%r0	/* get addresses of plt.got & reloc index */
 	pushl	(%r1)		/* push relocation index */
 	pushl	%r0		/* push address of obj entry */
 	calls	$2,_rtld_bind
-	movl	%r0,36(%sp)	/* save return address onto stack */
-	popr	$0xff		/* restore R0-R7 (cond flags not modified) */
-	addl2	$4,%sp
+	movl	%r0,32(%sp)	/* save return address onto stack */
+	bicw3	6(%fp),(%r0),%r0/* does the entry mask save any additional regs */
+	popr	$0xbf		/* restore R0-R5,R7 (cond flags not modified) */
+	bneq	4f		/* yes? do it the hard way */
+	addl2	$4,%sp		/* no? skip past plt.got on stack */
+	addl2	$2,(%sp)		/*    skip past the mask */
+	rsb			/*    and jump to it */
+4:	addl2	$4,%sp
 	callg	(%ap),*(%sp)+	/* return value from _rtld_bind() == actual */
 	ret
