@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.3 1994/01/23 21:55:56 deraadt Exp $
+ * $Id: bootparamd.c,v 1.4 1994/11/29 15:03:13 glass Exp $
  */
 
 #include <sys/types.h>
@@ -351,8 +351,10 @@ lookup_bootparam(client, client_canonical, id, server, path)
 			strncpy(client_canonical, word, MAX_MACHINE_NAME);
 
 		/* We have found a line for CLIENT */
-		if (id == NULL)
+		if (id == NULL) {
+			(void) fclose(f);
 			return 0;
+		}
 
 		/* Look for a value for the parameter named by ID */
 		while ((word = strsep(&bp, " \t\n")) != NULL) {
