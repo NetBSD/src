@@ -180,9 +180,10 @@ sys/arch/atari/atari/machdep.c		patch		leo
 
 sys/arch/amiga/amiga/pmap.c		1.45		is
 sys/arch/amiga/conf/GENERIC		1.101		is
+		    GENERIC		patch		chopps
 share/man/man4/options.4		1.43		is
 
-  Fix panics on machines with >24MB.
+  Partial fix for panics on machines with >24MB.
 
 usr.sbin/pwd_mkdb/pwd_mkdb.c		1.11-1.13	fair
 
@@ -436,4 +437,16 @@ gnu/dist/gdb/alpha-tdep.c		patch		cgd
 gnu/dist/gdb/config/alpha/nm-nbsd.h	patch		cgd
 
   Revert incorrect pullup that made GDB lose on the Alpha.
+
+sys/kern/init_main.c			patch		mycroft
+
+  Update copyright notice to include 1998.
+
+sys/vm/vm_mmap.c			1.57		mrg
+
+  Fix security hole with mmap(2) on append-only and immutable files.
+
+sys/conf/osrelease.sh			patch		mycroft
+
+  Update to 1.3.2.
 
