@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.1 2004/03/28 08:55:38 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.1.2.1 2004/08/13 03:56:23 jmc Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39 2004/01/31 14:48:44 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.2 2004/05/24 14:01:48 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY
@@ -270,9 +270,13 @@ nat_t *nat;
 	ip = fin->fin_ip;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	bzero(ctcpbuf, sizeof(ctcpbuf));
-	off = (char *)tcp - MTOD(m, char *) + (TCP_OFF(tcp) << 2);
+	off = (char *)tcp - (char *)ip + (TCP_OFF(tcp) << 2) + fin->fin_ipoff;
 
+#ifdef __sgi
+	dlen = fin->fin_plen - off;
+#else
 	dlen = MSGDSIZE(m) - off;
+#endif
 	if (dlen <= 0)
 		return 0;
 	COPYDATA(m, off, MIN(sizeof(ctcpbuf), dlen), ctcpbuf);

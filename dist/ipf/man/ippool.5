@@ -1,4 +1,4 @@
-.\"	$NetBSD: ippool.5,v 1.1.1.1 2004/03/28 08:56:23 martti Exp $
+.\"	$NetBSD: ippool.5,v 1.1.1.1.2.1 2004/08/13 03:57:32 jmc Exp $
 .\"
 .TH IPPOOL 5
 .SH NAME
@@ -116,7 +116,7 @@ in 2.2.0.0/16, except for those in 2.2.2.0/24.
 .PP
 .nf
 table role = ipf type = tree number = 100
-        { 1.1.1.1/32, 2.2.0.0/16, !2.2.2.0/24 };
+        { 1.1.1.1/32; 2.2.0.0/16; !2.2.2.0/24 };
 .fi
 .TP
 2

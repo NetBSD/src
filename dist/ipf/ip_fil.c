@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.3 2004/03/28 09:03:12 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.3.2.1 2004/08/13 03:56:19 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.2 2004/03/23 12:03:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.4 2004/05/19 01:22:05 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -361,11 +361,24 @@ int mode;
 		else {
 			error = COPYIN(data, &tmp, sizeof(tmp));
 			if (!error) {
-				tmp = frflush(unit, tmp);
+				tmp = frflush(unit, 4, tmp);
 				error = COPYOUT(&tmp, data, sizeof(tmp));
 			}
 		}
 		break;
+#ifdef	USE_INET6
+	case	SIOCIPFL6 :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			error = COPYIN(data, &tmp, sizeof(tmp));
+			if (!error) {
+				tmp = frflush(unit, 6, tmp);
+				error = COPYOUT(&tmp, data, sizeof(tmp));
+			}
+		}
+		break;
+#endif
 	case SIOCSTLCK :
 		error = COPYIN(data, &tmp, sizeof(tmp));
 		if (error == 0) {
@@ -669,7 +682,7 @@ int type;
 fr_info_t *fin;
 int dst;
 {
-	verbose("- TCP RST sent\n");
+	verbose("- ICMP unreachable sent\n");
 	return 0;
 }
 

@@ -5,7 +5,7 @@
 # provided that this notice is preserved and due credit is given
 # to the original author and the contributors.
 #
-# Id: Makefile,v 2.76.2.1 2004/03/06 14:32:46 darrenr Exp
+# Id: Makefile,v 2.76.2.9 2004/07/08 13:12:00 darrenr Exp
 #
 SHELL=/bin/sh
 BINDEST=/usr/local/bin
@@ -49,6 +49,10 @@ LOGFAC=-DLOGFAC=LOG_LOCAL0
 #
 # To enable rules to be written with BPF syntax, uncomment these two lines.
 #
+# WARNING: If you're building a commercial product based on IPFilter, using
+#          this options *may* infringe at least one patent held by CheckPoint
+#          (5,606,668.)
+#
 #IPFBPF=-DIPFILTER_BPF -I/usr/local/include
 #LIBBPF=-L/usr/local/lib -lpcap
 #
@@ -60,13 +64,13 @@ LOGFAC=-DLOGFAC=LOG_LOCAL0
 # By default IPFilter looks for /usr/src/linux, but you may have to change
 # it to /usr/src/linux-2.4 or similar.
 #
-LINUXKERNEL=/usr/src/linux-2.4
+LINUXKERNEL=/usr/src/linux
 
 #
 # All of the compile-time options are here, used for compiling the userland
 # tools for regression testing.  Well, all except for IPFILTER_LKM, of course.
 #
-ALLOPTS=-DIPFILTER_LOG -DIPFILTER_COMPILED -DIPFILTER_LOOKUP \
+ALLOPTS=-DIPFILTER_LOG -DIPFILTER_LOOKUP \
         -DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM
 
 #
@@ -106,7 +110,7 @@ MFLAGS1='CFLAGS=$(CFLAGS) $(ARCHINC) $(SOLARIS2) $(SGIREV) $(INET6)' \
 	"BITS=$(BITS)" "OBJ=$(OBJ)" "LOOKUP=$(LOOKUP)" "COMPIPF=$(COMPIPF)" \
 	'SYNC=$(SYNC)' 'ALLOPTS=$(ALLOPTS)' 'LIBBPF=$(LIBBPF)'
 MFLAGS=$(MFLAGS1) "IPFLKM=$(IPFLKM)"
-MACHASSERT=`find /usr/sys -name mach_assert.h -print`
+MACHASSERT=`/bin/ls -1 /usr/sys/*/mach_assert.h | head -1`
 #
 SHELL=/bin/sh
 #
@@ -124,7 +128,7 @@ all:
 	@echo "solaris	- auto-selects SunOS4.1.x/Solaris 2.3-6/Solaris2.4-6x86"
 	@echo "netbsd	- compile for NetBSD"
 	@echo "openbsd	- compile for OpenBSD"
-	@echo "freebsd	- compile for FreeBSD 2.0, 2.1 or earlier"
+	@echo "freebsd20	- compile for FreeBSD 2.0, 2.1 or earlier"
 	@echo "freebsd22	- compile for FreeBSD-2.2 or greater"
 	@echo "freebsd3	- compile for FreeBSD-3.x"
 	@echo "freebsd4	- compile for FreeBSD-4.x"
@@ -140,12 +144,17 @@ tests:
 	@if [ -d test ]; then (cd test; make) \
 	else echo test directory not present, sorry; fi
 
+retest:
+	@if [ -d test ]; then (cd test; make clean && make) \
+	else echo test directory not present, sorry; fi
+
 include:
 	if [ ! -f netinet/done ] ; then \
 		(cd netinet; ln -s ../*.h .; ln -s ../ip_*_pxy.c .;); \
 		(cd netinet; ln -s ../ipsend/tcpip.h tcpip.h); \
 		touch netinet/done; \
 	fi
+	-(cd netinet; ln -s ../ip_rules.h ip_rules.h)
 	if [ ! -f net/done ] ; then \
 		(cd net; ln -s ../radix_ipf.h .; ); \
 		touch net/done; \
@@ -174,7 +183,7 @@ freebsd22: include
 			ln -s $$x BSD/$$y ; \
 		fi \
 	fi
-	make freebsd
+	make freebsd20
 
 freebsd5: include
 	if [ x$(INET6) = x ] ; then \
@@ -209,15 +218,15 @@ freebsd3 freebsd30: include
 
 netbsd: include
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
-	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) 'DLKM=-D_LKM' "ML=mln_ipl.c" "MLR=mln_rule.o"; cd ..)
+	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) 'DLKM=-D_LKM' "ML=mln_ipl.c" LKMR= "MLR=mln_rule.o"; cd ..)
 	(cd BSD/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. $(MFLAGS); cd ..)
 
-openbsd openbsd21: include
+openbsd: include
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
-	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) 'DLKM=-D_LKM' "ML=mlo_ipl.c" "MLR=mlo_rule.o"; cd ..)
+	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) 'DLKM=-D_LKM' "ML=mlo_ipl.c" LKMR= "MLR=mlo_rule.o"; cd ..)
 	(cd BSD/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. $(MFLAGS); cd ..)
 
-freebsd freebsd20 freebsd21: include
+freebsd20 freebsd21: include
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
 	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) "ML=mlf_ipl.c" "MLR=mlf_rule.o"; cd ..)
 	(cd BSD/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. $(MFLAGS); cd ..)
@@ -319,8 +328,8 @@ sunos5x86 solaris2x86: null
 	(cd SunOS5/$(CPUDIR); make build TOP=../.. "CC=$(CC)" $(DEST) $(MFLAGS) "SOLARIS2=$(SOLARIS2)" "CPU=-Di86pc -Di386 -D__i386__"; cd ..)
 	(cd SunOS5/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. "CC=$(CC)" $(DEST) $(MFLAGS); cd ..)
 
-linux: null include
-	(cd Linux; make build LINUX=`uname -r | awk -F. ' { for(i=0;i<NF;i++){printf("%02d",$$(i+1));}}'` TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) LINUXKERNEL=$(LINUXKERNEL); cd ..)
+linux: include
+	(cd Linux; make build LINUX=`uname -r | awk -F. ' { for(i=0;i<3;i++){printf("%02d",$$(i+1));}}'` TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) LINUXKERNEL=$(LINUXKERNEL); cd ..)
 #	(cd Linux; make -f Makefile.ipsend build LINUX=`uname -r | awk -F. ' { for(i=0;i<NF;i++){printf("%02d",$$(i+1));}}'` TOP=.. "CC=$(CC)" $(MFLAGS); cd ..)
 
 install-linux: linux
@@ -333,7 +342,7 @@ install-bsd:
 install-sunos4: solaris
 	(cd SunOS4; $(MAKE) CPU=$(CPU) TOP=.. install)
 
-install-sunos5: solaris
+install-sunos5: solaris null
 	(cd SunOS5; $(MAKE) CPU=$(CPU) TOP=.. install)
 
 install-hpux: hpux
@@ -352,10 +361,10 @@ do-cvs:
 	/bin/rm -f ip_msnrpc_pxy.c ip_sunrpc_pxy.c
 
 ip_rules.c ip_rules.h: rules/ip_rules tools/ipfcomp.c
-	-./ipf -cc -f rules/ip_rules 2>/dev/null 1>&2
+	-./ipf -n -cc -f rules/ip_rules 2>/dev/null 1>&2
 
 null:
-	-@if [ "`$(MAKE) -v 2>&1 | sed -ne 's/GNU.*/GNU/p'`" = "GNU" ] ; then \
+	@if [ "`$(MAKE) -v 2>&1 | sed -ne 's/GNU.*/GNU/p'`" = "GNU" ] ; then \
 		echo 'Do not use GNU make (gmake) to compile IPFilter'; \
 		exit 1; \
 	fi

@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.1.2.1 2004/08/13 03:57:15 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.1 2004/03/06 14:33:30 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printnat.c,v 1.22.2.4 2004/05/11 01:41:16 darrenr Exp";
 #endif
 
 
@@ -99,7 +99,10 @@ int opts;
 		printf(" -> %s", inet_ntoa(np->in_in[0].in4));
 		if (np->in_flags & IPN_SPLIT)
 			printf(",%s", inet_ntoa(np->in_in[1].in4));
-		printf(" port %d", ntohs(np->in_pnext));
+		if ((np->in_flags & IPN_FIXEDDPORT) != 0)
+			printf(" port = %d", ntohs(np->in_pnext));
+		else
+			printf(" port %d", ntohs(np->in_pnext));
 		if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
 			printf(" tcp/udp");
 		else if ((np->in_flags & IPN_TCP) == IPN_TCP)
@@ -178,13 +181,19 @@ int opts;
 			if (opts & OPT_DEBUG)
 				printf("\n\tip modulous %d", np->in_pmax);
 		} else if (np->in_pmin || np->in_pmax) {
-			printf(" portmap");
+			if (np->in_flags & IPN_ICMPQUERY) {
+				printf(" icmpidmap");
+			} else {
+				printf(" portmap");
+			}
 			if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
 				printf(" tcp/udp");
 			else if (np->in_flags & IPN_TCP)
 				printf(" tcp");
 			else if (np->in_flags & IPN_UDP)
 				printf(" udp");
+			else if (np->in_flags & IPN_ICMPQUERY)
+				printf(" icmp");
 			if (np->in_flags & IPN_AUTOPORTMAP) {
 				printf(" auto");
 				if (opts & OPT_DEBUG)

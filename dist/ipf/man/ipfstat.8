@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfstat.8,v 1.10.2.1 2004/05/30 11:22:33 tron Exp $
+.\"	$NetBSD: ipfstat.8,v 1.10.2.2 2004/08/13 03:57:25 jmc Exp $
 .\"
 .TH ipfstat 8
 .SH NAME
@@ -135,6 +135,10 @@ parameters are present.
 When supplied with either \fB\-i\fP or \fB\-o\fP, it will retrieve and display
 the appropriate list of filter rules currently installed and in use by the
 kernel.
+.PP
+One of the statistics that \fBipfstat\fP shows is \fBticks\fP.
+This number indicates how long the filter has been enabled.
+The number is incremented every half\-second.
 .SH STATE TOP
 Using the \fB\-t\fP option \fBipfstat\fP will enter the state top mode. In
 this mode the state table is displayed similar to the way \fBtop\fP displays

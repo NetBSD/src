@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.1.1.1.2.2 2004/05/30 11:22:28 tron Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.1.1.1.2.3 2004/08/13 03:58:40 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -70,7 +70,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.4 2004/03/19 23:06:50 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.8 2004/07/18 04:11:37 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -812,7 +812,7 @@ char *comment;
 		}
 
 		printfr(fp, ioctl);
-		if (opts & OPT_VERBOSE) {
+		if (opts & OPT_DEBUG) {
 			binprint(fp, sizeof(*fp));
 			if (fp->fr_data != NULL && fp->fr_dsize > 0)
 				binprint(fp->fr_data, fp->fr_dsize);
@@ -1005,7 +1005,8 @@ int topclosed;
 	char str1[STSTRSIZE], str2[STSTRSIZE], str3[STSTRSIZE], str4[STSTRSIZE];
 	int maxtsentries = 0, reverse = 0, sorting = STSORT_DEFAULT;
 	int i, j, winy, tsentry, maxx, maxy, redraw = 0;
-	int len, srclen, dstlen, forward = 1, c = 0;
+	int len, srclen, dstlen, forward = 1, c = 0, ret = 0;
+	const char *errstr;
 	ips_stat_t ipsst, *ipsstp = &ipsst;
 	statetop_t *tstable = NULL, *tp;
 	ipstate_t ips;
@@ -1047,8 +1048,9 @@ int topclosed;
 		/* get state table */
 		bzero((char *)&ipsst, sizeof(ipsst));
 		if ((ioctl(state_fd, SIOCGETFS, &ipfo) == -1)) {
-			perror("ioctl(SIOCGETFS)");
-			exit(-1);
+			errstr = "ioctl(SIOCGETFS)";
+			ret = -1;
+			goto out;
 		}
 
 		/* clear the history */
@@ -1350,7 +1352,8 @@ int topclosed;
 		if (redraw)
 			clearok(stdscr,1);
 
-		refresh();
+		if (refresh() == ERR)
+			break;
 		if (redraw) {
 			clearok(stdscr,0);
 			redraw = 0;
@@ -1388,12 +1391,17 @@ int topclosed;
 		}
 	} /* while */
 
+out:
 	printw("\n");
 	curs_set(1);
 	nocbreak();
 	endwin();
 
 	free(tstable);
+	if (ret != 0) {
+		perror(errstr);
+		exit(ret);
+	}
 }
 #endif
 
@@ -1490,6 +1498,7 @@ static void showgroups(fiop)
 struct friostat	*fiop;
 {
 	static char *gnames[3] = { "Filter", "Accounting", "Authentication" };
+	static int gnums[3] = { IPL_LOGIPF, IPL_LOGCOUNT, IPL_LOGAUTH };
 	frgroup_t *fp, grp;
 	int on, off, i;
 
@@ -1498,13 +1507,15 @@ struct friostat	*fiop;
 
 	for (i = 0; i < 3; i++) {
 		printf("%s groups (active):\n", gnames[i]);
-		for (fp = fiop->f_groups[i][on]; fp != NULL; fp = grp.fg_next)
+		for (fp = fiop->f_groups[gnums[i]][on]; fp != NULL;
+		     fp = grp.fg_next)
 			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
 				break;
 			else
 				printf("%s\n", grp.fg_name);
 		printf("%s groups (inactive):\n", gnames[i]);
-		for (fp = fiop->f_groups[i][off]; fp != NULL; fp = grp.fg_next)
+		for (fp = fiop->f_groups[gnums[i]][off]; fp != NULL;
+		     fp = grp.fg_next)
 			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
 				break;
 			else

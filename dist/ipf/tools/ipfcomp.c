@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.1.1.1 2004/03/28 08:56:30 martti Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.1.1.1.2.1 2004/08/13 03:58:34 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24 2004/01/24 16:04:29 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.2 2004/04/28 10:34:44 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -123,6 +123,8 @@ frentry_t *fr;
 		fprintf(fp, "#ifndef _KERNEL\n");
 		fprintf(fp, "# include <string.h>\n");
 		fprintf(fp, "#endif /* _KERNEL */\n");
+		fprintf(fp, "\n");
+		fprintf(fp, "#ifdef IPFILTER_COMPILED\n");
 	}
 
 	addrule(fp, fr);
@@ -322,7 +324,9 @@ frentry_t *fr;
 			}
 		}
 		emittail();
+		fprintf(cfile, "#endif /* IPFILTER_COMPILED */\n");
 	}
+
 }
 
 
@@ -1291,6 +1295,9 @@ int ipfrule_add_%s_%s()\n", instr, group);
 	fp->fr_flags = FR_%sQUE|FR_NOMATCH;\n\
 	fp->fr_data = (void *)ipf_rules_%s_%s[0];\n",
 		(in != 0) ? "IN" : "OUT", instr, group);
+	fprintf(fp, "\
+	fp->fr_dsize = sizeof(ipf_rules_%s_%s[0]);\n",
+		instr, group);
 
 	fprintf(fp, "\
 	fp->fr_v = 4;\n\
