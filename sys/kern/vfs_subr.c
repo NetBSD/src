@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.104 1999/07/08 01:06:01 wrstuden Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.105 1999/07/15 21:30:31 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -432,8 +432,15 @@ getnewvnode(tag, mp, vops, vpp)
 	} else {
 		for (vp = vnode_free_list.tqh_first;
 				vp != NULLVP; vp = vp->v_freelist.tqe_next) {
-			if (simple_lock_try(&vp->v_interlock))
-				break;
+			if (simple_lock_try(&vp->v_interlock)) {
+				if ((vp->v_flag & VLAYER) == 0) {
+					break;
+				}
+				if (VOP_ISLOCKED(vp) == 0)
+					break;
+				else
+					simple_unlock(&vp->v_interlock);
+			}
 		}
 		/*
 		 * Unless this is a bad time of the month, at most

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.33 1999/07/08 01:26:29 wrstuden Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.34 1999/07/15 21:30:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -312,7 +312,7 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	}
 
 	/* detect the root vnode (and aliases) */
-	vflag = 0;
+	vflag = VLAYER;
 	if ((uppervp == um->um_uppervp) &&
 	    ((lowervp == NULLVP) || lowervp == um->um_lowervp)) {
 		if (lowervp == NULLVP) {
