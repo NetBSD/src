@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.40 1998/12/23 15:08:37 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.41 1999/01/06 11:52:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -725,16 +725,16 @@ ELFNAME2(netbsd,signature)(p, epp, eh)
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	hph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)hph,
-	    phsize)) != 0)
+	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
+	    (caddr_t)hph, phsize)) != 0)
 		goto out1;
 
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
 		if (ph->p_type != Elf_pt_note ||
-		    ph->p_filesz < sizeof(Elf_Note))
+		    ph->p_filesz < sizeof(Elf_Note) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
-		np = (Elf_Note *)malloc(ph->p_filesz + 1, M_TEMP, M_WAITOK);
+		np = (Elf_Note *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
 		    (caddr_t)np, ph->p_filesz)) != 0)
 			goto out2;
@@ -785,6 +785,6 @@ ELFNAME2(netbsd,probe)(p, epp, eh, itp, pos)
 		return error;
 
 	epp->ep_emul = &ELFNAMEEND(emul_netbsd);
-	*pos = 0;
+	*pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
 }
