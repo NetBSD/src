@@ -1,16 +1,27 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/09/22 21:11:25 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 1998/08/08 22:05:25 christos Exp $
 
 LIB= amu
 SRCS=	mtabutil.c tranputil.c umount_fs.c xutil.c xdr_func.c wire.c \
 util.c nfs_prot_xdr.c mtab.c mount_fs.c misc_rpc.c hasmntopt.c 
 
+NOPROFILE=
+ 
 config_local.h: mkconf
 	@rm -f ${.TARGET}
 	sh ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=config_local.h
 
+install: __libinstall
+ 
 .include <bsd.lib.mk>
+ 
+.if !defined(NOPIC)
+__libinstall: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.else
+__libinstall:
+.endif
+
 LDADD=
 DPADD=
 ${OBJS}: config_local.h
