@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)ifconfig.8	6.13 (Berkeley) 3/16/91
-.\"	$Id: ifconfig.8,v 1.8 1994/01/22 00:29:20 cgd Exp $
+.\"     from: @(#)ifconfig.8	8.3 (Berkeley) 1/5/94
+.\"	$Id: ifconfig.8,v 1.9 1994/09/23 01:38:51 mycroft Exp $
 .\"
-.Dd March 16, 1991
+.Dd January 5, 1994
 .Dt IFCONFIG 8
 .Os BSD 4.2
 .Sh NAME
@@ -176,7 +176,7 @@ Higher metrics have the effect of making a route
 less favorable; metrics are counted as addition hops
 to the destination network or host.
 .It Cm netmask Ar mask
-(Inet and Iso)
+(Inet and ISO)
 Specify how much of the address to reserve for subdividing
 networks into sub-networks.
 The mask includes the network part of the local address
@@ -204,7 +204,7 @@ taken to be the
 (Network Entity Title).
 The default value is 1, which is conformant to US
 .Tn GOSIP .
-When an iso address is set in an ifconfig command,
+When an ISO address is set in an ifconfig command,
 it is really the
 .Tn NSAP
 which is being specified.
@@ -214,7 +214,7 @@ For example, in
 specified in the
 .Tn ISO NSAP
 to be assigned to the interface.
-There is some evidence that a number different 1 may be useful
+There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
@@ -238,15 +238,13 @@ Currently used by Internet protocols only.
 Disable the use of a ``trailer'' link level encapsulation.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
-These three options are interface specific in actual effect,
-however, they are in general used to select special modes
-of operation. An example of this is to enable SLIP
-compression or to select BNC (thin-net) or the
-AUI port on certain ethernet cards.  Refer to the man
-page for the specific driver for more information.
+These three options are interface specific in actual effect, however,
+they are in general used to select special modes of operation. An example
+of this is to enable SLIP compression, or to select the connector type
+for some ethernet cards.  Refer to the man page for the specific driver
+for more information.
 .It Fl link[0-2]
-Disables special processing at the link level with the
-specified interface.
+Disable special processing at the link level with the specified interface.
 .It Cm up
 Mark an interface ``up''. 
 This may be used to enable an interface after an ``ifconfig down.''
@@ -264,7 +262,7 @@ Ifconfig will report only the details specific to that protocol family.
 .Pp
 The interface name
 .Ar -a
-is reserved, and causes information on all interfaces to be printed.
+is reserved, and causes information on all interfaces to be displayed.
 The protocol family may be specified as well.
 .Pp
 Only the super-user may modify the configuration of a network interface.

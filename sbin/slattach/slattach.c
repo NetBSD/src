@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Rick Adams.
@@ -34,126 +34,105 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Hacked to change from sgtty to POSIX termio style serial line control
- * and added flag to enable cts/rts style flow control.
- *
- * blymn@awadi.com.au (Brett Lymn) 93.04.04
- */
-
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)slattach.c	4.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: slattach.c,v 1.11 1994/02/10 18:03:23 cgd Exp $";
+/*static char sccsid[] = "from: @(#)slattach.c	8.2 (Berkeley) 1/7/94";*/
+static char *rcsid = "$Id: slattach.c,v 1.12 1994/09/23 01:39:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <netdb.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+
+#include <err.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <netdb.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
 
-#define DEFAULT_BAUD	9600
+int	speed = 9600;
+int	slipdisc = SLIPDISC;
 
-static char usage_str[] = "\
-usage: %s [-h] [-m] [-s <speed>] <device>\n\
-	-h -- turn on CTS/RTS style flow control\n\
-	-m -- maintain DTR after last close (no HUPCL)\n\
-	-s -- baud rate (default 9600)\n";
+char	devicename[32];
 
-int main(int argc, char **argv)
+void	usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
+	register int fd;
+	register char *dev = argv[1];
 	struct termios tty;
-	int option;
-	int fd;
-	char devname[32];
-	char *dev = (char *)0;
-	int slipdisc = SLIPDISC;
-	int speed = DEFAULT_BAUD;
-	int cflags = HUPCL;
+	tcflag_t cflag = HUPCL;
+	int ch;
 
-	extern char *optarg;
-	extern int optind;
-
-	while ((option = getopt(argc, argv, "achmns:")) != EOF) {
-		switch (option) {
+	while ((ch = getopt(argc, argv, "hms:")) != -1) {
+		switch (ch) {
 		case 'h':
-			cflags |= CRTSCTS;
+			cflag |= CRTSCTS;
 			break;
 		case 'm':
-			cflags &= ~HUPCL;
+			cflag &= ~HUPCL;
 			break;
 		case 's':
 			speed = atoi(optarg);
 			break;
 		case '?':
 		default:
-			fprintf(stderr, usage_str, argv[0]);
-			exit(1);
+			usage();
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
-	if (optind == argc - 1)
-		dev = argv[optind];
+	if (argc != 1)
+		usage();
 
-	if (dev == (char *)0) {
-		fprintf(stderr, usage_str, argv[0]);
-		exit(2);
-	}
-
+	dev = *argv;
 	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
-		strcpy(devname, _PATH_DEV);
-		strcat(devname, "/");
-		strncat(devname, dev, 10);
-		dev = devname;
+		(void)snprintf(devicename, sizeof(devicename),
+		    "%s%s", _PATH_DEV, dev);
+		dev = devicename;
 	}
-
 	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0) {
 		perror(dev);
 		exit(1);
 	}
-
-	if (tcgetattr(fd, &tty) < 0) {
-		perror("tcgetattr");
-		close(fd);
-		exit(1);
-	}
+	tty.c_cflag = CREAD | CS8 | cflag;
 	tty.c_iflag = 0;
-	tty.c_oflag = 0;
-	tty.c_cflag = CREAD | CS8 | cflags;
 	tty.c_lflag = 0;
-	tty.c_cc[VMIN] = 1; /* wait for one char */
-	tty.c_cc[VTIME] = 0; /* wait forever for a char */
-	cfsetispeed(&tty, speed);
-	cfsetospeed(&tty, speed);
-	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
-		perror("tcsetattr");
-		close(fd);
-		exit(1);
-	}
-
-	if (ioctl(fd, TIOCSDTR) < 0) {
-                perror("ioctl(TIOCSDTR)");
-                close(fd);
-                exit(1);
-        }
-
-	if (ioctl(fd, TIOCSETD, &slipdisc) < 0) {
-		perror("ioctl(TIOCSETD)");
-		close(fd);
-		exit(1);
-	}
+	tty.c_oflag = 0;
+	tty.c_cc[VMIN] = 1;
+	tty.c_cc[VTIME] = 0;
+	cfsetspeed(&tty, speed);
+	if (tcsetattr(fd, TCSADRAIN, &tty) < 0)
+		err(1, "tcsetattr");
+	if (ioctl(fd, TIOCSDTR, 0) < 0)
+		err(1, "TIOCSDTR");
+	if (ioctl(fd, TIOCSETD, &slipdisc) < 0)
+		err(1, "TIOCSETD");
 
 	if (fork() > 0)
 		exit(0);
-
 	for (;;)
 		sigpause(0L);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: slattach [-hm] [-s baudrate] ttyname\n");
+	exit(1);
 }
