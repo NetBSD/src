@@ -1,0 +1,67 @@
+$NetBSD: TODO,v 1.1.12.2 2002/03/06 02:13:38 simonb Exp $
+
+NetBSD/sbmips to-do list
+
+
+REALLY REALLY SHOULD ("MUST") BE DONE BEFORE INTEGRATION INTO NetBSD:
+
+	* pass1 workarounds code should be removed (i.e. not put into
+	  public libc). 
+
+	  NOTE- no pass1 workarounds are in libc or the toolchain.
+	  Remove the pass1 workarounds in the kernel at some future stage?
+
+
+SHOULD BE DONE BEFORE INTEGRATION INTO NetBSD:
+
+	* redo the softintr code.  it's fairly icky.
+
+	* clean as many changes off of 'stand' as possible.  the files
+	  in there were the most part derived from other ports (alpha
+	  and followers of that style of boot block).
+
+	  NOTE- 'stand' has not been imported to the NetBSD source tree
+	  yet.
+
+General features needed:
+
+	* SMP
+
+	* bus.h support.
+
+	* pci/ldt support (requires bus.h support).
+
+	* ide on generic bus (requires bus.h support).
+
+	* generic smbus support, and support for our controller.
+
+		* TOD clock on smbus.
+
+	* board-level configuration details.
+
+		* swarm LEDs.
+
+		* MAC vs. fifo
+
+		* sync serial vs. duart.
+
+	* fifo driver.
+
+	* sync serial driver.
+
+
+Cleanups / Improvements:
+
+	* mips cache code / pmap for coherent system.
+
+	* sb-1 cache error handler.
+
+	* clean up ethernet driver & tune.
+
+	* interrupt handling/routing.
+
+	* systemsw bits should be made more generic.  possibly apply to
+	  mips.
+
+	* sbscn should be made split into a driver per channel, w/
+	  the features for which that's not possible in pass1 disabled.
