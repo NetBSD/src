@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1998/02/22 00:31:00 mark Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1998/03/27 19:28:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -117,8 +117,6 @@ readdisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct riscbsd_partition *rp = osdep->partitions;
-	struct dkbad *bdp = &osdep->bad;
 	register struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
@@ -161,7 +159,8 @@ readdisklabel(dev, strat, lp, osdep)
 	netbsdpartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
-	if (rp) {
+	if (osdep) {
+		struct riscbsd_partition *rp = osdep->partitions;
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
@@ -308,7 +307,8 @@ readlabel:
 		goto done;
 
 	/* obtain bad sector table if requested and present */
-	if (bdp && (lp->d_flags & D_BADSECT)) {
+	if (osdep && (lp->d_flags & D_BADSECT)) {
+		struct dkbad *bdp = &osdep->bad;
 		struct dkbad *db;
 
 		i = 0;
@@ -422,7 +422,6 @@ writedisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct riscbsd_partition *rp = osdep->partitions;
 	register struct buf *bp;
 	struct disklabel *dlp;
 	int cyl, netbsdpartoff;
@@ -438,7 +437,8 @@ writedisklabel(dev, strat, lp, osdep)
 	netbsdpartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
-	if (rp) {
+	if (osdep) {
+		struct riscbsd_partition *rp = osdep->partitions;
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
