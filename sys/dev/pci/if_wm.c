@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.65 2004/01/14 14:29:48 tsutsui Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.66 2004/02/19 02:13:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.65 2004/01/14 14:29:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.66 2004/02/19 02:13:23 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -615,6 +615,7 @@ static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
 	"txseg17",
 	"txseg18",
 	"txseg19",
+	"txseg20",
 	"txseg21",
 	"txseg22",
 	"txseg23",
