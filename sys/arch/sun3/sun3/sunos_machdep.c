@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.1 1995/04/22 20:29:01 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.2 1995/04/22 21:23:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,19 +60,19 @@
 
 /* sigh.. I guess it's too late to change now, but "our" sigcontext
    is plain vax, not very 68000 (ap, for example..) */
-struct sun_sigcontext {
+struct sunos_sigcontext {
 	int 	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
 	int	sc_sp;			/* sp to restore */
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 };
-struct sun_sigframe {
+struct sunos_sigframe {
 	int	ssf_signum;		/* signo for handler */
 	int	ssf_code;		/* additional info for handler */
-	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
+	struct sunos_sigcontext *ssf_scp;/* context pointer for handler */
 	u_int	ssf_addr;		/* even more info for handler */
-	struct sun_sigcontext ssf_sc;	/* I don't know if that's what 
+	struct sunos_sigcontext ssf_sc;	/* I don't know if that's what 
 					   comes here */
 };
 
@@ -88,8 +88,8 @@ sunos_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct sun_sigframe *fp;
-	struct sun_sigframe kfp;
+	register struct sunos_sigframe *fp;
+	struct sunos_sigframe kfp;
 	register struct frame *frame;
 	register struct sigacts *ps = p->p_sigacts;
 	register short ft;
@@ -100,7 +100,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	ft = frame->f_format;
 	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 
-	/* if this is a hardware fault (ft >= FMT9), sun_sendsig
+	/* if this is a hardware fault (ft >= FMT9), sunos_sendsig
 	   can't currently handle it. Reset signal actions and
 	   have the process die unconditionally. */
 	if (ft >= FMT9) {
@@ -120,25 +120,25 @@ sunos_sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	fsize = sizeof(struct sun_sigframe);
+	fsize = sizeof(struct sunos_sigframe);
 	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_base +
+		fp = (struct sunos_sigframe *)(ps->ps_sigstk.ss_base +
 					 ps->ps_sigstk.ss_size - fsize);
 		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
+		fp = (struct sunos_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sunos_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sun_sendsig(%d): useracc failed on sig %d\n",
+			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
 		/*
@@ -175,7 +175,7 @@ sunos_sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
+		printf("sunos_sendsig(%d): sig %d scp %x sc_sp %x\n",
 		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
 #endif
 
@@ -184,7 +184,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	frame->f_pc = (u_int) catcher;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d returns\n",
+		printf("sunos_sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 }
@@ -200,8 +200,8 @@ sunos_sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-
-sigreturn(p, uap, retval)
+int
+sunos_sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sigreturn_args *uap;
 	int *retval;
@@ -211,6 +211,7 @@ sigreturn(p, uap, retval)
 	register int rf;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
+	struct sunos_sigcontext *sscp, stsigc;
 	int flags;
 
 	scp = SCARG(uap,sigcntxp);
@@ -224,26 +225,17 @@ sigreturn(p, uap, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (p->p_emul == EMUL_SUNOS) {
-	    struct sunos_sigcontext {
-		int ssc_onstack;
-		int ssc_mask;
-		int ssc_sp;
-		int ssc_pc;
-		int ssc_ps;
-	    } *sscp, stsigc;
 
-	    sscp = (struct sunos_sigcontext *) scp;
-	    if (useracc((caddr_t)sscp, sizeof (*sscp), B_WRITE) == 0 ||
-		copyin((caddr_t)sscp, (caddr_t)&stsigc, sizeof stsigc))
-		    return (EINVAL);
-	    sscp = &stsigc;
-	    tsigc.sc_onstack = sscp->ssc_onstack;
-	    tsigc.sc_mask = sscp->ssc_mask;
-	    tsigc.sc_sp = sscp->ssc_sp;
-	    tsigc.sc_ps = sscp->ssc_ps;
-	    tsigc.sc_pc = sscp->ssc_pc;
-	}
+	sscp = (struct sunos_sigcontext *) scp;
+	if (useracc((caddr_t)sscp, sizeof (*sscp), B_WRITE) == 0 ||
+	    copyin((caddr_t)sscp, (caddr_t)&stsigc, sizeof stsigc))
+		return (EINVAL);
+	sscp = &stsigc;
+	tsigc.sc_onstack = sscp->ssc_onstack;
+	tsigc.sc_mask = sscp->ssc_mask;
+	tsigc.sc_sp = sscp->ssc_sp;
+	tsigc.sc_ps = sscp->ssc_ps;
+	tsigc.sc_pc = sscp->ssc_pc;
 
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
@@ -264,7 +256,6 @@ sigreturn(p, uap, retval)
 	return (EJUSTRETURN);
 }
 
-#ifdef	COMPAT_SUNOS
 /*
  * SunOS reboot system call (for compatibility).
  * Sun lets you pass in a boot string which the PROM
@@ -281,10 +272,12 @@ static struct sun_howto_conv {
 	0x008,	RB_HALT,
 	0x080,	RB_DUMP,
 };
+
 struct sun_reboot_args {
 	int howto;
 	char *bootstr;
 };
+
 int sun_reboot(p, uap, retval)
 	struct proc *p;
 	struct sun_reboot_args *uap;
