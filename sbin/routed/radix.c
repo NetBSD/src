@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.8 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.9 1999/03/22 10:25:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: radix.c,v 1.8 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: radix.c,v 1.9 1999/03/22 10:25:23 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -381,7 +381,7 @@ on1:
 		if (cp[x->rn_off] & x->rn_bmask)
 			x = x->rn_r;
 		else x = x->rn_l;
-	} while (b > (int)(unsigned)x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
+	} while (b > (unsigned)x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
 #ifdef RN_DEBUG
 	if (rn_debug)
 		log(LOG_DEBUG, "rn_insert: Going In:\n"), traverse(p);
