@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.11 1996/09/30 23:02:14 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.12 1996/09/30 23:18:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -304,7 +304,7 @@ ELFNAME(read_from)(p, vp, off, buf, size)
 	int resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size,
-			     off, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+			     off, UIO_SYSSPACE, 0, p->p_ucred,
 			     &resid, p)) != 0)
 		return error;
 	/*
@@ -345,10 +345,17 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
          * 2. read filehdr
          * 3. map text, data, and bss out of it using VM_*
          */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
-	if ((error = namei(&nd)) != 0) {
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
+	if ((error = namei(&nd)) != 0)
 		return error;
-	}
+#ifdef notyet /* XXX cgd 960926 */
+	XXX cgd 960926: check vnode type
+	XXX cgd 960926: check mount point for MNT_NOEXEC
+	XXX cgd 960926: check VOP_ACCESS on it.
+	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
+#endif
+	VOP_UNLOCK(nd.ni_vp);
+
 	if ((error = ELFNAME(read_from)(p, nd.ni_vp, 0, (caddr_t) &eh,
 				    sizeof(eh))) != 0)
 		goto bad;
@@ -393,11 +400,17 @@ ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 		}
 	}
 
+	free((char *) ph, M_TEMP);
+	*last = addr;
+	vrele(nd.ni_vp);
+	return 0;
+
 bad:
 	if (ph != NULL)
 		free((char *) ph, M_TEMP);
-
-	*last = addr;
+#ifdef notyet /* XXX cgd 960926 */
+	(maybe) VOP_CLOSE it
+#endif
 	vrele(nd.ni_vp);
 	return error;
 }
