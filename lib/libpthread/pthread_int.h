@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.23 2003/12/31 16:45:48 cl Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.24 2004/01/02 19:14:00 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -158,6 +158,11 @@ struct	__pthread_st {
 	 */
 	pthread_spin_t*	pt_heldlock;
 
+	/* Upcall stack information shared between kernel and
+	 * userland.
+	 */
+	struct sa_stackinfo_t	pt_stackinfo;
+
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
 
@@ -245,6 +250,8 @@ void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Set up/clean up a thread's basic state. */
 void	pthread__initthread(pthread_t self, pthread_t t);
+/* Get offset from stack start to struct sa_stackinfo */
+ssize_t	pthread__stackinfo_offset(void);
 
 /* Go do something else. Don't go back on the run queue */
 void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
