@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.71 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.72 2000/09/07 22:20:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -412,7 +412,7 @@ linux_sys_mmap(p, v, retval)
 	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
 		SCARG(&cma,prot) |= VM_PROT_READ;
 	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = SCARG(uap, fd);
+	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
 	SCARG(&cma,pos) = SCARG(uap, offset);
 
