@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.10 1997/02/19 23:40:30 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.11 1997/02/24 01:47:08 jeremy Exp $
 
 #
 # sun3x-specific configuration info
@@ -103,6 +103,11 @@ file arch/sun3/sun3/intreg.c		intreg
 device iommu
 attach iommu at obio
 file arch/sun3x/sun3x/iommu.c		iommu
+
+device esp: scsi
+attach esp at obio
+file arch/sun3x/dev/esp.c		esp
+file arch/sun3x/dev/dma.c		esp
 
 # device defined in sys/conf/files
 attach le at obio
