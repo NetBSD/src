@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.9 2002/03/30 19:13:44 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.10 2002/04/06 21:46:52 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -343,7 +343,7 @@ extern void isic_hscx_cmd __P(( struct isic_softc *sc, int h_chan, unsigned char
 extern void isic_hscx_waitxfw __P(( struct isic_softc *sc, int h_chan ));
 extern void isic_init_linktab __P((struct isic_softc *sc));
 extern int isic_isac_init __P((struct isic_softc *sc));
-extern int isic_isac_irq __P((struct isic_softc *sc, int r));
+extern void isic_isac_irq __P((struct isic_softc *sc, int r));
 extern void isic_isac_l1_cmd __P((struct isic_softc *sc, int command));
 extern void isic_next_state __P((struct isic_softc *sc, int event));
 extern char * isic_printstate __P((struct isic_softc *sc));
