@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.63 2000/08/01 04:57:29 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.64 2000/08/21 23:40:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -372,6 +372,22 @@ u_int64_t callwheel_softempty;		/* # empty buckets seen */
 #ifndef MAX_SOFTCLOCK_STEPS
 #define	MAX_SOFTCLOCK_STEPS	100
 #endif
+
+struct simplelock callwheel_slock;
+
+#define	CALLWHEEL_LOCK(s)						\
+do {									\
+	s = splclock();							\
+	simple_lock(&callwheel_slock);					\
+} while (0)
+
+#define	CALLWHEEL_UNLOCK(s)						\
+do {									\
+	simple_unlock(&callwheel_slock);				\
+	splx(s);							\
+} while (0)
+
+static void callout_stop_locked(struct callout *);
 
 /*
  * Initialize clock frequencies and start both clocks running.
@@ -874,7 +890,8 @@ softclock(void)
 	int s, idx;
 	int steps = 0;
 
-	s = splhigh();
+	CALLWHEEL_LOCK(s);
+
 	softclock_running = 1;
 
 #ifdef CALLWHEEL_STATS
@@ -899,8 +916,8 @@ softclock(void)
 				if (++steps >= MAX_SOFTCLOCK_STEPS) {
 					nextsoftcheck = c;
 					/* Give interrupts a chance. */
-					splx(s);
-					(void) splhigh();
+					CALLWHEEL_UNLOCK(s);
+					CALLWHEEL_LOCK(s);
 					c = nextsoftcheck;
 					steps = 0;
 				}
@@ -916,9 +933,9 @@ softclock(void)
 				arg = c->c_arg;
 				c->c_func = NULL;
 				c->c_flags &= ~CALLOUT_PENDING;
-				splx(s);
+				CALLWHEEL_UNLOCK(s);
 				(*func)(arg);
-				(void) splhigh();
+				CALLWHEEL_LOCK(s);
 				steps = 0;
 				c = nextsoftcheck;
 			}
@@ -926,7 +943,7 @@ softclock(void)
 	}
 	nextsoftcheck = NULL;
 	softclock_running = 0;
-	splx(s);
+	CALLWHEEL_UNLOCK(s);
 }
 
 /*
@@ -956,6 +973,8 @@ callout_startup(void)
 
 	for (i = 0; i < callwheelsize; i++)
 		TAILQ_INIT(&callwheel[i]);
+
+	simple_lock_init(&callwheel_slock);
 }
 
 /*
@@ -985,15 +1004,14 @@ callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 	if (ticks <= 0)
 		ticks = 1;
 
-	/* Lock out the clock. */
-	s = splhigh();
+	CALLWHEEL_LOCK(s);
 
 	/*
 	 * If this callout's timer is already running, cancel it
 	 * before we modify it.
 	 */
 	if (c->c_flags & CALLOUT_PENDING) {
-		callout_stop(c);
+		callout_stop_locked(c);	/* Already locked */
 #ifdef CALLWHEEL_STATS
 		callwheel_changed++;
 #endif
@@ -1021,28 +1039,23 @@ callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 		    callwheel_sizes[c->c_time & callwheelmask];
 #endif
 
-	splx(s);
+	CALLWHEEL_UNLOCK(s);
 }
 
 /*
- * callout_stop:
+ * callout_stop_locked:
  *
- *	Disestablish a timeout.
+ *	Disestablish a timeout.  Callwheel is locked.
  */
-void
-callout_stop(struct callout *c)
+static void
+callout_stop_locked(struct callout *c)
 {
-	int s;
-
-	/* Lock out the clock. */
-	s = splhigh();
 
 	/*
 	 * Don't attempt to delete a callout that's not on the queue.
 	 */
 	if ((c->c_flags & CALLOUT_PENDING) == 0) {
 		c->c_flags &= ~CALLOUT_ACTIVE;
-		splx(s);
 		return;
 	}
 
@@ -1059,8 +1072,22 @@ callout_stop(struct callout *c)
 #endif
 
 	c->c_func = NULL;
+}
 
-	splx(s);
+/*
+ * callout_stop:
+ *
+ *	Disestablish a timeout.  Callwheel is unlocked.  This is
+ *	the standard entry point.
+ */
+void
+callout_stop(struct callout *c)
+{
+	int s;
+
+	CALLWHEEL_LOCK(s);
+	callout_stop_locked(c);
+	CALLWHEEL_UNLOCK(s);
 }
 
 #ifdef CALLWHEEL_STATS
