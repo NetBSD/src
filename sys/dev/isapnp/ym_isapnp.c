@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.11 1999/10/05 03:47:20 itohy Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.11.12.1 2002/03/27 10:18:51 he Exp $ */
 
 
 /*
@@ -41,6 +41,9 @@
  *
  *  Original code from OpenBSD.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.11.12.1 2002/03/27 10:18:51 he Exp $");
 
 #include "mpu_ym.h"
 
@@ -141,7 +144,6 @@ ym_isapnp_attach(parent, self, aux)
 	}
 	ac->mode = 2;
 	ac->MCE_bit = MODE_CHANGE_ENABLE;
-	ac->chip_name = "OPL3-SA3";
 
 	sc->sc_ad1848.sc_ic  = sc->sc_ic;
 
