@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.7 1997/02/04 00:32:10 cgd Exp $	*/
+/*	$NetBSD: db_print.c,v 1.8 1998/01/31 04:14:46 ross Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,8 +42,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
-
-extern unsigned int	db_maxoff;
 
 /*ARGSUSED*/
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.2 1997/10/24 18:26:36 chuck Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.3 1998/01/31 04:14:48 ross Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -47,6 +47,7 @@
 
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/resourcevar.h>
 
 #include <machine/db_machdep.h>
 
@@ -105,9 +106,11 @@ db_show_all_procs(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+	int i;
 	char *mode;
 	int doingzomb = 0;
 	struct proc *p, *pp;
+	struct timeval tv[3];
     
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
@@ -126,16 +129,17 @@ db_show_all_procs(addr, haddr, count, modif)
 	switch (*mode) {
 
 	case 'a':
-		db_printf("PID        %10s %18s %18s %18s\n",
+		db_printf(" PID       %10s %18s %18s %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'n':
-		db_printf("PID        %10s %10s %10s S %7s %16s %7s\n",
+		db_printf(" PID       %10s %10s %10s S %7s %16s %7s\n",
 		    "PPID", "PGRP", "UID", "FLAGS", "COMMAND", "WAIT");
 		break;
 	case 'w':
-		db_printf("PID        %16s %8s %18s %s\n",
-		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
+		db_printf(" PID       %10s %8s %4s %5s %5s %-12s%s\n",
+		    "COMMAND", "EMUL", "PRI", "UTIME", "STIME",
+		    "WAIT-MSG", "WAIT-CHANNEL");
 		break;
 	}
 
@@ -143,7 +147,7 @@ db_show_all_procs(addr, haddr, count, modif)
 		pp = p->p_pptr;
 		if (p->p_stat) {
 
-			db_printf("%-10d ", p->p_pid);
+			db_printf("%c%-10d", " >"[curproc == p], p->p_pid);
 
 			switch (*mode) {
 
@@ -161,10 +165,19 @@ db_show_all_procs(addr, haddr, count, modif)
 				break;
 
 			case 'w':
-				db_printf("%16s %8s %18p %s\n", p->p_comm,
-				    p->p_emul->e_name, p->p_wchan,
-				    (p->p_wchan && p->p_wmesg) ? 
-					p->p_wmesg : "");
+				db_printf("%10s %8s %4d", p->p_comm,
+				    p->p_emul->e_name,p->p_priority);
+				calcru(p, tv+0, tv+1, tv+2);
+				for(i = 0; i < 2; ++i) {
+					db_printf("%4ld.%1ld", tv[i].tv_sec,
+					    tv[i].tv_usec/100000);
+				}
+				if(p->p_wchan && p->p_wmesg) {
+					db_printf(" %-12s", p->p_wmesg);
+					db_printsym((db_addr_t)p->p_wchan,
+					    DB_STGY_XTRN);
+				}
+				db_printf("\n");
 				break;
 
 			}
