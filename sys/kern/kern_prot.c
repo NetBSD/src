@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.67 2001/11/29 21:21:13 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.68 2001/12/06 23:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.67 2001/11/29 21:21:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.68 2001/12/06 23:11:59 christos Exp $");
 
 #include "opt_compat_43.h"
 
@@ -686,15 +686,6 @@ void
 crfree(cr)
 	struct ucred *cr;
 {
-
-#ifdef DIAGNOSTIC
-	/*
-	 * This check is not too reliable - the memory is likely
-	 * to be reused fast.
-	 */
-	if (cr->cr_ref == 0)
-		panic("crfree: ucred already free");
-#endif
 
 	if (--cr->cr_ref == 0)
 		FREE((caddr_t)cr, M_CRED);
