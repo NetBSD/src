@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.45 2002/02/15 21:28:03 is Exp $
+# $NetBSD: md.amiga,v 1.46 2002/08/07 21:20:52 briggs Exp $
 ./usr/include/amiga	comp-c-include
 ./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/amiga/param.h	comp-c-include
 ./usr/include/amiga/pcb.h	comp-c-include
 ./usr/include/amiga/pmap.h	comp-c-include
+./usr/include/amiga/pmc.h	comp-c-include
 ./usr/include/amiga/proc.h	comp-c-include
 ./usr/include/amiga/profile.h	comp-c-include
 ./usr/include/amiga/psl.h	comp-c-include

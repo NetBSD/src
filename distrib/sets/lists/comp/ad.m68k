@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.27 2002/07/17 23:35:12 fredette Exp $
+# $NetBSD: ad.m68k,v 1.28 2002/08/07 21:20:50 briggs Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/m68k/math.h	comp-c-include
 ./usr/include/m68k/param.h	comp-c-include
 ./usr/include/m68k/pcb.h	comp-c-include
+./usr/include/m68k/pmc.h	comp-c-include
 ./usr/include/m68k/proc.h	comp-c-include
 ./usr/include/m68k/profile.h	comp-c-include
 ./usr/include/m68k/psl.h	comp-c-include

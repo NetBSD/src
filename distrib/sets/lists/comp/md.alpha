@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.38 2002/07/09 02:25:57 lukem Exp $
+# $NetBSD: md.alpha,v 1.39 2002/08/07 21:20:52 briggs Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -42,6 +42,7 @@
 ./usr/include/alpha/pcb.h	comp-c-include
 ./usr/include/alpha/pio.h	comp-c-include
 ./usr/include/alpha/pmap.h	comp-c-include
+./usr/include/alpha/pmc.h	comp-c-include
 ./usr/include/alpha/proc.h	comp-c-include
 ./usr/include/alpha/profile.h	comp-c-include
 ./usr/include/alpha/prom.h	comp-c-include
