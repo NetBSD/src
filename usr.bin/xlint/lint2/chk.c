@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.12 2001/11/21 19:14:26 wiz Exp $ */
+/* $NetBSD: chk.c,v 1.13 2002/01/18 20:14:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.12 2001/11/21 19:14:26 wiz Exp $");
+__RCSID("$NetBSD: chk.c,v 1.13 2002/01/18 20:14:32 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -84,37 +84,37 @@ inittyp(void)
 		{ UNSIGN,   { 0, 0,
 				      SIGNED, UNSIGN,
 				      0, 0, 0, 0, 0, "unsigned" } },
-		{ CHAR,	    { CHAR_BIT, CHAR_BIT,
+		{ CHAR,	    { CHAR_SIZE, CHAR_BIT,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, "char" } },
-		{ SCHAR,    { CHAR_BIT, CHAR_BIT,
+		{ SCHAR,    { CHAR_SIZE, CHAR_BIT,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, "signed char" } },
-		{ UCHAR,    { CHAR_BIT, CHAR_BIT,
+		{ UCHAR,    { CHAR_SIZE, CHAR_BIT,
 				      SCHAR, UCHAR,
 				      1, 1, 0, 1, 1, "unsigned char" } },
-		{ SHORT,    { sizeof (short) * CHAR_BIT, 2 * CHAR_BIT,
+		{ SHORT,    { SHORT_SIZE, 2 * CHAR_BIT,
 				      SHORT, USHORT,
 				      1, 0, 0, 1, 1, "short" } },
-		{ USHORT,   { sizeof (u_short) * CHAR_BIT, 2 * CHAR_BIT,
+		{ USHORT,   { SHORT_SIZE, 2 * CHAR_BIT,
 				      SHORT, USHORT,
 				      1, 1, 0, 1, 1, "unsigned short" } },
-		{ INT,      { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
+		{ INT,      { INT_SIZE, 3 * CHAR_BIT,
 				      INT, UINT,
 				      1, 0, 0, 1, 1, "int" } },
-		{ UINT,     { sizeof (u_int) * CHAR_BIT, 3 * CHAR_BIT,
+		{ UINT,     { INT_SIZE, 3 * CHAR_BIT,
 				      INT, UINT,
 				      1, 1, 0, 1, 1, "unsigned int" } },
-		{ LONG,     { sizeof (long) * CHAR_BIT, 4 * CHAR_BIT,
+		{ LONG,     { LONG_SIZE, 4 * CHAR_BIT,
 				      LONG, ULONG,
 				      1, 0, 0, 1, 1, "long" } },
-		{ ULONG,    { sizeof (u_long) * CHAR_BIT, 4 * CHAR_BIT,
+		{ ULONG,    { LONG_SIZE, 4 * CHAR_BIT,
 				      LONG, ULONG,
 				      1, 1, 0, 1, 1, "unsigned long" } },
-		{ QUAD,     { sizeof (quad_t) * CHAR_BIT, 8 * CHAR_BIT,
+		{ QUAD,     { QUAD_SIZE, 8 * CHAR_BIT,
 				      QUAD, UQUAD,
 				      1, 0, 0, 1, 1, "long long" } },
-		{ UQUAD,    { sizeof (u_quad_t) * CHAR_BIT, 8 * CHAR_BIT,
+		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
 				      QUAD, UQUAD,
 				      1, 1, 0, 1, 1, "unsigned long long" } },
 		{ FLOAT,    { sizeof (float) * CHAR_BIT, 4 * CHAR_BIT,
@@ -138,7 +138,7 @@ inittyp(void)
 		{ ENUM,     { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
 				      ENUM, ENUM,
 				      1, 0, 0, 1, 1, "enum" } },
-		{ PTR,      { sizeof (void *) * CHAR_BIT, 4 * CHAR_BIT,
+		{ PTR,      { PTR_SIZE, 4 * CHAR_BIT,
 				      PTR, PTR,
 				      0, 1, 0, 0, 1, "pointer" } },
 		{ ARRAY,    { -1, -1,
