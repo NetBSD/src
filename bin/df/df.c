@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.23 1996/12/11 03:48:42 thorpej Exp $	*/
+/*	$NetBSD: df.c,v 1.24 1997/07/20 06:00:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -38,17 +38,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1980, 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: df.c,v 1.23 1996/12/11 03:48:42 thorpej Exp $";
+__RCSID("$NetBSD: df.c,v 1.24 1997/07/20 06:00:39 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +65,7 @@ static char rcsid[] = "$NetBSD: df.c,v 1.23 1996/12/11 03:48:42 thorpej Exp $";
 #include <string.h>
 #include <unistd.h>
 
+int	 main __P((int, char *[]));
 int	 bread __P((off_t, void *, int));
 char	*getmntpt __P((char *));
 void	 prtstat __P((struct statfs *, int));
@@ -245,14 +247,16 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist;
+	    (nextcp = strchr(nextcp, ',')) != NULL; i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
-		err(1, NULL);
+		err(1, "can't allocate type array");
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist;
+	    (nextcp = strchr(nextcp, ',')) != NULL; i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}
@@ -419,7 +423,7 @@ bread(off, buf, cnt)
 		/* Probably a dismounted disk if errno == EIO. */
 		if (errno != EIO)
 			(void)fprintf(stderr, "\ndf: %qd: %s\n",
-			    off, strerror(nr > 0 ? EIO : errno));
+			    (long long)off, strerror(nr > 0 ? EIO : errno));
 		return (0);
 	}
 	return (1);
