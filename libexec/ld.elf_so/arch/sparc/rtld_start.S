@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2002/09/12 17:18:41 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2002/09/25 14:38:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -80,14 +80,11 @@ _rtld_start:
 	.global	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
-	save	%sp, -96, %sp		/* setup standard stack frame */
-	ld	[%i7 + 8], %o0		/* obj id is in second PLT slot */
+	ld	[%o7 + 8], %o0		/* obj id is in second PLT slot */
 	srl	%g1, 10, %o1		/* offset is in high 22 bits */
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
 	 sub	%o1, 12*4, %o1		/* first 4 `pltrel' entries missing! */
 
-	mov	%o0, %g1		/* return value == function address */
-	restore				/* get rid of our context */
-	 jmp	%g1			/* and the jmpslot context, then go. */
-	restore
+	jmp	%o0			/* return value == function address */
+	 restore
 
