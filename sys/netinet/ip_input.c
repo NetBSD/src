@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.187 2003/11/26 21:15:47 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.188 2003/12/04 10:02:35 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.187 2003/11/26 21:15:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.188 2003/12/04 10:02:35 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -561,7 +561,7 @@ ip_input(struct mbuf *m)
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/* ipflow (IP fast forwarding) is not compatible with IPsec. */
 	m->m_flags &= ~M_CANFASTFWD;
 #else
