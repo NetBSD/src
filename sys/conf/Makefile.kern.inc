@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.13 2002/05/07 02:00:17 uwe Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.14 2002/05/26 00:15:25 fvdl Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -48,7 +48,7 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-CWARNFLAGS+=	-Werror -Wall -Wno-main
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length
 WEAK_POINTERS?=	no
 .if !(${WEAK_POINTERS} == "yes")
 CWARNFLAGS+=	-Wpointer-arith
