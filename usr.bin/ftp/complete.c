@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.11.2.1 1998/11/10 18:48:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,12 +40,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.11.2.1 1998/11/10 18:48:41 cgd Exp $");
 #endif /* not lint */
 
 /*
  * FTP user program - command and file completion routines
  */
+
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -69,6 +71,10 @@ comparstr(a, b)
 	return (strcmp(*(char **)a, *(char **)b));
 }
 
+#ifndef CC_REFRESH_BEEP
+#define CC_REFRESH_BEEP	9
+#endif
+
 /*
  * Determine if complete is ambiguous. If unique, insert.
  * If no choices, error. If unambiguous prefix, insert that.
@@ -78,6 +84,7 @@ comparstr(a, b)
  *	word	word which started the match
  *	list	list by default
  *	words	stringlist containing possible matches
+ * Returns a result as per el_set(EL_ADDFN, ...)
  */
 static unsigned char
 complete_ambiguous(word, list, words)
@@ -119,14 +126,11 @@ complete_ambiguous(word, list, words)
 			if (el_insertstr(el, insertstr + wordlen) == -1)
 				return (CC_ERROR);
 			else	
-					/*
-					 * XXX: really want CC_REFRESH_BEEP
-					 */
-				return (CC_REFRESH);
+				return (CC_REFRESH_BEEP);
 		}
 	}
 
-	putchar('\n');
+	putc('\n', ttyout);
 	qsort(words->sl_str, words->sl_cur, sizeof(char *), comparstr);
 	list_vertical(words);
 	return (CC_REDISPLAY);
@@ -156,6 +160,10 @@ complete_command(word, list)
 	}
 
 	rv = complete_ambiguous(word, list, words);
+	if (rv == CC_REFRESH) {
+		if (el_insertstr(el, " ") == -1)
+			rv = CC_ERROR;
+	}
 	sl_free(words, 0);
 	return (rv);
 }
@@ -174,6 +182,7 @@ complete_local(word, list)
 	DIR *dd;
 	struct dirent *dp;
 	unsigned char rv;
+	size_t len;
 
 	if ((file = strrchr(word, '/')) == NULL) {
 		dir[0] = '.';
@@ -195,23 +204,43 @@ complete_local(word, list)
 
 	words = sl_init();
 
+	len = strlen(file);
+
 	for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
-		if (strlen(file) > dp->d_namlen)
+		
+#ifndef __SVR4
+		if (len > dp->d_namlen)
 			continue;
-		if (strncmp(file, dp->d_name, strlen(file)) == 0) {
+#else
+		if (len > strlen(dp->d_name))
+			continue;
+#endif
+		if (strncmp(file, dp->d_name, len) == 0) {
 			char *tcp;
 
-			tcp = strdup(dp->d_name);
-			if (tcp == NULL)
-				errx(1, "Can't allocate memory for local dir");
+			tcp = xstrdup(dp->d_name);
 			sl_add(words, tcp);
 		}
 	}
 	closedir(dd);
 
 	rv = complete_ambiguous(file, list, words);
+	if (rv == CC_REFRESH) {
+		struct stat sb;
+		char path[MAXPATHLEN];
+
+		snprintf(path, sizeof(path), "%s/%s", dir, words->sl_str[0]);
+		if (stat(path, &sb) >= 0) {
+			char suffix[2] = " ";
+
+			if (S_ISDIR(sb.st_mode))
+				suffix[0] = '/';
+			if (el_insertstr(el, suffix) == -1)
+				rv = CC_ERROR;
+		}
+	}
 	sl_free(words, 1);
 	return (rv);
 }
@@ -232,7 +261,8 @@ complete_remote(word, list)
 	int		 i;
 	unsigned char	 rv;
 
-	char *dummyargv[] = { "complete", dir, NULL };
+	char *dummyargv[] = { "complete", NULL, NULL };
+	dummyargv[1] = dir;
 
 	if ((file = strrchr(word, '/')) == NULL) {
 		dir[0] = '.';
@@ -270,13 +300,11 @@ complete_remote(word, list)
 				tcp++;
 			else
 				tcp = cp;
-			tcp = strdup(tcp);
-			if (tcp == NULL)
-				errx(1, "Can't allocate memory for remote dir");
+			tcp = xstrdup(tcp);
 			sl_add(dirlist, tcp);
 		}
 		if (emesg != NULL) {
-			printf("\n%s\n", emesg);
+			fprintf(ttyout, "\n%s\n", emesg);
 			return (CC_REDISPLAY);
 		}
 		(void)strcpy(lastdir, dir);
@@ -345,7 +373,7 @@ complete(el, ch)
 
 		/* check for 'continuation' completes (which are uppercase) */
 	if ((cursor_argc > celems) && (celems > 0)
-	    && isupper(c->c_complete[celems-1]))
+	    && isupper((unsigned char) c->c_complete[celems-1]))
 		cursor_argc = celems;
 
 	if (cursor_argc > celems)
@@ -358,7 +386,8 @@ complete(el, ch)
 		case 'r':			/* remote complete */
 		case 'R':
 			if (connected != -1) {
-				puts("\nMust be logged in to complete.");
+				fputs("\nMust be logged in to complete.\n",
+				    ttyout);
 				return (CC_REDISPLAY);
 			}
 			return (complete_remote(word, dolist));
