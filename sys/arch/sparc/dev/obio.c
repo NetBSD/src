@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.44 1998/08/21 14:07:37 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.45 1998/09/05 22:15:51 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ obioattach(parent, self, aux)
 		sc->sc_dmatag = ma->ma_dmatag;
 		sc->sc_intr2ipl = intr_obio2ipl;
 
-		sbus_attach(sc, "obio", ma->ma_node, ma->ma_bp, special4m);
+		sbus_attach_common(sc, "obio", ma->ma_node, ma->ma_bp, special4m);
 	} else {
 		printf("obio on this machine?\n");
 	}
