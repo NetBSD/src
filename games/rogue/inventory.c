@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.5 1997/10/12 11:45:11 lukem Exp $	*/
+/*	$NetBSD: inventory.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.5 1997/10/12 11:45:11 lukem Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,9 @@ __RCSID("$NetBSD: inventory.c,v 1.5 1997/10/12 11:45:11 lukem Exp $");
 #include "rogue.h"
 
 boolean is_wood[WANDS];
-char *press_space = " --press space to continue--";
+const char *press_space = " --press space to continue--";
 
-char *wand_materials[WAND_MATERIALS] = {
+const char *const wand_materials[WAND_MATERIALS] = {
 	"steel ",
 	"bronze ",
 	"gold ",
@@ -96,7 +96,7 @@ char *wand_materials[WAND_MATERIALS] = {
 	"wooden "
 };
 
-char *gems[GEMS] = {
+const char *const gems[GEMS] = {
 	"diamond ",
 	"stibotantalite ",
 	"lapi-lazuli ",
@@ -113,7 +113,7 @@ char *gems[GEMS] = {
 	"garnet "
 };
 
-char *syllables[MAXSYLLABLES] = {
+const char *const syllables[MAXSYLLABLES] = {
 	"blech ",
 	"foo ",
 	"barf ",
@@ -160,10 +160,10 @@ char *syllables[MAXSYLLABLES] = {
 
 struct id_com_s {
 	short com_char;
-	char *com_desc;
+	const char *com_desc;
 };
 
-struct id_com_s com_id_tab[COMS] = {
+const struct id_com_s com_id_tab[COMS] = {
 	{'?',	"?       prints help"},
 	{'r',	"r       read scroll"},
 	{'/',	"/       identify object"},
@@ -216,7 +216,7 @@ struct id_com_s com_id_tab[COMS] = {
 
 void
 inventory(pack, mask)
-	object *pack;
+	const object *pack;
 	unsigned short mask;
 {
 	object *obj;
@@ -453,10 +453,10 @@ make_scroll_titles()
 
 void
 get_desc(obj, desc)
-	object *obj;
+	const object *obj;
 	char *desc;
 {
-	char *item_name;
+	const char *item_name;
 	struct id *id_table;
 	char more_info[32];
 	short i;
@@ -671,7 +671,7 @@ single_inv(ichar)
 
 struct id *
 get_id_table(obj)
-	object *obj;
+	const object *obj;
 {
 	switch(obj->what_is) {
 	case SCROL:
@@ -712,7 +712,7 @@ inv_armor_weapon(is_weapon)
 void
 id_type()
 {
-	char *id;
+	const char *id;
 	int ch;
 	char buf[DCOLS];
 

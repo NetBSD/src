@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.5 1998/09/11 14:10:39 hubertf Exp $	*/
+/*	$NetBSD: pack.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pack.c,v 1.5 1998/09/11 14:10:39 hubertf Exp $");
+__RCSID("$NetBSD: pack.c,v 1.6 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: pack.c,v 1.5 1998/09/11 14:10:39 hubertf Exp $");
 
 #include "rogue.h"
 
-char *curse_message = "you can't, it appears to be cursed";
+const char *curse_message = "you can't, it appears to be cursed";
 
 object *
 add_to_pack(obj, pack, condense)
@@ -280,7 +280,7 @@ wait_for_ack()
 
 short
 pack_letter(prompt, mask)
-	char *prompt;
+	const char *prompt;
 	unsigned short mask;
 {
 	short ch;
@@ -479,7 +479,7 @@ call_it()
 
 short
 pack_count(new_obj)
-	object *new_obj;
+	const object *new_obj;
 {
 	object *obj;
 	short count = 0;
@@ -507,7 +507,7 @@ pack_count(new_obj)
 
 boolean
 mask_pack(pack, mask)
-	object *pack;
+	const object *pack;
 	unsigned short mask;
 {
 	while (pack->next_object) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.6 1998/09/11 14:07:51 hubertf Exp $	*/
+/*	$NetBSD: monster.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.6 1998/09/11 14:07:51 hubertf Exp $");
+__RCSID("$NetBSD: monster.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: monster.c,v 1.6 1998/09/11 14:07:51 hubertf Exp $");
 object level_monsters;
 boolean mon_disappeared;
 
-char *m_names[] = {
+const char *const m_names[] = {
 	"aquator",
 	"bat",
 	"centaur",
@@ -509,7 +509,7 @@ move_mon_to(monster, row, col)
 
 int
 mon_can_go(monster, row, col)
-	object *monster;
+	const object *monster;
 	short row, col;
 {
 	object *obj;
@@ -595,9 +595,9 @@ wake_room(rn, entering, row, col)
 	}
 }
 
-char *
+const char *
 mon_name(monster)
-	object *monster;
+	const object *monster;
 {
 	short ch;
 
@@ -823,7 +823,7 @@ char
 gr_obj_char()
 {
 	short r;
-	char *rs = "%!?]=/):*";
+	const char *rs = "%!?]=/):*";
 
 	r = get_rand(0, 8);
 
@@ -867,7 +867,7 @@ aggravate()
 
 boolean
 mon_sees(monster, row, col)
-	object *monster;
+	const object *monster;
 	int row, col;
 {
 	short rn, rdif, cdif, retval;

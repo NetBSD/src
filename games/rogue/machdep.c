@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1998/07/27 01:12:35 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.8 1998/07/27 01:12:35 mycroft Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.9 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ md_ignore_signals()
 
 int
 md_get_file_id(fname)
-	char *fname;
+	const char *fname;
 {
 	struct stat sbuf;
 
@@ -212,7 +212,7 @@ md_get_file_id(fname)
 
 int
 md_link_count(fname)
-char *fname;
+	const char *fname;
 {
 	struct stat sbuf;
 
@@ -270,7 +270,7 @@ md_gct(rt_buf)
 
 void
 md_gfmt(fname, rt_buf)
-	char *fname;
+	const char *fname;
 	struct rogue_time *rt_buf;
 {
 	struct stat sbuf;
@@ -302,7 +302,7 @@ md_gfmt(fname, rt_buf)
 
 boolean
 md_df(fname)
-	char *fname;
+	const char *fname;
 {
 	if (unlink(fname)) {
 		return(0);
@@ -384,7 +384,7 @@ md_sleep(nsecs)
 
 char *
 md_getenv(name)
-	char *name;
+	const char *name;
 {
 	char *value;
 
@@ -495,7 +495,7 @@ md_lock(l)
 
 void
 md_shell(shell)
-	char *shell;
+	const char *shell;
 {
 	int w;
 

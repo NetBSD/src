@@ -1,4 +1,4 @@
-/*	$NetBSD: hit.c,v 1.4 1997/10/12 11:45:05 lukem Exp $	*/
+/*	$NetBSD: hit.c,v 1.5 1998/11/10 13:01:31 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hit.c,v 1.4 1997/10/12 11:45:05 lukem Exp $");
+__RCSID("$NetBSD: hit.c,v 1.5 1998/11/10 13:01:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ mon_hit(monster)
 	object *monster;
 {
 	short damage, hit_chance;
-	char *mn;
+	const char *mn;
 	float minus;
 
 	if (fight_monster && (monster != fight_monster)) {
@@ -183,7 +183,7 @@ rogue_damage(d, monster, other)
 
 int
 get_damage(ds, r)
-	char *ds;
+	const char *ds;
 	boolean r;
 {
 	int i = 0, j, n, d, total = 0;
@@ -210,7 +210,7 @@ get_damage(ds, r)
 
 int
 get_w_damage(obj)
-	object *obj;
+	const object *obj;
 {
 	char new_damage[12];
 	int to_hit, damage;
@@ -230,7 +230,7 @@ get_w_damage(obj)
 
 int
 get_number(s)
-	char *s;
+	const char *s;
 {
 	int i = 0;
 	int total = 0;
@@ -244,7 +244,7 @@ get_number(s)
 
 long
 lget_number(s)
-	char *s;
+	const char *s;
 {
 	short i = 0;
 	long total = 0;
@@ -258,7 +258,7 @@ lget_number(s)
 
 int
 to_hit(obj)
-	object *obj;
+	const object *obj;
 {
 	if (!obj) {
 		return(1);
@@ -302,7 +302,7 @@ mon_damage(monster, damage)
 	object *monster;
 	short damage;
 {
-	char *mn;
+	const char *mn;
 	short row, col;
 
 	monster->hp_to_kill -= damage;
@@ -440,7 +440,7 @@ get_dir_rc(dir, row, col, allow_off_screen)
 
 int
 get_hit_chance(weapon)
-	object *weapon;
+	const object *weapon;
 {
 	short hit_chance;
 
@@ -452,7 +452,7 @@ get_hit_chance(weapon)
 
 int
 get_weapon_damage(weapon)
-	object *weapon;
+	const object *weapon;
 {
 	short damage;
 

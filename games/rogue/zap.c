@@ -1,4 +1,4 @@
-/*	$NetBSD: zap.c,v 1.4 1997/10/12 11:46:15 lukem Exp $	*/
+/*	$NetBSD: zap.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: zap.c,v 1.4 1997/10/12 11:46:15 lukem Exp $");
+__RCSID("$NetBSD: zap.c,v 1.5 1998/11/10 13:01:32 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,8 @@ bounce(ball, dir, row, col, r)
 	short ball, dir, row, col, r;
 {
 	short orow, ocol;
-	char buf[DCOLS], *s;
+	char buf[DCOLS];
+	const char *s;
 	short i, ch, new_dir = -1, damage;
 	static short btime;
 
