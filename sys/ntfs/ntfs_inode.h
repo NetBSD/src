@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.7 1999/10/09 14:27:42 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.8 1999/10/31 19:45:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -78,10 +78,6 @@ struct ntnode {
 	long		i_nlink;	/* MFR */
 	ino_t		i_mainrec;	/* MFR */
 	u_int32_t	i_frflag;	/* MFR */
-
-	uid_t           i_uid;
-	gid_t           i_gid;
-	mode_t          i_mode;
 };
 
 #define	FN_PRELOADED	0x0001
