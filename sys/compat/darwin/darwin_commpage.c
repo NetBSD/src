@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.1 2004/07/03 00:14:30 manu Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.2 2004/07/03 16:47:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.1 2004/07/03 00:14:30 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.2 2004/07/03 16:47:13 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -177,8 +177,8 @@ darwin_commpage_init(dcp)
 	dcp->dcp_cap |= DARWIN_CAP_CACHE128;
 #endif
 
-	dcp->dcp_2pow52 = 2^52;
-	dcp->dcp_10pow6 = 10^6;
+	dcp->dcp_2pow52 = 4503599627370496ULL;	/* 2^52 */
+	dcp->dcp_10pow6 = 1000000ULL;		/* 10^6 */
 
 	/*
 	 * On Darwin, these are maintained up to date by the kernel 
