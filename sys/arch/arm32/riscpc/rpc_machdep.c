@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.40 2001/02/25 21:31:15 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.41 2001/02/25 23:59:49 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -110,7 +110,9 @@ videomemory_t videomemory;	/* Video memory descriptor */
 /* 	static char bootargs[MAX_BOOT_STRING + 1]; */
 char *boot_args = NULL;
 char *boot_file = NULL;
-int   iomd_mapped = NULL;
+
+extern int *vidc_base;
+extern int *iomd_base;
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -449,6 +451,7 @@ initarm_new_bootloader(bootconf)
 		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM
 	;
 	vidc_base = (int *) VIDC_HW_BASE;
+	iomd_base = (int *) IOMD_HW_BASE;
 
 	/*
 	 * Initialise the physical console
@@ -828,14 +831,9 @@ initarm_new_bootloader(bootconf)
 		bootconfig.display_start = VMEM_VBASE;
 	};
 	vidc_base = (int *) VIDC_BASE;
+	iomd_base = (int *) IOMD_BASE;
 	physcon_display_base(VMEM_VBASE);
 	vidcrender_reinit();
-
-	/*
-	 * flag that the IOMD is mapped ... this allows to use qms slow scrolling
-	 * support wich needs a mapped MEMC
-	 */
-	iomd_mapped = 1;
 
 
 #ifdef VERBOSE_INIT_ARM
@@ -1276,6 +1274,7 @@ initarm_old_bootloader(bootconf)
 			videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	};
 	vidc_base = (int *) VIDC_BASE;
+	iomd_base = (int *) IOMD_BASE;
 
 	/*
 	 * Initialise the physical console
@@ -1880,12 +1879,6 @@ initarm_old_bootloader(bootconf)
 	}
 
 	printf("done.\n");
-
-	/*
-	 * flag that the IOMD is mapped ... this allows to use qms slow scrolling
-	 * support wich needs a mapped MEMC
-	 */
-	iomd_mapped = 1;
 
 	/* Right set up the vectors at the bottom of page 0 */
 	memcpy((char *)0x00000000, page0, page0_end - page0);

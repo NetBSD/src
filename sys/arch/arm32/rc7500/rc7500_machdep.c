@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.30 2001/02/25 17:17:55 reinoud Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.31 2001/02/25 23:59:49 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -82,6 +82,9 @@
 #ifdef RC7500
 #include <arm32/rc7500/rc7500_prom.h>
 #endif
+
+extern int *vidc_base;
+extern int *iomd_base;
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -470,6 +473,7 @@ initarm(prom_id)
 	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	videomemory.vidm_size = videodram_size;
 	vidc_base             = (int *) VIDC_BASE;
+	iomd_base             = (int *) IOMD_BASE;
 
 	kerneldatasize = bootconfig.kernsize + bootconfig.argsize;
 
