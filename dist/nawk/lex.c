@@ -27,7 +27,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <ctype.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 extern YYSTYPE	yylval;
 extern int	infunc;
@@ -43,7 +43,11 @@ typedef struct Keyword {
 	int	type;
 } Keyword;
 
-Keyword keywords[] ={	/* keep sorted: binary searched */
+int peek(void);
+int gettok(char **, int *);
+int binsearch(const char *, const Keyword *, int);
+
+const Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
@@ -426,7 +430,7 @@ int string(void)
 }
 
 
-int binsearch(char *w, Keyword *kp, int n)
+int binsearch(const char *w, const Keyword *kp, int n)
 {
 	int cond, low, mid, high;
 
@@ -446,7 +450,7 @@ int binsearch(char *w, Keyword *kp, int n)
 
 int word(char *w) 
 {
-	Keyword *kp;
+	const Keyword *kp;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));

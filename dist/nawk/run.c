@@ -31,9 +31,11 @@ THIS SOFTWARE.
 #include <stdlib.h>
 #include <time.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 #define tempfree(x)	if (istemp(x)) tfree(x); else
+
+void stdinit(void);
 
 /*
 #undef tempfree
@@ -124,8 +126,6 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 
 void run(Node *a)	/* execution of parse tree starts here */
 {
-	extern void stdinit(void);
-
 	stdinit();
 	execute(a);
 	closeall();

@@ -88,7 +88,7 @@ extern	Node	*pa2stat(Node *, Node *, Node *);
 extern	Node	*linkum(Node *, Node *);
 extern	void	defn(Cell *, Node *, Node *);
 extern	int	isarg(char *);
-extern	char	*tokname(int);
+extern	const char	*tokname(int);
 extern	Cell	*(*proctab[])(Node **, int);
 extern	int	ptoi(void *);
 extern	Node	*itonp(int);
