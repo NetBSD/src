@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.6 1997/10/19 02:34:07 lukem Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.7 1998/02/20 23:45:27 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hexsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: hexsyntax.c,v 1.6 1997/10/19 02:34:07 lukem Exp $");
+__RCSID("$NetBSD: hexsyntax.c,v 1.7 1998/02/20 23:45:27 jeremy Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ newsyntax(argc, argvp)
 	char *p, **argv;
 
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "bcde:f:n:os:vx")) != -1)
+	while ((ch = getopt(argc, argv, "bcCde:f:n:os:vx")) != -1)
 		switch (ch) {
 		case 'b':
 			add("\"%07.7_Ax\n\"");
@@ -72,6 +72,11 @@ newsyntax(argc, argvp)
 		case 'c':
 			add("\"%07.7_Ax\n\"");
 			add("\"%07.7_ax \" 16/1 \"%3_c \" \"\\n\"");
+			break;
+		case 'C':
+			add("\"%08.8_Ax\n\"");
+			add("\"%08.8_ax  \" 8/1 \"%02x \" \"  \" 8/1 \"%02x \" ");
+			add("\"  |\" 16/1 \"%_p\" \"|\\n\"");
 			break;
 		case 'd':
 			add("\"%07.7_Ax\n\"");
