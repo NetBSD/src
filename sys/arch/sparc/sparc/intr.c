@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.84 2004/04/17 10:01:55 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.85 2004/04/17 22:34:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.84 2004/04/17 10:01:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.85 2004/04/17 22:34:14 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -74,7 +74,14 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.84 2004/04/17 10:01:55 pk Exp $");
 void *softnet_cookie;
 #if defined(MULTIPROCESSOR)
 void *xcall_cookie;
+
+/* Stats */
+struct evcnt lev13_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","std");
+struct evcnt lev14_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","fast");
+EVCNT_ATTACH_STATIC(lev13_evcnt);
+EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
+
 
 void	strayintr __P((struct clockframe *));
 #ifdef DIAGNOSTIC
@@ -356,6 +363,9 @@ nmi_soft(tf)
  */
 static void xcallintr(void *v)
 {
+
+	/* Tally */
+	lev13_evcnt.ev_count++;
 
 	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
