@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.17 1997/07/04 21:23:53 christos Exp $	*/
+/*	$NetBSD: csh.c,v 1.17.2.1 1998/05/08 22:27:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.17 1997/07/04 21:23:53 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.17.2.1 1998/05/08 22:27:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,11 @@ __RCSID("$NetBSD: csh.c,v 1.17 1997/07/04 21:23:53 christos Exp $");
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <locale.h>
 #include <unistd.h>
 #include <vis.h>
+#include <paths.h>	/* should this be included in pathnames.h instead? */
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -111,7 +113,9 @@ static int	srcfile __P((char *, bool, bool));
 static void	phup __P((int));
 static void	srcunit __P((int, bool, bool));
 static void	mailchk __P((void));
+#ifndef _PATH_DEFPATH
 static Char   **defaultpath __P((void));
+#endif
 
 int main __P((int, char **));
 
@@ -258,10 +262,15 @@ main(argc, argv)
     /*
      * Re-initialize path if set in environment
      */
-    if ((tcp = getenv("PATH")) == NULL)
+    if ((tcp = getenv("PATH")) == NULL) {
+#ifdef _PATH_DEFPATH
+	importpath(SAVE(_PATH_DEFPATH));
+#else
 	setq(STRpath, defaultpath(), &shvhed);
-    else
+#endif
+    } else {
 	importpath(SAVE(tcp));
+    }
 
     set(STRshell, Strsave(STR_SHELLPATH));
 
@@ -1326,6 +1335,7 @@ xexit(i)
     _exit(i);
 }
 
+#ifndef _PATH_DEFPATH
 static Char **
 defaultpath()
 {
@@ -1352,6 +1362,7 @@ defaultpath()
     *blkp = NULL;
     return (blk);
 }
+#endif /* _PATH_DEFPATH */
 
 void
 printprompt()
