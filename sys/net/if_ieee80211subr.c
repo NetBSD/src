@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.21 2002/10/15 08:51:50 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.22 2002/10/16 11:29:30 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.21 2002/10/15 08:51:50 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.22 2002/10/16 11:29:30 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2941,6 +2941,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 					break;
 			}
 			ic->ic_flags &= ~IEEE80211_F_SCANAP;
+			memcpy(ic->ic_chan_active, ic->ic_chan_avail,
+			    sizeof(ic->ic_chan_active));
 		}
 		i = 0;
 		ap = (void *)((char *)wreq.wi_val + sizeof(i));
@@ -2948,15 +2950,21 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if ((caddr_t)(ap + 1) > (caddr_t)(&wreq + 1))
 				break;
 			memset(ap, 0, sizeof(*ap));
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 				IEEE80211_ADDR_COPY(ap->bssid, ni->ni_macaddr);
-			else
+				ap->namelen = ic->ic_des_esslen;
+				if (ic->ic_des_esslen)
+					memcpy(ap->name, ic->ic_des_essid,
+					    ic->ic_des_esslen);
+			} else {
 				IEEE80211_ADDR_COPY(ap->bssid, ni->ni_bssid);
+				ap->namelen = ni->ni_esslen;
+				if (ni->ni_esslen)
+					memcpy(ap->name, ni->ni_essid,
+					    ni->ni_esslen);
+			}
 			ap->channel = ni->ni_chan;
 			ap->signal = ni->ni_rssi;
-			ap->namelen = ni->ni_esslen;
-			if (ni->ni_esslen)
-				memcpy(ap->name, ni->ni_essid, ni->ni_esslen);
 			ap->capinfo = ni->ni_capinfo;
 			ap->interval = ni->ni_intval;
 			for (j = 0; j < ni->ni_nrate; j++) {
@@ -3262,6 +3270,8 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = EPERM;
 		break;
 	case WI_RID_SCAN_APS:
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			break;
 		wreq.wi_len -= 2;	/* XXX: tx rate? */
 		/* FALLTHRU */
 	case WI_RID_CHANNEL_LIST:
