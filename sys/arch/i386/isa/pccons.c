@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.62 1994/04/07 06:51:08 mycroft Exp $
+ *	$Id: pccons.c,v 1.63 1994/04/24 01:34:14 mycroft Exp $
  */
 
 /*
@@ -65,7 +65,7 @@
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
 
-#include <i386/isa/isa.h>
+#include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/kbdreg.h>
@@ -155,8 +155,10 @@ kbd_wait()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_IBF) == 0)
+		if ((inb(KBSTATP) & KBS_IBF) == 0) {
+			delay(6);
 			return 1;
+		}
 	return 0;
 }
 
@@ -214,6 +216,7 @@ kbd_cmd(val, polling)
 			for (i = 100000; i; i--) {
 				if (inb(KBSTATP) & KBS_DIB) {
 					register u_char c;
+					delay(6);
 					c = inb(KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
@@ -330,14 +333,17 @@ pcprobe(parent, self, aux)
 
 #if 1
 	/* Flush any garbage. */
-	while (inb(KBSTATP) & KBS_DIB)
+	while (inb(KBSTATP) & KBS_DIB) {
+		delay(6);
 		(void) inb(KBDATAP);
+	}
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
 		printf("pcprobe: reset error %d\n", 1);
 		goto lose;
 	}
 	while ((inb(KBSTATP) & KBS_DIB) == 0);
+	delay(6);
 	if (inb(KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
@@ -347,8 +353,10 @@ pcprobe(parent, self, aux)
 	 * This is kind of stupid, but we account for them anyway by just
 	 * flushing the buffer.
 	 */
-	while (inb(KBSTATP) & KBS_DIB)
+	while (inb(KBSTATP) & KBS_DIB) {
+		delay(6);
 		(void) inb(KBDATAP);
+	}
 	/* Just to be sure. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error %d\n", 3);
