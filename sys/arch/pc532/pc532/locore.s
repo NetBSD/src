@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 1996/02/01 22:32:06 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 1996/02/02 20:05:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -47,12 +47,11 @@
 /*
  * Tell include files that we don't want any C stuff.
  */
-#define _LOCORE
-
 #include "assym.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
+
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
