@@ -1,6 +1,7 @@
-/*	$NetBSD: endian.h,v 1.15 1995/03/28 18:16:54 jtc Exp $	*/
+/*	$NetBSD: endian.h,v 1.16 1995/06/01 17:19:18 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1987, 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -69,14 +70,14 @@ __END_DECLS
 #ifdef __GNUC__
 
 #if defined(_KERNEL) && !defined(I386_CPU)
-#define __byte_swap_long(x) \
+#define	__byte_swap_long_variable(x) \
 ({ register unsigned long __x = (x); \
    __asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #else
-#define __byte_swap_long(x) \
+#define	__byte_swap_long_variable(x) \
 ({ register unsigned long __x = (x); \
    __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=r" (__x) \
@@ -84,12 +85,36 @@ __END_DECLS
    __x; })
 #endif	/* _KERNEL && ... */
 
-#define __byte_swap_word(x) \
+#define	__byte_swap_word_variable(x) \
 ({ register unsigned short __x = (x); \
    __asm ("rorw $8, %w1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
+
+#ifdef __OPTIMIZE__
+
+#define	__byte_swap_long_constant(x) \
+	((((x) & 0xff000000) >> 24) | \
+	 (((x) & 0x00ff0000) >>  8) | \
+	 (((x) & 0x0000ff00) <<  8) | \
+	 (((x) & 0x000000ff) << 24))
+#define	__byte_swap_word_constant(x) \
+	((((x) & 0xff00) >> 8) | \
+	 (((x) & 0x00ff) << 8))
+#define	__byte_swap_long(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_long_constant(x) : __byte_swap_long_variable(x))
+#define	__byte_swap_word(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_word_constant(x) : __byte_swap_word_variable(x))
+
+#else /* __OPTIMIZE__ */
+
+#define	__byte_swap_long(x)	__byte_swap_long_variable(x)
+#define	__byte_swap_word(x)	__byte_swap_word_variable(x)
+
+#endif /* __OPTIMIZE__ */
 
 #define	ntohl(x)	__byte_swap_long(x)
 #define	ntohs(x)	__byte_swap_word(x)
