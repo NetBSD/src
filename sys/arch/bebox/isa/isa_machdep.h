@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6 1998/06/09 01:06:33 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.7 1998/08/24 01:40:29 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ struct bebox_isa_dma_cookie {
 #define	DMA_BOUNCE      8		/* one buffer per channel */
 #endif
 
-extern vm_offset_t isaphysmem;
+extern paddr_t isaphysmem;
 
 /*
  * Miscellanous functions.

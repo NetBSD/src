@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.16 1998/08/17 22:30:08 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.17 1998/08/24 01:40:26 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,15 +60,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -95,7 +86,7 @@
 #include <bebox/isa/isa_machdep.h>
 
 int	_bus_dmamap_load_buffer __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int));
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int));
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -173,7 +164,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -205,7 +196,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -248,7 +239,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -371,7 +362,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern vm_offset_t avail_end;		/* XXX temporary */
+	extern paddr_t avail_end;		/* XXX temporary */
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, trunc_page(avail_end)));
@@ -426,7 +417,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg, s;
 
@@ -485,9 +476,9 @@ _bus_dmamem_unmap(t, kva, size)
 	size = round_page(size);
 	s = splimp();
 #if defined(UVM)
-	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
+	uvm_km_free(kmem_map, (vaddr_t)kva, size);
 #else
-	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	kmem_free(kmem_map, (vaddr_t)kva, size);
 #endif
 	splx(s);
 }
@@ -544,13 +535,13 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -645,10 +636,10 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	int nsegs;
 	int *rsegs;
 	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+	paddr_t low;
+	paddr_t high;
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	vm_page_t m;
 	struct pglist mlist;
 	int curseg, error;
