@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.1 1999/01/12 03:08:14 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.2 2000/01/21 17:11:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,12 +48,8 @@
 #include <sys/featuretest.h>
 
 __BEGIN_DECLS
-#ifdef _REENTRANT
 extern int *__errno __P((void));
 #define errno (*__errno())
-#else
-extern int errno;
-#endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
