@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.247 2000/07/17 05:49:28 mrg Exp $
+#	$NetBSD: mi,v 1.248 2000/07/26 23:00:23 pk Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2938,6 +2938,7 @@
 ./usr/share/man/cat9/suword.0		comp-kern-catman
 ./usr/share/man/cat9/time.0		comp-kern-catman
 ./usr/share/man/cat9/timeout.0		comp-kern-catman
+./usr/share/man/cat9/todr.0		comp-kern-catman
 ./usr/share/man/cat9/tsleep.0		comp-kern-catman
 ./usr/share/man/cat9/ttyprintf.0		comp-kern-catman
 ./usr/share/man/cat9/uao_create.0		comp-kern-catman
@@ -4556,6 +4557,7 @@
 ./usr/share/man/man9/suword.9		comp-kern-man
 ./usr/share/man/man9/time.9		comp-kern-man
 ./usr/share/man/man9/timeout.9		comp-kern-man
+./usr/share/man/man9/todr.9		comp-kern-man
 ./usr/share/man/man9/tsleep.9		comp-kern-man
 ./usr/share/man/man9/ttyprintf.9		comp-kern-man
 ./usr/share/man/man9/uao_create.9		comp-kern-man
