@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.97 1996/05/03 19:48:22 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.98 1996/05/05 19:52:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -269,8 +269,8 @@ sdopen(dev, flag, fmt, p)
 	sc_link = sd->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
-	    sd_cd.cd_ndevs));
+	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
+	    sd_cd.cd_ndevs, SDPART(dev)));
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
