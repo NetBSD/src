@@ -1,4 +1,4 @@
-/*	$NetBSD: apm-proto.h,v 1.3 1997/07/30 22:54:02 jtc Exp $ */
+/*	$NetBSD: apm-proto.h,v 1.4 2005/03/16 01:44:46 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,5 +62,5 @@ struct apm_reply {
 
 #define APMD_VNO	1
 
-extern const char *battstate __P((int state));
-extern const char *ac_state __P((int state));
+extern const char *battstate(int state);
+extern const char *ac_state(int state);
