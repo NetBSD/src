@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.16 2003/05/27 02:37:24 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.17 2003/06/30 11:48:05 wiz Exp $
 .\"	$KAME: setkey.8,v 1.73 2002/05/14 11:05:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -443,7 +443,7 @@ means that IPsec operation will not take place onto the packet.
 means that IPsec operation will take place onto the packet.
 The part of
 .Ar protocol/mode/src-dst/level
-specifies the rule how to process the packet .
+specifies the rule how to process the packet.
 Either
 .Li ah ,
 .Li esp
@@ -508,7 +508,7 @@ separated by colon
 .Sq \&:
 like the following;
 .Li unique:number .
-in order to bind this policy to the SA .
+in order to bind this policy to the SA.
 .Li number
 must be between 1 and 32767.
 It corresponds to
