@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 11:44:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/10 04:12:42 mycroft Exp $
 
 .include "../Makefile.inc"
 
@@ -13,7 +13,7 @@ KMOD=	compat_osf1
 
 # common source files
 SRCS=	lkminit_emul.c
-SRCS+=	osf1_cvt.c osf1_cvt_errno.c osf1_cvt_signal.c osf1_descrip.c \
+SRCS+=	osf1_cvt.c osf1_errno.c osf1_signal.c osf1_descrip.c \
 	osf1_exec.c osf1_file.c osf1_generic.c osf1_ioctl.c osf1_misc.c	\
 	osf1_mmap.c osf1_mount.c osf1_prot.c osf1_resource.c osf1_signal.c \
 	osf1_socket.c osf1_syscalls.c osf1_sysent.c osf1_sysv_ipc.c \
