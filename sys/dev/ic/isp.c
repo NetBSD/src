@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.93 2002/04/20 05:05:56 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.94 2002/05/17 18:49:42 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.93 2002/04/20 05:05:56 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.94 2002/05/17 18:49:42 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -138,6 +138,8 @@ static const char sc1[] =
 static const char sc2[] = "%s CHAN %d TGT %d FLAGS 0x%x 0x%x/0x%x";
 static const char sc3[] = "Generated";
 static const char sc4[] = "NVRAM";
+static const char bun[] =
+    "bad underrun for %d.%d (count %d, resid %d, status %s)";
 
 /*
  * Local function prototypes.
@@ -705,8 +707,10 @@ again:
 	mbs.param[0] = MBOX_EXEC_FIRMWARE;
 	mbs.param[1] = code_org;
 	isp_mboxcmd(isp, &mbs, MBLOGNONE);
-	/* give it a chance to start */
-	USEC_SLEEP(isp, 500);
+	/*
+	 * Give it a chance to start.
+	 */
+	USEC_DELAY(500);
 
 	if (IS_SCSI(isp)) {
 		/*
@@ -1205,7 +1209,6 @@ isp_fibre_init(struct ispsoftc *isp)
 	 * Insist on Port Database Update Async notifications
 	 */
 	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
-
 
 	/*
 	 * Make sure that target role reflects into fwoptions.
@@ -3868,6 +3871,7 @@ again:
 static int
 isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 {
+	int rval = 0;
 	int bus;
 
 	if (IS_DUALBUS(isp)) {
@@ -3881,14 +3885,16 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 	case ASYNC_BUS_RESET:
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		isp_async(isp, ISPASYNC_BUS_RESET, &bus);
 		break;
 	case ASYNC_SYSTEM_ERROR:
 		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
 		/* no point continuing after this */
-		return (-1);
+		rval = -1;
+		break;
 
 	case ASYNC_RQS_XFER_ERR:
 		isp_prt(isp, ISP_LOGERR, "Request Queue Transfer Error");
@@ -3912,7 +3918,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		    "timeout initiated SCSI bus reset of bus %d", bus);
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -3920,7 +3927,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_prt(isp, ISP_LOGINFO, "device reset on bus %d", bus);
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -4006,19 +4014,19 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		break;
 
 	case ASYNC_CTIO_DONE:
+	{
 #ifdef	ISP_TARGET_MODE
-		/*
-		 * Bus gets overloaded with the handle. Dual bus
-		 * cards don't put bus# into the handle.
-		 */
-		isp_target_async(isp, ((ISP_READ(isp, OUTMAILBOX2) << 16) |
-		    ISP_READ(isp, OUTMAILBOX1)), mbox);
+		int handle =
+		    (ISP_READ(isp, OUTMAILBOX2) << 16) | 
+		    (ISP_READ(isp, OUTMAILBOX1));
+		if (isp_target_async(isp, handle, mbox))
+			rval = -1;
 #else
 		isp_prt(isp, ISP_LOGINFO, "Fast Posting CTIO done");
 #endif
 		isp->isp_fphccmplt++;	/* count it as a fast posting intr */
-		return (0);
-
+		break;
+	}
 	case ASYNC_LIP_F8:
 	case ASYNC_LIP_OCCURRED:
 		FCPARAM(isp)->isp_lipseq =
@@ -4029,7 +4037,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LIP, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		/*
 		 * We've had problems with data corruption occuring on
@@ -4063,7 +4072,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_UP, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -4074,7 +4084,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_DOWN, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -4085,7 +4096,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_RESET, NULL);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		break;
 
@@ -4116,7 +4128,8 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 		isp_async(isp, ISPASYNC_CHANGE_NOTIFY, ISPASYNC_CHANGE_OTHER);
 #ifdef	ISP_TARGET_MODE
-		isp_target_async(isp, bus, mbox);
+		if (isp_target_async(isp, bus, mbox))
+			rval = -1;
 #endif
 		isp_prt(isp, ISP_LOGINFO, "Point-to-Point mode");
 		break;
@@ -4141,7 +4154,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
 			isp_reinit(isp);
 #ifdef	ISP_TARGET_MODE
-			isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
+			(void) isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
 #endif
 			/* no point continuing after this */
 			return (-1);
@@ -4185,7 +4198,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 	} else {
 		isp->isp_intoasync++;
 	}
-	return (0);
+	return (rval);
 }
 
 /*
@@ -4428,11 +4441,25 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 		break;
 
 	case RQCS_DATA_UNDERRUN:
+	{
+		if (IS_FC(isp)) {
+			int ru_marked = (sp->req_scsi_status & RQCS_RU) != 0;
+			if (!ru_marked || sp->req_resid > XS_XFRLEN(xs)) {
+				isp_prt(isp, ISP_LOGWARN, bun, XS_TGT(xs),
+				    XS_LUN(xs), XS_XFRLEN(xs), sp->req_resid,
+				    (ru_marked)? "marked" : "not marked");
+				if (XS_NOERR(xs)) {
+					XS_SETERR(xs, HBA_BOTCH);
+				}
+				return;
+			}
+		}
 		XS_RESID(xs) = sp->req_resid;
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_NOERROR);
 		}
 		return;
+	}
 
 	case RQCS_XACT_ERR1:
 		isp_prt(isp, ISP_LOGERR, xact1, XS_CHANNEL(xs),
@@ -4455,8 +4482,8 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 
 	case RQCS_QUEUE_FULL:
 		isp_prt(isp, ISP_LOGDEBUG0,
-		    "internal queues full for %d.%d.%d status 0x%x", XS_TGT(xs),
-		    XS_LUN(xs), XS_CHANNEL(xs), *XS_STSP(xs));
+		    "internal queues full for %d.%d.%d status 0x%x",
+		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), *XS_STSP(xs));
 
 		/*
 		 * If QFULL or some other status byte is set, then this
@@ -4538,13 +4565,14 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 		 */
 		if ((sp->req_completion_status & 0xff) == RQCS_PORT_UNAVAILABLE)
 			isp_prt(isp, ISP_LOGINFO,
-			    "Port Unavailable for target %d", XS_TGT(xs));
+			    "port unavailable for target %d", XS_TGT(xs));
 		else
 			isp_prt(isp, ISP_LOGINFO,
 			    "port logout for target %d", XS_TGT(xs));
 		/*
 		 * If we're on a local loop, force a LIP (which is overkill)
-		 * to force a re-login of this unit.
+		 * to force a re-login of this unit. If we're on fabric,
+		 * then we'll have to relogin as a matter of course.
 		 */
 		if (FCPARAM(isp)->isp_topo == TOPO_NL_PORT ||
 		    FCPARAM(isp)->isp_topo == TOPO_FL_PORT) {
@@ -4964,8 +4992,8 @@ static u_int16_t mbpfc[] = {
 	ISPOPMAP(0x00, 0x00),	/* 0x58: */
 	ISPOPMAP(0x00, 0x00),	/* 0x59: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5a: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5b: */
-	ISPOPMAP(0x00, 0x00),	/* 0x5c: */
+	ISPOPMAP(0x03, 0x01),	/* 0x5b: MBOX_DRIVER_HEARTBEAT */
+	ISPOPMAP(0xcf, 0x01),	/* 0x5c: MBOX_FW_HEARTBEAT */
 	ISPOPMAP(0x07, 0x03),	/* 0x5d: MBOX_GET_SET_DATA_RATE */
 	ISPOPMAP(0x00, 0x00),	/* 0x5e: */
 	ISPOPMAP(0x00, 0x00),	/* 0x5f: */
@@ -6267,8 +6295,9 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 		ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
 	fcp->isp_fwoptions = ISP2100_NVRAM_OPTIONS(nvram_data);
 	isp_prt(isp, ISP_LOGDEBUG0,
-	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x",
-	    fcp->isp_maxfrmlen, fcp->isp_execthrottle, fcp->isp_fwoptions);
+	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x loopid %x",
+	    fcp->isp_maxfrmlen, fcp->isp_execthrottle, fcp->isp_fwoptions,
+	    fcp->isp_loopid);
 }
 
 #ifdef	ISP_FW_CRASH_DUMP

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.20 2002/04/11 02:32:05 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.21 2002/05/17 18:49:43 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -237,7 +237,7 @@ isp_fc_runstate(struct ispsoftc *isp, int tval)
 	fcparam *fcp;
 	int *tptr;
 
-	if (IS_SCSI(isp) || isp->isp_role == ISP_ROLE_NONE)
+	if (IS_SCSI(isp))
 		return (0);
 
 	tptr = tval? &tval : NULL;
