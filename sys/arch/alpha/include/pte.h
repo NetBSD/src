@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.13 1998/03/07 01:10:06 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.14 1998/03/07 01:44:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _ALPHA_PTE_H_
+#define	_ALPHA_PTE_H_
 
 /*
  * Alpha page table entry.
@@ -66,21 +69,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
 
-#if 0 /* XXX NOT HERE */
-#define	K0SEG_BEGIN	0xfffffc0000000000	/* unmapped, cached */
-#define	K0SEG_END	0xfffffe0000000000
-#define PHYS_UNCACHED	0x0000000040000000
-#endif
-
 #ifndef _LOCORE
-#if 0 /* XXX NOT HERE */
-#define	k0segtophys(x)	((vm_offset_t)(x) & 0x00000003ffffffff)
-#define	phystok0seg(x)	((vm_offset_t)(x) | K0SEG_BEGIN)
-
-#define phystouncached(x) ((vm_offset_t)(x) | PHYS_UNCACHED)
-#define uncachedtophys(x) ((vm_offset_t)(x) & ~PHYS_UNCACHED)
-#endif
-
 #define	PTEMASK		(NPTEPG - 1)
 #define	l3pte_index(va)	(((va) >> PGSHIFT) & PTEMASK)
 #define	l2pte_index(va)	(((va) >> SEGSHIFT) & PTEMASK)
@@ -92,7 +81,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 
 #ifdef _KERNEL
 extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	vm_size_t Sysmapsize;		/* number of pte's in Sysmap */
-#endif
-#endif
+#endif /* _KERNEL */
+#endif /* ! _LOCORE */
+
+#endif /* ! _ALPHA_PTE_H_ */
