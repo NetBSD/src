@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/02/03 16:35:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/02/21 15:07:38 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -54,6 +54,8 @@ HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 # turn off small gethostby* temporarily
 HACKOBJS:= ${HACKOBJS:Ngethost.o}
+
+release:
 
 clean cleandir distclean:
 	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi; \
