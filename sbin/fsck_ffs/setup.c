@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.12 1994/09/23 14:27:21 mycroft Exp $";
+static char *rcsid = "$Id: setup.c,v 1.13 1994/09/23 23:49:16 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -369,7 +369,7 @@ readsb(listerr)
 	altsblock.fs_qfmask = sblock.fs_qfmask;
 	altsblock.fs_state = sblock.fs_state;
 	altsblock.fs_maxfilesize = sblock.fs_maxfilesize;
-	if (bcmp((char *)&sblock, (char *)&altsblock, (int)sblock.fs_sbsize)) {
+	if (memcmp(&sblock, &altsblock, (int)sblock.fs_sbsize)) {
 		badsb(listerr,
 		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
 		return (0);

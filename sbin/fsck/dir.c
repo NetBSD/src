@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.11 1994/09/23 14:27:11 mycroft Exp $";
+static char *rcsid = "$Id: dir.c,v 1.12 1994/09/23 23:48:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -359,7 +359,7 @@ chgino(idesc)
 {
 	register struct direct *dirp = idesc->id_dirp;
 
-	if (bcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
+	if (memcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
 		return (KEEPON);
 	dirp->d_ino = idesc->id_parent;
 	if (newinofmt)

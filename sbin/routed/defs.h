@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/5/93
- *	$Id: defs.h,v 1.6 1994/05/13 08:04:34 mycroft Exp $
+ *	$Id: defs.h,v 1.7 1994/09/23 23:49:20 mycroft Exp $
  */
 
 /*
@@ -64,7 +64,7 @@
 #define	CHECK_INTERVAL	(1*60)
 
 #define equal(a1, a2) \
-	(bcmp((caddr_t)(a1), (caddr_t)(a2), sizeof (struct sockaddr)) == 0)
+	(memcmp((a1), (a2), sizeof (struct sockaddr)) == 0)
 
 struct	sockaddr_in addr;	/* address of daemon's socket */
 

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	8.8 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: newfs.c,v 1.11 1994/09/23 14:27:42 mycroft Exp $";
+static char *rcsid = "$Id: newfs.c,v 1.12 1994/09/23 23:51:31 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -499,7 +499,7 @@ main(argc, argv)
 	if (realsectorsize != DEV_BSIZE)
 		pp->p_size *= DEV_BSIZE / realsectorsize;
 #endif
-	if (!Nflag && bcmp(pp, &oldpartition, sizeof(oldpartition)))
+	if (!Nflag && memcmp(pp, &oldpartition, sizeof(oldpartition)))
 		rewritelabel(special, fso, lp);
 	if (!Nflag)
 		close(fso);

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)query.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: query.c,v 1.6 1994/09/23 14:28:12 mycroft Exp $";
+static char *rcsid = "$Id: query.c,v 1.7 1994/09/23 23:49:26 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -234,7 +234,7 @@ rip_input(from, size)
 				struct in_addr subnaddr, inet_makeaddr();
 
 				subnaddr = inet_makeaddr(subnet, INADDR_ANY);
-				if (bcmp(&sin->sin_addr, &subnaddr,
+				if (memcmp(&sin->sin_addr, &subnaddr,
 				    sizeof(subnaddr)) == 0)
 					name = np->n_name;
 				else

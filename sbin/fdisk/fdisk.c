@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.5 1994/09/23 05:30:10 mycroft Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.6 1994/09/23 23:48:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -281,7 +281,7 @@ print_part(part)
 	struct dos_partition *partp;
 
 	partp = &mboot.parts[part];
-	if (!bcmp(partp, &mtpart, sizeof(struct dos_partition))) {
+	if (!memcmp(partp, &mtpart, sizeof(struct dos_partition))) {
 		printf("<UNUSED>\n");
 		return;
 	}

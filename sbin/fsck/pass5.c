@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass5.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: pass5.c,v 1.7 1994/09/23 14:27:18 mycroft Exp $";
+static char *rcsid = "$Id: pass5.c,v 1.8 1994/09/23 23:49:15 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,7 +281,7 @@ pass5()
 		cstotal.cs_nifree += newcg->cg_cs.cs_nifree;
 		cstotal.cs_ndir += newcg->cg_cs.cs_ndir;
 		cs = &fs->fs_cs(fs, c);
-		if (bcmp((char *)&newcg->cg_cs, (char *)cs, sizeof *cs) != 0 &&
+		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0 &&
 		    dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 			memcpy(cs, &newcg->cg_cs, sizeof *cs);
 			sbdirty();
@@ -291,16 +291,16 @@ pass5()
 			cgdirty();
 			continue;
 		}
-		if (bcmp(cg_inosused(newcg),
-			 cg_inosused(cg), mapsize) != 0 &&
+		if (memcmp(cg_inosused(newcg),
+			   cg_inosused(cg), mapsize) != 0 &&
 		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
 			memcpy(cg_inosused(cg), cg_inosused(newcg),
 			      (size_t)mapsize);
 			cgdirty();
 		}
-		if ((bcmp((char *)newcg, (char *)cg, basesize) != 0 ||
-		     bcmp((char *)&cg_blktot(newcg)[0],
-			  (char *)&cg_blktot(cg)[0], sumsize) != 0) &&
+		if ((memcmp(newcg, cg, basesize) != 0 ||
+		     memcmp(&cg_blktot(newcg)[0],
+			    &cg_blktot(cg)[0], sumsize) != 0) &&
 		    dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 			memcpy(cg, newcg, (size_t)basesize);
 			memcpy(&cg_blktot(cg)[0],
@@ -310,7 +310,7 @@ pass5()
 	}
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
-	if (bcmp((char *)&cstotal, (char *)&fs->fs_cstotal, sizeof *cs) != 0
+	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0
 	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
 		memcpy(&fs->fs_cstotal, &cstotal, sizeof *cs);
 		fs->fs_ronly = 0;
