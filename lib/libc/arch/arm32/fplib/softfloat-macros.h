@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-macros.h,v 1.3 1998/01/06 00:06:11 perry Exp $	*/
+/*	$NetBSD: softfloat-macros.h,v 1.4 1998/04/24 18:46:53 cgd Exp $	*/
 
 /*
 ===============================================================================
@@ -125,7 +125,9 @@ INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
 
 INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
 
+#if 0 /* XXX not used */
 INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 );
+#endif
 
 
 /*
@@ -737,10 +739,12 @@ equal to the 64-bit value formed by concatenating `b0' and `b1'.  Otherwise,
 returns 0.
 -------------------------------------------------------------------------------
 */
+#if 0 /* XXX not used */
 INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 != b0 ) || ( a1 != b1 );
 
 }
+#endif
 
