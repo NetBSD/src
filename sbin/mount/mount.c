@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	8.19 (Berkeley) 4/19/94";*/
-static char *rcsid = "$Id: mount.c,v 1.12 1994/06/08 19:02:43 mycroft Exp $";
+static char *rcsid = "$Id: mount.c,v 1.13 1994/08/29 02:38:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ const char
 void	mangle __P((char *, int *, const char **));
 int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *));
-void	prmount __P((const char *, const char *, int));
+void	prmount __P((struct statfs *));
 void	usage __P((void));
 
 /* From mount_ufs.c. */
@@ -178,8 +178,7 @@ main(argc, argv)
 			for (i = 0; i < mntsize; i++) {
 				if (badvfsname(mntbuf[i].f_fstypename, vfslist))
 					continue;
-				prmount(mntbuf[i].f_mntfromname,
-				    mntbuf[i].f_mntonname, mntbuf[i].f_flags);
+				prmount(&mntbuf[i]);
 			}
 		}
 		exit(rval);
@@ -378,7 +377,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 				warn("statfs %s", name);
 				return (1);
 			}
-			prmount(sf.f_mntfromname, sf.f_mntonname, sf.f_flags);
+			prmount(&sf);
 		}
 		break;
 	}
@@ -387,16 +386,17 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 }
 
 void
-prmount(spec, name, flags)
-	const char *spec, *name;
-	int flags;
+prmount(sf)
+	struct statfs *sf;
 {
+	int flags;
 	struct opt *o;
 	int f;
 
-	(void)printf("%s on %s", spec, name);
+	(void)printf("%s on %s type %s", sf->f_mntfromname, sf->f_mntonname,
+	    sf->f_fstypename);
 
-	flags &= MNT_VISFLAGMASK;
+	flags = sf->f_flags & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o->o_opt; o++)
 		if (flags & o->o_opt) {
 			(void)printf("%s%s", !f++ ? " (" : ", ", o->o_name);
