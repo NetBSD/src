@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.44 2002/06/07 22:05:37 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.45 2002/06/07 22:06:48 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.44 2002/06/07 22:05:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.45 2002/06/07 22:06:48 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -482,8 +482,6 @@ rip6_output(m, va_alist)
 	    in6p->in6p_cksum != -1) {
 		int off;
 		u_int16_t sum;
-
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
