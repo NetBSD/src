@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.14 2005/03/21 23:12:17 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.15 2005/03/22 09:36:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -209,4 +209,10 @@ lib/libpam/modules/pam_skey/pam_skey.c		1.2
 	Make S/Key prompt compliant with RFC 2289. Patch supplied by Dave Huang
 	in PR bin/23167.
 	[christos, ticket #43]
+
+usr.sbin/ipwctl/ipwctl.8			1.8
+usr.sbin/iwictl/iwictl.8			1.4
+
+	Document where to get firmware binaries (pkgsrc!).
+	[hubertf, ticket #45]
 
