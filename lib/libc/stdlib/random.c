@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.19 2000/01/22 22:19:20 mycroft Exp $	*/
+/*	$NetBSD: random.c,v 1.19.4.1 2002/01/14 15:31:38 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.19 2000/01/22 22:19:20 mycroft Exp $");
+__RCSID("$NetBSD: random.c,v 1.19.4.1 2002/01/14 15:31:38 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ __weak_alias(setstate,_setstate)
 __weak_alias(srandom,_srandom)
 #endif
 
-static void srandom_unlocked __P((unsigned long));
+static void srandom_unlocked __P((unsigned int));
 static long random_unlocked __P((void));
 
 #ifdef _REENT
@@ -79,10 +79,10 @@ static mutex_t random_mutex = MUTEX_INITIALIZER;
  * congruential generator.  If the amount of state information is less than
  * 32 bytes, a simple linear congruential R.N.G. is used.
  *
- * Internally, the state information is treated as an array of longs; the
+ * Internally, the state information is treated as an array of ints; the
  * zeroeth element of the array is the type of R.N.G. being used (small
  * integer); the remainder of the array is the state information for the
- * R.N.G.  Thus, 32 bytes of state information will give 7 longs worth of
+ * R.N.G.  Thus, 32 bytes of state information will give 7 ints worth of
  * state information, which will allow a degree seven polynomial.  (Note:
  * the zeroeth word of state information also has some other information
  * stored in it -- see setstate() for details).
@@ -120,6 +120,11 @@ static mutex_t random_mutex = MUTEX_INITIALIZER;
  * 32 bytes, a simple linear congruential R.N.G. is used."  For a buffer of
  * 128 bytes, this new version runs about 19 percent faster and for a 16
  * byte buffer it is about 5 percent faster.
+ *
+ * Modified 07 January 2002 by Jason R. Thorpe.
+ * The following changes have been made:
+ * All the references to "long" have been changed back to "int".  This
+ * fixes memory corruption problems on LP64 platforms.
  */
 
 /*
@@ -177,19 +182,20 @@ static const int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
  *	MAX_TYPES * (rptr - state) + TYPE_3 == TYPE_3.
  */
 
-static long randtbl[DEG_3 + 1] = {
+/* LINTED */
+static int randtbl[DEG_3 + 1] = {
 	TYPE_3,
-	(long)0x9a319039L, (long)0x32d9c024L, (long)0x9b663182L,
-	(long)0x5da1f342L, (long)0xde3b81e0L, (long)0xdf0a6fb5L,
-	(long)0xf103bc02L, (long)0x48f340fbL, (long)0x7449e56bL,
-	(long)0xbeb1dbb0L, (long)0xab5c5918L, (long)0x946554fdL,
-	(long)0x8c2e680fL, (long)0xeb3d799fL, (long)0xb11ee0b7L,
-	(long)0x2d436b86L, (long)0xda672e2aL, (long)0x1588ca88L,
-	(long)0xe369735dL, (long)0x904f35f7L, (long)0xd7158fd6L,
-	(long)0x6fa6f051L, (long)0x616e6b96L, (long)0xac94efdcL,
-	(long)0x36413f93L, (long)0xc622c298L, (long)0xf5a42ab8L,
-	(long)0x8a88d77bL, (long)0xf5ad9d0eL, (long)0x8999220bL,
-	(long)0x27fb47b9L,
+	0x9a319039, 0x32d9c024, 0x9b663182,
+	0x5da1f342, 0xde3b81e0, 0xdf0a6fb5,
+	0xf103bc02, 0x48f340fb, 0x7449e56b,
+	0xbeb1dbb0, 0xab5c5918, 0x946554fd,
+	0x8c2e680f, 0xeb3d799f, 0xb11ee0b7,
+	0x2d436b86, 0xda672e2a, 0x1588ca88,
+	0xe369735d, 0x904f35f7, 0xd7158fd6,
+	0x6fa6f051, 0x616e6b96, 0xac94efdc,
+	0x36413f93, 0xc622c298, 0xf5a42ab8,
+	0x8a88d77b, 0xf5ad9d0e, 0x8999220b,
+	0x27fb47b9,
 };
 
 /*
@@ -206,8 +212,8 @@ static long randtbl[DEG_3 + 1] = {
  * in the initialization of randtbl) because the state table pointer is set
  * to point to randtbl[1] (as explained below).
  */
-static long *fptr = &randtbl[SEP_3 + 1];
-static long *rptr = &randtbl[1];
+static int *fptr = &randtbl[SEP_3 + 1];
+static int *rptr = &randtbl[1];
 
 /*
  * The following things are the pointer to the state information table, the
@@ -219,11 +225,11 @@ static long *rptr = &randtbl[1];
  * this is more efficient than indexing every time to find the address of
  * the last element to see if the front and rear pointers have wrapped.
  */
-static long *state = &randtbl[1];
-static long rand_type = TYPE_3;
+static int *state = &randtbl[1];
+static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
-static long *end_ptr = &randtbl[DEG_3 + 1];
+static int *end_ptr = &randtbl[DEG_3 + 1];
 
 /*
  * srandom:
@@ -239,7 +245,7 @@ static long *end_ptr = &randtbl[DEG_3 + 1];
  */
 static void
 srandom_unlocked(x)
-	unsigned long x;
+	unsigned int x;
 {
 	int i;
 
@@ -248,7 +254,7 @@ srandom_unlocked(x)
 	else {
 		state[0] = x;
 		for (i = 1; i < rand_deg; i++)
-			state[i] = 1103515245L * state[i - 1] + 12345L;
+			state[i] = 1103515245 * state[i - 1] + 12345;
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
@@ -262,7 +268,7 @@ srandom(x)
 {
 
 	mutex_lock(&random_mutex);
-	srandom_unlocked(x);
+	srandom_unlocked((unsigned int) x);
 	mutex_unlock(&random_mutex);
 }
 
@@ -285,7 +291,7 @@ srandom(x)
  *
  * Returns a pointer to the old state.
  *
- * Note: The Sparc platform requires that arg_state begin on a long
+ * Note: The Sparc platform requires that arg_state begin on an int
  * word boundary; otherwise a bus error will occur. Even so, lint will
  * complain about mis-alignment, but you should disregard these messages.
  */
@@ -296,17 +302,17 @@ initstate(seed, arg_state, n)
 	size_t n;			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
-	long *long_arg_state;
+	int *int_arg_state;
 
 	_DIAGASSERT(arg_state != NULL);
 
-	long_arg_state = (long *)(void *)arg_state;
+	int_arg_state = (int *)(void *)arg_state;
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
-		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
+		state[-1] = MAX_TYPES * (int)(rptr - state) + rand_type;
 	if (n < BREAK_0) {
 		mutex_unlock(&random_mutex);
 		return (NULL);
@@ -331,13 +337,13 @@ initstate(seed, arg_state, n)
 		rand_deg = DEG_4;
 		rand_sep = SEP_4;
 	}
-	state = (long *) (long_arg_state + 1); /* first location */
+	state = (int *) (int_arg_state + 1); /* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
-	srandom_unlocked(seed);
+	srandom_unlocked((unsigned int) seed);
 	if (rand_type == TYPE_0)
-		long_arg_state[0] = rand_type;
+		int_arg_state[0] = rand_type;
 	else
-		long_arg_state[0] = MAX_TYPES * (rptr - state) + rand_type;
+		int_arg_state[0] = MAX_TYPES * (int)(rptr - state) + rand_type;
 	mutex_unlock(&random_mutex);
 	return((char *)ostate);
 }
@@ -365,14 +371,14 @@ char *
 setstate(arg_state)
 	char *arg_state;		/* pointer to state array */
 {
-	long *new_state;
+	int *new_state;
 	int type;
 	int rear;
 	void *ostate = (void *)(&state[-1]);
 
 	_DIAGASSERT(arg_state != NULL);
 
-	new_state = (long *)(void *)arg_state;
+	new_state = (int *)(void *)arg_state;
 	type = (int)(new_state[0] % MAX_TYPES);
 	rear = (int)(new_state[0] / MAX_TYPES);
 
@@ -380,7 +386,7 @@ setstate(arg_state)
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
-		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
+		state[-1] = MAX_TYPES * (int)(rptr - state) + rand_type;
 	switch(type) {
 	case TYPE_0:
 	case TYPE_1:
@@ -395,7 +401,7 @@ setstate(arg_state)
 		mutex_unlock(&random_mutex);
 		return (NULL);
 	}
-	state = (long *) (new_state + 1);
+	state = (int *) (new_state + 1);
 	if (rand_type != TYPE_0) {
 		rptr = &state[rear];
 		fptr = &state[(rear + rand_sep) % rand_deg];
@@ -425,12 +431,12 @@ setstate(arg_state)
 static long
 random_unlocked()
 {
-	long i;
-	long *f, *r;
+	int i;
+	int *f, *r;
 
 	if (rand_type == TYPE_0) {
 		i = state[0];
-		state[0] = i = (i * 1103515245L + 12345L) & 0x7fffffff;
+		state[0] = i = (i * 1103515245 + 12345) & 0x7fffffff;
 	} else {
 		/*
 		 * Use local variables rather than static variables for speed.
@@ -438,7 +444,7 @@ random_unlocked()
 		f = fptr; r = rptr;
 		*f += *r;
 		/* chucking least random bit */
-		i = ((unsigned long)*f >> 1) & 0x7fffffff;
+		i = ((unsigned int)*f >> 1) & 0x7fffffff;
 		if (++f >= end_ptr) {
 			f = state;
 			++r;
