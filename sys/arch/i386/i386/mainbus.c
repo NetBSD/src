@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.33 2001/09/28 03:56:21 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.34 2001/10/24 15:53:04 soren Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -140,6 +140,11 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+	/*
+	 * ACPI needs to be able to access PCI configuration space.
+	 */
+	pci_mode = pci_mode_detect();
+
 #if NACPI > 0
 	if (acpi_probe()) {
 		mba.mba_acpi.aa_busname = "acpi";
@@ -179,7 +184,7 @@ mainbus_attach(parent, self, aux)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	if (pci_mode_detect() != 0) {
+	if (pci_mode != 0) {
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
