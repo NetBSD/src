@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33 2002/02/27 01:20:51 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.34 2002/03/25 13:14:10 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,20 +41,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33 2002/02/27 01:20:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.34 2002/03/25 13:14:10 aymeric Exp $");
 
 /*
  * Memory special file
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
