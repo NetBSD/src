@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.6 1993/09/07 15:40:25 ws Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.7 1993/12/05 13:34:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -747,6 +747,7 @@ getnfsargs(spec, nfsargsp)
 		(void) fprintf(stderr, "mount: Can't get net id for host\n");
 		return (0);
 	}
+	bzero((char *)&saddr, sizeof saddr);
 	bcopy(hp->h_addr, (caddr_t)&saddr.sin_addr, hp->h_length);
 	nfhret.stat = ETIMEDOUT;	/* Mark not yet successful */
 	while (retrycnt > 0) {

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)netdate.c	5.2 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: netdate.c,v 1.4 1993/08/01 19:00:17 mycroft Exp $";
+static char rcsid[] = "$Id: netdate.c,v 1.5 1993/12/05 13:26:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,6 +77,7 @@ netsettime(tval)
 		return (retval = 2);
 	}
 
+	bzero((char *)&dest, sizeof dest);
 	dest.sin_port = sp->s_port;
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = htonl((u_long)INADDR_ANY);
