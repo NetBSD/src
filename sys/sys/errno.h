@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.28 2002/11/12 08:20:05 skrll Exp $	*/
+/*	$NetBSD: errno.h,v 1.29 2002/11/12 13:52:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -192,7 +192,7 @@
 
 /* XSI STREAMS option errors  */
 #define ENODATA		89		/* No message available */
-#define ENOSR		90		/* No STREAM resource */
+#define ENOSR		90		/* No STREAM resources */
 #define ENOSTR		91		/* Not a STREAM */
 
 #define	ELAST		91		/* Must equal largest errno */
