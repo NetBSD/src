@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.1.1.1 2000/08/07 09:23:40 leo Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.2 2001/02/25 14:32:20 jdc Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ main (argc, argv)
 		exit (EXIT_FAILURE);
 	}
 	
-	flags = 0;
+	flags = AHDI_IGN_CKSUM;
 	while ((rv = ahdi_readlabel(&ptable, argv[1], flags)) != 1) {
 		switch (rv) {
 		case -1:
@@ -100,7 +100,7 @@ main (argc, argv)
 			if (toupper(getchar()) == 'Y') {
 				(void) fpurge(stdin);
 				flags |= AHDI_IGN_EXISTS | AHDI_IGN_EXT |
-				    AHDI_IGN_CKSUM | AHDI_IGN_SPU;
+				    AHDI_IGN_SPU;
 			} else
 				exit (EXIT_FAILURE);
 			break;
