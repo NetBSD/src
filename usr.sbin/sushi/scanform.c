@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.27 2003/06/13 07:26:41 itojun Exp $       */
+/*      $NetBSD: scanform.c,v 1.28 2003/07/16 06:40:47 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ form_status(FORM *form)
 	mvwaddstr(stdscr, ws.ws_row-3, 0, catgets(catalog, 4, 9,
 	    "PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do."));
 	wstandend(stdscr);
-	sprintf(buf, "%s (%d/%d)", catgets(catalog, 4, 8, "Form Page:"),
+	snprintf(buf, sizeof(buf), "%s (%d/%d)",
+	    catgets(catalog, 4, 8, "Form Page:"),
 	    form_page(form)+1, form->max_page); /* XXX */
 	mvwaddstr(stdscr, ws.ws_row-3, 60, buf);
 	wrefresh(stdscr);
@@ -240,7 +241,7 @@ scan_formindex(struct cqForm *cqf, char *row)
 
 	snprintf(desc, sizeof(desc), "%s", t);
 	if (strcmp(desc, "BLANK") == 0)
-		sprintf(desc, " ");
+		snprintf(desc, sizeof(desc), " ");
 
 	form_appenditem(cqf, desc, type, data, req);
 }
@@ -524,8 +525,10 @@ my_driver(FORM * form, int c, char *path)
 				if (slist->selections[y] == 1) {
 					n++;
 					if (n != 1)
-						sprintf(buf, "%s,", buf);
-					sprintf(buf, "%s%s", buf, list[y]);
+						snprintf(buf, sizeof(buf),
+						    "%s,", buf);
+					snprintf(buf, sizeof(buf), "%s%s",
+					    buf, list[y]);
 				}
 			free(otmp);
 			tmp = buf;
@@ -781,11 +784,12 @@ process_preform(FORM *form, char *path)
 	char **args;
 
 	if (lang_id == NULL) {
-		sprintf(file, "%s/%s", path, FORMFILE);
+		snprintf(file, sizeof(file), "%s/%s", path, FORMFILE);
 	} else {
-		sprintf(file, "%s/%s.%s", path, FORMFILE, lang_id);
+		snprintf(file, sizeof(file), "%s/%s.%s", path, FORMFILE,
+		    lang_id);
 		if (stat(file, &sb) != 0)
-			sprintf(file, "%s/%s", path, FORMFILE);
+			snprintf(file, sizeof(file), "%s/%s", path, FORMFILE);
 	}
 
 	args = malloc(sizeof(char *) * 2);
@@ -848,15 +852,18 @@ process_form(FORM *form, char *path)
 		return(process_preform(form, path));
 
 	if (lang_id == NULL) {
-		sprintf(file, "%s/%s", path, EXECFILE);
-		sprintf(file2, "%s/%s", path, SCRIPTFILE);
+		snprintf(file, sizeof(file), "%s/%s", path, EXECFILE);
+		snprintf(file2, sizeof(file2), "%s/%s", path, SCRIPTFILE);
 	} else {
-		sprintf(file, "%s/%s.%s", path, EXECFILE, lang_id);
-		sprintf(file2, "%s/%s.%s", path, SCRIPTFILE, lang_id);
+		snprintf(file, sizeof(file), "%s/%s.%s", path, EXECFILE,
+		    lang_id);
+		snprintf(file2, sizeof(file2), "%s/%s.%s", path, SCRIPTFILE,
+		    lang_id);
 		if (stat(file, &sb) != 0)
-			sprintf(file, "%s/%s", path, EXECFILE);
+			snprintf(file, sizeof(file), "%s/%s", path, EXECFILE);
 		if (stat(file2, &sb) != 0)
-			sprintf(file2, "%s/%s", path, SCRIPTFILE);
+			snprintf(file2, sizeof(file2), "%s/%s", path,
+			    SCRIPTFILE);
 	}
 
 	args = malloc(sizeof(char *) * 2);
@@ -957,7 +964,7 @@ tstring(int max, char *string)
 	if (max == 0)
 		return(0);
 	for (cur=0; cur <= max; cur++) {
-		sprintf(hold, "@@@%d@@@", cur);
+		snprintf(hold, sizeof(hold), "@@@%d@@@", cur);
 		if (strcmp(hold, string) == 0)
 			return(cur);
 	}
@@ -1088,8 +1095,8 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	size_t l;
 
 	qo = q = strdup(ftp->data);
-	comm = malloc(sizeof(char) * strlen(q) + 2);
 	l = strlen(q) + 2;
+	comm = malloc(sizeof(char) * l);
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	p = strsep(&q, ",");
@@ -1097,7 +1104,7 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
-			(void)strcat(comm, " ");
+			(void)strlcat(comm, " ", l);
 			for (test=p; *test != '\0'; test++)
 				if (*test == ',') {
 					*test = '\0';
@@ -1107,24 +1114,24 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 				}
 			cur = tstring(max, p);
 			if (cur) {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(args[cur-1]) + 2));
+				l = strlen(comm) + strlen(args[cur-1]) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, args[cur-1]);
+				(void)strlcat(comm, args[cur-1], l);
 			} else {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(p) + 2));
+				l = strlen(comm) + strlen(p) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, p);
+				(void)strlcat(comm, p, l);
 			}
 		}
 	free(qo);
 	if (po)
 		free(po);
 
-	sprintf(buf, "%s/%s", dir, comm);
+	snprintf(buf, sizeof(buf), "%s/%s", dir, comm);
 
 #if 0
 	if (stat(buf, &sb) != 0)
@@ -1181,8 +1188,8 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	else
 		qo = q = strdup(ftp->data);
 
-	comm = malloc(sizeof(char) * strlen(q) + 2);
 	l = strlen(q) + 2;
+	comm = malloc(sizeof(char) * l);
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	p = strsep(&q, ",");
@@ -1190,7 +1197,7 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
-			(void)strcat(comm, " ");
+			(void)strlcat(comm, " ", l);
 			for (test=p; *test != '\0'; test++)
 				if (*test == ',') {
 					*test = '\0';
@@ -1200,17 +1207,17 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 				}
 			cur = tstring(max, p);
 			if (cur) {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(args[cur-1]) + 2));
+				l = strlen(comm) + strlen(args[cur-1]) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, args[cur-1]);
+				(void)strlcat(comm, args[cur-1], l);
 			} else {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(p) + 2));
+				l = strlen(comm) + strlen(p) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, p);
+				(void)strlcat(comm, p, l);
 			}
 		}
 
@@ -1218,7 +1225,7 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	if (po)
 		free(po);
 
-	sprintf(buf, "%s/%s", dir, comm);
+	snprintf(buf, sizeof(buf), "%s/%s", dir, comm);
 
 #if 0
 	if (stat(buf, &sb) != 0)
@@ -1295,8 +1302,8 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	tmp = strsep(&q, ",");
 	maxi = atoi(tmp);
 
-	comm = malloc(sizeof(char) * strlen(q) + 2);
 	l = strlen(q) + 2;
+	comm = malloc(sizeof(char) * l);
 	if (comm == NULL)
 		bailout("malloc: %s", strerror(errno));
 	tmp = strsep(&q, ",");
@@ -1304,7 +1311,7 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	po = NULL;
 	if (q != NULL)
 		for (po=p=strdup(q); p != NULL; p = strsep(&q, ",")) {
-			(void)strcat(comm, " ");
+			(void)strlcat(comm, " ", l);
 			for (test=p; *test != '\0'; test++)
 				if (*test == ',') {
 					*test = '\0';
@@ -1314,24 +1321,24 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 				}
 			cur = tstring(max, p);
 			if (cur) {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(args[cur-1]) + 2));
+				l = strlen(comm) + strlen(args[cur-1]) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, args[cur-1]);
+				(void)strlcat(comm, args[cur-1], l);
 			} else {
-				comm = realloc(comm, sizeof(char) *
-				    (strlen(comm) + strlen(p) + 2));
+				l = strlen(comm) + strlen(p) + 2;
+				comm = realloc(comm, sizeof(char) * l);
 				if (comm == NULL)
 					bailout("malloc: %s", strerror(errno));
-				(void)strcat(comm, p);
+				(void)strlcat(comm, p, l);
 			}
 		}
 	free(qo);
 	if (po)
 		free(po);
 
-	sprintf(buf, "%s/%s", dir, comm);
+	snprintf(buf, sizeof(buf), "%s/%s", dir, comm);
 
 #if 0
 	if (stat(buf, &sb) != 0)
