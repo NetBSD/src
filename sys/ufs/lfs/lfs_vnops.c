@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.98 2003/03/21 06:26:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.99 2003/03/22 21:31:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.98 2003/03/21 06:26:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.99 2003/03/22 21:31:41 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,6 +367,7 @@ lfs_inactive(void *v)
 	 */
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM) {
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
+		VOP_UNLOCK(ap->a_vp, 0);
 		return 0;
 	}
 
