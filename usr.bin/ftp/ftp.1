@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.14 1996/12/06 02:06:49 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.15 1996/12/06 02:28:13 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 25, 1996
+.Dd December 6, 1996
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -256,30 +256,31 @@ When debugging is on,
 prints each command sent to the remote machine, preceded
 by the string
 .Ql \-\->
-.It Xo
-.Ic dir
-.Op Ar remote-directory
-.Op Ar local-file
-.Xc
-Print a listing of the directory contents in the
-directory,
-.Ar remote-directory  ,
-and, optionally, placing the output in
-.Ar local-file .
+.It Ic dir Op Ar remote-directory Op Ar local-file
+Print a listing of the contents of a
+directory on the remote machine.
+The listing includes any system-dependent information that the server
+chooses to include; for example, most
+.Ux
+systems will produce
+output from the command
+.Ql ls \-l .
+(See also
+.Ic ls . )
+If
+.Ar remote-directory
+is left unspecified, the current working directory is used.
 If interactive prompting is on,
 .Nm
 will prompt the user to verify that the last argument is indeed the
 target local file for receiving
 .Ic dir
 output.
-If no directory is specified, the current working
-directory on the remote machine is used.
-If no local
-file is specified, or
+If no local file is specified, or if
 .Ar local-file
 is
-.Fl  ,
-output comes to the terminal.
+.Sq Fl ,
+the output is sent to the terminal.
 .It Ic disconnect
 A synonym for
 .Ic close .
@@ -378,21 +379,9 @@ no
 is specified, the user's home directory is used.
 .It Ic lpwd
 Print the working directory on the local machine.
-.It Xo
-.Ic \&ls
-.Op Ar remote-directory
-.Op Ar local-file
-.Xc
-Print a listing of the contents of a
+.It Ic \&ls Op Ar remote-directory Op Ar local-file
+Print a list of the files in a
 directory on the remote machine.
-The listing includes any system-dependent information that the server
-chooses to include; for example, most
-.Ux
-systems will produce
-output from the command
-.Ql ls \-l .
-(See also
-.Ic nlist . )
 If
 .Ar remote-directory
 is left unspecified, the current working directory is used.
@@ -400,12 +389,12 @@ If interactive prompting is on,
 .Nm
 will prompt the user to verify that the last argument is indeed the
 target local file for receiving
-.Ic \&ls
+.Ic ls
 output.
 If no local file is specified, or if
 .Ar local-file
 is
-.Sq Fl ,
+.Fl  ,
 the output is sent to the terminal.
 .It Ic macdef Ar macro-name
 Define a macro.
@@ -468,7 +457,7 @@ new local directories can be created with
 Make a directory on the remote machine.
 .It Ic mls Ar remote-files local-file
 Like
-.Ic nlist  ,
+.Ic ls  ,
 except multiple remote files may be specified,
 and the
 .Ar local-file
@@ -511,27 +500,9 @@ exist on the current system, the remote file is considered
 .Ic newer .
 Otherwise, this command is identical to
 .Ar get .
-.It Xo
-.Ic nlist
-.Op Ar remote-directory
-.Op Ar local-file
-.Xc
-Print a list of the files in a
-directory on the remote machine.
-If
-.Ar remote-directory
-is left unspecified, the current working directory is used.
-If interactive prompting is on,
-.Nm
-will prompt the user to verify that the last argument is indeed the
-target local file for receiving
-.Ic nlist
-output.
-If no local file is specified, or if
-.Ar local-file
-is
-.Fl  ,
-the output is sent to the terminal.
+.It Ic nlist Op Ar remote-directory Op Ar local-file
+A synonym for
+.Ic ls .
 .It Ic nmap Op Ar inpattern outpattern
 Set or unset the filename mapping mechanism.
 If no arguments are specified, the filename mapping mechanism is unset.
@@ -802,11 +773,7 @@ If
 is specified, show status of
 .Ar file-name
 on remote machine.
-.It Xo
-.Ic rename
-.Op Ar from
-.Op Ar to
-.Xc
+.It Ic rename Op Ar from Op Ar to
 Rename the file
 .Ar from
 on the remote machine, to the file
@@ -935,8 +902,7 @@ If
 is omitted, the current umask is printed.
 .It Xo
 .Ic user Ar user-name
-.Op Ar password
-.Op Ar account
+.Op Ar password Op Ar account
 .Xc
 Identify yourself to the remote
 .Tn FTP
