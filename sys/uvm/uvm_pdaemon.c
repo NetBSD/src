@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.48 2002/11/24 11:50:32 scw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.49 2003/02/23 04:54:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.48 2002/11/24 11:50:32 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.49 2003/02/23 04:54:27 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -531,7 +531,7 @@ uvmpd_scan_inactive(pglst)
 
 			if ((p->pqflags & PQ_SWAPBACKED) == 0) {
 				uvm_unlock_pageq();
-				error = (uobj->pgops->pgo_put)(uobj, p->offset,
+				(uobj->pgops->pgo_put)(uobj, p->offset,
 				    p->offset + PAGE_SIZE,
 				    PGO_CLEANIT|PGO_FREE);
 				uvm_lock_pageq();
