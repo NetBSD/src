@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.2 1999/08/20 05:07:07 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.3 1999/08/20 05:45:05 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -33,3 +33,30 @@ usr.sbin/mbrlabel/mbrlabel.c			1.4-1.5
   Correct usage message and make the MBR examination code function
   properly on architectures which enforce strict alignment.  (cgd)
 
+usr.bin/tail/extern.h				1.4
+usr.bin/tail/forward.c				1.16
+usr.bin/tail/read.c				1.7
+usr.bin/tail/reverse.c				1.11
+
+  Avoid incorrectly-repeated error messages.  (cgd)
+
+sys/msdosfs/denode.h				1.31
+sys/msdosfs/fat.h				1.13
+sys/msdosfs/msdosfs_fat.c			1.31
+sys/msdosfs/msdosfs_vnops.c			1.83
+
+  Fix LP64 problems which made the MS-DOS file system unusable on
+  NetBSD/alpha as reported in PR#8037 and several other problems
+  encountered while researching it (NFS exporting and printf
+  formats).  (cgd)
+
+usr.bin/find/extern.h				1.12
+usr.bin/find/find.h				1.12
+usr.bin/find/find.1				1.22-1.23
+usr.bin/find/function.c				1.31
+usr.bin/find/option.c				1.13
+
+  Implement -regex and -iregex primaries which behave similarly (but
+  not identically) to the GNU find primaries of the same names.  (The
+  differences are caused by differences in the Basic Regular
+  Expression implementations.)  (cgd)
