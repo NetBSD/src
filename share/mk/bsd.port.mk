@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.50 1998/02/27 13:22:59 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.51 1998/02/28 10:14:41 tron Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1983,6 +1983,8 @@ ${PLIST}: ${PLIST_SRC}
 		${ECHO} "No ${PKGDIR}/PLIST, and no ${PKGDIR}/PLIST-{mi,md.shared,md.static}" ; \
 		${ECHO} "Package must care for making ${PLIST} by setting PLIST_SRC!" ; \
 	fi
+			-e '/man\/${MANLANG}\/man.*[^g][^z]$$/s/$$/.gz/' \
+			-e '/man\/${MANLANG}\/cat.*[^g][^z]$$/s/$$/.gz/' \
 .if defined(MANZ)
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
@@ -1992,6 +1994,8 @@ ${PLIST}: ${PLIST_SRC}
 			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
 	fi
+			-e '/man\/${MANLANG}\/man.*[^g][^z]$$/s/$$/.gz/' \
+			-e '/man\/${MANLANG}\/cat.*[^g][^z]$$/s/$$/.gz/' \
 .else   # !MANZ
 	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
@@ -2002,5 +2006,3 @@ ${PLIST}: ${PLIST_SRC}
 			>${PLIST} ; \
 	fi
 .endif  # MANZ
-
-
