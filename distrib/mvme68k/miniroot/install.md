@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.2 1999/02/20 16:21:19 scw Exp $
+#	$NetBSD: install.md,v 1.3 2001/08/16 19:14:41 tv Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,7 @@ md_makerootwritable() {
 	# Just remount the root device read-write.
 	__mount_kernfs
 	echo "Remounting root read-write..."
-	mount -u /kern/rootdev /
+	mount -t ffs -u /kern/rootdev /
 }
 
 md_get_diskdevs() {
