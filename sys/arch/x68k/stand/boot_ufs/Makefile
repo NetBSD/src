@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/09/28 01:49:54 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2001/10/01 17:03:38 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,9 @@ VERSION=1.0
 TEXT=		0f0000		# Primary (me)
 BOOT_TEXT=	006000		# Secondary (/boot)
 
-PROG=		$(BOOT)
+PROG=		xx$(BOOT)
+LINKS=		${BINDIR}/xx$(BOOT) ${BINDIR}/sd$(BOOT)
+LINKS=		${BINDIR}/xx$(BOOT) ${BINDIR}/fd$(BOOT)
 BINDIR=		/usr/mdec
 STRIPFLAG=
 BINMODE=	444
@@ -40,23 +42,23 @@ LDFLAGS+=  -noinhibit-exec	# XXX
 LDFLAGS=   -n -Bstatic -Ttext ${TEXT}
 .endif
 
-CLEANFILES=	$(BOOT).x s.x x.s x.o
+CLEANFILES=	$(PROG).x s.x x.s x.o
 
 
-$(BOOT): $(OBJS)
-	$(LD) $(LDFLAGS) -o $(BOOT).x $(OBJS) $(LDADD)
-	@$(NM) --target=a.out-m68k-netbsd $(BOOT).x | sed -n '/T first_kbyte/p'
+$(PROG): $(OBJS)
+	$(LD) $(LDFLAGS) -o $(PROG).x $(OBJS) $(LDADD)
+	@$(NM) --target=a.out-m68k-netbsd $(PROG).x | sed -n '/T first_kbyte/p'
 	@if [ `(echo ibase=16; \
-		$(NM) --target=a.out-m68k-netbsd $(BOOT).x | sed -n 's/T first_kbyte/-$(TEXT)-400/p' | \
+		$(NM) --target=a.out-m68k-netbsd $(PROG).x | sed -n 's/T first_kbyte/-$(TEXT)-400/p' | \
 				tr a-f A-F) | bc` -gt 0 ];\
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte'; exit 1; fi
-	@$(SIZE) --target=a.out-m68k-netbsd $(BOOT).x
+	then echo '$(PROG): first_kbyte exceeds the first killobyte'; exit 1; fi
+	@$(SIZE) --target=a.out-m68k-netbsd $(PROG).x
 	@if [ `(echo ibase=16; \
-		$(NM) --target=a.out-m68k-netbsd $(BOOT).x | sed -n 's/D _edata/-$(TEXT)-2000/p' | tr a-f A-F) |\
+		$(NM) --target=a.out-m68k-netbsd $(PROG).x | sed -n 's/D _edata/-$(TEXT)-2000/p' | tr a-f A-F) |\
 			bc` -gt 0 ];\
-	then	echo '$(BOOT): text+data is too large'; exit 1; fi
-	@cp $(BOOT).x s.x
-	@$(OBJCOPY) -I a.out-m68k-netbsd -O binary s.x $(BOOT)
+	then	echo '$(PROG): text+data is too large'; exit 1; fi
+	@cp $(PROG).x s.x
+	@$(OBJCOPY) -I a.out-m68k-netbsd -O binary s.x $(PROG)
 	@rm s.x
 
 .include <bsd.prog.mk>
