@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1998/09/28 07:51:23 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1998/10/06 09:19:36 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -551,7 +551,7 @@ pmap_init()
 	npg += mem_size >> NKPTADDSHIFT;
 #endif
 #ifdef DEBUG
-	printf("Maxproc %d, mem_size %ld MB: allocating %ld KPT pages\n",
+	printf("Maxproc %d, mem_size %ld MB: allocating %d KPT pages\n",
 	    maxproc, mem_size>>20, npg);
 #endif
 	s = ptoa(npg) + round_page(npg * sizeof(struct kpt_page));
