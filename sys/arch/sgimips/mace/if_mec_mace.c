@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.13 2004/01/11 14:01:46 sekiya Exp $	 */
+/* $NetBSD: if_mec_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.13 2004/01/11 14:01:46 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -82,9 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.13 2004/01/11 14:01:46 sekiya Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <sgimips/dev/macevar.h>
+#include <sgimips/mace/macevar.h>
 
-#include <sgimips/dev/if_mecreg.h>
+#include <sgimips/mace/if_mecreg.h>
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 

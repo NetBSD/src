@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.17 2004/01/18 00:54:55 sekiya Exp $	*/
+/*	$NetBSD: crime.c,v 1.18 2004/01/18 04:06:42 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.17 2004/01/18 00:54:55 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.18 2004/01/18 04:06:42 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.17 2004/01/18 00:54:55 sekiya Exp $");
 
 #include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
+#include <sgimips/mace/macevar.h>
 
 #include "locators.h"
 
@@ -182,6 +183,9 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 void *
 crime_intr_establish(int irq, int level, int (*func)(void *), void *arg)
 {
+	if (irq < 8)
+		return mace_intr_establish(irq, level, func, arg);
+	
 	if (crime[irq].func != NULL)
 		return NULL;	/* panic("Cannot share CRIME interrupts!"); */
 
