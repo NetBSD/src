@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.7 1996/09/24 16:46:51 christos Exp $	*/
+/*	$NetBSD: routed.h,v 1.8 1996/10/20 21:53:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -85,6 +85,7 @@ struct netinfo {
 
 /* RIPv2 authentication */
 struct netauth {
+	u_int16_t   a_family;		/* overlays netinfo.n_family */
 	u_int16_t   a_type;
 #define	    RIP_AUTH_PW	    htons(2)	/* password type */
 	union {
