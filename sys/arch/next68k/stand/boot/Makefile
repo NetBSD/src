@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/03/26 06:54:40 dbj Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -22,7 +22,7 @@ RELOC=	4380000
 
 # XXX make defs arch-indep.
 INCLUDES+=	-I${.CURDIR} -I${.CURDIR}/obj.${MACHINE} -I${S}/arch -I${S} -I${S}/lib/libsa -I${S}/lib/libkern
-DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG # -DEN_DEBUG   -DNETIF_DEBUG  # -DSD_DEBUG -DSCSI_DEBUG
+DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEBUG -DSCSI_DEBUG # -DEN_DEBUG   -DNETIF_DEBUG  
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
@@ -33,7 +33,7 @@ CFLAGS+=	 -nostdinc ${INCLUDES} ${DEFS}
 LIBCRT0=
 
 PROG=	boot
-SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c dev_net.c
+SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
 
@@ -41,7 +41,8 @@ MKMAN=	no
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}
-#OBJS+=	dev_net.o
+
+OBJS+=	dev_net.o
 
 ${PROG}: links srt0.o ${OBJS} vers.o ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} vers.o -o $@
@@ -49,8 +50,8 @@ ${PROG}: links srt0.o ${OBJS} vers.o ${LIBS}
 
 # this looks useful to me ... let's see when it will be an official part
 # of libsa
-#dev_net.o : ${S}/lib/libsa/dev_net.c
-#	${COMPILE.c} -DSUPPORT_BOOTP ${.IMPSRC}
+dev_net.o : ${S}/lib/libsa/dev_net.c
+	${COMPILE.c} ${.IMPSRC}
 
 # startup
 

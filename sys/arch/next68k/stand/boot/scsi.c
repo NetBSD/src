@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*      $NetBSD: scsi.c,v 1.2 1999/03/26 06:54:40 dbj Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -49,6 +49,13 @@ char the_dma_buffer[MAX_DMASIZE+DMA_ENDALIGNMENT], *dma_buffer;
 int scsi_msgin(void);
 int dma_start(char *addr, int len);
 int dma_done(void);
+
+void scsi_init(void);
+void scsierror(char *error);
+short scsi_getbyte(volatile caddr_t sr);
+int scsi_wait_for_intr(void);
+int scsiicmd(char target, char lun,
+	 u_char *cbuf, int clen, char *addr, int len);
 
 #ifdef SCSI_DEBUG
 #define DPRINTF(x) printf x;
@@ -132,12 +139,16 @@ scsi_wait_for_intr(void)
   extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
   volatile int *intrstat = MON(volatile int *,MG_intrstat);
+  volatile int *intrmask = MON(volatile int *,MG_intrmask);
 #endif
     int count;
 
-    for(count = 0; count < SCSI_TIMEOUT; count++)
+    for(count = 0; count < SCSI_TIMEOUT; count++) {
+			DPRINTF(("  *intrstat = 0x%x\t*intrmask = 0x%x\n",*intrstat,*intrmask));
+
 	if (*intrstat & SCSI_INTR)
 	    return 0;
+		}
 
     printf("scsiicmd: timed out.\n");
     return -1;
@@ -337,18 +348,31 @@ dma_start(char *addr, int len)
     }
     
     DPRINTF(("dma start: %lx, %d byte.\n", (long)addr, len));
+
+    DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n", 
+				(long)dma_buffer,(long)DMA_ENDALIGN(char *, dma_buffer+len)));
+
     sc->dma_addr = addr;
     sc->dma_len = len;
     
+    sr[ESP_TCL]  = len & 0xff;
+    sr[ESP_TCM]  = len >> 8;
+    sr[ESP_CMD]  = ESPCMD_DMA | ESPCMD_NOP;
+    sr[ESP_CMD]  = ESPCMD_DMA | ESPCMD_TRANS;
+
+#if 0
     dma->dd_csr = DMACSR_READ | DMACSR_RESET;
     dma->dd_next_initbuf = dma_buffer;
     dma->dd_limit = DMA_ENDALIGN(char *, dma_buffer+len);
     dma->dd_csr = DMACSR_READ | DMACSR_SETENABLE;
-    
-    sr[ESP_TCL]  = len & 0xff;
-    sr[ESP_TCM]  = len >> 8;
-    sr[ESP_CMD]  = ESPCMD_NOP;
-    sr[ESP_CMD]  = ESPCMD_DMA | ESPCMD_TRANS;
+#else
+    dma->dd_csr = 0;
+    dma->dd_csr = DMACSR_INITBUF | DMACSR_READ | DMACSR_RESET;
+    dma->dd_next_initbuf = dma_buffer;
+    dma->dd_limit = DMA_ENDALIGN(char *, dma_buffer+len);
+    dma->dd_csr = DMACSR_READ | DMACSR_SETENABLE;
+#endif
+
     sr[ESP_DCTL] = ESPDCTL_20MHZ|ESPDCTL_INTENB|ESPDCTL_DMAMOD|ESPDCTL_DMARD;
 
     sc->sc_state = SCSI_DMA;
@@ -373,12 +397,16 @@ dma_done(void)
     
     if (state & DMACSR_ENABLE) 
     {
+
+			DPRINTF(("dma still enabled, flushing DCTL.\n"));
+
 	sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 		       | ESPDCTL_DMARD | ESPDCTL_FLUSH;
-	DELAY(5);
+/*	DELAY(5); */
 	sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 		       | ESPDCTL_DMARD;
-	DELAY(5);
+/*	DELAY(5); */
+
 	return 0;
     }
 
