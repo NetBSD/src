@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.122 2000/11/07 12:41:52 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.123 2000/11/16 20:04:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -541,8 +541,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (p->p_emul && p->p_emul->e_proc_exit && p->p_emul != pack.ep_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
+	/*
+	 * Call exec hook. Emulation code may NOT store reference to anything
+	 * from &pack.
+	 */
         if (pack.ep_emul->e_proc_exec)
-                (*pack.ep_emul->e_proc_exec)(p);
+                (*pack.ep_emul->e_proc_exec)(p, &pack);
 
 	/* update p_emul, the old value is no longer needed */
 	p->p_emul = pack.ep_emul;
