@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.91 2000/06/09 13:05:03 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.92 2000/06/13 02:18:19 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.91 2000/06/06 17:19:59 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.93 2000/06/13 02:18:00 soren Exp 
  */
 
 /*-
@@ -196,28 +196,35 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_IBM_3270,
 	    0,
 	    "IBM Corporation",
-	    "3270 Emulation"	},
+	    "IBM 3270 Emulation"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
 	    PCMCIA_CIS_IBM_INFOMOVER,
 	    0,
 	    "IBM Corporation",
-	    "National Semiconductor InfoMover"	},
+	    "IBM InfoMover"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_5250,
 	    PCMCIA_CIS_IBM_5250,
 	    0,
 	    "IBM Corporation",
-	    "5250 Emulation"	},
+	    "IBM 5250 Emulation"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_TROPIC,
 	    PCMCIA_CIS_IBM_TROPIC,
 	    0,
 	    "IBM Corporation",
-	    "Token Ring 4/16"	},
+	    "IBM Token Ring 4/16"	},
+	},
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
+	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
+	    0,
+	    "IBM Corporation",
+	    "IBM PCMCIA Portable CD-ROM Drive"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
@@ -231,14 +238,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY,
 	    0,
 	    "IBM Corporation",
-	    "Wireless LAN Entry"	},
-	},
-	{
-	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
-	    0,
-	    "IBM Corporation",
-	    "PCMCIA Portable CD-ROM Drive"	},
+	    "IBM Wireless LAN Entry"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
