@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.99 2000/08/07 21:55:22 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.100 2000/08/12 16:38:43 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -260,7 +260,9 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
-#define	P_32		0x40000	/* 32-bit process -- only used on 64-bit kernels */
+#define	P_32		0x40000	/* 32-bit process (used on 64-bit kernels) */
+#define P_BIGLOCK	0x80000 /* Process needs kernel "big lock" to run */
+
 
 /*
  * Macro to compute the exit signal to be delivered.
