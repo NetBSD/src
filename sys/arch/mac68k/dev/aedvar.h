@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.1 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.2 1999/02/11 06:41:09 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -42,9 +42,9 @@ struct aed_softc {
 	struct  device  sc_dev;
 
 	/* ADB info */
-	u_char		origaddr;	/* ADB device type (ADBADDR_AED) */
-	u_char		adbaddr;	/* current ADB address */
-	u_char		handler_id;	/* type of device */
+	int		origaddr;	/* ADB device type (ADBADDR_AED) */
+	int		adbaddr;	/* current ADB address */
+	int		handler_id;	/* type of device */
 
 	/* ADB event queue */
 	adb_event_t	sc_evq[AED_MAX_EVENTS];	/* the queue */
