@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.4 2001/02/04 17:15:37 ad Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.5 2001/06/10 10:48:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,19 +46,19 @@ struct ld_softc {
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
 #endif
-	int	sc_queuecnt;
+	int	sc_queuecnt;		/* current h/w queue depth */
+	int	sc_ncylinders;		/* # cylinders */
+	int	sc_nheads;		/* # heads */
+	int	sc_nsectors;		/* # sectors per track */
 
 	/*
 	 * The following are filled by hardware specific attachment code.
 	 */
-	int	sc_flags;			/* control flags */
-	int	sc_secperunit;			/* # sectors in total */
-	int	sc_ncylinders;			/* # cylinders */
-	int	sc_nheads;			/* # heads */
-	int	sc_nsectors;			/* # sectors per track */
-	int	sc_secsize;			/* sector size in bytes */
-	int	sc_maxxfer;			/* max xfer size in bytes */
-	int	sc_maxqueuecnt;		/* maximum h/w queue count */
+	int	sc_flags;		/* control flags */
+	int	sc_secperunit;		/* # sectors in total */
+	int	sc_secsize;		/* sector size in bytes */
+	int	sc_maxxfer;		/* max xfer size in bytes */
+	int	sc_maxqueuecnt;		/* maximum h/w queue depth */
 
 	int	(*sc_dump)(struct ld_softc *, void *, int, int);
 	int	(*sc_flush)(struct ld_softc *);

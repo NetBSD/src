@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.6 2001/01/26 19:53:15 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.7 2001/06/10 10:48:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,17 +106,6 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
-
-	/* Build synthetic geometry as per controller internal rules. */
-	if (ld->sc_secperunit > 0x200000) {
-		ld->sc_nheads = 255;
-		ld->sc_nsectors = 63;
-	} else {
-		ld->sc_nheads = 64;
-		ld->sc_nsectors = 32;
-	}
-	ld->sc_ncylinders = ld->sc_secperunit /
-	    (ld->sc_nheads * ld->sc_nsectors);
 
 	printf("\n");
 	ldattach(ld);

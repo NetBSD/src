@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.8 2001/04/30 02:46:06 lukem Exp $	*/
+/*	$NetBSD: ld.c,v 1.9 2001/06/10 10:48:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -95,6 +95,22 @@ ldattach(struct ld_softc *sc)
 
 	if (sc->sc_maxxfer > MAXPHYS)
 		sc->sc_maxxfer = MAXPHYS;
+
+	/* Build synthetic geometry. */
+	if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
+		sc->sc_nheads = 16;
+	else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
+		sc->sc_nheads = 32;
+	else if (sc->sc_secperunit <= 21504 * 2048)	/* 21GB */
+		sc->sc_nheads = 64;
+	else if (sc->sc_secperunit <= 43008 * 2048)	/* 42GB */
+		sc->sc_nheads = 128;
+	else
+		sc->sc_nheads = 255;
+
+	sc->sc_nsectors = 63;
+	sc->sc_ncylinders = sc->sc_secperunit / 
+	    (sc->sc_nheads * sc->sc_nsectors);
 
 	format_bytes(buf, sizeof(buf), (u_int64_t)sc->sc_secperunit *
 	    sc->sc_secsize);

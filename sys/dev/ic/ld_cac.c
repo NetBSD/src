@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.2 2000/12/11 13:19:51 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.3 2001/06/10 10:48:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -109,14 +109,11 @@ ld_cac_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	ld->sc_ncylinders = CAC_GET2(dinfo.ncylinders);
-	ld->sc_nheads = CAC_GET1(dinfo.nheads);
-	ld->sc_nsectors = CAC_GET1(dinfo.nsectors);
 	ld->sc_secsize = CAC_GET2(dinfo.secsize);
 	ld->sc_maxxfer = CAC_MAX_XFER;
 	ld->sc_maxqueuecnt = CAC_MAX_CCBS / cac->sc_nunits;	/* XXX */
-	ld->sc_secperunit = ld->sc_ncylinders * ld->sc_nheads *
-	    ld->sc_nsectors;
+	ld->sc_secperunit = CAC_GET2(dinfo.ncylinders) *
+	    CAC_GET1(dinfo.nheads) * CAC_GET1(dinfo.nsectors);
 	ld->sc_start = ld_cac_start;
 	ld->sc_dump = ld_cac_dump;
 

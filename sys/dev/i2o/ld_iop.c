@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.6 2001/03/20 13:01:49 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.7 2001/06/10 10:48:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -215,22 +215,6 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_secsize = le32toh(param.p.bdi.blocksize);
 	ld->sc_secperunit = (int)
 	    (le64toh(param.p.bdi.capacity) / ld->sc_secsize);
-
-	/* Build synthetic geometry. */
-	if (ld->sc_secperunit <= 528 * 2048)		/* 528MB */
-		ld->sc_nheads = 16;
-	else if (ld->sc_secperunit <= 1024 * 2048)	/* 1GB */
-		ld->sc_nheads = 32;
-	else if (ld->sc_secperunit <= 21504 * 2048)	/* 21GB */
-		ld->sc_nheads = 64;
-	else if (ld->sc_secperunit <= 43008 * 2048)	/* 42GB */
-		ld->sc_nheads = 128;
-	else
-		ld->sc_nheads = 255;
-
-	ld->sc_nsectors = 63;
-	ld->sc_ncylinders = ld->sc_secperunit / 
-	    (ld->sc_nheads * ld->sc_nsectors);
 
 	switch (param.p.bdi.type) {
 	case I2O_RBS_TYPE_DIRECT:
