@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoul.3,v 1.12 2001/04/28 15:41:30 kleink Exp $
+.\"	$NetBSD: strtoul.3,v 1.13 2001/09/16 01:31:54 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,9 @@
 .Dt STRTOUL 3
 .Os
 .Sh NAME
-.Nm strtoul , 
-.Nm strtoull , 
-.Nm strtoumax , 
+.Nm strtoul ,
+.Nm strtoull ,
+.Nm strtoumax ,
 .Nm strtouq
 .Nd "convert a string to an unsigned long, unsigned long long, uintmax_t or uquad_t integer"
 .Sh LIBRARY
@@ -187,9 +187,9 @@ is set to
 The given string was out of range; the value converted has been clamped.
 .El
 .Sh SEE ALSO
+.Xr strtoimax 3 ,
 .Xr strtol 3 ,
-.Xr strtoll 3 ,
-.Xr strtoimax 3
+.Xr strtoll 3
 .Sh STANDARDS
 The
 .Fn strtoul

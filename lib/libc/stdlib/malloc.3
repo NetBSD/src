@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.3,v 1.12 2000/01/09 16:14:04 hubertf Exp $
+.\"	$NetBSD: malloc.3,v 1.13 2001/09/16 01:31:53 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
-.\"     From FreeBSD: Id: malloc.3,v 1.18 1999/03/28 14:16:04 phk Exp 
+.\"     From FreeBSD: Id: malloc.3,v 1.18 1999/03/28 14:16:04 phk Exp
 .\"
 .Dd August 2, 1999
 .Dt MALLOC 3
@@ -146,7 +146,7 @@ The ``name'' of the file referenced by the symbolic link named
 the value of the environment variable
 .Ev MALLOC_OPTIONS ,
 and the string pointed to by the global variable
-.Va malloc_options 
+.Va malloc_options
 will be interpreted, in that order, character by character as flags.
 .Pp
 Most flags are single letters,
@@ -205,7 +205,7 @@ Consult the source for details on this option.
 .It V
 Attempting to allocate zero bytes will return a NULL pointer instead of
 a valid pointer.
-(The default behavior is to make a minimal allocation and return a 
+(The default behavior is to make a minimal allocation and return a
 pointer to it.)
 This option is provided for System V compatibility.
 .It X
@@ -241,32 +241,8 @@ The
 and
 .Dq Z
 options are intended for testing and debugging.
-An application which changes its behavior when these options are used 
+An application which changes its behavior when these options are used
 is flawed.
-.Sh EXAMPLES
-To set a systemwide reduction of cache size, and to dump core whenever
-a problem occurs:
-.Pp
-.Bd -literal -offset indent
-ln -s 'A<' /etc/malloc.conf
-.Ed
-.Pp
-To specify in the source that a program does no return value checking
-on calls to these functions:
-.Bd -literal -offset indent
-extern char *malloc_options;
-malloc_options = "X";
-.Ed
-.Sh ENVIRONMENT
-The following environment variables affect the execution of the allocation
-functions:
-.Bl -tag -width MMM
-.It Ev MALLOC_OPTIONS
-If the environment variable
-.Ev MALLOC_OPTIONS
-is set, the characters it contains will be interpreted as flags to the
-allocation functions.
-.El
 .Sh RETURN VALUES
 The
 .Fn malloc
@@ -292,8 +268,31 @@ is still available and intact.
 The
 .Fn free
 function returns no value.
-.Sh "DEBUGGING MALLOC PROBLEMS"
+.Sh ENVIRONMENT
+The following environment variables affect the execution of the allocation
+functions:
+.Bl -tag -width MMM
+.It Ev MALLOC_OPTIONS
+If the environment variable
+.Ev MALLOC_OPTIONS
+is set, the characters it contains will be interpreted as flags to the
+allocation functions.
+.El
+.Sh EXAMPLES
+To set a systemwide reduction of cache size, and to dump core whenever
+a problem occurs:
 .Pp
+.Bd -literal -offset indent
+ln -s 'A<' /etc/malloc.conf
+.Ed
+.Pp
+To specify in the source that a program does no return value checking
+on calls to these functions:
+.Bd -literal -offset indent
+extern char *malloc_options;
+malloc_options = "X";
+.Ed
+.Sh DEBUGGING MALLOC PROBLEMS
 The major difference between this implementation and other allocation
 implementations is that the free pages are not accessed unless allocated,
 and are aggressively returned to the kernel for reuse.
@@ -311,8 +310,8 @@ done by a process.
 .Ed
 .Pp
 A side effect of this architecture is that many minor transgressions on
-the interface which would traditionally not be detected are in fact 
-detected.  As a result, programs that have been running happily for 
+the interface which would traditionally not be detected are in fact
+detected.  As a result, programs that have been running happily for
 years may suddenly start to complain loudly, when linked with this
 allocation implementation.
 .Pp
@@ -351,8 +350,8 @@ would be prohibitive.
 There are a number of allocation implementations available on the 'Net
 which focus on detecting and pinpointing problems by trading performance
 for extra sanity checks and detailed diagnostics.
-.Sh "DIAGNOSTIC MESSAGES
-If 
+.Sh DIAGNOSTIC MESSAGES
+If
 .Fn malloc ,
 .Fn calloc ,
 .Fn realloc
@@ -441,6 +440,14 @@ and
 .Fn free
 functions conform to
 .St -ansiC .
+.Sh HISTORY
+The present allocation implementation started out as a filesystem for a
+drum attached to a 20bit binary challenged computer which was built
+with discrete germanium transistors.  It has since graduated to
+handle primary storage rather than secondary.
+It first appeared in its new shape and ability in
+.Fx 2.2 , and then in
+.Nx 1.5 .
 .Sh BUGS
 The messages printed in case of problems provide no detail about the
 actual values.
@@ -451,11 +458,3 @@ allocate zero bytes is a silly response to a silly question.
 This implementation was authored by Poul-Henning Kamp.
 Please report any problems to him at
 .Li <phk@FreeBSD.org> .
-.Sh HISTORY
-The present allocation implementation started out as a filesystem for a
-drum attached to a 20bit binary challenged computer which was built 
-with discrete germanium transistors.  It has since graduated to 
-handle primary storage rather than secondary.
-It first appeared in its new shape and ability in
-.Fx 2.2 , and then in
-.Nx 1.5 .
