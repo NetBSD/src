@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.1.2.2 1997/10/14 01:04:28 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.1.2.3 1997/10/14 14:48:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -478,7 +478,7 @@ ne2000_write_mbuf(sc, m, buf)
 		log(LOG_WARNING,
 		    "%s: remote transmit DMA failed to complete\n",
 		    sc->sc_dev.dv_xname);
-		    dp8390_reset(sc);
+		dp8390_reset(sc);
 	}
 
 	return (savelen);
