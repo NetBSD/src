@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.6 1998/01/12 21:27:15 scottr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.7 1998/03/01 17:37:32 veego Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@
 #include <nfs/xdr_subs.h>
 
 #include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 
 #include "arp.h"
