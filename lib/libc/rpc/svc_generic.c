@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.1 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.2 2000/06/07 18:27:40 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -237,14 +237,16 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 	 */
 	if (madefd || !__rpc_sockisbound(fd)) {
 		if (bindaddr == NULL) {
-			memset(&ss, 0, sizeof ss);
-			ss.ss_family = si.si_af;
-			ss.ss_len = si.si_alen;
-			if (bind(fd, (struct sockaddr *)(void *)&ss,
-			    si.si_alen) < 0) {
-				warnx(
-		"svc_tli_create: could not bind to anonymous port");
-				goto freedata;
+			if (bindresvport(fd, NULL) < 0) {
+				memset(&ss, 0, sizeof ss);
+				ss.ss_family = si.si_af;
+				ss.ss_len = si.si_alen;
+				if (bind(fd, (struct sockaddr *)(void *)&ss,
+				    si.si_alen) < 0) {
+					warnx(
+			"svc_tli_create: could not bind to anonymous port");
+					goto freedata;
+				}
 			}
 			listen(fd, SOMAXCONN);
 		} else {
