@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.7 1998/01/18 00:05:33 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.8 1998/02/04 00:10:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.7 1998/01/18 00:05:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.8 1998/02/04 00:10:30 thorpej Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -90,6 +90,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
@@ -224,6 +225,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 		Debugger();
 #endif
 
+	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
 	return (0);
 }
@@ -313,4 +315,10 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	 */
 	if ((map->_dm_flags & BUS_DMA_ALLOCNOW) == 0)
 		alpha_sgmap_free(map, sgmap);
+
+	/*
+	 * Mark the mapping invalid.
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 }
