@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.6 1996/12/16 21:01:55 cgd Exp $	*/
+/* $NetBSD: cdefs.h,v 1.7 1997/04/06 08:47:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

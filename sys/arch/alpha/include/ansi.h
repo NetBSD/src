@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.7 1997/04/04 04:17:06 mycroft Exp $	*/
+/* $NetBSD: ansi.h,v 1.8 1997/04/06 08:47:15 cgd Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_swpal.S,v 1.1 1997/01/24 01:52:58 cgd Exp $	*/
+/* $NetBSD: prom_swpal.S,v 1.2 1997/04/06 08:41:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

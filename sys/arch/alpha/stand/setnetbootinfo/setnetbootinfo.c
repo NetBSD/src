@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetbootinfo.c,v 1.4 1997/03/18 07:27:58 cgd Exp $	*/
+/* $NetBSD: setnetbootinfo.c,v 1.5 1997/04/06 08:41:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 1996/12/19 09:13:44 cgd Exp $	*/
+/* $NetBSD: profile.h,v 1.9 1997/04/06 08:47:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

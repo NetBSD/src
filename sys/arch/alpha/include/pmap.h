@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1996/08/20 23:02:30 cgd Exp $	*/
+/* $NetBSD: pmap.h,v 1.10 1997/04/06 08:47:33 cgd Exp $ */
 
 #ifndef NEW_PMAP
 #include <machine/pmap.old.h>

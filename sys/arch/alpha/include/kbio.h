@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.1 1996/04/12 01:45:45 cgd Exp $ */
+/* $NetBSD: kbio.h,v 1.2 1997/04/06 08:47:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
+/* $NetBSD: pcb.h,v 1.6 1997/04/06 08:47:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

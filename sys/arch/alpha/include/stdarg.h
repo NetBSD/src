@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.6 1997/04/04 04:17:07 mycroft Exp $	*/
+/* $NetBSD: stdarg.h,v 1.7 1997/04/06 08:47:44 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993

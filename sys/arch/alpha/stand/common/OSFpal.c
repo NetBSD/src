@@ -1,4 +1,4 @@
-/*	$NetBSD: OSFpal.c,v 1.1 1997/01/24 01:52:52 cgd Exp $	*/
+/* $NetBSD: OSFpal.c,v 1.2 1997/04/06 08:40:56 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
