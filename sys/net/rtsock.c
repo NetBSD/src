@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.37 2000/03/10 14:47:13 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.38 2000/03/12 11:58:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -203,7 +203,7 @@ route_output(m, va_alist)
 #endif
 {
 	register struct rt_msghdr *rtm = 0;
-	register struct radix_node *rn;
+	register struct radix_node *rn = 0;
 	register struct rtentry *rt = 0;
 	struct rtentry *saved_nrt = 0;
 	struct radix_node_head *rnh;
