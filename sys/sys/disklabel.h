@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.17 1994/02/13 23:02:13 chopps Exp $
+ *	$Id: disklabel.h,v 1.18 1994/02/22 17:23:48 hpeyerl Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -47,15 +47,9 @@
 /*
  * Each disk has a label which includes information about the hardware
  * disk geometry, filesystem partitions, and drive specific information.
- * The label is in block 0 or 1, possibly offset from the beginning
- * to leave room for a bootstrap, etc.
+ *
+ * The arch dependant label offsets et'al should be defined in machine/param.h.
  */
-
-/* XXX these should be defined per controller (or drive) elsewhere, not here! */
-#ifdef i386
-#define LABELSECTOR	1			/* sector containing label */
-#define LABELOFFSET	0			/* offset of label in sector */
-#endif
 
 #ifdef amiga
 #define MAXPARTITIONS   16
