@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.77 2000/12/13 22:06:05 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.78 2000/12/14 17:47:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -907,7 +907,7 @@ if_down(ifp)
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
-	if_qflush(&ifp->if_snd);
+	IFQ_PURGE(&ifp->if_snd);
 	rt_ifmsg(ifp);
 }
 
