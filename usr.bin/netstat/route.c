@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.50 2000/10/11 14:46:15 is Exp $	*/
+/*	$NetBSD: route.c,v 1.51 2000/11/14 23:07:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.50 2000/10/11 14:46:15 is Exp $");
+__RCSID("$NetBSD: route.c,v 1.51 2000/11/14 23:07:40 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,13 +497,17 @@ p_sockaddr(sa, mask, flags, width)
 		else switch (sdl->sdl_type) {
 		case IFT_FDDI:
 		case IFT_ETHER:
+		case IFT_IEEE1394:
 		    {
-			int i;
+			int i, alen = sdl->sdl_alen;
 			u_char *lla = (u_char *)sdl->sdl_data +
 			    sdl->sdl_nlen;
 
+			if (sdl->sdl_type == IFT_IEEE1394 && alen > 8)
+				alen = 8;
+
 			cplim = "";
-			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
+			for (i = 0; i < alen; i++, lla++) {
 				/* XXX */
 				cp += sprintf(cp, "%s%02x", cplim, *lla);
 				cplim = ":";
