@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.83 2004/04/12 04:08:43 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.84 2004/04/12 05:12:10 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -848,3 +848,9 @@ usr.sbin/ipf/ippool/Makefile			1.8
 
 	install ippool(5) manual as well.  from peter postma in PR#25053.
 	[mrg, ticket #129]
+
+sys/arch/sparc/conf/GENERIC			1.151
+
+	Add comment to indicate that the SunSwift Sbus HME/FAS366 SCSI
+	combination board attaches esp* at sbus*; it's not just "older proms"
+	[fair, ticket #114]
