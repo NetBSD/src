@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/02/24 18:19:42 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2002/02/28 01:53:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -40,58 +40,42 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#define DIAGNOSTIC 1
-
-#include "opt_ddb.h"
-#include "opt_lockdebug.h"
 #include "opt_memsize.h"	
-
 #include "assym.h"
 
-#include <sh3/locore.h>	
-#include <sys/errno.h>
-#include <sys/syscall.h>
+#if defined(SH3) && defined(SH4)	
+#error "mmeye port don't support SH3,SH4 common kernel."	
+#endif
 
-#include <machine/asm.h>
-#include <machine/cputypes.h>
-#include <machine/param.h>
-#include <machine/pte.h>
-#include <machine/trap.h>
+#include <sh3/asm.h>
+#include <sh3/locore.h>
+#include <sh3/trapreg.h>
+#include <sh3/cache_sh3.h>
+#include <sh3/cache_sh4.h>	
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
 
 #define INIT_STACK	0x8c3ff000
-#define SHREG_BBRA	0xffffffb8
-#define SHREG_EXPEVT	0xffffffd4
-#define SHREG_INTEVT	0xffffffd8
-#define SHREG_MMUCR	0xffffffe0
-#define SHREG_TTB	0xfffffff8
 
 NENTRY(start)
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 
 	/* Set Register Bank to Bank 0 */
 	mov.l	SR_init, r0
 	ldc	r0, sr
 
 	xor	r0, r0
-	mov	#SHREG_MMUCR, r2
+	MOV	(MMUCR, r2)	
 	mov.l	r0, @r2		/* MMU OFF */
 
 	bra	start1
 	nop
-#if 0
-	mov	#0x20, r8
-	swap.b	r8, r8
-	swap.w	r8, r8
-	not	r8, r8
-	stc	sr, r9
-	and	r8, r9
-	ldc	r9, sr		 /* Change Register Bank to 0 */
-#endif
 	.align	2
 SR_init:	.long	0x500000F0
+REG_SYMBOL(MMUCR)	
 start1:
 
 #ifdef ROMIMAGE
@@ -135,12 +119,12 @@ start1:
 	.align	2
 LXstart_in_RAM:
 	.long	start_in_RAM
-#else
+#else /* ROMIMAGE */
 	/* Set Bus State Controler */
 	mov.l	XLInitializeBsc, r0
 	jsr	@r0
 	nop
-#endif
+#endif /* ROMIMAGE */
 
 start_in_RAM:
 	mova	1f, r0
@@ -163,7 +147,7 @@ ___start:	.long	start
 ___etext:	.long	_etext
 ___end:		.long	_end
 XLtmpstk:	.long	INIT_STACK
-_KERNBASE:	.long	KERNBASE
+_KERNBASE:	.long	0x8c000000
 _ROM_START:	.long	IOM_ROM_BEGIN
 XLinitSH3:	.long	_C_LABEL(initSH3)
 XLmain:		.long	_C_LABEL(main)
@@ -190,7 +174,7 @@ XL_start_address:
 load_and_reset_end:
 
 ENTRY(XLoadAndReset)
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 	/* copy trampoline code to RAM area top */
 	mov.l	XL_load_and_reset, r0
 	mov.l	XL_load_and_reset_end, r1
@@ -242,8 +226,8 @@ NENTRY(interrupt_exp)
 	MOV	(INTEVT, r0)
 	mov.l	@r0,	r0
 	mov.l	r0, @(TF_TRAPNO, r15)	/* trapframe->tf_trapno = INTEVT */
-	__INTR_MASK_r0_r1		/* mask all interrupt */
-	__EXCEPTION_UNBLOCK_r0_r1	/* enable exception for TLB handling */
+	__INTR_MASK(r0, r1)		/* mask all interrupt */
+	__EXCEPTION_UNBLOCK(r0, r1)	/* enable exception for TLB handling */
 	mov.l	_L.intrhandler, r0
 	jsr	@r0
  	 nop
@@ -272,8 +256,8 @@ NENTRY(Xspllower)
 	sts.l	pr,	@-r15
 
 restart:
-	__INTR_MASK_r0_r1
-	__EXCEPTION_UNBLOCK_r0_r1
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.check_ipending, r0
 	jsr	@r0
 	 nop
@@ -286,7 +270,7 @@ restart:
 	 nop
 
 1:
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 	lds.l	@r15+,	pr
 	rts
 	 nop

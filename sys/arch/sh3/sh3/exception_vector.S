@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.1 2002/02/24 18:19:43 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.2 2002/02/28 01:53:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 	
 #include <sh3/asm.h>
 #include <sh3/locore.h>
+#include <sh3/trapreg.h>	
+#include <sh3/ubcreg.h>
 
 /*
  * Exception vectors. following routines are copied to vector addreses.
@@ -71,8 +73,8 @@ _C_LABEL(sh_vector_generic):
 	cmp/eq	#0x40,	r0		/* T_TLBINVALIDR */
 	bf	1f
 3:
-	__INTR_MASK_r0_r1
-	__EXCEPTION_UNBLOCK_r0_r1
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.tlb_handler, r0
 	jsr	@r0
 	 nop
@@ -97,8 +99,8 @@ _C_LABEL(sh_vector_generic):
 #endif /* DDB */
 	
 	mov.l	r0,	@(TF_TRAPNO, r15) /* trapframe->tf_trapno = EXPEVT */
-	__INTR_UNMASK_r0_r1
-	__EXCEPTION_UNBLOCK_r0_r1
+	__INTR_UNMASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.trap, r0
 	jsr	@r0
 	 mov	r15,	r4
@@ -109,7 +111,7 @@ _C_LABEL(sh_vector_generic):
 	 mov	r15,	r4		
 
 #ifdef DDB	/* BBRA = trapframe->tf_ubc */	
-	__EXCEPTION_BLOCK_r0_r1
+	__EXCEPTION_BLOCK(r0, r1)
 	mov.l	@(TF_UBC, r15), r0
 	MOV	(BBRA, r1)
 	mov.w	r0,	@r1
@@ -135,8 +137,8 @@ _C_LABEL(sh_vector_generic_end):
 	.align	2	
 _C_LABEL(sh_vector_tlbmiss):
 	EXCEPTION_ENTRY	
-	__INTR_MASK_r0_r1
-	__EXCEPTION_UNBLOCK_r0_r1
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	1f,	r0
 	jsr	@r0
 	 nop
