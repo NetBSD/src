@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.73 2005/01/27 11:58:01 scw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.74 2005/01/30 17:36:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.73 2005/01/27 11:58:01 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74 2005/01/30 17:36:49 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -686,6 +686,12 @@ vr_rxeof(struct vr_softc *sc)
 		}
 #endif
 
+		/*
+		 * The Rhine chip includes the CRC with every packet.
+		 * Trim it off here.
+		 */
+		total_len -= ETHER_CRC_LEN;
+
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
 		 * If the packet is small enough to fit in a
@@ -758,12 +764,6 @@ vr_rxeof(struct vr_softc *sc)
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
-
-		/*
-		 * The Rhine chip includes the FCS with every
-		 * received packet.
-		 */
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
