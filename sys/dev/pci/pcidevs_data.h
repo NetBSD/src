@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.1 2004/04/01 23:06:30 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.2 2004/04/05 20:27:45 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615 2004/03/26 22:05:08 gendalia Exp 
+ *	NetBSD
  */
 
 /*
@@ -2980,6 +2980,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SBLive! EMU 10000",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2,
+	    0,
+	    "Creative Labs",
+	    "SBLive! EMU 10000",
+	},
+	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS,
 	    0,
 	    "Creative Labs",
@@ -2987,6 +2993,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY,
+	    0,
+	    "Creative Labs",
+	    "PCI Gameport Joystick",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY2,
 	    0,
 	    "Creative Labs",
 	    "PCI Gameport Joystick",
