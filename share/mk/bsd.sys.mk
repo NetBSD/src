@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.16 1997/11/04 21:12:45 gwr Exp $
+#	$NetBSD: bsd.sys.mk,v 1.17 1998/04/01 15:23:36 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -54,9 +54,10 @@ HOST_LDFLAGS?=
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.c
-.y.c:
+.y.c .y.h:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	mv ${.TARGET:R}.tab.c ${.TARGET}
+	[ -f ${.TARGET:R}.tab.h ] && mv ${.TARGET:R}.tab.h ${.TARGET:R}.h || true
 .y.o:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
