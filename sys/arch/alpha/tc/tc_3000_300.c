@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.16 1998/10/22 01:03:09 briggs Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.17 1998/10/23 23:49:31 briggs Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.16 1998/10/22 01:03:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.17 1998/10/23 23:49:31 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.16 1998/10/22 01:03:09 briggs Exp 
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
 #include <alpha/tc/ioasicreg.h>
+
+#include "sfb.h"
+
+#if NSFB > 0
 #include <alpha/tc/sfbvar.h>
+#endif
 
 int	tc_3000_300_intrnull __P((void *));
 
@@ -281,8 +286,12 @@ tc_3000_300_fb_cnattach(turbo_slot)
 	}
 
 	if (output_slot == 0) {
+#if NSFB > 0
 		sfb_cnattach(KV(0x1c0000000) + 0x02000000);
 		return 1;
+#else
+		return 0;
+#endif
 	}
 
 	return tc_fb_cnattach(tc_3000_300_slots[output_slot-1].tcs_addr);
