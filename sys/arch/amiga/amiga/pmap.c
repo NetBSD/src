@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1996/05/12 02:38:23 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1996/05/19 21:04:24 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -458,7 +458,7 @@ pmap_init(phys_start, phys_end)
 #ifdef MACHINE_NONCONTIG
 		printf("pmap_init(%lx, %lx)\n", avail_start, avail_end);
 #else
-		printf("pmap_init(%x, %x)\n", phys_start, phys_end);
+		printf("pmap_init(%lx, %lx)\n", phys_start, phys_end);
 #endif
 #endif
 	/*
@@ -984,8 +984,11 @@ pmap_remove(pmap, sva, eva)
 	register u_int *pte;
 	register pv_entry_t pv, npv;
 	pmap_t ptpmap;
-	int *ste, i, s, bits;
+	int *ste, s, bits;
 	boolean_t flushcache = FALSE;
+#if defined(M68040) || defined(M68060)
+	int i;
+#endif
 #ifdef DEBUG
 	u_int opte;
 
@@ -1094,7 +1097,13 @@ pmap_remove(pmap, sva, eva)
 			}
 #ifdef DEBUG
 			if (npv == NULL) {
-printf ("pmap_remove: PA %lx index %d\n", pa, pa_index(pa));
+#ifdef MACHINE_NONCONTIG	/* XXX this need to be fixed */
+				printf("pmap_remove: PA %lx index %d\n",
+				    pa, pa_index(pa));
+#else
+				printf("pmap_remove: PA %lx index %ld\n",
+				    pa, pa_index(pa));
+#endif
 				panic("pmap_remove: PA not in pv_tab");
 			}
 #endif
@@ -1137,7 +1146,7 @@ printf ("pmap_remove: PA %lx index %d\n", pa, pa_index(pa));
 #endif
 			}
 			else
-#endif /* M68040 */
+#endif /* M68040 || M68060 */
 				*ste = SG_NV;
 			/*
 			 * If it was a user PT page, we decrement the

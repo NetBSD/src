@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -121,7 +121,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_lkm_dummy(),		/* 25 */
+	cdev_scanner_init(NSS,ss),	/* 25: SCSI scanner */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
