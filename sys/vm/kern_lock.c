@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_lock.c	7.4 (Berkeley) 4/21/91
- *	$Id: kern_lock.c,v 1.5 1994/01/07 22:22:20 mycroft Exp $
+ *	from: @(#)kern_lock.c	8.1 (Berkeley) 6/11/93
+ *	$Id: kern_lock.c,v 1.6 1994/05/23 03:11:27 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,12 +68,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
+#include <vm/vm.h>
 
 /* XXX */
+#include <sys/proc.h>
 typedef	int *thread_t;
 #define	current_thread()	((thread_t)&curproc->p_thread)
 /* XXX */
@@ -135,12 +135,12 @@ boolean_t simple_lock_try(l)
 {
     	return (!test_and_set((boolean_t *)l));
 }
-#endif	notdef
-#endif	NCPUS > 1
+#endif /* notdef */
+#endif /* NCPUS > 1 */
 
 #if	NCPUS > 1
 int lock_wait_time = 100;
-#else	NCPUS > 1
+#else /* NCPUS > 1 */
 
 	/*
 	 * 	It is silly to spin on a uni-processor as if we
@@ -148,7 +148,7 @@ int lock_wait_time = 100;
 	 *	want_write bit while we are executing.
 	 */
 int lock_wait_time = 0;
-#endif	NCPUS > 1
+#endif /* NCPUS > 1 */
 
 
 /*
@@ -218,7 +218,7 @@ void lock_write(l)
 
 		if (l->can_sleep && l->want_write) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock);
+			thread_sleep((int) l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -237,7 +237,7 @@ void lock_write(l)
 
 		if (l->can_sleep && (l->read_count != 0 || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock);
+			thread_sleep((int) l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -293,7 +293,7 @@ void lock_read(l)
 
 		if (l->can_sleep && (l->want_write || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock);
+			thread_sleep((int) l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -357,7 +357,7 @@ boolean_t lock_read_to_write(l)
 
 		if (l->can_sleep && l->read_count != 0) {
 			l->waiting = TRUE;
-			thread_sleep((int) l, &l->interlock);
+			thread_sleep((int) l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -496,7 +496,7 @@ boolean_t lock_try_read_to_write(l)
 
 	while (l->read_count != 0) {
 		l->waiting = TRUE;
-		thread_sleep((int) l, &l->interlock);
+		thread_sleep((int) l, &l->interlock, FALSE);
 		simple_lock(&l->interlock);
 	}
 

@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_user.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_user.c,v 1.7 1994/01/08 04:17:35 mycroft Exp $
+ *	from: @(#)vm_user.c	8.2 (Berkeley) 1/12/94
+ *	$Id: vm_user.c,v 1.8 1994/05/23 03:12:10 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -72,8 +72,6 @@
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_user.h>
 
 simple_lock_data_t	vm_alloc_lock;	/* XXX */
 
@@ -88,7 +86,6 @@ struct svm_allocate_args {
 	vm_size_t size;
 	boolean_t anywhere;
 };
-
 /* ARGSUSED */
 int
 svm_allocate(p, uap, retval)
@@ -117,7 +114,6 @@ struct svm_deallocate_args {
 	vm_offset_t addr;
 	vm_size_t size;
 };
-
 /* ARGSUSED */
 int
 svm_deallocate(p, uap, retval)
@@ -138,7 +134,6 @@ struct svm_inherit_args {
 	vm_size_t size;
 	vm_inherit_t inherit;
 };
-
 /* ARGSUSED */
 int
 svm_inherit(p, uap, retval)
@@ -160,7 +155,6 @@ struct svm_protect_args {
 	boolean_t setmax;
 	vm_prot_t prot;
 };
-
 /* ARGSUSED */
 int
 svm_protect(p, uap, retval)
@@ -173,6 +167,42 @@ svm_protect(p, uap, retval)
 	uap->map = p->p_map;		/* XXX */
 	rv = vm_protect(uap->map, uap->addr, uap->size, uap->setmax, uap->prot);
 	return((int)rv);
+}
+
+/*
+ *	vm_inherit sets the inheritence of the specified range in the
+ *	specified map.
+ */
+int
+vm_inherit(map, start, size, new_inheritance)
+	register vm_map_t	map;
+	vm_offset_t		start;
+	vm_size_t		size;
+	vm_inherit_t		new_inheritance;
+{
+	if (map == NULL)
+		return(KERN_INVALID_ARGUMENT);
+
+	return(vm_map_inherit(map, trunc_page(start), round_page(start+size), new_inheritance));
+}
+
+/*
+ *	vm_protect sets the protection of the specified range in the
+ *	specified map.
+ */
+
+int
+vm_protect(map, start, size, set_maximum, new_protection)
+	register vm_map_t	map;
+	vm_offset_t		start;
+	vm_size_t		size;
+	boolean_t		set_maximum;
+	vm_prot_t		new_protection;
+{
+	if (map == NULL)
+		return(KERN_INVALID_ARGUMENT);
+
+	return(vm_map_protect(map, trunc_page(start), round_page(start+size), new_protection, set_maximum));
 }
 #endif
 
@@ -202,8 +232,7 @@ vm_allocate(map, addr, size, anywhere)
 		*addr = trunc_page(*addr);
 	size = round_page(size);
 
-	result = vm_map_find(map, NULL, (vm_offset_t) 0, addr,
-			size, anywhere);
+	result = vm_map_find(map, NULL, (vm_offset_t) 0, addr, size, anywhere);
 
 	return(result);
 }
@@ -228,36 +257,57 @@ vm_deallocate(map, start, size)
 }
 
 /*
- *	vm_inherit sets the inheritence of the specified range in the
- *	specified map.
+ * Similar to vm_allocate but assigns an explicit pager.
  */
 int
-vm_inherit(map, start, size, new_inheritance)
+vm_allocate_with_pager(map, addr, size, anywhere, pager, poffset, internal)
 	register vm_map_t	map;
-	vm_offset_t		start;
-	vm_size_t		size;
-	vm_inherit_t		new_inheritance;
+	register vm_offset_t	*addr;
+	register vm_size_t	size;
+	boolean_t		anywhere;
+	vm_pager_t		pager;
+	vm_offset_t		poffset;
+	boolean_t		internal;
 {
+	register vm_object_t	object;
+	register int		result;
+
 	if (map == NULL)
 		return(KERN_INVALID_ARGUMENT);
 
-	return(vm_map_inherit(map, trunc_page(start), round_page(start+size), new_inheritance));
-}
+	*addr = trunc_page(*addr);
+	size = round_page(size);
 
-/*
- *	vm_protect sets the protection of the specified range in the
- *	specified map.
- */
-int
-vm_protect(map, start, size, set_maximum, new_protection)
-	register vm_map_t	map;
-	vm_offset_t		start;
-	vm_size_t		size;
-	boolean_t		set_maximum;
-	vm_prot_t		new_protection;
-{
-	if (map == NULL)
-		return(KERN_INVALID_ARGUMENT);
+	/*
+	 *	Lookup the pager/paging-space in the object cache.
+	 *	If it's not there, then create a new object and cache
+	 *	it.
+	 */
+	object = vm_object_lookup(pager);
+	cnt.v_lookups++;
+	if (object == NULL) {
+		object = vm_object_allocate(size);
+		/*
+		 * From Mike Hibler: "unnamed anonymous objects should never
+		 * be on the hash list ... For now you can just change
+		 * vm_allocate_with_pager to not do vm_object_enter if this
+		 * is an internal object ..."
+		 */
+		if (!internal)
+			vm_object_enter(object, pager);
+	} else
+		cnt.v_hits++;
+	if (internal)
+		object->flags |= OBJ_INTERNAL;
+	else {
+		object->flags &= ~OBJ_INTERNAL;
+		cnt.v_nzfod -= atop(size);
+	}
 
-	return(vm_map_protect(map, trunc_page(start), round_page(start+size), new_protection, set_maximum));
+	result = vm_map_find(map, object, poffset, addr, size, anywhere);
+	if (result != KERN_SUCCESS)
+		vm_object_deallocate(object);
+	else if (pager != NULL)
+		vm_object_setpager(object, pager, (vm_offset_t) 0, TRUE);
+	return(result);
 }

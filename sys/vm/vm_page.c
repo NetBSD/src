@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.14 1994/04/29 08:21:50 mycroft Exp $
+ *	from: @(#)vm_page.c	8.3 (Berkeley) 3/21/94
+ *	$Id: vm_page.c,v 1.15 1994/05/23 03:11:55 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,18 +68,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
 #include <vm/vm_page.h>
+#include <vm/vm_map.h>
 #include <vm/vm_pageout.h>
 
 #include <machine/cpu.h>
-
-/*
- *	Associated with each page of user-allocatable memory is a
- *	page structure.
- */
 
 #ifdef MACHINE_NONCONTIG
 /*
@@ -90,6 +86,11 @@
 vm_offset_t	virtual_space_start;
 vm_offset_t	virtual_space_end;
 #endif /* MACHINE_NONCONTIG */
+
+/*
+ *	Associated with page of user-allocatable memory is a
+ *	page structure.
+ */
 
 struct pglist	*vm_page_buckets;		/* Array of buckets */
 int		vm_page_bucket_count = 0;	/* How big is array? */
@@ -102,8 +103,10 @@ struct pglist	vm_page_queue_inactive;
 simple_lock_data_t	vm_page_queue_lock;
 simple_lock_data_t	vm_page_queue_free_lock;
 
-vm_page_t	vm_page_array;
+/* has physical page allocation been initialized? */
+boolean_t vm_page_startup_initialized;
 
+vm_page_t	vm_page_array;
 #ifndef MACHINE_NONCONTIG
 long		first_page;
 long		last_page;
@@ -123,7 +126,7 @@ int		page_shift;
  *	size.  Must be called before any use of page-size
  *	dependent functions.
  *
- *	Sets page_shift and page_mask from page_size.
+ *	Sets page_shift and page_mask from cnt.v_page_size.
  */
 void
 vm_set_page_size()
@@ -265,16 +268,13 @@ vm_page_bootstrap(startp, endp)
  *	Each page cell is initialized and placed on the free list.
  */
 vm_offset_t
-vm_page_startup(start, end, vaddr)
-	register vm_offset_t	start;
-	vm_offset_t		end;
-	register vm_offset_t	vaddr;
+vm_page_startup(start, end)
+	register vm_offset_t	*start;
+	vm_offset_t		*end;
 {
 	register vm_page_t	m;
-	register vm_offset_t	mapped;
 	register struct pglist	*bucket;
 	vm_size_t		npages;
-	register vm_offset_t	new_start;
 	int			i;
 	vm_offset_t		pa;
 	extern	vm_offset_t	kentry_data;
@@ -298,7 +298,7 @@ vm_page_startup(start, end, vaddr)
 	TAILQ_INIT(&vm_page_queue_inactive);
 
 	/*
-	 *	Allocate (and initialize) the hash table buckets.
+	 *	Calculate the number of hash table buckets.
 	 *
 	 *	The number of buckets MUST BE a power of 2, and
 	 *	the actual value is the next power of 2 greater
@@ -308,28 +308,21 @@ vm_page_startup(start, end, vaddr)
 	 *		This computation can be tweaked if desired.
 	 */
 
-	vm_page_buckets = (struct pglist *) vaddr;
 	if (vm_page_bucket_count == 0) {
 		vm_page_bucket_count = 1;
-		while (vm_page_bucket_count < atop(end - start))
+		while (vm_page_bucket_count < atop(*end - *start))
 			vm_page_bucket_count <<= 1;
 	}
 
 	vm_page_hash_mask = vm_page_bucket_count - 1;
 
 	/*
-	 *	Validate these addresses.
+	 *	Allocate (and initialize) the hash table buckets.
 	 */
-
-	new_start = round_page(((struct pglist *)start) + vm_page_bucket_count);
-	mapped = vaddr;
-	vaddr = pmap_map(mapped, start, new_start,
-			VM_PROT_READ|VM_PROT_WRITE);
-	start = new_start;
-	bzero((caddr_t) mapped, vaddr - mapped);
-	mapped = vaddr;
-
+	vm_page_buckets = (struct pglist *)
+	    pmap_bootstrap_alloc(vm_page_bucket_count * sizeof(struct pglist));
 	bucket = vm_page_buckets;
+
 	for (i = vm_page_bucket_count; i--;) {
 		TAILQ_INIT(bucket);
 		bucket++;
@@ -338,10 +331,10 @@ vm_page_startup(start, end, vaddr)
 	simple_lock_init(&bucket_lock);
 
 	/*
-	 *	round (or truncate) the addresses to our page size.
+	 *	Truncate the remainder of physical memory to our page size.
 	 */
 
-	end = trunc_page(end);
+	*end = trunc_page(*end);
 
 	/*
 	 *	Pre-allocate maps and map entries that cannot be dynamically
@@ -355,21 +348,9 @@ vm_page_startup(start, end, vaddr)
 	 *	map (they should use their own maps).
 	 */
 
-	kentry_data_size = MAX_KMAP * sizeof(struct vm_map) +
-			   MAX_KMAPENT * sizeof(struct vm_map_entry);
-	kentry_data_size = round_page(kentry_data_size);
-	kentry_data = (vm_offset_t) vaddr;
-	vaddr += kentry_data_size;
-
-	/*
-	 *	Validate these zone addresses.
-	 */
-
-	new_start = start + (vaddr - mapped);
-	pmap_map(mapped, start, new_start, VM_PROT_READ|VM_PROT_WRITE);
-	bzero((caddr_t) mapped, (vaddr - mapped));
-	mapped = vaddr;
-	start = new_start;
+	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
+				      MAX_KMAPENT*sizeof(struct vm_map_entry));
+	kentry_data = (vm_offset_t) pmap_bootstrap_alloc(kentry_data_size);
 
 	/*
  	 *	Compute the number of pages of memory that will be
@@ -377,16 +358,15 @@ vm_page_startup(start, end, vaddr)
 	 *	of a page structure per page).
 	 */
 
-	cnt.v_free_count = npages =
-		(end - start + sizeof(struct vm_page))/(PAGE_SIZE + sizeof(struct vm_page));
+	cnt.v_free_count = npages = (*end - *start + sizeof(struct vm_page))
+		/ (PAGE_SIZE + sizeof(struct vm_page));
 
 	/*
-	 *	Initialize the mem entry structures now, and
-	 *	put them in the free queue.
+	 *	Record the extent of physical memory that the
+	 *	virtual memory system manages.
 	 */
 
-	m = vm_page_array = (vm_page_t) vaddr;
-	first_page = start;
+	first_page = *start;
 	first_page += npages*sizeof(struct vm_page);
 	first_page = atop(round_page(first_page));
 	last_page  = first_page + npages - 1;
@@ -394,24 +374,35 @@ vm_page_startup(start, end, vaddr)
 	first_phys_addr = ptoa(first_page);
 	last_phys_addr  = ptoa(last_page) + PAGE_MASK;
 
-	/*
-	 *	Validate these addresses.
-	 */
-
-	new_start = start + (round_page(m + npages) - mapped);
-	mapped = pmap_map(mapped, start, new_start,
-			VM_PROT_READ|VM_PROT_WRITE);
-	start = new_start;
 
 	/*
-	 *	Clear all of the page structures
+	 *	Allocate and clear the mem entry structures.
 	 */
-	bzero((caddr_t)m, npages * sizeof(*m));
+
+	m = vm_page_array = (vm_page_t)
+		pmap_bootstrap_alloc(npages * sizeof(struct vm_page));
+
+	/*
+	 *	Initialize the mem entry structures now, and
+	 *	put them in the free queue.
+	 */
 
 	pa = first_phys_addr;
 	while (npages--) {
+		m->flags = 0;
+		m->object = NULL;
 		m->phys_addr = pa;
+#ifdef i386					/* XXX will never be used */
+		if (pmap_isvalidphys(m->phys_addr)) {
+			TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
+		} else {
+			/* perhaps iomem needs it's own type, or dev pager? */
+			m->flags |= PG_FICTITIOUS | PG_BUSY;
+			cnt.v_free_count--;
+		}
+#else /* i386 */
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
+#endif /* i386 */
 		m++;
 		pa += PAGE_SIZE;
 	}
@@ -422,7 +413,8 @@ vm_page_startup(start, end, vaddr)
 	 */
 	simple_lock_init(&vm_pages_needed_lock);
 
-	return(mapped);
+	/* from now on, pmap_bootstrap_alloc can't be used */
+	vm_page_startup_initialized = TRUE;
 }
 #endif /* MACHINE_NONCONTIG */
 
@@ -604,6 +596,7 @@ vm_page_insert(mem, object, offset)
 
 /*
  *	vm_page_remove:		[ internal use only ]
+ *				NOTE: used by device pager as well -wfj
  *
  *	Removes the given mem entry from the object/offset-page
  *	table and the object page list.
@@ -761,11 +754,11 @@ vm_page_alloc(object, offset)
 	 *	it doesn't really matter.
 	 */
 
-	if ((cnt.v_free_count < cnt.v_free_min) ||
-			((cnt.v_free_count < cnt.v_free_target) &&
-			(cnt.v_inactive_count < cnt.v_inactive_target)))
-		thread_wakeup(&vm_pages_needed);
-	return(mem);
+	if (cnt.v_free_count < cnt.v_free_min ||
+	    (cnt.v_free_count < cnt.v_free_target &&
+	     cnt.v_inactive_count < cnt.v_inactive_target))
+		thread_wakeup((int)&vm_pages_needed);
+	return (mem);
 }
 
 /*
@@ -781,12 +774,12 @@ vm_page_free(mem)
 	register vm_page_t	mem;
 {
 	vm_page_remove(mem);
-
 	if (mem->flags & PG_ACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 		mem->flags &= ~PG_ACTIVE;
 		cnt.v_active_count--;
 	}
+
 	if (mem->flags & PG_INACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
 		mem->flags &= ~PG_INACTIVE;
@@ -878,22 +871,15 @@ vm_page_deactivate(m)
 	/*
 	 *	Only move active pages -- ignore locked or already
 	 *	inactive ones.
-	 *
-	 *	XXX: sometimes we get pages which aren't wired down
-	 *	or on any queue - we need to put them on the inactive
-	 *	queue also, otherwise we lose track of them.
-	 *	Paul Mackerras (paulus@cs.anu.edu.au) 9-Jan-93.
 	 */
 
-	if (!(m->flags & PG_INACTIVE) && m->wire_count == 0) {
+	if (m->flags & PG_ACTIVE) {
 		pmap_clear_reference(VM_PAGE_TO_PHYS(m));
-		if (m->flags & PG_ACTIVE) {
-			TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
-			m->flags &= ~PG_ACTIVE;
-			cnt.v_active_count--;
-		}
+		TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
 		TAILQ_INSERT_TAIL(&vm_page_queue_inactive, m, pageq);
+		m->flags &= ~PG_ACTIVE;
 		m->flags |= PG_INACTIVE;
+		cnt.v_active_count--;
 		cnt.v_inactive_count++;
 		if (pmap_is_modified(VM_PAGE_TO_PHYS(m)))
 			m->flags &= ~PG_CLEAN;
@@ -945,6 +931,7 @@ vm_page_zero_fill(m)
 {
 	VM_PAGE_CHECK(m);
 
+	m->flags &= ~PG_CLEAN;
 	pmap_zero_page(VM_PAGE_TO_PHYS(m));
 	return(TRUE);
 }
@@ -962,5 +949,6 @@ vm_page_copy(src_m, dest_m)
 	VM_PAGE_CHECK(src_m);
 	VM_PAGE_CHECK(dest_m);
 
+	dest_m->flags &= ~PG_CLEAN;
 	pmap_copy_page(VM_PAGE_TO_PHYS(src_m), VM_PAGE_TO_PHYS(dest_m));
 }

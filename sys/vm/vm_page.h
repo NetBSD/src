@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.11 1994/04/29 08:21:52 mycroft Exp $
+ *	$Id: vm_page.h,v 1.12 1994/05/23 03:11:57 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -286,7 +286,7 @@ vm_page_t	 vm_page_lookup __P((vm_object_t, vm_offset_t));
 void		 vm_page_remove __P((vm_page_t));
 void		 vm_page_rename __P((vm_page_t, vm_object_t, vm_offset_t));
 #ifndef MACHINE_NONCONTIG
-vm_offset_t	 vm_page_startup __P((vm_offset_t, vm_offset_t, vm_offset_t));
+vm_offset_t	 vm_page_startup __P((vm_offset_t *, vm_offset_t *));
 #endif
 void		 vm_page_unwire __P((vm_page_t));
 void		 vm_page_wire __P((vm_page_t));

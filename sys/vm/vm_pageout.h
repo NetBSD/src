@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.h	8.2 (Berkeley) 1/12/94
- *	$Id: vm_pageout.h,v 1.6 1994/05/05 20:35:12 mycroft Exp $
+ *	$Id: vm_pageout.h,v 1.7 1994/05/23 03:12:00 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,9 +63,6 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_PAGEOUT_H_
-#define _VM_VM_PAGEOUT_H_
-
 /*
  *	Header file for pageout daemon.
  */
@@ -90,7 +87,7 @@ simple_lock_data_t	vm_pages_needed_lock;
 			simple_lock(&vm_pages_needed_lock); \
 			thread_wakeup((int)&vm_pages_needed); \
 			thread_sleep((int)&cnt.v_free_count, \
-				&vm_pages_needed_lock); \
+				&vm_pages_needed_lock, FALSE); \
 			}
 #ifdef KERNEL
 void		 vm_pageout __P((void));
@@ -98,5 +95,3 @@ void		 vm_pageout_scan __P((void));
 void		 vm_pageout_page __P((vm_page_t, vm_object_t));
 void		 vm_pageout_cluster __P((vm_page_t, vm_object_t));
 #endif
-
-#endif /* !_VM_VM_PAGEOUT_H_ */

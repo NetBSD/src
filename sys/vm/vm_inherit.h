@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_inherit.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_inherit.h,v 1.4 1994/03/17 02:52:09 cgd Exp $
+ *	from: @(#)vm_inherit.h	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_inherit.h,v 1.5 1994/05/23 03:11:39 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,18 +63,12 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_INHERIT_H_
-#define _VM_VM_INHERIT_H_
-
 /*
  *	Virtual memory map inheritance definitions.
  */
 
-/*
- *	Types defined:
- *
- *	vm_inherit_t	inheritance codes.
- */
+#ifndef	_VM_INHERIT_
+#define	_VM_INHERIT_
 
 /*
  *	Enumeration of valid values for vm_inherit_t.
@@ -87,4 +81,4 @@
 
 #define VM_INHERIT_DEFAULT	VM_INHERIT_COPY
 
-#endif /* !_VM_VM_INHERIT_H_ */
+#endif /* _VM_INHERIT_ */

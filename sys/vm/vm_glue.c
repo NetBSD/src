@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	vm_glue.c,v 1.8 1993/07/15 15:42:17 cgd Exp
+ *	from: @(#)vm_glue.c	8.6 (Berkeley) 1/5/94
+ *	$vm_glue.c,v 1.8 1993/07/15 15:42:17 cgd Exp$
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -71,7 +71,6 @@
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_user.h>
 
 #include <machine/cpu.h>
 
@@ -80,25 +79,14 @@ unsigned maxdmap = MAXDSIZ;	/* XXX */
 unsigned maxsmap = MAXSSIZ;	/* XXX */ 
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 
-static void swapout __P((struct proc *));
-
 int
 kernacc(addr, len, rw)
 	caddr_t addr;
 	int len, rw;
 {
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
-
-	return (kerncheckprot(addr, len, prot));
-}
-
-int
-kerncheckprot(addr, len, prot)
-	caddr_t addr;
-	int len, prot;
-{
 	boolean_t rv;
 	vm_offset_t saddr, eaddr;
+	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page(addr);
 	eaddr = round_page(addr+len);
@@ -126,21 +114,16 @@ useracc(addr, len, rw)
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
+#if defined(i386) || defined(pc532)
 	/*
 	 * XXX - specially disallow access to user page tables - they are
-	 * in the map.
-	 *
-	 * XXX - don't specially disallow access to the user area - treat
-	 * it as incorrectly as elsewhere.
-	 *
-	 * XXX - VM_MAXUSER_ADDRESS is an end address, not a max.  It was
-	 * only used (as an end address) in trap.c.  Use it as an end
-	 * address here too.
+	 * in the map.  This is here until i386 & pc532 pmaps are fixed...
 	 */
 	if ((vm_offset_t) addr >= VM_MAXUSER_ADDRESS
 	    || (vm_offset_t) addr + len > VM_MAXUSER_ADDRESS
 	    || (vm_offset_t) addr + len <= (vm_offset_t) addr)
 		return (FALSE);
+#endif
 
 	rv = vm_map_check_protection(&curproc->p_vmspace->vm_map,
 	    trunc_page(addr), round_page(addr+len), prot);
@@ -151,16 +134,37 @@ useracc(addr, len, rw)
 /*
  * Change protections on kernel pages from addr to addr+len
  * (presumably so debugger can plant a breakpoint).
- * All addresses are assumed to reside in the Sysmap,
+ *
+ * We force the protection change at the pmap level.  If we were
+ * to use vm_map_protect a change to allow writing would be lazily-
+ * applied meaning we would still take a protection fault, something
+ * we really don't want to do.  It would also fragment the kernel
+ * map unnecessarily.  We cannot use pmap_protect since it also won't
+ * enforce a write-enable request.  Using pmap_enter is the only way
+ * we can ensure the change takes place properly.
  */
+void
 chgkprot(addr, len, rw)
 	register caddr_t addr;
 	int len, rw;
 {
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
+	vm_prot_t prot;
+	vm_offset_t pa, sva, eva;
 
-	vm_map_protect(kernel_map, trunc_page(addr),
-		       round_page(addr+len), prot, FALSE);
+	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
+	eva = round_page(addr + len);
+	for (sva = trunc_page(addr); sva < eva; sva += PAGE_SIZE) {
+		/*
+		 * Extract physical address for the page.
+		 * We use a cheezy hack to differentiate physical
+		 * page 0 from an invalid mapping, not that it
+		 * really matters...
+		 */
+		pa = pmap_extract(kernel_pmap, sva|1);
+		if (pa == 0)
+			panic("chgkprot: invalid page");
+		pmap_enter(kernel_pmap, sva, pa&~1, prot, TRUE);
+	}
 }
 #endif
 
@@ -181,7 +185,7 @@ vsunlock(addr, len, dirtied)
 {
 #ifdef	lint
 	dirtied++;
-#endif	lint
+#endif
 	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), TRUE);
 }
@@ -220,14 +224,23 @@ vm_fork(p1, p2, isvfork)
 		shmfork(p1, p2, isvfork);
 #endif
 
+#if !defined(i386) && !defined(pc532)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
-#ifdef notyet
 	addr = kmem_alloc_pageable(kernel_map, ctob(UPAGES));
+	if (addr == 0)
+		panic("vm_fork: no more kernel virtual memory");
 	vm_map_pageable(kernel_map, addr, addr + ctob(UPAGES), FALSE);
 #else
+	/*
+	 * XXX somehow, on 386, ocassionally pageout removes active, wired down
+	 * kstack and pagetables, WITHOUT going thru vm_page_unwire! Why this
+	 * appears to work is not yet clear, yet it does...
+	 */
 	addr = kmem_alloc(kernel_map, ctob(UPAGES));
+	if (addr == 0)
+		panic("vm_fork: no more kernel virtual memory");
 #endif
 	up = (struct user *)addr;
 	p2->p_addr = up;
@@ -251,11 +264,11 @@ vm_fork(p1, p2, isvfork)
 #if defined(i386) || defined(pc532)
 	{ vm_offset_t addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
 
-	vp = &p2->p_vmspace->vm_map;
-
 	/* ream out old pagetables and kernel stack */
+	vp = &p2->p_vmspace->vm_map;
 	(void)vm_deallocate(vp, addr, VM_MAX_ADDRESS - addr);
 	(void)vm_allocate(vp, &addr, VM_MAX_ADDRESS - addr, FALSE);
+	(void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 	}
 #endif
 	/*
@@ -288,8 +301,7 @@ vm_init_limits(p)
         p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
         p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
         p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
-	p->p_rlimit[RLIMIT_RSS].rlim_cur = p->p_rlimit[RLIMIT_RSS].rlim_max =
-		ptoa(cnt.v_free_count);
+	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(cnt.v_free_count);
 }
 
 #include <vm/vm_pageout.h>
@@ -321,14 +333,12 @@ scheduler()
 
 loop:
 #ifdef DEBUG
-	if (!enableswap) {
-		pp = NULL;
-		goto noswap;
-	}
+	while (!enableswap)
+		tsleep((caddr_t)&proc0, PVM, "noswap", 0);
 #endif
 	pp = NULL;
 	ppri = INT_MIN;
-	for (p = (struct proc *)allproc; p != NULL; p = p->p_next)
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_next) {
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
 			pri = p->p_swtime + p->p_slptime - p->p_nice * 8;
 			if (pri > ppri) {
@@ -336,6 +346,7 @@ loop:
 				ppri = pri;
 			}
 		}
+	}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: running, procp %x pri %d\n", pp, ppri);
@@ -364,7 +375,13 @@ noswap:
 			       ppri, cnt.v_free_count);
 #endif
 		vm_map_pageable(kernel_map, addr, addr+size, FALSE);
-		(void) splclock();
+		/*
+		 * Some architectures need to be notified when the
+		 * user area has moved to new physical page(s) (e.g.
+		 * see pmax/pmax/vm_machdep.c).
+		 */
+		cpu_swapin(p);
+		(void) splstatclock();
 		if (p->p_stat == SRUN)
 			setrunqueue(p);
 		p->p_flag |= P_INMEM;
@@ -391,9 +408,9 @@ noswap:
 	goto loop;
 }
 
-#define	swappable(p) \
-	(((p)->p_flag & (P_SYSTEM|P_INMEM|P_NOSWAP|P_WEXIT|P_PHYSIO)) == \
-	    P_INMEM)
+#define	swappable(p)							\
+	(((p)->p_flag &							\
+	    (P_SYSTEM | P_INMEM | P_NOSWAP | P_WEXIT | P_PHYSIO)) == P_INMEM)
 
 /*
  * Swapout is driven by the pageout daemon.  Very simple, we find eligible
@@ -431,7 +448,7 @@ swapout_threads()
 			
 		case SSLEEP:
 		case SSTOP:
-			if (p->p_slptime > maxslp) {
+			if (p->p_slptime >= maxslp) {
 				swapout(p);
 				didswap++;
 			} else if (p->p_slptime > outpri) {
@@ -460,7 +477,7 @@ swapout_threads()
 	}
 }
 
-static void
+void
 swapout(p)
 	register struct proc *p;
 {
@@ -475,9 +492,8 @@ swapout(p)
 #endif
 	size = round_page(ctob(UPAGES));
 	addr = (vm_offset_t) p->p_addr;
-	p->p_stats->p_ru.ru_nswap++;	/* record that it got swapped out */
-#ifdef notyet
-#ifdef hp300
+#ifdef notyet	/* XXX GC -- enable swapping! */
+#ifdef m68k
 	/*
 	 * Ugh!  u-area is double mapped to a fixed address behind the
 	 * back of the VM system and accesses are usually through that
@@ -497,8 +513,25 @@ swapout(p)
 		addr = (vm_offset_t) p->p_addr;
 	}
 #endif
+#ifdef mips
+	/*
+	 * Be sure to save the floating point coprocessor state before
+	 * paging out the u-struct.
+	 */
+	{
+		extern struct proc *machFPCurProcPtr;
+
+		if (p == machFPCurProcPtr) {
+			MachSaveCurFPState(p);
+			machFPCurProcPtr = (struct proc *)0;
+		}
+	}
+#endif
+/* temporary measure till we find spontaneous unwire of kstack */
+#if !defined(i386) && !defined(pc532)
 	vm_map_pageable(kernel_map, addr, addr+size, TRUE);
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
+#endif
 #endif
 	(void) splhigh();
 	p->p_flag &= ~P_INMEM;
@@ -533,12 +566,17 @@ thread_block()
 	splx(s);
 }
 
-thread_sleep(event, lock)
+void
+thread_sleep(event, lock, ruptible)
 	int event;
 	simple_lock_t lock;
+	boolean_t ruptible;
 {
 	int s = splhigh();
 
+#ifdef lint
+	ruptible++;
+#endif
 	curproc->p_thread = event;
 	simple_unlock(lock);
 	if (curproc->p_thread)
@@ -546,6 +584,7 @@ thread_sleep(event, lock)
 	splx(s);
 }
 
+void
 thread_wakeup(event)
 	int event;
 {
@@ -561,19 +600,27 @@ thread_wakeup(event)
 
 int indent = 0;
 
+#include <machine/stdarg.h>		/* see subr_prf.c */
+
 /*ARGSUSED2*/
-iprintf(pr, a, b, c, d, e, f, g, h)
+void
+#if __STDC__
+iprintf(void (*pr)(const char *, ...), const char *fmt, ...)
+#else
+iprintf(pr, fmt /* , va_alist */)
 	void (*pr)();
-	char *a;
+	char *fmt;
+	/* va_dcl */
+#endif
 {
 	register int i;
+	va_list ap;
 
-	i = indent;
-	while (i >= 8) {
+	for (i = indent; i >= 8; i -= 8)
 		(*pr)("\t");
-		i -= 8;
-	}
-	for (; i > 0; --i)
+	while (--i >= 0)
 		(*pr)(" ");
-	(*pr)(a, b, c, d, e, f, g, h);
+	va_start(ap, fmt);
+	(*pr)("%r", fmt, ap);
+	va_end(ap);
 }

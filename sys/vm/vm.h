@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.10 1994/04/15 07:04:46 cgd Exp $
+ *	from: @(#)vm.h	8.2 (Berkeley) 12/13/93
+ *	$Id: vm.h,v 1.11 1994/05/23 03:11:34 cgd Exp $
  */
 
 #ifndef VM_H

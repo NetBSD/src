@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_map.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.h,v 1.7 1994/03/17 02:52:11 cgd Exp $
+ *	from: @(#)vm_map.h	8.3 (Berkeley) 3/15/94
+ *	$Id: vm_map.h,v 1.8 1994/05/23 03:11:47 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -176,24 +176,29 @@ typedef struct {
 #define		vm_map_pmap(map)	((map)->pmap)
 
 /* XXX: number of kernel maps and entries to statically allocate */
-#define	MAX_KMAP	10
-#define	MAX_KMAPENT     1000	/* XXX 250 */
+#define MAX_KMAP	10
+#define	MAX_KMAPENT	500
 
 #ifdef KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t));
 int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,
 		    vm_size_t, vm_offset_t, boolean_t, boolean_t));
-/* XXX vm_map_copy_entry */
+void		 vm_map_copy_entry __P((vm_map_t,
+		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
 struct pmap;
 vm_map_t	 vm_map_create __P((struct pmap *,
 		    vm_offset_t, vm_offset_t, boolean_t));
 void		 vm_map_deallocate __P((vm_map_t));
 int		 vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
-/* XXX vm_map_entry_* */
+vm_map_entry_t	 vm_map_entry_create __P((vm_map_t));
+void		 vm_map_entry_delete __P((vm_map_t, vm_map_entry_t));
+void		 vm_map_entry_dispose __P((vm_map_t, vm_map_entry_t));
+void		 vm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 int		 vm_map_find __P((vm_map_t, vm_object_t,
 		    vm_offset_t, vm_offset_t *, vm_size_t, boolean_t));
-/* XXX vm_map_findspace */
+int		 vm_map_findspace __P((vm_map_t,
+		    vm_offset_t, vm_size_t, vm_offset_t *));
 int		 vm_map_inherit __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_inherit_t));
 void		 vm_map_init __P((struct vm_map *,
@@ -208,16 +213,17 @@ boolean_t	 vm_map_lookup_entry __P((vm_map_t,
 		    vm_offset_t, vm_map_entry_t *));
 int		 vm_map_pageable __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, boolean_t));
-/* XXX vm_map_clean */
+int		 vm_map_clean __P((vm_map_t,
+		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
 void		 vm_map_print __P((vm_map_t, boolean_t));
-/* XXX what the hell is this? */
-void		 _vm_map_print __P((vm_map_t, boolean_t, int (*)()));
+void		 _vm_map_print __P((vm_map_t, boolean_t,
+		    void (*)(const char *, ...)));
 int		 vm_map_protect __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
-/* XXX vm_map_reference */
+void		 vm_map_reference __P((vm_map_t));
 int		 vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
 void		 vm_map_simplify __P((vm_map_t, vm_offset_t));
-/* XXX vm_map_simplify_entry */
+void		 vm_map_simplify_entry __P((vm_map_t, vm_map_entry_t));
 void		 vm_map_startup __P((void));
 int		 vm_map_submap __P((vm_map_t,
 		    vm_offset_t, vm_offset_t, vm_map_t));

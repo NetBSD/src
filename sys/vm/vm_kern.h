@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_kern.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_kern.h,v 1.6 1994/01/13 04:25:01 cgd Exp $
+ *	from: @(#)vm_kern.h	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_kern.h,v 1.7 1994/05/23 03:11:42 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,29 +63,11 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_VM_KERN_H_
-#define _VM_VM_KERN_H_
+/* Kernel memory management definitions. */
 
-/*
- *	Kernel memory management functions.
- */
-vm_offset_t	kmem_alloc_pageable __P((vm_map_t, vm_size_t));
-vm_offset_t	kmem_alloc __P((vm_map_t, vm_size_t));
-void		kmem_free __P((vm_map_t, vm_offset_t, vm_size_t));
-vm_map_t	kmem_suballoc
-		   __P((vm_map_t, vm_offset_t *, vm_offset_t *, vm_size_t,
-			boolean_t));
-vm_offset_t	kmem_malloc __P((vm_map_t, vm_size_t, boolean_t));
-vm_offset_t	kmem_alloc_wait __P((vm_map_t, vm_size_t));
-vm_offset_t	kmem_alloc_wired_wait __P((vm_map_t, vm_size_t));
-void		kmem_free_wakeup __P((vm_map_t, vm_offset_t, vm_size_t));
-void		kmem_init __P((vm_offset_t, vm_offset_t));
-
-vm_map_t	kernel_map;
-vm_map_t	mb_map;
-vm_map_t	kmem_map;
-vm_map_t	exec_map;
-vm_map_t	phys_map;
 vm_map_t	buffer_map;
-
-#endif /* !_VM_VM_KERN_H_ */
+vm_map_t	exec_map;
+vm_map_t	kernel_map;
+vm_map_t	kmem_map;
+vm_map_t	mb_map;
+vm_map_t	phys_map;
