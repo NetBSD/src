@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.6 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.7 2004/03/21 21:02:01 dsl Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1844,6 +1844,10 @@ main(int ac, char **av)
 		readat(where, oldsb, SBLOCKSIZE);
 		if (oldsb->fs_magic == FS_UFS1_MAGIC)
 			break;
+		if (where == SBLOCK_UFS2)
+			continue;
+		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
+			err(1, "Cannot resize ffsv2 format suberblock!");
 	}
 	if (where == (off_t)-1)
 		errx(1, "Bad magic number");
