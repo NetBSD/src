@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.13 1993/11/13 16:31:48 ws Exp $
+ *	$Id: boot.c,v 1.14 1994/01/11 14:13:49 mycroft Exp $
  */
 
 /*
@@ -60,14 +60,7 @@ struct exec head;
 int argv[9];
 char *name;
 char *names[] = {
-#ifdef MACH
-	"/mach", "/mach.old",
-#endif
-#ifdef __NetBSD__
 	"/netbsd", "/onetbsd", "/netbsd.old",
-#else
-	"/386bsd", "/o386bsd", "/386bsd.old",
-#endif
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
@@ -82,9 +75,10 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.13 $");
+		"$Revision: 1.14 $");
+	printf("use hd(1,a)/netbsd to boot sd0 when wd0 is also installed\n");
 	gateA20();
-loadstart:
+    loadstart:
 	/***************************************************************\
 	* As a default set it to the first partition of the first	*
 	* floppy or hard drive						*
@@ -103,10 +97,6 @@ loadstart:
 		printf("Can't find %s\n", name);
 		goto loadstart;
 	}
-#if 0
-	if (inode.i_mode&IEXEC)
-		loadflags |= RB_KDB;
-#endif
 	loadprog(loadflags);
 	goto loadstart;
 }
@@ -116,67 +106,53 @@ loadprog(howto)
 {
 	long int startaddr;
 	long int addr;	/* physical address.. not directly useable */
-	long int addr0;
-	int i, omagic;
+	int i;
 	static int (*x_entry)() = 0;
-	unsigned char	tmpbuf[4096]; /* we need to load the first 4k here */
 
-	argv[3] = 0;
-	argv[4] = 0;
 	read(&head, sizeof(head));
-	if ( N_BADMAG(head)) {
-		printf("Invalid format!\n");
+	if (N_BADMAG(head)) {
+		printf("invalid format\n");
 		return;
 	}
 
-	omagic = N_GETMAGIC(head) == OMAGIC;
-	if(omagic) poff = sizeof(struct exec);
-	else
-                poff = N_TXTOFF(head);
+	poff = N_TXTOFF(head);
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */
-	addr0 = addr;
 	printf("Booting %s(%d,%c)%s @ 0x%x\n"
 			, devs[maj]
 			, unit
 			, 'a'+part
 			, name
 			, addr);
-	if(addr < ouraddr)
-	{
-		if((addr + head.a_text + head.a_data) > ouraddr)
-		{
-			printf("kernel will not fit below loader\n");
-			return;
-		}
-		/*
-		 * The +28672 is for memory allocated by locore.s that must
-		 * fit in the bss! (XXX - cgd)
-		 */
-		if((addr + head.a_text + head.a_data + head.a_bss + 28672) > 0xa0000)
-		{
-			printf("kernel too big, won't fit in 640K with bss\n");
-			printf("Only hope is to link the kernel for > 1MB\n");
-			return;
-		}
+
+	/*
+	 * The +40960 is for memory allocated by locore.s that must
+	 * fit in the bss!  XXXX
+	 */
+	if ((head.a_text + head.a_data + head.a_bss + 40960) >
+	    (memsize(1) * 1024)) {
+		printf("kernel too large\n");
+		return;
 	}
-	printf("text=0x%x ", head.a_text);
+
 	/********************************************************/
 	/* LOAD THE TEXT SEGMENT				*/
-	/* don't clobber the first 4k yet (BIOS NEEDS IT) 	*/
 	/********************************************************/
-	read(tmpbuf,4096);
-	addr += 4096; 
-	xread(addr, head.a_text - 4096);
-	addr += head.a_text - 4096;
+	printf("text=0x%x ", head.a_text);
+	xread(addr, head.a_text);
+	addr += head.a_text;
 
 	/********************************************************/
 	/* Load the Initialised data after the text		*/
 	/********************************************************/
-	if(!omagic)
-	  while (addr & CLOFSET)
-	    *(char *)addr++ = 0;
+	if (N_GETMAGIC(head) == NMAGIC) {
+		i = CLBYTES - (addr & CLOFSET);
+		if (i < CLBYTES) {
+			pbzero(addr, i);
+			addr += i;
+		}
+	}
 
 	printf("data=0x%x ", head.a_data);
 	xread(addr, head.a_data);
@@ -187,57 +163,46 @@ loadprog(howto)
 	/* (but clear it)					*/
 	/********************************************************/
 	printf("bss=0x%x ", head.a_bss);
-	if( (addr < ouraddr) && ((addr + head.a_bss) > ouraddr))
-	{
-		pbzero(addr,ouraddr - (int)addr);
-	}
-	else
-	{
-		pbzero(addr,head.a_bss);
-	}
+	pbzero(addr, head.a_bss);
 
 	argv[3] = (addr += head.a_bss);
-	if (addr > 0x100000)
-	{
-		/********************************************************/
-		/*copy in the symbol header				*/
-		/********************************************************/
-		pcpy(&head.a_syms, addr, sizeof(head.a_syms));
-		addr += sizeof(head.a_syms);
+
+	/********************************************************/
+	/*copy in the symbol header				*/
+	/********************************************************/
+	pcpy(&head.a_syms, addr, sizeof(head.a_syms));
+	addr += sizeof(head.a_syms);
 	
-		/********************************************************/
-		/* READ in the symbol table				*/
-		/********************************************************/
-		printf("symbols=[0x%x+", head.a_syms);
-		xread(addr, head.a_syms);
-		addr += head.a_syms;
+	/********************************************************/
+	/* READ in the symbol table				*/
+	/********************************************************/
+	printf("symbols=[0x%x+", head.a_syms);
+	xread(addr, head.a_syms);
+	addr += head.a_syms;
 	
-		/********************************************************/
-		/* Followed by the next integer (another header)	*/
-		/* more debug symbols?					*/
-		/********************************************************/
-		read(&i, sizeof(int));
-		pcpy(&i, addr, sizeof(int));
-                if (i) {
-                        i -= sizeof(int);
-                        addr += sizeof(int);
-                        xread(addr, i);
-                        addr += i;
-                }
-                
-		/********************************************************/
-		/* and that many bytes of (debug symbols?)		*/
-		/********************************************************/
-		printf("0x%x] ", i);
-                argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
+	/********************************************************/
+	/* Followed by the next integer (another header)	*/
+	/* more debug symbols?					*/
+	/********************************************************/
+	read(&i, sizeof(int));
+	pcpy(&i, addr, sizeof(int));
+	if (i) {
+		i -= sizeof(int);
+		addr += sizeof(int);
+		xread(addr, i);
+		addr += i;
 	}
+
+	/********************************************************/
+	/* and that many bytes of (debug symbols?)		*/
+	/********************************************************/
+	printf("0x%x] ", i);
+	argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
 
 	/********************************************************/
 	/* and note the end address of all this			*/
 	/********************************************************/
-
-	printf("total=0x%x ",(addr+sizeof(int)-1))&~(sizeof(int)-1);
-
+	printf("total=0x%x ", argv[4]);
 
 	/*
 	 *  We now pass the various bootstrap parameters to the loaded
@@ -263,23 +228,16 @@ loadprog(howto)
 		break;
 	}
 	argv[1] = howto;
-	argv[2] = (MAKEBOOTDEV(maj, 0, 0, unit, part)) ;
+	argv[2] = (MAKEBOOTDEV(maj, 0, 0, unit, part));
 	argv[5] = (head.a_entry &= 0xfffffff);
 	argv[6] = (int) &x_entry;
 	argv[0] = 8;
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	printf("entry=0x%x\n" ,((int)startaddr) & 0xffffff);
-	if (addr0) {
-		/* No BIOS variables here! */
-		pcpy(tmpbuf, addr0, 4096);
-	} else {
-		/* Under no circumstances overwrite precious BIOS variables! */
-		pcpy(tmpbuf, addr0, 0x400);
-		pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
-	}
-	startprog(((int)startaddr & 0xffffff),argv);
+	startaddr &= 0xffffff;
+	printf("entry=0x%x\n", (int)startaddr);
+	startprog((int)startaddr, argv);
 }
 
 char namebuf[100];
@@ -293,26 +251,30 @@ getbootdev(howto)
 			, 'a'+part
 			, name);
 	if (gets(namebuf)) {
-		while (c=*ptr) {
-			while (c==' ')
+		while (c = *ptr) {
+			while (c == ' ')
 				c = *++ptr;
 			if (!c)
 				return;
-			if (c=='-')
-				while ((c = *++ptr) && c!=' ')
+			if (c == '-')
+				while ((c = *++ptr) && c != ' ')
 					switch (c) {
-					      case 'a':
-						*howto |= RB_ASKNAME; continue;
-					      case 's':
-						*howto |= RB_SINGLE; continue;
-					      case 'd':
-						*howto |= RB_KDB; continue;
-					      case 'b':
-						*howto |= RB_HALT; continue;
+					case 'a':
+						*howto |= RB_ASKNAME;
+						continue;
+					case 's':
+						*howto |= RB_SINGLE;
+						continue;
+					case 'd':
+						*howto |= RB_KDB;
+						continue;
+					case 'b':
+						*howto |= RB_HALT;
+						continue;
 					}
 			else {
 				name = ptr;
-				while ((c = *++ptr) && c!=' ');
+				while ((c = *++ptr) && c != ' ');
 				if (c)
 					*ptr++ = 0;
 			}
