@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.7 2001/06/13 10:46:05 wiz Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.8 2001/08/27 17:47:36 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -68,6 +68,13 @@
 #define LMC_MTU 1500
 #define PPP_HEADER_LEN 4
 #define BIG_PACKET
+#define	LMC_DATA_PER_DESC	2032
+
+#if NetBSD >= 199803
+#define	LMC_BUS_DMA		1
+/* #define	LMC_BUS_DMA_NORX	1 */
+/* #define	LMC_BUS_DMA_NOTX	1 */
+#endif
 
 /*
  * Intel CPUs should use I/O mapped access.  XXXMLG Is this true on NetBSD
@@ -83,6 +90,32 @@
  */
 #if 0
 #define LMC_DEBUG
+typedef enum {
+    LMC_21040_GENERIC,		/* Generic 21040 (works with most any board) */
+    LMC_21140_ISV,			/* Digital Semicondutor 21140 ISV SROM Format */
+    LMC_21142_ISV,			/* Digital Semicondutor 21142 ISV SROM Format */
+    LMC_21143_ISV,			/* Digital Semicondutor 21143 ISV SROM Format */
+    LMC_21140_DEC_EB,			/* Digital Semicondutor 21140 Evaluation Board */
+    LMC_21140_MII,			/* 21140[A] with MII */
+    LMC_21140_DEC_DE500,		/* Digital DE500-?? 10/100 */
+    LMC_21140_SMC_9332,		/* SMC 9332 */
+    LMC_21140_COGENT_EM100,		/* Cogent EM100 100 only */
+    LMC_21140_ZNYX_ZX34X,		/* ZNYX ZX342 10/100 */
+    LMC_21140_ASANTE,			/* AsanteFast 10/100 */
+    LMC_21140_EN1207,			/* Accton EN2107 10/100 BNC */
+    LMC_21041_GENERIC			/* Generic 21041 card */
+} lmc_board_t;
+
+typedef enum {
+    LMC_MEDIAPOLL_TIMER,		/* 100ms timer fired */
+    LMC_MEDIAPOLL_FASTTIMER,		/* <100ms timer fired */
+    LMC_MEDIAPOLL_LINKFAIL,		/* called from interrupt routine */
+    LMC_MEDIAPOLL_LINKPASS,		/* called from interrupt routine */
+    LMC_MEDIAPOLL_START,		/* start a media probe (called from reset) */
+    LMC_MEDIAPOLL_TXPROBE_OK,		/* txprobe succeeded */
+    LMC_MEDIAPOLL_TXPROBE_FAILED,	/* txprobe failed */
+    LMC_MEDIAPOLL_MAX
+} lmc_mediapoll_event_t;
 #define DP(x)	printf x
 #else
 #define DP(x)
@@ -169,7 +202,7 @@ typedef struct {
     lmc_csrptr_t csr_command;			/* CSR6 */
     lmc_csrptr_t csr_intr;			/* CSR7 */
     lmc_csrptr_t csr_missed_frames;		/* CSR8 */
-    lmc_csrptr_t csr_9;			/* CSR9 */
+    lmc_csrptr_t csr_9;				/* CSR9 */
     lmc_csrptr_t csr_10;			/* CSR10 */
     lmc_csrptr_t csr_11;			/* CSR11 */
     lmc_csrptr_t csr_12;			/* CSR12 */
@@ -197,10 +230,10 @@ typedef struct {
  * traditional FIFO ring.  
  */
 struct lmc_ringinfo {
-    tulip_desc_t *ri_first;	/* first entry in ring */
-    tulip_desc_t *ri_last;	/* one after last entry */
-    tulip_desc_t *ri_nextin;	/* next to processed by host */
-    tulip_desc_t *ri_nextout;	/* next to processed by adapter */
+    lmc_desc_t *ri_first;	/* first entry in ring */
+    lmc_desc_t *ri_last;	/* one after last entry */
+    lmc_desc_t *ri_nextin;	/* next to processed by host */
+    lmc_desc_t *ri_nextout;	/* next to processed by adapter */
     int ri_max;
     int ri_free;
 };
@@ -334,18 +367,34 @@ struct lmc___softc {
     lmc_media_t *lmc_media;
     lmc_ctl_t ictl;
 
+#if defined(LMC_BUS_DMA)
+    bus_dma_tag_t lmc_dmatag;		/* bus DMA tag */
+#if !defined(LMC_BUS_DMA_NOTX)
+    bus_dmamap_t lmc_setupmap;
+    bus_dmamap_t lmc_txdescmap;
+    bus_dmamap_t lmc_txmaps[LMC_TXDESCS];
+    unsigned lmc_txmaps_free;
+#endif
+#if !defined(LMC_BUS_DMA_NORX)
+    bus_dmamap_t lmc_rxdescmap;
+    bus_dmamap_t lmc_rxmaps[LMC_RXDESCS];
+    unsigned lmc_rxmaps_free;
+#endif
+#endif
+
+
 #if defined(__NetBSD__)
     struct device *lmc_pci_busno;	/* needed for multiport boards */
 #else
     u_int8_t lmc_pci_busno;		/* needed for multiport boards */
 #endif
     u_int8_t lmc_pci_devno;		/* needed for multiport boards */
-#if defined(__FreeBSD__)
-    tulip_desc_t *lmc_rxdescs;
-    tulip_desc_t *lmc_txdescs;
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+    lmc_desc_t *lmc_rxdescs;
+    lmc_desc_t *lmc_txdescs;
 #else
-    tulip_desc_t lmc_rxdescs[LMC_RXDESCS];
-    tulip_desc_t lmc_txdescs[LMC_TXDESCS];
+    lmc_desc_t lmc_rxdescs[LMC_RXDESCS];
+    lmc_desc_t lmc_txdescs[LMC_TXDESCS];
 #endif
 #if defined(__NetBSD__) && NRND > 0
     rndsource_element_t    lmc_rndsource;
@@ -357,6 +406,37 @@ struct lmc___softc {
     char	lmc_timing;			/* for HSSI and SSI */
     u_int16_t   t1_alarm1_status;
     u_int16_t   t1_alarm2_status;
+#if defined(LMC_DEBUG)
+    /*
+     * Debugging/Statistical information
+     */
+    struct {
+	lmc_media_t dbg_last_media;
+	u_int32_t dbg_intrs;
+	u_int32_t dbg_media_probes;
+	u_int32_t dbg_txprobe_nocarr;
+	u_int32_t dbg_txprobe_exccoll;
+	u_int32_t dbg_link_downed;
+	u_int32_t dbg_link_suspected;
+	u_int32_t dbg_link_intrs;
+	u_int32_t dbg_link_pollintrs;
+	u_int32_t dbg_link_failures;
+	u_int32_t dbg_nway_starts;
+	u_int32_t dbg_nway_failures;
+	u_int16_t dbg_phyregs[32][4];
+	u_int32_t dbg_rxlowbufs;
+	u_int32_t dbg_rxintrs;
+	u_int32_t dbg_last_rxintrs;
+	u_int32_t dbg_high_rxintrs_hz;
+	u_int32_t dbg_no_txmaps;
+	u_int32_t dbg_txput_finishes[8];
+	u_int32_t dbg_txprobes_ok;
+	u_int32_t dbg_txprobes_failed;
+	u_int32_t dbg_events[LMC_MEDIAPOLL_MAX];
+	u_int32_t dbg_rxpktsperintr[LMC_RXDESCS];
+    } lmc_dbg;
+#endif
+
 };
 
 /*
@@ -454,6 +534,61 @@ static const char * const lmc_status_bits[] = {
  */
 #define	LMC_MAX_DEVICES	32
 
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NORX)
+#define LMC_RXDESC_PRESYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->lmc_dmatag, (sc)->lmc_rxdescmap, \
+		   (caddr_t) di - (caddr_t) (sc)->lmc_rxdescs, \
+		   (s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define LMC_RXDESC_POSTSYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->lmc_dmatag, (sc)->lmc_rxdescmap, \
+		   (caddr_t) di - (caddr_t) (sc)->lmc_rxdescs, \
+		   (s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	LMC_RXMAP_PRESYNC(sc, map) \
+	bus_dmamap_sync((sc)->lmc_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	LMC_RXMAP_POSTSYNC(sc, map) \
+	bus_dmamap_sync((sc)->lmc_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	LMC_RXMAP_CREATE(sc, mapp) \
+	bus_dmamap_create((sc)->lmc_dmatag, LMC_RX_BUFLEN, 2, \
+			  LMC_DATA_PER_DESC, 0, \
+			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, (mapp))
+#else
+#define LMC_RXDESC_PRESYNC(sc, di, s)		do { } while (0)
+#define LMC_RXDESC_POSTSYNC(sc, di, s)	do { } while (0)
+#define LMC_RXMAP_PRESYNC(sc, map)		do { } while (0)
+#define LMC_RXMAP_POSTSYNC(sc, map)		do { } while (0)
+#define LMC_RXMAP_CREATE(sc, mapp)		do { } while (0)
+#endif
+
+#if defined(LMC_BUS_DMA) && !defined(LMC_BUS_DMA_NOTX)
+#define LMC_TXDESC_PRESYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->lmc_dmatag, (sc)->lmc_txdescmap, \
+			(caddr_t) di - (caddr_t) (sc)->lmc_txdescs, \
+			(s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define LMC_TXDESC_POSTSYNC(sc, di, s)	\
+	bus_dmamap_sync((sc)->lmc_dmatag, (sc)->lmc_txdescmap, \
+			(caddr_t) di - (caddr_t) (sc)->lmc_txdescs, \
+			(s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	LMC_TXMAP_PRESYNC(sc, map) \
+	bus_dmamap_sync((sc)->lmc_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	LMC_TXMAP_POSTSYNC(sc, map) \
+	bus_dmamap_sync((sc)->lmc_dmatag, (map), 0, (map)->dm_mapsize, \
+			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+#define	LMC_TXMAP_CREATE(sc, mapp) \
+	bus_dmamap_create((sc)->lmc_dmatag, LMC_DATA_PER_DESC, \
+			  LMC_MAX_TXSEG, LMC_DATA_PER_DESC, \
+			  0, BUS_DMA_NOWAIT, (mapp))
+#else
+#define LMC_TXDESC_PRESYNC(sc, di, s)		do { } while (0)
+#define LMC_TXDESC_POSTSYNC(sc, di, s)	do { } while (0)
+#define LMC_TXMAP_PRESYNC(sc, map)		do { } while (0)
+#define LMC_TXMAP_POSTSYNC(sc, map)		do { } while (0)
+#define LMC_TXMAP_CREATE(sc, mapp)		do { } while (0)
+#endif
+
+
 #if defined(__FreeBSD__)
 #define	ifnet_ret_t void
 typedef int ioctl_cmd_t;
@@ -512,9 +647,11 @@ extern struct cfdriver de_cd;
 #define	loudprintf			printf
 #define	LMC_PRINTF_FMT		"%s"
 #define	LMC_PRINTF_ARGS		sc->lmc_xname
+#if !defined(LMC_BUS_DMA) || defined(LMC_BUS_DMA_NORX) || defined(LMC_BUS_DMA_NOTX)
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define LMC_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
+#define LMC_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vaddr_t)(va))
+#endif
 #endif
 #endif	/* __NetBSD__ */
 
@@ -546,7 +683,7 @@ extern struct cfdriver de_cd;
 #endif
 #endif
 
-#if !defined(LMC_KVATOPHYS)
+#if !defined(LMC_KVATOPHYS) && (!defined(LMC_BUS_DMA) || defined(LMC_BUS_DMA_NORX) || defined(LMC_BUS_DMA_NOTX))
 #define	LMC_KVATOPHYS(sc, va)	vtophys((vaddr_t)(va))
 #endif
 
