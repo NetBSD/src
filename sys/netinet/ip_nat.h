@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.15.10.2 2001/03/27 15:32:33 bouyer Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.15.10.3 2001/04/21 17:46:51 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -228,6 +228,7 @@ typedef	struct	natstat	{
 #define	IPN_ROUNDR	0x100
 #define	IPN_NOTSRC	0x080000
 #define	IPN_NOTDST	0x100000
+#define	IPN_FRAG	0x200000
 
 
 typedef	struct	natlog {

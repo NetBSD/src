@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.4 2001/03/12 13:27:14 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.5 2001/04/21 17:53:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -212,7 +212,6 @@ softintr(ipl)
 /*
  * Miscellaneous
  */
-#define splimp()	splraise(imask[IPL_IMP])
 #define splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()

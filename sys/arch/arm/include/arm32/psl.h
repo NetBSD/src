@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1.4.2 2001/03/12 13:27:25 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.1.4.3 2001/04/21 17:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -75,7 +75,6 @@
 #define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
 #define spltty()	raisespl(_SPL_TTY)
 #define spllpt()	spltty()
-#define splimp()	raisespl(_SPL_IMP)
 #define splvm()		raisespl(_SPL_IMP)
 #define splaudio()	raisespl(_SPL_AUDIO)
 #define splclock()	raisespl(_SPL_CLOCK)
@@ -100,7 +99,7 @@ void setsoftintr	__P((u_int intrmask));
 
 extern int current_spl_level;
 
-extern u_int spl_masks[_SPL_LEVELS];
+extern u_int spl_masks[_SPL_LEVELS + 1];
 extern u_int spl_smasks[_SPL_LEVELS];
 #endif /* _LOCORE */
 #endif /* _KERNEL */

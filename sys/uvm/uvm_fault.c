@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.45.2.5 2001/03/27 15:32:48 bouyer Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.45.2.6 2001/04/21 17:47:06 bouyer Exp $	*/
 
 /*
  *
@@ -602,7 +602,11 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	 * locking mess.
 	 */
 
-	KASSERT(orig_map != kernel_map || !uvmfault_check_intrsafe(&ufi));
+	if (orig_map == kernel_map && uvmfault_check_intrsafe(&ufi)) {
+		UVMHIST_LOG(maphist, "<- VA 0x%lx in intrsafe map %p",
+		    ufi.orig_rvaddr, ufi.map, 0, 0);
+		return EFAULT;
+	}
 
 	/*
 	 * "goto ReFault" means restart the page fault from ground zero.

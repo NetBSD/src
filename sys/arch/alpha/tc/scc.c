@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.47.2.2 2000/11/22 15:59:46 bouyer Exp $ */
+/* $NetBSD: scc.c,v 1.47.2.3 2001/04/21 17:53:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.47.2.2 2000/11/22 15:59:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.47.2.3 2001/04/21 17:53:05 bouyer Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -1050,10 +1050,7 @@ sccintr(xxxsc)
 					(caddr_t) tp->t_outq.c_cf);
 				dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 			}
-			if (tp->t_linesw)
-				(*tp->t_linesw->l_start)(tp);
-			else
-				sccstart(tp);
+			(*tp->t_linesw->l_start)(tp);
 			if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 				SCC_READ_REG(regs, chan, SCC_RR15, cc);
 				cc &= ~ZSWR15_TXUEOM_IE;

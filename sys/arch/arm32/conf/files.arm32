@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78.2.5 2001/03/27 15:30:27 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.78.2.6 2001/04/21 17:53:15 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,6 +24,7 @@ defopt	COMPAT_OLD_BOOTLOADER
 # Architectures and core logic
 defopt	EBSA285
 defopt	FOOTBRIDGE
+defopt	NETWINDER
 
 define todservice {}
 
@@ -141,6 +142,13 @@ file    arch/arm32/dev/qms.c			qms needs-flag
 attach	qms at iomd with qms_iomd
 file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 
+# wscons quadmouse device
+device	wsqms : wsmousedev
+file	arch/arm32/dev/wsqms.c			wsqms needs-flag
+
+attach wsqms at iomd with wsqms_iomd  
+file	arch/arm32/iomd/wsqms_iomd.c		wsqms_iomd
+
 # attribute used to represent the "keyboard controller" on the shark
 # XXX should be a real device
 define	spckbd { [irq = -1], [port = -1] }
@@ -226,6 +234,14 @@ include "dev/podulebus/files.podulebus"
 # Novell NE1000 and NE2000 clones (EtherM, EtherH)
 attach	ne at podulebus with ne_pbus
 file	arch/arm32/podulebus/if_ne_pbus.c	ne_pbus
+
+device	oea: ether, ifnet, arp
+attach	oea at podulebus
+file	arch/arm32/podulebus/if_ea.c		oea
+
+device	oeb: ether, ifnet, arp
+attach	oeb at podulebus
+file	arch/arm32/podulebus/if_eb.c		oeb
 
 device	ie: ether, ifnet, arp
 attach	ie at podulebus

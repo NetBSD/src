@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.52.2.4 2001/03/12 13:27:04 bouyer Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52.2.5 2001/04/21 17:46:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -269,7 +269,7 @@ adosfs_read(v)
 	 * taken from ufs_read()
 	 */
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG && IS_FFS(amp)) {
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
@@ -291,10 +291,6 @@ adosfs_read(v)
 	}
 
 	do {
-		/*
-		 * we are only supporting ADosFFS currently
-		 * (which have data blocks without headers)
-		 */
 		size = amp->dbsize;
 		lbn = uio->uio_offset / size;
 		on = uio->uio_offset % size;
@@ -328,14 +324,13 @@ adosfs_read(v)
 				printf("adosfs: bad primary type blk %ld\n",
 				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
-				error=EINVAL;
-			}
-			else if ( adoscksum(bp, ap->nwords)) {
+				error = EINVAL;
+			} else if (adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
 				printf("adosfs: blk %ld failed cksum.\n",
 				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
-				error=EINVAL;
+				error = EINVAL;
 			}
 		}
 
@@ -487,6 +482,9 @@ adosfs_bmap(v)
 	ap = VTOA(sp->a_vp);
 	bn = sp->a_bn / (ap->amp->bsize / DEV_BSIZE);
 	bnp = sp->a_bnp;
+	if (sp->a_runp) {
+		*sp->a_runp = 0;
+	}
 	error = 0;
 
 	if (sp->a_vpp != NULL)

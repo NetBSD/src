@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.1.1.1.2.1 2000/11/20 20:47:48 bouyer Exp $	*/
+/*	$NetBSD: cmu.c,v 1.1.1.1.2.2 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -42,7 +42,10 @@
 
 #include <machine/bus.h>
 
+#include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 
 #include <hpcmips/vr/cmureg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4.2.5 2001/03/12 13:29:04 bouyer Exp $	*/
+/*	$NetBSD: zs.c,v 1.4.2.6 2001/04/21 17:54:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ struct cfattach zsc_ca = {
 extern struct	cfdriver zsc_cd;
 
 static int	zshard __P((void *));
-static void	zssoft __P((void *));
+void		zssoft __P((void *));
 static int	zs_get_speed __P((struct zs_chanstate *));
 struct		zschan *zs_get_chan_addr (int zs_unit, int channel);
 int		zs_getc __P((void *));
@@ -287,7 +287,8 @@ zs_attach(parent, self, aux)
 		}
 	}
 
-	/* bus_intr_establish(zssoft, NULL, ZSSOFT_PRI); */
+
+	zsc->sc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
 	bus_intr_establish(zsc->zsc_bustag, SYS_INTR_SCC0, 0, 0, zshard, NULL);
 
 	evcnt_attach_dynamic(&zsc->zs_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -333,21 +334,19 @@ zshard(arg)
 	register struct zsc_softc *zsc;
 	register int unit, rval, softreq;
 
-	rval = softreq = 0;
+	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
-		softreq |= zsc->zsc_cs[0]->cs_softreq;
+		softreq = zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
+		if (softreq && (zssoftpending == 0)) {
+		    zssoftpending = 1;
+		    softintr_schedule(zsc->sc_si);
+		}
 		zsc->zs_intrcnt.ev_count++;
-	}
-
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = 1;
-		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
 	}
 	return 0;
 }
@@ -355,7 +354,7 @@ zshard(arg)
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-static void
+void
 zssoft(arg)
 	void *arg;
 {
@@ -373,7 +372,7 @@ zssoft(arg)
 	 * the soft intr bit just after zshard has set it.
 	 */
 	/*isr_soft_clear(ZSSOFT_PRI);*/
-	/*zssoftpending = 0;*/
+	zssoftpending = 0;
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
@@ -384,7 +383,6 @@ zssoft(arg)
 		(void) zsc_intr_soft(zsc);
 	}
 	splx(s);
-	zssoftpending = 0;
 	return;
 }
 

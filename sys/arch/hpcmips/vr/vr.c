@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.2.2.2 2001/03/12 13:28:49 bouyer Exp $	*/
+/*	$NetBSD: vr.c,v 1.2.2.3 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -52,8 +52,10 @@
 #include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include "opt_vr41xx.h"
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* cpu_name */
@@ -262,7 +264,7 @@ vr_os_init()
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
-	splvec.splimp = MIPS_SPL0;
+	splvec.splvm = MIPS_SPL0;
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
 
@@ -343,7 +345,7 @@ vr_cons_init()
 #endif
 
  find_keyboard:
-#if NVRKIU > 0
+#if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
 	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
 		printf("%s(%d): can't init vrkiu as console",
 		       __FILE__, __LINE__);
@@ -464,3 +466,26 @@ vr_intr(status, cause, pc, ipending)
 	
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
+
+
+/*
+int x4181 = VR4181;
+int x4101 = VR4101;
+int x4102 = VR4102;
+int x4111 = VR4111;
+int x4121 = VR4121;
+int x4122 = VR4122;
+int xo4181 = ONLY_VR4181;
+int xo4101 = ONLY_VR4101;
+int xo4102 = ONLY_VR4102;
+int xo4111_4121 = ONLY_VR4111_4121;
+int g4101=VRGROUP_4101;
+int g4102=VRGROUP_4102;
+int g4181=VRGROUP_4181;
+int g4102_4121=VRGROUP_4102_4121;
+int g4111_4121=VRGROUP_4111_4121;
+int g4102_4122=VRGROUP_4102_4122;
+int g4111_4122=VRGROUP_4111_4122;
+int single_vrip_base=SINGLE_VRIP_BASE;
+int vrip_base_addr=VRIP_BASE_ADDR;
+*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.52.2.6 2001/03/12 13:31:47 bouyer Exp $	*/
+/*	$NetBSD: if.c,v 1.52.2.7 2001/04/21 17:46:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_43.h"
 #include "opt_atalk.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -324,7 +325,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splimp();
+	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFAFREE(ifa);
@@ -408,6 +409,14 @@ if_attach(ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
+#ifdef PFIL_HOOKS
+	ifp->if_pfil.ph_type = PFIL_TYPE_IFNET;
+	ifp->if_pfil.ph_ifnet = ifp;
+	if (pfil_head_register(&ifp->if_pfil) != 0)
+		printf("%s: WARNING: unable to register pfil hook\n",
+		    ifp->if_xname);
+#endif
+
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
@@ -422,7 +431,7 @@ if_deactivate(ifp)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->if_input	 = if_nullinput;
@@ -466,7 +475,7 @@ if_detach(ifp)
 	 */
 	memset(&so, 0, sizeof(so));
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -478,6 +487,10 @@ if_detach(ifp)
 		altq_disable(&ifp->if_snd);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
+#endif
+
+#ifdef PFIL_HOOKS
+	(void) pfil_head_unregister(&ifp->if_pfil);
 #endif
 
 	if_free_sadl(ifp);
@@ -1019,7 +1032,7 @@ if_slowtimo(arg)
 	void *arg;
 {
 	struct ifnet *ifp;
-	int s = splimp();
+	int s = splnet();
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1167,12 +1180,12 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -1302,7 +1315,7 @@ ifioctl(so, cmd, data, p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splimp();
+			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
 		}

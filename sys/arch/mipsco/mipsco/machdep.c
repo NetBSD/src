@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.7 2001/03/27 15:31:12 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.8 2001/04/21 17:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,12 +43,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.7 2001/03/27 15:31:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.8 2001/04/21 17:54:05 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
@@ -99,11 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.7 2001/03/27 15:31:12 bouyer Exp 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 
+#include "zsc.h"			/* XXX */
+#include "com.h"			/* XXX */
+
 /* the following is used externally (sysctl_hw) */
 char  machine[] = MACHINE;	/* from <machine/param.h> */
 char  machine_arch[] = MACHINE_ARCH;
 char  cpu_model[40];
-unsigned ssir;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -137,7 +138,6 @@ int initcpu __P((void));
 void configure __P((void));
 
 void mach_init __P((int, char *[], char*[], u_int, char *));
-void softintr_init __P((void));
 int  memsize_scan __P((caddr_t));
 
 #ifdef DEBUG
@@ -472,18 +472,6 @@ cpu_startup()
 	bufinit();
 }
 
-void
-softintr_init()
-{	
-    int i;
-    static const char *intr_names[] = IPL_SOFTNAMES;
-
-    for (i=0; i < IPL_NSOFT; i++) {
-	    evcnt_attach_dynamic(&soft_evcnt[i], EVCNT_TYPE_INTR, NULL,
-				 "soft", intr_names[i]);
-    }
-}
-
 /*
  * machine dependent system variables.
  */
@@ -649,7 +637,6 @@ microtime(tvp)
 int
 initcpu()
 {
-        softintr_init();
 	spl0();		/* safe to turn interrupts on now */
 	return 0;
 }
@@ -707,51 +694,6 @@ delay(n)
 	int n;
 {
 	DELAY(n);
-}
-
-void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
-{
-	uvmexp.intrs++;
-
-	/* device interrupts */
-	(*platform.iointr)(status, cause, pc, ipending);
-
-	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1) ||
-	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
-
-#define DO_SIR(bit, fn, ev)			       		\
-	do {							\
-		if (n & (bit)) {				\
-			uvmexp.softs++;				\
-			soft_evcnt[ev].ev_count++;		\
-			fn;					\
-		}						\
-	} while (0)
-
-		unsigned n;
-		n = ssir; ssir = 0;
-		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
-
-#if NZSC > 0
-		DO_SIR(SIR_SERIAL, zssoft(), IPL_SOFTSERIAL);
-#endif
-		DO_SIR(SIR_NET, netintr(), IPL_SOFTNET);
-#undef DO_SIR
-	}
-
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
-		uvmexp.softs++;
-		soft_evcnt[IPL_SOFTCLOCK].ev_count++;
-		softclock(NULL);
-	}
 }
 
 /*

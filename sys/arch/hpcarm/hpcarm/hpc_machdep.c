@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.5.2.3 2001/03/27 15:30:50 bouyer Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.5.2.4 2001/04/21 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -86,6 +86,7 @@
 #include <machine/bootinfo.h>
 #include <machine/undefined.h>
 #include <machine/rtc.h>
+#include <hpc/hpc/platid.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 
 #include <dev/hpc/bicons.h>
@@ -116,10 +117,10 @@ BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
 char booted_kernel[80];
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
 u_int free_pages;
 int physmem = 0;
 
@@ -159,7 +160,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
-#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM + 1)
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
@@ -171,6 +172,8 @@ extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
 static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
+/* Non-buffered non-cachable memory needed to enter idle mode */
+vaddr_t sa11x0_idle_mem;
 
 /* virtual address for framebuffer */
 /* XXX temporary hack until we have bus_space_map */
@@ -214,7 +217,6 @@ extern int db_trapper();
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
-extern void parse_mi_bootargs	__P((char *args));
 
 extern void dumpsys	__P((void));
 
@@ -320,10 +322,10 @@ initarm(argc, argv, bi)
 	set_cpufuncs();
 
 	/* Put the processer in SVC mode */
-	__asm("mov r0, sp; mov r1, ip; mrs r2, cpsr_all;");
+	__asm("mov r0, sp; mov r1, lr; mrs r2, cpsr_all;");
 	/* PSR_MODE, PSR_SVC32_MODE" */
 	__asm("bic r2, r2, #31; orr r2, r2, #19;");
-	__asm("msr cpsr_all, r2; mov sp, r0; mov ip, r1;");
+	__asm("msr cpsr_all, r2; mov sp, r0; mov lr, r1;");
 
 #ifdef DEBUG_BEFOREMMU
 	/*
@@ -376,7 +378,6 @@ initarm(argc, argv, bi)
 	/* copy bootinfo into known kernel space */
 	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
-
 	bootinfo->fb_addr = (void *)FRAMEBUF_BASE;
 
 #ifdef BOOTINFO_FB_WIDTH
@@ -444,14 +445,14 @@ initarm(argc, argv, bi)
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)			\
 	(var).pv_pa = (var).pv_va = freemempos;	\
-	freemempos += np * NBPG;
+	freemempos += (np) * NBPG;
 #define	alloc_pages(var, np)			\
 	(var) = freemempos;			\
-	freemempos += np * NBPG;
+	freemempos += (np) * NBPG;
 
 
 	valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
-	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		alloc_pages(kernel_pt_table[loop], PT_SIZE / NBPG);
 	}
 
@@ -480,6 +481,10 @@ initarm(argc, argv, bi)
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
 
+	/*
+	 * XXX Actually, we only need virtual space and don't need
+	 * XXX physical memory for sa110_cc_base and sa11x0_idle_mem.
+	 */
 #ifdef CPU_SA110
 	/*
 	 * XXX totally stuffed hack to work round problems introduced
@@ -498,6 +503,8 @@ initarm(argc, argv, bi)
 	sa110_cache_clean_addr = sa110_cc_base;
 	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 #endif	/* CPU_SA110 */
+
+	alloc_pages(sa11x0_idle_mem, 1);
 
 	/*
 	 * Ok we have allocated physical pages for the primary kernel
@@ -575,6 +582,9 @@ initarm(argc, argv, bi)
 	/* Map the page table that maps the kernel pages */
 	map_entry_nc(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa);
 
+	/* Map a page for entering idle mode */
+	map_entry_nc(l2pagetable, sa11x0_idle_mem, sa11x0_idle_mem);
+
 	/*
 	 * Map entries in the page table used to map PTE's
 	 * Basically every kernel page table gets mapped here
@@ -617,7 +627,7 @@ initarm(argc, argv, bi)
 #ifdef CPU_SA110
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
 	map_chunk(0, l2pagetable, sa110_cache_clean_addr,
-	    sa110_cache_clean_addr, CPU_SA110_CACHE_CLEAN_SIZE,
+	    0xe0000000, CPU_SA110_CACHE_CLEAN_SIZE,
 	    AP_KRW, PT_CACHEABLE);
 #endif
 	/*
@@ -675,6 +685,7 @@ initarm(argc, argv, bi)
 	/* Disable PID virtual address mapping */ 
 	asm("mcr 15, 0, %0, c13, c0, 0" : : "r" (0));
 #ifdef BOOT_DUMP
+	dumppages((char *)0xc0000000, 16 * NBPG);
 	dumppages((char *)0xb0100000, 64); /* XXX */
 #endif
 	/* Enable MMU, I-cache, D-cache, write buffer. */
@@ -731,6 +742,11 @@ initarm(argc, argv, bi)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif	/* DDB */
+
+	if (bootinfo->magic == BOOTINFO_MAGIC) {
+		platid.dw.dw0 = bootinfo->platid_cpu;
+		platid.dw.dw1 = bootinfo->platid_machine;
+	}
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);

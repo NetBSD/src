@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.2.2.2 2001/01/05 17:39:38 bouyer Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.2.2.3 2001/04/21 17:46:12 bouyer Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ wfqclose(dev, flag, fmt, p)
 	wfq_state_t *wfqp;
 	int s;
     
-	s = splimp();
+	s = splnet();
 	while ((wfqp = wfq_list) != NULL) {
 		ifp = wfqp->ifq->altq_ifp;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -697,7 +697,7 @@ wfqioctl(dev, cmd, addr, flag, p)
 		break;
 	}
 
-	s = splimp();
+	s = splnet();
 	switch (cmd) {
 		
 	case WFQ_ENABLE:

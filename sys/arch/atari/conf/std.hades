@@ -1,0 +1,18 @@
+#	$NetBSD: std.hades,v 1.1.4.2 2001/04/21 17:53:24 bouyer Exp $
+#
+# standard atari information
+#
+machine		atari m68k
+
+options		_ATARIHW_		# Original Atari like mainboard hw.
+
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
+
+mainbus0	at root
+
+clock0		at mainbus0		# system clock
+kbd0		at mainbus0		# standard keyboard
+fdc0		at mainbus0		# floppy controller
+hdfd0		at fdc0 unit 0		# builtin Hades-type floppy drive
+hdfd1		at fdc0 unit 1		# external Hades-type floppy drive

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.30.4.1 2000/11/20 11:42:51 bouyer Exp $	*/
+/*	$NetBSD: uda.c,v 1.30.4.2 2001/04/21 17:49:42 bouyer Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -481,6 +481,9 @@ udactlrdone(usc)
 	struct device *usc;
 {
 	struct uda_softc *sc = (void *)usc;
+	int s;
 
+	s = spluba();
 	uba_done((struct uba_softc *)sc->sc_dev.dv_parent);
+	splx(s);
 }

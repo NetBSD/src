@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.6.2.3 2000/11/22 16:03:25 bouyer Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.6.2.4 2001/04/21 17:48:37 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -169,8 +169,8 @@ mk48txx_gettime(handle, tv)
 	todr_wenable(handle, 0);
 
 	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 || dt.dt_hour > 24 ||
-	    dt.dt_min > 60 || dt.dt_sec > 60)
+	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
+	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
 		return (1);
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.38.2.3 2001/03/12 13:31:39 bouyer Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.38.2.4 2001/04/21 17:46:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,8 +62,12 @@
 #include <miscfs/union/union.h>
 #endif
 
-struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll, vn_closefile };
+static int  vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));
+
+struct 	fileops vnops = {
+	vn_read, vn_write, vn_ioctl, vn_fcntl, vn_poll,
+	vn_statfile, vn_closefile
+};
 
 /*
  * Common code for vnode open operations.
@@ -433,12 +437,24 @@ vn_write(fp, offset, uio, cred, flags)
 /*
  * File table vnode stat routine.
  */
-int
-vn_stat(vp, sb, p)
-	struct vnode *vp;
+static int
+vn_statfile(fp, sb, p)
+	struct file *fp;
 	struct stat *sb;
 	struct proc *p;
 {
+	struct vnode *vp = (struct vnode *)fp->f_data;
+
+	return vn_stat(vp, sb, p);
+}
+
+int
+vn_stat(fdata, sb, p)
+	void *fdata;
+	struct stat *sb;
+	struct proc *p;
+{
+	struct vnode *vp = fdata;
 	struct vattr va;
 	int error;
 	mode_t mode;

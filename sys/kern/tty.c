@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.115.2.4 2001/03/27 15:32:24 bouyer Exp $	*/
+/*	$NetBSD: tty.c,v 1.115.2.5 2001/04/21 17:46:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -818,11 +818,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 	case TIOCGETD:			/* get line discipline */
-		*(int *)data = (tp->t_linesw) ? tp->t_linesw->l_no : 0;
+		*(int *)data = tp->t_linesw->l_no;
 		break;
 	case TIOCGLINED:
-		if (!tp->t_linesw)
-			return (EIO);
 		strncpy((char *)data, tp->t_linesw->l_name, 
 			TTLINEDNAMELEN);
 		break;

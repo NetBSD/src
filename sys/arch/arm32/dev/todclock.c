@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.4.14.1 2000/11/20 20:03:56 bouyer Exp $	*/
+/*	$NetBSD: todclock.c,v 1.4.14.2 2001/04/21 17:53:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -196,7 +196,11 @@ resettodr()
 
 	/* We need a todclock device and should always have one */
 	if (!todclock_sc)
+#ifdef NC
+		return;
+#else
 		panic("resettodr: No todclock device attached\n");
+#endif /* NC */
 
 	/* Abort early if there is not actually an RTC write routine */
 	if (todclock_sc->sc_rtc_write == NULL)
@@ -273,8 +277,10 @@ inittodr(base)
 	 */
 
 	/* We expect a todclock device */
+#ifndef NC
 	if (!todclock_sc)
 		panic("inittodr: No todclock device attached\n");
+#endif /* NC */
 
 	/* Use the suggested time as a fall back */
 	time.tv_sec = base;

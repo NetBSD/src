@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.1.12.1 2000/11/22 16:02:33 bouyer Exp $
+	$NetBSD: TODO,v 1.1.12.2 2001/04/21 17:46:14 bouyer Exp $
 
 	A good place to look for things to do might be the gnats
 PR database at http://www.netbsd.org/Misc/query-pr.html
@@ -19,3 +19,5 @@ fvdl@netbsd.org
 ITOH Yasufumi              m68k
 itohy@netbsd.com
 
+Emmanuel Dreyfus           PowerPC
+manu@netbsd.org

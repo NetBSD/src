@@ -1,0 +1,21 @@
+# $NetBSD: files.podulebus,v 1.3.2.2 2001/04/21 17:49:39 bouyer Exp $
+
+# Acorn Ether1
+device	ei: ether, ifnet, arp, i82586
+attach	ei at podulebus
+file	dev/podulebus/if_ei.c			ei
+
+# Acorn/Atomwide Ether3
+device	ea: ether, ifnet, arp, seeq8005
+attach	ea at podulebus
+file	dev/podulebus/if_ea.c			ea
+
+# ANT EtherB
+device	eb: ether, ifnet, arp, seeq8005
+attach	eb at podulebus
+file	dev/podulebus/if_eb.c			eb
+
+device	acemidi { }
+attach	acemidi at podulebus
+attach	com at acemidi with com_acemidi
+file	dev/podulebus/acemidi.c			acemidi

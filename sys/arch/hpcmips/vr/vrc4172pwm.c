@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.2.2.5 2001/03/27 15:30:56 bouyer Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.2.2.6 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.

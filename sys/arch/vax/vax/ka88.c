@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.1.2.2 2000/11/20 20:33:24 bouyer Exp $	*/
+/*	$NetBSD: ka88.c,v 1.1.2.3 2001/04/21 17:55:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -262,7 +262,7 @@ rxcdintr(void *arg)
 static void
 tocons(int val)
 {
-	int s = splimp();
+	int s = splhigh();
 
 	while ((mfpr(PR_TXCS) & GC_RDY) == 0)  /* Wait until xmit ready */
 		;
@@ -273,7 +273,7 @@ tocons(int val)
 static int
 fromcons(int func)
 {
-	int ret, s = splimp();
+	int ret, s = splhigh();
 
 	while (1) {
 		while ((mfpr(PR_RXCS) & GC_DON) == 0)
@@ -290,7 +290,7 @@ static int
 ka88_clkread(time_t base)
 {
 	union {u_int ret;u_char r[4];} u;
-	int i, s = splimp();
+	int i, s = splhigh();
 
 	tocons(KA88_COMM|KA88_TOYREAD);
 	for (i = 0; i < 4; i++) {
@@ -304,7 +304,7 @@ static void
 ka88_clkwrite(void)
 {
 	union {u_int ret;u_char r[4];} u;
-	int i, s = splimp();
+	int i, s = splhigh();
 
 	u.ret = time.tv_sec - yeartonum(numtoyear(time.tv_sec));
 	tocons(KA88_COMM|KA88_TOYWRITE);

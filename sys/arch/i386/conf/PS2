@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.7.2.4 2001/03/27 15:31:00 bouyer Exp $
+#	$NetBSD: PS2,v 1.7.2.5 2001/04/21 17:53:49 bouyer Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -114,6 +114,11 @@ com*	at mca? slot ?			# 16x50s on comm boards
 elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
 ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
 we*	at mca? slot ?			# WD/SMC Ethernet
+ate*	at mca? slot ?			# Allied Telesis AT1720
+
+# MCA ESDI controllers & disks - EXPERIMENTAL
+dasd*	at mca? slot ?			# IBM DASD-compliant ESDI controllers
+ed*	at dasd?
 
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -130,7 +135,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device (ramdisk)
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)

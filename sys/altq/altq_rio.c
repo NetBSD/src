@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.2.2.2 2001/01/05 17:39:37 bouyer Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.2.2.3 2001/04/21 17:46:12 bouyer Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ rioioctl(dev, cmd, addr, flag, p)
 				break;
 			}
 
-			s = splimp();
+			s = splnet();
 			_flushq(rqp->rq_q);
 			limit = fc->rio_limit;
 			if (limit < fc->q_params[RIO_NDROPPREC-1].th_max)
@@ -771,7 +771,7 @@ rio_addq(rp, q, m, pktattr)
 
 /*
  * dequeue routine:
- *	must be called in splimp.
+ *	must be called in splnet.
  *
  *	returns: mbuf dequeued.
  *		 NULL when no packet is available in the queue.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42.2.2 2000/11/22 16:00:47 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42.2.3 2001/04/21 17:54:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.2.2 2000/11/22 16:00:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.2.3 2001/04/21 17:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.2.2 2000/11/22 16:00:47 bouyer E
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
+
+#include "opt_ddb.h"
 
 paddr_t kvtophys __P((vaddr_t));	/* XXX */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.55.8.5 2001/01/18 09:23:51 bouyer Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.55.8.6 2001/04/21 17:46:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -262,7 +262,7 @@ slopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw && (tp->t_linesw->l_no == SLIPDISC))
+	if (tp->t_linesw->l_no == SLIPDISC)
 		return (0);
 
 	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)
@@ -515,7 +515,7 @@ slstart(tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_SLIP);
 	splx(s);
     }
@@ -647,7 +647,7 @@ slinput(c, tp)
 		softintr_schedule(sc->sc_si);
 #else
 	    {
-		int s = splimp();
+		int s = splhigh();
 		schednetisr(NETISR_SLIP);
 		splx(s);
 	    }
@@ -993,7 +993,7 @@ slintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_if.if_lastchange = time;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;

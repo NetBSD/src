@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12.2.5 2001/01/05 17:35:23 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.12.2.6 2001/04/21 17:46:15 bouyer Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -84,7 +84,7 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
+0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, void *buf, size_t nbyte); }
@@ -595,4 +595,8 @@
 371	UNIMPL		setresgid
 372	UNIMPL		getresgid
 373	UNIMPL		sys_dipc
-374	UNIMPL		shmget
+374	UNIMPL		pivot_root
+375	UNIMPL		mincore
+376	UNIMPL		pciconfig_iobase
+377	UNIMPL		getdents64
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.2.3 2001/03/29 07:40:08 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.4 2001/04/21 17:54:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -375,4 +375,33 @@ pcidev_to_ofdev(pc, tag)
 		}
 	}
 	return 0;
+}
+
+int
+getnodebyname(start, target)
+	int start;
+	char *target;
+{
+	int node, next;
+	char name[64];
+
+	if (start == 0)
+		start = OF_peer(0);
+
+	for (node = start; node; node = next) {
+		bzero(name, sizeof name);
+		OF_getprop(node, "name", name, sizeof name - 1);
+		if (strcmp(name, target) == 0)
+			break;
+
+		if ((next = OF_child(node)) != 0)
+			continue;
+		while (node) {
+			if ((next = OF_peer(node)) != 0)
+				break;
+			node = OF_parent(node);
+		}
+	}
+
+	return node;
 }

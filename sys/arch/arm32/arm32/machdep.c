@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71.2.4 2001/03/27 15:30:26 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.2.5 2001/04/21 17:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,18 +76,23 @@
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
 
+#if !defined(SHARK)
 #include <arm/mainbus/mainbus.h>
+#endif
+
+#if !defined(SHARK) && !defined(FOOTBRIDGE)
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/dev/rpckbdvar.h>
 #include <machine/vidc.h>
 #include <arm32/vidc/vidcvideo.h>
 
-#include "opt_ipkdb.h"
-#include "md.h"
-#include "opt_mdsize.h"
-
 #include "vidcvideo.h"
 #include "rpckbd.h"
+#endif
+
+#include "opt_ipkdb.h"
+#include "opt_mdsize.h"
+#include "md.h"
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -122,9 +127,12 @@ struct user *proc0paddr;
 
 char *booted_kernel;
 
+
 /* Prototypes */
 
 void consinit		__P((void));
+extern void comcninit	__P((struct consdev *cp));
+
 
 void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
 			     int cacheable));
@@ -494,6 +502,10 @@ consinit(void)
 	if (consinit_called != 0) return;
 	consinit_called = 1;
 
+#ifdef COMCONSOLE
+	ksc = ksc;	/* Not used */
+	comcninit(NULL);
+#else
 	/* set up bus variables for attachment */
 	ksc->sc_iot	 = &iomd_bs_tag;
 	ksc->t_isconsole = 1;
@@ -504,6 +516,7 @@ consinit(void)
 
 	rpckbd_cnattach((struct device *) ksc);
 	vidcvideo_cnattach(videomemory.vidm_vbase);
+#endif
 }
 
 #else
@@ -515,8 +528,9 @@ consinit(void)
 
 	if (consinit_called != 0)
 		return;
-
 	consinit_called = 1;
+
+	/* No serial console for now ? hmm... should be in constab */
 	cninit();
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.2.4.3 2001/03/27 15:30:33 bouyer Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.2.4.4 2001/04/21 17:53:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -248,6 +248,9 @@ vidcrender_coldinit(vc)
 	vidc_write(VIDC_CP1, 0x0);
 	vidc_write(VIDC_CP2, 0x0);
 	vidc_write(VIDC_CP3, 0x0);
+
+	/* the old vidc-console code can't handle all display depths */
+	bootconfig.log2_bpp = 3;
 
 	/* Try to determine the current mode */
 	vidc_initialmode.hder = bootconfig.width+1;

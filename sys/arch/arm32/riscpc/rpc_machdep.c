@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.31.2.3 2001/03/27 15:30:32 bouyer Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.31.2.4 2001/04/21 17:53:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -949,17 +949,17 @@ initarm_new_bootloader(bootconf)
 	printf("Kernel arg string (@%p) %s\n", (void *) bootconfig.argvirtualbase, (char *)bootconfig.argvirtualbase);
 	printf("\nBoot configuration structure reports the following memory\n");
 
-	printf("  DRAM block 0a at %08x size %08x  DRAM block 0b at %08x size %08x\n\r",
+	printf(" DRAM block 0a at %08x size %08x DRAM block 0b at %08x size %08x\n\r",
 	    bootconfig.dram[0].address,
 	    bootconfig.dram[0].pages * bootconfig.pagesize,
 	    bootconfig.dram[1].address,
 	    bootconfig.dram[1].pages * bootconfig.pagesize);
-	printf("  DRAM block 1a at %08x size %08x  DRAM block 1b at %08x size %08x\n\r",
+	printf(" DRAM block 1a at %08x size %08x DRAM block 1b at %08x size %08x\n\r",
 	    bootconfig.dram[2].address,
 	    bootconfig.dram[2].pages * bootconfig.pagesize,
 	    bootconfig.dram[3].address,
 	    bootconfig.dram[3].pages * bootconfig.pagesize);
-	printf("  VRAM block 0  at %08x size %08x\n\r",
+	printf(" VRAM block 0  at %08x size %08x\n\r",
 	    bootconfig.vram[0].address,
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
 
@@ -1901,4 +1901,3 @@ initarm_old_bootloader(bootconf)
 #endif
 
 /* End of machdep.c */
-

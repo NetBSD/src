@@ -1,0 +1,28 @@
+#
+#	$NetBSD: MILAN.in,v 1.1.2.2 2001/04/21 17:53:23 bouyer Exp $
+#
+# Milan
+#
+# This configuration file is for a generic Milan
+#
+
+#include "GENERIC.in"
+
+#
+# The following sections describe various hardware options.
+#
+
+isabus0		at mainbus0	# ISA-bus
+isa0		at isabus0
+ser0		at mainbus0
+fdcisa0		at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy contr.
+fdisa0		at fdcisa0 drive 0
+wdcisa0		at isa? port 0x1f0 irq 14	# 1st IDE controller
+wdcisa1		at isa? port 0x170 irq 15	# 2nd IDE controller
+wd*		at wdcisa? channel ? drive ?
+
+# ATAPI bus support
+atapibus*	at wdcisa? channel ?
+
+# ATAPI devices
+cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

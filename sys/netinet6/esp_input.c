@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.12.2.5 2001/03/12 13:31:52 bouyer Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.12.2.6 2001/04/21 17:46:53 bouyer Exp $	*/
 /*	$KAME: esp_input.c,v 1.54 2001/03/01 09:12:08 itojun Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ noreplaycheck:
 			goto bad;
 		}
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			ipsecstat.in_inval++;
 			splx(s);
@@ -813,7 +813,7 @@ noreplaycheck:
 			goto bad;
 		}
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ip6intrq)) {
 			ipsec6stat.in_inval++;
 			splx(s);

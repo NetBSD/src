@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.7.2.5 2001/03/12 13:31:54 bouyer Exp $	*/
+/*	$NetBSD: in6.c,v 1.7.2.6 2001/04/21 17:46:54 bouyer Exp $	*/
 /*	$KAME: in6.c,v 1.175 2001/02/10 15:44:58 jinmei Exp $	*/
 
 /*
@@ -1220,7 +1220,7 @@ in6_ifinit(ifp, ia, sin6, scrub)
 {
 	struct	sockaddr_in6 oldaddr;
 	int	error, flags = RTF_UP;
-	int	s = splimp();
+	int	s = splnet();
 
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin6;

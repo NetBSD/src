@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.1.2.3 2001/03/12 13:28:49 bouyer Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.1.2.4 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -35,6 +35,8 @@
 
 #include <machine/bus.h>
 
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.7.2.2 2000/11/20 11:42:11 bouyer Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.7.2.3 2001/04/21 17:49:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ nsphytermatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83843)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83843)
 		return (10);
 
 	return (0);
@@ -127,7 +127,7 @@ nsphyterattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83843,
+	printf(": %s, rev. %d\n", MII_STR_xxNATSEMI_DP83843,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;

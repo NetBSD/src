@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.5.4.3 2001/03/27 15:31:51 bouyer Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.5.4.4 2001/04/21 17:48:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -293,8 +293,8 @@ static const keysym_t mccs_cmdmap[] = {
 };
 
 static u_int8_t mobilepro_keytrans[] = {
-/*00	space	]	\	/	-	-	enter	l	*/
-/*08	-	[	'	;	-	-	.	o	*/
+/*00	space	]	\	/	left	down	enter	l	*/
+/*08	-	[	'	;	right	up	.	o	*/
 /*10	-	-	-	Windows	v	c	x	z	*/
 /*18	-	=	\-	`	f	d	s	a	*/
 /*20	8	7	6	5	r	e	w	q	*/
@@ -302,7 +302,7 @@ static u_int8_t mobilepro_keytrans[] = {
 /*30	k	j	h	g	4	3	2	1	*/
 /*38	i	u	y	t	-	caps	del	esc	*/
 /*40	alt_R	-	-	-	BS	p	TAB	Fn	*/
-/*48	-	alt_L	-	-	f12	f11	f10	f9	*/
+/*48	-	alt_L	-	-	pgdn	pgup	f10	f9	*/
 /*50	-	-	ctrl	-	f8	f7	f6	f5	*/
 /*58	-	-	-	shift	f4	f3	f2	f1	*/
 /*----------------------------------------------------------------------*/
@@ -314,10 +314,20 @@ static u_int8_t mobilepro_keytrans[] = {
 /*28*/	 51,	 50,	 49,	 48,	IGN,	IGN,	 11,	 10,
 /*30*/	 37,	 36,	 35,	 34,	  5,	  4,	  3,	  2,
 /*38*/	 23,	 22,	 21,	 20,	IGN,	 58,	 14,	  1,
-/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	IGN,
-/*48*/	IGN,	 56,	IGN,	IGN,	 88,	 87,	 68,	 67,
+/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	219,
+/*48*/	IGN,	 56,	IGN,	IGN,	 81,	 73,	 68,	 67,
 /*50*/	IGN,	IGN,	 29,	IGN,	 66,	 65,	 64,	 63,
 /*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
+};
+
+static const keysym_t mobilepro_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(219), KS_Cmd,		KS_Meta_L,	KS_Multi_key,
+	KC(73),  KS_Cmd_BrightnessUp,	KS_KP_Prior,	KS_KP_9,
+	KC(81),  KS_Cmd_BrightnessDown,	KS_KP_Next,	KS_KP_3,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 /* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
@@ -347,6 +357,35 @@ static u_int8_t mobilepro750c_keytrans[] = {
 /*48*/	IGN,	56,	IGN,	IGN,	125,	87,	65,	61,
 /*50*/	IGN,	IGN,	29,	IGN,	68,	68,	64,	60,
 /*58*/	IGN,	IGN,	IGN,	42,	13,	67,	63,	59,
+};
+
+/* NEC MobilePro 780 */
+static u_int8_t mobilepro780_keytrans[] = {
+/*00	space	]	\	/	left	right	enter	l	*/
+/*08	-	[	'	;	up	down	.	o	*/
+/*10	-	-	-	Windows	v	c	x	z	*/
+/*18	-	=	\-	`	f	d	s	a	*/
+/*20	8	7	6	5	r	e	w	q	*/
+/*28	,	m	n	b	-	-	0	9	*/
+/*30	k	j	h	g	4	3	2	1	*/
+/*38	i	u	y	t	-	caps	del	esc	*/
+/*40	alt_R	-	-	-	BS	p	TAB	Fn	*/
+/*48	-	alt_L	-	-	f12	f11	f10	f9	*/
+/*50	-	-	ctrl	-	f8	f7	f6	f5	*/
+/*58	-	-	-	shift	f4	f3	f2	f1	*/
+/*----------------------------------------------------------------------*/
+/*00*/	 57,	 27,	 43,	 53,	203,	205,	 28,	 38,
+/*08*/	IGN,	 26,	 40,	 39,	200,	208,	 52,	 24,
+/*10*/	IGN,	IGN,	IGN,	221,	 47,	 46,	 45,	 44,
+/*18*/	IGN,	 13,	 12,	 41,	 33,	 32,	 31,	 30,
+/*20*/	  9,	  8,	  7,	  6,	 19,	 18,	 17,	 16,
+/*28*/	 51,	 50,	 49,	 48,	IGN,	IGN,	 11,	 10,
+/*30*/	 37,	 36,	 35,	 34,	  5,	  4,	  3,	  2,
+/*38*/	 23,	 22,	 21,	 20,	IGN,	 58,	 14,	  1,
+/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	IGN,
+/*48*/	IGN,	 56,	IGN,	IGN,	 88,	 87,	 68,	 67,
+/*50*/	IGN,	IGN,	 29,	IGN,	 66,	 65,	 64,	 63,
+/*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
 };
 
 /* FUJITSU INTERTOP CX300 */
@@ -410,11 +449,11 @@ static u_int8_t sigmarion_jp_keytrans[] = {
 static const keysym_t sigmarion_cmdmap[] = {
 /*	pos      command		normal		shifted		*/
 	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
-	KC(64),  KS_Cmd_Screen1,	KS_f6,		KS_f1,
-	KC(65),  KS_Cmd_Screen2,	KS_f7,		KS_f2,
-	KC(66),  KS_Cmd_Screen3,	KS_f8,		KS_f3,
-	KC(67),  KS_Cmd_Screen4,	KS_f9,		KS_f4,
-	KC(68),  KS_Cmd_Screen5,	KS_f10,		KS_f5,
+	KC(64),  KS_Cmd_Screen0,	KS_f6,		KS_f1,
+	KC(65),  KS_Cmd_Screen1,	KS_f7,		KS_f2,
+	KC(66),  KS_Cmd_Screen2,	KS_f8,		KS_f3,
+	KC(67),  KS_Cmd_Screen3,	KS_f9,		KS_f4,
+	KC(68),  KS_Cmd_Screen4,	KS_f10,		KS_f5,
 	KC(27),  KS_Cmd_BrightnessUp,	KS_bracketleft,	KS_braceleft,
 	KC(43),  KS_Cmd_BrightnessDown,	KS_bracketright,KS_braceright,
 	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
@@ -581,10 +620,10 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_NEC_MCR_520A,
 		mobilepro_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(mobilepro_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_530A,
-		mobilepro_keytrans,
+		mobilepro780_keytrans,
 		NULL,
 		NULLCMDMAP,
 		KB_US },

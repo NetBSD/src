@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.1.4.1 2000/11/20 20:33:11 bouyer Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.1.4.2 2001/04/21 17:55:00 bouyer Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -316,7 +316,7 @@ ubaerror(uh, ipl, uvec)
 		return;
 	}
 	sr = uba->uba_sr;
-	s = splimp();
+	s = spluba();
 	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
 	printf("%s: uba error sr=%s fmer=%x fubar=%o\n", vc->uv_sc.uh_dev.dv_xname,
 	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);

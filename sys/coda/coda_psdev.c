@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.12.2.2 2001/01/05 17:35:19 bouyer Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.12.2.3 2001/04/21 17:46:12 bouyer Exp $	*/
 
 /*
  * 
@@ -69,6 +69,8 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+
+#include <miscfs/syncfs/syncfs.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -184,9 +186,16 @@ vc_nb_close (dev, flag, mode, p)
     }
 
     /* Let unmount know this is for real */
+    /*
+     * XXX Freeze syncer.  Must do this before locking the
+     * mount point.  See dounmount for details().
+     */
+    lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
     VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
-    if (vfs_busy(mi->mi_vfsp, 0, 0))
+    if (vfs_busy(mi->mi_vfsp, 0, 0)) {
+	lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	return (EBUSY);
+    }
     coda_unmounting(mi->mi_vfsp);
     
     /* Wakeup clients so they can return. */

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.264.2.11 2001/04/02 16:28:22 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.264.2.12 2001/04/21 17:53:49 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.264.2.11 $"
+#ident 		"GENERIC-$Revision: 1.264.2.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -712,6 +712,9 @@ ucom*	at uftdi? portno ?
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ? 
 
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
 
@@ -747,6 +750,7 @@ eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -776,6 +780,7 @@ opl*	at fms?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
+opl*	at yds?
 opl*	at ym?
 
 # Audio support
@@ -799,6 +804,7 @@ audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
 audio*	at wss?
+audio*	at yds?
 audio*	at ym?
 
 # MPU 401 UARTs
@@ -806,6 +812,7 @@ audio*	at ym?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?
+mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2.2.8 2001/03/27 15:30:25 bouyer Exp $ */
+/* $NetBSD: podulebus.c,v 1.2.2.9 2001/04/21 17:53:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.2.2.8 2001/03/27 15:30:25 bouyer Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.2.2.9 2001/04/21 17:53:13 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -157,6 +157,7 @@ podulebus_probe_podule(struct device *self, int slotnum)
 		pa.pa_product = (extecid[EXTECID_PLO] |
 				 extecid[EXTECID_PHI] << 8);
 		pa.pa_slotnum = slotnum;
+		pa.pa_ih = slotnum;
 		if (pa.pa_flags1 & EXTECID_F1_CD) {
 			w = pa.pa_flags1 & EXTECID_F1_W_MASK;
 			if (w != EXTECID_F1_W_8BIT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 1996/07/20 20:52:43 leo Exp $	*/
+/*	$NetBSD: pte.h,v 1.3.28.1 2001/04/21 17:53:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,15 @@ typedef u_int	st_entry_t;
 #define	PG_PROT		0x00000004
 #define	PG_U		0x00000008
 #define	PG_M		0x00000010
+/*
+ * XXX The Milan uses the U0 pin to switch the pci-bridge between little & big
+ * endian mode. That's why I moved the 'wired' flag to U1 leo 10Apr/2001.
+ */
+#if 0
 #define	PG_W		0x00000100
+#else
+#define	PG_W		0x00000200
+#endif
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
 #define PG_FRAME	0xffffe000

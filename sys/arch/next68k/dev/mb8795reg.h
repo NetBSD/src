@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795reg.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: mb8795reg.h,v 1.1.1.1.14.1 2001/04/21 17:54:23 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -34,7 +34,7 @@
  * and the Fujitsu Manchester Encoder/Decoder (MB502).
  */
 
-
+#if 0
 struct xe_regs {
   unsigned char	xe_txstat;      /* tx status */
   unsigned char xe_txmask;      /* tx interrupt condition mask */
@@ -48,6 +48,7 @@ struct xe_regs {
   unsigned char xe_reserved;
   unsigned char xe_tdc_msb;     /* transmit data count MSB */
 };
+#endif
 
 /* transmitter status (address 0) */
 #define XE_TXSTAT               0
@@ -145,3 +146,6 @@ struct xe_regs {
 #define	ENRX_EOP	0x80000000	/* end-of-packet flag */
 #define	ENRX_BOP	0x40000000	/* beginning-of-packet flag */
 #define ENTX_EOP	0x80000000	/* end-of-packet flag */
+
+/* Size of register area to be mapped */
+#define XE_SIZE                 16

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.12.2.3 2001/02/11 19:17:22 bouyer Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.12.2.4 2001/04/21 17:46:55 bouyer Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.100 2001/02/07 08:25:45 itojun Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ in6_ifattach_addaddr(ifp, ia)
 	 */
 	if (ifp->if_ioctl != NULL) {
 		int s;
-		s = splimp();
+		s = splnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia);
 		splx(s);
 	} else

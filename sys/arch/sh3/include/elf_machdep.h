@@ -1,6 +1,14 @@
-/*	$NetBSD: elf_machdep.h,v 1.1.2.1 2000/11/20 20:24:29 bouyer Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.1.2.2 2001/04/21 17:54:36 bouyer Exp $	*/
 
+#ifndef _BYTE_ORDER
+#error Define _BYTE_ORDER!
+#endif
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#else
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#endif
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_SH:						\
 			break;

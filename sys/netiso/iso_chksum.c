@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.11.14.1 2000/11/20 18:11:04 bouyer Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.11.14.2 2001/04/21 17:46:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -308,7 +308,7 @@ m_compress(in, out)
 	struct mbuf *in, **out;
 {
 	int    datalen = 0;
-	int             s = splimp();
+	int             s = splnet();
 
 	if (in->m_next == NULL) {
 		*out = in;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.29.2.4 2001/02/11 19:17:34 bouyer Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29.2.5 2001/04/21 17:47:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -186,6 +186,7 @@ loop:
 	 */
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
 	if (error) {
+		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return error;
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);

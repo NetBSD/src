@@ -1,4 +1,4 @@
-/* $NetBSD: int_types.h,v 1.2.2.3 2001/01/05 17:33:45 bouyer Exp $ */
+/* $NetBSD: int_types.h,v 1.2.2.4 2001/04/21 17:53:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,8 +51,8 @@ typedef	unsigned short int     __uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 #ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__		__int64_t;
-typedef	unsigned __COMPILER_INT64__	__uint64_t;
+typedef	__COMPILER_INT64__	__int64_t;
+typedef	__COMPILER_UINT64__    __uint64_t;
 #else
 typedef	long int		__int64_t;
 typedef	unsigned long int      __uint64_t;

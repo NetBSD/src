@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.13.6.2 2000/11/20 11:43:19 bouyer Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.13.6.3 2001/04/21 17:49:53 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -265,6 +265,11 @@ struct aue_softc {
 	u_int			aue_rx_errs;
 	u_int			aue_intr_errs;
 	struct timeval		aue_rx_notice;
+
+	struct usb_task		aue_tick_task;
+	struct usb_task		aue_stop_task;
+
+	struct lock		aue_mii_lock;
 };
 
 #define AUE_TIMEOUT		1000

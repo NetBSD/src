@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.1.1.1.2.5 2001/03/27 15:30:53 bouyer Exp $
+#	$NetBSD: files.hpcmips,v 1.1.1.1.2.6 2001/04/21 17:53:37 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -32,14 +32,14 @@ attach cpu at mainbus
 file arch/hpcmips/hpcmips/cpu.c		cpu
 
 # CPU support option headers
-defopt	VR41X1
-defopt	TX39XX
+defopt	opt_vr41xx.h	VR41XX VR4101 VR4102 VR4111 VR4121 VR4122 VR4181
+defopt	opt_tx39xx.h	TX39XX TX3911 TX3912 TX3922
 
 #
 # CPU-dependent files
 #
-file	arch/hpcmips/vr/vr.c		vr41x1	# NEC VR4000 series
-file	arch/hpcmips/vr/vr_idle.S	vr41x1
+file	arch/hpcmips/vr/vr.c		vr41xx	# NEC VR4000 series
+file	arch/hpcmips/vr/vr_idle.S	vr41xx
 file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
 
 file	arch/mips/mips/fp.S		softfloat
@@ -84,7 +84,7 @@ file	arch/hpcmips/dev/hpcapm.c	hpcapm
 include "dev/isa/files.isa"
 
 #
-#  Vr41x1 integrated peripherals
+#  Vr41xx integrated peripherals
 #
 device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1], [platform = -1] }
 attach vrip at mainbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1994/06/29 06:41:07 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.5.34.1 2001/04/21 17:46:59 bouyer Exp $	*/
 
 /*
  * TODO:
@@ -294,7 +294,7 @@ char *argv[];
 #endif notdef
 		if(strlen(kerneldirname)<1) {
 			fprintf(OUT, "K option: dir name too short!\n");
-			exit(-1);
+			exit(1);
 		}
 		/* add ../name/ */
 		c = (char *) Malloc(strlen(kerneldirname)+6) ;
@@ -302,7 +302,7 @@ char *argv[];
 			fprintf(OUT, "Cannot allocate %d bytes for kerneldirname\n",
 				strlen(kerneldirname + 6) );
 			fprintf(OUT, "kerneldirname is %s\n", kerneldirname  );
-			exit(-1);
+			exit(1);
 		}
 		*c = '.';
 		*(c+1) = '.';

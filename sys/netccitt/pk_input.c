@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.13.12.1 2000/11/20 18:10:17 bouyer Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.13.12.2 2001/04/21 17:46:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -321,7 +321,7 @@ pkintr()
 	int    s;
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&pkintrq, m);
 		splx(s);
 		if (m == 0)

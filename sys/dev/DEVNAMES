@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.20.2.9 2001/03/27 15:31:49 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.20.2.10 2001/04/21 17:48:14 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -16,6 +16,7 @@ abus			vax
 ac			hp300
 ac97			MI		Attribute
 acc			vax
+acemidi			MI
 aclock			arc
 ad			vax
 ad1848			MI		Attribute
@@ -68,7 +69,6 @@ aria			MI
 arp			MI		Attribute
 asc			alpha
 asc			arc
-asc			arm26
 asc			arm32
 asc			mac68k
 asc			mipsco
@@ -213,6 +213,7 @@ cy			MI
 cy82c693		MI		
 cz			MI		
 daic			MI
+dasd			MI (MCA)
 dc			pmax
 dca			hp300
 dcm			hp300
@@ -253,6 +254,7 @@ ec			MI
 eccmemctl		sparc
 ed			amiga
 ed			amigappc
+ed			MI (MCA)
 eeprom			sparc
 eeprom			sparc64
 eeprom			sun3
@@ -833,6 +835,7 @@ rd			vax
 rk			vax
 rl			vax
 rlc			vax
+rpckbd			arm32
 rtc			arm26
 rtc			arm32
 rtc			pc532
@@ -1010,6 +1013,7 @@ ukphy			MI
 ukphy_subr		MI		Attribute
 ulpt			MI		
 umass			MI		
+umct			MI
 umidi			MI
 umodem			MI		
 ums			MI		
@@ -1035,6 +1039,7 @@ viaenv			MI
 viapm			MI
 vidc			arm32
 vidcaudio		arm32
+vidcconsole		arm32
 vidcvideo		arm32
 vme			MI		
 vme			atari
@@ -1088,6 +1093,7 @@ wsmouse			MI
 wsmousedev		MI		Attribute
 wsrasteremulops		MI		Attribute
 wss			MI		
+wsqms			arm32
 wstsc			amiga
 wstsc			amigappc
 wt			MI		
@@ -1110,6 +1116,7 @@ xy			MI
 xy			sun3
 xyc			MI		
 xyc			sun3
+yds			MI
 ym			MI		
 zbus			amiga
 zbus			amigappc

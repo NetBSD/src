@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.2.4.2 2001/03/12 13:28:32 bouyer Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.2.4.3 2001/04/21 17:53:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -238,9 +238,11 @@ sa11x0_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
 	set_spl_masks();
-
-	/* XXX what if irq is disabled in current spl level */
+	spl_mask = spl_masks[current_spl_level];
 	current_mask |= (1 << irq);
+
+	irq_setmasks();
+
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
 #ifdef DEBUG
 	dumpirqhandlers();
@@ -261,7 +263,7 @@ sa11x0_intr_disestablish(ic, arg)
 	int saved_cpsr;
 	struct irqhandler **p, *q;
 
-#if DIAGNOSITC
+#if DIAGNOSTIC
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("intr_disestablish: bogus irq");
 #endif
@@ -281,8 +283,10 @@ sa11x0_intr_disestablish(ic, arg)
 	intr_calculatemasks();
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
 	set_spl_masks();
+	spl_mask = spl_masks[current_spl_level];
 
 	current_mask &= ~(1 << irq);
+	irq_setmasks();
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
 
 }

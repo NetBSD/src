@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.38.2.4 2001/01/18 09:23:53 bouyer Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.38.2.5 2001/04/21 17:46:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -160,7 +160,7 @@ tunclose(dev, flag, mode, p)
 	 * junk all pending output
 	 */
 	do {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 		if (m)
@@ -168,7 +168,7 @@ tunclose(dev, flag, mode, p)
 	} while (m);
 
 	if (ifp->if_flags & IFF_UP) {
-		s = splimp();
+		s = splnet();
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
@@ -239,7 +239,7 @@ tun_ioctl(ifp, cmd, data)
 {
 	int		error = 0, s;
 
-	s = splimp();
+	s = splnet();
 	switch(cmd) {
 	case SIOCSIFADDR:
 		tuninit((struct tun_softc *)(ifp->if_softc));
@@ -350,7 +350,7 @@ tun_output(ifp, m0, dst, rt)
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ifp->if_snd)) {
 			IF_DROP(&ifp->if_snd);
 			m_freem(m0);
@@ -409,7 +409,7 @@ tunioctl(dev, cmd, data, flag, p)
 		switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
 		case IFF_POINTOPOINT:
 		case IFF_BROADCAST:
-			s = splimp();
+			s = splnet();
 			if (tp->tun_if.if_flags & IFF_UP) {
 				splx(s);
 				return (EBUSY);
@@ -447,7 +447,7 @@ tunioctl(dev, cmd, data, flag, p)
 		break;
 
 	case FIONREAD:
-		s = splimp();
+		s = splnet();
 		if (tp->tun_if.if_snd.ifq_head)
 			*(int *)data = tp->tun_if.if_snd.ifq_head->m_pkthdr.len;
 		else	
@@ -493,7 +493,7 @@ tunread(dev, uio, ioflag)
 
 	tp->tun_flags &= ~TUN_RWAIT;
 
-	s = splimp();
+	s = splnet();
 	do {
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
@@ -636,7 +636,7 @@ tunwrite(dev, uio, ioflag)
 	}
 #endif
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		splx(s);
@@ -667,7 +667,7 @@ tunpoll(dev, events, p)
 	struct ifnet	*ifp = &tp->tun_if;
 	int		revents = 0;
 
-	s = splimp();
+	s = splnet();
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
 
 	if (events & (POLLIN | POLLRDNORM)) {

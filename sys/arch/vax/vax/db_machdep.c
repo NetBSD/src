@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.17.2.3 2001/02/11 19:13:04 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.17.2.4 2001/04/21 17:55:00 bouyer Exp $	*/
 
 /* 
  * :set tabs=4
@@ -144,7 +144,7 @@ kdb_trap(frame)
 
 	/* XXX Should switch to interrupt stack here, if needed. */
 
-	s = splimp();
+	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(frame->trap, frame->code);

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_we_mca.c,v 1.1.2.2 2001/03/27 15:32:06 bouyer Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.1.2.3 2001/04/21 17:48:54 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,18 +63,13 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
-
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/bswap.h>
-#include <machine/intr.h>
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>

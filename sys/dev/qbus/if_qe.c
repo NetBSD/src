@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.38.2.4 2001/03/12 13:31:22 bouyer Exp $ */
+/*      $NetBSD: if_qe.c,v 1.38.2.5 2001/04/21 17:49:41 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -473,7 +473,7 @@ qestart(struct ifnet *ifp)
 	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
 		return;
 
-	s = splimp();
+	s = splnet();
 	while (sc->sc_inq < (TXDESCS - 1)) {
 
 		if (sc->sc_setup) {
@@ -784,7 +784,7 @@ qe_setup(struct qe_softc *sc)
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	int i, j, k, idx, s;
 
-	s = splimp();
+	s = splnet();
 	if (sc->sc_inq == (TXDESCS - 1)) {
 		sc->sc_setup = 1;
 		splx(s);

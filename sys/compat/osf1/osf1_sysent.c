@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.36.2.5 2001/02/11 19:14:24 bouyer Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.36.2.6 2001/04/21 17:46:23 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -470,18 +470,18 @@ struct sysent osf1_sysent[] = {
 	    sys_nosys },			/* 222 = unimplemented security */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 223 = unimplemented kloadcall */
+	{ 2, s(struct osf1_sys_stat2_args), 0,
+	    osf1_sys_stat2 },			/* 224 = stat2 */
+	{ 2, s(struct osf1_sys_lstat2_args), 0,
+	    osf1_sys_lstat2 },			/* 225 = lstat2 */
+	{ 2, s(struct osf1_sys_fstat2_args), 0,
+	    osf1_sys_fstat2 },			/* 226 = fstat2 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 224 = unimplemented */
+	    sys_nosys },			/* 227 = unimplemented statfs2 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 225 = unimplemented */
+	    sys_nosys },			/* 228 = unimplemented fstatfs2 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 226 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 227 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 228 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 229 = unimplemented */
+	    sys_nosys },			/* 229 = unimplemented getfsstat2 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 230 = unimplemented */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.48.2.1 2000/11/20 18:10:21 bouyer Exp $	*/
+/*	$NetBSD: in.c,v 1.48.2.2 2001/04/21 17:46:47 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -809,7 +809,7 @@ in_ifinit(ifp, ia, sin, scrub)
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splimp(), flags = RTF_UP, error;
+	int s = splnet(), flags = RTF_UP, error;
 
 	/*
 	 * Set up new addresses.

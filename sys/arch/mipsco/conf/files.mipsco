@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.4.2.4 2001/03/12 13:29:03 bouyer Exp $
+#	$NetBSD: files.mipsco,v 1.4.2.5 2001/04/21 17:54:02 bouyer Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -7,16 +7,21 @@ maxpartitions 8
 
 maxusers 2 8 64
 
-device mainbus {}			# no locators
+device mainbus { }			# no locators
 attach mainbus at root
-
-device obio { [addr = -1], [level = -1] }
-attach obio at mainbus
-file arch/mipsco/obio/obio.c		obio
 
 device cpu
 attach cpu at mainbus
 file arch/mipsco/mipsco/cpu.c		cpu
+
+device isabus
+attach	isabus at mainbus
+file arch/mipsco/isa/isa_machdep.c	isabus
+include "dev/isa/files.isa"
+
+device obio { [addr = -1], [level = -1] }
+attach obio at mainbus
+file arch/mipsco/obio/obio.c		obio
 
 device mkclock
 attach mkclock at obio
@@ -47,6 +52,7 @@ file dev/ic/z8530tty.c			zstty needs-count
 file arch/mipsco/mipsco/autoconf.c
 file arch/mipsco/mipsco/conf.c
 file arch/mipsco/mipsco/machdep.c
+file arch/mipsco/mipsco/interrupt.c
 file arch/mipsco/mipsco/procfs_machdep.c	procfs
 file arch/mipsco/mipsco/mips_3x30.c
 file arch/mipsco/mipsco/disksubr.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.2.2 2001/01/18 09:22:55 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.3 2001/04/21 17:54:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -62,8 +62,7 @@ void	_clrsoftintr __P((int));
 #define splbio()	(_splraise(splvec.splbio))
 #define splnet()	(_splraise(splvec.splnet))
 #define spltty()	(_splraise(splvec.spltty))
-#define splimp()	(_splraise(splvec.splimp))
-#define splvm()		(_splraise(splvec.splimp))
+#define splvm()		(_splraise(splvec.splvm))
 #define splclock()	(_splraise(splvec.splclock))
 #define splstatclock()	(_splraise(splvec.splstatclock))
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
@@ -77,7 +76,7 @@ struct splvec {
 	int	splbio;
 	int	splnet;
 	int	spltty;
-	int	splimp;
+	int	splvm;
 	int	splclock;
 	int	splstatclock;
 };

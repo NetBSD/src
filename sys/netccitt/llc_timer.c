@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_timer.c,v 1.4.12.1 2000/11/20 18:10:16 bouyer Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.4.12.2 2001/04/21 17:46:45 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -86,7 +86,7 @@ llc_timer()
 	struct llc_linkcb *nlinkp;
 	int timer;
 	int action;
-	int s = splimp();
+	int s = splnet();
 
 	/*
 	 * All links are accessible over the doubly linked list llccb_q

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.10 1999/03/26 22:50:26 mhitch Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.10.8.1 2001/04/21 17:53:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -470,7 +470,7 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 #define	SIOP_CTEST4_SFWR	0x08	/* SCSI FIFO write enable (from sodl) */
 #else
 #define	SIOP_CTEST4_SRTM	0x10	/* Shadow Register Test Mode */
-#define	SIOP_CTEST4_EHPC	8x08	/* Enable Host Parity Check */
+#define	SIOP_CTEST4_EHPC	0x08	/* Enable Host Parity Check */
 #endif
 #define	SIOP_CTEST4_FBL		0x07	/* DMA FIFO Byte Lane select (from ctest6)
 					   4->0, .. 7->3 */

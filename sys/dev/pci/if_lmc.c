@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.1.8.2 2000/11/22 16:04:05 bouyer Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.1.8.3 2001/04/21 17:49:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -405,6 +405,36 @@ lmc_watchdog(int unit)
 
 	state = 0;
 
+	/*
+	 * Make sure the tx jabber and rx watchdog are off,
+	 * and the transmit and recieve processes are running.
+	 */
+	LMC_CSR_WRITE (sc, csr_15, 0x00000011);
+	sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;
+	LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
+
+	/* Is the transmit clock still available? */
+	ticks = LMC_CSR_READ (sc, csr_gp_timer);
+	ticks = 0x0000ffff - (ticks & 0x0000ffff);
+
+	if (ticks == 0)
+	{
+		/* no clock found ? */
+		if (sc->tx_clockState != 0)
+		{
+			sc->tx_clockState = 0;
+			if (sc->lmc_cardtype == LMC_CARDTYPE_SSI)
+				lmc_led_on (sc, LMC_MII16_LED3); /* ON red */
+		}
+	else
+		if (sc->tx_clockState == 0)
+		{
+			sc->tx_clockState = 1;
+			if (sc->lmc_cardtype == LMC_CARDTYPE_SSI)
+				lmc_led_off (sc, LMC_MII16_LED3); /* OFF red */
+		}
+	}
+
 	link_status = sc->lmc_media->get_link_status(sc);
 	ostatus = ((sc->lmc_flags & LMC_MODEMOK) == LMC_MODEMOK);
 
@@ -412,26 +442,52 @@ lmc_watchdog(int unit)
 	 * hardware level link lost, but the interface is marked as up.
 	 * Mark it as down.
 	 */
-        if (link_status == 0 && ostatus) {
+	if (link_status == LMC_LINK_DOWN && ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link down\n",
 		       LMC_PRINTF_ARGS);
 		sc->lmc_flags &= ~LMC_MODEMOK;
-		lmc_led_off(sc, LMC_MII16_LED1);
+		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+			lmc_led_on (sc, LMC_DS3_LED3 | LMC_DS3_LED2);
+							/* turn on red LED */
+		else {
+			lmc_led_off (sc, LMC_MII16_LED1);
+			lmc_led_on (sc, LMC_MII16_LED0);
+			if (sc->lmc_timing == LMC_CTL_CLOCK_SOURCE_EXT)
+				lmc_led_on (sc, LMC_MII16_LED3);
+		}
+
 	}
 
 	/*
 	 * hardware link is up, but the interface is marked as down.
 	 * Bring it back up again.
 	 */
-	if (link_status != 0 && !ostatus) {
+	if (link_status != LMC_LINK_DOWN && !ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link up\n",
 		       LMC_PRINTF_ARGS);
 		if (sc->lmc_flags & LMC_IFUP)
 			lmc_ifup(sc);
 		sc->lmc_flags |= LMC_MODEMOK;
-		lmc_led_on(sc, LMC_MII16_LED1); 
+		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+		{
+			sc->lmc_miireg16 |= LMC_DS3_LED3;
+			lmc_led_off (sc, LMC_DS3_LED3);
+							/* turn off red LED */
+			lmc_led_on (sc, LMC_DS3_LED2);
+		} else {
+			lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED1
+				    | LMC_MII16_LED2);
+			if (sc->lmc_timing != LMC_CTL_CLOCK_SOURCE_EXT)
+				lmc_led_off (sc, LMC_MII16_LED3);
+		}
+
 		return;
 	}
+
+	/* Call media specific watchdog functions */
+	sc->lmc_media->watchdog(sc);
 
 	/*
 	 * remember the timer value
@@ -455,12 +511,19 @@ lmc_ifup(lmc_softc_t * const sc)
 	lmc_dec_reset(sc);
 	lmc_reset(sc);
 
-	sc->lmc_media->set_link_status(sc, 1);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_UP);
 	sc->lmc_media->set_status(sc, NULL);
 
 	sc->lmc_flags |= LMC_IFUP;
 
-	lmc_led_on(sc, LMC_MII16_LED1);
+	/*
+	 * for DS3 & DS1 adapters light the green light, led2
+	 */
+	if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+	    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+		lmc_led_on (sc, LMC_MII16_LED2);
+	else
+		lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED2);
 
 	/*
 	 * select what interrupts we want to get
@@ -493,8 +556,8 @@ lmc_ifdown(lmc_softc_t * const sc)
 	sc->lmc_if.if_timer = 0;
 	sc->lmc_flags &= ~LMC_IFUP;
 
-	sc->lmc_media->set_link_status(sc, 0);
-	lmc_led_off(sc, LMC_MII16_LED1);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
+	lmc_led_off(sc, LMC_MII16_LED_ALL);
 
 	lmc_dec_reset(sc);
 	lmc_reset(sc);
@@ -1139,7 +1202,10 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		if (ifr->ifr_mtu > LMC_MTU) {
 			error = EINVAL;
 			goto out;
+		} else {
+			ifp->if_mtu = ifr->ifr_mtu;
 		}
+		break;
 #endif
 	}
 
@@ -1336,6 +1402,7 @@ lmc_attach(lmc_softc_t * const sc)
 	if_attach(ifp);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
+	sc->lmc_sppp.pp_framebytes = 3;	/* 1 flag byte, 2 byte FCS */
 	sppp_attach((struct ifnet *)&sc->lmc_sppp);
 	sc->lmc_sppp.pp_flags = PP_CISCO | PP_KEEPALIVE;
 #endif

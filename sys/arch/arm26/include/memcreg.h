@@ -1,4 +1,4 @@
-/* $NetBSD: memcreg.h,v 1.2.2.2 2000/11/20 20:02:43 bouyer Exp $ */
+/* $NetBSD: memcreg.h,v 1.2.2.3 2001/04/21 17:53:12 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -150,7 +150,7 @@
  * MEMCs).  The Archimedes 540 can have up to 16Mb of RAM, and arranges
  * this by having several address lines go through PALs on their way to the
  * MEMCs.  The upshot of this is that for the purposes of setting the
- * translation tables, PPN[7] maps to A[12].  The A540 always has 32kb pages.
+ * translation tables, PPN[8] maps to A[12].  The A540 always has 32kb pages.
  */
 
 /* Page protection levels (data sheet section 6.6) */

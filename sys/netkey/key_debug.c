@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.7.2.1 2000/11/20 18:11:10 bouyer Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.7.2.2 2001/04/21 17:47:00 bouyer Exp $	*/
 /*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ static void kdebug_secreplay __P((struct secreplay *));
 #endif
 
 #ifndef _KERNEL
-#define panic(param)	{ printf(param); exit(-1); }
+#define panic(param)	{ printf(param); exit(1); }
 #endif
 
 /* NOTE: host byte order */

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.6.2.6 2001/02/11 19:08:53 bouyer Exp $ */
+/* $NetBSD: irq.c,v 1.6.2.7 2001/04/21 17:53:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,12 +33,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.6.2.6 2001/02/11 19:08:53 bouyer Exp $");
+__RCSID("$NetBSD: irq.c,v 1.6.2.7 2001/04/21 17:53:11 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -137,7 +138,7 @@ irq_handler(struct irqframe *irqf)
 	for (h = irq_list_head.lh_first;
 	     h != NULL && h->ipl > s;
 	     h = h->link.le_next)
-		if (h->enabled && ((status & h->mask) != 0)) {
+		if (h->enabled && ((status & h->mask) == h->mask)) {
 			splx(h->ipl);
 #if 0
 			printf("IRQ %d...", h->irqnum);
@@ -162,10 +163,9 @@ irq_handler(struct irqframe *irqf)
 				stray = 0;
 		}
 
-	if (stray) {
-		panic("Stray IRQ, status = 0x%x, spl = %d, mask = 0x%x",
-		      status, s, irqmask[s]);
-	}
+	if (__predict_false(stray))
+		log(LOG_WARNING, "Stray IRQ, status = 0x%x, spl = %d, "
+		    "mask = 0x%x\n", status, s, irqmask[s]);
 #if 0
 	printf(" handled\n");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.3.2.3 2001/01/05 17:35:04 bouyer Exp $	*/
+/*	$NetBSD: int_types.h,v 1.3.2.4 2001/04/21 17:54:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,13 +61,13 @@ typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 
 #ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__		__int64_t;
-typedef	unsigned __COMPILER_INT64__	__uint64_t;
+typedef	__COMPILER_INT64__	__int64_t;
+typedef	__COMPILER_UINT64__    __uint64_t;
 #else
 #ifdef __arch64__
 /* 64-bit compiler */
 typedef	long int		__int64_t;
-typedef	unsigned long int       __uint64_t;
+typedef	unsigned long int      __uint64_t;
 #else
 /* 32-bit compiler */
 /* LONGLONG */
@@ -79,12 +79,7 @@ typedef	unsigned long long int __uint64_t;
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 
-#ifdef __arch64__
 typedef	long int	       __intptr_t;
 typedef	unsigned long int     __uintptr_t;
-#else
-typedef	int		       __intptr_t;
-typedef	unsigned int	      __uintptr_t;
-#endif
 
 #endif	/* !_SPARC64_INT_TYPES_H_ */

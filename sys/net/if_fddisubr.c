@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.28.2.4 2001/01/18 09:23:50 bouyer Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.28.2.5 2001/04/21 17:46:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -586,7 +586,7 @@ fddi_output(ifp, m0, dst, rt0)
 		    sizeof(fh->fddi_shost));
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -847,7 +847,7 @@ fddi_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

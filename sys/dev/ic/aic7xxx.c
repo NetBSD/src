@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.15 2001/04/03 10:05:31 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.16 2001/04/21 17:48:23 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4380,7 +4380,7 @@ ahc_download_instr(struct ahc_softc *ahc, int instrptr, u_int8_t *dconsts)
 	u_int	opcode;
 
 	/* Structure copy */
-	instr = *(union ins_formats*)&seqprog[instrptr * 4];
+	memcpy(&instr, &seqprog[instrptr * 4], sizeof instr);
 
 	instr.integer = le32toh(instr.integer);
 
@@ -4681,6 +4681,7 @@ bus_reset:
 
 				/* Will clear us from the bus */
 				restart_sequencer(ahc);
+				splx(s);
 				return;
 			}
 
@@ -4707,6 +4708,7 @@ bus_reset:
 				printf("%s: Hung target selection\n",
 				       ahc_name(ahc));
 				restart_sequencer(ahc);
+				splx(s);
 				return;
 			}
 

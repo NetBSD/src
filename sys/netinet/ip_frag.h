@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.12.10.2 2001/03/27 15:32:31 bouyer Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.12.10.3 2001/04/21 17:46:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -26,7 +26,8 @@ typedef	struct	ipfr	{
 	u_char	ipfr_p;
 	u_char	ipfr_tos;
 	u_short	ipfr_off;
-	u_short	ipfr_ttl;
+	u_char	ipfr_ttl;
+	u_char	ipfr_seen0;
 	frentry_t *ipfr_rule;
 } ipfr_t;
 
@@ -42,7 +43,8 @@ typedef	struct	ipfrstat {
 	struct	ipfr	**ifs_nattab;
 } ipfrstat_t;
 
-#define	IPFR_CMPSZ	(4 + 4 + 2 + 1 + 1)
+#define	IPFR_CMPSZ	(offsetof(ipfr_t, ipfr_off) - \
+			 offsetof(ipfr_t, ipfr_src))
 
 extern	int	fr_ipfrttl;
 extern	int	fr_frag_lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.62.2.5 2001/03/12 13:31:50 bouyer Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62.2.6 2001/04/21 17:46:51 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -679,7 +679,7 @@ sendorfree:
 	 * If there is no room for all the fragments, don't queue
 	 * any of them.
 	 */
-	s = splimp();
+	s = splnet();
 	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments)
 		error = ENOBUFS;
 	splx(s);

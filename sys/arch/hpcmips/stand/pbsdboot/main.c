@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6.2.4 2001/03/12 13:28:42 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.6.2.5 2001/04/21 17:53:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.17.2 2001.03.04\r\n")
+	TEXT("Version 1.17.3 2001.04.15\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.21.2.1 2000/11/20 18:09:09 bouyer Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.21.2.2 2001/04/21 17:46:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,7 +50,7 @@
 #include <net/route.h>
 
 struct	fileops socketops =
-    { soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll, soo_close };
+    { soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll, soo_stat, soo_close};
 
 /* ARGSUSED */
 int
@@ -191,16 +191,17 @@ soo_poll(fp, events, p)
 }
 
 int
-soo_stat(so, ub)
-	struct socket *so;
+soo_stat(fp, ub, p)
+	struct file *fp;
 	struct stat *ub;
+	struct proc *p;
 {
+	struct socket *so = (struct socket *)fp->f_data;
 
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
-	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct proc *)0));
+	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0, p));
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.9 2001/03/12 13:31:09 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.10 2001/04/21 17:49:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -1042,7 +1042,7 @@ pccbbintr_function(sc)
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
 		} else if (pil->pil_level == IPL_IMP) {
-			s = splimp();
+			s = splvm();	/* XXX */
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 		} else if (pil->pil_level == IPL_SOFTSERIAL) {

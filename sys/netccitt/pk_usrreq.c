@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.16.12.1 2000/11/20 18:10:18 bouyer Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.16.12.2 2001/04/21 17:46:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -412,7 +412,7 @@ pk_control(so, cmd, data, ifp, p)
 p		 * is its first address, and to validate the address.
 		 */
 		ia->ia_start = pk_start;
-		s = splimp();
+		s = splnet();
 		if (ifp->if_ioctl)
 			error = (*ifp->if_ioctl) (ifp, SIOCSIFCONF_X25,
 						  (caddr_t) ifa);

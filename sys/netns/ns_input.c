@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.14.14.1 2000/11/20 18:11:13 bouyer Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.14.14.2 2001/04/21 17:47:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -122,7 +122,7 @@ next:
 	 * Get next datagram off input queue and get IDP header
 	 * in first mbuf.
 	 */
-	s = splimp();
+	s = splnet();
 	IF_DEQUEUE(&nsintrq, m);
 	splx(s);
 	nsintr_getpck++;

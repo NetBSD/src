@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_classq.h,v 1.2.2.2 2001/01/05 17:39:36 bouyer Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.2.2.3 2001/04/21 17:46:11 bouyer Exp $	*/
 /*	$KAME: altq_classq.h,v 1.3 2000/07/25 10:12:29 kjc Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ _getq(class_queue_t *q)
 	else
 		qtail(q) = NULL;
 	qlen(q)--;
+	m0->m_nextpkt = NULL;
 	return (m0); 
 }
 
@@ -136,6 +137,7 @@ _getq_tail(class_queue_t *q)
 	else
 		qtail(q) = prev;
 	qlen(q)--;
+	m->m_nextpkt = NULL;
 	return (m);
 }
 
@@ -163,6 +165,7 @@ _getq_random(class_queue_t *q)
 			qtail(q) = prev;
 	}
 	qlen(q)--;
+	m->m_nextpkt = NULL;
 	return (m);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_spl.c,v 1.2.2.1 2001/01/18 09:22:53 bouyer Exp $	*/
+/*	$NetBSD: soft_spl.c,v 1.2.2.2 2001/04/21 17:54:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -38,7 +38,7 @@ static int soft_spl0 __P((void));
 static int soft_splbio __P((void));
 static int soft_splnet __P((void));
 static int soft_spltty __P((void));
-static int soft_splimp __P((void));
+static int soft_splvm __P((void));
 static int soft_splclock __P((void));
 static int soft_spllowersoftclock __P((void));
 static int soft_splsoftclock __P((void));
@@ -55,7 +55,7 @@ struct machvec soft_machvec = {
 	soft_splbio,
 	soft_splnet,
 	soft_spltty,
-	soft_splimp,
+	soft_splvm,
 	soft_splclock,
 	soft_spllowersoftclock,
 	soft_splsoftclock,
@@ -181,7 +181,7 @@ soft_spltty()
 }
 
 static int
-soft_splimp()
+soft_splvm()
 {
 	return splraise(SPLIMP | SPLSOFTCLOCK | SPLSOFTNET);
 }

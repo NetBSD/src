@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.12.2.5 2001/03/12 13:31:27 bouyer Exp $
+#	$NetBSD: files.usb,v 1.12.2.6 2001/04/21 17:49:51 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -82,6 +82,7 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
+file	dev/usb/umassbus.c		umass
 
 
 # Misc
@@ -138,6 +139,11 @@ file	dev/usb/uftdi.c			uftdi
 device	uplcom: ucombus
 attach	uplcom at uhub
 file	dev/usb/uplcom.c		uplcom
+
+# MCT USB-232 serial driver
+device	umct: ucombus
+attach	umct at uhub
+file	dev/usb/umct.c			umct
 
 # Scanners
 # Generic scanner support

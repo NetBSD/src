@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.1.2.2 2001/02/11 19:15:52 bouyer Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.1.2.3 2001/04/21 17:49:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -377,8 +377,11 @@ cs428x_src_wait(sc)
 	n = 0;
 	while ((BA0READ4(sc, CS428X_ACCTL) & ACCTL_DCV)) {
 		delay(1000);
-		while (++n > 1000)
+		while (++n > 1000) {
+			printf("cs428x_src_wait: 0x%08x\n",
+			    BA0READ4(sc, CS428X_ACCTL));
 			return -1;
+		}
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.4.2.5 2001/03/12 13:31:47 bouyer Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.4.2.6 2001/04/21 17:46:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -231,7 +231,7 @@ faithoutput(ifp, m, dst, rt)
 	/* XXX do we need more sanity checks? */
 
 	m->m_pkthdr.rcvif = ifp;
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

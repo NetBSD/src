@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.10.1 2000/11/20 18:08:54 bouyer Exp $
+#	$NetBSD: Makefile,v 1.8.10.2 2001/04/21 17:46:26 bouyer Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -38,15 +38,16 @@ vnode_if.c ../sys/vnode_if.h: ${VNODEIFSRC}
 ARCH=	i386 mac68k
 
 SYSTAGS=/var/db/sys_tags
-SYSDIR=/sys
+SYSDIR=..
 
 .ifmake links
 # Directories in which to place tags links (other than machine-dependent):
 # The invocation below returns every directory that contains sources, the idea
 # being, in the face of a constantly varying source tree, that this will be 
 # easier to maintain than a fixed list.
-DGEN!=	find -H /sys ! -path "/sys/arch*" -name "*.[chs]" | \
-	    sed -e "s@/sys/@@" -e "s@/[^/]*\..*@@" | sort -t / -u
+DGEN!=	(cd ${SYSDIR};							\
+	    find -H . -name arch -prune -o -name "*.[chs]" -print |	\
+	    sed -e 's@^\./@@' -e 's@/[^/]*\..*@@' | sort -t / -u )
 .endif
 
 tags::

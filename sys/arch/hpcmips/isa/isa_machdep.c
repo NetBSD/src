@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1.1.1.2.1 2000/11/20 20:46:53 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.1.1.2.2 2001/04/21 17:53:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -39,6 +39,8 @@
 #include <machine/platid_mask.h>
 
 #include <hpcmips/hpcmips/machdep.h>
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>

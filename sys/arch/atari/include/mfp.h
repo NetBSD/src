@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.3 1997/07/15 08:26:08 leo Exp $	*/
+/*	$NetBSD: mfp.h,v 1.3.20.1 2001/04/21 17:53:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -32,6 +32,7 @@
 
 #ifndef _MACHINE_MFP_H
 #define _MACHINE_MFP_H
+
 /*
  * Atari TT hardware: MFP1/MFP2
  * Motorola 68901 Multi-Function Peripheral
@@ -40,34 +41,41 @@
 #define	MFP	((struct mfp *)AD_MFP)
 #define	MFP2	((struct mfp *)AD_MFP2)
 
+#ifdef _MILANHW_
+#define		__MR(n)			(3 + (4 * n))
+#endif
+#ifdef _ATARIHW_
+#define		__MR(n)			(1 + (2 * n))
+#endif
+
 struct mfp {
-	volatile u_char	mfb[48];	/* use only the odd bytes */
+	volatile u_char	mfb[__MR(24)-1];	/* Sparse	*/
 };
 
-#define	mf_gpip		mfb[ 1]	/* general purpose I/O interrupt port	*/
-#define	mf_aer		mfb[ 3]	/* active edge register			*/
-#define	mf_ddr		mfb[ 5]	/* data direction register		*/
-#define	mf_iera		mfb[ 7]	/* interrupt enable register A		*/
-#define	mf_ierb		mfb[ 9]	/* interrupt enable register B		*/
-#define	mf_ipra		mfb[11]	/* interrupt pending register A		*/
-#define	mf_iprb		mfb[13]	/* interrupt pending register B		*/
-#define	mf_isra		mfb[15]	/* interrupt in-service register A	*/
-#define	mf_isrb		mfb[17]	/* interrupt in-service register B	*/
-#define	mf_imra		mfb[19]	/* interrupt mask register A		*/
-#define	mf_imrb		mfb[21]	/* interrupt mask register B		*/
-#define	mf_vr		mfb[23]	/* vector register			*/
-#define	mf_tacr		mfb[25]	/* timer control register A		*/
-#define	mf_tbcr		mfb[27]	/* timer control register B		*/
-#define	mf_tcdcr	mfb[29]	/* timer control register C+D		*/
-#define	mf_tadr		mfb[31]	/* timer data register A		*/
-#define	mf_tbdr		mfb[33]	/* timer data register B		*/
-#define	mf_tcdr		mfb[35]	/* timer data register C		*/
-#define	mf_tddr		mfb[37]	/* timer data register D		*/
-#define	mf_scr		mfb[39]	/* synchronous character register	*/
-#define	mf_ucr		mfb[41]	/* USART control register		*/
-#define	mf_rsr		mfb[43]	/* receiver status register		*/
-#define	mf_tsr		mfb[45]	/* transmitter status register		*/
-#define	mf_udr		mfb[47]	/* USART data register			*/
+#define	mf_gpip	    mfb[__MR(0) ]    /* gen-purp I/O interrupt port	*/
+#define	mf_aer	    mfb[__MR(1) ]    /* active edge register		*/
+#define	mf_ddr	    mfb[__MR(2) ]    /* data direction register		*/
+#define	mf_iera	    mfb[__MR(3) ]    /* interrupt enable register A	*/
+#define	mf_ierb	    mfb[__MR(4) ]    /* interrupt enable register B	*/
+#define	mf_ipra	    mfb[__MR(5) ]    /* interrupt pending register A	*/
+#define	mf_iprb	    mfb[__MR(6) ]    /* interrupt pending register B	*/
+#define	mf_isra	    mfb[__MR(7) ]    /* interrupt in-service register A	*/
+#define	mf_isrb	    mfb[__MR(8) ]    /* interrupt in-service register B	*/
+#define	mf_imra	    mfb[__MR(9) ]    /* interrupt mask register A	*/
+#define	mf_imrb	    mfb[__MR(10)]    /* interrupt mask register B	*/
+#define	mf_vr	    mfb[__MR(11)]    /* vector register			*/
+#define	mf_tacr	    mfb[__MR(12)]    /* timer control register A	*/
+#define	mf_tbcr	    mfb[__MR(13)]    /* timer control register B	*/
+#define	mf_tcdcr    mfb[__MR(14)]    /* timer control register C+D	*/
+#define	mf_tadr	    mfb[__MR(15)]    /* timer data register A		*/
+#define	mf_tbdr	    mfb[__MR(16)]    /* timer data register B		*/
+#define	mf_tcdr	    mfb[__MR(17)]    /* timer data register C		*/
+#define	mf_tddr	    mfb[__MR(18)]    /* timer data register D		*/
+#define	mf_scr	    mfb[__MR(19)]    /* synchronous character register	*/
+#define	mf_ucr	    mfb[__MR(20)]    /* USART control register		*/
+#define	mf_rsr	    mfb[__MR(21)]    /* receiver status register	*/
+#define	mf_tsr	    mfb[__MR(22)]    /* transmitter status register	*/
+#define	mf_udr	    mfb[__MR(23)]    /* USART data register		*/
 
 /* names of IO port bits: */
 #define	IO_PBSY		0x01	/* Parallel Busy			*/

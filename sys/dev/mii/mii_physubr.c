@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.5.2.1 2000/11/20 11:42:11 bouyer Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.5.2.2 2001/04/21 17:49:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -136,7 +137,11 @@ mii_phy_auto(sc, waitfor)
 	 * the tick handler driving autonegotiation.  Don't want 500ms
 	 * delays all the time while the system is running!
 	 */
-	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
+	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
+		sc->mii_flags |= MIIF_DOINGAUTO;
+		tsleep(&sc->mii_flags, PZERO, "miiaut", hz >> 1);
+		mii_phy_auto_timeout(sc);
+	} else if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
 		callout_reset(&sc->mii_nway_ch, hz >> 1,
 		    mii_phy_auto_timeout, sc);
@@ -306,7 +311,7 @@ mii_phy_statusmsg(sc)
 	}
 
 	if (announce) {
-		s = splimp();	/* XXX Should be splnet() */
+		s = splnet();
 		rt_ifmsg(ifp);
 		splx(s);
 	}

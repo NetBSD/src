@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.11.2.3 2001/03/27 15:30:50 bouyer Exp $
+#	$NetBSD: files.hpcarm,v 1.11.2.4 2001/04/21 17:53:34 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -47,23 +47,6 @@ file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
 file	arch/hpcarm/hpcarm/vm_machdep.c
 
-#
-# H/PC Platform common files.
-#
-include	"arch/hpc/conf/files.hpc"
-file	arch/hpc/hpc/disksubr.c			disk
-include	"dev/hpc/files.bicons"
-include	"dev/hpc/files.hpcfb"
-include	"dev/hpc/files.hpckbd"
-include	"dev/hpc/files.hpctp"
-
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-
-file	dev/cninit.c
-
 # ARM FPE
 #file	arch/hpcarm/fpe-arm/armfpe_glue.S	armfpe
 #file	arch/hpcarm/fpe-arm/armfpe_init.c	armfpe
@@ -83,24 +66,42 @@ file	arch/hpcarm/sa11x0/sa11x0_io_asm.S	saip
 file	arch/hpcarm/sa11x0/sa11x0_irq.S		saip
 file	arch/hpcarm/sa11x0/sa11x0_irqhandler.c	saip
 
-device	sacom: tty
-attach	sacom at saip
-file	arch/hpcarm/sa11x0/sa11x0_com.c		sacom needs-flag
-
 # clock device
 device	saost
 attach	saost at saip
 file	arch/hpcarm/sa11x0/sa11x0_ost.c		saost needs-flag
+
+device	sacom: tty
+attach	sacom at saip
+file	arch/hpcarm/sa11x0/sa11x0_com.c		sacom needs-flag
+
+
+# SA11[01]0 companion chips
+device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
+attach	sacc at saip
+file	arch/hpcarm/sa11x0/sa1111.c		sacc
+
+#
+# H/PC Platform common files.
+#
+include	"arch/hpc/conf/files.hpc"
+file	arch/hpc/hpc/disksubr.c			disk
+include	"dev/hpc/files.bicons"
+include	"dev/hpc/files.hpcfb"
+include	"dev/hpc/files.hpckbd"
+include	"dev/hpc/files.hpctp"
 
 # LCD
 device	salcd: hpcfbif
 attach	salcd at saip
 file	arch/hpcarm/sa11x0/sa11x0_lcd.c		salcd
 
-# SA11[01]0 companion chips
-device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
-attach	sacc at saip
-file	arch/hpcarm/sa11x0/sa1111.c		sacc
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+
+file	dev/cninit.c
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc

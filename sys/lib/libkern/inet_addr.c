@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.4.2.1 2000/11/20 18:09:19 bouyer Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.4.2.2 2001/04/21 17:46:33 bouyer Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -27,18 +27,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #else
 #include <lib/libkern/libkern.h>
 #endif
-
-/*
- * Warning - these are not the standard definitions,
- * but are the minimum sufficient for this source.
- */
-#define isspace(c)	(((c) == ' ') || ((c) == '\t') || ((c) == '\n'))
-#define isdigit(c)	(((c) >= '0') && ((c) <= '9'))
-#define isxdigit(c)	(((c) >= 'A') && ((c) <= 'F'))
-#define toupper(c)	((c) & 0x5f)
 
 /*
  * Ascii internet address interpretation routine.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_timer.c,v 1.7.12.1 2000/11/20 18:10:15 bouyer Exp $	*/
+/*	$NetBSD: hd_timer.c,v 1.7.12.2 2001/04/21 17:46:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -77,7 +77,7 @@ void
 hd_timer()
 {
 	struct hdcb *hdp;
-	int    s = splimp();
+	int    s = splnet();
 
 	for (hdp = hdcbhead; hdp; hdp = hdp->hd_next) {
 		if (hdp->hd_rrtimer && (--hdp->hd_rrtimer == 0)) {

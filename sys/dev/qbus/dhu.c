@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.16.4.2 2000/11/22 16:04:42 bouyer Exp $	*/
+/*	$NetBSD: dhu.c,v 1.16.4.3 2001/04/21 17:49:40 bouyer Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -357,10 +357,7 @@ dhuxint(arg)
 
 	sc->sc_dhu[line].dhu_state = STATE_IDLE;
 
-	if (tp->t_linesw)
-		(*tp->t_linesw->l_start)(tp);
-	else
-		dhustart(tp);
+	(*tp->t_linesw->l_start)(tp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.1.4.2 2001/03/12 13:28:20 bouyer Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.1.4.3 2001/04/21 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -228,22 +228,37 @@ _C_LABEL(curpcb):
 Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
+/* this .align is necessary for the idle mode code below */
+	.align	5
+
+Lsa11x0_idle_mem:
+	.word	_C_LABEL(sa11x0_idle_mem)
+
 /*
  * Idle loop, exercised while waiting for a process to wake up.
  */
 
 idle:
-	/* Enable interrupts */
-	IRQenable
+	/* Disable interrupts */
+	IRQdisable
 
 	/* XXX - r1 needs to be preserved for cpu_switch */
 	mov	r7, r1
 	ldr	r3, Lcpufuncs
-	mov	r0, #0
-	add	lr, pc, #Lidle_slept - . - 8
-	ldr	pc, [r3, #CF_SLEEP]
+	ldr	r1, Lsa11x0_idle_mem
+	ldr	r1, [r1]
+
+	/* enter idle mode. the following code must be 32-byte aligned */
+	mcr	p15, 0, r0, c15, c2, 2
+	ldr	r0, [r1]
+	mcr	p15, 0, r0, c15, c8, 2
 
 Lidle_slept:
+	/* enable clock switching again */
+	mcr	p15, 0, r0, c15, c1, 2
+
+	/* run irq_entry after enabling clock switching */
+	IRQenable
 	mov	r1, r7
 
 	/* Disable interrupts while we check for an active queue */

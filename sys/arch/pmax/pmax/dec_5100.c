@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.9.2.2 2001/03/12 13:29:12 bouyer Exp $ */
+/* $NetBSD: dec_5100.c,v 1.9.2.3 2001/04/21 17:54:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.9.2.2 2001/03/12 13:29:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.9.2.3 2001/04/21 17:54:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ dec_5100_init()
 	splvec.splbio = MIPS_SPL1;
 	splvec.splnet = MIPS_SPL1;
 	splvec.spltty = MIPS_SPL_0_1;
-	splvec.splimp = MIPS_SPL_0_1_2;
+	splvec.splvm = MIPS_SPL_0_1_2;
 	splvec.splclock = MIPS_SPL_0_1_2;
 	splvec.splstatclock = MIPS_SPL_0_1_2;
 

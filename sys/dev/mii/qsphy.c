@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.12.2.1 2000/11/20 11:42:12 bouyer Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.12.2.2 2001/04/21 17:49:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ qsphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_QUALSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_QUALSEMI_QS6612)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxQUALSEMI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxQUALSEMI_QS6612)
 		return (10);
 
 	return (0);
@@ -127,7 +127,7 @@ qsphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_QUALSEMI_QS6612,
+	printf(": %s, rev. %d\n", MII_STR_xxQUALSEMI_QS6612,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;

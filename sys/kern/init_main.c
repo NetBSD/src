@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157.2.6 2001/03/27 15:32:23 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.7 2001/04/21 17:46:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -355,7 +355,7 @@ main(void)
 	 * Initialize protocols.  Block reception of incoming packets
 	 * until everything is ready.
 	 */
-	s = splimp();
+	s = splnet();
 	ifinit();
 	domaininit();
 	splx(s);

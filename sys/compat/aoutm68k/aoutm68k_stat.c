@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.2.2.2 2001/01/08 14:56:47 bouyer Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.2.2.3 2001/04/21 17:46:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,9 @@ aoutm68k_compat_43_sys_stat(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = compat_43_sys_stat(p, &cup, retval)) != 0 ||
@@ -130,7 +132,9 @@ aoutm68k_compat_43_sys_lstat(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = compat_43_sys_lstat(p, &cup, retval)) != 0 ||
@@ -158,7 +162,9 @@ aoutm68k_compat_12_sys_stat(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = compat_12_sys_stat(p, &cup, retval)) != 0 ||
@@ -209,7 +215,9 @@ aoutm68k_compat_12_sys_lstat(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = compat_12_sys_lstat(p, &cup, retval)) != 0 ||
@@ -236,7 +244,9 @@ aoutm68k_sys___stat13(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(p, &cup, retval)) != 0 ||
@@ -288,7 +298,9 @@ aoutm68k_sys___lstat13(p, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+#ifdef COMPAT_AOUT_ALTPATH
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(p, &cup, retval)) != 0 ||

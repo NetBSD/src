@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28.8.1 2000/11/20 20:09:22 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.8.2 2001/04/21 17:53:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -160,7 +160,7 @@ mainbus_attach(parent, self, aux)
 #endif
 
 #if NMCA > 0
-	/* note MCA bus probe is done in i386/machdep.c */
+	/* Note: MCA bus probe is done in i386/machdep.c */
 	if (MCA_system) {
 		mba.mba_mba.mba_busname = "mca";
 		mba.mba_mba.mba_iot = I386_BUS_SPACE_IO;

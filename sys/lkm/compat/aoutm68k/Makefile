@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.3 2001/03/27 15:32:25 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.4 2001/04/21 17:46:34 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -14,7 +14,7 @@ MKMAN=	no
 KMOD=	compat_aoutm68k
 
 SRCS=	lkminit_emul.c
-SRCS+=	aoutm68k_exec.c aoutm68k_ioctl.c aoutm68k_misc.c aoutm68k_stat.c \
+SRCS+=	aoutm68k_exec.c aoutm68k_ioctl.c aoutm68k_stat.c \
 	aoutm68k_syscalls.c aoutm68k_sysent.c
 
 .include <bsd.kmod.mk>

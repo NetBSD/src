@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.21.4.2 2001/01/18 09:23:24 bouyer Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.21.4.3 2001/04/21 17:49:07 bouyer Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -263,7 +263,7 @@ raclose(dev, flags, fmt, p)
 	 */
 #if notyet
 	if (ra->ra_openpart == 0) {
-		s = splimp();
+		s = spluba();
 		while (BUFQ_FIRST(&udautab[unit]) != NULL)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);

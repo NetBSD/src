@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.3.8.2 2000/12/08 09:28:31 bouyer Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.3.8.3 2001/04/21 17:54:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@
  * a 1uS period. (PCC2REG_TIMER[12]_COMPARE)
  */
 #define PCCTWO_US2LIM(us)	(us)
+#define PCCTWO_LIM2US(lim)	(lim)
 
 /*
  * The Tick Timer Control Registers (PCC2REG_TIMER[12]_CONTROL)

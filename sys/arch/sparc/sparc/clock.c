@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.69.12.3 2001/02/11 19:12:20 bouyer Exp $ */
+/*	$NetBSD: clock.c,v 1.69.12.4 2001/04/21 17:54:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1040,10 +1040,21 @@ statintr(cap)
 	newint = statmin + r;
 
 	if (CPU_ISSUN4M) {
-		counterreg4m->t_limit = tmr_ustolim4m(newint);
+		/*
+		 * Use the `non-resetting' limit register, so we don't
+		 * loose the counter ticks that happened since this
+		 * interrupt was raised.
+		 */
+		counterreg4m->t_limit_nr = tmr_ustolim4m(newint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
+		/*
+		 * The sun4/4c timer has no `non-resetting' register;
+		 * use the current counter value to compensate the new
+		 * limit value for the number of counter ticks elapsed.
+		 */
+		newint -= tmr_cnttous(timerreg4->t_c14.t_counter);
 		timerreg4->t_c14.t_limit = tmr_ustolim(newint);
 	}
 	return (1);

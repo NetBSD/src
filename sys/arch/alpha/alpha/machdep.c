@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.6 2001/03/27 15:30:06 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.7 2001/04/21 17:53:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.6 2001/03/27 15:30:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.7 2001/04/21 17:53:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.6 2001/03/27 15:30:06 bouyer Exp
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 #ifdef DEBUG
@@ -1844,18 +1848,6 @@ fpusave_proc(struct proc *p, int save)
 	KASSERT(ci->ci_fpcurproc == p);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
-}
-
-void
-spl0()
-{
-
-	if (ssir) {
-		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
-		softintr_dispatch();
-	}
-
-	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 }
 
 /*

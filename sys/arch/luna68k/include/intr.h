@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.2.2.2 2000/11/20 20:10:30 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.2.2.3 2001/04/21 17:53:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #define splbio()        spl2()
 #define splnet()        spl3()
 #define spltty()        spl6()
-#define splimp()        spl7()
 #define splclock()      spl5()
 #define splstatclock()	spl5()
 #define splvm()         spl7()

@@ -1,0 +1,8 @@
+# $NetBSD: std.sun2,v 1.2.2.2 2001/04/21 17:54:47 bouyer Exp $
+
+# Standard information for Sun2 machines.
+machine	sun2 m68k
+
+# Standard defines
+options 	EXEC_AOUT, EXEC_SCRIPT
+options 	_SUN2_

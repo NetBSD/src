@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.68.2.2 2001/03/27 15:32:36 bouyer Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.68.2.3 2001/04/21 17:46:52 bouyer Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -245,7 +245,11 @@ tcp_reass_lock_try(tp)
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're blocking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (tp->t_flags & TF_REASSEMBLING) {
 		splx(s);
 		return (0);
@@ -261,7 +265,7 @@ tcp_reass_unlock(tp)
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	tp->t_flags &= ~TF_REASSEMBLING;
 	splx(s);
 }

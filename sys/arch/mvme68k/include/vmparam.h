@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11.2.3 2000/12/08 09:28:37 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11.2.4 2001/04/21 17:54:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,11 @@
 #define	PAGE_SHIFT	12
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Need a small pager map for the benefit of low-memory models...
+ */
+#define PAGER_MAP_SIZE	(4 * 1024 * 1024)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.47.2.3 2001/01/05 17:36:48 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.47.2.4 2001/04/21 17:46:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -233,7 +233,7 @@ bad:
 
 /*
  * Attach file to the bpf interface, i.e. make d listen on bp.
- * Must be called at splimp.
+ * Must be called at splnet.
  */
 static void
 bpf_attachd(d, bp)
@@ -371,7 +371,7 @@ bpfclose(dev, flag, mode, p)
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (d->bd_bif)
 		bpf_detachd(d);
 	splx(s);
@@ -411,7 +411,7 @@ bpfread(dev, uio, ioflag)
 	if (uio->uio_resid != d->bd_bufsize)
 		return (EINVAL);
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
 	 * ends when the timeout expires or when enough packets
@@ -481,7 +481,7 @@ bpfread(dev, uio, ioflag)
 	 */
 	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
 
-	s = splimp();
+	s = splnet();
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = 0;
 	d->bd_hlen = 0;
@@ -555,7 +555,7 @@ bpfwrite(dev, uio, ioflag)
 
 /*
  * Reset a descriptor by flushing its packet buffer and clearing the
- * receive and drop counts.  Should be called at splimp.
+ * receive and drop counts.  Should be called at splnet.
  */
 static void
 reset_d(d)
@@ -622,7 +622,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 		{
 			int n;
 
-			s = splimp();
+			s = splnet();
 			n = d->bd_slen;
 			if (d->bd_hbuf)
 				n += d->bd_hlen;
@@ -686,7 +686,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 			free((caddr_t)*p, M_DEVBUF);
 
 		/* Steal new filter (noop if error) */
-		s = splimp();
+		s = splnet();
 		*p = d->bd_filter;
 		d->bd_filter = NULL;
 		splx(s);
@@ -697,7 +697,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 	 * Flush read packet buffer.
 	 */
 	case BIOCFLUSH:
-		s = splimp();
+		s = splnet();
 		reset_d(d);
 		splx(s);
 		break;
@@ -713,7 +713,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 			error = EINVAL;
 			break;
 		}
-		s = splimp();
+		s = splnet();
 		if (d->bd_promisc == 0) {
 			error = ifpromisc(d->bd_bif->bif_ifp, 1);
 			if (error == 0)
@@ -858,7 +858,7 @@ bpf_setf(d, fp)
 	if (fp->bf_insns == 0) {
 		if (fp->bf_len != 0)
 			return (EINVAL);
-		s = splimp();
+		s = splnet();
 		d->bd_filter = 0;
 		reset_d(d);
 		splx(s);
@@ -874,7 +874,7 @@ bpf_setf(d, fp)
 	fcode = (struct bpf_insn *)malloc(size, M_DEVBUF, M_WAITOK);
 	if (copyin((caddr_t)fp->bf_insns, (caddr_t)fcode, size) == 0 &&
 	    bpf_validate(fcode, (int)flen)) {
-		s = splimp();
+		s = splnet();
 		d->bd_filter = fcode;
 		reset_d(d);
 		splx(s);
@@ -948,7 +948,7 @@ bpf_setif(d, ifr)
 			if (error != 0)
 				return (error);
 		}
-		s = splimp();
+		s = splnet();
 		if (bp != d->bd_bif) {
 			if (d->bd_bif)
 				/*
@@ -992,7 +992,7 @@ bpfpoll(dev, events, p)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int revents = 0;
-	int s = splimp();
+	int s = splnet();
 
 	/*
 	 * An imitation of the FIONREAD ioctl code.
@@ -1264,7 +1264,7 @@ bpfdetach(ifp)
 			 * Detach the descriptor from an interface now.
 			 * It will be free'ed later by close routine.
 			 */
-			s = splimp();
+			s = splnet();
 			d->bd_promisc = 0;	/* we can't touch device. */
 			bpf_detachd(d);
 			splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46.2.6 2001/03/12 13:29:30 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.46.2.7 2001/04/21 17:54:43 bouyer Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8460,6 +8460,7 @@ ENTRY(proc_trampoline)
 	Debugger()
 2:
 #endif
+	wrpr	%g0, 0, %pil		! Reset interrupt level
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.1.2.3 2001/01/05 17:35:47 bouyer Exp $ */
+/*      $NetBSD: sgec.c,v 1.1.2.4 2001/04/21 17:48:44 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -314,11 +314,10 @@ zestart(ifp)
 	struct ze_cdata *zc = sc->sc_zedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
-	int idx, len, s, i, totlen, error;
+	int idx, len, i, totlen, error;
 	int old_inq = sc->sc_inq;
 	short orword;
 
-	s = splimp();
 	while (sc->sc_inq < (TXDESCS - 1)) {
 
 		if (sc->sc_setup) {
@@ -400,7 +399,6 @@ zestart(ifp)
 
 out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
-	splx(s);
 }
 
 int
@@ -608,12 +606,10 @@ ze_setup(sc)
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
-	int j, idx, s, reg;
+	int j, idx, reg;
 
-	s = splimp();
 	if (sc->sc_inq == (TXDESCS - 1)) {
 		sc->sc_setup = 1;
-		splx(s);
 		return;
 	}
 	sc->sc_setup = 0;
@@ -682,7 +678,6 @@ ze_setup(sc)
 		if (++sc->sc_nexttx == TXDESCS)
 			sc->sc_nexttx = 0;
 	}
-	splx(s);
 }
 
 /*
@@ -716,7 +711,7 @@ int
 zereset(sc)
 	struct ze_softc *sc;
 {
-	int reg, i, s;
+	int reg, i;
 
 	ZE_WCSR(ZE_CSR6, ZE_NICSR6_RE);
 	DELAY(50000);
@@ -732,16 +727,13 @@ zereset(sc)
 	 */
 	reg = ZE_NICSR0_IPL14 | sc->sc_intvec | 0x1fff0003; /* SYNC/ASYNC??? */
 	i = 10;
-	s = splimp();
 	do {
 		if (i-- == 0) {
 			printf("Failing SGEC CSR0 init\n");
-			splx(s);
 			return 1;
 		}
 		ZE_WCSR(ZE_CSR0, reg);
 	} while (ZE_RCSR(ZE_CSR0) != reg);
-	splx(s);
 
 	ZE_WCSR(ZE_CSR3, (vaddr_t)sc->sc_pzedata->zc_recv);
 	ZE_WCSR(ZE_CSR4, (vaddr_t)sc->sc_pzedata->zc_xmit);

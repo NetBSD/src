@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.2.3 2001/02/11 19:11:08 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.4 2001/04/21 17:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@ extern int initcpu __P((void));		/*XXX*/
 
 void	findroot __P((struct device **, int *));
 
-struct intrhandler intrtab[MAX_INTR_COOKIES];
+struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 struct device  *booted_device;
 static int	booted_partition;
 
@@ -94,6 +94,7 @@ cpu_configure()
 {
   	int s;
 
+	softintr_init();
 	/*
 	 * Kick off autoconfiguration
 	 */

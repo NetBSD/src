@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13.2.3 2001/01/05 17:34:02 bouyer Exp $
+# $NetBSD: GENERIC,v 1.13.2.4 2001/04/21 17:53:11 bouyer Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -137,9 +137,6 @@ eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
-
-#asc*		at podulebus0 slot ?	# Acorn SCSI card (AKA30, AKA31)
-#scsibus*	at asc?
 
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 com0		at upc0			# Serial port

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.1.1.1.2.1 2000/11/20 20:47:57 bouyer Exp $	*/
+/*	$NetBSD: vrip.c,v 1.1.1.1.2.2 2001/04/21 17:53:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -41,8 +44,11 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/vr/vr.h>
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/icureg.h>
@@ -89,13 +95,18 @@ static struct intrhand {
 	bus_addr_t	ih_hreg;
 	bus_addr_t	ih_mhreg;
 } intrhand[MAX_LEVEL1] = {
-	[5] = { 0, 0, 0, 0, ICUPIUINT_REG_W,	MPIUINT_REG_W	},
-	[6] = { 0, 0, 0, 0, AIUINT_REG_W,	MAIUINT_REG_W	},
-	[7] = { 0, 0, 0, 0, KIUINT_REG_W,	MKIUINT_REG_W	},
-	[8] = { 0, 0, 0, 0, GIUINT_L_REG_W,	MGIUINT_L_REG_W, GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
-	[20] = { 0, 0, 0, 0, FIRINT_REG_W,	MFIRINT_REG_W	},
-	[21] = { 0, 0, 0, 0, DSIUINT_REG_W,	MDSIUINT_REG_W	}
+	[VRIP_INTR_PIU] = { 0, 0, 0, 0, ICUPIUINT_REG_W,	MPIUINT_REG_W	},
+	[VRIP_INTR_AIU] = { 0, 0, 0, 0, AIUINT_REG_W,	MAIUINT_REG_W	},
+	[VRIP_INTR_KIU] = { 0, 0, 0, 0, KIUINT_REG_W,	MKIUINT_REG_W	},
+	[VRIP_INTR_GIU] = { 0, 0, 0, 0, GIUINT_L_REG_W,	MGIUINT_L_REG_W, GIUINT_H_REG_W,	MGIUINT_H_REG_W	},
+	[VRIP_INTR_FIR] = { 0, 0, 0, 0, FIRINT_REG_W,	MFIRINT_REG_W	},
+	[VRIP_INTR_DSIU] = { 0, 0, 0, 0, DSIUINT_REG_W,	MDSIUINT_REG_W	},
+	[VRIP_INTR_PCI] = { 0, 0, 0, 0, PCIINT_REG_W,	MPCIINT_REG_W	},
+	[VRIP_INTR_SCU] = { 0, 0, 0, 0, SCUINT_REG_W,	MSCUINT_REG_W	},
+	[VRIP_INTR_CSI] = { 0, 0, 0, 0, CSIINT_REG_W,	MCSIINT_REG_W	},
+	[VRIP_INTR_BCU] = { 0, 0, 0, 0, BCUINT_REG_W,	MBCUINT_REG_W	}
 };
+
 #define	LEGAL_LEVEL1(x)	((x) >= 0 && (x) < MAX_LEVEL1)
 
 void
@@ -134,7 +145,11 @@ vripmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-    
+   
+#ifdef TX39XX 
+	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+		return 1;
+#endif /* !TX39XX */
 	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return 0;
 	return 1;
@@ -446,4 +461,3 @@ vrip_giu_function_register(vc, func, arg)
 	sc->sc_gf = func;
 	sc->sc_gc = arg;
 }
-

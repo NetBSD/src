@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.16.2.2 2001/03/12 13:29:12 bouyer Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.16.2.3 2001/04/21 17:54:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16.2.2 2001/03/12 13:29:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.16.2.3 2001/04/21 17:54:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ dec_maxine_init()
 	splvec.splbio = MIPS_SPL3; 
 	splvec.splnet = MIPS_SPL3;
 	splvec.spltty = MIPS_SPL3;
-	splvec.splimp = MIPS_SPL3;
+	splvec.splvm = MIPS_SPL3;
 	splvec.splclock = MIPS_SPL_0_1_3;
 	splvec.splstatclock = MIPS_SPL_0_1_3;
  

@@ -1,4 +1,4 @@
-/*	$NetBSD: button_vrgiu.c,v 1.2.6.3 2001/03/27 15:30:56 bouyer Exp $	*/
+/*	$NetBSD: button_vrgiu.c,v 1.2.6.4 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -44,6 +44,8 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>

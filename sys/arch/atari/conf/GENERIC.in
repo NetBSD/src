@@ -1,0 +1,224 @@
+#
+#	$NetBSD: GENERIC.in,v 1.2.2.2 2001/04/21 17:53:22 bouyer Exp $
+#
+# Generic atari
+#
+
+#if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
+include "arch/atari/conf/std.atari"
+#elif defined (HADES_KERNEL)
+include "arch/atari/conf/std.hades"
+#elif defined (MILAN_KERNEL)
+include "arch/atari/conf/std.milan"
+#endif
+
+#ident 		"GENERIC-$Revision: 1.2.2.2 $"
+
+#
+# Add support for about 16 users. This variable is used to size
+# various kernel structures.
+#
+maxusers	16
+
+options 	HZ=64		# Set the clock-rate (48/64/96)
+
+#if !defined(INSTALL_KERNEL) || defined(INSTALLX_KERNEL)
+#
+# X11R6 related options
+#
+options 	UCONSOLE	# Allow xconsole to work
+#endif
+
+# Standard system options
+options 	INSECURE	# disable kernel security levels
+#options 	NTP		# NTP phase/frequency locked loop
+
+#
+# (Co)processors this kernel should support
+#
+#if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
+options 	M68030		# support for 030
+options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
+#if !defined(INSTALL_KERNEL)
+options 	M68040		# support for 040
+options 	FPSP		# 68040 Floatingpoint support
+#endif
+#else /* for the Hades & Milan: */
+options 	M68040		# support for 040
+options 	M68060		# support for 060
+options 	FPSP		# 68040 Floatingpoint support
+options 	M060SP		# MC68060 software support (Required for 060)
+#endif
+
+#
+# Networking options
+#
+options 	INET            # IP + ICMP + TCP + UDP
+
+#ifndef INSTALL_KERNEL
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	GATEWAY         # packet forwarding
+#options 	MROUTING        # IP multicast routing
+options 	NS              # XNS
+#options 	NSIP            # XNS tunneling over IP
+options 	ISO,TPIP        # OSI
+#options 	EON             # OSI tunneling over IP
+options 	CCITT,LLC,HDLC  # X.25
+options 	NETATALK        # AppleTalk networking protocols
+#endif
+
+options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
+options 	PPP_DEFLATE     # Deflate compression support for PPP
+options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+
+#ifndef INSTALL_KERNEL
+options 	PFIL_HOOKS      # pfil(9) packet filter hooks
+options 	IPFILTER_LOG    # ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#endif
+
+# File systems
+file-system 	FFS		# Berkeley fast file system
+file-system 	MFS		# Memory based filesystem
+file-system 	KERNFS		# Kernel parameter filesystem
+file-system 	MSDOSFS		# MSDOS filesystem
+file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
+
+#ifndef INSTALL_KERNEL
+file-system 	NFS		# Network File System client side code
+file-system 	PROCFS		# Process filesystem
+file-system 	FDESC		# /dev/fd
+file-system 	NULLFS		# Loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
+file-system 	UNION		# union file system
+file-system 	UMAPFS		# null file system (with uid & gid remapping)
+file-system 	PORTAL		# portal file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+#endif
+
+#ifndef INSTALL_KERNEL
+# File system options
+options 	QUOTA		# Disk quotas for local disks
+#options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
+options 	NFSSERVER	# Network File System server side code
+#options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+#endif
+
+#
+# Misc. debugging options
+#
+options 	PANICWAIT	# Require keystroke to dump/reboot
+options 	DDB		# Kernel debugger
+#ifndef INSTALL_KERNEL
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	DEBUG		# expensive debugging checks/support
+#endif
+
+#
+# Compatability options for various existing systems
+#
+options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
+options 	COMPAT_10	# Compatibility to NetBSD1.0
+options 	COMPAT_11	# Compatibility to NetBSD1.1
+options 	COMPAT_12	# Compatibility to NetBSD1.2
+options 	COMPAT_13	# Compatibility to NetBSD1.3
+options 	COMPAT_14	# Compatibility to NetBSD1.4
+#ifndef INSTALL_KERNEL
+#options 	COMPAT_09	# has no meaning on the atari
+#options 	COMPAT_SUNOS	# Support to run Sun-3 executables
+#options 	COMPAT_SVR4	# Support to run SVR4 executables
+#options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
+#options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#endif
+
+#ifndef INSTALL_KERNEL
+#
+# Support for System V IPC facilities.
+#
+options 	SYSVSHM			# System V shared memory
+options 	SYSVMSG			# System V messages
+options 	SYSVSEM			# System V semaphores
+#endif
+
+#ifndef INSTALL_KERNEL
+#
+# Support for various kernel options
+#
+options 	KTRACE			# Add kernel tracing system call
+options 	DIAGNOSTIC		# Add additional error checking code
+#endif
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#ifndef INSTALL_KERNEL
+options 	SCSIVERBOSE		# human readable SCSI error messages
+#endif
+#if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
+options 	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
+#endif
+
+#
+# Atari specific options
+#
+#options 	KFONT_8x8		# Use 8x8 font instead of 8x16
+options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
+#if defined(TT030_KERNEL) || defined(HADES_KERNEL)
+options 	TT_SCSI			# SCSI-support for TT
+options 	TT_VIDEO		# Graphics support for TT
+#endif
+#ifdef FALCON_KERNEL
+options 	FALCON_SCSI		# SCSI-support for Falcon
+options 	FALCON_VIDEO		# Graphics support for FALCON
+#endif
+options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
+options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
+options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
+#ifndef INSTALL_KERNEL
+options 	SERCONSOLE		# modem1 console support
+options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
+options 	STATCLOCK		# Separate {stat,prof}clock
+#endif
+
+#ifndef INSTALL_KERNEL
+# Try linked commands on all targets
+options 	TRY_SCSI_LINKED_COMMANDS=0x7f
+#endif
+
+#
+# Build one kernel that can boot from any disk.
+#
+config		netbsd root on ? type ?
+
+pseudo-device	sl			# Slip
+pseudo-device	ppp			# ppp
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	loop			# Loopback network
+pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+pseudo-device	md		2	# Boot memory disk
+
+#ifndef INSTALL_KERNEL
+pseudo-device	bpfilter	2	# berkeley packet filters
+pseudo-device	tun		2	# network tunnel
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	ipfilter		# IP filtering device
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#endif
+
+#
+# Hardware options for GENERIC are in the various machine type specific files
+#

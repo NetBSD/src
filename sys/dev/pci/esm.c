@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.3.2.4 2001/03/12 13:31:05 bouyer Exp $      */
+/*      $NetBSD: esm.c,v 1.3.2.5 2001/04/21 17:49:12 bouyer Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -1426,13 +1426,13 @@ esm_powerhook(why, v)
 		case PWR_STANDBY:
 			ess->esm_suspend = why;
 			esm_suspend(ess);
-			 DPRINTF(ESM_DEBUG_RESUME,"esm_suspend\n");
+			DPRINTF(ESM_DEBUG_RESUME, ("esm_suspend\n"));
 			break;
 			
 		case PWR_RESUME:
 			ess->esm_suspend = why;
 			esm_resume(ess);
-			 DPRINTF(ESM_DEBUG_RESUME,"esm_resumed\n");
+			DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
 			break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.5 2001/03/27 15:31:43 bouyer Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71.2.6 2001/04/21 17:55:01 bouyer Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -531,7 +531,7 @@ if (startpmapdebug)
 #endif
 	if (IOSPACE(ptp->pg_pfn << VAX_PGSHIFT))
 		return; /* Nothing in pv_table */
-	s = splimp();
+	s = splvm();
 	RECURSESTART;
 	if (pv->pv_pte == ptp) {
 		g = (int *)pv->pv_pte;
@@ -794,7 +794,7 @@ if (startpmapdebug)
 		} else if (pmap != pmap_kernel())
 				pmap->pm_refcnt[index]++; /* New mapping */
 
-		s = splimp();
+		s = splvm();
 		if (pv->pv_pte == 0) {
 			pv->pv_pte = (struct pte *) & patch[i];
 			pv->pv_pmap = pmap;
@@ -815,6 +815,9 @@ if (startpmapdebug)
 	}
 	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
+
+	if (flags & PMAP_WIRED)
+		newpte |= PG_V; /* Not allowed to be invalid */
 
 	patch[i] = newpte;
 	patch[i+1] = newpte+1;
@@ -1123,17 +1126,18 @@ pmap_clear_reference(pg)
 	pv->pv_attr &= ~PG_V;
 
 	RECURSESTART;
-	if (pv->pv_pte)
+	if (pv->pv_pte && (pv->pv_pte[0].pg_w == 0))
 		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v = 
 		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
 		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
 		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 
 	while ((pv = pv->pv_next))
-		pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
-		    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
-		    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
-		    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
+		if (pv->pv_pte[0].pg_w == 0)
+			pv->pv_pte[0].pg_v = pv->pv_pte[1].pg_v =
+			    pv->pv_pte[2].pg_v = pv->pv_pte[3].pg_v = 
+			    pv->pv_pte[4].pg_v = pv->pv_pte[5].pg_v = 
+			    pv->pv_pte[6].pg_v = pv->pv_pte[7].pg_v = 0;
 	RECURSEEND;
 	mtpr(0, PR_TBIA);
 	return ref;
@@ -1266,7 +1270,7 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 
 	RECURSESTART;
 	if (prot == VM_PROT_NONE) {
-		s = splimp();
+		s = splvm();
 		g = (int *)pv->pv_pte;
 		if (g) {
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
@@ -1372,7 +1376,7 @@ struct pv_entry *
 get_pventry()
 {
 	struct pv_entry *tmp;
-	int s = splimp();
+	int s = splvm();
 
 	if (pventries == 0)
 		panic("get_pventry");
@@ -1388,7 +1392,7 @@ void
 free_pventry(pv)
 	struct pv_entry *pv;
 {
-	int s = splimp();
+	int s = splvm();
 
 	pv->pv_next = pv_list;
 	pv_list = pv;
@@ -1415,7 +1419,7 @@ more_pventries()
 	for (i = 0; i < count; i++)
 		pv[i].pv_next = &pv[i + 1];
 
-	s = splimp();
+	s = splvm();
 	pv[count - 1].pv_next = pv_list;
 	pv_list = pv;
 	pventries += count;

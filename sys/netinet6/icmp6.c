@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.11.2.7 2001/03/27 15:32:36 bouyer Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.11.2.8 2001/04/21 17:46:53 bouyer Exp $	*/
 /*	$KAME: icmp6.c,v 1.204 2001/03/20 02:44:39 itojun Exp $	*/
 
 /*
@@ -378,6 +378,15 @@ icmp6_error(m, type, code, param)
 	icmp6->icmp6_type = type;
 	icmp6->icmp6_code = code;
 	icmp6->icmp6_pptr = htonl((u_int32_t)param);
+
+	/*
+	 * icmp6_reflect() is designed to be in the input path.
+	 * icmp6_error() can be called from both input and outut path,
+	 * and if we are in output path rcvif could contain bogus value.
+	 * clear m->m_pkthdr.rcvif for safety, we should have enough scope
+	 * information in ip header (nip6).
+	 */
+	m->m_pkthdr.rcvif = NULL;
 
 	icmp6stat.icp6s_outhist[type]++;
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /*header order: IPv6 - ICMPv6*/
@@ -1291,18 +1300,11 @@ ni6_input(m, off)
 			    subjlen, (caddr_t)&sin6.sin6_addr);
 			/* XXX kame scope hack */
 			if (IN6_IS_SCOPE_LINKLOCAL(&sin6.sin6_addr)) {
-#ifdef FAKE_LOOPBACK_IF
 				if ((m->m_flags & M_PKTHDR) != 0 &&
 				    m->m_pkthdr.rcvif) {
 					sin6.sin6_addr.s6_addr16[1] =
 					    htons(m->m_pkthdr.rcvif->if_index);
 				}
-#else
-				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-					sin6.sin6_addr.s6_addr16[1] =
-					    ip6->ip6_dst.s6_addr16[1];
-				}
-#endif
 			}
 			subj = (char *)&sin6;
 			if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6.sin6_addr))

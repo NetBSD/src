@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.11.8.1 2000/11/20 18:10:03 bouyer Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.11.8.2 2001/04/21 17:46:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -152,6 +152,7 @@ struct frmrinfo {
 /*
  * ISO PDTR 10178 contains among others
  */
+#define	LLC_8021D_LSAP	0x42
 #define LLC_X25_LSAP	0x7e
 #define LLC_SNAP_LSAP	0xaa
 #define LLC_ISO_LSAP	0xfe

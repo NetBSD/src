@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.20.2.4 2001/01/18 09:23:49 bouyer Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.20.2.5 2001/04/21 17:46:37 bouyer Exp $       */
 
 /*
  *
@@ -229,7 +229,7 @@ atm_output(ifp, m0, dst, rt0)
 	 */
 
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 	if (error) {
 		splx(s);
@@ -272,7 +272,7 @@ atm_input(ifp, ah, m, rxhand)
 	if (rxhand) {
 #ifdef NATM
 	  struct natmpcb *npcb = rxhand;
-	  s = splimp();			/* in case 2 atm cards @ diff lvls */
+	  s = splnet();			/* in case 2 atm cards @ diff lvls */
 	  npcb->npcb_inq++;			/* count # in queue */
 	  splx(s);
 	  schednetisr(NETISR_NATM);
@@ -330,7 +330,7 @@ atm_input(ifp, ah, m, rxhand)
 	  }
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

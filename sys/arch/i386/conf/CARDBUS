@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.2.2.6 2001/03/27 15:31:00 bouyer Exp $
+#	$NetBSD: CARDBUS,v 1.2.2.7 2001/04/21 17:53:48 bouyer Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.2.2.6 $"
+#ident		"CARDBUS-$Revision: 1.2.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -712,6 +712,9 @@ ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ? 
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.4.12.1 2000/11/20 18:10:15 bouyer Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.4.12.2 2001/04/21 17:46:45 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -78,7 +78,7 @@ llc_output(m, va_alist)
 #endif
 {
 	struct llc_linkcb *linkp;
-	int    i = splimp();
+	int    i = splnet();
 	va_list ap;
 
 	va_start(ap, m);

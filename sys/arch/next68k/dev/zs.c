@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11.2.1 2000/11/20 20:18:14 bouyer Exp $	*/
+/*	$NetBSD: zs.c,v 1.11.2.2 2001/04/21 17:54:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -219,6 +219,10 @@ zs_attach(parent, self, aux)
 	printf("\n");
 
 	zs_unit = zsc->zsc_dev.dv_unit;
+
+	if (zs_unit == 0) {
+		zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
+	}
 
 	if (zsaddr[zs_unit] == NULL)
 		panic("zs_attach: zs%d not mapped\n", zs_unit);

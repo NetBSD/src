@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.61.2.6 2001/03/27 15:32:17 bouyer Exp $	*/
+/*	$NetBSD: uhci.c,v 1.61.2.7 2001/04/21 17:49:57 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -634,11 +634,9 @@ uhci_allocx(struct usbd_bus *bus)
 		UXFER(xfer)->iinfo.sc = sc;
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
+		xfer->busy_free = XFER_BUSY;
 #endif
 	}
-#ifdef DIAGNOSTIC
-	xfer->busy_free = XFER_BUSY;
-#endif
 	return (xfer);
 }
 

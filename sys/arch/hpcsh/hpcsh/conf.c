@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.2.2 2001/03/27 15:30:59 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.2.3 2001/04/21 17:53:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ struct cdevsw cdevsw[] =
 	cdev_tty_init(NSCIF,scif),	/* 31: SH internal serial with FIFO */
 	cdev_tty_init(NSCI,sci),	/* 32: SH internal serial */
 	cdev_tty_init(NBICONSDEV,
-		      biconsdev),	/* 34: bicons pseudo-dev */
+		      biconsdev),	/* 33: bicons pseudo-dev */
 };
 
 static int chrtoblktbl[] =  {

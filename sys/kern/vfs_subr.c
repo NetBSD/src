@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.2.6 2001/03/12 13:31:39 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.2.7 2001/04/21 17:46:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2394,8 +2394,15 @@ vfs_unmountall(p)
 		printf("unmounting %s (%s)...\n",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
-		if (vfs_busy(mp, 0, 0))
+		/*
+		 * XXX Freeze syncer.  Must do this before locking the
+		 * mount point.  See dounmount() for details.
+		 */
+		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		if (vfs_busy(mp, 0, 0)) {
+			lockmgr(&syncer_lock, LK_RELEASE, NULL);
 			continue;
+		}
 		if ((error = dounmount(mp, MNT_FORCE, p)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
@@ -2701,7 +2708,7 @@ vfs_buf_print(bp, full, pr)
 
 const char vnode_flagbits[] =
 	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\11XLOCK\12XWANT\13BWAIT\14ALIASED"
-	"\15DIROP\17DIRTY";
+	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
 
 const char *vnode_types[] = {
 	"VNON",

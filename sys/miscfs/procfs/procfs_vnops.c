@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.69.2.5 2001/03/12 13:31:45 bouyer Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69.2.6 2001/04/21 17:46:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -97,6 +97,7 @@ const struct proc_target {
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
+	{ DT_REG, N("maps"),	Pmaps,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
 #undef N
@@ -552,6 +553,7 @@ procfs_getattr(v)
 	case Pnote:
 	case Pnotepg:
 	case Pmap:
+	case Pmaps:
 	case Pcmdline:
 		vap->va_nlink = 1;
 		vap->va_uid = procp->p_ucred->cr_uid;
@@ -639,11 +641,18 @@ procfs_getattr(v)
 	case Pstatus:
 	case Pnote:
 	case Pnotepg:
-	case Pmap:
 	case Pcmdline:
 	case Pmeminfo:
 	case Pcpuinfo:
 		vap->va_bytes = vap->va_size = 0;
+		break;
+	case Pmap:
+	case Pmaps:
+		/*
+		 * Advise a larger blocksize for the map files, so that
+		 * they may be read in one pass.
+		 */
+		vap->va_blocksize = 4 * PAGE_SIZE;
 		break;
 
 	default:
@@ -1049,7 +1058,7 @@ procfs_readdir(v)
 				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
 				d.d_namlen = sprintf(d.d_name, "%ld",
 				    (long)p->p_pid);
-				d.d_type = DT_REG;
+				d.d_type = DT_DIR;
 				p = p->p_list.le_next;
 				break;
 			}

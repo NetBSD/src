@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.5.4.3 2001/01/05 17:34:33 bouyer Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.5.4.4 2001/04/21 17:53:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -52,7 +52,6 @@ void pchb_rnd_callout(void *v);
 void
 pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 {
-	struct timeval tv1, tv2;
 	int i;
 	u_int8_t reg8;
 
@@ -120,8 +119,6 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			/*
 			 * See how quickly the RNG provides entropy.
 			 */
-			microtime(&tv1);
-
 			for (i = 0; i < 8192; i++) {
 				while ((bus_space_read_1(sc->sc_st, sc->sc_sh,
 				    I82802_RNG_RNGST) &
@@ -131,14 +128,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				    I82802_RNG_DATA);
 			}
 
-			microtime(&tv2);
-
-			timersub(&tv2, &tv1, &tv1);
-			if (tv1.tv_sec)
-				tv1.tv_usec +=
-				    1000000 * tv1.tv_sec;
-			printf("%s: random number generator enabled, %ldKb/s\n",
-			    sc->sc_dev.dv_xname, 8 * 1000000 / tv1.tv_usec);
+			printf("%s: random number generator enabled\n",
+			    sc->sc_dev.dv_xname);
 
 			callout_init(&sc->sc_rnd_ch);
 			rnd_attach_source(&sc->sc_rnd_source,

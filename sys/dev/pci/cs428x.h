@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.3.2.2 2001/02/11 19:15:52 bouyer Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.3.2.3 2001/04/21 17:49:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -93,9 +93,8 @@ struct cs428x_softc {
 	struct	cs428x_dma *sc_pdma;
 	char	*sc_pbuf;
 	int     (*halt_output)__P((void *));
-#ifdef DIAGNOSTIC
-	char	sc_prun;
-#endif
+	char	sc_prun;                /* playback status */
+	int     sc_prate;               /* playback sample rate */
 
 	/* capturing */
 	void	(*sc_rintr)(void *);	/* dma completion intr handler */
@@ -107,9 +106,8 @@ struct cs428x_softc {
 	char	*sc_rbuf;
 	int	sc_rparam;		/* record format */
 	int     (*halt_input)__P((void *));
-#ifdef DIAGNOSTIC
-	char	sc_rrun;
-#endif
+	char	sc_rrun;                /* recording status */
+	int     sc_rrate;               /* recording sample rate */
 
 	/* Although cs4281 does not support midi (yet),
 	 * don't remove these definition.

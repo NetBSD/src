@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.5 1996/11/09 03:26:26 chuck Exp $	*/
+/*	$NetBSD: natm.c,v 1.5.28.1 2001/04/21 17:47:00 bouyer Exp $	*/
 
 /*
  *
@@ -190,7 +190,7 @@ struct proc *p;
       ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
       ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
       api.rxhand = npcb;
-      s2 = splimp();
+      s2 = splnet();
       if (ifp->if_ioctl == NULL || 
 	  ifp->if_ioctl(ifp, SIOCATMENA, (caddr_t) &api) != 0) {
 	splx(s2);
@@ -221,7 +221,7 @@ struct proc *p;
       ATM_PH_VPI(&api.aph) = npcb->npcb_vpi;
       ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
       api.rxhand = npcb;
-      s2 = splimp();
+      s2 = splnet();
       if (ifp->if_ioctl != NULL)
 	  ifp->if_ioctl(ifp, SIOCATMDIS, (caddr_t) &api);
       splx(s);
@@ -353,7 +353,7 @@ natmintr()
   struct natmpcb *npcb;
 
 next:
-  s = splimp();
+  s = splnet();
   IF_DEQUEUE(&natmintrq, m);
   splx(s);
   if (m == NULL)
@@ -367,7 +367,7 @@ next:
   npcb = (struct natmpcb *) m->m_pkthdr.rcvif; /* XXX: overloaded */
   so = npcb->npcb_socket;
 
-  s = splimp();			/* could have atm devs @ different levels */
+  s = splnet();			/* could have atm devs @ different levels */
   npcb->npcb_inq--;
   splx(s);
 
