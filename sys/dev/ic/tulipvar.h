@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.30 2000/03/15 18:39:51 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.31 2000/03/19 21:45:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -270,6 +270,7 @@ struct tulip_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+	void *sc_powerhook;		/* power management hook */
 
 	struct tulip_stats sc_stats;	/* debugging stats */
 
@@ -326,6 +327,7 @@ struct tulip_softc {
 	/* Power management hooks. */
 	int		(*sc_enable) __P((struct tulip_softc *));
 	void		(*sc_disable) __P((struct tulip_softc *));
+	void		(*sc_power) __P((struct tulip_softc *, int));
 
 	/*
 	 * The Winbond 89C840F places registers 4 bytes apart, instead
