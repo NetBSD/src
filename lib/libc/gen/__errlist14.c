@@ -1,4 +1,4 @@
-/*	$NetBSD: __errlist14.c,v 1.1 1998/11/30 20:46:09 thorpej Exp $	*/
+/*	$NetBSD: __errlist14.c,v 1.2 1999/03/22 19:03:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: __errlist14.c,v 1.1 1998/11/30 20:46:09 thorpej Exp $");
+__RCSID("$NetBSD: __errlist14.c,v 1.2 1999/03/22 19:03:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,6 +148,8 @@ static const char *const __errlist14[] = {
 /* SystemV IPC */
 	"Identifier removed",			/* 82 - EIDRM */
 	"No message of desired type",		/* 83 - ENOMSG */
+						/* 84 - EOVERFLOW */
+	"Value too large to be stored in data type"
 };
 
 const int __sys_nerr14 = sizeof(__errlist14) / sizeof(__errlist14[0]);
