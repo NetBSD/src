@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.7 1997/05/24 00:48:24 jtc Exp $	*/
+/*	$NetBSD: iostat.c,v 1.8 1997/07/21 07:05:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.7 1997/05/24 00:48:24 jtc Exp $";
+__RCSID("$NetBSD: iostat.c,v 1.8 1997/07/21 07:05:01 mrg Exp $");
 #endif not lint
 
 #include <sys/param.h>
@@ -70,6 +71,7 @@ static void stat1 __P((int, int));
 WINDOW *
 openiostat()
 {
+
 	return (subwin(stdscr, LINES-1-5, 0, 5, 0));
 }
 
@@ -77,6 +79,7 @@ void
 closeiostat(w)
 	WINDOW *w;
 {
+
 	if (w == NULL)
 		return;
 	wclear(w);
@@ -87,13 +90,16 @@ closeiostat(w)
 int
 initiostat()
 {
+
 	dkinit(1);
 	dkreadstats();
+	return(1);
 }
 
 void
 fetchiostat()
 {
+
 	if (dk_ndrive == 0)
 		return;
 	dkreadstats();
@@ -189,7 +195,6 @@ barlabels(row)
 void
 showiostat()
 {
-	register u_int64_t t;
 	register int i, row, col;
 
 	if (dk_ndrive == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.5 1997/07/21 07:05:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $";
+__RCSID("$NetBSD: netcmds.c,v 1.5 1997/07/21 07:05:05 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -74,7 +75,7 @@ static	struct hitem {
 int nports, nhosts, protos;
 
 static void changeitems __P((char *, int));
-static int selectproto __P((char *));
+static void selectproto __P((char *));
 static void showprotos __P((void));
 static int selectport __P((long, int));
 static void showports __P((void));
@@ -131,7 +132,6 @@ changeitems(args, onoff)
 	struct servent *sp;
 	struct hostent *hp;
 	struct in_addr in;
-	char *index();
 
 	cp = index(args, '\n');
 	if (cp)
@@ -164,19 +164,17 @@ changeitems(args, onoff)
 	}
 }
 
-static int
+static void
 selectproto(proto)
 	char *proto;
 {
-	int new = protos;
 
 	if (proto == 0 || streq(proto, "all"))
-		new = TCP|UDP;
+		protos = TCP|UDP;
 	else if (streq(proto, "tcp"))
-		new = TCP;
+		protos = TCP;
 	else if (streq(proto, "udp"))
-		new = UDP;
-	return (new != protos, protos = new);
+		protos = UDP;
 }
 
 static void
@@ -246,7 +244,7 @@ showports()
 
 	for (p = ports; p < ports+nports; p++) {
 		sp = getservbyport(p->port,
-		    protos == TCP|UDP ? 0 : protos == TCP ? "tcp" : "udp");
+		    protos == (TCP|UDP) ? 0 : protos == TCP ? "tcp" : "udp");
 		if (!p->onoff)
 			addch('!');
 		if (sp)
