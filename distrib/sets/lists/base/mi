@@ -473,6 +473,8 @@
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
+./usr/sbin/mdconfig
+./usr/sbin/mdsetimage
 ./usr/sbin/mk-amd-map
 ./usr/sbin/mknetid
 ./usr/sbin/mrinfo
@@ -498,8 +500,6 @@
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
-./usr/sbin/rdsetimage
-./usr/sbin/rdconfig
 ./usr/sbin/repquota
 ./usr/sbin/rmt
 ./usr/sbin/rpc.bootparamd
