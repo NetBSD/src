@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.34.2.2 1999/12/20 23:34:54 he Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.34.2.3 2000/08/02 15:44:46 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34.2.2 1999/12/20 23:34:54 he Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.34.2.3 2000/08/02 15:44:46 he Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.14 1999/12/11 05:31:08 darrenr Exp";
@@ -249,11 +249,11 @@ int iplattach()
 	ipflog_init();
 # endif
 	if (nat_init() == -1)
-		return -1;
+		return EIO;
 	if (fr_stateinit() == -1)
-		return -1;
+		return EIO;
 	if (appr_init() == -1)
-		return -1;
+		return EIO;
 
 # ifdef NETBSD_PF
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
@@ -425,7 +425,21 @@ int mode;
 	SPL_NET(s);
 
 	if (unit == IPL_LOGNAT) {
-		error = nat_ioctl(data, cmd, mode);
+		/*
+		 * If we're doing a NAT operation, implicitly enable
+		 * IP Filter if not already enabled.  We do this
+		 * because filtering and NAT are really separate
+		 * operations, and it's not entirely obvious from
+		 * a user's point of view that you need to enable
+		 * the filter in order to enable NAT.
+		 * 
+		 * Since the default rule is to pass all packets,
+		 * this shouldn't cause any noticeable side-effects.
+		 */
+		if (fr_running == 0)
+			error = ipl_enable();
+		if (error == 0)
+			error = nat_ioctl(data, cmd, mode);
 		SPL_X(s);
 		return error;
 	}
