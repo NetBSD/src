@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.17 2002/10/24 23:34:13 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.18 2002/10/25 17:26:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -540,7 +540,7 @@ proc_representative_lwp(p)
 	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
 
 	/* Trivial case: only one LWP */
-	if (p->p_nrlwps == 1)
+	if (p->p_nlwps == 1)
 		return (LIST_FIRST(&p->p_lwps));
 
 	switch (p->p_stat) {
