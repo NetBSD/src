@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.8 1996/03/14 19:44:30 christos Exp $	*/
+/*	$NetBSD: am7930.c,v 1.9 1996/03/17 02:00:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -103,9 +103,12 @@ static void init_amd __P((volatile struct amd7930 *));
 void	amd7930attach __P((struct device *, struct device *, void *));
 int	amd7930match __P((struct device *, void *, void *));
 
-struct	cfdriver audiocd = {
-	NULL, "audio", amd7930match, amd7930attach,
-	DV_DULL, sizeof(struct amd7930_softc)
+struct cfattach audio_ca = {
+	sizeof(struct amd7930_softc), amd7930match, amd7930attach
+};
+
+struct	cfdriver audio_cd = {
+	NULL, "audio", DV_DULL
 };
 
 struct audio_device amd7930_device = {
@@ -366,9 +369,9 @@ amd7930_open(dev, flags)
 
 	DPRINTF(("sa_open: unit %d\n",unit));
 
-	if (unit >= audiocd.cd_ndevs)
+	if (unit >= audio_cd.cd_ndevs)
 		return (ENODEV);
-	if ((sc = audiocd.cd_devs[unit]) == NULL)
+	if ((sc = audio_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.20 1996/03/14 19:45:12 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.21 1996/03/17 02:01:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -70,15 +70,29 @@ int 		vmel_scan __P((struct device *, void *, void *));
 int 		vmeintr __P((void *));
 #endif
 
-struct cfdriver obiocd = { NULL, "obio", busmatch, obioattach,
-	DV_DULL, sizeof(struct bus_softc)
+struct cfattach obio_ca = {
+	sizeof(struct bus_softc), busmatch, obioattach
 };
+
+struct cfdriver obio_cd = {
+	NULL, "obio", DV_DULL
+};
+
 #if defined(SUN4)
-struct cfdriver vmelcd = { NULL, "vmel", busmatch, vmelattach,
-	DV_DULL, sizeof(struct bus_softc)
+struct cfattach vmel_ca = {
+	sizeof(struct bus_softc), busmatch, vmelattach
 };
-struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
-	DV_DULL, sizeof(struct bus_softc)
+
+struct cfdriver vmel_cd = {
+	NULL, "vmel", DV_DULL
+};
+
+struct cfattach vmes_ca = {
+	sizeof(struct bus_softc), busmatch, vmesattach
+};
+
+struct cfdriver vmes_cd = {
+	NULL, "vmes", DV_DULL
 };
 #endif
 
@@ -170,7 +184,7 @@ busattach(parent, child, args, bustype)
 		oca.ca_ra.ra_bp = NULL;
 	oca.ca_bustype = bustype;
 
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return 0;
 
 	/*

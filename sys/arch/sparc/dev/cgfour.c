@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.4 1996/03/16 23:28:25 christos Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.5 1996/03/17 02:00:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -99,9 +99,12 @@ int		cgfourioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgfourmmap __P((dev_t, int, int));
 static void	cgfourunblank __P((struct device *));
 
-struct cfdriver cgfourcd = {
-	NULL, "cgfour", cgfourmatch, cgfourattach,
-	DV_DULL, sizeof(struct cgfour_softc)
+struct cfattach cgfour_ca = {
+	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
+};
+
+struct cfdriver cgfour_cd = {
+	NULL, "cgfour", DV_DULL
 };
 
 /* frame buffer generic driver */
@@ -288,7 +291,7 @@ cgfouropen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgfourcd.cd_ndevs || cgfourcd.cd_devs[unit] == NULL)
+	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -311,7 +314,7 @@ cgfourioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgfour_softc *sc = cgfourcd.cd_devs[minor(dev)];
+	register struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
 
@@ -415,7 +418,7 @@ cgfourmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgfour_softc *sc = cgfourcd.cd_devs[minor(dev)];
+	register struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	int poff;
 
 #define START_ENABLE	(128*1024)

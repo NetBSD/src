@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1996/02/12 05:14:19 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1996/03/17 02:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -70,10 +70,14 @@ int cold;
 struct mainbus_softc {
 	struct device mainbus_dev;
 };
-	
-struct cfdriver mainbuscd = 
-{ NULL, "mainbus", always_match, mainbusattach, DV_DULL,
-	sizeof(struct mainbus_softc), 0};
+
+struct cfattach mainbus_ca = {
+	sizeof(struct mainbus_softc), always_match, mainbusattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
 
 void mainbusattach(parent, self, args)
 	struct device *parent;

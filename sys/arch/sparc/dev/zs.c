@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 1996/03/14 19:45:28 christos Exp $ */
+/*	$NetBSD: zs.c,v 1.35 1996/03/17 02:01:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,8 +115,14 @@ struct zsinfo {
 /* Definition of the driver for autoconfig. */
 static int	zsmatch __P((struct device *, void *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
-struct cfdriver zscd =
-    { NULL, "zs", zsmatch, zsattach, DV_TTY, sizeof(struct zsinfo) };
+
+struct cfattach zs_ca = {
+	sizeof(struct zsinfo), zsmatch, zsattach
+};
+
+struct cfdriver zs_cd = {
+	NULL, "zs", DV_TTY
+};
 
 /* Interrupt handlers. */
 static int	zshard __P((void *));
@@ -572,7 +578,7 @@ zsopen(dev, flags, mode, p)
 	struct zsinfo *zi;
 	int unit = minor(dev), zs = unit >> 1, error, s;
 
-	if (zs >= zscd.cd_ndevs || (zi = zscd.cd_devs[zs]) == NULL ||
+	if (zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL ||
 	    unit == ZS_KBD || unit == ZS_MOUSE)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
@@ -645,7 +651,7 @@ zsclose(dev, flags, mode, p)
 	struct zsinfo *zi;
 	int unit = minor(dev), s;
 
-	zi = zscd.cd_devs[unit >> 1];
+	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 	linesw[tp->t_line].l_close(tp, flags);
@@ -688,7 +694,7 @@ zsread(dev, uio, flags)
 	register struct tty *tp;
 	int unit = minor(dev);
 
-	zi = zscd.cd_devs[unit >> 1];
+	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
@@ -707,7 +713,7 @@ zswrite(dev, uio, flags)
 	register struct tty *tp;
 	int unit = minor(dev);
 
-	zi = zscd.cd_devs[unit >> 1];
+	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
@@ -722,7 +728,7 @@ zstty(dev)
 	register struct zsinfo *zi;
 	int unit = minor(dev);
 
-	zi = zscd.cd_devs[unit >> 1];
+	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 
 	return (cs->cs_ttyp);
@@ -1129,7 +1135,7 @@ zsioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
+	struct zsinfo *zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 	register struct tty *tp = cs->cs_ttyp;
 	register int error, s;
@@ -1246,7 +1252,7 @@ zsstart(tp)
 	register struct zs_chanstate *cs;
 	register int s, nch;
 	int unit = minor(tp->t_dev);
-	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
+	struct zsinfo *zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
 	s = spltty();
@@ -1307,7 +1313,7 @@ zsstop(tp, flag)
 {
 	register struct zs_chanstate *cs;
 	register int s, unit = minor(tp->t_dev);
-	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
+	struct zsinfo *zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
 	s = splzs();
@@ -1335,7 +1341,7 @@ zsparam(tp, t)
 	register struct termios *t;
 {
 	int unit = minor(tp->t_dev);
-	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
+	struct zsinfo *zi = zs_cd.cd_devs[unit >> 1];
 	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
 	register int tmp, tmp5, cflag, s;
 
