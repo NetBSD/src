@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.29 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.30 1999/01/10 12:59:20 tron Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -216,9 +216,9 @@ ed_zbus_attach(parent, self, aux)
 		sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
 		prom = (u_char *)sc->mem_start + HYDRA_ADDRPROM;
 	} else {
-		sc->mem_start = zap->va + 0x8000;
+		sc->mem_start = (u_char *)zap->va + 0x8000;
 		sc->mem_size = 16384;
-		sc->nic_addr = zap->va + ASDG_NIC_BASE;
+		sc->nic_addr = (u_char *)zap->va + ASDG_NIC_BASE;
 		prom = (u_char *)sc->nic_addr + ASDG_ADDRPROM;
 	}
 	sc->cr_proto = ED_CR_RD2;
