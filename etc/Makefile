@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2002/04/07 15:52:27 wiz Exp $
+#	$NetBSD: Makefile,v 1.209 2002/04/09 18:07:24 matt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -111,7 +111,6 @@ BIN2+=	motd
 BIN3+=	hosts.equiv
 
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
-PCS=	pcs750.bin
 
 .if make(release) || make(snapshot) || make(distribution)		# {
 # find out endianness of target and set proper flag for pwd_mkdb so that
@@ -188,10 +187,6 @@ install-etc-files: check_DESTDIR
 	(cd namedb; \
 		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
-.if ${MACHINE_ARCH} == "vax"
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${PCS} \
-		${DESTDIR}/${PCS}
-.endif
 	(cd rc.d; ${MAKE} install)
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
 		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
