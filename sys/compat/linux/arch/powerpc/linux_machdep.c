@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.16 2002/07/04 23:32:11 thorpej Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.17 2002/07/09 17:41:27 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.16 2002/07/04 23:32:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2002/07/09 17:41:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ linux_sendsig(sig, mask, code)  /* XXX Check me */
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	if (curproc == fpuproc)
+	if (curproc == curcpu()->ci_fpuproc)
 		save_fpu(curproc);
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
 
@@ -303,7 +303,7 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is sync'ed
 	 */
-	if (curproc == fpuproc)
+	if (curproc == curcpu()->ci_fpuproc)
 		save_fpu(curproc);
 
 	/*
@@ -393,7 +393,7 @@ linux_sys_sigreturn(p, v, retval)
 	/*
 	 * Make sure, fpu is in sync
 	 */
-	if (curproc == fpuproc)
+	if (curproc == curcpu()->ci_fpuproc)
 		save_fpu(curproc);
 
 	/*
