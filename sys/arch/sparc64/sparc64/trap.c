@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2000/12/29 17:07:12 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.61 2001/02/05 12:45:38 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -930,15 +930,16 @@ rwindow_save(p)
 			struct rwindow32 rwstack;
 
 			/* 32-bit window */
-			for (j=0; j<8; j++) { 
+			for (j = 0; j < 8; j++) { 
 				rwstack.rw_local[j] = (int)rw[i].rw_local[j];
 				rwstack.rw_in[j] = (int)rw[i].rw_in[j];
 			}
-			if (copyout(&rwstack, (caddr_t)(u_long)rwdest, sizeof(rwstack))) {
+			/* Must truncate rwdest */
+			if (copyout(&rwstack, (caddr_t)(u_long)(u_int)rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug&RW_ERR)
-					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", 
-					       (void *)(long)rwdest);
+					printf("rwindow_save: 32-bit pcb copyout to %p (%p) failed\n", 
+					       (void *)(u_long)(u_int)rwdest, (void *)(u_long)rwdest);
 #endif
 				return (-1);
 			}
