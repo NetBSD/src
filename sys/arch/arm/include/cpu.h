@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2002/08/14 21:55:52 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2002/08/16 15:25:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -57,7 +57,8 @@
 #define	CPU_BOOTED_DEVICE	2	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -65,6 +66,7 @@
 	{ "booted_device", CTLTYPE_STRING }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "powersave", CTLTYPE_INT }, \
 }    
 
 #ifdef _KERNEL
@@ -87,6 +89,11 @@
 #endif	/* !_LOCORE */
 
 #include <arm/armreg.h>
+
+#ifndef _LOCORE
+/* 1 == use cpu_sleep(), 0 == don't */
+extern int cpu_do_powersave;
+#endif
 
 #ifdef __PROG32
 #ifdef _LOCORE
