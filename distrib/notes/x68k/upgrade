@@ -1,8 +1,8 @@
-	$NetBSD: upgrade,v 1.1.4.1 1998/05/09 05:06:42 mycroft Exp $	
+	$NetBSD: upgrade,v 1.1.4.2 1998/05/29 03:44:18 mycroft Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
-to interdepencies in the various components.
+to interdependencies in the various components.
 
 To do the upgrade, you must have the appropriate kernel-copy floppy
 image on a disk, and the upgr12.fs floppy image on another.  You must
