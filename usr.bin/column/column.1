@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)column.1	5.8 (Berkeley) 3/14/91
+.\"     @(#)column.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 14, 1991
+.Dd June 6, 1993
 .Os
 .Dt COLUMN 1
 .Sh NAME
@@ -39,9 +39,9 @@
 .Nd columnate lists
 .Sh SYNOPSIS
 .Nm column
-.Op Fl c Ns Ar columns
-.Op Fl s Ns Ar sep
 .Op Fl tx
+.Op Fl c Ar columns
+.Op Fl s Ar sep
 .Op Ar
 .Sh DESCRIPTION
 The
@@ -85,7 +85,7 @@ is used to determine the size of
 the screen if no other information is available.
 .El
 .Sh EXAMPLES
-.Dl (printf \&"PERM LINKS OWNER SIZE MONTH DAY HH:MM/YEAR NAME\en\&"\ \&;
+.Dl (printf \&"PERM LINKS OWNER SIZE MONTH DAY HH:MM/YEAR NAME\en\&"\ \&;\ \&\e
 .Dl ls -l \&| sed 1d) \&| column -t
 .Sh SEE ALSO
 .Xr colrm 1 ,
