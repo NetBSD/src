@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.7 1995/08/12 20:30:48 mycroft Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.8 1995/08/18 15:28:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
+#include <sys/malloc.h>
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -53,10 +54,53 @@ struct	dma_chain {
 	char	*dc_addr;
 };
 
-struct	sbic_pending {
-	TAILQ_ENTRY(sbic_pending) link;
-	struct scsi_xfer *xs;
+/*
+ * ACB. Holds additional information for each SCSI command Comments: We
+ * need a separate scsi command block because we may need to overwrite it
+ * with a request sense command.  Basicly, we refrain from fiddling with
+ * the scsi_xfer struct (except do the expected updating of return values).
+ * We'll generally update: xs->{flags,resid,error,sense,status} and
+ * occasionally xs->retries.
+ */
+struct sbic_acb {
+	TAILQ_ENTRY(sbic_acb) chain;
+	struct scsi_xfer *xs;		/* SCSI xfer ctrl block from above */
+	int		flags;		/* Status */
+#define ACB_FREE	0x00
+#define ACB_ACTIVE	0x01
+#define ACB_DONE	0x04
+#define ACB_CHKSENSE	0x08
+#define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
+#define	ACB_DATAIN	0x20	/* DMA direction flag */
+	struct scsi_generic cmd;	/* SCSI command block */
+	int	 clen;
+	struct	dma_chain sc_kv;	/* Virtual address of whole DMA */
+	struct	dma_chain sc_pa;	/* Physical address of DMA segment */
+	u_long	sc_tcnt;		/* number of bytes for this DMA */
+	u_char *sc_dmausrbuf;		/* user buffer kva - for bounce copy */
+	u_long  sc_dmausrlen;		/* length of bounce copy */
+	u_short sc_dmacmd;		/* Internal data for this DMA */
+	char *pa_addr;			/* XXXX initial phys addr */
+	u_char *sc_usrbufpa;		/* user buffer phys addr */
 };
+
+/*
+ * Some info about each (possible) target on the SCSI bus.  This should
+ * probably have been a "per target+lunit" structure, but we'll leave it at
+ * this for now.  Is there a way to reliably hook it up to sc->fordriver??
+ */
+struct sbic_tinfo {
+	int	cmds;		/* #commands processed */
+	int	dconns;		/* #disconnects */
+	int	touts;		/* #timeouts */
+	int	perrs;		/* #parity errors */
+	int	senses;		/* #request sense commands sent */
+	u_char*	bounce;		/* Bounce buffer for this device */
+	ushort	lubusy;		/* What local units/subr. are busy? */
+	u_char  flags;
+	u_char  period;		/* Period suggestion */
+	u_char  offset;		/* Offset suggestion */
+} tinfo_t;
 
 struct	sbic_softc {
 	struct	device sc_dev;
@@ -66,11 +110,21 @@ struct	sbic_softc {
 		u_char	period;
 		u_char	offset;
 	} sc_sync[8];
+	u_char	target;			/* Currently active target */
+	u_char  lun;
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	sbic_regmap_p	sc_sbicp;	/* the SBIC */
 	volatile void 	*sc_cregs;	/* driver specific regs */
-	TAILQ_HEAD(,sbic_pending) sc_xslist;	/* LIFO */
-	struct	sbic_pending sc_xsstore[8][8];	/* one for every unit */
+
+	/* Lists of command blocks */
+	TAILQ_HEAD(acb_list, sbic_acb) free_list,
+				       ready_list,
+				       nexus_list;
+
+	struct sbic_acb *sc_nexus;	/* current command */
+	struct sbic_acb sc_acb[8];	/* the real command blocks */
+	struct sbic_tinfo sc_tinfo[8];
+
 	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
 	u_char	sc_flags;
 	u_char	sc_scsiaddr;
@@ -78,13 +132,9 @@ struct	sbic_softc {
 	u_char	sc_msg[7];
 	u_long	sc_clkfreq;
 	u_long	sc_tcnt;		/* number of bytes transfered */
-	u_char *sc_dmabuffer;
-	u_char *sc_dmausrbuf;
-	u_long  sc_dmausrlen;
 	u_short sc_dmacmd;		/* used by dma drivers */
 	u_short	sc_dmatimo;		/* dma timeout */
 	u_long	sc_dmamask;		/* dma valid mem mask */
-	struct	dma_chain sc_chain[DMAMAXIO];
 	struct	dma_chain *sc_cur;
 	struct	dma_chain *sc_last;
 	int  (*sc_dmago)	__P((struct sbic_softc *, char *, int, int));
@@ -98,8 +148,8 @@ struct	sbic_softc {
 #define	SBICF_ALIVE	0x01	/* controller initialized */
 #define SBICF_DCFLUSH	0x02	/* need flush for overlap after dma finishes */
 #define SBICF_SELECTED	0x04	/* bus is in selected state. */
+#define SBICF_ICMD	0x08	/* Immediate command in execution */
 #define SBICF_BADDMA	0x10	/* controller can only DMA to ztwobus space */
-#define SBICF_BBUF	0x20	/* DMA input needs to be copied from bounce */
 #define	SBICF_INTR	0x40	/* SBICF interrupt expected */
 #define	SBICF_INDMA	0x80	/* not used yet, DMA I/O in progress */
 
@@ -141,12 +191,26 @@ extern int sbic_clock_override;
 #define	MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
 #define	MSG_SYNC_REQ 		0x01
 
+#define MSG_ISIDENTIFY(x) (x&MSG_IDENTIFY)
+#define IFY_TRN		0x20
+#define IFY_LUNTRN(x)	(x&0x07)
+#define IFY_LUN(x)	(!(x&0x20))
+
+/* Check if high bit set */
 
 #define	STS_CHECKCOND	0x02	/* Check Condition (ie., read sense) */
 #define	STS_CONDMET	0x04	/* Condition Met (ie., search worked) */
 #define	STS_BUSY	0x08
 #define	STS_INTERMED	0x10	/* Intermediate status sent */
 #define	STS_EXT		0x80	/* Extended status valid */
+
+
+/* States returned by our state machine */
+
+#define SBIC_STATE_ERROR	-1
+#define SBIC_STATE_DONE		0
+#define SBIC_STATE_RUNNING	1
+#define SBIC_STATE_DISCONNECT	2
 
 /*
  * XXXX

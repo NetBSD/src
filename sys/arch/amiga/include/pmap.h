@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1995/05/11 16:52:54 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1995/08/18 15:28:26 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -66,7 +66,7 @@ typedef struct pmap *pmap_t;
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
 		    amiga_btop(pmap_extract(pmap_kernel(), \
-		    cpu040 ? (vm_offset_t)(pmapp)->pm_rtab : \
+		    (mmutype == MMU_68040) ? (vm_offset_t)(pmapp)->pm_rtab : \
 		    (vm_offset_t)(pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.11 1995/02/12 19:19:07 chopps Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.12 1995/08/18 15:27:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -79,9 +79,10 @@ struct scsi_device gtsc_scsidev = {
 int gtsc_maxdma = 0;	/* Maximum size per DMA transfer */
 int gtsc_dmamask = 0;
 int gtsc_dmabounce = 0;
+int gtsc_clock_override = 0;
 
 #ifdef DEBUG
-void gtsc_dmatimeout __P((void *));
+void gtsc_dmatimeout __P((struct sbic_softc *));
 int gtsc_debug = 0;
 #endif
 
@@ -134,7 +135,7 @@ gtscattach(pdp, dp, auxp)
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout((void *)gtsc_dmatimeout, 0, 30 * hz);
+	timeout((void *)gtsc_dmatimeout, sc, 30 * hz);
 #endif
 
 	sc->sc_flags |= SBICF_BADDMA;
@@ -151,7 +152,7 @@ gtscattach(pdp, dp, auxp)
 	if ((gap->flags & GVP_NOBANK) == 0)
 		sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
 
-
+#if 0
 	/*
 	 * if the user requests a bounce buffer or 
 	 * the users kva space is not ztwo and dma needs it
@@ -164,7 +165,7 @@ gtscattach(pdp, dp, auxp)
 	 * XXX this needs to change if we move to multiple memory segments.
 	 */
 	if (gtsc_dmabounce || kvtop(sc) & sc->sc_dmamask) {
-		sc->sc_dmabuffer = (char *) alloc_z2mem(MAXPHYS);
+		sc->sc_dmabuffer = (char *) alloc_z2mem(MAXPHYS * 8); /* XXX */
 		if (isztwomem(sc->sc_dmabuffer))
 			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (gtsc_maxdma == 0) {
@@ -173,22 +174,25 @@ gtscattach(pdp, dp, auxp)
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 		}
 	}
+#endif
 	if (gtsc_maxdma == 0)
 		gtsc_maxdma = MAXPHYS;
 
+	printf(" flags %x", gap->flags);
 	printf(" maxdma %d\n", gtsc_maxdma);
 
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x61);
-	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
-
-	sbicreset(sc);
+	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
+	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
+	printf("sc_clkfreg: %d.%dMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &gtsc_scsiswitch;
 	sc->sc_link.device = &gtsc_scsidev;
-	sc->sc_link.openings = 1;
-	TAILQ_INIT(&sc->sc_xslist);
+	sc->sc_link.openings = 2;
+
+	sbicinit(sc);
 
 	sc->sc_isr.isr_intr = gtsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
@@ -375,25 +379,19 @@ gtsc_dmanext(dev)
 
 #ifdef DEBUG
 void
-gtsc_dmatimeout(arg)
-	void *arg;
+gtsc_dmatimeout(sc)
+	struct sbic_softc *sc;
 {
-	struct sbic_softc *dev;
-	int i, s;
+	int s;
 
-	for (i = 0; i < gtsccd.cd_ndevs; i++) {
-		dev = gtsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		s = splbio();
-		if (dev->sc_dmatimo) {
-			if (dev->sc_dmatimo > 1)
-				printf("gtsc_dma%d: timeout #%d\n",
-				    dev->sc_dev.dv_unit, dev->sc_dmatimo - 1);
-			dev->sc_dmatimo++;
-		}
-		splx(s);
+	s = splbio();
+	if (sc->sc_dmatimo) {
+		if (sc->sc_dmatimo > 1)
+			printf("%s: dma timeout #%d\n",
+			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
+		sc->sc_dmatimo++;
 	}
-	timeout(gtsc_dmatimeout, 0, 30 * hz);
+	splx(s);
+	timeout((void *)gtsc_dmatimeout, sc, 30 * hz);
 }
 #endif

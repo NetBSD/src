@@ -1,4 +1,4 @@
-;	$NetBSD: siop_script.ss,v 1.2 1995/07/04 18:06:43 chopps Exp $
+;	$NetBSD: siop_script.ss,v 1.3 1995/08/18 15:28:11 chopps Exp $
 
 ;
 ; Copyright (c) 1995 Michael L. Hitch
@@ -65,6 +65,8 @@ ABSOLUTE err10		= 0xff0a
 ENTRY	scripts
 ENTRY	switch
 ENTRY	wait_reselect
+ENTRY	dataout
+ENTRY	datain
 
 PROC	scripts:
 
@@ -80,26 +82,28 @@ switch:
 	JUMP REL(datain), IF DATA_IN
 	JUMP REL(end), IF STATUS
 
-	INT err1
+	INT err5			; Unrecognized phase
 
 msgin:
 	MOVE FROM ds_MsgIn, WHEN MSG_IN
-	CLEAR ACK
 	JUMP REL(ext_msg), IF 0x01	; extended message
 	JUMP REL(disc), IF 0x04		; disconnect message
-	JUMP REL(switch), IF 0x02	; ignore save data pointers
-	JUMP REL(msg_rej), IF 0x07	; ignore message reject
-	JUMP REL(switch), IF 0x03	; ignore restore data pointers
-	INT err2
+	JUMP REL(msg_sdp), IF 0x02	; save data pointers
+	JUMP REL(msg_rej), IF 0x07	; message reject
+	JUMP REL(msg_rdp), IF 0x03	; restore data pointers
+	INT err6			; unrecognized message
 
+msg_rdp:
 msg_rej:
+	CLEAR ACK
 	CLEAR ATN
 	JUMP REL(switch)
 
 ext_msg:
+	CLEAR ACK
 	MOVE FROM ds_ExtMsg, WHEN MSG_IN
 	JUMP REL(sync_msg), IF 0x03
-	int err3
+	int err7			; extended message not SDTR
 
 sync_msg:
 	CLEAR ACK
@@ -108,18 +112,39 @@ sync_msg:
 	JUMP REL(switch)
 
 disc:
+	CLEAR ACK
 	WAIT DISCONNECT
 
-	INT err10			; let host know about disconnect
+	int err2			; signal disconnect w/o save DP
 
+msg_sdp:
+	CLEAR ACK			; acknowledge message
+	JUMP REL(switch), WHEN NOT MSG_IN
+	MOVE FROM ds_ExtMsg, WHEN MSG_IN
+	INT err8, IF NOT 0x04		; interrupt if not disconnect
+	CLEAR ACK
+	WAIT DISCONNECT
+
+	INT err1			; signal disconnect
+
+reselect:
 wait_reselect:
 	WAIT RESELECT REL(select_adr)
+	MOVE LCRC to SFBR		; Save reselect ID
+	MOVE SFBR to SCRATCH0
 
-	INT err4, WHEN NOT MSG_IN
+	INT err9, WHEN NOT MSG_IN	; didn't get IDENTIFY
 	MOVE FROM ds_Msg, WHEN MSG_IN
-	CLEAR ACK
-	INT err9			; let host know about reconnect
+	INT err3			; let host know about reconnect
+	CLEAR ACK			; acknowlege the message
 	JUMP REL(switch)
+
+
+select_adr:
+	MOVE SCNTL1 & 0x10 to SFBR	; get connected status
+	INT err4, IF 0x00		; tell host if not connected
+	MOVE CTEST2 & 0x40 to SFBR	; clear Sig_P
+	JUMP REL(wait_reselect)		; and try reselect again
 
 msgout:
 	MOVE FROM ds_MsgOut, WHEN MSG_OUT
@@ -172,23 +197,9 @@ datain:
 
 end:
 	MOVE FROM ds_Status, WHEN STATUS
-	int err5, WHEN NOT MSG_IN
+	int err10, WHEN NOT MSG_IN	; status not followed by msg
 	MOVE FROM ds_Msg, WHEN MSG_IN
 	CLEAR ACK
 	WAIT DISCONNECT
-	INT ok
+	INT ok				; signal completion
 	JUMP REL(wait_reselect)
-
-reselect:
-	WAIT RESELECT REL(select_adr)
-	INT err6
-
-	INT err4, WHEN NOT MSG_IN
-	MOVE FROM ds_Msg, WHEN MSG_IN
-	CLEAR ACK
-	JUMP REL(switch)
-
-select_adr:
-	MOVE CTEST2 & 0x40 to SFBR	; get Sig_P
-	INT err7
-	JUMP REL(scripts)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1995/05/13 05:57:28 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1995/08/18 15:27:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,7 +280,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	/*
 	 * Print out some data about the fault
 	 */
-	if (mmudebug && cpu040) {
+	if (mmudebug && mmutype == MMU_68040) {
 		printf ("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
 		if (curpcb)
@@ -291,14 +291,14 @@ trapmmufault(type, code, v, fp, p, sticks)
 #endif
 	if (type == T_MMUFLT && 
 	    (p->p_addr->u_pcb.pcb_onfault == 0 ||
-	    (cpu040 && (code & SSW_TMMASK) == FC_SUPERD) ||
-	    (!cpu040 && (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
+	    (mmutype == MMU_68040 && (code & SSW_TMMASK) == FC_SUPERD) ||
+	    (mmutype != MMU_68040 && (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
 	else
 		map = &vm->vm_map;
 	if (
-	    (cpu040 && (code & SSW_RW040) == 0) ||
-	    (!cpu040 && (code & (SSW_DF|SSW_RW)) ==
+	    (mmutype == MMU_68040 && (code & SSW_RW040) == 0) ||
+	    (mmutype != MMU_68040 && (code & (SSW_DF|SSW_RW)) ==
 	    SSW_DF))	/* what about RMW? */
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
 	else
@@ -336,7 +336,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("vmfault %s %x returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		if(rv != KERN_SUCCESS) {
 			goto nogo;
 		}
