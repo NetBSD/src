@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.157 2004/03/20 21:28:59 bjh21 Exp $
+#       $NetBSD: Makefile,v 1.158 2004/03/21 11:49:28 he Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -331,7 +331,7 @@ MLINKS+=pckbport.9 pckbport_attach.9 \
 	pckbport.9 pckbport_attach_slot.9 \
 	pckbport.9 pckbport_cnattach.9 \
 	pckbport.9 pckbportintr.9 \
-	pckbport.9 pckbport_set_inputhandle.9 \
+	pckbport.9 pckbport_set_inputhandler.9 \
 	pckbport.9 pckbport_flush.9 \
 	pckbport.9 pckbport_poll_cmd.9 \
 	pckbport.9 pckbport_enqueue_cmd.9 \
