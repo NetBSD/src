@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.4 1998/10/20 14:56:30 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.5 1998/11/04 15:06:13 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1826,9 +1826,7 @@ adb_read_date_time(unsigned long *time)
 		while (0 == flag)	/* wait for result */
 			;
 
-		/* *time = (long)(*(long *)(output + 1)) - 2082844800; */
 		bcopy(output + 1, time, 4);
-		*time -= 2082844800;
 		return 0;
 
 	case ADB_HW_UNKNOWN:
@@ -1845,8 +1843,6 @@ adb_set_date_time(unsigned long time)
 	u_char output[ADB_MAX_MSG_LENGTH];
 	int result;
 	volatile int flag = 0;
-
-	time += 2082844800;
 
 	switch (adbHardware) {
 
