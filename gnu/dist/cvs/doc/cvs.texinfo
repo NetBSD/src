@@ -7811,10 +7811,6 @@ a command name, @samp{cvs -H} displays overall help for
 @c every time that we add a --help-foo option.  But
 @c perhaps that is confusing...
 
-@item -l
-Do not log the @samp{cvs_command} in the command history (but execute it
-anyway).  @xref{history}, for information on command history.
-
 @cindex Read-only mode
 @item -n
 Do not change any files.  Attempt to execute the
