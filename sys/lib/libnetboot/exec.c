@@ -28,14 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/exec.c,v 1.2 1993/10/16 07:57:41 cgd Exp $
+ *	$Id: exec.c,v 1.3 1994/05/27 03:33:03 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/mount.h>
-#include <sys/exec.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 
