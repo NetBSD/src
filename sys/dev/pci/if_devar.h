@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.20 1997/10/15 19:07:18 matt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.21 1997/10/16 22:02:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -341,6 +341,7 @@ typedef enum {
     TULIP_21140_COGENT_EM100,		/* Cogent EM100 100 only */
     TULIP_21140_ZNYX_ZX34X,		/* ZNYX ZX342 10/100 */
     TULIP_21140_ASANTE,			/* AsanteFast 10/100 */
+    TULIP_21140_EN1207,			/* Accton EN2107 10/100 BNC */
     TULIP_21041_GENERIC			/* Generic 21041 card */
 } tulip_board_t;
 
