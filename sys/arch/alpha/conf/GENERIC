@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.195 2001/11/04 07:39:41 itohy Exp $
+# $NetBSD: GENERIC,v 1.196 2001/11/04 10:27:15 itohy Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.195 $"
+#ident 		"GENERIC-$Revision: 1.196 $"
 
 maxusers 32
 
@@ -278,9 +278,13 @@ opl*	at	eso?
 #opl*	at	sv?
 opl*	at	yds?
 
+midi*	at	opl?
+
 mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
+
+midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
