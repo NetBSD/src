@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.234 2002/03/10 02:58:14 augustss Exp $
+$NetBSD: usbdevs,v 1.235 2002/03/10 19:55:23 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -377,6 +377,9 @@ product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
 
+/* Actiontec products */
+product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
+
 /* ACTiSYS products */
 product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
 
@@ -706,6 +709,9 @@ product INSYSTEM ADAPTERV2	0x5701	USB Storage Adapter V2
 /* Intel products */
 product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
 product INTEL TESTBOARD		0x9890	82930 test board
+
+/* Intersil products */
+product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* I/O DATA products */
 product IODATA USBETT		0x0901	USB ETT
