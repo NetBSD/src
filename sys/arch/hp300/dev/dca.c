@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.14 1994/10/26 07:23:31 cgd Exp $	*/
+/*	$NetBSD: dca.c,v 1.15 1995/04/10 01:01:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -711,6 +711,7 @@ dcamctl(dev, bits, how)
  */
 #include <dev/cons.h>
 
+void
 dcacnprobe(cp)
 	struct consdev *cp;
 {
@@ -767,6 +768,7 @@ dcacnprobe(cp)
 #endif
 }
 
+void
 dcacninit(cp)
 	struct consdev *cp;
 {
@@ -831,6 +833,7 @@ dcacngetc(dev)
 /*
  * Console kernel output character routine.
  */
+void
 dcacnputc(dev, c)
 	dev_t dev;
 	register int c;
