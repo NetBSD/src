@@ -1,4 +1,4 @@
-.\" $NetBSD: macros,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\" $NetBSD: macros,v 1.2 1999/03/25 21:19:08 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .	ie rHTML <h3>\\$*</h3>
 .	el \{\
 .		br
-.		ne 7P
+.		if t .ne 7P
 .		Pp
 .		Em "\\$*"
 .		Pp
@@ -78,7 +78,7 @@
 .
 .de br_ne
 .	br
-.	ne \\$1
+.	if t .ne \\$1
 ..
 .
 .
