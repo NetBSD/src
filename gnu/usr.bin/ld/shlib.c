@@ -1,5 +1,5 @@
 /*
- * $Id: shlib.c,v 1.4 1993/11/08 13:21:23 pk Exp $
+ * $Id: shlib.c,v 1.5 1993/11/21 21:01:08 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -20,7 +20,7 @@
  * Standard directories to search for files specified by -l.
  */
 #ifndef STANDARD_SEARCH_DIRS
-#define	STANDARD_SEARCH_DIRS	"/usr/lib", "/usr/local/lib"
+#define	STANDARD_SEARCH_DIRS	"/usr/lib", "/usr/X386/lib", "/usr/local/lib"
 #endif
 
 char *standard_search_dirs[] = {
