@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.7 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbscn.c,v 1.8 2003/03/28 07:10:35 he Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -1807,7 +1807,7 @@ sbscn_cnattach(u_long addr, int chan, int rate, tcflag_t cflag)
 	int res;
 	static struct consdev sbscn_cons = {
 		NULL, NULL, sbscn_cngetc, sbscn_cnputc, sbscn_cnpollc, NULL,
-		    NODEV, CN_NORMAL
+		    NULL, NULL, NODEV, CN_NORMAL
 	};
 
 	res = sbscn_init(addr, chan, rate, cflag);
