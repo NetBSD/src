@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2005/02/26 11:31:48 he Exp $
+# $NetBSD: Makefile,v 1.11 2005/03/04 20:41:09 he Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -40,8 +40,8 @@ LDADD+=-lradius
 DPADD+= ${LIBRADIUS}
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DHAVE_LIBPAM
-LDADD+=	-lpam
-DPADD+=	${LIBPAM}
+LDADD+=	-lpam ${PAM_STATIC_LDADD}
+DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI
