@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.9 1999/12/12 11:51:29 soren Exp $
+#	$NetBSD: EBSA285,v 1.10 2000/01/10 07:22:35 mark Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -175,8 +175,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #scsibus* at bha?
-#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-#scsibus* at isp?
+isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
 
@@ -189,17 +189,32 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 # PCI IDE Controllers and Devices
-pciide* at pci? dev ? function ?
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide* at pci? dev ? function ? flags 0x0000
 
 # IDE drives
-wd*	at pciide? channel ? drive ?	# the drives themselves
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*	at pciide? channel ? drive ? flags 0x0000	# the drives themselves
 
 # ATAPI bus support
 atapibus* at pciide? channel ?
 
 # ATAPI devices
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
-sd*	at atapibus? drive ?		# ATAPI disk drives
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
