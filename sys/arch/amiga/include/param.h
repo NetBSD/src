@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1994/10/26 02:06:20 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.16 1994/12/28 09:08:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,17 +155,33 @@
  */
 #include <machine/psl.h>
 
+#if 0
 #define _debug_spl(s) \
 ({ \
         register int _spl_r; \
 \
         __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
-	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
+	if ((_spl_r&PSL_IPL) > ((s)&PSL_IPL)&&((s)&PSL_IPL)!=PSL_IPL1) \
 		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
-		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&s)>>8)); \
+		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&(s))>>8)); \
         _spl_r; \
 })
+#else
+/*
+ * Don't lower IPL below current IPL (unless new IPL is 6)
+ */
+#define _debug_spl(s) \
+({ \
+        register int _spl_r; \
+\
+        __asm __volatile ("clrl %0; movew sr,%0" : \
+                "&=d" (_spl_r)); \
+	if ((((s)&PSL_IPL) >= PSL_IPL6) || (_spl_r&PSL_IPL) < ((s)&PSL_IPL) || ((s)&PSL_IPL) <= PSL_IPL1) \
+		__asm __volatile ("movew %0,sr" : : "di" (s)); \
+        _spl_r; \
+})
+#endif
 
 #define _spl_no_check(s) \
 ({ \
@@ -175,7 +191,7 @@
                 "&=d" (_spl_r) : "di" (s)); \
         _spl_r; \
 })
-#if defined (DEBUG)
+#if defined (DEBUGXX)		/* No workee */
 #define _spl _debug_spl
 #else
 #define _spl _spl_no_check

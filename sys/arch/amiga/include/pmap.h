@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1994/10/26 02:06:25 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1994/12/28 09:08:45 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -96,7 +96,11 @@ pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
 
+#ifdef MACHINE_NONCONTIG
+#define pa_index(pa)		pmap_page_index(pa)
+#else
 #define pa_index(pa)		atop(pa - vm_first_phys)
+#endif
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #endif	KERNEL
