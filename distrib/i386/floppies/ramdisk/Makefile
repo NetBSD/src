@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2000/06/07 22:15:31 marc Exp $
+#	$NetBSD: Makefile,v 1.29 2000/06/18 23:57:32 cyber Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -28,7 +28,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
 RAMDISKSPC=	128
-RAMDISKCYLS=	24
+RAMDISKCYLS=	32
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
 install.sh: install.tmpl
@@ -82,7 +82,7 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 release:
 
 clean cleandir distclean:
-	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c tmplabel
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
