@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 1996/12/28 18:56:57 tls Exp $
+#	$NetBSD: Makefile,v 1.3 1997/01/03 01:35:23 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/24/94
 
 PROG=	gomoku
