@@ -1,4 +1,4 @@
-/* $NetBSD: */
+/* $NetBSD: tx39xx.c,v 1.4 2000/01/16 11:14:49 uch Exp $ */
 
 /*-
  * Copyright (c) 1999 Shin Takemura, UCHIYAMA Yasushi
