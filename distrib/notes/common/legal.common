@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.22 2001/06/15 12:30:17 wiz Exp $
+.\"	$NetBSD: legal.common,v 1.23 2001/06/21 21:53:44 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,6 +114,8 @@ This product includes software developed by Leo Weppelman.
 This product includes software developed by Lloyd Parkes.
 This product includes software developed by Manuel Bouyer.
 This product includes software developed by Marc Horowitz.
+This product includes software developed by Mark Brinicombe
+for the NetBSD Project.
 This product includes software developed by Mark Brinicombe.
 This product includes software developed by Mark Tinguely and Jim Lowe.
 This product includes software developed by Markus Wild.
