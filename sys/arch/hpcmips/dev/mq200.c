@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.4 2000/12/03 13:43:40 takemura Exp $	*/
+/*	$NetBSD: mq200.c,v 1.5 2000/12/21 03:27:15 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -136,7 +136,7 @@ mq200_attach(sc)
 
 	mq200_fbinit(&sc->sc_fbconf);
 	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
-	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_baseaddr -
+	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_fbconf.hf_baseaddr -
 	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
 	DPRINTF(("hf_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
 	DPRINTF(("hf_offset=%lx\n", sc->sc_fbconf.hf_offset));
