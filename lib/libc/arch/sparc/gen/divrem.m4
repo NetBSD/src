@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
- * $Id: divrem.m4,v 1.2 1995/04/22 09:33:49 pk Exp $
+ * $Id: divrem.m4,v 1.3 1996/11/18 16:08:30 mrg Exp $
  */
 
 /*
@@ -128,7 +128,7 @@ L.$1.eval(TWOSUPN+$2):
 	', `	DEVELOP_QUOTIENT_BITS(incr($1), `eval(2*$2-1)')')
 	ifelse($1, 1, `9:')')
 
-#include "DEFS.h"
+#include <machine/asm.h>
 #include <machine/trap.h>
 
 FUNC(NAME)
