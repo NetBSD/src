@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1999/05/17 15:14:54 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 1999/05/18 08:14:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.19 1999/05/17 15:14:54 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.20 1999/05/18 08:14:17 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -351,13 +351,13 @@ show_chdir_messages(code)
 		/* First check for a display file */
 	if (curclass.display != NULL && curclass.display[0] &&
 	    (f = fopen(curclass.display, "r")) != NULL) {
+		lreply(code, "");
 		while (fgets(line, BUFSIZ, f)) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
-			lreply(code, "%s", line);
+			lreply(0, "%s", line);
 		}
 		fclose(f);
-		lreply(code, "");
 	}
 
 		/* Now see if there are any notify files */
@@ -373,6 +373,10 @@ show_chdir_messages(code)
 		if (!S_ISREG(st.st_mode))
 			continue;
 		then = st.st_mtime;
+		if (code != 0) {
+			lreply(code, "");
+			code = 0;
+		}
 		lreply(code, "Please read the file %s", *rlist);
 		t = localtime(&now);
 		age = 365 * t->tm_year + t->tm_yday;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.62 1999/05/17 15:14:54 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.63 1999/05/18 08:14:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -80,7 +80,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.62 1999/05/17 15:14:54 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.63 1999/05/18 08:14:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,6 +231,7 @@ int	main __P((int, char *[]));
 int	klogin __P((struct passwd *, char *, char *, char *));
 void	kdestroy __P((void));
 #endif
+
 int
 main(argc, argv)
 	int argc;
@@ -355,10 +356,11 @@ main(argc, argv)
 
 	/* If logins are disabled, print out the message. */
 	if ((fd = fopen(_PATH_NOLOGIN,"r")) != NULL) {
+		lreply(530, "");
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
-			lreply(530, "%s", line);
+			lreply(0, "%s", line);
 		}
 		(void) fflush(stdout);
 		(void) fclose(fd);
@@ -366,10 +368,11 @@ main(argc, argv)
 		exit(0);
 	}
 	if ((fd = fopen(conffilename(_PATH_FTPWELCOME), "r")) != NULL) {
+		lreply(220, "");
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
-			lreply(220, "%s", line);
+			lreply(0, "%s", line);
 		}
 		(void) fflush(stdout);
 		(void) fclose(fd);
@@ -751,10 +754,11 @@ skip:
 	if ((fd = fopen(conffilename(_PATH_FTPLOGINMESG), "r")) != NULL) {
 		char *cp, line[LINE_MAX];
 
+		lreply(230, "");
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
-			lreply(230, "%s", line);
+			lreply(0, "%s", line);
 		}
 		(void) fflush(stdout);
 		(void) fclose(fd);
@@ -797,13 +801,13 @@ retrieve(cmd, name)
 	FILE *fin = NULL, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *)) = NULL;
-	int log, sendrv, closerv, stderrfd, isconversion, isdata;
+	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
 	char tline[BUFSIZ];
 	const char *dispname;
 
 	sendrv = closerv = stderrfd = -1;
-	isconversion = isdata = log = 0;
+	isconversion = isdata = isls = log = 0;
 	tdp = NULL;
 	dispname = name;
 	if (cmd == NULL) {
@@ -821,11 +825,17 @@ retrieve(cmd, name)
 	if (cmd != NULL) {
 		char temp[MAXPATHLEN + 1];
 
-		(void)snprintf(temp, sizeof(temp), "%s", TMPFILE);
-		stderrfd = mkstemp(temp);
-		if (stderrfd != -1)
-			(void)unlink(temp);
-		(void)snprintf(tline, sizeof(tline), "%s", cmd);
+		if (strncmp(cmd, INTERNAL_LS, sizeof(INTERNAL_LS) - 1) == 0 &&
+		    strchr(" \t\n", cmd[sizeof(INTERNAL_LS) - 1]) != NULL) {
+			isls = 1;
+			stderrfd = -1;
+		} else {
+			(void)snprintf(temp, sizeof(temp), "%s", TMPFILE);
+			stderrfd = mkstemp(temp);
+			if (stderrfd != -1)
+				(void)unlink(temp);
+		}
+		(void)snprintf(tline, sizeof(tline), cmd, name);
 		dispname = tline;
 		fin = ftpd_popen(tline, "r", stderrfd);
 		closefunc = ftpd_pclose;
@@ -887,7 +897,7 @@ done:
 		FILE *err;
 		struct stat sb;
 
-		if (cmd != NULL && closerv != 0) {
+		if (!isls && cmd != NULL && closerv != 0) {
 			lreply(226,
 			    "Command returned an exit status of %d",
 			    closerv);
@@ -896,7 +906,7 @@ done:
 				    "get command: '%s' returned %d",
 				    cmd, closerv);
 		}
-		if (cmd != NULL && stderrfd != -1 &&
+		if (!isls && cmd != NULL && stderrfd != -1 &&
 		    (fstat(stderrfd, &sb) == 0) && sb.st_size > 0 &&
 		    ((err = fdopen(stderrfd, "r")) != NULL)) {
 			char *cp, line[LINE_MAX];
@@ -906,11 +916,10 @@ done:
 			while (fgets(line, sizeof(line), err) != NULL) {
 				if ((cp = strchr(line, '\n')) != NULL)
 					*cp = '\0';
-				lreply(226, " %s", line);
+				lreply(0, "  %s", line);
 			}
 			(void) fflush(stdout);
 			(void) fclose(err);
-			lreply(226, "End of command error messages.");
 				/* a reply(226,) must follow */
 		}
 		reply(226, "Transfer complete.");
@@ -1142,18 +1151,24 @@ send_data(instr, outstr, blksize, isdata)
 		(void) alarm(curclass.timeout);
 		while ((c = getc(instr)) != EOF) {
 			byte_count++;
+			if (c == '\n') {
+				if (ferror(outstr))
+					goto data_err;
+				(void) putc('\r', outstr);
+				if (isdata) {
+					total_data_out++;
+					total_data++;
+				}
+				total_bytes_out++;
+				total_bytes++;
+			}
+			(void) putc(c, outstr);
 			if (isdata) {
 				total_data_out++;
 				total_data++;
 			}
 			total_bytes_out++;
 			total_bytes++;
-			if (c == '\n') {
-				if (ferror(outstr))
-					goto data_err;
-				(void) putc('\r', outstr);
-			}
-			(void) putc(c, outstr);
 			if ((byte_count % 4096) == 0)
 				(void) alarm(curclass.timeout);
 		}
@@ -1172,8 +1187,8 @@ send_data(instr, outstr, blksize, isdata)
 			perror_reply(451, "Local resource failure: malloc");
 			goto cleanup_send_data;
 		}
-		netfd = fileno(outstr);
 		filefd = fileno(instr);
+		netfd = fileno(outstr);
 		(void) alarm(curclass.timeout);
 		while ((cnt = read(filefd, buf, (size_t)blksize)) > 0) {
 			if (write(netfd, buf, cnt) != cnt)
@@ -1365,8 +1380,12 @@ statfilecmd(filename)
 				return;
 			}
 			(void) putc('\r', stdout);
+			total_bytes++;
+			total_bytes_out++;
 		}
 		(void) putc(c, stdout);
+		total_bytes++;
+		total_bytes_out++;
 	}
 	(void) ftpd_pclose(fin);
 	reply(211, "End of Status");
@@ -2064,7 +2083,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 		return;
 
 	if ((p = realpath(file1, realfile)) == NULL) {
-#if 0				/* XXX */
+#if 0	/* XXX: too noisy */
 		syslog(LOG_WARNING, "realpath `%s' failed: %s",
 		    realfile, strerror(errno));
 #endif
@@ -2077,7 +2096,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 		    " = %qd byte%s", (long long) bytes, PLURAL(bytes));
 	} else if (file2 != NULL) {
 		if ((p = realpath(file2, realfile)) == NULL) {
-#if 0				/* XXX */
+#if 0	/* XXX: too noisy */
 			syslog(LOG_WARNING, "realpath `%s' failed: %s",
 			    realfile, strerror(errno));
 #endif
