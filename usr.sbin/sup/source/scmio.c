@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.11 2002/07/10 20:19:43 wiz Exp $	*/
+/*	$NetBSD: scmio.c,v 1.12 2002/09/19 02:49:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -161,6 +161,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include "supcdefs.h"
 #include "supextern.h"
 #include "supmsg.h"
@@ -419,13 +420,11 @@ static int
 readdata(int count, char *data)
 {				/* read raw data from network */
 	char *p;
-	int n, m, x;
-	int tries;
+	int c, n, m, x;
 	static int bufcnt = 0;
 	static char *bufptr;
 	static char buffer[FILEXFER];
-	static int imask;
-	static struct timeval timout;
+	struct pollfd set[1];
 
 	if (count < 0) {
 		if (bufptr + count < buffer)
@@ -452,38 +451,23 @@ readdata(int count, char *data)
 	}
 	bufptr = buffer;
 	bufcnt = 0;
-	timout.tv_usec = 0;
-	timout.tv_sec = 2 * 60 * 60;
+	set[0].fd = netfile;
+	set[0].events = POLLIN;
 	p = buffer;
 	n = FILEXFER;
 	m = count;
 	while (m > 0) {
-		tries = 0;
-		for (;;) {
-			imask = 1 << netfile;
-			if (select(netfile + 1, (fd_set *) & imask, (fd_set *) 0, (fd_set *) 0, &timout) < 0)
-				imask = 1;
-			errno = 0;
-			if (imask)
-				x = read(netfile, p, n);
-			else
+		while ((c = poll(set, 1, 2 * 60 * 60 * 1000)) < 1) {
+			if (c == 0)
 				return (scmerr(-1, "Timeout on network input"));
-			if (x > 0)
-				break;
-			if (x == 0)
-				return (scmerr(-1, "Premature EOF on network input"));
-			if (errno)
-				break;
-			if (++tries > RETRIES)
-				break;
-			if (scmdebug > 0)
-				loginfo("SCM Retrying failed network read");
+			if (errno != EINTR)
+				sleep(5);
 		}
-		if (x < 0) {
-			if (errno)
-				return (scmerr(errno, "Read error on network"));
-			return (scmerr(-1, "Read retries failed"));
-		}
+		x = read(netfile, p, n);
+		if (x == 0)
+			return (scmerr(-1, "Premature EOF on network input"));
+		if (x < 0)
+			return (scmerr(errno, "Read error on network"));
 		p += x;
 		n -= x;
 		m -= x;
@@ -719,18 +703,16 @@ readmstr(int msg, char **buf)
 void
 crosspatch(void)
 {
-	fd_set ibits, obits, xbits;
+	struct pollfd set[2];
 	int c;
 	char buf[STRINGLENGTH];
 
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
+	set[1].fd = netfile;
+	set[1].events = POLLIN;
 	for (;;) {
-		FD_ZERO(&ibits);
-		FD_ZERO(&obits);
-		FD_ZERO(&xbits);
-		FD_SET(0, &ibits);
-		FD_SET(netfile, &ibits);
-		if ((c = select(netfile + 1, &ibits, &obits, &xbits,
-			    (struct timeval *) NULL)) < 1) {
+		if ((c = poll(set, 2, INFTIM)) < 1) {
 			if (c == -1) {
 				if (errno == EINTR) {
 					continue;
@@ -739,7 +721,7 @@ crosspatch(void)
 			sleep(5);
 			continue;
 		}
-		if (FD_ISSET(netfile, &ibits)) {
+		if (set[1].revents & POLLIN) {
 			c = read(netfile, buf, sizeof(buf));
 			if (c < 0 && errno == EWOULDBLOCK)
 				c = 0;
@@ -750,7 +732,7 @@ crosspatch(void)
 				(void) write(1, buf, c);
 			}
 		}
-		if (FD_ISSET(0, &ibits)) {
+		if (set[0].revents & POLLIN) {
 			c = read(0, buf, sizeof(buf));
 			if (c < 0 && errno == EWOULDBLOCK)
 				c = 0;
