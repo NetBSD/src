@@ -1093,15 +1093,16 @@ ptransfer(direction, bytes, t0, t1)
 	struct timeval *t0, *t1;
 {
 	struct timeval td;
-	float s, bs;
+	float s;
+	long bs;
 
 	if (verbose) {
 		tvsub(&td, t1, t0);
 		s = td.tv_sec + (td.tv_usec / 1000000.);
 #define	nz(x)	((x) == 0 ? 1 : (x))
 		bs = bytes / nz(s);
-		printf("%ld bytes %s in %.2g seconds (%.2g Kbytes/s)\n",
-		    bytes, direction, s, bs / 1024.);
+		printf("%ld bytes %s in %.3g seconds (%ld bytes/s)\n",
+		    bytes, direction, s, bs);
 	}
 }
 
