@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.30 2002/10/07 04:51:00 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.31 2002/10/07 09:41:51 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.30 2002/10/07 04:51:00 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.31 2002/10/07 09:41:51 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -220,6 +220,11 @@ rnd_wakeup_readers(void)
 		}
 		selwakeup(&rnd_selq);
 
+#ifdef RND_VERBOSE
+		if (!rnd_have_entropy)
+			printf("rnd: have initial entropy (%u)\n",
+			       rndpool_get_entropy_count(&rnd_pool));
+#endif
 		/*
 		 * Allow open of /dev/random now, too.
 		 */
@@ -317,7 +322,8 @@ rnd_init(void)
 	rnd_ready = 1;
 
 #ifdef RND_VERBOSE
-	printf("Random device ready\n");
+	printf("rnd: initialised (%u)%s", RND_POOLBITS,
+	       c ? " with counter\n" : "\n");
 #endif
 }
 
@@ -767,8 +773,22 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 	LIST_INSERT_HEAD(&rnd_sources, rs, list);
 
 #ifdef RND_VERBOSE
-	printf("%s: attached as an entropy source\n", rs->data.name);
+	printf("rnd: %s attached as an entropy source (", rs->data.name);
+	if (!(flags & RND_FLAG_NO_COLLECT)) {
+		printf("collecting");
+		if (flags & RND_FLAG_NO_ESTIMATE)
+			printf(" without estimation");
+	}
+	else
+		printf("off");
+	printf(")\n");
 #endif
+
+	/* 
+	 * Again, put some more initial junk in the pool.
+	 * XXX Bogus, but harder to guess than zeros.
+	 */
+	rndpool_add_data(&rnd_pool, &ts, sizeof(u_int32_t), 0);
 }
 
 /*
@@ -805,6 +825,9 @@ rnd_detach_source(rndsource_element_t *rs)
 	}
 
 	splx(s);
+#ifdef RND_VERBOSE
+	printf("rnd: %s detached as an entropy source\n", rs->data.name);
+#endif
 }
 
 /*
@@ -977,6 +1000,12 @@ int
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	int retval, s;
+
+#ifdef RND_VERBOSE
+	if (!rnd_have_entropy)
+		printf("rnd: WARNING! initial entropy low (%u).\n",
+		       rndpool_get_entropy_count(&rnd_pool));
+#endif
 
 	s = splsoftclock();
 	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
