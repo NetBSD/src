@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.10 1996/12/09 20:03:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $";
+static char rcsid[] = "$NetBSD: xinstall.c,v 1.10 1996/12/09 20:03:20 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -299,7 +299,14 @@ copy(from_fd, from_name, to_fd, to_name, size)
 {
 	register int nr, nw;
 	int serrno;
+#ifndef XXX_BROKEN_GCC
 	char *p, buf[MAXBSIZE];
+#else
+	char *p, *buf;
+
+	if ((buf = (char *)malloc(MAXBSIZE)) == NULL)
+		err(1, "can't allocate memory for copy");
+#endif
 
 	/*
 	 * Mmap and write if less than 8M (the limit is so we don't totally
@@ -326,6 +333,9 @@ copy(from_fd, from_name, to_fd, to_name, size)
 			errx(1, "%s: %s", from_name, strerror(serrno));
 		}
 	}
+#ifdef XXX_BROKEN_GCC
+	free(buf);
+#endif
 }
 
 /*
