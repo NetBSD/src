@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.c,v 1.23 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: remoteconf.c,v 1.25 2001/05/24 06:43:24 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -154,9 +154,11 @@ newrmconf()
 	new->idvtype_p = IDTYPE_ADDRESS;
 	new->nonce_size = DEFAULT_NONCE_SIZE;
 	new->keepalive = FALSE;
+	new->passive = FALSE;
 	new->ini_contact = TRUE;
 	new->pcheck_level = PROP_CHECK_STRICT;
 	new->verify_cert = TRUE;
+	new->getcert_method = ISAKMP_GETCERT_PAYLOAD;
 	new->send_cert = TRUE;
 	new->send_cr = TRUE;
 	new->support_mip6 = FALSE;
