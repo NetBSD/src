@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.76 1996/09/26 23:34:47 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -74,17 +74,18 @@
  *
  * ON EXIT:
  *	error:	nothing held, etc.  exec header still allocated.
- *	ok:	filled exec package, one locked vnode.
+ *	ok:	filled exec package, executable's vnode (locked).
  *
  * EXEC SWITCH ENTRY:
  * 	Locked vnode to check, exec package, proc.
  *
  * EXEC SWITCH EXIT:
- *	ok:	return 0, filled exec package, one locked vnode.
+ *	ok:	return 0, filled exec package, executable's vnode (locked).
  *	error:	destructive:
  *			everything deallocated execept exec header.
- *		non-descructive:
- *			error code, locked vnode, exec header unmodified
+ *		non-destructive:
+ *			error code, executable's vnode (locked),
+ *			exec header unmodified.
  */
 int
 check_exec(p, epp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.14 1996/02/04 02:15:01 christos Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -257,7 +257,7 @@ exec_aout_setup_stack(p, epp)
 	 * arguably, it could be made into one, but that would require the
 	 * addition of another mapping proc, which is unnecessary
 	 *
-	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
+	 * note that in memory, things assumed to be: 0 ... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
