@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.74 2001/04/06 11:13:47 wiz Exp $	*/
+/*	$NetBSD: inetd.c,v 1.75 2001/12/26 17:01:39 abs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.74 2001/04/06 11:13:47 wiz Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.75 2001/12/26 17:01:39 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ void		unregister_rpc __P((struct servtab *sep));
 void		bump_nofile __P((void));
 void		inetd_setproctitle __P((char *, int));
 void		initring __P((void));
-long		machtime __P((void));
+uint32_t	machtime __P((void));
 int 		port_good_dg __P((struct sockaddr *sa));
 static int	getline __P((int, char *, int));
 int		main __P((int, char *[], char *[]));
@@ -1972,7 +1972,7 @@ chargen_dg(s, sep)		/* Character generator */
  * some seventy years Bell Labs was asleep.
  */
 
-long
+uint32_t
 machtime()
 {
 	struct timeval tv;
@@ -1980,10 +1980,10 @@ machtime()
 	if (gettimeofday(&tv, (struct timezone *)0) < 0) {
 		if (debug)
 			fprintf(stderr, "Unable to get time of day\n");
-		return (0L);
+		return (0);
 	}
-#define	OFFSET ((u_long)25567 * 24*60*60)
-	return (htonl((long)(tv.tv_sec + OFFSET)));
+#define	OFFSET ((uint32_t)25567 * 24*60*60)
+	return (htonl((uint32_t)(tv.tv_sec + OFFSET)));
 #undef OFFSET
 }
 
@@ -1993,7 +1993,7 @@ machtime_stream(s, sep)
 	int s;
 	struct servtab *sep;
 {
-	long result;
+	uint32_t result;
 
 	result = machtime();
 	(void) write(s, (char *) &result, sizeof(result));
@@ -2005,7 +2005,7 @@ machtime_dg(s, sep)
 	int s;
 	struct servtab *sep;
 {
-	long result;
+	uint32_t result;
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
 	int size;
