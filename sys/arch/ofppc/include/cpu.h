@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1999/08/05 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1999/08/10 21:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -82,6 +82,7 @@ extern struct machvec machine_interface;
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
+#define	cpu_number()		0
 
 extern void delay __P((unsigned));
 #define	DELAY(n)		delay(n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1999/06/24 01:28:02 sakamoto Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1999/08/10 21:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 
 #define	cpu_swapout(p)
 #define cpu_wait(p)
+#define	cpu_number()		0
 
 extern void delay __P((unsigned int));
 #define	DELAY(n)		delay(n)

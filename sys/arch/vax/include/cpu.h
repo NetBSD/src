@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.38 1999/08/07 10:36:46 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.39 1999/08/10 21:08:09 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -43,6 +43,7 @@
 #define enablertclock()
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
+#define	cpu_number()			0
 
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1998/11/11 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1999/08/10 21:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -224,6 +224,7 @@
  */
 
 #define cpu_wait(p)	/* nothing */
+#define	cpu_number()	0
 
 /*
  * Notify the current process (p) that it has a signal pending,

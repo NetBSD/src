@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.30 1998/11/19 01:51:40 ross Exp $ */
+/* $NetBSD: cpu.h,v 1.31 1999/08/10 21:08:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,8 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
+#define	cpu_wait(p)		/* nothing */
+#define	cpu_number()		alpha_pal_whami()
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 1999/02/26 22:16:35 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 1999/08/10 21:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define cpu_swapout(p)			/* nothing */
+#define	cpu_number()			0
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous

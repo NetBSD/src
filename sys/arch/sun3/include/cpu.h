@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1997/03/20 16:21:10 gwr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1999/08/10 21:08:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,6 +66,7 @@
  * referenced in generic code
  */
 #define	cpu_wait(p)			/* nothing */
+#define	cpu_number()			0
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
