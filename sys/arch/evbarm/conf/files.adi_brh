@@ -1,0 +1,29 @@
+#	$NetBSD: files.adi_brh,v 1.1 2003/01/25 02:00:15 thorpej Exp $
+#
+# ADI BRH evaluation board configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
+file	arch/evbarm/adi_brh/brh_7seg.c
+file	arch/evbarm/adi_brh/brh_machdep.c
+
+# BRH on-board devices
+device	obio {addr, [irq = -1]}: bus_space_generic
+attach	obio at mainbus
+file	arch/evbarm/adi_brh/obio.c			obio
+file	arch/evbarm/adi_brh/obio_space.c		obio
+
+# on-board 16550 UARTs
+attach	com at obio with com_obio
+file	arch/evbarm/adi_brh/com_obio.c			com_obio
+
+# i80200 CPU support
+include "arch/arm/xscale/files.i80200"
+
+# BECC Companion support
+include	"arch/arm/xscale/files.becc"
+
+attach	becc at mainbus with becc_mainbus
+file	arch/evbarm/adi_brh/becc_mainbus.c		becc_mainbus

@@ -1,0 +1,16 @@
+#	$NetBSD: mk.adi_brh,v 1.1 2003/01/25 02:00:15 thorpej Exp $
+
+SYSTEM_FIRST_OBJ=	brh_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/adi_brh/brh_start.S
+
+KERNEL_BASE_PHYS=0xc0200000
+KERNEL_BASE_VIRT=0xc0200000
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O srec $@ $@.srec; \
+	${OBJCOPY} -S -O srec $@ $@.srec; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.srec@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
