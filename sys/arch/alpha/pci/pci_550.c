@@ -1,12 +1,11 @@
-/* $NetBSD: pci_550.c,v 1.1 1998/06/05 02:13:42 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.2 1998/06/05 03:34:27 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Andrew Gallatin and Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.1 1998/06/05 02:13:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.2 1998/06/05 03:34:27 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
