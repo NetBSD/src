@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/02/29 11:36:50 leo Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/14 10:17:00 leo Exp $
 
 PROG=	wdb00t.ahdi
-SRCS=	wdb00t.ahdi.s
+SRCS=	${.CURDIR}/wdb00t.ahdi.s
 NOMAN=
+INCL=	-I${.CURDIR} -I${.CURDIR}/..
+
+CPPFLAGS+= ${INCL}
 
 .include <bsd.prog.mk>
