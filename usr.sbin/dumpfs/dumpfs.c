@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.21.4.1 2001/11/25 19:20:09 he Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.21.4.2 2001/11/25 19:24:07 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.21.4.1 2001/11/25 19:20:09 he Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.21.4.2 2001/11/25 19:24:07 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ dumpfs(name)
 
  	if (afs.fs_magic != FS_MAGIC) {
 		if (afs.fs_magic == bswap32(FS_MAGIC)) {
-			ffs_sb_swap(&afs, &afs, 0);
+			ffs_sb_swap(&afs, &afs, 1);
 			needswap = 1;
 		} else {
 			warnx("%s: superblock has bad magic number, skipped", name);
