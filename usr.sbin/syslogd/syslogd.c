@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.7 2004/11/15 17:16:10 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.8 2004/11/15 17:26:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.7 2004/11/15 17:16:10 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.8 2004/11/15 17:26:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ struct filed {
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
-			char	f_hname[MAXHOSTNAMELEN+1];
+			char	f_hname[MAXHOSTNAMELEN];
 			struct	addrinfo *f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
@@ -158,7 +158,7 @@ struct filed {
 	} f_un;
 	char	f_prevline[MAXSVLINE];		/* last message logged */
 	char	f_lasttime[16];			/* time of last occurrence */
-	char	f_prevhost[MAXHOSTNAMELEN+1];	/* host from which recd. */
+	char	f_prevhost[MAXHOSTNAMELEN];	/* host from which recd. */
 	int	f_prevpri;			/* pri of f_prevline */
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
@@ -215,7 +215,7 @@ struct	filed consfile;
 
 int	Debug;			/* debug flag */
 int	daemonized = 0;		/* we are not daemonized yet */
-char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
+char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	*finet = NULL;		/* Internet datagram sockets */
 int	Initialized;		/* set when we have initialized ourselves */
@@ -1341,7 +1341,7 @@ init(void)
 	char *p;
 	char cline[LINE_MAX];
 	char prog[NAME_MAX + 1];
-	char host[MAXHOSTNAMELEN + 1];
+	char host[MAXHOSTNAMELEN];
 
 	dprintf("init\n");
 
@@ -1443,7 +1443,7 @@ init(void)
 			}
 			if (*p == '@')
 				p = LocalHostName;
-			for (i = 1; i < MAXHOSTNAMELEN; i++) {
+			for (i = 1; i < MAXHOSTNAMELEN - 1; i++) {
 				if (!isalnum((unsigned char)*p) &&
 				    *p != '.' && *p != '-')
 					break;
