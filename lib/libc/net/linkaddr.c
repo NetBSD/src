@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)linkaddr.c	5.2 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: linkaddr.c,v 1.3 1993/08/26 00:46:09 jtc Exp $";
+static char *rcsid = "$Id: linkaddr.c,v 1.4 1994/10/19 03:19:42 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ link_addr(addr, sdl)
 		case NAMING | LETTER:
 			*cp++ = addr[-1]; continue;
 		case NAMING | DELIM:
-			state = RESET; sdl->sdl_nlen = cp - sdl->sdl_data; continue;
+			state = RESET; sdl->sdl_nlen = (long)cp - (long)sdl->sdl_data; continue;
 		case GOTTWO | DIGIT:
 			*cp++ = byte; /*FALLTHROUGH*/
 		case RESET | DIGIT:
