@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1998/10/19 22:09:19 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1998/11/18 09:05:18 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,6 +78,8 @@
 #include <machine/trap.h>
 
 #include <dev/cons.h>
+
+#include "pfb.h"
 
 #include "pc.h"
 #if (NPC > 0)
@@ -727,6 +729,16 @@ consinit()
 	if (!consinfo)
 		panic("not found console information in bootinfo");
 
+#if (NPFB > 0)
+	if (!strcmp(consinfo->devname, "be")) {
+		pfb_cnattach(consinfo->addr);
+#if (NPCKBC > 0)
+		pckbc_cnattach(BEBOX_BUS_SPACE_IO, PCKBC_KBD_SLOT);
+#endif
+		return;
+	}
+#endif
+
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
@@ -744,6 +756,7 @@ dokbd:
 		return;
 	}
 #endif /* PC | VGA */
+
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = BEBOX_BUS_SPACE_IO;
@@ -1129,3 +1142,36 @@ lcsplx(ipl)
 
 void
 dk_establish() {}
+
+/*
+ * Allocate vm space and mapin the I/O address
+ */
+void *
+mapiodev(pa, len)
+	paddr_t pa;
+	psize_t len;
+{
+	paddr_t faddr;
+	vaddr_t taddr, va;
+	int off;
+
+	faddr = trunc_page(pa);
+	off = pa - faddr;
+	len = round_page(off + len);
+#if defined(UVM)
+	va = taddr = uvm_km_valloc(kernel_map, len);
+#else
+	va = taddr = kmem_alloc_pageable(kernel_map, len);
+#endif
+
+	if (va == 0)
+		return NULL;
+
+	for (; len > 0; len -= NBPG) {
+		pmap_enter(pmap_kernel(), taddr, faddr,
+			   VM_PROT_READ | VM_PROT_WRITE, 1);
+		faddr += NBPG;
+		taddr += NBPG;
+	}
+	return (void *)(va + off);
+}
