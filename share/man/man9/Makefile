@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.140 2003/04/04 20:55:25 wiz Exp $
+#       $NetBSD: Makefile,v 1.141 2003/04/06 07:09:48 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -30,7 +30,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
 	tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
-	vattr.9 vfs.9 vfsops.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
+	vattr.9 vfs.9 vfsops.9 vfssubr.9 vme.9 vnfileops.9 \
+	vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
 MAN+=	dmover.9
@@ -450,10 +451,7 @@ MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_space_get.9
 MLINKS+=vattr.9 vattr_null.9 \
 	vattr.9 VATTR_NULL.9
-MLINKS+=vfsops.9 vfs_rootmountalloc.9 \
-	vfsops.9 vfs_export_lookup.9 \
-	vfsops.9 vfs_getnewfsid.9 \
-	vfsops.9 VFS_MOUNT.9 \
+MLINKS+=vfsops.9 VFS_MOUNT.9 \
 	vfsops.9 VFS_START.9 \
 	vfsops.9 VFS_UNMOUNT.9 \
 	vfsops.9 VFS_ROOT.9 \
@@ -464,6 +462,24 @@ MLINKS+=vfsops.9 vfs_rootmountalloc.9 \
 	vfsops.9 VFS_FHTOVP.9 \
 	vfsops.9 VFS_VPTOFH.9 \
 	vfsops.9 VFS_CHECKEXP.9
+MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
+	vfssubr.9 vfs_getvfs.9 \
+	vfssubr.9 vfs_export.9 \
+	vfssubr.9 vfs_showexport.9 \
+	vfssubr.9 vfs_export_lookup.9 \
+	vfssubr.9 vfs_setpublic.9 \
+	vfssubr.9 vfs_mountedon.9 \
+	vfssubr.9 vfs_mountroot.9 \
+	vfssubr.9 vfs_unmountall.9 \
+	vfssubr.9 vfs_busy.9 \
+	vfssubr.9 vfs_unbusy.9 \
+	vfssubr.9 vfs_rootmountalloc.9 \
+	vfssubr.9 vfs_shutdown.9 \
+	vfssubr.9 vfs_attach.9 \
+	vfssubr.9 vfs_detach.9 \
+	vfssubr.9 vfs_reinit.9 \
+	vfssubr.9 vfs_getopsbyname.9 \
+	vfssubr.9 vfs_sysctl.9
 MLINKS+=vnode.9 vcount.9 \
 	vnode.9 vref.9 \
 	vnode.9 VREF.9 \
@@ -480,7 +496,6 @@ MLINKS+=vnode.9 vcount.9 \
 	vnode.9 vgone.9 \
 	vnode.9 vgonel.9 \
 	vnode.9 vflush.9 \
-	vnode.9 vfs_shutdown.9 \
 	vnode.9 vaccess.9 \
 	vnode.9 checkalias.9 \
 	vnode.9 bdevvp.9 \

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.9 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: vfsops.9,v 1.10 2003/04/06 07:09:47 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,9 +39,6 @@
 .Os
 .Sh NAME
 .Nm vfsops ,
-.Nm vfs_rootmountalloc ,
-.Nm vfs_export_lookup ,
-.Nm vfs_getnewfsid ,
 .Nm VFS_MOUNT ,
 .Nm VFS_START ,
 .Nm VFS_UNMOUNT ,
@@ -59,14 +56,6 @@
 .Fd #include \*[Lt]sys/param.h\*[Gt]
 .Fd #include \*[Lt]sys/mount.h\*[Gt]
 .Fd #include \*[Lt]sys/vnode.h\*[Gt]
-.Ft int
-.Fn vfs_rootmountalloc "char *fstypename" "char *devname" \
-"struct mount **mpp"
-.Ft int
-.Fn vfs_export_lookup "struct mount *mp" "struct netexport *nep" \
-"struct export_args *argp"
-.Ft void
-.Fn vfs_getnewfsid "struct mount *mp"
 .Ft int
 .Fn VFS_MOUNT "struct mount *mp" "const char *path" "void *data" \
 "struct nameidata *ndp" "struct proc *p"
@@ -187,31 +176,6 @@ member of the vfsops structure is invoked by file system independent
 code for sysctl operations which are file system specific.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn vfs_rootmountalloc "fstypename" "devname" "mpp"
-Lookup a file system type specified by the name
-.Fa fstypename
-and if found allocate and initialise a mount structure for it.
-The allocated mount structure is returned in the address specified by
-.Fa mpp .
-The device the root file system was mounted from is specified by the
-argument
-.Fa devname
-and is recorded in the new mount structure.
-.It Fn vfs_export_lookup "mp" "nep" "argp"
-Check client permission on the exportable file system specified by the
-mount structure
-.Fa mp .
-The argument
-.Fa nam
-is the address of the networked client.
-This function is used by file system type specific functions to verify
-that the client can access the file system.
-.It Fn vfs_getnewfsid "mp"
-Get a new unique file system id type for the file system specified by
-the mount structure
-.Fa mp .
-The file system id type is stored in
-.Em mp-\*[Gt]mnt_stat.f_fsid .
 .It Fn VFS_MOUNT "mp" "path" "data" "ndp" "p"
 Mount a file system specified by the mount structure
 .Fa mp
@@ -402,6 +366,7 @@ and
 .Xr intro 9 ,
 .Xr namei 9 ,
 .Xr vfs 9 ,
+.Xr vfssubr 9 ,
 .Xr vnode 9 ,
 .Xr vnodeops 9
 .Sh HISTORY
