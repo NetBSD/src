@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pm.c	7.8 (Berkeley) 11/15/92
+ *	from: @(#)pm.c	8.1 (Berkeley) 6/10/93
+ *      $Id: pm.c,v 1.2 1994/05/27 08:39:46 glass Exp $
  */
 
 /* 
@@ -49,9 +50,11 @@
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
  *
- * from: $Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
- *	v 9.2 90/02/13 22:16:24 shirriff Exp $ SPRITE (DECWRL)";
+ * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
+ *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
+ * $Id: pm.c,v 1.2 1994/05/27 08:39:46 glass Exp $
  */
+
 
 #include <pm.h>
 #include <dc.h>
@@ -93,8 +96,6 @@ static u_short curReg;		/* copy of PCCRegs.cmdr since it's read only */
 /*
  * Forward references.
  */
-extern void fbScroll();
-
 static void pmScreenInit();
 static void pmLoadCursor();
 static void pmRestoreCursorColor();
@@ -104,8 +105,8 @@ static void pmInitColorMap();
 static void pmVDACInit();
 static void pmLoadColorMap();
 
-extern void dcPutc(), fbKbdEvent(), fbMouseEvent(), fbMouseButtons();
 void pmKbdEvent(), pmMouseEvent(), pmMouseButtons();
+extern void dcPutc();
 extern void (*dcDivertXInput)();
 extern void (*dcMouseEvent)();
 extern void (*dcMouseButtons)();
@@ -191,7 +192,6 @@ pmclose(dev, flag)
 	dcMouseButtons = (void (*)())0;
 	splx(s);
 	pmScreenInit();
-	vmUserUnmap();
 	bzero((caddr_t)fp->fr_addr,
 		(fp->isMono ? 1024 / 8 : 1024) * 864);
 	pmPosCursor(fp->col * 8, fp->row * 15);
@@ -199,9 +199,10 @@ pmclose(dev, flag)
 }
 
 /*ARGSUSED*/
-pmioctl(dev, cmd, data, flag)
+pmioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	caddr_t data;
+	struct proc *p;
 {
 	register PCCRegs *pcc = (PCCRegs *)MACH_PHYS_TO_UNCACHED(KN01_SYS_PCC);
 	register struct pmax_fb *fp = &pmfb;
@@ -209,43 +210,7 @@ pmioctl(dev, cmd, data, flag)
 
 	switch (cmd) {
 	case QIOCGINFO:
-	    {
-		caddr_t addr;
-		extern caddr_t vmUserMap();
-
-		/*
-		 * Map the all the data the user needs access to into
-		 * user space.
-		 */
-		addr = vmUserMap(sizeof(struct fbuaccess), (unsigned)fp->fbu);
-		if (addr == (caddr_t)0)
-			goto mapError;
-		*(PM_Info **)data = &((struct fbuaccess *)addr)->scrInfo;
-		fp->fbu->scrInfo.qe.events = ((struct fbuaccess *)addr)->events;
-		fp->fbu->scrInfo.qe.tcs = ((struct fbuaccess *)addr)->tcs;
-		/*
-		 * Map the plane mask into the user's address space.
-		 */
-		addr = vmUserMap(4, (unsigned)
-			MACH_PHYS_TO_UNCACHED(KN01_PHYS_COLMASK_START));
-		if (addr == (caddr_t)0)
-			goto mapError;
-		fp->fbu->scrInfo.planemask = (char *)addr;
-		/*
-		 * Map the frame buffer into the user's address space.
-		 */
-		addr = vmUserMap(fp->isMono ? 256*1024 : 1024*1024,
-			(unsigned)fp->fr_addr);
-		if (addr == (caddr_t)0)
-			goto mapError;
-		fp->fbu->scrInfo.bitmap = (char *)addr;
-		break;
-
-	mapError:
-		vmUserUnmap();
-		printf("Cannot map shared data structures\n");
-		return (EIO);
-	    }
+		return (fbmmap(fp, dev, data, p));
 
 	case QIOCPMSTATE:
 		/*
@@ -337,6 +302,24 @@ pmioctl(dev, cmd, data, flag)
 	return (0);
 }
 
+/*
+ * Return the physical page number that corresponds to byte offset 'off'.
+ */
+/*ARGSUSED*/
+pmmap(dev, off, prot)
+	dev_t dev;
+{
+	int len;
+
+	len = pmax_round_page(((vm_offset_t)&pmu & PGOFSET) + sizeof(pmu));
+	if (off < len)
+		return pmax_btop(MACH_CACHED_TO_PHYS(&pmu) + off);
+	off -= len;
+	if (off >= pmfb.fr_size)
+		return (-1);
+	return pmax_btop(MACH_UNCACHED_TO_PHYS(pmfb.fr_addr) + off);
+}
+
 pmselect(dev, flag, p)
 	dev_t dev;
 	int flag;
@@ -370,7 +353,13 @@ pminit()
 	fp->isMono = *(volatile u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR) &
 		KN01_CSR_MONO;
 	fp->fr_addr = (char *)MACH_PHYS_TO_UNCACHED(KN01_PHYS_FBUF_START);
-	fp->fbu = &pmu;
+	fp->fr_size = fp->isMono ? 0x40000 : 0x100000;
+	/*
+	 * Must be in Uncached space since the fbuaccess structure is
+	 * mapped into the user's address space uncached.
+	 */
+	fp->fbu = (struct fbuaccess *)
+		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&pmu));
 	fp->posCursor = pmPosCursor;
 	fp->KBDPutc = dcPutc;
 	fp->kbddev = makedev(DCDEV, DCKBD_PORT);

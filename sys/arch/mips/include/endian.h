@@ -1,9 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * Copyright (c) 1987, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,9 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)endian.h	7.5 (Berkeley) 2/21/93
- * $Id: endian.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *	from: @(#)endian.h	8.1 (Berkeley) 6/11/93
+ *      $Id: endian.h,v 1.2 1994/05/27 08:40:34 glass Exp $
  */
+
+#ifndef _ENDIAN_H_
+#define	_ENDIAN_H_
 
 /*
  * Define _NOQUAD if the compiler does NOT support 64-bit integers.
@@ -89,4 +89,5 @@ __END_DECLS
 #define	HTONL(x)	(x) = htonl((u_long)x)
 #define	HTONS(x)	(x) = htons((u_short)x)
 #endif
-#endif /* !_POSIX_SOURCE */
+#endif /* ! _POSIX_SOURCE */
+#endif /* !_ENDIAN_H_ */

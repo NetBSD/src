@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)mips_opcode.h	7.1 (Berkeley) 3/19/92
- * $Id: mips_opcode.h,v 1.1.1.1 1993/10/12 03:22:43 deraadt Exp $
+ *	from: @(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
+ *      $Id: mips_opcode.h,v 1.2 1994/05/27 08:40:44 glass Exp $
  */
 
 /*
