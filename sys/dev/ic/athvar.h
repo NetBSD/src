@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.6 2003/12/16 06:48:09 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.7 2004/02/29 00:47:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -314,8 +314,8 @@ int	ath_intr(void *);
 	((*(_ah)->ah_perCalibration)((_ah), (_chan)))
 #define	ath_hal_setledstate(_ah, _state) \
 	((*(_ah)->ah_setLedState)((_ah), (_state)))
-#define	ath_hal_beaconinit(_ah, _opmode, _nextb, _bperiod) \
-	((*(_ah)->ah_beaconInit)((_ah), (_opmode), (_nextb), (_bperiod)))
+#define	ath_hal_beaconinit(_ah, _nextb, _bperiod) \
+	((*(_ah)->ah_beaconInit)((_ah), (_nextb), (_bperiod)))
 #define	ath_hal_beaconreset(_ah) \
 	((*(_ah)->ah_resetStationBeaconTimers)((_ah)))
 #define	ath_hal_beacontimers(_ah, _bs, _tsf, _dc, _cc) \
@@ -323,8 +323,8 @@ int	ath_intr(void *);
 		(_dc), (_cc)))
 #define	ath_hal_setassocid(_ah, _bss, _associd) \
 	((*(_ah)->ah_writeAssocid)((_ah), (_bss), (_associd), 0))
-#define	ath_hal_setopmode(_ah, _opmode) \
-	((*(_ah)->ah_setPCUConfig)((_ah), (_opmode)))
+#define	ath_hal_setopmode(_ah) \
+	((*(_ah)->ah_setPCUConfig)((_ah)))
 #define	ath_hal_stoptxdma(_ah, _qnum) \
 	((*(_ah)->ah_stopTxDma)((_ah), (_qnum)))
 #define	ath_hal_stoppcurecv(_ah) \
