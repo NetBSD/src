@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.12 1998/06/17 20:13:38 mark Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.13 1998/06/25 17:24:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -133,7 +133,7 @@ do_copyinout:
 	 * not 32 bit aligned then copy it slowly, byte at a time.
 	 * Otherwise copy it 32 bites at a time.
 	 */
-	sub	r2, r2, #4
+	subs	r2, r2, #4
 	bmi	Lslow_copyinout
 	tst	r0, #3
 	tsteq	r1, #3
