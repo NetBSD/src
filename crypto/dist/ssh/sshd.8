@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.90 2001/02/04 11:11:55 djm Exp $
+.\" $OpenBSD: sshd.8,v 1.94 2001/02/12 16:16:24 markus Exp $
 .Dd September 25, 1999
 .Dt SSHD 8
 .Os
@@ -298,7 +298,7 @@ Specifies whether an AFS token may be forwarded to the server.
 Default is
 .Dq yes .
 .It Cm AllowGroups
-This keyword can be followed by a number of group names, separated
+This keyword can be followed by a list of group names, separated
 by spaces.
 If specified, login is allowed only for users whose primary
 group or supplementary group list matches one of the patterns.
@@ -319,7 +319,7 @@ users are also denied shell access, as they can always install their
 own forwarders.
 .Pp
 .It Cm AllowUsers
-This keyword can be followed by a number of user names, separated
+This keyword can be followed by a list of user names, separated
 by spaces.
 If specified, login is allowed only for users names that
 match one of the patterns.
@@ -501,6 +501,17 @@ QUIET, FATAL, ERROR, INFO, VERBOSE and DEBUG.
 The default is INFO.
 Logging with level DEBUG violates the privacy of users
 and is not recommended.
+.It Cm MACs
+Specifies the available MAC (message authentication code) algorithms.
+The MAC algorithm is used in protocol version 2
+for data integrity protection.
+Multiple algorithms must be comma-separated.
+The default is
+.Pp
+.Bd -literal
+  ``hmac-sha1,hmac-md5,hmac-ripemd160,hmac-ripemd160@openssh.com,
+    hmac-sha1-96,hmac-md5-96''
+.Ed
 .It Cm MaxStartups
 Specifies the maximum number of concurrent unauthenticated connections to the
 .Nm
@@ -541,21 +552,26 @@ Specifies whether the root can log in using
 .Xr ssh 1 .
 The argument must be
 .Dq yes ,
-.Dq without-password
+.Dq without-password ,
+.Dq forced-commands-only
 or
 .Dq no .
 The default is
 .Dq yes .
-If this options is set to
-.Dq without-password
-only password authentication is disabled for root.
 .Pp
-Root login with RSA authentication when the
+If this option is set to
+.Dq without-password
+password authentication is disabled for root.
+.Pp
+If this option is set to
+.Dq forced-commands-only
+root login with public key authentication will be allowed,
+but only if the
 .Ar command
-option has been
-specified will be allowed regardless of the value of this setting
+option has been specified
 (which may be useful for taking remote backups even if root login is
-normally not allowed).
+normally not allowed). All other authentication methods are disabled
+for root.
 .It Cm PidFile
 Specifies the file that contains the process identifier of the
 .Nm

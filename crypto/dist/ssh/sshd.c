@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.164 2001/02/07 22:35:46 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.167 2001/02/12 23:26:20 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -315,7 +315,8 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			fatal_cleanup();
 		}
 
-		/* Read other side\'s version identification. */
+		/* Read other side's version identification. */
+		memset(buf, 0, sizeof(buf)); 
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomic_read(sock_in, &buf[i], 1) != 1) {
 				log("Did not receive ident string from %s.", get_remote_ipaddr());
@@ -1387,6 +1388,10 @@ do_ssh2_kex(void)
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	}
+	if (options.macs != NULL) {
+		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
+		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 	}
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
 

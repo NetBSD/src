@@ -16,7 +16,8 @@
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
-#define RCSID(msg)
+#define RCSID(msg) \
+static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.65 2001/02/04 15:32:24 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.67 2001/02/12 16:16:23 markus Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -28,6 +28,8 @@ RCSID("$OpenBSD: servconf.c,v 1.65 2001/02/04 15:32:24 stevesk Exp $");
 #include "tildexpand.h"
 #include "misc.h"
 #include "cipher.h"
+#include "kex.h"
+#include "mac.h"
 
 /* add listen address */
 void add_listen_addr(ServerOptions *options, char *addr);
@@ -49,7 +51,7 @@ initialize_server_options(ServerOptions *options)
 	options->server_key_bits = -1;
 	options->login_grace_time = -1;
 	options->key_regeneration_time = -1;
-	options->permit_root_login = -1;
+	options->permit_root_login = PERMIT_NOT_SET;
 	options->ignore_rhosts = -1;
 	options->ignore_root_rhosts = -1;
 	options->ignore_user_known_hosts = -1;
@@ -86,6 +88,7 @@ initialize_server_options(ServerOptions *options)
 	options->num_allow_groups = 0;
 	options->num_deny_groups = 0;
 	options->ciphers = NULL;
+	options->macs = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->gateway_ports = -1;
 	options->num_subsystems = 0;
@@ -120,8 +123,8 @@ fill_default_server_options(ServerOptions *options)
 		options->login_grace_time = 600;
 	if (options->key_regeneration_time == -1)
 		options->key_regeneration_time = 3600;
-	if (options->permit_root_login == -1)
-		options->permit_root_login = 1;			/* yes */
+	if (options->permit_root_login == PERMIT_NOT_SET)
+		options->permit_root_login = PERMIT_YES;
 	if (options->ignore_rhosts == -1)
 		options->ignore_rhosts = 1;
 	if (options->ignore_root_rhosts == -1)
@@ -212,7 +215,7 @@ typedef enum {
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowTcpForwarding,
 	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
-	sIgnoreUserKnownHosts, sCiphers, sProtocol, sPidFile,
+	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
 	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
 	sBanner, sReverseMappingCheck,
 	sIgnoreRootRhosts
@@ -271,6 +274,7 @@ static struct {
 	{ "allowgroups", sAllowGroups },
 	{ "denygroups", sDenyGroups },
 	{ "ciphers", sCiphers },
+	{ "macs", sMacs },
 	{ "protocol", sProtocol },
 	{ "gatewayports", sGatewayPorts },
 	{ "subsystem", sSubsystem },
@@ -454,14 +458,17 @@ parse_filename:
 				exit(1);
 			}
 			if (strcmp(arg, "without-password") == 0)
-				value = 2;
+				value = PERMIT_NO_PASSWD;
+			else if (strcmp(arg, "forced-commands-only") == 0)
+				value = PERMIT_FORCED_ONLY;
 			else if (strcmp(arg, "yes") == 0)
-				value = 1;
+				value = PERMIT_YES;
 			else if (strcmp(arg, "no") == 0)
-				value = 0;
+				value = PERMIT_NO;
 			else {
-				fprintf(stderr, "%s line %d: Bad yes/without-password/no argument: %s\n",
-					filename, linenum, arg);
+				fprintf(stderr, "%s line %d: Bad yes/"
+				    "without-password/forced-commands-only/no "
+				    "argument: %s\n", filename, linenum, arg);
 				exit(1);
 			}
 			if (*intptr == -1)
@@ -665,6 +672,17 @@ parse_flag:
 				    filename, linenum, arg ? arg : "<NONE>");
 			if (options->ciphers == NULL)
 				options->ciphers = xstrdup(arg);
+			break;
+
+		case sMacs:
+			arg = strdelim(&cp);
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: Missing argument.", filename, linenum);
+			if (!mac_valid(arg))
+				fatal("%s line %d: Bad SSH2 mac spec '%s'.",
+				    filename, linenum, arg ? arg : "<NONE>");
+			if (options->macs == NULL)
+				options->macs = xstrdup(arg);
 			break;
 
 		case sProtocol:
