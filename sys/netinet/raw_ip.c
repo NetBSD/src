@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.4 1993/05/21 05:27:15 cgd Exp $
+ *	$Id: raw_ip.c,v 1.5 1993/05/22 11:42:37 cgd Exp $
  */
 
 #include "param.h"
 #include "malloc.h"
-#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "protosw.h"

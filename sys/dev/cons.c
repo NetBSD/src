@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.4 1993/05/18 18:18:55 cgd Exp $
+ *	$Id: cons.c,v 1.5 1993/05/22 11:41:13 cgd Exp $
  */
 
 
@@ -46,7 +46,6 @@
 #include "systm.h"
 #include "buf.h"
 #include "ioctl.h"
-#include "select.h"
 #include "tty.h"
 #include "file.h"
 #include "conf.h"

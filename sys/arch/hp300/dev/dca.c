@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.2 1993/05/18 18:18:40 cgd Exp $
+ *	$Id: dca.c,v 1.3 1993/05/22 11:40:42 cgd Exp $
  */
 
 #include "dca.h"
@@ -43,6 +43,7 @@
 #include "sys/param.h"
 #include "sys/systm.h"
 #include "sys/ioctl.h"
+#include "sys/select.h"
 #include "sys/tty.h"
 #include "sys/proc.h"
 #include "sys/conf.h"

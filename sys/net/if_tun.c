@@ -13,10 +13,13 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Id: if_tun.c,v 1.2 1993/05/18 18:19:58 cgd Exp $
+ * $Id: if_tun.c,v 1.3 1993/05/22 11:42:13 cgd Exp $
  * 
  * $Log: if_tun.c,v $
- * Revision 1.2  1993/05/18 18:19:58  cgd
+ * Revision 1.3  1993/05/22 11:42:13  cgd
+ * add include of select.h if necessary for protos, or delete if extraneous
+ *
+ * Revision 1.2  1993/05/18  18:19:58  cgd
  * make kernel select interface be one-stop shopping & clean it all up.
  *
  * Revision 1.1.1.1  1993/03/21  09:46:06  cgd
@@ -84,6 +87,7 @@
 #include "ioctl.h"
 #include "errno.h"
 #include "syslog.h"
+#include "select.h"
 
 #include "net/if.h"
 #include "net/netisr.h"

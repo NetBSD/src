@@ -31,13 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.2 1993/05/18 18:20:21 cgd Exp $
+ *	$Id: tcp_usrreq.c,v 1.3 1993/05/22 11:42:50 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "malloc.h"
-#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"
