@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.10 1999/01/27 20:54:57 thorpej Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.11 1999/03/08 00:09:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -169,7 +169,7 @@ biosdiskopen(struct open_file *f, ...)
 	}
 	va_start(ap, f);
 	d->ll.dev = va_arg(ap, int);
-	if (set_geometry(&d->ll)) {
+	if (set_geometry(&d->ll, NULL)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.8 1999/01/29 18:49:08 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.9 1999/03/08 00:09:25 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -112,6 +112,10 @@ exec_netbsd(file, loadaddr, boothowto)
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
+#ifdef PASS_BIOSGEOM
+	bi_getbiosgeom();
+#endif
+
 	extmem = getextmem();
 
 #ifdef XMS
@@ -194,9 +198,6 @@ exec_netbsd(file, loadaddr, boothowto)
 	boot_argv[4] = extmem;
 	boot_argv[5] = getbasemem();
 
-#ifdef PASS_BIOSGEOM
-	bi_getbiosgeom();
-#endif
 	close(fd);
 
 #ifdef XMS
