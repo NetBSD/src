@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.17 2002/12/19 22:23:06 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.18 2002/12/26 13:45:18 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.17 2002/12/19 22:23:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.18 2002/12/26 13:45:18 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.17 2002/12/19 22:23:06 manu Exp $");
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
+#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_exec.h>
 
@@ -292,6 +293,7 @@ mach_init(void)
 	mach_semaphore_init();
 	mach_message_init();
 	mach_port_init();
+	mach_clock_init();
 
 	mach_cold = 0;
 
