@@ -26,6 +26,11 @@ Boston, MA 02111-1307, USA.  */
       builtin_define ("__NetBSD__");		\
       builtin_assert ("system=unix");		\
       builtin_assert ("system=NetBSD");		\
+      if (flag_pic)				\
+        {					\
+          builtin_define ("__PIC__");		\
+          builtin_define ("__pic__");		\
+        }					\
     }						\
   while (0)
 
