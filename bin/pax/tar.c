@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.40 2003/06/23 13:06:53 grant Exp $	*/
+/*	$NetBSD: tar.c,v 1.41 2003/06/24 06:41:51 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.40 2003/06/23 13:06:53 grant Exp $");
+__RCSID("$NetBSD: tar.c,v 1.41 2003/06/24 06:41:51 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -1153,8 +1153,8 @@ ustar_wr(ARCHD *arcn)
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
-	user = user_from_uid(arcn->sb.st_uid, 1);
-	group = group_from_gid(arcn->sb.st_gid, 1);
+	user = (char *)user_from_uid(arcn->sb.st_uid, 1);
+	group = (char *)group_from_gid(arcn->sb.st_gid, 1);
 	strncpy(hd->uname, user ? user : "", sizeof(hd->uname));
 	strncpy(hd->gname, group ? group : "", sizeof(hd->gname));
 
