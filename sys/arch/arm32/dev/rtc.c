@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.5 1996/10/15 19:28:01 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.6 1997/01/06 04:47:59 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -131,14 +131,14 @@ cmos_write(location, value)
 
 /* Hex to BCD and BCD to hex conversion routines */
 
-static inline int
+static __inline int
 hexdectodec(n)
 	u_char n;
 {
 	return(((n >> 4) & 0x0F) * 10 + (n & 0x0F));
 }
 
-static inline int
+static __inline int
 dectohexdec(n)
 	u_char n;
 {
