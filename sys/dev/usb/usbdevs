@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.83 2000/03/13 17:14:27 augustss Exp $
+$NetBSD: usbdevs,v 1.84 2000/03/16 18:27:21 uch Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CANON		0x04a9	Canon Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
+vendor IODATA		0x04bb	I/O DATA
 vendor 3COMUSR		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
 vendor ALTEC		0x04d2	Altec Lansing
@@ -298,6 +299,9 @@ product INSYSTEM ISD110		0x0200  IDE adapter
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
+
+/* I/O DATA products */
+product	IODATA	USBETTX		0x0904
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
