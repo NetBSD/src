@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.5 2003/02/18 10:18:53 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.6 2003/02/24 21:13:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -230,12 +230,14 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 		break;
 	}
 	if (rqp->sr_sendcnt == 0) {
+		u_int16_t tid = ssp ? ssp->ss_tid : SMB_TID_UNKNOWN;
+		u_int16_t rquid = vcp ? vcp->vc_smbuid : 0;
 #ifdef movedtoanotherplace
 		if (vcp->vc_maxmux != 0 && iod->iod_muxcnt >= vcp->vc_maxmux)
 			return 0;
 #endif
-		*rqp->sr_rqtid = htole16(ssp ? ssp->ss_tid : SMB_TID_UNKNOWN);
-		*rqp->sr_rquid = htole16(vcp ? vcp->vc_smbuid : 0);
+		SMBRQ_PUTLE16(rqp->sr_rqtid, tid);
+		SMBRQ_PUTLE16(rqp->sr_rquid, rquid);
 		mb_fixhdr(&rqp->sr_rq);
 	}
 	if (rqp->sr_sendcnt++ > 5) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.2 2002/01/04 02:39:44 deberg Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.3 2003/02/24 21:13:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -61,6 +61,10 @@
 #define SMBRQ_SUNLOCK(rqp)	smb_sl_unlock(&(rqp)->sr_slock)
 #define SMBRQ_SLOCKPTR(rqp)	(&(rqp)->sr_slock)
 
+/* save 16bit 'what' to memory pointed out by 'where' in little-endian format */
+#define SMBRQ_PUTLE16(where, what)	\
+	(where)[0] = (what) & 0xff;	\
+	(where)[1] = (what) >> 8
 
 enum smbrq_state {
 	SMBRQ_NOTSENT,		/* rq have data to send */
@@ -80,8 +84,8 @@ struct smb_rq {
 	struct mbchain		sr_rq;
 	u_int8_t		sr_rqflags;
 	u_int16_t		sr_rqflags2;
-	u_char *		sr_wcount;
-	u_short *		sr_bcount;
+	u_int8_t *		sr_wcount;
+	u_int8_t *		sr_bcount;
 	struct mdchain		sr_rp;
 	int			sr_rpgen;
 	int			sr_rplast;
@@ -93,8 +97,8 @@ struct smb_rq {
 	int			sr_sendcnt;
 	struct timeval	 	sr_timesent;
 	int			sr_lerror;
-	u_int16_t *		sr_rqtid;
-	u_int16_t *		sr_rquid;
+	u_int8_t *		sr_rqtid;
+	u_int8_t *		sr_rquid;
 	u_int8_t		sr_errclass;
 	u_int16_t		sr_serror;
 	u_int32_t		sr_error;
