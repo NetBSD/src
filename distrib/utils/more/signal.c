@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.5 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: signal.c,v 1.5.2.1 2004/09/01 03:34:15 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: signal.c,v 1.5 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: signal.c,v 1.5.2.1 2004/09/01 03:34:15 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ psignals()
 		get_term();
 		if (sc_width != old_width || sc_height != old_height)
 		{
-			scroll = (sc_height + 1) / 2;
+			scroll_lines = (sc_height + 1) / 2;
 			screen_trashed = 1;
 		}
 	}
