@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.158 2004/04/29 04:34:12 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.159 2004/04/29 04:42:21 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1576,3 +1576,9 @@ sys/dev/acpi/acpi_ec.c				1.30
 	EcGpeHandler: in the case that the ec is EcLock'ed, always set
 	EC_F_PENDQUERY flag so that AcpiClearGpe() will be called later.
 	[yamt, ticket #221]
+
+x11/bin/xinit/Makefile				1.4
+
+	-DXFREE86 if we build an XFree86 server. Use /dev/urandom & hexdump to 
+	generate cookies
+	[mrg, ticket #222]
