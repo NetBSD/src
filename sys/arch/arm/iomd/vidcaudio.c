@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.29 2004/01/01 16:42:36 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.30 2004/01/01 17:52:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,12 +65,13 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.29 2004/01/01 16:42:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.30 2004/01/01 17:52:19 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
 #include <sys/errno.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>	/* device calls */
 #include <sys/systm.h>
 
@@ -107,10 +108,10 @@ struct vidcaudio_softc {
 
 	int	sc_is16bit;
 
-	void	*sc_pstart;
-	void	*sc_pend;
 	size_t	sc_pblksize;
-	void	*sc_pnext;
+	vm_offset_t	sc_poffset;
+	vm_offset_t	sc_pbufsize;
+	paddr_t	*sc_ppages;
 	void	(*sc_pintr)(void *);
 	void	*sc_parg;
 	int	sc_pcountdown;
@@ -264,8 +265,18 @@ vidcaudio_open(void *addr, int flags)
 static void
 vidcaudio_close(void *addr)
 {
+	struct vidcaudio_softc *sc = addr;
 
 	DPRINTF(("DEBUG: vidcaudio_close called\n"));
+	/*
+	 * We do this here rather than in vidcaudio_halt_output()
+	 * because the latter can be called from interrupt context
+	 * (audio_pint()->audio_clear()->vidcaudio_halt_output()).
+	 */
+	if (sc->sc_ppages != NULL) {
+		free(sc->sc_ppages, M_DEVBUF);
+		sc->sc_ppages = NULL;
+	}
 }
 
 /*
@@ -421,16 +432,26 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *params)
 {
 	struct vidcaudio_softc *sc = addr;
-
-	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
+	size_t npages, i;
 
 	DPRINTF(("vidcaudio_trigger_output %p-%p/0x%x\n",
 	    start, end, blksize));
 
-	sc->sc_pstart = start;
-	sc->sc_pend = end;
+	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
+	KASSERT((vaddr_t)start % blksize == 0);
+
 	sc->sc_pblksize = blksize;
-	sc->sc_pnext = start;
+	sc->sc_pbufsize = (char *)end - (char *)start;
+	npages = sc->sc_pbufsize >> PGSHIFT;
+	if (sc->sc_ppages != NULL)
+		free(sc->sc_ppages, M_DEVBUF);
+	sc->sc_ppages = malloc(npages * sizeof(paddr_t), M_DEVBUF, M_WAITOK);
+	if (sc->sc_ppages == NULL) return ENOMEM;
+	for (i = 0; i < npages; i++)
+		if (!pmap_extract(pmap_kernel(),
+		    (vaddr_t)start + i * PAGE_SIZE, &sc->sc_ppages[i]))
+			return EIO;
+	sc->sc_poffset = 0;
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
@@ -462,8 +483,8 @@ vidcaudio_halt_output(void *addr)
 	struct vidcaudio_softc *sc = addr;
 
 	DPRINTF(("vidcaudio_halt_output\n"));
-	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
 	disable_irq(sc->sc_dma_intr);
+	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
 	return 0;
 }
 
@@ -545,8 +566,8 @@ vidcaudio_intr(void *arg)
 	if ((status & IOMD_DMAST_INT) == 0)
 		return 0;
 
-	/* FIXME: Not really allowed to use pmap here. */
-	pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_pnext, &pnext);
+	pnext = sc->sc_ppages[sc->sc_poffset >> PGSHIFT] |
+	    (sc->sc_poffset & PGOFSET);
 	pend = (pnext + sc->sc_pblksize - 16) & IOMD_DMAEND_OFFSET;
 
 	switch (status &
@@ -567,9 +588,9 @@ vidcaudio_intr(void *arg)
 		break;
 	}
 
-	sc->sc_pnext = (char *)sc->sc_pnext + sc->sc_pblksize;
-	if (sc->sc_pnext >= sc->sc_pend)
-		sc->sc_pnext = sc->sc_pstart;
+	sc->sc_poffset += sc->sc_pblksize;
+	if (sc->sc_poffset >= sc->sc_pbufsize)
+		sc->sc_poffset = 0;
 	
 	if (sc->sc_pcountdown > 0)
 		sc->sc_pcountdown--;
