@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.14 2001/03/07 10:10:20 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.15 2001/03/14 08:22:00 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -714,10 +714,14 @@ INVIS(FIELD_RECORD *x)
 	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 0);
 
 	if (f) {
-		set_field_buffer(f, 0, x->v);
 		set_field_opts(f, field_opts(f) & ~(O_ACTIVE|O_VISIBLE));
+		if (x->bigfield) {
+			field_opts_off(f, O_STATIC);
+			set_max_field(f, x->rcols);
+		}
 		if (x->newpage == 1)
 			set_new_page(f, TRUE);
+		set_field_buffer(f, 0, x->v);
 	}
 	return f;
 }
@@ -728,12 +732,14 @@ NOEDIT(FIELD_RECORD *x)
 	FIELD *f = new_field(x->rows, x->cols, x->frow, x->fcol, 0, 0);
 
 	if (f) {
-		set_field_buffer(f, 0, x->v);
 		set_field_opts(f, field_opts(f) & ~(O_EDIT|O_ACTIVE));
 		if (x->newpage == 1)
 			set_new_page(f, TRUE);
-		if (x->bigfield)
+		if (x->bigfield) {
 			field_opts_off(f, O_STATIC);
+			set_max_field(f, x->rcols);
+		}
+		set_field_buffer(f, 0, x->v);
 	}
 	return f;
 }
@@ -745,7 +751,6 @@ ENUM(FIELD_RECORD *x)
 
 	if (f) {
 		set_field_back(f, A_REVERSE);
-		set_field_buffer(f, 0, x->list[0]);
 		set_field_type(f, TYPE_ENUM, x->list, FALSE, FALSE);
 		set_field_userptr(f, x->list);
 		if (x->newpage == 1)
@@ -756,6 +761,7 @@ ENUM(FIELD_RECORD *x)
 		set_field_buffer(f, 1, "single");
 		if (x->bigfield)
 			field_opts_off(f, O_STATIC);
+		set_field_buffer(f, 0, x->list[0]);
 	}
 	return f;
 }
@@ -977,6 +983,8 @@ strlen_data(FTREE_ENTRY *ftp)
 	case DATAT_V4SCRIPT:
 	case DATAT_V6:
 	case DATAT_V6SCRIPT:
+	case DATAT_INVIS:
+	case DATAT_NOEDIT:
 		return(ftp->elen);
 		/* NOTREACHED */
 		break;
@@ -990,11 +998,6 @@ strlen_data(FTREE_ENTRY *ftp)
 			if (strlen(ftp->list[i]) > j)
 				j = strlen(ftp->list[i]);
 		return(j);
-		/* NOTREACHED */
-		break;
-	case DATAT_INVIS:
-	case DATAT_NOEDIT:
-		return(strlen(ftp->data));
 		/* NOTREACHED */
 		break;
 	case DATAT_INTEGER:
@@ -1397,6 +1400,7 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 					F[i].v = strdup(args[cur-1]);
 				else
 					F[i].v = strdup(ftp->data);
+				ftp->elen = strlen(F[i].v);
 				break;
 			case DATAT_INVIS:
 				F[i].type = INVIS;
@@ -1405,6 +1409,7 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 					F[i].v = strdup(args[cur-1]);
 				else
 					F[i].v = strdup(ftp->data);
+				ftp->elen = strlen(F[i].v);
 				break;
 			case DATAT_INTEGER:
 				F[i].type = INTEGER;
@@ -1464,9 +1469,9 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 			}
 			F[i].rows = 1;
 			F[i].rcols = F[i].cols = strlen_data(ftp);
-			if (F[i].cols > 21) {
+			if (F[i].cols > 19) {
 				F[i].bigfield = 1;
-				F[i].cols = 21;
+				F[i].cols = 19;
 			} else
 				F[i].bigfield = 0;
 			F[i].newpage = 0;
