@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.9 1998/08/25 20:59:38 ross Exp $	*/
+/*	$NetBSD: send.c,v 1.10 1998/12/19 16:34:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.9 1998/08/25 20:59:38 ross Exp $");
+__RCSID("$NetBSD: send.c,v 1.10 1998/12/19 16:34:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ send(mp, obuf, doign, prefix)
 			for (cp = line; (c = *cp++) && c != ':' && !isspace(c);)
 				;
 			cp2 = --cp;
-			while (isspace(*cp++))
+			while (isspace((unsigned char)*cp++))
 				;
 			if (cp[-1] != ':') {
 				/*
