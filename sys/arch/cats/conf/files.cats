@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.29 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.cats,v 1.30 2004/06/16 12:15:00 he Exp $
 #
 # CATS-specific configuration info
 #
@@ -96,13 +96,13 @@ file	arch/cats/pci/pcib.c			pcib
 
 file	arch/cats/pci/pciide_machdep.c	pciide_common
 
-# Include USB stuff
-include "dev/usb/files.usb"
-
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 include "dev/pckbport/files.pckbport"
+
+# Include USB stuff
+include "dev/usb/files.usb"
 
 include "arch/arm/conf/majors.arm32"
