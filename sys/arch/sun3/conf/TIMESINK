@@ -19,7 +19,9 @@ options		"TCP_COMPAT_42"
 options		SWAPPAGER, VNODEPAGER, DEVPAGER
 options		KTRACE
 options		INET
-config		netbsd swap generic
+options 	NFSSERVER
+options 	NFSCLIENT
+config		netbsd swap nfs
 
 le0 at obio? addr ? level 3
 #zs0 at obio? addr  0x00000 level 3 

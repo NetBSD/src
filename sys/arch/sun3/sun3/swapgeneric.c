@@ -69,6 +69,62 @@ struct	genericconf {
 
 setconf()
 {
+	register struct genericconf *gc;
+	register char *cp;
+	int unit, swaponroot = 0;
+
+	if (rootdev != NODEV)
+		goto doswap;
+	unit = 0;
+	if (boothowto & RB_ASKNAME) {
+		char name[128];
+retry:
+		printf("root device? ");
+		gets(name);
+		for (gc = genericconf; gc->gc_driver; gc++)
+			if (gc->gc_name[0] == name[0] &&
+			    gc->gc_name[1] == name[1])
+				goto gotit;
+		printf("use one of:");
+		for (gc = genericconf; gc->gc_driver; gc++)
+			printf(" %s%%d", gc->gc_name);
+		printf("\n");
+		goto retry;
+gotit:
+		if (*++cp < '0' || *cp > '9') {
+			printf("bad/missing unit number\n");
+			goto retry;
+		}
+		while (*cp >= '0' && *cp <= '9')
+			unit = 10 * unit + *cp++ - '0';
+		if (*cp == '*')
+			swaponroot++;
+		goto found;
+	}
+	for (gc = genericconf; gc->gc_driver; gc++) {
+#if 0	    
+		for (hd = hp_dinit; hd->hp_driver; hd++) {
+			if (hd->hp_alive == 0)
+				continue;
+			if (hd->hp_unit == 0 && hd->hp_driver ==
+			    (struct driver *)gc->gc_driver) {
+				printf("root on %s0\n", hd->hp_driver->d_name);
+				goto found;
+			}
+		}
+#endif
+	}
+	printf("no suitable root\n");
+	sun3_stop();
+found:
+	gc->gc_root = makedev(major(gc->gc_root), unit*8);
+	rootdev = gc->gc_root;
+doswap:
+	swdevt[0].sw_dev = argdev = dumpdev =
+	    makedev(major(rootdev), minor(rootdev)+1);
+	/* swap size and dumplo set during autoconfigure */
+	if (swaponroot)
+		rootdev = dumpdev;
 }
 
 gets(cp)

@@ -34,7 +34,7 @@ extern int physmem;
 unsigned char *interrupt_reg;
 unsigned int orig_nmi_vector;
 vm_offset_t u_area_va;
-vm_offset_t u_area_pa;
+vm_offset_t proc0_user_pa;
 struct user *proc0paddr;
 extern struct pcb *curpcb;
 
@@ -125,6 +125,7 @@ void sun3_context_equiv()
 }
 
 void u_area_bootstrap(u_va, u_pa)
+     vm_offset_t u_va, u_pa;
 {
     vm_offset_t pte_proto, pa, va;
 
@@ -133,6 +134,7 @@ void u_area_bootstrap(u_va, u_pa)
     for (va = u_va, pa = u_pa; va < u_va+NBPG*UPAGES; va+=NBPG, pa+=NBPG)
 	set_pte(va, pte_proto|PA_PGNUM(pa));
 }
+
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
@@ -301,22 +303,42 @@ void sun3_vm_init()
 	set_segmap(va, SEGINV);
 	va = sun3_round_up_seg(va);
     }
-    sun3_context_equiv();
 
     /* My sincere apologies for this crud -- glass*/
-    u_area_va = high_segment_alloc(UPAGES);
+    u_area_va = high_segment_alloc(UPAGES*2);
     if (u_area_va != MONSHORTSEG) /* pg 3,4,5 */
 	mon_printf("sun3_vm_init: not at right location for upage\n");
-    avail_end -= UPAGES*NBPG;
-    u_area_pa = avail_end;
-    u_area_bootstrap(u_area_va, u_area_pa);
-    proc0paddr = (struct user *) u_area_va;
-    save_u_area(&proc0paddr->u_pcb, u_area_va); 
+    avail_end -= UPAGES*NBPG;	/* steal the UPAGES for proc0 u-area */
+    proc0_user_pa = avail_end;	/* UPAGES physical for proc0 u-area */
+
+    /*
+     * first UPAGES are used for u-area standard mapping
+     * second UPAGES are used for proc0's personal u-area, and will be mapped
+     * to real pages
+     *
+     * then the standard u-area will be loaded with proc0's u-area
+     */
+       
+    proc0paddr = (struct user *) (u_area_va+UPAGES*NBPG);/* proc0's u-are va */
+    /* need to load proc0paddr area with the physical pages stolen before */
+    u_area_bootstrap((vm_offset_t) proc0paddr, proc0_user_pa);
+    bzero(proc0paddr, UPAGES*NBPG);
+    save_u_area(&proc0paddr->u_pcb, proc0paddr);
+    load_u_area(&proc0paddr->u_pcb);
+    pte = get_pte(proc0paddr);
+    mon_printf(" proc0paddr: \n");
+    pte_print(pte);
     pte = get_pte(u_area_va);
-    printf(" u_area_pte: \n");
+    mon_printf(" u_area_va: \n");
     pte_print(pte);
     curpcb = &proc0paddr->u_pcb;
-   /*    load_u_area(&proc0paddr->u_pcb);*/
+    mon_printf("curpcb == %x\nproc0paddr == %x\n", curpcb, proc0paddr);
+    sun3_context_equiv();
+}
+
+void kstack_fall_off()
+{
+    mon_printf("kstack: fell off\n");
 }
 
 void idprom_etheraddr(eaddrp)

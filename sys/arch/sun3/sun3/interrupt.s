@@ -3,20 +3,22 @@
 .data
 .globl _intrcnt
 _intrcnt:
-	/*    0  1  2  3  4  5  6  7, spurious */
-	.long 0, 0, 0, 0, 0, 0, 0, 0, 0
+    /* spurious  1  2  3  4  5  6  7*/
+	.long 0, 0, 0, 0, 0, 0, 0, 0
 
 .text
 
 #define INTERRUPT_HANDLE(interrupt_num) \
-	addql #1,_intrcnt+interrupt_num	;\
+	clrw	sp@-		;	/* ???? stack alignment?*/\
+	moveml	#0xC0C0,sp@-	;	/* save a0 a1, d0, d1 */\
+	addql #1,_intrcnt+interrupt_num	;/*increment interrupt counter */\
 	movw	sr,sp@-		;	/* push current SR value */\
 	clrw	sp@-		;	/*    padded to longword */\
 	jbsr	_intrhand	;	/* handle interrupt 	 */\
 	addql	#4,sp		;	/* pop SR		 */\
-	moveml	sp@+,#0x0303	;				 \
-	addql	#2,sp		;				\
-	addql #1, _cnt+V_INTR	;				\
+	moveml	sp@+,#0x0303	;	/* restore a0, a1, d0, d1*/\
+	addql	#2,sp		;	/* undo stack alignment? hanck*/\
+	addql #1, _cnt+V_INTR	;	/* more statistics gathering */\
 	jra rei
 
 .globl _level0intr, _level1intr, _level2intr, _level3intr, _level4intr
