@@ -1,5 +1,5 @@
 #
-#	$NetBSD: dot.commonutils,v 1.1.1.1 1995/04/17 19:08:50 leo Exp $
+#	$NetBSD: dot.commonutils,v 1.2 1995/05/28 10:50:13 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -110,5 +110,20 @@ Extract()
 		tarverbose=
 		;;
 	esac
-	cat "$1".??? | gunzip | (cd / ; tar xfp$tarverbose -)
+	echo -n "Are you installing a '-current' snapshot? [n] "
+	read snapshot
+	case $snapshot in
+	y*|Y*)
+		snapshot=y
+		;;
+	*)
+		snapshot=n
+		;;
+	esac
+	if [ $snapshot = n ]
+	then
+		cat "$1".??? | gunzip | (cd / ; tar xfp$tarverbose -)
+	else
+		cat "$1".tar.gz | gunzip | (cd /mnt ; tar xfp$tarverbose -)
+	fi
 }
