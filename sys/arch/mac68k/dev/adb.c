@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.25 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: adb.c,v 1.26 1998/10/26 07:09:37 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -140,8 +140,8 @@ adbattach(parent, dev, aux)
 		printf("adb: calling ADBAlternateInit.\n");
 #endif
 
-	ADBAlternateInit();
 	printf(" (mrg)  ");
+	ADBAlternateInit();
 #else
 	ADBReInit();
 	printf(" (direct, %s)", adbHardwareDescr[adbHardware]);
