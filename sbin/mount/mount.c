@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.58 2002/01/30 21:40:31 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.59 2002/05/21 23:51:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.58 2002/01/30 21:40:31 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.59 2002/05/21 23:51:19 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -611,7 +611,7 @@ getfslab(str)
 	part = str[strlen(str) - 1] - 'a';
 
 	if (part < 0 || part >= dl.d_npartitions)
-		errx(1, "partition `%s' is not defined on disk", str);
+		return (NULL);
 
 	/* Return NULL for unknown types - caller can fall back to ffs */
 	if ((fstype = dl.d_partitions[part].p_fstype) >= FSMAXMOUNTNAMES)
