@@ -1,4 +1,4 @@
-.\" $NetBSD: ehci.4,v 1.1 2001/11/16 17:08:13 augustss Exp $
+.\" $NetBSD: ehci.4,v 1.2 2001/11/16 17:22:54 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,9 +41,9 @@
 .Nm ehci
 .Nd USB Enhanced Host Controller driver
 .Sh SYNOPSIS
-.Cd "ehci*    at cardbus? dev ? function ?"
-.Cd "ehci*    at pci? dev ? function ?"
-.Cd "usb*     at ehci?"
+.Cd "ehci* at cardbus? dev ? function ?"
+.Cd "ehci* at pci? dev ? function ?"
+.Cd "usb*  at ehci?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,7 +56,7 @@ protocol.  This means that they normally have a companion controller
 .Xr ohci 4
 or
 .Xr ehci 4 )
-handling USB 1.x devices.  This means that each USB connector is electrically
+handling USB 1.x devices.  Consequently each USB connector is electrically
 connected to two USB controllers.  The handling of this is totally automatic,
 but can be noticed since USB 1.x and USB 2.0 devices plugged in to the same
 connector appear to connect to different USB busses.
