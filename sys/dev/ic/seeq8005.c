@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.12 2001/03/24 23:31:06 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.13 2001/03/25 01:06:59 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.12 2001/03/24 23:31:06 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.13 2001/03/25 01:06:59 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -699,9 +699,10 @@ ea_init(struct ifnet *ifp)
 		sc->sc_config2 |= SEEQ_CFG2_RX_TX_DISABLE;
 
 	/* Configure rx. */
+	ea_mc_reset(sc);
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->sc_config1 = SEEQ_CFG1_PROMISCUOUS;
-	else if (ifp->if_flags & IFF_ALLMULTI)
+	else if ((ifp->if_flags & IFF_ALLMULTI) || sc->sc_variant == SEEQ_8004)
 		sc->sc_config1 = SEEQ_CFG1_MULTICAST;
 	else
 		sc->sc_config1 = SEEQ_CFG1_BROADCAST;
@@ -1365,7 +1366,7 @@ ea_mc_reset_8004(struct seeq8005_softc *sc)
 			ifp->if_flags |= IFF_ALLMULTI;
 			for (i = 0; i < 8; i++)
 				af[i] = 0xff;
-			return;
+			break;
 		}
 		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
