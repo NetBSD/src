@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.56 2001/02/11 03:29:59 ichiro Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.57 2001/03/04 11:18:51 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -826,6 +826,8 @@ static int wi_cmd(sc, cmd, val)
 				return(EIO);
 			break;
 		}
+		if (cmd == WI_CMD_INI)
+			DELAY(100);
 	}
 
 	if (i == WI_TIMEOUT)
