@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.8 1998/08/25 20:59:41 ross Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.9 1998/10/08 02:15:14 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-__RCSID("$NetBSD: tcopy.c,v 1.8 1998/08/25 20:59:41 ross Exp $");
+__RCSID("$NetBSD: tcopy.c,v 1.9 1998/10/08 02:15:14 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,7 +60,6 @@ __RCSID("$NetBSD: tcopy.c,v 1.8 1998/08/25 20:59:41 ross Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 
 #define	MAXREC	(64 * 1024)
 #define	NOCOUNT	(-2)
