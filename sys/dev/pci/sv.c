@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.24 2004/07/09 02:42:45 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.25 2004/10/29 12:57:18 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.24 2004/07/09 02:42:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.25 2004/10/29 12:57:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ int	sv_get_props __P((void *));
 void    sv_dumpregs __P((struct sv_softc *sc));
 #endif
 
-struct audio_hw_if sv_hw_if = {
+const struct audio_hw_if sv_hw_if = {
 	sv_open,
 	sv_close,
 	NULL,

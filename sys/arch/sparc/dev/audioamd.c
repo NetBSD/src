@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.18 2004/07/11 20:01:04 mycroft Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.19 2004/10/29 12:57:16 yamt Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.18 2004/07/11 20:01:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.19 2004/10/29 12:57:16 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -150,7 +150,7 @@ int	audioamd_start_input __P((void *, void *, int, void (*)(void *),
 				 void *));
 int	audioamd_getdev __P((void *, struct audio_device *));
 
-struct audio_hw_if sa_hw_if = {
+const struct audio_hw_if sa_hw_if = {
 	am7930_open,
 	am7930_close,
 	0,

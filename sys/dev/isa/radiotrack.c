@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.9 2003/07/14 15:47:16 lukem Exp $ */
+/* $NetBSD: radiotrack.c,v 1.10 2004/10/29 12:57:17 yamt Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.9 2003/07/14 15:47:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.10 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ void	rt_attach(struct device *, struct device * self, void *);
 int	rt_get_info(void *, struct radio_info *);
 int	rt_set_info(void *, struct radio_info *);
 
-struct radio_hw_if rt_hw_if = {
+const struct radio_hw_if rt_hw_if = {
 	NULL,   /* open */
 	NULL,   /* close */
 	rt_get_info,
