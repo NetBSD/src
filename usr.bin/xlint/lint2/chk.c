@@ -1,6 +1,7 @@
-/*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
+/*	$NetBSD: chk.c,v 1.3 1996/12/22 11:31:37 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: chk.c,v 1.3 1996/12/22 11:31:37 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -670,11 +671,16 @@ chkau(hte, n, def, decl, pos1p, call1, call, arg1, arg2)
 			}
 		}
 
-	} else if (t1 == PTR && isityp(t2) && psize(t1) == psize(t2)) {
+	} else if (t1 == PTR && isityp(t2)) {
 		for (ai = call->f_args; ai != NULL; ai = ai->a_nxt) {
 			if (ai->a_num == n)
 				break;
 		}
+		/*
+		 * Vendor implementations of lint (e.g. HP-UX, Digital UNIX)
+		 * don't care about the size of the integer argument,
+		 * only whether or not it is zero.  We do the same.
+		 */
 		if (ai != NULL && ai->a_zero)
 			return;
 	}
@@ -1339,6 +1345,13 @@ eqtype(tp1, tp2, ignqual, promot, asgn, warn)
 				return (tp1->t_tag == tp2->t_tag);
 			} else if (tp1->t_istynam && tp2->t_istynam) {
 				return (tp1->t_tynam == tp2->t_tynam);
+			} else if (tp1->t_isuniqpos && tp2->t_isuniqpos) {
+				return (tp1->t_uniqpos.p_line ==
+				      tp2->t_uniqpos.p_line &&
+				    tp1->t_uniqpos.p_file ==
+				      tp2->t_uniqpos.p_file &&
+				    tp1->t_uniqpos.p_uniq ==
+				      tp2->t_uniqpos.p_uniq);
 			} else {
 				return (0);
 			}
@@ -1366,6 +1379,13 @@ eqtype(tp1, tp2, ignqual, promot, asgn, warn)
 				return (tp1->t_tag == tp2->t_tag);
 			} else if (tp1->t_istynam && tp2->t_istynam) {
 				return (tp1->t_tynam == tp2->t_tynam);
+			} else if (tp1->t_isuniqpos && tp2->t_isuniqpos) {
+				return (tp1->t_uniqpos.p_line ==
+				      tp2->t_uniqpos.p_line &&
+				    tp1->t_uniqpos.p_file ==
+				      tp2->t_uniqpos.p_file &&
+				    tp1->t_uniqpos.p_uniq ==
+				      tp2->t_uniqpos.p_uniq);
 			} else {
 				return (0);
 			}
