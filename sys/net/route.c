@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.61 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: route.c,v 1.62 2004/09/29 21:19:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.61 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.62 2004/09/29 21:19:33 christos Exp $");
 
 #include "opt_ns.h"
 
@@ -559,6 +559,8 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
+		if (netmask)
+			rt_maskedcopy(dst, dst, netmask);
 		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == 0)
 			senderr(ESRCH);
 		rt = (struct rtentry *)rn;
