@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 2002/03/13 01:26:57 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2002/05/22 15:02:25 uch Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -56,6 +56,8 @@
 #	wskbd*	wscons keyboard events
 #
 # Terminal ports:
+#	scif*	serial communcation interface with FIFO
+#	sci*	serial communcation interface
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #
@@ -102,6 +104,7 @@ case $i in
 
 all)
 	makedev std wscons fd wd0 wd1 sd0 sd1
+	makedev scif0 sci0
 	makedev tty0 tty1 tty2 pty0
 	makedev bpf0
 	makedev md0 random
@@ -111,7 +114,8 @@ all)
 	;;
 
 ramdisk)
-	makedev floppy md0
+	makedev std md0
+	makedev scif0 sci0
 	;;
 
 std)
@@ -244,24 +248,50 @@ ccd*|fd*|sd*|vnd*|wd*|raid*)
 	wd*) name=wd;	unit=${i#wd};	blk=1;	chr=10;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
-	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
-	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
-	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
-	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
-	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
-	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
-	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
-	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
+	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 16 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 16 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 16 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 16 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 16 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 16 + 7))
+	mknod ${name}${unit}i	b $blk $(($unit * 16 + 9))
+	mknod ${name}${unit}j	b $blk $(($unit * 16 + 9))
+	mknod ${name}${unit}k	b $blk $(($unit * 16 + 10))
+	mknod ${name}${unit}l	b $blk $(($unit * 16 + 11))
+	mknod ${name}${unit}m	b $blk $(($unit * 16 + 12))
+	mknod ${name}${unit}n	b $blk $(($unit * 16 + 13))
+	mknod ${name}${unit}o	b $blk $(($unit * 16 + 14))
+	mknod ${name}${unit}p	b $blk $(($unit * 16 + 15))
+	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 16 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 16 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 16 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 16 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 16 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 16 + 7))
+	mknod r${name}${unit}i	c $chr $(($unit * 16 + 8))
+	mknod r${name}${unit}j	c $chr $(($unit * 16 + 9))
+	mknod r${name}${unit}k	c $chr $(($unit * 16 + 10))
+	mknod r${name}${unit}l	c $chr $(($unit * 16 + 11))
+	mknod r${name}${unit}m	c $chr $(($unit * 16 + 12))
+	mknod r${name}${unit}n	c $chr $(($unit * 16 + 13))
+	mknod r${name}${unit}o	c $chr $(($unit * 16 + 14))
+	mknod r${name}${unit}p	c $chr $(($unit * 16 + 15))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+scif*|sci*)
+	case $i in
+	scif*) name=scif; unit=${i#scif}; chr=31;;
+	sci*) name=sci; unit=${i#sci}; chr=32;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c $chr $unit
+	chown uucp $name$unit
 	;;
 
 com*|tty*)					# (XXX -- com should die)
