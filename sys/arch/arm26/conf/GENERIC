@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15 2000/12/19 15:51:48 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.16 2000/12/20 22:17:31 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -133,7 +133,8 @@ podulebus0	at ioc0 bank 4		# Expansion card bus
 unixbp0		at ioc0 bank 6		# Unix Backplane (interrupt routing)
 
 ei*		at podulebus0 slot ?	# Acorn AKA25 (Ether1)
-ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
+ea*		at podulebus0 slot ?	# Atomwide Ether3
+eh*		at podulebus0 slot ?	# i-cubed EtherH (E100/200/500)
 
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
