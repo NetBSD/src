@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.9 2003/04/26 18:40:00 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.10 2003/05/25 14:02:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,8 +226,6 @@ outofworld:
 	.globl _C_LABEL(intrnames)
 	.globl _C_LABEL(eintrnames)
 _C_LABEL(intrnames):
-	.asciiz	"softclock"
-	.asciiz	"softnet"
 	.asciiz	"serial0"
 	.asciiz	"serial1"
 	.asciiz	"serial2"
@@ -246,7 +244,7 @@ _C_LABEL(intrnames):
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0
 _C_LABEL(eintrcnt):
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2002/09/25 22:21:15 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2003/05/25 14:02:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,6 +98,7 @@ cpu_configure()
 	/*
 	 * Kick off autoconfiguration
 	 */
+	softintr_init();
 	_splnone();	/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 

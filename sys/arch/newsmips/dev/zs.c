@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 2003/04/26 18:43:20 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 2003/05/25 14:02:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,8 +84,6 @@ zs_print(aux, name)
 	return UNCONF;
 }
 
-static volatile int zssoftpending;
-
 /*
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
@@ -97,20 +95,16 @@ zshard(arg)
 	struct zsc_softc *zsc;
 	int unit, rval, softreq;
 
-	rval = softreq = 0;
+	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
-		softreq |= zsc->zsc_cs[0]->cs_softreq;
+		softreq =  zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
-	}
-
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = 1;
-		setsoftserial();
+		if (softreq)
+			softintr_schedule(zsc->zsc_si);
 	}
 
 	return rval;
@@ -125,19 +119,6 @@ zssoft(arg)
 {
 	struct zsc_softc *zsc;
 	int s, unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return;
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.  The order of
-	 * these next two statements prevents our clearing
-	 * the soft intr bit just after zshard has set it.
-	 */
-	/* clearsoftnet(); */
-	zssoftpending = 0;
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
@@ -214,7 +195,7 @@ zs_set_modes(cs, cflag)
 	 * Therefore, NEVER set the HFC bit, and instead use the
 	 * status interrupt to detect CTS changes.
 	 */
-	s = splzs();
+	s = splserial();
 	cs->cs_rr0_pps = 0;
 	if ((cflag & (CLOCAL | MDMBUF)) != 0) {
 		cs->cs_rr0_dcd = 0;
