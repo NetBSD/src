@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.10 2001/04/28 22:47:23 ross Exp $	*/
+/*	$NetBSD: position.c,v 1.11 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.10 2001/04/28 22:47:23 ross Exp $");
+__RCSID("$NetBSD: position.c,v 1.11 2001/11/25 06:53:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: position.c,v 1.10 2001/04/28 22:47:23 ross Exp $");
  * output.
  */
 void
-pos_in()
+pos_in(void)
 {
 	int bcnt, cnt, nr, warned;
 
@@ -122,7 +122,7 @@ pos_in()
 }
 
 void
-pos_out()
+pos_out(void)
 {
 	struct mtop t_op;
 	int cnt, n;
