@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.4 2002/03/28 15:27:02 uch Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.4.2.1 2002/05/19 07:56:38 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -99,12 +99,11 @@ STATIC void hd64465uart_write_1(void *, bus_space_handle_t, bus_size_t,
 void
 hd64465uartcnprobe(struct consdev *cp)
 {
+	extern struct cdevsw com_cdevsw;
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);

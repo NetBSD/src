@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.11 2002/05/03 07:31:25 takemura Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.11.2.1 2002/05/19 07:56:38 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -268,6 +268,7 @@ void
 hd64461video_cnprobe(struct consdev *cndev)
 {
 #if NWSDISPLAY > 0
+	extern const struct cdevsw wsdisplay_cdevsw;
 	int maj, unit;
 #endif
 	cndev->cn_dev = NODEV;
@@ -275,12 +276,9 @@ hd64461video_cnprobe(struct consdev *cndev)
 
 #if NWSDISPLAY > 0
 	unit = 0;
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-	}
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
-	if (maj != nchrdev) {
+	if (maj != -1) {
 		cndev->cn_pri = CN_INTERNAL;
 		cndev->cn_dev = makedev(maj, unit);
 	}

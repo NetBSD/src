@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2001/05/30 15:24:24 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.15.16.1 2002/05/19 07:56:35 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The NeXT provides a 3.686400 MHz clock to the ZS chips.
@@ -656,25 +655,20 @@ void zscninit __P((struct consdev *));
 int  zscngetc __P((dev_t));
 void zscnputc __P((dev_t, int));
 void zscnprobe __P((struct consdev *));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
 void
 zscnprobe(cp)
 	struct consdev * cp;
 {
+  extern const struct cdevsw zstty_cdevsw;
   int     maj;
-  for (maj = 0; maj < nchrdev; maj++) {
-    if (cdevsw[maj].d_open == zsopen) {
-      break;
-    }
-  }
-  if (maj != nchrdev) {
+  maj = cdevsw_lookup_major(&zstty_cdevsw);
+  if (maj != -1) {
 #ifdef SERCONSOLE
     cp->cn_pri = CN_REMOTE;
 #else
     cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
 #endif
-    zs_major = maj;
     zs_consunit = 0;
     zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
     cp->cn_dev = makedev(maj, zs_consunit);
