@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.129 2003/08/14 00:19:43 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.130 2003/08/14 07:39:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.129 2003/08/14 00:19:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.130 2003/08/14 07:39:22 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -800,7 +800,7 @@ if_clone_lookup(name, unitp)
 
 	/* separate interface name from unit */
 	for (cp = name;
-	    cp - name < IFNAMSIZ && *cp && *cp < '0' && *cp > '9';
+	    cp - name < IFNAMSIZ && *cp && (*cp < '0' || *cp > '9');
 	    cp++)
 		continue;
 
