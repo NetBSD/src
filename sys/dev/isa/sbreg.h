@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.11 1995/03/15 16:43:13 glass Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.12 1995/05/08 22:02:29 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
- *	$Id: sbreg.h,v 1.11 1995/03/15 16:43:13 glass Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.4 1995/04/17 12:06:57 cgd Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.5 1995/05/08 22:01:59 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ad1848var.h,v 1.4 1995/04/17 12:06:57 cgd Exp $
  */
 
 #define AD1848_NPORT	8

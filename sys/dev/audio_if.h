@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.2 1995/03/25 00:04:14 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.3 1995/05/08 22:01:42 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio_if.h,v 1.2 1995/03/25 00:04:14 mycroft Exp $
  */
 
 /*

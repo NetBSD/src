@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.2 1995/03/25 00:04:18 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.3 1995/05/08 22:01:44 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
- *	$Id: audiovar.h,v 1.2 1995/03/25 00:04:18 mycroft Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.6 1995/04/26 21:46:05 brezak Exp $	*/
+/*	$NetBSD: pss.c,v 1.7 1995/05/08 22:02:05 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.6 1995/04/26 21:46:05 brezak Exp $
  */
 
 /*
