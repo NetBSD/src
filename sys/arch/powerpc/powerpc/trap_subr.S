@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.46 2003/08/08 06:11:48 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.47 2003/08/08 07:14:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -802,19 +802,6 @@ disitrap:
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_DAR)(%r1)
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_DSISR)(%r1)
 
-	mfsrr1	%r31
-	mtcr	%r31
-
-	bt	17,u_trap		/* branch if PSL_PR is true */
-	mfsprg1	%r1			/* restore [K]SP */
-	subf	%r30,%r30,%r1		/* get the distance between the KSP
-					   and the exception address */
-	cmplwi	%r30,NBPG		/* distance less than a page? */
-	bgt+	k_trap			/* no, use existing kernel stack */
-	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
-	ldptr	%r1,CI_SPILLSTK(%r1)	/* get top of spill stack */
-	b	k_trap
-
 	.globl	_C_LABEL(trapstart)
 	.type	_C_LABEL(trapstart),@function
 _C_LABEL(trapstart):
@@ -826,7 +813,6 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bf	17,k_trap		/* branch if PSL_PR is false */
-u_trap:
 	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
 	ldptr	%r1,CI_CURPCB(%r1)
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */

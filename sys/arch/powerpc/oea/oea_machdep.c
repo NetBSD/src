@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.9 2003/07/15 02:54:45 lukem Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.10 2003/08/08 07:14:27 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.9 2003/07/15 02:54:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.10 2003/08/08 07:14:27 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -618,7 +618,6 @@ oea_startup(const char *model)
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
 	KASSERT(curcpu()->ci_intstk != 0);
-	KASSERT(curcpu()->ci_spillstk != 0);
 	KASSERT(curcpu()->ci_intrdepth == -1);
 
 	/*
