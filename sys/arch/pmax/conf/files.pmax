@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.8 1999/03/06 12:36:46 drochner Exp $
+#	$NetBSD: files.pmax,v 1.56.2.9 1999/03/15 05:37:24 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -88,6 +88,14 @@ attach	asc at ioasic with asc_ioasic
 file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
 device	sii: scsi
 file	arch/pmax/ibus/sii.c		sii needs-flag
+
+# the TCDS ASIC
+device	tcds { chip = -1 }
+attach	tcds at tc
+file	arch/alpha/tc/tcds.c		tcds
+attach	asc at tcds with asc_tcds
+file	arch/alpha/tc/asc.c		asc_tcds
+file	arch/alpha/tc/tcds_dma.c	asc_tcds
 
 include "dev/scsipi/files.scsipi"
 major { sd = 19 }
