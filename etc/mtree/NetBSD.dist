@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.233 2003/04/30 09:40:43 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.234 2003/06/26 09:24:25 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -262,9 +262,11 @@
 ./usr/share/groff_font/devX75
 ./usr/share/groff_font/devX75-12
 ./usr/share/groff_font/devascii
+./usr/share/groff_font/devcp1047
 ./usr/share/groff_font/devdvi
 ./usr/share/groff_font/devdvi/generate
 ./usr/share/groff_font/devhtml
+./usr/share/groff_font/devkoi8-r
 ./usr/share/groff_font/devlatin1
 ./usr/share/groff_font/devlbp
 ./usr/share/groff_font/devlj4
@@ -800,6 +802,7 @@
 ./usr/share/sushi/util/scripting
 ./usr/share/tabset
 ./usr/share/tmac
+./usr/share/tmac/mdoc
 ./usr/share/tmac/mm
 ./usr/share/vi
 ./usr/share/vi/catalog

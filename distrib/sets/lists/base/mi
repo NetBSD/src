@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.412 2003/06/26 06:30:10 tshiozak Exp $
+# $NetBSD: mi,v 1.413 2003/06/26 09:25:58 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -937,9 +937,11 @@
 ./usr/share/groff_font/devX75		base-groff-font
 ./usr/share/groff_font/devX75-12	base-groff-font
 ./usr/share/groff_font/devascii		base-groff-font
+./usr/share/groff_font/devcp1047	base-groff-font
 ./usr/share/groff_font/devdvi		base-groff-font
 ./usr/share/groff_font/devdvi/generate	base-groff-font
 ./usr/share/groff_font/devhtml		base-groff-font
+./usr/share/groff_font/devkoi8-r	base-groff-font
 ./usr/share/groff_font/devlatin1	base-groff-font
 ./usr/share/groff_font/devlbp		base-groff-font
 ./usr/share/groff_font/devlj4		base-groff-font
@@ -1854,6 +1856,7 @@
 ./usr/share/tabset/xerox1730-lm		base-util-share
 ./usr/share/tabset/zenith29		base-util-share
 ./usr/share/tmac			base-groff-share
+./usr/share/tmac/mdoc			base-groff-share
 ./usr/share/tmac/mm			base-groff-share
 ./usr/share/vi				base-util-share
 ./usr/share/vi/catalog			base-util-share
