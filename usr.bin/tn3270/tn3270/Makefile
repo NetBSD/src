@@ -1,10 +1,14 @@
-# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.4 1993/04/29 11:06:05 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.5 1993/07/28 01:36:35 cgd Exp $
 
 .include <../../Makefile.inc>
 
 CFLAGS += -I${.CURDIR} -I.
-LDADD += -lcrypt -lcurses -ltermcap -ltelnet
-DPADD += ${LIBCRYPT} ${LIBCURSES} /usr/lib/libtermcap.a /usr/lib/libtelnet.a
+LDADD += -lcurses -ltermcap -ltelnet
+DPADD += ${LIBCURSES} /usr/lib/libtermcap.a /usr/lib/libtelnet.a
+.ifndef EXPORTABLE_SYSTEM
+DPADD+= ${LIBCRYPT}
+LDADD+= -lcrypt
+.endif
 
 MAN1 = tn3270.0
 
@@ -52,7 +56,7 @@ disp_asc.OUT: ${.CURDIR}/../tools/mkdstoas/obj/mkdstoas
 	ln -s disp_asc.OUT disp_asc.out
 
 inbound.o: kbd.OUT
-CLEANFILES += kbd.OUT kbd.out
+CLEANFILES += TMPfunc.out kbd.OUT kbd.out
 kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
 	 ${.CURDIR}/../tools/mkhits/obj/mkhits
 	${CC} ${CFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out

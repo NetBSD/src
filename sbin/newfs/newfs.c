@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)newfs.c	6.27 (Berkeley) 7/3/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/newfs/newfs.c,v 1.4 1993/04/18 18:46:43 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)newfs.c	6.27 (Berkeley) 7/3/91"; */
+static char rcsid[] = "$Id: newfs.c,v 1.5 1993/07/28 00:57:29 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -570,7 +570,7 @@ usage()
 {
 	if (mfs) {
 		fprintf(stderr,
-		    "usage: mfs [ -fsoptions ] special-device mount-point\n");
+		    "usage: mount_mfs [ -fsoptions ] special-device mount-point\n");
 	} else
 		fprintf(stderr,
 		    "usage: newfs [ -fsoptions ] special-device%s\n",

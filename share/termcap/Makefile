@@ -6,6 +6,7 @@
 #
 MAN5=	termcap.0
 
+CLEANFILES= termcap termcap.db
 all: termcap termcap.db
 
 termcap: reorder termcap.src
@@ -14,9 +15,6 @@ termcap: reorder termcap.src
 
 termcap.db: termcap
 	cap_mkdb termcap
-
-clean:
-	rm -f termcap termcap.db
 
 beforeinstall:
 	@if [ ! -d ${DESTDIR}${BINDIR}/misc ]; then \

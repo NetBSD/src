@@ -2,9 +2,7 @@
 
 MAN1=	shar.0
 
-all shar:
-
-clean cleandir depend lint tags:
+NOPROG=noprog
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

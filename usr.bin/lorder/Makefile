@@ -2,13 +2,10 @@
 
 MAN1=	lorder.0
 
-all lorder:
+NOPROG=noprog
 
-clean cleandir depend lint tags:
-
-install:
+realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/lorder.sh ${DESTDIR}/${BINDIR}/lorder
+	    ${.CURDIR}/lorder.sh ${DESTDIR}${BINDIR}/lorder
 
 .include <bsd.prog.mk>
-.include <bsd.man.mk>
