@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 2000/03/06 03:15:28 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53.4.1 2000/07/26 11:51:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2000/03/06 03:15:28 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53.4.1 2000/07/26 11:51:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2000/03/06 03:15:28 mhitch Exp $")
 #include <dev/scsipi/scsiconf.h>
 
 #include "rz.h"
+#include "tz.h"
 #include "xasc_ioasic.h"
 #include "xasc_pmaz.h"
 
@@ -89,7 +90,7 @@ cpu_configure()
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
-#if NRZ > 0
+#if NRZ > 0 || NTZ > 0
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 #endif
