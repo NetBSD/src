@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.85 1998/05/15 15:45:58 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.86 1998/05/18 18:27:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -957,7 +957,7 @@ audio_drain(sc)
 		 * When the process is exiting, it ignores all signals and
 		 * we can't interrupt this sleep, so we set a timeout just in case.
 		 */
-		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 30*hz);
+		error = audio_sleep_timo(&sc->sc_wchan, "aud_dr", 30*hz);
 	}
 	splx(s);
 	return error;
@@ -1058,7 +1058,7 @@ audio_read(dev, uio, ioflag)
 					splx(s);
 					return EWOULDBLOCK;
 				}
-				error = audio_sleep(&sc->sc_rchan, "aud hr");
+				error = audio_sleep(&sc->sc_rchan, "aud_hr");
 				if (error) {
 					splx(s);
 					return error;
@@ -1089,7 +1089,7 @@ audio_read(dev, uio, ioflag)
 				}
 			}
 			DPRINTFN(2, ("audio_read: sleep used=%d\n", cb->used));
-			error = audio_sleep(&sc->sc_rchan, "aud rd");
+			error = audio_sleep(&sc->sc_rchan, "aud_rd");
 			if (error) {
 				splx(s);
 				return error;
@@ -1314,7 +1314,7 @@ audio_write(dev, uio, ioflag)
 				splx(s);
 				return (EWOULDBLOCK);
 			}
-			error = audio_sleep(&sc->sc_wchan, "aud wr");
+			error = audio_sleep(&sc->sc_wchan, "aud_wr");
 			if (error) {
 				splx(s);
 				return error;
