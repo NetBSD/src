@@ -1,38 +1,21 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1 1999/07/12 03:20:17 darrenr Exp $
+#	$NetBSD: Makefile,v 1.2 1999/07/12 04:13:34 mrg Exp $
 
+PROG=		ktruss
+SRCS=		ktrace.c dump.c subr.c ioctl.c misc.c
+LDSTATIC?=	-static
+CPPFLAGS+=	-I. -I${.CURDIR}/../ktrace -I${.CURDIR}/../../sys -DKTRUSS
+LDSTATIC?=	-static
+CLEANFILES+=	misc.c misc.h ioctl.c
 MAN=
-LDSTATIC?=-static
-PROG=	ktruss
-CFLAGS+=-g -I${.CURDIR}/../ktrace -I/sys -DKTRUSS
-SRCS=	ktrace.c dump.c subr.c ioctl.c misc.c
-CLEANFILES+=misc.c misc.h ktrace.c subr.c ioctl.c
-
-ktruss: links
-
-links: ktrace.c subr.c ioctl.c
-
-ktrace.c: ../ktrace/ktrace.c
-	rm -f ktrace.c
-	ln -s ../ktrace/ktrace.c .
-
-subr.c: ../ktrace/subr.c
-	rm -f subr.c
-	ln -s ../ktrace/subr.c .
-
-ioctl.c: ../kdump/ioctl.c
-	rm -f ioctl.c
-	ln -s ../kdump/ioctl.c .
-
-../kdump/ioctl.c: ../kdump/mkioctls
-	(cd ../kdump; make ioctl.c )
 
 dump.c: misc.h
+misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h \
+	       ${DESTDIR}/usr/include/sys/signal.h
+	${.CURDIR}/makeerrnos.sh \
+	    ${DESTDIR}/usr/include/sys/errno.h \
+	    ${DESTDIR}/usr/include/sys/signal.h misc
 
-misc.c: /usr/include/sys/errno.h /usr/include/sys/signal.h
-	./makeerrnos
-
-misc.h: /usr/include/sys/errno.h /usr/include/sys/signal.h
-	./makeerrnos
-
+.include "${.CURDIR}/../kdump/Makefile.ioctl-c"
 .include <bsd.prog.mk>
+
+.PATH: ${.CURDIR}/../ktrace ${.CURDIR}/../kdump
