@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.2 1996/03/14 23:11:41 mark Exp $ */
+/* $NetBSD: reg.h,v 1.3 1996/10/15 00:21:36 mark Exp $ */
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster
@@ -39,20 +39,16 @@
 #include <machine/fp.h>
 
 struct reg {
-  unsigned int r[13];
-  unsigned int r_sp;
-  unsigned int r_lr;
-  unsigned int r_pc;
-  unsigned int r_cpsr;
+	unsigned int r[13];
+	unsigned int r_sp;
+	unsigned int r_lr;
+	unsigned int r_pc;
+	unsigned int r_cpsr;
 };
 
-/* this is identical to fp_state */
 struct fpreg {
-  unsigned int fpr_flags;
-  unsigned int fpr_sr;
-  unsigned int fpr_cr;
-  fp_reg_t fpr[16];
+	unsigned int fpr_fpsr;
+	fp_reg_t fpr[8];
 };
 
 #endif /* !_ARM32_REG_H_ */
-
