@@ -37,13 +37,12 @@
  *
  *	from: Utah Hdr: hpux_tty.c 1.1 90/07/09
  *	from: @(#)hpux_tty.c	7.9 (Berkeley) 5/30/91
- *	$Id: hpux_tty.c,v 1.4 1994/01/07 00:44:05 mycroft Exp $
+ *	$Id: hpux_tty.c,v 1.5 1994/05/04 04:09:39 mycroft Exp $
  */
 
 /*
  * stty/gtty/termio emulation stuff
  */
-#ifdef HPUXCOMPAT
 
 #include "param.h"
 #include "systm.h"
@@ -424,4 +423,3 @@ getsettty(p, fdes, com, cmarg)
 	return (error);
 }
 /* #endif */
-#endif

@@ -37,14 +37,12 @@
  *
  *	from: Utah Hdr: hpux_net.c 1.33 89/08/23
  *	from: @(#)hpux_net.c	7.7 (Berkeley) 2/13/91
- *	$Id: hpux_net.c,v 1.4 1994/01/07 00:43:50 mycroft Exp $
+ *	$Id: hpux_net.c,v 1.5 1994/05/04 04:09:36 mycroft Exp $
  */
 
 /*
  * Network related HP-UX compatibility routines
  */
-
-#ifdef HPUXCOMPAT
 
 #include "sys/param.h"
 #include "sys/systm.h"
@@ -230,4 +228,3 @@ bad:
 		(void) m_free(m);
 	return (error);
 }
-#endif
