@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.30 1996/03/17 00:55:32 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.31 1996/03/27 04:06:53 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -197,7 +197,9 @@ extern PRINT_ADDR();
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#ifndef __alpha__
 #define DELAY(x)	delay(x)
+#endif
 #endif /* __NetBSD__ */
 
 #include <scsi/scsi_all.h>
@@ -206,6 +208,10 @@ extern PRINT_ADDR();
 #include <machine/clock.h>
 #endif /* __NetBSD__ */
 
+#if defined(__NetBSD__) && defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#define	vtophys(va)	(vtophys(va) | 0x40000000)
+#endif
 
 /*==========================================================
 **
@@ -1319,7 +1325,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.30 1996/03/17 00:55:32 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.31 1996/03/27 04:06:53 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3339,7 +3345,10 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	int retval;
+	bus_mem_size_t memsize;
+	int retval, cacheable;
+	pci_intr_handle_t intrhandle;
+	const char *intrstr;
 	ncb_p np = (void *)self;
 
 	printf(": NCR ");
@@ -3370,15 +3379,41 @@ ncr_attach(parent, self, aux)
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_map_mem(pa->pa_tag, 0x14, (vm_offset_t *)&np->sc_memh,
-	    &np->paddr);
-	if (retval)
+	retval = pci_mem_find(pa->pa_pc, pa->pa_tag, 0x14, &np->paddr,
+	    &memsize, &cacheable);
+	if (retval) {
+		printf("%s: couldn't find memory region\n", self->dv_xname);
 		return;
+	}
 
-	np->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ncr_intr, np);
-	if (np->sc_ih == NULL)
+	/* Map the memory.  Note that we never want it to be cacheable. */
+	retval = bus_mem_map(pa->pa_bc, np->paddr, memsize, 0, &np->sc_memh);
+	if (retval) {
+		printf("%s: couldn't map memory region\n", self->dv_xname);
 		return;
+	}
 
+	/*
+	**	Set up the controller chip's interrupt.
+	*/
+	retval = pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &intrhandle);
+	if (retval) {
+		printf("%s: couldn't map interrupt\n", self->dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	np->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
+	    ncr_intr, np);
+	if (np->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt", self->dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	if (intrstr != NULL)
+		printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 #else /* !__NetBSD__ */
 
