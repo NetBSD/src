@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.2 1995/02/16 02:36:35 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.3 1995/04/22 12:41:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -47,7 +47,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <alpha/tc/dmavar.h>
+#include <alpha/tc/tcds_dmavar.h>
 #include <alpha/tc/espreg.h>
 #include <alpha/tc/espvar.h>
 #include <alpha/tc/tcds.h>
