@@ -35,57 +35,57 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.1 1993/10/08 05:26:57 cgd Exp $";
+%static char rcsid[] = "$Id: rnusers.x,v 1.2 1993/11/21 18:59:03 brezak Exp $";
 %#endif /* not lint */
 #endif
 
-const MAXUSERS = 100;
-const MAXUTLEN = 256;
 
-struct utmp {
-	string ut_line<MAXUTLEN>;
-	string ut_name<MAXUTLEN>;
-	string ut_host<MAXUTLEN>;
-	int ut_time;
-};
-
-
-struct utmpidle {
-	utmp ui_utmp;
-	unsigned int ui_idle;
-};
-
-typedef utmp utmparr<MAXUSERS>;
-
-typedef utmpidle utmpidlearr<MAXUSERS>;
-
-program RUSERSPROG {
-	/*
-	 * Old version does not include idle information
-	 */
-	version RUSERSVERS_ORIG {
-		int
-		RUSERSPROC_NUM(void) = 1;
-
-		utmparr
-		RUSERSPROC_NAMES(void) = 2;
-
-		utmparr
-		RUSERSPROC_ALLNAMES(void) = 3;
-	} = 1;
-
-	/*
-	 * Includes idle information
-	 */
-	version RUSERSVERS_IDLE {
-		int
-		RUSERSPROC_NUM(void) = 1;
-
-		utmpidlearr
-		RUSERSPROC_NAMES(void) = 2;
-
-		utmpidlearr
-		RUSERSPROC_ALLNAMES(void) = 3;
-	} = 2;
-} = 100002;
-	
+#ifdef RPC_HDR
+%/*
+% * The following structures are used by version 2 of the rusersd protocol.
+% * They were not developed with rpcgen, so they do not appear as RPCL.
+% */
+%
+%#define	RUSERSVERS_IDLE 2
+%#define	RUSERSVERS 3		/* current version */
+%#define	MAXUSERS 100
+%
+%/*
+% * This is the structure used in version 2 of the rusersd RPC service.
+% * It corresponds to the utmp structure for BSD sytems.
+% */
+%struct ru_utmp {
+%	char	ut_line[8];		/* tty name */
+%	char	ut_name[8];		/* user id */
+%	char	ut_host[16];		/* host name, if remote */
+%	long	ut_time;		/* time on */
+%};
+%typedef struct ru_utmp rutmp;
+%
+%struct utmpidle {
+%	struct ru_utmp ui_utmp;
+%	unsigned ui_idle;
+%};
+%
+%struct utmpidlearr {
+%	struct utmpidle **uia_arr;
+%	int uia_cnt;
+%};
+%typedef struct utmpidlearr utmpidlearr;
+%
+%#define RUSERSVERS_2 ((u_long)2)
+%#ifndef RUSERSPROG
+%#define RUSERSPROG ((u_long)100002)
+%#endif
+%#ifndef RUSERSPROC_NUM
+%#define RUSERSPROC_NUM ((u_long)1)
+%#endif
+%#ifndef RUSERSPROC_NAMES
+%#define RUSERSPROC_NAMES ((u_long)2)
+%#endif
+%#ifndef RUSERSPROC_ALLNAMES
+%#define RUSERSPROC_ALLNAMES ((u_long)3)
+%#endif
+%int xdr_utmpidlearr();
+%
+#endif
