@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.111 2000/07/05 14:54:01 sommerfeld Exp $
+.\"	$NetBSD: options.4,v 1.112 2000/07/25 09:56:41 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1343,6 +1343,24 @@ affects rebooting from NetBSD and is only needed on 68040+PPC, not on
 68060+PPC; without this, affected machines will hang after NetBSD has shut
 down and will only restart after a keyboard reset or a power cycle.
 .El
+.Ss arm32-specific Options
+.Bl -ohang
+.It Cd options FRENCH_KEYBOARD
+Include translation for French keyboards when usign
+.Xr pccons 4
+on a Shark.
+.It Cd options FINNISH_KEYBOARD
+Include translation for Finnish keyboards when usign 
+.Xr pccons 4
+on a Shark.
+.It Cd options GERMAN_KEYBOARD
+Include translation for German keyboards when usign 
+.Xr pccons 4
+on a Shark.
+.It Cd options NORWEGIAN_KEYBOARD
+Include translation for French keyboards when usign 
+.Xr pccons 4
+on a Shark.
 .Ss atari-specific Options
 .Bl -ohang
 .It Cd options DISKLABEL_AHDI
