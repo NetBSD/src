@@ -30,7 +30,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)Makefile	5.6 (Berkeley) 3/5/91
+#	from: @(#)Makefile	5.6 (Berkeley) 3/5/91
+#	$Id: Makefile,v 1.2 1993/07/30 23:50:34 mycroft Exp $
 #
 
 PROG=	telnet
