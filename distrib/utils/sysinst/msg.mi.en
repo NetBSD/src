@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.45 1999/06/20 06:42:05 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.46 1999/06/22 02:25:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -454,7 +454,7 @@ message netinfo
 }
 
 message net_domain
-{Your domain}
+{Your DNS domain}
 
 message net_host
 {Your host name}
