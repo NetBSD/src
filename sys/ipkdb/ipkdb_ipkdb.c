@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.6 1997/06/26 07:21:47 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.7 1997/08/21 11:26:42 ws Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
@@ -50,7 +50,6 @@
 
 #include <machine/stdarg.h>
 #include <machine/cpu.h>
-#include <machine/psl.h>
 #include <machine/reg.h>
 
 #include <ipkdb/ipkdb.h>
