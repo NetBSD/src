@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/03/28 09:58:10 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/09/18 03:54:34 lukem Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -7,13 +7,7 @@ NTP_MAKEFILE_INC=1
 
 NTPDOCDIR?=	${HTMLDOCDIR}/ntp
 
-.if exists(${.CURDIR}/../../../dist/ntp)
-DIST=		${.CURDIR}/../../../dist/ntp
-.elif exists(${.CURDIR}/../../../../dist/ntp)
-DIST=		${.CURDIR}/../../../../dist/ntp
-.else
-# error here?
-.endif
+DIST=		${NETBSDSRCDIR}/dist/ntp
 
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
 
