@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.42 2003/07/07 12:30:22 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.43 2003/07/10 13:36:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -436,7 +436,7 @@ loop:
 	/* from here on out, we take tty signals ourselves */
 	ttysig_forward = 0;
 
-	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
+	reset_prog_mode();
 
 	if (WIFEXITED(status)) {
 		*errstr = "command failed";
@@ -475,6 +475,9 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	    (*aps = strsep(&p, " ")) != NULL;)
 		if (**aps != '\0')
 			++aps;
+
+	/* Make curses save tty settings */
+	def_prog_mode();
 
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
 	/* Apparently, we sometimes get 0x0 back, and that's not useful */
@@ -581,6 +584,8 @@ done:
 		ret = launch_subwin(NULL, args, &win, flags, &errstr);
 	}
 	va_end(ap);
+	/* restore tty setting we saved earlier */
+	reset_prog_mode();
 	if ((flags & RUN_FATAL) != 0 && ret != 0)
 		exit(ret);
 	if (ret && errmsg != MSG_NONE) {
