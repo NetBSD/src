@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.6 1999/03/02 03:13:59 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.7 1999/08/10 18:21:39 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,6 +95,8 @@ main(argc,argv)
 	char name[PATH_MAX];
 	char component[PATH_MAX];
 	int do_recon;
+	int do_rewrite;
+	int is_clean;
 	int raidID;
 	int rawpart;
 	int recon_percent_done;
@@ -106,9 +108,11 @@ main(argc,argv)
 	num_options = 0;
 	action = 0;
 	do_recon = 0;
+	do_rewrite = 0;
+	is_clean = 0;
 	force = 0;
 
-	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSu")) != -1)
+	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSpPu")) != -1)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
@@ -178,6 +182,15 @@ main(argc,argv)
 			break;
 		case 'S':
 			action = RAIDFRAME_CHECKRECON;
+			num_options++;
+			break;
+		case 'p':
+			action = RAIDFRAME_CHECK_PARITY;
+			num_options++;
+			break;
+		case 'P':
+			action = RAIDFRAME_CHECK_PARITY;
+			do_rewrite = 1;
 			num_options++;
 			break;
 		case 'u':
@@ -270,6 +283,25 @@ main(argc,argv)
 		break;
 	case RAIDFRAME_REBUILD_IN_PLACE:
 		rebuild_in_place(fd,component);
+		break;
+	case RAIDFRAME_CHECK_PARITY:
+		do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
+			 "RAIDFRAME_CHECK_PARITY");
+		if (is_clean) {
+			printf("%s: Parity status: clean\n",dev_name);
+		} else {
+			printf("%s: Parity status: DIRTY\n",dev_name);
+			if (do_rewrite) {
+				printf("%s: Initiating re-write of parity\n",
+				       dev_name);
+				do_ioctl(fd, RAIDFRAME_REWRITEPARITY, NULL, 
+					 "RAIDFRAME_REWRITEPARITY");
+			} else {
+				/* parity is wrong, and is not being fixed.
+				   Exit w/ an error. */
+				exit(1);
+			}
+		}
 		break;
 	case RAIDFRAME_SHUTDOWN:
 		do_ioctl(fd, RAIDFRAME_SHUTDOWN, NULL, "RAIDFRAME_SHUTDOWN");
@@ -584,7 +616,6 @@ rebuild_in_place( fd, component )
 	do_ioctl( fd, RAIDFRAME_REBUILD_IN_PLACE, &comp,
 		  "RAIDFRAME_REBUILD_IN_PLACE");
 }
-
 
 static void
 usage()
