@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.10 1997/07/30 15:43:27 leo Exp $
+#	$NetBSD: HADES,v 1.11 1997/08/02 12:12:25 leo Exp $
 #
 # Medusa-Hades
 #
@@ -16,12 +16,18 @@ maxusers	16
 #
 # processors this kernel should support
 #
-options 	M68030		# support for 030
 options 	M68040		# support for 040
+options 	M68060		# support for 060
 
 options 	HZ=64		# Set the clock-rate (48/64/96)
 
-options	FPSP			# 68040 Floatingpoint support
+options 	FPSP		# 68040 Floatingpoint support
+options 	M060SP		# MC68060 software support (Required for 060)
+
+#
+# X11R6 related options
+#
+options 	UCONSOLE	# Allow xconsole to work
 
 #
 # Networking options
