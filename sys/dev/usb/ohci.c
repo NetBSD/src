@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.31 1999/06/09 19:40:54 wrstuden Exp $	*/
+/*	$NetBSD: ohci.c,v 1.32 1999/06/09 22:57:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,6 +192,7 @@ struct ohci_pipe {
 		struct {
 			usb_dma_t datadma;
 			u_int length;
+			int isread;
 		} bulk;
 	} u;
 };
@@ -862,16 +863,19 @@ ohci_bulk_done(sc, reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
+	u_int len = opipe->u.bulk.length;
 	usb_dma_t *dma;
 
 
 	DPRINTFN(10,("ohci_bulk_done: reqh=%p, actlen=%d\n", 
 		     reqh, reqh->actlen));
 
-	dma = &opipe->u.bulk.datadma;
-	if (reqh->request.bmRequestType & UT_READ)
-		memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
-	usb_freemem(sc->sc_dmatag, dma);
+	if (len != 0) {
+		dma = &opipe->u.bulk.datadma;
+		if (opipe->u.bulk.isread)
+			memcpy(reqh->buffer, KERNADDR(dma), len);
+		usb_freemem(sc->sc_dmatag, dma);
+	}
 	usb_untimeout(ohci_timeout, reqh, reqh->timo_handle);
 }
 
@@ -1912,6 +1916,7 @@ ohci_device_bulk_start(reqh)
 	isread = reqh->pipe->endpoint->edesc->bEndpointAddress & UE_IN;
 	sed = opipe->sed;
 
+	opipe->u.bulk.isread = isread;
 	opipe->u.bulk.length = len;
 
 	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
@@ -1953,6 +1958,7 @@ ohci_device_bulk_start(reqh)
 	ohci_hash_add_td(sc, xfer);
 	sed->ed->ed_tailp = LE(tail->physaddr);
 	opipe->tail = tail;
+	sed->ed->ed_flags &= LE(~OHCI_ED_SKIP); /* XXX why */
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
 	if (reqh->timeout && !sc->sc_bus.use_polling) {
                 usb_timeout(ohci_timeout, reqh,
