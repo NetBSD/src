@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.6 2002/01/29 02:43:39 tv Exp $	*/
+/*	$NetBSD: mem1.c,v 1.7 2002/01/31 19:36:54 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,8 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: mem1.c,v 1.6 2002/01/29 02:43:39 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: mem1.c,v 1.7 2002/01/31 19:36:54 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -177,8 +177,6 @@ xnewblk(void)
 	mb->blk = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
 	if (mb->blk == (void *)-1)
 		err(1, "can't map memory");
-	if (ALIGN((u_long)mb->blk) != (u_long)mb->blk)
-		errx(1, "mapped address is not aligned");
 
 	mb->size = mblklen;
 
