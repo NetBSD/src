@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.150 2003/11/16 15:07:25 yamt Exp $
+#       $NetBSD: Makefile,v 1.151 2003/12/04 19:57:38 atatat Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -9,7 +9,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_idle.9 \
 	cpu_fork.9 \
 	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
-	cpu_startup.9 cpu_swapout.9 cpu_sysctl.9 cpu_wait.9 \
+	cpu_startup.9 cpu_swapout.9 cpu_wait.9 \
 	cred.9 ctxsw.9 curproc.9 \
 	delay.9 disk.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
@@ -456,7 +456,7 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uao_create.9 \
 	uvm.9 uao_detach.9 uvm.9 uao_reference.9 uvm.9 uvm_chgkprot.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
-	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
+	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9 \
 	uvm.9 ubc_alloc.9 \
 	uvm.9 ubc_release.9 \
@@ -506,7 +506,6 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_detach.9 \
 	vfssubr.9 vfs_reinit.9 \
 	vfssubr.9 vfs_getopsbyname.9 \
-	vfssubr.9 vfs_sysctl.9 \
 	vfssubr.9 vfs_write_suspend.9 \
 	vfssubr.9 vfs_write_resume.9
 MLINKS+=vnode.9 vcount.9 \
