@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.9 2000/05/15 01:27:44 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.10 2000/05/15 01:32:03 thorpej Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -67,30 +67,9 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/ic/ac97var.h>
 
-#define AC97_REG_RESET                0x00
-#define AC97_SOUND_ENHANCEMENT(reg)   (((reg) >> 10) & 0x1f)
-#define AC97_REG_MASTER_VOLUME        0x02
-#define AC97_REG_HEADPHONE_VOLUME     0x04
-#define AC97_REG_MASTER_VOLUME_MONO   0x06
-#define AC97_REG_MASTER_TONE          0x08
-#define AC97_REG_PCBEEP_VOLUME        0x0a
-#define AC97_REG_PHONE_VOLUME         0x0c
-#define AC97_REG_MIC_VOLUME           0x0e
-#define AC97_REG_LINEIN_VOLUME        0x10
-#define AC97_REG_CD_VOLUME            0x12
-#define AC97_REG_VIDEO_VOLUME         0x14
-#define AC97_REG_AUX_VOLUME           0x16
-#define AC97_REG_PCMOUT_VOLUME        0x18
-#define AC97_REG_RECORD_SELECT        0x1a
-#define AC97_REG_RECORD_GAIN          0x1c
-#define AC97_REG_RECORD_GAIN_MIC      0x1e
-#define AC97_REG_GP                   0x20
-#define AC97_REG_3D_CONTROL           0x22
-#define AC97_REG_POWER                0x26
-#define AC97_REG_VENDOR_ID1           0x7c
-#define AC97_REG_VENDOR_ID2           0x7e
+#include <dev/ic/ac97reg.h>
+#include <dev/ic/ac97var.h>
 
 static struct audio_mixer_enum ac97_on_off = { 2,
 					       { { { AudioNoff } , 0 },
@@ -289,17 +268,6 @@ struct ac97_codec_if_vtbl ac97civ = {
 	ac97_query_devinfo,
 	ac97_get_portnum_by_name
 };
-
-#define AC97_CODEC_ID(a0, a1, a2, x)					\
-	(((a0) << 24) | ((a1) << 16) | ((a2) << 8) | (x))
-
-#define	AC97_GET_CODEC_ID(id, cp)					\
-do {									\
-	(cp)[0] = ((id) >> 24) & 0xff;					\
-	(cp)[1] = ((id) >> 16) & 0xff;					\
-	(cp)[2] = ((id) >> 8)  & 0xff;					\
-	(cp)[3] = (id) & 0xff;						\
-} while (0)
 
 static const struct ac97_codecid {
 	u_int32_t id;
