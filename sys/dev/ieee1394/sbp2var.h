@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2var.h,v 1.3 2002/12/18 04:48:34 jmc Exp $	*/
+/*	$NetBSD: sbp2var.h,v 1.4 2002/12/19 09:59:47 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,12 +40,14 @@
 #define _DEV_IEEE1394_SBP2VAR_H
 
 #include <dev/std/ieee1212var.h>
+struct sbp2_orb;
 
 struct sbp2_mapping {
 	void *laddr;
 	u_int64_t fwaddr;
 	u_int32_t size;
 	u_int8_t rw;
+	struct sbp2_orb *orb;
 };
 
 /* Need a top level map per bus. */
@@ -80,12 +82,20 @@ struct sbp2_status {
 	u_int16_t datalen;
 };
 
+struct sbp2_pagetable {
+	struct ieee1394_abuf pt_ent;
+	u_int16_t pt_cnt;
+	struct ieee1394_abuf *pt_data; /* cbarg == data_mapping */
+};
+
 struct sbp2_orb {
 	struct sbp2_mapping data_map;
 	
 	struct ieee1394_abuf cmd;
 	struct ieee1394_abuf data;
 	struct ieee1394_abuf resp;
+
+	struct sbp2_pagetable *pt;
 	
 	struct sbp2_status status;
 	u_int8_t status_rec;
