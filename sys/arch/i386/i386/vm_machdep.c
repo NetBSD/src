@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 1996/02/05 02:00:35 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 1996/04/03 08:24:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -258,6 +258,7 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
+#if 0
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
@@ -274,12 +275,14 @@ setredzone(pte, vaddr)
    used by sched (that has physical memory mapped 1:1 at bottom)
    and take the dump while still in mapped mode */
 }
+#endif
 
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
@@ -303,6 +306,7 @@ pagemove(from, to, size)
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
 	register caddr_t addr;
 {
