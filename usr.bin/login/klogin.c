@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.8 1997/02/11 08:15:09 mrg Exp $	*/
+/*	$NetBSD: klogin.c,v 1.9 1997/06/21 04:41:27 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: klogin.c,v 1.8 1997/02/11 08:15:09 mrg Exp $";
+__RCSID ("$NetBSD: klogin.c,v 1.9 1997/06/21 04:41:27 mellon Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -67,6 +69,9 @@ extern char *tty;
 
 static char tkt_location[MAXPATHLEN];  /* a pointer to this is returned... */
 
+int  klogin __P((struct passwd *, char *, char *, char *));
+void kdestroy __P((void));
+
 /*
  * Attempt to log the user in using Kerberos authentication
  *
@@ -84,7 +89,6 @@ klogin(pw, instance, localhost, password)
 	struct hostent *hp;
 	unsigned long faddr;
 	char realm[REALM_SZ], savehost[MAXHOSTNAMELEN];
-	char *krb_get_phost();
 
 #ifdef SKEY
 	/*
