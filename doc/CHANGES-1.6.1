@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.95 2003/01/28 08:46:08 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.96 2003/01/28 18:32:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3458,3 +3458,12 @@ share/tmac/doc-common				patched by hand
 sys/sys/param.h					patched by hand
 
 	Update to 1.6.1_RC1
+
+sys/net/if_spppsubr.c				1.62-1.63
+sys/net/if_spppvar.h				1.6-1.7
+
+	Use MRU negotiated with remote system as MTU. Fixes PR#18850.
+	[tron, ticket #1133]
+
+	(Moved tags for RC1 on these files)
+
