@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/25 14:14:19 ragge Exp $
+#	$NetBSD: Makefile,v 1.4 1995/09/16 13:18:27 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -6,29 +6,19 @@ INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
 CC=	cc
 AS=	as
 
+S=      ../../..
 RELOC=	100000
-VAXTYP=	-DVAX750 -DVAX630
-CFLAGS=	-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC}
-MACH=	-DVAX750
+CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -D_VAX_INLINE_
 
-DEVS=	autoconf.o hp.o ra.o
-LIBS=	libsa.a libsvax.a libkern.a
+DEVS=	autoconf.o hp.o ra.o tmscp.o
 
-all:	boot xxboot
+.include "$S/lib/libkern/Makefile.inc"
+LIBKERN=        ${KERNLIB}
 
-machine:
-	ln -s ../include machine
+.include "$S/lib/libsa/Makefile.inc"
+LIBSA=		${SA_LIB}
 
-libsa.a: ../../../lib/libsa/libsa.a
-	@rm -f libsa.a
-	cd ../../../lib/libsa; rm -f machine; \
-	ln -s ../../arch/vax/include machine;make
-	@ln -s ../../../lib/libsa/libsa.a .
-
-libkern.a: ../../../lib/libkern/libkern.a
-	@rm -f libkern.a
-	cd ../../../lib/libkern; make
-	@ln -s ../../../lib/libkern/libkern.a .
+all:	xxboot boot copy edlabel
 
 libsvax.a: consio.o urem.o udiv.o
 	ar crv $@ $?
@@ -42,15 +32,41 @@ udiv.o:	../vax/udiv.s
 
 # startups
 
+start.o: start.s
+	${CC} -x assembler-with-cpp -E start.s | as -o start.o
+
 srt0.o:	srt0.s
-	${CC} -x assembler-with-cpp -E -DREL srt0.s | as -o srt0.o
+	${CC} -x assembler-with-cpp -E srt0.s | as -o srt0.o
 
+# 
 
-boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBS} machine
-	ld -N -T ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
-	conf.o ${DEVS} ${LIBS}
+xxboot:	start.o bootxx.o romread.o ${LIBSA} ${LIBKERN} libsvax.a 
+	ld -N -Ttext ${RELOC} -o a.out start.o bootxx.o romread.o \
+	${LIBSA} ${LIBKERN} libsvax.a
+	@strip a.out
+	@size a.out
+	@dd if=a.out of=xxboot bs=32 skip=1
+	@rm -f a.out
+
+boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
+	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
 	@strip boot
 	@size boot
+
+edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o edlabel.o\
+	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
+	@strip edlabel
+	@size edlabel
+
+copy:	copy.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o copy.o \
+	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
+	@strip copy
+	@size copy
+
+#
 
 hp.o:	hp.c
 	${CC} -c ${CFLAGS} $*.c
@@ -67,15 +83,8 @@ conf.o:	conf.c
 boot.o:	boot.c
 	${CC} -c ${CFLAGS} $*.c
 
-xxboot:	start.o bootxx.o init.o romread.o ${LIBS} machine
-	ld -N -T ${RELOC} -o a.out start.o bootxx.o init.o romread.o ${LIBS}
-	@strip a.out
-	@size a.out
-	@dd if=a.out of=xxboot bs=32 skip=1
-	@rm -f a.out
-
-start.o: start.s
-	${CC} -x assembler-with-cpp -E start.s | as -o start.o
+copy.o:	copy.c
+	${CC} -c ${CFLAGS} $*.c
 
 romread.o:	romread.s
 	${CC} -x assembler-with-cpp -E romread.s | as -o romread.o
@@ -86,7 +95,9 @@ init.o:	init.c
 bootxx.o: bootxx.c 
 	${CC} -c ${CFLAGS} $*.c
 
-clean:
-	rm -f start.o romread.o bootxx.o init.o xxboot bootxx bootblocks \
-	libsvax.a libsa.a libkern.a udiv.o urem.o consio.o machine
-	rm -f autoconf.o conf.o boot.o hp.o boot srt0.o devopen.o
+clean::
+	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
+	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o
+	rm -f conf.o boot.o rom.o racopy.o srt0.o devopen.o rootcopy.o \
+	copy copy.o
+
