@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$NetBSD: chown.c,v 1.9 1997/05/02 01:36:18 jtc Exp $";
+static char *rcsid = "$NetBSD: chown.c,v 1.10 1997/06/26 23:18:05 kleink Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char *rcsid = "$NetBSD: chown.c,v 1.9 1997/05/02 01:36:18 jtc Exp $";
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <fts.h>
 #include <grp.h>
 #include <pwd.h>
@@ -78,6 +79,8 @@ main(argc, argv)
 	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
 	char *cp;
 	
+	setlocale(LC_ALL, "");
+
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = myname[2] == 'o';
 	
