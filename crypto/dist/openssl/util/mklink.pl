@@ -48,8 +48,13 @@ foreach $dirname (@from_path) {
 my $to = join('/', @to_path);
 
 my $file;
+$symlink_exists=eval {symlink("",""); 1};
 foreach $file (@files) {
-#    print "ln -s $to/$file $from/$file\n";
-    symlink("$to/$file", "$from/$file");
-    print $file . " => $from/$file\n";
+    my $err = "";
+    if ($symlink_exists) {
+	symlink("$to/$file", "$from/$file") or $err = " [$!]";
+    } else {
+	system ("cp", "$file", "$from/$file") and $err = " [$!]";
+    }
+    print $file . " => $from/$file$err\n";
 }
