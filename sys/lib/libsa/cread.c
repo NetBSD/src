@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.7 1999/02/11 09:09:06 pk Exp $	*/
+/*	$NetBSD: cread.c,v 1.8 1999/02/12 10:44:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -402,7 +402,7 @@ lseek(fd, offset, where)
 	}
 	f = &files[fd];;
 
-	if ((f->f_flags & F_READ) != 0)
+	if ((f->f_flags & F_READ) == 0)
 		return(olseek(fd, offset, where));
 
 	s = ss[fd];
