@@ -1,7 +1,8 @@
-/*	$NetBSD: sys_machdep.c,v 1.34 1997/04/26 21:33:42 tls Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.35 1997/11/13 03:16:51 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1995, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -185,7 +186,7 @@ i386_get_ldt(p, args, retval)
 		lp = pcb->pcb_ldt;
 	} else {
 		nldt = NLDT;
-		lp = ldt;
+		lp = static_ldt;
 	}
 
 	if (ua.start > nldt)
@@ -237,7 +238,7 @@ i386_set_ldt(p, args, retval)
 			old_ldt = pcb->pcb_ldt;
 		} else {
 			old_len = NLDT * sizeof(union descriptor);
-			old_ldt = ldt;
+			old_ldt = static_ldt;
 			pcb->pcb_ldt_len = 512;
 		}
 		while ((ua.start + ua.num) > pcb->pcb_ldt_len)
@@ -256,7 +257,7 @@ i386_set_ldt(p, args, retval)
 		if (pcb == curpcb)
 			lldt(pcb->pcb_ldt_sel);
 
-		if (old_ldt != ldt)
+		if (old_ldt != static_ldt)
 			kmem_free(kernel_map, (vm_offset_t)old_ldt, old_len);
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);

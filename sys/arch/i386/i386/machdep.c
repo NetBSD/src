@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 1997/10/17 18:06:06 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.263 1997/11/13 03:16:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
 
-caddr_t	msgbufaddr;
+vm_offset_t msgbuf_vaddr, msgbuf_paddr;
 
 vm_map_t buffer_map;
 
@@ -421,6 +421,7 @@ cpu_startup()
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
 #endif
+
 	/*
 	 * Configure the system.
 	 */
@@ -430,6 +431,7 @@ cpu_startup()
 	/*
 	 * Set up proc0's TSS and LDT.
 	 */
+	gdt_init();
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
@@ -1337,9 +1339,9 @@ setregs(p, pack, stack)
  * Initialize segments and descriptor tables
  */
 
-union descriptor gdt[NGDT];
-union descriptor ldt[NLDT];
-struct gate_descriptor idt[NIDT];
+union descriptor static_gdt[NGDT], *gdt = static_gdt;
+union descriptor static_ldt[NLDT];
+struct gate_descriptor static_idt[NIDT], *idt = static_idt;
 
 extern  struct user *proc0paddr;
 
@@ -1426,36 +1428,42 @@ init386(first_avail)
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/* make gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
-	    0, 0);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&static_gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL,
+	    1, 1);
+	setsegment(&static_gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL,
+	    1, 1);
+	setsegment(&static_gdt[GLDT_SEL].sd, static_ldt, sizeof(static_ldt) - 1,
+	    SDT_SYSLDT, SEL_KPL, 0, 0);
+	setsegment(&static_gdt[GUCODE_SEL].sd, 0,
+	    i386_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&static_gdt[GUDATA_SEL].sd, 0,
+	    i386_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
+#if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
-	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0, 0);
-	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0, 0);
+	setsegment(&static_gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA,
+	    SEL_KPL, 0, 0);
+	setsegment(&static_gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA,
+	    SEL_KPL, 0, 0);
+#endif
 
 	/* make ldt gates and memory segments */
-	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
-	    SEL_UPL);
-	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
-	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
-	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+	setgate(&static_ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+	static_ldt[LUCODE_SEL] = static_gdt[GUCODE_SEL];
+	static_ldt[LUDATA_SEL] = static_gdt[GUDATA_SEL];
+	static_ldt[LBSDICALLS_SEL] = static_ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
 	for (x = 0; x < 32; x++)
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		setgate(&static_idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    x == 3 ? SEL_UPL : SEL_KPL);
 
 	/* new-style interrupt gate for syscalls */
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
+	setgate(&static_idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
 
-	setregion(&region, gdt, sizeof(gdt) - 1);
+	setregion(&region, static_gdt, sizeof(static_gdt) - 1);
 	lgdt(&region);
-	setregion(&region, idt, sizeof(idt) - 1);
+	setregion(&region, static_idt, sizeof(static_idt) - 1);
 	lidt(&region);
 
 #if NISA > 0
@@ -1482,7 +1490,7 @@ init386(first_avail)
 	 */
 	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
 		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
+		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM IOMEM EXTENT MAP!\n");
 	}
 	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
 	    (avail_end - IOM_END), EX_NOWAIT)) {
@@ -1553,9 +1561,9 @@ init386(first_avail)
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + x * NBPG,
-		    avail_end + x * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + x * NBPG,
+		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 #ifdef DDB
 	ddb_init();
@@ -1833,8 +1841,8 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
-	bzero((caddr_t)idt, sizeof(idt));
-	setregion(&region, idt, sizeof(idt) - 1);
+	bzero((caddr_t)idt, NIDT * sizeof(idt[0]));
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
