@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 2003/10/05 21:13:23 pk Exp $ */
+/*	$NetBSD: signal.h,v 1.14 2003/10/11 22:15:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,12 @@ struct sigcontext {
 	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
+
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((vers) <= 2)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
 #ifdef __arch64__
 #define	_MCONTEXT_TO_SIGCONTEXT_32_64(uc, sc)				\
