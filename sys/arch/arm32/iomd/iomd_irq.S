@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.14 1997/10/14 11:05:58 mark Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.15 1998/04/01 23:09:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,15 +44,13 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm32/iomd/iomdreg.h>
 
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
 	.text
+	.align	0
 
 /*
  *
@@ -92,7 +90,7 @@ Lcurrent_intr_depth:
  *  r10 - Base address of IOMD
  */
 
-irq_entry:
+ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
@@ -334,9 +332,7 @@ Lcurrent_mask:
 Lirqblock:
 	.word	_irqblock
 
-	.global	_irq_setmasks
-
-_irq_setmasks:
+ENTRY(irq_setmasks)
 	/* Disable interrupts */
 	mrs	r3, cpsr_all
 	orr	r1, r3,  #(I32_bit)
@@ -455,11 +451,7 @@ _eintrcnt:
 
 /* FIQ code */
 
-	.text
-	.align	0
-	.global	_fiq_setregs		/* Sets up the FIQ handler */
-
-_fiq_setregs:
+ENTRY(fiq_setregs)			/* Sets up the FIQ handler */
         mrs	r2, cpsr_all
 	mov	r3, r2
 	bic	r2, r2, #(PSR_MODE)
@@ -477,9 +469,7 @@ _fiq_setregs:
 
 	mov	pc, lr			/* Exit */
 
-	.global	_fiq_getregs		/* Gets the FIQ registers */
-
-_fiq_getregs:
+ENTRY(fiq_getregs)			/* Gets the FIQ registers */
         mrs	r2, cpsr_all
 	mov	r3, r2
 	bic	r2, r2, #(PSR_MODE)
