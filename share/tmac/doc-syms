@@ -119,6 +119,28 @@
 .de Ud
 \&currently under development.
 ..
+.\" Ns Nx macro - NetBSD
+.de Nx
+.nr cF \\n(.f
+.nr cZ \\n(.s
+.ds aa \&\f\\n(cF\s\\n(cZ
+.if \\n(.$==2 \{\
+.	if "\\$1"0.8"  \&\\*(tNNetBSD\\*(aa 0.8\\*(aa\\$2
+.	if "\\$1"0.8a"  \&\\*(tNNetBSD\\*(aa 0.8a\\*(aa\\$2
+.	if "\\$1"0.9"  \&\\*(tNNetBSD\\*(aa 0.9\\*(aa\\$2
+.	if "\\$1"0.9a"  \&\\*(tNNetBSD\\*(aa 0.9a\\*(aa\\$2
+.	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa\\$2
+.	if "\\$1"1.0a"  \&\\*(tNNetBSD\\*(aa 1.0a\\*(aa\\$2
+.\}
+.if \\n(.$==1 \{\
+.	if "\\$1"0.8"  \&\\*(tNNetBSD\\*(aa 0.8\\*(aa
+.	if "\\$1"0.8a"  \&\\*(tNNetBSD\\*(aa 0.8a\\*(aa
+.	if "\\$1"0.9"  \&\\*(tNNetBSD\\*(aa 0.9\\*(aa
+.	if "\\$1"0.9a"  \&\\*(tNNetBSD\\*(aa 0.9a\\*(aa
+.	if "\\$1"1.0"  \&\\*(tNNetBSD\\*(aa 1.0\\*(aa
+.	if "\\$1"1.0a"  \&\\*(tNNetBSD\\*(aa 1.0a\\*(aa
+.\}
+..
 .\" Ns At macro - AT&T UNIX
 .de At
 .nr cF \\n(.f
