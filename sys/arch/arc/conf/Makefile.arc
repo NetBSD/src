@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.36 2000/05/09 00:32:20 thorpej Exp $
+#	$NetBSD: Makefile.arc,v 1.37 2000/05/09 00:56:22 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -225,5 +225,17 @@ fp.o: ${MIPS}/mips/fp.S assym.h
 
 locore_machdep.o: ${ARC}/arc/locore_machdep.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

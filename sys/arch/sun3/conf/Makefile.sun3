@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.81 2000/05/09 00:32:26 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.82 2000/05/09 00:56:28 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -246,5 +246,17 @@ locore.o: ${SUN3}/${MACHTYPE}/locore.s
 	${NORMAL_S}
 
 # Generated rules follow:
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES

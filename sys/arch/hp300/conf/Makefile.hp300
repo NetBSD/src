@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.75 2000/05/09 00:32:22 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.76 2000/05/09 00:56:24 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -204,5 +204,17 @@ dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o tra
 
 locore.o: ${HP300}/hp300/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES
