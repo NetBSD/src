@@ -968,8 +968,8 @@ equivalent.  At least one option besides `-v' or `-H' must be given.
 `-D'
 `--use-dynamic'
      When displaying symbols, this option makes `readelf' use the
-     symblol table in the file's dynamic section, rather than the one
-     in the symbols section.
+     symbol table in the file's dynamic section, rather than the one in
+     the symbols section.
 
 `-x <number>'
 `--hex-dump=<number>'
