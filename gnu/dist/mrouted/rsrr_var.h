@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr_var.h,v 1.1 1995/12/10 10:07:15 mycroft Exp $	*/
+/*	$NetBSD: rsrr_var.h,v 1.1 2002/10/01 03:31:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993 by the University of Southern California
