@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.12 2002/04/04 07:06:17 ichiro Exp $	*/
+/*	$NetBSD: wivar.h,v 1.13 2002/04/04 17:43:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -110,4 +110,3 @@ int	wi_activate __P((struct device *, enum devact));
 int	wi_intr __P((void *arg));
 void	wi_power __P((struct wi_softc *, int));
 void	wi_shutdown __P((struct wi_softc *));
-void	wi_pci_reset __P((struct wi_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.65 2002/04/04 17:30:32 jdolecek Exp $	*/
+/*	$NetBSD: wi.c,v 1.66 2002/04/04 17:43:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.65 2002/04/04 17:30:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.66 2002/04/04 17:43:31 jdolecek Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -842,20 +842,6 @@ wi_reset(sc)
 
 	/* Calibrate timer. */
 	WI_SETVAL(WI_RID_TICK_TIME, 8);
-
-	return;
-}
-
-void
-wi_pci_reset(sc)
-	struct wi_softc		*sc;
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			  WI_PCI_COR, WI_PCI_SOFT_RESET);
-	DELAY(100*1000); /* 100 m sec */
-
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
-	DELAY(100*1000); /* 100 m sec */
 
 	return;
 }
