@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.22 2003/05/14 07:59:01 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.23 2003/06/29 16:59:51 oki Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,6 +77,19 @@ The
 mode, selected by setting
 .Em link1 ,
 only establishes a connection when data is being sent to the interface.
+.Pp
+If the kernel is compiled with options PPPOE_SERVER,
+there are two modes of connection, controlled via the
+.Em link0
+switch.
+The default mode,
+.Em link0
+not being set, client mode.
+The
+.Dq PPPoE server
+mode, selected by setting
+.Em Link0 ,
+wait incoming PPPoE session.
 .Pp
 Before a
 .Nm
