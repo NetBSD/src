@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.20 2000/04/17 12:25:46 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.21 2000/04/18 21:44:48 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.20 2000/04/17 12:25:46 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.21 2000/04/18 21:44:48 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -391,10 +391,10 @@ new_key(void)
 wchar_t
 inkey(int to, int delay)
 {
-	wchar_t	k;
-	ssize_t     nchar;
-	char    c;
-	keymap_t *current = base_keymap;
+	wchar_t		 k;
+	ssize_t		 nchar;
+	unsigned char    c;
+	keymap_t	*current = base_keymap;
 
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
