@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.3 2002/11/21 19:53:41 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.4 2002/11/23 17:35:06 wiz Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.3 2002/11/21 19:53:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.4 2002/11/23 17:35:06 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 	long argc, envc;
 	int error;
 
-	*stackp -= 16;
+	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
 	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
 	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
