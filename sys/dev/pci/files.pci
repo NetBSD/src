@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.188 2003/07/04 18:56:30 wiz Exp $
+#	$NetBSD: files.pci,v 1.189 2003/07/06 22:56:09 dyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -544,6 +544,10 @@ file	dev/pci/hifn7751.c		hifn
 # Aironet PC4500/PC4800
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
+
+# ADMtek ADM8211 PCI/Mini-PCI
+attach	atw at pci with atw_pci
+file	dev/pci/if_atw_pci.c		atw_pci
 
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
