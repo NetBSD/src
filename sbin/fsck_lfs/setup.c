@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.7 2000/10/04 11:37:54 jdolecek Exp $	 */
+/* $NetBSD: setup.c,v 1.8 2001/01/05 02:02:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -378,9 +378,10 @@ setup(const char *dev)
 	}
 #endif
 	if (sblock.lfs_maxfilesize != maxfilesize) {
-		pwarn("INCORRECT MAXFILESIZE=%qu IN SUPERBLOCK (should be %qu)",
-		      (unsigned long long)sblock.lfs_maxfilesize,
-		      (unsigned long long)maxfilesize);
+		pwarn(
+		    "INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK (should be %llu)",
+		    (unsigned long long)sblock.lfs_maxfilesize,
+		    (unsigned long long)maxfilesize);
 		sblock.lfs_maxfilesize = maxfilesize;
 		if (preen)
 			printf(" (FIXED)\n");
