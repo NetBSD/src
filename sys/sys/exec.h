@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.75 2000/12/08 19:42:12 jdolecek Exp $	*/
+/*	$NetBSD: exec.h,v 1.76 2000/12/10 14:13:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -77,7 +77,7 @@ struct ps_strings {
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#define	STACKGAPLEN	400	/* plenty enough for now */
+#define	STACKGAPLEN	512	/* plenty enough for now */
 /*
  * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
  */
