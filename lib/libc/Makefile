@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.11 1993/09/18 01:03:58 cgd Exp $
+#	$Id: Makefile,v 1.12 1993/09/28 03:05:28 mycroft Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -30,8 +30,6 @@ AINC=	-I${.CURDIR}/${MACHINE}
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/yp/Makefile.inc"
 .include "${.CURDIR}/rpc/Makefile.inc"
-.ifdef notdef
 .include "${.CURDIR}/quad/Makefile.inc"
-.endif
 
 .include <bsd.lib.mk>
