@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.44 1999/07/09 22:57:19 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.45 2000/02/01 00:07:50 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -575,7 +575,7 @@ add_vif(m)
 		/* Make sure the interface supports multicast. */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0)
 			return (EOPNOTSUPP);
-		
+
 		/* Enable promiscuous reception of all IP multicasts. */
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
@@ -584,7 +584,7 @@ add_vif(m)
 		if (error)
 			return (error);
 	}
-	
+
 	s = splsoftnet();
 
 	/* Define parameters for the tbf structure. */
