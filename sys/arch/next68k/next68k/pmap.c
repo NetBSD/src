@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2002/10/14 05:18:54 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.47 2002/11/03 19:56:33 chs Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -1782,47 +1782,6 @@ pmap_zero_page(phys)
 }
 
 /*
- * pmap_zero_page_uncached:
- *
- *	Same as above, except uncached.  Used in uvm_pageidlezero,
- *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
- *	was zero'd, FALSE if we aborted.
- */
-boolean_t
-pmap_zero_page_uncached(phys)
-	paddr_t phys;
-{
-	int s, npte;
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
-
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-#endif
-		DCPP_40(phys);	/* Works on 060 too */
-#endif
-
-	npte = phys | PG_V | PG_CI;
-
-	s = splvm();
-
-	*caddr1_pte = npte;
-	TBIS((vaddr_t)CADDR1);
-
-	zeropage(CADDR1);
-
-#ifdef DEBUG
-	*caddr1_pte = PG_NV;
-	TBIS((vaddr_t)CADDR1);
-#endif
-
-	splx(s);
-
-	return (TRUE);
-}
-
-/*
  * pmap_copy_page:		[ INTERFACE ]
  *
  *	Copy the specified (machine independent) page by mapping the page
@@ -2246,10 +2205,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				if (active_user_pmap(ptpmap))
 					PMAP_ACTIVATE(ptpmap, 1);
 			}
-#ifdef DEBUG
-			else if (ptpmap->pm_sref < 0)
-				panic("remove: sref < 0");
-#endif
 		}
 #if 0
 		/*
@@ -2709,69 +2664,6 @@ pmap_procwr(p, va, len)
 	size_t		len;
 {
 	(void)cachectl1(0x80000004, va, len, p);
-}
-
-void
-_pmap_set_page_cacheable(pm, va)
-	struct pmap *pm;
-	vaddr_t va;
-{
-
-	if (!pmap_ste_v(pm, va))
-		return;
-
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-	{
-#endif
-	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CCB, ~PG_CI))
-		DCIS();
-
-#if defined(M68020) || defined(M68030)
-	} else
-		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
-#endif
-#else
-	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
-#endif
-}
-
-void
-_pmap_set_page_cacheinhibit(pm, va)
-	struct pmap *pm;
-	vaddr_t va;
-{
-
-	if (!pmap_ste_v(pm, va))
-		return;
-
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-	{
-#endif
-	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~PG_CCB))
-		DCIS();
-#if defined(M68020) || defined(M68030)
-	} else
-		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
-#endif
-#else
-	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
-#endif
-}
-
-int
-_pmap_page_is_cacheable(pm, va)
-	struct pmap *pm;
-	vaddr_t va;
-{
-
-	if (!pmap_ste_v(pm, va))
-		return (0);
-
-	return ((pmap_pte_ci(pmap_pte(pm, va)) == 0) ? 1 : 0);
 }
 
 #ifdef DEBUG
