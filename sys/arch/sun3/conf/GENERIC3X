@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.67 2005/01/21 12:19:25 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.68 2005/01/28 03:19:51 rumble Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -86,6 +86,7 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 options 	INET		# IP prototol stack support

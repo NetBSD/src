@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2004/11/10 17:54:02 christos Exp $
+# $NetBSD: GENERIC,v 1.25 2005/01/28 03:19:49 rumble Exp $
 #
 # GENERIC machine description file
 # 
@@ -66,6 +66,7 @@ options 	QUOTA		# UFS quotas
 options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Executable format options
 options 	EXEC_ELF32
