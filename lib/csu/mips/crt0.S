@@ -34,30 +34,30 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
- *	$Id: crt0.S,v 1.1 1994/05/24 07:33:49 glass Exp $    
+ *	$Id: crt0.S,v 1.2 1994/11/14 23:34:40 dean Exp $    
  */
 
 #include <machine/regdef.h>
 #include <machine/machAsmDefs.h>
 
-	.comm	environ, 4
 	.data
+	.comm	_environ, 4
 	.align	2
-	.globl	__progname
-__progname:
+	.globl	___progname
+___progname:
 	.word	$L1
 $L1:
 	.word	0		# null string plus padding
 	.text
 
-NON_LEAF(start, 24, ra)
+NON_LEAF(_start, 24, ra)
 	.set	noreorder
 	lw	s0, 0(sp)	# get argc from stack
 	addu	s1, sp, 4	# get pointer to argv
 	addu	s2, s1, 4	# skip null pointer on stack
 	sll	v0, s0, 2	# add number of argv pointers
 	addu	s2, s2, v0	# final pointer to environment list
-	sw	s2, environ	# save environment pointer
+	sw	s2, _environ	# save environment pointer
 	subu	sp, sp, 24	# allocate standard frame
 	.mask	0x80000000, -4
 	sw	zero, 20(sp)	# clear return address for debugging
@@ -65,41 +65,41 @@ NON_LEAF(start, 24, ra)
 eprol:
 	la	a0, eprol
 	la	a1, etext
-	jal	monstartup	# monstartup(eprol, etext);
+	jal	_monstartup	# monstartup(eprol, etext);
 	nop
 	la	a0, _mcleanup
-	jal	atexit		# atext(_mcleanup);
+	jal	_atexit		# atext(_mcleanup);
 	nop
-	sw	zero, errno
+	sw	zero, _errno
 #endif
 	lw	a0, 0(s1)	# a0 = argv[0];
 	nop
 	beq	a0, zero, 2f	# skip if a0 == NULL
 	move	s3, a0		# save argv[0]
-	jal	strrchr
+	jal	_strrchr
 	li	a1, 0x2f	# a1 = '/'
 	bne	v0, zero, 1f	# if slash found
 	addu	v0, v0, 1
 	move	v0, s3		# v0 = argv[0];
 1:
-	sw	v0, __progname
+	sw	v0, ___progname
 2:
 	move	a0, s0
 	move	a1, s1
-	jal	main		# v0 = main(argc, argv, env);
+	jal	_main		# v0 = main(argc, argv, env);
 	move	a2, s2
-	jal	exit		# exit(v0);
+	jal	_exit		# exit(v0);
 	move	a0, v0
 	break	0
 	.set	reorder
-END(start)
+END(_start)
 
 #ifndef MCRT0
-LEAF(moncontrol)
+LEAF(_moncontrol)
 	j	ra
-END(moncontrol)
+END(_moncontrol)
 
-LEAF(_mcount)
+LEAF(__mcount)
 	.set	noreorder
 	.set	noat
 	addu	sp, sp, 8	# undo push
@@ -107,5 +107,5 @@ LEAF(_mcount)
 	move	ra, AT
 	.set	at
 	.set	reorder
-END(_mcount)
+END(__mcount)
 #endif
