@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 2001/12/23 20:15:04 manu Exp $
+	$NetBSD: syscalls.master,v 1.12 2001/12/23 20:57:30 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -153,7 +153,7 @@
 75	OBSOL		sigret
 76	OBSOL		rdebug
 77	OBSOL		rfstop
-78	UNIMPL		rfsys
+78	UNIMPL		lseek64
 79	NOARGS		{ int sys_rmdir(char *path); }
 80	NOARGS		{ int sys_mkdir(char *path, int mode); }
 81	STD		{ int irix_sys_getdents(int fildes, \
@@ -225,12 +225,12 @@
 141	UNIMPL		quotactl
 142	UNIMPL
 143	UNIMPL		getpgrp
-144	UNIMPL		vhangup
-145	UNIMPL		fsync
-146	UNIMPL		fchdir
-147	UNIMPL		getrlimit
-148	UNIMPL		setrlimit
-149	UNIMPL
+144	UNIMPL		setpgrp
+145	UNIMPL		vhangup
+146	UNIMPL		fsync
+147	UNIMPL		fchdir
+148	UNIMPL		getrlimit
+149	UNIMPL		setrlimit
 150	UNIMPL		cacheflush
 151	UNIMPL		cachectl
 152	UNIMPL		fchown
@@ -297,12 +297,12 @@
 			    irix_mountid_t *buf); }
 204	UNIMPL		nsproc
 205	UNIMPL		getdents64
-206	UNIMPL		dfs_XXX
+206	UNIMPL		afs_syscall
 207	STD		{ int irix_sys_ngetdents(int fildes, \
 			    irix_dirent_t *buf, unsigned short nbyte, \
 			    int *eof); }
 208	UNIMPL		ngetdents64
-209	UNIMPL
+209	UNIMPL		sgi_sesmgr
 210	UNIMPL		pidsprocsp
 211	UNIMPL		rexec
 212	UNIMPL		timer_create
@@ -319,3 +319,13 @@
 223	UNIMPL		usync_cntl
 224	UNIMPL		psema_cntl
 225	UNIMPL		restartreturn
+226	UNIMPL		sysget
+227	UNIMPL		xpg4_recvmsg
+228	UNIMPL		umfscall
+229	UNIMPL		nsproctid
+230	UNIMPL		rexec_complete
+231	UNIMPL		xpg4_sigaltstack
+232	UNIMPL		xpg4_sigaltstack
+233	UNIMPL		xpg4_setregid
+234	UNIMPL		linkfollow
+235	UNIMPL		utimets
