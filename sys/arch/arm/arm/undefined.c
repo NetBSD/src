@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9 2001/10/18 21:26:21 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.10 2001/11/22 17:59:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,11 +48,10 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9 2001/10/18 21:26:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.10 2001/11/22 17:59:59 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -172,7 +171,7 @@ undefinedinstruction(trapframe_t *frame)
 	frame->tf_pc -= INSN_SIZE;
 #endif
 
-#ifdef PROG26
+#ifdef __PROG26
 	fault_pc = frame->tf_r15 & R15_PC;
 #else
 	fault_pc = frame->tf_pc;
@@ -210,7 +209,7 @@ undefinedinstruction(trapframe_t *frame)
 	if ((p = curproc) == 0)
 		p = &proc0;
 
-#ifdef PROG26
+#ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
 #else
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 2001/10/27 16:48:50 rearnsha Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -67,11 +67,10 @@
  */
 
 #include "opt_armfpe.h"
-#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.7 2001/10/27 16:48:50 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -138,7 +137,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
-#ifdef PROG32
+#ifdef __PROG32
 	tf->tf_pc = regs->r_pc;
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
@@ -147,7 +146,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	    && tf->tf_spsr & I32_bit)
 		panic("process_write_regs: Interrupts blocked in user process");
 #endif
-#else /* PROG26 */
+#else /* __PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EPERM;
 
@@ -175,9 +174,9 @@ process_set_pc(struct proc *p, caddr_t addr)
 	struct trapframe *tf = process_frame(p);
 
 	KASSERT(tf != NULL);
-#ifdef PROG32
+#ifdef __PROG32
 	tf->tf_pc = (int)addr;
-#else /* PROG26 */
+#else /* __PROG26 */
 	/* Only set the PC, not the PSR */
 	if (((register_t)addr & R15_PC) != (register_t)addr)
 		return EINVAL;
