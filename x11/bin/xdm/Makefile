@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2005/02/24 14:47:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,11 @@ LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
 LDADD+=		-lXt -lSM -lICE -lXext -lX11 -lcrypt
 DPADD+=		${LIBXAU} ${LIBXDMCP} ${LIBXINERAMA} ${LIBXPM} ${LIBXMU}
 DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBCRYPT}
+.if (${USE_PAM} != "no")
+CPPFLAGS+=	-DUSE_PAM
+LDADD+=		-lpam
+DPADD+=		${LIBPAM}
+.endif
 
 SUBDIR=		chooser config sessreg
 # SUBDIR+=	xdmshell	# XXX
