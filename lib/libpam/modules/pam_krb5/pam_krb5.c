@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.4 2005/02/26 18:03:37 thorpej Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.5 2005/02/26 18:10:35 thorpej Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.4 2005/02/26 18:03:37 thorpej Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.5 2005/02/26 18:10:35 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ static const	char *compat_princ_component(krb5_context, krb5_principal, int);
 static void	compat_free_data_contents(krb5_context, krb5_data *);
 
 #define USER_PROMPT		"Username: "
-#define PASSWORD_PROMPT		"Password:"
+#define PASSWORD_PROMPT		"%s's Password:"
 #define NEW_PASSWORD_PROMPT	"New Password:"
 
 #define PAM_OPT_CCACHE		"ccache"
@@ -116,6 +116,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const char *user, *pass;
 	const void *sourceuser, *service;
 	char *principal, *princ_name, *ccache_name, luser[32], *srvdup;
+	char password_prompt[80];
 
 	retval = pam_get_user(pamh, &user, USER_PROMPT);
 	if (retval != PAM_SUCCESS)
@@ -194,7 +195,9 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	PAM_LOG("Got principal: %s", princ_name);
 
 	/* Get password */
-	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, PASSWORD_PROMPT);
+	(void) snprintf(password_prompt, sizeof(password_prompt),
+	    PASSWORD_PROMPT, princ_name);
+	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, password_prompt);
 	if (retval != PAM_SUCCESS)
 		goto cleanup2;
 
@@ -667,6 +670,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	const char *pass;
 	const void *user;
 	char *princ_name, *passdup;
+	char password_prompt[80];
 
 	if (flags & PAM_PRELIM_CHECK) {
 		/* Nothing to do here. */
@@ -718,7 +722,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	PAM_LOG("Got principal: %s", princ_name);
 
 	/* Get password */
-	retval = pam_get_authtok(pamh, PAM_OLDAUTHTOK, &pass, PASSWORD_PROMPT);
+	(void) snprintf(password_prompt, sizeof(password_prompt),
+	    PASSWORD_PROMPT, princ_name);
+	retval = pam_get_authtok(pamh, PAM_OLDAUTHTOK, &pass, password_prompt);
 	if (retval != PAM_SUCCESS)
 		goto cleanup2;
 
