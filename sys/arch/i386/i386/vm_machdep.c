@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.115 2004/02/06 08:18:39 junyoung Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.116 2004/02/06 10:28:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2004/02/06 08:18:39 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2004/02/06 10:28:03 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -335,7 +335,7 @@ setredzone(struct lwp *l)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(register caddr_t from, register caddr_t from, size_t size)
+pagemove(register caddr_t from, register caddr_t to, size_t size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 	int32_t cpumask = 0;
