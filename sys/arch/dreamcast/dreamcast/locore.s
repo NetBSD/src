@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2001/05/15 08:54:57 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2001/08/10 18:27:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1335,7 +1335,6 @@ XL_splimit_low3:	.long	0x80000000
 	nop
 	add	#4, r15		/* pop dummy code */
 	EXCEPT_DISABLE
-	ldtlb
 	INTRFASTEXIT
 
 	.align	2
