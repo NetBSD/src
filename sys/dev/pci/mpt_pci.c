@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.3 2004/09/18 08:52:50 martin Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.4 2005/01/06 14:58:00 he Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.3 2004/09/18 08:52:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.4 2005/01/06 14:58:00 he Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -109,6 +109,9 @@ static const struct mpt_pci_product {
 	{ PCI_VENDOR_SYMBIOS,   PCI_PRODUCT_SYMBIOS_FC929X,
 	  MPP_F_FC | MPP_F_DUAL,
 	  "LSI Logic FC929X FC Adapter" },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919X,
+	  MPP_F_FC,
+	  "LSI Logic FC919X FC Adapter" },
 
 	{ 0,			0,
 	  0,
