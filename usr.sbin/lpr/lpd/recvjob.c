@@ -1,4 +1,5 @@
-/*	$NetBSD: recvjob.c,v 1.7 1996/12/09 09:57:47 mrg Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.8 1997/07/17 05:44:34 mikel Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +34,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)recvjob.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: recvjob.c,v 1.8 1997/07/17 05:44:34 mikel Exp $");
+#endif
 #endif /* not lint */
 
 /*
