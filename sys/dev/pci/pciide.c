@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.11 1998/06/25 11:12:22 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.12 1998/08/13 14:36:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -40,10 +40,6 @@
  * "Programming Interface for Bus Master IDE Controller, Revision 1.0
  * 5/16/94" from the PCI SIG.
  *
- * XXX Does not yet support DMA (but does map the Bus Master DMA regs).
- *
- * XXX Does not support serializing the two channels for broken (at least
- * XXX according to linux and freebsd) controllers, e.g. CMD PCI0640.
  */
 
 #define WDCDEBUG
@@ -75,6 +71,7 @@ int wdcdebug_pciide_mask = DEBUG_PROBE;
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
 #include <dev/pci/pciide_apollo_reg.h>
+#include <dev/pci/pciide_cmd_reg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
@@ -108,6 +105,8 @@ struct pciide_softc {
 void default_setup_cap __P((struct pciide_softc*));
 void default_setup_chip __P((struct pciide_softc*,
 				pci_chipset_tag_t, pcitag_t));
+const char *default_compat_channel_probe __P((struct pciide_softc *,
+	    struct pci_attach_args *, int));
 void piix_setup_cap __P((struct pciide_softc*));
 void piix_setup_chip __P((struct pciide_softc*,
 				pci_chipset_tag_t, pcitag_t));
@@ -122,6 +121,9 @@ void apollo_setup_cap __P((struct pciide_softc*));
 void apollo_setup_chip __P((struct pciide_softc*,
 				pci_chipset_tag_t, pcitag_t));
 
+const char *cmd_compat_channel_probe __P((struct pciide_softc *,
+            struct pci_attach_args *, int));
+
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
 int  pciide_dma_init __P((void*, int, int, void *, size_t, int));
 void pciide_dma_start __P((void*, int, int, int));
@@ -135,10 +137,13 @@ struct pciide_product_desc {
     void (*setup_cap) __P((struct pciide_softc*));
     /* init controller after drives probe */
     void (*setup_chip) __P((struct pciide_softc*, pci_chipset_tag_t, pcitag_t));
+    /* Probe for compat channel enabled/disabled */
+    const char * (*compat_channel_probe) __P((struct pciide_softc *,
+		struct pci_attach_args *, int));
 };
 
 /* Flags for ide_flags */
-#define NO_PCI_INTR       0x01 /* don't try to map the native PCI intr */
+#define CMD_PCI064x_IOEN 0x01 /* CMD-style PCI_COMMAND_IO_ENABLE */
 #define ONE_QUEUE         0x02 /* device need serialised access */
 
 /* Default product description for devices not known from this controller */
@@ -147,7 +152,8 @@ const struct pciide_product_desc default_product_desc = {
     0,
     "Generic PCI IDE controller",
     default_setup_cap,
-    default_setup_chip
+    default_setup_chip,
+    default_compat_channel_probe
 };
 
 
@@ -156,25 +162,29 @@ const struct pciide_product_desc pciide_intel_products[] =  {
       0,
       "Intel 82092AA IDE controller",
       default_setup_cap,
-      default_setup_chip
+      default_setup_chip,
+      default_compat_channel_probe
     },
     { PCI_PRODUCT_INTEL_82371FB_IDE,
       0,
       "Intel 82371FB IDE controller (PIIX)",
       piix_setup_cap,
-      piix_setup_chip
+      piix_setup_chip,
+      default_compat_channel_probe
     },
     { PCI_PRODUCT_INTEL_82371SB_IDE,
       0,
       "Intel 82371SB IDE Interface (PIIX3)",
       piix_setup_cap,
-      piix3_4_setup_chip
+      piix3_4_setup_chip,
+      default_compat_channel_probe
     },
     { PCI_PRODUCT_INTEL_82371AB_IDE,
       0,
       "Intel 82371AB IDE controller (PIIX4)",
       piix_setup_cap,
-      piix3_4_setup_chip
+      piix3_4_setup_chip,
+      default_compat_channel_probe
     },
     { 0,
       0,
@@ -183,10 +193,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 };
 const struct pciide_product_desc pciide_cmd_products[] =  {
     { PCI_PRODUCT_CMDTECH_640,
-      NO_PCI_INTR | ONE_QUEUE,
+      ONE_QUEUE | CMD_PCI064x_IOEN,
       "CMD Technology PCI0640",
       default_setup_cap,
-      default_setup_chip
+      default_setup_chip,
+      cmd_compat_channel_probe
     },
     { 0,
       0,
@@ -200,6 +211,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
       "VT82C586 (Apollo VP) IDE Controller",
       apollo_setup_cap,
       apollo_setup_chip,
+      default_compat_channel_probe
      },
      { 0,
        0,
@@ -230,8 +242,6 @@ struct cfattach pciide_ca = {
 };
 
 int	pciide_map_channel_compat __P((struct pciide_softc *,
-	    struct pci_attach_args *, int));
-const char *pciide_compat_channel_probe __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
 int	pciide_map_channel_native __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
@@ -312,52 +322,63 @@ pciide_attach(parent, self, aux)
 
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
 		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-		printf("%s: device disabled (at %s)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname,
-		    (csr & PCI_COMMAND_IO_ENABLE) == 0 ? "device" : "bridge");
-		return;
+		/*
+		 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
+		 * and base adresses registers can be disabled at
+		 * hardware level. In this case, the device is wired
+		 * in compat mode and its first channel is always enabled,
+		 * but we can't rely on PCI_COMMAND_IO_ENABLE.
+		 * In fact, it seems that the first channel of the CMD PCI0640
+		 * can't be disabled.
+		 */
+		if ((sc->sc_pp->ide_flags & CMD_PCI064x_IOEN) == 0) {
+			printf("%s: device disabled (at %s)\n",
+		 	   sc->sc_wdcdev.sc_dev.dv_xname,
+		  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
+			  "device" : "bridge");
+			return;
+		}
 	}
 
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	interface = PCI_INTERFACE(class);
 
 	/*
-	 * Set up PCI interrupt.
-	 *
-	 * If mapping fails, that's (probably) because there's no pin
-	 * set to intr, which is (probably) because it's a compat-only
-	 * device (or hard-wired in compatibility-only mode).  Native-PCI
-	 * channels will complain later if the interrupt was needed.
-	 *
-	 * If establishment fails, that's (probably) some other problem.
+	 * Set up PCI interrupt only if at last one channel is in native mode.
+	 * At last one device (CMD PCI0640) has a default value of 14, which
+	 * will be mapped even if both channels are in compat-only mode.
 	 */
-	if ((sc->sc_pp->ide_flags & NO_PCI_INTR) == 0) {
-	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	        pa->pa_intrline, &intrhandle) == 0) {
-		    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-		    sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle,
-		        IPL_BIO, pciide_pci_intr, sc);
-
-		    if (sc->sc_pci_ih != NULL) {
-			printf("%s: using %s for native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    intrstr ? intrstr : "unknown interrupt");
-		    } else {
-			printf("%s: couldn't establish native-PCI interrupt",
+	if (interface & (PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1))) {
+		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+		    pa->pa_intrline, &intrhandle) != 0) {
+			printf("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
-			if (intrstr != NULL)
-			    printf(" at %s", intrstr); 
-			printf("\n");
-		    }
-	    }
+		} else {
+			intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+			sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+			    intrhandle, IPL_BIO, pciide_pci_intr, sc);
+			if (sc->sc_pci_ih != NULL) {
+				printf("%s: using %s for native-PCI "
+				    "interrupt\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    intrstr ? intrstr : "unknown interrupt");
+			} else {
+				printf("%s: couldn't establish native-PCI "
+				    "interrupt",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				if (intrstr != NULL)
+					printf(" at %s", intrstr); 
+				printf("\n");
+			}
+		}
 	}
 
 	/*
 	 * Map DMA registers, if DMA is supported.
 	 *
 	 * Note that sc_dma_ok is the right variable to test to see if
-	 * DMA can * be done.  If the interface doesn't support DMA,
-	 * sc_dma_ok * will never be non-zero.  If the DMA regs couldn't
+	 * DMA can be done.  If the interface doesn't support DMA,
+	 * sc_dma_ok will never be non-zero.  If the DMA regs couldn't
 	 * be mapped, it'll be zero.  I.e., sc_dma_ok will only be
 	 * non-zero if the interface supports DMA and the registers
 	 * could be mapped.
@@ -493,7 +514,7 @@ pciide_map_channel_compat(sc, pa, chan)
 	 * has been disabled and that other devices are free to use
 	 * its ports.
 	 */
-	probe_fail_reason = pciide_compat_channel_probe(sc, pa, chan);
+	probe_fail_reason = sc->sc_pp->compat_channel_probe(sc, pa, chan);
 	if (probe_fail_reason != NULL) {
 		printf("%s: %s channel ignored (%s)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname,
@@ -534,40 +555,6 @@ pciide_map_channel_compat(sc, pa, chan)
 
 out:
 	return (rv);
-}
-
-const char *
-pciide_compat_channel_probe(sc, pa, chan)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
-{
-	pcireg_t csr;
-	const char *failreason = NULL;
-
-	/*
-	 * Check to see if something appears to be there.
-	 */
-	if (!wdcprobe(&sc->wdc_channels[chan])) {
-		failreason = "not responding; disabled or no drives?";
-		goto out;
-	}
-
-	/*
-	 * Now, make sure it's actually attributable to this PCI IDE
-	 * channel by trying to access the channel again while the
-	 * PCI IDE controller's I/O space is disabled.  (If the
-	 * channel no longer appears to be there, it belongs to
-	 * this controller.)  YUCK!
-	 */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr & ~PCI_COMMAND_IO_ENABLE);
-	if (wdcprobe(&sc->wdc_channels[chan]))
-		failreason = "other hardware responding at addresses";
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
-
-out:
-	return (failreason);
 }
 
 int
@@ -710,6 +697,40 @@ default_setup_chip(sc, pc, tag)
 		}
 	}
 
+}
+
+const char *
+default_compat_channel_probe(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	pcireg_t csr;
+	const char *failreason = NULL;
+
+	/*
+	 * Check to see if something appears to be there.
+	 */
+	if (!wdcprobe(&sc->wdc_channels[chan])) {
+		failreason = "not responding; disabled or no drives?";
+		goto out;
+	}
+
+	/*
+	 * Now, make sure it's actually attributable to this PCI IDE
+	 * channel by trying to access the channel again while the
+	 * PCI IDE controller's I/O space is disabled.  (If the
+	 * channel no longer appears to be there, it belongs to
+	 * this controller.)  YUCK!
+	 */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr & ~PCI_COMMAND_IO_ENABLE);
+	if (wdcprobe(&sc->wdc_channels[chan]))
+		failreason = "other hardware responding at addresses";
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
+out:
+	return (failreason);
 }
 
 void
@@ -1164,7 +1185,34 @@ pio:			/* setup PIO mode */
 	pci_conf_write(pc, tag, APO_UDMA, udmatim_reg);
 }
 
+/*
+ * The default channel probe may not work for a CMD device, as the use of
+ * I/O register may be disabled by hardware. Look at the specific registers
+ */
+   
+const char*
+cmd_compat_channel_probe(sc, pa, chan)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+	int chan;
+{
 
+	/*
+	 * with a CMD PCI64x, if we get here, the first channel is enabled:
+	 * there's no way to disable the first channel without disabling
+	 * the whole device
+	 */
+	if (chan == 0)
+		return NULL;
+
+	/* Second channel is enabled if CMD_CONF_2PORT is set */
+	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, CMD_CONF_CTRL0) &
+	    CMD_CONF_2PORT) == 0)
+		return "disabled";
+
+	return NULL;
+}
+	
 int
 pciide_dma_table_setup(sc, channel, drive)
 	struct pciide_softc *sc;
