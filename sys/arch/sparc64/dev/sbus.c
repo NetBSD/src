@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.22 1999/11/25 05:03:53 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.23 2000/01/14 14:27:14 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,7 +271,6 @@ sbus_attach(parent, self, aux)
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 	char *busname = "sbus";
-	struct bootpath *bp = ma->ma_bp;
 
 
 	sc->sc_bustag = ma->ma_bustag;
@@ -298,12 +297,6 @@ sbus_attach(parent, self, aux)
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
 	sc->sc_burst = getpropint(node, "burst-sizes", 0);
-
-	/* Propagate bootpath */
-	if (bp != NULL && strcmp(bp->name, busname) == 0)
-		bp++;
-	else
-		bp = NULL;
 
 	/*
 	 * Collect address translations from the OBP.
@@ -334,7 +327,7 @@ sbus_attach(parent, self, aux)
 		char *name = getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
-					   node, bp, &sa) != 0) {
+					   node, &sa) != 0) {
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
@@ -344,12 +337,11 @@ sbus_attach(parent, self, aux)
 }
 
 int
-sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
+sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	struct sbus_softc	*sc;
 	bus_space_tag_t		bustag;
 	bus_dma_tag_t		dmatag;
 	int			node;
-	struct bootpath		*bp;
 	struct sbus_attach_args	*sa;
 {
 	/*struct	sbus_reg sbusreg;*/
@@ -366,7 +358,6 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
-	sa->sa_bp = bp;
 
 	error = getprop(node, "reg", sizeof(struct sbus_reg),
 			 &sa->sa_nreg, (void **)&sa->sa_reg);

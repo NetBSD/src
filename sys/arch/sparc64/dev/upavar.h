@@ -1,4 +1,4 @@
-/*	$NetBSD: upavar.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: upavar.h,v 1.2 2000/01/14 14:33:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,11 +122,10 @@ struct upa_attach_args {
 	int		*ua_interrupts;	/* "interrupts" properties */
 	int		ua_ninterrupts;
 	int		ua_pri;		/* priority (IPL) */
-	struct bootpath *ua_bp;		/* used for locating boot device */
 };
 
 /* upa_attach() is also used from obio.c */
-void	upa_attach __P((struct upa_softc *, char *, int, struct bootpath *,
+void	upa_attach __P((struct upa_softc *, char *, int,
 			 const char * const *));
 int	upa_print __P((void *, const char *));
 
@@ -138,7 +137,6 @@ int	upa_setup_attach_args __P((
 		bus_space_tag_t,
 		bus_dma_tag_t,
 		int,			/*node*/
-		struct bootpath *,
 		struct upa_attach_args *));
 
 #define upa_bus_map(t, bt, a, s, f, v, hp) \

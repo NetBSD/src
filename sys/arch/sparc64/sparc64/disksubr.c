@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1999/06/04 14:00:38 mrg Exp $ */
+/*	$NetBSD: disksubr.c,v 1.6 2000/01/14 14:34:44 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -61,44 +61,12 @@ static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 extern struct device *bootdv;
 
-/*
- * find the boot device (if it was a disk).   we must check to see if
- * unit info in saved bootpath structure matches unit info in our softc.
- * note that knowing the device name (e.g. "xd0") is not useful... we
- * must check the drive number (or target/lun, in the case of SCSI).
- * (XXX is it worth ifdef'ing this?)
- */
-
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bp == NULL)
-		return;
-
-	/*
-	 * scsi: sd,cd
-	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("wd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-		target = bp->val[0];
-		lun = bp->val[1];
-
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bp->dev = dev;	/* got it! */
-			return;
-		}
-	}
+	return;
 }
 
 /*

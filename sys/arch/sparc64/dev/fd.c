@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8 1999/06/07 05:28:03 eeh Exp $	*/
+/*	$NetBSD: fd.c,v 1.9 2000/01/14 14:33:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -322,7 +322,6 @@ fdcmatch(parent, match, aux)
  */
 struct fdc_attach_args {
 	int fa_drive;
-	struct bootpath *fa_bootpath;
 	struct fd_type *fa_deftype;
 };
 
@@ -377,7 +376,6 @@ fdcattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
-	struct bootpath *bp;
 	int pri;
 	char code;
 
@@ -451,49 +449,6 @@ fdcattach(parent, self, aux)
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
 
-	/*
-	 * Controller and drives are represented by one and the same
-	 * Openprom node, so we can as well check for the floppy boots here.
-	 */
-	fa.fa_bootpath = 0;
-	if ((bp = ca->ca_ra.ra_bp) && strcmp(bp->name, OBP_FDNAME) == 0) {
-
-		switch (ca->ca_bustype) {
-		case BUS_MAIN:
-			/*
-			 * We can get the bootpath in several different
-			 * formats! The faked v1 bootpath looks like /fd@0,0.
-			 * The v2 bootpath is either just /fd0, in which case
-			 * `bp->val[0]' will have been set to -1, or /fd@x,y
-			 * where <x,y> is the prom address specifier.
-			 */
-			if (((bp->val[0] == ca->ca_ra.ra_iospace) &&
-			     (bp->val[1] == (int)ca->ca_ra.ra_paddr)) ||
-
-			    ((bp->val[0] == -1) &&	/* v2: /fd0 */
-			     (bp->val[1] == 0)) ||
-
-			    ((bp->val[0] == 0) &&	/* v1: /fd@0,0 */
-			     (bp->val[1] == 0))
-			   )
-				fa.fa_bootpath = bp;
-			break;
-
-		case BUS_OBIO:
-			/*
-			 * floppy controller on obio (such as on the sun4m),
-			 * e.g.: `/obio0/SUNW,fdtwo@0,700000'.
-			 * We use "slot, offset" to determine if this is the
-			 * right one.
-			 */
-			if ((bp->val[0] == ca->ca_slot) &&
-			    (bp->val[1] == ca->ca_offset))
-				fa.fa_bootpath = bp;
-			break;
-		}
-
-	}
-
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
@@ -501,7 +456,6 @@ fdcattach(parent, self, aux)
 		(void)config_found(self, (void *)&fa, fdprint);
 	}
 
-	bootpath_store(1, NULL);
 }
 
 int
@@ -608,12 +562,6 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
-
-	/*
-	 * We're told if we're the boot device in fdcattach().
-	 */
-	if (fa->fa_bootpath)
-		fa->fa_bootpath->dev = &fd->sc_dv;
 
 	/*
 	 * Establish a mountroot_hook anyway in case we booted
