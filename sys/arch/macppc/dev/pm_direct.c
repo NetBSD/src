@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.23 2005/02/01 02:46:00 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.24 2005/02/01 03:08:16 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.23 2005/02/01 02:46:00 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24 2005/02/01 03:08:16 briggs Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -194,18 +194,17 @@ int	pm_wait_free __P((int));
 int	pm_receive_pm1 __P((u_char *));
 int	pm_send_pm1 __P((u_char,int));
 int	pm_pmgrop_pm1 __P((PMData *));
-void	pm_intr_pm1 __P((void));
+int	pm_intr_pm1 __P((void *));
 
 /* these functions are for the PB Duo series and the PB 5XX series */
 int	pm_receive_pm2 __P((u_char *));
 int	pm_send_pm2 __P((u_char));
 int	pm_pmgrop_pm2 __P((PMData *));
-void	pm_intr_pm2 __P((void));
+int	pm_intr_pm2 __P((void *));
 
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void));
 int	pm_adb_op __P((u_char *, void *, void *, int));
 
 /* these functions also use the variables of adb_direct.c */
@@ -640,8 +639,8 @@ pm_pmgrop_pm1(pmdata)
 /*
  * My PM interrupt routine for PB1XX series
  */
-void
-pm_intr_pm1()
+int
+pm_intr_pm1(void *arg)
 {
 #if 0
 	int s;
@@ -690,6 +689,7 @@ pm_intr_pm1()
 #else
 	panic("pm_intr_pm1");
 #endif
+	return 1;
 }
 
 
@@ -913,8 +913,8 @@ pm_pmgrop_pm2(pmdata)
 /*
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
  */
-void
-pm_intr_pm2()
+int
+pm_intr_pm2(void *arg)
 {
 	int s;
 	int rval;
@@ -935,7 +935,7 @@ pm_intr_pm2()
 			printf("pm: PM is not ready. error code: %08x\n", rval);
 #endif
 		splx(s);
-		return;
+		return 0;
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
@@ -991,6 +991,8 @@ pm_intr_pm2()
 	}
 
 	splx(s);
+
+	return 1;
 }
 
 
@@ -1018,19 +1020,20 @@ pmgrop(pmdata)
 /*
  * My PM interrupt routine
  */
-void
-pm_intr()
+int
+pm_intr(void *arg)
 {
 	switch (pmHardware) {
 	case PM_HW_PB1XX:
-		pm_intr_pm1();
+		return pm_intr_pm1(arg);
 		break;
 	case PM_HW_PB5XX:
-		pm_intr_pm2();
+		return pm_intr_pm2(arg);
 		break;
 	default:
 		break;
 	}
+	return 0;
 }
 
 
@@ -1120,7 +1123,7 @@ pm_adb_op(buffer, compRout, data, command)
 	timo = 0x80000;
 	while (adbWaiting == 1) {
 		if (read_via_reg(VIA1, vIFR) & 0x14)
-			pm_intr();
+			pm_intr(NULL);
 #ifdef PM_GRAB_SI
 #if 0
 			zshard(0);		/* grab any serial interrupts */
@@ -1134,7 +1137,7 @@ pm_adb_op(buffer, compRout, data, command)
 			 * when i press a key after boot and before adb
 			 * is attached;  For example, when booting with -d.
 			 */
-			pm_intr();
+			pm_intr(NULL);
 			if (adbWaiting) {
 				printf("pm_adb_op: timeout. command = 0x%x\n",command);
 				splx(s);

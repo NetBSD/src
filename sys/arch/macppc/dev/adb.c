@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.17 2005/02/01 02:46:00 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.17 2005/02/01 02:46:00 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,9 +134,14 @@ adbattach(parent, self, aux)
 	adb_polling = 1;
 	ADBReInit();
 
-	intr_establish(irq, IST_LEVEL, IPL_HIGH, (int (*)(void *))adb_intr, sc);
-	if (adbHardware == ADB_HW_PMU) {
+	switch (adbHardware) {
+	case ADB_HW_CUDA:
+		intr_establish(irq, IST_LEVEL, IPL_HIGH, adb_intr_cuda, sc);
+		break;
+	case ADB_HW_PMU:
+		intr_establish(irq, IST_LEVEL, IPL_HIGH, pm_intr, sc);
 		pm_init();
+		break;
 	}
 
 #ifdef ADB_DEBUG

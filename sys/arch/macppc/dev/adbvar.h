@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.8 2005/02/01 02:05:10 briggs Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.9 2005/02/01 03:08:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -93,10 +93,11 @@ extern int adbHardware;
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
-void	adb_intr __P((void));
+int	adb_intr __P((void *));
 int	adb_poweroff __P((void));
 void	adb_restart __P((void));
 void	adb_cuda_autopoll __P((void));
+int	adb_intr_cuda __P((void *));
 int	CountADBs __P((void));
 void	ADBReInit __P((void));
 int	GetIndADB __P((ADBDataBlock * info, int index));
