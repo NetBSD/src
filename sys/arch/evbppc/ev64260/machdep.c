@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2003/03/05 22:08:27 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2003/03/06 06:04:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,6 +98,7 @@ void isa_intr_init(void);
 #include <dev/ic/comvar.h>
 #endif
 
+#include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
 
 /*
@@ -139,6 +140,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	extern void *startsym, *endsym;
 #endif
 	extern vaddr_t gtbase;
+	volatile u_int32_t *gt = (volatile u_int32_t *) gtbase;
 
 #if 1
 	{
@@ -149,7 +151,20 @@ initppc(startkernel, endkernel, args, btinfo)
 	}
 #endif
 
-	gtbase = GT_BASE;
+	/*
+	 * Relocate Discovery to desired address.
+	 */
+	if (gtbase != GT_BASE) {
+		u_int32_t v = inlrb(gt + GT_Internal_Decode);
+		outlrb(gt + GT_Internal_Decode,
+		     (GT_BASE >> 20) | (v & ~0xffff));
+		gtbase = GT_BASE;
+	}
+	{
+		extern struct powerpc_bus_space ev64260_gt_mem_bs_tag;
+		ev64260_gt_mem_bs_tag.pbs_base = GT_BASE;
+		ev64260_gt_mem_bs_tag.pbs_limit = GT_BASE + 4096;
+	}
 
 	/*
 	 * Hardcode 32MB for now--we should probe for this or get it
@@ -191,9 +206,7 @@ initppc(startkernel, endkernel, args, btinfo)
 
 	ev64260_bus_space_init();
 
-	oea_batinit(0x10000000, BAT_BL_256M,
-	    0x80000000, BAT_BL_256M,
-	    0xf0000000, BAT_BL_256M);
+	oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M);
 	oea_init((void (*)(void))ext_intr);
 
 	cninit();
