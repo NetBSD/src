@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$Id: lprint.c,v 1.5 1996/11/21 06:01:50 lukem Exp $";
+static char rcsid[] = "$Id: lprint.c,v 1.6 1996/11/22 05:34:06 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -114,27 +114,23 @@ lprint(pn)
 		(void)snprintf(tbuf, sizeof(tbuf),
 		    "%s: %s, %s", OFFICE_TAG, pn->office,
 		    prphone(pn->officephone));
-		tbuf[sizeof(tbuf)-1] = '\0';
 		oddfield = demi_print(tbuf, oddfield);
 	} else {
 		if (pn->office) {
 			(void)snprintf(tbuf, sizeof(tbuf),
 			    "%s: %s", OFFICE_TAG, pn->office);
-			tbuf[sizeof(tbuf)-1] = '\0';
 			oddfield = demi_print(tbuf, oddfield);
 		}
 		if (pn->officephone) {
 			(void)snprintf(tbuf, sizeof(tbuf),
 			    "%s: %s", OFFICE_PHONE_TAG,
 			    prphone(pn->officephone));
-			tbuf[sizeof(tbuf)-1] = '\0';
 			oddfield = demi_print(tbuf, oddfield);
 		}
 	}
 	if (pn->homephone) {
 		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s", "Home Phone",
 		    prphone(pn->homephone));
-		tbuf[sizeof(tbuf)-1] = '\0';
 		oddfield = demi_print(tbuf, oddfield);
 	}
 	if (oddfield)
@@ -279,7 +275,6 @@ show_text(directory, file_name, header)
 
 	lastc = 0;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", directory, file_name);
-	tbuf[sizeof(tbuf)-1] = '\0';
 	if ((fp = fopen(tbuf, "r")) == NULL)
 		return(0);
 	(void)printf("%s\n", header);
