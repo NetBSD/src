@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.18 2004/05/11 08:07:37 kleink Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.19 2005/01/08 03:14:02 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.18 2004/05/11 08:07:37 kleink Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.19 2005/01/08 03:14:02 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,11 @@ __RCSID("$NetBSD: rexecd.c,v 1.18 2004/05/11 08:07:37 kleink Exp $");
 #include <unistd.h>
 #include <poll.h>
 
-void error __P((const char *, ...))
+void error(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
-int main __P((int, char **));
-void doit __P((int, struct sockaddr *));
-void getstr __P((char *, int, char *));
+int main(int, char *[]);
+void doit(int, struct sockaddr *);
+void getstr(char *, int, char *);
 
 char	username[32 + 1] = "USER=";
 char	logname[32 + 3 + 1] = "LOGNAME=";
@@ -84,9 +84,7 @@ int	dolog;
  *	data
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	int fromlen, ch;
@@ -110,9 +108,7 @@ main(argc, argv)
 }
 
 void
-doit(f, fromp)
-	int f;
-	struct sockaddr *fromp;
+doit(int f, struct sockaddr *fromp)
 {
 	struct pollfd fds[2];
 	char cmdbuf[NCARGS+1], *namep;
@@ -128,14 +124,14 @@ doit(f, fromp)
 	(void)signal(SIGINT, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
 	(void)signal(SIGTERM, SIG_DFL);
-	dup2(f, 0);
-	dup2(f, 1);
-	dup2(f, 2);
+	dup2(f, STDIN_FILENO);
+	dup2(f, STDOUT_FILENO);
+	dup2(f, STDERR_FILENO);
 	(void)alarm(60);
 	port = 0;
 	for (;;) {
 		char c;
-		if (read(f, &c, 1) != 1) {
+		if (read(f, &c, STDIN_FILENO) != 1) {
 			if (dolog)
 				syslog(LOG_ERR,
 				    "initial read failed");
@@ -202,7 +198,7 @@ doit(f, fromp)
 			    user);
 		exit(1);
 	}
-	(void)write(2, "\0", 1);
+	(void)write(STDERR_FILENO, "\0", 1);
 	if (port) {
 		if (pipe(pv) < 0 || (pid = fork()) == -1) {
 			error("Try again.\n");
@@ -212,9 +208,9 @@ doit(f, fromp)
 			exit(1);
 		}
 		if (pid) {
-			(void)close(0);
-			(void)close(1);
-			(void)close(2);
+			(void)close(STDIN_FILENO);
+			(void)close(STDOUT_FILENO);
+			(void)close(STDERR_FILENO);
 			(void)close(f);
 			(void)close(pv[1]);
 			fds[0].fd = s;
@@ -262,7 +258,7 @@ doit(f, fromp)
 	if (setsid() < 0 ||
 	    setlogin(pwd->pw_name) < 0 ||
 	    initgroups(pwd->pw_name, pwd->pw_gid) < 0 ||
-	    setgid((gid_t)pwd->pw_gid) < 0 || 
+	    setgid((gid_t)pwd->pw_gid) < 0 ||
 	    setuid((uid_t)pwd->pw_uid) < 0) {
 		error("Try again.\n");
 		if (dolog)
@@ -299,20 +295,17 @@ error(const char *fmt, ...)
 	va_start(ap, fmt);
 	buf[0] = 1;
 	(void)vsnprintf(buf+1, sizeof(buf) - 1, fmt, ap);
-	(void)write(2, buf, strlen(buf));
+	(void)write(STDERR_FILENO, buf, strlen(buf));
 	va_end(ap);
 }
 
 void
-getstr(buf, cnt, err)
-	char *buf;
-	int cnt;
-	char *err;
+getstr(char *buf, int cnt, char *err)
 {
 	char c;
 
 	do {
-		if (read(0, &c, 1) != 1)
+		if (read(STDIN_FILENO, &c, 1) != 1)
 			exit(1);
 		*buf++ = c;
 		if (--cnt == 0) {
