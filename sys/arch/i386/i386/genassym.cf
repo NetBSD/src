@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.5 2000/08/07 01:08:34 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.6 2000/08/18 03:30:53 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_TSS_SEL		offsetof(struct pcb, pcb_tss_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
