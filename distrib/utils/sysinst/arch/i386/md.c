@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.43 2000/10/11 23:47:59 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.44 2000/10/17 19:50:39 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,7 +193,7 @@ md_pre_disklabel()
 int
 md_post_disklabel(void)
 {
-	if (rammb <= 8)
+	if (rammb <= 32)
 		set_swap(diskdev, bsdlabel, 1);
 
 	/* Sector forwarding / badblocks ... */
@@ -227,9 +227,7 @@ md_make_bsd_partitions(void)
 {
 	FILE *f;
 	int i;
-	int part;
 	int maxpart = getmaxpartitions();
-	int remain;
 
 editlab:
 	/* Ask for layout type -- standard or special */
@@ -311,70 +309,8 @@ editlab:
 		strcpy (fsmount[E], "/usr");
 		break;
 
-	case 3: /* custom: ask user for all sizes */
-custom:		ask_sizemult(dlcylsize);
-		msg_display(MSG_defaultunit, multname);
-		partstart = ptstart;
-		remain = fsptsize;
-
-		/* root */
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-		if (partsize > remain)
-			partsize = remain;
-		msg_display_add(MSG_askfsroot1, remain/sizemult, multname);
-		partsize = getpartsize(MSG_askfsroot2, partstart, partsize);
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy (fsmount[A], "/");
-		partstart += partsize;
-		remain -= partsize;
-		
-		/* swap */
-		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart;
-		if (partsize > remain)
-			partsize = remain;
-		msg_display(MSG_askfsswap1, remain/sizemult, multname);
-		partsize = getpartsize(MSG_askfsswap2, partstart, partsize);
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-		remain -= partsize;
-		
-		/* Others E, F, G, H */
-		part = E;
-		if (remain > 0)
-			msg_display (MSG_otherparts);
-		while (remain > 0 && part <= H) {
-			msg_display_add(MSG_askfspart1, diskdev,
-			    partition_name(part), remain/sizemult, multname);
-			partsize = getpartsize(MSG_askfspart2, partstart,
-			    remain);
-			if (partsize > 0) {
-				if (remain - partsize < sizemult)
-					partsize = remain;
-				bsdlabel[part].pi_fstype = FS_BSDFFS;
-				bsdlabel[part].pi_offset = partstart;
-				bsdlabel[part].pi_size = partsize;
-				bsdlabel[part].pi_bsize = 8192;
-				bsdlabel[part].pi_fsize = 1024;
-				if (part == E)
-					strcpy (fsmount[E], "/usr");
-				msg_prompt_add (MSG_mountpoint, fsmount[part],
-						fsmount[part], 20);
-				partstart += partsize;
-				remain -= partsize;
-			}
-			part++;
-		}
-		
-		break;
+	case 3:
+custom:
 	}
 
 	/*
@@ -597,6 +533,7 @@ nogeom:
 		msg_table_add(MSG_onebiosmatch_header);
 		msg_table_add(MSG_onebiosmatch_row, bip->bi_dev - 0x80,
 		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
+		msg_display_add(MSG_biosgeom_advise);
 		process_menu(MENU_biosonematch);
 	} else {
 		msg_display(MSG_biosmultmatch);
