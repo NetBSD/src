@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.55 2001/01/24 10:10:04 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.56 2001/01/30 07:23:14 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -1303,7 +1303,11 @@ pccbb_power(ct, command)
 	 * XXX delay 300 ms: though the standard defines that the Vcc set-up
 	 * time is 20 ms, some PC-Card bridge requires longer duration.
 	 */
+#if 0	/* XXX called on interrupt context */
 	DELAY_MS(300, sc);
+#else
+	delay(300 * 1000);
+#endif
 
 	return 1;		       /* power changed correctly */
 }
@@ -2289,7 +2293,11 @@ pccbb_pcmcia_socket_enable(pch)
 	 * hold RESET at least 20 ms: the spec says only 10 us is
 	 * enough, but TI1130 requires at least 20 ms.
 	 */
+#if 0	/* XXX called on interrupt context */
 	DELAY_MS(20, sc);
+#else
+	delay(20 * 1000);
+#endif
 
 	/* clear the reset flag */
 
@@ -2298,7 +2306,11 @@ pccbb_pcmcia_socket_enable(pch)
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 
+#if 0	/* XXX called on interrupt context */
 	DELAY_MS(20, sc);
+#else
+	delay(20 * 1000);
+#endif
 
 	/* wait for the chip to finish initializing */
 
@@ -2366,7 +2378,11 @@ pccbb_pcmcia_socket_disable(pch)
 	/* 
 	 * wait 300ms until power fails (Tpf).
 	 */
+#if 0	/* XXX called on interrupt context */
 	DELAY_MS(300, sc);
+#else
+	delay(300 * 1000);
+#endif
 }
 
 /*
