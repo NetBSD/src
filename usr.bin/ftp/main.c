@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 1999/09/28 06:47:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.54 1999/09/30 12:18:04 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 1999/09/28 06:47:42 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 1999/09/30 12:18:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,8 @@ __RCSID("$NetBSD: main.c,v 1.53 1999/09/28 06:47:42 lukem Exp $");
 #define NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
+char home[MAXPATHLEN] = "/";
+
 int main __P((int, char **));
 
 int
@@ -107,7 +109,7 @@ main(argc, argv)
 {
 	int ch, top, rval;
 	struct passwd *pw = NULL;
-	char *cp, *ep, homedir[MAXPATHLEN];
+	char *cp, *ep;
 	int dumbterm, s, len;
 
 	ftpport = "ftp";
@@ -354,10 +356,8 @@ main(argc, argv)
 	}
 	if (pw == NULL)
 		pw = getpwuid(getuid());
-	if (pw != NULL) {
-		home = homedir;
+	if (pw != NULL)
 		(void)strlcpy(home, pw->pw_dir, sizeof(home));
-	}
 
 	setttywidth(0);
 	(void)xsignal(SIGWINCH, setttywidth);
