@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.79 2003/02/02 02:25:50 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.80 2003/02/10 23:58:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.79 2003/02/02 02:25:50 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.80 2003/02/10 23:58:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,10 +161,10 @@ int	getfiles __P((char **, int *));
 int	getflags __P((const struct flagbit_desc *, char *, u_int));
 struct mount *
 	getmnt __P((struct mount *));
-char *	kinfo_vnodes __P((int *));
+void	kinfo_vnodes __P((int *, char **));
 void	layer_header __P((void));
 int	layer_print __P((struct vnode *, int));
-char *	loadvnodes __P((int *));
+void	loadvnodes __P((int *, char **));
 int	main __P((int, char **));
 void	mount_print __P((struct mount *));
 void	nfs_header __P((void));
@@ -287,11 +287,12 @@ vnodemode()
 	    __P((struct vnode *, int)); /* per-fs data printer */
 
 	mp = NULL;
-	e_vnodebase = loadvnodes(&numvnodes);
 	if (totalflag) {
+		loadvnodes(&numvnodes, NULL);
 		(void)printf("%7d vnodes\n", numvnodes);
-		goto out;
+		return;
 	}
+	loadvnodes(&numvnodes, &e_vnodebase);
 	endvnode = e_vnodebase + numvnodes * (VPTRSZ + VNODESZ);
 	(void)printf("%d active vnodes\n", numvnodes);
 
@@ -338,8 +339,6 @@ vnodemode()
 			(*vnode_fsprint)(vp, ovflw);
 		(void)printf("\n");
 	}
-
- out:
 	free(e_vnodebase);
 }
 
@@ -682,41 +681,42 @@ mount_print(mp)
 	(void)printf("\n");
 }
 
-char *
-loadvnodes(avnodes)
+void
+loadvnodes(avnodes, vnodebase)
 	int *avnodes;
+	char **vnodebase;
 {
 	int mib[2];
 	size_t copysize;
-	char *vnodebase;
 
 	if (memf != NULL) {
 		/*
 		 * do it by hand
 		 */
-		return (kinfo_vnodes(avnodes));
+		return (kinfo_vnodes(avnodes, vnodebase));
 	}
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_VNODE;
 	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
-	if ((vnodebase = malloc(copysize)) == NULL)
+	*avnodes = copysize / (VPTRSZ + VNODESZ);
+	if (vnodebase == NULL)
+		return;
+	if (((*vnodebase) = malloc(copysize)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 2, vnodebase, &copysize, NULL, 0) == -1)
+	if (sysctl(mib, 2, *vnodebase, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
 	if (copysize % (VPTRSZ + VNODESZ))
 		errx(1, "vnode size mismatch");
-	*avnodes = copysize / (VPTRSZ + VNODESZ);
-
-	return (vnodebase);
 }
 
 /*
  * simulate what a running kernel does in in kinfo_vnode
  */
-char *
-kinfo_vnodes(avnodes)
+void
+kinfo_vnodes(avnodes, vnodebase)
 	int *avnodes;
+	char **vnodebase;
 {
 	struct mntlist mountlist;
 	struct mount *mp, mount;
@@ -725,6 +725,8 @@ kinfo_vnodes(avnodes)
 	int numvnodes;
 
 	KGET(V_NUMV, numvnodes);
+	if (vnodebase == NULL)
+		return;
 	if ((bp = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
 		err(1, "malloc");
 	beg = bp;
@@ -748,7 +750,7 @@ kinfo_vnodes(avnodes)
 			break;
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
-	return (beg);
+	*vnodebase = beg;
 }
 
 void
