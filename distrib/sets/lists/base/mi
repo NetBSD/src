@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.277 2001/09/02 22:56:52 wiz Exp $
+# $NetBSD: mi,v 1.278 2001/09/03 18:42:49 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1321,6 +1321,8 @@
 ./usr/share/nls/nl/libc.cat		base-locale-nl
 ./usr/share/nls/no			base-locale-no
 ./usr/share/nls/no/libc.cat		base-locale-no
+./usr/share/nls/pl			base-locale-pl
+./usr/share/nls/pl/libc.cat		base-locale-pl
 ./usr/share/nls/sv			base-locale-sv
 ./usr/share/nls/sv/libc.cat		base-locale-sv
 ./usr/share/sendmail			base-sendmail-share
