@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.2 2002/03/01 11:29:46 ad Exp $	*/
+/*	$NetBSD: pkill.c,v 1.3 2002/03/04 13:47:08 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.2 2002/03/01 11:29:46 ad Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.3 2002/03/04 13:47:08 augustss Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 {
 	extern char *optarg;
 	extern int optind;
-	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p;
+	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
 	void (*action)(struct kinfo_proc2 *);
 	struct kinfo_proc2 *kp;
@@ -132,12 +132,13 @@ main(int argc, char **argv)
 		action = killact;
 		p = argv[1];
 
-		if (p[0] == '-') {
+		if (argc > 1 && p[0] == '-') {
 			p++;
-			i = (int)strtol(p, &p, 10);
-			if (*p == '\0') {
+			i = (int)strtol(p, &q, 10);
+			if (*q == '\0') {
 				signum = i;
 				argv++;
+				argc--;
 			} else {
 				if (strncasecmp(p, "sig", 3) == 0)
 					p += 3;
@@ -147,6 +148,7 @@ main(int argc, char **argv)
 				if (i != NSIG) {
 					signum = i;
 					argv++;
+					argc--;
 				}
 			}
 		}
