@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.5 1993/12/13 11:50:13 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.6 1994/02/01 20:05:19 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -227,6 +227,28 @@ scsi_start_unit(sc_link, flags)
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = START_STOP;
 	scsi_cmd.how = SSS_START;
+
+	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
+			     sizeof(scsi_cmd), 0, 0, 2, 2000, NULL, flags);
+}
+
+/*
+ * Get scsi driver to send a "stop" command
+ */
+int
+scsi_stop_unit(sc_link, eject, flags)
+	struct scsi_link *sc_link;
+	u_int32 eject;
+	u_int32 flags;
+{
+	struct scsi_start_stop scsi_cmd;
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.op_code = START_STOP;
+	if (eject)
+		scsi_cmd.how = SSS_LOEJ;
+	else
+		scsi_cmd.how = SSS_STOP;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
 			     sizeof(scsi_cmd), 0, 0, 2, 2000, NULL, flags);
