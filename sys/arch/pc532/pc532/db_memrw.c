@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7 1998/07/04 22:18:35 jonathan Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8 1998/07/06 09:42:56 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -95,7 +95,7 @@ set_pte(addr, pte)
 	pt_entry_t pte;
 {
 	*kvtopte(addr) = pte;
-	pmap_update();
+	tlbflush();
 }
 
 /*
