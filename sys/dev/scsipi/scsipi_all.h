@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.24 2003/09/08 03:33:31 mycroft Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.25 2003/10/16 17:34:43 mycroft Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -280,6 +280,7 @@ struct scsipi_inquiry_data {
 /* 9*/	char    vendor[8];
 /*17*/	char    product[16];
 /*33*/	char    revision[4];
+#define	SCSIPI_INQUIRY_LENGTH_SCSI2	36
 /*37*/	u_int8_t vendor_specific[20];
 /*57*/	u_int8_t flags4;
 #define        SID_IUS         0x01
@@ -290,6 +291,7 @@ struct scsipi_inquiry_data {
 #define	SID_CLOCKING_SD_DT    0x0C
 /*58*/	u_int8_t reserved;
 /*59*/	char    version_descriptor[8][2];
+#define	SCSIPI_INQUIRY_LENGTH_SCSI3	74
 } __attribute__((packed)); /* 74 Bytes */
 
 /* Data structures for mode select/mode sense */

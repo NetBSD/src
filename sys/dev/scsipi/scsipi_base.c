@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.95 2003/10/12 03:21:56 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.96 2003/10/16 17:34:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.95 2003/10/12 03:21:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.96 2003/10/16 17:34:43 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1083,8 +1083,13 @@ scsipi_inquire(periph, inqbuf, flags)
 
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
+	    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2,
 	    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
+	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4)
+		error = scsipi_command(periph,
+		    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+		    (u_char *) inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3,
+		    retries, 10000, NULL, XS_CTL_DATA_IN | flags);
 	
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
@@ -1101,12 +1106,9 @@ scsipi_inquire(periph, inqbuf, flags)
 		inqbuf->dev_qual2 = 0;
 		inqbuf->version = 0;
 		inqbuf->response_format = SID_FORMAT_SCSI1;
-		inqbuf->additional_length = 3 + 28;
+		inqbuf->additional_length = SCSIPI_INQUIRY_LENGTH_SCSI2 - 4;
 		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
-		memcpy(inqbuf->vendor, "ADAPTEC ", sizeof(inqbuf->vendor));
-		memcpy(inqbuf->product, "ACB-4000        ",
-			sizeof(inqbuf->product));
-		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+		memcpy(inqbuf->vendor, "ADAPTEC ACB-4000            ", 28);
 		error = 0;
 	}
 
@@ -1124,12 +1126,9 @@ scsipi_inquire(periph, inqbuf, flags)
 		 */
 		inqbuf->device = (SID_QUAL_LU_PRESENT | T_SEQUENTIAL);
 		inqbuf->dev_qual2 = SID_REMOVABLE;
-		inqbuf->additional_length = 3 + 28;
+		inqbuf->additional_length = SCSIPI_INQUIRY_LENGTH_SCSI2 - 4;
 		inqbuf->flags1 = inqbuf->flags2 = inqbuf->flags3 = 0;
-		memcpy(inqbuf->vendor, "EMULEX  ", sizeof(inqbuf->vendor));
-		memcpy(inqbuf->product, "MT-02 QIC       ",
-			sizeof(inqbuf->product));
-		memcpy(inqbuf->revision, "    ", sizeof(inqbuf->revision));
+		memcpy(inqbuf->vendor, "EMULEX  MT-02 QIC           ", 28);
 	}
 #endif /* SCSI_OLD_NOINQUIRY */
 
