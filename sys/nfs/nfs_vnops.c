@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.65 1996/09/07 12:41:29 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.66 1996/10/10 23:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -397,7 +397,7 @@ nfs_open(v)
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
 #ifdef DIAGNOSTIC
-		printf("open eacces vtyp=%d\n",vp->v_type);
+		kprintf("open eacces vtyp=%d\n",vp->v_type);
 #endif
 		return (EACCES);
 	}
@@ -2164,7 +2164,7 @@ nfs_readdirrpc(vp, uiop, cred)
 		dnp->n_direofoffset = uiop->uio_offset;
 	else {
 		if (uiop->uio_resid > 0)
-			printf("EEK! readdirrpc resid > 0\n");
+			kprintf("EEK! readdirrpc resid > 0\n");
 		cookiep = nfs_getcookie(dnp, uiop->uio_offset, 1);
 		*cookiep = cookie;
 	}
@@ -2388,7 +2388,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		dnp->n_direofoffset = uiop->uio_offset;
 	else {
 		if (uiop->uio_resid > 0)
-			printf("EEK! readdirplusrpc resid > 0\n");
+			kprintf("EEK! readdirplusrpc resid > 0\n");
 		cookiep = nfs_getcookie(dnp, uiop->uio_offset, 1);
 		*cookiep = cookie;
 	}
@@ -2939,13 +2939,13 @@ nfs_print(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 
-	printf("tag VT_NFS, fileid %ld fsid 0x%lx",
-		np->n_vattr.va_fileid, np->n_vattr.va_fsid);
+	kprintf("tag VT_NFS, fileid %ld fsid 0x%lx",
+	    np->n_vattr.va_fileid, np->n_vattr.va_fsid);
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
 #endif
-	printf("\n");
+	kprintf("\n");
 	return (0);
 }
 
@@ -3021,7 +3021,7 @@ nfs_writebp(bp, force)
 		panic("bwrite: buffer is not busy???");
 
 #ifdef fvdl_debug
-	printf("nfs_writebp(%x): vp %x voff %d vend %d doff %d dend %d\n",
+	kprintf("nfs_writebp(%x): vp %x voff %d vend %d doff %d dend %d\n",
 	    bp, bp->b_vp, bp->b_validoff, bp->b_validend, bp->b_dirtyoff,
 	    bp->b_dirtyend);
 #endif
