@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_new_page.3,v 1.8 2004/11/24 12:26:23 wiz Exp $
+.\"	$NetBSD: form_new_page.3,v 1.9 2004/11/24 12:42:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -47,9 +47,11 @@
 .Sh DESCRIPTION
 The
 .Fn new_page
-function returns TRUE if the given field is the start of a new page,
-otherwise it returns FALSE, the new page status of a field can be set
-or unset using the
+function returns
+.Dv TRUE
+if the given field is the start of a new page, otherwise it returns
+.Dv FALSE ,
+the new page status of a field can be set or unset using the
 .Fn set_new_page
 function.
 .Sh RETURN VALUES

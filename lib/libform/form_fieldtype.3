@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_fieldtype.3,v 1.9 2004/11/24 12:26:23 wiz Exp $
+.\"	$NetBSD: form_fieldtype.3,v 1.10 2004/11/24 12:42:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -76,15 +76,19 @@ A new field type can be created by calling
 .Fn new_fieldtype
 which requires pointers to two functions which perform validation, the
 .Fa field_check
-function must validate the field contents and return TRUE if they are
-acceptable and FALSE if they are not.
+function must validate the field contents and return
+.Dv TRUE
+if they are acceptable and
+.Dv FALSE
+if they are not.
 The
 .Fa char_check
 validates the character input into the field, this function will be
 called for each character entered, if the character can be entered
 into the field then
 .Fa char_check
-must return TRUE.
+must return
+.Dv TRUE .
 Neither
 .Fa field_check
 nor
@@ -114,8 +118,11 @@ specify the next and previous choice functions for the field type.
 These functions must perform the necessary actions to select the next
 or previous choice for the field, updating the field buffer if
 necessary.
-The choice functions must return TRUE if the function
-succeeded and FALSE otherwise.
+The choice functions must return
+.Dv TRUE
+if the function succeeded and
+.Dv FALSE
+otherwise.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
