@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.1 1995/02/13 23:08:51 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.2 1995/02/16 02:36:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -102,7 +102,7 @@ dma_reset(sc)
 	((sc->sc_esp->sc_rev == ESP200) ? (16 * 1024 * 1024) :		\
 	(sc->sc_esp->sc_rev == NCR53C94) ? (8 * 1024) : (64 * 1024))
 #define DMAMAX(a)							\
-	(sc->sc_esp->sc_rev == NCR53C94) ? 0x2000 - ((a) & 0x1000) :	\
+	(sc->sc_esp->sc_rev == NCR53C94) ? 0x2000 - ((a) & 0x1fff) :	\
 	(0x01000000 - ((a) & 0x00ffffff))
 
 /*
