@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.647 2003/12/14 17:15:31 thorpej Exp $
+#	$NetBSD: mi,v 1.648 2003/12/20 20:25:28 lha Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3626,6 +3626,18 @@
 ./usr/share/man/cat9/crfree.0		comp-sys-catman
 ./usr/share/man/cat9/crget.0		comp-sys-catman
 ./usr/share/man/cat9/crhold.0		comp-sys-catman
+./usr/share/man/cat9/crypto_dispatch.0	comp-sys-catman
+./usr/share/man/cat9/crypto_done.0	comp-sys-catman
+./usr/share/man/cat9/crypto_freereq.0	comp-sys-catman
+./usr/share/man/cat9/crypto_freesession.0	comp-sys-catman
+./usr/share/man/cat9/crypto_get_driverid.0	comp-sys-catman
+./usr/share/man/cat9/crypto_getreq.0	comp-sys-catman
+./usr/share/man/cat9/crypto_kdispatch.0	comp-sys-catman
+./usr/share/man/cat9/crypto_kdone.0	comp-sys-catman
+./usr/share/man/cat9/crypto_kregister.0	comp-sys-catman
+./usr/share/man/cat9/crypto_newsession.0	comp-sys-catman
+./usr/share/man/cat9/crypto_register.0	comp-sys-catman
+./usr/share/man/cat9/crypto_unregister.0	comp-sys-catman
 ./usr/share/man/cat9/ctxsw.0		comp-sys-catman
 ./usr/share/man/cat9/curcpu.0	comp-sys-catman
 ./usr/share/man/cat9/curproc.0	comp-sys-catman
@@ -3838,6 +3850,7 @@
 ./usr/share/man/cat9/namei.0		comp-sys-catman
 ./usr/share/man/cat9/need_resched.0		comp-sys-catman
 ./usr/share/man/cat9/nextrunqueue.0		comp-sys-catman
+./usr/share/man/cat9/opencrypto.0		comp-sys-catman
 ./usr/share/man/cat9/panic.0		comp-sys-catman
 ./usr/share/man/cat9/pci.0		comp-sys-catman
 ./usr/share/man/cat9/pci_conf_hook.0	comp-sys-catman
@@ -6831,6 +6844,18 @@
 ./usr/share/man/man9/crfree.9		comp-sys-man
 ./usr/share/man/man9/crget.9		comp-sys-man
 ./usr/share/man/man9/crhold.9		comp-sys-man
+./usr/share/man/man9/crypto_dispatch.9	comp-sys-man
+./usr/share/man/man9/crypto_done.9	comp-sys-man
+./usr/share/man/man9/crypto_freereq.9	comp-sys-man
+./usr/share/man/man9/crypto_freesession.9	comp-sys-man
+./usr/share/man/man9/crypto_get_driverid.9	comp-sys-man
+./usr/share/man/man9/crypto_getreq.9	comp-sys-man
+./usr/share/man/man9/crypto_kdispatch.9	comp-sys-man
+./usr/share/man/man9/crypto_kdone.9	comp-sys-man
+./usr/share/man/man9/crypto_kregister.9	comp-sys-man
+./usr/share/man/man9/crypto_newsession.9	comp-sys-man
+./usr/share/man/man9/crypto_register.9	comp-sys-man
+./usr/share/man/man9/crypto_unregister.9	comp-sys-man
 ./usr/share/man/man9/ctxsw.9		comp-sys-man
 ./usr/share/man/man9/curcpu.9	comp-sys-man
 ./usr/share/man/man9/curproc.9	comp-sys-man
@@ -7043,6 +7068,7 @@
 ./usr/share/man/man9/namei.9		comp-sys-man
 ./usr/share/man/man9/need_resched.9		comp-sys-man
 ./usr/share/man/man9/nextrunqueue.9		comp-sys-man
+./usr/share/man/man9/opencrypto.9		comp-sys-man
 ./usr/share/man/man9/panic.9		comp-sys-man
 ./usr/share/man/man9/pci.9		comp-sys-man
 ./usr/share/man/man9/pci_conf_hook.9	comp-sys-man
