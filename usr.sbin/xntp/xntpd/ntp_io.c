@@ -113,9 +113,9 @@ static int sigio_block_count = 0;
 volatile u_long full_recvbufs;		/* number of recvbufs on fulllist */
 volatile u_long free_recvbufs;		/* number of recvbufs on freelist */
 
-volatile static	struct recvbuf *freelist;	/* free buffers */
-volatile static	struct recvbuf *fulllist;	/* lifo buffers with data */
-volatile static	struct recvbuf *beginlist;	/* fifo buffers with data */
+static	struct recvbuf *volatile freelist;	/* free buffers */
+static	struct recvbuf *volatile fulllist;	/* lifo buffers with data */
+static	struct recvbuf *volatile beginlist;	/* fifo buffers with data */
 
 u_long total_recvbufs;		/* total recvbufs currently in use */
 u_long lowater_additions;	/* number of times we have added memory */
