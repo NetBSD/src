@@ -1,4 +1,4 @@
-/*	$NetBSD: includes.h,v 1.8 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: includes.h,v 1.9 2005/02/13 18:14:04 christos Exp $	*/
 /*	$OpenBSD: includes.h,v 1.18 2004/06/13 15:03:02 djm Exp $	*/
 
 /*
@@ -56,6 +56,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 #include <time.h>
 #include <paths.h>
 #include <dirent.h>
+#ifdef USE_PAM
+# include <security/pam_appl.h>
+#endif
 
 #include "version.h"
 

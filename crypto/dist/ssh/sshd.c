@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.35 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.36 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshd.c,v 1.301 2004/08/11 11:50:09 dtucker Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.35 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.36 2005/02/13 18:14:04 christos Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1648,6 +1648,11 @@ main(int ac, char **av)
 
 	/* Start session. */
 	do_authenticated(authctxt);
+
+#ifdef USE_PAM
+	if (options.use_pam)
+		finish_pam();
+#endif /* USE_PAM */
 
 	/* The connection has been terminated. */
 	verbose("Closing connection to %.100s", remote_ip);

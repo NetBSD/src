@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.16 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.17 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor.c,v 1.61 2004/07/17 05:31:41 dtucker Exp $");
-__RCSID("$NetBSD: monitor.c,v 1.16 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.17 2005/02/13 18:14:04 christos Exp $");
 
 #include <openssl/dh.h>
 
@@ -123,6 +123,15 @@ int mm_answer_rsa_response(int, Buffer *);
 int mm_answer_sesskey(int, Buffer *);
 int mm_answer_sessid(int, Buffer *);
 
+#ifdef USE_PAM
+int mm_answer_pam_start(int, Buffer *);
+int mm_answer_pam_account(int, Buffer *);
+int mm_answer_pam_init_ctx(int, Buffer *);
+int mm_answer_pam_query(int, Buffer *);
+int mm_answer_pam_respond(int, Buffer *);
+int mm_answer_pam_free_ctx(int, Buffer *);
+#endif
+
 #ifdef KRB4
 int mm_answer_krb4(int, Buffer *);
 #endif
@@ -172,6 +181,14 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
     {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
     {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
+#ifdef USE_PAM
+    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
+    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
+    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
+    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
+    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
+    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
+#endif
 #ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
     {MONITOR_REQ_BSDAUTHRESPOND, MON_AUTH,mm_answer_bsdauthrespond},
@@ -193,6 +210,14 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_GSSSTEP, MON_ISAUTH, mm_answer_gss_accept_ctx},
     {MONITOR_REQ_GSSUSEROK, MON_AUTH, mm_answer_gss_userok},
     {MONITOR_REQ_GSSCHECKMIC, MON_ISAUTH, mm_answer_gss_checkmic},
+#endif
+#ifdef USE_PAM
+    {MONITOR_REQ_PAM_START, MON_ONCE, mm_answer_pam_start},
+    {MONITOR_REQ_PAM_ACCOUNT, 0, mm_answer_pam_account},
+    {MONITOR_REQ_PAM_INIT_CTX, MON_ISAUTH, mm_answer_pam_init_ctx},
+    {MONITOR_REQ_PAM_QUERY, MON_ISAUTH, mm_answer_pam_query},
+    {MONITOR_REQ_PAM_RESPOND, MON_ISAUTH, mm_answer_pam_respond},
+    {MONITOR_REQ_PAM_FREE_CTX, MON_ONCE|MON_AUTHDECIDE, mm_answer_pam_free_ctx},
 #endif
     {0, 0, NULL}
 };
@@ -297,6 +322,18 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 			if (authctxt->pw->pw_uid == 0 &&
 			    !auth_root_allowed(auth_method))
 				authenticated = 0;
+#ifdef USE_PAM
+			/* PAM needs to perform account checks after auth */
+			if (options.use_pam && authenticated) {
+				Buffer m;
+
+				buffer_init(&m);
+				mm_request_receive_expect(pmonitor->m_sendfd,
+				    MONITOR_REQ_PAM_ACCOUNT, &m);
+				authenticated = mm_answer_pam_account(pmonitor->m_sendfd, &m);
+				buffer_free(&m);
+			}
+#endif
 		}
 
 		if (ent->flags & MON_AUTHDECIDE) {
@@ -575,6 +612,10 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 		monitor_permit(mon_dispatch, MONITOR_REQ_AUTH2_READ_BANNER, 1);
 	}
 
+#ifdef USE_PAM
+	if (options.use_pam)
+		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_START, 1);
+#endif
 
 	return (0);
 }
@@ -748,6 +789,135 @@ mm_answer_skeyrespond(int sock, Buffer *m)
 	auth_method = "skey";
 
 	return (authok != 0);
+}
+#endif
+
+#ifdef USE_PAM
+int
+mm_answer_pam_start(int sock, Buffer *m)
+{
+	if (!options.use_pam)
+		fatal("UsePAM not set, but ended up in %s anyway", __func__);
+
+	start_pam(authctxt);
+
+	monitor_permit(mon_dispatch, MONITOR_REQ_PAM_ACCOUNT, 1);
+
+	return (0);
+}
+
+int
+mm_answer_pam_account(int sock, Buffer *m)
+{
+	u_int ret;
+
+	if (!options.use_pam)
+		fatal("UsePAM not set, but ended up in %s anyway", __func__);
+
+	ret = do_pam_account();
+
+	buffer_put_int(m, ret);
+
+	mm_request_send(sock, MONITOR_ANS_PAM_ACCOUNT, m);
+
+	return (ret);
+}
+
+static void *sshpam_ctxt, *sshpam_authok;
+extern KbdintDevice sshpam_device;
+
+int
+mm_answer_pam_init_ctx(int sock, Buffer *m)
+{
+
+	debug3("%s", __func__);
+	authctxt->user = buffer_get_string(m, NULL);
+	sshpam_ctxt = (sshpam_device.init_ctx)(authctxt);
+	sshpam_authok = NULL;
+	buffer_clear(m);
+	if (sshpam_ctxt != NULL) {
+		monitor_permit(mon_dispatch, MONITOR_REQ_PAM_FREE_CTX, 1);
+		buffer_put_int(m, 1);
+	} else {
+		buffer_put_int(m, 0);
+	}
+	mm_request_send(sock, MONITOR_ANS_PAM_INIT_CTX, m);
+	return (0);
+}
+
+int
+mm_answer_pam_query(int sock, Buffer *m)
+{
+	char *name, *info, **prompts;
+	u_int num, *echo_on;
+	int i, ret;
+
+	debug3("%s", __func__);
+	sshpam_authok = NULL;
+	ret = (sshpam_device.query)(sshpam_ctxt, &name, &info, &num, &prompts, &echo_on);
+	if (ret == 0 && num == 0)
+		sshpam_authok = sshpam_ctxt;
+	if (num > 1 || name == NULL || info == NULL)
+		ret = -1;
+	buffer_clear(m);
+	buffer_put_int(m, ret);
+	buffer_put_cstring(m, name);
+	xfree(name);
+	buffer_put_cstring(m, info);
+	xfree(info);
+	buffer_put_int(m, num);
+	for (i = 0; i < num; ++i) {
+		buffer_put_cstring(m, prompts[i]);
+		xfree(prompts[i]);
+		buffer_put_int(m, echo_on[i]);
+	}
+	if (prompts != NULL)
+		xfree(prompts);
+	if (echo_on != NULL)
+		xfree(echo_on);
+	mm_request_send(sock, MONITOR_ANS_PAM_QUERY, m);
+	return (0);
+}
+
+int
+mm_answer_pam_respond(int sock, Buffer *m)
+{
+	char **resp;
+	u_int num;
+	int i, ret;
+
+	debug3("%s", __func__);
+	sshpam_authok = NULL;
+	num = buffer_get_int(m);
+	if (num > 0) {
+		resp = xmalloc(num * sizeof(char *));
+		for (i = 0; i < num; ++i)
+			resp[i] = buffer_get_string(m, NULL);
+		ret = (sshpam_device.respond)(sshpam_ctxt, num, resp);
+		for (i = 0; i < num; ++i)
+			xfree(resp[i]);
+		xfree(resp);
+	} else {
+		ret = (sshpam_device.respond)(sshpam_ctxt, num, NULL);
+	}
+	buffer_clear(m);
+	buffer_put_int(m, ret);
+	mm_request_send(sock, MONITOR_ANS_PAM_RESPOND, m);
+	auth_method = "keyboard-interactive/pam";
+	if (ret == 0)
+		sshpam_authok = sshpam_ctxt;
+	return (0);
+}
+
+int
+mm_answer_pam_free_ctx(int sock, Buffer *m)
+{
+
+	debug3("%s", __func__);
+	(sshpam_device.free_ctx)(sshpam_ctxt);
+	buffer_clear(m);
+	mm_request_send(sock, MONITOR_ANS_PAM_FREE_CTX, m);
+	return (sshpam_authok == sshpam_ctxt);
 }
 #endif
 
