@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.16 1999/05/03 16:30:33 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.17 1999/06/08 00:46:38 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,21 +46,22 @@ typedef _BSD_VA_LIST_	va_list;
 #define __builtin_next_arg(t) ((t) ? 0 : 0)
 #endif
 
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
-
 #define	va_start(ap, last) \
 	((ap) = (va_list)__builtin_next_arg(last))
 
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define	va_arg(ap, T)							\
+	(((T *)(							\
+	    (ap) += (sizeof(T) <= sizeof(int)				\
+		? sizeof(int) : ((long)(ap) & 4) + sizeof(T)),		\
+	    (ap) - (sizeof(T) <= sizeof(int) ? sizeof(int) : sizeof(T))	\
+ 	))[0])
 #else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
-		sizeof(type) > sizeof(int) ? \
-		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
-		(abort(), 0)))[-1]
+#define	va_arg(ap, T)							\
+	(((T *)(							\
+	    (ap) += (sizeof(T) <= sizeof(int)				\
+		? sizeof(int) : ((long)(ap) & 4) + sizeof(T))		\
+ 	))[-1])
 #endif
 
 #define	va_end(ap)
