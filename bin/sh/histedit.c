@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.26 2002/03/12 00:14:31 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.27 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.26 2002/03/12 00:14:31 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.27 2002/11/24 22:35:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,15 +74,20 @@ EditLine *el;	/* editline cookie */
 int displayhist;
 static FILE *el_in, *el_out;
 
-STATIC const char *fc_replace __P((const char *, char *, char *));
+STATIC const char *fc_replace(const char *, char *, char *);
+
+#ifdef DEBUG
+extern FILE *tracefile;
+#endif
 
 /*
  * Set history and editing status.  Called whenever the status may
  * have changed (figures out what to do).
  */
 void
-histedit()
+histedit(void)
 {
+	FILE *el_err;
 
 #define editing (Eflag || Vflag)
 
@@ -111,7 +116,12 @@ histedit()
 				el_out = fdopen(2, "w");
 			if (el_in == NULL || el_out == NULL)
 				goto bad;
-			el = el_init(arg0, el_in, el_out, el_out);
+			el_err = el_out;
+#if DEBUG
+			if (tracefile)
+				el_err = tracefile;
+#endif
+			el = el_init(arg0, el_in, el_out, el_err);
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
@@ -150,8 +160,7 @@ bad:
 
 
 void
-sethistsize(hs)
-	const char *hs;
+sethistsize(const char *hs)
 {
 	int histsize;
 	HistEvent he;
@@ -165,8 +174,7 @@ sethistsize(hs)
 }
 
 void
-setterm(term)
-	const char *term;
+setterm(const char *term)
 {
 	if (el != NULL && term != NULL)
 		if (el_set(el, EL_TERMINAL, term) != 0) {
@@ -180,9 +188,7 @@ setterm(term)
  *  the Korn shell fc command.  Oh well...
  */
 int
-histcmd(argc, argv)
-	int argc;
-	char **argv;
+histcmd(int argc, char **argv)
 {
 	int ch;
 	const char *editor = NULL;
@@ -411,9 +417,7 @@ histcmd(argc, argv)
 }
 
 STATIC const char *
-fc_replace(s, p, r)
-	const char *s;
-	char *p, *r;
+fc_replace(const char *s, char *p, char *r)
 {
 	char *dest;
 	int plen = strlen(p);
@@ -435,8 +439,7 @@ fc_replace(s, p, r)
 }
 
 int
-not_fcnumber(s)
-        char *s;
+not_fcnumber(char *s)
 {
 	if (s == NULL)
 		return 0;
@@ -446,9 +449,7 @@ not_fcnumber(s)
 }
 
 int
-str_to_event(str, last)
-	const char *str;
-	int last;
+str_to_event(const char *str, int last)
 {
 	HistEvent he;
 	const char *s = str;
@@ -497,9 +498,7 @@ str_to_event(str, last)
 }
 #else
 int
-histcmd(argc, argv)
-	int argc;
-	char **argv;
+histcmd(int argc, char **argv)
 {
 	error("not compiled with history support");
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.55 2002/09/28 01:25:01 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.56 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.55 2002/09/28 01:25:01 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.56 2002/11/24 22:35:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,36 +96,32 @@ struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
 struct ifsregion *ifslastp;	/* last struct in list */
 struct arglist exparg;		/* holds expanded arg list */
 
-STATIC void argstr __P((char *, int));
-STATIC char *exptilde __P((char *, int));
-STATIC void expbackq __P((union node *, int, int));
-STATIC int subevalvar __P((char *, char *, int, int, int, int));
-STATIC char *evalvar __P((char *, int));
-STATIC int varisset __P((char *, int));
-STATIC void varvalue __P((char *, int, int));
-STATIC void recordregion __P((int, int, int));
-STATIC void removerecordregions __P((int)); 
-STATIC void ifsbreakup __P((char *, struct arglist *));
-STATIC void ifsfree __P((void));
-STATIC void expandmeta __P((struct strlist *, int));
-STATIC void expmeta __P((char *, char *));
-STATIC void addfname __P((char *));
-STATIC struct strlist *expsort __P((struct strlist *));
-STATIC struct strlist *msort __P((struct strlist *, int));
-STATIC int pmatch __P((char *, char *, int));
-STATIC char *cvtnum __P((int, char *));
-
-extern int oexitstatus;
+STATIC void argstr(char *, int);
+STATIC char *exptilde(char *, int);
+STATIC void expbackq(union node *, int, int);
+STATIC int subevalvar(char *, char *, int, int, int, int);
+STATIC char *evalvar(char *, int);
+STATIC int varisset(char *, int);
+STATIC void varvalue(char *, int, int);
+STATIC void recordregion(int, int, int);
+STATIC void removerecordregions(int); 
+STATIC void ifsbreakup(char *, struct arglist *);
+STATIC void ifsfree(void);
+STATIC void expandmeta(struct strlist *, int);
+STATIC void expmeta(char *, char *);
+STATIC void addfname(char *);
+STATIC struct strlist *expsort(struct strlist *);
+STATIC struct strlist *msort(struct strlist *, int);
+STATIC int pmatch(char *, char *, int);
+STATIC char *cvtnum(int, char *);
 
 /*
  * Expand shell variables and backquotes inside a here document.
  */
 
 void
-expandhere(arg, fd)
-	union node *arg;	/* the document */
-	int fd;			/* where to write the expanded version */
-	{
+expandhere(union node *arg, int fd)
+{
 	herefd = fd;
 	expandarg(arg, (struct arglist *)NULL, 0);
 	xwrite(fd, stackblock(), expdest - stackblock());
@@ -140,10 +136,7 @@ expandhere(arg, fd)
  */
 
 void
-expandarg(arg, arglist, flag)
-	union node *arg;
-	struct arglist *arglist;
-	int flag;
+expandarg(union node *arg, struct arglist *arglist, int flag)
 {
 	struct strlist *sp;
 	char *p;
@@ -192,9 +185,7 @@ expandarg(arg, arglist, flag)
  */
 
 STATIC void
-argstr(p, flag)
-	char *p;
-	int flag;
+argstr(char *p, int flag)
 {
 	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
@@ -257,9 +248,7 @@ breakloop:;
 }
 
 STATIC char *
-exptilde(p, flag)
-	char *p;
-	int flag;
+exptilde(char *p, int flag)
 {
 	char c, *startp = p;
 	struct passwd *pw;
@@ -307,8 +296,7 @@ lose:
 
 
 STATIC void 
-removerecordregions(endoff)
-	int endoff;
+removerecordregions(int endoff)
 {
 	if (ifslastp == NULL)
 		return;
@@ -352,8 +340,7 @@ removerecordregions(endoff)
  * evaluate, place result in (backed up) result, adjust string position.
  */
 void
-expari(flag)
-	int flag;
+expari(int flag)
 {
 	char *p, *start;
 	int result;
@@ -415,10 +402,7 @@ expari(flag)
  */
 
 STATIC void
-expbackq(cmd, quoted, flag)
-	union node *cmd;
-	int quoted;
-	int flag;
+expbackq(union node *cmd, int quoted, int flag)
 {
 	struct backcmd in;
 	int i;
@@ -477,7 +461,7 @@ expbackq(cmd, quoted, flag)
 	if (in.buf)
 		ckfree(in.buf);
 	if (in.jp)
-		exitstatus = waitforjob(in.jp);
+		back_exitstatus = waitforjob(in.jp);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
 	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
@@ -491,13 +475,7 @@ expbackq(cmd, quoted, flag)
 
 
 STATIC int
-subevalvar(p, str, strloc, subtype, startloc, varflags)
-	char *p;
-	char *str;
-	int strloc;
-	int subtype;
-	int startloc;
-	int varflags;
+subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varflags)
 {
 	char *startp;
 	char *loc = NULL;
@@ -619,9 +597,7 @@ recordright:
  */
 
 STATIC char *
-evalvar(p, flag)
-	char *p;
-	int flag;
+evalvar(char *p, int flag)
 {
 	int subtype;
 	int varflags;
@@ -796,9 +772,7 @@ record:
  */
 
 STATIC int
-varisset(name, nulok)
-	char *name;
-	int nulok;
+varisset(char *name, int nulok)
 {
 	if (*name == '!')
 		return backgndpid != -1;
@@ -839,10 +813,7 @@ varisset(name, nulok)
  */
 
 STATIC void
-varvalue(name, quoted, allow_split)
-	char *name;
-	int quoted;
-	int allow_split;
+varvalue(char *name, int quoted, int allow_split)
 {
 	int num;
 	char *p;
@@ -871,7 +842,7 @@ varvalue(name, quoted, allow_split)
 		num = rootpid;
 		goto numvar;
 	case '?':
-		num = oexitstatus;
+		num = exitstatus;
 		goto numvar;
 	case '#':
 		num = shellparam.nparam;
@@ -882,7 +853,7 @@ numvar:
 		expdest = cvtnum(num, expdest);
 		break;
 	case '-':
-		for (i = 0 ; i < NOPTS ; i++) {
+		for (i = 0; optlist[i].name; i++) {
 			if (optlist[i].val)
 				STPUTC(optlist[i].letter, expdest);
 		}
@@ -932,10 +903,7 @@ numvar:
  */
 
 STATIC void
-recordregion(start, end, nulonly)
-	int start;
-	int end;
-	int nulonly;
+recordregion(int start, int end, int nulonly)
 {
 	struct ifsregion *ifsp;
 
@@ -960,10 +928,8 @@ recordregion(start, end, nulonly)
  * searched for IFS characters have been stored by recordregion.
  */
 STATIC void
-ifsbreakup(string, arglist)
-	char *string;
-	struct arglist *arglist;
-	{
+ifsbreakup(char *string, struct arglist *arglist)
+{
 	struct ifsregion *ifsp;
 	struct strlist *sp;
 	char *start;
@@ -1048,7 +1014,7 @@ ifsbreakup(string, arglist)
 }
 
 STATIC void
-ifsfree()
+ifsfree(void)
 {
 	while (ifsfirst.next != NULL) {
 		struct ifsregion *ifsp;
@@ -1073,9 +1039,7 @@ char *expdir;
 
 
 STATIC void
-expandmeta(str, flag)
-	struct strlist *str;
-	int flag;
+expandmeta(struct strlist *str, int flag)
 {
 	char *p;
 	struct strlist **savelastp;
@@ -1129,10 +1093,8 @@ nometa:
  */
 
 STATIC void
-expmeta(enddir, name)
-	char *enddir;
-	char *name;
-	{
+expmeta(char *enddir, char *name)
+{
 	char *p;
 	const char *cp;
 	char *q;
@@ -1260,9 +1222,8 @@ expmeta(enddir, name)
  */
 
 STATIC void
-addfname(name)
-	char *name;
-	{
+addfname(char *name)
+{
 	char *p;
 	struct strlist *sp;
 
@@ -1282,9 +1243,8 @@ addfname(name)
  */
 
 STATIC struct strlist *
-expsort(str)
-	struct strlist *str;
-	{
+expsort(struct strlist *str)
+{
 	int len;
 	struct strlist *sp;
 
@@ -1296,9 +1256,7 @@ expsort(str)
 
 
 STATIC struct strlist *
-msort(list, len)
-	struct strlist *list;
-	int len;
+msort(struct strlist *list, int len)
 {
 	struct strlist *p, *q = NULL;
 	struct strlist **lpp;
@@ -1344,11 +1302,8 @@ msort(list, len)
  */
 
 int
-patmatch(pattern, string, squoted)
-	char *pattern;
-	char *string;
-	int squoted;	/* string might have quote chars */
-	{
+patmatch(char *pattern, char *string, int squoted)
+{
 #ifdef notdef
 	if (pattern[0] == '!' && pattern[1] == '!')
 		return 1 - pmatch(pattern + 2, string);
@@ -1359,11 +1314,8 @@ patmatch(pattern, string, squoted)
 
 
 STATIC int
-pmatch(pattern, string, squoted)
-	char *pattern;
-	char *string;
-	int squoted;
-	{
+pmatch(char *pattern, char *string, int squoted)
+{
 	char *p, *q;
 	char c;
 
@@ -1485,8 +1437,7 @@ breakloop:
  */
 
 void
-rmescapes(str)
-	char *str;
+rmescapes(char *str)
 {
 	char *p, *q;
 
@@ -1515,10 +1466,8 @@ rmescapes(str)
  */
 
 int
-casematch(pattern, val)
-	union node *pattern;
-	char *val;
-	{
+casematch(union node *pattern, char *val)
+{
 	struct stackmark smark;
 	int result;
 	char *p;
@@ -1540,10 +1489,8 @@ casematch(pattern, val)
  */
 
 STATIC char *
-cvtnum(num, buf)
-	int num;
-	char *buf;
-	{
+cvtnum(int num, char *buf)
+{
 	char temp[32];
 	int neg = num < 0;
 	char *p = temp + 31;

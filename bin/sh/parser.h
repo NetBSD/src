@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.14 2000/07/27 04:09:28 cgd Exp $	*/
+/*	$NetBSD: parser.h,v 1.15 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,15 +39,17 @@
  */
 
 /* control characters in argument strings */
-#define CTLESC '\201'
-#define CTLVAR '\202'
+#define CTL_FIRST '\201'	/* first 'special' character */
+#define CTLESC '\201'		/* escape next character */
+#define CTLVAR '\202'		/* variable defn */
 #define CTLENDVAR '\203'
 #define CTLBACKQ '\204'
 #define CTLQUOTE 01		/* ored with CTLBACKQ code if in quotes */
 /*	CTLBACKQ | CTLQUOTE == '\205' */
-#define	CTLARI	'\206'
+#define	CTLARI	'\206'		/* arithmetic expression */
 #define	CTLENDARI '\207'
 #define	CTLQUOTEMARK '\210'
+#define	CTL_LAST '\210'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE	0x0f		/* type of variable substitution */

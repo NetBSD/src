@@ -1,4 +1,4 @@
-/*	$NetBSD: init.h,v 1.8 1995/05/11 21:29:14 christos Exp $	*/
+/*	$NetBSD: init.h,v 1.9 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,6 @@
  *	@(#)init.h	8.2 (Berkeley) 5/4/95
  */
 
-void init __P((void));
-void reset __P((void));
-void initshellproc __P((void));
+void init(void);
+void reset(void);
+void initshellproc(void);

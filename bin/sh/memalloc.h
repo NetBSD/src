@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.11 2000/11/01 19:56:01 christos Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.12 2002/11/24 22:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,18 +51,18 @@ extern int stacknleft;
 extern int sstrnleft;
 extern int herefd;
 
-pointer ckmalloc __P((int));
-pointer ckrealloc __P((pointer, int));
-char *savestr __P((char *));
-pointer stalloc __P((int));
-void stunalloc __P((pointer));
-void setstackmark __P((struct stackmark *));
-void popstackmark __P((struct stackmark *));
-void growstackblock __P((void));
-void grabstackblock __P((int));
-char *growstackstr __P((void));
-char *makestrspace __P((void));
-void ungrabstackstr __P((char *, char *));
+pointer ckmalloc(int);
+pointer ckrealloc(pointer, int);
+char *savestr(char *);
+pointer stalloc(int);
+void stunalloc(pointer);
+void setstackmark(struct stackmark *);
+void popstackmark(struct stackmark *);
+void growstackblock(void);
+void grabstackblock(int);
+char *growstackstr(void);
+char *makestrspace(void);
+void ungrabstackstr(char *, char *);
 
 
 

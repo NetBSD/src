@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.26 2002/09/28 01:25:02 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.27 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.26 2002/09/28 01:25:02 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.27 2002/11/24 22:35:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,8 +94,8 @@ MKINIT struct redirtab *redirlist;
 */
 int fd0_redirected = 0;
 
-STATIC void openredirect __P((union node *, char[10 ]));
-STATIC int openhere __P((union node *));
+STATIC void openredirect(union node *, char[10 ]);
+STATIC int openhere(union node *);
 
 
 /*
@@ -107,10 +107,8 @@ STATIC int openhere __P((union node *));
  */
 
 void
-redirect(redir, flags)
-	union node *redir;
-	int flags;
-	{
+redirect(union node *redir, int flags)
+{
 	union node *n;
 	struct redirtab *sv = NULL;
 	int i;
@@ -177,10 +175,8 @@ again:
 
 
 STATIC void
-openredirect(redir, memory)
-	union node *redir;
-	char memory[10];
-	{
+openredirect(union node *redir, char memory[10])
+{
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
@@ -256,9 +252,8 @@ eopen:
  */
 
 STATIC int
-openhere(redir)
-	union node *redir;
-	{
+openhere(union node *redir)
+{
 	int pip[2];
 	int len = 0;
 
@@ -298,7 +293,8 @@ out:
  */
 
 void
-popredir() {
+popredir(void)
+{
 	struct redirtab *rp = redirlist;
 	int i;
 
@@ -375,9 +371,7 @@ clearredir(vforked)
  */
 
 int
-copyfd(from, to)
-	int from;
-	int to;
+copyfd(int from, int to)
 {
 	int newfd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.c,v 1.14 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: mystring.c,v 1.15 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mystring.c,v 1.14 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: mystring.c,v 1.15 2002/11/24 22:35:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,11 +80,8 @@ char nullstr[1];		/* zero length string */
  */
 
 void
-scopyn(from, to, size)
-	char const *from;
-	char *to;
-	int size;
-	{
+scopyn(const char *from, char *to, int size)
+{
 
 	while (--size > 0) {
 		if ((*to++ = *from++) == '\0')
@@ -99,10 +96,8 @@ scopyn(from, to, size)
  */
 
 int
-prefix(pfx, string)
-	char const *pfx;
-	char const *string;
-	{
+prefix(const char *pfx, const char *string)
+{
 	while (*pfx) {
 		if (*pfx++ != *string++)
 			return 0;
@@ -117,9 +112,8 @@ prefix(pfx, string)
  */
 
 int
-number(s)
-	const char *s;
-	{
+number(const char *s)
+{
 
 	if (! is_number(s))
 		error("Illegal number: %s", s);
@@ -133,9 +127,8 @@ number(s)
  */
 
 int
-is_number(p)
-	const char *p;
-	{
+is_number(const char *p)
+{
 	do {
 		if (! is_digit(*p))
 			return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.14 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.15 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,8 @@
  *	@(#)error.h	8.2 (Berkeley) 5/4/95
  */
 
+#include <stdarg.h>
+
 /*
  * Types of operations (passed to the errmsg routine).
  */
@@ -65,6 +67,7 @@ struct jmploc {
 
 extern struct jmploc *handler;
 extern int exception;
+extern int exerrno;	/* error for EXEXEC */
 
 /* exceptions */
 #define EXINT 0		/* SIGINT received */
@@ -89,11 +92,22 @@ extern volatile int intpending;
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
-void exraise __P((int)) __attribute__((__noreturn__));
-void onint __P((void));
-void error __P((const char *, ...)) __attribute__((__noreturn__));
-void exerror __P((int, const char *, ...)) __attribute__((__noreturn__));
-const char *errmsg __P((int, int));
+void exraise(int) __attribute__((__noreturn__));
+void onint(void);
+void error(const char *, ...) __attribute__((__noreturn__));
+void exerror(int, const char *, ...) __attribute__((__noreturn__));
+const char *errmsg(int, int);
+
+void sh_err(int, const char *, ...) __attribute__((__noreturn__));
+void sh_verr(int, const char *, va_list) __attribute__((__noreturn__));
+void sh_errx(int, const char *, ...) __attribute__((__noreturn__));
+void sh_verrx(int, const char *, va_list) __attribute__((__noreturn__));
+void sh_warn(const char *, ...);
+void sh_vwarn(const char *, va_list);
+void sh_warnx(const char *, ...);
+void sh_vwarnx(const char *, va_list);
+
+void sh_exit(int) __attribute__((__noreturn__));
 
 
 /*

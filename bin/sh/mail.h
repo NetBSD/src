@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.h,v 1.8 1995/05/11 21:29:23 christos Exp $	*/
+/*	$NetBSD: mail.h,v 1.9 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,4 +38,4 @@
  *	@(#)mail.h	8.2 (Berkeley) 5/4/95
  */
 
-void chkmail __P((int));
+void chkmail(int);

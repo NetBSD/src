@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2002/09/27 18:56:56 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2002/11/24 22:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.27 2002/09/27 18:56:56 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.28 2002/11/24 22:35:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,11 +80,9 @@ __RCSID("$NetBSD: trap.c,v 1.27 2002/09/27 18:56:56 christos Exp $");
 char *trap[NSIG+1];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */
 char gotsig[NSIG];		/* indicates specified signal received */
-int pendingsigs;			/* indicates some signal received */
+int pendingsigs;		/* indicates some signal received */
 
-static int getsigaction __P((int, sig_t *));
-static int signame_to_signum __P((const char *));
-void printsignals __P((void));
+static int getsigaction(int, sig_t *);
 
 /*
  * return the signal number described by `p' (as a number or a name)
@@ -92,8 +90,7 @@ void printsignals __P((void));
  */
 
 static int
-signame_to_signum(p)
-	const char *p;
+signame_to_signum(const char *p)
 {
 	int i;
 
@@ -115,7 +112,7 @@ signame_to_signum(p)
 /*
  * Print a list of valid signal names
  */
-void
+static void
 printsignals(void)
 {
 	int n;
@@ -136,9 +133,7 @@ printsignals(void)
  */
 
 int
-trapcmd(argc, argv)
-	int argc;
-	char **argv;
+trapcmd(int argc, char **argv)
 {
 	char *action;
 	char **ap;
@@ -210,8 +205,7 @@ trapcmd(argc, argv)
  */
 
 void
-clear_traps(vforked)
-	int vforked;
+clear_traps(int vforked)
 {
 	char **tp;
 
@@ -237,9 +231,7 @@ clear_traps(vforked)
  */
 
 long
-setsignal(signo, vforked)
-	int signo;
-	int vforked;
+setsignal(int signo, int vforked)
 {
 	int action;
 	sig_t sigact = SIG_DFL;
@@ -259,12 +251,8 @@ setsignal(signo, vforked)
 			break;
 		case SIGQUIT:
 #ifdef DEBUG
-			{
-			extern int debug;
-
 			if (debug)
 				break;
-			}
 #endif
 			/* FALLTHROUGH */
 		case SIGTERM:
@@ -322,9 +310,7 @@ setsignal(signo, vforked)
  * Return the current setting for sig w/o changing it.
  */
 static int
-getsigaction(signo, sigact)
-	int signo;
-	sig_t *sigact;
+getsigaction(int signo, sig_t *sigact)
 {
 	struct sigaction sa;
 
@@ -339,9 +325,7 @@ getsigaction(signo, sigact)
  */
 
 void
-ignoresig(signo, vforked)
-	int signo;
-	int vforked;
+ignoresig(int signo, int vforked)
 {
 	if (sigmode[signo - 1] != S_IGN && sigmode[signo - 1] != S_HARD_IGN) {
 		signal(signo, SIG_IGN);
@@ -373,8 +357,7 @@ SHELLPROC {
  */
 
 void
-onsig(signo)
-	int signo;
+onsig(int signo)
 {
 	signal(signo, onsig);
 	if (signo == SIGINT && trap[SIGINT] == NULL) {
@@ -393,7 +376,8 @@ onsig(signo)
  */
 
 void
-dotrap() {
+dotrap(void)
+{
 	int i;
 	int savestatus;
 
@@ -421,8 +405,7 @@ done:
 
 
 void
-setinteractive(on)
-	int on;
+setinteractive(int on)
 {
 	static int is_interactive;
 
@@ -441,13 +424,12 @@ setinteractive(on)
  */
 
 void
-exitshell(status)
-	int status;
+exitshell(int status)
 {
 	struct jmploc loc1, loc2;
 	char *p;
 
-	TRACE(("exitshell(%d) pid=%d\n", status, getpid()));
+	TRACE(("pid %d, exitshell(%d)\n", getpid(), status));
 	if (setjmp(loc1.loc)) {
 		goto l1;
 	}

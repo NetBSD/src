@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.27 2002/09/27 21:32:24 mycroft Exp $	*/
+/*	$NetBSD: error.c,v 1.28 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.27 2002/09/27 21:32:24 mycroft Exp $");
+__RCSID("$NetBSD: error.c,v 1.28 2002/11/24 22:35:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: error.c,v 1.27 2002/09/27 21:32:24 mycroft Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "shell.h"
 #include "main.h"
@@ -74,7 +75,7 @@ volatile int intpending;
 char *commandname;
 
 
-static void exverror __P((int, const char *, va_list))
+static void exverror(int, const char *, va_list)
     __attribute__((__noreturn__));
 
 /*
@@ -84,8 +85,7 @@ static void exverror __P((int, const char *, va_list))
  */
 
 void
-exraise(e)
-	int e;
+exraise(int e)
 {
 	if (handler == NULL)
 		abort();
@@ -105,11 +105,12 @@ exraise(e)
  */
 
 void
-onint() {
+onint(void)
+{
 	sigset_t sigset;
 
 	if (suppressint) {
-		intpending++;
+		intpending = 1;
 		return;
 	}
 	intpending = 0;
@@ -124,17 +125,37 @@ onint() {
 	/* NOTREACHED */
 }
 
+static void
+exvwarning(int sv_errno, const char *msg, va_list ap)
+{
+	/* Partially emulate line buffered output so that:
+	 *	printf '%d\n' 1 a 2
+	 * and
+	 *	printf '%d %d %d\n' 1 a 2
+	 * both generate sensible text when stdout and stderr are merged.
+	 */
+	if (output.nextc != output.buf && output.nextc[-1] == '\n')
+		flushout(&output);
+	if (commandname)
+		outfmt(&errout, "%s: ", commandname);
+	if (msg != NULL) {
+		doformat(&errout, msg, ap);
+		if (sv_errno >= 0)
+			outfmt(&errout, ": ");
+	}
+	if (sv_errno >= 0)
+		outfmt(&errout, "%s", strerror(sv_errno));
+	out2c('\n');
+	flushout(&errout);
+}
 
 /*
- * Exverror is called to raise the error exception.  If the first argument
+ * Exverror is called to raise the error exception.  If the second argument
  * is not NULL then error prints an error message using printf style
  * formatting.  It then raises the error exception.
  */
 static void
-exverror(cond, msg, ap)
-	int cond;
-	const char *msg;
-	va_list ap;
+exverror(int cond, const char *msg, va_list ap)
 {
 	CLEAR_PENDING_INT;
 	INTOFF;
@@ -145,12 +166,9 @@ exverror(cond, msg, ap)
 	else
 		TRACE(("exverror(%d, NULL) pid=%d\n", cond, getpid()));
 #endif
-	if (msg) {
-		if (commandname)
-			outfmt(&errout, "%s: ", commandname);
-		doformat(&errout, msg, ap);
-		out2c('\n');
-	}
+	if (msg)
+		exvwarning(-1, msg, ap);
+
 	flushall();
 	exraise(cond);
 	/* NOTREACHED */
@@ -180,6 +198,84 @@ exerror(int cond, const char *msg, ...)
 	va_end(ap);
 }
 
+/*
+ * error/warning routines for external builtins
+ */
+
+void
+sh_exit(int rval)
+{
+	exerrno = rval & 255;
+	exraise(EXEXEC);
+}
+
+void
+sh_err(int status, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	exvwarning(errno, fmt, ap);
+	va_end(ap);
+	sh_exit(status);
+}
+
+void
+sh_verr(int status, const char *fmt, va_list ap)
+{
+	exvwarning(errno, fmt, ap);
+	sh_exit(status);
+}
+
+void
+sh_errx(int status, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	exvwarning(-1, fmt, ap);
+	va_end(ap);
+	sh_exit(status);
+}
+
+void
+sh_verrx(int status, const char *fmt, va_list ap)
+{
+	exvwarning(-1, fmt, ap);
+	sh_exit(status);
+}
+
+void
+sh_warn(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	exvwarning(errno, fmt, ap);
+	va_end(ap);
+}
+
+void
+sh_vwarn(const char *fmt, va_list ap)
+{
+	exvwarning(errno, fmt, ap);
+}
+
+void
+sh_warnx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	exvwarning(-1, fmt, ap);
+	va_end(ap);
+}
+
+void
+sh_vwarnx(const char *fmt, va_list ap)
+{
+	exvwarning(-1, fmt, ap);
+}
 
 
 /*
@@ -258,9 +354,7 @@ STATIC const struct errname errormsg[] = {
  */
 
 const char *
-errmsg(e, action)
-	int e;
-	int action;
+errmsg(int e, int action)
 {
 	struct errname const *ep;
 	static char buf[12];

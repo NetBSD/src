@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.26 2002/05/25 23:09:06 wiz Exp $	*/
+/*	$NetBSD: output.c,v 1.27 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.26 2002/05/25 23:09:06 wiz Exp $");
+__RCSID("$NetBSD: output.c,v 1.27 2002/11/24 22:35:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,11 +110,8 @@ RESET {
  */
 
 void
-open_mem(block, length, file)
-	char *block;
-	int length;
-	struct output *file;
-	{
+open_mem(char *block, int length, struct output *file)
+{
 	file->nextc = block;
 	file->nleft = --length;
 	file->fd = BLOCK_OUT;
@@ -124,26 +121,22 @@ open_mem(block, length, file)
 
 
 void
-out1str(p)
-	const char *p;
-	{
+out1str(const char *p)
+{
 	outstr(p, out1);
 }
 
 
 void
-out2str(p)
-	const char *p;
-	{
+out2str(const char *p)
+{
 	outstr(p, out2);
 }
 
 
 void
-outstr(p, file)
-	const char *p;
-	struct output *file;
-	{
+outstr(const char *p, struct output *file)
+{
 	while (*p)
 		outc(*p++, file);
 	if (file == out2)
@@ -155,9 +148,8 @@ char out_junk[16];
 
 
 void
-emptyoutbuf(dest)
-	struct output *dest;
-	{
+emptyoutbuf(struct output *dest)
+{
 	int offset;
 
 	if (dest->fd == BLOCK_OUT) {
@@ -186,16 +178,16 @@ emptyoutbuf(dest)
 
 
 void
-flushall() {
+flushall(void)
+{
 	flushout(&output);
 	flushout(&errout);
 }
 
 
 void
-flushout(dest)
-	struct output *dest;
-	{
+flushout(struct output *dest)
+{
 
 	if (dest->buf == NULL || dest->nextc == dest->buf || dest->fd < 0)
 		return;
@@ -207,7 +199,8 @@ flushout(dest)
 
 
 void
-freestdout() {
+freestdout(void)
+{
 	INTOFF;
 	if (output.buf) {
 		ckfree(output.buf);
@@ -288,10 +281,7 @@ fmtstr(char *outbuf, size_t length, const char *fmt, ...)
 #endif
 
 void
-doformat(dest, f, ap)
-	struct output *dest;
-	const char *f;		/* format string */
-	va_list ap;
+doformat(struct output *dest, const char *f, va_list ap)
 {
 #if	HAVE_VASPRINTF
 	char *s;
@@ -490,11 +480,8 @@ number:		  /* process a number */
  */
 
 int
-xwrite(fd, buf, nbytes)
-	int fd;
-	char *buf;
-	int nbytes;
-	{
+xwrite(int fd, char *buf, int nbytes)
+{
 	int ntry;
 	int i;
 	int n;
@@ -524,10 +511,7 @@ xwrite(fd, buf, nbytes)
  */
 
 int
-xioctl(fd, request, arg)
-	int fd;
-	unsigned long request;
-	char * arg;
+xioctl(int fd, unsigned long request, char *arg)
 {
 	int i;
 
