@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 2000/10/29 14:08:12 lukem Exp $
+.\"	$NetBSD: hardware,v 1.8 2002/03/31 18:18:23 matt Exp $
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -40,6 +40,8 @@ DEUNA/DELUA Unibus ethernet
 DEQNA/DELQA Q22 bus ethernet
 .It
 LANCE chip (where available)
+.It
+SGEC chip (where available)
 .bullet)
 .It
 Serial lines

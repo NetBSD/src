@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.8 2000/10/29 14:08:12 lukem Exp $
+.\"	$NetBSD: xfer,v 1.9 2002/03/31 18:18:24 matt Exp $
 .
 .so ../common/xfer
 .
@@ -6,10 +6,8 @@
 .
 Fetch the bootable bootfs image from
 .Pp
-.Dl Pa \&.../NetBSD-\*V/\*M/installation/bootfs/boot.fs.gz
+.Dl Pa \&.../NetBSD-\*V/\*M/installation/bootfs/boot.fs
 .Pp
-.Ic gunzip
-.Pa boot.fs.gz
 and write it on the beginning of the tape.
 Under
 .Nx
@@ -17,7 +15,6 @@ this is done (for MSCP tape, with SCSI tape the name is
 .Li nrst0 )
 via:
 .Pp
-.Dl # Ic "gunzip boot.fs.gz"
 .Dl # Ic "mt -f /dev/nrmt0 rewind"
 .Dl # Ic "dd if=boot.fs of=/dev/nrmt0"
 .Dl # Ic "mt -f /dev/nrmt0 rewoffl"
@@ -26,7 +23,6 @@ Under
 .Tn Ultrix
 the tape name is different:
 .Pp
-.Dl # Ic "gunzip boot.fs.gz"
 .Dl # Ic "mt -f /dev/rmt0h rewind"
 .Dl # Ic "dd if=boot.fs of=/dev/rmt0h"
 .Dl # Ic "mt -f /dev/rmt0h rewoffl"
@@ -77,12 +73,12 @@ be 512 for the file to be bootable! Otherwise it just won't work.
 .
 Fetch the bootable bootfs image from
 .Pp
-.Dl Pa \&.../NetBSD-\*V/\*M/installation/bootfs/boot.fs.gz
+.Dl Pa \&.../NetBSD-\*V/\*M/installation/bootfs/boot.fs
 .Pp
 and
 .Ic gunzip
-it. It is a 1 MB bootable image that will boot from any
-floppy of size 1 MB and bigger.
+it. It is a 1.2MB bootable image that will boot from any
+floppy of size 1.2MB and bigger.
 Note that you
 .Em cannot
 install from RX50 floppies due to the small size. This may change
@@ -145,9 +141,9 @@ otherwise you may have to install a MOP loader. A loader can be found at
 Fetch the latest and read the
 installation instructions.
 .Pp
-The file that should be loaded is called boot.mop and is located in
+The file that should be loaded is called boot and is located in
 .Pp
-.Dl Pa \&.../NetBSD-\*V/\*M/installation/netboot/boot.mop
+.Dl Pa \&.../NetBSD-\*V/\*M/installation/netboot/boot
 .Pp
 The kernel to load is the same kernel as the bootfs uses and can
 be found in
