@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.36 2000/09/21 17:12:40 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.37 2000/12/03 01:54:46 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,9 +65,8 @@ Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
 lettre en référence (a, b, c, d,...) ou en utilisant les flèches.
 La sélection courante est activée en appuyant sur entrée.
 
-Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
-
-Merci d'utiliser NetBSD !
+message thanks
+{Merci d'utiliser NetBSD !
 }
 
 message installusure

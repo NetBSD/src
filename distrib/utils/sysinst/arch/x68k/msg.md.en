@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 1999/07/09 15:29:45 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2000/12/03 01:54:50 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,11 @@
 
 /* x68k machine dependent messages, english */
 
+
+message md_hello
+{If the floppy is not locked, you may now remove the disk.
+
+}
 
 message dobootblks
 {Installing boot blocks on %s....
