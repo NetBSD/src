@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.170 2003/12/31 03:02:57 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.171 2004/01/04 21:06:04 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.170 2003/12/31 03:02:57 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.171 2004/01/04 21:06:04 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1338,8 +1338,13 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		if (raidPtr->status != rf_rs_reconstructing)
 			*(int *) data = 100;
-		else
-			*(int *) data = raidPtr->reconControl->percentComplete;
+		else {
+			if (raidPtr->reconControl->numRUsTotal > 0) {
+				*(int *) data = (raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
+			} else {
+				*(int *) data = 0;
+			}
+		}
 		return (0);
 	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 		progressInfoPtr = (RF_ProgressInfo_t **) data;

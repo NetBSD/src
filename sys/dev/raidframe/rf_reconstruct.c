@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.64 2003/12/31 04:13:52 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.65 2004/01/04 21:06:04 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.64 2003/12/31 04:13:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.65 2004/01/04 21:06:04 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -653,10 +653,9 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			raidPtr->reconControl->numRUsComplete = 
 				mapPtr->totalRUs - 
 				rf_UnitsLeftToReconstruct(mapPtr);
-
+#if RF_DEBUG_RECON
 			raidPtr->reconControl->percentComplete = 
 				(raidPtr->reconControl->numRUsComplete * 100 / raidPtr->reconControl->numRUsTotal);
-#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl->reconMap, &(raidPtr->reconControl->starttime));
 			}
@@ -682,8 +681,8 @@ rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *reconDesc)
 			RF_ASSERT(event);
 
 			(void) ProcessReconEvent(raidPtr, event);	/* ignore return code */
-			raidPtr->reconControl->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
 #if RF_DEBUG_RECON
+			raidPtr->reconControl->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl->reconMap, &(raidPtr->reconControl->starttime));
 			}
