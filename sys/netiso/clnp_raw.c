@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.6 1995/06/13 07:13:21 mycroft Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.7 1995/06/13 07:58:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -318,7 +318,7 @@ clnp_usrreq(so, req, m, nam, control)
 
 		if (nam->m_len != sizeof(*addr))
 			return (EINVAL);
-		if ((ifnet == 0) ||
+		if ((ifnet.tqh_first == 0) ||
 		    (addr->siso_family != AF_ISO) ||
 		    (addr->siso_addr.isoa_len  &&
 		     ifa_ifwithaddr(sisotosa(addr)) == 0))
@@ -334,7 +334,7 @@ clnp_usrreq(so, req, m, nam, control)
 
 		if ((nam->m_len > sizeof(*addr)) || (addr->siso_len > sizeof(*addr)))
 			return (EINVAL);
-		if (ifnet == 0)
+		if (ifnet.tqh_first == 0)
 			return (EADDRNOTAVAIL);
 		if (addr->siso_family != AF_ISO)
 		rp->risop_isop.isop_sfaddr = *addr;

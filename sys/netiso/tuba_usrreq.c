@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.3 1995/04/22 13:29:33 cgd Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.4 1995/06/13 07:58:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@
  * TCP protocol interface to socket abstraction.
  */
 extern	char *tcpstates[];
-extern	struct inpcb tuba_inpcb;
+extern	struct inpcbtable tuba_inpcb;
 extern	struct isopcb tuba_isopcb;
 
 /*
@@ -138,7 +138,7 @@ tuba_usrreq(so, req, m, nam, control)
 			inp = sotoinpcb(so);
 			remque(inp);
 			insque(inp, &tuba_inpcb);
-			inp->inp_head = &tuba_inpcb;
+			inp->inp_table = &tuba_inpcb;
 			tp = intotcpcb(inp);
 			if (tp == 0)
 				panic("tuba_usrreq 3");

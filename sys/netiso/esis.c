@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.8 1995/06/13 07:13:25 mycroft Exp $	*/
+/*	$NetBSD: esis.c,v 1.9 1995/06/13 07:58:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@ SOFTWARE.
  *						ish.
  *
  */
-struct rawcb	esis_pcb;
+LIST_HEAD(, rawcb) esis_pcb;
 void				esis_config(), snpac_age();
 int				esis_sendspace = 2048;
 int				esis_recvspace = 2048;
@@ -140,7 +140,7 @@ esis_init()
 {
 	extern struct clnl_protosw clnl_protox[256];
 
-	esis_pcb.rcb_next = esis_pcb.rcb_prev = &esis_pcb;
+	LIST_INIT(&esis_pcb);
 	llinfo_llc.lc_next = llinfo_llc.lc_prev = &llinfo_llc;
 
 	timeout(snpac_age, (caddr_t)0, hz);
@@ -192,7 +192,7 @@ struct mbuf		*control;	/* optional control */
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
 		if (so->so_pcb = (caddr_t)rp) {
 			bzero(so->so_pcb, sizeof(*rp));
-			insque(rp, &esis_pcb);
+			LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
 			rp->rcb_socket = so;
 			error = soreserve(so, esis_sendspace, esis_recvspace);
 		} else
@@ -286,7 +286,7 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 	}
 
 bad:
-	if (esis_pcb.rcb_next != &esis_pcb)
+	if (esis_pcb.lh_first != 0)
 		isis_input(m0, shp);
 	else
 		m_freem(m0);
@@ -968,7 +968,7 @@ struct snpa_hdr	*shp;	/* subnetwork header */
 	esis_dl.sdl_alen = ifp->if_addrlen;
 	esis_dl.sdl_index = ifp->if_index;
 	bcopy(shp->snh_shost, (caddr_t)esis_dl.sdl_data, esis_dl.sdl_alen);
-	for (rp = esis_pcb.rcb_next; rp != &esis_pcb; rp = rp->rcb_next) {
+	for (rp = esis_pcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
 		if (first_rp == 0) {
 			first_rp = rp;
 			continue;

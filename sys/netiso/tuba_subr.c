@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.3 1995/04/15 01:55:45 cgd Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.4 1995/06/13 07:58:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,8 +73,8 @@ static	struct	sockaddr_iso null_siso = { sizeof(null_siso), AF_ISO, };
 extern	int	tuba_table_size, tcp_keepidle, tcp_keepintvl, tcp_maxidle;
 extern	int	tcppcbcachemiss, tcppredack, tcppreddat, tcprexmtthresh;
 extern	struct	tcpiphdr tcp_saveti;
-struct	inpcb	tuba_inpcb;
-struct	inpcb	*tuba_last_inpcb = &tuba_inpcb;
+struct	inpcbtable	tuba_inpcb;
+struct	inpcb	*tuba_last_inpcb = 0;
 struct	isopcb	tuba_isopcb;
 /*
  * Tuba initialization
@@ -85,7 +85,7 @@ tuba_init()
 #define TUBAHDRSIZE (3 /*LLC*/ + 9 /*CLNP Fixed*/ + 42 /*Addresses*/ \
 		     + 6 /*CLNP Segment*/ + 20 /*TCP*/)
 
-	tuba_inpcb.inp_next = tuba_inpcb.inp_prev = &tuba_inpcb;
+	in_pcbinit(&tuba_inpcb);
 	tuba_isopcb.isop_next = tuba_isopcb.isop_prev = &tuba_isopcb;
 	tuba_isopcb.isop_faddr = &tuba_isopcb.isop_sfaddr;
 	tuba_isopcb.isop_laddr = &tuba_isopcb.isop_sladdr;
