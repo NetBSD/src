@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1999/03/26 23:41:39 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 1999/04/18 14:39:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_linux.h"
+#include "opt_fpuemulate.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +405,26 @@ trap(type, code, v, frame)
 		i = SIGFPE;
 		break;
 
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_ILLINST:	/* fnop generates this, apparently. */
+	case T_FPEMULI:
+	case T_FPEMULD: {
+		extern label_t *nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp(nofault);
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
+		goto dopanic;
+	}
+
+	/*
+	 * Unimplemented FPU instructions/datatypes.
+	 */
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef FPU_EMULATE
@@ -705,7 +726,8 @@ trap(type, code, v, frame)
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode);
+	if (i)
+		trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 out:
