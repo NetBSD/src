@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.81 1998/10/12 20:56:48 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.82 1998/10/13 11:33:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -281,6 +281,7 @@ static	int cpu_number;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
 #else
 		printf(": no SMP support in kernel\n");
+		return;
 #endif
 	}
 
