@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/07/28 06:35:16 abs Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2000/01/31 14:25:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1999/07/28 06:35:16 abs Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2000/01/31 14:25:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,8 @@ __RCSID("$NetBSD: main.c,v 1.11 1999/07/28 06:35:16 abs Exp $");
 #endif
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-char *ipsec_policy = NULL;
+char *ipsec_policy_in = NULL;
+char *ipsec_policy_out = NULL;
 #endif
 
 int main P((int, char *[]));
@@ -111,9 +112,10 @@ usage()
 	    "[-r] ",
 #endif
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-	    "[-P policy] "
-#endif
+	    "[-P policy] [host-name [port]]"
+#else
 	    "[host-name [port]]"
+#endif
 	);
 	exit(1);
 }
@@ -297,7 +299,12 @@ main(argc, argv)
 			break;
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 		case 'P':
-			ipsec_policy = strdup(optarg);
+			if (!strncmp("in", optarg, 2))
+				ipsec_policy_in = strdup(optarg);
+			else if (!strncmp("out", optarg, 3)) 
+				ipsec_policy_out = strdup(optarg);
+			else
+				usage();
 			break;
 #endif
 		case '?':
