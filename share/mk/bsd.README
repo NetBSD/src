@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.132 2003/07/31 13:47:32 lukem Exp $
+#	$NetBSD: bsd.README,v 1.133 2003/08/02 00:34:25 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -260,13 +260,6 @@ USE_YP		If "no", disables building YP (NIS) support into
 
 The include file <sys.mk> has the default rules for all makes, in the BSD
 environment or otherwise.  You probably don't want to touch this file.
-If you intend to run a cross build, you will need to supply the following
-host tools, and configure the following variables properly:
-
-OBJCOPY		objcopy - copy and translate object files
-
-STRIP		strip - Discard symbols from object files
-
 
 =-=-=-=-=   bsd.own.mk   =-=-=-=-=
 
@@ -415,8 +408,10 @@ they use the same default owners etc. as the rest of the tree.
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
 The include file <bsd.dep.mk> contains the default targets for building
-.depend files.  It creates .d files from entries in SRCS and DPSRCS,
-and builds .depend from those.  In order for this to function correctly,
+.depend files.  It creates .d files from entries in SRCS and DPSRCS
+that are C, C++, or Objective C source files, and builds .depend from the
+.d files.  All other files in SRCS and all of DPSRCS will be used as
+dependencies for the .d files.  In order for this to function correctly,
 it should be .included after all other .mk files and directives that may
 modify SRCS or DPSRCS.  It uses the following variables:
 
@@ -424,15 +419,6 @@ SRCS		List of source files to build the program.
 
 DPSRCS		List of source files which are needed for generating
 		dependencies, but are not needed in ${SRCS}.
-		These are automatically added to CLEANFILES.
-
-
-It sets the following variables:
-
-DEPENDSRCS	.depend and all the .d files for this target.
-		If this variable is to used as a target, the rule
-		must appear after all of the bsd.*.mk includes
-		to function correctly.
 
 
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
@@ -991,9 +977,87 @@ special sources.
 
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 <bsd.lib.mk>.  It contains overrides that are used when building
-the NetBSD source tree.  For instance, if "PARALLEL" is defined by
-the program/library Makefile, it includes a set of rules for lex and
-yacc that allow multiple lex and yacc targets to be built in parallel.
+the NetBSD source tree.
+
+The following variables control how various files are compiled/built.
+(Note that these may be overridden in <bsd.own.mk> if USETOOLS=yes):
+
+AR		Create, modify, and extract from archives.  [ar]
+
+ARFLAGS		Options to ${AR}.  [rl]
+
+CC		C compiler.  [cc]
+
+CFLAGS		Options to ${CC}.  [Usually -O or -O2]
+
+CPP		C Pre-Processor.  [cpp]
+
+CPPFLAGS	Options to ${CPP}.  []
+
+CPUFLAGS	Optimization flags for ${CC}
+
+CXX		C++ compiler.  [c++]
+
+CXXFLAGS	Options to ${CXX}.  [${CFLAGS}]
+
+ELF2ECOFF	Convert ELF-format executable to ECOFF.  [elf2ecoff]
+
+FC		Fortran compiler.  [f77]
+
+FFLAGS		Options to {$FC}.  [-O]
+
+INSTALL		install(1) command.  [install]
+
+LEX		Lexical analyzer.  [lex]
+
+LFLAGS		Options to ${LEX}.  []
+
+LD		Linker.  [ld]
+
+LDFLAGS		Options to ${LD}.  []
+
+LINT		C program verifier.  [lint]
+
+LINTFLAGS	Options to ${LINT}.  [-chapbxzF]
+
+LORDER		List dependencies for object files.  [lorder]
+
+MAKE		make(1).  [make]
+
+MKDEP		Construct Makefile dependency list.  [mkdep]
+
+NM		List symbols from object files.  [nm]
+
+PC		Pascal compiler.  [pc]  (Not present)
+
+PFLAGS		Options to ${PC}.  []
+
+OBJC		Objective C compiler.  [${CC}]
+
+OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
+
+OBJCOPY		Copy and translate object files.  [objcopy]
+
+RANLIB		Generate index to archive.  [ranlib]
+
+SHELL		Shell.  [sh]
+
+SIZE		List section sizes and total size.  [size]
+
+STRIP		Discard symbols from object files.  [strip]
+
+TSORT		Topological sort of a directed graph.  [tsort -q]
+
+YACC		LALR(1) parser generator.  [yacc]
+
+YFLAGS		Options to ${YACC}.  []
+
+YHEADER		If defined, add "-d" to YFLAGS, and add dependencies
+		from <file>.y to <file>.h and <file>.c, and add
+		<foo>.h to CLEANFILES.
+
+YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
+
 
 The following variables are defined to commands to perform the
 appropriate operation, with the default in [brackets].
