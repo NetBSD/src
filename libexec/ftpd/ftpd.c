@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.80 1999/12/19 00:09:31 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.81 1999/12/21 12:56:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.80 1999/12/19 00:09:31 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.81 1999/12/21 12:56:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.80 1999/12/19 00:09:31 lukem Exp $");
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <glob.h>
+#include <grp.h>
 #include <limits.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -240,6 +241,11 @@ int	swaitint = SWAITINT;
 char	proctitle[BUFSIZ];	/* initial part of title */
 #endif /* HASSETPROCTITLE */
 
+#define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
+		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
+		    	curclass.type == CLASS_REAL   ? "REAL"   : \
+			"<unknown>"
+
 static void	 ack __P((const char *));
 static void	 myoob __P((int));
 static int	 checkuser __P((const char *, const char *, int, int, char **));
@@ -290,6 +296,7 @@ main(argc, argv)
 			break;
 
 		case 'C':
+			pw = sgetpwnam(optarg);
 			exit(checkaccess(optarg) ? 0 : 1);
 			/* NOTREACHED */
 
@@ -552,15 +559,17 @@ user(name)
 
 	curclass.type = CLASS_REAL;
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
-		if (! checkaccess("ftp") && ! checkaccess("anonymous"))
+			/* need `pw' setup for checkaccess() and checkuser () */
+		if ((pw = sgetpwnam("ftp")) == NULL)
+			reply(530, "User %s unknown.", name);
+		else if (! checkaccess("ftp") && ! checkaccess("anonymous"))
 			reply(530, "User %s access denied.", name);
-		else if ((pw = sgetpwnam("ftp")) != NULL) {
+		else {
 			curclass.type = CLASS_GUEST;
 			askpasswd = 1;
 			reply(331,
 			    "Guest login ok, type your name as password.");
-		} else
-			reply(530, "User %s unknown.", name);
+		}
 		if (!askpasswd && logging)
 			syslog(LOG_NOTICE,
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
@@ -610,6 +619,8 @@ user(name)
  * Any line starting with `#' is considered a comment and ignored.
  *
  * Returns 0 if the user is denied, or 1 if they are allowed.
+ *
+ * NOTE: needs struct passwd *pw setup before use.
  */
 int
 checkuser(fname, name, def, nofile, retclass)
@@ -678,6 +689,38 @@ checkuser(fname, name, def, nofile, retclass)
 				continue;
 		}
 
+					/* have a group specifier */
+		if ((p = strchr(glob, ':')) != NULL) {
+			gid_t	*groups, *ng;
+			int	 gsize, i, found;
+
+			*p++ = '\0';
+			groups = NULL;
+			gsize = 16;
+			do {
+				ng = realloc(groups, gsize * sizeof(gid_t));
+				if (ng == NULL)
+					fatal(
+					    "Local resource failure: realloc");
+				groups = ng;
+			} while (getgrouplist(pw->pw_name, pw->pw_gid,
+						groups, &gsize) == -1);
+			found = 0;
+			for (i = 0; i < gsize; i++) {
+				struct group *g;
+
+				if ((g = getgrgid(groups[i])) == NULL)
+					continue;
+				if (fnmatch(p, g->gr_name, 0) == 0) {
+					found = 1;
+					break;
+				}
+			}
+			free(groups);
+			if (!found)
+				continue;
+		}
+
 					/* check against username glob */
 		if (fnmatch(glob, name, 0) != 0)
 			continue;
@@ -704,6 +747,8 @@ checkuser(fname, name, def, nofile, retclass)
 /*
  * Check if user is allowed by /etc/ftpusers
  * returns 1 for yes, 0 for no
+ *
+ * NOTE: needs struct passwd *pw setup (for checkuser())
  */
 int
 checkaccess(name)
@@ -940,8 +985,10 @@ skip:
 		setproctitle(proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
-			syslog(LOG_INFO, "ANONYMOUS FTP LOGIN FROM %s, %s",
-			    remotehost, passwd);
+			syslog(LOG_INFO,
+			"ANONYMOUS FTP LOGIN FROM %s, %s (class: %s, type: %s)",
+			    remotehost, passwd,
+			    curclass.classname, CURCLASSTYPE);
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
 #ifdef HASSETPROCTITLE
@@ -950,8 +997,10 @@ skip:
 		setproctitle(proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
-			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
-			    remotehost, pw->pw_name);
+			syslog(LOG_INFO,
+			    "FTP LOGIN FROM %s as %s (class: %s, type: %s)",
+			    remotehost, pw->pw_name,
+			    curclass.classname, CURCLASSTYPE);
 	}
 	(void) umask(curclass.umask);
 	goto cleanuppass;
@@ -1845,10 +1894,8 @@ epsvonly:;
 		struct ftpconv *cp;
 
 		lreply(0, "");
-		lreply(0, "Class: %s, class type: %s", curclass.classname,
-		    curclass.type == CLASS_GUEST  ? "GUEST"  :
-		    curclass.type == CLASS_CHROOT ? "CHROOT" :
-		    curclass.type == CLASS_REAL   ? "REAL"   : "<unknown>");
+		lreply(0, "Class: %s, type: %s",
+		    curclass.classname, CURCLASSTYPE);
 		lreply(0, "Check PORT/LPRT commands: %sabled",
 		    curclass.checkportcmd ? "en" : "dis");
 		if (curclass.display != NULL)

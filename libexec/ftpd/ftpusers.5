@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpusers.5,v 1.3 1999/12/18 05:51:35 lukem Exp $
+.\"	$NetBSD: ftpusers.5,v 1.4 1999/12/21 12:56:15 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 1999
+.Dd December 21, 1999
 .Dt FTPUSERS 5
 .Os
 .Sh NAME
@@ -65,22 +65,34 @@ is the comment character, and all characters from it to the end of
 line are ignored (unless it is escaped with the escape character).
 .Pp
 The syntax of each line is:
-.Dl  userglob[@host] [directive [class]]
 .Pp
-.Sy userglob
-is matched against the username, using
+.Dl  userglob[:groupglob][@host] [directive [class]]
+.Pp
+These elements are:
+.Bl -tag -width "groupglob" -offset indent
+.It Sy userglob
+matched against the username, using
 .Xr fnmatch 3
-glob matching.
-.Pp
-.Sy host
-may be either a CIDR address (refer to
+glob matching
+(e.g,
+.Sq f* ) .
+.It Sy groupglob
+matched against all the groups that the user is a member of, using
+.Xr fnmatch 3
+glob matching
+(e.g,
+.Sq *src ) .
+.It Sy host
+either a CIDR address (refer to
 .Xr inet_net_pton 3 )
-to match against the remote address,
-or a glob to match against the remote hostname.
-.Pp
-If
-.Sy directive
-is given, it may be one of
+to match against the remote address
+(e.g,
+.Sq 1.2.3.4/24 ) ,
+or a glob to match against the remote hostname
+(e.g,
+.Sq *.netbsd.org ) .
+.It Sy directive
+one of
 .Dq allow ,
 .Dq yes ,
 .Dq deny ,
@@ -89,10 +101,11 @@ or
 If
 .Sy directive
 is not given, the user is denied access.
-.Pp
-.Sy class
+.It Sy class
 defines the class to use in
 .Xr ftpd.conf 8 .
+.El
+.Pp
 If
 .Sy class
 is not given, it defaults to one of the following:
