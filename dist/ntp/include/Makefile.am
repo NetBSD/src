@@ -5,6 +5,7 @@ ETAGS_ARGS = $(srcdir)/Makefile.am
 
 noinst_HEADERS = \
 	adjtime.h \
+	audio.h \
 	ascii.h \
 	audio.h \
 	binio.h \
@@ -21,6 +22,7 @@ noinst_HEADERS = \
 	ntp.h \
 	ntp_calendar.h \
 	ntp_control.h \
+	ntp_crypto.h \
 	ntp_datum.h \
 	ntp_filegen.h \
 	ntp_fp.h \

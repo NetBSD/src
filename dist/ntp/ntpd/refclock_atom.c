@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_atom.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_atom.c,v 1.1.1.2 2000/04/22 14:53:26 simonb Exp $	*/
 
 /*
  * refclock_atom - clock driver for 1-pps signals
@@ -326,7 +326,7 @@ atom_pps(
 		ts = up->pps_info.clear_timestamp;
 	pp->lastrec.l_ui = ts.tv_sec + JAN_1970;
 	ts.tv_nsec = (ts.tv_nsec + 500) / 1000;
-	if (ts.tv_nsec > 1000000) {
+	if (ts.tv_nsec >= 1000000) {
 		ts.tv_nsec -= 1000000;
 		ts.tv_sec++;
 	}

@@ -51,6 +51,10 @@ ToDo</h2>
 
 <ul>
 <li>
+MD5 authentication causes problems with DNS. If you use encryption/authentication,
+you have to use IP numbers in <tt>ntp.conf.</tt></li>
+
+<li>
 NMEA refclock support is in development.</li>
 
 <li>
@@ -143,21 +147,8 @@ This will force NTP to accept large time errors (including 1.1.1980 00:00)
 Bug Reports</h2>
 Send bug reports to <a href="news://comp.protocols.time.ntp">news://comp.protocols.time.ntp</a>
 and Sven_Dietrich@Trimble.COM
-<br>&nbsp;
 <h2>
 Change Log</h2>
-
-<h3>
-Last revision 21 February 1999&nbsp; Version 4.0.99f.</h3>
-<b>from Carl Byington &lt;carl@five-ten-sg.com></b>
-<p><b>Significant Changes:</b>
-<br>&nbsp;
-<li>
-MD5 authentication caused problems with DNS. If you use encryption/authentication,
-you had to use IP numbers in <tt>ntp.conf.</tt></li>
-
-<li>
-Carl's patch fixes these problems and MD5 seems to be fully functional.</li>
 
 <h3>
 Last revision 16 February 1999&nbsp; Version 4.0.99e.</h3>

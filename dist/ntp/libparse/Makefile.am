@@ -50,8 +50,8 @@ EXTRA_DIST = parsesolaris.c parsestreams.c mkinfo_scmd.sed mkinfo_rcmd.sed info_
 #
 info_trimble.c: $(top_srcdir)/include/trimble.h mkinfo_rcmd.sed mkinfo_scmd.sed
 	@rm -f info_trimble.c
-	sed -n -f mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.c || rm -f info_trimble.c
-	sed -n -f mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.c || rm -f info_trimble.c
+	sed -n -f $(srcdir)/mkinfo_scmd.sed $(top_srcdir)/include/trimble.h  > info_trimble.c || rm -f info_trimble.c
+	sed -n -f $(srcdir)/mkinfo_rcmd.sed $(top_srcdir)/include/trimble.h >> info_trimble.c || rm -f info_trimble.c
 
 kclk_computime.o: clk_computime.c
 	$(COMPILE) $(K_CFLAGS) -c $(srcdir)/clk_computime.c -o $@
