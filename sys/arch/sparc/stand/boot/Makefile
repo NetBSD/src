@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/02/26 11:48:15 pk Exp $
+#	$NetBSD: Makefile,v 1.20 2000/03/13 03:25:20 mycroft Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c vers.c
@@ -21,7 +21,7 @@ OBJCOPY?=	objcopy
 LINKFLAGS=-N -e start
 
 .MAIN: all
-all: ${FILES}
+realall: ${FILES}
 
 
 vers.c:
