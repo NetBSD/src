@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.18 2000/03/30 10:43:46 jdolecek Exp $
+.\"	$NetBSD: tunefs.8,v 1.19 2000/04/27 21:34:27 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,10 @@ users will be unable to allocate files until enough files have
 been deleted to get under the higher threshold.
 .It Fl n Ar soft_dependency_enabling
 The soft dependency code allows most filesystem I/O to be done
-asynchronously by reordering disk writes to ensure that the
+asynchronously by reordering dependant writes to ensure that the
+on-disk metadata is self-consistent even when updates are deferred. 
+Additionally, metadata updates are aggregated, reducing the total 
+number of writes performed.
 Use of this facility does not require any changes to the filesystem,
 so it can be enabled or disabled any time that the filesystem is unmounted.
 This experimental facility is turned off by default.
@@ -168,6 +171,15 @@ the same rotational position.
 .%P pp 181-197
 .%D August 1984
 .%O "(reprinted in the BSD System Manager's Manual, SMM:5)"
+.Re
+.Rs
+.%A M. McKusick
+.%A G. Ganger
+.%T "Soft Updates: A Technique for Eliminating Most Synchronous Writes \
+in the Fast File System"
+.%J "Proceedings of the FREENIX track: 1999 USENIX Annual Technical Conference"
+.%P pp. 1-17
+.%D June 1999
 .Re
 .Sh BUGS
 This program should work on mounted and active file systems.
