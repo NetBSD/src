@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.2 2000/10/03 09:56:38 lukem Exp $");
 #endif
 
 #include "includes.h"
@@ -252,7 +252,8 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 			continue;
 		}
 		/* Check if we have been configured to ignore .rhosts and .shosts files. */
-		if (options.ignore_rhosts) {
+		if ((pw->pw_uid == 0 && options.ignore_root_rhosts) ||
+		    (pw->pw_uid != 0 && options.ignore_rhosts)) {
 			packet_send_debug("Server has been configured to ignore %.100s.",
 					  rhosts_files[rhosts_file_index]);
 			continue;
