@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.18 2003/05/17 21:24:38 itojun Exp $	*/
+/*	$NetBSD: identd.c,v 1.19 2003/09/14 22:38:23 christos Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -728,8 +728,10 @@ int main(argc,argv)
 	    sadlen = sizeof(sad);
 	    errno = 0;
 	    fd = accept(0, &sad, &sadlen);
-	    if (fd == -1)
-		ERROR1("main: accept. errno = %d", errno);
+	    if (fd == -1) {
+		WARNING1("main: accept. errno = %d", errno);
+		continue;
+	    }
       
 	    /*
 	    ** And fork, then close the fd if we are the parent.
