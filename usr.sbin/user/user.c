@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.11 2000/02/02 15:12:10 agc Exp $ */
+/* $NetBSD: user.c,v 1.12 2000/03/07 20:56:45 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.11 2000/02/02 15:12:10 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.12 2000/03/07 20:56:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -288,6 +288,10 @@ creategid(char *group, int gid, char *name)
 	int		fd;
 	int		cc;
 
+	if (getgrnam(group) != (struct group *) NULL) {
+		warnx("group `%s' already exists", group);
+		return 0;
+	}
 	if ((from = fopen(ETCGROUP, "r")) == (FILE *) NULL) {
 		warn("can't create gid for %s: can't open %s", name, ETCGROUP);
 		return 0;
@@ -366,7 +370,8 @@ modify_gid(char *group, char *newent)
 		return 0;
 	}
 	groupc = strlen(group);
-	while ((cc = fread(buf, sizeof(char), sizeof(buf), from)) > 0) {
+	while (fgets(buf, sizeof(buf), from) != (char *) NULL) {
+		cc = strlen(buf);
 		if ((colon = strchr(buf, ':')) == (char *) NULL) {
 			warn("badly formed entry `%s'", buf);
 			continue;
