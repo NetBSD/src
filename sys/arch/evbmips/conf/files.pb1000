@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.1.4.3 2002/09/01 05:11:33 gehenna Exp $
+#	$NetBSD: files.pb1000,v 1.1.4.4 2002/09/01 08:15:04 gehenna Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
@@ -39,4 +39,3 @@ include "dev/pcmcia/files.pcmcia"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-major	{ md = 6 }
