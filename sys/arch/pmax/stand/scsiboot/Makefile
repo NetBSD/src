@@ -1,28 +1,27 @@
-#	$NetBSD: Makefile,v 1.1 1999/01/21 12:33:45 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 1999/01/21 14:16:52 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 
-S=      ${.CURDIR}/../../../..
-PROG = boot
-NOMAN =
-LDBUG= -T $S/arch/mips/conf/stand.ldscript
+S=	${.CURDIR}/../../../..
+PROG=	boot
+NOMAN=	noman	# XXX: Should have one
+LDBUG=	-T $S/arch/mips/conf/stand.ldscript
 
 
 ALL=	boot mkboot rzboot bootrz
 #ALL+=	mkboottape	XXX not used now
 
-all: ${ALL}
+all:	${ALL}
 
-boot: ${LIBS}
+boot:	${LIBS}
+DPADD+=	${LIBS}
 
-.PATH: ${.CURDIR}/../libsa
+.PATH:	${.CURDIR}/../libsa
 
 # Tell boot code which drivers we want to link against
-DRIVERS= rz.c
-LIBS+= libdrive.a
+DRIVERS=rz.c
+LIBS+=	libdrive.a
 
-
-# depend on DEFS?
 
 #before other deps on bootconf.o
 bootconf.o: ${.CURDIR}/conf.c
@@ -35,13 +34,13 @@ bootconf.o: ${.CURDIR}/conf.c
 # bootable from real disks
 
 boot:	start.o boot.o bootconf.o filesystem.o ${LIBS}
-	ld -Map boot.map -N -Ttext ${RELOC} ${LDBUG} -e start  start.o boot.o bootconf.o filesystem.o ${LIBS} -o boot.elf
+	ld -Map boot.map -N -Ttext ${RELOC} ${LDBUG} -e start \
+		start.o boot.o bootconf.o filesystem.o ${LIBS} -o boot.elf
 	elf2aout boot.elf boot
 
 start.o: ${.CURDIR}/start.S
 
-
-mkboot: ${.CURDIR}/mkboot.c
+mkboot:	${.CURDIR}/mkboot.c
 	${CC} ${CPPFLAGS} ${INCPATH} -o mkboot ${.CURDIR}/mkboot.c
 
 mkboottape: ${.CURDIR}/mkboottape.c
@@ -59,12 +58,10 @@ clean cleandir:
 	rm -f libdrive.a
 	rm -f boot.map
 
-install:
-	./mkboot boot rzboot bootrz
-	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m 444 rzboot ${DESTDIR}/usr/mdec
-	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m 444 bootrz ${DESTDIR}/usr/mdec
-
-
+proginstall:: bootrz rzboot
+	@echo "Sorry, bootblocks too large to install"
+#	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+#		${.ALLSRC} ${DESTDIR}${BINDIR}
 
 .include "../Makefile.booters"
 .include <bsd.prog.mk>
