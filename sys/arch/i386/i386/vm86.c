@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.9 1996/04/12 05:57:43 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.10 1996/04/18 19:58:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -366,6 +366,9 @@ vm86_gpfault(p, type)
 		IP(tf) -= 1;
 		goto bad;
 	}
+
+	if (tf->tf_eflags & PSL_T)
+		trapsignal(p, SIGTRAP, T_TRCTRAP);
 	return;
 
 bad:
