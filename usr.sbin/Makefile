@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.96 1998/10/18 01:06:31 perry Exp $
+#	$NetBSD: Makefile,v 1.97 1998/11/02 03:32:03 kim Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
 
-# XXX Temporary for USE_BIND8 and USE_VMAILER
+# XXX Temporary for NO_SENDMAIL and USE_BIND8
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
@@ -22,7 +22,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
 	ypbind yppoll ypserv ypset \
 	zdump zic
 
-.ifndef USE_VMAILER
+.ifndef NO_SENDMAIL
 SUBDIR+=	sendmail
 .endif
 
