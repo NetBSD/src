@@ -1,4 +1,4 @@
-$NetBSD: ReadMe.NetBSD,v 1.4 1999/02/22 22:07:37 is Exp $
+$NetBSD: ReadMe.NetBSD,v 1.5 2000/04/14 20:24:29 is Exp $
 
 Copyright (c) 1996 The NetBSD Foundation, Inc.
 All rights reserved.
@@ -69,6 +69,7 @@ Thanks for the initial effort!
 I. File suffix convention
 
 I cvs imported all of the Motorola files (with lowercase names).
+These have been moved to the dist subdirectory as of today --- 2000-04-14
 
 These are:
 
@@ -86,6 +87,8 @@ We use:		To create:
 
 isp.sa		isp.S
 fpsp.sa		fpsp.S
+
+Type "make" in this directory to create them, then check in.
 
 In addition, inetbsd.S and fnetbsd.S are our part specific glue files,
 netbsd.S is our general glue file, and copyright.S ensures we have a

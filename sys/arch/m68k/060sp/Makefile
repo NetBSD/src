@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1999/02/22 21:25:05 is Exp $
+# $NetBSD: Makefile,v 1.6 2000/04/14 20:24:29 is Exp $
 
 # regenerate isp.S, fpsp.S, pfpsp.S
 
@@ -6,6 +6,8 @@
 
 .SUFFIXES: .sa .S
 
-.sa.S: ; sh asm2gas $*.sa >${.TARGET}
+.PATH: dist
+
+.sa.S: ; sh asm2gas ${.IMPSRC} >${.TARGET}
 
 all: isp.S fpsp.S pfpsp.S
