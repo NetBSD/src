@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.6 1999/11/01 22:54:19 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.7 2000/02/04 23:01:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,6 +69,10 @@ void	scsipi_completion_thread __P((void *));
 void	scsipi_get_tag __P((struct scsipi_xfer *));
 void	scsipi_put_tag __P((struct scsipi_xfer *));
 
+int	scsipi_get_resource __P((struct scsipi_channel *));
+void	scsipi_put_resource __P((struct scsipi_channel *));
+__inline int scsipi_grow_resources __P((struct scsipi_channel *));
+
 void	scsipi_async_event_max_openings __P((struct scsipi_channel *,
 	    struct scsipi_max_openings *));
 void	scsipi_async_event_xfer_mode __P((struct scsipi_channel *,
@@ -131,6 +135,63 @@ scsipi_channel_init(chan)
 }
 
 /*
+ * scsipi_channel_shutdown:
+ *
+ *	Shutdown a scsipi_channel.
+ */
+void
+scsipi_channel_shutdown(chan)
+	struct scsipi_channel *chan;
+{
+
+	/*
+	 * Shut down the completion thread.
+	 */
+	chan->chan_flags |= SCSIPI_CHAN_SHUTDOWN;
+	wakeup(&chan->chan_complete);
+
+	/*
+	 * Now wait for the thread to exit.
+	 */
+	while (chan->chan_thread != NULL)
+		(void) tsleep(&chan->chan_thread, PRIBIO, "scshut", 0);
+}
+
+/*
+ * scsipi_insert_periph:
+ *
+ *	Insert a periph into the channel.
+ */
+void
+scsipi_insert_periph(chan, periph)
+	struct scsipi_channel *chan;
+	struct scsipi_periph *periph;
+{
+	int s;
+
+	s = splbio();
+	chan->chan_periphs[periph->periph_target][periph->periph_lun] = periph;
+	splx(s);
+}
+
+/*
+ * scsipi_remove_periph:
+ *
+ *	Remove a periph from the channel.
+ */
+void
+scsipi_remove_periph(chan, periph)
+	struct scsipi_channel *chan;
+	struct scsipi_periph *periph;
+{
+	int s;
+
+	s = splbio();
+	chan->chan_periphs[periph->periph_target][periph->periph_lun] = NULL;
+	splx(s);
+}
+
+/*
  * scsipi_lookup_periph:
  *
  *	Lookup a periph on the specified channel.
@@ -190,7 +251,7 @@ scsipi_get_resource(chan)
  *
  *	NOTE: Must be called at splbio().
  */
-int
+__inline int
 scsipi_grow_resources(chan)
 	struct scsipi_channel *chan;
 {
@@ -1587,13 +1648,19 @@ scsipi_completion_thread(arg)
 	struct scsipi_xfer *xs;
 	int s;
 
-	while ((chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) == 0) {
+	for (;;) {
 		s = splbio();
-		if ((xs = TAILQ_FIRST(&chan->chan_complete)) == NULL) {
+		xs = TAILQ_FIRST(&chan->chan_complete);
+		if (xs == NULL &&
+		    (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) == 0) {
 			splx(s);
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
 			continue;
+		}
+		if (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) {
+			splx(s);
+			break;
 		}
 		TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
 		splx(s);

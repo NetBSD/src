@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.4 1999/11/01 22:54:18 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.5 2000/02/04 23:01:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -223,7 +223,7 @@ atapibusactivate(self, act)
 
 	case DVACT_DEACTIVATE:
 		for (target = 0; target < chan->chan_ntargets; target++) {
-			periph = chan->chan_periphs[target][0];
+			periph = scsipi_lookup_periph(chan, target, 0);
 			if (periph == NULL)
 				continue;
 			error = config_deactivate(periph->periph_dev);
@@ -247,8 +247,16 @@ atapibusdetach(self, flags)
 	struct scsipi_periph *periph;
 	int target, error;
 
+	/*
+	 * Shut down the channel.
+	 */
+	scsipi_channel_shutdown(chan);
+
+	/*
+	 * Now detach all of the periphs.
+	 */
 	for (target = 0; target < chan->chan_ntargets; target++) {
-		periph = chan->chan_periphs[target][0];
+		periph = scsipi_lookup_periph(chan, target, 0);
 		if (periph == NULL)
 			continue;
 		error = config_detach(periph->periph_dev, flags);
@@ -266,8 +274,8 @@ atapibusdetach(self, flags)
 #endif
 		sc->sc_drvs[target].drv_softc = NULL;
 
+		scsipi_remove_periph(chan, periph);
 		free(periph, M_DEVBUF);
-		chan->chan_periphs[target][0] = NULL;
 	}
 	return (0);
 }
@@ -315,7 +323,7 @@ atapi_probe_device(sc, target)
 	char serial_number[21], model[41], firmware_revision[9];
 
 	/* skip if already attached */
-	if (chan->chan_periphs[target][0] != NULL)
+	if (scsipi_lookup_periph(chan, target, 0) != NULL)
 		return;
 
 	if (wdc_atapi_get_params(chan, target,
@@ -398,7 +406,7 @@ atapi_probe_device(sc, target)
 
 		if ((cf = config_search(atapibussubmatch, &sc->sc_dev,
 		    &sa)) != 0) {
-			chan->chan_periphs[target][0] = periph;
+			scsipi_insert_periph(chan, periph);
 			/*
 			 * XXX Can't assign periph_dev here, because we'll
 			 * XXX need it before config_attach() returns.  Must

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.6 1999/11/01 22:54:20 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.7 2000/02/04 23:01:55 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -596,6 +596,12 @@ void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
 void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));
 
 void	scsipi_channel_init __P((struct scsipi_channel *));
+void	scsipi_channel_shutdown __P((struct scsipi_channel *));
+
+void	scsipi_insert_periph __P((struct scsipi_channel *,
+	    struct scsipi_periph *));
+void	scsipi_remove_periph __P((struct scsipi_channel *,
+	    struct scsipi_periph *));
 struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
 	    int, int));
 

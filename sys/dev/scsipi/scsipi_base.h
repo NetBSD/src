@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.9.10.1 1999/10/19 17:39:36 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.9.10.2 2000/02/04 23:01:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,10 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-int	scsipi_get_resource __P((struct scsipi_channel *));
-int	scsipi_grow_resources __P((struct scsipi_channel *));
-void	scsipi_put_resource __P((struct scsipi_channel *));
 
 struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_periph *, int));
 void	scsipi_put_xs __P((struct scsipi_xfer *));
