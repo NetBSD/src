@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.18 1999/12/31 12:42:35 tron Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.18.4.1 2000/12/14 23:02:53 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.18 1999/12/31 12:42:35 tron Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.18.4.1 2000/12/14 23:02:53 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,13 +482,13 @@ getnpty()
  * Returns the file descriptor of the opened pty.
  */
 #ifndef	__GNUC__
-char *line = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+char *line = NULL16STR;
 #else
-static char Xline[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+static char Xline[] = NULL16STR;
 char *line = Xline;
 #endif
 #ifdef	CRAY
-char *myline = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+char *myline = NULL16STR;
 #endif	/* CRAY */
 
 #ifdef OPENPTY_PTY
@@ -522,7 +522,7 @@ int *ptynum;
 	if (p > 0) {
 		grantpt(p);
 		unlockpt(p);
-		strcpy(line, ptsname(p));
+		(void)strlcpy(line, ptsname(p), sizeof(NULL16STR));
 		return(p);
 	}
 
@@ -1601,7 +1601,7 @@ start_login(host, autologin, name)
 #endif
 #ifdef SOLARIS
 	char *term;
-	char termbuf[64];
+	char termnamebuf[64];
 #endif
 
 #ifdef	UTMPX
@@ -1655,9 +1655,10 @@ start_login(host, autologin, name)
 		if (term == NULL || term[0] == 0) {
 			term = "-";
 		} else {
-			strcpy(termbuf, "TERM=");
-			strncat(termbuf, term, sizeof(termbuf) - 6);
-			term = termbuf;
+			(void)strcpy(termnamebuf, "TERM=");
+			(void)strlcpy(&termnamebuf[5], term,
+			    sizeof(termnamebuf) - 6);
+			term = termnamebuf;
 		}
 		argv = addarg(argv, term);
 #endif
@@ -1881,22 +1882,50 @@ addarg(argv, val)
 /*
  * scrub_env()
  *
- * Remove a few things from the environment that
- * don't need to be there.
+ * We only accept the environment variables listed below.
  */
+
 void
 scrub_env()
 {
-	register char **cpp, **cpp2;
+	static const char *reject[] = {
+		"TERMCAP=/",
+		NULL
+	};
+
+	static const char *accept[] = {
+		"XAUTH=", "XAUTHORITY=", "DISPLAY=",
+		"TERM=",
+		"EDITOR=",
+		"PAGER=",
+		"LOGNAME=",
+		"POSIXLY_CORRECT=",
+		"TERMCAP=",
+		"PRINTER=",
+		NULL
+	};
+
+	char **cpp, **cpp2;
+	const char **p;
 
 	for (cpp2 = cpp = environ; *cpp; cpp++) {
-		if (strncmp(*cpp, "LD_", 3) &&
-		    strncmp(*cpp, "_RLD_", 5) &&
-		    strncmp(*cpp, "LIBPATH=", 8) &&
-		    strncmp(*cpp, "IFS=", 4))
+		int reject_it = 0;
+
+		for(p = reject; *p; p++)
+			if(strncmp(*cpp, *p, strlen(*p)) == 0) {
+				reject_it = 1;
+				break;
+			}
+		if (reject_it)
+			continue;
+
+		for(p = accept; *p; p++)
+			if(strncmp(*cpp, *p, strlen(*p)) == 0)
+				break;
+		if(*p != NULL)
 			*cpp2++ = *cpp;
 	}
-	*cpp2 = 0;
+	*cpp2 = NULL;
 }
 
 /*
