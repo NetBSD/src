@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.203 2004/04/26 03:54:28 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.204 2004/04/27 14:46:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.203 2004/04/26 03:54:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.204 2004/04/27 14:46:07 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1786,6 +1786,13 @@ after_listen:
 			todrop = tlen;
 			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
+		} else if ((tiflags & TH_RST) &&
+			   th->th_seq != tp->last_ack_sent) {
+			/*
+			 * Test for reset before adjusting the sequence
+			 * number for overlapping data.
+			 */
+			goto dropafterack_ratelim;
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
