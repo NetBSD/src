@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.12 2001/05/15 06:52:30 jmc Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.13 2001/07/18 02:59:54 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ struct ieee1394_softc {
 	int (*sc1394_ifoutput)(struct device *, struct mbuf *,
 	    void (*)(struct device *, struct mbuf *)); /* Nuke. */
 	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
+	    void (*)(struct device *, struct mbuf *)); /* Nuke */
+	int (*sc1394_ifsetiso)(struct device *, u_int32_t, u_int32_t, u_int32_t,
 	    void (*)(struct device *, struct mbuf *)); /* Nuke */
 	
 	LIST_ENTRY(ieee1394_softc) sc1394_node;
