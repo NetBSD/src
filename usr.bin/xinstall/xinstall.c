@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.27 1998/10/01 18:23:52 erh Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.28 1998/10/08 02:12:51 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.27 1998/10/01 18:23:52 erh Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.28 1998/10/08 02:12:51 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,13 +66,16 @@ __RCSID("$NetBSD: xinstall.c,v 1.27 1998/10/01 18:23:52 erh Exp $");
 
 #include "pathnames.h"
 
+#define STRIP_ARGS_MAX 32
+
 struct passwd *pp;
 struct group *gp;
-int docopy, dodir, dostrip, dolink, dopreserve;
+int docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
 gid_t gid;
+char *stripArgs=NULL;
 
 #define LN_ABSOLUTE	0x01
 #define LN_RELATIVE	0x02
@@ -106,7 +109,7 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cdf:g:l:m:o:ps")) != -1)
+	while ((ch = getopt(argc, argv, "cdf:g:l:m:o:psS:")) != -1)
 		switch((char)ch) {
 		case 'c':
 			docopy = 1;
@@ -162,6 +165,10 @@ main(argc, argv)
 		case 'p':
 			dopreserve = 1;
 			break;
+		case 'S':
+			stripArgs = (char*)malloc(sizeof(char)*(strlen(optarg)+1));
+			strcpy(stripArgs,optarg);
+			/* fall through; -S implies -s */
 		case 's':
 			dostrip = 1;
 			break;
@@ -196,7 +203,6 @@ main(argc, argv)
 		for (; *argv != NULL; ++argv)
 			install_dir(*argv);
 		exit (0);
-		/* NOTREACHED */
 	}
 
 	no_target = stat(to_name = argv[argc - 1], &to_sb);
@@ -431,28 +437,34 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	char buf[MAXBSIZE];
 
 	/*
-	 * Mmap and write if less than 8M (the limit is so we don't totally
-	 * trash memory on big files.  This is really a minor hack, but it
-	 * wins some CPU back.
+	 * There's no reason to do anything other than close the file
+	 * now if it's empty, so let's not bother.
 	 */
-	if (size <= 8 * 1048576) {
-		if ((p = mmap(NULL, (size_t)size, PROT_READ,
-		    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1)
-			err(1, "%s", from_name);
-		if (write(to_fd, p, size) != size)
-			err(1, "%s", to_name);
-	} else {
-		while ((nr = read(from_fd, buf, sizeof(buf))) > 0)
-			if ((nw = write(to_fd, buf, nr)) != nr) {
+	if (size > 0) {
+		/*
+		 * Mmap and write if less than 8M (the limit is so we don't totally
+		 * trash memory on big files).  This is really a minor hack, but it
+		 * wins some CPU back.
+		 */
+		if (size <= 8 * 1048576) {
+			if ((p = mmap(NULL, (size_t)size, PROT_READ,
+			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1)
+				err(1, "%s", from_name);
+			if (write(to_fd, p, size) != size)
+				err(1, "%s", to_name);
+		} else {
+			while ((nr = read(from_fd, buf, sizeof(buf))) > 0)
+				if ((nw = write(to_fd, buf, nr)) != nr) {
+					serrno = errno;
+					(void)unlink(to_name);
+					errx(1, "%s: %s",
+					    to_name, strerror(nw > 0 ? EIO : serrno));
+				}
+			if (nr != 0) {
 				serrno = errno;
 				(void)unlink(to_name);
-				errx(1, "%s: %s",
-				    to_name, strerror(nw > 0 ? EIO : serrno));
+				errx(1, "%s: %s", from_name, strerror(serrno));
 			}
-		if (nr != 0) {
-			serrno = errno;
-			(void)unlink(to_name);
-			errx(1, "%s: %s", from_name, strerror(serrno));
 		}
 	}
 }
@@ -477,7 +489,20 @@ strip(to_name)
 		stripprog = getenv("STRIP");
 		if (stripprog == NULL)
 			stripprog = _PATH_STRIP;
-		execl(stripprog, "strip", to_name, NULL);
+
+		if (stripArgs) {
+			/* build up a command line and let /bin/sh parse the arguments */
+			char* cmd = (char*)malloc(sizeof(char)*
+						  (3+strlen(stripprog)+
+						     strlen(stripArgs)+
+						     strlen(to_name)));
+
+			sprintf(cmd, "%s %s %s", stripprog, stripArgs, to_name);
+
+			execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
+		} else
+			execl(stripprog, "strip", to_name, NULL);
+
 		warn("%s", stripprog);
 		_exit(1);
 	default:
@@ -526,8 +551,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "\
-usage: install [-cps] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
-       install [-cps] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
-       install  -pd   [-g group] [-m mode] [-o owner] directory ...\n");
+usage: install [-cps] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
+       install [-cps] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
+       install -pd [-m mode] [-o owner] [-g group] directory ...\n");
 	exit(1);
 }
