@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.9.4.1 1996/05/30 04:13:19 mhitch Exp $	*/
+/*	$NetBSD: asic.c,v 1.9.4.2 1996/09/09 20:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -103,28 +103,12 @@ struct asic_slot {
 };
 
 #ifdef	pmax
-#define IOASIC_DEBUG
+/*#define IOASIC_DEBUG*/
 
 struct asic_slot *asic_slots;
 #include "ds-asic-conf.c"
 #endif	/*pmax*/
 
-#ifdef alpha
-struct asic_slot asic_slots[ASIC_MAX_NSLOTS] =
-
-{
-	{ { "lance",		/* XXX */ 0, 0x000c0000, },
-	    ASIC_INTR_LANCE, asic_intrnull, (void *)(long)IOASIC_SLOT_LANCE, },
-	{ { "scc",		/* XXX */ 1, 0x00100000, },
-	    ASIC_INTR_SCC_0, asic_intrnull, (void *)(long)IOASIC_SLOT_SCC0, },
-	{ { "scc",		/* XXX */ 2, 0x00180000, },
-	    ASIC_INTR_SCC_1, asic_intrnull, (void *)(long)IOASIC_SLOT_SCC1, },
-	{ { "dallas_rtc",	/* XXX */ 3, 0x00200000, },
-	    0, asic_intrnull, (void *)(long)IOASIC_SLOT_RTC, },
-	{ { "AMD79c30",		/* XXX */ 4, 0x00240000, },
-	    0 /* XXX */, asic_intrnull, (void *)(long)IOASIC_SLOT_ISDN, },
-};
-#endif	/*alpha*/
 
 #ifdef IOASIC_DEBUG
 #define IOASIC_DPRINTF(x)	printf x
