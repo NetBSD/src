@@ -257,7 +257,7 @@ case $basic_machine in
 	| pdp10 | pdp11 | pj | pjl \
 	| powerpc | powerpc64 | powerpc64le | powerpcle | ppcbe \
 	| pyramid \
-	| sh | sh[1234] | sh[23]e | sh[34]eb | shbe | shle | sh[1234]le | sh3ele \
+	| sh | sh[12345] | sh[23]e | sh[34]eb | shbe | shle | sh[12345]le | sh3ele \
 	| sh64 | sh64le \
 	| sparc | sparc64 | sparc86x | sparclet | sparclite | sparcv9 | sparcv9b \
 	| strongarm \
@@ -329,8 +329,8 @@ case $basic_machine in
 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* | ppcbe-* \
 	| pyramid-* \
 	| romp-* | rs6000-* \
-	| sh-* | sh[1234]-* | sh[23]e-* | sh[34]eb-* | shbe-* \
-	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
+	| sh-* | sh[12345]-* | sh[23]e-* | sh[34]eb-* | shbe-* \
+	| shle-* | sh[12345]le-* | sh3ele-* | sh64-* | sh64le-* \
 	| sparc-* | sparc64-* | sparc86x-* | sparclet-* | sparclite-* \
 	| sparcv9-* | sparcv9b-* | strongarm-* | sv1-* | sx?-* \
 	| tahoe-* | thumb-* \
