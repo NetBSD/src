@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.54 2003/03/02 04:34:30 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.55 2003/03/08 02:55:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ typedef struct lfs_res_blk {
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
 
 #define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
-     ((bp)->b_iodone == lfs_callback || (bp)->b_iodone == lfs_fakebuf_iodone))
+     (bp)->b_iodone == lfs_callback)
 
 #define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
@@ -534,6 +534,9 @@ struct lfs {
 	struct pool lfs_bpppool;	/* Pool for bpp */
 	struct pool lfs_segpool;	/* Pool for struct segment */
 #endif /* KERNEL */
+#define LFS_MAX_CLEANIND 64
+	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
+	int 	 lfs_cleanind;	/* Index into intervals */
 };
 
 /*
