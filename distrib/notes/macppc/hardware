@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.18 2001/07/11 15:35:35 mbw Exp $
+.\"$NetBSD: hardware,v 1.19 2001/07/23 02:52:03 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -218,7 +218,7 @@ Lite-On PNIC
 .Pq Em tlp
 .It
 D-Link DFE-530TX
-.Pq Em vr
+.Pq Em rtk
 .It
 Many other PCI and Cardbus Ethernet interfaces, such as
 Tulip-compatible
