@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.43 2002/06/29 20:16:41 scottr Exp $ */
+/*	$NetBSD: disks.c,v 1.44 2002/06/30 03:57:46 scottr Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -358,15 +358,11 @@ make_fstab(void)
 	return 0;
 }
 
+/* Return the appropriate fs_passno field, as specified by fstab(5) */
 static int
 fsck_num(const char *mp)
 {
-	static int num = 1;
-
-	if (strcmp(mp, "/"))
-		return 1;
-
-	return (++num);
+	return (strcmp(mp, "/") == 0) ? 1 : 2;
 }
 
 
