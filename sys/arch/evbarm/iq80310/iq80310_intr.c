@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.8 2002/01/30 03:59:42 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.9 2002/02/09 03:52:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -57,6 +57,14 @@
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
 
+#if defined(IOP310_TEAMASA_NPWR)
+/*
+ * We have 5 interrupt source bits -- all in XINT3.  All interrupts
+ * can be masked in the CPLD.
+ */
+#define	IRQ_BITS		0x1f
+#define	IRQ_BITS_ALWAYS_ON	0x00
+#else /* Default to stock IQ80310 */
 /*
  * We have 8 interrupt source bits -- 5 in the XINT3 register, and 3
  * in the XINT0 register (the upper 3).  Note that the XINT0 IRQs
@@ -66,6 +74,8 @@
  */
 #define	IRQ_BITS		0xff
 #define	IRQ_BITS_ALWAYS_ON	0xe0
+#define	IRQ_READ_XINT0		1	/* XXX only if board rev >= F */
+#endif /* list of IQ80310-based designs */
 
 /* Interrupt handler queues. */
 struct intrq intrq[NIRQ];
@@ -106,8 +116,10 @@ iq80310_intstat_read(void)
 	uint32_t intstat;
 
 	intstat = CPLD_READ(IQ80310_XINT3_STATUS) & 0x1f;
-	if (1/*rev F or later board*/)
+#if defined(IRQ_READ_XINT0)
+	if (IRQ_READ_XINT0)
 		intstat |= (CPLD_READ(IQ80310_XINT0_STATUS) & 0x7) << 5;
+#endif
 
 	/* XXX Why do we have to mask off? */
 	return (intstat & intr_enabled);
