@@ -1,31 +1,24 @@
 /*
  * This file contains changes from the Open Software Foundation.
  * The RCS history log will appear at the end of this file.
- * @(#)newsyslog.c	$Revision: 1.1 $ $Date: 1993/05/21 14:44:02 $ $Locker:  $
+ * @(#)newsyslog.c	$Revision: 1.2 $ $Date: 1993/05/21 14:47:30 $ $Locker:  $
  */
 
 /*
 
-Copyright 1991 by the Massachusetts Institute of Technology
+Copyright 1988, 1989 by the Massachusetts Institute of Technology
 
-All rights reserved.
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of the Massachusetts
-Institute of Technology (M.I.T.) not be used in advertising or publicity
-pertaining to distribution of the software without specific, written
-prior permission.
-
-M.I.T. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
-M.I.T. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-SOFTWARE.
+Permission to use, copy, modify, and distribute this software
+and its documentation for any purpose and without fee is
+hereby granted, provided that the above copyright notice
+appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation,
+and that the names of M.I.T. and the M.I.T. S.I.P.B. not be
+used in advertising or publicity pertaining to distribution
+of the software without specific, written prior permission.
+M.I.T. and the M.I.T. S.I.P.B. make no representations about
+the suitability of this software for any purpose.  It is
+provided "as is" without express or implied warranty.
 
 */
 
@@ -38,7 +31,7 @@ SOFTWARE.
  */
 
 #if !defined(lint) && !defined(_NOIDENT)
-static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.1 $ (OSF) $Date: 1993/05/21 14:44:02 $";
+static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.2 $ (OSF) $Date: 1993/05/21 14:47:30 $";
 #endif
 
 #ifndef CONF
@@ -576,13 +569,16 @@ char *string;
 }
 
 #if !defined(__SABER__) && !defined(lint) && !defined(NO_WHAT_STRINGS)
-static char *what_string = "@(#)newsyslog.c\t$Revision: 1.1 $ $Date: 1993/05/21 14:44:02 $ $Locker:  $";
+static char *what_string = "@(#)newsyslog.c\t$Revision: 1.2 $ $Date: 1993/05/21 14:47:30 $ $Locker:  $";
 #endif
 
 /*
  * HISTORY
  * $Log: newsyslog.c,v $
- * Revision 1.1  1993/05/21 14:44:02  cgd
+ * Revision 1.2  1993/05/21 14:47:30  cgd
+ * use the correct (or so john brezak says) copyright.
+ *
+ * Revision 1.1  1993/05/21  14:44:02  cgd
  * initial import of this log-rotation program to NetBSD
  *
  * Revision 3.0.2.2  1993/02/06  04:14:51  brezak
