@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.17 2002/01/31 22:43:35 tv Exp $	*/
+/*	$NetBSD: ftree.c,v 1.18 2002/02/02 12:34:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.17 2002/01/31 22:43:35 tv Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.18 2002/02/02 12:34:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,9 @@ __RCSID("$NetBSD: ftree.c,v 1.17 2002/01/31 22:43:35 tv Exp $");
 #include "pax.h"
 #include "ftree.h"
 #include "extern.h"
+#ifndef SMALL
 #include "mtree.h"
+#endif	/* SMALL */
 
 /*
  * routines to interface with the fts library function.
@@ -120,7 +122,9 @@ static FTREE *fttail = NULL;		/* tail of linked list of file args */
 static FTREE *ftcur = NULL;		/* current file arg being processed */
 static FTSENT *ftent = NULL;		/* current file tree entry */
 static int ftree_skip;			/* when set skip to next file arg */
+#ifndef SMALL
 static NODE *ftnode = NULL;		/* mtree(8) specfile; used by -M */
+#endif	/* SMALL */
 
 static int ftree_arg(void);
 
@@ -144,6 +148,7 @@ int
 ftree_start(void)
 {
 
+#ifndef SMALL
 	/*
 	 * if -M is given, the list of filenames on stdin is actually
 	 * an mtree(8) specfile, so parse the specfile into a NODE *
@@ -164,6 +169,7 @@ ftree_start(void)
 		}
 		return(0);
 	}
+#endif	/* SMALL */
 
 	/*
 	 * set up the operation mode of fts, open the first file arg. We must
@@ -405,17 +411,20 @@ ftree_arg(void)
 int
 next_file(ARCHD *arcn)
 {
+#ifndef SMALL
 	static	char	curdir[PAXPATHLEN+2], curpath[PAXPATHLEN+2];
 	static	int	curdirlen;
 
 	struct stat	statbuf;
 	FTSENT		Mftent;
+#endif	/* SMALL */
 	int		cnt;
 	time_t		atime, mtime;
 	char		*curlink;
 #define MFTENT_DUMMY_DEV	UINT_MAX
 
 	curlink = NULL;
+#ifndef SMALL
 	/*
 	 * if parsing an mtree(8) specfile, build up `dummy' ftsent
 	 * from specfile info, and jump below to complete setup of arcn.
@@ -439,9 +448,9 @@ next_file(ARCHD *arcn)
 		Mftent.fts_statp = &statbuf;
 		Mftent.fts_pointer = ftnode;
 		ftent = &Mftent;
-						/* stat existing file */
+						/* look for existing file */
 		if (lstat(Mftent.fts_path, &statbuf) == -1) {
-						/* fake up stat buffer */
+						/* missing: fake up stat info */
 			memset(&statbuf, 0, sizeof(statbuf));
 			statbuf.st_dev = MFTENT_DUMMY_DEV;
 			statbuf.st_ino = ftnode->lineno;
@@ -467,14 +476,16 @@ next_file(ARCHD *arcn)
 				NODETEST(ftnode->flags & F_SLINK, "symlink");
 			/* don't require F_FLAGS or F_SIZE */
 #undef NODETEST
-		} else if (ftnode->flags & F_TYPE && 
-		    nodetoino(ftnode->type) != (statbuf.st_mode & S_IFMT)) {
-			tty_warn(1,
+		} else {
+			if (ftnode->flags & F_TYPE && nodetoino(ftnode->type)
+			    != (statbuf.st_mode & S_IFMT)) {
+				tty_warn(1,
 			    "line %lu: %s: type mismatch: specfile %s, tree %s",
-			    (u_long)ftnode->lineno, ftent->fts_path,
-			    inotype(nodetoino(ftnode->type)),
-			    inotype(statbuf.st_mode));
-			return(-1);
+				    (u_long)ftnode->lineno, ftent->fts_path,
+				    inotype(nodetoino(ftnode->type)),
+				    inotype(statbuf.st_mode));
+				return(-1);
+			}
 		}
 		/*
 		 * override settings with those from specfile
@@ -534,6 +545,7 @@ next_file(ARCHD *arcn)
 		} while (ftnode != NULL && ftnode->flags & F_VISIT);
 		goto got_ftent;
 	}
+#endif	/* SMALL */
 
 	/*
 	 * ftree_sel() might have set the ftree_skip flag if the user has the
@@ -627,7 +639,9 @@ next_file(ARCHD *arcn)
 			continue;
 		}
 
+#ifndef SMALL
  got_ftent:
+#endif	/* SMALL */
 		/*
 		 * ok got a file tree node to process. copy info into arcn
 		 * structure (initialize as required)
