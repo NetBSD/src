@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$Id: ctermid.3,v 1.2 1993/07/30 08:35:24 mycroft Exp $
+.\"	$Id: ctermid.3,v 1.3 1993/11/29 19:30:32 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt CTERMID 3
@@ -57,7 +57,7 @@ Otherwise, the pathname is copied into the memory referenced by
 .Ar buf .
 The argument
 .Ar buf
-is assumed to be at least
+is assumed to point to an array at least
 .Dv L_ctermid
 (as defined in the include
 file
