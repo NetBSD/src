@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 1999/11/13 00:30:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 1999/11/14 19:20:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1150,7 +1150,7 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 int
-pmap_enter(pmap, va, pa, prot, int)
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
