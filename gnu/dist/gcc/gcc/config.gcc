@@ -2350,16 +2350,16 @@ sh-*-netbsdelf* | shl*-*-netbsdelf* | sh5-*-netbsd* | sh5l*-*-netbsd* | \
 		;;
 	esac
 	case $machine in
-	sh5*-*)
+	sh5*-* | sh64*-*)
 		# SHmedia, 32-bit ABI
 		target_cpu_default="SH5_BIT|SH4_BIT|SH3E_BIT"
 		tmake_file="${tmake_file} sh/t-sh64 sh/t-netbsd-sh5"
 		;;
-	sh64*-*)
-		# SHmedia, 64-bit ABI
-		target_cpu_default="SH5_BIT|SH4_BIT"
-		tmake_file="${tmake_file} sh/t-sh64 sh/t-netbsd-sh5 sh/t-netbsd-sh5-64"
-		;;
+	#sh64*-*)
+	#	# SHmedia, 64-bit ABI
+	#	target_cpu_default="SH5_BIT|SH4_BIT"
+	#	tmake_file="${tmake_file} sh/t-sh64 sh/t-netbsd-sh5 sh/t-netbsd-sh5-64"
+	#	;;
 	*)
 		# SH3, software floating point
 		target_cpu_default="SH1_BIT|SH2_BIT|SH3_BIT"
