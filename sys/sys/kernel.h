@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.20 2003/08/07 16:34:06 agc Exp $	*/
+/*	$NetBSD: kernel.h,v 1.21 2003/09/30 19:20:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,7 @@
 #ifndef _SYS_KERNEL_H_
 #define _SYS_KERNEL_H_
 
+#ifdef _KERNEL
 /* Global variables for the kernel. */
 
 extern long hostid;
@@ -65,8 +66,9 @@ extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
 
 extern int profsrc;		/* profiling source */
-#if defined(_KERNEL)
+
 #define PROFSRC_CLOCK	0
+
 #endif
 
 #endif /* _SYS_KERNEL_H_ */
