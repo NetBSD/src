@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.43 1995/05/04 03:11:06 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.44 1995/06/01 22:44:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1460,7 +1460,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	}
 	
 	/* Otherwise, check the groups. */
-	if (groupmember(gid, cred)) {
+	if (cred->cr_gid == gid || groupmember(gid, cred)) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)

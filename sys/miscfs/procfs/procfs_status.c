@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.9 1994/06/29 06:34:56 cgd Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.10 1995/06/01 22:44:28 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -78,7 +78,7 @@ procfs_dostatus(curp, p, pfs, uio)
 	sess = p->p_pgrp->pg_session;
 	sid = sess->s_leader ? sess->s_leader->p_pid : 0;
 
-/* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid groups ... */
+/* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups ... */
 
 	ps = psbuf;
 	bcopy(p->p_comm, ps, MAXCOMLEN);
@@ -127,6 +127,7 @@ procfs_dostatus(curp, p, pfs, uio)
 	cr = p->p_ucred;
 
 	ps += sprintf(ps, " %d", cr->cr_uid);
+	ps += sprintf(ps, " %d", cr->cr_gid);
 	for (i = 0; i < cr->cr_ngroups; i++)
 		ps += sprintf(ps, ",%d", cr->cr_groups[i]);
 	ps += sprintf(ps, "\n");

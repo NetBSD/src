@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.26 1995/05/10 16:52:53 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.27 1995/06/01 22:43:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -126,7 +126,7 @@ getgid(p, uap, retval)
 
 	*retval = p->p_cred->p_rgid;
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
-	retval[1] = p->p_ucred->cr_groups[0];
+	retval[1] = p->p_ucred->cr_gid;
 #endif
 	return (0);
 }
@@ -143,7 +143,7 @@ getegid(p, uap, retval)
 	register_t *retval;
 {
 
-	*retval = p->p_ucred->cr_groups[0];
+	*retval = p->p_ucred->cr_gid;
 	return (0);
 }
 
@@ -324,7 +324,7 @@ setgid(p, uap, retval)
 	if (gid != pc->p_rgid && (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_groups[0] = gid;
+	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
 	pc->p_svgid = gid;		/* ??? */
 	p->p_flag |= P_SUGID;
@@ -352,7 +352,7 @@ setegid(p, uap, retval)
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_groups[0] = egid;
+	pc->pc_ucred->cr_gid = egid;
 	p->p_flag |= P_SUGID;
 	return (0);
 }
@@ -373,7 +373,7 @@ setgroups(p, uap, retval)
 	if (error = suser(pc->pc_ucred, &p->p_acflag))
 		return (error);
 	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp < 1 || ngrp > NGROUPS)
+	if (ngrp > NGROUPS)
 		return (EINVAL);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	if (error = copyin((caddr_t)SCARG(uap, gidset),

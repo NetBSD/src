@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.11 1995/03/26 20:24:59 jtc Exp $	*/
+/*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,10 +44,10 @@
 struct ucred {
 	u_short	cr_ref;			/* reference count */
 	uid_t	cr_uid;			/* effective user id */
+	gid_t	cr_gid;			/* effective group id */
 	short	cr_ngroups;		/* number of groups */
 	gid_t	cr_groups[NGROUPS];	/* groups */
 };
-#define cr_gid cr_groups[0]
 #define NOCRED ((struct ucred *)-1)	/* no credential available */
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
