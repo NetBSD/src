@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.14 1997/03/18 21:39:01 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.15 1997/04/09 20:26:43 thorpej Exp $
 
 # config file for mvme68k
 
@@ -84,9 +84,6 @@ file arch/mvme68k/mvme68k/pmap_bootstrap.c
 file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/mvme68k/mvme68k/vm_machdep.c
-file arch/m68k/m68k/copy.s
-file arch/m68k/m68k/bcopy.s
-file arch/m68k/m68k/copypage.s
 file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 file dev/cninit.c
