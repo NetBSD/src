@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.9 1994/07/15 21:20:52 mycroft Exp $
+ *	$Id: if_le.c,v 1.10 1994/07/25 22:54:58 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -786,29 +786,33 @@ letint(sc)
 #endif
 		sc->sc_arpcom.ac_if.if_opackets++;
 		--sc->sc_no_td;
-		if (cdm->flags & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
-			if (cdm->flags & LE_TBUFF)
+		if (cdm->mcnt & (LE_TBUFF | LE_UFLO | LE_LCOL | LE_LCAR | LE_RTRY)) {
+			if (cdm->mcnt & LE_TBUFF)
 				printf("%s: TBUFF\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
+			if ((cdm->mcnt & (LE_TBUFF | LE_UFLO)) == LE_UFLO)
 				printf("%s: UFLO\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & LE_UFLO) {
+			if (cdm->mcnt & LE_UFLO) {
 				lereset(sc);
 				return;
 			}
 #if 0
-			if (cdm->flags & LE_LCOL) {
+			if (cdm->mcnt & LE_LCOL) {
 				printf("%s: late collision\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
-			if (cdm->flags & LE_LCAR)
+			if (cdm->mcnt & LE_LCAR)
 				printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & LE_RTRY) {
+			if (cdm->mcnt & LE_RTRY) {
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname, cdm->flags & 0x1ff);
-				sc->sc_arpcom.ac_if.if_collisions++;
+				sc->sc_arpcom.ac_if.if_collisions += 16;
 			}
 #endif
-		}
+		} else if (cdm->flags & LE_ONE)
+			sc->sc_arpcom.ac_if.if_collisions++;
+		else if (cdm->flags & LE_MORE)
+			/* Real number is unknown. */
+			sc->sc_arpcom.ac_if.if_collisions += 2;
 		NEXTTDS;
 	} while ((cdm->flags & LE_OWN) == 0);
 
