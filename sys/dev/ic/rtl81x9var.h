@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.10 2001/07/25 09:57:31 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.11 2003/10/25 23:48:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,8 +40,14 @@
 struct rtk_type {
 	u_int16_t		rtk_vid;
 	u_int16_t		rtk_did;
+	int			rtk_basetype;
 	const char		*rtk_name;
+};
+
+struct rtk_hwrev {
+	uint32_t		rtk_rev;
 	int			rtk_type;
+	char			*rtk_desc;
 };
 
 struct rtk_mii_frame {
@@ -63,6 +69,11 @@ struct rtk_mii_frame {
 
 #define RTK_8129		1
 #define RTK_8139		2
+#define RTK_8139CPLUS		3
+#define RTK_8169		4
+
+#define RTK_ISCPLUS(x)	((x)->rtk_type == RTK_8139CPLUS || \
+			 (x)->rtk_type == RTK_8169)
 
 struct rtk_tx_desc {
 	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
@@ -121,6 +132,9 @@ struct rtk_softc {
 	bus_space_write_2(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
 	bus_space_write_1(sc->rtk_btag, sc->rtk_bhandle, reg, val)
+#define CSR_WRITE_STREAM_4(sc, reg, val)	\
+	bus_space_write_stream_4(sc->rtk_btag, sc->rtk_bhandle, reg, val)
+
 
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->rtk_btag, sc->rtk_bhandle, reg)
