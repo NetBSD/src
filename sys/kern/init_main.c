@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.121 1998/03/30 06:15:44 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.122 1998/03/30 06:18:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -132,7 +132,7 @@ struct	timeval runtime;
 static void check_console __P((struct proc *p));
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
-void main __P((void *));
+void main __P((void));
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
