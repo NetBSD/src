@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 1999/01/16 07:48:23 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.40 1999/01/25 03:43:04 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -32,7 +32,7 @@ nslexer.c: nsparser.h
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
-	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \
+	getservent.3 hesiod.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \
 	nsdispatch.3 rcmd.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
@@ -48,6 +48,9 @@ MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
 	getprotoent.3 getprotobynumber.3 getprotoent.3 setprotoent.3
 MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservbyport.3 getservent.3 setservent.3
+MLINKS+=hesiod.3 hesiod_end.3 hesiod.3 hesiod_free_list.3 \
+	hesiod.3 hesiod_init.3 hesiod.3 hesiod_resolve.3 \
+	hesiod.3 hesiod_to_bind.3
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
