@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.1.1.1 2004/05/17 23:44:58 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.1.1.2 2004/11/06 23:55:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.95.2.3.2.8 2004/03/16 12:57:17 marka Exp */
+/* Id: name.h,v 1.95.2.3.2.11 2004/09/01 05:19:59 marka Exp */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -314,7 +314,7 @@ dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive);
  */
 
 unsigned int
-dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
+dns_name_fullhash(dns_name_t *name, isc_boolean_t case_sensitive);
 /*
  * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
  * always takes into account of the entire name to calculate the hash value.
@@ -574,6 +574,9 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
  *
  * Notes:
  *	Numbering starts at 0.
+ *
+ *	Given "rc.vix.com.", the label 0 is "rc", and label 3 is the
+ *	root label.
  *
  *	'target' refers to the same memory as 'source', so 'source'
  *	must not be changed while 'target' is still in use.
@@ -1216,7 +1219,7 @@ do { \
 do { \
 	(r)->base = (n)->ndata; \
 	(r)->length = (n)->length; \
-} while (0);
+} while (0)
 
 #define DNS_NAME_SPLIT(n, l, p, s) \
 do { \
@@ -1228,7 +1231,7 @@ do { \
 		dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
 	if (_s != NULL) \
 		dns_name_getlabelsequence(_n, _n->labels - _l, _l, _s); \
-} while (0);
+} while (0)
 
 #ifdef DNS_NAME_USEINLINE
 

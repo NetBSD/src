@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.1.1.1 2004/05/17 23:43:26 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.1.1.2 2004/11/06 23:53:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.77.2.5.2.12 2004/03/08 04:04:23 marka Exp */
+/* Id: rndc.c,v 1.77.2.5.2.12.6.1 2004/09/20 01:00:01 marka Exp */
 
 /*
  * Principal Author: DCL
@@ -101,7 +101,7 @@ command is one of the following:\n\
 		Retransfer a single zone without checking serial number.\n\
   freeze zone [class [view]]\n\
   		Suspend updates to a dynamic zone.\n\
-  unfreeze zone [class [view]]\n\
+  thaw zone [class [view]]\n\
   		Enable updates to a frozen dynamic zone and reload it.\n\
   reconfig	Reload configuration file and new zones only.\n\
   stats		Write server statistics to the statistics file.\n\

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.1 2004/05/17 23:45:12 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.2 2004/11/06 23:56:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.48.2.1.2.4 2004/03/08 09:05:13 marka Exp */
+/* Id: t_api.c,v 1.48.2.1.2.6 2004/08/28 06:25:27 marka Exp */
 
 #include <config.h>
 
@@ -35,6 +35,7 @@
 
 #include <isc/boolean.h>
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include <dns/compress.h>
@@ -391,6 +392,9 @@ t_result(int result) {
 			break;
 		case T_UNTESTED:
 			p = "UNTESTED";
+			break;
+		case T_THREADONLY:
+			p = "THREADONLY";
 			break;
 		default:
 			p = "UNKNOWN";

@@ -82,7 +82,7 @@ options {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         disable-algorithms <string> { <string>; ... };
         dnssec-enable <boolean>;
-        dnssec-lookaside <string>;
+        dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
         allow-query { <address_match_element>; ... };
         allow-transfer { <address_match_element>; ... };
@@ -262,7 +262,7 @@ view <string> <optional_class> {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         disable-algorithms <string> { <string>; ... };
         dnssec-enable <boolean>;
-        dnssec-lookaside <string>;
+        dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
         allow-query { <address_match_element>; ... };
         allow-transfer { <address_match_element>; ... };

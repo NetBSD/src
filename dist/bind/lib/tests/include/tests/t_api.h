@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.h,v 1.1.1.1 2004/05/17 23:45:12 christos Exp $	*/
+/*	$NetBSD: t_api.h,v 1.1.1.2 2004/11/06 23:56:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.h,v 1.14.206.1 2004/03/06 08:15:47 marka Exp */
+/* Id: t_api.h,v 1.14.206.2 2004/06/21 06:58:02 marka Exp */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1
@@ -39,6 +39,7 @@
 #define	T_UNRESOLVED	0x3
 #define	T_UNSUPPORTED	0x4
 #define	T_UNTESTED	0x5
+#define	T_THREADONLY	0x6
 
 /*
  *

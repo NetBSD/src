@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2004/05/17 23:45:06 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2 2004/11/06 23:55:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.11.12.3 2004/03/08 09:04:57 marka Exp */
+/* Id: os.c,v 1.11.12.4 2004/05/18 01:39:20 marka Exp */
 
 #include <config.h>
 
@@ -57,7 +57,8 @@ hpux_ncpus(void) {
 #endif /* __hpux */
 
 #if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTLBYNAME)
-#include <sys/types.h>
+#include <sys/types.h>  /* for FreeBSD */
+#include <sys/param.h>  /* for NetBSD */
 #include <sys/sysctl.h>
 
 static int

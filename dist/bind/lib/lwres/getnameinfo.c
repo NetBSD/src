@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.1 2004/05/17 23:45:09 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.2 2004/11/06 23:56:00 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.30.2.3.2.3 2004/03/06 08:15:31 marka Exp */
+/* Id: getnameinfo.c,v 1.30.2.3.2.4 2004/08/28 06:25:24 marka Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,7 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/netdb.h>
+#include "print_p.h"
 
 #include "assert_p.h"
 

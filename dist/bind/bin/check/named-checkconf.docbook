@@ -16,7 +16,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkconf.docbook,v 1.3.2.1.8.4 2004/03/08 04:04:13 marka Exp -->
+<!-- Id: named-checkconf.docbook,v 1.3.2.1.8.5 2004/06/03 02:24:59 marka Exp -->
 
 <refentry>
   <refentryinfo>
@@ -132,7 +132,7 @@
   <refsect1>
     <title>AUTHOR</title>
     <para>
-        <corpauthor>Internet Software Consortium</corpauthor>
+        <corpauthor>Internet Systems Consortium</corpauthor>
     </para>
   </refsect1>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1.1.1 2004/05/17 23:44:49 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.2 2004/11/06 23:55:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.181.2.11.2.17 2004/03/10 02:55:57 marka Exp */
+/* Id: adb.c,v 1.181.2.11.2.19 2004/09/01 05:19:57 marka Exp */
 
 /*
  * Implementation notes
@@ -1009,6 +1009,8 @@ set_target(dns_adb_t *adb, dns_name_t *name, dns_name_t *fname,
 		dns_fixedname_init(&fixed2);
 		new_target = dns_fixedname_name(&fixed2);
 		dns_name_split(name, nlabels, prefix, NULL);
+		result = dns_name_concatenate(prefix, &dname.dname, new_target,
+					      NULL);
 		dns_rdata_freestruct(&dname);
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -1581,7 +1583,7 @@ find_name_and_lock(dns_adb_t *adb, dns_name_t *name,
 	dns_adbname_t *adbname;
 	int bucket;
 
-	bucket = dns_fullname_hash(name, ISC_FALSE) % NBUCKETS;
+	bucket = dns_name_fullhash(name, ISC_FALSE) % NBUCKETS;
 
 	if (*bucketp == DNS_ADB_INVALIDBUCKET) {
 		LOCK(&adb->namelocks[bucket]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.2 2004/11/06 23:55:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.c,v 1.18.12.8 2004/03/08 09:04:49 marka Exp */
+/* Id: netaddr.c,v 1.18.12.9 2004/05/15 03:46:12 jinmei Exp */
 
 #include <config.h>
 
@@ -49,7 +49,8 @@ isc_netaddr_equal(const isc_netaddr_t *a, const isc_netaddr_t *b) {
 		break;
 	case AF_INET6:
 		if (memcmp(&a->type.in6, &b->type.in6,
-			   sizeof(a->type.in6)) != 0)
+			   sizeof(a->type.in6)) != 0 ||
+		    a->zone != b->zone)
 			return (ISC_FALSE);
 		break;
 	default:
