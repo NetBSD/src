@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sleep.3	6.3 (Berkeley) 4/19/91
-.\"	$Id: sleep.3,v 1.3 1993/07/30 08:39:16 mycroft Exp $
+.\"	$Id: sleep.3,v 1.4 1993/10/14 23:25:31 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt SLEEP 3
@@ -40,8 +40,8 @@
 .Nd suspend process execution for interval of seconds
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Ft u_int
-.Fn sleep "u_int seconds"
+.Ft unsigned int
+.Fn sleep "unsigned int seconds"
 .Sh DESCRIPTION
 The
 .Fn sleep
@@ -72,11 +72,15 @@ A similar but less compatible function can be obtained with a single
 such a function would not restart after signals, but would not interfere
 with other uses of
 .Xr setitimer .
-.Sh RETURN VALUES
 .Sh SEE ALSO
 .Xr setitimer 2 ,
 .Xr sigpause 2 ,
 .Xr usleep 3
+.Sh STANDARDS
+The 
+.Fn sleep 
+function conforms to 
+.St -p1003.1-90 .
 .Sh HISTORY
 A
 .Fn sleep
