@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.4 1997/10/15 12:02:08 mrg Exp $	*/
+/*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.4 1997/10/15 12:02:08 mrg Exp $");
+__RCSID("$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -367,6 +367,7 @@ init()
 	/*
 	 * Initialize minimal select mask
 	 */
+	FD_ZERO(&Fds_mask);
 	FD_SET(Socket, &Fds_mask);
 	FD_SET(Status, &Fds_mask);
 	Num_fds = ((Socket > Status) ? Socket : Status) + 1;

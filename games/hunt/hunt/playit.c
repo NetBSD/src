@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.3 1997/10/11 08:13:44 lukem Exp $	*/
+/*	$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.3 1997/10/11 08:13:44 lukem Exp $");
+__RCSID("$NetBSD: playit.c,v 1.4 1997/10/20 00:37:15 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -220,6 +220,7 @@ getchr()
 	fd_set	readfds, s_readfds;
 	int	nfds, s_nfds;
 
+	FD_ZERO(&s_readfds);
 	FD_SET(Socket, &s_readfds);
 	FD_SET(STDIN, &s_readfds);
 	s_nfds = (Socket > STDIN) ? Socket : STDIN;
