@@ -55,8 +55,10 @@ ENTRY(random)
 	movl	a0, d0
 	andil	#0x7fffffff, d0
 	addl	d1, d0
-	bge	L1
-	addql	#1, d0
+	bmi	L1
+	movl	d0, randseed
+	rts
 L1:
+	subil	#0x7fffffff, d0
 	movl	d0, randseed
 	rts
