@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.56 2003/09/13 14:45:44 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.57 2004/03/26 15:01:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -155,9 +155,7 @@ struct	sigaction {
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#if defined(_KERNEL) || defined(__HAVE_SIGINFO)
 #define SA_SIGINFO	0x0040
-#endif /* _KERNEL || __HAVE_SIGINFO */
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
