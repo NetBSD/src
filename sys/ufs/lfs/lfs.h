@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.31 2000/09/09 04:49:54 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.32 2000/09/13 00:07:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -550,7 +550,8 @@ struct segment {
  * of segment summaries and inode blocks taken into account.
  */
 /* Estimate number of clean blocks not available for writing */
-#define LFS_EST_CMETA(F) ((((F)->lfs_dmeta * (u_int64_t)(F)->lfs_nclean) /  \
+#define LFS_EST_CMETA(F) (int32_t)((((F)->lfs_dmeta *                        \
+				     (int64_t)(F)->lfs_nclean) /             \
 				      ((F)->lfs_nseg - (F)->lfs_nclean)))
 
 /* Estimate total size of the disk not including metadata */
@@ -560,8 +561,9 @@ struct segment {
 #define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta)
 
 /* Amount of non-meta space not available to mortal man */
-#define LFS_EST_RSVD(F) ((LFS_EST_NONMETA(F) * (u_int64_t)(F)->lfs_minfree) / \
-			  100)
+#define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *                      \
+                                   (u_int64_t)(F)->lfs_minfree) /            \
+			          100)
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
