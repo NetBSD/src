@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.73 1997/10/20 08:13:26 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.73.2.1 1997/11/05 22:00:29 mellon Exp $
 
 # mac68k-specific configuration info
 
@@ -51,14 +51,19 @@ device	grf { }
 attach	grf at grfbus
 file	arch/mac68k/dev/grf.c		grf needs-flag
 
+device	ite
+attach	ite at grf
+file	arch/mac68k/dev/ite.c		ite needs-flag
+
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
 file	arch/mac68k/dev/if_ae_nubus.c	ae_nubus
 file	arch/mac68k/dev/if_ae.c		ae
 
-device	ite
-attach	ite at grf
-file	arch/mac68k/dev/ite.c		ite needs-flag
+device	mc: ifnet, ether, arp
+attach	mc at obio_norm with mc_obio
+file	arch/mac68k/dev/if_mc.c		mc
+file	arch/mac68k/dev/if_mc_obio.c	mc_obio
 
 device	sn: ifnet, ether, arp
 attach	sn at obio_norm with sn_obio
@@ -116,6 +121,7 @@ file	arch/mac68k/mac68k/pmap.c
 file	arch/mac68k/mac68k/pmap_bootstrap.c
 file	arch/mac68k/mac68k/pram.c
 file	arch/mac68k/mac68k/pramasm.s
+file	arch/mac68k/mac68k/psc.c
 file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
