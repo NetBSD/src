@@ -1,4 +1,4 @@
-/* $NetBSD: spl.h,v 1.4 2000/08/16 23:58:29 bjh21 Exp $ */
+/* $NetBSD: spl.h,v 1.5 2000/08/21 02:06:31 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -71,6 +71,8 @@
 #define splclock()	raisespl(IPL_CLOCK)
 #define splstatclock()	raisespl(IPL_STATCLOCK)
 #define splhigh()	raisespl(IPL_HIGH)
+
+#define	splsched()	splhigh()
 
 #define spl0()			lowerspl(IPL_NONE)
 #define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
