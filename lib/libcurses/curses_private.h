@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.1 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.2 2000/04/12 21:46:27 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -42,24 +42,7 @@
  */
 
 struct __ldata {
-#define __CHARTEXT	0x000000ff	/* bits for 8-bit characters */
 	wchar_t	ch;			/* Character */
-#define __NORMAL	0x00000000	/* Added characters are normal. */
-#define __STANDOUT	0x00010000	/* Added characters are standout. */
-#define __UNDERSCORE	0x00020000	/* Added characters are underscored. */
-#define __REVERSE	0x00040000	/* Added characters are reverse
-					   video. */
-#define __BLINK		0x00080000	/* Added characters are blinking. */
-#define __DIM		0x00100000	/* Added characters are dim. */
-#define __BOLD		0x00200000	/* Added characters are bold. */
-#define __BLANK		0x00400000	/* Added characters are blanked. */
-#define __PROTECT	0x00800000	/* Added characters are protected. */
-#define __ALTCHARSET	0x01000000	/* Added characters are ACS */
-#define __COLOR		0xee000000	/* Color bits */
-#define __ATTRIBUTES	0xefff0000	/* All 8-bit attribute bits */
-#define __TERMATTR	0x00fc0000	/* Termcap attribute modes
-					   (reverse, blinking, dim, bold,
-					   blanked & protected */
 	attr_t	attr;			/* Attributes */
 };
 
@@ -99,4 +82,50 @@ struct __window {		/* Window structure. */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
+	wchar_t	bchar;			/* Background character */
+	attr_t	battr;			/* Background attributes */
 };
+
+/* Private functions. */
+#ifdef DEBUG
+void	 __CTRACE __P((const char *, ...));
+#endif
+int	 __delay __P((void));
+unsigned int __hash __P((char *, int));
+void	 __id_subwins __P((WINDOW *));
+void	 __init_getch __P((char *));
+void	 __init_acs __P((void));
+char	*__longname __P((char *, char *));	/* Original BSD version */
+int	 __mvcur __P((int, int, int, int, int));
+int	 __nodelay __P((void));
+int	 __notimeout __P((void));
+char	*__parse_cap __P((const char *, ...));
+void	 __restartwin __P((void));
+void	 __restore_colors __P((void));
+void	 __restore_termios __P((void));
+void	 __restore_stophandler __P((void));
+void	 __save_termios __P((void));
+void	 __set_color __P((attr_t));
+void	 __set_stophandler __P((void));
+void	 __set_subwin __P((WINDOW *, WINDOW *));
+void	 __startwin __P((void));
+void	 __stop_signal_handler __P((int));
+int	 __stopwin __P((void));
+void	 __swflags __P((WINDOW *));
+int	 __timeout __P((int));
+int	 __touchline __P((WINDOW *, int, int, int, int));
+int	 __touchwin __P((WINDOW *));
+char	*__tscroll __P((const char *, int, int));
+int	 __waddch __P((WINDOW *, __LDATA *));
+
+/* Private #defines. */
+#define	min(a,b)	(a < b ? a : b)
+#define	max(a,b)	(a > b ? a : b)
+
+/* Private externs. */
+extern int	 __echoit;
+extern int	 __endwin;
+extern int	 __pfast;
+extern int	 __rawmode;
+extern int	 __noqch;
+extern attr_t	 __nca;
