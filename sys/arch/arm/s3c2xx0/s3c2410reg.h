@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410reg.h,v 1.2 2003/08/04 10:24:15 bsh Exp $ */
+/* $NetBSD: s3c2410reg.h,v 1.3 2003/08/27 03:46:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -55,39 +55,28 @@
  * Physical address of integrated peripherals
  */
 #define S3C2410_MEMCTL_BASE	0x48000000 /* memory controller */
-#define S3C2410_MEMCTL_SIZE	0x34
 #define	S3C2410_USBHC_BASE 	0x49000000 /* USB Host controller */
-#define	S3C2410_USBHC_SIZE	0x5c
 #define S3C2410_INTCTL_BASE	0x4a000000 /* Interrupt controller */
-#define S3C2410_INTCTL_SIZE	0x20
 #define S3C2410_DMAC_BASE	0x4b000000
 #define S3C2410_DMAC_SIZE 	0xe4
 #define S3C2410_CLKMAN_BASE	0x4c000000 /* clock & power management */
-#define S3C2410_CLKMAN_SIZE	0x18
 #define	S3C2410_LCDC_BASE 	0x4d000000 /* LCD controller */
-#define	S3C2410_LCDC_SIZE 	0x64
 #define	S3C2410_NANDFC_BASE	0x4e000000 /* NAND Flash controller */
 #define	S3C2410_NANDFC_SIZE	0x18
 #define S3C2410_UART0_BASE	0x50000000
 #define S3C2410_UART_BASE(n)	(S3C2410_UART0_BASE+0x4000*(n))
-#define	S3C2410_UART_SIZE 	0x2c
 #define	S3C2410_TIMER_BASE 	0x51000000
-#define	S3C2410_TIMER_SIZE	0x44
 #define	S3C2410_USBDC_BASE 	0x5200140
 #define	S3C2410_USBDC_SIZE 	0x130
 #define	S3C2410_WDT_BASE 	0x53000000
-#define	S3C2410_WDT_SIZE 	0x0c
 #define	S3C2410_IIC_BASE 	0x54000000
-#define	S3C2410_IIC_SIZE 	0x0c
 #define	S3C2410_IIS_BASE 	0x55000000
-#define	S3C2410_IIS_SIZE 	0x14
 #define S3C2410_GPIO_BASE	0x56000000
 #define S3C2410_GPIO_SIZE	0xb4
 #define	S3C2410_ADC_BASE 	0x58000000
 #define	S3C2410_ADC_SIZE 	0x14
 #define	S3C2410_SPI0_BASE 	0x59000000
 #define	S3C2410_SPI1_BASE 	0x59000020
-#define	S3C2410_SPI1_SIZE 	0x18
 #define	S3C2410_SDI_BASE 	0x5a000000 /* SD Interface */
 #define	S3C2410_SDI_SIZE 	0x44
 
@@ -119,6 +108,8 @@
 #define	S3C2410_INT_ERR0	(S3C2410_SUBIRQ_MIN+2)	/* UART0 Error interrupt */
 #define	S3C2410_INT_TXD0	(S3C2410_SUBIRQ_MIN+1)	/* UART0 Tx interrupt */
 #define	S3C2410_INT_RXD0	(S3C2410_SUBIRQ_MIN+0)	/* UART0 Rx interrupt */
+
+#define S3C2410_INTCTL_SIZE	0x20
 
 
 /* Clock control: CLKCON register */

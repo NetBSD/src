@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.3 2003/08/05 11:26:54 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.4 2003/08/27 03:46:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.3 2003/08/05 11:26:54 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.4 2003/08/27 03:46:05 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,22 +132,22 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Memory controller */
 	if (bus_space_map(iot, S3C2410_MEMCTL_BASE,
-		S3C2410_MEMCTL_SIZE, 0, &sc->sc_sx.sc_memctl_ioh))
+		S3C24X0_MEMCTL_SIZE, 0, &sc->sc_sx.sc_memctl_ioh))
 		FAIL("MEMC");
 	/* Clock manager */
 	if (bus_space_map(iot, S3C2410_CLKMAN_BASE,
-		S3C2410_CLKMAN_SIZE, 0, &sc->sc_sx.sc_clkman_ioh))
+		S3C24X0_CLKMAN_SIZE, 0, &sc->sc_sx.sc_clkman_ioh))
 		FAIL("CLK");
 
 #if 0
 	/* Real time clock */
 	if (bus_space_map(iot, S3C2410_RTC_BASE,
-		S3C2410_RTC_SIZE, 0, &sc->sc_sx.sc_rtc_ioh))
+		S3C24X0_RTC_SIZE, 0, &sc->sc_sx.sc_rtc_ioh))
 		FAIL("RTC");
 #endif
 
 	if (bus_space_map(iot, S3C2410_TIMER_BASE,
-		S3C2410_TIMER_SIZE, 0, &sc->sc_timer_ioh))
+		S3C24X0_TIMER_SIZE, 0, &sc->sc_timer_ioh))
 		FAIL("TIMER");
 
 	/* calculate current clock frequency */
