@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.3 1998/06/07 20:19:12 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.4 1998/06/08 15:04:26 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,7 +102,7 @@ lkc_catch(line, ch)
 		return 1;
 
 	if (hej > 255) {
-		cp = q_special[c & 255];
+		cp = q_special[hej & 255];
 		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp, strlen(cp));
 	} else {
 		c = hej;
