@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.162 2003/06/27 07:32:38 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.164 2003/10/23 07:22:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipsec_doi.c,v 1.13 2003/07/12 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: ipsec_doi.c,v 1.14 2003/10/23 07:23:50 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2674,13 +2674,8 @@ setph2proposal0(iph2, pp, pr)
 			 * with no authentication transform.
 			 */
 			if (tr->trns_id == IPSECDOI_ESP_NULL &&
-			    tr->authtype == IPSECDOI_ATTR_AUTH_NONE) {
-				plog(LLV_ERROR, LOCATION, NULL,
-				    "attr AUTH must be present "
-				    "for ESP NULL encryption.\n");
-				vfree(p);
-				return NULL;
-			}
+			    tr->authtype == IPSECDOI_ATTR_AUTH_NONE)
+				continue;
 			break;
 		}
 
