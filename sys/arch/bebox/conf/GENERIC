@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 1999/07/29 10:37:16 augustss Exp $
+#	$NetBSD: GENERIC,v 1.19 1999/07/29 19:36:59 augustss Exp $
 #
 # First try for BEBOX config file
 #
@@ -58,6 +58,7 @@ pseudo-device	bpfilter	8	# packet filter
 pseudo-device	pty		64
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	wsmux		2
 
 #
 # device
@@ -103,7 +104,7 @@ pfb*	at pci?
 wsdisplay*	at vga? console ?
 wsdisplay*	at pfb? console ?
 wskbd*		at pckbd? console ?
-#wsmouse*	at pms?
+#wsmouse*	at pms? mux 0
 
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
