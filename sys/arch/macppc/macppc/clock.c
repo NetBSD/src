@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1998/11/04 15:06:13 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1999/01/11 09:44:51 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -142,7 +142,7 @@ decr_intr(frame)
 #if defined(UVM)
 	uvmexp.intrs++;
 #endif
-	/*intrcnt[CNT_CLOCK]++;*/
+	intrcnt[CNT_CLOCK]++;
 	{
 	int pri;
 	int msr;
