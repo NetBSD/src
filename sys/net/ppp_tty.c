@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.13 1997/03/25 22:33:25 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.14 1998/08/02 15:09:50 sommerfe Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -119,7 +119,7 @@ int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data, int flag,
 		       struct proc *));
 int	pppinput __P((int c, struct tty *tp));
-int	pppstart __P((struct tty *tp, int));
+int	pppstart __P((struct tty *tp));
 
 static u_int16_t pppfcs __P((u_int16_t fcs, u_char *cp, int len));
 static void	pppasyncstart __P((struct ppp_softc *));
@@ -664,7 +664,7 @@ pppasyncstart(sc)
 
     /* Call pppstart to start output again if necessary. */
     s = spltty();
-    pppstart(tp, 0);
+    pppstart(tp);
 
     /*
      * This timeout is needed for operation on a pseudo-tty,
@@ -705,9 +705,8 @@ pppasyncctlp(sc)
  * Called at spltty or higher.
  */
 int
-pppstart(tp, force)
+pppstart(tp)
     register struct tty *tp;
-    int force;
 {
     register struct ppp_softc *sc = (struct ppp_softc *) tp->t_sc;
 
@@ -723,7 +722,8 @@ pppstart(tp, force)
      * or been disconnected from the ppp unit, then tell if_ppp.c that
      * we need more output.
      */
-    if (CCOUNT(&tp->t_outq) >= PPP_LOWAT && !force)
+    if ((CCOUNT(&tp->t_outq) >= PPP_LOWAT)
+	&& ((sc == NULL) || (sc->sc_flags & SC_TIMEOUT)))
 	return 0;
     if (!((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0)
 	&& sc != NULL && tp == (struct tty *) sc->sc_devp) {
@@ -746,7 +746,7 @@ ppp_timeout(x)
 
     s = spltty();
     sc->sc_flags &= ~SC_TIMEOUT;
-    pppstart(tp, 1);
+    pppstart(tp);
     splx(s);
 }
 
