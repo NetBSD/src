@@ -19,7 +19,7 @@
 #
 
 if ![info exists ld] then {
-    set ld [findfile $objdir/ld.new $objdir/ld.new [transform ld]]
+    set ld [findfile $base_dir/ld.new $base_dir/ld.new [transform ld]]
 }
 
 if ![info exists as] then {

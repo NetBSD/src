@@ -1,3 +1,31 @@
+Wed May 21 17:44:15 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmain.c (main): Correct check of fclose return value when
+	handling --force-exe-suffix.
+
+Tue May 13 10:43:26 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldver.c: Set to "2.8.1".
+
+Mon May 12 11:11:06 1997  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* scripttempl/elf.sc: Don't align the data segment on the next 8
+	byte boundary, instead let the linker use whatever the individual
+	sections require.
+
+Tue May  6 13:21:19 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	From Sean McNeil <sean@mcneil.com>:
+	* emultempl/pe.em (sort_by_file_name): Sort by archive name
+	first.
+	(sort_sections): Sort all sections, not just sections in the same
+	archive.
+
+Mon May  5 18:19:55 1997  Philip Blundell  <pjb27@cam.ac.uk>
+
+	* configure.tgt, configure.host: cope with '*-*-linux-gnuaout'
+	targets.
+
 Wed Apr 30 12:23:21 1997  Manfred Hollstein  <manfred@s-direktnet.de>
 
 	* scripttempl/m88kbcs.sc (__.initp.end, _etext): Added whitespace
@@ -16,7 +44,7 @@ Fri Apr  4 11:42:41 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 Thu Apr  3 18:54:20 1997  Ian Lance Taylor  <ian@cygnus.com>
 
-	* ldver.c (ld_program_version): Set to "2.8";
+	* ldver.c (ld_program_version): Set to "2.8".
 
 Wed Apr  2 11:55:27 1997  Ian Lance Taylor  <ian@cygnus.com>
 

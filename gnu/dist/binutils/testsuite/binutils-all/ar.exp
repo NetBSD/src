@@ -84,8 +84,8 @@ proc long_filenames { } {
 	return
     }
 
-    verbose -log "cd tmpdir; $AR x artest.a"
-    catch "exec /bin/sh -c \"cd tmpdir; $AR x artest.a\"" exec_output
+    verbose -log "cd ./tmpdir; $AR x artest.a"
+    catch "exec /bin/sh -c \"cd ./tmpdir; $AR x artest.a\"" exec_output
     set exec_output [prune_warnings $exec_output]
     if ![string match "" $exec_output] {
 	verbose -log $exec_output
