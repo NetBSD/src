@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.20 1997/01/28 04:21:02 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.21 1997/07/17 01:52:54 jtk Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -55,6 +55,8 @@
 
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/podule_data.h>
+
+#include "locators.h"
 
 /* Array of podule structures, one per possible podule */
 
@@ -129,12 +131,12 @@ podulebussubmatch(parent, match, aux)
 
 	/* Return priority 0 or 1 for wildcarded podule */
 
-	if (cf->cf_loc[0] == -1)
+	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT)
 		return((*cf->cf_attach->ca_match)(parent, match, aux));
 
 	/* Return higher priority if we match the specific podule */
 
-	else if (cf->cf_loc[0] == pa->pa_podule_number)
+	else if (cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_podule_number)
 		return((*cf->cf_attach->ca_match)(parent, match, aux) * 8);
 
 	/* Fail */

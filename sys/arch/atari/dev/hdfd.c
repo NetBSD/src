@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.7 1997/04/25 19:18:04 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.8 1997/07/17 01:54:53 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -85,6 +85,8 @@
 #include <atari/dev/hdfdreg.h>
 #include <atari/atari/intr.h>
 #include <atari/atari/device.h>
+
+#include "locators.h"
 
 /*
  * {b,c}devsw[] function prototypes
@@ -405,14 +407,15 @@ fdprobe(parent, cfp, aux)
 	int			drive = fa->fa_drive;
 	int			n;
 
-	if (cfp->cf_loc[0] != -1 && cfp->cf_loc[0] != drive)
+	if (cfp->cf_loc[FDCCF_UNIT] != FDCCF_UNIT_DEFAULT &&
+	    cfp->cf_loc[FDCCF_UNIT] != drive)
 		return 0;
 	/*
 	 * XXX
 	 * This is to work around some odd interactions between this driver
 	 * and SMC Ethernet cards.
 	 */
-	if (cfp->cf_loc[0] == -1 && drive >= 2)
+	if (cfp->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
