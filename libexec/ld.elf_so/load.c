@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.20 2002/10/03 20:35:19 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.21 2002/10/04 03:59:40 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,6 +57,8 @@
 static bool _rtld_load_by_name __P((const char *, Obj_Entry *, Needed_Entry **,
     int));
 
+Objlist _rtld_list_main =	/* Objects loaded at program startup */
+  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.84 2002/10/03 20:35:20 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.85 2002/10/04 03:59:41 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -82,9 +82,6 @@ Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char           *_rtld_path = _PATH_RTLD;
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
-
-Objlist _rtld_list_main =	/* Objects loaded at program startup */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
