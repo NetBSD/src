@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.21 1999/12/31 22:26:21 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.22 2000/01/31 16:41:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -4323,7 +4323,7 @@ netbsd32_poll(p, v, retval)
  * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  */
 int
-netbsd32___semctl13(p, v, retval)
+netbsd32___semctl14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -4333,7 +4333,7 @@ netbsd32___semctl13(p, v, retval)
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(netbsd32_semunu_t) arg;
+		syscallarg(netbsd32_semunu_t *) arg;
 	} */ *uap = v;
 	union netbsd32_semun sem32;
 	int semid = SCARG(uap, semid);
