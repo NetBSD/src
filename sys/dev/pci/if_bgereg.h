@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.16 2004/01/22 02:13:48 jonathan Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.17 2004/01/22 02:29:46 jonathan Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2331,6 +2331,7 @@ struct bge_softc {
 	struct callout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
+  	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };
