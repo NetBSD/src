@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.4 1995/09/12 20:07:53 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.5 1995/10/06 05:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: utils.c,v 1.4 1995/09/12 20:07:53 thorpej Exp $";
+static char rcsid[] = "$NetBSD: utils.c,v 1.5 1995/10/06 05:12:22 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ DispPkt(rconn, direct)
 	struct tm *tmp;
 	register struct rmp_packet *rmp;
 	int i, omask;
-	u_int t;
+	u_int32_t t;
 
 	/*
 	 *  Since we will be working with RmpConns as well as DbgFp, we
@@ -204,32 +204,30 @@ DispPkt(rconn, direct)
 **	Warnings:
 **		- The return value points to a static buffer; it must
 **		  be copied if it's to be saved.
-**		- For speed, we assume a u_char consists of 8 bits.
 */
 char *
 GetEtherAddr(addr)
-	u_char *addr;
+	u_int8_t *addr;
 {
 	static char Hex[] = "0123456789abcdef";
 	static char etherstr[RMP_ADDRLEN*3];
 	register int i;
-	register char *cp1, *cp2;
+	register char *cp;
 
 	/*
 	 *  For each byte in `addr', convert it to "<hexchar><hexchar>:".
 	 *  The last byte does not get a trailing `:' appended.
 	 */
 	i = 0;
-	cp1 = (char *)addr;
-	cp2 = etherstr;
+	cp = etherstr;
 	for(;;) {
-		*cp2++ = Hex[*cp1 >> 4 & 0xf];
-		*cp2++ = Hex[*cp1++ & 0xf];
+		*cp++ = Hex[*addr >> 4 & 0xf];
+		*cp++ = Hex[*addr++ & 0xf];
 		if (++i == RMP_ADDRLEN)
 			break;
-		*cp2++ = ':';
+		*cp++ = ':';
 	}
-	*cp2 = '\0';
+	*cp = '\0';
 
 	return(etherstr);
 }
@@ -255,7 +253,7 @@ DspFlnm(size, flnm)
 {
 	register int i;
 
-	(void) fprintf(DbgFp, "\n\t\tFile Name (%d): <", size);
+	(void) fprintf(DbgFp, "\n\t\tFile Name (%u): <", size);
 	for (i = 0; i < size; i++)
 		(void) fputc(*flnm++, DbgFp);
 	(void) fputs(">\n", DbgFp);
@@ -277,7 +275,7 @@ DspFlnm(size, flnm)
 */
 CLIENT *
 NewClient(addr)
-	u_char *addr;
+	u_int8_t *addr;
 {
 	CLIENT *ctmp;
 
