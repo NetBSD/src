@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.12 1999/03/14 11:43:25 drochner Exp $	*/
+/*	$NetBSD: library.c,v 1.12.2.1 1999/10/11 05:18:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.12 1999/03/14 11:43:25 drochner Exp $");
+__RCSID("$NetBSD: library.c,v 1.12.2.1 1999/10/11 05:18:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,6 +208,7 @@ get_ifile (fsp, use_mmap)
 
 {
 	struct stat file_stat;
+	struct statfs statfsbuf;
 	caddr_t ifp;
 	char *ifile_name;
 	int count;
@@ -228,8 +229,16 @@ get_ifile (fsp, use_mmap)
 		lseek(ifile_fd, 0, SEEK_SET);
 
 	if (fstat (ifile_fd, &file_stat)) {
-		syslog(LOG_ERR, "Exiting: get_ifile: fstat failed: %m");
-                exit(1);
+		/* If the fs was unmounted, don't complain */
+		statfs(fsp->fi_statfsp->f_mntonname, &statfsbuf);
+		if(memcmp(&statfsbuf.f_fsid,&fsp->fi_statfsp->f_fsid,
+			  sizeof(statfsbuf.f_fsid))!=0)
+		{
+			/* Filesystem still mounted, this error is real */
+			syslog(LOG_ERR, "Exiting: get_ifile: fstat failed: %m");
+                	exit(1);
+		}
+		exit(0);
         }
 	fsp->fi_fs_tstamp = file_stat.st_mtimespec.tv_sec;
 
@@ -342,7 +351,6 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	caddr_t s;
 	daddr_t pseg_addr, seg_addr;
 	int nelem, nblocks, nsegs, sumsize, i, ssize;
-	time_t timestamp;
 
 	i = 0;
 	lfsp = &fsp->fi_lfs;
@@ -360,7 +368,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 
 	*bcount = 0;
-	for (nsegs = 0, timestamp = 0; nsegs < sup->su_nsums; nsegs++) {
+	for (nsegs = 0; nsegs < sup->su_nsums; nsegs++) {
 		sp = (SEGSUM *)s;
 
 		nblocks = pseg_valid(fsp, sp, pseg_addr);
@@ -371,11 +379,6 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 			return -1;
 			/* break; */
 		}
-
-		/* Check if we have hit old data */
-		if (timestamp > sp->ss_create)
-			break;
-		timestamp = sp->ss_create;
 
 #ifdef DIAGNOSTIC
 		/* Verify size of summary block */
