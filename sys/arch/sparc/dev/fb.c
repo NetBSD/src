@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.8 1995/10/02 21:48:21 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.9 1995/10/05 00:02:54 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,7 @@ fbmmap(dev, off, prot)
 	return (map(dev, off, prot));
 }
 
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
 
@@ -149,38 +149,50 @@ fb_bell(on)
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
 }
 
+#include <sparc/dev/rcons_font.h>
+
 void
 fbrcons_init(fb)
 	struct fbdevice *fb;
 {
+	struct rconsole	*rc = &fb->fb_rcons;
 
 	/*
 	 * Common glue for rconsole initialization
 	 * XXX - mostly duplicates values with fbdevice.
 	 */
-	fb->fb_rcons.rc_linebytes = fb->fb_linebytes;
-	fb->fb_rcons.rc_pixels = fb->fb_pixels;
-	fb->fb_rcons.rc_width = fb->fb_type.fb_width;
-	fb->fb_rcons.rc_height = fb->fb_type.fb_height;
-	fb->fb_rcons.rc_depth = fb->fb_type.fb_depth;
+	rc->rc_linebytes = fb->fb_linebytes;
+	rc->rc_pixels = fb->fb_pixels;
+	rc->rc_width = fb->fb_type.fb_width;
+	rc->rc_height = fb->fb_type.fb_height;
+	rc->rc_depth = fb->fb_type.fb_depth;
+	/* Setup the static font */
+	rc->rc_font = &console_font;
 
+#if defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT)
+	rc->rc_maxcol = rc->rc_height / rc->rc_font->height;
+	rc->rc_maxrow = rc->rc_width / rc->rc_font->width;
+#else
 	if (cputyp == CPU_SUN4) {
-		fb->fb_rcons.rc_maxcol = 80;
-		fb->fb_rcons.rc_maxrow = 34;
+		rc->rc_maxcol = 80;
+		rc->rc_maxrow = 34;
 	} else {
-		fb->fb_rcons.rc_maxcol =
+		rc->rc_maxcol =
 		    a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-		fb->fb_rcons.rc_maxrow =
+		rc->rc_maxrow =
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
+#endif
 
+#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
 	/* Determine addresses of prom emulator row and column */
 	if (cputyp == CPU_SUN4 ||
-	    romgetcursoraddr(&fb->fb_rcons.rc_row, &fb->fb_rcons.rc_col))
-		fb->fb_rcons.rc_row = fb->fb_rcons.rc_col = NULL;
+	    romgetcursoraddr(&rc->rc_row, &rc->rc_col))
+#endif
+		rc->rc_row = rc->rc_col = NULL;
 
-	fb->fb_rcons.rc_bell = fb_bell;
-	rcons_init(&fb->fb_rcons);
+	rc->rc_bell = fb_bell;
+	rcons_init(rc);
 	/* Hook up virtual console */
 	v_putc = (int (*) __P((int)))rcons_cnputc;
 }
