@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.2 1999/01/08 19:55:17 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.3 1999/04/25 01:20:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  * written by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
  * Technical manual available at
- * http://www.amd.com/products/npd/techdocs/19113a.pdf
+ * http://www.amd.com/products/npd/techdocs/techdocs.html
  */
 
 #include <sys/param.h>
@@ -52,6 +52,9 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#include <machine/bswap.h>
+#endif
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -434,13 +437,20 @@ pcscp_dma_intr(sc)
 				(NCR_READ_REG(sc, NCR_TCM) << 8),
 			NCR_READ_REG(sc, NCR_TCL),
 			NCR_READ_REG(sc, NCR_TCM)));
-		WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE |
-			     (datain ? DMACMD_DIR : 0));
-		bus_dmamap_unload(esc->sc_dmat, dmap);
 		return 0;
 	}
 
 	resid = 0;
+	/*
+	 * If a transfer onto the SCSI bus gets interrupted by the device
+	 * (e.g. for a SAVEPOINTER message), the data in the FIFO counts
+	 * as residual since the ESP counter registers get decremented as
+	 * bytes are clocked into the FIFO.
+	 */
+	if (!datain &&
+	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("pcscp_dma_intr: empty esp FIFO of %d ", resid));
+	}
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
 		/*
@@ -555,9 +565,11 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 #endif
 
 	/*
-	 * XXX should handle `Transfer Pad' operation?
+	 * No need to set up DMA in `Transfer Pad' operation.
 	 * (case of *dmasize == 0)
 	 */
+	if (*dmasize == 0)
+		return 0;
 
 	error = bus_dmamap_load(esc->sc_dmat, dmap, *esc->sc_dmaaddr,
 				*esc->sc_dmalen, NULL,
@@ -630,6 +642,10 @@ pcscp_dma_go(sc)
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 	bus_dmamap_t dmap = esc->sc_xfermap, mdldmap = esc->sc_mdldmap;
 	int datain = esc->sc_datain;
+
+	/* No DMA transfer in Transfer Pad operation */
+	if (esc->sc_dmasize == 0)
+		return;
 
 	/* sync transfer buffer */
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
