@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1999/01/08 09:20:37 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1999/01/13 12:17:15 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1898,15 +1898,26 @@ pmap_zero_page(phys)
 	register paddr_t	phys;
 {
 	int	s;
+	int	dst_pte = PG_RW | PG_V;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the page; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		dst_pte |= PG_CCB;
+	}
+#endif
 
 	s = splimp();
 
-	*CMAP1 = phys | PG_CI | PG_RW | PG_V;
+	*CMAP1 = phys | dst_pte;
 	TBIS((vaddr_t)CADDR1);
 	zeropage(CADDR1);
 
@@ -1938,16 +1949,28 @@ pmap_copy_page(src, dst)
 	register paddr_t	src, dst;
 {
 	int	s;
+	int	src_pte = PG_RO | PG_V;
+	int	dst_pte = PG_RW | PG_V;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-	s = splimp();
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the page; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		dst_pte |= PG_CCB;
+	}
+#endif
 
-	*CMAP1 = src | PG_CI | PG_RO | PG_V;
+	s = splimp();
+	*CMAP1 = src | src_pte;
 	TBIS((vaddr_t)CADDR1);
-	*CMAP2 = dst | PG_CI | PG_RW | PG_V;
+	*CMAP2 = dst | dst_pte;
 	TBIS((vaddr_t)CADDR2);
 
 	copypage(CADDR1, CADDR2);
