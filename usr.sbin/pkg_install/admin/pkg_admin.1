@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.30 2004/02/13 17:56:18 wiz Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.31 2004/08/13 13:28:46 agc Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -36,7 +36,7 @@
 .Nd perform various administrative tasks to the pkg system
 .Sh SYNOPSIS
 .Nm
-.Op Fl bSV
+.Op Fl bSVq
 .Nb -words
 .Op Fl d Ar lsdir
 .Bk -words
@@ -74,6 +74,12 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl q
+Perform checks in a quiet manner.
+In normal operation,
+.Nm
+prints a '.' to standard output to indicate progress.
+This option suppresses this progress indicator.
 .It Fl S
 Set the shell glob pattern for package suffixes when matching package
 names for
