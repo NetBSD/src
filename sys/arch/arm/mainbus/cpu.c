@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2001/03/03 17:49:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2001/03/03 18:04:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -452,85 +452,6 @@ identify_arm_fpu(cpu_number)
 		    cpu->fpu_model);
 		break;
 	}
-}
-
-
-int
-cpuopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	struct cpu_softc *sc;
-	int unit;
-	int s;
-    
-    	unit = minor(dev);
-	if (unit >= cpu_cd.cd_ndevs)
-		return(ENXIO);
-
-	sc = cpu_cd.cd_devs[unit];
-	if (!sc) return(ENXIO);
-
-	s = splhigh();
-	if (sc->sc_open) {
-		(void)splx(s);
-		return(EBUSY);
-	}
-
-	++sc->sc_open;   
-	(void)splx(s);
-
-	return(0);
-}
-
-
-int
-cpuclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
-{
-	struct cpu_softc *sc;
-	int unit;
-	int s;
-
-	unit = minor(dev);
-	sc = cpu_cd.cd_devs[unit];
-
-	if (sc->sc_open == 0) return(ENXIO);
-    
-	s = splhigh();
-	--sc->sc_open;
-	(void)splx(s);
-      
-	return(0);
-}
-
-
-int
-cpuioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	struct cpu_softc *sc;
-	int unit;
-
-	unit = minor(dev);
-	sc = cpu_cd.cd_devs[unit];
-
-	switch (cmd) {
-	default:
-		return(ENXIO);
-		break;
-	}   
-
-	return(0);
 }
 
 /* End of cpu.c */
