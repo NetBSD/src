@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.7 2001/05/31 21:00:07 gmcgarry Exp $
+.\"     $NetBSD: lock.9,v 1.8 2001/07/01 03:24:51 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -312,10 +312,26 @@ the system call is restarted.
 .It Bq Er EWOULDBLOCK
 Non-null lock timeout and timeout expires.
 .El
-.Sh HISTORY
-The kernel locking API first appeared in 4.4BSD-Lite2.
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing or utilising the locking
+framework can be found.  All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The locking framework itself is implemented within the file
+.Pa sys/kern/kern_lock.c .
+Data structures and function prototypes for the framework are located
+in
+.Pa sys/sys/lock.h .
+Machine-dependent simplelock primitives are implemented within the
+file
+.Pa sys/arch/<arch>/include/lock.h .
 .Sh SEE ALSO
 .Xr pmap 9 ,
 .Xr spl 9 ,
 .Xr tsleep 9 ,
 .Xr uvm 9 .
+.Sh HISTORY
+The kernel locking API first appeared in
+.Bx 4.4 -lite2.
