@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.61 1998/08/14 16:50:01 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.62 1998/08/25 01:09:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,12 +163,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 1998/08/14 16:50:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 1998/08/25 01:09:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/buf.h>
 #ifdef SYSVSHM
@@ -276,6 +277,11 @@ int		pv_nfree;
  * page tables are allocated.
  */
 LIST_HEAD(, pmap) pmap_all_pmaps;
+
+/*
+ * The pool from which pmap structures are allocated.
+ */
+struct pool pmap_pmap_pool;
 
 /*
  * Address Space Numbers.
@@ -793,8 +799,10 @@ pmap_bootstrap(ptaddr, maxasn)
 #endif
 
 	/*
-	 * Intialize the pmap list.
+	 * Intialize the pmap pool and list.
 	 */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, NULL, NULL, 0);
 	LIST_INIT(&pmap_all_pmaps);
 
 	/*
@@ -1043,8 +1051,7 @@ pmap_create(size)
 		return(NULL);
 #endif /* PMAP_NEW */
 
-	/* XXX: is it ok to wait here? */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 #ifdef notifwewait
 	if (pmap == NULL)
 		panic("pmap_create: cannot allocate a pmap");
@@ -1114,7 +1121,7 @@ pmap_destroy(pmap)
 	 * Reference count is zero: free all resources held by this pmap.
 	 */
 	pmap_release(pmap);
-	free(pmap, M_VMPMAP);
+	pool_put(&pmap_pmap_pool, pmap);
 }
 
 /*
