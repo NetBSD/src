@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.26 2001/03/17 18:46:26 bjh21 Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.27 2001/03/17 20:34:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -62,7 +62,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));

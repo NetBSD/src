@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.12 2001/03/17 18:46:25 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.13 2001/03/17 20:34:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -57,7 +57,7 @@
 #include <arm32/podulebus/escvar.h>
 #include <arm32/podulebus/coscreg.h>
 #include <arm32/podulebus/coscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
