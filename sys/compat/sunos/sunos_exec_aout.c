@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.3 2001/11/13 02:09:18 lukem Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.4 2001/11/26 18:15:16 fredette Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.3 2001/11/13 02:09:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.4 2001/11/26 18:15:16 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ exec_sunos_aout_makecmds(p, epp)
 	struct sunos_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
 
-	if(sunmag->a_machtype != SUNOS_M_NATIVE)
+	if (!SUNOS_M_NATIVE(sunmag->a_machtype))
 		return (ENOEXEC);
 
 	switch (sunmag->a_magic) {
@@ -90,13 +90,13 @@ exec_sunos_aout_makecmds(p, epp)
 }
 
 /*
- * the code below is only needed for sun3 emulation.
+ * the code below is only needed for sun2/sun3 emulation.
  */
 #ifndef __sparc__
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ		0x20000
-#define SUNOS_N_TXTADDR(x,m)	__LDPGSZ
+#define SUNOS_N_TXTADDR(x,m)	0x2000
 #define SUNOS_N_DATADDR(x,m)	(((m)==OMAGIC) ? \
 	(SUNOS_N_TXTADDR(x,m) + (x).a_text) : \
 	(SEGSIZ + ((SUNOS_N_TXTADDR(x,m) + (x).a_text - 1) & ~(SEGSIZ-1))))
