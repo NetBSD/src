@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.17 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.18 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -589,6 +589,17 @@ ugen_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct ugen_softc *sc = (struct ugen_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
 	return (0);
 }
 

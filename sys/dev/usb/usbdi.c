@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.31 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.32 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -625,7 +625,8 @@ usb_transfer_complete(reqh)
 	usbd_pipe_handle pipe = reqh->pipe;
 	int polling;
 
-	DPRINTFN(5, ("usb_transfer_complete: pipe=%p reqh=%p\n", pipe, reqh));
+	DPRINTFN(5, ("usb_transfer_complete: pipe=%p reqh=%p actlen=%d\n",
+		     pipe, reqh, reqh->actlen));
 
 #ifdef DIAGNOSTIC
 	if (!pipe) {
