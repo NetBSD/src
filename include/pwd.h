@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.16 1998/07/27 09:09:26 mycroft Exp $	*/
+/*	$NetBSD: pwd.h,v 1.17 1998/07/27 09:33:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -105,7 +105,7 @@ void		 endpwent __P((void));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int		 pw_scan __P((char *bp, struct passwd *pw, int *flags));
 int		 setpassent __P((int));
-char		*user_from_uid __P((uid_t, int));
+__aconst char	*user_from_uid __P((uid_t, int));
 #endif
 __END_DECLS
 
