@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.33 1996/11/29 19:40:56 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.34 1997/02/22 02:04:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.33 1996/11/29 19:40:56 thorpej Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.34 1997/02/22 02:04:42 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -795,18 +795,32 @@ domem()
 	struct kmembuckets buckets[MINBUCKET + 16];
 
 	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
-	(void)printf("Memory statistics by bucket size\n");
-	(void)printf(
-	    "    Size   In Use   Free   Requests  HighWater  Couldfree\n");
-	for (i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16; i++, kp++) {
+	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
+	    i++, kp++) {
 		if (kp->kb_calls == 0)
 			continue;
+		if (first) {
+			(void)printf("Memory statistics by bucket size\n");
+			(void)printf(
+		 "    Size   In Use   Free   Requests  HighWater  Couldfree\n");
+			first = 0;
+		}
 		size = 1 << i;
 		(void)printf("%8d %8ld %6ld %10ld %7ld %10ld\n", size, 
 			kp->kb_total - kp->kb_totalfree,
 			kp->kb_totalfree, kp->kb_calls,
 			kp->kb_highwat, kp->kb_couldfree);
 		totfree += size * kp->kb_totalfree;
+	}
+
+	/*
+	 * If kmem statistics are not being gathered by the kernel,
+	 * first will still be 1.
+	 */
+	if (first) {
+		printf(
+		    "Kmem statistics are not being gathered by the kernel.\n");
+		return;
 	}
 
 	kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
