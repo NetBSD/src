@@ -75,6 +75,7 @@ char	*LF;		/* log file for error messages */
 char	*LO;		/* lock file name */
 char	*LP;		/* line printer device name */
 long	 MC;		/* maximum number of copies allowed */
+char	*MS;		/* stty flags to set if lp is a tty */
 long	 MX;		/* maximum number of blocks to copy */
 char	*NF;		/* name of ditroff filter (per job) */
 char	*OF;		/* name of output filter (created once) */
@@ -110,6 +111,8 @@ char	host[MAXHOSTNAMELEN];
 char	*from = host;	/* client's machine name */
 int	sendtorem;	/* are we sending to a remote? */
 char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
+
+extern uid_t	uid, euid;
 
 static int compar __P((const void *, const void *));
 
@@ -147,7 +150,9 @@ getport(rhost)
 	 * Try connecting to the server.
 	 */
 retry:
+	seteuid(euid);
 	s = rresvport(&lport);
+	seteuid(uid);
 	if (s < 0)
 		return(-1);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
@@ -214,10 +219,12 @@ getq(namelist)
 	DIR *dirp;
 	int arraysz;
 
+	seteuid(euid);
 	if ((dirp = opendir(SD)) == NULL)
 		return(-1);
 	if (fstat(dirp->dd_fd, &stbuf) < 0)
 		goto errdone;
+	seteuid(uid);
 
 	/*
 	 * Estimate the array size by taking the size of the directory file
@@ -232,8 +239,10 @@ getq(namelist)
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
+		seteuid(euid);
 		if (stat(d->d_name, &stbuf) < 0)
 			continue;	/* Doesn't exist */
+		seteuid(uid);
 		q = (struct queue *)malloc(sizeof(time_t)+strlen(d->d_name)+1);
 		if (q == NULL)
 			goto errdone;
