@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.80 1998/10/11 23:21:02 chuck Exp $ */
+/*	$NetBSD: cpu.c,v 1.81 1998/10/12 20:56:48 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -118,8 +118,8 @@ void fpu_init __P((struct cpu_info *));
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
 
+#if defined(MULTIPROCESSOR)
 struct cpu_info	*alloc_cpuinfo __P((void));
-
 
 struct cpu_info *
 alloc_cpuinfo()
@@ -183,12 +183,12 @@ alloc_cpuinfo()
 	}
 
 	bzero((void *)cpi, sizeof(struct cpu_info));
-
-	cpi->eintstack = (void *)(sva + sz);
-	cpi->idle_u = (void *)(sva + sz - INT_STACK_SIZE - USPACE);
+	cpi->eintstack = (void *)((u_int)cpi + sz);
+	cpi->idle_u = (void *)((u_int)cpi + sz - INT_STACK_SIZE - USPACE);
 
 	return (cpi);
 }
+#endif /* MULTIPROCESSOR */
 
 #ifdef notdef
 /*
@@ -273,8 +273,15 @@ static	int cpu_number;
 		cpi->master = 1;
 		cpi->eintstack = eintstack;
 		cpi->idle_u = idle_u;
+		/* Note: `curpcb' is set to `proc0' in locore */
 	} else {
+#if defined(MULTIPROCESSOR)
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
+		cpi->curpcb = cpi->idle_u;
+		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
+#else
+		printf(": no SMP support in kernel\n");
+#endif
 	}
 
 #ifdef DEBUG
@@ -313,14 +320,6 @@ static	int cpu_number;
 		cpuinfo.vcache_flush_region = smp_vcache_flush_region;
 		cpuinfo.vcache_flush_context = smp_vcache_flush_context;
 	}
-
-#ifdef DEBUG
-	printf("***\n");
-	if (ncpu >= 4)
-		callrom();
-#endif
-#else
-	printf(": no SMP support in kernel\n");
 #endif /* MULTIPROCESSOR */
 }
 
