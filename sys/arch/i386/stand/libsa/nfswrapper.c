@@ -1,4 +1,4 @@
-/*	$NetBSD: nfswrapper.c,v 1.2 1997/03/22 09:13:50 thorpej Exp $	 */
+/*	$NetBSD: nfswrapper.c,v 1.3 1997/06/13 13:36:10 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,9 +33,11 @@
 
 /*
  * Makes the (filesystem dependant) mount part of open. Necessary for
- * interoperation with tftp filesystem on same net device layer. Assumes: -
- * socket descriptor (int) at open_file->f_devdata - server host IP in global
- * rootip - path to mount in globel rootpath
+ * interoperation with tftp filesystem on same net device layer.
+ * Assumes:
+ *  - socket descriptor (int) at open_file->f_devdata
+ *  - server host IP in global rootip
+ *  - path to mount in globel rootpath
  */
 
 #include <sys/param.h>

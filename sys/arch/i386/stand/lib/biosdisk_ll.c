@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.2 1997/03/22 01:41:36 thorpej Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.3 1997/06/13 13:36:06 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -36,8 +36,8 @@
  */
 
 /*
- * shared by bootsector startup (bootsectmain) and biosdisk.c needs lowlevel
- * parts from bios_disk.S
+ * shared by bootsector startup (bootsectmain) and biosdisk.c
+ * needs lowlevel parts from bios_disk.S
  */
 
 #include <lib/libsa/stand.h>
