@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.4 1999/05/10 01:58:37 cgd Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.5 1999/05/10 05:58:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -65,11 +65,99 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/socketvar.h>
+#include <sys/exec.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
+
+int
+osf1_sys_recvmsg_xopen(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	/* XXX */
+	return (EINVAL);
+}
+
+int
+osf1_sys_sendmsg_xopen(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_sendmsg_xopen_args *uap = v;
+	struct sys_sendmsg_args a;
+	struct osf1_msghdr_xopen osf_msghdr;
+	struct osf1_iovec_xopen osf_iovec, *osf_iovec_ptr;
+	struct msghdr bsd_msghdr;
+	struct iovec bsd_iovec, *bsd_iovec_ptr;
+	unsigned long leftovers;
+	caddr_t sg;
+	unsigned int i;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+
+	SCARG(&a, s) = SCARG(uap, s);
+
+	/*
+	 * translate msghdr structure
+	 */
+	if ((error = copyin(SCARG(uap, msg), &osf_msghdr,
+	    sizeof osf_msghdr)) != 0)
+		return (error);
+
+	error = osf1_cvt_msghdr_xopen_to_native(&osf_msghdr, &bsd_msghdr);
+	if (error != 0)
+		return (error);
+
+        if (STACKGAPLEN < (bsd_msghdr.msg_iovlen * sizeof (struct iovec) +
+	    sizeof (struct msghdr)))
+{
+printf("sendmsg space\n");
+                return (EINVAL);
+}
+
+	SCARG(&a, msg) = stackgap_alloc(&sg, sizeof bsd_msghdr);
+	bsd_msghdr.msg_iov = stackgap_alloc(&sg,
+	    bsd_msghdr.msg_iovlen * sizeof (struct iovec));
+
+	if ((error = copyout(&bsd_msghdr, (caddr_t)SCARG(&a, msg),
+	    sizeof bsd_msghdr)) != 0)
+		return (error);
+
+	osf_iovec_ptr = osf_msghdr.msg_iov;
+	bsd_iovec_ptr = bsd_msghdr.msg_iov;
+	for (i = 0; i < bsd_msghdr.msg_iovlen; i++) {
+		if ((error = copyin(&osf_iovec_ptr[i], &osf_iovec,
+		    sizeof osf_iovec)) != 0)
+			return (error);
+
+                bsd_iovec.iov_base = osf_iovec.iov_base;
+                bsd_iovec.iov_len = osf_iovec.iov_len;
+
+		if ((error = copyout(&bsd_iovec, &bsd_iovec_ptr[i],
+		    sizeof bsd_iovec)) != 0)
+			return (error);
+	}
+
+	/*
+	 * translate flags
+	 */
+	SCARG(&a, flags) = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+{
+printf("sendmsg flags leftover: 0x%lx\n", leftovers);
+		return (EINVAL);
+}
+
+	return sys_sendmsg(p, &a, retval);
+}
 
 int
 osf1_sys_sendto(p, v, retval)
