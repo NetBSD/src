@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.13 2002/03/10 22:27:04 christos Exp $	*/
+/*	$NetBSD: rbus.c,v 1.14 2002/04/22 19:29:55 matt Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.13 2002/03/10 22:27:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.14 2002/04/22 19:29:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,6 @@ rbus_new(parent, start, size, offset, flags)
 	} else if (flags == RBUS_SPACE_DEDICATE) {
 		if (NULL == (ex = extent_create("rbus", start, end, M_DEVBUF,
 		    NULL, 0, EX_NOCOALESCE|EX_NOWAIT))) {
-			free(rb, M_DEVBUF);
 			return NULL;
 		}
 	} else if (flags == RBUS_SPACE_ASK_PARENT) {
