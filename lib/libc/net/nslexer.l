@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.2 1999/01/15 12:53:25 lukem Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.3 1999/01/25 00:16:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: nslexer.l,v 1.3 1999/01/25 00:16:17 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 #include <err.h>
