@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.11 1998/06/02 20:41:53 mark Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.12 1999/02/07 09:34:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -27,7 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_md.h"
 #include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
