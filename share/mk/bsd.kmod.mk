@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.75 2004/05/12 16:56:43 cl Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.76 2004/05/14 14:07:46 cl Exp $
 
 .include <bsd.init.mk>
 
@@ -116,7 +116,7 @@ ${PROG}: ${OBJS} ${DPADD}
 	@rm -f xen && \
 	    ln -s $S/arch/xen/include xen
 	@rm -rf xen-ma && mkdir xen-ma && \
-	    ln -s $S/arch/${XEN_BUILD:U${MACHINE_ARCH}}/include xen-ma/machine
+	    ln -s ../${XEN_BUILD:U${MACHINE_ARCH}} xen-ma/machine
 .endif
 .endif
 
