@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.4 1993/07/13 10:16:40 cgd Exp $
+ *	$Id: vmparam.h,v 1.5 1993/09/04 00:38:47 cgd Exp $
  */
 
 
@@ -73,7 +73,7 @@
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
+#define	MAXSSIZ		(2*1024*1024)		/* max stack size */
 #endif
 
 /*
