@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.18 1999/01/19 10:57:11 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.19 1999/01/29 11:17:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,9 +287,13 @@ scsipi_interpret_sense(xs)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
 				return (0);
+			if (sense->add_sense_code == 0x3A &&
+			    sense->add_sense_code_qual == 0x00)
+				error = ENODEV; /* Medium not present */
+			else
+				error = EIO;
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return (EIO);
-			error = EIO;
+				return (error);
 			break;
 		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)

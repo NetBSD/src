@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.119 1999/01/26 13:59:44 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.120 1999/01/29 11:17:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -257,7 +257,8 @@ cdopen(dev, flag, fmt, p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
+			(part != RAW_PART || fmt != S_IFCHR )) {
 			error = EIO;
 			goto bad3;
 		}
@@ -282,7 +283,7 @@ cdopen(dev, flag, fmt, p)
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("cdopen: scsipi_start, error=%d\n", error));
 		if (error) {
-			if (part != RAW_PART) 
+			if (part != RAW_PART || fmt != S_IFCHR) 
 				goto bad3;
 			else
 				goto out;
@@ -420,7 +421,10 @@ cdstrategy(bp)
 	 * maybe the media changed
 	 */
 	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		bp->b_error = EIO;
+		if (cd->sc_link->flags & SDEV_OPEN)
+			bp->b_error = EIO;
+		else
+			bp->b_error = ENODEV;
 		goto bad;
 	}
 	/*
@@ -529,7 +533,7 @@ cdstart(v)
 		dp->b_actf = bp->b_actf;
 
 		/*
-		 * If the deivce has become invalid, abort all the
+		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
 		 * re-opened
 		 */
@@ -730,6 +734,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		case CDIOCSETLEFT:
 		case CDIOCSETRIGHT:
 		case CDIOCCLOSE:
+		case CDIOCEJECT:
 		case CDIOCALLOW:
 		case CDIOCPREVENT:
 		case CDIOCSETDEBUG:
@@ -741,7 +746,10 @@ cdioctl(dev, cmd, addr, flag, p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			return (EIO);
+			if ((cd->sc_link->flags & SDEV_OPEN) == 0)
+				return (ENODEV);
+			else
+				return (EIO);
 		}
 	}
 
