@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.106 2000/03/30 13:25:05 augustss Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.107 2000/05/05 14:51:46 matt Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1352,8 +1352,8 @@ after_listen:
 			tp->snd_una = tp->snd_recover = th->th_ack;
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		}
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->irs = th->th_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
