@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.6 1998/09/01 18:11:13 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.7 1998/09/17 18:14:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -288,6 +288,7 @@ static const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
+	{0, 0, 0, 0}
 };
 
 #undef KBD_MAP
