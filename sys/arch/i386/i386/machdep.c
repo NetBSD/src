@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.346 1999/03/26 23:41:29 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.347 1999/03/30 08:21:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
+#include "opt_bufcache.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_vm86.h"
