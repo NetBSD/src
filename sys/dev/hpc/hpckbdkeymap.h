@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.7 2001/03/24 17:33:12 uch Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.8 2001/04/05 11:37:18 sato Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ static u_int8_t mobilepro_keytrans[] = {
 /*30	k	j	h	g	4	3	2	1	*/
 /*38	i	u	y	t	-	caps	del	esc	*/
 /*40	alt_R	-	-	-	BS	p	TAB	Fn	*/
-/*48	-	alt_L	-	-	f12	f11	f10	f9	*/
+/*48	-	alt_L	-	-	pgdn	pgup	f10	f9	*/
 /*50	-	-	ctrl	-	f8	f7	f6	f5	*/
 /*58	-	-	-	shift	f4	f3	f2	f1	*/
 /*----------------------------------------------------------------------*/
@@ -314,10 +314,20 @@ static u_int8_t mobilepro_keytrans[] = {
 /*28*/	 51,	 50,	 49,	 48,	IGN,	IGN,	 11,	 10,
 /*30*/	 37,	 36,	 35,	 34,	  5,	  4,	  3,	  2,
 /*38*/	 23,	 22,	 21,	 20,	IGN,	 58,	 14,	  1,
-/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	IGN,
-/*48*/	IGN,	 56,	IGN,	IGN,	 88,	 87,	 68,	 67,
+/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	219,
+/*48*/	IGN,	 56,	IGN,	IGN,	 81,	 73,	 68,	 67,
 /*50*/	IGN,	IGN,	 29,	IGN,	 66,	 65,	 64,	 63,
 /*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
+};
+
+static const keysym_t mobilepro_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(219), KS_Cmd,		KS_Meta_L,	KS_Multi_key,
+	KC(73),  KS_Cmd_BrightnessUp,	KS_KP_Prior,	KS_KP_9,
+	KC(81),  KS_Cmd_BrightnessDown,	KS_KP_Next,	KS_KP_3,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 /* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
@@ -581,7 +591,7 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_NEC_MCR_520A,
 		mobilepro_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(mobilepro_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_530A,
 		mobilepro_keytrans,
