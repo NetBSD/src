@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.10 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: KARLA,v 1.11 2001/11/17 23:56:22 gmcgarry Exp $
 #
 # KARLA
 #
@@ -76,6 +76,12 @@ mainbus0	at root
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
+
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# Human Interface Loop
+hil*		at intio?
 
 topcat*		at intio?		# DAVE - remove one of these
 topcat*		at dio? scode?

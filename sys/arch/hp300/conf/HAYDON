@@ -1,4 +1,4 @@
-#	$NetBSD: HAYDON,v 1.12 2001/07/08 16:32:17 abs Exp $
+#	$NetBSD: HAYDON,v 1.13 2001/11/17 23:56:22 gmcgarry Exp $
 #
 # HAYDON
 #
@@ -81,6 +81,8 @@ mainbus0	at root
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
+rtc*		at intio?
+hil*		at intio?
 
 topcat*		at intio?		# DAVE - remove one of these
 topcat*		at dio? scode?
