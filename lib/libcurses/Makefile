@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2003/05/21 21:19:52 jdc Exp $
+#	$NetBSD: Makefile,v 1.46 2003/06/20 06:56:30 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -11,6 +11,9 @@ CFLAGS+=-g
 CPPFLAGS+=-DDEBUG
 .endif
 .endif
+.if defined(SMALL)
+CPPFLAGS+=-DSMALL
+.endif
 LIB=	curses
 SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	background.c bell.c border.c box.c clear.c clearok.c clrtobot.c \
@@ -18,6 +21,7 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	curses.c delch.c deleteln.c delwin.c erase.c flushok.c fullname.c \
 	getch.c getstr.c getyx.c id_subwins.c idlok.c idcok.c inch.c \
 	inchstr.c initscr.c insch.c insdelln.c insertln.c instr.c keypad.c \
+	keyname.c \
 	leaveok.c line.c longname.c meta.c move.c mvwin.c newwin.c nodelay.c \
 	notimeout.c overlay.c overwrite.c pause.c printw.c putchar.c \
 	refresh.c resize.c scanw.c screen.c scroll.c scrollok.c setterm.c \
@@ -28,10 +32,11 @@ MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
 	curses_clear.3 curses_color.3 curses_cursor.3 curses_default_colors.3 \
 	curses_delch.3 curses_deleteln.3 curses_inch.3 curses_input.3 \
-	curses_insertch.3 curses_insertln.3 curses_insdelln.3 curses_line.3 \
-	curses_pad.3 curses_print.3 curses_refresh.3 curses_scanw.3 \
-	curses_screen.3 curses_scroll.3 curses_standout.3 curses_termcap.3 \
-	curses_touch.3 curses_tty.3 curses_underscore.3 curses_window.3
+	curses_insertch.3 curses_insertln.3 curses_insdelln.3 \
+	curses_keyname.3 curses_line.3 curses_pad.3 curses_print.3 \
+	curses_refresh.3 curses_scanw.3 curses_screen.3 curses_scroll.3 \
+	curses_standout.3 curses_termcap.3 curses_touch.3 curses_tty.3 \
+	curses_underscore.3 curses_window.3
 INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 
@@ -84,6 +89,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_insertln.3 insertln.3 curses_inch.3 instr.3 \
 	 curses_tty.3 intrflush.3 curses_touch.3 is_linetouched.3 \
 	 curses_touch.3 is_wintouched.3 curses_screen.3 isendwin.3 \
+	 curses_keyname.3 keyname.3 \
 	 curses_input.3 keypad.3 curses_tty.3 killchar.3 \
 	 curses_refresh.3 leaveok.3 curses_termcap.3 longname.3 \
 	 curses_tty.3 meta.3 curses_cursor.3 move.3 \
