@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.37 2003/07/15 00:24:40 lukem Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.38 2003/09/21 00:26:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.37 2003/07/15 00:24:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.38 2003/09/21 00:26:09 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -267,7 +267,7 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	bufsize = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(bufsize),
+	if (uvm_map(kernel_map, (void *)&buffers, round_page(bufsize),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0)) != 0)
