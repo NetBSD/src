@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.2 1999/03/11 18:31:05 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.3 1999/05/16 22:38:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
  * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +203,8 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE, wsmouse), /* 41: wscons mouse driver */
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
-	cdev_wsdisplay_init(NWSDISPLAY,
-			    wsdisplay), /* 44: frame buffers, etc. */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 45: frame buffers, etc. */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

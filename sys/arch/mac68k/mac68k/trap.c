@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.68.2.1 1999/05/16 22:38:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,6 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
-#include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_linux.h"
@@ -81,9 +80,9 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
+
+#include "zsc.h"
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -275,11 +274,7 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.traps++;
-#else
-	cnt.v_trap++;
-#endif
 	p = curproc;
 	ucode = 0;
 
@@ -518,65 +513,43 @@ copyfault:
 
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
+#if NZSC > 0
 		if (ssir & SIR_SERIAL) {
 			void zssoft __P((int));
 			siroff(SIR_SERIAL);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			zssoft(0);
 		}
+#endif
 		if (ssir & SIR_NET) {
 			void netintr __P((void));
 			siroff(SIR_NET);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
 			void softclock __P((void));
 			siroff(SIR_CLOCK);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			softclock();
 		}
 		if (ssir & SIR_DTMGR) {
 			void mrg_execute_deferred __P((void));
 			siroff(SIR_DTMGR);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			mrg_execute_deferred();
 		}
 		if (ssir & SIR_ADB) {
 			void adb_soft_intr __P((void));
 			siroff(SIR_ADB);
-#if defined(UVM)
 			uvmexp.softs++;
-#else
-			cnt.v_soft++;
-#endif
 			adb_soft_intr();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-#if defined(UVM)
 			uvmexp.traps--;
-#else
-			cnt.v_trap--;
-#endif
 			return;
 		}
 		spl0();
@@ -634,21 +607,12 @@ copyfault:
 			goto dopanic;
 		}
 #endif
-#if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
-#else /* ! UVM */
-		rv = vm_fault(map, va, ftype, FALSE);
-#ifdef DEBUG
-		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-				map, va, ftype, rv);
-#endif
-#endif /* UVM */
 		/*
 		 * If this was a stack access, we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -680,19 +644,22 @@ copyfault:
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-#if defined(UVM)
 			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
-#else
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
-			       map, va, ftype, rv);
-#endif
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 				type, code);
 			goto dopanic;
 		}
 		ucode = v;
-		i = SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			i = SIGKILL;
+		} else {
+			i = SIGSEGV;
+		}
 		break;
 	    }
 	}
@@ -773,7 +740,8 @@ writeback(fp, docachepush)
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE);
+			    trunc_page(f->f_fa), VM_PROT_WRITE, TRUE,
+			    VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
@@ -1025,11 +993,7 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
-#if defined(UVM)
 	uvmexp.syscalls++;
-#else
-	cnt.v_syscall++;
-#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
