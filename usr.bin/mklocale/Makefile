@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$NetBSD: Makefile,v 1.5 2001/01/28 00:28:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2001/08/14 10:18:28 tv Exp $
 #	$FreeBSD: src/usr.bin/mklocale/Makefile,v 1.19.2.1 1999/08/29 15:31:03 peter Exp $
 
 WARNS?=	2
@@ -12,4 +12,6 @@ CLEANFILES+= y.tab.c y.tab.h
 YHEADER=	yes
 lex.o:	yacc.h					# for parallel make.
 
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
+.endif
