@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mathimpl.h	5.4 (Berkeley) 3/5/91
- *	$Id: mathimpl.h,v 1.2 1993/08/01 18:34:55 mycroft Exp $
+ *	$Id: mathimpl.h,v 1.3 1993/08/03 23:05:16 jtc Exp $
  */
 
 #include <sys/cdefs.h>
@@ -80,7 +80,7 @@
 
    /* Hooray, we have an IEEE machine */
 #  undef vccast
-#  define vc(name, value, x1,x2,x3,x4, bexp, xval) ;
+#  define vc(name, value, x1,x2,x3,x4, bexp, xval)
 
 #  define ic(name, value, bexp, xval) \
 	const static double name = value;
