@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.20 2002/12/22 00:17:15 gmcgarry Exp $	*/
+/*	$NetBSD: dio.c,v 1.21 2003/01/01 01:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.20 2002/12/22 00:17:15 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.21 2003/01/01 01:34:45 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -194,8 +194,9 @@ dioprint(aux, pnp)
 	char buf[128];
 
 	if (pnp)
-		printf("%s at %s", dio_devinfo(da, buf, sizeof(buf)), pnp);
-	printf(" scode %d", da->da_scode);
+		aprint_normal("%s at %s",
+		    dio_devinfo(da, buf, sizeof(buf)), pnp);
+	aprint_normal(" scode %d", da->da_scode);
 	return (UNCONF);
 }
 

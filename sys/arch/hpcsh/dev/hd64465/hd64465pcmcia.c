@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.10 2002/10/02 15:45:21 thorpej Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.11 2003/01/01 01:41:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ hd64465pcmcia_print(void *arg, const char *pnp)
 {
 
 	if (pnp)
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 
 	return (UNCONF);
 }

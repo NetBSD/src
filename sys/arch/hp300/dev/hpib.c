@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.23 2002/10/02 05:15:52 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.24 2003/01/01 01:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.23 2002/10/02 05:15:52 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.24 2003/01/01 01:34:46 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ hpibbusprint(aux, pnp)
 {
 	struct hpibbus_attach_args *ha = aux;
 
-	printf(" slave %d punit %d", ha->ha_slave, ha->ha_punit);
+	aprint_normal(" slave %d punit %d", ha->ha_slave, ha->ha_punit);
 	return (UNCONF);
 }
 
@@ -276,7 +276,7 @@ hpibdevprint(aux, pnp)
 
 	/* only hpibbus's can attach to hpibdev's -- easy. */
 	if (pnp != NULL)
-		printf("hpibbus at %s", pnp);
+		aprint_normal("hpibbus at %s", pnp);
 	return (UNCONF);
 }
 

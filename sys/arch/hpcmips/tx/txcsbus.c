@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.13 2002/10/02 05:26:51 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.14 2003/01/01 01:40:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ txcsbus_print(void *aux, const char *pnp)
 	struct cs_attach_args *ca = aux;
 	
 	if (ca->ca_csreg.cs != TXCSBUSCF_REGCS_DEFAULT) {
-		printf(" regcs %s %dbit %#x+%#x", 
+		aprint_normal(" regcs %s %dbit %#x+%#x", 
 		    __csmap[ca->ca_csreg.cs].cs_name,
 		    ca->ca_csreg.cswidth,
 		    ca->ca_csreg.csbase,
@@ -155,7 +155,7 @@ txcsbus_print(void *aux, const char *pnp)
 	}
 
 	if (ca->ca_csio.cs != TXCSBUSCF_IOCS_DEFAULT) {
-		printf(" iocs %s %dbit %#x+%#x", 
+		aprint_normal(" iocs %s %dbit %#x+%#x", 
 		    __csmap[ca->ca_csio.cs].cs_name,
 		    ca->ca_csio.cswidth,
 		    ca->ca_csio.csbase,
@@ -163,7 +163,7 @@ txcsbus_print(void *aux, const char *pnp)
 	}
 
 	if (ca->ca_csmem.cs != TXCSBUSCF_MEMCS_DEFAULT) {
-		printf(" memcs %s %dbit %#x+%#x", 
+		aprint_normal(" memcs %s %dbit %#x+%#x", 
 		    __csmap[ca->ca_csmem.cs].cs_name,
 		    ca->ca_csmem.cswidth,
 		    ca->ca_csmem.csbase,
@@ -171,15 +171,15 @@ txcsbus_print(void *aux, const char *pnp)
 	}
 	
 	if (ca->ca_irq1 != TXCSBUSCF_IRQ1_DEFAULT) {
-		printf(" irq1 %d(%d:%d)", PRINTIRQ(ca->ca_irq1));
+		aprint_normal(" irq1 %d(%d:%d)", PRINTIRQ(ca->ca_irq1));
 	}
 
 	if (ca->ca_irq2 != TXCSBUSCF_IRQ2_DEFAULT) {
-		printf(" irq2 %d(%d:%d)", PRINTIRQ(ca->ca_irq2));
+		aprint_normal(" irq2 %d(%d:%d)", PRINTIRQ(ca->ca_irq2));
 	}
 
 	if (ca->ca_irq3 != TXCSBUSCF_IRQ3_DEFAULT) {
-		printf(" irq3 %d(%d:%d)", PRINTIRQ(ca->ca_irq3));
+		aprint_normal(" irq3 %d(%d:%d)", PRINTIRQ(ca->ca_irq3));
 	}
 
 	return (UNCONF);

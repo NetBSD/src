@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.2 2002/10/02 05:31:46 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.3 2003/01/01 01:42:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.2 2002/10/02 05:31:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.3 2003/01/01 01:42:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,10 @@ sio_print(aux, name)
 	struct sio_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		aprint_normal("%s: ", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		aprint_normal(" channel %d", args->channel);
 
 	return UNCONF;
 }

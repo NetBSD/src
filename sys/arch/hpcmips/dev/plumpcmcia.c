@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.14 2002/10/02 05:26:46 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.15 2003/01/01 01:40:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -286,7 +286,7 @@ int
 plumpcmcia_print(void *arg, const char *pnp)
 {
 	if (pnp) {
-		printf("pcmcia at %s", pnp);
+		aprint_normal("pcmcia at %s", pnp);
 	}
 
 	return (UNCONF);

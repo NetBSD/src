@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.8 2002/03/15 05:52:54 gmcgarry Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.9 2003/01/01 01:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.8 2002/03/15 05:52:54 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.9 2003/01/01 01:34:46 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ grfdevprint(aux, pnp)
 
 	/* Only grf's can attach to grfdev's... easy. */
 	if (pnp)
-		printf("grf at %s", pnp);
+		aprint_normal("grf at %s", pnp);
 
 	return (UNCONF);
 }

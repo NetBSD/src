@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.4 2002/10/02 05:17:48 thorpej Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.5 2003/01/01 01:35:42 thorpej Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -696,7 +696,7 @@ mgprint(aux, pnp)
 	union mongoose_attach_args *ea = aux;
 
 	if (pnp)
-		printf ("%s at %s", ea->mongoose_name, pnp);
+		aprint_normal ("%s at %s", ea->mongoose_name, pnp);
 
 	return (UNCONF);
 }
