@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_value.3,v 1.8 2002/07/29 13:26:56 wiz Exp $
+.\"	$NetBSD: menu_item_value.3,v 1.9 2002/07/29 13:30:13 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -57,12 +57,12 @@ to set the value to a defined state.  Setting the value to a value
 other than TRUE or FALSE will have undefined results.
 The
 .Fn item_selected
-fucntion returns the number of items that are selected in the menu, that
+function returns the number of items that are selected in the menu, that
 is the number of items whose value is TRUE.  The indexes of the selected
 items will be returned in
 .Fa array
 which will be dynamically allocated to hold the number of indexes.  It
-is the reponsibility of the caller to release this storage by calling
+is the responsibility of the caller to release this storage by calling
 .Xr free 3
 when the storage is no longer required.  If there are no elements selected
 in the items array then
