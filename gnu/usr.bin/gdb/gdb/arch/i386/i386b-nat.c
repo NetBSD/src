@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.8 1995/01/26 18:13:49 mycroft Exp $
+	$Id: i386b-nat.c,v 1.9 1995/01/26 22:39:16 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -60,6 +60,7 @@ store_inferior_registers (regno)
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 }
 
+#if 0
 #define	fpstate		save87
 #define	U_FPSTATE(u)	u.u_pcb.pcb_savefpu
 
@@ -302,6 +303,7 @@ i386_float_info ()
   
   print_387_status (0, (struct env387 *)buf);
 }
+#endif
 
 void
 fetch_kcore_registers(pcb)
