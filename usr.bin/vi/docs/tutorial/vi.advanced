@@ -208,7 +208,7 @@ Everything UP TO the word 'looking' was deleted from the line.
 In general, almost any command that would move the cursor will specify a range
 for these commands.  The most confusing exception to this rule is when {dd} or
 {cc} is entered: they refer to the whole line.  Following is a summary of the
-suffixes (suffices? suffici?) and the ranges they specify:
+suffixes and the ranges they specify:
 
     suffix        will delete{d}/change{c}
     ------        ------------------------
@@ -1188,7 +1188,7 @@ create its buffer there.
 Section 44.6: {edcompatible} default: noedcompatible
 
 Causes the presence or absence of g and c suffixes on substitute commands to be
-remembered, and to be toggled by repeating the suffices.  The suffix r makes
+remembered, and to be toggled by repeating the suffixes.  The suffix r makes
 the substitution be as in the {~} command, instead of like {&}.
 
 [Author's note: this should not concern users of vi.]

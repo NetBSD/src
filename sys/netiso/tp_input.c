@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.16 2003/08/11 15:17:30 itojun Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.17 2004/02/13 17:56:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.16 2003/08/11 15:17:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.17 2004/02/13 17:56:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1303,7 +1303,7 @@ again:
 #endif
 
 			/*
-			 * if called or calling suffices appeared on the CC,
+			 * if called or calling suffixes appeared on the CC,
 			 * they'd better jive with what's in the pcb
 			 */
 				if (fsufxlen) {
