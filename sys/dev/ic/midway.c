@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.42 2000/07/06 01:47:38 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.43 2000/07/20 03:47:56 deberg Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -182,8 +182,6 @@
 #if !defined(__FreeBSD__)
 #include <machine/bus.h>
 
-#define LIST_FOREACH(var, head, field)					\
-	for((var) = (head)->lh_first; (var); (var) = (var)->field.le_next)
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
