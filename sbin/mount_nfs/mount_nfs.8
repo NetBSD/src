@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.5 1996/11/26 06:44:36 mikel Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.6 1997/03/23 20:59:56 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,12 +105,8 @@ Used with NQNFS to set the lease term to the specified number of seconds.
 Only use this argument for mounts with a large round trip delay.
 Values are normally in the 10-30 second range.
 .It Fl P
-Use a reserved socket port number.
-This is useful for mounting servers that require clients to use a
-reserved port number on the mistaken belief that this makes NFS
-more secure. (For the rare case where the client has a trusted root account
-but untrustworthy users and the network cables are in secure areas this does
-help, but for normal desktop clients this does not apply.)
+Use a reserved socket port number. This is the default, and available
+for backwards compatibility purposes only.
 .It Fl R
 Set the retry count for doing the mount to the specified value.
 .It Fl T
@@ -183,6 +179,10 @@ flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
+.It Fl p
+Do not use a reserved port number for RPCs. This option is provided only
+to be able to mimic the old default behavior of not using a reserved
+port, and should rarely be useful.
 .It Fl q
 Use the leasing extensions to the NFS Version 3 protocol
 to maintain cache consistency.
