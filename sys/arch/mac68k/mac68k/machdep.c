@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 1999/02/27 06:39:36 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223 1999/02/28 04:52:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,19 +226,6 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
-/*
- * Some of the below are not used yet, but might be used someday on the
- * Q700/900/950 where the interrupt controller may be reprogrammed to
- * interrupt on different levels as listed in locore.s
- */
-unsigned short	mac68k_ttyipl = PSL_S | PSL_IPL1;
-unsigned short	mac68k_bioipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_netipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_impipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_audioipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_clockipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_statclockipl = PSL_S | PSL_IPL2;
-unsigned short	mac68k_schedipl = PSL_S | PSL_IPL3;
 
 /*
  * Extent maps to manage all memory space, including I/O ranges.  Allocate
@@ -305,6 +292,9 @@ mac68k_init()
 			    atop(low[i]), atop(high[i]));
 #endif /* UVM */
 	}
+
+	/* Initialize the interrupt handlers. */
+	intr_init();
 
 	/* Initialize the VIAs */
 	via_init();
@@ -2443,10 +2433,6 @@ mac68k_set_io_offsets(base)
 		sccA = (volatile u_char *)base + 0x4000;
 		SCSIBase = base + 0x18000;
 		PSCBase = (volatile u_char *)base + 0x31000;
-		mac68k_bioipl = PSL_S | PSL_IPL4;
-		mac68k_netipl = PSL_S | PSL_IPL4;
-		mac68k_impipl = PSL_S | PSL_IPL4;
-		mac68k_statclockipl = PSL_S | PSL_IPL4;
 		break;
 	case MACH_CLASSII:
 	case MACH_CLASSPB:
