@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.2 2000/01/21 21:10:41 mjacob Exp $ */
+/*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -91,11 +91,6 @@ typedef struct {
 
 #define	SEN_ID		"UNISYS           SUN_SEN"
 #define	SEN_ID_LEN	24
-
-#define	SAFTE_START	44
-#define	SAFTE_END	50
-#define	SAFTE_LEN	SAFTE_END-SAFTE_START
-
 
 static enctyp ses_type __P((void *, int));
 
@@ -281,6 +276,7 @@ ses_attach(parent, self, aux)
 }
 
 
+#define	NETBSD_SAFTE_END	50
 
 static enctyp
 ses_device_type(sa)
@@ -300,7 +296,7 @@ ses_device_type(sa)
 	 * we don't have to run this as a polled command.
 	 */
 
-	if (inqp->additional_length >= SAFTE_END-4) {
+	if (inqp->additional_length >= NETBSD_SAFTE_END-4) {
 		size_t amt = inqp->additional_length + 4;
 		struct scsipi_generic cmd;
 		static u_char more[64];
@@ -594,6 +590,10 @@ ses_log(ssc, fmt, va_alist)
  * an SES device. If it happens to be an old UNISYS SEN device, we can
  * handle that too.
  */
+
+#define	SAFTE_START	44
+#define	SAFTE_END	50
+#define	SAFTE_LEN	SAFTE_END-SAFTE_START
 
 static enctyp
 ses_type(void *buf, int buflen)
