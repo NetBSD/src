@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	8.3 (Berkeley) 1/12/94
- *	$Id: malloc.h,v 1.15 1994/05/13 08:32:34 cgd Exp $
+ *	$Id: malloc.h,v 1.16 1994/05/19 03:39:39 mycroft Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -109,11 +109,14 @@
 #define	M_ISOFSNODE	58	/* ISOFS vnode private part */
 #define	M_MSDOSFSMNT	59	/* MSDOS FS mount structure */
 #define	M_MSDOSFSFAT	60	/* MSDOS FS fat table */
-#define	M_TTYS		61	/* allocated tty structures */
-#define	M_EXEC		62	/* argument lists & other mem used by exec */
-#define	M_MISCFSMNT	63	/* miscfs mount structures */
-#define	M_ADOSFSMNT	64	/* adosfs mount structures. */
-#define	M_ANODE		65	/* adosfs anode structures and tables. */
+#define	M_MSDOSFSNODE	61	/* MSDOS FS vnode private part */
+#define	M_TTYS		62	/* allocated tty structures */
+#define	M_EXEC		63	/* argument lists & other mem used by exec */
+#define	M_MISCFSMNT	64	/* miscfs mount structures */
+#define	M_MISCFSNODE	65	/* miscfs vnode private part */
+#define	M_ADOSFSMNT	66	/* adosfs mount structures */
+#define	M_ADOSFSNODE	67	/* adosfs vnode private part */
+#define	M_ANODE		68	/* adosfs anode structures and tables. */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -179,11 +182,14 @@
 	"ISOFS node",	/* 58 M_ISOFSNODE */ \
 	"MSDOSFS mount", /* 59 M_MSDOSFSMNT */ \
 	"MSDOSFS fat",	/* 60 M_MSDOSFSFAT */ \
-	"ttys",		/* 61 M_TTYS */ \
-	"exec",		/* 62 M_EXEC */ \
-	"miscfs mount",	/* 63 M_MISCFSMNT */ \
-	"adosfs mount",	/* 64 M_ADOSFSMNT */ \
-	"adosfs anode",	/* 65 M_ANODE */ \
+	"MSDOSFS node",	/* 61 M_MSDOSFSNODE */ \
+	"ttys",		/* 62 M_TTYS */ \
+	"exec",		/* 63 M_EXEC */ \
+	"miscfs mount",	/* 64 M_MISCFSMNT */ \
+	"miscfs node",	/* 65 M_MISCFSNODE */ \
+	"adosfs mount",	/* 66 M_ADOSFSMNT */ \
+	"adosfs node",	/* 67 M_ADOSFSNODE */ \
+	"adosfs anode",	/* 68 M_ANODE */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
