@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1998/07/28 19:27:39 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2003/04/04 01:24:09 perry Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1998/07/28 19:27:39 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2003/04/04 01:24:09 perry Exp $");
 #endif
 #endif
 
@@ -446,6 +446,10 @@ allowed(username)
 		allow = fopen(ALLOW_FILE, "r");
 		deny = fopen(DENY_FILE, "r");
 		Debug(DMISC, ("allow/deny enabled, %d/%d\n", !!allow, !!deny))
+		if (allow)
+			(void)fcntl(fileno(allow), F_SETFD, FD_CLOEXEC);
+		if (deny)
+			(void)fcntl(fileno(deny), F_SETFD, FD_CLOEXEC);
 #else
 		allow = NULL;
 		deny = NULL;
