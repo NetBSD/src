@@ -35,7 +35,7 @@
  *
  *	@(#)param.h	5.8 (Berkeley) 6/28/91
  *
- *	$Id: param.h,v 1.2 1993/09/10 20:02:11 phil Exp $
+ *	$Id: param.h,v 1.3 1993/09/12 06:26:13 phil Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 #define _MACHINE_PARAM_H_
 
 #define MACHINE "ns532"
-#define MID_MACHINE	MID_PC532
+#define MID_MACHINE	MID_NS32532
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
