@@ -27,7 +27,7 @@ Remove all of the devcap stuff.
 
 SBP2 needs a complete API written up: logins, ORB management/allocation, etc.
 
-Add locator detection/usage into fwnode code.
+done - Add locator detection/usage into fwohci code.
 
 Should do topology maps, speed maps, the various bus managers, etc.
 
