@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.22 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.23 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.22 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.23 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -146,7 +146,7 @@ pk_newlink(ia, llnext)
 {
 	struct x25config *xcp = &ia->ia_xc;
 	struct pkcb *pkp;
-	struct protosw *pp;
+	const struct protosw *pp;
 	unsigned        size;
 
 	pp = pffindproto(AF_CCITT, (int) xcp->xc_lproto, 0);
@@ -192,7 +192,7 @@ pk_dellink(pkp)
 	struct pkcb *pkp;
 {
 	int    i;
-	struct protosw *pp;
+	const struct protosw *pp;
 
 	/*
 	 * Essentially we have the choice to

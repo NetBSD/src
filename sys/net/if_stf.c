@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.37 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.38 2004/04/22 01:01:40 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.37 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.38 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -156,7 +156,7 @@ static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
 extern struct domain inetdomain;
-struct protosw in_stf_protosw =
+const struct protosw in_stf_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in_stf_input, rip_output,	0,		rip_ctloutput,
   rip_usrreq,

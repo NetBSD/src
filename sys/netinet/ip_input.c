@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.198 2004/04/01 22:47:55 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.199 2004/04/22 01:01:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.198 2004/04/01 22:47:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.199 2004/04/22 01:01:41 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -219,7 +219,6 @@ int	ip_checkinterface = 0;
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
-extern	struct domain inetdomain;
 int	ipqmaxlen = IFQ_MAXLEN;
 u_long	in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
@@ -393,7 +392,7 @@ ip_nmbclusters_changed(void)
 void
 ip_init()
 {
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",

@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.14 2003/07/14 15:47:04 lukem Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.15 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.14 2003/07/14 15:47:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.15 2004/04/22 01:01:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -384,7 +384,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;
 	long long orig_resid, resid;
-	struct protosw	*pr;
+	const struct protosw *pr;
 	struct mbuf *nextrecord;
 
 	pr = so->so_proto;

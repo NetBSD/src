@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.83 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.84 2004/04/22 01:01:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.83 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.84 2004/04/22 01:01:41 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -169,10 +169,10 @@ extern int rsvp_on;
 #endif /* RSVP_ISI */
 
 /* vif attachment using sys/netinet/ip_encap.c */
-extern struct domain inetdomain;
 static void vif_input __P((struct mbuf *, ...));
 static int vif_encapcheck __P((const struct mbuf *, int, int, void *));
-static struct protosw vif_protosw =
+
+static const struct protosw vif_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
   vif_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,

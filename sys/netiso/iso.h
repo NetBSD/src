@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.14 2003/08/07 16:33:36 agc Exp $	*/
+/*	$NetBSD: iso.h,v 1.15 2004/04/22 01:01:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -177,7 +177,7 @@ struct sockaddr_iso {
 #ifdef _KERNEL
 
 extern struct domain isodomain;
-extern struct protosw isosw[];
+extern const struct protosw isosw[];
 
 #define	satosiso(sa)	((struct sockaddr_iso *)(sa))
 #define	sisotosa(siso)	((struct sockaddr *)(siso))

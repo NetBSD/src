@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.27 2004/04/18 23:33:58 matt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.28 2004/04/22 01:01:41 matt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.27 2004/04/18 23:33:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.28 2004/04/22 01:01:41 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -349,7 +349,7 @@ key_sendup_mbuf(so, m, target)
 
 extern struct domain keydomain;
 
-struct protosw keysw[] = {
+const struct protosw keysw[] = {
 { SOCK_RAW,	&keydomain,	PF_KEY_V2,	PR_ATOMIC|PR_ADDR,
   0,		key_output,	raw_ctlinput,	0,
   key_usrreq,

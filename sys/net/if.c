@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.140 2004/04/21 04:17:28 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.141 2004/04/22 01:01:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.140 2004/04/21 04:17:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.141 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -549,7 +549,7 @@ if_detach(ifp)
 	struct ifaddr *last_ifa = NULL;
 #endif
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	struct radix_node_head *rnh;
 	int s, i, family, purged;
 

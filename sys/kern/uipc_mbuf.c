@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.80 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.81 2004/04/22 01:01:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.80 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.81 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -358,7 +358,7 @@ void
 m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 	struct ifnet *ifp;
 	int s = splvm();
 

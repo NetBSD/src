@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.62 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.63 2004/04/22 01:01:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.62 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.63 2004/04/22 01:01:41 matt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -142,9 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.62 2003/12/04 19:38:24 atatat Exp $")
 #include <netinet/ip_gre.h>
 #endif
 
-extern	struct domain inetdomain;
-
-struct protosw inetsw[] = {
+const struct protosw inetsw[] = {
 { 0,		&inetdomain,	0,		0,
   0,		ip_output,	0,		0,
   0,

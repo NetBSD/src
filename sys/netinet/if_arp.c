@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.95 2004/04/21 04:17:29 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.95 2004/04/21 04:17:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.96 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -216,7 +216,7 @@ lla_snprintf(adrp, len)
 	return p;
 }
 
-struct protosw arpsw[] = {
+const struct protosw arpsw[] = {
 	{ 0, 0, 0, 0,
 	  0, 0, 0, 0,
 	  0,

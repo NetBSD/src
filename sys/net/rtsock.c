@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.69 2004/04/21 21:03:43 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.70 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.69 2004/04/21 21:03:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.70 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -1089,7 +1089,7 @@ again:
  * Definitions of protocols supported in the ROUTE domain.
  */
 
-struct protosw routesw[] = {
+const struct protosw routesw[] = {
 {
 	SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,
 	raw_input,	route_output,	raw_ctlinput,	0,

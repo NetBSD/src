@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.46 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.47 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.46 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.47 2004/04/22 01:01:40 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -81,7 +81,7 @@ void
 domaininit()
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 #undef unix
 	/*
@@ -161,12 +161,12 @@ pffinddomain(family)
 	return (NULL);
 }
 
-struct protosw *
+const struct protosw *
 pffindtype(family, type)
 	int family, type;
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	dp = pffinddomain(family);
 	if (dp == NULL)
@@ -179,13 +179,13 @@ pffindtype(family, type)
 	return (NULL);
 }
 
-struct protosw *
+const struct protosw *
 pffindproto(family, protocol, type)
 	int family, protocol, type;
 {
 	struct domain *dp;
-	struct protosw *pr;
-	struct protosw *maybe = NULL;
+	const struct protosw *pr;
+	const struct protosw *maybe = NULL;
 
 	if (family == 0)
 		return (NULL);
@@ -232,7 +232,7 @@ pfctlinput(cmd, sa)
 	struct sockaddr *sa;
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
@@ -247,7 +247,7 @@ pfctlinput2(cmd, sa, ctlparam)
 	void *ctlparam;
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	if (!sa)
 		return;
@@ -271,7 +271,7 @@ pfslowtimo(arg)
 	void *arg;
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	pfslowtimo_now++;
 
@@ -287,7 +287,7 @@ pffasttimo(arg)
 	void *arg;
 {
 	struct domain *dp;
-	struct protosw *pr;
+	const struct protosw *pr;
 
 	pffasttimo_now++;
 
