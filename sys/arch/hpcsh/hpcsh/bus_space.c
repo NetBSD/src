@@ -1,11 +1,8 @@
-/*	$NetBSD: md_root.c,v 1.2 2001/02/07 15:29:22 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1 2001/02/07 15:29:21 uch Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,68 +35,74 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/reboot.h>
+#include <sys/malloc.h>
+#include <sys/map.h>
+#include <sys/extent.h>
 
-#include <dev/md.h>
+#include <uvm/uvm_extern.h>
+#include <machine/bus.h>
 
-#include "opt_mdsize.h"
-
-extern int boothowto;
-
-#ifdef MEMORY_DISK_DYNAMIC
-size_t md_root_size;
-caddr_t md_root_image;
-#else /* MEMORY_DISK_DYNAMIC */
-#ifndef MINIROOTSIZE
-#define MINIROOTSIZE 512
+#ifdef BUS_SPACE_DEBUG
+#define	DPRINTF(arg) printf arg
+#else
+#define	DPRINTF(arg)
 #endif
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
-u_int32_t md_root_size = ROOTBYTES;
-/*
- * This array will be patched to contain a file-system image.
- * See the program mdsetimage(8) for details.
- */
-char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
-#endif /* MEMORY_DISK_DYNAMIC */
 
-#ifdef MEMORY_DISK_DYNAMIC
-void md_root_setconf(caddr_t, size_t);
-
-void
-md_root_setconf(caddr_t addr, size_t size)
+int
+bus_space_map(t, addr, size, flags, bshp)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	bus_size_t size;
+	int flags;
+	bus_space_handle_t *bshp;
 {
-	md_root_image = addr;
-	md_root_size = size;
-}
-#endif /* MEMORY_DISK_DYNAMIC */
 
-/*
- * This is called during pseudo-device attachment.
- */
-void
-md_attach_hook(int unit, struct md_conf *md)
-{
-	char pbuf[9];
+	*bshp = (bus_space_handle_t)addr;
 
-	if (unit == 0) {
-		/* Setup root ramdisk */
-		md->md_addr = (caddr_t)md_root_image;
-		md->md_size = (size_t)md_root_size;
-		md->md_type = MD_KMEM_FIXED;
-		format_bytes(pbuf, sizeof(pbuf), md->md_size);
-		printf("md%d: internal %s image area\n", unit, pbuf);
-	}
+	return 0;
 }
 
-/*
- * This is called during open (i.e. mountroot)
- */
-void
-md_open_hook(int unit, struct md_conf *md)
+int
+sh_memio_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
 {
 
-	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
-	}
+	*nbshp = bsh + offset;
+	return (0);
+}
+
+int
+sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
+	       bpap, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment, boundary;
+	int flags;
+	bus_addr_t *bpap;
+	bus_space_handle_t *bshp;
+{
+	*bshp = *bpap = rstart;
+
+	return (0);
+}
+
+void
+sh_memio_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+}
+
+void
+sh_memio_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	return;
 }
