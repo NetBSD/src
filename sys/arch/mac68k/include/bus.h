@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2002/04/09 01:53:47 briggs Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2002/04/10 04:38:49 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -785,5 +785,7 @@ __MAC68K_copy_region_N(4)
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+#include <m68k/bus_dma.h>
 
 #endif /* _MAC68K_BUS_H_ */
