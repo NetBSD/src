@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.23 2001/08/18 17:10:05 ad Exp $	*/
+/*	$NetBSD: file.c,v 1.24 2001/09/09 10:46:36 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -59,9 +59,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.58 2001/07/22 21:04:15 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.59 2001/07/23 00:02:32 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.23 2001/08/18 17:10:05 ad Exp $");
+__RCSID("$NetBSD: file.c,v 1.24 2001/09/09 10:46:36 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 	if ((usermagic = getenv("MAGIC")) != NULL)
 		magicfile = usermagic;
 	else
-		if ((home = getenv("HOME"))) {
+		if ((home = getenv("HOME")) != NULL) {
 			if ((usermagic = malloc(strlen(home) + 8)) != NULL) {
 				(void)strcpy(usermagic, home);
 				(void)strcat(usermagic, "/.magic");
