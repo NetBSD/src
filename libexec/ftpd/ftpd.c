@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.36 1997/10/12 13:18:56 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.37 1997/10/12 13:52:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.36 1997/10/12 13:18:56 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.37 1997/10/12 13:52:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,6 +592,12 @@ pass(passwd)
 			rval = 1;	/* failure below */
 			goto skip;
 		}
+#ifdef KERBEROS
+		if (klogin(pw, "", hostname, passwd) == 0) {
+			rval = 0;
+			goto skip;
+		}
+#endif
 #ifdef SKEY
 		if (skey_haskey(pw->pw_name) == 0 &&
 		    skey_passcheck(pw->pw_name, passwd) != -1) {
@@ -599,19 +605,12 @@ pass(passwd)
 			goto skip;
 		}
 #endif
-#ifdef KERBEROS
-		if (klogin(pw, "", hostname, passwd) == 0) {
+		if (*pw->pw_passwd != '\0' &&
+		    !strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd)) {
 			rval = 0;
 			goto skip;
 		}
-#endif
-		/* the strcmp does not catch null passwords! */
-		if (pw == NULL || *pw->pw_passwd == '\0' ||
-		    strcmp(crypt(passwd, (pw ? pw->pw_passwd : "xx")), pw->pw_passwd)) {
-			rval = 1;	 /* failure */
-			goto skip;
-		}
-		rval = 0;
+		rval = 1;
 
 skip:
 		/*
