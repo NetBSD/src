@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.17 1994/05/11 19:03:34 chopps Exp $
+#	$Id: Makefile.amiga,v 1.18 1994/06/13 08:12:50 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -27,14 +27,13 @@ CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld 
 TOUCH=	touch -f -c
-GPROF.EX=/usr/src/usr.lib/libc/csu/amiga/gmon.ex
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 AMIGA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Damiga -DREFBIT
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Damiga
 CFLAGS=	-O -mc68020 -m68881 ${COPTS}
 
 ### find out what to use for libkern
@@ -56,8 +55,8 @@ DRIVER_C=	${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 
 PROFILE_C=	${CC} -S -c ${COPTS} $<; \
-		ex - $*.s < ${GPROF.EX}; \
-		${AS} -o $@ $*.s; \
+		sed -e s/_mcount/mcount/ -e s/subrmcount/subr_mcount/ <$*.s | \
+		${AS} -o $@; \
 		rm -f $*.s
 
 NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
@@ -72,11 +71,15 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vers.o ${LIBKERN}
+SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vnode_if.o ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
-		${LD} $$strip -T 0 -n -o $@ -e start ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	rm -f $@
+SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
+		then strip=-X; \
+		else strip=-x; \
+		fi; \
+		echo ${LD} $$strip -n -T 0 -o $@ -e start '$${SYSTEM_OBJ}' vers.o; \
+		${LD} $$strip -n -T 0 -o $@ -e start ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 		[ X${DEBUG} = X-g ] && { \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
@@ -91,7 +94,7 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean:
-	rm -f eddep *netbsd tags *.o locore.i [a-z]*.s \
+	rm -f eddep *netbsd netbsd.gdb tags *.o locore.i [a-z]*.s \
 		Errs errs linterrs makelinks
 
 lint: /tmp param.c
@@ -110,10 +113,10 @@ autoconf.o: Makefile
 
 # the following are necessary because the files depend on the types of
 # hp cpu's included in the system configuration
-clock.o machdep.o autoconf.o conf.o: Makefile
+machdep.o sys_machdep.o pmap.o pmap_bootstrap.o trap.o dma.o:	Makefile
 
-# depend on network configuration
-af.o uipc_proto.o locore.o: Makefile
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o locore.o:	Makefile
 
 # depend on maxusers
 assym.s: Makefile
@@ -125,7 +128,7 @@ genassym:
 	${CC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Damiga \
 	    -o genassym ${AMIGA}/amiga/genassym.c
 
-depend: assym.s param.c
+depend: assym.s param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${AMIGA}/amiga/genassym.c
 
@@ -149,5 +152,9 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
+vnode_if.c:	$S/kern/vnode_if.sh $S/kern/vnode_if.src
+	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+vnode_if.h:	$S/kern/vnode_if.sh $S/kern/vnode_if.src
+	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES

@@ -1,5 +1,5 @@
 /*
- *	$Id: loadbsd.c,v 1.10 1994/05/12 05:57:33 chopps Exp $
+ *	$Id: loadbsd.c,v 1.11 1994/06/13 08:13:16 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ OPTIONS
 \t-S  Include kernel symbol table.
 \t-D  Enter debugger
 \t-V  Version of loadbsd program.
+\t-c  Set machine type.
 HISTORY
       This version supports Kernel version 720 +
 ";
@@ -79,6 +80,8 @@ struct GfxBase *GfxBase;
  *	2.3	04/26/94 - Added -D option to enter debugger on boot.
  *	2.4	04/30/94 - Cpuid includes base machine type.
  *		Also check if CPU is capable of running NetBSD.
+ *	2.5	05/17/94 - Add check for "A3000 bonus".
+ *	2.6	06/05/94 - Added -c option to override machine type.
  */
 
 struct MEM_LIST {
@@ -110,7 +113,7 @@ void get_cpuid (void);
 void Usage (char *program_name);
 void Version (void);
 
-static const char _version[] = "$VER: LoadBSD 2.4 (30.4.94)";
+static const char _version[] = "$VER: LoadBSD 2.6 (5.6.94)";
 
 int
 main (int argc, char *argv[])
@@ -146,7 +149,7 @@ main (int argc, char *argv[])
 		  if (! ExpansionBase)	/* not supposed to fail... */
 		    abort();
 		  optind = 2;
-		  while ((i = getopt (argc, argv, "kabptVm:SD")) != EOF)
+		  while ((i = getopt (argc, argv, "kabptVm:SDc:")) != EOF)
 		    switch (i) {
 		    case 'k':
 		      k_opt = 1;
@@ -174,6 +177,9 @@ main (int argc, char *argv[])
 		      break;
 		    case 'D':
 		      D_opt = 1;
+		      break;
+		    case 'c':
+		      cpuid = atoi (optarg) << 16;
 		      break;
 		    default:
 		      Usage(argv[0]);
@@ -427,7 +433,23 @@ get_cpuid ()
 	u_long *rl;
 	struct Resident *rm;
 
-	cpuid = SysBase->AttnFlags;	/* get FPU and CPU flags */
+	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
+	if (cpuid & 0xffff0000) {
+		switch (cpuid >> 16) {
+		case 500:
+		case 600:
+		case 1000:
+		case 1200:
+		case 2000:
+		case 3000:
+		case 4000:
+			return;
+		default:
+			printf ("Machine type Amiga %d is not valid\n",
+			    cpuid >> 16);
+			exit (1);
+		}
+	}
 	rl = (u_long *) SysBase->ResModules;
 	if (rl == NULL)
 		return;
@@ -439,7 +461,8 @@ get_cpuid ()
 			cpuid |= 4000 << 16;
 			break;
 		}
-		if (strcmp (rm->rt_Name, "A3000 Bonus") == 0) {
+		if (strcmp (rm->rt_Name, "A3000 bonus") == 0 ||
+		    strcmp (rm->rt_Name, "A3000 Bonus") == 0) {
 			cpuid |= 3000 << 16;
 			break;
 		}

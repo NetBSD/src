@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.17 1994/05/25 11:33:05 chopps Exp $
+ *	$Id: ite_cc.c,v 1.18 1994/06/13 08:13:00 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -114,7 +114,7 @@ grfcc_cnprobe()
 }
 
 /*
- * called form grf_cc to init ite portion of 
+ * called from grf_cc to init ite portion of 
  * grf_softc struct
  */
 void

@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.16 1994/06/05 18:24:44 chopps Exp $
+#	$Id: GENERIC,v 1.17 1994/06/13 08:12:48 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -52,13 +52,13 @@ options		FFS		# Berkeley fast file system
 options		MFS		# Memory based filesystem
 options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem (Recommended)
-options		MSDOSFS		# MS-DOS filesystem
+#options		MSDOSFS		# MS-DOS filesystem
 options		FDESC		# /dev/fd filesystem
-options		LOFS		# Loopback filesystem
-options		ISOFS		# ISO 9660 file system, with Rock Ridge
+#options		LOFS		# Loopback filesystem
+#options		ISOFS		# ISO 9660 file system, with Rock Ridge
 options		PORTAL		# Portal filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
-options		ADOSFS		# AmigaDOS file system
+#options		ADOSFS		# AmigaDOS file system
 
 
 #

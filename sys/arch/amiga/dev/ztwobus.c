@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.6 1994/06/04 11:59:19 chopps Exp $
+ *	$Id: ztwobus.c,v 1.7 1994/06/13 08:13:11 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,12 +179,13 @@ ztwoattach(pdp, dp, auxp)
 		if (amiga_realconfig == 0 && pcp >= epcp)
 			continue;
 
-		za.pa = cdp->addr;
 		/*
-		 * check that its from zorro II space
+		 * check if it's a Zorro II board and not linked into
+		 * MemList (i.e. not a memory board)
 		 */
-		if ((u_long)za.pa >= 0xF00000 || (u_long)za.pa < 0xE90000)
-			continue;
+		if ((cdp->rom.type & 0xe0) != 0xc0)
+			continue;	/* er_Type != ZorroII I/O */
+		za.pa = cdp->addr;
 		za.va = (void *) (isztwopa(za.pa) ? ztwomap(za.pa) : 0);
 		za.size = cdp->size;
 		za.manid = cdp->rom.manid;

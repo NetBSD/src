@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)supradma.c
- *	$Id: wstsc.c,v 1.2 1994/05/29 04:50:25 chopps Exp $
+ *	$Id: wstsc.c,v 1.3 1994/06/13 08:13:09 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ wstscattach(pdp, dp, auxp)
 	volatile u_char *rp;
 	struct sci_softc *sc;
 	struct ztwobus_args *zap;
+
+	printf("\n");
 
 	zap = auxp;
 	
@@ -217,70 +219,23 @@ wstsc_dma_xfer_in (dev, len, buf, phase)
 			}
 		}
 
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
+#define R1	(*buf++ = *sci_dma)
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
+		R1; R1; R1; R1; R1; R1; R1; R1;
 		len -= 128;
 	}
 
@@ -409,38 +364,15 @@ wstsc_dma_xfer_in2 (dev, len, buf, phase)
 			;
 #endif
 
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
-		*buf++ = *sci_dma; *buf++ = *sci_dma;
+#define R2	(*buf++ = *sci_dma)
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
+		R2; R2; R2; R2; R2; R2; R2; R2;
 		len -= 128;
 	}
 	while (len > 0) {
@@ -501,6 +433,40 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 	*dev->sci_mode = SCI_MODE_DMA;
 	*dev->sci_icmd = SCI_ICMD_DATA;
 	*dev->sci_dma_send = 0;
+	while (len > 64) {
+#if 0
+		wait = sci_data_wait;
+		while ((*sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) !=
+		  (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) {
+			if (!(*sci_csr & SCI_CSR_PHASE_MATCH)
+			  || !(*dev->sci_bus_csr & SCI_BUS_BSY)
+			  || --wait < 0) {
+#ifdef DEBUG
+				if (sci_debug)
+					printf("supradma_out2 fail: l%d i%x w%d\n",
+					len, csr, wait);
+#endif
+				*dev->sci_mode = 0;
+				return 0;
+			}
+		}
+#else
+		*dev->sci_mode = 0;
+		*dev->sci_icmd &= ~SCI_ICMD_ACK;
+		while (!(*sci_bus_csr & SCI_BUS_REQ))
+			;
+		*dev->sci_mode = SCI_MODE_DMA;
+		*dev->sci_dma_send = 0;
+#endif
+
+#define W2	(*sci_dma = *buf++)
+		W2; W2; W2; W2; W2; W2; W2; W2;
+		W2; W2; W2; W2; W2; W2; W2; W2;
+		if (*(sci_bus_csr + 0x10) & SCI_BUS_REQ)
+			;
+		len -= 64;
+	}
+
 	while (len > 0) {
 #if 0
 		wait = sci_data_wait;
@@ -527,25 +493,10 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 		*dev->sci_dma_send = 0;
 #endif
 
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
-		*sci_dma = *buf++; *sci_dma = *buf++;
+		*sci_dma = *buf++;
 		if (*(sci_bus_csr + 0x10) & SCI_BUS_REQ)
 			;
-		len -= 64;
+		len -= 2;
 	}
 
 #if 0

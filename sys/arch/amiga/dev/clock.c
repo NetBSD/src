@@ -38,7 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.2 1994/05/09 06:38:37 chopps Exp $
+ *	$Id: clock.c,v 1.3 1994/06/13 08:12:54 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -112,6 +112,8 @@ clockattach(pdp, dp, auxp)
 	 * stop timer A 
 	 */
 	ciab.cra = ciab.cra & 0xc0;
+	ciab.icr = 1 << 0;		/* disable timer A interrupt */
+	interval = ciab.icr;		/* and make sure it's clear */
 
 	/*
 	 * load interval into registers.

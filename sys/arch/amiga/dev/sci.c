@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.5 1994/05/29 04:50:21 chopps Exp $
+ *	$Id: sci.c,v 1.6 1994/06/13 08:13:05 chopps Exp $
  */
 
 /*
@@ -361,7 +361,7 @@ scireset(dev)
 	 */
 	*dev->sci_icmd = SCI_ICMD_TEST;
 	*dev->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
-	DELAY (25);
+	delay (25);
 	*dev->sci_icmd = 0;
 
 	/*
@@ -426,7 +426,7 @@ sciselectbus(dev, target, our_addr)
 	*dev->sci_icmd = SCI_ICMD_DATA|SCI_ICMD_SEL;
 	while ((*dev->sci_bus_csr & SCI_BUS_BSY) == 0) {
 		if (--timeo > 0) {
-			DELAY(100);
+			delay(100);
 		} else {
 			break;
 		}
@@ -467,7 +467,7 @@ sci_ixfer_out(dev, len, buf, phase)
 #endif
 				return (len);
 			}
-			DELAY(1);
+			delay(1);
 			csr = *dev->sci_bus_csr;
 		}
 
@@ -516,7 +516,7 @@ sci_ixfer_in(dev, len, buf, phase)
 				return;
 			}
 
-			DELAY(1);
+			delay(1);
 			csr = *sci_bus_csr;
 		}
 

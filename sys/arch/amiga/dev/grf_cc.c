@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_cc.c,v 1.12 1994/05/08 05:53:04 chopps Exp $
+ *	$Id: grf_cc.c,v 1.13 1994/06/13 08:12:55 chopps Exp $
  */
 
 #include "grf.h"
@@ -104,6 +104,7 @@ grfccattach(pdp, dp, auxp)
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_unit = GRF_CC_UNIT;
+		gp->g_flags = GF_ALIVE;
 		gp->g_mode = cc_mode;
 		gp->g_conpri = grfcc_cnprobe();
 		grfcc_iteinit(gp);

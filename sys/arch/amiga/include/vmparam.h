@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.10 1994/06/04 05:25:04 chopps Exp $
+ *	$Id: vmparam.h,v 1.11 1994/06/13 08:13:14 chopps Exp $
  */
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
@@ -117,19 +117,6 @@
 #endif
 
 /*
- * Boundary at which to place first MAPMEM segment if not explicitly
- * specified.  Should be a power of two.  This allows some slop for
- * the data segment to grow underneath the first mapped segment.
- */
-/* XXXX probably too low !?!? */
-#define MMSEG		0x200000
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;
@@ -157,92 +144,23 @@
 					   protected against replacement */
 
 /*
- * DISKRPM is used to estimate the number of paging i/o operations
- * which one can expect from a single disk controller.
+ * user/kernel map constants
  */
-#define	DISKRPM		60
-
-/*
- * Klustering constants.  Klustering is the gathering
- * of pages together for pagein/pageout, while clustering
- * is the treatment of hardware page size as though it were
- * larger than it really is.
- *
- * KLMAX gives maximum cluster size in CLSIZE page (cluster-page)
- * units.  Note that ctod(KLMAX*CLSIZE) must be <= DMMIN in dmap.h.
- * ctob(KLMAX) should also be less than MAXPHYS (in vm_swp.c)
- * unless you like "big push" panics.
- */
-
-#define	KLMAX	(4/CLSIZE)
-#define	KLSEQL	(2/CLSIZE)		/* in klust if vadvise(VA_SEQL) */
-#define	KLIN	(4/CLSIZE)		/* default data/stack in klust */
-#define	KLTXT	(4/CLSIZE)		/* default text in klust */
-#define	KLOUT	(4/CLSIZE)
-
-/*
- * KLSDIST is the advance or retard of the fifo reclaim for sequential
- * processes data space.
- */
-#define	KLSDIST	3		/* klusters advance/retard for seq. fifo */
-
-/*
- * Paging thresholds (see vm_sched.c).
- * Strategy of 1/19/85:
- *	lotsfree is 512k bytes, but at most 1/4 of memory
- *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
- */
-#define	LOTSFREE	(512 * 1024)
-#define	LOTSFREEFRACT	4
-#define	DESFREE		(200 * 1024)
-#define	DESFREEFRACT	8
-#define	MINFREE		(64 * 1024)
-#define	MINFREEFRACT	2
-
-/*
- * There are two clock hands, initially separated by HANDSPREAD bytes
- * (but at most all of user memory).  The amount of time to reclaim
- * a page once the pageout process examines it increases with this
- * distance and decreases as the scan rate rises.
- */
-#define	HANDSPREAD	(2 * 1024 * 1024)
-
-/*
- * The number of times per second to recompute the desired paging rate
- * and poke the pagedaemon.
- */
-#define	RATETOSCHEDPAGING	4
-
-/*
- * Believed threshold (in megabytes) for which interleaved
- * swapping area is desirable.
- */
-#define	LOTSOFMEM	2
-
-#define	mapin(pte, v, pfnum, prot) \
-	(*(u_int *)(pte) = ((pfnum) << PGSHIFT) | (prot), TBIS((caddr_t)(v)))
-
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)(USRSTACK))
 #define VM_MAX_ADDRESS		((vm_offset_t)(0-(UPAGES*NBPG)))
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
 
-/* virtual sizes (bytes) for various kernel submaps */
+/*
+ * virtual sizes (bytes) for various kernel submaps
+ */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-/* # of kernel PT pages (initial only, can grow dynamically) */
+/*
+ * number of kernel PT pages (initial only, can grow dynamically)
+ */
 #define VM_KERNEL_PT_PAGES	((vm_size_t)1)		/* XXX: SYSPTSIZE */
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
-
 #endif /* !_MACHINE_VMPARAM_H_ */

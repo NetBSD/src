@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.13 1994/05/16 04:50:45 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.14 1994/06/13 08:12:34 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -52,8 +52,8 @@
 /*
  * Only boot on ufs. (XXX?)
  */
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 /*
  * Generic configuration;  all in one
