@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.44 1996/09/10 22:17:51 thorpej Exp $	*/
+/*	$NetBSD: rtld.c,v 1.45 1996/10/06 19:03:32 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -91,9 +91,9 @@ struct somap_private {
 	struct so_map	*spd_parent;
 	int		spd_refcount;
 	int		spd_flags;
-#define RTLD_MAIN	1
-#define RTLD_RTLD	2
-#define RTLD_DL		4
+#define RTLD_MAIN	1	/* Marks the main program */
+#define RTLD_RTLD	2	/* Marks the run-time linker */
+#define RTLD_DL		4	/* A dlopen'ed object */
 
 #ifdef SUN_COMPAT
 	long		spd_offset;	/* Correction for Sun main programs */
@@ -1497,6 +1497,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 	if (load_subs(smp) != 0)
 		return NULL;
 
+	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
 	init_maps(smp);
 	return smp;
 }
