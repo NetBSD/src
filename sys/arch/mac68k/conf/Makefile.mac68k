@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.24 1995/09/19 23:48:41 thorpej Exp $
+#	$NetBSD: Makefile.mac68k,v 1.25 1995/10/10 03:47:59 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -92,7 +92,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
 		${LD} $$strip -n -T 0 -e start -o $@ \
-		${SYSTEM_OBJ} vers.o ${LIBKERN}
+		${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@chmod 755 $@; size $@; \
 		[ X${DEBUG} = X-g ] && { \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
