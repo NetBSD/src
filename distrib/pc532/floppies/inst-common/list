@@ -1,6 +1,24 @@
-#	$Id: list,v 1.2 1995/09/26 21:25:09 phil Exp $
+#	$Id: list,v 1.3 1995/09/29 03:55:37 phil Exp $
 
-# copy the crunched binary, link to it, and kill it
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec (XXX)
+COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${TOPDIR}/../../../etc/group		etc
+COPY	${TOPDIR}/../../../etc/master.passwd	etc
+COPY	${TOPDIR}/../../../etc/protocols	etc
+COPY	${TOPDIR}/../../../etc/services		etc
+SPECIAL >etc/ppp/options
+COPY	${OBJDIR}/pwd_mkdb	pwd_mkdb
+SPECIAL	/usr/sbin/chroot . ./pwd_mkdb -p /etc/master.passwd
+SPECIAL	/bin/rm pwd_mkdb
+
+# copy the crunched binary, link to it
 COPY	${OBJDIR}/netbsd.gz	netbsd.gz
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
@@ -45,50 +63,33 @@ LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
-SYMLINK	/bin/cat		usr/bin/awk
-SYMLINK	/bin/cat		usr/bin/chgrp
-SYMLINK /bin/cat		usr/bin/hexdump
-SYMLINK /bin/cat		usr/bin/ex
-SYMLINK	/bin/cat		usr/bin/find
-SYMLINK	/bin/cat		usr/bin/ftp
-SYMLINK	/bin/cat		usr/bin/gunzip
-SYMLINK	/bin/cat		usr/bin/gzcat
-SYMLINK	/bin/cat		usr/bin/gzip
-SYMLINK	/bin/cat		usr/bin/more
-SYMLINK	/bin/cat		usr/bin/netstat
-SYMLINK	/bin/cat		usr/bin/sed
-SYMLINK	/bin/cat		usr/bin/strings
-SYMLINK	/bin/cat		usr/bin/tar
-SYMLINK	/bin/cat		usr/bin/tip
-SYMLINK /bin/cat		usr/bin/vi
-SYMLINK /bin/cat		usr/bin/view
-SYMLINK /bin/cat		usr/games/factor
-SYMLINK	/bin/cat		usr/sbin/chat
-SYMLINK	/bin/cat		usr/sbin/chown
-SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK	/bin/cat		usr/sbin/pppd
-SYMLINK	/bin/cat		usr/sbin/pppstats
-SYMLINK	/bin/cat		usr/sbin/traceroute
-SYMLINK	/bin/cat		usr/sbin/update
-SPECIAL	/bin/rm instbin
+SYMLINK	/instbin		usr/bin/awk
+SYMLINK	/instbin		usr/bin/chgrp
+SYMLINK /instbin		usr/bin/hexdump
+SYMLINK /instbin		usr/bin/ex
+SYMLINK	/instbin		usr/bin/find
+SYMLINK	/instbin		usr/bin/ftp
+SYMLINK	/instbin		usr/bin/gunzip
+SYMLINK	/instbin		usr/bin/gzcat
+SYMLINK	/instbin		usr/bin/gzip
+SYMLINK	/instbin		usr/bin/more
+SYMLINK	/instbin		usr/bin/netstat
+SYMLINK	/instbin		usr/bin/sed
+SYMLINK	/instbin		usr/bin/strings
+SYMLINK	/instbin		usr/bin/tar
+SYMLINK	/instbin		usr/bin/tip
+SYMLINK /instbin		usr/bin/vi
+SYMLINK /instbin		usr/bin/view
+SYMLINK /instbin		usr/games/factor
+SYMLINK	/instbin		usr/sbin/chat
+SYMLINK	/instbin		usr/sbin/chown
+SYMLINK	/instbin		usr/sbin/chroot
+SYMLINK	/instbin		usr/sbin/pppd
+SYMLINK	/instbin		usr/sbin/pppstats
+SYMLINK	/instbin		usr/sbin/traceroute
+SYMLINK	/instbin		usr/sbin/update
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV floppy
-SPECIAL	/bin/rm dev/MAKEDEV
-
-# we need the contents of /usr/mdec (XXX)
-COPY	${DESTDIR}/usr/mdec/*	usr/mdec
-
-# various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/master.passwd	etc
-COPY	${DESTDIR}/etc/passwd		etc
-COPY	${DESTDIR}/etc/protocols	etc
-COPY	${DESTDIR}/etc/pwd.db		etc
-COPY	${DESTDIR}/etc/services		etc
-COPY	${DESTDIR}/etc/spwd.db		etc
-SPECIAL >etc/ppp/options
+#SPECIAL	/bin/rm instbin
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
