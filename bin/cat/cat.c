@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.42 2003/10/27 00:12:41 lukem Exp $	*/
+/* $NetBSD: cat.c,v 1.43 2004/01/04 03:31:28 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.42 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: cat.c,v 1.43 2004/01/04 03:31:28 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,8 @@ __RCSID("$NetBSD: cat.c,v 1.42 2003/10/27 00:12:41 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
-int bflag, eflag, fflag, lflag, nflag, sflag, stdout_ok, tflag, vflag;
+int bflag, eflag, fflag, lflag, nflag, sflag, tflag, vflag;
 int rval;
 const char *filename;
 
@@ -118,8 +117,6 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	argv += optind;
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	if (lflag) {
 		stdout_lock.l_len = 0;
