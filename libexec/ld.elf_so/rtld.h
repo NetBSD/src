@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.49 2002/09/13 03:22:08 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.50 2002/09/17 07:29:47 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -265,6 +265,7 @@ int _rtld_relocate_nonplt_objects __P((const Obj_Entry *, bool));
 int _rtld_relocate_plt_lazy __P((const Obj_Entry *));
 int _rtld_relocate_plt_object __P((const Obj_Entry *, const Elf_Rela *,
     caddr_t *));
+int _rtld_relocate_plt_objects __P((const Obj_Entry *));
 
 /* search.c */
 char *_rtld_find_library __P((const char *, const Obj_Entry *));
