@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.25 2003/05/22 05:47:10 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.26 2003/07/13 01:01:51 igy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.25 2003/05/22 05:47:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.26 2003/07/13 01:01:51 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -299,6 +299,53 @@ cpu_reboot(howto, bootstr)
 	printf("RESET FAILED!\n");
 	for (;;);
 }
+
+/* Static device mappings. */
+static const struct pmap_devmap ixm1200_devmap[] = {
+	/* StrongARM System and Peripheral Registers */
+	{
+		IXP12X0_SYS_VBASE,
+		IXP12X0_SYS_HWBASE,
+		IXP12X0_SYS_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Registers Accessible Through StrongARM Core */
+	{
+		IXP12X0_PCI_VBASE, IXP12X0_PCI_HWBASE,
+		IXP12X0_PCI_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Registers Accessible Through I/O Cycle Access */
+	{
+		IXP12X0_PCI_IO_VBASE, IXP12X0_PCI_IO_HWBASE,
+		IXP12X0_PCI_IO_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Type0 Configuration Space */
+	{
+		IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
+		IXP12X0_PCI_TYPE0_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	/* PCI Type1 Configuration Space */
+	{
+		IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
+		IXP12X0_PCI_TYPE1_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	{
+		0,
+		0,
+		0,
+		0,
+		0
+	},
+};
 
 /*
  * Initial entry point on startup. This gets called before main() is
@@ -562,11 +609,8 @@ initarm(void *arg)
 	       systempage.pv_pa, vector_page);
 #endif
 
-	/*
-	 * Map the PCI I/O spaces and IXP12x0 registers
-	 */
-
-	ixp12x0_pmap_io_reg(l1pagetable);
+	/* Map the statically mapped devices. */
+	pmap_devmap_bootstrap(l1pagetable, ixm1200_devmap);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
@@ -743,6 +787,8 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
+
+	pmap_devmap_register(ixm1200_devmap);
 
 	if (ixpcomcnattach(&ixpsip_bs_tag,
 			   IXPCOM_UART_HWBASE, IXPCOM_UART_VBASE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.9 2003/07/13 01:01:50 igy Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.9 2003/07/13 01:01:50 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,75 +204,6 @@ ixp12x0_pcibus_print(void *aux, const char *pnp)
 	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
-}
-
-/*
- * IXP12x0 specific I/O registers mapping table
- */
-static struct pmap_ent	map_tbl_ixp12x0[] = {
-	{ "StrongARM System and Peripheral Registers",
-	  IXP12X0_SYS_VBASE, IXP12X0_SYS_HWBASE,
-	  IXP12X0_SYS_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through StrongARM Core",
-	  IXP12X0_PCI_VBASE, IXP12X0_PCI_HWBASE,
-	  IXP12X0_PCI_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through I/O Cycle Access",
-	  IXP12X0_PCI_IO_VBASE, IXP12X0_PCI_IO_HWBASE,
-	  IXP12X0_PCI_IO_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through Memory Cycle Access",
-	  IXP12X0_PCI_MEM_VBASE, IXP12X0_PCI_MEM_HWBASE,
-	  IXP12X0_PCI_MEM_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Type0 Configuration Space",
-	  IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
-	  IXP12X0_PCI_TYPE0_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Type1 Configuration Space",
-	  IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
-	  IXP12X0_PCI_TYPE1_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ NULL, 0, 0, 0, 0, 0 },
-};
-
-/*
- * mapping virtual memories
- */
-void
-ixp12x0_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m)
-{
-	int loop;
-
-	loop = 0;
-	while (m[loop].msg) {
-		printf("mapping %s...\n", m[loop].msg);
-		pmap_map_chunk(l1pt, m[loop].va, m[loop].pa,
-			       m[loop].sz, m[loop].prot, m[loop].cache);
-		++loop;
-	}
-}
-
-/*
- * mapping I/O registers
- */
-void
-ixp12x0_pmap_io_reg(vaddr_t l1pt)
-{
-	ixp12x0_pmap_chunk_table(l1pt, map_tbl_ixp12x0);
 }
 
 void
