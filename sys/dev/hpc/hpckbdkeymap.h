@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.15 2002/05/11 04:57:43 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.16 2002/11/28 15:09:48 hamajima Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -693,6 +693,11 @@ const struct hpckbd_keymap_table {
 		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_SIGMARION,
+		sigmarion_jp_keytrans,
+		NULL,
+		CMDMAP(sigmarion_cmdmap),
+		KB_JP },
+	{	&platid_mask_MACH_NEC_MCR_SIGMARION2,
 		sigmarion_jp_keytrans,
 		NULL,
 		CMDMAP(sigmarion_cmdmap),
