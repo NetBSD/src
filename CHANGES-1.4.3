@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.44 2000/07/23 18:05:03 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.45 2000/07/27 18:05:15 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -945,7 +945,7 @@ sys/arch/macppc/stand/Makefile.inc		patch
    o Make installation directories
    o Build and install the distrib and boot bits
 
-sys/arch/sparc/stand/common/dvma.c		1.7-1.8 via patch
+sys/arch/sparc/stand/common/dvma.c		1.7-1.8
 
   Account for stack when computing base VA; fixes booting on sun4
   systems.  Fixes PR#9906 and PR#10165
@@ -994,3 +994,83 @@ sys/dev/pci/pcidevs_data.h			regenerate
 sys/dev/pci/pcidevs.h				regenerate
 
   Add product codes for various Yamaha audio chips.
+
+usr.sbin/dhcp/CHANGES				patch (new)
+usr.sbin/dhcp/Makefile				patch
+usr.sbin/dhcp/README				patch
+usr.sbin/dhcp/RELNOTES				patch
+usr.sbin/dhcp/client/Makefile			patch
+usr.sbin/dhcp/client/clparse.c			patch
+usr.sbin/dhcp/client/dhclient-script.8		patch
+usr.sbin/dhcp/client/dhclient.c			patch
+usr.sbin/dhcp/client/scripts/freebsd		patch
+usr.sbin/dhcp/common/Makefile			patch
+usr.sbin/dhcp/common/bpf.c			patch
+usr.sbin/dhcp/common/dhcp-options.5		patch
+usr.sbin/dhcp/common/dispatch.c			patch
+usr.sbin/dhcp/common/dlpi.c			patch
+usr.sbin/dhcp/common/dns.c			deleted
+usr.sbin/dhcp/common/ethernet.c			patch (new)
+usr.sbin/dhcp/common/lpf.c			patch
+usr.sbin/dhcp/common/memory.c			patch
+usr.sbin/dhcp/common/packet.c			patch
+usr.sbin/dhcp/common/raw.c			patch
+usr.sbin/dhcp/common/resolv.c			deleted
+usr.sbin/dhcp/common/socket.c			patch
+usr.sbin/dhcp/common/sysconf.c			deleted
+usr.sbin/dhcp/common/tables.c			patch
+usr.sbin/dhcp/common/tr.c			patch (new)
+usr.sbin/dhcp/includes/cf/aix.h			patch
+usr.sbin/dhcp/includes/cf/alphaosf.h		patch
+usr.sbin/dhcp/includes/cf/hpux.h		patch
+usr.sbin/dhcp/includes/cf/irix.h		patch (new)
+usr.sbin/dhcp/includes/cf/linux.h		patch
+usr.sbin/dhcp/includes/dhcpd.h			patch
+usr.sbin/dhcp/includes/netinet/if_ether.h	patch
+usr.sbin/dhcp/includes/osdep.h			patch
+usr.sbin/dhcp/includes/version.h		patch (new)
+usr.sbin/dhcp/relay/dhcrelay.c			patch
+usr.sbin/dhcp/server/bootp.c			patch
+usr.sbin/dhcp/server/confpars.c			patch
+usr.sbin/dhcp/server/db.c			patch
+usr.sbin/dhcp/server/dhcp.c			patch
+usr.sbin/dhcp/server/dhcpd.c			patch
+usr.sbin/dhcp/server/dhcpd.conf.5		patch
+usr.sbin/dhcp/statmsg/Makefile			deleted
+usr.sbin/dhcp/statmsg/main.c			deleted
+usr.sbin/dhcp/statmsg/statmsg.8			deleted
+usr.sbin/dhcp/sysconfd/Makefile			deleted
+usr.sbin/dhcp/sysconfd/sysconfd.8		deleted
+usr.sbin/dhcp/sysconfd/sysconfd.c		deleted
+
+  Merge/update DHCP client and server software to ISC 2.0pl3.
+
+sys/dev/pci/pciide.c				1.80
+
+  Make pciide compile with ``options PCIIDE_AMD756_ENABLEDMA.''
+  Fixes PR#10555.
+
+sys/msdosfs/msdosfs_vnops.c			1.100
+
+  Fix too many vrele()'s of fdvp in some error cases.
+  Fixes PR#10312.
+
+sys/msdosfs/msdosfs_vnops.c			1.101
+
+  Silently ignore uid/gid changes, instead of returning EINVAL.
+  Fixes PR#9990.
+
+sys/dev/pci/pciide.c				1.81
+distrib/notes/i386/hardware			1.75 via patch
+share/man/man4/pciide.4				1.23
+sys/dev/pci/pciide_hpt_reg.h			1.2
+  
+  Clear the interrupt disable bit of the HPT370, and document HPT370
+  support.
+
+etc/etc.x68k/Makefile.inc			patch
+distrib/x68k/floppies/bootfloppy-common/Makefile.inc patch
+distrib/x68k/floppies/ramdisk/Makefile		patch
+distrib/x68k/Makefile				1.1-1.2 (new)
+
+  Improve ``make release'' target, following the MI changes.
