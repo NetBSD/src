@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.5 1994/02/10 13:59:32 mycroft Exp $
+ *	$Id: grf.c,v 1.6 1994/02/10 14:55:29 mycroft Exp $
  */
 
 /*
@@ -58,8 +58,8 @@
 #include <sys/mman.h>
 
 #include <hp300/dev/device.h>
-#include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
 
 #include <machine/cpu.h>
 
