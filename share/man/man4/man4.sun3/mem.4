@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)mem.4	8.1 (Berkeley) 6/5/93
-.\"	$NetBSD: mem.4,v 1.1.1.1 1995/08/08 20:18:53 gwr Exp $
+.\"	$NetBSD: mem.4,v 1.2 1998/06/11 09:03:46 fair Exp $
 .\"
 .Dd June 5, 1993
 .Dt MEM 4 sun3
@@ -45,7 +45,7 @@
 .Nd main memory
 .Sh DESCRIPTION
 The file
-.Nm /dev/mem
+.Pa /dev/mem
 is an interface to the physical memory of the
 computer.
 Byte offsets in this file are interpreted as physical memory addresses.
@@ -53,12 +53,12 @@ Reading and writing this file is equivalent to reading and writing
 memory itself.
 An error will be returned if an attempt is made to reference
 an offset outside of
-.Nm /dev/mem .
+.Pa /dev/mem .
 .Pp
 Kernel virtual memory is accessed via the file
-.Nm /dev/kmem
+.Pa /dev/kmem
 in the same manner as
-.Nm /dev/mem .
+.Pa /dev/mem .
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On the
