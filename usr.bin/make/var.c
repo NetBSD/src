@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.63 2001/06/09 05:57:31 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.64 2001/06/10 02:31:01 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -468,43 +468,10 @@ Var_Set (name, val, ctxt)
      * to the environment (as per POSIX standard)
      */
     if (ctxt == VAR_CMD) {
-	char tmp[256];
-	char *exp;
-	char *s;
-	int nbytes;
-	
+
 	setenv(name, val, 1);
 
-	/*
-	 * Add name='val' to .MAKEOVERRIDES
-	 * We actually want the equivalent of:
-	 * .MAKEOVERRIDES:= ${.MAKEOVERRIDES:Nname=*} name='val'
-	 * clearing the previous value for name is important, since
-	 * doing simple duplicate suppression does not handle:
-	 * $ make FOO=goo
-	 * which might run a sub-make with FOO=boo
-	 * the commands from that sub-make should see just FOO=boo.
-	 */
-	exp = 0;
-	if ((nbytes = snprintf(tmp, sizeof(tmp), "${%s:N%s=*} %s='%s'",
-			       MAKEOVERRIDES, name, name, val))
-	    < sizeof(tmp)) {
-	    exp = tmp;
-	} else {
-	    /* alloca is handy, but not everyone has it. */
-	    if ((exp = malloc(nbytes + 1)))
-		snprintf(exp, nbytes + 1, "${%s:N%s=*} %s='%s'",
-			       MAKEOVERRIDES, name, name, val);
-	}
-	if (exp) {
-	    s = Var_Subst(NULL, exp, VAR_GLOBAL, 0);
-	    if (s) {
-		    Var_Set(MAKEOVERRIDES, s, VAR_GLOBAL);
-		    free(s);
-	    }
-	    if (exp != tmp)
-		free(exp);
-	}
+	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
     if (name != cp)
 	free(name);
@@ -1299,15 +1266,17 @@ VarLoopExpand (ctx, word, addSpace, buf, loopp)
     VarLoop_t	*loop = (VarLoop_t *) loopp;
     char *s;
     int slen;
-    
-    Var_Set(loop->tvar, word, loop->ctxt);
-    s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
-    if (s != NULL && *s != '\0') {
-	if (addSpace && *s != '\n')
-	    Buf_AddByte(buf, ' ');
-	Buf_AddBytes(buf, (slen = strlen(s)), (Byte *)s);
-	addSpace = (slen > 0 && s[slen - 1] != '\n');
-	free(s);
+
+    if (word && *word) {
+        Var_Set(loop->tvar, word, loop->ctxt);
+        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->err);
+        if (s != NULL && *s != '\0') {
+            if (addSpace && *s != '\n')
+                Buf_AddByte(buf, ' ');
+            Buf_AddBytes(buf, (slen = strlen(s)), (Byte *)s);
+            addSpace = (slen > 0 && s[slen - 1] != '\n');
+            free(s);
+        }
     }
     return addSpace;
 }
