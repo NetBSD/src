@@ -1,12 +1,12 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.21 2002/03/17 21:11:32 tron Exp $
+#	$NetBSD: Makefile,v 1.22 2003/06/30 18:52:52 wiz Exp $
 
 MELIB=	${BINDIR}/me
-TMLIB=	${BINDIR}/tmac
+#TMLIB=	${BINDIR}/tmac
 MESRCS=	acm.me chars.me deltext.me eqn.me float.me footnote.me \
 	index.me letterhead.me local.me null.me refer.me sh.me \
 	tbl.me thesis.me
-TMSRCS=	tmac.e
+#TMSRCS=	tmac.e
 MAN=	me.7
 
 .include <bsd.prog.mk>
@@ -28,22 +28,22 @@ ${DESTDIR}${MELIB}/${M}: ${M}
 		${M}.tmp ${.TARGET}
 .endfor
 
-.for M in ${TMSRCS}
+#.for M in ${TMSRCS}
 
-proginstall:: ${DESTDIR}${TMLIB}/${M}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${TMLIB}/${M}
-.endif
-.if !defined(BUILD)
-${DESTDIR}${TMLIB}/${M}: .MADE
-.endif
+#proginstall:: ${DESTDIR}${TMLIB}/${M}
+#.if !defined(UPDATE)
+#.PHONY: ${DESTDIR}${TMLIB}/${M}
+#.endif
+#.if !defined(BUILD)
+#${DESTDIR}${TMLIB}/${M}: .MADE
+#.endif
 
-${DESTDIR}${TMLIB}/${M}: ${M}
-	@rm -f ${.TARGET} ${M}.tmp
-	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
-	${INSTALL_FILE:N-c} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		${M}.tmp ${.TARGET}
-.endfor
+#${DESTDIR}${TMLIB}/${M}: ${M}
+#	@rm -f ${.TARGET} ${M}.tmp
+#	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
+#	${INSTALL_FILE:N-c} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+#		${M}.tmp ${.TARGET}
+#.endfor
 
 proginstall:: ${DESTDIR}${MELIB}/revisions
 .if !defined(UPDATE)
