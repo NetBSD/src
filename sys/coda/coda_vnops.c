@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.22 2000/11/27 08:39:40 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.23 2001/01/22 12:17:35 jdolecek Exp $	*/
 
 /*
  * 
@@ -111,7 +111,7 @@ static int coda_lockdebug = 0;
 
 /* Definition of the vnode operation vector */
 
-struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_default_desc, coda_vop_error },
     { &vop_lookup_desc, coda_lookup },		/* lookup */
     { &vop_create_desc, coda_create },		/* create */
@@ -160,7 +160,7 @@ struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 
-struct vnodeopv_desc coda_vnodeop_opv_desc = 
+const struct vnodeopv_desc coda_vnodeop_opv_desc = 
         { &coda_vnodeop_p, coda_vnodeop_entries };
 
 /* Definitions of NetBSD vnodeop interfaces */

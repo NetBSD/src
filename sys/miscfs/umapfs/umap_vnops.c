@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.17 2001/01/18 20:28:24 jdolecek Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.18 2001/01/22 12:17:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ int	umap_rename	__P((void *));
  *
  */
 int (**umap_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_default_desc,	umap_bypass },
 
 	{ &vop_lookup_desc,	umap_lookup },
@@ -94,7 +94,7 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
 };
-struct vnodeopv_desc umapfs_vnodeop_opv_desc =
+const struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };
 
 /*

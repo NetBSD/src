@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.55 2000/11/27 08:39:39 chs Exp $	*/
+/*	$NetBSD: advnops.c,v 1.56 2001/01/22 12:17:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -98,7 +98,7 @@ int	adosfs_pathconf	__P((void *));
 #define adosfs_update 	genfs_nullop
 #define adosfs_valloc 	genfs_eopnotsupp
 
-struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, adosfs_lookup },		/* lookup */
 	{ &vop_create_desc, adosfs_create },		/* create */
@@ -148,7 +148,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ NULL, NULL }
 };
 
-struct vnodeopv_desc adosfs_vnodeop_opv_desc =
+const struct vnodeopv_desc adosfs_vnodeop_opv_desc =
 	{ &adosfs_vnodeop_p, adosfs_vnodeop_entries };
 
 int

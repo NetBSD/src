@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.85 2001/01/18 20:28:23 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.86 2001/01/22 12:17:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -435,7 +435,7 @@ struct vnodeopv_entry_desc {
 struct vnodeopv_desc {
 			/* ptr to the ptr to the vector where op should go */
 	int (***opv_desc_vector_p) __P((void *));
-	struct vnodeopv_entry_desc *opv_desc_ops;   /* null terminated list */
+	const struct vnodeopv_entry_desc *opv_desc_ops;   /* null terminated list */
 };
 
 /*

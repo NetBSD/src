@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.57 2000/11/08 14:28:13 ad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.58 2001/01/22 12:17:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ int	fdesc_pathconf	__P((void *));
 static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
 
 int (**fdesc_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fdesc_lookup },		/* lookup */
 	{ &vop_create_desc, fdesc_create },		/* create */
@@ -179,7 +179,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
-struct vnodeopv_desc fdesc_vnodeop_opv_desc =
+const struct vnodeopv_desc fdesc_vnodeop_opv_desc =
 	{ &fdesc_vnodeop_p, fdesc_vnodeop_entries };
 
 /*

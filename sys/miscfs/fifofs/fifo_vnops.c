@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.28 2000/03/30 12:22:13 augustss Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.29 2001/01/22 12:17:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -66,7 +66,7 @@ struct fifoinfo {
 };
 
 int (**fifo_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
@@ -112,7 +112,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc fifo_vnodeop_opv_desc =
+const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
 /*

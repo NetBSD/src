@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.126 2000/12/12 17:13:17 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.127 2001/01/22 12:17:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,7 +92,7 @@
  * Global vfs data structures for nfs
  */
 int (**nfsv2_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, nfs_lookup },		/* lookup */
 	{ &vop_create_desc, nfs_create },		/* create */
@@ -142,14 +142,14 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
+const struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };
 
 /*
  * Special device vnode ops
  */
 int (**spec_nfsv2nodeop_p) __P((void *));
-struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
+const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
@@ -197,11 +197,11 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
+const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
 
 int (**fifo_nfsv2nodeop_p) __P((void *));
-struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
+const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
@@ -249,7 +249,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
+const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
 
 /*

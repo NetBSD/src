@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.49 2000/12/11 02:50:17 chs Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50 2001/01/22 12:17:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -104,7 +104,7 @@ static int union_lookup1 __P((struct vnode *, struct vnode **,
  * Global vfs data structures
  */
 int (**union_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc union_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, union_lookup },		/* lookup */
 	{ &vop_create_desc, union_create },		/* create */
@@ -154,7 +154,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 #endif
 	{ NULL, NULL }
 };
-struct vnodeopv_desc union_vnodeop_opv_desc =
+const struct vnodeopv_desc union_vnodeop_opv_desc =
 	{ &union_vnodeop_p, union_vnodeop_entries };
 
 #define FIXUP(un) { \

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.26 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27 2001/01/22 12:17:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
  * mfs vnode operations.
  */
 int (**mfs_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, mfs_lookup },		/* lookup */
 	{ &vop_create_desc, mfs_create },		/* create */
@@ -102,7 +102,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc mfs_vnodeop_opv_desc =
+const struct vnodeopv_desc mfs_vnodeop_opv_desc =
 	{ &mfs_vnodeop_p, mfs_vnodeop_entries };
 
 /*

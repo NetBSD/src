@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.78 2001/01/10 17:49:18 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.79 2001/01/22 12:17:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -83,7 +83,7 @@ extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
 
-struct vnodeopv_desc *ffs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 	&ffs_vnodeop_opv_desc,
 	&ffs_specop_opv_desc,
 	&ffs_fifoop_opv_desc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.76 2001/01/17 00:09:08 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.77 2001/01/22 12:17:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -166,7 +166,7 @@ static pid_t atopid __P((const char *, u_int));
  * procfs vnode operations.
  */
 int (**procfs_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, procfs_lookup },		/* lookup */
 	{ &vop_create_desc, procfs_create },		/* create */
@@ -211,7 +211,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_update_desc, procfs_update },		/* update */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-struct vnodeopv_desc procfs_vnodeop_opv_desc =
+const struct vnodeopv_desc procfs_vnodeop_opv_desc =
 	{ &procfs_vnodeop_p, procfs_vnodeop_entries };
 /*
  * set things up for doing i/o on

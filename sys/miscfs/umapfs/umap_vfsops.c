@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.26 2000/11/08 14:28:14 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.27 2001/01/22 12:17:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -282,9 +282,9 @@ umapfs_unmount(mp, mntflags, p)
 	return (0);
 }
 
-extern struct vnodeopv_desc umapfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc umapfs_vnodeop_opv_desc;
 
-struct vnodeopv_desc *umapfs_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const umapfs_vnodeopv_descs[] = {
 	&umapfs_vnodeop_opv_desc,
 	NULL,
 };
