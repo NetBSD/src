@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_syscalls.c,v 1.31 2000/12/09 05:37:03 mycroft Exp $ */
+/* $NetBSD: hpux_syscalls.c,v 1.32 2001/01/27 07:25:26 thorpej Exp $ */
 
 /*
  * System call names.
