@@ -1,3 +1,5 @@
+/*	$NetBSD: rcsedit.c,v 1.6 1996/10/15 07:00:14 veego Exp $	*/
+
 /* RCS stream editor */
 
 /******************************************************************************
@@ -8,7 +10,7 @@
  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -24,8 +26,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -35,8 +38,33 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
- * Revision 1.5  1995/02/24 02:25:01  mycroft
- * RCS 5.6.7.4
+ * Revision 1.6  1996/10/15 07:00:14  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.19  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.18  1995/06/01 16:23:43  eggert
+ * (dirtpname): No longer external.
+ * (do_link): Simplify logic.
+ * (finisheditline, finishedit): Replace Iseek/Itell with what they stand for.
+ * (fopen_update_truncate): Replace `#if' with `if'.
+ * (keyreplace, makedirtemp): dirlen(x) -> basefilename(x)-x.
+ *
+ * (edit_string): Fix bug: if !large_memory, a bogus trailing `@' was output
+ * at the end of incomplete lines.
+ *
+ * (keyreplace): Do not assume that seeking backwards
+ * at the start of a file will fail; on some systems it succeeds.
+ * Convert C- and Pascal-style comment starts to ` *' in comment leader.
+ *
+ * (rcswriteopen): Use fdSafer to get safer file descriptor.
+ * Open RCS file with FOPEN_RB.
+ *
+ * (chnamemod): Work around bad_NFS_rename bug; don't ignore un_link result.
+ * Fall back on chmod if fchmod fails, since it might be ENOSYS.
+ *
+ * (aflush): Move to rcslex.c.
  *
  * Revision 5.17  1994/03/20 04:52:58  eggert
  * Normally calculate the $Log prefix from context, not from RCS file.
@@ -179,7 +207,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(editId, "$Id: rcsedit.c,v 1.5 1995/02/24 02:25:01 mycroft Exp $")
+libId(editId, "Id: rcsedit.c,v 5.19 1995/06/16 06:19:24 eggert Exp")
 
 static void editEndsPrematurely P((void)) exiting;
 static void editLineNumberOverflow P((void)) exiting;
@@ -205,7 +233,7 @@ static long linecorr; /* #adds - #deletes in each edit run.		    */
 #define DIRTEMPNAMES (newworkdirtp_index + 1)
 
 enum maker {notmade, real, effective};
-struct buf dirtpname[DIRTEMPNAMES];		/* unlink these when done */
+static struct buf dirtpname[DIRTEMPNAMES];	/* unlink these when done */
 static enum maker volatile dirtpmaker[DIRTEMPNAMES];	/* if these are set */
 #define lockname (dirtpname[lockdirtp_index].string)
 #define newRCSname (dirtpname[newRCSdirtp_index].string)
@@ -254,20 +282,19 @@ do_link(s, t)
 	char const *s, *t;
 /* Link S to T, ignoring bogus EEXIST problems due to NFS failures.  */
 {
-	struct stat sb, tb;
+	int r = link(s, t);
 
-	if (link(s,t) == 0)
-		return 0;
-	if (errno != EEXIST)
-		return -1;
-	if (
-	    stat(s, &sb) == 0  &&
-	    stat(t, &tb) == 0  &&
-	    same_file(sb, tb, 0)
-	)
-		return 0;
-	errno = EEXIST;
-	return -1;
+	if (r != 0  &&  errno == EEXIST) {
+		struct stat sb, tb;
+		if (
+		    stat(s, &sb) == 0  &&
+		    stat(t, &tb) == 0  &&
+		    same_file(sb, tb, 0)
+		)
+			r = 0;
+		errno = EEXIST;
+	}
+	return r;
 }
 #  endif
 #endif
@@ -404,7 +431,7 @@ finisheditline(fin, fout, l, delta)
 	Iptr_type l;
 	struct hshentry const *delta;
 {
-	Iseek(fin, l);
+	fin->ptr = l;
 	if (expandline(fin, fout, delta, true, (FILE*)0, true)  <  0)
 		faterror("finisheditline internal error");
 }
@@ -427,29 +454,27 @@ finishedit(delta, outfile, done)
 		else {
 			register Iptr_type *p, *lim, *l = line;
 			register RILE *fin = finptr;
-			Iptr_type here = Itell(fin);
+			Iptr_type here = fin->ptr;
 			for (p=l, lim=l+gap;  p<lim;  )
 				finisheditline(fin, outfile, *p++, delta);
 			for (p+=gapsize, lim=l+linelim;  p<lim;  )
 				finisheditline(fin, outfile, *p++, delta);
-			Iseek(fin, here);
+			fin->ptr = here;
 		}
 	}
 }
 
 /* Open a temporary NAME for output, truncating any previous contents.  */
-#   define fopen_update_truncate(name) fopen(name, FOPEN_W_WORK)
+#   define fopen_update_truncate(name) fopenSafer(name, FOPEN_W_WORK)
 #else /* !large_memory */
     static FILE * fopen_update_truncate P((char const*));
     static FILE *
 fopen_update_truncate(name)
     char const *name;
 {
-#	if bad_fopen_wplus
-		if (un_link(name) != 0)
-			efaterror(name);
-#	endif
-	return fopen(name, FOPEN_WPLUS_WORK);
+	if (bad_fopen_wplus  &&  un_link(name) != 0)
+		efaterror(name);
+	return fopenSafer(name, FOPEN_WPLUS_WORK);
 }
 #endif
 
@@ -665,7 +690,7 @@ enterstring()
 	frew = foutptr;
 	amidline = false;
 	for (;;) {
-		optr = cachetell();
+		optr = cacheptr();
 		GETC_(frew,c)
 		oamidline = amidline;
 		oe = e;
@@ -792,15 +817,10 @@ edit_string()
 			    cache(fin);
 			    do {
 #				if large_memory
-				    insertline(j++, cachetell());
+				    insertline(j++, cacheptr());
 #				endif
 				for (;;) {
 				    GETC_(frew, c)
-#				    if !large_memory
-					aputc_(c, f)
-#				    endif
-				    if (c == '\n')
-					break;
 				    if (c==SDELIM) {
 					GETC_(frew, c)
 					if (c!=SDELIM) {
@@ -811,6 +831,11 @@ edit_string()
 					    return;
 					}
 				    }
+#				    if !large_memory
+					aputc_(c, f)
+#				    endif
+				    if (c == '\n')
+					break;
 				}
 				++rcsline;
 			    } while (--i);
@@ -1029,14 +1054,11 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 	    case Date:
 		aputs(date2str(date,datebuf), out);
                 break;
-	    case Header:
 	    case Id:
-#ifdef LOCALID
-	    case LocalId:
-#endif
+	    case Header:
 		escape_string(out,
-			marker!=Header || RCSv<VERSION(4)
-			? basename(RCSname)
+			marker==Id || RCSv<VERSION(4)
+			? basefilename(RCSname)
 			: getfullRCSname()
 		);
 		aprintf(out, " %s %s %s %s",
@@ -1064,7 +1086,7 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
                 break;
 	    case Log:
 	    case RCSfile:
-		escape_string(out, basename(RCSname));
+		escape_string(out, basefilename(RCSname));
                 break;
 	    case Name:
 		if (delta->name)
@@ -1101,6 +1123,7 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 		    cs = Comment.size;
 		} else {
 		    int kdelim_found = 0;
+		    Ioffset_type chars_read = Itell(infile);
 		    declarecache;
 		    setupcache(infile); cache(infile);
 
@@ -1112,11 +1135,15 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 		    */
 		    cs = 0;
 		    for (;;) {
-			cacheunget_(infile, c, goto done_backing_up;)
+			if (!--chars_read)
+			    goto done_backing_up;
+			cacheunget_(infile, c)
 			if (c == '\n')
 			    break;
 			if (c == SDELIM  &&  delimstuffed) {
-			    cacheunget_(infile, c, break;)
+			    if (!--chars_read)
+				break;
+			    cacheunget_(infile, c)
 			    if (c != SDELIM) {
 				cacheget_(c)
 				break;
@@ -1136,6 +1163,28 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
 			if (c == SDELIM  &&  delimstuffed)
 			    cacheget_(c)
 			cacheget_(c)
+		    }
+
+		    /* Convert traditional C or Pascal leader to ` *'.  */
+		    for (cw = 0;  cw < cs;  cw++)
+			if (ctab[(unsigned char) cp[cw]] != SPACE)
+			    break;
+		    if (
+			cw+1 < cs
+			&&  cp[cw+1] == '*'
+			&&  (cp[cw] == '/'  ||  cp[cw] == '(')
+		    ) {
+			size_t i = cw+1;
+			for (;;)
+			    if (++i == cs) {
+				warn(
+				    "`%c* $Log' is obsolescent; use ` * $Log'.",
+				    cp[cw]
+				);
+				leader.string[cw] = ' ';
+				break;
+			    } else if (ctab[(unsigned char) cp[i]] != SPACE)
+				break;
 		    }
 
 		    /* Skip `$Log ... $' string.  */
@@ -1226,7 +1275,9 @@ resolve_symlink(L)
 	    } else {
 		/* Splice symbolic link into L.  */
 		b[r] = '\0';
-		L->string[ROOTPATH(b) ? (size_t)0 : dirlen(L->string)]  =  '\0';
+		L->string[
+		  ROOTPATH(b)  ?  0  :  basefilename(L->string) - L->string
+		] = '\0';
 		bufscat(L, b);
 	    }
 	e = errno;
@@ -1258,7 +1309,7 @@ rcswriteopen(RCSbuf, status, mustread)
 	register char const *sp, *RCSpath, *x;
 	RILE *f;
 	size_t l;
-	int e, exists, fdesc, r, waslocked;
+	int e, exists, fdesc, fdescSafer, r, waslocked;
 	struct buf *dirt;
 	struct stat statbuf;
 
@@ -1279,7 +1330,7 @@ rcswriteopen(RCSbuf, status, mustread)
 		return 0;
 
 	RCSpath = RCSbuf->string;
-	sp = basename(RCSpath);
+	sp = basefilename(RCSpath);
 	l = sp - RCSpath;
 	dirt = &dirtpname[waslocked];
 	bufscpy(dirt, RCSpath);
@@ -1377,7 +1428,7 @@ rcswriteopen(RCSbuf, status, mustread)
 #	if !open_can_creat
 #		define create(f) creat(f, OPEN_CREAT_READONLY)
 #	else
-#		define create(f) open(f, OPEN_O_BINARY|OPEN_O_LOCK|O_CREAT|O_EXCL|O_TRUNC|O_WRONLY, OPEN_CREAT_READONLY)
+#		define create(f) open(f, OPEN_O_BINARY|OPEN_O_LOCK|OPEN_O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, OPEN_CREAT_READONLY)
 #	endif
 
 	catchints();
@@ -1389,18 +1440,21 @@ rcswriteopen(RCSbuf, status, mustread)
 	 */
 	seteid();
 	fdesc = create(sp);
+	fdescSafer = fdSafer(fdesc); /* Do it now; setrid might use stderr.  */
 	e = errno;
 	setrid();
 
-	if (fdesc < 0) {
+	if (0 <= fdesc)
+		dirtpmaker[0] = effective;
+
+	if (fdescSafer < 0) {
 		if (e == EACCES  &&  stat(sp,&statbuf) == 0)
 			/* The RCS file is busy.  */
 			e = EEXIST;
 	} else {
-		dirtpmaker[0] = effective;
 		e = ENOENT;
 		if (exists) {
-		    f = Iopen(RCSpath, FOPEN_R, status);
+		    f = Iopen(RCSpath, FOPEN_RB, status);
 		    e = errno;
 		    if (f && waslocked) {
 			/* Discard the previous lock in favor of this one.  */
@@ -1414,7 +1468,7 @@ rcswriteopen(RCSbuf, status, mustread)
 			bufscpy(&dirtpname[lockdirtp_index], sp);
 		    }
 		}
-		fdlock = fdesc;
+		fdlock = fdescSafer;
 	}
 
 	restoreints();
@@ -1455,7 +1509,7 @@ makedirtemp(isworkfile)
 	register struct buf *bn;
 	register char const *name = isworkfile ? workname : RCSname;
 
-	dl = dirlen(name);
+	dl = basefilename(name) - name;
 	bn = &dirtpname[newRCSdirtp_index + isworkfile];
 	bufalloc(bn,
 #		if has_mktemp
@@ -1527,74 +1581,86 @@ chnamemod(
  * Rename a file (with stream pointer *FROMP) from FROM to TO.
  * FROM already exists.
  * If 0 < SET_MODE, change the mode to MODE, before renaming if possible.
- * If MTIME is not -1, change its mtime to MTIME, before renaming if possible.
+ * If MTIME is not -1, change its mtime to MTIME before renaming.
  * Close and clear *FROMP before renaming it.
  * Unlink TO if it already exists.
  * Return -1 on error (setting errno), 0 otherwise.
  */
 {
+	mode_t mode_while_renaming = mode;
+	int fchmod_set_mode = 0;
+
+#	if bad_a_rename || bad_NFS_rename
+	    struct stat st;
+	    if (bad_NFS_rename  ||  (bad_a_rename && set_mode <= 0)) {
+		if (fstat(fileno(*fromp), &st) != 0)
+		    return -1;
+		if (bad_a_rename && set_mode <= 0)
+		    mode = st.st_mode;
+	    }
+#	endif
+
 #	if bad_a_rename
 		/*
-		 * This host is brain damaged.  A race condition is possible
-		 * while the lock file is temporarily writable.
-		 * There doesn't seem to be a workaround.
-		 */
-		mode_t mode_while_renaming;
-		if (set_mode <= 0) {
-		    struct stat st;
-		    if (stat(from, &st) != 0)
-			return -1;
-		    mode = st.st_mode;
-		}
+		* There's a short window of inconsistency
+		* during which the lock file is writable.
+		*/
 		mode_while_renaming = mode|S_IWUSR;
 		if (mode != mode_while_renaming)
 		    set_mode = 1;
-#	else
-#		define mode_while_renaming mode
 #	endif
 
 #	if has_fchmod
-	    if (0<set_mode  &&  fchmod(fileno(*fromp),mode_while_renaming) != 0)
-		return -1;
-	    Ozclose(fromp);
-#	else
-	    /* If bad_chmod_close, we must close before chmod.  */
-	    Ozclose(fromp);
-	    if (0<set_mode  &&  chmod(from, mode_while_renaming) != 0)
-		return -1;
+	    if (0<set_mode  &&  fchmod(fileno(*fromp),mode_while_renaming) == 0)
+		fchmod_set_mode = set_mode;
 #	endif
+	/* If bad_chmod_close, we must close before chmod.  */
+	Ozclose(fromp);
+	if (fchmod_set_mode<set_mode  &&  chmod(from, mode_while_renaming) != 0)
+	    return -1;
 
 	if (setmtime(from, mtime) != 0)
 		return -1;
 
 #	if !has_rename || bad_b_rename
-		VOID un_link(to);
 		/*
-		 * We need not check the result;
-		 * link() or rename() will catch it.
-		 * No harm is done if TO does not exist.
-		 * However, there's a short window of inconsistency
-		 * during which TO does not exist.
-		 */
+		* There's a short window of inconsistency
+		* during which TO does not exist.
+		*/
+		if (un_link(to) != 0  &&  errno != ENOENT)
+			return -1;
 #	endif
 
-	return
-#	    if !has_rename
-		do_link(from,to) != 0  ?  -1  :  un_link(from)
-#	    else
-		    rename(from, to) != 0
-#		    if has_NFS
-			&& errno != ENOENT
-#		    endif
-		?  -1
-#		if bad_a_rename
-		:  0<set_mode  ?  chmod(to, mode)
-#		endif
-		:  0
-#	    endif
-	;
+#	if has_rename
+	    if (rename(from,to) != 0  &&  !(has_NFS && errno==ENOENT))
+		return -1;
+#	else
+	    if (do_link(from,to) != 0  ||  un_link(from) != 0)
+		return -1;
+#	endif
 
-#	undef mode_while_renaming
+#	if bad_NFS_rename
+	{
+	    /*
+	    * Check whether the rename falsely reported success.
+	    * A race condition can occur between the rename and the stat.
+	    */
+	    struct stat tostat;
+	    if (stat(to, &tostat) != 0)
+		return -1;
+	    if (! same_file(st, tostat, 0)) {
+		errno = EIO;
+		return -1;
+	    }
+	}
+#	endif
+
+#	if bad_a_rename
+	    if (0 < set_mode  &&  chmod(to, mode) != 0)
+		return -1;
+#	endif
+
+	return 0;
 }
 
 	int
@@ -1624,7 +1690,7 @@ findlock(delete, target)
  * Return 0 for no locks, 1 for one, 2 for two or more.
  */
 {
-	register struct lock *next, **trail, **found;
+	register struct rcslock *next, **trail, **found;
 
 	found = 0;
 	for (trail = &Locks;  (next = *trail);  trail = &next->nextlock)
@@ -1657,7 +1723,7 @@ addlock(delta, verbose)
  * Return 0 if the caller already holds the lock.
  */
 {
-	register struct lock *next;
+	register struct rcslock *next;
 
 	for (next = Locks;  next;  next = next->nextlock)
 		if (cmpnum(delta->num, next->delta->num) == 0)
@@ -1670,7 +1736,7 @@ addlock(delta, verbose)
 				  );
 				return -1;
 			}
-	next = ftalloc(struct lock);
+	next = ftalloc(struct rcslock);
 	delta->lockedby = next->login = getcaller();
 	next->delta = delta;
 	next->nextlock = Locks;
@@ -1855,14 +1921,6 @@ donerewrite(changed, newRCStime)
 #		endif
 	}
 	return r;
-}
-
-	void
-aflush(f)
-	FILE *f;
-{
-	if (fflush(f) != 0)
-		Oerror();
 }
 
 	void

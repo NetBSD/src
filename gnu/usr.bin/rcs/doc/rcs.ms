@@ -1,3 +1,5 @@
+.\"	$NetBSD: rcs.ms,v 1.3 1996/10/15 06:59:58 veego Exp $
+.\"
 .\" Format this file with:
 .\" pic file | tbl | troff -ms
 .\"
@@ -18,7 +20,7 @@
 .de Id
 .ND \\$4
 ..
-.Id $Id: rcs.ms,v 1.2 1995/02/24 02:07:52 mycroft Exp $
+.\" Id: rcs.ms,v 5.4 1995/06/01 16:23:43 eggert Exp
 .RP
 .TL
 RCS\*-A System for Version Control
@@ -283,7 +285,7 @@ has a similar function.  It accumulates
 the log messages that are requested during check-in.
 Thus, one can maintain the complete history of a revision directly inside it,
 by enclosing it in a comment.
-Figure 1 is a partial reproduction of a log contained in revision 4.1 of
+Figure 1 is an edited version of a log contained in revision 4.1 of
 the file \fIci.c\fR.  The log appears at the beginning of the file,
 and makes it easy to determine what the recent modifications were.
 .sp
@@ -292,23 +294,25 @@ and makes it easy to determine what the recent modifications were.
 .ne 18
 .nf
 .in +0.5i
-/* \*sLog: ci.c,v \*s
- * Revision 4.1  1983/05/10  17:03:06  wft
- * Added option \-d and \-w, and updated assignment of date, etc. to new delta.
- * Added handling of default branches.
- *
- * Revision 3.9  1983/02/15  15:25:44  wft
- * Added call to fastcopy() to copy remainder of RCS file.
- *
- * Revision 3.8  1983/01/14  15:34:05  wft
- * Added ignoring of interrupts while new RCS file is renamed;
- * avoids deletion of RCS files by interrupts.
- *
- * Revision 3.7  1982/12/10  16:09:20  wft
- * Corrected checking of return code from diff.
- * An RCS file now inherits its mode during the first ci from the working file,
- * except that write permission is removed.
- */
+/*
+.in +\w'/'u
+* \*sLog: ci.c,v \*s
+* Revision 4.1  1983/05/10 17:03:06  wft
+* Added option \-d and \-w, and updated assignment of date, etc. to new delta.
+* Added handling of default branches.
+*
+* Revision 3.9  1983/02/15 15:25:44  wft
+* Added call to fastcopy() to copy remainder of RCS file.
+*
+* Revision 3.8  1983/01/14 15:34:05  wft
+* Added ignoring of interrupts while new RCS file is renamed;
+* avoids deletion of RCS files by interrupts.
+*
+* Revision 3.7  1982/12/10 16:09:20  wft
+* Corrected checking of return code from diff.
+* An RCS file now inherits its mode during the first ci from the working file,
+* except that write permission is removed.
+*/
 .in 0
 .ce 1
 Figure 1.  Log entries produced by the marker \*sLog\*s.

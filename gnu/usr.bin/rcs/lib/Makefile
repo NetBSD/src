@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/09/26 21:47:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1996/10/15 07:00:03 veego Exp $
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes

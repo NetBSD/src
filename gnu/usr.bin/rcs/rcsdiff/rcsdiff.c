@@ -1,7 +1,9 @@
+/*	$NetBSD: rcsdiff.c,v 1.4 1996/10/15 07:00:40 veego Exp $	*/
+
 /* Compare RCS revisions.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,15 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
- * Revision 1.3  1995/02/24 02:25:35  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:40  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.19  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.18  1995/06/01 16:23:43  eggert
+ * (main): Pass "--binary" if -kb and if --binary makes a difference.
+ * Don't treat + options specially.
  *
  * Revision 5.17  1994/03/17 14:05:48  eggert
  * Specify subprocess input via file descriptor, not file name.  Remove lint.
@@ -147,7 +157,7 @@ static int exitstatus;
 static RILE *workptr;
 static struct stat workstat;
 
-mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft Exp $")
+mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert Exp")
 {
     static char const cmdusage[] =
 	    "\nrcsdiff usage: rcsdiff -ksubst -q -rrev1 [-rrev2] -Vn -xsuff -zzone [diff options] file ...";
@@ -163,7 +173,7 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
     char date2[datesize];
 #endif
     char const *cov[10 + !DIFF_L];
-    char const **diffv, **diffp;	/* argv for subsidiary diff */
+    char const **diffv, **diffp, **diffpend;	/* argv for subsidiary diff */
     char const **pp, *p, *diffvstr;
     struct buf commarg;
     struct buf numericrev;	/* expanded revision number */
@@ -186,8 +196,11 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
     no_diff_means_no_output = true;
     suffixes = X_DEFAULT;
 
-    /* Room for runv extra + args [+ 2 labels] + 1 file + 1 trailing null.  */
-    diffv = tnalloc(char const*, 1 + argc + 2*DIFF_L + 2);
+    /*
+    * Room for runv extra + args [+ --binary] [+ 2 labels]
+    * + 1 file + 1 trailing null.
+    */
+    diffv = tnalloc(char const*, 1 + argc + !!OPEN_O_BINARY + 2*DIFF_L + 2);
     diffp = diffv + 1;
     *diffp++ = DIFF;
 
@@ -289,7 +302,7 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
 	    diff_label2 = diffp++;
     }
 #endif
-    diffp[2] = 0;
+    diffpend = diffp;
 
     cov[1] = CO;
     cov[2] = "-q";
@@ -378,6 +391,11 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
 	    *pp++ = RCSname;
 	    *pp = 0;
 
+	    diffp = diffpend;
+#	    if OPEN_O_BINARY
+		    if (Expand == BINARY_EXPAND)
+			    *diffp++ = "--binary";
+#	    endif
 	    diffp[0] = maketemp(0);
 	    if (runv(-1, diffp[0], cov)) {
 		    rcserror("co failed");
@@ -385,16 +403,12 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
 	    }
 	    if (!rev2) {
 		    diffp[1] = workname;
-		    switch (workname[0]) {
-		     case '-':
-		     case '+': /* Older GNU diffs have '+' options, too.  */
-		      {
+		    if (*workname == '-') {
 			char *dp = ftnalloc(char, strlen(workname)+3);
 			diffp[1] = dp;
 			*dp++ = '.';
 			*dp++ = SLASH;
 			VOID strcpy(dp, workname);
-		      }
 		    }
 	    } else {
 		    diagnose("retrieving revision %s\n",xrev2);
@@ -412,6 +426,7 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.3 1995/02/24 02:25:35 mycroft
 	    else
 		    diagnose("diff%s -r%s -r%s\n", diffvstr, xrev1, xrev2);
 
+	    diffp[2] = 0;
 	    switch (runv(-1, (char*)0, diffv)) {
 		    case DIFF_SUCCESS:
 			    break;

@@ -1,6 +1,8 @@
+/*	$NetBSD: partime.c,v 1.4 1996/10/15 07:00:10 veego Exp $	*/
+
 /* Parse a string, yielding a struct partime that describes it.  */
 
-/* Copyright 1993, 1994 Paul Eggert
+/* Copyright 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -25,14 +28,27 @@ Report problems and direct all questions to:
 
 */
 
+#if has_conf_h
+#	include "conf.h"
+#else
+#	ifdef __STDC__
+#		define P(x) x
+#	else
+#		define const
+#		define P(x) ()
+#	endif
+#	include <limits.h>
+#	include <time.h>
+#endif
+
 #include <ctype.h>
 #undef isdigit
+#define isdigit(c) (((unsigned)(c)-'0') <= 9) /* faster than stock */
 
-#include "conf.h"
 #include "partime.h"
 
 char const partimeId[]
-  = "$Id: partime.c,v 1.3 1995/02/24 02:24:55 mycroft Exp $";
+  = "Id: partime.c,v 5.13 1995/06/16 06:19:24 eggert Exp";
 
 
 /* Lookup tables for names of months, weekdays, time zones.  */
@@ -91,10 +107,10 @@ static struct name_val const zone_names[] = {
 	zs(  100, "cet"),		/* Central Europe */
 	zs(  200, "eet"),		/* Eastern Europe */
 	zs(  530, "ist"),		/* India */
-	zs(  900, "jst"),		/* Japan */
+	zd(  900, "jst", "jdt"),/* Japan */
 	zd(  900, "kst", "kdt"),/* Korea */
 	zd( 1200,"nzst","nzdt"),/* New Zealand */
-	{ "lt", TM_LOCAL_ZONE },
+	{ "lt", 1 },
 #if 0
 	/* The following names are duplicates or are not well attested.  */
 	zs(-1100, "sst"),		/* Samoa */
@@ -157,12 +173,12 @@ static struct name_val const zone_names[] = {
 	zd( 1100,"lhst","lhst"),/* Lord Howe */
 	zd( 1100, "psk", "psd"),/* Petropavlovsk-Kamchatski */
 	zs( 1100,"ncst"),		/* New Caledonia */
-	zs( 1130, "nrt"),		/* Norfolk */
+	zs( 1130,"nrft"),		/* Norfolk */
 	zd( 1200, "ask", "asd"),/* Anadyr */
 	zs( 1245,"nz-chat"),	/* Chatham */
 	zs( 1300, "tgt"),		/* Tongatapu */
 #endif
-	{"", TM_UNDEFINED_ZONE}
+	{"", -1}
 };
 
 	static int
@@ -203,7 +219,7 @@ undefine (t) struct partime *t;
 /*
 * Array of patterns to look for in a date string.
 * Order is important: we look for the first matching pattern
-* whose values do not contract values that we already know about.
+* whose values do not contradict values that we already know about.
 * See `parse_pattern_letter' below for the meaning of the pattern codes.
 */
 static char const * const patterns[] = {
@@ -233,7 +249,7 @@ static char const * const patterns[] = {
 	static char const *
 parse_prefix (str, t, pi) char const *str; struct partime *t; int *pi;
 /*
-* Parse an initial prefix of S, setting *T accordingly.
+* Parse an initial prefix of STR, setting *T accordingly.
 * Return the first character after the prefix, or 0 if it couldn't be parsed.
 * Start with pattern *PI; if success, set *PI to the next pattern to try.
 * Set *PI to -1 if we know there are no more patterns to try;
@@ -329,7 +345,8 @@ parse_decimal (s, digits, lo, hi, resolution, res, fres)
 			s = parse_fixed (s1, s - s1, &num10);
 			product = num10*resolution;
 			f = (product + (denom10>>1)) / denom10;
-			if (f < 0  ||  product/num10 != resolution)
+			f -= f & (product%denom10 == denom10>>1); /* round to even */
+			if (f < 0  ||  product/resolution != num10)
 				return 0; /* overflow */
 		}
 		*fres = f;
@@ -338,17 +355,19 @@ parse_decimal (s, digits, lo, hi, resolution, res, fres)
 	return 0;
 }
 
-	char const *
-parzone (s, zone) char const *s; int *zone;
+	char *
+parzone (s, zone) char const *s; long *zone;
 /*
 * Parse an initial prefix of S; it must denote a time zone.
-* Set *ZONE to the number of minutes east of GMT,
+* Set *ZONE to the number of seconds east of GMT,
 * or to TM_LOCAL_ZONE if it is the local time zone.
 * Return the first character after the prefix, or 0 if it couldn't be parsed.
 */
 {
-	int neg, dd;
-	int offset;
+	char sign;
+	int hh, mm, ss;
+	int minutesEastOfUTC;
+	long offset, z;
 
 	/*
 	* The formats are LT, n, n DST, nDST, no, o
@@ -357,21 +376,25 @@ parzone (s, zone) char const *s; int *zone;
 	*/
 	switch (*s) {
 		case '-': case '+':
-			*zone = 0;
+			z = 0;
 			break;
 
 		default:
-			*zone = lookup (s, zone_names);
+			minutesEastOfUTC = lookup (s, zone_names);
+			if (minutesEastOfUTC == -1)
+				return 0;
+
 			/* Don't bother to check rest of spelling.  */
 			while (isalpha ((unsigned char) *s))
 				s++;
 
-			if (*zone == TM_UNDEFINED_ZONE)
-				return 0;
-
 			/* Don't modify LT.  */
-			if (*zone == TM_LOCAL_ZONE)
-				return s;
+			if (minutesEastOfUTC == 1) {
+				*zone = TM_LOCAL_ZONE;
+				return (char *) s;
+			}
+
+			z = minutesEastOfUTC * 60L;
 
 			/* Look for trailing " DST".  */
 			if (
@@ -389,35 +412,39 @@ parzone (s, zone) char const *s; int *zone;
 			) {
 				s += 3;
 			  trailing_dst:
-				*zone += 60;
-				return s;
+				*zone = z + 60*60;
+				return (char *) s;
 			}
 
 			switch (*s) {
 				case '-': case '+': break;
-				default: return s;
+				default: return (char *) s;
 			}
 	}
-	neg = *s++ == '-';
+	sign = *s++;
 
-	if (!(s = parse_ranged (s, 2, 0, 23, &dd)))
+	if (!(s = parse_ranged (s, 2, 0, 23, &hh)))
 		return 0;
-	offset = dd * 60;
+	mm = ss = 0;
 	if (*s == ':')
 		s++;
 	if (isdigit ((unsigned char) *s)) {
-		if (!(s = parse_ranged (s, 2, 0, 59, &dd)))
+		if (!(s = parse_ranged (s, 2, 0, 59, &mm)))
 			return 0;
-		offset += dd;
+		if (*s==':' && s[-3]==':' && isdigit ((unsigned char) s[1])) {
+			if (!(s = parse_ranged (s + 1, 2, 0, 59, &ss)))
+				return 0;
+		}
 	}
 	if (isdigit ((unsigned char) *s))
 		return 0;
-	*zone += neg ? -offset : offset;
+	offset = (hh*60 + mm)*60L + ss;
+	*zone = z + (sign=='-' ? -offset : offset);
 	/*
 	* ?? Are fractions allowed here?
 	* If so, they're not implemented.
 	*/
-	return s;
+	return (char *) s;
 }
 
 	static char const *
@@ -651,7 +678,7 @@ merge_partime (t, u) struct partime *t; struct partime const *u;
 	return 0;
 }
 
-	char const *
+	char *
 partime (s, t) char const *s; struct partime *t;
 /*
 * Parse a date/time prefix of S, putting the parsed result into *T.
@@ -668,9 +695,9 @@ partime (s, t) char const *s; struct partime *t;
 		char const *s1;
 		do {
 			if (!(s1 = parse_prefix (s, &p, &i)))
-				return s;
+				return (char *) s;
 		} while (merge_partime (t, &p) != 0);
 		s = s1;
 	}
-	return s;
+	return (char *) s;
 }

@@ -1,6 +1,8 @@
+/*	$NetBSD: merger.c,v 1.4 1996/10/15 07:00:08 veego Exp $	*/
+
 /* three-way file merge internals */
 
-/* Copyright 1991, 1992, 1993, 1994 Paul Eggert
+/* Copyright 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -27,7 +30,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(mergerId, "$Id: merger.c,v 1.3 1995/02/24 02:24:54 mycroft Exp $")
+libId(mergerId, "Id: merger.c,v 1.7 1995/06/16 06:19:24 eggert Exp")
 
 	static char const *normalize_arg P((char const*,char**));
 	static char const *
@@ -36,18 +39,17 @@ normalize_arg(s, b)
 	char **b;
 /*
  * If S looks like an option, prepend ./ to it.  Yield the result.
- * Set *B to the address of any storage that was allocated..
+ * Set *B to the address of any storage that was allocated.
  */
 {
 	char *t;
-	switch (*s) {
-		case '-': case '+':
-			*b = t = testalloc(strlen(s) + 3);
-			VOID sprintf(t, ".%c%s", SLASH, s);
-			return t;
-		default:
-			*b = 0;
-			return s;
+	if (*s == '-') {
+		*b = t = testalloc(strlen(s) + 3);
+		VOID sprintf(t, ".%c%s", SLASH, s);
+		return t;
+	} else {
+		*b = 0;
+		return s;
 	}
 }
 
@@ -79,11 +81,7 @@ merge(tostdout, edarg, label, argv)
 		a[i] = normalize_arg(argv[i], &b[i]);
 	
 	if (!edarg)
-#		if DIFF3_A
-			edarg = "-A";
-#		else
-			edarg = "-E";
-#		endif
+		edarg = "-E";
 
 #if DIFF3_BIN
 	t = 0;
@@ -91,10 +89,9 @@ merge(tostdout, edarg, label, argv)
 		t = maketemp(0);
 	s = run(
 		-1, t,
-		DIFF3, edarg, "-am", "-L", label[0],
-#		if DIFF3_A
-			"-L", label[1],
-#		endif
+		DIFF3, edarg, "-am",
+		"-L", label[0],
+		"-L", label[1],
 		"-L", label[2],
 		a[0], a[1], a[2], (char*)0
 	);
@@ -108,9 +105,9 @@ merge(tostdout, edarg, label, argv)
 			exiterr();
 	}
 	if (t) {
-		if (!(f = fopen(argv[0], FOPEN_W)))
+		if (!(f = fopenSafer(argv[0], "w")))
 			efaterror(argv[0]);
-		if (!(rt = Iopen(t, FOPEN_R, (struct stat*)0)))
+		if (!(rt = Iopen(t, "r", (struct stat*)0)))
 			efaterror(t);
 		fastcopy(rt, f);
 		Ifclose(rt);
@@ -135,7 +132,7 @@ merge(tostdout, edarg, label, argv)
 		s = DIFF_FAILURE;
 		warn("overlaps or other problems during merge");
 	}
-	if (!(f = fopen(t, "a+")))
+	if (!(f = fopenSafer(t, "a+")))
 		efaterror(t);
 	aputs(tostdout ? "1,$p\n" : "w\n",  f);
 	Orewind(f);

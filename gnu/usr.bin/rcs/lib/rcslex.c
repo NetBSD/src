@@ -1,3 +1,5 @@
+/*	$NetBSD: rcslex.c,v 1.5 1996/10/15 07:00:23 veego Exp $	*/
+
 /* lexical analysis of RCS files */
 
 /******************************************************************************
@@ -10,7 +12,7 @@
  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -26,8 +28,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -39,8 +42,24 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcslex.c,v $
- * Revision 1.4  1995/02/24 02:25:10  mycroft
- * RCS 5.6.7.4
+ * Revision 1.5  1996/10/15 07:00:23  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.19  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.18  1995/06/01 16:23:43  eggert
+ * (map_fd_deallocate,mmap_deallocate,read_deallocate,nothing_to_deallocate):
+ * New functions.
+ * (Iclose): If large_memory and maps_memory, use them to deallocate mapping.
+ * (fd2RILE): Use map_fd if available.
+ * If one mapping method fails, try the next instead of giving up;
+ * if they all fail, fall back on ordinary read.
+ * Work around bug: root mmap over NFS succeeds, but accessing dumps core.
+ * Use MAP_FAILED macro for mmap failure, and `char *' instead of caddr_t.
+ * (advise_access): Use madvise only if this instance used mmap.
+ * (Iopen): Use fdSafer to get safer file descriptor.
+ * (aflush): Moved here from rcsedit.c.
  *
  * Revision 5.17  1994/03/20 04:52:58  eggert
  * Don't worry if madvise fails.  Add Orewind.  Remove lint.
@@ -155,7 +174,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(lexId, "$Id: rcslex.c,v 1.4 1995/02/24 02:25:10 mycroft Exp $")
+libId(lexId, "Id: rcslex.c,v 5.19 1995/06/16 06:19:24 eggert Exp")
 
 static char *checkidentifier P((char*,int,int));
 static void errsay P((char const*));
@@ -537,7 +556,7 @@ getphrases(key)
 	frew = foutptr;
 	setupcache(fin); cache(fin);
 #	if large_memory
-	    r.string = (char const*)cachetell() - strlen(NextString) - 1;
+	    r.string = (char const*)cacheptr() - strlen(NextString) - 1;
 #	else
 	    bufautobegin(&b);
 	    bufscpy(&b, NextString);
@@ -593,7 +612,7 @@ getphrases(key)
 			    cacheget_(c)
 			}
 #			if large_memory
-			    r.size = (char const*)cachetell() - 1 - r.string;
+			    r.size = (char const*)cacheptr() - 1 - r.string;
 #			endif
 			for (;;) {
 			    switch (ctab[c]) {
@@ -850,15 +869,81 @@ checkssym(sym)
 }
 
 
-#if has_mmap && large_memory
+#if !large_memory
+#   define Iclose(f) fclose(f)
+#else
+# if !maps_memory
+    static int Iclose P((RILE *));
+	static int
+    Iclose(f)
+	register RILE *f;
+    {
+	tfree(f->base);
+	f->base = 0;
+	return fclose(f->stream);
+    }
+# else
+    static int Iclose P((RILE *));
+	static int
+    Iclose(f)
+	register RILE *f;
+    {
+	(* f->deallocate) (f);
+	f->base = 0;
+	return close(f->fd);
+    }
+
+#   if has_map_fd
+	static void map_fd_deallocate P((RILE *));
+	    static void
+	map_fd_deallocate(f)
+	    register RILE *f;
+	{
+	    if (vm_deallocate(
+		task_self(),
+		(vm_address_t) f->base,
+		(vm_size_t) (f->lim - f->base)
+	    ) != KERN_SUCCESS)
+		efaterror("vm_deallocate");
+	}
+#   endif
+#   if has_mmap
+	static void mmap_deallocate P((RILE *));
+	    static void
+	mmap_deallocate(f)
+	    register RILE *f;
+	{
+	    if (munmap((char *) f->base, (size_t) (f->lim - f->base)) != 0)
+		efaterror("munmap");
+	}
+#   endif
+    static void read_deallocate P((RILE *));
+	static void
+    read_deallocate(f)
+	RILE *f;
+    {
+	tfree(f->base);
+    }
+
+    static void nothing_to_deallocate P((RILE *));
+	static void
+    nothing_to_deallocate(f)
+	RILE *f;
+    {
+    }
+# endif
+#endif
+
+
+#if large_memory && maps_memory
 	static RILE *fd2_RILE P((int,char const*,struct stat*));
 	static RILE *
 fd2_RILE(fd, name, status)
 #else
 	static RILE *fd2RILE P((int,char const*,char const*,struct stat*));
 	static RILE *
-fd2RILE(fd, name, mode, status)
-	char const *mode;
+fd2RILE(fd, name, type, status)
+	char const *type;
 #endif
 	int fd;
 	char const *name;
@@ -877,9 +962,9 @@ fd2RILE(fd, name, mode, status)
 		return 0;
 	} else {
 
-#	    if ! (has_mmap && large_memory)
+#	    if !(large_memory && maps_memory)
 		FILE *stream;
-		if (!(stream = fdopen(fd, mode)))
+		if (!(stream = fdopen(fd, type)))
 			efaterror(name);
 #	    endif
 
@@ -887,50 +972,109 @@ fd2RILE(fd, name, mode, status)
 		return stream;
 #	    else
 #		define RILES 3
-		{
-			static RILE rilebuf[RILES];
+	      {
+		static RILE rilebuf[RILES];
 
-			register RILE *f;
-			size_t s = status->st_size;
+		register RILE *f;
+		size_t s = status->st_size;
 
-			if (s != status->st_size)
-				faterror("%s: too large", name);
-			for (f = rilebuf;  f->base;  f++)
-				if (f == rilebuf+RILES)
-					faterror("too many RILEs");
-			if (!s) {
-				static unsigned char dummy;
-				f->base = &dummy;
-			} else {
-#			    if has_mmap
-				catchmmapints();
-				if (
-				    (f->base = (unsigned char *)mmap(
-					(caddr_t)0, s, PROT_READ, MAP_SHARED,
-					fd, (off_t)0
-				    )) == (unsigned char *)-1
-				)
-					efaterror(name);
-#			    else
-			    	f->base = tnalloc(unsigned char, s);
+		if (s != status->st_size)
+			faterror("%s: too large", name);
+		for (f = rilebuf;  f->base;  f++)
+			if (f == rilebuf+RILES)
+				faterror("too many RILEs");
+#		if maps_memory
+			f->deallocate = nothing_to_deallocate;
+#		endif
+		if (!s) {
+		    static unsigned char nothing;
+		    f->base = &nothing; /* Any nonzero address will do.  */
+		} else {
+		    f->base = 0;
+#		    if has_map_fd
+			map_fd(
+				fd, (vm_offset_t)0, (vm_address_t*) &f->base,
+				TRUE, (vm_size_t)s
+			);
+			f->deallocate = map_fd_deallocate;
+#		    endif
+#		    if has_mmap
+			if (!f->base) {
+			    catchmmapints();
+			    f->base = (unsigned char *) mmap(
+				(char *)0, s, PROT_READ, MAP_SHARED,
+				fd, (off_t)0
+			    );
+#			    ifndef MAP_FAILED
+#			    define MAP_FAILED (-1)
 #			    endif
+			    if (f->base == (unsigned char *) MAP_FAILED)
+				f->base = 0;
+			    else {
+#				if has_NFS && mmap_signal
+				    /*
+				    * On many hosts, the superuser
+				    * can mmap an NFS file it can't read.
+				    * So access the first page now, and print
+				    * a nice message if a bus error occurs.
+				    */
+				    readAccessFilenameBuffer(name, f->base);
+#				endif
+			    }
+			    f->deallocate = mmap_deallocate;
 			}
-			f->ptr = f->base;
-			f->lim = f->base + s;
-#			if has_mmap
-			    f->fd = fd;
-#			else
-			    f->readlim = f->base;
-			    f->stream = stream;
+#		    endif
+		    if (!f->base) {
+			f->base = tnalloc(unsigned char, s);
+#			if maps_memory
+			{
+			    /*
+			    * We can't map the file into memory for some reason.
+			    * Read it into main memory all at once; this is
+			    * the simplest substitute for memory mapping.
+			    */
+			    char *bufptr = (char *) f->base;
+			    size_t bufsiz = s;
+			    do {
+				ssize_t r = read(fd, bufptr, bufsiz);
+				switch (r) {
+				    case -1:
+					efaterror(name);
+
+				    case 0:
+					/* The file must have shrunk!  */
+					status->st_size = s -= bufsiz;
+					bufsiz = 0;
+					break;
+
+				    default:
+					bufptr += r;
+					bufsiz -= r;
+					break;
+				}
+			    } while (bufsiz);
+			    if (lseek(fd, (off_t)0, SEEK_SET) == -1)
+				efaterror(name);
+			    f->deallocate = read_deallocate;
+			}
 #			endif
-			if_advise_access(s, f, MADV_SEQUENTIAL);
-			return f;
+		    }
 		}
+		f->ptr = f->base;
+		f->lim = f->base + s;
+		f->fd = fd;
+#		if !maps_memory
+		    f->readlim = f->base;
+		    f->stream = stream;
+#		endif
+		if_advise_access(s, f, MADV_SEQUENTIAL);
+		return f;
+	      }
 #	    endif
 	}
 }
 
-#if !has_mmap && large_memory
+#if !maps_memory && large_memory
 	int
 Igetmore(f)
 	register RILE *f;
@@ -956,59 +1100,37 @@ advise_access(f, advice)
 	register RILE *f;
 	int advice;
 {
-	VOID madvise((caddr_t)f->base, (size_t)(f->lim - f->base), advice);
+    if (f->deallocate == mmap_deallocate)
+	VOID madvise((char *)f->base, (size_t)(f->lim - f->base), advice);
 	/* Don't worry if madvise fails; it's only advisory.  */
 }
 #endif
 
 	RILE *
-#if has_mmap && large_memory
+#if large_memory && maps_memory
 I_open(name, status)
 #else
-Iopen(name, mode, status)
-	char const *mode;
+Iopen(name, type, status)
+	char const *type;
 #endif
 	char const *name;
 	struct stat *status;
 /* Open NAME for reading, yield its descriptor, and set *STATUS.  */
 {
-	int fd = open(name, O_RDONLY
-#		if OPEN_O_BINARY  &&  !(has_mmap && large_memory)
-			|  (strchr(mode,'b') ? OPEN_O_BINARY : 0)
+	int fd = fdSafer(open(name, O_RDONLY
+#		if OPEN_O_BINARY
+			|  (strchr(type,'b') ? OPEN_O_BINARY : 0)
 #		endif
-	);
+	));
 
 	if (fd < 0)
 		return 0;
-#	if has_mmap && large_memory
+#	if large_memory && maps_memory
 		return fd2_RILE(fd, name, status);
 #	else
-		return fd2RILE(fd, name, mode, status);
+		return fd2RILE(fd, name, type, status);
 #	endif
 }
-
-
-#if !large_memory
-#	define Iclose(f) fclose(f)
-#else
-	static int Iclose P((RILE*));
-		static int
-	Iclose(f)
-		register RILE *f;
-	{
-#	    if has_mmap
-		size_t s = f->lim - f->base;
-		if (s  &&  munmap((caddr_t)f->base, s) != 0)
-			return -1;
-		f->base = 0;
-		return close(f->fd);
-#	    else
-		tfree(f->base);
-		f->base = 0;
-		return fclose(f->stream);
-#	    endif
-	}
-#endif
 
 
 static int Oerrloop;
@@ -1028,14 +1150,7 @@ void testIerror(f) FILE *f; { if (ferror(f)) Ierror(); }
 void testOerror(o) FILE *o; { if (ferror(o)) Oerror(); }
 
 void Ifclose(f) RILE *f; { if (f && Iclose(f)!=0) Ierror(); }
-#ifndef FSYNC_ALL
 void Ofclose(f) FILE *f; { if (f && fclose(f)!=0) Oerror(); }
-#else
-void Ofclose(f) FILE *f; { if (f && (fflush(f)!=0 ||
-				     ((fsync(fileno(f)) == -1) &&
-				      (errno != EINVAL)) ||
-				     fclose(f)!=0)) Oerror(); }
-#endif
 void Izclose(p) RILE **p; { Ifclose(*p); *p = 0; }
 void Ozclose(p) FILE **p; { Ofclose(*p); *p = 0; }
 
@@ -1053,12 +1168,8 @@ void Irewind(f) FILE *f; { if (fseek(f,0L,SEEK_SET) != 0) Ierror(); }
 
 void Orewind(f) FILE *f; { if (fseek(f,0L,SEEK_SET) != 0) Oerror(); }
 
-void eflush()
-{
-	if (fflush(stderr) != 0  &&  !Oerrloop)
-		Oerror();
-}
-
+void aflush(f) FILE *f; { if (fflush(f) != 0) Oerror(); }
+void eflush() { if (fflush(stderr)!=0 && !Oerrloop) Oerror(); }
 void oflush()
 {
 	if (fflush(workstdout ? workstdout : stdout) != 0  &&  !Oerrloop)
@@ -1359,6 +1470,7 @@ fvfprintf(FILE *stream, char const *format, va_list args)
 {
 #if has_vfprintf
 	if (vfprintf(stream, format, args) < 0)
+		Oerror();
 #else
 #	if has__doprintf
 		_doprintf(stream, format, args);
@@ -1374,8 +1486,8 @@ fvfprintf(FILE *stream, char const *format, va_list args)
 #	endif
 #	endif
 	if (ferror(stream))
-#endif
 		Oerror();
+#endif
 }
 
 #if has_prototypes

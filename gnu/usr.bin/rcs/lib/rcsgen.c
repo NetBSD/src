@@ -1,7 +1,9 @@
+/*	$NetBSD: rcsgen.c,v 1.4 1996/10/15 07:00:20 veego Exp $	*/
+
 /* Generate RCS revisions.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,14 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsgen.c,v $
- * Revision 1.3  1995/02/24 02:25:06  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:20  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.16  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.15  1995/06/01 16:23:43  eggert
+ * (putadmin): Open RCS file with FOPEN_WB.
  *
  * Revision 5.14  1994/03/17 14:05:48  eggert
  * Work around SVR4 stdio performance bug.
@@ -137,7 +146,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(genId, "$Id: rcsgen.c,v 1.3 1995/02/24 02:25:06 mycroft Exp $")
+libId(genId, "Id: rcsgen.c,v 5.16 1995/06/16 06:19:24 eggert Exp")
 
 int interactiveflag;  /* Should we act as if stdin is a tty?  */
 struct buf curlogbuf;  /* buffer for current log message */
@@ -387,7 +396,7 @@ putdesc(textflag, textfile)
 				p = textfile + 1;
 				s = strlen(p);
 			} else {
-				if (!(txt = fopen(textfile, "r")))
+				if (!(txt = fopenSafer(textfile, "r")))
 					efaterror(textfile);
 				bufalloc(&desc, 1);
 				p = desc.string;
@@ -459,17 +468,17 @@ putadmin()
 {
 	register FILE *fout;
 	struct assoc const *curassoc;
-	struct lock const *curlock;
+	struct rcslock const *curlock;
 	struct access const *curaccess;
 
 	if (!(fout = frewrite)) {
 #		if bad_creat0
 			ORCSclose();
-			fout = fopen(makedirtemp(0), FOPEN_W);
+			fout = fopenSafer(makedirtemp(0), FOPEN_WB);
 #		else
 			int fo = fdlock;
 			fdlock = -1;
-			fout = fdopen(fo, FOPEN_W);
+			fout = fdopen(fo, FOPEN_WB);
 #		endif
 
 		if (!(frewrite = fout))

@@ -1,7 +1,9 @@
+/*	$NetBSD: rcsmerge.c,v 1.4 1996/10/15 07:00:45 veego Exp $	*/
+
 /* Merge RCS revisions.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -17,8 +19,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -28,8 +31,15 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsmerge.c,v $
- * Revision 1.3  1995/02/24 02:25:40  mycroft
- * RCS 5.6.7.4
+ * Revision 1.4  1996/10/15 07:00:45  veego
+ * Merge rcs 5.7.
+ *
+ * Revision 5.15  1995/06/16 06:19:24  eggert
+ * Update FSF address.
+ *
+ * Revision 5.14  1995/06/01 16:23:43  eggert
+ * (main): Report an error if -kb, so don't worry about binary stdout.
+ * Punctuate messages properly.  Rewrite to avoid `goto end'.
  *
  * Revision 5.13  1994/03/17 14:05:48  eggert
  * Specify subprocess input via file descriptor, not file name.  Remove lint.
@@ -113,7 +123,7 @@ Report problems and direct all questions to:
 
 static char const co[] = CO;
 
-mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.3 1995/02/24 02:25:40 mycroft Exp $")
+mainProg(rcsmergeId, "rcsmerge", "Id: rcsmerge.c,v 5.15 1995/06/16 06:19:24 eggert Exp")
 {
 	static char const cmdusage[] =
 		"\nrcsmerge usage: rcsmerge -rrev1 [-rrev2] -ksubst -{pq}[rev] -Vn -xsuff -zzone file";
@@ -208,7 +218,9 @@ mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.3 1995/02/24 02:25:40 mycr
 	    if (0 < pairnames(argc, argv, rcsreadopen, true, false)) {
 
                 if (argc>2  ||  (argc==2 && argv[1]))
-                        warn("Excess arguments ignored.");
+			warn("excess arguments ignored");
+		if (Expand == BINARY_EXPAND)
+			workerror("merging binary files");
 		diagnose("RCS file: %s\n", RCSname);
 		if (!(workptr = Iopen(workname, FOPEN_R_WORK, (struct stat*)0)))
 			efaterror(workname);
@@ -219,34 +231,26 @@ mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.3 1995/02/24 02:25:40 mycr
 
 		if (!*rev[1])
 			rev[1]  =  Dbranch ? Dbranch : Head->num;
-		if (!fexpandsym(rev[1], &numericrev, workptr))
-			goto end;
-		if (!(target=genrevs(numericrev.string, (char *)0, (char *)0, (char*)0, &gendeltas))) goto end;
-		xrev[1] = target->num;
-		if (!rev[2] || !*rev[2])
+		if (fexpandsym(rev[1], &numericrev, workptr)
+		    && (target=genrevs(numericrev.string, (char *)0, (char *)0, (char*)0, &gendeltas))
+		) {
+		  xrev[1] = target->num;
+		  if (!rev[2] || !*rev[2])
 			rev[2]  =  Dbranch ? Dbranch : Head->num;
-		if (!fexpandsym(rev[2], &numericrev, workptr))
-			goto end;
-		if (!(target=genrevs(numericrev.string, (char *)0, (char *)0, (char *)0, &gendeltas))) goto end;
-		xrev[2] = target->num;
+		  if (fexpandsym(rev[2], &numericrev, workptr)
+		      && (target=genrevs(numericrev.string, (char *)0, (char *)0, (char *)0, &gendeltas))
+		  ) {
+		    xrev[2] = target->num;
 
-		if (strcmp(xrev[1],xrev[2]) == 0) {
-			if (tostdout) {
-				FILE *o;
-#				if text_equals_binary_stdio || text_work_stdio
-				    o = stdout;
-#				else
-				    if (!(o=fdopen(STDOUT_FILENO,FOPEN_W_WORK)))
-					efaterror("standard output");
-#				endif
-				fastcopy(workptr,o);
-				Ofclose(o);
-			}
-			goto end;
-		}
-		Izclose(&workptr);
+		    if (strcmp(xrev[1],xrev[2]) == 0) {
+		      if (tostdout) {
+			fastcopy(workptr, stdout);
+			Ofclose(stdout);
+		      }
+		    } else {
+		      Izclose(&workptr);
 
-		for (i=1; i<=2; i++) {
+		      for (i=1; i<=2; i++) {
 			diagnose("retrieving revision %s\n", xrev[i]);
 			bufscpy(&commarg, "-p");
 			bufscat(&commarg, rev[i]); /* not xrev[i], for $Name's sake */
@@ -259,18 +263,20 @@ mainProg(rcsmergeId, "rcsmerge", "$Id: rcsmerge.c,v 1.3 1995/02/24 02:25:40 mycr
 				RCSname, (char*)0
 			))
 				rcsfaterror("co failed");
-		}
-		diagnose("Merging differences between %s and %s into %s%s\n",
-			 xrev[1], xrev[2], workname,
-                         tostdout?"; result to stdout":"");
+		      }
+		      diagnose("Merging differences between %s and %s into %s%s\n",
+			       xrev[1], xrev[2], workname,
+			       tostdout?"; result to stdout":"");
 
-		arg[0] = xrev[0] = workname;
-		status = merge(tostdout, edarg, xrev, arg);
+		      arg[0] = xrev[0] = workname;
+		      status = merge(tostdout, edarg, xrev, arg);
+		    }
+		  }
+		}
+
+		Izclose(&workptr);
 	    }
         }
-
-end:
-	Izclose(&workptr);
 	tempunlink();
 	exitmain(nerror ? DIFF_TROUBLE : status);
 }

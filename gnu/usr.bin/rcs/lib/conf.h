@@ -1,16 +1,19 @@
-/* RCS compile-time configuration */
+/*	$NetBSD: conf.h,v 1.10 1996/10/15 07:00:05 veego Exp $	*/
 
-	/* $Id: conf.h,v 1.9 1995/04/19 16:10:30 mycroft Exp $ */
+/* example RCS compile-time configuration */
+
+/* Id: conf.heg,v 1.17 1995/06/02 18:19:00 eggert Exp */
 
 /*
- * This file is generated automatically.
- * If you edit it by hand your changes may be lost.
- * Instead, please try to fix conf.sh,
- * and send your fixes to rcs-bugs@cs.purdue.edu.
+ * This example RCS compile-time configuration describes a host that conforms
+ * to Standard C (1990) and to Posix 1003.1b-1993 with Memory Mapped Files,
+ * and has GNU diffutils 2.7 or later.  If you can't get conf.sh to work,
+ * copy this file to conf.h and edit conf.h by hand; see ../INSTALL.RCS.
  */
 
 #define exitmain(n) return n /* how to exit from main() */
-/* #define _POSIX_SOURCE */ /* Define this if Posix + strict Standard C.  */
+/* #define _POSIX_C_SOURCE 2147483647L */ /* if strict C + Posix 1003.1b-1993 or later */
+/* #define _POSIX_SOURCE */ /* if strict C + Posix 1003.1-1990 */
 
 #include <errno.h>
 #include <stdio.h>
@@ -22,6 +25,8 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
+/* #include <mach/mach.h> */
+/* #include <net/errno.h> */
 #include <pwd.h>
 /* #include <siginfo.h> */
 #include <signal.h>
@@ -34,27 +39,14 @@
 #include <utime.h>
 /* #include <vfork.h> */
 
-/* Define the following symbols to be 1 or 0.  */
-#define has_sys_dir_h 1 /* Does #include <sys/dir.h> work?  */
+/* Define boolean symbols to be 0 (false, the default), or 1 (true).  */
 #define has_sys_param_h 1 /* Does #include <sys/param.h> work?  */
 /* extern int errno; */ /* Uncomment if <errno.h> doesn't declare errno.  */
 #define has_readlink 1 /* Does readlink() work?  */
 #define readlink_isreg_errno EINVAL /* errno after readlink on regular file */
 
-#if !defined(PATH_MAX) && !defined(_POSIX_PATH_MAX)
-#	if has_sys_param_h
-#		include <sys/param.h>
-#		define included_sys_param_h 1
-#	endif
-#	ifndef PATH_MAX
-#		ifndef MAXPATHLEN
-#			define MAXPATHLEN 1024
-#		endif
-#		define PATH_MAX (MAXPATHLEN-1)
-#	endif
-#endif
 #if has_readlink && !defined(MAXSYMLINKS)
-#	if has_sys_param_h && !included_sys_param_h
+#	if has_sys_param_h
 #		include <sys/param.h>
 #	endif
 #	ifndef MAXSYMLINKS
@@ -77,11 +69,40 @@
 /* #define const */
 /* #define volatile */
 
-/* Define the following symbols to be 1 or 0.  */
+/* Define boolean symbols to be 0 (false, the default), or 1 (true).  */
 #define has_prototypes 1 /* Do function prototypes work?  */
 #define has_stdarg 1 /* Does <stdarg.h> work?  */
-#define has_varargs 0 /* Does <varargs.h> work?  */
+/* #define has_varargs ? */ /* Does <varargs.h> work?  */
 #define va_start_args 2 /* How many args does va_start() take?  */
+
+#if O_BINARY
+	/* Text and binary i/o behave differently.  */
+	/* This is incompatible with Posix and Unix.  */
+#	define FOPEN_RB "rb"
+#	define FOPEN_R_WORK (Expand==BINARY_EXPAND ? "r" : "rb")
+#	define FOPEN_WB "wb"
+#	define FOPEN_W_WORK (Expand==BINARY_EXPAND ? "w" : "wb")
+#	define FOPEN_WPLUS_WORK (Expand==BINARY_EXPAND ? "w+" : "w+b")
+#	define OPEN_O_BINARY O_BINARY
+#else
+	/*
+	* Text and binary i/o behave the same.
+	* Omit "b", since some nonstandard hosts reject it.
+	*/
+#	define FOPEN_RB "r"
+#	define FOPEN_R_WORK "r"
+#	define FOPEN_WB "w"
+#	define FOPEN_W_WORK "w"
+#	define FOPEN_WPLUS_WORK "w+"
+#	define OPEN_O_BINARY 0
+#endif
+
+/* This may need changing on non-Unix systems (notably DOS).  */
+#define OPEN_CREAT_READONLY (S_IRUSR|S_IRGRP|S_IROTH) /* lock file mode */
+#define OPEN_O_LOCK 0 /* extra open flags for creating lock file */
+#define OPEN_O_WRONLY O_WRONLY /* main open flag for creating a lock file */
+
+/* Define or comment out the following symbols as needed.  */
 #if has_prototypes
 #	define P(params) params
 #else
@@ -105,46 +126,9 @@
 #else
 #	define vararg_start(ap,p) va_start(ap)
 #endif
-
-#define text_equals_binary_stdio 1 /* Does stdio treat text like binary?  */
-#define text_work_stdio 0 /* Text i/o for working file, binary for RCS file?  */
-#if text_equals_binary_stdio
-	/* Text and binary i/o behave the same, or binary i/o does not work.  */
-#	define FOPEN_R "r"
-#	define FOPEN_W "w"
-#	define FOPEN_WPLUS "w+"
-#	define OPEN_O_BINARY 0
-#else
-	/* Text and binary i/o behave differently.  */
-	/* This is incompatible with Posix and Unix.  */
-#	define FOPEN_R "rb"
-#	define FOPEN_W "wb"
-#	define FOPEN_WPLUS "w+b"
-#	define OPEN_O_BINARY O_BINARY
-#	ifndef O_BINARY
-#	define O_BINARY 0
-#	endif
-#endif
-#if text_work_stdio
-#	define FOPEN_R_WORK "r"
-#	define FOPEN_W_WORK "w"
-#	define FOPEN_WPLUS_WORK "w+"
-#	define OPEN_O_WORK 0
-#else
-#	define FOPEN_R_WORK FOPEN_R
-#	define FOPEN_W_WORK FOPEN_W
-#	define FOPEN_WPLUS_WORK FOPEN_WPLUS
-#	define OPEN_O_WORK OPEN_O_BINARY
-#endif
-
-/* This may need changing on non-Unix systems (notably DOS).  */
-#define OPEN_CREAT_READONLY (S_IRUSR|S_IRGRP|S_IROTH) /* lock file mode */
-#define OPEN_O_LOCK 0 /* extra open flags for creating lock file */
-
-/* Define or comment out the following symbols as needed.  */
 #define bad_chmod_close 0 /* Can chmod() close file descriptors?  */
 #define bad_creat0 0 /* Do writes fail after creat(f,0)?  */
-#define bad_fopen_wplus 0 /* Does fopen(f,FOPEN_WPLUS) fail to truncate f?  */
+#define bad_fopen_wplus 0 /* Does fopen(f,"w+") fail to truncate f?  */
 #define getlogin_is_secure 0 /* Is getlogin() secure?  Usually it's not.  */
 #define has_attribute_noreturn 1 /* Does __attribute__((noreturn)) work?  */
 #if has_attribute_noreturn
@@ -163,19 +147,21 @@
 #define has_memcmp 1 /* Does memcmp() work?  */
 #define has_memcpy 1 /* Does memcpy() work?  */
 #define has_memmove 1 /* Does memmove() work?  */
-#define has_madvise 0 /* Does madvise() work?  */
+#define has_map_fd 0 /* Does map_fd() work?  */
 #define has_mmap 1 /* Does mmap() work on regular files?  */
-/* typedef char *caddr_t; */ /* mmap argument type */
+#define has_madvise 0 /* Does madvise() work?  */
 #define mmap_signal SIGBUS /* signal received if you reference nonexistent part of mmapped file */
 #define has_rename 1 /* Does rename() work?  */
 #define bad_a_rename 0 /* Does rename(A,B) fail if A is unwritable?  */
 #define bad_b_rename 0 /* Does rename(A,B) fail if B is unwritable?  */
+#define bad_NFS_rename 0 /* Can rename(A,B) falsely report success?  */
 /* typedef int void; */ /* Some ancient compilers need this.  */
 #define VOID (void) /* 'VOID e;' discards the value of an expression 'e'.  */
-#define has_seteuid 1 /* Does seteuid() work?  See INSTALL.  */
-#define has_setreuid 0 /* Does setreuid() work?  See INSTALL.  */
+#define has_seteuid 1 /* Does seteuid() work?  See ../INSTALL.RCS.  */
+#define has_setreuid 0 /* Does setreuid() work?  See ../INSTALL.RCS.  */
 #define has_setuid 1 /* Does setuid() exist?  */
 #define has_sigaction 1 /* Does struct sigaction work?  */
+#define has_sa_sigaction 0 /* Does struct sigaction have sa_sigaction?  */
 #define has_signal 1 /* Does signal() work?  */
 #define signal_type void /* type returned by signal handlers */
 #define sig_zaps_handler 0 /* Must a signal handler reinvoke signal()?  */
@@ -191,7 +177,8 @@ typedef void *malloc_type; /* type returned by malloc() */
 #define has_NFS 1 /* Might NFS be used?  */
 #define has_psiginfo 0 /* Does psiginfo() work?  */
 #define has_psignal 1 /* Does psignal() work?  */
-#define has_sys_siglist 1 /* Does sys_siglist[] work?  */
+/* #define has_si_errno ? */ /* Does siginfo_t have si_errno?  */
+/* #define has_sys_siglist ? */ /* Does sys_siglist[] work?  */
 /* #define strchr index */ /* Use old-fashioned name for strchr()?  */
 /* #define strrchr rindex */ /* Use old-fashioned name for strrchr()?  */
 #define bad_unlink 0 /* Does unlink() fail on unwritable files?  */
@@ -199,6 +186,7 @@ typedef void *malloc_type; /* type returned by malloc() */
 #define has_fork 1 /* Does fork() work?  */
 #define has_spawn 0 /* Does spawn*() work?  */
 #define has_waitpid 1 /* Does waitpid() work?  */
+#define bad_wait_if_SIGCHLD_ignored 0 /* Does ignoring SIGCHLD break wait()?  */
 #define RCS_SHELL "/bin/sh" /* shell to run RCS subprograms */
 #define has_printf_dot 1 /* Does "%.2d" print leading 0?  */
 #define has_vfprintf 1 /* Does vfprintf() work?  */
@@ -228,10 +216,9 @@ typedef void *malloc_type; /* type returned by malloc() */
 #define COMPAT2 0 /* Are version 2 files supported?  */
 #define DIFF "/usr/bin/diff" /* name of 'diff' program */
 #define DIFF3 "/usr/bin/diff3" /* name of 'diff3' program */
-#define DIFF3_A 1 /* Does diff3 -A work?  */
 #define DIFF3_BIN 1 /* Is diff3 user-visible (not the /usr/lib auxiliary)?  */
-#define DIFF_FLAGS , "-an" /* Make diff output suitable for RCS.  */
-#define DIFF_L 1 /* Does diff -L work? */
+#define DIFFFLAGS "-an" /* Make diff output suitable for RCS.  */
+#define DIFF_L 1 /* Does diff -L work?  */
 #define DIFF_SUCCESS 0 /* DIFF status if no differences are found */
 #define DIFF_FAILURE 1 /* DIFF status if differences are found */
 #define DIFF_TROUBLE 2 /* DIFF status if trouble */
