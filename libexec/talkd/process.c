@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.6 1998/07/04 19:31:05 mrg Exp $	*/
+/*	$NetBSD: process.c,v 1.7 2002/08/20 13:56:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.6 1998/07/04 19:31:05 mrg Exp $");
+__RCSID("$NetBSD: process.c,v 1.7 2002/08/20 13:56:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,10 @@ __RCSID("$NetBSD: process.c,v 1.6 1998/07/04 19:31:05 mrg Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <paths.h>
-#include <utmp.h>
 
 #include "extern.h"
+
+#include "utmpentry.h"
 
 void
 process_request(mp, rp)
@@ -189,35 +190,28 @@ int
 find_user(name, tty)
 	char *name, *tty;
 {
-	struct utmp ubuf;
 	int status;
-	FILE *fd;
 	struct stat statb;
-	char line[sizeof(ubuf.ut_line) + 1];
-	char ftty[sizeof(_PATH_DEV) - 1 + sizeof(line)];
+	struct utmpentry *ep;
+	char ftty[sizeof(_PATH_DEV) + sizeof(ep->line)];
 	time_t atime = 0;
 	int anytty = 0;
 
-	if ((fd = fopen(_PATH_UTMP, "r")) == NULL) {
-		fprintf(stderr, "talkd: can't read %s.\n", _PATH_UTMP);
-		return (FAILED);
-	}
-#define SCMPN(a, b)	strncmp(a, b, sizeof (a))
+	(void)getutentries(NULL, &ep);
+
 	status = NOT_HERE;
 	(void) strcpy(ftty, _PATH_DEV);
 
 	if (*tty == '\0')
 		anytty = 1;
 
-	while (fread((char *) &ubuf, sizeof ubuf, 1, fd) == 1) {
-		if (SCMPN(ubuf.ut_name, name) != 0)
+	for (; ep; ep = ep->next) {
+		if (strcmp(ep->name, name) != 0)
 			continue;
-		(void)strncpy(line, ubuf.ut_line, sizeof(ubuf.ut_line));
-		line[sizeof(ubuf.ut_line)] = '\0';
 		if (anytty) {
 			/* no particular tty was requested */
 			/* XXX strcpy is safe */
-			(void)strcpy(ftty + sizeof(_PATH_DEV) - 1, line);
+			(void)strcpy(ftty + sizeof(_PATH_DEV) - 1, ep->line);
 			if (stat(ftty, &statb) == 0) {
 				if (!(statb.st_mode & S_IWGRP)) {
 					if (status != SUCCESS)
@@ -226,15 +220,14 @@ find_user(name, tty)
 				}
 				if (statb.st_atime > atime) {
 					atime = statb.st_atime;
-					(void)strcpy(tty, line);
+					(void)strcpy(tty, ep->line);
 					status = SUCCESS;
 				}
 			}
-		} else if (strcmp(line, tty) == 0) {
+		} else if (strcmp(ep->line, tty) == 0) {
 			status = SUCCESS;
 			break;
 		}
 	}
-	(void)fclose(fd);
 	return (status);
 }
