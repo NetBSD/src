@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.121 1999/04/12 23:18:16 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.122 1999/05/06 14:29:21 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp 
+ *	NetBSD: pcidevs,v 1.115 1999/05/06 06:17:39 mrg Exp 
  */
 
 /*
@@ -642,6 +642,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
+#define	PCI_PRODUCT_ATI_MACH64_B	0x4750		/* Mach64 B */
 #define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
 
@@ -938,6 +939,11 @@
 #define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* Olicom OC-2183/2185 Ethernet */
 #define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* Olicom OC-2325 Ethernet */
 #define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* Olicom OC-2326 10/100-TX Ethernet */
+
+/* Sun Microsystems products */
+#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* SPARC Ebus */
+#define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* SUNW,hme compatible Ethernet */
+#define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bus */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
