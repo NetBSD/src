@@ -1,8 +1,4 @@
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)zic.c	7.104";
-#endif /* !defined NOID */
-#endif /* !defined lint */
+static char	elsieid[] = "@(#)zic.c	7.113";
 
 #include "private.h"
 #include "locale.h"
@@ -446,7 +442,7 @@ const char * const	string;
 static void
 usage P((void))
 {
-	(void) fprintf(stderr, _("%s: usage is %s [ -s ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n"),
+	(void) fprintf(stderr, _("%s: usage is %s [ --version ] [ -s ] [ -v ] [ -l localtime ] [ -p posixrules ] \\\n\t[ -d directory ] [ -L leapseconds ] [ -y yearistype ] [ filename ... ]\n"),
 		progname, progname);
 	(void) exit(EXIT_FAILURE);
 }
@@ -478,6 +474,11 @@ char *	argv[];
 	(void) textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT - 0 */
 	progname = argv[0];
+	for (i = 1; i < argc; ++i)
+		if (strcmp(argv[i], "--version") == 0) {
+			(void) printf("%s\n", elsieid);
+			(void) exit(EXIT_SUCCESS);
+		}
 	while ((c = getopt(argc, argv, "d:l:p:L:vsy:")) != EOF && c != -1)
 		switch (c) {
 			default:
@@ -620,7 +621,9 @@ const char * const	tofile;
 
 		result = link(fromname, toname);
 #if (HAVE_SYMLINK - 0)
-		if (result != 0) {
+		if (result != 0 &&
+		    access(fromname, F_OK) == 0 &&
+		    !itsdir(fromname)) {
 		        const char *s = tofile;
 		        register char * symlinkcontents = NULL;
 		        while ((s = strchr(s+1, '/')) != NULL)
@@ -1152,14 +1155,15 @@ const int		nfields;
 		error(_("time before zero"));
 		return;
 	}
-	t = (time_t) dayoff * SECSPERDAY;
-	/*
-	** Cheap overflow check.
-	*/
-	if (t / SECSPERDAY != dayoff) {
-		error(_("time overflow"));
+	if (dayoff < min_time / SECSPERDAY) {
+		error(_("time too small"));
 		return;
 	}
+	if (dayoff > max_time / SECSPERDAY) {
+		error(_("time too large"));
+		return;
+	}
+	t = (time_t) dayoff * SECSPERDAY;
 	tod = gethms(fields[LP_TIME], _("invalid time of day"), FALSE);
 	cp = fields[LP_CORR];
 	{
@@ -1312,9 +1316,9 @@ const char * const		timep;
 		return;
 	} else if (noise) {
 		if (rp->r_loyear < min_year_representable)
-			warning(_("starting year too low to be represented"));
+			warning(_("ending year too low to be represented"));
 		else if (rp->r_loyear > max_year_representable)
-			warning(_("starting year too high to be represented"));
+			warning(_("ending year too high to be represented"));
 	}
 	if (rp->r_loyear > rp->r_hiyear) {
 		error(_("starting year greater than ending year"));
@@ -2139,12 +2143,11 @@ register const int			wantedy;
 	}
 	if (dayoff < 0 && !TYPE_SIGNED(time_t))
 		return min_time;
+	if (dayoff < min_time / SECSPERDAY)
+		return min_time;
+	if (dayoff > max_time / SECSPERDAY)
+		return max_time;
 	t = (time_t) dayoff * SECSPERDAY;
-	/*
-	** Cheap overflow check.
-	*/
-	if (t / SECSPERDAY != dayoff)
-		return (dayoff > 0) ? max_time : min_time;
 	return tadd(t, rp->r_tod);
 }
 
