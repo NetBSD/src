@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.20 1995/05/19 20:17:16 mycroft Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.21 1995/10/08 23:03:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.20 1995/05/19 20:17:16 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.21 1995/10/08 23:03:54 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,10 @@ struct	cmd {
 	{ "metric",	NEXTARG,	setifmetric },
 	{ "broadcast",	NEXTARG,	setifbroadaddr },
 	{ "ipdst",	NEXTARG,	setifipdst },
+#ifndef INET_ONLY
 	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
 	{ "nsellength",	NEXTARG,	setnsellength },
+#endif	/* INET_ONLY */
 	{ "link0",	IFF_LINK0,	setifflags } ,
 	{ "-link0",	-IFF_LINK0,	setifflags } ,
 	{ "link1",	IFF_LINK1,	setifflags } ,
@@ -169,10 +171,12 @@ struct afswtch {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
+#ifndef INET_ONLY	/* small version, for boot media */
 	{ "ns", AF_NS, xns_status, xns_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 	{ "iso", AF_ISO, iso_status, iso_getaddr,
 	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, C(iso_ridreq), C(iso_addreq) },
+#endif	/* INET_ONLY */
 	{ 0,	0,	    0,		0 }
 };
 
@@ -236,6 +240,9 @@ main(argc, argv)
 		}
 		argc--, argv++;
 	}
+
+#ifndef INET_ONLY
+
 	if (af == AF_ISO)
 		adjust_nsellength();
 	if (setipdst && af==AF_NS) {
@@ -248,6 +255,9 @@ main(argc, argv)
 		if (setsockopt(s, 0, SO_NSIP_ROUTE, &rq, size) < 0)
 			warn("encapsulation routing");
 	}
+
+#endif	/* INET_ONLY */
+
 	if (clearaddr) {
 		int ret;
 		strncpy(rafp->af_ridreq, name, sizeof ifr.ifr_name);
@@ -448,13 +458,6 @@ setifmetric(val)
 		warn("SIOCSIFMETRIC");
 }
 
-void
-setsnpaoffset(val)
-	char *val;
-{
-	iso_addreq.ifra_snpaoffset = atoi(val);
-}
-
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
@@ -541,6 +544,8 @@ in_status(force)
 	}
 	putchar('\n');
 }
+
+#ifndef INET_ONLY
 
 void
 xns_status(force)
@@ -629,6 +634,8 @@ iso_status(force)
 	putchar('\n');
 }
 
+#endif	/* INET_ONLY */
+
 struct	in_addr inet_makeaddr();
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
@@ -693,6 +700,8 @@ printb(s, v, bits)
 	}
 }
 
+#ifndef INET_ONLY
+
 #define SNS(x) ((struct sockaddr_ns *) &(x))
 struct sockaddr_ns *snstab[] = {
 SNS(ridreq.ifr_addr), SNS(addreq.ifra_addr),
@@ -737,6 +746,13 @@ iso_getaddr(addr, which)
 }
 
 void
+setsnpaoffset(val)
+	char *val;
+{
+	iso_addreq.ifra_snpaoffset = atoi(val);
+}
+
+void
 setnsellength(val)
 	char *val;
 {
@@ -763,6 +779,8 @@ adjust_nsellength()
 	fixnsel(sisotab[ADDR]);
 	fixnsel(sisotab[DSTADDR]);
 }
+
+#endif	/* INET_ONLY */
 
 void
 usage()
