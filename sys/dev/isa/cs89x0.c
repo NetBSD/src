@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.3 1998/08/08 23:44:12 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.4 1998/08/11 04:18:25 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1042,7 +1042,7 @@ cs_set_ladr_filt(sc, ec)
 	 * addresses, in which case we will just accept all packets.
 	 * Justification for this is given in the next comment.
 	 */
-	while ((enm != NULL) && ((ifp->if_flags | IFF_ALLMULTI) == 0)) {
+	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof enm->enm_addrlo)) {
 			/*
@@ -1055,6 +1055,7 @@ cs_set_ladr_filt(sc, ec)
 	                 */
 			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = af[2] = af[3] = 0xffff;
+			break;
 		} else {
 			/*
 	                 * we have got an individual address so just set that
