@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9 2003/05/10 21:10:25 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.10 2003/10/26 13:17:50 jdolecek Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2003/05/10 21:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2003/10/26 13:17:50 jdolecek Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -295,7 +295,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	UVMHIST_FUNC("pmap_steal_memory");
 
 	UVMHIST_CALLED(pmaphist);
-	addr = NULL;
+	addr = 0;
 	size = round_page(size);
 	for (i = 0; i < vm_nphysseg; i++) {
 		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {
