@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cpu.h	8.1 (Berkeley) 6/11/93
+ *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.6 1994/05/05 09:54:33 deraadt Exp $
+ * $Id: cpu.h,v 1.7 1994/05/19 08:23:17 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -72,7 +72,17 @@
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	cpu_exec(p)	/* nothing */
+#define	cpu_swapin(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
+
+/*
+ * See syscall() for an explanation of the following.  Note that the
+ * locore bootstrap code follows the syscall stack protocol.  The
+ * framep argument is unused.
+ */
+#define cpu_set_init_frame(p, fp) \
+	(p)->p_md.md_tf = (struct trapframe *) \
+	    ((caddr_t)(p)->p_addr + UPAGES * NBPG - sizeof(struct trapframe))
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
