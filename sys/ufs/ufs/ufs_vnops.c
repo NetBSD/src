@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.47 1998/08/10 08:11:14 matthias Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.48 1998/08/30 00:16:04 rvb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1443,9 +1443,6 @@ ufs_readdir(v)
 	int error;
 	size_t count, lost;
 	off_t off = uio->uio_offset;
-
-	if (ap->a_vp->v_type != VDIR)
-		return (ENOTDIR);
 
 	count = uio->uio_resid;
 	/* Make sure we don't return partial entries. */
