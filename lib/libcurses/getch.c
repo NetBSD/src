@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.36 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.37 2002/10/22 12:07:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.36 2002/01/02 10:38:27 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.37 2002/10/22 12:07:20 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -68,6 +68,7 @@ typedef struct key_entry key_entry_t;
 
 struct key_entry {
 	short   type;		/* type of key this is */
+	bool    enable;         /* true if the key is active */
 	union {
 		keymap_t *next;	/* next keymap is key is multi-key sequence */
 		wchar_t   symbol;	/* key symbol if key is a leaf entry */
@@ -87,10 +88,15 @@ struct key_entry {
 /* The max number of different chars we can receive */
 #define MAX_CHAR 256
 
+/*
+ * Unused mapping flag.
+ */
+#define MAPPING_UNUSED (0 - MAX_CHAR) /* never been used */
+
 struct keymap {
-	int	count;		/* count of number of key structs allocated */
+	int	count;	       /* count of number of key structs allocated */
 	short	mapping[MAX_CHAR]; /* mapping of key to allocated structs */
-	key_entry_t **key;	/* dynamic array of keys */
+	key_entry_t **key;     /* dynamic array of keys */
 };
 
 
@@ -274,8 +280,11 @@ static const struct tcdata tc[] = {
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
 /* prototypes for private functions */
+static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
 static key_entry_t *add_new_key(keymap_t *current, char chr, int key_type,
 				int symbol);
+static void delete_key_sequence(keymap_t *current, int key_type);
+static void do_keyok(keymap_t *current, int key_type, bool flag, int *retval);
 static keymap_t		*new_keymap(void);	/* create a new keymap */
 static key_entry_t	*new_key(void);		/* create a new key entry */
 static wchar_t		inkey(int to, int delay);
@@ -318,36 +327,46 @@ static key_entry_t *
 add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 {
 	key_entry_t *the_key;
-        int i;
+        int i, ki;
 
 #ifdef DEBUG
 	__CTRACE("Adding character %s of type %d, symbol 0x%x\n", unctrl(chr),
 		 key_type, symbol);
 #endif
 	if (current->mapping[(unsigned char) chr] < 0) {
-		  /* first time for this char */
-		current->mapping[(unsigned char) chr] = current->count;	/* map new entry */
-		  /* make sure we have room in the key array first */
-		if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
-		{
-			if ((current->key =
-			     realloc(current->key,
-				     (current->count) * sizeof(key_entry_t *)
-				     + KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t *))) == NULL) {
-				fprintf(stderr,
-					"Could not malloc for key entry\n");
-				exit(1);
-			}
+		if (current->mapping[(unsigned char) chr] == MAPPING_UNUSED) {
+			  /* first time for this char */
+			current->mapping[(unsigned char) chr] =
+				current->count;	/* map new entry */
+			ki = current->count;
 			
-			the_key = new_key();
-                        for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
-                                current->key[current->count + i]
-					= &the_key[i];
-                        }
-                }
-                
-                  /* point at the current key array element to use */
-                the_key = current->key[current->count];
+			  /* make sure we have room in the key array first */
+			if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
+			{
+				if ((current->key =
+				     realloc(current->key,
+					     ki * sizeof(key_entry_t *)
+					     + KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t *))) == NULL) {
+					fprintf(stderr,
+					  "Could not malloc for key entry\n");
+					exit(1);
+				}
+			
+				the_key = new_key();
+				for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
+					current->key[ki + i] = &the_key[i];
+				}
+			}
+                } else {
+			  /* the mapping was used but freed, reuse it */
+			ki = - current->mapping[(unsigned char) chr];
+			current->mapping[(unsigned char) chr] = ki;
+		}
+		
+		current->count++;
+		
+		  /* point at the current key array element to use */
+		the_key = current->key[ki];
                                                 
 		the_key->type = key_type;
 
@@ -358,6 +377,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			  __CTRACE("Creating new keymap\n");
 #endif
 			  the_key->value.next = new_keymap();
+			  the_key->enable = TRUE;
 			  break;
 
 		  case KEYMAP_LEAF:
@@ -366,14 +386,13 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			  __CTRACE("Adding leaf key\n");
 #endif
 			  the_key->value.symbol = symbol;
+			  the_key->enable = TRUE;
 			  break;
 
 		  default:
 			  fprintf(stderr, "add_new_key: bad type passed\n");
 			  exit(1);
 		}
-		
-		current->count++;
 	} else {
 		  /* the key is already known - just return the address. */
 #ifdef DEBUG
@@ -386,6 +405,85 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 }
 
 /*
+ * Delete the given key symbol from the key mappings for the screen.
+ *
+ */
+void
+delete_key_sequence(keymap_t *current, int key_type)
+{
+	key_entry_t *key;
+	int i;
+
+	  /*
+	   * we need to iterate over all the keys as there may be
+	   * multiple instances of the leaf symbol.
+	   */
+	for (i = 0; i < MAX_CHAR; i++) {
+		if (current->mapping[i] < 0)
+			continue; /* no mapping for the key, next! */
+
+		key = current->key[current->mapping[i]];
+
+		if (key->type == KEYMAP_MULTI) {
+			  /* have not found the leaf, recurse down */
+			delete_key_sequence(key->value.next, key_type);
+			  /* if we deleted the last key in the map, free */
+			if (key->value.next->count == 0)
+				_cursesi_free_keymap(key->value.next);
+		} else if ((key->type == KEYMAP_LEAF)
+			   && (key->value.symbol == key_type)) {
+			  /*
+			   * delete the mapping by negating the current
+			   * index - this "holds" the position in the
+			   * allocation just in case we later re-add
+			   * the key for that mapping.
+			   */
+			current->mapping[i] = - current->mapping[i];
+			current->count--;
+		}
+	}
+}
+	
+/*
+ * Add the sequence of characters given in sequence as the key mapping
+ * for the given key symbol.
+ */
+void
+add_key_sequence(SCREEN *screen, char *sequence, int key_type)
+{
+	key_entry_t *tmp_key;
+	keymap_t *current;
+	int length, j, key_ent;
+
+	current = screen->base_keymap;	/* always start with
+					 * base keymap. */
+	length = (int) strlen(sequence);
+
+	for (j = 0; j < length - 1; j++) {
+		  /* add the entry to the struct */
+		tmp_key = add_new_key(current, sequence[j], KEYMAP_MULTI, 0);
+					
+		  /* index into the key array - it's
+		     clearer if we stash this */
+		key_ent = current->mapping[(unsigned char) sequence[j]];
+
+		current->key[key_ent] = tmp_key;
+				
+		  /* next key uses this map... */
+		current = current->key[key_ent]->value.next;
+	}
+
+	/*
+	 * This is the last key in the sequence (it may have been the
+	 * only one but that does not matter) this means it is a leaf
+	 * key and should have a symbol associated with it.
+	 */
+	tmp_key = add_new_key(current, sequence[length - 1], KEYMAP_LEAF,
+			      key_type);
+	current->key[current->mapping[(int)sequence[length - 1]]] = tmp_key;
+}
+
+/*
  * Init_getch - initialise all the pointers & structures needed to make
  * getch work in keypad mode.
  *
@@ -394,12 +492,10 @@ void
 __init_getch(SCREEN *screen)
 {
 	char entry[1024], *p;
-	int     i, j, length, key_ent;
+	int     i;
 	size_t limit;
-	key_entry_t *tmp_key;
-	keymap_t *current;
 #ifdef DEBUG
-	int k;
+	int k, length;
 #endif
 
 	/* init the inkey state variable */
@@ -418,46 +514,17 @@ __init_getch(SCREEN *screen)
 		limit = 1023;
 		if (t_getstr(screen->cursesi_genbuf, tc[i].name,
 			     &p, &limit) != NULL) {
-			current = screen->base_keymap;	/* always start with
-							 * base keymap. */
-			length = (int) strlen(entry);
 #ifdef DEBUG
 			__CTRACE("Processing termcap entry %s, sequence ",
 				 tc[i].name);
+			length = (int) strlen(entry);
 			for (k = 0; k <= length -1; k++)
 				__CTRACE("%s", unctrl(entry[k]));
 			__CTRACE("\n");
 #endif
-			for (j = 0; j < length - 1; j++) {
-				  /* add the entry to the struct */
-				tmp_key = add_new_key(current,
-						      entry[j],
-						      KEYMAP_MULTI, 0);
-					
-				  /* index into the key array - it's
-				     clearer if we stash this */
-				key_ent = current->mapping[
-					(unsigned char) entry[j]];
-
-				current->key[key_ent] = tmp_key;
-				
-				  /* next key uses this map... */
-				current = current->key[key_ent]->value.next;
-			}
-
-				/* this is the last key in the sequence (it
-				 * may have been the only one but that does
-				 * not matter) this means it is a leaf key and
-				 * should have a symbol associated with it.
-				 */
-			tmp_key = add_new_key(current,
-					      entry[length - 1],
-					      KEYMAP_LEAF,
-					      tc[i].symbol);
-			current->key[
-				current->mapping[(int)entry[length - 1]]] =
-			tmp_key;
+			add_key_sequence(screen, entry, tc[i].symbol);
 		}
+		
 	}
 }
 
@@ -481,7 +548,7 @@ new_keymap(void)
 	/* Initialise the new map */
 	new_map->count = 0;
 	for (i = 0; i < MAX_CHAR; i++) {
-		new_map->mapping[i] = -1;	/* no mapping for char */
+		new_map->mapping[i] = MAPPING_UNUSED; /* no mapping for char */
 	}
 
 	/* key array will be allocated when first key is added */
@@ -525,7 +592,7 @@ wchar_t
 inkey(int to, int delay)
 {
 	wchar_t		 k;
-	int              c;
+	int              c, mapping;
 	keymap_t	*current = _cursesi_screen->base_keymap;
 	FILE            *infd = _cursesi_screen->infd;
 
@@ -608,8 +675,14 @@ reread:
 			exit(2);
 		}
 
-		/* Check key has no special meaning and we have not timed out */
-		if ((state == INKEY_TIMEOUT) || (current->mapping[k] < 0)) {
+		  /*
+		   * Check key has no special meaning and we have not
+		   * timed out and the key has not been disabled
+		   */
+		mapping = current->mapping[k];
+		if (((state == INKEY_TIMEOUT) || (mapping < 0))
+			|| ((current->key[mapping]->type == KEYMAP_LEAF)
+			    && (current->key[mapping]->enable == FALSE))) {
 			/* return the first key we know about */
 			k = inbuf[start];
 
@@ -689,6 +762,72 @@ mvwgetch(WINDOW *win, int y, int x)
 
 #endif
 
+/*
+ * keyok --
+ *      Set the enable flag for a keysym, if the flag is false then
+ * getch will not return this keysym even if the matching key sequence
+ * is seen.
+ */
+int
+keyok(int key_type, bool flag)
+{
+	int result = ERR;
+	
+	do_keyok(_cursesi_screen->base_keymap, key_type, flag, &result);
+	return result;
+}
+
+/*
+ * do_keyok --
+ *       Does the actual work for keyok, we need to recurse through the
+ * keymaps finding the passed key symbol.
+ */
+void
+do_keyok(keymap_t *current, int key_type, bool flag, int *retval)
+{
+	key_entry_t *key;
+	int i;
+
+	  /*
+	   * we need to iterate over all the keys as there may be
+	   * multiple instances of the leaf symbol.
+	   */
+	for (i = 0; i < MAX_CHAR; i++) {
+		if (current->mapping[i] < 0)
+			continue; /* no mapping for the key, next! */
+
+		key = current->key[current->mapping[i]];
+
+		if (key->type == KEYMAP_MULTI)
+			do_keyok(key->value.next, key_type, flag, retval);
+		else if ((key->type == KEYMAP_LEAF)
+			 && (key->value.symbol == key_type)) {
+			key->enable = flag;
+			*retval = OK; /* we found at least one instance, ok */
+		}
+	}
+}
+
+/*
+ * define_key --
+ *      Add a custom mapping of a key sequence to key symbol.
+ *
+ */
+int
+define_key(char *sequence, int symbol)
+{
+
+	if (symbol <= 0)
+		return ERR;
+
+	if (sequence == NULL)
+		delete_key_sequence(_cursesi_screen->base_keymap, symbol);
+	else
+		add_key_sequence(_cursesi_screen, sequence, symbol);
+
+	return OK;
+}
+	
 /*
  * wgetch --
  *	Read in a character from the window.
