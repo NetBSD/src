@@ -11,13 +11,13 @@ __weak_reference(_catclose,catclose);
 
 #include <nl_types.h>
 
-extern int _catclose __P((nl_catd));
+extern void _catclose __P((nl_catd));
 
-int
+void
 catclose(catd)
 	nl_catd catd;
 {
-	return _catclose(catd);
+	_catclose(catd);
 }
 
 #endif
