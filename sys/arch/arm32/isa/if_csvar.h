@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.9 1998/07/21 00:53:57 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.10 1998/07/21 00:58:46 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -100,6 +100,40 @@ struct cs_softc {
 
 	u_int8_t sc_enaddr[6];		/* MAC address */
 };
+
+/*
+ * Macros for reading/writing the packet page area.
+ */
+#define	CS_READ_PACKET_PAGE_IO(iot, ioh, offset)			\
+	(bus_space_write_2((iot), (ioh), PORT_PKTPG_PTR, (offset)),	\
+	 bus_space_read_2((iot), (ioh), PORT_PKTPG_DATA))
+
+#define	CS_READ_PACKET_PAGE_MEM(memt, memh, offset)			\
+	bus_space_read_2((memt), (memh), (offset))
+
+#define	CS_READ_PACKET_PAGE(sc, offset)					\
+	((sc)->sc_memorymode ? CS_READ_PACKET_PAGE_MEM((sc)->sc_memt,	\
+			       (sc)->sc_memh, (offset)) :		\
+	 CS_READ_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh, (offset)))
+
+#define	CS_WRITE_PACKET_PAGE_IO(iot, ioh, offset, val)			\
+do {									\
+	bus_space_write_2((iot), (ioh), PORT_PKTPG_PTR, (offset));	\
+	bus_space_write_2((iot), (ioh), PORT_PKTPG_DATA, (val));	\
+} while (0)
+
+#define	CS_WRITE_PACKET_PAGE_MEM(memt, memh, offset, val)		\
+	bus_space_write_2((memt), (memh), (offset), (val))
+
+#define	CS_WRITE_PACKET_PAGE(sc, offset, val)				\
+do {									\
+	if ((sc)->sc_memorymode)					\
+		CS_WRITE_PACKET_PAGE_MEM((sc)->sc_memt, (sc)->sc_memh,	\
+		    (offset), (val));					\
+	else								\
+		CS_WRITE_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh,	\
+		    (offset), (val));					\
+} while (0)
 
 /* Return Status */
 #define	CS_ERROR   -1
