@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.46.2.5 1997/06/06 00:34:02 thorpej Exp $
+# $NetBSD: files.alpha,v 1.46.2.6 1997/06/06 02:46:00 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -115,6 +115,8 @@ attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
 file	arch/alpha/tc/tc_dma.c		tcasic
+file	arch/alpha/tc/tc_dma_3000_300.c	tcasic & dec_3000_300
+file	arch/alpha/tc/tc_dma_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
