@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.22 1997/04/04 20:50:58 mycroft Exp $	*/
+/* $NetBSD: dec_2100_a50.c,v 1.23 1997/04/07 05:19:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 1997/03/12 04:22:30 cgd Exp $	*/
+/* $NetBSD: interrupt.c,v 1.16 1997/04/07 05:19:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
