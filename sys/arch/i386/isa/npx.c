@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.25 1994/11/04 18:35:16 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.26 1994/11/04 19:13:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -196,7 +196,7 @@ npxprobe(parent, match, aux)
 	setgate(&idt[npx_intrno], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
 	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
 	npx_idt_probeintr = idt[npx_intrno];
-	npx_intrmask = IRQ_SLAVE | (1 << ia->ia_irq);
+	npx_intrmask = (1 << IRQ_SLAVE) | (1 << ia->ia_irq);
 	imen = ~npx_intrmask;
 	SET_ICUS();
 	enable_intr();
