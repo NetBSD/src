@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)diskpart.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: diskpart.c,v 1.3 1993/08/01 17:59:55 mycroft Exp $";
+static char rcsid[] = "$Id: diskpart.c,v 1.4 1994/12/23 16:45:49 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -346,7 +346,7 @@ struct disklabel disk;
 struct	field {
 	char	*f_name;
 	char	*f_defaults;
-	u_long	*f_location;
+	u_int32_t *f_location;
 } fields[] = {
 	{ "sector size",		"512",	&disk.d_secsize },
 	{ "#sectors/track",		0,	&disk.d_nsectors },
