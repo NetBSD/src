@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.157 2001/12/05 15:05:15 wiz Exp $
+.\"	$NetBSD: options.4,v 1.158 2001/12/16 20:44:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -280,6 +280,15 @@ Currently only some system calls which use
 are adjusted and some binaries which use
 .Xr sysctl 3
 to retrieve network details would not work properly.
+.It Cd options EXEC_ELF_CATCHALL
+Run unidentified ELF binaries as NetBSD binaries. This might
+be needed for very old NetBSD ELF binaries on some archs.
+These old binaries didn't contain appropriate
+.Li .note.netbsd.ident
+section, and thus can't be identified by kernel as NetBSD binaries
+otherwise. Beware - if this options is on, the kernel would run
+.Em any
+unknown ELF binaries as if it would be NetBSD binary.
 .El
 .Ss Debugging Options
 .Bl -ohang
