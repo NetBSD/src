@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.4 2001/05/08 18:51:24 uch Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.5 2001/06/18 11:31:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ ARMBoot::create()
 			_cons = Console::Instance();
 			DPRINTF((TEXT("use LCD console instead.\n")));
 		}
+	} else {
+		_cons = Console::Instance();
 	}
   
 	// File Manager, Loader
