@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.1.2.2 2002/05/30 07:14:53 gehenna Exp $
+#	$NetBSD: majors.sparc64,v 1.1.2.3 2002/07/15 01:21:41 gehenna Exp $
 #
 # Device majors for sparc64
 #
@@ -74,3 +74,4 @@ device-major	pcons		char 122		pcons
 device-major	pci		char 123		pci
 device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
+device-major	systrace	char 126		systrace

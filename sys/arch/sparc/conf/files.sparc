@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.112.2.2 2002/05/17 15:09:19 gehenna Exp $
+#	$NetBSD: files.sparc,v 1.112.2.3 2002/07/15 01:21:12 gehenna Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -265,7 +265,6 @@ file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/disksubr.c
 
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
-
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153 2002/05/14 02:23:07 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.2.1 2002/07/15 01:21:52 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -60,7 +60,9 @@
 #define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
+#ifdef DEBUG
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
+#endif
 #undef	FLTRACE			/* Keep history of all page faults */
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
@@ -795,7 +797,11 @@ label:	\
 	_C_LABEL(kernel_text) = start		! for kvm_mkdb(8)
 start:
 	/* Traps from TL=0 -- traps from user mode */
-#define TABLE	user_
+#ifdef __STDC__
+#define TABLE(name)	user_ ## name
+#else
+#define	TABLE(name)	user_/**/name
+#endif
 	.globl	_C_LABEL(trapbase)
 _C_LABEL(trapbase):
 	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
@@ -961,7 +967,7 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	UTRAP(0x071); UTRAP(0x072); UTRAP(0x073); UTRAP(0x074); UTRAP(0x075); UTRAP(0x076)
 	UTRAP(0x077); UTRAP(0x078); UTRAP(0x079); UTRAP(0x07a); UTRAP(0x07b); UTRAP(0x07c)
 	UTRAP(0x07d); UTRAP(0x07e); UTRAP(0x07f)
-TABLE/**/uspill:
+TABLE(uspill):
 	SPILL64(uspill8,ASI_AIUS)	! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4,ASI_AIUS)	! 0x084 spill_1_normal
 	SPILLBOTH(uspill8,uspill4,ASI_AIUS)		! 0x088 spill_2_normal
@@ -969,12 +975,12 @@ TABLE/**/uspill:
 	sir
 #endif
 	UTRAP(0x08c); TA32	! 0x08c spill_3_normal
-TABLE/**/kspill:
+TABLE(kspill):
 	SPILL64(kspill8,ASI_N)	! 0x090 spill_4_normal -- used to save supervisor windows
 	SPILL32(kspill4,ASI_N)	! 0x094 spill_5_normal
 	SPILLBOTH(kspill8,kspill4,ASI_N)	! 0x098 spill_6_normal
 	UTRAP(0x09c); TA32	! 0x09c spill_7_normal
-TABLE/**/uspillk:
+TABLE(uspillk):
 	SPILL64(uspillk8,ASI_AIUS)	! 0x0a0 spill_0_other -- used to save user windows in supervisor mode
 	SPILL32(uspillk4,ASI_AIUS)	! 0x0a4 spill_1_other
 	SPILLBOTH(uspillk8,uspillk4,ASI_AIUS)	! 0x0a8 spill_2_other
@@ -983,17 +989,17 @@ TABLE/**/uspillk:
 	UTRAP(0x0b4); TA32	! 0x0b4 spill_5_other
 	UTRAP(0x0b8); TA32	! 0x0b8 spill_6_other
 	UTRAP(0x0bc); TA32	! 0x0bc spill_7_other
-TABLE/**/ufill:
+TABLE(ufill):
 	FILL64(ufill8,ASI_AIUS) ! 0x0c0 fill_0_normal -- used to fill windows when running user mode
 	FILL32(ufill4,ASI_AIUS)	! 0x0c4 fill_1_normal
 	FILLBOTH(ufill8,ufill4,ASI_AIUS)	! 0x0c8 fill_2_normal
 	UTRAP(0x0cc); TA32	! 0x0cc fill_3_normal
-TABLE/**/kfill:
+TABLE(kfill):
 	FILL64(kfill8,ASI_N)	! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
 	FILL32(kfill4,ASI_N)	! 0x0d4 fill_5_normal
 	FILLBOTH(kfill8,kfill4,ASI_N)	! 0x0d8 fill_6_normal
 	UTRAP(0x0dc); TA32	! 0x0dc fill_7_normal
-TABLE/**/ufillk:
+TABLE(ufillk):
 	FILL64(ufillk8,ASI_AIUS)	! 0x0e0 fill_0_other
 	FILL32(ufillk4,ASI_AIUS)	! 0x0e4 fill_1_other
 	FILLBOTH(ufillk8,ufillk4,ASI_AIUS)	! 0x0e8 fill_2_other
@@ -1002,7 +1008,7 @@ TABLE/**/ufillk:
 	UTRAP(0x0f4); TA32	! 0x0f4 fill_5_other
 	UTRAP(0x0f8); TA32	! 0x0f8 fill_6_other
 	UTRAP(0x0fc); TA32	! 0x0fc fill_7_other
-TABLE/**/syscall:
+TABLE(syscall):
 	SYSCALL			! 0x100 = sun syscall
 	BPT			! 0x101 = pseudo breakpoint instruction
 	STRAP(0x102); STRAP(0x103); STRAP(0x104); STRAP(0x105); STRAP(0x106); STRAP(0x107)
@@ -1048,7 +1054,11 @@ TABLE/**/syscall:
 
 	/* Traps from TL>0 -- traps from supervisor mode */
 #undef TABLE
-#define TABLE	nucleus_
+#ifdef __STDC__
+#define	TABLE(name)	nucleus_ ## name
+#else
+#define	TABLE(name)	nucleus_/**/name
+#endif
 trapbase_priv:
 	UTRAP(0x000)		! 000 = reserved -- Use it to boot
 	/* We should not get the next 5 traps */
@@ -1200,17 +1210,17 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	UTRAP(0x071); UTRAP(0x072); UTRAP(0x073); UTRAP(0x074); UTRAP(0x075); UTRAP(0x076)
 	UTRAP(0x077); UTRAP(0x078); UTRAP(0x079); UTRAP(0x07a); UTRAP(0x07b); UTRAP(0x07c)
 	UTRAP(0x07d); UTRAP(0x07e); UTRAP(0x07f)
-TABLE/**/uspill:
+TABLE(uspill):
 	SPILL64(1,ASI_AIUS)	! 0x080 spill_0_normal -- used to save user windows
 	SPILL32(2,ASI_AIUS)	! 0x084 spill_1_normal
 	SPILLBOTH(1b,2b,ASI_AIUS)	! 0x088 spill_2_normal
 	UTRAP(0x08c); TA32	! 0x08c spill_3_normal
-TABLE/**/kspill:
+TABLE(kspill):
 	SPILL64(1,ASI_N)	! 0x090 spill_4_normal -- used to save supervisor windows
 	SPILL32(2,ASI_N)	! 0x094 spill_5_normal
 	SPILLBOTH(1b,2b,ASI_N)	! 0x098 spill_6_normal
 	UTRAP(0x09c); TA32	! 0x09c spill_7_normal
-TABLE/**/uspillk:
+TABLE(uspillk):
 	SPILL64(1,ASI_AIUS)	! 0x0a0 spill_0_other -- used to save user windows in nucleus mode
 	SPILL32(2,ASI_AIUS)	! 0x0a4 spill_1_other
 	SPILLBOTH(1b,2b,ASI_AIUS)	! 0x0a8 spill_2_other
@@ -1219,17 +1229,17 @@ TABLE/**/uspillk:
 	UTRAP(0x0b4); TA32	! 0x0b4 spill_5_other
 	UTRAP(0x0b8); TA32	! 0x0b8 spill_6_other
 	UTRAP(0x0bc); TA32	! 0x0bc spill_7_other
-TABLE/**/ufill:
+TABLE(ufill):
 	FILL64(1,ASI_AIUS)	! 0x0c0 fill_0_normal -- used to fill windows when running nucleus mode from user
 	FILL32(2,ASI_AIUS)	! 0x0c4 fill_1_normal
 	FILLBOTH(1b,2b,ASI_AIUS)	! 0x0c8 fill_2_normal
 	UTRAP(0x0cc); TA32	! 0x0cc fill_3_normal
-TABLE/**/sfill:
+TABLE(sfill):
 	FILL64(1,ASI_N)		! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
 	FILL32(2,ASI_N)		! 0x0d4 fill_5_normal
 	FILLBOTH(1b,2b,ASI_N)	! 0x0d8 fill_6_normal
 	UTRAP(0x0dc); TA32	! 0x0dc fill_7_normal
-TABLE/**/kfill:
+TABLE(kfill):
 	FILL64(1,ASI_AIUS)	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
 	FILL32(2,ASI_AIUS)	! 0x0e4 fill_1_other
 	FILLBOTH(1b,2b,ASI_AIUS)! 0x0e8 fill_2_other
@@ -1238,7 +1248,7 @@ TABLE/**/kfill:
 	UTRAP(0x0f4); TA32	! 0x0f4 fill_5_other
 	UTRAP(0x0f8); TA32	! 0x0f8 fill_6_other
 	UTRAP(0x0fc); TA32	! 0x0fc fill_7_other
-TABLE/**/syscall:
+TABLE(syscall):
 	SYSCALL			! 0x100 = sun syscall
 	BPT			! 0x101 = pseudo breakpoint instruction
 	STRAP(0x102); STRAP(0x103); STRAP(0x104); STRAP(0x105); STRAP(0x106); STRAP(0x107)
@@ -3412,9 +3422,17 @@ fp_exception:
 /*
  * We're here because we took an alignment fault in NUCLEUS context.
  * This could be a kernel bug or it could be due to saving a user
- * window to an invalid stack pointer.  If the latter is the case,
- * we should emulate the save by storing all the user register windows 
- * to the PCB and returning.
+ * window to an invalid stack pointer.  
+ * 
+ * If the latter is the case, we could try to emulate unaligned accesses, 
+ * but we really don't know where to store the registers since we can't 
+ * determine if there's a stack bias.  Or we could store all the regs 
+ * into the PCB and punt, until the user program uses up all the CPU's
+ * register windows and we run out of places to store them.  So for
+ * simplicity we'll just blow them away and enter the trap code which
+ * will generate a bus error.  Debugging the problem will be a bit
+ * complicated since lots of register windows will be lost, but what
+ * can we do?
  */
 checkalign:
 	rdpr	%tl, %g2
@@ -3438,8 +3456,8 @@ checkalign:
 	!!
 	!! Double data fault -- bad stack?
 	!!
-	wrpr	%g2, %tl	! Restore trap level.
-	sir			! Just issue a reset and don't try to recover.
+	wrpr	%g2, %tl		! Restore trap level.
+	sir				! Just issue a reset and don't try to recover.
 	mov	%fp, %l6		! Save the frame pointer
 	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
 	add	%fp, -CC64FSZ, %sp	! Create a stackframe
@@ -3449,17 +3467,54 @@ checkalign:
 	ba	slowtrap		!  all our register windows.
 	 wrpr	%g0, 0x101, %tt
 #endif
-checkalignspill:	
-	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
-	ldxa	[SFSR] %asi, %g3			! get sync fault status register
-	stxa	%g0, [SFSR] %asi			! Clear out fault now
-	membar	#Sync					! No real reason for this XXXX
+checkalignspill:
 	/*
-	 * Here we just jump to winfixspill and let it take care of
-	 * saving the windows.
+         * %g1 -- current tl
+	 * %g2 -- original tl
+	 * %g4 -- tstate
+         * %g7 -- tt
 	 */
-	ba,pt	%icc, winfixspill	! Continue with the winfix
-	 orcc	%g0, %g0, %g0		! Make sure we compare to zero
+
+	and	%g4, CWP, %g5
+	wrpr	%g5, %cwp		! Go back to the original register win
+
+	/*
+	 * Remember:
+	 * 
+	 * %otherwin = 0
+	 * %cansave = NWINDOWS - 2 - %canrestore
+	 */
+
+	rdpr	%otherwin, %g6
+	rdpr	%canrestore, %g3
+	rdpr	%ver, %g5
+	sub	%g3, %g6, %g3		! Calculate %canrestore - %g7
+	and	%g5, CWP, %g5		! NWINDOWS-1
+	movrlz	%g3, %g0, %g3		! Clamp at zero
+	wrpr	%g0, 0, %otherwin
+	wrpr	%g3, 0, %canrestore	! This is the new canrestore
+	dec	%g5			! NWINDOWS-2
+	wrpr	%g5, 0, %cleanwin	! Set cleanwin to max, since we're in-kernel
+	sub	%g5, %g3, %g5		! NWINDOWS-2-%canrestore
+#ifdef xTRAPTRACE
+	wrpr	%g5, 0, %cleanwin	! Force cleanwindow faults
+#endif
+	wrpr	%g5, 0, %cansave
+
+	wrpr	%g0, T_ALIGN, %tt	! This was an alignment fault 
+	/*
+	 * Now we need to determine if this was a userland store or not.
+	 * Userland stores occur in anything other than the kernel spill
+	 * handlers (trap type 09x).
+	 */
+	and	%g7, 0xff0, %g5
+	cmp	%g5, 0x90
+	bz,pn	%icc, slowtrap
+	 nop
+	bclr	TSTATE_PRIV, %g4
+	wrpr	%g4, 0, %tstate
+	ba,a,pt	%icc, slowtrap
+	 nop
 	
 /*
  * slowtrap() builds a trap frame and calls trap().
@@ -6221,21 +6276,28 @@ ENTRY(dcache_flush_page)
 	clr	%o4
 	srl	%o1, 2, %o1	! Now we have bits <29:0> set
 	set	(2*NBPG), %o5
-	andn	%o1, 3, %o1	! Now we have bits <29:2> set
-
+	ba,pt	%icc, 1f
+	 andn	%o1, 3, %o1	! Now we have bits <29:2> set
+	
+	.align 8
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	dec	16, %o5
+	mov	%o4, %o0
+	deccc	16, %o5
+	bl,pn	%icc, 2f
+	
+	 inc	16, %o4
 	xor	%o3, %o2, %o3
 	andcc	%o3, %o1, %g0
-	bne,pt	%xcc, 2f
+	bne,pt	%xcc, 1b
 	 membar	#LoadStore
-	stxa	%g0, [%o4] ASI_DCACHE_TAG
-	membar	#StoreLoad
-2:
-	brnz,pt	%o5, 1b
-	 inc	16, %o4
 	
+	stxa	%g0, [%o0] ASI_DCACHE_TAG
+	ba,pt	%icc, 1b
+	 membar	#StoreLoad
+2:
+
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	retl
@@ -7974,29 +8036,16 @@ ENTRY(proc_trampoline)
 	 * have only set npc, in anticipation that trap.c will advance past
 	 * the trap instruction; but we bypass that, so we must do it manually.
 	 */
-!	save	%sp, -CC64FSZ, %sp		! Save a kernel frame to emulate a syscall
-#if 0
-	/* This code doesn't seem to work, but it should. */
 	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-	andn	%g1, CWP, %g1			! Clear the CWP bits
+!	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
+	srl	%g1, 0, %g1			! Clear out the condition codes
 	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
+!	andn	%g1, CWP, %g1			! Clear the CWP bits
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	or	%g1, %g5, %g1
+!	or	%g1, %g5, %g1	! Not needed
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-#else
-	mov	PSTATE_USER, %g1		! XXXX user pstate (no need to load it)
-	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
-	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
-	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	or	%g1, %g5, %g1
-	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
-	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-#endif
 #ifdef SCHED_DEBUG
 !	set	panicstack-CC64FSZ-STKB, %o0! DEBUG
 !	save	%g0, %o0, %sp	! DEBUG

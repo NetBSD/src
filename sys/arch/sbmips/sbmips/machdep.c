@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2002/03/17 11:37:55 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.4.4.1 2002/07/15 01:20:58 gehenna Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -143,7 +143,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 void	configure(void);
-void	mach_init(long,long,long,long);
+void	mach_init(long, long, long, long);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -158,18 +158,13 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(fwhandle,magic,bootdata,reserved)
-	long fwhandle;
-	long magic;
-	long bootdata;
-	long reserved;
+mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
 	caddr_t kernend, v, p0;
 	u_long first, last;
 	vsize_t size;
 	extern char edata[], end[];
 	int i;
-	u_int memsize;
 	uint32_t config;
 
 	/* XXX this code must run on the target cpu */
@@ -177,14 +172,6 @@ mach_init(fwhandle,magic,bootdata,reserved)
 	config &= ~MIPS3_CONFIG_K0_MASK;
 	config |= 0x05;				/* XXX.  cacheable coherent */
 	mips3_cp0_config_write(config);
-
-	/* XXXCGD */
-#ifdef SBMIPS_MEM_SIZE
-	memsize = SBMIPS_MEM_SIZE;
-#else
-	memsize = 32 * 1024 * 1024;
-#endif
-	memsize += MIPS_KSEG0_START;
 
 	/*
 	 * Clear the BSS segment.
@@ -229,17 +216,6 @@ mach_init(fwhandle,magic,bootdata,reserved)
 	memset(ikoscons_output_buf, 0, ikoscons_output_bufsize);
 #endif
 
-	/*
-	 * physmem is measured in pages
-	 * XXX does this need to be set for 'consinit', 'uvm_setpagesize',
-	 * XXX or 'mips_vector_init'?  not that I can tell right now...
-	 * XXX if CFE is present, this will be recalculated.
-	 * XXX
-	 * XXX Does 'physmem' want to be the total amount of RAM in the
-	 * XXX system, or the amount that is available to us?
-	 */
-	physmem = btoc(memsize - MIPS_KSEG0_START);
-
 	consinit();
 
 	uvm_setpagesize();
@@ -251,17 +227,15 @@ mach_init(fwhandle,magic,bootdata,reserved)
 	 */
 	mips_vector_init();
 
-#if 0
-*(unsigned long long *)0xb0020440 = 3;
-#endif
-
+#ifdef DEBUG
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
-	    (u_int) fwhandle,(u_int) magic,(u_int) bootdata,(u_int) reserved);
+	    (u_int)fwhandle, (u_int)magic, (u_int)bootdata, (u_int)reserved);
+#endif
 
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;
 		int added;
-		cfe_xuint_t start,len,type;
+		cfe_xuint_t start, len, type;
 
 		cfe_init(fwhandle);
 		cfe_present = 1;
@@ -269,7 +243,7 @@ mach_init(fwhandle,magic,bootdata,reserved)
 		idx = 0;
 		physmem = 0;
 		mem_cluster_cnt = 0;
-		while (cfe_getmeminfo(idx,&start,&len,&type) == 0) {
+		while (cfe_getmeminfo(idx, &start, &len, &type) == 0) {
 			added = 0;
 			printf("Memory Block #%d start %08llX len %08llX: %s: ",
 			    idx, start, len, (type == CFE_MI_AVAILABLE) ?
@@ -401,7 +375,7 @@ mach_init(fwhandle,magic,bootdata,reserved)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	unsigned i;
 	int base, residual;
@@ -487,15 +461,10 @@ cpu_startup()
 }
 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;
@@ -509,10 +478,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
+
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx((struct user *)curpcb);
@@ -558,7 +526,12 @@ haltsys:
 	printf("rebooting...\n\n");
 
 	if (cfe_present) {
-		cfe_exit(1, (howto & RB_DUMP) ? 1 : 0);
+		/*
+		 * XXX
+		 * For some reason we can't return to CFE with
+		 * and do a warm start.  Need to look into this...
+		 */
+		cfe_exit(0, (howto & RB_DUMP) ? 1 : 0);
 		printf("cfe_exit didn't!\n");
 	}
 
