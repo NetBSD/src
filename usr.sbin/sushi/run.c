@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.12 2005/01/12 17:38:40 peter Exp $       */
+/*      $NetBSD: run.c,v 1.13 2005/01/12 17:41:56 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize win, int display)
 {
 	int xcor,ycor;
 	int j, x;
-	int selectfailed, multiloop, cols;
+	int pollfailed, multiloop, cols;
 	int status, master, slave;
 	struct pollfd set[2];
 	int dataflow[2];
@@ -217,13 +217,13 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize win, int display)
 	set[1].events = POLLIN;
 
 	cols = 0;
-	for (selectfailed = 0, multiloop = 0;;) {
+	for (pollfailed = 0, multiloop = 0;;) {
 again:
 		if (multiloop > 10)
 			goto loop; /* XXX */
-		if (selectfailed) {
+		if (pollfailed) {
 			char *msg = catgets(catalog, 1, 7,
-			    "select failed but no child died");
+			    "poll failed but no child died");
 			if (logging)
 				(void)fprintf(logfile, msg);
 			bailout(msg);
@@ -234,9 +234,9 @@ again:
 			perror("poll");
 			if (logging)
 				(void)fprintf(logfile, "%s: %s\n",
-				    catgets(catalog, 1, 17, "select failure"),
+				    catgets(catalog, 1, 17, "poll failure"),
 				    strerror(errno));
-			++selectfailed;
+			++pollfailed;
 		} else {
 			if (set[1].revents & POLLIN) {
 				n = read(STDIN_FILENO, ibuf, MAXBUF);
