@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.3 2000/12/22 06:24:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.2 2000/12/21 11:29:47 itojun Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.3 2000/12/22 06:24:15 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,34 +138,8 @@ mbrlen(s, n, ps)
 	size_t n;
 	mbstate_t *ps;
 {
-	char const *e;
-	static void *state0 = NULL;
-	static _RuneLocale *rl0 = NULL;
-	void *state = NULL;
 
-	/* initialize the state */
-	INIT0(state0, rl0, _CurrentRuneLocale);
-	INIT(rl0, state, state0, ps);
-
-	if (s == 0 || *s == 0) {
-		if (!ps)
-			e = s - 1;
-		else {
-			if (state && ___rune_initstate(rl0))
-				(*___rune_initstate(rl0))(rl0, state);
-			e = s;
-		}
-		goto bye;
-	}
-
-	if ((*___sgetrune(rl0))(rl0, s, (unsigned int)n, &e, state)
-	    == ___INVALID_RUNE(rl0)) {
-		CLEANUP(rl0, state, state0, ps);
-		return (s - e);
-	}
-bye:
-	CLEANUP(rl0, state, state0, ps);
-	return (e - s);
+	return mbrtowc(NULL, s, n, ps);
 }
 
 int
@@ -173,6 +147,7 @@ mblen(s, n)
 	const char *s;
 	size_t n;
 {
+
 	return mbrlen(s, n, NULL);
 }
 
