@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.3 1998/02/07 11:09:29 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.4 1998/02/10 02:34:56 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_pager.h,v 1.1.2.14 1998/01/13 19:00:50 chuck Exp
  */
+
+#ifndef _UVM_UVM_PAGER_H_
+#define _UVM_UVM_PAGER_H_
 
 /*
  * uvm_pager.h
@@ -154,3 +157,5 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       vm_offset_t, vm_offset_t));
 void		uvm_shareprot __P((vm_map_entry_t, vm_prot_t));
 
+
+#endif /* _UVM_UVM_PAGER_H_ */

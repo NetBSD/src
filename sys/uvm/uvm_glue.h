@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.h,v 1.3 1998/02/07 11:08:36 mrg Exp $	*/
+/*	$NetBSD: uvm_glue.h,v 1.4 1998/02/10 02:34:37 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,8 +38,13 @@
  * from: Id: uvm_glue.h,v 1.1.2.1 1997/08/14 19:10:48 chuck Exp
  */
 
+#ifndef _UVM_UVM_GLUE_H_
+#define _UVM_UVM_GLUE_H_
+
 /*
  * uvm_glue.h
  */
 
 void uvm_swapout_threads __P((void));
+
+#endif /* _UVM_UVM_GLUE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.4 1998/02/09 04:05:36 mrg Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.5 1998/02/10 02:34:25 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_anon.h,v 1.1.2.4 1998/01/04 22:43:39 chuck Exp
  */
+
+#ifndef _UVM_UVM_ANON_H_
+#define _UVM_UVM_ANON_H_
 
 /*
  * uvm_anon.h
@@ -145,3 +148,5 @@ struct vm_aref {
  * locked by vm_map lock.
  */
 
+
+#endif /* _UVM_UVM_ANON_H_ */

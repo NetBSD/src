@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.3 1998/02/07 11:08:20 mrg Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.4 1998/02/10 02:34:29 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,14 +38,14 @@
  * from: Id: uvm_device.h,v 1.1.2.2 1997/10/03 17:39:44 chuck Exp
  */
 
+#ifndef _UVM_UVM_DEVICE_H_
+#define _UVM_UVM_DEVICE_H_
+
 /*
  * uvm_device.h
  *
  * device handle into the VM system.
  */
-
-#ifndef UVM_UVM_DEVICE_H
-#define UVM_UVM_DEVICE_H
 
 /*
  * the uvm_device structure.   object is put at the top of the data structure.
@@ -73,4 +73,4 @@ struct uvm_device {
 
 struct uvm_object *udv_attach __P((void *, vm_prot_t));
 
-#endif UVM_UVM_DEVICE_H
+#endif /* _UVM_UVM_DEVICE_H_ */

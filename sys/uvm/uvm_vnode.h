@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.3 1998/02/07 11:10:00 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.4 1998/02/10 02:35:05 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,14 +38,14 @@
  * from: Id: uvm_vnode.h,v 1.1.2.4 1997/10/03 21:18:24 chuck Exp
  */
 
+#ifndef _UVM_UVM_VNODE_H_
+#define _UVM_UVM_VNODE_H_
+
 /*
  * uvm_vnode.h
  *
  * vnode handle into the VM system.
  */
-
-#ifndef UVM_UVM_VNODE_H
-#define UVM_UVM_VNODE_H
 
 /*
  * the uvm_vnode structure.   put at the top of the vnode data structure.
@@ -105,4 +105,4 @@ struct uvm_vnode {
 struct uvm_object  *uvn_attach __P((void *, vm_prot_t));
 #endif
 
-#endif UVM_UVM_VNODE_H
+#endif /* _UVM_UVM_VNODE_H_ */

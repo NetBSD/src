@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.3 1998/02/07 11:09:17 mrg Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.4 1998/02/10 02:34:50 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,12 +38,12 @@
  * from: Id: uvm_object.h,v 1.1.2.2 1998/01/04 22:44:51 chuck Exp
  */
 
+#ifndef _UVM_UVM_OBJECT_H_
+#define _UVM_UVM_OBJECT_H_
+
 /*
  * uvm_object.h
  */
-
-#ifndef UVM_UVM_OBJECT_H
-#define UVM_UVM_OBJECT_H
 
 /*
  * uvm_object: all that is left of mach objects.
@@ -71,4 +71,4 @@ struct uvm_object {
  */
 #define UVM_OBJ_KERN	(-2)
 
-#endif /* !UVM_UVM_OBJECT_H */
+#endif /* _UVM_UVM_OBJECT_H_ */

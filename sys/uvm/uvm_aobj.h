@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.4 1998/02/07 11:08:14 mrg Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.5 1998/02/10 02:34:27 perry Exp $	*/
 
 /* copyright here */
 /*
@@ -11,8 +11,8 @@
  * anonymous memory uvm_object
  */
 
-#ifndef UVM_UVM_AOBJ_H
-#define UVM_UVM_AOBJ_H
+#ifndef _UVM_UVM_AOBJ_H_
+#define _UVM_UVM_AOBJ_H_
 
 /*
  * flags
@@ -39,4 +39,4 @@ int uao_set_swslot __P((struct uvm_object *, int, int));
 
 extern struct uvm_pagerops aobj_pager;
 
-#endif
+#endif /* _UVM_UVM_AOBJ_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.3 1998/02/07 11:09:24 mrg Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.4 1998/02/10 02:34:54 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -69,6 +69,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _UVM_UVM_PAGE_I_H_
+#define _UVM_UVM_PAGE_I_H_
 
 /*
  * uvm_page_i.h
@@ -277,3 +280,5 @@ struct vm_page *src, *dst;
 }
 
 #endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */
+
+#endif /* _UVM_UVM_PAGE_I_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.3 1998/02/07 11:07:38 mrg Exp $	*/
+/*	$NetBSD: uvm.h,v 1.4 1998/02/10 02:34:17 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,6 +38,9 @@
  *
  * from: Id: uvm.h,v 1.1.2.14 1998/02/02 20:07:19 chuck Exp
  */
+
+#ifndef _UVM_UVM_H_
+#define _UVM_UVM_H_
 
 #include <uvm/uvm_extern.h>
 
@@ -172,3 +175,5 @@ extern struct uvm uvm;
 #include <uvm/uvm_map_i.h>
 #include <uvm/uvm_page_i.h>
 #include <uvm/uvm_pager_i.h>
+
+#endif /* _UVM_UVM_H_ */

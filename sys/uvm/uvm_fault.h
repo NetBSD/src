@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.3 1998/02/07 11:08:28 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.4 1998/02/10 02:34:33 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -37,6 +37,9 @@
  *
  * from: Id: uvm_fault.h,v 1.1.2.2 1997/12/08 16:07:12 chuck Exp
  */
+
+#ifndef _UVM_UVM_FAULT_H_
+#define _UVM_UVM_FAULT_H_
 
 /*
  * fault types
@@ -85,3 +88,4 @@ static void uvmfault_unlockmaps __P((struct uvm_faultinfo *, boolean_t));
 int uvm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
 void uvm_fault_unwire __P((struct pmap *, vm_offset_t, vm_offset_t));
 
+#endif /* _UVM_UVM_FAULT_H_ */
