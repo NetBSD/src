@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.9 1995/12/30 20:59:17 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.10 1996/01/02 21:51:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -449,10 +449,6 @@ lerint(sc)
 	int rp;
 	struct lermd rmd;
 
-#ifdef LE_RINT_HOOK
-	(*sc->sc_rint_hook)(sc);
-#endif
-
 	bix = sc->sc_last_rd;
 
 	/* Process all buffers with valid data. */
@@ -522,10 +518,6 @@ letint(sc)
 	register int bix;
 	struct letmd tmd;
 
-#ifdef LE_TINT_HOOK
-	(*sc->sc_tint_hook)(sc);
-#endif
-
 	bix = sc->sc_first_td;
 
 	for (;;) {
@@ -590,19 +582,11 @@ letint(sc)
 /*
  * Controller interrupt.
  */
-#ifdef LEINTR_UNIT
-int
-leintr(unit)
-	int unit;
-{
-	register struct le_softc *sc = LE_SOFTC(unit);
-#else
 int
 leintr(arg)
 	register void *arg;
 {
 	register struct le_softc *sc = arg;
-#endif
 	register u_int16_t isr;
 
 	isr = lerdcsr(sc, LE_CSR0);
