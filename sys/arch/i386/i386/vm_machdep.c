@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.98 2001/04/24 04:30:59 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.99 2001/06/02 18:09:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -352,7 +352,7 @@ kvtop(addr)
 	return((int)pa);
 }
 
-extern vm_map_t phys_map;
+extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

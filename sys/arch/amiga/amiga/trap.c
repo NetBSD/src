@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2001/03/18 23:43:53 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 2001/06/02 18:09:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,7 +180,7 @@ int mmudebug = 0;
 
 extern struct pcb *curpcb;
 extern char fubail[], subail[];
-int _write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
+int _write_back __P((u_int, u_int, u_int, u_int, struct vm_map *));
 static void userret __P((struct proc *, int, u_quad_t));
 void panictrap __P((int, u_int, u_int, struct frame *));
 void trapcpfault __P((struct proc *, struct frame *));
@@ -296,11 +296,11 @@ trapmmufault(type, code, v, fp, p, sticks)
 	static u_int oldcode=0, oldv=0;
 	static struct proc *oldp=0;
 #endif
-	extern vm_map_t kernel_map;
+	extern struct vm_map *kernel_map;
 	struct vmspace *vm = NULL;
 	vm_prot_t ftype;
 	vaddr_t va;
-	vm_map_t map;
+	struct vm_map *map;
 	u_int nss;
 	int rv;
 
@@ -457,7 +457,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 		/* Check WB3 */
 		if(fp->f_fmt7.f_wb3s & WBS_VALID) {
-			vm_map_t wb3_map;
+			struct vm_map *wb3_map;
 
 			if ((fp->f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
 				wb3_map = kernel_map;
@@ -752,7 +752,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb_sts;	/* writeback status information */
 	u_int wb_data;	/* data to writeback */
 	u_int wb_addr;	/* address to writeback to */
-	vm_map_t wb_map;
+	struct vm_map *wb_map;
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;

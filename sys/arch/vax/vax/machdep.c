@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.116 2001/05/29 21:28:15 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.117 2001/06/02 18:09:23 chs Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -111,9 +111,9 @@ int		symtab_nsyms;
 #define	IOMAPSZ	100
 static	struct map iomap[IOMAPSZ];
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;
