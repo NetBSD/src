@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.5 2001/07/13 20:30:18 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.6 2002/05/09 02:55:50 simonb Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -265,7 +265,7 @@ dircheck(struct inodesc * idesc, struct direct * dp)
 #	endif
 	if (dp->d_reclen < size ||
 	    idesc->id_filesize < size ||
-	    namlen > MAXNAMLEN ||
+	    /* namlen > MAXNAMLEN || */
 	    type > 15) {
 		printf("reclen<size, filesize<size, namlen too large, or type>15\n");
 		return (0);

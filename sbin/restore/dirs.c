@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.36 2002/01/04 06:48:49 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.37 2002/05/09 02:55:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.36 2002/01/04 06:48:49 lukem Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.37 2002/05/09 02:55:50 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,8 +384,8 @@ putdir(buf, size)
 			i = DIRBLKSIZ - (loc & (DIRBLKSIZ - 1));
 			if ((dp->d_reclen & 0x3) != 0 ||
 			    dp->d_reclen > i ||
-			    dp->d_reclen < DIRSIZ(0, dp, 0) ||
-			    dp->d_namlen > NAME_MAX) {
+			    dp->d_reclen < DIRSIZ(0, dp, 0) /* ||
+			    dp->d_namlen > NAME_MAX */) {
 				vprintf(stdout, "Mangled directory: ");
 				if ((dp->d_reclen & 0x3) != 0)
 					vprintf(stdout,
@@ -394,10 +394,12 @@ putdir(buf, size)
 					vprintf(stdout,
 					   "reclen less than DIRSIZ (%d < %lu) ",
 					   dp->d_reclen, (u_long)DIRSIZ(0, dp, 0));
+#if 0	/* dp->d_namlen is a uint8_t, always < NAME_MAX */
 				if (dp->d_namlen > NAME_MAX)
 					vprintf(stdout,
 					   "reclen name too big (%d > %d) ",
 					   dp->d_namlen, NAME_MAX);
+#endif
 				vprintf(stdout, "\n");
 				loc += i;
 				continue;

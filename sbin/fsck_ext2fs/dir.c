@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.6 2002/05/09 02:55:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.6 2002/05/09 02:55:49 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,8 +251,8 @@ dircheck(idesc, dp)
 			return (1);
 	size = EXT2FS_DIRSIZ(dp->e2d_namlen);
 	if (reclen < size ||
-	    idesc->id_filesize < size ||
-	    dp->e2d_namlen > EXT2FS_MAXNAMLEN)
+	    idesc->id_filesize < size /* ||
+	    dp->e2d_namlen > EXT2FS_MAXNAMLEN */)
 		return (0);
 	for (cp = dp->e2d_name, size = 0; size < dp->e2d_namlen; size++)
 		if (*cp == '\0' || (*cp++ == '/'))
