@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.7 2002/11/28 16:37:35 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.8 2003/01/07 18:54:08 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
 #include <machine/tlog.h>
+#include <machine/pio.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -110,6 +111,10 @@
 #include <machine/i82093var.h>
 #endif
 
+#include <dev/ic/mc146818reg.h>
+#include <i386/isa/nvram.h>
+#include <dev/isa/isareg.h>
+
 int     cpu_match __P((struct device *, struct cfdata *, void *));
 void    cpu_attach __P((struct device *, struct device *, void *));
 
@@ -117,6 +122,12 @@ struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
+
+int mp_cpu_start __P((struct cpu_info *)); 
+void mp_cpu_start_cleanup __P((struct cpu_info *));
+struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
+				      mp_cpu_start_cleanup };
+
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
@@ -137,6 +148,8 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 static void	cpu_init_tss(struct i386tss *, void *, void *);
+
+u_int32_t cpus_attached = 0;
 
 #ifdef MULTIPROCESSOR
 /*
@@ -362,6 +375,8 @@ cpu_attach(parent, self, aux)
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
+
+	cpus_attached |= (1 << ci->ci_cpuid);
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
@@ -706,4 +721,71 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	setgate(&idt[ddb_vec].gd, NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
+}
+
+
+int
+mp_cpu_start(struct cpu_info *ci)
+{
+#if NLAPIC > 0
+	int error;
+#endif
+	unsigned short dwordptr[2];
+
+	/*
+	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
+	 */
+
+	outb(IO_RTC, NVRAM_RESET);
+	outb(IO_RTC+1, NVRAM_RESET_JUMP);
+
+	/*
+	 * "and the warm reset vector (DWORD based at 40:67) to point
+	 * to the AP startup code ..."
+	 */
+
+	dwordptr[0] = 0;
+	dwordptr[1] = MP_TRAMPOLINE >> 4;
+
+	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
+	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
+	pmap_kremove (0, NBPG);
+
+#if NLAPIC > 0
+	/*
+	 * ... prior to executing the following sequence:"
+	 */
+
+	if (ci->ci_flags & CPUF_AP) {
+		if ((error = i386_ipi_init(ci->ci_apicid)) != 0)
+			return error;
+
+		delay(10000);
+
+		if (cpu_feature & CPUID_APIC) {
+
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
+			    LAPIC_DLMODE_STARTUP)) != 0)
+				return error;
+			delay(200);
+
+			if ((error = i386_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
+			    LAPIC_DLMODE_STARTUP)) != 0)
+				return error;
+			delay(200);
+		}
+	}
+#endif
+	return 0;
+}
+
+void
+mp_cpu_start_cleanup(struct cpu_info *ci)
+{
+	/*
+	 * Ensure the NVRAM reset byte contains something vaguely sane.
+	 */
+
+	outb(IO_RTC, NVRAM_RESET);
+	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
