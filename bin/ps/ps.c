@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.23 1998/07/28 05:31:26 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.24 1998/07/28 11:41:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.23 1998/07/28 05:31:26 mycroft Exp $");
+__RCSID("$NetBSD: ps.c,v 1.24 1998/07/28 11:41:50 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -331,10 +331,8 @@ main(argc, argv)
 	 * print header
 	 */
 	printheader();
-	if (nentries == 0) {
+	if (nentries == 0)
 		exit(0);
-		/* NOTREACHED */
-	}
 	/*
 	 * sort proc list
 	 */

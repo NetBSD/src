@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $	*/
+/*	$NetBSD: sem.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $");
+__RCSID("$NetBSD: sem.c,v 1.15 1998/07/28 11:41:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,6 @@ execute(t, wanttty, pipein, pipeout)
 		if (pid < 0) {
 		    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
-		    /* NOTREACHED */
 		}
 		forked++;
 		if (pid) {	/* parent */
@@ -383,16 +382,12 @@ execute(t, wanttty, pipein, pipeout)
 	 */
 	if (bifunc) {
 	    func(t, bifunc);
-	    if (forked) {
+	    if (forked)
 		exitstat();
-		/* NOTREACHED */
-	    }
 	    break;
 	}
-	if (t->t_dtyp != NODE_PAREN) {
+	if (t->t_dtyp != NODE_PAREN)
 	    doexec(NULL, t);
-	    /* NOTREACHED */
-	}
 	/*
 	 * For () commands must put new 0,1,2 in FSH* and recurse
 	 */

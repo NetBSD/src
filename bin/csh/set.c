@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.12 1998/07/28 02:47:21 mycroft Exp $	*/
+/*	$NetBSD: set.c,v 1.13 1998/07/28 11:41:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.12 1998/07/28 02:47:21 mycroft Exp $");
+__RCSID("$NetBSD: set.c,v 1.13 1998/07/28 11:41:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,14 +98,10 @@ doset(v, t)
 	if (letter(*p))
 	    for (; alnum(*p); p++)
 		continue;
-	if (vp == p || !letter(*vp)) {
+	if (vp == p || !letter(*vp))
 	    stderror(ERR_NAME | ERR_VARBEGIN);
-	    /* NOTREACHED */
-	}
-	if ((p - vp) > MAXVARLEN) {
+	if ((p - vp) > MAXVARLEN)
 	    stderror(ERR_NAME | ERR_VARTOOLONG);
-	    /* NOTREACHED */
-	}
 	if (*p == '[') {
 	    hadsub++;
 	    p = getinx(p, &subscr);
@@ -120,22 +116,16 @@ doset(v, t)
 	    if (*v)
 		p = *v++;
 	}
-	if (op && op != '=') {
+	if (op && op != '=')
 	    stderror(ERR_NAME | ERR_SYNTAX);
-	    /* NOTREACHED */
-	}
 	if (eq(p, STRLparen)) {
 	    Char **e = v;
 
-	    if (hadsub) {
+	    if (hadsub)
 		stderror(ERR_NAME | ERR_SYNTAX);
-		/* NOTREACHED */
-	    }
 	    for (;;) {
-		if (!*e) {
+		if (!*e)
 		    stderror(ERR_NAME | ERR_MISSING, ')');
-		    /* NOTREACHED */
-		}
 		if (**e == ')')
 		    break;
 		e++;
@@ -205,10 +195,8 @@ getinx(cp, ip)
     *cp++ = 0;
     while (*cp && Isdigit(*cp))
 	*ip = *ip * 10 + *cp++ - '0';
-    if (*cp++ != ']') {
+    if (*cp++ != ']')
 	stderror(ERR_NAME | ERR_SUBSCRIPT);
-	/* NOTREACHED */
-    }
     return (cp);
 }
 
@@ -233,10 +221,8 @@ getvx(vp, subscr)
 
     if (v == 0)
 	udvar(vp);
-    if (subscr < 1 || subscr > blklen(v->vec)) {
+    if (subscr < 1 || subscr > blklen(v->vec))
 	stderror(ERR_NAME | ERR_RANGE);
-	/* NOTREACHED */
-    }
     return (v);
 }
 
@@ -263,14 +249,10 @@ dolet(v, t)
 	if (letter(*p))
 	    for (; alnum(*p); p++)
 		continue;
-	if (vp == p || !letter(*vp)) {
+	if (vp == p || !letter(*vp))
 	    stderror(ERR_NAME | ERR_VARBEGIN);
-	    /* NOTREACHED */
-	}
-	if ((p - vp) > MAXVARLEN) {
+	if ((p - vp) > MAXVARLEN)
 	    stderror(ERR_NAME | ERR_VARTOOLONG);
-	    /* NOTREACHED */
-	}
 	if (*p == '[') {
 	    hadsub++;
 	    p = getinx(p, &subscr);
@@ -279,15 +261,11 @@ dolet(v, t)
 	    p = *v++;
 	if ((op = *p) != '\0')
 	    *p++ = 0;
-	else {
+	else
 	    stderror(ERR_NAME | ERR_ASSIGN);
-	    /* NOTREACHED */
-	}
 
-	if (*p == '\0' && *v == NULL) {
+	if (*p == '\0' && *v == NULL)
 	    stderror(ERR_NAME | ERR_ASSIGN);
-	    /* NOTREACHED */
-	}
 
 	vp = Strsave(vp);
 	if (op == '=') {
@@ -297,24 +275,19 @@ dolet(v, t)
 	else {
 	    c = *p++;
 	    if (any("+-", c)) {
-		if (c != op || *p) {
+		if (c != op || *p)
 		    stderror(ERR_NAME | ERR_UNKNOWNOP);
-		    /* NOTREACHED */
-		}
 		p = Strsave(STR1);
 	    }
 	    else {
 		if (any("<>", op)) {
-		    if (c != op) {
+		    if (c != op)
 			stderror(ERR_NAME | ERR_UNKNOWNOP);
-			/* NOTREACHED */
-		    }
 		    c = *p++;
 		    stderror(ERR_NAME | ERR_SYNTAX);
 		}
 		if (c != '=')
 		    stderror(ERR_NAME | ERR_UNKNOWNOP);
-		/* NOTREACHED */
 		p = xset(p, &v);
 	    }
 	}
@@ -378,10 +351,8 @@ operate(op, vp, p)
     *v++ = p;
     *v++ = 0;
     i = expr(&vecp);
-    if (*vecp) {
+    if (*vecp)
 	stderror(ERR_NAME | ERR_EXPRESSION);
-	/* NOTREACHED */
-    }
     return (putn(i));
 }
 
@@ -442,18 +413,14 @@ getn(cp)
     if (*cp == '-') {
 	sign++;
 	cp++;
-	if (!Isdigit(*cp)) {
+	if (!Isdigit(*cp))
 	    stderror(ERR_NAME | ERR_BADNUM);
-	    /* NOTREACHED */
-	}
     }
     n = 0;
     while (Isdigit(*cp))
 	n = n * 10 + *cp++ - '0';
-    if (*cp) {
+    if (*cp)
 	stderror(ERR_NAME | ERR_BADNUM);
-	/* NOTREACHED */
-    }
     return (sign ? -n : n);
 }
 
@@ -529,7 +496,6 @@ set1(var, vec, head)
 	if (vec == 0) {
 	    blkfree(oldv);
 	    stderror(ERR_NAME | ERR_NOMATCH);
-	    /* NOTREACHED */
 	}
 	blkfree(oldv);
 	gargv = 0;
@@ -681,10 +647,8 @@ shift(v, t)
     argv = adrof(name);
     if (argv == 0)
 	udvar(name);
-    if (argv->vec[0] == 0) {
+    if (argv->vec[0] == 0)
 	stderror(ERR_NAME | ERR_NOMORE);
-	/* NOTREACHED */
-    }
     lshift(argv->vec, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.15 1998/07/28 02:47:20 mycroft Exp $	*/
+/*	$NetBSD: func.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.15 1998/07/28 02:47:20 mycroft Exp $");
+__RCSID("$NetBSD: func.c,v 1.16 1998/07/28 11:41:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,14 +124,10 @@ func(t, bp)
     xechoit(t->t_dcom);
     setname(bp->bname);
     i = blklen(t->t_dcom) - 1;
-    if (i < bp->minargs) {
+    if (i < bp->minargs)
 	stderror(ERR_NAME | ERR_TOOFEW);
-	/* NOTREACHED */
-    }
-    if (i > bp->maxargs) {
+    if (i > bp->maxargs)
 	stderror(ERR_NAME | ERR_TOOMANY);
-	/* NOTREACHED */
-    }
     (*bp->bfunct) (t->t_dcom, t);
 }
 
@@ -147,10 +143,8 @@ doonintr(v, t)
 
     if (parintr == SIG_IGN)
 	return;
-    if (setintr && intty) {
+    if (setintr && intty)
 	stderror(ERR_NAME | ERR_TERMINAL);
-	/* NOTREACHED */
-    }
     cp = gointr;
     gointr = 0;
     xfree((ptr_t) cp);
@@ -179,10 +173,8 @@ donohup(v, t)
     Char **v;
     struct command *t;
 {
-    if (intty) {
+    if (intty)
 	stderror(ERR_NAME | ERR_TERMINAL);
-	/* NOTREACHED */
-    }
     if (setintr == 0) {
 	(void) signal(SIGHUP, SIG_IGN);
     }
@@ -227,7 +219,6 @@ doalias(v, t)
 	if (eq(p, STRalias) || eq(p, STRunalias)) {
 	    setname(vis_str(p));
 	    stderror(ERR_NAME | ERR_DANGER);
-	    /* NOTREACHED */
 	}
 	set1(strip(p), saveblk(v), &aliases);
     }
@@ -289,15 +280,11 @@ doif(v, kp)
     v++;
     i = expr(&v);
     vv = v;
-    if (*vv == NULL) {
+    if (*vv == NULL)
 	stderror(ERR_NAME | ERR_EMPTYIF);
-	/* NOTREACHED */
-    }
     if (eq(*vv, STRthen)) {
-	if (*++vv) {
+	if (*++vv)
 	    stderror(ERR_NAME | ERR_IMPRTHEN);
-	    /* NOTREACHED */
-	}
 	setname(vis_str(STRthen));
 	/*
 	 * If expression was zero, then scan to else, otherwise just fall into
@@ -389,17 +376,13 @@ doswitch(v, t)
     Char *cp, *lp;
 
     v++;
-    if (!*v || *(*v++) != '(') {
+    if (!*v || *(*v++) != '(')
 	stderror(ERR_SYNTAX);
-	/* NOTREACHED */
-    }
     cp = **v == ')' ? STRNULL : *v++;
     if (*(*v++) != ')')
 	v--;
-    if (*v) {
+    if (*v)
 	stderror(ERR_SYNTAX);
-	/* NOTREACHED */
-    }
     search(T_SWITCH, 0, lp = globone(cp, G_ERROR));
     xfree((ptr_t) lp);
 }
@@ -412,10 +395,8 @@ dobreak(v, t)
 {
     if (whyles)
 	toend();
-    else {
+    else
 	stderror(ERR_NAME | ERR_NOTWHILE);
-	/* NOTREACHED */
-    }
 }
 
 void
@@ -432,10 +413,8 @@ doexit(v, t)
     v++;
     if (*v) {
 	set(STRstatus, putn(expr(&v)));
-	if (*v) {
+	if (*v)
 	    stderror(ERR_NAME | ERR_EXPRESSION);
-	    /* NOTREACHED */
-	}
     }
     btoeof();
     if (intty)
@@ -453,32 +432,22 @@ doforeach(v, t)
 
     v++;
     sp = cp = strip(*v);
-    if (!letter(*sp)) {
+    if (!letter(*sp))
 	stderror(ERR_NAME | ERR_VARBEGIN);
-	/* NOTREACHED */
-    }
     while (*cp && alnum(*cp))
 	cp++;
-    if (*cp) {
+    if (*cp)
 	stderror(ERR_NAME | ERR_VARALNUM);
-	/* NOTREACHED */
-    }
-    if ((cp - sp) > MAXVARLEN) {
+    if ((cp - sp) > MAXVARLEN)
 	stderror(ERR_NAME | ERR_VARTOOLONG);
-	/* NOTREACHED */
-    }
     cp = *v++;
-    if (v[0][0] != '(' || v[blklen(v) - 1][0] != ')') {
+    if (v[0][0] != '(' || v[blklen(v) - 1][0] != ')')
 	stderror(ERR_NAME | ERR_NOPAREN);
-	/* NOTREACHED */
-    }
     v++;
     gflag = 0, tglob(v);
     v = globall(v);
-    if (v == 0) {
+    if (v == 0)
 	stderror(ERR_NAME | ERR_NOMATCH);
-	/* NOTREACHED */
-    }
     nwp = (struct whyle *) xcalloc(1, sizeof *nwp);
     nwp->w_fe = nwp->w_fe0 = v;
     gargv = 0;
@@ -514,10 +483,8 @@ dowhile(v, t)
 	status = !exp0(&v, 1);
     else
 	status = !expr(&v);
-    if (*v) {
+    if (*v)
 	stderror(ERR_NAME | ERR_EXPRESSION);
-	/* NOTREACHED */
-    }
     if (!again) {
 	struct whyle *nwp =
 	(struct whyle *) xcalloc(1, sizeof(*nwp));
@@ -565,10 +532,8 @@ doend(v, t)
     Char **v;
     struct command *t;
 {
-    if (!whyles) {
+    if (!whyles)
 	stderror(ERR_NAME | ERR_NOTWHILE);
-	/* NOTREACHED */
-    }
     btell(&whyles->w_end);
     doagain();
 }
@@ -579,10 +544,8 @@ docontin(v, t)
     Char **v;
     struct command *t;
 {
-    if (!whyles) {
+    if (!whyles)
 	stderror(ERR_NAME | ERR_NOTWHILE);
-	/* NOTREACHED */
-    }
     doagain();
 }
 
@@ -973,10 +936,8 @@ xecho(sep, v)
     gflag = 0, tglob(v);
     if (gflag) {
 	v = globall(v);
-	if (v == 0) {
+	if (v == 0)
 	    stderror(ERR_NAME | ERR_NOMATCH);
-	    /* NOTREACHED */
-	}
     }
     else {
 	v = gargv = saveblk(v);
@@ -1178,10 +1139,8 @@ doumask(v, t)
     i = 0;
     while (Isdigit(*cp) && *cp != '8' && *cp != '9')
 	i = i * 8 + *cp++ - '0';
-    if (*cp || i < 0 || i > 0777) {
+    if (*cp || i < 0 || i > 0777)
 	stderror(ERR_NAME | ERR_MASK);
-	/* NOTREACHED */
-    }
     (void) umask(i);
 }
 
@@ -1220,17 +1179,14 @@ findlim(cp)
     res = (struct limits *) NULL;
     for (lp = limits; lp->limconst >= 0; lp++)
 	if (prefix(cp, str2short(lp->limname))) {
-	    if (res) {
+	    if (res)
 		stderror(ERR_NAME | ERR_AMBIG);
-		/* NOTREACHED */
-	    }
 	    res = lp;
 	}
     if (res)
 	return (res);
     stderror(ERR_NAME | ERR_LIMIT);
     /* NOTREACHED */
-    return (0);
 }
 
 void
@@ -1259,10 +1215,8 @@ dolimit(v, t)
 	return;
     }
     limit = getval(lp, v + 1);
-    if (setlim(lp, hard, limit) < 0) {
+    if (setlim(lp, hard, limit) < 0)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
 }
 
 static  RLIM_TYPE
@@ -1343,10 +1297,8 @@ limtail(cp, str)
 {
     while (*cp && *cp == *str)
 	cp++, str++;
-    if (*cp) {
+    if (*cp)
 	stderror(ERR_BADSCALE, str);
-	/* NOTREACHED */
-    }
 }
 
 
@@ -1393,18 +1345,14 @@ dounlimit(v, t)
 	for (lp = limits; lp->limconst >= 0; lp++)
 	    if (setlim(lp, hard, (RLIM_TYPE) RLIM_INFINITY) < 0)
 		lerr++;
-	if (lerr) {
+	if (lerr)
 	    stderror(ERR_SILENT);
-	    /* NOTREACHED */
-	}
 	return;
     }
     while (*v) {
 	lp = findlim(*v++);
-	if (setlim(lp, hard, (RLIM_TYPE) RLIM_INFINITY) < 0) {
+	if (setlim(lp, hard, (RLIM_TYPE) RLIM_INFINITY) < 0)
 	    stderror(ERR_SILENT);
-	    /* NOTREACHED */
-	}
     }
 }
 
@@ -1444,10 +1392,8 @@ dosuspend(v, t)
 
     void    (*old) __P((int));
 
-    if (loginsh) {
+    if (loginsh)
 	stderror(ERR_SUSPLOG);
-	/* NOTREACHED */
-    }
     untty();
 
     old = signal(SIGTSTP, SIG_DFL);
@@ -1517,10 +1463,8 @@ doeval(v, t)
     if (gflag) {
 	gv = v = globall(v);
 	gargv = 0;
-	if (v == 0) {
+	if (v == 0)
 	    stderror(ERR_NOMATCH);
-	    /* NOTREACHED */
-	}
 	v = copyblk(v);
     }
     else {
@@ -1559,10 +1503,8 @@ doeval(v, t)
 	blkfree(gv), gv = NULL;
     resexit(osetexit);
     gv = savegv;
-    if (my_reenter) {
+    if (my_reenter)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
 }
 
 void
@@ -1580,8 +1522,6 @@ doprintf(v, t)
     (void) fflush(csherr);
 
     blkfree((Char **) c);
-    if (ret) {
+    if (ret)
 	stderror(ERR_SILENT);
-	/* NOTREACHED */
-    }
 }

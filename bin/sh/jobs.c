@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.27 1998/05/20 00:31:11 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.28 1998/07/28 11:41:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.27 1998/05/20 00:31:11 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.28 1998/07/28 11:41:55 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -491,8 +491,7 @@ currentjob:
 		}
 	}
 	error("No such job: %s", name);
-	/*NOTREACHED*/
-	return NULL;
+	/* NOTREACHED */
 }
 
 

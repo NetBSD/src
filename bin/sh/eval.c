@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.43 1998/07/28 05:31:27 mycroft Exp $	*/
+/*	$NetBSD: eval.c,v 1.44 1998/07/28 11:41:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.43 1998/07/28 05:31:27 mycroft Exp $");
+__RCSID("$NetBSD: eval.c,v 1.44 1998/07/28 11:41:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -820,9 +820,8 @@ cmddone:
 		cmdenviron = NULL;
 		if (e != EXSHELLPROC) {
 			commandname = savecmdname;
-			if (flags & EV_EXIT) {
+			if (flags & EV_EXIT)
 				exitshell(exitstatus);
-			}
 		}
 		handler = savehandler;
 		if (e != -1) {
@@ -833,10 +832,8 @@ cmddone:
 #ifndef SMALL
 			   || cmdentry.u.index == HISTCMD
 #endif
-			   || cmdentry.u.index == EXECCMD) {
+			   || cmdentry.u.index == EXECCMD)
 				exraise(e);
-				/* NOTREACHED */
-			}
 			FORCEINTON;
 		}
 		if (cmdentry.u.index != EXECCMD)
@@ -856,7 +853,6 @@ cmddone:
 			setvareq(sp->text, VEXPORT|VSTACK);
 		envp = environment();
 		shellexec(argv, envp, pathval(), cmdentry.u.index);
-		/*NOTREACHED*/
 	}
 	goto out;
 
@@ -1009,7 +1005,6 @@ execcmd(argc, argv)
 		for (sp = cmdenviron; sp ; sp = sp->next)
 			setvareq(sp->text, VEXPORT|VSTACK);
 		shellexec(argv + 1, environment(), pathval(), 0);
-
 	}
 	return 0;
 }
