@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.111 2002/05/31 11:11:29 kleink Exp $
+#       $NetBSD: Makefile,v 1.112 2002/06/24 22:45:41 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -24,7 +24,7 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	psignal.9 radio.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	sleep.9 softintr.9 \
-	spl.9 store.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
+	spl.9 store.9 suser.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
 	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
