@@ -1,21 +1,35 @@
-#       $NetBSD: Makefile,v 1.83 2001/06/28 23:04:39 itojun Exp $
+#       $NetBSD: Makefile,v 1.84 2001/07/01 04:11:14 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 arp.9 audio.9 bitmask_snprintf.9 bus_dma.9 bus_space.9 \
-	callout.9 cnmagic.9 cons.9 copy.9 cpu_reboot.9 ctxsw.9 disk.9 \
-	disklabel.9 \
-	dopowerhooks.9 doshutdownhooks.9 ethersubr.9 evcnt.9 \
+MAN=	access.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
+	bus_dma.9 bus_space.9 \
+	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 cpu_reboot.9 \
+	ctxsw.9 disk.9 disklabel.9 \
+	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 fork1.9 humanize_number.9 in4_cksum.9 inittodr.9 \
-	intro.9 ioctl.9 kprintf.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
-	microtime.9 panic.9 pci_configure_bus.9 pci_intr.9 pfil.9 physio.9 \
+	intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 kprintf.9 kthread.9 \
+	linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
+	microtime.9 panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 psignal.9 \
 	ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	scsipi.9 shutdownhook_establish.9 sleep.9 softintr.9 \
-	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 \
+	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 vme.9 \
 	usbdi.9 uvm.9 wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
+MLINKS+=autoconf.9 config_search.9 \
+	autoconf.9 config_found_sm.9 \
+	autoconf.9 config_found.9 \
+	autoconf.9 config_attach.9 \
+	autoconf.9 config_detach.9 \
+	autoconf.9 config_activate.9 \
+	autoconf.9 config_deactivate.9 \
+	autoconf.9 config_defer.9 \
+	autoconf.9 config_interrupts.9 \
+	autoconf.9 config_pending_incr.9 \
+	autoconf.9 config_pending_decr.9 
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_1.9 \
 	bus_space.9 bus_space_copy_region_2.9 \
@@ -58,6 +72,29 @@ MLINKS+=callout.9 callout_init.9 callout.9 callout_reset.9 \
 	callout.9 callout_stop.9 callout.9 callout_active.9 \
 	callout.9 callout_pending.9 callout.9 callout_deactivate.9 \
 	callout.9 timeout.9 callout.9 untimeout.9
+MLINKS+=cardbus.9 cardbus_attach_card.9 \
+	cardbus.9 cardbus_detach_card.9 \
+	cardbus.9 cardbus_function_enable.9 \
+	cardbus.9 cardbus_function_disable.9 \
+	cardbus.9 cardbus_mapreg_map.9 \
+	cardbus.9 cardbus_mapreg_unmap.9 \
+	cardbus.9 cardbus_get_capability.9 \
+	cardbus.9 cardbus_make_tag.9 \
+	cardbus.9 cardbus_free_tag.9 \
+	cardbus.9 cardbus_conf_read.9 \
+	cardbus.9 cardbus_conf_write.9 \
+	cardbus.9 cardbus_intr_establish.9 \
+	cardbus.9 cardbus_intr_disestablish.9 \
+	cardbus.9 CARDBUS_VENDOR.9 \
+	cardbus.9 CARDBUS_PRODUCT.9 \
+	cardbus.9 Cardbus_function_enable.9 \
+	cardbus.9 Cardbus_function_disable.9 \
+	cardbus.9 Cardbus_mapreg_map.9 \
+	cardbus.9 Cardbus_mapreg_unmap.9 \
+	cardbus.9 Cardbus_make_tag.9 \
+	cardbus.9 Cardbus_free_tag.9 \
+	cardbus.9 Cardbus_conf_read.9 \
+	cardbus.9 Cardbus_conf_write.9
 MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
@@ -84,10 +121,41 @@ MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
 	in4_cksum.9 in6_cksum.9
+MLINKS+=ioasic.9 ioasic_intr_establish.9 \
+	ioasic.9 ioasic_intr_disestablish.9 \
+	ioasic.9 ioasic_intr_evcnt.9 \
+	ioasic.9 ioasic_attach_devs.9 \
+	ioasic.9 ioasic_submatch.9 
+MLINKS+=isa.9 isa_intr_alloc.9 \
+	isa.9 isa_intr_establish.9 \
+	isa.9 isa_intr_disestablish.9 \
+	isa.9 isa_intr_evcnt.9 \
+	isa.9 isa_dmamap_create.9 \
+	isa.9 isa_dmamap_destroy.9 \
+	isa.9 isa_dmamem_alloc.9 \
+	isa.9 isa_dmamem_free.9 \
+	isa.9 isa_dmamem_map.9 \
+	isa.9 isa_dmamem_unmap.9 \
+	isa.9 isa_malloc.9 \
+	isa.9 isa_free.9 \
+	isa.9 isa_dmastart.9 \
+	isa.9 isa_dmaabort.9 \
+	isa.9 isa_dmacount.9 \
+	isa.9 isa_dmadone.9 \
+	isa.9 isa_dmamaxsize.9 \
+	isa.9 isa_drq_isfree.9 \
+	isa.9 isa_dmacascade.9 \
+	isa.9 isa_mappage.9
+MLINKS+=isapnp.9 isapnp_devmatch.9 \
+	isapnp.9 isapnp_config.9 \
+	isapnp.9 isapnp_unconfig.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 snprintf.9 \
 	kprintf.9 vprintf.9 kprintf.9 vsprintf.9 kprintf.9 vsnprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
 	kprintf.9 tprintf.9 kprintf.9 tprintf_open.9 kprintf.9 tprintf_close.9
+MLINKS+=kthread.9 kthread_exit.9 \
+	kthread.9 kthread_create.9 \
+	kthread.9 kthread_create1.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_lock_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
@@ -106,7 +174,45 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
+MLINKS+=pci.9 pci_conf_read.9 \
+	pci.9 pci_conf_write.9 \
+	pci.9 pci_conf_print.9 \
+	pci.9 pci_get_capability.9 \
+	pci.9 pci_mapreg_type.9 \
+	pci.9 pci_mapreg_map.9 \
+	pci.9 pci_mapreg_info.9 \
+	pci.9 pci_intr_map.9 \
+	pci.9 pci_intr_string.9 \
+	pci.9 pci_intr_evcnt.9 \
+	pci.9 pci_intr_establish.9 \
+	pci.9 pci_intr_disestablish.9 \
+	pci.9 pci_make_tag.9 \
+	pci.9 pci_decompose_tag.9 \
+	pci.9 pci_findvendor.9 \
+	pci.9 pci_devinfo.9 \
+	pci.9 PCI_VENDOR.9 \
+	pci.9 PCI_PRODUCT.9 \
+	pci.9 PCI_REVISION.9
 MLINKS+=pci_configure_bus.9 pci_conf_interrupt.9
+MLINKS+=pcmcia.9 pcmcia_function_init.9 \
+	pcmcia.9 pcmcia_function_enable.9 \
+	pcmcia.9 pcmcia_function_disable.9 \
+	pcmcia.9 pcmcia_io_alloc.9 \
+	pcmcia.9 pcmcia_io_free.9 \
+	pcmcia.9 pcmcia_io_map.9 \
+	pcmcia.9 pcmcia_io_unmap.9 \
+	pcmcia.9 pcmcia_mem_alloc.9 \
+	pcmcia.9 pcmcia_mem_free.9 \
+	pcmcia.9 pcmcia_mem_map.9 \
+	pcmcia.9 pcmcia_mem_unmap.9 \
+	pcmcia.9 pcmcia_intr_establish.9 \
+	pcmcia.9 pcmcia_intr_disestablish.9 \
+	pcmcia.9 pcmcia_cis_read_1.9 \
+	pcmcia.9 pcmcia_cis_read_2.9 \
+	pcmcia.9 pcmcia_cis_read_3.9 \
+	pcmcia.9 pcmcia_cis_read_4.9 \
+	pcmcia.9 pcmcia_cis_read_n.9 \
+	pcmcia.9 pcmcia_scan_cis.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
@@ -130,6 +236,9 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
+MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
+	todr.9 todr_getcal.9 todr.9 todr_setcal.9 \
+	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_map_pageable.9 \
 	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
@@ -148,9 +257,20 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 uvm.9 uvm_vslock.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 uvm.9 uvm_sysctl.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 uvm.9 uvm_coredump.9
-MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
-	todr.9 todr_getcal.9 todr.9 todr_setcal.9 \
-	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
+MLINKS+=vme.9 vme_probe.9 \
+	vme.9 vme_space_map.9 \
+	vme.9 vme_space_unmap.9 \
+	vme.9 vme_intr_map.9 \
+	vme.9 vme_intr_establish.9 \
+	vme.9 vme_intr_disestablish.9 \
+	vme.9 vme_intr_evcnt.9 \
+	vme.9 vme_dmamap_create.9 \
+	vme.9 vme_dmamap_destroy.9 \
+	vme.9 vme_dmamem_alloc.9 \
+	vme.9 vme_dmamem_free.9 \
+	vme.9 vme_space_alloc.9 \
+	vme.9 vme_space_free.9 \
+	vme.9 vme_space_get.9 \
 
 SUBDIR= man9.i386 man9.sun3
 
