@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.77 2000/02/09 13:07:45 enami Exp $
+$NetBSD: pcmciadevs,v 1.78 2000/02/09 13:20:55 enami Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ vendor IODATA			0x01bf	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
+vendor MELCO			0x8a01	Melco Corporation
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
@@ -143,6 +144,9 @@ product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 
+/* Melco Products */
+product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 
@@ -217,7 +221,6 @@ vendor SVEC			-1	SVEC/Hawking Technology
 vendor AMBICOM			-1	AmbiCom Inc
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
-vendor MELCO			-1	Melco Inc
 vendor ICOM			-1	ICOM Inc
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
