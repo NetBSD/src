@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.8 2002/04/14 06:18:14 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.9 2002/04/24 21:03:42 thorpej Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -53,7 +53,8 @@ _KERNEL.${_K}:=	${_F}
 KERNELS+=	${_KERNEL.${_K}}.gz
 KERNELDEPS+=	${_KERNEL.${_K}}.gz .WAIT
 .for suf in ${MDSET.${_FILENAME}.suffixes}
-KERNELS+=	${_KERNEL.${_K}}.${suf}.gz .WAIT
+KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
+KERNELDEPS+=	${_KERNEL.${_K}}.${suf}.gz .WAIT
 CLEANFILES+=	netbsd.${suf} netbsd.${suf}.gz
 .endfor
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
