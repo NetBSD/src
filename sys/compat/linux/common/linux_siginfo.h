@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.1 1998/10/03 20:20:04 christos Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.2 1998/12/15 19:31:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #if defined(__i386__)
 /*XXX XAX write me#include <compat/linux/i386/linux_siginfo.h>*/
 #include <compat/linux/arch/alpha/linux_siginfo.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_siginfo.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_siginfo.h>
 #else
