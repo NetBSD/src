@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: traceroute.c,v 1.5 1995/01/04 04:42:09 mycroft Exp $";
+static char *rcsid = "$Id: traceroute.c,v 1.6 1995/01/04 04:47:42 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -398,13 +398,12 @@ main(argc, argv)
 		errx(1, "packet size must be 0 to %d.",
 		    IP_MAXPACKET - HEADERSIZE);
 	datalen += HEADERSIZE;
-	outpacket = (u_char *)malloc(datalen);
-	if (outpacket == 0) {
-		perror("traceroute: malloc");
-		exit(1);
-	}
 
+	outpacket = (u_char *)malloc(datalen);
+	if (outpacket == 0)
+		err(1, "malloc");
 	(void) bzero(outpacket, datalen);
+
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
 		u_char *p;
@@ -431,10 +430,8 @@ main(argc, argv)
 		Fprintf(stderr, "icmp: unknown protocol\n");
 		exit(10);
 	}
-	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0) {
-		perror("traceroute: icmp socket");
-		exit(5);
-	}
+	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0)
+		err(5, "icmp socket");
 	if (options & SO_DEBUG)
 		(void) setsockopt(s, SOL_SOCKET, SO_DEBUG,
 				  (char *)&on, sizeof(on));
@@ -442,24 +439,18 @@ main(argc, argv)
 		(void) setsockopt(s, SOL_SOCKET, SO_DONTROUTE,
 				  (char *)&on, sizeof(on));
 
-	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
-		perror("traceroute: raw socket");
-		exit(5);
-	}
+	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+		err(5, "raw socket");
 
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-		       sizeof(datalen)) < 0) {
-		perror("traceroute: SO_SNDBUF");
-		exit(6);
-	}
+		       sizeof(datalen)) < 0)
+		err(6, "SO_SNDBUF");
 #endif SO_SNDBUF
 #ifdef IP_HDRINCL
 	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
-		       sizeof(on)) < 0) {
-		perror("traceroute: IP_HDRINCL");
-		exit(6);
-	}
+		       sizeof(on)) < 0)
+		err(6, "IP_HDRINCL");
 #endif IP_HDRINCL
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
@@ -472,16 +463,12 @@ main(argc, argv)
 		(void) bzero((char *)&from, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
 		from.sin_addr.s_addr = inet_addr(source);
-		if (from.sin_addr.s_addr == -1) {
-			Printf("traceroute: unknown host %s\n", source);
-			exit(1);
-		}
+		if (from.sin_addr.s_addr == -1)
+			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
 #ifndef IP_HDRINCL
-		if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0) {
-			perror ("traceroute: bind:");
-			exit (1);
-		}
+		if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
+			err(1, "bind");
 #endif IP_HDRINCL
 	}
 
