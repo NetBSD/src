@@ -1,8 +1,6 @@
-#	@(#)Makefile	5.4 (Berkeley) 5/11/90
+#	@(#)Makefile	8.2 (Berkeley) 2/20/94
 
 PROG=	umount
-CFLAGS+=-DNFS
-NOMAN=	noman
 DPADD=	${LIBRPC}
 LDADD=	-lrpc
 
