@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.22 2001/11/20 12:56:31 lukem Exp $
+#	$NetBSD: GENERIC,v 1.23 2001/11/23 05:00:25 atatat Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	8
 
@@ -137,6 +137,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		1	# SLIP interfaces
 #pseudo-device	tun		2	# Network "tunnel" device
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vnd		2	# disk-like interface to files
 pseudo-device	rnd			# /dev/random and in-kernel generator
