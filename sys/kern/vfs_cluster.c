@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.6 1994/12/13 09:13:39 mycroft Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.7 1994/12/13 09:14:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_cluster.c	8.7 (Berkeley) 2/13/94
+ *	@(#)vfs_cluster.c	8.8 (Berkeley) 7/28/94
  */
 
 #include <sys/param.h>
