@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_shell.c	8.17 (Berkeley) 12/23/93"; */
-static char *rcsid = "$Id: ex_shell.c,v 1.2 1994/01/24 06:40:37 cgd Exp $";
+static char sccsid[] = "@(#)ex_shell.c	8.21 (Berkeley) 3/23/94";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
-#include <curses.h>
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -74,19 +82,16 @@ ex_exec_proc(sp, cmd, p1, p2)
 	SCR *sp;
 	char *cmd, *p1, *p2;
 {
-	struct sigaction act, oact;
-	struct stat osb, sb;
-	struct termios term;
 	const char *name;
 	pid_t pid;
-	int isig, rval;
+	int rval, teardown;
 
 	/* Clear the rest of the screen. */
 	if (sp->s_clear(sp))
 		return (1);
 
 	/* Save ex/vi terminal settings, and restore the original ones. */
-	EX_LEAVE(sp, isig, act, oact, sb, osb, term);
+	teardown = !ex_sleave(sp);
 
 	/* Put out various messages. */
 	if (p1 != NULL)
@@ -122,14 +127,15 @@ ex_exec_proc(sp, cmd, p1, p2)
 	rval = proc_wait(sp, (long)pid, cmd, 0);
 
 	/* Restore ex/vi terminal settings. */
-err:	EX_RETURN(sp, isig, act, oact, sb, osb, term);
+err:	if (teardown)
+		ex_rleave(sp);
 
 	/*
 	 * XXX
-	 * EX_LEAVE/EX_RETURN only give us 1-second resolution on the tty
-	 * changes.  A fast '!' command, e.g. ":!pwd" can beat us to the
-	 * refresh.  When there's better resolution from the stat(2) timers,
-	 * this can go away.
+	 * Stat of the tty structures (see ex_sleave, ex_rleave) only give
+	 * us 1-second resolution on the tty changes.  A fast '!' command,
+	 * e.g. ":!pwd" can beat us to the refresh.  When there's better
+	 * resolution from the stat(2) timers, this can go away.
 	 */
 	F_SET(sp, S_REFRESH);
 

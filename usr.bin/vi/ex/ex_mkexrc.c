@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,33 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_mkexrc.c	8.8 (Berkeley) 12/2/93"; */
-static char *rcsid = "$Id: ex_mkexrc.c,v 1.2 1994/01/24 06:40:26 cgd Exp $";
+static char sccsid[] = "@(#)ex_mkexrc.c	8.10 (Berkeley) 3/22/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
+#include <pathnames.h>
 
 #include "vi.h"
 #include "excmd.h"
 #include "seq.h"
-#include "pathnames.h"
 
 /*
  * ex_mkexrc -- :mkexrc[!] [file]

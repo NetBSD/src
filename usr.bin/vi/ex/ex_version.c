@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,22 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_version.c	8.32 (Berkeley) 1/23/94"; */
-static char *rcsid = "$Id: ex_version.c,v 1.2 1994/01/24 06:40:47 cgd Exp $";
+static char sccsid[] = "@(#)ex_version.c	8.41 (Berkeley) 3/24/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
+
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -51,10 +62,10 @@ ex_version(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
-	static time_t then = 759365451;
+	static time_t then = 764543281;
 
 	(void)ex_printf(EXCOOKIE,
-"Version 1.03, %sThe CSRG, University of California, Berkeley.\n",
+"Version 1.11, %sThe CSRG, University of California, Berkeley.\n",
 	    ctime(&then));
 	return (0);
 }

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,24 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_screen.c	8.10 (Berkeley) 12/2/93"; */
-static char *rcsid = "$Id: ex_screen.c,v 1.2 1994/01/24 06:40:33 cgd Exp $";
+static char sccsid[] = "@(#)ex_screen.c	8.12 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -84,7 +94,7 @@ ex_fg(sp, ep, cmdp)
 }
 
 /*
- * ex_resize --	:resize [change]
+ * ex_resize --	:resize [+-]rows
  *	Change the screen size.
  */
 int
@@ -93,9 +103,19 @@ ex_resize(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
-	if (!F_ISSET(cmdp, E_COUNT))
-		cmdp->count = 1;
-	return (sp->s_rabs(sp, cmdp->count));
+	enum adjust adj;
+
+	if (!F_ISSET(cmdp, E_COUNT)) {
+		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+		return (1);
+	}
+	if (F_ISSET(cmdp, E_COUNT_NEG))
+		adj = A_DECREASE;
+	else if (F_ISSET(cmdp, E_COUNT_POS))
+		adj = A_INCREASE;
+	else
+		adj = A_SET;
+	return (sp->s_rabs(sp, cmdp->count, adj));
 }
 
 /*

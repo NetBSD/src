@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ex_at.c	8.16 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: ex_at.c,v 1.2 1994/01/24 06:40:09 cgd Exp $";
+static char sccsid[] = "@(#)ex_at.c	8.18 (Berkeley) 3/14/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "excmd.h"
@@ -83,7 +93,7 @@ ex_at(sp, ep, cmdp)
 	/* Save for reuse. */
 	exp->at_lbuf = name;
 	exp->at_lbuf_set = 1;
-		
+
 	/*
 	 * If the buffer was cut in line mode or had portions of more
 	 * than one line, <newlines> are appended to each line as it

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,23 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_filter.c	8.10 (Berkeley) 12/2/93"; */
-static char *rcsid = "$Id: v_filter.c,v 1.2 1994/01/24 06:41:36 cgd Exp $";
+static char sccsid[] = "@(#)v_filter.c	8.12 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -49,11 +59,10 @@ static char *rcsid = "$Id: v_filter.c,v 1.2 1994/01/24 06:41:36 cgd Exp $";
  *	Run range through shell commands, replacing text.
  */
 int
-v_filter(sp, ep, vp, fm, tm, rp)
+v_filter(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	EXCMDARG cmd;
 	TEXT *tp;
@@ -66,7 +75,7 @@ v_filter(sp, ep, vp, fm, tm, rp)
 	 * particular, note that we're manipulating the ex argument
 	 * structures behind ex's back.
 	 */
-	SETCMDARG(cmd, C_BANG, 2, fm->lno, tm->lno, 0, NULL);
+	SETCMDARG(cmd, C_BANG, 2, vp->m_start.lno, vp->m_stop.lno, 0, NULL);
 	EXP(sp)->argsoff = 0;			/* XXX */
 	if (F_ISSET(vp,  VC_ISDOT)) {
 		if (argv_exp1(sp, ep, &cmd, "!", 1, 1))
@@ -89,5 +98,5 @@ v_filter(sp, ep, vp, fm, tm, rp)
 	}
 	cmd.argc = EXP(sp)->argsoff;		/* XXX */
 	cmd.argv = EXP(sp)->args;		/* XXX */
-	return (sp->s_ex_cmd(sp, ep, &cmd, rp));
+	return (sp->s_ex_cmd(sp, ep, &cmd, &vp->m_final));
 }

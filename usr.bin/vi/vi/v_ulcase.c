@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,26 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_ulcase.c	8.3 (Berkeley) 12/9/93"; */
-static char *rcsid = "$Id: v_ulcase.c,v 1.2 1994/01/24 06:42:04 cgd Exp $";
+static char sccsid[] = "@(#)v_ulcase.c	8.6 (Berkeley) 3/18/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -56,11 +66,10 @@ static char *rcsid = "$Id: v_ulcase.c,v 1.2 1994/01/24 06:42:04 cgd Exp $";
  * it now.
  */
 int
-v_ulcase(sp, ep, vp, fm, tm, rp)
+v_ulcase(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	recno_t lno;
 	size_t blen, lcnt, len;
@@ -68,41 +77,44 @@ v_ulcase(sp, ep, vp, fm, tm, rp)
 	int ch, change, rval;
 	char *bp, *p;
 
-	/* Figure out what memory to use. */
+	/* Get some memory. */
 	GET_SPACE_RET(sp, bp, blen, 256);
 
 	/*
 	 * !!!
-	 * Historic vi didn't permit ~ to cross newline boundaries.
-	 * I can think of no reason why it shouldn't, which at least
-	 * lets you auto-repeat through a paragraph.
+	 * Historic vi didn't permit ~ to cross newline boundaries.  I can
+	 * think of no reason why it shouldn't, which at least lets the user
+	 * auto-repeat through a paragraph.
 	 */
 	rval = 0;
 	for (change = -1, cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt;) {
 		/* Get the line; EOF is an infinite sink. */
-		if ((p = file_gline(sp, ep, fm->lno, &len)) == NULL) {
-			if (file_lline(sp, ep, &lno))
-				return (1);
-			if (lno >= fm->lno) {
-				GETLINE_ERR(sp, fm->lno);
+		if ((p = file_gline(sp, ep, vp->m_stop.lno, &len)) == NULL) {
+			if (file_lline(sp, ep, &lno)) {
 				rval = 1;
-				break;
+				goto ret;
+			}
+			if (lno >= vp->m_stop.lno) {
+				GETLINE_ERR(sp, vp->m_stop.lno);
+				rval = 1;
+				goto ret;
 			}
 			if (change == -1) {
 				v_eof(sp, ep, NULL);
-				return (1);
+				rval = 1;
+				goto ret;
 			}
 			break;
 		}
 
 		/* Set current line number. */
-		lno = fm->lno;
+		lno = vp->m_stop.lno;
 
 		/* Empty lines just decrement the count. */
 		if (len == 0) {
 			--cnt;
-			++fm->lno;
-			fm->cno = 0;
+			++vp->m_stop.lno;
+			vp->m_stop.cno = 0;
 			change = 0;
 			continue;
 		}
@@ -113,7 +125,7 @@ v_ulcase(sp, ep, vp, fm, tm, rp)
 
 		/* Set starting pointer. */
 		if (change == -1)
-			p = bp + fm->cno;
+			p = bp + vp->m_stop.cno;
 		else
 			p = bp;
 
@@ -121,12 +133,12 @@ v_ulcase(sp, ep, vp, fm, tm, rp)
 		 * Figure out how many characters get changed in this
 		 * line.  Set the final cursor column.
 		 */
-		if (fm->cno + cnt >= len) {
-			lcnt = len - fm->cno;
-			++fm->lno;
-			fm->cno = 0;
+		if (vp->m_stop.cno + cnt >= len) {
+			lcnt = len - vp->m_stop.cno;
+			++vp->m_stop.lno;
+			vp->m_stop.cno = 0;
 		} else
-			fm->cno += lcnt = cnt;
+			vp->m_stop.cno += lcnt = cnt;
 		cnt -= lcnt;
 
 		/* Change the line. */
@@ -149,12 +161,13 @@ v_ulcase(sp, ep, vp, fm, tm, rp)
 	}
 
 	/* If changed lines, could be on an illegal line. */
-	if (fm->lno != lno && file_gline(sp, ep, fm->lno, &len) == NULL) {
-		--fm->lno;
-		fm->cno = len ? len - 1 : 0;
+	if (vp->m_stop.lno != lno &&
+	    file_gline(sp, ep, vp->m_stop.lno, &len) == NULL) {
+		--vp->m_stop.lno;
+		vp->m_stop.cno = len ? len - 1 : 0;
 	}
-	*rp = *fm;
+	vp->m_final = vp->m_stop;
 
-	FREE_SPACE(sp, bp, blen);
+ret:	FREE_SPACE(sp, bp, blen);
 	return (rval);
 }

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,25 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)v_increment.c	8.6 (Berkeley) 12/9/93"; */
-static char *rcsid = "$Id: v_increment.c,v 1.2 1994/01/24 06:41:37 cgd Exp $";
+static char sccsid[] = "@(#)v_increment.c	8.8 (Berkeley) 3/8/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/queue.h>
+#include <sys/time.h>
 
+#include <bitstring.h>
 #include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+
+#include "compat.h"
+#include <db.h>
+#include <regex.h>
 
 #include "vi.h"
 #include "vcmd.h"
@@ -63,11 +73,10 @@ static char * const fmt[] = {
  *	Increment/decrement a keyword number.
  */
 int
-v_increment(sp, ep, vp, fm, tm, rp)
+v_increment(sp, ep, vp)
 	SCR *sp;
 	EXF *ep;
 	VICMDARG *vp;
-	MARK *fm, *tm, *rp;
 {
 	VI_PRIVATE *vip;
 	u_long ulval;
@@ -136,19 +145,19 @@ underflow:			msgq(sp, M_ERR, "Resulting number too small.");
 		nlen = snprintf(nbuf, sizeof(nbuf), ntype, lval);
 	}
 
-	if ((p = file_gline(sp, ep, fm->lno, &len)) == NULL) {
-		GETLINE_ERR(sp, fm->lno);
+	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
+		GETLINE_ERR(sp, vp->m_start.lno);
 		return (1);
 	}
 
 	GET_SPACE_RET(sp, bp, blen, len + nlen);
-	memmove(bp, p, fm->cno);
-	memmove(bp + fm->cno, nbuf, nlen);
-	memmove(bp + fm->cno + nlen,
-	    p + fm->cno + vp->klen, len - fm->cno - vp->klen);
+	memmove(bp, p, vp->m_start.cno);
+	memmove(bp + vp->m_start.cno, nbuf, nlen);
+	memmove(bp + vp->m_start.cno + nlen,
+	    p + vp->m_start.cno + vp->klen, len - vp->m_start.cno - vp->klen);
 	len = len - vp->klen + nlen;
 
-	rval = file_sline(sp, ep, fm->lno, bp, len);
+	rval = file_sline(sp, ep, vp->m_start.lno, bp, len);
 	FREE_SPACE(sp, bp, blen);
 	return (rval);
 }
