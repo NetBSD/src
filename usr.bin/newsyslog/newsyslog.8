@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.30 2003/08/25 19:06:57 erh Exp $
+.\"	$NetBSD: newsyslog.8,v 1.31 2004/03/24 02:25:15 fair Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\"
 .\" from FreeBSD: newsyslog.8,v 1.14.2.1 1999/02/25 18:38:33 wollman Exp
 .\"
-.Dd November 20, 1999
+.Dd March 23, 2004
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -307,6 +307,7 @@ rotate on every 5th day of month at 6:00 hr
 .Pp
 .It Ar flags
 This field specifies any special processing that is required.
+These flags are parsed in a case insensitive manner.
 Individual
 flags and their meanings:
 .Bl -tag -width indent
