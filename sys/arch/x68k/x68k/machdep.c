@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1999/05/05 13:41:20 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 1999/05/05 13:46:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,8 +128,6 @@ int badbaddr __P((caddr_t));
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-int cpuspeed;	/* XXX */
-
 vm_map_t exec_map = NULL;  
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
@@ -191,6 +189,16 @@ void	nmihand __P((struct frame));
 void	intrhand __P((int));
 
 /*
+ * On the 68020/68030, the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68040/68060(?), the value of delay_divisor is roughly
+ * 759 / cpuspeed (where cpuspeed is in MHz).
+ */
+int	delay_divisor = 140;	/* assume some reasonable value to start */
+static int cpuspeed;		/* MPU clock (in MHz) */
+
+/*
  * Machine-dependent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
@@ -204,20 +212,17 @@ void
 consinit()
 {
 	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.  Note that we only set it if a custom value
-	 * has not already been specified.
-	 */
-
-	cpuspeed = MHZ_25; /* XXX */
-
-	if (mmutype == MMU_68040)
-		cpuspeed *= 2;	/* XXX */
-
-  	/*
 	 * bring graphics layer up.
-  	 */
+	 */
 	config_console();
+
+	/*
+	 * cpuspeed is now used only for print.
+	 */
+	if (mmutype == MMU_68040) /* 68040/060 */
+		cpuspeed = (759 / delay_divisor);
+	else			/* 68030 */
+		cpuspeed = (2048 / delay_divisor);
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -530,12 +535,12 @@ char	cpu_model[120];
 extern	char version[];
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	" emulator FPU", 	/* 0 */
+	", emulator FPU", 	/* 0 */
 #else
-	" no math support",	/* 0 */
+	", no math support",	/* 0 */
 #endif
-	" m68881 FPU",		/* 1 */
-	" m68882 FPU",		/* 2 */
+	", m68881 FPU",		/* 1 */
+	", m68882 FPU",		/* 2 */
 	"/FPU",			/* 3 */
 	"/FPU",			/* 4 */
 	};
@@ -591,19 +596,20 @@ identifycpu()
 		break;
 	case CPU_68020:
 		cpu_type = "m68020";
-		mmu = " m68851 MMU";
+		mmu = ", m68851 MMU";
 		break;
 	default:
 		cpu_type = "unknown";
-		mmu = " unknown MMU";
+		mmu = ", unknown MMU";
 		break;
 	}
 	fputype = fpu_probe();
 	if (fputype >= 0 && fputype < sizeof(fpu_descr)/sizeof(fpu_descr[0]))
 		fpu = fpu_descr[fputype];
 	else
-		fpu = " unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+		fpu = ", unknown FPU";
+	sprintf(cpu_model, "X68%s (%s CPU%s%s, %dMHz clock)",
+		mach, cpu_type, mmu, fpu, cpuspeed);
 	printf("%s\n", cpu_model);
 }
 
