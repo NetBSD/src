@@ -1,3 +1,5 @@
+/*      $NetBSD: ftp.c,v 1.12 1995/09/08 01:06:28 tls Exp $      */
+
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ftp.c	8.4 (Berkeley) 4/6/94";*/
-static char *rcsid = "$Id: ftp.c,v 1.11 1995/05/21 16:49:33 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
+#else
+static char rcsid[] = "$NetBSD: ftp.c,v 1.12 1995/09/08 01:06:28 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,6 +106,8 @@ hookup(host, port)
 			return ((char *) 0);
 		}
 		hisctladdr.sin_family = hp->h_addrtype;
+		memmove((caddr_t)&hisctladdr.sin_addr,
+				hp->h_addr_list[0], hp->h_length);
 		memcpy(&hisctladdr.sin_addr, hp->h_addr, hp->h_length);
 		(void) strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
 	}
@@ -645,10 +652,10 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		break;
 	}
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (closefunc != NULL)
 		(*closefunc)(fin);
 	(void) fclose(dout);
+	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) getreply(0);
 	(void) signal(SIGINT, oldintr);
 	if (oldintp)
@@ -657,7 +664,6 @@ sendrequest(cmd, local, remote, printnames)
 		ptransfer("sent", bytes, &start, &stop);
 	return;
 abort:
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) signal(SIGINT, oldintr);
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintp);
@@ -675,6 +681,7 @@ abort:
 	code = -1;
 	if (closefunc != NULL && fin != NULL)
 		(*closefunc)(fin);
+	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (bytes > 0)
 		ptransfer("sent", bytes, &start, &stop);
 }
@@ -954,8 +961,8 @@ break2:
 	(void) signal(SIGINT, oldintr);
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintp);
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) fclose(din);
+	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) getreply(0);
 	if (bytes > 0 && is_retr)
 		ptransfer("received", bytes, &start, &stop);
@@ -964,7 +971,6 @@ abort:
 
 /* abort using RFC959 recommended IP,SYNC sequence  */
 
-	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintr);
 	(void) signal(SIGINT, SIG_IGN);
@@ -984,6 +990,7 @@ abort:
 		(*closefunc)(fout);
 	if (din)
 		(void) fclose(din);
+	(void) gettimeofday(&stop, (struct timezone *)0);
 	if (bytes > 0)
 		ptransfer("received", bytes, &start, &stop);
 	(void) signal(SIGINT, oldintr);
@@ -1018,10 +1025,10 @@ initconn()
 
 		/*
 		 * What we've got at this point is a string of comma
-		 * separated one-byte unsigned integer values, separated
-		 * by commas.  The first four are the an IP address. The
-		 * fifth is the MSB of the port number, the sixth is the
-		 * LSB.  From that we'll prepare a sockaddr_in.
+		 * separated one-byte unsigned integer values.
+		 * The first four are the an IP address. The fifth is
+		 * the MSB of the port number, the sixth is the LSB.
+		 * From that we'll prepare a sockaddr_in.
 		 */
 
 		if (sscanf(pasv,"%d,%d,%d,%d,%d,%d",
@@ -1155,7 +1162,7 @@ ptransfer(direction, bytes, t0, t1)
 	long bs;
 
 	if (verbose) {
-		timersub(t1, t0, &td);
+		timersub(&td, t1, t0);
 		s = td.tv_sec + (td.tv_usec / 1000000.);
 #define	nz(x)	((x) == 0 ? 1 : (x))
 		bs = bytes / nz(s);
