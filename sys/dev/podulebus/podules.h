@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.1 2001/03/17 20:32:00 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.2 2001/05/26 21:47:30 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.1 2001/03/17 19:05:19 bjh21 Exp 
+ *	NetBSD: podules,v 1.4 2001/05/26 21:47:09 bjh21 Exp 
  */
 
 /*
@@ -54,7 +54,9 @@
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
 #define	MANUFACTURER_IRLAM	0x001f		/* Irlam Instruments */
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
+#define	MANUFACTURER_SJ	0x0029		/* SJ Research */
 #define	MANUFACTURER_MORLEY	0x002b		/* Morley */
+manufacterer	HCCS2		0x002d	HCCS
 #define	MANUFACTURER_VTI	0x0035		/* Vertical Twist */
 #define	MANUFACTURER_CUMANA	0x003a		/* Cumana */
 #define	MANUFACTURER_ICS	0x003c		/* ICS */
@@ -83,6 +85,7 @@
 #define	PODULE_ACORN_BBCIO	0x0006		/* BBC IO interface */
 #define	PODULE_ACORN_ST506	0x000b		/* ST506 HD interface */
 #define	PODULE_ACORN_MIDI	0x0013		/* MIDI interface */
+#define	PODULE_ACORN_USERMIDI	0x003F		/* User Port/MIDI interface */
 #define	PODULE_ACORN_ETHER2	0x0061		/* ether 2 interface */
 #define	PODULE_ACORN_ETHERI	0x0139		/* EtherI interface */
 
@@ -100,7 +103,8 @@
 #define	PODULE_WILDVISION_LARKA16	0x00ce		/* lark A16 */
 #define	PODULE_WILDVISION_MIDIMAX	0x0200		/* MIDI max */
 
-#define	PODULE_HCCS_IDE	0x0022		/* IDE interface */
+#define	PODULE_HCCS_IDESCSI	0x0022		/* IDE or SCSI interface */
+#define	PODULE_HCCS_ULTIMATE	0x0063		/* Ultimate micropodule carrier */
 
 #define	PODULE_ATOMWIDE_ETHER3	0x00A4		/* ether 3/5 interface */
 
@@ -112,11 +116,17 @@
 #define	PODULE_LINGENUITY_SCSI8SHARE	0x008c		/* 8 bit SCSIShare interface */
 
 #define	PODULE_IRLAM_24I16	0x00e6		/* 24i16 digitiser */
+#define	PODULE_IRLAM_MMETHERV	0x1234		/* Multi-media/EtherV */
 #define	PODULE_IRLAM_ETHERN	0x5678		/* EtherN interface */
 
 #define	PODULE_OAK_SCSI	0x0058		/* 16 bit SCSI interface */
 
+#define	PODULE_SJ_NEXUS	0x0064		/* Nexus interface (Podule) */
+#define	PODULE_SJ_NEXUSNS	0x008F		/* Nexus interface (A3020 netslot) */
+
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
+
+#define	PODULE_HCCS2_USERANALOGUE	0x006e		/* User and Analogue ports */
 
 #define	PODULE_VTI_SCSI	0x008d		/* SCSI interface */
 
@@ -158,7 +168,7 @@
 
 #define	PODULE_CASTLE_SCSI16	0x00f6		/* 8 or 16 bit SCSI2 interface */
 #define	PODULE_CASTLE_SCSI16SHARE	0x00f3		/* 8 or 16 bit SCSI2Share interface */
-#define	PODULE_CASTLE_ETHERSCSI	0x00f5		/* 8 or 16 bit SCSI2 interface, possibly with Ethernet */
+#define	PODULE_CASTLE_ETHERSCSI	0x00f5		/* EtherSCSI */
 #define	PODULE_CASTLE_ETHERSCSISHARE	0x00f4		/* 8 or 16 bit SCSI2Share interface, possibly with Ethernet */
 #define	PODULE_CASTLE_SCSI32	0x012b		/* 32 bit SCSI2 + DMA interface */
 
