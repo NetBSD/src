@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.4 2001/05/21 13:30:31 leo Exp $
+#	$NetBSD: MILAN.in,v 1.5 2001/05/29 06:42:21 leo Exp $
 #
 # Milan
 #
@@ -39,30 +39,36 @@ options 	PCDISPLAY_SOFTCURSOR
 # The following sections describe various hardware options.
 #
 
-isabus0		at mainbus0			# ISA-bus
-isa0		at isabus0
+isabus0 	at mainbus0			# ISA-bus
+isa0 		at isabus0
 pcibus0 	at mainbus0			# PCI-bus
 pci0 		at pcibus0
-ser0		at mainbus0
-fdcisa0		at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy contr.
-fdisa0		at fdcisa0 drive 0
-wdcisa0		at isa? port 0x1f0 irq 14	# 1st IDE controller
-wdcisa1		at isa? port 0x170 irq 15	# 2nd IDE controller
-wd*		at wdcisa? channel ? drive ?
+ser0 		at mainbus0
+fdcisa0 	at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy contr.
+fdisa0 		at fdcisa0 drive 0
+
+# I found out that it's better to use the pciide version...
+#wdcisa0 	at isa? port 0x1f0 irq 14	# 1st IDE controller
+#wdcisa1 	at isa? port 0x170 irq 15	# 2nd IDE controller
+#wd* 		at wdcisa? channel ? drive ?
+
+pciide* 	at pci? dev ? function ? flags 0x0000
+wd* 		at pciide? channel ? drive ? flags 0x0000
 
 #
 # The Milan uses wscons
 #  XXX without the __HAVE_NWSCONS option, the keyboard won't work...
 #
 options 	__HAVE_NWSCONS
-vga0		at pci? dev ? function ?	# a PCI VGA card
-wsdisplay*	at vga? console ?		# as a wscons console
-pckbc0		at isa? 			# PC keyboard controller
+vga0 		at pci? dev ? function ?	# a PCI VGA card
+wsdisplay* 	at vga? console ?		# as a wscons console
+pckbc0 		at isa? 			# PC keyboard controller
 pckbd* 		at pckbc?			# PC keyboard
-wskbd*		at pckbd? console ?		# wscons keyboard
+wskbd* 		at pckbd? console ?		# wscons keyboard
 
 # ATAPI bus support
-atapibus*	at wdcisa? channel ?
+#atapibus* 	at wdcisa? channel ?
+atapibus* 	at pciide? channel ?
 
 # ATAPI devices
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+cd* 		at atapibus? drive ?		# ATAPI CD-ROM drives
