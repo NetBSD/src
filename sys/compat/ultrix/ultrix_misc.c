@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.20 1996/01/07 13:38:51 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.21 1996/02/19 15:41:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
 #include <vm/vm.h>
