@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.7 2001/11/24 16:38:08 perry Exp $
+.\"	$NetBSD: installboot.8,v 1.8 2001/12/26 01:53:18 wiz Exp $
 .\"
 .Dd May 31, 1995
 .Dt INSTALLBOOT 8 mvme68k
@@ -44,6 +44,9 @@ on which the file system containing
 .Ar ufsboot
 is mounted.
 .El
+.Sh SEE ALSO
+.Xr disklabel 8 ,
+.Xr init 8
 .Sh BUGS
 .Nm
 requires simultaneous access to the mounted file system and
@@ -53,6 +56,3 @@ variable set to a value greater than zero (the default), so
 .Nm
 only works in single-user mode (or insecure mode - see
 .Xr init 8 ) .
-.Sh SEE ALSO
-.Xr disklabel 8 ,
-.Xr init 8
