@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.13 2002/05/02 12:37:19 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.14 2002/08/29 15:42:49 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -66,7 +66,7 @@ ABSOLUTE int_err	= 0xffff;
 ; scratchC: current target/lun/tag
 ; scratchC0: flags
 ABSOLUTE f_c_target	= 0x01 ; target valid
-ABSOLUTE f_c_lun	= 0x02 ; lun valud
+ABSOLUTE f_c_lun	= 0x02 ; lun valid
 ABSOLUTE f_c_tag	= 0x04 ; tag valid
 ABSOLUTE f_c_data	= 0x08 ; data I/O in progress
 ABSOLUTE f_c_data_mask	= 0xf7 ; ~f_c_data
