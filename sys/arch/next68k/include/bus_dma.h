@@ -1,4 +1,12 @@
-/* $NetBSD: bus_dma.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $ */
+/* $NetBSD: bus_dma.h,v 1.2 1999/08/03 09:16:00 dbj Exp $ */
+
+/*
+ * This file was extracted from from alpha/include/bus.h
+ * and should probably be resynced when needed.
+ * Darrin B. Jewell <dbj@netbsd.org> Sat Jul 31 06:11:33 UTC 1999
+ * original cvs id: NetBSD: bus.h,v 1.29 1999/06/18 04:49:24 cgd Exp
+ */
+
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,8 +72,8 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _BUS_DMA_H_
-#define	_BUS_DMA_H_
+#ifndef _NEXT68K_BUS_DMA_H_
+#define	_NEXT68K_BUS_DMA_H_
 
 /*
  * Bus DMA methods.
@@ -83,11 +91,6 @@
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
-/*
- * Private flags stored in the DMA map.
- */
-#define	DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
-
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -100,19 +103,8 @@ struct uio;
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-/*
- *	generic_bus_t
- *
- *	Busses supported by NetBSD/generic, used by internal
- *	utility functions.  NOT TO BE USED BY MACHINE-INDEPENDENT
- *	CODE!
- */
-typedef enum {
-	GENERIC_BUS_UNKNOWN,
-} generic_bus_t;
-
-typedef struct generic_bus_dma_tag	*bus_dma_tag_t;
-typedef struct generic_bus_dmamap		*bus_dmamap_t;
+typedef struct next68k_bus_dma_tag *bus_dma_tag_t;
+typedef struct next68k_bus_dmamap *bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -120,11 +112,14 @@ typedef struct generic_bus_dmamap		*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct generic_bus_dma_segment {
+struct next68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+
+	/* Machine dependant fields: */
+	bus_size_t  ds_read_len;	/* length of successful transfer */
 };
-typedef struct generic_bus_dma_segment	bus_dma_segment_t;
+typedef struct next68k_bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -132,14 +127,17 @@ typedef struct generic_bus_dma_segment	bus_dma_segment_t;
  *	A machine-dependent opaque type describing the implementation of
  *	DMA for a given bus.
  */
-struct generic_bus_dma_tag {
+struct next68k_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 
 	/*
-	 * Internal-use only utility methods.  NOT TO BE USED BY
-	 * MACHINE-INDEPENDENT CODE!
+	 * Some chipsets have a built-in boundary constraint, independent
+	 * of what the device requests.  This allows that boundary to
+	 * be specified.  If the device has a more restrictive contraint,
+	 * the map will use that, otherwise this boundary will be used.
+	 * This value is ignored if 0.
 	 */
-	bus_dma_tag_t (*_get_tag) __P((bus_dma_tag_t, generic_bus_t));
+	bus_size_t _boundary;
 
 	/*
 	 * DMA mapping methods.
@@ -173,9 +171,6 @@ struct generic_bus_dma_tag {
 		    int, int, int, int));
 };
 
-#define	genericbus_dma_get_tag(t, b)				\
-	(*(t)->_get_tag)(t, b)
-
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
 	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
 #define	bus_dmamap_destroy(t, p)				\
@@ -208,27 +203,15 @@ struct generic_bus_dma_tag {
  *
  *	Describes a DMA mapping.
  */
-struct generic_bus_dmamap {
+struct next68k_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-
-#if 0                           /* useful on alpha, but not here */
-
-	/*
-	 * This is used only for SGMAP-mapped DMA, but we keep it
-	 * here to avoid pointless indirection.
-	 */
-	int		_dm_pteidx;	/* PTE index */
-	int		_dm_ptecnt;	/* PTE count */
-	u_long		_dm_sgva;	/* allocated sgva */
-	bus_size_t	_dm_sgvalen;	/* svga length */
-#endif
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -238,7 +221,7 @@ struct generic_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _GENERIC_BUS_DMA_PRIVATE
+#ifdef _NEXT68K_BUS_DMA_PRIVATE
 int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
@@ -250,8 +233,7 @@ int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
 int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct uio *, int));
 int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t,
-	    int));
+	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
@@ -268,6 +250,6 @@ void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
 int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, int off, int prot, int flags));
-#endif /* _GENERIC_BUS_DMA_PRIVATE */
+#endif /* _NEXT68K_BUS_DMA_PRIVATE */
 
-#endif /* _BUS_DMA_H_ */
+#endif /* _NEXT68K_BUS_DMA_H_ */
