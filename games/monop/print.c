@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 1997/10/12 17:45:22 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.5 1999/08/21 10:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.4 1997/10/12 17:45:22 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 1999/08/21 10:40:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include "monop.ext"
 
 static char *header = "Name      Own      Price Mg # Rent";
 
@@ -54,8 +54,7 @@ static void printmorg __P((SQUARE *));
 void
 printboard() 
 {
-
-	int	i;
+	int i;
 
 	printf("%s\t%s\n", header, header);
 	for (i = 0; i < N_SQRS/2; i++) {
@@ -64,14 +63,14 @@ printboard()
 		printsq(i+N_SQRS/2, TRUE);
 	}
 }
+
 /*
  *	This routine lists where each player is.
  */
 void
 where() 
 {
-
-	int	i;
+	int i;
 
 	printf("%s Player\n", header);
 	for (i = 0; i < num_play; i++) {
@@ -82,18 +81,18 @@ where()
 		putchar('\n');
 	}
 }
+
 /*
  *	This routine prints out an individual square
  */
 void
 printsq(sqn, eoln)
-int		sqn;
-bool	eoln;
+	int sqn;
+	bool eoln;
 {
-
-	int		rnt;
-	PROP	*pp;
-	SQUARE	*sqp;
+	int rnt;
+	PROP *pp;
+	SQUARE *sqp;
 
 	sqp = &board[sqn];
 	printf("%-10.10s", sqp->name);
@@ -156,39 +155,40 @@ bool	eoln;
 		printmorg(sqp);
 		rnt = 25;
 		rnt <<= play[sqp->owner].num_rr - 1;
-		printf("%d %4d", play[sqp->owner].num_rr, 25 << (play[sqp->owner].num_rr - 1));
+		printf("%d %4d", play[sqp->owner].num_rr,
+		    25 << (play[sqp->owner].num_rr - 1));
 		break;
 	}
 	if (eoln)
 		putchar('\n');
 }
+
 /*
  *	This routine prints out the mortgage flag.
  */
 static void
 printmorg(sqp)
-SQUARE	*sqp;
+	SQUARE *sqp;
 {
-
 	if (sqp->desc->morg)
 		printf(" * ");
 	else
 		printf("   ");
 }
+
 /*
  *	This routine lists the holdings of the player given
  */
 void
 printhold(pl)
-int	pl;
+	int pl;
 {
-
-	OWN		*op;
-	PLAY	*pp;
+	OWN *op;
+	PLAY *pp;
 
 	pp = &play[pl];
-	printf("%s's (%d) holdings (Total worth: $%d):\n", name_list[pl], pl+1,
-		pp->money + prop_worth(pp));
+	printf("%s's (%d) holdings (Total worth: $%d):\n", name_list[pl],
+	    pl + 1, pp->money + prop_worth(pp));
 	printf("\t$%d", pp->money);
 	if (pp->num_gojf) {
 		printf(", %d get-out-of-jail-free card", pp->num_gojf);
