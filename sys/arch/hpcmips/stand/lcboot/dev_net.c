@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.1 2003/08/09 08:01:45 igy Exp $ */
+/* $NetBSD: dev_net.c,v 1.2 2003/08/09 11:37:57 igy Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,10 +26,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_net.c,v 1.1 2003/08/09 08:01:45 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_net.c,v 1.2 2003/08/09 11:37:57 igy Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootp.h>
 #include <lib/libkern/libkern.h>
 #include <machine/stdarg.h>
 
@@ -64,9 +68,10 @@ net_open(struct open_file *f, ...)
 
 	bootfile[0] = '\0';
 	if (bootopts.b_flags & B_F_USE_BOOTP) {
-		printf("bootp is not yet supported\n");
-		netif_close(netdev_sock);
-		return EIO;
+		s = socktodesc(netdev_sock);
+		bootp(netdev_sock);
+		if (fname[0] != '\0')
+			strlcpy(bootfile, fname, sizeof bootfile);
 	} else {
 		s = socktodesc(netdev_sock);
 
@@ -81,8 +86,9 @@ net_open(struct open_file *f, ...)
 			return EIO;
 		}
 		strlcpy(bootfile, fname, sizeof bootfile);
-		*file = fname;
 	}
+
+	*file = bootfile;
 
 	return 0;
 }
