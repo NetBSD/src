@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.10 2002/01/29 18:53:23 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.11 2002/02/11 17:20:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -229,10 +229,10 @@ STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 /* fix SH3 Area[56] bug */
 STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
 #define _BUS_SPACE_ACCESS_HOOK()					\
-{									\
+do {									\
 	u_int8_t dummy __attribute__((__unused__)) =			\
 	 *(volatile u_int8_t *)0xba000000;				\
-}
+} while (/*CONSTCOND*/0)
 _BUS_SPACE_WRITE(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_MULTI(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_REGION(_sh3_pcmcia_bug, 1, 8)
