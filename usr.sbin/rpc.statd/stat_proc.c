@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.2 1997/10/17 16:02:59 lukem Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.3 1997/10/17 16:12:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,18 +35,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.2 1997/10/17 16:02:59 lukem Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.3 1997/10/17 16:12:48 lukem Exp $");
 #endif
 
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <rpc/rpc.h>
 #include <syslog.h>
-#include <netdb.h>
+#include <unistd.h>
+
+#include <rpc/rpc.h>
 
 #include "statd.h"
+
+static	int	do_unmon __P((HostInfo *, my_id *));
 
 /* sm_stat_1 --------------------------------------------------------------- */
 /*
@@ -97,9 +101,8 @@ sm_mon_1_svc(arg, req)
 		syslog(LOG_DEBUG, "monitor request for host %s",
 		    arg->mon_id.mon_name);
 		syslog(LOG_DEBUG, "recall host: %s prog: %d ver: %d proc: %d",
-		    arg->mon_id.mon_name, arg->mon_id.my_id.my_name,
-		    arg->mon_id.my_id.my_prog, arg->mon_id.my_id.my_vers,
-		    arg->mon_id.my_id.my_proc);
+		    arg->mon_id.my_id.my_name, arg->mon_id.my_id.my_prog,
+		    arg->mon_id.my_id.my_vers, arg->mon_id.my_id.my_proc);
 	}
 	res.res_stat = stat_fail;	/* Assume fail until set otherwise */
 	res.state = status_info->ourState;
@@ -111,7 +114,7 @@ sm_mon_1_svc(arg, req)
 	if (!gethostbyname(arg->mon_id.mon_name))
 		syslog(LOG_ERR, "Invalid hostname to sm_mon: %s",
 		    arg->mon_id.mon_name);
-	else if (hp = find_host(arg->mon_id.mon_name, TRUE)) {
+	else if ((hp = find_host(arg->mon_id.mon_name, TRUE)) != NULL) {
 		lp = (MonList *)malloc(sizeof(MonList));
 		if (!lp)
 			syslog(LOG_ERR, "Out of memory");
@@ -193,10 +196,10 @@ sm_unmon_1_svc(arg, req)
 		syslog(LOG_DEBUG, "un-monitor request for host %s",
 		    arg->mon_name);
 		syslog(LOG_DEBUG, "recall host: %s prog: %d ver: %d proc: %d",
-		    arg->mon_name, arg->my_id.my_name, arg->my_id.my_prog,
+		    arg->my_id.my_name, arg->my_id.my_prog,
 		    arg->my_id.my_vers, arg->my_id.my_proc);
 	}
-	if (hp = find_host(arg->mon_name, FALSE)) {
+	if ((hp = find_host(arg->mon_name, FALSE)) != NULL) {
 		if (do_unmon(hp, &arg->my_id))
 			sync_file();
 		else
@@ -226,7 +229,6 @@ sm_unmon_all_1_svc(arg, req)
 {
 	static sm_stat res;
 	HostInfo *hp;
-	MonList *lp;
 	int     i;
 
 	if (debug) {
@@ -268,6 +270,7 @@ sm_simu_crash_1_svc(v, req)
 	HostInfo *hp;
 	int     i;
 
+	work_to_do = 0;
 	if (debug)
 		syslog(LOG_DEBUG, "simu_crash called!!");
 
@@ -328,7 +331,7 @@ sm_notify_1_svc(arg, req)
 		/* Never heard of this host - why is it notifying us? */
 		syslog(LOG_ERR, "Unsolicited notification from host %s",
 		    arg->mon_name);
-		return;
+		return (FALSE);
 	}
 	lp = hp->monList;
 	if (!lp) /* We know this host, but have no outstanding requests. */
@@ -338,7 +341,7 @@ sm_notify_1_svc(arg, req)
 	if (pid == -1) {
 		syslog(LOG_ERR, "Unable to fork notify process - %s",
 		    strerror(errno));
-		return;
+		return (FALSE);
 	}
 	if (pid)
 		return (&dummy); /* Parent returns */
