@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd_encode.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: pckbd_encode.c,v 1.2 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbd_encode.c,v 1.2 2001/11/13 12:47:56 lukem Exp $");
 
 #include "opt_wsdisplay_compat.h"
 

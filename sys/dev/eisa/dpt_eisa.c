@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.5 2001/04/25 17:53:27 bouyer Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -30,6 +30,9 @@
 /*
  * EISA front-end for DPT EATA SCSI driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.6 2001/11/13 12:47:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
