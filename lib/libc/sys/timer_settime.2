@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.2 2003/09/13 22:31:04 kleink Exp $
+.\"	$NetBSD: timer_settime.2,v 1.3 2003/09/13 23:00:38 kleink Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .Sh DESCRIPTION
 The
 .Fn timer_settime
-sets the next expiration time of the timer who's id is specified by
+sets the next expiration time of the timer with id
 .Ar timerid
 to the
 .Fa it_value
@@ -75,7 +75,8 @@ the
 .Ar tim
 argument from the time the call to
 .Fn timer_settime
-was made. If the
+was made.
+If the
 .Ar flags
 argument is set to
 .Dv TIMER_ABSTIME
@@ -103,8 +104,8 @@ argument.
 Only one notification event (signal) can be pending for a given timer
 and process.
 If a timer expires while the signal is still queued for delivery, then
-the overrun counter for that timer is increased. The counter can store
-values up to
+the overrun counter for that timer is increased.
+The counter can store values up to
 .Dv DELAYTIMER_MAX .
 When the signal is finally delivered to the process, then the
 .Fn timer_getoverrun
@@ -127,16 +128,16 @@ argment of
 are subject to the above rounding effect and might not exactly match the
 requested values by the user.
 .Sh RETURN VALUES
-The
+If successful, the
 .Fn timer_gettime
 and
 .Fn timer_settime
-functions return 0 on success or -1 on failure with errno set to indicate the
-error.
-The
+functions return 0, and the
 .Fn timer_getoverrun
-returns the expiration overrun count for the specified timer when it succeeds,
-or -1 with errno set to indicated the error.
+function returns the expiration overrun count for the specified timer.
+Otherwise, the functions return \-1, and set
+.Dv errno
+to indicate the error.
 .Sh ERRORS
 The
 .Fn timer_gettime ,
@@ -146,9 +147,9 @@ and
 functions will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The 
+The argument
 .Ar timerid
-argument does not correspond to a valid timer id as returned by
+does not correspond to a valid timer id as returned by
 .Fn timer_create
 or that timer id has been deleted by
 .Fn timer_delete .
