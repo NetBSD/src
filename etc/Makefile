@@ -5,7 +5,9 @@ LOCALTIME=	US/Pacific
 NOOBJ=	oobj
 
 # disktab may be wrong -- hcx9 is a tahoe, but gets its own.
-# -rw-r--r--
+# -rw-r--r-- root.wheel
+BIN1OWN= root
+BIN1GRP= wheel
 BIN1=	aliases csh.cshrc csh.login csh.logout daily dm.conf \
 	ftpusers gettytab group hosts hosts.equiv hosts.lpd inetd.conf \
 	man.conf monthly motd myname netstart newsyslog.conf phones \
@@ -24,7 +26,7 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 all clean cleandir depend etc install lint:
 
 distribution: distrib-dirs
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
+	install -c -o ${BIN1OWN} -g ${BIN1GRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
