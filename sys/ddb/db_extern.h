@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.9 2002/05/13 20:17:20 matt Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.10 2003/04/28 02:49:55 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ void	db_check_interrupt(void);
 void	db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
 
 /* db_trap.c */
+extern int	db_trap_type;
 void	db_trap(int, int);
 
 /* db_write_cmd.c */

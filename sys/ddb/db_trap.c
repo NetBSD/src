@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.20 2003/01/18 08:54:22 thorpej Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.21 2003/04/28 02:49:55 briggs Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.20 2003/01/18 08:54:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.21 2003/04/28 02:49:55 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,11 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.20 2003/01/18 08:54:22 thorpej Exp $")
  */
 void (*db_trap_callback)(int);
 
+int db_trap_type;
+
 void
 db_trap(int type, int code)
 {
 	boolean_t	bkpt;
 	boolean_t	watchpt;
+
+	db_trap_type = type;
 
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
