@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.28 1996/10/13 12:25:50 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.29 1996/10/13 13:13:54 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,6 @@
 #include <machine/conf.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
-#include <machine/machConst.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 

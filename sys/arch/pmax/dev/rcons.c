@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.13 1996/10/13 12:47:56 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.14 1996/10/13 13:14:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -73,7 +73,6 @@
 #include <dev/rcons/raster.h>
 #include <machine/fbvar.h>
 
-#include <machine/machConst.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
 
