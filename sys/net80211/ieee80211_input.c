@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.10 2003/10/23 06:30:32 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.11 2003/10/25 01:17:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.10 2003/10/23 06:30:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.11 2003/10/25 01:17:39 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -605,7 +605,8 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		break;
 
 	case IEEE80211_M_HOSTAP:
-		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    seq != IEEE80211_AUTH_OPEN_REQUEST)
 			return;
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_alloc_node(ic, wh->i_addr2);
