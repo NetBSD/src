@@ -1,4 +1,4 @@
-.\" $NetBSD: eh.4,v 1.4 2001/06/13 23:38:31 wiz Exp $
+.\" $NetBSD: eh.4,v 1.5 2001/06/30 16:55:03 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -53,12 +53,12 @@ card behave as if only one medium is available.  The media available,
 subject to the hardware on the card, are:
 .Bl -tag -width 10baseFL
 .It auto
-Automatically select 10baseT or 10base2.  10baseT will be used if a link
-beat appears to be present on that interface.  Otherwise, 10base2 will be used.
+Automatically select 10BASE-T or 10BASE2.  10BASE-T will be used if a link
+beat appears to be present on that interface.  Otherwise, 10BASE2 will be used.
 .It 10baseT
-10baseT, 10Mb/s over unshielded twisted pair, RJ45 connector.
+10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
 .It 10base2
-10base2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
@@ -69,4 +69,4 @@ beat appears to be present on that interface.  Otherwise, 10base2 will be used.
 .Sh BUGS
 EtherLan 500-series support is untested.
 .Pp
-The 10baseFL port on the EtherLan 513 will probably be identified as 10base2.
+The 10BASE-FL port on the EtherLan 513 will probably be identified as 10BASE2.
