@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.53 2001/10/17 08:23:07 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.54 2001/10/17 10:55:09 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 static struct sockaddr_in6 all1_sa;
 
 static void nd6_slowtimo __P((void *));
+static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 
 struct callout nd6_slowtimo_ch;
 struct callout nd6_timer_ch;
@@ -445,7 +446,7 @@ nd6_timer(ignored_arg)
 			ln = next;
 			continue;
 		}
-		
+
 		/* sanity check */
 		if (!rt)
 			panic("rt=0 in nd6_timer(ln=%p)\n", ln);
@@ -480,7 +481,7 @@ nd6_timer(ignored_arg)
 						    ICMP6_DST_UNREACH_ADDR, 0);
 					ln->ln_hold = NULL;
 				}
-				next = nd6_free(rt);
+				next = nd6_free(rt, 0);
 			}
 			break;
 		case ND6_LLINFO_REACHABLE:
@@ -493,7 +494,7 @@ nd6_timer(ignored_arg)
 		case ND6_LLINFO_STALE:
 			/* Garbage Collection(RFC 2461 5.3) */
 			if (ln->ln_expire)
-				next = nd6_free(rt);
+				next = nd6_free(rt, 1);
 			break;
 
 		case ND6_LLINFO_DELAY:
@@ -518,8 +519,9 @@ nd6_timer(ignored_arg)
 					nd_ifinfo[ifp->if_index].retrans / 1000;
 				nd6_ns_output(ifp, &dst->sin6_addr,
 					       &dst->sin6_addr, ln, 0);
-			} else
-				next = nd6_free(rt);
+			} else {
+				next = nd6_free(rt, 0);
+			}
 			break;
 		}
 		ln = next;
@@ -653,7 +655,7 @@ nd6_purge(ifp)
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = (struct sockaddr_dl *)rt->rt_gateway;
 			if (sdl->sdl_index == ifp->if_index)
-				nln = nd6_free(rt);
+				nln = nd6_free(rt, 0);
 		}
 		ln = nln;
 	}
@@ -713,11 +715,15 @@ nd6_lookup(addr6, create, ifp)
 					   (ifa->ifa_flags |
 					    RTF_HOST | RTF_LLINFO) &
 					   ~RTF_CLONING,
-					   &rt)) != 0)
+					   &rt)) != 0) {
+#if 0
 				log(LOG_ERR,
 				    "nd6_lookup: failed to add route for a "
 				    "neighbor(%s), errno=%d\n",
 				    ip6_sprintf(addr6), e);
+#endif
+				return(NULL);
+			}
 			if (rt == NULL)
 				return(NULL);
 			if (rt->rt_llinfo) {
@@ -742,7 +748,6 @@ nd6_lookup(addr6, create, ifp)
 		if (create) {
 			log(LOG_DEBUG, "nd6_lookup: failed to lookup %s (if = %s)\n",
 			    ip6_sprintf(addr6), ifp ? if_name(ifp) : "unspec");
-			/* xxx more logs... kazu */
 		}
 		return(0);
 	}
@@ -808,26 +813,49 @@ nd6_is_addr_neighbor(addr, ifp)
 
 /*
  * Free an nd6 llinfo entry.
+ * Since the function would cause significant changes in the kernel, DO NOT
+ * make it global, unless you have a strong reason for the change, and are sure
+ * that the change is safe.
  */
-struct llinfo_nd6 *
-nd6_free(rt)
+static struct llinfo_nd6 *
+nd6_free(rt, gc)
 	struct rtentry *rt;
+	int gc;
 {
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
 
 	/*
-	 * Clear all destination cache entries for the neighbor.
-	 * XXX: is it better to restrict this to hosts?
+	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
+	 * even though it is not harmful, it was not really necessary.
 	 */
-	pfctlinput(PRC_HOSTDEAD, rt_key(rt));
 
 	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
 		int s;
 		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
 				      rt->rt_ifp);
+
+		if (dr != NULL && dr->expire &&
+		    ln->ln_state == ND6_LLINFO_STALE && gc) {
+			/*
+			 * If the reason for the deletion is just garbage
+			 * collection, and the neighbor is an active default
+			 * router, do not delete it.  Instead, reset the GC
+			 * timer using the router's lifetime.
+			 * Simply deleting the entry would affect default
+			 * router selection, which is not necessarily a good
+			 * thing, especially when we're using router preference
+			 * values.
+			 * XXX: the check for ln_state would be redundant,
+			 *      but we intentionally keep it just in case.
+			 */
+			ln->ln_expire = dr->expire;
+			splx(s);
+			return(ln->ln_next);
+		}
+
 		if (ln->ln_router || dr) {
 			/*
 			 * rt6_flush must be called whether or not the neighbor
@@ -847,11 +875,19 @@ nd6_free(rt)
 			/*
 			 * Temporarily fake the state to choose a new default
 			 * router and to perform on-link determination of
-			 * prefixes coreectly.
+			 * prefixes correctly.
 			 * Below the state will be set correctly,
 			 * or the entry itself will be deleted.
 			 */
 			ln->ln_state = ND6_LLINFO_INCOMPLETE;
+
+			/*
+			 * Since defrouter_select() does not affect the
+			 * on-link determination and MIP6 needs the check
+			 * before the default router selection, we perform
+			 * the check now.
+			 */
+			pfxlist_onlink_check();
 
 			if (dr == TAILQ_FIRST(&nd_defrouter)) {
 				/*
@@ -866,7 +902,6 @@ nd6_free(rt)
 
 				defrouter_select();
 			}
-			pfxlist_onlink_check();
 		}
 		splx(s);
 	}
@@ -959,6 +994,17 @@ nd6_rtrequest(req, rt, info)
 	if (rt->rt_flags & RTF_GATEWAY)
 		return;
 
+	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
+		/*
+		 * This is probably an interface direct route for a link
+		 * which does not need neighbor caches (e.g. fe80::%lo0/64).
+		 * We do not need special treatment below for such a route.
+		 * Moreover, the RTF_LLINFO flag which would be set below
+		 * would annoy the ndp(8) command.
+		 */
+		return;
+	}
+
 	switch (req) {
 	case RTM_ADD:
 		/*
@@ -986,7 +1032,7 @@ nd6_rtrequest(req, rt, info)
 			if (ln && ln->ln_expire == 0) {
 				/* kludge for desktops */
 #if 0
-				printf("nd6_request: time.tv_sec is zero; "
+				printf("nd6_rtequest: time.tv_sec is zero; "
 				       "treat it as 1\n");
 #endif
 				ln->ln_expire = 1;
@@ -1094,7 +1140,7 @@ nd6_rtrequest(req, rt, info)
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
 			if (nd6_useloopback) {
-				rt->rt_ifp = &loif[0];	/*XXX*/
+				rt->rt_ifp = &loif[0];	/* XXX */
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.
@@ -1127,10 +1173,9 @@ nd6_rtrequest(req, rt, info)
 				llsol.s6_addr8[12] = 0xff;
 
 				if (!in6_addmulti(&llsol, ifp, &error)) {
-					nd6log((LOG_ERR, "%s: "
-					    "failed to join %s (errno=%d)\n",
-					    if_name(ifp), ip6_sprintf(&llsol),
-					    error));
+					nd6log((LOG_ERR, "%s: failed to join "
+					    "%s (errno=%d)\n", if_name(ifp),
+					    ip6_sprintf(&llsol), error));
 				}
 			}
 		}
@@ -1504,7 +1549,7 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 		return NULL;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
-		(void)nd6_free(rt);
+		(void)nd6_free(rt, 0);
 		return NULL;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1649,8 +1694,8 @@ fail:
 		/*
 		 * Mark an entry with lladdr as a router.
 		 */
-		if ((!is_newentry && (olladdr || lladdr))	/*(2-5)*/
-		 || (is_newentry && lladdr)) {			/*(7)*/
+		if ((!is_newentry && (olladdr || lladdr))	/* (2-5) */
+		 || (is_newentry && lladdr)) {			/* (7) */
 			ln->ln_router = 1;
 		}
 		break;
@@ -1725,26 +1770,11 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
 
-	/*
-	 * XXX: we currently do not make neighbor cache on any interface
-	 * other than ARCnet, Ethernet, FDDI and GIF.
-	 *
-	 * RFC2893 says:
-	 * - unidirectional tunnels needs no ND
-	 */
-	switch (ifp->if_type) {
-	case IFT_ARCNET:
-	case IFT_ETHER:
-	case IFT_FDDI:
-	case IFT_IEEE1394:
-	case IFT_GIF:		/* XXX need more cases? */
-		break;
-	default:
+	if (nd6_need_cache(ifp) == 0)
 		goto sendpkt;
-	}
 
 	/*
-	 * next hop determination. This routine is derived from ether_outpout.
+	 * next hop determination.  This routine is derived from ether_outpout.
 	 */
 	if (rt) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -1904,6 +1934,29 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	return (error);
 }	
 #undef senderr
+
+int
+nd6_need_cache(ifp)
+	struct ifnet *ifp;
+{
+	/*
+	 * XXX: we currently do not make neighbor cache on any interface
+	 * other than ARCnet, Ethernet, FDDI and GIF.
+	 *
+	 * RFC2893 says:
+	 * - unidirectional tunnels needs no ND
+	 */
+	switch (ifp->if_type) {
+	case IFT_ARCNET:
+	case IFT_ETHER:
+	case IFT_FDDI:
+	case IFT_IEEE1394:
+	case IFT_GIF:		/* XXX need more cases? */
+		return(1);
+	default:
+		return(0);
+	}
+}
 
 int
 nd6_storelladdr(ifp, rt, m, dst, desten)
