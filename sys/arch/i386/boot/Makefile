@@ -22,7 +22,7 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.13 1994/07/01 03:02:29 deraadt Exp $
+#	$Id: Makefile,v 1.14 1994/07/26 19:33:49 mycroft Exp $
 #
 
 S=	${.CURDIR}/../../..
@@ -46,7 +46,8 @@ all: machine-links biosboot bootbios
 NOPROG=	noprog
 NOMAN=	noman
 
-CFLAGS	= -O6 -DKERNEL -DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
+CFLAGS=	-O6 -DKERNEL -DI386_CPU -DI486_CPU -DI586_CPU
+CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 
 # start.o should be first
 OBJS=	start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o version.o
