@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2000/07/05 11:03:23 ad Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2000/08/25 04:48:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,6 +63,8 @@ extern int	protos;
 extern int	verbose;
 extern int	nflag;
 extern char	*memf;
+extern int	allflag;
+extern int	turns;
 
 struct inpcb;
 #ifdef INET6
@@ -180,6 +182,7 @@ void	 showswap(void);
 void	 showtcp(void);
 void	 showtcpsyn(void);
 void	 status(void);
+void	 switch_mode(struct mode *);
 void	 tcp_boot(char *);
 void	 tcp_run(char *);
 void	 tcp_time(char *);

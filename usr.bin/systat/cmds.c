@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.22 2000/07/05 11:03:20 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.23 2000/08/25 04:48:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.22 2000/07/05 11:03:20 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.23 2000/08/25 04:48:56 hubertf Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -103,8 +103,10 @@ void
 switch_mode(struct mode *p)
 {
 	int switchfail;
+	struct mode *r;
 
 	switchfail = 0;
+	r = p;
 
 	if (curmode == p)
 		return;
@@ -137,10 +139,16 @@ switch_mode(struct mode *p)
 	curmode = p;
 	labels();
 	display(0);
-	if (switchfail)
+	if (switchfail && !allflag)
 		error("Couldn't switch mode, back to %s", curmode->c_name);
-	else
-		status();
+	else {
+		if (switchfail && allflag) {
+			r++;
+			switch_mode(r);
+		} else {
+			status();
+		}
+	}
 }
 
 void

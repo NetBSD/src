@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.20 2000/07/05 11:04:51 ad Exp $
+.\"	$NetBSD: systat.1,v 1.21 2000/08/25 04:48:56 hubertf Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl n
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl t Ar turns
 .Op Fl w Ar wait
 .Op Ar display
 .Op Ar refresh-interval
@@ -105,10 +106,13 @@ subcommand in
 .It Fl w Ar wait
 See
 .Ar refresh-interval .
+.It Fl t Ar turns
+How many refreshs to show each screen in 'all' display mode.
 .It Ar display
 The
 .Ar display
 argument expects to be one of:
+.Ic all ,
 .Ic bufcache ,
 .Ic inet.icmp ,
 .Ic inet.ip ,
@@ -194,6 +198,14 @@ Exit
 .Pp
 The available displays are:
 .Bl -tag -width Ic
+.It Ic all
+Cycle through all displays automatically. At each display, wait some
+refresh-turns, then switch to the next display.
+Duration of one refresh-turn is adjustable with the
+.Fl w
+option, number of refresh-turns can be changed with the
+.Fl t
+option.
 .It Ic bufcache
 Display, in the lower window, statistics about the file system buffers.
 Statistics for each filesytem that has active buffers include the number

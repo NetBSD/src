@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2000/08/25 04:48:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.26 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2000/08/25 04:48:56 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,6 +83,9 @@ char    *namp;
 char    hostname[MAXHOSTNAMELEN + 1];
 WINDOW  *wnd;
 int     CMDLINE;
+int     turns = 2;	/* stay how many refresh-turns in 'all' mode? */
+int     allflag;
+int     allcounter;
 
 static	WINDOW *wload;			/* one line window for load average */
 
@@ -100,7 +103,7 @@ main(int argc, char **argv)
 	egid = getegid();
 	(void)setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "M:N:nw:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:nw:t:")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -114,6 +117,10 @@ main(int argc, char **argv)
 		case 'w':
 			if ((naptime = atoi(optarg)) <= 0)
 				errx(1, "interval <= 0.");
+			break;
+		case 't':
+			if ((turns = atoi(optarg)) <= 0)
+				errx(1, "turns <= 0.");
 			break;
 		case '?':
 		default:
@@ -140,9 +147,15 @@ main(int argc, char **argv)
 				modefound++;
 				break;
 			}
+
+			if(strstr("all",argv[0]) == "all"){
+				allcounter=0;
+				allflag=1;
+			}
 		}
 
-		if (!modefound)
+
+		if (!modefound && !allflag)
 			error("%s: Unknown command.", argv[0]);
 	}
 
@@ -223,7 +236,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: systat [-n] [-M core] [-N system] [-w wait] "
-		"[display] [refresh-interval]\n");
+		"[-t turns]\n\t\t[display] [refresh-interval]\n");
 	exit(1);
 }
 
@@ -248,6 +261,7 @@ display(int signo)
 {
 	int j;
 	sigset_t set;
+	struct mode *p;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
@@ -280,6 +294,19 @@ display(int signo)
 	wrefresh(wnd);
 	move(CMDLINE, col);
 	refresh();
+	
+	if (allflag && signo==SIGALRM) {
+		if (allcounter >= turns){
+			p = curmode;
+			p++;
+			if (p->c_name == NULL)
+				p = modes;
+			switch_mode(p);
+			allcounter=0;
+		} else
+			allcounter++;
+       }
+
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
 	alarm(naptime);
 }
