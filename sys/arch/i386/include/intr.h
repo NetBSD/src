@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 1999/08/05 18:08:10 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2000/06/04 21:27:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
 #define	SIR_CLOCK	31
 #define	SIR_NET		30
 #define	SIR_SERIAL	29
+
+/* Hack for CLKF_INTR(). */
+#define	IPL_TAGINTR	28
 
 #ifndef _LOCORE
 
