@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.10 1998/04/15 20:43:07 drochner Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.11 1998/05/28 16:59:31 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 1998/04/15 20:43:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 1998/05/28 16:59:31 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 1998/04/15 20:43:07 drochner Ex
 
 #include "vga_isa.h"
 #if NVGA_ISA
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/isa/vga_isavar.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1998/05/28 08:44:57 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1998/05/28 16:59:31 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,6 +78,8 @@
 
 #include "vga.h"
 #if (NVGA > 0)
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 #endif

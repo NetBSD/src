@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.12 1998/04/15 20:46:34 drochner Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.13 1998/05/28 16:59:32 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 1998/04/15 20:46:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 1998/05/28 16:59:32 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 1998/04/15 20:46:34 drochner Ex
 
 #include "vga_pci.h"
 #if NVGA_PCI
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/pci/vga_pcivar.h>
 #endif
 
