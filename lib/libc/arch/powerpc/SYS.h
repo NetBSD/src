@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.3 1997/07/16 16:11:48 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.4 1998/02/03 19:33:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,23 +42,17 @@
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-
-#define _SYSCALL_NOERROR(x,y)	.text				;\
-				.align	2			;\
-			ENTRY(x)				;\
-				li	0,(SYS_ ## y)		;\
+#define	_DOSYSCALL(x)		li	0,(SYS_ ## x)		;\
 				sc
-
-#else /* !__STDC__ */
-
-#define _SYSCALL_NOERROR(x,y)	.text				;\
-				.align	2			;\
-			ENTRY(x)				;\
-				li	0,(SYS_/**/y)		;\
+#else
+#define	_DOSYSCALL(x)		li	0,(SYS_/**/x)		;\
 				sc
-
 #endif /* __STDC__ */
 
+#define	_SYSCALL_NOERROR(x,y)	.text				;\
+				.align	2			;\
+			ENTRY(x)				;\
+				_DOSYSCALL(y)
 
 #define _SYSCALL(x,y)		.text				;\
 				.align	2			;\
