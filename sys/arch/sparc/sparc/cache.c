@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.38 1998/09/22 13:39:20 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.39 1998/10/08 22:27:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -799,3 +799,116 @@ srmmu_pcache_flush_line(va, pa)
 	sta(va, ASI_IDCACHELFP, 0);
 }
 #endif /* SUN4M */
+
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Cache flushing on multi-processor systems involves sending
+ * inter-processor messages to flush the cache on each module.
+ *
+ * The current context of the originating processor is passed in the
+ * message. This assumes the allocation of CPU contextses is a global
+ * operation (remember that the actual context tables for the CPUs
+ * are distinct).
+ */
+void
+smp_vcache_flush_page(va)
+	int va;
+{
+	int n;
+
+	cpuinfo.sp_vcache_flush_page(va);
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_page *p = &cpi->msg.u.xpmsg_flush_page;
+		if (cpuinfo.mid == cpi->mid)
+			continue;
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_VCACHE_FLUSH_PAGE;
+		p->ctx = getcontext4m();
+		p->va = va;
+		raise_ipi(cpi);
+	}
+}
+
+void
+smp_vcache_flush_segment(vr, vs)
+	int vr, vs;
+{
+	int n;
+
+	cpuinfo.sp_vcache_flush_segment(vr, vs);
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_segment *p = &cpi->msg.u.xpmsg_flush_segment;
+		if (cpuinfo.mid == cpi->mid)
+			continue;
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_VCACHE_FLUSH_SEGMENT;
+		p->ctx = getcontext4m();
+		p->vr = vr;
+		p->vs = vs;
+		raise_ipi(cpi);
+	}
+}
+
+void
+smp_vcache_flush_region(vr)
+	int vr;
+{
+	int n;
+
+	cpuinfo.sp_vcache_flush_region(vr);
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_region *p = &cpi->msg.u.xpmsg_flush_region;
+		if (cpuinfo.mid == cpi->mid)
+			continue;
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_VCACHE_FLUSH_REGION;
+		p->ctx = getcontext4m();
+		p->vr = vr;
+		raise_ipi(cpi);
+	}
+}
+
+void
+smp_vcache_flush_context()
+{
+	int n;
+
+	cpuinfo.sp_vcache_flush_context();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_context *p = &cpi->msg.u.xpmsg_flush_context;
+		if (cpuinfo.mid == cpi->mid)
+			continue;
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_VCACHE_FLUSH_CONTEXT;
+		p->ctx = getcontext4m();
+		raise_ipi(cpi);
+	}
+}
+
+void
+smp_cache_flush(va, size)
+	caddr_t va;
+	u_int size;
+{
+	int n;
+
+	cpuinfo.sp_cache_flush(va, size);
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_range *p = &cpi->msg.u.xpmsg_flush_range;
+		if (cpuinfo.mid == cpi->mid)
+			continue;
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_VCACHE_FLUSH_RANGE;
+		p->ctx = getcontext4m();
+		p->va = va;
+		p->size = size;
+		raise_ipi(cpi);
+	}
+}
+#endif /* MULTIPROCESSOR */
