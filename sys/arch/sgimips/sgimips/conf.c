@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2000/06/14 16:02:43 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2000/10/20 12:04:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@
 #include "wd.h"
 bdev_decl(wd);
 cdev_decl(wd);
-#include "ca.h"
+#include "lsu.h"
 #include "zstty.h"
 cdev_decl(zs);
 #include "com.h"
@@ -88,7 +88,7 @@ struct bdevsw bdevsw[] =
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
 	bdev_disk_init(NWD,wd),		/* 13: ATA disk */
-	bdev_disk_init(NCA,ca),		/* 14: Compaq array */
+	bdev_disk_init(NLSU,lsu),	/* 14: logical storage unit */
 	bdev_notdef(),			/* 15: */
 	bdev_notdef(),			/* 16: */
 	bdev_notdef(),			/* 17: */
@@ -123,7 +123,7 @@ struct cdevsw cdevsw[] =
 	cdev_tape_init(NST,st),		/* 11: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
 	cdev_disk_init(NWD,wd),		/* 13: ATA disk */
-	cdev_disk_init(NCA,ca),		/* 14: Compaq array */
+	cdev_disk_init(NLSU,lsu),	/* 14: logical storage unit */
 	cdev_notdef(),			/* 15: */
 	cdev_notdef(),			/* 16: */
 	cdev_notdef(),			/* 17: */

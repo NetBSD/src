@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2000/07/13 18:10:38 soren Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2000/10/20 12:04:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@ cdev_decl(com);
 cdev_decl(scsibus);
 #include "ses.h"
 cdev_decl(ses);
-#include "ca.h"
+#include "lsu.h"
 
 struct bdevsw bdevsw[] =
 {
@@ -85,7 +85,7 @@ struct bdevsw bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
 	bdev_tape_init(NST,st),		/* 9: SCSI tape */
-	bdev_disk_init(NCA,ca),         /* 10: Compaq array */
+	bdev_disk_init(NLSU,lsu),       /* 10: logical storage unit */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
@@ -133,7 +133,7 @@ struct cdevsw cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 24: SCSI bus */
 	cdev_ses_init(NSES,ses),	/* 25: SCSI SES/SAF-TE */
 	cdev_tty_init(NCOM,com),        /* 26: com serial port */
-	cdev_disk_init(NCA,ca),         /* 27: Compaq array */
+	cdev_disk_init(NLSU,lsu),       /* 27: logical storage unit */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
