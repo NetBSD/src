@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.402 2003/12/07 22:33:16 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.403 2003/12/07 22:52:56 scw Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -20,12 +20,11 @@ NEED_OWN_INSTALL_TARGET?=	yes
 
 #
 # This lists the platforms which do not have working in-tree toolchains.
+# For the in-tree gcc 3.3.2 toolchain, this list is empty.
+# If some future port is not supported by the in-tree toolchain, this
+# should be set to "yes" for that port only.
 #
-.if ${MACHINE_CPU} == "sh5"
-TOOLCHAIN_MISSING?=	yes
-.else
 TOOLCHAIN_MISSING=	no
-.endif
 
 #
 # Transitional for toolchain upgrade to GCC3.3
@@ -382,10 +381,12 @@ NOPIC=		# defined
 .endif
 
 #
-# The sh5 port is incomplete.
+# gcc3 and gdb on sh5 are not ready for prime-time.
 #
 .if ${MACHINE_CPU} == "sh5"
 NOPROFILE=	# defined
+NOPIC=		# defined
+MKGDB=no
 .endif
 
 #
@@ -460,8 +461,6 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
      ${MACHINE_ARCH} == "m68000" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
      ${MACHINE_GNU_ARCH} == "shle" || \
-     ${MACHINE_GNU_ARCH} == "sh5" || \
-     ${MACHINE_GNU_ARCH} == "sh5le" || \
      ${MACHINE_ARCH} == "sparc" || \
      ${MACHINE_ARCH} == "vax")
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf
