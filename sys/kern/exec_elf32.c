@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.64 2001/07/14 02:08:29 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.65 2001/07/15 20:52:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -235,18 +235,25 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
-	psize = round_page(*size);
 
-	if ((ph->p_flags & PF_W) != 0) {
-		/*
-		 * Because the pagedvn pager can't handle zero fill of the last
-		 * data page if it's not page aligned we map the last page
-		 * readvn.
-		 */
-		psize = trunc_page(*size);
+	if (ph->p_align >= PAGE_SIZE) {
+		if ((ph->p_flags & PF_W) != 0) {
+			/*
+			 * Because the pagedvn pager can't handle zero fill
+			 * of the last data page if it's not page aligned we
+			 * map the last page readvn.
+			 */
+			psize = trunc_page(*size);
+		} else {
+			psize = round_page(*size);
+		}
+	} else {
+		psize = *size;
 	}
+
 	if (psize > 0) {
-		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
+		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
 		    offset, *prot, flags);
 	}
 	if (psize < *size) {
