@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2002/09/27 20:34:13 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2002/10/02 04:40:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,9 +47,8 @@ static void	mainbus_attach __P((struct device *, struct device *, void *));
 static int	mainbus_search __P((struct device *, struct cfdata *, void *));
 static int	mainbus_print __P((void *, const char *));
 
-const struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 static int mainbus_found;
 

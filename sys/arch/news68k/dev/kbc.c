@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.2 2002/09/27 20:34:10 thorpej Exp $	*/
+/*	$NetBSD: kbc.c,v 1.3 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -48,9 +48,8 @@ static int kbc_match __P((struct device *, struct cfdata *, void *));
 static void kbc_attach __P((struct device *, struct device *, void *));
 static int kbc_print __P((void *, const char *name));
 
-const struct cfattach kbc_ca = {
-	sizeof(struct device), kbc_match, kbc_attach
-};
+CFATTACH_DECL(kbc, sizeof(struct device),
+    kbc_match, kbc_attach, NULL, NULL);
 
 extern struct cfdriver kbc_cd;
 
