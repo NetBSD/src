@@ -1,7 +1,7 @@
-# round --- do normal rounding
+# round.awk --- do normal rounding
 #
-# Arnold Robbins, arnold@gnu.ai.mit.edu, August, 1996
-# Public Domain
+# Arnold Robbins, arnold@gnu.org, Public Domain
+# August, 1996
 
 function round(x,   ival, aval, fraction)
 {
