@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	8.3 (Berkeley) 1/4/94
- *	$Id: nfs_vfsops.c,v 1.22 1994/06/13 15:29:01 gwr Exp $
+ *	$Id: nfs_vfsops.c,v 1.23 1994/06/14 03:29:12 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -178,6 +178,15 @@ nfs_mountroot()
 	procp = curproc; /* XXX */
 
 	/*
+	 * XXX time must be non-zero when we init the interface or else
+	 * the arp code will wedge.  [Fixed now in if_ether.c]
+	 * However, the NFS attribute cache gives false "hits" when
+	 * time.tv_sec < NFS_ATTRTIMEO(np) so keep this in for now.
+	 */
+	if (time.tv_sec < NFS_MAXATTRTIMO)
+		time.tv_sec = NFS_MAXATTRTIMO;
+
+	/*
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
@@ -204,8 +213,10 @@ nfs_mountroot()
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_cred->pc_ucred, procp);
 	if (error) panic("nfs_mountroot: getattr for root");
-	n = attr.va_mtime.ts_sec;	/* XXX - Always zero.  Why? -gwr */
+	n = attr.va_mtime.ts_sec;
+#ifdef	DEBUG
 	printf(" root time: 0x%x\n", n);
+#endif
 	inittodr(n);
 
 #ifdef notyet
@@ -255,7 +266,9 @@ nfs_mountroot()
 	error = VOP_GETATTR(vp, &attr, procp->p_cred->pc_ucred, procp);
 	if (error) panic("nfs_mountroot: getattr for swap");
 	n = (long) (attr.va_size / DEV_BSIZE);
-	printf(" swap size: 0x%x (blocks)\n", n);	/* XXX */
+#ifdef	DEBUG
+	printf(" swap size: 0x%x (blocks)\n", n);
+#endif
 	swdevt[0].sw_nblks = n;
 
 	return (0);
