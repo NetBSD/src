@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2001/07/03 06:15:16 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2001/09/05 14:12:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -676,7 +676,7 @@ pmeg_init()
 	TAILQ_INIT(&pmeg_active_queue);
 	TAILQ_INIT(&pmeg_kernel_queue);
 
-	bzero(pmeg_array, NPMEG*sizeof(struct pmeg_state));
+	memset(pmeg_array, 0, NPMEG*sizeof(struct pmeg_state));
 	for (x =0 ; x<NPMEG; x++) {
 		TAILQ_INSERT_TAIL(&pmeg_free_queue, &pmeg_array[x],
 				  pmeg_link);
@@ -1095,7 +1095,7 @@ pv_init()
 	p = (char *)uvm_km_alloc(kernel_map, sz);
 	if (p == NULL)
 		panic("pmap:pv_init: alloc failed");
-	bzero(p, sz);
+	memset(p, 0, sz);
 
 	/* Now divide up the space. */
 	pv_flags_tbl = (void *) p;
@@ -1520,7 +1520,7 @@ void
 pmap_common_init(pmap)
 	pmap_t pmap;
 {
-	bzero(pmap, sizeof(struct pmap));
+	memset(pmap, 0, sizeof(struct pmap));
 	pmap->pm_refcount = 1;
 	pmap->pm_version = pmap_version++;
 	pmap->pm_ctxnum = EMPTY_CONTEXT;
