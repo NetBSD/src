@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.64 2002/01/04 12:02:13 tron Exp $
+.\"	$NetBSD: packages.7,v 1.65 2002/01/04 12:07:02 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -128,7 +128,7 @@ at problems or questions regarding this package which have been
 reported with
 .Xr send-pr 1 .
 The right person to contact before making major changes to the
-package.  The default is packages@NetBSD.ORG.
+package.  The default is packages@netbsd.org.
 .It CATEGORIES
 A list of descriptive categories into which this package falls.
 .It COMMENT
@@ -205,9 +205,10 @@ which may be shortened when you use gensolpkg. Only add SVR4_PKGNAME if
 does not produce an unique package name on a SVR4 system.
 The length of SVR4_PKGNAME is limited to 5 characters.
 .It PKGREVISION
-This number indicates the package's revision within the NetBSD
+This number indicates the package's revision within the
+.Nx
 Packages Collection (pkgsrc). If set, this will be attached to the
-PKGNAME variable separated by a "nb". 
+PKGNAME variable separated by a "nb".
 .It EXTRACT_ONLY
 If defined, a subset of
 .Pa ${DISTFILES}
@@ -359,7 +360,8 @@ Note: it looks for the listed files in ${WRKSRC}.
 .It UNLIMIT_RESOURCES
 List of process limits which need to be raised to hard limits for building
 this package. Use a list of single letters which are understood by the
-.Pa ulimit command in
+.Ic ulimit
+command in
 .Xr sh 1 .
 A value of "d s" will e.g. increase datasize and stacksize.
 .It USE_LIBTOOL
@@ -803,5 +805,7 @@ and
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
-file, as distributed with NetBSD.  The sources to this are far
+file, as distributed with
+.Nx .
+The sources to this are far
 and varied across all free BSD projects.
