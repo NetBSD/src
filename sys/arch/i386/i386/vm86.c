@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.13 1996/04/25 13:50:21 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.14 1996/04/30 10:35:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -176,7 +176,6 @@ fast_intxx(p, intrno)
 	struct vm86_struct *u_vm86p;
 	struct { u_short ip, cs; } ihand;
 
-	u_short cs;
 	u_long ss, sp;
 
 	/* 
@@ -187,12 +186,10 @@ fast_intxx(p, intrno)
 	u_vm86p = (struct vm86_struct *)p->p_addr->u_pcb.vm86_userp;
 
 	/* 
-	 * If coming from BIOS segment, or going to BIOS segment, or user
-	 * requested special handling, return to user space with indication
-	 * of which INT was requested.
+	 * If user requested special handling, return to user space with
+	 * indication of which INT was requested.
 	 */
-	cs = CS(tf);
-	if (cs == BIOSSEG || is_bitset(intrno, &u_vm86p->int_byuser[0]))
+	if (is_bitset(intrno, &u_vm86p->int_byuser[0]))
 		goto vector;
 
 	/*
@@ -210,9 +207,6 @@ fast_intxx(p, intrno)
 	if (copyin((caddr_t)(intrno * sizeof(ihand)), &ihand, sizeof(ihand)))
 		goto bad;
 
-	if (ihand.cs == BIOSSEG)
-		goto vector;
-
 	/*
 	 * Otherwise, push flags, cs, eip, and jump to handler to
 	 * simulate direct INT call.
@@ -228,9 +222,6 @@ fast_intxx(p, intrno)
 	IP(tf) = ihand.ip;
 	CS(tf) = ihand.cs;
 
-	/* disable further "hardware" interrupts, turn off any tracing. */
-	tf->tf_eflags &= ~PSL_T;
-	clr_vif(p);
 	return;
 
 vector:
