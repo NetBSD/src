@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.6 2004/03/30 19:39:39 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.7 2004/03/31 19:05:18 mellon Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -914,6 +914,13 @@ void parse_client_lease_statement (cfile, is_static)
 		if (lp -> address.len == lease -> address.len &&
 		    !memcmp (lp -> address.iabuf, lease -> address.iabuf,
 			     lease -> address.len)) {
+			/* If the lease we found is a static lease, and
+			   this one expires earlier, discard this one. */
+			if (lp->is_static &&
+			    lp->expiry > lease->expiry) {
+				destroy_client_lease(lease);
+				return;
+			}
 			if (pl)
 				pl -> next = next;
 			else
