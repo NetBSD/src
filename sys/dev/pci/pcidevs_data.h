@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.279 2000/12/05 18:11:02 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.280 2000/12/14 04:06:06 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.275 2000/12/05 18:10:19 drochner Exp 
+ *	NetBSD: pcidevs,v 1.276 2000/12/14 04:05:38 onoe Exp 
  */
 
 /*
@@ -620,6 +620,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ASB-3940U3W",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4500/PC4800 Wireless LAN Adapter",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4500 Wireless LAN Adapter",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet PC4800 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -8401,6 +8419,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AVERMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Avermedia Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AIRONET, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Aironet Wireless Communications",
 	    NULL,
 	},
 	{
