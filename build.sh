@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.104 2003/05/18 10:57:11 lukem Exp $
+#	$NetBSD: build.sh,v 1.105 2003/05/25 12:34:27 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,6 +127,7 @@ initdefaults()
 	do_distribution=false
 	do_release=false
 	do_kernel=false
+	do_releasekernel=false
 	do_install=false
 	do_sets=false
 	do_sourcesets=false
@@ -342,9 +343,10 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
                         (Always done)
     obj                 Run "make obj" (default unless -o is used)
     tools               Build and install tools
-    kernel=conf         Build kernel with config file \`conf'
     install=idir        Run "make installworld" to \`idir'
                         (useful after 'distribution' or 'release')
+    kernel=conf         Build kernel with config file \`conf'
+    releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR
     sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets
     sourcesets          Create source sets in RELEASEDIR/source/sets
 
@@ -562,11 +564,11 @@ parseoptions()
 		makewrapper|obj|tools|build|distribution|release|sets|sourcesets)
 			;;
 
-		kernel=*)
+		kernel=*|releasekernel=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
-			    bomb "Must supply a kernel name with \`kernel=...'"
+			    bomb "Must supply a kernel name with \`${op}=...'"
 			;;
 
 		install=*)
@@ -683,24 +685,24 @@ validatemakeparams()
 		${runcmd} mkdir -p "${makeobjdir}"
 	fi
 
-	statusmsg "MACHINE:         ${MACHINE}"
-	statusmsg "MACHINE_ARCH:    ${MACHINE_ARCH}"
+	statusmsg "MACHINE:          ${MACHINE}"
+	statusmsg "MACHINE_ARCH:     ${MACHINE_ARCH}"
 
 	# Find TOOLDIR, DESTDIR, and RELEASEDIR.
 	#
 	TOOLDIR=$(getmakevar TOOLDIR)
-	statusmsg "TOOLDIR path:    ${TOOLDIR}"
+	statusmsg "TOOLDIR path:     ${TOOLDIR}"
 	DESTDIR=$(getmakevar DESTDIR)
 	RELEASEDIR=$(getmakevar RELEASEDIR)
 	if ! $do_expertmode; then
-		_SRCTOPOBJ_=$(getmakevar _SRC_TOP_OBJ_)
-		: ${DESTDIR:=${_SRCTOPOBJ_}/destdir.${MACHINE}}
-		: ${RELEASEDIR:=${_SRCTOPOBJ_}/releasedir}
+		_SRC_TOP_OBJ_=$(getmakevar _SRC_TOP_OBJ_)
+		: ${DESTDIR:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
+		: ${RELEASEDIR:=${_SRC_TOP_OBJ_}/releasedir}
 		makeenv="${makeenv} DESTDIR RELEASEDIR"
 	fi
 	export TOOLDIR DESTDIR RELEASEDIR
-	statusmsg "DESTDIR path:    ${DESTDIR}"
-	statusmsg "RELEASEDIR path: ${RELEASEDIR}"
+	statusmsg "DESTDIR path:     ${DESTDIR}"
+	statusmsg "RELEASEDIR path:  ${RELEASEDIR}"
 
 	# Check validity of TOOLDIR and DESTDIR.
 	#
@@ -735,6 +737,9 @@ validatemakeparams()
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
         fi
+	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
+		bomb "Must set RELEASEDIR with \`releasekernel=...'"
+	fi
 }
 
 
@@ -783,7 +788,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.104 2003/05/18 10:57:11 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.105 2003/05/25 12:34:27 lukem Exp $
 #
 
 EOF
@@ -798,7 +803,7 @@ exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
 	[ "${runcmd}" = "echo" ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
-	statusmsg "makewrapper:     ${makewrapper}"
+	statusmsg "makewrapper:      ${makewrapper}"
 	statusmsg "Updated ${makewrapper}"
 }
 
@@ -819,19 +824,9 @@ buildtools()
 	statusmsg "Tools built to ${TOOLDIR}"
 }
 
-buildkernel()
+getkernelconf()
 {
-	kernconf="$1"
-	if ! ${do_tools}; then
-		# Building tools every time we build a kernel is clearly
-		# unnecessary.  We could try to figure out whether rebuilding
-		# the tools is necessary this time, but it doesn't seem worth
-		# the trouble.  Instead, we say it's the user's responsibility
-		# to rebuild the tools if necessary.
-		#
-		statusmsg "Building kernel without building new tools"
-	fi
-	statusmsg "Building kernel ${kernconf}"
+	kernelconf="$1"
 	if [ "${MKOBJDIRS}" != "no" ] && [ ! -z "${makeobjdir}" ]; then
 		# The correct value of KERNOBJDIR might
 		# depend on a prior "make obj" in
@@ -846,44 +841,77 @@ buildkernel()
 	fi
 	KERNCONFDIR="$(getmakevar KERNCONFDIR)"
 	KERNOBJDIR="$(getmakevar KERNOBJDIR)"
-	case "${kernconf}" in
+	case "${kernelconf}" in
 	*/*)
-		kernconfpath="${kernconf}"
-		kernconfbase="$(basename "${kernconf}")"
+		kernelconfpath="${kernelconf}"
+		kernelconfname="${kernelconf##*/}"
 		;;
 	*)
-		kernconfpath="${KERNCONFDIR}/${kernconf}"
-		kernconfbase="${kernconf}"
+		kernelconfpath="${KERNCONFDIR}/${kernelconf}"
+		kernelconfname="${kernelconf}"
 		;;
 	esac
-	kernbuilddir="${KERNOBJDIR}/${kernconfbase}"
-	statusmsg "Kernel build directory: ${kernbuilddir}"
-	${runcmd} mkdir -p "${kernbuilddir}" ||
-	    bomb "Cannot mkdir: ${kernbuilddir}"
+	kernelbuildpath="${KERNOBJDIR}/${kernelconfname}"
+}
+
+buildkernel()
+{
+	if ! ${do_tools} && ! ${buildkernelwarned:-false}; then
+		# Building tools every time we build a kernel is clearly
+		# unnecessary.  We could try to figure out whether rebuilding
+		# the tools is necessary this time, but it doesn't seem worth
+		# the trouble.  Instead, we say it's the user's responsibility
+		# to rebuild the tools if necessary.
+		#
+		statusmsg "Building kernel without building new tools"
+		buildkernelwarned=true
+	fi
+	getkernelconf $1
+	statusmsg "Building kernel:  ${kernelconf}"
+	statusmsg "Build directory:  ${kernelbuildpath}"
+	${runcmd} mkdir -p "${kernelbuildpath}" ||
+	    bomb "Cannot mkdir: ${kernelbuildpath}"
 	if [ -z "${UPDATE}" ]; then
-		${runcmd} cd "${kernbuilddir}"
+		${runcmd} cd "${kernelbuildpath}"
 		${runcmd} "${makewrapper}" cleandir ||
-		    bomb "Failed to make cleandir in ${kernbuilddir}"
+		    bomb "Failed to make cleandir in ${kernelbuildpath}"
 		${runcmd} cd "${TOP}"
 	fi
-	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernbuilddir}" \
-		-s "${TOP}/sys" "${kernconfpath}" ||
-	    bomb "${toolprefix}config failed for ${kernconf}"
-	${runcmd} cd "${kernbuilddir}"
+	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
+		-s "${TOP}/sys" "${kernelconfpath}" ||
+	    bomb "${toolprefix}config failed for ${kernelconf}"
+	${runcmd} cd "${kernelbuildpath}"
 	${runcmd} "${makewrapper}" depend ||
-	    bomb "Failed to make depend in ${kernbuilddir}"
+	    bomb "Failed to make depend in ${kernelbuildpath}"
 	${runcmd} "${makewrapper}" ${parallel} all ||
-	    bomb "Failed to make all in ${kernbuilddir}"
+	    bomb "Failed to make all in ${kernelbuildpath}"
 	${runcmd} cd "${TOP}"
 
 	if [ "${runcmd}" != "echo" ]; then
-		statusmsg "Kernels built from ${kernconf}:"
-		kernlist=$(awk '$1 == "config" { print $2 }' ${kernconfpath})
+		statusmsg "Kernels built from ${kernelconf}:"
+		kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
 		for kern in ${kernlist:-netbsd}; do
-			[ -f "${kernbuilddir}/${kern}" ] && \
-			    echo "  ${kernbuilddir}/${kern}"
+			[ -f "${kernelbuildpath}/${kern}" ] && \
+			    echo "  ${kernelbuildpath}/${kern}"
 		done | tee -a "${results}"
 	fi
+}
+
+releasekernel()
+{
+	getkernelconf $1
+	kernelreldir="${RELEASEDIR}/${MACHINE}/binary/kernel"
+	${runcmd} mkdir -p "${kernelreldir}"
+	kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
+echo "releasekernel: conf ${kernelconf}, name ${kernelconfname}, build ${kernelbuildpath}"
+	for kern in ${kernlist:-netbsd}; do
+echo "  checking ${kern} in ${kernelbuildpath}"
+		builtkern="${kernelbuildpath}/${kern}"
+		[ -f "${builtkern}" ] || continue
+		releasekern="${kernelreldir}/${kern}-${kernelconfname}.gz"
+		statusmsg "Kernel copy:      ${releasekern}"
+		${runcmd} gzip -c -9 < "${builtkern}" > "${releasekern}"
+	done
 }
 
 installworld()
@@ -930,6 +958,11 @@ main()
 		kernel=*)
 			arg=${op#*=}
 			buildkernel "${arg}"
+			;;
+
+		releasekernel=*)
+			arg=${op#*=}
+			releasekernel "${arg}"
 			;;
 
 		install=*)
