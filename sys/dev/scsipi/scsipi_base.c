@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.49 2001/07/13 20:00:23 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.50 2001/07/18 18:21:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -949,7 +949,7 @@ scsipi_size(periph, flags)
 	struct scsipi_read_cap_data rdcap;
 	struct scsipi_read_capacity scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = READ_CAPACITY;
 
 	/*
@@ -984,7 +984,7 @@ scsipi_test_unit_ready(periph, flags)
 	if (periph->periph_quirks & PQUIRK_NOTUR)
 		return (0);
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = TEST_UNIT_READY;
 
 	return (scsipi_command(periph,
@@ -1005,7 +1005,7 @@ scsipi_inquire(periph, inqbuf, flags)
 {
 	struct scsipi_inquiry scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
@@ -1030,7 +1030,7 @@ scsipi_prevent(periph, type, flags)
 	if (periph->periph_quirks & PQUIRK_NODOORLOCK)
 		return (0);
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
 	scsipi_cmd.how = type;
 
@@ -1054,7 +1054,7 @@ scsipi_start(periph, type, flags)
 	if (periph->periph_quirks & PQUIRK_NOSTARTUNIT)
 		return 0;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = START_STOP;
 	scsipi_cmd.byte2 = 0x00;
 	scsipi_cmd.how = type;
@@ -1079,7 +1079,7 @@ scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
 	struct scsipi_mode_sense scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SENSE;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
@@ -1104,7 +1104,7 @@ scsipi_mode_sense_big(periph, byte2, page, data, len, flags, retries, timeout)
 	struct scsipi_mode_sense_big scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SENSE_BIG;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
@@ -1126,7 +1126,7 @@ scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
 	struct scsipi_mode_select scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT;
 	scsipi_cmd.byte2 = byte2;
 	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
@@ -1150,7 +1150,7 @@ scsipi_mode_select_big(periph, byte2, data, len, flags, retries, timeout)
 	struct scsipi_mode_select_big scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT_BIG;
 	scsipi_cmd.byte2 = byte2;
 	_lto2b(len, scsipi_cmd.length);
@@ -1542,7 +1542,7 @@ scsipi_request_sense(xs)
 	flags |= XS_CTL_REQSENSE | XS_CTL_URGENT | XS_CTL_DATA_IN |
 	    XS_CTL_THAW_PERIPH | XS_CTL_FREEZE_PERIPH;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = REQUEST_SENSE;
 	cmd.length = sizeof(struct scsipi_sense_data);
 
