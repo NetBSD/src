@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.121 2004/04/24 18:34:07 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.122 2004/04/26 20:11:24 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1268,4 +1268,33 @@ src/sys/arch/sparc/conf/GENERIC.MP		1.3
 	Many fixes for issues with sparc multi-processor support (includes
 	fixes to make HyperSPARC MP work).
 	[pk, ticket #179]
+
+src/sys/sys/sysctl.h				1.123
+
+	Add extra parentheses to make the cast correct.
+	[atatat, ticket #180]
+
+src/sbin/sysctl/sysctl.c			1.93
+
+	Allocate adjusted size, not fixed size.
+	[atatat, ticket #181]
+
+src/sys/arch/i386/stand/mbr/mbr.S		1.6
+
+	Put the 'mbr has bootselect table' marker into all versions of the
+	mbr code.  Having the table in the 'standard' mbr allows fdisk to
+	write in bootsel menu items and only ask about updating the mbr
+	code before exit.
+	Sysinst validates that the mbr code contains the bootselect table
+	for all the mbr code variants it reads - because it might want to
+	write the table and doesn't really want to make the validation
+	dependant on what it is going to do later.
+	PR#25235.
+	[dsl, ticket #182]
+
+src/sys/arch/vax/vax/machdep.c			1.146
+
+	The second "console_device" node should really be called
+	"booted_device".
+	[atatat, ticket #183]
 
