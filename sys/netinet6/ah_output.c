@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_output.c,v 1.9 2000/06/02 18:20:16 itojun Exp $	*/
-/*	$KAME: ah_output.c,v 1.21 2000/05/29 08:05:03 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.10 2000/07/06 12:51:40 itojun Exp $	*/
+/*	$KAME: ah_output.c,v 1.22 2000/07/03 13:23:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,7 +68,6 @@
 #include <netinet6/ah.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
-#include <netkey/key_debug.h>
 
 #include <net/net_osdep.h>
 
