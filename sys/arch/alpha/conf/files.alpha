@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.100 1999/02/18 21:27:54 mycroft Exp $
+# $NetBSD: files.alpha,v 1.101 1999/04/30 05:58:11 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -430,6 +430,7 @@ file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
+file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
