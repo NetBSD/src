@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.27 1998/08/15 10:10:50 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.28 1998/09/10 19:24:45 kenh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -350,7 +350,8 @@ wdcattach(wdc, adp)
 	 * devices keep it in a mostly working, but strange state (with busy
 	 * led on)
 	 */
-	wdcreset(wdc, VERBOSE);
+	if (!(wdc->sc_adp->flags & WDC_NO_EXTRA_RESETS))
+		wdcreset(wdc, VERBOSE);
 }
 
 /*
@@ -1532,7 +1533,8 @@ wdc_atapi_get_params(ab_link, drive, id)
 
 	wdc->sc_flags |= WDCF_ACTIVE;
 	error = 1;
-	(void)wdcreset(wdc, VERBOSE);
+	if (!(wdc->sc_adp->flags & WDC_NO_EXTRA_RESETS))
+		(void)wdcreset(wdc, VERBOSE);
 	if ((status = wdccommand(wdc, (struct wd_link*)(&(ab_link->scsipi_atapi)),
 	    ATAPI_SOFT_RESET, drive, 0, 0, 0, 0)) != 0) {
 #ifdef ATAPI_DEBUG
