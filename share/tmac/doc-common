@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.30 1999/03/23 11:50:09 mycroft Exp $
+.\"	$NetBSD: doc-common,v 1.31 1999/04/28 00:23:39 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,6 +56,7 @@
 .nr Dc 3
 .nr Do 10n
 .nr Dq 12n
+.nr Qq 12n
 .nr Ds 6n
 .nr Dq 12n
 .nr Dv 12n
@@ -470,5 +471,6 @@
 .tm w8==\\n(w8
 .tm w9==\\n(w9
 .tm xX==\\n(xX local register
+.tm hY==\\n(hY Hyphenation type
 .tm END OF REGISTER DUMP
 ..
