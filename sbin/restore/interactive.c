@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +32,17 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)interactive.c	5.18 (Berkeley) 12/2/92"; */
-static char *rcsid = "$Id: interactive.c,v 1.3 1993/12/22 10:31:47 cgd Exp $";
+/*static char sccsid[] = "from: @(#)interactive.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: interactive.c,v 1.4 1994/06/08 19:33:35 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 
-#include <ufs/fs.h>
-#include <ufs/dinode.h>
-#include <ufs/dir.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
 #include <protocols/dumprestore.h>
 
 #include <setjmp.h>
@@ -82,7 +82,6 @@ struct arglist {
 
 static char	*copynext __P((char *, char *));
 static int	 fcmp __P((const void *, const void *));
-static char	*fmtentry __P((struct afile *));
 static void	 formatf __P((struct afile *, int));
 static void	 getcmd __P((char *, char *, char *, struct arglist *));
 struct dirent	*glob_readdir __P((RST_DIR *dirp));
@@ -567,7 +566,6 @@ mkentry(dp, fp)
 {
 	char *cp;
 	struct entry *np;
-	int type;
 
 	fp->fnum = dp->d_ino;
 	fp->fname = savename(dp->d_name);
@@ -581,16 +579,11 @@ mkentry(dp, fp)
 		fp->prefix = '*';
 	else
 		fp->prefix = ' ';
-
-#ifndef BSD44
-	type = (np && (np->e_type == NODE)) ? DT_DIR : DT_REG;
-#else
-	type = dp->d_type;
-#endif
-	switch(type) {
+	switch(dp->d_type) {
 
 	default:
-		fprintf(stderr, "Warning: undefined file type %d\n", type);
+		fprintf(stderr, "Warning: undefined file type %d\n",
+		    dp->d_type);
 		/* fall through */
 	case DT_REG:
 		fp->postfix = ' ';
@@ -618,7 +611,6 @@ mkentry(dp, fp)
 			fp->postfix = ' ';
 		break;
 	}
-
 	return;
 }
 

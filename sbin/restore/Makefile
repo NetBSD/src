@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.13 (Berkeley) 3/16/92
-#	$Id: Makefile,v 1.10 1993/12/22 10:31:38 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$Id: Makefile,v 1.11 1994/06/08 19:33:32 mycroft Exp $
 
 PROG=	restore
 LINKS=	${BINDIR}/restore ${BINDIR}/rrestore
@@ -12,5 +12,7 @@ BINMODE=6555
 MAN8=	restore.0
 MLINKS+=restore.8 rrestore.8
 .PATH:	${.CURDIR}/../dump
+
+all: ${PROG} ${MAN8}
 
 .include <bsd.prog.mk>

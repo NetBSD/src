@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)restore.h	5.14 (Berkeley) 10/16/92
- *	$Id: restore.h,v 1.4 1994/05/17 04:14:37 cgd Exp $
+ *	from: @(#)restore.h	8.2 (Berkeley) 1/21/94
+ *	$Id: restore.h,v 1.5 1994/06/08 19:33:43 mycroft Exp $
  */
 
 /*

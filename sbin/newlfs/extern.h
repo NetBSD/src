@@ -1,11 +1,6 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,10 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.2 (Berkeley) 1/21/94
- *	$Id: pathnames.h,v 1.5 1994/06/08 19:33:38 mycroft Exp $
+ *	from: @(#)extern.h	8.1 (Berkeley) 6/5/93
+ *	$Id: extern.h,v 1.1 1994/06/08 19:31:18 mycroft Exp $
  */
 
-#include <paths.h>
+u_long	cksum __P((void *, size_t));
+u_short	dkcksum __P((struct disklabel *));
+void	fatal __P((const char *fmt, ...));
+u_int	log2 __P((u_int));
+int	make_lfs
+	    __P((int, struct disklabel *, struct partition *, int, int, int));
+int	mkfs __P((struct partition *, char *, int, int));
 
-#define	_PATH_DEFTAPE	"/dev/rmt8"
+extern char	*progname;
+extern char	*special;
