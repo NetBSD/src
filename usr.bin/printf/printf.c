@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.8 1993/11/19 21:08:17 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.9 1993/11/25 04:42:11 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -68,7 +68,7 @@ static char  **gargv;
 
 #define isodigit(c)	((c) >= '0' && (c) <= '7')
 #define octtobin(c)	((c) - '0')
-#define hextobin(c)	((c) >= 'A' && 'c' <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
+#define hextobin(c)	((c) >= 'A' && (c) <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
 
 #ifdef SHELL
 #define main printfcmd
@@ -185,20 +185,20 @@ main(argc, argv)
 				}
 
 				/* skip to field width */
-				for (; index(SKIP1, *fmt); ++fmt);
+				for (; index(SKIP1, *fmt); ++fmt) ;
 				fieldwidth = *fmt == '*' ? getint() : 0;
 
 				/* skip to possible '.', get following precision */
-				for (; index(SKIP2, *fmt); ++fmt);
+				for (; index(SKIP2, *fmt); ++fmt) ;
 				if (*fmt == '.')
 					++fmt;
 				precision = *fmt == '*' ? getint() : 0;
 
-				for (; index(SKIP2, *fmt); ++fmt);
+				for (; index(SKIP2, *fmt); ++fmt) ;
 				if (!*fmt) {
 					warnx ("missing format character");
 					rval = 1;
-					return;
+					return;		/* XXX */
 				}
 
 				convch = *fmt;
@@ -307,8 +307,8 @@ print_escape(str)
 	register const char *str;
 {
 	const char *start = str;
-	int c;
 	int value;
+	int c;
 
 	str++;
 
@@ -406,7 +406,7 @@ mklong(str, ch)
 	int len;	
 
 	len = strlen(str) + 2;
-	memmove(copy, str, len - 3);
+	(void) memmove(copy, str, len - 3);
 	copy[len - 3] = 'l';
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
