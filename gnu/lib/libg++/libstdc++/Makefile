@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/04/04 23:34:25 phil Exp $
+#	$NetBSD: Makefile,v 1.4 1996/12/20 01:04:27 cgd Exp $
 
 LIB=	stdc++
 
@@ -18,6 +18,7 @@ ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc rx.c \
 CXXFLAGS+=  -nostdinc++ 
 CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=	    noman
+NOLINT=	    nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
