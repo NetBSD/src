@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.7 1999/08/05 14:57:38 minoura Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.8 1999/09/25 21:19:48 is Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -82,8 +82,8 @@ mappedcopyin(f, t, count)
 	register size_t count;
 {
 	register caddr_t fromp = f, top = t;
-	register vm_offset_t kva;
-	vm_offset_t upa;
+	register vaddr_t kva;
+	paddr_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
@@ -99,7 +99,7 @@ mappedcopyin(f, t, count)
 	if (CADDR1 == 0)
 		CADDR1 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
 
-	kva = (vm_offset_t)CADDR1;
+	kva = (vaddr_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
 	alignable = (off == ((u_long)top & PAGE_MASK));
 	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
@@ -138,8 +138,8 @@ mappedcopyout(f, t, count)
 	register size_t count;
 {
 	register caddr_t fromp = f, top = t;
-	register vm_offset_t kva;
-	vm_offset_t upa;
+	register vaddr_t kva;
+	paddr_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
@@ -155,7 +155,7 @@ mappedcopyout(f, t, count)
 	if (CADDR2 == 0)
 		CADDR2 = (caddr_t) uvm_km_valloc(kernel_map, NBPG);
 
-	kva = (vm_offset_t) CADDR2;
+	kva = (vaddr_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
 	alignable = (off == ((u_long)fromp & PAGE_MASK));
 	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
