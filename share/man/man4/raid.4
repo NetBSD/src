@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.28 2004/02/29 23:46:04 wiz Exp $
+.\"     $NetBSD: raid.4,v 1.29 2004/03/05 14:43:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,21 +149,21 @@ If all of the components are consistent among themselves, the RAID set
 will configure normally.
 .Pp
 Component labels are also used to support the auto-detection and
-auto-configuration of RAID sets.  A RAID set can be flagged as
-auto-configurable, in which case it will be configured automatically
+autoconfiguration of RAID sets.  A RAID set can be flagged as
+autoconfigurable, in which case it will be configured automatically
 during the kernel boot process.  RAID file systems which are
 automatically configured are also eligible to be the root file system.
 There is currently only limited support (alpha and pmax architectures)
 for booting a kernel directly from a RAID 1 set, and no support for
 booting from any other RAID sets.  To use a RAID set as the root
 file system, a kernel is usually obtained from a small non-RAID
-partition, after which any auto-configuring RAID set can be used for the
+partition, after which any autoconfiguring RAID set can be used for the
 root file system.  See
 .Xr raidctl 8
-for more information on auto-configuration of RAID sets.
-Note that with auto-configuration of RAID sets, it is no longer
+for more information on autoconfiguration of RAID sets.
+Note that with autoconfiguration of RAID sets, it is no longer
 necessary to hard-code SCSI IDs of drives.
-The auto-configuration code will
+The autoconfiguration code will
 correctly configure a device even after any number of the components
 have had their device IDs changed or device names changed.
 .Pp
@@ -228,7 +228,7 @@ to the kernel configuration file.  The
 argument (
 .Sq 4 ,
 in this case), specifies the number of RAIDframe drivers to configure.
-To turn on component auto-detection and auto-configuration of RAID
+To turn on component auto-detection and autoconfiguration of RAID
 sets, simply add:
 .Bd -unfilled -offset indent
 options RAID_AUTOCONFIG
@@ -241,7 +241,7 @@ All component partitions must be of the type
 (e.g. 4.2BSD) or
 .Dv FS_RAID .
 The use of the latter is strongly encouraged, and is required if
-auto-configuration of the RAID set is desired.  Since RAIDframe leaves
+autoconfiguration of the RAID set is desired.  Since RAIDframe leaves
 room for disklabels, RAID components can be simply raw disks, or
 partitions which use an entire disk.
 .Pp
