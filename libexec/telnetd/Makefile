@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/07/27 04:16:20 scottr Exp $
+#	$NetBSD: Makefile,v 1.14 1998/07/27 04:45:23 scottr Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -22,7 +22,6 @@ LDADD+=	-lutil -ltermcap -ltelnet
 .include <bsd.prog.mk>
 
 .else	# EXPORTABLE_SYSTEM
-.include <bsd.obj.mk>
 .include <bsd.man.mk>
 .endif	# EXPORTABLE_SYSTEM
 
