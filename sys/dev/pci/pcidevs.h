@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.282 2000/12/14 04:06:05 onoe Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.283 2000/12/23 10:13:21 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.276 2000/12/14 04:05:38 onoe Exp 
+ *	NetBSD: pcidevs,v 1.277 2000/12/23 10:11:55 tsutsui Exp 
  */
 
 /*
@@ -622,6 +622,8 @@
 #define	PCI_PRODUCT_ACC_2051_ISA	0x5842		/* 2051 PCI Single Chip Solution (ISA bridge) */
 
 /* Acard products */
+#define	PCI_PRODUCT_ACARD_AEC6210U	0x0001		/* AEC6210U/UF UDMA IDE Controller */
+#define	PCI_PRODUCT_ACARD_AEC6260	0x0007		/* AEC6260 UDMA IDE Controller */
 #define	PCI_PRODUCT_ACARD_AEC6710	0x8002		/* AEC6710 SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712UW	0x8010		/* AEC6712UW SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712U	0x8020		/* AEC6712U SCSI */
