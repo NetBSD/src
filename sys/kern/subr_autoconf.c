@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.62.6.2 2002/03/26 17:09:53 eeh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.62.6.3 2002/04/06 16:04:31 eeh Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Eduardo E. Horvath
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62.6.2 2002/03/26 17:09:53 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.62.6.3 2002/04/06 16:04:31 eeh Exp $");
 
 #include "opt_ddb.h"
 
@@ -207,7 +207,8 @@ locset(struct device *d, struct cfdata *cf)
 	char buf[32];
 
 	dev_setprop(d, "cd-name", cf->cf_driver->cd_name, 
-		strlen(cf->cf_driver->cd_name) + 1, PROP_STRING, (!cold));
+		strlen(cf->cf_driver->cd_name) + 1, 
+		PROP_STRING|PROP_CONST, (!cold));
 
 	for (i=0; cf->cf_locnames[i]; i++) {
 		sprintf(buf, "loc-%s", cf->cf_locnames[i]);
@@ -306,6 +307,10 @@ config_search_ad(cfmatch_t fn, struct device *parent, void *aux,
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
 				mapply(&m, cf, child);
+	}
+	if (m.match == NULL && child != NULL) {
+		/* Consume the device if we failed to match */
+		config_detach(child, 0);
 	}
 	return (m.match);
 }
@@ -971,7 +976,7 @@ dev_setprop(struct device *dev, const char *name, void *val,
 	if (devprop_debug)
 		printf("dev_setprop(%p, %s, %p %s, %ld, %x, %d)\n", 
 		       dev, name, val, (PROP_TYPE(type) == PROP_STRING) ? 
-		       (char *)val : "", len, type, wait);
+		       (char *)val : "", (u_long)len, type, wait);
 #endif
 
 	return (prop_set(devpropdb, dev, name, val, len, type, wait));
@@ -986,15 +991,17 @@ dev_getprop(struct device *dev, const char *name, void *val,
 #ifdef DEBUG
 	if (devprop_debug) {
 		printf("dev_getprop(%p, %s, %p, %ld, %p, %d)\n", 
-		       dev, name, val, len, type, search);
+		       dev, name, val, (u_long)len, type, search);
 	}
 #endif
 	rv = prop_get(devpropdb, dev, name, val, len, type);
+#if defined(dev_mdgetprop)
 	if (rv == -1) {
 		/* Not found -- try md_getprop */
 		rv = dev_mdgetprop(dev, name, val,
 			len, type);
 	}
+#endif
 	if ((rv == -1) && search) {
 		if (dev->dv_parent)
 			/* Tail recursion -- there should be no stack growth. */
@@ -1026,6 +1033,29 @@ dev_copyprops(struct device *src, struct device *dest, int wait)
 {
 	return (prop_copy(devpropdb, src, dest, wait));
 }
+
+/* 
+ * For debug: print some of the properties associated with a device.
+ *
+ * XXX not reentrant.
+ */
+#ifdef DEBUG
+void
+dev_dumprops(struct device *dev)
+{
+	size_t len;
+	int i;
+	static char buf[2048];
+
+	len = prop_list(devpropdb, dev, buf, sizeof(buf));
+
+	printf("Device %p has:\n", dev);
+	while (i < len) {
+		printf("%s\n", &buf[i]);
+		i += strlen(&buf[i]);
+	}
+}
+#endif
 
 #ifdef DDB
 void
