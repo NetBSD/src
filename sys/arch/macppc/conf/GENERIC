@@ -1,6 +1,6 @@
-#	$NetBSD: GENERIC,v 1.37 1999/09/19 22:02:38 matt Exp $
+#	$NetBSD: GENERIC,v 1.38 1999/10/15 07:55:08 tsubai Exp $
 #
-# POWERMAC config file
+#	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
@@ -120,8 +120,9 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
-#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
+cbb*	at pci? dev? function ?		# PCI-CardBus bridge
 obio0	at pci? dev ? function ?
+#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
 nsphy*	at mii? phy ?			# NS83840 PHYs
 
@@ -138,6 +139,17 @@ zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
+
+cardslot* at cbb?
+cardbus* at cardslot?
+pcmcia*	at cardslot?
+
+#com*	at pcmcia? function ?		# Modems and serial cards
+wdc*	at pcmcia? function ?		# PCMCIA IDE controllers
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ex*	at cardbus?			# 3Com 3C575TX
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
