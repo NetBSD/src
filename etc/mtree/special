@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.30.4.6 2002/02/23 16:06:20 he Exp $
+#	$NetBSD: special,v 1.30.4.7 2002/02/26 21:01:55 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -48,7 +48,7 @@ mail.rc		type=file mode=0644 uname=root gname=wheel
 mailer.conf	type=file mode=0644 uname=root gname=wheel
 man.conf	type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
-mk.conf		type=file mode=0644 uname=root gname=wheel
+mk.conf		type=file mode=0644 uname=root gname=wheel optional
 moduli		type=file mode=0444 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.conf	type=file mode=0644 uname=root gname=wheel
