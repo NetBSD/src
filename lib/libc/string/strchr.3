@@ -34,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strchr.3	8.2 (Berkeley) 4/19/94
-.\"	$NetBSD: strchr.3,v 1.8 2002/02/07 07:00:32 ross Exp $
+.\"	$NetBSD: strchr.3,v 1.9 2002/08/11 07:36:19 yamt Exp $
 .\"
-.Dd April 19, 1994
+.Dd August 11, 2002
 .Dt STRCHR 3
 .Os
 .Sh NAME
@@ -71,6 +71,18 @@ The function
 returns a pointer to the located character, or
 .Dv NULL
 if the character does not appear in the string.
+.Sh EXAMPLES
+After the following call to
+.Fn strchr ,
+.Va p
+will point to the string
+.Qq oobar :
+.Bd -literal -offset indent
+char *p;
+char *s = "foobar";
+
+p = strchr(s, 'o');
+.Ed
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
