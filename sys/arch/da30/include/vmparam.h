@@ -1,3 +1,5 @@
+/*	$NetBSD: vmparam.h,v 1.3 1994/10/26 02:34:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
- *	from: @(#)vmparam.h	8.2 (Berkeley) 4/19/94
- *	$Id: vmparam.h,v 1.2 1994/06/18 12:10:38 paulus Exp $
+ *	@(#)vmparam.h	8.2 (Berkeley) 4/19/94
  */
 
 /*

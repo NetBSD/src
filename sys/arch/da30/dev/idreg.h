@@ -1,3 +1,5 @@
+/*	$NetBSD: idreg.h,v 1.3 1994/10/26 02:33:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)idreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: idreg.h,v 1.2 1994/07/08 12:02:30 paulus Exp $
+ *	@(#)idreg.h	7.1 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcb.h,v 1.3 1994/10/26 02:33:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: pcb.h 1.14 91/03/25$
  *
- *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
- *	$Id: pcb.h,v 1.2 1994/06/18 12:10:31 paulus Exp $
+ *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
 #include <machine/frame.h>
