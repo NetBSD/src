@@ -1,4 +1,6 @@
-/*	$NetBSD: mips_param.h,v 1.15 1999/12/04 21:20:48 ragge Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.16 2000/01/09 13:24:15 simonb Exp $	*/
+
+#include <machine/cpu.h>
 
 /*
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
