@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.8 1999/01/24 12:57:38 mycroft Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.9 1999/01/24 13:34:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,11 +191,10 @@ ipflow_fastforward(
 	/*
 	 * Everything checks out and so we can forward this packet.
 	 * Modify the TTL and incrementally change the checksum.
-	 * On little endian machine, the TTL is in LSB position 
-	 * (so we can simply add) while on big-endian it's in the
-	 * MSB position (so we have to do two calculation; the first
-	 * is the add and second is to wrap the results into 17 bits,
-	 * 16 bits and a carry).  
+	 * 
+	 * This method of adding the checksum works on either endian CPU.
+	 * If htons() is inlined, all the arithmetic is folded; otherwise
+	 * the htons()s are combined by CSE due to the __const__ attribute.
 	 */
 	ip->ip_ttl -= IPTTLDEC;
 	if (ip->ip_sum >= 0xffff - htons(IPTTLDEC << 8))
