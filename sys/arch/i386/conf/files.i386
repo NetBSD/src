@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.194 2001/09/10 10:08:10 fvdl Exp $
+#	$NetBSD: files.i386,v 1.195 2001/09/15 01:10:10 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -143,8 +143,6 @@ device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
-define	agpbus { }
-
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -152,7 +150,9 @@ define	agpbus { }
 #
 
 include	"dev/pci/files.pci"
+include "dev/pci/files.agp"
 file	arch/i386/pci/pci_machdep.c	pci
+file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/i386/pci/pcibios.c		pcibios
 file	arch/i386/pci/pci_intr_fixup.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/piix.c		pcibios & pcibios_intr_fixup
@@ -173,18 +173,6 @@ device	pchb: pcibus, agpbus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
-
-# AGP control devices inside PCI-Host bridges
-device 	agp
-attach 	agp at agpbus
-file 	dev/pci/agp.c			agp			needs-flag
-file 	dev/pci/agp_ali.c		agp
-file 	dev/pci/agp_amd.c		agp
-file 	dev/pci/agp_intel.c		agp
-file 	dev/pci/agp_sis.c		agp
-file 	dev/pci/agp_via.c		agp
-file	dev/pci/agp_i810.c		agp
-file 	arch/i386/pci/agp_machdep.c	agp
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
