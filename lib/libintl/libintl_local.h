@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.7 2004/01/18 08:40:40 yamt Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.8 2004/09/23 16:44:26 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -30,7 +30,9 @@
 
 #define MO_MAGIC		0x950412de
 #define MO_MAGIC_SWAPPED	0xde120495
-#define MO_REVISION		0
+#define MO_GET_REV_MAJOR(r)	(((r) >> 16) & 0xFFFF)
+#define MO_GET_REV_MINOR(r)	((r) & 0xFFFF)
+#define MO_MAKE_REV(maj, min)	(((maj) << 16) | (min))
 
 #define GETTEXT_MMAP_MAX	(1024 * 1024)	/*XXX*/
 
@@ -45,11 +47,24 @@ struct mo {
 	u_int32_t mo_ttable;	/* T: translated text table offset */
 	u_int32_t mo_hsize;	/* S: size of hashing table */
 	u_int32_t mo_hoffset;	/* H: offset of hashing table */
+	/* rev 0.1 / 1.1 */
+	/* system dependent string support */
+	u_int32_t mo_sysdep_nsegs;	/* number of sysdep segments */
+	u_int32_t mo_sysdep_segoff;	/* offset of sysdep segment table */
+	u_int32_t mo_sysdep_nstring;	/* number of strings */
+	u_int32_t mo_sysdep_otable;	/* offset of original text table */
+	u_int32_t mo_sysdep_ttable;	/* offset of translated text table */
 } __attribute__((__packed__));
 
 struct moentry {
 	u_int32_t len;		/* strlen(str), so region will be len + 1 */
 	u_int32_t off;		/* offset of \0-terminated string */
+} __attribute__((__packed__));
+
+struct mosysdepstr
+{
+	u_int32_t off;		/* offset of seed text */
+	struct moentry segs[1];	/* text segments */
 } __attribute__((__packed__));
 
 /* libintl internal data format */
@@ -66,6 +81,8 @@ struct mo_h {
 	struct moentry_h *mo_ttable;	/* T: translated text table offset */
 	const char *mo_header;
 	char *mo_charset;
+	u_int32_t mo_hsize;	/* S: size of hashing table */
+	u_int32_t *mo_htable;	/* H: hashing table */
 };
 
 struct mohandle {
@@ -85,4 +102,7 @@ struct domainbinding {
 extern struct domainbinding *__bindings;
 extern char __current_domainname[PATH_MAX];
 
+__BEGIN_DECLS
 const char *__gettext_iconv __P((const char *, struct domainbinding *));
+u_int32_t __intl_string_hash __P((const char *));
+__END_DECLS
