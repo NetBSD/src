@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.10 2000/04/19 13:41:29 blymn Exp $	*/
+/*	$NetBSD: termcap.h,v 1.11 2000/05/20 13:55:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,8 @@ int   t_getent	__P((struct tinfo **, const char *));
 int   t_getnum  __P((struct tinfo *, const char *));
 int   t_getflag __P((struct tinfo *, const char *));
 char *t_getstr  __P((struct tinfo *, const char *, char **, size_t *));
-int   t_getterm(struct tinfo *info, char **area, size_t *limit);
+char *t_agetstr(struct tinfo *, const char *, char **, char **);
+int   t_getterm(struct tinfo *, char **, size_t *);
 int   t_goto    __P((struct tinfo *, const char *, int, int, char *, size_t));
 int   t_puts    __P((struct tinfo *, const char *, int,
 		     void (*)(char, void *), void *));
