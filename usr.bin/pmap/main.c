@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2003/03/29 18:01:21 he Exp $ */
+/*	$NetBSD: main.c,v 1.7 2003/04/04 03:49:20 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2003/03/29 18:01:21 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2003/04/04 03:49:20 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -78,6 +78,14 @@ u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose, recurse, page_size;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
 rlim_t maxssiz;
+
+void (*process_map)(kvm_t *, struct kinfo_proc2 *,
+		    struct kbit *, const char *);
+void (*dump_vm_map)(kvm_t *, struct kinfo_proc2 *,
+		    struct kbit *, struct kbit *, const char *);
+size_t (*dump_vm_map_entry)(kvm_t *, struct kinfo_proc2 *,
+			    struct kbit *, struct kbit *, int);
+void (*dump_amap)(kvm_t *, struct kbit *);
 
 struct nlist ksyms[] = {
 	{ "_maxsmap" },
@@ -121,6 +129,11 @@ struct nlist kmaps[] = {
 	{ NULL }
 };
 
+#define VMSPACE_ADDRESS		1
+#define VM_MAP_ADDRESS		2
+#define VM_MAP_ENTRY_ADDRESS	3
+#define AMAP_ADDRESS		4
+
 void check_fd(int);
 int using_lockdebug(kvm_t *);
 void load_symbols(kvm_t *);
@@ -131,11 +144,13 @@ main(int argc, char *argv[])
 {
 	kvm_t *kd;
 	pid_t pid;
-	int many, ch, rc;
+	int which, many, ch, rc;
 	char errbuf[_POSIX2_LINE_MAX + 1];
 	struct kinfo_proc2 *kproc;
-	char *kmem, *kernel;
+	char *kmem, *kernel, *t;
 	gid_t egid;
+	struct kbit kbit, *vmspace;
+	u_long address;
 
 	egid = getegid();
 	if (setegid(getgid()) == -1)
@@ -146,13 +161,34 @@ main(int argc, char *argv[])
 	check_fd(STDERR_FILENO);
 
 	pid = -1;
-	verbose = debug = 0;
+	which = verbose = debug = 0;
 	print_all = print_map = print_maps = print_solaris = print_ddb = 0;
 	recurse = 0;
 	kmem = kernel = NULL;
+	address = 0;
+	vmspace = &kbit;
 
-	while ((ch = getopt(argc, argv, "aD:dlmM:N:p:PRrsvx")) != -1) {
+	while ((ch = getopt(argc, argv, "A:aD:dE:lM:mN:Pp:RrS:sV:vx")) != -1) {
 		switch (ch) {
+		case 'A':
+		case 'E':
+		case 'S':
+		case 'V':
+			if (which != 0)
+				errx(1, "use only one of -A, -E, -S, or -V");
+			errno = 0;
+			address = strtoul(optarg, &t, 0);
+			if (*t != '\0')
+				errx(1, "%s is not a valid address", optarg);
+			if (errno != 0)
+				err(1, "%s is not a valid address", optarg);
+			switch (ch) {
+			case 'A':	which = AMAP_ADDRESS;		break;
+			case 'E':	which = VM_MAP_ENTRY_ADDRESS;	break;
+			case 'S':	which = VMSPACE_ADDRESS;	break;
+			case 'V':	which = VM_MAP_ADDRESS;		break;
+			}
+			break;
 		case 'a':
 			print_all = 1;
 			break;
@@ -160,7 +196,12 @@ main(int argc, char *argv[])
 			print_ddb = 1;
 			break;
 		case 'D':
-			debug = strtol(optarg, NULL, 0);
+			errno = 0;
+			debug = strtoul(optarg, &t, 0);
+			if (*t != '\0')
+				errx(1, "%s is not a valid number", optarg);
+			if (errno != 0)
+				err(1, "%s is not a valid number", optarg);
 			break;
 		case 'l':
 			print_maps = 1;
@@ -175,7 +216,14 @@ main(int argc, char *argv[])
 			kernel = optarg;
 			break;
 		case 'p':
-			pid = strtol(optarg, NULL, 0);
+			errno = 0;
+			pid = strtol(optarg, &t, 0);
+			if (pid < 0)
+				errno = EINVAL;
+			if (*t != '\0')
+				errx(1, "%s is not a valid pid", optarg);
+			if (errno != 0)
+				err(1, "%s is not a valid pid", optarg);
 			break;
 		case 'P':
 			pid = getpid();
@@ -195,8 +243,10 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-adlmPsv] [-D number] "
-				"[-M core] [-N system] [-p pid] [pid ...]\n",
+			fprintf(stderr, "usage: %s [-adlmPRsv] [-A address] "
+				"[-D number] [-E address] [-M core]\n"
+				"\t[-N system] [-S address] [-V address] "
+				"[-p pid] [pid ...]\n",
 				getprogname());
 			exit(1);
 		}
@@ -213,7 +263,7 @@ main(int argc, char *argv[])
 		print_solaris = 1;
 
 	/* get privs back if it appears to be safe, otherwise toss them */
-	if (kernel == NULL && kmem == NULL)
+	if (kernel == NULL && kmem == NULL && address == 0)
 		rc = setegid(egid);
 	else
 		rc = setgid(getgid());
@@ -229,17 +279,62 @@ main(int argc, char *argv[])
 	/* get "bootstrap" addresses from kernel */
 	load_symbols(kd);
 
-	if (! using_lockdebug(kd))
+	if (! using_lockdebug(kd)) {
 		process_map = PMAPFUNC(process_map,regular);
-	else
+		dump_vm_map = PMAPFUNC(dump_vm_map,regular);
+		dump_vm_map_entry = PMAPFUNC(dump_vm_map_entry,regular);
+		dump_amap = PMAPFUNC(dump_amap,regular);
+	}
+	else {
 		process_map = PMAPFUNC(process_map,lockdebug);
+		dump_vm_map = PMAPFUNC(dump_vm_map,lockdebug);
+		dump_vm_map_entry = PMAPFUNC(dump_vm_map_entry,lockdebug);
+		dump_amap = PMAPFUNC(dump_amap,lockdebug);
+	}
+
+	if (address) {
+		struct kbit kbit2, *at = &kbit2;
+
+		memset(vmspace, 0, sizeof(*vmspace));
+		A(at) = address;
+		S(at) = -1;
+
+		switch (which) {
+		    case VMSPACE_ADDRESS:
+			/* (kd, kproc, vmspace, thing) */
+			(*process_map)(kd, NULL, at, "vm_map");
+			break;
+		    case VM_MAP_ADDRESS:
+			/* (kd, proc, vmspace, vm_map, thing) */
+			(*dump_vm_map)(kd, NULL, vmspace, at, "vm_map");
+			break;
+		    case VM_MAP_ENTRY_ADDRESS:
+			/* (kd, proc, vmspace, vm_map_entry, 0) */
+			(*dump_vm_map_entry)(kd, NULL, vmspace, at, 0);
+			break;
+		    case AMAP_ADDRESS:
+			/* (kd, amap) */
+			(*dump_amap)(kd, at);
+			break;
+		}
+		exit(0);
+	}
 
 	do {
 		if (pid == -1) {
 			if (argc == 0)
 				pid = getppid();
 			else {
-				pid = strtol(argv[0], NULL, 0);
+				errno = 0;
+				pid = strtol(argv[0], &t, 0);
+				if (pid < 0)
+					errno = EINVAL;
+				if (*t != '\0')
+					errx(1, "%s is not a valid pid",
+					    argv[0]);
+				if (errno != 0)
+					err(1, "%s is not a valid pid",
+					    argv[0]);
 				argv++;
 				argc--;
 			}
@@ -267,7 +362,7 @@ main(int argc, char *argv[])
 				printf("kernel:\n");
 		}
 
-		(*process_map)(kd, pid, kproc);
+		(*process_map)(kd, kproc, vmspace, NULL);
 		pid = -1;
 	} while (argc > 0);
 

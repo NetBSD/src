@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2003/03/28 23:10:33 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.15 2003/04/04 03:49:20 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.14 2003/03/28 23:10:33 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.15 2003/04/04 03:49:20 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -52,11 +52,6 @@ __RCSID("$NetBSD: pmap.c,v 1.14 2003/03/28 23:10:33 atatat Exp $");
 #include "pmap.h"
 #include "main.h"
 
-static void dump_vm_map(kvm_t *, pid_t, struct kinfo_proc2 *, struct kbit *,
-	struct kbit *, char *);
-static size_t dump_vm_map_entry(kvm_t *, pid_t, struct kinfo_proc2 *,
-	struct kbit *, struct kbit *, int);
-static void dump_amap(kvm_t *, struct kbit *);
 static void dump_vm_anon(kvm_t *, struct vm_anon **, int);
 static char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	struct kbit *, struct kbit *);
@@ -69,23 +64,21 @@ static int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 int heapfound;
 
 void
-PMAPFUNC(process_map,VERSION)(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
+PMAPFUNC(process_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
+			      struct kbit *vmspace, const char *thing)
 {
-	struct kbit kbit[2], *vmspace, *vm_map;
-	char *thing;
+	struct kbit kbit, *vm_map = &kbit;
 
-	vmspace = &kbit[0];
-	vm_map = &kbit[1];
-
-	A(vmspace) = 0;
-	A(vm_map) = 0;
-
-	if (pid > 0) {
+	if (proc) {
 		heapfound = 0;
 		A(vmspace) = (u_long)proc->p_vmspace;
 		S(vmspace) = sizeof(struct vmspace);
-		KDEREF(kd, vmspace);
 		thing = "proc->p_vmspace.vm_map";
+	} else if (S(vmspace) == -1) {
+		heapfound = 0;
+		/* A(vmspace) set by caller */
+		S(vmspace) = sizeof(struct vmspace);
+		/* object identified by caller */
 	} else {
 		heapfound = 1; /* but really, do kernels have a heap? */
 		A(vmspace) = 0;
@@ -94,7 +87,9 @@ PMAPFUNC(process_map,VERSION)(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 	}
 
 	S(vm_map) = sizeof(struct vm_map);
-	if (pid > 0) {
+
+	if (S(vmspace) != 0) {
+		KDEREF(kd, vmspace);
 		A(vm_map) = A(vmspace) + offsetof(struct vmspace, vm_map);
 		memcpy(D(vm_map, vm_map), &D(vmspace, vmspace)->vm_map,
 		       S(vm_map));
@@ -103,17 +98,23 @@ PMAPFUNC(process_map,VERSION)(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
 		KDEREF(kd, vm_map);
 	}
 
-	(*dump_vm_map)(kd, pid, proc, vmspace, vm_map, thing);
+	PMAPFUNC(dump_vm_map,VERSION)(kd, proc, vmspace, vm_map, thing);
 }
 
-static void
-dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
-	struct kbit *vmspace, struct kbit *vm_map, char *mname)
+void
+PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
+	struct kbit *vmspace, struct kbit *vm_map, const char *mname)
 {
 	struct kbit kbit[2], *header, *vm_map_entry;
 	struct vm_map_entry *last, *next;
 	size_t total;
 	u_long addr, end;
+
+	if (S(vm_map) == -1) {
+		heapfound = 1;
+		S(vm_map) = sizeof(struct vm_map);
+		KDEREF(kd, vm_map);
+	}
 
 	header = &kbit[0];
 	vm_map_entry = &kbit[1];
@@ -124,7 +125,7 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 	S(header) = sizeof(struct vm_map_entry);
 	memcpy(D(header, vm_map_entry), &D(vm_map, vm_map)->header, S(header));
 
-	if (pid > 0 && (debug & PRINT_VMSPACE)) {
+	if (S(vmspace) != 0 && (debug & PRINT_VMSPACE)) {
 		printf("proc->p_vmspace %p = {", P(vmspace));
 		printf(" vm_refcnt = %d,", D(vmspace, vmspace)->vm_refcnt);
 		printf(" vm_shm = %p,\n", D(vmspace, vmspace)->vm_shm);
@@ -190,7 +191,7 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 			printf("\t%*s([ %s ])\n", indent(2), "", name);
 	}
 
-	(*dump_vm_map_entry)(kd, pid, proc, vmspace, header, 1);
+	PMAPFUNC(dump_vm_map_entry,VERSION)(kd, proc, vmspace, header, 1);
 
 	/*
 	 * we're not recursing into a submap, so print headers
@@ -244,8 +245,8 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 			       page_size,
 			       (D(vm_map_entry, vm_map_entry)->start - end) /
 			       1024);
-		total += (*dump_vm_map_entry)(kd, pid, proc, vmspace,
-		    vm_map_entry, 0);
+		total += PMAPFUNC(dump_vm_map_entry,VERSION)(kd, proc,
+		    vmspace, vm_map_entry, 0);
 
 		end = D(vm_map_entry, vm_map_entry)->end;
 	}
@@ -265,9 +266,10 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 	}
 }
 
-static size_t
-dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
-	struct kbit *vmspace, struct kbit *vm_map_entry, int ishead)
+size_t
+PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
+	struct kinfo_proc2 *proc, struct kbit *vmspace,
+	struct kbit *vm_map_entry, int ishead)
 {
 	struct kbit kbit[3];
 	struct kbit *uvm_obj, *vp, *vfs;
@@ -276,6 +278,12 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 	char *name;
 	dev_t dev;
 	ino_t inode;
+
+	if (S(vm_map_entry) == -1) {
+		heapfound = 1;
+		S(vm_map_entry) = sizeof(struct vm_map_entry);
+		KDEREF(kd, vm_map_entry);
+	}
 
 	uvm_obj = &kbit[0];
 	vp = &kbit[1];
@@ -325,7 +333,7 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		P(amap) = vme->aref.ar_amap;
 		S(amap) = sizeof(struct vm_amap);
 		KDEREF(kd, amap);
-		dump_amap(kd, amap);
+		PMAPFUNC(dump_amap,VERSION)(kd, amap);
 	}
 
 	if (ishead)
@@ -538,21 +546,27 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		P(submap) = vme->object.sub_map;
 		S(submap) = sizeof(*vme->object.sub_map);
 		KDEREF(kd, submap);
-		(*dump_vm_map)(kd, pid, proc, vmspace, submap, "submap");
+		PMAPFUNC(dump_vm_map,VERSION)(kd, proc, vmspace, submap, "submap");
 		recurse--;
 	}
 
 	return (sz);
 }
 
-static void
-dump_amap(kvm_t *kd, struct kbit *amap)
+void
+PMAPFUNC(dump_amap,VERSION)(kvm_t *kd, struct kbit *amap)
 {
 	struct vm_anon **am_anon;
 	int *am_slots;
 	int *am_bckptr;
 	int *am_ppref;
 	size_t i, r, l, e;
+
+	if (S(amap) == -1) {
+		heapfound = 1;
+                S(amap) = sizeof(struct vm_amap);
+		KDEREF(kd, amap);
+	}
 
 	printf("%*s  amap %p = { am_l = <struct simplelock>, am_ref = %d, "
 	       "am_flags = %x,\n"

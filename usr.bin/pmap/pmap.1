@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.9 2003/03/28 23:10:33 atatat Exp $
+.\"	$NetBSD: pmap.1,v 1.10 2003/04/04 03:49:20 atatat Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl adlmPRsv
+.Op Fl A Ar address
 .Op Fl D Ar number
+.Op Fl E Ar address
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl S Ar address
+.Op Fl V Ar address
 .Op Fl p Ar pid
 .Op Ar pid ...
 .Sh DESCRIPTION
@@ -71,6 +75,17 @@ then information for the kernel's memory map is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width XXXnumberXX
+.It Fl A Ar address
+Dumps the vm_amap structure found at
+.Ar address .
+.It Fl a
+Display
+.Dq all
+information from the process's memory map.
+This output
+mode is an amalgam of the contents of the Solaris, Linux, and
+.Nx
+style output modes.
 .It Fl D Ar number
 Enable various debug facilities.
 The
@@ -95,25 +110,6 @@ dump the vm_anon data from the am_anon array, if present (requires 0x20)
 .It Cm 0x1000
 dump the namei cache as it is traversed
 .El
-.It Fl M Ar core
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/kmem .
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /netbsd .
-.It Fl P
-Causes
-.Nm
-to print information about itself.
-.It Fl a
-Display
-.Dq all
-information from the process's memory map.
-This output
-mode is an amalgam of the contents of the Solaris, Linux, and
-.Nx
-style output modes.
 .It Fl d
 Dumps the vm_map and vm_map_entry structures in a style similar to
 that of
@@ -122,6 +118,9 @@ When combined with the
 .Fl v
 option, the device number, inode number, name, vnode addresses, or
 other identifying information from the vm_map_entries will be printed.
+.It Fl E Ar address
+Dumps the vm_map_entry structure found at
+.Ar address .
 .It Fl l
 Dumps information in a format like the contents of the maps
 pseudo-file under the
@@ -133,6 +132,10 @@ file system.
 When combined with the
 .Fl v
 option, identifiers for all entries are printed.
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/kmem .
 .It Fl m
 Dumps information in the same format as the map pseudo-file of the
 .Pa /proc
@@ -141,6 +144,13 @@ When the
 .Fl v
 option is also given, device number, inode number, and filename
 or other identifying information is printed.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the default
+.Pa /netbsd .
+.It Fl P
+Causes
+.Nm
+to print information about itself.
 .It Fl p Ar pid
 Tells
 .Nm
@@ -160,10 +170,18 @@ to print the entries of the submap as well.
 The submap output is
 indented, and does not affect any total printed at the bottom of the
 output.
+.It Fl S Ar address
+Dumps the vmspace structure found at
+.Ar address .
 .It Fl s
 The Solaris style output format, modeled after the Solaris command of
 the same name.
 This is the default output style.
+.It Fl V Ar address
+Dumps the vm_map structure found at
+.Ar address .
+Note that if you print the vm_map of a process, there may not be a way
+to properly determine which map entries are related to the stack.
 .It Fl v
 Verbose output.
 When used with
@@ -418,3 +436,15 @@ uses
 .Xr kvm 3
 to read the requested data directly from kernel memory, no such
 limitation exists.
+.Pp
+If any of the
+.Fl A ,
+.Fl E ,
+.Fl M ,
+.Fl N ,
+.Fl S ,
+or
+.Fl V
+options are used, any extra privileges that
+.Nm
+has will be dropped.
