@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.119 2003/08/19 20:08:38 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.120 2003/08/23 06:46:44 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1141,7 +1141,7 @@ sys/nfs/nfs_node.c				patch
 	system.
 	[christos, ticket #1171]
 
-sys/dev/pci/if_wi_pci.c				1.21,1.23 via patch
+sys/dev/pci/if_wi_pci.c				1.21,1.23 (via patch)
 
 	Support the so-called ``PLX'' bridge for wi(4).
 	[grant, ticket #1281]
@@ -1156,13 +1156,13 @@ sys/dev/ic/dpt.c				1.38
 	Fix printf format warnings in previous.
 	[jmc, ticket #1403]
 
-build.sh					1.113 via patch
+build.sh					1.113 (via patch)
 distrib/cats/instkernel/Makefile		patch
 distrib/shark/instkernel/instkernel/Makefile	patch
 distrib/walnut/md-kernel/Makefile		patch
 sys/arch/cats/conf/Makefile.cats.inc		patch
 sys/arch/walnut/conf/Makefile.walnut.inc	patch
-tools/host-mkdep/Makefile			1.8 via patch
+tools/host-mkdep/Makefile			1.8 (via patch)
 
 	Fix 2 remaining places items are depending on execute permissions
 	coming out from a cvs checkout on scripts.
@@ -1174,7 +1174,7 @@ usr.sbin/sup/source/supfilesrv.c		1.26
 	Debian bug id "sup 1.8-8, bug #175327" - temporary file symlink race
 	[itojun, ticket #1391]
 
-sys/arch/i386/include/param.h			1.55 via patch
+sys/arch/i386/include/param.h			1.55 (via patch)
 
 	Allow redefiniton of KERNBASE.  Because the type of this constant is
 	different for locore.S and the rest of the kernel, if you redefine
@@ -1233,7 +1233,7 @@ sys/dev/microcode/siop/esiop.out		regenerate
 	time. Problem reported and fix tested by Andreas Wrede.
 	[bouyer, ticket #1399]
 
-sys/dev/pci/if_fxp_pci.c			1.34 via patch
+sys/dev/pci/if_fxp_pci.c			1.34 (via patch)
 
 	Add support for another Intel Pro/100 variant. From Quentin Garnier in
 	private mail.
@@ -1245,7 +1245,7 @@ sys/dev/ata/wd.c				1.256
 	the first 128GB). Tested by Andreas Johansson.
 	[bouyer, ticket #1370]
 
-sys/dev/pci/pciide.c				1.193 via patch
+sys/dev/pci/pciide.c				1.193 (via patch)
 
 	Add support for ICH5, from Quentin Garnier in private mail.
 	[bouyer, ticket #1367]
@@ -1257,8 +1257,8 @@ sys/dev/pci/pciide_pdc202xx_reg.h		1.10
 	newer. From Andreas Johansson in private mail.
 	[bouyer, ticket #1369]
 
-distrib/notes/i386/hardware			1.112 via patch
-share/man/man4/pciide.4				1.49 via patch
+distrib/notes/i386/hardware			1.112 (via patch)
+share/man/man4/pciide.4				1.49 (via patch)
 
 	Note ICH5 support.
 	[bouyer, ticket #1371]
@@ -1273,7 +1273,7 @@ sys/arch/i386/i386/machdep.c			1.529
 	but atm the infrastructure for this is missing.)
 	[drochner, ticket #1415]
 
-sys/arch/sparc/sparc/pmap.c			1.259 via patch
+sys/arch/sparc/sparc/pmap.c			1.259 (via patch)
 
 	Make sure to flush any user register windows when stealing PMEGs in
 	me_alloc() (and SMEGs in region_alloc()). Should fix PR#14180.
@@ -1330,4 +1330,9 @@ gnu/dist/postfix/src/trivial-rewrite/resolve.c	patch
 
 	Fix remote DoS vulnerability described in CAN-2003-0540.
 	[taca, ticket #1396]
+
+sys/dev/pci/ahc_pci.c				1.43 (via patch)
+
+	Make ahc(4) to recognize Adaptec 2915LP Ultra160 SCSI adapter.
+	[taca, ticket #1430]
 
