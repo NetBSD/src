@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.76 2003/07/27 09:35:47 lukem Exp $
+#	$NetBSD: sys.mk,v 1.77 2003/07/27 19:08:03 uwe Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -32,8 +32,7 @@ CC?=		cc
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "vax"
 DBG?=	-O2
-.elif ${MACHINE_ARCH} == "hppa" || \
-      ${MACHINE_ARCH} == "sh5el" || ${MACHINE_ARCH} == "sh5eb"
+.elif ${MACHINE_ARCH} == "hppa"
 DBG?=
 .elif ${MACHINE_ARCH} == "sparc64"
 DBG?=	-O -ffixed-g4	#Hack for embedany memory model compatibility
