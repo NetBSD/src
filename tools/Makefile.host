@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.14 2001/12/12 02:48:46 tv Exp $
+#	$NetBSD: Makefile.host,v 1.15 2001/12/12 12:07:26 lukem Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -36,7 +36,6 @@ ${var}:=	${${var}}
 HOSTPROGNAME?=	${HOSTPROG}
 HOST_BINDIR?=	${TOOLDIR}/bin
 HOST_CPPFLAGS:=	-Wall ${HOST_CPPFLAGS} ${CPPFLAGS}
-NOMAN=		# defined
 .undef LINKS
 
 SRCS?=		${HOSTPROG}.c
