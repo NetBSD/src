@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.4 2001/11/14 15:27:10 briggs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/04/24 05:20:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,5 +57,61 @@ pthread__sp(void)
  * See comment in pthread_switch.S about STACK_SWITCH.
  */
 #define STACKSPACE	32	/* room for 8 integer values */
+
+/*
+ * Conversions between struct reg and struct mcontext. Used by
+ * libpthread_dbg.
+ */
+
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
+	(reg)->r_gs  = (uc)->uc_mcontext.__gregs[_REG_GS];		\
+	(reg)->r_fs  = (uc)->uc_mcontext.__gregs[_REG_FS];		\
+	(reg)->r_es  = (uc)->uc_mcontext.__gregs[_REG_ES];		\
+	(reg)->r_ds  = (uc)->uc_mcontext.__gregs[_REG_DS];		\
+	(reg)->r_edi = (uc)->uc_mcontext.__gregs[_REG_EDI];		\
+	(reg)->r_esi = (uc)->uc_mcontext.__gregs[_REG_ESI];		\
+	(reg)->r_ebp = (uc)->uc_mcontext.__gregs[_REG_EBP];		\
+	(reg)->r_ebx = (uc)->uc_mcontext.__gregs[_REG_EBX];		\
+	(reg)->r_edx = (uc)->uc_mcontext.__gregs[_REG_EDX];		\
+	(reg)->r_ecx = (uc)->uc_mcontext.__gregs[_REG_ECX];		\
+	(reg)->r_eax = (uc)->uc_mcontext.__gregs[_REG_EAX];		\
+	(reg)->r_eip = (uc)->uc_mcontext.__gregs[_REG_EIP];		\
+	(reg)->r_cs  = (uc)->uc_mcontext.__gregs[_REG_CS];		\
+	(reg)->r_eflags  = (uc)->uc_mcontext.__gregs[_REG_EFL];		\
+	(reg)->r_esp = (uc)->uc_mcontext.__gregs[_REG_UESP];		\
+	(reg)->r_ss  = (uc)->uc_mcontext.__gregs[_REG_SS];		\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
+	(uc)->uc_mcontext.__gregs[_REG_GS]  = (reg)->r_gs;		\
+	(uc)->uc_mcontext.__gregs[_REG_FS]  = (reg)->r_fs; 		\
+	(uc)->uc_mcontext.__gregs[_REG_ES]  = (reg)->r_es; 		\
+	(uc)->uc_mcontext.__gregs[_REG_DS]  = (reg)->r_ds; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EDI] = (reg)->r_edi; 		\
+	(uc)->uc_mcontext.__gregs[_REG_ESI] = (reg)->r_esi; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EBP] = (reg)->r_ebp; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EBX] = (reg)->r_ebx; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EDX] = (reg)->r_edx; 		\
+	(uc)->uc_mcontext.__gregs[_REG_ECX] = (reg)->r_ecx; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EAX] = (reg)->r_eax; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EIP] = (reg)->r_eip; 		\
+	(uc)->uc_mcontext.__gregs[_REG_CS]  = (reg)->r_cs; 		\
+	(uc)->uc_mcontext.__gregs[_REG_EFL] = (reg)->r_eflags; 		\
+	(uc)->uc_mcontext.__gregs[_REG_UESP]= (reg)->r_esp;		\
+	(uc)->uc_mcontext.__gregs[_REG_SS]  = (reg)->r_ss; 		\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)		       		\
+	memcpy((freg)->__data,						\
+        (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
+	sizeof(struct fpreg))
+
+#define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
+	memcpy(								\
+        (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
+	(freg)->__data, sizeof(struct fpreg));				\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
