@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.32 1999/08/31 08:58:47 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.33 2000/05/13 20:50:15 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.32 1999/08/31 08:58:47 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.33 2000/05/13 20:50:15 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,9 +149,9 @@ setjobctl(on)
 			return;
 		}
 #endif
-		setsignal(SIGTSTP);
-		setsignal(SIGTTOU);
-		setsignal(SIGTTIN);
+		setsignal(SIGTSTP, 0);
+		setsignal(SIGTTOU, 0);
+		setsignal(SIGTTIN, 0);
 		setpgid(0, rootpid);
 #ifdef OLD_TTY_DRIVER
 		ioctl(2, TIOCSPGRP, (char *)&rootpid);
@@ -165,9 +165,9 @@ setjobctl(on)
 #else
 		tcsetpgrp(2, initialpgrp);
 #endif
-		setsignal(SIGTSTP);
-		setsignal(SIGTTOU);
-		setsignal(SIGTTIN);
+		setsignal(SIGTSTP, 0);
+		setsignal(SIGTTOU, 0);
+		setsignal(SIGTTIN, 0);
 	}
 	jobctl = on;
 }
@@ -574,81 +574,33 @@ forkshell(jp, n, mode)
 {
 	int pid;
 	int pgrp;
-	const char *devnull = _PATH_DEVNULL;
-	const char *nullerr = "Can't open %s";
 
 	TRACE(("forkshell(%%%d, 0x%lx, %d) called\n", jp - jobtab, (long)n,
 	    mode));
 	INTOFF;
-	pid = fork();
-	if (pid == -1) {
+	switch (pid = fork()) {
+	case -1:
 		TRACE(("Fork failed, errno=%d\n", errno));
 		INTON;
 		error("Cannot fork");
+		break;
+	case 0:
+		forkchild(jp, n, mode, 0);
+		return 0;
+	default:
+		return forkparent(jp, n, mode, pid);
 	}
-	if (pid == 0) {
-		struct job *p;
-		int wasroot;
-		int i;
+}
 
-		TRACE(("Child shell %d\n", getpid()));
-		wasroot = rootshell;
-		rootshell = 0;
-		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
-			if (p->used)
-				freejob(p);
-		closescript();
-		INTON;
-		clear_traps();
-#if JOBS
-		jobctl = 0;		/* do job control only in root shell */
-		if (wasroot && mode != FORK_NOJOB && mflag) {
-			if (jp == NULL || jp->nprocs == 0)
-				pgrp = getpid();
-			else
-				pgrp = jp->ps[0].pid;
-			setpgid(0, pgrp);
-			if (mode == FORK_FG) {
-				/*** this causes superfluous TIOCSPGRPS ***/
-#ifdef OLD_TTY_DRIVER
-				if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
-					error("TIOCSPGRP failed, errno=%d", errno);
-#else
-				if (tcsetpgrp(2, pgrp) < 0)
-					error("tcsetpgrp failed, errno=%d", errno);
-#endif
-			}
-			setsignal(SIGTSTP);
-			setsignal(SIGTTOU);
-		} else if (mode == FORK_BG) {
-			ignoresig(SIGINT);
-			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0) &&
-			    ! fd0_redirected_p ()) {
-				close(0);
-				if (open(devnull, O_RDONLY) != 0)
-					error(nullerr, devnull);
-			}
-		}
-#else
-		if (mode == FORK_BG) {
-			ignoresig(SIGINT);
-			ignoresig(SIGQUIT);
-			if ((jp == NULL || jp->nprocs == 0) &&
-			    ! fd0_redirected_p ()) {
-				close(0);
-				if (open(devnull, O_RDONLY) != 0)
-					error(nullerr, devnull);
-			}
-		}
-#endif
-		if (wasroot && iflag) {
-			setsignal(SIGINT);
-			setsignal(SIGQUIT);
-			setsignal(SIGTERM);
-		}
-		return pid;
-	}
+int
+forkparent(jp, n, mode, pid)
+	union node *n;
+	struct job *jp;
+	int mode;
+	pid_t pid;
+{
+	int pgrp;
+	
 	if (rootshell && mode != FORK_NOJOB && mflag) {
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
@@ -669,6 +621,81 @@ forkshell(jp, n, mode)
 	INTON;
 	TRACE(("In parent shell:  child = %d\n", pid));
 	return pid;
+}
+
+void
+forkchild(jp, n, mode, vforked)
+	union node *n;
+	struct job *jp;
+	int mode;
+	int vforked;
+{
+	struct job *p;
+	int wasroot;
+	int i;
+	int pgrp;
+	const char *devnull = _PATH_DEVNULL;
+	const char *nullerr = "Can't open %s";
+
+	TRACE(("Child shell %d\n", getpid()));
+	wasroot = rootshell;
+	if (!vforked) {
+		rootshell = 0;
+		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
+			if (p->used)
+				freejob(p);
+	}
+	closescript(vforked);
+	INTON;
+	clear_traps(vforked);
+#if JOBS
+	if (!vforked)
+		jobctl = 0;		/* do job control only in root shell */
+	if (wasroot && mode != FORK_NOJOB && mflag) {
+		if (jp == NULL || jp->nprocs == 0)
+			pgrp = getpid();
+		else
+			pgrp = jp->ps[0].pid;
+		setpgid(0, pgrp);
+		if (mode == FORK_FG) {
+			/*** this causes superfluous TIOCSPGRPS ***/
+#ifdef OLD_TTY_DRIVER
+			if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
+				error("TIOCSPGRP failed, errno=%d", errno);
+#else
+			if (tcsetpgrp(2, pgrp) < 0)
+				error("tcsetpgrp failed, errno=%d", errno);
+#endif
+		}
+		setsignal(SIGTSTP, vforked);
+		setsignal(SIGTTOU, vforked);
+	} else if (mode == FORK_BG) {
+		ignoresig(SIGINT, vforked);
+		ignoresig(SIGQUIT, vforked);
+		if ((jp == NULL || jp->nprocs == 0) &&
+		    ! fd0_redirected_p ()) {
+			close(0);
+			if (open(devnull, O_RDONLY) != 0)
+				error(nullerr, devnull);
+		}
+	}
+#else
+	if (mode == FORK_BG) {
+		ignoresig(SIGINT, vforked);
+		ignoresig(SIGQUIT, vforked);
+		if ((jp == NULL || jp->nprocs == 0) &&
+		    ! fd0_redirected_p ()) {
+			close(0);
+			if (open(devnull, O_RDONLY) != 0)
+				error(nullerr, devnull);
+		}
+	}
+#endif
+	if (wasroot && iflag) {
+		setsignal(SIGINT, vforked);
+		setsignal(SIGQUIT, vforked);
+		setsignal(SIGTERM, vforked);
+	}
 }
 
 

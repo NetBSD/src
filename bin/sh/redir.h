@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.10 1996/10/16 15:45:18 christos Exp $	*/
+/*	$NetBSD: redir.h,v 1.11 2000/05/13 20:50:15 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,11 +41,12 @@
 /* flags passed to redirect */
 #define REDIR_PUSH 01		/* save previous values of file descriptors */
 #define REDIR_BACKQ 02		/* save the command output in memory */
+#define REDIR_VFORK 04		/* running under vfork(2), be careful */
 
 union node;
 void redirect __P((union node *, int));
 void popredir __P((void));
 int fd0_redirected_p __P((void));
-void clearredir __P((void));
+void clearredir __P((int));
 int copyfd __P((int, int));
 
