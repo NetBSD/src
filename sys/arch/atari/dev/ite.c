@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.27 2000/01/19 13:23:14 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.28 2000/02/11 21:42:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,15 @@ u_int	ite_confunits;			/* configured units */
 int	start_repeat_timeo = 30;	/* first repeat after x s/100 */
 int	next_repeat_timeo  = 10;	/* next repeat after x s/100 */
 
-int	ite_default_wrap   = 1;		/* you want vtxxx-nam, binpatch */
+/*
+ * Patchable
+ */
+int ite_default_x      = 0;	/* def leftedge offset			*/
+int ite_default_y      = 0;	/* def topedge offset			*/
+int ite_default_width  = 640;	/* def width				*/
+int ite_default_depth  = 1;	/* def depth				*/
+int ite_default_height = 400;	/* def height				*/
+int ite_default_wrap   = 1;	/* if you want vtxxx-nam -> binpatch	*/
 
 struct	ite_softc con_itesoftc;
 u_char	cons_tabs[MAX_TABS];
@@ -691,7 +699,7 @@ int	flag;
 		ip->flags &= ~ITE_ACTIVE;
 }
 
-void
+static void
 ite_switch(unit)
 int	unit;
 {

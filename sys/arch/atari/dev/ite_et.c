@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.8 1998/01/12 18:04:09 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.9 2000/02/11 21:42:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -87,13 +87,6 @@ void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
 void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
 void et_scroll __P((struct ite_softc *ip, int sy, int sx, int count,
     int dir));
-
-/* XXX: move to ite.c */
-extern int ite_default_x;
-extern int ite_default_y;
-extern int ite_default_width;
-extern int ite_default_depth;
-extern int ite_default_height;
 
 /*
  * grfet config stuff
@@ -517,7 +510,7 @@ et_clear(ip, sy, sx, h, w)
 	int h;
 	int w;
 {
-	/* cl_clear and cl_scroll both rely on ite passing arguments
+	/* et_clear and et_scroll both rely on ite passing arguments
 	 * which describe continuous regions.  For a VT200 terminal,
 	 * this is safe behavior.
 	 */
