@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.4 2002/01/07 11:10:26 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.5 2002/01/07 12:22:02 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -74,6 +74,8 @@ main(int argc, char **argv)
 	int mib[2];
 	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0;
 	struct clockinfo clockinfo;
+
+	setprogname(argv[0]);
 
 	eth_if_name = NULL;
 	access_concentrator = NULL;
@@ -344,9 +346,23 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n",
-	"usage: ispppcontrol [-v] ifname [{my|his}auth{proto|name|secret}=...]",
-	"       ispppcontrol [-v] ifname callin|always");
+	const char * prog = getprogname();
+	fprintf(stderr,
+	    "usage:\n"
+	    "       %s [-v] ifname [{my|his}auth{proto|name|secret}=...] \\\n"
+            "                      [callin] [always] [{no}rechallenge]\n"
+	    "           to set authentication names, passwords\n"
+	    "           and (optional) paramaters\n"
+	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|max-auth-failure=count\n"
+	    "           to set general parameters\n"
+	    "   or\n"
+	    "       %s -e ethernet-ifname ifname\n"
+	    "           to connect an ethernet interface for PPPoE\n"
+	    "       %s [-a access-concentrator-name] [-s service-name] ifname\n"
+	    "           to specify (optional) data for PPPoE sessions\n"
+	    "       %s -d ifname\n"
+	    "           to dump the current PPPoE session state\n"
+	    , prog, prog, prog, prog, prog);
 	exit(EX_USAGE);
 }
 
