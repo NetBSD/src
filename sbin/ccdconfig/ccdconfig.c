@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.21 1998/07/31 01:34:20 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.22 1998/08/10 18:03:04 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.21 1998/07/31 01:34:20 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.22 1998/08/10 18:03:04 msaitoh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@ main(argc, argv)
 
 	egid = getegid();
 	setegid(getgid());
-	while ((ch = getopt(argc, argv, "cCf:gM:N:suUv")) != -1) {
+	while ((ch = getopt(argc, argv, "cCf:gM:N:uUv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = CCD_CONFIG;
@@ -728,8 +728,6 @@ usage()
 	fprintf(stderr, "       %s -u [-v] ccd [...]\n", __progname);
 	fprintf(stderr, "       %s -U [-v] [-f config_file]\n", __progname);
 	fprintf(stderr, "       %s -g [-M core] [-N system] %s\n", __progname,
-	    "[ccd [...]]");
-	fprintf(stderr, "       %s -s [-M core] [-N system] %s\n", __progname,
 	    "[ccd [...]]");
 	exit(1);
 }
