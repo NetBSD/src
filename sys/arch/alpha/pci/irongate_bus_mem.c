@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.4 2000/06/29 08:58:47 mrg Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.5 2000/11/29 05:56:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4 2000/06/29 08:58:47 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.5 2000/11/29 05:56:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,12 +53,16 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4 2000/06/29 08:58:47 mrg Exp
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
+void	irongate_bus_mem_init_hook(bus_space_tag_t, void *);
+
 #define	CHIP		irongate
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct irongate_config *)(v))->ic_mallocsafe)
 #define	CHIP_MEM_EXTENT(v)	(((struct irongate_config *)(v))->ic_mem_ex)
 
 #define	CHIP_MEM_SYS_START(v)	IRONGATE_MEM_BASE
+
+#define	CHIP_MEM_INIT_HOOK(t, v) irongate_bus_mem_init_hook((t), (v))
 
 /* 
  * AMD 751 core logic appears on EV6.  We require at least EV56 
@@ -67,3 +71,29 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4 2000/06/29 08:58:47 mrg Exp
 __asm(".arch ev6");
 
 #include <alpha/pci/pci_bwx_bus_mem_chipdep.c>
+
+#include <sys/kcore.h>
+
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
+
+void
+irongate_bus_mem_init_hook(bus_space_tag_t t, void *v)
+{
+	int i, error;
+
+	/*
+	 * Since the AMD 751 doesn't have DMA windows, we need to
+	 * allocate RAM out of the extent map.
+	 */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+		    mem_clusters[i].start, mem_clusters[i].size,
+		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		if (error) {
+			printf("WARNING: unable reserve RAM at 0x%lx - 0x%lx\n",
+			    mem_clusters[i].start,
+			    mem_clusters[i].start + (mem_clusters[i].size - 1));
+		}
+	}
+}
