@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.9 1999/01/22 02:36:13 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.10 1999/01/23 01:08:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.9 1999/01/22 02:36:13 thorpej Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.10 1999/01/23 01:08:55 thorpej Exp $");
 #endif
 
 /*
@@ -178,7 +178,7 @@ ypdb_close_map(map)
 
 #ifdef DEBUG
 	syslog(LOG_DEBUG,
-	    "ypdb_close_map: closing map %s in domain %s [db=%#x]",
+	    "ypdb_close_map: closing map %s in domain %s [db=%p]",
 	    map->map, map->dom->domain, map->db);
 #endif
 
@@ -232,7 +232,7 @@ ypdb_close_db(db)
 {
 
 #ifdef DEBUG
-	syslog(LOG_DEBUG, "ypdb_close_db(%#x)", db);
+	syslog(LOG_DEBUG, "ypdb_close_db(%p)", db);
 #endif
 
 #ifndef OPTIMIZE_DB
@@ -314,7 +314,7 @@ ypdb_open_db(domain, map, status, map_info)
 	if (m) {
 #ifdef DEBUG
 		syslog(LOG_DEBUG,
-		    "ypdb_open_db: cached open: domain=%s, map=%s, db=%#x,",
+		    "ypdb_open_db: cached open: domain=%s, map=%s, db=%p,",
 		    domain, map, m->db);
 		syslog(LOG_DEBUG,
 		    "\tdbdev %d new %d; dbino %d new %d; dbmtime %d new %d",
@@ -465,7 +465,7 @@ retryopen:
 
 #ifdef DEBUG
 	syslog(LOG_DEBUG,
-	    "ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=%#x",
+	    "ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=%p",
 	    domain, map, m->host_lookup, m->secure, m->db);
 #endif
 
