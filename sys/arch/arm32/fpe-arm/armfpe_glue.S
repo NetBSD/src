@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.10 1997/07/08 19:41:29 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.11 1997/10/14 07:56:48 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,6 +42,7 @@
 
 #define CHECK_BEFORE_USERRET
 #include "assym.h"
+#include <machine/asm.h>
 #include <machine/cpu.h>
 
 ip	.req	r12
@@ -56,47 +57,27 @@ pc	.req	r15
  * Glue for calling the core entry points
  */
 
-	.global	_arm_fpe_core_disable
-_arm_fpe_core_disable:
+ENTRY(arm_fpe_core_disable)
 	stmfd	sp!, {r0-r7, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	bl	_fpe_arm_core_disable
 	ldmfd	sp!, {r0-r7, pc}
 
 
-	.global	_arm_fpe_core_enable
-_arm_fpe_core_enable:
+ENTRY(arm_fpe_core_enable)
 	stmfd	sp!, {r0-r7, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	bl	_fpe_arm_core_enable
 	ldmfd	sp!, {r0-r7, pc}
 
 
-	.global	_arm_fpe_core_initws
-_arm_fpe_core_initws:
+ENTRY(arm_fpe_core_initws)
 	stmfd	sp!, {r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_initws
 	ldmfd	sp!, {r10, pc}
 
 
-	.global	_arm_fpe_core_abort
-_arm_fpe_core_abort:
+ENTRY(arm_fpe_core_abort)
 	stmfd	sp!, {r1-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
@@ -106,13 +87,8 @@ _arm_fpe_core_abort:
 
 /* Only needs to preserve r10 */
 
-	.global	_arm_fpe_core_initcontext
-_arm_fpe_core_initcontext:
+ENTRY(arm_fpe_core_initcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_initcontext
 	ldmfd	sp!, {r0-r7, r10, pc}
@@ -120,13 +96,8 @@ _arm_fpe_core_initcontext:
 
 /* Only needs to preserve r10 */
 
-	.global	_arm_fpe_core_changecontext
-_arm_fpe_core_changecontext:
+ENTRY(arm_fpe_core_changecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_changecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
@@ -134,25 +105,15 @@ _arm_fpe_core_changecontext:
 
 /* All regs preerved */
 
-	.global	_arm_fpe_core_shutdown
-_arm_fpe_core_shutdown:
+ENTRY(arm_fpe_core_shutdown)
 	stmfd	sp!, {r0-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	bl	_fpe_arm_core_shutdown
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
 /* Preserve r10 */
-	.global	_arm_fpe_core_savecontext
-_arm_fpe_core_savecontext:
+ENTRY(arm_fpe_core_savecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
@@ -162,13 +123,8 @@ _arm_fpe_core_savecontext:
 
 /* Preserve r10 */
 
-	.global	_arm_fpe_core_loadcontext
-_arm_fpe_core_loadcontext:
+ENTRY(arm_fpe_core_loadcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	mov	r0, r1
 	bl	_fpe_arm_core_loadcontext
@@ -177,13 +133,8 @@ _arm_fpe_core_loadcontext:
 
 /* Only needs to preserve r10 */
 
-	.global	_arm_fpe_core_activatecontext
-_arm_fpe_core_activatecontext:
+ENTRY(arm_fpe_core_activatecontext)
 	stmfd	sp!, {r0-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_activatecontext
 	ldmfd	sp!, {r0-r7, r10, pc}
@@ -191,13 +142,8 @@ _arm_fpe_core_activatecontext:
 
 /* Only needs to preserve r10 */
 
-	.global	_arm_fpe_core_deactivatecontext
-_arm_fpe_core_deactivatecontext:
+ENTRY(arm_fpe_core_deactivatecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	bl	_fpe_arm_core_deactivatecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
@@ -293,13 +239,8 @@ Lcurpriority:
 
 #endif
 
-	.global	_arm_fpe_post_proc_glue
-_arm_fpe_post_proc_glue:
+ENTRY(arm_fpe_post_proc_glue)
 	stmfd	sp!, {r0-r3, lr}
-#if defined(GPROF) && defined(PROFILE_ASM) && 0
-	mov	ip, lr
-	bl	mcount
-#endif
 
 #ifdef CHECK_BEFORE_USERRET
 
@@ -446,13 +387,8 @@ Lwe_need_userret:
  * Call back routine from FPE when the an exception occurs
  */
 
-	.global	_arm_fpe_exception_glue
-_arm_fpe_exception_glue:
+ENTRY(arm_fpe_exception_glue)
 	stmfd	sp!, {r0-r6, r10-r12, lr}
-#if defined(GPROF) && defined(PROFILE_ASM) && 0
-	mov	ip, lr
-	bl	mcount
-#endif
 
 	mov	r10, r0
 
@@ -547,8 +483,7 @@ _arm_fpe_exception_glue:
 	ldmfd	sp!, {pc}^
 
 
-	.global	_arm_fpe_set_exception_mask
-_arm_fpe_set_exception_mask:
+ENTRY(arm_fpe_set_exception_mask)
 	rfs	r1			/* Get FP status */
 	bic	r1, r1, #0x001f0000	/* Zero exception mask */
 	and	r0, r0, #0x0000001f	/* Mask new bits */
