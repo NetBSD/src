@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.15 1999/10/17 23:39:16 cgd Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.16 1999/10/31 15:49:27 chs Exp $	*/
 
 /*
  * 
@@ -872,9 +872,9 @@ coda_inactive(v)
 
     if (IS_UNMOUNTING(cp)) {
 #ifdef	DEBUG
-	printf("coda_inactive: IS_UNMOUNTING use %d: vp %p, cp %p\n", vp->v_usecount, vp, cp);
+	printf("coda_inactive: IS_UNMOUNTING use %ld: vp %p, cp %p\n", vp->v_usecount, vp, cp);
 	if (cp->c_ovp != NULL)
-	    printf("coda_inactive: cp->ovp != NULL use %d: vp %p, cp %p\n",
+	    printf("coda_inactive: cp->ovp != NULL use %ld: vp %p, cp %p\n",
 	    	   vp->v_usecount, vp, cp);
 #endif
 	lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
