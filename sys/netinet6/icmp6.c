@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.77 2002/05/24 09:21:30 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.78 2002/05/29 06:55:48 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.77 2002/05/24 09:21:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.78 2002/05/29 06:55:48 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2924,8 +2924,8 @@ icmp6_mtudisc_timeout(rt, r)
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu;
+		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
+			rt->rt_rmx.rmx_mtu = 0;
 	}
 }
 
