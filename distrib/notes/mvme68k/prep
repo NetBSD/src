@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 1999/02/20 16:18:11 scw Exp $	
+.\"	$NetBSD: prep,v 1.5 1999/04/10 16:16:11 scw Exp $	
 .
 mvme68k machines usually need little or no preparation before installing
 .Nx "" ,
@@ -37,16 +37,16 @@ Make sure the RAM size looks ok (if you've got an 8Mb MVME147 or a
 have the same value as I do). Also make sure the clock is ticking:
 .Pp
 .Dl 1x7-Bug\*> Ns Ic time
-.Dl Sunday   12/21/29   16:25:14
+.Dl Sunday   12/21/31   16:25:14
 .Dl 1x7-Bug\*> Ns Ic time
-.Dl Sunday   12/21/29   16:25:15
+.Dl Sunday   12/21/31   16:25:15
 .Dl 1x7-Bug\*>
 .Pp
 Note that
 .Nx
 bases its year at 1968, and adds the year offset in
-the MVME1x7's real-time clock to get the current year. So the '29' here
-equates to 1997. You may have to adjust your clock using the 'set'
+the MVME1x7's real-time clock to get the current year. So the '31' here
+equates to 1999. You may have to adjust your clock using the 'set'
 command to comply with
 .Nx "" 's
 requirements. Don't worry if the "Day of the week" is not correct,
