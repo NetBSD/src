@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.9 2002/11/17 16:51:12 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.10 2002/11/17 18:39:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.9 2002/11/17 16:51:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.10 2002/11/17 18:39:48 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,6 +218,7 @@ mach_sys_map_fd(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	vref(vp);
 
+	DPRINTF(("vm_map_fd: addr = %p len = 0x%08x\n", va, SCARG(uap, size)));
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = (u_long)va;
 	evc.ev_len = SCARG(uap, size);
@@ -231,8 +232,7 @@ mach_sys_map_fd(p, v, retval)
 	if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
 		VOP_UNLOCK(vp, 0);
 
-		DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", 
-		    (void *)evc.ev_addr));
+		DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", va));
 
 		if (SCARG(uap, findspace) == 0)
 			goto bad2;
@@ -246,8 +246,18 @@ mach_sys_map_fd(p, v, retval)
 		}
 		vm_map_unlock(&p->p_vmspace->vm_map);
 
-		DPRINTF(("mach_sys_map_fd: trying at %p\n",
-		    (void *)evc.ev_addr));
+		va = (void *)evc.ev_addr;
+
+		bzero(&evc, sizeof(evc));
+		evc.ev_addr = (u_long)va;
+		evc.ev_len = SCARG(uap, size);
+		evc.ev_prot = VM_PROT_ALL;
+		evc.ev_flags = 0;
+		evc.ev_proc = vmcmd_map_readvn;
+		evc.ev_offset = SCARG(uap, offset);
+		evc.ev_vp = vp;
+
+		DPRINTF(("mach_sys_map_fd: trying at %p\n", va));
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = (*evc.ev_proc)(p, &evc)) != 0)
 			goto bad1;
@@ -269,8 +279,8 @@ bad1:
 bad2:	
 	vrele(vp);
 	FILE_UNUSE(fp, p);
-	DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", 
-	    (void *)evc.ev_addr));
+	DPRINTF(("mach_sys_map_fd: mapping at %p failed, error = %d\n", 
+	    (void *)evc.ev_addr, error));
 	return error;
 }
  
