@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.49 1997/03/18 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.50 1997/10/09 12:59:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -321,8 +321,8 @@ extern struct cdevsw cdevsw[];
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* symbolic sleep message strings */
-extern char devopn[], devio[], devwait[], devin[], devout[];
-extern char devioc[], devcls[];
+extern	const char devopn[], devio[], devwait[], devin[], devout[];
+extern	const char devioc[], devcls[];
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.97 1997/10/09 12:49:52 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.98 1997/10/09 12:59:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -68,14 +68,14 @@ static void ttyrubo __P((struct tty *, int));
 static int proc_compare __P((struct proc *, struct proc *));
 
 /* Symbolic sleep message strings. */
-char ttclos[]	= "ttycls";
-char ttopen[]	= "ttyopn";
-char ttybg[]	= "ttybg";
+const char	ttclos[] = "ttycls";
+const char	ttopen[] = "ttyopn";
+const char	ttybg[] = "ttybg";
 #ifdef REAL_CLISTS
-char ttybuf[]	= "ttybuf";
+const char	ttybuf[] = "ttybuf";
 #endif
-char ttyin[]	= "ttyin";
-char ttyout[]	= "ttyout";
+const char	ttyin[] = "ttyin";
+const char	ttyout[] = "ttyout";
 
 /*
  * Used to determine whether we still have a connection.  This is true in
