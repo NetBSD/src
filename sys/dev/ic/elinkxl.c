@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.71 2003/07/06 09:12:59 jdolecek Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.72 2003/11/10 12:30:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.71 2003/07/06 09:12:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.72 2003/11/10 12:30:27 drochner Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -945,17 +945,20 @@ ex_media_stat(ifp, req)
 	struct ifmediareq *req;
 {
 	struct ex_softc *sc = ifp->if_softc;
+	u_int16_t help;
 
 	if (sc->ex_conf & EX_CONF_MII) {
 		mii_pollstat(&sc->ex_mii);
 		req->ifm_status = sc->ex_mii.mii_media_status;
 		req->ifm_active = sc->ex_mii.mii_media_active;
-	} else {
+	} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING))
+		   == (IFF_UP|IFF_RUNNING)) {
 		GO_WINDOW(4);
 		req->ifm_status = IFM_AVALID;
 		req->ifm_active = sc->ex_mii.mii_media.ifm_cur->ifm_media;
-		if (bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-		    ELINK_W4_MEDIA_TYPE) & LINKBEAT_DETECT)
+		help = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+					ELINK_W4_MEDIA_TYPE);
+		if (help & LINKBEAT_DETECT)
 			req->ifm_status |= IFM_ACTIVE;
                 GO_WINDOW(1);
 	}
