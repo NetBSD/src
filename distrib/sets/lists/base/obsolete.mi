@@ -1,6 +1,7 @@
-# $NetBSD: obsolete.mi,v 1.12 2000/08/06 22:35:40 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.13 2000/11/08 10:49:28 wiz Exp $
 /bin/rcorder
 /dev/log
+/etc/disklabels
 /etc/rc.d/xntpd
 /sbin/dumpfs
 /sbin/dumplfs
