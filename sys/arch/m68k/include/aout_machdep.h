@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.2 1997/04/09 23:34:29 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.3 2001/05/18 15:34:28 fredette Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,9 @@
 #ifndef _M68K_EXEC_H_
 #define _M68K_EXEC_H_
 
+#ifndef	__LDPGSZ
 #define __LDPGSZ	8192
+#endif
 
 /*
  * Override the N_PAGSIZ() macro.
