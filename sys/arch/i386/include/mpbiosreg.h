@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosreg.h,v 1.1.2.3 2000/02/29 13:17:51 sommerfeld Exp $ */
+/* $NetBSD: mpbiosreg.h,v 1.1.2.4 2000/09/23 17:25:34 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,9 @@ struct mpbios_int {
 	u_int8_t  src_bus_id;
 	u_int8_t  src_bus_irq;
 	u_int8_t  dst_apic_id;
+#define MPS_ALL_APICS	0xff
 	u_int8_t  dst_apic_int;
 };
+
 
 #endif /* !_I386_MPBIOSREG_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.8 2000/09/21 13:24:08 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.9 2000/09/23 17:25:33 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ ioapic_find(int apicid)
 {
 	struct ioapic_softc *sc;
 
-	if (apicid == 0xff) {
+	if (apicid == MPS_ALL_APICS) {	/* XXX mpbios-specific */
 		/*
 		 * XXX kludge for all-ioapics interrupt support
 		 * on single ioapic systems
