@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.2 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: buffer.c,v 1.3 2003/09/16 13:22:57 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: buffer.c,v 1.16 2002/06/26 08:54:18 markus Exp $");
-__RCSID("$NetBSD: buffer.c,v 1.2 2003/07/10 01:09:43 lukem Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.3 2003/09/16 13:22:57 christos Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -71,6 +71,7 @@ buffer_append(Buffer *buffer, const void *data, u_int len)
 void *
 buffer_append_space(Buffer *buffer, u_int len)
 {
+	u_int newlen;
 	void *p;
 
 	if (len > 0x100000)
@@ -100,11 +101,12 @@ restart:
 		goto restart;
 	}
 	/* Increase the size of the buffer and retry. */
-	buffer->alloc += len + 32768;
-	if (buffer->alloc > 0xa00000)
+	newlen = buffer->alloc + len + 32768;
+	if (newlen > 0xa00000)
 		fatal("buffer_append_space: alloc %u not supported",
-		    buffer->alloc);
-	buffer->buf = xrealloc(buffer->buf, buffer->alloc);
+		    newlen);
+	buffer->buf = xrealloc(buffer->buf, newlen);
+	buffer->alloc = newlen;
 	goto restart;
 	/* NOTREACHED */
 }
