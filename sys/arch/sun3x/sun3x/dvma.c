@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.6 1997/10/16 16:11:17 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.7 1998/01/22 22:12:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ dvma_mapin(kmem_va, len, canwait)
 			panic("dvma_mapin: null page frame");
 #endif	DEBUG
 
-		iommu_enter((tva & DVMA_SLAVE_MASK), pa);
+		iommu_enter((tva & IOMMU_VA_MASK), pa);
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
 			VM_PROT_READ|VM_PROT_WRITE, 1);
 	}
@@ -268,7 +268,7 @@ dvma_mapout(dvma_addr, len)
 	kva -= off;
 	len = round_page(len + off);
 
-	iommu_remove((kva & DVMA_SLAVE_MASK), len);
+	iommu_remove((kva & IOMMU_VA_MASK), len);
 
 	/*
 	 * XXX - don't call pmap_remove() with DVMA space yet.
