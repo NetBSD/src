@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.12 1994/09/30 02:39:13 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.13 1994/10/20 03:56:56 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -626,7 +626,7 @@ number:			if ((dprec = prec) >= 0)
 			PAD(width - realsz, zeroes);
 
 		/* leading zeroes from decimal precision */
-		PAD(dprec - fieldsz, zeroes);
+		PAD(dprec - size, zeroes);
 
 		/* the string or number proper */
 #ifdef FLOATING_POINT
