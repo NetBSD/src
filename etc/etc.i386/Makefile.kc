@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.3 1994/04/21 18:57:19 cgd Exp $
+#	$Id: Makefile.kc,v 1.4 1994/07/18 06:37:20 glass Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -10,7 +10,7 @@ VND_RDEV=	/dev/rvnd0a
 
 ROOTDIRLIST=	/ /bin /dev /instbin /mnt /sbin /usr
 BINDIRLIST=	/usr/bin
-FLOPPYBINS=	echo fsck init mount reboot sh tar test umount
+FLOPPYBINS=	fsck init mount reboot sh tar test umount
 
 all:
 .if !defined(IMAGE) || !defined(KERNEL)
