@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6 1999/03/23 21:19:58 perry Exp $
+.\" $NetBSD: main,v 1.6.2.1 1999/04/03 08:38:59 lukem Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,10 +205,9 @@ RAIDframe, version 1.1, from the Parallel Data Laboratory at Carnegie
 Mellon University, has been integrated.  Supports RAID levels 0, 1, 4,
 5, 6, parity logging, and more.
 .It
-An
-.Pa /etc/nsswitch.conf
-file has been added to the system to specify
-search order for system databases. See the man page for details.
+Luke Mewburn added
+.Xr nsswitch.conf 5
+functionality to the system to specify the search order for system databases.
 .It
 .Xr syslogd 8
 now supports listening on multiple sockets, to make the
