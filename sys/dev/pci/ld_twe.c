@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.3 2001/01/22 17:40:14 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.4 2001/01/22 17:44:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,8 +56,6 @@
 
 #include <machine/bus.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <dev/ldvar.h>
 
 #include <dev/pci/twereg.h>
@@ -70,7 +68,7 @@ struct ld_twe_softc {
 
 static void	ld_twe_attach(struct device *, struct device *, void *);
 static int	ld_twe_dobio(struct ld_twe_softc *, int, void *, int, int,
-			      int, struct twe_context *);
+			     int, struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
@@ -126,7 +124,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 
 static int
 ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
-	      int blkno, int dowrite, struct twe_context *tx)
+	     int blkno, int dowrite, struct buf *bp)
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -160,7 +158,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 		return (rv);
 	}
 
-	if (tx == NULL) {
+	if (bp == NULL) {
 		/*
 		 * Polled commands must not sit on the software queue.  Wait
 		 * up to 2 seconds for the command to complete.
@@ -172,7 +170,9 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 		twe_ccb_free(twe, ccb);
 		splx(s);
 	} else {
-		memcpy(&ccb->ccb_tx, tx, sizeof(struct twe_context));
+		ccb->ccb_tx.tx_handler = ld_twe_handler;
+		ccb->ccb_tx.tx_context = bp;
+		ccb->ccb_tx.tx_dv = (struct device *)sc;
 		twe_ccb_enqueue(twe, ccb);
 		rv = 0;
 	}
@@ -183,19 +183,12 @@ ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 static int
 ld_twe_start(struct ld_softc *ld, struct buf *bp)
 {
-	struct twe_context tx;
 	struct ld_twe_softc *sc;
-	struct twe_softc *twe;
 
 	sc = (struct ld_twe_softc *)ld;
-	twe = (struct twe_softc *)ld->sc_dv.dv_parent;
-
-	tx.tx_handler = ld_twe_handler;
-	tx.tx_context = bp;
-	tx.tx_dv = &ld->sc_dv;
 
 	return (ld_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
-	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx));
+	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }
 
 static void
