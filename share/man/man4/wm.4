@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.1.2.1 2002/06/04 11:43:49 lukem Exp $
+.\"	$NetBSD: wm.4,v 1.1.2.2 2002/11/16 09:54:35 he Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -56,23 +56,38 @@ driver include:
 .It
 Intel i82542 1000BASE-X Ethernet
 .It
-Intel i82543 1000BASE-X Ethernet
+Intel i82543GC 1000BASE-X Ethernet
 .It
-Intel i82543-SC 1000BASE-X Ethernet
+Intel i82543GC 1000BASE-T Ethernet
 .It
-Intel i82543 1000BASE-T Ethernet
+Intel i82544EI 1000BASE-T Ethernet
 .It
-Intel i82544 1000BASE-T Ethernet
+Intel i82544EI 1000BASE-X Ethernet
 .It
-Intel i82544 1000BASE-X Ethernet
+Intel i82544GC 1000BASE-T Ethernet
 .It
-Intel i82544GC 1000BASE-T Ethernet (32- and 64-bit)
+Intel i82544GC (LOM) 1000BASE-T Ethernet
+.It
+Intel i82540EM 1000BASE-T Ethernet
+.It
+Intel i82545EM 1000BASE-T Ethernet
+.It
+Intel i82546EB 1000BASE-T Ethernet
+.Pq dual-port
+.It
+Intel i82545EM 1000BASE-X Ethernet
+.It
+Intel i82546EB 1000BASE-X Ethernet
+.Pq dual-port
+.It
+Intel i82540EM (LOM) 1000BASE-T Ethernet
 .El
 .Pp
 In addition to Intel's own
 .Dq PRO/1000
 line of Gigabit Ethernet interfaces, these chips also appear on
-some processor evaluation boards and in embedded systems.
+some server systems, processor evaluation boards, and in embedded
+systems.
 .\" .Sh DIAGNOSTICS
 .\" XXX too be done.
 .Sh SEE ALSO
