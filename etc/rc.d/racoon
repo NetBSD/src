@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: racoon,v 1.4 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: racoon,v 1.5 2004/12/07 17:37:15 kleink Exp $
 #
 
 # PROVIDE: ike
 # REQUIRE: isdnd kdc ppp
 # BEFORE:  SERVERS
+# KEYWORD: shutdown
 
 $_rc_subr_loaded . /etc/rc.subr
 
