@@ -1,4 +1,4 @@
-/* $NetBSD: printf.s,v 1.4 2001/02/26 14:58:37 is Exp $ */
+/* $NetBSD: printf.s,v 1.5 2001/03/01 21:32:53 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,34 +44,34 @@
 	.text
 	.even
 Lputch:
-	movl	d0,sp@-
+	movl	%d0,sp@-
 	bsr	_C_LABEL(putchar)
-	addql	#4,sp
+	addql	#4,%sp
 	rts
 
 ENTRY_NOPROFILE(printf)
-	movml	#0x0032,sp@-
-	lea	pc@(Lputch:w),a2
-	lea	sp@(20),a1
-	movl	sp@(16),a0
-	movl	pc@(_C_LABEL(SysBase):w),a6
-	jsr	a6@(-0x20a)
-	movml	sp@+, #0x4c00
+	movml	#0x0032,%sp@-
+	lea	%pc@(Lputch:w),%a2
+	lea	%sp@(20),%a1
+	movl	%sp@(16),%a0
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x20a)
+	movml	%sp@+, #0x4c00
 	rts
 #if 0
 Lstorech:
-	movb	d0, a3@+
+	movb	%d0, %a3@+
 	rts
 
 	.globl _sprintf
 ENTRY_NOPROFILE(sprintf)
-	movml	#0x0032,sp@-
-	movl	sp@(16),a3
-	lea	pc@(Lstorech:w),a2
-	lea	sp@(24),a1
-	movl	sp@(20),a0
-	movl	pc@(_C_LABEL(SysBase):w),a6
-	jsr	a6@(-0x20a)
-	movml	sp@+, #0x4c00
+	movml	#0x0032,%sp@-
+	movl	%sp@(16),%a3
+	lea	%pc@(Lstorech:w),%a2
+	lea	%sp@(24),%a1
+	movl	%sp@(20),%a0
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x20a)
+	movml	%sp@+, #0x4c00
 	rts
 #endif
