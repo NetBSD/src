@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.271 2004/11/17 12:51:20 hira Exp $
+.\"	$NetBSD: main,v 1.272 2004/12/03 18:19:13 jklos Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1580,6 +1580,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Min Sik Kim Ta Mt minskim@NetBSD.org
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.org
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.org
+.It Ta John Klos Ta Mt jklos@NetBSD.org
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
 .It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
 .It Ta John Kohl Ta Mt jtk@NetBSD.org
