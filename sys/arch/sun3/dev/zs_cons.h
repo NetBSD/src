@@ -1,3 +1,5 @@
+/*	$NetBSD: zs_cons.h,v 1.3 1998/01/05 07:03:22 perry Exp $	*/
+
 
 struct consdev;
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: promcons.c,v 1.2 1998/01/05 07:03:39 perry Exp $	*/
+
 
 #include <stdarg.h>
 #include <sys/types.h>
