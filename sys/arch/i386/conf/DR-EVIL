@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.21.2.1 2000/08/10 23:10:28 soda Exp $
+#	$NetBSD: DR-EVIL,v 1.21.2.2 2001/04/25 08:58:31 he Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -68,7 +68,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
