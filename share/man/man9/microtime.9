@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.6 2001/09/04 02:51:16 wiz Exp $
+.\"     $NetBSD: microtime.9,v 1.7 2001/09/04 04:03:50 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,11 +59,11 @@ all calls to
 are guaranteed to return a system time greater than or equal to the
 system time returned in any previous calls.
 .Sh SEE ALSO
-\" .Xr hz 9 ,
+.Xr settimeofday 2 ,
 \" .Xr hardclock 9 ,
+.Xr hz 9 ,
 .Xr inittodr 9 ,
-.Xr time 9 ,
-.Xr settimeofday 9
+.Xr time 9
 .Sh CODE REFERENCES
 The implementation of the
 .Fn microtime
