@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.9 1999/01/12 10:38:00 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.10 1999/06/22 11:29:11 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1866,7 +1866,7 @@ adb_read_date_time(unsigned long *time)
 
 	case ADB_HW_PB:
 		pm_read_date_time(time);
-		return -1;
+		return 0;
 
 	case ADB_HW_CUDA:
 		output[0] = 0x02;	/* 2 byte message */
@@ -1918,9 +1918,12 @@ adb_set_date_time(unsigned long time)
 
 		return 0;
 
+	case ADB_HW_PB:
+		pm_set_date_time(time);
+		return 0;
+
 	case ADB_HW_II:
 	case ADB_HW_IISI:
-	case ADB_HW_PB:
 	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
@@ -2131,18 +2134,6 @@ adb_restart()
 
 	case ADB_HW_PB:
 		pm_adb_restart();
-		return;
+		while (1);		/* not return */
 	}
-}
-
-void
-powermac_restart()
-{
-	adb_restart();
-}
-
-void
-powermac_powerdown()
-{
-	adb_poweroff();
 }

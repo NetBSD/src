@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.3 1998/12/07 17:17:14 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.4 1999/06/22 11:29:11 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1165,7 +1165,7 @@ pm_adb_restart()
 {
 	PMData p;
 
-	p.command = 0xd0;	/* reset CPU */
+	p.command = PMU_RESET_CPU;
 	p.num_data = 0;
 	p.s_buf = p.data;
 	p.r_buf = p.data;
@@ -1178,11 +1178,24 @@ pm_read_date_time(time)
 {
 	PMData p;
 
-	p.command = 0x38;	/* read time */
+	p.command = PMU_READ_RTC;
 	p.num_data = 0;
 	p.s_buf = p.data;
 	p.r_buf = p.data;
 	pmgrop(&p);
 
 	bcopy(p.data, time, 4);
+}
+
+void
+pm_set_date_time(time)
+	u_long time;
+{
+	PMData p;
+
+	p.command = PMU_SET_RTC;
+	p.num_data = 4;
+	p.s_buf = p.r_buf = p.data;
+	bcopy(&time, p.data, 4);
+	pmgrop(&p);
 }
