@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.76 2000/02/01 10:21:00 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.77 2000/02/03 08:26:33 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.75 2000/02/01 10:19:51 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.76 2000/02/03 08:25:55 enami Exp 
  */
 
 /*-
@@ -668,6 +668,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Melco WLI-PCM"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ICOM_SL200,
+	    PCMCIA_CIS_ICOM_SL200,
+	    0,
+	    "ICOM Inc",
+	    "Icom SL-200"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -987,6 +994,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Melco Inc",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ICOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "ICOM Inc",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
