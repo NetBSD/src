@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.93 2002/12/23 10:29:57 jdolecek Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.94 2003/01/04 10:07:45 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,7 +341,9 @@ some essential things first.
 message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
 should boot from hard disk.  Follow the instructions in the INSTALL
-document about final configuration of your system.
+document about final configuration of your system.  The afterboot(8)
+manpage is another recommended reading; it contains a list of things
+to be checked after the first complete boot.
 
 At a minimum, you should edit /etc/rc.conf to match your needs. See
 /etc/defaults/rc.conf for the default values.
@@ -350,8 +352,9 @@ At a minimum, you should edit /etc/rc.conf to match your needs. See
 message upgrcomplete
 {The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
 now need to follow the instructions in the INSTALL document as to
-what you need to do to get your system reconfigured for your
-situation.  Your old /etc has been saved as /etc.old.
+what you need to do to get your system reconfigured for your situation.
+Remember to (re)read the afterboot(8) manpage as it may contain new
+items since your last upgrade.  Your old /etc has been saved as /etc.old.
 
 At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user,
@@ -366,7 +369,8 @@ message unpackcomplete
 complete.  Unpacking sets has clobbered the target /etc.  Any /etc.old
 saved by an earlier upgrade was not touched.  You will now need to
 follow the instructions in the INSTALL document to get your system
-reconfigured for your situation.
+reconfigured for your situation.  The afterboot(8) manpage can also be
+of some help.
 
 At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
