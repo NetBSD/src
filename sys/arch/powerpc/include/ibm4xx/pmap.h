@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2002/03/13 00:47:59 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2002/09/22 07:17:19 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -170,6 +170,12 @@ boolean_t check_attr(struct vm_page *, u_int, int);
 int ptereadonly(struct vm_page *);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 int	ctx_alloc(struct pmap*);
 void	ctx_free(struct pmap*);

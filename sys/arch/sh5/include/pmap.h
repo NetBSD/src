@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2002/09/12 12:44:13 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2002/09/22 07:17:20 chs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -100,6 +100,12 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 #define	pmap_wired_count(pm)		((pm)->pm_stats.wired_count)
 
 #define	pmap_phys_address(x)		(x)
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 /* Private pmap data and functions */
 extern int	pmap_initialized;

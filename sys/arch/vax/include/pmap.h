@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2002/05/13 21:11:23 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.55 2002/09/22 07:17:23 chs Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -217,6 +217,12 @@ pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 	if (pmap->pm_p0lr != 0 || pmap->pm_p1lr != 0x200000 ||
 	    (start & KERNBASE) != 0)
 		pmap_protect_long(pmap, start, end, prot);
+}
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
 }
 
 /* Routines that are best to define as macros */
