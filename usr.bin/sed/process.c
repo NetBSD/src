@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.23 1998/08/25 20:59:40 ross Exp $	*/
+/*	$NetBSD: process.c,v 1.24 1998/12/19 22:12:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.23 1998/08/25 20:59:40 ross Exp $");
+__RCSID("$NetBSD: process.c,v 1.24 1998/12/19 22:12:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,7 @@ applies(cp)
 	lastaddr = 0;
 	if (cp->a1 == NULL && cp->a2 == NULL)
 		r = 1;
-	else if (cp->a2)
+	else if (cp->a2) {
 		if (cp->inrange) {
 			if (MATCH(cp->a2)) {
 				cp->inrange = 0;
@@ -305,7 +305,7 @@ applies(cp)
 			r = 1;
 		} else
 			r = 0;
-	else
+	} else
 		r = MATCH(cp->a1);
 	return (cp->nonsel ? ! r : r);
 }
@@ -484,7 +484,8 @@ lputs(s)
 			(void)printf("\\\n");
 			count = 0;
 		}
-		if (isascii(*s) && isprint(*s) && *s != '\\') {
+		if (isascii((unsigned char)*s) && isprint((unsigned char)*s) &&
+		    *s != '\\') {
 			(void)putchar(*s);
 			count++;
 		} else {
@@ -513,6 +514,9 @@ regexec_e(preg, string, eflags, nomatch, slen)
 	size_t slen;
 {
 	int eval;
+#ifndef REG_STARTEND
+	char *buf;
+#endif
 	
 	if (preg == NULL) {
 		if (defpreg == NULL)
@@ -523,11 +527,21 @@ regexec_e(preg, string, eflags, nomatch, slen)
 	/* Set anchors, discounting trailing newline (if any). */
 	if (slen > 0 && string[slen - 1] == '\n')
 		slen--;
+
+#ifndef REG_STARTEND
+	if ((buf = malloc(slen + 1)) == NULL)
+		err(1, "%s", "");
+	(void)memcpy(buf, string, slen);
+	buf[slen] = '\0';
+	eval = regexec(defpreg, buf,
+	    nomatch ? 0 : maxnsub + 1, match, eflags);
+	free(buf);
+#else
 	match[0].rm_so = 0;
 	match[0].rm_eo = slen;
-	
 	eval = regexec(defpreg, string,
 	    nomatch ? 0 : maxnsub + 1, match, eflags | REG_STARTEND);
+#endif
 	switch(eval) {
 	case 0:
 		return (1);
@@ -562,7 +576,7 @@ regsub(sp, string, src)
 	while ((c = *src++) != '\0') {
 		if (c == '&')
 			no = 0;
-		else if (c == '\\' && isdigit(*src))
+		else if (c == '\\' && isdigit((unsigned char)*src))
 			no = *src++ - '0';
 		else
 			no = -1;
