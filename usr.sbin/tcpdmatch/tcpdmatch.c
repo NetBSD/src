@@ -1,3 +1,5 @@
+/*	$NetBSD: tcpdmatch.c,v 1.2 1997/10/11 21:48:52 christos Exp $	*/
+
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
   * 
@@ -13,8 +15,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
+#else
+__RCSID("$NetBSD: tcpdmatch.c,v 1.2 1997/10/11 21:48:52 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -29,10 +36,7 @@ static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #include <syslog.h>
 #include <setjmp.h>
 #include <string.h>
-
-extern void exit();
-extern int optind;
-extern char *optarg;
+#include <stdlib.h>
 
 #ifndef	INADDR_NONE
 #define	INADDR_NONE	(-1)		/* XXX should be 0xffffffff */
@@ -48,8 +52,10 @@ extern char *optarg;
 #include "inetcf.h"
 #include "scaffold.h"
 
-static void usage();
-static void tcpdmatch();
+static void usage __P((char *));
+static void expand __P((char *, char *, struct request_info *));
+static void tcpdmatch __P((struct request_info *));
+int main __P((int, char **));
 
 /* The main program */
 
@@ -80,7 +86,7 @@ char  **argv;
     /*
      * Parse the JCL.
      */
-    while ((ch = getopt(argc, argv, "di:")) != EOF) {
+    while ((ch = getopt(argc, argv, "di:")) != -1) {
 	switch (ch) {
 	case 'd':
 	    hosts_allow_table = "hosts.allow";
