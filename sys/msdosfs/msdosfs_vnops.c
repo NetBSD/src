@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.101 2000/07/25 22:15:00 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.102 2000/07/30 20:16:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -331,10 +331,8 @@ msdosfs_getattr(v)
 		vap->va_ctime = vap->va_mtime;
 	}
 	vap->va_flags = 0;
-	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0) {
-		vap->va_flags |= SF_ARCHIVED;
+	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
 		vap->va_mode  |= S_ARCH1;
-	}
 	vap->va_gen = 0;
 	vap->va_blocksize = pmp->pm_bpcluster;
 	vap->va_bytes =
