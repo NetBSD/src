@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.s,v 1.4.12.1 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: proc_subr.s,v 1.4.12.2 2002/10/05 06:34:37 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,6 @@ ENTRY(setrunqueue)
 	rts
 #ifdef DIAGNOSTIC
 Lset1:
-	jbsr		_C_LABEL(cpu_Debugger)
 	PANIC("setrunqueue")
 #endif
 
