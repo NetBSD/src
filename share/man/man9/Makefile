@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.124 2002/09/29 17:36:16 wiz Exp $
+#       $NetBSD: Makefile,v 1.125 2002/09/29 17:41:44 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -16,8 +16,8 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
 	isapnp.9 itimerfix.9 kcopy.9 \
-	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
-	mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
+	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 mstohz.9 namecache.9 namei.9 need_resched.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
@@ -26,8 +26,7 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
-	signal.9 ltsleep.9 softintr.9 \
-	spl.9 store.9 suser.9 suspendsched.9 \
+	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
 	tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
@@ -200,6 +199,7 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 lockinit.9 lock.9 lockmgr.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
+MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 tsleep.9
 MLINKS+=malloc.9 free.9 malloc.9 malloc_roundup.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 FREE.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
@@ -345,7 +345,6 @@ MLINKS+=signal.9 siginit.9 \
 	signal.9 sendsig.9 \
 	signal.9 sigcode.9 \
 	signal.9 sigtramp.9
-MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 tsleep.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
