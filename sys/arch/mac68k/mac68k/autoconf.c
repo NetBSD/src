@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 1997/09/10 04:22:33 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 1997/11/01 21:11:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,6 +104,11 @@ configure()
 
 	cold = 0;
 }
+
+/* XXX should be passed by bootcode */
+#if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
+int nfs_boot_rfc951 = 1;
+#endif
 
 void
 cpu_rootconf()
