@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.35 2001/12/12 23:50:27 jmc Exp $
+#  $NetBSD: build.sh,v 1.36 2001/12/17 13:16:10 wiz Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -94,19 +94,19 @@ usage () {
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
 	echo "    -b: build nbmake and nbmake wrapper script, if needed"
+	echo "    -D: set DESTDIR to dest"
 	echo "    -d: build a full distribution into DESTDIR (including etc files)"
 	echo "    -j: set NBUILDJOBS to njob"
 	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
 	echo "    -n: show commands that would be executed, but do not execute them"
+	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
 	echo "    -o: set MKOBJDIRS=no (do not create objdirs at start of build)"
+	echo "    -R: build a release (and set RELEASEDIR to release)"
 	echo "    -r: remove contents of TOOLDIR and DESTDIR before building"
+	echo "    -T: set TOOLDIR to tools"
 	echo "    -t: build and install tools only (implies -b)"
 	echo "    -u: set UPDATE"
 	echo "    -w: create nbmake script at wrapper (default TOOLDIR/bin/nbmake-MACHINE)"
-	echo "    -D: set DESTDIR to dest"
-	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
-	echo "    -R: build a release (and set RELEASEDIR to release)"
-	echo "    -T: set TOOLDIR to tools"
 	echo ""
 	echo "Note: if -T is unset and TOOLDIR is not set in the environment,"
 	echo "      nbmake will be [re]built unconditionally."
@@ -343,7 +343,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.35 2001/12/12 23:50:27 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.36 2001/12/17 13:16:10 wiz Exp $
 #
 
 EOF
