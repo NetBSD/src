@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.79 2003/01/23 17:35:32 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.80 2003/02/07 21:44:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.79 2003/01/23 17:35:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.80 2003/02/07 21:44:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ sys_ptrace(l, v, retval)
 		syscallarg(int) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct lwp *lt;
+	struct lwp *lt, *lr;
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
@@ -380,7 +380,15 @@ sys_ptrace(l, v, retval)
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
 			SCHED_LOCK(s);
-			setrunnable(proc_unstop(t));
+			lr = proc_unstop(t);
+			/*
+			 * If the target needs to take a signal, there
+			 * is no running LWP that will see it, and
+			 * there is a LWP sleeping interruptably, then
+			 * get it moving.
+			 */
+			if (lr && (t->p_xstat != 0))
+			    setrunnable(lr);
 			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
