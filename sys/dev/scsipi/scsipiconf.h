@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.22 1998/10/15 05:11:52 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.23 1998/10/15 07:06:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -393,11 +393,11 @@ static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _2btol __P((u_int8_t *bytes))
+static __inline u_int32_t _2btol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _3btol __P((u_int8_t *bytes))
+static __inline u_int32_t _3btol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _4btol __P((u_int8_t *bytes))
+static __inline u_int32_t _4btol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 
 static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes))
@@ -406,11 +406,11 @@ static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _2ltol __P((u_int8_t *bytes))
+static __inline u_int32_t _2ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _3ltol __P((u_int8_t *bytes))
+static __inline u_int32_t _3ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline u_int32_t _4ltol __P((u_int8_t *bytes))
+static __inline u_int32_t _4ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline void bswap __P((char *, int))
 	__attribute__ ((unused));
@@ -450,7 +450,7 @@ _lto4b(val, bytes)
 
 static __inline u_int32_t
 _2btol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
@@ -461,7 +461,7 @@ _2btol(bytes)
 
 static __inline u_int32_t
 _3btol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
@@ -473,7 +473,7 @@ _3btol(bytes)
 
 static __inline u_int32_t
 _4btol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
@@ -519,7 +519,7 @@ _lto4l(val, bytes)
 
 static __inline u_int32_t
 _2ltol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
@@ -530,7 +530,7 @@ _2ltol(bytes)
 
 static __inline u_int32_t
 _3ltol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
@@ -542,7 +542,7 @@ _3ltol(bytes)
 
 static __inline u_int32_t
 _4ltol(bytes)
-	u_int8_t *bytes;
+	const u_int8_t *bytes;
 {
 	register u_int32_t rv;
 
