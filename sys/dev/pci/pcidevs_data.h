@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.120 1999/05/06 14:29:21 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.121 1999/05/07 00:57:46 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.115 1999/05/06 06:17:39 mrg Exp 
+ *	NetBSD: pcidevs,v 1.116 1999/05/07 00:56:46 matt Exp 
  */
 
 /*
@@ -2228,6 +2228,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "TLAN",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCILYNX,
+	    0,
+	    "Texas Instruments",
+	    "LYNX FireWire Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
