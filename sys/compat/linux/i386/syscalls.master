@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 1997/04/07 14:13:19 augustss Exp $
+	$NetBSD: syscalls.master,v 1.18 1997/06/13 17:30:19 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -146,7 +146,7 @@
 85	STD		{ int linux_sys_readlink(char *name, char *buf, \
 			    int count); }
 86	STD		{ int linux_sys_uselib(char *path); }
-87	NOARGS		{ int sys_swapon(char *name); }
+87	NOARGS		{ int compat_12_sys_swapon(char *name); }
 88	NOARGS		{ int sys_reboot(int opt); }
 89	STD		{ int linux_sys_readdir(int fd, caddr_t dent, \
 			    unsigned int count); }
