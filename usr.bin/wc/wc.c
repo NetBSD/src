@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.26 2002/03/23 21:32:21 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.27 2002/03/23 21:36:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.26 2002/03/23 21:32:21 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.27 2002/03/23 21:36:08 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,7 @@ cnt(file)
 	mbstate_t st;
 	u_char *C;
 	wchar_t *WC;
+	char *name;				/* filename or <stdin> */
 	size_t r = 0;
 	int fd, gotsp, len = 0;
 
@@ -198,8 +199,10 @@ cnt(file)
 			rval = 1;
 			return;
 		}
+		name = file;
 	} else {
 		fd = STDIN_FILENO;
+		name = "<stdin>";
 	}
 
 	if (dochar || doword)
@@ -217,7 +220,7 @@ cnt(file)
 					size_t wlen;
 
 					r = do_mb(0, (char *)buf, (size_t)len,
-					    &st, &wlen, file);
+					    &st, &wlen, name);
 					charct += wlen;
 				} else if (dobyte)
 					charct += len;
@@ -237,7 +240,7 @@ cnt(file)
 		 */
 		else if (dobyte) {
 			if (fstat(fd, &sb)) {
-				warn("%s", file);
+				warn("%s", name);
 				rval = 1;
 			} else {
 				if (S_ISREG(sb.st_mode) ||
@@ -258,7 +261,7 @@ cnt(file)
 			size_t wlen;
 
 			r = do_mb(wbuf, (char *)buf, (size_t)len, &st, &wlen,
-			    file);
+			    name);
 			if (dochar) {
 				charct += wlen;
 			} else if (dobyte)
@@ -288,15 +291,15 @@ cnt(file)
 	}
 
 	if (len == -1) {
-		warn("%s", file);
+		warn("%s", name);
 		rval = 1;
 	}
 	if (dochar && r == (size_t)-2) {
-		warnx("%s: incomplete multibyte character", file);
+		warnx("%s: incomplete multibyte character", name);
 		rval = 1;
 	}
 
-	print_counts(linect, wordct, charct, file ? file : 0);
+	print_counts(linect, wordct, charct, file);
 
 	/*
 	 * don't bother checkint doline, doword, or dobyte --- speeds
@@ -307,7 +310,7 @@ cnt(file)
 	tcharct += charct;
 
 	if (close(fd)) {
-		warn("%s", file);
+		warn("%s", name);
 		rval = 1;
 	}
 }
