@@ -1,10 +1,10 @@
-# $NetBSD: DRACO,v 1.32 1999/04/01 20:24:29 is Exp $
+# $NetBSD: DRACO,v 1.32.2.1 1999/04/12 08:30:07 tron Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.119 1999/03/24 22:24:42 is Exp $
+#$ NetBSD: GENERIC,v 1.120 1999/04/10 21:23:27 tron Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -201,6 +201,7 @@ pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
 pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 
