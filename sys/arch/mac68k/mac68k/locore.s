@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 1997/06/29 19:02:09 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 1997/07/04 04:49:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -343,7 +343,8 @@ ENTRY_NOPROFILE(addrerr4060)
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	sp@(FR_HW+8),sp@-
 	clrl	sp@-			| dummy code
-	jra	Lisaerr
+	movl	#T_ADDRERR,sp@-		| mark address error
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 #endif
 
 #if defined(M68060)
@@ -375,11 +376,16 @@ Lberr3:
 	movl	d1,sp@-
 	movl	d0,sp@-			| code is FSLW now.
 	andw	#0x1f80,d0 
-	jne	Lismerr
-	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lberr60			| it is a bus error
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+Lberr60:
+	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
 	movl	sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
-	jra	Lcatchberr
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
 #endif
 #if defined(M68040)
 ENTRY_NOPROFILE(buserr40)
@@ -398,15 +404,20 @@ Lbe1stpg:
 	movl	d1,sp@-			| pass fault address.
 	movl	d0,sp@-			| pass SSW as code
 	btst	#10,d0			| test ATC
-	jne	Lismerr			| it is a bus error
-	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lberr40			| it is a bus error
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+Lberr40:
+	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
 	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
-	jra	Lcatchberr
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
 #endif
 
-_buserr:
-_addrerr:
+ENTRY_NOPROFILE(buserr)
+ENTRY_NOPROFILE(addrerr)
 #if !(defined(M68020) || defined(M68030))
 	jra	_badtrap
 #else
@@ -471,8 +482,10 @@ Lbe10a:
 	btst	#2,d1			| invalid (incl. limit viol. and berr)?
 	jeq	Lmightnotbemerr		| no -> wp check
 	btst	#7,d1			| is it MMU table berr?
-	jeq	Lismerr			| no, must be fast
-	jra	Lisberr1		| real bus err needs not be fast.
+	jne	Lisberr1		| yes, needs not be fast.
+Lismerr:
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lmightnotbemerr:
 	btst	#3,d1			| write protect bit set?
 	jeq	Lisberr1		| no: must be bus error
@@ -480,24 +493,21 @@ Lmightnotbemerr:
 	andw	#0xc0,d0		| Write protect is set on page:
 	cmpw	#0x40,d0		| was it read cycle?
 	jne	Lismerr			| no, was not WPE, must be MMU fault
-Lisberr1:
-	clrw	sp@			| re-clear pad word
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	Lisberr			| no, handle as usual
-	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
-#endif
-Lcatchberr:
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-	/* NOTREACHED */
-Lisberr:				| also used by M68040/60
-	movl	#T_BUSERR,sp@-		| mark bus error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+	jra	Lisberr1		| real bus err needs not be fast.
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lismerr:
-	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+Lisberr1:
+	clrw	sp@			| re-clear pad word
+	tstl	_C_LABEL(nofault)	| catch bus error?
+	jeq	Lisberr			| no, handle as usual
+	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
+#endif
+Lisberr:				| also used by M68040/60
+	movl	#T_BUSERR,sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*
