@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbcvar.h,v 1.1 2001/05/28 16:22:22 thorpej Exp $	*/
+/*	$NetBSD: vtpbcvar.h,v 1.2 2001/06/14 17:57:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,14 @@ struct vtpbc_config {
 	vaddr_t		vt_cfgbase;	/* PCI configuration space base */
 	int		vt_adbase;	/* AD line base for config access */
 	int		vt_rev;		/* silicon revision */
+
+	/*
+	 * These are here in order to support the old-style PCI address
+	 * map used by boards with older firmware (mostly on P-4032
+	 * boards).
+	 */
+	bus_addr_t	vt_pci_membase;	/* PCI memory space base */
+	bus_addr_t	vt_dma_winbase;	/* DMA window base */
 };
 
 #ifdef _KERNEL
