@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2000/02/08 20:02:13 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2000/02/14 12:45:52 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,11 +58,6 @@ char cbootpath[256];
 struct device *booted_device;	/* boot device */
 int booted_partition;		/* ...and partition on that device */
 
-#define INT_ENABLE_REG (interrupt_reg + 0x24)
-#define INT_CLEAR_REG  (interrupt_reg + 0x28)
-u_char *interrupt_reg;
-
-#define HEATHROW_FCR_OFFSET 0x38
 u_int *heathrow_FCR = NULL;
 
 /*
@@ -71,22 +66,9 @@ u_int *heathrow_FCR = NULL;
 void
 cpu_configure()
 {
-	int node, reg[5];
 	int msr;
 
-	node = OF_finddevice("mac-io");
-	if (node == -1)
-		node = OF_finddevice("/pci/mac-io");
-	if (node != -1 &&
-	    OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) != -1) {
-		interrupt_reg = mapiodev(reg[2], NBPG);
-		heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET, 4);
-	} else
-		interrupt_reg = mapiodev(0xf3000000, NBPG);
-
-	out32rb(INT_ENABLE_REG, 0);		/* disable all intr. */
-	out32rb(INT_CLEAR_REG, 0xffffffff);	/* clear pending intr. */
-
+	init_interrupt();
 	calc_delayconst();
 	canonicalize_bootpath();
 
