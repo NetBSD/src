@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.3 1995/03/24 15:03:02 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.4 1996/04/13 00:31:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,10 +66,10 @@ long	dumplo;
 int	dmmin, dmmax, dmtext;
 
 #if NSD > 0
-extern	struct cfdriver sdcd;
+extern	struct cfdriver sd_cd;
 #endif
 #if NCD > 0
-extern	struct cfdriver cdcd;
+extern	struct cfdriver cd_cd;
 #endif
 
 struct	genericconf {
@@ -78,10 +78,10 @@ struct	genericconf {
 	dev_t gc_major;
 } genericconf[] = {
 #if NSD > 0
-	{ &sdcd,  "sd",  8 },
+	{ &sd_cd,  "sd",  8 },
 #endif
 #if NCD > 0
-	{ &cdcd,  "cd",  3 },
+	{ &cd_cd,  "cd",  3 },
 #endif
 	{ 0 }
 };
