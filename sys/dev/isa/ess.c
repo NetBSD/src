@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.31 1999/02/20 23:28:37 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.32 1999/02/22 01:57:33 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1179,7 +1179,7 @@ ess_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	isa_dmastart(sc->sc_ic, sc->sc_out.drq, start, 
 		     (char *)end - (char *)start, NULL,
-	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_out.drq))
 		blksize >>= 1;	/* use word count for 16 bit DMA */
@@ -1271,7 +1271,7 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	isa_dmastart(sc->sc_ic, sc->sc_in.drq, start, 
 		     (char *)end - (char *)start, NULL,
-	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	if (IS16BITDRQ(sc->sc_in.drq))
 		blksize >>= 1;	/* use word count for 16 bit DMA */
