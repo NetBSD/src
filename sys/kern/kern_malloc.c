@@ -1,6 +1,7 @@
-/*	$NetBSD: kern_malloc.c,v 1.19 1996/08/13 23:25:10 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.20 1996/08/27 20:01:42 cgd Exp $	*/
 
 /*
+ * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1987, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -367,6 +368,89 @@ free(addr, type)
 	freep->next = NULL;
 	kbp->kb_last = addr;
 	splx(s);
+}
+
+/*
+ * Change the size of a block of memory.
+ */
+void *
+realloc(curaddr, newsize, type, flags)
+	void *curaddr;
+	unsigned long newsize;
+	int type, flags;
+{
+	register struct kmemusage *kup;
+	long cursize;
+	void *newaddr;
+#ifdef DIAGNOSTIC
+	long alloc;
+#endif
+
+	/*
+	 * Realloc() with a NULL pointer is the same as malloc().
+	 */
+	if (curaddr == NULL)
+		return (malloc(newsize, type, flags));
+
+	/*
+	 * Realloc() with zero size is the same as free().
+	 */
+	if (newsize == 0) {
+		free(curaddr, type);
+		return (NULL);
+	}
+
+	/*
+	 * Find out how large the old allocation was (and do some
+	 * sanity checking).
+	 */
+	kup = btokup(curaddr);
+	cursize = 1 << kup->ku_indx;
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Check for returns of data that do not point to the
+	 * beginning of the allocation.
+	 */
+	if (cursize > NBPG * CLSIZE)
+		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	else
+		alloc = addrmask[kup->ku_indx];
+	if (((u_long)curaddr & alloc) != 0)
+		panic("realloc: unaligned addr %p, size %ld, type %s, mask %ld\n",
+			curaddr, cursize, memname[type], alloc);
+#endif /* DIAGNOSTIC */
+
+	if (cursize > MAXALLOCSAVE)
+		cursize = ctob(kup->ku_pagecnt);
+
+	/*
+	 * If we already actually have as much as they want, we're done.
+	 */
+	if (newsize <= cursize)
+		return (curaddr);
+
+	/*
+	 * Can't satisfy the allocation with the existing block.
+	 * Allocate a new one and copy the data.
+	 */
+	newaddr = malloc(newsize, type, flags);
+	if (newaddr == NULL) {
+		/*
+		 * Malloc() failed, because flags included M_NOWAIT.
+		 * Return NULL to indicate that failure.  The old
+		 * pointer is still valid.
+		 */
+		return NULL;
+	}
+	bcopy(curaddr, newaddr, cursize);
+
+	/*
+	 * We were successful: free the old allocation and return
+	 * the new one.
+	 */
+	free(curaddr, type);
+	return (newaddr);
 }
 
 /*
