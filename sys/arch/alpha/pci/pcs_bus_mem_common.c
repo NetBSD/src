@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_mem_common.c,v 1.1 1996/04/12 04:35:01 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_mem_common.c,v 1.1.4.1 1996/06/03 20:28:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -60,6 +60,9 @@ void		__C(CHIP,_mem_write_4) __P((void *, bus_mem_handle_t,
 void		__C(CHIP,_mem_write_8) __P((void *, bus_mem_handle_t,
 		    bus_mem_size_t, u_int64_t));
 
+/* XXX DOES NOT BELONG */
+vm_offset_t	__C(CHIP,_XXX_dmamap) __P((void *));
+
 void
 __C(CHIP,_bus_mem_init)(bc, memv)
 	bus_chipset_tag_t bc;
@@ -80,6 +83,9 @@ __C(CHIP,_bus_mem_init)(bc, memv)
 	bc->bc_mw2 = __C(CHIP,_mem_write_2);
 	bc->bc_mw4 = __C(CHIP,_mem_write_4);
 	bc->bc_mw8 = __C(CHIP,_mem_write_8);
+
+	/* XXX DOES NOT BELONG */
+	bc->bc_XXX_dmamap = __C(CHIP,_XXX_dmamap);
 }
 
 int
@@ -289,4 +295,12 @@ __C(CHIP,_mem_write_8)(v, memh, off, val)
 		    __STRING(__C(CHIP,_mem_write_8)));
 	}
 	wbflush();
+}
+
+vm_offset_t
+__C(CHIP,_XXX_dmamap)(addr)
+	void *addr;
+{
+
+	return (vtophys(addr) | 0x40000000);
 }
