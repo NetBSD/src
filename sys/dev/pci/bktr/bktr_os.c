@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.13 2000/10/28 14:31:58 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.14 2000/10/28 14:50:27 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.18 2000/10/15 14:18:06 phk Exp */
 
@@ -1300,9 +1300,6 @@ static	int		bktr_intr(void *arg) { return common_bktr_intr(arg); }
 #define bktr_ioctl      bktrioctl
 #define bktr_mmap       bktrmmap
 
-vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
-                                 vm_offset_t, vm_offset_t);
-
 #if defined(__OpenBSD__)
 static int      bktr_probe __P((struct device *, void *, void *));
 #else
@@ -1509,7 +1506,11 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 /*
  * Special Memory Allocation
  */
+#if defined (__NetBSD__)
+vaddr_t
+#else
 vm_offset_t
+#endif
 get_bktr_mem(bktr, dmapp, size)
         bktr_ptr_t bktr;
         bus_dmamap_t *dmapp;
@@ -1563,14 +1564,22 @@ get_bktr_mem(bktr, dmapp, size)
                 bus_dmamap_destroy(dmat, *dmapp);
                 return 0;
         }
+#if defined(__NetBSD__)
+        return (vaddr_t)kva;
+#else
         return (vm_offset_t)kva;
+#endif
 }
 
 void
 free_bktr_mem(bktr, dmap, kva)
         bktr_ptr_t bktr;
         bus_dmamap_t dmap;
+#if defined(__NetBSD__)
+        vaddr_t kva;
+#else
         vm_offset_t kva;
+#endif
 {
         bus_dma_tag_t dmat = bktr->dmat;
 
