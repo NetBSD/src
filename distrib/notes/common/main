@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.17 1999/05/04 03:34:14 simonb Exp $
+.\" $NetBSD: main,v 1.18 1999/05/14 15:44:48 jwise Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -821,6 +821,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.ORG
 .It Ta Krister Walfridsson Ta Mt kristerw@NetBSD.ORG
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.ORG
+.It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
 .It Ta Colin Wood Ta Mt ender@NetBSD.ORG
 .
 .El
