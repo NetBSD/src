@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.8 2002/08/01 14:04:50 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.9 2002/08/01 23:47:46 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -37,7 +37,7 @@ config_vifs_from_kernel(void)
 	if (ifa->ifa_addr->sa_family != AF_INET)
 	    continue;
 
-	addr = ((struct sockaddr_in *)&ifa->ifa_addr)->sin_addr.s_addr;
+	addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 
 	/*
 	 * Ignore loopback interfaces and interfaces that do not support
@@ -52,7 +52,7 @@ config_vifs_from_kernel(void)
 	 * valid subnet number, or whose address is of the form {subnet,0}
 	 * or {subnet,-1}.
 	 */
-	mask = ((struct sockaddr_in *)&ifa->ifa_netmask)->sin_addr.s_addr;
+	mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
 	subnet = addr & mask;
 	if (!inet_valid_subnet(subnet, mask) ||
 	    addr == subnet ||
