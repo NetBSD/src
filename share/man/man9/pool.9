@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
+.\"	$NetBSD: pool.9,v 1.19 2001/07/19 21:35:53 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 1998
+.Dd July 20, 2001
 .Dt POOL 9
 .Os
 .Sh NAME
 .Nm pool_init ,
-.Nm pool_create ,
 .Nm pool_destroy ,
 .Nm pool_get ,
 .Nm pool_put ,
@@ -50,19 +49,6 @@
 .Nd resource-pool manager
 .Sh SYNOPSIS
 .Fd #include <sys/pool.h>
-.Ft struct pool *
-.\" too many arguments for a single .Fn
-.Fo pool_create
-.Fa "size_t size"
-.Fa "u_int align"
-.Fa "u_int align_offset"
-.Fa "int nitems"
-.Fa "char *wchan"
-.Fa "u_int pagesz"
-.Fa "void *(*palloc)(unsigned long sz, int flags, int tag)"
-.Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
-.Fa "int mtag"
-.Fc
 .Ft void
 .Fo pool_init
 .Fa "struct pool *"
@@ -76,6 +62,8 @@
 .Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
 .Fa "int mtag"
 .Fc
+.Ft void
+.Fn pool_destroy "struct pool *pp"
 .Ft void *
 .Fn pool_get "struct pool *pp" "int flags"
 .Ft void
@@ -99,18 +87,20 @@ resources currently available from the system-wide memory allocator
 The pool manager can optionally obtain temporary memory by calling the
 .Fn palloc
 function passed to
-.Fn pool_create ,
+.Fn pool_init ,
 for extra pool items in case the number of allocations exceeds
 the nominal number of pool items managed by a pool resource.
 This temporary memory will be automatically returned to the system
 at a later time.
-.Ss CREATING A POOL
+.Ss INITIALIZING A POOL
 The function
-.Fn pool_create
-initializes a resource pool and returns a handle to it.
+.Fn pool_init
+initializes a resource pool.
 The arguments are:
 .Pp
 .Bl -tag -offset indent -width "prelease"
+.It Fa pp
+The handle identifying the pool resource instance.
 .It Fa size
 Specifies the size of the memory items managed by the pool.
 .It Fa align
@@ -163,7 +153,8 @@ and
 .Xr uvm_km_free 9
 to allocate and release memory using the
 .Em kernel_map
-.Po see
+.Po
+see
 .Xr uvm 9
 .Pc .
 .It Fa mtag
@@ -174,24 +165,20 @@ and
 when allocating or releasing memory pages.
 .El
 .Pp
-If not enough memory is available to create the pool resource,
-.Fn pool_create
-returns
-.Dv NULL .
 .\"The macro
 .\".Fn POOL_STORAGE_SIZE "size" "nitems"
 .\"can be used to determine the amount of storage needed to setup a pool,
 .\"given the size and number of the pool items.
-.Pp
-.Fn pool_init
-can be used to initialize a pre-allocated pool structure. It takes a pointer
-to an existing
-.Fa struct pool
-as its first argument. The other arguments are as described for
-.Fn pool_create .
+.Ss DESTROYING A POOL
+The function
+.Fn pool_destroy
+destroys a resource pool.  It takes a single argument
+.Fa pp
+identifying the pool resource instance.
 .Ss ALLOCATING ITEMS FROM A POOL
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
+The arguments are:
 .Bl -tag -offset indent -width "flags"
 .It Fa pp
 The handle identifying the pool resource instance.
@@ -245,6 +232,9 @@ size set by
 and there are no outstanding requests for pool items,
 the excess items will be returned to the system by calling
 .Fn prelease .
+The arguments to
+.Fn pool_put
+are:
 .Bl -tag -offset indent -width "item"
 .It Fa pp
 The handle identifying the pool resource instance.
@@ -264,7 +254,9 @@ by the caller through the
 .Fa storage
 parameter.
 .Pp
+The arguments to
 .Fn pool_prime
+are:
 .Bl -tag -offset indent -width "nitems"
 .It Fa pp
 The handle identifying the pool resource instance.
