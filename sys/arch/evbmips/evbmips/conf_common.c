@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_common.c,v 1.3.4.3 2002/08/30 01:27:47 gehenna Exp $	*/
+/*	$NetBSD: conf_common.c,v 1.3.4.4 2002/09/01 12:14:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,8 +38,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.3.4.3 2002/08/30 01:27:47 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.3.4.4 2002/09/01 12:14:53 gehenna Exp $");
 
+#include <sys/param.h>
 #include <sys/conf.h>
 
 /*
