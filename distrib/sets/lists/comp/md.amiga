@@ -16,6 +16,7 @@
 ./usr/include/amiga/fbio.h
 ./usr/include/amiga/float.h
 ./usr/include/amiga/frame.h
+./usr/include/amiga/ieee.h
 ./usr/include/amiga/ieeefp.h
 ./usr/include/amiga/intr.h
 ./usr/include/amiga/kcore.h
