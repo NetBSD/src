@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.32 1994/06/03 02:08:59 gwr Exp $
+ *	$Id: machdep.c,v 1.33 1994/06/28 22:05:52 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -144,6 +144,10 @@ void identifycpu()
 	printf("Model: %s\n", cpu_model);
 }
 
+/* The following two functions assume UPAGES == 3 */
+#if	UPAGES != 3
+#error "UPAGES changed?"
+#endif
 void save_u_area(pcbp, va)
      struct pcb *pcbp;
      vm_offset_t va;
@@ -170,6 +174,7 @@ void cpu_startup()
     int base, residual;
     vm_offset_t minaddr, maxaddr, uarea_pages;
 
+	/* XXX - Get boot parameters from PROM. */
 
     /* msgbuf mapped earlier, should figure out why? */
     printf(version);
@@ -539,6 +544,8 @@ struct hpuxsigframe {
 };
 #endif
 
+#define	DEBUG XXX
+
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -891,7 +898,7 @@ sigreturn(p, uap, retval)
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
 	 */
-	if (p->p_emul == COMPAT_HPUX) {
+	if (p->p_emul == EMUL_HPUX) {
 		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
 		struct hpuxsigcontext htsigc;
 
@@ -1062,7 +1069,7 @@ void boot(howto)
 		 */
 	if (panicstr == 0)
 	    vnode_pager_umount(NULL);
-	sync((struct proc *)0, (void *)0, (int *)0);
+	sync(&proc0, (void *)0, (int *)0);
 	
 	for (iter = 0; iter < 20; iter++) {
 	    nbusy = 0;
@@ -1101,8 +1108,8 @@ void boot(howto)
 }
 
 
-regdump(rp, sbytes)
-  int *rp; /* must not be register */
+regdump(fp, sbytes)
+	struct frame *fp; /* must not be register */
   int sbytes;
 {
 	static int doingdump = 0;
@@ -1115,8 +1122,8 @@ regdump(rp, sbytes)
 	s = splhigh();
 	doingdump = 1;
 	printf("pid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
+	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
+	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
@@ -1124,18 +1131,18 @@ regdump(rp, sbytes)
 		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
+		printf(" %s", hexstr(fp->f_regs[i], 8));
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
+		printf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
+		if (fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
+			       hexstr((int)(((int *)&fp)-1), 8));
+			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
+			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;

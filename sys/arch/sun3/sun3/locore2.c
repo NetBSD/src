@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: locore2.c,v 1.21 1994/05/06 07:47:12 gwr Exp $
+ *	$Id: locore2.c,v 1.22 1994/06/28 22:06:02 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -204,6 +204,7 @@ void u_area_bootstrap(u_va, u_pa)
 	set_pte(va, pte_proto|PA_PGNUM(pa));
 }
 
+/* This is called just before pmap_bootstrap() */
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
@@ -211,7 +212,6 @@ void sun3_vm_init()
     extern char start[], etext[], end[];
     unsigned char sme;
     int valid;
-
 
     pmeg_init();
 
@@ -345,8 +345,9 @@ void sun3_vm_init()
     virtual_avail = eva;
 
     /*
-     * unmap kernel virtual space (only segments.  if it squished ptes, bad
-     * things might happen.
+     * Unmap kernel virtual space (only segments.  if it squished ptes,
+     * bad things might happen.  Also, make sure to leave no valid
+     * segmap entries in the MMU unless pmeg_array records them.
      */
 
     /* this only works because both are seg bounds*/
@@ -355,6 +356,21 @@ void sun3_vm_init()
 	set_segmap(va, SEGINV);
 	va = sun3_round_up_seg(va);
     }
+
+    /*
+     * Record pmegs in use by DVMA segment.
+     * I would have preferred to just nuke these, but that
+     * made the kernel die before we even get to consinit.
+     * Instead, there is a hack in pmap_enter_kernel (sigh)
+     */
+    va = DVMA_SPACE_START;
+    while (va < DVMA_SPACE_END) {
+	sme = get_segmap(va);
+	if (sme != SEGINV)
+	    pmeg_steal(sme);
+	va = sun3_round_up_seg(va);
+    }
+    
 
     /* My sincere apologies for this crud -- glass*/
     u_area_va = high_segment_alloc(UPAGES*2);

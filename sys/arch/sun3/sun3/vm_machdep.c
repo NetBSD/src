@@ -39,7 +39,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.16 1994/05/27 14:58:44 gwr Exp $
+ *	$Id: vm_machdep.c,v 1.17 1994/06/28 22:06:05 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ cpu_exit(p)
 
 	(void) splimp();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	switch_exit();
+	switch_exit(p);
 	/* NOTREACHED */
 }
 

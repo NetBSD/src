@@ -28,8 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.10 1994/06/14 02:31:09 gwr Exp $
+ * $Id: autoconf.c,v 1.11 1994/06/28 22:05:41 gwr Exp $
  */
+
 /*
  * Setup the system to run on the current machine.
  *
@@ -89,12 +90,14 @@ int nmi_intr(arg)
 void configure()
 {
     int root_found;
+    extern int soft1intr();
 
     isr_init();
     root_found = config_rootfound("mainbus", NULL);
     if (!root_found)
 	panic("configure: autoconfig failed, no device tree root found");
     isr_add(7, nmi_intr, 0);
+    isr_add(1, soft1intr, 0);
     isr_cleanup();
     conf_init();
 }

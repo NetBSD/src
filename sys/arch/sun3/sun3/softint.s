@@ -103,7 +103,9 @@ Laststkadj:
 #else
 	rte				| and do real RTE
 #endif
+
 Lchksir:
+#if 0	/* XXX - Now using isr_soft_request() */
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
 	movl	d0,sp@-			| need a scratch register
@@ -135,6 +137,8 @@ Lgotsir:
 #endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
+#endif	/* XXX */
+
 Ldorte:
 #ifdef STACKCHECK
 	movw	#SPL6,sr		| avoid trouble
