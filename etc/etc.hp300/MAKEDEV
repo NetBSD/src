@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.30 1999/10/18 22:41:26 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.31 1999/12/18 03:09:46 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,7 @@
 #	st*	Exabyte tape
 # Disks:
 #	ccd*	"concatenated" pseudo-disks
+#	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
 #	rd*	HP300 HP-IB disks
 #	sd*	HP300 SCSI disks
@@ -178,6 +179,16 @@ tun*)
 	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
+	;;
+
+md*)
+	unit=${i#md}; blk=14; chr=32;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 8))
+	mknod md${unit}c b $blk $((($unit + 16) * 8))
+#	mknod md${unit}  c $chr $((($unit + 16) * 8))
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
 	;;
 
 ccd*|fd*|raid*|rd*|sd*|vnd*)

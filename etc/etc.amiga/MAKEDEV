@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.52 1999/10/18 22:41:24 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.53 1999/12/18 03:09:45 tsutsui Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,7 @@
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
 #	raid*	RAIDframe disk driver
+#	md*	memory pseudo-disk devices
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -186,6 +187,15 @@ fd*)
 		echo bad unit for floppy disk in: $i
 		;;
 	esac
+	;;
+md*)
+	unit={$i#md}; blk=15; chr=43;
+	rm -rf md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 16))
+	mknod md${unit}c b $blk $((($unit + 16) * 16))
+#	mknod rmd${unit} c $chr $((($unit + 16) * 16))
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
 	;;
 
 sd*|vnd*|ccd*|raid*)
