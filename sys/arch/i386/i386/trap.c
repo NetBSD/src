@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.117 1998/06/25 23:19:36 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.118 1998/06/25 23:23:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -51,6 +51,7 @@
 #include "opt_cputype.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
+#include "opt_compat_ibcs2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
