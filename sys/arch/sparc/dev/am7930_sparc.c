@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.19 1997/05/07 18:51:35 augustss Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.20 1997/05/09 22:16:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -206,7 +206,7 @@ static const u_short ger_coeff[] = {
 int	amd7930_open __P((dev_t, int));
 void	amd7930_close __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_params __P((void *, struct audio_params *));
+int	amd7930_set_params __P((void *, int, struct audio_params *, struct audio_params *));
 int	amd7930_round_blocksize __P((void *, int));
 int	amd7930_set_out_port __P((void *, int));
 int	amd7930_get_out_port __P((void *));
@@ -234,15 +234,12 @@ struct audio_hw_if sa_hw_if = {
 	NULL,
 	amd7930_query_encoding,
 	amd7930_set_params,
-	amd7930_set_params,
 	amd7930_round_blocksize,
 	amd7930_set_out_port,
 	amd7930_get_out_port,
 	amd7930_set_in_port,
 	amd7930_get_in_port,
 	amd7930_commit_settings,
-	NULL,
-	NULL,
 	amd7930_start_output,
 	amd7930_start_input,
 	amd7930_halt_output,
@@ -398,17 +395,25 @@ amd7930_close(addr)
 }
 
 int
-amd7930_set_params(addr, p)
+amd7930_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
+	int mode;
+	struct audio_params *p, *q;
 {
 	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
 	    p->encoding != AUDIO_ENCODING_ULAW ||
 	    p->precision != 8 ||
 	    p->channels != 1)
 		return EINVAL;
-	p->sample_rate = 8000;
-	return 0;	/* no other sampling rates supported by amd chip */
+	p->sample_rate = 8000;	/* no other sampling rates supported by amd chip */
+
+	/* Update setting for the other mode. */
+	q->sample_rate = p->sample_rate;
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
+
+	return 0;
 }
 
 int
