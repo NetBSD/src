@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2000/06/12 13:35:49 veego Exp $
+#	$NetBSD: Makefile,v 1.17 2000/06/12 21:32:25 veego Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c parse.c common.c fil.c ipft_sn.c ipft_ef.c ipft_td.c \
@@ -11,5 +11,5 @@ CPPFLAGS+=-I${.CURDIR}/../../../dist/ipf
 SUBDIR=	test
 
 .PATH:	${.CURDIR}/../../../sys/netinet
-.include <bsd.subdir.mk>
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
