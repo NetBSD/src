@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.14 1998/08/27 23:37:36 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.15 1998/10/01 21:16:27 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.14 1998/08/27 23:37:36 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.15 1998/10/01 21:16:27 hubertf Exp $");
 #endif
 #endif
 
@@ -278,7 +278,7 @@ fileGetURL(char *base, char *spec)
     if (ftp) {
 	pen[0] = '\0';
 	if ((rp = make_playpen(pen, 0)) != NULL) {
-            rp=pen; /* XXX - pen is dynamic; make static? */
+            rp=strdup(pen); /* XXX be safe for nested calls */
 	    if (Verbose)
 		printf("Extracting from FTP connection into %s\n", pen);
 	    tpid = fork();
