@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.10 1998/09/20 19:00:15 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.11 1998/10/02 19:37:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,12 +53,9 @@ struct channel_softc { /* Per channel data */
 	bus_space_handle_t    cmd_ioh;
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
-	/*
-	 * XXX data access (normal and 32-bit) may need to be
-	 * done via a separate iot/ioh on some systems.  Let's
-	 * wait and see if that's the case before implementing
-	 * it.
-	 */
+	/* data32{iot,ioh} are only used for 32 bit xfers */
+	bus_space_tag_t         data32iot;
+	bus_space_handle_t      data32ioh;
 	/* Our state */
 	int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
@@ -80,14 +77,15 @@ struct wdc_softc { /* Per controller state */
 	/* mandatory fields */
 	int           cap;
 /* Capabilities supported by the controller */
-#define	WDC_CAPABILITY_DATA32 0x0001     /* 32-bit data access */
-#define WDC_CAPABILITY_PIO    0x0002	/* controller knows its PIO modes */
-#define	WDC_CAPABILITY_DMA    0x0004	/* DMA */
-#define	WDC_CAPABILITY_UDMA   0x0008	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK 0x0010	/* Needs to lock HW */
-#define	WDC_CAPABILITY_ATA_NOSTREAM 0x0020 /* Don't use stream funcs on ATA */
-#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0040 /* Don't use stream funcs on ATAPI */
-#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0080 /* only reset once */
+#define	WDC_CAPABILITY_DATA16 0x0001    /* can do  16-bit data access */
+#define	WDC_CAPABILITY_DATA32 0x0002    /* can do 32-bit data access */
+#define WDC_CAPABILITY_PIO    0x0004	/* controller knows its PIO modes */
+#define	WDC_CAPABILITY_DMA    0x0008	/* DMA */
+#define	WDC_CAPABILITY_UDMA   0x0010	/* Ultra-DMA/33 */
+#define	WDC_CAPABILITY_HWLOCK 0x0020	/* Needs to lock HW */
+#define	WDC_CAPABILITY_ATA_NOSTREAM 0x0040 /* Don't use stream funcs on ATA */
+#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
+#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 	u_int8_t      pio_mode; /* highest PIO mode supported */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */

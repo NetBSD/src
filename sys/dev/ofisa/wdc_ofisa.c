@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.2.2.3 1998/10/02 01:35:11 matt Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.2.2.4 1998/10/02 19:37:22 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -143,6 +143,7 @@ wdc_ofisa_attach(parent, self, aux)
 	    IPL_BIO, wdcintr, sc);
 
 	printf("\n");
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.channels = &sc->wdc_channel;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
