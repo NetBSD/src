@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.27 2004/01/05 23:23:32 jmmv Exp $	*/
+/*	$NetBSD: atactl.c,v 1.28 2004/03/14 20:11:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.27 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.28 2004/03/14 20:11:24 wiz Exp $");
 #endif
 
 
@@ -157,7 +157,7 @@ struct bitinfo ata_cmd_set2[] = {
 	{ WDC_CMD2_DCO, "Device Configuration Overlay feature set" },
 	{ ATA_CMD2_LBA48, "48-bit Address feature set" },
 	{ WDC_CMD2_AAM, "Automatic Acoustic Management feature set" },
-	{ WDC_CMD2_SM, "SET MAX security extention" },
+	{ WDC_CMD2_SM, "SET MAX security extension" },
 	{ WDC_CMD2_SFREQ, "SET FEATURES required to spin-up after power-up" },
 	{ WDC_CMD2_PUIS, "Power-Up In Standby feature set" },
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
