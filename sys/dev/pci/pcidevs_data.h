@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.456 2002/07/22 07:48:48 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.457 2002/07/26 10:17:22 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.454 2002/07/22 07:47:44 msaitoh Exp 
+ *	NetBSD: pcidevs,v 1.455 2002/07/26 10:14:00 onoe Exp 
  */
 
 /*
@@ -2078,6 +2078,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "USB0673",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_680,
+	    0,
+	    "CMD Technology",
+	    "SiI0680",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
