@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.16 1996/11/25 03:59:20 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.17 1996/12/17 23:21:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -83,7 +83,7 @@ dec_axppci_33_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comconsinit, comdefaultrate;		/*XXX*/
+			extern int comdefaultrate;			/*XXX*/
 			extern int comcngetc __P((dev_t));		/*XXX*/
 			extern void comcnputc __P((dev_t, int));	/*XXX*/
 			extern void comcnpollc __P((dev_t, int));	/*XXX*/
@@ -94,7 +94,6 @@ dec_axppci_33_cons_init()
 			DELAY(10000);
 
 			comconsaddr = 0x3f8;
-			comconsinit = 0;
 			comconstag = lcp->lc_iot;
 			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
 			    0, &comconsbah))
