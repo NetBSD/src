@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39io.c,v 1.4 2000/01/09 18:56:37 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.5 2000/01/16 21:47:00 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,19 @@
 #include <machine/bus.h>
 
 #include <hpcmips/tx/tx39var.h>
+#include <hpcmips/tx/tx39iovar.h>
 #include <hpcmips/tx/tx39ioreg.h>
 #include <hpcmips/tx/tx39icureg.h>
+
+#include <hpcmips/tx/txiomanvar.h>
 
 #define TX39IO_ATTACH_DUMMYHANDLER 0
 #undef TX39IO_MFIOOUTPORT_ON
 #undef TX39IO_MFIOOUTPORT_OFF
 
-int	tx39io_match __P((struct device*, struct cfdata*, void*));
-void	tx39io_attach __P((struct device*, struct device*, void*));
+int	tx39io_match	__P((struct device*, struct cfdata*, void*));
+void	tx39io_attach	__P((struct device*, struct device*, void*));
+int	tx39io_print	__P((void*, const char*));
 
 struct tx39io_softc {
 	struct	device sc_dev;
@@ -54,11 +58,16 @@ struct cfattach tx39io_ca = {
 	sizeof(struct tx39io_softc), tx39io_match, tx39io_attach
 };
 
+#ifdef TX39IODEBUG
 int	tx39io_intr __P((void*));
 int	tx39mfio_intr __P((void*));
-
+void	tx39io_dump __P((struct tx39io_softc*));
 void	tx39io_dump_and_attach_handler __P((struct tx39io_softc*, int));
-void	__dump_and_attach_handler __P((tx_chipset_tag_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t, int, int, int (*) __P((void*)), void*));
+void	__dump_and_attach_handler __P((tx_chipset_tag_t, u_int32_t, 
+				       u_int32_t, u_int32_t, u_int32_t, 
+				       int, int, int (*) __P((void*)), 
+				       void*, int));
+#endif /* TX39IODEBUG */
 
 #define ISSET(x, s)	((x) & (1 << (s)))
 #define STD_IN		1
@@ -121,42 +130,7 @@ tx39io_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-
-	return 1;
-}
-
-int
-tx39io_intr(arg)
-	void *arg;
-{
-#ifdef TX39_DEBUG
-#if 0
-	static int i;
-	if (i ^= 1) {
-		tx39debugflag = 1;
-	} else {
-		tx39debugflag = 0;
-	}
-#endif
-	printf("io (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
-	       tx39intrvec & 0xfff);
-#endif
-	return 0;
-}
-
-int
-tx39mfio_intr(arg)
-	void *arg;
-{
-#ifdef TX39_DEBUG
-#if 0
-	struct tx39io_softc *sc = arg;
-	tx39io_dump_and_attach_handler(sc, 0);
-#endif
-	printf("mfio (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
-	       tx39intrvec & 0xfff);
-#endif
-	return 0;
+	return 2; /* 1st attach group of txsim */
 }
 
 void
@@ -167,23 +141,127 @@ tx39io_attach(parent, self, aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39io_softc *sc = (void*)self;
-	tx_chipset_tag_t tc;
-	tc = sc->sc_tc = ta->ta_tc;
+	struct txioman_attach_args tia;
+	
+	sc->sc_tc = ta->ta_tc;
 
 	printf("\n");
-#ifdef COMPAQ_LOCAL_INTR
+#ifdef TX39IODEBUG
+	tx39io_dump(sc);
+#endif /* TX39IODEBUG */
+	
+	/* 
+	 * attach platform dependent io manager
+	 */
+	tia.tia_tc = sc->sc_tc;
+	config_found(self, &tia, tx39io_print);
+}
+
+int
+tx39io_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	return pnp ? QUIET : UNCONF;
+}
+
+void
+tx39io_portout(tc, port, onoff)
+	tx_chipset_tag_t tc;
+	int port, onoff;
+{
+	txreg_t reg;
+	
+	/* XXX check port is output or not */
+
+	if (port >= TXIO) { /* XXX TX3922 case */
+#ifdef TX391X
+		txreg_t  iostat;
+		/* IO */ 
+		reg = tx_conf_read(tc, TX39_IOCTRL_REG);
+		iostat = TX39_IOCTRL_IODOUT(reg);
+		if (onoff)
+			iostat |= (1 << (port - TXIO));
+		else
+			iostat &= ~(1 << (port - TXIO));
+
+		TX39_IOCTRL_IODOUT_CLR(reg);
+		reg = TX39_IOCTRL_IODOUT_SET(reg, iostat);
+		tx_conf_write(tc, TX39_IOCTRL_REG, reg);
+#endif /* TX391X */
+	} else {
+		/* MFIO */
+		reg = tx_conf_read(tc, TX39_IOMFIODATAOUT_REG);
+		if (onoff)
+			reg |= (1 << port);
+		else
+			reg &= ~(1 << port);
+
+		tx_conf_write(tc, TX39_IOMFIODATAOUT_REG, reg);
+	}
+}
+
+#ifdef TX39IODEBUG
+int
+tx39io_intr(arg)
+	void *arg;
+{
+	printf("io (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
+	       tx39intrvec & 0xfff);
+
+	return 0;
+}
+
+int
+tx39mfio_intr(arg)
+	void *arg;
+{
+	printf("mfio (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
+	       tx39intrvec & 0xfff);
+
+	return 0;
+}
+
+void
+tx39io_dump(sc)
+	struct tx39io_softc *sc;
+{
+#ifdef COMPAQ_LOCAL_INTR /* for debug */
 	/* 2010c Rec button */
 	tx_intr_establish(tc, MAKEINTR(5, (1<<6)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
 	/* Play button */
 	tx_intr_establish(tc, MAKEINTR(5, (1<<5)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
-	/* It seems that these interrupt arise when serial session start */
+	/* Power connector */
+	tx_intr_establish(tc, MAKEINTR(3, (1<<28)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	tx_intr_establish(tc, MAKEINTR(4, (1<<28)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	/* UARTA carrier */
 	tx_intr_establish(tc, MAKEINTR(3, (1<<30)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
-	tx_intr_establish(tc, MAKEINTR(3, (1<<5)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 	tx_intr_establish(tc, MAKEINTR(4, (1<<30)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	/* --> then turn off MFIO 31 */
+	tx_intr_establish(tc, MAKEINTR(3, (1<<5)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 	tx_intr_establish(tc, MAKEINTR(4, (1<<5)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	/* --> then turn off MFIO 6 */
+	/* green LED:  MFIO 3 off */
+	/* orange LED: not connected to TX39IO ??? */
+	/* Backlight: UCB1200 GPIO port ??? */
 #endif
-
-#ifdef VICTOR_INTERLINK_INTR
+#ifdef MOBILON_LOCAL_INTR /* for debug */
+	/* Rec button */
+	tx_intr_establish(tc, MAKEINTR(5, (1<<0)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
+	/* Play button */
+	tx_intr_establish(tc, MAKEINTR(3, (1<<31)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	/* Battery cover open */
+	tx_intr_establish(tc, MAKEINTR(3, (1<<29)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
+	/* Serial DCD */
+	tx_intr_establish(tc, MAKEINTR(5, (1<<4)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
+	/* --> then turn off IO 3 ??? */
+	tx_intr_establish(tc, MAKEINTR(5, (1<<6)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
+	/* --> then turn off IO 5 ??? */
+	/* keyboard */
+	tx_intr_establish(tc, MAKEINTR(5, (1<<13)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);
+	/* Back light: MFIO 14 on */
+#endif	
+#ifdef VICTOR_INTERLINK_INTR /* for debug */
 	/* open panel */
 	tx_intr_establish(tc, MAKEINTR(8, (1<<20)), IST_EDGE, IPL_CLOCK, tx39io_intr, sc);	
 	/* close panel */
@@ -197,12 +275,9 @@ tx39io_attach(parent, self, aux)
 	tx_intr_establish(tc, MAKEINTR(3, (1<<7)), IST_EDGE, IPL_CLOCK, tx39mfio_intr, sc);
 #endif
 
-#ifdef TX39IODEBUG
 	tx39io_dump_and_attach_handler(sc, TX39IO_ATTACH_DUMMYHANDLER);
-#endif /* TX39IODEBUG */
 }
 
-#ifdef TX39IODEBUG
 void
 tx39io_dump_and_attach_handler(sc, dummy)
 	struct tx39io_softc *sc;
@@ -245,7 +320,7 @@ tx39io_dump_and_attach_handler(sc, dummy)
 		printf("%s", ISSET(reg_dir, i) ? "On " : "Off");
 		printf("      ");
 		__dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, 
-					  reg_pwr, i, 1, iointr, sc);
+					  reg_pwr, i, 1, iointr, sc, 1);
 		
 		printf("    -");
 		printf("\n");
@@ -260,7 +335,8 @@ tx39io_dump_and_attach_handler(sc, dummy)
 	for (i = TX39_IO_MFIO_MAX - 1; i >= 0 ; i--) {
 		printf("MFIO %2d:     -       ", i);
 		__dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, 
-					  reg_pwr, i, 0, mfiointr, sc);
+					  reg_pwr, i, 0, mfiointr, sc,
+					  ISSET(reg_sel, i));
 		printf("  ");
 		printf(ISSET(reg_sel, i) ? "MFIO(%s)" : "%s", 
 		       mfio_map[i].std_pin_name);
@@ -271,12 +347,13 @@ tx39io_dump_and_attach_handler(sc, dummy)
 
 void	
 __dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr, 
-			  i, io, func, arg)
+			  i, io, func, arg, mf)
 	tx_chipset_tag_t tc;
 	u_int32_t reg_dir, reg_out, reg_in, reg_pwr;
 	int i, io;
 	int (*func) __P((void*));
 	void *arg;
+	int mf;
 {
 	int pset, nset, pofs, nofs;
 
@@ -328,7 +405,7 @@ __dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr,
 		printf("Out");
 	} else {
 		printf("In ");
-		if (func) {
+		if (mf && func) {
 			/* Positive Edge */
 			tx_intr_establish(
 				tc, MAKEINTR(pset, (1 << pofs)), 

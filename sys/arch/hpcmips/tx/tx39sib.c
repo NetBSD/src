@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.2 2000/01/12 14:56:19 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.3 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -48,7 +48,7 @@
 
 #ifdef TX39SIBDEBUG
 int	tx39sib_debug = 0;
-#define	DPRINTF(arg) if (vrpiu_debug) printf arg;
+#define	DPRINTF(arg) if (tx39sib_debug) printf arg;
 #else
 #define	DPRINTF(arg)
 #endif

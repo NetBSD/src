@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.1 2000/01/12 14:56:21 uch Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.2 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -245,11 +245,6 @@ ucbtp_calibration(sc)
 #ifdef TX391X
 	tx3912video_calibration_pattern(); /* debug */
 #endif
-	sc->sc_tpcalib.sc_maxx = bootinfo->fb_width - 1;
-	sc->sc_tpcalib.sc_maxy = bootinfo->fb_height - 1;
-	sc->sc_tpcalib.sc_minx = 0;
-	sc->sc_tpcalib.sc_miny = 0;
-
 	tpcalib_init(&sc->sc_tpcalib);
 
 	if (!(cs = calibration_sample_lookup())) {

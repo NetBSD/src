@@ -1,7 +1,7 @@
-/*	$NetBSD: skbd.c,v 1.2 2000/01/12 14:56:22 uch Exp $ */
+/*	$NetBSD: skbd.c,v 1.3 2000/01/16 21:47:01 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
@@ -59,6 +60,7 @@ struct skbd_softc;
 struct skbd_chip {
 	skbd_tag_t	sk_ic;
 	const u_int8_t	*sk_keymap;
+	const int	*sk_special;
 	int		sk_polling;
 	int		sk_console;
 	u_int		sk_type;
@@ -182,6 +184,7 @@ skbd_keymap_lookup(sk)
 
 		if (platid_match(&platid, &mask)) {
 			sk->sk_keymap = tab->st_keymap;
+			sk->sk_special = tab->st_special;
 			skbd_keymapdata.layout = tab->st_layout;
 
 			return 0;
@@ -191,6 +194,7 @@ skbd_keymap_lookup(sk)
 	/* no keymap. use default. */
 
 	sk->sk_keymap = default_keymap;
+	sk->sk_special = default_special_keymap;
 	skbd_keymapdata.layout = KB_US;
 
 	return 1;
@@ -235,6 +239,21 @@ __skbd_input(arg, flag, scancode)
 		return 0;
 	}
 
+	if (key == SPL) {
+		if (!flag)
+			return 0;
+		
+		if (scancode == sk->sk_special[KEY_SPECIAL_OFF])
+			printf("off button\n");
+		else if (scancode == sk->sk_special[KEY_SPECIAL_LIGHT])
+			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
+					 CONFIG_HOOK_BUTTONEVENT_LIGHT, 
+					 0);
+		else 
+			printf("unknown special key %d\n", scancode);
+		
+		return 0;
+	}
 
 	if (sk->sk_polling) {
 		sk->sk_type = type;

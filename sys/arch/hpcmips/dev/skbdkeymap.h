@@ -1,7 +1,7 @@
-/*	$NetBSD: skbdkeymap.h,v 1.4 2000/01/14 18:37:58 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.5 2000/01/16 21:47:01 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,10 @@
  */
 #define UNK	255	/* unknown */
 #define IGN	254	/* ignore */
+#define SPL	253	/* special key */
+
+#define KEY_SPECIAL_OFF		0
+#define KEY_SPECIAL_LIGHT	1
 
 const u_int8_t default_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
@@ -48,6 +52,11 @@ const u_int8_t default_keymap[] = {
 /*15 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
 };
 
+const int default_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= -1,
+	[KEY_SPECIAL_LIGHT]	= -1
+};
+
 const u_int8_t tc5165_mobilon_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	37 , 45 , 44 , UNK, 9  , 51 , 23 , UNK,
@@ -55,9 +64,9 @@ const u_int8_t tc5165_mobilon_keymap[] = {
 /* 2 */	UNK, UNK, 29 , UNK, UNK, UNK, UNK, UNK,
 /* 3 */	24 , 203, UNK, 38 , 10 , 27 , 13 , UNK,
 /* 4 */	40 , UNK, UNK, 39 , 26 , 53 , 11 , 12 ,
-/* 5 */	UNK, UNK, UNK, 53 , 25 , UNK, UNK, IGN,
+/* 5 */	UNK, UNK, UNK, 53 , 25 , UNK, UNK, SPL, /* Light */
 /* 6 */	208, UNK, UNK, UNK, 52 , UNK, 43 , 14 ,
-/* 7 */	205, 200, UNK, UNK, IGN, UNK, UNK, 28 ,
+/* 7 */	205, 200, UNK, UNK, SPL, UNK, UNK, 28 , /* Off key */
 /* 8 */	UNK, 41 , 59 , 15 , 2  , UNK, UNK, UNK,
 /* 9 */	63 , 64 , 1  , UNK, 65 , 16 , 17 , UNK,
 /*10 */	60 , UNK, 61 , 62 , 3  , UNK, UNK, UNK,
@@ -65,7 +74,12 @@ const u_int8_t tc5165_mobilon_keymap[] = {
 /*12 */	47 , 33 , 46 , 5  , 4  , 18 , 19 , UNK,
 /*13 */	34 , 35 , 20 , 48 , 6  , 7  , 21 , 49 ,
 /*14 */	22 , 31 , 32 , 36 , 8  , 30 , 50 , 57 ,
-/*15 */	UNK, IGN, UNK, UNK, UNK, UNK, UNK, UNK
+/*15 */	UNK, IGN, UNK, UNK, UNK, UNK, UNK, UNK /* Windows key */
+};
+
+const int tc5165_mobilon_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 60,
+	[KEY_SPECIAL_LIGHT]	= 47
 };
 
 const u_int8_t tc5165_telios_jp_keymap[] = {
@@ -96,7 +110,7 @@ const u_int8_t tc5165_compaq_c_jp_keymap[] = {
 /* 3 */	77,  75,  80,  72,  39,  53,  52,  51,
 /* 4 */	24,  25,  40,  IGN, 43,  26,  115, 58,
 /* 5 */	54,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
-/* 6 */	IGN, IGN, IGN, 70,  IGN, IGN, IGN, IGN,
+/* 6 */	IGN, IGN, IGN, SPL,  IGN, IGN, IGN, IGN, /* Light */
 /* 7 */	IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
 /* 8 */	42,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
 /* 9 */	29,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
@@ -106,6 +120,11 @@ const u_int8_t tc5165_compaq_c_jp_keymap[] = {
 /*13 */	9,   8,   7,   6,   5,   4,   3,   2,
 /*14 */	23,  22,  21,  20,  19,  18,  17,  16,
 /*15 */	37,  36,  35,  34,  33,  32,  31,  30
+};
+
+const int tc5165_compaq_c_jp_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= -1, /* don't have off button */
+	[KEY_SPECIAL_LIGHT]	= 51
 };
 
 const u_int8_t m38813c_keymap[] = {
@@ -131,19 +150,28 @@ const u_int8_t m38813c_keymap[] = {
 const struct skbd_keymap_table {
 	platid_t	st_platform;
 	const u_int8_t	*st_keymap;
+	const int	*st_special;
 	kbd_t		st_layout;
 } skbd_keymap_table[] = {
 	{{{PLATID_WILD, PLATID_MACH_COMPAQ_C}},
-	 tc5165_compaq_c_jp_keymap, KB_JP},
+	 tc5165_compaq_c_jp_keymap, 
+	 tc5165_compaq_c_jp_special_keymap,
+	 KB_JP},
 
 	{{{PLATID_WILD, PLATID_MACH_VICTOR_INTERLINK}},
-	 m38813c_keymap, KB_JP},
+	 m38813c_keymap, 
+	 default_special_keymap,
+	 KB_JP},
 
 	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS}},
-	 tc5165_telios_jp_keymap, KB_JP},
+	 tc5165_telios_jp_keymap, 
+	 default_special_keymap,
+	 KB_JP},
 
 	{{{PLATID_WILD, PLATID_MACH_SHARP_MOBILON}},
-	 tc5165_mobilon_keymap, KB_US},
+	 tc5165_mobilon_keymap, 
+	 tc5165_mobilon_special_keymap,
+	 KB_US},
 
 	{{{0, 0}}, NULL, 0}
 };

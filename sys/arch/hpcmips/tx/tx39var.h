@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.4 2000/01/12 14:56:19 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.5 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -31,6 +31,7 @@ struct tx_chipset_tag {
 	void *tc_powert; /* power tag */
 	void *tc_clockt; /* clock/timer tag */
 	void *tc_soundt; /* sound tag */
+	void *tc_iomant; /* io manager tag */
 };
 
 typedef struct tx_chipset_tag* tx_chipset_tag_t;
@@ -40,6 +41,7 @@ void	tx_conf_register_intr __P((tx_chipset_tag_t, void*));
 void	tx_conf_register_power __P((tx_chipset_tag_t, void*));
 void	tx_conf_register_clock __P((tx_chipset_tag_t, void*));
 void	tx_conf_register_sound __P((tx_chipset_tag_t, void*));
+void	tx_conf_register_ioman __P((tx_chipset_tag_t, void*));
 
 /*
  *	TX39 Internal Function Register access
@@ -82,18 +84,23 @@ struct txsim_attach_args {
  *	Interrupt staff
  */
 #define MAKEINTR(s, b) ((s) * 32 + (ffs(b) - 1))
-void*	tx_intr_establish __P((tx_chipset_tag_t, int, int, int, int (*) __P((void*)),	void*));
+void*	tx_intr_establish __P((tx_chipset_tag_t, int, int, int, 
+			       int (*) __P((void*)),	void*));
 void	tx_intr_disestablish __P((tx_chipset_tag_t, void*));
 
 #ifdef USE_POLL
-void*	tx39_poll_establish __P((tx_chipset_tag_t, int, int, int (*) __P((void*)),	void*));
+void*	tx39_poll_establish __P((tx_chipset_tag_t, int, int, 
+				 int (*) __P((void*)),	void*));
 void	tx39_poll_disestablish __P((tx_chipset_tag_t, void*));
 #define POLL_CONT	0
 #define POLL_END	1
 #endif /* USE_POLL */
 
+u_int32_t tx_intr_status __P((tx_chipset_tag_t, int));
+extern u_int32_t tx39intrvec;
+
 #ifdef TX39_DEBUG
-extern u_int32_t tx39debugflag, tx39intrvec;
+extern u_int32_t tx39debugflag;
 /*
  *	Debugging use.
  */

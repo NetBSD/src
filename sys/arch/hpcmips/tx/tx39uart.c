@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39uart.c,v 1.2 1999/12/07 17:08:10 uch Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.3 2000/01/16 21:47:01 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,8 @@
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39uartvar.h>
+
+#include <hpcmips/tx/txiomanvar.h>
 
 #include "locators.h"
 
@@ -76,6 +78,8 @@ tx39uart_attach(parent, self, aux)
 
 	printf("\n");
 	sc->sc_tc = tc = ta->ta_tc;
+
+	txioman_uart_init(tc);
 
 	config_search(tx39uart_search, self, tx39uart_print);
 }

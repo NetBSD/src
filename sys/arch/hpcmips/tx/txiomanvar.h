@@ -1,4 +1,4 @@
-/*	$NetBSD: txsnd.c,v 1.2 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: txiomanvar.h,v 1.1 2000/01/16 21:47:00 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -25,37 +25,36 @@
  * SUCH DAMAGE.
  *
  */
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 
-#include <hpcmips/tx/tx39var.h>
-#include <hpcmips/tx/txsnd.h>
+struct txioman_attach_args {
+	char *tia_busname;
+	tx_chipset_tag_t tia_tc;
+};
 
-struct	tx_sound_tag __tx_sound_default;
-void	__tx_sound_click	__P((tx_sound_tag_t));
-void	__tx_sound_mute		__P((tx_sound_tag_t, int));
+typedef struct txioman_tag *txioman_tag_t;
 
-void
-tx_sound_init(tc)
-	tx_chipset_tag_t tc;
-{
-	__tx_sound_default.ts_v = NULL;
-	__tx_sound_default.ts_click = __tx_sound_click;
-	__tx_sound_default.ts_mute  = __tx_sound_mute;
+struct txioman_tag {
+	void	*ti_v;
 
-	tx_conf_register_sound(tc, &__tx_sound_default);
-}
+	void	(*ti_led)	__P((txioman_tag_t, int, int));
+	void	(*ti_backlight)	__P((txioman_tag_t, int));
 
-void
-__tx_sound_click(arg)
-	tx_sound_tag_t arg;
-{
-}
-void
-__tx_sound_mute(arg, onoff)
-	tx_sound_tag_t arg;
-	int onoff;
-{
-}
+	void	(*ti_uart_init) __P((txioman_tag_t));
+	void	(*ti_uarta_init) __P((txioman_tag_t, void*));
+#if not_required_yet
+	void	(*ti_uartb_init) __P((txioman_tag_t, void*));
+#endif
+};
 
+#define	txioman_led(t, type, onoff) \
+	(*((txioman_tag_t)(t->tc_iomant))->ti_led) \
+	(((txioman_tag_t)(t->tc_iomant))->ti_v, (type), (onoff))
+#define	txioman_backlight(t, onoff) \
+	(*((txioman_tag_t)(t->tc_iomant))->ti_backlight) \
+	(((txioman_tag_t)(t->tc_iomant))->ti_v, (onoff))
+#define	txioman_uart_init(t) \
+	(*((txioman_tag_t)(t->tc_iomant))->ti_uart_init) \
+	(((txioman_tag_t)(t->tc_iomant))->ti_v)
+#define	txioman_uarta_init(t, c) \
+	(*((txioman_tag_t)(t->tc_iomant))->ti_uarta_init) \
+	(((txioman_tag_t)(t->tc_iomant))->ti_v, (c))

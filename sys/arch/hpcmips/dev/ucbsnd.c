@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.1 2000/01/12 14:56:21 uch Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.2 2000/01/16 21:47:01 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -83,6 +83,7 @@ struct ucbsnd_softc {
 	tx_chipset_tag_t	sc_tc;
 
 	struct	tx_sound_tag sc_tag;
+	int	sc_mute;
 
 	/* 
 	 *  audio codec state machine 
@@ -107,6 +108,7 @@ int	ucbsnd_busy __P((void*));
 
 void	ucbsnd_sound_init	__P((struct ucbsnd_softc*));
 void	__ucbsnd_sound_click	__P((tx_sound_tag_t));
+void	__ucbsnd_sound_mute	__P((tx_sound_tag_t, int));
 
 struct cfattach ucbsnd_ca = {
 	sizeof(struct ucbsnd_softc), ucbsnd_match, ucbsnd_attach
@@ -134,10 +136,10 @@ ucbsnd_attach(parent, self, aux)
 	tc = sc->sc_tc = ucba->ucba_tc;
 	sc->sc_sib = ucba->ucba_sib;
 	sc->sc_ucb = ucba->ucba_ucb;
-#define SOUND_TEST
-#ifdef SOUND_TEST
+
+	/* register sound functions */
 	ucbsnd_sound_init(sc);
-#endif
+
 	sc->sa_snd_rate = ucba->ucba_snd_rate;
 	sc->sa_tel_rate = ucba->ucba_tel_rate;
 
@@ -246,7 +248,6 @@ ucbsnd_exec_output(arg)
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
 
 		sc->sa_state = UCBSND_TRANSITION_PIO;
-		sc->sa_cnt = 0;
 		return 0;
 
 	case UCBSND_TRANSITION_PIO:
@@ -259,6 +260,7 @@ ucbsnd_exec_output(arg)
 		sc->sa_enabled = 1;
 
 		sc->sa_state = UCBSND_PIO;
+		sc->sa_cnt = 0;
 		return 0;
 
 	case UCBSND_PIO:
@@ -271,7 +273,7 @@ ucbsnd_exec_output(arg)
 
 		tx_conf_write(tc, TX39_SIBSF0CTRL_REG, TX39_SIBSF0_SNDVALID);
 		
-		if (sc->sa_cnt > 1000)
+		if (sc->sa_cnt > 50)
 			sc->sa_state = UCBSND_TRANSITION_DISABLE;
 		
 		return 0;
@@ -356,7 +358,8 @@ ucbsnd_sound_init(sc)
 	tx_chipset_tag_t tc = sc->sc_tc;
 
 	ts->ts_v = sc;
-	ts->ts_click = __ucbsnd_sound_click;
+	ts->ts_click	= __ucbsnd_sound_click;
+	ts->ts_mute	= __ucbsnd_sound_mute;
 
 	tx_conf_register_sound(tc, ts);
 }
@@ -367,10 +370,17 @@ __ucbsnd_sound_click(arg)
 {
 	struct ucbsnd_softc *sc = (void*)arg;
 	
-	if (sc->sa_state == UCBSND_IDLE) {
+	if (!sc->sc_mute && sc->sa_state == UCBSND_IDLE) {
 		sc->sa_state = UCBSND_INIT;
 		ucbsnd_exec_output((void*)sc);
 	}
 }
 
-
+void
+__ucbsnd_sound_mute(arg, onoff)
+	tx_sound_tag_t arg;
+	int onoff;
+{
+	struct ucbsnd_softc *sc = (void*)arg;
+	sc->sc_mute = onoff;
+}
