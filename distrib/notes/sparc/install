@@ -21,7 +21,7 @@ If you elect to you a separately NFS-mounted filesystem for `/usr' on your
 diskless setup, make sure the "./usr" base files in base.tar.gz end up
 in the correct location. One way to do this is to temporarily use a loopback
 mount on the server, re-routing <root>/usr to your server's exported
-NetBSD "/usr" directory.
+NetBSD "/usr" directory. Also put the kernel into the root directory.
 
 A few configuration files need to be edited:
 
@@ -33,8 +33,10 @@ A few configuration files need to be edited:
 		name as in <root>/etc/hosts.
 
 	<root>/etc/fstab
-		Enter the entries for remotely mounted `root', `swap' and
-		possibly `/usr' filesystems.
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+			server:/export/root/client       /     nfs  rw 0 0
+			server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
 
 Now you must populate the the `/dev' directory for your client. If you server
 runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
@@ -70,6 +72,27 @@ If you use a diskless setup with a separately NFS-mounted /usr filesystem,
 mount /usr by hand now:
 
 netbsd# mount /usr
+
+At this point, it's worth checking the disk label and partition sizes on
+the disk you want to install NetBSD onto. NetBSD understands SunOS-style
+disklabels, so if your disk was previously used by SunOS there will be
+a usable label on it. Use `disklabel -e <disk>' (where <disk> is the
+device name assigned by the NetBSD kernel, e.g. `sd0') to view and
+modify the partition sizes. A comfortable size for the root filesystem
+partition is about 20MB; a good initial size for the swap partition is
+twice the amount of physical memory in your machine (though, unlike
+SunOS 4.x, there are no restrictions on the size of the swap partition
+that would render part of your memory unusable). A full binary installation
+takes about 60MB in `/usr'. Make all your partitions start and end on
+cylinder boundaries.
+
+NOTE: if you are installing on a SCSI disk that does *not* have a SunOS
+or NetBSD label on it, you may still be able to use disklabel(8) but you'll
+have to create all partitions from scratch. If your disk is listed in
+`/etc/disktab', you may use the entry (which in most cases only defines
+a `c' partition to describe the whole disk) to put an initial label on
+the disk.
+
 
 If you are upgrading a NetBSD installation, start the upgrade script:
 
