@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.680 2005/01/08 16:07:20 fredb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.681 2005/01/13 18:25:49 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.679 2005/01/08 16:00:03 fredb Exp 
+ *	NetBSD: pcidevs,v 1.680 2005/01/13 18:25:19 jdolecek Exp 
  */
 
 /*
@@ -2823,6 +2823,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8653	0x3101		/* VT8653 (Apollo Pro 266T) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237_EHCI	0x3104		/* VT8237 EHCI USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT6105	0x3106		/* VT6105 (Rhine III) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT61XX	0x3119		/* VT61XX (Velocity) 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8623_VGA	0x3122		/* VT8623 (Apollo CLE266) VGA Controller */
 #define	PCI_PRODUCT_VIATECH_VT8623	0x3123		/* VT8623 (Apollo CLE266) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
