@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.8 1999/08/15 03:15:00 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.9 1999/08/15 03:18:19 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -337,7 +337,7 @@ rf_configure(fd,config_file,force)
 	void *generic;
 	RF_Config_t cfg;
 
-	if (rf_MakeConfig( config_file, &cfg ) < 0) {
+	if (rf_MakeConfig( config_file, &cfg ) != 0) {
 		fprintf(stderr,"%s: unable to create RAIDframe %s\n",
 			__progname, "configuration structure\n");
 		exit(1);
