@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.6 1996/03/31 22:30:50 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.7 1996/04/01 17:29:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -62,6 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
@@ -70,11 +71,11 @@
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/eeprom.h>
+#include <machine/conf.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/pfourreg.h>
-#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgeight_softc {
