@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.2 1998/06/08 20:23:08 tv Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.3 1998/06/20 20:38:33 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -3003,7 +3003,10 @@ void csCopyTxFrame( struct cs_softc *sc, struct mbuf *m0 )
 	struct mbuf *m;
 	int len, leftover, frameoff;
 	u_int16_t dbuf;
-	u_int8_t *p, *lim;
+	u_int8_t *p;
+#ifdef DIAGNOSTIC
+	u_int8_t *lim;
+#endif
 
 	/* Initialize frame pointer and data port address */
 	frameoff = PKTPG_TX_FRAME;
