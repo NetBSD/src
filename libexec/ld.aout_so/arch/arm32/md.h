@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 1998/10/19 03:09:31 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.3.8.1 2000/06/22 15:58:24 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -72,7 +72,6 @@
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
 #define JMPSLOT_NEEDS_RELOC			(1)
-#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
 #define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 #define md_got_reloc(r)			(-r->r_address)

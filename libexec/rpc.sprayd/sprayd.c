@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.11 1999/01/31 08:51:53 mrg Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.11.8.1 2000/06/22 15:58:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.11 1999/01/31 08:51:53 mrg Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.11.8.1 2000/06/22 15:58:36 minoura Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,58 +45,49 @@ __RCSID("$NetBSD: sprayd.c,v 1.11 1999/01/31 08:51:53 mrg Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/spray.h>
 
-static void cleanup __P((int));
-static void die __P((int));
-static void spray_service __P((struct svc_req *, SVCXPRT *));
+static void cleanup(int);
+static void die(int);
+static void spray_service(struct svc_req *, SVCXPRT *);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 static int from_inetd = 1;
 
 #define TIMEOUT 120
 
 static void
-cleanup(n)
-	int n;
+cleanup(int n)
 {
 
-	(void)pmap_unset(SPRAYPROG, SPRAYVERS);
+	(void)rpcb_unset(SPRAYPROG, SPRAYVERS, NULL);
 	exit(0);
 }
 
 static void
-die(n)
-	int n;
+die(int n)
 {
 
 	exit(0);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
-	int sock = 0;
-	int proto = 0;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 
 	/*
 	 * See if inetd started us
 	 */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)
 		from_inetd = 0;
-		sock = RPC_ANYSOCK;
-		proto = IPPROTO_UDP;
-	}
 
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		(void)pmap_unset(SPRAYPROG, SPRAYVERS);
+		(void)rpcb_unset(SPRAYPROG, SPRAYVERS, NULL);
 
 		(void)signal(SIGINT, cleanup);
 		(void)signal(SIGTERM, cleanup);
@@ -108,16 +99,24 @@ main(argc, argv)
 
 	openlog("rpc.sprayd", LOG_PID, LOG_DAEMON);
 
-	transp = svcudp_create(sock);
-	if (transp == NULL) {
-		syslog(LOG_ERR, "cannot create udp service.");
-		return 1;
-	}
-	if (!svc_register(transp, SPRAYPROG, SPRAYVERS, spray_service, proto)) {
-		syslog(LOG_ERR,
-		    "unable to register (SPRAYPROG, SPRAYVERS, %s).",
-		    proto ? "udp" : "(inetd)");
-		return 1;
+	if (from_inetd) {
+		transp = svc_dg_create(0, 0, 0);
+		if (transp == NULL) {
+			syslog(LOG_ERR, "cannot create udp service.");
+			return 1;
+		}
+		if (!svc_reg(transp, SPRAYPROG, SPRAYVERS, spray_service,
+		    NULL)) {
+			syslog(LOG_ERR,
+			    "unable to register (SPRAYPROG, SPRAYVERS).");
+			exit(1);
+		}
+	} else {
+		if (!svc_create(spray_service, SPRAYPROG, SPRAYVERS, "udp")) {
+			syslog(LOG_ERR,
+			    "unable to register (SPRAYPROG, SPRAYVERS).");
+			exit(1);
+		}
 	}
 
 	svc_run();
@@ -127,9 +126,7 @@ main(argc, argv)
 
 
 static void
-spray_service(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+spray_service(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	static spraycumul scum;
 	static struct timeval clear, get;

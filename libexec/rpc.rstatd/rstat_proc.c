@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.29 1999/03/25 08:07:47 bgrayson Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.29.8.1 2000/06/22 15:58:34 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.29 1999/03/25 08:07:47 bgrayson Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.29.8.1 2000/06/22 15:58:34 minoura Exp $");
 #endif
 #endif
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.29 1999/03/25 08:07:47 bgrayson Exp $");
  */
 
 #include <sys/param.h>
+#include <sys/sched.h>
 #include <sys/socket.h>
 
 #include <errno.h>
@@ -120,15 +121,15 @@ union {
 	struct statstime s3;
 } stats_all;
 
-extern void dkreadstats __P((void));
-extern int dkinit __P((int, gid_t));
+extern void dkreadstats(void);
+extern int dkinit(int, gid_t);
 
-void updatestat __P((int));
-void setup __P((void));
-void setup_kd_once __P((void));
-void stat_init __P((void));
-int havedisk __P((void));
-void rstat_service __P((struct svc_req *, SVCXPRT *));
+void updatestat(int);
+void setup(void);
+void setup_kd_once(void);
+void stat_init(void);
+int havedisk(void);
+void rstat_service(struct svc_req *, SVCXPRT *);
 
 static int stat_is_init = 0;
 
@@ -147,9 +148,7 @@ stat_init()
 }
 
 statstime *
-rstatproc_stats_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_3_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 	        stat_init();
@@ -158,9 +157,7 @@ rstatproc_stats_3_svc(arg, rqstp)
 }
 
 statsswtch *
-rstatproc_stats_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_2_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 	        stat_init();
@@ -170,9 +167,7 @@ rstatproc_stats_2_svc(arg, rqstp)
 }
 
 stats *
-rstatproc_stats_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_stats_1_svc(void *arg, struct svc_req *rqstp)
 {
 	if (!stat_is_init)
 	        stat_init();
@@ -182,9 +177,7 @@ rstatproc_stats_1_svc(arg, rqstp)
 }
 
 u_int *
-rstatproc_havedisk_3_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_3_svc(void *arg, struct svc_req *rqstp)
 {
 	static u_int have;
 
@@ -196,24 +189,19 @@ rstatproc_havedisk_3_svc(arg, rqstp)
 }
 
 u_int *
-rstatproc_havedisk_2_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_2_svc(void *arg, struct svc_req *rqstp)
 {
 	return (rstatproc_havedisk_3_svc(arg, rqstp));
 }
 
 u_int *
-rstatproc_havedisk_1_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
+rstatproc_havedisk_1_svc(void *arg, struct svc_req *rqstp)
 {
 	return (rstatproc_havedisk_3_svc(arg, rqstp));
 }
 
 void
-updatestat(dummy)
-	int dummy;
+updatestat(int dummy)
 {
 	long off;
 	int i;
@@ -279,8 +267,9 @@ updatestat(dummy)
 
 
 #ifdef DEBUG
-	syslog(LOG_DEBUG, "%d %d %d %d\n", stats_all.s3.cp_time[0],
-	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2], stats_all.s3.cp_time[3]);
+	syslog(LOG_DEBUG, "%d %d %d %d %d\n", stats_all.s3.cp_time[0],
+	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2],
+	    stats_all.s3.cp_time[3], stats_all.s3.cp_time[4]);
 #endif
 
 	mib[0] = CTL_VM;
@@ -385,9 +374,7 @@ havedisk()
 }
 
 void
-rstat_service(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+rstat_service(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		int fill;

@@ -1,9 +1,9 @@
-/*	$NetBSD: rwalld.c,v 1.14 1999/01/31 08:51:53 mrg Exp $	*/
+/* $NetBSD: rwalld.c,v 1.14.8.1 2000/06/22 15:58:36 minoura Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,26 +12,31 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.14 1999/01/31 08:51:53 mrg Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.14.8.1 2000/06/22 15:58:36 minoura Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -56,29 +61,24 @@ __RCSID("$NetBSD: rwalld.c,v 1.14 1999/01/31 08:51:53 mrg Exp $");
 
 static int from_inetd = 1;
 
-static void cleanup __P((int));
-static void wallprog_1 __P((struct svc_req *, SVCXPRT *));
+static void cleanup(int);
+static void wallprog_1(struct svc_req *, SVCXPRT *);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 static void
-cleanup(n)
-	int n;
+cleanup(int n)
 {
 
-	(void)pmap_unset(WALLPROG, WALLVERS);
+	(void)rpcb_unset(WALLPROG, WALLVERS, NULL);
 	exit(0);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
-	int sock = 0;
-	int proto = 0;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 
 	if (geteuid() == 0) {
@@ -93,16 +93,13 @@ main(argc, argv)
 	 * See if inetd started us
 	 */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)
 		from_inetd = 0;
-		sock = RPC_ANYSOCK;
-		proto = IPPROTO_UDP;
-	}
 
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		(void) pmap_unset(WALLPROG, WALLVERS);
+		(void) rpcb_unset(WALLPROG, WALLVERS, NULL);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
@@ -111,14 +108,23 @@ main(argc, argv)
 
 	openlog("rpc.rwalld", LOG_PID, LOG_DAEMON);
 
-	transp = svcudp_create(sock);
-	if (transp == NULL) {
-		syslog(LOG_ERR, "cannot create udp service.");
-		exit(1);
-	}
-	if (!svc_register(transp, WALLPROG, WALLVERS, wallprog_1, proto)) {
-		syslog(LOG_ERR, "unable to register (WALLPROG, WALLVERS, %s).", proto?"udp":"(inetd)");
-		exit(1);
+	if (from_inetd) {
+		transp = svc_dg_create(0, 0, 0);
+		if (transp == NULL) {
+			syslog(LOG_ERR, "cannot create udp service.");
+			exit(1);
+		}
+		if (!svc_reg(transp, WALLPROG, WALLVERS, wallprog_1, NULL)) {
+			syslog(LOG_ERR, "unable to register "
+			    "(WALLPROG, WALLVERS).");
+			exit(1);
+		}
+	} else {
+		if (!svc_create(wallprog_1, WALLPROG, WALLVERS, "udp")) {
+			syslog(LOG_ERR, "unable to create "
+			    "(WALLPROG, WALLVERS.)");
+			exit(1);
+		}
 	}
 
 	svc_run();
@@ -128,9 +134,7 @@ main(argc, argv)
 }
 
 void *
-wallproc_wall_1_svc(s, rqstp )
-	char **s;
-	struct svc_req *rqstp;
+wallproc_wall_1_svc(char **s, struct svc_req *rqstp)
 {
 	FILE *pfp;
 
@@ -144,9 +148,7 @@ wallproc_wall_1_svc(s, rqstp )
 }
 
 static void
-wallprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+wallprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		char *wallproc_wall_1_arg;

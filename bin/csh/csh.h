@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.h,v 1.11 1998/07/28 02:47:19 mycroft Exp $	*/
+/*	$NetBSD: csh.h,v 1.11.8.1 2000/06/22 15:03:41 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,12 +38,12 @@
 /*
  * Fundamental definitions which may vary from system to system.
  *
- *	BUFSIZ		The i/o buffering size; also limits word size
+ *	BUFSIZE		The i/o buffering size; also limits word size
  *	MAILINTVL	How often to mailcheck; more often is more expensive
  */
-#ifndef BUFSIZ
-#define	BUFSIZ	1024		/* default buffer size */
-#endif				/* BUFSIZ */
+#ifndef BUFSIZE
+#define	BUFSIZE	4096		/* default buffer size */
+#endif				/* BUFSIZE */
 
 #define FORKSLEEP	10	/* delay loop on non-interactive fork failure */
 #define	MAILINTVL	600	/* 10 minutes */

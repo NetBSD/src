@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.10 1999/02/17 15:28:09 kleink Exp $	*/
+/*	$NetBSD: ls.h,v 1.10.8.1 2000/06/22 15:03:43 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,6 +51,7 @@ extern int f_size;		/* list size in short listing */
 extern int f_statustime;	/* use time of last mode change */
 extern int f_type;		/* add type character for non-regular files */
 extern int f_typedir;		/* add type character for directories */
+extern int f_nonprint;		/* show unprintables as ? */
 
 typedef struct {
 	FTSENT *list;
