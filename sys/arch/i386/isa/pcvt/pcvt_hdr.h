@@ -1167,11 +1167,12 @@ extern u_char		*saved_charsets[NVGAFONTS];
 #define U_char	int
 
 /*
- * In FreeBSD >= 2.0, dev_t has type `unsigned long', so promoting it
- * doesn't cause any problems in prototypes.
+ * In FreeBSD >= 2.0 and NetBSD >= 1.1, dev_t has type
+ * `unsigned long' (FreeBSD) or `int32_t' or `u_int32_t' (NetBSD)
+ * so promoting it doesn't cause any problems in prototypes.
  */
 
-#if PCVT_FREEBSD >= 200
+#if PCVT_FREEBSD >= 200 || PCVT_NETBSD >= 110
 #undef Dev_t
 #define Dev_t	dev_t
 #endif
