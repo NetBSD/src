@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.4 1999/12/16 12:10:02 shin Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.5 2000/01/27 06:25:54 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -55,6 +55,8 @@ static void vrbcu_attach __P((struct device *, struct device *, void *));
 static void vrbcu_write __P((struct vrbcu_softc *, int, unsigned short));
 static unsigned short vrbcu_read __P((struct vrbcu_softc *, int));
 
+static void vrbcu_dump_regs __P((void));
+
 char	*vr_cpuname=NULL;
 int	vr_major=-1;
 int	vr_minor=-1;
@@ -108,6 +110,84 @@ vrbcu_attach(parent, self, aux)
 
 	printf("\n");
 	the_bcu_sc = sc;
+	vrbcu_dump_regs();
+}
+
+static void
+vrbcu_dump_regs()
+{
+	struct vrbcu_softc *sc = the_bcu_sc;
+	int reg;
+	int cpuclock, tclock, vtclock, cpuid, vt;
+
+#ifdef VRBCUDEBUG
+	reg = vrbcu_read(sc, BCUCNT1_REG_W);
+	printf("vrbcu: CNT1 %x: ",  reg);
+	bitdisp16(reg);
+	reg = vrbcu_read(sc, BCUCNT2_REG_W);
+	printf("vrbcu: CNT2 %x: ",  reg);
+	bitdisp16(reg);
+	reg = vrbcu_read(sc, BCUSPEED_REG_W);
+	printf("vrbcu: SPEED %x: ",  reg);
+	bitdisp16(reg);
+	reg = vrbcu_read(sc, BCUERRST_REG_W);
+	printf("vrbcu: ERRST %x: ",  reg);
+	bitdisp16(reg);
+	reg = vrbcu_read(sc, BCURFCNT_REG_W);
+	printf("vrbcu: RFCNT %x\n",  reg);
+	reg = vrbcu_read(sc, BCUREFCOUNT_REG_W);
+	printf("vrbcu: RFCOUNT %x\n",  reg);
+#endif /* VRBCUDEBUG */	
+	reg = vrbcu_read(sc, BCUCLKSPEED_REG_W);
+#ifdef VRBCUDEBUG
+	printf("vrbcu: CLKSPEED %x: \n",  reg);
+#endif /* VRBCUDEBUG */	
+	cpuclock = vrbcu_vrip_getcpuclock();
+	cpuid = vrbcu_vrip_getcpuid();
+
+	switch (cpuid) {
+	case BCUREVID_RID_4101:
+		/* assume 33MHz */
+		vtclock = tclock = cpuclock/2;	/* XXX */
+		break;
+	case BCUREVID_RID_4102:
+		vtclock = tclock = cpuclock/2;
+		break;
+	case BCUREVID_RID_4111:
+		if ((reg&BCUCLKSPEED_DIVT2B) == 0) 
+			vtclock = tclock = cpuclock/2;
+		else if ((reg&BCUCLKSPEED_DIVT3B) == 0) 
+			vtclock = tclock = cpuclock/3;
+		else if ((reg&BCUCLKSPEED_DIVT4B) == 0) 
+			vtclock = tclock = cpuclock/4;
+		else
+			vtclock = tclock = 0; /* XXX */
+		break;
+	case BCUREVID_RID_4121:
+			tclock = cpuclock / ((reg&BCUCLKSPEED_DIVTMASK)>>BCUCLKSPEED_DIVTSHFT);
+			vt = ((reg&BCUCLKSPEED_DIVVTMASK)>>BCUCLKSPEED_DIVVTSHFT);
+			if (vt == 0)
+				vtclock = 0; /* XXX */
+			else if (vt < 0x9)
+				vtclock = cpuclock / vt;
+			else
+				vtclock = cpuclock / ((vt - 8)*2+1) * 2;
+		break;
+	default:
+		break;
+	}
+	printf("vrbcu: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
+		cpuclock/1000000, (cpuclock%1000000)/1000,
+		tclock/1000000, (tclock%1000000)/1000,
+		vtclock/1000000, (vtclock%1000000)/1000);
+#ifdef VRBCUDEBUG
+	if (cpuid >= BCUREVID_RID_4111) {
+		reg = vrbcu_read(sc, BCUCNT3_REG_W);
+		printf("vrbcu: CNT3 %x: ",  reg);
+		bitdisp16(reg);
+	}
+#endif /* VRBCUDEBUG */
+
 }
 
 static char *cpuname[] = {
