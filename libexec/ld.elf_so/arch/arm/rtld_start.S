@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2002/09/09 19:28:40 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2002/09/11 22:28:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,19 +48,14 @@ _rtld_start:
 
 	ldr	sl, .L2
 	ldr	r1, .L2+4
-	ldr	r2, .L2+8
+	ldr	r0, .L2+8
 .L1:
 	add	sl, pc, sl
 	ldr	r1, [sl, r1]
-	ldr	r2, [sl, r2]
+	ldr	r0, [sl, r0]
 	sub	r1, sl, r1
-	add	r2, r1, r2
-1:
-	ldr	r0, [sl]
 	add	r0, r1, r0
-	str	r0, [sl], #4
-	cmp	sl, r2
-	bcc	1b
+	bl	_rtld_relocate_nonplt_self
 
 	mov	r0, sp			/* arg#1 = sp */
 	bl	_rtld			/* call the shared loader */
@@ -74,7 +69,7 @@ _rtld_start:
 .L2:
 	.word	_GLOBAL_OFFSET_TABLE_ - (.L1+8)
 	.word	_GLOBAL_OFFSET_TABLE_(GOT)
-	.word	_GOT_END_(GOT)
+	.word	_DYNAMIC(GOT)
 
 	.align	0
 	.globl	_rtld_bind_start
