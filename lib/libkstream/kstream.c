@@ -1,4 +1,4 @@
-/*	$NetBSD: kstream.c,v 1.2 2000/06/17 06:39:32 thorpej Exp $	*/
+/*	$NetBSD: kstream.c,v 1.3 2001/11/05 15:01:02 lukem Exp $	*/
 
 /* Encrypted-stream implementation for MIT Kerberos.
    Written by Ken Raeburn (Raeburn@Cygnus.COM).
@@ -199,7 +199,7 @@ kstream_flush (kstream k)
 
   if (k->ctl == 0)
     {
-      int n = fifo__bytes_available (out);
+      n = fifo__bytes_available (out);
       x = krb_net_write (k->fd, fifo__data_start (out), n);
       if (x < 0)
 	return x;
@@ -238,7 +238,7 @@ kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
   char *data = p_data;
   size_t len = p_len;
   int n;
-  fifo *in = &k->in_clear, *crypt;
+  fifo *in = &k->in_clear, *cryptstr;
   struct kstream_data_block kd_out, kd_in;
 
   assert (k != 0);
@@ -250,12 +250,12 @@ kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
   if (fifo__bytes_available (in) > 0)
     return fifo__extract (in, data, len);
 
-  crypt = &k->in_crypt;
+  cryptstr = &k->in_crypt;
  try_2:
   kd_out.ptr = 0;
   kd_out.length = 0;
-  kd_in.length = fifo__bytes_available (crypt);
-  kd_in.ptr = fifo__data_start (crypt);
+  kd_in.length = fifo__bytes_available (cryptstr);
+  kd_in.ptr = fifo__data_start (cryptstr);
   if (kd_in.length == 0)
     {
       n = -1;
@@ -265,7 +265,7 @@ kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
   if (n > 0)
     {
       /* Succeeded in decrypting some data.  */
-      fifo__extract (crypt, 0, n);
+      fifo__extract (cryptstr, 0, n);
       {
 	int n2;
 	n = kd_out.length;
@@ -282,11 +282,11 @@ kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
     size_t sz;
     static char *buf;
     sz = -n;
-    if (sz > fifo__space_available (crypt))
+    if (sz > fifo__space_available (cryptstr))
       {
 #ifdef DEBUG
 	fprintf (stderr, "insufficient space avail (%d, want %d)\n",
-		 fifo__space_available (crypt), sz);
+		 fifo__space_available (cryptstr), sz);
 #endif
 	errno = ENOMEM;
 	return -1;
@@ -313,7 +313,7 @@ kstream_read (kstream k, kstream_ptr p_data, size_t p_len)
 	  }
 	else if (n2 == 0)
 	  return 0;
-	fifo__append (crypt, buf, n2);
+	fifo__append (cryptstr, buf, n2);
 	sz -= n2;
       }
     goto try_2;
