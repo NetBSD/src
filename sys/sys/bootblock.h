@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.35 2004/11/26 21:51:50 he Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.36 2005/02/26 13:05:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ static const struct mbr_ptype {
 	{ MBR_PTYPE_FAT16S, "Primary DOS with 16 bit FAT <32M" },
 	{ MBR_PTYPE_EXT, "Extended partition" },
 	{ MBR_PTYPE_FAT16B, "Primary 'big' DOS, 16-bit FAT (> 32MB)" },
-	{ MBR_PTYPE_NTFS, "OS/2 HPFS or NTFS or QNX2 or Advanced UNIX" },
+	{ MBR_PTYPE_NTFS, "NTFS, OS/2 HPFS, QNX2 or Advanced UNIX" },
 	{ MBR_PTYPE_DELL, "AIX filesystem or OS/2 (thru v1.3) or DELL "
 			  "multiple drives or Commodore DOS or SplitDrive" },
 	{ MBR_PTYPE_AIX_BOOT, "AIX boot partition or Coherent" },
