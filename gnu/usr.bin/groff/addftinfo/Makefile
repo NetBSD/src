@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/01 00:27:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2002/01/01 01:38:25 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/utils/addftinfo
 .PATH:		${DIST}
 
-PROG=		addftinfo
-PROG_CXX=
+PROG_CXX=	addftinfo
 SRCS=		addftinfo.cc guess.cc
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)

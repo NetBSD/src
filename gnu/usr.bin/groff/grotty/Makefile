@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2002/01/01 00:27:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12 2002/01/01 01:38:27 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/devices/grotty
 .PATH:		${DIST}
 
-PROG=		grotty
-PROG_CXX=
+PROG_CXX=	grotty
 SRCS=		tty.cc
 LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
 DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBM)

@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2002/01/01 00:27:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 2002/01/01 01:38:29 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/preproc/tbl
 .PATH:		${DIST}
 
-PROG=		tbl
-PROG_CXX=
+PROG_CXX=	tbl
 SRCS=		main.cc table.cc
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)

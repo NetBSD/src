@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.145 2002/01/01 00:27:06 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.146 2002/01/01 01:38:25 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -101,9 +101,16 @@ CLEANFILES+=strings
 	@rm -f x.C
 .endif
 
+.if defined(PROG_CXX)
+PROG=	${PROG_CXX}
+.endif
 
 .if defined(PROG)
+.if defined(PROG_CXX)
+SRCS?=		${PROG}.cc
+.else
 SRCS?=		${PROG}.c
+.endif
 
 DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
