@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.503 2004/11/12 04:58:45 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.504 2004/11/12 04:59:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7848,3 +7848,9 @@ etc/MAKEDEV.tmpl				1.30
 
 	MAKEDEV regression because of printf -> zeropad change. PR#27235
 	[christos, ticket #919]
+
+bin/pax/tar.c					1.59
+
+	In GNU-tar mode, dontt split filenames to prefix+name because GNU 
+	tar does not honor it.
+	[christos, ticket #920]
