@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.37 2003/04/18 23:38:18 uwe Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.38 2003/05/06 09:58:44 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -240,6 +240,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  PQUIRK_NOMODESENSE | PQUIRK_NOBIGMODESENSE,
 	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_PEN, USB_PRODUCT_PEN_MOBILEDRIVE },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE | PQUIRK_NODOORLOCK | PQUIRK_FORCELUNS,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
 
