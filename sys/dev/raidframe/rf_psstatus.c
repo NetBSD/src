@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.13 2003/12/21 07:53:59 simonb Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.14 2003/12/21 15:56:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.13 2003/12/21 07:53:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.14 2003/12/21 15:56:20 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -100,7 +100,8 @@ rf_ConfigurePSStatus(
 	}
 	pool_sethiwat(&raidPtr->pss_pool, RF_MAX_FREE_PSS);
 	pool_sethiwat(&raidPtr->pss_issued_pool, RF_MAX_FREE_PSS);
-
+	pool_prime(&raidPtr->pss_pool, RF_PSS_INITIAL);
+	pool_prime(&raidPtr->pss_issued_pool, RF_PSS_INITIAL);
 	return (0);
 }
 /*****************************************************************************************
