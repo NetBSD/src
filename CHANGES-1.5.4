@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.117 2003/11/06 08:26:19 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.118 2003/11/27 17:59:11 cyber Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2302,3 +2302,104 @@ crypto/dist/openssl/ssl/ssl_ciph.c		patch
 		Stop bug triggering large recursion when presented with
 		certain ASN.1 tags (CAN-2003-0851). From Steve Henson.
 	[itojun, ticket#107]
+
+
+
+dist/bind/README				1.8, 1.9
+dist/bind/Version				1.4, 1.5
+dist/bind/bin/dig/dig.c				1.7
+dist/bind/bin/dnsquery/dnsquery.c		1.5
+dist/bind/bin/host/host.c			1.7
+dist/bind/bin/named-xfer/named-xfer.c		1.7
+dist/bind/bin/named/db_defs.h			1.7
+dist/bind/bin/named/db_ixfr.c			1.5
+dist/bind/bin/named/db_load.c			1.7
+dist/bind/bin/named/db_sec.c			1.6
+dist/bind/bin/named/ns_config.c			1.8
+dist/bind/bin/named/ns_ctl.c			1.7
+dist/bind/bin/named/ns_defs.h			1.9
+dist/bind/bin/named/ns_forw.c			1.6
+dist/bind/bin/named/ns_func.h			1.8
+dist/bind/bin/named/ns_glob.h			1.5
+dist/bind/bin/named/ns_init.c			1.5
+dist/bind/bin/named/ns_ixfr.c			1.6
+dist/bind/bin/named/ns_lexer.c			1.5
+dist/bind/bin/named/ns_main.c			1.14, 1.15
+dist/bind/bin/named/ns_maint.c			1.7
+dist/bind/bin/named/ns_ncache.c			1.6
+dist/bind/bin/named/ns_parser.y			1.6
+dist/bind/bin/named/ns_req.c			1.8
+dist/bind/bin/named/ns_resp.c			1.10
+dist/bind/bin/named/ns_update.c			1.6
+dist/bind/bin/ndc/ndc.c				1.8
+dist/bind/bin/nslookup/getinfo.c		1.6
+dist/bind/bin/nslookup/main.c			1.4
+dist/bind/bin/nslookup/send.c			1.5
+dist/bind/bin/nsupdate/nsupdate.c		1.6
+dist/bind/bin/probe_ipv6			1.5
+dist/bind/include/arpa/nameser.h		1.5
+dist/bind/include/arpa/nameser_compat.h		1.3
+dist/bind/include/hesiod.h			1.2
+dist/bind/include/irp.h				1.2
+dist/bind/include/irs.h				1.4
+dist/bind/include/isc/ctl.h			1.4
+dist/bind/include/isc/dst.h			1.2
+dist/bind/include/isc/eventlib.h		1.3
+dist/bind/include/isc/irpmarshall.h		1.3
+dist/bind/include/isc/logging.h			1.5
+dist/bind/include/isc/misc.h			1.4
+dist/bind/include/isc/tree.h			1.2
+dist/bind/include/netgroup.h			1.2
+dist/bind/include/port_after.h			1.6
+dist/bind/include/resolv.h			1.8
+dist/bind/lib/bsd/strtoul.c			1.2
+dist/bind/lib/bsd/writev.c			1.2
+dist/bind/lib/dst/bsafe_link.c			1.6
+dist/bind/lib/dst/cylink_link.c			1.5
+dist/bind/lib/dst/dst_api.c			1.6
+dist/bind/lib/dst/hmac_link.c			1.4
+dist/bind/lib/irs/dns_gr.c			1.3
+dist/bind/lib/irs/dns_ho.c			1.6
+dist/bind/lib/irs/dns_nw.c			1.5
+dist/bind/lib/irs/gen_gr.c			1.4
+dist/bind/lib/irs/getaddrinfo.c			1.5
+dist/bind/lib/irs/gethostent.c			1.5, 1.6
+dist/bind/lib/irs/getnameinfo.c			1.5
+dist/bind/lib/irs/getnetgrent.c			1.3
+dist/bind/lib/irs/getnetgrent_r.c		1.3
+dist/bind/lib/irs/hesiod.c			1.4
+dist/bind/lib/irs/irp_p.h			1.4
+dist/bind/lib/irs/irs_data.c			1.6
+dist/bind/lib/irs/nis_gr.c			1.3
+dist/bind/lib/irs/nis_ho.c			1.3
+dist/bind/lib/isc/ctl_clnt.c			1.5
+dist/bind/lib/isc/ctl_srvr.c			1.5
+dist/bind/lib/isc/ev_files.c			1.4
+dist/bind/lib/isc/ev_timers.c			1.7
+dist/bind/lib/isc/ev_waits.c			1.4
+dist/bind/lib/isc/eventlib.c			1.6
+dist/bind/lib/isc/eventlib_p.h			1.5
+dist/bind/lib/isc/logging.c			1.4
+dist/bind/lib/nameser/ns_name.c			1.9
+dist/bind/lib/nameser/ns_parse.c		1.5
+dist/bind/lib/nameser/ns_print.c		1.5
+dist/bind/lib/nameser/ns_samedomain.c		1.4
+dist/bind/lib/nameser/ns_sign.c			1.4
+dist/bind/lib/resolv/res_comp.c			1.2
+dist/bind/lib/resolv/res_debug.c		1.6, 1.7
+dist/bind/lib/resolv/res_findzonecut.c		1.5
+dist/bind/lib/resolv/res_init.c			1.5
+dist/bind/lib/resolv/res_mkquery.c		1.3
+dist/bind/lib/resolv/res_mkupdate.c		1.4
+dist/bind/lib/resolv/res_private.h		1.2
+dist/bind/lib/resolv/res_query.c		1.4
+dist/bind/lib/resolv/res_send.c			1.7
+dist/bind/lib/resolv/res_update.c		1.6
+dist/bind/man/dig.1				1.10
+dist/bind/man/named-xfer.8			1.8
+dist/bind/man/named.conf.5			1.13
+
+	sync w/ 8.3.5
+	sync w/ 8.3.6
+	[itojun, ticket #104]
+
