@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.41 2000/07/20 18:14:47 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.42 2000/07/25 17:56:06 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -626,10 +626,11 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	REG_L	s7, FRAME_S7(k1)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
+	REG_L	k0, FRAME_SR(k1)
+	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
-	REG_L	k0, FRAME_SR(k1)
 	REG_L	ra, FRAME_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS		# restore status
 	nop
@@ -760,10 +761,11 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_L	s7, FRAME_S7(k1)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
+	REG_L	k0, FRAME_SR(k1)
+	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
-	REG_L	k0, FRAME_SR(k1)
 	REG_L	ra, FRAME_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS
 	nop					# 3 nops before eret
@@ -835,6 +837,7 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	nop
 	nop
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
+	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
 	REG_L	v0, TF_BASE+TF_REG_EPC(sp)
@@ -982,6 +985,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 
 	REG_L	a0, FRAME_EPC(a1)	# argument is interrupted PC
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
+	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	jal	_C_LABEL(ast)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 
@@ -1039,12 +1043,13 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_L	t7, FRAME_T7(k1)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
+	REG_L	k0, FRAME_SR(k1)
+	DYNAMIC_STATUS_MASK(k0,ra)		# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
-	REG_L	k0, FRAME_SR(k1)
 	REG_L	ra, FRAME_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS		# restore the SR
-	nop					# Required for QED 5230
+	nop					# required for QED 5230
 	nop
 	eret					# return to interrupted point
 	.set	at
@@ -1099,7 +1104,7 @@ LEAF_NOPROFILE(mips3_TLBInvalidException)
 	addu	k1, k1, k0
 	tlbp					# Probe the invalid entry
 	and	k0, k0, 4			# check even/odd page
-	nop					# Required for QED 5230
+	nop					# required for QED 5230
 	bne	k0, zero, KernTLBIOdd
 	nop
 
@@ -1112,7 +1117,7 @@ LEAF_NOPROFILE(mips3_TLBInvalidException)
 	dsrl	k0, k0, 34
 	dmtc0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
-	nop					# Required for QED5230
+	nop					# required for QED5230
 	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
@@ -1122,7 +1127,7 @@ LEAF_NOPROFILE(mips3_TLBInvalidException)
 	or	k1, k1, k0
 	dmtc0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
 	nop
-	nop					# Required for QED5230
+	nop					# required for QED5230
 	tlbwi					# write TLB
 	nop
 	nop
@@ -1141,7 +1146,7 @@ KernTLBIOdd:
 	dsrl	k0, k0, 34
 	dmtc0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
-	nop					# Required for QED5230
+	nop					# required for QED5230
 	beq	k0, zero, _C_LABEL(mips3_KernGenException)	# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
@@ -1281,8 +1286,8 @@ END(mips3_SetPID)
  */
 LEAF(mips3_SetWIRED)
 	mtc0	a0, MIPS_COP_0_TLB_WIRED
-	nop				# Required for 5230
-	nop				# Required for 5230
+	nop				# required for 5230
+	nop				# required for 5230
 	j	ra
 	nop
 END(mips3_SetWIRED)
@@ -2153,10 +2158,11 @@ LEAF(mips3_proc_trampoline)
 	REG_L	s7, FRAME_S7(k1)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
+	REG_L	k0, FRAME_SR(k1)
+	DYNAMIC_STATUS_MASK(k0,sp)		# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	s8, FRAME_S8(k1)
 	REG_L	ra, FRAME_RA(k1)
-	REG_L	k0, FRAME_SR(k1)
 	REG_L	sp, FRAME_SP(k1)
 	mtc0	k0, MIPS_COP_0_STATUS
 	nop
