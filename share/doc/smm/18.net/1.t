@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.t,v 1.2 1998/01/09 06:55:41 perry Exp $
+.\"	$NetBSD: 1.t,v 1.3 2003/02/05 00:02:28 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,5 +64,5 @@ any additional ideas are introduced.
 .PP
 The remainder of this document
 provides a description of the system internals,
-avoiding, when possible, those portions which are utilized only
+avoiding, when possible, those portions which are used only
 by the interprocess communication facilities.

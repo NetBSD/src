@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.10 2002/01/26 13:40:55 aymeric Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.11 2003/02/05 00:02:31 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -285,7 +285,7 @@ struct MonDef {
                       unsigned short  w, unsigned short  h  );
 
 /*
- * This Routine utilizes the blitter to perform fast copies
+ * This Routine uses the blitter to perform fast copies
  * in the text-display. The paramters are:
  *  xs - source x-coordinate
  *  ys - source y-coordinate
@@ -303,7 +303,7 @@ struct MonDef {
                        unsigned short  w, unsigned short  h );
 
 /*
- * RZ3AlphaErase utilizes the blitter to erase portions of
+ * RZ3AlphaErase uses the blitter to erase portions of
  * the text-display. The parameters are:
  *  xd - destination x-coordinate
  *  yd - destination y-coordinate
@@ -324,7 +324,7 @@ struct MonDef {
 	void RZ3BitBlit (struct grf_bitblt * gbb );
 
 /*
- * RZ3BitBlit utilizes the blitter to perform one of 16
+ * RZ3BitBlit uses the blitter to perform one of 16
  * available logical operations on the display memory,
  * among them ordinary fill- and copy operations.
  * The only parameter is a pointer to a struct grf_bitblt:

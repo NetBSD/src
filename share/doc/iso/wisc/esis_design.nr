@@ -1,4 +1,4 @@
-.\"	$NetBSD: esis_design.nr,v 1.2 1998/01/09 06:34:45 perry Exp $
+.\"	$NetBSD: esis_design.nr,v 1.3 2003/02/05 00:02:26 perry Exp $
 .\"
 .NC "The Design of the ARGO Network Layer"
 .sh 1 "End System to Intermediate System Routing Protocol"
@@ -26,7 +26,7 @@ System (ES-IS) Routing Exchange Protocol.
 .sh 2 "Kernel Resident Features"
 .sh 3 "Support for PDU Transmission"
 - need mechanism to send/receive PDUs
-- utilize ES-IS socket (like raw socket)
+- use ES-IS socket (like raw socket)
 - socket(AF_ISO, SOCK_DGRAM, ISOPROTO_ESIS)
 .sh 4 "Sending PDUs"
 - sendmsg() used for transmitting PDUS
