@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.2 2001/02/04 22:59:26 christos Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.3 2001/06/13 23:10:31 wiz Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,9 +65,9 @@
 #include <compat/linux/common/linux_exec.h>
 
 #ifdef LINUX_SP_WRAP
-extern linux_sp_wrap_start;
-extern linux_sp_wrap_end;
-extern linux_sp_wrap_entry;
+extern int linux_sp_wrap_start;
+extern int linux_sp_wrap_end;
+extern int linux_sp_wrap_entry;
 #endif
 /*
  * Alpha and PowerPC specific linux copyargs function.
