@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.85 1995/04/21 04:53:19 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.86 1995/04/21 19:44:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -112,7 +112,7 @@ struct pc_softc {
 	struct	device sc_dev;
 	void	*sc_ih;
 	struct	tty *sc_tty;
-}
+};
 
 int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
@@ -603,7 +603,8 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
+	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
