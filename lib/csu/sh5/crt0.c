@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 2002/12/06 17:06:06 scw Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 2003/04/01 10:20:38 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,29 @@
 void	__start(int argc, char **argv, char **envp, void (*cleanup)(void),
 	    const Obj_Entry *obj, struct ps_strings *ps_strings);
 
+/*
+ * The SuperH SH5 linker has a bug which causes statically linked binaries
+ * to SEGV in crt0.o due to bogus SHmedia GOT offsets. (crt0.o is always
+ * compiled PIC).
+ *
+ * The following gross hack works around it for now (at the expense of
+ * a few more runtime relocations in dynamically linked binaries).
+ */
+static int		(*hack_atexit)(void (*)(void)) = atexit;
+#define	atexit		hack_atexit
+static void		(*hack__init)(void) = _init;
+#define	_init		hack__init
+static void		(*hack__fini)(void) = _fini;
+#define	_fini		hack__fini
+static void		(*hack_exit)(int) = exit;
+#define	exit		hack_exit
+static int		(*hack_main)(int, char **, char **) = main;
+#define	main		hack_main
+#ifdef MCRT0
+static void		(*hack_monstartup)(u_long, u_long) = monstartup;
+#define	monstartup	hack_monstartup
+#endif
+
 void
 __start(int argc, char **argv, char **envp, void (*cleanup)(void),
     const Obj_Entry *obj, struct ps_strings *ps_strings)
@@ -84,7 +107,7 @@ __start(int argc, char **argv, char **envp, void (*cleanup)(void),
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
   */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.3 2002/12/06 17:06:06 scw Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.4 2003/04/01 10:20:38 scw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
