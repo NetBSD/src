@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 1999/05/26 22:07:39 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 1999/05/26 22:19:36 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -415,7 +415,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

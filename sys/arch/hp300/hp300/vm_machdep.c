@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1999/05/26 22:07:38 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 1999/05/26 22:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -336,7 +336,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

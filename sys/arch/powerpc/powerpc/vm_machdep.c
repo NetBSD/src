@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 1999/05/26 22:07:40 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 1999/05/26 22:19:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -257,7 +257,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map addresses associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
