@@ -1,5 +1,7 @@
-/*	$NetBSD: sccvar.h,v 1.5 2000/01/09 03:56:09 simonb Exp $	*/
+/*	$NetBSD: sccvar.h,v 1.6 2000/01/09 23:10:45 ad Exp $	*/
 
+#ifndef _PMAX_TC_SCCVAR_H_
+#define _PMAX_TC_SCCVAR_H_
 
 /*
  * Minor device numbers for scc. Weird because B channel comes
@@ -18,13 +20,15 @@
 #define	SCCCOMM3_PORT	0x2
 #define	SCCKBD_PORT	0x3
 
+struct	scc_regmap;
 
 int	sccGetc __P((dev_t));
 void	sccPutc __P((dev_t, int));
-struct scc_regmap;
 void	scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 extern void	(*sccDivertXInput) __P((int));
 extern void	(*sccMouseEvent) __P((void *));
 extern void	(*sccMouseButtons) __P((void *));
+
+#endif	/* !_PMAX_TC_SCCVAR_H_ */
