@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)badsect.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: badsect.c,v 1.8 1994/10/31 04:19:00 cgd Exp $";
+static char *rcsid = "$Id: badsect.c,v 1.9 1995/01/30 20:37:27 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -117,7 +117,7 @@ main(argc, argv)
 			exit(4);
 		}
 		if (stbuf.st_dev == devstat.st_rdev &&
-		    (devstat.st_mode & IFMT) == IFBLK)
+		    S_ISBLK(devstat.st_mode))
 			break;
 	}
 	closedir(dirp);
@@ -137,7 +137,8 @@ main(argc, argv)
 		number = atoi(*argv);
 		if (chkuse(number, 1))
 			continue;
-		if (mknod(*argv, IFMT|0600, dbtofsb(fs, number)) < 0) {
+		if (mknod(*argv, S_IFMT|S_IRUSR|S_IWUSR,
+		    dbtofsb(fs, number)) < 0) {
 			perror(*argv);
 			errs++;
 		}

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traverse.c	8.2 (Berkeley) 9/23/93";*/
-static char *rcsid = "$Id: traverse.c,v 1.7 1994/09/23 14:27:08 mycroft Exp $";
+static char *rcsid = "$Id: traverse.c,v 1.8 1995/01/30 20:32:01 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -350,7 +350,7 @@ dumpino(dp, ino)
 	spcl.c_dinode = *dp;
 	spcl.c_type = TS_INODE;
 	spcl.c_count = 0;
-	switch (dp->di_mode & S_IFMT) {
+	switch (dp->di_mode & IFMT) {
 
 	case 0:
 		/*
@@ -358,7 +358,7 @@ dumpino(dp, ino)
 		 */
 		return;
 
-	case S_IFLNK:
+	case IFLNK:
 		/*
 		 * Check for short symbolic link.
 		 */
@@ -379,21 +379,21 @@ dumpino(dp, ino)
 		}
 		/* fall through */
 
-	case S_IFDIR:
-	case S_IFREG:
+	case IFDIR:
+	case IFREG:
 		if (dp->di_size > 0)
 			break;
 		/* fall through */
 
-	case S_IFIFO:
-	case S_IFSOCK:
-	case S_IFCHR:
-	case S_IFBLK:
+	case IFIFO:
+	case IFSOCK:
+	case IFCHR:
+	case IFBLK:
 		writeheader(ino);
 		return;
 
 	default:
-		msg("Warning: undefined file type 0%o\n", dp->di_mode & S_IFMT);
+		msg("Warning: undefined file type 0%o\n", dp->di_mode & IFMT);
 		return;
 	}
 	if (dp->di_size > NDADDR * sblock->fs_bsize)
