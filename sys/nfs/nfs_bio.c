@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.54 2000/11/27 08:39:48 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.55 2000/12/04 12:12:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1343,7 +1343,7 @@ nfs_putpages(v)
 	struct vm_page **pgs = ap->a_m;
 	int flags = ap->a_flags;
 	int npages = ap->a_count;
-	int s, error, i;
+	int s, error = 0, i;
 	size_t bytes, iobytes, skipbytes;
 	vaddr_t kva;
 	off_t offset, origoffset, commitoff;
