@@ -1,4 +1,4 @@
-.\"	$NetBSD: fixdist-3.0,v 1.1.1.1 2002/01/24 08:18:32 martti Exp $
+.\"	$NetBSD: fixdist-3.0,v 1.1.1.2 2002/03/14 12:30:13 martti Exp $
 .\"
 #!/bin/sh
 #
@@ -59,7 +59,7 @@ cat > ${OFILE} << __EOF__
 PROG=	ipf
 MAN=	${MFILES}
 SRCS=	${SFILES}
-CFLAGS+=-I\${.CURDIR}/../../sys/netinet
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sys/netinet
 
 .include <bsd.prog.mk>
 __EOF__
@@ -80,7 +80,7 @@ PROG=	ipfstat
 MAN=	${MFILES}
 SRCS=	${SFILES}
 .PATH:	\${.CURDIR}/../../sbin/ipf
-CFLAGS+=-I\${.CURDIR}/../../sbin/ipf -DSTATETOP \\
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sbin/ipf -DSTATETOP \\
 	-I\${.CURDIR}/../../sys/netinet
 DPADD=	\${LIBCURSES}
 LDADD=	-lcurses -lkvm
@@ -104,7 +104,7 @@ PROG=	ipnat
 MAN=	${MFILES}
 SRCS=	${SFILES}
 .PATH:	\${.CURDIR}/../ipfstat \${.CURDIR}/../ipf
-CFLAGS+=-I\${.CURDIR}/../../sbin/ipfstat -I\${.CURDIR}/../ipf \\
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sbin/ipfstat -I\${.CURDIR}/../ipf \\
 	-I\${.CURDIR}/../../sys/netinet
 LDADD=	-lkvm
 
@@ -163,8 +163,8 @@ SRCS=	${SFILES}
 .PATH:	\${.CURDIR}/../../sbin/ipf \${.CURDIR}/../../sbin/ipfstat \\
 	\${.CURDIR}/../../sys/netinet \${.CURDIR}/../../sbin/ipnat
 
-CFLAGS+=-I\${.CURDIR}/../../sbin/ipf -I\${.CURDIR}/../../sys/netinet \\
-	-I\${.CURDIR}/../../sys -I\${.CURDIR}
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sbin/ipf \\
+	-I\${.CURDIR}/../../sys/netinet -I\${.CURDIR}/../../sys -I\${.CURDIR}
 
 .include <bsd.prog.mk>
 __EOF__
@@ -186,7 +186,8 @@ PROG=	ipfs
 MAN=	${MFILES}
 SRCS=	${SFILES}
 
-CFLAGS+=-I\${.CURDIR}/../../sbin/ipf -I\${.CURDIR}/../../sys/netinet
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sbin/ipf \\
+	-I\${.CURDIR}/../../sys/netinet
 
 .include <bsd.prog.mk>
 __EOF__
@@ -207,7 +208,7 @@ cat > ${OFILE} << __EOF__
 PROG=	ipmon
 MAN=	${MFILES}
 SRCS=	${SFILES}
-CFLAGS+=-I\${.CURDIR}/../../sys/netinet
+CFLAGS+=-DUSE_INET6 -I\${.CURDIR}/../../sys/netinet
 
 .include <bsd.prog.mk>
 __EOF__
@@ -276,7 +277,7 @@ PROG=	ipresend
 BINDIR=	/usr/sbin
 MAN=	${MFILES}
 SRCS=	${SFILES}
-CFLAGS+=  -DDOSOCKET -I\${.CURDIR}/../common -I\${.CURDIR}/../../ipftest \\
+CFLAGS+=-DDOSOCKET -I\${.CURDIR}/../common -I\${.CURDIR}/../../ipftest \\
 	-I\${.CURDIR}/../../../sbin/ipf \\
 	-I\${.CURDIR}/../../../sys/netinet -I\${.CURDIR}/..
 .PATH:	\${.CURDIR}/../common \${.CURDIR}/../../ipftest \\
@@ -302,7 +303,7 @@ PROG=	iptest
 BINDIR=	/usr/sbin
 MAN=	${MFILES}
 SRCS=	${SFILES}
-CFLAGS+=  -DDOSOCKET -I\${.CURDIR}/../common -I\${.CURDIR}/../../ipftest \\
+CFLAGS+=-DDOSOCKET -I\${.CURDIR}/../common -I\${.CURDIR}/../../ipftest \\
 	-I\${.CURDIR}/../../../sys/netinet \\
 	-I\${.CURDIR}/../../../sbin/ipf -I\${.CURDIR}/..
 .PATH:	\${.CURDIR}/../common
