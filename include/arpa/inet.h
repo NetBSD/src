@@ -55,7 +55,7 @@
 
 /*
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: inet.h,v 1.9 1999/07/03 13:30:38 kleink Exp $
+ *	$NetBSD: inet.h,v 1.10 2002/04/26 14:56:16 bjh21 Exp $
  */
 
 #ifndef _ARPA_INET_H_
@@ -70,6 +70,7 @@
 # include <sys/types.h>
 #endif
 #include <sys/cdefs.h>
+#include <netinet/in.h>
 
 __BEGIN_DECLS
 unsigned long	 inet_addr __P((const char *));
