@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.99 2002/01/27 13:33:36 lukem Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.100 2002/01/28 02:06:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.99 2002/01/27 13:33:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.100 2002/01/28 02:06:02 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -110,6 +110,7 @@ static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 #endif
 static int sysctl_msgbuf(void *, size_t *);
 static int sysctl_doeproc(int *, u_int, void *, size_t *);
+static int sysctl_dotkstat(int *, u_int, void *, size_t *, void *);
 #ifdef MULTIPROCESSOR
 static int sysctl_docptime(void *, size_t *, void *);
 static int sysctl_ncpus(void);
@@ -333,6 +334,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_PROC_ARGS:
 	case KERN_SYSVIPC_INFO:
 	case KERN_PIPE:
+	case KERN_TKSTAT:
 		/* Not terminal. */
 		break;
 	default:
@@ -558,6 +560,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		return (error);
 	    }
+	case KERN_TKSTAT:
+		return (sysctl_dotkstat(name + 1, namelen - 1, oldp, oldlenp,
+		    newp));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1882,3 +1887,29 @@ sysctl_pty(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	return (error);
 }
 #endif /* NPTY > 0 */
+
+static int
+sysctl_dotkstat(name, namelen, where, sizep, newp)
+	int *name;
+	u_int namelen;
+	void *where;
+	size_t *sizep;
+	void *newp;
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case KERN_TKSTAT_NIN:
+		return (sysctl_rdquad(where, sizep, newp, tk_nin));
+	case KERN_TKSTAT_NOUT:
+		return (sysctl_rdquad(where, sizep, newp, tk_nout));
+	case KERN_TKSTAT_CANCC:
+		return (sysctl_rdquad(where, sizep, newp, tk_cancc));
+	case KERN_TKSTAT_RAWCC:
+		return (sysctl_rdquad(where, sizep, newp, tk_rawcc));
+	default:
+		return (EOPNOTSUPP);
+	}
+}
