@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.6 2003/03/25 06:12:47 igy Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -31,6 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.6 2003/03/25 06:12:47 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.15 2003/03/06 07:39:34 igy Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.16 2003/03/25 06:12:46 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,6 +76,8 @@
  *      @(#)com.c       7.5 (Berkeley) 5/16/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.16 2003/03/25 06:12:46 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
