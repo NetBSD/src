@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.58 2004/08/01 21:40:41 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.59 2004/08/02 22:02:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@ struct wdc_channel {
 #define WDCF_TH_RESET 0x200	/* someone ask the thread to reset */
 	u_int8_t ch_status;	/* copy of status register */
 	u_int8_t ch_error;	/* copy of error register */
+
+	/* for the reset callback */
+	int ch_reset_flags;
 
 	/* per-drive info */
 	struct ata_drive_datas ch_drive[2];

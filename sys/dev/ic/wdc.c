@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.183 2004/08/01 21:40:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.184 2004/08/02 22:02:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.183 2004/08/01 21:40:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.184 2004/08/02 22:02:35 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -982,18 +982,64 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 	struct ata_xfer *xfer, *next_xfer;
 	int drive;
 
+	chp->ch_queue->queue_freeze++;
+
+	/* if we can poll or wait it's OK, otherwise wake up the kernel
+	 * thread
+	 */
+	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
+		if (chp->ch_flags & WDCF_TH_RESET) {
+			/* no need to schedule a reset more than one time */
+			return;
+		}
+		chp->ch_flags |= WDCF_TH_RESET;
+		chp->ch_reset_flags = flags & (AT_RST_EMERG | AT_RST_NOCMD);
+		wakeup(&chp->ch_thread);
+		return;
+	}
+
+	/* reset the channel */
+	chp->ch_flags &= ~WDCF_IRQ_WAIT;
+	if ((flags & AT_WAIT) == 0) {
+		(void) wdcreset(chp, RESET_POLL);
+	} else {
+		(void) wdcreset(chp, RESET_SLEEP);
+	}
+
+	/*
+	 * wait a bit after reset; in case the the DMA engines needs some time
+	 * to recover.
+	 */
+	if (flags & AT_WAIT)
+		tsleep(&flags, PRIBIO, "atardl", 1);
+	else 
+		delay(1000);
 	/*
 	 * look for pending xfers. If we have a shared queue, we'll also reset
 	 * the other channel if the current xfer is running on it.
-	 * Then we'll freese the queue, and dequeue only the xfers for this
-	 * channel. xfer->c_kill_xfer() will reset any ATAPI device when
-	 * needed.
+	 * Then we'll dequeue only the xfers for this channel.
+	 * xfer->c_kill_xfer() will reset any ATAPI device when needed.
 	 */
-	chp->ch_queue->queue_freeze++;
 	if ((flags & AT_RST_NOCMD) == 0) {
 		xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-		if (xfer && xfer->c_chp != chp)
-			wdc_reset_channel(xfer->c_chp, flags);
+		if (xfer) {
+			if (xfer->c_chp != chp)
+				wdc_reset_channel(xfer->c_chp, flags);
+			else {
+				/*
+				 * If we're waiting for DMA, stop the
+				 * DMA engine
+				 */
+				if (chp->ch_flags & WDCF_DMA_WAIT) {
+					(*chp->ch_wdc->dma_finish)(
+					    chp->ch_wdc->dma_arg,
+					    chp->ch_channel,
+					    xfer->c_drive,
+					    1);
+					chp->ch_flags &= WDCF_DMA_WAIT;
+				}
+			}
+		}
 		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
 		    xfer != NULL; xfer = next_xfer) {
 			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
@@ -1003,24 +1049,10 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
 		}
 	}
-	chp->ch_flags &= ~(WDCF_IRQ_WAIT|WDCF_DMA_WAIT);
-	if ((flags & AT_POLL) == 0) {
-		if (chp->ch_flags & WDCF_TH_RESET) {
-			/* no need to schedule a reset more than one time */
-			return;
-		}
-		chp->ch_flags |= WDCF_TH_RESET;
-		wakeup(&chp->ch_thread);
-		return;
-	}
-	if ((flags & AT_WAIT) == 0) {
-		(void) wdcreset(chp, RESET_POLL);
-	} else {
-		(void) wdcreset(chp, RESET_SLEEP);
-	}
 	for (drive = 0; drive < 2; drive++) {
 		chp->ch_drive[drive].state = 0;
 	}
+	chp->ch_flags &= ~WDCF_TH_RESET;
 	if ((flags & AT_RST_EMERG) == 0)  {
 		chp->ch_queue->queue_freeze--;
 		wdcstart(chp);
