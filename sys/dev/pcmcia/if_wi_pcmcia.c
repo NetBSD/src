@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.43 2004/07/07 06:43:22 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.44 2004/08/05 17:29:41 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.43 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.44 2004/08/05 17:29:41 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,9 @@ static const struct wi_pcmcia_product {
 
 	{ PCMCIA_VENDOR_ARTEM, PCMCIA_PRODUCT_ARTEM_ONAIR,
 	  PCMCIA_CIS_ARTEM_ONAIR },
+
+	{ PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
+	  PCMCIA_CIS_ASUSTEK_WL_100 },
 };
 
 static const struct wi_pcmcia_product *
