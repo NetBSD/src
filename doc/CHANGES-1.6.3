@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.94 2004/05/11 14:42:32 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.95 2004/05/12 11:38:59 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -713,4 +713,10 @@ sys/compat/linux/common/linux_file64.c		1.22 via patch
 	translation. Problem found and patch supplied in PR kern/22360 by
 	Ales Krenek.
 	[wennmach, ticket #1686]
+
+sys/dev/ata/atavar.h				1.41 via patch
+
+	Change the value of DRIVE_ATAPIST which was same as that of
+	DRIVE_DMAERR.
+	[bouyer, ticket #1689]
 
