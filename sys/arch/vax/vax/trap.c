@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2001/06/04 15:33:07 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.66 2001/06/28 21:54:23 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -208,6 +208,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		if (p == 0)
 			panic("trap: access fault: addr %lx code %lx",
 			    frame->pc, frame->code);
+		if (frame->psl & PSL_IS)
+			panic("trap: pflt on IS");
 #endif
 
 		/*
