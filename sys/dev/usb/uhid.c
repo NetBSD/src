@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.32 2000/02/02 13:18:45 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.33 2000/02/22 11:24:22 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -95,8 +95,8 @@ struct uhid_softc {
 	u_int8_t sc_oid;
 	u_int8_t sc_fid;
 
-	char *sc_ibuf;
-	char *sc_obuf;
+	u_char *sc_ibuf;
+	u_char *sc_obuf;
 
 	void *sc_repdesc;
 	int sc_repdesc_size;
@@ -326,9 +326,18 @@ uhid_intr(xfer, addr, status)
 {
 	struct uhid_softc *sc = addr;
 
-	DPRINTFN(5, ("uhid_intr: status=%d\n", status));
-	DPRINTFN(5, ("uhid_intr: data = %02x %02x %02x\n",
-		     sc->sc_ibuf[0], sc->sc_ibuf[1], sc->sc_ibuf[2]));
+#ifdef UHID_DEBUG
+	if (uhiddebug > 5) {
+		u_int32_t cc, i;
+		
+		usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
+		DPRINTF(("uhid_intr: status=%d cc=%d\n", status, cc));
+		DPRINTF(("uhid_intr: data ="));
+		for (i = 0; i < cc; i++)
+			DPRINTF((" %02x", sc->sc_ibuf[i]));
+		DPRINTF(("\n"));
+	}
+#endif
 
 	if (status == USBD_CANCELLED)
 		return;
