@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.10 2003/10/06 02:21:47 lukem Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.11 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.10 2003/10/06 02:21:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.11 2003/10/14 14:02:56 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -297,7 +297,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 			error = EOPNOTSUPP;
 		if (error)
 			return (error);
-		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) && (mp->mnt_flag & MNT_WANTRDWR)) {
+		if ((pmp->pm_flags & MSDOSFSMNT_RONLY) && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.134 2003/10/14 13:51:51 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.135 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.134 2003/10/14 13:51:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.135 2003/10/14 14:02:56 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -357,7 +357,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
 		fs = ump->um_lfs;
-		if (fs->lfs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.

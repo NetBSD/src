@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.118 2003/09/24 10:22:54 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.119 2003/10/14 14:02:56 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.118 2003/09/24 10:22:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.119 2003/10/14 14:02:56 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -917,7 +917,7 @@ lfs_close(void *v)
 	struct timespec ts;
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
-	    vp->v_mount->mnt_flag & MNT_UNMOUNT)
+	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
 	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
@@ -1222,7 +1222,7 @@ lfs_fcntl(void *v)
 	}
 
 	/* Avoid locking a draining lock */
-	if (ap->a_vp->v_mount->mnt_flag & MNT_UNMOUNT) {
+	if (ap->a_vp->v_mount->mnt_iflag & IMNT_UNMOUNT) {
 		return ESHUTDOWN;
 	}
 
