@@ -64,7 +64,7 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 
 void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 {
-    char   *myname = "inet_addr_list_append";
+    const char *myname = "inet_addr_list_append";
 
     if (msg_verbose > 1)
 	msg_info("%s: %s", myname, inet_ntoa(*addr));

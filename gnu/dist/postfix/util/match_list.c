@@ -88,10 +88,10 @@ struct MATCH_LIST {
 
 static ARGV *match_list_parse(ARGV *list, char *string)
 {
-    char   *myname = "match_list_parse";
+    const char *myname = "match_list_parse";
     VSTRING *buf = 0;
     VSTREAM *fp;
-    char   *delim = " ,\t\r\n";
+    const char *delim = " ,\t\r\n";
     char   *bp = string;
     char   *pattern;
     char   *cp;
@@ -154,7 +154,7 @@ MATCH_LIST *match_list_init(const char *patterns, int match_count,...)
 
 int     match_list_match(MATCH_LIST * list,...)
 {
-    char   *myname = "match_list_match";
+    const char *myname = "match_list_match";
     char  **cpp;
     char   *pat;
     int     match;

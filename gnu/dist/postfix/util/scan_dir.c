@@ -117,7 +117,7 @@ char   *scan_dir_path(SCAN_DIR *scan)
 
 void    scan_dir_push(SCAN_DIR *scan, const char *path)
 {
-    char   *myname = "scan_dir_push";
+    const char *myname = "scan_dir_push";
     SCAN_INFO *info;
 
     info = (SCAN_INFO *) mymalloc(sizeof(*info));
@@ -137,7 +137,7 @@ void    scan_dir_push(SCAN_DIR *scan, const char *path)
 
 SCAN_DIR *scan_dir_pop(SCAN_DIR *scan)
 {
-    char   *myname = "scan_dir_pop";
+    const char *myname = "scan_dir_pop";
     SCAN_INFO *info = scan->current;
     SCAN_INFO *parent;
 
@@ -170,7 +170,7 @@ SCAN_DIR *scan_dir_open(const char *path)
 
 char   *scan_dir_next(SCAN_DIR *scan)
 {
-    char   *myname = "scan_dir_next";
+    const char *myname = "scan_dir_next";
     SCAN_INFO *info = scan->current;
     struct dirent *dp;
 

@@ -70,7 +70,7 @@
 
 int     inet_addr_local(INET_ADDR_LIST *addr_list)
 {
-    char   *myname = "inet_addr_local";
+    const char *myname = "inet_addr_local";
     struct ifconf ifc;
     struct ifreq *ifr;
     struct ifreq *the_end;

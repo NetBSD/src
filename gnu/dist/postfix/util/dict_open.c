@@ -214,7 +214,7 @@ static HTABLE *dict_open_hash;
 
 static void dict_open_init(void)
 {
-    char   *myname = "dict_open_init";
+    const char *myname = "dict_open_init";
     DICT_OPEN_INFO *dp;
 
     if (dict_open_hash != 0)
@@ -247,7 +247,7 @@ DICT   *dict_open(const char *dict_spec, int open_flags, int dict_flags)
 DICT   *dict_open3(const char *dict_type, const char *dict_name,
 		           int open_flags, int dict_flags)
 {
-    char   *myname = "dict_open";
+    const char *myname = "dict_open";
     DICT_OPEN_INFO *dp;
     DICT   *dict;
 
@@ -267,7 +267,7 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 void    dict_open_register(const char *type,
 			           DICT *(*open) (const char *, int, int))
 {
-    char   *myname = "dict_open_register";
+    const char *myname = "dict_open_register";
     DICT_OPEN_INFO *dp;
 
     if (dict_open_hash == 0)

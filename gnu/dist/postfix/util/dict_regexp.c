@@ -333,11 +333,11 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(int lineno, char *line, int *nsub
     if (!*p) {
 	msg_warn("%s, line %d: no replacement text: using empty string",
 		 VSTREAM_PATH(map_fp), lineno);
-	p = "";
+	/* tested again below... */
     }
     rule->expr[0] = expr1;
     rule->expr[1] = expr2;
-    rule->replace = mystrdup(p);
+    rule->replace = mystrdup((*p == 0) ? "" : p);
     rule->lineno = lineno;
     rule->next = NULL;
     return rule;

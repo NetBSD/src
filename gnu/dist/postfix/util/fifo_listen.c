@@ -52,7 +52,7 @@ int     fifo_listen(const char *path, int permissions, int block_mode)
 {
     char    buf[BUF_LEN];
     static int open_mode = 0;
-    char   *myname = "fifo_listen";
+    const char *myname = "fifo_listen";
     struct stat st;
     int     fd;
     int     count;

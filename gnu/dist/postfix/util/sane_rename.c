@@ -39,7 +39,7 @@
 
 int     sane_rename(const char *from, const char *to)
 {
-    char   *myname = "sane_rename";
+    const char *myname = "sane_rename";
     int     saved_errno;
     struct stat st;
 

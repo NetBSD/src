@@ -117,7 +117,7 @@ static WATCHDOG *watchdog_curr;
 
 static void watchdog_event(int unused_sig)
 {
-    char   *myname = "watchdog_event";
+    const char *myname = "watchdog_event";
     WATCHDOG *wp;
 
     /*
@@ -143,7 +143,7 @@ static void watchdog_event(int unused_sig)
 
 WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 {
-    char   *myname = "watchdog_create";
+    const char *myname = "watchdog_create";
     struct sigaction sig_action;
     WATCHDOG *wp;
 
@@ -172,7 +172,7 @@ WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 
 void    watchdog_destroy(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_destroy";
+    const char *myname = "watchdog_destroy";
 
     watchdog_stop(wp);
     watchdog_curr = wp->saved_watchdog;
@@ -189,7 +189,7 @@ void    watchdog_destroy(WATCHDOG *wp)
 
 void    watchdog_start(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_start";
+    const char *myname = "watchdog_start";
 
     if (wp != watchdog_curr)
 	msg_panic("%s: wrong watchdog instance", myname);
@@ -203,7 +203,7 @@ void    watchdog_start(WATCHDOG *wp)
 
 void    watchdog_stop(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_stop";
+    const char *myname = "watchdog_stop";
 
     if (wp != watchdog_curr)
 	msg_panic("%s: wrong watchdog instance", myname);

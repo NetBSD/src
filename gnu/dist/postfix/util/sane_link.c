@@ -39,7 +39,7 @@
 
 int     sane_link(const char *from, const char *to)
 {
-    char   *myname = "sane_link";
+    const char *myname = "sane_link";
     int     saved_errno;
     struct stat from_st;
     struct stat to_st;

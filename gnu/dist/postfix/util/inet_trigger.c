@@ -59,7 +59,7 @@
 
 int     inet_trigger(const char *service, const char *buf, int len, int timeout)
 {
-    char   *myname = "inet_trigger";
+    const char *myname = "inet_trigger";
     int     fd;
 
     if (msg_verbose > 1)

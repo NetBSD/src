@@ -59,10 +59,10 @@
 
 static void msg_syslog_print(int level, const char *text)
 {
-    static int log_level[] = {
+    static const int log_level[] = {
 	LOG_INFO, LOG_WARNING, LOG_ERR, LOG_CRIT, LOG_CRIT,
     };
-    static char *severity_name[] = {
+    static const char *severity_name[] = {
 	"info", "warning", "error", "fatal", "panic",
     };
 

@@ -44,7 +44,7 @@
 
 int     name_mask(NAME_MASK *table, const char *names)
 {
-    char   *myname = "name_mask";
+    const char *myname = "name_mask";
     char   *saved_names = mystrdup(names);
     char   *bp = saved_names;
     int     result = 0;

@@ -74,7 +74,7 @@
 
 int     match_string(const char *string, const char *pattern)
 {
-    char   *myname = "match_string";
+    const char *myname = "match_string";
     int     match;
     char   *key;
 
@@ -112,7 +112,7 @@ int     match_string(const char *string, const char *pattern)
 
 int     match_hostname(const char *name, const char *pattern)
 {
-    char   *myname = "match_hostname";
+    const char *myname = "match_hostname";
     const char *pd;
     const char *entry;
     char   *next;
@@ -183,7 +183,7 @@ static int match_parse_mask(const char *pattern, unsigned long *net_bits,
 
 int     match_hostaddr(const char *addr, const char *pattern)
 {
-    char   *myname = "match_hostaddr";
+    const char *myname = "match_hostaddr";
     int     mask_shift;
     unsigned long mask_bits;
     unsigned long net_bits;
