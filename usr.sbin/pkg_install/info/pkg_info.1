@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.36 2004/01/06 16:15:06 hubertf Exp $
+.\" $NetBSD: pkg_info.1,v 1.37 2004/01/06 16:22:06 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -82,7 +82,7 @@ Show the install-message file (if any) for each package.
 Show the long-description field for each package.
 .It Fl e Ar pkg-name
 This option
-allows you to test for the existcnce of a given package. 
+allows you to test for the existence of a given package.
 If the package identified by
 .Ar pkg-name
 is currently installed, return code is 0, otherwise 1.
@@ -175,18 +175,18 @@ The filename must be absolute, compare the output of pkg_info
 .Sh PACKAGE WILDCARDS
 In the places where a package name/version is expected, e.g. for the
 .Fl e
-switch, several forms can be used. Either use a package name with or
-without version, or specify a package wildcard that gets matched
-against all installed packages.
+switch, several forms can be used.
+Either use a package name with or without version, or specify a
+package wildcard that gets matched against all installed packages.
 .Pp
-Package wildcards use 
+Package wildcards use
 .Xr fnmatch 3 .
 In addition,
 .Xr csh 1
 style {,} alternates have also been implemented.
 Package version numbers can also be matched in a relational manner
 using the
-.Pa \*[Ge], \*[Le], \*[Gt]
+.Pa \*[Ge] , \*[Le] , \*[Gt] ,
 and
 .Pa \*[Lt]
 operators.
