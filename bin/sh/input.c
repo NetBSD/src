@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.27 1997/07/04 21:02:03 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.28 1997/10/14 15:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.27 1997/07/04 21:02:03 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.28 1997/10/14 15:06:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,8 +297,10 @@ check:
 
 #ifndef SMALL
 	if (parsefile->fd == 0 && hist && something) {
+		HistEvent he;
 		INTOFF;
-		history(hist, whichprompt == 1 ? H_ENTER : H_ADD, parsenextc);
+		history(hist, &he,
+			whichprompt == 1 ? H_ENTER : H_ADD, parsenextc);
 		INTON;
 	}
 #endif
