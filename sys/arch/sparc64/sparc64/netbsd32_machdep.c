@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.41 2003/11/09 16:41:53 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.42 2004/01/15 14:37:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.41 2003/11/09 16:41:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.42 2004/01/15 14:37:31 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -932,19 +932,20 @@ struct netbsd32_opiocdesc {
 #endif
 
 /* prototypes for the converters */
-static __inline void
-netbsd32_to_fbcmap(struct netbsd32_fbcmap *, struct fbcmap *, u_long);
-static __inline void
-netbsd32_to_fbcursor(struct netbsd32_fbcursor *, struct fbcursor *, u_long);
-static __inline void
-netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *, struct opiocdesc *, u_long);
+static __inline void netbsd32_to_fbcmap(struct netbsd32_fbcmap *,
+					struct fbcmap *, u_long);
+static __inline void netbsd32_to_fbcursor(struct netbsd32_fbcursor *,
+					  struct fbcursor *, u_long);
+static __inline void netbsd32_to_opiocdesc(struct netbsd32_opiocdesc *,
+					   struct opiocdesc *, u_long);
 
-static __inline void
-netbsd32_from_fbcmap(struct fbcmap *, struct netbsd32_fbcmap *);
-static __inline void
-netbsd32_from_fbcursor(struct fbcursor *, struct netbsd32_fbcursor *);
-static __inline void
-netbsd32_from_opiocdesc(struct opiocdesc *, struct netbsd32_opiocdesc *);
+static __inline void netbsd32_from_fbcmap(struct fbcmap *,
+					  struct netbsd32_fbcmap *, u_long);
+static __inline void netbsd32_from_fbcursor(struct fbcursor *,
+					    struct netbsd32_fbcursor *, u_long);
+static __inline void netbsd32_from_opiocdesc(struct opiocdesc *,
+					     struct netbsd32_opiocdesc *,
+					     u_long);
 
 /* convert to/from different structures */
 static __inline void
@@ -993,9 +994,10 @@ netbsd32_to_opiocdesc(s32p, p, cmd)
 }
 
 static __inline void
-netbsd32_from_fbcmap(p, s32p)
+netbsd32_from_fbcmap(p, s32p, cmd)
 	struct fbcmap *p;
 	struct netbsd32_fbcmap *s32p;
+	u_long cmd;
 {
 
 	s32p->index = p->index;
@@ -1009,16 +1011,17 @@ netbsd32_from_fbcmap(p, s32p)
 }
 
 static __inline void
-netbsd32_from_fbcursor(p, s32p)
+netbsd32_from_fbcursor(p, s32p, cmd)
 	struct fbcursor *p;
 	struct netbsd32_fbcursor *s32p;
+	u_long cmd;
 {
 
 	s32p->set = p->set;
 	s32p->enable = p->enable;
 	s32p->pos = p->pos;
 	s32p->hot = p->hot;
-	netbsd32_from_fbcmap(&p->cmap, &s32p->cmap);
+	netbsd32_from_fbcmap(&p->cmap, &s32p->cmap, cmd);
 	s32p->size = p->size;
 /* filled in */
 #if 0
@@ -1028,9 +1031,10 @@ netbsd32_from_fbcursor(p, s32p)
 }
 
 static __inline void
-netbsd32_from_opiocdesc(p, s32p)
+netbsd32_from_opiocdesc(p, s32p, cmd)
 	struct opiocdesc *p;
 	struct netbsd32_opiocdesc *s32p;
+	u_long cmd;
 {
 
 	s32p->op_nodeid = p->op_nodeid;
@@ -1041,9 +1045,9 @@ netbsd32_from_opiocdesc(p, s32p)
 }
 
 int
-netbsd32_md_ioctl(fp, com, data32, p)
+netbsd32_md_ioctl(fp, cmd, data32, p)
 	struct file *fp;
-	netbsd32_u_long com;
+	netbsd32_u_long cmd;
 	void *data32;
 	struct proc *p;
 {
@@ -1053,7 +1057,7 @@ netbsd32_md_ioctl(fp, com, data32, p)
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 	int error;
 
-	switch (com) {
+	switch (cmd) {
 	case FBIOPUTCMAP32:
 		IOCTL_STRUCT_CONV_TO(FBIOPUTCMAP, fbcmap);
 	case FBIOGETCMAP32:
@@ -1071,7 +1075,7 @@ netbsd32_md_ioctl(fp, com, data32, p)
 	case OPIOCNEXTPROP32:
 		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32, p);
 	}
 	if (memp)
 		free(memp, M_IOCTLOPS);
