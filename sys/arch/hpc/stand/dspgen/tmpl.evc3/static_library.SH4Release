@@ -1,6 +1,0 @@
-CPP=shcl.exe
-# ADD BASE CPP /nologo /W3 /GX- %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /Qsh4 /Oxs /M$(CECrtMT)  /c
-# ADD CPP /nologo /W3 /GX- /D _WIN32_WCE=$(CEVersion) %%% INCDIRS %%% /D "$(CePlatform)" /D "SHx" /D "SH4" /D "_SH4_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_LIB" /YX /Qsh4 /Oxs %%% CPPDEFS %%% /M$(CECrtMT)  /c
-LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo

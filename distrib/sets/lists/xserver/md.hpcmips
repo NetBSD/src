@@ -1,5 +1,0 @@
-# $NetBSD: md.hpcmips,v 1.10 2004/03/28 07:18:08 jmc Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xhpc
-./usr/X11R6/man/cat1/Xhpc.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xhpc.1			-unknown-		.man

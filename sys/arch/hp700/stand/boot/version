@@ -1,4 +1,0 @@
-$NetBSD: version,v 1.2 2003/10/21 12:40:15 itohy Exp $
-
-1.1:		Initial version
-1.2:		Support disklabel.

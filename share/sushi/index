@@ -1,9 +1,0 @@
-# $NetBSD: index,v 1.6 2004/03/09 20:06:42 garbled Exp $
-install		install	Software Installation and Maintenance
-system		system	System Maintenance
-users		users	Users and Groups
-procs		procs	Processes and Daemons
-network		network	Network related configuration
-BLANK		BLANK	BLANK
-info		info	Using sushi (information only)
-util		util	Sushi utilities (logging/scripting)
