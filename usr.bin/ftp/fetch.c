@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.92 1999/11/03 07:42:02 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.93 1999/11/09 07:46:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.92 1999/11/03 07:42:02 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.93 1999/11/09 07:46:22 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -768,7 +768,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			struct utsname unam;
 
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
-			fprintf(fin, "Host: %s:%s\r\n", host, port);
+			fprintf(fin, "Host: %s:%d\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
 			if (uname(&unam) != -1) {
 				fprintf(fin, "User-Agent: %s-%s/ftp\r\n",
