@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2004/01/14 11:31:55 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2004/06/05 07:31:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1205,13 +1205,6 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
-
-int	_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
-	    bus_size_t size, int flags);
-void	_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
-int	_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-	    void *buf, bus_size_t buflen, struct proc *p, int flags,
-	    paddr_t *lastaddrp, int *segp, int first);
 
 
 
