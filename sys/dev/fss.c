@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.5 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.6 2004/02/14 00:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.5 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.6 2004/02/14 00:00:56 hannken Exp $");
 
 #include "fss.h"
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,13 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.5 2004/01/25 18:06:48 hannken Exp $");
 #include <dev/fssvar.h>
 
 #include <machine/stdarg.h>
-
-#if defined(DEBUG) && defined(DDB)
-#include <ddb/ddbvar.h>
-#include <machine/db_machdep.h>
-#include <ddb/db_command.h>
-#include <ddb/db_interface.h>
-#endif
 
 #ifdef DEBUG
 #define FSS_STATISTICS
@@ -120,10 +112,7 @@ static struct fss_stat fss_stat[NFSS];
 #define FSS_STAT_CLEAR(sc)
 #endif /* FSS_STATISTICS */
 
-typedef enum {
-	FSS_READ,
-	FSS_WRITE
-} fss_io_type;
+static struct fss_softc fss_softc[NFSS];
 
 void fssattach(int);
 
@@ -136,7 +125,10 @@ dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
+static void fss_copy_on_write(void *, struct buf *);
 static inline void fss_error(struct fss_softc *, const char *, ...);
+static int fss_create_files(struct fss_softc *, struct fss_set *,
+    off_t *, struct proc *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
     struct proc *);
 static int fss_delete_snapshot(struct fss_softc *, struct proc *);
@@ -456,34 +448,18 @@ fss_umount_hook(struct mount *mp, int forced)
  * A buffer is written to the snapshotted block device. Copy to
  * backing store if needed.
  */
-void
-fss_copy_on_write(struct fss_softc *sc, struct buf *bp)
+static void
+fss_copy_on_write(void *v, struct buf *bp)
 {
 	int s;
 	u_int32_t cl, ch, c;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Buffer written on a suspended file system. This is always an error.
-	 */
-	if (sc->sc_mount &&
-	    (sc->sc_mount->mnt_iflag & IMNT_SUSPENDED) == IMNT_SUSPENDED) {
-		printf_nolog("fss%d: write while suspended, %lu@%" PRId64 "\n",
-		    sc->sc_unit, bp->b_bcount, bp->b_blkno);
-#if defined(DEBUG) && defined(DDB)
-		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
-		    TRUE, 65535, "", printf_nolog);
-#endif /* DEBUG && DDB */
-	}
-#endif /* DIAGNOSTIC */
+	struct fss_softc *sc = v;
 
 	FSS_LOCK(sc, s);
 	if (!FSS_ISVALID(sc)) {
 		FSS_UNLOCK(sc, s);
 		return;
 	}
-
-	sc->sc_cowcount++;
 
 	FSS_UNLOCK(sc, s);
 
@@ -494,24 +470,17 @@ fss_copy_on_write(struct fss_softc *sc, struct buf *bp)
 
 	for (c = cl; c <= ch; c++)
 		fss_read_cluster(sc, c);
-
-	FSS_LOCK(sc, s);
-
-	if (--sc->sc_cowcount == 0 && !FSS_ISVALID(sc))
-		wakeup(&sc->sc_cowcount);
-
-	FSS_UNLOCK(sc, s);
 }
 
 /*
  * Lookup and open needed files.
  *
  * Returns dev and size of the underlying block device.
- * Initializes the fields sc_mntname, sc_bs_vp and sc_mount
+ * Initializes sc_mntname, sc_mount_vp, sc_bdev, sc_bs_vp and sc_mount
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
-    dev_t *bdev, off_t *bsize, struct proc *p)
+    off_t *bsize, struct proc *p)
 {
 	int error, fsbsize;
 	struct partinfo dpart;
@@ -555,7 +524,8 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return error;
 	}
 
-	*bdev = nd.ni_vp->v_rdev;
+	sc->sc_mount_vp = nd.ni_vp;
+	sc->sc_bdev = nd.ni_vp->v_rdev;
 	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
 
@@ -614,13 +584,12 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
 {
 	int len, error;
 	u_int32_t csize;
-	dev_t bdev;
 	off_t bsize;
 
 	/*
 	 * Open needed files.
 	 */
-	if ((error = fss_create_files(sc, fss, &bdev, &bsize, p)) != 0)
+	if ((error = fss_create_files(sc, fss, &bsize, p)) != 0)
 		goto bad;
 
 	if (sc->sc_bs_vp->v_type == VREG &&
@@ -693,10 +662,11 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct proc *p)
 
 	microtime(&sc->sc_time);
 
-	if (error == 0) {
+	if (error == 0)
+		error = vn_cow_establish(sc->sc_mount_vp,
+		    fss_copy_on_write, sc);
+	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
-		sc->sc_bdev = bdev;
-	}
 
 	vfs_write_resume(sc->sc_mount);
 
@@ -729,14 +699,10 @@ fss_delete_snapshot(struct fss_softc *sc, struct proc *p)
 {
 	int s;
 
+	vn_cow_disestablish(sc->sc_mount_vp, fss_copy_on_write, sc);
+
 	FSS_LOCK(sc, s);
-
 	sc->sc_flags &= ~(FSS_ACTIVE|FSS_ERROR);
-
-	while (sc->sc_cowcount > 0) {
-		ltsleep(&sc->sc_cowcount, PRIBIO, "cowwait1", 0, &sc->sc_slock);
-	}
-
 	sc->sc_mount = NULL;
 	sc->sc_bdev = NODEV;
 	FSS_UNLOCK(sc, s);
