@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.2 1999/05/24 00:25:31 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.3 1999/06/04 13:48:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ struct iommu_strbuf {
 #endif
 
 /*
- * interrupt map stuff.
+ * interrupt map stuff.  this belongs elsewhere.
  */
 
 #define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
@@ -118,7 +118,10 @@ struct iommu_strbuf {
 #define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
 #define INTMAP_INO	0x00000003fLL	/* Interrupt number */
 #define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
-#define INTMAP_SLOT	0x000000018LL	/* SBUS slot # */
+#define INTMAP_SBUSSLOT	0x000000018LL	/* SBUS slot # */
+#define INTMAP_PCIBUS	0x000000010LL	/* PCI bus number (A or B) */
+#define INTMAP_PCISLOT	0x00000000cLL	/* PCI slot # */
+#define INTMAP_PCIINT	0x000000003LL	/* PCI interrupt #A,#B,#C,#D */
 #define INTMAP_OBIO	0x000000020LL	/* Onboard device */
 #define INTMAP_LSHIFT	11		/* Encode level in vector */
 #define	INTLEVENCODE(x)	(((x)&0x0f)<<INTMAP_LSHIFT)
@@ -126,5 +129,10 @@ struct iommu_strbuf {
 #define INTVEC(x)	((x)&INTMAP_INR)
 #define INTSLOT(x)	(((x)>>3)&0x7)
 #define	INTPRI(x)	((x)&0x7)
+#define	INTINO(x)	((x)&INTMAP_INO)
+
+#define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
+#define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */
+#define	INTPCIINOX(x)	(((x)&0x1c)>>2)	/* PCI ino index */
 
 #endif /* _SPARC64_DEV_IOMMUREG_H_ */
