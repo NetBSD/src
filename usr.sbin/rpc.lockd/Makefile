@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/18 04:01:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:37 lukem Exp $
 
 PROG=	rpc.lockd
 SRCS=	nlm_prot_svc.c lockd.c lock_proc.c
 MAN=	rpc.lockd.8
 MLINKS=	rpc.lockd.8 lockd.8
 
-CFLAGS+= -I.
+CPPFLAGS+= -I.
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc

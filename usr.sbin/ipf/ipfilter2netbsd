@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -67,7 +67,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 SUBDIR=		ipf ipfstat ipmon ipnat ipftest ipsend iptest
 .if make(install)
@@ -83,7 +83,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile.inc
 cat > Makefile.inc<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 WARNS?=	1
 
@@ -105,7 +105,7 @@ mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -132,12 +132,12 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
 MAN=	ipfstat.8
-CFLAGS+=-I${.CURDIR}/../ipf
+CPPFLAGS+=-I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf
 .include <bsd.prog.mk>
@@ -156,12 +156,12 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c ip_auth.c
 NOMAN=	yes
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../ipf
+CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../../../sys/netinet
 .include <bsd.prog.mk>
@@ -181,11 +181,11 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
-CFLAGS+=-DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../ipf
+CPPFLAGS+=-DLOGFAC=LOG_LOCAL0 -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf
 .include <bsd.prog.mk>
@@ -206,13 +206,13 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
 MAN=	ipnat.8 ipnat.4 ipnat.5
 MLINKS=	ipnat.5 ipnat.conf.5
-CFLAGS+=-I${.CURDIR}/../ipf -I${.CURDIR}/../ipfstat
+CPPFLAGS+=-I${.CURDIR}/../ipf -I${.CURDIR}/../ipfstat
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat
 .include <bsd.prog.mk>
@@ -231,12 +231,12 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
 MAN=	ipresend.1
-CFLAGS+=-I${.CURDIR}/../ipfstat -I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
+CPPFLAGS+=-I${.CURDIR}/../ipfstat -I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipfstat ${.CURDIR}/../ipsend ${.CURDIR}/../ipftest
 .include <bsd.prog.mk>
@@ -258,11 +258,11 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
-CFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
+CPPFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
 LDADD=	-ll
 DPADD=	${LIBL}
 
@@ -287,12 +287,12 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
 MAN=	iptest.1
-CFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
+CPPFLAGS+=-I${.CURDIR}/../ipsend -I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf
 
 .PATH: ${.CURDIR}/../ipf ${.CURDIR}/../ipsend
 .include <bsd.prog.mk>
@@ -309,7 +309,7 @@ cd $d/src/usr.sbin/ipf/rules
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 FILESDIR= /usr/share/samples/ipf
 
@@ -343,7 +343,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -370,7 +370,7 @@ find $d -name '*.[chly]' -print | while read c; do
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.10 1997/09/21 16:34:31 veego Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $	*/
 
 __eof_header
 cat $c

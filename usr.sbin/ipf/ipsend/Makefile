@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 1997/09/21 18:02:04 veego Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/25 06:58:16 lukem Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
-CFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
+CPPFLAGS+=-I${.CURDIR}/../ipftest -I${.CURDIR}/../ipf -I.
 LDADD=	-ll
 DPADD=	${LIBL}
 

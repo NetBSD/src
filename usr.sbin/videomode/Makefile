@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1997/06/24 08:01:39 mikel Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/25 06:58:53 lukem Exp $
 
 .if ${MACHINE} == "amiga"
 PROG=videomode
-CFLAGS+=-I${.CURDIR}/../../sys/arch -D${MACHINE}
+CPPFLAGS+=-I${.CURDIR}/../../sys/arch -D${MACHINE}
 .else
 NOOBJ=	noobj
 .endif
