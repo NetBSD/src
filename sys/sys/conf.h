@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.15 1994/10/30 21:49:47 cgd Exp $	*/
+/*	$NetBSD: conf.h,v 1.16 1994/11/14 06:02:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,10 +49,11 @@ struct proc;
 struct tty;
 struct uio;
 struct vnode;
+struct file;
 
 struct bdevsw {
 	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
-				     struct proc *p));
+				     struct proc *p, struct file* fp));
 	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
 				     struct proc *p));
 	void	(*d_strategy)	__P((struct buf *bp));
@@ -69,7 +70,7 @@ extern struct bdevsw bdevsw[];
 
 struct cdevsw {
 	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
-				     struct proc *p));
+				     struct proc *p, struct file *fp));
 	int	(*d_close)	__P((dev_t dev, int fflag, int devtype,
 				     struct proc *));
 	int	(*d_read)	__P((dev_t dev, struct uio *uio, int ioflag));
