@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.5 2002/11/14 21:17:30 christos Exp $ */
+/*	$NetBSD: mach_task.c,v 1.6 2002/11/26 08:10:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.5 2002/11/14 21:17:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.6 2002/11/26 08:10:17 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.5 2002/11/14 21:17:30 christos Exp $
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_task.h>
 #include <compat/mach/mach_syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.6 2002/11/26 08:10:16 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.1 2002/11/26 08:10:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,36 +36,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.6 2002/11/26 08:10:16 manu Exp $");
+#ifndef	_MACH_THREAD_H_
+#define	_MACH_THREAD_H_
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/signal.h>
+#include <sys/proc.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_clock.h>
-#include <compat/mach/mach_host.h>
-#include <compat/mach/mach_port.h>
-#include <compat/mach/mach_task.h>
-#include <compat/mach/mach_thread.h>
-#include <compat/mach/mach_vm.h>
 
-struct mach_subsystem_namemap mach_namemap[] = {
-	{ 200, mach_host_info, "host_info" },
-	{ 202, mach_host_page_size,"host_page_size" },
-	{ 206, mach_host_get_clock_service, "host_get_clock_service" },
-	{ 1000, mach_clock_get_time, "clock_get_time" },
-	{ 3204, mach_port_allocate, "port_allocate" },
-	{ 3206, mach_port_deallocate, "port_deallocate" },
-	{ 3214, mach_port_insert_right, "port_insert_right" },
-	{ 3404, mach_ports_lookup, "ports_lookup" },
-	{ 3409, mach_task_get_special_port, "task_get_special_port" },
-	{ 3616, mach_thread_policy, "thread_policy" },
-	{ 3801, mach_vm_allocate, "vm_allocate" },
-	{ 3802, mach_vm_deallocate, "vm_deallocate" },
-	{ 3812, mach_vm_map, "vm_map" },
-	{ 0, NULL, NULL },
-};
+/* thread_policy */
+typedef int mach_policy_t;
 
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_policy_t req_policy;
+	mach_msg_type_number_t req_count;
+	mach_integer_t req_base[5];
+	mach_boolean_t req_setlimit;
+} mach_thread_policy_request_t;
 
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_thread_policy_reply_t;
+
+int mach_thread_policy(struct proc *, mach_msg_header_t *);
+
+#endif /* _MACH_THREAD_H_ */

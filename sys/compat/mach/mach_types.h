@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.5 2002/11/10 21:53:41 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.6 2002/11/26 08:10:19 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ typedef int mach_clock_res_t;
 typedef int mach_clock_id_t;
 typedef int mach_boolean_t;
 typedef int mach_sleep_type_t;
-typedef int mach_timespec_t;
 typedef int mach_absolute_time_t;
 typedef int mach_integer_t;
 typedef int mach_cpu_type_t;
