@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.5 2000/04/05 14:26:51 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.6 2000/04/08 15:15:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ iommu_reset(is)
 	bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_ctl, 0, STRBUF_EN);
 
 	/* No streaming buffers? Disable them */
-	if (bus_space_read_8(is->is_bustag, &is->is_sb->strbuf_ctl, 0) == 0)
+	if (bus_space_read_8(is->is_bustag, (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl, 0) == 0)
 		is->is_sb = 0;
 }
 
