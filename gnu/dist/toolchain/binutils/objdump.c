@@ -2633,7 +2633,7 @@ display_target_list ()
   dummy_name = choose_temp_base ();
   for (t = 0; bfd_target_vector[t]; t++)
     {
-      bfd_target *p = bfd_target_vector[t];
+      const bfd_target *p = bfd_target_vector[t];
       bfd *abfd = bfd_openw (dummy_name, p->name);
       int a;
 
@@ -2692,7 +2692,7 @@ display_info_table (first, last)
 		bfd_printable_arch_mach (a, 0));
 	for (t = first; t < last && bfd_target_vector[t]; t++)
 	  {
-	    bfd_target *p = bfd_target_vector[t];
+	    const bfd_target *p = bfd_target_vector[t];
 	    boolean ok = true;
 	    bfd *abfd = bfd_openw (dummy_name, p->name);
 
