@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.4 1999/05/31 14:48:16 kleink Exp $	 */
+/*	$NetBSD: load.c,v 1.5 1999/11/07 00:21:12 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -66,19 +66,41 @@ _rtld_load_object(filepath, dodebug)
 	bool dodebug;
 {
 	Obj_Entry *obj;
+	int fd = -1;
+	struct stat sb;
 
 	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
 		if (strcmp(obj->path, filepath) == 0)
 			break;
 
-	if (obj == NULL) { /* First use of this object, so we must map it in */
-		int fd;
-
+	/*
+	 * If we didn't find a match by pathname, open the file and check
+	 * again by device and inode.  This avoids false mismatches caused
+	 * by multiple links or ".." in pathnames.
+	 *
+	 * To avoid a race, we open the file and use fstat() rather than
+	 * using stat().
+	 */
+	if (obj == NULL) {
 		if ((fd = open(filepath, O_RDONLY)) == -1) {
 			_rtld_error("Cannot open \"%s\"", filepath);
 			return NULL;
 		}
-		obj = _rtld_map_object(filepath, fd);
+		if (fstat(fd, &sb) == -1) {
+			_rtld_error("Cannot fstat \"%s\"", filepath);
+			close(fd);
+			return NULL;
+		}
+		for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next) {
+			if (obj->ino == sb.st_ino && obj->dev == sb.st_dev) {
+				close(fd);
+				break;
+			}
+		}
+	}
+
+	if (obj == NULL) { /* First use of this object, so we must map it in */
+		obj = _rtld_map_object(filepath, fd, &sb);
 		(void)close(fd);
 		if (obj == NULL) {
 			free(filepath);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.16 1999/08/19 23:42:15 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.17 1999/11/07 00:21:14 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,9 +34,11 @@
 #ifndef RTLD_H
 #define RTLD_H
 
+#include <dlfcn.h>
 #include <stddef.h>
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/exec_elf.h>
 #include "rtldenv.h"
 #include "link.h"
@@ -88,6 +90,13 @@ typedef enum {
 } bool;
 
 struct Struct_Obj_Entry;
+
+typedef struct Struct_Objlist_Entry {
+	SIMPLEQ_ENTRY(Struct_Objlist_Entry) link;
+	struct Struct_Obj_Entry *obj;
+} Objlist_Entry;
+
+typedef SIMPLEQ_HEAD(Struct_Objlist, Struct_Objlist_Entry) Objlist;
 
 typedef struct Struct_Needed_Entry {
 	struct Struct_Needed_Entry *next;
@@ -178,6 +187,14 @@ typedef struct Struct_Obj_Entry {
 	int             printed:1;	/* True if ldd has printed it */
 
 	struct link_map linkmap;	/* for GDB */
+
+	/* These items are computed by map_object() or by digest_phdr(). */
+	const char     *interp;	/* Pathname of the interpreter, if any */
+	Objlist         dldags;	/* Object belongs to these dlopened DAGs (%) */
+	Objlist         dagmembers;	/* DAG has these members (%) */
+	dev_t           dev;		/* Object's filesystem's device */
+	ino_t           ino;		/* Object's inode number */
+	unsigned long   mark;	/* Set to "curmark" to avoid repeat visits */
 } Obj_Entry;
 
 #if defined(_RTLD_SOURCE)
@@ -186,10 +203,15 @@ extern struct r_debug _rtld_debug;
 extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
+extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
 extern bool _rtld_trust;
 extern const char *_rtld_error_message;
+extern unsigned long curmark;
+extern Objlist _rtld_list_global;
+extern Objlist _rtld_list_main;
+extern Elf_Sym _rtld_sym_zero;
 
 /* rtld_start.S */
 void _rtld_bind_start __P((void));
@@ -201,6 +223,7 @@ char *_rtld_dlerror __P((void));
 void *_rtld_dlopen __P((const char *, int));
 void *_rtld_dlsym __P((void *, const char *));
 int _rtld_dlclose __P((void *));
+int _rtld_dladdr __P((const void *, Dl_info *));
 void _rtld_debug_state __P((void));
 void _rtld_linkmap_add __P((Obj_Entry *));
 void _rtld_linkmap_delete __P((Obj_Entry *));
@@ -220,11 +243,11 @@ void _rtld_process_hints __P((Search_Path **, const char *, bool));
 
 /* reloc.c */
 int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
-caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind __P((Obj_Entry *, Elf_Word));
 int _rtld_relocate_objects __P((Obj_Entry *, bool, bool));
-int _rtld_relocate_nonplt_object __P((const Obj_Entry *,
+int _rtld_relocate_nonplt_object __P((Obj_Entry *,
     const Elf_RelA *, bool));
-int _rtld_relocate_plt_object __P((const Obj_Entry *, const Elf_RelA *,
+int _rtld_relocate_plt_object __P((Obj_Entry *, const Elf_RelA *,
     caddr_t *, bool, bool));
 
 /* search.c */
@@ -235,10 +258,14 @@ unsigned long _rtld_elf_hash __P((const char *));
 const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
     const Obj_Entry *, bool));
 const Elf_Sym *_rtld_find_symdef __P((const Obj_Entry *, Elf_Word,
-    const char *, const Obj_Entry *, const Obj_Entry **, bool));
+    const char *, Obj_Entry *, const Obj_Entry **, bool));
+const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
+  Objlist *, const Obj_Entry **, bool in_plt);
 
 /* map_object.c */
-Obj_Entry *_rtld_map_object __P((const char *, int));
+Obj_Entry *_rtld_map_object __P((const char *, int, const struct stat *));
+void _rtld_obj_free(Obj_Entry *);
+Obj_Entry *_rtld_obj_new(void);
 
 #if defined(__mips__)
 /* mips_reloc.c */
