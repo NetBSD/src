@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: catman.c,v 1.8 1997/10/18 04:37:20 lukem Exp $");
+__RCSID("$NetBSD: catman.c,v 1.9 1997/10/24 01:31:35 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -154,8 +154,10 @@ catman(path, section)
 		if (sectlen == 0)
 			errx(1, "malformed section string");
 
-		sprintf(mandir, "%s/%s%.*s", path, _PATH_MANPAGES, sectlen, s);
-		sprintf(catdir, "%s/%s%.*s", path, _PATH_CATPAGES, sectlen, s);
+		snprintf(mandir, sizeof mandir, "%s/%s%.*s", path,
+		    _PATH_MANPAGES, sectlen, s);
+		snprintf(catdir, sizeof catdir, "%s/%s%.*s", path,
+		    _PATH_CATPAGES, sectlen, s);
 
 		if ((dirp = opendir(mandir)) == 0) {
 			warn("can't open %s", mandir);
