@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.28 1999/11/29 01:40:34 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.29 2000/02/05 17:02:44 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -294,32 +294,43 @@ and will call
 with the
 .Dq call Sy peer
 option.
-.It Sy ip6forwarding
-YES or NO.
+.It Sy ip6mode
 An IPv6 node can be a router
 .Pq nodes that forward packet for others
 or host
 .Pq nodes that do not forward .
+A host can be autoconfigured
+based on the information advertised by adjacent IPv6 router.
 By setting
-.Sy ip6forwarding
-to YES, the node will become an IPv6 router.
-Note that this is orthogonal to IPv4 forwarding/routing.
+.Sy ip6mode
+to
+.Dq Li router ,
+.Dq Li host ,
+or
+.Dq Li autohost ,
+you can configure your node as a router,
+a non-autoconfigured host, or an autoconfigured host.
+Invalid values will be ignored, and the node will be configured as
+a non-autoconfigured host.
+You may want to check
+.Sy rtsol
+and
+.Sy rtsold
+as well, if you set the variable to
+.Li autohost .
 .It Sy rtsol
 YES or NO.
 Run
 .Xr rtsol 8 ,
 router solicitation command for IPv6 host.
-By setting this option to YES, your host will be autoconfigured
-based on the information advertised by adjacent IPv6 router.
 On nomadic host like notebook computers, you may want to enable
 .Sy rtsold
 as well.
 Passes
 .Sy rtsol_flags .
-This is only for IPv6 host, so set
-.Sy ip6forwarding
-to NO if you use
-.Sy rtsol .
+This is only for autoconfigured IPv6 host, so set
+.Sy ip6mode
+to autohost if you use it.
 .El
 .Pp
 .Ss Daemons required by other daemons:
@@ -465,9 +476,9 @@ Stationary host should work fine with
 only.
 Passes
 .Sy rtsold_flags .
-This is only for IPv6 host, so set
-.Sy ip6forwarding
-to NO if you use it.
+This is only for autoconfigured IPv6 host, so set
+.Sy ip6mode
+to autohost if you use it.
 .El
 .Pp
 .Ss Daemons used to boot other hosts over a network:
