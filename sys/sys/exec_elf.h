@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.76 2004/05/17 02:28:17 mrg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.77 2004/12/26 23:37:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -444,14 +444,17 @@ typedef struct {
 #define	STT_LOPROC		13	/* Processor-specific range */
 #define	STT_HIPROC		15
 
-/* st_info utility macros */
-#define	ELF32_ST_BIND(info)		((Elf32_Word)(info) >> 4)
-#define	ELF32_ST_TYPE(info)		((Elf32_Word)(info) & 0xf)
-#define	ELF32_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
+/* st_other: Visibility Types */
+#define	STV_DEFAULT		0	/* use binding type */
+#define	STV_INTERNAL		1	/* not referenced from outside */
+#define	STV_HIDDEN		2	/* not visible, may be used via ptr */
+#define	STV_PROTECTED		3	/* visible, not preemptible */
 
-#define	ELF64_ST_BIND(info)		((Elf64_Xword)(info) >> 4)
-#define	ELF64_ST_TYPE(info)		((Elf64_Xword)(info) & 0xf)
-#define	ELF64_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
+/* st_info/st_other utility macros */
+#define	ELF_ST_BIND(info)		((Elf_Byte)(info) >> 4)
+#define	ELF_ST_TYPE(info)		((Elf_Byte)(info) & 0xf)
+#define	ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
+#define	ELF_ST_VISIBILITY(other)	((Elf_Byte)(other) & 3)
 
 /*
  * Special section indexes
@@ -735,10 +738,6 @@ struct netbsd_elfcore_procinfo {
 #define	ELF_R_TYPE	ELF32_R_TYPE
 #define	ELFCLASS	ELFCLASS32
 
-#define	ELF_ST_BIND	ELF32_ST_BIND
-#define	ELF_ST_TYPE	ELF32_ST_TYPE
-#define	ELF_ST_INFO	ELF32_ST_INFO
-
 #define	AuxInfo		Aux32Info
 #elif defined(ELFSIZE) && (ELFSIZE == 64)
 #define	Elf_Ehdr	Elf64_Ehdr
@@ -757,10 +756,6 @@ struct netbsd_elfcore_procinfo {
 #define	ELF_R_SYM	ELF64_R_SYM
 #define	ELF_R_TYPE	ELF64_R_TYPE
 #define	ELFCLASS	ELFCLASS64
-
-#define	ELF_ST_BIND	ELF64_ST_BIND
-#define	ELF_ST_TYPE	ELF64_ST_TYPE
-#define	ELF_ST_INFO	ELF64_ST_INFO
 
 #define	AuxInfo		Aux64Info
 #endif
