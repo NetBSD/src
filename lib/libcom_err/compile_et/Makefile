@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/08/19 09:41:29 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2002/08/19 13:35:06 lukem Exp $
 
 NOMAN=		# defined
 
@@ -17,7 +17,7 @@ YHEADER=	# defined
 
 BINDIR=		/usr/bin
 
-LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
+LIBROKEN!=	cd ${NETBSDSRCDIR}/lib/libroken && ${PRINTOBJDIR}
 
 HOST_CPPFLAGS+= -I.				\
 	 -I${NETBSDSRCDIR}/include/heimdal	\

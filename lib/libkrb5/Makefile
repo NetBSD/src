@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2002/08/19 09:41:32 lukem Exp $
+# $NetBSD: Makefile,v 1.23 2002/08/19 13:35:08 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,7 +12,7 @@ WARNS?=		1
 LIB=		krb5
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
@@ -238,7 +238,7 @@ krb5-types.h:
 
 INCSDIR=	/usr/include/krb5
 
-ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\

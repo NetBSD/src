@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/08/19 09:41:32 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2002/08/19 13:35:08 lukem Exp $
 
 NOLINT=		# defined
 
@@ -17,7 +17,7 @@ SRCS=		krb_cache.c krb_kdb_utils.c copykey.c \
 INCS=		krb_db.h
 INCSDIR=	/usr/include/kerberosIV
 
-LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${PRINTOBJDIR}
+LIBKRBINC!=	cd ${NETBSDSRCDIR}/lib/libkrb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/kdb			\

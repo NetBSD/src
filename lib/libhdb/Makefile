@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2002/08/19 09:41:30 lukem Exp $
+# $NetBSD: Makefile,v 1.15 2002/08/19 13:35:07 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,7 +12,7 @@ WARNS?=		1
 LIB=		hdb
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
+COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
@@ -44,15 +44,15 @@ INCS=		hdb.h hdb_err.h hdb_asn1.h hdb-protos.h hdb-private.h
 INCSDIR=	/usr/include/krb5
 
 .if ${USETOOLS} != "yes"
-ASN1_COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${PRINTOBJDIR}
+ASN1_COMPILE!=	cd ${NETBSDSRCDIR}/lib/libasn1/asn1_compile && ${PRINTOBJDIR}
 ASN1_COMPILE:=	${ASN1_COMPILE}/asn1_compile
 .endif
 
 asn1_files hdb_asn1.hx: hdb.asn1
 	${ASN1_COMPILE} ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
 
-ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${NETBSDSRCDIR}/lib/libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/hdb		\
