@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.18 1999/06/20 01:20:14 cgd Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.19 1999/06/20 02:07:18 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,7 +369,8 @@ static void post_menu (struct menudesc *m)
 			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
-		waddstr (m->mw, "x: Exit");
+		waddstr (m->mw, "x: ");
+		waddstr (m->mw, m->exitstr);
 		if (m->cursel >= m->numopts)
 			wstandend(m->mw);
 		cury++;
