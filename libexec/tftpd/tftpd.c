@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.10 1997/10/19 18:17:27 mycroft Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.11 1997/11/06 00:08:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.10 1997/10/19 18:17:27 mycroft Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.11 1997/11/06 00:08:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ main(argc, argv)
 	int fd = 0;
 	struct sockaddr_in sin;
 
-	openlog("tftpd", LOG_PID, LOG_DAEMON);
+	openlog("tftpd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	while ((ch = getopt(argc, argv, "lns:")) != -1)
 		switch (ch) {
