@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.16 2000/01/17 07:21:25 bgrayson Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.17 2000/11/06 14:00:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.16 2000/01/17 07:21:25 bgrayson Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.17 2000/11/06 14:00:38 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,12 @@ __RCSID("$NetBSD: mount_portal.c,v 1.16 2000/01/17 07:21:25 bgrayson Exp $");
 #include "pathnames.h"
 #include "portald.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
-static char *mountpt;		/* made available to signal handler */
+static const char *mountpt;		/* made available to signal handler */
 
 	int	main __P((int, char *[]));
 static	void	sigchld __P((int));
@@ -125,6 +125,7 @@ main(argc, argv)
 	char *conf;
 	int mntflags = 0;
 	char tag[32];
+	char tmpdir[PATH_MAX];
 
 	qelem q;
 	int rc;
@@ -173,37 +174,48 @@ main(argc, argv)
 	 * Construct the listening socket
 	 */
 	un.sun_family = AF_LOCAL;
-	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
+	strcpy(tmpdir, _PATH_TMPPORTAL);
+	mkdtemp(tmpdir);
+	un.sun_len = snprintf(un.sun_path, sizeof(un.sun_path),
+			"%s/%s", tmpdir, _PATH_PORTAL_FILE);
+	if (un.sun_len >= sizeof(un.sun_path))
 		errx(1, "portal socket name too long");
-	strcpy(un.sun_path, _PATH_TMPPORTAL);
-	mktemp(un.sun_path);
-	un.sun_len = strlen(un.sun_path);
 
 	so = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (so < 0)
 		err(1, "socket");
-	(void) unlink(un.sun_path);
 	if (bind(so, (struct sockaddr *) &un, sizeof(un)) < 0)
 		err(1, "bind() call");
+
+	/* path no longer needed */
 	(void) unlink(un.sun_path);
+	if (rmdir(tmpdir) != 0)
+		warn("failed to rmdir(%s)", tmpdir);
 
 	(void) listen(so, 5);
 
+	/*
+	 * Now it's good time to fork - all but the actual mount(2)
+	 * call is performed, and we need the new pid to fill in
+	 * the tag contents correctly. Since we need to print error message
+	 * in case mount(2) fails or DEBUG case, we don't let daemon(3) to
+	 * close the standard streams and handle them on our own later.
+	 */
+	daemon(0, 1);
+
 	args.pa_socket = so;
-	sprintf(tag, "portal:%d", getpid() + 1);
+	sprintf(tag, "portal:%d", getpid());
 	args.pa_config = tag;
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
 	if (rc < 0)
 		err(1, "mount attempt on %s", mountpt);
 
-	/*
-	 * Everything is ready to go - now is a good time to fork
-	 */
+	/* mount(2) call succeeded, redirect standard streams to /dev/null */
+	freopen("/dev/null", "r", stdin);
+	freopen("/dev/null", "w", stdout);
 #ifndef DEBUG
-	daemon(0, 0);
-#else
-	daemon(0, 1);	/* Keep stderr around. */
+	freopen("/dev/null", "w", stderr);
 #endif
 
 	/*
