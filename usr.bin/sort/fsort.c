@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.7 2001/01/08 18:00:31 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -153,8 +153,11 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
 					fstack[MAXFCT-16+mfct].fp = ftmp();
-					if (radixsort(keylist, nelem, weights,
-					    REC_D))
+					if ((stable_sort)
+						? sradixsort(keylist, nelem,
+							weights, REC_D)
+						: radixsort(keylist, nelem,
+							weights, REC_D) )
 						err(2, NULL);
 					append(keylist, nelem, depth, fstack[
 					 MAXFCT-16+mfct].fp, putrec, ftbl);
@@ -186,9 +189,12 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 		}
 		get = getnext;
 		if (!ntfiles && !mfct) {	/* everything in memory--pop */
-			if (nelem > 1)
-			   if (radixsort(keylist, nelem, weights, REC_D))
+			if (nelem > 1) {
+			   if ((stable_sort)
+				? sradixsort(keylist, nelem, weights, REC_D)
+				: radixsort(keylist, nelem, weights, REC_D) )
 				err(2, NULL);
+			}
 			append(keylist, nelem, depth, outfp, putline, ftbl);
 			break;					/* pop */
 		}
