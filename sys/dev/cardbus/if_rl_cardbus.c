@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.3 2000/04/19 08:44:32 haya Exp $	*/
+/*	$NetBSD: if_rl_cardbus.c,v 1.4 2000/04/24 15:25:00 tsutsui Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -163,12 +163,9 @@ rl_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s;
-#ifndef RL_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
+	int			s, pmreg;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
+	pcireg_t		command;
 	struct rl_cardbus_softc *csc = (struct rl_cardbus_softc *)self;
 	struct rl_softc *sc = &csc->sc_rl;
 	struct cardbus_attach_args *ca = aux;
@@ -195,10 +192,10 @@ rl_cardbus_attach(parent, self, aux)
 	/*
 	 * Handle power management nonsense.
 	 */
-	if (cardbus_get_capability(cc, cf, csc->sc_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		command = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_PWRMGMTCTRL);
+	if (cardbus_get_capability(cc, cf, csc->sc_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		command = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_LOIO);
@@ -210,7 +207,7 @@ rl_cardbus_attach(parent, self, aux)
 			"-- setting to D0\n", sc->sc_dev.dv_xname,
 			       command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_PWRMGMTCTRL, command);
+			cardbus_conf_write(cc, cf, csc->sc_tag, pmreg + 4, command);
 
 			/* Restore PCI config data. */
 			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_LOIO, iobase);
