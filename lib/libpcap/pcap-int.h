@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.9 2002/09/22 16:13:01 thorpej Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.10 2004/09/27 23:02:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -32,21 +32,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-int.h,v 1.18 96/11/27 18:43:09 leres Exp  (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-int.h,v 1.55.2.4 2003/12/15 01:42:24 guy Exp  (LBL)
  */
 
 #ifndef pcap_int_h
 #define pcap_int_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <pcap.h>
+
+#ifdef WIN32
+#include <packet32.h>
+#endif /* WIN32 */
 
 /*
  * Savefile
  */
+typedef enum {
+	NOT_SWAPPED,
+	SWAPPED,
+	MAYBE_SWAPPED
+} swapped_type_t;
+
 struct pcap_sf {
 	FILE *rfile;
 	int swapped;
 	int hdrsize;
+	swapped_type_t lengths_swapped;
 	int version_major;
 	int version_minor;
 	u_char *base;
@@ -55,25 +70,47 @@ struct pcap_sf {
 struct pcap_md {
 	struct pcap_stat stat;
 	/*XXX*/
-	int use_bpf;
+	int use_bpf;		/* using kernel filter */
 	u_long	TotPkts;	/* can't oflow for 79 hrs on ether */
 	u_long	TotAccepted;	/* count accepted by filter */
 	u_long	TotDrops;	/* count of dropped packets */
 	long	TotMissed;	/* missed by i/f during this run */
 	long	OrigMissed;	/* missed by i/f before this run */
 #ifdef linux
-	int pad;
-	int skip;
-	char *device;
+	int	sock_packet;	/* using Linux 2.0 compatible interface */
+	int	timeout;	/* timeout specified to pcap_open_live */
+	int	clear_promisc;	/* must clear promiscuous mode when we close */
+	int	cooked;		/* using SOCK_DGRAM rather than SOCK_RAW */
+	int	lo_ifindex;	/* interface index of the loopback device */
+	char	*device;	/* device name */
+	struct pcap *next;	/* list of open promiscuous sock_packet pcaps */
+#endif
+
+#ifdef HAVE_DAG_API
+	void	*dag_mem_base;	/* DAG card memory base address */
+	u_int	dag_mem_bottom;	/* DAG card current memory bottom pointer */
+	u_int	dag_mem_top;	/* DAG card current memory top pointer */
+	int	dag_fcs_bits;	/* Number of checksum bits from link layer */
+	int dag_offset_flags; /* Flags to pass to dag_offset(). */
 #endif
 };
 
 struct pcap {
+#ifdef WIN32
+	ADAPTER *adapter;
+	LPPACKET Packet;
+	int timeout;
+	int nonblock;
+#else
 	int fd;
+	int selectable_fd;
+#endif /* WIN32 */
 	int snapshot;
 	int linktype;
 	int tzoff;		/* timezone offset */
 	int offset;		/* offset for proper alignment */
+
+	int break_loop;		/* flag set to force break from packet-reading loop */
 
 	struct pcap_sf sf;
 	struct pcap_md md;
@@ -91,15 +128,27 @@ struct pcap {
 	 */
 	u_char *pkt;
 
+	/*
+	 * Methods.
+	 */
+	int	(*read_op)(pcap_t *, int cnt, pcap_handler, u_char *);
+	int	(*setfilter_op)(pcap_t *, struct bpf_program *);
+	int	(*set_datalink_op)(pcap_t *, int);
+	int	(*getnonblock_op)(pcap_t *, char *);
+	int	(*setnonblock_op)(pcap_t *, int, char *);
+	int	(*stats_op)(pcap_t *, struct pcap_stat *);
+	void	(*close_op)(pcap_t *);
 
 	/*
 	 * Placeholder for filter code if bpf not in kernel.
 	 */
 	struct bpf_program fcode;
 
-	char errbuf[PCAP_ERRBUF_SIZE];
+	char errbuf[PCAP_ERRBUF_SIZE + 1];
 	int dlt_count;
 	int *dlt_list;
+
+	struct pcap_pkthdr pcap_header;	/* This is needed for the pcap_next_ex() to work */
 };
 
 /*
@@ -145,6 +194,25 @@ struct pcap_sf_pkthdr {
     bpf_u_int32 len;		/* length this packet (off wire) */
 };
 
+/*
+ * How a `pcap_pkthdr' is actually stored in dumpfiles written
+ * by some patched versions of libpcap (e.g. the ones in Red
+ * Hat Linux 6.1 and 6.2).
+ *
+ * Do not change the format of this structure, in any way (this includes
+ * changes that only affect the length of fields in this structure).
+ * Instead, introduce a new structure, as per the above.
+ */
+
+struct pcap_sf_patched_pkthdr {
+    struct pcap_timeval ts;	/* time stamp */
+    bpf_u_int32 caplen;		/* length of portion present */
+    bpf_u_int32 len;		/* length this packet (off wire) */
+    int		index;
+    unsigned short protocol;
+    unsigned char pkt_type;
+};
+
 int	yylex(void);
 
 #ifndef min
@@ -155,12 +223,73 @@ int	yylex(void);
 int	pcap_offline_read(pcap_t *, int, pcap_handler, u_char *);
 int	pcap_read(pcap_t *, int cnt, pcap_handler, u_char *);
 
-/* ULTRIX, Digital UNIX & NetBSD pad to make everything line
-   up on a nice boundary */
-#if defined(ultrix) || defined(__alpha) || defined(__NetBSD__)
+
+/*
+ * Ultrix, DEC OSF/1^H^H^H^H^H^H^H^H^HDigital UNIX^H^H^H^H^H^H^H^H^H^H^H^H
+ * Tru64 UNIX, and NetBSD pad to make everything line up on a nice boundary.
+ */
+#if defined(ultrix) || defined(__osf__) || defined(__NetBSD__)
 #define       PCAP_FDDIPAD 3
 #endif
 
+#ifndef HAVE_STRLCPY
+#define strlcpy(x, y, z) \
+	(strncpy((x), (y), (z)), \
+	 ((z) <= 0 ? 0 : ((x)[(z) - 1] = '\0')), \
+	 strlen((y)))
+#endif
+
+#include <stdarg.h>
+
+#if !defined(HAVE_SNPRINTF)
+#define snprintf pcap_snprintf
+extern int snprintf (char *, size_t, const char *, ...);
+#endif
+
+#if !defined(HAVE_VSNPRINTF)
+#define vsnprintf pcap_vsnprintf
+extern int vsnprintf (char *, size_t, const char *, va_list ap);
+#endif
+
+/*
+ * Routines that most pcap implementations can use for non-blocking mode.
+ */
+#ifndef WIN32
+int	pcap_getnonblock_fd(pcap_t *, char *);
+int	pcap_setnonblock_fd(pcap_t *p, int, char *);
+#endif
+
+/*
+ * Internal interfaces for "pcap_findalldevs()".
+ *
+ * "pcap_platform_finddevs()" is a platform-dependent routine to
+ * add devices not found by the "standard" mechanisms (SIOCGIFCONF,
+ * "getifaddrs()", etc..
+ *
+ * "pcap_add_if()" adds an interface to the list of interfaces.
+ */
+int	pcap_platform_finddevs(pcap_if_t **, char *);
+int	add_addr_to_iflist(pcap_if_t **, char *, u_int, struct sockaddr *,
+	    size_t, struct sockaddr *, size_t, struct sockaddr *, size_t,
+	    struct sockaddr *, size_t, char *);
+int	pcap_add_if(pcap_if_t **, char *, u_int, const char *, char *);
+struct sockaddr *dup_sockaddr(struct sockaddr *, size_t);
+int	add_or_find_if(pcap_if_t **, pcap_if_t **, const char *, u_int,
+	    const char *, char *);
+
+#ifdef WIN32
+char	*pcap_win32strerror(void);
+#endif
+
 /* XXX */
-extern	int pcap_fddipad;
+extern	u_int pcap_fddipad;
+
+int	install_bpf_program(pcap_t *, struct bpf_program *);
+
+int	pcap_strcasecmp(const char *, const char *);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
