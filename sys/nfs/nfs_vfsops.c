@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.2 1993/05/20 03:18:53 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.3 1993/07/07 12:06:36 cgd Exp $
  */
 
 #include "param.h"
@@ -183,7 +183,7 @@ nfs_mountroot()
 		bcopy((caddr_t)&nfs_diskless.mygateway, (caddr_t)&rt.rt_gateway,
 			sizeof (struct sockaddr_in));
 		rt.rt_flags = (RTF_UP | RTF_GATEWAY);
-		if (rtioctl(SIOCADDRT, (caddr_t)&rt))
+		if (rtioctl(SIOCADDRT, (caddr_t)&rt, curproc))
 			panic("nfs root route");
 	}
 #endif	/* COMPAT_43 */
@@ -224,6 +224,14 @@ nfs_mountroot()
 		swapdev_vp = vp;
 		VREF(vp);
 		swdevt[0].sw_vp = vp;
+		{
+			struct vattr attr;
+
+			if (nfs_dogetattr(vp,&attr,0,0,0)) {
+			    panic("nfs swap");
+			}
+			swdevt[0].sw_nblks = attr.va_size / DEV_BSIZE;
+		}
 	}
 
 	/*
