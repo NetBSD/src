@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/07/28 21:45:13 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/08/10 12:00:03 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/28 21:45:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/08/10 12:00:03 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -174,7 +174,7 @@ initppc(startkernel, endkernel, btinfo)
 	}
 
 	/*
-	 * boothowto
+	 * Setup fixed BAT registers.
 	 */
 	oea_batinit(
 	    MVMEPPC_PHYS_BASE_IO,  BAT_BL_256M,
