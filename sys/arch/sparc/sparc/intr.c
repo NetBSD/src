@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.47 2000/07/02 04:40:44 cgd Exp $ */
+/*	$NetBSD: intr.c,v 1.48 2001/01/15 20:19:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ soft01intr(fp)
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
-			softclock();
+			softclock(NULL);
 		}
 #if NCOM > 0
 		/*

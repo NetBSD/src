@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.12 2000/12/23 09:35:52 jdolecek Exp $ */
+/* $NetBSD: trap.c,v 1.13 2001/01/15 20:19:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2000/12/23 09:35:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2001/01/15 20:19:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -468,7 +468,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
-			softclock();
+			softclock(NULL);
 		}
 		/*
 		 * If this was not an AST trap, we are all done.

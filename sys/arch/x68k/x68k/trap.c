@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2000/12/23 09:35:53 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2001/01/15 20:19:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -557,7 +557,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
-			softclock();
+			softclock(NULL);
 		}
 		if (ssir & SIR_SERIAL) {
 #include "zsc.h"

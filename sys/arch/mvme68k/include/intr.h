@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2001/01/15 20:19:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -159,10 +159,8 @@ void	softintr_dispatch(void);
 
 /* XXX For legacy software interrupts */
 extern struct mvme68k_soft_intrhand *softnet_intrhand;
-extern struct mvme68k_soft_intrhand *softclock_intrhand;
 
 #define setsoftnet()	softintr_schedule(softnet_intrhand)
-#define setsoftclock()	softintr_schedule(softclock_intrhand)
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2000/11/27 05:57:27 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2001/01/15 20:19:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -569,7 +569,7 @@ else
 		clearsoftclock();
 		uvmexp.softs++;
 		intrcnt[SOFTCLOCK_INTR]++;
-		softclock();
+		softclock(NULL);
 	}
 }
 

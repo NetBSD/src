@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2000/08/25 01:04:10 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2001/01/15 20:19:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -130,7 +130,6 @@ void	save_fpu_context __P((struct pcb *));
 
 /* machdep.c */
 void	dumpconf __P((void));
-void	do_softclock __P((void *));
 void	softnet __P((void *));
 
 /* mainbus.c */

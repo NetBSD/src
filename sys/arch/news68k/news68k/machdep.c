@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2001/01/12 17:17:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2001/01/15 20:19:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1122,7 +1122,7 @@ init_sir()
 {
 
 	sir_routines[SIR_NET]   = (void (*) __P((void *)))netintr;
-	sir_routines[SIR_CLOCK] = (void (*) __P((void *)))softclock;
+	sir_routines[SIR_CLOCK] = softclock;
 	next_sir = NEXT_SIR;
 }
 

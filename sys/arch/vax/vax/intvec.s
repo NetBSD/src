@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.57 2000/12/31 19:27:24 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.58 2001/01/15 20:19:58 thorpej Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -290,7 +290,8 @@ TRAPCALL(astintr, T_ASTFLT)
 
 SCBENTRY(softclock)
 	PUSHR
-	calls	$0,_C_LABEL(softclock)
+	movab	_C_LABEL(softclock_head),r0
+	jsb	softintr_dispatch
 	incl	_C_LABEL(softclock_intrcnt)+EV_COUNT
 	adwc	$0,_C_LABEL(softclock_intrcnt)+EV_COUNT+4
 	POPR

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.72 2000/12/10 19:29:31 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.73 2001/01/15 20:19:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -394,6 +394,11 @@ static void callout_stop_locked(struct callout *);
  */
 u_int64_t hardclock_ticks, softclock_ticks;
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+void	softclock(void *);
+void	*softclock_si;
+#endif
+
 /*
  * Initialize clock frequencies and start both clocks running.
  */
@@ -401,6 +406,12 @@ void
 initclocks(void)
 {
 	int i;
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
+	if (softclock_si == NULL)
+		panic("initclocks: unable to register softclock intr");
+#endif
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -879,10 +890,15 @@ hardclock(struct clockframe *frame)
 			 */
 			spllowersoftclock();
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-			softclock();
+			softclock(NULL);
 			KERNEL_UNLOCK();
-		} else
+		} else {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+			softintr_schedule(softclock_si);
+#else
 			setsoftclock();
+#endif
+		}
 		return;
 	} else if (softclock_running == 0 &&
 		   (softclock_ticks + 1) == hardclock_ticks) {
@@ -897,7 +913,7 @@ hardclock(struct clockframe *frame)
  */
 /*ARGSUSED*/
 void
-softclock(void)
+softclock(void *v)
 {
 	struct callout_queue *bucket;
 	struct callout *c;
