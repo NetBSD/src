@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2000/06/29 08:52:59 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 2001/02/13 22:54:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,7 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
@@ -409,59 +408,6 @@ vunmapbuf(bp, len)
 		cpu_tlb_flushID();
 
 	uvm_km_free_wakeup(phys_map, addr, len);
-}
-
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-
-int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
-{
-	int error;
-	struct {
-	  struct reg regs;
-	  struct fpreg fpregs;
-	} cpustate;
-	struct coreseg cseg;
-
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-	chdr->c_cpusize = sizeof(cpustate);
-
-	/* Save integer registers. */
-	error = process_read_regs(p, &cpustate.regs);
-	if (error)
-		return error;
-	/* Save floating point registers. */
-	error = process_read_fpregs(p, &cpustate.fpregs);
-	if (error)
-		return error;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
-	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
-	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	if (error)
-		return error;
-
-	chdr->c_nseg++;
-
-	return error;
 }
 
 /* End of vm_machdep.c */
