@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.44 1999/11/05 21:33:21 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.45 2000/02/01 13:59:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -199,8 +199,9 @@ msdosfs_lookup(v)
 		slotcount = 0;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename %s, length %ld\n",
-	    dosfilename, cnp->cn_namelen);
+	printf("msdosfs_lookup(): dos version of filename %.*s, ",
+	    (int)cnp->cn_namelen, dosfilename);
+	printf("long filename length %ld\n", cnp->cn_namelen);
 #endif
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
@@ -353,10 +354,8 @@ notfound:;
 	 * the pathname and the directory hasn't been removed.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): op %d, refcnt %ld\n",
-	    nameiop, dp->de_refcnt);
-	printf("               slotcount %d, slotoffset %d\n",
-	       slotcount, slotoffset);
+	printf("msdosfs_lookup(): op %d, refcnt %ld, slotcount %d, slotoffset %d\n",
+	    nameiop, dp->de_refcnt, slotcount, slotoffset);
 #endif
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN) && dp->de_refcnt != 0) {
