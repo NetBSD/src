@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.11 2003/03/05 21:05:39 wiz Exp $	*/
+/*	$NetBSD: prune.c,v 1.12 2003/03/05 21:32:51 wiz Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -380,8 +380,7 @@ update_kernel(struct gtable *g)
  * Find a specific group entry in the group table
  */
 struct gtable *
-find_grp(grp)
-   u_long grp;
+find_grp(u_long grp)
 {
    struct gtable *gt;
 
