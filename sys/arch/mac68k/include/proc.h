@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 1994/10/26 08:46:40 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 1997/06/11 08:58:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 /*
- * Machine-dependent part of the proc structure for hp300.
+ * Machine-dependent part of the proc structure for mac68k.
  */
 struct mdproc {
 	int	md_flags;		/* machine-dependent flags */
@@ -44,7 +44,6 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */
-#define	MDP_STACKADJ	0x0002	/* Frame SP adjusted, might have to
+#define	MDP_STACKADJ	0x0001	/* Frame SP adjusted, might have to
 				   undo when system call returns
 				   ERESTART. */
