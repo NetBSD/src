@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.4 1997/10/13 07:38:12 lukem Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.4.2.1 1997/11/28 09:48:18 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppush_svc.c,v 1.4 1997/10/13 07:38:12 lukem Exp $");
+__RCSID("$NetBSD: yppush_svc.c,v 1.4.2.1 1997/11/28 09:48:18 mellon Exp $");
 #endif
 
 /*
@@ -81,11 +81,11 @@ void _msgout(msg)
 {
 #ifdef RPC_SVC_FG
 	if (_rpcpmstart)
-		syslog(LOG_ERR, msg);
+		syslog(LOG_ERR, "%s", msg);
 	else
-		warnx(msg);
+		warnx("%s", msg);
 #else
-	syslog(LOG_ERR, msg);
+	syslog(LOG_ERR, "%s", msg);
 #endif
 }
 
