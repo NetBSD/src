@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.8 1998/09/14 17:33:01 garbled Exp $
+.\"	$NetBSD: packages.7,v 1.9 1998/09/17 14:14:17 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -205,6 +205,16 @@ plus
 or
 .Pa ${PKGDIR}/PLIST-md.static ,
 if not set otherwise.
+.It INSTALL_FILE
+The name of a script which will be invoked when installing
+binary packages. If there is a file called
+.Pa ${PKGDIR}/INSTALL ,
+that file will be used.
+.It DEINSTALL_FILE
+The name of a script which will be invoked when de-installing
+binary packages. If there is a file called
+.Pa ${PKGDIR}/DEINSTALL ,
+that file will be used.
 .It NO_BUILD	
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
@@ -244,6 +254,10 @@ variable will be searched, if set, for a string matching the licence.
 Uses passive
 .Xr ftp 1
 to retrieve distribution files.
+.It USE_LIBTOOL	
+Says that the package uses
+.Pa libtool
+to manage building of libraries and shared objects, where applicable.
 .It USE_GMAKE	
 Says that the package uses
 .Pa gmake .
@@ -339,14 +353,10 @@ This will be checked during the
 stage and the name of the
 dependency will be put into the package as well.
 .It LIB_DEPENDS
-A list of
-.Dq lib:dir
-pairs of other packages this package depends on.
-.Dq lib
-is the name of a shared library.  make will use
-.Dq ldconfig -r
-to
-search for the library.  Note that lib can be any regular expression.
+This definition is deprecated, and is no longer used in the packages
+collection. It should be replaced by a simple
+.Dq DEPENDS
+definition.
 .It DEPENDS
 A list of prerequisite packages. The format of this entry is
 .Dq pkgname:dir .
