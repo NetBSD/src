@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.6.2.1 1993/08/05 02:37:36 cgd Exp $
+ *	$Id: vnode.h,v 1.6.2.2 1993/08/20 07:17:51 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -295,6 +295,7 @@ int 	vn_closefile __P((struct file *fp, struct proc *p));
 int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
 	    struct vnodeops *vops, struct vnode **vpp));
 int 	bdevvp __P((int dev, struct vnode **vpp));
+int 	cdevvp __P((int dev, struct vnode **vpp));
 	/* check for special device aliases */
 	/* XXX nvp_rdev should be type dev_t, not int */
 struct 	vnode *checkalias __P((struct vnode *vp, int nvp_rdev,
