@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.3 1997/10/13 03:42:31 lukem Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.4 1999/01/31 10:14:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yplib_host.c,v 1.3 1997/10/13 03:42:31 lukem Exp $");
+__RCSID("$NetBSD: yplib_host.c,v 1.4 1999/01/31 10:14:02 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -296,7 +296,7 @@ yp_order_host(client, indomain, inmap, outorder)
 
 	r = clnt_call(client, YPPROC_ORDER, xdr_ypreq_nokey, &yprnk,
 	    xdr_ypresp_order, &ypro, _yplib_host_timeout);
-	if(r != RPC_SUCCESS)
+	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_order_host: clnt_call");
 
 	*outorder = ypro.ordernum;
@@ -325,7 +325,7 @@ yp_master_host(client, indomain, inmap, outname)
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_master: clnt_call");
 
-	if(!(r=ypprot_err(yprm.status)) ) {
+	if (!(r = ypprot_err(yprm.status))) {
 		*outname = (char *)strdup(yprm.master);
 	}
 	xdr_free(xdr_ypresp_master, (char *)&yprm);
