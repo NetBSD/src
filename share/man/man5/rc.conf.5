@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.41 2001/01/03 17:54:05 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.42 2001/01/11 17:56:17 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -255,17 +255,21 @@ flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy net_interfaces
 The list of network interfaces to be configured at boot time.
-For each interface "xxn", the system first looks for ifconfig
+For each interface "xxN", the system first looks for ifconfig
 parameters in
-.Pa /etc/ifconfig.xxn
+.Pa /etc/ifconfig.xxN
 and then in the variable
-.Sy ifconfig_xxn .
+.Sy ifconfig_xxN .
 The contents of the file or the variable are handed to ifconfig
 after the interface name.
 If
 .Sy auto_ifconfig
 is set to "NO" and neither the file nor the variable is found,
 a warning is printed.
+Refer to
+.Xr ifconfig.if 5
+for more details on
+.Pa /etc/ifconfig.xxN .
 .It Sy ifaliases_*
 List of
 .Sq Em "address netmask"
@@ -904,6 +908,7 @@ Default settings for
 .Nm "" .
 .El
 .Sh SEE ALSO
+.Xr ifconfig.if 5 ,
 .Xr boot 8 ,
 .Xr rc 8 ,
 .Xr sysctl 8

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.28 2001/01/03 17:54:05 itojun Exp $
+# $NetBSD: network,v 1.29 2001/01/11 17:56:16 itojun Exp $
 #
 
 # PROVIDE: network
@@ -88,6 +88,9 @@ network_start()
 	#	inet 10.1.1.2 netmask 0xffffff00 alias
 	#	inet6 fec0::1 prefixlen 64 alias
 	#
+	# You can put shell script fragment into /etc/ifconfig.xxN by
+	# starting a line with "!".  Refer to ifconfig.if(5) for details.
+	#
 	if [ "$net_interfaces" != NO ]; then
 		if checkyesno auto_ifconfig; then
 			tmp=`ifconfig -l`
@@ -110,7 +113,16 @@ network_start()
 				echo -n " $int"
 				while read args; do
 					[ -z "$args" ] && continue
-					ifconfig $int $args
+					case "$args" in
+					"#"*)
+						;;
+					"!"*)
+						eval ${args#*!}
+						;;
+					*)
+						ifconfig $int $args
+						;;
+					esac
 				done < /etc/ifconfig.$int
 			else
 				if ! checkyesno auto_ifconfig; then
