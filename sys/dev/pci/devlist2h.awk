@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.8 2003/12/15 07:32:21 jmc Exp $
+#	$NetBSD: devlist2h.awk,v 1.9 2004/08/02 18:43:38 mycroft Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -160,28 +160,36 @@ END {
 
 	printf("\n") > dfile
 
-	printf("const struct pci_knowndev pci_knowndevs[] = {\n") > dfile
+	printf("const struct pci_vendor pci_vendors[] = {\n") > dfile
+	for (i = 1; i <= nvendors; i++) {
+		printf("\t{\n") > dfile
+		printf("\t    PCI_VENDOR_%s,\n", vendors[i, 1]) \
+		    > dfile
+
+		printf("\t    \"") > dfile
+		j = 3;
+		needspace = 0;
+		while ((i, j) in vendors) {
+			if (needspace)
+				printf(" ") > dfile
+			printf("%s", vendors[i, j]) > dfile
+			needspace = 1
+			j++
+		}
+		printf("\",\n") > dfile
+		printf("\t},\n") > dfile
+	}
+	printf("};\n") > dfile
+	printf("const int pci_nvendors = %d;\n", nvendors) > dfile
+
+	printf("\n") > dfile
+
+	printf("const struct pci_product pci_products[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    PCI_VENDOR_%s, PCI_PRODUCT_%s_%s,\n",
 		    products[i, 1], products[i, 1], products[i, 2]) \
 		    > dfile
-		printf("\t    ") > dfile
-		printf("0") > dfile
-		printf(",\n") > dfile
-
-		vendi = vendorindex[products[i, 1]];
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while ((vendi, j) in vendors) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[vendi, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
 
 		printf("\t    \"") > dfile
 		j = 4;
@@ -196,28 +204,9 @@ END {
 		printf("\",\n") > dfile
 		printf("\t},\n") > dfile
 	}
-	for (i = 1; i <= nvendors; i++) {
-		printf("\t{\n") > dfile
-		printf("\t    PCI_VENDOR_%s, 0,\n", vendors[i, 1]) \
-		    > dfile
-		printf("\t    PCI_KNOWNDEV_NOPROD,\n") \
-		    > dfile
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while ((i, j) in vendors) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[i, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
-		printf("\t    NULL,\n") > dfile
-		printf("\t},\n") > dfile
-	}
-	printf("\t{ 0, 0, 0, NULL, NULL, }\n") > dfile
 	printf("};\n") > dfile
+	printf("const int pci_nproducts = %d;\n", nproducts) >dfile
+
 	close(dfile)
 	close(hfile)
 }
