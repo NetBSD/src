@@ -1,4 +1,4 @@
-.\"	$NetBSD: iopaau.4,v 1.1 2002/08/02 21:11:19 thorpej Exp $
+.\"	$NetBSD: iopaau.4,v 1.2 2002/08/04 22:58:14 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Aug 2, 2002
+.Dd August 2, 2002
 .Dt IOPAAU 4
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ multiple regions of memory
 and parity verification.
 .Pp
 The
-.Nm iopaau
+.Nm
 driver supports the Application Accelerator Units on the following
 Intel I/O Processors:
 .Bl -bullet
@@ -62,7 +62,7 @@ Intel i80321 I/O Processor
 .El
 .Pp
 The
-.Nm iopaau
+.Nm
 driver provides a back-end to the
 .Xr dmover 9
 interface, and supports the following
@@ -86,15 +86,14 @@ Perform an XOR of 4 input streams
 .Xr dmover 9
 .Sh HISTORY
 The
-.Nm iopaau
+.Nm
 device first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
 The
-.Nm iopaau
+.Nm
 driver was written by
-.An Jason R. Thorpe
-.Aq thorpej@wasabisystems.com
+.An Jason R. Thorpe Aq thorpej@wasabisystems.com
 and contributed by Wasabi Systems, Inc.
 .Sh BUGS
 Due to limitations in how scatter-gather is done by the AAU hardware,
