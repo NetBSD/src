@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.13 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.14 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,12 +50,11 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for usbdivar.h */
+#include <machine/bus.h>
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
 #endif
-
-#include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -210,12 +209,13 @@ usb_block_freemem(p)
 }
 
 usbd_status
-usb_allocmem(tag, size, align, p)
-	bus_dma_tag_t tag;
+usb_allocmem(bus, size, align, p)
+	usbd_bus_handle bus;
 	size_t size;
 	size_t align;
         usb_dma_t *p;
 {
+	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status r;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
@@ -264,8 +264,8 @@ usb_allocmem(tag, size, align, p)
 }
 
 void
-usb_freemem(tag, p)
-	bus_dma_tag_t tag;
+usb_freemem(bus, p)
+	usbd_bus_handle bus;
         usb_dma_t *p;
 {
 	struct usb_frag_dma *f;

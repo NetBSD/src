@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.8 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.9 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ typedef struct ohci_softc {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 
-	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
 #endif /* __NetBSD__ || defined(__OpenBSD__) */
 
@@ -94,8 +93,6 @@ typedef struct ohci_softc {
 	ohci_soft_td_t *sc_freetds;
 
 	usbd_request_handle sc_intrreqh;
-
-	int sc_intrs;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
