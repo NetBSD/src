@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.18 2004/03/17 17:04:58 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.19 2004/03/19 16:05:25 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.19 2004/03/19 16:05:25 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.18 2004/03/17 17:04:58 pk Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 
+#include <machine/promlib.h>
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
 #include <machine/eeprom.h>
@@ -94,20 +95,11 @@ fb_unblank()
  * on machines with old PROMs; in that case, drivers should consult
  * other sources of configuration information (e.g. EEPROM entries).
  */
-#if defined(SUN4U)
-/* Temporary special case for sun4u */
 int
 fb_is_console(node)
 	int node;
 {
-	extern int fbnode;
-	return (node == fbnode);
-}
-#else
-int
-fb_is_console(node)
-	int node;
-{
+#if !defined(SUN4U)
 	int fbnode;
 
 	switch (prom_version()) {
@@ -134,8 +126,10 @@ fb_is_console(node)
 	}
 
 	return (0);
+#else
+		return (node == prom_stdout_node);
+#endif
 }
-#endif /* SUN4U */
 
 void
 fb_attach(fb, isconsole)
