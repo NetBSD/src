@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.17 2000/06/05 07:59:54 nisimura Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_vax46.h"
+#include "opt_cputype.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.17 2000/06/05 07:59:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
