@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/09/05 14:46:18 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/10/04 14:57:53 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -34,11 +34,13 @@ all: ${AUXTARGETS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
+	cat /*bin/* > /dev/null
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
