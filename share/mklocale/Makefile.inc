@@ -1,12 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.3 2000/12/22 00:54:43 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.4 2000/12/22 01:11:48 itojun Exp $
 # $FreeBSD: src/usr.bin/mklocale/data/Makefile,v 1.17.2.3 1999/08/29 15:31:04 peter Exp $
 
 NOMAN=YES
 
-# XXX cross builds?
-MKLOCALE_OBJDIR!=cd $(.CURDIR)/../../usr.bin/mklocale; ${MAKE} print-objdir
-MKLOCALE_CMD=	${MKLOCALE_OBJDIR}/mklocale
-MKLOCALE=LD_LIBRARY_PATH=${DESTDIR}/usr/lib ${MKLOCALE_CMD}
+MKLOCALE=	/usr/bin/mklocale
 
 LOCALES += da_DK.ISO8859-1
  LOCALESRC_da_DK.ISO8859-1 = en_US.ISO_8859-1
@@ -284,7 +281,7 @@ CLEANFILES+= ${LOCALESRCS:S/$/.out/g}
 
 .if !defined(_BUILD_TOOLS)
 all: ${LOCALESRCS:S/$/.out/g}
-realall: ${LOCALESRCS:S/$/.out/g}		# XXX for NetBSD-current XXX
+realall: ${LOCALESRCS:S/$/.out/g}
 .endif
 
 
