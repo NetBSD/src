@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1995/03/08 00:38:56 cgd Exp $
+#	$NetBSD: GENERIC,v 1.5 1995/03/26 01:48:21 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -44,6 +44,9 @@ options		COMPAT_OSF1
 
 # Loadable kernel modules
 options		LKM
+
+# Disable kernel security.
+options		INSECURE
 
 config		netbsd	swap generic
 
