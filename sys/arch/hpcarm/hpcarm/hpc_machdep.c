@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.28 2002/02/20 00:10:19 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.29 2002/02/20 02:32:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -178,9 +178,6 @@ void physcon_display_base	__P((u_int addr));
 void consinit		__P((void));
 
 void map_pagetable	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
-void map_entry		__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
-void map_entry_nc	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
-void map_entry_ro	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
 vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
 			     vaddr_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
@@ -561,10 +558,12 @@ initarm(argc, argv, bi)
 	    PD_SIZE, AP_KRW, 0);
 
 	/* Map the page table that maps the kernel pages */
-	map_entry_nc(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa);
+	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map a page for entering idle mode */
-	map_entry_nc(l2pagetable, sa11x0_idle_mem, sa11x0_idle_mem);
+	pmap_map_entry(l2pagetable, sa11x0_idle_mem, sa11x0_idle_mem,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
 	 * Map entries in the page table used to map PTE's
@@ -572,33 +571,40 @@ initarm(argc, argv, bi)
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	l2pagetable = kernel_ptpt.pv_pa;
-	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_SYS]);
-	map_entry_nc(l2pagetable, (KERNEL_SPACE_START >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
-	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_SYS],
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l2pagetable, (KERNEL_SPACE_START >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_KERNEL],
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_KERNEL],
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
-		map_entry_nc(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
+		    kernel_pt_table[KERNEL_PT_VMDATA + loop],
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
-	map_entry_nc(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa);
-	map_entry_nc(l2pagetable, (SAIPIO_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_IO]);
+	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	pmap_map_entry(l2pagetable, (SAIPIO_BASE >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_IO], VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE);
 
 	/*
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
 	l2pagetable = kernel_pt_table[KERNEL_PT_SYS];
-	map_entry(l2pagetable, 0x0000000, systempage.pv_pa);
+	pmap_map_entry(l2pagetable, 0x0000000, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map any I/O modules here, as we don't have real bus_space_map() */
 	printf("mapping IO...");
 	l2pagetable = kernel_pt_table[KERNEL_PT_IO];
-	map_entry_nc(l2pagetable, SACOM3_BASE, SACOM3_HW_BASE);
+	pmap_map_entry(l2pagetable, SACOM3_BASE, SACOM3_HW_BASE,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef CPU_SA110
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
