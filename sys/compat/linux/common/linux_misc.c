@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.87 2001/03/30 17:16:34 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.88 2001/05/20 09:29:10 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1214,7 +1214,7 @@ linux_sys_ptrace(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_ptrace_args /* {
-		i386, m68k: T=int
+		i386, m68k, powerpc: T=int
 		alpha: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
