@@ -1,3 +1,5 @@
+/*	$NetBSD: flt_rounds.S,v 1.7 1995/12/13 19:36:12 thorpej Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.

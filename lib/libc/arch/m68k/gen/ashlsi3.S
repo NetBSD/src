@@ -1,3 +1,5 @@
+/*	$NetBSD: ashlsi3.S,v 1.2 1995/12/13 19:35:49 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,13 +37,15 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)ashlsi3.s	5.1 (Berkeley) 6/7/90"*/
-	.asciz "$Id: ashlsi3.S,v 1.1 1993/11/25 23:36:51 paulus Exp $"
-#endif /* LIBC_SCCS and not lint */
-
 #include "DEFS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)ashlsi3.s	5.1 (Berkeley) 6/7/90")
+#else
+	RCSID("$NetBSD: ashlsi3.S,v 1.2 1995/12/13 19:35:49 thorpej Exp $")
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 /* int << int */
 ENTRY(__ashlsi3)
