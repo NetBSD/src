@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2002/12/10 20:08:46 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2003/04/06 16:12:44 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,23 +70,23 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern",			1, "aj", "Kernel        : "},
-    {"base",			1, "cr", "Base          : "},
-    {"etc",			1, "aa", "System (/etc) : "},
-    {"comp",			1, "ca", "Compiler      : "},
-    {"games",			1, "am", "Games         : "},
-    {"man",			1, "ax", "Manuals       : "},
-    {"misc",			1, "aj", "Miscellaneous : "},
-    {"text",			1, "af", "Text tools    : "},
+    {"kern",			1, "Kernel        : "},
+    {"base",			1, "Base          : "},
+    {"etc",			1, "System (/etc) : "},
+    {"comp",			1, "Compiler      : "},
+    {"games",			1, "Games         : "},
+    {"man",			1, "Manuals       : "},
+    {"misc",			1, "Miscellaneous : "},
+    {"text",			1, "Text tools    : "},
 #if 0
-    {"xbase",			1, "al", "X11 clients   : "},
-    {"xfont",			1, "az", "X11 fonts     : "},
-    {"xserver",			1, "ck", "X11 servers   : "},
-    {"xcontrib",		1, "aa", "X11 contrib   : "},
-    {"xcomp",			1, "ah", "X programming : "},
-    {"xmisc",			1, "aa", "X11 Misc.     : "},
+    {"xbase",			1, "X11 clients   : "},
+    {"xfont",			1, "X11 fonts     : "},
+    {"xserver",			1, "X11 servers   : "},
+    {"xcontrib",		1, "X11 contrib   : "},
+    {"xcomp",			1, "X programming : "},
+    {"xmisc",			1, "X11 Misc.     : "},
 #endif
-    {NULL, 0, NULL, NULL }
+    { NULL,			0, NULL }
 }
 #endif
 ;
