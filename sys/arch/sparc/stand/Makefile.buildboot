@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 1999/02/15 18:52:12 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5 1999/02/15 19:31:34 pk Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -19,7 +19,7 @@ RELOC?=		${RELOC_SUN4C}
 
 CPPFLAGS+=	-D_STANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
 
-CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O2
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
@@ -39,3 +39,6 @@ LIBZ=		${ZLIB}
 SA_AS=		library
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
+
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
