@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.2 1998/06/09 07:32:55 thorpej Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.3 1998/07/19 17:28:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,11 +53,7 @@
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
-
-
-#define	PCMCIA_MANUFACTURER_TDK		0x0105
-#define	PCMCIA_PRODUCT_TDK_LAK_CD021BX	0x0200
-#define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
+#include <dev/pcmcia/pcmciadevs.h>
 
 int	mbe_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	mbe_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -99,7 +95,7 @@ mbe_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_MANUFACTURER_TDK) {
+	if (pa->manufacturer == PCMCIA_VENDOR_TDK) {
 		switch (pa->product) {
 		case PCMCIA_PRODUCT_TDK_LAK_CD021BX:
 			if (pa->pf->number == 0)
@@ -161,10 +157,10 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_TDK_LAK_CD021BX:
-		model = "TDK LAK-CD021BX Ethernet";
+		model = PCMCIA_STR_TDK_LAK_CD021BX;
 		break;
 	case PCMCIA_PRODUCT_TDK_DFL9610:
-		model = "TDK DFL9610 Ethernet & Digital Cellular";
+		model = PCMCIA_STR_TDK_DFL9610;
 		break;
 
 	default:

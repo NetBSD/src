@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.5 1998/06/09 07:32:54 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -46,10 +46,7 @@
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
-
-#define	PCMCIA_MANUFACTURER_ADAPTEC		0x012F
-#define	PCMCIA_PRODUCT_ADAPTEC_APA1460_1	0x0001
-#define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
+#include <dev/pcmcia/pcmciadevs.h>
 
 int	aic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	aic_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -76,7 +73,7 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_MANUFACTURER_ADAPTEC) {
+	if (pa->manufacturer == PCMCIA_VENDOR_ADAPTEC) {
 		switch (pa->product) {
 		case PCMCIA_PRODUCT_ADAPTEC_APA1460_1:
 		case PCMCIA_PRODUCT_ADAPTEC_APA1460_2:
@@ -98,6 +95,7 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
+	const char *s;
 
 	psc->sc_pf = pf;
 
@@ -137,7 +135,19 @@ aic_pcmcia_attach(parent, self, aux)
 	if (!aic_find(sc->sc_iot, sc->sc_ioh))
 		printf(": coundn't find aic\n%s", sc->sc_dev.dv_xname);
 
-	printf(": APA-1460 SCSI Host Adapter\n");
+	switch (pa->product) {
+	case PCMCIA_PRODUCT_ADAPTEC_APA1460_1:
+		s = PCMCIA_STR_ADAPTEC_APA1460_1;
+		break;
+	case PCMCIA_PRODUCT_ADAPTEC_APA1460_2:
+		s = PCMCIA_STR_ADAPTEC_APA1460_2;
+		break;
+	default:
+		s = "Unknown APA1460";
+		break;
+	}
+
+	printf(": %s\n", s);
 
 	aicattach(sc);
 
