@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.10 1994/02/22 01:32:26 briggs Exp $
+ *	$Id: locore.s,v 1.11 1994/03/20 00:26:21 briggs Exp $
  */
 
 #include "assym.s"
@@ -833,9 +833,9 @@ abouttouser:
 
 	.text
 	.globl	_edata
-	.globl	_etext,_end
+	.globl	_etext
 	.globl	start
-	.globl _gray_bar, _gray_bar2
+	.globl _gray_bar
 	.globl _macinit
 	.globl _root_scsi_id		| CPC - for scsi id passed in on d7 from booter
 	.globl _serial_boot_echo
@@ -870,7 +870,6 @@ start:
 	addql	#8, sp
 	jbsr	_getenvvars		| Parse the environment buffer
 	jbsr	_setmachdep		| Set some machine-dep stuff
-	movl	_end, _esym		| fake debugger symbols for now
 	jbsr	_gray_bar		| first graybar call (we need stack).
 
 
@@ -1022,7 +1021,7 @@ Lbootdevcool:
  */
 	.globl	_Sysseg, _Sysmap, _Sysptmap, _Sysptsize
 | ALICE the next five lines load the first page after the kernel into a4
-	movl	#_end,a4		| end of static kernel text/data
+	movl	_esym,a4		| end of static kernel text/data
 	addl	#NBPG-1,a4		| number of bytes per page
 	movl	a4,d0			| cant andl with address reg
 	andl	#PG_FRAME,d0		| round to a page
@@ -1530,10 +1529,12 @@ foobar2:
 /* final setup for C code */
 	jbsr	_gray_bar		| #21
 	jbsr	_gray_bar		| #22
-	movl	#0x7f, 0x50001C00
-	movl	#0x7f, 0x50003C00
+|	movl	#0x7f, 0x50001C00
+|	movl	#0x7f, 0x50003C00
+	jbsr	_setmachdep		| Set some machine-dep stuff
+	jbsr	_gray_bar		| #23
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
-	jbsr	_gray_bar2		| #23
+	jbsr	_gray_bar		| #24
 	movl	#0,a6			| LAK: so that stack_trace() works
 	jbsr	_main			| call main() ; tag Minit_main()
 
