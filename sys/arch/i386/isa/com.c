@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.31.2.3 1994/08/21 15:04:59 mycroft Exp $
+ *	$Id: com.c,v 1.31.2.4 1994/08/24 07:29:42 mycroft Exp $
  */
 
 /*
@@ -297,10 +297,6 @@ comopen(dev, flag, mode, p)
 
 		iobase = sc->sc_iobase;
 		/* flush any pending I/O */
-		if (sc->sc_hwflags & COM_HW_FIFO)
-			outb(iobase + com_fifo,
-			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
-			    FIFO_TRIGGER_8);
 		(void) inb(iobase + com_lsr);
 		(void) inb(iobase + com_data);
 		/* you turn me on, baby */
@@ -558,6 +554,12 @@ comparam(tp, t)
 		cfcr |= CFCR_STOPB;
 
 	s = spltty();
+
+	/* Set the FIFO threshold based on the receive speed. */
+	if (sc->sc_hwflags & COM_HW_FIFO)
+		outb(iobase + com_fifo,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+		    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 
 	if (ospeed == 0)
 		outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_DTR);
