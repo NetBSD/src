@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.9 2003/04/05 21:18:02 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.10 2003/09/06 23:52:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,44 @@ struct mach_create_thread_child_args {
 #define MACH_SWITCH_OPTION_WAIT	2
 #define MACH_SWITCH_OPTION_IDLE	3
 
+/* For mach_thread_info */
+#define MACH_THREAD_BASIC_INFO 3
+struct mach_thread_basic_info {
+	mach_time_value_t	user_time;
+	mach_time_value_t	system_time;
+	mach_integer_t	cpu_usage;
+	mach_policy_t	policy;
+	mach_integer_t	run_state;
+	mach_integer_t	flags;
+	mach_integer_t	suspend_count;
+	mach_integer_t	sleep_time;
+};
+#define MACH_TH_STATE_RUNNING		1
+#define MACH_TH_STATE_STOPPED		2
+#define MACH_TH_STATE_WAITING		3
+#define MACH_TH_STATE_UNINTERRUPTIBLE	4
+#define MACH_TH_STATE_HALTED		5
+
+#define MACH_TH_FLAGS_SWAPPED	1
+#define MACH_TH_FLAGS_IDLE	2
+
+#define MACH_THREAD_SCHED_TIMESHARE_INFO 10
+struct mach_policy_timeshare_info {
+	mach_integer_t max_priority;
+	mach_integer_t base_priority;
+	mach_integer_t cur_priority;
+	mach_boolean_t depressed;
+	mach_integer_t depress_priority;
+};
+
+#define MACH_THREAD_SCHED_RR_INFO	11
+#define MACH_THREAD_SCHED_FIFO_INFO	12
+
+/* For mach_policy_t */
+#define MACH_THREAD_STANDARD_POLICY	1 
+#define MACH_THREAD_TIME_CONSTRAINT_POLICY 2 
+#define MACH_THREAD_PRECEDENCE_POLICY	3
+
 /* thread_policy */
 
 typedef struct {
@@ -96,9 +134,28 @@ typedef struct {
 	mach_msg_port_descriptor_t rep_child_act;
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_create_running_reply_t;
+
+/* mach_thread_info */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_thread_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_thread_info_request_t;
 	
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_out[12];
+	mach_msg_trailer_t rep_trailer;
+} mach_thread_info_reply_t;
+
 int mach_thread_policy(struct mach_trap_args *);
 int mach_thread_create_running(struct mach_trap_args *);
+int mach_thread_info(struct mach_trap_args *);
 void mach_create_thread_child(void *);
 
 #endif /* _MACH_THREAD_H_ */
