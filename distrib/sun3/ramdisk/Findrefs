@@ -1,4 +1,5 @@
 #!/bin/sh
+# $NetBSD: Findrefs,v 1.2 1995/10/13 16:51:28 gwr Exp $
 
 # Small helper to find out who pulls in X
 

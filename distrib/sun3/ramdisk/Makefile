@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/10/08 23:07:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1995/10/13 16:51:30 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,9 +25,7 @@ NBLKS=		512
 # args: old fmt, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
-CLEANFILES+= rdsetroot
-
-.PRECIOUS: ${IMAGE}.fs
+CLEANFILES= netbsd-rd rdsetroot
 
 netbsd-rd : rdsetroot ${IMAGE}.fs
 	cp ${KERNEL} netbsd-tmp
@@ -39,6 +37,9 @@ rdsetroot: ${TOP}/common/rdsetroot.c
 
 ${IMAGE}.fs: ${CBIN} do_mount do_files do_umount
 	dd if=${CDEV} of=$@ count=${NBLKS}
+
+# Do not delete this if I change my mind and kill make...
+.PRECIOUS: ${IMAGE}.fs
 
 # Rules used making ${IMAGE}.fs (do_*)
 .include "${TOP}/common/Make.fsimage"
@@ -53,7 +54,8 @@ HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir:
-	echo rm -f core ${CLEANFILES} *.o
+	-rm -f a.out core *.core *.o
+	-rm -f ${CLEANFILES}
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
