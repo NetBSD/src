@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.55 1994/03/02 08:03:02 mycroft Exp $
+ *	$Id: pccons.c,v 1.56 1994/03/03 19:11:59 mycroft Exp $
  */
 
 /*
@@ -340,6 +340,9 @@ pcprobe(dev)
 	}
 
 #if 0
+	/* Flush any garbage. */
+	while (inb(KBSTATP) & KBS_DIB)
+		(void) inb(KBDATAP);
 	/* Reset the keyboard. */
 	if (!kbd_cmd(KBC_RESET, 1)) {
 		printf("pcprobe: reset error %d\n", 1);
@@ -350,6 +353,9 @@ pcprobe(dev)
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
+	/* Flush any garbage. */
+	while (inb(KBSTATP) & KBS_DIB)
+		(void) inb(KBDATAP);
 	/* Just to be safe. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error %d\n", 3);
