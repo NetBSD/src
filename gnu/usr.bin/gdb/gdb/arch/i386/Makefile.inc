@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.1 1994/01/28 12:41:22 pk Exp $
+# $Id: Makefile.inc,v 1.2 1995/08/06 20:38:41 mycroft Exp $
 
-SRCS+=	coredep.c i386-pinsn.c i386-tdep.c i386b-nat.c i386-dis.c
+SRCS+=	i386-pinsn.c i386-tdep.c i386-dis.c i386b-nat.c
 
