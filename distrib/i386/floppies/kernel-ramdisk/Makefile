@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/02/08 04:40:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2002/02/26 13:27:50 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -50,7 +50,7 @@ netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
 #
 all: ${KERNELS}
 
-release:
+release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
