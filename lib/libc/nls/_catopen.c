@@ -1,4 +1,4 @@
-/*	$NetBSD: _catopen.c,v 1.3 1997/07/17 18:30:12 thorpej Exp $	*/
+/*	$NetBSD: _catopen.c,v 1.4 1997/11/04 23:52:52 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_catopen,catopen);
+__indr_reference(_catopen,catopen)
 #else
 
 #include <nl_types.h>

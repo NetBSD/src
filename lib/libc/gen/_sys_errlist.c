@@ -6,8 +6,8 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_sys_errlist, sys_errlist);
-__indr_reference(_sys_errlist, __sys_errlist); /* Backwards compat with v.12 */
+__indr_reference(_sys_errlist, sys_errlist)
+__indr_reference(_sys_errlist, __sys_errlist) /* Backwards compat with v.12 */
 #else
 
 #undef _sys_errlist
