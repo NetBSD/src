@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.59 1994/11/03 23:14:43 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.60 1994/11/04 18:35:02 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -138,29 +138,29 @@ struct cfdriver edcd = {
  * Interrupt conversion table for WD/SMC ASIC.
  * (IRQ* are defined in icu.h.)
  */
-static u_short ed_intr_mask[] = {
-	IRQ9,
-	IRQ3,
-	IRQ5,
-	IRQ7,
-	IRQ10,
-	IRQ11,
-	IRQ15,
-	IRQ4
+static u_short ed_intr[] = {
+	9,
+	3,
+	5,
+	7,
+	10,
+	11,
+	15,
+	4
 };
 
 /*
  * Interrupt conversion table for 585/790 Combo.
  */
-static u_short ed_790_intr_mask[] = {
-	0,
-	IRQ9,
-	IRQ3,
-	IRQ5,
-	IRQ7,
-	IRQ10,
-	IRQ11,
-	IRQ15
+static u_short ed_790_intr[] = {
+	-1,
+	9,
+	3,
+	5,
+	7,
+	10,
+	11,
+	15
 };
 	
 #define	ETHER_MIN_LEN	64
@@ -409,10 +409,10 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_790_intr_mask[iptr] != ia->ia_irq) {
+		if (ed_790_intr[iptr] != ia->ia_irq) {
 			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1,
-			    ffs(ed_790_intr_mask[iptr]) - 1);
+			    sc->sc_dev.dv_xname, ia->ia_irq,
+			    ed_790_intr[iptr]);
 			return (0);
 		}
 		/* Enable the interrupt. */
@@ -427,10 +427,10 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_intr_mask[iptr] != ia->ia_irq) {
+		if (ed_intr[iptr] != ia->ia_irq) {
 			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1,
-			    ffs(ed_intr_mask[iptr]) - 1);
+			    sc->sc_dev.dv_xname, ia->ia_irq,
+			    ed_intr[iptr]);
 			return (0);
 		}
 		/* Enable the interrupt. */
@@ -767,21 +767,21 @@ ed_probe_3Com(sc, cf, ia)
 
 	/* Set IRQ.  3c503 only allows a choice of irq 3-5 or 9. */
 	switch (ia->ia_irq) {
-	case IRQ9:
+	case 9:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ2);
 		break;
-	case IRQ3:
+	case 3:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ3);
 		break;
-	case IRQ4:
+	case 4:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ4);
 		break;
-	case IRQ5:
+	case 5:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ5);
 		break;
 	default:
 		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
-		    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1);
+		    sc->sc_dev.dv_xname, ia->ia_irq);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.10 1994/11/03 23:08:30 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.11 1994/11/04 18:34:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -700,10 +700,10 @@ aicprobe(parent, match, aux)
 		return 0;
 #ifdef NEWCONFIG
 	if (ia->ia_irq == IRQUNK)
-		ia->ia_irq = (1 << aic->aic_int);
-	else if (ia->ia_irq != (1 << aic->aic_int)) {
+		ia->ia_irq = aic->aic_int;
+	else if (ia->ia_irq != aic->aic_int) {
 		printf("aic%d: irq mismatch, %x != %x\n",
-		       aic->sc_dev.dv_unit, ia->ia_irq, 1 << aic->aic_int);
+		    aic->sc_dev.dv_unit, ia->ia_irq, aic->aic_int);
 		return 0;
 	}
 	
@@ -711,8 +711,8 @@ aicprobe(parent, match, aux)
 		ia->ia_drq = aic->aic_dma;
 	else if (ia->ia_drq != aic->aic_dma) {
 		printf("aic%d: drq mismatch, %x != %x\n",
-				aic->sc_dev.dv_unit, ia->ia_drq, aic->aic_dma);
-			return 0;
+		    aic->sc_dev.dv_unit, ia->ia_drq, aic->aic_dma);
+		return 0;
 	}
 #endif
 	ia->ia_msize = 0;
