@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1994/10/14 18:27:33 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1995/05/03 19:53:44 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,8 +39,9 @@
 #define	RAW_PART	3			/* raw partition: xx?c (XXX) */
 
 /* Just a dummy */
+#ifndef LOCORE
 struct cpu_disklabel {
 	int	cd_dummy;			/* must have one element. */
 };
-
+#endif
 #endif /* _MACHINE_DISKLABEL_H_ */
