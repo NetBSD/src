@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1995/09/26 20:16:30 phil Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 1997/03/20 12:00:56 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,105 +45,38 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/fcntl.h>
 
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <vm/vm.h>
 
 extern char *vmmap;		/* poor name! */
 caddr_t zeropage;
 
-#ifndef NO_RTC
-int have_rtc = 1;			/* For access to rtc. */
-#else
-int have_rtc = 0;			/* For no rtc. */
-#endif
-#define ROM_ORIGIN	0xFFF00000	/* Mapped origin! */
-
-/* Do the actual reading and writing of the rtc.  We have to read
-   and write the entire contents at a time.  rw = 0 => read,
-   rw = 1 => write. */
-
-void rw_rtc (unsigned char *buffer, int rw)
-{
-  static unsigned char magic[8] =
-    {0xc5, 0x3a, 0xa3, 0x5c, 0xc5, 0x3a, 0xa3, 0x5c};
-  volatile unsigned char * const rom_p = (unsigned char *)ROM_ORIGIN;
-  unsigned char *bp;
-  unsigned char dummy;	/* To defeat optimization */
-
-  /* Read or write to the real time chip. Address line A0 functions as
-   * data input, A2 is used as the /write signal. Accesses to the RTC
-   * are always done to one of the addresses (unmapped):
-   *
-   * 0x10000000  -  write a '0' bit
-   * 0x10000001  -  write a '1' bit
-   * 0x10000004  -  read a bit
-   *
-   * Data is output from the RTC using D0. To read or write time
-   * information, the chip has to be activated first, to distinguish
-   * clock accesses from normal ROM reads. This is done by writing,
-   * bit by bit, a magic pattern to the chip. Before that, a dummy read
-   * assures that the chip's pattern comparison register pointer is
-   * reset. The RTC register file is always read or written wholly,
-   * even if we are only interested in a part of it.
-   */
-
-  /* Activate the real time chip */
-  dummy = rom_p[4]; /* Synchronize the comparison reg. */
-
-  for (bp=magic; bp<magic+8; bp++) {
-    int i;
-    for (i=0; i<8; i++)
-      dummy = rom_p[ (*bp>>i) & 0x01 ];
-  }
-
-  if (rw == 0) {
-	/* Read the time from the RTC. Do this even this is
-	   a write, since the user might have only given
-	   partial data and the RTC must always be written
-	   completely.
-	*/
-
-	for (bp=buffer; bp<buffer+8; bp++) {
-	  int i;
-	  for (i=0; i<8; i++) {
-	    *bp >>= 1;
-	    *bp |= ((rom_p[4] & 0x01) ? 0x80 : 0x00);
-	  }
-	}
-  } else {
-	/* Write to the RTC */
-	for (bp=buffer; bp<buffer+8; bp++) {
-	  int i;
-	  for (i=0; i<8; i++)
-	    dummy = rom_p[ (*bp>>i) & 0x01 ];
-	}
-  }
-}
-
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
-
 	return (0);
 }
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
-
 	return (0);
 }
 
@@ -159,8 +92,6 @@ mmrw(dev, uio, flags)
 	register struct iovec *iov;
 	int error = 0;
 	static int physlock;
-	/* /dev/rtc support. */
-	unsigned char buffer[8];
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -213,32 +144,6 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-#ifdef DEV_RTC
-/* minor device 3 is the realtime clock. */
-		case 3:
-			if (!have_rtc)
-				return (ENXIO);
-
-			/* Calc offsets and lengths. */
-			v = uio->uio_offset;
-			if (v > 8)
-				return (0);  /* EOF */
-			c = iov->iov_len;
-			if (v+c > 8)
-				c = 8-v;
-
-			rw_rtc(buffer, 0);   /* Read the rtc. */
-
-			error = uiomove((caddr_t)&buffer[v], c, uio);
-
-			if (uio->uio_rw == UIO_READ || error)
-				return (error);
-
-			rw_rtc(buffer, 1);   /* Write the rtc. */
-
-			return (error);
-#endif
-
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
@@ -265,7 +170,6 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
-unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
@@ -278,6 +182,5 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-
 	return (EOPNOTSUPP);
 }
