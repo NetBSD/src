@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.92 1998/10/04 23:52:43 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.93 1998/10/05 20:38:17 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.85 1998/10/04 23:50:05 tron Exp 
+ *	NetBSD: pcidevs,v 1.86 1998/10/05 20:34:39 tron Exp 
  */
 
 /*
@@ -429,7 +429,7 @@
 #define	PCI_VENDOR_COROLLARY	0x118c		/* Corrollary */
 #define	PCI_VENDOR_BITFLOW	0x118d		/* BitFlow */
 #define	PCI_VENDOR_HERMSTEDT	0x118e		/* Hermstedt */
-#define	PCI_VENDOR_ARTOP	0x1191		/* Artop Electric */
+#define	PCI_VENDOR_ACARD	0x1191		/* ACARD */
 #define	PCI_VENDOR_DENSAN	0x1192		/* Densan */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
 #define	PCI_VENDOR_TOUCAN	0x1194		/* Toucan Technology */
@@ -558,6 +558,14 @@
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
 #define	PCI_PRODUCT_ACC_2051_HB	0x2051		/* 2051 PCI Single Chip Solution (host bridge) */
 #define	PCI_PRODUCT_ACC_2051_ISA	0x5842		/* 2051 PCI Single Chip Solution (ISA bridge) */
+
+/* ACARD products */
+#define	PCI_PRODUCT_ACARD_AEC6710	0x8002		/* AEC6710 SCSI */
+#define	PCI_PRODUCT_ACARD_AEC6712UW	0x8010		/* AEC6712UW SCSI */
+#define	PCI_PRODUCT_ACARD_AEC6712U	0x8020		/* AEC6712U SCSI */
+#define	PCI_PRODUCT_ACARD_AEC6712S	0x8030		/* AEC6712S SCSI */
+#define	PCI_PRODUCT_ACARD_AEC6712D	0x8040		/* AEC6712D SCSI */
+#define	PCI_PRODUCT_ACARD_AEC6712SUW	0x8050		/* AEC6712SUW SCSI */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
@@ -872,10 +880,13 @@
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (\"Atlas\") */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM	0x0519		/* MGA Millennium 2064W (\"Storm\") */
-#define	PCI_PRODUCT_MATROX_MYSTIQUE	0x051A		/* MGA 1064SG */
-#define	PCI_PRODUCT_MATROX_MILLENNIUM_II	0x051B		/* MGA Millennium II 2164W */
-#define	PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP	0x051F		/* MGA Millennium II 2164WA-B AGP */
+#define	PCI_PRODUCT_MATROX_MYSTIQUE	0x051a		/* MGA Mystique 1064SG */
+#define	PCI_PRODUCT_MATROX_MILLENNIUM2	0x051b		/* MGA Millennium II 2164W */
+#define	PCI_PRODUCT_MATROX_MILLENNIUM2_AGP	0x051f		/* MGA Millennium II 2164WA-B AG */
+#define	PCI_PRODUCT_MATROX_G200	0x0521		/* MGA G200 */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
+#define	PCI_PRODUCT_MATROX_G100	0x1000		/* MGA G100 */
+#define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */

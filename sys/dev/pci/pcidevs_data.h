@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.91 1998/10/04 23:52:44 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.92 1998/10/05 20:38:18 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.85 1998/10/04 23:50:05 tron Exp 
+ *	NetBSD: pcidevs,v 1.86 1998/10/05 20:34:39 tron Exp 
  */
 
 /*
@@ -158,6 +158,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ACC Microelectronics",
 	    "2051 PCI Single Chip Solution (ISA bridge)",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
+	    0,
+	    "ACARD",
+	    "AEC6710 SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712UW,
+	    0,
+	    "ACARD",
+	    "AEC6712UW SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712U,
+	    0,
+	    "ACARD",
+	    "AEC6712U SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712S,
+	    0,
+	    "ACARD",
+	    "AEC6712S SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712D,
+	    0,
+	    "ACARD",
+	    "AEC6712D SCSI",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712SUW,
+	    0,
+	    "ACARD",
+	    "AEC6712SUW SCSI",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
@@ -1417,25 +1453,43 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
 	    0,
 	    "Matrox",
-	    "MGA 1064SG",
+	    "MGA Mystique 1064SG",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_II,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2,
 	    0,
 	    "Matrox",
 	    "MGA Millennium II 2164W",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2_AGP,
 	    0,
 	    "Matrox",
-	    "MGA Millennium II 2164WA-B AGP",
+	    "MGA Millennium II 2164WA-B AG",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200,
+	    0,
+	    "Matrox",
+	    "MGA G200",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
 	    0,
 	    "Matrox",
 	    "MGA Impression",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100,
+	    0,
+	    "Matrox",
+	    "MGA G100",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G100 AGP",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
@@ -4714,9 +4768,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ARTOP, 0,
+	    PCI_VENDOR_ACARD, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Artop Electric",
+	    "ACARD",
 	    NULL,
 	},
 	{
