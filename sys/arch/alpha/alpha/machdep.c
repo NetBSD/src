@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1996/01/04 22:21:33 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1996/04/12 02:07:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -1432,6 +1432,19 @@ microtime(tvp)
 	}
 	lasttime = *tvp;
 	splx(s);
+}
+
+/*
+ * Wait "n" microseconds.
+ */
+int
+delay(n)
+	int n;
+{
+	long N = cycles_per_usec * (n);
+
+	while (N > 0)				/* XXX */
+		N -= 3;				/* XXX */
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
