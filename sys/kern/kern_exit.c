@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.81 2000/06/27 17:41:18 mrg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.82 2000/08/01 04:57:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -123,10 +123,7 @@
  *	Death of process.
  */
 int
-sys_exit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_exit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int) rval;
@@ -143,9 +140,7 @@ sys_exit(p, v, retval)
  * status and rusage for wait().  Check for child processes and orphan them.
  */
 void
-exit1(p, rv)
-	struct proc *p;
-	int rv;
+exit1(struct proc *p, int rv)
 {
 	struct proc *q, *nq;
 	struct vmspace *vm;
@@ -350,8 +345,7 @@ exit1(p, rv)
  * list (using the p_hash member), and wake up the reaper.
  */
 void
-exit2(p)
-	struct proc *p;
+exit2(struct proc *p)
 {
 
 	simple_lock(&deadproc_slock);
@@ -367,7 +361,7 @@ exit2(p)
  * a zombie, and the parent is allowed to read the undead's status.
  */
 void
-reaper()
+reaper(void)
 {
 	struct proc *p;
 
@@ -411,10 +405,7 @@ reaper()
 }
 
 int
-sys_wait4(q, v, retval)
-	struct proc *q;
-	void *v;
-	register_t *retval;
+sys_wait4(struct proc *q, void *v, register_t *retval)
 {
 	struct sys_wait4_args /* {
 		syscallarg(int) pid;
@@ -553,9 +544,7 @@ loop:
  * make process 'parent' the new parent of process 'child'.
  */
 void
-proc_reparent(child, parent)
-	struct proc *child;
-	struct proc *parent;
+proc_reparent(struct proc *child, struct proc *parent)
 {
 
 	if (child->p_pptr == parent)

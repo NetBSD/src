@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.62 2000/07/13 17:06:15 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.63 2000/08/01 04:57:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -377,7 +377,7 @@ u_int64_t callwheel_softempty;		/* # empty buckets seen */
  * Initialize clock frequencies and start both clocks running.
  */
 void
-initclocks()
+initclocks(void)
 {
 	int i;
 
@@ -471,8 +471,7 @@ initclocks()
  * The real-time timer, interrupting hz times per second.
  */
 void
-hardclock(frame)
-	struct clockframe *frame;
+hardclock(struct clockframe *frame)
 {
 	struct proc *p;
 	int delta;
@@ -866,11 +865,11 @@ hardclock(frame)
  */
 /*ARGSUSED*/
 void
-softclock()
+softclock(void)
 {
 	struct callout_queue *bucket;
 	struct callout *c;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 	int s, idx;
 	int steps = 0;
@@ -937,7 +936,7 @@ softclock()
  *	set hash mask.  Called from allocsys().
  */
 void
-callout_setsize()
+callout_setsize(void)
 {
 
 	for (callwheelsize = 1; callwheelsize < ncallout; callwheelsize <<= 1)
@@ -951,7 +950,7 @@ callout_setsize()
  *	Initialize the callwheel buckets.
  */
 void
-callout_startup()
+callout_startup(void)
 {
 	int i;
 
@@ -966,8 +965,7 @@ callout_startup()
  *	by callout_reset() and callout_stop().
  */
 void
-callout_init(c)
-	struct callout *c;
+callout_init(struct callout *c)
 {
 
 	memset(c, 0, sizeof(*c));
@@ -979,11 +977,7 @@ callout_init(c)
  *	Establish or change a timeout.
  */
 void
-callout_reset(c, ticks, func, arg)
-	struct callout *c;
-	int ticks;
-	void (*func) __P((void *));
-	void *arg;
+callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
 {
 	struct callout_queue *bucket;
 	int s;
@@ -1036,8 +1030,7 @@ callout_reset(c, ticks, func, arg)
  *	Disestablish a timeout.
  */
 void
-callout_stop(c)
-	struct callout *c;
+callout_stop(struct callout *c)
 {
 	int s;
 
@@ -1077,7 +1070,7 @@ callout_stop(c)
  *	Display callout statistics.  Call it from DDB.
  */
 void
-callout_showstats()
+callout_showstats(void)
 {
 	u_int64_t curticks;
 	int s;
@@ -1107,8 +1100,7 @@ callout_showstats()
  * argument to callout_reset() from an absolute time.
  */
 int
-hzto(tv)
-	struct timeval *tv;
+hzto(struct timeval *tv)
 {
 	unsigned long ticks;
 	long sec, usec;
@@ -1173,8 +1165,7 @@ hzto(tv)
  * keeps the profile clock running constantly.
  */
 void
-startprofclock(p)
-	struct proc *p;
+startprofclock(struct proc *p)
 {
 	int s;
 
@@ -1193,8 +1184,7 @@ startprofclock(p)
  * Stop profiling on a process.
  */
 void
-stopprofclock(p)
-	struct proc *p;
+stopprofclock(struct proc *p)
 {
 	int s;
 
@@ -1214,8 +1204,7 @@ stopprofclock(p)
  * do process and kernel statistics.
  */
 void
-statclock(frame)
-	struct clockframe *frame;
+statclock(struct clockframe *frame)
 {
 #ifdef GPROF
 	struct gmonparam *g;
@@ -1319,8 +1308,7 @@ statclock(frame)
  * Note: splclock() is in effect.
  */
 void
-hardupdate(offset)
-	long offset;
+hardupdate(long offset)
 {
 	long ltemp, mtemp;
 
@@ -1404,9 +1392,8 @@ hardupdate(offset)
  * routine.
  */
 void
-hardpps(tvp, usec)
-	struct timeval *tvp;		/* time at PPS */
-	long usec;			/* hardware counter at PPS */
+hardpps(struct timeval *tvp,		/* time at PPS */
+	long usec			/* hardware counter at PPS */)
 {
 	long u_usec, v_usec, bigtick;
 	long cal_sec, cal_usec;
@@ -1626,14 +1613,11 @@ hardpps(tvp, usec)
 #endif /* PPS_SYNC */
 #endif /* NTP  */
 
-
 /*
  * Return information about system clocks.
  */
 int
-sysctl_clockrate(where, sizep)
-	void *where;
-	size_t *sizep;
+sysctl_clockrate(void *where, size_t *sizep)
 {
 	struct clockinfo clkinfo;
 
