@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.3 1999/12/08 04:54:15 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.4 1999/12/10 05:47:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1188,8 +1188,9 @@ struct rainfo *rainfo;
 
 	if (i < 0 || i != rainfo->ra_datalen)  {
 		if (i < 0) {
-			syslog(LOG_ERR, "<%s> sendmsg: %s",
-			       __FUNCTION__, strerror(errno));
+			syslog(LOG_ERR, "<%s> sendmsg on %s: %s",
+			       __FUNCTION__, rainfo->ifname,
+			       strerror(errno));
 		}
 	}
 
