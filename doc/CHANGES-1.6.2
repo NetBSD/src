@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.20 2003/06/16 13:21:44 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.21 2003/06/16 13:24:52 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -335,3 +335,19 @@ sys/dev/pci/if_bgereg.h				1.7
 	appropriate in referencing device memory.  Parenthesize BGE_HOSTADDR
 	define properly.
 	[tron, ticket #1249]
+
+sys/dev/pci/if_bge.c				1.35
+sys/dev/pci/if_bgereg.h				1.8
+
+	Commit the FreeBSD alternative of a private patch to check NIC internal
+	ram for using TBI, versus MII/GMII.
+
+	FreeBSD commit log and versions:
+	   Obtain the media type from the shared memory and only use the eeprom
+	   as a fallback.
+
+	   if_bge.c:	rev 1.30
+	   if_bgereg.h:	rev 1.13
+
+	Thanks to Paul Saab @mu.org.
+	[tron, ticket #1250]
