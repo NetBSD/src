@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.31 1999/09/27 19:34:25 mjl Exp $
+.\"	$NetBSD: sh.1,v 1.32 1999/09/28 14:54:43 bouyer Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1395,6 +1395,10 @@ If none of these is specified, it is the limit on file size that is shown
 or set. If value is specified, the limit is set to that number; otherwise
 the current limit is displayed.
 .Pp
+Limits of an arbitrary process can be displayed or set using the
+.Xr sysctl 8
+utility.
+.Pp
 .It umask Op Ar mask
 Set the value of umask (see
 .Xr umask 2 )
@@ -1506,6 +1510,7 @@ The number of lines in the history buffer for the shell.
 .Xr passwd 4 ,
 .Xr profile 4 ,
 .Xr environ 5
+.Xr sysctl 8
 .Sh HISTORY
 A
 .Nm
