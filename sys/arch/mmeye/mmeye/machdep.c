@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1999/09/17 20:04:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1999/09/21 13:16:16 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,31 +75,20 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/syscallargs.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/user.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -116,11 +105,10 @@
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/psl.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/mmeye.h>
+
 #include <sh3/bscreg.h>
 #include <sh3/ccrreg.h>
 #include <sh3/cpgreg.h>
@@ -128,7 +116,10 @@
 #include <sh3/pfcreg.h>
 #include <sh3/wdtreg.h>
 
-#include <sys/termios.h>
+#if 0
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* cpu "architecture" */
@@ -140,8 +131,6 @@ int cpu_debug_mode = 1;
 int cpu_debug_mode = 0;
 #endif
 
-char cpu_model[120];
-
 char bootinfo[BOOTINFO_MAXSIZE];
 
 int physmem;
@@ -151,17 +140,8 @@ vaddr_t atdevbase;	/* location of start of iomem in virtual */
 paddr_t msgbuf_paddr;
 struct user *proc0paddr;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
-
 extern int boothowto;
 extern paddr_t avail_start, avail_end;
-
-#ifdef	SYSCALL_DEBUG
-#define	SCDEBUG_ALL 0x0004
-extern int	scdebug;
-#endif
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -176,27 +156,20 @@ extern int	scdebug;
  * routines need access to them for bus address space allocation.
  */
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct	extent *ioport_ex;
 struct	extent *iomem_ex;
-static	int ioport_malloc_safe;
 
 void setup_bootinfo __P((void));
 void dumpsys __P((void));
-void identifycpu __P((void));
 void initSH3 __P((void *));
-void InitializeSci  __P((unsigned char));
-void Send16550 __P((int c));
-void Init16550 __P((void));
 void sh3_cache_on __P((void));
+void InitializeBsc __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
 void Sh3Reset __P((void));
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#ifdef COMPAT_NOMID
-static int exec_nomid	__P((struct proc *, struct exec_package *));
+#if 0
+void Send16550 __P((int c));
+void Init16550 __P((void));
 #endif
 
 /*
@@ -207,124 +180,7 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 void
 cpu_startup()
 {
-	unsigned i;
-	caddr_t v;
-	int sz;
-	int base, residual;
-	vaddr_t minaddr, maxaddr;
-	vsize_t size;
-	struct pcb *pcb;
-	char pbuf[9];
-
-	printf(version);
-
-	sprintf(cpu_model, "Hitachi SH3");
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	buffers = 0;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, TRUE, FALSE, NULL);
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-
-	/* Safe for i/o port allocation to use malloc now. */
-	ioport_malloc_safe = 1;
-
-	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->r15 = (int)proc0.p_addr + USPACE - 16;
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->r15 - 1;
-
-#ifdef SYSCALL_DEBUG
-	scdebug |= SCDEBUG_ALL;
-#endif
+	sh3_startup();
 
 #ifdef FORCE_RB_SINGLE
 	boothowto |= RB_SINGLE;
@@ -334,7 +190,6 @@ cpu_startup()
 /*
  * Info for CTL_HW
  */
-extern	char version[];
 
 #define CPUDEBUG
 
@@ -404,192 +259,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user
- * specified pc, psl.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	struct proc *p = curproc;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
-	int onstack;
-
-	tf = p->p_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_r15;
-	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
-
-	/* Save register context. */
-	frame.sf_sc.sc_ssr = tf->tf_ssr;
-	frame.sf_sc.sc_spc = tf->tf_spc;
-	frame.sf_sc.sc_pr = tf->tf_pr;
-	frame.sf_sc.sc_r15 = tf->tf_r15;
-	frame.sf_sc.sc_r14 = tf->tf_r14;
-	frame.sf_sc.sc_r13 = tf->tf_r13;
-	frame.sf_sc.sc_r12 = tf->tf_r12;
-	frame.sf_sc.sc_r11 = tf->tf_r11;
-	frame.sf_sc.sc_r10 = tf->tf_r10;
-	frame.sf_sc.sc_r9 = tf->tf_r9;
-	frame.sf_sc.sc_r8 = tf->tf_r8;
-	frame.sf_sc.sc_r7 = tf->tf_r7;
-	frame.sf_sc.sc_r6 = tf->tf_r6;
-	frame.sf_sc.sc_r5 = tf->tf_r5;
-	frame.sf_sc.sc_r4 = tf->tf_r4;
-	frame.sf_sc.sc_r3 = tf->tf_r3;
-	frame.sf_sc.sc_r2 = tf->tf_r2;
-	frame.sf_sc.sc_r1 = tf->tf_r1;
-	frame.sf_sc.sc_r0 = tf->tf_r0;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-#ifdef TODO
-	frame.sf_sc.sc_err = tf->tf_err;
-#endif
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
-
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_spc = (int)psp->ps_sigcode;
-#ifdef TODO
-	tf->tf_ssr &= ~(PSL_T|PSL_VM|PSL_AC);
-#endif
-	tf->tf_r15 = (int)fp;
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, context;
-	struct trapframe *tf;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/* Restore signal context. */
-	tf = p->p_md.md_regs;
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-#ifdef TODO
-	  if (((context.sc_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0) {
-	    return (EINVAL);
-	  }
-#endif
-
-	  tf->tf_ssr = context.sc_ssr;
-	}
-	tf->tf_r0 = context.sc_r0;
-	tf->tf_r1 = context.sc_r1;
-	tf->tf_r2 = context.sc_r2;
-	tf->tf_r3 = context.sc_r3;
-	tf->tf_r4 = context.sc_r4;
-	tf->tf_r5 = context.sc_r5;
-	tf->tf_r6 = context.sc_r6;
-	tf->tf_r7 = context.sc_r7;
-	tf->tf_r8 = context.sc_r8;
-	tf->tf_r9 = context.sc_r9;
-	tf->tf_r10 = context.sc_r10;
-	tf->tf_r11 = context.sc_r11;
-	tf->tf_r12 = context.sc_r12;
-	tf->tf_r13 = context.sc_r13;
-	tf->tf_r14 = context.sc_r14;
-	tf->tf_spc = context.sc_spc;
-	tf->tf_r15 = context.sc_r15;
-	tf->tf_pr = context.sc_pr;
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
-
-	return (EJUSTRETURN);
 }
 
 int waittime = -1;
@@ -819,46 +488,6 @@ dumpsys()
 }
 
 /*
- * Clear registers on exec
- */
-void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-{
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct trapframe *tf;
-
-	p->p_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
-
-	tf = p->p_md.md_regs;
-
-	tf->tf_r0 = 0;
-	tf->tf_r1 = 0;
-	tf->tf_r2 = 0;
-	tf->tf_r3 = 0;
-	tf->tf_r4 = *(int *)stack;	/* argc */
-	tf->tf_r5 = stack+4;		/* argv */
-	tf->tf_r6 = stack+4*tf->tf_r4 + 8; /* envp */
-	tf->tf_r7 = 0;
-	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
-	tf->tf_r10 = 0;
-	tf->tf_r11 = 0;
-	tf->tf_r12 = 0;
-	tf->tf_r13 = 0;
-	tf->tf_r14 = 0;
-	tf->tf_spc = pack->ep_entry;
-	tf->tf_ssr = PSL_USERSET;
-	tf->tf_r15 = stack;
-#ifdef TODO
-	tf->tf_r9 = (int)PS_STRINGS;
-#endif
-}
-
-/*
  * Initialize segments and descriptor tables
  */
 #define VBRINIT		((char *)0x8c000000)
@@ -1085,136 +714,6 @@ initSH3(pc)
 	__asm __volatile ("jmp @%0; mov %1, r15" :: "r"(pc), "r"(sp));
 }
 
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	struct queue *elem = v1, *head = v2;
-	struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(v)
-	void *v;
-{
-	struct queue *elem = v;
-	struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
-}
-
-#ifdef COMPAT_NOMID
-static int
-exec_nomid(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	int error;
-	u_long midmag, magic;
-	u_short mid;
-	struct exec *execp = epp->ep_hdr;
-
-	/* check on validity of epp->ep_hdr performed by exec_out_makecmds */
-
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16) & 0xffff;
-	magic = midmag & 0xffff;
-
-	if (magic == 0) {
-		magic = (execp->a_midmag & 0xffff);
-		mid = MID_ZERO;
-	}
-
-	midmag = mid << 16 | magic;
-
-	switch (midmag) {
-	case (MID_ZERO << 16) | ZMAGIC:
-		/*
-		 * 386BSD's ZMAGIC format:
-		 */
-		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | QMAGIC:
-		/*
-		 * BSDI's QMAGIC format:
-		 * same as new ZMAGIC format, but with different magic number
-		 */
-		error = exec_aout_prep_zmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | NMAGIC:
-		/*
-		 * BSDI's NMAGIC format:
-		 * same as NMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldnmagic(p, epp);
-		break;
-
-	case (MID_ZERO << 16) | OMAGIC:
-		/*
-		 * BSDI's OMAGIC format:
-		 * same as OMAGIC format, but with different magic number
-		 * and with text starting at 0.
-		 */
-		error = exec_aout_prep_oldomagic(p, epp);
-		break;
-
-	default:
-		error = ENOEXEC;
-	}
-
-	return error;
-}
-#endif
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
- * if COMPAT_NOMID is given as a kernel option.
- */
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	int error = ENOEXEC;
-
-#ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
-		return error;
-#endif /* ! COMPAT_NOMID */
-
-	return error;
-}
-
 void
 setup_bootinfo(void)
 {
@@ -1337,8 +836,6 @@ sh_memio_unmap(t, bsh, size)
  * InitializeBsc
  * : BSC(Bus State Controler)
  */
-void InitializeBsc __P((void));
-
 void
 InitializeBsc()
 {
@@ -1488,7 +985,6 @@ sh3_cache_on(void)
 #endif
 }
 
-#include <machine/mmeye.h>
 void
 LoadAndReset(osimage)
 	char *osimage;
