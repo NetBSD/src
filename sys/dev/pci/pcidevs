@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.467 2002/09/06 23:41:56 uwe Exp $
+$NetBSD: pcidevs,v 1.468 2002/09/11 20:43:07 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -657,6 +657,8 @@ product ACC 2051_ISA 	0x5842	2051 PCI Single Chip Solution (ISA bridge)
 product ACARD ATP850U	0x0005	ATP850U/UF UDMA IDE Controller 
 product ACARD ATP860	0x0006	ATP860 UDMA IDE Controller 
 product ACARD ATP860A	0x0007	ATP860-A UDMA IDE Controller 
+product ACARD ATP865	0x0008	ATP865 UDMA IDE Controller 
+product ACARD ATP865A	0x0009	ATP865-A UDMA IDE Controller 
 product ACARD AEC6710	0x8002	AEC6710 SCSI
 product ACARD AEC6712UW	0x8010	AEC6712UW SCSI
 product ACARD AEC6712U	0x8020	AEC6712U SCSI
