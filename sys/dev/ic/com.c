@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.121 1997/11/01 20:40:38 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.122 1997/11/02 08:50:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -600,8 +600,6 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splserial();
-
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -610,6 +608,8 @@ comopen(dev, flag, mode, p)
 		 * unless explicitly requested to deassert it.
 		 */
 		com_modem(sc, 1);
+
+		s2 = splserial();
 
 		/* Clear the input ring, and unblock. */
 		sc->sc_rbput = sc->sc_rbget = 0;
@@ -678,10 +678,11 @@ comclose(dev, flag, mode, p)
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 	com_hwiflow(sc);
-	/* Clear any break condition set with TIOCSBRK. */
-	com_break(sc, 0);
 
 	splx(s);
+
+	/* Clear any break condition set with TIOCSBRK. */
+	com_break(sc, 0);
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -696,7 +697,7 @@ comclose(dev, flag, mode, p)
 
 	/* Turn off interrupts. */
 #ifdef DDB
-	if(ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
 	else
 #else
