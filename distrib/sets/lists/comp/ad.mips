@@ -33,7 +33,6 @@
 ./usr/include/mips/pte.h
 ./usr/include/mips/ptrace.h
 ./usr/include/mips/reg.h
-./usr/include/mips/regdef.h
 ./usr/include/mips/regnum.h
 ./usr/include/mips/reloc.h
 ./usr/include/mips/setjmp.h
