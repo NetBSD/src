@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.16 2004/07/06 23:51:40 sekiya Exp $	*/
+/*	$NetBSD: gio.c,v 1.17 2004/09/29 04:06:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.16 2004/07/06 23:51:40 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.17 2004/09/29 04:06:52 sekiya Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,10 +82,6 @@ static uint32_t gio_slot_addr[] = {
 static int
 gio_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct giobus_attach_args *gba = aux;
-
-	if (strcmp(gba->gba_busname, match->cf_name) != 0)
-		return 0;
 
 	return 1;
 }

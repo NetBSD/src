@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2004/01/19 03:26:14 sekiya Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2004/09/29 04:06:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2004/01/19 03:26:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2004/09/29 04:06:52 sekiya Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,8 +89,7 @@ cpu_configure()
  * 'dksc(0,1,0)netbsd'
  */
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
 	if (booted_protocol != NULL)
 		return;
@@ -170,9 +169,7 @@ cpu_rootconf()
  * Try to determine the boot device.
  */
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	struct device *parent = dev->dv_parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mace.c,v 1.4 2004/07/12 13:45:40 tsutsui Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.5 2004/09/29 04:06:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.4 2004/07/12 13:45:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.5 2004/09/29 04:06:52 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,20 +74,14 @@ CFATTACH_DECL(lpt_mace, sizeof(struct lpt_mace_softc),
     lpt_mace_match, lpt_mace_attach, NULL, NULL);
 
 static int
-lpt_mace_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
 }
 
 static void
-lpt_mace_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+lpt_mace_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_mace_softc *msc = (void *)self;
 	struct lpt_softc *sc = &msc->sc_lpt;

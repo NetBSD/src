@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.4 2003/12/15 05:26:56 lonewolf Exp $	*/
+/*	$NetBSD: giovar.h,v 1.5 2004/09/29 04:06:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,8 +39,6 @@
 #include <machine/bus.h>
 
 struct giobus_attach_args {
-	char		*gba_busname;
-
 	bus_space_tag_t	gba_iot;
 	bus_space_handle_t gba_ioh;
 
