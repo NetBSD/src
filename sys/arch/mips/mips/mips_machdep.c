@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.34 1998/10/01 00:42:38 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.35 1998/10/02 18:59:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,9 +52,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.34 1998/10/01 00:42:38 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.35 1998/10/02 18:59:56 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_ultrix.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
@@ -827,7 +828,7 @@ sendsig(catcher, sig, mask, code)
 	/* Save signal mask. */
 	ksc.sc_mask = *mask;
 
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 	/*
 	 * XXX We always have to save an old style signal mask because
 	 * XXX we might be delivering a signal to a process which will
