@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.6 1999/02/19 02:27:59 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.7 1999/03/22 07:58:55 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -738,6 +738,17 @@ sv_set_params(addr, setmode, usemode, play, rec)
 	}
 	
 	val = p->sample_rate * 65536 / 48000;
+	/*
+	 * If the sample rate is exactly 48KHz, the fraction would overflow the
+	 * register, so we have to bias it.  This causes a little clock drift.
+	 * The drift is below normal crystal tolerance (.0001%), so although
+	 * this seems a little silly, we can pretty much ignore it.
+	 * (I tested the output speed with values of 1-20, just to be sure this
+	 * register isn't *supposed* to have a bias.  It isn't.)
+	 * - mycroft
+	 */
+	if (val > 65535)
+		val = 65535;
 
 	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_0, val & 0xff);
 	sv_write_indirect(sc, SV_PCM_SAMPLE_RATE_1, val >> 8);
