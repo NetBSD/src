@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.24 2004/05/27 02:57:42 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.25 2004/06/08 19:03:14 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -289,6 +289,17 @@ Usage: ${0##*/} [-f] [-m mknod] [-s]  special [...]
 
 _USAGE_
 	exit 1
+}
+
+zeropad() {
+	case $(($1 - ${#2})) in
+	5)	echo 00000$2;;
+	4)	echo 0000$2;;
+	3)	echo 000$2;;
+	2)	echo 00$2;;
+	1)	echo 0$2;;
+	*)	echo "$0: bad padding" 1>&2; exit 1;;
+	esac
 }
 
 do_force=false
@@ -659,13 +670,13 @@ ofdisk*)
 	;;
 
 ttyCY*)
-	name=tyCY; chr=%cy_chr%; off=32; fmt="%03d"
+	name=tyCY; chr=%cy_chr%; off=32
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
 	eminor=$(($minor + $off))
 	while [ $minor -lt $eminor ]
 	do
-		nminor=$(printf $fmt $minor)
+		nminor=$(zeropad 3 $minor)
 		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
 		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
@@ -673,13 +684,13 @@ ttyCY*)
 	;;
 
 ttyCZ*)
-	name=tyCZ; chr=%cz_chr%; off=64; fmt="%04d"
+	name=tyCZ; chr=%cz_chr%; off=64
 	unit=${i#t${name}}
 	minor=$(($unit * $off))
 	eminor=$(($minor + $off))
 	while [ $minor -lt $eminor ]
 	do
-		nminor=$(printf $fmt $minor)
+		nminor=$(zeropad 4 $minor)
 		mkdev t$name$nminor c $chr $(($minor + $dialin )) "" "" $u_uucp
 		mkdev d$name$nminor c $chr $(($minor + $dialout)) "" "" $u_uucp
 		minor=$(($minor + 1))
@@ -700,7 +711,7 @@ tty[0-9]|tty0[0-9])
 
 tty0*|tty1*|tty[0-9])
 	unit=${i#tty}
-	ounit=$(printf "%02d" $unit)
+	ounit=$(zeropad 2 $unit)
 	mkdev tty$ounit c %com_chr% $(($unit + $dialin )) "" "" $u_uucp
 	mkdev dty$ounit c %com_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
