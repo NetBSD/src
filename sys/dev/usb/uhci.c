@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.60 1999/10/16 15:35:18 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.61 1999/10/17 15:31:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -526,6 +526,7 @@ uhci_power(why, v)
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_suspend = why;
+		sc->sc_bus.use_polling--;
 		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
 	} else {
 		/*
@@ -534,11 +535,10 @@ uhci_power(why, v)
 		 * not restored them.
 		 */
 #ifdef DIAGNOSTIC
-		if (sc->sc_bus.use_polling == 0) {
-			printf("uhci_power: weird, polling not set.\n");
-			sc->sc_bus.use_polling = 1;
-		}
+		if (sc->sc_suspend == PWR_RESUME)
+			printf("uhci_power: weird, resume without suspend.\n");
 #endif
+		sc->sc_bus.use_polling++;
 		sc->sc_suspend = why;
 		if (cmd & UHCI_CMD_RS)
 			uhci_run(sc, 0); /* in case BIOS has started it */
