@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.71 2003/07/22 11:18:26 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.72 2003/08/22 06:22:21 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.71 2003/07/22 11:18:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.72 2003/08/22 06:22:21 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1102,9 +1102,9 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 		panic("ipsec_init_pcbpolicy: NULL pointer was passed.");
 
 	if (!initialized) {
-		if ((in = key_newsp()) == NULL)
+		if ((in = key_newsp(0)) == NULL)
 			return ENOBUFS;
-		if ((out = key_newsp()) == NULL) {
+		if ((out = key_newsp(0)) == NULL) {
 			key_freesp(in);
 			in = NULL;
 			return ENOBUFS;
@@ -1210,7 +1210,7 @@ ipsec_deepcopy_policy(src)
 	struct ipsecrequest *r;
 	struct secpolicy *dst;
 
-	dst = key_newsp();
+	dst = key_newsp(0);
 	if (src == NULL || dst == NULL)
 		return NULL;
 
