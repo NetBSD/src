@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.12 2000/01/16 21:47:00 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.13 2000/02/10 02:15:02 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -44,7 +44,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <hpcmips/hpcmips/machdep.h> /* cpu_model */
+#include <hpcmips/hpcmips/machdep.h> /* cpu_name */
 
 #include <hpcmips/tx/tx39biureg.h>
 #include <hpcmips/tx/tx39reg.h>
@@ -117,20 +117,20 @@ tx_init()
 	switch (model) {
 	default:
 		 /* Unknown TOSHIBA TX39-series */
-		sprintf(cpu_model, "Unknown TOSHIBA TX39-series %x.%x", 
+		sprintf(cpu_name, "Unknown TOSHIBA TX39-series %x.%x", 
 			cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
 		break;
 	case TMPR3912:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 
-		sprintf(cpu_model, "TOSHIBA TMPR3912 %d.%02d MHz",
+		sprintf(cpu_name, "TOSHIBA TMPR3912 %d.%02d MHz",
 			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		break;
 	case TMPR3922:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 		rev = tx_conf_read(tc, TX3922_REVISION_REG);
 
-		sprintf(cpu_model, "TOSHIBA TMPR3922 rev. %x.%x "
+		sprintf(cpu_name, "TOSHIBA TMPR3922 rev. %x.%x "
 			"%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
 			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		break;

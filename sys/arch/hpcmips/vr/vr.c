@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.11 2000/01/28 15:08:38 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.12 2000/02/10 02:15:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -55,7 +55,7 @@
 #include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
-#include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
+#include <hpcmips/hpcmips/machdep.h>	/* cpu_name */
 #include <machine/bootinfo.h>
 
 #include "vrip.h"
@@ -146,14 +146,14 @@ vr_init()
 	platform.reboot = vr_reboot;
 
 #if NVRBCU > 0
-	sprintf(cpu_model, "NEC %s rev%d.%d %d.%03dMHz", 
+	sprintf(cpu_name, "NEC %s rev%d.%d %d.%03dMHz", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
 		vrbcu_vrip_getcpuminor(),
 		vrbcu_vrip_getcpuclock() / 1000000,
 		(vrbcu_vrip_getcpuclock() % 1000000) / 1000);
 #else
-	sprintf(cpu_model, "NEC VR41xx");
+	sprintf(cpu_name, "NEC VR41xx");
 #endif
 }
 
