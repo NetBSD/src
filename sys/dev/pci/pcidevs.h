@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.90 1998/09/26 16:17:40 dante Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.91 1998/10/01 23:33:25 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.83 1998/09/26 16:16:23 dante Exp 
+ *	NetBSD: pcidevs,v 1.84 1998/10/01 23:32:41 fvdl Exp 
  */
 
 /*
@@ -543,7 +543,7 @@
 #define	PCI_PRODUCT_3COM_3C900BTPO	0x9004		/* 3c900B 10Base-T */
 #define	PCI_PRODUCT_3COM_3C900BCOMBO	0x9005		/* 3c900B 10Mbps-Combo */
 #define	PCI_PRODUCT_3COM_3C905BTX	0x9055		/* 3c905B 100Base-TX */
-#define	PCI_PRODUCT_3COM_3c905BT4	0x9056		/* 3c905B 100Base-T4 */
+#define	PCI_PRODUCT_3COM_3C905BT4	0x9056		/* 3c905B 100Base-T4 */
 
 /* 3Dfx Interactive producs */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
