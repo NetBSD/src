@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.h,v 1.1 2001/12/17 12:16:15 gehenna Exp $	*/
+/*	$NetBSD: umass_quirks.h,v 1.2 2001/12/24 21:36:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@ typedef void (*umass_fixup_quirk)(struct umass_softc *);
 
 struct umass_quirk {
 	struct usb_devno	uq_dev;
-#define	USB_PRODUCT_ANY		0xffff		/* XXX */
 
 	u_int8_t		uq_wire;
 	u_int8_t		uq_cmd;
