@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.2 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: ite.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,10 +89,14 @@
 
 #include <hp300/stand/common/device.h>
 #include <hp300/stand/common/itevar.h>
+#include <hp300/stand/common/kbdvar.h>
 #include <hp300/stand/common/consdefs.h>
 #include <hp300/stand/common/samachdep.h>
 
-void	ite_deinit_noop __P((struct ite_data *));
+static void iteconfig(void);
+static void ite_deinit_noop(struct ite_data *);
+static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
+static void itecheckwrap(struct ite_data *, struct itesw *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
@@ -131,12 +135,13 @@ int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct  ite_data ite_data[NITE] = { 0 };
+struct  ite_data ite_data[NITE] = { { 0 } };
 int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
  */
+static void
 iteconfig()
 {
 	extern struct hp_hw sc_table[];
@@ -165,7 +170,7 @@ iteconfig()
 		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
 		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
-		ip->fbbase = (caddr_t) (*((u_char *)ip->regbase+fboff) << 16);
+		ip->fbbase = (caddr_t)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (ip->regbase >= (caddr_t)DIOIIBASE)
 			ip->fbbase += (int)ip->regbase;
@@ -201,8 +206,8 @@ void
 iteprobe(cp)
 	struct consdev *cp;
 {
-	register int ite;
-	register struct ite_data *ip;
+	int ite;
+	struct ite_data *ip;
 	int unit, pri;
 
 #ifdef CONSDEBUG
@@ -265,10 +270,10 @@ iteinit(cp)
 void
 iteputchar(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
-	register struct ite_data *ip = &ite_data[itecons];
-	register struct itesw *sp = ip->isw;
+	struct ite_data *ip = &ite_data[itecons];
+	struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
 	switch (c) {
@@ -305,9 +310,10 @@ iteputchar(dev, c)
 	}
 }
 
+static void
 itecheckwrap(ip, sp)
-     register struct ite_data *ip;
-     register struct itesw *sp;
+	struct ite_data *ip;
+	struct itesw *sp;
 {
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
@@ -321,10 +327,11 @@ itecheckwrap(ip, sp)
 	(*sp->ite_cursor)(ip, MOVE_CURSOR);
 }
 
+static void
 ite_clrtoeol(ip, sp, y, x)
-     register struct ite_data *ip;
-     register struct itesw *sp;
-     register int y, x;
+	struct ite_data *ip;
+	struct itesw *sp;
+	int y, x;
 {
 	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
@@ -335,16 +342,17 @@ int
 itegetchar(dev)
 	dev_t dev;
 {
+
 #ifdef SMALL
-	return (0);
+	return 0;
 #else
-	return (kbdgetc());
+	return kbdgetc();
 #endif
 }
 #endif
 
 /* ARGSUSED */
-void
+static void
 ite_deinit_noop(ip)
 	struct ite_data *ip;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.5 2003/11/08 12:02:33 tsutsui Exp $	*/
+/*	$NetBSD: apci.c,v 1.6 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
+#include <lib/libsa/stand.h>
+
 #include <hp300/dev/frodoreg.h>		/* for APCI offsets */
 
 #include <hp300/stand/common/apcireg.h>	/* for register map */
@@ -125,8 +127,8 @@ void
 apciprobe(cp)
 	struct consdev *cp;
 {
-	struct apciregs *apci = apcicnaddr =
-	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
+
+	apcicnaddr = (void *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
 
 	cp->cn_pri = CN_DEAD;
 
@@ -176,21 +178,22 @@ int
 apcigetchar(dev)
 	dev_t dev;
 {
-	register struct apciregs *apci = apcicnaddr;
+	struct apciregs *apci = apcicnaddr;
 	short stat;
 	int c;
 
 	if (((stat = apci->ap_lsr) & LSR_RXRDY) == 0)
-		return (0);
+		return 0;
 	c = apci->ap_data;
-	return (c);
+	return c;
 }
 #else
 int
 apcigetchar(dev)
 	dev_t dev;
 {
-	return (0);
+
+	return 0;
 }
 #endif
 

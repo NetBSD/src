@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.7 2003/11/14 13:08:45 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.8 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -255,16 +255,16 @@ char hil_uk_ctrlmap[] = {
  * Lookup is by hardware returned language code.
  */
 struct kbdmap hilkbd_map[] = {
-	KBD_US,		"",
-	hil_us_keymap,	hil_us_shiftmap, hil_us_ctrlmap, NULL,	NULL,
+	{ KBD_US, "",
+	    hil_us_keymap, hil_us_shiftmap, hil_us_ctrlmap, NULL, NULL},
 
 #ifdef UK_KEYBOARD
-	KBD_UK,		"",
-	hil_uk_keymap,	hil_uk_shiftmap, hil_uk_ctrlmap, NULL,	NULL,
+	{ KBD_UK, "",
+	    hil_uk_keymap, hil_uk_shiftmap, hil_uk_ctrlmap, NULL, NULL},
 #endif
 
-	0,		"",
-	NULL,		NULL,		NULL,		NULL,	NULL,
+	{ 0, "",
+	    NULL, NULL, NULL, NULL, NULL},
 };
 
 char	*hilkbd_keymap = hil_us_keymap;
@@ -279,7 +279,7 @@ hilkbd_getc()
 
 	status = hiladdr->hil_stat;
 	if ((status & HIL_DATA_RDY) == 0)
-		return(0);
+		return 0;
 	c = hiladdr->hil_data;
 	switch ((status>>KBD_SSHIFT) & KBD_SMASK) {
 	case KBD_SHIFT:
@@ -295,7 +295,7 @@ hilkbd_getc()
 		c = 0;
 		break;
 	}
-	return(c);
+	return c;
 }
 #endif /* SMALL */
 
@@ -326,7 +326,7 @@ hilkbd_init()
 	HILDATAWAIT(hiladdr);
 	lang = hiladdr->hil_data;
 	if (lang == 0)
-		return (0);
+		return 0;
 
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_SETARR;
@@ -345,5 +345,6 @@ hilkbd_init()
 	}
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_INTON;
+	return 1;
 }
 #endif /* ITECONSOLE && HIL_KEYBOARD */
