@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.36 1994/10/27 04:17:17 cgd Exp $	*/
+/*	$NetBSD: icu.s,v 1.37 1995/01/15 00:36:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -129,12 +129,13 @@ IDTVEC(doreti)
 	jmp	*_Xresume(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
+	cmpb	$0,_astpending
+	je	3f
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
 	jz	3f
-	btrl	$0,_astpending
-	jnc	3f
+	movb	$0,_astpending
 	sti
-	/* Pushed T_ASTFLT into TF_TRAPNO on interrupt entry. */
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_trap
 3:	INTRFASTEXIT
 
