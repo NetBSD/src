@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.25 2005/03/30 21:37:48 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.26 2005/04/03 13:45:51 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -450,4 +450,46 @@ share/man/man4/gre.4				1.30
 
 	Add IPv6 over GRE (contributed by Gert Doering in PR 29150).
 	[is, ticket #80]
+
+share/man/man5/rpc.5				1.8
+
+	Remove an space from the beginning of a line. It caused incorrect
+	formatting after the .Nm macro (the text started at the following
+	line).
+	[jmmv, ticket #79]
+
+libexec/lfs_cleanerd/cleanerd.c			1.53
+
+	Add missing flags to usage().
+	[xtraeme, ticket #81]
+
+sys/kern/vfs_bio.c				1.143
+
+	Fix validation of new values when setting vm.{hi,low}water.
+	Fixes PR 29651.
+	[chs, ticket #82]
+
+sys/sys/fcntl.h					1.32
+
+	Correct the comment against FKIOCTL and put the comment against FMASK
+	back where it belongs.
+	[skrll, ticket #83]
+
+sys/dev/vnd.c					1.112,1.114
+sys/dev/vndvar.h				1.14
+
+	Make vnd do I/O to the underlying file from thread context. This
+	allows the strategy routine to be called from interrupt context,
+	fixes PR kern/29775 by Juan RP.
+	Now that pool_get() is only called from thread context, change
+	PR_NOWAIT to PR_WAITOK. Fix PR kern/26272 by Juergen Hannken-Illjes.
+	Don't eventually leak vnx and bp on unconfigure, pointed out by
+	YAMAMOTO Takashi. Instead, let the current I/O complete before
+	killing the thread.
+	[bouyer, ticket #85]
+
+etc/MAKEDEV.tmpl				1.41
+
+	Add pf to the all target.
+	[peter, ticket #86]
 
