@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.9 1997/03/30 22:53:39 cjs Exp $
+.\"	$NetBSD: ftpd.8,v 1.10 1997/04/06 07:53:10 cjs Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,6 +101,20 @@ exists,
 .Nm
 prints it after a successful login.
 .Pp
+The
+.Pa /etc/ftpusers
+file is used to determine which users may use ftp.  If a user is
+listed in the file with ``allow'' after his name, he is allowed to
+log in using ftp.  If he has anything else (or nothing) after the
+name, he is not allowed to log in.  If there is an entry for the
+pseudo-user ``*'', that entry is used for users not listed in the
+file, otherwise users not listed in the file are allowed (as if
+``* allow'' appeared in the file).
+Note that if you have ``* deny'' in your
+.Pa /etc/ftpusers
+file, you will need to add both ``anonymous allow'' and ``ftp allow''
+to allow anonymous ftp logins.
+.Pp
 The ftp server currently supports the following ftp requests.
 The case of the requests is ignored.
 .Bl -column "Request" -offset indent
@@ -202,8 +216,9 @@ password it has been given and attempt to authenticate accordingly. See
 for more information on S/Key authentication. S/Key is a Trademark of
 Bellcore.
 .It
-The login name must not appear in the file
-.Pa /etc/ftpusers .
+The login name must be allowed based on the information in
+.Pa /etc/ftpusers
+(see above).
 .It
 The user must have a standard shell returned by 
 .Xr getusershell 3 .
