@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2000/01/23 21:01:57 soda Exp $	*/
+/*	$NetBSD: param.h,v 1.12 2000/01/27 07:50:02 soda Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -57,10 +57,11 @@
  *	Deskstation Tyne
  *	Etc
  */
+#define	_MACHINE_ARCH	mipsel
+#define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	arc
 #define	MACHINE		"arc"
-#define MACHINE_ARCH	"mips"
-#define MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
+#define	MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
@@ -120,8 +121,6 @@
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define dbtob(x)	((x) << DEV_BSHIFT)
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
@@ -137,6 +136,8 @@ extern void delay __P((int n));
  */
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while ((N -= 3) > 0); }
 #endif
+
+#include <machine/intr.h>
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
