@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.4 1999/11/28 10:59:06 sato Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.5 1999/12/04 10:55:18 takemura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,7 +92,6 @@ extern struct platform {
 		unsigned long, unsigned long));
 #endif
 	void	(*reboot) __P((int howto, char *bootstr));
-	void	(*powerdown) __P((int howto, char *bootstr));
 } platform;
 
 extern struct platform unimpl_platform;

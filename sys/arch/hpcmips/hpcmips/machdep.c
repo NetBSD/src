@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1999/11/28 10:59:05 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1999/12/04 10:55:17 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 1999/11/28 10:59:05 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 1999/12/04 10:55:17 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -178,7 +178,6 @@ struct platform platform = {
 	unimpl_fb_init,
 	unimpl_mem_init,
 	unimpl_reboot,
-	NULL /* powerdown */,
 };
 
 #ifdef VR41X1
@@ -616,15 +615,9 @@ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN &&
-	    platform.powerdown != NULL) {
-		(*platform.powerdown)(howto, bootstr);
-		printf("WARNING: powerdown failed!\n");
-	}
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	if (platform.reboot != NULL)
-		(*platform.reboot)(howto, bootstr);
+	(*platform.reboot)(howto, bootstr);
 
 	while(1)
 		;
@@ -772,7 +765,7 @@ unimpl_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	panic("sysconf.init didnt set reboot");
+	printf("platform depend reboot code is not implemented.\n");
 }
 
 unsigned
