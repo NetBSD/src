@@ -1,3 +1,5 @@
+/*	$NetBSD: sigcompat.c,v 1.7 1997/07/13 18:50:14 christos Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)sigcompat.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: sigcompat.c,v 1.6 1994/02/24 06:10:57 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)sigcompat.c	5.3 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: sigcompat.c,v 1.7 1997/07/13 18:50:14 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

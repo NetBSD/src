@@ -1,3 +1,5 @@
+/*	$NetBSD: setrgid.c,v 1.7 1997/07/13 18:50:12 christos Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)setrgid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setrgid.c,v 1.6 1996/07/08 16:42:49 thorpej Exp $";
+#if 0
+static char *sccsid = "@(#)setrgid.c	5.5 (Berkeley) 2/23/91";
+#else
+__RCSID("$NetBSD: setrgid.c,v 1.7 1997/07/13 18:50:12 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,10 +1,13 @@
+/*	$NetBSD: getdtablesize.c,v 1.4 1997/07/13 18:50:08 christos Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getdtablesize.c,v 1.3 1995/05/11 23:03:44 jtc Exp $";
+__RCSID("$NetBSD: getdtablesize.c,v 1.4 1997/07/13 18:50:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>

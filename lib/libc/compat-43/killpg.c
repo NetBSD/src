@@ -1,3 +1,5 @@
+/*	$NetBSD: killpg.c,v 1.5 1997/07/13 18:50:09 christos Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)killpg.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: killpg.c,v 1.4 1993/11/11 19:04:06 jtc Exp $";
+#if 0
+static char *sccsid = "@(#)killpg.c	5.3 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: killpg.c,v 1.5 1997/07/13 18:50:09 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
