@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.14 1994/06/08 18:57:30 mycroft Exp $
+#	$Id: Makefile,v 1.15 1994/12/22 10:44:12 cgd Exp $
 
 #	dump.h			header file
 #	itime.c			reads /etc/dumpdates
@@ -20,7 +20,7 @@ SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c unctime.c
 BINOWN=	root
 BINGRP=	tty
 BINMODE=6555
-MAN8=	dump.0
+MAN=	dump.8
 MLINKS+=dump.8 rdump.8
 
 .include <bsd.prog.mk>

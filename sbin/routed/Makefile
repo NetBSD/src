@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
-#	$Id: Makefile,v 1.10 1994/05/15 00:50:38 cgd Exp $
+#	$Id: Makefile,v 1.11 1994/12/22 10:48:37 cgd Exp $
 
 PROG=	routed
 SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
 	trace.c inet.c
-MAN8=	routed.0
+MAN=	routed.8
 #SUBDIR=	query trace
 DPADD=	${LIBCOMPAT}
 LDADD=	-lcompat
