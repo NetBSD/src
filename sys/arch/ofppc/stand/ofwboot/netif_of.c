@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.4 1998/02/22 07:42:31 mycroft Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.5 2001/07/22 14:43:15 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -89,7 +89,7 @@ netif_open(machdep_hint)
 		errno = ENFILE;
 		return -1;
 	}
-	bzero(io, sizeof *io);
+	memset(io, 0, sizeof *io);
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
