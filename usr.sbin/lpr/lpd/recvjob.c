@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.12 2000/10/11 20:23:52 is Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.13 2001/10/09 02:15:38 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.12 2000/10/11 20:23:52 is Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.13 2001/10/09 02:15:38 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: recvjob.c,v 1.12 2000/10/11 20:23:52 is Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-#define ack()	(void)write(1, sp, 1);
+#define ack()	(void)write(STDOUT_FILENO, sp, 1);
 
 static char	 dfname[NAME_MAX];	/* data files */
 static int	 minfree;       /* keep at least minfree blocks available */
@@ -88,7 +88,7 @@ static int        readjob __P((void));
 
 
 void
-recvjob()
+recvjob(void)
 {
 	struct stat stb;
 	int status;
@@ -139,7 +139,7 @@ recvjob()
  * Return the number of jobs successfully transfered.
  */
 static int
-readjob()
+readjob(void)
 {
 	int size, nfiles;
 	char *cp;
@@ -152,7 +152,7 @@ readjob()
 		 */
 		cp = line;
 		do {
-			if ((size = read(1, cp, 1)) != 1) {
+			if ((size = read(STDOUT_FILENO, cp, 1)) != 1) {
 				if (size < 0)
 					frecverr("%s: Lost connection",
 					    printer);
@@ -189,7 +189,7 @@ readjob()
 				frecverr("readjob: %s: illegal path name",
 				    tfname);
 			if (!chksize(size)) {
-				(void)write(1, "\2", 1);
+				(void)write(STDOUT_FILENO, "\2", 1);
 				continue;
 			}
 			if (!readfile(tfname, size)) {
@@ -210,7 +210,7 @@ readjob()
 			if (*cp++ != ' ')
 				break;
 			if (!chksize(size)) {
-				(void)write(1, "\2", 1);
+				(void)write(STDOUT_FILENO, "\2", 1);
 				continue;
 			}
 			(void)strncpy(dfname, cp, sizeof(dfname) - 1);
@@ -229,9 +229,7 @@ readjob()
  * Read files send by lpd and copy them to the spooling directory.
  */
 static int
-readfile(file, size)
-	char *file;
-	int size;
+readfile(char *file, int size)
 {
 	char *cp;
 	char buf[BUFSIZ];
@@ -249,7 +247,7 @@ readfile(file, size)
 		if (i + amt > size)
 			amt = size - i;
 		do {
-			j = read(1, cp, amt);
+			j = read(STDOUT_FILENO, cp, amt);
 			if (j <= 0)
 				frecverr("Lost connection");
 			amt -= j;
@@ -275,11 +273,11 @@ readfile(file, size)
 }
 
 static int
-noresponse()
+noresponse(void)
 {
 	char resp;
 
-	if (read(1, &resp, 1) != 1)
+	if (read(STDOUT_FILENO, &resp, 1) != 1)
 		frecverr("Lost connection");
 	if (resp == '\0')
 		return(0);
@@ -291,8 +289,7 @@ noresponse()
  * 1 == OK, 0 == Not OK.
  */
 static int
-chksize(size)
-	int size;
+chksize(int size)
 {
 	int spacefree;
 	struct statfs sfb;
@@ -329,8 +326,7 @@ read_number(fn)
  * Remove all the files associated with the current job being transfered.
  */
 static void
-rcleanup(signo)
-	int signo;
+rcleanup(int signo)
 {
 	if (tfname[0])
 		(void)unlink(tfname);
