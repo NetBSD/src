@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.13 2003/08/05 14:24:45 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.14 2003/10/31 21:49:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.13 2003/08/05 14:24:45 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.14 2003/10/31 21:49:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ vald_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "TOS6200") == 0)
+	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "TOS6200") == 0)
 		return (1);
 
 	return (0);

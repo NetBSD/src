@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.5 2002/12/28 20:06:07 christos Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.6 2003/10/31 21:49:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.5 2002/12/28 20:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.6 2003/10/31 21:49:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ spic_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId, "SNY6001") == 0)
+	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "SNY6001") == 0)
 		return (1);
 
 	return (0);
