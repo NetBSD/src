@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.21 2000/08/21 14:11:45 ad Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.22 2000/09/01 17:19:36 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.19 2000/08/21 14:11:07 ad Exp 
+ *	NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp 
  */
 
 /*
