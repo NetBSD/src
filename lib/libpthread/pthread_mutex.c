@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.19 2003/01/13 22:50:10 thorpej Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.20 2003/01/14 17:10:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -207,11 +207,6 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			GET_MUTEX_PRIVATE(mutex, mp);
 
 			if (mutex->ptm_owner == self) {
-				/*
-				 * It's safe to do this without holding the
-				 * interlock, because we only modify it if
-				 * we know we own the mutex.
-				 */
 				switch (mp->type) {
 				case PTHREAD_MUTEX_ERRORCHECK:
 					pthread_spinunlock(self,
@@ -219,6 +214,12 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 					return EDEADLK;
 
 				case PTHREAD_MUTEX_RECURSIVE:
+					/*
+					 * It's safe to do this without
+					 * holding the interlock, because
+					 * we only modify it if we know we
+					 * own the mutex.
+					 */
 					pthread_spinunlock(self,
 					    &mutex->ptm_interlock);
 					if (mp->recursecount == INT_MAX)
