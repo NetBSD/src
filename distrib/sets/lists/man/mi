@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.424 2001/12/02 18:56:48 wiz Exp $
+# $NetBSD: mi,v 1.425 2001/12/02 19:55:35 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -555,6 +555,7 @@
 ./usr/share/man/cat4/cd.0			man-sys-catman
 ./usr/share/man/cat4/cfb.0			man-sys-catman
 ./usr/share/man/cat4/ch.0			man-sys-catman
+./usr/share/man/cat4/cir.0			man-sys-catman
 ./usr/share/man/cat4/clcs.0			man-sys-catman
 ./usr/share/man/cat4/clct.0			man-sys-catman
 ./usr/share/man/cat4/clnp.0			man-sys-catman
@@ -702,6 +703,7 @@
 ./usr/share/man/cat4/ipl.0			man-sys-catman
 ./usr/share/man/cat4/ipnat.0			man-sys-catman
 ./usr/share/man/cat4/ipsec.0			man-sys-catman
+./usr/share/man/cat4/irframe.0			man-sys-catman
 ./usr/share/man/cat4/isa.0			man-sys-catman
 ./usr/share/man/cat4/isabeep.0			man-sys-catman
 ./usr/share/man/cat4/isapnp.0			man-sys-catman
@@ -780,6 +782,7 @@
 ./usr/share/man/cat4/ntwoc.0			man-sys-catman
 ./usr/share/man/cat4/null.0			man-sys-catman
 ./usr/share/man/cat4/ofisa.0			man-sys-catman
+./usr/share/man/cat4/oboe.0			man-sys-catman
 ./usr/share/man/cat4/ohci.0			man-sys-catman
 ./usr/share/man/cat4/opl.0			man-sys-catman
 ./usr/share/man/cat4/options.0			man-sys-catman
@@ -2201,6 +2204,7 @@
 ./usr/share/man/man4/cd.4			man-sys-man
 ./usr/share/man/man4/cfb.4			man-sys-man
 ./usr/share/man/man4/ch.4			man-sys-man
+./usr/share/man/man4/cir.4			man-sys-man
 ./usr/share/man/man4/clcs.4			man-sys-man
 ./usr/share/man/man4/clct.4			man-sys-man
 ./usr/share/man/man4/clnp.4			man-sys-man
@@ -2348,6 +2352,7 @@
 ./usr/share/man/man4/ipl.4			man-sys-man
 ./usr/share/man/man4/ipnat.4			man-sys-man
 ./usr/share/man/man4/ipsec.4			man-sys-man
+./usr/share/man/man4/irframe.4			man-sys-man
 ./usr/share/man/man4/isa.4			man-sys-man
 ./usr/share/man/man4/isabeep.4			man-sys-man
 ./usr/share/man/man4/isapnp.4			man-sys-man
@@ -2426,6 +2431,7 @@
 ./usr/share/man/man4/ntwoc.4			man-sys-man
 ./usr/share/man/man4/null.4			man-sys-man
 ./usr/share/man/man4/ofisa.4			man-sys-man
+./usr/share/man/man4/oboe.4			man-sys-man
 ./usr/share/man/man4/ohci.4			man-sys-man
 ./usr/share/man/man4/opl.4			man-sys-man
 ./usr/share/man/man4/options.4			man-sys-man
