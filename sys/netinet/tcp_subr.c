@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.38 1998/01/05 10:32:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.39 1998/01/12 03:00:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -35,6 +35,7 @@
  *	@(#)tcp_subr.c	8.2 (Berkeley) 5/24/95
  */
 
+#include "opt_tcp_compat_42.h"
 #include "rnd.h"
 
 #include <sys/param.h>

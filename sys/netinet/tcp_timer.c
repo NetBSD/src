@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.28 1998/01/05 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.29 1998/01/12 03:00:43 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -34,6 +34,8 @@
  *
  *	@(#)tcp_timer.c	8.2 (Berkeley) 5/24/95
  */
+
+#include "opt_tcp_compat_42.h"
 
 #ifndef TUBA_INCLUDE
 #include <sys/param.h>
