@@ -1,5 +1,5 @@
 ./sbin/binpatch
-./usr/lib/libc.so.12.16
+./usr/lib/libc.so.12.17
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -20,6 +20,7 @@
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.0
 ./usr/libexec/ld.so
+./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
