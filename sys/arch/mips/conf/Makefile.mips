@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.32 2002/12/09 22:54:14 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.33 2003/07/04 03:48:01 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -78,6 +78,11 @@ machdep.o mainbus.o trap.o: Makefile
 
 # depend on System V IPC/shmem options
 mips_machdep.o pmap.o: Makefile
+
+# various assembly files that depend on assym.h
+copy.o fp.o locore.o locore_mips1.o locore_mips3.o sigcode.o: assym.h
+mips32_subr.o mips3_subr.o mips5900_subr.o mips64_subr.o mipsX_subr.o: assym.h
+
 
 ##
 ## (7) misc settings
