@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.117 2004/12/28 23:35:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.117 2004/12/28 23:35:21 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -659,10 +659,8 @@ USB_DETACH(umass)
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL) {
+		if (sc->sc_pipe[i] != NULL)
 			usbd_abort_pipe(sc->sc_pipe[i]);
-			sc->sc_pipe[i] = NULL;
-		}
 	}
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
