@@ -1,10 +1,11 @@
-/*	$NetBSD: netif.h,v 1.4 1995/09/14 23:45:30 pk Exp $	*/
+/*	$NetBSD: netif.h,v 1.5 2003/03/12 14:49:19 drochner Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
 #define __SYS_LIBNETBOOT_NETIF_H
+
 #include "iodesc.h"
 
-#define NENTS(x)	sizeof(x)/sizeof(x[0])
+struct netif; /* forward */
 
 struct netif_driver {
 	char	*netif_bname;
@@ -54,12 +55,8 @@ struct netif	*netif_select __P((void *));
 int		netif_probe __P((struct netif *, void *));
 void		netif_attach __P((struct netif *, struct iodesc *, void *));
 void		netif_detach __P((struct netif *));
-ssize_t		netif_get __P((struct iodesc *, void *, size_t, time_t));
-ssize_t		netif_put __P((struct iodesc *, void *, size_t));
 
 int		netif_open __P((void *));
 int		netif_close __P((int));
 
-struct iodesc	*socktodesc __P((int));
-	
 #endif /* __SYS_LIBNETBOOT_NETIF_H */
