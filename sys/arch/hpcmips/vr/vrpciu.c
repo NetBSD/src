@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1 2001/06/13 07:32:48 enami Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.2 2001/11/22 14:24:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -30,8 +30,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#define	_HPCMIPS_BUS_DMA_PRIVATE	/* XXX */
 #include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
+#include <machine/bus_dma_hpcmips.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -138,8 +139,9 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct vrip_attach_args *va = aux;
-	bus_space_tag_t iot;
+	struct bus_space_tag_hpcmips *iot;
 	u_int32_t reg;
+	char tmpbuf[16];
 #if NPCI > 0
 	struct pcibus_attach_args pba;
 #endif
@@ -275,13 +277,13 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 
 	/* For now, just inherit window mappings set by WinCE.  XXX. */
 
-	pba.pba_iot = iot = hpcmips_alloc_bus_space_tag();
+	iot = hpcmips_alloc_bus_space_tag();
 	reg = vrpciu_read(sc, VRPCIU_MIOAWREG);
-	iot->t_base = VRPCIU_MAW_ADDR(reg);
-	iot->t_size = VRPCIU_MAW_SIZE(reg);
-	snprintf(iot->t_name, sizeof(iot->t_name), "%s/iot",
+	snprintf(tmpbuf, sizeof(tmpbuf), "%s/iot",
 	    sc->sc_dev.dv_xname);
-	hpcmips_init_bus_space_extent(iot);
+	hpcmips_init_bus_space(iot, (struct bus_space_tag_hpcmips *)sc->sc_iot,
+	    tmpbuf, VRPCIU_MAW_ADDR(reg), VRPCIU_MAW_SIZE(reg));
+	pba.pba_iot = &iot->bst;
 
 	/*
 	 * Just use system bus space tag.  It works since WinCE maps
@@ -289,7 +291,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	 * of course.  XXX.
 	 */
 	pba.pba_memt = sc->sc_iot;
-	pba.pba_dmat = &hpcmips_default_bus_dma_tag;
+	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY;
