@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.30 1997/07/30 03:45:27 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: mount.c,v 1.30 1997/07/30 03:45:27 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.31 1997/09/15 04:09:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ main(argc, argv)
 	all = forceall = init_flags = 0;
 	options = NULL;
 	vfstype = ffs;
-	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != EOF)
+	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
 		switch (ch) {
 		case 'A':
 			all = forceall = 1;
