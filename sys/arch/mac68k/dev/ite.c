@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.29 1996/12/16 16:17:08 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.30 1996/12/18 03:06:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -435,6 +435,7 @@ clear_screen(which)
 		len = y;
 		break;
 	case 2:		/* Whole screen		 */
+	default:
 		len = scrrows;
 		break;
 	}
