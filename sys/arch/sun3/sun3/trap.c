@@ -39,7 +39,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.28 1994/09/20 16:52:30 gwr Exp $
+ *	$Id: trap.c,v 1.29 1994/10/20 05:10:15 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -588,17 +588,17 @@ syscall(code, frame)
 	else
 		callp += SYS_syscall;		/* => nosys */
 
-	argsize = callp->sy_narg * sizeof(int);
+	argsize = callp->sy_argsize;
 	if (argsize != 0)
 		error = copyin(params, (caddr_t)args, argsize);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
 #endif
 #ifdef SYSCALL_DEBUG
 	if (p->p_emul == EMUL_NETBSD) /* XXX */
-		scdebug_call(p, code, callp->sy_narg, args);
+		scdebug_call(p, code, callp->sy_narg, argsize, args);
 #endif
 	if (error == 0) {
 		rval[0] = 0;

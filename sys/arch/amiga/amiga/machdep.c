@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.38 1994/10/06 19:11:30 chopps Exp $
+ *	$Id: machdep.c,v 1.39 1994/10/20 05:06:06 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -61,6 +61,8 @@
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -410,7 +412,7 @@ setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	
@@ -820,16 +822,13 @@ sun_sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-struct sigreturn_args {
-	struct sigcontext *sigcntxp;
-};
-
-
 /* ARGSUSED */
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct sigcontext *scp, context;
 	struct frame *frame;
@@ -842,7 +841,7 @@ sigreturn(p, uap, retval)
 		return(sun_sigreturn(p, uap, retval));
 #endif
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
@@ -898,7 +897,7 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
@@ -965,7 +964,7 @@ int
 sun_sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sun_sigreturn_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct sun_sigcontext *scp;
 	register struct frame *frame;
@@ -973,7 +972,7 @@ sun_sigreturn(p, uap, retval)
 	struct sun_sigcontext tsigc;
 	int flags;
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sun_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
