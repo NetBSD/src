@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.10 1994/12/03 23:34:17 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.11 1995/03/26 15:52:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -910,8 +910,20 @@ itecninit(struct consdev *cp)
 			break;
 	}
 
+	iteon(cp->cn_dev, 0);
+}
+
+iteon(dev_t dev, int flags)
+{
+	erasecursor ();
 	clear_screen (2);
 	drawcursor ();
+}
+
+iteoff(dev_t dev, int flags)
+{
+	erasecursor ();
+	clear_screen (2);
 }
 
 itecngetc(dev_t dev)
