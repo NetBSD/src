@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: postfix2netbsd,v 1.1 2002/06/08 22:37:06 itojun Exp $
+#	$NetBSD: postfix2netbsd,v 1.2 2004/07/28 17:18:20 heas Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,19 +33,82 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# postfix2netbsd: adds NetBSD tag, for importing posfix tree into netbsd.
+# postfix2netbsd: adds NetBSD tag, removes unnecessary files, resolve symlinks,
+# for importing posfix tree into netbsd.
 # works on current directory.
 
-### Add NetBSD tag to conf/*.cf
-for i in conf/*.cf; do
-	ex $i <<EOF
-0i
-#	\$NetBSD\$
+# postfix2netbsd:  convert an postfix source tree into a
+# format suitable for commit.  Works on current dir.
 #
-.
-w
-q
-EOF
+# Seed from Wiz's grep2netbsd.
+
+# delete some superfluous files
+echo deleting some superfluous files
+find . \( -type f -o -type l \) -a \
+	\( -name .indent.pro -o -name .printfck -o -name .keep \) \
+	-exec rm {} \;
+
+echo done
+
+### ditch symlinks
+find . -type l | while read t; do
+	cp $t /tmp/postfix7$$   
+	rm -f $t
+	mv /tmp/postfix7$$ $t
+	echo "resolved symlink $t"
+done    
+
+### Remove the $'s around RCS tags
+find . -type f -print | xargs egrep -l '\$(Id|Created|Header|Revision|Source)' | while read f; do
+	sed -e 's/\$\(Id.*\) ?\$/\1/' \
+	    -e 's/\$\(Created.*\) \$/\1/' \
+	    -e 's/\$\(Header.*\) \$/\1/' \
+	    -e 's/\$\(Revision.*\) ?\$/\1/' \
+	    -e 's/\$\(Source.*\) ?\$/\1/' \
+	    $f > /tmp/postfix2$$ && mv /tmp/postfix2$$ $f && \
+	echo "removed RCS tag from $f"
 done
+
+### Add our NetBSD RCS Id
+find . -type f -name '*.[chly]' -print | while read c; do
+	sed 1q < $c | grep -q '\$NetBSD' || (
+echo "/*	\$NetBSD\$	*/" >/tmp/postfix3$$
+echo "" >>/tmp/postfix3$$
+cat $c  >> /tmp/postfix3$$
+mv /tmp/postfix3$$ $c && echo "added NetBSD RCS tag to $c"
+	)
+done
+
+find man -type f -name '*.[0-9]' -print | while read m; do
+	sed 1q < $m | grep -q '\$NetBSD' || (
+echo ".\\\"	\$NetBSD\$" >/tmp/postfix4$$
+echo ".\\\"" >>/tmp/postfix4$$
+cat $m >> /tmp/postfix4$$
+mv /tmp/postfix4$$ $m && echo "added NetBSD RCS tag to $m"
+	)
+done
+
+find conf -type f \( -name '*.cf' -o -name 'post*' -o -name 'Makefile*' \) -print | while read t; do  
+        grep -q '\$NetBSD' $t && continue
+        sed 1q < $t | grep -q '^\#!'
+        if [ $? -eq 0 ] ; then
+		sed 1q < $t >/tmp/postfix5$$
+		echo "#	\$NetBSD\$" >>/tmp/postfix5$$
+		echo "#" >>/tmp/postfix5$$
+		sed "1d" < $t >>/tmp/postfix5$$
+        else
+		echo "#	\$NetBSD\$" >/tmp/postfix5$$
+		echo "#" >>/tmp/postfix5$$
+		cat $t >> /tmp/postfix5$$
+	fi
+	mv /tmp/postfix5$$ $t && echo "added NetBSD RCS tag to $t"
+done
+echo done
+
+echo You can import now.
+
+echo Path: src/gnu/dist/postfix
+echo Vendor: VENEMA
+echo Versiontag: PFIX-X-Y-Z
 
 exit 0
