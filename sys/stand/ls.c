@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,24 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)ls.c	7.9 (Berkeley) 6/28/90
- *	$Id: ls.c,v 1.2 1993/05/20 03:54:00 cgd Exp $
  */
 
-#include "sys/param.h"
-#include "ufs/dir.h"
-#include "saio.h"
-#include "sys/ttychars.h"
+#ifndef lint
+static char copyright[] =
+"@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+/* From:
+   static char sccsid[] = "@(#)ls.c	8.1 (Berkeley) 6/11/93"; */
+static char rcsid[] = "$Id: ls.c,v 1.3 1994/01/26 03:21:43 cgd Exp $";
+#endif /* not lint */
+
+#include <sys/param.h>
+#include <ufs/dir.h>
+#include <sys/ttychars.h>
+#include "stand.h"
 
 main()
 {
@@ -74,7 +83,7 @@ getfile(prompt, mode)
 		gets(buf);
 		if (buf[0] == CTRL('d') && buf[1] == 0)
 			return (-1);
-	} while ((fd = open(buf, mode)) <= 0);
+	} while ((fd = open(buf, mode)) < 0);
 	return(fd);
 }
 
@@ -89,7 +98,7 @@ ls(fd)
 
 	printf("\ninode\tname\n");
 	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ)
-		for(dp = dirbuf; (dp < (dirbuf + size)) &&
+		for (dp = dirbuf; (dp < (dirbuf + size)) &&
 		    (dp + ((DP *)dp)->d_reclen) < (dirbuf + size);
 		    dp += ((DP *)dp)->d_reclen) {
 			if (((DP *)dp)->d_ino == 0)
