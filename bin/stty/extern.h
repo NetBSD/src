@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	5.4 (Berkeley) 6/10/91
- *	$Id: extern.h,v 1.5 1994/03/23 04:05:26 mycroft Exp $
+ *	from: @(#)extern.h	8.1 (Berkeley) 5/31/93
+ *	$Id: extern.h,v 1.6 1994/09/20 04:52:04 mycroft Exp $
  */
 
-__BEGIN_DECLS
 int	c_cchars __P((const void *, const void *));
 int	c_modes __P((const void *, const void *));
 int	csearch __P((char ***, struct info *));
@@ -46,6 +45,5 @@ int	msearch __P((char ***, struct info *));
 void	optlist __P((void));
 void	print __P((struct termios *, struct winsize *, int, enum FMT));
 void	usage __P((void));
-__END_DECLS
 
 extern struct cchar cchars1[], cchars2[];

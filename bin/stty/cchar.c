@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,18 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cchar.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: cchar.c,v 1.7 1994/03/23 04:05:24 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)cchar.c	8.5 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: cchar.c,v 1.8 1994/09/20 04:52:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "stty.h"
 #include "extern.h"
 
@@ -53,45 +55,50 @@ static char rcsid[] = "$Id: cchar.c,v 1.7 1994/03/23 04:05:24 mycroft Exp $";
  * command line.
  */
 struct cchar cchars1[] = {
-	"discard",	VDISCARD, 	CDISCARD,
-	"dsusp", 	VDSUSP,		CDSUSP,
-	"eof",		VEOF,		CEOF,
-	"eol",		VEOL,		CEOL,
-	"eol2",		VEOL2,		CEOL,
-	"erase",	VERASE,		CERASE,
-	"intr",		VINTR,		CINTR,
-	"kill",		VKILL,		CKILL,
-	"lnext",	VLNEXT,		CLNEXT,
-	"min",		VMIN,		CMIN,
-	"quit",		VQUIT,		CQUIT,
-	"reprint",	VREPRINT, 	CREPRINT,
-	"start",	VSTART,		CSTART,
-	"status",	VSTATUS, 	CSTATUS,
-	"stop",		VSTOP,		CSTOP,
-	"susp",		VSUSP,		CSUSP,
-	"time",		VTIME,		CTIME,
-	"werase",	VWERASE,	CWERASE,
-	NULL,
+	{ "discard",	VDISCARD, 	CDISCARD },
+	{ "dsusp", 	VDSUSP,		CDSUSP },
+	{ "eof",	VEOF,		CEOF },
+	{ "eol",	VEOL,		CEOL },
+	{ "eol2",	VEOL2,		CEOL },
+	{ "erase",	VERASE,		CERASE },
+	{ "intr",	VINTR,		CINTR },
+	{ "kill",	VKILL,		CKILL },
+	{ "lnext",	VLNEXT,		CLNEXT },
+	{ "min",	VMIN,		CMIN },
+	{ "quit",	VQUIT,		CQUIT },
+	{ "reprint",	VREPRINT, 	CREPRINT },
+	{ "start",	VSTART,		CSTART },
+	{ "status",	VSTATUS, 	CSTATUS },
+	{ "stop",	VSTOP,		CSTOP },
+	{ "susp",	VSUSP,		CSUSP },
+	{ "time",	VTIME,		CTIME },
+	{ "werase",	VWERASE,	CWERASE },
+	{ NULL },
 };
 
 struct cchar cchars2[] = {
-	"brk",		VEOL,		CEOL,
-	"flush",	VDISCARD, 	CDISCARD,
-	"rprnt",	VREPRINT, 	CREPRINT,
-	"xoff",		VSTOP,		CSTOP,
-	"xon",		VSTART,		CSTART,
-	NULL,
+	{ "brk",	VEOL,		CEOL },
+	{ "flush",	VDISCARD, 	CDISCARD },
+	{ "rprnt",	VREPRINT, 	CREPRINT },
+	{ NULL },
 };
 
+static int
+c_cchar(a, b)
+        const void *a, *b;
+{
+
+        return (strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
+}
+
+int
 csearch(argvp, ip)
 	char ***argvp;
 	struct info *ip;
 {
-	register struct cchar *cp;
-	struct cchar tmp;
+	struct cchar *cp, tmp;
 	long val;
 	char *arg, *ep, *name;
-	static int c_cchar __P((const void *, const void *));
 		
 	name = **argvp;
 
@@ -101,7 +108,7 @@ csearch(argvp, ip)
 	    c_cchar)) && !(cp = (struct cchar *)bsearch(&tmp, cchars1,
 	    sizeof(cchars1)/sizeof(struct cchar) - 1, sizeof(struct cchar),
 	    c_cchar)))
-		return(0);
+		return (0);
 
 	arg = *++*argvp;
 	if (!arg) {
@@ -135,12 +142,5 @@ csearch(argvp, ip)
 	else
 		ip->t.c_cc[cp->sub] = arg[0];
 	ip->set = 1;
-	return(1);
-}
-
-static
-c_cchar(a, b)
-        const void *a, *b;
-{
-        return(strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
+	return (1);
 }
