@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.57 1998/08/18 11:51:07 leo Exp $
+#	$NetBSD: files.atari,v 1.58 1998/09/02 11:23:42 leo Exp $
 
 maxpartitions 16
 
@@ -65,11 +65,11 @@ file	arch/atari/dev/hdfd_intr.s	hdfd
 major	{hdfd = 2}
 
 # The generic VME-bus driver
-device	vmebus {}
-attach	vmebus at mainbus
+device	avmebus {}
+attach	avmebus at mainbus
 
 device	vme {[ioport = -1], [iosize = 0], [mem = -1], [memsiz = 0], [irq = -1] }
-attach	vme at vmebus
+attach	vme at avmebus
 file	arch/atari/vme/vme.c		vme
 file	arch/atari/vme/vme_machdep.c	vme
 
