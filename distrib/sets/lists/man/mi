@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.551 2003/03/04 14:51:52 jmmv Exp $
+# $NetBSD: mi,v 1.552 2003/03/09 13:50:58 he Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1621,6 +1621,7 @@
 ./usr/share/man/cat8/praliases.0		man-sendmail-catman
 ./usr/share/man/cat8/prep/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/prep/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/proxymap.0			man-postfix-catman
 ./usr/share/man/cat8/pstat.0			man-sysutil-catman
 ./usr/share/man/cat8/pvcsif.0			man-netutil-catman
 ./usr/share/man/cat8/pvctxctl.0			man-netutil-catman
@@ -3404,6 +3405,7 @@
 ./usr/share/man/man8/praliases.8		man-sendmail-man
 ./usr/share/man/man8/prep/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/prep/makedev.8		man-sysutil-man
+./usr/share/man/man8/proxymap.8			man-postfix-man
 ./usr/share/man/man8/pstat.8			man-sysutil-man
 ./usr/share/man/man8/pvcsif.8			man-netutil-man
 ./usr/share/man/man8/pvctxctl.8			man-netutil-man

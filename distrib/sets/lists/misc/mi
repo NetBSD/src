@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.80 2002/12/25 10:43:24 lukem Exp $
+# $NetBSD: mi,v 1.81 2003/03/09 13:50:58 he Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -154,6 +154,7 @@
 ./usr/share/doc/html/postfix/postmap.1.html	misc-postfix-htmldoc
 ./usr/share/doc/html/postfix/postqueue.1.html	misc-postfix-htmldoc
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc
+./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc
 ./usr/share/doc/html/postfix/queuing.html	misc-postfix-htmldoc
 ./usr/share/doc/html/postfix/rate.html		misc-postfix-htmldoc
