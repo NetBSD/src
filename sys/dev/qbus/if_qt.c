@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.2 2003/08/29 13:49:39 ragge Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.2 2003/08/29 13:49:39 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.3 2003/08/29 14:39:28 ragge Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -107,6 +107,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.2 2003/08/29 13:49:39 ragge Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #ifdef NS
@@ -143,7 +148,6 @@ struct	qt_softc {
 	u_int8_t is_addr[ETHER_ADDR_LEN]; /* hardware Ethernet address	*/
 	bus_space_tag_t	sc_iot;
 	bus_addr_t	sc_ioh;
-	bus_dma_tag_t	sc_dmat;
 
 	struct	ubinfo	sc_ui;		/* init block address desc	*/
 	struct	qt_cdata *sc_ib;	/* virt address of init block	*/
@@ -161,7 +165,6 @@ struct	qt_softc {
 	int	xlast;			/* Last descriptor transmitted	*/
 	int	nxmit;			/* # packets in send queue	*/
 	short	vector;			/* Interrupt vector assigned	*/
-	volatile struct	qtdevice *addr;	/* device CSR addr		*/
 };
 
 static	int qtmatch(struct device *, struct cfdata *, void *);
@@ -187,6 +190,12 @@ CFATTACH_DECL(qt, sizeof(struct qt_softc),
 #define MAXPACKETSIZE (ETHERMTU + sizeof (struct ether_header) + 4)
 #define	MINPACKETSIZE 64
 
+#define QT_WCSR(csr, val) \
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
+#define QT_RCSR(csr) \
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, csr)
+
+
 #define loint(x)	((int)(x) & 0xffff)
 #define hiint(x)	(((int)(x) >> 16) & 0x3f)
 #define	XNAME		sc->sc_dev.dv_xname
@@ -203,7 +212,8 @@ qtmatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
 
 
-	sc->addr = (struct qtdevice *)ua->ua_ioh;
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
 	if (qtturbo(sc) == 0)
 		return 0;
 
@@ -238,7 +248,8 @@ qtattach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
 	    sc->sc_dev.dv_xname, "intr");
 
-	sc->addr = (struct qtdevice *)ua->ua_ioh;
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
 	ubasc->uh_lastiv -= 4;
 	sc->vector = ubasc->uh_lastiv;
 
@@ -247,12 +258,12 @@ qtattach(struct device *parent, struct device *self, void *aux)
  * fail because main memory is allocated after the DMA pool is used up.
 */
 
-	sc->is_addr[0] = sc->addr->sarom[0];
-	sc->is_addr[1] = sc->addr->sarom[2];
-	sc->is_addr[2] = sc->addr->sarom[4];
-	sc->is_addr[3] = sc->addr->sarom[6];
-	sc->is_addr[4] = sc->addr->sarom[8];
-	sc->is_addr[5] = sc->addr->sarom[10];
+	sc->is_addr[0] = QT_RCSR(0);
+	sc->is_addr[1] = QT_RCSR(2);
+	sc->is_addr[2] = QT_RCSR(4);
+	sc->is_addr[3] = QT_RCSR(6);
+	sc->is_addr[4] = QT_RCSR(8);
+	sc->is_addr[5] = QT_RCSR(10);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -274,23 +285,22 @@ qtturbo(sc)
 	register struct qt_softc *sc;
 	{
 	register int i;
-	volatile struct qtdevice *addr = sc->addr;
 
 /*
  * Issue the software reset.  Delay 150us.  The board should now be in
  * DELQA-Normal mode.  Set ITB and DEQTA select.  If both bits do not
  * stay turned on then the board is not a DELQA-YM.
 */
-	addr->arqr = ARQR_SR;
-	addr->arqr = 0;
+	QT_WCSR(CSR_ARQR, ARQR_SR);
+	QT_WCSR(CSR_ARQR, 0);
 	delay(150L);
 
-	addr->srr = 0x8001;		/* MS | ITB */
-	i = addr->srr;
-	addr->srr = 0x8000;		/* Turn off ITB, set DELQA select */
+	QT_WCSR(CSR_SRR, 0x8001);	/* MS | ITB */
+	i = QT_RCSR(CSR_SRR);
+	QT_WCSR(CSR_SRR, 0x8000);	/* Turn off ITB, set DELQA select */
 	if	(i != 0x8001)
 		{
-		printf("qt@%p !-YM\n", addr);
+		printf("qt !-YM\n");
 		return(0);
 		}
 /*
@@ -298,17 +308,17 @@ qtturbo(sc)
  * 1 second, testing the SRR register every millisecond to see if the
  * board has shifted to Turbo mode.
 */
-	addr->xcr0 = 0x0baf;
-	addr->xcr1 = 0xff00;
+	QT_WCSR(CSR_XCR0, 0x0baf);
+	QT_WCSR(CSR_XCR1, 0xff00);
 	for	(i = 0; i < 1000; i++)
 		{
-		if	((addr->srr & SRR_RESP) == 1)
+		if	((QT_RCSR(CSR_SRR) & SRR_RESP) == 1)
 			break;
 		delay(1000L);
 		}
 	if	(i >= 1000)
 		{
-		printf("qt@%p !Turbo\n", addr);
+		printf("qt !Turbo\n");
 		return(0);
 		}
 	return(1);
@@ -318,7 +328,6 @@ int
 qtinit(struct ifnet *ifp)
 	{
 	register struct qt_softc *sc = ifp->if_softc;
-	volatile struct qtdevice *addr = sc->addr;
 	register struct qt_init *iniblk;
 	struct ifrw *ifrw;
 	struct ifxmt *ifxp;
@@ -406,9 +415,9 @@ qtinit(struct ifnet *ifp)
  * being received an error is printed, the flags cleared and the device left
  * marked down.
 */
-	addr->ibal = loint(&sc->sc_pib->qc_init);
-	addr->ibah = hiint(&sc->sc_pib->qc_init);
-	addr->srqr = 2;
+	QT_WCSR(CSR_IBAL, loint(&sc->sc_pib->qc_init));
+	QT_WCSR(CSR_IBAH, hiint(&sc->sc_pib->qc_init));
+	QT_WCSR(CSR_SRQR, 2);
 
 	sc->is_if.if_flags |= IFF_RUNNING;
 	return 0;
@@ -435,11 +444,17 @@ qtstart(struct ifnet *ifp)
 		if ((rp->tmd3 & TMD3_OWN) == 0)
 			panic("qtstart");
 
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->xnext], m);
 		if (len < MINPACKETSIZE)
 			len = MINPACKETSIZE;
 		rp->tmd3 = len & TMD3_BCT;	/* set length,clear ownership */
-		sc->addr->arqr = ARQR_TRQ;	/* tell device it has buffer */
+		QT_WCSR(CSR_ARQR, ARQR_TRQ);	/* tell device it has buffer */
+
 		if	(++sc->xnext >= NXMT)
 			sc->xnext = 0;
 	}
@@ -462,7 +477,7 @@ qtintr(void *arg)
 	short status;
 
  
-	status = sc->addr->srr;
+	status = QT_RCSR(CSR_SRR);
 	if	(status < 0)
 		/* should we reset the device after a bunch of these errs? */
 		qtsrr(sc, status);
@@ -556,6 +571,10 @@ qtrint(struct qt_softc *sc)
 			sc->is_if.if_ierrors++;
 			goto rnext;
 		}
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
 		(*ifp->if_input)(ifp, m);
 rnext:
 		--sc->nrcv;
@@ -564,7 +583,7 @@ rnext:
 		if	(++sc->rindex >= NRCV)
 			sc->rindex = 0;
 		}
-	sc->addr->arqr = ARQR_RRQ;	/* tell device it has buffer */
+	QT_WCSR(CSR_ARQR, ARQR_RRQ);	/* tell device it has buffer */
 	}
 
 int

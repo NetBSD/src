@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qtreg.h,v 1.2 2003/08/29 13:49:39 ragge Exp $	*/
+/*	$NetBSD: if_qtreg.h,v 1.3 2003/08/29 14:39:29 ragge Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -133,6 +133,7 @@
 
 /* DELQA-YM CSR layout */
 
+#ifdef notdef
 	struct	qtcsr0
 		{
 		short	Ibal;
@@ -158,6 +159,15 @@
 #define	srqr	qt_un0.csr0.Srqr
 #define	icr	qt_un0.csr0.Icr
 #define	sarom	qt_un0.Sarom
+#endif
+
+#define	CSR_IBAL	0
+#define	CSR_IBAH	2
+#define	CSR_ICR		4
+#define	CSR_SRQR	8
+#define	CSR_SRR		12
+#define	CSR_ARQR	14
+
 
 /* SRR definitions */
 
@@ -186,8 +196,12 @@
 
 /* DELQA registers used to shift into -T mode */
 
+#ifdef notdef
 #define	xcr0	qt_un0.csr0.Ibal
 #define	xcr1	qt_un0.csr0.Ibah
+#endif
+#define	CSR_XCR0	CSR_IBAL
+#define	CSR_XCR1	CSR_IBAH
 
 /* INIT block structure and definitions */
 
