@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.15 1998/01/23 01:06:45 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.16 1998/02/03 04:26:46 sakamoto Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -62,6 +62,13 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#ifndef __BUS_SPACE_NEED_STREAM_METHODS
+#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define	bus_space_write_multi_stream_4	bus_space_write_multi_4
+#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
+#define	bus_space_read_multi_stream_4	bus_space_read_multi_4
+#endif /* __BUS_SPACE_NEED_STREAM_METHODS */
 
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
@@ -622,11 +629,11 @@ wdc_ata_start(wdc, xfer)
 		}
 
 		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
-			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			bus_space_write_multi_stream_2(wdc->sc_iot, wdc->sc_ioh,
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 1);
 		else
-			bus_space_write_multi_4(wdc->sc_iot, wdc->sc_ioh,
+			bus_space_write_multi_stream_4(wdc->sc_iot, wdc->sc_ioh,
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 2);
 	}
@@ -716,11 +723,11 @@ wdc_ata_intr(wdc,xfer)
 
 		/* Pull in data. */
 		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
-			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			bus_space_read_multi_stream_2(wdc->sc_iot, wdc->sc_ioh,
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 1);
 		else
-			bus_space_read_multi_4(wdc->sc_iot, wdc->sc_ioh,
+			bus_space_read_multi_stream_4(wdc->sc_iot, wdc->sc_ioh,
 			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 2);
 	}
