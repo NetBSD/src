@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.75 2002/07/25 20:04:02 jdolecek Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.76 2002/08/25 23:23:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.75 2002/07/25 20:04:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.76 2002/08/25 23:23:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,15 +471,14 @@ process_doregs(curp, p, uio)
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
+	if (kl < 0)
+		return (EINVAL);
+	if ((size_t) kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(p);
 
-	if (kl < 0)
-		error = EINVAL;
-	else
-		error = process_read_regs(p, &r);
+	error = process_read_regs(p, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
@@ -530,15 +529,14 @@ process_dofpregs(curp, p, uio)
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
+	if (kl < 0)
+		return (EINVAL);
+	if ((size_t) kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	PHOLD(p);
 
-	if (kl < 0)
-		error = EINVAL;
-	else
-		error = process_read_fpregs(p, &r);
+	error = process_read_fpregs(p, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
