@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.78 1998/02/10 14:09:52 mrg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.79 1998/02/18 07:16:41 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -136,8 +136,17 @@ TAILQ_HEAD(freelst, vnode) vnode_free_list =	/* vnode free list */
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
 
-struct device *root_device;			/* root device */
+struct vfs_list_head vfs_list =			/* vfs list */
+    LIST_HEAD_INITIALIZER(vfs_list);
+
 struct nfs_public nfs_pub;			/* publicly exported FS */
+
+/*
+ * These define the root filesystem and device.
+ */
+struct mount *rootfs;
+struct vnode *rootvnode;
+struct device *root_device;
 
 int vfs_lock __P((struct mount *));
 void vfs_unlock __P((struct mount *));
@@ -1823,7 +1832,7 @@ int
 vfs_mountroot()
 {
 	extern int (*mountroot) __P((void));
-	int i;
+	struct vfsops *v;
 
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
@@ -1854,24 +1863,26 @@ vfs_mountroot()
 	/*
 	 * Try each file system currently configured into the kernel.
 	 */
-	for (i = 0; i < nvfssw; i++) {
-		if (vfssw[i] == NULL || vfssw[i]->vfs_mountroot == NULL)
+	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+		if (v->vfs_mountroot == NULL)
 			continue;
 #ifdef DEBUG
-		printf("mountroot: trying %s...\n", vfssw[i]->vfs_name);
+		printf("mountroot: trying %s...\n", v->vfs_name);
 #endif
-		if ((*vfssw[i]->vfs_mountroot)() == 0) {
-			printf("root file system type: %s\n",
-			    vfssw[i]->vfs_name);
-			return (0);
+		if ((*v->vfs_mountroot)() == 0) {
+			printf("root file system type: %s\n", v->vfs_name);
+			break;
 		}
 	}
 
-	printf("no file system for %s", root_device->dv_xname);
-	if (root_device->dv_class == DV_DISK)
-		printf(" (dev 0x%x)", rootdev);
-	printf("\n");
-	return (EFTYPE);
+	if (v == NULL) {
+		printf("no file system for %s", root_device->dv_xname);
+		if (root_device->dv_class == DV_DISK)
+			printf(" (dev 0x%x)", rootdev);
+		printf("\n");
+		return (EFTYPE);
+	}
+	return (0);
 }
 
 /*
@@ -1883,10 +1894,92 @@ struct vfsops *
 vfs_getopsbyname(name)
 	const char *name;
 {
-	int i;
+	struct vfsops *v;
 
-	for (i = 0; i < nvfssw; i++)
-		if (vfssw[i] != NULL && strcmp(vfssw[i]->vfs_name, name) == 0)
-			return (vfssw[i]);
-	return (NULL);
+	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+		if (strcmp(v->vfs_name, name) == 0)
+			break;
+	}
+
+	return (v);
+}
+
+/*
+ * Establish a file system and initialize it.
+ */
+int
+vfs_attach(vfs)
+	struct vfsops *vfs;
+{
+	struct vfsops *v;
+	int error = 0;
+
+
+	/*
+	 * Make sure this file system doesn't already exist.
+	 */
+	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
+			error = EEXIST;
+			goto out;
+		}
+	}
+
+	/*
+	 * Initialize the vnode operations for this file system.
+	 */
+	vfs_opv_init(vfs->vfs_opv_descs);
+
+	/*
+	 * Now initialize the file system itself.
+	 */
+	(*vfs->vfs_init)();
+
+	/*
+	 * ...and link it into the kernel's list.
+	 */
+	LIST_INSERT_HEAD(&vfs_list, vfs, vfs_list);
+
+	/*
+	 * Sanity: make sure the reference count is 0.
+	 */
+	vfs->vfs_refcount = 0;
+
+ out:
+	return (error);
+}
+
+/*
+ * Remove a file system from the kernel.
+ */
+int
+vfs_detach(vfs)
+	struct vfsops *vfs;
+{
+	struct vfsops *v;
+
+	/*
+	 * Make sure no one is using the filesystem.
+	 */
+	if (vfs->vfs_refcount != 0)
+		return (EBUSY);
+
+	/*
+	 * ...and remove it from the kernel's list.
+	 */
+	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+		if (v == vfs) {
+			LIST_REMOVE(v, vfs_list);
+			break;
+		}
+	}
+
+	if (v == NULL)
+		return (ESRCH);
+
+	/*
+	 * Free the vnode operations vector.
+	 */
+	vfs_opv_free(vfs->vfs_opv_descs);
+	return (0);
 }
