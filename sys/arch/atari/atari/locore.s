@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1996/10/16 12:41:50 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1996/10/25 20:00:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1925,8 +1925,6 @@ Ldb2:					| Do the copy
 	movl	a1@+,a0@+
 	cmpl	a2,a1
 	jle	Ldb2
-	movl	#0,a0
-	movl	a0@,d0
 
 	/*
 	 * Ok, turn off MMU..
