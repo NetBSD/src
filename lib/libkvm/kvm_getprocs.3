@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getprocs.3,v 1.9 2002/02/07 07:00:48 ross Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.10 2002/10/01 19:18:13 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,8 +72,9 @@ The
 .Fa op
 and
 .Fa arg
-arguments constitute a predicate which limits the set of processes
-returned.  The value of
+arguments constitute a predicate
+which limits the set of processes returned.
+The value of
 .Fa op
 describes the filtering predicate as follows:
 .Pp
@@ -137,7 +138,8 @@ command line arguments passed to process indicated by
 .Fa p .
 Most likely, these arguments correspond to the values passed to
 .Xr exec 3
-on process creation.  This information is, however,
+on process creation.
+This information is, however,
 deliberately under control of the process itself.
 Note that the original command name can be found, unaltered,
 in the p_comm field of the process structure returned by
@@ -146,7 +148,8 @@ in the p_comm field of the process structure returned by
 The
 .Fa nchr
 argument indicates the maximum number of characters, including null bytes,
-to use in building the strings.  If this amount is exceeded, the string
+to use in building the strings.
+If this amount is exceeded, the string
 causing the overflow is truncated and the partial result is returned.
 This is handy for programs like
 .Xr ps 1
@@ -160,7 +163,8 @@ is zero, no limit is imposed and all argument strings are returned in
 their entirety.
 .Pp
 The memory allocated to the argv pointers and string storage
-is owned by the kvm library.  Subsequent
+is owned by the kvm library.
+Subsequent
 .Fn kvm_getprocs
 and
 .Xr kvm_close 3
@@ -170,15 +174,16 @@ The
 .Fn kvm_getenvv
 function is similar to
 .Fn kvm_getargv
-but returns the vector of environment strings.  This data is
-also alterable by the process.
+but returns the vector of environment strings.
+This data is also alterable by the process.
 .Pp
 .Fn kvm_getproc2
 is similar to
 .Fn kvm_getprocs
 but returns an array of
 .Sy kinfo_proc2
-structures.  Additionally, only the first
+structures.
+Additionally, only the first
 .Fa elemsize
 bytes of each array entry are returned.
 If the size of the
