@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.26 1998/06/25 23:59:34 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.27 1998/06/26 00:07:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -36,6 +36,7 @@
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>

@@ -56,6 +56,8 @@
 #undef LOCKED_PCB
 
 #include "opt_uvm.h"
+#include "opt_compat_svr4.h"
+
 #include "assym.h"
 #include <machine/param.h>
 #include <sparc64/sparc64/intreg.h>

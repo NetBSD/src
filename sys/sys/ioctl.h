@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.22 1998/06/25 23:40:59 thorpej Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.23 1998/06/26 00:07:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -86,6 +86,7 @@ __END_DECLS
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_freebsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_compat_svr4.h"
 #endif
 
 #if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \
