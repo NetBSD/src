@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.17 2001/02/20 18:33:09 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.18 2001/05/14 21:45:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.17 2001/02/20 18:33:09 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.18 2001/05/14 21:45:19 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 
 static const u_char **keylist = 0;
 u_char *buffer = 0, *linebuf = 0;
-size_t bufsize = DEFLLEN;
+size_t bufsize = DEFBUFSIZE;
 size_t linebuf_size;
 struct tempfile fstack[MAXFCT];
 extern char *toutpath;
@@ -145,7 +145,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				SALIGN(crec->length) + sizeof(TRECHEADER));
 			}
 
-			if (c == BUFFEND && nelem < min(9, MAXNUM)) {
+			if (c == BUFFEND && nelem < MAXNUM
+			    && bufsize < MAXBUFSIZE) {
 				const u_char **keyp;
 				u_char *oldb = buffer;
 
