@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.28 2005/03/07 13:21:24 wiz Exp $
+.\"	$NetBSD: select.2,v 1.29 2005/03/09 22:28:52 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,14 +108,14 @@ to the maximum number of descriptors supported by the system.
 .Pp
 If
 .Fa timeout
-is a non-nil pointer, it specifies a maximum interval to wait for the
+is a non-null pointer, it specifies a maximum interval to wait for the
 selection to complete.
 If
 .Fa timeout
-is a nil pointer, the select blocks indefinitely.
+is a null pointer, the select blocks indefinitely.
 To affect a poll, the
 .Fa timeout
-argument should be non-nil, pointing to a zero-valued timeval or timespec
+argument should be non-null, pointing to a zero-valued timeval or timespec
 structure, as appropriate.
 .Fa timeout
 is not changed by
@@ -126,7 +126,7 @@ re-initialize it before each invocation of
 .Pp
 If
 .Fa sigmask
-is a non-nil pointer, then the
+is a non-null pointer, then the
 .Fn pselect
 function shall replace the signal mask of the caller by the set of
 signals pointed to by
@@ -139,7 +139,7 @@ Any of
 .Fa writefds ,
 and
 .Fa exceptfds
-may be given as nil pointers if no descriptors are of interest.
+may be given as null pointers if no descriptors are of interest.
 .Sh RETURN VALUES
 .Fn select
 returns the number of ready descriptors that are contained in
