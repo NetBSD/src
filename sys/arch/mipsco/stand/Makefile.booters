@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.10 2004/07/19 01:41:26 chs Exp $
+#	$NetBSD: Makefile.booters,v 1.11 2005/01/01 07:00:51 simonb Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -34,7 +34,6 @@ CPPFLAGS+=	-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 #CFLAGS=		-Os -mmemcpy -mno-abicalls -G 128
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
-OFORMAT=	--oformat elf32-bigmips
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'

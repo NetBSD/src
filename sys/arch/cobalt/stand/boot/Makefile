@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/06/21 18:20:08 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2005/01/01 07:00:50 simonb Exp $
 
 NOMAN= # defined
 
@@ -58,7 +58,6 @@ CPPFLAGS+=	-DCOMSPEED=${COMSPEED} -DCOMPROBE=${COMPROBE}
 
 # compiler flags for smallest code size
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
-OFORMAT=	--oformat elf32-littlemips
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
@@ -93,7 +92,7 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
 
 ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
-	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
+	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}
