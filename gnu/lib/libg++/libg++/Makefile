@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.17 1993/11/17 21:22:34 jtc Exp $
+#	$Id: Makefile,v 1.18 1994/01/05 21:20:05 pk Exp $
 
-LIB=	g++
-NOPIC=
+LIB=		g++
 
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
@@ -22,6 +21,8 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../g++-include \
 		-I$(.CURDIR)/../iostream
 CFLAGS+=	-I$(.CURDIR)
+LDADD=		/usr/lib/c++rt0.o -lcurses
+DPADD=		/usr/lib/c++rt0.o
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream 
 
