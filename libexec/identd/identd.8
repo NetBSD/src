@@ -1,9 +1,9 @@
-.\" $NetBSD: identd.8,v 1.19 2005/04/03 22:15:32 peter Exp $
+.\" $NetBSD: identd.8,v 1.20 2005/04/04 18:43:55 peter Exp $
 .\"
 .\" This software is in the public domain.
 .\" Written by Peter Postma <peter@NetBSD.org>
 .\"
-.Dd March 22, 2005
+.Dd April 4, 2005
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -15,7 +15,7 @@
 .Op Fl a Ar address
 .Op Fl c Ar charset
 .Op Fl F Ar format
-.Op Fl f Ar fallback
+.Op Fl f Ar username
 .Op Fl g Ar uid
 .Op Fl L Ar username
 .Op Fl m Ar filter
@@ -35,31 +35,28 @@ information which may or may not be associated with the process owning
 the connection.
 .Pp
 The following options are available:
-.Bl -tag -width XXxXusernameXX
+.Bl -tag -width XXusernameXX
 .It Fl 4
-Bind to IPv4 addresses only.
-(flag
-.Fl b
-only)
+Bind to IPv4 addresses only
+(valid with flag
+.Fl b ) .
 .It Fl 6
-Bind to IPv6 addresses only.
-(flag
-.Fl b
-only)
+Bind to IPv6 addresses only
+(valid with flag
+.Fl b ) .
 .It Fl a Ar address
 Bind to the specified
 .Ar address .
 This may be an IPv4 or IPv6 address or even a hostname.
 If a hostname is specified then
 .Nm
-will resolve it to an address (or addresses) and will bind this address.
-(flag
-.Fl b
-only)
+will resolve it to an address (or addresses) and will bind this address
+(valid with flag
+.Fl b ) .
 .It Fl b
 Run in the background (as daemon).
 .It Fl c Ar charset
-Specfify an optional character set designator to be included in replies.
+Specify an optional character set designator to be included in replies.
 .Ar charset
 should be a valid charset set as described in the
 .Tn MIME RFC
@@ -88,14 +85,9 @@ The lists of groups (%l, %L) are comma-separated, and start with the primary
 group which is not repeated.
 Any other characters (preceded by %, and those not preceded by it)
 are printed literally.
-The
-.Dq default
-format is %u, and you should not use anything else without using the flag
-.Fl o Ar OTHER .
-.It Fl f Ar fallback
-Specify a
-.Ar fallback
-username.
+.It Fl f Ar username
+Specify a fall back
+.Ar username .
 If the lookup fails then this username will be returned.
 This can be useful for when running this service on a NAT host and
 not using the forward/proxy functionality.
@@ -120,11 +112,12 @@ is that of an existing user, then the real username will be returned.
 Specify a
 .Dq lie
 .Ar username .
-Return this name for all ident requests.
+.Nm
+will return this name for all valid ident requests.
 .It Fl l
 Use
 .Xr syslogd 8
-for logging.
+for logging purposes.
 .It Fl m Ar filter
 Enables forwarding of ident queries.
 The
@@ -149,16 +142,6 @@ flag or
 with the
 .Fl L
 flag.
-.Nm
-will need access to
-.Pa /etc/pf
-or
-.Pa /etc/ipnat
-so you either need to run
-.Nm
-under root or adjust group owner/permissions to the device(s) and run
-.Nm
-under that group.
 .It Fl N
 Enable
 .Pa .noident
@@ -181,10 +164,9 @@ See also the
 flag how this operates.
 .It Fl p Ar portno
 Specify an alternative port number under which the server should run.
-The default is port 113.
-(flag
-.Fl b
-only)
+The default is port 113
+(valid with flag
+.Fl b ) .
 .It Fl r
 Return a random name of alphanumeric characters.
 If the
@@ -214,11 +196,48 @@ ident stream tcp nowait nobody /usr/libexec/identd identd -l
 .Pp
 ident stream tcp6 nowait nobody /usr/libexec/identd identd -l
 .Pp
-If you want to run
+To run
 .Nm
-as standalone daemon then please use the
+as standalone daemon, use the
 .Fl b
-flag (background).
+flag.
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
+.Sh AUTHORS
+This implementation of
+.Nm
+is written by
+.An Peter Postma
+.Aq peter@NetBSD.org .
+.Sh CAVEATS
+Since
+.Nm
+should typically not be run as a privileged user or group,
+.Pa .ident
+files for use when running with the
+.Fl I
+or
+.Fl i
+flags will need to be world accessible.
+The same applies for
+.Pa .noident
+files when running with the
+.Fl N
+flag.
+.Pp
+When forwarding is enabled with the
+.Fl m
+flag then
+.Nm
+will need access to either
+.Pa /etc/pf
+(pf) or
+.Pa /etc/ipnat
+(ipfilter).
+Since it's not a good idea to run
+.Nm
+under root, you'll need to adjust group owner/permissions to the device(s)
+and run
+.Nm
+under that group.
