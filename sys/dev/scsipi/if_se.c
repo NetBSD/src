@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.20 1998/10/13 02:34:31 kim Exp $	*/
+/*	$NetBSD: if_se.c,v 1.21 1998/11/20 00:35:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -196,6 +196,7 @@ struct se_softc {
 	int sc_flags;
 #define SE_NEED_RECV 0x1
 	int sc_last_timeout;
+	int sc_enabled;
 };
 
 cdev_decl(se);
@@ -232,6 +233,9 @@ static __inline int se_scsipi_cmd __P((struct scsipi_link *sc_link,
 			int flags));
 static void	se_delayed_ifstart __P((void *));
 static int	se_set_mode(struct se_softc *, int, int);
+
+int	se_enable __P((struct se_softc *));
+void	se_disable __P((struct se_softc *));
 
 struct cfattach se_ca = {
 	sizeof(struct se_softc), sematch, seattach
@@ -393,10 +397,14 @@ se_delayed_ifstart(v)
 	void *v;
 {
 	struct ifnet *ifp = v;
-	int s = splnet();
+	struct se_softc *sc = ifp->if_softc;
+	int s;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-	se_ifstart(ifp);
+	s = splnet();
+	if (sc->sc_enabled) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		se_ifstart(ifp);
+	}
 	splx(s);
 }
 
@@ -550,6 +558,9 @@ se_recv(v)
 	struct se_softc *sc = (struct se_softc *) v;
 	struct scsi_ctron_ether_recv recv_cmd;
 	int error;
+
+	if (sc->sc_enabled == 0)
+		return;
 
 	PROTOCMD(ctron_ether_recv, recv_cmd);
 
@@ -985,10 +996,12 @@ se_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		if ((error = se_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		if ((error = se_set_media(sc, CMEDIA_AUTOSENSE) != 0))
-			return (error);
+			break;
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -1031,6 +1044,8 @@ se_ioctl(ifp, cmd, data)
 
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
+		if ((error = se_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
@@ -1048,14 +1063,17 @@ se_ioctl(ifp, cmd, data)
 			 */
 			se_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			se_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if ((error = se_enable(sc)) != 0)
+				break;
 			error = se_init(sc);
-		} else {
+		} else if (sc->sc_enabled) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -1071,12 +1089,20 @@ se_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCADDMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
 		if (ether_addmulti(ifr, &sc->sc_ethercom) == ENETRESET)
 			error = se_set_multi(sc, ifr->ifr_addr.sa_data);
 		else
 			error = 0;
 		break;
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
 		if (ether_delmulti(ifr, &sc->sc_ethercom) == ENETRESET)
 			error = se_remove_multi(sc, ifr->ifr_addr.sa_data);
 		else
@@ -1093,6 +1119,39 @@ se_ioctl(ifp, cmd, data)
 	return (error);
 }
 
+/*
+ * Enable the network interface.
+ */
+int
+se_enable(sc)
+	struct se_softc *sc;
+{
+	int error = 0;
+
+	if (sc->sc_enabled == 0 &&
+	    (error = scsipi_adapter_addref(sc->sc_link)) == 0)
+		sc->sc_enabled = 1;
+	else
+		printf("%s: device enable failed\n",
+		    sc->sc_dev.dv_xname);
+
+	return (error);
+}
+
+/*
+ * Disable the network interface.
+ */
+void
+se_disable(sc)
+	struct se_softc *sc;
+{
+
+	if (sc->sc_enabled != 0) {
+		scsipi_adapter_delref(sc->sc_link);
+		sc->sc_enabled = 0;
+	}
+}
+
 #define	SEUNIT(z)	(minor(z))
 /*
  * open the device.
@@ -1103,7 +1162,7 @@ seopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	int unit;
+	int unit, error;
 	struct se_softc *sc;
 	struct scsipi_link *sc_link;
 
@@ -1115,6 +1174,9 @@ seopen(dev, flag, fmt, p)
 		return (ENXIO);
 
 	sc_link = sc->sc_link;
+
+	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+		return (error);
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("scopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
@@ -1139,6 +1201,7 @@ seclose(dev, flag, fmt, p)
 	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
 
 	SC_DEBUG(sc->sc_link, SDEV_DB1, ("closing\n"));
+	scsipi_adapter_delref(sc->sc_link);
 	sc->sc_link->flags &= ~SDEV_OPEN;
 
 	return (0);

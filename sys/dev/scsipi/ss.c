@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.22 1998/08/31 22:28:07 cgd Exp $	*/
+/*	$NetBSD: ss.c,v 1.23 1998/11/20 00:35:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -175,7 +175,7 @@ ssopen(dev, flag, mode, p)
 {
 	int unit;
 	u_int ssmode;
-	int error = 0;
+	int error;
 	struct ss_softc *ss;
 	struct scsipi_link *sc_link;
 
@@ -196,6 +196,9 @@ ssopen(dev, flag, mode, p)
 		printf("%s: already open\n", ss->sc_dev.dv_xname);
 		return (EBUSY);
 	}
+
+	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+		return (error);
 
 	/*
 	 * Catch any unit attention errors.
@@ -224,6 +227,7 @@ ssopen(dev, flag, mode, p)
 	return (0);
 
 bad:
+	scsipi_adapter_delref(sc_link);
 	sc_link->flags &= ~SDEV_OPEN;
 	return (error);
 }
@@ -256,6 +260,8 @@ ssclose(dev, flag, mode, p)
 		ss->sio.scan_window_size = 0;
 		ss->flags &= ~SSF_TRIGGERED;
 	}
+
+	scsipi_adapter_delref(ss->sc_link);
 	ss->sc_link->flags &= ~SDEV_OPEN;
 
 	return (0);

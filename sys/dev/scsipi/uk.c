@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.25 1998/10/19 12:28:52 bouyer Exp $	*/
+/*	$NetBSD: uk.c,v 1.26 1998/11/20 00:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ ukopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	int unit;
+	int unit, error;
 	struct uk_softc *uk;
 	struct scsipi_link *sc_link;
 
@@ -157,6 +157,8 @@ ukopen(dev, flag, fmt, p)
 		return (EBUSY);
 	}
 
+	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+		return (error);
 	sc_link->flags |= SDEV_OPEN;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
@@ -176,6 +178,7 @@ ukclose(dev, flag, fmt, p)
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
+	scsipi_adapter_delref(uk->sc_link);
 	uk->sc_link->flags &= ~SDEV_OPEN;
 
 	return (0);

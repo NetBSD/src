@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.136 1998/11/17 14:46:26 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.137 1998/11/20 00:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,8 +281,16 @@ sdopen(dev, flag, fmt, p)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sd_cd.cd_ndevs, SDPART(dev)));
 
-	if ((error = sdlock(sd)) != 0)
+	/*
+	 * If this is the first open of this device, add a reference
+	 * to the adapter.
+	 */
+	if (sd->sc_dk.dk_openmask == 0 &&
+	    (error = scsipi_adapter_addref(sc_link)) != 0)
 		return (error);
+
+	if ((error = sdlock(sd)) != 0)
+		goto bad4;
 
 	if (sd->sc_dk.dk_openmask != 0) {
 		/*
@@ -380,6 +388,9 @@ bad:
 
 bad3:
 	sdunlock(sd);
+bad4:
+	if (sd->sc_dk.dk_openmask == 0)
+		scsipi_adapter_delref(sc_link);
 	return (error);
 }
 
@@ -425,6 +436,8 @@ sdclose(dev, flag, fmt, p)
 		scsipi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
+
+		scsipi_adapter_delref(sd->sc_link);
 	}
 
 	sdunlock(sd);

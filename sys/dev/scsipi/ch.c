@@ -1,7 +1,7 @@
-/*	$NetBSD: ch.c,v 1.34 1998/08/31 22:28:06 cgd Exp $	*/
+/*	$NetBSD: ch.c,v 1.35 1998/11/20 00:35:39 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
+ * Copyright (c) 1996, 1997, 1998 Jason R. Thorpe <thorpej@and.com>
  * All rights reserved.
  *
  * Partially based on an autochanger driver written by Stefan Grefen
@@ -223,7 +223,7 @@ chopen(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ch_softc *sc;
-	int unit, error = 0;
+	int unit, error;
 
 	unit = CHUNIT(dev);
 	if ((unit >= ch_cd.cd_ndevs) ||
@@ -235,6 +235,9 @@ chopen(dev, flags, fmt, p)
 	 */
 	if (sc->sc_link->flags & SDEV_OPEN)
 		return (EBUSY);
+
+	if ((error = scsipi_adapter_addref(sc->sc_link)) != 0)
+		return (error);
 
 	sc->sc_link->flags |= SDEV_OPEN;
 
@@ -257,6 +260,7 @@ chopen(dev, flags, fmt, p)
 	return (0);
 
  bad:
+	scsipi_adapter_delref(sc->sc_link);
 	sc->sc_link->flags &= ~SDEV_OPEN;
 	return (error);
 }
@@ -269,6 +273,7 @@ chclose(dev, flags, fmt, p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 
+	scsipi_adapter_delref(sc->sc_link);
 	sc->sc_link->flags &= ~SDEV_OPEN;
 	return (0);
 }
