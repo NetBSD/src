@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.78 2000/12/18 14:40:03 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.79 2000/12/21 20:19:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -867,6 +867,7 @@ linux_sys_personality(p, v, retval)
 	return 0;
 }
 
+#if defined(__i386__) || defined(__m68k__)
 /*
  * The calls are here because of type conversions.
  */
@@ -909,6 +910,7 @@ linux_sys_setregid16(p, v, retval)
 
 	return sys_setregid(p, &bsa, retval);
 }
+#endif /* __i386__ || __m68k__ */
 
 /*
  * We have nonexistent fsuid equal to uid.
@@ -1071,6 +1073,7 @@ linux_sys_getresuid(p, v, retval)
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
 }
 
+#if defined(__i386__) || defined(__m68k__)
 /*
  * XXX fix these for 0xffff == -1 for old Linux uids return case.
  */
@@ -1126,6 +1129,7 @@ linux_sys_getegid16(p, v, retval)
 {
 	return sys_getegid(p, v, retval);
 }
+#endif /* __i386__ || __m68k__ */
 
 int
 linux_sys_ptrace(p, v, retval)
