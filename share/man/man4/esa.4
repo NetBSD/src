@@ -1,4 +1,4 @@
-.\"	$NetBSD: esa.4,v 1.5 2003/08/03 15:13:57 jmcneill Exp $
+.\"	$NetBSD: esa.4,v 1.6 2003/08/04 02:22:48 grant Exp $
 .\"
 .\" Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
 .\" All rights reserved.
@@ -38,14 +38,16 @@
 The
 .Nm
 driver provides support for the ESS Allegro-1 and Maestro-3 audio devices
-on the PCI bus. These devices are popular in laptop systems.
+on the PCI bus.
+These devices are popular in laptop systems.
 .Pp
 The Allegro-1 and the Maestro-3 are full-duplex devices that allow
 independent playback and recording at sample rates between 8000Hz and
 48000Hz and are capable of playback at 8 and 16 bit in mono and stereo.
 .Pp
 Setting options ESA_NUM_VOICES=4 allows for hardware mixing in the device
-driver. Note that due to microcode constraints, the
+driver.
+Note that due to microcode constraints, the
 .Nm
 driver is currently limited to 4 simultaneous voices.
 .Sh SEE ALSO
