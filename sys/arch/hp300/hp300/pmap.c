@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1995/10/05 06:47:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1995/10/08 19:33:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -331,7 +331,7 @@ pmap_bootstrap_alloc(size)
 		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
 	avail_start += size;
 
-	blkclr ((caddr_t) val, size);
+	bzero ((caddr_t) val, size);
 	return ((void *) val);
 }
 
