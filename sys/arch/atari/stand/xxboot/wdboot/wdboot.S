@@ -1,4 +1,4 @@
-/*	$NetBSD: wdb00t.ahdi.s,v 1.5 2002/04/15 09:29:58 leo Exp $	*/
+/*	$NetBSD: wdboot.S,v 1.1 2003/10/28 11:35:00 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -36,73 +36,93 @@
 	.globl	_start, main, fill
 
 	.text
-
-_start:	bras	main
+_start:
 #else
 	.globl	start, main, fill
 
 	.text
-
-start:	bras	main
+start:
 #endif
-	bra	rds0
+/*
+ * in: d3 ('DMAr' flag), d4 (SCSI target), d5 (boot pref), d7 (ACSI target)
+ */
+main:	lea	%pc@(regsav),%a0
+	movml	%d3-%d5/%d7,%sp@-
+	movl	%sp,%a0@
 
-main:	bclr	#2,(_drvbits+3):w
-	clrl	pun_ptr:w
-	movml	%d3/%d5,%sp@-
 	movw	#-1,%sp@-
 	movw	#Kbshift,%sp@-
 	trap	#BIOS
 	addql	#4,%sp
-	btst	#3,%d0			| Alternate?
+
+	tstb	%d5
+	beqs	0f			| no boot preference
+	cmpb	#0x20,%d5
+	bnes	exit			| bootpref != NetBSD
+
+0:	btst	#3,%d0			| Alternate?
 	bnes	exit
-	movq	#3,%d0
-	lea	%pc@(p0_dsc),%a0
-	movb	%d5,%d1			| NVRAM bootpref
-	bnes	0f
+	subql	#1,%d0
+	movl	%d0,%a3			| autoboot flag
+	
+	movl	_membot:w,%d3
+	lea	MAXBOT,%a4
+	cmpl	%a4,%d3
+	bhis	exit			| membot > MAXBOT
 
-	| The Hades bios does not provide a bootprev. In case
-	| of doubt, we fetch it ourselves.
-	movb	#BOOTPREF,rtcrnr:w
-	movb	rtcdat:w,%d1
-	bnes	0f
-	movq	#-8,%d1	 		| bootpref = any
+	movl	_memtop:w,%d3
+	cmpl	#MINTOP,%d3
+	blts	exit			| memtop < MINTOP
 
-0:	movb	%a0@,%d2			| bootflags
-	btst	#0,%d2
-	beqs	1f
-	andb	%d1,%d2
-	bnes	boot
-1:	lea	%a0@(12),%a0
-	dbra	%d0,0b
+	andw	#-4,%d3
+	movl	%d3,%a0
+	movl	%sp,%a0@-
+	movl	%a0,%sp			| set new stack
 
-exit:	movml	%sp@+,%d3/%d5
-tostst:	clrw	_bootdev:w
-	movl	_sysbase:w,%a0
-	movl	%a0@(24),%d0
-	swap	%d0
-	cmpl	#0x19870422,%d0		| old TOS?
-	bccs	0f			| no
-	movw	#0xe0,%d7
-0:	rts
-
-boot:	movl	%a0@(4),%d6
-	movq	#1,%d5
-	lea	%pc@(end),%a4
+	movq	#NSEC,%d5		| sector count
+	movq	#1,%d6			| first sector
 	bsrs	rds0
-	tstw	%d0
-	bnes	exit
-	movl	%a4,%a0
-	movw	#0xff,%d0
-	movq	#0,%d1
-0:	addw	%a0@+,%d1
-	dbra	%d0,0b
-	cmpw	#0x1234,%d1
-	bnes	exit
-	lea	%pc@(rds0),%a3
-	lea	%pc@(tostst),%a5
-	movml	%sp@+,%d3/%d5
-	jmp	%a4@			| start bootsector code
+	tstl	%d0
+	bnes	0f
+/*
+ * loader (readsector, disklabel, autoboot)
+ */
+	pea	%a3@			| autoboot
+	pea	%a4@(LBLST-MAXBOT)	| disklabel
+	pea	%pc@(rds1)		| readsector
+	jsr	%a4@(BXXST-MAXBOT)
+	lea	%sp@(12),%sp		| NetBSD not booted
+
+0:	movl	%sp@,%sp			| restore BIOS stack
+	tstl	%d0
+	bmis	exit
+	movl	%d0,%sp@(8)		| new boot preference
+
+exit:	movml	%sp@+,%d3-%d5/%d7
+	rts
+
+/*
+ * int readsec (void *buffer, u_int offset, u_int count);
+ */
+rds1:	movml	%d2-%d7/%a2-%a6,%sp@-
+	movl	%pc@(regsav),%a0
+	movml	%a0@,%d3-%d5/%d7
+	movl	%sp@(48),%a4		| buffer
+	movl	%sp@(52),%d6		| offset
+	movl	%sp@(56),%d3		| count
+0:	movl	#255,%d5
+	cmpl	%d5,%d3
+	bccs	1f
+	movl	%d3,%d5
+1:	bsrs	rds0
+	tstl	%d0
+	bnes	2f
+	addl	#(255*512),%a4
+	addl	%d5,%d6
+	subl	%d5,%d3
+	bnes	0b
+2:	movml	%sp@+,%d2-%d7/%a2-%a6
+	rts
 /*
  * in:  d4 (target) d5 (count), d6 (offset), a4 (buffer)
  * out: d0 (<= 0)
@@ -175,10 +195,13 @@ err:	movq	#-1,%d0
 	movq	#0,%d0
 	rts
 
-fill:	.space	52
+regsav:	.long	0
+
+fill:	.space	30
 
 dpar:	.byte	0			| tracks/cylinder
 	.byte	0			| sectors/track
+
 	.ascii	"NetBSD"
 hd_siz:	.long	0
 p0_dsc:	.long	0, 0, 0
