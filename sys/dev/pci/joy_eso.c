@@ -1,11 +1,11 @@
-/*	$NetBSD: joy_eso.c,v 1.5 2003/07/14 15:47:25 lukem Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.5 2003/07/14 15:47:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

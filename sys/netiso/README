@@ -4,4 +4,4 @@ The ISO (or OSI) stack is still in use by many router vendors (e.g., using
 IS-IS the OSI equivalent of OSPF, to carry IP routes).
 
 Chris.
-chopps@netbsd.org
+chopps@NetBSD.org
