@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.50 1994/08/06 23:19:39 deraadt Exp $
+ *	$Id: if_ep.c,v 1.51 1994/08/14 09:43:59 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -180,13 +180,13 @@ epprobe(parent, self, aux)
 #endif
 				continue;
 			}
-#if 0
+
 			outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 			delay(10);
 			outb(iobase + EISA_CONTROL, EISA_ENABLE);
 			/* Wait for reset? */
 			delay(1000);
-#endif
+
 			k = inw(iobase + EP_W0_ADDRESS_CFG);
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(iobase + EP_W0_RESOURCE_CFG);
