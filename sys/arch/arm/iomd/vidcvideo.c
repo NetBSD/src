@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.11 2002/04/03 16:03:50 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.12 2002/06/19 22:42:02 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.11 2002/04/03 16:03:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.12 2002/06/19 22:42:02 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,7 +731,7 @@ static u_char ri_col_data[6][6] = {
 	{ 0,  0,  0,   0,  0,  0},	/*  2 bpp */
 	{ 0,  0,  0,   0,  0,  0},	/*  4 bpp */
 	{ 0,  0,  0,   0,  0,  0},	/*  8 bpp */
-	{ 5,  5,  5,   0,  5, 10},	/* 16 bpp */
+	{ 6,  5,  5,   0,  6, 11},	/* 16 bpp */
 	{ 8,  8,  8,   0,  8, 16},	/* 32 bpp */
 };
 
