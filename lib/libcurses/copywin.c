@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.10 2004/08/01 21:48:24 dsl Exp $	*/
+/*	$NetBSD: copywin.c,v 1.11 2004/08/02 18:47:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.10 2004/08/01 21:48:24 dsl Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.11 2004/08/02 18:47:52 dsl Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -79,16 +79,16 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 	if (dmaxcol >= dstwin->maxx)
 		dmaxcol = dstwin->maxx - 1;
 	if (smincol + (dmaxcol - dmincol) >= srcwin->maxx)
-		dmaxcol = srcwin->maxx + dmincol - smincol;
+		dmaxcol = srcwin->maxx + dmincol - smincol - 1;
 	if (dmaxcol < dmincol)
 		/* nothing in the intersection */
 		return OK;
 
 	/* Bound dmaxrow for both windows (should be ok for dstwin) */
-	if (dmaxrow >= dstwin->maxx)
+	if (dmaxrow >= dstwin->maxy)
 		dmaxrow = dstwin->maxy - 1;
 	if (sminrow + (dmaxrow - dminrow) >= srcwin->maxy)
-		dmaxrow = srcwin->maxx + dminrow - sminrow;
+		dmaxrow = srcwin->maxy + dminrow - sminrow - 1;
 
 #ifdef DEBUG
 	__CTRACE("copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
