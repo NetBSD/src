@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.66 2001/12/25 14:50:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.66 2001/12/25 14:50:36 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.65 2001/06/12 23:36:18 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.66 2001/12/25 14:50:36 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2007,6 +2007,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			cp = ++tstr;
 			break;
 		    }
+			/* '{' */
 		    delim = '}';
 		    pattern.flags = 0;
 
@@ -2329,6 +2330,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			NULL, &pattern.leftLen, NULL)) == NULL)
 			goto cleanup;
 
+			/* '{' */
 		    delim = '}';
 		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
 			NULL, &pattern.rightLen, NULL)) == NULL)
@@ -2336,9 +2338,10 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 
 		    termc = *--cp;
 		    delim = '\0';
-		    if (Cond_EvalExpression(1, str, &value, 0) == COND_INVALID){
+		    if (Cond_EvalExpression(1, v->name, &value, 0)
+			== COND_INVALID) {
 			Error("Bad conditional expression `%s' in %s?%s:%s",
-			      str, str, pattern.lhs, pattern.rhs);
+			      v->name, v->name, pattern.lhs, pattern.rhs);
 			goto cleanup;
 		    }
 
