@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.405 2002/02/24 01:42:36 kleink Exp $
+$NetBSD: pcidevs,v 1.406 2002/02/27 16:36:41 junyoung Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -806,34 +806,25 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 product ATI MACH32		0x4158	Mach32
 product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
-product ATI MACH64_ET		0x4554	Mach64 ET
-product ATI MACH64_VT		0x4654	Mach64 VT
-product ATI MACH64_GB		0x4742	Mach64 GB
-product ATI MACH64_GD		0x4744	Mach64 GD
-product ATI MACH64_GI		0x4749	Mach64 GI
-product ATI MACH64_GL		0x474c	Mach64 GL
-product ATI RAGEXLAGP2X		0x474d	Rage XL AGP 2x
-product ATI MACH64_GN		0x474e	Mach64 GN
-product ATI MACH64_GO		0x474f	Mach64 GO
-product ATI MACH64_GP		0x4750	Mach64 GP
-product ATI MACH64_GQ		0x4751	Mach64 GQ
-product ATI MACH64_GR		0x4752	Mach64 GR
-product ATI MACH64_GS		0x4753	Mach64 GS
-product ATI MACH64_GT		0x4754	Mach64 GT
-product ATI MACH64_GU		0x4755	Mach64 GU
-product ATI MACH64_GV		0x4756	Mach64 GV
-product ATI MACH64_GW		0x4757	Mach64 GW
+product ATI RAGE_PRO_AGP	0x4742	3D Rage Pro (AGP) 
+product ATI RAGE_PRO_AGP1X	0x4744	3D Rage Pro (AGP 1x)
+product ATI RAGE_PRO_PCI	0x4749	3D Rage Pro	
+product ATI RAGE_XL_AGP		0x474d	Rage XL (AGP)
+product ATI RAGE_PRO_PCI	0x4750 	3D Rage Pro	
+product ATI RAGE_PRO_PCI_L	0x4751 	3D Rage Pro (limited 3D)
+product ATI RAGE_II		0x4754	3D Rage I/II 
+product ATI RAGE_IIP		0x4755	3D Rage II+
+product ATI RAGE_IIC_PCI	0x4756	3D Rage IIC 
+product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP) 
 product ATI MACH64_GX		0x4758	Mach64 GX
-product ATI MACH64_GZ		0x475a	Mach64 GZ
-product ATI MACH64_LB		0x4c42	Mach64 LB
-product ATI MACH64_LD		0x4c44	Mach64 LD
-product ATI MOBILITY_M3_PCI	0x4c45	Mobility M3 (PCI)
-product ATI MOBILITY_M3_AGP	0x4c46	Mobility M3 (AGP)
-product ATI MACH64_LG		0x4c47	Mach64 LG
-product ATI MACH64_LI		0x4c49	Mach64 LI
-product ATI MACH64_LM		0x4c4d	Mach64 LM
-product ATI MACH64_LP		0x4c50	Mach64 LP
-product ATI MACH64_LR		0x4c52	Mach64 LR
+product ATI RAGE_IIC_AGP_P	0x475a 	3D Rage IIC (AGP)
+product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP)
+product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3
+product ATI RAGE_MOB_M3_AGP	0x4c46	Rage Mobility M3 (AGP)
+product ATI RAGE_LT		0x4c47	3D Rage LT	
+product ATI RAGE_LT_PRO_PCI	0x4c49	3D Rage LT Pro
+product ATI RAGE_MOBILITY	0x4c4d	Rage Mobility	
+product ATI RAGE_LT_PRO		0x4c50	3D Rage LT Pro	
 product ATI RAGE1PCI		0x5041	Rage 128 Pro PCI
 product ATI RAGE1AGP2X		0x5042	Rage 128 Pro AGP 2x
 product ATI RAGE1AGP4X		0x5043	Rage 128 Pro AGP 4x
@@ -870,6 +861,9 @@ product ATI RAGE24XPCI		0x534b	Rage 128 4x PCI
 product ATI RAGE24XA2X		0x534c	Rage 128 4x AGP 2x
 product ATI RAGE24XA4X		0x534d	Rage 128 4x AGP 4x
 product ATI RAGE24X		0x534e	Rage 128 4x
+product ATI MACH64_VT		0x5654	Mach64 VT
+product ATI MACH64_VTB		0x5655	Mach64 VTB
+product ATI MACH64_VT4		0x5656	Mach64 VT4
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
