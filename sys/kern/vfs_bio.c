@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.47 1996/10/10 22:46:36 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.48 1996/10/13 02:32:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -838,11 +838,11 @@ vfs_bufstats()
 			count++;
 		}
 		splx(s);
-		kprintf("%s: total-%d", bname[i], count);
+		printf("%s: total-%d", bname[i], count);
 		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
 			if (counts[j] != 0)
-				kprintf(", %d-%d", j * CLBYTES, counts[j]);
-		kprintf("\n");
+				printf(", %d-%d", j * CLBYTES, counts[j]);
+		printf("\n");
 	}
 }
 #endif /* DEBUG */

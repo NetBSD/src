@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.27 1996/10/10 22:43:22 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.28 1996/10/13 02:32:43 christos Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -22,7 +22,7 @@ int	semtot = 0;
 struct	proc *semlock_holder = NULL;
 
 #ifdef SEM_DEBUG
-#define SEM_PRINTF(a) kprintf a
+#define SEM_PRINTF(a) printf a
 #else
 #define SEM_PRINTF(a)
 #endif
@@ -101,7 +101,7 @@ sys_semconfig(p, v, retval)
 		break;
 
 	default:
-		kprintf(
+		printf(
 		    "semconfig: unknown flag parameter value (%d) - ignored\n",
 		    SCARG(uap, flag));
 		eval = EINVAL;

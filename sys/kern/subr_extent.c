@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.4 1996/10/10 22:46:25 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.5 1996/10/13 02:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	if (name == NULL)
 		panic("extent_create: name == NULL");
 	if (end < start) {
-		kprintf("extent_create: extent `%s', start 0x%lx, end 0x%lx\n",
+		printf("extent_create: extent `%s', start 0x%lx, end 0x%lx\n",
 		    name, start, end);
 		panic("extent_create: end < start");
 	}
@@ -200,7 +200,7 @@ extent_insert_and_optimize(ex, start, size, flags, after)
 		rp = extent_alloc_region_descriptor(ex, flags);
 		if (rp == NULL) {
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-			kprintf("extent `%s': can't alloc region descriptor.\n",
+			printf("extent `%s': can't alloc region descriptor.\n",
 			    ex->ex_name);
 #endif
 			return (ENOMEM);
@@ -273,7 +273,7 @@ extent_insert_and_optimize(ex, start, size, flags, after)
 	rp = extent_alloc_region_descriptor(ex, flags);
 	if (rp == NULL) {
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-		kprintf("extent `%s': can't allocate region descriptor.\n",
+		printf("extent `%s': can't allocate region descriptor.\n",
 		    ex->ex_name);
 #endif
 		return (ENOMEM);
@@ -301,12 +301,12 @@ extent_alloc_region(ex, start, size, flags)
 	if (ex == NULL)
 		panic("extent_alloc_region: NULL extent");
 	if (size < 1) {
-		kprintf("extent_alloc_region: extent `%s', size 0x%lx\n",
+		printf("extent_alloc_region: extent `%s', size 0x%lx\n",
 		    ex->ex_name, size);
 		panic("extent_alloc_region: bad size");
 	}
 	if (end < start) {
-		kprintf(
+		printf(
 		 "extent_alloc_region: extent `%s', start 0x%lx, size 0x%lx\n",
 		 ex->ex_name, start, size);
 		panic("extent_alloc_region: overflow");
@@ -316,9 +316,9 @@ extent_alloc_region(ex, start, size, flags)
 	 * extent.
 	 */
 	if ((start < ex->ex_start) || (end > ex->ex_end)) {
-		kprintf("extent_alloc_region: extent `%s' (0x%lx - 0x%lx)\n",
+		printf("extent_alloc_region: extent `%s' (0x%lx - 0x%lx)\n",
 		    ex->ex_name, ex->ex_start, ex->ex_end);
-		kprintf("extent_alloc_region: start 0x%lx, end 0x%lx\n",
+		printf("extent_alloc_region: start 0x%lx, end 0x%lx\n",
 		    start, end);
 		panic("extent_alloc_region: region lies outside extent");
 	}
@@ -422,21 +422,21 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		panic("extent_alloc_subregion: NULL result pointer");
 	if ((substart < ex->ex_start) || (substart >= ex->ex_end) ||
 	    (subend > ex->ex_end) || (subend <= ex->ex_start)) {
-  kprintf("extent_alloc_subregion: extent `%s', ex_start 0x%lx, ex_end 0x%lx\n",
+  printf("extent_alloc_subregion: extent `%s', ex_start 0x%lx, ex_end 0x%lx\n",
 		    ex->ex_name, ex->ex_start, ex->ex_end);
-		kprintf("extent_alloc_subregion: substart 0x%lx, subend 0x%lx\n",
+		printf("extent_alloc_subregion: substart 0x%lx, subend 0x%lx\n",
 		    substart, subend);
 		panic("extent_alloc_subregion: bad subregion");
 	}
 	if ((size < 1) || (size > ((subend - substart) + 1))) {
-		kprintf("extent_alloc_subregion: extent `%s', size 0x%lx\n",
+		printf("extent_alloc_subregion: extent `%s', size 0x%lx\n",
 		    ex->ex_name, size);
 		panic("extent_alloc_subregion: bad size");
 	}
 	if (alignment == 0)
 		panic("extent_alloc_subregion: bad alignment");
 	if (boundary && (boundary < size)) {
-		kprintf(
+		printf(
 		    "extent_alloc_subregion: extent `%s', size 0x%lx,
 		    boundary 0x%lx\n", ex->ex_name, size, boundary);
 		panic("extent_alloc_subregion: bad boundary");
@@ -488,7 +488,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 */
 	newstart = EXTENT_ALIGN(substart, alignment);
 	if (newstart < ex->ex_start) {
-		kprintf(
+		printf(
       "extent_alloc_subregion: extent `%s' (0x%lx - 0x%lx), alignment 0x%lx\n",
 		 ex->ex_name, ex->ex_start, ex->ex_end, alignment);
 		panic("extent_alloc_subregion: overflow after alignment");
@@ -666,7 +666,7 @@ extent_free(ex, start, size, flags)
 		panic("extent_free: NULL extent");
 	if ((start < ex->ex_start) || (start > ex->ex_end)) {
 		extent_print(ex);
-		kprintf("extent_free: extent `%s', start 0x%lx, size 0x%lx\n",
+		printf("extent_free: extent `%s', start 0x%lx, size 0x%lx\n",
 		    ex->ex_name, start, size);
 		panic("extent_free: extent `%s', region not within extent",
 		    ex->ex_name);
@@ -674,7 +674,7 @@ extent_free(ex, start, size, flags)
 	/* Check for an overflow. */
 	if (end < start) {
 		extent_print(ex);
-		kprintf("extent_free: extent `%s', start 0x%lx, size 0x%lx\n",
+		printf("extent_free: extent `%s', start 0x%lx, size 0x%lx\n",
 		    ex->ex_name, start, size);
 		panic("extent_free: overflow");
 	}
@@ -766,7 +766,7 @@ extent_free(ex, start, size, flags)
 
 	/* Region not found, or request otherwise invalid. */
 	extent_print(ex);
-	kprintf("extent_free: start 0x%lx, end 0x%lx\n", start, end);
+	printf("extent_free: start 0x%lx, end 0x%lx\n", start, end);
 	panic("extent_free: region not found");
 
  done:
@@ -848,10 +848,10 @@ extent_print(ex)
 	if (ex == NULL)
 		panic("extent_print: NULL extent");
 
-	kprintf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
+	printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags);
 
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
 	    rp = rp->er_link.le_next)
-		kprintf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
+		printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
 }
