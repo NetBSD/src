@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.54 1996/10/15 23:59:32 perry Exp $
+#	$NetBSD: Makefile,v 1.55 1996/10/16 01:30:11 perry Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
 
+# setting NOOBJ prevents "make obj" from doing anything;
+# an objdir would break the installation stuff below
 NOOBJ=	oobj
 
 .if exists(etc.${MACHINE}/Makefile.inc)
