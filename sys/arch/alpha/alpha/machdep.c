@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.150 1998/09/29 23:45:25 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.151 1998/10/06 21:10:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 1998/09/29 23:45:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 1998/10/06 21:10:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1178,6 +1178,12 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/*
+	 * Set up the HWPCB so that it's safe to configure secondary
+	 * CPUs.
+	 */
+	hwrpb_primary_init();
 
 	/*
 	 * Configure the system.
