@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.47 1999/02/28 18:14:57 ross Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.48 1999/05/04 16:16:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -292,7 +292,12 @@ int	fixtick;			/* used by NTP for same */
 int	shifthz;
 #endif
 
-volatile struct	timeval time;
+/*
+ * We might want ldd to load the both words from time at once.
+ * To succeed we need to be quadword aligned.
+ * The sparc already does that, and that it has worked so far is a fluke.
+ */
+volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 
 /*
