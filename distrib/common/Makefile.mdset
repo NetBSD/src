@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.19 2003/01/03 15:34:32 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.20 2003/03/11 05:14:58 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -15,8 +15,12 @@
 #			${FILENAME}.symbols.gz), and gzipped into
 #			${FILENAME}.gz.
 #
+#			If KERNEL does not contain a `/', use
+#			${KERNOBJDIR}/KERNEL/netbsd as the kernel.
+#
 #			If FILENAME is "-", use "netbsd-${KERNEL}" as
-#			the target name.
+#			the target name.  This may not be a sensible
+#			name if KERNEL contains a `/'.
 #
 # Optional variables:
 #	MDSET_RELEASEDIR		Where to install release kernels.
@@ -48,7 +52,15 @@
 .include <bsd.kernobj.mk>
 
 .for _K _I _F in ${MDSETTARGETS}			# {
-_FILENAME:=${_F}		# work around obscure issue in make(1)
+
+_KERNEL:=${_K}			# (work around obscure issue in make(1))
+.if (${_KERNEL:M*/*} != "")
+_KERNNAME.${_K}.${_F}:=	${_K}
+.else
+_KERNNAME.${_K}.${_F}:=	${KERNOBJDIR}/${_K}/netbsd
+.endif
+
+_FILENAME:=${_F}		# (work around obscure issue in make(1))
 .if ${_FILENAME} == "-"
 _KERNEL.${_K}.${_F}:=	netbsd-${_K}
 .else
@@ -83,12 +95,12 @@ KERNELSYMS+=	${_KERNEL.${_K}.${_F}}.symbols.gz
 _POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
 .endif
 
-${_KERNEL.${_K}.${_F}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
-	@echo "mdsetimage: ${KERNOBJDIR}/${_K}/netbsd"
+${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
+	@echo "mdsetimage: ${_KERNNAME.${_K}.${_F}}"
 	@echo "      with: ${_I}"
 	@echo "      into: ${.TARGET}"
 	@rm -f ${.TARGET} ${.TARGET}.symbols.gz
-	@cp ${KERNOBJDIR}/${_K}/netbsd ${.TARGET}
+	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}
 	${MDSETIMAGE} -v ${.TARGET} ${_I}
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME})
 	${NM} ${.TARGET} | gzip -9 > ${.TARGET}.symbols.gz
