@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.10 1995/03/19 23:44:44 mycroft Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.11 1995/05/01 22:39:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -69,15 +69,17 @@ long addrmask[] = { 0,
 #define MAX_COPY	32
 
 /*
- * Normally the first word of the structure is used to hold the list
- * pointer for free objects. However, when running with diagnostics,
- * we use the third and fourth fields, so as to catch modifications
- * in the most commonly trashed first two words.
+ * Normally the freelist structure is used only to hold the list pointer
+ * for free objects.  However, when running with diagnostics, the first
+ * 8 bytes of the structure is unused except for diagnostic information,
+ * and the free list pointer is at offst 8 in the structure.  Since the
+ * first 8 bytes is the portion of the structure most often modified, this
+ * helps to detect memory reuse problems and avoid free list corruption.
  */
 struct freelist {
-	long	spare0;
-	short	type;
-	long	spare1;
+	int32_t	spare0;
+	int16_t	type;
+	int16_t	spare1;
 	caddr_t	next;
 };
 #else /* !DIAGNOSTIC */
@@ -101,7 +103,7 @@ malloc(size, type, flags)
 	int s;
 	caddr_t va, cp, savedlist;
 #ifdef DIAGNOSTIC
-	long *end, *lp;
+	int32_t *end, *lp;
 	int copysize;
 	char *savedtype;
 #endif
@@ -174,8 +176,8 @@ malloc(size, type, flags)
 			 * Copy in known text to detect modification
 			 * after freeing.
 			 */
-			end = (long *)&cp[copysize];
-			for (lp = (long *)cp; lp < end; lp++)
+			end = (int32_t *)&cp[copysize];
+			for (lp = (int32_t *)cp; lp < end; lp++)
 				*lp = WEIRD_ADDR;
 			freep->type = M_FREE;
 #endif /* DIAGNOSTIC */
@@ -196,30 +198,36 @@ malloc(size, type, flags)
 		memname[freep->type] : "???";
 	if (kbp->kb_next &&
 	    !kernacc(kbp->kb_next, sizeof(struct freelist), 0)) {
-		printf("%s of object %p size %d %s %s (invalid addr %p)\n",
-			"Data modified on freelist: word 2.5", va, size,
+		printf("%s %d of object %p size %d %s %s (invalid addr %p)\n",
+			"Data modified on freelist: word", 
+			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
 			"previous type", savedtype, kbp->kb_next);
 		kbp->kb_next = NULL;
 	}
+
+	/* Fill the fields that we've used with WEIRD_ADDR */
 #if BYTE_ORDER == BIG_ENDIAN
 	freep->type = WEIRD_ADDR >> 16;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
 	freep->type = (short)WEIRD_ADDR;
 #endif
-	if (((long)(&freep->next)) & 0x2)
-		freep->next = (caddr_t)((WEIRD_ADDR >> 16)|(WEIRD_ADDR << 16));
-	else
-		freep->next = (caddr_t)WEIRD_ADDR;
-	end = (long *)&va[copysize];
-	for (lp = (long *)va; lp < end; lp++) {
+	end = (int32_t *)&freep->next +
+	    (sizeof(freep->next) / sizeof(int32_t));
+	for (lp = (int32_t *)&freep->next; lp < end; lp++)
+		*lp = WEIRD_ADDR;
+
+	/* and check that the data hasn't been modified. */
+	end = (int32_t *)&va[copysize];
+	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (*lp == WEIRD_ADDR)
 			continue;
 		printf("%s %d of object %p size %d %s %s (%p != %p)\n",
-			"Data modified on freelist: word", lp - (long *)va,
+			"Data modified on freelist: word", lp - (int32_t *)va,
 			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
 		break;
 	}
+
 	freep->spare0 = 0;
 #endif /* DIAGNOSTIC */
 #ifdef KMEMSTATS
@@ -259,7 +267,8 @@ free(addr, type)
 	int s;
 #ifdef DIAGNOSTIC
 	caddr_t cp;
-	long *end, *lp, alloc, copysize;
+	int32_t *end, *lp;
+	long alloc, copysize;
 #endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
@@ -319,8 +328,8 @@ free(addr, type)
 	 * when the object is reallocated.
 	 */
 	copysize = size < MAX_COPY ? size : MAX_COPY;
-	end = (long *)&((caddr_t)addr)[copysize];
-	for (lp = (long *)addr; lp < end; lp++)
+	end = (int32_t *)&((caddr_t)addr)[copysize];
+	for (lp = (int32_t *)addr; lp < end; lp++)
 		*lp = WEIRD_ADDR;
 	freep->type = type;
 #endif /* DIAGNOSTIC */
@@ -364,6 +373,10 @@ kmeminit()
 #if	(MAXALLOCSAVE < CLBYTES)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_small
 #endif
+
+	if (sizeof(struct freelist) > (1 << MINBUCKET))
+		panic("minbucket too small/struct freelist too big");
+
 	npg = VM_KMEM_SIZE/ NBPG;
 	kmemusage = (struct kmemusage *) kmem_alloc(kernel_map,
 		(vm_size_t)(npg * sizeof(struct kmemusage)));
