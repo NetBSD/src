@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.9 2003/03/14 22:46:06 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.10 2003/03/20 04:22:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,13 @@ struct pciide_softc {
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/*
+	 * Some controllers might have DMA restrictions other than
+	 * the norm.
+	 */
+	bus_size_t		sc_dma_maxsegsz;
+	bus_size_t		sc_dma_boundary;
 
 	/* For AMD/nVidia */
 	bus_addr_t sc_amd_regbase;
