@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.22 1995/04/13 03:58:18 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.23 1995/04/16 00:14:54 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -175,13 +175,21 @@ word_copy(a, b, len)
 	u_short *x = (u_short *)a,
 		*y = (u_short *)b;
 
-if (len & 1) {
-	printf("if_ae.c: word_copy, len = %d.\n", len);
-	panic("not good.\n");
-}
 	len >>= 1;
 	while (len--)
 		*y++ = *x++;
+}
+
+/*
+ * Memory copy, copies bytes at time.
+ */
+static inline void
+byte_copy(a, b, len)
+	caddr_t a, b;
+	int len;
+{
+	while (len--)
+		*b++ = *a++;
 }
 
 void
@@ -513,6 +521,7 @@ ae_init(sc)
 	NIC_PUT(sc, ED_P0_TCR, ED_TCR_LB0);
 
 	/* Initialize receive buffer ring. */
+	NIC_PUT(sc, ED_P0_TPSR, sc->rec_page_start);
 	NIC_PUT(sc, ED_P0_BNRY, sc->rec_page_start);
 	NIC_PUT(sc, ED_P0_PSTART, sc->rec_page_start);
 	NIC_PUT(sc, ED_P0_PSTOP, sc->rec_page_stop);
@@ -1177,14 +1186,14 @@ ae_ring_copy(sc, src, dst, amount)
 		tmp_amount = sc->mem_end - src;
 
 		/* Copy amount up to end of NIC memory. */
-		word_copy(src, dst, tmp_amount);
+		byte_copy(src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
 		dst += tmp_amount;
 	}
 
-	word_copy(src, dst, amount);
+	byte_copy(src, dst, amount);
 
 	return (src + amount);
 }
@@ -1205,9 +1214,6 @@ ae_ring_to_mbuf(sc, src, dst, total_len)
 	u_short total_len;
 {
 	register struct mbuf *m = dst;
-
-	/* Round the length to a word boundary. */
-	total_len = (total_len + 1) & ~1;
 
 	while (total_len) {
 		register u_short amount = min(total_len, M_TRAILINGSPACE(m));
@@ -1371,7 +1377,6 @@ ae_put(sc, m, buf)
 	if (wantbyte) {
 		savebyte[1] = 0;
 		word_copy(savebyte, buf, 2);
-		buf += 2;
 	}
 
 	return (totlen);
