@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/12/18 19:27:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/12/18 19:32:46 thorpej Exp $
 
-# Override this to built a cross profiler.
+# Override this to build a cross profiler.
 TARGET_ARCH?=${MACHINE_ARCH}
 
 TOP=	${.CURDIR}/../..
@@ -15,7 +15,7 @@ SRCS=	${TARGET_ARCH}.c basic_blocks.c call_graph.c \
 
 SRCS+=	flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 
-.PATH:	${.CURDIR}/../../dist/gprof
+.PATH:	${srcdir}
 
 CPPFLAGS+=-I${srcdir} -I${TOP}/lib/bfd -I${dist}/bfd -I${dist}/include
 CPPFLAGS+=-DBSD44_FORMAT=1 -DTARGET_${TARGET_ARCH}
