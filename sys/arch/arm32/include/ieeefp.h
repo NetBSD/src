@@ -1,19 +1,34 @@
-/* $NetBSD: ieeefp.h,v 1.1 1996/05/12 21:26:24 mark Exp $ */
+/* $NetBSD: ieeefp.h,v 1.2 1996/10/15 00:06:47 mark Exp $ */
 
 /* 
- * Written by J.T. Conklin, Apr 28, 1995
+ * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */
 
 #ifndef _ARM32_IEEEFP_H_
 #define _ARM32_IEEEFP_H_
 
+/* FP exception codes */
+
+#define FP_EXCEPT_INV	0
+#define FP_EXCEPT_DZ	1
+#define FP_EXCEPT_OFL	2
+#define FP_EXCEPT_UFL	3
+#define FP_EXCEPT_IMP	4
+
+/* Exception type (used by fpsetmask() et al.) */
+
 typedef int fp_except;
-#define	FP_X_INV	0x01	/* invalid operation exception */
-#define	FP_X_DZ		0x02	/* divide-by-zero exception */
-#define	FP_X_OFL	0x04	/* overflow exception */
-#define	FP_X_UFL	0x08	/* underflow exception */
-#define	FP_X_IMP	0x10	/* imprecise (loss of precision; "inexact") */
+
+/* Bit defines for fp_except */
+
+#define	FP_X_INV	(1 << FP_EXCEPT_INV)	/* invalid operation exception */
+#define	FP_X_DZ		(1 << FP_EXCEPT_DZ)	/* divide-by-zero exception */
+#define	FP_X_OFL	(1 << FP_EXCEPT_OFL)	/* overflow exception */
+#define	FP_X_UFL	(1 << FP_EXCEPT_UFL)	/* underflow exception */
+#define	FP_X_IMP	(1 << FP_EXCEPT_IMP)	/* imprecise (loss of precision; "inexact") */
+
+/* Rounding modes */
 
 typedef enum {
     FP_RN=0,			/* round to nearest representable number */
