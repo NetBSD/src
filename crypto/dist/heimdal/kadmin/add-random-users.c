@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: add-random-users.c,v 1.1.1.2 2001/02/11 13:51:32 assar Exp $");
+RCSID("$Id: add-random-users.c,v 1.2 2001/04/07 21:29:23 thorpej Exp $");
 
 #define WORDS_FILENAME "/usr/share/dict/words"
 

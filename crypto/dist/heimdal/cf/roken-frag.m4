@@ -1,4 +1,4 @@
-dnl $Id: roken-frag.m4,v 1.1.1.2 2001/02/11 13:51:51 assar Exp $
+dnl $Id: roken-frag.m4,v 1.2 2001/04/07 21:29:22 thorpej Exp $
 dnl
 dnl some code to get roken working
 dnl
