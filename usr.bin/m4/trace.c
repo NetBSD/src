@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.4 2002/01/21 21:49:58 tv Exp $	*/
+/*	$NetBSD: trace.c,v 1.5 2004/06/20 22:20:16 jmc Exp $	*/
 /* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
 
 /*
@@ -25,6 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/types.h>
 #include <stddef.h>

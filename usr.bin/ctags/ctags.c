@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.9 2003/08/07 11:13:30 agc Exp $	*/
+/*	$NetBSD: ctags.c,v 1.10 2004/06/20 22:20:15 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
@@ -39,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.9 2003/08/07 11:13:30 agc Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.10 2004/06/20 22:20:15 jmc Exp $");
 #endif /* not lint */
 
 #include <err.h>

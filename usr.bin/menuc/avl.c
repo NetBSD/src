@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.5 2003/07/17 08:33:43 lukem Exp $	*/
+/*	$NetBSD: avl.c,v 1.6 2004/06/20 22:20:16 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Philip A. Nelson.
@@ -46,10 +46,14 @@
  *	} id_rec;
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: avl.c,v 1.5 2003/07/17 08:33:43 lukem Exp $");
+__RCSID("$NetBSD: avl.c,v 1.6 2004/06/20 22:20:16 jmc Exp $");
 #endif
 
 

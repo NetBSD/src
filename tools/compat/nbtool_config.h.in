@@ -1,4 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.3 2004/06/18 20:07:31 thorpej Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.4 2004/06/20 22:20:15 jmc Exp $	*/
 
 #ifndef	__NETBSD_NBTOOL_CONFIG_H__
 #define	__NETBSD_NBTOOL_CONFIG_H__
@@ -11,6 +11,7 @@
 #undef HAVE_DIRENT_H
 #undef HAVE_ERR_H
 #undef HAVE_FEATURES_H
+#undef HAVE_GETOPT_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGEN_H
 #undef HAVE_NDIR_H
@@ -34,7 +35,26 @@
 #undef HAVE_SOCKLEN_T
 #undef HAVE_LONG_LONG
 #undef HAVE_U_LONG
+#undef HAVE_U_CHAR
+#undef HAVE_U_INT
+#undef HAVE_U_SHORT
 #undef HAVE_U_QUAD_T
+
+#undef HAVE_BSWAP16
+#undef HAVE_BSWAP32
+#undef HAVE_BSWAP64
+#undef HAVE_HTOBE16
+#undef HAVE_HTOBE32
+#undef HAVE_HTOBE64
+#undef HAVE_HTOLE16
+#undef HAVE_HTOLE32
+#undef HAVE_HTOLE64
+#undef HAVE_BE16TOH
+#undef HAVE_BE32TOH
+#undef HAVE_BE64TOH
+#undef HAVE_LE16TOH
+#undef HAVE_LE32TOH
+#undef HAVE_LE64TOH
 
 #undef HAVE_DIR_DD_FD
 #undef HAVE_STRUCT_DIRENT_D_NAMLEN
