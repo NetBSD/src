@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.30 2002/10/22 01:46:17 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.31 2002/10/29 18:32:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,6 +135,12 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		si = arg;
 		if (si->si_value.sival_int == PT_ALARMTIMER_MAGIC)
 			runalarms = 1;
+		/*
+		 * PT_RRTIMER_MAGIC doesn't need explicit handling;
+		 * the per-thread work below will put the interrupted
+		 * thread on the back of the run queue, and
+		 * pthread_next() will get one from the front.
+		 */
 		break;
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
@@ -603,12 +609,13 @@ pthread__sa_start(void)
 
 	ret = sa_register(pthread__upcall, NULL, flags);
 	if (ret)
-		err(1, "sa_register failed");
+		errx(1, "sa_register failed: %s", strerror(ret));
 
 	self = pthread__self();
 	for (i = 0; i < PT_UPCALLSTACKS; i++) {
 		if (0 != (ret = pthread__stackalloc(&t)))
-			err(1, "Could not allocate upcall stack!");
+			errx(1, "Could not allocate upcall stack!: %s",
+			    strerror(ret));
 		upcall_stacks[i] = t->pt_stack;	
 		pthread__initthread(self, t);
 		t->pt_type = PT_THREAD_UPCALL;
