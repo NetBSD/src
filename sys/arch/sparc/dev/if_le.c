@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.31 1996/04/22 02:39:49 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.32 1996/04/22 03:57:29 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -141,13 +141,15 @@ lehwinit(sc)
 	struct le_softc *sc;
 {
 #if defined(SUN4M) 
-	if (CPU_ISSUN4M) {
+	if (CPU_ISSUN4M && sc->sc_dma) {
 		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 		if (ifp->if_flags & IFF_LINK0)
 			sc->sc_dma->sc_regs->csr |= DE_AUI_TP;
 		else
 			sc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
+
+		delay(20000);	/* must not touch le for 20ms */
 	}
 #endif
 }
