@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 2003/07/15 03:36:10 lukem Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.4 2003/07/17 07:56:46 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.3 2003/07/15 03:36:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.4 2003/07/17 07:56:46 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -143,7 +143,7 @@ pccbb_attach_hook(parent, self, pa)
 	/*
 	 * bus fixup:
 	 *	if OBP didn't assign a bus number to the cardbus bridge,
-	 *	then assigne it here.
+	 *	then assign it here.
 	 */
 	if (OF_getprop(node, "bus-range", br, sizeof(br)) == sizeof(br)) {
 		bus = br[0];
