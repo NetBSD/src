@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.150 2003/10/19 01:44:49 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.151 2003/10/21 22:55:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.150 2003/10/19 01:44:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.151 2003/10/21 22:55:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -619,11 +619,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		int new_sbmax = sb_max;
 
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &new_sbmax);
-		if (newp && !error) {
-			if (new_sbmax < (16 * 1024)) /* sanity */
-				return (EINVAL);
-			sb_max = new_sbmax;
-		}
+		if (newp && error == 0)
+			error = sb_max_set(new_sbmax);
 		return (error);
 	    }
 	case KERN_TKSTAT:
