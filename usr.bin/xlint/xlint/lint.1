@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.13 2000/07/06 01:17:18 christos Exp $
+.\" $NetBSD: lint.1,v 1.14 2001/01/23 23:06:11 enami Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -70,7 +70,7 @@
 .Op Fl B Ar directory
 .Ek
 .Bk -words
-.Op Fl X Ar id Op ,id ...
+.Op Fl X Ar id Ns Op ,id ...
 .Ek
 .Ar
 .Nm lint
@@ -97,7 +97,7 @@
 .Op Fl B Ar directory
 .Ek
 .Bk -words
-.Op Fl X Ar id Op ,id ...
+.Op Fl X Ar id Ns Op ,id ...
 .Ek
 .Ar
 .Sh DESCRIPTION
@@ -399,7 +399,7 @@ run the C preprocessor and
 first and second pass.
 .It Fl w
 Treat warnings as errors.
-.It Fl X Ar id Op ,id ...
+.It Fl X Ar id Ns Op ,id ...
 Suppress error messages identified by the list of ids. A list of messages
 and ids can be found in
 .Xr lint 7 .
