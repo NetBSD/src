@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.10 1998/09/13 13:49:29 christos Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.11 1999/02/21 15:07:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -107,52 +107,28 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
  * is used for all subsequent booptaram RPCs.
  */
 int
-nfs_bootparam(ifp, nd, procp)
-	struct ifnet *ifp;
+nfs_bootparam(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	struct ifreq ireq;
-	struct in_addr my_ip, gw_ip;
+	struct ifnet *ifp = nd->nd_ifp;
+	struct in_addr my_ip, arps_ip, gw_ip;
 	struct sockaddr_in bp_sin;
 	struct sockaddr_in *sin;
-	struct socket *so;
-	struct nfs_dlmount *gw_ndm;
 #if 0	/* XXX - not yet */
+	struct nfs_dlmount *gw_ndm = 0;
 	char *p;
 	u_int32_t mask;
 #endif	/* XXX */
 	int error;
 
-	gw_ndm = 0;
-	memset(&ireq, 0, sizeof(ireq));
-	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
-
-	/*
-	 * Get a socket to use for various things in here.
-	 * After this, use "goto out" to cleanup and return.
-	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
-	if (error) {
-		printf("nfs_boot: socreate, error=%d\n", error);
-		return (error);
-	}
-
 	/*
 	 * Bring up the interface. (just set the "up" flag)
-	 * Get the old interface flags and or IFF_UP into them so
-	 * things like media selection flags are not clobbered.
 	 */
-	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
-	if (error) {
-		printf("nfs_boot: GIFFLAGS, error=%d\n", error);
-		goto out;
-	}
-	ireq.ifr_flags |= IFF_UP;
-	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
+	error = nfs_boot_ifupdown(ifp, procp, 1);
 	if (error) {
 		printf("nfs_boot: SIFFLAGS, error=%d\n", error);
-		goto out;
+		return (error);
 	}
 
 	error = EADDRNOTAVAIL; /* ??? */
@@ -161,7 +137,7 @@ nfs_bootparam(ifp, nd, procp)
 		/*
 		 * Do RARP for the interface address.
 		 */
-		error = revarpwhoami(&my_ip, ifp);
+		error = revarpwhoarewe(ifp, &arps_ip, &my_ip);
 		if (error) {
 			printf("revarp failed, error=%d\n", error);
 			goto out;
@@ -170,18 +146,16 @@ nfs_bootparam(ifp, nd, procp)
 #endif
 
 	nd->nd_myip.s_addr = my_ip.s_addr;
-	printf("nfs_boot: client_addr=0x%x\n",
-	       (u_int32_t)ntohl(my_ip.s_addr));
+	printf("nfs_boot: client_addr=0x%x (RARP from 0x%x)\n",
+	       (u_int32_t)ntohl(my_ip.s_addr),
+	       (u_int32_t)ntohl(arps_ip.s_addr));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
 	 */
-	sin = (struct sockaddr_in *)&ireq.ifr_addr;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr = my_ip;
-	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
+	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
+				    INADDR_ANY, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifaddr, error=%d\n", error);
 		goto out;
@@ -205,7 +179,7 @@ nfs_bootparam(ifp, nd, procp)
 	error = bp_whoami(sin, &my_ip, &gw_ip);
 	if (error) {
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
-		goto out;
+		goto delout;
 	}
 	printf("nfs_boot: server_addr=0x%x\n",
 		   (u_int32_t)ntohl(sin->sin_addr.s_addr));
@@ -218,15 +192,8 @@ nfs_bootparam(ifp, nd, procp)
 	error = bp_getfile(sin, "root", &nd->nd_root);
 	if (error) {
 		printf("nfs_boot: bootparam get root: %d\n", error);
-		goto out;
+		goto delout;
 	}
-#if 0
-	error = bp_getfile(sin, "swap", &nd->nd_swap);
-	if (error) {
-		printf("nfs_boot: bootparam get swap: %d\n", error);
-		error = 0;
-	}
-#endif
 
 #ifdef	NFS_BOOT_GATEWAY
 	/*
@@ -281,12 +248,18 @@ nfs_bootparam(ifp, nd, procp)
 		printf("nfs_boot: set ifmask, error=%d\n", error);
 		error = 0;	/* ignore it */
 	}
-#endif	/* XXX */
-
- out:
 	if (gw_ndm)
 		free(gw_ndm, M_NFSMNT);
-	soclose(so);
+#endif	/* XXX */
+
+delout:
+	if (error)
+		(void) nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
+out:
+	if (error) {
+		(void) nfs_boot_ifupdown(ifp, procp, 0);
+		nfs_boot_flushrt(ifp);
+	}
 	return (error);
 }
 
