@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2001/02/25 19:15:04 msaitoh Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 2001/04/09 15:52:59 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@
 	.text ;\
 	_ALIGN_TEXT; \
 	.globl x; \
+	.type x,@function; \
 	x:
 
 # define _PROF_PROLOGUE
