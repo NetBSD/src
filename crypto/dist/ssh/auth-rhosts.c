@@ -1,5 +1,3 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.1.2.2 2000/10/03 21:55:26 lukem Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,21 +13,17 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rhosts.c,v 1.15 2000/09/07 20:27:49 deraadt Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.1.2.2 2000/10/03 21:55:26 lukem Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: auth-rhosts.c,v 1.21 2001/02/08 19:30:51 itojun Exp $");
 
 #include "packet.h"
-#include "pathnames.h"
-#include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
+#include "pathnames.h"
+#include "log.h"
 #include "servconf.h"
+#include "canohost.h"
+#include "auth.h"
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
@@ -161,8 +155,11 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 	const char *hostname, *ipaddr;
 	struct stat st;
 	static const char *rhosts_files[] = {".shosts", ".rhosts", NULL};
-	unsigned int rhosts_file_index;
+	u_int rhosts_file_index;
 
+	/* no user given */
+	if (pw == NULL)
+		return 0;
 	/* Switch to the user's uid. */
 	temporarily_use_uid(pw->pw_uid);
 	/*
@@ -183,25 +180,25 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 
 	/* Deny if The user has no .shosts or .rhosts file and there are no system-wide files. */
 	if (!rhosts_files[rhosts_file_index] &&
-	    stat(_PATH_HEQUIV, &st) < 0 &&
-	    stat(_PATH_SSH_HEQUIV, &st) < 0)
+	    stat(_PATH_RHOSTS_EQUIV, &st) < 0 &&
+	    stat(_PATH_SSH_HOSTS_EQUIV, &st) < 0)
 		return 0;
 
-	hostname = get_canonical_hostname();
+	hostname = get_canonical_hostname(options.reverse_mapping_check);
 	ipaddr = get_remote_ipaddr();
 
 	/* If not logging in as superuser, try /etc/hosts.equiv and shosts.equiv. */
 	if (pw->pw_uid != 0) {
-		if (check_rhosts_file(_PATH_HEQUIV, hostname, ipaddr, client_user,
+		if (check_rhosts_file(_PATH_RHOSTS_EQUIV, hostname, ipaddr, client_user,
 				      pw->pw_name)) {
-			packet_send_debug("Accepted for %.100s [%.100s] by " _PATH_HEQUIV ".",
+			packet_send_debug("Accepted for %.100s [%.100s] by /etc/hosts.equiv.",
 					  hostname, ipaddr);
 			return 1;
 		}
-		if (check_rhosts_file(_PATH_SSH_HEQUIV, hostname, ipaddr, client_user,
+		if (check_rhosts_file(_PATH_SSH_HOSTS_EQUIV, hostname, ipaddr, client_user,
 				      pw->pw_name)) {
 			packet_send_debug("Accepted for %.100s [%.100s] by %.100s.",
-				      hostname, ipaddr, _PATH_SSH_HEQUIV);
+				      hostname, ipaddr, _PATH_SSH_HOSTS_EQUIV);
 			return 1;
 		}
 	}

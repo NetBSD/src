@@ -1,5 +1,3 @@
-/*	$NetBSD: servconf.h,v 1.1.1.1.2.2 2000/10/03 21:55:26 lukem Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: servconf.h,v 1.28 2000/09/07 20:27:53 deraadt Exp */
+/* RCSID("$OpenBSD: servconf.h,v 1.38 2001/02/12 16:16:23 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -25,22 +23,31 @@
 #define MAX_ALLOW_GROUPS	256	/* Max # groups on allow list. */
 #define MAX_DENY_GROUPS		256	/* Max # groups on deny list. */
 #define MAX_SUBSYSTEMS		256	/* Max # subsystems. */
+#define MAX_HOSTKEYS		256	/* Max # hostkeys. */
+
+/* permit_root_login */
+#define	PERMIT_NOT_SET		-1
+#define	PERMIT_NO		0
+#define	PERMIT_FORCED_ONLY	1
+#define	PERMIT_NO_PASSWD	2
+#define	PERMIT_YES		3
+
 
 typedef struct {
-	unsigned int num_ports;
-	unsigned int ports_from_cmdline;
+	u_int num_ports;
+	u_int ports_from_cmdline;
 	u_short ports[MAX_PORTS];	/* Port number to listen on. */
 	char   *listen_addr;		/* Address on which the server listens. */
 	struct addrinfo *listen_addrs;	/* Addresses on which the server listens. */
-	char   *host_key_file;	/* File containing host key. */
-	char   *host_dsa_key_file;	/* File containing dsa host key. */
+	char   *host_key_files[MAX_HOSTKEYS];	/* Files containing host keys. */
+	int     num_host_key_files;     /* Number of files for host keys. */
 	char   *pid_file;	/* Where to put our pid */
 	int     server_key_bits;/* Size of the server key. */
 	int     login_grace_time;	/* Disconnect if no auth in this time
 					 * (sec). */
 	int     key_regeneration_time;	/* Server key lifetime (seconds). */
-	int     permit_root_login;	/* If true, permit root login. */
-	int     ignore_rhosts;		/* Ignore .rhosts and .shosts. */
+	int     permit_root_login;	/* PERMIT_*, see above */
+	int     ignore_rhosts;	/* Ignore .rhosts and .shosts. */
 	int     ignore_root_rhosts;	/* Ignore .rhosts and .shosts for root;
 					   defaults to ignore_rhosts if not
 					   given. */
@@ -54,8 +61,9 @@ typedef struct {
 	char   *xauth_location;	/* Location of xauth program */
 	int     strict_modes;	/* If true, require string home dir modes. */
 	int     keepalives;	/* If true, set SO_KEEPALIVE. */
-	char   *ciphers;	/* Ciphers in order of preference. */
-	int	protocol;	/* Protocol in order of preference. */
+	char   *ciphers;	/* Supported SSH2 ciphers. */
+	char   *macs;		/* Supported SSH2 macs. */
+	int	protocol;	/* Supported protocol versions. */
 	int     gateway_ports;	/* If true, allow remote connects to forwarded ports. */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for system logging. */
@@ -64,7 +72,7 @@ typedef struct {
 	int     rhosts_rsa_authentication;	/* If true, permit rhosts RSA
 						 * authentication. */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
-	int     dsa_authentication;	/* If true, permit DSA authentication. */
+	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 #ifdef KRB4
 	int     kerberos_authentication;	/* If true, permit Kerberos
 						 * authentication. */
@@ -83,29 +91,30 @@ typedef struct {
 #endif
 	int     password_authentication;	/* If true, permit password
 						 * authentication. */
-#ifdef SKEY
-	int     skey_authentication;	/* If true, permit s/key
-					 * authentication. */
-#endif
+	int     kbd_interactive_authentication;	/* If true, permit */
+	int     challenge_reponse_authentication;
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     use_login;	/* If true, login(1) is used */
-	unsigned int num_allow_users;
+	int	allow_tcp_forwarding;
+	u_int num_allow_users;
 	char   *allow_users[MAX_ALLOW_USERS];
-	unsigned int num_deny_users;
+	u_int num_deny_users;
 	char   *deny_users[MAX_DENY_USERS];
-	unsigned int num_allow_groups;
+	u_int num_allow_groups;
 	char   *allow_groups[MAX_ALLOW_GROUPS];
-	unsigned int num_deny_groups;
+	u_int num_deny_groups;
 	char   *deny_groups[MAX_DENY_GROUPS];
 
-	unsigned int num_subsystems;
+	u_int num_subsystems;
 	char   *subsystem_name[MAX_SUBSYSTEMS];
 	char   *subsystem_command[MAX_SUBSYSTEMS];
 
 	int	max_startups_begin;
 	int	max_startups_rate;
 	int	max_startups;
+	char   *banner;			/* SSH-2 banner message */
+	int	reverse_mapping_check;	/* cross-check ip and dns */
 
 }       ServerOptions;
 /*

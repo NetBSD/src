@@ -1,5 +1,3 @@
-/*	$NetBSD: servconf.c,v 1.1.1.1.2.2 2000/10/03 21:55:26 lukem Exp $	*/
-
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,23 +9,33 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: servconf.c,v 1.51 2000/09/07 20:27:53 deraadt Exp */
+#include "includes.h"
+RCSID("$OpenBSD: servconf.c,v 1.67 2001/02/12 16:16:23 markus Exp $");
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: servconf.c,v 1.1.1.1.2.2 2000/10/03 21:55:26 lukem Exp $");
+#ifdef KRB4
+#include <krb.h>
+#endif
+#ifdef AFS
+#include <kafs.h>
 #endif
 
-#include "includes.h"
-
 #include "ssh.h"
-#include "pathnames.h"
+#include "log.h"
 #include "servconf.h"
 #include "xmalloc.h"
 #include "compat.h"
+#include "pathnames.h"
+#include "tildexpand.h"
+#include "misc.h"
+#include "cipher.h"
+#include "kex.h"
+#include "mac.h"
 
 /* add listen address */
 void add_listen_addr(ServerOptions *options, char *addr);
+
+/* AF_UNSPEC or AF_INET or AF_INET6 */
+extern int IPv4or6;
 
 /* Initializes the server options to their default values. */
 
@@ -38,13 +46,12 @@ initialize_server_options(ServerOptions *options)
 	options->num_ports = 0;
 	options->ports_from_cmdline = 0;
 	options->listen_addrs = NULL;
-	options->host_key_file = NULL;
-	options->host_dsa_key_file = NULL;
+	options->num_host_key_files = 0;
 	options->pid_file = NULL;
 	options->server_key_bits = -1;
 	options->login_grace_time = -1;
 	options->key_regeneration_time = -1;
-	options->permit_root_login = -1;
+	options->permit_root_login = PERMIT_NOT_SET;
 	options->ignore_rhosts = -1;
 	options->ignore_root_rhosts = -1;
 	options->ignore_user_known_hosts = -1;
@@ -60,7 +67,7 @@ initialize_server_options(ServerOptions *options)
 	options->rhosts_authentication = -1;
 	options->rhosts_rsa_authentication = -1;
 	options->rsa_authentication = -1;
-	options->dsa_authentication = -1;
+	options->pubkey_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
 	options->kerberos_or_local_passwd = -1;
@@ -71,35 +78,43 @@ initialize_server_options(ServerOptions *options)
 	options->afs_token_passing = -1;
 #endif
 	options->password_authentication = -1;
-#ifdef SKEY
-	options->skey_authentication = -1;
-#endif
+	options->kbd_interactive_authentication = -1;
+	options->challenge_reponse_authentication = -1;
 	options->permit_empty_passwd = -1;
 	options->use_login = -1;
+	options->allow_tcp_forwarding = -1;
 	options->num_allow_users = 0;
 	options->num_deny_users = 0;
 	options->num_allow_groups = 0;
 	options->num_deny_groups = 0;
 	options->ciphers = NULL;
+	options->macs = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->gateway_ports = -1;
 	options->num_subsystems = 0;
 	options->max_startups_begin = -1;
 	options->max_startups_rate = -1;
 	options->max_startups = -1;
+	options->banner = NULL;
+	options->reverse_mapping_check = -1;
 }
 
 void
 fill_default_server_options(ServerOptions *options)
 {
+	if (options->protocol == SSH_PROTO_UNKNOWN)
+		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
+	if (options->num_host_key_files == 0) {
+		/* fill default hostkeys for protocols */
+		if (options->protocol & SSH_PROTO_1)
+			options->host_key_files[options->num_host_key_files++] = _PATH_HOST_KEY_FILE;
+		if (options->protocol & SSH_PROTO_2)
+			options->host_key_files[options->num_host_key_files++] = _PATH_HOST_DSA_KEY_FILE;
+	}
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
 	if (options->listen_addrs == NULL)
 		add_listen_addr(options, NULL);
-	if (options->host_key_file == NULL)
-		options->host_key_file = _PATH_HOST_KEY_FILE;
-	if (options->host_dsa_key_file == NULL)
-		options->host_dsa_key_file = _PATH_HOST_DSA_KEY_FILE;
 	if (options->pid_file == NULL)
 		options->pid_file = _PATH_SSH_DAEMON_PID_FILE;
 	if (options->server_key_bits == -1)
@@ -108,8 +123,8 @@ fill_default_server_options(ServerOptions *options)
 		options->login_grace_time = 600;
 	if (options->key_regeneration_time == -1)
 		options->key_regeneration_time = 3600;
-	if (options->permit_root_login == -1)
-		options->permit_root_login = 1;			/* yes */
+	if (options->permit_root_login == PERMIT_NOT_SET)
+		options->permit_root_login = PERMIT_YES;
 	if (options->ignore_rhosts == -1)
 		options->ignore_rhosts = 1;
 	if (options->ignore_root_rhosts == -1)
@@ -124,10 +139,10 @@ fill_default_server_options(ServerOptions *options)
 		options->x11_forwarding = 0;
 	if (options->x11_display_offset == -1)
 		options->x11_display_offset = 10;
-#ifdef _PATH_XAUTH
+#ifdef XAUTH_PATH
 	if (options->xauth_location == NULL)
-		options->xauth_location = _PATH_XAUTH;
-#endif /* _PATH_XAUTH */
+		options->xauth_location = XAUTH_PATH;
+#endif /* XAUTH_PATH */
 	if (options->strict_modes == -1)
 		options->strict_modes = 1;
 	if (options->keepalives == -1)
@@ -142,8 +157,8 @@ fill_default_server_options(ServerOptions *options)
 		options->rhosts_rsa_authentication = 0;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
-	if (options->dsa_authentication == -1)
-		options->dsa_authentication = 1;
+	if (options->pubkey_authentication == -1)
+		options->pubkey_authentication = 1;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = (access(KEYFILE, R_OK) == 0);
@@ -160,16 +175,16 @@ fill_default_server_options(ServerOptions *options)
 #endif /* AFS */
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
-#ifdef SKEY
-	if (options->skey_authentication == -1)
-		options->skey_authentication = 1;
-#endif
+	if (options->kbd_interactive_authentication == -1)
+		options->kbd_interactive_authentication = 0;
+	if (options->challenge_reponse_authentication == -1)
+		options->challenge_reponse_authentication = 1;
 	if (options->permit_empty_passwd == -1)
 		options->permit_empty_passwd = 0;
 	if (options->use_login == -1)
 		options->use_login = 0;
-	if (options->protocol == SSH_PROTO_UNKNOWN)
-		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
+	if (options->allow_tcp_forwarding == -1)
+		options->allow_tcp_forwarding = 1;
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->max_startups == -1)
@@ -178,6 +193,8 @@ fill_default_server_options(ServerOptions *options)
 		options->max_startups_rate = 100;		/* 100% */
 	if (options->max_startups_begin == -1)
 		options->max_startups_begin = options->max_startups;
+	if (options->reverse_mapping_check == -1)
+		options->reverse_mapping_check = 0;
 }
 
 /* Keyword tokens. */
@@ -192,16 +209,16 @@ typedef enum {
 #ifdef AFS
 	sKerberosTgtPassing, sAFSTokenPassing,
 #endif
-#ifdef SKEY
-	sSkeyAuthentication,
-#endif
-	sPasswordAuthentication, sListenAddress,
+	sChallengeResponseAuthentication,
+	sPasswordAuthentication, sKbdInteractiveAuthentication, sListenAddress,
 	sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
-	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
-	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile,
-	sGatewayPorts, sDSAAuthentication, sXAuthLocation, sSubsystem,
-	sMaxStartups, sIgnoreRootRhosts
+	sUseLogin, sAllowTcpForwarding,
+	sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
+	sIgnoreUserKnownHosts, sCiphers, sMacs, sProtocol, sPidFile,
+	sGatewayPorts, sPubkeyAuthentication, sXAuthLocation, sSubsystem, sMaxStartups,
+	sBanner, sReverseMappingCheck,
+	sIgnoreRootRhosts
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -211,8 +228,8 @@ static struct {
 } keywords[] = {
 	{ "port", sPort },
 	{ "hostkey", sHostKeyFile },
-	{ "hostdsakey", sHostDSAKeyFile },
- 	{ "pidfile", sPidFile },
+	{ "hostdsakey", sHostKeyFile },					/* alias */
+	{ "pidfile", sPidFile },
 	{ "serverkeybits", sServerKeyBits },
 	{ "logingracetime", sLoginGraceTime },
 	{ "keyregenerationinterval", sKeyRegenerationTime },
@@ -222,7 +239,8 @@ static struct {
 	{ "rhostsauthentication", sRhostsAuthentication },
 	{ "rhostsrsaauthentication", sRhostsRSAAuthentication },
 	{ "rsaauthentication", sRSAAuthentication },
-	{ "dsaauthentication", sDSAAuthentication },
+	{ "pubkeyauthentication", sPubkeyAuthentication },
+	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
 #ifdef KRB4
 	{ "kerberosauthentication", sKerberosAuthentication },
 	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
@@ -233,9 +251,9 @@ static struct {
 	{ "afstokenpassing", sAFSTokenPassing },
 #endif
 	{ "passwordauthentication", sPasswordAuthentication },
-#ifdef SKEY
-	{ "skeyauthentication", sSkeyAuthentication },
-#endif
+	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication },
+	{ "challengeresponseauthentication", sChallengeResponseAuthentication },
+	{ "skeyauthentication", sChallengeResponseAuthentication }, /* alias */
 	{ "checkmail", sCheckMail },
 	{ "listenaddress", sListenAddress },
 	{ "printmotd", sPrintMotd },
@@ -250,15 +268,19 @@ static struct {
 	{ "uselogin", sUseLogin },
 	{ "randomseed", sRandomSeedFile },
 	{ "keepalive", sKeepAlives },
+	{ "allowtcpforwarding", sAllowTcpForwarding },
 	{ "allowusers", sAllowUsers },
 	{ "denyusers", sDenyUsers },
 	{ "allowgroups", sAllowGroups },
 	{ "denygroups", sDenyGroups },
 	{ "ciphers", sCiphers },
+	{ "macs", sMacs },
 	{ "protocol", sProtocol },
 	{ "gatewayports", sGatewayPorts },
 	{ "subsystem", sSubsystem },
 	{ "maxstartups", sMaxStartups },
+	{ "banner", sBanner },
+	{ "reversemappingcheck", sReverseMappingCheck },
 	{ NULL, 0 }
 };
 
@@ -271,7 +293,7 @@ static ServerOpCodes
 parse_token(const char *cp, const char *filename,
 	    int linenum)
 {
-	unsigned int i;
+	u_int i;
 
 	for (i = 0; keywords[i].name; i++)
 		if (strcasecmp(cp, keywords[i].name) == 0)
@@ -288,7 +310,6 @@ parse_token(const char *cp, const char *filename,
 void
 add_listen_addr(ServerOptions *options, char *addr)
 {
-	extern int IPv4or6;
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr;
@@ -339,8 +360,10 @@ read_server_config(ServerOptions *options, const char *filename)
 		/* Ignore leading whitespace */
 		if (*arg == '\0')
 			arg = strdelim(&cp);
-		if (!*arg || *arg == '#')
+		if (!arg || !*arg || *arg == '#')
 			continue;
+		intptr = NULL;
+		charptr = NULL;
 		opcode = parse_token(arg, filename, linenum);
 		switch (opcode) {
 		case sBadOption:
@@ -394,9 +417,13 @@ parse_int:
 			break;
 
 		case sHostKeyFile:
-		case sHostDSAKeyFile:
-			charptr = (opcode == sHostKeyFile ) ?
-			    &options->host_key_file : &options->host_dsa_key_file;
+			intptr = &options->num_host_key_files;
+			if (*intptr >= MAX_HOSTKEYS) {
+				fprintf(stderr, "%s line %d: to many host keys specified (max %d).\n",
+				    filename, linenum, MAX_HOSTKEYS);
+				exit(1);
+			}
+			charptr = &options->host_key_files[*intptr];
 parse_filename:
 			arg = strdelim(&cp);
 			if (!arg || *arg == '\0') {
@@ -404,8 +431,12 @@ parse_filename:
 				    filename, linenum);
 				exit(1);
 			}
-			if (*charptr == NULL)
+			if (*charptr == NULL) {
 				*charptr = tilde_expand_filename(arg, getuid());
+				/* increase optional counter */
+				if (intptr != NULL)
+					*intptr = *intptr + 1;
+			}
 			break;
 
 		case sPidFile:
@@ -427,14 +458,17 @@ parse_filename:
 				exit(1);
 			}
 			if (strcmp(arg, "without-password") == 0)
-				value = 2;
+				value = PERMIT_NO_PASSWD;
+			else if (strcmp(arg, "forced-commands-only") == 0)
+				value = PERMIT_FORCED_ONLY;
 			else if (strcmp(arg, "yes") == 0)
-				value = 1;
+				value = PERMIT_YES;
 			else if (strcmp(arg, "no") == 0)
-				value = 0;
+				value = PERMIT_NO;
 			else {
-				fprintf(stderr, "%s line %d: Bad yes/without-password/no argument: %s\n",
-					filename, linenum, arg);
+				fprintf(stderr, "%s line %d: Bad yes/"
+				    "without-password/forced-commands-only/no "
+				    "argument: %s\n", filename, linenum, arg);
 				exit(1);
 			}
 			if (*intptr == -1)
@@ -483,8 +517,8 @@ parse_flag:
 			intptr = &options->rsa_authentication;
 			goto parse_flag;
 
-		case sDSAAuthentication:
-			intptr = &options->dsa_authentication;
+		case sPubkeyAuthentication:
+			intptr = &options->pubkey_authentication;
 			goto parse_flag;
 
 #ifdef KRB4
@@ -515,15 +549,17 @@ parse_flag:
 			intptr = &options->password_authentication;
 			goto parse_flag;
 
+		case sKbdInteractiveAuthentication:
+			intptr = &options->kbd_interactive_authentication;
+			goto parse_flag;
+
 		case sCheckMail:
 			intptr = &options->check_mail;
 			goto parse_flag;
 
-#ifdef SKEY
-		case sSkeyAuthentication:
-			intptr = &options->skey_authentication;
+		case sChallengeResponseAuthentication:
+			intptr = &options->challenge_reponse_authentication;
 			goto parse_flag;
-#endif
 
 		case sPrintMotd:
 			intptr = &options->print_motd;
@@ -540,7 +576,7 @@ parse_flag:
 		case sXAuthLocation:
 			charptr = &options->xauth_location;
 			goto parse_filename;
-			
+
 		case sStrictModes:
 			intptr = &options->strict_modes;
 			goto parse_flag;
@@ -559,6 +595,10 @@ parse_flag:
 
 		case sGatewayPorts:
 			intptr = &options->gateway_ports;
+			goto parse_flag;
+
+		case sReverseMappingCheck:
+			intptr = &options->reverse_mapping_check;
 			goto parse_flag;
 
 		case sLogFacility:
@@ -582,6 +622,10 @@ parse_flag:
 			if (*intptr == -1)
 				*intptr = (LogLevel) value;
 			break;
+
+		case sAllowTcpForwarding:
+			intptr = &options->allow_tcp_forwarding;
+			goto parse_flag;
 
 		case sAllowUsers:
 			while ((arg = strdelim(&cp)) && *arg != '\0') {
@@ -628,6 +672,17 @@ parse_flag:
 				    filename, linenum, arg ? arg : "<NONE>");
 			if (options->ciphers == NULL)
 				options->ciphers = xstrdup(arg);
+			break;
+
+		case sMacs:
+			arg = strdelim(&cp);
+			if (!arg || *arg == '\0')
+				fatal("%s line %d: Missing argument.", filename, linenum);
+			if (!mac_valid(arg))
+				fatal("%s line %d: Bad SSH2 mac spec '%s'.",
+				    filename, linenum, arg ? arg : "<NONE>");
+			if (options->macs == NULL)
+				options->macs = xstrdup(arg);
 			break;
 
 		case sProtocol:
@@ -685,13 +740,17 @@ parse_flag:
 			intptr = &options->max_startups;
 			goto parse_int;
 
+		case sBanner:
+			charptr = &options->banner;
+			goto parse_filename;
+
 		default:
 			fprintf(stderr, "%s line %d: Missing handler for opcode %s (%d)\n",
 				filename, linenum, arg, opcode);
 			exit(1);
 		}
 		if ((arg = strdelim(&cp)) != NULL && *arg != '\0') {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"%s line %d: garbage at end of line; \"%.200s\".\n",
 				filename, linenum, arg);
 			exit(1);
