@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.9 1995/09/30 01:54:00 chopps Exp $
+#	$NetBSD: COFFEE,v 1.10 1995/09/30 08:34:49 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -163,6 +163,7 @@ le0		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 ae0		at zbus0		# Ariadne ethernet
+bah0		at zbus0		# C= arcnet
 
 # scsi stuff, all possible
 gvpbus*		at zbus0
@@ -209,7 +210,8 @@ pseudo-device	ppp			# ppp
 pseudo-device	view 10			# views
 pseudo-device	pty 16			# pseudo terminals
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter 2		# berkeley packet filters
-#pseudo-device	tun 2
+pseudo-device	bpfilter 2		# berkeley packet filters
+pseudo-device	tun 2
+pseudo-device	vnd	3		# 3 pseudo disks (see vnconfig)
 
 config	netbsd swap on generic
