@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.171 1998/02/10 14:11:55 mrg Exp $
+#	$NetBSD: files,v 1.172 1998/02/12 20:12:03 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -29,7 +29,7 @@ defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 # these are not together so that turning on UVMHIST only affects files that
 # use it, not most of the kernel
 defopt	opt_uvm.h	UVM
-defopt	opt_uvmhist.h	UVMHIST
+defopt	opt_uvmhist.h	UVMHIST UVMHIST_PRINT
 defopt	opt_pmap_new.h	PMAP_NEW
 
 # generic attributes
