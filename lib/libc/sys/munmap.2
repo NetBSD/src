@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)munmap.2	6.1 (Berkeley) 5/27/91
-.\"	$Id: munmap.2,v 1.3 1993/08/05 21:31:46 jtc Exp $
+.\"	$Id: munmap.2,v 1.4 1993/12/15 18:08:18 jtc Exp $
 .\"
 .Dd May 27, 1991
 .Dt MUNMAP 2
@@ -39,6 +39,9 @@
 .Nm munmap
 .Nd remove a mapping
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/mman.h>
+.Ft int
 .Fn munmap "caddr_t addr" "int len"
 .Sh DESCRIPTION
 The 

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sigaction.2	6.3 (Berkeley) 7/23/91
-.\"	$Id: sigaction.2,v 1.3 1993/10/15 00:05:58 jtc Exp $
+.\"	$Id: sigaction.2,v 1.4 1993/12/15 18:08:20 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt SIGACTION 2
@@ -47,6 +47,7 @@ struct sigaction {
 	int	 sa_flags;
 };
 .Ed
+.Ft int
 .Fn sigaction "int sig" "struct sigaction *act" "struct sigaction *oact"
 .Sh DESCRIPTION
 The system defines a set of signals that may be delivered to a process.
