@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.53 2000/03/29 01:45:21 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.54 2000/03/29 03:59:43 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -247,7 +247,6 @@ void		usb_schedsoftintr __P((struct usbd_bus *));
 #ifdef DIAGNOSTIC
 #define SPLUSBCHECK \
 	do { int _s = splusb(), _su = splusb(); \
-	     extern int cold; \
              if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
 	     splx(_s); \
