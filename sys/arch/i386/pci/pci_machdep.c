@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.19 1996/02/28 01:50:02 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20 1996/03/04 19:39:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -229,15 +229,15 @@ pci_map_io(tag, reg, iobasep)
 	pcireg_t address;
 	int iobase;
 
-	if (reg < PCI_MAP_REG_START || reg >= PCI_MAP_REG_END || (reg & 3))
+	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
 		panic("pci_map_io: bad request");
 
 	address = pci_conf_read(tag, reg);
 
-	if ((address & PCI_MAP_IO) == 0)
-		panic("pci_map_io: attempt to I/O map a memory region");
+	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO)
+		panic("pci_map_io: not an I/O mapping register");
 
-	iobase = address & PCI_MAP_IO_ADDRESS_MASK;
+	iobase = PCI_MAPREG_IO_ADDR(address);
 	*iobasep = iobase;
 
 	return 0;
@@ -254,7 +254,7 @@ pci_map_mem(tag, reg, vap, pap)
 	vm_size_t size;
 	vm_offset_t va, pa;
 
-	if (reg < PCI_MAP_REG_START || reg >= PCI_MAP_REG_END || (reg & 3))
+	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
 		panic("pci_map_mem: bad request");
 
 	/*
@@ -272,23 +272,23 @@ pci_map_mem(tag, reg, vap, pap)
 	mask = pci_conf_read(tag, reg);
 	pci_conf_write(tag, reg, address);
 
-	if ((address & PCI_MAP_IO) != 0)
-		panic("pci_map_mem: attempt to memory map an I/O region");
+	if (PCI_MAPREG_TYPE(address) == PCI_MAPREG_TYPE_IO)
+		panic("pci_map_mem: I/O mapping register");
 
-	switch (address & PCI_MAP_MEMORY_TYPE_MASK) {
-	case PCI_MAP_MEMORY_TYPE_32BIT:
-	case PCI_MAP_MEMORY_TYPE_32BIT_1M:
+	switch (address & PCI_MAPREG_MEM_TYPE_MASK) {
+	case PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		break;
-	case PCI_MAP_MEMORY_TYPE_64BIT:
-		printf("pci_map_mem: attempt to map 64-bit region\n");
+	case PCI_MAPREG_MEM_TYPE_64BIT:
+		printf("pci_map_mem: 64-bit memory mapping register\n");
 		return EOPNOTSUPP;
 	default:
-		printf("pci_map_mem: reserved mapping type\n");
+		printf("pci_map_mem: reserved mapping register type\n");
 		return EINVAL;
 	}
 
-	pa = address & PCI_MAP_MEMORY_ADDRESS_MASK;
-	size = -(mask & PCI_MAP_MEMORY_ADDRESS_MASK);
+	pa = PCI_MAPREG_MEM_ADDR(address);
+	size = ~PCI_MAPREG_MEM_ADDR(mask) + 1;
 	if (size < NBPG)
 		size = NBPG;
 
@@ -312,7 +312,7 @@ pci_map_mem(tag, reg, vap, pap)
 #endif
 
 	/* Map the space into the kernel page table. */
-	cachable = !!(address & PCI_MAP_MEMORY_CACHABLE);
+	cachable = PCI_MAPREG_MEM_CACHEABLE(address);
 	pa &= ~PGOFSET;
 	while (size) {
 		pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
