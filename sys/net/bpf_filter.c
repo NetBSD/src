@@ -35,15 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)bpf_filter.c	7.2 (Berkeley) 5/14/91
- *
- * static char rcsid[] =
- * "@(#) $Header: /cvsroot/src/sys/net/bpf_filter.c,v 1.2 1993/03/25 00:27:53 cgd Exp $ (LBL)";
+ *      from: @(#)bpf_filter.c	7.2 (Berkeley) 5/14/91
+ *	$Id: bpf_filter.c,v 1.3 1993/05/20 03:05:53 cgd Exp $
  */
-#if !(defined(lint) || defined(KERNEL))
-static char rcsid[] =
-	"@(#) $Header: /cvsroot/src/sys/net/bpf_filter.c,v 1.2 1993/03/25 00:27:53 cgd Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

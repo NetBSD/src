@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_arp.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)if_arp.h	7.4 (Berkeley) 6/28/90
+ *	$Id: if_arp.h,v 1.3 1993/05/20 03:05:57 cgd Exp $
  */
 
 #ifndef _NET_IF_ARP_H_

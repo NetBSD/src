@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_types.h	7.3 (Berkeley) 6/28/90
+ *	from: @(#)if_types.h	7.3 (Berkeley) 6/28/90
+ *	$Id: if_types.h,v 1.3 1993/05/20 03:06:04 cgd Exp $
  */
 
 #ifndef _NET_IF_TYPES_H_

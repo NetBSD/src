@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)raw_cb.h	7.6 (Berkeley) 6/28/90
+ *	from: @(#)raw_cb.h	7.6 (Berkeley) 6/28/90
+ *	$Id: raw_cb.h,v 1.3 1993/05/20 03:06:09 cgd Exp $
  */
 
 #ifndef _NET_RAW_CB_H_

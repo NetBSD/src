@@ -2,7 +2,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Header: /cvsroot/src/sys/net/slcompress.h,v 1.2 1993/04/19 03:48:01 mycroft Exp $
+ * $Header: /cvsroot/src/sys/net/slcompress.h,v 1.3 1993/05/20 03:06:13 cgd Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,8 @@
  *
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
+ *
+ *	$Id: slcompress.h,v 1.3 1993/05/20 03:06:13 cgd Exp $
  */
 
 #ifndef _NET_SLCOMPRESS_H_

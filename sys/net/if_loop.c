@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_loop.c	7.13 (Berkeley) 4/26/91
+ *	from: @(#)if_loop.c	7.13 (Berkeley) 4/26/91
+ *	$Id: if_loop.c,v 1.5 1993/05/20 03:06:02 cgd Exp $
  */
 
 /*
