@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc_686.S,v 1.1 2001/09/09 11:01:02 tls Exp $	*/
+/*	$NetBSD: bf_enc_686.S,v 1.2 2003/11/28 08:56:48 keihan Exp $	*/
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -60,7 +60,7 @@
 /*
  * Modified from the output of `perl bf-686.pl elf' by
  * Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon
- * <tls@netbsd.org>
+ * <tls@NetBSD.org>
  */
 
 #include <i386/include/asm.h>
