@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0reg.h,v 1.1 2002/11/20 17:52:52 bsh Exp $ */
+/* $NetBSD: s3c2xx0reg.h,v 1.2 2003/02/02 08:41:12 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -77,9 +77,9 @@
 #define  UFCON_TXTRIGGER_4	(1<<6)
 #define  UFCON_TXTRIGGER_8	(2<<6)
 #define  UFCON_TXTRIGGER_16	(3<<6)
-#define  UFCON_RXTRIGGER_0	(0<<4)
-#define  UFCON_RXTRIGGER_4	(1<<4)
-#define  UFCON_RXTRIGGER_8	(2<<4)
+#define  UFCON_RXTRIGGER_4	(0<<4)
+#define  UFCON_RXTRIGGER_8	(1<<4)
+#define  UFCON_RXTRIGGER_12	(2<<4)
 #define  UFCON_RXTRIGGER_16	(3<<4)
 #define  UFCON_TXFIFO_RESET	(1<<2)
 #define  UFCON_RXFIFO_RESET	(1<<1)
