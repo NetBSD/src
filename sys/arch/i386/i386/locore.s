@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.13 1993/10/12 23:27:04 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.14 1993/10/13 02:21:31 mycroft Exp $
  */
 
 
@@ -115,7 +115,7 @@
 	.set	_kstack,USRSTACK
 	.globl	_kstack
 	.set	PPDROFF,(_kstack>>PD_SHIFT)
-	.set	PPTEOFF,0x400-UPAGES		# 0x3FE (XXX)
+	.set	PPTEOFF,NPTEPG-UPAGES
 
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
@@ -1688,7 +1688,7 @@ IDTVEC(fpu)
 	movl	$(KDSEL),%eax
 	movl	%ax,%ds
 	movl	%ax,%es
-	pushl	_cpl
+	pushl	_cpl		/* now it's an intrframe */
 	incl	_cnt+V_TRAP
 	movl	%esp,%eax	/* pointer to frame */
 	pushl	%eax
@@ -1739,7 +1739,6 @@ alltraps:
 	movl	%ax,%ds
 	movl	%ax,%es
 calltrap:
-	incl	_cnt+V_TRAP
 	call	_trap
 	/*
 	 * Return through doreti to handle ASTs.  Have to change trap frame
@@ -1775,7 +1774,7 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushfl				# Room for tf_err
+	pushl	$0			# Room for tf_err
 	pushfl				# Room for tf_trapno
 	pushl	%ds
 	pushl	%es
@@ -1783,10 +1782,8 @@ IDTVEC(syscall)
 	movl	$(KDSEL),%eax		# switch to kernel segments
 	movl	%ax,%ds
 	movl	%ax,%es
-	movl	TF_ERR(%esp),%eax	# copy eflags from tf_err to tf_eflags
+	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to tf_eflags
 	movl	%eax,TF_EFLAGS(%esp)
-	movl	$0,TF_ERR(%esp)
-	incl	_cnt+V_SYSCALL
 	call	_syscall
 	/*
 	 * Return through doreti to handle ASTs.
