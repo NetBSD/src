@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.13 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.13.2.1 2004/04/29 04:07:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.13 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.13.2.1 2004/04/29 04:07:18 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,8 @@ static struct sysctlnode linux_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|
 	    CTLFLAG_ROOT|CTLTYPE_NODE|CTLFLAG_READWRITE,
 	.sysctl_num = 0,
-	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(linux_root)",
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 };
 
 /*
