@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.20 1996/02/25 21:46:01 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.21 1996/02/27 00:32:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 
+#include <sparc/dev/btreg.h> 
 #include <sparc/dev/bwtworeg.h>
 #include <sparc/dev/sbusvar.h>
 
@@ -75,7 +76,7 @@ struct bwtwo_softc {
 	struct	device sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	volatile struct bwtworeg *sc_reg;/* control registers */
+	volatile struct fbcontrol *sc_reg;/* control registers */
 	struct rom_reg	sc_phys;	/* phys address description */
 	int	sc_bustype;		/* type of bus we live on */
 };
@@ -155,11 +156,8 @@ bwtwoattach(parent, self, args)
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
-			node = ca->ca_ra.ra_node;
-			nam = getpropstring(node, "model");
-			break;
-		}
+		if (CPU_ISSUN4M)	/* 4m has framebuffer on obio */
+			goto obp_name;
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
@@ -167,6 +165,7 @@ bwtwoattach(parent, self, args)
 		break;
 
 	case BUS_SBUS:
+	obp_name:
 #if defined(SUN4C) || defined(SUN4M)
 		nam = getpropstring(node, "model");
 #endif
@@ -213,9 +212,9 @@ bwtwoattach(parent, self, args)
 		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, BWREG_MEM,
 						ramsize, ca->ca_bustype);
 	}
-	sc->sc_reg = (volatile struct bwtworeg *)
+	sc->sc_reg = (volatile struct fbcontrol *)
 	    mapiodev(ca->ca_ra.ra_reg, BWREG_REG,
-			sizeof(struct bwtworeg), ca->ca_bustype);
+			sizeof(struct fbcontrol), ca->ca_bustype);
 
 	/* Insure video is enabled */
 	bwtwo_set_video(sc, 1);
@@ -331,7 +330,7 @@ bwtwo_get_video(sc)
 		return ((lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO) != 0);
 #endif
 
-	return ((sc->sc_reg->bw_ctl & CTL_VE) != 0);
+	return ((sc->sc_reg->fbc_ctrl & FBC_VENAB) != 0);
 }
 
 static void
@@ -354,7 +353,7 @@ bwtwo_set_video(sc, enable)
 #endif
 
 	if (enable)
-		sc->sc_reg->bw_ctl |= CTL_VE;
+		sc->sc_reg->fbc_ctrl |= FBC_VENAB;
 	else
-		sc->sc_reg->bw_ctl &= ~CTL_VE;
+		sc->sc_reg->fbc_ctrl &= ~FBC_VENAB;
 }
