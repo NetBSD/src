@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.12 1996/08/14 05:47:39 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.13 1996/08/15 22:17:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -86,6 +86,7 @@ struct evcnt kn20aa_intr_evcnt;
 void	kn20aa_pci_strayintr __P((int irq));
 void	kn20aa_iointr __P((void *framep, unsigned long vec));
 void	kn20aa_enable_intr __P((int irq));
+void	kn20aa_disable_intr __P((int irq));
 struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
 			    int, int (*) (void *), void *));
 
@@ -235,10 +236,13 @@ kn20aa_pci_strayintr(irq)
 	int irq;
 {
 
-	if (++kn20aa_pci_strayintrcnt[irq] <= PCI_STRAY_MAX)
-		log(LOG_ERR, "stray kn20aa irq %d%s\n", irq,
-		    kn20aa_pci_strayintrcnt[irq] >= PCI_STRAY_MAX ?
-		    "; stopped logging" : "");
+	kn20aa_pci_strayintrcnt[irq]++;
+	if (kn20aa_pci_strayintrcnt[irq] == PCI_STRAY_MAX)
+		kn20aa_disable_intr(irq);
+
+	log(LOG_ERR, "stray kn20aa irq %d\n", irq);
+	if (kn20aa_pci_strayintrcnt[irq] == PCI_STRAY_MAX)
+		log(LOG_ERR, "disabling interrupts on kn20aa irq %d\n", irq);
 }
 
 void
