@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.80 2001/04/05 17:04:03 wiz Exp $
+# $NetBSD: mi,v 1.81 2001/04/05 23:56:43 thorpej Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -71,6 +71,7 @@
 ./etc/rc.d/NETWORK			etc-sys-rc
 ./etc/rc.d/SERVERS			etc-sys-rc
 ./etc/rc.d/accounting			etc-sys-rc
+./etc/rc.d/altqd			etc-router-rc
 ./etc/rc.d/amd				etc-amd-rc
 ./etc/rc.d/apmd				etc-sys-rc
 ./etc/rc.d/bootconf.sh			etc-sys-rc
