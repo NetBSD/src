@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.2 2003/04/18 15:15:12 wiz Exp $
+.\"	$NetBSD: powerd.8,v 1.3 2003/04/21 00:55:17 thorpej Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -96,6 +96,8 @@ The following power switch script names are defined:
 .Bl -tag -width "power_button"
 .It power_button
 This script is called when an event occurs on a power button device.
+.It reset_button
+This script is called when an event occurs on a reset button device.
 .It sleep_button
 This script is called when an event occurs on a sleep button device.
 .It lid_switch
