@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.192 2003/11/08 07:39:18 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.193 2003/11/08 08:09:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4114,7 +4114,7 @@ Lgandul:	nop
 
 	/* Clear `cpuinfo' */
 	sethi	%hi(CPUINFO_VA), %o0		! memset(&cpuinfo, 0, NBPG)
-	sethi	0, %o1
+	mov	0, %o1
 	sethi	%hi(CPUINFO_STRUCTSIZE), %o2
 	call	_C_LABEL(memset)
 	 add	%o1, %lo(CPUINFO_STRUCTSIZE), %o1
