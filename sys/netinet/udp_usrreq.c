@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.56 2000/01/06 15:46:08 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.57 2000/01/31 10:39:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -219,6 +219,10 @@ udp_input(m, va_alist)
 	}
 #endif
 
+	/* destination port of 0 is illegal, based on RFC768. */
+	if (uh->uh_dport == 0)
+		goto bad;
+
 	/*
 	 * Make mbuf data length reflect UDP length.
 	 * If not enough data to reflect UDP length, drop.
@@ -375,6 +379,10 @@ udp6_input(mp, offp, proto)
 		udp6stat.udp6s_badlen++;
 		goto bad;
 	}
+
+	/* destination port of 0 is illegal, based on RFC768. */
+	if (uh->uh_dport == 0)
+		goto bad;
 
 	/* Be proactive about malicious use of IPv4 mapped address */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
@@ -927,6 +935,10 @@ udp_input(m, va_alist)
 		ip = mtod(m, struct ip *);
 	}
 	uh = (struct udphdr *)((caddr_t)ip + iphlen);
+
+	/* destination port of 0 is illegal, based on RFC768. */
+	if (uh->uh_dport == 0)
+		goto bad;
 
 	/*
 	 * Make mbuf data length reflect UDP length.
