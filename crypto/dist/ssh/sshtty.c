@@ -1,5 +1,4 @@
-/*	$NetBSD: sshtty.c,v 1.1.1.1 2001/05/15 15:02:41 itojun Exp $	*/
-/* $OpenBSD: sshtty.c,v 1.1 2001/04/14 16:33:20 stevesk Exp $ */
+/*	$NetBSD: sshtty.c,v 1.1.1.2 2002/03/08 01:21:47 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,6 +36,7 @@
  */
 
 #include "includes.h"
+RCSID("$OpenBSD: sshtty.c,v 1.3 2002/03/04 17:27:39 stevesk Exp $");
 
 #include "sshtty.h"
 #include "log.h"
@@ -47,7 +47,7 @@ static int _in_raw_mode = 0;
 int
 in_raw_mode(void)
 {
-	return _in_raw_mode;	
+	return _in_raw_mode;
 }
 
 struct termios

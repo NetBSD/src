@@ -1,4 +1,6 @@
-/*	$NetBSD: scard.h,v 1.1.1.1 2001/09/27 02:00:48 itojun Exp $	*/
+/*	$NetBSD: scard.h,v 1.1.1.2 2002/03/08 01:21:47 itojun Exp $	*/
+/*	$OpenBSD: scard.h,v 1.7 2002/03/04 17:27:39 stevesk Exp $	*/
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -22,8 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* $OpenBSD: scard.h,v 1.6 2001/08/01 22:03:33 markus Exp $ */
 
 #include <openssl/engine.h>
 
