@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/04/04 20:29:35 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.13 2002/04/04 21:29:04 bjh21 Exp $
 
 KDIR=	/sys/arch/amigappc/include
 INCSDIR= /usr/include/amigappc
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	kcore.h \
-	limits.h \
+	limits.h lock.h \
 	math.h mtpr.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
