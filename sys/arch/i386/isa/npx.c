@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.91 2003/02/26 22:23:03 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.92 2003/03/03 22:14:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.91 2003/02/26 22:23:03 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.92 2003/03/03 22:14:18 fvdl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -180,11 +180,11 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	save_eflags = read_eflags();
 	disable_intr();
-	save_idt_npxintr = idt[NRSVIDT + irq].gd;
-	save_idt_npxtrap = idt[16].gd;
-	setgate(&idt[NRSVIDT + irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL,
+	save_idt_npxintr = idt[NRSVIDT + irq];
+	save_idt_npxtrap = idt[16];
+	setgate(&idt[NRSVIDT + irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL,
+	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 
 	irqmask = i8259_setmask(~((1 << IRQ_SLAVE) | (1 << irq)));
@@ -260,10 +260,10 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	irqmask = i8259_setmask(irqmask);
 
-	idt[NRSVIDT + irq].gd = save_idt_npxintr;
+	idt[NRSVIDT + irq] = save_idt_npxintr;
 	idt_allocmap[NRSVIDT + irq] = 1;
 
-	idt[16].gd = save_idt_npxtrap;
+	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
 
 	if ((rv == NPX_NONE) || (rv == NPX_BROKEN)) {
