@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.59 2001/06/05 04:39:02 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.60 2001/06/26 16:02:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -712,7 +712,8 @@ kmeminit()
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = (nkmempages << PAGE_SHIFT) * 6 / 10;
+		kmemstats[indx].ks_limit =
+		    ((u_long)nkmempages << PAGE_SHIFT) * 6U / 10U;
 #endif
 }
 
