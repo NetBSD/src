@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.15 2000/12/22 15:12:04 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.16 2001/01/12 18:53:21 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.39 2000/12/22 15:11:05 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.15 2000/12/22 15:12:04 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.16 2001/01/12 18:53:21 itojun Exp $");
 #endif
 #endif
 
@@ -932,7 +932,7 @@ wait_for_reply(sock, mhdr)
 	struct timeval wait;
 	int cc = 0, fdsn;
 
-	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
+	fdsn = howmany(sock + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
 		err(1, "malloc");
 	memset(fdsp, 0, fdsn);
