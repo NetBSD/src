@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.383 2001/07/25 22:28:22 thorpej Exp $
+# $NetBSD: mi,v 1.384 2001/07/25 22:30:43 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -537,6 +537,7 @@
 ./usr/share/man/cat4/ddb.0			man-sys-catman
 ./usr/share/man/cat4/de.0			man-sys-catman
 ./usr/share/man/cat4/depca.0			man-sys-catman
+./usr/share/man/cat4/dmphy.0			man-sys-catman
 ./usr/share/man/cat4/dpt.0			man-sys-catman
 ./usr/share/man/cat4/drum.0			man-sys-catman
 ./usr/share/man/cat4/dtide.0			man-sys-catman
@@ -2083,6 +2084,7 @@
 ./usr/share/man/man4/ddb.4			man-sys-man
 ./usr/share/man/man4/de.4			man-sys-man
 ./usr/share/man/man4/depca.4			man-sys-man
+./usr/share/man/man4/dmphy.4			man-sys-man
 ./usr/share/man/man4/dpt.4			man-sys-man
 ./usr/share/man/man4/drum.4			man-sys-man
 ./usr/share/man/man4/dtide.4			man-sys-man
