@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.7 2003/10/26 20:59:51 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.8 2003/10/26 21:46:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,5 +81,13 @@ struct ieee_ext {
  * Exponent biases.
  */
 #define	EXT_EXP_BIAS	16383
+
+/*
+ * Convenience data structures.
+ */
+union ieee_ext_u {
+	long double		extu_ld;
+	struct ieee_ext		extu_ldbl;
+};
 
 #endif /* !__mc68010__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.4 2003/10/26 20:55:30 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.5 2003/10/26 21:46:46 kleink Exp $	*/
 
 /*	$OpenBSD: ieee.h,v 1.1 1999/04/20 19:44:04 mickey Exp $	*/
 
@@ -81,3 +81,11 @@ struct ieee_ext {
  * Exponent biases.
  */
 #define	EXT_EXP_BIAS	16383
+
+/*
+ * Convenience data structures.
+ */
+union ieee_ext_u {
+	long double		extu_ld;
+	struct ieee_ext		extu_ldbl;
+};
