@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2000/07/26 11:48:51 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.24.8.1 2002/03/29 23:22:45 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -33,6 +33,7 @@
 
 include	<sys/param.h>
 include	<sys/proc.h>
+include	<sys/lwp.h>
 include	<sys/errno.h>
 include	<sys/syscall.h>
 include	<sys/sched.h>
@@ -47,16 +48,17 @@ include	<machine/trap.h>
 include	<machine/cpu.h>
 include	<machine/uvax.h>
 
-define	P_PRIORITY	offsetof(struct proc, p_priority)
-define	P_ADDR		offsetof(struct proc, p_addr)
+define	L_PRIORITY	offsetof(struct lwp, l_priority)
+define	L_ADDR		offsetof(struct lwp, l_addr)
+define	L_BACK		offsetof(struct lwp, l_back)
+define	L_CPU		offsetof(struct lwp, l_cpu)
+define	L_STAT		offsetof(struct lwp, l_stat)
+
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_CPU		offsetof(struct proc, p_cpu)
 
 define	PH_RLINK	offsetof(struct prochd, ph_rlink)
 
-define	SONPROC		SONPROC
+define	LSONPROC	LSONPROC
 
 define	P0BR		offsetof(struct pcb, P0BR)
 define	P0LR		offsetof(struct pcb, P0LR)
@@ -65,6 +67,7 @@ define	P1LR		offsetof(struct pcb, P1LR)
 define	IFTRAP		offsetof(struct pcb, iftrap)
 define	ESP		offsetof(struct pcb, ESP)
 define	SSP		offsetof(struct pcb, SSP)
+define	PCB_R0		offsetof(struct pcb, R[0])
 
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 2000/07/03 23:05:32 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.14.8.1 2002/03/29 23:31:42 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,8 +79,13 @@
 # endif
 #endif
 
+#if 0
 #define	_ENTRY(x, regs) \
 	.text; _ALIGN_TEXT; .globl x; .type x@function; x: .word regs
+#else
+#define	_ENTRY(x, regs) \
+	.text; _ALIGN_TEXT; .globl x; x: .word regs
+#endif
 
 #ifdef GPROF
 # ifdef __ELF__
