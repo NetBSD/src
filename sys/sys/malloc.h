@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.86 2003/02/14 21:51:36 pk Exp $	*/
+/*	$NetBSD: malloc.h,v 1.87 2003/05/24 06:25:39 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -56,6 +56,7 @@
 				 * be allocated */
 #ifdef _KERNEL
 
+#include <sys/lock.h>
 #include <sys/mallocvar.h>
 /*
  * The following are standard, built-in malloc types that are
