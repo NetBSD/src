@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.1 2000/12/11 13:48:53 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.2 2000/12/11 13:58:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.1 2000/12/11 13:48:53 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.2 2000/12/11 13:58:46 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: iopctl.c,v 1.1 2000/12/11 13:48:53 ad Exp $");
 #include <dev/i2o/iopvar.h>
 
 const char	*class2str(int);
+void	getparam(int, int, void *, int);
 int	main(int, char *[]);
 int	show(const char *, const char *, ...);
 void	i2ostrvis(const char *, int, char *, int);
@@ -191,27 +192,6 @@ class2str(int class)
 			return (i2oclass[i].caption);
 			
 	return ("unknown");
-}
-
-const char *
-bustype2str(bustype)
-	int bustype;
-{
-	static char buf[32];
-#ifdef notyet
-	int i;
-#endif
-
-	strcpy(buf, "unknown");
-
-#ifdef notyet	
-	for (i = 0; i < sizeof(i2obustype) / sizeof(i2obustype[0]); i++)
-		if (bustype == i2obustype[i].bustype) {
-			strcpy(buf, i2obustype[i].caption);
-			break;
-		}
-#endif			
-	return (strcat(buf, " bus"));
 }
 
 void
