@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.58 2003/08/07 16:44:23 agc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.59 2004/03/28 08:58:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.58 2003/08/07 16:44:23 agc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.59 2004/03/28 08:58:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -340,6 +340,13 @@ prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 #ifdef DEBUG
 	__CTRACE("prefresh: pad %p, flags 0x%08x\n", pad, pad->flags);
 #endif
+	/* Retain values in case pechochar() is called. */
+	pad->pbegy = pbegy;
+	pad->pbegx = pbegx;
+	pad->sbegy = sbegy;
+	pad->sbegx = sbegx;
+	pad->smaxy = smaxy;
+	pad->smaxx = smaxx;
 
 	/* Use pnoutrefresh() to avoid duplicating code here */
 	retval = pnoutrefresh(pad, pbegy, pbegx, sbegy, sbegx, smaxy, smaxx);

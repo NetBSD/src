@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.85 2004/03/23 21:35:29 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.86 2004/03/28 08:58:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -338,6 +338,7 @@ extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 #define color_set(c, o)			wcolor_set(stdscr, c, o)
 #define	delch()				wdelch(stdscr)
 #define	deleteln()			wdeleteln(stdscr)
+#define	echochar(c)			wechochar(stdscr, c)
 #define	erase()				werase(stdscr)
 #define	getch()				wgetch(stdscr)
 #define	getnstr(s, n)			wgetnstr(stdscr, s, n)
@@ -442,6 +443,7 @@ int	 clrtoeol(void);
 int	 color_set(short, void *);
 int	 delch(void);
 int	 deleteln(void);
+int	 echochar(const chtype);
 int	 erase(void);
 int	 getch(void);
 int	 getnstr(char *, int);
@@ -600,6 +602,7 @@ int	 notimeout(WINDOW *, bool);
 int	 overlay(const WINDOW *, WINDOW *);
 int	 overwrite(const WINDOW *, WINDOW *);
 int	 pair_content(short, short *, short *);
+int	 pechochar(WINDOW *, const chtype);
 int	 pnoutrefresh(WINDOW *, int, int, int, int, int, int);
 int	 prefresh(WINDOW *, int, int, int, int, int, int);
 int	 printw(const char *, ...)
@@ -653,6 +656,7 @@ int	 wclrtoeol(WINDOW *);
 int	 wcolor_set(WINDOW *, short, void *);
 int	 wdelch(WINDOW *);
 int	 wdeleteln(WINDOW *);
+int	 wechochar(WINDOW *, const chtype);
 int	 werase(WINDOW *);
 int	 wgetch(WINDOW *);
 int	 wgetnstr(WINDOW *, char *, int);
