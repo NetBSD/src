@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57 1998/10/02 18:44:32 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.58 1998/10/24 01:14:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1649,12 +1649,12 @@ END(MachFPInterrupt)
  * stacktrace() -- print a stack backtrace to the console. 
  *	implicitly accesses caller's a0-a3.
  */
-NON_LEAF(stacktrace, STAND_FRAME_SIZE+20, ra)
+NON_LEAF(stacktrace, STAND_FRAME_SIZE+24, ra)
 
-	subu	sp, sp, STAND_FRAME_SIZE+20	# four arg-passing slots
+      subu    sp, sp, STAND_FRAME_SIZE+24     # four arg-passing slots
 
 	move	t0, ra				# save caller's PC
-	addu	t1, sp, STAND_FRAME_SIZE+20	# compute caller's SP
+      addu    t1, sp, STAND_FRAME_SIZE+24     # compute caller's SP
 	move	t2, s8				# non-virtual frame pointer
 
 	la	v0, _C_LABEL(printf)
@@ -1670,7 +1670,7 @@ NON_LEAF(stacktrace, STAND_FRAME_SIZE+20, ra)
 	sw	v0, 32(sp)			#   push printf
 
 	lw	ra, 36(sp)
-	addu	sp, sp, STAND_FRAME_SIZE+20
+      addu    sp, sp, STAND_FRAME_SIZE+24
 	j	ra
 	nop
 END(stacktrace)
@@ -1680,12 +1680,12 @@ END(stacktrace)
  * logstacktrace() -- log a stack traceback to msgbuf.
  *	implicitly accesses caller's a0-a3.
  */
-NON_LEAF(logstacktrace, STAND_FRAME_SIZE+20, ra)
+NON_LEAF(logstacktrace, STAND_FRAME_SIZE+24, ra)
 
-	subu	sp, sp, STAND_FRAME_SIZE+20	# four arg-passing slots
+      subu    sp, sp, STAND_FRAME_SIZE+24     # four arg-passing slots
 
 	move	t0, ra				# save caller's PC
-	addu	t1, sp, STAND_FRAME_SIZE+20	# compute caller's SP
+      addu    t1, sp, STAND_FRAME_SIZE+24     # compute caller's SP
 	move	t2, s8				# non-virtual frame pointer
 
 	la	v0, _C_LABEL(printf)
@@ -1701,7 +1701,7 @@ NON_LEAF(logstacktrace, STAND_FRAME_SIZE+20, ra)
 	sw	v0, 32(sp)			#   push printf
 
 	lw	ra, 36(sp)
-	addu	sp, sp, STAND_FRAME_SIZE+20
+      addu    sp, sp, STAND_FRAME_SIZE+24
 	j	ra
 	nop
 END(logstacktrace)
