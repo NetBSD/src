@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2004/07/02 00:05:23 sjg Exp $
+#	$NetBSD: Makefile,v 1.3 2005/01/11 22:56:19 christos Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
 PROG=	pwhash
-SRCS=	pwhash.c pwd_gensalt.c
-.PATH: ${.CURDIR}/../passwd
+SRCS=	pwhash.c
 
 CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP
 CPPFLAGS+= -I${.CURDIR}/../../lib/libcrypt
