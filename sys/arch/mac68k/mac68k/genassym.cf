@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21.8.4 2002/08/02 21:02:30 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.21.8.5 2002/10/05 06:16:42 gmcgarry Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -60,8 +60,6 @@ include	<machine/psl.h>
 include	<machine/reg.h>
 include	<machine/pte.h>
 
-include	<m68k/saframe.h>
-
 # machine class
 define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)
 define	MACH_CLASSAV		MACH_CLASSAV
@@ -104,6 +102,7 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # lwp fields and values
@@ -115,7 +114,7 @@ define	LSONPROC		LSONPROC
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
-# PSL values (should just include psl.h?)
+#mE PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
 define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
@@ -153,6 +152,9 @@ define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	PCB_TRCB		5
+
+# frame offsets
+define	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct frame, f_regs[15])
