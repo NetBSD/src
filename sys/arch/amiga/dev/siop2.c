@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.1 1999/03/07 22:16:19 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.2 1999/03/12 20:17:47 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -737,7 +737,7 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 #ifdef DEBUG
 	if (siopng_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
 		printf ("ACK! siopng was busy: rp %p script %p dsa %p active %ld\n",
-		    rp, &scripts, &acb->ds, sc->sc_active);
+		    rp, &siopng_scripts, &acb->ds, sc->sc_active);
 		printf ("istat %02x sfbr %02x respid %02x sien %04x dien %02x\n",
 		    rp->siop_istat, rp->siop_sfbr, rp->siop_respid,
 		    rp->siop_sien, rp->siop_dien);
@@ -856,7 +856,7 @@ siopng_start (sc, target, lun, cbuf, clen, buf, len)
 #ifdef DEBUG
 	if (siopng_debug & 0x100 && rp->siop_sbcl & SIOP_BSY) {
 		printf ("ACK! siopng was busy at start: rp %p script %p dsa %p active %ld\n",
-		    rp, &scripts, &acb->ds, sc->sc_active);
+		    rp, &siopng_scripts, &acb->ds, sc->sc_active);
 #ifdef DDB
 		/*Debugger();*/
 #endif
@@ -924,10 +924,10 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 	}
 #endif
 	if (rp->siop_dsp && (rp->siop_dsp < sc->sc_scriptspa ||
-	    rp->siop_dsp >= sc->sc_scriptspa + sizeof(scripts))) {
+	    rp->siop_dsp >= sc->sc_scriptspa + sizeof(siopng_scripts))) {
 		printf ("%s: dsp not within script dsp %lx scripts %lx:%lx",
 		    sc->sc_dev.dv_xname, rp->siop_dsp, sc->sc_scriptspa,
-		    sc->sc_scriptspa + sizeof(scripts));
+		    sc->sc_scriptspa + sizeof(siopng_scripts));
 		printf(" istat %x dstat %x sist %x\n",
 		    istat, dstat, sist);
 #ifdef DDB
@@ -998,7 +998,7 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 #ifdef DEBUG
 		if (rp->siop_sbcl & SIOP_BSY) {
 			/*printf ("ACK! siop was busy at end: rp %x script %x dsa %x\n",
-			    rp, &scripts, &acb->ds);*/
+			    rp, &siopng_scripts, &acb->ds);*/
 #ifdef DDB
 			/*Debugger();*/
 #endif
@@ -1080,7 +1080,7 @@ siopng_checkintr(sc, istat, dstat, sist, status)
 			    sc->sc_dev.dv_xname);
 		if (rp->siop_sbcl & SIOP_BSY) {
 			printf ("ACK! siop was busy at timeout: rp %p script %p dsa %p\n",
-			    rp, &scripts, &acb->ds);
+			    rp, &siopng_scripts, &acb->ds);
 			printf(" sbcl %x sdid %x istat %x dstat %x sist %x\n",
 			    rp->siop_sbcl, rp->siop_sdid, istat, dstat, sist);
 			if (!(rp->siop_sbcl & SIOP_BSY)) {
