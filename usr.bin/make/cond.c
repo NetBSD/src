@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.13 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.13 2002/06/15 18:24:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.13 2002/06/15 18:24:56 wiz Exp $");
+__RCSID("$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -544,6 +544,7 @@ CondToken(Boolean doEval)
 		t = Not;
 		condExpr++;
 		break;
+	    case '#':
 	    case '\n':
 	    case '\0':
 		t = EndOfFile;
