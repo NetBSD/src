@@ -1,4 +1,5 @@
-/*      $NetBSD: raidctl.c,v 1.17 2000/05/23 00:33:13 thorpej Exp $   */
+/*      $NetBSD: raidctl.c,v 1.18 2000/05/23 00:46:53 thorpej Exp $   */
+
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,28 +37,25 @@
  */
 
 /* 
-
-   This program is a re-write of the original rf_ctrl program 
-   distributed by CMU with RAIDframe 1.1.
-
-   This program is the user-land interface to the RAIDframe kernel
-   driver in NetBSD.
-
+ * This program is a re-write of the original rf_ctrl program 
+ * distributed by CMU with RAIDframe 1.1.
+ *
+ * This program is the user-land interface to the RAIDframe kernel
+ * driver in NetBSD.
  */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
+
 #include <util.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <string.h>
-#include <sys/disklabel.h>
-#include <machine/disklabel.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -66,9 +64,9 @@
 extern  char *__progname;
 
 int     main __P((int, char *[]));
-void	do_ioctl __P((int, unsigned long, void *, const char *));
+void	do_ioctl __P((int, u_long, void *, const char *));
 static  void rf_configure __P((int, char*, int));
-static  char *device_status __P((RF_DiskStatus_t));
+static  const char *device_status __P((RF_DiskStatus_t));
 static  void rf_get_device_status __P((int));
 static  void get_component_number __P((int, char *, int *, int *));
 static  void rf_fail_disk __P((int, char *, int));
@@ -81,12 +79,12 @@ static  void add_hot_spare __P((int, char *));
 static  void remove_hot_spare __P((int, char *));
 static  void rebuild_in_place __P((int, char *));
 static  void check_status __P((int,int));
-static  void check_parity __P((int,int,char *));
+static  void check_parity __P((int,int, char *));
 static  void do_meter __P((int, u_long));
 static  void get_bar __P((char *, double, int));
 static  void get_time_string __P((char *, int));
 
-int verbose = 0;
+int verbose;
 
 int
 main(argc,argv)
@@ -358,50 +356,46 @@ rf_configure(fd,config_file,force)
 	cfg.force = force;
 
 	/* 
-
-	   Note the extra level of redirection needed here, since
-	   what we really want to pass in is a pointer to the pointer to 
-	   the configuration structure. 
-
+	 * Note the extra level of redirection needed here, since
+	 * what we really want to pass in is a pointer to the pointer to 
+	 * the configuration structure. 
 	 */
 
 	generic = (void *) &cfg;
 	do_ioctl(fd, RAIDFRAME_CONFIGURE, &generic, "RAIDFRAME_CONFIGURE");
 }
 
-static char *
+static const char *
 device_status(status)
 	RF_DiskStatus_t status;
 {
-	static char status_string[256];
 
 	switch (status) {
 	case rf_ds_optimal:
-		strcpy(status_string,"optimal");
+		return ("optimal");
 		break;
 	case rf_ds_failed:
-		strcpy(status_string,"failed");
+		return ("failed");
 		break;
 	case rf_ds_reconstructing:
-		strcpy(status_string,"reconstructing");
+		return ("reconstructing");
 		break;
 	case rf_ds_dist_spared:
-		strcpy(status_string,"dist_spared");
+		return ("dist_spared");
 		break;
 	case rf_ds_spared:
-		strcpy(status_string,"spared");
+		return ("spared");
 		break;
 	case rf_ds_spare:
-		strcpy(status_string,"spare");
+		return ("spare");
 		break;
 	case rf_ds_used_spare:
-		strcpy(status_string,"used_spare");
+		return ("used_spare");
 		break;
 	default:
-		strcpy(status_string,"UNKNOWN");
-		break;
+		return ("UNKNOWN");
 	}
-	return(status_string);
+	/* NOTREACHED */
 }
 
 static void
@@ -793,7 +787,7 @@ check_status( fd, meter )
 	}
 }
 
-char *tbits = "|/-\\";
+const char *tbits = "|/-\\";
 
 static void
 do_meter(fd, option)
