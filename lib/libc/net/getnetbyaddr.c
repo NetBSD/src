@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getnetbyaddr.c	1.1 (Coimbra) 93/06/02";
-static char rcsid[] = "$Id: getnetbyaddr.c,v 8.2 1996/05/09 05:59:13 vixie Exp ";
+static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -41,8 +40,8 @@ static char rcsid[] = "$Id: getnetbyaddr.c,v 8.2 1996/05/09 05:59:13 vixie Exp "
 extern int _net_stayopen;
 
 struct netent *
-_getnetbyaddr(net, type)
-	register unsigned long net;
+getnetbyaddr(net, type)
+	register long net;
 	register int type;
 {
 	register struct netent *p;
