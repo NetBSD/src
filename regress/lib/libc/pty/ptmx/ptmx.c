@@ -1,7 +1,7 @@
-/*	$NetBSD: ptmx.c,v 1.1 2004/05/25 20:32:32 christos Exp $	*/
+/*	$NetBSD: ptmx.c,v 1.2 2004/05/26 01:14:56 christos Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptmx.c,v 1.1 2004/05/25 20:32:32 christos Exp $");
+__RCSID("$NetBSD: ptmx.c,v 1.2 2004/05/26 01:14:56 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
