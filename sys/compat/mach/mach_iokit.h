@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.11 2003/04/30 07:32:17 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.12 2003/05/13 20:48:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ typedef struct {
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
-	mach_msg_port_descriptor_t rep_properties;
+	mach_msg_ool_descriptor_t rep_properties;
 	mach_ndr_record_t rep_ndr;
 	mach_msg_type_number_t rep_properties_count;
 	mach_msg_trailer_t rep_trailer;
@@ -400,18 +400,18 @@ struct mach_device_iterator {
 	struct device *mdi_current;
 };
 
+struct mach_iokit_property {
+	const char *mip_name;
+	const char *mip_value;
+};
+
 struct mach_iokit_devclass {
 	char *mid_string;
 	char *mid_properties;
-	int (*mid_registry_entry_get_property)(struct mach_trap_args *);
+	struct mach_iokit_property *mid_properties_array;
 	int (*mid_connect_method_scalari_scalaro)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
 	char *mid_name;
 };
 	
-struct mach_iokit_property {
-	const char *mip_name;
-	const int mip_value;
-};
-
 #endif /* _MACH_IOKIT_H_ */
