@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1998/11/15 20:36:30 perry Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/03 17:12:23 jhawk Exp $
 
 # Makefile for mac68k tags file and boot blocks
 
 # Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
-SYSDIR?=	/sys
 TMAC68K=${SYSDIR}/arch/mac68k/tags
 SMAC68K=${SYSDIR}/arch/mac68k/mac68k/*.[ch] ${SYSDIR}/arch/mac68k/include/*.h \
 	${SYSDIR}/arch/mac68k/nubus/*.[ch] ${SYSDIR}/arch/mac68k/obio/*.[ch] \

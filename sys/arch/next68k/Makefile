@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/10/05 18:22:41 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/03 17:12:23 jhawk Exp $
 
 # Makefile for next68k tags file and boot blocks
 
@@ -14,7 +14,6 @@ ANEXT68K=	../next68k/next68k/*.s
 # Directories in which to place tags links
 DNEXT68K=	dev next68k include
 
-SYSDIR=		../..
 .include "../../kern/Make.tags.inc"
 
 tags:
