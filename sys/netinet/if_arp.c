@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.23 1995/04/17 05:32:52 cgd Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.24 1995/05/15 01:30:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -115,6 +115,7 @@ arptimer(arg)
 	timeout(arptimer, NULL, arpt_prune * hz);
 	while (la != &llinfo_arp) {
 		register struct rtentry *rt = la->la_rt;
+
 		la = la->la_next;
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
 			arptfree(la->la_prev); /* timer has expired; clear */
@@ -210,19 +211,21 @@ arp_rtrequest(req, rt, sa)
 		insque(la, &llinfo_arp);
 		if (SIN(rt_key(rt))->sin_addr.s_addr ==
 		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
-		    /*
-		     * This test used to be
-		     *	if (loif.if_flags & IFF_UP)
-		     * It allowed local traffic to be forced
-		     * through the hardware by configuring the loopback down.
-		     * However, it causes problems during network configuration
-		     * for boards that can't receive packets they send.
-		     * It is now necessary to clear "useloopback" and remove
-		     * the route to force traffic out to the hardware.
-		     */
+			/*
+			 * This test used to be
+			 *	if (loif.if_flags & IFF_UP)
+			 * It allowed local traffic to be forced through
+			 * the hardware by configuring the loopback down.
+			 * However, it causes problems during network
+			 * configuration for boards that can't receive
+			 * packets they send.  It is now necessary to clear
+			 * "useloopback" and remove the route to force
+			 * traffic out to the hardware.
+			 */
 			rt->rt_expire = 0;
 			Bcopy(((struct arpcom *)rt->rt_ifp)->ac_enaddr,
-				LLADDR(SDL(gate)), SDL(gate)->sdl_alen = 6);
+			    LLADDR(SDL(gate)),
+			    SDL(gate)->sdl_alen = ETHER_ADDR_LEN);
 			if (useloopback)
 				rt->rt_ifp = &loif;
 		}
@@ -279,7 +282,7 @@ arprequest(ac, sip, tip, enaddr)
 	bzero((caddr_t)ea, sizeof (*ea));
 	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
 	    sizeof(eh->ether_dhost));
-	eh->ether_type = htons(ETHERTYPE_ARP);
+	eh->ether_type = htons(ETHERTYPE_ARP);	/* if_output will not swap */
 	ea->arp_hrd = htons(ARPHRD_ETHER);
 	ea->arp_pro = htons(ETHERTYPE_IP);
 	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
@@ -321,7 +324,7 @@ arpresolve(ac, rt, m, dst, desten)
 	}
 	if (m->m_flags & M_MCAST) {	/* multicast */
 		ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr, desten);
-		return(1);
+		return (1);
 	}
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
