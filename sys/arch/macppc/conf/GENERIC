@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165 2003/10/18 08:30:14 lukem Exp $
+# $NetBSD: GENERIC,v 1.166 2003/11/13 14:39:38 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165 $"
+#ident 		"GENERIC-$Revision: 1.166 $"
 
 maxusers	32
 
@@ -185,6 +185,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+lpt*	at puc? port ?			# || ports on > "universal" comm boards
 
 # PCI Network devices
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
