@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.21 1996/10/10 22:39:40 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.22 1996/10/13 02:31:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -542,7 +542,7 @@ cd9660_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	int error;
 	
 #ifdef	ISOFS_DBG
-	kprintf("fhtovp: ino %d, start %ld\n",
+	printf("fhtovp: ino %d, start %ld\n",
 	    ifhp->ifid_ino, ifhp->ifid_start);
 #endif
 	
@@ -638,14 +638,14 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		lbn = lblkno(imp, ino);
 		if (lbn >= imp->volume_space_size) {
 			vput(vp);
-			kprintf("fhtovp: lbn exceed volume space %d\n", lbn);
+			printf("fhtovp: lbn exceed volume space %d\n", lbn);
 			return (ESTALE);
 		}
 	
 		off = blkoff(imp, ino);
 		if (off + ISO_DIRECTORY_RECORD_SIZE > imp->logical_block_size) {
 			vput(vp);
-			kprintf("fhtovp: crosses block boundary %d\n",
+			printf("fhtovp: crosses block boundary %d\n",
 			    off + ISO_DIRECTORY_RECORD_SIZE);
 			return (ESTALE);
 		}
@@ -656,7 +656,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		if (error) {
 			vput(vp);
 			brelse(bp);
-			kprintf("fhtovp: bread error %d\n",error);
+			printf("fhtovp: bread error %d\n",error);
 			return (error);
 		}
 		isodir = (struct iso_directory_record *)(bp->b_data + off);
@@ -666,7 +666,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			vput(vp);
 			if (bp != 0)
 				brelse(bp);
-			kprintf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
+			printf("fhtovp: directory crosses block boundary %d[off=%d/len=%d]\n",
 			    off +isonum_711(isodir->length), off,
 			    isonum_711(isodir->length));
 			return (ESTALE);
@@ -677,7 +677,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		    isonum_711(isodir->ext_attr_length) != ifhp->ifid_start) {
 			if (bp != 0)
 				brelse(bp);
-			kprintf("fhtovp: file start miss %d vs %d\n",
+			printf("fhtovp: file start miss %d vs %d\n",
 			    isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length),
 			    ifhp->ifid_start);
 			return (ESTALE);
@@ -818,7 +818,7 @@ cd9660_vptofh(vp, fhp)
 	ifhp->ifid_start = ip->iso_start;
 	
 #ifdef	ISOFS_DBG
-	kprintf("vptofh: ino %d, start %ld\n",
+	printf("vptofh: ino %d, start %ld\n",
 	    ifhp->ifid_ino,ifhp->ifid_start);
 #endif
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.9 1996/10/10 22:46:22 christos Exp $	*/
+/*	$NetBSD: exit.c,v 1.10 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -58,7 +58,7 @@ panic(fmt /*, va_alist */)
     va_start(ap);
 #endif
     kvprintf(fmt, ap);
-    kprintf("\n");
+    printf("\n");
     va_end(ap);
     _rtt();
     /*NOTREACHED*/

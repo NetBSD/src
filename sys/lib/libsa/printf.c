@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.8 1996/10/10 22:46:29 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.9 1996/10/13 02:29:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
  * The format %b is supported to decode error registers.
  * Its usage is:
  *
- *	kprintf("reg=%b\n", regval, "<base><arg>*");
+ *	printf("reg=%b\n", regval, "<base><arg>*");
  *
  * where <base> is the output base expressed as a control character, e.g.
  * \10 gives octal; \20 gives hex.  Each arg is a sequence of characters,
@@ -51,7 +51,7 @@
  * the next characters (up to a control character, i.e. a character <= 32),
  * give the name of the register.  Thus:
  *
- *	kprintf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
+ *	printf("reg=%b\n", 3, "\10\2BITTWO\1BITONE\n");
  *
  * would produce output:
  *
@@ -83,9 +83,9 @@ sputchar(c)
 
 void
 #ifdef __STDC__
-ksprintf(char *buf, const char *fmt, ...)
+sprintf(char *buf, const char *fmt, ...)
 #else
-ksprintf(buf, fmt, va_alist)
+sprintf(buf, fmt, va_alist)
 	char *buf, *fmt;
 #endif
 {
@@ -104,9 +104,9 @@ ksprintf(buf, fmt, va_alist)
 
 void
 #ifdef __STDC__
-kprintf(const char *fmt, ...)
+printf(const char *fmt, ...)
 #else
-kprintf(fmt, va_alist)
+printf(fmt, va_alist)
 	char *fmt;
 #endif
 {

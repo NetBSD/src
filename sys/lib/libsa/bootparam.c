@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.8 1996/10/10 22:45:37 christos Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.9 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,7 +53,7 @@
 #include "bootparam.h"
 
 #ifdef DEBUG_RPC
-#define RPC_PRINTF(a)	kprintf a
+#define RPC_PRINTF(a)	printf a
 #else
 #define RPC_PRINTF(a)
 #endif
@@ -164,7 +164,7 @@ bp_whoami(sockfd)
 				  args, send_tail - (char*)args,
 				  repl, sizeof(*repl));
 	if (len < 8) {
-		kprintf("bootparamd: 'whoami' call failed\n");
+		printf("bootparamd: 'whoami' call failed\n");
 		return (-1);
 	}
 
@@ -192,7 +192,7 @@ bp_whoami(sockfd)
 	 */
 	x = ntohl(repl->encap_len);
 	if (len < x) {
-		kprintf("bp_whoami: short reply, %d < %d\n", len, x);
+		printf("bp_whoami: short reply, %d < %d\n", len, x);
 		return (-1);
 	}
 	recv_head = (char*) repl->capsule;
