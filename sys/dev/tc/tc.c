@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.11 1996/03/17 00:58:36 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.12 1996/03/17 22:09:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -219,7 +219,7 @@ tcsubmatch(parent, match, aux)
 	    (cf->tccf_offset != d->ta_offset))
 		return 0;
 
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 
