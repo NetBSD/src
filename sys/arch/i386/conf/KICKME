@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.33 1996/08/31 20:39:22 mycroft Exp $
+#	$NetBSD: KICKME,v 1.34 1996/10/02 23:15:58 mycroft Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -37,6 +37,9 @@ options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12
 options		COMPAT_43	# and 4.3BSD
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
 
 options		FFS		# UFS
 

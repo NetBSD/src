@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.76 1996/09/26 21:45:05 cgd Exp $
+#	$NetBSD: SUN_LAMP,v 1.77 1996/10/02 23:15:59 mycroft Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -46,6 +46,10 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 #options	COMPAT_SVR4	# binary compatibility with SVR4
 #options	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+#options	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 #options	USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
