@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.11 1998/02/13 08:28:32 enami Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.12 1998/12/17 22:27:18 gibbs Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -297,7 +297,7 @@ struct page_device_capabilities {
 #define MOVE_TO_IE	0x04
 #define MOVE_TO_DT	0x08
 
-	u_int8_t	reserved1[2];
+	u_int8_t	reserved1[4];
 
 	/*
 	 * Similar to above, but for EXCHANGE MEDIUM.
