@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.10 2000/09/03 02:01:32 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.11 2000/09/06 19:01:45 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
 
@@ -505,8 +505,9 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 #endif
 
 	if ( bootverbose ) {
-		printf("%s: buffer size %d, addr 0x%x\n",
-			bktr_name(bktr), BROOKTREE_ALLOC, vtophys(buf));
+		printf("%s: buffer size %d, addr 0x%lx\n",
+			bktr_name(bktr), BROOKTREE_ALLOC,
+			(u_long) vtophys((vaddr_t)buf));
 	}
 
 	if ( buf != 0 ) {
@@ -711,7 +712,7 @@ common_bktr_intr( void *arg )
 			}
 		}
 
-		OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
+		OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
 		OUTW(bktr, BKTR_GPIO_DMA_CTL, FIFO_ENABLED);
 		OUTW(bktr, BKTR_GPIO_DMA_CTL, bktr->capcontrol);
 
@@ -2689,7 +2690,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		pitch = bktr->video.width;
 	}
 	else {
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
 		pitch = cols*Bpp;
 	}
 
@@ -2709,7 +2710,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys((vaddr_t)bktr->vbidata +
 					(i * VBI_LINE_SIZE));
 	}
 
@@ -2760,7 +2761,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
+		*dma_prog++ = (u_long) vtophys((vaddr_t)bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 	}
 
@@ -2810,7 +2811,7 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = 0;  /* NULL WORD */
 
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(loop_point) ;
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)loop_point) ;
 	*dma_prog++ = 0;  /* NULL WORD */
 
 }
@@ -2861,7 +2862,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		pitch = bktr->video.width;
 	}
 	else {
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
 		pitch = cols*Bpp;
 	}
 
@@ -2908,7 +2909,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 2:
@@ -2917,7 +2918,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 3:
@@ -2925,7 +2926,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP; ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
 		break;
 	}
 
@@ -2972,7 +2973,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog) ;
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3015,7 +3016,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	if (bktr->video.addr)
 		target_buffer = (u_long) bktr->video.addr;
 	else
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
 
 	buffer = target_buffer;
 
@@ -3041,7 +3042,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 2:
@@ -3049,7 +3050,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = OP_SYNC  | 1 << 24 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 3:
@@ -3057,7 +3058,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = OP_SYNC	 | 1 << 24 | 1 << 15 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3084,10 +3085,10 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC   |  1 << 24  | 1 << 15 |  BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 
 	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3133,7 +3134,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	if (bktr->video.addr)
 		target_buffer = (u_long) bktr->video.addr;
 	else
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
     
 	buffer = target_buffer;
 
@@ -3158,7 +3159,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP ;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 2:
@@ -3166,7 +3167,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 		return;
 
 	case 3:
@@ -3174,7 +3175,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3200,7 +3201,7 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC  | 1 << 24 | 1 << 15 |   BKTR_VRE; 
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog) ;
 	*dma_prog++ = 0;  /* NULL WORD */
 }
 
@@ -3234,7 +3235,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  	if (bktr->video.addr)
  		target_buffer = (u_long) bktr->video.addr;
  	else
- 		target_buffer = (u_long) vtophys(bktr->bigbuf);
+ 		target_buffer = (u_long) vtophys((vaddr_t)bktr->bigbuf);
      
 	buffer = target_buffer;
  	t1 = buffer;
@@ -3262,7 +3263,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
  		return;
 
  	case 2:
@@ -3270,14 +3271,14 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
  		*dma_prog++ = 0;  /* NULL WORD */
 
 		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
  		return;
  
  	case 3:
  		*dma_prog++ = OP_SYNC |  1 << 24 | 1 << 15 | BKTR_VRO;
 		*dma_prog++ = 0;  /* NULL WORD */
 		*dma_prog++ = OP_JUMP ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_long ) vtophys((vaddr_t)bktr->odd_dma_prog);
 		break;
 	}
 
@@ -3310,7 +3311,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = OP_SYNC |  1 << 24 | 1 << 15 | BKTR_VRE;
 	*dma_prog++ = 0;  /* NULL WORD */
 	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = (u_long ) vtophys((vaddr_t)bktr->dma_prog);
 	*dma_prog++ = 0;  /* NULL WORD */
 }
   
@@ -3470,7 +3471,7 @@ build_dma_prog( bktr_ptr_t bktr, char i_flag )
 		break;
 	}
 
-	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
+	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
 
 	rows = bktr->rows;
 	cols = bktr->cols;
@@ -3579,7 +3580,7 @@ start_capture( bktr_ptr_t bktr, unsigned type )
 	}
 	
 
-	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys(bktr->dma_prog));
+	OUTL(bktr, BKTR_RISC_STRT_ADD, vtophys((vaddr_t)bktr->dma_prog));
 
 }
 

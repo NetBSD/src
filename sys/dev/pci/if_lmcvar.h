@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.3 2000/05/03 21:08:03 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.4 2000/09/06 18:56:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -558,7 +558,7 @@ extern struct cfdriver de_cd;
 #endif
 
 #if !defined(LMC_KVATOPHYS)
-#define	LMC_KVATOPHYS(sc, va)	vtophys(va)
+#define	LMC_KVATOPHYS(sc, va)	vtophys((vaddr_t)(va))
 #endif
 
 #ifndef LMC_RAISESPL
