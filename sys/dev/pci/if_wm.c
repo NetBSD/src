@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.60 2003/11/03 03:05:25 ichiro Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.61 2003/11/04 19:09:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,13 +40,15 @@
  *
  * TODO (in order of importance):
  *
- *	- Fix hw VLAN assist.
+ *	- Rework how parameters are loaded from the EEPROM.
+ *	- Figure out performance stability issue on i82547 (fvdl).
  *	- Figure out what to do with the i82545GM and i82546GB
  *	  SERDES controllers.
+ *	- Fix hw VLAN assist.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.60 2003/11/03 03:05:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.61 2003/11/04 19:09:39 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -556,7 +558,6 @@ const struct wm_product {
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
 #endif
-#if 0 /* not yet... */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
 	  "Intel i82541EI Mobile 1000BASE-T Ethernet",
 	  WM_T_82541,		WMP_F_1000T },
@@ -580,7 +581,6 @@ const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,
 	  "Intel i82547GI 1000BASE-T Ethernet",
 	  WM_T_82547_2,		WMP_F_1000T },
-#endif /* not yet... */
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
