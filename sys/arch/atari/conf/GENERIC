@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.32.4.1 1997/08/23 07:08:28 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.32.4.2 1997/09/01 18:30:40 thorpej Exp $
 #
 # Generic atari
 #
@@ -86,7 +86,7 @@ options	SYSVSEM			# System V semaphores
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
 options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 #
 # Atari specific options
