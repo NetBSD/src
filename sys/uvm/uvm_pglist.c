@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.4 1998/05/05 20:51:07 kleink Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.5 1998/07/08 04:28:28 thorpej Exp $	*/
 
 #define VM_PAGE_ALLOC_MEMORY_STATS
  
@@ -100,7 +100,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	vm_offset_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
-	int s, tryidx, idx, end, error;
+	int s, tryidx, idx, end, error, free_list;
 	vm_page_t m;
 	u_long pagemask;
 #ifdef DEBUG
@@ -140,7 +140,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	uvm_lock_fpageq();            /* lock free page queue */
 
 	/* Are there even any free pages? */
-	if (uvm.page_free.tqh_first == NULL)
+	for (idx = 0; idx < VM_NFREELIST; idx++)
+		if (uvm.page_free[idx].tqh_first != NULL)
+			break;
+	if (idx == VM_NFREELIST)
 		goto out;
 
 	for (;; try += alignment) {
@@ -210,16 +213,17 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	idx = tryidx;
 	while (idx < end) {
 		m = &pgs[idx];
+		free_list = uvm_page_lookup_freelist(m);
 #ifdef DEBUG
-		for (tp = uvm.page_free.tqh_first; tp != NULL;
-		    tp = tp->pageq.tqe_next) {
+		for (tp = uvm.page_free[free_list].tqh_first;
+		     tp != NULL; tp = tp->pageq.tqe_next) {
 			if (tp == m)
 				break;
 		}
 		if (tp == NULL)
 			panic("uvm_pglistalloc: page not on freelist");
 #endif
-		TAILQ_REMOVE(&uvm.page_free, m, pageq);
+		TAILQ_REMOVE(&uvm.page_free[free_list], m, pageq);
 		uvmexp.free--;
 		m->flags = PG_CLEAN;
 		m->pqflags = 0;
@@ -277,7 +281,8 @@ uvm_pglistfree(list)
 #endif
 		TAILQ_REMOVE(list, m, pageq);
 		m->pqflags = PQ_FREE;
-		TAILQ_INSERT_TAIL(&uvm.page_free, m, pageq);
+		TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(m)],
+		    m, pageq);
 		uvmexp.free++;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}

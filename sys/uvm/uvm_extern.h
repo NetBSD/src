@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.14 1998/07/04 22:18:53 jonathan Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.15 1998/07/08 04:28:27 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -126,6 +126,13 @@
 #define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
 #define UVM_KMF_VALLOC	0x2			/* allocate VA only */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
+
+/*
+ * the following defines the strategies for uvm_pagealloc_strat()
+ */
+#define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
+#define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
+#define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
 
 /*
  * structures
@@ -328,12 +335,14 @@ int			uvm_mmap __P((vm_map_t, vm_offset_t *, vm_size_t,
 				caddr_t, vm_offset_t));
 
 /* uvm_page.c */
-struct vm_page		*uvm_pagealloc __P((struct uvm_object *, vm_offset_t,
-					    struct vm_anon *));
+struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
+				vm_offset_t, struct vm_anon *, int, int));
+#define	uvm_pagealloc(obj, off, anon) \
+	    uvm_pagealloc_strat((obj), (off), (anon), UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagerealloc __P((struct vm_page *, 
 					     struct uvm_object *, vm_offset_t));
 void			uvm_page_physload __P((vm_offset_t, vm_offset_t,
-					       vm_offset_t, vm_offset_t));
+					       vm_offset_t, vm_offset_t, int));
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */

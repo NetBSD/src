@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.11 1998/05/28 15:31:31 chuck Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.12 1998/07/08 04:28:28 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -224,7 +224,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * step 1: init the page queues and page queue locks
 	 */
 
-	TAILQ_INIT(&uvm.page_free);
+	for (lcv = 0; lcv < VM_NFREELIST; lcv++)
+	  TAILQ_INIT(&uvm.page_free[lcv]);
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive_swp);
 	TAILQ_INIT(&uvm.page_inactive_obj);
@@ -548,8 +549,9 @@ uvm_page_physget(paddrp)
  */
 
 void
-uvm_page_physload(start, end, avail_start, avail_end)
+uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	vm_offset_t start, end, avail_start, avail_end;
+	int free_list;
 {
 	int preload, lcv, npages;
 	struct vm_page *pgs;
@@ -557,6 +559,9 @@ uvm_page_physload(start, end, avail_start, avail_end)
 
 	if (uvmexp.pagesize == 0)
 		panic("vm_page_physload: page size not set!");
+
+	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
+		panic("uvm_page_physload: bad free list %d\n", free_list);
 
 	/*
 	 * do we have room?
@@ -597,11 +602,12 @@ uvm_page_physload(start, end, avail_start, avail_end)
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
 		}
-		/* zero data, init phys_addr, and free pages */
+		/* zero data, init phys_addr and free_list, and free pages */
 		bzero(pgs, sizeof(struct vm_page) * npages);
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
+			pgs[lcv].free_list = free_list;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
 				uvm_pagefree(&pgs[lcv]);
@@ -673,6 +679,7 @@ uvm_page_physload(start, end, avail_start, avail_end)
 		ps->pgs = pgs;
 		ps->lastpg = pgs + npages - 1;
 	}
+	ps->free_list = free_list;
 	vm_nphysseg++;
 
 	/*
@@ -794,7 +801,7 @@ uvm_page_physdump()
 #endif
 
 /*
- * uvm_pagealloc: allocate vm_page.   
+ * uvm_pagealloc_strat: allocate vm_page from a particular free list.
  *
  * => return null if no pages free
  * => wake up pagedaemon if number of free pages drops below low water mark
@@ -802,16 +809,19 @@ uvm_page_physdump()
  * => if anon != NULL, anon must be locked (to put in anon)
  * => only one of obj or anon can be non-null
  * => caller must activate/deactivate page if it is not wired.
+ * => free_list is ignored if strat == UVM_PGA_STRAT_NORMAL.
  */
 
 struct vm_page *
-uvm_pagealloc(obj, off, anon)
+uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	struct uvm_object *obj;
 	vm_offset_t off;
 	struct vm_anon *anon;
+	int strat, free_list;
 {
-	int s;
+	int lcv, s;
 	struct vm_page *pg;
+	struct pglist *freeq;
 
 #ifdef DIAGNOSTIC
 	/* sanity check */
@@ -841,18 +851,53 @@ uvm_pagealloc(obj, off, anon)
 	 *        the requestor isn't the pagedaemon.
 	 */
 
-	pg = uvm.page_free.tqh_first;
-	if (pg == NULL || 
-	    (uvmexp.free <= uvmexp.reserve_kernel &&
+	if ((uvmexp.free <= uvmexp.reserve_kernel &&
 	     !(obj && obj->uo_refs == UVM_OBJ_KERN)) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(obj == uvmexp.kmem_object && curproc == uvm.pagedaemon_proc))) {
-		uvm_unlock_fpageq();
-		splx(s);
-		return(NULL);
+	     !(obj == uvmexp.kmem_object && curproc == uvm.pagedaemon_proc)))
+		goto fail;
+
+ again:
+	switch (strat) {
+	case UVM_PGA_STRAT_NORMAL:
+		/* Check all freelists in descending priority order. */
+		for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
+			freeq = &uvm.page_free[lcv];
+			if ((pg = freeq->tqh_first) != NULL)
+				goto gotit;
+		}
+
+		/* No pages free! */
+		goto fail;
+
+	case UVM_PGA_STRAT_ONLY:
+	case UVM_PGA_STRAT_FALLBACK:
+		/* Attempt to allocate from the specified free list. */
+#ifdef DIAGNOSTIC
+		if (free_list >= VM_NFREELIST || free_list < 0)
+			panic("uvm_pagealloc_strat: bad free list %d",
+			    free_list);
+#endif
+		freeq = &uvm.page_free[free_list];
+		if ((pg = freeq->tqh_first) != NULL)
+			goto gotit;
+
+		/* Fall back, if possible. */
+		if (strat == UVM_PGA_STRAT_FALLBACK) {
+			strat = UVM_PGA_STRAT_NORMAL;
+			goto again;
+		}
+
+		/* No pages free! */
+		goto fail;
+
+	default:
+		panic("uvm_pagealloc_strat: bad strat %d", strat);
+		/* NOTREACHED */
 	}
 
-	TAILQ_REMOVE(&uvm.page_free, pg, pageq);
+ gotit:
+	TAILQ_REMOVE(freeq, pg, pageq);
 	uvmexp.free--;
 
 	uvm_unlock_fpageq();		/* unlock free page queue */
@@ -879,6 +924,11 @@ uvm_pagealloc(obj, off, anon)
 	UVM_PAGE_OWN(pg, "new alloc");
 
 	return(pg);
+
+ fail:
+	uvm_unlock_fpageq();
+	splx(s);
+	return (NULL);
 }
 
 /*
@@ -1021,7 +1071,8 @@ struct vm_page *pg;
 
 	s = splimp();
 	uvm_lock_fpageq();
-	TAILQ_INSERT_TAIL(&uvm.page_free, pg, pageq);
+	TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)],
+	    pg, pageq);
 	pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
