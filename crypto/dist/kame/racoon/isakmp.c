@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp.c,v 1.15 2004/04/12 03:34:07 itojun Exp $");
+__RCSID("$NetBSD: isakmp.c,v 1.16 2004/08/06 13:57:05 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1287,17 +1287,21 @@ isakmp_open()
 		/* warn if wildcard address - should we forbid this? */
 		switch (p->addr->sa_family) {
 		case AF_INET:
+#if 0
 			if (((struct sockaddr_in *)p->addr)->sin_addr.s_addr == 0)
 				plog(LLV_WARNING, LOCATION, NULL,
 					"listening to wildcard address,"
 					"broadcast IKE packet may kill you\n");
+#endif
 			break;
 #ifdef INET6
 		case AF_INET6:
+#if 0
 			if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)p->addr)->sin6_addr))
 				plog(LLV_WARNING, LOCATION, NULL,
 					"listening to wildcard address, "
 					"broadcast IKE packet may kill you\n");
+#endif
 			break;
 #endif
 		default:
