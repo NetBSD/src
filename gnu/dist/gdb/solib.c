@@ -71,6 +71,7 @@ static char *solib_break_names[] = {
   "r_debug_state",
   "_r_debug_state",
   "_dl_debug_state",
+  "_rtld_debug_state",
   NULL
 };
 #endif
@@ -1563,7 +1564,12 @@ solib_create_inferior_hook()
      Now run the target.  It will eventually hit the breakpoint, at
      which point all of the libraries will have been mapped in and we
      can go groveling around in the dynamic linker structures to find
-     out what we need to know about them. */
+     out what we need to know about them.
+
+     Note: This applies to NetBSD too, where ld.so is kind enough to
+     generated a breakpoint trap after mapping the shared libraries,
+     but before calling main.  We HAVE to let ld.so do that, because
+     there is no symbol marking the spot we would like to stop.  */
 
   clear_proceed_status ();
   stop_soon_quietly = 1;
