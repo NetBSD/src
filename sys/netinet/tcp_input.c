@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.66 1998/09/19 04:32:51 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.67 1998/09/19 04:34:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -601,7 +601,7 @@ findpcb:
 						 * We were unable to create
 						 * the connection.  If the
 						 * 3-way handshake was
-						 * completeed, and RST has
+						 * completed, and RST has
 						 * been sent to the peer.
 						 * Since the mbuf might be
 						 * in use for the reply,
