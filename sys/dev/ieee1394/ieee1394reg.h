@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.7 2001/05/01 04:48:11 jmc Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.8 2001/05/01 06:15:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _DEV_IEEE1394_IEEE1394REG_H_
-#define _DEV_IEEE1394_IEEE1394REG_H_
+#define	_DEV_IEEE1394_IEEE1394REG_H_
 
 #include <dev/std/ieee1212reg.h>
 
@@ -162,7 +162,7 @@ struct ieee1394_async_nodata {
 /*
  * Signature
  */
-#define IEEE1394_SIGNATURE              0x31333934
+#define	IEEE1394_SIGNATURE              0x31333934
 
 /*
  * Tag value
@@ -174,7 +174,7 @@ struct ieee1394_async_nodata {
  */
 #define	CSR_BASE_HI			0x0000ffff
 #define	CSR_BASE_LO			0xf0000000
-#define CSR_BASE			0x0000fffff0000000
+#define	CSR_BASE			0x0000fffff0000000
 
 #define	CSR_STATE_CLEAR			0x0000
 #define	CSR_STATE_SET			0x0004

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.9 2001/05/01 04:48:11 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.10 2001/05/01 06:15:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@
 #define	OHCI_BUF_ATRQ_CNT	(8*8)
 #define	OHCI_BUF_ATRS_CNT	(8*8)
 #define	OHCI_BUF_IR_CNT		16
-#define	OHCI_BUF_CNT		(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT + OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
+#define	OHCI_BUF_CNT							\
+	(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT +	\
+	    OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
 
 #define	OHCI_LOOP		1000
 #define	OHCI_SELFID_TIMEOUT	(hz * 3)
@@ -79,7 +81,7 @@ struct fwohci_pkt {
 	struct uio fp_uio;
 	struct iovec fp_iov[6];
 	u_int32_t *fp_trail;
-        struct mbuf *fp_m;
+	struct mbuf *fp_m;
 	void (*fp_callback)(struct device *, struct mbuf *);
 };
 
@@ -145,14 +147,14 @@ struct fwohci_softc {
 	struct fwohci_ctx **sc_ctx_ir;
 	struct fwohci_buf sc_buf_cnfrom;
 	struct fwohci_buf sc_buf_selfid;
-        
-        struct proc *sc_event_thread;
 
-        int sc_dying;
-        u_int32_t sc_intmask;
-        u_int32_t sc_iso;
+	struct proc *sc_event_thread;
+
+	int sc_dying;
+	u_int32_t sc_intmask;
+	u_int32_t sc_iso;
     
-        u_int8_t sc_csr[CSR_SB_END];
+	u_int8_t sc_csr[CSR_SB_END];
 
 	struct fwohci_uidtbl *sc_uidtbl;
 	u_int16_t sc_nodeid;			/* Full Node ID of this node */
