@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.14 1998/07/28 18:11:39 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.15 1998/08/04 04:03:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -109,7 +109,7 @@ vmcmdset_extend(evsp)
 
 	/* free the old struct, if there was one, and record the new one */
 	if (ocnt) {
-		bcopy(evsp->evs_cmds, nvcp, (ocnt * sizeof(struct exec_vmcmd)));
+		memcpy(nvcp, evsp->evs_cmds, (ocnt * sizeof(struct exec_vmcmd)));
 		FREE(evsp->evs_cmds, M_EXEC);
 	}
 	evsp->evs_cmds = nvcp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.16 1996/10/25 21:20:29 cgd Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.17 1998/08/04 04:03:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -91,7 +91,7 @@ clalloc(clp, size, quot)
 	MALLOC(clp->c_cs, u_char *, size, M_TTYS, M_WAITOK);
 	if (!clp->c_cs)
 		return (-1);
-	bzero(clp->c_cs, size);
+	memset(clp->c_cs, 0, size);
 
 	if(quot) {
 		MALLOC(clp->c_cq, u_char *, QMEM(size), M_TTYS, M_WAITOK);
@@ -99,7 +99,7 @@ clalloc(clp, size, quot)
 			FREE(clp->c_cs, M_TTYS);
 			return (-1);
 		}
-		bzero(clp->c_cs, QMEM(size));
+		memset(clp->c_cs, 0, QMEM(size));
 	} else
 		clp->c_cq = (u_char *)0;
 
@@ -177,7 +177,7 @@ q_to_b(clp, cp, count)
 			cc = clp->c_ce - clp->c_cf;
 		if (cc > count)
 			cc = count;
-		bcopy(clp->c_cf, p, cc);
+		memcpy(p, clp->c_cf, cc);
 		count -= cc;
 		p += cc;
 		clp->c_cc -= cc;
@@ -403,12 +403,12 @@ b_to_q(cp, count, clp)
 			cc = clp->c_cf - clp->c_cl;
 		if (cc > count)
 			cc = count;
-		bcopy(p, clp->c_cl, cc);
+		memcpy(clp->c_cl, p, cc);
 		if (clp->c_cq) {
 #ifdef QBITS
 			clrbits(clp->c_cq, clp->c_cl - clp->c_cs, cc);
 #else
-			bzero(clp->c_cl - clp->c_cs + clp->c_cq, cc);
+			memset(clp->c_cl - clp->c_cs + clp->c_cq, 0, cc);
 #endif
 		}
 		p += cc;

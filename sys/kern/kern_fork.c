@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.44 1998/08/02 04:41:32 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.45 1998/08/04 04:03:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -237,9 +237,9 @@ again:
 	 * Start by zeroing the section of proc that is zero-initialized,
 	 * then copy the section that is copied directly from the parent.
 	 */
-	bzero(&p2->p_startzero,
+	memset(&p2->p_startzero, 0,
 	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
-	bcopy(&p1->p_startcopy, &p2->p_startcopy,
+	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
 	/*
@@ -253,7 +253,7 @@ again:
 		startprofclock(p2);
 	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
 	    M_SUBPROC, M_WAITOK);
-	bcopy(p1->p_cred, p2->p_cred, sizeof(*p2->p_cred));
+	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.46 1998/07/31 22:50:49 perry Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.47 1998/08/04 04:03:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -174,7 +174,7 @@ acct_process(p)
 	 */
 
 	/* (1) The name of the command that ran */
-	bcopy(p->p_comm, acct.ac_comm, sizeof(acct.ac_comm));
+	memcpy(acct.ac_comm, p->p_comm, sizeof(acct.ac_comm));
 
 	/* (2) The amount of user and system time that was used */
 	calcru(p, &ut, &st, NULL);

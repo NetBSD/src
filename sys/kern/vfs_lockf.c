@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.13 1998/07/31 22:50:53 perry Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.14 1998/08/04 04:03:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -671,7 +671,7 @@ lf_split(lock1, lock2)
 	 * the encompassing lock
 	 */
 	MALLOC(splitlock, struct lockf *, sizeof(*splitlock), M_LOCKF, M_WAITOK);
-	bcopy((caddr_t)lock1, (caddr_t)splitlock, sizeof(*splitlock));
+	memcpy((caddr_t)splitlock, (caddr_t)lock1, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
 	lock1->lf_end = lock2->lf_start - 1;

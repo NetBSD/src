@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.108 1998/07/31 22:50:52 perry Exp $	*/
+/*	$NetBSD: tty.c,v 1.109 1998/08/04 04:03:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -240,7 +240,7 @@ ttylopen(device, tp)
 	tp->t_dev = device;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_ISOPEN);
-		bzero(&tp->t_winsize, sizeof(tp->t_winsize));
+		memset(&tp->t_winsize, 0, sizeof(tp->t_winsize));
 #ifdef COMPAT_OLDTTY
 		tp->t_flags = 0;
 #endif
@@ -832,7 +832,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case TIOCGETA: {		/* get termios struct */
 		struct termios *t = (struct termios *)data;
 
-		bcopy(&tp->t_termios, t, sizeof(struct termios));
+		memcpy(t, &tp->t_termios, sizeof(struct termios));
 		break;
 	}
 	case TIOCGETD:			/* get line discipline */
@@ -924,7 +924,7 @@ ttioctl(tp, cmd, data, flag, p)
 		else
 			CLR(t->c_lflag, EXTPROC);
 		tp->t_lflag = t->c_lflag | ISSET(tp->t_lflag, PENDIN);
-		bcopy(t->c_cc, tp->t_cc, sizeof(t->c_cc));
+		memcpy(tp->t_cc, t->c_cc, sizeof(t->c_cc));
 		splx(s);
 		break;
 	}
@@ -1000,7 +1000,7 @@ ttioctl(tp, cmd, data, flag, p)
 		ttyinfo(tp);
 		break;
 	case TIOCSWINSZ:		/* set window size */
-		if (bcmp((caddr_t)&tp->t_winsize, data,
+		if (memcmp((caddr_t)&tp->t_winsize, data,
 		    sizeof(struct winsize))) {
 			tp->t_winsize = *(struct winsize *)data;
 			pgsignal(tp->t_pgrp, SIGWINCH, 1);
@@ -1141,7 +1141,7 @@ ttychars(tp)
 	struct tty *tp;
 {
 
-	bcopy(ttydefchars, tp->t_cc, sizeof(ttydefchars));
+	memcpy(tp->t_cc, ttydefchars, sizeof(ttydefchars));
 }
 
 /*
@@ -2195,7 +2195,7 @@ ttymalloc()
 	struct tty *tp;
 
 	MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-	bzero(tp, sizeof(*tp));
+	memset(tp, 0, sizeof(*tp));
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

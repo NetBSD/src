@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.8 1998/08/02 19:07:47 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.9 1998/08/04 04:03:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -384,7 +384,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 		/* The page header will be taken from our page header pool */
 		pp->pr_phoffset = 0;
 		off = pagesz;
-		bzero(pp->pr_hashtab, sizeof(pp->pr_hashtab));
+		memset(pp->pr_hashtab, 0, sizeof(pp->pr_hashtab));
 	}
 
 	/*

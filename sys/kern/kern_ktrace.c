@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.31 1998/07/31 22:50:49 perry Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.32 1998/08/04 04:03:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -106,7 +106,7 @@ ktrgetheader(type)
 	kth->ktr_type = type;
 	microtime(&kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
-	bcopy(p->p_comm, kth->ktr_comm, MAXCOMLEN);
+	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 	return (kth);
 }
 

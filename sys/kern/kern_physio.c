@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.32 1998/05/08 18:18:58 kleink Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.33 1998/08/04 04:03:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -295,7 +295,7 @@ getphysbuf()
 	struct buf *bp;
 
 	bp = malloc(sizeof(*bp), M_TEMP, M_WAITOK);
-	bzero(bp, sizeof(*bp));
+	memset(bp, 0, sizeof(*bp));
 
 	/* XXXCDC: are the following two lines necessary? */
 	bp->b_rcred = bp->b_wcred = NOCRED;

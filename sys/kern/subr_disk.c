@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.23 1997/12/30 09:51:24 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.24 1998/08/04 04:03:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -316,8 +316,8 @@ disk_attach(diskp)
 	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
 		panic("disk_attach: can't allocate storage for disklabel");
 
-	bzero(diskp->dk_label, sizeof(struct disklabel));
-	bzero(diskp->dk_cpulabel, sizeof(struct cpu_disklabel));
+	memset(diskp->dk_label, 0, sizeof(struct disklabel));
+	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	/*
 	 * Set the attached timestamp.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.37 1998/08/02 04:53:12 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.38 1998/08/04 04:03:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -91,7 +91,7 @@ socreate(dom, aso, type, proto)
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
 	so = pool_get(&socket_pool, PR_WAITOK);
-	bzero((caddr_t)so, sizeof(*so));
+	memset((caddr_t)so, 0, sizeof(*so));
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
@@ -853,7 +853,7 @@ sorflush(so)
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
-	bzero((caddr_t)sb, sizeof(*sb));
+	memset((caddr_t)sb, 0, sizeof(*sb));
 	splx(s);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
