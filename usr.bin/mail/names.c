@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.14 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: names.c,v 1.15 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.14 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: names.c,v 1.15 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,14 +243,14 @@ outof(struct name *names, FILE *fo, struct header *hp)
 
 		if (image < 0) {
 			if ((fout = Fopen(tempEdit, "a")) == NULL) {
-				perror(tempEdit);
+				warn("%s", tempEdit);
 				senderr++;
 				goto cant;
 			}
 			image = open(tempEdit, 2);
 			(void)unlink(tempEdit);
 			if (image < 0) {
-				perror(tempEdit);
+				warn("%s", tempEdit);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
@@ -264,7 +264,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)putc('\n', fout);
 			(void)fflush(fout);
 			if (ferror(fout)) {
-				perror(tempEdit);
+				warn("%s", tempEdit);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
@@ -306,12 +306,12 @@ outof(struct name *names, FILE *fo, struct header *hp)
 		} else {
 			int f;
 			if ((fout = Fopen(fname, "a")) == NULL) {
-				perror(fname);
+				warn("%s", fname);
 				senderr++;
 				goto cant;
 			}
 			if ((f = dup(image)) < 0) {
-				perror("dup");
+				warn("dup");
 				fin = NULL;
 			} else
 				fin = Fdopen(f, "r");
@@ -325,7 +325,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			while ((c = getc(fin)) != EOF)
 				(void)putc(c, fout);
 			if (ferror(fout)) {
-				perror(fname);
+				warn("%s", fname);
 				senderr++;
 				(void)Fclose(fout);
 				(void)Fclose(fin);

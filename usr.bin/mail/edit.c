@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.12 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.13 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.12 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.13 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ edit1(int *msgvec, int editortype)
 					break;
 			}
 			if (ferror(otf))
-				perror("/tmp");
+				warn("/tmp");
 			(void)Fclose(fp);
 		}
 		(void)signal(SIGINT, sigint);
@@ -153,11 +153,11 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	struct stat statb;
 
 	if ((t = creat(tempEdit, readonlyflag ? 0400 : 0600)) < 0) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		goto out;
 	}
 	if ((nf = Fdopen(t, "w")) == NULL) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		(void)unlink(tempEdit);
 		goto out;
 	}
@@ -170,7 +170,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	(void)fflush(nf);
 	if (ferror(nf)) {
 		(void)Fclose(nf);
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		(void)unlink(tempEdit);
 		nf = NULL;
 		goto out;
@@ -180,7 +180,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	else
 		modtime = statb.st_mtime;
 	if (Fclose(nf) < 0) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		(void)unlink(tempEdit);
 		nf = NULL;
 		goto out;
@@ -202,7 +202,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		goto out;
 	}
 	if (stat(tempEdit, &statb) < 0) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		goto out;
 	}
 	if (modtime == statb.st_mtime) {
@@ -213,7 +213,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	 * Now switch to new file.
 	 */
 	if ((nf = Fopen(tempEdit, "a+")) == NULL) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		(void)unlink(tempEdit);
 		goto out;
 	}

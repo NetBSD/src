@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.19 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.20 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.19 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.20 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ setptr(FILE *ibuf, off_t offset)
 	for (;;) {
 		if (fgets(linebuf, LINESIZE, ibuf) == NULL) {
 			if (append(&this, mestmp)) {
-				perror("temporary file");
+				warn("temporary file");
 				exit(1);
 			}
 			makemessage(mestmp, omsgCount);
@@ -119,7 +119,7 @@ setptr(FILE *ibuf, off_t offset)
 		}
 		(void)fwrite(linebuf, sizeof *linebuf, len, otf);
 		if (ferror(otf)) {
-			perror("/tmp");
+			warn("/tmp");
 			exit(1);
 		}
 		if(len)
@@ -127,7 +127,7 @@ setptr(FILE *ibuf, off_t offset)
 		if (maybe && linebuf[0] == 'F' && ishead(linebuf)) {
 			msgCount++;
 			if (append(&this, mestmp)) {
-				perror("temporary file");
+				warn("temporary file");
 				exit(1);
 			}
 			this.m_flag = MUSED|MNEW;
@@ -371,7 +371,7 @@ expand(char *name)
 	if (strpbrk(name, "~{[*?$`'\"\\") == NULL)
 		return name;
 	if (pipe(pivec) < 0) {
-		perror("pipe");
+		warn("pipe");
 		return name;
 	}
 	snprintf(cmdbuf, PATHSIZE, "echo %s", name);
@@ -391,7 +391,7 @@ expand(char *name)
 		return NULL;
 	}
 	if (l < 0) {
-		perror("read");
+		warn("read");
 		return NULL;
 	}
 	if (l == 0) {

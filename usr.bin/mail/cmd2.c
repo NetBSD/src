@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.14 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.15 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.14 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.15 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,14 +191,14 @@ save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 	else
 		disp = "[New file]";
 	if ((obuf = Fopen(fn, "a")) == NULL) {
-		perror(NULL);
+		warn(NULL);
 		return(1);
 	}
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
 		if (sendmessage(mp, obuf, ignoretabs, NULL) < 0) {
-			perror(fn);
+			warn("%s", fn);
 			Fclose(obuf);
 			return(1);
 		}
@@ -207,7 +207,7 @@ save1(char str[], int markmsg, char *cmd, struct ignoretab *ignoretabs)
 	}
 	fflush(obuf);
 	if (ferror(obuf))
-		perror(fn);
+		warn("%s", fn);
 	Fclose(obuf);
 	printf("%s\n", disp);
 	return(0);
@@ -371,7 +371,7 @@ core(void *v)
 
 	switch (pid = vfork()) {
 	case -1:
-		perror("fork");
+		warn("fork");
 		return(1);
 	case 0:
 		abort();

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 			 */
 			Tflag = optarg;
 			if ((i = creat(Tflag, 0600)) < 0) {
-				perror(Tflag);
+				warn("%s", Tflag);
 				exit(1);
 			}
 			close(i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.25 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.26 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.25 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.26 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ collect(struct header *hp, int printheaders)
 
 	noreset++;
 	if ((collf = Fopen(tempMail, "w+")) == NULL) {
-		perror(tempMail);
+		warn("%s", tempMail);
 		goto err;
 	}
 	unlink(tempMail);
@@ -339,12 +339,12 @@ cont:
 				int rc2;
 
 				if((nullfd = open("/dev/null", O_RDONLY, 0)) == -1) {
-					perror("/dev/null");
+					warn("/dev/null");
 					break;
 				}
 
 				if ((fbuf = Fopen(tempEdit, "w+")) == NULL) {
-					perror(tempEdit);
+					warn("%s", tempEdit);
 					break;
 				}
 				(void)unlink(tempEdit);
@@ -374,7 +374,7 @@ cont:
 				break;
 			}
 			else if ((fbuf = Fopen(cp, "r")) == NULL) {
-				perror(cp);
+				warn("%s", cp);
 				break;
 			}
 			printf("\"%s\" ", cp);
@@ -424,7 +424,7 @@ cont:
 			goto cont;
 		case '?':
 			if ((fbuf = Fopen(_PATH_TILDE, "r")) == NULL) {
-				perror(_PATH_TILDE);
+				warn(_PATH_TILDE);
 				break;
 			}
 			while ((t = getc(fbuf)) != EOF)
@@ -505,7 +505,7 @@ exwrite(char name[], FILE *fp, int f)
 		return(-1);
 	}
 	if ((of = Fopen(name, "w")) == NULL) {
-		perror(name);
+		warn("%s", name);
 		return(-1);
 	}
 	lc = 0;
@@ -516,7 +516,7 @@ exwrite(char name[], FILE *fp, int f)
 			lc++;
 		(void)putc(c, of);
 		if (ferror(of)) {
-			perror(name);
+			warn("%s", name);
 			Fclose(of);
 			return(-1);
 		}
@@ -559,7 +559,7 @@ mespipe(FILE *fp, char cmd[])
 	char *shellcmd;
 
 	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
-		perror(tempEdit);
+		warn("%s", tempEdit);
 		goto out;
 	}
 	(void)unlink(tempEdit);
@@ -629,7 +629,7 @@ forward(char ms[], FILE *fp, int f)
 		touch(mp);
 		printf(" %d", *msgvec);
 		if (sendmessage(mp, fp, ig, tabst) < 0) {
-			perror(tempMail);
+			warn("%s", tempMail);
 			return(-1);
 		}
 	}
