@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.13 2000/07/07 00:18:29 mjl Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.14 2000/07/28 19:19:23 thorpej Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -58,7 +58,20 @@ int main(int argc, char **argv)
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
-	(void)strncpy(defaultseed, hostname, sizeof(defaultseed)- 1);
+
+	/*
+	 * Copy the hostname into the default seed, eliminating any
+	 * non alpha-numeric characters.
+	 */
+	for (i = 0, l = 0; l < sizeof(defaultseed); i++) {
+		if (hostname[i] == '\0') {
+			defaultseed[l] = hostname[i];
+			break;
+		}
+		if (isalnum(hostname[i]))
+			defaultseed[l++] = hostname[i];
+	}
+
 	defaultseed[SKEY_NAMELEN] = '\0';
 	(void)time(&now);
 	(void)sprintf(tbuf, "%05ld", (long) (now % 100000));
