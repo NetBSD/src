@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.1 2002/04/22 10:44:47 wiz Exp $ */
+/* $NetBSD: pms.c,v 1.2 2002/04/22 15:16:56 ad Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.1 2002/04/22 10:44:47 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2 2002/04/22 15:16:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ pms_spawn_reset_thread(arg)
 {
 	struct pms_softc *sc = arg;
 	kthread_create1(pms_reset_thread, sc, &sc->sc_event_thread,
-	    "pms reset thread");
+	    sc->sc_dev.dv_xname);
 }
 
 static void
