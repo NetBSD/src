@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.14 1997/09/13 05:18:30 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.15 1997/09/29 01:41:32 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -96,6 +96,7 @@ static void isp_fibre_init __P((struct ispsoftc *));
 static void isp_fw_state __P((struct ispsoftc *));
 static void isp_dumpregs __P((struct ispsoftc *, const char *));
 static void isp_setdparm __P((struct ispsoftc *));
+static void isp_prtstst __P((ispstatusreq_t *));
 
 #define	WATCHI	(30 * hz)
 static void isp_watch __P((void *));
@@ -1166,6 +1167,12 @@ isp_parse_status(isp, sp, xs)
 		printf("%s: incomplete, state %x\n",
 			isp->isp_name, sp->req_state_flags);
 		break;
+
+	case RQCS_TRANSPORT_ERROR:
+		printf("%s: transport error\n", isp->isp_name);
+		isp_prtstst(sp);
+		break;
+
 	case RQCS_DATA_OVERRUN:
 		if (isp->isp_type & ISP_HA_FC) {
 			xs->resid = sp->req_resid;
@@ -1828,4 +1835,43 @@ isp_watch(void *arg)
 	}
 	(void) splx(s);
 	timeout(isp_watch, arg, WATCHI);
+}
+
+static void
+isp_prtstst(ispstatusreq_t *sp)
+{
+	printf("states->");
+	if (sp->req_state_flags & RQSF_GOT_BUS)
+		printf("GOT_BUS ");
+	if (sp->req_state_flags & RQSF_GOT_TARGET)
+		printf("GOT_TGT ");
+	if (sp->req_state_flags & RQSF_SENT_CDB)
+		printf("SENT_CDB ");
+	if (sp->req_state_flags & RQSF_XFRD_DATA)
+		printf("XFRD_DATA ");
+	if (sp->req_state_flags & RQSF_GOT_STATUS)
+		printf("GOT_STS ");
+	if (sp->req_state_flags & RQSF_GOT_SENSE)
+		printf("GOT_SNS ");
+	if (sp->req_state_flags & RQSF_XFER_COMPLETE)
+		printf("XFR_CMPLT ");
+	printf("\n");
+	printf("status->");
+	if (sp->req_status_flags & RQSTF_DISCONNECT)
+		printf("Disconnect ");
+	if (sp->req_status_flags & RQSTF_SYNCHRONOUS)
+		printf("Sync_xfr ");
+	if (sp->req_status_flags & RQSTF_PARITY_ERROR)
+		printf("Parity ");
+	if (sp->req_status_flags & RQSTF_BUS_RESET)
+		printf("Bus_Reset ");
+	if (sp->req_status_flags & RQSTF_DEVICE_RESET)
+		printf("Device_Reset ");
+	if (sp->req_status_flags & RQSTF_ABORTED)
+		printf("Aborted ");
+	if (sp->req_status_flags & RQSTF_TIMEOUT)
+		printf("Timeout ");
+	if (sp->req_status_flags & RQSTF_NEGOTIATION)
+		printf("Negotiation ");
+	printf("\n");
 }
