@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.50 2001/05/02 10:32:11 scw Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.51 2001/05/18 11:49:21 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.50 2001/05/02 10:32:11 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.51 2001/05/18 11:49:21 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1782,19 +1782,18 @@ wsdisplay_pollc(dev, on)
 	dev_t dev;
 	int on;
 {
-	struct wsdisplay_softc *sc;
-
-	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	wsdisplay_cons_pollmode = on;
 
 	/* notify to fb drivers */
-	if (sc != NULL && sc->sc_accessops->pollc != NULL)
-		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
+	if (wsdisplay_console_device != NULL &&
+	    wsdisplay_console_device->sc_accessops->pollc != NULL)
+		(*wsdisplay_console_device->sc_accessops->pollc)
+			(wsdisplay_console_device->sc_accesscookie, on);
 
 	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
-		(*wsdisplay_cons_kbd_pollc)(dev, on);
+		(*wsdisplay_cons_kbd_pollc)(NODEV, on);
 }
 
 void
