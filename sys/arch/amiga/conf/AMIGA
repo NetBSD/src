@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.22 1999/10/15 21:54:43 is Exp $
+# $NetBSD: AMIGA,v 1.23 2000/01/22 21:09:38 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.129 1999/10/15 21:50:34 is Exp $
+#$ NetBSD: GENERIC,v 1.132 2000/01/20 19:12:28 wrstuden Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -32,9 +32,24 @@ options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
 
+#Pull in config fragments for kernel crypto.  This is required for
+#options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+#one of these, based on whether you use crypto-us or crypto-intl, and
+#adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
 #Networking options
 
 options 	INET		# IP networking support (Required)
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	MROUTING	# Multicast routing
@@ -61,6 +76,7 @@ file-system 	MSDOSFS		# MS-DOS filesystem
 file-system 	FDESC		# user file descriptor filesystem
 file-system 	KERNFS		# kernel data-structure filesystem
 file-system 	NULLFS		# loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
 #file-system 	PORTAL		# Portal filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -69,6 +85,7 @@ file-system 	UNION		# union filesystem
 #Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -312,6 +329,8 @@ pseudo-device	tun		1	# network tunnel line discipline
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys
