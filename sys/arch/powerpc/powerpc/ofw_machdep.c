@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.4 1998/02/24 05:46:07 mycroft Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.5 2000/05/23 13:25:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -90,6 +90,7 @@ ppc_boot(str)
 	OF_boot(str);
 }
 
+#ifdef __BROKEN_DK_ESTABLISH
 /*
  * Establish a list of all available disks to allow specifying the
  * root/swap/dump dev.
@@ -295,3 +296,4 @@ dk_match(name)
 	}
 	return ENODEV;
 }
+#endif /* __BROKEN_DK_ESTABLISH */
