@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.3 1997/10/11 01:53:35 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 1997/10/11 01:55:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.3 1997/10/11 01:53:35 lukem Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.4 1997/10/11 01:55:30 lukem Exp $";
 #endif
 #endif				/* not lint */
 
@@ -71,10 +71,9 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.3 1997/10/11 01:53:35 lukem Exp $";
 #define YES 1
 #define NO  0
 
-void    fatal();
-
 #define LINE 10			/* How many values do we get on a line? */
 
+int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
@@ -83,10 +82,10 @@ main(argc, argv)
 	int     c, count, linestart;
 
 	if (argc != 2)
-		fatal(USAGE);
+		errx(1, USAGE);
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
-		fatal("Can't read file %s.\n", argv[1]);
+		err(1, "Can't read file %s.\n", argv[1]);
 	puts("/*\n * data.c: created by setup from the ascii data file.");
 	puts(SIG1);
 	puts(SIG2);
@@ -119,13 +118,4 @@ main(argc, argv)
 	puts("\n\t0\n};");
 	fclose(infile);
 	exit(0);
-}
-
-
-void 
-fatal(format, arg)
-	char   *format;
-{
-	fprintf(stderr, format, arg);
-	exit(1);
 }
