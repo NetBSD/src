@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.35 1999/04/24 08:01:08 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.36 1999/06/08 23:41:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -71,6 +71,7 @@
 #include <pmax/dev/siivar.h>		/* softc and prototypes */
 
 #include <pmax/pmax/pmaxtype.h>		/* Definition of DS_PMAX */
+#include <pmax/pmax/machdep.h>		/* prom_scsiid prototype */
 
 /* Machine-indepedent back-end attach entry point */
 void	siiattach __P((struct siisoftc *sc));
@@ -219,6 +220,7 @@ siiattach(sc)
 #ifdef USE_NEW_SCSI
 	/* XXX probe SCSI bus and attach slave devices */
 #endif
+	printf(": target %d", sc->sc_regs->id & SII_IDMSK);
 }
 
 
@@ -302,12 +304,9 @@ sii_Reset(sc, reset)
 	 */
 	regs->csr = SII_HPM;
 	/*
-	 * Set host adapter ID (6 for PMIN/PMAX, 7 for everything else)
+	 * Set host adapter ID (from PROM sciiidN variable).
 	 */
-	if (systype == DS_PMAX)
-		regs->id = SII_ID_IO | 6;
-	else
-		regs->id = SII_ID_IO | 7;
+	regs->id = SII_ID_IO | prom_scsiid(sc->sc_dev.dv_unit);
 	/*
 	 * Enable SII to drive the SCSI bus.
 	 */
