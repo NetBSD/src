@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.1 1999/06/07 04:25:38 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.2 1999/07/04 02:08:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -64,6 +64,7 @@
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/pool.h>
+#include <sys/mount.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -191,8 +192,8 @@ uvn_attach(arg, accessprot)
 	 * first get a lock on the uvn.
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
-	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
-		uvn->u_flags |= UVM_VNODE_WANTED;
+	while (uvn->u_flags & VXLOCK) {
+		uvn->u_flags |= VXWANT;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
 		UVM_UNLOCK_AND_WAIT(uvn, &uvn->u_obj.vmobjlock, FALSE,
 		    "uvn_attach", 0);
@@ -211,12 +212,12 @@ uvn_attach(arg, accessprot)
 
 	/* check for new writeable uvn */
 	if ((accessprot & VM_PROT_WRITE) != 0 && 
-	    (uvn->u_flags & UVM_VNODE_WRITEABLE) == 0) {
+	    (uvn->u_flags & VDIRTY) == 0) {
 		simple_lock(&uvn_wl_lock);
 		LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
 		simple_unlock(&uvn_wl_lock);
 		/* we are now on wlist! */
-		uvn->u_flags |= UVM_VNODE_WRITEABLE;
+		uvn->u_flags |= VDIRTY;
 	}
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VREG) {
@@ -230,7 +231,7 @@ uvn_attach(arg, accessprot)
 	 */
 	if (uvn->u_size == VSIZENOTSET) {
 
-	uvn->u_flags = UVM_VNODE_ALOCK;
+	uvn->u_flags = VXLOCK;
 	simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
@@ -271,7 +272,7 @@ uvn_attach(arg, accessprot)
 	/* relock object */
 	simple_lock(&uvn->u_obj.vmobjlock);
 
-	if (uvn->u_flags & UVM_VNODE_WANTED)
+	if (uvn->u_flags & VXWANT)
 		wakeup(uvn);
 	uvn->u_flags = 0;
 
@@ -363,10 +364,10 @@ uvm_vnp_terminate(vp)
 	struct vnode *vp;
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
-	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
+	if (uvn->u_flags & VDIRTY) {
 		simple_lock(&uvn_wl_lock);
 		LIST_REMOVE(uvn, u_wlist);
-		uvn->u_flags &= ~(UVM_VNODE_WRITEABLE);
+		uvn->u_flags &= ~(VDIRTY);
 		simple_unlock(&uvn_wl_lock);
 	}
 }
@@ -422,7 +423,7 @@ uvn_releasepg(pg, nextpgp)
 			panic("uvn_releasepg: kill flag set on referenced "
 			    "object!");
 		if (uvn->u_obj.uo_npages == 0) {
-			if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
+			if (uvn->u_flags & VDIRTY) {
 				simple_lock(&uvn_wl_lock);
 				LIST_REMOVE(uvn, u_wlist);
 				simple_unlock(&uvn_wl_lock);
@@ -431,7 +432,7 @@ uvn_releasepg(pg, nextpgp)
 			if (uvn->u_obj.memq.tqh_first)
 	panic("uvn_releasepg: pages in object with npages == 0");
 #endif
-			if (uvn->u_flags & UVM_VNODE_WANTED)
+			if (uvn->u_flags & VXWANT)
 				/* still holding object lock */
 				wakeup(uvn);
 
@@ -548,6 +549,7 @@ uvn_flush(uobj, start, stop, flags)
 	struct vnode *vp = (struct vnode *)uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
+	int s;
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, by_list, needs_clean;
 	vaddr_t curoff;
@@ -584,7 +586,9 @@ uvn_flush(uobj, start, stop, flags)
 		start = trunc_page(start);
 		stop = round_page(stop);
 		if (stop > round_page(uvn->u_size)) {
-			printf("uvn_flush: oor vp %p start 0x%x stop 0x%x size 0x%x\n", uvn, (int)start, (int)stop, (int)round_page(uvn->u_size));
+			printf("uvn_flush: oor vp %p start 0x%x stop 0x%x "
+			       "size 0x%x\n", uvn, (int)start, (int)stop,
+			       (int)round_page(uvn->u_size));
 		}
 
 		by_list = (uobj->uo_npages <= 
@@ -964,6 +968,7 @@ ReTry:
 		 * but to use that, all i/o initiators will have to change.
 		 */
 
+		s = splbio();
 		while (vp->v_numoutput != 0) {
 			vp->v_flag |= VBWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput,
@@ -971,6 +976,7 @@ ReTry:
 					    FALSE, "uvn_flush",0);
 			simple_lock(&uvn->u_obj.vmobjlock);
 		}
+		splx(s);
 	}
 
 	/* return, with object locked! */
@@ -994,29 +1000,10 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	vaddr_t offset;
 	vaddr_t *loffset, *hoffset; /* OUT */
 {
-	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
-	UVMHIST_FUNC("uvn_cluster"); UVMHIST_CALLED(ubchist);
+	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 
 	*loffset = offset;
-
-	if (*loffset >= uvn->u_size)
-	{
-		/* XXX nfs writes cause trouble with this */
-		*loffset = *hoffset = offset;
-UVMHIST_LOG(ubchist, "uvn_cluster: offset out of range: vp %p loffset 0x%x",
-		      uobj, (int)*loffset, 0,0);
-Debugger();
-		return;
-	}
-
-	/*
-	 * XXX: old pager claims we could use VOP_BMAP to get maxcontig value.
-	 */
-	*hoffset = *loffset + MAXBSIZE;
-	if (*hoffset > round_page(uvn->u_size))	/* past end? */
-		*hoffset = round_page(uvn->u_size);
-
-	return;
+	*hoffset = min(offset + MAXBSIZE, round_page(uvn->u_size));
 }
 
 /*
@@ -1026,8 +1013,6 @@ Debugger();
  * => object must be locked!   we will _unlock_ it before starting I/O.
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
- * => XXX: currently we use VOP_READ/VOP_WRITE which are only sync.
- *	[thus we never do async i/o!  see iodone comment]
  */
 
 static int
@@ -1040,14 +1025,9 @@ uvn_put(uobj, pps, npages, flags)
 
 	sync = (flags & PGO_SYNCIO) ? 1 : 0;
 
-	/* note: object locked */
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
-
-	/* XXX why would the VOP need it locked? */
-	/* currently, just to increment vp->v_numoutput (aka uvn->u_nio) */
 	simple_unlock(&uobj->vmobjlock);
 	retval = VOP_PUTPAGES((struct vnode *)uobj, pps, npages, sync, &retval);
-	/* note: object unlocked */
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 
 	return(retval);
@@ -1076,6 +1056,8 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
+	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
 	simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
@@ -1319,7 +1301,7 @@ uvm_vnp_sync(mp)
 		/* attempt to gain reference */
 		while ((got_lock = simple_lock_try(&uvn->u_obj.vmobjlock)) ==
 		    						FALSE && 
-				(uvn->u_flags & UVM_VNODE_BLOCKED) == 0) 
+				(uvn->u_flags & VXLOCK) == 0) 
 			/* spin */ ;
 
 		/*
@@ -1336,7 +1318,7 @@ uvm_vnp_sync(mp)
 		 * note that uvn must already be valid because we found it on
 		 * the wlist (this also means it can't be ALOCK'd).
 		 */
-		if (!got_lock || (uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
+		if (!got_lock || (uvn->u_flags & VXLOCK) != 0) {
 			if (got_lock)
 				simple_unlock(&uvn->u_obj.vmobjlock);
 			continue;		/* skip it */
@@ -1364,15 +1346,14 @@ uvm_vnp_sync(mp)
 
 		/*
 		 * if we have the only reference and we just cleaned the uvn,
-		 * then we can pull it out of the UVM_VNODE_WRITEABLE state
+		 * then we can pull it out of the VDIRTY state
 		 * thus allowing us to avoid thinking about flushing it again
 		 * on later sync ops.
 		 */
-		if (uvn->u_obj.uo_refs == 1 &&
-		    (uvn->u_flags & UVM_VNODE_WRITEABLE)) {
+		if (uvn->u_obj.uo_refs == 1 && (uvn->u_flags & VDIRTY)) {
 			simple_lock(&uvn_wl_lock);
 			LIST_REMOVE(uvn, u_wlist);
-			uvn->u_flags &= ~UVM_VNODE_WRITEABLE;
+			uvn->u_flags &= ~VDIRTY;
 			simple_unlock(&uvn_wl_lock);
 		}
 
@@ -1391,31 +1372,31 @@ uvm_vnp_sync(mp)
 
 /*
  * uvm_vnp_zerorange:  set a range of bytes in a file to zero.
- * this is called from fs-specific code when truncating a file
- * to zero the part of last block that is past the new end-of-file.
  */
+
 void
 uvm_vnp_zerorange(vp, off, len)
 	struct vnode *vp;
 	off_t off;
 	size_t len;
 {
-	void *win;
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	off_t pagestart = trunc_page(off);
+	off_t pageend = round_page(off + len);
+	int npages = (pageend - pagestart) >> PAGE_SHIFT;
+	struct vm_page *pgs[npages];
+	char *cp;
 
-	/*
-	 * XXX invent kzero() and use it
-	 */
-
-	while (len) {
-		vsize_t bytelen = len;
-
-		win = ubc_alloc(&vp->v_uvm.u_obj, off, &bytelen, UBC_WRITE);
-		memset(win, 0, bytelen);
-		ubc_release(win, 0);
-
-		off += bytelen;
-		len -= bytelen;
-	}
+	memset(pgs, 0, sizeof(pgs));
+	simple_lock(&uobj->vmobjlock);
+	uvn_findpages(uobj, (vaddr_t)pagestart, &npages, pgs, 0);
+	simple_unlock(&uobj->vmobjlock);
+	cp = (char *)uvm_pagermapin(pgs, npages, M_WAITOK);
+	memset(cp + (off - pagestart), 0, len);
+	uvm_pagermapout((vaddr_t)cp, npages);
+	simple_lock(&uobj->vmobjlock);
+	uvm_pager_dropcluster(uobj, NULL, pgs, &npages, 0, 0);
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -1428,23 +1409,19 @@ uvn_doasyncget(pgs, bytes, blkno)
 	size_t bytes;
 	daddr_t blkno;
 {
-	struct uvm_aiobuf *abp;
 	struct buf *bp;
 	struct vnode *vp = (struct vnode *)pgs[0]->uobject;
 	int pages = roundup(bytes, PAGE_SIZE) >> PAGE_SHIFT;
+	int s;
 	UVMHIST_FUNC("uvn_doasyncget"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p offset 0x%x bytes 0x%x blkno 0x%x",
 		    vp, (int)pgs[0]->offset, (int)bytes, (int)blkno);
 
-	abp = pool_get(uvm_aiobuf_pool, PR_WAITOK);
-	abp->aio.aiodone = uvm_aio_aiodone;
-	abp->aio.kva = uvm_pagermapin(pgs, pages, NULL, M_WAITOK);
-	abp->aio.npages = pages;
-	abp->aio.pd_ptr = abp;
-
-	bp = &abp->buf;
-	bzero(bp, sizeof *bp);
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
+	bp->b_data = (void *)uvm_pagermapin(pgs, pages, M_WAITOK);
 	bp->b_flags = B_BUSY|B_READ|B_CALL|B_ASYNC;
 	bp->b_iodone = uvm_aio_biodone;
 	bp->b_lblkno = 0;
@@ -1452,7 +1429,7 @@ uvn_doasyncget(pgs, bytes, blkno)
 	bp->b_bufsize = pages << PAGE_SHIFT;
 	bp->b_bcount = bytes;
 	bp->b_vp = vp;
-	bp->b_data = (void *)abp->aio.kva;
+	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
 	VOP_STRATEGY(bp);
 }
@@ -1464,16 +1441,17 @@ uvn_doasyncget(pgs, bytes, blkno)
  */
 
 void
-uvm_vnp_asyncget(vp, off, len, bsize)
+uvm_vnp_asyncget(vp, off, len)
 	struct vnode *vp;
 	off_t off;
 	size_t len;
-	size_t bsize;
 {
 	off_t filesize = vp->v_uvm.u_size;
 	struct vm_page *pgs[MAXRAPAGES];
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	daddr_t lbn, blkno;
+	int bshift = vp->v_mount->mnt_fs_bshift;
+	int dev_bshift = vp->v_mount->mnt_dev_bshift;
 	int i, npages, npgs, startidx, run, bytes, startpage, endpage;
 	int count;
 	UVMHIST_FUNC("uvn_asyncget"); UVMHIST_CALLED(ubchist);
@@ -1491,7 +1469,7 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 			return;
 		}
 
-		lbn = off / bsize;
+		lbn = off >> bshift;
 		if (VOP_BMAP(vp, lbn, NULL, &blkno, &run) != 0) {
 			return;
 		}
@@ -1505,7 +1483,7 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 		}
 
 		startpage = off >> PAGE_SHIFT;
-		endpage = min(roundup(off + 1 + run * bsize, bsize),
+		endpage = min(roundup(off + 1 + (run << bshift), 1 << bshift),
 			      round_page(filesize)) >> PAGE_SHIFT;
 		npages = min(endpage - startpage, min(count, MAXRAPAGES));
 
@@ -1513,9 +1491,10 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 			    "startpage %d endpage %d",
 			    (int)off, run, startpage, endpage);
 		UVMHIST_LOG(ubchist, "runend 0x%x fileend 0x%x sum 0x%x",
-			    (int)roundup(off + 1 + run * bsize, bsize),
+			    (int)roundup(off + 1 + (run << bshift),
+					 (1 << bshift)),
 			    (int)round_page(filesize),
-			    (int)(off + 1 + run * bsize), 0);
+			    (int)(off + 1 + (run << bshift)), 0);
 
 		if (npages == 0) {
 			return;
@@ -1528,7 +1507,7 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 		uvn_findpages(uobj, off, &npgs, pgs, UFP_NOWAIT | UFP_NOCACHE);
 		simple_unlock(&uobj->vmobjlock);
 
-		blkno += (off - lbn * bsize) >> DEV_BSHIFT;
+		blkno += (off - (lbn << bshift)) >> dev_bshift;
 
 		/*
 		 * activate any pages we just allocated.
@@ -1554,7 +1533,7 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 			if (i > startidx) {
 				bytes = min((i - startidx) << PAGE_SHIFT,
 					    filesize - pgs[startidx]->offset);
-				bytes = roundup(bytes, DEV_BSIZE);
+				bytes = roundup(bytes, 1 << dev_bshift);
 
 				UVMHIST_LOG(ubchist, "bytes i %d startidx %d "
 					    "filesize 0x%x pgoff 0x%x",
@@ -1562,13 +1541,15 @@ uvm_vnp_asyncget(vp, off, len, bsize)
 					    (int)pgs[startidx]->offset);
 
 				uvn_doasyncget(&pgs[startidx], bytes,
-					       blkno + startidx * (PAGE_SIZE >>
-								   DEV_BSHIFT));
+					       blkno + startidx *
+					       (PAGE_SIZE >> dev_bshift));
 			}
 		}
 
 		off += npages << PAGE_SHIFT;
 		count -= npages;
+
+		/* XXX for now, don't loop */
 		return;
 	}
 }
