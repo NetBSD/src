@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.85 2001/12/23 16:16:59 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.86 2002/05/14 17:37:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.85 2001/12/23 16:16:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.86 2002/05/14 17:37:52 mycroft Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -1282,10 +1282,6 @@ ufs_mkdir(void *v)
 			blkoff += DIRBLKSIZ;
 		}
 	}
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
-		(void)VOP_BWRITE(bp);
-		goto bad;
-	}
 	/*
 	 * Directory set up, now install it's entry in the parent directory.
 	 *
@@ -1297,8 +1293,13 @@ ufs_mkdir(void *v)
 	 * an appropriate ordering dependency to the buffer which ensures that
 	 * the buffer is written before the new name is written in the parent.
 	 */
-	if (!DOINGSOFTDEP(dvp) && ((error = VOP_BWRITE(bp)) != 0))
+	if (!DOINGSOFTDEP(tvp) && ((error = VOP_BWRITE(bp)) != 0))
 		goto bad;
+	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
+		if (DOINGSOFTDEP(tvp))
+			(void)VOP_BWRITE(bp);
+		goto bad;
+	}
 	ufs_makedirentry(ip, cnp, &newdir);
 	error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
  bad:
