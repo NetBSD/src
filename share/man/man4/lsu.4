@@ -1,4 +1,4 @@
-.\"	$NetBSD: lsu.4,v 1.1 2000/10/19 14:55:51 ad Exp $
+.\"	$NetBSD: lsu.4,v 1.2 2000/11/09 13:01:41 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nd logical storage unit
 .Sh SYNOPSIS
 .Cd lsu* at cac? unit ?
+.Cd lsu* at iop? tid ?
 .Cd lsu* at twe? unit ?
 .Sh DESCRIPTION
 The
@@ -64,6 +65,7 @@ partition
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr iop 4 ,
 .Xr cac 4 ,
 .Xr twe 4
 .Sh AUTHOR
@@ -77,5 +79,11 @@ The
 driver first appeared in
 .Nx 1.6 .
 .Sh BUGS
-This driver is in reality a nasty hack intended to reduce code size and
-maintenace overheads.
+This driver is in reality a nasty hack intended to reduce code size
+and maintenace overheads.
+.Pp
+The capacity and geometry of units as accessed through the
+.Nm
+driver may be different than when accessed through some other
+medium (e.g.
+.Tn SCSI ).
