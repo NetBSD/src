@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.90 2003/04/14 08:37:29 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.91 2003/04/14 08:38:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ extern	 int optopt;
 #endif
 
 /*
- * Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
