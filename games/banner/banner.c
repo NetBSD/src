@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.3 1995/03/25 07:44:49 glass Exp $	*/
+/*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -43,13 +43,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: banner.c,v 1.3 1995/03/25 07:44:49 glass Exp $";
+static char rcsid[] = "$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $";
 #endif
 #endif /* not lint */
 
 /*
  * banner - prints large signs
- * banner [-w#] [-d] [-t] message ...
+ * banner [-w width] [-d] [-t] message ...
  */
 
 #include <err.h>
@@ -1071,7 +1071,8 @@ main(argc, argv)
 		}
 		nchars = strlen(message);
 	} else {
-		fprintf(stderr,"Message: ");
+		if (isatty(fileno(stdin)))
+			fprintf(stderr,"Message: ");
 		(void)fgets(message, sizeof(message), stdin);
 		nchars = strlen(message);
 		message[nchars--] = '\0';	/* get rid of newline */
