@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 1997/06/01 03:39:27 mrg Exp $ */
+/*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@ loadfile(io, addr)
 			addr += i;
 		}
 		printf("+%d]", i);
-		esym = KERNBASE +
+		esym = ((u_int)x.a_entry - (u_int)LOADADDR) +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 #if 0
 		/*
@@ -169,7 +169,7 @@ loadfile(io, addr)
 
 	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
 	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec,
-		 0, 0, 0, esym, DDB_MAGIC);
+		 0, 0, 0, esym, DDB_MAGIC1);
 	return;
 
 shread:
