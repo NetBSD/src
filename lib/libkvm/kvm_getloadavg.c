@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $	*/
+/*	$NetBSD: kvm_getloadavg.c,v 1.3 1997/06/20 04:43:36 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_getloadavg.c,v 1.3 1997/06/20 04:43:36 mikel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ static char *rcsid = "$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpe
 #include <limits.h>
 #include <nlist.h>
 #include <kvm.h>
+#include <stdlib.h>
 
 #include "kvm_private.h"
 
