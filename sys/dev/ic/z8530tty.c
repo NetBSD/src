@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.26 1997/11/01 20:15:10 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.27 1997/11/01 20:23:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -410,7 +410,8 @@ zsopen(dev, flags, mode, p)
 		s2 = splzs();
 
 		/* Turn on interrupts. */
-		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		cs->cs_creg[1] = cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
+		zs_write_reg(cs, 1, cs->cs_creg[1]);
 
 		/* Fetch the current modem control status, needed later. */
 		cs->cs_rr0 = zs_read_csr(cs);
@@ -521,11 +522,16 @@ zsclose(dev, flags, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flags);
 	ttyclose(tp);
 
+	s = splzs();
+
 	/* If we were asserting flow control, then deassert it. */
 	zst->zst_rx_blocked = 1;
 	zs_hwiflow(zst);
 	/* Clear any break condition set with TIOCSBRK. */
 	zs_break(cs, 0);
+
+	splx(s);
+
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
 	 * notice even if we immediately open the port again.
@@ -536,9 +542,11 @@ zsclose(dev, flags, mode, p)
 	}
 
 	s = splzs();
+
 	/* Turn off interrupts. */
 	cs->cs_creg[1] = cs->cs_preg[1] = 0;
 	zs_write_reg(cs, 1, cs->cs_creg[1]);
+
 	splx(s);
 
 	return (0);
