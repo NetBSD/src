@@ -1161,13 +1161,12 @@
   else
     {
       rtx macl = gen_rtx_REG (SImode, MACL_REG);
-      rtx giv_insn;
 
       first = emit_insn (gen_mul_l (operands[1], operands[2]));
       /* consec_sets_giv can only recognize the first insn that sets a
 	 giv as the giv insn.  So we must tag this also with a REG_EQUAL
 	 note.  */
-      last = emit_insn (gen_movsi_i ((operands[0]), operands[0]));
+      last = emit_insn (gen_movsi_i ((operands[0]), macl));
     }
   /* Wrap the sequence in REG_LIBCALL / REG_RETVAL notes so that loop
      invariant code motion can move it.  */
