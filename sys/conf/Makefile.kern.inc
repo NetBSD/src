@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.8 2001/12/09 16:04:03 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.9 2001/12/10 05:24:17 chs Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -163,7 +163,7 @@ DEBUG?=
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
-.else
+.elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
