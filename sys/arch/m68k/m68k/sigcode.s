@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.1 1997/04/13 02:30:02 thorpej Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.2 1997/04/25 02:22:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,17 +65,16 @@
  *	scp+0	->	beginning of signal context frame
  */
 
-	.globl	_sigcode, _esigcode, _sigcodetrap
 	.data
 	.align	2
-_sigcode:
+GLOBAL(sigcode)
 	movl	sp@(12),a0	| signal handler addr	(4 bytes)
 	jsr	a0@		| call signal handler	(2 bytes)
 	addql	#4,sp		| pop signal number	(2 bytes)
-_sigcodetrap:
+GLOBAL(sigcodetrap)
 	trap	#1		| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)	| save errno		(4 bytes)
 	moveq	#1,d0		| syscall == exit	(2 bytes)
 	trap	#0		| exit(errno)		(2 bytes)
 	.align	2
-_esigcode:
+GLOBAL(esigcode)

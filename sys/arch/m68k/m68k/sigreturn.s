@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.s,v 1.1 1996/01/31 02:22:15 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.s,v 1.2 1997/04/25 02:22:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@
  * because we must open a hole in the stack to fill in the (possibly much
  * larger) original stack frame.
  */
-sigreturn:
+ASENTRY_NOPROFILE(sigreturn)
 	lea	sp@(-84),sp		| leave enough space for largest frame
 	movl	sp@(84),sp@		| move up current 8 byte frame
 	movl	sp@(88),sp@(4)
@@ -63,7 +63,7 @@ sigreturn:
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	#SYS_sigreturn,sp@-	| push syscall number
-	jbsr	_syscall		| handle it
+	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,sp			| pop syscall#
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
@@ -84,4 +84,4 @@ Lsigr1:
 	movl	a1,sp@(FR_SP)		| new SP value
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
