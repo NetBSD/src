@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1996/02/24 00:55:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1996/03/03 16:49:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,8 +128,7 @@ extern struct emul emul_hpux;
  * "internal" framebuffer.
  */
 int	conscode;
-int	conpri = CN_DEAD;	/* so drivers can tell if they should bother */
-int	consinit_active = 0;	/* flag for driver init routines */
+int	consinit_active;	/* flag for driver init routines */
 caddr_t	conaddr;		/* for drivers in cn_init() */
 int	convasize;		/* size of mapped console device */
 int	conforced;		/* console has been forced */
@@ -143,9 +142,13 @@ consinit()
 {
 	extern struct map extiomap[];
 
+	/*
+	 * Initialize some variables for sanity.
+	 */
 	consinit_active = 1;
 	convasize = 0;
 	conforced = 0;
+	conscode = 1024;		/* invalid */
 
 	/*
 	 * Set cpuspeed immediately since hp300_cninit() called routines

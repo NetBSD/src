@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1996/02/24 00:55:34 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1996/03/03 16:49:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -708,6 +708,7 @@ console_scan(func, arg)
 		 * and worthwhile.
 		 */
 		size = (*func)(scode, va, arg);
+		iounmap(va, NBPG);
 		if (size) {
 			/* Free last mapping. */
 			if (convasize)
@@ -715,7 +716,6 @@ console_scan(func, arg)
 			convasize = 0;
 
 			/* Remap to correct size. */
-			iounmap(va, NBPG);
 			va = iomap(pa, size);
 			if (va == 0)
 				continue;
@@ -724,9 +724,7 @@ console_scan(func, arg)
 			conscode = scode;
 			conaddr = va;
 			convasize = size;
-			cn_tab = (struct consdev *)arg;
-		} else
-			iounmap(va, NBPG);
+		}
 	}
 }
 
