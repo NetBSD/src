@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.24 2001/05/03 21:03:47 he Exp $
+# $NetBSD: mi,v 1.253.2.25 2001/05/06 14:43:03 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -662,6 +662,7 @@
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/nele.0
+./usr/share/man/cat4/neo.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
 ./usr/share/man/cat4/ns.0
@@ -2083,6 +2084,7 @@
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/nele.4
+./usr/share/man/man4/neo.4
 ./usr/share/man/man4/netintro.4
 ./usr/share/man/man4/networking.4
 ./usr/share/man/man4/ns.4
