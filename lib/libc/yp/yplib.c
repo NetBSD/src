@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.27 1997/01/23 14:02:35 mrg Exp $	 */
+/*	$NetBSD: yplib.c,v 1.28 1997/07/07 02:00:43 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.27 1997/01/23 14:02:35 mrg Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.28 1997/07/07 02:00:43 lukem Exp $";
 #endif
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.27 1997/01/23 14:02:35 mrg Exp $";
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/uio.h>
+#include <arpa/nameser.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +65,8 @@ struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
 int _yplib_nerrs = 5;
 
-void _yp_unbind __P((struct dom_binding *));
+void	_yp_unbind __P((struct dom_binding *));
+int	_yp_invalid_domain __P((const char *));
 
 int
 _yp_dobind(dom, ypdb)
@@ -81,7 +83,7 @@ _yp_dobind(dom, ypdb)
 	int             new = 0, r;
 	int             nerrs = 0;
 
-	if (dom == NULL || *dom == 0)
+	if (dom == NULL || *dom == '\0')
 		return YPERR_BADARGS;
 
 	/*
@@ -258,6 +260,9 @@ int
 yp_bind(dom)
 	const char     *dom;
 {
+	if (_yp_invalid_domain(dom))
+		return YPERR_BADARGS;
+
 	return _yp_dobind(dom, NULL);
 }
 
@@ -266,6 +271,9 @@ yp_unbind(dom)
 	const char     *dom;
 {
 	struct dom_binding *ypb, *ypbp;
+
+	if (_yp_invalid_domain(dom))
+		return;
 
 	ypbp = NULL;
 	for (ypb = _ypbindlist; ypb; ypb = ypb->dom_pnext) {
@@ -309,6 +317,47 @@ _yp_check(dom)
 		*dom = _yp_domain;
 
 	if (yp_bind(_yp_domain) == 0)
+		return 1;
+	return 0;
+}
+
+/*
+ * _yp_invalid_domain: check if given domainname isn't RFC1035 compliant
+ * returns non-zero if invalid
+ */
+int
+_yp_invalid_domain(dom)
+	const char *dom;
+{
+	const char	*p;
+
+	if (dom == NULL || *dom == '\0')
+		return 1;
+
+#define	is_digit(x)	((x) >= '0' && (x) <= '9')
+#define	is_letter(x)	(((x) >= 'a' && (x) <= 'z') || ((x) >='A' && (x) <='Z'))
+
+	for (p = dom; *p != '\0'; p++) {
+		int len;
+		if (!is_letter(*p))		/* label starts with a letter */
+			return 1;
+		p++;
+		len = 0;			/* then has [-a-zA-Z0-9] */
+		while (is_digit(*p) || is_letter(*p) || *p == '-') {
+			p++;
+			if (++len > MAXLABEL)
+				return 1;	/* label is too long */
+		}
+		if (*(p-1) == '-')		/* no trailing - for label */
+			return 1;
+		if (*p == '\0')
+			break;
+		else if (*p != '.')
+			return 1;
+		else if (*(p+1) == '\0')	/* no trailing . for domain */
+			return 1;
+	}
+	if ((p - dom) > YPMAXDOMAIN)
 		return 1;
 	return 0;
 }
