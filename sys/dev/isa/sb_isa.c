@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.23 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.24 2001/11/13 08:01:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.24 2001/11/13 08:01:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.27 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.28 2001/11/13 08:01:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.28 2001/11/13 08:01:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

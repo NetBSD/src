@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.13 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.14 2001/11/13 08:01:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * which the user then reads from, and provide an ioctl interface to
  * reset the card, etc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.14 2001/11/13 08:01:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

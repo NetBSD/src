@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.50 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.51 2001/11/13 08:01:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -52,6 +52,9 @@
 /*
  * Device Driver for AT parallel printer port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.51 2001/11/13 08:01:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.28 2001/09/02 06:46:57 tsutsui Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.29 2001/11/13 08:01:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.29 2001/11/13 08:01:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

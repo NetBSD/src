@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.9 2001/03/10 20:04:30 jdolecek Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.10 2001/11/13 08:01:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.10 2001/11/13 08:01:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.50 2001/10/03 00:04:50 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.51 2001/11/13 08:01:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -55,6 +55,9 @@
  * conflict with other hardware...
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.51 2001/11/13 08:01:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.28 2001/09/26 01:30:58 thorpej Exp $	*/
-
-#define	PCICISADEBUG
+/*	$NetBSD: i82365_isasubr.c,v 1.29 2001/11/13 08:01:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -33,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.29 2001/11/13 08:01:15 lukem Exp $");
+
+#define	PCICISADEBUG
 
 #include <sys/types.h>
 #include <sys/param.h>

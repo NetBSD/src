@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.1 2000/11/20 19:24:39 jdolecek Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.2 2001/11/13 08:01:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.2 2001/11/13 08:01:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

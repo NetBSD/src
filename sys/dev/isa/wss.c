@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.58 2001/10/03 00:04:51 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.59 2001/11/13 08:01:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.59 2001/11/13 08:01:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.22 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.23 2001/11/13 08:01:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.23 2001/11/13 08:01:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

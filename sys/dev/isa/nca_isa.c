@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.7 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.8 2001/11/13 08:01:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.8 2001/11/13 08:01:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

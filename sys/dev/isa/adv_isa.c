@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.2 1999/06/12 12:10:30 dante Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.3 2001/11/13 08:01:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -57,6 +57,8 @@
  *     3. This board has been sold by SIIG as the i542 SpeedMaster.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.3 2001/11/13 08:01:09 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

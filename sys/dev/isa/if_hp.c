@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.32 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.33 2001/11/13 08:01:18 lukem Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -51,6 +51,9 @@
  * Mostly rewritten for HP-labelled EISA controllers by Charles Hannum,
  * 18JAN1993.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.33 2001/11/13 08:01:18 lukem Exp $");
 
 #include "hp.h"
 #if NHP > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.5 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.6 2001/11/13 08:01:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.6 2001/11/13 08:01:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

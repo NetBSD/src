@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.19 2001/11/04 08:08:26 itohy Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.20 2001/11/13 08:01:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@
  *
  * Portions also supplied from the SoundBlaster driver for NetBSD.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.20 2001/11/13 08:01:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.27 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.28 2001/11/13 08:01:16 lukem Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.28 2001/11/13 08:01:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.55 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.56 2001/11/13 08:01:19 lukem Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -44,6 +44,9 @@
  * - Intel EtherExpress Pro/10.
  * - possibly other boards using the i82595 chip and no special tweaks.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.56 2001/11/13 08:01:19 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
