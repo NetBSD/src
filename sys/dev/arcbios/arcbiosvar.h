@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbiosvar.h,v 1.1 2001/07/08 19:58:03 thorpej Exp $	*/
+/*	$NetBSD: arcbiosvar.h,v 1.2 2001/07/08 22:57:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,9 +38,20 @@
 
 #ifdef _KERNEL
 
+/*
+ * Context used when walking the ARC BIOS component tree.
+ */
+struct arcbios_treewalk_context {
+	void *atc_cookie;		/* client context */
+	int atc_terminate;		/* to short-cut to the end */
+};
+
 extern const struct arcbios_spb *ARCBIOS_SPB;
 extern const struct arcbios_fv *ARCBIOS;
 
 int	arcbios_init(vaddr_t);
+
+void	arcbios_tree_walk(void (*)(struct arcbios_component *,
+	    struct arcbios_treewalk_context *), void *);
 
 #endif /* _KERNEL */
