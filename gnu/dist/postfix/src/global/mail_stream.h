@@ -1,3 +1,5 @@
+/*	$NetBSD: mail_stream.h,v 1.1.1.4 2004/05/31 00:24:32 heas Exp $	*/
+
 #ifndef _MAIL_STREAM_H_INCLUDED_
 #define _MAIL_STREAM_H_INCLUDED_
 

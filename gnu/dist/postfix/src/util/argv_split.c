@@ -1,3 +1,5 @@
+/*	$NetBSD: argv_split.c,v 1.1.1.2 2004/05/31 00:24:54 heas Exp $	*/
+
 /*++
 /* NAME
 /*	argv_split 3

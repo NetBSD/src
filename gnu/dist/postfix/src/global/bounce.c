@@ -1,3 +1,5 @@
+/*	$NetBSD: bounce.c,v 1.1.1.6 2004/05/31 00:24:29 heas Exp $	*/
+
 /*++
 /* NAME
 /*	bounce 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: non_blocking.c,v 1.1.1.3 2004/05/31 00:25:00 heas Exp $	*/
+
 /*++
 /* NAME
 /*	non_blocking 3

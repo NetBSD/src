@@ -1,3 +1,5 @@
+/*	$NetBSD: rewrite_clnt.c,v 1.1.1.6 2004/05/31 00:24:35 heas Exp $	*/
+
 /*++
 /* NAME
 /*	rewrite_clnt 3

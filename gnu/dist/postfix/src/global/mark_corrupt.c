@@ -1,3 +1,5 @@
+/*	$NetBSD: mark_corrupt.c,v 1.1.1.3 2004/05/31 00:24:31 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mark_corrupt 3

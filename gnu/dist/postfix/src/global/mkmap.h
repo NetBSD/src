@@ -1,3 +1,5 @@
+/*	$NetBSD: mkmap.h,v 1.1.1.3 2004/05/31 00:24:32 heas Exp $	*/
+
 #ifndef _MKMAP_H_INCLUDED_
 #define _MKMAP_H_INCLUDED_
 

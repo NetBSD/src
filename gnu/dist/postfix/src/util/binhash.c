@@ -1,3 +1,5 @@
+/*	$NetBSD: binhash.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+
 /*++
 /* NAME
 /*	binhash 3

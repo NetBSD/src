@@ -1,3 +1,5 @@
+/*	$NetBSD: smtpd_sasl_proto.h,v 1.1.1.2 2004/05/31 00:24:50 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtpd_sasl_proto 3h
