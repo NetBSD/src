@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1997/07/05 20:57:40 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/07/15 08:25:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -288,6 +288,7 @@ mbattach(pdp, dp, auxp)
 	printf ("\n");
 	config_found(dp, "clock"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
+	config_found(dp, "isabus" , simple_devprint);
 	config_found(dp, "pcibus" , simple_devprint);
 	config_found(dp, "vmebus" , simple_devprint);
 	config_found(dp, "kbd"    , simple_devprint);
