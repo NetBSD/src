@@ -1,17 +1,17 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.35 1993/10/18 14:35:45 pk Exp $
+#	$Id: Makefile.i386,v 1.36 1993/12/15 01:06:55 deraadt Exp $
 #
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/i386/conf/``machineid''
+#	/sys/arch/i386/conf/``machineid''
 # after which you should do
 #	 config machineid
 # Generic makefile changes should be made in
-#	/sys/i386/conf/Makefile.i386
+#	/sys/arch/i386/conf/Makefile.i386
 # after which config should be rerun for all machines.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE INVISIBLE TO MAKEFILE
