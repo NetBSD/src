@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.4 1996/07/09 00:35:05 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.5 1996/08/21 15:53:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -209,7 +209,7 @@ _mcount:;			\
  * XXX These macros should probably use inline assembly.
  */
 #define MCOUNT_ENTER \
-	s = _alpha_pal_swpipl(PSL_IPL_HIGH)
+	s = _alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH)
 #define MCOUNT_EXIT \
 	(void)_alpha_pal_swpipl(s);
 #endif
