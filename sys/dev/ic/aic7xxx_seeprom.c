@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.4 2000/09/24 12:37:03 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.5 2001/04/30 03:45:35 lukem Exp $	*/
 
 /*       
  * Product specific probe and attach routines for: 
@@ -598,17 +598,14 @@ acquire_seeprom(struct ahc_softc *ahc, struct seeprom_descriptor *sd)
 }
 
 static void
-release_seeprom(sd)
-	struct seeprom_descriptor *sd;
+release_seeprom(struct seeprom_descriptor *sd)
 {
 	/* Release access to the memory port and the serial EEPROM. */
 	SEEPROM_OUTB(sd, 0);
 }
 
 static void
-write_brdctl(ahc, value)
-	struct 	ahc_softc *ahc;
-	u_int8_t value;
+write_brdctl(struct ahc_softc *ahc, u_int8_t value)
 {
 	u_int8_t brdctl;
 
@@ -640,8 +637,7 @@ write_brdctl(ahc, value)
 }
 
 static u_int8_t
-read_brdctl(ahc)
-	struct 	ahc_softc *ahc;
+read_brdctl(struct ahc_softc *ahc)
 {
 	u_int8_t brdctl;
 	u_int8_t value;
