@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.5 1995/09/14 23:45:35 pk Exp $	*/
+/*	$NetBSD: read.c,v 1.6 1996/06/21 20:09:04 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -64,6 +64,7 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/param.h>
 #include "stand.h"
 
 ssize_t
@@ -82,9 +83,10 @@ read(fd, dest, bcount)
 	if (f->f_flags & F_RAW) {
 		twiddle();
 		errno = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-			(daddr_t)0, bcount, dest, &resid);
+			btodb(f->f_offset), bcount, dest, &resid);
 		if (errno)
 			return (-1);
+		f->f_offset += (bcount - resid);
 		return (resid);
 	}
 	resid = bcount;
