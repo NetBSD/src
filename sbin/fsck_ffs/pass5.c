@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.32 2003/01/24 21:55:09 fvdl Exp $	*/
+/*	$NetBSD: pass5.c,v 1.33 2003/02/14 16:21:47 grant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.32 2003/01/24 21:55:09 fvdl Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.33 2003/02/14 16:21:47 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ pass5()
 			if (isappleufs) {
 				/* Apple PR2216969 gives rationale for this change.
 				 * I believe they were mistaken, but we need to
-				 * duplicate it for compatibility.  -- dbj@netbsd.org
+				 * duplicate it for compatibility.  -- dbj@NetBSD.org
 				 */
 				newcg->cg_clustersumoff += sizeof(int32_t);
 			}
