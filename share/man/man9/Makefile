@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.79 2001/05/23 15:59:58 sommerfeld Exp $
+#       $NetBSD: Makefile,v 1.80 2001/05/24 14:04:41 sommerfeld Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -79,6 +79,8 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=humanize_number.9 format_bytes.9
+MLINKS+=in4_cksum.9 in_cksum.9 \
+	in4_cksum.9 in6_cksum.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 snprintf.9 \
 	kprintf.9 vprintf.9 kprintf.9 vsprintf.9 kprintf.9 vsnprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
