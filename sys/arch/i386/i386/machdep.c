@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.10 1998/05/08 06:44:34 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.11 1998/05/08 16:57:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1617,11 +1617,6 @@ init386(first_avail)
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
 	avail_next = avail_start;
-#if NBIOSCALL > 0
-	/* install page 2 (reserved above) as PT page for first 4M */
-	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
-	bzero(vtopte(0), NBPG);  /* make sure it is clean before using */
-#endif
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
@@ -1634,6 +1629,12 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+#if NBIOSCALL > 0
+	/* install page 2 (reserved above) as PT page for first 4M */
+	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
+	bzero(vtopte(0), NBPG);  /* make sure it is clean before using */
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
