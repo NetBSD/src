@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.27 1997/11/24 05:01:09 lukem Exp $
+.\"	$NetBSD: doc-syms,v 1.28 1997/12/20 20:33:52 kleink Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -358,11 +358,11 @@
 .       if "\\*(A\\n(aP"-xpg4.2" \{\
 .		ie \\n(sT==1 \{\
 .			ds b1 \&\\*(tNX/Open Portability Guide Issue 4.2\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4\\*(aa'')
+.			as b1 (``\\*(tNXPG4.2\\*(aa'')
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNX/Open Portability Guide Issue 4.2\\*(aa\\*(sV
-.			as b1 (``\\*(tNXPG4\\*(aa'')
+.			as b1 (``\\*(tNXPG4.2\\*(aa'')
 .		\}
 .       \}
 .	ie \\n(aC>\\n(aP \{\
