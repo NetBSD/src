@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.64 2005/02/27 00:27:18 perry Exp $	*/
+/*	$NetBSD: wt.c,v 1.65 2005/02/28 05:05:02 simonb Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.64 2005/02/27 00:27:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.65 2005/02/28 05:05:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,8 @@ wtprobe(parent, match, aux)
 		return (0);
 	if (ia->ia_nirq < 1)
 		return (0);
-	if (ia->ia_ndrq < 1);
+	if (ia->ia_ndrq < 1)
+		return (0);
 
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
