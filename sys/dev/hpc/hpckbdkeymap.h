@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.13 2002/05/02 16:38:02 uch Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.14 2002/05/10 21:05:13 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ const u_int8_t jornada6x0_jp_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-/* XXX: uwe: US */
+/* US (international?) */
 const u_int8_t jornada6x0_us_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
@@ -748,7 +748,7 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
-	/* XXX: uwe: US */
+	/* US (international?) */
 	{	&platid_mask_MACH_HP_JORNADA_680,
 		jornada6x0_us_keytrans,
 		jornada6x0_special_keymap,
