@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.10 1997/12/22 20:02:33 christos Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.11 1998/02/03 03:24:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.10 1997/12/22 20:02:33 christos Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.11 1998/02/03 03:24:24 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,11 @@ __RCSID("$NetBSD: getNAME.c,v 1.10 1997/12/22 20:02:33 christos Exp $");
  *	-w	for querying type of manual source
  *	other	apropos database
  */
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 
 static int tocrc;
 static int intro;
