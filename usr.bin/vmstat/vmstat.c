@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.34 1997/02/22 02:04:42 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.35 1997/04/10 15:23:50 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.34 1997/02/22 02:04:42 thorpej Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.35 1997/04/10 15:23:50 is Exp $";
 #endif
 #endif /* not lint */
 
@@ -837,7 +837,13 @@ domem()
 				continue;
 			if ((ks->ks_size & j) == 0)
 				continue;
-			name = kmemnames[i] ? kmemnames[i] : "undefined";
+			if (kmemnames[i] == 0) {
+				kmemnames[i] = malloc(10);
+						/* strlen("undef/")+3+1);*/
+				snprintf(kmemnames[i], 10, "undef/%d", i);
+						/* same 10 as above!!! */
+			}
+			name = kmemnames[i];
 			len += 2 + strlen(name);
 			if (first)
 				printf("%8d  %s", j, name);
