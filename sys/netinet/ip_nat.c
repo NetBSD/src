@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.6 1997/05/27 01:20:46 thorpej Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.7 1997/05/28 00:17:20 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,11 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.6 1997/05/27 01:20:46 thorpej Exp $";
+static	char	rcsid[] = "Id: ip_nat.c,v 2.0.2.18 1997/05/24 07:34:44 darrenr Exp ";
+#endif
+
+#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
+#define _KERNEL
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -442,14 +446,30 @@ int direction;
 				struct ifaddr *ifa;
 				struct sockaddr_in *sin;
 
+# if	(__FreeBSD_version >= 300000)
+				ifa = TAILQ_FIRST(&ifp->if_addrhead);
+# else
+#  ifdef	__NetBSD__
 				ifa = ifp->if_addrlist.tqh_first;
+#  else
+				ifa = ifp->if_addrlist;
+#  endif
+# endif
 # if	BSD < 199306
 				sin = (SOCKADDR_IN *)&ifa->ifa_addr;
 # else
 				sin = (SOCKADDR_IN *)ifa->ifa_addr;
 				while (sin && ifa &&
 				       sin->sin_family != AF_INET) {
+#  if	(__FreeBSD_version >= 300000)
+					ifa = TAILQ_NEXT(ifa, ifa_link);
+#  else
+#   ifdef	__NetBSD__
 					ifa = ifa->ifa_list.tqe_next;
+#   else
+					ifa = ifa->ifa_next;
+#   endif
+#  endif
 					sin = (SOCKADDR_IN *)ifa->ifa_addr;
 				}
 				if (!ifa)

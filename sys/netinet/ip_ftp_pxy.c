@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_ftp_pxy.c,v 1.3 1997/05/28 00:17:19 thorpej Exp $	*/
+
 /*
  * Simple FTP transparent proxy for in-kernel.
  */
