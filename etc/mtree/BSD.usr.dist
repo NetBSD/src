@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.8 1994/02/06 06:49:41 cgd Exp $
+#	$Id: BSD.usr.dist,v 1.9 1994/02/09 01:58:17 jtc Exp $
 #
 
 .	type=dir
@@ -306,9 +306,13 @@ share	type=dir
 		cat3f
 		..
 		cat4
+			amiga
+			..
 			hp300
 			..
 			i386
+			..
+			sparc
 			..
 			tahoe
 			..
@@ -322,9 +326,13 @@ share	type=dir
 		cat7
 		..
 		cat8
+			amiga
+			..
 			hp300
 			..
 			i386
+			..
+			sparc
 			..
 			tahoe
 			..
@@ -340,9 +348,13 @@ share	type=dir
 		man3f
 		..
 		man4
+			amiga
+			..
 			hp300
 			..
 			i386
+			..
+			sparc
 			..
 			tahoe
 			..
@@ -356,9 +368,13 @@ share	type=dir
 		man7
 		..
 		man8
+			amiga
+			..
 			hp300
 			..
 			i386
+			..
+			sparc
 			..
 			tahoe
 			..
