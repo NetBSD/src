@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.1 2003/01/25 01:57:20 thorpej Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.2 2003/05/23 05:21:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -134,7 +134,7 @@ cpu_initclocks(void)
 	profhz = 0;
 
 	/* Report the clock frequency. */
-	printf("clock: hz=%d stathz=%d profhz=%d\n", hz, stathz, profhz);
+	aprint_normal("clock: hz=%d stathz=%d profhz=%d\n", hz, stathz, profhz);
 
 	oldirqstate = disable_interrupts(I32_bit);
 
