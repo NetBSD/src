@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.17 1997/10/09 18:18:37 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.18 1997/10/10 14:15:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -46,6 +46,9 @@
 
 /* BSD style release date */
 #define BPF_RELEASE 199606
+
+typedef	int bpf_int32;
+typedef	u_int bpf_u_int32;
 
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
