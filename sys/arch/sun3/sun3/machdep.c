@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1995/06/27 14:42:34 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1995/08/08 21:07:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -873,7 +873,8 @@ dumpconf()
 	dumplo &= ~(ctod(1)-1);
 
 	/* If it does not fit, truncate it by moving dumplo. */
-	if (dumplo < ctod(1)) {
+	/* Note: Must force signed comparison (fixes PR#887) */
+	if (dumplo < ((long)ctod(1))) {
 		dumplo = ctod(1);
 		dumpsize = dtoc(nblks - dumplo);
 	}
