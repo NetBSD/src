@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.22 2003/12/13 23:13:40 thorpej Exp $
+# $NetBSD: BASIL,v 1.23 2003/12/14 01:32:01 thorpej Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.22 $"
+#ident 		"BASIL-$Revision: 1.23 $"
 
 maxusers 64
 
@@ -230,6 +230,7 @@ ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?		# Acard IDE controllers
 aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 cypide* at pci? dev ? function ?		# Cypress IDE controllers
 hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
