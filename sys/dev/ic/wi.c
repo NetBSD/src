@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.112 2003/02/25 01:57:35 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.113 2003/03/27 04:34:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.112 2003/02/25 01:57:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.113 2003/03/27 04:34:17 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -846,6 +846,10 @@ wi_reset(struct wi_softc *sc)
 	int i, error;
 
 	DPRINTF(("wi_reset\n"));
+
+	if (sc->sc_reset)
+		(*sc->sc_reset)(sc);
+
 	error = 0;
 	for (i = 0; i < 5; i++) {
 		DELAY(20*1000);	/* XXX: way too long! */
