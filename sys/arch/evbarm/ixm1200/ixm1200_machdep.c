@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.13 2003/03/25 06:53:15 igy Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.14 2003/04/02 03:49:26 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.13 2003/03/25 06:53:15 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.14 2003/04/02 03:49:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.13 2003/03/25 06:53:15 igy Exp
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -349,7 +351,7 @@ initarm(void *arg)
 
 	/* XXX overwrite bootconfig to hardcoded values */
 	bootconfig.dram[0].address = 0xc0000000;
-	bootconfig.dram[0].pages   = 0x10000000 / NBPG;	/* SDRAM 256MB */
+	bootconfig.dram[0].pages   = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
 	bootconfig.dramblocks = 1;
 
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
@@ -372,27 +374,27 @@ initarm(void *arg)
 #endif
 	printf("kernsize=0x%x\n", kerneldatasize);
 	kerneldatasize += symbolsize;
-	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
+	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
 	/*
 	 * Set up the variables that define the availablilty of physcial
 	 * memory
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + (bootconfig.dram[0].pages * NBPG);
+	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
 	physical_freestart = physical_start
 		+ (KERNEL_TEXT_BASE - KERNEL_BASE) + kerneldatasize;
 	physical_freeend = physical_end;
 
-	physmem = (physical_end - physical_start) / NBPG;
+	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	freemempos = 0xc0000000;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Allocating page tables\n");
 #endif
-	free_pages = (physical_freeend - physical_freestart) / NBPG;
+	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("CP15 Register1 = 0x%08x\n", cpu_get_control());
@@ -408,8 +410,8 @@ initarm(void *arg)
 	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
 #define alloc_pages(var, np)				\
 	(var) = freemempos;				\
-	memset((char *)(var), 0, ((np) * NBPG));	\
-	freemempos += (np) * NBPG;
+	memset((char *)(var), 0, ((np) * PAGE_SIZE));	\
+	freemempos += (np) * PAGE_SIZE;
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
@@ -417,10 +419,10 @@ initarm(void *arg)
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
+			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
-			    L2_TABLE_SIZE / NBPG);
+			    L2_TABLE_SIZE / PAGE_SIZE);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
 			++loop1;
@@ -441,7 +443,7 @@ initarm(void *arg)
 	alloc_pages(systempage.pv_pa, 1);
 
 	/* Allocate a page for the page table to map kernel page tables. */
-	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -456,7 +458,7 @@ initarm(void *arg)
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
 #endif
 
-	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
+	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 #ifdef CPU_IXP12X0
         /*
@@ -471,7 +473,7 @@ initarm(void *arg)
 	}
 	{
 		vaddr_t dummy;
-		alloc_pages(dummy, CPU_IXP12X0_CACHE_CLEAN_SIZE / NBPG - 1);
+		alloc_pages(dummy, CPU_IXP12X0_CACHE_CLEAN_SIZE / PAGE_SIZE - 1);
 	}
 	ixp12x0_cache_clean_addr = ixp12x0_cc_base;
 	ixp12x0_cache_clean_size = CPU_IXP12X0_CACHE_CLEAN_SIZE / 2;
@@ -546,13 +548,13 @@ initarm(void *arg)
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
@@ -647,9 +649,12 @@ initarm(void *arg)
 	 */
 	printf("init subsystems: stacks ");
 
-	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + IRQ_STACK_SIZE * NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + ABT_STACK_SIZE * NBPG);
-	set_stackptr(PSR_UND32_MODE, undstack.pv_va + UND_STACK_SIZE * NBPG);
+	set_stackptr(PSR_IRQ32_MODE,
+	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_ABT32_MODE,
+	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_UND32_MODE,
+	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
@@ -777,7 +782,7 @@ ixdp_ixp12x0_cc_setup(void)
 	pt_entry_t *pte;
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
-	for (loop = 0; loop < CPU_IXP12X0_CACHE_CLEAN_SIZE; loop += NBPG) {
+	for (loop = 0; loop < CPU_IXP12X0_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
                 pte = vtopte(ixp12x0_cc_base + loop);
                 *pte = L2_S_PROTO | kaddr |
                     L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
