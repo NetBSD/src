@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.13.6.1 1999/07/06 11:02:37 itojun Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,12 @@
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
 
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_ccitt.h"
+#include "opt_natm.h"
 #include "ppp.h"
 
 #include <sys/param.h>
@@ -68,12 +74,22 @@
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 #endif
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 #ifdef NS
 #include <netns/ns_var.h>
 #endif
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #include "ppp.h"
 #if NPPP > 0
@@ -102,14 +118,18 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
-	int swallow_zsintrs;
+#if 0
+	extern int swallow_zsintrs;
+#endif
+
+	return;
 
 	/* If we're in polled mode ignore spurious interrupts */
-	if (swallow_zsintrs) return;
+	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %x pc=%x npc=%x pstate=%b\n",
-		fp->tf_pil, (int)fp->tf_pc, (int)fp->tf_npc, 
-	       (unsigned int)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
+	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%lb\n",
+		fp->tf_pil, fp->tf_pc, fp->tf_npc, 
+	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
@@ -155,6 +175,14 @@ soft01intr(fp)
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
+#ifdef INET6
+			if (n & (1 << NETISR_IPV6))
+				ip6intr();
+#endif
+#ifdef NETATALK
+			if (n & (1 << NETISR_ATALK))
+				atintr();
+#endif
 #ifdef NS
 			if (n & (1 << NETISR_NS))
 				nsintr();
@@ -166,6 +194,10 @@ soft01intr(fp)
 #ifdef NATM
 			if (n & (1 << NETISR_NATM))
 				natmintr();
+#endif
+#ifdef CCITT
+			if (n & (1 << NETISR_CCITT))
+				ccittintr();
 #endif
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
@@ -220,45 +252,24 @@ intr_establish(level, ih)
 	struct intrhand *ih;
 {
 	register struct intrhand **p, *q;
-#ifdef DIAGNOSTIC
-	register struct trapvec *tv;
-	register int displ;
-#endif
 	int s;
 
 	s = splhigh();
-#if 0
-#ifdef DIAGNOSTIC
-	/* double check for legal hardware interrupt */
-	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M ) {
-		tv = &trapbase[T_L1INT - 1 + level];
-		displ = &sparc_interrupt[0] - &tv->tv_instr[1];
-
-		/* has to be `mov level,%l3; ba _sparc_interrupt; rdpsr %l0' */
-		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
-		    tv->tv_instr[1] != I_BA(0, displ) ||
-		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %p)\n%x %x %x != %x %x %x",
-			    level, ih,
-			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
-			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
-	}
-#endif
-#endif
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
 	 */
-	ih->ih_pil = (1<<level); /* XXXX caller should have done this before */
+	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next);
+	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
+		;
 	*p = ih;
 	/*
 	 * Store in fast lookup table
 	 */
-#ifdef NOTDEF_DEBUG
+#ifdef NOT_DEBUG
 	if (!ih->ih_number) {
-		printf("intr_establish: NULL vector fun %p arg %p pil %p\n",
+		printf("\nintr_establish: NULL vector fun %p arg %p pil %p\n",
 			  ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil);
 		Debugger();
 	}
@@ -267,9 +278,9 @@ intr_establish(level, ih)
 		if (intrlev[ih->ih_number]) 
 			panic("intr_establish: intr reused %d", ih->ih_number);
 		intrlev[ih->ih_number] = ih;
-#ifdef NOTDEF_DEBUG
-		printf("intr_establish: vector %p ipl %d clrintr %p fun %p arg %p\n",
-		       ih->ih_number, ih->ih_pil, ih->ih_clr, ih->ih_fun, ih->ih_arg);
+#ifdef NOT_DEBUG
+		printf("\nintr_establish: vector %x ipl mask %x clrintr %p fun %p arg %p\n",
+		       ih->ih_number, ih->ih_pil, (long)ih->ih_clr, ih->ih_fun, ih->ih_arg);
 		Debugger();
 #endif
 	} else
@@ -316,12 +327,12 @@ intr_fasttrap(level, vec)
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
 #endif
 	/* kernel text is write protected -- let us in for a moment */
-	pmap_changeprot(pmap_kernel(), (vm_offset_t)tv,
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv,
 	    VM_PROT_READ|VM_PROT_WRITE, 1);
 	tv->tv_instr[0] = I_SETHI(I_L3, hi22);	/* sethi %hi(vec),%l3 */
 	tv->tv_instr[1] = I_JMPLri(I_G0, I_L3, lo10);/* jmpl %l3+%lo(vec),%g0 */
 	tv->tv_instr[2] = I_RDPSR(I_L0);	/* mov %psr, %l0 */
-	pmap_changeprot(pmap_kernel(), (vm_offset_t)tv, VM_PROT_READ, 1);
+	pmap_changeprot(pmap_kernel(), (vaddr_t)tv, VM_PROT_READ, 1);
 	fastvec |= 1 << level;
 	splx(s);
 }
