@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.113 2000/07/14 07:21:22 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.114 2000/08/09 03:23:11 tv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -174,7 +174,7 @@ int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
 void	printf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 int	sprintf __P((char *buf, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
 int	snprintf __P((char *buf, size_t, const char *, ...))
@@ -184,15 +184,11 @@ int	vsprintf __P((char *buf, const char *, _BSD_VA_LIST_));
 int	vsnprintf __P((char *buf, size_t, const char *, _BSD_VA_LIST_));
 
 void	panic __P((const char *, ...))
-#ifdef __KPRINTF_ATTRIBUTE__
-    __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
-#else
-    __attribute__((__noreturn__));
-#endif
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));
 void	uprintf __P((const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf __P((struct tty *, const char *, ...))
-    __kprintf_attribute__((__format__(__kprintf__,2,3)));
+    __attribute__((__format__(__printf__,2,3)));
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 

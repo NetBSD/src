@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.37 2000/08/07 16:35:33 kleink Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.38 2000/08/09 03:23:10 tv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -159,12 +159,6 @@
 #define	__dead		__volatile
 #define	__pure		__const
 #endif
-#endif
-
-#ifdef __KPRINTF_ATTRIBUTE__
-#define __kprintf_attribute__(a) __attribute__(a)
-#else
-#define __kprintf_attribute__(a)
 #endif
 
 /* Delete pseudo-keywords wherever they are not available or needed. */
