@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.1 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.2 2004/10/23 17:20:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,8 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
-#include <sys/dkio.h>
+#include <sys/disk.h>
 #include <sys/proc.h>
+#include <sys/md5.h>
 
 #include <machine/bootinfo.h>
 
@@ -59,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD");
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
 #endif
-
-struct device *booted_device;
-int booted_partition;
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -205,6 +203,81 @@ matchbiosdisks(void)
 
 /*
  * Helper function for findroot():
+ * Return non-zero if wedge device matches bootinfo.
+ */
+static int
+match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
+{
+	MD5_CTX ctx;
+	struct vnode *tmpvn;
+	int error;
+	uint8_t buf[DEV_BSIZE];
+	uint8_t hash[16];
+	int found = 0;
+	int bmajor;
+	daddr_t blk;
+	uint64_t nblks;
+
+	/*
+	 * If the boot loader didn't specify the sector, abort.
+	 */
+	if (biw->matchblk == -1)
+		return (0);
+	
+	/*
+	 * Lookup major number for disk block device.
+	 */
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == -1)
+		return (0);	/* XXX panic ??? */
+	
+	/*
+	 * Fake a temporary vnode for the disk, open it, and read
+	 * and hash the sectors.
+	 */
+	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
+		panic("findroot: can't alloc vnode");
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	if (error) {
+#ifndef DEBUG
+		/*
+		 * Ignore errors caused by missing device, partition,
+		 * or medium.
+		 */
+		if (error != ENXIO && error != ENODEV)
+#endif
+			printf("findroot: can't open dev %s (%d)\n",
+			    dv->dv_xname, error);
+		vput(tmpvn);
+		return (0);
+	}
+
+	MD5Init(&ctx);
+	for (blk = biw->matchblk, nblks = biw->matchnblks;
+	     nblks != 0; nblks--, blk++) {
+		error = vn_rdwr(UIO_READ, tmpvn, (caddr_t) buf,
+		    sizeof(buf), blk * DEV_BSIZE, UIO_SYSSPACE,
+		    0, NOCRED, NULL, NULL);
+		if (error) {
+			printf("findroot: unable to read block %" PRIu64 "\n",
+			    blk);
+			goto closeout;
+		}
+		MD5Update(&ctx, buf, sizeof(buf));
+	}
+	MD5Final(hash, &ctx);
+
+	/* Compare with the provided hash. */
+	found = memcmp(biw->matchhash, hash, sizeof(hash)) == 0;
+
+ closeout:
+	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
+	vput(tmpvn);
+	return (found);
+}
+
+/*
+ * Helper function for findroot():
  * Return non-zero if disk device matches bootinfo.
  */
 static int
@@ -230,7 +303,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 	if (bmajor == -1)
 		return (0);	/* XXX panic ??? */
-	
+
 	/*
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * the disklabel for comparison.
@@ -292,6 +365,7 @@ static void
 findroot(void)
 {
 	struct btinfo_bootdisk *bid;
+	struct btinfo_bootwedge *biw;
 	struct device *dv;
 #ifdef COMPAT_OLDBOOT
 	const char *name;
@@ -313,8 +387,47 @@ findroot(void)
 		return;
 	}
 
-	bid = lookup_bootinfo(BTINFO_BOOTDISK);
-	if (bid) {
+	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
+		/*
+		 * Scan all disk devices for ones that match the passed data.
+		 * Don't break if one is found, to get possible multiple
+		 * matches - for problem tracking.  Use the first match anyway
+		 * because lower devices numbers are more likely to be the
+		 * boot device.
+		 */
+		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+		     dv = TAILQ_NEXT(dv, dv_list)) {
+			if (dv->dv_class != DV_DISK)
+				continue;
+
+			if (is_valid_disk(dv)) {
+				/*
+				 * Don't trust BIOS device numbers, try
+				 * to match the information passed by the
+				 * boot loader instead.
+				 */
+				if ((biw->biosdev & 0x80) == 0 ||
+				    match_bootwedge(dv, biw) == 0)
+				    	continue;
+				goto bootwedge_found;
+			}
+
+			continue;
+ bootwedge_found:
+			if (booted_device) {
+				printf("WARNING: double match for boot "
+				    "device (%s, %s)\n",
+				    booted_device->dv_xname, dv->dv_xname);
+				continue;
+			}
+			dkwedge_set_bootwedge(dv, biw->startblk, biw->nblks);
+		}
+
+		if (booted_wedge)
+			return;
+	}
+
+	if ((bid = lookup_bootinfo(BTINFO_BOOTDISK)) != NULL) {
 		/*
 		 * Scan all disk devices for ones that match the passed data.
 		 * Don't break if one is found, to get possible multiple
@@ -340,7 +453,7 @@ findroot(void)
 				if ((bid->biosdev & 0x80) != 0 ||
 				    dv->dv_unit != bid->biosdev)
 				    	continue;
-				goto found;
+				goto bootdisk_found;
 			}
 
 			if (is_valid_disk(dv)) {
@@ -352,11 +465,11 @@ findroot(void)
 				if ((bid->biosdev & 0x80) == 0 ||
 				    match_bootdisk(dv, bid) == 0)
 				    	continue;
-				goto found;
+				goto bootdisk_found;
 			}
 
 			continue;
- found:
+ bootdisk_found:
 			if (booted_device) {
 				printf("WARNING: double match for boot "
 				    "device (%s, %s)\n",
@@ -406,10 +519,16 @@ cpu_rootconf(void)
 	findroot();
 	matchbiosdisks();
 
-	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
-	
-	setroot(booted_device, booted_partition);
+	if (booted_wedge) {
+		KASSERT(booted_device != NULL);
+		printf("boot device: %s (%s)\n",
+		    booted_wedge->dv_xname, booted_device->dv_xname);
+		setroot(booted_wedge, 0);
+	} else {
+		printf("boot device: %s\n",
+		    booted_device ? booted_device->dv_xname : "<unknown>");
+		setroot(booted_device, booted_partition);
+	}
 }
 
 void
