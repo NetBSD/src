@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1995/02/25 03:31:42 cgd Exp $
+#	$NetBSD: Makefile,v 1.37 1995/03/05 07:12:54 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -83,7 +83,7 @@ beforeinstall: tags
 
 tags: ${SRCS}
 	ctags ${.ALLSRC:M*.c}
-	egrep -o "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" ${.ALLSRC:M*.S} | \
+	egrep "^ENTRY(.*)|^FUNC(.*)|^SYSCALL(.*)" /dev/null ${.ALLSRC:M*.S} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> tags; sort -o tags tags
 
