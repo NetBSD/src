@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.4.4.1 1998/02/07 06:18:06 mellon Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.4.4.2 1998/05/08 07:16:16 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.4.4.1 1998/02/07 06:18:06 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.4.4.2 1998/05/08 07:16:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,7 +87,7 @@ mcclock_ioasic_match(parent, match, aux)
 		name = ca->ca_name;
 	}
 	else
-	if (CFMATCH(parent, "ioasic")) {
+	if (CFMATCH(parent, "asic")) {
 		struct ioasicdev_attach_args *d = aux;
 		addr = d->iada_addr;
 		name = d->iada_modname;
