@@ -2,7 +2,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: unbzip2.c,v 1.1 1999/07/25 07:06:06 simonb Exp $";
+static char rcsid[] = "$Id: unbzip2.c,v 1.2 1999/08/20 00:08:57 simonb Exp $";
 #endif
 
 #define BZ_NO_STDIO
@@ -49,15 +49,18 @@ int unbzip2(in, out)
 		ret = bzDecompress(&bzs);
 
 		if (ret == BZ_STREAM_END) {
-			n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
-			if (n < 0)
-				write_error();
+			if (!test) {
+				n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
+				if (n < 0)
+					write_error();
+			}
 			break;
 		}
 		else if (ret == BZ_OK) {
 			if (end_of_file)
 				read_error();
-			n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
+			if (!test)
+				n = write(out, outbuf, OUTBUFSIZ - bzs.avail_out);
 		}
 		else {
 			switch (ret) {
