@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.7 1995/04/17 15:48:34 cgd Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.8 1995/04/17 23:48:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.7 1995/04/17 15:48:34 cgd Exp $
+ *	$Id: sbdsp.c,v 1.8 1995/04/17 23:48:06 mycroft Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -447,15 +447,12 @@ sbdsp_set_in_port(addr, port)
 	register struct sbdsp_softc *sc = addr;
 	int mixport, sbport;
 	
-	switch (port) {
-	case SB_MIC_PORT:
-	    sbport = SBP_FROM_MIC;
-	    mixport = SBP_MIC_VOL;
-	    break;
-	}
-	
 	if (ISSBPROCLASS(sc)) {
 	    switch (port) {
+	    case SB_MIC_PORT:
+		sbport = SBP_FROM_MIC;
+		mixport = SBP_MIC_VOL;
+		break;
 	    case SB_LINE_IN_PORT:
 		sbport = SBP_FROM_LINE;
 		mixport = SBP_LINE_VOL;
@@ -472,8 +469,15 @@ sbdsp_set_in_port(addr, port)
 	    }
 	}
 	else {
-	    return(EINVAL);
-	    /*NOTREACHED*/
+	    switch (port) {
+	    case SB_MIC_PORT:
+		sbport = SBP_FROM_MIC;
+		mixport = SBP_MIC_VOL;
+		break;
+	    default:
+		return(EINVAL);
+		/*NOTREACHED*/
+	    }
 	}	    
 
 	sc->in_port = port;	/* Just record it */
