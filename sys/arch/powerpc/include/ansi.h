@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.4 1997/11/23 20:21:02 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.5 1998/04/27 17:39:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,6 +65,8 @@ struct __gnuc_va_list__;  /* forward declaration to prohibit gcc warning XXX */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
+#define	_BSD_INTPTR_T_		int		/* intptr_t */
+#define	_BSD_UINTPTR_T_		unsigned int	/* uintptr_t */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
