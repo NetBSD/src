@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.24 1997/05/17 19:38:12 pk Exp $	*/
+/*	$NetBSD: dirs.c,v 1.25 1997/06/03 04:27:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.24 1997/05/17 19:38:12 pk Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.25 1997/06/03 04:27:49 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,6 +281,7 @@ treescan(pname, ino, todo)
 				locname, dp->d_name, sizeof(locname) - 1);
 		} else {
 			(void) strncat(locname, dp->d_name, (int)dp->d_namlen);
+			locname[namelen + dp->d_namlen] = '\0';
 			treescan(locname, dp->d_ino, todo);
 			rst_seekdir(dirp, bpt, itp->t_seekpt);
 		}
