@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rstatd.c,v 1.4 1993/08/02 17:50:40 mycroft Exp $";
+static char rcsid[] = "$Id: rstatd.c,v 1.5 1994/02/22 15:37:19 pk Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,7 +91,7 @@ main(argc, argv)
 		(void) signal(SIGHUP, cleanup);
         }
         
-        openlog("rpc.rusersd", LOG_CONS|LOG_PID, LOG_DAEMON);
+        openlog("rpc.rstatd", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
