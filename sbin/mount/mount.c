@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.59 2002/05/21 23:51:19 nathanw Exp $	*/
+/*	$NetBSD: mount.c,v 1.60 2002/08/23 03:17:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.59 2002/05/21 23:51:19 nathanw Exp $");
+__RCSID("$NetBSD: mount.c,v 1.60 2002/08/23 03:17:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,6 +309,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 {
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
+#ifdef _PATH_RESCUE
+		_PATH_RESCUE,
+#endif
 		_PATH_SBIN,
 		_PATH_USRSBIN,
 		NULL

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.28 2001/12/20 20:10:36 soren Exp $	*/
+/*	$NetBSD: fsck.c,v 1.29 2002/08/23 03:17:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.28 2001/12/20 20:10:36 soren Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.29 2002/08/23 03:17:18 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -220,6 +220,9 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 {
 	/* List of directories containing fsck_xxx subcommands. */
 	static const char *edirs[] = {
+#ifdef _PATH_RESCUE
+		_PATH_RESCUE,
+#endif
 		_PATH_SBIN,
 		_PATH_USRSBIN,
 		NULL
