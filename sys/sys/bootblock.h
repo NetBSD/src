@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.17 2003/10/09 10:25:40 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.18 2003/10/10 01:49:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
@@ -478,7 +478,7 @@ struct x86_boot_params {
 	uint32_t	bp_timeout;	/* boot timeout in seconds */
 	uint32_t	bp_consdev;
 	uint32_t	bp_conspeed;
-	char		bp_password[16];	/* md5 hash of password */
+	uint8_t		bp_password[16];	/* md5 hash of password */
 };
 
 #endif	/* !defined(__ASSEMBLER__) */				/* } */
