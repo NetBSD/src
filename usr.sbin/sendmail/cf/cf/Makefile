@@ -1,7 +1,6 @@
 #	@(#)Makefile	8.5 (Berkeley) 12/1/93
 
 M4=	m4
-#M4=	/usr/src/usr.bin/m4/obj/m4
 CHMOD=	chmod
 ROMODE=	444
 RM=	rm -f
@@ -15,8 +14,8 @@ RM=	rm -f
 
 ALL=	ucbarpa.cf ucbvax.cf vangogh.cf \
 	chez.cf python.cf \
-	sun-lamp.cf pain.cf boat-anchor.cf netbsd-proto.cf trinity.cf \
-	clientproto.cf tcpproto.cf uucpproto.cf
+	boat-anchor.cf chimera.cf pain.cf sun-lamp.cf trinity.cf \
+	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
 
