@@ -450,7 +450,7 @@ struct  isa_dev *dev;
 
 
 #ifdef  __386BSD__
-	printf(" probing for scsi devices**\n");
+	printf("uha%d: probing for scsi devices..", unit);
 #endif  __386BSD__
 
 	/***********************************************\
@@ -465,11 +465,6 @@ struct  isa_dev *dev;
 	{
 		uha_timeout(0);
 	}
-
-
-#ifdef  __386BSD__
-	printf("uha%d",unit);
-#endif  __386BSD__
 	return;
 }
 

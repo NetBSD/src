@@ -184,7 +184,6 @@ isattach(dvp)
 	ifp->if_unit = unit;
 	ifp->if_name = isdriver.name ;
 	ifp->if_mtu = ETHERMTU;
-	printf (" ethernet address %s", ether_sprintf(is->ns_addr)) ;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_init = isinit;
 	ifp->if_output = ether_output;
@@ -193,6 +192,8 @@ isattach(dvp)
 	ifp->if_reset = isreset;
 	ifp->if_watchdog = 0;
 	if_attach(ifp);
+
+	printf("is%d: ethernet address %s\n", unit, ether_sprintf(is->ns_addr));
 }
 
 

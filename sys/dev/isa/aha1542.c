@@ -28,7 +28,11 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/04/08 08:26:46  deraadt
+ * dmesg output at boottime now tries to print out information as
+ * soon as it is available. The output looks much more like Sunos.
+ *
+ * Revision 1.1  1993/03/21  18:09:54  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 1.6  1992/08/24  21:01:58  jason
@@ -641,7 +645,7 @@ struct	isa_dev	*dev;
 	int	unit = dev->dev_unit;
 
 #ifdef	__386BSD__
-	printf(" probing for scsi devices**\n");
+	printf("aha%d: probing for scsi devices..\n", unit);
 #endif	__386BSD__
 	/***********************************************\
 	* ask the adapter what subunits are present	*
@@ -654,11 +658,7 @@ struct	isa_dev	*dev;
 	{
 		aha_timeout(0);
 	}
-#ifdef	__386BSD__
-	printf("aha%d",unit);
-#endif	__386BSD__
 	return;
-
 }
 
 
