@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.2 2002/04/02 10:10:54 jmc Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1233,7 +1233,7 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 	    P1212_FIND_SEARCHALL|P1212_FIND_RETURNALL);
 	
 	if (udirs) {
-		while (*udirs++) {
+		do {
 			dev = config_found_sm(sc, udirs, print, NULL);
 			if (dev && numdev) {
 				devret = realloc(devret,
@@ -1245,7 +1245,8 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 				devret[0] = dev;
 				numdev++;
 			}
-		}
+			udirs++;
+		} while (*udirs);
 	}
 	if (numdev == 0) {
 		free(devret, M_DEVBUF);
