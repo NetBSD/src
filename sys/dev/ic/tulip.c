@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.35 1999/12/11 00:33:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.36 1999/12/15 12:23:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1228,7 +1228,7 @@ tlp_txintr(sc)
 	 */
 	if (sc->sc_flags & TULIPF_DOING_SETUP) {
 		TULIP_CDSDSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if ((sc->sc_setup_desc.td_status & TDSTAT_OWN) == 0)
+		if ((sc->sc_setup_desc.td_status & htole32(TDSTAT_OWN)) == 0)
 			sc->sc_flags &= ~TULIPF_DOING_SETUP;
 	}
 
