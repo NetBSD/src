@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.17 2002/04/18 20:08:10 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.18 2002/04/21 22:05:45 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -735,18 +735,18 @@ s_dsitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	lis	1,spillstk+SPILLSTK@ha
 	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mflr	30			/* save trap type */
 	mfctr	31			/* & CTR */
 	mfdar	3
@@ -757,17 +757,17 @@ s_pte_spill:
 	mtlr	30			/* and trap type */
 	mfsprg	31,2			/* get saved XER */
 	mtxer	31			/* restore XER */
-	lwz	12,8(1)			/* restore non-volatile registers */
-	lwz	11,12(1)
-	lwz	10,16(1)
-	lwz	9,20(1)
-	lwz	8,24(1)
-	lwz	7,28(1)
-	lwz	6,32(1)
-	lwz	5,36(1)
-	lwz	4,40(1)
-	lwz	3,44(1)
-	lwz	0,48(1)
+	lwz	12,SPFRAME_R12(1)	/* restore non-volatile registers */
+	lwz	11,SPFRAME_R11(1)
+	lwz	10,SPFRAME_R10(1)
+	lwz	9,SPFRAME_R9(1)
+	lwz	8,SPFRAME_R8(1)
+	lwz	7,SPFRAME_R7(1)
+	lwz	6,SPFRAME_R6(1)
+	lwz	5,SPFRAME_R5(1)
+	lwz	4,SPFRAME_R4(1)
+	lwz	3,SPFRAME_R3(1)
+	lwz	0,SPFRAME_R0(1)
 	beq	disitrap
 	mfsprg	1,1			/* restore SP */
 	mtcr	29			/* restore CR */
@@ -786,18 +786,18 @@ s_isitrap:
 	bc	4,1,disitrap		/* branch if table miss is false */
 	lis	1,spillstk+SPILLSTK@ha
 	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-52(1)
-	stw	0,48(1)			/* save non-volatile registers */
-	stw	3,44(1)
-	stw	4,40(1)
-	stw	5,36(1)
-	stw	6,32(1)
-	stw	7,28(1)
-	stw	8,24(1)
-	stw	9,20(1)
-	stw	10,16(1)
-	stw	11,12(1)
-	stw	12,8(1)
+	stwu	1,-SPFRAMELEN(1)
+	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
+	stw	3,SPFRAME_R3(1)
+	stw	4,SPFRAME_R4(1)
+	stw	5,SPFRAME_R5(1)
+	stw	6,SPFRAME_R6(1)
+	stw	7,SPFRAME_R7(1)
+	stw	8,SPFRAME_R8(1)
+	stw	9,SPFRAME_R9(1)
+	stw	10,SPFRAME_R10(1)
+	stw	11,SPFRAME_R11(1)
+	stw	12,SPFRAME_R12(1)
 	mfxer	30			/* save XER */
 	mtsprg	2,30
 	mflr	30			/* save trap type */
