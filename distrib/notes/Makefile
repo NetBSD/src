@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/03/30 07:00:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2002/04/02 12:35:43 skrll Exp $
 #
 
 TARGETS+= release
@@ -12,8 +12,8 @@ SUBDIR+= acorn26
 SUBDIR+= acorn32
 SUBDIR+= alpha
 SUBDIR+= amiga
-SUBDIR+= arc
 SUBDIR+= atari
+SUBDIR+= cats
 SUBDIR+= evbarm
 SUBDIR+= hp300
 SUBDIR+= hpcmips
@@ -26,6 +26,7 @@ SUBDIR+= next68k
 SUBDIR+= pc532
 SUBDIR+= pmax
 SUBDIR+= sandpoint
+SUBDIR+= shark
 SUBDIR+= sparc
 SUBDIR+= sparc64
 SUBDIR+= sun2
