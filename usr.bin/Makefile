@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.51 1995/07/03 20:57:38 cgd Exp $
+#	$Id: Makefile,v 1.52 1995/07/24 04:31:55 cgd Exp $
 
-SUBDIR=	apply apropos asa at biff basename cal calendar cap_mkdb \
+SUBDIR=	apply apropos asa at basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
 	compress crontab ctags cut dirname du \
 	env error expand false file find finger fmt fold fpr from \
