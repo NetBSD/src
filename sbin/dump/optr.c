@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.13.10.3 2002/01/16 09:57:08 he Exp $	*/
+/*	$NetBSD: optr.c,v 1.13.10.4 2002/03/28 22:40:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.13.10.3 2002/01/16 09:57:08 he Exp $");
+__RCSID("$NetBSD: optr.c,v 1.13.10.4 2002/03/28 22:40:22 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: optr.c,v 1.13.10.3 2002/01/16 09:57:08 he Exp $");
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
 
 #include <errno.h>
 #include <fstab.h>
@@ -505,6 +507,39 @@ fstabsearch(key)
 	}
 	return (NULL);
 }
+
+/*
+ * Search in the mounted file list for a file name.
+ * This file name can be either the special or the path file name.
+ *
+ * The entries in the list are the BLOCK special names, not the
+ * character special names.
+ * The caller of mntinfosearch assures that the character device
+ * is dumped (that is much faster)
+ */
+struct statfs *
+mntinfosearch(const char *key)
+{
+	int i, mntbufc;
+	struct statfs *mntbuf, *fs;
+	char *rn;
+
+	if ((mntbufc = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
+		quit("Can't get mount list: %s", strerror(errno));
+	for (fs = mntbuf, i = 0; i < mntbufc; i++, fs++) {
+		if (strcmp(fs->f_fstypename, "ufs") != 0 &&
+		    strcmp(fs->f_fstypename, "ffs") != 0)
+			continue;
+		if (strcmp(fs->f_mntonname, key) == 0 ||
+		    strcmp(fs->f_mntfromname, key) == 0)
+			return (fs);
+		rn = rawname(fs->f_mntfromname);
+		if (rn != NULL && strcmp(rn, key) == 0)
+			return (fs);
+	}
+	return (NULL);
+}
+
 
 /*
  *	Tell the operator what to do
