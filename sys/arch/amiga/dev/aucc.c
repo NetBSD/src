@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.32 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: aucc.c,v 1.33 2003/04/06 18:20:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -35,14 +35,14 @@
 
 /* TODO:
  *
- * - ulaw -> 14bit conversion
+ * - mu-law -> 14bit conversion
  * - channel allocation is wrong for 14bit mono
  * - convert the... err... conversion routines to 68k asm for best performance
  * 	XXX: NO. aucc audio is limited by chipmem speed, anyway. You dont
  *	want to make life difficult for amigappc work.
  *		-is
  *
- * - rely on auconv.c routines for ulaw/alaw conversions
+ * - rely on auconv.c routines for mu-law/A-law conversions
  * - perhaps use a calibration table for better 14bit output
  * - set 31KHz AGA video mode to allow 44.1KHz even if grfcc is missing
  *	in the kernel
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.32 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.33 2003/04/06 18:20:10 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ struct audio_device aucc_device = {
 struct aucc_softc *aucc=NULL;
 
 
-unsigned char ulaw_to_lin[] = {
+unsigned char mulaw_to_lin[] = {
 	0x82, 0x86, 0x8a, 0x8e, 0x92, 0x96, 0x9a, 0x9e,
 	0xa2, 0xa6, 0xaa, 0xae, 0xb2, 0xb6, 0xba, 0xbe,
 	0xc1, 0xc3, 0xc5, 0xc7, 0xc9, 0xcb, 0xcd, 0xcf,
@@ -217,10 +217,10 @@ static void aucc_decode_ulinear8_2ch(u_char **, u_char *, int);
 static void aucc_decode_ulinear8_3ch(u_char **, u_char *, int);
 static void aucc_decode_ulinear8_4ch(u_char **, u_char *, int);
 
-static void aucc_decode_ulaw_1ch(u_char **, u_char *, int);
-static void aucc_decode_ulaw_2ch(u_char **, u_char *, int);
-static void aucc_decode_ulaw_3ch(u_char **, u_char *, int);
-static void aucc_decode_ulaw_4ch(u_char **, u_char *, int);
+static void aucc_decode_mulaw_1ch(u_char **, u_char *, int);
+static void aucc_decode_mulaw_2ch(u_char **, u_char *, int);
+static void aucc_decode_mulaw_3ch(u_char **, u_char *, int);
+static void aucc_decode_mulaw_4ch(u_char **, u_char *, int);
 
 static void aucc_decode_slinear16_1ch(u_char **, u_char *, int);
 static void aucc_decode_slinear16_2ch(u_char **, u_char *, int);
@@ -335,7 +335,7 @@ init_aucc(struct aucc_softc *sc)
 	sc->sc_precision=8;
 	sc->sc_14bit = 0;
 	sc->sc_encoding=AUDIO_ENCODING_ULAW;
-	sc->sc_decodefunc = aucc_decode_ulaw_1ch;
+	sc->sc_decodefunc = aucc_decode_mulaw_1ch;
 
 	/* clear interrupts and dma: */
 	custom.intena = AUCC_ALLINTF;
@@ -475,16 +475,16 @@ aucc_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 		case AUDIO_ENCODING_ULAW:
 			switch (p->channels) {
 			case 1:
-				sc->sc_decodefunc = aucc_decode_ulaw_1ch;
+				sc->sc_decodefunc = aucc_decode_mulaw_1ch;
 				break;
 			case 2:
-				sc->sc_decodefunc = aucc_decode_ulaw_2ch;
+				sc->sc_decodefunc = aucc_decode_mulaw_2ch;
 				break;
 			case 3:
-				sc->sc_decodefunc = aucc_decode_ulaw_3ch;
+				sc->sc_decodefunc = aucc_decode_mulaw_3ch;
 				break;
 			case 4:
-				sc->sc_decodefunc = aucc_decode_ulaw_4ch;
+				sc->sc_decodefunc = aucc_decode_mulaw_4ch;
 				break;
 			default:
 				return EINVAL;
@@ -1105,42 +1105,42 @@ aucc_decode_ulinear8_4ch(u_char **dmap, u_char *p, int i)
 
 
 static void
-aucc_decode_ulaw_1ch(u_char **dmap, u_char *p, int i)
+aucc_decode_mulaw_1ch(u_char **dmap, u_char *p, int i)
 {
 	u_char *ch0 = dmap[0];
 
 	while (i--)
-		*ch0++ = ulaw_to_lin[*p++];
+		*ch0++ = mulaw_to_lin[*p++];
 }
 
 static void
-aucc_decode_ulaw_2ch(u_char **dmap, u_char *p, int i)
+aucc_decode_mulaw_2ch(u_char **dmap, u_char *p, int i)
 {
 	u_char *ch0 = dmap[0];
 	u_char *ch1 = dmap[1];
 
 	while (i--) {
-		*ch0++ = ulaw_to_lin[*p++];
-		*ch1++ = ulaw_to_lin[*p++];
+		*ch0++ = mulaw_to_lin[*p++];
+		*ch1++ = mulaw_to_lin[*p++];
 	}
 }
 
 static void
-aucc_decode_ulaw_3ch(u_char **dmap, u_char *p, int i)
+aucc_decode_mulaw_3ch(u_char **dmap, u_char *p, int i)
 {
 	u_char *ch0 = dmap[0];
 	u_char *ch1 = dmap[1];
 	u_char *ch2 = dmap[2];
 
 	while (i--) {
-		*ch0++ = ulaw_to_lin[*p++];
-		*ch1++ = ulaw_to_lin[*p++];
-		*ch2++ = ulaw_to_lin[*p++];
+		*ch0++ = mulaw_to_lin[*p++];
+		*ch1++ = mulaw_to_lin[*p++];
+		*ch2++ = mulaw_to_lin[*p++];
 	}
 }
 
 static void
-aucc_decode_ulaw_4ch(u_char **dmap, u_char *p, int i)
+aucc_decode_mulaw_4ch(u_char **dmap, u_char *p, int i)
 {
 	u_char *ch0 = dmap[0];
 	u_char *ch1 = dmap[1];
@@ -1148,10 +1148,10 @@ aucc_decode_ulaw_4ch(u_char **dmap, u_char *p, int i)
 	u_char *ch3 = dmap[3];
 
 	while (i--) {
-		*ch0++ = ulaw_to_lin[*p++];
-		*ch1++ = ulaw_to_lin[*p++];
-		*ch2++ = ulaw_to_lin[*p++];
-		*ch3++ = ulaw_to_lin[*p++];
+		*ch0++ = mulaw_to_lin[*p++];
+		*ch1++ = mulaw_to_lin[*p++];
+		*ch2++ = mulaw_to_lin[*p++];
+		*ch3++ = mulaw_to_lin[*p++];
 	}
 }
 

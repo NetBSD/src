@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.4 2002/12/08 10:49:03 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.5 2003/04/06 18:20:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -54,7 +54,7 @@ struct {
 	{ WAVE_FORMAT_PCM,	"Microsoft PCM" },
 	{ WAVE_FORMAT_ADPCM,	"Microsoft ADPCM" },
 	{ WAVE_FORMAT_ALAW,	"Microsoft A-law" },
-	{ WAVE_FORMAT_MULAW,	"Microsoft U-law" },
+	{ WAVE_FORMAT_MULAW,	"Microsoft mu-law" },
 	{ WAVE_FORMAT_OKI_ADPCM,"OKI ADPCM" },
 	{ WAVE_FORMAT_DIGISTD,	"Digistd format" },
 	{ WAVE_FORMAT_DIGIFIX,	"Digifix format" },

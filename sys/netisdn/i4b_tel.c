@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.12 2002/11/26 19:49:01 christos Exp $
+ *	$Id: i4b_tel.c,v 1.13 2003/04/06 18:20:13 wiz Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.12 2002/11/26 19:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13 2003/04/06 18:20:13 wiz Exp $");
 
 #include "isdntel.h"
 
@@ -485,14 +485,14 @@ isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 						sc->wcvttab = 0;
 						break;
 					case CVT_ALAW2ULAW:
-						/* ISDN: a-law */
-						/* user: u-law */ 
+						/* ISDN: A-law */
+						/* user: mu-law */ 
 						sc->rcvttab = a2u_tab;
 						sc->wcvttab = u2a_tab;
 						break;
 					case CVT_ULAW2ALAW:
-						/* ISDN: u-law */
-						/* user: a-law */ 
+						/* ISDN: mu-law */
+						/* user: A-law */ 
 						sc->rcvttab = u2a_tab;
 						sc->wcvttab = a2u_tab;
 						break;
@@ -1319,7 +1319,7 @@ tel_get_softc(int unit)
  *===========================================================================*/
 
 /*---------------------------------------------------------------------------*
- *	A-law to u-law conversion
+ *	A-law to mu-law conversion
  *---------------------------------------------------------------------------*/
 static unsigned char a2u_tab[256] = {
 /* 00 */	0x2a, 0x2b, 0x28, 0x29, 0x2e, 0x2f, 0x2c, 0x2d, 
@@ -1357,7 +1357,7 @@ static unsigned char a2u_tab[256] = {
 };
 
 /*---------------------------------------------------------------------------*
- *	u-law to A-law conversion
+ *	mu-law to A-law conversion
  *---------------------------------------------------------------------------*/
 static unsigned char u2a_tab[256] = {
 /* 00 */	0x2a, 0x2b, 0x28, 0x29, 0x2e, 0x2f, 0x2c, 0x2d, 
