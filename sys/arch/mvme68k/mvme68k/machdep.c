@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1998/02/21 19:03:26 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1998/03/18 07:11:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,9 +98,7 @@
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
-#ifdef MACHINE_NEW_NONCONTIG
 #include <mvme68k/mvme68k/seglist.h>
-#endif
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 
@@ -135,9 +133,11 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-caddr_t	msgbufaddr;
+caddr_t	msgbufaddr;		/* KVA of message buffer */
+vm_offset_t msgbufpa;		/* PA of message buffer */
+
 int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+int	physmem;		/* size of physical memory */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -168,6 +168,20 @@ void	cpu_init_kcore_hdr __P((void));
  * Machine-independent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
+
+/*
+ * Memory segments initialized in locore, which are eventually loaded
+ * as managed VM pages.
+ */
+phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
+
+/*
+ * Memory segments to dump.  This is initialized from the phys_seg_list
+ * before pages are stolen from it for VM system overhead.  I.e. this
+ * covers the entire range of physical memory.
+ */
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+int	mem_cluster_cnt;
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -206,8 +220,13 @@ mvme68k_init()
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
-#ifdef MACHINE_NEW_NONCONTIG
-	for (i = 0; i < MAX_PHYS_SEGS && phys_seg_list[i].ps_start; i++)
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			/*
+			 * Segment has been completely gobbled up.
+			 */
+			continue;
+		}
 #if defined(UVM)
 		uvm_page_physload(atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end),
@@ -219,7 +238,7 @@ mvme68k_init()
 				 atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end));
 #endif
-#endif
+	}
 
 	/* Initialize interrupt handlers. */
 	isrinit();
@@ -246,19 +265,11 @@ mvme68k_init()
 
 	/*
 	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-#ifdef MACHINE_NEW_NONCONTIG
-#define MVME_MSG_BUF_START	phys_seg_list[0].ps_end
-#else
-#define MVME_MSG_BUF_START	avail_end
-#endif
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-		    MVME_MSG_BUF_START + i * NBPG, VM_PROT_ALL, TRUE);
+		    msgbufpa + i * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-
-#undef MVME_MSG_BUF_START
 }
 
 #ifdef MVME147
@@ -351,6 +362,7 @@ cpu_startup()
 	register unsigned i;
 	register caddr_t v;
 	int base, residual;
+	u_quad_t vmememsize;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
 #ifdef DEBUG
@@ -371,15 +383,12 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	printf("real mem  = %d", ctob(physmem));
-
-#ifdef MACHINE_NEW_NONCONTIG
-	maxaddr = 0;
-	for (i = 1; i < MAX_PHYS_SEGS && phys_seg_list[i].ps_start; i++)
-		maxaddr += phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
-
-	if ( maxaddr )
-		printf(" (of which %d is offboard)", maxaddr);
-#endif
+	
+	for (vmememsize = 0, i = 1; i < mem_cluster_cnt; i++)
+		vmememsize += mem_clusters[i].size;
+	if (vmememsize != 0)
+		printf(" (%qu on-board, %qu VMEbus)",
+		    mem_clusters[0].size, vmememsize);
 
 	printf("\n");
 
@@ -891,6 +900,7 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
+	int i;
 	extern char end[];
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr)); 
@@ -942,12 +952,11 @@ cpu_init_kcore_hdr()
 
 	/*
 	 * The mvme68k has one or two memory segments.
-	 *
-	 * XXX Dump routines need to be fixed to handle multiple
-	 * XXX segments (VME memory cards).
 	 */
-	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size  = ctob(physmem);
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		m->ram_segs[i].start = mem_clusters[i].start;
+		m->ram_segs[i].size  = mem_clusters[i].size;
+	}
 }
 
 /*
@@ -961,6 +970,20 @@ cpu_dumpsize()
 
 	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
 	return (btodb(roundup(size, dbtob(1))));
+}
+
+/*
+ * Calculate size of RAM (in pages) to be dumped.
+ */
+u_long
+cpu_dump_mempagecnt()
+{
+	u_long i, n;
+
+	n = 0;
+	for (i = 0; i < mem_cluster_cnt; i++)
+		n += atop(mem_clusters[i].size);
+	return (n);
 }
 
 /*
@@ -1003,143 +1026,153 @@ long	dumplo = 0;		/* blocks */
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
- *
- * XXX This routine will need to change when we support
- * XXX VME memory cards.
  */
 void
 cpu_dumpconf()
 {
-	int chdrsize;	/* size of the dump header */
-	int nblks;	/* size of the dump area */
+	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
-		return;
+		goto bad;
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdevsw[maj].d_psize == NULL)
-		return;
+		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	chdrsize = cpu_dumpsize();
+	if (nblks <= ctod(1))
+		goto bad;
 
-	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)
+		goto bad;
+	dumpblks += ctod(cpu_dump_mempagecnt());
 
-	/*
-	 * Check do see if we will fit.  Note we always skip the
-	 * first CLBYTES in case there is a disk label there.
-	 */
-	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
-		dumpsize = 0;
-		dumplo = -1;
-		return;
-	}
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
 
-	/*
-	 * Put dump at the end of the partition.
-	 */
-	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
+	dumpsize = cpu_dump_mempagecnt();
+	return;
+
+ bad:
+	dumpsize = 0;
 }
 
 /*
  * Dump physical memory onto the dump device.  Called by cpu_reboot().
- *
- * XXX This routine will have to change when we support
- * XXX VME memory cards.
  */
 void
 dumpsys()
 {
-	daddr_t blkno;		/* current block to write */
-				/* dump routine */
+	u_long totalbytesleft, bytes, i, n, memcl;
+	u_long maddr;
+	int psize;
+	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	int pg;			/* page being dumped */
-	vm_offset_t maddr;	/* PA being dumped */
-	int error;		/* error code from (*dump)() */
+	int error;
 
-	/* XXX initialized here because of gcc lossage */
-	maddr = lowram;
-	pg = 0;
+	/* XXX Should save registers. */
 
-	/* Don't put dump messages in msgbuf. */
-	msgbufenabled = 0;
-
-	/* Make sure dump device is valid. */
+	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
 	/*
-	 * XXX When we support VME memory cards, we'll want to initialize
-	 * XXX the kcore header and call cpu_dumpconf() again here.
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
 	 */
-
-	if (dumpsize == 0) {  
+	if (dumpsize == 0)
 		cpu_dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
 	if (dumplo <= 0) {
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
 	}
-	dump = bdevsw[major(dumpdev)].d_dump;
-	blkno = dumplo;
-
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
 
-	/* Write the dump header. */
-	error = cpu_dump(dump, &blkno);
-	if (error)
-		goto bad;
+	/* XXX should purge all outstanding keystrokes. */
 
-	for (pg = 0; pg < dumpsize; pg++) {
-#define	NPGMB	(1024*1024/NBPG)
-		/* print out how many MBs we have dumped */
-		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
-#undef NPGMB
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE);
+	dump = bdevsw[major(dumpdev)].d_dump;
+	blkno = dumplo;
 
-		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
- bad:
-		switch (error) {
-		case 0:
-			maddr += NBPG;
-			blkno += btodb(NBPG);
-			break;
+	if ((error = cpu_dump(dump, &blkno)) != 0)
+		goto err;
 
-		case ENXIO:
-			printf("device bad\n");
-			return;
+	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 
-		case EFAULT:
-			printf("device not ready\n");
-			return;
+	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {
+		maddr = mem_clusters[memcl].start;
+		bytes = mem_clusters[memcl].size;
 
-		case EINVAL:
-			printf("area improper\n");
-			return;
+		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 
-		case EIO:
-			printf("i/o error\n");
-			return;
+			/* Print out how many MBs we have left to go. */
+			if ((totalbytesleft % (1024*1024)) == 0)
+				printf("%d ", totalbytesleft / (1024 * 1024));
 
-		case EINTR:
-			printf("aborted from console\n");
-			return;
+			/* Limit size for next transfer. */
+			n = bytes - i;
+			if (n > NBPG)
+				n = NBPG;
 
-		default:
-			printf("error %d\n", error);
-			return;
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+			    VM_PROT_READ, TRUE);
+
+			error = (*dump)(dumpdev, blkno, vmmap, n);
+			if (error)
+				goto err;
+			maddr += n;
+			blkno += btodb(n);
 		}
 	}
-	printf("succeeded\n");
+
+ err:
+	switch (error) {
+
+	case ENXIO:
+		printf("device bad\n");
+		break;
+
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+
+	case EINVAL:
+		printf("area improper\n");
+		break;
+
+	case EIO:
+		printf("i/o error\n");
+		break;
+
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+
+	case 0:
+		printf("succeeded\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
+		break;
+	}
+	printf("\n\n");
+	delay(5000);
 }
 
 void
