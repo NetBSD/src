@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88.2.9 1999/11/20 08:40:02 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.10 2000/02/07 07:55:33 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -69,6 +69,10 @@ file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
 file	arch/mac68k/dev/maccons.c	akbd & macfb
 
+#device	ite: wsemuldisplaydev
+#attach	ite at wsdisplay
+#file	arch/mac68k/dev/ite_compat.c	ite needs-flag
+
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
 file	arch/mac68k/nubus/if_ae_nubus.c	ae_nubus
@@ -133,6 +137,7 @@ include "arch/m68k/fpe/files.fpe"
 
 # legitimate pseudo-devices
 defpseudo grf
+defpseudo ite
 
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/bus_space.c
@@ -158,6 +163,7 @@ file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag
+file	arch/mac68k/dev/ite_compat.c		ite needs-flag
 
 file	dev/cons.c
 file	dev/cninit.c
