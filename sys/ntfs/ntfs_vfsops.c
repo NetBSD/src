@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.22 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.23 1999/11/15 19:38:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -657,17 +657,12 @@ ntfs_unmount(
 	if (error)
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
 
-	ntmp->ntm_devvp->v_specmountpoint = NULL;
-#if defined(__FreeBSD__)
-	ntmp->ntm_devvp->v_specmountpoint = NULL;
-#else
 	/* Check if the type of device node isn't VBAD before
 	 * touching v_specinfo.  If the device vnode is revoked, the
 	 * field is NULL and touching it causes null pointer derefercence.
 	 */
 	if (ntmp->ntm_devvp->v_type != VBAD)
 		ntmp->ntm_devvp->v_specmountpoint = NULL;
-#endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 
