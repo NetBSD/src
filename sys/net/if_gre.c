@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.32 2002/06/09 17:22:41 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.33 2002/06/09 17:32:54 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.32 2002/06/09 17:22:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.33 2002/06/09 17:32:54 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -470,6 +470,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GREGADDRS:
+		memset(&si, 0, sizeof(si));
 		si.sin_family = AF_INET;
 		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
@@ -477,6 +478,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_addr = *sa;
 		break;
 	case GREGADDRD:
+		memset(&si, 0, sizeof(si));
 		si.sin_family = AF_INET;
 		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
@@ -512,16 +514,13 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EADDRNOTAVAIL;
 			break;
 		}
+		memset(&si, 0, sizeof(si));
 		si.sin_family = AF_INET;
 		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
-		sa = sintosa(&si);
-		memcpy(&lifr->addr, sa, sa->sa_len);
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
+		memcpy(&lifr->addr, &si, sizeof(si));
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
-		sa = sintosa(&si);
-		memcpy(&lifr->dstaddr, sa, sa->sa_len);
+		memcpy(&lifr->dstaddr, &si, sizeof(si));
 		break;
 	default:
 		error = EINVAL;
