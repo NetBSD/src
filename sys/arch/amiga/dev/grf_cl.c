@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.24 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.25 1999/06/29 19:51:28 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -145,7 +145,7 @@ unsigned long cl_maxpixelclock = 86000000;
 extern unsigned char CIRRUSFONT[];
 
 struct grfcltext_mode clconsole_mode = {
-	{255, "", 25200000, 640, 480, 4, 640/8, 752/8, 792/8, 800/8,
+	{255, "", 25000000, 640, 480, 4, 640/8, 680/8, 768/8, 800/8,
 	 481, 490, 498, 522, 0},
 	8, CIRRUSFONTY, 80, 480 / CIRRUSFONTY, CIRRUSFONT, 32, 255
 };
