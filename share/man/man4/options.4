@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.188 2002/11/16 11:42:33 grant Exp $
+.\"	$NetBSD: options.4,v 1.189 2002/11/16 12:28:04 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 29, 2002
+.Dd November 16, 2002
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -191,13 +191,13 @@ On those architectures that support it, this enables binary
 compatibility with
 .At V.4
 applications built for the same architecture.
-This currently includes the i386, m68k and sparc port.
+This currently includes the i386, m68k, and sparc ports.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and
 .Xr a.out 5
 applications built for the same architecture.
-This currently includes the alpha, i386, powerpc, mips, arm, and m68k
+This currently includes the alpha, arm, i386, m68k, mips, and powerpc
 ports.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
@@ -218,8 +218,8 @@ The functionality of this option is unknown.
 .It Cd options COMPAT_DARWIN
 On those architectures that support it, this enables binary compatibility with
 .Tn Darwin
-applications built for the same architecture. 
-This feature is highly experimental, it requires COMPAT_MACH and 
+applications built for the same architecture.
+This feature is highly experimental, it requires COMPAT_MACH and
 EXEC_MACHO and it is currently limited to i386 and powerpc ports of
 .Nx .
 .It Cd options COMPAT_FREEBSD
@@ -298,10 +298,9 @@ are adjusted and some binaries which use
 .Xr sysctl 3
 to retrieve network details would not work properly.
 .It Cd options EXEC_MACHO
-On those architectures that support it, this adds support for running 
+On those architectures that support it, this adds support for running
 Mach-O executables.
-This is currently limited to the i386 and powerpc 
-ports of 
+This is currently limited to the i386 and powerpc ports of
 .Nx .
 .It Cd options EXEC_ELF_NOTELESS
 Run unidentified ELF binaries as
