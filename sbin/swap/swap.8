@@ -1,4 +1,4 @@
-.\"	$NetBSD: swap.8,v 1.1.2.2.2.3 1997/05/11 13:54:03 mrg Exp $
+.\"	$NetBSD: swap.8,v 1.1.2.2.2.4 1997/05/12 01:47:25 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -77,14 +77,17 @@ with the
 option.
 .Sh OPTIONS
 The following options are available:
-.Bl -tag -width Sxxxsuffix
+.Bl -tag -width 123456
 .It Fl A
 This options causes
 .Nm
 to read the
 .Pa /etc/fstab
 file for devices and files with a ``sw'' type, and adds all these entries
-as swap devices.
+as swap devices.  The priority can set by having ``priority=N'' in the
+mount options field of the 
+.Xr fstab 5 
+file.
 .It Fl a
 The
 .Fl a
@@ -94,10 +97,13 @@ also be in the argument list.  The
 .Ar path
 is added to the kernel's list of swap devices using the
 .Xr swapon 2
-system call.  The priority set by having ``priority=N'' in the
-mount options field of the 
-.Xr fstab 5 
-file.
+system call.  When using the
+.Nm swapon
+form of this command, the
+.Fl a
+option is treated the same as the
+.Fl A
+option, for backwards compatibility.
 .It Fl c
 The
 .Fl c
@@ -123,7 +129,8 @@ option sets the priority of swap devices or files to the
 .Ar priority
 argument.  This works with the
 .\" .Fl d ,
-.Fl a
+.Fl a ,
+.Fl c
 and
 .Fl l
 options.
