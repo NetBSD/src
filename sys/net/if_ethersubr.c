@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.6 1994/02/02 01:21:36 hpeyerl Exp $
+ *	$Id: if_ethersubr.c,v 1.7 1994/04/18 06:18:10 glass Exp $
  */
 
 #include <sys/param.h>
@@ -314,6 +314,10 @@ ether_input(ifp, eh, m)
 
 	case ETHERTYPE_ARP:
 		arpinput((struct arpcom *)ifp, m);
+		return;
+
+	case ETHERTYPE_REVARP:
+		revarpinput((struct arpcom *) ifp, m);
 		return;
 #endif
 #ifdef NS

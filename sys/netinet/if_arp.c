@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_arp.c,v 1.8 1994/02/02 05:58:50 hpeyerl Exp $
+ *	$Id: if_arp.c,v 1.9 1994/04/18 06:18:16 glass Exp $
  */
 
 /*
@@ -95,6 +95,12 @@ int	arptab_size = ARPTAB_SIZE;	/* for arp command */
 #define	ARPT_AGE	(60*1)	/* aging timer, 1 min. */
 #define	ARPT_KILLC	20	/* kill completed entry in 20 mins. */
 #define	ARPT_KILLI	3	/* kill incomplete entry in 3 minutes */
+
+/* revarp state*/
+struct in_addr myip; 
+int myip_initialized = 0;
+int revarp_in_progress = 0;
+struct ifnet *myip_ifp = NULL;
 
 extern struct ifnet loif;
 
@@ -612,4 +618,154 @@ arpioctl(cmd, data)
 	}
 	splx(s);
 	return (0);
+}
+
+/*
+ * Called from 10 Mb/s Ethernet interrupt handlers
+ * when ether packet type ETHERTYPE_REVARP
+ * is received.  Common length and type checks are done here,
+ * then the protocol-specific routine is called.
+ */
+void revarpinput(ac, m)
+	struct arpcom *ac;
+	struct mbuf *m;
+{
+	struct arphdr *ar;
+	int op, s;
+
+	if (m->m_len < sizeof(struct arphdr))
+		goto out;
+	ar = mtod(m, struct arphdr *);
+	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER)
+		goto out;
+	if (m->m_len < sizeof(struct arphdr) + 2 * ar->ar_hln +
+	    2 * ar->ar_pln)	
+		goto out;
+	switch (ntohs(ar->ar_pro)) {
+
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPTRAILERS:
+		in_revarpinput(ac, m);
+		return;
+
+	default:
+		break;
+	}
+out:
+	m_freem(m);
+}
+
+/*
+ * RARP for Internet protocols on 10 Mb/s Ethernet.
+ * Algorithm is that given in RFC 903.
+ * We are only using for bootstrap purposes to get an ip address for one of
+ * our interfaces.  Thus we support no user-interface.
+ *
+ * Since the contents of the RARP reply are specific to the interface that
+ * sent the request, this code must ensure that they are properly associated.
+ *
+ * Note: also supports ARP via RARP packets, per the RFC.
+ */
+in_revarpinput(ac, m)
+	struct arpcom *ac;
+	struct mbuf *m;
+{
+	struct ether_arp *ar;
+	int op, s;
+
+	ar = mtod(m, struct ether_arp *);
+	op = ntohs(ar->arp_op);
+	switch (op) {
+	case ARPOP_REQUEST:
+	case ARPOP_REPLY:	/* per RFC */
+		if (ac->ac_if.if_flags & IFF_NOARP)
+			goto out;
+		in_arpinput(ac, m);
+		return;
+		break;
+	case REVARP_REPLY:
+		break;
+	case REVARP_REQUEST:	/* handled by rarpd(8) */
+	default:
+		goto out;
+	}
+	if (!revarp_in_progress)
+		goto out;
+	if ((struct ifnet *) ac != myip_ifp) /* !same interface */
+		goto out;
+	if (myip_initialized != 0)
+		goto out;
+	if (bcmp(ar->arp_tha, ac->ac_enaddr, sizeof(ar->arp_tha)))
+		goto out;
+	bcopy((caddr_t) ar->arp_tpa, (caddr_t) &myip, sizeof(myip));
+	myip_initialized = 1;
+	wakeup((caddr_t) &myip);
+ out:
+	m_freem(m);
+}
+
+/*
+ * Send a RARP request for the ip address of the specified interface.
+ * The request should be RFC 903-compliant.
+ */
+void revarp_request(ifp)
+	struct ifnet *ifp;
+{
+	struct sockaddr sa;
+	struct mbuf *m;
+	struct ether_header *eh;
+	struct ether_arp *ea;
+	struct arpcom *ac = (struct arpcom *) ifp;
+
+	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
+		return;
+	m->m_len = sizeof(*ea);
+	m->m_pkthdr.len = sizeof(*ea);
+	MH_ALIGN(m, sizeof(*ea));
+	ea = mtod(m, struct ether_arp *);
+	eh = (struct ether_header *) sa.sa_data;
+	bzero((caddr_t)ea, sizeof (*ea));
+	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
+	      sizeof(eh->ether_dhost));
+	eh->ether_type = htons(ETHERTYPE_REVARP);
+	ea->arp_hrd = htons(ARPHRD_ETHER);
+	ea->arp_pro = htons(ETHERTYPE_IP);
+	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
+	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
+	ea->arp_op = htons(REVARP_REQUEST);
+	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
+	   sizeof(ea->arp_sha));
+	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_tha,
+	   sizeof(ea->arp_tha));
+	sa.sa_family = AF_UNSPEC;
+	sa.sa_len = sizeof(sa);
+	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
+}
+
+/*
+ * RARP for the ip address of the specified interface.  Timeout if
+ * no response is received.
+ */
+int revarp_whoami(in, ifp)
+	struct in_addr *in;
+	struct ifnet *ifp;
+{
+	int result, count = 20;
+	
+	if (myip_initialized) 
+		return EIO;
+
+	myip_ifp = ifp;
+	revarp_in_progress = 1;
+	while (count--) {
+		revarp_request(ifp);
+		result = tsleep((caddr_t) &myip, PSOCK, "revarp", hz/2);
+		if (result != EWOULDBLOCK) break;
+	}
+	revarp_in_progress = 0;
+	if (!myip_initialized)
+		return ENETUNREACH;
+	
+	bcopy((caddr_t) &myip, in, sizeof(*in));
+	return 0;
 }
