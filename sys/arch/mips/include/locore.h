@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.43 2000/09/16 07:20:17 nisimura Exp $ */
+/* $NetBSD: locore.h,v 1.44 2000/10/02 22:13:38 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -93,6 +93,9 @@ u_int32_t mips3_read_compare(void);
 void	mips3_write_config(u_int32_t);
 void	mips3_write_compare(u_int32_t);
 void	mips3_clearBEV(void);
+
+u_int64_t mips3_ld(u_int64_t *);
+void	mips3_sd(u_int64_t *, u_int64_t);
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent
