@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.62 2004/10/29 06:32:09 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.63 2004/11/01 08:21:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.62 2004/10/29 06:32:09 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.63 2004/11/01 08:21:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -154,12 +154,12 @@ static 	mutex_t			_pwmutex = MUTEX_INITIALIZER;
 const char __yp_token[] = "__YP!";	/* Let pwd_mkdb pull this in. */
 
 static const ns_src defaultcompat[] = {
-	{ NSSRC_FILES,	NS_SUCCESS },
+	{ NSSRC_COMPAT,	NS_SUCCESS },
 	{ 0 }
 };
 
 static const ns_src defaultcompat_forceall[] = {
-	{ NSSRC_FILES,	NS_SUCCESS | NS_FORCEALL },
+	{ NSSRC_COMPAT,	NS_SUCCESS | NS_FORCEALL },
 	{ 0 }
 };
 
