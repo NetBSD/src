@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.7 2004/01/04 14:27:30 sekiya Exp $
+.\"	$NetBSD: hardware,v 1.8 2004/05/01 12:41:34 pooka Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by 
@@ -74,6 +74,8 @@ Audio
 .(bullet -compact
 On-board HAL2 controller (IP22/24)
 .bullet)
+.bullet)
+.
 .Ss2 Unsupported devices
 .(bullet -offset indent
 Keyboard and mouse devices
