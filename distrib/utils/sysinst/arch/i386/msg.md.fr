@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.14 2000/05/11 02:27:25 hubertf Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.15 2000/12/03 01:54:48 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,11 @@
  */
 
 /* MD Message catalog -- french, i386 version */
+
+message md_hello
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+
+}
 
 message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez

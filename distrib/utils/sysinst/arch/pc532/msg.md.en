@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 1999/07/06 06:10:07 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2000/12/03 01:54:49 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,11 @@
  */
 
 /* pc532 machine dependent messages, english */
+
+message md_hello
+{If you booted from a floppy, you may now remove the disk.
+
+}
 
 message askfsroot
 {I will be asking for partition sizes and on some, mount points.

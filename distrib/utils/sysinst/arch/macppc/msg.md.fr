@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 1999/07/06 06:10:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2000/12/03 01:54:48 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,10 @@
 
 /* macppc machine dependent messages, french */
 
+
+message md_hello
+{
+}
 
 message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
