@@ -121,9 +121,9 @@ while (<>) {
 		chew("</A>");
 		chomp($_ .= " " . <>) if (/<A$/);	# another reference on the next line
 		s#<TT><A HREF="(.*).htm">\1</A></TT>#\n.Xr \1 $sec\n#ig;
-		s#<A HREF="([^"]*)">(.*?) +</A> *page#\n.%T "$2"\npage in\n.Pa /usr/share/doc/ntp/$1\n#ig;
+		s#<A HREF="([^"]*)">(.*?) +</A> *page#\n.%T "$2"\npage in\n.Pa /usr/share/doc/html/ntp/$1\n#ig;
 		s#^<BR>##g;
-		s#<A HREF="([^"]*)">(.*?)</A>#For\n.%T "$2"\n, refer to\n.Pa /usr/share/doc/ntp/$1 .\n.Pp\n#ig;
+		s#<A HREF="([^"]*)">(.*?)</A>#For\n.%T "$2"\n, refer to\n.Pa /usr/share/doc/html/ntp/$1 .\n.Pp\n#ig;
 		detag;
 	}
 	s#<TT>$name</TT>#\n.Nm\n#ig;
