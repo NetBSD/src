@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.5 1997/10/15 23:01:02 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.6 1998/01/12 20:04:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -105,9 +105,7 @@ struct cfattach pcom_ca = {
 	sizeof(struct com_softc), commatch, comattach
 };
 
-struct cfdriver pcom_cd = {
-	NULL, "pcom", DV_TTY
-};
+extern struct cfdriver pcom_cd;
 
 int	comdefaultrate = TTYDEF_SPEED;
 #ifdef COMCONSOLE

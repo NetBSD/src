@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 1997/06/23 02:56:46 jonathan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 1998/01/12 20:04:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,9 +42,7 @@ struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 
-struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_DULL
-};
+extern struct cfdriver cpu_cd;
 
 extern void cpu_identify __P((void));
 

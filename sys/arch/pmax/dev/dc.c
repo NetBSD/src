@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.35 1997/11/21 17:26:29 mhitch Exp $	*/
+/*	$NetBSD: dc.c,v 1.36 1998/01/12 20:12:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.35 1997/11/21 17:26:29 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.36 1998/01/12 20:12:30 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.35 1997/11/21 17:26:29 mhitch Exp $");
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_cons.h>
 
-extern struct cfdriver mainbus_cd;
-
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
 
@@ -120,13 +118,7 @@ extern struct cfdriver mainbus_cd;
 int	old_dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	old_dcattach __P((struct device *parent, struct device *self, void *aux));
 
-
 extern struct cfdriver dc_cd;
-struct  cfdriver dc_cd = {
-	NULL, "dc", DV_TTY
-};
-
-
 
 /*
  * Forward declarations
