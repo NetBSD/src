@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2 2004/10/15 04:42:09 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.3 2004/10/23 17:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.2 2004/10/15 04:42:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.3 2004/10/23 17:16:45 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.2 2004/10/15 04:42:09 thorpej Exp $");
 #include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -83,8 +84,6 @@ struct dkwedge_softc {
 	dev_t		sc_pdev;	/* cached parent's dev_t */
 					/* link on parent's wedge list */
 	LIST_ENTRY(dkwedge_softc) sc_plink;
-
-	int		sc_open;	/* locked by parent's rawlock */
 
 	struct disk	sc_dk;		/* our own disk structure */
 	struct bufq_state sc_bufq;	/* buffer queue */
@@ -503,17 +502,19 @@ dkwedge_del(struct dkwedge_info *dkw)
 	}
 
 	/* Clean up the parent. */
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
-	if (sc->sc_open) {
+	if (sc->sc_dk.dk_openmask) {
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
 					NOCRED, curproc);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
-		sc->sc_open = 0;
+		sc->sc_dk.dk_openmask = 0;
 	}
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
 
 	/* Announce our departure. */
 	aprint_normal("%s at %s (%s) deleted\n", sc->sc_dev->dv_xname,
@@ -625,6 +626,44 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
 	(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
 
 	return (error);
+}
+
+/*
+ * dkwedge_set_bootwedge
+ *
+ *	Set the booted_wedge global based on the specified parent name
+ *	and offset/length.
+ */
+void
+dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
+{
+	struct dkwedge_softc *sc;
+	int i;
+
+	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+	for (i = 0; i < ndkwedges; i++) {
+		if ((sc = dkwedges[i]) == NULL)
+			continue;
+		if (strcmp(sc->sc_parent->dk_name, parent->dv_xname) == 0 &&
+		    sc->sc_offset == startblk &&
+		    sc->sc_size == nblks) {
+			if (booted_wedge) {
+				printf("WARNING: double match for boot wedge "
+				    "(%s, %s)\n",
+				    booted_wedge->dv_xname,
+				    sc->sc_dev->dv_xname);
+				continue;
+			}
+			booted_device = parent;
+			booted_wedge = sc->sc_dev;
+			booted_partition = 0;
+		}
+	}
+	/*
+	 * XXX What if we don't find one?  Should we create a special
+	 * XXX root wedge?
+	 */
+	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
 }
 
 /*
@@ -813,7 +852,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
 static struct dkwedge_softc *
 dkwedge_lookup(dev_t dev)
 {
-	int unit = DISKUNIT(dev);
+	int unit = minor(dev);
 
 	if (unit >= ndkwedges)
 		return (NULL);
@@ -847,8 +886,9 @@ dkopen(dev_t dev, int flags, int fmt, struct proc *p)
 	 * opened.  The reason?  We see one dkopen() per open call, but
 	 * only dkclose() on the last close.
 	 */
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
-	if (sc->sc_open == 0) {
+	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->sc_parent->dk_rawopens++ == 0) {
 			KASSERT(sc->sc_parent->dk_rawvp == NULL);
 			error = bdevvp(sc->sc_pdev, &vp);
@@ -869,9 +909,15 @@ dkopen(dev_t dev, int flags, int fmt, struct proc *p)
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
 		}
-		sc->sc_open = 1;
+		if (fmt == S_IFCHR)
+			sc->sc_dk.dk_copenmask |= 1;
+		else
+			sc->sc_dk.dk_bopenmask |= 1;
+		sc->sc_dk.dk_openmask =
+		    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 	}
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
 
 	return (0);
 
@@ -891,19 +937,29 @@ dkclose(dev_t dev, int flags, int fmt, struct proc *p)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
-	KASSERT(sc->sc_open);
+	KASSERT(sc->sc_dk.dk_openmask != 0);
 
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
 
-	if (sc->sc_parent->dk_rawopens-- == 1) {
-		KASSERT(sc->sc_parent->dk_rawvp != NULL);
-		error = vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
-				 NOCRED, p);
-		sc->sc_parent->dk_rawvp = NULL;
+	if (fmt == S_IFCHR)
+		sc->sc_dk.dk_copenmask &= ~1;
+	else
+		sc->sc_dk.dk_bopenmask &= ~1;
+	sc->sc_dk.dk_openmask =
+	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
+
+	if (sc->sc_dk.dk_openmask == 0) {
+		if (sc->sc_parent->dk_rawopens-- == 1) {
+			KASSERT(sc->sc_parent->dk_rawvp != NULL);
+			error = vn_close(sc->sc_parent->dk_rawvp,
+					 FREAD | FWRITE, NOCRED, p);
+			sc->sc_parent->dk_rawvp = NULL;
+		}
 	}
-	sc->sc_open = 0;
 
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
 
 	return (error);
 }
