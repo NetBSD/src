@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.38 1997/05/26 20:28:38 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.39 1997/06/08 15:55:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,6 +313,7 @@ vndstrategy(bp)
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		VOP_UNLOCK(vnd->sc_vp);
 
+#define VND_FILLHOLES
 #ifdef VND_FILLHOLES
 		if (error == 0 && (long)nbn == -1) {
 			int rw = (flags & B_READ) ? UIO_READ : UIO_WRITE;
@@ -321,7 +322,9 @@ vndstrategy(bp)
 					bn, UIO_SYSSPACE,
 					IO_SYNC | IO_NODELOCKED,
 					vnd->sc_cred, &resid, bp->b_proc);
+			s = splbio();
 			bp->b_resid -= (sz - resid);
+			splx(s);
 		}
 #else
 		if (error == 0 && (long)nbn == -1)
@@ -339,6 +342,7 @@ vndstrategy(bp)
 		 */
 		if (error || (long)nbn == -1) {
 			vnx->vx_error = error;
+			s = splbio();
 			if (vnx->vx_pending == 0) {
 				if (error) {
 					bp->b_error = error;
@@ -347,6 +351,7 @@ vndstrategy(bp)
 				putvndxfer(vnx);
 				biodone(bp);
 			}
+			splx(s);
 			return;
 		}
 
@@ -405,13 +410,13 @@ vndstrategy(bp)
 		}
 
 		nbp->vb_xfer = vnx;
-		vnx->vx_pending++;
 
 		/*
 		 * Just sort by block number
 		 */
 		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
+		vnx->vx_pending++;
 		disksort(&vnd->sc_tab, &nbp->vb_buf);
 		if (vnd->sc_tab.b_active < vnd->sc_maxactive) {
 			vnd->sc_tab.b_active++;
