@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.21 2004/03/28 20:49:22 pooka Exp $ 
+ *	$Id: rc_config.c,v 1.22 2004/05/06 21:13:28 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -1239,12 +1239,6 @@ check_config(void)
 				    cep->name);
 				error++;
 			}
-			if (strlen(cep->local_phone_dialout) == 0)
-			{
-				logit(LL_ERR, "check_config: local-phone-dialout not set in entry \"%s\"!",
-				    cep->name);
-				error++;
-			}
 		}
 
 		/* numbers used for incoming calls */
@@ -1584,7 +1578,9 @@ print_config(void)
 				}
 			}
 
-			fprintf(PFILE, "local-phone-dialout   = %s\t\t# show this number to remote when dialling out\n", cep->local_phone_dialout);
+			if (cep->local_phone_dialout[0])
+				fprintf(PFILE, "local-phone-dialout   = %s\t\t# show this number to remote when dialling out\n",
+				    cep->local_phone_dialout);
 			fprintf(PFILE, "dialout-type          = %s\n", cep->dialouttype ? "calledback\t\t# i am called back by remote" : "normal\t\t# i am not called back by remote");
 		}
 
