@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1999/03/30 06:12:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -469,7 +469,9 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[16] = MACHINE;	/* from <machine/param.h> */
+
+/* Non-standard name here to distinguish Sun3 from Sun3X. */
+char	machine[16] = "sun3x";	/* Not same as MACHINE! */
 char	cpu_model[120];
 
 /*
@@ -791,7 +793,6 @@ dumpsys()
 	kseg_p->c_size = sizeof(*chdr_p);
 
 	/* Fill in cpu_kcore_hdr_t part. */
-	/* Can NOT use machine[] as the name! */
 	strncpy(chdr_p->name, "sun3x", sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
