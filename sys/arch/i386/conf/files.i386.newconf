@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.25 1994/11/03 16:50:50 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.26 1994/11/03 18:14:53 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -75,9 +75,7 @@ device	pci at root {[bus = -1], [dev = -1], [function = -1]}
 #
 file	arch/i386/isa/isa.c		isa needs-flag
 
-device	timer at isa
-device	clock at isa
-file	arch/i386/isa/clock.c		clock timer
+file	arch/i386/isa/clock.c		isa
 define	dma
 file	arch/i386/isa/dma.c		dma needs-flag
 file	arch/i386/isa/intr.c		isa
