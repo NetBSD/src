@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/03/23 03:21:23 shin Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/10 05:00:47 shin Exp $
 
 .include "../Makefile.inc"
 
@@ -12,10 +12,10 @@ ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 PBSDBOOTDIR = ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
-PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.exe
-PBSDBOOT1 = ${PBSDBOOTDIR}/pbsdboot1.exe
+PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.uu
+PBSDBOOT1 = ${PBSDBOOTDIR}/pbsdboot1.uu
 HPCBOOTDIR = ${KERNSRCDIR}/arch/hpc/stand
-HPCBOOT = ${HPCBOOTDIR}/binary/MIPS/hpcboot.exe
+HPCBOOT = ${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
 MDSETIMAGE?=	mdsetimage
 
 INSTKERNELS = TX3912
@@ -41,11 +41,9 @@ release:
 	gzip -9 netbsd
 	${IINST} netbsd.gz ${ITARGET}/netbsd.${instkern}.gz
 .endfor
-	cd ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot; make
-	${IINST} ${PBSDBOOT} ${ITARGET}/.
-	${IINST} ${PBSDBOOT1} ${ITARGET}/.
-	cd ${KERNSRCDIR}/arch/hpc/stand; make
-	${IINST} ${HPCBOOT} ${ITARGET}/.
+	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT1}; chmod ${NONBINMODE} pbsdboot1.exe)
+	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT}; chmod ${NONBINMODE} pbsdboot.exe)
+	(cd ${ITARGET}; rm -f hpcboot.exe; ${UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; chmod ${NONBINMODE} hpcboot.exe)
 	${.CURDIR}/../sets/makesums -t ${ITARGET} '*.gz' '*.exe'
 .endif
 
