@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.7 1994/02/22 07:17:22 hpeyerl Exp $
+ *	$Id: sd.c,v 1.8 1994/05/11 10:16:19 mycroft Exp $
  */
 
 /*
@@ -757,38 +757,6 @@ sdintr(unit, stat)
 		}
 	}
 	sdfinish(unit, sc, bp);
-}
-
-int
-sdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	register int unit = sdunit(dev);
-	register int pid;
-
-	if ((pid = sd_softc[unit].sc_format_pid) &&
-	    pid != uio->uio_procp->p_pid)
-		return (EPERM);
-		
-	return (physio(sdstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-int
-sdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	register int unit = sdunit(dev);
-	register int pid;
-
-	if ((pid = sd_softc[unit].sc_format_pid) &&
-	    pid != uio->uio_procp->p_pid)
-		return (EPERM);
-		
-	return (physio(sdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
