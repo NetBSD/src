@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/13 06:15:18 jmc Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/13 06:16:13 jmc Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=	${.CURDIR}/../miniroot
@@ -27,6 +27,7 @@ CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
 MTREECONF=	${.CURDIR}/mtree.conf
 
 MTREE?=		mtree
+CRUNCHGEN?=	crunchgen
 
 realall: ${IMAGE}
 
@@ -55,7 +56,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
