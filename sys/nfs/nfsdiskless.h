@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.17 2002/12/01 22:59:42 matt Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.18 2003/05/05 13:21:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct nfs_diskless {
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
 };
 
+#ifdef _KERNEL
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
 void nfs_boot_cleanup __P((struct nfs_diskless *nd, struct proc *procp));
 int nfs_boot_ifupdown __P((struct ifnet *, struct proc *, int));
@@ -84,5 +85,6 @@ int nfs_boot_sendrecv __P((struct socket *, struct mbuf *,
 
 int nfs_bootdhcp  __P((struct nfs_diskless *, struct proc *));
 int nfs_bootparam __P((struct nfs_diskless *, struct proc *));
+#endif /* _KERNEL */
 
 #endif /* _NFS_NFSDISKLESS_H_ */
