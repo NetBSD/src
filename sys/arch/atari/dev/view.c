@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17 2000/06/26 04:55:34 simonb Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.1 2001/09/12 19:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -448,6 +448,14 @@ struct proc	*p;
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	return (revents);
+}
+
+int
+viewkqfilter(dev_t dev, struct knote *kn)
+{
+
+	/* XXXLUKEM (thorpej): not supported -- why is poll? */
+	return (1);
 }
 
 view_t	*
