@@ -1,4 +1,4 @@
-/* $NetBSD: tsc_microtime.c,v 1.2 2002/10/01 12:57:01 fvdl Exp $ */
+/* $NetBSD: tsc_microtime.c,v 1.3 2002/10/16 21:01:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tsc_microtime.c,v 1.2 2002/10/01 12:57:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc_microtime.c,v 1.3 2002/10/16 21:01:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,11 @@ tsc_microtime(struct timeval *tvp)
 	int64_t sec, usec;
 	int s;
 
+#ifdef MULTIPROCESSOR
 	s = splipi();		/* also blocks IPIs */
+#else
+	s = splclock();		/* block clock interrupts */
+#endif
 
 	/* XXXSMP: not atomic */
 	st = time;		/* read system time */
