@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.15 2001/04/20 12:56:09 jdc Exp $	*/
+/*	$NetBSD: scroll.c,v 1.16 2001/05/17 19:04:01 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.15 2001/04/20 12:56:09 jdc Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.16 2001/05/17 19:04:01 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -128,7 +128,7 @@ wscrl(WINDOW *win, int lines)
 int
 wsetscrreg(WINDOW *win, int top, int bottom)
 {
-	if (top < win->begy || bottom >= win->maxy || bottom - top < 1)
+	if (top < 0 || bottom >= win->maxy || bottom - top < 1)
 		return (ERR);
 	win->scr_t = top;
 	win->scr_b = bottom;
