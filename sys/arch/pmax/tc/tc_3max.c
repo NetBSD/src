@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.3 1999/11/15 09:50:43 nisimura Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.3 1999/11/15 09:50:43 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.4 1999/12/01 08:41:41 nisimura Exp $ ");
 
 
 #include <sys/param.h>
@@ -41,38 +41,35 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.3 1999/11/15 09:50:43 nisimura Exp $ "
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/kn02.h>
 
-/* 3MAX (kn02) TURBOchannel slots  */
-/* slot addreseses */
-struct tc_slotdesc tc_kn02_slots [8] = {
+/*
+ * 3MAX has 8 TC slot address space starting at 0x1e00.0000 with 4MB
+ * range for each.  Three option slots are available as #0,1,2.  Two
+ * devices on baseboard, ASC SCSI and LANCE Ether, are designed as TC
+ * option cards and populated in distinct slots.  Slot #7, which
+ * contains RTC and serial chip, forms 3MAX system base.
+ */
+static struct tc_slotdesc tc_kn02_slots [8] = {
        	{ TC_KV(KN02_PHYS_TC_0_START), TC_C(0), },	/* tc option slot 0 */
 	{ TC_KV(KN02_PHYS_TC_1_START), TC_C(1), },	/* tc option slot 1 */
 	{ TC_KV(KN02_PHYS_TC_2_START), TC_C(2), },	/* tc option slot 2 */
 	{ TC_KV(KN02_PHYS_TC_3_START), TC_C(3), },	/*  - reserved */
 	{ TC_KV(KN02_PHYS_TC_4_START), TC_C(4), },	/*  - reserved */
-	{ TC_KV(KN02_PHYS_TC_5_START), TC_C(5), },	/* SCSI on b`board */
+	{ TC_KV(KN02_PHYS_TC_5_START), TC_C(5), },	/* b`board SCSI */
 	{ TC_KV(KN02_PHYS_TC_6_START), TC_C(6), },	/* b'board Ether */
 	{ TC_KV(KN02_PHYS_TC_7_START), TC_C(7), }	/* system CSR, etc. */
 };
 
-int tc_kn02_nslots = sizeof(tc_kn02_slots) / sizeof(tc_kn02_slots[0]);
-
-#define TC_KN02_DEV_IOASIC     -1
-#define TC_KN02_DEV_ETHER	6
-#define TC_KN02_DEV_SCSI	5
-
 const struct tc_builtin tc_kn02_builtins[] = {
-	{ "KN02SYS ",	7, 0x0, TC_C(TC_KN02_DEV_IOASIC) /* TC_C(7)*/ },
-	{ "PMAD-AA ",	6, 0x0, TC_C(TC_KN02_DEV_ETHER)  /* TC_C(6)*/ },
-	{ "PMAZ-AA ",	5, 0x0, TC_C(TC_KN02_DEV_SCSI)   /* TC_C(5)*/ }
+	{ "KN02SYS ",	7, 0x0, TC_C(7), },
+	{ "PMAD-AA ",	6, 0x0, TC_C(6), },
+	{ "PMAZ-AA ",	5, 0x0, TC_C(5), }
 };
 
-
 struct tcbus_attach_args kn02_tc_desc = {
-	NULL,
-	0,
+	NULL, 0,
   	TC_SPEED_25_MHZ,
-	8, tc_kn02_slots,
-	3, tc_kn02_builtins,	/*XXX*/
-	NULL,
+	KN02_TC_NSLOTS, tc_kn02_slots,
+	3, tc_kn02_builtins,
+	NULL, NULL,
 	NULL,
 };
