@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.2 2003/04/20 00:32:16 christos Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.3 2003/04/20 14:36:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.2 2003/04/20 00:32:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.3 2003/04/20 14:36:05 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +74,9 @@ darwin_sys_lseek(l, v, retval)
 	 * argument going through our syscall machinery, we declare
 	 * it as two long arguments, and we reassemble them here.
 	 */
-	off.l[_QUAD_LOWWORD] = (u_long)SCARG(uap, off1);
-	off.l[_QUAD_HIGHWORD] = (u_long)SCARG(uap, off2);
+	off.l[_QUAD_LOWWORD] = (u_long)SCARG(uap, off2);
+	off.l[_QUAD_HIGHWORD] = (u_long)SCARG(uap, off1);
+
 	SCARG(&cup, offset) = off.o;
 
 	return sys_lseek(l, &cup, retval);
