@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.79 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.80 2004/08/27 20:37:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.79 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.80 2004/08/27 20:37:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
-	int error, s;
+	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsi_scsipi_cmd\n"));
 
@@ -95,13 +95,7 @@ scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
 
 	if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
 	    datalen, retries, timeout, bp, flags)) == NULL) {
-		if (bp != NULL) {
-			s = splbio();
-			bp->b_flags |= B_ERROR;
-			bp->b_error = ENOMEM;
-			biodone(bp);
-			splx(s);
-		}
+		/* let the caller deal with this */
 		return (ENOMEM);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.164 2004/08/21 22:16:07 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.165 2004/08/27 20:37:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.164 2004/08/21 22:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.165 2004/08/27 20:37:29 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -321,6 +321,7 @@ static int	st_mount_tape(dev_t, int);
 static void	st_unmount(struct st_softc *, boolean);
 static int	st_decide_mode(struct st_softc *, boolean);
 static void	ststart(struct scsipi_periph *);
+static void	strestart(void *);
 static void	stdone(struct scsipi_xfer *);
 static int	st_read(struct st_softc *, char *, int, int);
 static int	st_space(struct st_softc *, int, u_int, int);
@@ -376,6 +377,8 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	 * Set up the buf queue for this device
 	 */
 	bufq_alloc(&st->buf_queue, BUFQ_FCFS);
+
+	callout_init(&st->sc_callout);
 
 	/*
 	 * Check if the drive is a known criminal and take
@@ -437,6 +440,9 @@ stdetach(struct device *self, int flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&st_bdevsw);
 	cmaj = cdevsw_lookup_major(&st_cdevsw);
+
+	/* kill any pending restart */
+	callout_stop(&st->sc_callout);
 
 	s = splbio();
 
@@ -1171,23 +1177,28 @@ ststart(struct scsipi_periph *periph)
 			return;
 		}
 
-		if ((bp = BUFQ_GET(&st->buf_queue)) == NULL)
-			return;
-
 		/*
 		 * If the device has been unmounted by the user
 		 * then throw away all requests until done.
 		 */
-		if ((st->flags & ST_MOUNTED) == 0 ||
-		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
-			/* make sure that one implies the other.. */
-			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			continue;
+		if (__predict_false((st->flags & ST_MOUNTED) == 0 ||
+		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
+			if ((bp = BUFQ_GET(&st->buf_queue)) != NULL) {
+				/* make sure that one implies the other.. */
+				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
+				bp->b_flags |= B_ERROR;
+				bp->b_error = EIO;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
+				continue;
+			} else {
+				return;
+			}
 		}
+
+		if ((bp = BUFQ_PEEK(&st->buf_queue)) == NULL)
+			return;
+
 		/*
 		 * only FIXEDBLOCK devices have pending I/O or space operations.
 		 */
@@ -1205,12 +1216,14 @@ ststart(struct scsipi_periph *periph)
 					 * Back up over filemark
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
+						BUFQ_GET(&st->buf_queue);
 						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
 					}
 				} else {
+					BUFQ_GET(&st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
 					bp->b_flags &= ~B_ERROR;
@@ -1225,6 +1238,7 @@ ststart(struct scsipi_periph *periph)
 		 * yet then we should report it now.
 		 */
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
+			BUFQ_GET(&st->buf_queue);
 			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING) {
 				bp->b_error = EIO;
@@ -1271,12 +1285,36 @@ ststart(struct scsipi_periph *periph)
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
-		if (error) {
+		if (__predict_false(error)) {
 			printf("%s: not queued, error %d\n",
 			    st->sc_dev.dv_xname, error);
 		}
+		if (__predict_false(error == ENOMEM)) {
+			/*
+			 * out of memory. Keep this buffer in the queue, and
+			 * retry later.
+			 */
+			callout_reset(&st->sc_callout, hz / 2, strestart,
+			    periph);
+			return;
+		}
+#ifdef DIAGNOSTIC
+		if (BUFQ_GET(&st->buf_queue) != bp)
+			panic("ststart(): dequeued wrong buf");
+#else
+		BUFQ_GET(&st->buf_queue);
+#endif
 	} /* go back and see if we can cram more work in.. */
 }
+
+static void
+strestart(void *v)
+{
+	int s = splbio();
+	ststart((struct scsipi_periph *)v);
+	splx(s);
+}
+
 
 static void
 stdone(struct scsipi_xfer *xs)
