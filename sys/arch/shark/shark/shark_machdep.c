@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.18 2003/11/02 10:13:23 martin Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.19 2003/12/14 05:16:30 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.18 2003/11/02 10:13:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.19 2003/12/14 05:16:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.18 2003/11/02 10:13:23 martin Ex
 
 #if NWD > 0 || NSD > 0 || NCD > 0
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #endif
 #if NSD > 0 || NCD > 0
 #include <dev/scsipi/scsi_all.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.15 2003/10/14 22:01:02 nathanw Exp $ */
+/* $NetBSD: api_up1000.c,v 1.16 2003/12/14 05:15:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.15 2003/10/14 22:01:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.16 2003/12/14 05:15:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.15 2003/10/14 22:01:02 nathanw Exp 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 
 #include "pckbd.h"
 

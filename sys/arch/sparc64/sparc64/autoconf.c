@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.85 2003/11/09 16:41:52 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.86 2003/12/14 05:16:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2003/11/09 16:41:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2003/12/14 05:16:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2003/11/09 16:41:52 martin Exp $")
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/sbus/sbusvar.h>
 
