@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.16 2001/05/30 11:37:33 mrg Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.17 2001/06/14 20:32:46 thorpej Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -456,8 +456,7 @@ ultrix_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.50 2001/06/07 01:29:16 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.51 2001/06/14 20:32:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -932,9 +932,7 @@ unp_internalize(control, p)
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
-		if ((unsigned)fd >= fdescp->fd_nfiles ||
-		    fdescp->fd_ofiles[fd] == NULL ||
-		    (fdescp->fd_ofiles[fd]->f_iflags & FIF_WANTCLOSE) != 0)
+		if (fd_getfile(fdescp, fd) == NULL)
 			return (EBADF);
 	}
 

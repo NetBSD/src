@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.2 2001/04/13 23:30:30 thorpej Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.3 2001/06/14 20:32:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -493,10 +493,12 @@ nsmb_getfp(struct filedesc* fdp, int fd, int flag)
 {
 	struct file* fp;
 
-	if (((u_int)fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & flag) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (NULL);
+
+	if ((fp->f_flag & flag) == 0)
+		return (NULL);
+
 	return (fp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.8 2001/02/03 01:23:08 fvdl Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.9 2001/06/14 20:32:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,9 +126,7 @@ linux_ioctl_cdrom(p, uap, retval)
 	dvd_authinfo dai;
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

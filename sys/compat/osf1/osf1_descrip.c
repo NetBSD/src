@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.11 2001/04/09 10:22:01 jdolecek Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.12 2001/06/14 20:32:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -242,9 +242,7 @@ osf1_sys_fstat(p, v, retval)
 	struct osf1_stat oub;
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -275,9 +273,7 @@ osf1_sys_fstat2(p, v, retval)
 	struct osf1_stat2 oub;
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
