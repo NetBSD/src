@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2001/11/22 14:22:30 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2002/02/10 15:17:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -100,14 +100,14 @@ int
 mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = (void *)aux;
-	int locator = cf->cf_loc[MAINBUSCF_ID];
+	int locator = cf->cf_loc[MAINBUSCF_PLATFORM];
 
 	/* check device name */
 	if (strcmp(ma->ma_name, cf->cf_driver->cd_name) != 0)
 		return (0);
 
 	/* check platform ID in config file */
-	if (locator != MAINBUSCF_ID_DEFAULT &&
+	if (locator != MAINBUSCF_PLATFORM_DEFAULT &&
 	    !platid_match(&platid, PLATID_DEREFP(locator)))
 		return (0);
 
