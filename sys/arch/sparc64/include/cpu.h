@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2003/11/09 05:29:59 tsutsui Exp $ */
+/*	$NetBSD: cpu.h,v 1.38 2003/11/15 05:24:51 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,7 @@ struct cpu_info {
 	struct lwp		*ci_fplwp;
 	int			ci_number;
 	int			ci_upaid;
+	int			ci_cpuid;
 	struct schedstate_percpu ci_schedstate;
 
 	/*
@@ -145,6 +146,11 @@ extern struct cpu_info cpu_info_store;
 
 /* This really should be somewhere else. */
 #define	cpu_proc_fork(p1, p2)	/* nothing */
+
+#if defined(MULTIPROCESSOR)
+void	cpu_boot_secondary_processors __P((void));
+#define	CPU_IS_PRIMARY(ci)	(1) /* XXX */
+#endif
 
 /*
  * definitions for MI microtime().
