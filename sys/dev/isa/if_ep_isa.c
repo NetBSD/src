@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.8 1996/10/21 22:40:56 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.8.4.1 1997/02/20 18:46:01 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -48,6 +48,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -255,7 +257,6 @@ ep_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_short conn = 0;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
@@ -265,12 +266,10 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
-	GO_WINDOW(0);
-	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-
 	printf(": 3Com 3C509 Ethernet\n");
 
-	epconfig(sc, conn);
+	/* we can't easily tell if this is a 3c509, 3c509B, or 3c515 */
+	epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX */
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, epintr, sc);
