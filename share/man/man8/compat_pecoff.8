@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.8 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.9 2002/03/25 10:17:29 kent Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 17, 2000
+.Dd March 25, 2002
 .Dt COMPAT_PECOFF 8
 .Os
 .Sh NAME
@@ -86,13 +86,16 @@ is the Windows shell support, including file association.
 .Pp
 .Pa COMCTL32.DLL
 and
-.Pa COMDLG.32.DLL
+.Pa COMDLG32.DLL
 are GUI components which are commonly used in many applications.
 .Pa WSOCK32.DLL
 provides the networking API.
-.Pa DDRAW.DLL
-is for
-.Tn DirectDraw .
+.Pa DDRAW.DLL ,
+.Pa DSOUND.DLL ,
+and
+.Pa DINPUT.DLL
+are for
+.Tn DirectX .
 .Pp
 Most other DLLs are compatible among all the implementations and
 therefore can be shared.
@@ -118,7 +121,13 @@ system call, just like other binary compatibility options.
 It is activated by enabling the
 .Dv COMPAT_PECOFF
 kernel option (see
-.Xr options 4 ) .
+.Xr options 4 ) ,
+or enablling
+.Pa /usr/lkm/compat_pecoff.o
+and 
+.Pa /usr/lkm/exec_pecoff.o
+with
+.Xr modload 8 .
 .Pp
 The dynamic loader is the
 .Tn PE/COFF
@@ -142,23 +151,29 @@ and
 .Pa libX11 ) .
 .Sh PREPARING THE PEACE DYNAMIC LOADER AND CORE DLLS
 Development snapshots of the dynamic loader can be retrieved from
-.Pa http://chiharu.haun.org/peace/dist/peace-i386-ld.so.dll-*.gz ,
+.Pa http://sourceforge.net/project/showfiles.php?group_id=21711 .
+The file name of snapshot is
+.Pa peace-i386-ld.so.dll-*.gz ,
 where `*' is replaced with the snapshot date.
 Simply
 .Xr gunzip 1
 the file and copy the resulting file to
 .Pa /usr/libexec/ld.so.dll .
 .Pp
-The core DLLs can also be retrieved from
-.Pa http://chiharu.haun.org/peace/dist/peace-i386-dll-*.tgz .
+The core DLLs archives can also be retrieved from
+.Pa http://sourceforge.net/project/showfiles.php?group_id=21711
+as 
+.Pa peace-i386-sysdll-*.tgz
+and
+.Pa peace-i386-dll-*.tgz .
 The dynamic loader searches for required DLLs from the following directories:
 .Bl -enum -compact
-.It
-.Pa /usr/lib
 .It
 directories listed in the environment variable
 .Ev DLLPATH
 (separated by colons)
+.It
+.Pa /usr/lib
 .It
 the directory where the executable is located
 .El
@@ -195,8 +210,9 @@ setenv DLLPATH /nthd/WINNT/SYSTEM32:/nthd/WINNT
 .Xr execve 2 ,
 .Xr options 4 ,
 .Xr config 8 ,
+.Xr modload 8 ,
 .Xr mount_ntfs 8 ,
-.Pa http://chiharu.hauN.ORG/peace/
+.Pa http://chiharu.hauN.org/peace/
 .Sh HISTORY
 Kernel support for
 .Tn PE/COFF
@@ -207,7 +223,7 @@ Implementation of
 .Tn Win32
 binary compatibility support for
 .Nx
-was started by Masaru Oki.
+was started by Masaru OKI.
 The PEACE Project is founded by him to implement the enormous number
 of functions in the
 .Tn Win32/WinCE
