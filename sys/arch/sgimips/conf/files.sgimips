@@ -1,15 +1,8 @@
-#	$NetBSD: files.sgimips,v 1.11 2001/09/22 21:30:15 manu Exp $
+#	$NetBSD: files.sgimips,v 1.12 2001/09/23 19:45:41 manu Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
-
-# Linux compatibility
-include "compat/ossaudio/files.ossaudio"
-include "compat/linux/files.linux"
-include "compat/linux/arch/mips/files.linux_mips"
-file arch/mips/mips/linux_trap.c			compat_linux
-file arch/mips/mips/linux_syscall.c			compat_linux
 
 defopt	opt_machtypes.h IP20 IP22 IP32
 
