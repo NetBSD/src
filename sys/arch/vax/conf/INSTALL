@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2 1999/07/29 10:37:25 augustss Exp $
+#	$NetBSD: INSTALL,v 1.3 2000/03/04 16:21:05 ragge Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -26,7 +26,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
 options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MINIROOTSIZE=2400       # size of memory disk, in blocks
+options 	MINIROOTSIZE=2112       # size of memory disk, in blocks
 
 
 # Kernel compiled-in symbolic debugger & system call tracer
@@ -44,7 +44,7 @@ options         INET
 # All supported filesystem types
 file-system 	FFS
 #file-system 	LFS
-file-system 	MFS
+#file-system 	MFS
 file-system 	NFS
 #file-system 	FDESC
 file-system 	KERNFS
@@ -52,17 +52,17 @@ file-system 	KERNFS
 #file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION
-#file-system 	CD9660
+file-system 	CD9660
 
 #options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
-options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
+#options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
+#options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100
-options 	WSDISPLAY_DEFAULTSCREENS=8
+#options 	WSDISPLAY_DEFAULTSCREENS=8
 
 # System V shared memory & semaphores support.
 #options 	SYSVMSG
@@ -152,9 +152,9 @@ scsibus*	at ncr?
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?
 cd*		at scsibus? target? lun?
-ch*		at scsibus? target? lun?
-ss*		at scsibus? target? lun?
-uk*		at scsibus? target? lun?
+#ch*		at scsibus? target? lun?
+#ss*		at scsibus? target? lun?
+#uk*		at scsibus? target? lun?
 
 # Graphic adapters.
 qd0		at uba? csr 0177400
@@ -176,15 +176,15 @@ wsdisplay0	at smg0			# display device driver.
 lkc0		at dz0			# Keyboard LK201
 
 pseudo-device   loop	1
-#pseudo-device   pty	48
+pseudo-device   pty	8
 #pseudo-device	bpfilter 8	# Not supported by de yet.
 pseudo-device	sl	2
-pseudo-device	ppp	2
+#pseudo-device	ppp	2
 #pseudo-device	tun	2
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	tb	1
 #pseudo-device	vnd	4
-pseudo-device	ccd	4
+#pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
