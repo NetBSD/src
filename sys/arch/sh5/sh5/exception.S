@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.22 2003/03/19 11:31:55 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.23 2003/08/10 22:24:50 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -791,6 +791,7 @@ Lsh5_vector_interrupt:
  *     sy_flags, SYCALL_FULL_CTX (for example), so that trapa() can
  *     detect when the full context is required.
  */
+	.type	Lsh5_event_sync,@function
 Lsh5_event_sync:
 	ld.q	r2, ES(ES_EXPEVT), r0	/* Fetch contingent data */
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0 /* Save in stateframe */
@@ -815,6 +816,7 @@ Lsh5_event_sync:
 	pta/l	Ltrapepilogue, tr0
 	blink	tr0, r63
 
+	.type	Ltrapagain,@function
 Ltrapagain:
 	getcon	kcr0, r2		/* Get cpu_info for this cpu */
 	LEAF(_C_LABEL(trap), r0)
@@ -823,6 +825,7 @@ Ltrapagain:
 	or	r15, r63, r3
 	blink	tr0, r18		/* trap(curlwp, trapframe); */
 
+	.type	Ltrapepilogue,@function
 Ltrapepilogue:
 	/* Check for ASTs */
 	pta/l	Ltrapexit, tr0		/* Preload the No-AST path */
@@ -847,6 +850,7 @@ Ltrapepilogue:
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
 	blink	tr0, r63		/* Go back around to deal with it */
 
+	.type	Ltrapexit,@function
 Ltrapexit:
 #if defined(PORTMASTER)
 	movi	SH5_CONREG_SR_IMASK_ALL, r0
@@ -869,6 +873,7 @@ Ltrapexit:
  * Space has been allocated on the stack for an interrupt frame, so save
  * caller-saved registers into it before invoking the C dispatcher.
  */
+	.type	Lsh5_event_interrupt,@function
 Lsh5_event_interrupt:
 	_INTR_FRAME_SAVE(SZ_INTRFRAME)
 
@@ -954,6 +959,7 @@ Lsh5_event_interrupt:
 	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0
 	blink	tr0, r63		/* Go back around to deal with it */
 
+	.type	Lintrexit,@function
 Lintrexit:
 	_INTR_FRAME_RESTORE(SZ_INTRFRAME)
 	_EXCEPTION_EXIT(SZ_INTRFRAME, CRIT_ASYNC_EXCEPTION)
