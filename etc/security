@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.93 2004/11/21 19:00:12 kim Exp $
+#	$NetBSD: security,v 1.94 2005/02/05 15:26:37 jdolecek Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -183,10 +183,15 @@ if checkyesno check_passwd; then
         # XXX: the sense of permit_star is reversed; the code works as
         # implemented, but usage needs to be negated.
 	checkyesno check_passwd_permit_star && permit_star=0 || permit_star=1
+	checkyesno check_passwd_permit_nonalpha \
+		 && permit_nonalpha=1 || permit_nonalpha=0
+
 	awk -v "len=$max_loginlen" \
 	    -v "nowarn_shells_list=$check_passwd_nowarn_shells" \
 	    -v "nowarn_users_list=$check_passwd_nowarn_users" \
-	    -v "permit_star=$permit_star" '
+	    -v "permit_star=$permit_star" \
+	    -v "permit_nonalpha=$permit_nonalpha" \
+	'
 	BEGIN {
 		while ( getline < "/etc/shells" > 0 ) {
 			if ($0 ~ /^\#/ || $0 ~ /^$/ )
@@ -216,7 +221,8 @@ if checkyesno check_passwd; then
 			        NR;
 			next;
 		}
-		if ($1 !~ /^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])*$/)
+		if (!permit_nonalpha &&
+		    $1 !~ /^[A-Za-z0-9]([-A-Za-z0-9]*[A-Za-z0-9])*$/)
 			printf "Login %s has non-alphanumeric characters.\n",
 			    $1;
 		if (length($1) > len)
