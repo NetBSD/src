@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1998/11/13 04:47:07 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2000/11/15 00:39:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,8 @@ cdev_decl(ofrtc_);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "rnd.h"
+#include "openfirm.h"
+cdev_decl(openfirm);
 
 cdev_decl(raid);
 
@@ -97,6 +99,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
 	cdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
+	cdev_openfirm_init(NOPENFIRM,openfirm),/* 13: OpenFirmware pseudo-device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -143,6 +146,7 @@ static int chrtoblktbl[] = {
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	3,
+	/* 13 */	NODEV,
 };
 
 /*
