@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.14 2001/10/31 18:23:55 jmc Exp $
+#  $NetBSD: build.sh,v 1.15 2001/10/31 19:59:43 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -13,6 +13,7 @@ bomb () {
 	echo "*** BUILD ABORTED ***"
 	exit 1
 }
+[ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
 
 getarch () {
 	# Translate a MACHINE into a default MACHINE_ARCH.
@@ -54,14 +55,22 @@ getarch () {
 	esac
 }
 
+getmakevar () {
+	cat <<EOF | $make -s -f- $makeflags _x_
+_x_:
+	echo \${$1}
+.include <bsd.prog.mk>
+EOF
+}
+
 # Emulate "mkdir -p" for systems that have an Old "mkdir".
 mkdirp () {
 	IFS=/; set -- $@; unset IFS
 	_d=
-	if [ "$1" = "" ]; then _d=/; shift; fi
+	if [ -z "$1" ]; then _d=/; shift; fi
 
 	for _f in "$@"; do
-		if [ "$_f" != "" ]; then
+		if [ -n "$_f" ]; then
 			[ -d "$_d$_f" ] || $runcmd mkdir "$_d$_f" || return 1
 			_d="$_d$_f/"
 		fi
@@ -77,35 +86,39 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-oru] [-a arch] [-j njob] [-m mach]"
+	echo "$0 [-boru] [-a arch] [-j njob] -m mach [-w wrapper]"
 	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
-	echo "    -m: set target MACHINE to mach (REQUIRED)"
-	echo "    -D: set DESTDIR to dest (REQUIRED unless -b is specified)"
-	echo "    -T: set TOOLDIR to tools (REQUIRED)"
 	echo ""
-	echo "    -a: set target MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
-	echo "    -b: do not build the system; just build nbmake if required."
+	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
+	echo "    -b: build nbmake and nbmake wrapper script, if needed"
 	echo "    -j: set NBUILDJOBS to njob"
+	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
 	echo "    -n: show commands that would be executed, but do not execute them"
-	echo "    -o: do not create objdirs at start of build (sets MKOBJDIRS=no)"
-	echo "    -r: remove TOOLDIR and DESTDIR before building"
-	echo "    -u: do not clobber up-to-date files (sets UPDATE)"
+	echo "    -o: set MKOBJDIRS=no (do not create objdirs at start of build)"
+	echo "    -r: remove contents of TOOLDIR and DESTDIR before building"
+	echo "    -u: set UPDATE (overrides mk.conf)"
+	echo "    -w: create nbmake script at wrapper (default TOOLDIR/bin/nbmake-MACHINE)"
+	echo "    -D: set DESTDIR to dest (overrides mk.conf)"
 	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
-	echo "    -R: build a release (set RELEASEDIR) to release"
+	echo "    -R: build a release (and set RELEASEDIR to release)"
+	echo "    -T: set TOOLDIR to tools (overrides mk.conf)"
+	echo ""
+	echo "Note: if -T is unset and TOOLDIR is not set in the environment,"
+	echo "      nbmake will be [re]built unconditionally."
 	exit 1
 }
 
 # Set defaults.
-MKOBJDIRS=yes
 buildtarget=build
 cwd=`pwd`
 do_buildsystem=true
 do_rebuildmake=false
 do_removedirs=false
-extraenv=''
-extraflags=''
+makeenv='exec'
+makeflags=''
+makewrapper=''
 opt_a=no
-opts='a:bhj:m:noruD:O:R:T:'
+opts='a:bhj:m:noruw:D:O:R:T:'
 runcmd=''
 
 if type getopts >/dev/null 2>&1; then
@@ -132,7 +145,7 @@ while eval $getoptcmd; do case $opt in
 	-b)	do_buildsystem=false;;
 
 	-j)	eval $optargcmd
-		extraflags="$extraflags NBUILDJOBS=$OPTARG";;
+		makeflags="$makeflags NBUILDJOBS=$OPTARG";;
 
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
@@ -144,60 +157,52 @@ while eval $getoptcmd; do case $opt in
 
 	-r)	do_removedirs=true; do_rebuildmake=true;;
 
-	-u)	extraflags="$extraflags UPDATE=yes";;
+	-u)	makeflags="$makeflags UPDATE=yes";;
+
+	-w)	eval $optargcmd; resolvepath
+		makewrapper="$OPTARG";;
 
 	-D)	eval $optargcmd; resolvepath
-		DESTDIR="$OPTARG";;
+		makeflags="$makeflags DESTDIR='$OPTARG'";;
 
 	-O)	eval $optargcmd; resolvepath
-		extraenv="$extraenv MAKEOBJDIR=\${.CURDIR:C,^$cwd,$OPTARG,}";;
+		makeenv="env MAKEOBJDIR='\${.CURDIR:C,^$cwd,$OPTARG,}'"
+		MAKEOBJDIR="\${.CURDIR:C,^$cwd,$OPTARG,}"; export MAKEOBJDIR
+		execcmd='';;
 
 	-R)	eval $optargcmd; resolvepath
-		extraflags="$extraflags RELEASEDIR=$OPTARG"; buildtarget=release;;
+		makeflags="$makeflags RELEASEDIR=$OPTARG"
+		buildtarget=release;;
 
 	-T)	eval $optargcmd; resolvepath
-		TOOLDIR="$OPTARG";;
+		TOOLDIR="$OPTARG"
+		makeflags="$makeflags TOOLDIR='$TOOLDIR'";;
 
 	--)		break;;
 	-'?'|-h)	usage;;
 esac; done
 
-# Check required environment; DESTDIR only needed if building.
-checkvars='MACHINE TOOLDIR'
-$do_buildsystem && checkvars="$checkvars DESTDIR"
-
-for var in $checkvars; do
-	if ! eval '[ -n "$'$var'" ]'; then
-		echo "$var must be set in the environment before running build.sh."
+# Set up MACHINE*.  On a NetBSD host, these are allowed to be unset.
+if [ -z "$MACHINE" ]; then
+	if [ "`uname -s 2>/dev/null`" != "NetBSD" ]; then
+		echo "MACHINE must be set, or -m must be used, for cross builds."
 		echo ""; usage
 	fi
-done
-
-# Set up environment.
-[ -n "$MACHINE_ARCH" ] || getarch
-[ -d usr.bin/make ] || bomb "build.sh must be run from the top source level"
-
-# Remove the target directories.
-if $do_removedirs; then
-	dir1=`cd $DESTDIR;pwd`
-	dir2=`cd $TOOLDIR;pwd`
-	if [ "$dir1" = "/" ] || [ "$dir2" = "/" ]; then
-		echo "Will not remove /, please check DESTDIR and TOOLDIR settings"
-		echo
-		echo "DESTDIR: $DESTDIR"
-		echo "TOOLDIR: $TOOLDIR"
-		exit 1
-	fi
-	echo "Removing DESTDIR and TOOLDIR...."
-	$runcmd rm -rf $DESTDIR $TOOLDIR
+	MACHINE=`uname -m`
 fi
+[ -n "$MACHINE_ARCH" ] || getarch
 
-mkdirp $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
+# Set up default make(1) environment.
+makeflags="-m $cwd/share/mk $makeflags \
+	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
+	MKOBJDIRS=${MKOBJDIRS-yes}"
 
-# Test make source file timestamps against installed nbmake binary.
-if [ -x $TOOLDIR/bin/nbmake ]; then
+# Test make source file timestamps against installed nbmake binary,
+# if TOOLDIR is pre-set.
+make=${TOOLDIR-nonexistent}/bin/nbmake
+if [ -x $make ]; then
 	for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
-		if [ $f -nt $TOOLDIR/bin/nbmake ]; then
+		if [ $f -nt $make ]; then
 			do_rebuildmake=true; break
 		fi
 	done
@@ -205,11 +210,9 @@ else
 	do_rebuildmake=true
 fi
 
-# Build $TOOLDIR/bin/nbmake.
+# Build bootstrap nbmake if needed.
 if $do_rebuildmake; then
-	echo "Building nbmake...."
-
-	# Go to a temporary directory in case building .o's happens.
+	echo "===> Bootstrapping nbmake"
 	tmpdir=${TMPDIR-/tmp}/nbbuild$$
 
 	$runcmd mkdir $tmpdir || bomb "cannot mkdir: $tmpdir"
@@ -218,43 +221,90 @@ if $do_rebuildmake; then
 	$runcmd cd $tmpdir
 
 	$runcmd ${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
-		-o $TOOLDIR/bin/nbmake -I$cwd/usr.bin/make \
+		-o nbmake -I$cwd/usr.bin/make \
 		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c \
 		|| bomb "build of nbmake failed"
 
-	# Clean up.
+	make=$tmpdir/nbmake
 	$runcmd cd $cwd
+	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
+fi
+
+# If TOOLDIR isn't already set, make objdirs in "tools" in case the
+# default setting from <bsd.own.mk> is used.
+if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
+	$runcmd $make $makeflags obj-tools || exit 1
+fi
+
+# Find DESTDIR and TOOLDIR.
+if [ "$runcmd" = "echo" ]; then
+	DESTDIR='$DESTDIR'
+	TOOLDIR='$TOOLDIR'
+else
+	DESTDIR=`getmakevar DESTDIR`; echo "===> DESTDIR path: $DESTDIR"
+	TOOLDIR=`getmakevar TOOLDIR`; echo "===> TOOLDIR path: $TOOLDIR"
+fi
+
+# Check validity of TOOLDIR and DESTDIR.
+if [ -z "$TOOLDIR" ] || [ "$TOOLDIR" = "/" ]; then
+	bomb "TOOLDIR '$TOOLDIR' invalid"
+fi
+removedirs="$TOOLDIR"
+
+if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
+	if [ "$buildtarget" = "release" ] || \
+	   [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
+	   [ "`uname -m`" != "$MACHINE" ]; then
+		bomb "DESTDIR must be set to a non-root path for cross builds or -R."
+	fi
+	echo "===> WARNING: Building to /."
+	echo "===> If your kernel is not up to date, this may cause the system to break!"
+else
+	removedirs="$removedirs $DESTDIR"
+fi
+
+# Remove the target directories.
+if $do_removedirs; then
+	for f in $removedirs; do
+		echo "===> Removing $f"
+		$runcmd rm -r -f $f
+	done
+fi
+
+# Recreate $TOOLDIR.
+mkdirp $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
+
+# Install nbmake if it was built.
+if $do_rebuildmake; then
+	$runcmd rm -f $TOOLDIR/bin/nbmake
+	$runcmd cp $make $TOOLDIR/bin/nbmake
 	$runcmd rm -r -f $tmpdir
 	trap 0 1 2 3 15
-
-	# Some compilers are just *that* braindead.
-	$runcmd rm -f $cwd/usr.bin/make/*.o $cwd/usr.bin/make/lst.lib/*.o
 fi
 
 # Build a nbmake wrapper script, usable by hand as well as by build.sh.
-makeprog=$TOOLDIR/bin/nbmake-$MACHINE
+if [ -z "$makewrapper" ]; then
+	makewrapper=$TOOLDIR/bin/nbmake-$MACHINE
+fi
 
-if $do_rebuildmake || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; then
-	rm -f $makeprog
+if $do_rebuildmake || [ ! -f $makewrapper ] || [ $makewrapper -ot build.sh ]; then
+	rm -f $makewrapper
 	if [ "$runcmd" = "echo" ]; then
-		mkscriptcmd='echo "cat >$makeprog <<EOF" && cat'
+		mkscriptcmd='echo "cat >$makewrapper <<EOF" && cat'
 	else
-		mkscriptcmd="cat >$makeprog"
+		mkscriptcmd="cat >$makewrapper"
 	fi
 	eval $mkscriptcmd <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.14 2001/10/31 18:23:55 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.15 2001/10/31 19:59:43 tv Exp $
 #
-exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
-USETOOLS=yes USE_NEW_TOOLCHAIN=yes TOOLDIR="$TOOLDIR" \${1+\$@}
+$makeenv $TOOLDIR/bin/nbmake $makeflags \${1+\$@}
 EOF
 	[ "$runcmd" = "echo" ] && echo EOF
-	$runcmd chmod +x $makeprog
+	$runcmd chmod +x $makewrapper
 fi
 
 if $do_buildsystem; then
-	${runcmd-exec} env $extraenv $makeprog -m `pwd`/share/mk \
-		MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-		MKOBJDIRS=$MKOBJDIRS $extraflags $buildtarget
+	${runcmd-exec} $makewrapper $buildtarget
 fi
