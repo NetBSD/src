@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.buildboot,v 1.1 2002/06/06 19:48:11 fredette Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2 2002/11/28 06:00:28 chs Exp $
 
+MACHINE_ARCH=hppa
+MACHINE=hp700
 RELOC=	700000
 HEAP_LIMIT=0x7c0000
 #DEBUGFLAGS=-DDEBUG
@@ -14,17 +16,15 @@ S=		${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../common
 
-PROG=		${PROGAOUT}.lif
-
 SRCS=		${PROGSOURCE} ${COMMONSOURCE} ${DRIVERSOURCE}
-MKMAN=		no
+NOMAN=		
 STRIPFLAG=
 BINMODE=	444
 
 CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-nostdinc -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
-CFLAGS=		-Os -msoft-float -Wno-main
+CFLAGS+=	-Os -msoft-float -Wno-main
 CFLAGS+=	-fno-builtin 
 CFLAGS+=	-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 
@@ -35,11 +35,6 @@ CLEANFILES+=	vers.c
 vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp700 ${NEWVERSWHAT}
 
-${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
-	-@cp ${PROGAOUT} ${PROGAOUT}.gdb
-	${STRIP} ${PROGAOUT}
-	${MKBOOT_PROG} -v ${PROGAOUT} ${ADDBOOT} ${PROG}
-
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT} 
 CPPFLAGS+=		-DNO_NET -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
@@ -47,17 +42,6 @@ CPPFLAGS+=		-DNO_NET -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
 COMMONSOURCE=		cons.c ct.c dev_hppa.c dk.c itecons.c \
 			lf.c lif.c machdep.c pdc.c time.c
 DRIVERSOURCE=		
-
-.ifnmake(print-objdir)
-MKBOOTOBJDIR!=		cd ${.CURDIR}/../mkboot ; ${MAKE} print-objdir
-MKBOOT_PROG?=		${MKBOOTOBJDIR}/mkboot
-.endif
-
-# Make sure ${MKBOOT_PROG} is always available
-${MKBOOTOBJDIR}/mkboot:
-	@cd ${MKBOOTDIR} && ${MAKE} depend && ${MAKE}
-
-.include <bsd.prog.mk>
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -77,10 +61,11 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 LIBSA=		${SALIB}
 
 LDFLAGS+=	-Bstatic -nostartfiles -nostdlib -N -Ttext $(RELOC)
-LDFLAGS+=	-T ${.CURDIR}/ld.script -Map ${PROGAOUT}.map
+LDFLAGS+=	-T ${.CURDIR}/ld.script -Map ${PROG}.map
 
-${PROGAOUT}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} ${LDFLAGS} -o ${PROGAOUT} \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	@${SIZE} ${PROGAOUT}
-	@echo ${PROGAOUT} total size should not exceed XXXX bytes
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	@${SIZE} ${PROG}
+	@echo ${PROG} total size should not exceed XXXX bytes
+
+.include <bsd.prog.mk>
