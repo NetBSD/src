@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.174 2003/07/26 14:58:11 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.175 2003/07/27 14:49:23 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -14,7 +14,7 @@ clean:		cleanprog
 
 ##### Default values
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
-CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++}
+CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
 .if ${MACHINE_ARCH} == "sparc64"
 CFLAGS+=	-mcmodel=medlow
