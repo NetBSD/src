@@ -297,7 +297,6 @@ ENTRY (_get_fp)
 
 /* reboot the machine :)  if possible */
 
-.globl _rebootPTD
 ENTRY(low_level_reboot)
 
 	ints_off			/* Stop things! */
