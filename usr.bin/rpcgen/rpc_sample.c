@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.6 2001/03/21 00:30:39 mycroft Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.7 2001/03/21 00:31:52 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_sample.c,v 1.6 2001/03/21 00:30:39 mycroft Exp $");
+__RCSID("$NetBSD: rpc_sample.c,v 1.7 2001/03/21 00:31:52 mycroft Exp $");
 #endif
 #endif
 
@@ -89,7 +89,6 @@ write_sample_client(program_name, vp)
 	version_list *vp;
 {
 	proc_list *proc;
-	int     i;
 	decl_list *l;
 
 	f_print(fout, "\n\nvoid\n");
@@ -100,7 +99,6 @@ write_sample_client(program_name, vp)
 		f_print(fout, "(host)\n\tchar *host;\n{\n");
 	f_print(fout, "\tCLIENT *clnt;\n");
 
-	i = 0;
 	for (proc = vp->procs; proc != NULL; proc = proc->next) {
 		/* print out declarations for arguments */
 		if (proc->arg_num < 2 && !newstyle) {
@@ -181,7 +179,7 @@ write_sample_client(program_name, vp)
 			f_print(fout, "clnt);\n");
 			f_print(fout, "\tif (");
 			pvname(proc->proc_name, vp->vers_num);
-			f_print(fout, "_res == NULL)\n", i);
+			f_print(fout, "_res == NULL)\n");
 		}
 		f_print(fout, "\t\tclnt_perror(clnt, \"call failed:\");\n");
 	}
