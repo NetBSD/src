@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.29 1998/09/02 06:41:22 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.29 1998/09/02 06:41:22 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp
 #include <uvm/uvm_extern.h>
 #endif
 
-#include <mips/cpu.h>			/* declaration of of cpu_id */
 #include <mips/regnum.h>		/* symbolic register indices */
 #include <mips/locore.h>
 #include <mips/vmparam.h>		/* USRSTACK */
@@ -102,6 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.28 1998/07/14 03:19:17 mhitch Exp
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 int	cpu_dump __P((void));
+
+void	mips1_vector_init __P((void));
+void	mips3_vector_init __P((void));
 
 mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
@@ -128,22 +130,18 @@ int cpu_mhz;
 
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by switch_exit() */
+struct	proc *fpcurproc;
+struct	pcb  *curpcb;
 
 caddr_t	msgbufaddr;
 
 /*
  * Forward declarations
- * XXX should be in a header file so each mips port can include it.
+ * XXX will be declared in mips/include/cpu.h XXX
  */
 extern void cpu_identify __P((void));
 extern void mips_vector_init __P((void));
-extern void savefpregs __P((struct proc *));		/* lcoore */
-
-void mips1_vector_init __P((void));
-void mips3_vector_init __P((void));
-
-/* the following is used externally (sysctl_hw) */
-char	machine_arch[] = MACHINE_ARCH;	/* cpu "architecture" */
+extern void savefpregs __P((struct proc *));
 
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 /*
@@ -177,16 +175,16 @@ mips1_vector_init()
 	 */
 	if (mips1_UTLBMissEnd - mips1_UTLBMiss > 0x80)
 		panic("startup: UTLB code too large");
-	bcopy(mips1_UTLBMiss, (char *)MIPS_UTLB_MISS_EXC_VEC,
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips1_UTLBMiss,
 		mips1_UTLBMissEnd - mips1_UTLBMiss);
-	bcopy(mips1_exception, (char *)MIPS1_GEN_EXC_VEC,
-	      mips1_exceptionEnd - mips1_exception);
+	memcpy((void *)MIPS1_GEN_EXC_VEC, mips1_exception,
+		mips1_exceptionEnd - mips1_exception);
 
 	/*
 	 * Copy locore-function vector.
 	 */
-	bcopy(&mips1_locore_vec, &mips_locore_jumpvec,
-	      sizeof(mips_locore_jumpvec_t));
+	memcpy(&mips_locore_jumpvec, &mips1_locore_vec,
+		sizeof(mips_locore_jumpvec_t));
 
 	/*
 	 * Clear out the I and D caches.
@@ -242,16 +240,16 @@ mips3_vector_init()
 	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
 #endif
-	bcopy(mips3_TLBMiss, (char *)MIPS_UTLB_MISS_EXC_VEC,
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_TLBMiss,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
 
-	bcopy(mips3_exception, (char *)MIPS3_GEN_EXC_VEC,
+	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception,
 	      mips3_exceptionEnd - mips3_exception);
 
 	/*
 	 * Copy locore-function vector.
 	 */
-	bcopy(&mips3_locore_vec, &mips_locore_jumpvec,
+	memcpy(&mips_locore_jumpvec, &mips3_locore_vec,
 	      sizeof(mips_locore_jumpvec_t));
 
 	/*
@@ -348,7 +346,6 @@ cpu_identify()
 		printf("MIPS R2000 CPU");
 		break;
 	case MIPS_R3000:
-
 	  	/*
 		 * XXX
 		 * R2000A silicion has an r3000 core and shows up here.
@@ -366,7 +363,6 @@ cpu_identify()
 	case MIPS_R6000:
 		printf("MIPS R6000 CPU");
 		break;
-
 	case MIPS_R4000:
 		if(mips_L1InstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
@@ -403,8 +399,6 @@ cpu_identify()
 	case MIPS_R3NKK:
 		printf("NKK R3000 based CPU");
 		break;
-	case MIPS_UNKC1:
-	case MIPS_UNKC2:
 	default:
 		printf("Unknown CPU type (0x%x)",cpu_id.cpu.cp_imp);
 		break;
@@ -464,7 +458,6 @@ cpu_identify()
 	case MIPS_R3NKK:
 		printf("NKK R3000 based FPC");
 		break;
-	case MIPS_UNKF1:
 	default:
 		printf("Unknown FPU type (0x%x)", fpu_id.cpu.cp_imp);
 		break;
@@ -494,14 +487,14 @@ cpu_identify()
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
 	extern struct proc *fpcurproc;
 
-	bzero((caddr_t)p->p_md.md_regs, sizeof(struct frame));
-	bzero((caddr_t)&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
+	bzero(p->p_md.md_regs, sizeof(struct frame));
+	bzero(&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
 	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
@@ -554,10 +547,10 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp;
-	register int *regs;
-	register struct sigacts *psp = p->p_sigacts;
+	struct proc *p = curproc;
+	struct sigframe *fp;
+	int *regs;
+	struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize;
 	struct sigcontext ksc;
 	extern char sigcode[], esigcode[];
@@ -602,7 +595,7 @@ sendsig(catcher, sig, mask, code)
 	ksc.mullo = regs[MULLO];
 	ksc.mulhi = regs[MULHI];
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
+	memcpy(&ksc.sc_regs[1], &regs[1],
 		sizeof(ksc.sc_regs) - sizeof(ksc.sc_regs[0]));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
@@ -613,7 +606,7 @@ sendsig(catcher, sig, mask, code)
 			savefpregs(p);
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
-	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
+	if (copyout(&ksc, &fp->sf_sc, sizeof(ksc))) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -669,8 +662,8 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register int *regs;
+	struct sigcontext *scp;
+	int *regs;
 	struct sigcontext ksc;
 	int error;
 
@@ -684,7 +677,7 @@ sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(ksc));
+	error = copyin(scp, &ksc, sizeof(ksc));
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
@@ -709,7 +702,7 @@ sys_sigreturn(p, v, retval)
 	regs[PC] = scp->sc_pc;
 	regs[MULLO] = scp->mullo;
 	regs[MULHI] = scp->mulhi;
-	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
+	memcpy(&regs[1], &scp->sc_regs[1],
 		sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
 		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
@@ -1129,7 +1122,7 @@ mips_init_proc0(space)
 	nullproc.p_addr = (struct user *)(space + (UPAGES * PAGE_SIZE));
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 
-	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
+	memcpy(nullproc.p_comm, "nullproc", sizeof("nullproc"));
 
 	pa = MIPS_KSEG0_TO_PHYS(nullproc.p_addr);
 
