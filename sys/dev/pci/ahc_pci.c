@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.46 2004/10/16 22:52:37 christos Exp $
+ * $Id: ahc_pci.c,v 1.47 2004/10/17 01:10:44 christos Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.46 2004/10/16 22:52:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.47 2004/10/17 01:10:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.46 2004/10/16 22:52:37 christos Exp $"
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+
+/* XXXX some i386 on-board chips act weird when memory-mapped */
+#ifndef __i386__
+#define AHC_ALLOW_MEMIO
+#endif
 
 #define AHC_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHC_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
