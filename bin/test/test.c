@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.24 2001/09/16 19:03:26 wiz Exp $ */
+/* $NetBSD: test.c,v 1.25 2002/05/25 23:12:16 wiz Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.24 2001/09/16 19:03:26 wiz Exp $");
+__RCSID("$NetBSD: test.c,v 1.25 2002/05/25 23:12:16 wiz Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -25,11 +25,7 @@ __RCSID("$NetBSD: test.c,v 1.24 2001/09/16 19:03:26 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 /* test(1) accepts the following grammar:
 	oexpr	::= aexpr | aexpr "-o" oexpr ;
@@ -168,22 +164,11 @@ extern void error(const char *, ...) __attribute__((__noreturn__));
 static void error(const char *, ...) __attribute__((__noreturn__));
 
 static void
-#ifdef __STDC__
 error(const char *msg, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifndef __STDC__
-	const char *msg;
 
-	va_start(ap);
-	msg = va_arg(ap, const char *);
-#else
 	va_start(ap, msg);
-#endif
 	verrx(2, msg, ap);
 	/*NOTREACHED*/
 	va_end(ap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.14 1998/01/31 12:37:55 christos Exp $	*/
+/*	$NetBSD: output.h,v 1.15 2002/05/25 23:13:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,11 +40,7 @@
 
 #ifndef OUTPUT_INCL
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 struct output {
 	char *nextc;
