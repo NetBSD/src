@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.26 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.27 2003/03/14 05:38:53 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -211,6 +211,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				    tf->dar);
 #endif
 				goto print_trap;
+			case EXC_ALI:
+#ifdef PPC_OEA
+				(*pr)("ALI trap @ %#x (DSISR %#x) ",
+				    tf->dar, tf->dsisr);
+				goto print_trap;
+#else
+				trapstr = "ALI"; break;
+#endif
 			case EXC_ISI: trapstr = "ISI"; break;
 			case EXC_PGM: trapstr = "PGM"; break;
 			case EXC_SC: trapstr = "SC"; break;
@@ -220,7 +228,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			case EXC_FPU: trapstr = "FPU"; break;
 			case EXC_FPA: trapstr = "FPA"; break;
 			case EXC_DECR: trapstr = "DECR"; break;
-			case EXC_ALI: trapstr = "ALI"; break;
 			case EXC_BPT: trapstr = "BPT"; break;
 			case EXC_TRC: trapstr = "TRC"; break;
 			case EXC_RUNMODETRC: trapstr = "RUNMODETRC"; break;
