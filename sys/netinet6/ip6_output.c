@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.4 1999/07/09 22:57:28 thorpej Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -751,7 +751,7 @@ skip_ipsec2:;
 	if (exthdrs.ip6e_hbh) {
 		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh,
 					   struct ip6_hbh *);
-		long dummy1;	/* XXX unused */
+		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 
 		/*
@@ -816,7 +816,7 @@ skip_ipsec2:;
 	} else {
 		struct mbuf **mnext, *m_frgpart;
 		struct ip6_frag *ip6f;
-		u_long id = htonl(ip6_id++);
+		u_int32_t id = htonl(ip6_id++);
 		u_char nextproto;
 
 		/*
