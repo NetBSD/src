@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 1998 Ignatios Souvatzis. All rights reserved.
+ *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions
@@ -35,10 +35,11 @@
  *		- ISDN Blaster	5001/1
  *		- ISDN MasterII	5000/1
  *		- ISDN Master	2092/64
- *	But we attach to the supio, so just see "isic" or "isicII".
+ *		- ISDN Surfer	4626/5
+ *	But we attach to the supio, so just see "isic", "isicII", icis
  *	-----------------------------------------------------------
  *
- *	$Id: isic_supio.c,v 1.1 2001/01/21 22:23:08 is Exp $ 
+ *	$Id: isic_supio.c,v 1.2 2001/01/25 22:22:15 is Exp $ 
  *
  *      last edit-date: [Tue Jan  9 21:57:11 2001]
  *
@@ -111,8 +112,7 @@ isic_supio_match(parent, cf, aux)
 	struct supio_attach_args *sap = aux;
 
 	/* ARGSUSED */
-	return (!strcmp("isic", sap->supio_name) ||
-		!strcmp("isicII", sap->supio_name));
+	return (!strncmp("isic", sap->supio_name, 4));
 }
 
 int isic_supio_ipl = 2;
@@ -141,32 +141,28 @@ isic_supio_attach(parent, self, aux)
 	/* create io mappings */
 	MALLOC_MAPS(sc);
 
-	if (!strcmp(sap->supio_name, "isic")) {
-		o1 = 0x300;
-		o2 = 0x100;
-	} else /* "isic-II" */ {
-		o1 = 0x100;
-		o2 = 0x300;
-	}
+	o1 = (sap->supio_name[4]-'0') << 7;
+	o2 = (sap->supio_name[5]-'0') << 7;
+
 	bst = sap->supio_iot;
-	bus_space_map(bst, sap->supio_iobase, 0x400, 0, &h);
+	bus_space_map(bst, sap->supio_iobase, 0x1000, 0, &h);
 
 	/* ISAC */
 	sc->sc_maps[0].t = bst;
 	sc->sc_maps[0].h = h;
-	sc->sc_maps[0].offset = o1/2;	
+	sc->sc_maps[0].offset = o1;	
 	sc->sc_maps[0].size = 0;	/* foreign mapping, leave it alone */
 
 	/* HSCX A */
 	sc->sc_maps[1].t = bst;
 	sc->sc_maps[1].h = h;
-	sc->sc_maps[1].offset = o2/2;
+	sc->sc_maps[1].offset = o2;
 	sc->sc_maps[1].size = 0;	/* foreign mapping, leave it alone */
 
 	/* HSCX B */
 	sc->sc_maps[2].t = bst;
 	sc->sc_maps[2].h = h;
-	sc->sc_maps[2].offset = (o2 + 0x80)/2;
+	sc->sc_maps[2].offset = o2 + 0x40;
 	sc->sc_maps[2].size = 0;	/* foreign mapping, leave it alone */
 
 	sc->clearirq = NULL;

@@ -1,7 +1,7 @@
-/*	$NetBSD: aster.c,v 1.7 2000/01/23 21:06:12 aymeric Exp $ */
+/*	$NetBSD: aster.c,v 1.8 2001/01/25 22:22:15 is Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,6 +92,9 @@ astermatch(parent, cfp, auxp)
 	if (zap->manid == 5000 && zap->prodid == 1)	/* ITH ISDN Master II */
 		return (1);
 
+	if (zap->manid == 4626 && zap->prodid == 5 && zap->serno == 0)
+		return (1);			/* Schoenfeld ISDN Surfer */
+
 	return (0);
 }
 
@@ -108,27 +111,38 @@ asterattach(parent, self, auxp)
 	astrsc = (struct aster_softc *)self;
 	zap = auxp;
 
+	astrsc->sc_bst.base = (u_long)zap->va + 0;
+	astrsc->sc_bst.absm = &amiga_bus_stride_2;
+	supa.supio_ipl = 2;	/* could be 6. isic_supio will decide. */
+
 	if (zap->manid == 5001 && zap->prodid == 1) {
 		cardname = "Blaster";
-		supa.supio_name = "isic";
+		supa.supio_name = "isic31";
 	} else if (zap->manid == 2092 && zap->prodid == 64) {
 		cardname = "Master";
-		supa.supio_name = "isic";
-	} else /* if (zap->manid == 5000 && zap->prodid == 1) */ {
+		supa.supio_name = "isic31";
+	} else if (zap->manid == 5000 && zap->prodid == 1) {
 		cardname = "Master II";
-		supa.supio_name = "isicII";
+		supa.supio_name = "isic13";
+	} else /* if (zap->manid == 4626 && zap->prodid == 5 &&
+		    zap->serno == 0) */{
+		cardname = "Surfer";
+		supa.supio_name = "isic1C";
+
+		((volatile u_int8_t *)zap->va)[0x00fe] = 0xff;
+
+		if (((volatile u_int8_t *)zap->va)[0x00fe] & 0x80)
+			supa.supio_ipl = 6;
 	}
+
 	if (parent)
 		printf(": ISDN %s\n", cardname);
 
-	astrsc->sc_bst.base = (u_long)zap->va + 0;
-	astrsc->sc_bst.absm = &amiga_bus_stride_2;
 
 	supa.supio_iot = &astrsc->sc_bst;
 
 	supa.supio_iobase = 0;
 	supa.supio_arg = 0;
-	supa.supio_ipl = 2;	/* could be 6. isic_supio will decide. */
 	config_found(self, &supa, asterprint); /* XXX */
 #ifdef __notyet__
 	hyper3i_attach_subr(self, &supa, asterprint);
