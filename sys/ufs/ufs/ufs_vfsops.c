@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.2 1994/06/29 06:47:33 cgd Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.3 1995/05/10 18:00:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -108,8 +108,9 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	cmd = cmds >> SUBCMDSHIFT;
 
 	switch (cmd) {
-	case Q_GETQUOTA:
 	case Q_SYNC:
+		break;
+	case Q_GETQUOTA:
 		if (uid == p->p_cred->p_ruid)
 			break;
 		/* fall through */
@@ -118,7 +119,7 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 			return (error);
 	}
 
-	type = cmd & SUBCMDMASK;
+	type = cmds & SUBCMDMASK;
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
 
