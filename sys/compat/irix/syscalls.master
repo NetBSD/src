@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2001/12/22 14:43:45 manu Exp $
+	$NetBSD: syscalls.master,v 1.11 2001/12/23 20:15:04 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -156,8 +156,8 @@
 78	UNIMPL		rfsys
 79	NOARGS		{ int sys_rmdir(char *path); }
 80	NOARGS		{ int sys_mkdir(char *path, int mode); }
-81	STD		{ int svr4_sys_getdents(int fd, char *buf, \
-			    int nbytes); }
+81	STD		{ int irix_sys_getdents(int fildes, \
+			    irix_dirent_t *buf, int nbytes); }
 82	STD		{ long irix_sys_sginap (long ticks); }
 83	UNIMPL		sgikopt
 84	UNIMPL		sysfs
@@ -298,7 +298,9 @@
 204	UNIMPL		nsproc
 205	UNIMPL		getdents64
 206	UNIMPL		dfs_XXX
-207	UNIMPL		ngetdents
+207	STD		{ int irix_sys_ngetdents(int fildes, \
+			    irix_dirent_t *buf, unsigned short nbyte, \
+			    int *eof); }
 208	UNIMPL		ngetdents64
 209	UNIMPL
 210	UNIMPL		pidsprocsp
