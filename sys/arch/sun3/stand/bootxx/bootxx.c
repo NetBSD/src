@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1995/06/01 21:03:07 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.4 1995/08/12 18:38:52 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -54,7 +54,6 @@ int netif_debug;
  * Boot device is derived from ROM provided information.
  */
 #define LOADADDR	0x4000
-struct open_file	io;
 
 /* This determines the largest boot program we can load. */
 #define MAXBLOCKNUM	64
@@ -72,30 +71,42 @@ daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
 
 main()
 {
-	char *dummy;
-	int n;
+	struct open_file	f;
+	void	(*entry)();
+	char	*addr;
+	int n, error;
 
 #ifdef DEBUG
 	printf("bootxx: open...\n");
 #endif
-	io.f_flags = F_RAW;
-	if (devopen(&io, 0, &dummy)) {
+	f.f_flags = F_RAW;
+	if (devopen(&f, 0, &addr)) {
 		printf("bootxx: open failed\n");
 		exit();
 	}
 
-	(void)copyboot(&io, LOADADDR);
+	addr = (char*)LOADADDR;
+	error = copyboot(&f, addr);
+	f.f_dev->dv_close(&f);
+	if (!error) {
+#ifdef DEBUG
+		printf("bootxx: start 0x%x\n", (long)addr);
+#endif
+		entry = (void (*)())addr;
+		(*entry)();
+	}
+	/* copyboot had a problem... */
 	exit();
 }
 
 int
-copyboot(f, addr)
-	register struct open_file	*f;
+copyboot(fp, addr)
+	register struct open_file	*fp;
 	register char			*addr;
 {
-	int	n, i, bsize;
-	daddr_t	blk;
-	void	(*entry)() = (void (*)())addr;
+	int	n, i;
+	int	blknum;
+	char *buf;
 
 #ifdef	sparc
 	/*
@@ -108,17 +119,21 @@ copyboot(f, addr)
 	addr -= sizeof(struct exec); /* XXX */
 #endif
 
+	/* Need to use a buffer that can be mapped into DVMA space. */
+	buf = alloc(block_size);
+	if (!buf)
+		panic("bootxx: alloc failed");
+
 	for (i = 0; i < block_count; i++) {
 
-		/* XXX - This is FS knowledge, actually. */
-		if ((blk = block_table[i]) == 0)
+		if ((blknum = block_table[i]) == 0)
 			break;
 
 #ifdef DEBUG
-		printf("bootxx: block # %d = %d\n", i, blk);
+		printf("bootxx: block # %d = %d\n", i, blknum);
 #endif
-		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-					   blk, block_size, addr, &n))
+		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ,
+					   blknum, block_size, buf, &n))
 		{
 			printf("bootxx: read failed\n");
 			return -1;
@@ -127,13 +142,10 @@ copyboot(f, addr)
 			printf("bootxx: short read\n");
 			return -1;
 		}
+		bcopy(buf, addr, block_size);
 		addr += block_size;
 	}
 
-#ifdef DEBUG
-	printf("bootxx: start 0x%x\n", (int)entry);
-#endif
-	(*entry)();
 	return 0;
 }
 
