@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.38 2000/07/22 14:49:17 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.39 2000/09/19 22:03:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -791,7 +791,7 @@ loop:
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -803,7 +803,7 @@ loop:
 	if (waitfor != MNT_LAZY) {
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0);
 	}
