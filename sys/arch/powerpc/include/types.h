@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21 2003/07/18 01:08:11 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.22 2003/07/21 16:10:50 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -62,6 +62,6 @@ typedef struct label_t {
 
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_BITENDIAN_BITOPS		/* for cntlzw in locore_subr.S */
+#define	__HAVE_BIGENDIAN_BITOPS		/* for cntlzw in locore_subr.S */
 
 #endif	/* _MACHTYPES_H_ */
