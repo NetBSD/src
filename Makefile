@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.233 2004/05/16 10:27:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.234 2004/05/17 07:00:16 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -240,7 +240,6 @@ distribution buildworld: .PHONY
 	@false
 .endif
 	${MAKEDIRTARGET} . build NOPOSTINSTALL=1
-	${MAKEDIRTARGET} x11 distribution
 	${MAKEDIRTARGET} etc distribution INSTALL_DONE=1
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	${MAKEDIRTARGET} . postinstall-fix-obsolete
