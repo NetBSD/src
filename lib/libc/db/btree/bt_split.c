@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.10 1998/12/09 12:42:47 christos Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.11 1999/07/29 04:07:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_split.c,v 1.10 1998/12/09 12:42:47 christos Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.11 1999/07/29 04:07:27 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -736,7 +736,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	 * the right page.
 	 */
 	if (skip <= off) {
-		skip = 0;
+		skip = -1;
 		rval = l;
 	} else {
 		rval = r;
@@ -746,7 +746,7 @@ bt_psplit(t, h, l, r, pskip, ilen)
 	for (off = 0; nxt < top; ++off) {
 		if (skip == nxt) {
 			++off;
-			skip = 0;
+			skip = -1;
 		}
 		switch (h->flags & P_TYPE) {
 		case P_BINTERNAL:
