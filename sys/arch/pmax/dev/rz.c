@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28 1997/08/17 16:51:21 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.29 1997/10/25 22:28:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -973,7 +973,10 @@ rzclose(dev, flags, mode, p)
 		while (sc->sc_tab.b_actf)
 			sleep((caddr_t)&sc->sc_tab, PZERO - 1);
 		splx(s);
+#if 0
+		/* 4.4Lite semantics  breaks disklabel -[N|W] on close */
 		sc->sc_flags &= ~RZF_WLABEL;
+#endif
 	}
 	return (0);
 }
