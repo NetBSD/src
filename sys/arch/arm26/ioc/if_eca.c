@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.5 2001/09/20 21:54:11 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.6 2001/09/22 14:42:51 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.5 2001/09/20 21:54:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.6 2001/09/22 14:42:51 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -405,7 +405,9 @@ eca_rx_downgrade(void)
 }
 
 /*
- * This is a soft interrupt handler, and hence can get away with anything.
+ * eca_gotframe() is called if there's something interesting on
+ * reception.  The receiver is turned off now -- it's up to us to
+ * start it again.
  */
 static void
 eca_gotframe(void *arg)
@@ -420,17 +422,10 @@ eca_gotframe(void *arg)
 
 	reply = NULL;
 	sr2 = sc->sc_sr2;
-	/* OVRN and FV can be set together. */
-	if (__predict_false(sr2 & MC6854_SR2_OVRN)) {
-		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
-		ifp->if_ierrors++;
 
-		/* Discard the rest of the frame. */
-		if (!sc->sc_transmitting)
-			bus_space_write_1(iot, ioh, MC6854_CR1,
-			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
-	} else if (__predict_true(sr2 & MC6854_SR2_FV)) {
-		/* Frame Valid. */
+	/* 1: Is there a valid frame waiting? */
+	if ((sr2 & MC6854_SR2_FV) && !(sr2 & MC6854_SR2_OVRN) &&
+	    sc->sc_fiqstate.efs_rx_curmbuf != NULL) {
 		fiq_getregs(&fr);
 		m = sc->sc_rcvmbuf;
 		mtail = sc->sc_fiqstate.efs_rx_curmbuf;
@@ -452,6 +447,17 @@ eca_gotframe(void *arg)
 			reply = eco_inputframe(ifp, m);
 		} else
 			ifp->if_iqdrops++;
+	}
+
+	/* 2: Are there any errors waiting? */
+	if (sr2 & MC6854_SR2_OVRN) {
+		log(LOG_ERR, "%s: Rx overrun\n", sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
+
+		/* Discard the rest of the frame. */
+		if (!sc->sc_transmitting)
+			bus_space_write_1(iot, ioh, MC6854_CR1,
+			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	} else if (sr2 & MC6854_SR2_RXABT) {
 		log(LOG_NOTICE, "%s: Rx abort\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
@@ -464,10 +470,6 @@ eca_gotframe(void *arg)
 		log(LOG_ERR, "%s: No clock\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 	}
-
-	if (sr2 & MC6854_SR2_RX_IDLE)
-		eco_inputidle(ifp);
-
 	if (sc->sc_fiqstate.efs_rx_curmbuf == NULL) {
 		log(LOG_NOTICE, "%s: Oversized frame\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
@@ -477,16 +479,23 @@ eca_gotframe(void *arg)
 			    sc->sc_cr1 | MC6854_CR1_DISCONTINUE);
 	}
 
+
 	bus_space_write_1(iot, ioh, MC6854_CR2,
 	    sc->sc_cr2 | MC6854_CR2_CLR_RX_ST);
 
-	if (reply)
+	if (reply) {
+		KASSERT(sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL);
 		eca_txframe(ifp, reply);
-	else if (!sc->sc_transmitting) {
-		/* Make sure we're not flag-filling. */
-		bus_space_write_1(iot, ioh, MC6854_CR2,
-		    sc->sc_cr2);
+	} else {
+		KASSERT(!sc->sc_transmitting);
+		if (sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL)
+			/* Stop flag-filling: we have nothing to send. */
+			bus_space_write_1(iot, ioh, MC6854_CR2,
+			    sc->sc_cr2);
 		/* Set the ADLC up to receive the next frame. */
 		eca_init_rx(sc);
+		/* 3: Is the network idle now? */
+		if (sr2 & MC6854_SR2_RX_IDLE)
+			eco_inputidle(ifp);
 	}
 }
