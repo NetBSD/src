@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: ifconfig.c,v 1.17 1994/12/18 12:58:39 cgd Exp $";
+static char *rcsid = "$Id: ifconfig.c,v 1.18 1995/01/21 21:22:16 glass Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,6 +137,7 @@ void	getsock __P((int));
 void	printall __P((void));
 void 	printb __P((char *, unsigned short, char *));
 void 	status();
+void 	usage();
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -180,15 +181,8 @@ main(argc, argv)
 	register struct afswtch *rafp;
 	int aflag = 0;
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s",
-		    "\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
-			    "[ netmask mask ] ]\n",
-		    "\t[ metric n ]\n",
-		    "\t[ arp | -arp ]\n",
-		    "\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n");
-		exit(1);
-	}
+	if (argc < 2) 
+		usage();
 	argc--, argv++;
 	if (!strcmp(*argv, "-a"))
 		aflag = 1;
@@ -205,6 +199,8 @@ main(argc, argv)
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
 	}
 	if (aflag) {
+		if (argc > 0)
+			usage();
 		printall();
 		exit(0);
 	}
@@ -762,4 +758,17 @@ adjust_nsellength()
 	fixnsel(sisotab[RIDADDR]);
 	fixnsel(sisotab[ADDR]);
 	fixnsel(sisotab[DSTADDR]);
+}
+
+void
+usage()
+{
+	fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s%s",
+		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
+		"[ netmask mask ] ]\n",
+		"\t[ metric n ]\n",
+		"\t[ arp | -arp ]\n",
+		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
+		"       ifconfig -a [ af ]\n");
+	exit(1);
 }
