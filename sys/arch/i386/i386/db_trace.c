@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.40 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2003/05/21 23:12:18 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.40 2003/10/27 14:11:46 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ db_numargs(int *retaddrp)
 
 int
 db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
-	     int *argp, int is_trap, void (*pr) __P((const char *, ...)))
+	     int *argp, int is_trap, void (*pr)(const char *, ...))
 {
 	struct trapframe *tf;
 	struct i386tss *tss;
