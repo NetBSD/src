@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.44 2004/12/29 00:43:02 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.44 2004/12/29 00:43:02 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.44 2004/12/29 00:43:02 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.45 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -268,26 +268,26 @@ static char *DirLookupAbs(Path *, const char *, const char *);
  *-----------------------------------------------------------------------
  */
 void
-Dir_Init (const char *cdname)
+Dir_Init(const char *cdname)
 {
-    dirSearchPath = Lst_Init (FALSE);
-    openDirectories = Lst_Init (FALSE);
+    dirSearchPath = Lst_Init(FALSE);
+    openDirectories = Lst_Init(FALSE);
     Hash_InitTable(&mtimes, 0);
 
     Dir_InitCur(cdname);
 
-    dotLast = (Path *) emalloc (sizeof (Path));
+    dotLast = emalloc(sizeof(Path));
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = estrdup(".DOTLAST");
-    Hash_InitTable (&dotLast->files, -1);
+    Hash_InitTable(&dotLast->files, -1);
 }
 
 /*
  * Called by Dir_Init() and whenever .CURDIR is assigned to.
  */
 void
-Dir_InitCur (const char *cdname)
+Dir_InitCur(const char *cdname)
 {
     Path *p;
     
@@ -329,11 +329,11 @@ Dir_InitDot(void)
 	LstNode ln;
 
 	/* Remove old entry from openDirectories, but do not destroy. */
-	ln = Lst_Member (openDirectories, (ClientData)dot);
-	(void) Lst_Remove (openDirectories, ln);
+	ln = Lst_Member(openDirectories, (ClientData)dot);
+	(void) Lst_Remove(openDirectories, ln);
     }
 
-    dot = Dir_AddDir (NULL, ".");
+    dot = Dir_AddDir(NULL, ".");
 
     if (dot == NULL) {
 	Error("Cannot open `.' (%s)", strerror(errno));
@@ -386,7 +386,7 @@ Dir_End(void)
  * This is the simplest way to deal with the effect of .DOTLAST.
  */
 void
-Dir_SetPATH (void)
+Dir_SetPATH(void)
 {
     LstNode       ln;		/* a list element */
     Path *p;
@@ -394,9 +394,9 @@ Dir_SetPATH (void)
 
     Var_Delete(".PATH", VAR_GLOBAL);
     
-    if (Lst_Open (dirSearchPath) == SUCCESS) {
-	if ((ln = Lst_First (dirSearchPath)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
+    if (Lst_Open(dirSearchPath) == SUCCESS) {
+	if ((ln = Lst_First(dirSearchPath)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
 	    if (p == dotLast) {
 		hasLastDot = TRUE;
 		Var_Append(".PATH", dotLast->name, VAR_GLOBAL);
@@ -410,8 +410,8 @@ Dir_SetPATH (void)
 		Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 
-	while ((ln = Lst_Next (dirSearchPath)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
+	while ((ln = Lst_Next(dirSearchPath)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if (p == dot && hasLastDot)
@@ -869,10 +869,10 @@ DirLookup(Path *p, const char *name __unused, const char *cp,
 	printf("   %s ...\n", p->name);
     }
 
-    if (Hash_FindEntry (&p->files, cp) == (Hash_Entry *)NULL)
+    if (Hash_FindEntry(&p->files, cp) == (Hash_Entry *)NULL)
 	return NULL;
 
-    file = str_concat (p->name, cp, STR_ADDSLASH);
+    file = str_concat(p->name, cp, STR_ADDSLASH);
     if (DEBUG(DIR)) {
 	printf("   returning %s\n", file);
     }
@@ -904,7 +904,7 @@ DirLookupSubdir(Path *p, const char *name)
     char 	 *file;		/* the current filename to check */
 
     if (p != dot) {
-	file = str_concat (p->name, name, STR_ADDSLASH);
+	file = str_concat(p->name, name, STR_ADDSLASH);
     } else {
 	/*
 	 * Checking in dot -- DON'T put a leading ./ on the thing.
@@ -973,7 +973,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 		return NULL;
 	}
 
-	if (Hash_FindEntry (&p->files, cp) == (Hash_Entry *)NULL) {
+	if (Hash_FindEntry(&p->files, cp) == (Hash_Entry *)NULL) {
 		if (DEBUG(DIR)) {
 			printf("   must be here but isn't -- returning\n");
 		}
@@ -986,7 +986,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	if (DEBUG(DIR)) {
 		printf("   returning %s\n", name);
 	}
-	return (estrdup (name));
+	return (estrdup(name));
 }
 
 /*-
@@ -1006,22 +1006,22 @@ static char *
 DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 {
 
-	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
+	if (Hash_FindEntry(&dot->files, cp) != (Hash_Entry *)NULL) {
 	    if (DEBUG(DIR)) {
 		printf("   in '.'\n");
 	    }
 	    hits += 1;
 	    dot->hits += 1;
-	    return (estrdup (name));
+	    return (estrdup(name));
 	}
 	if (cur &&
-	    Hash_FindEntry (&cur->files, cp) != (Hash_Entry *)NULL) {
+	    Hash_FindEntry(&cur->files, cp) != (Hash_Entry *)NULL) {
 	    if (DEBUG(DIR)) {
 		printf("   in ${.CURDIR} = %s\n", cur->name);
 	    }
 	    hits += 1;
 	    cur->hits += 1;
-	    return str_concat (cur->name, cp, STR_ADDSLASH);
+	    return str_concat(cur->name, cp, STR_ADDSLASH);
 	}
 
 	return NULL;
@@ -1078,7 +1078,7 @@ Dir_FindFile(const char *name, Lst path)
 	printf("Searching for %s ...", name);
     }
 
-    if (Lst_Open (path) == FAILURE) {
+    if (Lst_Open(path) == FAILURE) {
 	if (DEBUG(DIR)) {
 	    printf("couldn't open path, file not found\n");
 	}
@@ -1086,8 +1086,8 @@ Dir_FindFile(const char *name, Lst path)
 	return ((char *) NULL);
     }
 
-    if ((ln = Lst_First (path)) != NILLNODE) {
-	p = (Path *) Lst_Datum (ln);
+    if ((ln = Lst_First(path)) != NILLNODE) {
+	p = (Path *) Lst_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
             if (DEBUG(DIR))
@@ -1120,27 +1120,27 @@ Dir_FindFile(const char *name, Lst path)
 	     */
 	    if (!hasLastDot &&
 			(file = DirFindDot(hasSlash, name, cp)) != NULL) {
-		    Lst_Close (path);
+		    Lst_Close(path);
 		    return file;
 	    }
 
-	    while ((ln = Lst_Next (path)) != NILLNODE) {
-		p = (Path *) Lst_Datum (ln);
+	    while ((ln = Lst_Next(path)) != NILLNODE) {
+		p = (Path *) Lst_Datum(ln);
 		if (p == dotLast)
 		    continue;
 		if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
-		    Lst_Close (path);
+		    Lst_Close(path);
 			return file;
 		}
 	    }
 
 	    if (hasLastDot &&
 			(file = DirFindDot(hasSlash, name, cp)) != NULL) {
-		    Lst_Close (path);
+		    Lst_Close(path);
 		    return file;
 	    }
     }
-    Lst_Close (path);
+    Lst_Close(path);
 
     /*
      * We didn't find the file on any directory in the search path.
@@ -1181,9 +1181,9 @@ Dir_FindFile(const char *name, Lst path)
 			return file;
 	}
 
-	(void) Lst_Open (path);
-	while ((ln = Lst_Next (path)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
+	(void) Lst_Open(path);
+	while ((ln = Lst_Next(path)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if (p == dot) {
@@ -1192,11 +1192,11 @@ Dir_FindFile(const char *name, Lst path)
 		checkedDot = TRUE;
 	    }
 	    if ((file = DirLookupSubdir(p, name)) != NULL) {
-		Lst_Close (path);
+		Lst_Close(path);
 		return file;
 	    }
 	}
-	Lst_Close (path);
+	Lst_Close(path);
 
 	if (hasLastDot) {
 		if (dot && !checkedDot) {
@@ -1237,17 +1237,17 @@ Dir_FindFile(const char *name, Lst path)
 	if (!hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
 	    return *file?file:NULL;
 
-	(void) Lst_Open (path);
-	while ((ln = Lst_Next (path)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
+	(void) Lst_Open(path);
+	while ((ln = Lst_Next(path)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if ((file = DirLookupAbs(p, name, cp)) != NULL) {
-		Lst_Close (path);
+		Lst_Close(path);
 		return *file?file:NULL;
 	    }
 	}
-	Lst_Close (path);
+	Lst_Close(path);
 
 	if (hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
 	    return *file?file:NULL;
@@ -1272,19 +1272,19 @@ Dir_FindFile(const char *name, Lst path)
      */
 #ifdef notdef
     cp[-1] = '\0';
-    (void) Dir_AddDir (path, name);
+    (void) Dir_AddDir(path, name);
     cp[-1] = '/';
 
     bigmisses += 1;
-    ln = Lst_Last (path);
+    ln = Lst_Last(path);
     if (ln == NILLNODE) {
 	return ((char *) NULL);
     } else {
-	p = (Path *) Lst_Datum (ln);
+	p = (Path *) Lst_Datum(ln);
     }
 
-    if (Hash_FindEntry (&p->files, cp) != (Hash_Entry *)NULL) {
-	return (estrdup (name));
+    if (Hash_FindEntry(&p->files, cp) != (Hash_Entry *)NULL) {
+	return (estrdup(name));
     } else {
 	return ((char *) NULL);
     }
@@ -1307,7 +1307,7 @@ Dir_FindFile(const char *name, Lst path)
 		    name);
 	}
 	Hash_SetValue(entry, (long)stb.st_mtime);
-	return (estrdup (name));
+	return (estrdup(name));
     } else {
 	if (DEBUG(DIR)) {
 	    printf("   failed. Returning NULL\n");
@@ -1422,7 +1422,7 @@ Dir_MTime(GNode *gn)
     Hash_Entry	  *entry;
 
     if (gn->type & OP_ARCHV) {
-	return Arch_MTime (gn);
+	return Arch_MTime(gn);
     } else if (gn->type & OP_PHONY) {
 	gn->mtime = 0;
 	return 0;
@@ -1430,7 +1430,7 @@ Dir_MTime(GNode *gn)
 	if (gn->type & OP_NOPATH)
 	    fullName = NULL;
 	else
-	    fullName = Dir_FindFile (gn->name, Suff_FindPath(gn));
+	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
     } else {
 	fullName = gn->path;
     }
@@ -1456,7 +1456,7 @@ Dir_MTime(GNode *gn)
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
-	    return Arch_MemMTime (gn);
+	    return Arch_MemMTime(gn);
 	} else {
 	    stb.st_mtime = 0;
 	}
@@ -1498,7 +1498,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;	      /* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find (path, (ClientData)UNCONST(name), DirFindName);
+	ln = Lst_Find(path, (ClientData)UNCONST(name), DirFindName);
 	if (ln != NILLNODE)
 	    return (Path *) Lst_Datum(ln);
 	else {
@@ -1508,7 +1508,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path)
-	ln = Lst_Find (openDirectories, (ClientData)UNCONST(name), DirFindName);
+	ln = Lst_Find(openDirectories, (ClientData)UNCONST(name), DirFindName);
     if (ln != NILLNODE) {
 	p = (Path *)Lst_Datum (ln);
 	if (Lst_Member(path, (ClientData)p) == NILLNODE) {
@@ -1522,11 +1522,11 @@ Dir_AddDir(Lst path, const char *name)
 	}
 
 	if ((d = opendir (name)) != (DIR *) NULL) {
-	    p = (Path *) emalloc (sizeof (Path));
-	    p->name = estrdup (name);
+	    p = emalloc(sizeof(Path));
+	    p->name = estrdup(name);
 	    p->hits = 0;
 	    p->refCount = 1;
-	    Hash_InitTable (&p->files, -1);
+	    Hash_InitTable(&p->files, -1);
 
 	    while ((dp = readdir (d)) != (struct dirent *) NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
@@ -1604,17 +1604,17 @@ Dir_MakeFlags(const char *flag, Lst path)
     LstNode	  ln;	  /* the node of the current directory */
     Path	  *p;	  /* the structure describing the current directory */
 
-    str = estrdup ("");
+    str = estrdup("");
 
-    if (Lst_Open (path) == SUCCESS) {
-	while ((ln = Lst_Next (path)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
-	    s2 = str_concat (flag, p->name, 0);
-	    str = str_concat (s1 = str, s2, STR_ADDSPACE);
+    if (Lst_Open(path) == SUCCESS) {
+	while ((ln = Lst_Next(path)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
+	    s2 = str_concat(flag, p->name, 0);
+	    str = str_concat(s1 = str, s2, STR_ADDSPACE);
 	    free(s1);
 	    free(s2);
 	}
-	Lst_Close (path);
+	Lst_Close(path);
     }
 
     return (str);
@@ -1647,10 +1647,10 @@ Dir_Destroy(ClientData pp)
     if (p->refCount == 0) {
 	LstNode	ln;
 
-	ln = Lst_Member (openDirectories, (ClientData)p);
-	(void) Lst_Remove (openDirectories, ln);
+	ln = Lst_Member(openDirectories, (ClientData)p);
+	(void) Lst_Remove(openDirectories, ln);
 
-	Hash_DeleteTable (&p->files);
+	Hash_DeleteTable(&p->files);
 	free((Address)p->name);
 	free((Address)p);
     }
@@ -1730,12 +1730,12 @@ Dir_PrintDirectories(void)
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
     printf ("# %-20s referenced\thits\n", "directory");
-    if (Lst_Open (openDirectories) == SUCCESS) {
-	while ((ln = Lst_Next (openDirectories)) != NILLNODE) {
-	    p = (Path *) Lst_Datum (ln);
+    if (Lst_Open(openDirectories) == SUCCESS) {
+	while ((ln = Lst_Next(openDirectories)) != NILLNODE) {
+	    p = (Path *) Lst_Datum(ln);
 	    printf ("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 	}
-	Lst_Close (openDirectories);
+	Lst_Close(openDirectories);
     }
 }
 
@@ -1749,5 +1749,5 @@ DirPrintDir(ClientData p, ClientData dummy)
 void
 Dir_PrintPath(Lst path)
 {
-    Lst_ForEach (path, DirPrintDir, (ClientData)0);
+    Lst_ForEach(path, DirPrintDir, (ClientData)0);
 }

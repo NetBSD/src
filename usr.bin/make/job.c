@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.89 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.89 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.89 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -737,7 +737,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 
     if (!commandShell->hasErrCtl) {
 	/* Worst that could happen is every char needs escaping. */
-	escCmd = (char *) emalloc((strlen(cmd) * 2) + 1);
+	escCmd = emalloc((strlen(cmd) * 2) + 1);
 	for (i = 0, j= 0; cmd[i] != '\0'; i++, j++) {
 		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' || 
 			cmd[i] == '"')
@@ -1924,7 +1924,7 @@ JobStart(GNode *gn, int flags, Job *previous)
 	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT|JOB_REMOTE);
 	job = previous;
     } else {
-	job = (Job *) emalloc(sizeof(Job));
+	job = emalloc(sizeof(Job));
 	if (job == NULL) {
 	    Punt("JobStart out of memory");
 	}
@@ -2580,7 +2580,7 @@ Job_CatchOutput(void)
      * NOTE: IT IS THE RESPONSIBILITY OF Rmt_Wait TO CALL Job_CatchChildren
      * IN A TIMELY FASHION TO CATCH ANY LOCALLY RUNNING JOBS THAT EXIT.
      * It may use the variable nLocal to determine if it needs to call
-     * Job_CatchChildren (if nLocal is 0, there's nothing for which to
+     * Job_CatchChildren(if nLocal is 0, there's nothing for which to
      * wait...)
      */
     while (nJobs != 0 && pnJobs == nJobs) {
@@ -3013,7 +3013,7 @@ Job_ParseShell(char *line)
 	    }
 	    commandShell = sh;
 	} else {
-	    commandShell = (Shell *) emalloc(sizeof(Shell));
+	    commandShell = emalloc(sizeof(Shell));
 	    *commandShell = newShell;
 	}
     }
@@ -3528,7 +3528,7 @@ Job_ServerStart(int maxproc)
     char jobarg[64];
     
     if (pipe(job_pipe) < 0)
-	Fatal ("error in pipe: %s", strerror(errno));
+	Fatal("error in pipe: %s", strerror(errno));
 
     /*
      * We mark the input side of the pipe non-blocking; we poll(2) the
