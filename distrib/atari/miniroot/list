@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7.10.2 2000/11/14 16:18:34 tv Exp $
+#	$NetBSD: list,v 1.7.10.3 2001/05/26 16:00:39 he Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64KB!
 LIBS	libhack.o
@@ -38,15 +38,15 @@ COPY	${ARCHDIR}/termcap.vt usr/share/misc/termcap
 COPY	${ARCHDIR}/install.md		install.md
 COPY	${ARCHDIR}/dot.profile		.profile
 
-# and the keyboard maps
-COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
-
-# mount-point for kernfs
-SPECIAL	mkdir kern
-
 # remove the /usr/share/zoneinfo directory, so the installation script
 # can determine that the atari install does not support it.
 SPECIAL	rmdir usr/share/zoneinfo
 
 # strip /etc/services - not enough space... (leaves ftp in).
 SPECIAL grep ftp ${DESTDIR}/etc/services > etc/services
+
+# and the keyboard maps
+COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
+
+# mount-point for kernfs
+SPECIAL	mkdir kern
