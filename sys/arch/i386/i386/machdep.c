@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 1996/03/05 01:28:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 1996/03/08 11:40:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -691,16 +691,17 @@ struct pcb dumppcb;
 
 void
 boot(howto)
-	register int howto;
+	int howto;
 {
 	extern int cold;
 
 	if (cold) {
-		printf("hit reset please");
-		for(;;);
+		howto |= RB_HALT;
+		goto haltsys;
 	}
+
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -709,21 +710,24 @@ boot(howto)
 		 */
 		resettodr();
 	}
+
+	/* Disable interrupts. */
 	splhigh();
+
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
+haltsys:
+	doshutdownhooks();
+
 	if (howto & RB_HALT) {
-		doshutdownhooks();
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb, 0);
-			dumppcb.pcb_cr3 = rcr3();
-			dumpsys();
-		}
-		doshutdownhooks();
 	}
+
 	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
@@ -800,6 +804,9 @@ dumpsys()
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 	int c;
+
+	/* Save registers. */
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
