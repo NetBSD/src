@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.19 1998/01/26 21:03:44 gwr Exp $	*/
+/*	$NetBSD: xd.c,v 1.20 1998/06/24 21:36:05 jeremy Exp $	*/
 
 /*
  *
@@ -78,8 +78,9 @@
 #include <vm/vm_kern.h>
 
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
 #include <machine/dvma.h>
+
+#include <dev/sun/sun_disklabel.h>
 
 #include <sun3/dev/xdreg.h>
 #include <sun3/dev/xdvar.h>
