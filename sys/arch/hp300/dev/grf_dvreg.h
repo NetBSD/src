@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,10 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf_dvreg.h 1.1 90/07/09
- *	from: @(#)grf_dvreg.h	7.2 (Berkeley) 11/4/90
- *	$Id: grf_dvreg.h,v 1.3 1993/08/08 03:42:35 mycroft Exp $
+ * from: Utah $Hdr: grf_dvreg.h 1.5 92/01/21$
+ *
+ *	from: @(#)grf_dvreg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: grf_dvreg.h,v 1.4 1994/05/25 11:47:25 mycroft Exp $
  */
+
+#include <hp300/dev/iotypes.h>	/* XXX */
 
 /*
  * Map of the DaVinci frame buffer controller chip in memory ...
@@ -47,10 +50,6 @@
 #define db_waitbusy(regaddr) \
 	while (((struct dvboxfb *)(regaddr))->wbusy || \
 	       ((struct dvboxfb *)(regaddr))->as_busy) DELAY(100)
-
-#define	vu_char		volatile u_char
-#define	vu_short	volatile u_short
-#define	vu_int		volatile u_int
 
 struct rgb {
   u_char :8, :8, :8;
