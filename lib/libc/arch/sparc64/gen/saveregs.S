@@ -1,4 +1,4 @@
-/*	$NetBSD: saveregs.S,v 1.1 1998/09/11 04:56:28 eeh Exp $	*/
+/*	$NetBSD: saveregs.S,v 1.2 2000/07/21 03:14:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: saveregs.S,v 1.1 1998/09/11 04:56:28 eeh Exp $")
+	RCSID("$NetBSD: saveregs.S,v 1.2 2000/07/21 03:14:15 eeh Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,12 +54,13 @@
  *
  * We assume the caller has executed a `save' instruction.
  */
-
+#define	REGOFF	(BIAS - CC64FSZ)
+	
 ENTRY(__builtin_saveregs)
-	st	%i0, [%fp + 0x44]	! fr->fr_argd[0]
-	st	%i1, [%fp + 0x48]	! fr->fr_argd[1]
-	st	%i2, [%fp + 0x4c]	! fr->fr_argd[2]
-	st	%i3, [%fp + 0x50]	! fr->fr_argd[3]
-	st	%i4, [%fp + 0x54]	! fr->fr_argd[4]
+	stx	%i0, [%fp + REGOFF + 0x00]	! fr->fr_argd[0]
+	stx	%i1, [%fp + REGOFF + 0x08]	! fr->fr_argd[1]
+	stx	%i2, [%fp + REGOFF + 0x10]	! fr->fr_argd[2]
+	stx	%i3, [%fp + REGOFF + 0x18]	! fr->fr_argd[3]
+	stx	%i4, [%fp + REGOFF + 0x20]	! fr->fr_argd[4]
 	retl
-	st	%i5, [%fp + 0x58]	! fr->fr_argd[5]
+	 stx	%i5, [%fp + REGOFF + 0x28]	! fr->fr_argd[5]
