@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.c,v 1.1 1996/01/31 23:25:03 mark Exp $ */
+/* $NetBSD: qmouse.c,v 1.2 1996/03/06 23:26:23 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -29,8 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: qmouse.c,v 1.1 1996/01/31 23:25:03 mark Exp $
  */
 
 /*
@@ -108,12 +106,18 @@ quadmouseprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) >> 8);
+	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
 
 /* So far I only know about this IOMD */
 
-	if (id == RPC600_IOMD_ID)
+	switch (id) {
+	case RPC600_IOMD_ID:
 		return(1);
+		break;
+	default:
+		printf("quadmouse: Unknown IOMD id=%04x", id);
+		break;
+	}
 
 	return(0);
 }
@@ -195,8 +199,8 @@ quadmouseopen(dev, flag, mode, p)
 	WriteByte(IOMD_T1HIGH, (TIMER1_COUNT >> 8) & 0xff);
 	WriteByte(IOMD_T1GO, 0);
 	
-	if (irq_claim(IRQ_TIMER1, &sc->sc_ih) == -1)
-		panic("Cannot claim VSYNC IRQ\n");
+	if (irq_claim(IRQ_TIMER1, &sc->sc_ih))
+		panic("Cannot claim TIMER1 IRQ for quadmouse%d\n", sc->sc_device.dv_unit);
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.1 1996/01/31 23:24:19 mark Exp $ */
+/* $NetBSD: beep.c,v 1.2 1996/03/06 23:26:20 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -27,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: beep.c,v 1.1 1996/01/31 23:24:19 mark Exp $
  */
 
 /*
@@ -104,13 +102,18 @@ beepprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
 
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) >> 8);
+	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
 
 /* So far I only know about this IOMD */
 
-	if (id == RPC600_IOMD_ID)
+	switch (id) {
+	case RPC600_IOMD_ID:
 		return(1);
-
+		break;
+	default:
+		printf("beep: Unknown IOMD id=%04x", id);
+		break;
+	}
 	return(0);
 }
 
@@ -159,8 +162,8 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NONE;
 
-	if (irq_claim(IRQ_DMASCH0, &sc->sc_ih) == -1)
-		panic("Cannot claim DMASCH0 IRQ\n");
+	if (irq_claim(IRQ_DMASCH0, &sc->sc_ih))
+		panic("Cannot claim DMASCH0 IRQ for beep%d\n", parent->dv_unit);
 
 	disable_irq(IRQ_DMASCH0);
 
