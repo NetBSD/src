@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.16 2001/12/01 10:43:36 jdolecek Exp $
+$NetBSD: mcadevs,v 1.17 2002/12/04 18:52:28 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -348,6 +348,7 @@ product 0x8FD8 "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0x8FD9 "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0x8FDA "IBM XGA/XGA-2 Display Adapter"				[2]
 product 0x8FDB "IBM XGA/XGA-2 Display Adapter"				[2]
+product 0x90EE IBM_SVGA "IBM SVGA Adapter/A"				[10]
 product 0xDDFF IBM_ESDIC "IBM ESDI Fixed Disk Controller"		[3]
 product 0xDEFF IBM_MPCOM "IBM Multi-Protocol Communications Adapter"	[3]
 product 0xDF7F "IBM 3363 Optical Disk Adapter"				[5]
