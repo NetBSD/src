@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.6 1996/03/28 21:52:47 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.7 1996/05/07 00:51:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,7 +49,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.6 1996/03/28 21:52:47 mark Exp $
+ *	from:$NetBSD: lpt.c,v 1.7 1996/05/07 00:51:44 thorpej Exp $
  */
 
 /*
@@ -660,8 +660,8 @@ plipattach(struct lpt_softc *sc, int unit)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_ifbuf = NULL;
-	ifp->if_unit = unit;
-	ifp->if_name = "plip";
+	sprintf(ifp->if_xname, "plip%d", unit);
+	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_output = ether_output;
 	ifp->if_start = plipstart;
@@ -695,7 +695,7 @@ static int
 plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	unsigned int iobase = sc->sc_iobase;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
@@ -981,7 +981,7 @@ printf("plipintr:\n");
 		if (plipreceive(iobase, minibuf, 2) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[0];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) {
-			log(LOG_NOTICE, "plip%d: packet > MTU\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_xname);
 			goto err;
 		}
 #if PLIP_DEBUG != 0
@@ -1001,7 +1001,7 @@ printf("plipintr:\n");
 	if (plipreceive(iobase, minibuf, 1) < 0) goto err;
 	if ((cksum & 0xff) != minibuf[0]) {
 		printf("cksum=%d, %d, %d\n", cksum, c, minibuf[0]);
-		log(LOG_NOTICE, "plip%d: checksum error\n", ifp->if_unit);
+		log(LOG_NOTICE, "%s: checksum error\n", ifp->if_xname);
 		goto err;
 	} 
 
@@ -1054,7 +1054,7 @@ err:
 		 * disabled.
 		 */
 		if (sc->sc_iferrs == PLIPMXERRS + 1)
-			log(LOG_NOTICE, "plip%d: rx hard error\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: rx hard error\n", ifp->if_xname);
 /*	xxx	i8255->port_a |= LPA_ACTIVE;*/
 	} else
 ;
@@ -1142,7 +1142,7 @@ pliptransmit(unsigned int iobase, u_char *buf, int len)
 static void
 plipstart(struct ifnet *ifp)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	unsigned int iobase = sc->sc_iobase;
 	struct mbuf *m0, *m;
 	u_char minibuf[4], cksum;
@@ -1292,7 +1292,7 @@ retry:
 	} else {
 		if (sc->sc_ifretry == PLIPMXRETRY) {
 			sc->sc_ifretry++;
-			log(LOG_NOTICE, "plip%d: tx hard error\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);
 		}
 		s = splimp();
 		m_freem(m0);
