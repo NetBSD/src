@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.3 2001/09/08 03:42:26 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.4 2001/09/08 04:08:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -188,7 +188,7 @@ tunclose(dev, flag, mode, p)
 		splx(s);
 	}
 	tp->tun_pgrp = 0;
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0);
 		
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
 	return (0);
@@ -378,7 +378,7 @@ tun_output(ifp, m0, dst, rt)
 		else if ((p = pfind(-tp->tun_pgrp)) != NULL)
 			psignal(p, SIGIO);
 	}
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0);
 	return (0);
 }
 
