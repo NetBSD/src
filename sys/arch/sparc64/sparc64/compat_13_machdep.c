@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.1 1998/09/17 04:52:17 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.2 1998/10/08 02:31:40 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,6 @@ compat_13_sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifdef _LP64
-	panic("compat_13_sys_sigreturn");
-#else
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
@@ -84,7 +81,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		sigexit(p, SIGILL);
 
 	scp = SCARG(uap, sigcntxp);
-	f ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 		return (EFAULT);
 	scp = &sc;
 
@@ -97,7 +94,11 @@ compat_13_sys_sigreturn(p, v, retval)
 	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
 		return (EINVAL);
 	/* take only psr ICC field */
+#ifdef _LP64
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | scp->sc_tstate;
+#else
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+#endif
 	tf->tf_pc = scp->sc_pc;
 	tf->tf_npc = scp->sc_npc;
 	tf->tf_global[1] = scp->sc_g1;
@@ -114,5 +115,4 @@ compat_13_sys_sigreturn(p, v, retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
-#endif /* _LP64 */
 }

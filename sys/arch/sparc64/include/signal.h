@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: signal.h,v 1.6 1998/10/08 02:31:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,17 +65,20 @@ typedef int sig_atomic_t;
  * All machines must have an sc_onstack and sc_mask.
  */
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-/* Since we didn't start at 1.3, this is only for sparc32 code */
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
 	/* begin machine dependent portion */
-	int	sc_sp;			/* %sp to restore */
-	int	sc_pc;			/* pc to restore */
-	int	sc_npc;			/* npc to restore */
-	int	sc_psr;			/* pstate to restore */
-	int	sc_g1;			/* %g1 to restore */
-	int	sc_o0;			/* %o0 to restore */
+	long	sc_sp;			/* %sp to restore */
+	long	sc_pc;			/* pc to restore */
+	long	sc_npc;			/* npc to restore */
+#ifdef _LP64
+	long	sc_tstate;		/* tstate to restore */
+#else
+	long	sc_psr;			/* pstate to restore */
+#endif
+	long	sc_g1;			/* %g1 to restore */
+	long	sc_o0;			/* %o0 to restore */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 struct sigcontext {

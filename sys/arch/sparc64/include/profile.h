@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2 1998/07/07 03:05:03 eeh Exp $ */
+/*	$NetBSD: profile.h,v 1.3 1998/10/08 02:31:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef ELF
+#if	defined(ELF)||defined(__ELF__)
 #define _MCOUNT_SYM "_mcount"
 #else
 #define _MCOUNT_SYM "__mcount"
@@ -56,8 +56,8 @@
 	__asm__(".global mcount");\
 	__asm__("mcount:");\
 	__asm__("add %o7, 8, %o1");\
-	__asm__("1: call 2f; nop; 2:");\
-	__asm__("add %o7," _MCOUNT_SYM "-1b, %o2");\
+	__asm__("1: rd %pc, %o2");\
+	__asm__("add %o2," _MCOUNT_SYM "-1b, %o2");\
 	__asm__("ld [%o2], %o2");\
 	__asm__("jmpl %o2, %g0");\
 	__asm__("add %i7, 8, %o0");

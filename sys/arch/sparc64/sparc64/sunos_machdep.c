@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.3 1998/09/22 02:48:45 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.4 1998/10/08 02:31:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -56,20 +56,32 @@
 #include <machine/cpu.h>
 
 #ifdef DEBUG
-int sunos_sigdebug = 0;
-int sunos_sigpid = 0;
+extern int sigdebug;
+extern int sigpid;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
 #define SDB_FPSTATE	0x04
 #define SDB_DDB		0x08
 #endif
 
+struct sunos_sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore (old style) */
+	/* begin machine dependent portion */
+	int	sc_sp;			/* %sp to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_npc;			/* npc to restore */
+	int	sc_psr;			/* pstate to restore */
+	int	sc_g1;			/* %g1 to restore */
+	int	sc_o0;			/* %o0 to restore */
+};
+
 struct sunos_sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-	struct	sigcontext13 *sf_scp;	/* SunOS user addr of sigcontext */
+	u_int32_t	sf_scp;			/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
-	struct	sigcontext13 sf_sc;	/* actual sigcontext */
+	struct	sunos_sigcontext sf_sc;	/* actual sigcontext */
 };
 
 void
@@ -86,8 +98,6 @@ sunos_sendsig(catcher, sig, mask, code)
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sunos_sigframe sf;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
 
 	tf = p->p_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
@@ -108,11 +118,11 @@ sunos_sendsig(catcher, sig, mask, code)
 	fp = (struct sunos_sigframe *)((long)(fp - 1) & ~7);
 
 #ifdef DEBUG
-	sunos_sigpid = p->p_pid;
-	if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid) {
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
+	sigpid = p->p_pid;
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("sunos_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
-		if (sunos_sigdebug & SDB_DDB) Debugger();
+		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
 	/*
@@ -149,8 +159,8 @@ sunos_sendsig(catcher, sig, mask, code)
 	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
-	if ((sunos_sigdebug & SDB_KSTACK))
-	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
+	if ((sigdebug & SDB_KSTACK))
+	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
@@ -162,18 +172,18 @@ sunos_sendsig(catcher, sig, mask, code)
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
-		if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid)
-			printf("sendsig: window save or copyout error\n");
-		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
-		if (sunos_sigdebug & SDB_DDB) Debugger();
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sunos_sendsig: window save or copyout error\n");
+		printf("sunos_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
+		if (sigdebug & SDB_DDB) Debugger();
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
 
 #ifdef DEBUG
-	if (sunos_sigdebug & SDB_FOLLOW) {
-		printf("sendsig: %s[%d] sig %d scp %p\n",
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sunos_sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 	}
 #endif
@@ -186,10 +196,10 @@ sunos_sendsig(catcher, sig, mask, code)
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
-	if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid) {
-		printf("sendsig: about to return to catcher %p thru %p\n", 
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		printf("sunos_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, addr);
-		if (sunos_sigdebug & SDB_DDB) Debugger();
+		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
 }
@@ -200,7 +210,51 @@ sunos_sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_sigreturn_args *uap = v;
+	struct sunos_sys_sigreturn_args /* 
+		syscallarg(struct sigcontext13 *) sigcntxp;
+	} */ *uap = v;
+	struct sunos_sigcontext sc, *scp;
+	sigset_t mask;
+	struct trapframe *tf;
 
-	return (sys___sigreturn14(p, (struct sys_sigreturn_args *)uap, retval));
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+#if 0
+	/* Make sure our D$ is not polluted w/bad data */
+	blast_vcache();
+#endif
+	if (rwindow_save(p))
+		sigexit(p, SIGILL);
+
+	scp = (struct sunos_sigcontext *)SCARG(uap, sigcntxp);
+	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+		return (EFAULT);
+	scp = &sc;
+
+	tf = p->p_md.md_tf;
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
+		return (EINVAL);
+	/* take only psr ICC field */
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+	tf->tf_pc = scp->sc_pc;
+	tf->tf_npc = scp->sc_npc;
+	tf->tf_global[1] = scp->sc_g1;
+	tf->tf_out[0] = scp->sc_o0;
+	tf->tf_out[6] = scp->sc_sp;
+
+	if (scp->sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask */
+	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	return (EJUSTRETURN);
 }
