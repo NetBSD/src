@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.16 2001/01/22 07:51:01 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.17 2001/01/22 07:57:34 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -137,9 +137,6 @@ in_gif_output(ifp, family, m, rt)
 		}
 		ip = mtod(m, struct ip *);
 		tos = ip->ip_tos;
-
-		/* RFCs 1853, 2003, 2401 -- copy the DF bit. */
-		iphdr.ip_off |= (ntohs(ip->ip_off) & IP_DF);
 		break;
 	    }
 #endif /*INET*/
