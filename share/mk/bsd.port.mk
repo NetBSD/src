@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.1.1.1 1997/08/20 10:21:06 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.2 1997/08/20 10:50:26 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -24,6 +24,7 @@
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
 OpenBSD_MAINTAINER=	imp@OpenBSD.ORG
+NetBSD_MAINTAINER=	agc@netbsd.org
 
 # Supported Variables and their behaviors:
 #
@@ -35,10 +36,10 @@ OpenBSD_MAINTAINER=	imp@OpenBSD.ORG
 #				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
 # PORTSDIR		- The root of the ports tree.  Defaults:
 #					FreeBSD/OpenBSD: /usr/ports
-#					NetBSD:          /usr/opt
+#					NetBSD:          /usr/pkg
 # DISTDIR 		- Where to get gzip'd, tarballed copies of original sources
 #				  (default: ${PORTSDIR}/distfiles).
-# PREFIX		- Where to install things in general (default: /usr/local).
+# PREFIX		- Where to install things in general (default: /usr/pkg).
 # MASTER_SITES	- Primary location(s) for distribution files if not found
 #				  locally.
 # PATCH_SITES	- Primary location(s) for distribution patch files
@@ -280,11 +281,11 @@ OPSYS!=	uname -s
 # tree we are and thus can't go relative.  They can, of course, be overridden
 # by individual Makefiles or local system make configuration.
 .if (${OPSYS} == "NetBSD")
-PORTSDIR?=		/usr/opt
+PORTSDIR?=		/usr/pkg/src
 .else
 PORTSDIR?=		/usr/ports
 .endif
-LOCALBASE?=		${DESTDIR}/usr/local
+LOCALBASE?=		${DESTDIR}/usr/pkg
 X11BASE?=		${DESTDIR}/usr/X11R6
 DISTDIR?=		${PORTSDIR}/distfiles
 _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
