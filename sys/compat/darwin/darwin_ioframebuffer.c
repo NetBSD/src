@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.15 2003/08/29 23:11:40 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.15 2003/08/29 23:11:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.16 2003/08/31 14:17:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.15 2003/08/29 23:11:40 ma
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/mman.h>
+#include <sys/vnode.h>
+#include <sys/resourcevar.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -480,9 +483,9 @@ darwin_ioframebuffer_connect_map_memory(args)
 		dev_t device;
 		int screen;
 		int mode;
-		struct uvm_object *udo;
 		struct wsdisplay_fbinfo fbi;
 		struct darwin_emuldata *ded;
+		struct vnode *vp;
 
 		/* Find the first wsdisplay available */
 		TAILQ_FOREACH(dv, &alldevs, dv_list)
@@ -522,13 +525,12 @@ darwin_ioframebuffer_connect_map_memory(args)
 		len = round_page(fbi.height * fbi.width * fbi.depth / 8);
 
 		/* 
-		 * The framebuffer cannot be mapped (ie: udv_attach will
-		 * fail) if the console is not in graphic mode. We will
-		 * do the switch, but it screws the console. Therefore
-		 * we attempt to restore its original state on process
-		 * exit. ded->ded_wsdev is used to remember the console
-		 * device. If it is not NODEV on process exit, we use
-		 * it to restore text mode.
+		 * The framebuffer cannot be mapped if the console is 
+		 * not in graphic mode. We will do the switch, but it 
+		 * screws the console. Therefore we attempt to restore 
+		 * its original state on process exit. ded->ded_wsdev 
+		 * is used to remember the console device. If it is not 
+		 * NODEV on process exit, we use it to restore text mode.
 		 */
 		ded = (struct darwin_emuldata *)p->p_emuldata;
 		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
@@ -551,26 +553,23 @@ darwin_ioframebuffer_connect_map_memory(args)
 			return mach_msg_error(args, ENODEV);
 		}
 
-
-		/* Create the uvm_object */
-		udo = udv_attach(&device, UVM_PROT_RW, 0, len);
-		if (udo == NULL) {
+		if ((error = cdevvp(device, &vp)) != 0) {
 #ifdef DEBUG_DARWIN
-			printf("*** Cannot udv_attach ***\n");
-#endif
-			return mach_msg_error(args, ENODEV);
-		}
-
-		/* Map it in user space */
-		if ((error == uvm_map(&p->p_vmspace->vm_map, &pvaddr,
-		    len, udo, 0, PAGE_SIZE, 
-		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0) {
-#ifdef DEBUG_DARWIN
-			printf("*** Cannot uvm_map ***\n");
+			printf("*** cdevvp failed ***\n");
 #endif
 			return mach_msg_error(args, error);
 		}
+
+		pvaddr = 0;
+		if ((error = uvm_mmap(&p->p_vmspace->vm_map, &pvaddr, 
+		    len, UVM_PROT_RW, UVM_PROT_RW, MAP_SHARED, vp, 0,
+		    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)) != 0) {
+#ifdef DEBUG_DARWIN
+			printf("*** uvm_mmap failed ***\n");
+#endif
+			return mach_msg_error(args, error);
+		}
+
 #ifdef DEBUG_DARWIN
 		printf("mapped framebuffer at %p\n", (void *)pvaddr);
 #endif
