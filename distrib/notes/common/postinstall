@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.17 2000/11/10 06:56:11 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.18 2000/11/12 03:10:45 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,7 +166,7 @@ Other files in
 .Pa /etc
 that may require modification or setting up include
 .Pa /etc/mailer.conf ,
-.Pa /etc/nsswitch.conf
+.Pa /etc/nsswitch.conf ,
 and
 .Pa /etc/wscons.conf .
 .ie r_arm32 \{\
@@ -203,7 +203,7 @@ edit
 .Pa /etc/passwd
 directly. See
 .Xr useradd 8
-for more information on the process of how to add a new user to the system.
+for more information on how to add a new user to the system.
 .It
 The X Window System
 .Pp
