@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.8 2003/12/09 01:25:33 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.9 2003/12/09 01:52:07 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_INT, "maxphys", NULL,
 		       NULL, MAXPHYS, NULL, 0,
 		       CTL_KERN, KERN_MAXPHYS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "sbmax", NULL,
 		       sysctl_kern_sbmax, 0, NULL, 0,
 		       CTL_KERN, KERN_SBMAX, CTL_EOL);
