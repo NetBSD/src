@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.8 1995/03/08 02:14:52 cgd Exp $	*/
+/*	$NetBSD: ns.c,v 1.9 1995/06/13 08:37:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -51,7 +51,7 @@
 
 #ifdef NS
 
-struct ns_ifaddr *ns_ifaddr;
+struct ns_ifaddrhead ns_ifaddr;
 int ns_interfaces;
 extern struct sockaddr_ns ns_netmask, ns_hostmask;
 
@@ -69,7 +69,6 @@ ns_control(so, cmd, data, ifp)
 	register struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
 	register struct ns_ifaddr *ia;
 	struct ifaddr *ifa;
-	struct ns_ifaddr *oia;
 	int error, dstIsNew, hostIsNew;
 
 	/*
@@ -77,33 +76,33 @@ ns_control(so, cmd, data, ifp)
 	 */
 	if (ifp == 0)
 		return (EADDRNOTAVAIL);
-	for (ia = ns_ifaddr; ia; ia = ia->ia_next)
+	for (ia = ns_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 		if (ia->ia_ifp == ifp)
 			break;
 
 	switch (cmd) {
 
 	case SIOCGIFADDR:
-		if (ia == (struct ns_ifaddr *)0)
+		if (ia == 0)
 			return (EADDRNOTAVAIL);
-		*(struct sockaddr_ns *)&ifr->ifr_addr = ia->ia_addr;
+		*satosns(&ifr->ifr_addr) = ia->ia_addr;
 		return (0);
 
 
 	case SIOCGIFBRDADDR:
-		if (ia == (struct ns_ifaddr *)0)
+		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return (EINVAL);
-		*(struct sockaddr_ns *)&ifr->ifr_dstaddr = ia->ia_broadaddr;
+		*satosns(&ifr->ifr_dstaddr) = ia->ia_broadaddr;
 		return (0);
 
 	case SIOCGIFDSTADDR:
-		if (ia == (struct ns_ifaddr *)0)
+		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		*(struct sockaddr_ns *)&ifr->ifr_dstaddr = ia->ia_dstaddr;
+		*satosns(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
 		return (0);
 	}
 
@@ -114,7 +113,7 @@ ns_control(so, cmd, data, ifp)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sns_family == AF_NS)
-		    for (oia = ia; ia; ia = ia->ia_next) {
+		    for (; ia; ia = ia->ia_list.tqe_next) {
 			if (ia->ia_ifp == ifp  &&
 			    ns_neteq(ia->ia_addr.sns_addr,
 				  ifra->ifra_addr.sns_addr))
@@ -126,33 +125,19 @@ ns_control(so, cmd, data, ifp)
 
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-		if (ia == (struct ns_ifaddr *)0) {
-			oia = (struct ns_ifaddr *)
+		if (ia == 0) {
+			ia = (struct ns_ifaddr *)
 				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
-			if (oia == (struct ns_ifaddr *)NULL)
+			if (ia == 0)
 				return (ENOBUFS);
-			bzero((caddr_t)oia, sizeof(*oia));
-			if (ia = ns_ifaddr) {
-				for ( ; ia->ia_next; ia = ia->ia_next)
-					;
-				ia->ia_next = oia;
-			} else
-				ns_ifaddr = oia;
-			ia = oia;
-			if (ifa = ifp->if_addrlist) {
-				for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
-					;
-				ifa->ifa_next = (struct ifaddr *) ia;
-			} else
-				ifp->if_addrlist = (struct ifaddr *) ia;
+			bzero((caddr_t)ia, sizeof(*ia));
+			TAILQ_INSERT_TAIL(&ns_ifaddr, ia, ia_list);
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
+			    ifa_list);
+			ia->ia_ifa.ifa_addr = snstosa(&ia->ia_addr);
+			ia->ia_ifa.ifa_netmask = snstosa(&ns_netmask);
+			ia->ia_ifa.ifa_dstaddr = snstosa(&ia->ia_dstaddr);
 			ia->ia_ifp = ifp;
-			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
-
-			ia->ia_ifa.ifa_netmask =
-				(struct sockaddr *)&ns_netmask;
-
-			ia->ia_ifa.ifa_dstaddr =
-				(struct sockaddr *)&ia->ia_dstaddr;
 			if (ifp->if_flags & IFF_BROADCAST) {
 				ia->ia_broadaddr.sns_family = AF_NS;
 				ia->ia_broadaddr.sns_len = sizeof(ia->ia_addr);
@@ -178,39 +163,17 @@ ns_control(so, cmd, data, ifp)
 			if (error)
 				return (error);
 		}
-		*(struct sockaddr *)&ia->ia_dstaddr = ifr->ifr_dstaddr;
+		*snstosa(&ia->ia_dstaddr) = ifr->ifr_dstaddr;
 		return (0);
 
 	case SIOCSIFADDR:
-		return (ns_ifinit(ifp, ia,
-				(struct sockaddr_ns *)&ifr->ifr_addr, 1));
+		return (ns_ifinit(ifp, ia, satosns(&ifr->ifr_addr), 1));
 
 	case SIOCDIFADDR:
 		ns_ifscrub(ifp, ia);
-		if ((ifa = ifp->if_addrlist) == (struct ifaddr *)ia)
-			ifp->if_addrlist = ifa->ifa_next;
-		else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != (struct ifaddr *)ia))
-				    ifa = ifa->ifa_next;
-			if (ifa->ifa_next)
-			    ifa->ifa_next = ((struct ifaddr *)ia)->ifa_next;
-			else
-				printf("Couldn't unlink nsifaddr from ifp\n");
-		}
-		oia = ia;
-		if (oia == (ia = ns_ifaddr)) {
-			ns_ifaddr = ia->ia_next;
-		} else {
-			while (ia->ia_next && (ia->ia_next != oia)) {
-				ia = ia->ia_next;
-			}
-			if (ia->ia_next)
-			    ia->ia_next = oia->ia_next;
-			else
-				printf("Didn't unlink nsifadr from list\n");
-		}
-		IFAFREE((&oia->ia_ifa));
+		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+		TAILQ_REMOVE(&ns_ifaddr, ia, ia_list);
+		IFAFREE((&ia->ia_ifa));
 		if (0 == --ns_interfaces) {
 			/*
 			 * We reset to virginity and start all over again
@@ -319,9 +282,9 @@ ns_ifinit(ifp, ia, sns, scrub)
 	 * Add route for the network.
 	 */
 	if (scrub) {
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&oldaddr;
+		ia->ia_ifa.ifa_addr = snstosa(&oldaddr);
 		ns_ifscrub(ifp, ia);
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
+		ia->ia_ifa.ifa_addr = snstosa(&ia->ia_addr);
 	}
 	if (ifp->if_flags & IFF_POINTOPOINT)
 		rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
@@ -351,7 +314,7 @@ ns_iaonnetof(dst)
 	struct ns_ifaddr *ia_maybe = 0;
 	union ns_net net = dst->x_net;
 
-	for (ia = ns_ifaddr; ia; ia = ia->ia_next) {
+	for (ia = ns_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		if (ifp = ia->ia_ifp) {
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				compare = &satons_addr(ia->ia_dstaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_if.h,v 1.6 1995/03/29 22:09:50 briggs Exp $	*/
+/*	$NetBSD: ns_if.h,v 1.7 1995/06/13 08:37:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -46,7 +46,7 @@ struct ns_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
 #define	ia_flags	ia_ifa.ifa_flags
-	struct	ns_ifaddr *ia_next;	/* next in list of xerox addresses */
+	TAILQ_ENTRY(ns_ifaddr) ia_list;	/* list of xerox addresses */
 	struct	sockaddr_ns ia_addr;	/* reserve space for my address */
 	struct	sockaddr_ns ia_dstaddr;	/* space for my broadcast address */
 #define ia_broadaddr	ia_dstaddr
@@ -78,7 +78,8 @@ struct nsip_req {
 #endif
 
 #ifdef	_KERNEL
-struct	ns_ifaddr *ns_ifaddr;
+TAILQ_HEAD(ns_ifaddrhead, ns_ifaddr);
+extern	struct	ns_ifaddrhead ns_ifaddr;
+extern	struct	ifqueue	nsintrq;	/* XNS input packet queue */
 struct	ns_ifaddr *ns_iaonnetof();
-struct	ifqueue	nsintrq;	/* XNS input packet queue */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.6 1994/06/29 06:41:44 cgd Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.7 1995/06/13 08:37:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -80,7 +80,7 @@ ns_output(m0, ro, flags)
 		ro = &idproute;
 		bzero((caddr_t)ro, sizeof (*ro));
 	}
-	dst = (struct sockaddr_ns *)&ro->ro_dst;
+	dst = satosns(&ro->ro_dst);
 	if (ro->ro_rt == 0) {
 		dst->sns_family = AF_NS;
 		dst->sns_len = sizeof (*dst);
@@ -115,7 +115,7 @@ ns_output(m0, ro, flags)
 	}
 	ro->ro_rt->rt_use++;
 	if (ro->ro_rt->rt_flags & (RTF_GATEWAY|RTF_HOST))
-		dst = (struct sockaddr_ns *)ro->ro_rt->rt_gateway;
+		dst = satosns(ro->ro_rt->rt_gateway);
 gotif:
 
 	/*
@@ -139,8 +139,7 @@ gotif:
 		if (ns_copy_output) {
 			ns_watch_output(m0, ifp);
 		}
-		error = (*ifp->if_output)(ifp, m0,
-					(struct sockaddr *)dst, ro->ro_rt);
+		error = (*ifp->if_output)(ifp, m0, snstosa(dst), ro->ro_rt);
 		goto done;
 	} else error = EMSGSIZE;
 

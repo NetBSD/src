@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.6 1995/03/26 20:36:19 jtc Exp $	*/
+/*	$NetBSD: ns.h,v 1.7 1995/06/13 08:37:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -141,6 +141,9 @@ union ns_host ns_broadhost;
 union ns_net ns_zeronet;
 union ns_net ns_broadnet;
 u_short ns_cksum();
+
+#define	satosns(sa)	((struct sockaddr_ns *)(sa))
+#define	snstosa(sns)	((struct sockaddr *)(sns))
 #else
 
 #include <sys/cdefs.h>
