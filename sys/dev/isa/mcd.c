@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.32 1995/03/27 21:44:11 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.33 1995/04/01 08:40:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -120,7 +120,6 @@ struct mcd_softc {
 #define	MCDF_WLABEL	0x04	/* label is writable */
 #define	MCDF_LABELLING	0x08	/* writing label */
 #define	MCDF_LOADED	0x10	/* parameters loaded */
-#define	MCDF_HAVETOC	0x20	/* already read toc */
 	short	status;
 	short	audio_status;
 	int	blksize;
@@ -295,7 +294,6 @@ mcdopen(dev, flag, fmt, p)
 
 		if ((sc->flags & MCDF_LOADED) == 0) {
 			/* Partially reset the state. */
-			sc->flags &= ~MCDF_HAVETOC;
 			sc->lastmode = MCD_MD_UNKNOWN;
 			sc->lastupc = MCD_UPC_UNKNOWN;
 
@@ -310,6 +308,10 @@ mcdopen(dev, flag, fmt, p)
 				error = ENXIO;
 				goto bad2;
 			}
+
+			/* Read the table of contents. */
+			if ((error = mcd_read_toc(sc)) != 0)
+				goto bad2;
 
 			/* Fabricate a disk label. */
 			mcdgetdisklabel(sc);
@@ -1236,10 +1238,6 @@ mcd_read_toc(sc)
 	union mcd_qchninfo q;
 	int error, trk, idx, retry;
 
-	/* Only read TOC if needed. */
-	if ((sc->flags & MCDF_HAVETOC) != 0)
-		return 0;
-
 	if ((error = mcd_toc_header(sc, &th)) != 0)
 		return error;
 
@@ -1266,6 +1264,10 @@ mcd_read_toc(sc)
 		}
 	}
 
+	/* Inform the drive that we're finished so it turns off the light. */
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
+
 	if (trk != 0)
 		return EINVAL;
 
@@ -1279,7 +1281,6 @@ mcd_read_toc(sc)
 	sc->toc[idx].toc.absolute_pos[1] = sc->volinfo.vol_msf[1];
 	sc->toc[idx].toc.absolute_pos[2] = sc->volinfo.vol_msf[2];
 
-	sc->flags |= MCDF_HAVETOC;
 	return 0;
 }
 
@@ -1317,10 +1318,6 @@ mcd_toc_entries(sc, te)
 	else if (trk < data.header.starting_track ||
 		 trk > data.header.ending_track + 1)
 		return EINVAL;
-
-	/* Make sure we have a valid TOC. */
-	if ((error = mcd_read_toc(sc)) != 0)
-		return error;
 
 	/* Copy the TOC data. */
 	for (n = 0; trk <= data.header.ending_track + 1; trk++) {
@@ -1496,9 +1493,6 @@ mcd_playtracks(sc, p)
 	int z = p->end_track;
 	int error;
 
-	if ((error = mcd_read_toc(sc)) != 0)
-		return error;
-
 	if (sc->debug)
 		printf("%s: playtracks: from %d:%d to %d:%d\n",
 		    sc->sc_dev.dv_xname,
@@ -1535,9 +1529,6 @@ mcd_playmsf(sc, p)
 	struct mcd_mbox mbx;
 	int error;
 
-	if ((error = mcd_read_toc(sc)) != 0)
-		return error;
-
 	if (sc->debug)
 		printf("%s: playmsf: from %d:%d.%d to %d:%d.%d\n",
 		    sc->sc_dev.dv_xname,
@@ -1571,9 +1562,6 @@ mcd_playblocks(sc, p)
 {
 	struct mcd_mbox mbx;
 	int error;
-
-	if ((error = mcd_read_toc(sc)) != 0)
-		return error;
 
 	if (sc->debug)
 		printf("%s: playblocks: blkno %d length %d\n",
