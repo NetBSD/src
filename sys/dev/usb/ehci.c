@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.30.2.1 2004/03/15 04:37:08 jmc Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.30 2002/05/19 06:24:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.30.2.1 2004/03/15 04:37:08 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1688,7 +1688,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 #endif
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		if (value != 0) {
+		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
 		}
