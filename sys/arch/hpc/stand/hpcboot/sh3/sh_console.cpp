@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.8 2002/02/04 17:38:27 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.9 2002/02/11 17:08:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -38,32 +38,26 @@
 
 #include <hpcmenu.h>
 #include <sh3/sh_console.h>
-#include <sh3/hd64461.h>
-#include <sh3/hd64465.h>
+#include <sh3/dev/sh.h>
+#include <sh3/dev/hd64461.h>
+#include <sh3/dev/hd64465.h>
 
-// XXX don't define here. arch/hpcsh/include/bootinfo.h
-#define BI_CNUSE_SCI		2
-#define BI_CNUSE_SCIF		3
-#define BI_CNUSE_HD64461COM	4
-#define BI_CNUSE_HD64461VIDEO	5
-#define BI_CNUSE_HD64465COM	6
-#define BI_CNUSE_MQ100		7
+// console switch
+#include "../../../../hpcsh/include/console.h"
 
-SHConsole *SHConsole::_instance = 0;
-
-struct SHConsole::console_info
+const struct SHConsole::console_info
 SHConsole::_console_info[] = {
 	{ PLATID_CPU_SH_3        , PLATID_MACH_HP                          , SCIFPrint       , BI_CNUSE_SCIF       , BI_CNUSE_HD64461VIDEO },
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI                     , HD64461COMPrint , BI_CNUSE_HD64461COM , BI_CNUSE_HD64461VIDEO },
 	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , 0               , BI_CNUSE_BUILTIN    , BI_CNUSE_BUILTIN },
-	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    , HD64465COMPrint , BI_CNUSE_HD64465COM , BI_CNUSE_MQ100 },
+	{ PLATID_CPU_SH_4_7750   , PLATID_MACH_HITACHI_PERSONA_HPW650PA    , HD64465COMPrint , BI_CNUSE_HD64465COM , BI_CNUSE_BUILTIN },
 	{ 0, 0, 0 } // terminator.
 };
 
-struct SHConsole::console_info *
+const struct SHConsole::console_info *
 SHConsole::selectBootConsole(Console &cons, enum consoleSelect select)
 {
-	struct console_info *tab = _console_info;
+	const struct console_info *tab = _console_info;
 	platid_mask_t target, entry;
 
 	target.dw.dw0 = HPC_PREFERENCE.platid_hi;
@@ -99,16 +93,6 @@ SHConsole::~SHConsole()
 	// NO-OP
 }
 
-SHConsole *
-SHConsole::Instance()
-{
-
-	if (!_instance)
-		_instance = new SHConsole();
-
-	return _instance;
-}
-
 BOOL
 SHConsole::init()
 {
@@ -116,12 +100,15 @@ SHConsole::init()
 	if (!super::init())
 		return FALSE;
 
-	_kmode = SetKMode(1);
-
-	struct console_info *tab = selectBootConsole(*this, SERIAL);
-	if (tab != 0)
+	const struct console_info *tab = selectBootConsole(*this, SERIAL);
+	if (tab != 0) {
+		SetKMode(1);	// Native method access P4.
 		_print = tab->print;
+	} 
 	
+	// override default instance.
+	Console::_instance = this;
+
 	return TRUE;
 }
 
@@ -144,14 +131,14 @@ void
 SHConsole::SCIPrint(const char *buf)
 {
 
-	SCI_PRINT(buf);
+	SH3_SCI_PRINT(buf);
 }
 
 void
 SHConsole::SCIFPrint(const char *buf)
 {
 
-	SCIF_PRINT(buf);
+	SH3_SCIF_PRINT(buf);
 }
 
 void

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.5 2002/02/04 17:38:27 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.6 2002/02/11 17:08:56 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -39,75 +39,42 @@
 #ifndef _HPCBOOT_SH_ARCH_H_
 #define _HPCBOOT_SH_ARCH_H_
 
-#include <hpcboot.h>
-#include <console.h>
-#include <memory.h>
 #include <arch.h>
-#include <sh3/sh3.h>
-#include <sh3/hd64461.h>
-#include <sh3/hd64465.h>
+#include <memory.h>	// loadBank
+#include <console.h>	// DPRINTF
 
-template <class T>
-inline T
-REG_READ(paddr_t r)
-{
-	return r & SH_P1_START ? *(T *)r :  *(T *)(r | SH_P2_START);
-}
+#include <sh3/dev/sh_dev.h>
+
+// CPU specific macro
+#include <sh3/cpu/sh3.h>
+#include <sh3/cpu/sh4.h>
 
 class SHArchitecture : public Architecture {
 protected:
 	typedef void(*boot_func_t)(struct BootArgs *, struct PageTag *);
-  
-	u_int8_t reg_read_1(paddr_t reg) {
-		return REG_READ <u_int8_t>(reg);
-	}
-	u_int16_t reg_read_2(paddr_t reg) {
-		return REG_READ <u_int16_t>(reg);
-	}
-	u_int32_t reg_read_4(paddr_t reg) {
-		return REG_READ <u_int32_t>(reg);
-	}
-	void hd64461_dump(platid_t &);
-	void bsc_dump(void);
-	void pfc_dump(void);
-	void tmu_dump(void);
-	void tmu_channel_dump(int, paddr_t, paddr_t, paddr_t);
-	void icu_dump(void);
-	void icu_priority(void);
-	void icu_control(void);
-	void scif_dump(int);
-
-public:
-	struct intr_priority {
-		const char *name;
-		paddr_t reg;
-		int shift;
-	};
-	static struct intr_priority ipr_table[];
+	SHdev *_dev;
 
 private:
-	int _kmode;
+	typedef Architecture super;
 	boot_func_t _boot_func;
-	void print_stack_pointer(void);
 
 protected:
-
-	// should be created as actual product insntnce.
+	// should be created as actual product insntnce. not public.
 	SHArchitecture(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)
 		: _boot_func(bootfunc), Architecture(cons, mem) {
 		// NO-OP
 	}
 	virtual ~SHArchitecture(void) { /* NO-OP */ }
+	virtual void cache_flush(void) = 0;
 
 public:
-	BOOL init(void);
-	BOOL setupLoader(void);
-	paddr_t setupBootInfo(Loader &);
+	virtual BOOL init(void);
+	virtual BOOL setupLoader(void);
+	virtual void systemInfo(void);
+	virtual void jump(kaddr_t info, kaddr_t pvce);
 
-	void systemInfo(void);
-	void jump(kaddr_t info, kaddr_t pvce);
-
-	virtual void cache_flush(void) { /* NO-OP */ }
+	// returns host machines CPU type. 3 for SH3. 4 for SH4
+	static int cpu_type(void);
 };
 
 // 
@@ -118,20 +85,93 @@ public:
 // SH3 series.
 ///
 #define SH_(x)								\
-class SH##x : public SHArchitecture {					\
+class SH ## x : public SHArchitecture {					\
+private:								\
+	typedef SHArchitecture super;					\
 public:									\
-	SH##x(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)\
+	SH ## x(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)\
 		: SHArchitecture(cons, mem, bootfunc) {			\
 		DPRINTF((TEXT("CPU: SH") TEXT(#x) TEXT("\n")));		\
+		_dev = new SH3dev;					\
 	}								\
-	~SH##x(void) { /* NO-OP */ }					\
+	~SH ## x(void) {						\
+		delete _dev;						\
+	}								\
 									\
-	void cache_flush(void) {					\
-		SH##x##_CACHE_FLUSH();					\
+	virtual BOOL init(void) {					\
+		int sz;							\
+									\
+		if (!super::init())					\
+			return FALSE;					\
+		/* SH7709, SH7709A split AREA3 to two area. */		\
+		sz = SH_AREA_SIZE / 2;					\
+		_mem->loadBank(SH_AREA3_START, sz);			\
+		_mem->loadBank(SH_AREA3_START + sz , sz);		\
+		return TRUE;						\
+	}								\
+									\
+	virtual void cache_flush(void) {				\
+		SH ## x ## _CACHE_FLUSH();				\
 	}								\
 									\
 	static void boot_func(struct BootArgs *, struct PageTag *);	\
 }
+
+SH_(7709);
+SH_(7709A);
+
+//
+// SH4 series.
+///
+class SH7750 : public SHArchitecture {
+private:
+	typedef SHArchitecture super;
+
+public:
+	SH7750(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)
+		: SHArchitecture(cons, mem, bootfunc) {
+		DPRINTF((TEXT("CPU: SH7750\n")));
+		_dev = new SH4dev;
+	}
+	~SH7750(void) {
+		delete _dev;
+	}
+
+	virtual BOOL init(void) {
+
+		if (!super::init())
+			return FALSE;
+		_mem->loadBank(SH_AREA3_START, SH_AREA_SIZE);
+
+		return TRUE;
+	}
+
+	virtual void cache_flush(void) {
+		//
+		// To invalidate I-cache, program must run on P2. I can't 
+		// do it myself, use WinCE API. (WCE2.10 or later)
+		//
+		CacheSync(CACHE_D_WBINV);
+		CacheSync(CACHE_I_INV);
+	}
+
+	virtual BOOL setupLoader(void) {
+		//
+		// 2nd boot loader access cache address array. run on P2.
+		// 
+		if (super::setupLoader()) {
+			(u_int32_t)_loader_addr |= 0x20000000;
+			DPRINTF
+			    ((TEXT("loader address moved to P2-area 0x%08x\n"),
+				(unsigned)_loader_addr));
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+
+	static void boot_func(struct BootArgs *, struct PageTag *);
+};
 
 // 
 // 2nd-bootloader.  make sure that PIC and its size is lower than page size.
@@ -146,9 +186,9 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 	__asm("stc	sr, r5\n"					\
 	      "or	r4, r5\n"					\
 	      "ldc	r5, sr\n", 0x500000f0, tmp);			\
-	/* Now I run on P1, TLB flush. and disable. */			\
+	/* Now I run on P1(P2 for SH4), TLB flush. and disable. */	\
 									\
-	VOLATILE_REF(MMUCR) = MMUCR_TF;					\
+	SH ## x ## _MMU_DISABLE();					\
 	do {								\
 		u_int32_t *dst =(u_int32_t *)p->dst;			\
 		u_int32_t *src =(u_int32_t *)p->src;			\
@@ -161,7 +201,7 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 				*dst++ = *src++;			\
 	} while ((p =(struct PageTag *)p->next) != ~0);			\
 									\
-	SH##x##_CACHE_FLUSH();						\
+	SH ## x ## _CACHE_FLUSH();					\
 									\
 	/* jump to kernel entry. */					\
 	__asm("jmp	@r7\n"						\
@@ -169,30 +209,12 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 		 bi->bootinfo, bi->kernel_entry);			\
 }
 
-SH_(7709);
-SH_(7709A);
-
+//   suspend/resume external Interrupt. 
+//  (don't block) use under privilege mode.
 //
-// SH4 series.
-///
-class SH7750 : public SHArchitecture {
-public:
-	SH7750(Console *&cons, MemoryManager *&mem, boot_func_t bootfunc)
-		: SHArchitecture(cons, mem, bootfunc) {
-		DPRINTF((TEXT("CPU: SH7750\n")));
-	}
-	~SH7750(void) { /* NO-OP */ }
-
-	void cache_flush(void) {
-		//
-		// To invalidate I-cache, program must run on P2. I can't 
-		// do it myself, use WinCE API. (WCE2.10 or later)
-		//
-		CacheSync(CACHE_D_WBINV);
-		CacheSync(CACHE_I_INV);
-	}
-
-	static void boot_func(struct BootArgs *, struct PageTag *);
-};
+__BEGIN_DECLS
+u_int32_t suspendIntr(void);
+void resumeIntr(u_int32_t);
+__END_DECLS
 
 #endif // _HPCBOOT_SH_ARCH_H_
