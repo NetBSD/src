@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.9 1995/04/11 04:30:59 mycroft Exp $	*/
+/*	$NetBSD: iso.c,v 1.10 1995/06/01 21:41:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -353,15 +353,10 @@ caddr_t			buf;		/* RESULT: network portion of address here */
  */
 				len += ADDROSINET_IDI_LEN;
 			else if (idi == IDI_RFC986) {
-				u_long				inetaddr;
 				struct ovl_rfc986	*o986 = (struct ovl_rfc986 *)isoa;
 
 				/* bump len to include idi and version (1 byte) */
 				len += ADDRRFC986_IDI_LEN + 1;
-
-				/* get inet addr long aligned */
-				bcopy(o986->o986_inetaddr, &inetaddr, sizeof(inetaddr));
-				inetaddr = ntohl(inetaddr);	/* convert to host byte order */
 
 				IFDEBUG(D_ROUTE)
 					printf("iso_netof: isoa ");
@@ -370,12 +365,12 @@ caddr_t			buf;		/* RESULT: network portion of address here */
 				ENDDEBUG
 
 				/* bump len by size of network portion of inet address */
-				if (IN_CLASSA(inetaddr)) {
+				if (IN_CLASSA(o986->o986_inetaddr)) {
 					len += 4-IN_CLASSA_NSHIFT/8;
 					IFDEBUG(D_ROUTE)
 						printf("iso_netof: class A net len is now %d\n", len);
 					ENDDEBUG
-				} else if (IN_CLASSB(inetaddr)) {
+				} else if (IN_CLASSB(o986->o986_inetaddr)) {
 					len += 4-IN_CLASSB_NSHIFT/8;
 					IFDEBUG(D_ROUTE)
 						printf("iso_netof: class B net len is now %d\n", len);

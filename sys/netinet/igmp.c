@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.11 1995/06/01 15:59:04 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.12 1995/06/01 21:35:34 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -27,13 +27,8 @@
 #include <netinet/igmp_var.h>
 
 #define IP_MULTICASTOPTS	0
-#define	IN_LOCAL_GROUP(addr) \
-	(((addr) & igmp_local_group_mask) == igmp_local_group)
 
 int		igmp_timers_are_running;
-u_int32_t	igmp_all_hosts_group;
-u_int32_t	igmp_local_group;
-u_int32_t	igmp_local_group_mask;
 static struct router_info *rti_head;
 
 void igmp_sendpkt __P((struct in_multi *, int));
@@ -46,9 +41,6 @@ igmp_init()
 	 * To avoid byte-swapping the same value over and over again.
 	 */
 	igmp_timers_are_running = 0;
-	igmp_all_hosts_group = htonl(INADDR_ALLHOSTS_GROUP);
-	igmp_local_group = htonl(INADDR_UNSPEC_GROUP);
-	igmp_local_group_mask = htonl(IN_CLASSC_NET);
 	rti_head = 0;
 }
 
@@ -161,7 +153,7 @@ igmp_input(m, iphlen)
 			rti->rti_type = IGMP_v1_ROUTER;
 			rti->rti_age = 0;
 
-			if (ip->ip_dst.s_addr != igmp_all_hosts_group) {
+			if (ip->ip_dst.s_addr != INADDR_ALLHOSTS_GROUP) {
 				++igmpstat.igps_rcv_badqueries;
 				m_freem(m);
 				return;
@@ -186,7 +178,7 @@ igmp_input(m, iphlen)
 				IN_NEXT_MULTI(step, inm);
 			}
 		} else {
-			if (!IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
 				++igmpstat.igps_rcv_badqueries;
 				m_freem(m);
 				return;
@@ -206,7 +198,7 @@ igmp_input(m, iphlen)
 			while (inm != NULL) {
 				if (inm->inm_ifp == ifp &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-				    (ip->ip_dst.s_addr == igmp_all_hosts_group ||
+				    (ip->ip_dst.s_addr == INADDR_ALLHOSTS_GROUP ||
 				     ip->ip_dst.s_addr == inm->inm_addr.s_addr)) {
 					switch (inm->inm_state) {
 					case IGMP_DELAYING_MEMBER:
@@ -240,7 +232,7 @@ igmp_input(m, iphlen)
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
-		if (!IN_MULTICAST(ntohl(igmp->igmp_group.s_addr)) ||
+		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
 			++igmpstat.igps_rcv_badreports;
 			m_freem(m);
@@ -256,10 +248,10 @@ igmp_input(m, iphlen)
 		 * to compensate for the lack of any way for a process to
 		 * determine the arrival interface of an incoming packet.
 		 */
-		if ((ntohl(ip->ip_src.s_addr) & IN_CLASSA_NET) == 0) {
+		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 			IFP_TO_IA(ifp, ia);
 			if (ia)
-				ip->ip_src.s_addr = htonl(ia->ia_subnet);
+				ip->ip_src.s_addr = ia->ia_subnet;
 		}
 
 		/*
@@ -306,7 +298,7 @@ igmp_input(m, iphlen)
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
-		if (!IN_MULTICAST(ntohl(igmp->igmp_group.s_addr)) ||
+		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
 			++igmpstat.igps_rcv_badreports;
 			m_freem(m);
@@ -322,12 +314,12 @@ igmp_input(m, iphlen)
 		 * to compensate for the lack of any way for a process to
 		 * determine the arrival interface of an incoming packet.
 		 */
-		if ((ntohl(ip->ip_src.s_addr) & IN_CLASSA_NET) == 0) {
+		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
 			IFP_TO_IA(ifp, ia);
 #endif
 			if (ia)
-				ip->ip_src.s_addr = htonl(ia->ia_subnet);
+				ip->ip_src.s_addr = ia->ia_subnet;
 		}
 
 		/*

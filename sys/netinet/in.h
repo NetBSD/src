@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.15 1995/05/31 07:39:33 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.16 1995/06/01 21:36:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,43 +85,62 @@ struct in_addr {
  * Definitions of bits in internet address integers.
  * On subnets, the decomposition of addresses to host and net parts
  * is done according to subnet mask, not the masks here.
+ *
+ * By byte-swapping the constants, we avoid ever having to byte-swap IP
+ * addresses inside the kernel.  Unfortunately, user-level programs rely
+ * on these macros not doing byte-swapping.
  */
-#define	IN_CLASSA(i)		(((int32_t)(i) & 0x80000000) == 0)
-#define	IN_CLASSA_NET		0xff000000
-#define	IN_CLASSA_NSHIFT	24
-#define	IN_CLASSA_HOST		0x00ffffff
-#define	IN_CLASSA_MAX		128
-
-#define	IN_CLASSB(i)		(((int32_t)(i) & 0xc0000000) == 0x80000000)
-#define	IN_CLASSB_NET		0xffff0000
-#define	IN_CLASSB_NSHIFT	16
-#define	IN_CLASSB_HOST		0x0000ffff
-#define	IN_CLASSB_MAX		65536
-
-#define	IN_CLASSC(i)		(((int32_t)(i) & 0xe0000000) == 0xc0000000)
-#define	IN_CLASSC_NET		0xffffff00
-#define	IN_CLASSC_NSHIFT	8
-#define	IN_CLASSC_HOST		0x000000ff
-
-#define	IN_CLASSD(i)		(((int32_t)(i) & 0xf0000000) == 0xe0000000)
-#define	IN_CLASSD_NET		0xf0000000	/* These ones aren't really */
-#define	IN_CLASSD_NSHIFT	28		/* net and host fields, but */
-#define	IN_CLASSD_HOST		0x0fffffff	/* routing needn't know.    */
-#define	IN_MULTICAST(i)		IN_CLASSD(i)
-
-#define	IN_EXPERIMENTAL(i)	(((int32_t)(i) & 0xf0000000) == 0xf0000000)
-#define	IN_BADCLASS(i)		(((int32_t)(i) & 0xf0000000) == 0xf0000000)
-
-#define	INADDR_ANY		(u_int32_t)0x00000000
-#define	INADDR_LOOPBACK		(u_int32_t)0x7f000001
-#define	INADDR_BROADCAST	(u_int32_t)0xffffffff	/* must be masked */
-#ifndef _KERNEL
-#define	INADDR_NONE		0xffffffff		/* -1 return */
+#ifdef _KERNEL
+#define	__IPADDR(x)	htonl((u_int32_t)(x))
+#else
+#define	__IPADDR(x)	((u_int32_t)(x))
 #endif
 
-#define	INADDR_UNSPEC_GROUP	(u_int32_t)0xe0000000	/* 224.0.0.0 */
-#define	INADDR_ALLHOSTS_GROUP	(u_int32_t)0xe0000001	/* 224.0.0.1 */
-#define	INADDR_MAX_LOCAL_GROUP	(u_int32_t)0xe00000ff	/* 224.0.0.255 */
+#define	IN_CLASSA(i)		(((u_int32_t)(i) & __IPADDR(0x80000000)) == \
+				 __IPADDR(0x00000000))
+#define	IN_CLASSA_NET		__IPADDR(0xff000000)
+#define	IN_CLASSA_NSHIFT	24
+#define	IN_CLASSA_HOST		__IPADDR(0x00ffffff)
+#define	IN_CLASSA_MAX		128
+
+#define	IN_CLASSB(i)		(((u_int32_t)(i) & __IPADDR(0xc0000000)) == \
+				 __IPADDR(0x80000000))
+#define	IN_CLASSB_NET		__IPADDR(0xffff0000)
+#define	IN_CLASSB_NSHIFT	16
+#define	IN_CLASSB_HOST		__IPADDR(0x0000ffff)
+#define	IN_CLASSB_MAX		65536
+
+#define	IN_CLASSC(i)		(((u_int32_t)(i) & __IPADDR(0xe0000000)) == \
+				 __IPADDR(0xc0000000))
+#define	IN_CLASSC_NET		__IPADDR(0xffffff00)
+#define	IN_CLASSC_NSHIFT	8
+#define	IN_CLASSC_HOST		__IPADDR(0x000000ff)
+
+#define	IN_CLASSD(i)		(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+				 __IPADDR(0xe0000000))
+/* These ones aren't really net and host fields, but routing needn't know. */
+#define	IN_CLASSD_NET		__IPADDR(0xf0000000)
+#define	IN_CLASSD_NSHIFT	28
+#define	IN_CLASSD_HOST		__IPADDR(0x0fffffff)
+#define	IN_MULTICAST(i)		IN_CLASSD(i)
+
+#define	IN_EXPERIMENTAL(i)	(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+				 __IPADDR(0xf0000000))
+#define	IN_BADCLASS(i)		(((u_int32_t)(i) & __IPADDR(0xf0000000)) == \
+				 __IPADDR(0xf0000000))
+
+#define	IN_LOCAL_GROUP(i)	(((u_int32_t)(i) & __IPADDR(0xffffff00)) == \
+				 __IPADDR(0xe0000000))
+
+#define	INADDR_ANY		__IPADDR(0x00000000)
+#define	INADDR_LOOPBACK		__IPADDR(0x7f000001)
+#define	INADDR_BROADCAST	__IPADDR(0xffffffff)	/* must be masked */
+#ifndef _KERNEL
+#define	INADDR_NONE		__IPADDR(0xffffffff)	/* -1 return */
+#endif
+
+#define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
+#define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
@@ -240,7 +259,6 @@ int	   in_broadcast __P((struct in_addr, struct ifnet *));
 int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));
 int	   in_localaddr __P((struct in_addr));
-u_int32_t  in_netof __P((struct in_addr));
 void	   in_socktrim __P((struct sockaddr_in *));
 #endif
 #endif /* !_NETINET_IN_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.12 1995/05/31 06:08:29 mycroft Exp $	*/
+/*	$NetBSD: in_var.h,v 1.13 1995/06/01 21:36:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -72,9 +72,6 @@ struct	in_aliasreq {
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
 
-#define IN_LNAOF(in, ifa) \
-	((ntohl((in).s_addr) & ~((struct in_ifaddr *)(ifa)->ia_subnetmask))
-			
 
 #ifdef	_KERNEL
 extern	struct	in_ifaddr *in_ifaddr;
