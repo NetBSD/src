@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.62 2002/08/22 16:32:14 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.63 2002/08/27 08:50:49 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.62 2002/08/22 16:32:14 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.63 2002/08/27 08:50:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -196,11 +196,7 @@ static const ns_src default_dns_files[] = {
 	{ 0 }
 };
 
-#if PACKETSZ > 1024
-#define MAXPACKET	PACKETSZ
-#else
-#define MAXPACKET	1024
-#endif
+#define MAXPACKET	(64*1024)
 
 typedef union {
 	HEADER hdr;
@@ -1320,7 +1316,7 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	va_list	 ap;
 {
 	struct addrinfo *ai;
-	querybuf buf, buf2;
+	querybuf *buf, *buf2;
 	const char *name;
 	const struct addrinfo *pai;
 	struct addrinfo sentinel, *cur;
@@ -1334,51 +1330,70 @@ _dns_getaddrinfo(rv, cb_data, ap)
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 
+	buf = malloc(sizeof(*buf));
+	if (buf == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+	buf2 = malloc(sizeof(*buf2));
+	if (buf2 == NULL) {
+		free(buf);
+		h_errno = NETDB_INTERNAL;
+		return NS_NOTFOUND;
+	}
+
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
 		/* prefer IPv6 */
 		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		q.next = &q2;
 		q2.name = name;
 		q2.qclass = C_IN;
 		q2.qtype = T_A;
-		q2.answer = buf2.buf;
-		q2.anslen = sizeof(buf2);
+		q2.answer = buf2->buf;
+		q2.anslen = sizeof(buf2->buf);
 		break;
 	case AF_INET:
 		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_A;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		break;
 	case AF_INET6:
 		q.name = name;
 		q.qclass = C_IN;
 		q.qtype = T_AAAA;
-		q.answer = buf.buf;
-		q.anslen = sizeof(buf);
+		q.answer = buf->buf;
+		q.anslen = sizeof(buf->buf);
 		break;
 	default:
+		free(buf);
+		free(buf2);
 		return NS_UNAVAIL;
 	}
-	if (res_searchN(name, &q) < 0)
+	if (res_searchN(name, &q) < 0) {
+		free(buf);
+		free(buf2);
 		return NS_NOTFOUND;
-	ai = getanswer(&buf, q.n, q.name, q.qtype, pai);
+	}
+	ai = getanswer(buf, q.n, q.name, q.qtype, pai);
 	if (ai) {
 		cur->ai_next = ai;
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
 	}
 	if (q.next) {
-		ai = getanswer(&buf2, q2.n, q2.name, q2.qtype, pai);
+		ai = getanswer(buf2, q2.n, q2.name, q2.qtype, pai);
 		if (ai)
 			cur->ai_next = ai;
 	}
+	free(buf);
+	free(buf2);
 	if (sentinel.ai_next == NULL)
 		switch (h_errno) {
 		case HOST_NOT_FOUND:
@@ -1956,7 +1971,7 @@ res_querydomainN(name, domain, target)
 		 * copy without '.' if present.
 		 */
 		n = strlen(name);
-		if (n >= MAXDNAME) {
+		if (n + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
@@ -1968,7 +1983,7 @@ res_querydomainN(name, domain, target)
 	} else {
 		n = strlen(name);
 		d = strlen(domain);
-		if (n + d + 1 >= MAXDNAME) {
+		if (n + 1 + d + 1 > sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
