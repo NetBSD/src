@@ -1,5 +1,5 @@
+/*	$NetBSD: db_trace.c,v 1.2 1997/12/02 01:20:32 sakamoto Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
-/*	$NetBSD: db_trace.c,v 1.1 1997/10/14 06:47:33 sakamoto Exp $	*/
 
 /* 
  * Mach Operating System
