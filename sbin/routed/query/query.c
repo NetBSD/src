@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1982, 1986 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1982, 1986, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)query.c	5.13 (Berkeley) 4/16/91";*/
-static char rcsid[] = "$Id: query.c,v 1.4 1993/08/01 18:24:51 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)query.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: query.c,v 1.5 1994/05/13 08:05:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,11 +74,12 @@ main(argc, argv)
 	extern int optind;
 	int ch, cc, count, bits;
 	struct sockaddr from;
+	struct sigaction sigact;
 	int fromlen = sizeof(from), size = 32*1024;
 	struct timeval shorttime;
 
 	while ((ch = getopt(argc, argv, "n")) != EOF)
-		switch((char)ch) {
+		switch (ch) {
 		case 'n':
 			nflag++;
 			break;
@@ -113,7 +114,11 @@ usage:		printf("usage: query [-n] hosts...\n");
 	bits = 1 << s;
 	bzero(&shorttime, sizeof(shorttime));
 	shorttime.tv_usec = STIME;
-	signal(SIGALRM, timeout);
+	bzero(&sigact, sizeof(sigact));
+	sigact.sa_handler = timeout;
+	/*sigact.sa_flags = 0;		/* no restart */
+	if (sigaction(SIGALRM, &sigact, (struct sigaction *)NULL) == -1)
+		perror("sigaction");
 	alarm(WTIME);
 	while ((count > 0 && !timedout) ||
 	    select(20, (fd_set *)&bits, NULL, NULL, &shorttime) > 0) {
