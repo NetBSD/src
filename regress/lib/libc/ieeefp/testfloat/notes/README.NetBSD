@@ -1,4 +1,4 @@
-$NetBSD: README.NetBSD,v 1.1 2001/03/13 08:02:17 ross Exp $
+$NetBSD: README.NetBSD,v 1.2 2002/03/24 23:04:03 bjh21 Exp $
 
 
 Changes at initial import...ross@netbsd.org
@@ -11,7 +11,7 @@ Changes at initial import...ross@netbsd.org
   o  <asm.h> conversion
   o  the previously target-specific softfloat.h and milieu.h made mostly
      generic. Still some work to do with default NaN bitpatterns, endian,
-     and arm26-DEMANGLE issues.
+     and arm/fpa-DEMANGLE issues.
   o  arch/i386/systfloat.S extended to handle:
 	int32_t syst_floatx80_to_int32_round_to_zero(floatx80)
 	int64_t syst_floatx80_to_int64_round_to_zero(floatx80)
