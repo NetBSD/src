@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.34 2003/08/21 14:41:00 dsl Exp $	*/
+/*	$NetBSD: fs.h,v 1.35 2003/09/29 20:34:23 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -272,7 +272,7 @@ struct fs {
 	int8_t	 fs_fmod;		/* super block modified flag */
 	int8_t	 fs_clean;		/* file system is clean flag */
 	int8_t	 fs_ronly;		/* mounted read-only flag */
-	int8_t	 fs_old_flags;		/* see FS_ flags below */
+	uint8_t	 fs_old_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	u_char   fs_volname[MAXVOLLEN];	/* volume name */
 	uint64_t fs_swuid;		/* system-wide uid */
@@ -300,7 +300,7 @@ struct fs {
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
 	int32_t	 fs_save_cgsize;	/* save real cg size to use fs_bsize */
 	int32_t	 fs_sparecon32[26];	/* reserved for future constants */
-	int32_t  fs_flags;		/* see FS_ flags below */
+	uint32_t fs_flags;		/* see FS_ flags below */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */ 
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_old_inodefmt;	/* format of on-disk inodes */
