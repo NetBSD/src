@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1996/08/10 13:47:54 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.68 1996/09/26 18:55:51 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -372,6 +372,9 @@ setregs(p, pack, stack, retval)
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
 	register int psr;
+
+	/* Don't allow misaligned code by default */
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * The syscall will ``return'' to npc or %g7 or %g2; set them all.
