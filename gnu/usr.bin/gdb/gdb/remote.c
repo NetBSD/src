@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: remote.c,v 1.1 1994/01/28 12:40:32 pk Exp $
+	$Id: remote.c,v 1.2 1997/08/15 18:11:14 drochner Exp $
 */
 
 /* Remote communication protocol.
@@ -226,6 +226,13 @@ extern int remote_debug;
    be plenty.  */
 static int timeout = 2;
 
+/* This variable chooses whether to send a ^C or a break when the user
+   requests program interruption.  Although ^C is usually what remote
+   systems expect, and that is the default here, sometimes a break is
+   preferable instead.  */
+
+static int remote_break;
+
 #if 0
 int icache;
 #endif
@@ -421,7 +428,11 @@ remote_interrupt (signo)
   if (remote_debug)
     printf ("remote_interrupt called\n");
 
-  SERIAL_WRITE (remote_desc, "\003", 1); /* Send a ^C */
+  /* Send a break or a ^C, depending on user preference.  */
+  if (remote_break)
+    SERIAL_SEND_BREAK (remote_desc);
+  else
+    SERIAL_WRITE (remote_desc, "\003", 1); /* Send a ^C */
 }
 
 static void (*ofunc)();
@@ -1271,5 +1282,10 @@ void
 _initialize_remote ()
 {
   add_target (&remote_ops);
+
+  add_show_from_set (add_set_cmd ("remotebreak", no_class,
+				  var_integer, (char *)&remote_break,
+				  "Set whether to send break if interrupted.\n", &setlist),
+		     &showlist);
 }
 #endif
