@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.90 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.91 2004/12/03 20:20:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -770,6 +770,22 @@ _5btol(const u_int8_t *bytes)
 	     ((u_int64_t)bytes[2] << 16) |
 	     ((u_int64_t)bytes[3] << 8) |
 	     (u_int64_t)bytes[4];
+	return (rv);
+}
+
+static __inline u_int64_t __unused
+_8btol(const u_int8_t *bytes)
+{
+	u_int64_t rv;
+
+	rv = ((u_int64_t)bytes[0] << 56) |
+	     ((u_int64_t)bytes[1] << 48) |
+	     ((u_int64_t)bytes[2] << 40) |
+	     ((u_int64_t)bytes[3] << 32) |
+	     ((u_int64_t)bytes[4] << 24) |
+	     ((u_int64_t)bytes[5] << 16) |
+	     ((u_int64_t)bytes[6] << 8) |
+	     (u_int64_t)bytes[7];
 	return (rv);
 }
 
