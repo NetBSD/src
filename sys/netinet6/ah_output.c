@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.17 2002/06/09 14:43:11 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.18 2002/08/09 07:01:21 itojun Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.17 2002/06/09 14:43:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.18 2002/08/09 07:01:21 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -126,9 +126,9 @@ ah_hdrsiz(isr)
     estimate:
 	/* ASSUMING:
 	 *	sizeof(struct newah) > sizeof(struct ah).
-	 *	16 = (16 + 3) & ~(4 - 1).
+	 *	AH_MAXSUMSIZE is multiple of 4.
 	 */
-	return sizeof(struct newah) + 16;
+	return sizeof(struct newah) + AH_MAXSUMSIZE;
 }
 
 #ifdef INET
