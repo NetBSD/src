@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.29 2001/06/30 05:48:24 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.30 2001/06/30 14:16:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1555,7 +1555,7 @@ static int ti_gibinit(sc)
 	 */
 	CSR_WRITE_4(sc, TI_WINBASE, TI_TX_RING_BASE);
 	if (sc->ti_hwrev == TI_HWREV_TIGON) {
-		sc->ti_rdata->ti_tx_ring_nic =
+		sc->ti_tx_ring_nic =
 		    (struct ti_tx_desc *)(sc->ti_vhandle + TI_WINDOW);
 	}
 	bzero((char *)sc->ti_rdata->ti_tx_ring,
@@ -2109,7 +2109,7 @@ static void ti_txeof(sc)
 			else
 				CSR_WRITE_4(sc, TI_WINBASE,
 				    TI_TX_RING_BASE);
-			cur_tx = &sc->ti_rdata->ti_tx_ring_nic[idx % 128];
+			cur_tx = &sc->ti_tx_ring_nic[idx % 128];
 		} else
 			cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
 		if (cur_tx->ti_flags & TI_BDFLAG_END)
@@ -2258,7 +2258,7 @@ static int ti_encap(sc, m_head, txidx)
 				else
 					CSR_WRITE_4(sc, TI_WINBASE,
 					    TI_TX_RING_BASE);
-				f = &sc->ti_rdata->ti_tx_ring_nic[frag % 128];
+				f = &sc->ti_tx_ring_nic[frag % 128];
 			} else
 				f = &sc->ti_rdata->ti_tx_ring[frag];
 			if (sc->ti_cdata.ti_tx_chain[frag] != NULL)
@@ -2291,7 +2291,7 @@ static int ti_encap(sc, m_head, txidx)
 		return(ENOBUFS);
 
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
-		sc->ti_rdata->ti_tx_ring_nic[cur % 128].ti_flags |=
+		sc->ti_tx_ring_nic[cur % 128].ti_flags |=
 		    TI_BDFLAG_END;
 	else
 		sc->ti_rdata->ti_tx_ring[cur].ti_flags |= TI_BDFLAG_END;
