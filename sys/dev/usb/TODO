@@ -16,11 +16,14 @@ Merge soft_td and td in uhci.c.
       soft_ed and ed in ohci.c
       soft_td and td
 
-Tidy up transfer completion.
-
 Throw out more USBDI gunk.
 
 Port FreeBSD umass driver.
 
 Make hub driver note transition between self and bus powered state.
 Handle overcurrent conditions.
+
+Make it possible to preallocate DMA buffers to avoid calling the
+memory allocator from an interrupt context.
+
+Move memory allocation and copying to HC independent code.
