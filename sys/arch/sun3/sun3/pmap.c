@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.23 1994/05/06 07:47:10 gwr Exp $
+ *	$Id: pmap.c,v 1.24 1994/05/20 04:57:17 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -978,6 +978,39 @@ void pmap_bootstrap()
     
     pmeg_clean_free();
 }
+
+/*
+ * Bootstrap memory allocator. This function allows for early dynamic
+ * memory allocation until the virtual memory system has been bootstrapped.
+ * After that point, either kmem_alloc or malloc should be used. This
+ * function works by stealing pages from the (to be) managed page pool,
+ * stealing virtual address space, then mapping the pages and zeroing them.
+ *
+ * It should be used from pmap_bootstrap till vm_page_startup, afterwards
+ * it cannot be used, and will generate a panic if tried. Note that this
+ * memory will never be freed, and in essence it is wired down.
+ */
+void *
+pmap_bootstrap_alloc(size)
+	int size;
+{
+	register void *mem;
+
+#if 0	/* XXX */
+	extern boolean_t vm_page_startup_initialized;
+	if (vm_page_startup_initialized)
+		panic("pmap_bootstrap_alloc: called after startup initialized");
+#endif
+
+	size = round_page(size);
+	mem = (void *)virtual_avail;
+	virtual_avail = pmap_map(virtual_avail, avail_start,
+	    avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
+	avail_start += size;
+	bzero((void *)mem, size);
+	return (mem);
+}
+
 /*
  *	Initialize the pmap module.
  *	Called by vm_init, to initialize any structures that the pmap
