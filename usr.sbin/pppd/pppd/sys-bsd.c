@@ -19,7 +19,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.4 1994/05/08 12:16:31 paulus Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.5 1994/05/30 00:45:15 paulus Exp $";
 #endif
 
 /*
@@ -38,12 +38,15 @@ static char rcsid[] = "$Id: sys-bsd.c,v 1.4 1994/05/08 12:16:31 paulus Exp $";
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include "pppd.h"
 #include "ppp.h"
 
 static int initdisc = -1;		/* Initial TTY discipline */
 extern int kdebugflag;
+
+int rtm_seq;
 
 /*
  * establish_ppp - Turn the serial port into a ppp interface.
@@ -282,6 +285,7 @@ sifvjcomp(u, vjcomp, cidcomp, maxcid)
  */
 int
 sifup(u)
+    int u;
 {
     struct ifreq ifr;
     u_int x;
@@ -313,6 +317,7 @@ sifup(u)
  */
 int
 sifdown(u)
+    int u;
 {
     struct ifreq ifr;
     u_int x;
@@ -357,6 +362,8 @@ sifdown(u)
  */
 int
 sifaddr(u, o, h, m)
+    int u;
+    u_long o, h, m;
 {
     struct ifaliasreq ifra;
 
@@ -386,6 +393,8 @@ sifaddr(u, o, h, m)
  */
 int
 cifaddr(u, o, h)
+    int u;
+    u_long o, h;
 {
     struct ifaliasreq ifra;
 
@@ -407,18 +416,10 @@ cifaddr(u, o, h)
  */
 int
 sifdefaultroute(u, g)
+    int u;
+    u_long g;
 {
-    struct ortentry rt;
-
-    SET_SA_FAMILY(rt.rt_dst, AF_INET);
-    SET_SA_FAMILY(rt.rt_gateway, AF_INET);
-    ((struct sockaddr_in *) &rt.rt_gateway)->sin_addr.s_addr = g;
-    rt.rt_flags = RTF_GATEWAY;
-    if (ioctl(s, SIOCADDRT, &rt) < 0) {
-	syslog(LOG_ERR, "default route ioctl(SIOCADDRT): %m");
-	return 0;
-    }
-    return 1;
+    return dodefaultroute(g, 's');
 }
 
 /*
@@ -426,46 +427,111 @@ sifdefaultroute(u, g)
  */
 int
 cifdefaultroute(u, g)
+    int u;
+    u_long g;
 {
-    struct ortentry rt;
+    return dodefaultroute(g, 'c');
+}
 
-    SET_SA_FAMILY(rt.rt_dst, AF_INET);
-    SET_SA_FAMILY(rt.rt_gateway, AF_INET);
-    ((struct sockaddr_in *) &rt.rt_gateway)->sin_addr.s_addr = g;
-    rt.rt_flags = RTF_GATEWAY;
-    if (ioctl(s, SIOCDELRT, &rt) < 0)
-	syslog(LOG_WARNING, "default route ioctl(SIOCDELRT): %m");
+int
+dodefaultroute(g, cmd)
+    u_long g;
+    int cmd;
+{
+    int routes;
+    struct {
+	struct rt_msghdr	hdr;
+	struct sockaddr_in	dst;
+	struct sockaddr_in	gway;
+	struct sockaddr_in	mask;
+    } rtmsg;
+
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+	syslog(LOG_ERR, "%cifdefaultroute: opening routing socket: %m", cmd);
+	return 0;
+    }
+
+    memset(&rtmsg, 0, sizeof(rtmsg));
+    rtmsg.hdr.rtm_type = cmd == 's'? RTM_ADD: RTM_DELETE;
+    rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY;
+    rtmsg.hdr.rtm_version = RTM_VERSION;
+    rtmsg.hdr.rtm_seq = ++rtm_seq;
+    rtmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+    rtmsg.dst.sin_len = sizeof(rtmsg.dst);
+    rtmsg.dst.sin_family = AF_INET;
+    rtmsg.gway.sin_len = sizeof(rtmsg.gway);
+    rtmsg.gway.sin_family = AF_INET;
+    rtmsg.gway.sin_addr.s_addr = g;
+    rtmsg.mask.sin_len = sizeof(rtmsg.dst);
+    rtmsg.mask.sin_family = AF_INET;
+
+    rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
+    if (write(routes, &rtmsg, sizeof(rtmsg)) < 0) {
+	syslog(LOG_ERR, "%s default route: %m", cmd=='s'? "add": "delete");
+	close(routes);
+	return 0;
+    }
+
+    close(routes);
+    return 1;
 }
 
 /*
  * sifproxyarp - Make a proxy ARP entry for the peer.
  */
+static struct {
+    struct rt_msghdr		hdr;
+    struct sockaddr_inarp	dst;
+    struct sockaddr_dl		hwa;
+    char			extra[128];
+} arpmsg;
+
+static int arpmsg_valid;
+
 int
 sifproxyarp(unit, hisaddr)
     int unit;
     u_long hisaddr;
 {
-    struct arpreq arpreq;
-
-    BZERO(&arpreq, sizeof(arpreq));
+    int routes;
+    int l;
 
     /*
      * Get the hardware address of an interface on the same subnet
      * as our local address.
      */
-    if (!get_ether_addr(hisaddr, &arpreq.arp_ha)) {
+    memset(&arpmsg, 0, sizeof(arpmsg));
+    if (!get_ether_addr(hisaddr, &arpmsg.hwa)) {
 	syslog(LOG_ERR, "Cannot determine ethernet address for proxy ARP");
 	return 0;
     }
 
-    SET_SA_FAMILY(arpreq.arp_pa, AF_INET);
-    ((struct sockaddr_in *) &arpreq.arp_pa)->sin_addr.s_addr = hisaddr;
-    arpreq.arp_flags = ATF_PERM | ATF_PUBL;
-    if (ioctl(s, SIOCSARP, (caddr_t)&arpreq) < 0) {
-	syslog(LOG_ERR, "ioctl(SIOCSARP): %m");
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+	syslog(LOG_ERR, "sifproxyarp: opening routing socket: %m");
 	return 0;
     }
 
+    arpmsg.hdr.rtm_type = RTM_ADD;
+    arpmsg.hdr.rtm_flags = RTF_ANNOUNCE | RTF_HOST | RTF_STATIC;
+    arpmsg.hdr.rtm_version = RTM_VERSION;
+    arpmsg.hdr.rtm_seq = ++rtm_seq;
+    arpmsg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
+    arpmsg.hdr.rtm_inits = RTV_EXPIRE;
+    arpmsg.dst.sin_len = sizeof(struct sockaddr_inarp);
+    arpmsg.dst.sin_family = AF_INET;
+    arpmsg.dst.sin_addr.s_addr = hisaddr;
+    arpmsg.dst.sin_other = SIN_PROXY;
+
+    arpmsg.hdr.rtm_msglen = (char *) &arpmsg.hwa - (char *) &arpmsg
+	+ arpmsg.hwa.sdl_len;
+    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
+	syslog(LOG_ERR, "add proxy arp entry: %m");
+	close(routes);
+	return 0;
+    }
+
+    close(routes);
+    arpmsg_valid = 1;
     return 1;
 }
 
@@ -477,15 +543,27 @@ cifproxyarp(unit, hisaddr)
     int unit;
     u_long hisaddr;
 {
-    struct arpreq arpreq;
+    int routes;
 
-    BZERO(&arpreq, sizeof(arpreq));
-    SET_SA_FAMILY(arpreq.arp_pa, AF_INET);
-    ((struct sockaddr_in *) &arpreq.arp_pa)->sin_addr.s_addr = hisaddr;
-    if (ioctl(s, SIOCDARP, (caddr_t)&arpreq) < 0) {
-	syslog(LOG_WARNING, "ioctl(SIOCDARP): %m");
+    if (!arpmsg_valid)
+	return 0;
+    arpmsg_valid = 0;
+
+    arpmsg.hdr.rtm_type = RTM_DELETE;
+    arpmsg.hdr.rtm_seq = ++rtm_seq;
+
+    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+	syslog(LOG_ERR, "sifproxyarp: opening routing socket: %m");
 	return 0;
     }
+
+    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
+	syslog(LOG_ERR, "delete proxy arp entry: %m");
+	close(routes);
+	return 0;
+    }
+
+    close(routes);
     return 1;
 }
 
@@ -498,7 +576,7 @@ cifproxyarp(unit, hisaddr)
 int
 get_ether_addr(ipaddr, hwaddr)
     u_long ipaddr;
-    struct sockaddr *hwaddr;
+    struct sockaddr_dl *hwaddr;
 {
     struct ifreq *ifr, *ifend, *ifp;
     u_long ina, mask;
@@ -562,10 +640,8 @@ get_ether_addr(ipaddr, hwaddr)
 	    /*
 	     * Found the link-level address - copy it out
 	     */
-	    dla = (struct sockaddr_dl *)&ifr->ifr_addr;
-	    hwaddr->sa_len = sizeof(struct sockaddr);
-	    hwaddr->sa_family = AF_UNSPEC;
-	    BCOPY(LLADDR(dla), hwaddr->sa_data, dla->sdl_alen);
+	    dla = (struct sockaddr_dl *) &ifr->ifr_addr;
+	    BCOPY(dla, hwaddr, dla->sdl_len);
 	    return 1;
 	}
 	ifr = (struct ifreq *) ((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len);
