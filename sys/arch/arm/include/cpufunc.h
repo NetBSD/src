@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11 2001/11/14 01:00:06 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.12 2001/11/19 18:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,6 +54,7 @@ struct cpu_functions {
 	/* CPU functions */
 	
 	u_int	(*cf_id)		__P((void));
+	void	(*cf_cpwait)		__P((void));
 
 	/* MMU functions */
 
@@ -121,6 +122,7 @@ extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
 #define cpu_id()		cpufuncs.cf_id()
+#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
@@ -307,6 +309,8 @@ void	sa110_setup		__P((char *string));
 #endif	/* CPU_SA110 */
 
 #ifdef CPU_XSCALE
+void	xscale_cpwait		__P((void));
+
 u_int	xscale_control		__P((u_int clear, u_int bic));
 
 void	xscale_setttb		__P((u_int ttb));

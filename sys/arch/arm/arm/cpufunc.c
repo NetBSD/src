@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15 2001/11/14 01:00:05 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.16 2001/11/19 18:40:15 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -61,7 +61,8 @@
 struct cpu_functions arm3_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -131,8 +132,9 @@ struct cpu_functions arm3_cpufuncs = {
 struct cpu_functions arm6_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
-
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
+ 
 	/* MMU functions */
 
 	cpufunc_control,		/* control		*/
@@ -205,7 +207,8 @@ struct cpu_functions arm6_cpufuncs = {
 struct cpu_functions arm7_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -275,7 +278,8 @@ struct cpu_functions arm7_cpufuncs = {
 struct cpu_functions arm7tdmi_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -345,7 +349,8 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 struct cpu_functions arm8_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -415,6 +420,7 @@ struct cpu_functions arm9_cpufuncs = {
 	/* CPU functions */
 
 	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -484,7 +490,8 @@ struct cpu_functions arm9_cpufuncs = {
 struct cpu_functions sa110_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	cpufunc_nullop,			/* cpwait		*/
 
 	/* MMU functions */
 
@@ -553,7 +560,8 @@ struct cpu_functions sa110_cpufuncs = {
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
-	cpufunc_id,			/* id			 */
+	cpufunc_id,			/* id			*/
+	xscale_cpwait,			/* cpwait		*/
 
 	/* MMU functions */
 
