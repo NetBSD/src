@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.93 2003/03/04 02:20:28 lukem Exp $
+#	$NetBSD: build.sh,v 1.94 2003/03/07 01:22:16 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -689,7 +689,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.93 2003/03/04 02:20:28 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.94 2003/03/07 01:22:16 lukem Exp $
 #
 
 EOF
@@ -786,7 +786,6 @@ buildkernel()
 			[ -f "${kernbuilddir}/${kern}" ] && \
 			    echo "  ${kernbuilddir}/${kern}"
 		done
-		echo "."
 	fi
 }
 
