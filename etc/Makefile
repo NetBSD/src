@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.264 2003/12/19 06:04:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.265 2004/01/01 12:28:22 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -344,6 +344,7 @@ CDROM.pathlist=	cdrom.pathlist
 
 iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
+	@echo "iso-image created as: ${CDROM.image}"
 
 iso-image-setup: check_RELEASEDIR
 	rm -f ${CDROM.pathlist}
