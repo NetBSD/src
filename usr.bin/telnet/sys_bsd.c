@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.9 1996/02/24 07:32:01 jtk Exp $";
+static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.10 1996/02/24 20:02:02 jtk Exp $";
 #endif /* not lint */
 
 /*
@@ -141,7 +141,7 @@ TerminalWrite(buf, n)
 
     int
 TerminalRead(buf, n)
-    char *buf;
+    unsigned char *buf;
     int  n;
 {
     return read(tin, buf, n);
