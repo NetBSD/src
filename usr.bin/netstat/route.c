@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36.2.2 2000/01/21 00:17:37 he Exp $	*/
+/*	$NetBSD: route.c,v 1.36.2.3 2000/10/19 16:28:12 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.36.2.2 2000/01/21 00:17:37 he Exp $");
+__RCSID("$NetBSD: route.c,v 1.36.2.3 2000/10/19 16:28:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ static void ntreestuff __P((void));
 static void np_rtentry __P((struct rt_msghdr *));
 static void p_sockaddr __P((const struct sockaddr *,
 			    const struct sockaddr *, int, int));
-static void p_flags __P((int, char *));
+static void p_flags __P((int));
 static void p_rtentry __P((struct rtentry *));
 static void ntreestuff __P((void));
 static u_long forgemask __P((u_long));
@@ -379,7 +379,7 @@ np_rtentry(rtm)
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, NULL, 0, 18);
 	}
-	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
+	p_flags(rtm->rtm_flags & interesting);
 	putchar('\n');
 }
 
@@ -481,9 +481,8 @@ p_sockaddr(sa, mask, flags, width)
 }
 
 static void
-p_flags(f, format)
+p_flags(f)
 	int f;
-	char *format;
 {
 	char name[33], *flags;
 	struct bits *p = bits;
@@ -492,7 +491,7 @@ p_flags(f, format)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
 	*flags = '\0';
-	printf(format, name);
+	printf("%-6.6s", name);
 }
 
 static struct sockaddr *sockcopy __P((struct sockaddr *,
@@ -533,7 +532,7 @@ p_rtentry(rt)
 		mask = sockcopy(0, &mask_un);
 	p_sockaddr(addr, mask, rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), NULL, RTF_HOST, WID_GW);
-	p_flags(rt->rt_flags, "%-6.6s ");
+	p_flags(rt->rt_flags);
 	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
 		printf("%6lu", rt->rt_rmx.rmx_mtu); 
