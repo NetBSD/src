@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 1996/04/12 06:08:52 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5 1996/11/13 21:13:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -85,3 +85,10 @@ struct alpha_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+
+/*
+ * alpha-specific PCI funcionts.
+ * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
+ */
+void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, int, int, int));

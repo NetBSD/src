@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 1996/07/14 04:12:59 cgd Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 1996/11/13 21:13:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -80,9 +80,6 @@ struct bootdev_data {
 	char	*ctrl_dev_type;
 };
 
-void	set_clockintr __P((void));
-void	set_iointr __P((void (*)(void *, unsigned long)));
-int	badaddr			__P((void *, size_t));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;

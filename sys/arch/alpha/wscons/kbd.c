@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 1996/09/15 17:15:28 cgd Exp $ */
+/*	$NetBSD: kbd.c,v 1.3 1996/11/13 21:13:39 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <machine/autoconf.h>
 
@@ -67,6 +68,10 @@
 #include <machine/wsconsio.h>			/* XXX for bell ioctls */
 #include <alpha/wscons/event_var.h>
 #include <alpha/wscons/wsconsvar.h>
+
+static void	kbd_repeat __P((void *));
+
+cdev_decl(kbd);
 
 struct kbd_softc {
 	struct device *k_idev;		/* the input device */
@@ -105,7 +110,7 @@ kbdattach(idev, ispec)
 	k->k_ispec = *ispec;
 }
 
-void
+static void
 kbd_repeat(void *arg)
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
@@ -168,8 +173,6 @@ kbd_input(register int c)
 int
 kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int s;
-	struct tty *tp;
 
 	if (kbd_softc.k_events.ev_io)
 		return (EBUSY);

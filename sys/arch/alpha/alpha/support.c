@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.2 1995/11/23 02:34:32 cgd Exp $	*/
+/*	$NetBSD: support.c,v 1.3 1996/11/13 21:13:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,7 @@
  * Some C support functions that aren't (yet) in libkern or assembly.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 
 struct qelem {
