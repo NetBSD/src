@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.3 2003/02/07 16:56:19 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.4 2003/02/07 20:40:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -219,6 +219,92 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_connect_set_notification_port_reply_t;
 
+/* io_registry_get_root_entry */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_io_registry_get_root_entry_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_root;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_get_root_entry_reply_t;
+
+/* io_registry_entry_get_child_iterator */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_planeoffset;
+	mach_msg_type_number_t req_planecount;
+	char req_plane[128];
+} mach_io_registry_entry_get_child_iterator_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_iterator;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_child_iterator_reply_t;
+
+/* io_registry_entry_get_name_in_plane */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_planeoffset;
+	mach_msg_type_number_t req_planecount;
+	char req_plane[128];
+} mach_io_registry_entry_get_name_in_plane_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_nameoffset;
+	mach_msg_type_number_t rep_namecount;
+	char rep_name[128];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_name_in_plane_reply_t;
+
+/* io_object_get_class */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_io_object_get_class_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_nameoffset;
+	mach_msg_type_number_t rep_namecount;
+	char rep_name[128];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_object_get_class_reply_t;
+
+/* io_registry_entry_get_location_in_plane */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_nameoffset;
+	mach_msg_type_number_t req_namecount;
+	char req_plane[128];
+} mach_io_registry_entry_get_location_in_plane_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_locationoffset;
+	mach_msg_type_number_t rep_locationcount;
+	char rep_location[128];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_location_in_plane_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -229,6 +315,11 @@ int mach_io_registry_entry_create_iterator(struct mach_trap_args *);
 int mach_io_object_conforms_to(struct mach_trap_args *);
 int mach_io_service_add_interest_notification(struct mach_trap_args *);
 int mach_io_connect_set_notification_port(struct mach_trap_args *);
+int mach_io_registry_get_root_entry(struct mach_trap_args *);
+int mach_io_registry_entry_get_child_iterator(struct mach_trap_args *);
+int mach_io_registry_entry_get_name_in_plane(struct mach_trap_args *);
+int mach_io_object_get_class(struct mach_trap_args *);
+int mach_io_registry_entry_get_location_in_plane(struct mach_trap_args *);
 
 #endif /* _MACH_IOKIT_H_ */
 
