@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl_vrgiu.c,v 1.1 1999/12/23 06:26:10 takemura Exp $	*/
+/*	$NetBSD: pwctl_vrgiu.c,v 1.2 2000/02/09 14:39:06 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -56,6 +56,7 @@ struct pwctl_vrgiu_softc {
 	vrgiu_function_tag_t sc_gf;
 	int sc_port;
 	long sc_id;
+	int sc_on, sc_off;
 	config_hook_tag sc_hook_tag;
 };
 
@@ -105,7 +106,9 @@ pwctl_vrgiu_attach(parent, self, aux)
 	loc = sc->sc_dev.dv_cfdata->cf_loc;
 	sc->sc_port = loc[NEWGPBUSIFCF_PORT];
 	sc->sc_id = loc[NEWGPBUSIFCF_ID];
-	printf(" port=%d id=%ld", sc->sc_port, sc->sc_id);
+	sc->sc_on = loc[NEWGPBUSIFCF_ACTIVE] ? 1 : 0;
+	sc->sc_off = loc[NEWGPBUSIFCF_ACTIVE] ? 0 : 1;
+	printf(" port=%d id=%ld on=%d", sc->sc_port, sc->sc_id, sc->sc_on);
 
 	if (sc->sc_port == NEWGPBUSIFCF_PORT_DEFAULT ||
 	    sc->sc_id == NEWGPBUSIFCF_ID_DEFAULT) {
@@ -127,7 +130,9 @@ pwctl_vrgiu_hook(ctx, type, id, msg)
 {
 	struct pwctl_vrgiu_softc *sc = ctx;
 
-	printf("pwctl hook: port %d %s", sc->sc_port, msg ? "ON" : "OFF");
-	sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port, msg ? 1 : 0);
+	printf("pwctl hook: port %d %s(%d)", sc->sc_port,
+	       msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off);
+	sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port,
+				msg ? sc->sc_on : sc->sc_off);
 	return (0);
 }
