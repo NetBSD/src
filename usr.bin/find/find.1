@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.13 1998/02/02 14:02:14 mrg Exp $
+.\"	$NetBSD: find.1,v 1.14 1998/05/27 13:15:30 msaitoh Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,19 +130,6 @@ returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
-.It Fl X
-The
-.Fl X
-option is a modification to permit
-.Nm
-to be safely used in conjunction with
-.Xr xargs 1 .
-If a file name contains any of the delimiting characters used by
-.Xr xargs ,
-a diagnostic message is displayed on standard error, and the file
-is skipped.
-The delimiting characters include single (`` ' '') and double (`` " '')
-quotes, backslash (``\e''), space, tab and newline characters.
 .It Fl x
 The
 .Fl x
