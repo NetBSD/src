@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.107 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.108 2003/07/27 07:45:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -470,10 +470,10 @@ typedef struct {
 } set_menu_info_t;
 
 static int
-set_toggle(menudesc *menu, menu_ent *ent, void *arg)
+set_toggle(menudesc *menu, void *arg)
 {
 	set_menu_info_t *i = arg;
-	int set = i->i[ent - menu->opts].set;
+	int set = i->i[menu->cursel].set;
 
 	if (set & SET_KERNEL)
 		/* only one kernel set is allowed */
@@ -483,7 +483,7 @@ set_toggle(menudesc *menu, menu_ent *ent, void *arg)
 }
 
 static int
-set_all(menudesc *menu, menu_ent *ent, void *arg)
+set_all(menudesc *menu, void *arg)
 {
 	set_menu_info_t *i = arg;
 
@@ -492,7 +492,7 @@ set_all(menudesc *menu, menu_ent *ent, void *arg)
 }
 
 static int
-set_none(menudesc *menu, menu_ent *ent, void *arg)
+set_none(menudesc *menu, void *arg)
 {
 	set_menu_info_t *i = arg;
 
@@ -500,7 +500,7 @@ set_none(menudesc *menu, menu_ent *ent, void *arg)
 	return 1;
 }
 
-static int set_sublist(menudesc *menu, menu_ent *ent, void *arg);
+static int set_sublist(menudesc *menu, void *arg);
 
 static void
 set_selected_sets(menudesc *menu, void *arg)
@@ -572,7 +572,7 @@ set_selected_sets(menudesc *menu, void *arg)
 }
 
 static int
-set_sublist(menudesc *menu, menu_ent *ent, void *arg)
+set_sublist(menudesc *menu, void *arg)
 {
 	distinfo *list;
 	menu_ent me[32];
@@ -582,7 +582,7 @@ set_sublist(menudesc *menu, menu_ent *ent, void *arg)
 	unsigned int set;
 	set_menu_info_t *i = arg;
 
-	set = i->i[ent - menu->opts].set;
+	set = i->i[menu->cursel].set;
 	set_menu_info.sets = set;
 
 	/* Count number of entries we require */
@@ -1167,7 +1167,7 @@ static int save_cursel, save_topline;
  * Callback from timezone menu
  */
 static int
-set_tz_select(menudesc *m, menu_ent *opt, void *arg)
+set_tz_select(menudesc *m, void *arg)
 {
 	time_t t;
 	char *new;
@@ -1189,7 +1189,7 @@ set_tz_select(menudesc *m, menu_ent *opt, void *arg)
 }
 
 static int
-set_tz_back(menudesc *m, menu_ent *opt, void *arg)
+set_tz_back(menudesc *m, void *arg)
 {
 
 	zoneinfo_dir[zonerootlen] = 0;
@@ -1199,7 +1199,7 @@ set_tz_back(menudesc *m, menu_ent *opt, void *arg)
 }
 
 static int
-set_tz_dir(menudesc *m, menu_ent *opt, void *arg)
+set_tz_dir(menudesc *m, void *arg)
 {
 
 	strlcpy(zoneinfo_dir + zonerootlen, m->opts[m->cursel].opt_name,
@@ -1219,7 +1219,7 @@ static void
 timezone_sig(int sig)
 {
 
-	set_tz_select(NULL, NULL, NULL);
+	set_tz_select(NULL, NULL);
 	alarm(60);
 }
 

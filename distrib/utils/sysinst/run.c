@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.46 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.47 2003/07/27 07:45:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,8 +73,8 @@
  */
 static int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win,
 				int display, const char **errstr);
-int log_flip (menudesc *, menu_ent *, void *);
-int script_flip (menudesc *, menu_ent *, void *);
+int log_flip (menudesc *, void *);
+int script_flip (menudesc *, void *);
 
 #define BUFSIZE 4096
 
@@ -106,7 +106,7 @@ do_logging(void)
 
 int
 /*ARGSUSED*/
-log_flip(menudesc *m, menu_ent *opt, void *arg)
+log_flip(menudesc *m, void *arg)
 {
 	time_t tloc;
 
@@ -134,7 +134,7 @@ log_flip(menudesc *m, menu_ent *opt, void *arg)
 
 int
 /*ARGSUSED*/
-script_flip(menudesc *m, menu_ent *opt, void *arg)
+script_flip(menudesc *m, void *arg)
 {
 	time_t tloc;
 

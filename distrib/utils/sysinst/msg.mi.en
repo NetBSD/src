@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.115 2003/07/22 08:30:10 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.116 2003/07/27 07:45:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,7 @@ message None {None}
 message none {none}
 message OK {OK}
 message ok {ok}
+message unchanged {unchanged}
 
 message install
 {install}
@@ -303,7 +304,10 @@ message restore
 {Restore original values}
 
 message Select_the_type
-{MSG Select the type}
+{Select the type}
+
+message other_types
+{other types}
 
 message label_size
 {%s
@@ -981,8 +985,8 @@ message Halt_the_system {Halt the system}
 message yes_or_no {yes or no?}
 message Hit_enter_to_continue {Hit enter to continue}
 message Choose_your_installation {Choose your installation}
-message Standard {Standard}
-message Use_Existing {Use Existing}
+message Set_Sizes {Set sizes of NetBSD partitions}
+message Use_Existing {Use existing partition sizes}
 message Choose_your_size_specifier {Choose your size specifier}
 message Megabytes {Megabytes}
 message Cylinders {Cylinders}

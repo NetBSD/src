@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.36 2003/07/25 08:26:21 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.37 2003/07/27 07:45:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.36 2003/07/25 08:26:21 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.37 2003/07/27 07:45:08 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -162,7 +162,7 @@ check_one_root(partinfo *lp, int nparts)
 }
 
 static int
-edit_fs_start(menudesc *m, menu_ent *e, void *arg)
+edit_fs_start(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 	int start, size;
@@ -181,7 +181,7 @@ edit_fs_start(menudesc *m, menu_ent *e, void *arg)
 }
 
 static int
-edit_fs_size(menudesc *m, menu_ent *e, void *arg)
+edit_fs_size(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 	int size;
@@ -216,7 +216,7 @@ set_fsize(partinfo *p, int nfrag)
 }
 
 static int
-edit_fs_preserve(menudesc *m, menu_ent *e, void *arg)
+edit_fs_preserve(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 
@@ -225,7 +225,7 @@ edit_fs_preserve(menudesc *m, menu_ent *e, void *arg)
 }
 
 static int
-edit_fs_mount(menudesc *m, menu_ent *e, void *arg)
+edit_fs_mount(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 
@@ -234,7 +234,7 @@ edit_fs_mount(menudesc *m, menu_ent *e, void *arg)
 }
 
 static int
-edit_fs_mountpt(menudesc *m, menu_ent *e, void *arg)
+edit_fs_mountpt(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 	char buff[4];
@@ -266,7 +266,7 @@ edit_fs_mountpt(menudesc *m, menu_ent *e, void *arg)
 }
 
 static int
-edit_restore(menudesc *m, menu_ent *e, void *arg)
+edit_restore(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 
@@ -291,10 +291,28 @@ set_ptn_header(menudesc *m, void *arg)
 	}
 }
 
+static int
+set_fstype(menudesc *m, void *arg)
+{
+	partinfo *p = arg;
+
+	p->pi_fstype = m->cursel;
+	return 1;
+}
+
+static void
+get_fstype(menudesc *m, void *arg)
+{
+	partinfo *p = arg;
+
+	m->cursel = p->pi_fstype;
+}
+
 static void set_ptn_label(menudesc *m, int opt, void *arg);
+int all_fstype_menu = -1;
 
 static int
-edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
+edit_ptn(menudesc *menu, void *arg)
 {
 	static menu_ent fs_fields[] = {
 #define PTN_MENU_FSKIND		0
@@ -319,11 +337,11 @@ edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
 	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
 	};
 	static int fspart_menu = -1;
+	static menu_ent all_fstypes[FSMAXTYPES];
 	partinfo *p, p_save;
+	int i;
 
 	if (fspart_menu == -1) {
-		if (!check_lfs_progs())
-			set_menu_numopts(MENU_selfskind, 4);
 		fspart_menu = new_menu(NULL, fs_fields, nelem(fs_fields),
 			0, 7, 0, 70,
 			MC_NOBOX | MC_NOCLEAR | MC_SCROLL,
@@ -331,7 +349,20 @@ edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
 			NULL, MSG_partition_sizes_ok);
 	}
 
-	p = bsdlabel + (opt - menu->opts);
+	if (all_fstype_menu == -1) {
+		for (i = 0; i < nelem(all_fstypes); i++) {
+			all_fstypes[i].opt_name = fstypenames[i];
+			all_fstypes[i].opt_menu = OPT_NOMENU;
+			all_fstypes[i].opt_flags = 0;
+			all_fstypes[i].opt_action = set_fstype;
+		}
+		all_fstype_menu = new_menu(MSG_Select_the_type,
+			all_fstypes, nelem(all_fstypes),
+			-1, 15, 10, 0, MC_SCROLL,
+			get_fstype, NULL, NULL, NULL, MSG_unchanged);
+	}
+
+	p = bsdlabel + menu->cursel;
 	p->pi_flags &= ~PIF_RESET;
 	p_save = *p;
 	for (;;) {
@@ -400,7 +431,7 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 }
 
 static int
-show_all_unused(menudesc *m, menu_ent *opt, void *arg)
+show_all_unused(menudesc *m, void *arg)
 {
 	struct ptn_menu_info *pi = arg;
 
@@ -523,43 +554,6 @@ emptylabel(partinfo *lp)
 	memset(lp, 0, sizeof *lp);
 }
 
-#if 0
-/*
- * XXX MSDOS?
- */
-void
-translate_partinfo(partinfo *lp, struct partition *pp)
-{
-
-	lp->pi_fstype = pp->p_fstype;
-
-	switch (pp->p_fstype) {
-
-	case FS_UNUSED:				/* XXX */
-	case FS_SWAP:
-		break;
-
-	case FS_BSDLFS:
-	case FS_BSDFFS:
-		(*lp).pi_offset = 0;
-		(*lp).pi_size = 0;
-		(*lp).pi_frag = pp->p_frag;
-		(*lp).pi_fsize = pp->p_fsize;
-		break;
-
-	case FS_EX2FS:
-		(*lp).pi_fstype = FS_UNUSED;	/* XXX why? */
-		(*lp).pi_frag = pp->p_frag;
-		(*lp).pi_fsize = pp->p_fsize;
-		break;
-
-	default:
-		(*lp).pi_fstype = FS_UNUSED;
-		break;
-	}
-}
-#endif
-
 /*
  * Read a label from disk into a sysinst label structure.
  */
@@ -588,6 +582,8 @@ incorelabel(const char *dkname, partinfo *lp)
 	pp = &lab.d_partitions[0];
 	for (i = 0; i < maxpart; lp++, pp++, i++) {
 		lp->pi_partition = *pp;
+		if (lp->pi_fstype >= FSMAXTYPES)
+			lp->pi_fstype = FS_OTHER;
 		strlcpy(lp->pi_mount, get_last_mounted(fd, pp->p_offset),
 			sizeof lp->pi_mount);
 	}
@@ -637,7 +633,7 @@ get_last_mounted(int fd, int partstart)
 		if (*sbp != 0)
 			continue;
 
-		/* If start of disk check for other fs types */
+		/* If start of partition check for other fs types */
 		if (sblk[0x42] == 0x29 && memcmp(sblk + 0x52, "FAT", 3) == 0) {
 			/* Probably a FAT filesystem, report volume name */
 			cp = strchr(sblk + 0x47, ' ');

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.9 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.10 2003/07/27 07:45:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,17 +63,30 @@ allow dynamic menus;
 allow dynamic messages;
 
 
-menu selfskind, title MSG_Select_the_type, y=15;
-	option "4.2BSD", exit, action 
-	    { ((partinfo *)arg)->pi_fstype = FS_BSDFFS; set_bsize(arg, 8192); };
+menu selfskind, title MSG_Select_the_type, y=15, exitstring MSG_unchanged;
+	display action {
+		switch (((partinfo *)arg)->pi_fstype) {
+		case FS_UNUSED:	menu->cursel = 0; break;
+		case FS_BSDFFS:	menu->cursel = 1; break;
+		case FS_SWAP:	menu->cursel = 2; break;
+		case FS_MSDOS:	menu->cursel = 3; break;
+		case FS_BSDLFS:	menu->cursel = 4; break;
+		default	:	menu->cursel = 5; break;
+		};
+	};
 	option "unused", exit, action 
 	    { ((partinfo *)arg)->pi_fstype = FS_UNUSED; set_bsize(arg, 0); };
+	option "4.2BSD", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_BSDFFS; set_bsize(arg, 8192); };
 	option "swap", exit, action 
 	    { ((partinfo *)arg)->pi_fstype = FS_SWAP;   set_bsize(arg, 0); };
 	option "msdos", exit, action 
 	    { ((partinfo *)arg)->pi_fstype = FS_MSDOS;  set_bsize(arg, 0); };
 	option "4.4LFS", exit, action 
 	    { ((partinfo *)arg)->pi_fstype = FS_BSDLFS; set_bsize(arg, 8192); };
+	option MSG_other_types, action 
+	    { extern int all_fstype_menu;
+	      m->opts[m->cursel].opt_menu = all_fstype_menu; };
 
 menu selbsize, title MSG_Select_file_system_block_size, y = 15;
 	option  "8192", exit, action { set_bsize(arg, 8192); };
@@ -129,10 +142,16 @@ menu ok, title MSG_Hit_enter_to_continue;
 	option MSG_ok, exit;
 
 menu layout, title  MSG_Choose_your_installation;
-	option MSG_Standard, 	  exit, action { layoutkind = 1; };
+	option MSG_Set_Sizes, 	  exit, action { layoutkind = 1; };
 	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
 
 menu sizechoice, title  MSG_Choose_your_size_specifier;
+	display action {
+		if (sizemult == current_cylsize)
+			menu->cursel = 1;
+		else if (sizemult == 1)
+			menu->cursel = 2;
+		};
 	option MSG_Megabytes, exit, action 
 		{ sizemult = MEG / sectorsize;
 		  multname = msg_string(MSG_megname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.21 2003/07/26 17:07:39 salo Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.22 2003/07/27 07:45:08 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,7 +91,7 @@
 #define DEFSWAPSIZE	128
 #endif
 
-static int set_ptn_size(menudesc *, menu_ent *, void *);
+static int set_ptn_size(menudesc *, void *);
 
 #define NUM_PTN_MENU	(MAXPARTITIONS + 4)
 
@@ -218,7 +218,7 @@ set_ptn_menu_texts(struct ptn_info *pi)
 }
 
 static int
-set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
+set_ptn_size(menudesc *m, void *arg)
 {
 	struct ptn_info *pi = arg;
 	struct ptn_size *p;
@@ -228,7 +228,7 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	int size;
 	int mult;
 
-	p = pi->ptn_sizes + (opt - m->opts);
+	p = pi->ptn_sizes + m->cursel;
 
 	if (pi->free_parts == 0 && p->size == 0)
 		/* Don't allow 'free_parts' to go negative */
