@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.89 2003/02/16 18:16:26 tron Exp $	*/
+/*	$NetBSD: inetd.c,v 1.90 2003/04/22 07:45:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.89 2003/02/16 18:16:26 tron Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.90 2003/04/22 07:45:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1049,7 +1049,7 @@ goaway(void)
 static void
 setup(struct servtab *sep)
 {
-	int		on = 1;
+	int		on = 1, off = 0;
 	struct kevent	*ev;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
@@ -1086,9 +1086,15 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	    SO_RCVBUF, (char *)&sep->se_rcvbuf, sizeof(sep->se_rcvbuf)) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
 		    sep->se_rcvbuf);
-	if (sep->se_type == FAITH_TYPE && setsockopt(sep->se_fd, IPPROTO_IPV6,
-	    IPV6_FAITH, (char *)&on, sizeof(on)) < 0)
-		syslog(LOG_ERR, "setsockopt (IPV6_FAITH): %m");
+#ifdef INET6
+	if (sep->se_family == AF_INET6) {
+		int *v;
+		v = (sep->se_type == FAITH_TYPE) ? &on : &off;
+		if (setsockopt(sep->se_fd, IPPROTO_IPV6, IPV6_FAITH,
+		    (char *)v, sizeof(*v)) < 0)
+			syslog(LOG_ERR, "setsockopt (IPV6_FAITH): %m");
+	}
+#endif
 #ifdef IPSEC
 	if (ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy) < 0 &&
 	    sep->se_policy) {
