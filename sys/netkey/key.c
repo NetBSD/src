@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.21 2000/06/15 05:50:22 itojun Exp $	*/
-/*	$KAME: key.c,v 1.130 2000/06/15 05:46:06 sakane Exp $	*/
+/*	$NetBSD: key.c,v 1.22 2000/06/15 12:37:07 itojun Exp $	*/
+/*	$KAME: key.c,v 1.131 2000/06/15 12:20:50 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2717,9 +2717,6 @@ key_setsaval(sav, m, mhp)
 			error = ENOBUFS;
 			goto fail;
 		}
-
-		/* make length shift up for kernel*/
-		sav->key_auth->sadb_key_len = len;
 	}
 
 	/* Encryption key */
@@ -2761,9 +2758,6 @@ key_setsaval(sav, m, mhp)
 			error = ENOBUFS;
 			goto fail;
 		}
-
-		/* make length shift up for kernel*/
-		sav->key_enc->sadb_key_len = len;
 	}
 
 	/* set iv */
@@ -3194,7 +3188,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		goto fail;
 	result = m;
 
-	for (i = SADB_EXT_MAX; i >= 0; i--) {
+	for (i = sizeof(dumporder)/sizeof(dumporder[0]) - 1; i >= 0; i--) {
 		m = NULL;
 		p = NULL;
 		switch (dumporder[i]) {
@@ -3230,14 +3224,14 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		case SADB_EXT_KEY_AUTH:
 			if (!sav->key_auth)
 				continue;
-			l = sav->key_auth->sadb_key_len;
+			l = PFKEY_UNUNIT64(sav->key_auth->sadb_key_len);
 			p = sav->key_auth;
 			break;
 
 		case SADB_EXT_KEY_ENCRYPT:
 			if (!sav->key_enc)
 				continue;
-			l = sav->key_enc->sadb_key_len;
+			l = PFKEY_UNUNIT64(sav->key_enc->sadb_key_len);
 			p = sav->key_enc;
 			break;
 
