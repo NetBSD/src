@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.23 2000/09/24 15:59:31 jdolecek Exp $
+#	$NetBSD: HADES,v 1.24 2000/09/28 06:19:06 leo Exp $
 #
 # Medusa-Hades
 #
@@ -106,6 +106,7 @@ hdfd1	at fdc0 unit 1		# 2nd Hades-type floppy drive
 zs0	at mainbus0		# Serial support through 8530
 nvr0	at mainbus0		# nvram driver
 lp0	at mainbus0		# centronics printer
+grfbus0	at mainbus0		# bitmapped display's
 grfet0	at grfbus0		# et4000/et6000/et6100 consoles
 ite0	at grfet0
 grfet1	at grfbus0

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.25 2000/09/24 15:59:30 jdolecek Exp $
+#	$NetBSD: BOOTX,v 1.26 2000/09/28 06:19:06 leo Exp $
 #
 # BOOTX
 #
@@ -102,6 +102,7 @@ pseudo-device	md		2	# Boot memory disk
 fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
+grfbus0	at mainbus0		# bitmapped display's
 grfcc0	at grfbus0		# graphics driver
 ite0	at grfcc0		# console
 grfcc1	at grfbus0		# 2nd graphics driver
