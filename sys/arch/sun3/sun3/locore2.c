@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.28 1994/12/12 19:00:09 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.29 1994/12/13 18:43:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -77,7 +77,6 @@ vm_offset_t high_segment_free_end = 0;
 
 int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
-caddr_t vmempage;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
 unsigned char *interrupt_reg;
@@ -318,6 +317,8 @@ void sun3_vm_init()
 
 	/*
 	 * Message buffer page (msgbuf).
+	 * XXX - Should put this in physical page zero.
+	 * Also unmap a page at KERNBASE for redzone?
 	 */
 	msgbufp = (struct msgbuf *) virtual_avail;
 	virtual_avail += NBPG;
@@ -331,7 +332,8 @@ void sun3_vm_init()
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
-	 * Make these non-cached at their not-in-use mapping address.
+	 * Make these non-cached at their full-time mapping address.
+	 * The running proc's upages are also mapped cached at kstack.
 	 */
 	proc0paddr = (struct user *) virtual_avail;
 	proc0_user_pa = avail_start;
@@ -356,10 +358,7 @@ void sun3_vm_init()
 	 * Now steal some virtual addresses, but
 	 * not the physical pages behind them.
 	 */
-	
-	/* vmempage (used by /dev/mem) */
-	vmempage = (caddr_t) virtual_avail;
-	virtual_avail += NBPG;
+	va = virtual_avail;	/* will clear PTEs from here */
 
 	/*
 	 * vpages array:  just some virtual addresses for
@@ -375,8 +374,7 @@ void sun3_vm_init()
 	 * clean out the rest of the last used segment.
 	 * After this point, virtual_avail is seg-aligned.
 	 */
-	va = virtual_avail;
-	virtual_avail = sun3_round_seg(va);
+	virtual_avail = sun3_round_seg(virtual_avail);
 	while (va < virtual_avail) {
 		set_pte(va, PG_INVAL);
 		va += NBPG;
