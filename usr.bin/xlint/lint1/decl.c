@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.17 2000/06/14 06:49:22 cgd Exp $ */
+/* $NetBSD: decl.c,v 1.18 2000/07/05 22:50:59 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -857,10 +857,13 @@ length(tp, name)
 	int	elem, elsz;
 
 	elem = 1;
-	while (tp->t_tspec == ARRAY) {
+	while (tp && tp->t_tspec == ARRAY) {
 		elem *= tp->t_dim;
 		tp = tp->t_subt;
 	}
+	if (tp == NULL)
+		return -1;
+
 	switch (tp->t_tspec) {
 	case FUNC:
 		/* compiler takes size of function */
@@ -899,8 +902,11 @@ getbound(tp)
 	int	a;
 	tspec_t	t;
 
-	while (tp->t_tspec == ARRAY)
+	while (tp && tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
+
+	if (tp == NULL)
+		return -1;
 
 	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
 		a = tp->t_str->align;
@@ -1255,8 +1261,10 @@ addptr(decl, pi)
 	pqinf_t	*npi;
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_type)
+	while (*tpp && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+		return decl;
 
 	while (pi != NULL) {
 		*tpp = tp = getblk(sizeof (type_t));
@@ -1283,8 +1291,10 @@ addarray(decl, dim, n)
 	type_t	**tpp, *tp;
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_type)
+	while (*tpp && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+	    return decl;
 
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = ARRAY;
@@ -1338,8 +1348,10 @@ addfunc(decl, args)
 	}
 
 	tpp = &decl->s_type;
-	while (*tpp != dcs->d_nxt->d_type)
+	while (*tpp && *tpp != dcs->d_nxt->d_type)
 		tpp = &(*tpp)->t_subt;
+	if (*tpp == NULL)
+	    return decl;
 
 	*tpp = tp = getblk(sizeof (type_t));
 	tp->t_tspec = FUNC;
