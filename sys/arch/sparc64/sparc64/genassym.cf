@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.24 2001/10/05 21:53:56 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,8 +96,6 @@ include <uvm/uvm.h>
 include <machine/db_machdep.h>
 include <machine/pmap.h>
 include <machine/cpu.h>
-
-include <machine/bsd_openprom.h>
 include <machine/reg.h>
 
 #include <sparc64/sparc64/cpuvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.20 2001/08/08 00:09:30 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.21 2001/10/05 21:53:56 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,6 @@
 #include <machine/pmap.h>
 #include <machine/cpu.h>
 
-#include <machine/bsd_openprom.h>
 #include <machine/reg.h>
 
 #ifdef notyet

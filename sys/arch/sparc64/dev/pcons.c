@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
+/*	$NetBSD: pcons.c,v 1.8 2001/10/05 21:53:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -49,7 +49,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
