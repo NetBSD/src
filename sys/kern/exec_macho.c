@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.25 2003/06/29 22:31:16 fvdl Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.26 2003/08/08 18:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.25 2003/06/29 22:31:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.26 2003/08/08 18:53:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -645,54 +645,10 @@ exec_macho_makecmds(p, epp)
 		goto bad;
 	}
 
-	return exec_macho_setup_stack(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 bad2:
 	free(emea, M_EXEC);
 	return error;
-}
-
-
-/*
- * exec_macho_setup_stack(): Set up the stack segment for a exec_macho
- * executable.
- *
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
- *
- * This function returns an int for uniformity with other (future) formats'
- * stack setup functions.  They might have errors to return.
- */
-int
-exec_macho_setup_stack(p, epp)
-	struct proc *p; 
-	struct exec_package *epp;
-{
-
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ... ep_maxsaddr
-	 * <stack> ep_minsaddr
-	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-	return 0;
 }
