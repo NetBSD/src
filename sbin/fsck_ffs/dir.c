@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.32 2001/01/23 02:35:51 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.33 2002/05/09 02:55:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.32 2001/01/23 02:35:51 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.33 2002/05/09 02:55:50 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,7 +326,7 @@ dircheck(idesc, dp)
 		}
 	if (iswap16(dp->d_reclen) < size ||
 	    idesc->id_filesize < size ||
-	    namlen > MAXNAMLEN ||
+	    /* namlen > MAXNAMLEN || */
 	    type > 15)
 		return (0);
 	for (cp = dp->d_name, size = 0; size < namlen; size++)
