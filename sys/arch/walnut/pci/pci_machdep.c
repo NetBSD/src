@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2001/11/08 23:28:15 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2002/02/25 00:34:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -253,7 +253,7 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 
 /* Avoid overconfiguration */
 int
-pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, int id)
+pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 {
 
 	if ((PCI_VENDOR(id) == PCI_VENDOR_IBM && PCI_PRODUCT(id) == PCI_PRODUCT_IBM_405GP) ||
