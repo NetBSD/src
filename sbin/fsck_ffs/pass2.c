@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.34 2003/04/09 12:49:28 fvdl Exp $	*/
+/*	$NetBSD: pass2.c,v 1.35 2003/07/13 08:16:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.34 2003/04/09 12:49:28 fvdl Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.35 2003/07/13 08:16:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,8 @@ pass2()
 			} else
 				markclean = 0;
 		} else if ((inp->i_isize & (dirblksiz - 1)) != 0) {
-			getpathname(pathbuf, inp->i_number, inp->i_number);
+			getpathname(pathbuf, sizeof(pathbuf), inp->i_number,
+			    inp->i_number);
 			if (usedsoftdep)
 				pfatal("%s %s: LENGTH %lld NOT MULTIPLE OF %d",
 					"DIRECTORY", pathbuf,
@@ -360,7 +361,7 @@ pass2check(idesc)
 	else
 		proto.d_type = 0;
 	proto.d_namlen = 1;
-	(void)strcpy(proto.d_name, ".");
+	(void)strlcpy(proto.d_name, ".", sizeof(proto.d_name));
 #	if BYTE_ORDER == LITTLE_ENDIAN
 		if (!newinofmt && !needswap) {
 #	else
@@ -411,18 +412,18 @@ chk1:
 	else
 		proto.d_type = 0;
 	proto.d_namlen = 2;
-	(void)strcpy(proto.d_name, "..");
-#	if BYTE_ORDER == LITTLE_ENDIAN
-		if (!newinofmt && !needswap) {
-#	else
-		if (!newinofmt && needswap) {
-#	endif
-			u_char tmp;
+	(void)strlcpy(proto.d_name, "..", sizeof(proto.d_name));
+#if BYTE_ORDER == LITTLE_ENDIAN
+	if (!newinofmt && !needswap) {
+#else
+	if (!newinofmt && needswap) {
+#endif
+		u_char tmp;
 
-			tmp = proto.d_type;
-			proto.d_type = proto.d_namlen;
-			proto.d_namlen = tmp;
-		}
+		tmp = proto.d_type;
+		proto.d_type = proto.d_namlen;
+		proto.d_namlen = tmp;
+	}
 	entrysize = DIRSIZ(0, &proto, 0);
 	if (idesc->id_entryno == 0) {
 		n = DIRSIZ(0, dirp, 0);
@@ -556,10 +557,10 @@ again:
 		case DFOUND:
 			inp = getinoinfo(iswap32(dirp->d_ino));
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
-				getpathname(namebuf, iswap32(dirp->d_ino),
-					iswap32(dirp->d_ino));
+				getpathname(pathbuf, sizeof(pathbuf),
+				    idesc->id_number, idesc->id_number);
+				getpathname(namebuf, sizeof(namebuf),
+				    iswap32(dirp->d_ino), iswap32(dirp->d_ino));
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);
