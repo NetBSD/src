@@ -1,10 +1,10 @@
-#	$NetBSD: list,v 1.8 2000/08/09 13:38:48 leo Exp $
+#	$NetBSD: list,v 1.9 2000/08/23 14:15:06 leo Exp $
 
 # Usage of libhack.o reduces the instbin-size with approx. 64MB!
 LIBS	libhack.o
 
 # Atari extra's
-LINK	instbin			sbin/edahdi
+LINK	instbin			sbin/ahdilabel
 LINK	instbin			sbin/edlabel
 LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_kernfs
@@ -15,7 +15,7 @@ LINK	instbin			usr/sbin/loadkmap
 ARGVLINK mount_msdos	msdos
 
 # crunchgen source directory specials
-CRUNCHSPECIAL	edahdi srcdir /usr/src/sys/arch/atari/stand/edahdi/
+CRUNCHSPECIAL	ahdilabel srcdir /usr/src/sys/arch/atari/stand/ahdilabel/
 CRUNCHSPECIAL	loadkmap srcdir /usr/src/sys/arch/atari/stand/loadkmap/
 
 # copy the MAKEDEV script and make some devices
