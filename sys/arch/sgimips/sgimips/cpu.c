@@ -1,7 +1,8 @@
-/*	$NetBSD: cpu.c,v 1.6 2001/11/14 18:15:35 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2001/11/17 01:19:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
+ * Copyright (c) 2001 Jason R. Thorpe.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -45,12 +46,38 @@
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
 
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
+
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
 };
+
+static void
+sgimips_find_l2cache(struct arcbios_component *comp,
+    struct arcbios_treewalk_context *atc)
+{
+	struct device *self = atc->atc_cookie;
+
+	if (comp->Class != COMPONENT_CLASS_CacheClass)
+		return;
+
+	switch (comp->Type) {
+	case COMPONENT_TYPE_SecondaryICache:
+		mips_sicache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		/* XXX */
+		printf("%s: split L2 cache, no bets!\n", self->dv_xname);
+		break;
+
+	case COMPONENT_TYPE_SecondaryDCache:
+	case COMPONENT_TYPE_SecondaryCache:
+		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		break;
+	}
+}
 
 static int
 cpu_match(parent, match, aux)
@@ -69,15 +96,13 @@ cpu_attach(parent, self, aux)
 {
 	u_int32_t config;
 
-	switch (mach_type) {
-	case MACH_SGI_IP22:
-		mips_sdcache_size = 1024 * 1024;	/* XXX Indy */
-		break;
-
-	case MACH_SGI_IP32:
-		mips_sdcache_size = 512 * 1024;		/* XXX O2 */
-		break;
-	}
+	/*
+	 * Walk the ARCBIOS device tree to find the L2 cache.
+	 *
+	 * XXX We should be walking the tree to attach the CPUs,
+	 * XXX etc, but we don't currently do that.
+	 */
+	arcbios_tree_walk(sgimips_find_l2cache, self);
 
 #if 1	/* XXX XXX XXX */
 	config = mips3_cp0_config_read();
