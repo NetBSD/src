@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.2 1997/05/17 21:38:48 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.1.1.3 1997/09/26 18:51:16 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -34,11 +34,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: auth.c,v 1.31 1997/04/30 05:50:16 paulus Exp ";
+static char rcsid[] = "Id: auth.c,v 1.32 1997/07/14 03:52:33 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: auth.c,v 1.1.1.2 1997/05/17 21:38:48 christos Exp $";
+__RCSID("$NetBSD: auth.c,v 1.1.1.3 1997/09/26 18:51:16 christos Exp $");
 #endif
 #endif
 
@@ -310,6 +311,10 @@ network_phase(unit)
 	    if (protp->protocol != PPP_CCP)
 		++num_np_open;
 	}
+
+    if (num_np_open == 0)
+	/* nothing to do */
+	lcp_close(0, "No network protocols running");
 }
 
 /*
@@ -421,8 +426,14 @@ void
 np_up(unit, proto)
     int unit, proto;
 {
-    if (num_np_up == 0 && idle_time_limit > 0) {
-	TIMEOUT(check_idle, NULL, idle_time_limit);
+    if (num_np_up == 0) {
+	/*
+	 * At this point we consider that the link has come up successfully.
+	 */
+	need_holdoff = 0;
+
+	if (idle_time_limit > 0)
+	    TIMEOUT(check_idle, NULL, idle_time_limit);
 
 	/*
 	 * Set a timeout to close the connection once the maximum
@@ -465,7 +476,7 @@ np_finished(unit, proto)
  */
 static void
 check_idle(arg)
-    void *arg;
+     void *arg;
 {
     struct ppp_idle idle;
     time_t itime;
@@ -476,7 +487,6 @@ check_idle(arg)
     if (itime >= idle_time_limit) {
 	/* link is idle: shut it down. */
 	syslog(LOG_INFO, "Terminating connection due to lack of activity.");
-	need_holdoff = 0;
 	lcp_close(0, "Link inactive");
     } else {
 	TIMEOUT(check_idle, NULL, idle_time_limit - itime);
@@ -879,6 +889,7 @@ get_pap_passwd(passwd)
 {
     char *filename;
     FILE *f;
+    int ret;
     struct wordlist *addrs;
     char secret[MAXWORDLEN];
 
@@ -888,9 +899,11 @@ get_pap_passwd(passwd)
     if (f == NULL)
 	return 0;
     check_access(f, filename);
-    if (scan_authfile(f, user,
-		      remote_name[0]? remote_name: NULL,
-		      (u_int32_t)0, secret, NULL, filename) < 0)
+    ret = scan_authfile(f, user,
+			remote_name[0]? remote_name: NULL,
+			(u_int32_t)0, secret, NULL, filename);
+    fclose(f);
+    if (ret < 0)
 	return 0;
     if (passwd != NULL) {
 	strncpy(passwd, secret, MAXSECRETLEN);

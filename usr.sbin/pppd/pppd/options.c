@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.1.1.2 1997/05/17 21:38:05 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.1.1.3 1997/09/26 18:52:22 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: options.c,v 1.38 1997/04/30 05:55:54 paulus Exp ";
+static char rcsid[] = "Id: options.c,v 1.39 1997/07/14 03:53:34 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.1.1.2 1997/05/17 21:38:05 christos Exp $";
+__RCSID("$NetBSD: options.c,v 1.1.1.3 1997/09/26 18:52:22 christos Exp $");
 #endif
 #endif
 
@@ -1835,6 +1836,7 @@ setnetmask(argv)
 	return 0;
     }
 
+    netmask = mask;
     return (1);
 }
 

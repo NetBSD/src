@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.1.1.2 1997/05/17 21:27:51 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.1.1.3 1997/09/26 18:53:19 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -33,11 +33,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.19 1997/04/30 06:00:27 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: pppstats.c,v 1.1.1.2 1997/05/17 21:27:51 christos Exp $";
+__RCSID("$NetBSD: pppstats.c,v 1.1.1.3 1997/09/26 18:53:19 christos Exp $");
 #endif
 #endif
 
@@ -58,7 +59,11 @@ static char rcsid[] = "$NetBSD: pppstats.c,v 1.1.1.2 1997/05/17 21:27:51 christo
 #ifndef STREAMS
 #include <sys/socket.h>		/* *BSD, Linux, NeXT, Ultrix etc. */
 #include <net/if.h>
+#ifndef _linux_
 #include <net/if_ppp.h>
+#else
+#include <net/if_ppp.h>
+#endif
 
 #else	/* STREAMS */
 #include <sys/stropts.h>	/* SVR4, Solaris 2, SunOS 4, OSF/1, etc. */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/05/17 21:38:50 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 1997/09/26 18:51:07 christos Exp $
 
 PCAPDIR=${.CURDIR}/../../../lib/libpcap
 
@@ -14,7 +14,7 @@ BINOWN=	root
 LDADD=	-lpcap -lcrypt -lutil
 DPADD=	${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 CFLAGS+= -I. -DHAVE_PATHS_H -I${PCAPDIR} -DPPP_FILTER
-#CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Dlint
+CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.c,v 1.1.1.2 1997/05/17 21:38:40 christos Exp $	*/
+/*	$NetBSD: chap.c,v 1.1.1.3 1997/09/26 18:51:35 christos Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -35,11 +35,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.14 1997/04/30 05:51:08 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: chap.c,v 1.1.1.2 1997/05/17 21:38:40 christos Exp $";
+__RCSID("$NetBSD: chap.c,v 1.1.1.3 1997/09/26 18:51:35 christos Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.1.1.2 1997/05/17 21:38:27 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.1.1.3 1997/09/26 18:51:58 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ipcp.c,v 1.31 1997/04/30 05:52:48 paulus Exp ";
+static char rcsid[] = "Id: ipcp.c,v 1.32 1997/07/14 03:52:56 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: ipcp.c,v 1.1.1.2 1997/05/17 21:38:27 christos Exp $";
+__RCSID("$NetBSD: ipcp.c,v 1.1.1.3 1997/09/26 18:51:58 christos Exp $");
 #endif
 #endif
 
@@ -1091,10 +1092,12 @@ ip_check_options()
 	option_error("remote IP address required for demand-dialling\n");
 	exit(1);
     }
+#if 0
     if (demand && wo->accept_remote) {
 	option_error("ipcp-accept-remote is incompatible with demand\n");
 	exit(1);
     }
+#endif
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.1.1.2 1997/05/17 21:38:34 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.1.1.3 1997/09/26 18:51:48 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -19,11 +19,12 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char rcsid[] = "Id: demand.c,v 1.6 1997/04/30 05:51:56 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: demand.c,v 1.1.1.2 1997/05/17 21:38:34 christos Exp $";
+__RCSID("$NetBSD: demand.c,v 1.1.1.3 1997/09/26 18:51:48 christos Exp $");
 #endif
 #endif
 
