@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.76 2004/01/19 05:14:58 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.77 2004/01/24 13:02:41 darrenr Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.76 2004/01/19 05:14:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.77 2004/01/24 13:02:41 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -122,8 +122,6 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
-static int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
-	struct ifnet *, struct in6_addr *, u_long *));
 
 extern struct ifnet loif[NLOOP];
 
@@ -1167,7 +1165,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 	return (0);
 }
 
-static int
+int
 ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup)
 	struct route_in6 *ro_pmtu, *ro;
 	struct ifnet *ifp;
