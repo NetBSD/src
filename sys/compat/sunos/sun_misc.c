@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.4 1993/11/26 13:38:44 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.5 1993/11/26 23:51:54 deraadt Exp $
  */
 
 /*
@@ -777,4 +777,18 @@ sun_ustat(p, uap, retval)
 	if (error = copyout(&us, uap->buf, sizeof us))
 		return (error);
 	return 0;
+}
+
+struct sun_quotactl_args {
+	int	cmd;
+	char	*special;
+	int	uid;
+	caddr_t	addr;
+};
+sun_quotactl(p, uap, retval)
+	struct proc *p;
+	struct sun_quotactl_args *uap;
+	int *retval;
+{
+	return EINVAL;
 }
