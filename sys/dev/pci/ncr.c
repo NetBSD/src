@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.46 1996/10/23 04:37:37 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.47 1996/10/25 00:33:00 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1328,7 +1328,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.46 1996/10/23 04:37:37 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.47 1996/10/25 00:33:00 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
@@ -1473,8 +1473,11 @@ static char *ncr_name (ncb_p np)
  * Kernel variables referenced in the scripts.
  * THESE MUST ALL BE ALIGNED TO A 4-BYTE BOUNDARY.
  */
-static void *script_kvars[] =
-	{ (void *)&mono_time.tv_sec, (void *)&mono_time, (void *)&ncr_cache };
+static unsigned long script_kvars[] = {
+	(unsigned long)&mono_time.tv_sec,
+	(unsigned long)&mono_time,
+	(unsigned long)&ncr_cache,
+};
 
 static	struct script script0 = {
 /*--------------------------< START >-----------------------*/ {
@@ -3188,7 +3191,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 					    ((old & ~RELOC_MASK) >
 					     SCRIPT_KVAR_LAST))
 						panic("ncr KVAR out of range");
-					new = vtophys(script_kvars[old &
+					new = vtophys((void *)script_kvars[old &
 					    ~RELOC_MASK]);
 					break;
 				case 0:
