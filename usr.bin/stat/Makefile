@@ -1,4 +1,4 @@
-#	$NetBSD
+#	$NetBSD: Makefile,v 1.3 2002/07/26 14:16:37 atatat Exp $
 
 PROG=	stat
 LINKS=	${BINDIR}/stat ${BINDIR}/readlink
