@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.37 1998/06/04 15:59:04 ragge Exp $
+#       $NetBSD: files.vax,v 1.38 1998/06/05 22:17:02 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -141,11 +141,11 @@ attach	ln at vsbus
 file	arch/vax/vsa/if_ln.c		ln
 
 # Monochrome framebuffer on VS3100.
-device	smg: wsemuldisplaydev, wsrasteremulops
+device	smg: wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
 
-device	lkc # : wskbddev, wsmousedev
+device	lkc
 attach	lkc at dz
 file	arch/vax/vsa/lkc.c		lkc needs-flag
 
