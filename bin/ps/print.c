@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.9 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: print.c,v 1.10 1994/05/05 02:04:30 cgd Exp $";
+static char rcsid[] = "$Id: print.c,v 1.11 1994/05/05 06:44:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -233,7 +233,7 @@ pri(k, v)
 	KINFO *k;
 	VAR *v;
 {
-	(void) printf("%*d", v->width, k->ki_p->p_pri - PZERO);
+	(void) printf("%*d", v->width, k->ki_p->p_priority - PZERO);
 }
 
 uname(k, v)
@@ -421,10 +421,8 @@ cputime(k, v)
 		secs = 0;
 		psecs = 0;
 	} else {
-		secs = k->ki_p->p_utime.tv_sec +
-			k->ki_p->p_stime.tv_sec;
-		psecs = k->ki_p->p_utime.tv_usec +
-			k->ki_p->p_stime.tv_usec;
+		secs = k->ki_p->p_rtime.tv_sec;
+		psecs = k->ki_p->p_rtime.tv_usec;
 		if (sumrusage) {
 			secs += k->ki_u->u_cru.ru_utime.tv_sec +
 				k->ki_u->u_cru.ru_stime.tv_sec;
@@ -460,12 +458,12 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_time == 0 || (p->p_stat == SZOMB) || (p->p_flag & P_INMEM) == 0)
+	if (p->p_swtime == 0 || (p->p_stat == SZOMB) || (p->p_flag & P_INMEM) == 0)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
 	return (100.0 * fxtofl(p->p_pctcpu) /
-		(1.0 - exp(p->p_time * log(fxtofl(ccpu)))));
+		(1.0 - exp(p->p_swtime * log(fxtofl(ccpu)))));
 }
 
 pcpu(k, v)
