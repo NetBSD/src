@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 1997/01/09 20:19:48 tls Exp $
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
+#	$NetBSD: Makefile,v 1.4 1997/10/18 13:15:18 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	head
 
