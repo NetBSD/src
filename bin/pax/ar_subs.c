@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.20 2002/10/18 11:54:22 itojun Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.21 2002/12/10 18:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.20 2002/10/18 11:54:22 itojun Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.21 2002/12/10 18:33:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1267,6 +1267,6 @@ get_arc(void)
 	/*
 	 * we cannot find a header, bow, apologize and quit
 	 */
-	tty_warn(0, "Sorry, unable to determine archive format.");
+	tty_warn(1, "Sorry, unable to determine archive format.");
 	return(-1);
 }
