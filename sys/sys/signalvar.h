@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.24 2000/08/20 21:50:12 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.25 2000/11/05 15:37:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -164,6 +164,7 @@ void	sigpending1 __P((struct proc *p, sigset_t *ss));
 int	sigsuspend1 __P((struct proc *p, const sigset_t *ss));
 int	sigaltstack1 __P((struct proc *p, \
 	    const struct sigaltstack *nss, struct sigaltstack *oss));
+int	sigismasked __P((struct proc *, int));
 
 void	signal_init __P((void));
 
