@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.29 2000/03/12 04:25:57 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.30 2000/03/12 04:34:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -694,57 +694,45 @@ pccbb_chipinit(sc)
 	pcitag_t tag = sc->sc_tag;
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
 	bus_space_handle_t base_memh = sc->sc_base_memh;
-	pcireg_t cbctrl;
+	pcireg_t reg;
 
 	/* 
 	 * Set PCI command reg.
 	 * Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
 	 */
-	{
-		pcireg_t command =
-		    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-
-		/* I believe it is harmless. */
-		command |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		    PCI_COMMAND_MASTER_ENABLE);
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, command);
-	}
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	/* I believe it is harmless. */
+	reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/* 
-	 * Set CardBus latency timer
+	 * Set CardBus latency timer.
 	 */
-	{
-		pcireg_t pci_lscp = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
-		if (PCI_CB_LATENCY(pci_lscp) < 0x20) {
-			pci_lscp &=
-			    ~(PCI_CB_LATENCY_MASK << PCI_CB_LATENCY_SHIFT);
-			pci_lscp |= (0x20 << PCI_CB_LATENCY_SHIFT);
-			pci_conf_write(pc, tag, PCI_CB_LSCP_REG, pci_lscp);
-		}
-		DPRINTF(("CardBus latency timer 0x%x (%x)\n",
-		    PCI_CB_LATENCY(pci_lscp), pci_conf_read(pc, tag,
-		    PCI_CB_LSCP_REG)));
+	reg = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
+	if (PCI_CB_LATENCY(reg) < 0x20) {
+		reg &= ~(PCI_CB_LATENCY_MASK << PCI_CB_LATENCY_SHIFT);
+		reg |= (0x20 << PCI_CB_LATENCY_SHIFT);
+		pci_conf_write(pc, tag, PCI_CB_LSCP_REG, reg);
 	}
+	DPRINTF(("CardBus latency timer 0x%x (%x)\n",
+	    PCI_CB_LATENCY(reg), pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
 
 	/* 
-	 * Set PCI latency timer
+	 * Set PCI latency timer.
 	 */
-	{
-		pcireg_t pci_bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_LATTIMER(pci_bhlc) < 0x10) {
-			pci_bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-			pci_bhlc |= (0x10 << PCI_LATTIMER_SHIFT);
-			pci_conf_write(pc, tag, PCI_BHLC_REG, pci_bhlc);
-		}
-		DPRINTF(("PCI latency timer 0x%x (%x)\n",
-		    PCI_LATTIMER(pci_bhlc), pci_conf_read(pc, tag,
-		    PCI_BHLC_REG)));
+	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < 0x10) {
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (0x10 << PCI_LATTIMER_SHIFT);
+		pci_conf_write(pc, tag, PCI_BHLC_REG, reg);
 	}
+	DPRINTF(("PCI latency timer 0x%x (%x)\n",
+	    PCI_LATTIMER(reg), pci_conf_read(pc, tag, PCI_BHLC_REG)));
 
-	/* disable Legacy IO */
-
+	/* Disable legacy register mapping. */
 	switch (sc->sc_chipset) {
-	case CB_RX5C46X:	       /* fallthrogh */
+	case CB_RX5C46X:	       /* fallthrough */
 #if 0
 	case CB_RX5C47X:
 #endif
@@ -754,94 +742,65 @@ pccbb_chipinit(sc)
 		 * CardBus bridges have special bits on Bridge control reg (addr
 		 * 0x3e on PCI config space).
 		 */
-		{
-			pcireg_t bcri = pci_conf_read(pc, tag, PCI_BCR_INTR);
-			bcri &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
-			pci_conf_write(pc, tag, PCI_BCR_INTR, bcri);
-		}
+		reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		reg &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
+		pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
 		break;
+
 	default:
-		/* XXX: I don't know proper way to kill Legacy IO properly. */
+		/* XXX I don't know proper way to kill legacy I/O. */
 		pci_conf_write(pc, tag, PCI_LEGACY, 0x0);
 		break;
 	}
 
-	/* 
-	 * Interrupt routing: use PCI interrupt
-	 */
-	{
-		u_int32_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
-		bcr &= ~CB_BCR_INTR_IREQ_ENABLE;	/* use PCI Intr */
-		bcr |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
-		pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
-	}
+	/* Route functional interrupts to PCI. */
+	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
+	reg &= ~CB_BCR_INTR_IREQ_ENABLE;	/* use PCI Intr */
+	reg |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
+	pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
 
-	if (CB_TI113X == sc->sc_chipset) {
-		cbctrl = pci_conf_read(pc, tag, PCI_CBCTRL);
-		if (0 == sc->sc_function) {
-			cbctrl |= PCI113X_CBCTRL_PCI_IRQ_ENA;
-		}
-		/* XXX: bug in PCI113X */
-		cbctrl |= PCI113X_CBCTRL_PCI_IRQ_ENA;
+	switch (sc->sc_chipset) {
+	case CB_TI113X:
+		reg = pci_conf_read(pc, tag, PCI_CBCTRL);
+		/* This bit is shared, but may read as 0 on some chips, so set
+		   it explicitly on both functions. */
+		reg |= PCI113X_CBCTRL_PCI_IRQ_ENA;
 		/* CSC intr enable */
-		cbctrl |= PCI113X_CBCTRL_PCI_CSC;
+		reg |= PCI113X_CBCTRL_PCI_CSC;
 		/* functional intr prohibit */
-		cbctrl &= ~PCI113X_CBCTRL_PCI_INTR;
-		/* prohibit ISA routing */
-		cbctrl &= ~PCI113X_CBCTRL_INT_MASK;
-		pci_conf_write(pc, tag, PCI_CBCTRL, cbctrl);
+		reg &= ~PCI113X_CBCTRL_PCI_INTR;
+		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
 
+		/* FALLTHROUGH */
+	case CB_TI12XX:
 		/*
-		 * set ExCA regs: PCI113X required to be set bit 4 at Interrupt
-		 * and General Register, which is IRQ Enable Register, and
-		 * clear bit 3:0 to zero in order to route CSC interrupt to
-		 * PCI interrupt pin.
+		 * Register 03 bits 0-3 contain the functional IRQ number.
+		 * Register 05 bits 4-7 contain the CSC IRQ number.
+		 * Setting these to 0 disables ISA interrupt routing.
+		 * Setting register 03 bit 4 is required to enable PCI
+		 * interrupt routing on some chips.
 		 */
 		bus_space_write_1(base_memt, base_memh, 0x0803, 0x10);
-		/* set ExCA regs: prohibit all pcmcia-style CSC intr. */
-		bus_space_write_1(base_memt, base_memh, 0x0805, 0x00);
-#if 1
-		DPRINTF(("ExCA regs:"));
-		DPRINTF((" 0x803: %02x", bus_space_read_1(base_memt, base_memh,
-		    0x803)));
-		DPRINTF((" 0x805: %02x", bus_space_read_1(base_memt, base_memh,
-		    0x805)));
-		DPRINTF((" 0x81e: %02x\n", bus_space_read_1(base_memt,
-		    base_memh, 0x81e)));
-#endif
-	} else if (sc->sc_chipset == CB_TI12XX) {
-		cbctrl = pci_conf_read(pc, tag, PCI_CBCTRL);
-		cbctrl &= ~PCI12XX_CBCTRL_INT_MASK;	/* intr routing reset */
-		pci_conf_write(pc, tag, PCI_CBCTRL, cbctrl);
-		/* 
-		 * set ExCA regs: PCI12XX required to be set bit 4 at
-		 * Interrupt and General Register, which is IRQ Enable
-		 * Register, and clear bit 3:0 to zero in order to
-		 * route CSC interrupt to PCI interrupt pin.
-		 */
-		bus_space_write_1(base_memt, base_memh, 0x0803, 0x10);
-		/* set ExCA regs: prohibit all pcmcia-style CSC intr. */
-		bus_space_write_1(base_memt, base_memh, 0x0805, 0x00);
-	} else if (sc->sc_chipset == CB_TOPIC95B) {
-		cardbusreg_t sock_ctrl, slot_ctrl;
+		bus_space_write_1(base_memt, base_memh, 0x0805, 0x08);
+		break;
 
-		sock_ctrl = pci_conf_read(pc, tag, TOPIC_SOCKET_CTRL);
-		pci_conf_write(pc, tag, TOPIC_SOCKET_CTRL,
-		    sock_ctrl | TOPIC_SOCKET_CTRL_SCR_IRQSEL);
+	case CB_TOPIC95B:
+		reg = pci_conf_read(pc, tag, TOPIC_SOCKET_CTRL);
+		reg |= TOPIC_SOCKET_CTRL_SCR_IRQSEL;
+		pci_conf_write(pc, tag, TOPIC_SOCKET_CTRL, reg);
 
-		slot_ctrl = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
+		reg = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
 		DPRINTF(("%s: topic slot ctrl reg 0x%x -> ",
-		    sc->sc_dev.dv_xname, slot_ctrl));
-		slot_ctrl |=
-		    (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
-		    TOPIC_SLOT_CTRL_ID_LOCK);
-		slot_ctrl |= TOPIC_SLOT_CTRL_CARDBUS;
-		slot_ctrl &= ~TOPIC_SLOT_CTRL_SWDETECT;
-		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, slot_ctrl);
-		DPRINTF(("0x%x\n", slot_ctrl));
+		    sc->sc_dev.dv_xname, reg));
+		reg |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
+		    TOPIC_SLOT_CTRL_ID_LOCK | TOPIC_SLOT_CTRL_CARDBUS);
+		reg &= ~TOPIC_SLOT_CTRL_SWDETECT;
+		DPRINTF(("0x%x\n", reg));
+		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		break;
 	}
 
-	/* close all memory and io windows */
+	/* Close all memory and I/O windows. */
 	pci_conf_write(pc, tag, PCI_CB_MEMBASE0, 0xffffffff);
 	pci_conf_write(pc, tag, PCI_CB_MEMLIMIT0, 0);
 	pci_conf_write(pc, tag, PCI_CB_MEMBASE1, 0xffffffff);
@@ -850,8 +809,6 @@ pccbb_chipinit(sc)
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT0, 0);
 	pci_conf_write(pc, tag, PCI_CB_IOBASE1, 0xffffffff);
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT1, 0);
-
-	return;
 }
 
 
