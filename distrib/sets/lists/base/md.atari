@@ -1,6 +1,7 @@
 ./sbin/binpatch
 ./sbin/edahdi
 ./sbin/edlabel
+./sbin/ldconfig
 ./usr/bin/fdformat
 ./usr/bin/msconfig
 ./usr/lib/libamu.so.0.0
