@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.123 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.124 2004/07/01 10:03:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -571,6 +571,7 @@ vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 	}
 	if ((mp = *mpp) == NULL)
 		return (0);
+	mp = mp->mnt_leaf;
 	/*
 	 * Check on status of suspension.
 	 */
@@ -611,6 +612,7 @@ vn_finished_write(struct mount *mp, int flags)
 {
 	if (mp == NULL)
 		return;
+	mp = mp->mnt_leaf;
 	simple_lock(&mp->mnt_slock);
 	if ((flags & V_LOWER) == 0) {
 		mp->mnt_writeopcountupper--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.122 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.123 2004/07/01 10:03:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -134,6 +134,7 @@ struct mount {
 	int		mnt_writeopcountlower;	/* lower writeops in progress */
 	struct simplelock mnt_slock;		/* mutex for wcnt and
 						   writeops counters */
+	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
 };
 
 /*
