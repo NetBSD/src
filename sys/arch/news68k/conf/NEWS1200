@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.15 2002/03/04 13:24:11 sommerfeld Exp $
+# 	$NetBSD: NEWS1200,v 1.16 2002/03/05 13:59:14 wiz Exp $
 
 #	news1200 config file
 #
@@ -71,7 +71,7 @@ file-system	NULLFS		# loopback file system
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP securyty (encryption part; define w/IPSEC)
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
