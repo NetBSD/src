@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.100 1999/02/12 01:10:08 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.101 1999/07/01 20:19:18 itojun Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -39,6 +39,7 @@ LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
