@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.61 2004/04/09 02:31:39 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.62 2004/04/09 10:49:06 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -663,6 +663,13 @@ games/mille/move.c				1.14
 sys/arch/macppc/pci/pci_machdep.c		1.25
 
 	Deal with OFW trees that have interrupt nodes without an #address-cells
-	property. Treat them as if they had such a property but its value was 0.
-
+	property. Treat them as if they had such a property but its value
+	was 0.
 	[matt, ticket #102]
+
+sys/arch/i386/i386/procfs_machdep.c		1.19
+
+	Revert previous: Linux' procfs spells "CPU" "cpu", so mimic it.
+	Closes PR 25076 by salo.
+	[salo, ticket #103]
+
