@@ -1,4 +1,0 @@
-# $NetBSD: md.mac68k,v 1.5 1999/04/19 03:11:37 simonb Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xmac68k
-./usr/X11R6/man/cat1/Xmac68k.0

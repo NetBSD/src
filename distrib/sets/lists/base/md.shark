@@ -1,3 +1,0 @@
-# $NetBSD: md.shark,v 1.1 2002/02/11 19:10:56 thorpej Exp $
-./sbin/ldconfig			base-sysutil-root
-./usr/libexec/ld.so		base-sys-shlib
