@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.4 1997/10/03 19:55:36 christos Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.5 1999/05/11 02:54:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ppp.c,v 1.4 1997/10/03 19:55:36 christos Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.5 1999/05/11 02:54:30 thorpej Exp $");
 #endif
 #endif
 
@@ -43,6 +43,12 @@ struct rtentry;
 #endif
 #include <net/if.h>
 
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
+#include <netinet/if_ether.h>
+#endif
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -54,6 +60,7 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "ethertype.h"
 #include "ppp.h"
 
 /* XXX This goes somewhere else. */
@@ -99,11 +106,38 @@ out:
 
 /* proto type to string mapping */
 static struct tok ptype2str[] = {
+	{ PPP_IP,	"IP" },
+	{ PPP_OSI,	"OSI" },
+	{ PPP_NS,	"NS" },
+	{ PPP_DECNET,	"DEC" },
+	{ PPP_APPLE,	"AT" },
+	{ PPP_IPX,	"IPX" },
 	{ PPP_VJC,	"VJC" },
 	{ PPP_VJNC,	"VJNC" },
-	{ PPP_OSI,	"OSI" },
-	{ PPP_LCP,	"LCP" },
+	{ PPP_BRPDU,	"BRPDU" },
+	{ PPP_STII,	"STII" },
+	{ PPP_VINES,	"VINES" },
+	{ PPP_IPV6,	"IPv6" },
+
+	{ PPP_HELLO,	"HELLO" },
+	{ PPP_LUXCOM,	"LUXCOM" },
+	{ PPP_SNS,	"SNS" },
+
 	{ PPP_IPCP,	"IPCP" },
+	{ PPP_OSICP,	"OSICP" },
+	{ PPP_NSCP,	"NSCP" },
+	{ PPP_DECNETCP,	"DECCP" },
+	{ PPP_APPLECP,	"ATCP" },
+	{ PPP_IPXCP,	"IPXCP" },
+	{ PPP_STIICP,	"STIICP" },
+	{ PPP_VINESCP,	"VINESCP" },
+
+	{ PPP_LCP,	"LCP" },
+	{ PPP_PAP,	"PAP" },
+	{ PPP_LQM,	"LQM" },
+	{ PPP_CBCP,	"CBCP" },
+	{ PPP_CHAP,	"CHAP" },
+
 	{ 0,		NULL }
 };
 
@@ -172,4 +206,170 @@ ppp_bsdos_if_print(u_char *user, const struct pcap_pkthdr *h,
 		default_print((const u_char *)p, caplen - hdrlength);
 out:
 	putchar('\n');
+}
+
+/*
+ * NetBSD-specific PPP printers.  Handles multiple PPP encaps, and
+ * Cisco frames.
+ */
+
+void	ppp_netbsd_common_print(const u_char *, u_int, u_int, u_short);
+
+#define	PPP_NETBSD_SERIAL_HDRLEN	4
+
+void
+ppp_netbsd_serial_if_print(u_char *user, const struct pcap_pkthdr *h,
+		register const u_char *p)
+{
+	register u_int length = h->len;
+	register u_int caplen = h->caplen;
+	u_short ptype;
+	u_char addr, ctrl;
+
+	ts_print(&h->ts);
+
+	if (caplen < PPP_NETBSD_SERIAL_HDRLEN) {
+		printf("[|ppp]");
+		goto out;
+	}
+
+	/*
+	 * Some printers want to get back at the link level addresses,
+	 * and/or check that they're not walking off the end of the packet.
+	 * Rather than pass them all the way down, we set these globals.
+	 */
+	packetp = p;
+	snapend = p + caplen;
+
+	addr = p[0];
+	ctrl = p[1];
+
+	switch (addr) {
+	case PPP_ADDR_ALLSTATIONS:
+		/*
+		 * Regular serial PPP packet.
+		 */
+		if (eflag)
+			printf("%02x %02x %d ", p[0], p[1], length);
+
+		ptype = (p[2] << 8) | p[3];
+
+		p += PPP_NETBSD_SERIAL_HDRLEN;
+		length -= PPP_NETBSD_SERIAL_HDRLEN;
+		caplen -= PPP_NETBSD_SERIAL_HDRLEN;
+
+		ppp_netbsd_common_print(p, length, caplen, ptype);
+		break;
+
+	case PPP_ADDR_CISCO_MULTICAST:
+	case PPP_ADDR_CISCO_UNICAST:
+		if (eflag) {
+			/* Control field not valid here. */
+			printf("CISCO %02x %d ", p[0], length);
+		}
+
+		ptype = (p[2] << 8) | p[3];
+
+		p += PPP_NETBSD_SERIAL_HDRLEN;
+		length -= PPP_NETBSD_SERIAL_HDRLEN;
+		caplen -= PPP_NETBSD_SERIAL_HDRLEN;
+
+		switch (ptype) {
+		case PPP_CISCO_KEEPALIVE:
+		    {
+			u_int type, par1, par2;
+			u_short rel, time0, time1;
+
+			if (caplen < CISCO_KEEP_LEN) {
+				printf("[!cisco keepalive]");
+				goto out;
+			}
+
+#define	GET4(p, o) \
+	(p)[(o) + 0] << 24 | \
+	(p)[(o) + 1] << 16 | \
+	(p)[(o) + 2] << 8  | \
+	(p)[(o) + 3]
+
+			type = GET4(p, CISCO_KEEP_TYPE_OFF);
+			par1 = GET4(p, CISCO_KEEP_PAR1_OFF);
+			par2 = GET4(p, CISCO_KEEP_PAR2_OFF);
+
+#undef GET4
+
+#define	GET2(p, o) \
+	(p)[(o) + 0] << 8 | \
+	(p)[(o) + 1]
+
+			rel = GET2(p, CISCO_KEEP_REL_OFF);
+			time0 = GET2(p, CISCO_KEEP_TIME0_OFF);
+			time1 = GET2(p, CISCO_KEEP_TIME1_OFF);
+
+#undef GET2
+
+			switch(type) {
+			case CISCO_KEEP_TYPE_ADDR_REPLY:
+				printf("CISCO ADDR REPLY ");
+				break;
+
+			case CISCO_KEEP_TYPE_KEEP_REQ:
+				printf("CISCO KEEP REQ ");
+				break;
+
+			case CISCO_KEEP_TYPE_ADDR_REQ:
+				printf("CISCO ADDR REQ ");
+				break;
+
+			default:
+				printf("CISCO type %04x ", type);
+			}
+
+			printf("%08x %08x %08x %04x-%04x ",
+			    par1, par2, rel, time0, time1);
+
+			p += CISCO_KEEP_LEN;
+			length -= CISCO_KEEP_LEN;
+			caplen -= CISCO_KEEP_LEN;
+			break;
+		    }
+
+		default:
+			if (ether_encap_print(ptype, p, length, caplen) == 0)
+				printf("proto-#%d ", ptype);
+		}
+
+		if (xflag)
+			default_print((const u_char *)p, caplen);
+		break;
+
+	default:
+		/* Address not known, print raw packet. */
+		if (!qflag)
+			default_print((const u_char *)p, caplen);
+	}
+
+ out:
+	putchar('\n');
+}
+
+void
+ppp_netbsd_common_print(const u_char *p, u_int length, u_int caplen,
+		u_short ptype)
+{
+
+	switch (ptype) {
+	case PPP_IP:
+		ip_print(p, length);
+		break;
+
+	case PPP_IPX:
+		ipx_print(p, length);
+		break;
+
+	default:
+		printf("%s ", tok2str(ptype2str, "proto-#%d", ptype));
+	}
+
+	if (xflag)
+		default_print((const u_char *)p, caplen);
 }
