@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.15 1995/06/04 05:06:58 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.16 1995/06/04 05:58:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -182,10 +182,10 @@ in_pcbconnect(inp, nam)
 		 * choose the broadcast address for that interface.
 		 */
 		if (sin->sin_addr.s_addr == INADDR_ANY)
-		    sin->sin_addr = IA_SIN(in_ifaddr)->sin_addr;
+			sin->sin_addr = in_ifaddr->in_addr.sin_addr;
 		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
 		  (in_ifaddr->ia_ifp->if_flags & IFF_BROADCAST))
-		    sin->sin_addr = satosin(&in_ifaddr->ia_broadaddr)->sin_addr;
+			sin->sin_addr = in_ifaddr->ia_broadaddr.sin_addr;
 	}
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		register struct route *ro;
