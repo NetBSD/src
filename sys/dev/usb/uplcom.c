@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.12 2001/03/14 15:53:01 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.13 2001/03/26 12:49:39 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,6 @@ struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface;	/* first interface */
-	usbd_interface_handle	sc_sec_iface;	/* second interface */
 	int			sc_iface_number;	/* interface number */
 
 	int			sc_intr_number;	/* interrupt number */
@@ -103,7 +102,7 @@ struct	uplcom_softc {
 
 	device_ptr_t		sc_subdev;	/* ucom device */
 
-	u_char			sc_dying;
+	u_char			sc_dying;	/* disconnecting */
 
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* uplcom status register */
@@ -151,6 +150,7 @@ static const struct uplcom_product {
 } uplcom_products [] = {
 	/* I/O DATA USB-RSAQ2 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	/* I/O DATA USB-RSAQ */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 
 	{ 0, 0 }
@@ -197,11 +197,17 @@ USB_ATTACH(uplcom)
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
+	/* initialize endpoints */ 
+	uca.bulkin = uca.bulkout = -1;
+	sc->sc_intr_number = -1;
+	sc->sc_intr_pipe = NULL;
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
 	if (err) {
 		printf("\n%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -211,55 +217,88 @@ USB_ATTACH(uplcom)
 	if (cdesc == NULL) {
 		printf("%s: failed to get configuration descriptor\n",
 			USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	/* get the (first) interface */
+	/* get the (first/common) interface */
 	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX, 
 							&sc->sc_iface);
 	if (err) {
 		printf("\n%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	/*
-	 * check second interface
-	 * USB-RSAQ has two interface
-	 */
-	if (cdesc->bNumInterface == 2) {
-		err = usbd_device2interface_handle(dev, 
-				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_sec_iface);
-		if (err) {
-			printf("\n%s: failed to get second interface, err=%s\n",
-							devname, usbd_errstr(err));
-			USB_ATTACH_ERROR_RETURN;
-		}
-		sc->sc_iface = sc->sc_sec_iface;
-	} 
 
-	/* Find the bulk endpoints */
+	/* Find the interrupt endpoints */
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	sc->sc_iface_number = id->bInterfaceNumber;
 
-	uca.bulkin = uca.bulkout = -1;
-	sc->sc_intr_number = -1;
-	sc->sc_intr_pipe = NULL;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
 			printf("%s: no endpoint descriptor for %d\n",
 				USBDEVNAME(sc->sc_dev), i);
+			sc->sc_dying = 1;
+			USB_ATTACH_ERROR_RETURN;
+		}
+
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
+			sc->sc_intr_number = ed->bEndpointAddress;
+			sc->sc_isize = UGETW(ed->wMaxPacketSize);
+		} 
+	}
+
+	if (sc->sc_intr_number== -1) {
+		printf("%s: Could not find interrupt in\n",
+			USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	/*
+	 * USB-RSAQ1 has two interface
+	 *
+	 *  USB-RSAQ1       | USB-RSAQ2
+ 	 * -----------------+-----------------
+	 * Interface 1      |Interface 1
+	 *  Interruput(0x81)| Interruput(0x81)
+	 * -----------------+ BulkIN(0x02)
+	 * Interface 2	    | BulkOUT(0x83)
+	 *   BulkIN(0x02)   | 
+	 *   BulkOUT(0x83)  |
+	 */
+	if (cdesc->bNumInterface == 2) {
+		err = usbd_device2interface_handle(dev, 
+				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
+		if (err) {
+			printf("\n%s: failed to get second interface, err=%s\n",
+							devname, usbd_errstr(err));
+			sc->sc_dying = 1;
+			USB_ATTACH_ERROR_RETURN;
+		}
+	} 
+
+	/* Find the bulk{in,out} endpoints */
+
+	id = usbd_get_interface_descriptor(sc->sc_iface);
+	sc->sc_iface_number = id->bInterfaceNumber;
+
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		if (ed == NULL) {
+			printf("%s: no endpoint descriptor for %d\n",
+				USBDEVNAME(sc->sc_dev), i);
+			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkin = ed->bEndpointAddress;
-		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			sc->sc_intr_number = ed->bEndpointAddress;
-			sc->sc_isize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkout = ed->bEndpointAddress;
@@ -269,18 +308,14 @@ USB_ATTACH(uplcom)
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
 			USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	if (uca.bulkout == -1) {
 		printf("%s: Could not find data bulk out\n",
 			USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
-	if (sc->sc_intr_number== -1) {
-		printf("%s: Could not find interrupt in\n",
-			USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -302,6 +337,7 @@ USB_ATTACH(uplcom)
 	if (err) {
 		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
 			usbd_errstr(err));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
