@@ -1,7 +1,10 @@
-.\" $NetBSD: bba.4,v 1.3 2001/09/21 09:11:40 gmcgarry Exp $
+.\"     $NetBSD: tfb.4,v 1.1 2001/09/21 09:11:41 gmcgarry Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Gregory McGarry.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,32 +34,34 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 2, 2000
-.Dt BBA 4
+.Dd September 14, 2001
+.Dt TFB 4
 .Os
 .Sh NAME
-.Nm bba
-.Nd IOASIC Baseboard Audio device driver
+.Nm tfb
+.Nd
+PMAG-J and PMAGB-J TX colour unaccelerated 2-D framebuffer
 .Sh SYNOPSIS
-.Cd "bba0   at ioasic? offset ?"
-.Cd "audio* at bba?"
+.Cd "tfb* at tc? slot ? offset ?"
+.Cd "wsdisplay* at tfb?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the IOASIC baseboard audio found on
-DEC 3000/300, 3000/500
-.Ns ( Nx Ns /alpha )
-and DEC Personal DECstation
-.Ns ( Nx Ns /pmax )
-systems.  The baseboard
-audio driver is based on the AMD 79c30 ISDN and audio interface.  The
-interface is only capable of playing and recording 8kHz u-law audio.
+driver provides support for the PMAG-J and PMAGB-J TX colour
+framebuffer for the TurboChannel bus.  The PMAG-J is an 8 bpp or 24
+bpp colour framebuffer capable of running at a resolution of
+1280-by-1024 at 66 Hz.  The PMAGB-J is an 8 bpp or 24 bpp colour
+framebuffer capable of running at a resolution of 1280-by-1024 at 72
+Hz.
 .Sh SEE ALSO
-.Xr audio 4 ,
-.Xr ioasic 4
-.Sh HISTORY
-The
-.Nm
-device driver appeared in
-.Nx 1.5 .
-The name for the driver was adopted from the same driver in Ultrix.
+.Xr cfb 4 ,
+.Xr mfb 4 ,
+.Xr px 4 ,
+.Xr sfb 4 ,
+.Xr tc 4 ,
+.Xr wscons 4
+.Sh BUGS
+.Nx Ns /pmax
+does not currently support the machine-independent
+.Xr wscons 4
+interface and uses a machine-dependent version.

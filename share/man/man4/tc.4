@@ -1,3 +1,4 @@
+.\" $NetBSD: tc.4,v 1.1 2001/09/21 09:11:41 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -27,78 +28,95 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ioasic.4,v 1.10 2001/08/26 14:23:47 wiz Exp $
-.\"
-.Dd August 6, 1996
-.Dt IOASIC 4 pmax
+.Dd September 12, 2001
+.Dt TC 4
 .Os
 .Sh NAME
-.Nm ioasic
+.Nm tc
 .Nd
-baseboard IO control ASIC for DEC TurboChannel systems
+TurboChannel expansion bus driver
 .Sh SYNOPSIS
-.Cd "ioasic0 at tc?"
+.Ss alpha
+.Cd "tc* at tcasic?"
+.Ss pmax
+.Cd "tc* at mainbus0"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the DEC proprietary IOCTL ASIC found on
-all DEC TurboChannel machines with MIPS (DECstation 5000 series,
-excluding the 5000/200) and Alpha (3000-series) processors.
-On these machines (including the 5000/200), all baseboard devices should be
-configured as children of the
-.Nm
-device.
+driver provides machine-independent support for the DEC TurboChannel
+expansion bus found on all DEC 5000-series machines with MIPS and DEC
+3000-series with Alpha processors.  
 .Pp
-The
-.Nm
-provides hardware DMA channels and interrupt support for several
-baseboard devices, including one
-.Nm asc
-SCSI device with a scatter/gather DMA channel, an mc146818-compatible
-.Nm mcclock ,
-an Am9730 audio device
-.Nm bba ,
-one or two
-.Nm scc
-two-port serial devices, and a AMD 9770 LANCE
-.Nm le
-Ethernet interface.
+Your system may support additional
+.Tn TurboChannel
+devices.  Drivers for
+.Tn TurboChannel
+devices not listed here are machine-dependent.
+Consult your system's
+.Xr intro 4
+for additional information.
+.Sh SUPPORTED DEVICES
+.Nx
+includes machine-independent
+.Tn TurboChannel
+drivers, sorted by device type and driver name:
 .Pp
-The
-.Nm
-is also used for the floppy-disc drive and audio/ISDN hardware on
-the Personal DECstation and audio-equipped TurboChannel Alphas,
-where the
-.Nm
-hardware provides a scatter-gather DMA channel between the 16-bit
-device and the 32-bit
-.Nm tc
-DMA address space.
+.Ss SCSI interfaces
+.Bl -tag -width pcdisplay -offset indent
+.It asc
+PMAZ-A single-channel SCSI adapter
+.It tcds
+PMAZ-DS, PMAZ-FS, PMAZB-AA and PMAZC-AA dual-channel SCSI adapters
+.El
 .Pp
-Support for scatter-gather DMA eliminates the need for additional copying.
-A baseboard
-.Nm asc
-SCSI adaptor attached to an
-.Nm ioasic
-will give slightly better performance than its
-.Nm tc
-counterpart.
+.Ss Network interfaces
+.Bl -tag -width pcdisplay -offset indent
+.It fta
+PMAF-F DEFTA FDDI controller
+.It le
+LANCE Ethernet interface
+.El
+.Pp
+.Ss Frame buffers
+.Bl -tag -width pcdisplay -offset indent
+.It cfb
+PMAG-B CX colour unaccelerated 2-D framebuffer
+.It mfb
+PMAG-A MX monochrome framebuffer
+.It px
+PMAG-C, PMAG-D, PMAG-E and PMAG-F ``PixelStamp'' accelerated graphics
+boards
+.It sfb
+PMAGB-BA HX colour unaccelerated 2-D framebuffer
+.It tfb
+PMAG-J TX 24-bit colour unaccelerated 2-D framebuffer
+.El
+.Pp
+.Ss Miscellaneous
+.Bl -tag -width pcdisplay -offset indent
+.It ioasic
+baseboard IO control ASIC for DEC TurboChannel systems
+.El
+.Pp
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr mcclock 4 ,
 .Xr asc 4 ,
-.Xr bba 4 ,
+.Xr cfb 4 ,
+.Xr fta 4 ,
+.Xr ioasic 4 ,
+.Xr intro 4 ,
 .Xr le 4 ,
-.Xr scc 4 ,
-.Xr tc 4
+.Xr mfb 4 ,
+.Xr px 4 ,
+.Xr sfb 4 ,
+.Xr tcds 4 ,
+.Xr tfb 4
 .Sh HISTORY
 The
 .Nm
-driver
-first appeared in
-.Nx 1.1 ,
-derived from DECstation boot-time configuration code in
-.Bx 4.4  .
+driver first appeared in
+.Nx 1.1 .
 .Sh BUGS
-The DECstation 5000/200 does not actually have an IOASIC
-chip, but for consistency it must be configured as if it did.
+The
+.Nm
+driver makes poor use of interrupt priority on the 5000/1xx series
+systems.

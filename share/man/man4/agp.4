@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.4 2001/09/11 17:39:00 wiz Exp $
+.\"     $NetBSD: agp.4,v 1.5 2001/09/21 09:11:40 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,13 +58,15 @@ The
 driver supports the following chipsets:
 .Bl -dash -compact indent
 .It
-VIA
+ALI
 .It
-Intel
+AMD (AMD751)
+.It
+Intel (82810, 82810E)
 .It
 SiS
 .It
-AMD
+VIA
 .El
 .Pp
 The
@@ -122,7 +124,7 @@ typedef struct _agp_allocate {
 .It Dv AGPIOC_DEALLOCATE
 Deallocate AGP space.
 .It Dv AGPIOC_BIND
-Bind AGP, using the members in the
+Bind AGP space, using the members in the
 .Em agp_bind
 structure as defined in <sys/agpio.h>:
 .Bd -literal
@@ -132,7 +134,7 @@ typedef struct _agp_bind {
 } agp_bind;
 .Ed
 .It Dv AGPIOC_UNBIND
-Unbind AGP, using the members in the
+Unbind AGP space, using the members in the
 .Em agp_unbind
 structure as defined in <sys/agpio.h>:
 .Bd -literal
@@ -237,6 +239,6 @@ main(int argc, char **argv)
 The
 .Nm
 driver first appeared in
-.Fx .
+.Fx 5.0 .
 It was adopted in
 .Nx 1.6 .

@@ -1,5 +1,6 @@
+.\" $NetBSD: ioasic.4,v 1.1 2001/09/21 09:11:40 gmcgarry Exp $
 .\"
-.\" Copyright (c) 1996 Jonathan Stone.
+.\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,48 +28,76 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sii.4,v 1.10 2001/09/21 09:11:48 gmcgarry Exp $
-.\"
-.Dd August 26, 2001
-.Dt SII 4 pmax
+.Dd September 12, 1996
+.Dt IOASIC 4
 .Os
 .Sh NAME
-.Nm sii
+.Nm ioasic
 .Nd
-SII SCSI adaptor
+baseboard IO control ASIC for DEC TurboChannel systems
 .Sh SYNOPSIS
-.Cd "sii* at ibus0 addr ?
-.Cd "scsibus* at sii?"
+.Cd "ioasic0 at tc? slot ? offset ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the
-.Tn DEC
-SII SCSI adaptor ASIC used in
-the DECstation 2100, 3100, and 5100, and in the VAXstation 3100.
+driver provides support for the DEC proprietary IOCTL ASIC found on
+all DEC TurboChannel machines with MIPS (DECstation 5000 series,
+excluding the 5000/200) and Alpha (3000-series) processors.  On these
+machines (including the 5000/200), all baseboard devices should be
+configured as children of the
+.Nm
+device.
 .Pp
 The
 .Nm
-is a medium-performance implementation of the SCSI-I common command set
-supporting synchronous and asynchronous SCSI devices.
-.Pp
-The SII cabling is unusual: the bulkhead connector is very similar
-to a standard submicro wide SCSI-II connector, but has the other gender.
+provides hardware DMA channels and interrupt support for several
+baseboard devices, including one
+.Nm asc
+SCSI device with a scatter/gather DMA channel, an mc146818-compatible
+.Nm mcclock ,
+an Am9730 audio device
+.Nm bba ,
+one or two
+.Nm scc
+two-port serial devices, and a AMD 9770 LANCE
+.Nm le
+Ethernet interface.
 .Pp
 The
 .Nm
-chip only supports DMA to or from a fixed window in memory.
-The driver uses this "window" area as a bounce buffer, copying data
-to and from the DMA region.
+is also used for the floppy-disc drive and audio/ISDN hardware on
+the Personal DECstation and audio-equipped TurboChannel Alphas,
+where the
+.Nm
+hardware provides a scatter-gather DMA channel between the 16-bit
+device and the 32-bit
+.Nm tc
+DMA address space.
+.Pp
+Support for scatter-gather DMA eliminates the need for additional copying.
+A baseboard
+.Nm asc
+SCSI adaptor attached to an
+.Nm ioasic
+will give slightly better performance than its
+.Nm tc
+counterpart.
 .Sh SEE ALSO
-.Xr cd 4 ,
-.Xr ch 4 ,
-.Xr ibus 4 ,
+.Xr asc 4 ,
+.Xr bba 4 ,
 .Xr intro 4 ,
-.Xr sd 4 ,
-.Xr st 4
+.Xr mcclock 4 ,
+.Xr le 4 ,
+.Xr scc 4 ,
+.Xr tc 4
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
-.Bx 4.4 .
+driver
+first appeared in
+.Nx 1.1 ,
+derived from DECstation boot-time configuration code in
+.Bx 4.4  .
+.Sh BUGS
+The DECstation 5000/200 does not actually have an IOASIC
+chip, but for consistency it must be configured as if it did.

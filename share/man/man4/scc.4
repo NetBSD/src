@@ -27,28 +27,26 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.7 2001/07/08 17:22:54 wiz Exp $
+.\"	$NetBSD: scc.4,v 1.1 2001/09/21 09:11:41 gmcgarry Exp $
 .\"
-.Dd August 6, 1996
-.Dt SCC 4 pmax
+.Dd September 19, 2001
+.Dt SCC 4
 .Os
 .Sh NAME
 .Nm scc
 .Nd
 Zilog 8530 Serial Communications Controller interface
 .Sh SYNOPSIS
-.Cd "scc0 at ioasic?"
-.Cd "scc1 at ioasic?"
+.Cd "scc* at ioasic? offset ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the Zilog 8530 Serial Communications
-Controller (SCC) via the IOCTL ASIC on DECstation 5000 models
-in the /100, /20, and /240 series.
-Each SCC device has two serial ports.
-The model 20 provides one SCC device.
-Other models provide two, but one port of each device is dedicated
-to mouse and keyboard input, respectively.
+Controller (SCC) via the IOASIC found on DEC 3000/300, 3000/500 and
+DECstation 5000 models in the /100, /20, and /240 series.  Each SCC
+device has two serial ports.  The model 20 provides one SCC device.
+Other models provide two, but one port of each device is dedicated to
+mouse and keyboard input, respectively.
 .Pp
 Input and output for each line may set to one of following baud rates:
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
@@ -79,16 +77,19 @@ the first serial port (default serial console) is
 .Pa ttyc
 and the second port is
 .Pa ttya .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr ioasic 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Bx 4.4 .
 .Sh BUGS
-The IOCTL ASIC provides internal DMA channels that can be programmed
-to transfer up to 4096 bytes of data into, or out, of an SCC without
-further software intervention.
-This feature of the IOCTL ASIC is not yet supported.
+The IOASIC provides internal DMA channels that can be programmed to
+transfer up to 4096 bytes of data into, or out, of an SCC without
+further software intervention.  This feature of the IOASIC is not yet
+supported.
 .Pp
 The mapping from device-special files (major and minor number) to chip
 and port is arguably backwards.
