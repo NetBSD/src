@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.22 1998/04/13 22:18:03 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.23 1998/05/20 16:19:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -100,7 +100,6 @@ sb_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "CTL0045") && /* SB AWE64 Value */
 	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
 	    strcmp(ipa->ipa_devlogic, "OPT9250") && /* Televideo card, Opti */
-	    strcmp(ipa->ipa_devlogic, "YMH0021") && /* OPL3-SA3 */
 	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
 	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
 	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */

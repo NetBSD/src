@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.58 1998/04/16 17:51:46 drochner Exp $
+#	$NetBSD: files.isa,v 1.59 1998/05/20 16:19:42 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -277,6 +277,10 @@ file	dev/isa/wss.c			wss needs-flag
 
 attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss_isa needs-flag
+
+# Yamaha OPL3-SA3
+device	ym: audio, isadma, ad1848, auconv
+file	dev/isa/ym.c			ym needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "flags" keyword in a config file to specify an extra DMA
