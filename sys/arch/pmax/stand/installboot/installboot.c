@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.3.2.1 2000/10/17 01:46:31 tv Exp $ */
+/* $NetBSD: installboot.c,v 1.3.2.2 2000/10/17 23:44:46 tv Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -80,18 +80,19 @@
 static void usage(void);
 static void clr_bootstrap(const char *disk);
 static void set_bootstrap(const char *disk, const char *bootstrap);
+static void set_sunsum(struct pmax_boot_block *bb);
 
 extern char *__progname;
 
-int verbose, nowrite, append, isoblock;
+int verbose, nowrite, append, isoblock, sunsum;
 struct stat disksb;
 
 static void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-nv] [-i block | -a] disk bootstrap\n", __progname);
-	fprintf(stderr, "\t%s [-nv] -c disk\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] [-i block | -a] disk bootstrap\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] -c disk\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -101,9 +102,9 @@ main(int argc, char **argv)
 	const char *disk, *bootstrap;
 	int c, clearflag;
 
-	clearflag = verbose = nowrite = append = isoblock = 0;
+	clearflag = verbose = nowrite = append = isoblock = sunsum = 0;
 
-	while ((c = getopt(argc, argv, "aci:nv")) != -1) {
+	while ((c = getopt(argc, argv, "aci:nsv")) != -1) {
 		switch (c) {
 		case 'a':
 			/* Append to disk (image) */
@@ -121,6 +122,10 @@ main(int argc, char **argv)
 		case 'n':
 			/* Do not actually write the boot file */
 			nowrite = 1;
+			break;
+		case 's':
+			/* Recompute the sun checksum */
+			sunsum = 1;
 			break;
 		case 'v':
 			/* Chat */
@@ -146,6 +151,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "disk: %s\n", disk);
 		fprintf(stderr, "bootstrap: %s\n",
 		    bootstrap != NULL ? bootstrap : "to be cleared");
+		if (sunsum){fprintf(stderr, "will restore sun checksum\n");}
 	}
 	if (sizeof (struct pmax_boot_block) != PMAX_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
@@ -183,7 +189,7 @@ clr_bootstrap(const char *disk)
 	else if (rv != sizeof bb)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
-	if (le32toh(bb.magic) != PMAX_BOOT_MAGIC) {
+	if (htole32(bb.magic) != PMAX_BOOT_MAGIC) {
 		fprintf(stderr, "old boot block magic number invalid (%#x)\n",
 		    bb.magic);
 		fprintf(stderr, "boot block invalid\n");
@@ -192,6 +198,10 @@ clr_bootstrap(const char *disk)
 
 	bb.map[0].num_blocks = bb.map[0].start_block = bb.mode = 0;
 	bb.magic = htole32(PMAX_BOOT_MAGIC);
+
+        /* restore sun checksum */
+	if (sunsum)
+		set_sunsum(&bb);
 
 	fprintf(stderr, "new boot block start sector: %#x\n",
 	    le32toh(bb.map[0].start_block));
@@ -260,6 +270,10 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	bb.load_addr = htole32(bootstrapload);
 	bb.exec_addr = htole32(bootstrapexec);
 	bb.mode = htole32(PMAX_BOOTMODE_CONTIGUOUS);
+	
+        /* restore sun checksum */
+	if (sunsum)
+		set_sunsum(&bb);
 
 	if (verbose) {
 		fprintf(stderr, "bootstrap starting sector: %i\n",
@@ -300,3 +314,24 @@ set_bootstrap(const char *disk, const char *bootstrap)
 done:
 	(void)close(diskfd);
 }
+
+static void
+set_sunsum(struct pmax_boot_block *bb)
+{
+        u_int16_t *sp, sum;
+
+	sp = (u_int16_t *)bb;
+	sum = 0;
+	while (sp < (u_int16_t *)((bb)+1) - 1) {
+		sum ^= *sp++;   /* XXX no need to ntohs/htons for XOR */
+	}
+        sp = (u_int16_t *)bb;
+#define bb_sunsum sp[PMAX_BOOT_BLOCK_BLOCKSIZE/2 - 1]
+	if (verbose) {
+		fprintf(stderr,"old sun checksum:  0x%04x\n",be16toh(bb_sunsum));
+		fprintf(stderr,"recalculated sun checksum:  0x%04x\n",be16toh(sum));
+	}
+	bb_sunsum = sum;
+
+}
+
