@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.3 1993/10/13 21:22:29 cgd Exp $
+ * $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.4 1993/10/15 13:43:16 cgd Exp $
  */
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -69,7 +69,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.3 1993/10/13 21:22:29 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/boot_nfs.c,v 1.4 1993/10/15 13:43:16 cgd Exp $ (LBL)
  */
 
 #include <sys/param.h>
@@ -152,15 +152,13 @@ unsigned int nfs_boot(kernel_override, machdep_hint)
      * 7. if nfs_diskless crud, do the right thign
      * 8. run kernel
      */
-    struct iodesc *desc;
-    struct iodesc desc_store;
+    struct iodesc desc;
     struct netif *nif;
 
-    desc = &desc_store;
     netif_init();
     while (1) {
-	bzero(desc, sizeof(*desc));
-	machdep_common_ether(desc->myea);
+	bzero(&desc, sizeof(desc));
+	machdep_common_ether(desc.myea);
 	nif = netif_select(machdep_hint);
 	if (!nif) 
 	    panic("netboot: no interfaces left untried");
@@ -169,11 +167,11 @@ unsigned int nfs_boot(kernel_override, machdep_hint)
 		   nif->netif_bname, nif->netif_unit);
 	    continue;
 	}
-	netif_attach(nif, desc, machdep_hint);
+	netif_attach(nif, &desc, machdep_hint);
 
-	get_bootinfo(desc);
-	nfs_setup(desc);
-	nfs_exec(desc, kernel_override);
-    failed: netif_detach(nif);
+	get_bootinfo(&desc);
+	nfs_setup(&desc);
+	nfs_exec(&desc, kernel_override);
+    	netif_detach(nif);
     }
 }
