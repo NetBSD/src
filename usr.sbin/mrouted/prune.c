@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.3 1995/12/10 10:07:09 mycroft Exp $	*/
+/*	$NetBSD: prune.c,v 1.4 1997/10/17 10:38:33 lukem Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -809,7 +809,7 @@ reset_neighbor_state(vifi, addr)
 
 		g->gt_prsent_timer = 0;
 		g->gt_grftsnt = 0;
-		while (st = g->gt_srctbl) {
+		while ((st = g->gt_srctbl) != NULL) {
 		    g->gt_srctbl = st->st_next;
 		    k_del_rg(st->st_origin, g);
 		    kroutes--;
@@ -1944,7 +1944,6 @@ dump_cache(fp2)
     register struct rtentry *r;
     register struct gtable *gt;
     register struct stable *st;
-    register struct ptable *pt;
     register vifi_t i;
     register time_t thyme = time(0);
 
