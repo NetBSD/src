@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.30 1999/07/21 13:24:56 jtk Exp $	*/
+/*	$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.30 1999/07/21 13:24:56 jtk Exp $");
+__RCSID("$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -2284,7 +2284,10 @@ tn(argc, argv)
 	/*numeric*/
 	freeaddrinfo(res0);
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = AI_CANONNAME;
+	if (doaddrlookup)
+		hints.ai_flags = AI_CANONNAME;
+	else
+		hints.ai_flags |= AI_NUMERICHOST;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
