@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.21 2002/10/30 06:26:43 manu Exp $
+#	$NetBSD: files.ofppc,v 1.22 2003/03/05 05:43:44 matt Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -20,10 +20,10 @@ file	arch/ofppc/ofppc/conf.c
 file	arch/ofppc/ofppc/disksubr.c		disk
 file	arch/ofppc/ofppc/machdep.c
 file	arch/ofppc/ofppc/platform.c
-file	arch/ofppc/ofppc/procfs_machdep.c	procfs
 file	dev/cons.c
 file	dev/cninit.c
 
+file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 #
 # CPU specific OpenFirmware code
 #
