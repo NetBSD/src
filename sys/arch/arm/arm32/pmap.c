@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2002/04/04 02:06:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2002/04/04 04:25:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2002/04/04 02:06:46 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2002/04/04 04:25:44 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -815,7 +815,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
 	pve->pv_next = pg->mdpage.pvh_list;	/* add to ... */
 	pg->mdpage.pvh_list = pve;		/* ... locked list */
 	simple_unlock(&pg->mdpage.pvh_slock);	/* unlock, done! */
-	if (pve->pv_flags & PT_W)
+	if (pve->pv_flags & PVF_WIRED)
 		++pmap->pm_stats.wired_count;
 }
 
@@ -840,7 +840,7 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 	while (pve) {
 		if (pve->pv_pmap == pmap && pve->pv_va == va) {	/* match? */
 			*prevptr = pve->pv_next;		/* remove it! */
-			if (pve->pv_flags & PT_W)
+			if (pve->pv_flags & PVF_WIRED)
 			    --pmap->pm_stats.wired_count;
 			break;
 		}
@@ -879,8 +879,8 @@ pmap_modify_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg,
 			oflags = npv->pv_flags;
 			npv->pv_flags = flags =
 			    ((oflags & ~bic_mask) ^ eor_mask);
-			if ((flags ^ oflags) & PT_W) {
-				if (flags & PT_W)
+			if ((flags ^ oflags) & PVF_WIRED) {
+				if (flags & PVF_WIRED)
 					++pmap->pm_stats.wired_count;
 				else
 					--pmap->pm_stats.wired_count;
@@ -1695,7 +1695,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 			/* The page is mapped non-cacheable in 
 			 * this map.  No need to flush the cache.
 			 */
-			if (npv->pv_flags & PT_NC) {
+			if (npv->pv_flags & PVF_NC) {
 #ifdef DIAGNOSTIC
 				if (cache_needs_cleaning)
 					panic("pmap_clean_page: "
@@ -1711,7 +1711,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 			/* If the page is not writable and this
 			   is the source, then there is no need
 			   to flush it from the cache.  */
-			else if (is_src && ! (npv->pv_flags & PT_Wr))
+			else if (is_src && ! (npv->pv_flags & PVF_WRITE))
 				continue;
 #endif
 			if (cache_needs_cleaning){
@@ -1974,15 +1974,15 @@ pmap_vac_me_kpmap(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap != pmap) {
 			user_entries++;
-			if (pv->pv_flags & PT_Wr)
+			if (pv->pv_flags & PVF_WRITE)
 				user_writable++;
-			if ((pv->pv_flags & PT_NC) == 0)
+			if ((pv->pv_flags & PVF_NC) == 0)
 				user_cacheable++;
 		} else {
 			kernel_entries++;
-			if (pv->pv_flags & PT_Wr)
+			if (pv->pv_flags & PVF_WRITE)
 				kernel_writable++;
-			if ((pv->pv_flags & PT_NC) == 0)
+			if ((pv->pv_flags & PVF_NC) == 0)
 				kernel_cacheable++;
 		}
 	}
@@ -2017,8 +2017,8 @@ pmap_vac_me_kpmap(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			 * skip this entry also.  
 			 */
 			if (kernel_entries > 0 &&
-			    (pv->pv_flags & (PT_NC | PT_Wr)) ==
-			    (PT_NC | PT_Wr))
+			    (pv->pv_flags & (PVF_NC | PVF_WRITE)) ==
+			    (PVF_NC | PVF_WRITE))
 				continue;
 			/* 
 			 * Similarly if there are no kernel-writable 
@@ -2026,7 +2026,7 @@ pmap_vac_me_kpmap(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			 * read-only/cacheable.
 			 */
 			if (kernel_writable == 0 &&
-			    (pv->pv_flags & (PT_NC | PT_Wr)) == 0)
+			    (pv->pv_flags & (PVF_NC | PVF_WRITE)) == 0)
 				continue;
 			/* 
 			 * For some of the remaining cases, we know
@@ -2080,15 +2080,15 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 			if (entries++ == 0)
 				pv = npv;
 			/* Cacheable mappings */
-			if ((npv->pv_flags & PT_NC) == 0) {
+			if ((npv->pv_flags & PVF_NC) == 0) {
 				cacheable_entries++;
 				if (kpmap == npv->pv_pmap)
 					kern_cacheable++;
 			}
 			/* Writable mappings */
-			if (npv->pv_flags & PT_Wr)
+			if (npv->pv_flags & PVF_WRITE)
 				++writable;
-		} else if (npv->pv_flags & PT_Wr)
+		} else if (npv->pv_flags & PVF_WRITE)
 			other_writable = 1;
 	}
 
@@ -2109,9 +2109,9 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 		for (npv = pv; npv; npv = npv->pv_next) {
 			if ((pmap == npv->pv_pmap 
 			    || kpmap == npv->pv_pmap) && 
-			    (npv->pv_flags & PT_NC) == 0) {
+			    (npv->pv_flags & PVF_NC) == 0) {
 				ptes[arm_btop(npv->pv_va)] &= ~(PT_C | PT_B);
- 				npv->pv_flags |= PT_NC;
+ 				npv->pv_flags |= PVF_NC;
 				/*
 				 * If this page needs flushing from the
 				 * cache, and we aren't going to do it
@@ -2141,9 +2141,9 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 		for (npv = pv; npv; npv = npv->pv_next) {
 			if ((pmap == npv->pv_pmap ||
 			    (kpmap == npv->pv_pmap && other_writable == 0)) && 
-			    (npv->pv_flags & PT_NC)) {
+			    (npv->pv_flags & PVF_NC)) {
 				ptes[arm_btop(npv->pv_va)] |= pte_cache_mode;
-				npv->pv_flags &= ~PT_NC;
+				npv->pv_flags &= ~PVF_NC;
 			}
 		}
 	}
@@ -2361,7 +2361,7 @@ pmap_remove_all(struct vm_page *pg)
 		--pmap->pm_stats.resident_count;
 
 		/* Wired bit */
-		if (pv->pv_flags & PT_W)
+		if (pv->pv_flags & PVF_WIRED)
 			--pmap->pm_stats.wired_count;
 
 		/*
@@ -2472,7 +2472,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		/* Clear write flag */
 		if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 			simple_lock(&pg->mdpage.pvh_slock);
-			(void) pmap_modify_pv(pmap, sva, pg, PT_Wr, 0);
+			(void) pmap_modify_pv(pmap, sva, pg, PVF_WRITE, 0);
 			pmap_vac_me_harder(pmap, pg, ptes, FALSE);
 			simple_unlock(&pg->mdpage.pvh_slock);
 		}
@@ -2565,9 +2565,9 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	nflags = 0;
 	if (prot & VM_PROT_WRITE)
-		nflags |= PT_Wr;
+		nflags |= PVF_WRITE;
 	if (wired)
-		nflags |= PT_W;
+		nflags |= PVF_WIRED;
 
 	/* Is the pte valid ? If so then this page is already mapped */
 	if (l2pte_valid(opte)) {
@@ -2580,7 +2580,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			if (pg != NULL) {
 				simple_lock(&pg->mdpage.pvh_slock);
 				(void) pmap_modify_pv(pmap, va, pg,
-				    PT_Wr | PT_W, nflags);
+				    PVF_WRITE | PVF_WIRED, nflags);
 				simple_unlock(&pg->mdpage.pvh_slock);
  			}
 		} else {
@@ -2650,10 +2650,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		npte |= pte_cache_mode;
 		if (flags & VM_PROT_WRITE) {
 			npte |= L2_SPAGE | PT_AP(AP_W);
-			pg->mdpage.pvh_attrs |= PT_H | PT_M;
+			pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 		} else if (flags & VM_PROT_ALL) {
 			npte |= L2_SPAGE;
-			pg->mdpage.pvh_attrs |= PT_H;
+			pg->mdpage.pvh_attrs |= PVF_REF;
 		} else
 			npte |= L2_INVAL;
 	} else {
@@ -2739,7 +2739,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_clearbit(pg, PT_Wr);
+		pmap_clearbit(pg, PVF_WRITE);
 		break;
 
 	default:
@@ -2780,7 +2780,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 
 		/* Update the wired bit in the pv entry for this page. */
 		simple_lock(&pg->mdpage.pvh_slock);
-		(void) pmap_modify_pv(pmap, va, pg, PT_W, 0);
+		(void) pmap_modify_pv(pmap, va, pg, PVF_WIRED, 0);
 		simple_unlock(&pg->mdpage.pvh_slock);
 	}
 #ifdef DIAGNOSTIC
@@ -2984,8 +2984,8 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 		pv->pv_flags &= ~maskbits;
 		ptes = pmap_map_ptes(pv->pv_pmap);	/* locks pmap */
 		KASSERT(pmap_pde_v(pmap_pde(pv->pv_pmap, va)));
-		if (maskbits & (PT_Wr|PT_M)) {
-			if ((pv->pv_flags & PT_NC)) {
+		if (maskbits & (PVF_WRITE|PVF_MOD)) {
+			if ((pv->pv_flags & PVF_NC)) {
 				/* 
 				 * Entry is not cacheable: reenable
 				 * the cache, nothing to flush
@@ -3002,9 +3002,9 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 * permission.
 				 *
 				 */
-				if (maskbits & PT_Wr) {
+				if (maskbits & PVF_WRITE) {
 					ptes[arm_btop(va)] |= pte_cache_mode;
-					pv->pv_flags &= ~PT_NC;
+					pv->pv_flags &= ~PVF_NC;
 				}
 			} else if (pmap_is_curpmap(pv->pv_pmap)) {
 				/* 
@@ -3019,7 +3019,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			ptes[arm_btop(va)] &= ~PT_AP(AP_W);
 		}
 
-		if (maskbits & PT_H)
+		if (maskbits & PVF_REF)
 			ptes[arm_btop(va)] =
 			    (ptes[arm_btop(va)] & ~L2_MASK) | L2_INVAL;
 
@@ -3050,9 +3050,9 @@ pmap_clear_modify(struct vm_page *pg)
 {
 	boolean_t rv;
 
-	if (pg->mdpage.pvh_attrs & PT_M) {
+	if (pg->mdpage.pvh_attrs & PVF_MOD) {
 		rv = TRUE;
-		pmap_clearbit(pg, PT_M);
+		pmap_clearbit(pg, PVF_MOD);
 	} else
 		rv = FALSE;
 
@@ -3072,9 +3072,9 @@ pmap_clear_reference(struct vm_page *pg)
 {
 	boolean_t rv;
 
-	if (pg->mdpage.pvh_attrs & PT_H) {
+	if (pg->mdpage.pvh_attrs & PVF_REF) {
 		rv = TRUE;
-		pmap_clearbit(pg, PT_H);
+		pmap_clearbit(pg, PVF_REF);
 	} else
 		rv = FALSE;
 
@@ -3145,7 +3145,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 	 * a write has occurred we can correct this and also set the
 	 * modified bit
 	 */
-	if (~flags & PT_Wr) {
+	if (~flags & PVF_WRITE) {
 	    	simple_unlock(&pg->mdpage.pvh_slock);
 		goto out;
 	}
@@ -3153,14 +3153,14 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 	PDEBUG(0,
 	    printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %08x\n",
 	    va, ptes[arm_btop(va)]));
-	pg->mdpage.pvh_attrs |= PT_H | PT_M;
+	pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 
 	/* 
 	 * Re-enable write permissions for the page.  No need to call
 	 * pmap_vac_me_harder(), since this is just a
-	 * modified-emulation fault, and the PT_Wr bit isn't changing.  We've
-	 * already set the cacheable bits based on the assumption that we
-	 * can write to this page.
+	 * modified-emulation fault, and the PVF_WRITE bit isn't changing.
+	 * We've already set the cacheable bits based on the assumption
+	 * that we can write to this page.
 	 */
 	ptes[arm_btop(va)] =
 	    (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
@@ -3219,7 +3219,7 @@ pmap_handled_emulation(struct pmap *pmap, vaddr_t va)
 	PDEBUG(0,
 	    printf("pmap_handled_emulation: Got a hit va=%08lx pte = %08x\n",
 	    va, ptes[arm_btop(va)]));
-	pg->mdpage.pvh_attrs |= PT_H;
+	pg->mdpage.pvh_attrs |= PVF_REF;
 
 	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));

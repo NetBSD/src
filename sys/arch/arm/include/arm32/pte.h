@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2002/04/03 00:46:53 reinoud Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2002/04/04 04:25:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -37,7 +37,6 @@
 
 #define PDSHIFT		20		/* LOG2(NBPDR) */
 #define NBPD		(1 << PDSHIFT)	/* bytes/page dir */
-#define NPTEPD		(NBPD / NBPG)
 
 #ifndef _LOCORE
 typedef	u_int32_t	pd_entry_t;		/* page directory entry */
@@ -79,14 +78,6 @@ extern pt_entry_t	pte_cache_mode;
 
 #define PT_CACHEABLE	(pte_cache_mode)
 #endif
-
-/* Page R/M attributes (in pmseg.attrs). */
-#define PT_M		0x01	/* Virt - Modified */
-#define PT_H		0x02	/* Virt - Handled (Used) */
-/* Mapping wired/writeable/cacheable attributes (in pv_flags). */
-#define PT_W		0x04	/* Virt - Wired */
-#define PT_Wr		0x08	/* Virt / Phys Write */
-#define PT_NC		0x10	/* Cacheing disabled (multi-mapped page) */
 
 /* access permissions for L2 pages (all sub pages have the same perms) */
 #define PT_AP(x)	((x << 10) | (x << 8) | (x << 6)  | (x << 4))

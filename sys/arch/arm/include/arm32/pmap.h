@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42 2002/04/03 23:33:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43 2002/04/04 04:25:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -109,6 +109,23 @@ typedef struct pv_addr {
 #define	PTE_CACHE	1
 
 /*
+ * Flags that indicate attributes of pages or mappings of pages.
+ *
+ * The PVF_MOD and PVF_REF flags are stored in the mdpage for each
+ * page.  PVF_WIRED, PVF_WRITE, and PVF_NC are kept in individual
+ * pv_entry's for each page.  They live in the same "namespace" so
+ * that we can clear multiple attributes at a time.
+ *
+ * Note the "non-cacheable" flag generally means the page has
+ * multiple mappings in a given address space.
+ */
+#define	PVF_MOD		0x01		/* page is modified */
+#define	PVF_REF		0x02		/* page is referenced */
+#define	PVF_WIRED	0x04		/* mapping is wired */
+#define	PVF_WRITE	0x08		/* mapping is writable */
+#define	PVF_NC		0x10		/* mapping is non-cacheable */
+
+/*
  * Commonly referenced structures
  */
 extern struct pmap	kernel_pmap_store;
@@ -121,8 +138,10 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define	pmap_is_modified(pg)		(((pg)->mdpage.pvh_attrs & PT_M) != 0)
-#define	pmap_is_referenced(pg)		(((pg)->mdpage.pvh_attrs & PT_H) != 0)
+#define	pmap_is_modified(pg)	\
+	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
+#define	pmap_is_referenced(pg)	\
+	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
