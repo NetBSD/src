@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.159 2000/05/11 16:38:10 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.160 2000/06/04 16:26:11 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -312,6 +312,9 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"
+
+# Win32 binary compatibility (COMPAT_PECOFF)
+include "compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
