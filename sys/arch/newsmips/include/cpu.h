@@ -1,11 +1,11 @@
-/*	$NetBSD: cpu.h,v 1.13 2001/09/16 03:20:01 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2001/09/20 12:29:48 tsutsui Exp $	*/
 
 #ifndef _NEWSMIPS_CPU_H_
 #define _NEWSMIPS_CPU_H_
 
 #include <mips/cpu.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
 extern int systype;
 
