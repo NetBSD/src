@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.8 1997/10/14 11:08:45 mark Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.9 1998/03/26 20:05:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -204,13 +204,13 @@
 
 #define IOMD_ADDRESS(reg)	(IOMD_BASE + (reg << 2))
 #define IOMD_WRITE_BYTE(reg, val)	\
-	WriteByte(IOMD_ADDRESS(reg), val)
+	(*((volatile unsigned char *)(IOMD_ADDRESS(reg))) = (val))
 #define IOMD_WRITE_WORD(reg, val)	\
-	WriteWord(IOMD_ADDRESS(reg), val)
+	(*((volatile unsigned int *)(IOMD_ADDRESS(reg))) = (val))
 #define IOMD_READ_BYTE(reg)		\
-	ReadByte(IOMD_ADDRESS(reg))
+	(*((volatile unsigned char *)(IOMD_ADDRESS(reg))))
 #define IOMD_READ_WORD(reg)		\
-	ReadWord(IOMD_ADDRESS(reg))
+	(*((volatile unsigned int *)(IOMD_ADDRESS(reg))))
 
 #define IOMD_ID (IOMD_READ_BYTE(IOMD_ID0) | (IOMD_READ_BYTE(IOMD_ID1) << 8))
 
