@@ -46,6 +46,10 @@ Supported devices include:
 		    Merlin.
 		A2410.
 		Cybervision 64.
+
+	Audio I/O:
+		Amiga builtin (currently 8bit-mode only)
+		
 	Ethernet controllers:
 		A2065 Ethernet
 		Hydra Ethernet
@@ -72,6 +76,9 @@ Supported devices include:
 	Amiga serial port.
 	Amiga mouse.
 	DraCo serial port, including serial mouse.
+	Real-time clocks:
+		A2000, A3000, A4000 builtin (r/w),
+		DraCo builtin (r/o).
 
 If its not on the above lists, there is no support for it in this
 release. Especially (but this is an incomplete list), there is no
