@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.4 1994/01/11 00:18:54 briggs Exp $
+ *	$Id: machdep.c,v 1.5 1994/01/13 12:56:16 briggs Exp $
  */
 
 #include <param.h>
@@ -312,6 +312,13 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+	/*
+	 * Allocate a submap for exec arguments.  This map effectively
+	 * limits the number of processes exec'ing at any time.
+	 */
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE);
+
 	/*
 	 * Allocate a submap for physio
 	 */
