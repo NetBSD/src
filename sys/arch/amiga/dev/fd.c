@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 1996/04/21 21:11:01 veego Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 1996/04/29 06:23:47 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -148,6 +148,8 @@ int fdc_wantwakeup;
 int fdc_side;
 void  *fdc_dmap;
 struct fd_softc *fdc_indma;
+int fdc_dmalen;
+int fdc_dmawrite;
 
 struct fdcargs {
 	struct fdtype *type;
@@ -161,6 +163,7 @@ int	fdmatch __P((struct device *, void *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
 void	fdintr __P((int));
+void	fdidxintr __P((void));
 void	fdstrategy __P((struct buf *));
 int	fdloaddisk __P((struct fd_softc *));
 int	fdgetdisklabel __P((struct fd_softc *, dev_t));
@@ -383,9 +386,8 @@ fdattach(pdp, dp, auxp)
 	 * enable disk related interrupts
 	 */
 	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_DISK;
-	/* XXX why softint */
-	custom.intena = INTF_SETCLR |INTF_SOFTINT | INTF_DSKBLK;
-	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
+	custom.intena = INTF_SETCLR | INTF_DSKBLK;
+	ciab.icr = CIA_ICR_FLG;
 }
 
 /*ARGSUSED*/
@@ -595,6 +597,19 @@ fdintr(flag)
 }
 
 void
+fdidxintr()
+{
+	if (fdc_indma && fdc_dmalen) {
+		/*
+		 * turn off intr and start actual dma
+		 */
+		ciab.icr = CIA_ICR_FLG;
+		FDDMASTART(fdc_dmalen, fdc_dmawrite);
+		fdc_dmalen = 0;
+	}
+}
+
+void
 fdstrategy(bp)
 	struct buf *bp;
 {
@@ -654,8 +669,9 @@ fdloaddisk(sc)
 	/*
 	 * if diskchange is low step drive to 0 then up one then to zero.
 	 */
-	fdsetpos(sc, 0, 0);
+	fdselunit(sc);			/* make sure the unit is selected */
 	if (FDTESTC(FDB_CHANGED)) {
+		fdsetpos(sc, 0, 0);
 		sc->cachetrk = -1;		/* invalidate the cache */
 		sc->flags &= ~FDF_HAVELABEL;
 		fdsetpos(sc, FDNHEADS, 0);
@@ -909,7 +925,7 @@ fdcgetfdtype(unit)
 		delay(1);
 	}
 #ifdef FDDEBUG
-	printf("fdcgettype unit %d id 0x%x\n", unit, id);
+	printf("fdcgettype unit %d id 0x%lx\n", unit, id);
 #endif
 
 	for (cnt = 0, ftp = fdtype; cnt < nfdtype; ftp++, cnt++)
@@ -984,7 +1000,7 @@ fdmotoroff(arg)
 	}
 
 #ifdef FDDEBUG
-	printf("  hw turing unit off\n");
+	printf("  hw turning unit off\n");
 #endif
 
 	sc->flags &= ~(FDF_MOTORON | FDF_MOTOROFF);
