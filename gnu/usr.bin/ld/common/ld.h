@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.25 1998/10/24 21:07:15 kristerw Exp $	*/
+/*	$NetBSD: ld.h,v 1.26 1998/12/15 21:27:08 pk Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -640,9 +640,9 @@ void	read_file_symbols __P((struct file_entry *));
 int	set_element_prefixed_p __P((char *));
 int	text_offset __P((struct file_entry *));
 int	file_open __P((struct file_entry *));
-void	each_file __P((void (*)(), void *));
-void	each_full_file __P((void (*)(), void *));
-unsigned long	check_each_file __P((unsigned long (*)(), void *));
+void	each_file __P((void (*) __P((struct file_entry *, void *)), void *));
+void	each_full_file __P((void (*)__P((struct file_entry *, void *)), void *));
+unsigned long	check_each_file __P((unsigned long (*)__P((struct file_entry *, void *)), void *));
 void	mywrite __P((void *, int, int, FILE *));
 void	padfile __P((int, FILE *));
 
@@ -674,6 +674,8 @@ char	*findshlib __P((char *, int *, int *, int));
 void	add_search_dir __P((char *));
 void	add_search_path __P((char *));
 void	std_search_path __P((void));
+void	remove_search_dir __P((char *));
+void	remove_search_path __P((char *));
 int	getdewey __P((int[], char *));
 int	cmpndewey __P((int[], int, int[], int));
 
@@ -705,7 +707,7 @@ void	md_fix_jmpslot __P((jmpslot_t *, long, u_long, int));
 int	md_make_reloc __P((struct relocation_info *, struct relocation_info *, int));
 void	md_make_jmpreloc __P((struct relocation_info *, struct relocation_info *, int));
 void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_copyreloc __P((struct relocation_info *, struct relocation_info *));
+void	md_make_cpyreloc __P((struct relocation_info *, struct relocation_info *));
 void	md_set_breakpoint __P((long, long *));
 
 #ifdef NEED_SWAP
