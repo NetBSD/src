@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.305 2005/03/04 16:16:00 christos Exp $
+#	$NetBSD: Makefile,v 1.306 2005/03/08 07:39:30 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -57,12 +57,15 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 MKISOFS?=	mkisofs
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
-ISO_VOLID!=	echo NETBSD_${MACHINE}_${DISTRIBREV} | tr a-z A-Z
-MKISOFS_FLAGS+= -J -l \
-		-r -T -v \
+ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
+MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
 		-V ${ISO_VOLID} \
 		-P "The NetBSD Project" \
 		-m "${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom"
+.if ${MKISOFS_FLAGS:N-v}
+MKISOFS_FLAGS+=	-quiet
+.endif
+ 
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".
