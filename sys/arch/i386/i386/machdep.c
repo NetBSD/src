@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.112 1994/07/20 23:01:26 mycroft Exp $
+ *	$Id: machdep.c,v 1.113 1994/07/22 22:26:12 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -521,25 +521,27 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
 	int result;
 
 	__asm __volatile("
-	movl	%1,%%edx
+	xorl	%%edx,%%edx
+
+	movw	%1,%%dx
 	verr	%%dx
 	jnz	1f
 	movl	%%edx,%%eax
 
-	movl	%2,%%edx
+	movw	%2,%%dx
 	verr	%%dx
 	jnz	1f
 	andl	%%edx,%%eax
 
-	movl	%3,%%edx
-	testl	$0xfffc,%%edx
+	movw	%3,%%dx
+	testw	$0xfffc,%%dx
 	jz	2f
 	verr	%%dx
 	jnz	1f
 	andl	%%edx,%%eax
 
-2:	movl	%4,%%edx
-	testl	$0xfffc,%%edx
+2:	movw	%4,%%dx
+	testw	$0xfffc,%%dx
 	jz	2f
 	verr	%%dx
 	jnz	1f
@@ -550,7 +552,7 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
 	jmp	3f
 1:	movl	$1,%%eax
 3:
-	": "=a" (result)
+	": "=&a" (result)
 	 : "g" (cs), "g" (ss), "g" (ds), "g" (es)
 	 : "%edx");
 	return result;
