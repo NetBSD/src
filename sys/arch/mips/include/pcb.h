@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 1995/01/18 06:39:43 mellon Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 1996/03/19 02:12:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 /*
- * PMAX process control block
+ * MIPS process control block
  */
 struct pcb
 {
@@ -55,7 +55,7 @@ struct pcb
 
 /*
  * The pcb is augmented with machine-dependent additional data for
- * core dumps. For the PMAX, there is nothing to add.
+ * core dumps. For the MIPS, there is nothing to add.
  */
 struct md_coredump {
 	long	md_pad[8];
