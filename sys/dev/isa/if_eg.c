@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.30 1996/10/13 01:37:44 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.31 1996/10/17 04:21:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -42,6 +42,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -135,6 +136,14 @@ void egreset __P((struct eg_softc *));
 void egread __P((struct eg_softc *, caddr_t, int));
 struct mbuf *egget __P((struct eg_softc *, caddr_t, int));
 void egstop __P((struct eg_softc *));
+
+static inline void egprintpcb __P((struct eg_softc *));
+static inline void egprintstat __P((u_char));
+static int egoutPCB __P((struct eg_softc *, u_int8_t));
+static int egreadPCBstat __P((struct eg_softc *, u_int8_t));
+static int egreadPCBready __P((struct eg_softc *));
+static int egwritePCB __P((struct eg_softc *));
+static int egreadPCB __P((struct eg_softc *));
 
 /*
  * Support stuff
@@ -321,7 +330,7 @@ egprobe(parent, match, aux)
 
 	rval = 0;
 
-	if (ia->ia_iobase & ~0x07f0 != 0) {
+	if ((ia->ia_iobase & ~0x07f0) != 0) {
 		DPRINTF(("Weird iobase %x\n", ia->ia_iobase));
 		return 0;
 	}
@@ -389,7 +398,6 @@ egattach(parent, self, aux)
 	bus_chipset_tag_t bc = ia->ia_bc;
 	bus_io_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i;
 
 	printf("\n");
 
@@ -824,7 +832,6 @@ egioctl(ifp, cmd, data)
 {
 	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
