@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.167 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.168 2004/05/25 04:30:32 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.167 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.168 2004/05/25 04:30:32 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,28 +189,34 @@ SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
 		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "tkstat", NULL,
+		       CTLTYPE_NODE, "tkstat",
+		       SYSCTL_DESCR("Number of characters sent and and "
+				    "received on ttys"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "nin", NULL,
+		       CTLTYPE_QUAD, "nin",
+		       SYSCTL_DESCR("Total number of tty input characters"),
 		       NULL, 0, &tk_nin, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "nout", NULL,
+		       CTLTYPE_QUAD, "nout",
+		       SYSCTL_DESCR("Total number of tty output characters"),
 		       NULL, 0, &tk_nout, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NOUT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "cancc", NULL,
+		       CTLTYPE_QUAD, "cancc",
+		       SYSCTL_DESCR("Number of canonical tty input characters"),
 		       NULL, 0, &tk_cancc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_CANCC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_QUAD, "rawcc", NULL,
+		       CTLTYPE_QUAD, "rawcc",
+		       SYSCTL_DESCR("Number of raw tty input characters"),
 		       NULL, 0, &tk_rawcc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_RAWCC, CTL_EOL);
 }
