@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)pass1.c	5.16 (Berkeley) 3/19/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/fsck/Attic/pass1.c,v 1.3 1993/03/23 00:27:58 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/fsck/Attic/pass1.c,v 1.4 1993/06/13 21:10:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,6 +102,13 @@ pass1()
 				continue;
 			}
 			lastino = inumber;
+			/* is fast symlink? */
+			if (DFASTLINK(*dp)) {
+				lncntp[inumber] = dp->di_nlink;
+				statemap[inumber] = FSTATE;
+				n_files++;
+				continue;
+			}
 			if (/* dp->di_size < 0 || */
 			    dp->di_size + sblock.fs_bsize - 1 < dp->di_size) {
 				if (debug)
