@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_eb164.h,v 1.1 1996/11/11 21:08:13 cgd Exp $	*/
+/* $NetBSD: pci_eb164.h,v 1.2 1997/04/07 02:00:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
