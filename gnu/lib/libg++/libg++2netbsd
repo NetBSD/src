@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.17 1997/02/07 07:14:02 mikel Exp $
+#	$NetBSD: libg++2netbsd,v 1.18 1997/03/16 15:45:15 veego Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -296,8 +296,8 @@ sub dumprtti {
     print ODATA "\n";
 
     print ODATA "@name.so: @name.cc\n";
-    print ODATA "\t\@echo \"\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.IMPSRC) -o \$(.TARGET)\"\n";
-    print ODATA "\t\@\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.IMPSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) \$(CPICFLAGS) -frtti \$(.IMPSRC) -o \$(.TARGET)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) \$(CPICFLAGS) -frtti \$(.IMPSRC) -o \$(.TARGET).o\n";
     print ODATA "\t\@\$(LD) -x -r \$(.TARGET).o -o \$(.TARGET)\n";
     print ODATA "\t\@rm -f \$(.TARGET).o\n";
     print ODATA "\n";
