@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.4 2001/11/29 13:14:36 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.5 2001/11/30 11:53:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1414,6 +1414,9 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
+#ifdef KTRACE
+	struct proc *p;
+#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
@@ -1421,8 +1424,8 @@ child_return(arg)
 	KERNEL_PROC_UNLOCK(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
+	p = l->l_proc;
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		struct proc *p = l->l_proc;
 		KERNEL_PROC_LOCK(l);
 		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
