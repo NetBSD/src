@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.35 1997/03/14 01:42:23 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.36 1997/07/04 21:02:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.35 1997/03/14 01:42:23 christos Exp $";
+__RCSID("$NetBSD: parser.c,v 1.36 1997/07/04 21:02:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -696,8 +697,6 @@ peektoken() {
 	return (t);
 }
 
-STATIC int xxreadtoken();
-
 STATIC int
 readtoken() {
 	int t;
@@ -1264,6 +1263,9 @@ parsebackq: {
 	struct jmploc *volatile savehandler;
 	int savelen;
 	int saveprompt;
+#ifdef __GNUC__
+	(void) &saveprompt;
+#endif
 
 	savepbq = parsebackquote;
 	if (setjmp(jmploc.loc)) {
