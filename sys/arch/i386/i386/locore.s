@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -47,17 +48,17 @@
 #include "npx.h"
 #include "assym.s"
 
-#include "machine/psl.h"
-#include "machine/pte.h"
+#include <sys/errno.h>
+#include <sys/syscall.h>
 
-#include "errno.h"
-#include "syscall.h"
+#include <machine/cputypes.h>
+#include <machine/param.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/specialreg.h>
+#include <machine/trap.h>
 
-#include "machine/trap.h"
-
-#include "machine/specialreg.h"
-#include "i386/isa/debug.h"
-#include "machine/cputypes.h"
+#include <i386/isa/debug.h>
 
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
@@ -94,7 +95,7 @@
 	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
 	.set	_PTmap,(PTDPTDI << PDSHIFT)
 	.set	_PTD,(_PTmap + PTDPTDI * NBPG)
-	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 = sizeof pde
+	.set	_PTDpde,(_PTD + PTDPTDI * 4)		# XXX 4 == sizeof pde
 	.set	_Sysmap,(_PTmap + KPTDI * NBPG)
 
 /*
@@ -104,7 +105,7 @@
 	.globl	_APTmap,_APTD,_APTDpde
 	.set	_APTmap,(APTDPTDI << PDSHIFT)
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
-	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 = sizeof pde
+	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
 /*
  * Access to each processes kernel stack is via a region of
@@ -124,11 +125,13 @@
         .globl	_esym
 _esym:	.long	0		# ptr to end of syms
 
-	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase
+	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase,_proc0paddr,_curpcb
 _cpu:	.long	0		# are we 386, 386sx, or 486
 _cold:	.long	1		# cold till we are not
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _atdevphys:	.long	0	# location of device mapping ptes (phys)
+_cyloffset:	.long	0
+_proc0paddr:	.long	0
 
 	.globl	_IdlePTD,_KPTphys
 _IdlePTD:	.long	0
@@ -155,29 +158,56 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	12(%esp),%eax
 	movl	%eax,_cyloffset-KERNBASE
  	movl	16(%esp),%eax
- 	addl	$ KERNBASE,%eax
- 	movl	%eax, _esym-KERNBASE
+ 	addl	$(KERNBASE),%eax
+ 	movl	%eax,_esym-KERNBASE
 
 	/* find out our CPU type. */
-        pushfl
-        popl    %eax
-        movl    %eax,%ecx
-        xorl    $0x40000,%eax
-        pushl   %eax
-        popfl
-        pushfl
-        popl    %eax
-        xorl    %ecx,%eax
-        shrl    $18,%eax
-        andl    $1,%eax
-        push    %ecx
-        popfl
-      
-        cmpl    $0,%eax
-        jne     1f
-        movl    $CPU_386,_cpu-KERNBASE
+	/* first, clear the alignment check and identification flags */
+	pushfl
+	popl	%eax
+	andl	$~(PSL_AC|PSL_ID),%eax
+	pushl	%eax
+	popfl
+
+	/* try to frob alignment check flag; does not exist on 386 */
+	pushfl
+	popl	%eax
+	movl	%eax,%ecx
+	orl	$(PSL_AC),%eax
+	pushl	%eax
+	popfl
+	pushfl
+	popl	%eax
+	xorl	%ecx,%eax
+	andl	$(PSL_AC),%eax
+	pushl	%ecx
+	popfl
+
+	testl	%eax,%eax
+	jnz	1f
+	movl	$(CPU_386),_cpu-KERNBASE
 	jmp	2f
-1:      movl    $CPU_486,_cpu-KERNBASE
+
+1:	/* try to frob identification flag; does not exist on 486 */
+	pushfl
+	popl	%eax
+	movl	%eax,%ecx
+	xorl	$(PSL_ID),%eax
+	pushl	%eax
+	popfl
+	pushfl
+	popl	%eax
+	xorl	%ecx,%eax
+	andl	$(PSL_ID),%eax
+	pushl	%ecx
+	popfl
+
+	testl	%eax,%eax
+	jnz	1f
+	movl	$(CPU_486),_cpu-KERNBASE
+	jmp	2f
+
+1:	movl	$(CPU_586),_cpu-KERNBASE
 2:
 
 	/*
@@ -1757,26 +1787,9 @@ proffault:
 	leave
 	ret
 
- # To be done:
- ENTRY(astoff)
+# To be done:
+ENTRY(astoff)
 	ret
-
-	.data
-	ALIGN_DATA
-	.globl	_cyloffset, _curpcb
-_cyloffset:	.long	0
-	.globl	_proc0paddr
-_proc0paddr:	.long	0
-LF:	.asciz "swtch %x"
-	ALIGN_DATA
-
-#if 0
-#define	PANIC(msg)	xorl %eax,%eax; movl %eax,_waittime; pushl 1f; \
-			call _panic; MSG(msg)
-#define	PRINTF(n,msg)	pushal ; nop ; pushl 1f; call _printf; MSG(msg) ; \
-			 popl %eax ; popal
-#define	MSG(msg)	.data; 1: .asciz msg; ALIGN_DATA; .text
-#endif /* 0 */
 
 /*
  * Trap and fault vector routines
@@ -1785,44 +1798,69 @@ LF:	.asciz "swtch %x"
  * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#define	INTRENTRY \
+	pushal			; \
+	pushl	%ds		; \
+	pushl	%es		; /* now the stack frame is a trap frame */ \
+	movl	$KDSEL,%eax	; \
+	movl	%ax,%ds		; \
+	movl	%ax,%es
+#define	INTREXIT \
+	jmp	doreti
+#define	INTRFASTEXIT \
+	popl	%es		; \
+	popl	%ds		; \
+	popal			; \
+	addl	$8,%esp		; \
+	iret
+
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
+#define	ZTRAP(a)	pushl $0 ; TRAP(a)
 #ifdef KGDB
-#define	BPTTRAP(a)	sti; pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	sti; TRAP(a)
+#define	BPTTRAP(a)	TRAP(a)
 #endif
 
 	.text
 IDTVEC(div)
-	pushl $0; TRAP(T_DIVIDE)
+	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
+	subl	$4,%esp
+	pushl	%eax
+#	movl	%dr6,%eax       /* XXX stupid assembler! */
+	.byte	0x0f, 0x21, 0xf0
+	movl	%eax,4(%esp)
+	andb	$~15,%al
+#	movl	%eax,%dr6       /* XXX stupid assembler! */
+	.byte	0x0f, 0x23, 0xf0
+	popl	%eax
 #ifdef BDBTRAP
 	BDBTRAP(dbg)
 #endif
-	pushl $0; BPTTRAP(T_TRCTRAP)
+	BPTTRAP(T_TRCTRAP)
 IDTVEC(nmi)
-	pushl $0; TRAP(T_NMI)
+	ZTRAP(T_NMI)
 IDTVEC(bpt)
+	pushl $0
 #ifdef BDBTRAP
 	BDBTRAP(bpt)
 #endif
-	pushl $0; BPTTRAP(T_BPTFLT)
+	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
-	pushl $0; TRAP(T_OFLOW)
+	ZTRAP(T_OFLOW)
 IDTVEC(bnd)
-	pushl $0; TRAP(T_BOUND)
+	ZTRAP(T_BOUND)
 IDTVEC(ill)
-	pushl $0; TRAP(T_PRIVINFLT)
+	ZTRAP(T_PRIVINFLT)
 IDTVEC(dna)
-	pushl $0; TRAP(T_DNA)
+	ZTRAP(T_DNA)
 IDTVEC(dble)
 	TRAP(T_DOUBLEFLT)
-	/*PANIC("Double Fault");*/
 IDTVEC(fpusegm)
-	pushl $0; TRAP(T_FPOPFLT)
+	ZTRAP(T_FPOPFLT)
 IDTVEC(tss)
 	TRAP(T_TSSFLT)
-	/*PANIC("TSS not valid");*/
 IDTVEC(missing)
 	TRAP(T_SEGNPFLT)
 IDTVEC(stk)
@@ -1832,7 +1870,7 @@ IDTVEC(prot)
 IDTVEC(page)
 	TRAP(T_PAGEFLT)
 IDTVEC(rsvd)
-	pushl $0; TRAP(T_RESERVED)
+	ZTRAP(T_RESERVED)
 IDTVEC(fpu)
 #if NNPX > 0
 	/*
@@ -1842,79 +1880,60 @@ IDTVEC(fpu)
 	 */
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
-	pushal
-#ifdef I386_CPU
-	nop			/* silly, the bug is for popal and it only
-				 * bites when the next instruction has a
-				 * complicated address mode */
-#endif
-	pushl	%ds
-	pushl	%es		/* now the stack frame is a trap frame */
-	movl	$KDSEL,%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 	pushl	_cpl
 	pushl	$0		/* dummy unit to finish building intr frame */
 	incl	_cnt+V_TRAP
 	call	_npxintr
-	jmp	doreti
+	INTREXIT
 #else
-	pushl $0; TRAP(T_ARITHTRAP)
+	ZTRAP(T_ARITHTRAP)
 #endif
 	/* 17 - 31 reserved for future exp */
-IDTVEC(rsvd0)
-	pushl $0; TRAP(17)
+IDTVEC(align)
+	ZTRAP(T_ALIGNFLT)
 IDTVEC(rsvd1)
-	pushl $0; TRAP(18)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd2)
-	pushl $0; TRAP(19)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd3)
-	pushl $0; TRAP(20)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd4)
-	pushl $0; TRAP(21)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd5)
-	pushl $0; TRAP(22)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd6)
-	pushl $0; TRAP(23)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd7)
-	pushl $0; TRAP(24)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd8)
-	pushl $0; TRAP(25)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd9)
-	pushl $0; TRAP(26)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd10)
-	pushl $0; TRAP(27)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd11)
-	pushl $0; TRAP(28)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd12)
-	pushl $0; TRAP(29)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd13)
-	pushl $0; TRAP(30)
+	ZTRAP(T_RESERVED)
 IDTVEC(rsvd14)
-	pushl $0; TRAP(31)
+	ZTRAP(T_RESERVED)
 
 	SUPERALIGN_TEXT
 alltraps:
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
-	pushl	%ds
-	pushl	%es
-	movl	$KDSEL,%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 calltrap:
-	incl	_cnt+V_TRAP
 	call	_trap
 	/*
 	 * Return through doreti to handle ASTs.  Have to change trap frame
 	 * to interrupt frame.
 	 */
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* new trap type (err code not used) */
+	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
 	pushl	$0			/* dummy unit */
-	jmp	doreti
+	INTREXIT
 
 #ifdef KGDB
 /*
@@ -1923,15 +1942,7 @@ calltrap:
  */
 	ALIGN_TEXT
 bpttraps:
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
-	pushl	%ds
-	pushl	%es
-	movl	$KDSEL,%eax
-	movl	%ax,%ds
-	movl	%ax,%es
+	INTRENTRY
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 					# non-kernel mode?
 	jne	calltrap		# yes
@@ -1949,66 +1960,19 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushfl		# Room for tf_err
+	pushl	$0	# Room for tf_err
 	pushfl		# Room for tf_trapno
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
-	pushl	%ds
-	pushl	%es
-	movl	$KDSEL,%eax		# switch to kernel segments
-	movl	%ax,%ds
-	movl	%ax,%es
-	movl	TF_ERR(%esp),%eax	# copy eflags from tf_err to fs_eflags
+	INTRENTRY
+	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to fs_eflags
 	movl	%eax,TF_EFLAGS(%esp)
-	movl	$0,TF_ERR(%esp)		# zero tf_err
-	incl	_cnt+V_SYSCALL  # kml 3/25/93
 	call	_syscall
   	/*
 	 * Return through doreti to handle ASTs.
   	 */
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)	# new trap type (err code not used)
+	movl	$(T_ASTFLT),TF_TRAPNO(%esp)	# new trap type (err code not used)
   	pushl	_cpl
   	pushl	$0
-  	jmp	doreti
-
-#ifdef SHOW_A_LOT
-
-/*
- * 'show_bits' was too big when defined as a macro.  The line length for some
- * enclosing macro was too big for gas.  Perhaps the code would have blown
- * the cache anyway.
- */
-
-	ALIGN_TEXT
-show_bits:
-	pushl	%eax
-	SHOW_BIT(0)
-	SHOW_BIT(1)
-	SHOW_BIT(2)
-	SHOW_BIT(3)
-	SHOW_BIT(4)
-	SHOW_BIT(5)
-	SHOW_BIT(6)
-	SHOW_BIT(7)
-	SHOW_BIT(8)
-	SHOW_BIT(9)
-	SHOW_BIT(10)
-	SHOW_BIT(11)
-	SHOW_BIT(12)
-	SHOW_BIT(13)
-	SHOW_BIT(14)
-	SHOW_BIT(15)
-	popl	%eax
-	ret
-
-	.data
-bit_colors:
-	.byte	GREEN,RED,0,0
-	.text
-
-#endif /* SHOW_A_LOT */
+	INTREXIT
 
 #include "i386/isa/vector.s"
 #include "i386/isa/icu.s"
