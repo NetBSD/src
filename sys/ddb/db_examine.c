@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.7 1994/10/06 05:20:42 mycroft Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.8 1994/11/14 20:40:04 gwr Exp $	*/
 
 /*
  * Mach Operating System
@@ -84,7 +84,7 @@ db_examine(addr, fmt, count)
 	while (--count >= 0) {
 		fp = fmt;
 		size = 4;
-		width = 16;
+		width = 12;
 		while ((c = *fp++) != 0) {
 			switch (c) {
 			case 'b':
@@ -97,7 +97,7 @@ db_examine(addr, fmt, count)
 				break;
 			case 'l':
 				size = 4;
-				width = 16;
+				width = 12;
 				break;
 			case 'a':	/* address */
 				/* always forces a new line */
@@ -239,7 +239,7 @@ db_print_loc_and_inst(loc)
 {
 	db_printsym(loc, DB_STGY_PROC);
 	db_printf(":\t");
-	(void) db_disasm(loc, TRUE);
+	(void) db_disasm(loc, FALSE);
 }
 
 db_strcpy(dst, src)
