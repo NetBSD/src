@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.107 2000/04/23 18:58:46 matt Exp $
+.\"	$NetBSD: options.4,v 1.108 2000/05/31 22:26:58 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -706,7 +706,7 @@ option adds an in-kernel Phase-Locked Loop (PLL) for normal
 .Em NTP
 operation, and a Frequency-Locked Loop (FLL) for intermittently-connected
 operation.
-.Xr xntpd 8
+.Xr ntpd 8
 will employ a user-level PLL when kernel support is unavailable,
 but the in-kernel version has lower latency and more precision, and
 so typically keeps much better time.
@@ -717,7 +717,7 @@ support is provided by the
 and
 .Xr ntp_gettime 2
 system calls, which are intended for use by
-.Xr xntpd 8
+.Xr ntpd 8
 and are enabled by the option.
 On systems with sub-microsecond resolution timers, or where (HZ / 100000)
 is not an integer, the
@@ -754,7 +754,7 @@ usually requires a
 gadget box
 to convert from TTL to RS-232 signal levels.
 The gadget box and PPS are described in more detail in the HTML documentation
-shipped with the xntpd distribution.
+shipped with the ntpd distribution.
 .It Cd options SETUIDSCRIPTS
 Allows scripts with the setuid bit set to execute as the effective
 user rather than the real user, just like binary executables.
@@ -1621,7 +1621,7 @@ bolded
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
 .Xr sysctl 8 ,
-.Xr xntpd 8
+.Xr ntpd 8
 .Sh HISTORY
 The
 .Nm
