@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.32 2000/04/02 17:58:17 augustss Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.33 2000/04/03 01:40:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -779,7 +779,8 @@ sc_err1(xs, async)
 		if (xs->retries) {
 			if ((xs->xs_control & XS_CTL_POLL) != 0)
 				delay(1000000);
-			else if ((xs->xs_control & (XS_CTL_NOSLEEP|XS_CTL_DISCOVERY)) == 0)
+			else if ((xs->xs_control &
+			    (XS_CTL_NOSLEEP|XS_CTL_DISCOVERY)) == 0)
 				tsleep(&lbolt, PRIBIO, "scbusy", 0);
 			else
 #if 0
