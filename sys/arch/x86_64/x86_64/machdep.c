@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/11/20 08:43:43 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2002/03/20 17:59:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -994,7 +994,7 @@ setregs(p, pack, stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)PS_STRINGS;
+	tf->tf_rbx = (u_int64_t)p->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
