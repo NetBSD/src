@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.1 1998/01/31 22:28:36 thorpej Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2 1998/01/31 22:30:09 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* arm32 machine dependent menus, english */
+/* alpha machine dependent menus, english */
 
 menu editfsparts, y=13, exit;
 	display action  {
