@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.8 1999/12/15 08:12:30 garbled Exp $ */
+/*	$NetBSD: p9100.c,v 1.9 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,9 +137,6 @@ static struct fbdriver p9100fbdriver = {
 	p9100mmap
 };
 
-extern int fbnode;
-extern struct tty *fbconstty;
-
 static void p9100loadcmap(struct p9100_softc *, int, int);
 static void p9100_set_video(struct p9100_softc *, int);
 static int p9100_get_video(struct p9100_softc *);
@@ -172,6 +169,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole;
+	int node;
 	int i;
 
 	/* Remember cookies for p9100_mmap() */
@@ -190,6 +188,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
+
+	node = sa->sa_node;
 
 	/*
 	 * When the ROM has mapped in a p9100 display, the address
@@ -213,7 +213,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
-	isconsole = sa->sa_node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
@@ -240,7 +240,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		panic("pnozz: can't determine screen depth (0x%02x)", i);
 	    }
 	}
-	fb_setsize_obp(fb, fb->fb_type.fb_depth, 800, 600, sa->sa_node);
+	fb_setsize_obp(fb, fb->fb_type.fb_depth, 800, 600, node);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
@@ -249,7 +249,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	       (i & 7), fb->fb_type.fb_width, fb->fb_type.fb_height,
 	       fb->fb_type.fb_depth);
 
-	fb->fb_type.fb_cmsize = getpropint(sa->sa_node, "cmsize", 256);
+	fb->fb_type.fb_cmsize = getpropint(node, "cmsize", 256);
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 
@@ -281,8 +281,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	} else
 		printf("\n");
 
-	if (sa->sa_node == fbnode)
-		fb_attach(fb, isconsole);
+	fb_attach(fb, isconsole);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.19 1998/11/19 15:38:24 mrg Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.20 2000/03/19 15:38:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -149,9 +149,6 @@ static struct fbdriver cgeightfbdriver = {
 	cgeightpoll, cgeightmmap
 };
 
-extern int fbnode;
-extern struct tty *fbconstty;
-
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
 static int cgeight_get_video __P((struct cgeight_softc *));
 static void cgeight_set_video __P((struct cgeight_softc *, int));
@@ -248,7 +245,7 @@ cgeightattach(parent, self, aux)
 		 * to be found.
 		 */
 		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
-			isconsole = (fbconstty != NULL);
+			isconsole = fb_is_console(0);
 	}
 
 #if 0

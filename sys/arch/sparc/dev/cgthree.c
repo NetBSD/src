@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.41 1999/08/26 22:53:42 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.42 2000/03/19 15:38:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ static void	cgthreeattach_sbus(struct device *, struct device *, void *);
 static void	cgthreeattach_obio(struct device *, struct device *, void *);
 
 static void	cgthreeunblank(struct device *);
-static void	cgthreeattach __P((struct cgthree_softc *, char *, int, int));
+static void	cgthreeattach __P((struct cgthree_softc *, char *, int));
 
 /* cdevsw prototypes */
 cdev_decl(cgthree);
@@ -153,9 +153,6 @@ static struct fbdriver cgthreefbdriver = {
 	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
 	cgthreemmap
 };
-
-extern int fbnode;
-extern struct tty *fbconstty;
 
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
 static void cgthree_set_video __P((struct cgthree_softc *, int));
@@ -255,7 +252,7 @@ cgthreeattach_sbus(parent, self, args)
 	}
 	sc->sc_fbc = (struct fbcontrol *)bh;
 
-	isconsole = node == fbnode && fbconstty != NULL;
+	isconsole = fb_is_console(node);
 	name = getpropstring(node, "model");
 
 	if (sa->sa_npromvaddrs != 0)
@@ -275,7 +272,7 @@ cgthreeattach_sbus(parent, self, args)
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	cgthreeattach(sc, name, isconsole, node == fbnode);
+	cgthreeattach(sc, name, isconsole);
 }
 
 void
@@ -322,7 +319,7 @@ cgthreeattach_obio(parent, self, aux)
 	}
 	sc->sc_fbc = (struct fbcontrol *)bh;
 
-	isconsole = fbconstty != NULL;
+	isconsole = fb_is_console(0);
 	name = "cgthree";
 
 	if (isconsole) {
@@ -339,15 +336,14 @@ cgthreeattach_obio(parent, self, aux)
 		sc->sc_fb.fb_pixels = (char *)bh;
 	}
 
-	cgthreeattach(sc, name, isconsole, 1);
+	cgthreeattach(sc, name, isconsole);
 }
 
 void
-cgthreeattach(sc, name, isconsole, isfb)
+cgthreeattach(sc, name, isconsole)
 	struct cgthree_softc *sc;
 	char *name;
 	int isconsole;
-	int isfb;
 {
 	int i;
 	struct fbdevice *fb = &sc->sc_fb;
@@ -393,8 +389,7 @@ cgthreeattach(sc, name, isconsole, isfb)
 	} else
 		printf("\n");
 
-	if (isfb)
-		fb_attach(fb, isconsole);
+	fb_attach(fb, isconsole);
 }
 
 
