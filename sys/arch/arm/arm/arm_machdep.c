@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.16 2002/07/12 01:39:24 nathanw Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.17 2002/08/03 01:27:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.16 2002/07/12 01:39:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.17 2002/08/03 01:27:42 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -177,10 +177,8 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
     void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct saframe *sf, frame;
-	extern char sigcode[], upcallcode[];
 
 	tf = process_frame(l);
 
@@ -206,9 +204,5 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_r3 = ninterrupted;
 	tf->tf_pc = (int) upcall;
 	tf->tf_usr_sp = (int) sf;
-	tf->tf_usr_lr = (int) ((caddr_t)p->p_sigctx.ps_sigcode + (
-	    (caddr_t)upcallcode - (caddr_t)sigcode));
-#ifndef arm26
-	cpu_icache_sync_all();	/* XXX really necessary? */
-#endif
+	tf->tf_usr_lr = 0;		/* no return */
 }

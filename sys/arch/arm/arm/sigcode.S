@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1.10.3 2002/08/01 02:41:12 nathanw Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.10.4 2002/08/03 01:27:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.1.10.3 2002/08/01 02:41:12 nathanw Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.1.10.4 2002/08/03 01:27:43 thorpej Exp $")
 
 #include "assym.h"
 #include <sys/syscall.h>
@@ -54,16 +54,6 @@ ENTRY_NP(sigcode)
 
 /* Well if that failed we better exit quick ! */
 
-	swi	SYS_exit
-	b	. - 8
-
-/*
- * Scheduler activations upcall trampoline.  The kernel directly
- * invokes the upcall.  The trampoline only exits if the upcall
- * returns (which is an error).
- */
-ENTRY_NP(upcallcode)
-	mov	r0, #101
 	swi	SYS_exit
 	b	. - 8
 
