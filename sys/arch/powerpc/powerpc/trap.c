@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 2003/08/24 17:52:35 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.86 2003/09/19 00:16:35 cl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2003/08/24 17:52:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2003/09/19 00:16:35 cl Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -127,6 +127,11 @@ trap(struct trapframe *frame)
 					KERNEL_UNLOCK();
 					return;
 				}
+				if (l->l_flag & L_SA) {
+					KDASSERT(p != NULL && p->p_sa != NULL);
+					p->p_sa->sa_vp_faultaddr = va;
+					l->l_flag |= L_SA_PAGEFAULT;
+				}
 			} else {
 				map = kernel_map;
 			}
@@ -143,6 +148,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
+				l->l_flag &= ~L_SA_PAGEFAULT;
 				/* KERNEL_PROC_UNLOCK(l); */
 			}
 			KERNEL_UNLOCK();
@@ -194,12 +200,18 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->dar;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(map, trunc_page(frame->dar), 0, ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(frame->dar));
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
@@ -221,6 +233,7 @@ trap(struct trapframe *frame)
 		} else {
 			trapsignal(l, SIGSEGV, EXC_DSI);
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
@@ -247,9 +260,15 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		ftype = VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
@@ -260,6 +279,7 @@ trap(struct trapframe *frame)
 			    frame->srr0, frame->srr1);
 		}
 		trapsignal(l, SIGSEGV, EXC_ISI);
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
 

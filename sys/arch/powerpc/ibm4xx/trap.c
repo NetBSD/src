@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2003/08/24 17:52:34 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 2003/09/19 00:16:34 cl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2003/08/24 17:52:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2003/09/19 00:16:34 cl Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -186,6 +186,11 @@ trap(struct trapframe *frame)
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
+				if (l->l_flag & L_SA) {
+					KDASSERT(p != NULL && p->p_sa != NULL);
+					p->p_sa->sa_vp_faultaddr = va;
+					l->l_flag |= L_SA_PAGEFAULT;
+				}
 			}
 
 			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
@@ -198,6 +203,8 @@ trap(struct trapframe *frame)
 			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
+			if (map != kernel_map)
+				l->l_flag &= ~L_SA_PAGEFAULT;
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
@@ -228,9 +235,15 @@ trap(struct trapframe *frame)
 		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
 		    frame->dar, frame->tf_xtra[TF_ESR]));
 		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->dar;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    0, ftype);
 		if (rv == 0) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
@@ -244,12 +257,18 @@ trap(struct trapframe *frame)
 		} else {
 			trapsignal(l, SIGSEGV, EXC_DSI);
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
@@ -257,10 +276,12 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);
 		if (rv == 0) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 		trapsignal(l, SIGSEGV, EXC_ISI);
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
