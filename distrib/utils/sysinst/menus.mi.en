@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.40 2000/06/18 23:50:03 cyber Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.41 2000/06/29 16:47:09 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,7 @@ menu netbsd, title "NetBSD-@@VERSION@@ Install System",
 	option "Re-install sets or install additional sets",
 		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
-		action { run_prog(0, 0, NULL, "/sbin/reboot"); };
+		action (endwin) { run_prog(0, 0, NULL, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
 
 menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
