@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.93.2.5 2004/09/21 13:39:19 skrll Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.93.2.6 2004/10/30 06:46:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93.2.5 2004/09/21 13:39:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93.2.6 2004/10/30 06:46:50 skrll Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -660,7 +660,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_bmapv(l, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -681,7 +681,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 #endif
 
 int
-lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
+lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
@@ -696,7 +696,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	int cnt, error;
 	int numrefed = 0;
 
-	lfs_cleaner_pid = l->l_proc->p_pid;
+	lfs_cleaner_pid = p->p_pid;
 	
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);

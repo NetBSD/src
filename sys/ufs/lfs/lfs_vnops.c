@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109.2.5 2004/09/21 13:39:21 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.109.2.6 2004/10/30 06:46:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.5 2004/09/21 13:39:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.6 2004/10/30 06:46:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1272,7 +1272,7 @@ lfs_fcntl(void *v)
 		simple_unlock(&fs->lfs_interlock);
 		VOP_UNLOCK(ap->a_vp, 0);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(ap->a_l, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
 			error = lfs_markv(p, fsidp, blkiov, blkcnt);
 		if (error == 0)
