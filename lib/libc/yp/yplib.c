@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.30 1997/07/21 14:09:32 jtc Exp $	 */
+/*	$NetBSD: yplib.c,v 1.31 1997/07/23 05:29:38 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.30 1997/07/21 14:09:32 jtc Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.31 1997/07/23 05:29:38 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -328,42 +328,21 @@ _yp_check(dom)
 }
 
 /*
- * _yp_invalid_domain: check if given domainname isn't RFC1035 compliant
+ * _yp_invalid_domain: check if given domainname isn't legal.
  * returns non-zero if invalid
  */
 int
 _yp_invalid_domain(dom)
 	const char *dom;
 {
-	const char	*p;
-
 	if (dom == NULL || *dom == '\0')
 		return 1;
 
-#define	is_digit(x)	((x) >= '0' && (x) <= '9')
-#define	is_letter(x)	(((x) >= 'a' && (x) <= 'z') || ((x) >='A' && (x) <='Z'))
-
-	for (p = dom; *p != '\0'; p++) {
-		int len;
-		if (!is_letter(*p))		/* label starts with a letter */
-			return 1;
-		p++;
-		len = 0;			/* then has [-a-zA-Z0-9] */
-		while (is_digit(*p) || is_letter(*p) || *p == '-') {
-			p++;
-			if (++len > MAXLABEL)
-				return 1;	/* label is too long */
-		}
-		if (*(p-1) == '-')		/* no trailing - for label */
-			return 1;
-		if (*p == '\0')
-			break;
-		else if (*p != '.')
-			return 1;
-		else if (*(p+1) == '\0')	/* no trailing . for domain */
-			return 1;
-	}
-	if ((p - dom) > YPMAXDOMAIN)
+	if (strlen(dom) > YPMAXDOMAIN)
 		return 1;
+
+	if (strchr(dom, '/') != NULL)
+		return 1;
+
 	return 0;
 }
