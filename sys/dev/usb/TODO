@@ -1,4 +1,5 @@
 Some things that need to be done in no particular order:
+--------------------------------------------------------
 
 Implement isochronous transfer mode.
 
@@ -11,9 +12,15 @@ Use lock manager locks.
 Use the pool allocator for TDs et al.
 
 Merge soft_td and td in uhci.c.
-
-Redo toggle handling in UHCI driver.
+      soft_qh and qh
+      soft_ed and ed in ohci.c
+      soft_td and td
 
 Tidy up transfer completion.
 
 Throw out more USBDI gunk.
+
+Port FreeBSD umass driver.
+
+Make hub driver note transition between self and bus powered state.
+Handle overcurrent conditions.
