@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.20 1994/02/15 17:44:53 mycroft Exp $
+ *	$Id: if_is.c,v 1.21 1994/02/15 19:53:20 mycroft Exp $
  */
 
 /* TODO
@@ -29,6 +29,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,6 +80,8 @@ char *chip_type[] = {"unknown", "Am7990 LANCE", "Am79960 PCnet-ISA"};
  * This structure contains the output queue for the interface, its address, ...
  */
 struct is_softc {
+	struct	device sc_dev;
+
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
 	u_short	sc_iobase;		/* IO base address of card */
 	u_short	sc_rap, sc_rdp;
@@ -159,6 +162,10 @@ is_probe(isa_dev)
 	register struct is_softc *sc = &is_softc[unit];
 	int nports;
 
+	/* XXX HACK */
+	sprintf(sc->sc_dev.dv_xname, "%s%d", isdriver.name, isa_dev->id_unit);
+	sc->sc_dev.dv_unit = isa_dev->id_unit;
+
 	if (nports = bicc_probe(isa_dev, sc))
 		goto found;
 	if (nports = ne2100_probe(isa_dev, sc))
@@ -176,7 +183,8 @@ found:
 		 + sizeof(struct init_block) + 8)
 	sc->sc_init = (struct init_block *)malloc(MAXMEM, M_TEMP, M_NOWAIT);
 	if (!sc->sc_init) {
-		printf("is%d: couldn't allocate memory for card\n", unit);
+		printf("%s: couldn't allocate memory for card\n",
+		    sc->sc_dev.dv_xname);
 		return 0;
 	}
 
@@ -290,7 +298,7 @@ is_attach(isa_dev)
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
-	ifp->if_unit = isa_dev->id_unit;
+	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = isdriver.name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
@@ -325,9 +333,9 @@ is_attach(isa_dev)
 			ifa = ifa->ifa_next;
 	}
 
-	printf("is%d: %s %s, address %s\n", ifp->if_unit,
-	    card_type[sc->sc_card], chip_type[sc->sc_chip],
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: address %s, type %s %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	    card_type[sc->sc_card], chip_type[sc->sc_chip]);
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -339,7 +347,7 @@ is_reset(sc)
 	struct is_softc *sc;
 {
 
-	log(LOG_NOTICE, "is%d: reset\n", sc->sc_arpcom.ac_if.if_unit);
+	log(LOG_NOTICE, "%s: reset\n", sc->sc_dev.dv_xname);
 	is_init(sc);
 }
  
@@ -349,7 +357,7 @@ is_watchdog(unit)
 {
 	struct is_softc *sc = &is_softc[unit];
 
-	log(LOG_ERR, "is%d: device timeout\n", sc->sc_arpcom.ac_if.if_unit);
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
 	is_reset(sc);
 }
@@ -477,7 +485,7 @@ is_init(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		is_start(ifp);
 	} else 
-		printf("is%d: card failed to initialise\n", ifp->if_unit);
+		printf("%s: card failed to initialise\n", sc->sc_dev.dv_xname);
 	
 	(void) splx(s);
 }
@@ -634,29 +642,29 @@ isintr(unit)
 	do {
 		if (isr & ERR) {
 			if (isr & BABL){
-				printf("is%d: BABL\n", unit);
+				printf("%s: BABL\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			}
 			if (isr & CERR) {
-				printf("is%d: CERR\n", unit);
+				printf("%s: CERR\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_collisions++;
 			}
 			if (isr & MISS) {
-				printf("is%d: MISS\n", unit);
+				printf("%s: MISS\n", sc->sc_dev.dv_xname);
 				sc->sc_arpcom.ac_if.if_ierrors++;
 			}
 			if (isr & MERR)
-				printf("is%d: MERR\n", unit);
+				printf("%s: MERR\n", sc->sc_dev.dv_xname);
 			iswrcsr(sc, 0, BABL | CERR | MISS | MERR | INEA);
 		}
 		if ((isr & RXON) == 0) {
-			printf("is%d: !RXON\n", unit);
+			printf("%s: !RXON\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_ierrors++;
 			is_reset(sc);
 			return 1;
 		}
 		if ((isr & TXON) == 0) {
-			printf("is%d: !TXON\n", unit);
+			printf("%s: !TXON\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_oerrors++;
 			is_reset(sc);
 			return 1;
@@ -723,8 +731,7 @@ is_rint(sc)
 	/* Out of sync with hardware, should never happen */
 	
 	if (cdm->flags & OWN) {
-		printf("is%d: error: out of sync\n",
-		    sc->sc_arpcom.ac_if.if_unit);
+		printf("%s: error: out of sync\n", sc->sc_dev.dv_xname);
 		iswrcsr(sc, 0, RINT|INEA);
 		return;
 	}
@@ -735,17 +742,13 @@ is_rint(sc)
 		iswrcsr(sc, 0, RINT | INEA);
 		if (cdm->flags & ERR) {
 			if (cdm->flags & FRAM)
-				printf("is%d: FRAM\n",
-				    sc->sc_arpcom.ac_if.if_unit);
+				printf("%s: FRAM\n", sc->sc_dev.dv_xname);
 			if (cdm->flags & OFLO)
-				printf("is%d: OFLO\n",
-				    sc->sc_arpcom.ac_if.if_unit);
+				printf("%s: OFLO\n", sc->sc_dev.dv_xname);
 			if (cdm->flags & CRC)
-				printf("is%d: CRC\n",
-				    sc->sc_arpcom.ac_if.if_unit);
+				printf("%s: CRC\n", sc->sc_dev.dv_xname);
 			if (cdm->flags & RBUFF)
-				printf("is%d: RBUFF\n",
-				    sc->sc_arpcom.ac_if.if_unit);
+				printf("%s: RBUFF\n", sc->sc_dev.dv_xname);
 		} else if (cdm->flags & (STP | ENP) != (STP | ENP)) {
 			do {
 				iswrcsr(sc, 0, RINT | INEA);
@@ -754,8 +757,7 @@ is_rint(sc)
 				NEXTRDS;
 			} while ((cdm->flags & (OWN | ERR | STP | ENP)) == 0);
 			sc->sc_last_rd = rmd;
-			printf("is%d: chained buffer\n",
-			    sc->sc_arpcom.ac_if.if_unit);
+			printf("%s: chained buffer\n", sc->sc_dev.dv_xname);
 			if ((cdm->flags & (OWN | ERR | STP | ENP)) != ENP) {
 				is_reset(sc);
 				return;
@@ -951,8 +953,8 @@ is_ioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct is_softc *sc = &is_softc[ifp->if_unit];
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -981,7 +983,7 @@ is_ioctl(ifp, cmd, data)
 		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -990,8 +992,8 @@ is_ioctl(ifp, cmd, data)
 				/* 
 				 *
 				 */
-				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->sc_arpcom.ac_enaddr,
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
 			}
 			/* Set new address. */
@@ -1043,8 +1045,8 @@ is_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti((struct ifreq *)data, &sc->sc_arpcom):
-		    ether_delmulti((struct ifreq *)data, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_arpcom):
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1058,8 +1060,8 @@ is_ioctl(ifp, cmd, data)
 
 #ifdef notdef
 	case SIOCGHWADDR:
-		bcopy((caddr_t)sc->sc_arpcom.ac_enaddr,
-		    (caddr_t) &ifr->ifr_data, sizeof(sc->sc_arpcom.ac_enaddr));
+		bcopy(sc->sc_arpcom.ac_enaddr, &ifr->ifr_data,
+		    sizeof(sc->sc_arpcom.ac_enaddr));
 		break;
 #endif
 
@@ -1082,14 +1084,13 @@ recv_print(sc, no)
 	
 	rmd = &sc->sc_rd[no];
 	len = rmd->mcnt;
-	printf("is%d: receive buffer %d, len = %d\n", 
-	    sc->sc_arpcom.ac_if.if_unit, no, len);
-	printf("is%d: status %x\n", sc->sc_arpcom.ac_if.if_unit,
-	    isrdcsr(sc, 0));
+	printf("%s: receive buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
+	    len);
+	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc, 0));
 	for (i = 0; i < len; i++) {
 		if (!printed) {
 			printed = 1;
-			printf("is%d: data: ", sc->sc_arpcom.ac_if.if_unit);
+			printf("%s: data: ", sc->sc_dev.dv_xname);
 		}
 		printf("%x ", *(sc->sc_rbuf + (BUFSIZE*no) + i));
 	}
@@ -1108,17 +1109,15 @@ xmit_print(sc, no)
 	
 	rmd = &sc->sc_td[no];
 	len = -rmd->bcnt;
-	printf("is%d: transmit buffer %d, len = %d\n",
-	    sc->sc_arpcom.ac_if.if_unit, no, len);
-	printf("is%d: status %x\n", sc->sc_arpcom.ac_if.if_unit,
-	    isrdcsr(sc, 0));
-	printf("is%d: addr %x, flags %x, bcnt %x, mcnt %x\n",
-	    sc->sc_arpcom.ac_if.if_unit, rmd->addr, rmd->flags, rmd->bcnt,
-	    rmd->mcnt);
+	printf("%s: transmit buffer %d, len = %d\n", sc->sc_dev.dv_xname, no,
+	    len);
+	printf("%s: status %x\n", sc->sc_dev.dv_xname, isrdcsr(sc, 0));
+	printf("%s: addr %x, flags %x, bcnt %x, mcnt %x\n",
+	    sc->sc_dev.dv_xname, rmd->addr, rmd->flags, rmd->bcnt, rmd->mcnt);
 	for (i = 0; i < len; i++)  {
 		if (!printed) {
 			printed = 1;
-			printf("is%d: data: ", sc->sc_arpcom.ac_if.if_unit);
+			printf("%s: data: ", sc->sc_dev.dv_xname);
 		}
 		printf("%x ", *(sc->sc_tbuf + (BUFSIZE*no) + i));
 	}
