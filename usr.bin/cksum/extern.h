@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2005/01/12 17:04:35 xtraeme Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2005/01/20 15:44:59 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,36 +38,36 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	crc (int, u_int32_t *, off_t *);
-void	pcrc (char *, u_int32_t, off_t);
-void	psum1 (char *, u_int32_t, off_t);
-void	psum2 (char *, u_int32_t, off_t);
-int	csum1 (int, u_int32_t *, off_t *);
-int	csum2 (int, u_int32_t *, off_t *);
-int	md5 (int, u_int32_t *, u_int32_t *);
+int	crc(int, u_int32_t *, off_t *);
+void	pcrc(char *, u_int32_t, off_t);
+void	psum1(char *, u_int32_t, off_t);
+void	psum2(char *, u_int32_t, off_t);
+int	csum1(int, u_int32_t *, off_t *);
+int	csum2(int, u_int32_t *, off_t *);
+int	md5(int, u_int32_t *, u_int32_t *);
 
-void	MD2String (const char *);
-void	MD2TimeTrial (void);
-void	MD2TestSuite (void);
-void	MD2Filter (int);
+void	MD2String(const char *);
+void	MD2TimeTrial(void);
+void	MD2TestSuite(void);
+void	MD2Filter(int);
 
-void	MD4String (const char *);
-void	MD4TimeTrial (void);
-void	MD4TestSuite (void);
-void	MD4Filter (int);
+void	MD4String(const char *);
+void	MD4TimeTrial(void);
+void	MD4TestSuite(void);
+void	MD4Filter(int);
 
-void	MD5String (const char *);
-void	MD5TimeTrial (void);
-void	MD5TestSuite (void);
-void	MD5Filter (int);
+void	MD5String(const char *);
+void	MD5TimeTrial(void);
+void	MD5TestSuite(void);
+void	MD5Filter(int);
 
-void	SHA1String (const char *);
-void	SHA1TimeTrial (void);
-void	SHA1TestSuite (void);
-void	SHA1Filter (int);
+void	SHA1String(const char *);
+void	SHA1TimeTrial(void);
+void	SHA1TestSuite(void);
+void	SHA1Filter(int);
 
-void	RMD160String (const char *);
-void	RMD160TimeTrial (void);
-void	RMD160TestSuite (void);
-void	RMD160Filter (int);
+void	RMD160String(const char *);
+void	RMD160TimeTrial(void);
+void	RMD160TestSuite(void);
+void	RMD160Filter(int);
 __END_DECLS

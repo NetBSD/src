@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.7 2005/01/12 17:10:05 xtraeme Exp $	*/
+/*	$NetBSD: md5.c,v 1.8 2005/01/20 15:44:59 xtraeme Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.7 2005/01/12 17:10:05 xtraeme Exp $");
+__RCSID("$NetBSD: md5.c,v 1.8 2005/01/20 15:44:59 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -34,10 +34,10 @@ __RCSID("$NetBSD: md5.c,v 1.7 2005/01/12 17:10:05 xtraeme Exp $");
 #include <string.h>
 #include <time.h>
 
-void	MD5Filter (int);
-void	MD5String (const char *);
-void	MD5TestSuite (void);
-void	MD5TimeTrial (void);
+void	MD5Filter(int);
+void	MD5String(const char *);
+void	MD5TestSuite(void);
+void	MD5TimeTrial(void);
 
 #ifndef HASHTYPE
 #define HASHTYPE "MD5"
