@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.69 1996/05/29 02:04:22 mrg Exp $	*/
+/*	$NetBSD: tty.c,v 1.70 1996/05/30 23:32:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -2055,12 +2055,12 @@ void
 tty_detach(tp)
 	struct tty *tp;
 {
-	TAILQ_REMOVE(&ttylist, tp, tty_link);
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
 		panic("tty_detach: tty_count < 0");
 #endif
+	TAILQ_REMOVE(&ttylist, tp, tty_link);
 }
 
 /*
