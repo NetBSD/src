@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.29.4.1 1997/01/26 04:57:35 rat Exp $	*/
+/*	$NetBSD: parser.c,v 1.29.4.2 1997/01/26 18:20:40 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.29.4.1 1997/01/26 04:57:35 rat Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.29.4.2 1997/01/26 18:20:40 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -1194,11 +1194,15 @@ parsesub: {
 				STPUTC(c, out);
 				c = pgetc();
 			} while (is_in_name(c));
-		} else if (is_special(c)) {
+		} else if (is_digit(c)) {
 			do {
 				USTPUTC(c, out);
 				c = pgetc();
-			} while (is_special(c));
+			} while (is_digit(c));
+		}
+		else if (is_special(c)) {
+			USTPUTC(c, out);
+			c = pgetc();
 		}
 		else
 badsub:			synerror("Bad substitution");
