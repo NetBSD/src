@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,8 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: pagsh.c,v 1.1.1.3 2001/02/11 13:51:10 assar Exp $");
+__RCSID("$Heimdal: pagsh.c,v 1.6 2002/08/23 17:54:20 assar Exp $"
+        "$NetBSD: pagsh.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,6 +63,26 @@ RCSID("$Id: pagsh.c,v 1.1.1.3 2001/02/11 13:51:10 assar Exp $");
 
 #include <err.h>
 #include <roken.h>
+#include <getarg.h>
+
+static int help_flag;
+static int version_flag;
+static int c_flag;
+
+struct getargs getargs[] = {
+    { NULL,	'c', arg_flag, &c_flag },
+    { "version", 0,  arg_flag, &version_flag },
+    { "help",	'h', arg_flag, &help_flag },
+};
+
+static int num_args = sizeof(getargs) / sizeof(getargs[0]);
+
+static void
+usage(int ecode)
+{
+    arg_printusage(getargs, num_args, NULL, "command [args...]");
+    exit(ecode);
+}
 
 /*
  * Run command with a new ticket file / credentials cache / token
@@ -77,6 +98,20 @@ main(int argc, char **argv)
   char *path;
   char **args;
   int i;
+  int optind = 0;
+
+  set_progname(argv[0]);
+  if(getarg(getargs, num_args, argc, argv, &optind))
+      usage(1);
+  if(help_flag)
+      usage(0);
+  if(version_flag) {
+      print_version(NULL);
+      exit(0);
+  }
+
+  argc -= optind;
+  argv += optind;
 
 #ifdef KRB5
   snprintf (tf, sizeof(tf), "%sXXXXXX", KRB5_DEFAULT_CCROOT);
@@ -101,8 +136,6 @@ main(int argc, char **argv)
       errx (1, "Out of memory allocating %lu bytes",
 	    (unsigned long)((argc + 10)*sizeof(char *)));
   
-  argv++;
-
   if(*argv == NULL) {
     path = getenv("SHELL");
     if(path == NULL){
@@ -110,7 +143,6 @@ main(int argc, char **argv)
       path = strdup(pw->pw_shell);
     }
   } else {
-    if(strcmp(*argv, "-c") ==  0) argv++;
     path = strdup(*argv++);
   }
   if (path == NULL)

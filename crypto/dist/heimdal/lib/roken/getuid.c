@@ -38,7 +38,8 @@
 
 #ifndef HAVE_GETUID
 
-RCSID("$Id: getuid.c,v 1.1.1.2 2000/08/02 19:59:50 assar Exp $");
+__RCSID("$Heimdal: getuid.c,v 1.3 1999/12/02 16:58:46 joda Exp $"
+        "$NetBSD: getuid.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 
 int getuid(void)
 {

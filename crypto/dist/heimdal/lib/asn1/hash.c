@@ -37,7 +37,8 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: hash.c,v 1.1.1.2 2000/08/02 19:59:04 assar Exp $");
+__RCSID("$Heimdal: hash.c,v 1.8 1999/12/02 17:05:02 joda Exp $"
+        "$NetBSD: hash.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
 
 static Hashentry *_search(Hashtab * htab,	/* The hash table */
 			  void *ptr);	/* And key */

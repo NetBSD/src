@@ -513,7 +513,7 @@ sink(int argc, char **argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; isdigit(*cp);)
+		for (size = 0; isdigit((unsigned char)*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
@@ -684,21 +684,23 @@ run_err(const char *fmt, ...)
 {
 	static FILE *fp;
 	va_list ap;
-	va_start(ap, fmt);
 
 	++errs;
 	if (fp == NULL && !(fp = fdopen(remout, "w")))
 		return;
+	va_start(ap, fmt);
 	fprintf(fp, "%c", 0x01);
 	fprintf(fp, "rcp: ");
 	vfprintf(fp, fmt, ap);
 	fprintf(fp, "\n");
 	fflush(fp);
-
-	if (!iamremote)
-		vwarnx(fmt, ap);
-
 	va_end(ap);
+
+	if (!iamremote) {
+	    va_start(ap, fmt);
+	    vwarnx(fmt, ap);
+	    va_end(ap);
+	}
 }
 
 /*

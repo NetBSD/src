@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kafs_locl.h,v 1.1.1.2 2000/08/02 20:00:21 assar Exp $ */
+/* $Heimdal: kafs_locl.h,v 1.15 1999/12/02 16:58:40 joda Exp $
+   $NetBSD: kafs_locl.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
 
 #ifndef __KAFS_LOCL_H__
 #define __KAFS_LOCL_H__

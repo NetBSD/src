@@ -1,12 +1,15 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_init_context.3,v 1.1.1.3 2001/09/17 12:25:04 assar Exp $
-.Dd Jan 21, 2001
+.\" $Heimdal: krb5_init_context.3,v 1.6 2002/09/02 12:42:00 joda Exp $
+.\" $NetBSD: krb5_init_context.3,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $
+.Dd January 21, 2001
 .Dt KRB5_CONTEXT 3
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm krb5_init_context ,
 .Nm krb5_free_context
 .Nd create and delete krb5_context structures
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
 .Fd #include <krb5.h>
 .Ft krb5_error_code
@@ -18,7 +21,7 @@ The
 .Fn krb5_init_context
 function initializes the
 .Fa context
-structure and reads the configration file
+structure and reads the configuration file
 .Pa /etc/krb5.conf .
 .Pp
 The structure should be freed by calling

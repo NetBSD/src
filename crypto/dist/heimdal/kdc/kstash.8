@@ -1,8 +1,9 @@
-.\" $Id: kstash.8,v 1.1.1.5 2001/09/17 12:24:58 assar Exp $
+.\" $Heimdal: kstash.8,v 1.7 2002/08/20 16:37:14 joda Exp $
+.\" $NetBSD: kstash.8,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $
 .\"
 .Dd September  1, 2000
 .Dt KSTASH 8
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm kstash
 .Nd "store the KDC master password in a file"
@@ -28,12 +29,12 @@ used by the KDC.
 Supported options:
 .Bl -tag -width Ds
 .It Xo
-.Fl e Ar string Ns ,
+.Fl e Ar string ,
 .Fl -enctype= Ns Ar string
 .Xc
 the encryption type to use, defaults to DES3-CBC-SHA1
 .It Xo
-.Fl k Ar file Ns ,
+.Fl k Ar file ,
 .Fl -key-file= Ns Ar file
 .Xc
 the name of the master key file

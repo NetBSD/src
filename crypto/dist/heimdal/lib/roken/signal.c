@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: signal.c,v 1.1.1.2 2000/08/02 19:59:56 assar Exp $");
+__RCSID("$Heimdal: signal.c,v 1.12 2000/07/08 12:39:06 assar Exp $"
+        "$NetBSD: signal.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include <signal.h>

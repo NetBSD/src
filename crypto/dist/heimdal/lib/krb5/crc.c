@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: crc.c,v 1.1.1.3 2001/02/11 13:51:44 assar Exp $");
+__RCSID("$Heimdal: crc.c,v 1.9 2000/08/03 01:45:14 assar Exp $"
+        "$NetBSD: crc.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 static u_long table[256];
 

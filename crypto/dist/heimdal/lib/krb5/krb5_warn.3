@@ -1,8 +1,9 @@
 .\" Copyright (c) 1997 Kungliga Tekniska Högskolan
-.\" $Id: krb5_warn.3,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $
+.\" $Heimdal: krb5_warn.3,v 1.5 2002/08/28 15:30:59 joda Exp $
+.\" $NetBSD: krb5_warn.3,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $
 .Dd August 8, 1997
 .Dt KRB5_WARN 3
-.Os HEIMDAL
+.Os
 .Sh NAME
 .Nm krb5_warn ,
 .Nm krb5_warnx ,
@@ -14,6 +15,8 @@
 .Nm krb5_verrx ,
 .Nm krb5_set_warn_dest
 .Nd Heimdal warning and error functions
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
 .Fd #include <krb5.h>
 .Ft krb5_error_code
@@ -40,7 +43,7 @@ These functions prints a warning message to some destination.
 is a printf style format specifying the message to print. The forms not ending in an
 .Dq x
 prints the error string associated with
-.Fa code 
+.Fa code
 along with the message.
 The
 .Dq err
@@ -50,7 +53,7 @@ after printing the message.
 .Pp
 The
 .Fn krb5_set_warn_func
-function sets the destination for warning messages to the specified 
+function sets the destination for warning messages to the specified
 .Fa facility .
 Messages logged with the
 .Dq warn

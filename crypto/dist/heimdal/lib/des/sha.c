@@ -34,7 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: sha.c,v 1.1.1.3 2001/02/11 13:51:48 assar Exp $");
+__RCSID("$Heimdal: sha.c,v 1.16 2001/01/29 04:33:44 assar Exp $"
+        "$NetBSD: sha.c,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
 #endif
 
 #include "sha.h"

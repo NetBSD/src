@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: del_enctype.c,v 1.1.1.4 2001/06/19 22:08:08 assar Exp $");
+__RCSID("$Heimdal: del_enctype.c,v 1.7 2001/04/19 07:26:52 joda Exp $"
+        "$NetBSD: del_enctype.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 /*
  * del_enctype principal enctypes...

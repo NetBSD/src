@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sl_locl.h,v 1.1.1.2 2000/08/02 20:00:19 assar Exp $ */
+/* $Heimdal: sl_locl.h,v 1.6 1999/12/02 16:58:55 joda Exp $
+   $NetBSD: sl_locl.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

@@ -36,7 +36,8 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.1.1.3 2001/06/19 22:08:09 assar Exp $");
+__RCSID("$Heimdal: kadm_conn.c,v 1.13 2001/05/16 22:06:44 assar Exp $"
+        "$NetBSD: kadm_conn.c,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $");
 
 struct kadm_port {
     char *port;

@@ -33,7 +33,8 @@
 
 #include "kpasswd_locl.h"
 
-RCSID("$Id: kpasswd-generator.c,v 1.1.1.4 2001/09/17 12:24:58 assar Exp $");
+__RCSID("$Heimdal: kpasswd-generator.c,v 1.5 2001/07/31 02:44:42 assar Exp $"
+        "$NetBSD: kpasswd-generator.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 static unsigned
 read_words (const char *filename, char ***ret_w)

@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: get_mic.c,v 1.1.1.5 2001/09/17 12:25:00 assar Exp $");
+__RCSID("$Heimdal: get_mic.c,v 1.19 2001/10/31 13:37:39 nectar Exp $"
+        "$NetBSD: get_mic.c,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $");
 
 static OM_uint32
 mic_des
@@ -235,10 +236,6 @@ mic_des3
 
   memcpy (p, encdata.data, encdata.length);
   krb5_data_free (&encdata);
-
-  p += 8 + cksum.checksum.length;
-
-  memcpy (p, message_buffer->value, message_buffer->length);
 
   krb5_auth_con_setlocalseqnumber (gssapi_krb5_context,
 			       context_handle->auth_context,

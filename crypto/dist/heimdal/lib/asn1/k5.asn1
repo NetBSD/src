@@ -1,4 +1,4 @@
--- $Id: k5.asn1,v 1.1.1.4 2001/06/19 22:08:14 assar Exp $
+-- $Id: k5.asn1,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $
 
 KERBEROS5 DEFINITIONS ::=
 BEGIN
@@ -73,6 +73,7 @@ CKSUMTYPE ::= INTEGER {
 	-- CKSUMTYPE_SHA1(10),
 	CKSUMTYPE_HMAC_SHA1_DES3(12),
 	CKSUMTYPE_SHA1(1000),		-- correct value? 10 (9 also)
+	CKSUMTYPE_GSSAPI(0x8003),
 	CKSUMTYPE_HMAC_MD5(-138),	-- unofficial microsoft number
 	CKSUMTYPE_HMAC_MD5_ENC(-1138)	-- even more unofficial
 }
@@ -96,8 +97,7 @@ ENCTYPE ::= INTEGER {
 	ETYPE_DES_CBC_NONE(-0x1000),
 	ETYPE_DES3_CBC_NONE(-0x1001),
 	ETYPE_DES_CFB64_NONE(-0x1002),
-	ETYPE_DES_PCBC_NONE(-0x1003),
-	ETYPE_DES3_CBC_NONE_IVEC(-0x1004)
+	ETYPE_DES_PCBC_NONE(-0x1003)
 }
 
 -- this is sugar to make something ASN1 does not have: unsigned

@@ -35,7 +35,8 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$Id: prog_setup.c,v 1.1.1.4 2001/06/19 22:08:22 assar Exp $");
+__RCSID("$Heimdal: prog_setup.c,v 1.9 2001/02/20 01:44:54 assar Exp $"
+        "$NetBSD: prog_setup.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
 
 void
 krb5_std_usage(int code, struct getargs *args, int num_args)

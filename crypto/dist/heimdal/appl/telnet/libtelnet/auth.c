@@ -53,7 +53,8 @@
 
 #include <config.h>
 
-RCSID("$Id: auth.c,v 1.1.1.3 2001/09/17 12:24:37 assar Exp $");
+__RCSID("$Heimdal: auth.c,v 1.25 2002/01/18 12:58:48 joda Exp $"
+        "$NetBSD: auth.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
 
 #if	defined(AUTHENTICATION)
 #include <stdio.h>
@@ -100,6 +101,8 @@ extern rsaencpwd_printsub();
 #endif
 
 int auth_debug_mode = 0;
+int auth_has_failed  = 0;
+int auth_enable_encrypt = 0;
 static 	const	char	*Name = "Noname";
 static	int	Server = 0;
 static	Authenticator	*authenticated = 0;
@@ -468,6 +471,7 @@ auth_send(unsigned char *data, int cnt)
     if (auth_debug_mode)
 	printf(">>>%s: Sent failure message\r\n", Name);
     auth_finished(0, AUTH_REJECT);
+    auth_has_failed = 1;
 #ifdef KANNAN
     /*
      *  We requested strong authentication, however no mechanisms worked.

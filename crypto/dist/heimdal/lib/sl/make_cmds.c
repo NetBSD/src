@@ -34,7 +34,8 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-RCSID("$Id: make_cmds.c,v 1.1.1.3 2001/06/19 22:08:33 assar Exp $");
+__RCSID("$Heimdal: make_cmds.c,v 1.7 2001/02/20 01:44:55 assar Exp $"
+        "$NetBSD: make_cmds.c,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
 
 #include <roken.h>
 #include <err.h>

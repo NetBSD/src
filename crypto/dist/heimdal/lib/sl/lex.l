@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,12 +37,15 @@
 #include "make_cmds.h"
 #include "parse.h"
 
-RCSID("$Id: lex.l,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $");
+__RCSID("$Heimdal: lex.l,v 1.6 2001/09/16 23:10:10 assar Exp $"
+        "$NetBSD: lex.l,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);
 
 #define YY_NO_UNPUT
+
+#undef ECHO
 
 %}
 

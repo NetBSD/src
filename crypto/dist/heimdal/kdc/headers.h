@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: headers.h,v 1.1.1.5 2001/09/17 12:24:57 assar Exp $ 
+ * $Id: headers.h,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $ 
  */
 
 #ifndef __HEADERS_H__
@@ -41,6 +41,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,11 +86,6 @@
 #include <getarg.h>
 #include <base64.h>
 #include <parse_units.h>
-#ifdef HAVE_OPENSSL
-#include <openssl/des.h>
-#else
-#include <des.h>
-#endif
 #include <krb5.h>
 #include <krb5_locl.h>
 #include <hdb.h>

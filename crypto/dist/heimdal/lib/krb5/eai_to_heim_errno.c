@@ -33,7 +33,8 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: eai_to_heim_errno.c,v 1.1.1.2 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: eai_to_heim_errno.c,v 1.3 2001/05/14 22:48:33 assar Exp $"
+        "$NetBSD: eai_to_heim_errno.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 /*
  * convert the getaddrinfo error code in `eai_errno' into a

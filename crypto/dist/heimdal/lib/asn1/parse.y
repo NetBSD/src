@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: parse.y,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $ */
+/* $Heimdal: parse.y,v 1.19 2001/09/27 16:21:47 assar Exp $
+   $NetBSD: parse.y,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $ */
 
 %{
 #ifdef HAVE_CONFIG_H
@@ -44,7 +45,8 @@
 #include "lex.h"
 #include "gen_locl.h"
 
-RCSID("$Id: parse.y,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $");
+__RCSID("$Heimdal: parse.y,v 1.19 2001/09/27 16:21:47 assar Exp $"
+        "$NetBSD: parse.y,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 static Type *new_type (Typetype t);
 void yyerror (char *);
@@ -61,10 +63,12 @@ static void append (Member *l, Member *r);
 }
 
 %token INTEGER SEQUENCE OF OCTET STRING GeneralizedTime GeneralString
-%token BIT APPLICATION OPTIONAL EEQUAL TBEGIN END DEFINITIONS EXTERNAL
+%token BIT APPLICATION OPTIONAL EEQUAL TBEGIN END DEFINITIONS ENUMERATED
+%token EXTERNAL
 %token DOTDOT
 %token IMPORTS FROM
-%token <name> IDENTIFIER 
+%token OBJECT IDENTIFIER
+%token <name> IDENT 
 %token <constant> CONSTANT
 
 %type <constant> constant optional2
@@ -75,7 +79,7 @@ static void append (Member *l, Member *r);
 
 %%
 
-envelope	: IDENTIFIER DEFINITIONS EEQUAL TBEGIN specification END {}
+envelope	: IDENT DEFINITIONS EEQUAL TBEGIN specification END {}
 		;
 
 specification	:
@@ -87,22 +91,23 @@ declaration	: imports_decl
 		| constant_decl
 		;
 
-referencenames	: IDENTIFIER ',' referencenames
+referencenames	: IDENT ',' referencenames
 		{
 			Symbol *s = addsym($1);
 			s->stype = Stype;
 		}
-		| IDENTIFIER
+		| IDENT
 		{
 			Symbol *s = addsym($1);
 			s->stype = Stype;
 		}
 		;
 
-imports_decl	: IMPORTS referencenames FROM IDENTIFIER ';'
+imports_decl	: IMPORTS referencenames FROM IDENT ';'
+		{ add_import($4); }
 		;
 
-type_decl	: IDENTIFIER EEQUAL type
+type_decl	: IDENT EEQUAL type
 		{
 		  Symbol *s = addsym ($1);
 		  s->stype = Stype;
@@ -111,7 +116,7 @@ type_decl	: IDENTIFIER EEQUAL type
 		}
 		;
 
-constant_decl	: IDENTIFIER type EEQUAL constant
+constant_decl	: IDENT type EEQUAL constant
 		{
 		  Symbol *s = addsym ($1);
 		  s->stype = SConstant;
@@ -134,6 +139,12 @@ type		: INTEGER     { $$ = new_type(TInteger); }
 			$$ = new_type(TInteger);
 			$$->members = $3;
                 }
+		| OBJECT IDENTIFIER { $$ = new_type(TOID); }
+		| ENUMERATED '{' bitdecls '}'
+		{
+			$$ = new_type(TEnumerated);
+			$$->members = $3;
+		}
 		| OCTET STRING { $$ = new_type(TOctetString); }
 		| GeneralString { $$ = new_type(TGeneralString); }
 		| GeneralizedTime { $$ = new_type(TGeneralizedTime); }
@@ -152,7 +163,7 @@ type		: INTEGER     { $$ = new_type(TInteger); }
 		  $$ = new_type(TBitString);
 		  $$->members = $4;
 		}
-		| IDENTIFIER
+		| IDENT
 		{
 		  Symbol *s = addsym($1);
 		  $$ = new_type(TType);
@@ -174,7 +185,7 @@ memberdecls	: { $$ = NULL; }
 		| memberdecls ',' memberdecl { $$ = $1; append($$, $3); }
 		;
 
-memberdecl	: IDENTIFIER '[' constant ']' type optional2
+memberdecl	: IDENT '[' constant ']' type optional2
 		{
 		  $$ = malloc(sizeof(*$$));
 		  $$->name = $1;
@@ -196,7 +207,7 @@ bitdecls	: { $$ = NULL; }
 		| bitdecls ',' bitdecl { $$ = $1; append($$, $3); }
 		;
 
-bitdecl		: IDENTIFIER '(' constant ')'
+bitdecl		: IDENT '(' constant ')'
 		{
 		  $$ = malloc(sizeof(*$$));
 		  $$->name = $1;
@@ -210,7 +221,7 @@ bitdecl		: IDENTIFIER '(' constant ')'
 		;
 
 constant	: CONSTANT	{ $$ = $1; }
-		| IDENTIFIER	{
+		| IDENT	{
 				  Symbol *s = addsym($1);
 				  if(s->stype != SConstant)
 				    error_message ("%s is not a constant\n",

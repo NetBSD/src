@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: roken_gethostby.c,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $");
+__RCSID("$Heimdal: roken_gethostby.c,v 1.5 1999/12/05 13:16:44 assar Exp $"
+        "$NetBSD: roken_gethostby.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 #endif
 
 #include <roken.h>

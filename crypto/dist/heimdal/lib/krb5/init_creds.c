@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: init_creds.c,v 1.1.1.4 2001/09/17 12:25:03 assar Exp $");
+__RCSID("$Heimdal: init_creds.c,v 1.9 2001/07/03 18:42:07 assar Exp $"
+        "$NetBSD: init_creds.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
 
 void
 krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)

@@ -33,7 +33,8 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen_decode.c,v 1.1.1.4 2001/06/19 22:08:14 assar Exp $");
+__RCSID("$Heimdal: gen_decode.c,v 1.18 2002/08/09 15:37:34 joda Exp $"
+        "$NetBSD: gen_decode.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 static void
 decode_primitive (const char *typename, const char *name)
@@ -73,8 +74,14 @@ decode_type (const char *name, const Type *t)
     case TUInteger:
 	decode_primitive ("unsigned", name);
 	break;
+    case TEnumerated:
+	decode_primitive ("enumerated", name);
+	break;
     case TOctetString:
 	decode_primitive ("octet_string", name);
+	break;
+    case TOID :
+	decode_primitive ("oid", name);
 	break;
     case TBitString: {
 	Member *m;
@@ -297,6 +304,7 @@ generate_type_decode (const Symbol *s)
   case TInteger:
   case TUInteger:
   case TOctetString:
+  case TOID:
   case TGeneralizedTime:
   case TGeneralString:
   case TBitString:
@@ -307,9 +315,8 @@ generate_type_decode (const Symbol *s)
     fprintf (codefile,
 	     "size_t ret = 0, reallen;\n"
 	     "size_t l;\n"
-	     "int i, e;\n\n");
+	     "int e;\n\n");
     fprintf (codefile, "memset(data, 0, sizeof(*data));\n");
-    fprintf (codefile, "i = 0;\n"); /* hack to avoid `unused variable' */
     fprintf (codefile, "reallen = 0;\n"); /* hack to avoid `unused variable' */
 
     decode_type ("data", s->type);
