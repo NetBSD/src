@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.37 1997/05/12 23:40:22 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.38 1997/05/22 18:20:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -666,7 +666,17 @@ nfs_reply(myrep)
 		}
 		if (nam)
 			m_freem(nam);
-	
+
+		/*
+		 * XXX: Temporary work-around for unexplained lossage with a
+		 * XXX: netmask that's not byte-aligned, i.e. 255.255.255.192.
+		 * XXX: See PR kern/3579 for details.
+		 */
+		if (mrep == 0) {
+			printf("nfs_reply: null mbuf from nfs_receive()\n");
+			continue;
+		}
+
 		/*
 		 * Get the xid and check that it is an rpc reply
 		 */
