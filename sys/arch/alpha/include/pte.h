@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.14 1998/03/07 01:44:08 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.15 1998/03/07 03:15:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -80,7 +80,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	ALPHA_MAX_PTSIZE	((u_long)(NPTEPG * NBPG))	/* 8M */
 
 #ifdef _KERNEL
-extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */
+extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
 #endif /* _KERNEL */
 #endif /* ! _LOCORE */
 
