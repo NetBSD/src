@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1994/12/06 08:34:12 deraadt Exp $ */
+/*	$NetBSD: pmap.c,v 1.24 1994/12/10 11:43:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -2838,6 +2838,41 @@ pmap_count_ptes(pm)
 		total += pm->pm_npte[--idx];
 	pm->pm_stats.resident_count = total;
 	return (total);
+}
+
+/*
+ * Find first virtual address >= va that doesn't cause
+ * a cache alias on physical address pa.
+ */
+vm_offset_t
+pmap_prefer(pa, va)
+	register vm_offset_t pa;
+	register vm_offset_t va;
+{
+	register struct pvlist	*pv;
+	register long		m, d;
+
+	if (cputyp == CPU_SUN4)
+		m = 0x20000;
+	else if (cputyp == CPU_SUN4C)
+		m = 0x10000;
+	else
+		return va;
+
+	if (!managed(pa))
+		return va;
+
+	pv = pvhead(pa);
+	if (pv->pv_pmap == NULL)
+		/* Unusable, tell caller to try another one */
+		return (vm_offset_t)-1;
+
+	d = (long)(pv->pv_va & (m - 1)) - (long)(va & (m - 1));
+	if (d < 0)
+		va += m;
+	va += d;
+
+	return va;
 }
 
 pmap_redzone()
