@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32.2.2 2001/11/12 08:14:10 nisimura Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.32.2.3 2001/11/13 19:49:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -579,9 +579,9 @@ _bus_dmamap_sync_r4k(t, map, offset, len, ops)
 	 * The R4000 cache is virtually-indexed, write-back.  This means
 	 * we need to do the following things:
 	 *
-	 *	PREREAD -- Invalidate D-cache.  We do it here, because
-	 *	we might have to use an Index op, which would mean a
-	 *	write-back.
+	 *	PREREAD -- Invalidate D-cache.  Note we might have
+	 *	to also write-back here if we have to use an Index
+	 *	op, or if the buffer start/end is not cache-line aligned.
 	 *
 	 *	PREWRITE -- Write-back the D-cache.  If we have to use
 	 *	an Index op, we also have to invalidate.  Note that if
@@ -665,7 +665,11 @@ _bus_dmamap_sync_r4k(t, map, offset, len, ops)
 			break;
 
 		case BUS_DMASYNC_PREREAD:
+#if 1
+			mips_dcache_wbinv_range(addr + offset, minlen);
+#else
 			mips_dcache_inv_range(addr + offset, minlen);
+#endif
 			break;
 
 		case BUS_DMASYNC_PREWRITE:

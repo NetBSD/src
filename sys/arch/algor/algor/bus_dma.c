@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4.2.1 2001/10/24 17:27:10 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4.2.2 2001/11/13 19:49:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4.2.1 2001/10/24 17:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4.2.2 2001/11/13 19:49:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,9 +427,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * Since we're dealing with a virtually-indexed, write-back
 	 * cache, we need to do the following things:
 	 *
-	 *	PREREAD -- Invalidate D-cache.  We do it here, because
-	 *	we might have to use an Index op, which would mean a
-	 *	write-back.
+	 *	PREREAD -- Invalidate D-cache.  Note we might have
+	 *	to also write-back here if we have to use an Index
+	 *	op, or if the buffer start/end is not cache-line aligned.
 	 *
 	 *	PREWRITE -- Write-back the D-cache.  If we have to use
 	 *	an Index op, we also have to invalidate.  Note that if
@@ -513,7 +513,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		case BUS_DMASYNC_PREREAD:
+#if 1
+			mips_dcache_wbinv_range(addr + offset, minlen);
+#else
 			mips_dcache_inv_range(addr + offset, minlen);
+#endif
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
