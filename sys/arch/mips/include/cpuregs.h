@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.11 1997/06/21 04:18:12 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.12 1997/06/22 03:17:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -432,7 +432,7 @@
 /*
  * The high part of the TLB entry.
  */
-#define VMMACH_TLB_VIRT_PAGE_SHIFT	12
+#define MIPS_TLB_VIRT_PAGE_SHIFT	12
 
 #define MIPS1_TLB_VIRT_PAGE_NUM		0xfffff000
 #define MIPS1_TLB_PID			0x00000fc0
@@ -469,28 +469,43 @@
 /*
  * backwards compatibility with existing locore and compile-time
  * mips1/mips3 binding. 
- * XXX needs more thought, should support runtime decisions.
+ *
+ * XXX INT_MASK and HARD_INT_MASK are here only because we dont
+ * support the mips3 on-chip timer which is tied to INT_5.
  */
 
-#ifdef MIPS3
+#if defined(MIPS3) && !defined(MIPS1)
 #define MACH_INT_MASK			MIPS3_INT_MASK
 #define MACH_HARD_INT_MASK		MIPS3_HARD_INT_MASK
-#define VMMACH_TLB_PID_SHIFT		MIPS3_TLB_PID_SHIFT
-#define	VMMACH_NUM_PIDS			MIPS3_TLB_NUM_PIDS
+#define MIPS_TLB_PID_SHIFT		MIPS3_TLB_PID_SHIFT
+#define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_PIDS
+#endif
 
-#else
+#if !defined(MIPS3) && defined(MIPS1)
 #define MACH_INT_MASK			MIPS_INT_MASK
 #define MACH_HARD_INT_MASK		MIPS_HARD_INT_MASK
-#define VMMACH_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
-#define	VMMACH_NUM_PIDS			MIPS1_TLB_NUM_PIDS
+#define MIPS_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
+#define	MIPS_TLB_NUM_PIDS		MIPS1_TLB_NUM_PIDS
+#endif
+
+
+#if defined(MIPS1) && defined(MIPS3)
+#define MACH_INT_MASK			MIPS_INT_MASK		/* XXX */
+#define MACH_HARD_INT_MASK		MIPS_HARD_INT_MASK	/* XXX */
+#define MIPS_TLB_PID_SHIFT \
+    ((CPUISMIPS3)? MIPS3_TLB_PID_SHIFT : MIPS1_TLB_PID_SHIFT)
+
+#define MIPS_TLB_NUM_PIDS \
+    ((CPUISMIPS3)? MIPS3_TLB_NUM_PIDS : MIPS1_TLB_NUM_PIDS)
+
 #endif
 
 /*
  * TLB probe return codes.
  */
-#define VMMACH_TLB_NOT_FOUND		0
-#define VMMACH_TLB_FOUND		1
-#define VMMACH_TLB_FOUND_WITH_PATCH	2
-#define VMMACH_TLB_PROBE_ERROR		3
+#define MIPS_TLB_NOT_FOUND		0
+#define MIPS_TLB_FOUND		1
+#define MIPS_TLB_FOUND_WITH_PATCH	2
+#define MIPS_TLB_PROBE_ERROR		3
 
 #endif /* _MIPS_CPUREGS_H_ */

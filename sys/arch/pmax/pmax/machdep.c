@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1997/06/21 04:18:09 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 1997/06/22 03:17:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -395,7 +395,7 @@ mach_init(argc, argv, code, cv)
 	}
 	else for (i = 0; i < UPAGES; i++) {
 		mips1_TLBWriteIndexed(i,
-			(UADDR + (i << PGSHIFT)) | (1 << VMMACH_TLB_PID_SHIFT),
+			(UADDR + (i << PGSHIFT)) | (1 << MIPS1_TLB_PID_SHIFT),
 			proc0.p_md.md_upte[i] = firstaddr |
 				      MIPS1_PG_V | MIPS1_PG_M);
 		firstaddr += NBPG;
