@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.313 2002/03/22 10:11:13 martti Exp $
+# $NetBSD: mi,v 1.314 2002/03/24 22:21:02 bjh21 Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1153,9 +1153,9 @@
 ./usr/share/man/cat3			base-man-share
 ./usr/share/man/cat3f			base-man-share
 ./usr/share/man/cat4			base-man-share
+./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/alpha			base-man-share
 ./usr/share/man/cat4/amiga			base-man-share
-./usr/share/man/cat4/arm26			base-man-share
 ./usr/share/man/cat4/arm32			base-man-share
 ./usr/share/man/cat4/atari			base-man-share
 ./usr/share/man/cat4/hp300			base-man-share
@@ -1174,11 +1174,11 @@
 ./usr/share/man/cat6			base-man-share
 ./usr/share/man/cat7			base-man-share
 ./usr/share/man/cat8			base-man-share
+./usr/share/man/cat8/acorn26		base-man-share
 ./usr/share/man/cat8/acorn32		base-man-share
 ./usr/share/man/cat8/alpha		base-man-share
 ./usr/share/man/cat8/amiga		base-man-share
 ./usr/share/man/cat8/arc		base-man-share
-./usr/share/man/cat8/arm26		base-man-share
 ./usr/share/man/cat8/arm32		base-man-share
 ./usr/share/man/cat8/atari		base-man-share
 ./usr/share/man/cat8/bebox		base-man-share
@@ -1212,9 +1212,9 @@
 ./usr/share/man/cat8/walnut		base-man-share
 ./usr/share/man/cat8/x68k		base-man-share
 ./usr/share/man/cat9		base-man-share
+./usr/share/man/cat9/acorn26		base-man-share
 ./usr/share/man/cat9/alpha		base-man-share
 ./usr/share/man/cat9/amiga		base-man-share
-./usr/share/man/cat9/arm26		base-man-share
 ./usr/share/man/cat9/arm32		base-man-share
 ./usr/share/man/cat9/atari		base-man-share
 ./usr/share/man/cat9/hp300		base-man-share
@@ -1234,9 +1234,9 @@
 ./usr/share/man/man3		base-man-share
 ./usr/share/man/man3f		base-man-share
 ./usr/share/man/man4		base-man-share
+./usr/share/man/man4/acorn26		base-man-share
 ./usr/share/man/man4/alpha		base-man-share
 ./usr/share/man/man4/amiga		base-man-share
-./usr/share/man/man4/arm26		base-man-share
 ./usr/share/man/man4/arm32		base-man-share
 ./usr/share/man/man4/atari		base-man-share
 ./usr/share/man/man4/hp300		base-man-share
@@ -1255,11 +1255,11 @@
 ./usr/share/man/man6		base-man-share
 ./usr/share/man/man7		base-man-share
 ./usr/share/man/man8		base-man-share
+./usr/share/man/man8/acorn26		base-man-share
 ./usr/share/man/man8/acorn32		base-man-share
 ./usr/share/man/man8/alpha		base-man-share
 ./usr/share/man/man8/amiga		base-man-share
 ./usr/share/man/man8/arc		base-man-share
-./usr/share/man/man8/arm26		base-man-share
 ./usr/share/man/man8/arm32		base-man-share
 ./usr/share/man/man8/atari		base-man-share
 ./usr/share/man/man8/bebox		base-man-share
@@ -1293,9 +1293,9 @@
 ./usr/share/man/man8/walnut		base-man-share
 ./usr/share/man/man8/x68k		base-man-share
 ./usr/share/man/man9			base-man-share
+./usr/share/man/man9/acorn26		base-man-share
 ./usr/share/man/man9/alpha		base-man-share
 ./usr/share/man/man9/amiga		base-man-share
-./usr/share/man/man9/arm26		base-man-share
 ./usr/share/man/man9/arm32		base-man-share
 ./usr/share/man/man9/atari		base-man-share
 ./usr/share/man/man9/hp300		base-man-share
@@ -1314,9 +1314,9 @@
 ./usr/share/man/html3		base-man-share
 ./usr/share/man/html3f		base-man-share
 ./usr/share/man/html4		base-man-share
+./usr/share/man/html4/acorn26		base-man-share
 ./usr/share/man/html4/alpha		base-man-share
 ./usr/share/man/html4/amiga		base-man-share
-./usr/share/man/html4/arm26		base-man-share
 ./usr/share/man/html4/arm32		base-man-share
 ./usr/share/man/html4/atari		base-man-share
 ./usr/share/man/html4/hp300		base-man-share
@@ -1335,11 +1335,11 @@
 ./usr/share/man/html6		base-man-share
 ./usr/share/man/html7		base-man-share
 ./usr/share/man/html8		base-man-share
+./usr/share/man/html8/acorn26		base-man-share
 ./usr/share/man/html8/acorn32		base-man-share
 ./usr/share/man/html8/alpha		base-man-share
 ./usr/share/man/html8/amiga		base-man-share
 ./usr/share/man/html8/arc		base-man-share
-./usr/share/man/html8/arm26		base-man-share
 ./usr/share/man/html8/arm32		base-man-share
 ./usr/share/man/html8/atari		base-man-share
 ./usr/share/man/html8/bebox		base-man-share
@@ -1373,9 +1373,9 @@
 ./usr/share/man/html8/walnut		base-man-share
 ./usr/share/man/html8/x68k		base-man-share
 ./usr/share/man/html9			base-man-share
+./usr/share/man/html9/acorn26		base-man-share
 ./usr/share/man/html9/alpha		base-man-share
 ./usr/share/man/html9/amiga		base-man-share
-./usr/share/man/html9/arm26		base-man-share
 ./usr/share/man/html9/arm32		base-man-share
 ./usr/share/man/html9/atari		base-man-share
 ./usr/share/man/html9/hp300		base-man-share

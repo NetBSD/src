@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.41 2002/03/16 17:31:24 martin Exp $
+# $NetBSD: obsolete.mi,v 1.42 2002/03/24 22:21:07 bjh21 Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -24,8 +24,17 @@
 /usr/share/man/cat3/i386
 /usr/share/man/cat3/i386/keycap.0
 /usr/share/man/cat4/amiga/le.0
+/usr/share/man/cat4/arm26/arckbd.0
+/usr/share/man/cat4/arm26/arcwskbd.0
+/usr/share/man/cat4/arm26/arcwsmouse.0
+/usr/share/man/cat4/arm26/cpu.0
 /usr/share/man/cat4/arm26/dtide.0
 /usr/share/man/cat4/arm26/ea.0
+/usr/share/man/cat4/arm26/eca.0
+/usr/share/man/cat4/arm26/eh.0
+/usr/share/man/cat4/arm26/ei.0
+/usr/share/man/cat4/arm26/podulebus.0
+/usr/share/man/cat4/arm26/unixbp.0
 /usr/share/man/cat4/arm32/com.0
 /usr/share/man/cat4/arm32/ea.0
 /usr/share/man/cat4/arm32/eb.0
@@ -78,7 +87,11 @@
 /usr/share/man/cat5/ypserv.acl.0
 /usr/share/man/cat7/miscellaneous.0
 /usr/share/man/cat8/arm26/BBBB.0
+/usr/share/man/cat8/arm26/MAKEDEV.0
 /usr/share/man/cat8/arm26/bbbb.0
+/usr/share/man/cat8/arm26/boot.0
+/usr/share/man/cat8/arm26/boot26.0
+/usr/share/man/cat8/arm26/makedev.0
 /usr/share/man/cat8/gettable.0
 /usr/share/man/cat8/htable.0
 /usr/share/man/cat8/i386/apmd.0
@@ -132,8 +145,17 @@
 /usr/share/man/man3/i386
 /usr/share/man/man3/i386/keycap.3
 /usr/share/man/man4/amiga/le.4
+/usr/share/man/man4/arm26/arckbd.4
+/usr/share/man/man4/arm26/arcwskbd.4
+/usr/share/man/man4/arm26/arcwsmouse.4
+/usr/share/man/man4/arm26/cpu.4
 /usr/share/man/man4/arm26/dtide.4
 /usr/share/man/man4/arm26/ea.4
+/usr/share/man/man4/arm26/eca.4
+/usr/share/man/man4/arm26/eh.4
+/usr/share/man/man4/arm26/ei.4
+/usr/share/man/man4/arm26/podulebus.4
+/usr/share/man/man4/arm26/unixbp.4
 /usr/share/man/man4/arm32/com.4
 /usr/share/man/man4/arm32/ea.4
 /usr/share/man/man4/arm32/eb.4
@@ -186,6 +208,10 @@
 /usr/share/man/man5/ypserv.acl.5
 /usr/share/man/man8/arm26/BBBB.8
 /usr/share/man/man8/arm26/bbbb.8
+/usr/share/man/man8/arm26/MAKEDEV.8
+/usr/share/man/man8/arm26/boot.8
+/usr/share/man/man8/arm26/boot26.8
+/usr/share/man/man8/arm26/makedev.8
 /usr/share/man/man8/gettable.8
 /usr/share/man/man8/htable.8
 /usr/share/man/man8/i386/apmd.8
