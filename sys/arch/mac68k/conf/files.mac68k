@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.41 1996/03/17 01:33:13 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.42 1996/04/25 22:30:10 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -57,7 +57,7 @@ file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
 device	sbc: scsi, ncr5380sbc
 attach	sbc at mainbus
-file	arch/mac68k/dev/ncr_sbc.c	sbc
+file	arch/mac68k/dev/sbc.c		sbc
 
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/db_memrw.c	ddb
