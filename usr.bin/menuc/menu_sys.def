@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.50 2003/11/22 22:18:32 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.51 2003/11/30 09:22:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,7 +156,7 @@ init_menu(menudesc *m)
 		}
 		hadd++;
 		i = strlen(tp);
-			wmax = MAX(wmax, i);
+		wmax = MAX(wmax, i);
 		if (i != 0)
 			hadd++;
 	} else {
@@ -184,17 +184,14 @@ init_menu(menudesc *m)
 			exit(1);
 		}
 		hadd++;
-		m->h--;
-	} else
-		m->mopt &= ~MC_SCROLL;
+		m->h = MIN(m->h, max_lines - y - hadd);
+		i = strlen(scrolltext);
+		wmax = MAX(wmax, i);
+	}
 
 	/* Calculate w? */
 	if (w == 0) {
 		int l;
-		if (m->mopt & (MC_SCROLL | MC_ALWAYS_SCROLL)) {
-			l = strlen(scrolltext);
-			wmax = MAX(wmax, l);
-		}
 		for (i = 0; i < m->numopts; i++) {
 			l = strlen(MSG_XLAT(m->opts[i].opt_name));
 			if (!(m->mopt & MC_NOSHORTCUT))
@@ -302,6 +299,9 @@ draw_menu(menudesc *m, void *arg)
 
 	cury = tadd;
 	maxy = getmaxy(m->mw) - hasbox;
+	if (m->numopts + hasexit > m->h)
+		/* allow for scroll text */
+		maxy--;
 
 	if (m->cursel == -1) {
 		m->cursel = m->numopts;
