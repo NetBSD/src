@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.34 1998/07/28 19:22:55 mycroft Exp $	*/
+/*	$NetBSD: newfs.c,v 1.35 1998/10/20 01:51:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.34 1998/07/28 19:22:55 mycroft Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.35 1998/10/20 01:51:17 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,7 +659,7 @@ rewritelabel(s, fd, lp)
 		warn("ioctl (WDINFO)");
 		errx(1, "%s: can't rewrite disk label", s);
 	}
-#if vax
+#if __vax__
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		int i;
 		int cfd;
