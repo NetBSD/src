@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.7 2003/01/20 01:58:54 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.8 2003/03/01 22:11:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 extern int __isthreaded;
