@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.87 2001/07/25 03:05:33 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.88 2001/07/25 03:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1408,12 +1408,13 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
 			error = EINVAL;
-		else
+		else {
 			ifp->if_mtu = ifr->ifr_mtu;
 
-		/* Make sure the device notices the MTU change. */
-		if (ifp->if_flags & IFF_UP)
-			error = (*ifp->if_init)(ifp);
+			/* Make sure the device notices the MTU change. */
+			if (ifp->if_flags & IFF_UP)
+				error = (*ifp->if_init)(ifp);
+		}
 		break;
 	    }
 
