@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.49 2001/12/07 09:56:44 jmc Exp $
+$NetBSD: UPDATING,v 1.50 2002/01/30 06:54:56 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,19 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20020118:
+
+	ntpd user/group has been added.  Need to hand add this in or builds
+	will break as mtree aborts early.
+
+	Add the following into /etc/group:
+
+	ntpd:*:15:
+
+	and the following to /etc/master.passwd (via vipw):
+
+	ntpd:*:15:15::0:0:Ntpd pseudo-user:/var/chroot/ntpd:/sbin/nologin
+
 20011207:
 
 	If you're attempting to build a snapshot on sparc64 and are getting
