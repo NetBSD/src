@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.18 1998/08/13 09:36:34 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.19 1998/08/21 19:45:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
+
+#define AUDIOCTL "/dev/audioctl0"
+#define OLD_AUDIOCTL "/dev/audioctl"
 
 struct field *findfield __P((char *name));
 void prfield __P((struct field *p, char *sep));
@@ -373,7 +376,7 @@ main(argc, argv)
     
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
-		file = "/dev/audioctl";
+		file = AUDIOCTL;
 
 	prog = *argv;
     
@@ -402,6 +405,15 @@ main(argc, argv)
 	fd = open(file, O_WRONLY);
 	if (fd < 0)
 		fd = open(file, O_RDONLY);
+#ifdef OLD_AUDIOCTL
+        /* Allow the non-unit device to be used. */
+        if (file == AUDIOCTL) {
+        	file = OLD_AUDIOCTL;
+                fd = open(file, O_WRONLY);
+		if (fd < 0)
+			fd = open(file, O_RDONLY);
+        }
+#endif
 	if (fd < 0)
 		err(1, "%s", file);
     
