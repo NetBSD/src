@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.71 2000/10/10 22:30:15 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.72 2000/10/11 18:54:05 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1460,6 +1460,7 @@ usr.bin/passwd/yp_passwd.c			patch
 
   Make this program actually able to change the YP password.
 
+dist/bind/bin/named-xfer/named-xfer.c		1.2
 dist/bind/bin/named/db_dump.c			1.2
 dist/bind/bin/named/db_glue.c			1.2
 dist/bind/bin/named/db_load.c			1.2
@@ -1478,7 +1479,6 @@ dist/bind/bin/named/ns_parser.y			1.2
 dist/bind/bin/named/ns_resp.c			1.2
 dist/bind/bin/named/ns_stats.c			1.2
 dist/bind/bin/named/ns_update.c			1.2
-dist/bind/bin/named-xfer/named-xfer.c		1.2
 dist/bind/bin/ndc/ndc.c				1.2
 dist/bind/include/isc/ctl.h			1.2
 dist/bind/include/isc/logging.h			1.2
@@ -1510,13 +1510,17 @@ sbin/atactl/atactl.c				1.10
 sbin/ccdconfig/ccdconfig.c			1.32
 sbin/disklabel/disklabel.c			1.89 via patch
 sbin/dump/dump.h				1.20
+sbin/dump/main.c				1.26
 sbin/dump/optr.c				1.14
+sbin/dump/rcache.c				1.5
+sbin/dump/tape.c				1.22
 sbin/fsck/fsutil.c				1.8
 sbin/fsck_ext2fs/utilities.c			1.5
 sbin/fsck_ffs/utilities.c			1.27
 sbin/fsck_lfs/utilities.c			1.6
 sbin/fsck_msdos/ext.h				1.7
 sbin/fsck_msdos/fat.c				1.12 via patch
+sbin/fsck_msdos/fat.c				patch
 sbin/fsdb/fsdb.c				1.17
 sbin/mount/mount.c				1.50 via patch
 sbin/newfs/newfs.c				1.39
@@ -1528,3 +1532,17 @@ sbin/route/show.c				1.15
 sbin/routed/main.c				1.25
 
   Format string cleanup.
+
+gnu/dist/gcc/c-common.c				1.7
+
+  Allow NULL format strings except under pedantic checking,
+  so that we may check the err() formats.
+
+libexec/talkd/announce.c			1.12
+
+  Make sure big_buf is big enough to hold output.
+
+sbin/restore/tape.c				1.40-1.41
+
+  Make restore correctly handle large dumps with large inode maps.
+  Fixes PR#11188.
