@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.2 2000/11/29 22:05:36 jdolecek Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.3 2001/05/30 11:37:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  * calls.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 

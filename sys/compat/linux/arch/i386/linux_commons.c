@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.3 2000/12/17 16:15:54 jdolecek Exp $	*/
+/*	$NetBSD: linux_commons.c,v 1.4 2001/05/30 11:37:25 mrg Exp $	*/
 
 /*
  * This file includes C files from the common
@@ -12,7 +12,7 @@
  * C files doesn't use it.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.6 2001/04/07 12:28:55 tsutsui Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.7 2001/05/30 11:37:22 mrg Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.5 2001/04/07 12:25:15 tsutsui Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"

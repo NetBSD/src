@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.2 2001/03/15 06:10:54 chs Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.3 2001/05/30 11:37:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

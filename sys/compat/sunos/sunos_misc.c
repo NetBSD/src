@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.108 2001/02/12 19:49:20 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.109 2001/05/30 11:37:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
 
 #define COMPAT_SUNOS 1
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #endif

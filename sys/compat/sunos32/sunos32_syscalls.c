@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscalls.c,v 1.4 2001/02/06 15:42:34 mrg Exp $ */
+/* $NetBSD: sunos32_syscalls.c,v 1.5 2001/05/30 11:37:31 mrg Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from;	NetBSD: syscalls.master,v 1.4 2001/02/06 15:41:53 mrg Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "fs_nfs.h"
@@ -25,7 +25,7 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const sunos32_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.22 2001/04/10 11:12:12 kleink Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.23 2001/05/30 11:37:29 mrg Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.19 2001/04/10 11:11:17 kleink Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
@@ -26,45 +26,45 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #ifdef COMPAT_43
-#define compat_43(func) __CONCAT(compat_43_,func)
+#define	compat_43(func) __CONCAT(compat_43_,func)
 #else
-#define compat_43(func) sys_nosys
+#define	compat_43(func) sys_nosys
 #endif
 
 #ifdef COMPAT_09
-#define compat_09(func) __CONCAT(compat_09_,func)
+#define	compat_09(func) __CONCAT(compat_09_,func)
 #else
-#define compat_09(func) sys_nosys
+#define	compat_09(func) sys_nosys
 #endif
 
 #ifdef COMPAT_10
-#define compat_10(func) __CONCAT(compat_10_,func)
+#define	compat_10(func) __CONCAT(compat_10_,func)
 #else
-#define compat_10(func) sys_nosys
+#define	compat_10(func) sys_nosys
 #endif
 
 #ifdef COMPAT_11
-#define compat_11(func) __CONCAT(compat_11_,func)
+#define	compat_11(func) __CONCAT(compat_11_,func)
 #else
-#define compat_11(func) sys_nosys
+#define	compat_11(func) sys_nosys
 #endif
 
 #ifdef COMPAT_12
-#define compat_12(func) __CONCAT(compat_12_,func)
+#define	compat_12(func) __CONCAT(compat_12_,func)
 #else
-#define compat_12(func) sys_nosys
+#define	compat_12(func) sys_nosys
 #endif
 
 #ifdef COMPAT_13
-#define compat_13(func) __CONCAT(compat_13_,func)
+#define	compat_13(func) __CONCAT(compat_13_,func)
 #else
-#define compat_13(func) sys_nosys
+#define	compat_13(func) sys_nosys
 #endif
 
 #ifdef COMPAT_14
-#define compat_14(func) __CONCAT(compat_14_,func)
+#define	compat_14(func) __CONCAT(compat_14_,func)
 #else
-#define compat_14(func) sys_nosys
+#define	compat_14(func) sys_nosys
 #endif
 
 #define	s(type)	sizeof(type)

@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.6 2001/04/07 12:28:55 tsutsui Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.7 2001/05/30 11:37:22 mrg Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _AOUTM68K_SYS__SYSCALLARGS_H_
-#define _AOUTM68K_SYS__SYSCALLARGS_H_
+#define	_AOUTM68K_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
