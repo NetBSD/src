@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.54 2000/10/20 12:29:26 pk Exp $
+# $NetBSD: md.sparc,v 1.55 2000/11/30 16:06:25 jdolecek Exp $
 ./dev/apm
 ./sbin/edlabel
 ./sbin/ldconfig
@@ -10,6 +10,7 @@
 ./usr/lkm/ext2fs.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
+./usr/lkm/lfs.o
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o

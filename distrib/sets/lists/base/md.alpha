@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.22 2000/02/27 23:46:01 mycroft Exp $
+# $NetBSD: md.alpha,v 1.23 2000/11/30 16:06:25 jdolecek Exp $
 ./usr/bin/fdformat
 ./usr/lib/libalpha.so.0
 ./usr/lib/libalpha.so.0.0
@@ -8,6 +8,7 @@
 ./usr/lkm/ext2fs.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
+./usr/lkm/lfs.o
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o

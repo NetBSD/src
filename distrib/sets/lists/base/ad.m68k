@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.8 2000/01/24 07:25:01 mycroft Exp $
+# $NetBSD: ad.m68k,v 1.9 2000/11/30 16:06:25 jdolecek Exp $
 ./sbin/ldconfig
 ./usr/lib/libm68k.so.0.0
 ./usr/libexec/ld.so
@@ -8,6 +8,7 @@
 ./usr/lkm/ext2fs.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
+./usr/lkm/lfs.o
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
