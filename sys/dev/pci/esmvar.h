@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.9 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.9.2.1 2004/09/22 20:58:39 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -199,7 +199,7 @@ struct esm_quirks {
 int	esm_read_codec(void *, u_int8_t, u_int16_t *);
 int	esm_write_codec(void *, u_int8_t, u_int16_t);
 int	esm_attach_codec(void *, struct ac97_codec_if *);
-void	esm_reset_codec(void *);
+int	esm_reset_codec(void *);
 enum ac97_host_flags	esm_flags_codec(void *);
 
 void	esm_power(struct esm_softc *, int);
