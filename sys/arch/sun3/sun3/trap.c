@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,10 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: trap.c 1.32 91/04/06
- *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.22 1994/05/27 14:58:41 gwr Exp $
+ *	from: Utah Hdr: trap.c 1.37 92/12/20
+ *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
+ *	$Id: trap.c,v 1.23 1994/06/29 05:35:59 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -56,21 +55,19 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <vm/vm.h>
+#include <vm/pmap.h>
+
 #include <machine/cpu.h>
 #include <machine/endian.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
 
-#include <vm/vm.h>
-#include <vm/pmap.h>
-
-#ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
-#endif
-
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sun_syscall.h>
+extern struct	sysent	sun_sysent[];
+extern int	nsun_sysent;
 #endif
 
 
@@ -79,14 +76,12 @@
  *        Chris's new syscall debug stuff 
  */
 
-struct	sysent	sysent[];
-int	nsysent;
+extern struct	sysent	sysent[];
+extern int	nsysent;
+extern int fubail(), subail();
+
 int astpending;
 int want_resched;
-#ifdef COMPAT_SUNOS
-struct	sysent	sun_sysent[];
-int	nsun_sysent;
-#endif
 
 char	*trap_type[] = {
 	"Bus error",
@@ -104,8 +99,8 @@ char	*trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-#define	TRAP_TYPES	(sizeof trap_type / sizeof trap_type[0])
-int trap_types = TRAP_TYPES;
+int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
+
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
@@ -146,17 +141,20 @@ userret(p, fp, oticks)
 	u_quad_t oticks;
 {
 	int sig, s;
-    
-	while ((sig = CURSIG(p)) !=0)
+
+	/* take pending signals */
+	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
+
 	p->p_priority = p->p_usrpri;
+
 	if (want_resched) {
 		/*
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
 		s = splstatclock();
@@ -169,7 +167,7 @@ userret(p, fp, oticks)
 	}
 
 	/*
-	 * If profiling, charge recent system time to the trapped pc.
+	 * If profiling, charge system time to the trapped pc.
 	 */
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
@@ -179,6 +177,7 @@ userret(p, fp, oticks)
 
 	curpriority = p->p_priority;
 }
+
 /*
  * Trap is called from locore to handle most types of processor traps,
  * including events such as simulated software interrupts/AST's.
@@ -187,22 +186,26 @@ userret(p, fp, oticks)
 /*ARGSUSED*/
 trap(type, code, v, frame)
 	int type;
-	unsigned code;
-	register unsigned v;
+	u_int code, v;
 	struct frame frame;
 {
-	extern char fuswintr[];
 	register struct proc *p;
-	register int i = 0;
-	unsigned ucode = 0;
+	register int sig;
+	unsigned ucode;
 	u_quad_t sticks;
 	unsigned ncode;
 	int s;
 
 	cnt.v_trap++;
 	p = curproc;
-	if ((p = curproc) == NULL)
-		p = &proc0;
+	ucode = 0;
+	sig = 0;
+
+#ifdef	DIAGNOSTIC
+	if (p == NULL)
+		panic("trap: curproc == NULL");
+#endif
+
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -215,34 +218,36 @@ trap(type, code, v, frame)
 			return;
 	}
 #endif
+#if 0
+	printf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
+	    type, code, v, frame.f_pad, frame.f_stackadj, frame.f_sr,
+	    frame.f_pc, frame.f_format, frame.f_vector);
+#endif
 
 	switch (type) {
 	default:
-dopanic:
-		printf("trap type %d, code = %x, v = %x, pc=%x\n",
-			   type, code, v, frame.f_pc);
-#ifdef DDB
-		if (kdb_trap(type, &frame))
-			return;
-#endif
-		regdump(frame.f_regs, 128);
+	dopanic:
+		if (panicstr == NULL) {
+			printf("trap type %d, code = %x, v = %x\n", type, code, v);
+			regdump(&frame, 128);
+		}
 		type &= ~T_USER;
-		if ((unsigned)type < TRAP_TYPES)
+		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (p->p_addr->u_pcb.pcb_onfault == 0)
 			goto dopanic;
+		/*FALLTHROUGH*/
 
+	copyfault:
 		/*
 		 * If we have arranged to catch this fault in any of the
 		 * copy to/from user space routines, set PC to return to
 		 * indicated location and set flag informing buserror code
 		 * that it may need to clean up stack frame.
 		 */
-copyfault:
-
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
 		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
@@ -251,112 +256,71 @@ copyfault:
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
 		ucode = v;
-		i = SIGBUS;
+		sig = SIGBUS;
 		break;
 
-#ifdef FPCOPROC
-	case T_COPERR:		/* kernel coprocessor violation */
-#endif
-	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
-	case T_FMTERR:		/* ...just in case... */
-	/*
-	 * The user has most likely trashed the RTE or FP state info
-	 * in the stack frame of a signal handler.
-	 */
-		type |= T_USER;
-		printf("pid %d: kernel %s exception\n", p->p_pid,
-		       type==T_COPERR ? "coprocessor" : "format");
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
-		i = sigmask(SIGILL);
-		p->p_sigignore &= ~i;
-		p->p_sigcatch &= ~i;
-		p->p_sigmask &= ~i;
-		i = SIGILL;
-		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
+	case T_ILLINST|T_USER:	/* illegal instruction fault */
+	case T_PRIVINST|T_USER:	/* privileged instruction fault */
+		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+		sig = SIGILL;
+		break;
+
+	case T_ZERODIV|T_USER:	/* Divide by zero */
+	case T_CHKINST|T_USER:	/* CHK instruction trap */
+	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
+		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
+		sig = SIGFPE;
 		break;
 
 #ifdef FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
-	/* What is a proper response here? */
+		/* What is a proper response here? */
 		ucode = 0;
-		i = SIGFPE;
+		sig = SIGFPE;
 		break;
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
-	/*
-	 * We pass along the 68881 status register which locore stashed
-	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this register will conflict with one of the
-	 * FPE_* codes defined in signal.h.  Fortunately for us, the
-	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status register are defined as 0 so there is
-	 * no clash.
-	 */
+		/*
+		 * We pass along the 68881 status register which locore stashed
+		 * in code for us.  Note that there is a possibility that the
+		 * bit pattern of this register will conflict with one of the
+		 * FPE_* codes defined in signal.h.  Fortunately for us, the
+		 * only such codes we use are all in the range 1-7 and the low
+		 * 3 bits of the status register are defined as 0 so there is
+		 * no clash.
+		 */
 		ucode = code;
-		i = SIGFPE;
-		break;
-#endif
-
-	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX) {
-			ucode = HPUX_ILL_ILLINST_TRAP;
-			i = SIGILL;
-			break;
-		}
-		/* fall through */
-#endif
-	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX)
-			ucode = HPUX_ILL_PRIV_TRAP;
-		else
-#endif
-		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
-		i = SIGILL;
+		sig = SIGFPE;
 		break;
 
-	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX)
-			ucode = HPUX_FPE_INTDIV_TRAP;
-		else
+	case T_COPERR:		/* kernel coprocessor violation */
+		/*FALLTHROUGH*/
 #endif
-		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
-		i = SIGFPE;
-		break;
-
-	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_CHK_TRAP;
-			break;
-		}
+	case T_FMTERR:		/* kernel format error */
+	case T_FMTERR|T_USER:	/* XXX ...just in case... */
+		/*
+		 * The user has most likely trashed the RTE or FP state info
+		 * in the stack frame of a signal handler.
+		 */
+		type |= T_USER;
+#ifdef DEBUG
+		printf("pid %d: kernel %s exception\n", p->p_pid,
+		       type==T_COPERR ? "coprocessor" : "format");
 #endif
-		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
-		i = SIGFPE;
-		break;
-
-	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_TRAPV_TRAP;
-			break;
-		}
-#endif
-		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
-		i = SIGFPE;
+		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch  &= ~sig;
+		p->p_sigmask   &= ~sig;
+		sig = SIGILL;
+		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		break;
 
 	/*
 	 * XXX: Trace traps are a nightmare.
 	 *
 	 *	HP-UX uses trap #1 for breakpoints,
-	 *	HPBSD uses trap #2,
+	 *	NetBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
 	 *	KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
 	 *
@@ -367,19 +331,22 @@ copyfault:
 	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* SUN trace trap */
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
+		sig = SIGTRAP;
 		break;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
-		/* SunOS seems to use Trap #2 for some obscure fpu operations.
-		   So far, just ignore it, but DONT trap on it.. */
+		/*
+		 * SunOS seems to use Trap #2 for some obscure fpu operations.
+		 * So far, just ignore it, but DONT trap on it...
+		 * (i.e. do not deliver a signal for it)
+		 */
 		if (p->p_emul == EMUL_SUNOS)
 		    break;
 #endif
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
+		sig = SIGTRAP;
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
@@ -387,6 +354,7 @@ copyfault:
 
 	case T_ASTFLT|T_USER:	/* user async trap */
 		astpending = 0;
+#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
 		/*
 		 * We check for software interrupts first.  This is because
 		 * they are at a higher level than ASTs, and on a VAX would
@@ -396,7 +364,7 @@ copyfault:
 		 * IPL while processing the SIR.
 		 */
 		spl1();
-		/* fall into... */
+		/*FALLTHROUGH*/
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
@@ -418,6 +386,7 @@ copyfault:
 			return;
 		}
 		spl0();
+#endif	/* NEED_SSIR */
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -428,11 +397,14 @@ copyfault:
 		/*
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
-		 * XXX - Can this test ever succeed? -gwr
+		 * XXX - Should this be a range test? -gwr
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fuswintr)
+		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
+		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)
+		{
 			goto copyfault;
-		/* fall into ... */
+		}
+		/*FALLTHROUGH*/
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
@@ -458,7 +430,7 @@ copyfault:
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
+		    ((p->p_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -468,29 +440,25 @@ copyfault:
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 #ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", v);
-			goto dopanic;
+		if (map == kernel_map) {
+			if (va == 0) {
+				printf("trap: bad kernel access at %x\n", v);
+				goto dopanic;
+			}
+		} else {
+			if (va >= VM_MAXUSER_ADDRESS) {
+				printf("trap: user access at kern addr %x\n", v);
+				Debugger();
+			}
 		}
 #endif
-#if 0	/* XXX def COMPAT_HPUX */
-		if (ISHPMMADDR(va)) {
-			vm_offset_t bva;
-
-			rv = pmap_mapmulti(map->pmap, va);
-			if (rv != KERN_SUCCESS) {
-				bva = HPMMBASEADDR(va);
-				rv = vm_fault(map, bva, ftype, FALSE);
-				if (rv == KERN_SUCCESS)
-					(void) pmap_mapmulti(map->pmap, va);
-			}
-		} else
-#endif
 		rv = vm_fault(map, va, ftype, FALSE);
-#ifdef DEBUG
-		if (rv && MDB_ISPID(p->p_pid))
+#if 1 /* def DEBUG */
+		if (rv) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
+			Debugger();
+		}
 #endif
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x, %x, %x, 0) -> %x in context %d at %x\n",
@@ -534,18 +502,20 @@ copyfault:
 			       ((int *) frame.f_regs)[PC], rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
-			
 			goto dopanic;
 		}
 		ucode = v;
-		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		break;
 	    }
 	}
+#ifdef	DIAGNOSTIC
+	if (sig == 0)
+		panic("trap: sig not set");
+#endif
+	trapsignal(p, sig, ucode);
 	if ((type & T_USER) == 0)
 		return;
-	if (i)
-	    trapsignal(p, i, ucode);
 out:
 	userret(p, &frame, sticks);
 }
@@ -560,73 +530,72 @@ syscall(code, frame)
 	register caddr_t params;
 	register int i;
 	register struct sysent *callp;
-	register struct proc *p = curproc;
+	register struct proc *p;
 	int error, opc, numsys, s;
+	u_int argsize;
 	u_quad_t sticks;
-	struct args {
-		int i[8];
-	} args;
+	int args[8];
 	int rval[2];
 	struct timeval syst;
 	struct sysent *systab;
-#ifdef COMPAT_HPUX
-	extern struct sysent hpuxsysent[];
-	extern int hpux_nsysent, notimp();
-#endif
 
-	cnt.v_syscall++;
-	sticks = p->p_sticks;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
+
+	cnt.v_syscall++;
+	p = curproc;
 	p->p_md.md_regs = frame.f_regs;
+	p->p_md.md_flags &= ~MDP_STACKADJ;
+	sticks = p->p_sticks;
 	opc = frame.f_pc - 2;
+	error = 0;
+
 	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
-	case EMUL_SUNOS: {
-	    extern char *sun_syscallnames[];
+	case EMUL_SUNOS:
+		systab = sun_sysent;
+		numsys = nsun_sysent;
+		/*
+		 * SunOS passes the syscall-number on the stack, whereas
+		 * BSD passes it in D0. So, we have to get the real "code"
+		 * from the stack, and clean up the stack, as SunOS glue
+		 * code assumes the kernel pops the syscall argument the
+		 * glue pushed on the stack. Sigh...
+		 */
+		code = fuword ((caddr_t) frame.f_regs[SP]);
 
-	    systab = sun_sysent;
-	    numsys = nsun_sysent;
-	    /* SunOS passes the syscall-number on the stack, whereas
-	       BSD passes it in D0. So, we have to get the real "code"
-	       from the stack, and clean up the stack, as SunOS glue
-	       code assumes the kernel pops the syscall argument the
-	       glue pushed on the stack. Sigh... */
-	    code = fuword ((caddr_t) frame.f_regs[SP]);
-	    /* XXX don't do this for sun_sigreturn, as there's no
-	       XXX stored pc on the stack to skip, the argument follows
-	       XXX the syscall number without a gap. */
+		/*
+		 * XXX don't do this for sun_sigreturn, as there's no
+		 * XXX stored pc on the stack to skip, the argument follows
+		 * XXX the syscall number without a gap.
+		 */
 		if (code != SUN_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
-			/* remember that we adjusted the SP, might have to undo
-			   this if the system call returns ERESTART. */
+			/*
+			 * remember that we adjusted the SP, might have to
+			 * undo this if the system call returns ERESTART.
+			 */
 			p->p_md.md_flags |= MDP_STACKADJ;
 		}
-	}
-	    break;
-#endif
-#ifdef COMPAT_HPUX
-	case EMUL_HPUX: 
-		systab = hpux_sysent;
-		numsys = hpux_nsysent;
-	    break;
-	    
+		break;
 #endif
 	case EMUL_NETBSD:
-	    systab = sysent;
-	    numsys = nsysent;
-	    break;
+		systab = sysent;
+		numsys = nsysent;
+		break;
 	default:
 	    panic("syscall: bad syscall emulation type");
 	}
+
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
+
 	switch (code) {
 
 	case SYS_syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params); /* indir */
+		code = fuword(params);
 		params += sizeof(int);
 		/*
 		 * XXX sigreturn requires special stack manipulation
@@ -642,89 +611,72 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (p->p_emul != EMUL_NETBSD)
+		if (systab != sysent)
 			break;
-		code = fuword(params + _QUAD_LOWWORD*sizeof(int)); /* indir */
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
+
 	default:
 	}
-	if (code >= numsys)
-		callp = &systab[0];		/* indir (illegal) */
+
+	callp = systab;
+	if (code < numsys)
+		callp += code;
 	else
-		callp = &systab[code];
-	if ((i = callp->sy_narg * sizeof (int)) &&
-	    (error = copyin(params, (caddr_t)&args, (u_int)i))) {
-#ifdef COMPAT_HPUX
-		if (p->p_flag & SHPUX)
-			error = bsdtohpuxerrno(error);
-#endif
-		frame.f_regs[D0] = error;
-		frame.f_sr |= PSL_C;	/* carry bit */
-#ifdef SYSCALL_DEBUG
-		if (p->p_emul == EMUL_NETBSD) /* XXX */
-		    scdebug_call(p, code, callp->sy_narg, args.i);
-#endif
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
-#endif
-		goto done;
-	}
-#ifdef SYSCALL_DEBUG
-	if (p->p_emul == EMUL_NETBSD) /* XXX */
-	    scdebug_call(p, code, callp->sy_narg, args.i);
-#endif
+		callp += SYS_syscall;		/* => nosys */
+
+	argsize = callp->sy_narg * sizeof(int);
+	if (argsize != 0)
+		error = copyin(params, (caddr_t)args, argsize);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
 #endif
-	rval[0] = 0;
-	rval[1] = frame.f_regs[D1];
-#ifdef COMPAT_HPUX
-	/* debug kludge */
-	if (callp->sy_call == notimp)
-		error = notimp(p, args.i, rval, code, callp->sy_narg);
-	else
+#ifdef SYSCALL_DEBUG
+	if (p->p_emul == EMUL_NETBSD) /* XXX */
+		scdebug_call(p, code, callp->sy_narg, args);
 #endif
-	error = (*callp->sy_call)(p, &args, rval);
-	if (error == ERESTART)
-		frame.f_pc = opc;
-	else if (error != EJUSTRETURN) {
-		if (error) {
-#ifdef COMPAT_HPUX
-			if (p->p_flag & SHPUX)
-				error = bsdtohpuxerrno(error);
-#endif
-			frame.f_regs[D0] = error;
-			frame.f_sr |= PSL_C;	/* carry bit */
-		} else {
-			frame.f_regs[D0] = rval[0];
-			frame.f_regs[D1] = rval[1];
-			frame.f_sr &= ~PSL_C;
-		}
+	if (error == 0) {
+		rval[0] = 0;
+		rval[1] = frame.f_regs[D1];
+		error = (*callp->sy_call)(p, &args, rval);
 	}
-	/* else if (error == EJUSTRETURN) */
-		/* nothing to do */
 
-done:
+	switch (error) {
+	case 0:
+		frame.f_regs[D0] = rval[0];
+		frame.f_regs[D1] = rval[1];
+		frame.f_sr &= ~PSL_C;
+		break;
+	case ERESTART:
+		frame.f_pc = opc;
+		break;
+	case EJUSTRETURN:
+		break;
+	default:
+		frame.f_regs[D0] = error;
+		frame.f_sr |= PSL_C;	/* carry bit */
+		break;
+	}
+
 	/*
 	 * Reinitialize proc pointer `p' as it may be different
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
 #ifdef SYSCALL_DEBUG
-	if (p->p_emul == EMUL_NETBSD) /* XXX */
-	    scdebug_ret(p, code, error, rval[0]);
+	if (p->p_emul == EMUL_NETBSD)			 /* XXX */
+		scdebug_ret(p, code, error, rval[0]);
 #endif
 
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-	  {
-	    frame.f_regs[SP] -= sizeof (int);
-	    p->p_md.md_flags &= ~MDP_STACKADJ;
-	  }
+	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ)) {
+		frame.f_regs[SP] -= sizeof (int);
+		p->p_md.md_flags &= ~MDP_STACKADJ;
+	}
 #endif
 	userret(p, &frame, sticks);
 #ifdef KTRACE
