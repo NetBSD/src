@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.116 1999/04/10 04:41:52 fair Exp $
+#	$NetBSD: Makefile,v 1.117 1999/04/27 03:08:02 simonb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -50,6 +50,12 @@ MKOBJ=	no
 BIN1=	
 BIN2=
 BIN3=
+
+# Directories to build in ${RELEASEDIR}.   MD Makefile.inc files can
+# add to this.
+# NOTE: Parent directories must be listed before subdirectories.
+INSTALLATION_DIRS= \
+	binary binary/sets binary/kernel binary/security installation
 
 .if exists(etc.${MACHINE}/Makefile.inc)
 .include "etc.${MACHINE}/Makefile.inc"
@@ -215,11 +221,11 @@ distrib-dirs:
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
-release snapshot snap_pre:
+release snapshot snap_pre snap_md_pre snap_md_post:
 	@echo setenv RELEASEDIR before doing that!
 	@false
 .else
-release snapshot: distribution snap_pre snap_md snap_kern 
+release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 .if exists(../domestic) && !defined(EXPORTABLE_SYSTEM)
@@ -247,11 +253,9 @@ release snapshot: distribution snap_pre snap_md snap_kern
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
 	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}
-	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary
-	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/sets
-	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/kernel
-	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/binary/security
-	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/installation
+.for dir in ${INSTALLATION_DIRS}
+	${INSTALL} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
+.endfor
 
 # the regular expression does a basename(1) on .CURDIR so that we don't
 # have to keep looking up .. at compile time.
@@ -282,6 +286,8 @@ snap_kern:
 	cd ${KERNOBJDIR}/GENERIC &&	\
 		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
+# XXX use same loop for ${EXTRA_KERNELS} and ${BUILD_KERNELS} but
+# XXX only install ${EXTRA_KERNELS} in binary/kernel???
 .for configfile in ${EXTRA_KERNELS}
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
@@ -295,10 +301,21 @@ snap_kern:
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
 .endfor # EXTRA_KERNELS
+.for configfile in ${BUILD_KERNELS}
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${configfile} -s ${KERNSRCDIR} ${configfile}
+.ifndef UPDATE
+	cd ${KERNOBJDIR}/${configfile} && ${MAKE} clean 
+.endif
+	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
+.endfor # BUILD_KERNELS
 
 .endif # RELEASEDIR check
 
-snap_md:
+snap_md_pre:
+# nothing here -- look in the machine-dependent Makefile.inc
+
+snap_md_post:
 # nothing here -- look in the machine-dependent Makefile.inc
 
 .endif	# DESTDIR check
