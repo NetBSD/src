@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.14 2001/09/27 03:24:02 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.15 2001/10/18 19:46:12 sommerfeld Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1016,6 +1016,7 @@ channel_post_x11_listener(Channel *c, fd_set * readset, fd_set * writeset)
 	int remote_port;
 
 	if (FD_ISSET(c->sock, readset)) {
+		int on = 1;
 		debug("X11 connection requested.");
 		addrlen = sizeof(addr);
 		newsock = accept(c->sock, &addr, &addrlen);
@@ -1023,6 +1024,8 @@ channel_post_x11_listener(Channel *c, fd_set * readset, fd_set * writeset)
 			error("accept: %.100s", strerror(errno));
 			return;
 		}
+		setsockopt(newsock, IPPROTO_TCP, TCP_NODELAY,
+		    (void *)&on, sizeof(on));
 		remote_ipaddr = get_peer_ipaddr(newsock);
 		remote_port = get_peer_port(newsock);
 		snprintf(buf, sizeof buf, "X11 connection from %.200s port %d",
@@ -2501,7 +2504,7 @@ connect_local_xsocket(u_int dnr)
 int
 x11_connect_display(void)
 {
-	int display_number, sock = 0;
+	int display_number, sock = 0, on = 1;
 	const char *display;
 	char buf[1024], *cp;
 	struct addrinfo hints, *ai, *aitop;
@@ -2590,6 +2593,7 @@ x11_connect_display(void)
 		    strerror(errno));
 		return -1;
 	}
+	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
 	return sock;
 }
 
