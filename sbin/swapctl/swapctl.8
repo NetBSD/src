@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.2 1997/06/15 03:52:02 mrg Exp $
+.\"	$NetBSD: swapctl.8,v 1.3 1997/06/15 04:08:33 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -37,26 +37,30 @@
 .Nd system swap management tool
 .Sh SYNOPSIS
 .Nm swapctl
-.Op Fl A
+.Fl A
 .Op Fl p Ar priority
 .Nm swapctl
-.Op Fl a | Fl c
-.\" SWAP_OFF_WORKS: .Op Fl a | Fl c | Fl d
+.Fl a
 .Op Fl p Ar priority
 .Ar path
 .Nm swapctl
-.Op Fl l | Fl s
+.Fl c
+.Fl p Ar priority
+.Ar path
+.Nm swapctl
+.Fl d
+.Ar path
+.Nm swapctl
+.Fl l | Fl s
 .Op Fl k
 .Nm swapon
-.Op Fl a
+.Fl a | Ar path
+.Nm swapoff
 .Ar path
-.\" .Nm swapoff
-.\" .Ar path
 .Sh DESCRIPTION
 The
 .Nm
-program adds,
-.\" SWAP_OFF_WORKS: removes,
+program adds, removes,
 lists and prioritizes swap devices and files for the system.
 The
 .Nm swapon
@@ -105,12 +109,12 @@ option, for backwards compatibility.
 The
 .Fl c
 option changes the priority of the listed swap device or file.
-.\" .It Fl d
-.\" The
-.\" .Fl d
-.\" option removes the listed
-.\" .Ar path
-.\" from the kernel's list of swap devices or files.
+.It Fl d
+The
+.Fl d
+option removes the listed
+.Ar path
+from the kernel's list of swap devices or files.
 .It Fl l
 The
 .Fl l
@@ -166,6 +170,11 @@ program, provided for backwards compatibility, appeared in
 The
 .Nm
 program was written by Matthew R. Green <mrg@eterna.com.au>.
+.Sh BUGS
+The
+.Fl d
+option is not currently supported by
+.Nx .
 .Sh SEE ALSO
 .Xr swapctl 2 ,
 .Xr fstab 5 ,
