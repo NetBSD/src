@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.26 1998/10/07 22:17:57 erh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.27 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ linux_sys_creat(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_creat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct sys_open_args oa;
@@ -169,7 +169,7 @@ linux_sys_open(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_open_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -523,7 +523,7 @@ linux_sys_stat(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_stat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct linux_stat *) sp;
 	} */ *uap = v;
 
@@ -539,7 +539,7 @@ linux_sys_lstat(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_lstat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct linux_stat *) sp;
 	} */ *uap = v;
 
@@ -556,7 +556,7 @@ linux_sys_access(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_access_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -574,7 +574,7 @@ linux_sys_unlink(p, v, retval)
 
 {
 	struct linux_sys_unlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -590,7 +590,7 @@ linux_sys_chdir(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_chdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -606,7 +606,7 @@ linux_sys_mknod(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_mknod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
@@ -633,7 +633,7 @@ linux_sys_chmod(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_chmod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -650,7 +650,7 @@ linux_sys_chown(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_chown_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
@@ -719,8 +719,8 @@ linux_sys_rename(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_rename_args /* {
-		syscallarg(char *) from;
-		syscallarg(char *) to;
+		syscallarg(const char *) from;
+		syscallarg(const char *) to;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -737,7 +737,7 @@ linux_sys_mkdir(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_mkdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -754,7 +754,7 @@ linux_sys_rmdir(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_rmdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -770,8 +770,8 @@ linux_sys_symlink(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_symlink_args /* {
-		syscallarg(char *) path;
-		syscallarg(char *) to;
+		syscallarg(const char *) path;
+		syscallarg(const char *) to;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -788,7 +788,7 @@ linux_sys_readlink(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_readlink_args /* {
-		syscallarg(char *) name;
+		syscallarg(const char *) name;
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
@@ -806,7 +806,7 @@ linux_sys_truncate(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_truncate_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);

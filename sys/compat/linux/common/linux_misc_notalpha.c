@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.49 1998/10/04 00:02:37 fvdl Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.50 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ linux_sys_utime(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_utime_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct linux_utimbuf *)times;
 	} */ *uap = v;
 	caddr_t sg;

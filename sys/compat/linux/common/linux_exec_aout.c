@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.36 1998/10/23 10:54:58 veego Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.37 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -379,7 +379,7 @@ linux_sys_uselib(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_uselib_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	caddr_t sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
