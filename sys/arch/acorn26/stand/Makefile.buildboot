@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.1 2002/03/24 15:47:24 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2 2002/05/04 12:25:00 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -63,11 +63,18 @@ realall: ${PROG},${RISCOSTYPE}
 CLEANFILES+=	${PROG},${RISCOSTYPE}
 FILES+=		${PROG},${RISCOSTYPE}
 
-.if !make(obj)
-.BEGIN:
-	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine
 .NOPATH: machine
-CLEANFILES+= machine
 .endif
+
+realdepend realall: machine
+CLEANFILES+= machine
+
+machine::
+	-rm -f $@
+	ln -s $S/arch/acorn26/include $@
+
+${OBJS}: machine
 
 .include <bsd.prog.mk>
