@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.31 2001/05/15 06:52:30 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.32 2001/06/25 04:52:26 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -840,7 +840,7 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 			DPRINTFN(1, (" ForceRoot"));
 		if (val & 0x00400000)
 			DPRINTFN(1, (" Gap=%x", (val & 0x003f0000) >> 16));
-		printf("\n");
+		DPRINTFN(1, ("\n"));
 #endif
 		break;
 	case 1:
