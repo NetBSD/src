@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.56 1999/09/18 11:25:51 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.57 1999/10/12 11:21:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -438,11 +438,10 @@ uhci_activate(self, act)
 }
 
 int
-uhci_detach(self, flags)
-	device_ptr_t self;
+uhci_detach(sc, flags)
+	struct uhci_softc *sc;
 	int flags;
 {
-	struct uhci_softc *sc = (struct uhci_softc *)self;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
