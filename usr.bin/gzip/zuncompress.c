@@ -1,4 +1,4 @@
-/*	$NetBSD: zuncompress.c,v 1.2 2004/02/18 18:29:07 he Exp $ */
+/*	$NetBSD: zuncompress.c,v 1.3 2004/04/25 16:20:33 mrg Exp $ */
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -76,6 +76,10 @@ static char_type magic_header[] =
 static char_type rmask[9] =
 	{0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
+/* XXX zuncompress global */
+off_t total_compressed_bytes;
+size_t compressed_prelen;
+char *compressed_pre;
 
 struct s_zstate {
 	FILE *zs_fp;			/* File stream for I/O */
@@ -124,10 +128,18 @@ struct s_zstate {
 static code_int	getcode(struct s_zstate *zs);
 
 static off_t
-zuncompress(FILE *in, FILE *out)
+zuncompress(FILE *in, FILE *out, char *pre, size_t prelen,
+	    off_t *compressed_bytes)
 {
 	off_t bin, bout = 0;
 	char buf[BUFSIZE];
+
+	/* XXX */
+	compressed_prelen = prelen;
+	if (prelen != 0)
+		compressed_pre = pre;
+	else
+		compressed_pre = NULL;
 
 	while ((bin = fread(buf, 1, sizeof(buf), in)) != 0) {
 		if (fwrite(buf, 1, bin, out) != bin)
@@ -135,11 +147,14 @@ zuncompress(FILE *in, FILE *out)
 		bout += bin;
 	}
 
+	if (compressed_bytes)
+		*compressed_bytes = total_compressed_bytes;
+
 	return bout;
 }
 
 FILE *
-zopen(const char *fname)
+zopen(const char *fname, FILE *preopen)
 {
 	struct s_zstate *zs;
 
@@ -164,7 +179,8 @@ zopen(const char *fname)
 	 * Layering compress on top of stdio in order to provide buffering,
 	 * and ensure that reads and write work with the data specified.
 	 */
-	if ((zs->zs_fp = fopen(fname, "r")) == NULL) {
+	if ((zs->zs_fp = preopen) == NULL &&
+	    (zs->zs_fp = fopen(fname, "r")) == NULL) {
 		free(zs);
 		return NULL;
 	}
@@ -181,7 +197,7 @@ zopen(const char *fname)
 static int
 zread(void *cookie, char *rbp, int num)
 {
-	u_int count;
+	u_int count, i;
 	struct s_zstate *zs;
 	u_char *bp, header[3];
 
@@ -202,12 +218,16 @@ zread(void *cookie, char *rbp, int num)
 	}
 
 	/* Check the magic number */
-	if (fread(header,
-	    sizeof(char), sizeof(header), zs->zs_fp) != sizeof(header) ||
+	for (i = 0; i < 3 && compressed_prelen; i++, compressed_prelen--)  
+		header[i] = *compressed_pre++;
+
+	if (fread(header + i, 1, sizeof(header) - i, zs->zs_fp) !=
+		  sizeof(header) - i ||
 	    memcmp(header, magic_header, sizeof(magic_header)) != 0) {
 		errno = EFTYPE;
 		return (-1);
 	}
+	total_compressed_bytes = 0;
 	zs->zs_maxbits = header[2];	/* Set -b from file. */
 	zs->zs_block_compress = zs->zs_maxbits & BLOCK_MASK;
 	zs->zs_maxbits &= BIT_MASK;
@@ -291,7 +311,7 @@ static code_int
 getcode(struct s_zstate *zs)
 {
 	code_int gcode;
-	int r_off, bits;
+	int r_off, bits, i;
 	char_type *bp;
 
 	bp = zs->u.r.zs_gbuf;
@@ -313,10 +333,17 @@ getcode(struct s_zstate *zs)
 			zs->zs_maxcode = MAXCODE(zs->zs_n_bits = INIT_BITS);
 			zs->zs_clear_flg = 0;
 		}
-		zs->u.r.zs_size = fread(zs->u.r.zs_gbuf, 1, zs->zs_n_bits, zs->zs_fp);
+		/* XXX */
+		for (i = 0; i < zs->zs_n_bits && compressed_prelen; i++, compressed_prelen--)  
+			zs->u.r.zs_gbuf[i] = *compressed_pre++;
+		zs->u.r.zs_size = fread(zs->u.r.zs_gbuf + i, 1, zs->zs_n_bits - i, zs->zs_fp);
+		zs->u.r.zs_size += i;
 		if (zs->u.r.zs_size <= 0)			/* End of file. */
 			return (-1);
 		zs->u.r.zs_roffset = 0;
+
+		total_compressed_bytes += zs->u.r.zs_size;
+
 		/* Round size down to integral number of codes. */
 		zs->u.r.zs_size = (zs->u.r.zs_size << 3) - (zs->zs_n_bits - 1);
 	}
