@@ -1178,14 +1178,10 @@ gld${EMULATION_NAME}_place_orphan (file, s)
 	   && (hold_rel.os != NULL
 	       || (hold_rel.os = output_rel_find (s)) != NULL))
     place = &hold_rel;
-  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == SEC_READONLY)
-    {
-      /* If we have .rodata, fine.  If not, assume we can put
-	 read-only data into .text.  */
-      place = HAVE_SECTION (hold_rodata, ".rodata") ? &hold_rodata
-      						    : &hold_text;
-    }
-  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == (SEC_CODE | SEC_READONLY)
+  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == SEC_READONLY
+	   && HAVE_SECTION (hold_rodata, ".rodata"))
+    place = &hold_rodata;
+  else if ((s->flags & SEC_READONLY) != 0
 	   && hold_text.os != NULL)
     place = &hold_text;
 
