@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.24 2003/01/31 00:26:30 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.25 2003/02/20 00:55:21 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.24 2003/01/31 00:26:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.25 2003/02/20 00:55:21 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -259,7 +259,7 @@ gem_attach(sc, enaddr)
 	gem_mifinit(sc);
 
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY, 0);
+			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
