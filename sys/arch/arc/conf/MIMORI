@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.7 2001/08/22 15:39:05 hubertf Exp $
+#	$NetBSD: MIMORI,v 1.8 2001/11/13 17:54:47 augustss Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -264,4 +264,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux		2
+#pseudo-device	wsmux

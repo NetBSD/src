@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.6 2001/11/04 09:00:38 yamt Exp $
+#	$NetBSD: DELPHI,v 1.7 2001/11/13 17:54:50 augustss Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.6 $"
+ident 		"DELPHI-$Revision: 1.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -788,7 +788,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # Support for the Middle Digital, Inc. PC-Weasel serial console board
 pseudo-device	pcweasel

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.6 2001/06/20 14:42:39 nonaka Exp $
+#	$NetBSD: NATSUMI,v 1.7 2001/11/13 17:54:52 augustss Exp $
 #
 #	for development
 #
@@ -401,4 +401,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
