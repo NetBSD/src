@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.6 1996/04/15 18:58:20 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.7 1996/06/12 19:00:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -135,12 +135,4 @@ dec_2100_a50_consinit(constype)
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
-}
-
-dev_t
-dec_2100_a50_bootdev(booted_dev)
-	char *booted_dev;
-{
-
-	panic("gack.");
 }

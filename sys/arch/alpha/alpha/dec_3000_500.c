@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_500.c,v 1.1 1995/08/03 00:57:26 cgd Exp $	*/
+/*	$NetBSD: dec_3000_500.c,v 1.2 1996/06/12 19:00:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -77,12 +77,4 @@ dec_3000_500_consinit(constype)
 	char *constype;
 {
 
-}
-
-dev_t
-dec_3000_500_bootdev(booted_dev)
-	char *booted_dev;
-{
-
-	panic("gack.");
 }

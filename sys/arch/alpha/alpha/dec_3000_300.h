@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.h,v 1.2 1995/08/03 01:12:23 cgd Exp $	*/
+/*	$NetBSD: dec_3000_300.h,v 1.3 1996/06/12 19:00:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,4 +29,3 @@
 
 char	*dec_3000_300_modelname __P((void));
 void	dec_3000_300_consinit __P((char *));
-dev_t	dec_3000_300_bootdev __P((char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 1996/06/12 01:38:09 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 1996/06/12 19:00:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -175,7 +175,6 @@ int		ncpus;
 /* various CPU-specific functions. */
 char		*(*cpu_modelname) __P((void));
 void		(*cpu_consinit) __P((char *));
-dev_t		(*cpu_bootdev) __P((char *));
 char		*cpu_iobus;
 
 char *boot_file, *boot_flags, *boot_console, *boot_dev;
@@ -362,7 +361,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_3000_500:
 		cpu_modelname = dec_3000_500_modelname;
 		cpu_consinit = dec_3000_500_consinit;
-		cpu_bootdev = dec_3000_500_bootdev;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -371,7 +369,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_3000_300:
 		cpu_modelname = dec_3000_300_modelname;
 		cpu_consinit = dec_3000_300_consinit;
-		cpu_bootdev = dec_3000_300_bootdev;
 		cpu_iobus = "tcasic";
 		break;
 #endif
@@ -380,7 +377,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_2100_A50:
 		cpu_modelname = dec_2100_a50_modelname;
 		cpu_consinit = dec_2100_a50_consinit;
-		cpu_bootdev = dec_2100_a50_bootdev;
 		cpu_iobus = "apecs";
 		break;
 #endif
@@ -389,7 +385,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_KN20AA:
 		cpu_modelname = dec_kn20aa_modelname;
 		cpu_consinit = dec_kn20aa_consinit;
-		cpu_bootdev = dec_kn20aa_bootdev;
 		cpu_iobus = "cia";
 		break;
 #endif
@@ -398,7 +393,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_AXPPCI_33:
 		cpu_modelname = dec_axppci_33_modelname;
 		cpu_consinit = dec_axppci_33_consinit;
-		cpu_bootdev = dec_axppci_33_bootdev;
 		cpu_iobus = "lca";
 		break;
 #endif
@@ -407,7 +401,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_2000_300:
 		cpu_modelname = dec_2000_300_modelname;
 		cpu_consinit = dec_2000_300_consinit;
-		cpu_bootdev = dec_2000_300_bootdev;
 		cpu_iobus = "ibus";
 	XXX DEC 2000/300 NOT SUPPORTED
 		break;
@@ -417,7 +410,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	case ST_DEC_21000:
 		cpu_modelname = dec_21000_modelname;
 		cpu_consinit = dec_21000_consinit;
-		cpu_bootdev = dec_21000_bootdev;
 		cpu_iobus = "tlsb";
 		break;
 #endif
@@ -565,17 +557,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		boot_file = argv[0];
 		/* FALLTHRU */
 	}
-
-	/*
-	 * Look at arguments and compute bootdev.
-	 * XXX NOT HERE.
-	 */
-#if 0
-	{							/* XXX */
-		extern dev_t bootdev;				/* XXX */
-		bootdev = (*cpu_bootdev)(boot_dev);
-	}							/* XXX */
-#endif
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

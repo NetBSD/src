@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.4 1996/04/15 18:58:22 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.5 1996/06/12 19:00:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -118,12 +118,4 @@ dec_axppci_33_consinit(constype)
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
-}
-
-dev_t
-dec_axppci_33_bootdev(booted_dev)
-	char *booted_dev;
-{
-
-	panic("gack.");
 }

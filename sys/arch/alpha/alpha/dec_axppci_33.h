@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.h,v 1.1 1995/11/23 02:33:57 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.h,v 1.2 1996/06/12 19:00:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,4 +29,3 @@
 
 char	*dec_axppci_33_modelname __P((void));
 void	dec_axppci_33_consinit __P((char *));
-dev_t	dec_axppci_33_bootdev __P((char *));
