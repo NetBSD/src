@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2002/03/24 22:30:05 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.55 2002/04/07 15:28:43 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	compat_freebsd.8 compat_hpux.8 compat_ibcs2.8 compat_linux.8 \
@@ -15,12 +15,15 @@ MLINKS+=compat_netbsd32.8 netbsd32.8
 MLINKS+=yp.8 nis.8
 MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.shutdown.8
-SUBDIR=	man8.acorn26 man8.acorn32 man8.alpha man8.amiga man8.arc man8.arm32 \
-	man8.atari man8.bebox man8.cobalt man8.dreamcast man8.evbarm \
-	man8.hp300 man8.hpcmips man8.hpcsh man8.i386 man8.luna68k man8.mac68k \
-	man8.macppc man8.mipsco man8.mmeye man8.mvme68k man8.netwinder \
-	man8.news68k man8.newsmips man8.next68k man8.pc532 man8.pmax \
-	man8.prep man8.sandpoint man8.sgimips man8.sparc man8.sparc64 \
+SUBDIR=	man8.acorn26 man8.acorn32 man8.algor man8.alpha man8.amiga \
+	man8.arc man8.atari man8.bebox man8.cats \
+	man8.cobalt man8.dreamcast man8.evbarm man8.evbsh3 \
+	man8.hp300 man8.hpcmips man8.hpcsh man8.i386 man8.luna68k \
+	man8.mac68k man8.macppc man8.mipsco man8.mmeye man8.mvme68k \
+	man8.mvmeppc man8.netwinder man8.news68k man8.newsmips \
+	man8.next68k man8.pc532 man8.playstation2 man8.pmax \
+	man8.prep man8.sandpoint man8.sgimips man8.shark \
+	man8.sparc man8.sparc64 \
 	man8.sun2 man8.sun3 man8.vax man8.walnut man8.x68k
 
 .include <bsd.man.mk>
