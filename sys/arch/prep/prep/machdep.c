@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2000/03/27 16:45:42 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2000/05/03 11:39:54 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -525,6 +525,8 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
+
+	printf("Model: %s\n", res->VitalProductData.PrintableModel);
 	identifycpu();
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
