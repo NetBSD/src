@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 1997/01/27 19:41:07 gwr Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 1997/05/29 21:16:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,22 +44,58 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #ifndef __GNUC__
-/* No inline, use real function in locore.s */
-extern int _spl(int new);
+/* No inline, use the real functions in locore.s */
+extern int _getsr __P((void));
+extern int _spl __P((int new));
+extern int _splraise __P((int new));
 #else	/* GNUC */
 /*
- * Define an inline function for PSL manipulation.
- * This is as close to a macro as one can get.
- * If not optimizing, the one in locore.s is used.
+ * Define inline functions for PSL manipulation.
+ * These are as close to macros as one can get.
+ * When not optimizing gcc will call the locore.s
+ * functions by the same names, so breakpoints on
+ * these functions will work normally, etc.
  * (See the GCC extensions info document.)
  */
-extern __inline__ int _spl(int new)
+
+/* Get current sr value. */
+extern __inline__ int
+_getsr(void)
+{
+	register int rv;
+
+	__asm __volatile ("clrl %0; movew sr,%0" : "&=d" (rv));
+	return (rv);
+}
+
+/* Set the current sr and return the old value. */
+extern __inline__ int
+_spl(int new)
 {
 	register int old;
 
 	__asm __volatile (
 		"clrl %0; movew sr,%0; movew %1,sr" :
 			"&=d" (old) : "di" (new));
+	return (old);
+}
+
+/*
+ * Like _spl() but can be used in places where the
+ * interrupt priority may already have been raised,
+ * without risk of enabling interrupts by accident.
+ * The comparison includes the "S" bit (always on)
+ * because that generates more efficient code.
+ */
+extern __inline__ int
+_splraise(int new)
+{
+	register int old;
+
+	__asm __volatile ("clrl %0; movew sr,%0" : "&=d" (old));
+	if ((old & PSL_HIGHIPL) < new) {
+		__asm __volatile ("movew %0,sr;" : : "di" (new));
+	}
 	return (old);
 }
 #endif	/* GNUC */
@@ -94,8 +130,14 @@ extern __inline__ int _spl(int new)
 /* Highest tty device IPL. */
 #define spltty()        spl4()
 
-/* Requirement: imp >= (highest network, tty, or disk IPL) */
-#define splimp()        spl4()
+/*
+ * Requirement: imp >= (highest network, tty, or disk IPL)
+ * This is used mostly in the VM code. (Why not splvm?)
+ * Note that the VM code runs at spl7 during kernel
+ * initialization, and later at spl0, so we have to 
+ * use splraise to avoid enabling interrupts early.
+ */
+#define splimp()        _splraise(PSL_S|PSL_IPL4)
 
 /* Intersil clock hardware interrupts (hard-wired at 5) */
 #define splclock()      spl5()
@@ -104,9 +146,6 @@ extern __inline__ int _spl(int new)
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
-
-/* Get current sr value (debug, etc.) */
-extern int getsr __P((void));
 
 #endif	/* KERNEL && !_LOCORE */
 #endif	/* PSL_C */
