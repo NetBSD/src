@@ -126,7 +126,7 @@
 /* #undef _GLIBCPP_CONCEPT_CHECKS */
 
 // Define to use symbol versioning in the shared library.
-/* #undef _GLIBCPP_SYMVER */
+#define _GLIBCPP_SYMVER 1
 
 // Define symbol versioning in assember directives. If symbol
 // versioning is beigng used, and the assembler supports this kind of
