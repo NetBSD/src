@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 1998/01/05 22:00:39 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.9 1998/08/26 14:37:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -195,9 +195,10 @@ int			type;
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
+md_make_gotreloc(rp, r, type, gotp)
 struct relocation_info	*rp, *r;
 int			type;
+got_t			*gotp;
 {
 	r->r_baserel = 1;
 	if (type & RELTYPE_RELATIVE)
