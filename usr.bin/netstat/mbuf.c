@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.17 2002/03/09 23:26:51 sommerfeld Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.18 2002/12/14 11:12:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.17 2002/03/09 23:26:51 sommerfeld Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.18 2002/12/14 11:12:24 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.17 2002/03/09 23:26:51 sommerfeld Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "netstat.h"
 
 #define	YES	1
@@ -87,7 +88,8 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	u_long msizeaddr, mclbaddr;
 	u_long mbpooladdr, mclpooladdr;
 {
-	int totmem, totused, totmbufs, totpct;
+	u_long totmem, totused, totpct;
+	u_int totmbufs;
 	int i;
 	struct mbtypes *mp;
 
@@ -157,8 +159,17 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	    (mclpool.pr_npages << mclpa.pa_pageshift);
 	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size +
 	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
-	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
-	printf("%u Kbytes allocated to network (%d%% in use)\n",
+	if (totmem == 0)
+		totpct = 0;
+	else if (totused < (ULONG_MAX/100))
+		totpct = (totused * 100)/totmem;
+	else {
+		u_long totmem1 = totmem/100;
+		u_long totused1 = totused/100;
+		totpct = (totused1 * 100)/totmem1;
+	}
+	
+	printf("%lu Kbytes allocated to network (%lu%% in use)\n",
 	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
