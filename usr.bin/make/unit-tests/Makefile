@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2004/04/08 00:59:01 sjg Exp $
+# $Id: Makefile,v 1.13 2004/05/07 08:12:16 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -23,6 +23,7 @@ SUBFILES= \
 	modmatch \
 	modts \
 	modword \
+	posix \
 	ternary \
 	varcmd
 
@@ -31,7 +32,7 @@ all: ${SUBFILES}
 # the tests are actually done with sub-makes.
 .PHONY: ${SUBFILES}
 ${SUBFILES}:
-	@${.MAKE} -k -f ${UNIT_TESTS}/$@
+	-@${.MAKE} -k -f ${UNIT_TESTS}/$@
 
 clean:
 	rm -f *.out *.fail *.core
@@ -43,11 +44,15 @@ TEST_MAKE?= ${MAKE}
 # The driver.
 # We always pretend .MAKE was called 'make' 
 # and strip ${.CURDIR}/ from the output
+# and replace anything after 'stopped in' with unit-tests
 # so the results can be compared.
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
 	@cd ${.OBJDIR} && ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
-	sed -e 's,^${TEST_MAKE:T}:,make:,' -e 's,${.CURDIR}/,,g' > ${.TARGET}.out || { \
+	sed -e 's,^${TEST_MAKE:T}:,make:,' \
+	-e '/stopped/s, /.*, unit-tests,' \
+	-e 's,${.CURDIR}/,,g' \
+	-e 's,${UNIT_TESTS}/,,g' > ${.TARGET}.out || { \
 	tail ${.TARGET}.out; mv ${.TARGET}.out ${.TARGET}.fail; exit 1; }
 	diff -u ${UNIT_TESTS}/${.TARGET}.exp ${.TARGET}.out
 

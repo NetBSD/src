@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.101 2004/02/05 23:51:46 wiz Exp $
+.\"	$NetBSD: make.1,v 1.102 2004/05/07 08:12:16 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 6, 2004
+.Dd May 6, 2004
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -367,14 +367,22 @@ dependencies may be followed by a creation script, unless the
 .Ql Ic \&::
 operator is used.
 .Pp
-If the first or first two characters of the command line are
-.Ql Ic @
-and/or
+If the first characters of the command line are any combination of
+.Ql Ic @ ,
+.Ql Ic +
+or
 .Ql Ic \- ,
 the command is treated specially.
 A
 .Ql Ic @
 causes the command not to be echoed before it is executed.
+A
+.Ql Ic +
+causes the command to be executed even when
+.Fl n
+is given.
+This is similar to the effect of the .MAKE special source,
+except that the effect can be limited to a single line of a script.
 A
 .Ql Ic \-
 causes any non-zero exit status of the command line to be ignored.
@@ -1176,7 +1184,8 @@ operator is not an integral value, then
 string comparison is performed between the expanded
 variables.
 If no relational operator is given, it is assumed that the expanded
-variable is being compared against 0.
+variable is being compared against 0 or an empty string in the case
+of a string comparison.
 .Pp
 When
 .Nm

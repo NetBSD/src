@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.84 2004/05/07 00:04:38 ross Exp $	*/
+/*	$NetBSD: job.c,v 1.85 2004/05/07 08:12:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.84 2004/05/07 00:04:38 ross Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.85 2004/05/07 08:12:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.84 2004/05/07 00:04:38 ross Exp $");
+__RCSID("$NetBSD: job.c,v 1.85 2004/05/07 08:12:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -704,11 +704,24 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     /*
      * Check for leading @' and -'s to control echoing and error checking.
      */
-    while (*cmd == '@' || *cmd == '-') {
-	if (*cmd == '@') {
+    while (*cmd == '@' || *cmd == '-' || (*cmd == '+')) {
+	switch (*cmd) {
+	case '@':
 	    shutUp = TRUE;
-	} else {
+	    break;
+	case '-':
 	    errOff = TRUE;
+	    break;
+	case '+':
+	    if (noSpecials) {
+		/*
+		 * We're not actually executing anything...
+		 * but this one needs to be - use compat mode just for it.
+		 */
+		CompatRunCommand(cmdp, (ClientData)job->node);
+		return 0;
+	    }
+	    break;
 	}
 	cmd++;
     }
