@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_securetty.c,v 1.2 2004/12/12 08:18:47 christos Exp $	*/
+/*	$NetBSD: pam_securetty.c,v 1.2.2.1 2005/04/04 17:55:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_securetty/pam_securetty.c,v 1.13 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_securetty.c,v 1.2 2004/12/12 08:18:47 christos Exp $");
+__RCSID("$NetBSD: pam_securetty.c,v 1.2.2.1 2005/04/04 17:55:20 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,16 +61,18 @@ PAM_EXTERN int
 pam_sm_acct_mgmt(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct ttyent *ty;
 	const char *user;
 	const void *tty;
 	int pam_err;
+	char pwbuf[1024];
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	if (user == NULL || (pwd = getpwnam(user)) == NULL)
+	if (user == NULL ||
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_SERVICE_ERR);
 
 	PAM_LOG("Got user: %s", user);

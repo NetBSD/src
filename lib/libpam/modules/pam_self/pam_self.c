@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_self.c,v 1.2 2004/12/12 08:18:47 christos Exp $	*/
+/*	$NetBSD: pam_self.c,v 1.2.2.1 2005/04/04 17:55:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_self/pam_self.c,v 1.9 2002/04/12 22:27:24 des Exp $");
 #else
-__RCSID("$NetBSD: pam_self.c,v 1.2 2004/12/12 08:18:47 christos Exp $");
+__RCSID("$NetBSD: pam_self.c,v 1.2.2.1 2005/04/04 17:55:20 tron Exp $");
 #endif
 
 #define _BSD_SOURCE
@@ -61,15 +61,17 @@ PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	const char *luser;
 	int pam_err;
 	uid_t uid;
+	char pwbuf[1024];
 
 	pam_err = pam_get_user(pamh, &luser, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
-	if (luser == NULL || (pwd = getpwnam(luser)) == NULL)
+	if (luser == NULL ||
+	    getpwnam_r(luser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_AUTH_ERR);
 
 	uid = getuid();
