@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2000/10/31 23:16:31 jeffs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2000/10/31 23:39:25 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2000/10/31 23:16:31 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2000/10/31 23:39:25 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1547,8 +1547,6 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	int *p, *end;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
@@ -1558,31 +1556,8 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx) nonphys\n", phys);
 #endif
 
-	p = (int *)MIPS_PHYS_TO_KSEG0(phys);
-	end = p + PAGE_SIZE / sizeof(int);
-	/* XXX blkclr()? */
-	do {
-		p[0] = 0;
-		p[1] = 0;
-		p[2] = 0;
-		p[3] = 0;
+	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
 
-		p[4] = 0;
-		p[5] = 0;
-		p[6] = 0;
-		p[7] = 0;
-
-		p[8] = 0;
-		p[9] = 0;
-		p[10] = 0;
-		p[11] = 0;
-
-		p[12] = 0;
-		p[13] = 0;
-		p[14] = 0;
-		p[15] = 0;
-		p += 16;
-	} while (p != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
@@ -1609,8 +1584,6 @@ boolean_t
 pmap_zero_page_uncached(phys)
 	paddr_t phys;
 {
-	int *p, *end;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page_uncached(%lx)\n", phys);
@@ -1619,32 +1592,7 @@ pmap_zero_page_uncached(phys)
 	if (! (phys < MIPS_MAX_MEM_ADDR))
 		printf("pmap_zero_page_uncached(%lx) nonphys\n", phys);
 #endif
-
-	p = (int *)MIPS_PHYS_TO_KSEG1(phys);
-	end = p + PAGE_SIZE / sizeof(int);
-	/* XXX blkclr()? */
-	do {
-		p[0] = 0;
-		p[1] = 0;
-		p[2] = 0;
-		p[3] = 0;
-
-		p[4] = 0;
-		p[5] = 0;
-		p[6] = 0;
-		p[7] = 0;
-
-		p[8] = 0;
-		p[9] = 0;
-		p[10] = 0;
-		p[11] = 0;
-
-		p[12] = 0;
-		p[13] = 0;
-		p[14] = 0;
-		p[15] = 0;
-		p += 16;
-	} while (p != end);
+	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG1(phys));
 
 	return (TRUE);
 }
@@ -1656,10 +1604,6 @@ void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	int *s, *d, *end;
-	int tmp0, tmp1, tmp2, tmp3;
-	int tmp4, tmp5, tmp6, tmp7;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
@@ -1691,49 +1635,10 @@ pmap_copy_page(src, dst)
 /*		mips_flushcache_allpvh(dst); */
 	}
 #endif
-	s = (int *)MIPS_PHYS_TO_KSEG0(src);
-	d = (int *)MIPS_PHYS_TO_KSEG0(dst);
-	end = s + PAGE_SIZE / sizeof(int);
-	do {
-		tmp0 = s[0];
-		tmp1 = s[1];
-		tmp2 = s[2];
-		tmp3 = s[3];
-		d[0] = tmp0;
-		d[1] = tmp1;
-		d[2] = tmp2;
-		d[3] = tmp3;
 
-		tmp4 = s[4];
-		tmp5 = s[5];
-		tmp6 = s[6];
-		tmp7 = s[7];
-		d[4] = tmp4;
-		d[5] = tmp5;
-		d[6] = tmp6;
-		d[7] = tmp7;
+	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
+		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
 
-		tmp0 = s[8];
-		tmp1 = s[9];
-		tmp2 = s[10];
-		tmp3 = s[11];
-		d[8] = tmp0;
-		d[9] = tmp1;
-		d[10] = tmp2;
-		d[11] = tmp3;
-
-		tmp4 = s[12];
-		tmp5 = s[13];
-		tmp6 = s[14];
-		tmp7 = s[15];
-		d[12] = tmp4;
-		d[13] = tmp5;
-		d[14] = tmp6;
-		d[15] = tmp7;
-
-		s += 16;
-		d += 16;
-	} while (s != end);
 #if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
