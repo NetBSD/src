@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_vm86.c,v 1.6 1999/07/02 15:14:07 simonb Exp $	*/
+/*	$NetBSD: i386_vm86.c,v 1.7 2003/09/11 19:19:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/ucontext.h>
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
