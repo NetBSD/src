@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.106 1999/07/08 18:05:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.107 1999/07/28 23:23:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 1999/07/08 18:05:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 1999/07/28 23:23:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2775,7 +2775,8 @@ pmap_changebit(pa, set, mask, cpu_id)
 		/*
 		 * XXX don't write protect pager mappings
 		 */
-/* XXX */	if (mask == ~(PG_KWE | PG_UWE)) {
+		if (pv->pv_pmap == pmap_kernel() &&
+/* XXX */	    mask == ~(PG_KWE | PG_UWE)) {
 			if (va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
 		}
