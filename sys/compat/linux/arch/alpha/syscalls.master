@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2002/02/18 16:35:57 christos Exp $
+	$NetBSD: syscalls.master,v 1.39 2002/02/18 20:12:49 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -281,9 +281,9 @@
 				caddr_t asa, int *alen); }
 142	UNIMPL
 143	UNIMPL
-144	NOARGS		{ int compat_43_sys_getrlimit(int which, \
+144	STD		{ int linux_sys_getrlimit(int which, \
 			    struct orlimit *rlp); }
-145	NOARGS		{ int compat_43_sys_setrlimit(int which, \
+145	STD		{ int linux_sys_setrlimit(int which, \
 			    const struct orlimit *rlp); }
 146	UNIMPL
 147	NOARGS		{ int sys_setsid(void); }
