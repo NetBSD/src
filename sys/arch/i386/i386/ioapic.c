@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.5 2000/08/07 01:08:36 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.6 2000/08/18 13:54:25 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ apic_vectorset (sc, irq, level)
 	struct ioapic_pin *pin = &sc->sc_pins[irq];
 	int ovector = 0;
 	int nvector = 0;
+	void (*handler)(void);
 	
 	ovector = pin->ip_vector;
 
@@ -396,7 +397,9 @@ apic_vectorset (sc, irq, level)
 			 */
 			panic("apic_vectorset: no free vectors");
 		}
-		idt_vec_set(nvector, apichandler[nvector & 0xf]);
+		handler = apichandler[(nvector & 0xf) +
+		    ((level > IPL_HIGH) ? 0x10 : 0)];
+		idt_vec_set(nvector, handler);
 		pin->ip_vector = nvector;
 		pin->ip_level = level;
 	}
