@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.52 1997/11/02 08:05:11 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.53 1997/11/03 11:33:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -526,6 +526,10 @@ zs_set_modes(cs, cflag)
 	if ((cflag & CRTSCTS) != 0) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = ZSWR5_RTS;
+		cs->cs_rr0_cts = ZSRR0_CTS;
+	} else if ((cflag & CDTRCTS) != 0) {
+		cs->cs_wr5_dtr = 0;
+		cs->cs_wr5_rts = ZSWR5_DTR;
 		cs->cs_rr0_cts = ZSRR0_CTS;
 	} else if ((cflag & MDMBUF) != 0) {
 		cs->cs_wr5_dtr = 0;
