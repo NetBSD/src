@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.5 1993/10/13 02:23:12 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.6 1993/10/15 03:19:44 mycroft Exp $
  */
 
 #include "i386/isa/icu.h"
@@ -81,8 +81,24 @@
 
 	.globl	_isa_strayintr
 
+IDTVEC(stray)
+	sti
+	pushl	%ds
+	pushl	%es
+	pushal
+	movl	$KDSEL,%eax
+	movl	%ax,%ds
+	movl	%ax,%es
+	pushl	$-1
+	call	_isa_strayintr
+	addl	$4,%esp
+	popal
+	popl	%es
+	popl	%ds
+	iret
+
 #define	INTR(irq_num, icu, enable_icus) \
-IDTVEC(irq_num) ; \
+IDTVEC(intr/**/irq_num) ; \
 	ss ; \
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
 	jnz	2f ; \
@@ -99,7 +115,7 @@ IDTVEC(irq_num) ; \
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
 	outb	%al,$icu+1 ; \
 	enable_icus ; 		/* reenable hw interrupts */ \
-Vresume/**/irq_num: ; \
+_Xresume/**/irq_num: ; \
 	incl	_cnt+V_INTR ; 	/* increment statistical counters */ \
 	incl	_intrcnt_actv + 4*irq_num ; \
 	movl	_cpl,%eax ; 	/* finish interrupt frame */ \
@@ -176,11 +192,15 @@ INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
 /*
  * Interrupt counters
  */
-	ALIGN_TEXT
-Vresume:			/* where to resume intr handler after unpend */
-	.long	Vresume0, Vresume1, Vresume2, Vresume3, Vresume4, Vresume5
-	.long	Vresume6, Vresume7, Vresume8, Vresume9, Vresume10, Vresume11
-	.long	Vresume12, Vresume13, Vresume14, Vresume15
+IDTVEC(intr)	/* interrupt service routine entry points */
+	.long	_Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
+	.long	_Xintr7, _Xintr8, _Xintr9, _Xintr10, _Xintr11, _Xintr12
+	.long	_Xintr13, _Xintr14, _Xintr15
+IDTVEC(resume)	/* interrupt service routine resume points */
+	.long	_Xresume0, _Xresume1, _Xresume2, _Xresume3, _Xresume4
+	.long	_Xresume5, _Xresume6, _Xresume7, _Xresume8, _Xresume9
+	.long	_Xresume10, _Xresume11, _Xresume12, _Xresume13, _Xresume14
+	.long	_Xresume15
 
 	.data
 	.globl	_intrcnt
