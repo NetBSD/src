@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.16.2.1 2000/02/08 22:52:43 he Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.16.2.2 2000/10/04 14:08:34 he Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.16.2.1 2000/02/08 22:52:43 he Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.16.2.2 2000/10/04 14:08:34 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.16.2.1 2000/02/08 22:52:43 he Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "ctypeio.h"
 
 /*
@@ -104,11 +105,8 @@ setlocale(category, locale)
 	size_t len;
 	char *env, *r;
 
-	/*
-	 * XXX potential security problem here with set-id programs
-	 * being able to read files the user can not normally read.
-	 */
-	if (!PathLocale && !(PathLocale = getenv("PATH_LOCALE")))
+	if (issetugid() ||
+	    (!PathLocale && !(PathLocale = getenv("PATH_LOCALE"))))
 		PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
@@ -137,7 +135,7 @@ setlocale(category, locale)
 		if (!env || !*env)
 			env = getenv("LANG");
 
-		if (!env || !*env)
+		if (!env || !*env || strchr(env, '/'))
 			env = "C";
 
 		(void)strncpy(new_categories[category], env, 31);
