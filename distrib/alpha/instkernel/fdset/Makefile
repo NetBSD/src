@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1998/10/16 00:43:02 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/29 00:37:07 ross Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
 
 INSTKERNEL!=cd ${.CURDIR}/../instkernel; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd\n" | \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.gz\n" | \
 	${MAKE} -s -f-
 
 MOUNT_POINT?=	/mnt
@@ -51,10 +51,7 @@ all:	netbsd
 	@rm ${FSTMP}
 
 netbsd: ${INSTKERNEL}
-	cp ${INSTKERNEL} tmp
-	strip tmp
-	gzip -v9 tmp
-	mv tmp.gz netbsd
+	cp ${INSTKERNEL} netbsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

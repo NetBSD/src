@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 1998/10/16 00:43:02 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/29 00:37:06 ross Exp $
 
-IMAGE=		cd_or_tape
+IMAGE=		cdhdtape
 IMAGESIZE=	4000
 NFILES=		3
 
 INSTKERNEL!=cd ${.CURDIR}/../instkernel; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd\n" | \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.gz\n" | \
 	${MAKE} -s -f-
 
 MOUNT_POINT?=	/mnt
@@ -50,10 +50,7 @@ all:	netbsd
 	vnconfig -u ${VND_CDEV}
 
 netbsd: ${INSTKERNEL}
-	cp ${INSTKERNEL} tmp
-	strip tmp
-	gzip -v9 tmp
-	mv tmp.gz netbsd
+	cp ${INSTKERNEL} netbsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
