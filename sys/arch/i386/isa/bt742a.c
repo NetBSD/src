@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.23 1994/04/07 06:50:19 mycroft Exp $
+ *      $Id: bt742a.c,v 1.24 1994/04/08 18:22:20 mycroft Exp $
  */
 
 /*
@@ -677,8 +677,8 @@ btintr(bt)
 				break;
 			delay(10);
 		}
-		if (i == 0) {
-			printf("%s: bt_intr, cmd/data port full\n",
+		if (!i) {
+			printf("%s: btintr, cmd/data port full\n",
 				bt->sc_dev.dv_xname);
 			outb(BT_CTRL_STAT_PORT, BT_SRST);
 			return 1;
@@ -690,7 +690,7 @@ btintr(bt)
 	}
 	if (!(stat & BT_MBIF)) {
 		outb(BT_CTRL_STAT_PORT, BT_IRST);
-		return 1;
+		return -1;	/* XXX */
 	}
 	/*
 	 * If it IS then process the competed operation

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.36 1994/04/07 06:50:32 mycroft Exp $
+ *	$Id: fd.c,v 1.37 1994/04/08 18:22:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -750,7 +750,7 @@ fdcintr(fdc)
 	/* call the state machine until it returns 0 */
 	while (fdcstate(fdc));
 	/* XXX need a more useful return value */
-	return 1;
+	return -1;
 }
 
 int
