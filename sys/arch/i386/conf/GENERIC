@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.622 2004/07/15 03:53:47 atatat Exp $
+# $NetBSD: GENERIC,v 1.623 2004/07/19 14:23:59 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.622 $"
+#ident 		"GENERIC-$Revision: 1.623 $"
 
 maxusers	32		# estimated number of users
 
@@ -861,8 +861,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-# The EHCI is not ready for prime time.
-#ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
@@ -874,7 +873,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
-#usb*	at ehci?
+usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
 #usb*	at slhci?
