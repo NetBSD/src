@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.13 1997/09/11 23:05:30 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.13.2.1 1998/05/05 09:38:33 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Scott Bartram
+ * Copyright (c) 1994, 1995, 1998 Scott Bartram
  * Copyright (c) 1994 Adam Glass
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -34,22 +34,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define ELFSIZE		32
+
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/exec.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
-#include <sys/resourcevar.h>
 #include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+#include <sys/resourcevar.h>
+#ifdef IBCS2_DEBUG
+#include <sys/syslog.h>
+#endif
+
+#include <sys/mman.h>
+#include <sys/syscallargs.h>
+
 #include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/vm_map.h>
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/ibcs2_machdep.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-#include <machine/ibcs2_machdep.h>
+
+#define IBCS2_ELF_AUX_ARGSIZ	(sizeof(AuxInfo) * 8 / sizeof(char *))
+
 
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
@@ -73,17 +93,18 @@ int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
 static int coff_find_section __P((struct proc *, struct vnode *, 
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
+static int ibcs2_elf32_signature __P((struct proc *p, struct exec_package *,
+				      Elf32_Ehdr *));
 	
 
 extern int bsd2ibcs_errno[];
 extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
-extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
-extern char sigcode[], esigcode[];
+extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";
 
-struct emul emul_ibcs2 = {
+struct emul emul_ibcs2_coff = {
 	"ibcs2",
 	bsd2ibcs_errno,
 	ibcs2_sendsig,
@@ -94,9 +115,122 @@ struct emul emul_ibcs2 = {
 	0,
 	copyargs,
 	ibcs2_setregs,
-	sigcode,
-	esigcode,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
 };
+
+struct emul emul_ibcs2_xout = {
+	"ibcs2",
+	bsd2ibcs_errno,
+	ibcs2_sendsig,
+	0,
+	IBCS2_SYS_MAXSYSCALL,
+	ibcs2_sysent,
+	ibcs2_syscallnames,
+	0,
+	copyargs,
+	ibcs2_setregs,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
+};
+
+struct emul emul_ibcs2_elf = {
+	"ibcs2",
+	bsd2ibcs_errno,
+	ibcs2_sendsig,
+	0,
+	IBCS2_SYS_MAXSYSCALL,
+	ibcs2_sysent,
+	ibcs2_syscallnames,
+	IBCS2_ELF_AUX_ARGSIZ,
+	elf32_copyargs,
+	ibcs2_setregs,
+	ibcs2_sigcode,
+	ibcs2_esigcode,
+};
+
+
+/*
+ * The SCO compiler adds the string "SCO" to the .notes section of all
+ * binaries I've seen so far.
+ *
+ * XXX - probably should only compare the id in the actual ELF notes struct
+ */
+
+#define SCO_SIGNATURE	"\004\0\0\0\014\0\0\0\001\0\0\0SCO\0"
+
+static int
+ibcs2_elf32_signature(p, epp, eh)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf32_Ehdr *eh;
+{
+	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
+	size_t i;
+	static const char signature[] = SCO_SIGNATURE;
+	char buf[sizeof(signature) - 1];
+	Elf32_Shdr *sh;
+	int error;
+
+	sh = (Elf32_Shdr *)malloc(shsize, M_TEMP, M_WAITOK);
+
+	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
+	    (caddr_t)sh, shsize)) != 0)
+		goto out;
+
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf32_Shdr *s = &sh[i];
+		if (s->sh_type != Elf_sht_note ||
+		    s->sh_flags != 0 ||
+		    s->sh_size < sizeof(signature) - 1)
+			continue;
+
+		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
+		    (caddr_t)buf, sizeof(signature) - 1)) != 0)
+			goto out;
+
+		if (bcmp(buf, signature, sizeof(signature) - 1) == 0)
+			goto out;
+		else
+			break;	/* only one .note section so quit */
+	}
+	error = EFTYPE;
+
+out:
+	free(sh, M_TEMP);
+	return error;
+}
+
+/*
+ * ibcs2_elf32_probe - search the executable for signs of SCO
+ */
+
+int
+ibcs2_elf32_probe(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf32_Ehdr *eh;
+	char *itp;
+	Elf32_Addr *pos;
+{
+	char *bp;
+	int error;
+	size_t len;
+
+	if ((error = ibcs2_elf32_signature(p, epp, eh)) != 0)
+                return error;
+
+	if (itp[0]) {
+		if ((error = emul_find(p, NULL, ibcs2_emul_path, itp, &bp, 0)))
+			return error;
+		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
+			return error;
+		free(bp, M_TEMP);
+	}
+	epp->ep_emul = &emul_ibcs2_elf;
+	*pos = ELF32_NO_ADDR;
+	return 0;
+}
 
 /*
  * exec_ibcs2_coff_makecmds(): Check if it's an coff-format executable.
@@ -141,7 +275,7 @@ exec_ibcs2_coff_makecmds(p, epp)
 	}
 
 	if (error == 0)
-		epp->ep_emul = &emul_ibcs2;
+		epp->ep_emul = &emul_ibcs2_coff;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -583,7 +717,7 @@ exec_ibcs2_xout_makecmds(p, epp)
 		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
 	if (error == 0)
-		epp->ep_emul = &emul_ibcs2;
+		epp->ep_emul = &emul_ibcs2_xout;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
