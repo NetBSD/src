@@ -1,0 +1,12 @@
+#	$NetBSD: files.dec,v 1.1 1997/07/22 04:32:20 jonathan Exp $
+#
+# Config file and device description for  machine-independent
+# code for devices for Digital Equipment Corp. systems.
+# Included by ports that need it.
+
+# Attribute for DEC lance padded-DMA copy functions.  Lance attachments
+# which need it should specify the le_de_subr attribute.
+define	le_dec_subr
+
+#  DMA copy functions.  Lance attachments qhich Decices
+file	dev/tc/if_le_dec.c		le_dec_subr
