@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICOTHER,v 1.23 1996/08/26 23:40:01 mrg Exp $
+#	$NetBSD: GENERICOTHER,v 1.24 1996/08/31 20:39:19 mycroft Exp $
 #
 #	GENERICOTHER -- everything that's currently supported, except
 #	             Adaptec SCSI controllers.
@@ -122,17 +122,17 @@ mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt2	at isa? port ? irq ?
-scsibus* at bt?
+bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bha*	at eisa? slot ?
+scsibus* at bha?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 sea0	at isa? iomem 0xc8000 irq 5
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
