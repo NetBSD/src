@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.32 2003/08/07 09:46:47 agc Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.33 2004/07/17 18:32:23 wiz Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.32 2003/08/07 09:46:47 agc Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.33 2004/07/17 18:32:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,7 @@ doit(f, fromp)
 	if (getnameinfo((struct sockaddr *)fromp, fromp->sa_len,
 		    saddr, sizeof(saddr), NULL, 0, NI_NAMEREQD) == 0) {
 		/*
-		 * If name returned by gethostbyaddr is in our domain,
+		 * If name returned by getnameinfo is in our domain,
 		 * attempt to verify that we haven't been fooled by someone
 		 * in a remote net; look up the name and check that this
 		 * address corresponds to the name.
