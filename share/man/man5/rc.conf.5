@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.33 2000/06/20 16:48:21 itojun Exp $
+.\"	$NetBSD: rc.conf.5,v 1.34 2000/07/03 07:16:04 enami Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -109,7 +109,8 @@ YES or NO.
 Set the 
 .Sy critfs_require_network
 variable to YES if the network must be configured before critical filesystems
-can be mounted.   This should be set to NO if you are using the DHCP client,
+can be mounted.
+This should be set to NO if you are using the DHCP client,
 because the DHCP client needs to store its lease database in the
 .Pa /var/db 
 directory.
@@ -134,6 +135,9 @@ Runs the
 utility.
 Passes
 .Sy savecore_flags .
+.It Sy clear_tmp
+YES or NO.
+Clear /tmp after reboot.
 .It Sy update_motd
 YES or NO.
 Updates the
@@ -158,26 +162,16 @@ Enables process accounting with
 Requires
 .Pa /var/account/acct
 to exist.
-.It Sy defcorename
-A string.
-This sets the default core name template, from which are derived core dump
-files names. The template can include format charaters which are dynamically
-interpreted. See
-.Xr core 5
-for details of the format.
-If set to nothing, the default compiled-in value is keept (see
-.Xr options 4 ,
-.Xr sysctl 3
-).
 .El
 .Pp
 .Ss System security setting:
 .Bl -tag -width securelevel
 .It Sy securelevel
-A number.  The system securelevel is set to the specified value early
+A number.
+The system securelevel is set to the specified value early
 in the boot process, before any external logins, or other programs
-that run users job, are started.  If set to nothing, the default
-action is taken, as described
+that run users job, are started.
+If set to nothing, the default action is taken, as described
 .Xr init 8 ,
 which contains definative information about the system securelevel.
 .El
@@ -250,23 +244,27 @@ single-user mode.
 .It Sy dhclient
 YES or NO.
 Set to YES to configure some or all network interfaces using
-the DHCP client.   If you set
+the DHCP client.
+If you set
 .Sy dhclient
 to YES, you must either set 
 .Sy critfs_require_network
 to NO or direct the DHCP client to store the leases file on the root
 filesystem by modifying the
 .Sy dhclient_flags
-variable.   You must not provide ifconfig information or ifaliases
-information for any interface that is to be configured using the DHCP
-client.   Interface aliases can be set up in the DHCP client configuration
+variable.
+You must not provide ifconfig information or ifaliases
+information for any interface that is to be configured using the DHCP client.
+Interface aliases can be set up in the DHCP client configuration
 file if needed - see
 .Xr dhclient.conf 5
 for details.
 .It Sy dhclient_flags
-Flags to pass to the DHCP client.   See
+Flags to pass to the DHCP client.
+See
 .Xr dhclient 8
-for complete documentation.   If you wish to configure all broadcast
+for complete documentation.
+If you wish to configure all broadcast
 network interfaces using the DHCP client, you can leave this blank.
 To configure only specific interfaces, name the interfaces to be configured
 on the command line.
@@ -276,7 +274,6 @@ then you should specify an alternate location for the DHCP client's lease
 file in the
 .Sy dhclient_flags
 variable - for example, "-lf /tmp/dhclient.leases".
-
 .It Sy ntpdate
 YES or NO.
 Runs
@@ -354,10 +351,10 @@ Passes
 The
 .Ar -l
 flag turns on libwrap connection logging.
-.It Sy portmap
+.It Sy rpcbind
 YES or NO.
 The
-.Xr portmap 8
+.Xr rpcbind 8
 daemon is required for any
 .Xr rpc 3
 services.
@@ -372,12 +369,6 @@ and
 .Pp
 .Ss Commonly used daemons:
 .Bl -tag -width net_interfaces
-.It Sy update
-YES or NO.
-Runs
-.Xr update 8
-and passes
-.Sy update_flags .
 .It Sy syslogd
 YES or NO.
 Runs
@@ -402,23 +393,28 @@ option allows
 .Xr timed 8
 to be a master time source as well as a slave.
 If you are also running
-.Xr xntpd 8 ,
+.Xr ntpd 8 ,
 only one machine running both should have the
 .Ar -M
 flag given to
 .Xr timed 8 .
-.It Sy xntpd
+.It Sy ntpd
 YES or NO.
 Runs
-.Xr xntpd 8
+.Xr ntpd 8
 and passes
-.Sy xntpd_flags .
+.Sy ntpd_flags .
 .It Sy sendmail
 YES or NO.
 Runs
 .Xr sendmail 8
 and passes
 .Sy sendmail_flags .
+.It Sy postfix
+YES or NO.
+Starts
+.Xr postfix 8
+mail system.
 .It Sy lpd
 YES or NO.
 Runs
@@ -600,11 +596,8 @@ Passes
 .Bl -tag -width net_interfaces
 .It Sy nfs_client
 YES or NO.
-Runs
-.Xr nfsiod 8
-to increase performance of an NFS client host.
-Passes
-.Sy nfsiod_flags .
+The number of local NFS asynchronous I/O server is now controlled via
+.Xr sysctl 8 .
 .It Sy nfs_server
 YES or NO.
 Sets up a host to be a NFS server by running
@@ -719,7 +712,8 @@ and passes
 .Pa /etc/rc.conf
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr rc 8
+.Xr rc 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
