@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.4 1998/11/06 20:08:20 is Exp $	*/
+/*	$NetBSD: startit.s,v 1.5 1998/11/11 20:57:33 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.4 1998/11/06 20:08:20 is Exp $
+ * From: $NetBSD: startit.s,v 1.5 1998/11/11 20:57:33 is Exp $
  */
 
 	.set	ABSEXECBASE,4
@@ -154,14 +154,6 @@ nott:
 	moveb	#0,0x200003c9
 #endif
 
-| ---- switch off cache ----
-	btst	#3,d5
-	jeq	L3
-	.word	0xf4f8
-L3:	movl	d2,sp@-			| save d2
-	movql	#0,d2			| switch off cache to ensure we use
-	movec	d2,cacr			| valid kernel data
-	movl	sp@+,d2			| restore d2
 
 | ---- copy kernel start ----
 
@@ -207,7 +199,9 @@ L0:	movw	a1@-,a3@-
 	movl	a3,sp@			| address of relocated below
 	addl	#(ckend - below),a3
 	movl	a3,sp@(12)		| address of ckend for later
-	rts
+| ---- switch off cache ----
+	bra	Lchoff			| and to relocated below
+
 
 below:	movl	sp@+,a3			| recover destination
 	movl	sp@+,a1			| recover source
@@ -216,7 +210,8 @@ L1:	movl	a1@-,a3@-		| copy kernel
 	subl	#4,d2
 	bne	L1
 
-	rts				| jmps to relocated ckend
+| ---- switch off cache ----
+	bra	Lchoff			| and to relocated ckend
 
 above:	movl	a1@+,a3@+
 	subl	#4,d2
@@ -241,6 +236,14 @@ L2:
 	moveb	#0,0x200003c9
 #endif
 
+| ---- switch off cache ----
+Lchoff:	btst	#3,d5
+	jeq	L3c
+	.word	0xf4f8
+L3c:	movl	d2,sp@-			| save d2
+	movql	#0,d2			| switch off cache to ensure we use
+	movec	d2,cacr			| valid kernel data
+	movl	sp@+,d2			| restore d2
 	rts
 
 | ---- copy kernel end ----
