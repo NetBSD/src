@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.80 2004/01/11 18:55:33 jdolecek Exp $	*/
+/*	$NetBSD: print.c,v 1.81 2004/02/24 15:16:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.80 2004/01/11 18:55:33 jdolecek Exp $");
+__RCSID("$NetBSD: print.c,v 1.81 2004/02/24 15:16:04 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ lstate(arg, ve, mode)
 		break;
 
 	case LSSLEEP:
-		if (flag & L_SINTR)	/* interuptable (long) */
+		if (flag & L_SINTR)	/* interruptible (long) */
 			*cp = k->l_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';

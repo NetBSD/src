@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.28 2004/02/24 15:12:51 wiz Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.29 2004/02/24 15:16:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.28 2004/02/24 15:12:51 wiz Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.29 2004/02/24 15:16:04 wiz Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -108,7 +108,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		/*
 		 * Do per-thread work, including saving the context.
 		 * Briefly run any threads that were in a critical section.
-		 * This includes any upcalls that have been interupted, so
+		 * This includes any upcalls that have been interrupted, so
 		 * they can do their own version of this dance.
 		 */
 		pthread__find_interrupted(type, sas, ev, intr,
