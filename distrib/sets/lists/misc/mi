@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.100.2.1 2004/09/10 02:44:05 jmc Exp $
+# $NetBSD: mi,v 1.100.2.2 2004/09/10 02:56:52 jmc Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -147,7 +147,6 @@
 ./usr/share/doc/html/postfix/postalias.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postcat.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postconf.1.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/postconf.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postdrop.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
@@ -498,7 +497,6 @@
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix,doc
-./usr/share/doc/html/postfix/OVERVIEW.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/QMQP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc

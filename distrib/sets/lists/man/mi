@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672.2.8 2004/09/10 02:44:01 jmc Exp $
+# $NetBSD: mi,v 1.672.2.9 2004/09/10 02:56:51 jmc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1426,7 +1426,6 @@
 ./usr/share/man/cat5/phones.0			man-uucp-catman		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
-./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
 ./usr/share/man/cat5/printcap.0			man-lpr-catman		.cat
 ./usr/share/man/cat5/protocols.0		man-net-catman		.cat
@@ -3503,7 +3502,6 @@
 ./usr/share/man/man5/phones.5			man-uucp-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
-./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
 ./usr/share/man/man5/printcap.5			man-lpr-man		.man
 ./usr/share/man/man5/protocols.5		man-net-man		.man
