@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.377 2000/11/14 19:52:05 augustss Exp $
+#	$NetBSD: GENERIC,v 1.378 2000/11/20 19:53:43 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.377 $"
+#ident 		"GENERIC-$Revision: 1.378 $"
 
 maxusers	32		# estimated number of users
 
@@ -358,6 +358,8 @@ com2	at isa? port 0x3e8 irq 5
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
 #com*	at addcom? slave ?
+#moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
+#com*	at moxa? slave ?
 
 
 # Parallel Printer Interfaces
