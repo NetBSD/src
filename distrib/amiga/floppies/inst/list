@@ -1,10 +1,10 @@
-#	$Id: list,v 1.2 1995/11/28 23:56:58 jtc Exp $
+#	$Id: list,v 1.2.4.1 1996/06/15 14:29:24 is Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc
 
 # copy the kernel
-COPY	${CURDIR}/../../../../sys/arch/amiga/compile/INSTALL/netbsd	netbsd
+COPY	${CURDIR}/../../../../sys/arch/amiga/compile/GENERIC/netbsd	netbsd
 
 # and the installation tools
 COPY	dot.profile			.profile
