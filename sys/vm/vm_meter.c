@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	8.4 (Berkeley) 1/4/94
- *	$Id: vm_meter.c,v 1.12 1994/05/07 00:40:07 cgd Exp $
+ *	$Id: vm_meter.c,v 1.13 1994/05/11 01:01:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -41,7 +41,7 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
-struct loadavg averunnable;
+struct	loadavg averunnable;		/* load average, of runnable procs */
 
 int	maxslp = MAXSLP;
 #ifndef MACHINE_NONCONTIG
@@ -51,7 +51,6 @@ int	saferss = SAFERSS;
 void
 vmmeter()
 {
-	register unsigned *cp, *rp, *sp;
 
 	if (time.tv_sec % 5 == 0)
 		loadav(&averunnable);
@@ -80,13 +79,13 @@ loadav(avg)
 	register int i, nrun;
 	register struct proc *p;
 
-	for (nrun = 0, p = (struct proc *)allproc; p != NULL; p = p->p_next) {  
+	for (nrun = 0, p = (struct proc *)allproc; p != NULL; p = p->p_next) {
 		switch (p->p_stat) {
 		case SSLEEP:
 			if (p->p_priority > PZERO || p->p_slptime != 0)
 				continue;
 			/* fall through */
-		case SRUN:      
+		case SRUN:
 		case SIDL:
 			nrun++;
 		}
