@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.4 1998/06/20 19:11:04 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.5 1998/06/20 21:52:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_dumb.c,v 1.4 1998/06/20 19:11:04 drochner Exp $";
+    "$NetBSD: wsemul_dumb.c,v 1.5 1998/06/20 21:52:50 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			break;
 
 		default:
-			(*edp->emulops->putstr)(edp->emulcookie, edp->crow,
-			    edp->ccol, &c, 1, edp->defattr);
+			(*edp->emulops->putchar)(edp->emulcookie, edp->crow,
+			    edp->ccol, c, edp->defattr);
 			edp->ccol++;
 
 			/* if cur col is still on cur line, done. */
