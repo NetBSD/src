@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2003/09/08 08:01:52 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2003/09/18 22:40:04 cl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2003/09/08 08:01:52 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2003/09/18 22:40:04 cl Exp $");
 
 #include "opt_ddb.h"
 
@@ -304,6 +304,11 @@ trap(struct lwp *l, struct trapframe *tf)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)vaddr;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(map, va, 0, ftype);
 
 		/*
@@ -324,6 +329,8 @@ trap(struct lwp *l, struct trapframe *tf)
 			if (rv == EACCES)
 				rv = EFAULT;
 		}
+
+		l->l_flag &= ~L_SA_PAGEFAULT;
 
 		if (rv == 0) {
 			if (traptype & T_USER)
