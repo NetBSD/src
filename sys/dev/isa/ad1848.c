@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.38 1997/08/19 23:35:45 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.39 1997/08/20 15:26:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -66,11 +66,6 @@
  * Portions also supplied from the SoundBlaster driver for NetBSD.
  */
 
-/*
- * Todo:
- * - Need datasheet for CS4231 (for use with GUS MAX)
- * - Use fast audio_dma
- */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -481,6 +476,14 @@ ad1848_probe(sc)
 bad:
     bus_space_unmap(sc->sc_iot, sc->sc_ioh, AD1848_NPORT);
     return 0;
+}
+
+/* Unmap the I/O ports */
+void
+ad1848_unmap(sc)
+    struct ad1848_softc *sc;
+{
+    bus_space_unmap(sc->sc_iot, sc->sc_ioh, AD1848_NPORT);
 }
 
 /*
