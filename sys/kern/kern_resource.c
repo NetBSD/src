@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.40 1997/10/09 01:04:13 enami Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.41 1997/10/09 01:07:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -290,8 +290,8 @@ dosetrlimit(p, which, limp)
 				size = alimp->rlim_cur - limp->rlim_cur;
 				addr = USRSTACK - alimp->rlim_cur;
 			}
-			(void) vm_map_protect(&p->p_vmspace->vm_map,
-					      addr, addr+size, prot, FALSE);
+			(void)vm_map_protect(&p->p_vmspace->vm_map,
+			    addr, addr+size, prot, FALSE);
 		}
 		break;
 
