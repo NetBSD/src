@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13 2000/05/31 00:16:16 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.14 2000/05/31 02:06:57 mycroft Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -1057,9 +1057,9 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 	 * Add it to the dependency list for the buffer holding
 	 * the cylinder group map from which it was allocated.
 	 */
-	ACQUIRE_LOCK(&lk);
 	if (newblk_lookup(fs, newblkno, DEPALLOC, &newblk) != 0)
 		panic("softdep_setup_blkmapdep: found block");
+	ACQUIRE_LOCK(&lk);
 	newblk->nb_bmsafemap = bmsafemap = bmsafemap_lookup(bp);
 	LIST_INSERT_HEAD(&bmsafemap->sm_newblkhd, newblk, nb_deps);
 	FREE_LOCK(&lk);
