@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1998/04/15 11:51:54 tv Exp $
+#	$NetBSD: Makefile,v 1.10 1998/04/15 21:54:05 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,7 @@ NOSTATICLIB=
 CPICFLAGS=-fPIC -DPIC
 YHEADER=1
 
-MD= ${DIST}/config/${MACHINE_ARCH}/${MACHINE_ARCH}.md
+MD= ${DIST}/config/${TARGET_GNU_ARCH}/${TARGET_GNU_ARCH}.md
 
 BCDEF= ${DIST}/bytecode.def
 CPPFLAGS+=	-DTARGET_NAME=\"${target_alias}\"
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DTARGET_NAME=\"${target_alias}\"
 .PATH:	${DIST}
 
 SRCS= \
-	${MACHINE_ARCH}.c alias.c bc-arity.h bc-emit.c bc-opcode.h \
+	${TARGET_GNU_ARCH}.c alias.c bc-arity.h bc-emit.c bc-opcode.h \
 	bc-opname.h bc-optab.c bitmap.c c-aux-info.c c-convert.c c-parse.h \
 	c-pragma.c caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
 	dwarf2out.c dwarfout.c emit-rtl.c explow.c expmed.c expr.c except.c \
