@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.5 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: ffb.c,v 1.6 2004/05/21 19:21:31 heas Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.5 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.6 2004/05/21 19:21:31 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.5 2004/03/17 17:04:59 pk Exp $");
 #include <sparc64/dev/ffbvar.h>
 
 struct wsscreen_descr ffb_stdscreen = {
-	"std",
+	"sunffb",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
@@ -209,7 +209,7 @@ ffb_ioctl(v, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNFFB;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
