@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.87 1996/10/09 00:59:15 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.88 1996/10/10 00:27:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,6 @@
 #include <sys/device.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
-#include <sys/tty.h>
 #include <sys/user.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
