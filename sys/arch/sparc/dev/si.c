@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.61 2000/06/25 13:09:52 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.62 2000/06/26 09:50:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -436,7 +436,7 @@ si_attach_common(parent, sc)
 {
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	char bits[64];
-	int i;
+	int error, i;
 
 	/*
 	 * Pull in the options flags.  Allow the user to completely
@@ -490,7 +490,16 @@ si_attach_common(parent, sc)
 		sc->sc_dma[i].dh_flags = 0;
 
 		/* Allocate a DMA handle */
-		if (vme_dmamap_create(
+		error = (sc->sc_adapter_type == BOARD_ID_SW)
+			? bus_dmamap_create(
+				sc->sc_dmatag,	/* tag */
+				MAXPHYS,	/* size */
+				1,		/* nsegments */
+				MAXPHYS,	/* maxsegsz */
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&sc->sc_dma[i].dh_dmamap)
+			: vme_dmamap_create(
 				sc->sc_vctag,	/* VME chip tag */
 				MAXPHYS,	/* size */
 				VME_AM_A24,	/* address modifier */
@@ -500,7 +509,9 @@ si_attach_common(parent, sc)
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&sc->sc_dma[i].dh_dmamap) != 0) {
+				&sc->sc_dma[i].dh_dmamap);
+
+		if (error != 0) {
 			printf("%s: DMA buffer map create error\n",
 				ncr_sc->sc_dev.dv_xname);
 			return;
