@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.3 2000/12/03 01:42:29 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -30,6 +30,8 @@
 #include <sys/systm.h>
 
 #include <newsmips/apbus/apbusvar.h>
+
+static void apctl_dump (struct apbus_ctl *);
 
 void *
 apbus_device_to_hwaddr(apbus_dev)
@@ -68,7 +70,7 @@ apbus_lookupdev(devname)
 	return NULL;
 }
 
-void
+static void
 apctl_dump(apctl)
 	struct apbus_ctl *apctl;
 {
