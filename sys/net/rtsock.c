@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.33 2000/02/01 22:52:05 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.34 2000/02/11 06:11:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -554,7 +554,9 @@ rt_msg1(type, rtinfo, data, datalen)
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
-	if (len > MHLEN) {
+	if (len > MHLEN + MLEN)
+		panic("rt_msg1: message too long");
+	else if (len > MHLEN) {
 		m->m_next = m_get(M_DONTWAIT, MT_DATA);
 		if (m->m_next == NULL) {
 			m_freem(m);
