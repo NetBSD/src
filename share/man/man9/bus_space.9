@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.19 2001/06/21 11:59:00 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.20 2001/09/04 02:10:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,6 +85,7 @@
 .Nm bus_space_subregion ,
 .Nm bus_space_unmap ,
 .Nm bus_space_vaddr ,
+.Nm bus_space_mmap ,
 .Nm bus_space_write_1 ,
 .Nm bus_space_write_2 ,
 .Nm bus_space_write_4 ,
@@ -132,6 +133,9 @@
 "bus_size_t size"
 .Ft void *
 .Fn bus_space_vaddr "bus_space_tag_t space" "bus_space_handle_t handle"
+.Ft paddr_t
+.Fn bus_space_mmap "bus_space_tag_t space" "bus_addr_t addr" "off_t off" \
+"int prot" "int flags"
 .Ft int
 .Fn bus_space_peek_1 "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t offset" "u_int8_t *datap"
@@ -687,6 +691,44 @@ If mapped with the
 flag, the
 .Fn bus_space_barrier
 method must be used to force a particular access order.
+.Pp
+.It Fn bus_space_mmap "tag" "addr" "off" "prot" "flags"
+.Pp
+This method is used to provide support for memory mapping bus space
+into user applications.  If an address space is addressable via
+volatile pointer dereferences,
+.Fn bus_space_mmap
+will return the physical address (possibly encoded as a machine-dependent
+cookie) of the bus space indicated by
+.Fa addr
+and
+.Fa off .
+.Fa addr
+is the base address of the device or device region, and
+.Fa off
+is the offset into that region that is being requested.
+If the request is made with
+.Dv BUS_SPACE_MAP_LINEAR
+as a flag, then a linear region must be returned to the caller.
+If the region cannot be mapped (either the address does not exist,
+or the constraints can not be met),
+.Fn bus_space_mmap
+returns
+.Dv -1
+to indicate failure.
+.Pp
+Note that it is not necessary that the region being requested by a
+.Fn bus_space_mmap
+call be mapped into a
+.Fa bus_space_handle_t .
+.Pp
+.Fn bus_space_mmap
+is called once per
+.Dv PAGE_SIZE
+page in the range.  The
+.Fa prot
+argument indicates the memory protection requested by the user application
+for the range.
 .El
 .Pp
 .Sh ALLOCATING AND FREEING BUS SPACE
