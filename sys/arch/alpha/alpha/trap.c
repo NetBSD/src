@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.77 2001/07/18 22:22:02 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.77.16.1 2002/06/10 16:22:34 tv Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2001/07/18 22:22:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.16.1 2002/06/10 16:22:34 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -826,13 +826,13 @@ struct unaligned_fixup_data {
 int
 unaligned_fixup(u_long va, u_long opcode, u_long reg, struct proc *p)
 {
-	const struct unaligned_fixup_data tab_unknown[1] = {
+	static const struct unaligned_fixup_data tab_unknown[1] = {
 		UNKNOWN(),
 	};
-	const struct unaligned_fixup_data tab_0c[0x02] = {
+	static const struct unaligned_fixup_data tab_0c[0x02] = {
 		FIX_LD("ldwu", 2),	FIX_ST("stw", 2),
 	};
-	const struct unaligned_fixup_data tab_20[0x10] = {
+	static const struct unaligned_fixup_data tab_20[0x10] = {
 #ifdef FIX_UNALIGNED_VAX_FP
 		FIX_LD("ldf", 4),	FIX_LD("ldg", 8),
 #else
