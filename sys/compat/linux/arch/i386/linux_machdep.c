@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.72 2002/03/22 18:39:23 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.73 2002/03/29 17:01:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.72 2002/03/22 18:39:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.73 2002/03/29 17:01:49 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -133,12 +133,44 @@ linux_setregs(p, epp, stack)
 	u_long stack;
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf;
 
-	setregs(p, epp, stack);
-	if (i386_use_fxsave)
+#if NNPX > 0
+	/* If we were using the FPU, forget about it. */
+	if (npxproc == p)
+		npxdrop();
+#endif
+
+#ifdef USER_LDT
+	pmap_ldt_cleanup(p);
+#endif
+
+	p->p_md.md_flags &= ~MDP_USEDFPU;
+	pcb->pcb_flags = 0;
+
+	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;
-	else
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
+
+	tf = p->p_md.md_regs;
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_edi = 0;
+	tf->tf_esi = 0;
+	tf->tf_ebp = 0;
+	tf->tf_ebx = (int)p->p_psstr;
+	tf->tf_edx = 0;
+	tf->tf_ecx = 0;
+	tf->tf_eax = 0;
+	tf->tf_eip = epp->ep_entry;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_eflags = PSL_USERSET;
+	tf->tf_esp = stack;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
 /*
@@ -447,6 +479,8 @@ linux_write_ldt(p, uap, retval)
 		sd.sd_gran = ldt_info.limit_in_pages;
 		if (!oldmode)
 			sd.sd_xx = ldt_info.useable;
+		else
+			sd.sd_xx = 0;
 	}
 	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
