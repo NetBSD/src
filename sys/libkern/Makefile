@@ -1,5 +1,5 @@
 #
-#	$Id: Makefile,v 1.2 1993/09/02 01:00:42 jtc Exp $
+#	$Id: Makefile,v 1.3 1993/09/02 01:50:22 jtc Exp $
 #
 
 .PATH: ${.CURDIR}/${MACHINE}
@@ -18,14 +18,18 @@ NOPROFILE=
 SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
 SRCS+=	bcmp.s bzero.s ffs.s strcat.s strcmp.s strcpy.s strlen.s strncpy.c
 SRCS+=	scanc.c skpc.c locc.c
-SRCS+=	htonl.c htons.c ntohl.c ntohs.c
+SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 SRCS+=	setjmp.s
+.elif	(${MACHINE} == "hp300")
+SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
+SRCS+=	bcmp.s bzero.s ffs.c strcat.c strcmp.s strcpy.s strlen.s strncpy.s
+SRCS+=	scanc.c skpc.c locc.c
+SRCS+=	htonl.s htons.s ntohl.s ntohs.s
 .else
 SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
 SRCS+=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncpy.c
 SRCS+=	scanc.c skpc.c locc.c
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .endif
-
 
 .include <bsd.lib.mk>
