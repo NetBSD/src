@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 1996/05/16 16:10:11 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 1996/05/19 15:35:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -227,11 +227,26 @@ void	configure __P((void));
 int	is_a1200 __P((void));
 int	is_a3000 __P((void));
 int	is_a4000 __P((void));
+#ifdef DRACO
+int	is_draco __P((void));
+#endif
 
 /*
  * Prototypes from clock.c
  */
 u_long	clkread __P((void));
+
+#ifdef DRACO
+/*
+ * Prototypes from kbd.c
+ */
+void	drkbdintr __P((void));
+
+/*
+ * Prototypes from drsc.c
+ */
+void	drsc_handler __P((void));
+#endif
 
 /*
  * Prototypes from locore.s
