@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.33 2000/06/29 07:40:07 mrg Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.34 2000/08/22 21:28:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,9 +62,10 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <machine/fbio.h>
 #include <machine/autoconf.h>
-#include <machine/fbvar.h>
+
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 
 #include <dev/vme/vmevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.46 2000/06/26 04:56:04 simonb Exp $ */
+/*	$NetBSD: fb.c,v 1.47 2000/08/22 21:28:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,13 +56,15 @@
 #include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
 #include <machine/kbd.h>
-#include <machine/fbvar.h>
 #include <machine/conf.h>
 #include <machine/eeprom.h>
-#include <sparc/dev/pfourreg.h>
 #include <sparc/dev/cons.h>
+
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+
+#include "pfour.h"
 
 static struct fbdevice *devfb;
 
@@ -267,73 +269,9 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 	fb->fb_type.fb_height = def_height;
 
 	if (fb->fb_flags & FB_PFOUR) {
-		volatile u_int32_t pfour;
-
-		/*
-		 * Some pfour framebuffers, e.g. the
-		 * cgsix, don't encode resolution the
-		 * same, so the driver handles that.
-		 * The driver can let us know that it
-		 * needs to do this by not mapping in
-		 * the pfour register by the time this
-		 * routine is called.
-		 */
-		if (fb->fb_pfour == NULL)
-			goto donesize;
-
-		pfour = *fb->fb_pfour;
-
-		/*
-		 * Use the pfour register to determine
-		 * the size.  Note that the cgsix and
-		 * cgeight don't use this size encoding.
-		 * In this case, we have to settle
-		 * for the defaults we were provided
-		 * with.
-		 */
-		if ((PFOUR_ID(pfour) == PFOUR_ID_COLOR24) ||
-		    (PFOUR_ID(pfour) == PFOUR_ID_FASTCOLOR))
-			goto donesize;
-
-		switch (PFOUR_SIZE(pfour)) {
-		case PFOUR_SIZE_1152X900:
-			fb->fb_type.fb_width = 1152;
-			fb->fb_type.fb_height = 900;
-			break;
-
-		case PFOUR_SIZE_1024X1024:
-			fb->fb_type.fb_width = 1024;
-			fb->fb_type.fb_height = 1024;
-			break;
-
-		case PFOUR_SIZE_1280X1024:
-			fb->fb_type.fb_width = 1280;
-			fb->fb_type.fb_height = 1024;
-			break;
-
-		case PFOUR_SIZE_1600X1280:
-			fb->fb_type.fb_width = 1600;
-			fb->fb_type.fb_height = 1280;
-			break;
-
-		case PFOUR_SIZE_1440X1440:
-			fb->fb_type.fb_width = 1440;
-			fb->fb_type.fb_height = 1440;
-			break;
-
-		case PFOUR_SIZE_640X480:
-			fb->fb_type.fb_width = 640;
-			fb->fb_type.fb_height = 480;
-			break;
-
-		default:
-			/*
-			 * XXX: Do nothing, I guess.
-			 * Should we print a warning about
-			 * an unknown value? --thorpej
-			 */
-			break;
-		}
+#if NPFOUR > 0
+		fb_setsize_pfour(fb);
+#endif
 	} else if (eep != NULL) {
 		switch (eep->eeScreenSize) {
 		case EE_SCR_1152X900:
@@ -366,7 +304,6 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 		}
 	}
 
-donesize:
 	fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
 #endif /* SUN4 */
 }
@@ -524,68 +461,3 @@ fbrcons_cols()
 	return (devfb ? devfb->fb_rcons.rc_maxcol : 0);
 }
 #endif /* RASTERCONSOLE */
-
-/*
- * Support routines for pfour framebuffers.
- */
-
-/*
- * Probe for a pfour framebuffer.  Return values:
- *
- *	PFOUR_NOTPFOUR		framebuffer is not a pfour
- *				framebuffer
- *
- *	otherwise returns pfour ID
- */
-int
-fb_pfour_id(va)
-	volatile void *va;
-{
-#if defined(SUN4)
-	volatile u_int32_t val, save, *pfour = va;
-
-	/* Read the pfour register. */
-	save = *pfour;
-
-	/*
-	 * Try to modify the type code.  If it changes, put the
-	 * original value back, and notify the caller that it's
-	 * not a pfour framebuffer.
-	 */
-	val = save & ~PFOUR_REG_RESET;
-	*pfour = (val ^ PFOUR_FBTYPE_MASK);
-	if ((*pfour ^ val) & PFOUR_FBTYPE_MASK) {
-		*pfour = save;
-		return (PFOUR_NOTPFOUR);
-	}
-
-	return (PFOUR_ID(val));
-#else
-	return (PFOUR_NOTPFOUR);
-#endif /* SUN4 */
-}
-
-/*
- * Return the status of the video enable.
- */
-int
-fb_pfour_get_video(fb)
-	struct fbdevice *fb;
-{
-
-	return ((*fb->fb_pfour & PFOUR_REG_VIDEO) != 0);
-}
-
-/*
- * Enable or disable the framebuffer.
- */
-void
-fb_pfour_set_video(fb, enable)
-	struct fbdevice *fb;
-	int enable;
-{
-	volatile u_int32_t pfour;
-
-	pfour = *fb->fb_pfour & ~(PFOUR_REG_INTCLR|PFOUR_REG_VIDEO);
-	*fb->fb_pfour = pfour | (enable ? PFOUR_REG_VIDEO : 0);
-}
