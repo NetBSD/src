@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.4 1999/08/04 19:12:22 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.5 2000/03/26 11:45:04 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,7 @@ struct bi_softc {
 	bus_addr_t sc_addr;		/* Address base address for this bus */
 	int sc_busnr;			/* (Physical) number of this bus */
 	int sc_lastiv;			/* last available interrupt vector */
+	int sc_intcpu;
 };
 
 /*
@@ -55,6 +56,7 @@ struct bi_attach_args {
 	int ba_nodenr;
 	int ba_intcpu;	/* Mask of which cpus to interrupt */
 	int ba_ivec;	/* Interrupt vector to use */
+	void *ba_icookie;
 };
 
 /*
@@ -68,3 +70,4 @@ struct bi_list {
 
 /* Prototype */
 void	bi_attach __P((struct bi_softc *));
+void	bi_intr_establish __P((void *, int, void (*)(void *), void *));
