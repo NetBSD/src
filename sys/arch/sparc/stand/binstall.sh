@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.3 1996/04/07 20:00:12 thorpej Exp $
+#	$NetBSD: binstall.sh,v 1.4 1996/11/29 14:59:32 pk Exp $
 #
 
 vecho () {
@@ -59,21 +59,13 @@ fi
 WHAT=$1
 DEST=$2
 
-if [ "`sysctl -n hw.model | cut -b1-5`" = "SUN-4" ]; then
-	KARCH=sun4
-else
-	KARCH=sun4c
-fi
-vecho "Kernel architecture: $KARCH"
-
 if [ ! -d $DEST ]; then
 	echo "$DEST: not a directory"
 	Usage
 fi
 
 
-if [ $KARCH = sun4 ]; then SKIP=1; else SKIP=0; fi
-
+SKIP=0
 
 case $WHAT in
 "ffs")
@@ -99,16 +91,25 @@ case $WHAT in
 	TARGET=$DEST/boot
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
-	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
+	$DOIT dd if=${MDEC}/boot of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
 	vecho installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	$DOIT installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.netbsd.$KARCH
+	TARGET=$DEST/boot.sparc.netbsd
+	TMP=/tmp/boot.$$
 	vecho Target: $TARGET
-	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
+	vecho Copying to temporary file.
+	cp ${MDEC}/boot $TMP; chmod +w $TMP
+	vecho Stripping $TMP
+	strip $TMP
+	vecho Creating header magic.
+	printf '\01\03\01\07\060\200\0\07' | dd of=$TARGET bs=32 conv=sync
+	vecho Concatenating boot code.
+	dd if=$TMP of=$TARGET bs=32 skip=1 seek=1
+	rm $TMP
 	;;
 
 *)
