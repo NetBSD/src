@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.4 2003/09/25 01:05:06 mycroft Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.5 2003/09/25 19:06:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,5 +144,5 @@ struct fdc_softc {
 
 int	out_fdc __P((bus_space_tag_t iot, bus_space_handle_t ioh, u_char x));
 
-void	fdcattach __P((struct device *));
+void	fdcattach __P((struct fdc_softc *));
 int	fdcintr __P((void *));
