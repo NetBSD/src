@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.3 1997/07/31 23:02:24 mark Exp $ */
+/* $NetBSD: mem.c,v 1.4 1998/03/28 00:04:46 mark Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 
 extern char *memhook;            /* poor name! */
 caddr_t zeropage;
+int physlock;
 
 /*ARGSUSED*/
 int
@@ -92,7 +93,6 @@ mmrw(dev, uio, flags)
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	static int physlock;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
