@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.489 2002/10/05 21:20:27 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.490 2002/10/08 20:17:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.489 2002/10/05 21:20:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.490 2002/10/08 20:17:09 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -597,7 +597,6 @@ i386_proc0_tss_ldt_init()
 
 	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
 
-	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
 
@@ -626,7 +625,6 @@ i386_init_pcb_tss_ldt(ci)
 	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
 
-	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
@@ -2599,7 +2597,6 @@ setregs(p, pack, stack)
 #endif
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
