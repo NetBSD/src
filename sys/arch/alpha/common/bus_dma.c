@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.9 1998/01/27 02:35:58 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.10 1998/02/04 00:04:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 1998/01/27 02:35:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 1998/02/04 00:04:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_nsegs = 0;		/* no valid mappings */
+	map->dm_mapsize = 0;		/* no valid mappings */
+	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
@@ -229,6 +230,7 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
@@ -237,8 +239,10 @@ _bus_dmamap_load_direct_common(t, map, buf, buflen, p, flags, wbase)
 	seg = 0;
 	error = _bus_dmamap_load_buffer_direct_common(map, buf, buflen,
 	    p, flags, wbase, &lastaddr, &seg, 1);
-	if (error == 0)
+	if (error == 0) {
+		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+	}
 	return (error);
 }
 
@@ -260,6 +264,7 @@ _bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
 #ifdef DIAGNOSTIC
@@ -279,8 +284,10 @@ _bus_dmamap_load_mbuf_direct_common(t, map, m0, flags, wbase)
 		    &seg, first);
 		first = 0;
 	}
-	if (error == 0)
+	if (error == 0) {
+		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+	}
 	return (error);
 }
 
@@ -330,6 +337,7 @@ _bus_dmamap_unload(t, map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
 
@@ -490,10 +498,6 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-#if 0
-			if (flags & BUS_DMAMEM_NOSYNC)
-				/* XXX make non-cacheable? */ ;
-#endif
 		}
 	}
 
