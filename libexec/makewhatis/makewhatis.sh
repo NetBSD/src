@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# $Header: /cvsroot/src/libexec/makewhatis/Attic/makewhatis.sh,v 1.2 1994/01/29 01:49:52 jtc Exp $
+# $Header: /cvsroot/src/libexec/makewhatis/Attic/makewhatis.sh,v 1.3 1994/02/07 05:11:24 cgd Exp $
 #
 
 trap "rm -f /tmp/whatis$$; exit 1" 1 2 15
@@ -43,5 +43,5 @@ do
 	sed -n -f /usr/share/man/makewhatis.sed $file;
 done | sort -u > /tmp/whatis$$
 
-#install -o bin -g bin -m 444 /tmp/whatis$$ "$MANDIR/whatis.db"
+install -o bin -g bin -m 444 /tmp/whatis$$ "$MANDIR/whatis.db"
 exit 0
