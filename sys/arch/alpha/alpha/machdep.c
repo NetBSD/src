@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1996/07/11 20:14:19 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1996/07/14 04:21:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -186,9 +186,12 @@ char		*cpu_iobus;
 char boot_flags[64];
 
 /* for cpu_sysctl() */
-char		root_device[17];
+char	root_device[17];
+int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
+int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
+int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
-void		identifycpu();
+void	identifycpu();
 
 int
 alpha_init(pfn, ptb)
@@ -232,12 +235,18 @@ alpha_init(pfn, ptb)
 	/*
 	 * Point interrupt/exception vectors to our own.
 	 */
-	alpha_pal_wrent(XentInt, 0);
-	alpha_pal_wrent(XentArith, 1);
-	alpha_pal_wrent(XentMM, 2);
-	alpha_pal_wrent(XentIF, 3);
-	alpha_pal_wrent(XentUna, 4);
-	alpha_pal_wrent(XentSys, 5);
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT);
+	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
+	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
+	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA);
+	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
+
+	/*
+	 * Disable System and Processor Correctable Error reporting.
+	 * Clear pending machine checks and error reports, etc.
+	 */
+	alpha_pal_wrmces(alpha_pal_rdmces() | ALPHA_MCES_SCE | ALPHA_MCES_PCE);
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -579,9 +588,9 @@ alpha_init(pfn, ptb)
 			boothowto &= ~RB_SINGLE;
 			break;
 
-		case 'n': /* askname */
-		case 'N':
-			boothowto |= RB_ASKNAME;
+		case 'h': /* always halt, never reboot */
+		case 'H':
+			boothowto |= RB_HALT;
 			break;
 
 #if 0
@@ -590,6 +599,11 @@ alpha_init(pfn, ptb)
 			boothowto |= RB_MINIROOT;
 			break;
 #endif
+
+		case 'n': /* askname */
+		case 'N':
+			boothowto |= RB_ASKNAME;
+			break;
 		}
 	}
 
@@ -758,6 +772,10 @@ boot(howto)
 		howto |= RB_HALT;
 		goto haltsys;
 	}
+
+	/* If "always halt" was specified as a boot flag, obey. */
+	if ((boothowto & RB_HALT) != 0)
+		howto |= RB_HALT;
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
@@ -1230,6 +1248,18 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_ROOT_DEVICE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, root_device));
+
+	case CPU_UNALIGNED_PRINT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &alpha_unaligned_print));
+
+	case CPU_UNALIGNED_FIX:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &alpha_unaligned_fix));
+
+	case CPU_UNALIGNED_SIGBUS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &alpha_unaligned_sigbus));
 
 	default:
 		return (EOPNOTSUPP);
