@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edreg.h,v 1.12 1994/10/27 04:17:23 cgd Exp $	*/
+/*	$NetBSD: if_edreg.h,v 1.13 1995/01/02 20:32:59 mycroft Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -796,25 +796,11 @@ struct ed_ring	{
  */
 #define ED_3COM_BCFR		3
 
-#define ED_3COM_BCFR_2E0	0x01
-#define ED_3COM_BCFR_2A0	0x02
-#define ED_3COM_BCFR_280	0x04
-#define ED_3COM_BCFR_250	0x08
-#define ED_3COM_BCFR_350	0x10
-#define ED_3COM_BCFR_330	0x20
-#define ED_3COM_BCFR_310	0x40
-#define ED_3COM_BCFR_300	0x80
-
 /*
  * EPROM Configuration Register.  Read-only register which contains the
  * board-configured memory base address.  Bit encoded.
  */
 #define ED_3COM_PCFR		4
-
-#define ED_3COM_PCFR_C8000	0x10
-#define ED_3COM_PCFR_CC000	0x20
-#define ED_3COM_PCFR_D8000	0x40
-#define ED_3COM_PCFR_DC000	0x80
 
 /*
  * GA Configuration Register.  Gate-Array Configuration Register.
@@ -871,14 +857,16 @@ struct ed_ring	{
  */
 #define ED_3COM_IDCFR		8
 
-#define ED_3COM_IDCFR_DRQ0	0x01	/* DMA request 1 select */
-#define ED_3COM_IDCFR_DRQ1	0x02	/* DMA request 2 select */
-#define ED_3COM_IDCFR_DRQ2	0x04	/* DMA request 3 select */
+#define ED_3COM_IDCFR_DRQ	0x07	/* DMA request */
 #define ED_3COM_IDCFR_UNUSED	0x08	/* not used */
+#if 0
+#define ED_3COM_IDCFR_IRQ	0xF0	/* Interrupt request */
+#else
 #define ED_3COM_IDCFR_IRQ2	0x10	/* Interrupt request 2 select */
 #define ED_3COM_IDCFR_IRQ3	0x20	/* Interrupt request 3 select */
 #define ED_3COM_IDCFR_IRQ4	0x40	/* Interrupt request 4 select */
 #define ED_3COM_IDCFR_IRQ5	0x80	/* Interrupt request 5 select */
+#endif
 
 /*
  * DMA Address Register MSB

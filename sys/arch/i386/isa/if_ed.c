@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.64 1994/11/18 22:25:12 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.65 1995/01/02 20:32:55 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -54,6 +54,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
+#include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/if_edreg.h>
 
@@ -133,16 +134,6 @@ struct cfdriver edcd = {
 	NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc)
 };
 
-/* 
- * Interrupt conversion table for WD/SMC ASIC.
- */
-static int ed_intr[] = { 9, 3, 5, 7, 10, 11, 15, 4 };
-
-/*
- * Interrupt conversion table for 585/790 Combo.
- */
-static int ed_790_intr[] = { IRQUNK, 9, 3, 5, 7, 10, 11, 15 };
-	
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
@@ -204,6 +195,9 @@ ed_probe_generic8390(sc)
 	return (1);
 }
 	
+int ed_wd584_irq[] = { 9, 3, 5, 7, 10, 11, 15, 4 };
+int ed_wd790_irq[] = { IRQUNK, 9, 3, 5, 7, 10, 11, 15 };
+
 /*
  * Probe and vendor-specific initialization routine for SMC/WD80x3 boards.
  */
@@ -371,9 +365,8 @@ ed_probe_WD80x3(sc, cf, ia)
 		isa16bit = 0;
 
 	/*
-	 * Check 83C584 interrupt configuration register if this board has one
-	 * XXX - We could also check the IO address register.  But why
-	 * bother... if we get past this, it *has* to be correct.
+	 * If possible, get the assigned interrupt number from the card and
+	 * use it.
 	 */
 	if (sc->is790) {
 		u_char x;
@@ -389,12 +382,15 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_790_intr[iptr] != ia->ia_irq) {
-			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq,
-			    ed_790_intr[iptr]);
-			return (0);
-		}
+		if (ia->ia_irq != IRQUNK) {
+			if (ia->ia_irq != ed_wd790_irq[iptr]) {
+				printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+				    sc->sc_dev.dv_xname, ia->ia_irq,
+				    ed_wd790_irq[iptr]);
+				return (0);
+			}
+		} else
+			ia->ia_irq = ed_wd790_irq[iptr];
 		/* Enable the interrupt. */
 		outb(ia->ia_iobase + ED_WD790_ICR,
 		    inb(ia->ia_iobase + ED_WD790_ICR) | ED_WD790_ICR_EIL);
@@ -407,21 +403,32 @@ ed_probe_WD80x3(sc, cf, ia)
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_intr[iptr] != ia->ia_irq) {
-			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq,
-			    ed_intr[iptr]);
-			return (0);
-		}
+		if (ia->ia_irq != IRQUNK) {
+			if (ia->ia_irq != ed_wd584_irq[iptr]) {
+				printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+				    sc->sc_dev.dv_xname, ia->ia_irq,
+				    ed_wd584_irq[iptr]);
+				return (0);
+			}
+		} else
+			ia->ia_irq = ed_wd584_irq[iptr];
 		/* Enable the interrupt. */
 		outb(ia->ia_iobase + ED_WD_IRR,
 		    inb(ia->ia_iobase + ED_WD_IRR) | ED_WD_IRR_IEN);
+	} else {
+		if (ia->ia_irq == IRQUNK) {
+			printf("%s: %s does not have soft configuration\n",
+			    sc->sc_dev.dv_xname, sc->type_str);
+			return (0);
+		}
 	}
+
+	/* XXX Figure out the shared memory address. */
 
 	sc->isa16bit = isa16bit;
 	sc->mem_shared = 1;
 	ia->ia_msize = memsize;
-	sc->mem_start = (caddr_t)ia->ia_maddr;
+	sc->mem_start = ISA_HOLE_VADDR(ia->ia_maddr);
 
 	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
 	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
@@ -543,6 +550,12 @@ ed_probe_WD80x3(sc, cf, ia)
 	return (1);
 }
 
+int ed_3com_iobase[] = {0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300};
+int ed_3com_maddr[] = {MADDRUNK, MADDRUNK, MADDRUNK, MADDRUNK, 0xc8000, 0xcc000, 0xd8000, 0xdc000};
+#if 0
+int ed_3com_irq[] = {IRQUNK, IRQUNK, IRQUNK, IRQUNK, 9, 3, 4, 5};
+#endif
+
 /*
  * Probe and vendor-specific initialization routine for 3Com 3c503 boards.
  */
@@ -554,7 +567,8 @@ ed_probe_3Com(sc, cf, ia)
 {
 	int i;
 	u_int memsize;
-	u_char isa16bit, sum;
+	u_char isa16bit, sum, x;
+	int ptr;
 
 	sc->asic_addr = ia->ia_iobase + ED_3COM_ASIC_OFFSET;
 	sc->nic_addr = ia->ia_iobase + ED_3COM_NIC_OFFSET;
@@ -567,68 +581,50 @@ ed_probe_3Com(sc, cf, ia)
 	 * board is there; after all, we are already talking it at that
 	 * address.
 	 */
-	switch (inb(sc->asic_addr + ED_3COM_BCFR)) {
-	case ED_3COM_BCFR_300:
-		if (ia->ia_iobase != 0x300)
-			return (0);
-		break;
-	case ED_3COM_BCFR_310:
-		if (ia->ia_iobase != 0x310)
-			return (0);
-		break;
-	case ED_3COM_BCFR_330:
-		if (ia->ia_iobase != 0x330)
-			return (0);
-		break;
-	case ED_3COM_BCFR_350:
-		if (ia->ia_iobase != 0x350)
-			return (0);
-		break;
-	case ED_3COM_BCFR_250:
-		if (ia->ia_iobase != 0x250)
-			return (0);
-		break;
-	case ED_3COM_BCFR_280:
-		if (ia->ia_iobase != 0x280)
-			return (0);
-		break;
-	case ED_3COM_BCFR_2A0:
-		if (ia->ia_iobase != 0x2a0)
-			return (0);
-		break;
-	case ED_3COM_BCFR_2E0:
-		if (ia->ia_iobase != 0x2e0)
-			return (0);
-		break;
-	default:
+	x = inb(sc->asic_addr + ED_3COM_BCFR);
+	if (x == 0 || (x & (x - 1)) != 0)
 		return (0);
-	}
+	ptr = ffs(x) - 1;
+	if (ia->ia_iobase != IOBASEUNK) {
+		if (ia->ia_iobase != ed_3com_iobase[ptr]) {
+			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
+			    "iobase", sc->sc_dev.dv_xname, ia->ia_iobase,
+			    ed_3com_iobase[ptr]);
+			return (0);
+		}
+	} else
+		ia->ia_iobase = ed_3com_iobase[ptr];
 
-	/*
-	 * Verify that the kernel shared memory address matches the board
-	 * configured address.
-	 */
-	switch (inb(sc->asic_addr + ED_3COM_PCFR)) {
-	case ED_3COM_PCFR_DC000:
-		if (kvtop(ia->ia_maddr) != 0xdc000)
-			return (0);
-		break;
-	case ED_3COM_PCFR_D8000:
-		if (kvtop(ia->ia_maddr) != 0xd8000)
-			return (0);
-		break;
-	case ED_3COM_PCFR_CC000:
-		if (kvtop(ia->ia_maddr) != 0xcc000)
-			return (0);
-		break;
-	case ED_3COM_PCFR_C8000:
-		if (kvtop(ia->ia_maddr) != 0xc8000)
-			return (0);
-		break;
-	default:
+	x = inb(sc->asic_addr + ED_3COM_PCFR);
+	if (x == 0 || (x & (x - 1)) != 0)
 		return (0);
-	}
+	ptr = ffs(x) - 1;
+	if (ia->ia_maddr != MADDRUNK) {
+		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
+			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
+			    "maddr", sc->sc_dev.dv_xname, ia->ia_maddr,
+			    ed_3com_maddr[ptr]);
+			return (0);
+		}
+	} else
+		ia->ia_maddr = ed_3com_maddr[ptr];
 
+#if 0
+	x = inb(sc->asic_addr + ED_3COM_IDCFR) & ED_3COM_IDCFR_IRQ;
+	if (x == 0 || (x & (x - 1)) != 0)
+		return (0);
+	ptr = ffs(x) - 1;
+	if (ia->ia_irq != IRQUNK) {
+		if (ia->ia_irq != ed_3com_irq[ptr]) {
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			    sc->sc_dev.dv_xname, ia->ia_irq,
+			    ed_3com_irq[ptr]);
+			return (0);
+		}
+	} else
+		ia->ia_irq = ed_3com_irq[ptr];
+#endif
+	
 	/*
 	 * Reset NIC and ASIC.  Enable on-board transceiver throughout reset
 	 * sequence because it'll lock up if the cable isn't connected if we
@@ -701,7 +697,7 @@ ed_probe_3Com(sc, cf, ia)
 	/* Select page 0 registers. */
 	outb(sc->nic_addr + ED_P2_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
 
-	sc->mem_start = (caddr_t)ia->ia_maddr;
+	sc->mem_start = ISA_HOLE_VADDR(ia->ia_maddr);
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
 
@@ -907,6 +903,12 @@ ed_probe_Novell(sc, cf, ia)
 		sc->type_str = "NE1000";
 	}
 	
+	if (ia->ia_irq == IRQUNK) {
+		printf("%s: %s does not have soft configuration\n",
+		    sc->sc_dev.dv_xname, sc->type_str);
+		return (0);
+	}
+
 	/* 8k of memory plus an additional 8k if 16-bit. */
 	memsize = 8192 + sc->isa16bit * 8192;
 
@@ -1884,16 +1886,6 @@ ed_ioctl(ifp, command, data)
 }
  
 /*
- * Macro to calculate a new address within shared memory when given an offset
- * from an address, taking into account ring-wrap.
- */
-#define	ringoffset(sc, start, off, type) \
-	((type)( ((caddr_t)(start)+(off) >= (sc)->mem_end) ? \
-		(((caddr_t)(start)+(off))) - (sc)->mem_end \
-		+ (sc)->mem_ring: \
-		((caddr_t)(start)+(off)) ))
-
-/*
  * Retreive packet from shared memory and send to the next level up via
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
  */
@@ -1985,13 +1977,10 @@ ed_pio_readmem(sc, src, dst, amount)
 	caddr_t dst;
 	u_short amount;
 {
-	u_short tmp_amount;
-
 	/* Select page 0 registers. */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/* Round up to a word. */
-	tmp_amount = amount;
 	if (amount & 1)
 		++amount;
 
