@@ -1,4 +1,41 @@
-/* $NetBSD: pci_eb164.c,v 1.13 1998/04/16 19:50:55 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.14 1998/04/18 01:18:37 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.13 1998/04/16 19:50:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.14 1998/04/18 01:18:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.13 1998/04/16 19:50:55 thorpej Exp $
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
@@ -67,6 +106,9 @@ const char *dec_eb164_intr_string __P((void *, pci_intr_handle_t));
 void	*dec_eb164_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_eb164_intr_disestablish __P((void *, void *));
+
+void	*dec_eb164_pciide_compat_intr_establish __P((void *, struct device *,
+	    struct pci_attach_args *, int, int (*)(void *), void *));
 
 #define	EB164_SIO_IRQ	4  
 #define	EB164_MAX_IRQ	24
@@ -97,6 +139,9 @@ pci_eb164_pickintr(ccp)
         pc->pc_intr_string = dec_eb164_intr_string;
         pc->pc_intr_establish = dec_eb164_intr_establish;
         pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
+
+	pc->pc_pciide_compat_intr_establish =
+	    dec_eb164_pciide_compat_intr_establish;
 
 	eb164_intrgate_iot = iot;
 	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
@@ -253,6 +298,35 @@ dec_eb164_intr_disestablish(ccv, cookie)
 #endif
 
 	panic("dec_eb164_intr_disestablish not implemented"); /* XXX */
+}
+
+void *
+dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
+	void *v;
+	struct device *dev;
+	struct pci_attach_args *pa;
+	int chan;
+	int (*func) __P((void *));
+	void *arg;
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	void *cookie = NULL;
+	int bus, irq;
+
+	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+
+	/*
+	 * If this isn't PCI bus #0, all bets are off.
+	 */
+	if (bus != 0)
+		return (NULL);
+
+	irq = PCIIDE_COMPAT_IRQ(chan);
+#if NSIO
+	cookie = sio_intr_establish(NULL /*XXX*/, irq, IST_EDGE, IPL_BIO,
+	    func, arg);
+#endif
+	return (cookie);
 }
 
 void
