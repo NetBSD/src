@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.21 2001/03/14 06:46:17 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.22 2001/03/15 23:01:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -528,6 +528,10 @@ fwohci_hw_init(struct fwohci_softc *sc)
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlClear,
 	    OHCI_HCControl_NoByteSwapData | OHCI_HCControl_APhyEnhanceEnable);
+#if BYTE_ORDER == BIG_ENDIAN
+	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet,
+	    OHCI_HCControl_NoByteSwapData);
+#endif
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskClear, ~0);
 	OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet, OHCI_Int_BusReset |
