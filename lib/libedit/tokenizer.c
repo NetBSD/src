@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.8 2002/01/31 00:25:33 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.9 2002/01/31 02:27:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.8 2002/01/31 00:25:33 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.9 2002/01/31 02:27:31 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -381,9 +381,9 @@ tok_line(Tokenizer *tok, const char *line, int *argc, char ***argv)
 				}
 				tok->wptr = (tok->wptr - tok->wspace) + s;
 				tok->wstart = (tok->wstart - tok->wspace) + s;
-				tok->wmax = s + size;
 				tok->wspace = s;
 			}
+			tok->wmax = s + size;
 		}
 		if (tok->argc >= tok->amax - 4) {
 			char **p;
