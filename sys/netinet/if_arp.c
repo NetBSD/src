@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.37 1997/04/07 01:48:30 jtk Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.38 1997/05/27 23:14:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -784,18 +784,17 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 {
 	int result, count = 20;
 	
-	if (myip_initialized) 
-		return EIO;
-
-	myip_ifp = ifp;
-	revarp_in_progress = 1;
-	while (count--) {
-		revarprequest(ifp);
-		result = tsleep((caddr_t)&myip, PSOCK, "revarp", hz/2);
-		if (result != EWOULDBLOCK)
-			break;
+	if (!myip_initialized) {
+		myip_ifp = ifp;
+		revarp_in_progress = 1;
+		while (count--) {
+			revarprequest(ifp);
+			result = tsleep((caddr_t)&myip, PSOCK, "revarp", hz/2);
+			if (result != EWOULDBLOCK)
+				break;
+		}
+		revarp_in_progress = 0;
 	}
-	revarp_in_progress = 0;
 	if (!myip_initialized)
 		return ENETUNREACH;
 	
