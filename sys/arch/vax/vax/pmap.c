@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.16 1995/08/21 03:27:05 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.17 1995/08/22 04:34:17 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -216,12 +216,9 @@ pmap_init(s, e)
 	vm_offset_t s,e;
 {
 
-	/* reserve place on SPT for UPT * maxproc */
-	pte_map=kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
-		USRPTSIZE*4, TRUE); /* Don't allow paging yet */
-#ifdef DEBUG
-if(startpmapdebug) printf("pmap_init: pte_map ptemapstart %x, ptemapend %x, ptemapsize %x\n", ptemapstart, ptemapend, USRPTSIZE*4);
- #endif
+	/* reserve place on SPT for UPT */
+	pte_map = kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
+	    USRPTSIZE * 4, TRUE);
 }
 
 /******************************************************************************
@@ -272,33 +269,22 @@ pmap_release(pmap)
 if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 #endif
 
-	if(pmap->pm_pcb->P0BR) kmem_free_wakeup(pte_map,
-		(vm_offset_t)pmap->pm_pcb->P0BR, 
-		(pmap->pm_pcb->P0LR&~AST_MASK)*4);
+	if (pmap->pm_pcb->P0BR)
+		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_pcb->P0BR, 
+		    (pmap->pm_pcb->P0LR & ~AST_MASK) * 4);
 
-	if(pmap->pm_pcb->P1BR) kmem_free_wakeup(pte_map,
-		(vm_offset_t)pmap->pm_stack, (0x200000-pmap->pm_pcb->P1LR)*4);
+	if (pmap->pm_pcb->P1BR)
+		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_stack,
+		    (0x200000 - pmap->pm_pcb->P1LR) * 4);
 
 	bzero(pmap, sizeof(struct pmap));
 }
 
 
-/******************************************************************************
- *
- * pmap_destroy()
- *
- ******************************************************************************
- *
- * pmap_destroy(pmap)
- *
- * Remove a reference from the pmap. 
- *
+/*
+ * pmap_destroy(pmap): Remove a reference from the pmap. 
  * If the pmap is NULL then just return else decrese pm_count.
- *
- *  XXX pmap == NULL => "software only" pmap???
- *
  * If this was the last reference we call's pmap_relaese to release this pmap.
- *
  * OBS! remember to set pm_lock
  */
 
@@ -311,7 +297,8 @@ pmap_destroy(pmap)
 #ifdef DEBUG
 if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
 #endif
-	if(pmap == NULL) return;
+	if (pmap == NULL)
+		return;
 
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->ref_count;
@@ -331,79 +318,80 @@ pmap_enter(pmap, v, p, prot, wired)
 	vm_prot_t       prot;
 	boolean_t       wired;
 {
-	u_int j,i,pte,s, *patch;
+	u_int j, i, pte, s, *patch;
 	pv_entry_t pv, tmp;
 
-	if(v>0x7fffffff) pte=kernel_prot[prot]|PG_PFNUM(p)|PG_V;
-	else pte=prot_array[prot]|PG_PFNUM(p)|PG_V;
-	s=splimp();
-	pv=PHYS_TO_PV(p);
+	if (v > 0x7fffffff) pte = kernel_prot[prot] | PG_PFNUM(p) | PG_V;
+	else pte = prot_array[prot] | PG_PFNUM(p) | PG_V;
+	s = splimp();
+	pv = PHYS_TO_PV(p);
 
 #ifdef DEBUG
 if(startpmapdebug)
 printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	pmap,v,p,pv,prot);
 #endif
-	if(!pmap) return;
-	if(wired) pte |= PG_W;
+	if (!pmap) return;
+	if (wired) pte |= PG_W;
 
 
-	if(v<0x40000000){
-		patch=(int *)pmap->pm_pcb->P0BR;
-		i=(v>>PG_SHIFT);
-		if(i>=(pmap->pm_pcb->P0LR&~AST_MASK)) pmap_expandp0(pmap,i);
-		patch=(int *)pmap->pm_pcb->P0BR;
-	} else if(v<(u_int)0x80000000){
-		patch=(int *)pmap->pm_pcb->P1BR;
-		i=(v-0x40000000)>>PG_SHIFT;
-		if(i<pmap->pm_pcb->P1LR)
+	if (v < 0x40000000) {
+		patch = (int *)pmap->pm_pcb->P0BR;
+		i = (v >> PG_SHIFT);
+		if (i >= (pmap->pm_pcb->P0LR&~AST_MASK))
+			pmap_expandp0(pmap, i);
+		patch = (int *)pmap->pm_pcb->P0BR;
+	} else if (v < (u_int)0x80000000) {
+		patch = (int *)pmap->pm_pcb->P1BR;
+		i = (v - 0x40000000) >> PG_SHIFT;
+		if (i < pmap->pm_pcb->P1LR)
 			panic("pmap_enter: must expand P1");
 	} else {
-		patch=(int *)Sysmap;
-		i=(v-(u_int)0x80000000)>>PG_SHIFT;
+		patch = (int *)Sysmap;
+		i = (v - (u_int)0x80000000) >> PG_SHIFT;
 	}
 
-	if((patch[i]&PG_FRAME)==(pte&PG_FRAME)){ /* no map change */
-		if((patch[i]&PG_W)!=(pte&PG_W)){ /* wiring change */
+	if ((patch[i] & PG_FRAME) == (pte & PG_FRAME)) { /* no map change */
+		if ((patch[i] & PG_W) != (pte & PG_W)) { /* wiring change */
 			pmap_change_wiring(pmap, v, wired);
-		} else if((patch[i]&PG_PROT)!=(pte&PG_PROT)){
-			patch[i]&= ~PG_PROT;
-			patch[i++]|= prot_array[prot];
-			patch[i]&= ~PG_PROT;
-			patch[i]|= prot_array[prot];
-			mtpr(v,PR_TBIS);
-			mtpr(v+NBPG,PR_TBIS);
-		} else if((patch[i]&PG_V)==0) {
-			if(patch[i]&PG_SREF){
-				patch[i]&=~PG_SREF;
-				patch[i]|=PG_V|PG_REF;
-			} else patch[i]|=PG_V;
-			if(patch[++i]&PG_SREF){
-				patch[i]&=~PG_SREF;
-				patch[i]|=PG_V|PG_REF;
-			} else patch[i]|=PG_V;
-			mtpr(v,PR_TBIS);
-			mtpr(v+NBPG,PR_TBIS);
+		} else if ((patch[i] & PG_PROT) != (pte & PG_PROT)) {
+			patch[i] &= ~PG_PROT;
+			patch[i++] |= prot_array[prot];
+			patch[i] &= ~PG_PROT;
+			patch[i] |= prot_array[prot];
+			mtpr(v, PR_TBIS);
+			mtpr(v + NBPG, PR_TBIS);
+		} else if ((patch[i] & PG_V) == 0) {
+			if (patch[i] & PG_SREF) {
+				patch[i] &= ~PG_SREF;
+				patch[i] |= PG_V | PG_REF;
+			} else patch[i] |= PG_V;
+			if (patch[++i] & PG_SREF) {
+				patch[i] &= ~PG_SREF;
+				patch[i] |= PG_V | PG_REF;
+			} else patch[i] |= PG_V;
+			mtpr(v, PR_TBIS);
+			mtpr(v + NBPG, PR_TBIS);
 		} /* else nothing to do */
 		splx(s);
 		return;
 	}
 
-	if(!pv->pv_pmap) {
-		pv->pv_pmap=pmap;
-		pv->pv_next=NULL;
-		pv->pv_va=v;
+	if (!pv->pv_pmap) {
+		pv->pv_pmap = pmap;
+		pv->pv_next = NULL;
+		pv->pv_va = v;
 	} else {
-		tmp=alloc_pv_entry();
-		tmp->pv_pmap=pmap;
-		tmp->pv_next=pv->pv_next;
-		tmp->pv_va=v;
-		pv->pv_next=tmp;
+		tmp = alloc_pv_entry();
+		tmp->pv_pmap = pmap;
+		tmp->pv_next = pv->pv_next;
+		tmp->pv_va = v;
+		pv->pv_next = tmp;
 	}
-	patch[i++]=pte++;
-	patch[i]=pte;
-	mtpr(v,PR_TBIS);
-	mtpr(v+NBPG,PR_TBIS);
+	patch[i++] = pte++;
+	patch[i] = pte;
+	mtpr(v, PR_TBIS);
+	mtpr(v + NBPG, PR_TBIS);
 	splx(s);
 }
 
@@ -900,7 +888,8 @@ pmap_expandp0(pmap,ny_storlek)
 	pmap->pm_pcb->P0BR=(void*)tmp;
 	pmap->pm_pcb->P0LR=((size>>2)|astlvl);
 	splx(s);
-	if(osize) kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
+	if(osize)
+		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
 
 pmap_expandp1(pmap)
@@ -922,5 +911,6 @@ pmap_expandp1(pmap)
 	mtpr(pmap->pm_pcb->P1LR,PR_P1LR);
 	mtpr(0,PR_TBIA);
 	splx(s);
-	if(osize) kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
+	if (osize)
+		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
