@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.2 2001/07/22 11:29:48 wiz Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.3 2001/09/14 21:04:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -180,12 +180,8 @@ uninorth_conf_read(pc, tag, reg)
 		panic("pci_conf_read: func > 7");
 
 	if (bus == pc->bus) {
-		if (dev < 11) {
-			if (reg == PCI_ID_REG)
-				return 0xffffffff;
-			else
-				panic("pci_conf_read: dev < 11");
-		}
+		if (dev < 11)
+			return 0xffffffff;
 		x = (1 << dev) | (func << 8) | reg;
 	} else
 		x = tag | reg | 1;
