@@ -65,7 +65,8 @@ host_tools="byacc flex bison binutils ld gas gcc cgen sid sim gdb make patch prm
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
 #
-target_libs="target-libgloss \
+target_libs="target-libiberty \
+		target-libgloss \
 		target-newlib \
 		${libstdcxx_version} \
 		target-libf2c \
