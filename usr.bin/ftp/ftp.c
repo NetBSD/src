@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.49 1999/07/03 05:44:11 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.50 1999/07/03 05:49:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.49 1999/07/03 05:44:11 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.50 1999/07/03 05:49:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,6 +204,7 @@ hookup(host, port)
 	if (s < 0) {
 		warn(cause);
 		code = -1;
+		freeaddrinfo(res0);
 		return 0;
 	}
 	memcpy(&hisctladdr, res->ai_addr, res->ai_addrlen);
