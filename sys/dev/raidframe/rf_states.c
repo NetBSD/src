@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.22 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.23 2003/12/31 17:47:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.22 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.23 2003/12/31 17:47:53 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -141,9 +141,10 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t *desc)
 			break;
 		}
 
-		/* after this point, we cannot dereference desc since desc may
-		 * have been freed. desc is only freed in LastState, so if we
-		 * renter this function or loop back up, desc should be valid. */
+		/* after this point, we cannot dereference desc since
+		 * desc may have been freed. desc is only freed in
+		 * LastState, so if we renter this function or loop
+		 * back up, desc should be valid. */
 
 #if RF_DEBUG_STATES
 		if (rf_printStatesDebug) {
@@ -184,18 +185,17 @@ rf_ContinueDagAccess(RF_DagList_t *dagList)
 
 	/* check to see if retry is required */
 	if (dag_h->status == rf_rollBackward) {
-		/* when a dag fails, mark desc status as bad and allow all
-		 * other dags in the desc to execute to completion.  then,
-		 * free all dags and start over */
+		/* when a dag fails, mark desc status as bad and allow
+		 * all other dags in the desc to execute to
+		 * completion.  then, free all dags and start over */
 		desc->status = 1;	/* bad status */
-		{
-			printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
-			       desc->raidPtr->raidid, desc->type, 
-			       (long) desc->raidAddress,
-			       (long) desc->raidAddress, (int) desc->numBlocks,
-			       (int) desc->numBlocks, 
-			       (unsigned long) (desc->bufPtr));
-		}
+
+		printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
+		       desc->raidPtr->raidid, desc->type, 
+		       (long) desc->raidAddress,
+		       (long) desc->raidAddress, (int) desc->numBlocks,
+		       (int) desc->numBlocks, 
+		       (unsigned long) (desc->bufPtr));
 	}
 	dagList->numDagsDone++;
 	rf_ContinueRaidAccess(desc);
@@ -294,9 +294,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	if (raidPtr->accesses_suspended) {
 		RF_CallbackDesc_t *cb;
 		cb = rf_AllocCallbackDesc();
-		/* XXX the following cast is quite bogus...
-		 * rf_ContinueRaidAccess takes a (RF_RaidAccessDesc_t *) as an
-		 * argument..  GO */
+
 		cb->callbackFunc = (void (*) (RF_CBParam_t)) rf_ContinueRaidAccess;
 		cb->callbackArg.p = (void *) desc;
 		cb->next = raidPtr->quiesce_wait_list;
@@ -360,12 +358,10 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS) &&
 			    !(asm_p->flags & RF_ASM_FLAGS_LOCK_TRIED)) {
 				asm_p->flags |= RF_ASM_FLAGS_LOCK_TRIED;
-				RF_ASSERT(asm_p->stripeID > lastStripeID);	/* locks must be
-										 * acquired
-										 * hierarchically */
+				/* locks must be acquired hierarchically */
+				RF_ASSERT(asm_p->stripeID > lastStripeID);
 				lastStripeID = asm_p->stripeID;
-				/* XXX the cast to (void (*)(RF_CBParam_t))
-				 * below is bogus!  GO */
+
 				RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
 				    (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
 				    raidPtr->Layout.dataSectorsPerStripe);
@@ -381,8 +377,6 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 					int     val;
 
 					asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
-					/* XXX the cast below is quite
-					 * bogus!!! XXX  GO */
 					val = rf_ForceOrBlockRecon(raidPtr, asm_p,
 					    (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
 					if (val == 0) {
@@ -500,13 +494,13 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 	RF_DagHeader_t *dag_h;
 	RF_DagList_t *dagArray = desc->dagArray;
 
-	/* next state is always rf_State_ProcessDAG important to do this
-	 * before firing the first dag (it may finish before we leave this
-	 * routine) */
+	/* next state is always rf_State_ProcessDAG important to do
+	 * this before firing the first dag (it may finish before we
+	 * leave this routine) */
 	desc->state++;
 
-	/* sweep dag array, a stripe at a time, firing the first dag in each
-	 * stripe */
+	/* sweep dag array, a stripe at a time, firing the first dag
+	 * in each stripe */
 	for (i = 0; i < desc->numStripes; i++) {
 		RF_ASSERT(dagArray[i].numDags > 0);
 		RF_ASSERT(dagArray[i].numDagsDone == 0);
@@ -516,8 +510,6 @@ rf_State_ExecuteDAG(RF_RaidAccessDesc_t *desc)
 		dag_h = dagArray[i].dags;
 		RF_ASSERT(dag_h);
 		dagArray[i].numDagsFired++;
-		/* XXX Yet another case where we pass in a conflicting
-		 * function pointer :-(  XXX  GO */
 		rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess, &dagArray[i]);
 	}
 
@@ -580,8 +572,6 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 				for (j = 0; j < dagArray[i].numDagsDone; j++)
 					dag_h = dag_h->next;
 				dagArray[i].numDagsFired++;
-				/* XXX and again we pass a different function
-				 * pointer.. GO */
 				rf_DispatchDAG(dag_h, (void (*) (void *)) rf_ContinueDagAccess,
 				    &dagArray[i]);
 			}
