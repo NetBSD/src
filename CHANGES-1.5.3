@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.32 2002/01/24 22:49:38 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.33 2002/01/29 23:35:49 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1434,3 +1434,75 @@ sys/arch/macppc/dev/mesh.c			1.8
   Honour SCSI command timeout.  This fixes a problem with some SCSI
   commands which take longer than 10s to complete, and were falling
   into a timeout, e.g. CD-R fixating.
+
+sys/sys/disklabel.h				1.68-1.69
+
+  Fix warnings about redefinition if <sys/disklabel.h> is used on
+  its own.
+
+sys/nfs/nfs_vnops.c				1.148
+
+  Set np->n_size before calling nfs_vinvalbuf.  Avoids confusion as
+  to the actual file size.
+
+sys/arch/alpha/conf/files.alpha			1.151
+
+  We need the compat_13 sys_sigreturn to do OSF1 emulation.  Fixes
+  PR#8788.
+
+sys/dev/pci/pcidevs				1.287
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/siop_pci_common.c			1.6-1.8
+sys/dev/ic/siop_common.c			1.13
+sys/dev/ic/siopreg.h				1.8
+sys/dev/ic/siopvar.h				1.14-1.15
+share/man/man4/siop.4				1.2-1.9
+
+  Add support for the 53c1010-33 and 53c1510D, and bring documentation
+  up to date.
+
+distrib/notes/i386/hardware			1.100
+
+  Replace ncr0 with siop0, and mention 53c1010-33 and 53c1510D.
+
+sys/dev/cardbus/cardbusdevs			1.13,1.17
+sys/dev/cardbus/cardbusdevs.h			regenerate
+sys/dev/cardbus/cardbusdevs_data.h		regenerate
+sys/dev/cardbus/if_tlp_cardbus.c		1.25-1.27
+
+  Add support for AN985-based CardBus network interfaces.
+
+usr.bin/audio/common/Makefile			1.3-1.4 via patch
+usr.bin/audio/common/auconv.c			1.1 (new)
+usr.bin/audio/common/auconv.h			1.1 (new)
+usr.bin/audio/common/audio.c			1.10,1.12-1.15 via patch
+usr.bin/audio/common/libaudio.h			1.5-1.6,1.8-1.10 via patch
+usr.bin/audio/common/sun.c			1.1-1.2 (new)
+usr.bin/audio/common/wav.c			1.1-1.3 (new)
+usr.bin/audio/play/audioplay.1			1.8-1.15
+usr.bin/audio/play/play.c			1.18-1.21,1.25-1.31 via patch
+usr.bin/audio/record/audiorecord.1		1.9-1.22
+usr.bin/audio/record/record.c			1.11-1.13,1.15-1.21 via patch
+usr.bin/audio/ctl/ctl.c				patch
+
+  Bring in several fixes and enhancements to these tools:
+   o fix stdin audioplay
+   o add WAV support to audiorecord
+   o allows any host to output any endian sample
+   o don't output a bogus header
+   o fix a bug in audiorecord -t
+   o many manual page fixes
+   o exit immediately on signals
+
+sys/dev/eisa/cac_eisa.c				1.5
+sys/dev/ic/cac.c				1.20
+sys/dev/ic/cacvar.h				1.9
+sys/dev/ic/ld_cac.c				1.5
+sys/dev/pci/cac_pci.c				1.12
+
+  Some fixes:
+   o Always validate return value read from outbound FIFO
+   o Copy access method into to softc to avoid double dereference
+   o Remove static on functions
+  Fixes PR#14453.
