@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.25 1998/07/28 11:41:47 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.26 1998/10/14 00:49:44 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.25 1998/07/28 11:41:47 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.26 1998/10/14 00:49:44 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ int retval, nflag;
 int main __P((int, char *[]));
 static void setthetime __P((const char *));
 static void badformat __P((void));
+static void badtime __P((void));
 static void usage __P((void));
 
 int
@@ -200,7 +201,7 @@ setthetime(p)
 
 	/* convert broken-down time to GMT clock time */
 	if ((tval = mktime(lt)) == -1)
-		badformat();
+		badtime();
 
 	/* set the time */
 	if (nflag || netsettime(tval)) {
@@ -224,6 +225,12 @@ badformat()
 {
 	warnx("illegal time format");
 	usage();
+}
+
+static void
+badtime()
+{
+	errx(1, "illegal time");
 }
 
 static void
