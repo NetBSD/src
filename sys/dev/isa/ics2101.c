@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.4 1996/04/29 20:03:10 christos Exp $ */
+/* $NetBSD: ics2101.c,v 1.5 1997/09/06 14:31:34 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	struct ics2101_softc *sc;
 	u_int chan, side, value, flags;
 {
+	bus_space_tag_t iot = sc->sc_iot;
 	unsigned char flip_left[6] = {0x01, 0x01, 0x01, 0x02, 0x01, 0x02};
 	unsigned char flip_right[6] = {0x02, 0x02, 0x02, 0x01, 0x02, 0x01};
 	register unsigned char ctrl_addr;
@@ -127,11 +128,11 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 
 	s = splaudio();
 
-	outb(sc->sc_selio, ctrl_addr);
-	outb(sc->sc_dataio, normal);
+	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, ctrl_addr);
+	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, normal);
 
-	outb(sc->sc_selio, attn_addr);
-	outb(sc->sc_dataio, (unsigned char) value);
+	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, attn_addr);
+	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, (unsigned char) value);
 
 	splx(s);
 }
