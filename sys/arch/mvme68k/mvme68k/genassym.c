@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1996/04/26 19:26:41 chuck Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5 1996/05/20 00:40:10 chuck Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -54,6 +54,7 @@
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/prom.h>
 #include <machine/pte.h>
 #include <mvme68k/mvme68k/clockreg.h>
 
@@ -98,6 +99,10 @@ main()
 	def("NBPG", NBPG);
 	def("PGSHIFT", PGSHIFT);
 	def("USRSTACK", USRSTACK);
+
+	/* boot stuff */
+	def("RB_SBOOT", RB_SBOOT);
+	def("MVMEPROM_EXIT", MVMEPROM_EXIT);
 
 	/* proc fields and values */
 	off("P_FORW", struct proc, p_forw);
