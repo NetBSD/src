@@ -1,4 +1,4 @@
-/*	$NetBSD: forwback.c,v 1.1.1.2 1997/04/22 13:45:29 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.1.1.3 1997/09/21 12:23:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -148,13 +148,20 @@ forw(n, pos, force, only_last, nblank)
 			 *    to hit eof in the middle of this screen,
 			 *    but we don't yet know if that will happen. }}
 			 */
+			pos_clear();
+			add_forw_pos(pos);
+			force = 1;
 			if (top_scroll == OPT_ONPLUS || first_time)
 				clear();
 			home();
-			force = 1;
 		} else
 		{
 			clear_bot();
+			/*
+			 * Remove the top n lines and scroll the rest
+			 * upward, leaving cursor at first new blank line.
+			 */
+			remove_top(n);
 		}
 
 		if (pos != position(BOTTOM_PLUS_ONE) || empty_screen())
@@ -211,7 +218,9 @@ forw(n, pos, force, only_last, nblank)
 				eof = 1;
 				if (!force && position(TOP) != NULL_POSITION)
 					break;
-				if (empty_lines(2, sc_height-1))
+				if (!empty_lines(0, 0) && 
+				    !empty_lines(1, 1) &&
+				     empty_lines(2, sc_height-1))
 					break;
 			}
 		}
@@ -242,7 +251,7 @@ forw(n, pos, force, only_last, nblank)
 			squished = 1;
 			continue;
 		}
-		if (top_scroll == 1)
+		if (top_scroll == OPT_ON)
 			clear_eol();
 		put_line();
 	}

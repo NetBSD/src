@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdbuf.c,v 1.1.1.2 1997/04/22 13:45:14 mrg Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.1.1.3 1997/09/21 12:22:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -59,6 +59,11 @@ static struct textlist tk_tlist;
 
 static int cmd_left();
 static int cmd_right();
+
+#if SPACES_IN_FILENAMES
+public char openquote = '"';
+public char closequote = '"';
+#endif
 
 #if CMD_HISTORY
 /*
@@ -307,7 +312,6 @@ cmd_left()
 cmd_ichar(c)
 	int c;
 {
-	int col;
 	char *s;
 	
 	if (strlen(cmdbuf) >= sizeof(cmdbuf)-2)
@@ -341,8 +345,6 @@ cmd_ichar(c)
 cmd_erase()
 {
 	register char *s;
-	char *p;
-	int col;
 
 	if (cp == cmdbuf)
 	{
@@ -386,8 +388,6 @@ cmd_erase()
 	static int
 cmd_delete()
 {
-	char *p;
-	
 	if (*cp == '\0')
 	{
 		/*
@@ -499,7 +499,6 @@ set_mlist(mlist)
 cmd_updown(action)
 	int action;
 {
-	char *p;
 	char *s;
 	
 	if (curr_mlist == NULL)
@@ -536,6 +535,53 @@ cmd_updown(action)
 #endif
 
 /*
+ * Add a string to a history list.
+ */
+	public void
+cmd_addhist(mlist, cmd)
+	struct mlist *mlist;
+	char *cmd;
+{
+#if CMD_HISTORY
+	struct mlist *ml;
+	
+	/*
+	 * Don't save a trivial command.
+	 */
+	if (strlen(cmd) == 0)
+		return;
+	/*
+	 * Don't save if a duplicate of a command which is already 
+	 * in the history.
+	 * But select the one already in the history to be current.
+	 */
+	for (ml = mlist->next;  ml != mlist;  ml = ml->next)
+	{
+		if (strcmp(ml->string, cmd) == 0)
+			break;
+	}
+	if (ml == mlist)
+	{
+		/*
+		 * Did not find command in history.
+		 * Save the command and put it at the end of the history list.
+		 */
+		ml = (struct mlist *) ecalloc(1, sizeof(struct mlist));
+		ml->string = save(cmd);
+		ml->next = mlist;
+		ml->prev = mlist->prev;
+		mlist->prev->next = ml;
+		mlist->prev = ml;
+	}
+	/*
+	 * Point to the cmd just after the just-accepted command.
+	 * Thus, an UPARROW will always retrieve the previous command.
+	 */
+	mlist->curr_mp = ml->next;
+#endif
+}
+
+/*
  * Accept the command in the command buffer.
  * Add it to the currently selected history list.
  */
@@ -543,45 +589,12 @@ cmd_updown(action)
 cmd_accept()
 {
 #if CMD_HISTORY
-	struct mlist *ml;
-	
 	/*
 	 * Nothing to do if there is no currently selected history list.
 	 */
 	if (curr_mlist == NULL)
 		return;
-	/*
-	 * Don't save a trivial command.
-	 */
-	if (strlen(cmdbuf) == 0)
-		return;
-	/*
-	 * Don't save if a duplicate of a command which is already in the history.
-	 * But select the one already in the history to be current.
-	 */
-	for (ml = curr_mlist->next;  ml != curr_mlist;  ml = ml->next)
-	{
-		if (strcmp(ml->string, cmdbuf) == 0)
-			break;
-	}
-	if (ml == curr_mlist)
-	{
-		/*
-		 * Did not find command in history.
-		 * Save the command and put it at the end of the history list.
-		 */
-		ml = (struct mlist *) ecalloc(1, sizeof(struct mlist));
-		ml->string = save(cmdbuf);
-		ml->next = curr_mlist;
-		ml->prev = curr_mlist->prev;
-		curr_mlist->prev->next = ml;
-		curr_mlist->prev = ml;
-	}
-	/*
-	 * Point to the cmd just after the just-accepted command.
-	 * Thus, an UPARROW will always retrieve the previous command.
-	 */
-	curr_mlist->curr_mp = ml->next;
+	cmd_addhist(curr_mlist, cmdbuf);
 #endif
 }
 
@@ -693,6 +706,8 @@ cmd_edit(c)
 	case EC_EXPAND:
 		return (cmd_complete(action));
 #endif
+	case EC_NOACTION:
+		return (CC_OK);
 	default:
 		not_in_completion();
 		return (CC_PASS);
@@ -732,6 +747,10 @@ cmd_istr(str)
 delimit_word()
 {
 	char *word;
+#if SPACES_IN_FILENAMES
+	char *p;
+	int quoted;
+#endif
 	
 	/*
 	 * Move cursor to end of word.
@@ -764,6 +783,27 @@ delimit_word()
 	 */
 	if (cp == cmdbuf)
 		return (NULL);
+#if SPACES_IN_FILENAMES
+	/*
+	 * If we have an unbalanced quote (that is, an open quote
+	 * without a corresponding close quote), we return everything
+	 * from the open quote, including spaces.
+	 */
+	quoted = 0;
+	for (p = cmdbuf;  p < cp;  p++)
+	{
+		if (!quoted && *p == openquote)
+		{
+			quoted = 1;
+			word = p;
+		} else if (quoted && *p == closequote)
+		{
+			quoted = 0;
+		}
+	}
+	if (quoted)
+		return (word);
+#endif
 	for (word = cp-1;  word > cmdbuf;  word--)
 		if (word[-1] == ' ')
 			break;
@@ -814,6 +854,10 @@ init_compl()
 	 */
 	c = *cp;
 	*cp = '\0';
+#if SPACES_IN_FILENAMES
+	if (*word == openquote)
+		word++;
+#endif
 	tk_text = fcomplete(word);
 	*cp = c;
 }
@@ -847,6 +891,7 @@ next_compl(action, prev)
 cmd_complete(action)
 	int action;
 {
+	char *s;
 
 	if (!in_completion || action == EC_EXPAND)
 	{
@@ -907,6 +952,19 @@ cmd_complete(action)
 		 */
 		if (cmd_istr(tk_trial) != CC_OK)
 			goto fail;
+		/*
+		 * If it is a directory, append a slash.
+		 */
+		if (is_dir(tk_trial))
+		{
+			if (cp > cmdbuf && cp[-1] == closequote)
+				(void) cmd_erase();
+			s = lgetenv("LESSSEPARATOR");
+			if (s == NULL)
+				s = PATHNAME_SEP;
+			if (cmd_istr(s) != CC_OK)
+				goto fail;
+		}
 	}
 	
 	return (CC_OK);
@@ -961,10 +1019,7 @@ cmd_char(c)
 	/*
 	 * Insert the char into the command buffer.
 	 */
-	action = cmd_ichar(c);
-	if (action != CC_OK)
-		return (action);
-	return (CC_OK);
+	return (cmd_ichar(c));
 }
 
 /*
