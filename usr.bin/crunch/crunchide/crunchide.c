@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchide.c,v 1.9 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: crunchide.c,v 1.10 1999/11/26 13:47:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -60,7 +60,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.9 1999/01/11 22:40:00 kleink Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.10 1999/11/26 13:47:52 msaitoh Exp $");
 #endif
 
 #include <unistd.h>
@@ -209,6 +209,9 @@ struct {
 } exec_formats[] = {
 #ifdef NLIST_AOUT
 	{	"a.out",	check_aout,	hide_aout,	},
+#endif
+#ifdef NLIST_COFF
+	{	"COFF",		check_coff,	hide_coff,	},
 #endif
 #ifdef NLIST_ECOFF
 	{	"ECOFF",	check_ecoff,	hide_ecoff,	},
