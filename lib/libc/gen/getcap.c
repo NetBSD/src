@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.18 1998/03/02 23:39:49 thorpej Exp $	*/
+/*	$NetBSD: getcap.c,v 1.19 1998/03/18 20:29:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.18 1998/03/02 23:39:49 thorpej Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.19 1998/03/18 20:29:27 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -623,10 +623,6 @@ cgetmatch(buf, name)
 	}
 }
 
-
-
-
-
 int
 cgetfirst(buf, db_array)
 	char **buf, **db_array;
@@ -681,11 +677,12 @@ cgetnext(bp, db_array)
 		} else {
 			line = fgetln(pfp, &len);
 			if (line == NULL && pfp) {
-				(void)fclose(pfp);
 				if (ferror(pfp)) {
 					(void)cgetclose();
 					return (-1);
 				} else {
+					(void)fclose(pfp);
+					pfp = NULL;
 					if (*++dbp == NULL) {
 						(void)cgetclose();
 						return (0);
@@ -739,11 +736,14 @@ cgetnext(bp, db_array)
 			} else { /* name field extends beyond the line */
 				line = fgetln(pfp, &len);
 				if (line == NULL && pfp) {
-					(void)fclose(pfp);
 					if (ferror(pfp)) {
 						(void)cgetclose();
 						return (-1);
 					}
+					(void)fclose(pfp);
+					pfp = NULL;
+					*np = '\0';
+					break;
 				} else
 					line[len - 1] = '\0';
 			}
