@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.45 2003/11/20 14:44:36 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.45 2003/11/20 14:44:36 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,6 @@ data_abort_handler(trapframe_t *tf)
 	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
-	ksi.ksi_errno = error;
 
 do_trapsignal:
 	call_trapsignal(l, &ksi);
@@ -787,7 +786,6 @@ prefetch_abort_handler(trapframe_t *tf)
 	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
 	ksi.ksi_trap = fault_pc;
-	ksi.ksi_errno = error;
 
 do_trapsignal:
 	call_trapsignal(l, &ksi);
