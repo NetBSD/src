@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: main.c,v 1.3 1995/01/12 10:20:34 pk Exp $
+	$Id: main.c,v 1.4 1995/01/18 07:13:21 pk Exp $
 */
 
 #include "defs.h"
@@ -808,7 +808,6 @@ GDB manual (available as on-line info or a printed manual).\n", stdout);
       exit (0);
     }
     
-#if 0	/* Use -version in stead */
   if (!quiet)
     {
       /* Print all the junk at the top, with trailing "..." if we are about
@@ -820,7 +819,6 @@ GDB manual (available as on-line info or a printed manual).\n", stdout);
       wrap_here("");
       fflush (stdout);		/* Force to screen during slow operations */
     }
-#endif
 
   error_pre_print = "\n\n";
   /* We may get more than one warning, don't double space all of them... */
