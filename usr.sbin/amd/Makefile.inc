@@ -1,20 +1,24 @@
-#	$NetBSD: Makefile.inc,v 1.13 1999/02/13 02:54:58 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2000/11/20 00:24:41 wiz Exp $
+
+WARNS?=	1
+
+IDIST=	${.CURDIR}/../../../dist/am-utils
+
+LIBAMUOBJDIR!=cd ${.CURDIR}/../libamu; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+
+CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/libamu \
+	-I${IDIST}/include -I${LIBAMUOBJDIR}
 
 .include <bsd.own.mk>
 
-WARNS ?= 1
-LIBAMU != cd ${.CURDIR}/../libamu;\
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-CPPFLAGS += -I${.CURDIR}/../include -I${.CURDIR} -I${LIBAMU} -I. -DHAVE_CONFIG_H
-CPPFLAGS += -DDEBUG
 .if !defined(LIB) || empty(LIB)
-LDADD += -L${LIBAMU} -lamu -lrpcsvc -ll
+LDADD+=	-L${LIBAMUOBJDIR} -lamu
 .if ${MKPIC} == "no"
-DPADD += ${LIBAMU}/libamu.a
+DPADD+=	${LIBAMUOBJDIR}/libamu.a
 .else
-DPADD += ${LIBAMU}/libamu_pic.a
+DPADD+=	${LIBAMUOBJDIR}/libamu_pic.a
 .endif
-DPADD += ${LIBRPCSVC} ${LIBL}
 .endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aux_conf.h,v 1.3 1998/08/08 22:33:37 christos Exp $	*/
+/* $NetBSD: aux_conf.h,v 1.4 2000/11/20 00:25:23 wiz Exp $ */
 
 /*
  * aux_conf.h:

@@ -1,11 +1,18 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/26 20:04:50 kim Exp $
+#	$NetBSD: Makefile,v 1.4 2000/11/20 00:25:29 wiz Exp $
+
+.include "${.CURDIR}/../Makefile.inc"
 
 BINDIR=	/usr/bin
+
 PROG=	pawd
-SRCS=	pawd.c 
-SRCS+=	amq_clnt.c amq_xdr.c
+
+DIST=	${IDIST}/amq
+.PATH:	${DIST}
+
+SRCS=	amq_clnt.c amq_xdr.c pawd.c
 MAN+=	pawd.1
-CPPFLAGS+=-I${.CURDIR}/../amq
-.PATH.c: ${.CURDIR}/../amq
+
+CPPFLAGS+=	-I${DIST}
+LDADD+=		${LIBAMU}
 
 .include <bsd.prog.mk>
