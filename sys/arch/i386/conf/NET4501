@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.13 2002/08/11 16:22:09 itojun Exp $
+# $NetBSD: NET4501,v 1.14 2002/08/12 01:03:12 thorpej Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.13 $"
+#ident 		"NET4501-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -177,7 +177,6 @@ mainbus0 at root
 
 # PCI bus support
 pci*	at mainbus? bus ?
-pci*	at pchb? bus ?
 
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
@@ -190,7 +189,7 @@ pci*	at pchb? bus ?
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
-pchb*	at pci? dev ? function ?	# PCI-Host bridges
+elansc*	at pci? dev ? function ?	# Elan SC520 System Controller
 
 # ISA bus support
 isa0	at mainbus?
