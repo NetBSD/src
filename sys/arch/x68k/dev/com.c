@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.6.10.1 1997/10/14 10:20:09 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.6.10.2 1997/10/15 23:21:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -128,12 +128,12 @@ int comspeed __P((long));
 
 static u_char tiocm_xxx2mcr __P((int));
 
-struct cfattach com_ca = {
+struct cfattach xcom_ca = {
 	sizeof(struct com_softc), comprobe, comattach,
 };
 
-struct cfdriver com_cd = {
-	NULL, "com", DV_TTY
+struct cfdriver xcom_cd = {
+	NULL, "xcom", DV_TTY
 };
 
 #define	outb(addr, val)		*(u_char *)(addr) = (val)

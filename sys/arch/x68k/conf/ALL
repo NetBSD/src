@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.15 1997/06/12 18:42:23 mrg Exp $
+#	$NetBSD: ALL,v 1.15.4.1 1997/10/15 23:21:07 thorpej Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -113,8 +113,8 @@ grf1		at grfbus0		# flexible graphics
 ite0		at grf0			# console
 fdc0		at mainbus0		# floppy controller
 fd*		at fdc0 unit ?		# builtin floppy drive
-com0		at mainbus0		# NS16550
-com1		at mainbus0		# NS16550
+xcom0		at mainbus0		# NS16550
+xcom1		at mainbus0		# NS16550
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
