@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.6 2000/05/24 22:26:35 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.7 2000/06/09 16:53:23 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -178,8 +178,10 @@ void	cz_poll(void *);
 int	cztty_transmit(struct cztty_softc *, struct tty *);
 int	cztty_receive(struct cztty_softc *, struct tty *);
 
+struct	cztty_softc * cztty_getttysoftc(dev_t dev);
 int	cztty_findmajor(void);
 int	cztty_major;
+int	cztty_attached_ttys;
 int	cz_timeout_ticks;
 
 cdev_decl(cztty);
@@ -396,6 +398,7 @@ cz_attach(struct device *parent,
 	CZ_WIN_RAM(cz);
 	cz->cz_ports = malloc(sizeof(struct cztty_softc) * cz->cz_nchannels,
 	    M_DEVBUF, M_WAITOK);
+	cztty_attached_ttys += cz->cz_nchannels;
 	memset(cz->cz_ports, 0,
 	    sizeof(struct cztty_softc) * cz->cz_nchannels);
 
@@ -533,7 +536,7 @@ cz_load_firmware(struct cz_softc *cz)
 		for (i = 0; i < nblocks; i++) {
 			/* zfb = zblocks + le32toh(zfc->zfc_blocklist[i]) ?? */
 			zfb = &zblocks[le32toh(zfc->zfc_blocklist[i])];
-			if (zfb->zfb_type == ZFB_TYPE_FPGA) {
+			if (le32toh(zfb->zfb_type) == ZFB_TYPE_FPGA) {
 				nbytes = le32toh(zfb->zfb_size);
 				cp = &cycladesz_firmware[
 				    le32toh(zfb->zfb_fileoff)];
@@ -564,7 +567,7 @@ cz_load_firmware(struct cz_softc *cz)
 			    &cycladesz_firmware[le32toh(zfb->zfb_fileoff)];
 			for (j = 0; j < nbytes; j += 4, lp++) {
 				bus_space_write_4(cz->cz_win_st, cz->cz_win_sh,
-				    ro + j, *lp);
+				    ro + j, le32toh(*lp));
 				delay(10);
 			}
 		}
@@ -649,11 +652,10 @@ cz_load_firmware(struct cz_softc *cz)
 	}
 
 	fid = CZ_FWCTL_READ(cz, BRDCTL_FWVERSION);
-	printf("%s: %s, %d channels (ttyCZ%04d..ttyCZ%04d), "
+	printf("%s: %s, %d channels (ttyCZ%02x..ttyCZ%02x), "
 	    "firmware %x.%x.%x\n",
 	    cz->cz_dev.dv_xname, board, cz->cz_nchannels,
-	    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS),
-	    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + (cz->cz_nchannels - 1),
+	    cztty_attached_ttys, cztty_attached_ttys + (cz->cz_nchannels - 1),
 	    (fid >> 8) & 0xf, (fid >> 4) & 0xf, fid & 0xf);
 
 	return (0);
@@ -849,10 +851,27 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 	((struct cz_softc *)(CZTTY_BOARD(dev) < cz_cd.cd_ndevs ?	\
 	  cz_cd.cd_devs[CZTTY_BOARD(dev)] : NULL))
 
-#define	CZTTY_SOFTC(dev)						\
-	((CZ_SOFTC(dev) != NULL &&					\
-	  CZTTY_CHAN(dev) < CZ_SOFTC(dev)->cz_nchannels) ?		\
-	 &CZ_SOFTC(dev)->cz_ports[CZTTY_CHAN(dev)] : NULL)
+#define	CZTTY_SOFTC(dev) cztty_getttysoftc(dev)
+
+struct cztty_softc *
+cztty_getttysoftc(dev_t dev)
+{
+	int i, j, k, u = minor(dev) & ~CZTTYDIALOUT_MASK;
+	struct cz_softc *cz;
+
+	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
+		k = j;
+		cz = cz_cd.cd_devs[i];
+		j += cz->cz_nchannels;
+		if (j > u)
+			break;
+	}
+
+	if (i >= cz_cd.cd_ndevs) {
+		return (NULL);
+	} else
+		return (&cz->cz_ports[u - k]);
+}
 
 int
 cztty_findmajor(void)
