@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.10 1994/05/20 18:19:46 mycroft Exp $
+ *	$Id: pmap.c,v 1.11 1994/05/23 02:36:21 cgd Exp $
  */
 
 /*
@@ -319,7 +319,6 @@ pmap_bootstrap(firstaddr, loadaddr)
 #endif
 }
 
-#ifdef notyet
 /*
  * Bootstrap memory allocator. This function allows for early dynamic
  * memory allocation until the virtual memory system has been bootstrapped.
@@ -350,7 +349,6 @@ pmap_bootstrap_alloc(size)
 	bzero((caddr_t) val, size);
 	return ((void *) val);
 }
-#endif
 
 /*
  *	Initialize the pmap module.
