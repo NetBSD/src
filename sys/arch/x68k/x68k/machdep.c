@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1997/10/12 18:12:51 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1997/10/12 18:49:25 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1343,10 +1343,13 @@ void
 netintr()
 {
 #ifdef INET
+#include "arp.h"
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
 	}
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
