@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.11 2001/09/20 15:56:06 yamt Exp $	*/
+/*	$NetBSD: gencat.c,v 1.12 2001/09/23 16:32:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.11 2001/09/20 15:56:06 yamt Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.12 2001/09/23 16:32:35 yamt Exp $");
 #endif
 
 /***********************************************************
@@ -79,6 +79,7 @@ up-to-date.  Many thanks.
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <nl_types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -703,13 +704,10 @@ MCAddSet(setId)
 		error(NULL, "setId's must be greater than zero");
 		/* NOTREACHED */
 	}
-#if 0
-	/* XXX */
 	if (setId > NL_SETMAX) {
-		error(NULL, "setId %d exceeds limit (%d)");
+		error(NULL, "setId exceeds limit");
 		/* NOTREACHED */
 	}
-#endif
 
 	p = sethead.lh_first;
 	q = NULL;
@@ -748,13 +746,10 @@ MCAddMsg(msgId, str)
 		error(NULL, "msgId's must be greater than zero");
 		/* NOTREACHED */
 	}
-#if 0
-	/* XXX */
-	if (msgId > NL_SETMAX) {
-		error(NULL, "msgID %d exceeds limit (%d)");
+	if (msgId > NL_MSGMAX) {
+		error(NULL, "msgID exceeds limit");
 		/* NOTREACHED */
 	}
-#endif
 
 	p = curSet->msghead.lh_first;
 	q = NULL;
