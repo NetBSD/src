@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lpf.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lpf.c,v 1.2 1993/08/01 17:59:17 mycroft Exp $";
+static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -51,8 +50,10 @@ static char rcsid[] = "$Id: lpf.c,v 1.2 1993/08/01 17:59:17 mycroft Exp $";
  *	to try to gain a little speed.
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define MAXWIDTH  132
 #define MAXREP    10
@@ -69,6 +70,7 @@ char	*name;		/* user's login name */
 char	*host;		/* user's machine name */
 char	*acctfile;	/* accounting information file */
 
+int
 main(argc, argv) 
 	int argc;
 	char *argv[];

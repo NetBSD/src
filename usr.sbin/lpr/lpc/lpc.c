@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,26 +33,33 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lpc.c	5.11 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: lpc.c,v 1.2 1993/08/01 17:58:57 mycroft Exp $";
+static char sccsid[] = "@(#)lpc.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
+
+#include <sys/param.h>
+
+#include <dirent.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include "lp.h"
+#include "lpc.h"
+#include "extern.h"
 
 /*
  * lpc -- line printer control program
  */
-#include <stdio.h>
-#include <signal.h>
-#include <ctype.h>
-#include <setjmp.h>
-#include <syslog.h>
-
-#include "lpc.h"
 
 int	fromatty;
 
@@ -59,16 +67,20 @@ char	cmdline[200];
 int	margc;
 char	*margv[20];
 int	top;
-void	intr();
-struct	cmd *getcmd();
 
 jmp_buf	toplevel;
 
+static void		 cmdscanner __P((int));
+static struct cmd	*getcmd __P((char *));
+static void		 intr __P((int));
+static void		 makeargv __P((void));
+
+int
 main(argc, argv)
+	int argc;
 	char *argv[];
 {
 	register struct cmd *c;
-	extern char *name;
 
 	name = argv[0];
 	openlog("lpd", 0, LOG_LPR);
@@ -100,8 +112,9 @@ main(argc, argv)
 	}
 }
 
-void
-intr()
+static void
+intr(signo)
+	int signo;
 {
 	if (!fromatty)
 		exit(0);
@@ -111,6 +124,7 @@ intr()
 /*
  * Command parser.
  */
+static void
 cmdscanner(top)
 	int top;
 {
@@ -124,7 +138,7 @@ cmdscanner(top)
 			fflush(stdout);
 		}
 		if (fgets(cmdline, sizeof(cmdline), stdin) == 0)
-			quit();
+			quit(0, NULL);
 		if (cmdline[0] == 0 || cmdline[0] == '\n')
 			break;
 		makeargv();
@@ -145,8 +159,6 @@ cmdscanner(top)
 	}
 	longjmp(toplevel, 0);
 }
-
-extern struct cmd cmdtab[];
 
 struct cmd *
 getcmd(name)
@@ -180,6 +192,7 @@ getcmd(name)
 /*
  * Slice a string up into argc/argv.
  */
+static void
 makeargv()
 {
 	register char *cp;
@@ -207,6 +220,7 @@ makeargv()
 /*
  * Help command.
  */
+void
 help(argc, argv)
 	int argc;
 	char *argv[];

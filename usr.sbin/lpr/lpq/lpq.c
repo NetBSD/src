@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +33,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lpq.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: lpq.c,v 1.2 1993/08/01 17:58:45 mycroft Exp $";
+static char sccsid[] = "@(#)lpq.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -51,13 +51,25 @@ static char rcsid[] = "$Id: lpq.c,v 1.2 1993/08/01 17:58:45 mycroft Exp $";
  * -P used to identify printer as per lpr/lprm
  */
 
+#include <sys/param.h>
+
+#include <syslog.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 #include "lp.h"
+#include "lp.local.h"
 
+int	 requ[MAXREQUESTS];	/* job number of spool entries */
+int	 requests;		/* # of spool requests */
 char	*user[MAXUSERS];	/* users to process */
-int	users;			/* # of users in user array */
-int	requ[MAXREQUESTS];	/* job number of spool entries */
-int	requests;		/* # of spool requests */
+int	 users;			/* # of users in user array */
 
+void usage __P((void));
+
+int
 main(argc, argv)
 	register int	argc;
 	register char	**argv;
@@ -106,6 +118,7 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 usage()
 {
 	puts("usage: lpq [-l] [-Pprinter] [user ...] [job ...]");

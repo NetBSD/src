@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lpdchar.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lpdchar.c,v 1.2 1993/08/01 17:58:53 mycroft Exp $";
+static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*

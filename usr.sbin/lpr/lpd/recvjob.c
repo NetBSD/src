@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,46 +33,73 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)recvjob.c	5.15 (Berkeley) 5/4/91";*/
-static char rcsid[] = "$Id: recvjob.c,v 1.3 1994/04/21 18:53:47 cgd Exp $";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+static char sccsid[] = "@(#)recvjob.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
  * Receive printer jobs from the network, queue them and
  * start the printer daemon.
  */
-
-#include "lp.h"
-#include "pathnames.h"
+#include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 
-char	*sp = "";
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <syslog.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "lp.h"
+#include "lp.local.h"
+#include "extern.h"
+#include "pathnames.h"
+
 #define ack()	(void) write(1, sp, 1);
 
-char    tfname[40];		/* tmp copy of cf before linking */
-char    dfname[40];		/* data files */
-int	minfree;		/* keep at least minfree blocks available */
+static char	 dfname[40];	/* data files */
+static int	 minfree;       /* keep at least minfree blocks available */
+static char	*sp = "";
+static char	 tfname[40];	/* tmp copy of cf before linking */
 
-void	rcleanup();
+static int        chksize __P((int));
+static void       frecverr __P((const char *, ...));
+static int        noresponse __P((void));
+static void       rcleanup __P((int));
+static int        read_number __P((char *));
+static int        readfile __P((char *, int));
+static int        readjob __P((void));
 
+
+void
 recvjob()
 {
 	struct stat stb;
-	char *bp = pbuf;
 	int status;
 
 	/*
 	 * Perform lookup for printer name or abbreviation
 	 */
-	if ((status = pgetent(line, printer)) < 0)
+	if ((status = cgetent(&bp, printcapdb, printer)) == -2)
 		frecverr("cannot open printer description file");
-	else if (status == 0)
+	else if (status == -1)
 		frecverr("unknown printer %s", printer);
-	if ((LF = pgetstr("lf", &bp)) == NULL)
+	else if (status == -3)
+		fatal("potential reference loop detected in printcap file");
+	
+	if (cgetstr(bp, "lf", &LF) == -1)
 		LF = _PATH_CONSOLE;
-	if ((SD = pgetstr("sd", &bp)) == NULL)
+	if (cgetstr(bp, "sd", &SD) == -1)
 		SD = _PATH_DEFSPOOL;
-	if ((LO = pgetstr("lo", &bp)) == NULL)
+	if (cgetstr(bp, "lo", &LO) == -1)
 		LO = DEFLOCK;
 
 	(void) close(2);			/* set up log file */
@@ -102,6 +130,7 @@ recvjob()
  * Read printer jobs sent by lpd and copy them to the spooling directory.
  * Return the number of jobs successfully transfered.
  */
+static int
 readjob()
 {
 	register int size, nfiles;
@@ -125,7 +154,7 @@ readjob()
 		cp = line;
 		switch (*cp++) {
 		case '\1':	/* cleanup because data sent was bad */
-			rcleanup();
+			rcleanup(0);
 			continue;
 
 		case '\2':	/* read cf file */
@@ -148,7 +177,7 @@ readjob()
 				continue;
 			}
 			if (!readfile(tfname, size)) {
-				rcleanup();
+				rcleanup(0);
 				continue;
 			}
 			if (link(tfname, cp) < 0)
@@ -175,13 +204,14 @@ readjob()
 			(void) readfile(dfname, size);
 			continue;
 		}
-		frecverr("protocol screwup");
+		frecverr("protocol screwup: %s", line);
 	}
 }
 
 /*
  * Read files send by lpd and copy them to the spooling directory.
  */
+static int
 readfile(file, size)
 	char *file;
 	int size;
@@ -227,6 +257,7 @@ readfile(file, size)
 	return(1);
 }
 
+static int
 noresponse()
 {
 	char resp;
@@ -242,6 +273,7 @@ noresponse()
  * Check to see if there is enough space on the disk for size bytes.
  * 1 == OK, 0 == Not OK.
  */
+static int
 chksize(size)
 	int size;
 {
@@ -259,6 +291,7 @@ chksize(size)
 	return(1);
 }
 
+static int
 read_number(fn)
 	char *fn;
 {
@@ -278,10 +311,10 @@ read_number(fn)
 /*
  * Remove all the files associated with the current job being transfered.
  */
-void
-rcleanup()
+static void
+rcleanup(signo)
+	int signo;
 {
-
 	if (tfname[0])
 		(void) unlink(tfname);
 	if (dfname[0])
@@ -294,11 +327,32 @@ rcleanup()
 	dfname[0] = '\0';
 }
 
-frecverr(msg, a1, a2)
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+static void
+#if __STDC__
+frecverr(const char *msg, ...)
+#else
+frecverr(msg, va_alist)
 	char *msg;
+        va_dcl
+#endif
 {
-	rcleanup();
-	syslog(LOG_ERR, msg, a1, a2);
+	extern char *fromb;
+	va_list ap;
+#if __STDC__
+	va_start(ap, msg);
+#else
+	va_start(ap);
+#endif
+	rcleanup(0);
+	syslog(LOG_ERR, "%s", fromb);
+	vsyslog(LOG_ERR, msg, ap);
+	va_end(ap);
 	putchar('\1');		/* return error code */
 	exit(1);
 }

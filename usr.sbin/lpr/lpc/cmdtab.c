@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmdtab.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmdtab.c,v 1.2 1993/08/01 17:58:58 mycroft Exp $";
+static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
+
+#include <sys/cdefs.h>
+
+#include "lpc.h"
+#include "extern.h"
 
 /*
  * lpc -- command tables
  */
-
-#include "lpc.h"
-
-int	abort(), clean(), enable(), disable(), down(), help();
-int	quit(), restart(), start(), status(), stop(), topq(), up();
-
 char	aborthelp[] =	"terminate a spooling daemon immediately and disable printing";
 char	cleanhelp[] =	"remove cruft files from a queue";
 char	enablehelp[] =	"turn a spooling queue on";
@@ -60,7 +58,7 @@ char	topqhelp[] =	"put job at top of printer queue";
 char	uphelp[] =	"enable everything and restart spooling daemon";
 
 struct cmd cmdtab[] = {
-	{ "abort",	aborthelp,	abort,		1 },
+	{ "abort",	aborthelp,	doabort,	1 },
 	{ "clean",	cleanhelp,	clean,		1 },
 	{ "enable",	enablehelp,	enable,		1 },
 	{ "exit",	quithelp,	quit,		0 },
@@ -69,7 +67,7 @@ struct cmd cmdtab[] = {
 	{ "help",	helphelp,	help,		0 },
 	{ "quit",	quithelp,	quit,		0 },
 	{ "restart",	restarthelp,	restart,	0 },
-	{ "start",	starthelp,	start,		1 },
+	{ "start",	starthelp,	startcmd,	1 },
 	{ "status",	statushelp,	status,		0 },
 	{ "stop",	stophelp,	stop,		1 },
 	{ "topq",	topqhelp,	topq,		1 },
