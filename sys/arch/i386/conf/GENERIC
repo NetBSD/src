@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.418 2001/08/27 22:23:47 augustss Exp $
+#	$NetBSD: GENERIC,v 1.419 2001/08/27 22:25:42 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.418 $"
+#ident 		"GENERIC-$Revision: 1.419 $"
 
 maxusers	32		# estimated number of users
 
@@ -577,7 +577,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
