@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)startup.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: startup.c,v 1.7 1994/09/23 14:28:09 mycroft Exp $";
+static char *rcsid = "$Id: startup.c,v 1.8 1994/10/31 04:35:58 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -46,6 +46,7 @@ static char *rcsid = "$Id: startup.c,v 1.7 1994/09/23 14:28:09 mycroft Exp $";
 #include <net/if_dl.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pathnames.h"
 
 struct	interface *ifnet;
