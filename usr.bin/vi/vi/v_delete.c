@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_delete.c	8.10 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)v_delete.c	8.15 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,8 +81,9 @@ v_Delete(sp, ep, vp)
 	vp->m_stop.cno = len - 1;
 
 	/* Yank the lines. */
-	if (cut(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_stop, CUT_DELETE))
+	if (cut(sp, ep,
+	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_stop, CUT_NUMOPT))
 		return (1);
 	if (delete(sp, ep, &vp->m_start, &vp->m_stop, 0))
 		return (1);
@@ -106,11 +107,15 @@ v_delete(sp, ep, vp)
 	size_t len;
 	int lmode;
 
-	/* Yank the lines. */
 	lmode = F_ISSET(vp, VM_LMODE) ? CUT_LINEMODE : 0;
-	if (cut(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-	    &vp->m_start, &vp->m_stop, lmode | CUT_DELETE))
+
+	/* Yank the lines. */
+	if (cut(sp, ep, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_stop,
+	    lmode | (F_ISSET(vp, VM_CUTREQ) ? CUT_NUMREQ : CUT_NUMOPT)))
 		return (1);
+
+	/* Delete the lines. */
 	if (delete(sp, ep, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
@@ -142,5 +147,14 @@ v_delete(sp, ep, vp)
 	}
 	if (vp->m_final.cno >= len)
 		vp->m_final.cno = len ? len - 1 : 0;
+
+	/*
+	 * !!!
+	 * The "dd" command moved to the first non-blank; "d<motion>" didn't.
+	 */
+	if (F_ISSET(vp, VM_LDOUBLE)) {
+		F_CLR(vp, VM_RCM_MASK);
+		F_SET(vp, VM_RCM_SETFNB);
+	}
 	return (0);
 }

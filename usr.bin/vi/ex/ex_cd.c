@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_cd.c	8.10 (Berkeley) 3/19/94";
+static const char sccsid[] = "@(#)ex_cd.c	8.17 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)ex_cd.c	8.10 (Berkeley) 3/19/94";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,16 +67,36 @@ ex_cd(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
+	struct passwd *pw;
+	ARGS *ap;
 	CDPATH *cdp;
-	EX_PRIVATE *exp;
-	char *dir, buf[MAXPATHLEN];
+	char *dir;		/* XXX END OF THE STACK, DON'T TRUST GETCWD. */
+	char buf[MAXPATHLEN * 2];
+
+	/*
+	 * !!!
+	 * Historic practice is that the cd isn't attempted if the file has
+	 * been modified, unless its name begins with a leading '/' or the
+	 * force flag is set.
+	 */
+	if (F_ISSET(ep, F_MODIFIED) &&
+	    !F_ISSET(cmdp, E_FORCE) && sp->frp->name[0] != '/') {
+		msgq(sp, M_ERR,
+    "File modified since last complete write; write or use ! to override");
+		return (1);
+	}
 
 	switch (cmdp->argc) {
 	case 0:
+		/* If no argument, change to the user's home directory. */
 		if ((dir = getenv("HOME")) == NULL) {
-			msgq(sp, M_ERR,
-			    "Environment variable HOME not set.");
-			return (1);
+			if ((pw = getpwuid(getuid())) == NULL ||
+			    pw->pw_dir == NULL || pw->pw_dir[0] == '\0') {
+				msgq(sp, M_ERR,
+			   "Unable to find home directory location");
+				return (1);
+			}
+			dir = pw->pw_dir;
 		}
 		break;
 	case 1:
@@ -85,36 +106,32 @@ ex_cd(sp, ep, cmdp)
 		abort();
 	}
 
+	/* Try the current directory first. */
+	if (!chdir(dir))
+		goto ret;
+
 	/*
-	 * If the user has a CDPATH variable, we use it, otherwise
-	 * we use the current directory.
-	 *
-	 * !!!
-	 * This violates historic practice.  Historic vi didn't consider
-	 * CDPATH, and therefore always used the current directory. This
-	 * is probably correct; if user's have set CDPATH to not include
-	 * the current directory, they probably had a reason.
+	 * If moving to the user's home directory, or, the path begins with
+	 * "/", "./" or "../", it's the only place we try.
 	 */
-	exp = EXP(sp);
-	if (dir[0] == '/') {
-		if (chdir(dir) < 0)
-			goto err;
-	} else {
-		for (cdp = exp->cdq.tqh_first;
-		    cdp != NULL; cdp = cdp->q.tqe_next) {
-			(void)snprintf(buf,
-			    sizeof(buf), "%s/%s", cdp->path, dir);
-			if (!chdir(buf))
-				break;
-		}
-		if (cdp == NULL) {
-err:			msgq(sp, M_SYSERR, dir);
-			return (1);
+	if (cmdp->argc == 0 ||
+	    (ap = cmdp->argv[0])->bp[0] == '/' ||
+	    ap->len == 1 && ap->bp[0] == '.' ||
+	    ap->len >= 2 && ap->bp[0] == '.' && ap->bp[1] == '.' &&
+	    (ap->bp[2] == '/' || ap->bp[2] == '\0'))
+		goto err;
+
+	/* If the user has a CDPATH variable, try its elements. */
+	for (cdp = EXP(sp)->cdq.tqh_first; cdp != NULL; cdp = cdp->q.tqe_next) {
+		(void)snprintf(buf, sizeof(buf), "%s/%s", cdp->path, dir);
+		if (!chdir(buf)) {
+ret:			if (getcwd(buf, sizeof(buf)) != NULL)
+				msgq(sp, M_INFO, "New directory: %s", buf);
+			return (0);
 		}
 	}
-	if (getcwd(buf, sizeof(buf)) != NULL)
-		msgq(sp, M_INFO, "New directory: %s", buf);
-	return (0);
+err:	msgq(sp, M_SYSERR, "%s", dir);
+	return (1);
 }
 
 #define	FREE_CDPATH(cdp) {						\

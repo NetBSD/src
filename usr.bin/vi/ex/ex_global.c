@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_global.c	8.32 (Berkeley) 3/22/94";
+static const char sccsid[] = "@(#)ex_global.c	8.42 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,13 +95,14 @@ global(sp, ep, cmdp, cmd)
 	EXCMDARG *cmdp;
 	enum which cmd;
 {
+	MARK abs;
 	RANGE *rp;
 	EX_PRIVATE *exp;
 	recno_t elno, lno;
 	regmatch_t match[1];
 	regex_t *re, lre;
 	size_t clen, len;
-	int delim, eval, reflags, replaced, rval, teardown;
+	int delim, eval, reflags, replaced, rval;
 	char *cb, *ptrn, *p, *t;
 
 	/*
@@ -110,7 +111,7 @@ global(sp, ep, cmdp, cmd)
 	 */
 	for (p = cmdp->argv[0]->bp; isblank(*p); ++p);
 	if (*p == '\0' || isalnum(*p)) {
-		msgq(sp, M_ERR, "Usage: %s.", cmdp->cmd->usage);
+		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 		return (1);
 	}
 	delim = *p++;
@@ -141,7 +142,7 @@ global(sp, ep, cmdp, cmd)
 	/* If the pattern string is empty, use the last one. */
 	if (*ptrn == '\0') {
 		if (!F_ISSET(sp, S_SRE_SET)) {
-			msgq(sp, M_ERR, "No previous regular expression.");
+			msgq(sp, M_ERR, "No previous regular expression");
 			return (1);
 		}
 		re = &sp->sre;
@@ -163,7 +164,7 @@ global(sp, ep, cmdp, cmd)
 
 		/* Free up any allocated memory. */
 		if (replaced)
-			free(ptrn);
+			FREE_SPACE(sp, ptrn, 0);
 
 		if (eval) {
 			re_error(sp, eval, re);
@@ -179,10 +180,14 @@ global(sp, ep, cmdp, cmd)
 		F_SET(sp, S_SRE_SET);
 	}
 
-	/* Get a copy of the command string. */
+	/*
+	 * Get a copy of the command string; the default command is print.
+	 * Don't worry about a set of <blank>s with no command, that will
+	 * default to print in the ex parser.
+	 */
 	if ((clen = strlen(p)) == 0) {
-		msgq(sp, M_ERR, "No command string specified.");
-		return (1);
+		p = "p";
+		clen = 1;
 	}
 	MALLOC_RET(sp, cb, char *, clen);
 	memmove(cb, p, clen);
@@ -194,9 +199,14 @@ global(sp, ep, cmdp, cmd)
 	sp->subre = sp->sre;
 	F_SET(sp, S_SUBRE_SET);
 
-	/* Set the global flag, and set up interrupts. */
+	/* Set the global flag. */
 	F_SET(sp, S_GLOBAL);
-	teardown = !intr_init(sp);
+
+	/* The global commands always set the previous context mark. */
+	abs.lno = sp->lno;
+	abs.cno = sp->cno;
+	if (mark_set(sp, ep, ABSMARK1, &abs, 1))
+		goto err;
 
 	/*
 	 * For each line...  The semantics of global matching are that we first
@@ -214,7 +224,7 @@ global(sp, ep, cmdp, cmd)
 	for (rval = 0, lno = cmdp->addr1.lno,
 	    elno = cmdp->addr2.lno; lno <= elno; ++lno) {
 		/* Someone's unhappy, time to stop. */
-		if (F_ISSET(sp, S_INTERRUPTED))
+		if (INTERRUPTED(sp))
 			goto interrupted;
 
 		/* Get the line and search for a match. */
@@ -275,12 +285,12 @@ global(sp, ep, cmdp, cmd)
 		 * the command fails.
 		 */
 		exp->range_lno = sp->lno = rp->start++;
-		if (ex_cmd(sp, ep, cb, clen))
+		if (ex_cmd(sp, ep, cb, clen, 0))
 			goto err;
 
 		/* Someone's unhappy, time to stop. */
-		if (F_ISSET(sp, S_INTERRUPTED)) {
-interrupted:		msgq(sp, M_INFO, "Interrupted.");
+		if (INTERRUPTED(sp)) {
+interrupted:		msgq(sp, M_INFO, "Interrupted");
 			break;
 		}
 	}
@@ -296,9 +306,11 @@ interrupted:		msgq(sp, M_INFO, "Interrupted.");
 err:		rval = 1;
 	}
 
+	/* Command we ran may have set the autoprint flag, clear it. */
+	F_CLR(exp, EX_AUTOPRINT);
+
+	/* Clear the global flag. */
 	F_CLR(sp, S_GLOBAL);
-	if (teardown)
-		intr_end(sp);
 
 	/* Free any remaining ranges and the command buffer. */
 	while ((rp = exp->rangeq.cqh_first) != (void *)&exp->rangeq) {

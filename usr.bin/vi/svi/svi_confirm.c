@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)svi_confirm.c	8.6 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)svi_confirm.c	8.9 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,13 +40,13 @@ static char sccsid[] = "@(#)svi_confirm.c	8.6 (Berkeley) 3/8/94";
 #include <sys/time.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <termios.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 
@@ -76,19 +76,19 @@ svi_confirm(sp, ep, fp, tp)
 	getyx(stdscr, oldy, oldx);
 	MOVE(sp, INFOLINE(sp), 0);
 	clrtoeol();
-	ADDNSTR(CONFSTRING, sizeof(CONFSTRING) - 1);
+	ADDNSTR(STR_CONFIRM, sizeof(STR_CONFIRM) - 1);
 	MOVEA(sp, oldy, oldx);
 	refresh();
 
 	if (term_key(sp, &ikey, 0) != INP_OK)
 		return (CONF_QUIT);
 	switch (ikey.ch) {
-	case YES_CH:
+	case CH_YES:
 		return (CONF_YES);
-	case QUIT_CH:
+	case CH_QUIT:
 		return (CONF_QUIT);
 	default:
-	case NO_CH:
+	case CH_NO:
 		return (CONF_NO);
 	}
 	/* NOTREACHED */

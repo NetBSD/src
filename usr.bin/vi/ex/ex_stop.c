@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_stop.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_stop.c	8.8 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)ex_stop.c	8.5 (Berkeley) 3/8/94";
 
 #include "vi.h"
 #include "excmd.h"
-#include "sex/sex_screen.h"
+#include "../sex/sex_screen.h"
 
 /*
  * ex_stop -- :stop[!]
@@ -68,12 +68,9 @@ ex_stop(sp, ep, cmdp)
 	EXCMDARG *cmdp;
 {
 	/* For some strange reason, the force flag turns off autowrite. */
-	if (F_ISSET(ep, F_MODIFIED) && O_ISSET(sp, O_AUTOWRITE) &&
-	    !F_ISSET(cmdp, E_FORCE)) {
-		if (file_write((sp), (ep), NULL, NULL, NULL, FS_ALL))
-			return (1);
-		if (sex_refresh(sp, ep))
-			return (1);
-	}
+	if (!F_ISSET(cmdp, E_FORCE) &&
+	    F_ISSET(ep, F_MODIFIED) && O_ISSET(sp, O_AUTOWRITE) &&
+	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
+		return (1);
 	return (sp->s_suspend(sp));
 }

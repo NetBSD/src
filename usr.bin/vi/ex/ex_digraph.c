@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_digraph.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_digraph.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #ifndef NO_DIGRAPH
@@ -41,7 +41,6 @@ static char sccsid[] = "@(#)ex_digraph.c	8.5 (Berkeley) 3/8/94";
 #include <sys/time.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -50,6 +49,7 @@ static char sccsid[] = "@(#)ex_digraph.c	8.5 (Berkeley) 3/8/94";
 #include <termios.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 

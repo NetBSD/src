@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_set.c	8.3 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_set.c	8.5 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ ex_set(sp, ep, cmdp)
 		opts_dump(sp, CHANGED_DISPLAY);
 		break;
 	default:
-		opts_set(sp, cmdp->argv);
+		opts_set(sp, cmdp->cmd->usage, cmdp->argv);
 		break;
 	}
 	return (0);

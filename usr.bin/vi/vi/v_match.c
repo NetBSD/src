@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_match.c	8.10 (Berkeley) 3/10/94";
+static const char sccsid[] = "@(#)v_match.c	8.15 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,6 +70,10 @@ v_match(sp, ep, vp)
 	int cnt, matchc, startc, (*gc)__P((SCR *, EXF *, VCS *));
 	char *p;
 
+	/*
+	 * !!!
+	 * Historic practice; ignore the count.
+	 */
 	if ((p = file_gline(sp, ep, vp->m_start.lno, &len)) == NULL) {
 		if (file_lline(sp, ep, &lno))
 			return (1);
@@ -86,7 +90,7 @@ v_match(sp, ep, vp)
 	 */
 	for (off = vp->m_start.cno;; ++off) {
 		if (off >= len) {
-nomatch:		msgq(sp, M_BERR, "No match character on this line.");
+nomatch:		msgq(sp, M_BERR, "No match character on this line");
 			return (1);
 		}
 		switch (startc = p[off]) {
@@ -138,7 +142,7 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 			break;
 	}
 	if (cnt) {
-		msgq(sp, M_BERR, "Matching character not found.");
+		msgq(sp, M_BERR, "Matching character not found");
 		return (1);
 	}
 
@@ -149,7 +153,7 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 	 * If moving right, non-motion commands move to the end of the range.
 	 * VC_D and VC_Y stay at the start.  If moving left, non-motion and
 	 * VC_D commands move to the end of the range.  VC_Y remains at the
-	 * start.  Ignore VC_C and VC_S.
+	 * start.  Ignore VC_C and VC_DEF.
 	 *
 	 * !!!
 	 * Don't correct for leftward movement -- historic vi deleted the
@@ -166,22 +170,29 @@ nomatch:		msgq(sp, M_BERR, "No match character on this line.");
 	/*
 	 * !!!
 	 * If the motion is across lines, and the earliest cursor position
-	 * is at or before any non-blank characters in its line, i.e. the
-	 * movement is cutting all of the line's text, the buffer is in line
-	 * mode.
+	 * is at or before any non-blank characters in the line, i.e. the
+	 * movement is cutting all of the line's text, and the later cursor
+	 * position has nothing other than whitespace characters between it
+	 * and the end of its line, the buffer is in line mode.
 	 */
-	if (ISMOTION(vp) && vp->m_start.lno != vp->m_stop.lno) {
-		mp = vp->m_start.lno < vp->m_stop.lno ?
-		    &vp->m_start : &vp->m_stop;
-		if (mp->cno == 0) {
-			F_SET(vp, VM_LMODE);
-			return (0);
-		}
+	if (!ISMOTION(vp) || vp->m_start.lno == vp->m_stop.lno)
+		return (0);
+	mp = vp->m_start.lno < vp->m_stop.lno ? &vp->m_start : &vp->m_stop;
+	if (mp->cno != 0) {
 		cno = 0;
 		if (nonblank(sp, ep, mp->lno, &cno))
 			return (1);
-		if (cno >= mp->cno)
-			F_SET(vp, VM_LMODE);
+		if (cno < mp->cno)
+			return (0);
 	}
+	mp = vp->m_start.lno < vp->m_stop.lno ? &vp->m_stop : &vp->m_start;
+	if ((p = file_gline(sp, ep, mp->lno, &len)) == NULL) {
+		GETLINE_ERR(sp, mp->lno);
+		return (1);
+	}
+	for (p += mp->cno + 1, len -= mp->cno; --len; ++p)
+		if (!isblank(*p))
+			return (0);
+	F_SET(vp, VM_LMODE);
 	return (0);
 }

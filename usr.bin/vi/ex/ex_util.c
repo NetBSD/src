@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_util.c	8.6 (Berkeley) 3/23/94";
+static const char sccsid[] = "@(#)ex_util.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,11 +73,18 @@ ex_getline(sp, fp, lenp)
 	char *p;
 
 	exp = EXP(sp);
-	for (off = 0, p = exp->ibp;; ++off) {
-		ch = getc(fp);
+	for (errno = 0, off = 0, p = exp->ibp;;) {
 		if (off >= exp->ibp_len) {
 			BINC_RET(sp, exp->ibp, exp->ibp_len, off + 1);
 			p = exp->ibp + off;
+		}
+		if ((ch = getc(fp)) == EOF && !feof(fp)) {
+			if (errno == EINTR) {
+				errno = 0;
+				clearerr(fp);
+				continue;
+			}
+			return (1);
 		}
 		if (ch == EOF || ch == '\n') {
 			if (ch == EOF && !off)
@@ -86,20 +93,20 @@ ex_getline(sp, fp, lenp)
 			return (0);
 		}
 		*p++ = ch;
+		++off;
 	}
 	/* NOTREACHED */
 }
 
 /*
  * ex_sleave --
- *	Save the terminal/signal state, not screen modification time.
+ *	Save the terminal/signal state, screen modification time.
  * 	Specific to ex/filter.c and ex/ex_shell.c.
  */
 int
 ex_sleave(sp)
 	SCR *sp;
 {
-	struct sigaction act;
 	struct stat sb;
 	EX_PRIVATE *exp;
 
@@ -107,33 +114,14 @@ ex_sleave(sp)
 	if (!F_ISSET(sp->gp, G_STDIN_TTY))
 		return (1);
 	
-	/*
-	 * The old terminal values almost certainly turn on VINTR, VQUIT and
-	 * VSUSP.  We don't want to interrupt the parent(s), so we ignore
-	 * VINTR.  VQUIT is ignored by main() because nvi never wants to catch
-	 * it.  A VSUSP handler have been installed by the screen code.
-	 */
-	act.sa_handler = SIG_IGN;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-
 	exp = EXP(sp);
-	if (sigaction(SIGINT, &act, &exp->leave_act)) {
-		msgq(sp, M_SYSERR, "sigaction");
-		return (1);
-	}
 	if (tcgetattr(STDIN_FILENO, &exp->leave_term)) {
 		msgq(sp, M_SYSERR, "tcgetattr");
-		goto err;
+		return (1);
 	}
 	if (tcsetattr(STDIN_FILENO,
 	    TCSANOW | TCSASOFT, &sp->gp->original_termios)) {
 		msgq(sp, M_SYSERR, "tcsetattr");
-		/*
-		 * If an error occurs, back out the changes and run
-		 * without interrupts.
-		 */
-err:		(void)sigaction(SIGINT, &exp->leave_act, NULL);
 		return (1);
 	}
 	/*
@@ -166,16 +154,36 @@ ex_rleave(sp)
 
 	exp = EXP(sp);
 
-	/* Turn off interrupts. */
+	/* Restore the terminal modes. */
 	if (tcsetattr(STDIN_FILENO, TCSANOW | TCSASOFT, &exp->leave_term))
 		msgq(sp, M_SYSERR, "tcsetattr");
-
-	/* Reset the signal state. */
-	if (sigaction(SIGINT, &exp->leave_act, NULL))
-		msgq(sp, M_SYSERR, "sigaction");
 
 	/* If the terminal was used, refresh the screen. */
 	if (fstat(STDIN_FILENO, &sb) || exp->leave_atime == 0 ||
 	    exp->leave_atime != sb.st_atime || exp->leave_mtime != sb.st_mtime)
 		F_SET(sp, S_REFRESH);
+}
+
+/*
+ * ex_ncheck --
+ *	Check for more files to edit.
+ */
+int
+ex_ncheck(sp, force)
+	SCR *sp;
+	int force;
+{
+	/*
+	 * !!!
+	 * Historic practice: quit! or two quit's done in succession
+	 * (where ZZ counts as a quit) didn't check for other files.
+	 */
+	if (!force && sp->ccnt != sp->q_ccnt + 1 &&
+	    sp->cargv != NULL && sp->cargv[1] != NULL) {
+		sp->q_ccnt = sp->ccnt;
+		msgq(sp, M_ERR,
+    "More files to edit; use n[ext] to go to the next file, q[uit]! to quit");
+		return (1);
+	}
+	return (0);
 }

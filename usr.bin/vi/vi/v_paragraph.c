@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_paragraph.c	8.9 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)v_paragraph.c	8.19 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,14 +55,39 @@ static char sccsid[] = "@(#)v_paragraph.c	8.9 (Berkeley) 3/14/94";
 #include "vi.h"
 #include "vcmd.h"
 
-/*
- * Paragraphs are empty lines after text or values from the paragraph
- * or section options.
- */
+#define	INTEXT_CHECK {							\
+	if (len == 0 || v_isempty(p, len)) {				\
+		if (!--cnt)						\
+			goto found;					\
+		pstate = P_INBLANK;					\
+	}								\
+	/*								\
+	 * !!!								\
+	 * Historic documentation (USD:15-11, 4.2) said that formfeed	\
+	 * characters (^L) in the first column delimited paragraphs.	\
+	 * The historic vi code mentions formfeed characters, but never	\
+	 * implements them.  It seems reasonable, do it.		\
+	 */								\
+	if (p[0] == '\014') {						\
+		if (!--cnt)						\
+			goto found;					\
+		continue;						\
+	}								\
+	if (p[0] != '.' || len < 2)					\
+		continue;						\
+	for (lp = VIP(sp)->ps; *lp != '\0'; lp += 2)			\
+		if (lp[0] == p[1] &&					\
+		    (lp[1] == ' ' && len == 2 || lp[1] == p[2]) &&	\
+		    !--cnt)						\
+			goto found;					\
+}
 
 /*
  * v_paragraphf -- [count]}
  *	Move forward count paragraphs.
+ *
+ * Paragraphs are empty lines after text, formfeed characters, or values
+ * from the paragraph or section options.
  */
 int
 v_paragraphf(sp, ep, vp)
@@ -126,17 +151,7 @@ v_paragraphf(sp, ep, vp)
 			goto eof;
 		switch (pstate) {
 		case P_INTEXT:
-			if (p[0] == '.' && len >= 2)
-				for (lp = VIP(sp)->paragraph; *lp; lp += 2)
-					if (lp[0] == p[1] &&
-					    (lp[1] == ' ' || lp[1] == p[2]) &&
-					    !--cnt)
-						goto found;
-			if (len == 0 || v_isempty(p, len)) {
-				if (!--cnt)
-					goto found;
-				pstate = P_INBLANK;
-			}
+			INTEXT_CHECK;
 			break;
 		case P_INBLANK:
 			if (len == 0 || v_isempty(p, len))
@@ -149,10 +164,10 @@ v_paragraphf(sp, ep, vp)
 			 * !!!
 			 * Non-motion commands move to the end of the range,
 			 * VC_D and VC_Y stay at the start.  Ignore VC_C and
-			 * VC_S.  Adjust end of the range for motion commands;
-			 * historically, a motion component was to the end of
-			 * the previous line, whereas the movement command was
-			 * to the start of the new "paragraph".
+			 * VC_DEF.  Adjust the end of the range for motion
+			 * commands; historically, a motion component was to
+			 * the end of the previous line, whereas the movement
+			 * command was to the start of the new "paragraph".
 			 */
 found:			if (ISMOTION(vp)) {
 				vp->m_stop.lno = lastlno;
@@ -174,12 +189,19 @@ found:			if (ISMOTION(vp)) {
 	 * Adjust end of the range for motion commands; EOF is a movement
 	 * sink.  The } command historically moved to the end of the last
 	 * line, not the beginning, from any position before the end of the
-	 * last line.
+	 * last line.  It also historically worked on empty files, so we
+	 * have to make it okay.
 	 */
-eof:	if (vp->m_start.lno == lno - 1) {
+eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
 		if (file_gline(sp, ep, vp->m_start.lno, &len) == NULL) {
-			GETLINE_ERR(sp, vp->m_start.lno);
-			return (1);
+			if (file_lline(sp, ep, &lno))
+				return (1);
+			if (vp->m_start.lno != 1 || lno != 0) {
+				GETLINE_ERR(sp, vp->m_start.lno);
+				return (1);
+			}
+			vp->m_start.cno = 0;
+			return (0);
 		}
 		if (vp->m_start.cno == (len ? len - 1 : 0)) {
 			v_eof(sp, ep, NULL);
@@ -188,11 +210,11 @@ eof:	if (vp->m_start.lno == lno - 1) {
 	}
 	/*
 	 * !!!
-	 * Non-motion commands move to the end of the range, VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_S.
+	 * Non-motion commands move to the end of the range, VC_D
+	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
 	 *
-	 * If deleting the line (which happens if deleting to EOF),
-	 * then cursor movement is to the first nonblank.
+	 * If deleting the line (which happens if deleting to EOF), then
+	 * cursor movement is to the first nonblank.
 	 */
 	if (F_ISSET(vp, VC_D)) {
 		F_CLR(vp, VM_RCM_MASK);
@@ -238,6 +260,7 @@ v_paragraphb(sp, ep, vp)
 	 * Correct for a left motion component while we're thinking about it.
 	 */
 	lno = vp->m_start.lno;
+
 	if (ISMOTION(vp))
 		if (vp->m_start.cno == 0) {
 			if (vp->m_start.lno == 1) {
@@ -267,6 +290,14 @@ v_paragraphb(sp, ep, vp)
 	else {
 		--cnt;
 		pstate = P_INTEXT;
+
+		/*
+		 * !!!
+		 * If the starting cursor is past the first column,
+		 * the current line is checked for a paragraph.
+		 */
+		if (vp->m_start.cno > 0)
+			++lno;
 	}
 
 	for (;;) {
@@ -274,22 +305,12 @@ v_paragraphb(sp, ep, vp)
 			goto sof;
 		switch (pstate) {
 		case P_INTEXT:
-			if (p[0] == '.' && len >= 2)
-				for (lp = VIP(sp)->paragraph; *lp; lp += 2)
-					if (lp[0] == p[1] &&
-					    (lp[1] == ' ' || lp[1] == p[2]) &&
-					    !--cnt)
-						goto ret;
-			if (len == 0 || v_isempty(p, len)) {
-				if (!--cnt)
-					goto ret;
-				pstate = P_INBLANK;
-			}
+			INTEXT_CHECK;
 			break;
 		case P_INBLANK:
 			if (len != 0 && !v_isempty(p, len)) {
 				if (!--cnt)
-					goto ret;
+					goto found;
 				pstate = P_INTEXT;
 			}
 			break;
@@ -301,23 +322,23 @@ v_paragraphb(sp, ep, vp)
 	/* SOF is a movement sink. */
 sof:	lno = 1;
 
-ret:	vp->m_stop.lno = lno;
+found:	vp->m_stop.lno = lno;
 	vp->m_stop.cno = 0;
 
 	/*
-	 * VC_D and non-motion commands move to the end of the range,
-	 * VC_Y stays at the start.  Ignore VC_C and VC_S.
+	 * All commands move to the end of the range.  (We already
+	 * adjusted the start of the range for motion commands).
 	 */
-	vp->m_final = F_ISSET(vp, VC_Y) ? vp->m_start : vp->m_stop;
+	vp->m_final = vp->m_stop;
 	return (0);
 }
 
 /*
- * v_buildparagraph --
+ * v_buildps --
  *	Build the paragraph command search pattern.
  */
 int
-v_buildparagraph(sp)
+v_buildps(sp)
 	SCR *sp;
 {
 	VI_PRIVATE *vip;
@@ -337,14 +358,13 @@ v_buildparagraph(sp)
 	MALLOC_RET(sp, p, char *, p_len + s_len + 1);
 
 	vip = VIP(sp);
-	if (vip->paragraph != NULL)
-		FREE(vip->paragraph, vip->paragraph_len);
+	if (vip->ps != NULL)
+		free(vip->ps);
 
 	if (p_p != NULL)
 		memmove(p, p_p, p_len + 1);
 	if (s_p != NULL)
 		memmove(p + p_len, s_p, s_len + 1);
-	vip->paragraph = p;
-	vip->paragraph_len = p_len + s_len + 1;
+	vip->ps = p;
 	return (0);
 }

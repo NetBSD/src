@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_init.c	8.21 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_init.c	8.27 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,8 +91,8 @@ v_screen_copy(orig, sp)
 		nvip->inc_lastch = ovip->inc_lastch;
 		nvip->inc_lastval = ovip->inc_lastval;
 
-		if (ovip->paragraph != NULL &&
-		    (nvip->paragraph = strdup(ovip->paragraph)) == NULL) {
+		if (ovip->ps != NULL &&
+		    (nvip->ps = strdup(ovip->ps)) == NULL) {
 			msgq(sp, M_SYSERR, NULL);
 			return (1);
 		}
@@ -116,10 +116,10 @@ v_screen_end(sp)
 	vip = VIP(sp);
 
 	if (vip->rep != NULL)
-		FREE(vip->rep, vip->rep_len);
+		free(vip->rep);
 
-	if (vip->paragraph != NULL)
-		FREE(vip->paragraph, vip->paragraph_len);
+	if (vip->ps != NULL)
+		free(vip->ps);
 
 	/* Free private memory. */
 	FREE(vip, sizeof(VI_PRIVATE));
@@ -158,17 +158,31 @@ v_init(sp, ep)
 			}
 		} else if (sp->cno >= len)
 			sp->cno = 0;
+
+		if (F_ISSET(sp->frp, FR_FNONBLANK)) {
+			sp->cno = 0;
+			if (nonblank(sp, ep, sp->lno, &sp->cno))
+				return (1);
+
+			/* Reset strange attraction. */
+			sp->rcm = 0;
+			sp->rcm_last = 0;
+		}
 	} else {
 		sp->lno = 1;
 		sp->cno = 0;
 
 		if (O_ISSET(sp, O_COMMENT) && v_comment(sp, ep))
 			return (1);
-	}
 
-	/* Reset strange attraction. */
-	sp->rcm = 0;
-	sp->rcmflags = 0;
+		/* Vi always starts up on the first non-<blank>. */
+		if (nonblank(sp, ep, sp->lno, &sp->cno))
+			return (1);
+
+		/* Reset strange attraction. */
+		sp->rcm = 0;
+		sp->rcm_last = 0;
+	}
 
 	/* Make ex display to a special function. */
 	if ((sp->stdfp = fwopen(sp, sp->s_ex_write)) == NULL) {
@@ -180,7 +194,7 @@ v_init(sp, ep)
 #endif
 
 	/* Display the status line. */
-	return (status(sp, ep, sp->lno, 0));
+	return (msg_status(sp, ep, sp->lno, 0));
 }
 
 /*
@@ -209,7 +223,7 @@ v_optchange(sp, opt)
 	switch (opt) {
 	case O_PARAGRAPHS:
 	case O_SECTIONS:
-		return (v_buildparagraph(sp));
+		return (v_buildps(sp));
 	}
 	return (0);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getc.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)getc.c	8.10 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ cs_init(sp, ep, csp)
 		if (file_lline(sp, ep, &lno))
 			return (1);
 		if (lno == 0)
-			msgq(sp, M_BERR, "Empty file.");
+			msgq(sp, M_BERR, "Empty file");
 		else
 			GETLINE_ERR(sp, csp->cs_lno);
 		return (1);

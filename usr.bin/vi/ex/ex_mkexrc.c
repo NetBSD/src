@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_mkexrc.c	8.10 (Berkeley) 3/22/94";
+static const char sccsid[] = "@(#)ex_mkexrc.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,6 @@ static char sccsid[] = "@(#)ex_mkexrc.c	8.10 (Berkeley) 3/22/94";
 
 #include "vi.h"
 #include "excmd.h"
-#include "seq.h"
 
 /*
  * ex_mkexrc -- :mkexrc[!] [file]
@@ -90,7 +89,7 @@ ex_mkexrc(sp, ep, cmdp)
 
 	if (!F_ISSET(cmdp, E_FORCE) && !stat(fname, &sb)) {
 		msgq(sp, M_ERR,
-		    "%s exists, not written; use ! to override.", fname);
+		    "%s exists, not written; use ! to override", fname);
 		return (1);
 	}
 

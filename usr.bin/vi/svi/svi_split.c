@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)svi_split.c	8.36 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)svi_split.c	8.48 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,6 @@ static char sccsid[] = "@(#)svi_split.c	8.36 (Berkeley) 3/14/94";
 #include <sys/time.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -50,6 +49,7 @@ static char sccsid[] = "@(#)svi_split.c	8.36 (Berkeley) 3/14/94";
 #include <termios.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 
@@ -61,9 +61,10 @@ static char sccsid[] = "@(#)svi_split.c	8.36 (Berkeley) 3/14/94";
  *	Split the screen.
  */
 int
-svi_split(sp, argv)
+svi_split(sp, argv, argc)
 	SCR *sp;
 	ARGS *argv[];
+	int argc;
 {
 	MSG *mp, *next;
 	SCR *tsp, saved_sp;
@@ -71,6 +72,7 @@ svi_split(sp, argv)
 	SMAP *smp;
 	size_t cnt, half;
 	int issmallscreen, splitup;
+	char **ap;
 
 	/* Check to see if it's possible. */
 	half = sp->rows / 2;
@@ -176,7 +178,7 @@ svi_split(sp, argv)
 		 */
 		if (splitup)
 			for (cnt = tsp->t_rows; ++cnt <= tsp->t_maxrows;) {
-				MOVE(tsp, cnt, 0)
+				MOVE(tsp, cnt, 0);
 				clrtoeol();
 			}
 	} else {
@@ -194,7 +196,7 @@ svi_split(sp, argv)
 			tsp->t_minrows = tsp->t_rows = tsp->rows - 1;
 		else
 			for (cnt = tsp->t_rows; ++cnt <= tsp->t_maxrows;) {
-				MOVE(tsp, cnt, 0)
+				MOVE(tsp, cnt, 0);
 				clrtoeol();
 			}
 	}
@@ -203,35 +205,33 @@ svi_split(sp, argv)
 	_TMAP(sp) = _HMAP(sp) + (sp->t_rows - 1);
 	_TMAP(tsp) = _HMAP(tsp) + (tsp->t_rows - 1);
 
-	/*
-	 * In any case, if the size of the scrolling region hasn't been
-	 * modified by the user, reset it so it's reasonable for the split
-	 * screen.
-	 */
-	if (!F_ISSET(&sp->opts[O_SCROLL], OPT_SET)) {
-		O_VAL(sp, O_SCROLL) = sp->t_maxrows / 2;
-		O_VAL(tsp, O_SCROLL) = sp->t_maxrows / 2;
-	}
+	/* Reset the length of the default scroll. */
+	sp->defscroll = sp->t_maxrows / 2;
+	tsp->defscroll = tsp->t_maxrows / 2;
 
 	/*
 	 * If files specified, build the file list, else, link to the
 	 * current file.
 	 */
 	if (argv == NULL) {
-		if (file_add(tsp, NULL, FILENAME(sp->frp), 0) == NULL)
+		if ((tsp->frp = file_add(tsp, sp->frp->name)) == NULL)
 			goto err;
-	} else
-		for (; (*argv)->len != 0; ++argv)
-			if (file_add(tsp, NULL, (*argv)->bp, 0) == NULL)
+	} else {
+		/* Create a new argument list. */
+		CALLOC(sp, tsp->argv, char **, argc + 1, sizeof(char *));
+		if (tsp->argv == NULL)
+			goto err;
+		for (ap = tsp->argv, argv; argv[0]->len != 0; ++ap, ++argv)
+			if ((*ap =
+			    v_strdup(sp, argv[0]->bp, argv[0]->len)) == NULL)
 				goto err;
+		*ap = NULL;
 
-	/* Set up the argument and current FREF pointers. */
-	if ((tsp->frp = file_first(tsp)) == NULL) {
-		msgq(sp, M_ERR, "No files in the file list.");
-		goto err;
+		/* Switch to the first one. */
+		tsp->cargv = tsp->argv;
+		if ((tsp->frp = file_add(tsp, *tsp->cargv)) == NULL)
+			goto err;
 	}
-
-	tsp->a_frp = tsp->frp;
 
 	/*
 	 * Copy the file state flags, start the file.  Fill the child's
@@ -256,6 +256,7 @@ svi_split(sp, argv)
 	}
 
 	/* Everything's initialized, put the screen on the displayed queue.*/
+	SIGBLOCK(sp->gp);
 	if (splitup) {
 		/* Link in before the parent. */
 		CIRCLEQ_INSERT_BEFORE(&sp->gp->dq, sp, tsp, q);
@@ -263,6 +264,7 @@ svi_split(sp, argv)
 		/* Link in after the parent. */
 		CIRCLEQ_INSERT_AFTER(&sp->gp->dq, sp, tsp, q);
 	}
+	SIGUNBLOCK(sp->gp);
 
 	/* Clear the current information lines in both screens. */
 	MOVE(sp, INFOLINE(sp), 0);
@@ -271,7 +273,7 @@ svi_split(sp, argv)
 	clrtoeol();
 
 	/* Redraw the status line for the parent screen. */
-	(void)status(sp, sp->ep, sp->lno, 0);
+	(void)msg_status(sp, sp->ep, sp->lno, 0);
 
 	/* Save the parent screen's cursor information. */
 	sp->frp->lno = sp->lno;
@@ -302,6 +304,11 @@ err:	*sp = saved_sp;
 	}
 
 	/* Free the new screen. */
+	if (tsp->argv != NULL) {
+		for (ap = tsp->argv; *ap != NULL; ++ap)
+			free(*ap);
+		free(tsp->argv);
+	}
 	free(_HMAP(tsp));
 	free(SVP(tsp));
 	FREE(tsp, sizeof(SCR));
@@ -323,13 +330,15 @@ svi_bg(csp)
 		return (1);
 	if (sp == NULL) {
 		msgq(csp, M_ERR,
-		    "You may not background your only displayed screen.");
+		    "You may not background your only displayed screen");
 		return (1);
 	}
 
 	/* Move the old screen to the hidden queue. */
+	SIGBLOCK(csp->gp);
 	CIRCLEQ_REMOVE(&csp->gp->dq, csp, q);
 	CIRCLEQ_INSERT_TAIL(&csp->gp->hq, csp, q);
+	SIGUNBLOCK(csp->gp);
 
 	/* Switch screens. */
 	csp->nextdisp = sp;
@@ -379,12 +388,21 @@ svi_join(csp, nsp)
 		F_SET(sp, S_REDRAW);
 	}
 
+	/* Reset the length of the default scroll. */
+	sp->defscroll = sp->t_maxrows / 2;
+
 	/*
-	 * If the size of the scrolling region hasn't been modified by
-	 * the user, reset it so it's reasonable for the new screen.
+	 * Save the old screen's cursor information.
+	 *
+	 * XXX
+	 * If called after file_end(), if the underlying file was a tmp
+	 * file it may have gone away.
 	 */
-	if (!F_ISSET(&sp->opts[O_SCROLL], OPT_SET))
-		O_VAL(sp, O_SCROLL) = sp->t_maxrows / 2;
+	if (csp->frp != NULL) {
+		csp->frp->lno = csp->lno;
+		csp->frp->cno = csp->cno;
+		F_SET(csp->frp, FR_CURSORSET);
+	}
 
 	*nsp = sp;
 	return (0);
@@ -405,17 +423,19 @@ svi_fg(csp, name)
 		return (1);
 	if (sp == NULL) {
 		if (name == NULL)
-			msgq(csp, M_ERR, "There are no background screens.");
+			msgq(csp, M_ERR, "There are no background screens");
 		else
 			msgq(csp, M_ERR,
-		    "There's no background screen editing a file named %s.",
+		    "There's no background screen editing a file named %s",
 			    name);
 		return (1);
 	}
 
 	/* Move the old screen to the hidden queue. */
+	SIGBLOCK(csp->gp);
 	CIRCLEQ_REMOVE(&csp->gp->dq, csp, q);
 	CIRCLEQ_INSERT_TAIL(&csp->gp->hq, csp, q);
+	SIGUNBLOCK(csp->gp);
 
 	return (0);
 }
@@ -435,7 +455,7 @@ svi_swap(csp, nsp, name)
 	/* Find the screen, or, if name is NULL, the first screen. */
 	for (sp = csp->gp->hq.cqh_first;
 	    sp != (void *)&csp->gp->hq; sp = sp->q.cqe_next)
-		if (name == NULL || !strcmp(FILENAME(sp->frp), name))
+		if (name == NULL || !strcmp(sp->frp->name, name))
 			break;
 	if (sp == (void *)&csp->gp->hq) {
 		*nsp = NULL;
@@ -443,10 +463,18 @@ svi_swap(csp, nsp, name)
 	}
 	*nsp = sp;
 
-	/* Save the old screen's cursor information. */
-	csp->frp->lno = csp->lno;
-	csp->frp->cno = csp->cno;
-	F_SET(csp->frp, FR_CURSORSET);
+	/*
+	 * Save the old screen's cursor information.
+	 *
+	 * XXX
+	 * If called after file_end(), if the underlying file was a tmp
+	 * file it may have gone away.
+	 */
+	if (csp->frp != NULL) {
+		csp->frp->lno = csp->lno;
+		csp->frp->cno = csp->cno;
+		F_SET(csp->frp, FR_CURSORSET);
+	}
 
 	/* Switch screens. */
 	csp->nextdisp = sp;
@@ -478,12 +506,8 @@ svi_swap(csp, nsp, name)
 	} else
 		sp->t_rows = sp->t_maxrows = sp->t_minrows = sp->rows - 1;
 
-	/*
-	 * If the size of the scrolling region hasn't been modified by
-	 * the user, reset it so it's reasonable for the new screen.
-	 */
-	if (!F_ISSET(&sp->opts[O_SCROLL], OPT_SET))
-		O_VAL(sp, O_SCROLL) = sp->t_maxrows / 2;
+	/* Reset the length of the default scroll. */
+	sp->defscroll = sp->t_maxrows / 2;
 
 	/*
 	 * Don't change the screen's cursor information other than to
@@ -509,8 +533,10 @@ svi_swap(csp, nsp, name)
 	 * the exit will delete the old one, if we're foregrounding, the fg
 	 * code will move the old one to the hidden queue.
 	 */
+	SIGBLOCK(sp->gp);
 	CIRCLEQ_REMOVE(&sp->gp->hq, sp, q);
 	CIRCLEQ_INSERT_AFTER(&csp->gp->dq, csp, sp, q);
+	SIGUNBLOCK(sp->gp);
 
 	F_SET(sp, S_REDRAW);
 	return (0);
@@ -568,13 +594,13 @@ svi_rabs(sp, count, adj)
 			s = NULL;
 		if (s == NULL) {
 			if ((s = sp->q.cqe_prev) == (void *)&sp->gp->dq) {
-toobig:				msgq(sp, M_BERR, "The screen cannot %s.",
+toobig:				msgq(sp, M_BERR, "The screen cannot %s",
 				    adj == A_DECREASE ? "shrink" : "grow");
 				return (1);
 			}
 			if (s->t_maxrows < MINIMUM_SCREEN_ROWS + count) {
 toosmall:			msgq(sp, M_BERR,
-				    "The screen can only shrink to %d rows.",
+				    "The screen can only shrink to %d rows",
 				    MINIMUM_SCREEN_ROWS);
 				return (1);
 			}
@@ -593,7 +619,7 @@ toosmall:			msgq(sp, M_BERR,
 		g->t_minrows += count;
 	g->t_maxrows += count;
 	_TMAP(g) += count;
-	(void)status(g, g->ep, g->lno, 0);
+	(void)msg_status(g, g->ep, g->lno, 0);
 	F_SET(g, S_REFORMAT);
 
 	s->rows -= count;
@@ -602,7 +628,7 @@ toosmall:			msgq(sp, M_BERR,
 	if (s->t_minrows > s->t_maxrows)
 		s->t_minrows = s->t_maxrows;
 	_TMAP(s) -= count;
-	(void)status(s, s->ep, s->lno, 0);
+	(void)msg_status(s, s->ep, s->lno, 0);
 	F_SET(s, S_REFORMAT);
 
 	return (0);

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_put.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_put.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,5 +72,7 @@ ex_put(sp, ep, cmdp)
 	if (put(sp, ep, NULL, F_ISSET(cmdp, E_BUFFER) ? &cmdp->buffer : NULL,
 	    &cmdp->addr1, &m, 1))
 		return (1);
+	sp->lno = m.lno;
+	sp->cno = m.cno;
 	return (0);
 }

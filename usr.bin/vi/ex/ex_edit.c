@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_edit.c	8.15 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_edit.c	8.19 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,17 +86,18 @@ ex_edit(sp, ep, cmdp)
 		 * special exit processing of temporary files, and reusing
 		 * them is tricky.
 		 */
-		if (frp->cname != NULL) {
-			if ((frp = file_add(sp, frp, frp->cname, 1)) == NULL)
+		if (F_ISSET(frp, FR_TMPFILE)) {
+			if ((frp = file_add(sp, NULL)) == NULL)
 				return (1);
-			set_alt_name(sp, sp->frp->cname);
-		} else if (frp->name == NULL)
-			if ((frp = file_add(sp, frp, NULL, 1)) == NULL)
+		} else {
+			if ((frp = file_add(sp, frp->name)) == NULL)
 				return (1);
+			set_alt_name(sp, sp->frp->name);
+		}
 		break;
 	case 1:
 		ap = cmdp->argv[0];
-		if ((frp = file_add(sp, sp->frp, ap->bp, 1)) == NULL)
+		if ((frp = file_add(sp, ap->bp)) == NULL)
 			return (1);
 		set_alt_name(sp, ap->bp);
 		break;
@@ -110,12 +111,8 @@ ex_edit(sp, ep, cmdp)
 	 * !!!
 	 * Contrary to POSIX 1003.2-1992, autowrite did not affect :edit.
 	 */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    ep->refcnt <= 1 && !F_ISSET(cmdp, E_FORCE)) {
-		msgq(sp, M_ERR,
-		    "Modified since last write; write or use ! to override.");
+	if (file_m2(sp, ep, F_ISSET(cmdp, E_FORCE)))
 		return (1);
-	}
 
 	/* Switch files. */
 	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))

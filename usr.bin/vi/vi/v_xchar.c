@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_xchar.c	8.6 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_xchar.c	8.9 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ v_xchar(sp, ep, vp)
 		return (1);
 	}
 	if (len == 0) {
-nodel:		msgq(sp, M_BERR, "No characters to delete.");
+nodel:		msgq(sp, M_BERR, "No characters to delete");
 		return (1);
 	}
 
@@ -95,7 +95,7 @@ nodel:		msgq(sp, M_BERR, "No characters to delete.");
 	} else
 		vp->m_final.cno = vp->m_start.cno;
 
-	if (cut(sp, ep, NULL,
+	if (cut(sp, ep,
 	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
 	    &vp->m_start, &vp->m_stop, 0))
 		return (1);
@@ -128,7 +128,7 @@ v_Xchar(sp, ep, vp)
 	--vp->m_stop.cno;
 	vp->m_final.cno = vp->m_start.cno;
 
-	if (cut(sp, ep, NULL,
+	if (cut(sp, ep,
 	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
 	    &vp->m_start, &vp->m_stop, 0))
 		return (1);

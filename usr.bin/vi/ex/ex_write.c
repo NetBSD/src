@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_write.c	8.27 (Berkeley) 3/23/94";
+static const char sccsid[] = "@(#)ex_write.c	8.37 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,13 +58,34 @@ static char sccsid[] = "@(#)ex_write.c	8.27 (Berkeley) 3/23/94";
 #include "vi.h"
 #include "excmd.h"
 
-enum which {WQ, WRITE, XIT};
+enum which {WN, WQ, WRITE, XIT};
 
 static int exwr __P((SCR *, EXF *, EXCMDARG *, enum which));
 
 /*
+ * ex_wn --	:wn[!] [>>] [file]
+ *	Write to a file and switch to the next one.
+ */
+int
+ex_wn(sp, ep, cmdp)
+	SCR *sp;
+	EXF *ep;
+	EXCMDARG *cmdp;
+{
+	if (exwr(sp, ep, cmdp, WN))
+		return (1);
+	if (file_m3(sp, ep, 0))
+		return (1);
+
+	/* The file name isn't a new file to edit. */
+	cmdp->argc = 0;
+
+	return (ex_next(sp, ep, cmdp));
+}
+
+/*
  * ex_wq --	:wq[!] [>>] [file]
- *	Write to a file.
+ *	Write to a file and quit.
  */
 int
 ex_wq(sp, ep, cmdp)
@@ -76,13 +97,13 @@ ex_wq(sp, ep, cmdp)
 
 	if (exwr(sp, ep, cmdp, WQ))
 		return (1);
+	if (file_m3(sp, ep, 0))
+		return (1);
 
 	force = F_ISSET(cmdp, E_FORCE);
-	if (!force && ep->refcnt <= 1 && file_unedited(sp) != NULL) {
-		msgq(sp, M_ERR,
-		    "More files to edit; use \":n\" to go to the next file");
+
+	if (ex_ncheck(sp, force))
 		return (1);
-	}
 
 	F_SET(sp, force ? S_EXIT_FORCE : S_EXIT);
 	return (0);
@@ -118,13 +139,13 @@ ex_xit(sp, ep, cmdp)
 
 	if (F_ISSET((ep), F_MODIFIED) && exwr(sp, ep, cmdp, XIT))
 		return (1);
+	if (file_m3(sp, ep, 0))
+		return (1);
 
 	force = F_ISSET(cmdp, E_FORCE);
-	if (!force && ep->refcnt <= 1 && file_unedited(sp) != NULL) {
-		msgq(sp, M_ERR,
-		    "More files to edit; use \":n\" to go to the next file");
+
+	if (ex_ncheck(sp, force))
 		return (1);
-	}
 
 	F_SET(sp, force ? S_EXIT_FORCE : S_EXIT);
 	return (0);
@@ -168,7 +189,7 @@ exwr(sp, ep, cmdp, cmd)
 	if (cmd == WRITE && *p == '!') {
 		for (++p; *p && isblank(*p); ++p);
 		if (*p == '\0') {
-			msgq(sp, M_ERR, "Usage: %s.", cmdp->cmd->usage);
+			msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 			return (1);
 		}
 		/* Expand the argument. */
@@ -211,7 +232,7 @@ exwr(sp, ep, cmdp, cmd)
 		/* If expanded to more than one argument, object. */
 		msgq(sp, M_ERR, "%s expanded into too many file names",
 		    cmdp->argv[0]->bp);
-		msgq(sp, M_ERR, "Usage: %s.", cmdp->cmd->usage);
+		msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 		return (1);
 	}
 
@@ -267,10 +288,9 @@ ex_writefp(sp, ep, name, fp, fm, tm, nlno, nch)
 	lcnt = 0;
 	if (tline != 0) {
 		for (; fline <= tline; ++fline, ++lcnt) {
-			if (F_ISSET(sp, S_INTERRUPTED)) {
-				msgq(sp, M_INFO, "Interrupted.");
+			/* Caller has to provide any interrupt message. */
+			if (INTERRUPTED(sp))
 				break;
-			}
 			if ((p = file_gline(sp, ep, fline, &len)) == NULL)
 				break;
 			if (fwrite(p, 1, len, fp) != len) {

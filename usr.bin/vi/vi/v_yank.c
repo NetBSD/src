@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_yank.c	8.13 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_yank.c	8.15 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,7 +84,8 @@ v_yank(sp, ep, vp)
 		lmode = CUT_LINEMODE;
 	} else
 		lmode = 0;
-	if (cut(sp, ep, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	if (cut(sp, ep,
+	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
 	    &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 

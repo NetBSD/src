@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_yank.c	8.4 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_yank.c	8.6 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ ex_yank(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
-	return (cut(sp, ep, NULL,
+	return (cut(sp, ep,
 	    F_ISSET(cmdp, E_BUFFER) ? &cmdp->buffer : NULL,
 	    &cmdp->addr1, &cmdp->addr2, CUT_LINEMODE));
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_print.c	8.8 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)ex_print.c	8.15 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -121,17 +121,22 @@ ex_print(sp, ep, fp, tp, flags)
 	MARK *fp, *tp;
 	register int flags;
 {
-	register int ch, col, rlen;
 	recno_t from, to;
-	size_t len;
-	int cnt;
-	char *p, buf[10];
+	size_t col, len;
+	char *p;
 
 	F_SET(sp, S_INTERRUPTIBLE);
 	for (from = fp->lno, to = tp->lno; from <= to; ++from) {
-		/* Display the line number. */
+		/*
+		 * Display the line number.  The %6 format is specified
+		 * by POSIX 1003.2, and is almost certainly large enough.
+		 * Check, though, just in case.
+		 */
 		if (LF_ISSET(E_F_HASH))
-			col = ex_printf(EXCOOKIE, "%7ld ", from);
+			if (from <= 999999)
+				col = ex_printf(EXCOOKIE, "%6ld  ", from);
+			else
+				col = ex_printf(EXCOOKIE, "TOOBIG  ");
 		else
 			col = 0;
 
@@ -145,63 +150,63 @@ ex_print(sp, ep, fp, tp, flags)
 			return (1);
 		}
 
-#define	WCHECK(ch) {							\
-	if (col == sp->cols) {						\
-		(void)ex_printf(EXCOOKIE, "\n");			\
-		col = 0;						\
-	}								\
-	(void)ex_printf(EXCOOKIE, "%c", ch);				\
-	++col;								\
+		if (len == 0 && !LF_ISSET(E_F_LIST))
+			(void)ex_printf(EXCOOKIE, "\n");
+		else if (ex_ldisplay(sp, p, len, col, flags))
+			return (1);
+
+		if (INTERRUPTED(sp))
+			break;
+	}
+
+	return (0);
 }
-		for (rlen = len; rlen--;) {
-			ch = *p++;
-			if (LF_ISSET(E_F_LIST))
-				if (ch != '\t' && isprint(ch)) {
-					WCHECK(ch);
-				} else if (ch & 0x80) {
-					(void)snprintf(buf,
-					    sizeof(buf), "\\%03o", ch);
-					len = strlen(buf);
-					for (cnt = 0; cnt < len; ++cnt)
-						WCHECK(buf[cnt]);
-				} else {
-					WCHECK('^');
-					WCHECK(ch + 0x40);
-				}
-			else {
-				ch &= 0x7f;
-				if (ch == '\t') {
-					while (col < sp->cols &&
-					    ++col % O_VAL(sp, O_TABSTOP))
-						(void)ex_printf(EXCOOKIE, " ");
+
+/*
+ * ex_ldisplay --
+ *	Display a line.
+ */
+int
+ex_ldisplay(sp, lp, len, col, flags)
+	SCR *sp;
+	CHAR_T *lp;
+	size_t len, col;
+	u_int flags;
+{
+	CHAR_T ch, *kp;
+	u_long ts;
+	size_t tlen;
+
+	ts = O_VAL(sp, O_TABSTOP);
+	for (;; --len) {
+		if (len > 0)
+			ch = *lp++;
+		else if (LF_ISSET(E_F_LIST))
+			ch = '$';
+		else
+			break;
+		if (ch == '\t' && !LF_ISSET(E_F_LIST))
+			for (tlen = ts - col % ts;
+			    col < sp->cols && tlen--; ++col)
+				(void)ex_printf(EXCOOKIE, " ");
+		else {
+			kp = KEY_NAME(sp, ch);
+			tlen = KEY_LEN(sp, ch);
+			if (col + tlen < sp->cols) {
+				(void)ex_printf(EXCOOKIE, "%s", kp);
+				col += tlen;
+			} else
+				for (; tlen--; ++kp, ++col) {
 					if (col == sp->cols) {
 						col = 0;
 						(void)ex_printf(EXCOOKIE, "\n");
 					}
-				} else if (isprint(ch)) {
-					WCHECK(ch);
-				} else if (ch == '\n') {
-					col = 0;
-					(void)ex_printf(EXCOOKIE, "\n");
-				} else {
-					WCHECK('^');
-					WCHECK(ch + 0x40);
+					(void)ex_printf(EXCOOKIE, "%c", *kp);
 				}
-			}
 		}
-		if (LF_ISSET(E_F_LIST)) {
-			WCHECK('$');
-		} else if (len == 0) {
-			/*
-			 * If the line is empty, output a space
-			 * to overwrite the colon prompt.
-			 */
-			WCHECK(' ');
-		}
-		(void)ex_printf(EXCOOKIE, "\n");
-
-		if (F_ISSET(sp, S_INTERRUPTED))
+		if (len == 0)
 			break;
 	}
+	(void)ex_printf(EXCOOKIE, "\n");
 	return (0);
 }

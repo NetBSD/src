@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_screen.c	8.10 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)v_screen.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ v_screen(sp, ep, vp)
 	if (sp->q.cqe_next != (void *)&sp->gp->dq)
 		sp->nextdisp = sp->q.cqe_next;
 	else if (sp->gp->dq.cqh_first == sp) {
-		msgq(sp, M_ERR, "No other screen to switch to.");
+		msgq(sp, M_ERR, "No other screen to switch to");
 		return (1);
 	} else
 		sp->nextdisp = sp->gp->dq.cqh_first;
@@ -78,7 +78,7 @@ v_screen(sp, ep, vp)
 	 * Display the old screen's status line so the user can
 	 * find the screen they want.
 	 */
-	(void)status(sp, ep, vp->m_start.lno, 0);
+	(void)msg_status(sp, ep, vp->m_start.lno, 0);
 
 	/* Save the old screen's cursor information. */
 	sp->frp->lno = sp->lno;

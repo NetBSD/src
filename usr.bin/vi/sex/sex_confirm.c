@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sex_confirm.c	8.6 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)sex_confirm.c	8.8 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,12 +74,12 @@ sex_confirm(sp, ep, fp, tp)
 	if (term_key(sp, &ikey, 0) != INP_OK)
 		return (CONF_QUIT);
 	switch (ikey.ch) {
-	case YES_CH:
+	case CH_YES:
 		return (CONF_YES);
-	case QUIT_CH:
+	case CH_QUIT:
 		return (CONF_QUIT);
 	default:
-	case NO_CH:
+	case CH_NO:
 		return (CONF_NO);
 	}
 	/* NOTREACHED */

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)svi_screen.h	8.38 (Berkeley) 3/15/94
+ *	@(#)svi_screen.h	8.52 (Berkeley) 7/20/94
  */
 
 /*
@@ -90,12 +90,12 @@ typedef struct _svi_private {
 
 	char	*VB;		/* Visual bell termcap string. */
 
-#define	SVI_CUR_INVALID	0x001	/* Cursor position is unknown. */
-#define	SVI_DIVIDER	0x002	/* Screen divider is displayed. */
-#define	SVI_INFOLINE	0x004	/* The infoline is being used by v_ntext(). */
-#define	SVI_NO_VBELL	0x008	/* No visual bell available. */
+#define	SVI_CURSES_INIT	0x001	/* Curses/termcap initialized. */
+#define	SVI_CUR_INVALID	0x002	/* Cursor position is unknown. */
+#define	SVI_DIVIDER	0x004	/* Screen divider is displayed. */
+#define	SVI_INFOLINE	0x008	/* The infoline is being used by v_ntext(). */
 #define	SVI_SCREENDIRTY	0x010	/* Screen needs refreshing. */
-	u_int	 flags;
+	u_int8_t flags;
 } SVI_PRIVATE;
 
 #define	SVP(sp)		((SVI_PRIVATE *)((sp)->svi_private))
@@ -138,53 +138,69 @@ typedef struct _svi_private {
 #define	TAB_OFF(sp, c)	(O_VAL(sp, O_TABSTOP) - (c) % O_VAL(sp, O_TABSTOP))
 
 /* Move in a screen (absolute), and fail if it doesn't work. */
+#ifdef DEBUG
 #define	MOVEA(sp, lno, cno) {						\
 	if (move(lno, cno) == ERR) {					\
 		msgq(sp, M_ERR,						\
-		    "Error: %s/%d: move:l(%u), c(%u), abs.",		\
+		    "Error: %s/%d: move:l(%u), c(%u), abs",		\
 		    tail(__FILE__), __LINE__, lno, cno);		\
 		return (1);						\
 	}								\
 }
+#else
+#define	MOVEA(sp, lno, cno)	(void)move(lno, cno)
+#endif
 
 /* Move in a window, and fail if it doesn't work. */
+#ifdef DEBUG
 #define	MOVE(sp, lno, cno) {						\
 	size_t __lno = (sp)->woff + (lno);				\
 	if (move(__lno, cno) == ERR) {					\
 		msgq(sp, M_ERR,						\
-		    "Error: %s/%d: move:l(%u), c(%u), o(%u).",		\
+		    "Error: %s/%d: move:l(%u), c(%u), o(%u)",		\
 		    tail(__FILE__), __LINE__, lno, cno, sp->woff);	\
 		return (1);						\
 	}								\
 }
+#else
+#define	MOVE(sp, lno, cno)	(void)move((sp)->woff + (lno), cno)
+#endif
 
 /* Add a character. */
 #define	ADDCH(ch) {							\
-	int __ch = (ch);						\
-	ADDNSTR(cname[__ch].name, cname[__ch].len);			\
+	CHAR_T __ch = ch;						\
+	ADDNSTR(KEY_NAME(sp, __ch), KEY_LEN(sp, __ch));			\
 }
 
 /* Add a string len bytes long. */
+#ifdef DEBUG
 #define	ADDNSTR(str, len) {						\
 	if (addnstr(str, len) == ERR) {					\
 		int __x, __y;						\
 		getyx(stdscr, __y, __x);				\
-		msgq(sp, M_ERR, "Error: %s/%d: addnstr: (%d/%u).",	\
+		msgq(sp, M_ERR, "Error: %s/%d: addnstr: (%d/%u)",	\
 		    tail(__FILE__), __LINE__, __y, __x);		\
 		return (1);						\
 	}								\
 }
+#else
+#define	ADDNSTR(str, len)	(void)addnstr(str, len)
+#endif
 
 /* Add a string. */
+#ifdef DEBUG
 #define	ADDSTR(str) {							\
 	if (addstr(str) == ERR) {					\
 		int __x, __y;						\
 		getyx(stdscr, __y, __x);				\
-		msgq(sp, M_ERR, "Error: %s/%d: addstr: (%d/%u).",	\
+		msgq(sp, M_ERR, "Error: %s/%d: addstr: (%d/%u)",	\
 		    tail(__FILE__), __LINE__, __y, __x);		\
 		return (1);						\
 	}								\
 }
+#else
+#define	ADDSTR(str)	(void)addstr(str);
+#endif
 
 /* Public routines. */
 void	svi_bell __P((SCR *));
@@ -201,8 +217,9 @@ int	svi_ex_cmd __P((SCR *, EXF *, struct _excmdarg *, MARK *));
 int	svi_ex_run __P((SCR *, EXF *, MARK *));
 int	svi_ex_write __P((void *, const char *, int));
 int	svi_fg __P((SCR *, CHAR_T *));
+int	svi_fmap __P((SCR *, enum seqtype, CHAR_T *, size_t, CHAR_T *, size_t));
 enum input
-	svi_get __P((SCR *, EXF *, TEXTH *, int, u_int));
+	svi_get __P((SCR *, EXF *, TEXTH *, ARG_CHAR_T, u_int));
 int	svi_optchange __P((SCR *, int));
 int	svi_rabs __P((SCR *, long, enum adjust));
 size_t	svi_rcm __P((SCR *, EXF *, recno_t));
@@ -210,11 +227,10 @@ int	svi_refresh __P((SCR *, EXF *));
 int	svi_screen_copy __P((SCR *, SCR *));
 int	svi_screen_edit __P((SCR *, EXF *));
 int	svi_screen_end __P((SCR *));
-int	svi_sm_down __P((SCR *, EXF *, MARK *, recno_t, int));
 int	svi_sm_fill __P((SCR *, EXF *, recno_t, enum position));
 int	svi_sm_position __P((SCR *, EXF *, MARK *, u_long, enum position));
-int	svi_sm_up __P((SCR *, EXF *, MARK *, recno_t, int));
-int	svi_split __P((SCR *, ARGS *[]));
+int	svi_sm_scroll __P((SCR *, EXF *, MARK *, recno_t, enum sctype));
+int	svi_split __P((SCR *, ARGS *[], int));
 int	svi_suspend __P((SCR *));
 int	svi_swap __P((SCR *, SCR **, char *));
 
@@ -222,22 +238,23 @@ int	svi_swap __P((SCR *, SCR **, char *));
 size_t	svi_cm_private __P((SCR *, EXF *, recno_t, size_t, size_t));
 int	svi_curses_end __P((SCR *));
 int	svi_curses_init __P((SCR *));
-int	svi_divider __P((SCR *));
+void	svi_dtoh __P((SCR *, char *));
 int	svi_init __P((SCR *));
 int	svi_join __P((SCR *, SCR **));
 void	svi_keypad __P((SCR *, int));
 int	svi_line __P((SCR *, EXF *, SMAP *, size_t *, size_t *));
+int	svi_msgflush __P((SCR *));
 int	svi_number __P((SCR *, EXF *));
 size_t	svi_opt_screens __P((SCR *, EXF *, recno_t, size_t *));
 int	svi_paint __P((SCR *, EXF *));
-void	svi_putchar __P((int));
-size_t	svi_screens __P((SCR *, EXF *, char *, size_t, recno_t, size_t *));
 int	svi_sm_1down __P((SCR *, EXF *));
 int	svi_sm_1up __P((SCR *, EXF *));
 int	svi_sm_cursor __P((SCR *, EXF *, SMAP **));
 int	svi_sm_next __P((SCR *, EXF *, SMAP *, SMAP *));
 recno_t	svi_sm_nlines __P((SCR *, EXF *, SMAP *, recno_t, size_t));
 int	svi_sm_prev __P((SCR *, EXF *, SMAP *, SMAP *));
+int	svi_term_end __P((SCR *sp));
+int	svi_term_init __P((SCR *sp));
 
 /* Private debugging routines. */
 #ifdef DEBUG

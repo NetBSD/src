@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_word.c	8.18 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)v_word.c	8.22 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -255,8 +255,8 @@ ret:	if (!ISMOTION(vp) &&
 		--vp->m_stop.cno;
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_S.
+	 * Non-motion commands move to the end of the range.  VC_D
+	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
 	 */
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
@@ -407,8 +407,8 @@ ret:	if (!ISMOTION(vp) &&
 	vp->m_stop.cno = cs.cs_cno;
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_S.
+	 * Non-motion commands move to the end of the range.  VC_D
+	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
 	 */
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
@@ -554,17 +554,17 @@ ret:	if (cs.cs_lno == vp->m_start.lno && cs.cs_cno == vp->m_start.cno) {
 	vp->m_stop.cno = cs.cs_cno;
 
 	/*
-	 * Non-motion commands move to the end of the range.  VC_D commands
-	 * move to the end of the range.  VC_Y stays at the start unless the
-	 * end of the range is on a different line, when it moves to the end
-	 * of the range.  Ignore VC_C and VC_S.  Motion commands adjust the
-	 * starting point to the character before the current one.
+	 * All commands move to the end of the range.  Motion commands
+	 * adjust the starting point to the character before the current
+	 * one.
+	 *
+	 * !!!
+	 * The historic vi didn't get this right -- the `yb' command yanked
+	 * the right stuff and even updated the cursor value, but the cursor
+	 * was not actually updated on the screen.
 	 */
 	vp->m_final = vp->m_stop;
-	if (ISMOTION(vp)) {
+	if (ISMOTION(vp))
 		--vp->m_start.cno;
-		if (F_ISSET(vp, VC_Y) && vp->m_start.lno == vp->m_stop.lno)
-			vp->m_final = vp->m_start;
-	}
 	return (0);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_abbrev.c	8.8 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_abbrev.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,8 +51,8 @@ static char sccsid[] = "@(#)ex_abbrev.c	8.8 (Berkeley) 3/8/94";
 #include <regex.h>
 
 #include "vi.h"
-#include "seq.h"
 #include "excmd.h"
+#include "../vi/vcmd.h"
 
 /*
  * ex_abbr -- :abbreviate [key replacement]
@@ -64,10 +64,13 @@ ex_abbr(sp, ep, cmdp)
 	EXF *ep;
 	EXCMDARG *cmdp;
 {
+	CHAR_T *p;
+	size_t len;
+
 	switch (cmdp->argc) {
 	case 0:
 		if (seq_dump(sp, SEQ_ABBREV, 0) == 0)
-			msgq(sp, M_INFO, "No abbreviations to display.");
+			msgq(sp, M_INFO, "No abbreviations to display");
 		return (0);
 	case 2:
 		break;
@@ -75,9 +78,19 @@ ex_abbr(sp, ep, cmdp)
 		abort();
 	}
 
+	/* Check for illegal characters. */
+	for (p = cmdp->argv[0]->bp, len = cmdp->argv[0]->len; len--; ++p)
+		if (!inword(*p)) {
+			msgq(sp, M_ERR,
+			    "%s may not be part of an abbreviated word",
+			    KEY_NAME(sp, *p));
+			return (1);
+		}
+
 	if (seq_set(sp, NULL, 0, cmdp->argv[0]->bp, cmdp->argv[0]->len,
-	    cmdp->argv[1]->bp, cmdp->argv[1]->len, SEQ_ABBREV, S_USERDEF))
+	    cmdp->argv[1]->bp, cmdp->argv[1]->len, SEQ_ABBREV, SEQ_USERDEF))
 		return (1);
+
 	F_SET(sp->gp, G_ABBREV);
 	return (0);
 }
@@ -97,7 +110,7 @@ ex_unabbr(sp, ep, cmdp)
 	ap = cmdp->argv[0];
 	if (!F_ISSET(sp->gp, G_ABBREV) ||
 	    seq_delete(sp, ap->bp, ap->len, SEQ_ABBREV)) {
-		msgq(sp, M_ERR, "\"%s\" is not an abbreviation.", ap->bp);
+		msgq(sp, M_ERR, "\"%s\" is not an abbreviation", ap->bp);
 		return (1);
 	}
 	return (0);

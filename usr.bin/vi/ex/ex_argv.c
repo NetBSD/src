@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_argv.c	8.28 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)ex_argv.c	8.37 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ argv_init(sp, ep, excp)
 
 /*
  * argv_exp0 --
- *	Put a string into an argv.
+ *	Append a string to the argument list.
  */
 int
 argv_exp0(sp, ep, excp, cmd, cmdlen)
@@ -110,7 +110,8 @@ argv_exp0(sp, ep, excp, cmd, cmdlen)
 
 /*
  * argv_exp1 --
- *	Do file name expansion on a string, and leave it in a string.
+ *	Do file name expansion on a string, and append it to the
+ *	argument list.
  */
 int
 argv_exp1(sp, ep, excp, cmd, cmdlen, is_bang)
@@ -123,7 +124,7 @@ argv_exp1(sp, ep, excp, cmd, cmdlen, is_bang)
 {
 	EX_PRIVATE *exp;
 	size_t blen, len;
-	char *bp;
+	char *bp, *p, *t;
 
 	GET_SPACE_RET(sp, bp, blen, 512);
 
@@ -134,22 +135,26 @@ argv_exp1(sp, ep, excp, cmd, cmdlen, is_bang)
 		return (1);
 	}
 
-	argv_alloc(sp, len);
-	memmove(exp->args[exp->argsoff]->bp, bp, len);
-	exp->args[exp->argsoff]->bp[len] = '\0';
-	exp->args[exp->argsoff]->len = len;
-	++exp->argsoff;
-	excp->argv = exp->args;
-	excp->argc = exp->argsoff;
+	/* If it's empty, we're done. */
+	if (len != 0) {
+		for (p = bp, t = bp + len; p < t; ++p)
+			if (!isblank(*p))
+				break;
+		if (p == t)
+			goto ret;
+	} else
+		goto ret;
 
-	FREE_SPACE(sp, bp, blen);
+	(void)argv_exp0(sp, ep, excp, bp, len);
+		
+ret:	FREE_SPACE(sp, bp, blen);
 	return (0);
 }
 
 /*
  * argv_exp2 --
- *	Do file name and shell expansion on a string, and break
- *	it up into an argv.
+ *	Do file name and shell expansion on a string, and append it to
+ *	the argument list.
  */
 int
 argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
@@ -162,7 +167,7 @@ argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
 {
 	size_t blen, len, n;
 	int rval;
-	char *bp, *p;
+	char *bp, *mp, *p;
 
 	GET_SPACE_RET(sp, bp, blen, 512);
 
@@ -186,13 +191,31 @@ argv_exp2(sp, ep, excp, cmd, cmdlen, is_bang)
 #endif
 
 	/*
-	 * Do shell word expansion -- it's very, very hard to figure out
-	 * what magic characters the user's shell expects.  If it's not
-	 * pure vanilla, don't even try.
+	 * Do shell word expansion -- it's very, very hard to figure out what
+	 * magic characters the user's shell expects.  Historically, it was a
+	 * union of v7 shell and csh meta characters.  We match that practice
+	 * by default, so ":read \%" tries to read a file named '%'.  It would
+	 * make more sense to pass any special characters through the shell,
+	 * but then, if your shell was csh, the above example will behave
+	 * differently in nvi than in vi.  If you want to get other characters
+	 * passed through to your shell, change the "meta" option.
+	 *
+	 * To avoid a function call per character, we do a first pass through
+	 * the meta characters looking for characters that aren't expected
+	 * to be there.
 	 */
-	for (p = bp, n = len; n > 0; --n, ++p)
-		if (!isalnum(*p) && !isblank(*p) && *p != '/' && *p != '.')
+	for (p = mp = O_STR(sp, O_META); *p != '\0'; ++p)
+		if (isblank(*p) || isalnum(*p))
 			break;
+	if (*p != '\0') {
+		for (p = bp, n = len; n > 0; --n, ++p)
+			if (strchr(mp, *p) != NULL)
+				break;
+	} else
+		for (p = bp, n = len; n > 0; --n, ++p)
+			if (!isblank(*p) &&
+			    !isalnum(*p) && strchr(mp, *p) != NULL)
+				break;
 	if (n > 0) {
 		if (argv_sexp(sp, &bp, &blen, &len)) {
 			rval = 1;
@@ -216,7 +239,8 @@ err:	FREE_SPACE(sp, bp, blen);
 
 /*
  * argv_exp3 --
- *	Take a string and break it up into an argv.
+ *	Take a string and break it up into an argv, which is appended
+ *	to the argument list.
  */
 int
 argv_exp3(sp, ep, excp, cmd, cmdlen)
@@ -270,10 +294,8 @@ argv_exp3(sp, ep, excp, cmd, cmdlen)
 		off = exp->argsoff;
 		exp->args[off]->len = len;
 		for (p = exp->args[off]->bp; len > 0; --len, *p++ = *ap++)
-			if (IS_ESCAPE(sp, *ap)) {
+			if (IS_ESCAPE(sp, *ap))
 				++ap;
-				--exp->args[off]->len;
-			}
 		*p = '\0';
 	}
 	excp->argv = exp->args;
@@ -311,7 +333,7 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			exp = EXP(sp);
 			if (exp->lastbcomm == NULL) {
 				msgq(sp, M_ERR,
-				    "No previous command to replace \"!\".");
+				    "No previous command to replace \"!\"");
 				return (1);
 			}
 			len += tlen = strlen(exp->lastbcomm);
@@ -321,12 +343,12 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			F_SET(excp, E_MODIFY);
 			break;
 		case '%':
-			if (sp->frp->cname == NULL && sp->frp->name == NULL) {
+			if ((t = sp->frp->name) == NULL) {
 				msgq(sp, M_ERR,
-				    "No filename to substitute for %%.");
+				    "No filename to substitute for %%");
 				return (1);
 			}
-			tlen = strlen(t = FILENAME(sp->frp));
+			tlen = strlen(t);
 			len += tlen;
 			ADD_SPACE_RET(sp, bp, blen, len);
 			memmove(p, t, tlen);
@@ -334,20 +356,11 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			F_SET(excp, E_MODIFY);
 			break;
 		case '#':
-			/*
-			 * Try the alternate file name first, then the
-			 * previously edited file.
-			 */
-			if (sp->alt_name == NULL && (sp->p_frp == NULL ||
-			    sp->frp->cname == NULL && sp->frp->name == NULL)) {
+			if ((t = sp->alt_name) == NULL) {
 				msgq(sp, M_ERR,
-				    "No filename to substitute for #.");
+				    "No filename to substitute for #");
 				return (1);
 			}
-			if (sp->alt_name != NULL)
-				t = sp->alt_name;
-			else
-				t = FILENAME(sp->frp);
 			len += tlen = strlen(t);
 			ADD_SPACE_RET(sp, bp, blen, len);
 			memmove(p, t, tlen);
@@ -361,8 +374,10 @@ argv_fexp(sp, excp, cmd, cmdlen, p, lenp, bpp, blenp, is_bang)
 			 * Strip any backslashes that protected the file
 			 * expansion characters.
 			 */
-			if (cmdlen > 1 && cmd[1] == '%' || cmd[1] == '#')
+			if (cmdlen > 1 && (cmd[1] == '%' || cmd[1] == '#')) {
 				++cmd;
+				--cmdlen;
+			}
 			/* FALLTHROUGH */
 		default:
 ins_ch:			++len;
@@ -521,13 +536,19 @@ argv_sexp(sp, bpp, blenp, lenp)
 	 * Do the minimal amount of work possible, the shell is going
 	 * to run briefly and then exit.  Hopefully.
 	 */
+	SIGBLOCK(sp->gp);
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
+		SIGUNBLOCK(sp->gp);
+
 		msgq(sp, M_SYSERR, "vfork");
 err:		(void)close(output[0]);
 		(void)close(output[1]);
 		return (1);
 	case 0:				/* Utility. */
+		/* The utility has default signal behavior. */
+		sig_end();
+
 		/* Redirect stdout/stderr to the write end of the pipe. */
 		(void)dup2(output[1], STDOUT_FILENO);
 		(void)dup2(output[1], STDERR_FILENO);
@@ -541,7 +562,9 @@ err:		(void)close(output[0]);
 		msgq(sp, M_ERR,
 		    "Error: execl: %s: %s", sh_path, strerror(errno));
 		_exit(127);
-	default:
+	default:			/* Parent. */
+		SIGUNBLOCK(sp->gp);
+
 		/* Close the pipe end the parent won't use. */
 		(void)close(output[1]);
 		break;
@@ -566,7 +589,7 @@ err:		(void)close(output[0]);
 		}
 
 	/* Delete the final newline, nul terminate the string. */
-	if (p > bp && p[-1] == '\n' || p[-1] == '\r') {
+	if (p > bp && (p[-1] == '\n' || p[-1] == '\r')) {
 		--len;
 		*--p = '\0';
 	} else
@@ -582,5 +605,5 @@ binc_err:	rval = 1;
 	*bpp = bp;		/* *blenp is already updated. */
 
 	/* Wait for the process. */
-	return (proc_wait(sp, (long)pid, sh, 0) | rval);
+	return (proc_wait(sp, (long)pid, sh, 0) || rval);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_preserve.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_preserve.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ ex_preserve(sp, ep, cmdp)
 	recno_t lno;
 
 	if (!F_ISSET(ep, F_RCV_ON)) {
-		msgq(sp, M_ERR, "Preservation of this file not possible.");
+		msgq(sp, M_ERR, "Preservation of this file not possible");
 		return (1);
 	}
 
@@ -80,12 +80,49 @@ ex_preserve(sp, ep, cmdp)
 		return (1);
 
 	/* Sync to disk. */
-	if (rcv_sync(sp, ep))
+	if (rcv_sync(sp, ep, RCV_SNAPSHOT))
 		return (1);
 
-	/* Preserve the recovery files. */
-	F_SET(ep, F_RCV_NORM);
+	msgq(sp, M_INFO, "File preserved");
+	return (0);
+}
 
-	msgq(sp, M_INFO, "File preserved.");
+/*
+ * ex_recover -- :rec[over][!] file
+ *
+ * Recover the file.
+ */
+int
+ex_recover(sp, ep, cmdp)
+	SCR *sp;
+	EXF *ep;
+	EXCMDARG *cmdp;
+{
+	ARGS *ap;
+	FREF *frp;
+
+	ap = cmdp->argv[0];
+
+	/* Set the alternate file name. */
+	set_alt_name(sp, ap->bp);
+
+	/*
+	 * Check for modifications.  Autowrite did not historically
+	 * affect :recover.
+	 */
+	if (file_m2(sp, ep, F_ISSET(cmdp, E_FORCE)))
+		return (1);
+
+	/* Get a file structure for the file. */
+	if ((frp = file_add(sp, ap->bp)) == NULL)
+		return (1);
+
+	/* Set the recover bit. */
+	F_SET(frp, FR_RECOVER);
+
+	/* Switch files. */
+	if (file_init(sp, frp, NULL, F_ISSET(cmdp, E_FORCE)))
+		return (1);
+	F_SET(sp, S_FSWITCH);
 	return (0);
 }

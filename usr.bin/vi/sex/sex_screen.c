@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sex_screen.c	8.36 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)sex_screen.c	8.48 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,10 +44,12 @@ static char sccsid[] = "@(#)sex_screen.c	8.36 (Berkeley) 3/15/94";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 
@@ -59,6 +61,8 @@ static char sccsid[] = "@(#)sex_screen.c	8.36 (Berkeley) 3/15/94";
 static void	sex_abort __P((void));
 static int	sex_noop __P((void));
 static int	sex_nope __P((SCR *));
+static int	sex_term_init __P((SCR *));
+static void	so_se_init __P((SCR *));
 
 /*
  * sex_screen_init --
@@ -78,7 +82,6 @@ sex_screen_init(sp)
 	sp->s_column		= (int (*)())sex_abort;
 	sp->s_confirm		= sex_confirm;
 	sp->s_crel		= (int (*)())sex_nope;
-	sp->s_down		= (int (*)())sex_abort;
 	sp->s_edit		= sex_screen_edit;
 	sp->s_end		= (int (*)())sex_noop;
 	sp->s_ex_cmd		= (int (*)())sex_abort;
@@ -86,17 +89,18 @@ sex_screen_init(sp)
 	sp->s_ex_write		= (int (*)())sex_abort;
 	sp->s_fg		= (int (*)())sex_nope;
 	sp->s_fill		= (int (*)())sex_abort;
-	sp->s_get		= F_ISSET(sp->gp,
-				    G_STDIN_TTY) ? sex_get : sex_get_notty;
+	sp->s_get		= sex_get;
 	sp->s_key_read		= sex_key_read;
-	sp->s_optchange		= (int (*)())sex_noop;
+	sp->s_optchange		= sex_optchange;
+	sp->s_fmap		= (int (*)())sex_noop;
 	sp->s_position		= (int (*)())sex_abort;
 	sp->s_rabs		= (int (*)())sex_nope;
 	sp->s_rcm		= (size_t (*)())sex_abort;
 	sp->s_refresh		= sex_refresh;
+	sp->s_scroll		= (int (*)())sex_abort;
 	sp->s_split		= (int (*)())sex_nope;
 	sp->s_suspend		= sex_suspend;
-	sp->s_up		= (int (*)())sex_abort;
+	sp->s_window		= sex_window;
 
 	return (0);
 }
@@ -109,6 +113,31 @@ int
 sex_screen_copy(orig, sp)
 	SCR *orig, *sp;
 {
+	SEX_PRIVATE *osex, *nsex;
+
+	/* Create the private screen structure. */
+	CALLOC_RET(orig, nsex, SEX_PRIVATE *, 1, sizeof(SEX_PRIVATE));
+	sp->sex_private = nsex;
+
+/* INITIALIZED AT SCREEN CREATE. */
+
+/* PARTIALLY OR COMPLETELY COPIED FROM PREVIOUS SCREEN. */
+	if (orig == NULL) {
+	} else {
+		osex = SXP(orig);
+#ifndef SYSV_CURSES
+		if (osex->SE != NULL && (nsex->SE = strdup(osex->SE)) == NULL) {
+			msgq(sp, M_SYSERR, NULL);
+			return (1);
+		}
+		if (osex->SO != NULL && (nsex->SO = strdup(osex->SO)) == NULL) {
+			msgq(sp, M_SYSERR, NULL);
+			free(osex->SE);
+			return (1);
+		}
+#endif
+	}
+
 	return (0);
 }
 
@@ -120,6 +149,18 @@ int
 sex_screen_end(sp)
 	SCR *sp;
 {
+#ifndef SYSV_CURSES
+	/* Free inverse video strings. */
+	if (SXP(sp)->SE != NULL)
+		free(SXP(sp)->SE);
+	if (SXP(sp)->SO != NULL)
+		free(SXP(sp)->SO);
+#endif
+
+	/* Free private memory. */
+	FREE(SXP(sp), sizeof(SEX_PRIVATE));
+	sp->sex_private = NULL;
+
 	return (0);
 }
 
@@ -133,31 +174,37 @@ sex_screen_edit(sp, ep)
 	SCR *sp;
 	EXF *ep;
 {
-	struct termios rawt, t;
+	struct termios t;
+	GS *gp;
 	int force, rval;
 
 	/* Initialize the terminal state. */
-	if (F_ISSET(sp->gp, G_STDIN_TTY))
-		SEX_RAW(t, rawt);
+	gp = sp->gp;
+	if (F_ISSET(gp, G_STDIN_TTY))
+		SEX_RAW(t);
 
 	/* Write to the terminal. */
 	sp->stdfp = stdout;
 
-	for (;;) {
-		sp->rows = O_VAL(sp, O_LINES);
-		sp->cols = O_VAL(sp, O_COLUMNS);
+	/*
+	 * The resize bit is probably set, but clear it, we're
+	 * going to initialize the screen right now.
+	 */
+	F_CLR(sp, S_RESIZE);
 
+	/* Initialize the termcap buffer. */
+	if (sex_term_init(sp))
+		return (1);
+
+	for (;;) {
 		/*
 		 * Run ex.  If ex fails, sex data structures
 		 * may be corrupted, be careful what you do.
 		 */
 		if (rval = ex(sp, sp->ep)) {
-			if (F_ISSET(ep, F_RCV_ON)) {
-				F_SET(ep, F_RCV_NORM);
-				(void)rcv_sync(sp, sp->ep);
-			}
-			(void)file_end(sp, sp->ep, 1);
-			(void)screen_end(sp);		/* General SCR info. */
+			(void)rcv_sync(sp, sp->ep,
+			    RCV_EMAIL | RCV_ENDSESSION | RCV_PRESERVE);
+			(void)screen_end(sp);	/* General SCR info. */
 			break;
 		}
 
@@ -184,10 +231,81 @@ sex_screen_edit(sp, ep)
 	}
 
 	/* Reset the terminal state. */
-ret:	if (F_ISSET(sp->gp, G_STDIN_TTY) && SEX_NORAW(t))
+ret:	if (F_ISSET(gp, G_STDIN_TTY) && SEX_NORAW(t))
 		rval = 1;
 	return (rval);
 }
+
+/*
+ * sex_term_init --
+ *	Initialize ex's relationship with the termcap/terminfo entry.
+ */
+static int
+sex_term_init(sp)
+	SCR *sp;
+{
+
+#ifndef SYSV_CURSES
+	/* Initialize standout information. */
+		so_se_init(sp);
+#endif
+
+	sp->rows = O_VAL(sp, O_LINES);
+	sp->cols = O_VAL(sp, O_COLUMNS);
+	return (0);
+}
+
+#ifndef SYSV_CURSES
+/*
+ * so_se_init --
+ *	Initialize the inverse video strings.
+ */
+static void
+so_se_init(sp)
+	SCR *sp;
+{
+	SEX_PRIVATE *sxp;
+	size_t len;
+	char *s, *t, buf[128], tbuf[2048];
+
+	if (tgetent(tbuf, O_STR(sp, O_TERM)) != 1)
+		return;
+
+	sxp = SXP(sp);
+
+	/* Get SE. */
+	t = buf;
+	if ((t = tgetstr("se", &t)) == NULL)
+		return;
+	if ((len = strlen(t)) == 0)
+		return;
+	MALLOC_NOMSG(sp, s, char *, len + 1);
+	if (s == NULL)
+		return;
+	memmove(s, buf, len);
+	s[len] = '\0';
+	sxp->SE = s;
+
+	/* Get SO. */
+	t = buf;
+	if ((t = tgetstr("so", &t)) == NULL)
+		goto err;
+	if ((len = strlen(t)) == 0)
+		goto err;
+	MALLOC_NOMSG(sp, s, char *, len + 1);
+	if (s == NULL)
+		goto err;
+	memmove(s, buf, len);
+	s[len] = '\0';
+	sxp->SO = s;
+
+	return;
+
+err:	free(sxp->SE);
+	sxp->SE = NULL;
+	return;
+}
+#endif
 
 /*
  * sex_abort --
@@ -217,6 +335,6 @@ static int
 sex_nope(sp)
 	SCR *sp;
 {
-	msgq(sp, M_ERR, "Command not applicable to ex mode.");
+	msgq(sp, M_ERR, "Command not applicable to ex mode");
 	return (1);
 }

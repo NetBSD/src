@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_display.c	8.15 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_display.c	8.22 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ static char sccsid[] = "@(#)ex_display.c	8.15 (Berkeley) 3/8/94";
 #include "excmd.h"
 
 static int	bdisplay __P((SCR *, EXF *));
-static void	db __P((SCR *, CB *, char *));
+static void	db __P((SCR *, CB *, CHAR_T *));
 
 /*
  * ex_display -- :display b[uffers] | s[creens] | t[ags]
@@ -71,15 +71,28 @@ ex_display(sp, ep, cmdp)
 {
 	switch (cmdp->argv[0]->bp[0]) {
 	case 'b':
+#undef	ARG
+#define	ARG	"buffers"
+		if (cmdp->argv[0]->len >= sizeof(ARG) ||
+		    memcmp(cmdp->argv[0]->bp, ARG, cmdp->argv[0]->len))
+			break;
 		return (bdisplay(sp, ep));
 	case 's':
+#undef	ARG
+#define	ARG	"screens"
+		if (cmdp->argv[0]->len >= sizeof(ARG) ||
+		    memcmp(cmdp->argv[0]->bp, ARG, cmdp->argv[0]->len))
+			break;
 		return (ex_sdisplay(sp, ep));
 	case 't':
+#undef	ARG
+#define	ARG	"tags"
+		if (cmdp->argv[0]->len >= sizeof(ARG) ||
+		    memcmp(cmdp->argv[0]->bp, ARG, cmdp->argv[0]->len))
+			break;
 		return (ex_tagdisplay(sp, ep));
 	}
-	msgq(sp, M_ERR,
-	    "Unknown display argument %s, use b[uffers], s[creens], or t[ags].",
-	    cmdp->argv[0]);
+	msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
 	return (1);
 }
 
@@ -96,7 +109,7 @@ bdisplay(sp, ep)
 	CB *cbp;
 
 	if (sp->gp->cutq.lh_first == NULL && sp->gp->dcbp == NULL) {
-		(void)ex_printf(EXCOOKIE, "No cut buffers to display.");
+		(void)ex_printf(EXCOOKIE, "No cut buffers to display.\n");
 		return (0);
 	}
 
@@ -109,7 +122,7 @@ bdisplay(sp, ep)
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);
-		if (F_ISSET(sp, S_INTERRUPTED))
+		if (INTERRUPTED(sp))
 			return (0);
 	}
 	/* Display numbered buffers. */
@@ -118,7 +131,7 @@ bdisplay(sp, ep)
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);
-		if (F_ISSET(sp, S_INTERRUPTED))
+		if (INTERRUPTED(sp))
 			return (0);
 	}
 	/* Display default buffer. */
@@ -135,20 +148,20 @@ static void
 db(sp, cbp, name)
 	SCR *sp;
 	CB *cbp;
-	char *name;
+	CHAR_T *name;
 {
+	CHAR_T *p;
 	TEXT *tp;
 	size_t len;
-	char *p;
 
 	(void)ex_printf(EXCOOKIE, "********** %s%s\n",
-	    name == NULL ? charname(sp, cbp->name) : name,
-	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : "");
+	    name == NULL ? KEY_NAME(sp, cbp->name) : name,
+	    F_ISSET(cbp, CB_LMODE) ? " (line mode)" : " (character mode)");
 	for (tp = cbp->textq.cqh_first;
 	    tp != (void *)&cbp->textq; tp = tp->q.cqe_next) {
-		for (len = tp->len, p = tp->lb; len--;) {
-			(void)ex_printf(EXCOOKIE, "%s", charname(sp, *p++));
-			if (F_ISSET(sp, S_INTERRUPTED))
+		for (len = tp->len, p = tp->lb; len--; ++p) {
+			(void)ex_printf(EXCOOKIE, "%s", KEY_NAME(sp, *p));
+			if (INTERRUPTED(sp))
 				return;
 		}
 		(void)ex_printf(EXCOOKIE, "\n");

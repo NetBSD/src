@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_init.c	8.14 (Berkeley) 3/18/94";
+static const char sccsid[] = "@(#)ex_init.c	8.17 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,8 +93,6 @@ ex_screen_copy(orig, sp)
 		if (ex_tagcopy(orig, sp))
 			return (1);
 	}
-
-	nexp->lastcmd = &cmds[C_PRINT];
 	return (0);
 }
 
@@ -171,7 +169,7 @@ ex_init(sp, ep)
 	}
 
 	/* Display the status line. */
-	return (status(sp, ep, sp->lno, 0));
+	return (msg_status(sp, ep, sp->lno, 0));
 }
 
 /*

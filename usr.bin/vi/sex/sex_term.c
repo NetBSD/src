@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sex_term.c	8.28 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)sex_term.c	8.39 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)sex_term.c	8.28 (Berkeley) 3/15/94";
 
 #include "vi.h"
 #include "excmd.h"
-#include "script.h"
+#include "../ex/script.h"
 
 /*
  * sex_key_read --
@@ -68,53 +68,31 @@ sex_key_read(sp, nrp, timeout)
 	struct timeval *timeout;
 {
 	struct timeval t, *tp;
+	GS *gp;
 	IBUF *tty;
-	SCR *tsp;
 	int maxfd, nr;
 
 	*nrp = 0;
-	tty = sp->gp->tty;
+	gp = sp->gp;
+	tty = gp->tty;
 
 	/*
 	 * We're about to block; check for signals.  If a signal received,
 	 * clear it immediately, so that if it's reset while being serviced
 	 * we won't miss it.
 	 *
-	 * Signal recipients set global flags.  If one is set, we either
-	 * set local flags or call handling routines.  None of this has
+	 * These signal recipients set global flags.  None of this has
 	 * anything to do with input keys, but it's something that can't
-	 * be done asynchronously without doing a lot of locking to handle
-	 * race conditions, and which needs to be done periodically.
+	 * be done asynchronously without adding locking to handle race
+	 * conditions, and which needs to be done periodically.
 	 */
-sigchk:	while (F_ISSET(sp->gp,
-	    G_SIGALRM | G_SIGHUP | G_SIGTERM | G_SIGWINCH)) {
-		if (F_ISSET(sp->gp, G_SIGALRM)) {
-			F_CLR(sp->gp, G_SIGALRM);
-			for (tsp = sp->gp->dq.cqh_first;
-			    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
-				if (tsp->ep != NULL &&
-				    F_ISSET(tsp->ep, F_RCV_ON))
-					F_SET(tsp->ep, F_RCV_ALRM);
-		}
-		if (F_ISSET(sp->ep, F_RCV_ALRM)) {
-			F_CLR(sp->ep, F_RCV_ALRM);
-			(void)rcv_sync(sp, sp->ep);
-		}
-		if (F_ISSET(sp->gp, G_SIGHUP)) {
-			F_CLR(sp->gp, G_SIGHUP);
-			rcv_hup();
-			/* NOTREACHED */
-		}
-		if (F_ISSET(sp->gp, G_SIGTERM)) {
-			F_CLR(sp->gp, G_SIGTERM);
-			rcv_term();
-			/* NOTREACHED */
-		}
-		if (F_ISSET(sp->gp, G_SIGWINCH)) {
-			F_CLR(sp->gp, G_SIGWINCH);
-			set_window_size(sp, 0, 1);
-			F_SET(sp, S_RESIZE);
-			(void)sp->s_refresh(sp, sp->ep);
+sigchk:	while (F_ISSET(gp, G_SIGINT | G_SIGWINCH)) {
+		if (F_ISSET(gp, G_SIGINT))
+			return (INP_INTR);
+		if (F_ISSET(gp, G_SIGWINCH)) {
+			F_CLR(gp, G_SIGWINCH);
+			if (!sp->s_window(sp, 1))
+				(void)sp->s_refresh(sp, sp->ep);
 		}
 	}
 
@@ -126,13 +104,11 @@ sigchk:	while (F_ISSET(sp->gp,
 	 *    when trying to complete a map, but we're going to hang
 	 *    on the next read anyway.
 	 */
-	if (!F_ISSET(sp->gp, G_STDIN_TTY)) {
+	if (!F_ISSET(gp, G_STDIN_TTY)) {
 		if ((nr = read(STDIN_FILENO,
 		    tty->ch + tty->next + tty->cnt,
-		    tty->nelem - (tty->next + tty->cnt))) > 0) {
-			tty->cnt += *nrp = nr;
-			return (INP_OK);
-		}
+		    tty->nelem - (tty->next + tty->cnt))) > 0)
+			goto success;
 		return (INP_EOF);
 	}
 
@@ -229,10 +205,13 @@ err:			msgq(sp, M_SYSERR, "select");
 			msgq(sp, M_SYSERR, "read");
 			return (INP_ERR);
 		default:
-			tty->cnt += *nrp = nr;
-			return (INP_OK);
+			goto success;
 		}
 		/* NOTREACHED */
 	}
-	/* NOTREACHED */
+
+success:
+	MEMSET(tty->chf + tty->next + tty->cnt, 0, nr);
+	tty->cnt += *nrp = nr;
+	return (INP_OK);
 }

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_mark.c	8.5 (Berkeley) 3/8/94";
+static const char sccsid[] = "@(#)ex_mark.c	8.7 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ ex_mark(sp, ep, cmdp)
 	EXCMDARG *cmdp;
 {
 	if (cmdp->argv[0]->len != 1) {
-		msgq(sp, M_ERR, "Mark names must be a single character.");
+		msgq(sp, M_ERR, "Mark names must be a single character");
 		return (1);
 	}
 	return (mark_set(sp, ep, cmdp->argv[0]->bp[0], &cmdp->addr1, 1));

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_move.c	8.11 (Berkeley) 3/15/94";
+static const char sccsid[] = "@(#)ex_move.c	8.18 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)ex_move.c	8.11 (Berkeley) 3/15/94";
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 
@@ -68,6 +69,8 @@ ex_copy(sp, ep, cmdp)
 	recno_t cnt;
 	int rval;
 
+	rval = 0;
+
 	/*
 	 * It's possible to copy things into the area that's being
 	 * copied, e.g. "2,5copy3" is legitimate.  Save the text to
@@ -77,8 +80,12 @@ ex_copy(sp, ep, cmdp)
 	fm2 = cmdp->addr2;
 	memset(&cb, 0, sizeof(cb));
 	CIRCLEQ_INIT(&cb.textq);
-	if (cut(sp, ep, &cb, NULL, &fm1, &fm2, CUT_LINEMODE))
-		return (1);
+	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
+		if (cut_line(sp, ep, cnt, 0, 0, &cb)) {
+			rval = 1;
+			goto err;
+		}
+	cb.flags |= CB_LMODE;
 
 	/* Put the text into place. */
 	tm.lno = cmdp->lineno;
@@ -94,11 +101,8 @@ ex_copy(sp, ep, cmdp)
 		cnt = (fm2.lno - fm1.lno) + 1;
 		sp->lno = m.lno + (cnt - 1);
 		sp->cno = 0;
-
-		sp->rptlines[L_COPIED] += cnt;
-		rval = 0;
 	}
-	text_lfree(&cb.textq);
+err:	text_lfree(&cb.textq);
 	return (rval);
 }
 
@@ -115,9 +119,9 @@ ex_move(sp, ep, cmdp)
 	LMARK *lmp;
 	MARK fm1, fm2;
 	recno_t cnt, diff, fl, tl, mfl, mtl;
-	size_t len;
+	size_t blen, len;
 	int mark_reset;
-	char *p;
+	char *bp, *p;
 
 	/*
 	 * It's not possible to move things into the area that's being
@@ -125,8 +129,8 @@ ex_move(sp, ep, cmdp)
 	 */
 	fm1 = cmdp->addr1;
 	fm2 = cmdp->addr2;
-	if (cmdp->lineno >= fm1.lno && cmdp->lineno < fm2.lno) {
-		msgq(sp, M_ERR, "Destination line is inside move range.");
+	if (cmdp->lineno >= fm1.lno && cmdp->lineno <= fm2.lno) {
+		msgq(sp, M_ERR, "Destination line is inside move range");
 		return (1);
 	}
 
@@ -154,6 +158,9 @@ ex_move(sp, ep, cmdp)
 			(void)log_mark(sp, ep, lmp);
 		}
 
+	/* Get memory for the copy. */
+	GET_SPACE_RET(sp, bp, blen, 256);
+
 	/* Move the lines. */
 	diff = (fm2.lno - fm1.lno) + 1;
 	if (tl > fl) {				/* Destination > source. */
@@ -162,7 +169,9 @@ ex_move(sp, ep, cmdp)
 		for (cnt = diff; cnt--;) {
 			if ((p = file_gline(sp, ep, fl, &len)) == NULL)
 				return (1);
-			if (file_aline(sp, ep, 1, tl, p, len))
+			BINC_RET(sp, bp, blen, len);
+			memmove(bp, p, len);
+			if (file_aline(sp, ep, 1, tl, bp, len))
 				return (1);
 			if (mark_reset)
 				for (lmp = ep->marks.lh_first;
@@ -179,7 +188,9 @@ ex_move(sp, ep, cmdp)
 		for (cnt = diff; cnt--;) {
 			if ((p = file_gline(sp, ep, fl, &len)) == NULL)
 				return (1);
-			if (file_aline(sp, ep, 1, tl++, p, len))
+			BINC_RET(sp, bp, blen, len);
+			memmove(bp, p, len);
+			if (file_aline(sp, ep, 1, tl++, bp, len))
 				return (1);
 			if (mark_reset)
 				for (lmp = ep->marks.lh_first;
@@ -192,6 +203,8 @@ ex_move(sp, ep, cmdp)
 				return (1);
 		}
 	}
+	FREE_SPACE(sp, bp, blen);
+
 	sp->lno = tl;				/* Last line moved. */
 	sp->cno = 0;
 

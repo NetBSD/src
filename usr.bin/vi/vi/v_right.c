@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_right.c	8.6 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)v_right.c	8.9 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ v_right(sp, ep, vp)
 
 	/*
 	 * Non-motion commands move to the end of the range.  VC_D and
-	 * VC_Y stay at the start.  Ignore VC_C and VC_S.  Adjust the
+	 * VC_Y stay at the start.  Ignore VC_C and VC_DEF.  Adjust the
 	 * end of the range for motion commands.
 	 *
 	 * !!!
@@ -92,16 +92,14 @@ v_right(sp, ep, vp)
 	 */
 	vp->m_stop.cno = vp->m_start.cno +
 	    (F_ISSET(vp, VC_C1SET) ? vp->count : 1);
-	if (vp->m_start.cno == len - 1) {
-		if (!ISMOTION(vp)) {
-			v_eol(sp, ep, NULL);
-			return (1);
-		}
-		vp->m_stop.cno = vp->m_start.cno;
-	} else if (vp->m_stop.cno > len - 1)
+	if (vp->m_start.cno == len - 1 && !ISMOTION(vp)) {
+		v_eol(sp, ep, NULL);
+		return (1);
+	}
+	if (vp->m_stop.cno >= len) {
 		vp->m_stop.cno = len - 1;
-
-	if (ISMOTION(vp)) {
+		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
+	} else if (ISMOTION(vp)) {
 		--vp->m_stop.cno;
 		vp->m_final = vp->m_start;
 	} else
@@ -155,8 +153,8 @@ v_dollar(sp, ep, vp)
 	}
 
 	/*
-	 * Non-motion commands move to the end of the range.
-	 * VC_D and VC_Y stay at the start.  Ignore VC_C and VC_S.
+	 * Non-motion commands move to the end of the range.  VC_D
+	 * and VC_Y stay at the start.  Ignore VC_C and VC_DEF.
 	 */
 	vp->m_stop.cno = len ? len - 1 : 0;
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_join.c	8.11 (Berkeley) 3/24/94";
+static const char sccsid[] = "@(#)ex_join.c	8.13 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ ex_join(sp, ep, cmdp)
 
 	/* Check for no lines to join. */
 	if ((p = file_gline(sp, ep, from + 1, &len)) == NULL) {
-		msgq(sp, M_ERR, "No following lines to join.");
+		msgq(sp, M_ERR, "No following lines to join");
 		return (1);
 	}
 
