@@ -1,4 +1,4 @@
-/*	$NetBSD: ftello.c,v 1.1 2000/07/08 13:46:35 kleink Exp $	*/
+/*	$NetBSD: ftello.c,v 1.2 2000/07/26 08:52:57 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftello.c,v 1.1 2000/07/08 13:46:35 kleink Exp $");
+__RCSID("$NetBSD: ftello.c,v 1.2 2000/07/26 08:52:57 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,10 @@ __RCSID("$NetBSD: ftello.c,v 1.1 2000/07/08 13:46:35 kleink Exp $");
 #include <stdio.h>
 #include "local.h"
 #include "reentrant.h"
+
+#ifdef __weak_alias
+__weak_alias(ftello, _ftello)
+#endif
 
 /*
  * ftell: return current offset.
