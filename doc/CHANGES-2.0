@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.77 2004/04/11 04:00:48 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.78 2004/04/11 04:01:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -787,3 +787,8 @@ sys/arch/hp300/dev/hil.c			1.62-1.63
 	Include ite.h before the first reference of NITE. Change us_keymap 
 	extern
 	[tsutsui, ticket #119]
+
+sys/arch/cobalt/cobalt/machdep.c		1.51
+
+	Tidy up messages for total/avail memory.
+	[tsutsui, ticket #120]
