@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.7 1995/08/20 02:54:34 chopps Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.8 1995/08/20 03:07:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1409,8 +1409,8 @@ static const char *monitor_descr[] = {
 int rh_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
 
 /* patchable */
-int rh_default_mon = 2;
-int rh_default_gfx = 8;
+int rh_default_mon = 0;
+int rh_default_gfx = 4;
 
 static struct MonDef *current_mon;
 
