@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_subr.c,v 1.5 1994/01/05 07:51:29 cgd Exp $
+ *	$Id: procfs_subr.c,v 1.6 1994/01/09 19:44:07 ws Exp $
  */
 
 #include <sys/param.h>
@@ -122,55 +122,71 @@ loop:
 	pfs->pfs_next = 0;
 	pfs->pfs_pid = (pid_t) pid;
 	pfs->pfs_type = pfs_type;
-	pfs->pfs_vnode = *vpp;
+	pfs->pfs_vnode = vp = *vpp;
 	pfs->pfs_flags = 0;
 	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type);
 
 	switch (pfs_type) {
-	case Proot:	/* /proc = dr-xr-xr-x */
-		pfs->pfs_mode = (VREAD|VEXEC) |
-				(VREAD|VEXEC) >> 3 |
-				(VREAD|VEXEC) >> 6;
+	case Proot:
+		switch ((int)pid) {
+		case 0:		/* /proc = dr-xr-xr-x */
+			pfs->pfs_mode = (VREAD|VEXEC) |
+					(VREAD|VEXEC) >> 3 |
+					(VREAD|VEXEC) >> 6;
+			vp->v_type = VDIR;
+			vp->v_flag = VROOT;
+			break;
+		case 1:		/* /proc/curdir = lr--r--r-- */
+			pfs->pfs_mode = VREAD |
+					VREAD >> 3 |
+					VREAD >> 6;
+			vp->v_type = VLNK;
+		default:
+			panic("procfs_allocvp root");
+		}
 		break;
 
 	case Pproc:
 		pfs->pfs_mode = (VREAD|VEXEC) |
 				(VREAD|VEXEC) >> 3 |
 				(VREAD|VEXEC) >> 6;
-		break;
-
-	case Pfile:
-		pfs->pfs_mode = (VREAD|VWRITE);
+		vp->v_type = VDIR;
 		break;
 
 	case Pmem:
 		pfs->pfs_mode = (VREAD|VWRITE);
+		vp->v_type = VREG;
 		break;
 
 	case Pregs:
 		pfs->pfs_mode = (VREAD|VWRITE);
+		vp->v_type = VREG;
 		break;
 
 	case Pctl:
 		pfs->pfs_mode = (VWRITE);
+		vp->v_type = VREG;
 		break;
 
 	case Pstatus:
 		pfs->pfs_mode = (VREAD) |
 				(VREAD >> 3) |
 				(VREAD >> 6);
+		vp->v_type = VREG;
 		break;
 
 	case Pnote:
 		pfs->pfs_mode = (VWRITE);
+		vp->v_type = VREG;
 		break;
 
 	case Pnotepg:
 		pfs->pfs_mode = (VWRITE);
+		vp->v_type = VREG;
 		break;
 
 	default:
-		panic("procfs_allocvp");
+		panic("procfs_allocvp type");
 	}
 
 	/* add to procfs vnode list */
