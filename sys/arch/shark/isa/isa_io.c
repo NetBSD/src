@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.4 2005/01/05 10:25:43 tsutsui Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.5 2005/01/09 15:26:19 tsutsui Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.4 2005/01/05 10:25:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.5 2005/01/09 15:26:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ struct bus_space isa_io_bs_tag = {
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
+	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
@@ -214,7 +214,7 @@ struct bus_space isa_mem_bs_tag = {
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
+	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
