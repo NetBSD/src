@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.16 2000/06/21 06:28:08 thorpej Exp $
+# $NetBSD: shl.elf,v 1.17 2000/11/18 06:17:36 wiz Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -17,6 +17,7 @@
 ./usr/lib/libgnumalloc.so	comp-c-lib
 ./usr/lib/libgssapi.so		comp-c-lib
 ./usr/lib/libhdb.so		comp-c-lib
+./usr/lib/libintl.so		comp-c-lib
 ./usr/lib/libipsec.so		comp-c-lib
 ./usr/lib/libkadm.so		comp-c-lib
 ./usr/lib/libkadm5clnt.so	comp-c-lib

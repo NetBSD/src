@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.275 2000/11/18 06:11:03 wiz Exp $
+#	$NetBSD: mi,v 1.276 2000/11/18 06:17:35 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1181,6 +1181,8 @@
 ./usr/lib/libgssapi_p.a	comp-c-proflib
 ./usr/lib/libhdb.a	comp-c-lib
 ./usr/lib/libhdb_p.a	comp-c-proflib
+./usr/lib/libintl.a	comp-c-lib
+./usr/lib/libintl_p.a	comp-c-proflib
 ./usr/lib/libipsec.a	comp-c-lib
 ./usr/lib/libipsec_p.a	comp-c-proflib
 ./usr/lib/libkadm.a	comp-c-lib
@@ -1256,6 +1258,7 @@
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib
+./usr/libdata/lint/llib-lint.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lkstream.ln	comp-c-lintlib
 ./usr/libdata/lint/llib-lkvm.ln		comp-c-lintlib
