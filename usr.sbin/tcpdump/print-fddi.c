@@ -1,4 +1,4 @@
-/*	$NetBSD: print-fddi.c,v 1.5 1998/05/24 21:41:30 matt Exp $	*/
+/*	$NetBSD: print-fddi.c,v 1.6 1998/09/20 02:36:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-fddi.c,v 1.36 97/05/26 17:13:35 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-fddi.c,v 1.5 1998/05/24 21:41:30 matt Exp $");
+__RCSID("$NetBSD: print-fddi.c,v 1.6 1998/09/20 02:36:09 matt Exp $");
 #endif
 #endif
 
@@ -47,6 +47,7 @@ struct rtentry;
 #include <netinet/in.h>
 #ifdef __NetBSD__
 #include <net/if_ether.h>
+#include <net/if_fddi.h>
 #else
 #include <netinet/if_ether.h>
 #endif
@@ -63,8 +64,6 @@ struct rtentry;
 #include "interface.h"
 #include "addrtoname.h"
 #include "ethertype.h"
-
-#include "fddi.h"
 
 /*
  * Some FDDI interfaces use bit-swapped addresses.
