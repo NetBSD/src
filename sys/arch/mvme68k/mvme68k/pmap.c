@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1999/03/26 23:41:31 mycroft Exp $        */
+/*	$NetBSD: pmap.c,v 1.29 1999/03/27 03:37:52 mycroft Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2260,7 +2260,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
+		    VM_PROT_DEFAULT);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);

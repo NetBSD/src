@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/03/26 23:41:27 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 1999/03/27 03:37:51 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -2435,7 +2435,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
+		    VM_PROT_DEFAULT);
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);
