@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.4 2001/06/04 18:59:31 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.5 2001/06/05 17:29:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.4 2001/06/04 18:59:31 uch Exp $";
+    "$NetBSD: hpcfb.c,v 1.5 2001/06/05 17:29:12 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,6 +474,13 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
+	if (fbconf->hf_swap_flags != 0) {
+		if (fbconf->hf_swap_flags == HPCFB_SWAP_BYTE)
+			ri->ri_flg |= RI_BSWAP;
+		else
+			panic("not supported swap method.");
+	}
+
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
