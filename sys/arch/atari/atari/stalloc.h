@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.h,v 1.2 1996/04/12 08:46:45 leo Exp $	*/
+/*	$NetBSD: stalloc.h,v 1.3 1996/04/12 09:05:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps (allocator stuff)
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ATARI_MISC_H
-#define _ATARI_MISC_H
+#ifndef _ATARI_STALLOC_H
+#define _ATARI_STALLOC_H
 /*
  * St-mem allocator stuff.
  */
@@ -52,4 +52,4 @@ void init_stmem __P((void));
 void *alloc_stmem __P((u_long, void **));
 void free_stmem __P((void *));
 
-#endif /* _ATARI_MISC_H */
+#endif /* _ATARI_STALLOC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 1996/03/27 10:08:28 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.19 1996/04/12 09:05:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -62,6 +62,7 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <atari/atari/device.h>
+#include <atari/atari/stalloc.h>
 #include <machine/disklabel.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>

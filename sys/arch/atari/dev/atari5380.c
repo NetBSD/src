@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.10 1996/03/17 01:26:42 thorpej Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.11 1996/04/12 09:05:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -38,6 +38,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
+
+#include <atari/atari/stalloc.h>
 
 /*
  * Include the driver definitions
@@ -343,7 +345,7 @@ tt_poll_edma(SC_REQ *reqp)
 		delay(20);
 		if (--timeout <= 0) {
 			ncr_tprint(reqp, "timeout on polled transfer\n");
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+			reqp->xs->error = XS_TIMEOUT;
 			return(0);
 		}
 		dmstat  = GET_TT_REG(NCR5380_DMSTAT);
@@ -558,15 +560,15 @@ static	int falcon_lock = 0;
 extern __inline__ int
 falcon_claimed_dma()
 {
-	if (!(falcon_lock & DMA_LOCK_GRANT)) {
-		if (falcon_lock) {
+	if (falcon_lock != DMA_LOCK_GRANT) {
+		if (falcon_lock == DMA_LOCK_REQ) {
 			/*
 			 * DMA access is being claimed.
 			 */
 			return(0);
 		}
 		if (!st_dmagrab((dma_farg)fscsi_int, (dma_farg)run_main,
-						&connected,&falcon_lock,1))
+						&connected, &falcon_lock, 1))
 			return(0);
 	}
 	return(1);
@@ -667,7 +669,7 @@ SC_REQ	*reqp;
 		delay(20);
 		if (--timeout <= 0) {
 			ncr_tprint(reqp, "Timeout on polled transfer\n");
-			reqp->xs->error = XS_DRIVER_STUFFUP;
+			reqp->xs->error = XS_TIMEOUT;
 			return(0);
 		}
 		if (!(MFP->mf_gpip & IO_DINT))

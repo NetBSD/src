@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.11 1996/03/27 10:07:45 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.12 1996/04/12 09:05:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,7 +59,8 @@
 #include <machine/mfp.h>
 #include <machine/scu.h>
 #include <machine/kcore.h>
-#include <atari/atari/misc.h>
+#include <atari/atari/stalloc.h>
+#include <atari/dev/ym2149reg.h>
 
 /*
  * All info needed to generate a panic dump. All fields are setup by
