@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.1 2002/08/02 00:30:40 thorpej Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.2 2002/08/02 00:31:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.2 2002/08/02 00:31:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>

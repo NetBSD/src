@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.1 2002/08/02 00:30:38 thorpej Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.2 2002/08/02 00:31:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.2 2002/08/02 00:31:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
