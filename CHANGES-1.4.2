@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.43 1999/09/27 05:05:30 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.44 1999/09/27 05:08:49 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -556,3 +556,8 @@ sys/dev/raidframe/rf_parityscan.c		1.5
 
   Do not allow rebuilding parity on a degraded RAID set.  Also, don't
   allow parity rewriting on a RAID 0 set, as that makes no sense.
+
+usr.bin/audio/play/play.c			1.13
+
+  Honor the "-f" flag even if we appear to recognize a broken Sun audio
+  file, and fix an error message on little-endian hosts.
