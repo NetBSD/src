@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1998/09/05 16:23:08 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.6 1998/09/05 16:52:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/sbusreg.h>
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/sparc64/asm.h>
 #include "kbd.h"
 

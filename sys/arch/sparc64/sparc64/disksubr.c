@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
+/*	$NetBSD: disksubr.c,v 1.4 1998/09/05 16:52:02 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -52,7 +52,7 @@
 #include <machine/oldmon.h>
 #endif
 
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
