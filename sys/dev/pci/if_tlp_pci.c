@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.3 1999/09/08 21:42:44 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.4 1999/09/08 22:29:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -127,14 +127,39 @@ const struct tulip_pci_product {
 	  TULIP_CHIP_82C168 },
 
 #if 0
+	/*
+	 * Note: This is like a MX98715A with Wake-On-LAN and a
+	 * 128-bit multicast hash table.
+	 */
+	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
+	  TULIP_CHIP_82C115 },
+#endif
+
+#if 0
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
 	  TULIP_CHIP_MX98713 },
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX987x5,
 	  TULIP_CHIP_MX98715 },
+
+	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100TX,
+	  TULIP_CHIP_MX98713 },
 #endif
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C840F,
 	  TULIP_CHIP_WB89C840F },
+	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
+	  TULIP_CHIP_WB89C840F },
+
+#if 0
+	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
+	  TULIP_CHIP_DM9102 },
+
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
+	  TULIP_CHIP_AL981 },
+
+	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
+	  TULIP_CHIP_AX88140 },
+#endif
 
 	{ 0,				0,
 	  TULIP_CHIP_INVALID },
@@ -256,6 +281,11 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_regshift = 1;
+		break;
+
+	case TULIP_CHIP_AX88140:
+		if (sc->sc_rev >= 0x10)
+			sc->sc_chip = TULIP_CHIP_AX88141;
 		break;
 
 	default:
