@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.5 2002/08/03 02:03:00 itojun Exp $	*/
+/*	$NetBSD: database.c,v 1.6 2002/11/16 04:34:13 itojun Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 2.8 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.5 2002/08/03 02:03:00 itojun Exp $");
+__RCSID("$NetBSD: database.c,v 1.6 2002/11/16 04:34:13 itojun Exp $");
 #endif
 #endif
 
@@ -118,8 +118,7 @@ load_database(old_db)
 		if (dp->d_name[0] == '.')
 			continue;
 
-		(void) strncpy(fname, dp->d_name, sizeof(fname) - 1);
-		fname[sizeof(fname) - 1] = '\0';
+		(void) strlcpy(fname, dp->d_name, sizeof(fname));
 		snprintf(tabname, sizeof(tabname), CRON_TAB(fname));
 
 		process_crontab(fname, fname, tabname,

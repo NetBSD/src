@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.26 2002/06/14 00:55:48 wiz Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.27 2002/11/16 04:42:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.26 2002/06/14 00:55:48 wiz Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.27 2002/11/16 04:42:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,10 +277,8 @@ main(int argc, char *argv[])
 	if (sp == NULL)
 		errx(1, "login/tcp: unknown service.");
 
-	if ((p = getenv("TERM")) != NULL) {
-		(void)strncpy(term, p, sizeof(term) - 1);
-		term[sizeof(term) - 1] = '\0';
-	}
+	if ((p = getenv("TERM")) != NULL)
+		(void)strlcpy(term, p, sizeof(term));
 	len = strlen(term);
 	if (len < (sizeof(term) - 1) && tcgetattr(0, &tty) == 0) {
 		/* start at 2 to include the / */

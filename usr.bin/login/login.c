@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.70 2002/09/25 03:45:32 itojun Exp $       */
+/*     $NetBSD: login.c,v 1.71 2002/11/16 04:38:45 itojun Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.70 2002/09/25 03:45:32 itojun Exp $");
+__RCSID("$NetBSD: login.c,v 1.71 2002/11/16 04:38:45 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -377,8 +377,7 @@ main(argc, argv)
 				badlogin(tbuf);
 			failures = 0;
 		}
-		(void)strncpy(tbuf, username, sizeof(tbuf) - 1);
-		tbuf[sizeof(tbuf) - 1] = '\0';
+		(void)strlcpy(tbuf, username, sizeof(tbuf));
 
 		if ((pwd = getpwnam(username)) != NULL)
 			salt = pwd->pw_passwd;
@@ -672,7 +671,7 @@ main(argc, argv)
 			tt = login_getcapstr(lc, "term", NULL, NULL);
 #endif
 		/* unknown term -> "su" */
-		(void)strncpy(term, tt != NULL ? tt : "su", sizeof(term));
+		(void)strlcpy(term, tt != NULL ? tt : "su", sizeof(term));
 	}
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
@@ -745,8 +744,8 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strncpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
-	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 2);
+	(void)strlcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
+	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 1);
 
 	/* Wait to change password until we're unprivileged */
 	if (need_chpass) {
