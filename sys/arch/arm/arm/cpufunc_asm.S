@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.1 2001/02/23 03:48:09 ichiro Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.1 2001/05/06 18:01:44 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -122,9 +122,88 @@ ENTRY(cpufunc_control)
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
 
+#ifdef CPU_ARM8
+ENTRY(arm8_clock_config)
+	mrc	15, 0, r3, c15, c0, 0	/* Read the clock register */
+	bic	r2, r3, #0x11		/* turn off dynamic clocking
+					   and clear L bit */
+	mcr	15, 0, r2, c15, c0, 0	/* Write clock register */
+
+	bic	r2, r3, r0		/* Clear bits */
+	eor     r2, r2, r1		/* XOR bits */
+	bic	r2, r2, #0x10		/* clear the L bit */
+
+	bic	r1, r2, #0x01		/* still keep dynamic clocking off */
+	mcr	15, 0, r1, c15, c0, 0	/* Write clock register */
+	mov	r0, r0			/* NOP */
+	mov	r0, r0			/* NOP */
+	mov	r0, r0			/* NOP */
+	mov	r0, r0			/* NOP */
+	mcr	15, 0, r2, c15, c0, 0	/* Write clock register */
+	mov	r0, r3			/* Return old value */
+	mov	pc, lr
+#endif	/* CPU_ARM8 */
+
 /*
  * Functions to set the MMU Translation Table Base register
  */
+
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+ENTRY(arm67_setttb)
+
+	/*
+	 * We need to flush the cache as it uses virtual addresses that
+	 * are about to change
+	 */
+        mcr     15, 0, r0, c7, c0, 0
+
+	/* Write the TTB */
+	mcr	15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+        mcr     15, 0, r0, c5, c0, 0
+
+	/* For good measure we will flush the IDC as well */
+        mcr     15, 0, r0, c7, c0, 0
+
+	/* Make sure that pipeline is emptied */
+        mov     r0, r0
+        mov     r0, r0
+
+	mov	pc, lr
+#endif	/* CPU_ARM6 || CPU_ARM7 */
+
+#ifdef CPU_ARM8
+ENTRY(arm8_setttb)
+	/* We need to clean and flush the cache as it uses virtual
+	 * addresses that are about to change
+	 */
+	mrs	r3, cpsr_all
+	orr	r1, r3, #(I32_bit | F32_bit)
+	msr	cpsr_all , r1
+
+	stmfd	sp!, {r0-r3, lr}
+	bl	_C_LABEL(arm8_cache_cleanID)
+	ldmfd	sp!, {r0-r3, lr}
+	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+
+	/* Write the TTB */
+	mcr	15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	mcr     15, 0, r0, c8, c7, 0
+
+	/* For good measure we will flush the IDC as well */
+	mcr     15, 0, r0, c7, c7, 0
+
+	/* Make sure that pipeline is emptied */
+	mov     r0, r0
+	mov     r0, r0
+	msr	cpsr_all , r3
+
+	mov	pc, lr
+#endif	/* CPU_ARM8 */
+
 
 #ifdef CPU_SA110
 Lblock_userspace_access:
@@ -172,6 +251,26 @@ ENTRY(sa110_setttb)
  * TLB functions
  */
 
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+ENTRY(arm67_tlb_flush)
+	mcr	15, 0, r0, c5, c0, 0
+	mov	pc, lr
+
+ENTRY(arm67_tlb_purge)
+	mcr	15, 0, r0, c6, c0, 0
+	mov	pc, lr
+#endif	/* CPU_ARM6 || CPU_ARM7 */
+
+#ifdef CPU_ARM8
+ENTRY(arm8_tlb_flushID)
+	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
+	mov	pc, lr
+
+ENTRY(arm8_tlb_flushID_SE)
+	mcr	15, 0, r0, c8, c7, 1		/* flush I+D tlb single entry */
+	mov	pc, lr
+#endif	/* CPU_ARM8 */
+
 #ifdef CPU_SA110
 ENTRY(sa110_tlb_flushID)
 	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
@@ -198,6 +297,165 @@ ENTRY(sa110_tlb_flushD_SE)
 /*
  * Cache functions
  */
+
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+ENTRY(arm67_cache_flush)
+	mcr	15, 0, r0, c7, c0, 0
+	mov	pc, lr
+#endif	/* CPU_ARM6 || CPU_ARM7 */
+
+#ifdef CPU_ARM8
+ENTRY(arm8_cache_flushID)
+	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+	mov	pc, lr
+
+ENTRY(arm8_cache_flushID_E)
+	mcr	15, 0, r0, c7, c7, 1		/* flush I+D single entry */
+	mov	pc, lr
+
+ENTRY(arm8_cache_cleanID)
+	mov	r0, #0x00000000
+
+Larm8_cache_cleanID_loop:
+	mov	r2, r0
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+
+	adds	r0, r0, #0x04000000
+	bne	Larm8_cache_cleanID_loop
+
+	mov	pc, lr
+
+ENTRY(arm8_cache_cleanID_E)
+	mcr	15, 0, r0, c7, c11, 1		/* clean ID single entry */
+	mov	pc, lr
+
+ENTRY(arm8_cache_purgeID)
+	/*
+	 * ARM810 bug 3
+	 *
+	 * Clean and invalidate entry will not invalidate the entry
+	 * if the line was already clean. (mcr 15, 0, rd, c7, 15, 1)
+	 *
+	 * Instead of using the clean and invalidate entry operation
+	 * use a separate clean and invalidate entry operations.
+	 * i.e.
+	 * mcr 15, 0, rd, c7, 11, 1
+	 * mcr 15, 0, rd, c7, 7, 1
+	 */
+
+	mov	r0, #0x00000000
+
+	mrs	r3, cpsr_all
+	orr	r2, r3, #(I32_bit | F32_bit)
+	msr	cpsr_all , r2
+
+Larm8_cache_purgeID_loop:
+	mov	r2, r0
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+	add	r2, r2, #0x10
+	mcr	15, 0, r2, c7, c11, 1
+	mcr	15, 0, r2, c7, c7, 1
+
+	adds	r0, r0, #0x04000000
+	bne	Larm8_cache_purgeID_loop
+
+	msr	cpsr_all, r3
+	mov	pc, lr
+
+ENTRY(arm8_cache_purgeID_E)
+	/*
+	 * ARM810 bug 3
+	 *
+	 * Clean and invalidate entry will not invalidate the entry
+	 * if the line was already clean. (mcr 15, 0, rd, c7, 15, 1)
+	 *
+	 * Instead of using the clean and invalidate entry operation
+	 * use a separate clean and invalidate entry operations.
+	 * i.e.
+	 * mcr 15, 0, rd, c7, 11, 1
+	 * mcr 15, 0, rd, c7, 7, 1
+	 */
+	mrs	r3, cpsr_all
+	orr	r2, r3, #(I32_bit | F32_bit)
+	msr	cpsr_all , r2
+	mcr	15, 0, r0, c7, c11, 1		/* clean ID single entry */
+	mcr	15, 0, r0, c7, c7, 1		/* flush ID single entry */
+	msr	cpsr_all , r3
+	mov	pc, lr
+#endif	/* CPU_ARM8 */
 
 #ifdef CPU_SA110
 ENTRY(sa110_cache_flushID)
@@ -263,6 +521,7 @@ Lsa110_cache_cleanD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_cleanD_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -292,6 +551,7 @@ Lsa110_cache_purgeID_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeID_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
@@ -321,6 +581,7 @@ Lsa110_cache_purgeD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeD_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
 #else
@@ -330,12 +591,14 @@ Lsa110_cache_purgeD_loop:
 
 ENTRY(sa110_cache_purgeID_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 */
@@ -376,6 +639,7 @@ Lsa110_cache_syncI_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_syncI_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
@@ -399,10 +663,11 @@ sa110_cache_cleanD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_cleanD_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeID)
 
 	and	r2, r0, #0x1f
@@ -416,12 +681,13 @@ sa110_cache_purgeID_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeID_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_rng)
-	cmp	r1, #0x2000
+	cmp	r1, #0x4000
 	bcs	_C_LABEL(sa110_cache_purgeD)
 
 	and	r2, r0, #0x1f
@@ -435,6 +701,7 @@ sa110_cache_purgeD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeD_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mov	pc, lr
 
 ENTRY(sa110_cache_syncI_rng)
@@ -451,6 +718,7 @@ sa110_cache_syncI_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_syncI_rng_loop
 
+	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
@@ -465,6 +733,50 @@ sa110_cache_syncI_rng_loop:
  * NOTE: Special calling convention
  *       r1, r4-r13 must be preserved
  */
+
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+ENTRY(arm67_context_switch)
+	/* Switch the memory to the new process */
+
+	/* For good measure we will flush the IDC as well */
+	mcr     15, 0, r0, c7, c0, 0		/* flush cache */
+
+	/* Write the TTB */
+	mcr     15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	mcr     15, 0, r0, c5, c0, 0
+
+	/* For good measure we will flush the IDC as well */
+/*	mcr     15, 0, r0, c7, c0, 0*/
+
+	/* Make sure that pipeline is emptied */
+	mov     r0, r0
+	mov     r0, r0
+	mov     pc, lr
+#endif
+
+#ifdef CPU_ARM8
+ENTRY(arm8_context_switch)
+	/* Switch the memory to the new process */
+
+	/* For good measure we will flush the IDC as well */
+	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
+
+	/* Write the TTB */
+	mcr     15, 0, r0, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+
+	/* For good measure we will flush the IDC as well */	
+/*	mcr     15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
+
+	/* Make sure that pipeline is emptied */
+	mov     r0, r0
+	mov     r0, r0
+	mov     pc, lr
+#endif	/* CPU_ARM8 */
 
 #ifdef CPU_SA110
 ENTRY(sa110_context_switch)
