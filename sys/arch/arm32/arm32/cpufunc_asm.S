@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.5 1998/05/08 23:21:31 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.6 1998/06/09 01:02:14 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -204,7 +204,7 @@ ENTRY(arm8_setttb)
 
 #ifdef CPU_SA110
 ENTRY(sa110_setttb)
-/* We need to flush the cache as it uses virtual addresses that are about to change */
+	/* We need to flush the cache as it uses virtual addresses that are about to change */
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r1
@@ -214,16 +214,16 @@ ENTRY(sa110_setttb)
 	mcr	15, 0, r0, c7, c7, 0
 	mcr	15, 0, r0, c7, c10, 4
 
-/* Write the TTB */
+	/* Write the TTB */
 	mcr	15, 0, r0, c2, c0, 0
 
-/* If we have updated the TTB we must flush the TLB */
+	/* If we have updated the TTB we must flush the TLB */
         mcr     15, 0, r0, c8, c7, 0
 
-/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c7, 0
+	/* The cleanID above means we only need to flush the I cache here */
+        mcr     15, 0, r0, c7, c5, 0
 
-/* Make sure that pipeline is emptied */
+	/* Make sure that pipeline is emptied */
         mov     r0, r0
         mov     r0, r0
 	msr	cpsr_all , r3
@@ -519,8 +519,8 @@ Lsa110_cache_purgeID_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeID_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
+	mcr	15, 0, r0, c7, c10, 4	/* drain write buffer */
+	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
 	msr	cpsr_all , r3
 	mov	pc, lr	
 
@@ -539,7 +539,7 @@ Lsa110_cache_purgeD_loop:
 	bne	Lsa110_cache_purgeD_loop
 
 	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c6, 0		/* flush D cache */
+/*	mcr	15, 0, r0, c7, c6, 0*/		/* flush D cache */
 	msr	cpsr_all , r3
 	mov	pc, lr	
 
@@ -731,9 +731,15 @@ ENTRY(arm8_context_switch)
 ENTRY(sa110_context_switch)
 	/* Switch the memory to the new process */
 
+	/*
+	 * CF_CACHE_PURGE_ID will ALWAYS be called prior to this
+	 * Thus the data cache will contain only kernel data
+	 * and the instruction cache will contain only kernel code
+	 */
+
 	/* For good measure we will flush the IDC as well */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
+/*	mcr	15, 0, r0, c7, c10, 4*/		/* drain write buffer */
+/*	mcr	15, 0, r0, c7, c7, 0*/		/* flush i+d cache */
 
 	/* Write the TTB */
         mcr     15, 0, r0, c2, c0, 0
@@ -742,7 +748,7 @@ ENTRY(sa110_context_switch)
         mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* For good measure we will flush the IDC as well */	
-        mcr     15, 0, r0, c7, c7, 0		/* flush the i+d cache */
+/*        mcr     15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
 
 	/* Make sure that pipeline is emptied */
         mov     r0, r0
