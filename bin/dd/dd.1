@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
+.\"	$NetBSD: dd.1,v 1.6 1997/10/20 08:51:24 enami Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm dd
 .Nd convert and copy a file
 .Sh SYNOPSIS
-.Nm dd
+.Nm
 .Op operands ...
 .Sh DESCRIPTION
 The
@@ -53,7 +53,7 @@ Input data is read and written in 512-byte blocks.
 If input reads are short, input from multiple reads are aggregated
 to form the output block.
 When finished,
-.Nm dd
+.Nm
 displays the number of complete and partial input and output blocks
 and truncated input records to the standard error output.
 .Pp
@@ -238,7 +238,7 @@ will be positioned past the block in which the error occurred using
 Do not truncate the output file.
 This will preserve any blocks in the output file not explicitly written
 by
-.Nm dd .
+.Nm "" .
 The
 .Cm notrunc
 value is not supported for tapes.
@@ -281,7 +281,7 @@ in an integer, respectively.
 Two or more numbers may be separated by an ``x'' to indicate a product.
 .Pp
 When finished,
-.Nm dd
+.Nm
 displays the number of complete and partial input and output blocks,
 truncated input records and odd-length byte-swapping blocks to the
 standard error output.
@@ -304,7 +304,7 @@ This means that the final output block may be shorter than the output
 block size.
 .Pp
 If
-.Nm dd
+.Nm
 receives a
 .Dv SIGINFO
 (see the ``status'' argument for
@@ -313,17 +313,17 @@ signal, the current input and output block counts will
 be written to the standard error output
 in the same format as the standard completion message.
 If
-.Nm dd
+.Nm
 receives a
 .Dv SIGINT
 signal, the current input and output block counts will
 be written to the standard error output
 in the same format as the standard completion message and
-.Nm dd
+.Nm
 will exit.
 .Pp
 The
-.Nm dd
+.Nm
 utility exits 0 on success and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cp 1 ,
@@ -331,7 +331,7 @@ utility exits 0 on success and >0 if an error occurred.
 .Xr tr 1
 .Sh STANDARDS
 The
-.Nm dd
+.Nm
 utility is expected to be a superset of the
 .St -p1003.2
 standard.
