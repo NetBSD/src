@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.51 2000/10/11 17:56:05 abs Exp $	*/
+/*	$NetBSD: mount.c,v 1.52 2000/10/30 21:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.51 2000/10/11 17:56:05 abs Exp $");
+__RCSID("$NetBSD: mount.c,v 1.52 2000/10/30 21:31:50 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,27 +68,27 @@ __RCSID("$NetBSD: mount.c,v 1.51 2000/10/11 17:56:05 abs Exp $");
 
 #include "pathnames.h"
 
-int	debug, verbose;
+static int	debug, verbose;
 
 int	checkvfsname __P((const char *, const char **));
-void	catopt __P((char **, const char *));
-struct statfs
-       *getmntpt __P((const char *));
-int	hasopt __P((const char *, const char *));
+static void	catopt __P((char **, const char *));
+static struct statfs	*getmntpt __P((const char *));
+static int	hasopt __P((const char *, const char *));
 const char
       **makevfslist __P((char *));
 const static char *
 	getfslab __P((const char *str));
 static void
 	mangle __P((char *, int *, const char ***, int *));
-int	mountfs __P((const char *, const char *, const char *,
+static int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
-void	prmount __P((struct statfs *));
-void	usage __P((void));
+static void	prmount __P((struct statfs *));
+static void	usage __P((void));
 int	main __P((int, char *[]));
+void	checkname __P((int, char *[]));
 
 /* Map from mount otions to printable formats. */
-static struct opt {
+static const struct opt {
 	int o_opt;
 	int o_silent;
 	const char *o_name;
@@ -131,6 +131,10 @@ main(argc, argv)
 	char *options;
 	const char *mountopts, *fstypename;
 
+	/* if called as specific mount, call it's main mount routine */
+	checkname(argc, argv);
+
+	/* started as "mount" */
 	all = forceall = init_flags = 0;
 	options = NULL;
 	vfslist = NULL;
@@ -314,7 +318,7 @@ hasopt(mntopts, option)
 	return (found);
 }
 
-int
+static int
 mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	const char *vfstype, *spec, *name, *options, *mntopts;
 	int flags, skipmounted;
@@ -464,12 +468,12 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	return (0);
 }
 
-void
+static void
 prmount(sfp)
 	struct statfs *sfp;
 {
 	int flags;
-	struct opt *o;
+	const struct opt *o;
 	struct passwd *pw;
 	int f;
 
@@ -501,7 +505,7 @@ prmount(sfp)
 		(void)printf("%s", f ? ")\n" : "\n");
 }
 
-struct statfs *
+static struct statfs *
 getmntpt(name)
 	const char *name;
 {
@@ -516,7 +520,7 @@ getmntpt(name)
 	return (NULL);
 }
 
-void
+static void
 catopt(sp, o)
 	char **sp;
 	const char *o;
@@ -631,7 +635,7 @@ getfslab(str)
 	return vfstype;
 }
 
-void
+static void
 usage()
 {
 
