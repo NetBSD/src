@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.27 2004/03/22 17:30:33 tls Exp $	*/
+/*	$NetBSD: ld.c,v 1.28 2004/07/20 15:44:20 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.27 2004/03/22 17:30:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.28 2004/07/20 15:44:20 dbj Exp $");
 
 #include "rnd.h"
 
@@ -120,6 +120,8 @@ ldattach(struct ld_softc *sc)
 	/* Build synthetic geometry if necessary. */
 	if (sc->sc_nheads == 0 || sc->sc_nsectors == 0 ||
 	    sc->sc_ncylinders == 0) {
+		uint64_t ncyl;
+
 		if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
 			sc->sc_nheads = 16;
 		else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
@@ -132,13 +134,16 @@ ldattach(struct ld_softc *sc)
 			sc->sc_nheads = 255;
 
 		sc->sc_nsectors = 63;
-		sc->sc_ncylinders = sc->sc_secperunit / 
+		sc->sc_ncylinders = INT_MAX;
+		ncyl = sc->sc_secperunit / 
 		    (sc->sc_nheads * sc->sc_nsectors);
+		if (ncyl < INT_MAX)
+			sc->sc_ncylinders = (int)ncyl;
 	}
 
-	format_bytes(buf, sizeof(buf), (u_int64_t)sc->sc_secperunit *
+	format_bytes(buf, sizeof(buf), sc->sc_secperunit *
 	    sc->sc_secsize);
-	printf("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %d sectors\n",
+	printf("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
 	    sc->sc_dv.dv_xname, buf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
