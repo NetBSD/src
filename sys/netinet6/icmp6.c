@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.93 2003/06/24 07:39:24 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.94 2003/06/24 07:54:47 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.93 2003/06/24 07:39:24 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94 2003/06/24 07:54:47 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2420,7 +2420,7 @@ icmp6_redirect_output(m0, rt)
 	icmp6_errcount(&icmp6stat.icp6s_outerrhist, ND_REDIRECT, 0);
 
 	/* if we are not router, we don't send icmp6 redirect */
-	if (!ip6_forwarding || ip6_accept_rtadv)
+	if (!ip6_forwarding)
 		goto fail;
 
 	/* sanity check */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.84 2003/06/24 07:49:03 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.85 2003/06/24 07:54:48 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.84 2003/06/24 07:49:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.85 2003/06/24 07:54:48 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,7 +815,7 @@ nd6_free(rt, gc)
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
-	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+	if (!ip6_forwarding) {
 		int s;
 		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
