@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1997/10/16 23:55:50 christos Exp $
+	$NetBSD: syscalls.master,v 1.23 1998/02/14 22:04:56 kleink Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -55,7 +55,7 @@
 13	OBSOL		time
 14	STD		{ int ultrix_sys_mknod(char *path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
+16	NOARGS		{ int sys___posix_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	OBSOL		stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -190,7 +190,7 @@
 			    u_int iovcnt); }
 122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
 			    struct timezone *tzp); }
-123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
