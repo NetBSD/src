@@ -1,4 +1,4 @@
-/*	$NetBSD: pms_iomd.c,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: pms_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -50,7 +50,7 @@
 #include <sys/tty.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/pmsvar.h>
 

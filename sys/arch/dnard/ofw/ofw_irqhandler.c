@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.2 2001/11/09 00:34:36 thorpej Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.3 2001/11/27 01:10:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,7 +50,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 irqhandler_t *irqhandlers[NIRQS];

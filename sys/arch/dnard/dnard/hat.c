@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.3 2001/11/23 19:36:49 thorpej Exp $	*/
+/*	$NetBSD: hat.c,v 1.4 2001/11/27 01:10:12 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -47,7 +47,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <arm/cpufunc.h>
 

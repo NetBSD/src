@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.26 2001/11/23 21:18:32 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.27 2001/11/27 01:06:30 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 #include <machine/frame.h>
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <arm/undefined.h>
 
