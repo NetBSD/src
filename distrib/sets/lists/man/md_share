@@ -123,6 +123,7 @@
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
+./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
 ./usr/share/man/cat4/pc532/ncr.0
@@ -202,7 +203,6 @@
 ./usr/share/man/cat4/vax/lp.0
 ./usr/share/man/cat4/vax/mem.0
 ./usr/share/man/cat4/vax/mt.0
-./usr/share/man/cat4/vax/mtio.0
 ./usr/share/man/cat4/vax/np.0
 ./usr/share/man/cat4/vax/pcl.0
 ./usr/share/man/cat4/vax/ps.0
@@ -414,6 +414,7 @@
 ./usr/share/man/man4/mac68k/mem.4
 ./usr/share/man/man4/mac68k/obio.4
 ./usr/share/man/man4/mac68k/sn.4
+./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/pc532/lpt.4
 ./usr/share/man/man4/pc532/mem.4
 ./usr/share/man/man4/pc532/ncr.4
@@ -493,7 +494,6 @@
 ./usr/share/man/man4/vax/lp.4
 ./usr/share/man/man4/vax/mem.4
 ./usr/share/man/man4/vax/mt.4
-./usr/share/man/man4/vax/mtio.4
 ./usr/share/man/man4/vax/np.4
 ./usr/share/man/man4/vax/pcl.4
 ./usr/share/man/man4/vax/ps.4
