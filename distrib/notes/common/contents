@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8.2.1 1999/04/06 22:02:05 minoura Exp $
+.\"	$NetBSD: contents,v 1.8.2.2 1999/04/23 15:16:02 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,6 +92,14 @@ directory exists to hold a copy of the
 .Nx
 .Xr release 7
 standard.
+.		It Pa instkernel/
+.No contains a Pa netbsd.gz
+installation kernel; this is the same installer kernel as in all the
+other install
+images, but without the various boot program and filesystem wrappers.
+It can be netbooted or diskbooted from a previous installation. Note: there is
+no need to ungzip this image.
+
 .		It Pa misc/
 contains
 .Pa GENERIC.fs ,
@@ -712,9 +720,9 @@ This TOS disk contains the loadbsd and chg_pid programs
 and a kernel. It is setup so that you can insert it
 int your floppy drive, and start the programs from GEM.
 .Pp
-For the TT030 and Falcon, the floppy is named boot-_SVER_S.fs and
+For the TT030 and Falcon, the (720KB) floppy is named boot.fs and
 the kernel supplied is 'BOOT'. For the Hades, you need the
-hades-boot-_SVER_S.fs floppy. The kernel is 'HADES'.
+hades-boot.fs floppy (1.44MB), the kernel is 'HADES'.
 .It Em Installation\ floppy:
 This disk contains a BSD root file system setup to help
 you install the rest of NetBSD. This includes formatting
