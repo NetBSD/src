@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.10 2000/06/26 19:36:07 pk Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.11 2000/06/26 19:41:20 pk Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -425,7 +425,6 @@ prom_claim_phys(phys, len)
 		cell_t phys_hi;
 		cell_t phys_lo;
 		cell_t status;
-		cell_t res;
 		cell_t rphys_hi;
 		cell_t rphys_lo;
 	} args;
@@ -436,7 +435,7 @@ prom_claim_phys(phys, len)
 	}
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = 6;
-	args.nreturns = 4;
+	args.nreturns = 3;
 	args.method = ADR2CELL(&"claim");
 	args.ihandle = HDL2CELL(memh);
 	args.align = 0;
@@ -445,7 +444,7 @@ prom_claim_phys(phys, len)
 	args.phys_lo = HDL2CELL(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(int)args.rphys_lo);
 }
 
 /* 
