@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.15 1996/05/22 13:55:32 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.16 1996/09/09 14:51:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -98,7 +98,7 @@ tcp_fasttimo()
 void
 tcp_slowtimo()
 {
-	register struct inpcb *ip, *ipnxt;
+	register struct inpcb *inp, *ninp;
 	register struct tcpcb *tp;
 	int s;
 	register long i;
@@ -108,14 +108,14 @@ tcp_slowtimo()
 	/*
 	 * Search through tcb's and update active timers.
 	 */
-	ip = tcbtable.inpt_queue.cqh_first;
-	if (ip == (struct inpcb *)0) {				/* XXX */
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp == (struct inpcb *)0) {				/* XXX */
 		splx(s);
 		return;
 	}
-	for (; ip != (struct inpcb *)&tcbtable.inpt_queue; ip = ipnxt) {
-		ipnxt = ip->inp_queue.cqe_next;
-		tp = intotcpcb(ip);
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue; inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
+		tp = intotcpcb(inp);
 		if (tp == 0)
 			continue;
 		for (i = 0; i < TCPT_NTIMERS; i++) {
@@ -125,9 +125,9 @@ tcp_slowtimo()
 				    (struct mbuf *)i, (struct mbuf *)0,
 				    (struct proc *)0);
 				/* XXX NOT MP SAFE */
-				if ((ipnxt == (void *)&tcbtable.inpt_queue &&
-				    tcbtable.inpt_queue.cqh_last != ip) ||
-				    ipnxt->inp_queue.cqe_prev != ip)
+				if ((ninp == (void *)&tcbtable.inpt_queue &&
+				    tcbtable.inpt_queue.cqh_last != inp) ||
+				    ninp->inp_queue.cqe_prev != inp)
 					goto tpgone;
 			}
 		}
@@ -204,8 +204,8 @@ tcp_timers(tp, timer)
 		}
 		tcpstat.tcps_rexmttimeo++;
 		rexmt = TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift];
-		TCPT_RANGESET((long) tp->t_rxtcur, rexmt,
-		    tp->t_rttmin, TCPTV_REXMTMAX);
+		TCPT_RANGESET(tp->t_rxtcur, rexmt, tp->t_rttmin,
+		    TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 		/*
 		 * If losing, let the lower level know and try for

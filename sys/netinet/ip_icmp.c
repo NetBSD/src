@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.20 1996/09/09 14:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -209,15 +209,15 @@ icmp_input(m, va_alist)
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_input from %x to %x, len %d\n",
-			ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
-			icmplen);
+		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
+		    icmplen);
 #endif
 	if (icmplen < ICMP_MINLEN) {
 		icmpstat.icps_tooshort++;
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == 0)  {
+	if (m->m_len < i && (m = m_pullup(m, i)) == 0) {
 		icmpstat.icps_tooshort++;
 		return;
 	}
@@ -294,6 +294,8 @@ icmp_input(m, va_alist)
 		if (code)
 			goto badcode;
 		code = PRC_QUENCH;
+		goto deliver;
+
 	deliver:
 		/*
 		 * Problem with datagram; advise higher level routines.
@@ -344,7 +346,7 @@ icmp_input(m, va_alist)
 		if (icmplen < ICMP_MASKLEN)
 			break;
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
-		    ip->ip_dst.s_addr == INADDR_ANY)
+		    in_nullhost(ip->ip_dst))
 			icmpdst.sin_addr = ip->ip_src;
 		else
 			icmpdst.sin_addr = ip->ip_dst;
@@ -354,7 +356,7 @@ icmp_input(m, va_alist)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
-		if (ip->ip_src.s_addr == 0) {
+		if (in_nullhost(ip->ip_src)) {
 			if (ia->ia_ifp->if_flags & IFF_BROADCAST)
 				ip->ip_src = ia->ia_broadaddr.sin_addr;
 			else if (ia->ia_ifp->if_flags & IFF_POINTOPOINT)
@@ -387,7 +389,7 @@ reflect:
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs)
 			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
-				icp->icmp_gwaddr);
+			    icp->icmp_gwaddr);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
@@ -446,10 +448,10 @@ icmp_reflect(m)
 	 * to the incoming interface.
 	 */
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
+		if (in_hosteq(t, ia->ia_addr.sin_addr))
 			break;
 		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    t.s_addr == ia->ia_broadaddr.sin_addr.s_addr)
+		    in_hosteq(t, ia->ia_broadaddr.sin_addr))
 			break;
 	}
 	icmpdst.sin_addr = t;
@@ -479,7 +481,7 @@ icmp_reflect(m)
 		if ((opts = ip_srcroute()) == 0 &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			opts->m_len = sizeof(struct in_addr);
-			mtod(opts, struct in_addr *)->s_addr = 0;
+			*mtod(opts, struct in_addr *) = zeroin_addr;
 		}
 		if (opts) {
 #ifdef ICMPPRINTFS

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.30 1996/09/06 05:07:45 mrg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.31 1996/09/09 14:51:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -104,8 +104,6 @@ ip_output(m0, va_alist)
 	imo = va_arg(ap, struct ip_moptions *);
 	va_end(ap);
 
-
-
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ip_output no HDR");
@@ -141,7 +139,7 @@ ip_output(m0, va_alist)
 	 * and is still up.  If not, free it and try again.
 	 */
 	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	   dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+	    !in_hosteq(dst->sin_addr, ip->ip_dst))) {
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = (struct rtentry *)0;
 	}
@@ -207,7 +205,7 @@ ip_output(m0, va_alist)
 		 * If source address not specified yet, use address
 		 * of outgoing interface.
 		 */
-		if (ip->ip_src.s_addr == INADDR_ANY) {
+		if (in_nullhost(ip->ip_src)) {
 			register struct in_ifaddr *ia;
 
 			for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
@@ -271,7 +269,7 @@ ip_output(m0, va_alist)
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
-	if (ip->ip_src.s_addr == INADDR_ANY)
+	if (in_nullhost(ip->ip_src))
 		ip->ip_src = ia->ia_addr.sin_addr;
 #endif
 	/*
@@ -412,8 +410,10 @@ sendorfree:
 		ipstat.ips_fragmented++;
     }
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt)
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt) {
 		RTFREE(ro->ro_rt);
+		ro->ro_rt = 0;
+	}
 	return (error);
 bad:
 #ifdef PACKET_FILTER
@@ -447,7 +447,7 @@ ip_insertoptions(m, opt, phlen)
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
 	if (optlen + (u_int16_t)ip->ip_len > IP_MAXPACKET)
 		return (m);		/* XXX should fail */
-	if (p->ipopt_dst.s_addr)
+	if (!in_nullhost(p->ipopt_dst))
 		ip->ip_dst = p->ipopt_dst;
 	if (m->m_flags & M_EXT || m->m_data - optlen < m->m_pktdat) {
 		MGETHDR(n, M_DONTWAIT, MT_HEADER);
@@ -822,7 +822,7 @@ ip_setmoptions(optname, imop, m)
 		 * When no interface is selected, a default one is
 		 * chosen every time a multicast packet is sent.
 		 */
-		if (addr.s_addr == INADDR_ANY) {
+		if (in_nullhost(addr)) {
 			imo->imo_multicast_ifp = NULL;
 			break;
 		}
@@ -881,7 +881,7 @@ ip_setmoptions(optname, imop, m)
 		 * If no interface address was provided, use the interface of
 		 * the route to the given multicast address.
 		 */
-		if (mreq->imr_interface.s_addr == INADDR_ANY) {
+		if (in_nullhost(mreq->imr_interface)) {
 			ro.ro_rt = NULL;
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
@@ -911,8 +911,8 @@ ip_setmoptions(optname, imop, m)
 		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
 			if (imo->imo_membership[i]->inm_ifp == ifp &&
-			    imo->imo_membership[i]->inm_addr.s_addr
-						== mreq->imr_multiaddr.s_addr)
+			    in_hosteq(imo->imo_membership[i]->inm_addr,
+				      mreq->imr_multiaddr))
 				break;
 		}
 		if (i < imo->imo_num_memberships) {
@@ -953,7 +953,7 @@ ip_setmoptions(optname, imop, m)
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (mreq->imr_interface.s_addr == INADDR_ANY)
+		if (in_nullhost(mreq->imr_interface))
 			ifp = NULL;
 		else {
 			INADDR_TO_IFP(mreq->imr_interface, ifp);
@@ -968,8 +968,8 @@ ip_setmoptions(optname, imop, m)
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
 			if ((ifp == NULL ||
 			     imo->imo_membership[i]->inm_ifp == ifp) &&
-			     imo->imo_membership[i]->inm_addr.s_addr ==
-			     mreq->imr_multiaddr.s_addr)
+			     in_hosteq(imo->imo_membership[i]->inm_addr,
+				       mreq->imr_multiaddr))
 				break;
 		}
 		if (i == imo->imo_num_memberships) {
@@ -1030,26 +1030,25 @@ ip_getmoptions(optname, imo, mp)
 		addr = mtod(*mp, struct in_addr *);
 		(*mp)->m_len = sizeof(struct in_addr);
 		if (imo == NULL || imo->imo_multicast_ifp == NULL)
-			addr->s_addr = INADDR_ANY;
+			*addr = zeroin_addr;
 		else {
 			IFP_TO_IA(imo->imo_multicast_ifp, ia);
-			addr->s_addr = (ia == NULL) ? INADDR_ANY
-					: ia->ia_addr.sin_addr.s_addr;
+			*addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
 		}
 		return (0);
 
 	case IP_MULTICAST_TTL:
 		ttl = mtod(*mp, u_char *);
 		(*mp)->m_len = 1;
-		*ttl = (imo == NULL) ? IP_DEFAULT_MULTICAST_TTL
-				     : imo->imo_multicast_ttl;
+		*ttl = imo ? imo->imo_multicast_ttl
+			   : IP_DEFAULT_MULTICAST_TTL;
 		return (0);
 
 	case IP_MULTICAST_LOOP:
 		loop = mtod(*mp, u_char *);
 		(*mp)->m_len = 1;
-		*loop = (imo == NULL) ? IP_DEFAULT_MULTICAST_LOOP
-				      : imo->imo_multicast_loop;
+		*loop = imo ? imo->imo_multicast_loop
+			    : IP_DEFAULT_MULTICAST_LOOP;
 		return (0);
 
 	default:
