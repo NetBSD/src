@@ -103,6 +103,22 @@ enum decl_context
 #ifndef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 #endif
+
+#ifndef INTMAX_TYPE
+#define INTMAX_TYPE ((INT_TYPE_SIZE == LONG_LONG_TYPE_SIZE)	\
+		     ? "int"					\
+		     : ((LONG_TYPE_SIZE == LONG_LONG_TYPE_SIZE)	\
+			? "long int"				\
+			: "long long int"))
+#endif
+
+#ifndef UINTMAX_TYPE
+#define UINTMAX_TYPE ((INT_TYPE_SIZE == LONG_LONG_TYPE_SIZE)	\
+		     ? "unsigned int"				\
+		     : ((LONG_TYPE_SIZE == LONG_LONG_TYPE_SIZE)	\
+			? "long unsigned int"			\
+			: "long long unsigned int"))
+#endif
 
 /* a node which has tree code ERROR_MARK, and whose type is itself.
    All erroneous expressions are replaced with this node.  All functions
@@ -129,6 +145,9 @@ tree boolean_false_node;
 tree boolean_true_node;
 
 tree ptrdiff_type_node;
+
+tree intmax_type_node;
+tree uintmax_type_node;
 
 tree unsigned_char_type_node;
 tree signed_char_type_node;
@@ -3095,6 +3114,11 @@ init_decl_processing ()
     (TREE_TYPE (IDENTIFIER_GLOBAL_VALUE (get_identifier (SIZE_TYPE))));
   if (flag_traditional && TREE_UNSIGNED (sizetype))
     set_sizetype (signed_type (sizetype));
+
+  intmax_type_node
+    = TREE_TYPE (IDENTIFIER_GLOBAL_VALUE (get_identifier (INTMAX_TYPE)));
+  uintmax_type_node
+    = TREE_TYPE (IDENTIFIER_GLOBAL_VALUE (get_identifier (UINTMAX_TYPE)));
 
   ptrdiff_type_node
     = TREE_TYPE (IDENTIFIER_GLOBAL_VALUE (get_identifier (PTRDIFF_TYPE)));
