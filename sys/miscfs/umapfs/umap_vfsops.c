@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.34 2002/07/30 07:40:11 soren Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.34 2002/07/30 07:40:11 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,16 @@ umapfs_mount(mp, path, data, ndp, p)
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 #endif
+	if (mp->mnt_flag & MNT_GETARGS) {
+		amp = MOUNTTOUMAPMOUNT(mp);
+		if (amp == NULL)
+			return EIO;
+		args.la.target = NULL;
+		vfs_showexport(mp, &args.la.export, &amp->umapm_export);
+		args.nentries = amp->info_nentries;
+		args.gnentries = amp->info_gnentries;
+		return copyout(&args, data, sizeof(args));
+	}
 
 	/* only for root */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
