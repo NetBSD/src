@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.9 1998/02/21 03:13:46 mark Exp $	*/
+/*	$NetBSD: rtc.c,v 1.10 1998/04/19 03:55:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -62,6 +62,8 @@ struct rtc_softc {
 
 void rtcattach __P((struct device *parent, struct device *self, void *aux));
 int rtcmatch __P((struct device *parent, struct cfdata *cf, void *aux));
+int rtc_read __P((void *, rtc_t *));
+int rtc_write __P((void *, rtc_t *));
 
 /* Read a byte from CMOS RAM */
 
@@ -150,7 +152,8 @@ dectohexdec(n)
 /* Write the RTC data from an 8 byte buffer */
 
 int
-rtc_write(rtc)
+rtc_write(arg, rtc)
+	void *arg;
 	rtc_t *rtc;
 {
 	u_char buff[8];
@@ -180,7 +183,8 @@ rtc_write(rtc)
 /* Read the RTC data into a 8 byte buffer */
 
 int
-rtc_read(rtc)
+rtc_read(arg, rtc)
+	void *arg;
 	rtc_t *rtc;
 {
 	u_char buff[8];
@@ -306,6 +310,7 @@ rtcattach(parent, self, aux)
 	printf("\n");
 
 	ta.ta_name = "todclock";
+	ta.ta_rtc_arg = NULL;
 	ta.ta_rtc_write = rtc_write; 
 	ta.ta_rtc_read =  rtc_read;
 	ta.ta_flags = 0;
@@ -367,7 +372,7 @@ rtcread(dev, uio, flag)
 	int length;
 
 	s = splclock();
-	if (rtc_read(&rtc) == 0) {
+	if (rtc_read(NULL, &rtc) == 0) {
 		(void)splx(s);
 		return(ENXIO);
 	}
@@ -443,7 +448,7 @@ rtcwrite(dev, uio, flag)
 	rtc.rtc_cen   = twodigits(buffer, 20); 
 
 	s = splclock();
-	rtc_write(&rtc);
+	rtc_write(NULL, &rtc);
 	(void)splx(s);
 
 	return(0);
