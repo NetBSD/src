@@ -63,8 +63,12 @@ map 10.0.0.0/8 -> 209.1.2.0/24
 so that all TCP/UDP packets were port mapped and only other protocols, such as
 ICMP, only have their IP# changed.
 .SH FILES
+/dev/ipnat
+.br
 /etc/services
 .br
 /etc/hosts
+.br
+/usr/share/examples/ipf  Directory with examples.
 .SH SEE ALSO
-ipf(5), ipnat(4), ipnat(8)
+ipnat(4), hosts(5), ipf(5), services(5), ipf(8), ipnat(8)
