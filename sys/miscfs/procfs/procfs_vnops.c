@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.47 1997/05/05 07:14:01 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.48 1997/05/05 07:34:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -55,7 +55,10 @@
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
+
 #include <vm/vm.h>	/* for PAGE_SIZE */
+
 #include <machine/reg.h>
 
 #include <miscfs/genfs/genfs.h>
