@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.16 1999/12/08 09:41:24 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.17 1999/12/15 15:09:37 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.16 1999/12/08 09:41:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.17 1999/12/15 15:09:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -534,13 +534,13 @@ cfbintr(arg)
 	v = sc->sc_changed;
 	sc->sc_changed = 0;
 	if (v & DATA_ENB_CHANGED) {
-		SELECT(vdac, BT459_REG_CCR);
+		SELECT(vdac, BT459_IREG_CCR);
 		REG(vdac, bt_reg) = (sc->sc_curenb) ? 0xc0 : 0x00;
 	}
 	if (v & DATA_CURCMAP_CHANGED) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
-		SELECT(vdac, BT459_REG_CCOLOR_2);
+		SELECT(vdac, BT459_IREG_CCOLOR_2);
 		REG(vdac, bt_reg) = cp[1];	tc_wmb();
 		REG(vdac, bt_reg) = cp[3];	tc_wmb();
 		REG(vdac, bt_reg) = cp[5];	tc_wmb();
@@ -558,7 +558,7 @@ cfbintr(arg)
 		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
 
 		bcnt = 0;
-		SELECT(vdac, BT459_REG_CRAM_BASE+0);
+		SELECT(vdac, BT459_IREG_CRAM_BASE+0);
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
@@ -606,7 +606,7 @@ cfbinit(dc)
 	struct bt459reg *vdac = (void *)(cfbbase + CX_BT459_OFFSET);
 	int i;
 
-	SELECT(vdac, BT459_REG_COMMAND_0);
+	SELECT(vdac, BT459_IREG_COMMAND_0);
 	REG(vdac, bt_reg) = 0x40; /* CMD0 */	tc_wmb();
 	REG(vdac, bt_reg) = 0x0;  /* CMD1 */	tc_wmb();
 	REG(vdac, bt_reg) = 0xc0; /* CMD2 */	tc_wmb();
@@ -619,7 +619,7 @@ cfbinit(dc)
 	REG(vdac, bt_reg) = 0x0;  /* ILV */	tc_wmb();
 	REG(vdac, bt_reg) = 0x0;  /* TEST */	tc_wmb();
 
-	SELECT(vdac, BT459_REG_CCR);
+	SELECT(vdac, BT459_IREG_CCR);
 	REG(vdac, bt_reg) = 0x0;	tc_wmb();
 	REG(vdac, bt_reg) = 0x0;	tc_wmb();
 	REG(vdac, bt_reg) = 0x0;	tc_wmb();
@@ -646,7 +646,7 @@ cfbinit(dc)
 	}
 
 	/* clear out cursor image */
-	SELECT(vdac, BT459_REG_CRAM_BASE);
+	SELECT(vdac, BT459_IREG_CRAM_BASE);
 	for (i = 0; i < 1024; i++)
 		REG(vdac, bt_reg) = 0xff;	tc_wmb();
 
@@ -655,7 +655,7 @@ cfbinit(dc)
 	 * cursor image.  CCOLOR_2 for mask color, while CCOLOR_3 for
 	 * image color.  CCOLOR_1 will be never used.
 	 */
-	SELECT(vdac, BT459_REG_CCOLOR_1);
+	SELECT(vdac, BT459_IREG_CCOLOR_1);
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
@@ -817,7 +817,7 @@ bt459_set_curpos(sc)
 
 	s = spltty();
 
-	SELECT(vdac, BT459_REG_CURSOR_X_LOW);
+	SELECT(vdac, BT459_IREG_CURSOR_X_LOW);
 	REG(vdac, bt_reg) = x;		tc_wmb();
 	REG(vdac, bt_reg) = x >> 8;	tc_wmb();
 	REG(vdac, bt_reg) = y;		tc_wmb();
