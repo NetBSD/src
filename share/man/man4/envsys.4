@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.6 2000/07/04 08:57:44 enami Exp $
+.\"	$NetBSD: envsys.4,v 1.7 2001/08/21 17:56:41 jdolecek Exp $
 .\"
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -221,9 +221,11 @@ typedef struct envsys_basic_info {
 } envsys_basic_info_t;
 .Ed
 .Pp
-.Dv ENVSYS_STREINFO is for setting this information in the driver,
+.Dv ENVSYS_STREINFO
+is for setting this information in the driver,
 while
-.DV ENVSYS_GTREINFO is for retrieving this information.
+.Dv ENVSYS_GTREINFO
+is for retrieving this information.
 .Pp
 To retrieve information, simply fill in the
 .Va sensor
