@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.10 1996/10/10 17:51:59 christos Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.11 1996/10/13 00:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -96,7 +96,7 @@ osf1_sys_open(p, v, retval)
 
 	if (scdebug &&
 	    copyinstr(SCARG(uap, path), pnbuf, sizeof pnbuf, NULL) == 0)
-		kprintf("osf1_open: open: %s\n", pnbuf);
+		printf("osf1_open: open: %s\n", pnbuf);
 #endif
 
 	SCARG(&a, path) = SCARG(uap, path);
