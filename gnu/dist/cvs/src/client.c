@@ -3974,8 +3974,14 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostname)
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	int fd = (int) lto_server->closure;
+	int fd;
 	struct stat s;
+
+	if ((intptr_t) lto_server->closure > INT_MAX)
+	{
+	    error (1, 0, "file descriptor out of range");
+	}
+	fd = (intptr_t)lto_server->closure;
 
 	if (fstat (fd, &s) < 0 || !S_ISSOCK(s.st_mode))
 	{
