@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.2.6.2 2002/09/17 21:22:37 nathanw Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.2.6.3 2002/12/11 16:14:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.2.6.2 2002/09/17 21:22:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.2.6.3 2002/12/11 16:14:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -97,19 +97,19 @@ coda_lkmentry(lkmtp, cmd, ver)
 
 	switch (cmd) {
 	case LKM_E_LOAD:
-		lkmtp->private.lkm_any = (struct lkm_any *) &coda_lkm_dev;
+		lkmtp->private.lkm_any = (void *) &coda_lkm_dev;
 		error = lkmdispatch(lkmtp, cmd);
 		if (error)
 			break;
-		lkmtp->private.lkm_any = (struct lkm_any *) &coda_lkm_vfs ;
+		lkmtp->private.lkm_any = (void *) &coda_lkm_vfs ;
 		error = lkmdispatch(lkmtp, cmd);
 		break;
 	case LKM_E_UNLOAD:
-		lkmtp->private.lkm_any = (struct lkm_any *) &coda_lkm_vfs ;
+		lkmtp->private.lkm_any = (void *) &coda_lkm_vfs ;
 		error = lkmdispatch(lkmtp, cmd);
 		if (error)
 			break;
-		lkmtp->private.lkm_any = (struct lkm_any *) &coda_lkm_dev;
+		lkmtp->private.lkm_any = (void *) &coda_lkm_dev;
 		error = lkmdispatch(lkmtp, cmd);
 		break;
 	case LKM_E_STAT:

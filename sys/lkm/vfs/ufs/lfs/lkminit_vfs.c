@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.2.2.2 2002/05/29 21:33:21 nathanw Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.2.2.3 2002/12/11 16:14:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.2.2.2 2002/05/29 21:33:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.2.2.3 2002/12/11 16:14:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -108,7 +108,7 @@ lfs_lkmentry(lkmtp, cmd, ver)
 
 	/* do this first, lkmdispatch() expects this to be already filled in */
 	if (cmd == LKM_E_LOAD)
-		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
+		lkmtp->private.lkm_any = (void *)&_module;
 
 	if ((error = lkmdispatch(lkmtp, cmd)))
 		return error;
