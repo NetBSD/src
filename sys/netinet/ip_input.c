@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.86 1999/05/03 22:12:44 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.87 1999/05/04 20:13:09 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -345,7 +345,6 @@ next:
 	 * as wanted by rfc 1112
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		ipstat.ips_odropped++;
 		goto bad;
 	}
 
