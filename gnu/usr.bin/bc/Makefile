@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.21 1999/02/11 16:13:01 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2000/11/01 13:14:46 wiz Exp $
 
 PROG=		bc
-SRCS=		bc.y execute.c getopt.c getopt1.c global.c load.c main.c \
+SRCS=		bc.y execute.c global.c load.c main.c \
 		number.c scan.l storage.c util.c
 CPPFLAGS+=	-D_POSIX_SOURCE -I. -I${.CURDIR} -I${DIST}/bc/bc -I${DIST}/bc/h
 LFLAGS+=	-I8
