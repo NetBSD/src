@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.2 1998/05/02 02:34:53 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.3 1998/05/02 02:36:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -717,7 +717,7 @@ eap_set_params(addr, setmode, usemode, p, r)
 
         /* Set the encoding */
         mode |= EREAD4(sc, EAP_SIC) & ~(EAP_R1P2_BITS | EAP_INC_BITS);
-	mode |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(sc->sc_precision / 8);
+	mode |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(p->precision / 8);
         EWRITE4(sc, EAP_SIC, mode);
 	DPRINTFN(2, ("eap_set_params: set SIC = 0x%08x\n", mode));
 
