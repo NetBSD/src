@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.214 2003/04/10 22:06:58 christos Exp $
+#	$NetBSD: INSTALL,v 1.215 2003/04/16 23:39:02 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -328,6 +328,7 @@ dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
+mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (new driver)
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
