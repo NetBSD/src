@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.16 1998/10/08 17:43:24 wsanchez Exp $	*/
+/*	$NetBSD: utils.c,v 1.17 1999/03/01 18:57:29 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.16 1998/10/08 17:43:24 wsanchez Exp $");
+__RCSID("$NetBSD: utils.c,v 1.17 1999/03/01 18:57:29 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,8 @@ set_utimes(file, fs)
     TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
     TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
 
-    if (utimes(file, tv)) {
-	warn("utimes: %s", file);
+    if (lutimes(file, tv)) {
+	warn("lutimes: %s", file);
 	return (1);
     }
     return (0);
