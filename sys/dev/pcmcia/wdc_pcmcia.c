@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.84 2004/08/10 23:34:32 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.85 2004/08/11 18:06:22 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.84 2004/08/10 23:34:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.85 2004/08/11 18:06:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,18 +163,15 @@ static int
 wdc_pcmcia_validate_config(cfe)
 	struct pcmcia_config_entry *cfe;
 {
+	/*
+	 * NOTE: We can't use pure memory card mode, because we wouldn't get
+	 * any interrupts.
+	 */
 	switch (cfe->iftype) {
-#if 0
-	case PCMCIA_IFTYPE_MEMORY:
-		if (cfe->num_iospace != 0 ||
-		    cfe->num_memspace != 1)
-			return (EINVAL);
-		break;
-#endif
 	case PCMCIA_IFTYPE_IO:
-		if (cfe->num_iospace < 1 || cfe->num_iospace > 2)
+		if (cfe->num_iospace < 1 || cfe->num_iospace > 2 ||
+		    cfe->num_memspace > 1)
 			return (EINVAL);
-		cfe->num_memspace = 0;
 		break;
 	default:
 		return (EINVAL);
@@ -207,43 +204,23 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	cfe = pa->pf->cfe;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
-		sc->wdc_channel.cmd_iot = cfe->memspace[0].handle.memt;
-		sc->wdc_channel.cmd_baseioh = cfe->memspace[0].handle.memh;
-		offset = cfe->memspace[0].offset;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 
-		sc->wdc_channel.ctl_iot = cfe->memspace[0].handle.memt;
-		if (bus_space_subregion(cfe->memspace[0].handle.memt,
-		    cfe->memspace[0].handle.memh,
-		    WDC_PCMCIA_AUXREG_OFFSET + offset, WDC_PCMCIA_AUXREG_NPORTS,
+	sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
+	sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
+	offset = 0;
+
+	if (cfe->num_iospace == 1) {
+		sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
+		if (bus_space_subregion(cfe->iospace[0].handle.iot,
+		    cfe->iospace[0].handle.ioh,
+		    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
 		    &sc->wdc_channel.ctl_ioh))
 			goto fail;
-		
-		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
 	} else {
-		sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
-		sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
-		offset = 0;
-
-		if (cfe->num_iospace == 1) {
-			sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
-			if (bus_space_subregion(cfe->iospace[0].handle.iot,
-			    cfe->iospace[0].handle.ioh,
-			    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
-			    &sc->wdc_channel.ctl_ioh))
-				goto fail;
-		} else {
-			sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
-			sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
-		}
-
-		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+		sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
+		sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
 	}
-
-	error = wdc_pcmcia_enable(self, 1);
-	if (error)
-		goto fail;
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
 		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
@@ -255,9 +232,27 @@ wdc_pcmcia_attach(parent, self, aux)
 			goto fail2;
 		}
 	}
+
+	if (cfe->num_memspace == 1) {
+		sc->wdc_channel.data32iot = cfe->memspace[0].handle.memt;
+		if (bus_space_subregion(cfe->memspace[0].handle.memt,
+		    cfe->memspace[0].handle.memh,
+		    cfe->memspace[0].offset + 1024, 1024,
+		    &sc->wdc_channel.data32ioh))
+			goto fail;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA1K;
+		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
+	} else {
+		sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
+		sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[wd_data];
+		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
+	}
+
+	error = wdc_pcmcia_enable(self, 1);
+	if (error)
+		goto fail;
+
 	wdc_init_shadow_regs(&sc->wdc_channel);
-	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
