@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.12 2000/08/25 03:56:29 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.13 2000/09/23 17:30:07 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -141,10 +141,13 @@ struct cpu_info {
 #define CPU_IS_PRIMARY(ci) ((ci)->ci_flags & CPUF_PRIMARY)
 
 #define	curpcb		curcpu()->ci_curpcb
-#define ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
-#define aston(ci)	((ci)->ci_astpending = 1, ipisend(ci))
+#if 0
+#define i386_ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
+#else
+#define i386_ipisend(ci)	0
+#endif
+#define aston(ci)	((ci)->ci_astpending = 1, i386_ipisend(ci))
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
-extern	u_long cpus_running;
 
 void cpu_boot_secondary_processors __P((void));
 void cpu_init_idle_pcbs __P((void));

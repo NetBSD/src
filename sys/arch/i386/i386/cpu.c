@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.13 2000/08/21 02:36:20 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.14 2000/09/23 17:30:06 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <machine/gdt.h>
+#include <machine/mtrr.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -117,6 +118,8 @@ void    cpu_attach __P((struct device *, struct device *, void *));
 
 static struct cpu_info dummy_cpu_info; /* XXX */
 struct cpu_info *cpu_info[I386_MAXPROCS] = { &dummy_cpu_info };
+
+u_int32_t cpus_running = 0;
 
 void    	cpu_hatch __P((void *));
 static void    	cpu_boot_secondary __P((struct cpu_info *ci));
@@ -297,10 +300,27 @@ cpu_init(ci)
 	if (ci->cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
 #endif
+#if defined(I686_CPU)
+	/*
+	 * On a P6 or above, enable global TLB caching if the
+	 * hardware supports it.
+	 */
 	if (cpu_feature & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
+	/*
+	 * On a P6 or above, initialize MTRR's if the hardware supports them.
+	 */
+	if (cpu_feature & CPUID_MTRR) {
+		if ((ci->ci_flags & CPUF_AP) == 0)
+			mtrr_init_first();
+		mtrr_init_cpu(ci);
+	}
+#endif
+#ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
+	cpus_running |= 1 << cpu_number();
+#endif
 }
 
 
