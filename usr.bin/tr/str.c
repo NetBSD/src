@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)str.c	5.9 (Berkeley) 3/4/93";*/
-static char rcsid[] = "$Id: str.c,v 1.3 1993/08/01 18:04:35 mycroft Exp $";
+static char rcsid[] = "$Id: str.c,v 1.4 1993/09/14 01:17:46 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: str.c,v 1.3 1993/08/01 18:04:35 mycroft Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "extern.h"
 
@@ -143,28 +144,6 @@ bracket(s)
 	}
 	/* NOTREACHED */
 }
-
-int isalnum __P((int)),
-    isalpha __P((int)),
-    isblank __P((int)),
-    isspace __P((int)),
-    iscntrl __P((int)),
-    isdigit __P((int)),
-    isgraph __P((int)),
-    islower __P((int)),
-    isprint __P((int)),
-    ispunct __P((int)),
-    isupper __P((int)),
-    isxdigit __P((int));
-
-
-static int isblank(x) /* until 4.4 */
-     int x;
-{
-    if ((x == ' ') || (x== '\t')) return 1;
-    return 0;
-}
-
 
 typedef struct {
 	char *name;
