@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.34 2002/03/16 18:26:00 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.35 2002/03/24 15:37:46 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -622,7 +622,7 @@ get_cachetype_cp15()
 #endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    defined(CPU_ARM7) || defined(CPU_SA110)
+    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110)
 /* Cache information for CPUs without cache type registers. */
 struct cachetab {
 	u_int32_t ct_cpuid;
@@ -641,6 +641,7 @@ struct cachetab cachetab[] = {
     { CPU_ID_ARM2,      0,                1,     0,  0,  0,     0,  0,  0 },
     { CPU_ID_ARM250,    0,                1,     0,  0,  0,     0,  0,  0 },
     { CPU_ID_ARM3,      CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
+    { CPU_ID_ARM610,	CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
     { CPU_ID_ARM710,    CPU_CT_CTYPE_WT,  1,  8192, 32,  4,     0,  0,  0 },
     { CPU_ID_ARM7500,   CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
     { CPU_ID_ARM710A,   CPU_CT_CTYPE_WT,  1,  8192, 16,  4,     0,  0,  0 },
@@ -679,7 +680,7 @@ get_cachetype_table()
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 
-#endif /* ARM2 || ARM250 || ARM3 || ARM7 || SA110 */
+#endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 */
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -706,8 +707,7 @@ set_cpufuncs()
 	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
-		arm_dcache_align_mask = -1;
+		get_cachetype_table();
 		return 0;
 	}
 #endif	/* CPU_ARM6 */
