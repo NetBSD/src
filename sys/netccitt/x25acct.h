@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)x25acct.h	7.2 (Berkeley) 5/11/90
+ *	from: @(#)x25acct.h	7.2 (Berkeley) 5/11/90
+ *	$Id: x25acct.h,v 1.3 1993/05/20 04:12:27 cgd Exp $
  */
 
 #ifndef _NETCCITT_X25ACCT_H_

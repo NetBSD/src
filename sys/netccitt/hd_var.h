@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hd_var.h	7.4 (Berkeley) 5/29/91
+ *	from: @(#)hd_var.h	7.4 (Berkeley) 5/29/91
+ *	$Id: hd_var.h,v 1.3 1993/05/20 04:12:10 cgd Exp $
  */
 
 #ifndef _NETCCITT_HD_VAR_H_
