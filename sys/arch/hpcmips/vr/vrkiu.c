@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.7 1999/11/29 02:20:20 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.8 1999/12/09 03:03:55 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -252,6 +252,22 @@ static char mobilepro_keytrans[] = {
 /*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
 };
 
+/* NEC MobilePro 750c */
+static char mobilepro750c_keytrans[] = {
+/*00*/  77,  43,  25,  52,  21,  48,  44,  57, /* right \ p . y b z space */
+/*08*/  80,  53,  24,  51,  20,  47,  30, UNK, /* down / o , t v a  - */
+/*10*/  75,  28,  23,  50,  19,  46,  17, 221, /* left enter i m r c w Win */
+/*18*/  69,  27,  22,  49,  18,  45,  16,  58, /* num ] u n e x q caps */
+/*20*/  81,  UNK, 11,  38,   7,  34,  15,   1, /* pgdn - 0 l : g tab esc */
+/*28*/ UNK,  39,  10,  37,   6,  33,   3,  41, /* - ; 9 k 5 f 2 ` */
+/*30*/  72,  26,   9,  36,   5,  32,   2,  40, /* up [ 8 j 4 d 1 ' */
+/*38*/  12,  26,   8,  35,   4,  31,  83, UNK, /* - @ 7 h 3 s del - */
+/*40*/  42, UNK, UNK, UNK,  14,  88,  66,  62, /* shift - - - bs f12 f8 f4 */
+/*48*/ UNK, 184, UNK, UNK, 125,  87,  65,  61, /* - alt - - | f11 f7 f3 */
+/*50*/ UNK, UNK,  29, UNK,  68,  68,  64,  60, /* - - ctrl - f10 f10 f6 f2 */
+/*58*/ UNK, UNK, UNK,  42,  13,  67,  63,  59, /* - - - shift del f9 f5 f1 */
+};
+
 /* FUJITSU INTERTOP CX300 */
 static char intertop_keytrans[] = {
   57,  60,   2,  15,  28,  58,  75,  41,
@@ -398,6 +414,11 @@ vrkiuattach(parent, self, aux)
 
 	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
 		keytrans = mobilepro_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_500A)) {
+		keytrans = mobilepro750c_keytrans;
 #if !defined(PCKBD_LAYOUT)
 		vrkiu_keymapdata.layout = KB_US;
 #endif
