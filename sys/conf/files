@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.366 2000/05/02 06:30:49 augustss Exp $
+#	$NetBSD: files,v 1.367 2000/05/11 16:49:01 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -158,7 +158,7 @@ define rasops24
 define rasops32
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, and atm.
+# fddi, token ring and atm.
 define	arc
 define	atm
 define	ether
@@ -471,6 +471,7 @@ define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
+define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
