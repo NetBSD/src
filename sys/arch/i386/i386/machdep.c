@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.382 2000/05/03 20:02:08 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.383 2000/05/03 20:17:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1707,10 +1707,10 @@ init386(first_avail)
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
-		       "have %d bytes, want %d bytes\n"
+		       "have %lu bytes, want %lu bytes\n"
 		       "running in degraded mode\n"
 		       "press a key to confirm\n\n",
-		       ptoa(physmem), 2*1024*1024);
+		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
 }
