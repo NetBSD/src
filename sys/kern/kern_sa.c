@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.10 2003/02/14 20:45:12 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.11 2003/02/17 23:32:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.10 2003/02/14 20:45:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.11 2003/02/17 23:32:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,6 +999,11 @@ sa_vp_repossess(struct lwp *l)
 #endif
 		}
 		sa_putcachelwp(p, l2);
+		/*
+		 * XXX SMP race! Need to be sure that l2's state is
+		 * captured before the upcall before we make it possible
+		 * for another processor to grab it.
+		 */
 		SCHED_UNLOCK(s);
 	}
 	return l2;
