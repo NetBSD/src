@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1998/01/02 20:10:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1998/01/22 21:35:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1107,13 +1107,12 @@ L_delay:
 
 
 | Define some addresses, mostly so DDB can print useful info.
-	.globl	_C_LABEL(kernbase)
-	.set	_C_LABEL(kernbase),KERNBASE
-	.globl	_C_LABEL(dvma_base)
-	.set	_C_LABEL(dvma_base),DVMA_SPACE_START
-	.globl	_C_LABEL(monstart)
-	.set	_C_LABEL(monstart),MONSTART
-	.globl	_C_LABEL(prom_base)
-	.set	_C_LABEL(prom_base),PROM_BASE
+| Not using _C_LABEL() here because these symbols are never
+| referenced by any C code, and if the leading underscore
+| ever goes away, these lines turn into syntax errors...
+	.set	_KERNBASE,KERNBASE
+	.set	_MONSTART,MONSTART
+	.set	_PROM_BASE,PROM_BASE
+	.set	_MONEND,MONEND
 
 |The end!
