@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.96 2002/02/11 15:11:49 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.97 2002/02/20 20:30:14 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.96 2002/02/11 15:11:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.97 2002/02/20 20:30:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));
 
 	/* Count completed transfers. */
-	++pipe->device->bus->stats.requests
+	++pipe->device->bus->stats.uds_requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	xfer->done = 1;
