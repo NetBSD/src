@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.7 1998/03/25 22:49:11 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.8 1998/03/26 19:49:51 chuck Exp $	*/
 
 /*
  *
@@ -3494,3 +3494,68 @@ vm_offset_t maxkvaddr;
   simple_unlock(&kpm->pm_obj.vmobjlock);
   splx(s);
 }
+
+#ifdef DEBUG
+void pmap_dump __P((struct pmap *, vm_offset_t, vm_offset_t));
+
+/*
+ * pmap_dump: dump all the mappings from a pmap
+ *
+ * => caller should not be holding any pmap locks
+ */
+
+void pmap_dump(pmap, sva, eva)
+
+struct pmap *pmap;
+vm_offset_t sva, eva;
+
+{
+  pt_entry_t *ptes, *pte;
+  vm_offset_t blkendva;
+  
+  /*
+   * if end is out of range truncate.  
+   * if (end == start) update to max.
+   */
+
+  if (eva > VM_MAXUSER_ADDRESS || eva <= sva)
+    eva = VM_MAXUSER_ADDRESS;
+
+  /*
+   * we lock in the pmap => pv_head direction
+   */
+
+  PMAP_MAP_TO_HEAD_LOCK();
+  ptes = pmap_map_ptes(pmap);	/* locks pmap */
+
+  /*
+   * dumping a range of pages: we dump in PTP sized blocks (4MB)
+   */
+  
+  for (/* null */ ; sva < eva ; sva = blkendva) {
+    
+    /* determine range of block */
+    blkendva = i386_round_pdr(sva+1);
+    if (blkendva > eva)
+      blkendva = eva;
+
+    if (!pmap_valid_entry(pmap->pm_pdir[pdei(sva)]))	/* valid block? */
+      continue;
+
+    pte = &ptes[i386_btop(sva)];
+    for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
+      if (!pmap_valid_entry(*pte)) continue;
+      printf("va %#lx -> pa %#x (pte=%#x)\n", sva, *pte, *pte & PG_FRAME);
+    }
+
+  }
+
+  /*
+   * done!
+   */
+
+  pmap_unmap_ptes(pmap);
+  PMAP_MAP_TO_HEAD_UNLOCK();
+  return;
+}
+#endif
