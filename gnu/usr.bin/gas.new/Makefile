@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/05/19 19:09:31 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/05/21 18:43:27 cgd Exp $
 #
 
 DIST=	${.CURDIR}/../../dist
@@ -24,7 +24,9 @@ CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${TARGET_ARCH} \
 TARGET_CPU ?= ${TARGET_ARCH}
 
 SRCS+=	${TARG_CPU_C} ${OBJ_FORMAT_C} ${ATOF_TARG_C}
-CPPFLAGS+= -D__TARGET_CPU=${TARGET_CPU}
+CPPFLAGS+= -DTARGET_ALIAS=\"${TARGET_CPU}-netbsd\"
+CPPFLAGS+= -DTARGET_CPU=\"${TARGET_CPU}\"
+CPPFLAGS+= -DTARGET_CANONICAL=\"${TARGET_CPU}-unknown-netbsd\"
 
 LDADD+= -lbfd
 DPADD+= ${LIBBFD}
