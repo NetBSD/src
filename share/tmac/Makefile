@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$NetBSD: Makefile,v 1.23 1999/07/10 20:04:03 christos Exp $
+#	$NetBSD: Makefile,v 1.24 1999/08/30 00:41:57 christos Exp $
 
 # IF YOU ADD TO MSRCS, MAKE SURE YOU UPDATE `CATDEPS' IN bsd.man.mk!
 MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
@@ -19,10 +19,7 @@ all:	${MMACS}
 
 .for i in ${MSRCS}
 tmac.$i: $i
-	@if [ ! -f ${.TARGET} -o ${.ALLSRC} -nt ${.TARGET} ]; then \
-		echo "sed -f ${STRIP_SED} < ${.ALLSRC} > ${.TARGET}"; \
-		sed -f ${STRIP_SED} < ${.ALLSRC} > ${.TARGET}; \
-	fi
+	sed -f ${STRIP_SED} < ${.ALLSRC} > ${.TARGET}
 .endfor
 
 .include <bsd.prog.mk>
