@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.82 2003/06/30 02:45:35 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.83 2003/06/30 02:48:02 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -946,3 +946,8 @@ share/man/man4/vlan.4				1.21
 	Add tl(4), while I'm there add a few others adapters that are known to
 	support ETHERCAP_VLAN_MTU.
 	[bouyer, ticket #1349]
+
+sys/dev/pci/if_tl.c				1.57
+
+	tl(4) supports ETHERCAP_VLAN_MTU.
+	[bouyer, ticket #1350]
