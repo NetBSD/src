@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.5 1999/08/15 02:36:40 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,6 +39,8 @@
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_dag.h"
+#include "rf_dagdegrd.h"
+#include "rf_dagdegwr.h"
 #include "rf_dagfuncs.h"
 #include "rf_dagutils.h"
 #include "rf_etimer.h"
