@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.36 1997/12/02 08:42:28 mikel Exp $
+#	$NetBSD: bsd.man.mk,v 1.37 1998/02/15 01:07:46 thorpej Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -17,6 +17,13 @@ realinstall:	${MANINSTALL}
 .endif
 cleandir:	cleanman
 
+TMACDIR?=	${DESTDIR}/usr/share/tmac
+CATDEPS?=	${TMACDIR}/tmac.andoc \
+		${TMACDIR}/tmac.doc \
+		${TMACDIR}/tmac.doc-ditroff \
+		${TMACDIR}/tmac.doc-common \
+		${TMACDIR}/tmac.doc-nroff \
+		${TMACDIR}/tmac.doc-syms
 MANTARGET?=	cat
 NROFF?=		nroff
 TBL?=		tbl
@@ -24,7 +31,8 @@ TBL?=		tbl
 .SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
 	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9
 
-.9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1:
+.9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1: \
+    ${CATDEPS}
 .if !defined(USETBL)
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || \
