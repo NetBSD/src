@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,12 +31,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)vis.1	5.2 (Berkeley) 4/23/91
-.\"	$Id: vis.1,v 1.4 1994/01/11 18:49:36 jtc Exp $
+.\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd April 23, 1991
+.Dd April 19, 1994
 .Dt VIS 1
-.Os
+.Os BSD 4.4
 .Sh NAME
 .Nm vis
 .Nd display non-printable characters in a visual format
@@ -55,8 +56,7 @@ A detailed description of the
 various visual formats is given in
 .Xr vis 3 .
 .Pp
-Options supported by
-.Nm vis :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Turns off prepending of backslash before up-arrow control sequences
@@ -118,10 +118,9 @@ White space (space-tab-newline) is also encoded.
 .El
 .Sh SEE ALSO
 .Xr unvis 1 ,
-.Xr unvis 3 ,
 .Xr vis 3
 .Sh HISTORY
 The
 .Nm
-command is
-.Ud .
+command appears in
+.Bx 4.4 .

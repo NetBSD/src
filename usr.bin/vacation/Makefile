@@ -1,7 +1,6 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 4/1/91
-#	$Id: Makefile,v 1.2 1993/07/30 22:30:37 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1994/11/17 07:55:49 jtc Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	vacation
-DPADD=	${LIBDBM}
 
 .include <bsd.prog.mk>
