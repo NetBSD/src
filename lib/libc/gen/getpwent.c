@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.12 1995/02/27 04:13:05 cgd Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.13 1995/05/17 17:36:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.12 1995/02/27 04:13:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.13 1995/05/17 17:36:43 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,7 +84,7 @@ char *s;
 		return 1;
 	pw->pw_uid = atoi(cp);
 	if (!(cp = strsep(&bp, ":\n")))
-		return 0;
+		return 1;
 	pw->pw_gid = atoi(cp);
 	pw->pw_change = 0;
 	pw->pw_class = "";
@@ -102,7 +102,7 @@ getpwent()
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
 #ifdef YP
-	char *bp, *cp;
+	char *cp;
 #endif
 
 	if (!_pw_db && !__initdb())
@@ -162,8 +162,9 @@ again:
 		}
 		line[datalen] = '\0';
 		/*printf("line = %s\n", line);*/
-		bp = line;
-		goto parse;
+		if (__ypparse(&_pw_passwd, line))
+			goto again;
+		return &_pw_passwd;
 	}
 #endif
 
@@ -182,25 +183,6 @@ again:
 		return &_pw_passwd;
 	}
 	return (struct passwd *)NULL;
-
-#ifdef YP
-parse:
-	_pw_passwd.pw_name = strsep(&bp, ":\n");
-	_pw_passwd.pw_passwd = strsep(&bp, ":\n");
-	if (!(cp = strsep(&bp, ":\n")))
-		goto again;
-	_pw_passwd.pw_uid = atoi(cp);
-	if (!(cp = strsep(&bp, ":\n")))
-		goto again;
-	_pw_passwd.pw_gid = atoi(cp);
-	_pw_passwd.pw_change = 0;
-	_pw_passwd.pw_class = "";
-	_pw_passwd.pw_gecos = strsep(&bp, ":\n");
-	_pw_passwd.pw_dir = strsep(&bp, ":\n");
-	_pw_passwd.pw_shell = strsep(&bp, ":\n");
-	_pw_passwd.pw_expire = 0;
-	return &_pw_passwd;
-#endif
 }
 
 struct passwd *
