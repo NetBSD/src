@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.13 2003/08/07 16:32:59 agc Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.14 2004/12/06 02:59:23 christos Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -123,7 +123,9 @@ struct cstate {
 	u_char cs_filler;
 	union {
 		char csu_hdr[MAX_HDR];
+#ifdef INET
 		struct ip csu_ip;	/* ip/tcp hdr from most recent packet */
+#endif
 	} slcs_u;
 };
 #define cs_ip slcs_u.csu_ip
@@ -156,8 +158,10 @@ struct slcompress {
 
 void	sl_compress_init __P((struct slcompress *));
 void	sl_compress_setup __P((struct slcompress *, int));
+#ifdef INET
 u_int	sl_compress_tcp __P((struct mbuf *,
   	    struct ip *, struct slcompress *, int));
+#endif
 int	sl_uncompress_tcp __P((u_char **, int, u_int, struct slcompress *));
 int	sl_uncompress_tcp_core __P((u_char *, int, int, u_int,
   	    struct slcompress *, u_char **, u_int *));
