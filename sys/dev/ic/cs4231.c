@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.15 2004/07/09 02:08:33 mycroft Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.16 2004/07/09 18:45:56 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.15 2004/07/09 02:08:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.16 2004/07/09 18:45:56 petrov Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -379,9 +379,8 @@ void
 cs4231_close(addr)
 	void *addr;
 {
-	struct cs4231_softc *sc = addr;
 
-	DPRINTF(("sa_close: sc=%p\n", sc));
+	DPRINTF(("sa_close: sc=%p\n", addr));
 
 	/* audio(9) already called halt methods */
 
