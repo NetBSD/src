@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.53 2003/05/03 03:49:06 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.54 2003/05/03 18:25:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -113,6 +113,9 @@
 
 #include "opt_ipkdb.h"
 #include "ksyms.h"
+
+/* Kernel text starts 2MB in from the bottom of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.

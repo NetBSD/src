@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2003/05/03 03:29:08 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2003/05/03 18:25:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -52,7 +52,6 @@
 
 #ifndef ARM32_NEW_VM_LAYOUT
 /* Various constants used by the MD code*/
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 #endif
 /*

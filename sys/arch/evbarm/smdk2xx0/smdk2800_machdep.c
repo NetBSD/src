@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.6 2003/05/03 03:49:07 thorpej Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.7 2003/05/03 18:25:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -161,6 +161,9 @@
  */
 #define	SMDK2800_IO_AREA_VBASE	0xfd000000
 #define SMDK2800_VBASE_FREE	0xfd200000
+
+/* Kernel text starts 2MB in from the bottom of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.
