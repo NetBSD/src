@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.15 2002/05/08 21:44:55 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.16 2002/05/10 02:31:45 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -20,6 +20,8 @@
 #
 # Optional variables:
 #	MDSET_RELEASEDIR		Where to install release kernels.
+#
+#	MDSET_NOSTRIP.${FILENAME}	If defined, don't strip ${FILENAME}
 #
 #	MDSET_NOSYMBOLS.${FILENAME}	If defined, don't generate
 #					${FILENAME}.symbols.gz
@@ -91,7 +93,9 @@ ${_KERNEL.${_K}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME})
 	${NM} ${.TARGET} | gzip -9 > ${.TARGET}.symbols.gz
 .endif
+.if !defined(MDSET_NOSTRIP.${_FILENAME})
 	${STRIP} ${.TARGET}
+.endif
 .if defined(MDSET_POST.${_FILENAME})
 	${_POST.${.TARGET}}
 .endif
