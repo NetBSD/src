@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.118.2.3 2000/08/11 18:00:03 thorpej Exp $
+# $NetBSD: files.alpha,v 1.118.2.4 2001/10/25 18:00:12 he Exp $
 #
 # alpha-specific configuration info
 
@@ -66,6 +66,12 @@ file	arch/alpha/alpha/cpu.c		cpu
 include "dev/mii/files.mii"
 
 #
+# Machine-independent I2O drivers.
+#
+
+include "dev/i2o/files.i2o"
+
+#
 # Machine-independent SCSI drivers
 #
 
@@ -86,6 +92,9 @@ major { md = 6 }
 
 # RAIDframe 
 major { raid = 16 }
+
+# H/w RAID arrays
+major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
