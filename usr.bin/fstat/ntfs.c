@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.7 2003/02/01 18:31:09 tron Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.8 2003/02/02 02:35:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,12 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.7 2003/02/01 18:31:09 tron Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.8 2003/02/02 02:35:58 christos Exp $");
 
 #include <sys/param.h>
-#define _KERNEL
-#include <sys/mallocvar.h>
-#undef _KERNEL
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/user.h>
