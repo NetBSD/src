@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.45 1998/09/05 22:15:51 eeh Exp $	*/
+/*	$NetBSD: obio.c,v 1.46 1999/06/28 22:40:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,16 @@ struct cfattach obio_ca = {
 	sizeof(union obio_softc), obiomatch, obioattach
 };
 
+
+/*
+ * This `obio4_busattachargs' data structure only exists to pass down
+ * to obiosearch() the name of a device that must be configured early.
+ */
+struct obio4_busattachargs {
+	struct mainbus_attach_args	*ma;
+	const char			*name;
+};
+
 #if defined(SUN4)
 static	int obioprint  __P((void *, const char *));
 static	int obiosearch   __P((struct device *, struct cfdata *, void *));
@@ -141,6 +151,13 @@ obioattach(parent, self, aux)
 	if (CPU_ISSUN4) {
 #if defined(SUN4)
 		struct obio4_softc *sc = &((union obio_softc *)self)->sc_obio;
+		struct obio4_busattachargs oa;
+		const char *const *cpp;
+		static const char *const special4[] = {
+			/* find these first */
+			"timer",
+			NULL
+		};
 
 		sc->sc_bustag = ma->ma_bustag;
 		sc->sc_dmatag = ma->ma_dmatag;
@@ -148,7 +165,17 @@ obioattach(parent, self, aux)
 		obio_space_tag.cookie = sc;
 		obio_space_tag.parent = sc->sc_bustag;
 
-		(void)config_search(obiosearch, self, aux);
+		oa.ma = ma;
+
+		/* Find all `early' obio devices */
+		for (cpp = special4; *cpp != NULL; cpp++) {
+			oa.name = *cpp;
+			(void)config_search(obiosearch, self, &oa);
+		}
+
+		/* Find all other obio devices */
+		oa.name = NULL;
+		(void)config_search(obiosearch, self, &oa);
 #endif
 		return;
 	} else if (CPU_ISSUN4M) {
@@ -236,11 +263,14 @@ obiosearch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct obio4_busattachargs *oap = aux;
 	union obio_attach_args uoba;
 	struct obio4_attach_args *oba = &uoba.uoba_oba4;
 	struct bootpath *bp;
 
+	/* Check whether we're looking for a specifically named device */
+	if (oap->name != NULL && strcmp(oap->name, cf->cf_driver->cd_name) != 0)
+		return (0);
 
 	/*
 	 * Avoid sun4m entries which don't have valid PAs.
@@ -263,11 +293,11 @@ obiosearch(parent, cf, aux)
 
 	uoba.uoba_isobio4 = 1;
 	oba->oba_bustag = &obio_space_tag;
-	oba->oba_dmatag = ma->ma_dmatag;
+	oba->oba_dmatag = oap->ma->ma_dmatag;
 	oba->oba_paddr = cf->cf_loc[0];
 	oba->oba_pri = cf->cf_loc[1];
 
-	bp = ma->ma_bp;
+	bp = oap->ma->ma_bp;
 	if (bp != NULL && strcmp(bp->name, "obio") == 0)
 		oba->oba_bp = bp + 1;
 	else
