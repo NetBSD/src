@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.37 2002/05/15 22:48:42 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.38 2002/06/22 14:36:26 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.37 2002/05/15 22:48:17 matt Exp 
+ *	NetBSD: miidevs,v 1.38 2002/06/22 14:35:52 fvdl Exp 
  */
 
 /*-
@@ -142,6 +142,8 @@
 #define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5701	0x0011
+#define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
