@@ -1,4 +1,4 @@
-/*	$NetBSD: secure_path.c,v 1.1 2001/08/20 14:47:50 wiz Exp $	*/
+/*	$NetBSD: secure_path.c,v 1.2 2003/01/06 20:30:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: secure_path.c,v 1.1 2001/08/20 14:47:50 wiz Exp $");
+__RCSID("$NetBSD: secure_path.c,v 1.2 2003/01/06 20:30:30 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ secure_path(const char *path)
 	_DIAGASSERT(path != NULL);
 
 	/*
-	 * If not a regular file, or is owned/writeable by someone
+	 * If not a regular file, or is owned/writable by someone
 	 * other than root, quit.
 	 */
 	if (lstat(path, &sb) < 0)
@@ -64,7 +64,7 @@ secure_path(const char *path)
 	else if (sb.st_uid != 0)
 		syslog(LOG_ERR, "%s: not owned by root", path);
 	else if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0)
-		syslog(LOG_ERR, "%s: writeable by non-root", path);
+		syslog(LOG_ERR, "%s: writable by non-root", path);
 	else
 		return (0);
 

@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tstuu_rcsid[] = "$Id: tstuu.c,v 1.4 1995/08/24 05:18:42 jtc Exp $";
+const char tstuu_rcsid[] = "$Id: tstuu.c,v 1.5 2003/01/06 20:30:43 wiz Exp $";
 #endif
 
 #include "sysdep.h"
@@ -851,7 +851,7 @@ uprepare_test (fmake, itest, fcall_uucico, zsys)
   const char *zfrom;
   const char *zto;
 
-/* We must make /usr/tmp/tstuu world writeable or we won't be able to
+/* We must make /usr/tmp/tstuu world writable or we won't be able to
    receive files into it.  */
   (void) umask (0);
 

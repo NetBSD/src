@@ -448,9 +448,9 @@ extern openfile_t esysdep_open_receive P((const struct uuconf_system *qsys,
    location.  The zto argument is the file to create.  The zorig
    argument is the name of the file to move.  If fmkdirs is TRUE, then
    any necessary directories are created; fpublic indicates whether
-   they should be publically writeable or not.  If fcheck is TRUE,
-   this should make sure the directory is writeable by the user zuser
-   (if zuser is NULL, then it must be writeable by any user); this is
+   they should be publically writable or not.  If fcheck is TRUE,
+   this should make sure the directory is writable by the user zuser
+   (if zuser is NULL, then it must be writable by any user); this is
    to avoid a window of vulnerability between fsysdep_in_directory and
    fsysdep_move_file.  This function should return FALSE on error, in
    which case the zorig file should still exist.  */

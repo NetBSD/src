@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.8 2002/03/20 18:54:47 eeh Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.9 2003/01/06 20:30:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ struct iommu_strbuf {
 #define	IOTTE_LOCAL	0x0800000000000000LL	/* Accesses to same bus segment? */
 #define IOTTE_PAMASK	0x000001ffffffe000LL	/* Let's assume this is correct */
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
-#define IOTTE_W		0x0000000000000002LL	/* Writeable */
+#define IOTTE_W		0x0000000000000002LL	/* Writable */
 
 /*
  * On sun4u each bus controller has a separate IOMMU.  The IOMMU has 

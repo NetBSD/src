@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.7 2000/05/28 20:54:42 pk Exp $ */
+/*	$NetBSD: iommureg.h,v 1.8 2003/01/06 20:30:34 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,7 +81,7 @@ typedef u_int32_t iopte_t;
 /* IOMMU PTE bits */
 #define IOPTE_PPN	0xffffff00	/* PA<35:12> */
 #define IOPTE_C		0x00000080 	/* cacheable */
-#define IOPTE_W		0x00000004	/* writeable */
+#define IOPTE_W		0x00000004	/* writable */
 #define IOPTE_V		0x00000002	/* valid */
 #define IOPTE_WAZ	0x00000001	/* must write as zero */
 

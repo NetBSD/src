@@ -4843,7 +4843,7 @@ requested by a local user.  The default is @samp{~}.
 Specifies that files may be received into the named directories when
 requested by the remote system.  The default is @samp{~}.  On Unix, the
 remote system may only request that files be received into directories
-that are writeable by the world, regardless of how this is set.
+that are writable by the world, regardless of how this is set.
 
 @item forward-to @var{strings}
 @findex forward-to
@@ -5649,8 +5649,8 @@ Keywords: UUCP, protocol, FAQ
 Approved: news-answers-request@@MIT.Edu
 
 Archive-name: uucp-internals
-Version: $Revision: 1.4 $
-Last-modified: $Date: 2003/01/06 12:38:47 $
+Version: $Revision: 1.5 $
+Last-modified: $Date: 2003/01/06 20:30:43 $
 @end format
 @end ifset
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 2002/03/10 22:32:31 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.78 2003/01/06 20:30:36 wiz Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -261,7 +261,7 @@ cpu_coredump(p, vp, cred, chdr)
 }
 
 /*
- * Map in a bunch of pages read/writeable for the kernel.
+ * Map in a bunch of pages read/writable for the kernel.
  */
 void
 ioaccess(vaddr, paddr, npgs)

@@ -119,7 +119,7 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
 {
     MEDIA m;
     partition_map_header * map;
-    int writeable;
+    int writable;
     int size;
 
     m = open_pathname_as_media(name, (rflag)?O_RDONLY:O_RDWR);
@@ -130,10 +130,10 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
 	    *valid_file = 0;
 	    return NULL;
 	} else {
-	    writeable = 0;
+	    writable = 0;
 	}
     } else {
-	writeable = 1;
+	writable = 1;
     }
     *valid_file = 1;
 
@@ -144,7 +144,7 @@ open_partition_map(char *name, int *valid_file, int ask_logical_size)
 	return NULL;
     }
     map->name = name;
-    map->writeable = (rflag)?0:writeable;
+    map->writable = (rflag)?0:writable;
     map->changed = 0;
     map->written = 0;
     map->disk_order = NULL;
@@ -448,7 +448,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	return NULL;
     }
     map->name = name;
-    map->writeable = (rflag)?0:1;
+    map->writable = (rflag)?0:1;
     map->changed = 1;
     map->disk_order = NULL;
     map->base_order = NULL;

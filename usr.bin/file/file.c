@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.28 2002/07/09 14:59:54 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.29 2003/01/06 20:30:40 wiz Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -63,7 +63,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.66 2002/07/03 19:00:41 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.28 2002/07/09 14:59:54 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.29 2003/01/06 20:30:40 wiz Exp $");
 #endif
 #endif	/* lint */
 
@@ -424,7 +424,7 @@ process(const char *inname, int wid)
 
 		if ((fd = open(inname, O_RDONLY)) < 0) {
 			/* We can't open it, but we were able to stat it. */
-			if (sb.st_mode & 0002) ckfputs("writeable, ", stdout);
+			if (sb.st_mode & 0002) ckfputs("writable, ", stdout);
 			if (sb.st_mode & 0111) ckfputs("executable, ", stdout);
 			ckfprintf(stdout, "can't read `%s' (%s).\n",
 			    inname, strerror(errno));

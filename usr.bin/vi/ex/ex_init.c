@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_init.c,v 1.9 2002/04/09 01:47:33 thorpej Exp $	*/
+/*	$NetBSD: ex_init.c,v 1.10 2003/01/06 20:30:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -327,7 +327,7 @@ ex_run_str(sp, name, str, len, ex_flags, nocopy)
  * .exrc file to be owned by root, the $HOME .exrc file to be owned by the
  * user's effective ID (or that the user's effective ID be root) and the
  * local .exrc files to be owned by the user's effective ID.  In all cases,
- * the file cannot be writeable by anyone other than its owner.
+ * the file cannot be writable by anyone other than its owner.
  *
  * In O'Reilly ("Learning the VI Editor", Fifth Ed., May 1992, page 106),
  * it notes that System V release 3.2 and later has an option "[no]exrc".
@@ -397,7 +397,7 @@ denied:	a = msg_print(sp, path, &nf1);
 			break;
 		case WRITER:
 			msgq(sp, M_ERR,
-    "127|%s/%s: not sourced: writeable by a user other than the owner", b, a);
+    "127|%s/%s: not sourced: writable by a user other than the owner", b, a);
 			break;
 		}
 		if (nf2)
@@ -414,7 +414,7 @@ denied:	a = msg_print(sp, path, &nf1);
 			break;
 		case WRITER:
 			msgq(sp, M_ERR,
-	    "130|%s: not sourced: writeable by a user other than the owner", a);
+	    "130|%s: not sourced: writable by a user other than the owner", a);
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2002/09/22 07:19:45 chs Exp $ */
+/*	$NetBSD: pte.h,v 1.12 2003/01/06 20:30:35 wiz Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -52,7 +52,7 @@
  *			data_cacheable:2,	(cacheability control)
  *			data_e:1,	(explicit accesses only)
  *			data_priv:1,	(privileged page)
- *			data_w:1,	(writeable)
+ *			data_w:1,	(writable)
  *			data_g:1;	(same as tag_g)
  *	};	
  */
@@ -111,7 +111,7 @@ struct sun4u_data_fields {
 		data_cacheable:2,	/* cacheability control */
 		data_e:1,	/* explicit accesses only */
 		data_priv:1,	/* privileged page */
-		data_w:1,	/* writeable */
+		data_w:1,	/* writable */
 		data_g:1;	/* same as tag_g */
 };
 union sun4u_data { struct sun4u_data_fields f; int64_t data; };

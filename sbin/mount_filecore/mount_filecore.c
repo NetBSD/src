@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.5 2002/09/21 18:43:34 christos Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.6 2003/01/06 20:30:31 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -140,7 +140,7 @@ mount_filecore(argc, argv)
 
 #define DEFAULT_ROOTUID	-2
 	/*
-	 * FILECORE filesystems are not writeable.
+	 * FILECORE filesystems are not writable.
 	 */
 	mntflags |= MNT_RDONLY;
 	if (useuid) args.flags |= FILECOREMNT_USEUID;

@@ -648,8 +648,8 @@ do_create_partition(partition_map_header *map, int get_type)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
 // XXX add help feature (i.e. '?' in any argument routine prints help string)
     if (get_base_argument(&base, map) == 0) {
@@ -765,8 +765,8 @@ do_rename_partition(partition_map_header *map)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -801,8 +801,8 @@ do_delete_partition(partition_map_header *map)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -829,8 +829,8 @@ do_reorder(partition_map_header *map)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("Partition number: ", &old_index, kDefault) == 0) {
 	bad_input("Bad partition number");
@@ -856,8 +856,8 @@ do_write_partition_map(partition_map_header *map)
 	bad_input("The map has not been changed.");
 	return;
     }
-    if (map->writeable == 0) {
-	bad_input("The map is not writeable.");
+    if (map->writable == 0) {
+	bad_input("The map is not writable.");
 	return;
     }
 #if 0 /* this check is not found in linux fdisk-0.1 */
@@ -973,8 +973,8 @@ do_change_map_size(partition_map_header *map)
 	bad_input("No partition map exists");
 	return;
     }
-    if (!rflag && map->writeable == 0) {
-	printf("The map is not writeable.\n");
+    if (!rflag && map->writable == 0) {
+	printf("The map is not writable.\n");
     }
     if (get_number_argument("New size: ", &size, kDefault) == 0) {
 	bad_input("Bad size");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.7 2002/12/01 00:12:06 matt Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.8 2003/01/06 20:30:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -98,7 +98,7 @@ struct ext2fs_dinode {
 
 /* File permissions. */
 #define	EXT2_IEXEC		0000100		/* Executable. */
-#define	EXT2_IWRITE		0000200		/* Writeable. */
+#define	EXT2_IWRITE		0000200		/* Writable. */
 #define	EXT2_IREAD		0000400		/* Readable. */
 #define	EXT2_ISVTX		0001000		/* Sticky bit. */
 #define	EXT2_ISGID		0002000		/* Set-gid. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.27 2002/12/19 14:23:53 grant Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.28 2003/01/06 20:30:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.27 2002/12/19 14:23:53 grant Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.28 2003/01/06 20:30:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,7 @@ unlnk_exist(char *name, int type)
  * chk_path()
  *	We were trying to create some kind of node in the file system and it
  *	failed. chk_path() makes sure the path up to the node exists and is
- *	writeable. When we have to create a directory that is missing along the
+ *	writable. When we have to create a directory that is missing along the
  *	path somewhere, the directory we create will be set to the same
  *	uid/gid as the file has (when uid and gid are being preserved).
  *	NOTE: this routine is a real performance loss. It is only used as a

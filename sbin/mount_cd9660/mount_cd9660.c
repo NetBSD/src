@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.15 2002/09/21 18:43:33 christos Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.16 2003/01/06 20:30:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.15 2002/09/21 18:43:33 christos Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.16 2003/01/06 20:30:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ mount_cd9660(argc, argv)
 
 #define DEFAULT_ROOTUID	-2
 	/*
-	 * ISO 9660 filesystems are not writeable.
+	 * ISO 9660 filesystems are not writable.
 	 */
 	mntflags |= MNT_RDONLY;
 	args.export.ex_flags = MNT_EXRDONLY;

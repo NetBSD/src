@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.8 1999/09/23 16:09:58 christos Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.9 2003/01/06 20:32:43 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 /* Large Tags */
 #define ISAPNP_LARGE_TAG				0x80
 #define ISAPNP_TAG_MEM_RANGE_DESC			0x81
-#define		ISAPNP_MEMATTR_WRITEABLE		0x01
+#define		ISAPNP_MEMATTR_WRITABLE			0x01
 #define		ISAPNP_MEMATTR_CACHEABLE		0x02
 #define		ISAPNP_MEMATTR_HIGH_ADDR		0x04
 #define		ISAPNP_MEMATTR_SHADOWABLE		0x20

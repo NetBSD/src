@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.32 2002/09/21 18:09:31 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.33 2003/01/06 20:30:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2002/09/21 18:09:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.33 2003/01/06 20:30:38 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ union_statfs(mp, sbp, p)
 	 * The "total" fields count total resources in all layers,
 	 * the "free" fields count only those resources which are
 	 * free in the upper layer (since only the upper layer
-	 * is writeable).
+	 * is writable).
 	 */
 
 	if (mstat.f_bsize != lbsize)

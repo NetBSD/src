@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.7 2002/10/05 22:34:04 chs Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.7 2002/10/05 22:34:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.8 2003/01/06 20:30:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.7 2002/10/05 22:34:04 chs Exp $")
  * a_entry. Read in the header, set up some VM commands and run them.
  *
  * Yes, both text and data are mapped at once, so we're left with
- * writeable text for the shared libs. The Linux crt0 seemed to break
+ * writable text for the shared libs. The Linux crt0 seemed to break
  * sometimes when data was mapped separately. It munmapped a uselib()
  * of ld.so by hand, which failed with shared text and data for ld.so
  * Yuck.
