@@ -1,9 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: rc.shutdown,v 1.4 2000/07/17 15:23:28 lukem Exp $
+# $NetBSD: rc.shutdown,v 1.5 2000/12/15 00:00:09 lukem Exp $
 #
-# rc.shutdown.sh --
+# rc.shutdown --
 #	Run the scripts in /etc/rc.d with reverse rcorder.
+
+#	System shutdown script run by shutdown(8) at system shutdown time.
+#	Note that halt(8) and reboot(8) do NOT invoke this script.
 
 export HOME=/
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
