@@ -1,4 +1,4 @@
-/*	 $NetBSD: lucida16x29.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
+/*	 $NetBSD: lucida16x29.h,v 1.4 2000/01/05 18:44:24 ad Exp $ */
 
 /*
 
@@ -73,6 +73,8 @@ struct wsdisplay_font lucida16x29 = {
 	16,				/* width */
 	29,				/* height */
 	2,				/* stride */
+	WSDISPLAY_FONTORDER_L2R,	/* bit order */
+	WSDISPLAY_FONTORDER_L2R,	/* byte order */
 	lucida16x29_data		/* data */
 };
 

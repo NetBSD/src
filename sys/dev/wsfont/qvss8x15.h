@@ -1,4 +1,4 @@
-/* 	$NetBSD: qvss8x15.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: qvss8x15.h,v 1.4 2000/01/05 18:44:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986
@@ -82,6 +82,8 @@ struct wsdisplay_font qvss8x15 = {
 	8,				/* width */
 	15,				/* height */
 	1,				/* stride */
+	WSDISPLAY_FONTORDER_R2L,	/* bit order */
+	WSDISPLAY_FONTORDER_L2R,	/* byte order */
 	qvss8x15_data			/* data */
 };
 
