@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$NetBSD: Makefile,v 1.13 1996/10/15 20:04:22 perry Exp $
+#	$NetBSD: Makefile,v 1.14 1996/10/18 06:00:31 thorpej Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc
@@ -21,7 +21,7 @@ realinstall:
 		chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		chmod 444 ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 	done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 		${DESTDIR}${BINDIR}/tmac
 
 .include <bsd.prog.mk>

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1996/04/06 06:00:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1996/10/18 06:23:04 thorpej Exp $
 
 PROG=	units
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/units.lib ${DESTDIR}/usr/share/misc
 
 .include <bsd.prog.mk>

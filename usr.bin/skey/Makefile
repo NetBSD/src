@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/09/19 19:44:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1996/10/18 06:20:23 thorpej Exp $
 
 PROG= skey
 CFLAGS+= -I${.CURDIR}/../../lib/libskey
@@ -7,7 +7,9 @@ DPADD=	${LIBSKEY}
 LDADD=	-lskey
 
 beforeinstall:
-	install -c -m 755 ${.CURDIR}/skeyaudit.sh ${DESTDIR}${BINDIR}/skeyaudit
-	install -c -m 755 ${.CURDIR}/skeyinfo.sh ${DESTDIR}${BINDIR}/skeyinfo
+	${INSTALL} -c -m 755 ${.CURDIR}/skeyaudit.sh \
+	    ${DESTDIR}${BINDIR}/skeyaudit
+	${INSTALL} -c -m 755 ${.CURDIR}/skeyinfo.sh \
+	    ${DESTDIR}${BINDIR}/skeyinfo
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.12 1996/04/25 01:23:37 jtc Exp $
+#	$Id: Makefile,v 1.13 1996/10/18 06:16:10 thorpej Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -41,7 +41,7 @@ scan.c: scan.l
 scan.o: parse.c
 
 includes:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/FlexLexer.h \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/FlexLexer.h \
 		${DESTDIR}/usr/include/g++
 
 .include <bsd.prog.mk>

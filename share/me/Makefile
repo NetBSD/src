@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.7 1995/04/20 02:04:51 mycroft Exp $
+#	$Id: Makefile,v 1.8 1996/10/18 05:57:14 thorpej Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -22,7 +22,7 @@ realinstall:
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${TMLIB}/$$i; \
 		chmod 444 ${DESTDIR}${TMLIB}/$$i; \
 	done
-	cd ${.CURDIR}; install -c -o ${BINOWN} -g ${BINGRP} -m 444 revisions \
-	    ${DESTDIR}${MELIB}/revisions
+	cd ${.CURDIR}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    revisions ${DESTDIR}${MELIB}/revisions
 
 .include <bsd.prog.mk>
