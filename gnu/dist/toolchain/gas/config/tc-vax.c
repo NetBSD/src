@@ -313,7 +313,9 @@ md_apply_fix (fixP, valP)
      fixS *fixP;
      valueT *valP;
 {
+#ifdef OBJ_ELF
   if (fixP->fx_r_type == NO_RELOC)
+#endif
     number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
 				  (valueT) *valP, fixP->fx_size);
   return 0;
