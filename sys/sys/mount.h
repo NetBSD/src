@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.94 2002/01/30 21:39:51 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.95 2002/02/05 19:35:03 chuck Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -175,7 +175,7 @@ struct mount {
 	{ MNT_UNION,		0,	"union" }, \
 	{ MNT_ASYNC,		0,	"asynchronous" }, \
 	{ MNT_NOCOREDUMP,	0,	"nocoredump" }, \
-	{ MNT_IGNORE,		1,	"ignored" }, \
+	{ MNT_IGNORE,		0,	"hidden" }, \
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
