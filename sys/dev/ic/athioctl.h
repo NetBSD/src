@@ -1,3 +1,5 @@
+/*	$NetBSD: athioctl.h,v 1.2 2003/10/15 23:23:39 itojun Exp $	*/
+
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
