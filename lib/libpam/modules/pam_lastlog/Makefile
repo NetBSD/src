@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/12/29 15:04:06 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2005/02/01 17:54:48 christos Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -28,6 +28,8 @@
 LIB=	pam_lastlog
 SRCS=	pam_lastlog.c
 MAN=	pam_lastlog.8
+
+CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 
 LIBDPLIBS=	util	${LIB_ROOT_DIR}/libutil
 
