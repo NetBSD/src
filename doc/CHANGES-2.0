@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.181 2004/05/06 05:25:12 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.182 2004/05/06 05:29:48 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1848,3 +1848,10 @@ share/man/man4/envsys.4				1.14
 
 	Add references to ACPI man pages.
 	[kochi, ticket #250]
+
+bin/pax/file_subs.c				1.45-1.46
+
+	Set the chflags *after* the rename, not before.
+	Don't exit with 1 on broken archives that mark directories as files for
+	the benefit of pkgsrc. 
+	[snj, ticket #252]
