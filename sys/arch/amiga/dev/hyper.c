@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.5 1998/12/26 22:22:58 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.6 1999/01/10 19:19:57 is Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 Ignatios Souvatzis
@@ -81,11 +81,6 @@ struct hyper_prods {
 	{"3+", 0x8000}		/* 7 */
 };
 
-#define HYPERPROD3	(1<<3)
-#define HYPERPROD4	(1<<2)
-#define HYPERPROD4PLUS	(1<<6)
-#define HYPERPROD3PLUS	(1<<7)
-
 int
 hypermatch(parent, cfp, auxp)
 	struct device *parent;
@@ -100,13 +95,18 @@ hypermatch(parent, cfp, auxp)
 	if (zap->manid != 5001)
 		return (0);
 
-	if (prodid < sizeof(hyperproducts)/sizeof(*hyperproducts) &&
-	    hyperproducts[prodid].name)
+	if (zap->prodid < sizeof(hyperproducts)/sizeof(*hyperproducts) &&
+	    hyperproducts[zap->prodid].name)
 
 		return (1);
 
 	return (0);
 }
+
+#define HYPERPROD3	(1<<3)
+#define HYPERPROD4	(1<<2)
+#define HYPERPROD4PLUS	(1<<6)
+#define HYPERPROD3PLUS	(1<<7)
 
 struct hyper_devs {
 	char *name;
@@ -138,11 +138,11 @@ hyperattach(parent, self, auxp)
 	struct hyper_devs  *hprsd;
 	struct zbus_args *zap;
 	struct supio_attach_args supa;
-	struct hyper_products *hprpp;
+	struct hyper_prods *hprpp;
 
 	hprsc = (struct hyper_softc *)self;
 	zap = auxp;
-	hprpp = &hyper_products[zap->prodid];
+	hprpp = &hyperproducts[zap->prodid];
 
 	if (parent)
 		printf(": Hypercom %s\n", hprpp->name);
@@ -153,8 +153,10 @@ hyperattach(parent, self, auxp)
 	supa.supio_iot = &hprsc->sc_bst;
 	supa.supio_ipl = 6;
 
+	hprsd = hyperdevices;
+
 	while (hprsd->name) {
-		if (hprsd->productmask && (1 << zap->prodid)) {
+		if (hprsd->productmask & (1 << zap->prodid)) {
 			supa.supio_name = hprsd->name;
 			supa.supio_iobase = hprsd->off;
 			supa.supio_arg = hprsd->arg;
