@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230.4.2 1997/05/17 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.4.3 1997/05/25 00:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2212,7 +2212,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = kmem_alloc_pageable(kernel_map, size);
+	va = kmem_alloc_pageable(kmem_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -2255,7 +2255,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	kmem_free(kmem_map, (vm_offset_t)kva, size);
 }
 
 /*
