@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.199 2000/03/06 02:32:32 mark Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.200 2000/03/09 09:53:04 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp 
+ *	NetBSD: pcidevs,v 1.195 2000/03/09 09:50:49 jdolecek Exp 
  */
 
 /*
@@ -1310,6 +1310,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compex",
 	    "RL100-TX 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56,
+	    0,
+	    "Conexant Systems",
+	    "SoftK56 PCI Software Modem",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -3050,6 +3056,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sony",
 	    "CXD1947A FireWire Host Controller",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD32222,
+	    0,
+	    "Sony",
+	    "CXD3222 OHCI i.LINK(IEEE 1394) PCI controller",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
+	    0,
+	    "Sony",
+	    "Memory Stick I/F Controller",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
@@ -6655,6 +6673,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LMC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "LAN Media Corporation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CONEXANT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Conexant Systems",
 	    NULL,
 	},
 	{
