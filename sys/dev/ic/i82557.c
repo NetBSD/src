@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.31 2000/05/24 13:20:32 soren Exp $	*/
+/*	$NetBSD: i82557.c,v 1.32 2000/05/26 19:11:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1086,6 +1086,8 @@ fxp_tick(arg)
 
 	s = splnet();
 
+	FXP_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
+
 	ifp->if_opackets += le32toh(sp->tx_good);
 	ifp->if_collisions += le32toh(sp->tx_total_collisions);
 	if (sp->rx_good) {
@@ -1133,6 +1135,7 @@ fxp_tick(arg)
 		/*
 		 * Start another stats dump.
 		 */
+		FXP_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
 		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND,
 		    FXP_SCB_COMMAND_CU_DUMPRESET);
 	} else {
@@ -1317,6 +1320,7 @@ fxp_init(sc)
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 	    sc->sc_cddma + FXP_CDSTATSOFF);
+	FXP_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_DUMP_ADR);
 
 	cbp = &sc->sc_control_data->fcd_configcb;
