@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 1997/08/11 22:53:47 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 1997/08/14 18:23:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1940,7 +1940,7 @@ struct cpu_model_info cpu_models[] = {
 	/* PB 100 has no MMU! */
 	{MACH_MACPB140, "PowerBook", " 140 ", MACH_CLASSPB, &romvecs[1]},
 	{MACH_MACPB145, "PowerBook", " 145 ", MACH_CLASSPB, &romvecs[1]},
-	{MACH_MACPB150, "PowerBook", " 150 ", MACH_CLASSPB, &romvecs[10]},
+	{MACH_MACPB150, "PowerBook", " 150 ", MACH_CLASSDUO, &romvecs[10]},
 	{MACH_MACPB160, "PowerBook", " 160 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB165, "PowerBook", " 165 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB165C, "PowerBook", " 165c ", MACH_CLASSPB, &romvecs[5]},
@@ -1988,12 +1988,15 @@ struct {
 	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
 	{ MACH_MACPB170,	(caddr_t)0xfee00000,	32 * 1024 },
+	{ MACH_MACPB150,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB160,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB165,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB180,	(caddr_t)0x60000000,	128 * 1024 },
+	{ MACH_MACCCLASSIC,	(caddr_t)0x50f40000,	512 * 1024 },
 	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
+	{ MACH_MACLC520,	(caddr_t)0x60000000,	1024 * 1024 },
 	{ 0,			(caddr_t)0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
@@ -2274,6 +2277,7 @@ mac68k_set_io_offsets(base)
 		break;
 	case MACH_CLASSII:
 	case MACH_CLASSPB:
+	case MACH_CLASSDUO:
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
 	case MACH_CLASSIIvx:
