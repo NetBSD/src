@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.8 1995/03/26 21:45:23 glass Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.9 1995/03/27 02:24:17 glass Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.8 1995/03/26 21:45:23 glass Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.9 1995/03/27 02:24:17 glass Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ main(argc, argv)
 
 	setlinebuf (stdout);
 
-	(void) memset((char *)&to, 0, sizeof(struct sockaddr));
+	(void) memset(&to, 0, sizeof(struct sockaddr));
 	to.sin_family = AF_INET;
 	to.sin_addr.s_addr = inet_addr(*argv);
 	if (to.sin_addr.s_addr != -1)
@@ -393,7 +393,7 @@ main(argc, argv)
 		if (hp == 0)
 			errx(1, "unknown host %s", *argv);
 		to.sin_family = hp->h_addrtype;
-		memcpy((caddr_t)&to.sin_addr, hp->h_addr, hp->h_length);
+		memcpy(&to.sin_addr, hp->h_addr, hp->h_length);
 		hostname = hp->h_name;
 	}
 	if (*++argv)
@@ -464,7 +464,7 @@ main(argc, argv)
 				  (char *)&on, sizeof(on));
 
 	if (source) {
-		(void) memset((char *)&from, 0, sizeof(struct sockaddr));
+		(void) memset(&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
 		from.sin_addr.s_addr = inet_addr(source);
 		if (from.sin_addr.s_addr == -1)
