@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2001/12/10 05:27:59 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2002/02/09 13:56:52 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -20,8 +20,7 @@ TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 SRCS=	${MAIN} whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
-ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-	-o root -g wheel -m ${NONBINMODE} 
+ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1
 

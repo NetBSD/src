@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2001/11/14 00:44:13 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2002/02/09 13:56:49 lukem Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
 SUBDIR=	instkernel #floppy-GENERIC
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE}
+IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 .ifndef RELEASEDIR
 release:

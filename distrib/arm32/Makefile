@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.5 2002/01/19 11:16:20 reinoud Exp $
+# $NetBSD: Makefile,v 1.6 2002/02/09 13:56:49 lukem Exp $
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE}
+IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 KERNELS=	A7INST CATSINST RPCINST SHARKINST
 
 SUBDIR= ramdisk kernels

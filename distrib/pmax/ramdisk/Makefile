@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/10/13 06:15:19 jmc Exp $
+#	$NetBSD: Makefile,v 1.18 2002/02/09 13:56:53 lukem Exp $
 
 BINDIR=		/installation/netboot
 
@@ -64,8 +64,8 @@ echoimage:
 	@echo ${.OBJDIR}/${IMAGE}
 
 realinstall:
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${DISKIMAGE} ${RELEASEDIR}${BINDIR}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
+		${DISKIMAGE} ${RELEASEDIR}${BINDIR}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c

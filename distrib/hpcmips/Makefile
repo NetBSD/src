@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/11/14 00:48:38 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/02/09 13:56:50 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -8,8 +8,7 @@
 SUBDIR=
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE}
+IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 PBSDBOOTDIR = ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
 PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.exe

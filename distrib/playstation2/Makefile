@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 00:58:49 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/02/09 13:56:52 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -8,8 +8,7 @@
 SUBDIR=
 
 ITARGET=	${RELEASEDIR}/installation
-IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE}
+IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 .ifndef RELEASEDIR
 release:

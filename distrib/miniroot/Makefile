@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2002/01/15 17:45:36 pk Exp $
+#	$NetBSD: Makefile,v 1.46 2002/02/09 13:56:51 lukem Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -31,8 +31,7 @@ DISKTYPEARG=	-t ${DISKTYPE}
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	${.CURDIR}/mtree.conf
-ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
-			-o root -g wheel -m ${NONBINMODE} 
+ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
