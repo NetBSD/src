@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.27 1998/08/03 13:03:36 leo Exp $
+.\"	$NetBSD: ddb.4,v 1.28 1999/01/08 13:18:28 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -652,6 +652,40 @@ rejected with an error message.
 Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
+.It Xo
+.Ic dwatch
+.Ar address
+.Xc
+Delete the watchpoint at address
+.Ar address
+that was previously set with
+.Ic watch
+command.
+.It Xo
+.Ic kill
+.Ar pid Ns Op Cm , Ns Ar signal_number
+.Xc
+Send a signal to the process specified by the
+.Ar pid .
+If
+.Ar signal_number
+isn't specified, the SIGTERM signal is sent.
+.It Xo
+.Ic call
+.Sm off
+.Ar address
+.Oo
+.Cm ( Ar expression
+.Op Ar ,...
+.Cm )
+.Oc
+.Sm on
+.Xc
+Call the function specified by
+.Ar address
+with the argument(s) listed in parentheses.
+Parentheses may be omitted if the function takes no arguments.
+The number of arguments is currently limited to 10.
 .El
 .Sh MACHINE-SPECIFIC COMMANDS
 The "glue" code that hooks
