@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.106 2001/08/27 18:52:09 eeh Exp $
+#	$NetBSD: GENERIC,v 1.107 2001/08/29 17:37:48 briggs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
 maxusers	32
 
@@ -148,6 +148,7 @@ options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI

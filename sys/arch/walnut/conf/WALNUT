@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.4 2001/08/28 02:43:49 eeh Exp $
+#	$NetBSD: WALNUT,v 1.5 2001/08/29 17:37:48 briggs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -159,6 +159,7 @@ options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 #adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 #ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
@@ -198,6 +199,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 #scsibus* at adv?
+#scsibus* at adw?
 #scsibus* at ahc?
 #scsibus* at bha?
 #scsibus* at isp?
