@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.5 2001/02/19 23:22:42 cgd Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.6 2001/03/17 20:43:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ctypeio.h"
 
@@ -59,7 +60,6 @@ static int uplow __P((struct chartbl *, const char *, int, char *, size_t));
 static void printctype __P((FILE *, unsigned int));
 static int output_ascii __P((const char *, const struct chartbl *));
 static int output_binary __P((const struct chartbl *));
-static char *getline __P((FILE *, size_t *, size_t *));
 
 int main __P((int, char *[]));
 
@@ -431,45 +431,6 @@ output_binary(ct)
 }
 
 
-/* getline():
- *	Read a line from a file parsing continuations ending in \
- *	and eliminating trailing newlines.
- */
-static char *
-getline(fp, size, lineno)
-	FILE *fp;
-	size_t *size, *lineno;
-{
-	size_t s, len = 0;
-	char *buf = NULL;
-	char *ptr;
-	int cnt = 1;
-
-	while (cnt) {
-		if ((ptr = fgetln(fp, &s)) == NULL) {
-			*size = len;
-			return buf;
-		}
-		/* the newline may be missing at EOF */
-		if (ptr[s - 1] == '\n')	{ 
-			s--;			/* forget newline */
-			*lineno += 1;
-		}
-		if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
-			    s--;			/* forget \\ */
-
-		buf = realloc(buf, len + s + 1);
-		if (buf == NULL)
-			err(1, "Out of memory");
-		(void) memcpy(buf + len, ptr, s);
-		len += s;
-		buf[len] = '\0';
-	}
-	*size = len;
-	return buf;
-}
-
-
 int
 main(argc, argv)
 	int argc;
@@ -518,9 +479,8 @@ main(argc, argv)
 	(void) memset(ct.uptab, 0, sizeof(ct.uptab[0]) * (ct.maxchar * 1));
 	(void) memset(ct.lotab, 0, sizeof(ct.lotab[0]) * (ct.maxchar * 1));
 
-	for (lnum = 1; (line = getline(fp, &size, &lnum)) != NULL; free(line)) {
-		if (*line == '#')
-			continue;
+	for (lnum = 1; (line = fparseln(fp, &size, &lnum, NULL, 0)) != NULL;
+	    free(line)) {
 		for (token = line; *token && isspace((u_char) *token); token++)
 			continue;
 		if (*token == '\0')
