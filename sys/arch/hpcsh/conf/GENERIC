@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 2001/03/20 16:05:42 uch Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/04/23 11:22:19 uch Exp $
 #
 #	GENERIC kernel for SH3+HD64461 based machines.
 #
@@ -17,12 +17,9 @@ options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options		MSGBUFSIZE=65534
 
-#options		USE_RTCCLK
-
 # Standard system options
 
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
-options 	HZ=50		# clock interrupt generates every 1/HZ sec 
 
 # Compatibility options
 options 	COMPAT_43

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2001/02/24 20:17:45 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2001/04/23 11:22:19 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <machine/config_hook.h>
@@ -86,8 +85,6 @@ cpu_configure()
 	(void)splhigh();
 
 	config_hook_init();
-
-	startrtclock();
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
