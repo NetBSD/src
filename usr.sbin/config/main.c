@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2002/10/11 01:54:50 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2002/10/11 02:02:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -988,12 +988,11 @@ crosscheck(void)
 	TAILQ_FOREACH(i, &alldevi, i_next) {
 		if ((p = i->i_pspec) == NULL || hasparent(i))
 			continue;
-		xerror(conffile, i->i_lineno,
-		    "%s at %s is orphaned", i->i_name, i->i_at);
-		(void)fprintf(stderr, " (%s %s declared)\n",
+		(void)fprintf(stderr,
+		    "%s:%d: `%s at %s' is orphaned (%s `%s' declared)\n",
+		    conffile, i->i_lineno, i->i_name, i->i_at,
 		    p->p_atunit == WILD ? "nothing matching" : "no",
 		    i->i_at);
-		errs++;
 	}
 	if (TAILQ_EMPTY(&allcf)) {
 		(void)fprintf(stderr, "%s has no configurations!\n",
