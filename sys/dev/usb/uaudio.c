@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.27 2000/06/19 11:43:48 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.28 2000/08/24 14:11:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -960,6 +960,9 @@ uaudio_add_extension(struct uaudio_softc *sc, usb_descriptor_t *v,
 
 	DPRINTFN(2,("uaudio_add_extension: bUnitId=%d bNrInPins=%d\n",
 		    d->bUnitId, d->bNrInPins));
+
+	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_XU)
+		return;
 
 	if (d1->bmControls[0] & UA_EXT_ENABLE_MASK) {
 		mix.wIndex = MAKE(d->bUnitId, sc->sc_ac_iface);
