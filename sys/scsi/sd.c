@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.5 1993/11/24 20:24:26 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.6 1993/11/24 23:00:06 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -53,19 +53,6 @@ int     Debugger();
 #define SDUNIT(z)	(minor(z) >> 3)
 #define	RAW_PART	3
 
-void sdstrategy();
-void sdstart();
-
-struct scsi_device sd_switch =
-{
-    NULL,			/* Use default error handler */
-    sdstart,			/* have a queue, served by this */
-    NULL,			/* have no async handler */
-    NULL,			/* Use default 'done' routine */
-    "sd",
-    0
-};
-
 struct sd_data {
 	struct dkdevice sc_dk;
 
@@ -100,6 +87,20 @@ struct  cfdriver sdcd =
 
 int sdgetdisklabel __P((struct sd_data *));
 int sd_get_parms __P((struct sd_data *, int));
+void sdstrategy __P((struct buf *));
+void sdstart __P((int));
+
+struct dkdriver sddkdriver = { sdstrategy };
+
+struct scsi_device sd_switch =
+{
+    NULL,			/* Use default error handler */
+    sdstart,			/* have a queue, served by this */
+    NULL,			/* have no async handler */
+    NULL,			/* Use default 'done' routine */
+    "sd",
+    0
+};
 
 /*
  * The routine called by the low level scsi routine when it discovers
@@ -123,6 +124,8 @@ sdattach(parent, self, aux)
 	sc_link->device = &sd_switch;
 	sc_link->dev_unit = self->dv_unit;
 
+	sd->sc_dk.dk_driver = &sddkdriver;
+
 	if (sd->sc_link->adapter->adapter_info) {
 		sd->ad_info = ((*(sd->sc_link->adapter->adapter_info)) (sc_link->adapter_softc));
 		sd->cmdscount = sd->ad_info & AD_INF_MAX_CMDS;
@@ -140,9 +143,9 @@ sdattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	sd_get_parms(sd, SCSI_NOSLEEP | SCSI_NOMASK);
-	printf(": %dMB (%d total sec), %d cyl, %d head, %d sec, %d bytes/sec\n",
-	       self->dv_xname, dp->disksize / ((1024L * 1024L) / dp->secsiz),
-	       dp->disksize, dp->cyls, dp->heads, dp->sectors, dp->secsiz);
+	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	       dp->disksize / ((1024L * 1024L) / dp->secsiz),
+	       dp->cyls, dp->heads, dp->sectors, dp->secsiz);
 	sd->flags |= SDINIT;
 }
 
@@ -224,8 +227,8 @@ sdopen(dev)
 	 */
 	sd_get_parms(sd, 0);	/* sets SDEV_MEDIA_LOADED */
 	if (sd->params.secsiz != SECSIZE) {	/* XXX One day... */
-		printf("sd%d: Can't deal with %d bytes logical blocks\n",
-		    unit, sd->params.secsiz);
+		printf("%s: can't deal with %d byte logical blocks\n",
+		       sd->sc_dk.dk_dev.dv_xname, sd->params.secsiz);
 		Debugger();
 		errcode = ENXIO;
 		goto bad;
@@ -384,6 +387,7 @@ sdstrategy(bp)
 	sdstart(unit);
 
 	splx(opri);
+	return;
 bad:
 	bp->b_flags |= B_ERROR;
 done:
@@ -428,26 +432,24 @@ sdstart(unit)
 	 * Check if the device has room for another command
 	 */
 	while (sc_link->opennings) {
-
 		/*
 		 * there is excess capacity, but a special waits 
 		 * It'll need the adapter as soon as we clear out of the
 		 * way and let it run (user level wait).
 		 */
-		if (sc_link->flags & SDEV_WAITING) {
+		if (sc_link->flags & SDEV_WAITING)
 			return;
-		}
+
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
 		dp = &sd->buf_queue;
-		if ((bp = dp->b_actf) == NULL) {	/* yes, an assign */
+		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
 			return;
-		}
 		dp->b_actf = bp->av_forw;
 
 		/*
-		 *  If the device has become invalid, abort all the
+		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
 		 * re-openned
 		 */
@@ -455,13 +457,14 @@ sdstart(unit)
 			sd->flags &= ~SDHAVELABEL;
 			goto bad;
 		}
+
 		/*
 		 * We have a buf, now we know we are going to go through
 		 * With this thing..
 		 *
 		 *  First, translate the block to absolute
 		 */
-		p = sd->sc_dk.dk_label.d_partitions + SDPART(bp->b_dev);
+		p = &sd->sc_dk.dk_label.d_partitions[SDPART(bp->b_dev)];
 		blkno = bp->b_blkno + p->p_offset;
 		nblk = (bp->b_bcount + 511) >> 9;
 
@@ -477,24 +480,19 @@ sdstart(unit)
 		cmd.addr_0 = blkno & 0xff;
 		cmd.length2 = (nblk & 0xff00) >> 8;
 		cmd.length1 = (nblk & 0xff);
+
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link,
-			(struct scsi_generic *) &cmd,
-			sizeof(cmd),
-			(u_char *) bp->b_un.b_addr,
-			bp->b_bcount,
-			SD_RETRIES,
-			10000,
-			bp,
-			SCSI_NOSLEEP | ((bp->b_flags & B_READ) ?
-			    SCSI_DATA_IN : SCSI_DATA_OUT))
-		    == SUCCESSFULLY_QUEUED) {
-		} else {
+		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+				  sizeof(cmd), (u_char *) bp->b_un.b_addr,
+				  bp->b_bcount, SD_RETRIES, 10000, bp,
+				  SCSI_NOSLEEP | ((bp->b_flags & B_READ) ?
+			    	  SCSI_DATA_IN : SCSI_DATA_OUT))
+		    != SUCCESSFULLY_QUEUED) {
 bad:
-			printf("sd%d: oops not queued", unit);
+			printf("%s: not queued", sd->sc_dk.dk_dev.dv_xname);
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -616,6 +614,7 @@ sdgetdisklabel(sd)
 		return 0;
 
 	bzero(&sd->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(&sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 	/*
 	 * make partition 3 the whole disk in case of failure then get pdinfo
 	 * for historical reasons, make part a same as raw part
@@ -815,10 +814,7 @@ sdsize(dev_t dev)
 		if (val != 0)
 			return -1;
 	}
-	if (sd->flags & SDWRITEPROT)
-		return -1;
-
-	return (int)sd->sc_dk.dk_label.d_partitions[part].p_size;
+	return sd->sc_dk.dk_label.d_partitions[part].p_size;
 }
 
 
