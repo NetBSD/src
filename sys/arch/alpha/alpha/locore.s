@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.38 1997/11/03 04:22:02 ross Exp $ */
+/* $NetBSD: locore.s,v 1.39 1998/02/12 01:53:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.38 1997/11/03 04:22:02 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.39 1998/02/12 01:53:19 cgd Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -102,7 +102,7 @@ Lstart1: LDGP(pv)
 	/*
 	 * Call alpha_init() to do pre-main initialization.
 	 * alpha_init() gets the arguments we were called with,
-	 * which are already in a0, a1, a2, and a3.
+	 * which are already in a0, a1, a2, a3, and a4.
 	 */
 	CALL(alpha_init)
 

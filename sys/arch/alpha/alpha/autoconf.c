@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.29 1998/01/09 17:06:35 drochner Exp $ */
+/* $NetBSD: autoconf.c,v 1.30 1998/02/12 01:53:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 1998/01/09 17:06:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 1998/02/12 01:53:18 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 1998/01/09 17:06:35 drochner Exp $
 struct device		*booted_device;
 int			booted_partition;
 struct bootdev_data	*bootdev_data;
-char			boot_dev[128];
 
 void	parse_prom_bootdev __P((void));
 int	atoi __P((char *));
@@ -107,7 +106,7 @@ cpu_rootconf()
 
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
-		    boot_dev);
+		    bootinfo.booted_dev);
 	setroot(booted_device, booted_partition, alpha_nam2blk);
 }
 
@@ -123,10 +122,10 @@ parse_prom_bootdev()
 	booted_partition = 0;
 	bootdev_data = NULL;
 
-        prom_getenv(PROM_E_BOOTED_DEV, boot_dev, sizeof(boot_dev));
-	bcopy(boot_dev, hacked_boot_dev, sizeof hacked_boot_dev);
+	bcopy(bootinfo.booted_dev, hacked_boot_dev,
+	    min(sizeof bootinfo.booted_dev, sizeof hacked_boot_dev));
 #if 0
-	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
+	printf("parse_prom_bootdev: boot dev = \"%s\"\n", hacked_boot_dev);
 #endif
 
 	i = 0;

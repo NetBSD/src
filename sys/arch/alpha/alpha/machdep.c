@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.101 1998/02/11 00:05:33 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.102 1998/02/12 01:53:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 1998/02/11 00:05:33 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 1998/02/12 01:53:21 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,11 +174,7 @@ u_int64_t	cycles_per_usec;
 /* number of cpus in the box.  really! */
 int		ncpus;
 
-char boot_flags[64];
-char booted_kernel[64];
-
-int bootinfo_valid;
-struct bootinfo bootinfo;
+struct bootinfo_kernel bootinfo;
 
 struct platform platform;
 
@@ -205,11 +201,12 @@ void	netintr __P((void));
 void	printregs __P((struct reg *));
 
 void
-alpha_init(pfn, ptb, bim, bip)
+alpha_init(pfn, ptb, bim, bip, biv)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
 	u_long bim;		/* bootinfo magic */
 	u_long bip;		/* bootinfo pointer */
+	u_long biv;		/* bootinfo version */
 {
 	extern char kernel_text[], _end[];
 	struct mddt *mddtp;
@@ -261,22 +258,45 @@ alpha_init(pfn, ptb, bim, bip)
 	 * Check for a bootinfo from the boot program.
 	 */
 	if (bim == BOOTINFO_MAGIC) {
-		/*
-		 * Have boot info.  Copy it to our own storage.
-		 * We'll sanity-check it later.
-		 */
-		bcopy((void *)bip, &bootinfo, sizeof(bootinfo));
-		switch (bootinfo.version) {
-		case 1:
-			bootinfo_valid = 1;
-			break;
+		if (biv == 0) {		/* backward compat */
+			biv = *(u_long *)bip;
+			bip += 8;
+		}
+		switch (biv) {
+		case 1: {
+			struct bootinfo_v1 *v1p = (struct bootinfo_v1 *)bip;
 
+			bootinfo.ssym = v1p->ssym;
+			bootinfo.esym = v1p->esym;
+			bcopy(v1p->boot_flags, bootinfo.boot_flags,
+			    min(sizeof v1p->boot_flags,
+			      sizeof bootinfo.boot_flags));
+			bcopy(v1p->booted_kernel, bootinfo.booted_kernel,
+			    min(sizeof v1p->booted_kernel,
+			      sizeof bootinfo.booted_kernel));
+			/* booted dev not provided by boot block */
+                	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
+			    sizeof bootinfo.booted_dev);
+			break;
+		}
 		default:
 			printf("warning: unknown bootinfo version %d\n",
-			    bootinfo.version);
+			    biv);
+			goto nobootinfo;
 		}
-	} else
+	} else {
 		printf("warning: boot program did not pass bootinfo\n");
+
+nobootinfo:
+		bootinfo.ssym = (u_long)_end;
+		bootinfo.esym = (u_long)_end;
+		prom_getenv(PROM_E_BOOTED_OSFLAGS, bootinfo.boot_flags,
+		    sizeof bootinfo.boot_flags);
+		prom_getenv(PROM_E_BOOTED_FILE, bootinfo.booted_kernel,
+		    sizeof bootinfo.booted_kernel);
+		prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
+		    sizeof bootinfo.booted_dev);
+	}
 
 	/*
 	 * Point interrupt/exception vectors to our own.
@@ -314,20 +334,12 @@ alpha_init(pfn, ptb, bim, bip)
 	 */
 	kernstart = trunc_page(kernel_text) - 2 * PAGE_SIZE;
 #ifdef DDB
-	if (bootinfo_valid) {
-		/*
-		 * Save the kernel symbol table.
-		 */
-		switch (bootinfo.version) {
-		case 1:
-			ksym_start = (void *)bootinfo.un.v1.ssym;
-			ksym_end   = (void *)bootinfo.un.v1.esym;
-			break;
-		}
-		kernend = (vm_offset_t)round_page(ksym_end);
-	} else
+	ksym_start = (void *)bootinfo.ssym;
+	ksym_end   = (void *)bootinfo.esym;
+	kernend = (vm_offset_t)round_page(ksym_end);
+#else
+	kernend = (vm_offset_t)round_page(_end);
 #endif
-		kernend = (vm_offset_t)round_page(_end);
 
 	/*
 	 * Find out how much memory is available, by looking at
@@ -546,33 +558,13 @@ alpha_init(pfn, ptb, bim, bip)
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
-	 * Also, get kernel name so it can be used in user-land.
 	 */
-	if (bootinfo_valid) {
-		switch (bootinfo.version) {
-		case 1:
-			bcopy(bootinfo.un.v1.boot_flags, boot_flags,
-			    sizeof(boot_flags));
-			bcopy(bootinfo.un.v1.booted_kernel, booted_kernel,
-			    sizeof(booted_kernel));
-		}
-	} else {
-		prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags,
-		    sizeof(boot_flags));
-		prom_getenv(PROM_E_BOOTED_FILE, booted_kernel,
-		    sizeof(booted_kernel));
-	}
-
-#if 0
-	printf("boot flags = \"%s\"\n", boot_flags);
-	printf("booted kernel = \"%s\"\n", booted_kernel);
-#endif
 
 	boothowto = RB_SINGLE;
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
-	for (p = boot_flags; p && *p != '\0'; p++) {
+	for (p = bootinfo.boot_flags; p && *p != '\0'; p++) {
 		/*
 		 * Note that we'd really like to differentiate case here,
 		 * but the Alpha AXP Architecture Reference Manual
@@ -1470,7 +1462,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    &alpha_unaligned_sigbus));
 
 	case CPU_BOOTED_KERNEL:
-		return (sysctl_rdstring(oldp, oldlenp, newp, booted_kernel));
+		return (sysctl_rdstring(oldp, oldlenp, newp,
+		    bootinfo.booted_kernel));
 
 	default:
 		return (EOPNOTSUPP);
