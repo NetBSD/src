@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.35 1998/12/05 19:43:42 mjacob Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.36 1999/02/19 21:04:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1823,7 +1823,7 @@ SC_REQ	*reqp;
 {
 	u_long			phy_buf;
 	u_long			phy_len;
-	void			*req_addr;
+	caddr_t			req_addr;
 	u_long			req_len;
 	struct dma_chain	*dm;
 
@@ -1831,7 +1831,7 @@ SC_REQ	*reqp;
 	 * Initialize locals and requests' DMA-chain.
 	 */
 	req_len        = reqp->xdata_len;
-	req_addr       = (void*)reqp->xdata_ptr;
+	req_addr       = (caddr_t)reqp->xdata_ptr;
 	dm             = reqp->dm_cur = reqp->dm_last = reqp->dm_chain;
 	dm->dm_count   = dm->dm_addr = 0;
 	reqp->dr_flag &= ~DRIVER_BOUNCING;
