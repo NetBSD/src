@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.14 2002/08/10 03:06:15 yamt Exp $
+.\"	$NetBSD: exec.3,v 1.15 2002/08/10 03:08:15 yamt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -227,8 +227,7 @@ and
 .Fn execvp
 functions was
 .Dq Pa :/bin:/usr/bin .
-This was changed to place the current directory last to enhance system
-security.
+This was changed to improve security and behaviour.
 .Pp
 The behavior of
 .Fn execlp
