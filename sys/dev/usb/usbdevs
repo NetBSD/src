@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.113 2000/09/16 11:45:38 ichiro Exp $
+$NetBSD: usbdevs,v 1.114 2000/09/23 18:39:41 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -136,8 +136,13 @@ vendor ELSA		0x05cc	ELSA Gmbh
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
+vendor SYMBOL		0x05e0	Symbol Technologies
+vendor GENESYS		0x05e3	Genesys Logic, Inc.
+vendor FUJI		0x05e5	Fuji Electric Co., Ltd.
+vendor KEITHLEY		0x05e6	Keithley Instruments
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor KLSI		0x05e9	Kawasaki LSI
+vendor FFC		0x05eb	FFC Limited
 vendor ANKO		0x05ef	Anko Electronic Co., Ltd.
 vendor PIENGINEERING	0x05f3	P.I. Engineering
 vendor AOC		0x05f6	AOC International
@@ -179,10 +184,13 @@ vendor BRIMAX		0x078e	Brimax, Inc.
 vendor AXIS		0x0792	Axis Communications AB
 vendor ABL		0x0794	ABL Electronics Corp.
 vendor ALFADATA		0x079d	Alfadata Computer Corp.
+vendor NATIONALTECH	0x07a2	National Technical Systems
+vendor ONNTO		0x07a3	Onnto Corp.
 vendor BE		0x07a4	Be, Inc.
 vendor ADMTEK		0x07a6	ADMtek, Inc.
 vendor COREGA		0x07aa	Corega
 vendor FREECOM		0x07ab	Freecom
+vendor MICROTECH	0x07af	Microtech
 vendor ABOCOM		0x07b8	AboCom Systems, Inc.
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken Corp.
 vendor APG		0x07c5	APG Cash Drawer
