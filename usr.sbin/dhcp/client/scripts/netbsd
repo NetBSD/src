@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.6 1999/03/05 22:37:43 mycroft Exp $
+# $NetBSD: netbsd,v 1.7 1999/06/04 20:12:52 thorpej Exp $
 
 make_resolv_conf() {
   echo search $new_domain_name >/etc/resolv.conf
@@ -28,6 +28,10 @@ if [ -x /etc/dhclient-enter-hooks ]; then
   if [ $exit_status -ne 0 ]; then
     exit $exit_status
   fi
+fi
+
+if [ x$new_host_name != x ]; then
+   echo New Host Name: $new_host_name
 fi
 
 if [ x$new_network_number != x ]; then
@@ -74,6 +78,9 @@ fi
   
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
    [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
+  if [ x$new_host_name != x ]; then
+    hostname $new_host_name
+  fi
   if [ x$old_ip_address != x ] && [ x$alias_ip_address != x ] && \
 		[ x$alias_ip_address != x$old_ip_address ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
@@ -151,6 +158,9 @@ if [ x$reason = xTIMEOUT ]; then
   if [ x$alias_ip_address != x ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
+  fi
+  if [ x$new_host_name != x ]; then
+    hostname $new_host_name
   fi
   ifconfig $interface inet $new_ip_address $new_netmask_arg \
 					$new_broadcast_arg $medium
