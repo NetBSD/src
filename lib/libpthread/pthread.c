@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.24 2002/05/02 16:49:24 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.25 2002/05/20 19:18:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ void pthread_init(void)
 
 	/* Start subsystems */
 	pthread__alarm_init();
+	pthread__signal_init();
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__libc_pthread_ops = &pthread_ops;
@@ -369,8 +370,8 @@ pthread_exit(void *retval)
 		pthread_spinlock(self, &allqueue_lock);
 		nthreads--;
 		nt = nthreads;
-		pthread_spinunlock(self, &allqueue_lock); 
 		self->pt_state = PT_STATE_ZOMBIE;
+		pthread_spinunlock(self, &allqueue_lock); 
 		if (nt == 0) {
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
