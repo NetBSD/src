@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.39 2000/03/30 13:24:57 augustss Exp $	*/
+/*	$NetBSD: in_var.h,v 1.39.4.1 2000/10/17 00:46:09 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,8 @@ struct in_ifaddr {
 #define	ia_broadaddr	ia_dstaddr
 	struct	sockaddr_in ia_sockmask; /* reserve space for general netmask */
 	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
+	struct	in_multi *ia_allhosts;	/* multicast address record for
+					   the allhosts multicast group */
 };
 
 struct	in_aliasreq {
@@ -304,6 +306,9 @@ struct ifaddr;
 
 int	in_ifinit __P((struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int));
+void	in_savemkludge __P((struct in_ifaddr *));
+void	in_restoremkludge __P((struct in_ifaddr *, struct ifnet *));
+void	in_purgemkludge __P((struct ifnet *));
 struct	in_multi *in_addmulti __P((struct in_addr *, struct ifnet *));
 void	in_delmulti __P((struct in_multi *));
 void	in_ifscrub __P((struct ifnet *, struct in_ifaddr *));
