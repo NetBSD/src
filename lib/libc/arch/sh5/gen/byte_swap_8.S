@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_8.S,v 1.1 2002/07/05 13:31:30 scw Exp $	*/
+/*	$NetBSD: byte_swap_8.S,v 1.2 2002/07/10 11:29:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,6 @@
  */
 
 #include <machine/asm.h>
-#include <machine/endian.h>
 
 ENTRY(__bswap64)
 	ptabs/l	r18, tr0
