@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_console.8,v 1.12 2003/08/14 09:55:29 dsl Exp $
+.\"	$NetBSD: boot_console.8,v 1.13 2004/07/03 20:04:03 mycroft Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 14, 2003
+.Dd July 3, 2004
 .Os
 .Dt BOOT_CONSOLE 8 i386
 .Sh NAME
@@ -41,7 +41,8 @@ kernel.
 When booting from the system BIOS, the console device and properties
 are saved in the primary bootstrap by
 .Xr installboot 8 .
-For the other boot procedures
+For other boot procedures (such as
+.Xr dosboot 8 )
 the selection process is controlled by bootloader compile-time
 options and system setup at the bootloader startup time.
 The selection may be changed on-the-fly from within the bootloader.
@@ -90,7 +91,7 @@ The following options are available:
 Force use of the standard PC keyboard and display as the console.
 .It Em CONSDEV_COM0 Li ... Em CONSDEV_COM3
 Use the serial port with the corresponding BIOS number as the console.
-No output is attempted to the selected serial port.
+No attempt is made to verify connectivity on the selected port.
 If the port is not known to the BIOS, it falls back to
 .Dq Dv CONSDEV_PC .
 (Note: This feature can be deliberately used for console selection if
@@ -103,7 +104,8 @@ is defined the RS-232
 .Dq "modem ready"
 status is on after the character is output), the port is used as
 console.
-If the port is not known to the BIOS, it falls back to
+If the port is not known to the BIOS, or the test output fails, it falls back
+to
 .Dq Dv CONSDEV_PC .
 .It Em CONSDEV_AUTO
 Auto-select the console.
