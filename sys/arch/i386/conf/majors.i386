@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.7 2002/12/13 23:26:47 christos Exp $
+#	$NetBSD: majors.i386,v 1.8 2003/02/18 12:26:50 jdolecek Exp $
 #
 # Device majors for i386
 #
@@ -96,3 +96,4 @@ device-major	verifiedexec	char 94			verifiedexec
 device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
+device-major	nsmb		char 98			nsmb		
