@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 1999/04/26 22:47:34 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 1999/06/20 00:53:58 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,6 +139,10 @@
 struct pmap_physseg {
 	int	dummy;
 };
+
+/* MD round macros */
+#define	vax_round_page(x) (((vaddr_t)(x) + VAX_PGOFSET) & ~VAX_PGOFSET)
+#define	vax_trunc_page(x) ((vaddr_t)(x) & ~VAX_PGOFSET)
 
 /*
  * Mach derived constants
