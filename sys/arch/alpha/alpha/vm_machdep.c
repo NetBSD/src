@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.33 1998/03/18 20:38:07 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.34 1998/03/26 02:21:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 1998/03/18 20:38:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 1998/03/26 02:21:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,9 +193,6 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
-#ifdef NEW_PMAP
-printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
-#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -224,9 +221,6 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
 		    sizeof(struct trapframe));
 
-#ifdef NEW_PMAP
-printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
-#endif
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
 		 */
