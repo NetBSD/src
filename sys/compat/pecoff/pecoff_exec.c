@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.22.2.5 2005/02/04 11:45:08 skrll Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.22.2.6 2005/02/06 09:00:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.5 2005/02/04 11:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.22.2.6 2005/02/06 09:00:15 skrll Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -532,5 +532,5 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 #endif
 
 	free(sh, M_TEMP);
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
