@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.6 2000/06/14 22:52:45 cgd Exp $
+# $NetBSD: dot.profile,v 1.7 2002/03/25 21:14:32 scw Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -59,44 +59,61 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		fi
 	done
 
+	mount -t kernfs /kern /kern
+
 	# Installing or upgrading?
-	again="true"
 	echo "Welcome to the NetBSD/mvme68k installation miniroot."
 	echo
-	while [ $again = "true" ]; do
 
-		echo 'enter "install" to install NetBSD,'
-		echo '      "upgrade" to upgrade an existing NetBSD system,'
-		echo '   or "shell" for a shell prompt.'
-		echo
-		echo -n "your choice? "
-		read resp
+	_forceloop=""
+	while [ "X${_forceloop}" = X"" ]; do
+                cat <<'EOF'
 
-		case "$resp" in
-			install|upgrade|shell)
-				again="false"
+This installer now uses the new `sysinst' installer tool by default.  To
+use the old install or upgrade shell scripts instead, enter the options
+(OI) for Old Install or (OU) for Old Upgrade.
+
+The script-based installers may be removed in a future release.
+
+EOF
+		echo -n '(I)nstall/Upgrade, (H)alt or (S)hell? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*|u*|U*)
+				# setup a writable /tmp directory
+				mount_mfs swap /tmp || continue
+				/sysinst
 				;;
-			"")
-				echo
+
+			oi*|OI*)
+				/install
 				;;
+
+			ou*|OU*)
+				/upgrade
+				;;
+
+			h*|H*)
+				#
+				# XXX - if we're piggybacking a microroot, then
+				# exit from this (chroot) environment: the
+				# microroot's .profile will halt the machine.
+				#
+				if [ "$BOOTFS_DONEPROFILE" = YES ]; then
+					exit
+				else
+					/sbin/halt
+				fi
+				;;
+
+			s*|S*)
+				/bin/sh
+				continue
+				;;
+
 			*)
-				echo	"Sorry, $resp isn't valid."
-				echo
+				_forceloop=""
 				;;
 		esac
 	done
-
-	case "$resp" in
-		install)
-			install
-			;;
-		upgrade)
-			upgrade
-			;;
-		shell)
-			echo 'If you want to run install or upgrade later,'
-			echo 'simply type "install" or "upgrade" at the'
-			echo 'shell prompt. Good luck!'
-			;;
-	esac
 fi
