@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.30 1999/05/26 00:32:42 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.31 1999/05/28 20:49:51 thorpej Exp $	*/
 
 /*
  *
@@ -1719,7 +1719,7 @@ uvm_fault_wire(map, start, end, access_type)
 		rv = uvm_fault(map, va, VM_FAULT_WIRE, access_type);
 		if (rv) {
 			if (va != start) {
-				uvm_fault_unwire(map->pmap, start, va);
+				uvm_fault_unwire(map, start, va);
 			}
 			return (rv);
 		}
@@ -1730,18 +1730,22 @@ uvm_fault_wire(map, start, end, access_type)
 
 /*
  * uvm_fault_unwire(): unwire range of virtual space.
- *
- * => caller holds reference to pmap (via its map)
  */
 
 void
-uvm_fault_unwire(pmap, start, end)
-	struct pmap *pmap;
+uvm_fault_unwire(map, start, end)
+	vm_map_t map;
 	vaddr_t start, end;
 {
+	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
 	struct vm_page *pg;
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("uvm_fault_unwire: intrsafe map");
+#endif
 
 	/*
 	 * we assume that the area we are unwiring has actually been wired
