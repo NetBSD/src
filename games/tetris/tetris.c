@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.8 1999/02/11 02:34:24 simonb Exp $	*/
+/*	$NetBSD: tetris.c,v 1.9 1999/03/22 06:12:23 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,7 +134,7 @@ main(argc, argv)
 			level = atoi(optarg);
 			if (level < MINLEVEL || level > MAXLEVEL) {
 				(void)fprintf(stderr,
-				    "tetris: level must be from %d to %d",
+				    "tetris: level must be from %d to %d\n",
 				    MINLEVEL, MAXLEVEL);
 				exit(1);
 			}
@@ -162,7 +162,7 @@ main(argc, argv)
 		for (j = i+1; j <= 5; j++) {
 			if (keys[i] == keys[j]) {
 				(void)fprintf(stderr,
-				    "%s: Duplicate command keys specified.\n",
+				    "%s: duplicate command keys specified.\n",
 				    argv[0]);
 				exit (1);
 			}
@@ -314,6 +314,6 @@ onintr(signo)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: tetris [-ps] [-l level] [-keys]\n");
+	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");
 	exit(1);
 }
