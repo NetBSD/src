@@ -25,28 +25,30 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 #options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
+# File systems
+
+file-system	FFS		# UFS
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PROCFS		# /proc
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+
 # File system options
-
-options		FFS		# UFS
 #options	QUOTA		# UFS quotas
-#options	LFS		# log-structured file system
-options		MFS		# memory file system
-
-options		CD9660		# ISO 9660 + Rock Ridge file system
-options		MSDOSFS		# MS-DOS file system
-options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-#options	NULLFS		# loopback file system
-#options	PORTAL		# portal filesystem (still experimental)
-options		PROCFS		# /proc
-options		UMAPFS		# NULLFS + uid and gid remapping
-options		UNION		# union file system
+options		NFSSERVER
 
 # Networking options
 
 options		NFSCLIENT
-options		NFSSERVER
 options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 #options	NS		# XNS
@@ -92,8 +94,7 @@ options		LKM		# loadable kernel modules
 options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
-config		netbsd	swap generic
-options		GENERIC
+config		netbsd	root on ? type ?
 
 # The main bus device
 mainbus0 at root
