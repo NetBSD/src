@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.54 2000/03/19 21:45:23 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.55 2000/03/20 07:52:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -624,6 +624,7 @@ tlp_detach(sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_powerhook);
 
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
