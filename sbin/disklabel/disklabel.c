@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.77 1999/10/12 00:36:17 shin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.78 1999/11/26 06:03:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.77 1999/10/12 00:36:17 shin Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.78 1999/11/26 06:03:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,6 @@ static void makelabel __P((char *, char *, struct disklabel *));
 static void l_perror __P((char *));
 static struct disklabel *readlabel __P((int));
 static struct disklabel *makebootarea __P((char *, struct disklabel *, int));
-static void showinfo __P((FILE *, struct disklabel *));
 static int edit __P((struct disklabel *, int));
 static int editit __P((void));
 static char *skip __P((char *));
@@ -1119,7 +1118,7 @@ makedisktab(f, lp)
 	(void) fflush(f);
 }
 
-static void
+void
 showinfo(f, lp)
 	FILE *f;
 	struct disklabel *lp;
