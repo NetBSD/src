@@ -1,4 +1,4 @@
-/*	$NetBSD: from.c,v 1.13 2001/07/01 00:09:46 mjl Exp $	*/
+/*	$NetBSD: from.c,v 1.14 2001/11/15 14:16:11 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: from.c,v 1.13 2001/07/01 00:09:46 mjl Exp $");
+__RCSID("$NetBSD: from.c,v 1.14 2001/11/15 14:16:11 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,7 +101,8 @@ main(int argc, char **argv)
 			if (!(file = getenv("MAIL"))) {
 				if (!(pwd = getpwuid(getuid())))
 					errx(1, "no password file entry for you");
-				if ((file = getenv("USER")) != NULL) {
+				if ((file = getenv("LOGNAME")) != NULL ||
+				    (file = getenv("USER")) != NULL) {
 					(void)snprintf(buf, sizeof(buf), 
 					    "%s/%s", _PATH_MAILDIR, file);
 					file = buf;
