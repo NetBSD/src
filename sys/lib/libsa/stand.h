@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.35 1999/11/11 20:22:00 thorpej Exp $	*/
+/*	$NetBSD: stand.h,v 1.36 1999/11/11 21:23:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -243,6 +243,8 @@ int	ioctl __P((int, u_long, char *));
 size_t	strlen __P((const char *));
 int	strcmp __P((const char *, const char *));
 int	strncmp __P((const char *, const char *, size_t));
+char	*strcpy __P((char *, const char *));
+char	*strcat __P((char *, const char *));
 
 u_int32_t inet_addr __P((const char *));
 const char *intoa __P((u_int32_t));
