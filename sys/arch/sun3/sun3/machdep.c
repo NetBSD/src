@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104.2.1 1997/11/26 04:18:23 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.2.2 1998/05/29 17:41:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -149,19 +149,25 @@ consinit()
 {
 	/* Note: cninit() done earlier.  (See _startup.c) */
 
-#ifdef KGDB
-	/* XXX - Ask on console for kgdb_dev? */
-	/* Note: this will just return if kgdb_dev<0 */
-	if (boothowto & RB_KDB)
-		kgdb_connect(1);
-#endif
 #ifdef DDB
-	/* Now that we have a console, we can stop in DDB. */
 	db_machine_init();
 	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
 #endif DDB
+
+	/*
+	 * Now that we have a working console,
+	 * consider stopping for a debugger.
+	 */
+	if (boothowto & RB_KDB) {
+#ifdef KGDB
+		/* XXX - Ask on console for kgdb_dev? */
+		/* Note: this will just return if kgdb_dev==NODEV */
+		kgdb_connect(1);
+#else	/* KGDB */
+		/* Either DDB or no debugger (just PROM). */
+		Debugger();
+#endif	/* KGDB */
+	}
 }
 
 /*
