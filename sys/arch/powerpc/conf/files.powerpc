@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.43 2003/02/02 20:43:22 matt Exp $
+#	$NetBSD: files.powerpc,v 1.44 2003/02/02 21:22:12 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -15,7 +15,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
-file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx & !oldpmap
+file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
@@ -46,9 +46,8 @@ file	arch/powerpc/ibm4xx/intr.c			ppc_ibm4xx
 file	arch/powerpc/mpc6xx/altivec.c			ppc_mpc6xx & altivec
 file	arch/powerpc/mpc6xx/cpu_subr.c			ppc_mpc6xx
 file	arch/powerpc/mpc6xx/mpc6xx_machdep.c		ppc_mpc6xx
-file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx & !oldpmap
+file	arch/powerpc/mpc6xx/pmap.c			ppc_mpc6xx
 file	arch/powerpc/powerpc/fpu.c			ppc_mpc6xx
-file	arch/powerpc/powerpc/pmap.c			ppc_mpc6xx & oldpmap
 file	arch/powerpc/powerpc/trap.c			ppc_mpc6xx
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
