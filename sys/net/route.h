@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.21 2000/03/06 20:49:00 thorpej Exp $	*/
+/*	$NetBSD: route.h,v 1.22 2000/05/04 17:33:03 ragge Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -99,8 +99,8 @@ struct rtentry {
 #define	rt_key(r)	((struct sockaddr *)((r)->rt_nodes->rn_key))
 #define	rt_mask(r)	((struct sockaddr *)((r)->rt_nodes->rn_mask))
 	struct	sockaddr *rt_gateway;	/* value */
-	short	rt_flags;		/* up/down?, host/net */
-	short	rt_refcnt;		/* # held references */
+	int	rt_flags;		/* up/down?, host/net */
+	int	rt_refcnt;		/* # held references */
 	u_long	rt_use;			/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
