@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.1 1995/02/23 07:19:54 glass Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.2 1995/03/02 09:14:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,4 +77,10 @@ struct	arccom {
 
 #ifdef	KERNEL
 u_char	arcbroadcastaddr;
+
+void arc_ifattach __P((struct ifnet *));
+char *arc_sprintf __P((u_char *));
+void arc_input __P((struct ifnet *, struct arc_header *, struct mbuf *));
+int arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *));
 #endif
