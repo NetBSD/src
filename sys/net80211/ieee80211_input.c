@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.19 2004/01/15 08:16:24 onoe Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.20 2004/02/01 08:25:57 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.19 2004/01/15 08:16:24 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.20 2004/02/01 08:25:57 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -685,7 +685,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s %s authenticated\n",
+			if_printf(ifp, "station %s %s authenticated (open)\n",
 			    ether_sprintf(ni->ni_macaddr),
 			    (allocbs ? "newly" : "already"));
 		break;
@@ -698,7 +698,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		if (status != 0) {
 			if_printf(&ic->ic_if,
-			    "authentication failed (reason %d) for %s\n",
+			    "open authentication failed (reason %d) for %s\n",
 			    status,
 			    ether_sprintf(wh->i_addr3));
 			if (ni != ic->ic_bss)
@@ -730,7 +730,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	}
 
 	if (frm + 1 < efrm) {
-		if ((frm[1] + 2) > (efrm - frm)) {
+		if (frm[1] + 2 > efrm - frm) {
 			IEEE80211_DPRINTF(("elt %d %d bytes too long\n",
 			    frm[0], (frm[1] + 2) - (efrm - frm)));
 			ic->ic_stats.is_rx_bad_auth++;
@@ -798,6 +798,11 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			for (i = IEEE80211_CHALLENGE_LEN / sizeof(u_int32_t);
 			     --i >= 0; )
 				ni->ni_challenge[i] = arc4random();
+			if (ifp->if_flags & IFF_DEBUG)
+				if_printf(ifp, "station %s shared key "
+					"%sauthentication\n",
+					ether_sprintf(ni->ni_macaddr),
+					allocbs ? "" : "re");
 			break;
 		case IEEE80211_AUTH_SHARED_RESPONSE:
 			if (ni == ic->ic_bss) {
@@ -805,7 +810,6 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				    __func__));
 				return;
 			}
-			allocbs = 1;
 			if (ni->ni_challenge == NULL) {
 				IEEE80211_DPRINTF((
 				    "%s: no challenge recorded\n", __func__));
@@ -819,6 +823,10 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ic->ic_stats.is_rx_auth_fail++;
 				return;
 			}
+			if (ifp->if_flags & IFF_DEBUG)
+				if_printf(ifp, "station %s authenticated "
+					"(shared key)\n",
+					ether_sprintf(ni->ni_macaddr));
 			break;
 		default:
 			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
@@ -828,10 +836,6 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		IEEE80211_SEND_MGMT(ic, ni,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
-		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s %s authenticated\n",
-			    ether_sprintf(ni->ni_macaddr),
-			    (allocbs ? "newly" : "already"));
 		break;
 
 	case IEEE80211_M_STA:
@@ -845,7 +849,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			}
 			if (status != 0) {
 				if_printf(&ic->ic_if,
-				    "%s: auth failed (reason %d) for %s\n",
+				    "%s: shared authentication failed "
+				    "(reason %d) for %s\n",
 				    __func__, status,
 				    ether_sprintf(wh->i_addr3));
 				if (ni != ic->ic_bss)
@@ -867,6 +872,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				return;
 			}
 			memcpy(ni->ni_challenge, &challenge[2], challenge[1]);
+			IEEE80211_SEND_MGMT(ic, ni,
+				IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 			break;
 		default:
 			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
@@ -1179,7 +1186,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
 			    status);
 		else {
-			IEEE80211_DPRINTF(("%s: unsupported auth %d from %s\n",
+			IEEE80211_DPRINTF(("%s: unsupported authentication "
+				"algorithm %d from %s\n",
 				__func__, algo, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_auth_unsupported++;
 			return;
