@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1997/04/01 08:17:44 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1997/05/25 12:41:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -289,6 +289,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "vmebus" , simple_devprint);
 	config_found(dp, "kbd"    , simple_devprint);
 	config_found(dp, "fdc"    , simple_devprint);
+	config_found(dp, "ser"    , simple_devprint);
 	config_found(dp, "zs"     , simple_devprint);
 	config_found(dp, "ncrscsi", simple_devprint);
 	config_found(dp, "nvr"    , simple_devprint);

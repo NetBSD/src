@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.38 1997/04/09 19:44:47 thorpej Exp $
+#	$NetBSD: files.atari,v 1.39 1997/05/25 12:41:56 leo Exp $
 
 maxpartitions 16
 
@@ -23,6 +23,11 @@ file	arch/atari/dev/clock.c
 device	kbd: event
 attach	kbd at mainbus
 file	arch/atari/dev/kbd.c		kbd needs-flag
+
+# serial port via 68901 (modem1/serial1)
+device	ser:	tty
+attach	ser at mainbus
+file	arch/atari/dev/ser.c		ser needs-flag
 
 # serial port via 85C30 (modem2/serial2)
 device	zs:	tty
