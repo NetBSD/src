@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2003/06/11 21:35:43 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.35 2003/06/25 15:45:23 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -656,7 +656,8 @@ md_get_info()
 	char devname[100];
 	struct apple_part_map_entry block;
 
-	snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
+	snprintf(devname, sizeof(devname), "/dev/r%s%c",
+		diskdev, 'a' + getrawpartition());
 
 	/*
 	 * Open the disk as a raw device
