@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.19 2003/08/07 11:13:45 agc Exp $	*/
+/*	$NetBSD: lprint.c,v 1.20 2004/06/03 18:33:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.19 2003/08/07 11:13:45 agc Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.20 2004/06/03 18:33:57 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,6 @@ __RCSID( "$NetBSD: lprint.c,v 1.19 2003/08/07 11:13:45 agc Exp $");
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#include <time.h>
 #include <tzfile.h>
 #include <db.h>
 #include <err.h>
@@ -56,7 +55,6 @@ __RCSID( "$NetBSD: lprint.c,v 1.19 2003/08/07 11:13:45 agc Exp $");
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
-#include <string.h>
 #include <paths.h>
 #include <vis.h>
 
