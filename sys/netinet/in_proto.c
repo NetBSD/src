@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.52 2001/12/21 03:21:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.52 2001/12/21 03:21:51 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -121,11 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $");
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
 
-#include "gif.h"
-#if NGIF > 0
-#include <netinet/in_gif.h>
-#endif
-
 #ifdef NSIP
 #include <netns/ns_var.h>
 #include <netns/idp_var.h>
@@ -148,11 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.51 2001/11/13 00:32:36 lukem Exp $");
 #include "gre.h"
 #if NGRE > 0
 #include <netinet/ip_gre.h>
-#endif
-
-#include "stf.h"
-#if NSTF > 0
-#include <net/if_stf.h>
 #endif
 
 extern	struct domain inetdomain;
@@ -277,24 +267,6 @@ struct protosw ipip_protosw =
   0,		0,		0,		0,
 };
 #endif /* NIPIP */
-
-#if NGIF > 0
-struct protosw in_gif_protosw =
-{ SOCK_RAW,	&inetdomain,	0/*IPPROTO_IPV[46]*/,	PR_ATOMIC|PR_ADDR,
-  in_gif_input, rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0,
-};
-#endif /*NGIF*/
-
-#if NSTF > 0
-struct protosw in_stf_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_stf_input, rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0
-};
-#endif /*NSTF*/
 
 struct domain inetdomain =
     { PF_INET, "internet", 0, 0, 0, 
