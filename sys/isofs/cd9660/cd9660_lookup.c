@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.26 2000/03/30 12:13:30 augustss Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.26.4.1 2000/07/16 07:52:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -55,6 +55,7 @@
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_rrip.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 struct	nchstats iso_nchstats;
 
@@ -291,9 +292,15 @@ searchloop:
 				ino = dbtob(bp->b_blkno) + entryoffsetinblock;
 			dp->i_ino = ino;
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
-			if (namelen == cnp->cn_namelen
-			    && !memcmp(name, altname, namelen))
-				goto found;
+			if (namelen == cnp->cn_namelen) {
+				if (imp->im_flags & ISOFSMNT_RRCASEINS) {
+					if (strncasecmp(name, altname, namelen) == 0)
+						goto found;
+				} else {
+					if (memcmp(name, altname, namelen) == 0)
+						goto found;
+				}
+			}
 			ino = 0;
 			break;
 		}

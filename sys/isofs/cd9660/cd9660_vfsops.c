@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.48 2000/05/27 16:03:56 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.48.2.1 2000/07/16 07:52:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -433,7 +433,7 @@ iso_mountfs(devvp, mp, p, argp)
 		bp = NULL;
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |
-					 ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET);
+		 ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET | ISOFSMNT_RRCASEINS);
 
 	if (isomp->im_flags & ISOFSMNT_GENS)
 		isomp->iso_ftype = ISO_FTYPE_9660;
