@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.83 2002/10/05 21:22:31 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.84 2002/10/06 12:37:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -252,8 +252,6 @@ do {									\
 
 #define	curpcb			curcpu()->ci_curpcb
 #define	curproc			curcpu()->ci_curproc
-
-#define	cpu_swapin(p)		/* nothing */
 
 /*
  * Arguments to hardclock, softclock and statclock
