@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1.2.2 2002/11/11 22:00:52 nathanw Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.2.3 2002/11/20 11:02:46 wdk Exp $	*/
 
 #include "opt_compat_ultrix.h"
 #include "opt_compat_linux.h"
@@ -33,6 +33,30 @@ LEAF_NOPROFILE(sigcode)
 	syscall
 	break	0			# just in case sigreturn fails
 END(sigcode)
+
+/* Upcall "trampoline" code. Invoked from RTE setup by cpu_upcall().
+ *
+ * *MUST* be after signal trampoline code
+ *
+ * On entry, stack & registers look like:
+ *	
+ *      a0	upcall type	
+ *      a1	pointer to sa_t array
+ *      a2	count of "event" SAs	
+ *	a3	count of "interrupted" SAs
+ *	t0	arg
+ *      t1	address of upcallhandler
+ */
+LEAF_NOPROFILE(upcallcode)
+	jal	t9
+	nop				# BD slot
+	li	v0, SYS_exit
+	li	a0, -1
+	syscall
+	break	0			# just in case exit fails
+END(upcallcode)
+XLEAF(esigcode)
+
 XLEAF(esigcode)
 
 #ifdef COMPAT_ULTRIX
