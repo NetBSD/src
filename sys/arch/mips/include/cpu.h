@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1997/06/16 23:41:42 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 1997/06/21 04:18:11 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,6 +46,25 @@
  */
 
 /*
+ * Macros to find the CPU architecture we're on at run-time,
+ * or if possible, at compile-time.
+ */
+
+#if (MIPS1 + MIPS3) == 1
+#ifdef MIPS1
+# define CPUISMIPS3	0
+#endif /* mips1 */
+
+#ifdef MIPS3
+#  define CPUISMIPS3	 1
+#endif /* mips1 */
+
+#else /* run-time test */
+extern int cpu_arch;
+#define CPUISMIPS3	(cpu_arch == 3)
+#endif /* run-time test */
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -68,26 +87,37 @@ struct clockframe {
  * the macros below.
  */
 
-/* r3000 versions */
-#define	CLKF_USERMODE_R3K(framep)	((framep)->sr & MACH_SR_KU_PREV)
-#define	CLKF_BASEPRI_R3K(framep)	\
+/* mips1 versions */
+#define	MIPS1_CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KU_PREV)
+#define	MIPS1_CLKF_BASEPRI(framep)	\
 	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) == 0)
 
-/* r4000 versions */
-#define	CLKF_USERMODE_R4K(framep)	((framep)->sr & MACH_SR_KSU_USER)
-#define	CLKF_BASEPRI_R4K(framep)	\
+/* mips3 versions */
+#define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KSU_USER)
+#define	MIPS3_CLKF_BASEPRI(framep)	\
 	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENAB)) == 0)
 
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
-#ifdef MIPS3
-#define	CLKF_USERMODE(framep)	CLKF_USERMODE_R4K(framep)
-#define	CLKF_BASEPRI(framep)	CLKF_BASEPRI_R4K(framep)
-#else
-#define	CLKF_USERMODE(framep)	CLKF_USERMODE_R3K(framep)
-#define	CLKF_BASEPRI(framep)	CLKF_BASEPRI_R3K(framep)
+#if defined(MIPS3) && !defined(MIPS1)
+#define	CLKF_USERMODE(framep)	MIPS3_CLKF_USERMODE(framep)
+#define	CLKF_BASEPRI(framep)	MIPS3_CLKF_BASEPRI(framep)
 #endif
+
+#if !defined(MIPS3) && defined(MIPS1)
+#define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
+#define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
+#endif
+
+
+#if defined(MIPS3) && defined(MIPS1)
+#define CLKF_USERMODE(framep) \
+    ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
+#define CLKF_BASEPRI(framep) \
+    ((CPUISMIPS3) ? MIPS3_CLKF_BASEPRI(framep):  MIPS1_CLKF_BASEPRI(framep))
+#endif
+
 
 
 /*
@@ -166,22 +196,6 @@ int	want_resched;	/* resched() was called */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define	MIPS_R3NKK	0x23	/* NKK R3000 based FPU		ISA I   */
 
-/*
- * Macros to find the CPU architecture we're on at run-time.
- */
-#if (MIPS1 + MIPS3) == 1
-#ifdef MIPS1
-# define CPUISMIPS3	0
-#endif /* mips1 */
-
-#ifdef MIPS3
-#  define CPUISMIPS3	 1
-#endif /* mips1 */
-
-#else /* run-time test */
-extern int cpu_arch;
-#define CPUISMIPS3	(cpu_arch == 3)
-#endif /* run-time test */
  
 /*
  * Enable realtime clock (always enabled).

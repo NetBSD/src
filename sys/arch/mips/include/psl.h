@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1997/06/16 01:10:03 jonathan Exp $	*/
+/*	$NetBSD: psl.h,v 1.7 1997/06/21 04:18:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,65 +38,110 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/10/93
  */
 
+/*
+ * Define PSL_LOWIPL, PSL_USERSET, PSL_USERCLR, USERMODE, BASEPRI
+ * for MI code, for MIPS1, MIPS3, or both, depending on the
+ * configured CPU types.
+ */
+
 #include <mips/cpuregs.h>
 
-#ifdef MIPS3		/* OUCH! */
+/*
+ * mips3-specific  definitions
+ */
+#define	MIPS3_PSL_LOWIPL	(MIPS3_INT_MASK | MIPS_SR_INT_IE)
 
-#define	PSL_LOWIPL	(MACH_INT_MASK | MACH_SR_INT_ENAB)
+#define	MIPS3_PSL_USERSET 	\
+	(MIPS3_SR_KSU_USER |	\
+	 MIPS_SR_INT_IE |	\
+	 MIPS3_SR_EXL |		\
+	 MIPS3_INT_MASK)
 
-#define	PSL_USERSET (	\
-	MACH_SR_KSU_USER |	\
-	MACH_SR_INT_ENAB |	\
-	MACH_SR_EXL |	\
-	MACH_INT_MASK)
+#define	MIPS3_PSL_USERCLR 	\
+	(MACH_SR_COP_USABILITY |\
+	 MACH_SR_BOOT_EXC_VEC |	\
+	 MACH_SR_TLB_SHUTDOWN |	\
+	 MACH_SR_PARITY_ERR |	\
+	 MACH_SR_CACHE_MISS |	\
+	 MACH_SR_PARITY_ZERO |	\
+	 MACH_SR_SWAP_CACHES |	\
+	 MACH_SR_ISOL_CACHES |	\
+	 MACH_SR_KU_CUR |	\
+	 MIPS_SR_INT_IE |	\
+	 MACH_SR_MBZ)
 
-#define	PSL_USERCLR (	\
-	MACH_SR_COP_USABILITY |	\
-	MACH_SR_BOOT_EXC_VEC |	\
-	MACH_SR_TLB_SHUTDOWN |	\
-	MACH_SR_PARITY_ERR |	\
-	MACH_SR_CACHE_MISS |	\
-	MACH_SR_PARITY_ZERO |	\
-	MACH_SR_SWAP_CACHES |	\
-	MACH_SR_ISOL_CACHES |	\
-	MACH_SR_KU_CUR |	\
-	MACH_SR_INT_ENA_CUR |	\
-	MACH_SR_MBZ)
+#define	MIPS3_USERMODE(ps) \
+	(((ps) & MIPS3_SR_KSU_MASK) == MIPS3_SR_KSU_USER)
+
+#define	MIPS3_BASEPRI(ps) \
+	(((ps) & (MIPS3_INT_MASK | MACH_SR_INT_ENA_PREV)) \
+			== (MIPS3_INT_MASK | MACH_SR_INT_ENA_PREV))
+
 
 /*
- * Macros to decode processor status word.
+ * mips1-specific definitions
  */
-#define	USERMODE(ps)	(((ps) & MACH_SR_KSU_MASK) == MACH_SR_KSU_USER)
-#define	BASEPRI(ps)	(((ps) & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) \
-			== (MACH_INT_MASK | MACH_SR_INT_ENA_PREV))
-#else
+#define	MIPS1_PSL_LOWIPL	(MIPS_INT_MASK | MIPS_SR_INT_IE)
 
-#define	PSL_LOWIPL	(MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+#define	MIPS1_PSL_USERSET \
+	(MIPS1_SR_KU_OLD |	\
+	 MIPS1_SR_INT_ENA_OLD |	\
+	 MIPS1_SR_KU_PREV |	\
+	 MIPS1_SR_INT_ENA_PREV |\
+	 MIPS_INT_MASK)
 
-#define	PSL_USERSET (	\
-	MACH_SR_KU_OLD |	\
-	MACH_SR_INT_ENA_OLD |	\
-	MACH_SR_KU_PREV |	\
-	MACH_SR_INT_ENA_PREV |	\
-	MACH_INT_MASK)
+#define	MIPS1_PSL_USERCLR \
+	(MACH_SR_COP_USABILITY |\
+	 MACH_SR_BOOT_EXC_VEC |	\
+	 MACH_SR_TLB_SHUTDOWN |	\
+	 MACH_SR_PARITY_ERR |	\
+	 MACH_SR_CACHE_MISS |	\
+	 MACH_SR_PARITY_ZERO |	\
+	 MACH_SR_SWAP_CACHES |	\
+	 MACH_SR_ISOL_CACHES |	\
+	 MACH_SR_KU_CUR |	\
+	 MIPS_SR_INT_IE |	\
+	 MACH_SR_MBZ)
 
-#define	PSL_USERCLR (	\
-	MACH_SR_COP_USABILITY |	\
-	MACH_SR_BOOT_EXC_VEC |	\
-	MACH_SR_TLB_SHUTDOWN |	\
-	MACH_SR_PARITY_ERR |	\
-	MACH_SR_CACHE_MISS |	\
-	MACH_SR_PARITY_ZERO |	\
-	MACH_SR_SWAP_CACHES |	\
-	MACH_SR_ISOL_CACHES |	\
-	MACH_SR_KU_CUR |	\
-	MACH_SR_INT_ENA_CUR |	\
-	MACH_SR_MBZ)
+#define	MIPS1_USERMODE(ps) \
+	((ps) & MIPS1_SR_KU_PREV)
+
+#define	MIPS1_BASEPRI(ps) \
+		(((ps) & (MIPS_INT_MASK | MIPS1_SR_INT_ENA_PREV)) == \
+		 (MIPS_INT_MASK | MIPS1_SR_INT_ENA_PREV))
+
 
 /*
- * Macros to decode processor status word.
+ * Choose mips3-only, mips1-only, or runtime-selected values.
  */
-#define	USERMODE(ps)	((ps) & MACH_SR_KU_PREV)
-#define	BASEPRI(ps)	(((ps) & (MACH_INT_MASK | MACH_SR_INT_ENA_PREV)) \
-			== (MACH_INT_MASK | MACH_SR_INT_ENA_PREV))
+
+#if defined(MIPS3) && !defined(MIPS1) /* mips3 only */
+# define  PSL_LOWIPL	MIPS3_PSL_LOWIPL
+# define  PSL_USERSET	MIPS3_PSL_USERSET
+# define  PSL_USERCLR	MIPS3_PSL_USERCLR
+# define  USERMODE(ps)	MIPS3_USERMODE(ps)
+# define  BASEPRI(ps)	MIPS3_BASEPRI(ps)
+#endif /* mips3 only */
+
+
+#if !defined(MIPS3) && defined(MIPS1) /* mips1 only */
+# define  PSL_LOWIPL	MIPS1_PSL_LOWIPL
+# define  PSL_USERSET	MIPS1_PSL_USERSET
+# define  PSL_USERCLR	MIPS1_PSL_USERCLR
+# define  USERMODE(ps)	MIPS1_USERMODE(ps)
+# define  BASEPRI(ps)	MIPS1_BASEPRI(ps)
+#endif /* mips1 only */
+
+
+#if  MIPS3 +  MIPS1 > 1
+# define PSL_LOWIPL \
+	((cpu_arch == 3) ? MIPS3_PSL_LOWIPL : MIPS1_PSL_LOWIPL)
+#define PSL_USERSET \
+	((cpu_arch == 3) ? MIPS3_PSL_USERSET : MIPS1_PSL_USERSET)
+# define PSL_USRCLR \
+	((cpu_arch == 3) ? MIPS3_PSL_USRCLR : MIPS1_PSL_USRCLR)
+# define USERMODE(ps) \
+	((cpu_arch == 3) ? MIPS3_USERMODE(ps) : MIPS1_USERMODE(ps))
+# define  BASEPRI(ps)	\
+	((cpu_arch == 3) ? MIPS3_BASEPRI(ps) : MIPS1_BASEPRI(ps))
 #endif
