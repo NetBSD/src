@@ -37,7 +37,7 @@ WARNS?=	0
 COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}
 OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
 MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
-DSTOBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
+DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a ${DSTOBJDIR}/libdst.a
