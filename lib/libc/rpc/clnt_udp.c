@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_udp.c,v 1.1 1993/10/07 07:29:47 cgd Exp $";
+static char *rcsid = "$Id: clnt_udp.c,v 1.2 1994/08/20 00:55:28 deraadt Exp $";
 #endif
 
 /*
@@ -221,13 +221,8 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	register int outlen;
 	register int inlen;
 	int fromlen;
-#ifdef FD_SETSIZE
 	fd_set readfds;
 	fd_set mask;
-#else
-	int readfds;
-	register int mask;
-#endif /* def FD_SETSIZE */
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
@@ -280,15 +275,11 @@ send_again:
 	reply_msg.acpted_rply.ar_verf = _null_auth;
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
-#ifdef FD_SETSIZE
 	FD_ZERO(&mask);
 	FD_SET(cu->cu_sock, &mask);
-#else
-	mask = 1 << cu->cu_sock;
-#endif /* def FD_SETSIZE */
 	for (;;) {
 		readfds = mask;
-		switch (select(_rpc_dtablesize(), &readfds, (int *)NULL, 
+		switch (select(cu->cu_sock+1, &readfds, (int *)NULL, 
 			       (int *)NULL, &(cu->cu_wait))) {
 
 		case 0:

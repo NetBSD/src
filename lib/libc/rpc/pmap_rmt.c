@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: pmap_rmt.c,v 1.1 1993/10/07 07:30:06 cgd Exp $";
+static char *rcsid = "$Id: pmap_rmt.c,v 1.2 1994/08/20 00:55:29 deraadt Exp $";
 #endif
 
 /*
@@ -232,13 +232,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	int outlen, inlen, fromlen, nets;
 	register int sock;
 	int on = 1;
-#ifdef FD_SETSIZE
 	fd_set mask;
 	fd_set readfds;
-#else
-	int readfds;
-	register int mask;
-#endif /* def FD_SETSIZE */
 	register int i;
 	bool_t done = FALSE;
 	register u_long xid;
@@ -267,12 +262,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		goto done_broad;
 	}
 #endif /* def SO_BROADCAST */
-#ifdef FD_SETSIZE
 	FD_ZERO(&mask);
 	FD_SET(sock, &mask);
-#else
-	mask = (1 << sock);
-#endif /* def FD_SETSIZE */
 	nets = getbroadcastnets(addrs, sock, inbuf);
 	bzero((char *)&baddr, sizeof (baddr));
 	baddr.sin_family = AF_INET;
@@ -328,7 +319,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		msg.acpted_rply.ar_results.where = (caddr_t)&r;
                 msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
 		readfds = mask;
-		switch (select(_rpc_dtablesize(), &readfds, (int *)NULL, 
+		switch (select(sock+1, &readfds, (int *)NULL, 
 			       (int *)NULL, &t)) {
 
 		case 0:  /* timed out */

@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_tcp.c,v 1.1 1993/10/07 07:30:19 cgd Exp $";
+static char *rcsid = "$Id: svc_tcp.c,v 1.2 1994/08/20 00:55:34 deraadt Exp $";
 #endif
 
 /*
@@ -294,30 +294,21 @@ readtcp(xprt, buf, len)
 	register int len;
 {
 	register int sock = xprt->xp_sock;
-#ifdef FD_SETSIZE
 	fd_set mask;
 	fd_set readfds;
 
 	FD_ZERO(&mask);
 	FD_SET(sock, &mask);
-#else
-	register int mask = 1 << sock;
-	int readfds;
-#endif /* def FD_SETSIZE */
 	do {
 		readfds = mask;
-		if (select(_rpc_dtablesize(), &readfds, (int*)NULL, (int*)NULL, 
+		if (select(sock+1, &readfds, (int*)NULL, (int*)NULL, 
 			   &wait_per_try) <= 0) {
 			if (errno == EINTR) {
 				continue;
 			}
 			goto fatal_err;
 		}
-#ifdef FD_SETSIZE
 	} while (!FD_ISSET(sock, &readfds));
-#else
-	} while (readfds != mask);
-#endif /* def FD_SETSIZE */
 	if ((len = read(sock, buf, len)) > 0) {
 		return (len);
 	}
