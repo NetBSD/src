@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.8.2.5 1993/11/14 20:35:48 mycroft Exp $
+ *	$Id: kern_kinfo.c,v 1.8.2.6 1993/12/03 09:15:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -238,31 +238,10 @@ fill_eproc(p, ep)
 	ep->e_sess = p->p_pgrp->pg_session;
 	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
-	/*
-	 * XXX sizeof(struct vmspace) is too big on the
-	 * sparc to fit within the upage. This is a nasty warty
-	 * problem that needs fixing.
-	 */
 	if (p->p_stat == SIDL || p->p_stat == SZOMB) {
-#ifdef sparc
-		ep->e_vm.vm_rssize = 0;
-		ep->e_vm.vm_tsize = 0;
-		ep->e_vm.vm_dsize = 0;
-		ep->e_vm.vm_ssize = 0;
-#else
 		bzero(&ep->e_vm, sizeof(ep->e_vm));
-#endif
 	} else {
-#ifdef sparc
-		register struct vmspace *vm = p->p_vmspace;
-
-		ep->e_vm.vm_rssize = vm->vm_rssize;
-		ep->e_vm.vm_tsize = vm->vm_tsize;
-		ep->e_vm.vm_dsize = vm->vm_dsize;
-		ep->e_vm.vm_ssize = vm->vm_ssize;
-#else
 		ep->e_vm = *p->p_vmspace;
-#endif
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
