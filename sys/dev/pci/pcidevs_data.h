@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.528 2003/04/24 23:37:00 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.529 2003/04/28 08:33:49 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.528 2003/04/24 23:36:09 nathanw Exp 
+ *	NetBSD: pcidevs,v 1.530 2003/04/28 08:29:52 haya Exp 
  */
 
 /*
@@ -3022,16 +3022,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "OZ6832/OZ6833 PCI-CardBus Bridge",
 	},
 	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6860,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836,
 	    0,
 	    "O2 Micro, Inc.",
-	    "OZ6860 PCI-Cardbus Bridge",
+	    "OZ6836/OZ6860 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
 	    0,
 	    "O2 Micro, Inc.",
 	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
+	    0,
+	    "O2 Micro, Inc.",
+	    "OZ6922 PCI-Cardbus Bridge",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933,
+	    0,
+	    "O2 Micro, Inc.",
+	    "OZ6933 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
@@ -7534,6 +7546,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI4510 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI4520 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410LYNX,
+	    0,
+	    "Texas Instruments",
+	    "PCI7[4-6]10 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
 	    0,
 	    "Texas Instruments",
@@ -7642,6 +7672,54 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI4510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI4520 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI7510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI7610 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410YENTA,
+	    0,
+	    "Texas Instruments",
+	    "PCI7410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM,
+	    0,
+	    "Texas Instruments",
+	    "PCI7610 PCI-CardBus Bridge (Smart Card mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410SD,
+	    0,
+	    "Texas Instruments",
+	    "PCI7[46]10 PCI-CardBus Bridge (SD/MMC mode)",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410MS,
+	    0,
+	    "Texas Instruments",
+	    "PCI7[46]10 PCI-CardBus Bridge (Memory stick mode)",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
 	    0,
 	    "Texas Instruments",
@@ -7658,6 +7736,42 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "PCI1451 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1421,
+	    0,
+	    "Texas Instruments",
+	    "PCI1421 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620,
+	    0,
+	    "Texas Instruments",
+	    "PCI1620 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1520,
+	    0,
+	    "Texas Instruments",
+	    "PCI1520 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510,
+	    0,
+	    "Texas Instruments",
+	    "PCI1510 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1530,
+	    0,
+	    "Texas Instruments",
+	    "PCI1530 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1515,
+	    0,
+	    "Texas Instruments",
+	    "PCI1515 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
