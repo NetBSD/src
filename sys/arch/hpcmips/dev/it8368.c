@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.8 2000/03/12 15:35:29 uch Exp $ */
+/*	$NetBSD: it8368.c,v 1.9 2001/05/08 18:08:02 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -409,8 +409,8 @@ it8368_attach_socket(sc)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&it8368_functions;
 	paa.pch = (pcmcia_chipset_handle_t)sc;
-	paa.iobase = 0;		/* I don't use them */
-	paa.iosize = 0;
+	paa.iobase = 0;
+	paa.iosize = sc->sc_csiosize;
 	
 	if ((sc->sc_pcmcia = config_found_sm((void*)sc, &paa, it8368_print,
  					     it8368_submatch))) {
