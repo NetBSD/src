@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.5 2001/11/29 01:22:57 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.6 2002/01/28 18:29:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -250,6 +250,35 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+int sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_wakeup_args /* {
+	syscallarg(lwpid_t) wakeup;
+	} */ *uap = v;
+	lwpid_t target_lid;
+	struct lwp *t;
+	struct proc *p;
+
+	p = l->l_proc;
+	target_lid = SCARG(uap, target);
+
+	LIST_FOREACH(t, &p->p_lwps, l_sibling)
+		if (t->l_lid == target_lid)
+			break;
+
+	if (t == NULL)
+		return (ESRCH);
+	
+	if (t->l_stat != LSSLEEP)
+		return (ENODEV);
+
+	if ((l->l_flag & L_SINTR) == 0)
+		return (EBUSY);
+
+	setrunnable(l);
+
+	return 0;
+}
 
 int
 sys__lwp_wait(struct lwp *l, void *v, register_t *retval)

@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124.2.5 2001/11/17 01:15:18 nathanw Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.6 2002/01/28 18:29:51 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.5 2001/11/17 01:15:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.6 2002/01/28 18:29:51 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -831,8 +831,8 @@ struct sysent sysent[] = {
 	    sys__lwp_suspend },			/* 313 = _lwp_suspend */
 	{ 1, s(struct sys__lwp_continue_args), 0,
 	    sys__lwp_continue },		/* 314 = _lwp_continue */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 315 = unimplemented */
+	{ 1, s(struct sys__lwp_wakeup_args), 0,
+	    sys__lwp_wakeup },			/* 315 = _lwp_wakeup */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 316 = unimplemented */
 	{ 0, 0, 0,

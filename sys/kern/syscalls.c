@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.119.2.5 2001/11/17 01:15:18 nathanw Exp $ */
+/* $NetBSD: syscalls.c,v 1.119.2.6 2002/01/28 18:29:52 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.5 2001/11/17 01:15:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.6 2002/01/28 18:29:52 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -435,7 +435,7 @@ const char *const syscallnames[] = {
 	"_lwp_wait",			/* 312 = _lwp_wait */
 	"_lwp_suspend",			/* 313 = _lwp_suspend */
 	"_lwp_continue",			/* 314 = _lwp_continue */
-	"#315 (unimplemented)",		/* 315 = unimplemented */
+	"_lwp_wakeup",			/* 315 = _lwp_wakeup */
 	"#316 (unimplemented)",		/* 316 = unimplemented */
 	"#317 (unimplemented)",		/* 317 = unimplemented */
 	"#318 (unimplemented)",		/* 318 = unimplemented */
