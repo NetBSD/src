@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $");
 #endif
 
 /*
@@ -251,7 +251,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_ENCRYPTION:
 		wreq.wi_val[0] =
-		    htole16((ic->ic_flags & IEEE80211_F_WEPON) ? 1 : 0);
+		    htole16((ic->ic_flags & IEEE80211_F_PRIVACY) ? 1 : 0);
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_TX_CRYPT_KEY:
@@ -688,13 +688,13 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (wreq.wi_val[0] != 0) {
 			if ((ic->ic_caps & IEEE80211_C_WEP) == 0)
 				return EINVAL;
-			if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
-				ic->ic_flags |= IEEE80211_F_WEPON;
+			if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
+				ic->ic_flags |= IEEE80211_F_PRIVACY;
 				error = ENETRESET;
 			}
 		} else {
-			if (ic->ic_flags & IEEE80211_F_WEPON) {
-				ic->ic_flags &= ~IEEE80211_F_WEPON;
+			if (ic->ic_flags & IEEE80211_F_PRIVACY) {
+				ic->ic_flags &= ~IEEE80211_F_PRIVACY;
 				error = ENETRESET;
 			}
 		}
@@ -837,7 +837,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if ((ic->ic_caps & IEEE80211_C_WEP) == 0) {
 				ireq->i_val = IEEE80211_WEP_NOSUP; 
 			} else {
-				if (ic->ic_flags & IEEE80211_F_WEPON) {
+				if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 					ireq->i_val =
 					    IEEE80211_WEP_MIXED;
 				} else {
@@ -949,9 +949,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * passed in is not OFF.
 			 */
 			if (ireq->i_val == IEEE80211_WEP_OFF) {
-				ic->ic_flags &= ~IEEE80211_F_WEPON;
+				ic->ic_flags &= ~IEEE80211_F_PRIVACY;
 			} else {
-				ic->ic_flags |= IEEE80211_F_WEPON;
+				ic->ic_flags |= IEEE80211_F_PRIVACY;
 			}
 			error = ENETRESET;
 			break;
@@ -1191,9 +1191,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_wep_txkey = i;
 		/* save the key */
 		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN)
-			ic->ic_flags &= ~IEEE80211_F_WEPON;
+			ic->ic_flags &= ~IEEE80211_F_PRIVACY;
 		else
-			ic->ic_flags |= IEEE80211_F_WEPON;
+			ic->ic_flags |= IEEE80211_F_PRIVACY;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			if (keys[i].wk_len < 0)
 				continue;
@@ -1205,7 +1205,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCG80211NWKEY:
 		nwkey = (struct ieee80211_nwkey *)data;
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			nwkey->i_wepon = IEEE80211_NWKEY_WEP;
 		else
 			nwkey->i_wepon = IEEE80211_NWKEY_OPEN;

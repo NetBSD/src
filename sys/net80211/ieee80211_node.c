@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.20 2004/07/23 08:25:25 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.21 2004/07/23 08:31:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.20 2004/07/23 08:25:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.21 2004/07/23 08:31:39 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -255,7 +255,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	memset(ni->ni_tstamp, 0, sizeof(ni->ni_tstamp));
 	ni->ni_intval = ic->ic_lintval;
 	ni->ni_capinfo = IEEE80211_CAPINFO_IBSS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if (ic->ic_phytype == IEEE80211_T_FH) {
 		ni->ni_fhdwell = 200;	/* XXX */
@@ -283,7 +283,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_ESS) == 0)
 			fail |= 0x02;
 	}
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
 			fail |= 0x04;
 	} else {

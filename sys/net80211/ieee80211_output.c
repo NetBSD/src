@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.15 2004/07/23 08:25:25 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.15 2004/07/23 08:25:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.16 2004/07/23 08:31:39 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -260,7 +260,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	case IEEE80211_M_MONITOR:
 		goto bad;
 	}
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
 	*pni = ni;
 	return m;
@@ -424,7 +424,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			capinfo = IEEE80211_CAPINFO_IBSS;
 		else
 			capinfo = IEEE80211_CAPINFO_ESS;
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
@@ -552,7 +552,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			capinfo |= IEEE80211_CAPINFO_IBSS;
 		else		/* IEEE80211_M_STA */
 			capinfo |= IEEE80211_CAPINFO_ESS;
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		/*
 		 * NB: Some 11a AP's reject the request when
@@ -604,7 +604,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		frm = mtod(m, u_int8_t *);
 
 		capinfo = IEEE80211_CAPINFO_ESS;
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.29 2004/01/28 15:07:52 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.30 2004/07/23 08:34:11 mycroft Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.29 2004/01/28 15:07:52 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.30 2004/07/23 08:34:11 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -456,7 +456,7 @@ an_init(struct ifnet *ifp)
 	IEEE80211_ADDR_COPY(sc->sc_config.an_macaddr, ic->ic_myaddr);
 	sc->sc_config.an_scanmode = htole16(AN_SCANMODE_ACTIVE);
 	sc->sc_config.an_authtype = htole16(AN_AUTHTYPE_OPEN);	/*XXX*/
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		sc->sc_config.an_authtype |=
 		    htole16(AN_AUTHTYPE_PRIVACY_IN_USE);
 		if (sc->sc_use_leap)
@@ -488,7 +488,7 @@ an_init(struct ifnet *ifp)
 		sc->sc_config.an_rxmode =
 		    htole16(AN_RXMODE_80211_MONITOR_ANYBSS);
 		sc->sc_config.an_authtype = htole16(AN_AUTHTYPE_NONE);
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			sc->sc_config.an_authtype |=
 			    htole16(AN_AUTHTYPE_PRIVACY_IN_USE |
 		            AN_AUTHTYPE_ALLOW_UNENCRYPTED);
@@ -529,7 +529,7 @@ an_init(struct ifnet *ifp)
 	    sizeof(sc->sc_buf.sc_encap));
 
 	/* Set the WEP Keys */
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		an_write_wepkey(sc, AN_RID_WEP_VOLATILE, sc->sc_wepkeys,
 		    sc->sc_tx_key);
 
@@ -655,7 +655,7 @@ an_start(struct ifnet *ifp)
 #endif
 
 		wh = mtod(m, struct ieee80211_frame *);
-		if (ic->ic_flags & IEEE80211_F_WEPON)
+		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			wh->i_fc[1] |= IEEE80211_FC1_WEP;
 		m_copydata(m, 0, sizeof(struct ieee80211_frame),
 		    (caddr_t)&frmhdr.an_whdr);
@@ -942,7 +942,7 @@ an_set_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 	switch (nwkey->i_wepon) {
 	case IEEE80211_NWKEY_OPEN:
 		sc->sc_config.an_authtype = AN_AUTHTYPE_OPEN;
-		ic->ic_flags &= ~IEEE80211_F_WEPON;
+		ic->ic_flags &= ~IEEE80211_F_PRIVACY;
 		break;
 
 	case IEEE80211_NWKEY_WEP:
@@ -951,7 +951,7 @@ an_set_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (error == 0 || error == ENETRESET) {
 			sc->sc_config.an_authtype =
 			    AN_AUTHTYPE_OPEN | AN_AUTHTYPE_PRIVACY_IN_USE;
-			ic->ic_flags |= IEEE80211_F_WEPON;
+			ic->ic_flags |= IEEE80211_F_PRIVACY;
 		}
 		break;
 
@@ -960,7 +960,7 @@ an_set_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (error == 0 || error == ENETRESET) {
 			sc->sc_config.an_authtype = AN_AUTHTYPE_OPEN |
 			    AN_AUTHTYPE_PRIVACY_IN_USE | AN_AUTHTYPE_LEAP;
-			ic->ic_flags |= IEEE80211_F_WEPON;
+			ic->ic_flags |= IEEE80211_F_PRIVACY;
 		}
 		break;
 	default:

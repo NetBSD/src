@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.28 2004/07/22 18:52:44 mycroft Exp $	*/
+/*	$NetBSD: ath.c,v 1.29 2004/07/23 08:34:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.28 2004/07/22 18:52:44 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.29 2004/07/23 08:34:11 mycroft Exp $");
 #endif
 
 /*
@@ -964,7 +964,7 @@ ath_init1(struct ath_softc *sc)
 	 * in the frame output path; there's nothing to do
 	 * here except setup the interrupt mask.
 	 */
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		ath_initkeytable(sc);
 	if ((error = ath_startrecv(sc)) != 0) {
 		if_printf(ifp, "unable to start recv logic\n");
@@ -1609,7 +1609,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		capinfo = IEEE80211_CAPINFO_IBSS;
 	else
 		capinfo = IEEE80211_CAPINFO_ESS;
-	if (ic->ic_flags & IEEE80211_F_WEPON)
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
@@ -3187,7 +3187,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ath_hal_setassocid(ah, bssid, ni->ni_associd);
 	else
 		ath_hal_setassocid(ah, bssid, 0);
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		for (i = 0; i < IEEE80211_WEP_NKID; i++)
 			if (ath_hal_keyisvalid(ah, i))
 				ath_hal_keysetmac(ah, i, bssid);
