@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1999/06/18 08:54:28 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -158,8 +158,10 @@ inthandler(notused)
 	int notused;
 {
 
-	/* atexit() wants a void function, so inthandler() just calls cleanup */
-	cleanup();
+	/*
+	 * we need to cleanup(), but it was already scheduled with atexit(),
+	 * so it'll be invoked on exit().
+	 */
 	exit(1);
 }
 
@@ -184,7 +186,7 @@ cleanup()
 	}
 
 	if (!exit_cleanly)
-		fprintf(stderr, "\n\n sysinst terminated.\n");
+		fprintf(stderr, "\n\nsysinst terminated.\n");
 }
 
 
