@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/11/29 19:56:19 tv Exp $
+# $NetBSD: Makefile,v 1.3 2000/11/30 00:04:08 tv Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -30,8 +30,8 @@ all:
 CD_RELEASE?=
 RELEASENAME=		NetBSD-${CD_RELEASE}
 MKISOFS_ARGS=		-f -A "NetBSD ${CD_RELEASE}" \
-			-hide-list ${.CURDIR}/hide-iso.lst \
 			-hide-rr-moved -m Split -m cdrom
+#			-hide-list ${.CURDIR}/hide-iso.lst
 
 ALL_PORTS=
 .for image in ${CD_IMAGES}
@@ -183,9 +183,10 @@ MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
 
 .if !empty(ports:Mmacppc)
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
-			--macbin -boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
+			--macbin -map ${.CURDIR}/hfsmap.lst \
+			-boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
-MKISOFS_ARGS.${image}+=	-apple --macbin
+MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
 
 # Sun (sparc, sparc64, sun3)
@@ -257,7 +258,7 @@ MKISOFS_ARGS+=		-hide-joliet-trans-tbl
 ##### File extract rule #####
 
 USE-FILE: .USE
-	@case $> in \
+	@if [ ! -r $@ ]; then case $> in \
 		/*,link) \
 			echo "ln -sf ${>:S/,link$//} $@"; \
 			ln -sf ${>:S/,link$//} $@;; \
@@ -269,7 +270,7 @@ USE-FILE: .USE
 			tar --fast-read -xzOf ${>:C/,.*$//} ${>:C/^.*,//} >$@;; \
 		*.gz) echo "gunzip -c <$> >$@"; gunzip -c <$> >$@;; \
 		*) echo "Unknown archive method for $@"; false;; \
-	esac
+	esac; else true; fi
 
 ##### Makefile rules #####
 
