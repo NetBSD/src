@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.68 2002/05/06 15:15:53 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.69 2002/06/07 12:11:29 is Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -589,6 +589,7 @@
 /usr/libdata/lint/llib-lntp.ln
 /usr/libdata/lint/llib-lusb.ln
 /usr/sbin/config.new
+/usr/sbin/gspahextoc
 /usr/share/ldscripts/m68kelf.x
 /usr/share/ldscripts/m68kelf.xbn
 /usr/share/ldscripts/m68kelf.xn
