@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/06 19:35:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 21:46:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -109,9 +109,9 @@ ENTRY(pthread__switch)
 	 * here.
 	 */
 #ifdef PIC
-	lwz	%r6, switch_return@got(%r9)
+	lwz	%r6, pthread__switch_return_point@got(%r9)
 #else
-	lis	%r6, switch_return@ha
+	lis	%r6, pthread__switch_return_point@ha
 	addi	%r6, %r6, switch_return@l
 #endif
 	stw	%r6, (_REG_PC + 16)(%r1)
@@ -124,7 +124,7 @@ ENTRY(pthread__switch)
 	b	PIC_PLT(_C_LABEL(_setcontext_u))
 	NOTREACHED
 
-switch_return:
+ENTRY_NOPROFILE(pthread__switch_return_point)
 	lwz	%r31, (RND_CTXSIZE + 44)(%r1)
 	addi	%r1, %r1, (RND_CTXSIZE + 48)
 	lwz	%r0, 4(%r1)
@@ -161,10 +161,10 @@ ENTRY(pthread__upcall_switch)
 	or.	%r7, %r7, %r7
 	beq	1f
 
-	stw	%r4, PT_SWITCHTO(%r3)
-	stw	%r5, PT_SWITCHTOUC(%r3)
 	li	%r5, PT_STATE_RECYCLABLE
 	stw	%r5, PT_STATE(%r3)
+	stw	%r5, PT_SWITCHTOUC(%r3)
+	stw	%r4, PT_SWITCHTO(%r3)
 	mr	%r3, %r4
 	mr	%r4, %r7
 	li	%r5, 1
@@ -187,8 +187,8 @@ ENTRY(pthread__upcall_switch)
 	or.	%r7, %r7, %r7
 	beq	2f
 
-	stw	%r4, PT_SWITCHTO(%r4)
 	stw	%r5, PT_SWITCHTOUC(%r4)
+	stw	%r4, PT_SWITCHTO(%r4)
 	mr	%r3, %r4
 	mr	%r4, %r7
 	li	%r5, 0
@@ -289,9 +289,9 @@ ENTRY(pthread__locked_switch)
 	 * Don't release the lock.  It's possible that if we do so,
 	 * PT_SWITCHTO will be stomped by another switch_lock and preemption.
 	 */
-	stw	%r4, PT_SWITCHTO(%r3)
-	stw	%r7, PT_SWITCHTOUC(%r3)
 	stw	%r5, PT_HELDLOCK(%r3)
+	stw	%r7, PT_SWITCHTOUC(%r3)
+	stw	%r4, PT_SWITCHTO(%r3)
 	lwz	%r6, PT_SPINLOCKS(%r3)
 	addi	%r6, %r6, -1
 	stw	%r6, PT_SPINLOCKS(%r3)
@@ -333,8 +333,8 @@ ENTRY(pthread__locked_switch)
 	beq	2f
 
 	/* Yes, we were.  Go to the next element in the chain. */
-	stw	%r4, PT_SWITCHTO(%r4)
 	stw	%r7, PT_SWITCHTOUC(%r4)
+	stw	%r4, PT_SWITCHTO(%r4)
 	mr	%r3, %r4
 	mr	%r4, %r8
 	li	%r5, 0
