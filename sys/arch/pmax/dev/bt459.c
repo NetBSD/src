@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.8.6.2 1997/11/20 03:14:38 mellon Exp $	*/
+/*	$NetBSD: bt459.c,v 1.8.6.3 1998/05/08 17:33:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.8.6.2 1997/11/20 03:14:38 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.8.6.3 1998/05/08 17:33:05 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,9 +449,9 @@ bt459InitColorMap(fi)
    pointed to by bits. */
 
 int
-bt459LoadColorMap(fi, bits, index, count)
+bt459LoadColorMap(fi, newbits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	caddr_t newbits;
 	int index, count;
 {
 	bt459_regmap_t *regs;
@@ -463,20 +463,16 @@ bt459LoadColorMap(fi, bits, index, count)
 		return EINVAL;
 
 	regs = (bt459_regmap_t *)(fi -> fi_vdac);
-	cmap_bits = (u_char *)bits;
-	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
+	cmap_bits = (u_char *)newbits;
+	cmap = (u_char *)(fi -> fi_cmap_bits) + (index * 3);
 
 	bt459_select_reg(regs, index);
 
 	for (i = 0; i < count; i++) {
-		cmap [(i + index) * 3]
-			= regs -> addr_cmap = cmap_bits [i * 3];
-		cmap [(i + index) * 3 + 1]
-			= regs -> addr_cmap = cmap_bits [i * 3 + 1];
-		cmap [(i + index) * 3 + 2]
-			= regs -> addr_cmap = cmap_bits [i * 3 + 2];
-	}
-	return 0;
+		cmap[(i * 3) + 0] = regs->addr_cmap = cmap_bits [(i * 3) + 0];
+		cmap[(i * 3) + 1] = regs->addr_cmap = cmap_bits [(i * 3) + 1];
+		cmap[(i * 3) + 2] = regs->addr_cmap = cmap_bits [(i * 3) + 2];
+	}	return 0;
 }
 
 /* Copy out count entries of the colormap starting at index into bits. */
