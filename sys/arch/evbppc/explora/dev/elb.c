@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.3 2003/07/25 11:44:20 scw Exp $	*/
+/*	$NetBSD: elb.c,v 1.4 2004/09/13 15:14:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.3 2003/07/25 11:44:20 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.4 2004/09/13 15:14:12 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -146,7 +146,7 @@ elb_attach(struct device *parent, struct device *self, void *aux)
 		eaa.elb_base2 = elb_devs[i].elb_addr2;
 		eaa.elb_irq = elb_devs[i].elb_irq;
 
-		(void) config_found_sm(self, &eaa, elb_print, NULL);
+		(void) config_found(self, &eaa, elb_print);
 	}
 }
 
