@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.25 1993/06/03 18:01:08 cgd Exp $
+ *	$Id: machdep.c,v 1.26 1993/06/03 18:06:43 cgd Exp $
  */
 
 #include "param.h"
@@ -539,7 +539,7 @@ boot(arghowto)
 		}
 		if (nbusy)
 			printf("giving up\n");
-		else if (nomsg == 0)
+		else
 			printf("done\n");
 		DELAY(10000);			/* wait for printf to finish */
 	}
