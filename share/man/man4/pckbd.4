@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.2 1999/04/21 18:42:04 drochner Exp $
+.\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .Dd March 20, 1999
 .Os
 .Dt PCKBD 4
@@ -42,11 +42,6 @@ The builtin mappings are at this time:
 .Dq de
 ) German with
 .Dq dead accents .
-.It KB_DE | KB_NODEAD
-(
-.Dq de.nodead
-) German without
-.Dq dead accents .
 .It KB_FR
 (
 .Dq fr
@@ -55,11 +50,6 @@ The builtin mappings are at this time:
 (
 .Dq dk
 ) Danish with
-.Dq dead accents .
-.It KB_DK | KB_NODEAD
-(
-.Dq dk.nodead
-) Danish without
 .Dq dead accents .
 .It KB_IT
 (
@@ -73,29 +63,41 @@ The builtin mappings are at this time:
 (
 .Dq jp
 ) Japanese.
+.It KB_SV
+(
+.Dq sv
+) Swedish with
+.Dq dead accents .
 .It KB_US | KB_DECLK
 (
 .Dq us.declk
 ) English / US mapping for
 .Tn DEC
 LK400-style keyboards with PC keyboard interface (eg LK461).
-.It KB_US | KB_SWAPCTRLCAPS
+.It KB_US | KB_DVORAK
 (
-.Dq us.swapctrlcaps
-) English / US mapping with swapped
-.Dq Control
-and
-.Dq Caps Lock
-keys.
-.It KB_JP | KB_SWAPCTRLCAPS
-(
-.Dq jp.swapctrlcaps
-) Japanese mapping with swapped
-.Dq Control
-and
-.Dq Caps Lock
-keys.
+.Dq us.dvorak
+) English / US keyboard with
+.Dq Dvorak
+layout.
 .El
+.Pp
+The KB_DE, KB_DK and KB_SV mappings can be used in the KB_NODEAD (
+.Dq .nodead
+) variant. This switches off the
+.Dq dead accents .
+.Pp
+The KB_US, KB_JP and KB_US | KB_DVORAK mappings can be modified
+to swap the left CNTL	and the CAPS LOCK keys by the
+KB_SWAPCTRLCAPS variant bit or the
+.Dq .swapctrlcaps
+suffix.
+.Pp
+The KB_METAESC (
+.Dq .metaesc
+) option can be applied to any layout. If set, keys pressed together
+with the ALT modifier are prefixed by an ESC character. (Standard
+behaviour is to add 128 to the ASCII value.)
 .Pp
 Because PC keyboard hardware doesn't contain a beeper, requests for
 .Dq keyboard beeps
@@ -103,6 +105,15 @@ cannot be handled directly. On alpha and i386 a helper device attached
 to the
 .Xr pcppi 4
 driver allows to use the standard ISA speaker for this purpose.
+.Sh EXAMPLES
+To set a german keyboard layout without
+.Dq dead accents
+and sending an ESC character before the key symbol if the ALT
+key is pressed simultanously, use
+.Ic wsconsctl -w encoding=de.nodead.metaesc .
+To set it at kernel build time, add
+.Cd options PCKBD_LAYOUT="(KB_DE | KB_NODEAD | KB_METAESC)"
+to the kernel configuration file.
 .Sh BUGS
 The list of builtin mappings doesn't follow any logics.
 It grew as people submitted what they needed.
