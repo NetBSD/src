@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1996/12/07 09:24:56 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1996/12/23 08:36:08 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -136,6 +136,7 @@ int	msgbufmapped;
 vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
+extern	int nkpde;
 
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -360,6 +361,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+
+	case CPU_NKPDE:
+		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -914,6 +919,10 @@ init532()
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
+#ifndef NKPDE
+	nkpde = min(NKPDE_MAX,
+			NKPDE_BASE + ((u_int) avail_end >> 20) * NKPDE_SCALE);
+#endif
 
 #if VERYLOWDEBUG
 	umprintf ("avail_start = 0x%x\navail_end=0x%x\nphysmem=0x%x\n",
@@ -961,7 +970,7 @@ init532()
 	proc0.p_addr = proc0paddr;
 
 	/* Allocate second level page tables for kernel virtual address space */
-	map(pd, VM_MIN_KERNEL_ADDRESS, (vm_offset_t)-1, 0, NKPDE << PDSHIFT);
+	map(pd, VM_MIN_KERNEL_ADDRESS, (vm_offset_t)-1, 0, nkpde << PDSHIFT);
 	/* Map monitor scratch area R/W. */
 	map(pd, KERNBASE,        0x00000000, PG_KW, 0x2000);
 	/* Map kernel text R/O. */
