@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.6 1995/06/11 14:56:59 fvdl Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.7 1995/06/11 21:51:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -740,7 +740,8 @@ out:
 }
 
 /*
- * Out of register error once more.. Apart from that, no difference.
+ * Out of register error once more.. Also, Linux copies the amount of
+ * time left into the user-supplied timeval structure.
  */
 int
 linux_select(p, uap, retval)
@@ -752,9 +753,10 @@ linux_select(p, uap, retval)
 {
 	struct linux_select ls;
 	struct select_args bsa;
+	struct timeval tv0, tv1, utv;
 	int error;
 
-	if ((error = copyin(SCARG(uap, lsp), (caddr_t) &ls, sizeof ls)))
+	if ((error = copyin(SCARG(uap, lsp), (caddr_t)&ls, sizeof ls)))
 		return error;
 
 	SCARG(&bsa, nd) = ls.nfds;
@@ -763,7 +765,39 @@ linux_select(p, uap, retval)
 	SCARG(&bsa, ex) = ls.exceptfds;
 	SCARG(&bsa, tv) = ls.timeout;
 
-	return select(p, &bsa, retval);
+	/*
+	 * Store current time for computation of the amount of
+	 * time left.
+	 */
+	if (ls.timeout)
+		microtime(&tv0);
+
+	if ((error = select(p, &bsa, retval)))
+		return error;
+
+	if (ls.timeout) {
+		if (!*retval) {
+			utv.tv_sec = 0;
+			utv.tv_usec = 0;
+		} else {
+			/*
+			 * Compute how many time was left of the timeout,
+			 * by subtracting the current time and the time
+			 * before we started the call, and subtracting
+			 * that result from the user-supplied value.
+			 */
+			microtime(&tv1);
+			if ((error = copyin((caddr_t)ls.timeout, (caddr_t)&utv,
+			    sizeof utv)))
+				return error;
+			timersub(&tv1, &tv0, &tv1);
+			timersub(&utv, &tv1, &utv);
+		}
+		if ((error = copyout((caddr_t)&utv, (caddr_t)ls.timeout,
+		    sizeof utv)))
+			return error;
+	}
+	return 0;
 }
 
 /*
