@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax.oldconf,v 1.13 1995/04/21 23:58:36 mellon Exp $
+#	$NetBSD: files.pmax.oldconf,v 1.14 1995/04/27 20:52:39 mellon Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -26,6 +26,7 @@ arch/pmax/dev/dtop.c			optional dtop device-driver
 arch/pmax/dev/if_le.c			optional le device-driver
 arch/pmax/dev/pm.c			optional pm device-driver
 arch/pmax/dev/cfb.c			optional cfb device-driver
+arch/pmax/dev/sfb.c			optional sfb device-driver
 arch/pmax/dev/mfb.c			optional mfb device-driver
 arch/pmax/dev/rz.c			optional rz device-driver
 arch/pmax/dev/scc.c			optional scc device-driver
