@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.4 1995/02/27 12:36:37 cgd Exp $
+.\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ returns the total number of ready descriptors in all the sets.
 .Pp
 The descriptor sets are stored as bit fields in arrays of integers.
 The following macros are provided for manipulating such descriptor sets:
-.Fn FD_ZERO &fdsetx
+.Fn FD_ZERO &fdset
 initializes a descriptor set
 .Fa fdset
 to the null set.
