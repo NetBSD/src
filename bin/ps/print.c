@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.53 2000/06/07 04:58:00 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.54 2000/06/08 00:51:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.53 2000/06/07 04:58:00 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.54 2000/06/08 00:51:10 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,7 @@ tname(k, ve, mode)
 
 			fmtlen = strlen(ttname) + noctty;
 			if (v->width < fmtlen)
-				fmtlen = v->width;
+				v->width = fmtlen;
 		} else {
 			if (noctty)
 				printf("%-*s-", v->width - 1, ttname);
