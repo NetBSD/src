@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.19 1997/04/19 02:59:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.20 1997/05/11 06:18:32 mikel Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
-.if exists(config/Makefile.$(MACHINE_ARCH))
-.include "config/Makefile.$(MACHINE_ARCH)"
+.if exists($(.CURDIR)/config/Makefile.$(MACHINE_ARCH))
+.include "$(.CURDIR)/config/Makefile.$(MACHINE_ARCH)"
 .endif
 
 .if !defined (gas_hosttype)
