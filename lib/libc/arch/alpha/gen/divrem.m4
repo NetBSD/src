@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.2 1995/02/25 03:09:32 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.3 1995/08/14 02:20:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,13 +57,15 @@ ifelse(S, `true', `define(SIGN, `t4')')
 #include "DEFS.h"
 
 LEAF(NAME, 0)					/* XXX */
-	lda	sp, -48(sp)
+	lda	sp, -64(sp)
 	stq	BIT, 0(sp)
 	stq	I, 8(sp)
 	stq	CC, 16(sp)
 	stq	T_0, 24(sp)
 ifelse(S, `true',
 `	stq	SIGN, 32(sp)')
+	stq	A, 40(sp)
+	stq	B, 48(sp)
 	mov	zero, RESULT			/* Initialize result to zero */
 
 ifelse(S, `true',
@@ -166,7 +168,9 @@ ifelse(S, `true',
 	ldq	T_0, 24(sp)
 ifelse(S, `true',
 `	ldq	SIGN, 32(sp)')
-	lda	sp, 48(sp)
+	ldq	A, 40(sp)
+	ldq	B, 48(sp)
+	lda	sp, 64(sp)
 	ret	zero, (t9), 1
 
 Ldotrap:
