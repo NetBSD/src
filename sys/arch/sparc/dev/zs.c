@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.69.2.1 2000/01/15 16:50:53 he Exp $	*/
+/*	$NetBSD: zs.c,v 1.69.2.2 2000/03/29 20:32:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -447,6 +447,7 @@ zshard(arg)
 {
 	register struct zsc_softc *zsc;
 	register int unit, rr3, rval, softreq;
+	struct zs_chanstate *cs;
 
 	rval = softreq = 0;
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
@@ -459,8 +460,10 @@ zshard(arg)
 			rval |= rr3;
 			zsc->zsc_intrcnt.ev_count++;
 		}
-		softreq |= zsc->zsc_cs[0]->cs_softreq;
-		softreq |= zsc->zsc_cs[1]->cs_softreq;
+		if ((cs = zsc->zsc_cs[0]) != NULL)
+			softreq |= cs->cs_softreq;
+		if ((cs = zsc->zsc_cs[1]) != NULL)
+			softreq |= cs->cs_softreq;
 	}
 
 	/* We are at splzs here, so no need to lock. */
