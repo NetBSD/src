@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.10 2003/07/29 06:08:18 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.11 2003/07/29 06:57:34 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -64,7 +64,7 @@ checkdir() {
 	fi
 }
 
-ignorefiles=${PLIST_IGNORE_FILES:-info/dir}
+ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
 linktype=-s
 
 # default action: create a linkfarm in $target from $stowdir/$1
