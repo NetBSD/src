@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.77 2000/06/26 04:56:32 simonb Exp $	*/
+/*	$NetBSD: conf.h,v 1.78 2000/07/05 23:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -85,12 +85,8 @@ struct bdevsw {
 	void	(*d_strategy)	__P((struct buf *bp));
 	int	(*d_ioctl)	__P((dev_t dev, u_long cmd, caddr_t data,
 				     int fflag, struct proc *p));
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 	int	(*d_dump)	__P((dev_t dev, daddr_t blkno, caddr_t va,
 				    size_t size));
-#else /* not __BDEVSW_DUMP_OLD_TYPE */
-	int	(*d_dump)	();	/* parameters vary by architecture */
-#endif /* __BDEVSW_DUMP_OLD_TYPE */
 	int	(*d_psize)	__P((dev_t dev));
 	int	d_type;
 };
@@ -100,11 +96,7 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 
 /* bdevsw-specific types */
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 #define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, size_t))
-#else /* not __BDEVSW_DUMP_OLD_TYPE */
-#define	dev_type_dump(n)	int n()	/* parameters vary by architecture */
-#endif /* __BDEVSW_DUMP_OLD_TYPE */
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* bdevsw-specific initializations */

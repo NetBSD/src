@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.163 2000/06/09 08:54:26 enami Exp $	*/
+/*	$NetBSD: sd.c,v 1.164 2000/07/05 23:31:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1211,7 +1211,6 @@ sdsize(dev)
 	return (size);
 }
 
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define SD_DUMP_NOT_TRUSTED if you just want to watch */
 static struct scsipi_xfer sx;
 static int sddoingadump;
@@ -1331,16 +1330,3 @@ sddump(dev, blkno, va, size)
 	sddoingadump = 0;
 	return (0);
 }
-#else	/* __BDEVSW_DUMP_NEW_TYPE */
-int
-sddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return (ENXIO);
-}
-#endif	/* __BDEVSW_DUMP_NEW_TYPE */
