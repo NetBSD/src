@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2001/09/21 03:02:32 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2001/09/23 09:01:13 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -3338,6 +3338,39 @@ pmap_count_res(pm)
 					for (j=0; j<PTSZ; j++) {
 						int64_t data = (int64_t)ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V)
+							n++;
+					}
+				}
+			}
+		}
+	}
+	simple_unlock(&pm->pm_lock);
+	splx(s);
+	return n;
+}
+
+/*
+ * count wired pages in pmap -- this can be slow.
+ */
+int
+pmap_count_wired(pm)
+	pmap_t pm;
+{
+	int i, j, k, n, s;
+	paddr_t *pdir, *ptbl;
+	/* Almost the same as pmap_collect() */
+
+	/* Don't want one of these pages reused while we're reading it. */
+	s = splvm();
+	simple_lock(&pm->pm_lock);
+	n = 0;
+	for (i = 0; i < STSZ; i++) {
+		if ((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+			for (k = 0; k < PDSZ; k++) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
+					for (j = 0; j < PTSZ; j++) {
+						int64_t data = (int64_t)ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
+						if (data & TLB_TSB_LOCK)
 							n++;
 					}
 				}
