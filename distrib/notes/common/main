@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.88 2000/11/12 02:57:21 wiz Exp $
+.\"	$NetBSD: main,v 1.89 2000/11/12 03:08:44 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -471,7 +471,12 @@ There are also
 files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution that may be subject to
-export regulations of the United States.  It is your responsibility
+export regulations of the United States, e.g.
+code under
+.Pa src/crypto
+and
+.Pa src/sys/crypto . 
+It is your responsibility
 to determine whether or not it is legal for you to export these portions
 and to act accordingly.
 .Pp
