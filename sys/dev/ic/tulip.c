@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.60 2000/04/04 19:22:51 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.61 2000/04/07 18:58:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -182,6 +182,12 @@ const struct mii_bitbang_ops tlp_sio_mii_bitbang_ops = {
 #ifdef TLP_STATS
 void	tlp_print_stats __P((struct tulip_softc *));
 #endif
+
+/*
+ * Can be used to debug the SROM-related things, including contents.
+ * Initialized so that it's patchable.
+ */
+int	tlp_srom_debug = 0;
 
 /*
  * tlp_attach:
@@ -2064,14 +2070,13 @@ tlp_srom_size(sc)
 	SROM_EMIT(sc, 0);
 
 	if (x < 4 || x > 12) {
-		printf("%s: broken MicroWire interface detected; setting SROM size to 1Kb\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: broken MicroWire interface detected; "
+		    "setting SROM size to 1Kb\n", sc->sc_dev.dv_xname);
 		return (6);
 	} else {
-#if 0
-		printf("%s: SROM size is 2^%d*16 bits (%d bytes)\n",
-			sc->sc_dev.dv_xname, x, (1 << (x + 4)) >> 3);
-#endif
+		if (tlp_srom_debug)
+			printf("%s: SROM size is 2^%d*16 bits (%d bytes)\n",
+			    sc->sc_dev.dv_xname, x, (1 << (x + 4)) >> 3);
 		return (x);
 	}
 }
@@ -2155,15 +2160,15 @@ tlp_read_srom(sc)
 	/* ...and idle it. */
 	tlp_srom_idle(sc);
 
-#if 0
-	printf("SROM CONTENTS:");
-	for (i = 0; i < size; i++) {
-		if ((i % 8) == 0)
-			printf("\n\t");
-		printf("0x%02x ", sc->sc_srom[i]);
+	if (tlp_srom_debug) {
+		printf("SROM CONTENTS:");
+		for (i = 0; i < size; i++) {
+			if ((i % 8) == 0)
+				printf("\n\t");
+			printf("0x%02x ", sc->sc_srom[i]);
+		}
+		printf("\n");
 	}
-	printf("\n");
-#endif
 
 	return (1);
 }
