@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.31 1997/04/26 02:00:11 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.32 1997/05/24 09:53:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -604,6 +604,7 @@ ultrix_sys_sigreturn(p, v, retval)
 	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
 }
 
+int
 ultrix_sys_shmsys(p, v, retval)
 	struct proc *p;
 	void *v;
