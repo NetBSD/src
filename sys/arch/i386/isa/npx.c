@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.15 2002/10/18 04:14:08 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.16 2002/10/18 20:32:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.15 2002/10/18 04:14:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.16 2002/10/18 20:32:33 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -549,7 +549,7 @@ npxdna_s87(struct cpu_info *ci)
 	splx(s);
 
 	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
-	KDASSERT(ci->ci_fpcurproc == NULL);
+	KDASSERT(ci->ci_fpcurlwp == NULL);
 #ifndef MULTIPROCESSOR
 	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
@@ -656,7 +656,7 @@ npxsave_lwp(struct lwp *l, int save)
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & P_INMEM);
+	KDASSERT(l->l_flag & L_INMEM);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
@@ -692,7 +692,7 @@ npxsave_lwp(struct lwp *l, int save)
 		}
 	}
 #else
-	KASSERT(ci->ci_fpcurproc == p);
+	KASSERT(ci->ci_fpcurlwp == l);
 	npxsave_cpu(ci, save);
 #endif
 }
