@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.27.2.5 2000/11/20 09:59:23 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27.2.6 2001/01/15 09:24:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -61,6 +61,8 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
+
+#include <dev/scsipi/scsi_all.h> /* for SCSI status */
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -333,7 +335,6 @@ wdc_atapi_scsipi_request(chan, req, arg)
 		WDCDEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
 		if ((wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
-			sc_xfer->xs_status |= XS_STS_DONE;
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			scsipi_done(sc_xfer);
 			return;
@@ -385,7 +386,7 @@ wdc_atapi_start(chp, xfer)
 	    sc_xfer->xs_control), DEBUG_XFERS);
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE))) {
+	    sc_xfer->datalen > 0) {
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		xfer->c_flags |= C_DMA;
@@ -469,9 +470,6 @@ wdc_atapi_intr(chp, xfer, irq)
 	int len, phase, i, retries=0;
 	int ire;
 	int dma_flags = 0;
-	struct scsipi_generic _cmd_reqsense;
-	struct scsipi_sense *cmd_reqsense =
-	    (struct scsipi_sense *)&_cmd_reqsense;
 	void *cmd;
 
 	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
@@ -523,19 +521,9 @@ wdc_atapi_intr(chp, xfer, irq)
 	 * previously recorded, else continue normal processing
 	 */
 
-	if ((xfer->c_flags & C_SENSE) != 0 &&
-	    (chp->ch_status & WDCS_ERR) != 0 &&
-	    (chp->ch_error & WDCE_ABRT) != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_intr: request_sense aborted, "
-		    "calling wdc_atapi_done(), sense 0x%x\n",
-		    sc_xfer->sense.atapi_sense), DEBUG_INTR);
-		wdc_atapi_done(chp, xfer);
-		return 1;
-	}
-
 	if (xfer->c_flags & C_DMA)
-		dma_flags = ((sc_xfer->xs_control & XS_CTL_DATA_IN) ||
-		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
+		dma_flags = (sc_xfer->xs_control & XS_CTL_DATA_IN)
+		    ?  WDC_DMA_READ : 0;
 again:
 	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
 	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
@@ -547,14 +535,7 @@ again:
 
 	switch (phase) {
 	case PHASE_CMDOUT:
-		if (xfer->c_flags & C_SENSE) {
-			memset(cmd_reqsense, 0, sizeof(struct scsipi_generic));
-			cmd_reqsense->opcode = REQUEST_SENSE;
-			cmd_reqsense->length = xfer->c_bcount;
-			cmd = cmd_reqsense;
-		} else {
-			cmd  = sc_xfer->cmd;
-		}
+		cmd  = sc_xfer->cmd;
 		WDCDEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
@@ -682,8 +663,7 @@ again:
 	case PHASE_DATAIN:
 		/* Read data */
 		WDCDEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
-		if (((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 &&
-		    (xfer->c_flags & C_SENSE) == 0) || 
+		if ((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 || 
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
 			if (xfer->c_flags & C_DMA) {
@@ -758,58 +738,18 @@ again:
 		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 		/* turn off DMA channel */
 		if (xfer->c_flags & C_DMA) {
-			if (xfer->c_flags & C_SENSE)
-				xfer->c_bcount -=
-				    sizeof(sc_xfer->sense.scsi_sense);
-			else
-				xfer->c_bcount -= sc_xfer->datalen;
+			xfer->c_bcount -= sc_xfer->datalen;
 		}
-		if (xfer->c_flags & C_SENSE) {
-			if ((chp->ch_status & WDCS_ERR) ||
-			    (chp->wdc->dma_status &
-				(WDC_DMAST_NOIRQ | WDC_DMAST_ERR))) {
-				/*
-				 * request sense failed ! it's not suppossed
-				 * to be possible
-				 */
-				if (xfer->c_flags & C_DMA) {
-					ata_dmaerr(drvp);
-				}
-				sc_xfer->error = XS_RESET;
-				wdc_atapi_reset(chp, xfer);
-				return (1);
-			} else if (xfer->c_bcount <
-			    sizeof(sc_xfer->sense.scsi_sense)) {
-				/* use the sense we just read */
-				sc_xfer->error = XS_SENSE;
-			} else {
-				/*
-				 * command completed, but no data was read.
-				 * use the short sense we saved previsouly.
-				 */
-				sc_xfer->error = XS_SHORTSENSE;
-			}
-		} else {
-			sc_xfer->resid = xfer->c_bcount;
-			if (chp->ch_status & WDCS_ERR) {
-				/* save the short sense */
-				sc_xfer->error = XS_SHORTSENSE;
-				sc_xfer->sense.atapi_sense = chp->ch_error;
-				if ((sc_xfer->xs_periph->periph_quirks &
-				    PQUIRK_NOSENSE) == 0) {
-					/*
-					 * let the driver issue a
-					 * 'request sense'
-					 */
-					xfer->databuf = &sc_xfer->sense;
-					xfer->c_bcount =
-					    sizeof(sc_xfer->sense.scsi_sense);
-					xfer->c_skip = 0;
-					xfer->c_flags |= C_SENSE;
-					callout_stop(&chp->ch_callout);
-					wdc_atapi_start(chp, xfer);
-					return 1;
-				}
+		sc_xfer->resid = xfer->c_bcount;
+		if (chp->ch_status & WDCS_ERR) {
+			/* save the short sense */
+			sc_xfer->error = XS_SHORTSENSE;
+			sc_xfer->sense.atapi_sense = chp->ch_error;
+			if ((sc_xfer->xs_periph->periph_quirks &
+			    PQUIRK_NOSENSE) == 0) {
+				/* ask scsipi to send a REQUEST_SENSE */
+				sc_xfer->error = XS_BUSY;
+				sc_xfer->status = SCSI_CHECK;
 			} else if (chp->wdc->dma_status &
 			    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
 				ata_dmaerr(drvp);
