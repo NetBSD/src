@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.16 1998/07/26 23:29:58 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.17 1998/09/06 21:38:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -309,8 +309,8 @@
 /* [4m] Bits in the Synchronous Fault Status Register */
 #define SFSR_EM		0x00020000	/* Error mode watchdog reset occurred */
 #define SFSR_CS		0x00010000	/* Control Space error */
-#define SFSR_PERR	0x00006000	/* Parity error code */
 #define SFSR_SB		0x00008000	/* SS: Store Buffer Error */
+#define SFSR_PERR	0x00006000	/* Parity error code */
 #define SFSR_P		0x00004000	/* SS: Parity error */
 #define SFSR_UC		0x00001000	/* Uncorrectable error */
 #define SFSR_TO		0x00000800	/* S-Bus timeout */
@@ -321,8 +321,10 @@
 #define SFSR_FAV	0x00000002	/* Fault Address is valid */
 #define SFSR_OW		0x00000001	/* Overwritten with new fault */
 
-#define	SFSR_BITS \
-"\20\21CSERR\17PARITY\16SYSERR\15UNCORR\14TIMEOUT\13BUSERR\2FAV\1OW"
+#define	SFSR_BITS	"\177\020"		\
+	"b\21EM\0b\20CS\0b\17SB\0f\15\2PERR\0"	\
+	"b\14UC\0b\13TO\0b\12BE\0f\10\2LVL\0"	\
+	"f\05\3AT\0f\02\3FT\0b\01FAV\0b\01OW"
 
 /* [4m] Synchronous Fault Types */
 #define SFSR_FT_NONE		(0 << 2) 	/* no fault */
@@ -363,7 +365,8 @@
 #define AFSR_UC		0x00001000	/* Uncorrectable error */
 #define AFSR_SE		0x00002000	/* System error */
 
-#define	AFSR_BITS	"\20\16SYSERR\15UNCORR\14TIMEOUT\13BUSERR\1AFO"
+#define	AFSR_BITS	"\177\020"	\
+	"b\15SE\0b\14UC\0b\13TO\0b\12BE\0f\04\4AFA\0b\0AFO\0"
 
 /* [4m] TLB Replacement Control Register bits */
 #define TLBC_DISABLE	0x00000020	/* Disable replacement counter */
