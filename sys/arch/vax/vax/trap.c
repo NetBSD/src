@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2003/09/29 22:20:52 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.85 2003/09/29 22:24:53 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/09/29 22:20:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2003/09/29 22:24:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -373,7 +373,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		KERNEL_PROC_LOCK(l);
 		memset(&ksi, 0, sizeof(ksi));
 		ksi.ksi_signo = sig;
-		ksi.ksi_trap = frame->code;
+		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
 		trapsignal(l, &ksi);
