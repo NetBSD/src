@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.102 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.103 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -288,3 +288,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[jhawk 20030221]
 	/etc/security, security.conf(5): Produce unified diffs by default.
 		[jhawk 20030221]
+	kernel: Add LFSv2 support to libsa [simonb 20030324]
+	i386: Add LFS support to bootblocks [simonb 20030324]
