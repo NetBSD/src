@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127 1999/11/29 12:55:06 itojun Exp $
+#	$NetBSD: Makefile,v 1.128 1999/12/08 09:19:04 soren Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -20,9 +20,8 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank \
 	sliplogin slstats spray sup sysctl syslogd tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp unlink \
-	usbdevs videomode vipw vnconfig wiconfig wsconscfg wsfontload xntp \
-	ypbind yppoll ypserv ypset \
-	zdump zic
+	usbdevs user videomode vipw vnconfig wiconfig wsconscfg \
+	wsfontload xntp ypbind yppoll ypserv ypset zdump zic
 
 # IPv6
 SUBDIR+=faithd gifconfig ifmcstat mld6query ndp pim6dd rip6query route6d \
