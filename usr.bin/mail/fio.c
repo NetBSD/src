@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fio.c	5.24 (Berkeley) 2/3/91";*/
-static char rcsid[] = "$Id: fio.c,v 1.2 1993/08/01 18:13:07 mycroft Exp $";
+static char rcsid[] = "$Id: fio.c,v 1.3 1994/04/01 01:44:59 cgd Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -201,7 +201,6 @@ makemessage(f)
 	FILE *f;
 {
 	register size = (msgCount + 1) * sizeof (struct message);
-	off_t lseek();
 
 	if (message != 0)
 		free((char *) message);
@@ -210,7 +209,7 @@ makemessage(f)
 	dot = message;
 	size -= sizeof (struct message);
 	fflush(f);
-	(void) lseek(fileno(f), (long) sizeof *message, 0);
+	(void) lseek(fileno(f), sizeof *message, 0);
 	if (read(fileno(f), (char *) message, size) != size)
 		panic("Message temporary file corrupted");
 	message[msgCount].m_size = 0;
