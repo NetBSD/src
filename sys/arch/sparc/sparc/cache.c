@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.56 2001/07/07 20:09:15 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.57 2001/07/10 15:03:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -938,8 +938,7 @@ smp_vcache_flush_page(va)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_page *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_page;
 		s = splhigh();
@@ -967,8 +966,7 @@ smp_vcache_flush_segment(vr, vs)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_segment *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_segment;
 		s = splhigh();
@@ -997,8 +995,7 @@ smp_vcache_flush_region(vr)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_region *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_region;
 		s = splhigh();
@@ -1025,8 +1022,7 @@ smp_vcache_flush_context()
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_context *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_context;
 		s = splhigh();
@@ -1054,8 +1050,7 @@ smp_cache_flush(va, size)
 		struct cpu_info *cpi = cpus[n];
 		struct xpmsg_flush_range *p;
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 		p = &cpi->msg.u.xpmsg_flush_range;
 		s = splhigh();
