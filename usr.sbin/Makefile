@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.138 2000/03/15 12:01:19 soren Exp $
+#	$NetBSD: Makefile,v 1.139 2000/04/15 21:29:49 tsarna Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for BUILD_POSTFIX
@@ -15,7 +15,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	kvm_mkdb lastlogin link lpr mailwrapper map-mbone \
 	mdconfig mdsetimage \
 	memswitch mopd mountd mrinfo mrouted mtrace mtree \
-	netgroup_mkdb nfsd nfsiod pkg_install portmap pppd pstat \
+	netgroup_mkdb nfsd pkg_install portmap pppd pstat \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank sesd \
