@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.13 1998/11/09 07:01:47 msaitoh Exp $	*/
+/*	$NetBSD: i82365.c,v 1.14 1998/11/16 22:41:01 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/kthread.h>
 
 #include <vm/vm.h>
 
@@ -83,6 +84,11 @@ void	pcic_detach_card __P((struct pcic_handle *));
 
 void	pcic_chip_do_mem_map __P((struct pcic_handle *, int));
 void	pcic_chip_do_io_map __P((struct pcic_handle *, int));
+
+void	pcic_create_event_thread __P((void *));
+void	pcic_event_thread __P((void *));
+
+void	pcic_queue_event __P((struct pcic_handle *, int));
 
 static void	pcic_wait_ready __P((struct pcic_handle *));
 
@@ -228,6 +234,7 @@ pcic_attach(sc)
 	/* XXX block interrupts? */
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
+		SIMPLEQ_INIT(&sc->handle[i].events);
 #if 0
 		/*
 		 * this should work, but w/o it, setting tty flags hangs at
@@ -302,6 +309,7 @@ pcic_attach_socket(h)
 
 	/* initialize the rest of the handle */
 
+	h->shutdown = 0;
 	h->memalloc = 0;
 	h->ioalloc = 0;
 	h->ih_irq = 0;
@@ -323,10 +331,95 @@ pcic_attach_socket(h)
 }
 
 void
+pcic_create_event_thread(arg)
+	void *arg;
+{
+	struct pcic_handle *h = arg;
+	const char *cs;
+
+	switch (h->sock) {
+	case C0SA:
+		cs = "0,0";
+		break;
+	case C0SB:
+		cs = "0,1";
+		break;
+	case C1SA:
+		cs = "1,0";
+		break;
+	case C1SB:
+		cs = "1,1";
+		break;
+	default:
+		panic("pcic_create_event_thread: unknown pcic socket");
+	}
+
+	if (kthread_create(pcic_event_thread, h, &h->event_thread,
+	    "%s,%s", h->sc->dev.dv_xname, cs)) {
+		printf("%s: unable to create event thread for sock 0x%02x\n",
+		    h->sc->dev.dv_xname, h->sock);
+		panic("pcic_create_event_thread");
+	}
+}
+
+void
+pcic_event_thread(arg)
+	void *arg;
+{
+	struct pcic_handle *h = arg;
+	struct pcic_event *pe;
+	int s;
+
+	while (h->shutdown == 0) {
+		s = splhigh();
+		if ((pe = SIMPLEQ_FIRST(&h->events)) == NULL) {
+			splx(s);
+			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
+			continue;
+		}
+		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+		splx(s);
+
+		switch (pe->pe_type) {
+		case PCIC_EVENT_INSERTION:
+			DPRINTF(("%s: insertion event\n", h->sc->dev.dv_xname));
+			pcic_attach_card(h);
+			break;
+
+		case PCIC_EVENT_REMOVAL:
+			DPRINTF(("%s: removal event\n", h->sc->dev.dv_xname));
+			pcic_detach_card(h);
+			break;
+
+		default:
+			panic("pcic_event_thread: unknown event %d",
+			    pe->pe_type);
+		}
+		free(pe, M_TEMP);
+	}
+
+	h->event_thread = NULL;
+
+	/* In case parent is waiting for us to exit. */
+	wakeup(h->sc);
+
+	kthread_exit(0);
+}
+
+void
 pcic_init_socket(h)
 	struct pcic_handle *h;
 {
 	int reg;
+
+	/*
+	 * queue creation of a kernel thread to handle insert/removal events.
+	 */
+#ifdef DIAGNOSTIC
+	if (h->event_thread != NULL)
+		panic("pcic_attach_socket: event thread");
+#endif
+	kthread_create_deferred(pcic_create_event_thread, h);
 
 	/* set up the card to interrupt on card detect */
 
@@ -487,18 +580,20 @@ pcic_intr_socket(h)
 		DPRINTF(("%s: %02x CD %x\n", h->sc->dev.dv_xname, h->sock,
 		    statreg));
 
-		/*
-		 * XXX This should probably schedule something to happen
-		 * after the interrupt handler completes
-		 */
-
 		if ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 		    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
-			if (!(h->flags & PCIC_FLAG_CARDP))
-				pcic_attach_card(h);
+			if (!(h->flags & PCIC_FLAG_CARDP)) {
+				DPRINTF(("%s: enqueing INSERTION event\n",
+				    h->sc->dev.dv_xname));
+				pcic_queue_event(h, PCIC_EVENT_INSERTION);
+			}
 		} else {
-			if (h->flags & PCIC_FLAG_CARDP)
-				pcic_detach_card(h);
+			if (h->flags & PCIC_FLAG_CARDP) {
+				/* XXX Should deactivate children NOW. */
+				DPRINTF(("%s: enqueing REMOVAL event\n",
+				    h->sc->dev.dv_xname));
+				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
+			}
 		}
 	}
 	if (cscreg & PCIC_CSC_READY) {
@@ -512,6 +607,25 @@ pcic_intr_socket(h)
 		DPRINTF(("%s: %02x BATTDEAD\n", h->sc->dev.dv_xname, h->sock));
 	}
 	return (cscreg ? 1 : 0);
+}
+
+void
+pcic_queue_event(h, event)
+	struct pcic_handle *h;
+	int event;
+{
+	struct pcic_event *pe;
+	int s;
+
+	pe = malloc(sizeof(*pe), M_TEMP, M_NOWAIT);
+	if (pe == NULL)
+		panic("pcic_queue_event: can't allocate event");
+
+	pe->pe_type = event;
+	s = splhigh();
+	SIMPLEQ_INSERT_TAIL(&h->events, pe, pe_q);
+	splx(s);
+	wakeup(&h->events);
 }
 
 void
