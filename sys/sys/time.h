@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38 2003/04/28 23:16:31 bjh21 Exp $	*/
+/*	$NetBSD: time.h,v 1.39 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -215,7 +215,7 @@ struct	ptimers {
 };
 
 int	itimerfix __P((struct timeval *tv));
-int	itimerdecr __P((struct ptimer *, int usec));
+int	itimerdecr __P((struct ptimer *, int));
 void	itimerfire __P((struct ptimer *));
 void	microtime __P((struct timeval *tv));
 int	settime __P((struct timeval *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.61 2003/04/09 12:55:50 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.62 2003/07/08 06:17:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -289,12 +289,12 @@ int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,
 void	cluster_write __P((struct buf *, u_quad_t));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));
-struct buf *getnewbuf __P((int slpflag, int slptimeo));
+struct buf *getnewbuf __P((int, int));
 struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *bp));
-int	physio __P((void (*)(struct buf *), struct buf *bp, dev_t dev,
-		    int flags, void (*)(struct buf *), struct uio *uio));
+int	physio __P((void (*)(struct buf *), struct buf *, dev_t,
+		    int, void (*)(struct buf *), struct uio *));
 
 void  brelvp __P((struct buf *));
 void  reassignbuf __P((struct buf *, struct vnode *));

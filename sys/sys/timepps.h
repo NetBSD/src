@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.4 2000/07/23 22:56:14 mycroft Exp $	*/
+/*	$NetBSD: timepps.h,v 1.5 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -134,23 +134,21 @@ typedef struct {
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
-static __inline int time_pps_create __P((int filedes, pps_handle_t *handle));
-static __inline int time_pps_destroy __P((pps_handle_t handle));
-static __inline int time_pps_setparams __P((pps_handle_t handle, 
-	const pps_params_t *ppsparams));
-static __inline int time_pps_getparams __P((pps_handle_t handle,
-	pps_params_t *ppsparams));
-static __inline int time_pps_getcap __P((pps_handle_t handle, int *mode));
-static __inline int time_pps_fetch __P((pps_handle_t handle,
-	const int tsformat, pps_info_t *ppsinfobuf,
-	const struct timespec *timeout));
+static __inline int time_pps_create __P((int, pps_handle_t *));
+static __inline int time_pps_destroy __P((pps_handle_t));
+static __inline int time_pps_setparams __P((pps_handle_t, 
+	const pps_params_t *));
+static __inline int time_pps_getparams __P((pps_handle_t, pps_params_t *));
+static __inline int time_pps_getcap __P((pps_handle_t, int *));
+static __inline int time_pps_fetch __P((pps_handle_t, const int, pps_info_t *,
+	const struct timespec *));
 #if 0
-static __inline int time_pps_wait __P((pps_handle_t handle,
-       const struct timespec *timeout, pps_info_t *ppsinfobuf));
+static __inline int time_pps_wait __P((pps_handle_t, const struct timespec *,
+	pps_info_t *));
 #endif
 
-static __inline int time_pps_kcbind __P((pps_handle_t handle,
-	 const int kernel_consumer, const int edge, const int tsformat));
+static __inline int time_pps_kcbind __P((pps_handle_t, const int, const int,
+	const int));
 
 static __inline int
 time_pps_create(filedes, handle)

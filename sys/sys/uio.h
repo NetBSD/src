@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.28 2003/06/29 22:32:30 fvdl Exp $	*/
+/*	$NetBSD: uio.h,v 1.29 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -109,7 +109,7 @@ ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
 #else
-int ureadc __P((int c, struct uio *));
+int ureadc __P((int, struct uio *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_UIO_H_ */

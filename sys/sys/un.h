@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.28 2003/06/29 22:32:30 fvdl Exp $	*/
+/*	$NetBSD: un.h,v 1.29 2003/07/08 06:18:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,18 +66,18 @@ struct	sockaddr_un {
 struct unpcb;
 struct socket;
 
-int	unp_attach __P((struct socket *so));
-int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
-int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
-int	unp_connect2 __P((struct socket *so, struct socket *so2));
-void	unp_detach __P((struct unpcb *unp));
-void	unp_discard __P((struct file *fp));
-void	unp_disconnect __P((struct unpcb *unp));
-void	unp_drop __P((struct unpcb *unp, int errno));
+int	unp_attach __P((struct socket *));
+int	unp_bind __P((struct unpcb *, struct mbuf *, struct proc *));
+int	unp_connect __P((struct socket *, struct mbuf *, struct proc *));
+int	unp_connect2 __P((struct socket *, struct socket *));
+void	unp_detach __P((struct unpcb *));
+void	unp_discard __P((struct file *));
+void	unp_disconnect __P((struct unpcb *));
+void	unp_drop __P((struct unpcb *, int));
 void	unp_gc __P((void));
-void	unp_mark __P((struct file *fp));
-void	unp_scan __P((struct mbuf *m0, void (*op)(struct file *), int));
-void	unp_shutdown __P((struct unpcb *unp));
+void	unp_mark __P((struct file *));
+void	unp_scan __P((struct mbuf *, void (*)(struct file *), int));
+void	unp_shutdown __P((struct unpcb *));
 int 	unp_externalize __P((struct mbuf *));
 int	unp_internalize __P((struct mbuf *, struct proc *));
 void 	unp_dispose __P((struct mbuf *));
