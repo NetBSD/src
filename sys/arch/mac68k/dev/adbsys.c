@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.9 1995/04/21 02:47:42 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.10 1995/06/25 02:46:46 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -176,7 +176,7 @@ adb_init()
 		printf(" at %d\n", adbaddr);
 
 		/* Set completion routine to be MacBSD's */
-		adbinfo.siServiceRtPtr = adb_asmcomplete;
+		adbinfo.siServiceRtPtr = (Ptr) adb_asmcomplete;
 		adbinfo.siDataAreaAddr = NULL;
 		error = SetADBInfo(&adbinfo, adbaddr);
 #if defined(MRG_DEBUG)
