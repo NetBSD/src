@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgroups.2,v 1.13 1999/12/02 21:42:37 kleink Exp $
+.\"	$NetBSD: getgroups.2,v 1.14 2001/09/16 01:39:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,11 +49,11 @@
 .Sh DESCRIPTION
 .Fn getgroups
 gets the current group access list of the current user process
-and stores it in the array 
+and stores it in the array
 .Fa gidset .
 The parameter
 .Fa gidsetlen
-indicates the number of entries that may be placed in 
+indicates the number of entries that may be placed in
 .Fa gidset .
 .Fn getgroups
 returns the actual number of groups returned in
@@ -64,7 +64,7 @@ will ever
 be returned.
 If
 .Fa gidsetlen
-is 0, 
+is 0,
 .Fn getgroups
 returns the number of groups without modifying the
 .Fa gidset
