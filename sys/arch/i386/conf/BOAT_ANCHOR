@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.29 1994/03/09 21:22:33 ws Exp $
+#	$Id: BOAT_ANCHOR,v 1.30 1994/03/23 01:25:53 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -37,6 +37,11 @@ device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
 device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 
 device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
+master		ast0	at isa? port 0x1a0 tty irq 3 vector astintr
+device		com1	at ast0 slave 0
+device		com2	at ast0 slave 1
+device		com3	at ast0 slave 2
+device		com4	at ast0 slave 3
 
 device ed0 at isa? port 0x280 net irq 9 iomem 0xd0000 vector edintr
 
