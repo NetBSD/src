@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.42 2002/10/22 03:35:10 simonb Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.43 2003/01/20 23:57:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.42 2002/10/22 03:35:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.43 2003/01/20 23:57:49 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -497,7 +497,7 @@ unionlookup:
 	if ((error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
-			panic("leaf should be empty");
+			panic("leaf `%s' should be empty", cnp->cn_nameptr);
 #endif
 #ifdef NAMEI_DIAGNOSTIC
 		printf("not found\n");
@@ -717,7 +717,7 @@ relookup(dvp, vpp, cnp)
 	if ((error = VOP_LOOKUP(dp, vpp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (*vpp != NULL)
-			panic("leaf should be empty");
+			panic("leaf `%s' should be empty", cnp->cn_nameptr);
 #endif
 		if (error != EJUSTRETURN)
 			goto bad;
