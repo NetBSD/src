@@ -1,4 +1,4 @@
-# $Id: Makefile.inc,v 1.1.2.1 2000/05/28 22:41:15 minoura Exp $
+# from: Id: Makefile.inc,v 1.9 2000/05/21 14:22:35 minoura Exp
 
 NOMAN=YES
 
