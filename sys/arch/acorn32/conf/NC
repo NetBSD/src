@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.8 2002/04/02 05:30:37 lukem Exp $
+#	$NetBSD: NC,v 1.9 2002/04/10 20:10:08 thorpej Exp $
 #
 #	NC - with vidcconsole
 #
@@ -22,7 +22,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
 
 # Architecture options
-options 	RISCPC		# We are a RiscPC
 options 	NC
 
 # FPA options
