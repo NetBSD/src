@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.5 2001/11/13 06:54:32 lukem Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.6 2001/12/09 12:02:06 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.5 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.6 2001/12/09 12:02:06 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,11 @@ struct zsops zsops_ms = {
 };
 
 /* Fall-back baud rate */
-int	ms_zs_bps = MS_BPS;
+#ifdef SUN_MS_BPS
+int	ms_zs_bps = SUN_MS_BPS;
+#else
+int	ms_zs_bps = MS_DEFAULT_BPS;
+#endif
 
 static int	ms_zs_match(struct device *, struct cfdata *, void *);
 static void	ms_zs_attach(struct device *, struct device *, void *);
@@ -143,7 +147,10 @@ ms_zs_attach(parent, self, aux)
 	cs->cs_private = ms;
 	cs->cs_ops = &zsops_ms;
 	ms->ms_cs = cs;
+	/* Allow kernel option SUN_MS_BPS to hard-code baud rate */
+#ifndef SUN_MS_BPS
 	if ((bps = cs->cs_defspeed) == 0)
+#endif
 		bps = ms_zs_bps;
 
 	printf(": baud rate %d\n", bps);
