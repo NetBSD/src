@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.23 1998/06/10 12:06:24 jonathan Exp $	*/
+/*	$NetBSD: comvar.h,v 1.24 1998/06/11 02:01:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,8 @@
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
 #endif
+
+#include <sys/timepps.h>
 
 int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
 
