@@ -44,6 +44,5 @@ fi
 touch version
 v=`cat version` t=`date "+ %m/%d/%y %H:%M"`
 (
-  echo "char version[] = \"version: ${v} ${t}\";"
+  echo "char version[] = \"version: ${v} ($1) ${t}\";"
 ) > vers.c
-echo `expr ${v} + 1` > version
