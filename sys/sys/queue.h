@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.21 2000/05/27 22:17:54 mycroft Exp $	*/
+/*	$NetBSD: queue.h,v 1.21.2.1 2001/05/06 15:07:45 he Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,8 +39,18 @@
 #define	_SYS_QUEUE_H_
 
 /*
- * This file defines four types of data structures: lists, simple queues,
- * tail queues, and circular queues.
+ * This file defines five types of data structures: singly-linked lists,
+ * lists, simple queues, tail queues, and circular queues.
+ *
+ * A singly-linked list is headed by a single forward pointer. The
+ * elements are singly linked for minimum space and pointer manipulation
+ * overhead at the expense of O(n) removal for arbitrary elements. New
+ * elements can be added to the list after an existing element or at the
+ * head of the list.  Elements being removed from the head of the list
+ * should use the explicit macro for this purpose for optimum
+ * efficiency. A singly-linked list may only be traversed in the forward
+ * direction.  Singly-linked lists are ideal for applications with large
+ * datasets and few or no removals or for implementing a LIFO queue.
  *
  * A list is headed by a single forward pointer (or an array of forward
  * pointers for a hash table header). The elements are doubly linked
@@ -61,7 +71,7 @@
  * linked so that an arbitrary element can be removed without a need to
  * traverse the list. New elements can be added to the list before or
  * after an existing element, at the head of the list, or at the end of
- * the list. A tail queue may only be traversed in the either direction.
+ * the list. A tail queue may be traversed in either direction.
  *
  * A circle queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
@@ -94,11 +104,29 @@ struct {								\
 /*
  * List functions.
  */
+#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#define QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)			\
+	if ((head)->lh_first &&						\
+	    (head)->lh_first->field.le_prev != &(head)->lh_first)	\
+		panic("LIST_INSERT_HEAD %p", (head));
+#define QUEUEDEBUG_LIST_OP(elm, field)					\
+	if ((elm)->field.le_next &&					\
+	    (elm)->field.le_next->field.le_prev !=			\
+	    &(elm)->field.le_next)					\
+		panic("LIST_* forw %p", elm);				\
+	if (*(elm)->field.le_prev != (elm))				\
+		panic("LIST_* back %p", elm);
+#else
+#define QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)
+#define QUEUEDEBUG_LIST_OP(elm, field)
+#endif
+
 #define	LIST_INIT(head) do {						\
 	(head)->lh_first = NULL;					\
 } while (/*CONSTCOND*/0)
 
 #define LIST_INSERT_AFTER(listelm, elm, field) do {			\
+	QUEUEDEBUG_LIST_OP(listelm, field)				\
 	if (((elm)->field.le_next = (listelm)->field.le_next) != NULL)	\
 		(listelm)->field.le_next->field.le_prev =		\
 		    &(elm)->field.le_next;				\
@@ -107,6 +135,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	LIST_INSERT_BEFORE(listelm, elm, field) do {			\
+	QUEUEDEBUG_LIST_OP(listelm, field)				\
 	(elm)->field.le_prev = (listelm)->field.le_prev;		\
 	(elm)->field.le_next = (listelm);				\
 	*(listelm)->field.le_prev = (elm);				\
@@ -114,6 +143,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define LIST_INSERT_HEAD(head, elm, field) do {				\
+	QUEUEDEBUG_LIST_INSERT_HEAD(head, elm, field)			\
 	if (((elm)->field.le_next = (head)->lh_first) != NULL)		\
 		(head)->lh_first->field.le_prev = &(elm)->field.le_next;\
 	(head)->lh_first = (elm);					\
@@ -121,11 +151,17 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define LIST_REMOVE(elm, field) do {					\
+	QUEUEDEBUG_LIST_OP(elm, field)					\
 	if ((elm)->field.le_next != NULL)				\
 		(elm)->field.le_next->field.le_prev = 			\
 		    (elm)->field.le_prev;				\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
 } while (/*CONSTCOND*/0)
+
+#define LIST_FOREACH(var, head, field)					\
+	for ((var) = ((head)->lh_first);				\
+		(var);							\
+		(var) = ((var)->field.le_next))
 
 /*
  * List access methods.
@@ -186,7 +222,7 @@ struct {								\
 	}								\
 	else {								\
 		struct type *curelm = (head)->slh_first;		\
-		while( curelm->field.sle_next != (elm) )		\
+		while(curelm->field.sle_next != (elm))			\
 			curelm = curelm->field.sle_next;		\
 		curelm->field.sle_next =				\
 		    curelm->field.sle_next->field.sle_next;		\
@@ -241,6 +277,11 @@ struct {								\
 		(head)->sqh_last = &(head)->sqh_first;			\
 } while (/*CONSTCOND*/0)
 
+#define SIMPLEQ_FOREACH(var, head, field)				\
+	for ((var) = ((head)->sqh_first);				\
+		(var);							\
+		(var) = ((var)->field.sqe_next))
+
 /*
  * Simple queue access methods.
  */
@@ -269,12 +310,34 @@ struct {								\
 /*
  * Tail queue functions.
  */
+#if defined(_KERNEL) && defined(QUEUEDEBUG)
+#define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)			\
+	if ((head)->tqh_first &&					\
+	    (head)->tqh_first->field.tqe_prev != &(head)->tqh_first)	\
+		panic("TAILQ_INSERT_HEAD %p", (head));
+#define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)			\
+	if (*(head)->tqh_last != NULL)					\
+		panic("TAILQ_INSERT_TAIL %p", (head));
+#define QUEUEDEBUG_TAILQ_OP(elm, field)					\
+	if ((elm)->field.tqe_next &&					\
+	    (elm)->field.tqe_next->field.tqe_prev !=			\
+	    &(elm)->field.tqe_next)					\
+		panic("TAILQ_* forw %p", elm);				\
+	if (*(elm)->field.tqe_prev != (elm))				\
+		panic("TAILQ_* back %p", elm);
+#else
+#define QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)
+#define QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)
+#define QUEUEDEBUG_TAILQ_OP(elm, field)
+#endif
+
 #define	TAILQ_INIT(head) do {						\
 	(head)->tqh_first = NULL;					\
 	(head)->tqh_last = &(head)->tqh_first;				\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_HEAD(head, elm, field) do {			\
+	QUEUEDEBUG_TAILQ_INSERT_HEAD(head, elm, field)			\
 	if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)	\
 		(head)->tqh_first->field.tqe_prev =			\
 		    &(elm)->field.tqe_next;				\
@@ -285,6 +348,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_TAIL(head, elm, field) do {			\
+	QUEUEDEBUG_TAILQ_INSERT_TAIL(head, elm, field)			\
 	(elm)->field.tqe_next = NULL;					\
 	(elm)->field.tqe_prev = (head)->tqh_last;			\
 	*(head)->tqh_last = (elm);					\
@@ -292,6 +356,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
+	QUEUEDEBUG_TAILQ_OP(listelm, field)				\
 	if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)\
 		(elm)->field.tqe_next->field.tqe_prev = 		\
 		    &(elm)->field.tqe_next;				\
@@ -302,6 +367,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define	TAILQ_INSERT_BEFORE(listelm, elm, field) do {			\
+	QUEUEDEBUG_TAILQ_OP(listelm, field)				\
 	(elm)->field.tqe_prev = (listelm)->field.tqe_prev;		\
 	(elm)->field.tqe_next = (listelm);				\
 	*(listelm)->field.tqe_prev = (elm);				\
@@ -309,6 +375,7 @@ struct {								\
 } while (/*CONSTCOND*/0)
 
 #define TAILQ_REMOVE(head, elm, field) do {				\
+	QUEUEDEBUG_TAILQ_OP(elm, field)					\
 	if (((elm)->field.tqe_next) != NULL)				\
 		(elm)->field.tqe_next->field.tqe_prev = 		\
 		    (elm)->field.tqe_prev;				\
@@ -328,6 +395,16 @@ struct {								\
 	(*(((struct headname *)((head)->tqh_last))->tqh_last))
 #define TAILQ_PREV(elm, headname, field) \
 	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
+
+#define TAILQ_FOREACH(var, head, field)					\
+	for ((var) = ((head)->tqh_first);				\
+		(var);							\
+		(var) = ((var)->field.tqe_next))
+
+#define TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
+	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));	\
+		(var);							\
+		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
 
 /*
  * Circular queue definitions.
@@ -407,6 +484,16 @@ struct {								\
 		(elm)->field.cqe_prev->field.cqe_next =			\
 		    (elm)->field.cqe_next;				\
 } while (/*CONSTCOND*/0)
+
+#define CIRCLEQ_FOREACH(var, head, field)				\
+	for ((var) = ((head)->cqh_first);				\
+		(var) != (void *)(head);				\
+		(var) = ((var)->field.cqe_next))
+
+#define CIRCLEQ_FOREACH_REVERSE(var, head, field)			\
+	for ((var) = ((head)->cqh_last);				\
+		(var) != (void *)(head);				\
+		(var) = ((var)->field.cqe_prev))
 
 /*
  * Circular queue access methods.
