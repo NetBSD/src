@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.106 2003/07/01 23:59:30 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.107 2003/08/10 19:51:40 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2092,12 +2092,54 @@ sys/netinet6/ip6_mroute.c		1.47
 
 sys/net/rtsock.c			1.61
 
-	recover code that requires exact match on rtm_change/lock (lost in
+	Recover code that requires exact match on rtm_change/lock (lost in
 	1.16). without it "route change X" would change less-specific route by
 	mistake.  reported by jinmei@kame
 	[itojun, ticket #48]
 
 usr.bin/mkdep/mkdep.c			1.16
 
-	catch SIGPIPE too, so that we do not leave temporary files behind.
+	Catch SIGPIPE too, so that we do not leave temporary files behind.
 	[msaitoh, ticket #49]
+
+sys/netinet/igmp.c			1.34
+sys/netinet/igmp_var.h			1.16
+sys/netinet/in.c			1.87
+
+	Purge rti structure (in igmp.c) for removed ifp on if_detach().
+	[itojun, ticket #50]
+
+sys/netinet/ip_output.c			1.106-1.107
+
+	After pfil_run_hooks, need to fix hlen as well.
+	freebsd code somehow crept in.
+	[itojun, ticket #53]
+
+sys/netinet6/esp_input.c		1.30 via patch
+
+	Fix missing check for taillen against pkthdr.len.
+	[itojun, ticket #55]
+
+sys/netinet6/in6_ifattach.c		1.55 via patch
+sys/netinet6/ip6_mroute.c		1.50 via patch
+sys/netinet6/ip6_mroute.c		1.9
+
+	On interface detach, clear multicast forwarding table.
+	[itojun, ticket #57]
+
+sys/netinet6/esp_core.c			1.30
+sys/netkey/key.c			1.83
+
+	Clear scheduled key before freeing, for safety.
+	[itojun, ticket #58]
+
+sys/netkey/key.c			1.84
+
+	Clear enc/auth key before freeing for safety.
+	[itojun, ticket #59]
+
+lib/libc/gen/getcwd.c			1.29
+
+	Fix NetBSD SA 2003-011.
+	Fix off-by-one error in realpath().
+	[itojun, ticket #61]
