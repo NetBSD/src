@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	6.18 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: mkfs.c,v 1.6 1993/10/01 01:56:42 mycroft Exp $";
+static char rcsid[] = "$Id: mkfs.c,v 1.7 1994/04/01 08:42:43 cgd Exp $";
 #endif /* not lint */
 
 #ifndef STANDALONE
@@ -612,7 +612,7 @@ next:
 	 */
 	fsinit(utime);
 	sblock.fs_time = utime;
-	wtfs(SBOFF / sectorsize, sbsize, (char *)&sblock);
+	wtfs((daddr_t)(SBOFF / sectorsize), sbsize, (char *)&sblock);
 	for (i = 0; i < sblock.fs_cssize; i += sblock.fs_bsize)
 		wtfs(fsbtodb(&sblock, sblock.fs_csaddr + numfrags(&sblock, i)),
 			sblock.fs_cssize - i < sblock.fs_bsize ?
