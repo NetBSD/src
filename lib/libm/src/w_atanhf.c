@@ -8,17 +8,17 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_atanhf.c,v 1.4 1997/10/09 11:34:16 lukem Exp $");
+__RCSID("$NetBSD: w_atanhf.c,v 1.5 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
-/* 
+/*
  * wrapper atanhf(x)
  */
 
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: w_atanhf.c,v 1.4 1997/10/09 11:34:16 lukem Exp $");
 	    if(y>(float)1.0)
 	        /* atanhf(|x|>1) */
 	        return (float)__kernel_standard((double)x,(double)x,130);
-	    else 
+	    else
 	        /* atanhf(|x|==1) */
 	        return (float)__kernel_standard((double)x,(double)x,131);
 	} else

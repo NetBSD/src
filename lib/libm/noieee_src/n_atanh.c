@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atanh.c,v 1.4 1998/11/08 19:29:34 ragge Exp $ */
+/*      $NetBSD: n_atanh.c,v 1.5 1999/07/02 15:37:36 simonb Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,14 +41,14 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
 /* ATANH(X)
  * RETURN THE HYPERBOLIC ARC TANGENT OF X
  * DOUBLE PRECISION (VAX D format 56 bits, IEEE DOUBLE 53 BITS)
- * CODED IN C BY K.C. NG, 1/8/85; 
+ * CODED IN C BY K.C. NG, 1/8/85;
  * REVISED BY K.C. NG on 2/7/85, 3/7/85, 8/18/85.
  *
  * Required kernel function:
  *	log1p(x) 	...return log(1+x)
  *
  * Method :
- *	Return 
+ *	Return
  *                          1              2x                          x
  *		atanh(x) = --- * log(1 + -------) = 0.5 * log1p(2 * --------)
  *                          2             1 - x                      1 - x

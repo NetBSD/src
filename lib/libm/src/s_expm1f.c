@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_expm1f.c,v 1.8 1998/08/19 00:45:37 thorpej Exp $");
+__RCSID("$NetBSD: s_expm1f.c,v 1.9 1999/07/02 15:37:42 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -73,7 +73,7 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 	}
 
     /* argument reduction */
-	if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */ 
+	if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */
 	    if(hx < 0x3F851592) {	/* and |x| < 1.5 ln2 */
 		if(xsb==0)
 		    {hi = x - ln2_hi; lo =  ln2_lo;  k =  1;}
@@ -87,10 +87,10 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 	    }
 	    x  = hi - lo;
 	    c  = (hi-x)-lo;
-	} 
+	}
 	else if(hx < 0x33000000) {  	/* when |x|<2**-25, return x */
 	    t = huge+x;	/* return x with inexact flags when x!=0 */
-	    return x - (t-(huge+x));	
+	    return x - (t-(huge+x));
 	}
 	else k = 0;
 

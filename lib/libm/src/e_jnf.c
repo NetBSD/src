@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_jnf.c,v 1.6 1997/10/09 11:29:21 lukem Exp $");
+__RCSID("$NetBSD: e_jnf.c,v 1.7 1999/07/02 15:37:40 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -54,7 +54,7 @@ static float zero  =  0.0000000000e+00;
 	ix = 0x7fffffff&hx;
     /* if J(n,NaN) is NaN */
 	if(ix>0x7f800000) return x+x;
-	if(n<0){		
+	if(n<0){
 		n = -n;
 		x = -x;
 		hx ^= 0x80000000;
@@ -65,7 +65,7 @@ static float zero  =  0.0000000000e+00;
 	x = fabsf(x);
 	if(ix==0||ix>=0x7f800000) 	/* if x is 0 or inf */
 	    b = zero;
-	else if((float)n<=x) {   
+	else if((float)n<=x) {
 		/* Safe to use J(n+1,x)=2n/x *J(n,x)-J(n-1,x) */
 	    a = __ieee754_j0f(x);
 	    b = __ieee754_j1f(x);
@@ -76,7 +76,7 @@ static float zero  =  0.0000000000e+00;
 	    }
 	} else {
 	    if(ix<0x30800000) {	/* x < 2**-29 */
-    /* x is tiny, return the first Taylor expansion of J(n,x) 
+    /* x is tiny, return the first Taylor expansion of J(n,x)
      * J(n,x) = 1/n!*(x/2)^n  - ...
      */
 		if(n>33)	/* underflow */
@@ -91,14 +91,14 @@ static float zero  =  0.0000000000e+00;
 		}
 	    } else {
 		/* use backward recurrence */
-		/* 			x      x^2      x^2       
+		/* 			x      x^2      x^2
 		 *  J(n,x)/J(n-1,x) =  ----   ------   ------   .....
 		 *			2n  - 2(n+1) - 2(n+2)
 		 *
-		 * 			1      1        1       
+		 * 			1      1        1
 		 *  (for large x)   =  ----  ------   ------   .....
 		 *			2n   2(n+1)   2(n+2)
-		 *			-- - ------ - ------ - 
+		 *			-- - ------ - ------ -
 		 *			 x     x         x
 		 *
 		 * Let w = 2n/x and h=2/x, then the above quotient
@@ -114,9 +114,9 @@ static float zero  =  0.0000000000e+00;
 		 * To determine how many terms needed, let
 		 * Q(0) = w, Q(1) = w(w+h) - 1,
 		 * Q(k) = (w+k*h)*Q(k-1) - Q(k-2),
-		 * When Q(k) > 1e4	good for single 
-		 * When Q(k) > 1e9	good for double 
-		 * When Q(k) > 1e17	good for quadruple 
+		 * When Q(k) > 1e4	good for single
+		 * When Q(k) > 1e9	good for double
+		 * When Q(k) > 1e17	good for quadruple
 		 */
 	    /* determine k */
 		float t,v;
@@ -138,7 +138,7 @@ static float zero  =  0.0000000000e+00;
 		 *  single 8.8722839355e+01
 		 *  double 7.09782712893383973096e+02
 		 *  long double 1.1356523406294143949491931077970765006170e+04
-		 *  then recurrent value may overflow and the result is 
+		 *  then recurrent value may overflow and the result is
 		 *  likely underflow to zero
 		 */
 		tmp = n;
@@ -174,9 +174,9 @@ static float zero  =  0.0000000000e+00;
 }
 
 #ifdef __STDC__
-	float __ieee754_ynf(int n, float x) 
+	float __ieee754_ynf(int n, float x)
 #else
-	float __ieee754_ynf(n,x) 
+	float __ieee754_ynf(n,x)
 	int n; float x;
 #endif
 {
@@ -203,7 +203,7 @@ static float zero  =  0.0000000000e+00;
 	b = __ieee754_y1f(x);
 	/* quit if b is -inf */
 	GET_FLOAT_WORD(ib,b);
-	for(i=1;i<n&&ib!=0xff800000;i++){ 
+	for(i=1;i<n&&ib!=0xff800000;i++){
 	    temp = b;
 	    b = ((float)(i+i)/x)*b - a;
 	    GET_FLOAT_WORD(ib,b);

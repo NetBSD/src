@@ -40,10 +40,10 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sqrt.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: e_sqrt.S,v 1.3 1995/05/09 01:28:27 jtc Exp $")
+RCSID("$NetBSD: e_sqrt.S,v 1.4 1999/07/02 15:37:34 simonb Exp $")
 
 /*
- * sqrt(x) 
+ * sqrt(x)
  * returns the square root of x correctly rounded according
  * to the rounding mode.
  */

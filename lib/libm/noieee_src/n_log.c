@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
+/*      $NetBSD: n_log.c,v 1.4 1999/07/02 15:37:37 simonb Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -395,7 +395,7 @@ log(x) double x;
 		else
 			return (infnan(ERANGE));
 	}
-	
+
 	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
 	/* y = F*(1 + f/F) for |f| <= 2^-8		*/
 
