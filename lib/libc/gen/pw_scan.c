@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.18 2005/01/20 21:11:56 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.19 2005/01/20 21:53:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.18 2005/01/20 21:11:56 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.19 2005/01/20 21:53:23 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -94,7 +94,7 @@ done:
 static int
 getid(unsigned long *res, const char *p, int *flags, int dowarn, int flag)
 {
-	long ul;
+	unsigned long ul;
 	char *ep;
 
 	if (*p == '\0') {
@@ -125,6 +125,7 @@ done:
 	return 0;
 
 }
+
 int
 #ifdef _LIBC
 __pw_scan(char *bp, struct passwd *pw, int *flags)
