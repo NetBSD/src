@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.12 2003/05/30 18:14:13 kristerw Exp $	*/
+/*	$NetBSD: inp.c,v 1.13 2003/05/30 22:33:58 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.12 2003/05/30 18:14:13 kristerw Exp $");
+__RCSID("$NetBSD: inp.c,v 1.13 2003/05/30 22:33:58 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -16,8 +16,7 @@ __RCSID("$NetBSD: inp.c,v 1.12 2003/05/30 18:14:13 kristerw Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 
-static bool plan_a(char *);
-static void plan_b(char *);
+static void plan_a(char *);
 static bool rev_in_string(char *);
 
 /* Input-file-with-indexable-lines abstract type. */
@@ -26,57 +25,37 @@ static size_t i_size;			/* Size of the input file */
 static char *i_womp;			/* Plan a buffer for entire file */
 static char **i_ptr;			/* Pointers to lines in i_womp */
 
-static int tifd = -1;			/* Plan b virtual string array */
-static char *tibuf[2];			/* Plan b buffers */
-static LINENUM tiline[2] = {-1, -1};	/* 1st line in each buffer */
-static LINENUM lines_per_buf;		/* How many lines per buffer */
-static int tireclen;			/* Length of records in tmp file */
-
 /*
- * New patch--prepare to edit another file.
+ * New patch -- prepare to edit another file.
  */
 void
 re_input(void)
 {
-	if (using_plan_a) {
-		i_size = 0;
+	i_size = 0;
 
-		if (i_ptr != NULL)
-			free(i_ptr);
-		if (i_womp != NULL)
-			free(i_womp);
-		i_womp = NULL;
-		i_ptr = NULL;
-	} else {
-		using_plan_a = TRUE;	/* maybe the next one is smaller */
-		Close(tifd);
-		tifd = -1;
-		free(tibuf[0]);
-		free(tibuf[1]);
-		tibuf[0] = tibuf[1] = NULL;
-		tiline[0] = tiline[1] = -1;
-		tireclen = 0;
-	}
+	if (i_ptr != NULL)
+		free(i_ptr);
+	if (i_womp != NULL)
+		free(i_womp);
+	i_womp = NULL;
+	i_ptr = NULL;
 }
 
 /*
- * Constuct the line index, somehow or other.
+ * Construct the line index, somehow or other.
  */
 void
 scan_input(char *filename)
 {
-	if (!plan_a(filename))
-		plan_b(filename);
-	if (verbose) {
-		say("Patching file %s using Plan %s...\n", filename,
-		    (using_plan_a ? "A" : "B") );
-	}
+	plan_a(filename);
+	if (verbose)
+		say("Patching file %s using Plan A...\n", filename);
 }
 
 /*
  * Try keeping everything in memory.
  */
-static bool
+static void
 plan_a(char *filename)
 {
 	int ifd, statfailed;
@@ -180,15 +159,8 @@ plan_a(char *filename)
 	i_womp = xmalloc(i_size + 2);
 	if ((ifd = open(filename, 0)) < 0)
 		pfatal("can't open file %s", filename);
-	if (read(ifd, i_womp, i_size) != i_size) {
-		/*
-		 * This probably means i_size > 15 or 16 bits worth at this
-		 *  point it doesn't matter if i_womp was undersized.
-		 */
-		Close(ifd);
-		free(i_womp);
-		return FALSE;
-	}
+	if (read(ifd, i_womp, i_size) != i_size)
+		pfatal("read error");
 	Close(ifd);
 	if (i_size && i_womp[i_size - 1] != '\n')
 		i_womp[i_size++] = '\n';
@@ -238,105 +210,18 @@ plan_a(char *filename)
 			say("Good.  This file appears to be the %s version.\n",
 			    revision);
 	}
-
-    return TRUE;		/* Plan a will work. */
-}
-
-/*
- * Keep (virtually) nothing in memory.
- */
-static void
-plan_b(char *filename)
-{
-	FILE *ifp;
-	int i = 0;
-	int maxlen = 1;
-	bool found_revision = (revision == NULL);
-
-	using_plan_a = FALSE;
-	if ((ifp = fopen(filename, "r")) == NULL)
-		pfatal("can't open file %s", filename);
-	if ((tifd = creat(TMPINNAME, 0666)) < 0)
-		pfatal("can't open file %s", TMPINNAME);
-	while (fgets(buf, sizeof buf, ifp) != NULL) {
-		if (revision != NULL && !found_revision && rev_in_string(buf))
-			found_revision = TRUE;
-		if ((i = strlen(buf)) > maxlen)
-			maxlen = i;		/* Find longest line. */
-	}
-	if (revision != NULL) {
-		if (!found_revision) {
-			if (force) {
-				if (verbose)
-					say(
-"Warning: this file doesn't appear to be the %s version--patching anyway.\n",
-					    revision);
-			} else if (batch) {
-				fatal(
-"this file doesn't appear to be the %s version--aborting.\n", revision);
-			} else {
-				ask(
-"This file doesn't appear to be the %s version--patch anyway? [n] ",
-				    revision);
-				if (*buf != 'y')
-					fatal("aborted\n");
-			}
-		} else if (verbose)
-			say("Good.  This file appears to be the %s version.\n",
-			    revision);
-	}
-	Fseek(ifp, 0L, 0);		/* Rewind file. */
-	lines_per_buf = BUFFERSIZE / maxlen;
-	tireclen = maxlen;
-	tibuf[0] = xmalloc(BUFFERSIZE + 1);
-	tibuf[1] = xmalloc(BUFFERSIZE + 1);
-	for (i = 1; ; i++) {
-		if (! (i % lines_per_buf))	/* New block. */
-			if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
-				pfatal("can't write temp file");
-		if (fgets(tibuf[0] + maxlen * (i % lines_per_buf),
-			  maxlen + 1, ifp) == NULL) {
-			input_lines = i - 1;
-			if (i % lines_per_buf)
-				if (write(tifd, tibuf[0], BUFFERSIZE)
-				    < BUFFERSIZE)
-					pfatal("can't write temp file");
-			break;
-		}
-	}
-	Fclose(ifp);
-	Close(tifd);
-	if ((tifd = open(TMPINNAME, 0)) < 0) {
-		pfatal("can't reopen file %s", TMPINNAME);
-	}
 }
 
 /*
  * Fetch a line from the input file, \n terminated, not necessarily \0.
  */
 char *
-ifetch(LINENUM line, int whichbuf)
+ifetch(LINENUM line)
 {
 	if (line < 1 || line > input_lines)
 		return "";
-	if (using_plan_a)
-		return i_ptr[line];
-	else {
-		LINENUM offline = line % lines_per_buf;
-		LINENUM baseline = line - offline;
 
-		if (tiline[0] == baseline)
-			whichbuf = 0;
-		else if (tiline[1] == baseline)
-			whichbuf = 1;
-		else {
-			tiline[whichbuf] = baseline;
-			Lseek(tifd, baseline / lines_per_buf * BUFFERSIZE, 0);
-			if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
-				pfatal("error reading tmp file %s", TMPINNAME);
-		}
-		return tibuf[whichbuf] + (tireclen * offline);
-	}
+	return i_ptr[line];
 }
 
 /*
@@ -361,5 +246,5 @@ rev_in_string(char *string)
 			return TRUE;
 		}
 	}
-    return FALSE;
+	return FALSE;
 }
