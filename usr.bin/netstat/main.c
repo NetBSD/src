@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2001/05/28 04:22:56 assar Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2001/10/18 09:26:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2001/05/28 04:22:56 assar Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2001/10/18 09:26:16 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,6 +179,8 @@ struct nlist nl[] = {
 	{ "_pfkeystat" },
 #define N_ARPSTAT	54
 	{ "_arpstat" },
+#define N_RIP6STAT	55
+	{ "_rip6stat" },
 	{ "" },
 };
 
@@ -235,6 +237,8 @@ struct protox ip6protox[] = {
 #endif
 	{ -1,		N_PIM6STAT,	1,	0,
 	  pim6_stats,	NULL,		0,	"pim6" },
+	{ -1,		N_RIP6STAT,	1,	0,
+	  rip6_stats,	NULL,		0,	"rip6" },
 	{ -1,		-1,		0,	0,
 	  0,		NULL,		0,	0 }
 };
