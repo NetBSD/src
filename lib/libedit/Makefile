@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/10/27 21:41:50 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2003/05/08 13:20:44 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -44,35 +44,38 @@ ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 SUBDIR=	readline
 
 vi.h: vi.c makelist
-	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c \
+	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 emacs.h: emacs.c makelist
-	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/emacs.c > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/emacs.c \
+	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 common.h: common.c makelist
-	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/common.c > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/common.c \
+	    > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 fcns.h: ${AHDR} makelist
-	sh ${LIBEDITDIR}/makelist -fh ${AHDR} > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -fh ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 fcns.c: ${AHDR} fcns.h makelist
-	sh ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -fc ${AHDR} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 help.c: ${ASRC} makelist 
-	sh ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -bc ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 help.h: ${ASRC} makelist
-	sh ${LIBEDITDIR}/makelist -bh ${ASRC} > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -bh ${ASRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 editline.c: ${OSRCS}
-	sh ${LIBEDITDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 test.o:	${LIBEDITDIR}/TEST/test.c
