@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1999/09/13 17:18:57 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.14 1999/09/14 18:08:46 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,6 @@
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sys/time.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <pwd.h>
@@ -44,6 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define BITS (8 * sizeof (int))
