@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.8 1994/09/27 01:32:06 deraadt Exp $
+ * $Id: cpu.h,v 1.9 1994/10/26 07:16:34 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -164,6 +164,7 @@ struct intrhand {
 } *intrhand[15];
 
 void	intr_establish __P((int level, struct intrhand *));
+void	vmeintr_establish __P((int vec, int level, struct intrhand *));
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''

@@ -42,7 +42,7 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.7 1994/08/20 01:26:41 deraadt Exp $
+ * $Id: param.h,v 1.8 1994/10/26 07:16:37 deraadt Exp $
  */
 
 /*
@@ -67,10 +67,6 @@
 #define SUN4_PGSHIFT	13	/* for a sun4 machine */
 #define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
 
-#if defined(KERNEL) && !defined(LOCORE)
-extern int nbpg, pgofset, pgshift;
-#endif
-
 /*
  * Three possible cases:
  * 	sun4 only		8192 bytes/page
@@ -92,6 +88,9 @@ extern int nbpg, pgofset, pgshift;
 #define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
 #endif
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#if defined(KERNEL) && !defined(LOCORE)
+extern int nbpg, pgofset, pgshift;
+#endif
 #define	NBPG		nbpg		/* bytes/page */
 #define	PGOFSET		pgofset		/* byte offset into page */
 #define	PGSHIFT		pgshift		/* log2(NBPG) */
