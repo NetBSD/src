@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.18 1998/05/17 17:07:25 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.19 1998/05/29 20:24:37 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.8 1998/05/08 15:10:17 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.10 1998/05/23 19:05:29 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -132,10 +132,10 @@ static	int	nat_ifpaddr __P((nat_t *, void *, struct in_addr *));
 
 void fix_outcksum(sp, n)
 u_short *sp;
-u_long n;
+u_32_t n;
 {
 	register u_short sumshort;
-	register u_long sum1;
+	register u_32_t sum1;
 
 	if (!n)
 		return;
@@ -151,10 +151,10 @@ u_long n;
 
 void fix_incksum(sp, n)
 u_short *sp;
-u_long n;
+u_32_t n;
 {
 	register u_short sumshort;
-	register u_long sum1;
+	register u_32_t sum1;
 
 	if (!n)
 		return;
@@ -523,7 +523,7 @@ fr_info_t *fin;
 u_short flags;
 int direction;
 {
-	register u_long sum1, sum2, sumd, l;
+	register u_32_t sum1, sum2, sumd, l;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
 	struct in_addr in;
 	tcphdr_t *tcp = NULL;
@@ -781,7 +781,7 @@ int *nflags;
 	 */
 	if (flags & IPN_TCPUDP) {
 		tcphdr_t *tcp = (tcphdr_t *)(oip + 1);
-		u_long	sum1, sum2, sumd;
+		u_32_t	sum1, sum2, sumd;
 		struct in_addr in;
 
 		if (nat->nat_dir == NAT_OUTBOUND) {
@@ -966,7 +966,7 @@ int hlen;
 fr_info_t *fin;
 {
 	register ipnat_t *np;
-	register u_long ipa;
+	register u_32_t ipa;
 	tcphdr_t *tcp = NULL;
 	u_short nflags = 0, sport = 0, dport = 0, *csump = NULL;
 	struct ifnet *ifp;
@@ -1283,7 +1283,7 @@ void *ifp;
 #endif
 {
 	register nat_t *nat;
-	register u_long sum1, sum2, sumd;
+	register u_32_t sum1, sum2, sumd;
 	struct in_addr in;
 	ipnat_t *np;
 #if defined(_KERNEL) && !SOLARIS

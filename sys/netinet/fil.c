@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.20 1998/05/17 17:07:24 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.21 1998/05/29 20:24:36 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.12 1998/04/25 15:46:36 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.14 1998/05/23 19:20:30 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -23,9 +23,7 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.12 1998/04/25 15:46:36 d
 #else
 # include <stdio.h>
 # include <string.h>
-# ifdef __NetBSD__
-#  include <stdlib.h>
-# endif
+# include <stdlib.h>
 #endif
 #include <sys/uio.h>
 #if !defined(__SVR4) && !defined(__svr4__)
@@ -909,7 +907,7 @@ u_short ipf_cksum(addr, len)
 register u_short *addr;
 register int len;
 {
-	register u_long sum = 0;
+	register u_32_t sum = 0;
 
 	for (sum = 0; len > 1; len -= 2)
 		sum += *addr++;
@@ -942,7 +940,7 @@ int len;
 		u_char	c[2];
 		u_short	s;
 	} bytes;
-	u_long sum;
+	u_32_t sum;
 	u_short	*sp;
 # if SOLARIS || defined(__sgi)
 	int add, hlen;
@@ -1041,7 +1039,7 @@ int len;
 #endif /* SOLARIS */
 		if (len < 2)
 			break;
-		if((u_long)sp & 1) {
+		if((u_32_t)sp & 1) {
 			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
 		} else
@@ -1095,7 +1093,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.0.2.41.2.12 1998/04/25 15:46:36 darrenr Exp 
+ * Id: fil.c,v 2.0.2.41.2.14 1998/05/23 19:20:30 darrenr Exp 
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
