@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 1999/01/15 03:53:33 castor Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 1999/01/31 00:57:10 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,11 +40,12 @@
 #include <sys/syscall.h>
 #include <mips/regnum.h>
 #include <mips/asm.h>
+#include <machine/signal.h>
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: __setjmp14.S,v 1.2 1999/01/15 03:53:33 castor Exp $")
+	ASMSTR("$NetBSD: __setjmp14.S,v 1.3 1999/01/31 00:57:10 castor Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -62,10 +63,10 @@
  * and a struct sigcontext, see <signal.h>
  */
 
-#define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
+#define SETJMP_FRAME_SIZE	(CALLFRAME_SIZ + 12)
 
 NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
-	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 #ifdef ABICALLS
 	.set	noreorder
 	.cpload	t9
@@ -75,7 +76,7 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 #ifdef ABICALLS
 	.cprestore 16
 #endif
-	sw	ra, STAND_RA_OFFSET(sp)		# save RA
+	sw	ra, CALLFRAME_RA(sp)		# save RA
 	sw	a0, SETJMP_FRAME_SIZE(sp)	# squirrel away sc
 
 	/* Get the signal mask. */
@@ -86,15 +87,15 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 
 	/* Get the signal stack. */
 	move	a0, zero
-	addu	a1, sp, STAND_FRAME_SIZE	# pointer to struct sigaltstack
+	addu	a1, sp, CALLFRAME_SIZ	# pointer to struct sigaltstack
 	jal	_C_LABEL(__sigaltstack14)
 	nop
-	lw	v1, STAND_FRAME_SIZE+8(sp)	# get old ss_onstack
+	lw	v1, CALLFRAME_SIZ+8(sp)	# get old ss_onstack
 	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore sc pointer
 	and	v1, v1, 1			# extract onstack flag
 	sw	v1, 0(a0)			# save it in sc_onstack
 
-	lw	ra, STAND_RA_OFFSET(sp)		# restore RA
+	lw	ra, CALLFRAME_RA(sp)		# restore RA
 	addu	sp, sp, SETJMP_FRAME_SIZE	# pop stack frame
 
 	blt	v0, zero, botch			# check for sigaltstack() error

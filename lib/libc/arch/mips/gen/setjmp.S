@@ -1,5 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.9 1999/01/15 03:53:33 castor Exp $	*/
-/*	$Id: setjmp.S,v 1.9 1999/01/15 03:53:33 castor Exp $
+/*	$NetBSD: setjmp.S,v 1.10 1999/01/31 00:57:10 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,11 +40,12 @@
 #include <sys/syscall.h>
 #include <mips/regnum.h>
 #include <mips/asm.h>
+#include <machine/signal.h>
 #include <machine/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.9 1999/01/15 03:53:33 castor Exp $")
+	ASMSTR("$NetBSD: setjmp.S,v 1.10 1999/01/31 00:57:10 castor Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -63,10 +63,10 @@
  * and a struct sigcontext, see <signal.h>
  */
 
-#define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
+#define SETJMP_FRAME_SIZE	(CALLFRAME_SIZ + 12)
 
 NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
-	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 #ifdef ABICALLS
 	.set	noreorder
 	.cpload	t9
@@ -76,20 +76,20 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 #ifdef ABICALLS
 	.cprestore 16
 #endif
-	sw	ra, STAND_RA_OFFSET(sp)		# save state
+	sw	ra, CALLFRAME_RA(sp)		# save state
 	sw	a0, SETJMP_FRAME_SIZE(sp)
 	move	a0, zero			# get current signal mask
 	jal	_C_LABEL(sigblock)
 	lw	v1, SETJMP_FRAME_SIZE(sp)	# v1 = jmpbuf
 	sw	v0, (1 * 4)(v1)			# save sc_mask = sigblock(0)
 	move	a0, zero
-	addu	a1, sp, STAND_FRAME_SIZE	# pointer to struct sigaltstack
+	addu	a1, sp, CALLFRAME_SIZ	# pointer to struct sigaltstack
 	jal	_C_LABEL(__sigaltstack14)
 	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore jmpbuf
-	lw	v1, STAND_FRAME_SIZE+8(sp)	# get old ss_onstack
+	lw	v1, CALLFRAME_SIZ+8(sp)	# get old ss_onstack
 	and	v1, v1, 1			# extract onstack flag
 	sw	v1, 0(a0)			# save it in sc_onstack
-	lw	ra, STAND_RA_OFFSET(sp)
+	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, SETJMP_FRAME_SIZE
 	blt	v0, zero, botch			# check for sigstack() error
 	REG_PROLOGUE
