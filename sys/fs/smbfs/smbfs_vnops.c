@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.6 2003/02/20 15:35:55 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.7 2003/02/21 20:13:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -555,12 +555,11 @@ smbfs_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct uio *uio = ap->a_uio;
 
-	SMBVDEBUG("\n");
 	if (vp->v_type != VREG && vp->v_type != VDIR)
 		return EPERM;
-	return smbfs_readvnode(vp, uio, ap->a_cred);
+
+	return smbfs_readvnode(vp, ap->a_uio, ap->a_cred);
 }
 
 int
@@ -881,8 +880,6 @@ smbfs_readdir(v)
 		int a_ncookies;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct uio *uio = ap->a_uio;
-	int error;
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
@@ -892,8 +889,7 @@ smbfs_readdir(v)
 		return (EOPNOTSUPP);
 	}
 #endif
-	error = smbfs_readvnode(vp, uio, ap->a_cred);
-	return error;
+	return (smbfs_readvnode(vp, ap->a_uio, ap->a_cred));
 }
 
 /* ARGSUSED */
