@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.5 2002/07/28 23:43:33 christos Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.6 2002/08/20 07:42:53 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -165,6 +165,13 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		ux.ut_tv = tv;
 		strncpy(ux.ut_name, user, sizeof(ux.ut_name));
 		strncpy(ux.ut_host, host, sizeof(ux.ut_host));
+		/* XXX: need ut_id, use last 4 char of ttyname */
+		if (strlen(ttyname) > sizeof(ux.ut_id)) {
+			strncpy(ux.ut_id,
+			    ttyname + strlen(ttyname) - sizeof(ux.ut_id),
+			    sizeof(ux.ut_id));
+		} else
+			strncpy(ux.ut_id, ttyname, sizeof(ux.ut_id));
 		/* XXX: It would be better if we had sockaddr_storage here */
 		memcpy(&ux.ut_ss, addr, sizeof(*addr));
 		if (pututxline(&ux) == NULL)
