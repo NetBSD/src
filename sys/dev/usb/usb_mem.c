@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.16 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.17 1999/12/18 22:47:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@ usb_block_allocmem(tag, size, align, dmap)
         usb_dma_block_t *p;
 	int s;
 
-	DPRINTFN(5, ("usb_block_allocmem: size=%d align=%d\n", size, align));
+	DPRINTFN(5, ("usb_block_allocmem: size=%lu align=%lu\n", 
+		     (u_long)size, (u_long)align));
 
 #ifdef DIAGNOSTIC
 	if (!curproc) {
@@ -118,8 +119,8 @@ usb_block_allocmem(tag, size, align, dmap)
 			LIST_REMOVE(p, next);
 			splx(s);
 			*dmap = p;
-			DPRINTFN(6,("usb_block_allocmem: free list size=%d\n",
-				    p->size));
+			DPRINTFN(6,("usb_block_allocmem: free list size=%lu\n",
+				    (u_long)p->size));
 			return (USBD_NORMAL_COMPLETION);
 		}
 	}
@@ -202,7 +203,7 @@ usb_block_freemem(p)
 {
 	int s;
 
-	DPRINTFN(6, ("usb_block_freemem: size=%d\n", p->size));
+	DPRINTFN(6, ("usb_block_freemem: size=%lu\n", (u_long)p->size));
 	s = splusb();
 	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
 	splx(s);
