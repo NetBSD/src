@@ -1,3 +1,5 @@
+/*	$NetBSD: caljulian.c,v 1.2 1998/01/09 03:16:01 perry Exp $	*/
+
 /*
  * caljulian - determine the Julian date from an NTP time.
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: mfptoms.c,v 1.2 1998/01/09 03:16:22 perry Exp $	*/
+
 /*
  * mfptoms - Return an asciized signed long fp number in milliseconds
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: auth12crypt.c,v 1.2 1998/01/09 03:15:53 perry Exp $	*/
+
 /*
  * auth12crypt.c - routines to support two stage NTP encryption
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: fptoa.c,v 1.2 1998/01/09 03:16:10 perry Exp $	*/
+
 /*
  * fptoa - return an asciized representation of an s_fp number
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: tsftomsu.c,v 1.2 1998/01/09 03:16:33 perry Exp $	*/
+
 /*
  * tsftomsu - convert from a time stamp fraction to milliseconds
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: clocktypes.c,v 1.2 1998/01/09 03:16:05 perry Exp $	*/
+
 /*
  * Data for pretty printing clock types
  */

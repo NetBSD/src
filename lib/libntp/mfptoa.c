@@ -1,3 +1,5 @@
+/*	$NetBSD: mfptoa.c,v 1.2 1998/01/09 03:16:20 perry Exp $	*/
+
 /*
  * mfptoa - Return an asciized representation of a signed long fp number
  */
