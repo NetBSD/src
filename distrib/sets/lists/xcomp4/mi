@@ -1,5 +1,5 @@
-# $NetBSD: mi,v 1.8 2004/03/06 20:46:30 heas Exp $
-./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
+# $NetBSD: mi,v 1.9 2005/03/18 20:45:42 tron Exp $
+./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete obsolete
 ./usr/X11R6/bin/ccmakedep
 ./usr/X11R6/bin/cleanlinks
 ./usr/X11R6/bin/freetype-config
@@ -176,7 +176,7 @@
 ./usr/X11R6/include/X11/Xft
 ./usr/X11R6/include/X11/Xft/Xft.h
 ./usr/X11R6/include/X11/Xft/XftCompat.h
-./usr/X11R6/include/X11/Xft/XftFreetype.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/X11/Xft/XftFreetype.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/X11/Xfuncproto.h
 ./usr/X11R6/include/X11/Xfuncs.h
 ./usr/X11R6/include/X11/Xlib.h
@@ -262,6 +262,8 @@
 ./usr/X11R6/include/X11/extensions/Xvlib.h
 ./usr/X11R6/include/X11/extensions/Xvproto.h
 ./usr/X11R6/include/X11/extensions/bigreqstr.h
+./usr/X11R6/include/X11/extensions/dmxext.h
+./usr/X11R6/include/X11/extensions/dmxproto.h
 ./usr/X11R6/include/X11/extensions/extutil.h
 ./usr/X11R6/include/X11/extensions/fontcache.h
 ./usr/X11R6/include/X11/extensions/fontcacheP.h
@@ -278,6 +280,7 @@
 ./usr/X11R6/include/X11/extensions/multibufst.h
 ./usr/X11R6/include/X11/extensions/panoramiXext.h
 ./usr/X11R6/include/X11/extensions/panoramiXproto.h
+./usr/X11R6/include/X11/extensions/panoramiXwrap.h
 ./usr/X11R6/include/X11/extensions/randr.h
 ./usr/X11R6/include/X11/extensions/randrproto.h
 ./usr/X11R6/include/X11/extensions/record.h
@@ -309,13 +312,13 @@
 ./usr/X11R6/include/X11/fonts/FS.h
 ./usr/X11R6/include/X11/fonts/FSlib.h
 ./usr/X11R6/include/X11/fonts/FSproto.h
-./usr/X11R6/include/X11/fonts/codeconv
-./usr/X11R6/include/X11/fonts/codeconv/cconvversion.h
-./usr/X11R6/include/X11/fonts/codeconv/xttcap.h
-./usr/X11R6/include/X11/fonts/codeconv/xttcconv.h
-./usr/X11R6/include/X11/fonts/codeconv/xttcconvP.h
-./usr/X11R6/include/X11/fonts/codeconv/xttcommon.h
-./usr/X11R6/include/X11/fonts/codeconv/xttversion.h
+./usr/X11R6/include/X11/fonts/codeconv			xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/cconvversion.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/xttcap.h		xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/xttcconv.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/xttcconvP.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/xttcommon.h	xcomp-obsolete obsolete
+./usr/X11R6/include/X11/fonts/codeconv/xttversion.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/X11/fonts/fontenc.h
 ./usr/X11R6/include/X11/fonts/fsmasks.h
 ./usr/X11R6/include/X11/keysym.h
@@ -334,8 +337,9 @@
 ./usr/X11R6/include/freetype2/freetype/cache/ftcglyph.h
 ./usr/X11R6/include/freetype2/freetype/cache/ftcimage.h
 ./usr/X11R6/include/freetype2/freetype/cache/ftcmanag.h
+./usr/X11R6/include/freetype2/freetype/cache/ftcmru.h
 ./usr/X11R6/include/freetype2/freetype/cache/ftcsbits.h
-./usr/X11R6/include/freetype2/freetype/cache/ftlru.h
+./usr/X11R6/include/freetype2/freetype/cache/ftlru.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/config
 ./usr/X11R6/include/freetype2/freetype/config/ftconfig.h
 ./usr/X11R6/include/freetype2/freetype/config/ftheader.h
@@ -354,16 +358,19 @@
 ./usr/X11R6/include/freetype2/freetype/ftimage.h
 ./usr/X11R6/include/freetype2/freetype/ftincrem.h
 ./usr/X11R6/include/freetype2/freetype/ftlist.h
+./usr/X11R6/include/freetype2/freetype/ftlzw.h
 ./usr/X11R6/include/freetype2/freetype/ftmac.h
 ./usr/X11R6/include/freetype2/freetype/ftmm.h
+./usr/X11R6/include/freetype2/freetype/ftmodapi.h
 ./usr/X11R6/include/freetype2/freetype/ftmoderr.h
-./usr/X11R6/include/freetype2/freetype/ftmodule.h
+./usr/X11R6/include/freetype2/freetype/ftmodule.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/ftoutln.h
 ./usr/X11R6/include/freetype2/freetype/ftpfr.h
 ./usr/X11R6/include/freetype2/freetype/ftrender.h
 ./usr/X11R6/include/freetype2/freetype/ftsizes.h
 ./usr/X11R6/include/freetype2/freetype/ftsnames.h
-./usr/X11R6/include/freetype2/freetype/ftstroker.h
+./usr/X11R6/include/freetype2/freetype/ftstroke.h
+./usr/X11R6/include/freetype2/freetype/ftstroker.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/ftsynth.h
 ./usr/X11R6/include/freetype2/freetype/ftsysio.h
 ./usr/X11R6/include/freetype2/freetype/ftsysmem.h
@@ -374,37 +381,52 @@
 ./usr/X11R6/include/freetype2/freetype/ftxf86.h
 ./usr/X11R6/include/freetype2/freetype/internal
 ./usr/X11R6/include/freetype2/freetype/internal/autohint.h
-./usr/X11R6/include/freetype2/freetype/internal/bdftypes.h
-./usr/X11R6/include/freetype2/freetype/internal/cfftypes.h
-./usr/X11R6/include/freetype2/freetype/internal/fnttypes.h
+./usr/X11R6/include/freetype2/freetype/internal/bdftypes.h	xcomp-obsolete obsolete
+./usr/X11R6/include/freetype2/freetype/internal/cfftypes.h	xcomp-obsolete obsolete
+./usr/X11R6/include/freetype2/freetype/internal/fnttypes.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftcalc.h
-./usr/X11R6/include/freetype2/freetype/internal/ftcore.h
+./usr/X11R6/include/freetype2/freetype/internal/ftcore.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftdebug.h
 ./usr/X11R6/include/freetype2/freetype/internal/ftdriver.h
-./usr/X11R6/include/freetype2/freetype/internal/ftexcept.h
-./usr/X11R6/include/freetype2/freetype/internal/ftextend.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/freetype2/freetype/internal/ftexcept.h	xcomp-obsolete obsolete
+./usr/X11R6/include/freetype2/freetype/internal/ftextend.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftgloadr.h
-./usr/X11R6/include/freetype2/freetype/internal/fthash.h
+./usr/X11R6/include/freetype2/freetype/internal/fthash.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftmemory.h
-./usr/X11R6/include/freetype2/freetype/internal/ftobject.h
+./usr/X11R6/include/freetype2/freetype/internal/ftobject.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/ftobjs.h
+./usr/X11R6/include/freetype2/freetype/internal/ftrfork.h
+./usr/X11R6/include/freetype2/freetype/internal/ftserv.h
 ./usr/X11R6/include/freetype2/freetype/internal/ftstream.h
 ./usr/X11R6/include/freetype2/freetype/internal/fttrace.h
 ./usr/X11R6/include/freetype2/freetype/internal/internal.h
 ./usr/X11R6/include/freetype2/freetype/internal/pcftypes.h
-./usr/X11R6/include/freetype2/freetype/internal/pfr.h
+./usr/X11R6/include/freetype2/freetype/internal/pfr.h		xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/psaux.h
-./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete	obsolete
+./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/pshints.h
-./usr/X11R6/include/freetype2/freetype/internal/psnames.h
+./usr/X11R6/include/freetype2/freetype/internal/psnames.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/sfnt.h
 ./usr/X11R6/include/freetype2/freetype/internal/t1types.h
-./usr/X11R6/include/freetype2/freetype/internal/t42types.h
+./usr/X11R6/include/freetype2/freetype/internal/t42types.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/tttypes.h
+./usr/X11R6/include/freetype2/freetype/internal/services
+./usr/X11R6/include/freetype2/freetype/internal/services/svbdf.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svgldict.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svmm.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svpfr.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svpostnm.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svpscmap.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svpsinfo.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svsfnt.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svttcmap.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svwinfnt.h
+./usr/X11R6/include/freetype2/freetype/internal/services/svxf86nm.h
 ./usr/X11R6/include/freetype2/freetype/t1tables.h
 ./usr/X11R6/include/freetype2/freetype/ttnameid.h
 ./usr/X11R6/include/freetype2/freetype/tttables.h
 ./usr/X11R6/include/freetype2/freetype/tttags.h
+./usr/X11R6/include/freetype2/freetype/ttunpat.h
 ./usr/X11R6/include/freetype2/ft2build.h		xcomp-obsolete obsolete
 ./usr/X11R6/include/ft2build.h
 ./usr/X11R6/lib/X11/config/Amoeba.cf
@@ -545,6 +567,7 @@
 ./usr/X11R6/lib/libXvMC.a
 ./usr/X11R6/lib/libdps.a
 ./usr/X11R6/lib/libdpstk.a
+./usr/X11R6/lib/libdmx.a
 ./usr/X11R6/lib/libexpat.a
 ./usr/X11R6/lib/libfntstubs.a
 ./usr/X11R6/lib/libfontconfig.a
@@ -600,6 +623,25 @@
 ./usr/X11R6/man/cat3/DisplayString.0
 ./usr/X11R6/man/cat3/DisplayWidth.0
 ./usr/X11R6/man/cat3/DisplayWidthMM.0
+./usr/X11R6/man/cat3/DMX.0
+./usr/X11R6/man/cat3/DMXAddBackendInput.0
+./usr/X11R6/man/cat3/DMXAddConsoleInput.0
+./usr/X11R6/man/cat3/DMXAddInput.0
+./usr/X11R6/man/cat3/DMXAddScreen.0
+./usr/X11R6/man/cat3/DMXChangeDesktopAttributes.0
+./usr/X11R6/man/cat3/DMXChangeScreensAttributes.0
+./usr/X11R6/man/cat3/DMXForceWindowCreation.0
+./usr/X11R6/man/cat3/DMXGetDesktopAttributes.0
+./usr/X11R6/man/cat3/DMXGetInputAttributes.0
+./usr/X11R6/man/cat3/DMXGetInputCount.0
+./usr/X11R6/man/cat3/DMXGetScreenAttributes.0
+./usr/X11R6/man/cat3/DMXGetScreenCount.0
+./usr/X11R6/man/cat3/DMXGetWindowAttributes.0
+./usr/X11R6/man/cat3/DMXQueryExtension.0
+./usr/X11R6/man/cat3/DMXQueryVersion.0
+./usr/X11R6/man/cat3/DMXRemoveInput.0
+./usr/X11R6/man/cat3/DMXRemoveScreen.0
+./usr/X11R6/man/cat3/DMXSync.0
 ./usr/X11R6/man/cat3/DoesBackingStore.0
 ./usr/X11R6/man/cat3/DoesSaveUnders.0
 ./usr/X11R6/man/cat3/EventMaskOfScreen.0
@@ -646,7 +688,7 @@
 ./usr/X11R6/man/cat3/WhitePixelOfScreen.0
 ./usr/X11R6/man/cat3/WidthMMOfScreen.0
 ./usr/X11R6/man/cat3/WidthOfScreen.0
-./usr/X11R6/man/cat3/X.0		xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/X.0		xcomp-obsolete obsolete
 ./usr/X11R6/man/cat3/XActivateScreenSaver.0
 ./usr/X11R6/man/cat3/XAddConnectionWatch.0
 ./usr/X11R6/man/cat3/XAddHost.0
@@ -711,7 +753,7 @@
 ./usr/X11R6/man/cat3/XConfigureEvent.0
 ./usr/X11R6/man/cat3/XConfigureRequestEvent.0
 ./usr/X11R6/man/cat3/XConfigureWindow.0
-./usr/X11R6/man/cat3/XConsortium.0	xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/XConsortium.0	xcomp-obsolete obsolete
 ./usr/X11R6/man/cat3/XContextDependentDrawing.0
 ./usr/X11R6/man/cat3/XContextualDrawing.0
 ./usr/X11R6/man/cat3/XConvertCase.0
@@ -989,7 +1031,7 @@
 ./usr/X11R6/man/cat3/XRaiseWindow.0
 ./usr/X11R6/man/cat3/XReadBitmapFile.0
 ./usr/X11R6/man/cat3/XReadBitmapFileData.0
-./usr/X11R6/man/cat3/XRebindKeySym.0	xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/XRebindKeySym.0	xcomp-obsolete obsolete
 ./usr/X11R6/man/cat3/XRebindKeysym.0
 ./usr/X11R6/man/cat3/XRecolorCursor.0
 ./usr/X11R6/man/cat3/XReconfigureWMWindow.0
@@ -1116,7 +1158,7 @@
 ./usr/X11R6/man/cat3/XShrinkRegion.0
 ./usr/X11R6/man/cat3/XSizeHints.0
 ./usr/X11R6/man/cat3/XStandardColormap.0
-./usr/X11R6/man/cat3/XStandards.0	xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/XStandards.0	xcomp-obsolete obsolete
 ./usr/X11R6/man/cat3/XStoreBuffer.0
 ./usr/X11R6/man/cat3/XStoreBytes.0
 ./usr/X11R6/man/cat3/XStoreColor.0
@@ -1295,7 +1337,7 @@
 ./usr/X11R6/man/cat3/XrmStringToQuarkList.0
 ./usr/X11R6/man/cat3/XrmUniqueQuark.0
 ./usr/X11R6/man/cat3/XrmValue.0
-./usr/X11R6/man/cat3/Xsecurity.0	xcomp-obsolete	obsolete
+./usr/X11R6/man/cat3/Xsecurity.0	xcomp-obsolete obsolete
 ./usr/X11R6/man/cat3/Xss.0
 ./usr/X11R6/man/cat3/XtAddActions.0
 ./usr/X11R6/man/cat3/XtAddCallback.0

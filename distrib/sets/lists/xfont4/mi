@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: mi,v 1.7 2005/03/18 20:45:43 tron Exp $
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-13.pcf.gz
@@ -3813,6 +3813,7 @@
 ./usr/X11R6/lib/X11/fonts/TTF/Vera.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/VeraBI.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/VeraBd.ttf
+./usr/X11R6/lib/X11/fonts/TTF/VeraIt.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/VeraMoBI.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/VeraMoBd.ttf
 ./usr/X11R6/lib/X11/fonts/TTF/VeraMoIt.ttf
@@ -4003,6 +4004,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/large
 ./usr/X11R6/lib/X11/fonts/encodings/large/big5.eten-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/big5hkscs-0.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/cns11643-1.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/encodings.dir
 ./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-1.enc.gz
@@ -4029,6 +4031,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/mulearabic-1.enc
 ./usr/X11R6/lib/X11/fonts/encodings/mulearabic-2.enc
 ./usr/X11R6/lib/X11/fonts/encodings/mulelao-1.enc
+./usr/X11R6/lib/X11/fonts/encodings/sun_eu_greek.enc
 ./usr/X11R6/lib/X11/fonts/encodings/tcvn-0.enc
 ./usr/X11R6/lib/X11/fonts/encodings/tis620-2.enc
 ./usr/X11R6/lib/X11/fonts/encodings/viscii1.1-1.enc.gz
