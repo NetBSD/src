@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
+.\"	$NetBSD: ypbind.8,v 1.3 1996/10/01 00:22:29 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,8 +45,10 @@
 .Op Fl ypset
 .Nm ypbind
 .Op Fl ypsetme
+.Nm ypbind
+.Op Fl broadcast
 .Sh DESCRIPTION
-.Nm Ypbind
+.Nm
 finds the server for a particular YP domain and stores information about it
 in a
 .Pa binding file.
@@ -58,21 +60,43 @@ in a file named with the convention
 .Pa domainname.version.
 (The YP system only supplies information on version 2.)
 .Pp
-When
-.Nm ypbind
-starts, it broadcasts looking for a process willing to serve maps for the
-client's domain.  Once a binding is established,
-.Nm ypbind
+If
+.Nm
+is started without the
+.Fl broadcast
+option,
+.Nm
+steps through the list of YP servers specified in
+.Pa /var/yp/domainname/.ypservers
+and contacts each in turn attempting to bind to that server. 
+It is strongly recommended that these hosts are in the local
+hosts file, and that hosts are looked up in local files before
+the YP hosts map.
+.Pp
+If
+.Nm
+is started with the
+.Fl broadcast
+option, or if
+.Pa /var/yp/domainname/.ypservers
+does not exist,
+.Nm
+broadcasts to find a process willing to serve maps for the
+client's domain.
+.Pp
+Once a binding is established,
+.Nm
 maintains this binding by periodically communicating with the server to which
-it is bound.  If the binding is somehow lost, e.g by server reboot,
-.Nm ypbind
+it is bound.
+If the binding is somehow lost, e.g by server reboot,
+.Nm
 marks the domain as unbound and attempts to re-establish the binding.
 When the binding is once again successful,
-.Nm ypbind
+.Nm
 marks the domain as bound and resumes its periodic check.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width "-broadcast"
 .It Fl ypset
 .Xr ypset 8
 may be used to change the server to which a domain is bound.
@@ -80,21 +104,21 @@ may be used to change the server to which a domain is bound.
 .Xr ypset 8
 may be used only from this machine to change the server
 to which a domain is bound.
+.It Fl broadcast
+sends a broadcast requesting a YP server to which to bind.
 .El
 .Pp
 The
-.Fl ypset
+.Fl ypset ,
+.Fl ypsetme ,
 and
-.Fl ypsetme
-options are dangerous and should be avoided.
-.Pp
-If the directory
-.Pa /var/yp
-exists, YP is started automatically at boot time by
-.Pa /etc/rc .
+.Fl broadcast
+options are inherently insecure and should be avoided.
 .Sh FILES
 .Pa /var/yp/bindings/domainname.version
 - binding file for domainname
+.Pa /var/yp/domainname/.ypservers
+- explicit servers to bind to.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
@@ -104,4 +128,7 @@ exists, YP is started automatically at boot time by
 .Xr ypwhich 1 ,
 .Xr yp 8
 .Sh AUTHOR
-Theo De Raadt
+This version of
+.Nm ypbind
+was originally implemented by Theo de Raadt.  The .ypservers support was
+implemented by Luke Mewburn.
