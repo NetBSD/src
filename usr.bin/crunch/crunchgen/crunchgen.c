@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.41 2003/01/29 10:32:34 simonb Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.42 2003/02/18 18:12:07 msaitoh Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.41 2003/01/29 10:32:34 simonb Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.42 2003/02/18 18:12:07 msaitoh Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -846,7 +846,10 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "DPADD+= ${CRUNCHED_OBJS}\n");
     fprintf(outmk, "LDADD+= ${CRUNCHED_OBJS} ");
     output_strlst(outmk, libs);
-    fprintf(outmk, "CRUNCHEDOBJSDIRS=${CRUNCHED_OBJS:R}\n\n");
+    fprintf(outmk, "CRUNCHEDOBJSDIRS=");
+    for(p = progs; p != NULL; p = p->next)
+	fprintf(outmk, " %s", p->ident);
+    fprintf(outmk, "\n\n");
     
     fprintf(outmk, "SUBMAKE_TARGETS=");
     for(p = progs; p != NULL; p = p->next)
