@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.2 2002/02/20 20:31:07 christos Exp $	*/
+/*	$NetBSD: descr.c,v 1.3 2003/03/08 07:45:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: descr.c,v 1.3 2003/03/08 07:45:58 lukem Exp $");
 
 #include <sys/types.h>
 

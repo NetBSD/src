@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.9 2002/05/29 18:15:18 christos Exp $ */
+/* $NetBSD: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -31,7 +31,10 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.9 2002/05/29 18:15:18 christos Exp $ */
+/* @(#) $Id: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $");
 
 /* #define GEN_TREES_H */
 
