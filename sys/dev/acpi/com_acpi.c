@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.1 2002/12/28 06:20:15 jmcneill Exp $ */
+/* $NetBSD: com_acpi.c,v 1.2 2002/12/28 07:30:33 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.1 2002/12/28 06:20:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.2 2002/12/28 07:30:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ CFATTACH_DECL(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
  * Supported device IDs
  */
 
-static char *com_acpi_ids[] = {
+static const char * const com_acpi_ids[] = {
 	"PNP0500",	/* Standard PC COM port */
 	"PNP0501",	/* 16550A-compatible COM port */
 	"PNP0510",	/* Generic IRDA-compatible device */
