@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.6 1994/01/13 12:59:30 briggs Exp $
+ * $Id: console.c,v 1.7 1994/01/20 23:57:09 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -150,6 +150,7 @@ int numsb;  /* Number of lines scrolling back -- Used by adb */
 static int cursoron, cursorlit, cursortype = C_BLOCK | C_SOLID;
 
 void	macconputchar(int, u_char);
+void	macputchar(dev_t, u_char);
 
 static getvideoparams()
 {
@@ -1338,6 +1339,7 @@ static int maccon_flags = 0;
 
 /* These routines are the actual device driver: */
 
+#if 0
 static char maccon_id_string[128] ;
 
 coninit(register struct macdriver *md)
@@ -1353,7 +1355,9 @@ coninit(register struct macdriver *md)
 */
    grfconfig();
 }
+#endif
 
+void
 constart(register struct tty *tp)
 {
    void		ttrstrt(struct tty *);
@@ -1362,7 +1366,7 @@ constart(register struct tty *tp)
  
    unit = minor(tp->t_dev);
    if (unit >= NCON)
-	return ENODEV;
+	return;
    if (unit == curvt) restoresb();
 
    s = spltty();
