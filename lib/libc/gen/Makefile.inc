@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.46 1994/05/28 23:16:48 mycroft Exp $
+#	$Id: Makefile.inc,v 1.47 1994/06/11 16:40:46 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -50,7 +50,7 @@ SRCS+=	_setjmp.S fabs.S frexp.c infinity.c isnan.c ldexp.c modf.S
 SRCS+=	fixunsdfsi.S mul.S umul.S saveregs.S setjmp.S
 .endif
 
-MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 \
+MAN3+=	alarm.0 clock.0 confstr.0 ctermid.0 ctime.0 ctype.0 \
 	daemon.0 devname.0 directory.0 err.0 exec.0 fnmatch.0 frexp.0 fts.0 \
 	getbsize.0 getcap.0 getcwd.0 getdomainname.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 \
