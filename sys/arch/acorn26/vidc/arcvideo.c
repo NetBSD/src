@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.6 2002/10/02 03:26:28 thorpej Exp $ */
+/* $NetBSD: arcvideo.c,v 1.7 2003/07/14 15:17:21 lukem Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.6 2002/10/02 03:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.7 2003/07/14 15:17:21 lukem Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>

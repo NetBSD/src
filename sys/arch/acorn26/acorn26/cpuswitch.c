@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.1 2003/05/05 22:43:39 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.2 2003/07/14 15:17:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cpuswitch.c,v 1.1 2003/05/05 22:43:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.2 2003/07/14 15:17:15 lukem Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>

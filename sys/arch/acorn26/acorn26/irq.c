@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.3 2003/07/14 15:17:15 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.3 2003/07/14 15:17:15 lukem Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
