@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2002/08/19 09:46:39 lukem Exp $
-
-LIB=		bfd
+#	$NetBSD: Makefile,v 1.30 2002/08/19 15:01:34 lukem Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -8,6 +6,8 @@ NOMAN=		# defined
 NOPROFILE=	# defined
 
 .include <bsd.own.mk>
+
+LIB=		bfd
 
 .if defined(USE_NEW_TOOLCHAIN)
 
