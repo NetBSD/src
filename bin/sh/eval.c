@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.77 2004/06/26 14:09:58 dsl Exp $	*/
+/*	$NetBSD: eval.c,v 1.78 2004/06/26 22:09:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.77 2004/06/26 14:09:58 dsl Exp $");
+__RCSID("$NetBSD: eval.c,v 1.78 2004/06/26 22:09:49 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ evalfor(union node *n, int flags)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next) {
-		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE | EXP_IFS_SPLIT);
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
 		if (evalskip)
 			goto out;
 	}
@@ -702,6 +702,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 
 	arglist.lastp = &arglist.list;
 	varflag = 1;
+	/* Expand arguments, ignoring the initial 'name=value' ones */
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		char *p = argp->narg.text;
 		if (varflag && is_name(*p)) {
@@ -718,6 +719,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 
 	expredir(cmd->ncmd.redirect);
 
+	/* Now do the initial 'name=value' ones we skipped above */
 	varlist.lastp = &varlist.list;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		char *p = argp->narg.text;
