@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.27.10.1 2000/11/20 19:58:35 bouyer Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.27.10.2 2001/03/29 09:57:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -103,7 +103,7 @@ gtscattach(pdp, dp, auxp)
 {
 	volatile struct sdmac *rp;
 	struct gvpbus_args *gap;
-	struct sbic_softc *sc (struct sbic_softc *)dp;
+	struct sbic_softc *sc = (struct sbic_softc *)dp;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 

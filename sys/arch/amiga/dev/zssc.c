@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.28.8.1 2001/03/29 09:02:57 bouyer Exp $	*/
+/*	$NetBSD: zssc.c,v 1.28.8.2 2001/03/29 09:57:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,17 +58,6 @@ int  zssc_dmaintr __P((void *));
 void zssc_dump __P((void));
 #endif
 
-struct scsipi_device zssc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
-
-#ifdef DEBUG
-#endif
-
 struct cfattach zssc_ca = {
 	sizeof(struct siop_softc), zsscmatch, zsscattach
 };
@@ -121,7 +110,7 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_ioctl = NULL;
 	sc->sc_adapter.adapt_minphys = siop_minphys;
-	sc->sc_adapter.adapt_request = siop_scsi_request;
+	sc->sc_adapter.adapt_request = siop_scsipi_request;
 
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;

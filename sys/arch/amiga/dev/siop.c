@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.43.2.2 2001/03/29 09:02:56 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.43.2.3 2001/03/29 09:57:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -81,7 +81,7 @@ void siopreset __P((struct siop_softc *));
 void siopsetdelay __P((int));
 void siop_scsidone __P((struct siop_acb *, int));
 void siop_sched __P((struct siop_softc *));
-int  siop_poll __P((struct siop_softc *, struct siop_acb *));
+void siop_poll __P((struct siop_softc *, struct siop_acb *));
 void siopintr __P((struct siop_softc *));
 void scsi_period_to_siop __P((struct siop_softc *, int));
 void siop_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, int)); 
@@ -228,7 +228,7 @@ siop_scsipi_request(chan, req, arg)
 		 * This should never happen as we track the resources
 		 * in the mid-layer.
 		 */
-		if (abc == NULL) {
+		if (acb == NULL) {
 			scsipi_printaddr(periph);
 			printf("unable to allocate acb\n");
 			panic("siop_scsipi_request");
@@ -259,9 +259,10 @@ siop_scsipi_request(chan, req, arg)
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 		return;
+	}
 }
 
-int
+void
 siop_poll(sc, acb)
 	struct siop_softc *sc;
 	struct siop_acb *acb;
@@ -299,7 +300,7 @@ siop_poll(sc, acb)
 				--to;
 				if (to <= 0) {
 					siopreset(sc);
-					return(COMPLETE);
+					return;
 				}
 			}
 			delay(20);
@@ -322,7 +323,6 @@ siop_poll(sc, acb)
 			break;
 	}
 	splx(s);
-	return (COMPLETE);
 }
 
 /*
@@ -406,7 +406,7 @@ siop_scsidone(acb, stat)
 
 	if (xs->error == XS_NOERROR) {
 		if (stat == SCSI_CHECK || stat == SCSI_BUSY)
-			xs->error == XS_BUSY;
+			xs->error = XS_BUSY;
 	}
 
 	/*
@@ -622,7 +622,7 @@ siopreset(sc)
 	rp->siop_dmode = 0x80;	/* burst length = 4 */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = 1 << sc->sc_channel->chan_id;
+	rp->siop_scid = 1 << sc->sc_channel.chan_id;
 	rp->siop_dwt = 0x00;
 	rp->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
 	rp->siop_ctest7 |= sc->sc_ctest7;
@@ -639,7 +639,7 @@ siopreset(sc)
 	splx (s);
 
 	delay (siop_reset_delay * 1000);
-	printf("siop id %d reset V%d\n", sc->sc_channel->chan_id,
+	printf("siop id %d reset V%d\n", sc->sc_channel.chan_id,
 	    rp->siop_ctest8 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {

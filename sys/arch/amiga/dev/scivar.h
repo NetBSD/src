@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.12.10.1 2000/11/20 19:58:42 bouyer Exp $	*/
+/*	$NetBSD: scivar.h,v 1.12.10.2 2001/03/29 09:57:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,6 @@ struct	sci_softc {
 	struct	isr sc_isr;
 	struct	scsipi_adapter sc_adapter;
 	struct	scsipi_channel sc_channel;
-	struct	sci_pending sc_xsstore[8][8];
 	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */
 
 	volatile u_char	*sci_data;	/* r: Current data */

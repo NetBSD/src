@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.5.2.2 2001/03/29 09:02:55 bouyer Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.5.2.3 2001/03/29 09:57:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -91,7 +91,7 @@ cbiiiscattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	struct siop_softc *sc (struct siop_softc *)dp;
+	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
 	siop_regmap_p rp;
         struct scsipi_adapter *adapt = &sc->sc_adapter;
