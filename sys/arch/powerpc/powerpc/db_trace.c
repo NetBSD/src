@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.31 2003/07/15 02:54:47 lukem Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.32 2003/08/12 18:34:50 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.32 2003/08/12 18:34:50 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -108,7 +108,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	void (*pr) __P((const char *, ...));
 {
 	db_addr_t frame, lr, *args;
-	db_addr_t fakeframe[2];
 	db_expr_t diff;
 	db_sym_t sym;
 	char *symname;
@@ -191,11 +190,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			break;
 		}
 
-		if (frame != (db_addr_t) fakeframe) {
-			(*pr)("0x%08lx: ", frame);
-		} else {
-			(*pr)("  <?>  : ");
-		}
+		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
 		    lr + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;
@@ -277,9 +272,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			    tf->tf_xtra[TF_PID]);
 #endif
 			(*pr)("\n");
-			fakeframe[0] = (db_addr_t) tf->fixreg[1];
-			fakeframe[1] = (db_addr_t) tf->lr;
-			frame = (db_addr_t) fakeframe;
+			frame = (db_addr_t) tf->fixreg[1];
 			in_kernel = !(tf->srr1 & PSL_PR);
 			if (kernel_only && !in_kernel)
 				break;
