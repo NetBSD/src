@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 2000/07/09 02:24:30 sommerfeld Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 2000/07/17 02:30:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.32 2000/07/09 02:24:30 sommerfeld Exp $");
+__RCSID("$NetBSD: conf.c,v 1.33 2000/07/17 02:30:52 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,9 +89,11 @@ init_curclass(void)
 	}
 
 	curclass.checkportcmd = 0;
+	REASSIGN(curclass.chroot, NULL);
 	REASSIGN(curclass.classname, NULL);
 	curclass.conversions =	NULL;
 	REASSIGN(curclass.display, NULL);
+	REASSIGN(curclass.homedir, NULL);
 	curclass.limit =	-1;		/* unlimited connections */
 	REASSIGN(curclass.limitfile, NULL);
 	curclass.maxrateget =	0;
@@ -106,6 +108,7 @@ init_curclass(void)
 	curclass.rateget =	0;
 	curclass.rateput =	0;
 	curclass.timeout =	900;		/* 15 minutes */
+	    /* curclass.type is set elsewhere */
 	curclass.umask =	027;
 	curclass.upload =	1;
 }
@@ -173,6 +176,13 @@ parse_conf(const char *findclass)
 				curclass.checkportcmd = 0;
 			else
 				curclass.checkportcmd = 1;
+
+		} else if (strcasecmp(word, "chroot") == 0) {
+			if (none || EMPTYSTR(arg))
+				arg = NULL;
+			else
+				arg = xstrdup(arg);
+			REASSIGN(curclass.chroot, arg);
 
 		} else if (strcasecmp(word, "classtype") == 0) {
 			if (!none && !EMPTYSTR(arg)) {
@@ -248,6 +258,13 @@ parse_conf(const char *findclass)
 			else
 				arg = xstrdup(arg);
 			REASSIGN(curclass.display, arg);
+
+		} else if (strcasecmp(word, "homedir") == 0) {
+			if (none || EMPTYSTR(arg))
+				arg = NULL;
+			else
+				arg = xstrdup(arg);
+			REASSIGN(curclass.homedir, arg);
 
 		} else if (strcasecmp(word, "limit") == 0) {
 			int limit;
@@ -494,7 +511,7 @@ show_chdir_messages(int code)
 		syslog(LOG_WARNING, "can't add `%s' to stringlist", cp);
 
 		/* First check for a display file */
-	(void)format_file(curclass.display, code);
+	(void)display_file(curclass.display, code);
 
 		/* Now see if there are any notify files */
 	if (EMPTYSTR(curclass.notify))
@@ -525,7 +542,7 @@ show_chdir_messages(int code)
 }
 
 int
-format_file(const char *file, int code)
+display_file(const char *file, int code)
 {
 	FILE   *f;
 	char   *buf, *p, *cwd;
@@ -619,6 +636,54 @@ format_file(const char *file, int code)
 	(void)fflush(stdout);
 	(void)fclose(f);
 	return (1);
+}
+
+/*
+ * Parse src, expanding '%' escapes, into dst (which must be at least
+ * MAXPATHLEN long).
+ */
+void
+format_path(char *dst, const char *src)
+{
+	size_t len;
+	const char *p;
+
+	dst[0] = '\0';
+	len = 0;
+	if (src == NULL)
+		return;
+
+	for (p = src; *p && len < MAXPATHLEN; p++) {
+		if (*p == '%') {
+			p++;
+			switch (*p) {
+
+			case 'c':
+				len += strlcpy(dst + len, curclass.classname,
+				    MAXPATHLEN - len);
+				break;
+
+			case 'd':
+				len += strlcpy(dst + len, pw->pw_dir,
+				    MAXPATHLEN - len);
+				break;
+
+			case 'u':
+				len += strlcpy(dst + len, pw->pw_name,
+				    MAXPATHLEN - len);
+				break;
+
+			case '%':
+				dst[len++] = '%';
+				break;
+
+			}
+		} else
+			dst[len++] = *p;
+	}
+	if (len < MAXPATHLEN)
+		dst[len] = '\0';
+	dst[MAXPATHLEN - 1] = '\0';
 }
 
 /*

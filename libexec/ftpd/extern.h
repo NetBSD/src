@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2000/07/08 18:24:28 sommerfeld Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2000/07/17 02:30:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,11 +110,12 @@ void	cprintf(FILE *, const char *, ...)
 void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
+int	display_file(const char *, int);
 char  **do_conversion(const char *);
 void	dologout(int);
 void	fatal(const char *);
 void	feat(void);
-int	format_file(const char *, int);
+void	format_path(char *, const char *);
 int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
 char   *getline(char *, int, FILE *);
@@ -178,9 +179,11 @@ struct ftpconv {
 
 struct ftpclass {
 	int		 checkportcmd;	/* Check PORT commands are valid */
+	char		*chroot;	/* Directory to chroot(2) to at login */
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
 	char		*display;	/* Files to display upon chdir */
+	char		*homedir;	/* Directory to chdir(2) to at login */
 	int	 	 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
 	int		 maxrateget;	/* Maximum get transfer rate throttle */
@@ -238,6 +241,7 @@ GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
 GLOBAL	gid_t		gidlist[NGROUPS_MAX];
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
+GLOBAL	char		homedir[MAXPATHLEN];
 #ifdef KERBEROS5
 GLOBAL	krb5_context	kcontext;
 #endif

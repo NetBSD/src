@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.99 2000/07/15 03:45:20 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.100 2000/07/17 02:30:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.99 2000/07/15 03:45:20 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.100 2000/07/17 02:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,6 +243,7 @@ main(int argc, char *argv[])
 	usedefault = 1;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 	hostname[0] = '\0';
+	homedir[0] = '\0';
 	gidcount = 0;
 
 	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlst:T:u:Uv")) != -1) {
@@ -432,11 +433,11 @@ main(int argc, char *argv[])
 	curclass.type = CLASS_REAL;
 
 	/* If logins are disabled, print out the message. */
-	if (format_file(_PATH_NOLOGIN, 530)) {
+	if (display_file(_PATH_NOLOGIN, 530)) {
 		reply(530, "System not available.");
 		exit(0);
 	}
-	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
+	(void)display_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
 	reply(220, "%s FTP server (%s) ready.", hostname, FTPD_VERSION);
 
@@ -749,8 +750,8 @@ void
 pass(const char *passwd)
 {
 	int		 rval;
-	const char	*cp, *shell, *home;
-	char		*class;
+	const char	*cp, *shell;
+	char		*class, root[MAXPATHLEN];
 
 	class = NULL;
 	if (logged_in || askpasswd == 0) {
@@ -903,17 +904,18 @@ pass(const char *passwd)
 	count_users();
 	if (curclass.limit != -1 && connections > curclass.limit) {
 		if (! EMPTYSTR(curclass.limitfile))
-			(void)format_file(conffilename(curclass.limitfile),530);
+			(void)display_file(conffilename(curclass.limitfile),
+			    530);
 		reply(530,
 		    "User %s access denied, connection limit of %d reached.",
 		    pw->pw_name, curclass.limit);
 		syslog(LOG_NOTICE,
-	"Maximum connection limit of %d for class %s reached, login refused",
-		    curclass.limit, curclass.classname);
+    "Maximum connection limit of %d for class %s reached, login refused for %s",
+		    curclass.limit, curclass.classname, pw->pw_name);
 		goto bad;
 	}
 
-	home = "/";
+	homedir[0] = '/';
 	switch (curclass.type) {
 	case CLASS_GUEST:
 		/*
@@ -921,37 +923,82 @@ pass(const char *passwd)
 		 * the old current directory will be accessible as "."
 		 * outside the new root!
 		 */
-		if (chroot(anondir ? anondir : pw->pw_dir) < 0 ||
-		    chdir("/") < 0) {
+		format_path(root,
+		    curclass.chroot ? curclass.chroot :
+		    anondir ? anondir :
+		    pw->pw_dir);
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    "/");
+		if (EMPTYSTR(homedir))
+			homedir[0] = '/';
+		if (EMPTYSTR(root) || chroot(root) < 0) {
+			syslog(LOG_NOTICE,
+			    "GUEST user %s: can't chroot to %s: %m",
+			    pw->pw_name, root);
+			goto bad_guest;
+		}
+		if (chdir(homedir) < 0) {
+			syslog(LOG_NOTICE,
+			    "GUEST user %s: can't chdir to %s: %m",
+			    pw->pw_name, homedir);
+ bad_guest:
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
 		break;
 	case CLASS_CHROOT:
-		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+		format_path(root,
+		    curclass.chroot ? curclass.chroot :
+		    pw->pw_dir);
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    "/");
+		if (EMPTYSTR(homedir))
+			homedir[0] = '/';
+		if (EMPTYSTR(root) || chroot(root) < 0) {
+			syslog(LOG_NOTICE,
+			    "CHROOT user %s: can't chroot to %s: %m",
+			    pw->pw_name, root);
+			goto bad_chroot;
+		}
+		if (chdir(homedir) < 0) {
+			syslog(LOG_NOTICE,
+			    "CHROOT user %s: can't chdir to %s: %m",
+			    pw->pw_name, homedir);
+ bad_chroot:
 			reply(550, "Can't change root.");
 			goto bad;
 		}
 		break;
 	case CLASS_REAL:
-		if (chdir(pw->pw_dir) < 0) {
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    pw->pw_dir);
+		if (EMPTYSTR(homedir) || chdir(homedir) < 0) {
 			if (chdir("/") < 0) {
+				syslog(LOG_NOTICE,
+				    "REAL user %s: can't chdir to %s: %m",
+				    pw->pw_name,
+				    !EMPTYSTR(homedir) ?  homedir : "/");
 				reply(530,
 				    "User %s: can't change directory to %s.",
-				    pw->pw_name, pw->pw_dir);
+				    pw->pw_name,
+				    !EMPTYSTR(homedir) ? homedir : "/");
 				goto bad;
-			} else
+			} else {
 				reply(-230,
 				    "No directory! Logging in with home=/");
-		} else
-			home = pw->pw_dir;
+				homedir[0] = '/';
+			}
+		}
 		break;
 	}
 	if (seteuid((uid_t)pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
-	setenv("HOME", home, 1);
+	setenv("HOME", homedir, 1);
 
 	if (curclass.type == CLASS_GUEST && passwd[0] == '-')
 		quietmessages = 1;
@@ -960,7 +1007,7 @@ pass(const char *passwd)
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
 	 */
-	(void)format_file(conffilename(curclass.motd), 230);
+	(void)display_file(conffilename(curclass.motd), 230);
 	show_chdir_messages(230);
 	if (curclass.type == CLASS_GUEST) {
 		reply(230, "Guest login ok, access restrictions apply.");
@@ -1814,9 +1861,9 @@ statcmd(void)
 		    curclass.classname, CURCLASSTYPE);
 		reply(0, "Check PORT/LPRT commands: %sabled",
 		    curclass.checkportcmd ? "en" : "dis");
-		if (curclass.display != NULL)
+		if (! EMPTYSTR(curclass.display))
 			reply(0, "Display file: %s", curclass.display);
-		if (curclass.notify != NULL)
+		if (! EMPTYSTR(curclass.notify))
 			reply(0, "Notify fileglob: %s", curclass.notify);
 		reply(0, "Idle timeout: %d, maximum timeout: %d",
 		    curclass.timeout, curclass.maxtimeout);
@@ -1828,7 +1875,11 @@ statcmd(void)
 		if (curclass.limitfile)
 			reply(0, "Connection limit exceeded file: %s",
 			    curclass.limitfile);
-		if (curclass.motd != NULL)
+		if (! EMPTYSTR(curclass.chroot))
+			reply(0, "Chroot format: %s", curclass.chroot);
+		if (! EMPTYSTR(curclass.homedir))
+			reply(0, "Homedir format: %s", curclass.homedir);
+		if (! EMPTYSTR(curclass.motd))
 			reply(0, "MotD file: %s", curclass.motd);
 		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
