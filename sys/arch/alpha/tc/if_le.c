@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1995/11/23 02:41:25 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1995/11/25 01:31:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -62,6 +62,9 @@
 #include <alpha/tc/asic.h>
 #include <alpha/tc/if_levar.h>
 #include <dev/ic/am7990reg.h>
+#define	LE_NEED_BUF_CONTIG
+#define	LE_NEED_BUF_GAP2
+#define	LE_NEED_BUF_GAP16
 #include <dev/ic/am7990var.h>
 
 /* access LANCE registers */
@@ -77,10 +80,6 @@ extern caddr_t le_iomem;
 
 #define	LE_SOFTC(unit)	lecd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
-
-#define	LE_NEED_BUF_CONTIG
-#define	LE_NEED_BUF_GAP2
-#define	LE_NEED_BUF_GAP16
 
 int lematch __P((struct device *, void *, void *));
 void leattach __P((struct device *, struct device *, void *));
