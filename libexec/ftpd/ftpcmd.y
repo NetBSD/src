@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpcmd.y,v 1.82 2005/01/05 10:31:27 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.83 2005/03/03 22:19:47 ginsbach Exp $	*/
 
 /*-
- * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.82 2005/01/05 10:31:27 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.83 2005/03/03 22:19:47 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,6 +511,8 @@ cmd
 		{
 			char *argv[] = { INTERNAL_LS, "-lgA", NULL };
 			
+			if (CURCLASS_FLAGS_ISSET(hidesymlinks))
+				argv[1] = "-LlgA";
 			if ($2)
 				retrieve(argv, "");
 		}
@@ -519,6 +521,8 @@ cmd
 		{
 			char *argv[] = { INTERNAL_LS, "-lgA", NULL, NULL };
 
+			if (CURCLASS_FLAGS_ISSET(hidesymlinks))
+				argv[1] = "-LlgA";
 			if ($2 && $4 != NULL) {
 				argv[2] = $4;
 				retrieve(argv, $4);
