@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.4 1998/01/19 02:47:33 sakamoto Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.5 1998/01/19 11:39:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -171,9 +171,10 @@ sysbeep(pitch, period)
 	}
 	if (!beeping || last_pitch != pitch) {
 		disable_intr();
-		isa_outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		isa_outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-		isa_outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
+		isa_outb(IO_TIMER1 + TIMER_MODE,
+			 TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
+		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) % 256);
+		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) / 256);
 		isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
 		enable_intr();
 	}
