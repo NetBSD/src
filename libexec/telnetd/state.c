@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.13 2000/10/10 19:54:39 is Exp $	*/
+/*	$NetBSD: state.c,v 1.14 2001/02/04 22:32:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,18 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.13 2000/10/10 19:54:39 is Exp $");
+__RCSID("$NetBSD: state.c,v 1.14 2001/02/04 22:32:16 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
-#if	defined(AUTHENTICATION)
-#include <libtelnet/auth.h>
-#endif
-
-#if defined(ENCRYPTION)
-#include <libtelnet/encrypt.h>
-#endif
 
 static int envvarok __P((char *));
 
@@ -471,15 +464,17 @@ send_do(option, init)
 	DIAG(TD_OPTIONS, printoption("td: send do", option));
 }
 
-#ifdef	AUTHENTICATION
-extern void auth_request __P((void));	/* libtelnet */
-#endif
 #ifdef	LINEMODE
 extern void doclientstat __P((void));
+#endif
+#if 0
+#ifdef	AUTHENTICATION
+extern void auth_request __P((void));	/* libtelnet */
 #endif
 #ifdef	ENCRYPTION
 extern void encrypt_send_support __P((void));
 #endif	/* ENCRYPTION */
+#endif
 
 	void
 willoption(option)

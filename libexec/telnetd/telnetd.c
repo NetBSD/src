@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.24 2001/01/10 02:51:37 lukem Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.25 2001/02/04 22:32:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.24 2001/01/10 02:51:37 lukem Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.25 2001/02/04 22:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,12 +120,7 @@ struct	socket_security ss;
 #endif
 
 #if	defined(AUTHENTICATION)
-#include <libtelnet/auth.h>
 int	auth_level = 0;
-#endif
-
-#if defined(ENCRYPTION)
-#include <libtelnet/encrypt.h>
 #endif
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
@@ -137,6 +132,10 @@ int	require_secure_login = 0;
 #endif
 
 extern	int utmp_len;
+extern int require_hwpreauth;
+#ifdef KRB5
+extern krb5_context telnet_context;
+#endif
 int	registerd_host_only = 0;
 
 #ifdef	STREAMSPTY
@@ -183,7 +182,6 @@ int keepalive = 1;
 char *gettyname = "default";
 char *progname;
 
-extern void usage P((void));
 int main __P((int, char *[]));
 void usage __P((void));
 int getterminaltype __P((char *));
@@ -271,7 +269,6 @@ main(argc, argv)
 			 * Check for required authentication level
 			 */
 			if (strcmp(optarg, "debug") == 0) {
-				extern int auth_debug_mode;
 				auth_debug_mode = 1;
 			} else if (strcasecmp(optarg, "none") == 0) {
 				auth_level = 0;
@@ -333,7 +330,6 @@ main(argc, argv)
 #ifdef	ENCRYPTION
 		case 'e':
 			if (strcmp(optarg, "debug") == 0) {
-				extern int encrypt_debug_mode;
 				encrypt_debug_mode = 1;
 				break;
 			}
@@ -353,7 +349,6 @@ main(argc, argv)
 #ifdef	KRB5
 		case 'H':
 		    {
-			extern int require_hwpreauth;
 			require_hwpreauth = 1;
 			break;
 		    }
@@ -417,7 +412,6 @@ main(argc, argv)
 #ifdef	KRB5
 		case 'R':
 		    {
-			extern krb5_context telnet_context;
 			krb5_error_code retval;
 
 			if (telnet_context == 0) {

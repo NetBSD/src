@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.21 2001/01/10 02:51:37 lukem Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.22 2001/02/04 22:32:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.21 2001/01/10 02:51:37 lukem Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.22 2001/02/04 22:32:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +49,6 @@ __RCSID("$NetBSD: sys_term.c,v 1.21 2001/01/10 02:51:37 lukem Exp $");
 
 #include <sys/cdefs.h>
 #define P __P
-
-#if	defined(AUTHENTICATION)
-#include <libtelnet/auth.h>
-#endif
 
 #if defined(CRAY) || defined(__hpux)
 # define PARENT_DOES_UTMP
@@ -184,7 +180,6 @@ int ttyfd = -1;
 
 void getptyslave __P((void));
 int cleanopen __P((char *));
-void init_env __P((void));
 char **addarg __P((char **, char *));
 void scrub_env __P((void));
 int getent __P((char *, char *));
@@ -1106,7 +1101,14 @@ extern void utmp_sig_notify P((int));
  * that is necessary.  The return value is a file descriptor
  * for the slave side.
  */
-	void
+#if	!defined(CRAY) || !defined(NEWINIT)
+extern int def_tspeed, def_rspeed;
+# ifdef	TIOCGWINSZ
+	extern int def_row, def_col;
+# endif
+#endif
+
+    void
 getptyslave()
 {
 	register int t = -1;
@@ -1117,9 +1119,7 @@ getptyslave()
 # endif
 # ifdef	TIOCGWINSZ
 	struct winsize ws;
-	extern int def_row, def_col;
 # endif
-	extern int def_tspeed, def_rspeed;
 	/*
 	 * Opening the slave side may cause initilization of the
 	 * kernel tty structure.  We need remember the state of
@@ -1555,7 +1555,6 @@ startslave(host, autologin, autoname)
 }
 
 char	*envinit[3];
-extern char **environ;
 
 	void
 init_env()
@@ -1581,6 +1580,7 @@ init_env()
  * Assuming that we are now running as a child processes, this
  * function will turn us into the login process.
  */
+extern char *gettyname;
 
 	void
 start_login(host, autologin, name)
@@ -1589,7 +1589,6 @@ start_login(host, autologin, name)
 	char *name;
 {
 	register char **argv;
-	extern char *gettyname;
 #define	TABBUFSIZ	512
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
