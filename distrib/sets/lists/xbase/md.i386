@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.11 2002/08/03 23:58:06 chris Exp $
+# $NetBSD: md.i386,v 1.12 2003/02/15 09:05:52 tron Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/kbd_mode
@@ -19,7 +19,6 @@
 ./usr/X11R6/man/cat1/beforelight.0
 ./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/kbd_mode.0
-./usr/X11R6/man/cat1/scanpci.0
 ./usr/X11R6/man/cat1/xf86config.0
 ./usr/X11R6/man/cat1/xvidtune.0
 ./usr/X11R6/man/cat5
