@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.19 1999/09/03 21:35:05 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1999/09/16 09:12:06 fvdl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	acronyms airport ascii birthtoken bsd-family-tree country domains \
-	eqnchar flowers getopt indent.pro inter.phone language man.template \
+	eqnchar flowers indent.pro inter.phone language man.template \
 	mdoc.template na.phone operator style zipcodes
 FILESDIR=${BINDIR}/misc
 MKOBJ=	no
@@ -13,7 +13,7 @@ MKOBJ=	no
 update-domains:
 	ftp -o /tmp/domains.$$$$ http://www.iana.org/country-codes.txt ; \
 	( \
-	echo '# $$NetBSD: Makefile,v 1.19 1999/09/03 21:35:05 christos Exp $$' ;  \
+	echo '# $$NetBSD: Makefile,v 1.20 1999/09/16 09:12:06 fvdl Exp $$' ;  \
 	echo '# ISO 3166 country codes, from http://www.iana.org/country-codes.txt' ;  \
 	echo '# '`grep ^Latest /tmp/domains.$$$$` ;  \
 	echo '#' ;  \
