@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.3 1993/11/26 13:29:34 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.4 1993/11/26 13:38:44 deraadt Exp $
  */
 
 /*
@@ -750,4 +750,31 @@ sun_nfssvc(p, uap, retval)
 		return (error);
 
 	return nfssvc(p, &outuap, retval);
+}
+
+struct sun_ustat {
+	daddr_t	f_tfree;	/* total free */
+	ino_t	f_tinode;	/* total inodes free */
+	char	f_fname[6];	/* filsys name */
+	char	f_fpack[6];	/* filsys pack name */
+};
+struct sun_ustat_args {
+	int	dev;
+	struct	sun_ustat *buf;
+};
+sun_ustat(p, uap, retval)
+	struct proc *p;
+	struct sun_ustat_args *uap;
+	int *retval;
+{
+	struct sun_ustat us;
+	int error;
+
+	bzero(&us, sizeof us);
+	
+	/* XXX: should set f_tfree and f_tinode at least */
+
+	if (error = copyout(&us, uap->buf, sizeof us))
+		return (error);
+	return 0;
 }
