@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.55 1999/01/18 20:06:25 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.56 1999/02/08 15:22:28 bouyer Exp $ */
 
 
 /*
@@ -912,7 +912,7 @@ wdc_probe_caps(drvp)
 }
 
 /*
- * downgrade the transfert mode of a drive after an error. return 1 if
+ * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
  */
 int
@@ -938,12 +938,12 @@ wdc_downgrade_mode(drvp)
 		drvp->drive_flags &= ~DRIVE_UDMA;
 		drvp->drive_flags |= DRIVE_DMA;
 		drvp->DMA_mode = drvp->DMA_cap;
-		printf("%s: transfert error, downgrading to DMA mode %d\n",
+		printf("%s: transfer error, downgrading to DMA mode %d\n",
 		    drv_dev->dv_xname, drvp->DMA_mode);
 	} else if (drvp->drive_flags & DRIVE_DMA) {
 		drvp->drive_flags &= ~DRIVE_DMA;
 		drvp->PIO_mode = drvp->PIO_cap;
-		printf("%s: transfert error, downgrading to PIO mode %d\n",
+		printf("%s: transfer error, downgrading to PIO mode %d\n",
 		    drv_dev->dv_xname, drvp->PIO_mode);
 	} else /* already using PIO, can't downgrade */
 		return 0;
