@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.11 2003/08/07 11:15:52 agc Exp $	*/
+/*	$NetBSD: soelim.c,v 1.12 2003/10/16 06:38:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.11 2003/08/07 11:15:52 agc Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.12 2003/10/16 06:38:11 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -90,11 +90,14 @@ initpath(struct path *p)
 static void
 addpath(struct path *p, const char *dir)
 {
+	char **n;
+
 	if (p->list == NULL || p->n <= p->c - 2) {
-		p->n += 10;
-		p->list = realloc(p->list, p->n * sizeof(p->list[0]));
-		if (p->list == NULL)
+		n = realloc(p->list, (p->n + 10) * sizeof(p->list[0]));
+		if (n == NULL)
 			err(1, NULL);
+		p->list = n;
+		p->n += 10;
 	}
 
 	if ((p->list[p->c++] = strdup(dir)) == NULL)
