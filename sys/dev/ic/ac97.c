@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.47 2003/09/11 09:21:29 jmmv Exp $ */
+/*      $NetBSD: ac97.c,v 1.48 2003/09/28 15:39:09 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.47 2003/09/11 09:21:29 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.48 2003/09/28 15:39:09 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,6 +353,7 @@ static const struct ac97_codecid {
 	 * http://www.analog.com/UploadedFiles/Data_Sheets/206585810AD1980_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981A_0.pdf
 	 * http://www.analog.com/productSelection/pdf/AD1981B_0.pdf
+	 * http://www.analog.com/UploadedFiles/Data_Sheets/180644528AD1985_0.pdf
 	 */
 	{ AC97_CODEC_ID('A', 'D', 'S', 3),
 	  0xffffffff,			"Analog Devices AD1819B" },
@@ -372,6 +373,8 @@ static const struct ac97_codecid {
 	  0xffffffff,			"Analog Devices AD1981A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0x74),
 	  0xffffffff,			"Analog Devices AD1981B" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 0x75),
+	  0xffffffff,			"Analog Devices AD1985" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Analog Devices unknown" },
 
