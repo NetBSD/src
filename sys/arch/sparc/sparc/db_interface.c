@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49 2003/01/07 16:03:04 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.50 2003/01/09 18:00:51 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -360,13 +360,13 @@ db_proc_cmd(addr, have_addr, count, modif)
 		db_printf("no current process\n");
 		return;
 	}
-	db_printf("process %p:", p);
-	db_printf("pid:%d cpu:%d vmspace:%p ", p->p_pid, p->p_cpu->ci_cpuid, p->p_vmspace);
+	db_printf("process %p: ", p);
+	db_printf("pid:%d cpu:%d vmspace:%p\n", p->p_pid, p->p_cpu->ci_cpuid,
+	    p->p_vmspace);
 	db_printf("pmap:%p ctx:%p wchan:%p pri:%d upri:%d\n",
 		  p->p_vmspace->vm_map.pmap, 
 		  p->p_vmspace->vm_map.pmap->pm_ctx,
 		  p->p_wchan, p->p_priority, p->p_usrpri);
-	db_printf("thread @ %p = %p ", &p->p_thread, p->p_thread);
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
