@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.4 1995/06/26 23:13:54 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.5 1995/08/29 22:44:27 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -159,6 +159,12 @@ struct lpt_softc {
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
 
+#if defined(INET) && defined(PLIP)
+#define IPL_LPT	IPL_NET
+#else
+#define IPL_LPT	IPL_NONE
+#endif
+
 static int lptmatch(struct device *, void *, void *aux);
 static void lptattach(struct device *, struct device *, void *);
 static void lptintr(struct lpt_softc *);
@@ -236,12 +242,9 @@ lptattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_state = 0;
 	sc->sc_i8255 = i8255;
 
-#if defined(INET) && defined(PLIP)
 	plipattach(sc, self->dv_unit);
-	intr_establish(sc->sc_irq, lptintr, sc, "lpt", IPL_NET, FALLING_EDGE);
-#else
-	intr_establish(sc->sc_irq, lptintr, sc, "lpt", IPL_NONE, FALLING_EDGE);
-#endif
+	intr_establish(sc->sc_irq, lptintr, sc, sc->sc_dev.dv_xname,
+			IPL_LPT, FALLING_EDGE);
 	printf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
 }
 

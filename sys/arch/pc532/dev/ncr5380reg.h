@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.1 1995/08/25 07:30:36 phil Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.2 1995/08/29 22:44:42 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -182,13 +182,15 @@ typedef struct	req_q {
     struct req_q	*next;	    /* next in free, issue or discon queue  */
     struct req_q	*link;	    /* next linked command to execute       */
     struct scsi_xfer	*xs;	    /* request from high-level driver       */
-    u_char		dr_flag;    /* driver state			    */
+    u_short		dr_flag;    /* driver state			    */
     u_char		phase;	    /* current SCSI phase		    */
     u_char		msgout;	    /* message to send when requested       */
     u_char		targ_id;    /* target for command		    */
     u_char		targ_lun;   /* lun for command			    */
     u_char		status;	    /* returned status byte		    */
     u_char		message;    /* returned message byte		    */
+    u_char		*bounceb;   /* allocated bounce buffer		    */
+    u_char		*bouncerp;  /* bounce read-pointer		    */
     struct dma_chain	dm_chain[MAXDMAIO];
     struct dma_chain	*dm_cur;    /* current dma-request		    */
     struct dma_chain	*dm_last;   /* last dma-request			    */
@@ -200,10 +202,11 @@ typedef struct	req_q {
 /*
  * Values for dr_flag:
  */
-#define	DRIVER_IN_DMA	1	/* Non-polled DMA activated		*/
-#define	DRIVER_AUTOSEN	2	/* Doing automatic sense		*/
-#define	DRIVER_NOINT	4	/* We are booting: no interrupts	*/
-#define	DRIVER_DMAOK	8	/* DMA can be used on this request	*/
+#define	DRIVER_IN_DMA	0x01	/* Non-polled DMA activated		*/
+#define	DRIVER_AUTOSEN	0x02	/* Doing automatic sense		*/
+#define	DRIVER_NOINT	0x04	/* We are booting: no interrupts	*/
+#define	DRIVER_DMAOK	0x08	/* DMA can be used on this request	*/
+#define	DRIVER_BOUNCING	0x10	/* Using the bounce buffer		*/
 
 /* XXX: Should go to ncr5380var.h */
 static SC_REQ	*issue_q   = NULL;	/* Commands waiting to be issued*/

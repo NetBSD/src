@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.18 1995/08/25 07:30:33 phil Exp $ */
+/*	$NetBSD: ncr.c,v 1.19 1995/08/29 22:44:33 phil Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncr.c,v 1.18 1995/08/25 07:30:33 phil Exp $
+ *	$Id: ncr.c,v 1.19 1995/08/29 22:44:33 phil Exp $
  */
 
 #include <sys/param.h>
@@ -70,7 +70,6 @@
  * Softc of currently active controller (a bit of fake; we only have one)
  */
 static struct ncr_softc	*cur_softc;
-static int callback_scheduled; /* Atari artefact :-) */
 
 /*
  * Function decls:
@@ -113,8 +112,10 @@ scsi_mach_init(sc)
 {
 	register int i;
 	intr_disable(IR_SCSI1);
-	i = intr_establish(SOFTINT, ncr_soft_intr, sc, "softncr", IPL_BIO, 0);
-	intr_establish(IR_SCSI1, ncr_intr, (void *)i, "ncr", IPL_BIO, RISING_EDGE);
+	i = intr_establish(SOFTINT, ncr_soft_intr, sc, sc->sc_dev.dv_xname,
+		IPL_BIO, 0);
+	intr_establish(IR_SCSI1, ncr_intr, (void *)i, sc->sc_dev.dv_xname,
+		IPL_BIO, RISING_EDGE);
 	printf(" addr 0x%x, irq %d", NCR5380, IR_SCSI1);
 }
 
@@ -147,11 +148,6 @@ ncr_soft_intr(sc)
 /*
  * PDMA stuff
  */
-#define load_tbl(a) do { \
-		u_long *p = (u_long *) a; \
-		*(p + 63) = *p; \
-	} while (0)
-
 #define movsd(from, to, n) do { \
 		register int r0 __asm ("r0") = n; \
 		register u_char *r1 __asm("r1") = from; \
@@ -179,6 +175,7 @@ ncr_soft_intr(sc)
 #define TIMEOUT	1000000
 #define READY(dataout) do { \
 		for (i = TIMEOUT; i > 0; i --) { \
+			/*if (!(NCR5380->ncr_dmstat & SC_PHS_MTCH)) {*/ \
 			if (NCR5380->ncr_dmstat & SC_IRQ_SET) { \
 				if (dataout) NCR5380->ncr_icom &= ~SC_ADTB; \
 				NCR5380->ncr_mode &= ~SC_M_DMA; \
@@ -215,6 +212,7 @@ transfer_pdma(phase, data, count)
 	register int len = *count, i, idstat;
 
 	if (len < 256) {
+		__asm volatile ("lmr ivar0,%0" : : "g" (data));
 		transfer_pio(phase, data, count);
 		return;
 	}
@@ -225,13 +223,13 @@ transfer_pdma(phase, data, count)
 		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA;
 		NCR5380->ncr_ircv = 0;
 		while (len >= 256) {
+			if (!((u_long) data & 0xfff))
+				__asm volatile ("lmr ivar0,%0" : : "g" (data));
 			READY(0);
 			di();
-			load_tbl(data);
-			di(); /* Serialize CPU */
 			movsd((u_char *)pdma, data, 64);
-			ei();
 			len -= 256;
+			ei();
 		}
 		if (len) {
 			di();
