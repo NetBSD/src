@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.5 2004/04/04 19:31:19 matt Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.6 2004/04/04 19:54:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,18 +63,26 @@ fpsetsticky(fp_except mask)
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
 	old = ((uint32_t)fpscr & STICKYBITS) >> STICKYSHFT;
 	/*
-	 * FPSCR_VX (aka FP_X_INV) is not a sticky bit but a summary
-	 * of the all the FPSCR_VX* sticky bits.  So FP_X_INV is cleared
+	 * FPSCR_VX (aka FP_X_INV) is not a sticky bit but a summary of the
+	 * all the FPSCR_VX* sticky bits.  So when FP_X_INV is cleared then
 	 * clear all of those bits, likewise when it's set, set them all.
 	 */
 	if ((mask & FP_X_INV) == 0)
 		fpscr &= ~INVBITS;
 	else 
 		fpscr |= INVBITS;
-	if (mask == 0)
-		fpscr &= ~FPSCR_FX;
 	fpscr &= ~STICKYBITS;
 	fpscr |= ((uint32_t)mask << STICKYSHFT) & STICKYBITS;
+	/*
+	 * Make FPSCR_FX reflect the presence of a set sticky bit (or not).
+	 */
+	if (fpscr & (STICKYBITS|INVBITS))
+		fpscr |= FPSCR_FX;
+	else
+		fpscr &= ~FPSCR_FX;
+	/*
+	 * Write back the fpscr.
+	 */
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
