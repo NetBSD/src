@@ -1,4 +1,4 @@
-.\"	$NetBSD: yppush.8,v 1.3 1997/10/07 14:23:57 lukem Exp $
+.\"	$NetBSD: yppush.8,v 1.4 1997/11/08 15:03:39 lukem Exp $
 .\"
 .\" Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -43,14 +43,19 @@
 .Ar mapname
 .Sh DESCRIPTION
 .Nm
-is used to distribute a YP map from a master server to any
-slave server in the domain. All servers of domain is featch from the YP
-map ypservers.
+is used to distribute a
+.Tn YP
+map from a master server to any
+slave server in the domain. All servers of domain is featch from the
+.Tn YP
+map
+.Pa ypservers .
 .Pp
 The options are as follows:
 .Bl -tag -width "-d domainname"
 .It Fl d Ar domainname
-YP domain to use instead of the default domain.
+.Tn YP
+domain to use instead of the default domain.
 .It Fl h Ar hostname
 Distribute map only to one host and not to the hosts in the ypserver map.
 .It Fl v
