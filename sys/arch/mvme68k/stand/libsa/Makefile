@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/03/16 08:39:58 he Exp $
+#	$NetBSD: Makefile,v 1.25 2003/08/22 21:00:26 dsl Exp $
 
 LIB=sa
 
@@ -22,7 +22,7 @@ SRC_sa= alloc.c \
 	getfile.c gets.c globals.c \
 	intoa.c \
 	loadfile.c loadfile_aout.c loadfile_elf32.c lseek.c \
-	memcmp.c memcpy.c memset.c \
+	memmove.c memcmp.c memcpy.c memset.c \
 	nullfs.c \
 	open.c \
 	panic.c printf.c \
