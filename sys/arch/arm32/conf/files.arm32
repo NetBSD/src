@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.36 1998/02/16 22:12:46 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.37 1998/03/14 17:10:13 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -226,14 +226,15 @@ device	ptsc: scsi, sfas
 attach	ptsc at podulebus
 file	arch/arm32/podulebus/ptsc.c		ptsc
 
-# Generic NCR driver
-define	ncr
-file	arch/arm32/dev/ncr5380sbc.c		ncr
-
-# Oak specific layer for ncr
-device	oak: scsi, ncr
+# Oak specific layer for ncr5380
+device	oak: scsi, ncr5380sbc
 attach	oak at podulebus
 file	arch/arm32/podulebus/oak.c		oak
+
+# Cumana SCSI1 specific layer for ncr5380
+device	csa: scsi, ncr5380sbc
+attach	csa at podulebus
+file	arch/arm32/podulebus/csa.c		csa
 
 # ICS IDE driver
 device	icside {}
