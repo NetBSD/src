@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.3 1998/02/07 11:09:50 mrg Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.4 1998/03/09 00:58:59 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -71,91 +71,91 @@
  * sys_obreak: set break
  */
 
-int sys_obreak(p, v, retval)
-
-struct proc *p;
-void *v;
-register_t *retval;
+int
+sys_obreak(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
-  struct sys_obreak_args /* {
-			    syscallarg(char *) nsize;
-			    } */ *uap = v;
-  register struct vmspace *vm = p->p_vmspace;
-  vm_offset_t new, old;
-  int rv;
-  register int diff;
+	struct sys_obreak_args /* {
+		syscallarg(char *) nsize;
+	} */ *uap = v;
+	register struct vmspace *vm = p->p_vmspace;
+	vm_offset_t new, old;
+	int rv;
+	register int diff;
 
-  old = (vm_offset_t)vm->vm_daddr;
-  new = round_page(SCARG(uap, nsize));
-  if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
-    return(ENOMEM);
+	old = (vm_offset_t)vm->vm_daddr;
+	new = round_page(SCARG(uap, nsize));
+	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+		return(ENOMEM);
 
-  old = round_page(old + ctob(vm->vm_dsize));
-  diff = new - old;
+	old = round_page(old + ctob(vm->vm_dsize));
+	diff = new - old;
 
-  /*
-   * grow or shrink?
-   */
+	/*
+	 * grow or shrink?
+	 */
 
-  if (diff > 0) {
+	if (diff > 0) {
 
-    rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
-           UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, UVM_ADV_NORMAL,
-           UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
+		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
+		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
 
-    if (rv != KERN_SUCCESS) {
-      uprintf("sbrk: grow failed, return = %d\n", rv);
-      return(ENOMEM);
-    }
-    vm->vm_dsize += btoc(diff);
+		if (rv != KERN_SUCCESS) {
+			uprintf("sbrk: grow failed, return = %d\n", rv);
+			return(ENOMEM);
+		}
+		vm->vm_dsize += btoc(diff);
 
-  } else if (diff < 0) {
+	} else if (diff < 0) {
 
-    diff = -diff;
-    rv = uvm_deallocate(&vm->vm_map, new, diff);
-    if (rv != KERN_SUCCESS) {
-      uprintf("sbrk: shrink failed, return = %d\n", rv);
-      return(ENOMEM);
-    }
-    vm->vm_dsize -= btoc(diff);
+		diff = -diff;
+		rv = uvm_deallocate(&vm->vm_map, new, diff);
+		if (rv != KERN_SUCCESS) {
+			uprintf("sbrk: shrink failed, return = %d\n", rv);
+			return(ENOMEM);
+		}
+		vm->vm_dsize -= btoc(diff);
 
-  }
-  return(0);
+	}
+	return(0);
 }
 
 /*
  * uvm_grow: enlarge the "stack segment" to include sp.
  */
 
-int uvm_grow(p, sp)
-
-struct proc *p;
-vm_offset_t sp;
-
+int
+uvm_grow(p, sp)
+	struct proc *p;
+	vm_offset_t sp;
 {
-  register struct vmspace *vm = p->p_vmspace;
-  register int si;
+	register struct vmspace *vm = p->p_vmspace;
+	register int si;
 
-  /*
-   * For user defined stacks (from sendsig).
-   */
-  if (sp < (vm_offset_t)vm->vm_maxsaddr)
-    return (0);
+	/*
+	 * For user defined stacks (from sendsig).
+	 */
+	if (sp < (vm_offset_t)vm->vm_maxsaddr)
+		return (0);
 
-  /*
-   * For common case of already allocated (from trap).
-   */
-  if (sp >= USRSTACK - ctob(vm->vm_ssize))
-    return (1);
+	/*
+	 * For common case of already allocated (from trap).
+	 */
+	if (sp >= USRSTACK - ctob(vm->vm_ssize))
+		return (1);
 
-  /*
-   * Really need to check vs limit and increment stack size if ok.
-   */
-  si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
-  if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
-    return (0);
-  vm->vm_ssize += si;
-  return (1);
+	/*
+	 * Really need to check vs limit and increment stack size if ok.
+	 */
+	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
+	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+		return (0);
+	vm->vm_ssize += si;
+	return (1);
 }
 
 /*
@@ -163,113 +163,112 @@ vm_offset_t sp;
  */
 
 /* ARGSUSED */
-int sys_ovadvise(p, v, retval)
-
-struct proc *p;
-void *v;
-register_t *retval;
-
+int
+sys_ovadvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
 #if 0
-  struct sys_ovadvise_args /* {
-			      syscallarg(int) anom;
-			      } */ *uap = v;
+	struct sys_ovadvise_args /* {
+		syscallarg(int) anom;
+	} */ *uap = v;
 #endif
-  return (EINVAL);
+
+	return (EINVAL);
 }
 
 /*
  * uvm_coredump: dump core!
  */
 
-int uvm_coredump(p, vp, cred, chdr)
-
-struct proc *p;
-struct vnode *vp;
-struct ucred *cred;
-struct core *chdr;
-
+int
+uvm_coredump(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core *chdr;
 {
-  register struct vmspace *vm = p->p_vmspace;
-  register vm_map_t map = &vm->vm_map;
-  register vm_map_entry_t entry;
-  vm_offset_t start, end;
-  struct coreseg cseg;
-  off_t offset;
-  int flag, error = 0;
+	register struct vmspace *vm = p->p_vmspace;
+	register vm_map_t map = &vm->vm_map;
+	register vm_map_entry_t entry;
+	vm_offset_t start, end;
+	struct coreseg cseg;
+	off_t offset;
+	int flag, error = 0;
 
-  if (!map->is_main_map) {
+	if (!map->is_main_map) {
 #ifdef DEBUG
-    uprintf(
-     "uvm_coredump: %s map 0x%lx: pmap=0x%lx,ref=%d,nentries=%d,version=%d\n",
-     (map->is_main_map ? "Task" : "Share"),
-     (long)map, (long)(map->pmap),
-     map->ref_count, map->nentries,
-     map->timestamp);
+		uprintf("uvm_coredump: %s map 0x%lx: pmap=0x%lx,ref=%d,"
+		    "nentries=%d,version=%d\n",
+		    (map->is_main_map ? "Task" : "Share"),
+		    (long)map, (long)(map->pmap),
+		    map->ref_count, map->nentries,
+		    map->timestamp);
 #endif
-    return EIO;
-  }
+		return (EIO);
+	}
 
-  offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
 
-  for (entry = map->header.next; entry != &map->header;
-       entry = entry->next) {
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
 
-    if (UVM_ET_ISMAP(entry)) {
+		if (UVM_ET_ISMAP(entry)) {
 #ifdef DEBUG
-      uprintf("uvm_coredump: entry: share=0x%lx, offset=0x%lx\n",
-	      (long) entry->object.share_map,
-	      (long) entry->offset);
+			uprintf("uvm_coredump: entry: share=0x%lx, "
+			    "offset=0x%lx\n", (long) entry->object.share_map,
+			    (long) entry->offset);
 #endif
-      continue;
-    }
+			continue;
+		}
 
-    if (!(entry->protection & VM_PROT_WRITE))
-      continue;
+		if (!(entry->protection & VM_PROT_WRITE))
+			continue;
 
-    start = entry->start;
-    end = entry->end;
+		start = entry->start;
+		end = entry->end;
 
-    if (start >= VM_MAXUSER_ADDRESS)
-      continue;
+		if (start >= VM_MAXUSER_ADDRESS)
+			continue;
 
-    if (end > VM_MAXUSER_ADDRESS)
-      end = VM_MAXUSER_ADDRESS;
+		if (end > VM_MAXUSER_ADDRESS)
+			end = VM_MAXUSER_ADDRESS;
 
-    if (start >= (vm_offset_t)vm->vm_maxsaddr) {
-      flag = CORE_STACK;
-      start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-      if (start >= end)
-	continue;
-    } else
-      flag = CORE_DATA;
+		if (start >= (vm_offset_t)vm->vm_maxsaddr) {
+			flag = CORE_STACK;
+			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+			if (start >= end)
+				continue;
+		} else
+			flag = CORE_DATA;
 
-    /*
-     * Set up a new core file segment.
-     */
-    CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
-    cseg.c_addr = start;
-    cseg.c_size = end - start;
+		/*
+		 * Set up a new core file segment.
+		 */
+		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
+		cseg.c_addr = start;
+		cseg.c_size = end - start;
 
-    error = vn_rdwr(UIO_WRITE, vp,
+		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)&cseg, chdr->c_seghdrsize,
 		    offset, UIO_SYSSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
-    if (error)
-      break;
+		if (error)
+			break;
 
-    offset += chdr->c_seghdrsize;
-    error = vn_rdwr(UIO_WRITE, vp,
+		offset += chdr->c_seghdrsize;
+		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
-    if (error)
-      break;
-    
-    offset += cseg.c_size;
-    chdr->c_nseg++;
-  }
+		if (error)
+			break;
+		
+		offset += cseg.c_size;
+		chdr->c_nseg++;
+	}
 
-  return error;
+	return (error);
 }
 

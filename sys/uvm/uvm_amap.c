@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.6 1998/02/10 14:12:03 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.7 1998/03/09 00:58:55 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -437,7 +437,7 @@ amap_share_protect(entry, prot)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
-  
+
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_slotoff + slots;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.8 1998/02/10 02:34:31 perry Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.9 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -148,12 +148,12 @@ struct vnode;
  */
 
 struct uvmexp {
-		/* vm_page constants */
+	/* vm_page constants */
 	int pagesize;   /* size of a page (PAGE_SIZE): must be power of 2 */
 	int pagemask;   /* page mask */
 	int pageshift;  /* page shift */
 
-		/* vm_page counters */
+	/* vm_page counters */
 	int npages;     /* number of pages we manage */
 	int free;       /* number of free pages */
 	int active;     /* number of active pages */
@@ -163,13 +163,13 @@ struct uvmexp {
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel; /* number of pages reserved for kernel */
 
-                /* pageout params */
-        int freemin;    /* min number of free pages */
-        int freetarg;   /* target number of free pages */
-        int inactarg;   /* target number of inactive pages */
-        int wiredmax;   /* max number of wired pages */
+	/* pageout params */
+	int freemin;    /* min number of free pages */
+	int freetarg;   /* target number of free pages */
+	int inactarg;   /* target number of inactive pages */
+	int wiredmax;   /* max number of wired pages */
 
-		/* swap */
+	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
 	int swpginuse;	/* number of swap pages in use */
@@ -177,7 +177,7 @@ struct uvmexp {
 	int nanon;	/* number total of anon's in system */
 	int nfreeanon;	/* number of free anon's */
 
-		/* stat counters */
+	/* stat counters */
 	int faults;		/* page fault count */
 	int traps;		/* trap count */
 	int intrs;		/* interrupt count */
@@ -194,7 +194,7 @@ struct uvmexp {
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
 
-		/* fault subcounters */
+	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
 	int fltnoanon;	/* number of times fault was out of anons */
 	int fltpgwait;	/* number of times fault had to wait on a page */
@@ -214,7 +214,7 @@ struct uvmexp {
 	int flt_prcopy;	/* number of times fault promotes with copy (2b) */
 	int flt_przero;	/* number of times fault promotes with zerofill (2b) */
 
-		/* daemon counters */
+	/* daemon counters */
 	int pdwoke;	/* number of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
@@ -228,7 +228,7 @@ struct uvmexp {
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
 	
-		/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
+	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
 	struct uvm_object *mb_object;
 };
@@ -258,7 +258,7 @@ void			uao_reference __P((struct uvm_object *));
 
 /* uvm_fault.c */
 int			uvm_fault __P((vm_map_t, vm_offset_t, 
-						vm_fault_t, vm_prot_t));
+				vm_fault_t, vm_prot_t));
 				/* handle a page fault */
 
 /* uvm_glue.c */

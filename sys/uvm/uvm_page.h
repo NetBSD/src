@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.5 1998/02/10 14:12:24 mrg Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.6 1998/03/09 00:58:58 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -87,7 +87,7 @@
 #define uvm_unlock_fpageq()	simple_unlock(&uvm.fpageqlock)
 
 #define uvm_pagehash(obj,off) \
-  (((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
+	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
 /*
  * handle inline options
