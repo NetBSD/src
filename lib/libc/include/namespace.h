@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.91 2004/06/02 20:54:58 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.92 2004/08/17 14:10:06 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -225,6 +225,7 @@
 #define getgrouplist		_getgrouplist
 #define gethostbyaddr		_gethostbyaddr
 #define gethostbyname		_gethostbyname
+#define gethostent		_gethostent
 #define gethostname		_gethostname
 #define getifaddrs		_getifaddrs
 #define getloadavg		_getloadavg
@@ -254,8 +255,11 @@
 #define getpwnam		_getpwnam
 #define getpwuid		_getpwuid
 #define getrpcbyname		_getrpcbyname
+#define getrpcbyname_r		_getrpcbyname_r
 #define getrpcbynumber		_getrpcbynumber
+#define getrpcbynumber_r	_getrpcbynumber_r
 #define getrpcent		_getrpcent
+#define getrpcent_r		_getrpcent_r
 #define getrpcport		_getrpcport
 #define getservbyname		_getservbyname
 #define getservbyname_r		_getservbyname_r
@@ -440,6 +444,7 @@
 #define siginterrupt		_siginterrupt
 #define signal			_signal
 #define sl_add			_sl_add
+#define sl_create		_sl_create
 #define sl_find			_sl_find
 #define sl_free			_sl_free
 #define sl_init			_sl_init
