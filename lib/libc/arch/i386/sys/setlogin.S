@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.6 1997/07/16 14:37:33 christos Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.7 1998/07/01 06:24:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,20 +40,20 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: setlogin.S,v 1.6 1997/07/16 14:37:33 christos Exp $")
+	RCSID("$NetBSD: setlogin.S,v 1.7 1998/07/01 06:24:25 thorpej Exp $")
 #endif
 
 #include "SYS.h"
 
-	.globl	___logname_valid	/* in getlogin() */
+	.globl	_C_LABEL(__logname_valid)	/* in getlogin() */
 SYSCALL(setlogin)
 	xorl	%eax,%eax
 #ifdef PIC
 	PIC_PROLOGUE
-	movl	PIC_GOT(___logname_valid),%edx
+	movl	PIC_GOT(_C_LABEL(__logname_valid)),%edx
 	PIC_EPILOGUE
 	movl	%eax,(%edx)
 #else
-	movl	%eax,___logname_valid
+	movl	%eax,_C_LABEL(__logname_valid)
 #endif
 	ret				/* setlogin(name) */
