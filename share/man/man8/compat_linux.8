@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
+.\"	$NetBSD: compat_linux.8,v 1.1.2.1 1995/10/16 20:20:13 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -36,12 +36,15 @@
 .Nm COMPAT_LINUX
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
-NetBSD supports running Linux binaries. This applies to i386 systems
-and Linux a.out binaries only for now. Most binaries should work,
-except programs that use Linux-specific features. These include
-the Linux /proc filesystem (which is different from the optional
-NetBSD /proc filesystem), and i386-specific calls, such as enabling
-virtual 8086 mode. The Linux compatibility feature is active
+NetBSD supports running Linux binaries. This only applies to i386 systems
+for now. Both the a.out and ELF binary formats are supported. Most programs
+should work, including the ones that use the Linux SVGAlib. Programs that
+will not work include the Linux /proc filesystem (which is different from
+the optional NetBSD /proc filesystem), and i386-specific calls, such as
+enabling virtual 8086 mode. Currently, sound is not supported for Linux
+binaries (they will probably run, but not produce any sound).
+
+The Linux compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_LINUX
 option enabled.
@@ -307,5 +310,21 @@ slakware/x9/xf_lib.tgz
 Extract the files from these gzipped tarfiles in your /emul/linux directory
 (possibly omitting or afterwards removing files you don't need), and you
 are done.
+
+.Ss Programs using SVGAlib
+SVGAlib binaries require some extra care. The pcvt virtual console driver
+has to be in the kernel for them to work, and you will also have to create
+some symbloic links in the /emul/linux/dev directory, namely:
+.Pp
+.nf
+/emul/linux/dev/console -> /dev/tty
+/emul/linux/dev/mouse -> whatever device your mouse is connected to
+/emul/linux/dev/ttyS0 -> /dev/tty00
+/emul/linux/dev/ttyS1 -> /dev/tty01
+.fi
+.Pp
+Be warned: the first link mentioned here makes SVGAlib binaries
+work, but may confuse others, so you may have to remove it again at
+some point.
 .Sh BUGS
 The information about Linux distributions may become outdated.
