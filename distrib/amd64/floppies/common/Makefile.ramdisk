@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.1 2003/04/26 18:55:42 fvdl Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.2 2003/07/25 21:24:37 dsl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,8 +16,11 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		dot.profile termcap.mini \
-		${DESTDIR}/usr/mdec/biosboot.sym \
-		${DESTDIR}/usr/mdec/mbr ${DESTDIR}/usr/mdec/mbr_bootsel \
+		${DESTDIR}/usr/mdec/biosboot \
+		${DESTDIR}/usr/mdec/bootxx_ffsv1 \
+		${DESTDIR}/usr/mdec/mbr \
+		${DESTDIR}/usr/mdec/mbr_ext \
+		${DESTDIR}/usr/mdec/mbr_bootsel \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/etc/services
