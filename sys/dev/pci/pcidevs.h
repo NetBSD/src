@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.688 2005/01/23 03:07:05 fredb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.689 2005/01/25 00:55:25 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.687 2005/01/23 03:06:07 fredb Exp 
+ *	NetBSD: pcidevs,v 1.688 2005/01/25 00:55:00 matt Exp 
  */
 
 /*
@@ -1060,6 +1060,8 @@
 #define	PCI_PRODUCT_ATI_MACH64_VTB	0x5655		/* Mach64 VTB */
 #define	PCI_PRODUCT_ATI_MACH64_VT4	0x5656		/* Mach64 VT4 */
 #define	PCI_PRODUCT_ATI_RADEON_9200	0x5961		/* Radeon 9200 */
+#define	PCI_PRODUCT_ATI_RADEON_9200_2	0x5962		/* Radeon 9200 */
+#define	PCI_PRODUCT_ATI_RADEON_9200_3	0x5963		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_9200SE	0x5964		/* Radeon 9200SE */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 Series */
 #define	PCI_PRODUCT_ATI_RADEON_X300_S	0x5b70		/* Radeon X300 Series Secondary */
