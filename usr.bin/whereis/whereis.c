@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.7 1997/01/23 06:29:05 mikel Exp $	*/
+/*	$NetBSD: whereis.c,v 1.8 1997/10/20 02:22:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char *rcsid = "$NetBSD: whereis.c,v 1.7 1997/01/23 06:29:05 mikel Exp $";
+__RCSID("$NetBSD: whereis.c,v 1.8 1997/10/20 02:22:55 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ static char *rcsid = "$NetBSD: whereis.c,v 1.7 1997/01/23 06:29:05 mikel Exp $";
 #include <unistd.h>
 
 void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -89,7 +90,7 @@ main(argc, argv)
 	if (len == 0)
 		err(1, "user_cs_path: sysctl: zero length\n");
 	if ((std = malloc(len)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	if (sysctl(mib, 2, std, &len, NULL, 0) == -1) {
 		sverrno = errno;
 		free(std);
