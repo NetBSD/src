@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.43 1999/01/13 04:19:08 abs Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -46,6 +46,7 @@
 #include <dev/audio_if.h>
 
 #include <dev/ic/am7930reg.h>
+#include <machine/am7930_machdep.h>
 #include <dev/ic/am7930var.h>
 
 #define AUDIO_ROM_NAME "audio"
@@ -107,7 +108,7 @@ int	am7930_set_port __P((void *, mixer_ctrl_t *));
 int	am7930_get_port __P((void *, mixer_ctrl_t *));
 int	am7930_query_devinfo __P((void *, mixer_devinfo_t *));
 
-void	am7930_sparc_w16 __P((volatile struct am7930 *amd, u_int16_t val));
+void	am7930_sparc_w16 __P((bus_space_tag_t bt, bus_space_handle_t bh, u_int16_t val));
 
 struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -188,7 +189,7 @@ am7930attach_mainbus(parent, self, aux)
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_amd = (volatile struct am7930 *)bh;
+	sc->sc_bh = bh;
 	am7930_sparc_attach(sc, ma->ma_pri);
 }
 
@@ -213,7 +214,7 @@ am7930attach_sbus(parent, self, aux)
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_amd = (volatile struct am7930 *)bh;
+	sc->sc_bh = bh;
 	am7930_sparc_attach(sc, sa->sa_pri);
 }
 
@@ -225,7 +226,6 @@ am7930_sparc_attach(sc, pri)
 
 	printf(" softpri %d\n", PIL_AUSOFT);
 
-	sc->sc_au.au_amd = sc->sc_amd;
 	am7930_init(sc);
 
 	sc->sc_wam16  = am7930_sparc_w16;
@@ -255,12 +255,13 @@ am7930_sparc_attach(sc, pri)
  *  16-bit register write, big-endian mapping.
  */
 void
-am7930_sparc_w16(amd, val)
-	volatile struct am7930 *amd;
+am7930_sparc_w16(bt, bh, val)
+	bus_space_tag_t	bt;
+	bus_space_handle_t bh;
 	u_int16_t val;
 {
-	amd->dr = val;
-	amd->dr = val >> 8;
+	AM7930_WRITE_REG(bt, bh, dr, val);
+	AM7930_WRITE_REG(bt, bh, dr, val >> 8);
 }
 
 
@@ -310,11 +311,11 @@ am7930_start_output(addr, p, cc, intr, arg)
 #endif
 
 	if (!sc->sc_locked) {
-		register volatile struct am7930 *amd;
+		register bus_space_tag_t bt = sc->sc_bustag;
+		register bus_space_handle_t bh = sc->sc_bh;
 
-		amd = sc->sc_au.au_amd;
-		amd->cr = AMDR_INIT;
-		amd->dr = AMD_INIT_PMS_ACTIVE;
+		AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
+		AM7930_WRITE_REG(bt, bh, dr, AMD_INIT_PMS_ACTIVE);
 		sc->sc_locked = 1;
 		DPRINTF(("sa_start_output: started intrs.\n"));
 	}
@@ -342,11 +343,11 @@ am7930_start_input(addr, p, cc, intr, arg)
 #endif
 
 	if (!sc->sc_locked) {
-		register volatile struct am7930 *amd;
+		register bus_space_tag_t bt = sc->sc_bustag;
+		register bus_space_handle_t bh = sc->sc_bh;
 
-		amd = sc->sc_au.au_amd;
-		amd->cr = AMDR_INIT;
-		amd->dr = AMD_INIT_PMS_ACTIVE;
+		AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
+		AM7930_WRITE_REG(bt, bh, dr, AMD_INIT_PMS_ACTIVE);
 		sc->sc_locked = 1;
 		DPRINTF(("sa_start_input: started intrs.\n"));
 	}
@@ -371,17 +372,18 @@ am7930hwintr(au0)
 	void *au0;
 {
 	register struct auio *au = au0;
-	register volatile struct am7930 *amd = au->au_amd;
+	register bus_space_tag_t bt = sc->sc_bustag;
+	register bus_space_handle_t bh = sc->sc_bh;
 	register u_char *d, *e;
 	register int k;
 
-	k = amd->ir;		/* clear interrupt */
+	k = AM7930_READ_REG(bt, bh, ir);	/* clear interrupt */
 
 	/* receive incoming data */
 	d = au->au_rdata;
 	e = au->au_rend;
 	if (d && d <= e) {
-		*d = amd->bbrb;
+		*d = AM7930_READ_REG(bt, bh, bbrb);
 		au->au_rdata++;
 		if (d == e) {
 #ifdef AUDIO_DEBUG
@@ -396,7 +398,7 @@ am7930hwintr(au0)
 	d = au->au_pdata;
 	e = au->au_pend;
 	if (d && d <= e) {
-		amd->bbtb = *d;
+		AM7930_WRITE_REG(bt, bh, bbtb, *d);
 		au->au_pdata++;
 		if (d == e) {
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.5 1998/06/24 11:09:23 jonathan Exp $ */
+/*	$NetBSD: am7930var.h,v 1.6 1999/03/14 22:29:01 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,8 @@ struct mapreg {
  * pdma state
  */
 struct auio {
-	volatile struct am7930 *au_amd;/* chip registers */
+	bus_space_tag_t		au_bt;	/* bus tag */
+	bus_space_handle_t	au_bh;	/* handle to chip registers */
 
 	u_char	*au_rdata;		/* record data */
 	u_char	*au_rend;		/* end of record data */
@@ -81,10 +82,19 @@ struct auio {
 };
 
 
+/*
+ * interrupt-hanlder status 
+ * XXX should be MI or required in each port's <machine/cpu.h>
+ */
+struct am7930_intrhand {
+	int	(*ih_fun) __P((void *));
+	void	*ih_arg;
+};
 
 struct am7930_softc {
 	struct	device sc_dev;		/* base device */
-	bus_space_tag_t	sc_bustag;
+	bus_space_tag_t	sc_bustag;	/* bus cookie */
+	bus_space_handle_t sc_bh;	/* device registers */
 
 	int	sc_open;		/* single use device */
 	int	sc_locked;		/* true when transfering data */
@@ -95,11 +105,11 @@ struct am7930_softc {
 	u_char	sc_mlevel;		/* monitor level */
 	u_char	sc_out_port;		/* output port */
 
-	volatile struct am7930	*sc_amd;/* chip registers */
 
 	/* Callbacks */
-	void	(*sc_wam16) __P((volatile struct am7930 *amd, u_int16_t val));
-#define	WAMD16(sc, amd, v) (sc)->sc_wam16((amd), (v))
+	void	(*sc_wam16) __P((bus_space_tag_t bt, bus_space_handle_t bh,
+				 u_int16_t val));
+#define	WAMD16(bt, bh,  v) (sc)->sc_wam16((bt), (bh), (v))
 	void	(*sc_onopen) __P((struct am7930_softc *sc));
 	void	(*sc_onclose) __P((struct am7930_softc *sc));
 
@@ -110,8 +120,7 @@ struct am7930_softc {
 	 *  or replaced with an MI pdma type.
 	 */
 
-	/*struct intrhand sc_hwih;	-* hardware interrupt vector */
-	struct	intrhand sc_swih;	/* software interrupt vector */
+	struct	am7930_intrhand sc_ih;	/* interrupt vector (hw or sw)  */
 	void	(*sc_rintr)(void*);	/* input completion intr handler */
 	void	*sc_rarg;		/* arg for sc_rintr() */
 	void	(*sc_pintr)(void*);	/* output completion intr handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930reg.h,v 1.2 1998/06/24 10:52:53 jonathan Exp $ */
+/*	$NetBSD: am7930reg.h,v 1.3 1999/03/14 22:29:01 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,20 @@ struct am7930 {
 #define bcrb bctb		/* Bc-channel receive register (ro) */
 	u_char	dsr2;		/* D-channel status register 2 (ro) */
 };
+
+#define REG_CR	offsetof(struct am7930, cr)
+#define REG_DR	offsetof(struct am7930, dr)
+#define RREG_DSR1	offsetof(struct am7930, dsr1r)
+#define REG_DER	offsetof(struct am7930, der)
+#define REG_DCTB	offsetof(struct am7930, dctb)
+#define REG_BCTB	offsetof(struct am7930, bctb)
+#define REG_DSR2	offsetof(struct am7930, dsr2)
+
+/* aliases */
+#define REG_DCRB	AM7930_REG_DCTB
+#define REG_BBRB	AM7930_REG_BBTB
+#define REG_BCRB	AM7930_REG_BCTB
+
 
 #define AMDR_INIT	0x21
 #define 	AMD_INIT_PMS_IDLE		0x00
