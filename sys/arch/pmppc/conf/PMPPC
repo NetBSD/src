@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.19 2004/09/04 23:29:57 manu Exp $
+#	$NetBSD: PMPPC,v 1.20 2004/10/23 14:00:53 augustss Exp $
 #
 #	PMPPC
 #
@@ -348,9 +348,9 @@ irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
