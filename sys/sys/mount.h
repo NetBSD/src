@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.13 1993/08/07 08:12:25 cgd Exp $
+ *	$Id: mount.h,v 1.14 1993/08/13 11:35:58 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -277,7 +277,7 @@ struct nfs_args {
 /*
  *  Arguments to mount MSDOS filesystems.
  */
-struct pcfs_args {
+struct msdosfs_args {
 	char *fspec;		/* blocks special holding the fs to mount */
 	int exflags;		/* mount flags				*/
 	uid_t exroot;		/* mapping for root uid			*/
