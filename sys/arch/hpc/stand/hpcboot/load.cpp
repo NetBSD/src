@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
+/*	$NetBSD: load.cpp,v 1.3 2001/03/22 18:23:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,6 +162,8 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 
 	DPRINTF((TEXT("\t->load 0x%08x+0x%08x=0x%08x ofs=0x%08x+0x%x\n"),
 		 kv, memsz, kv + memsz, fileofs, filesz));
+	_kernend = kv + memsz;
+
 	if (filesz) {
 		n = filesz / _tpsz;
 		for (j = 0; j < n; j++) {
@@ -198,7 +200,6 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 		_pvec_clr_paddr += sizeof(struct PageTag);
 		++_n0clr_link;
 	}
-	_kernend = kv + memsz;
 }
 
 void
