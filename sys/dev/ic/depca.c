@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.2 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.3 2001/07/08 17:52:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,8 +74,6 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
-
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
