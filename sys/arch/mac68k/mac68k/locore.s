@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.4 1993/12/15 03:27:56 briggs Exp $
+ *	$Id: locore.s,v 1.5 1994/01/22 03:47:48 briggs Exp $
  */
 
 #include "assym.s"
@@ -1380,6 +1380,7 @@ Lauexit:
 	movl	sp@+,a2			| restore scratch reg
 	rts
 
+#if NO_M68K_COPY
 #if 1
 /* MF we used the i386 copyinstr which in now coded in C
 it shall be placed in machdep.c
@@ -1398,7 +1399,7 @@ ENTRY(copyinstr)
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
 	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	movl	sp@(12),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
 	jeq	Lcisdone		| zero count, all done
 	subql	#1,d0			| set up for dbeq
@@ -1606,6 +1607,7 @@ Lcoexit:
 Lcoflt:
 	moveq	#EFAULT,d0		| got a fault
 	jra	Lcoexit
+#endif /* NO_M68K_COPY */
 
 /*
  * non-local gotos
@@ -2003,6 +2005,7 @@ Lsavedone:
 	moveq	#0,d0			| return 0
 	rts
 
+#if NO_M68K_COPY
 /*
  * {fu,su},{byte,sword,word}
  */
@@ -2065,6 +2068,7 @@ ENTRY(subyte)
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	jra	Lfsdone
+#endif /* NO_M68K_COPY */
 
 /*
  * Copy 1 relocation unit (NBPG bytes)
