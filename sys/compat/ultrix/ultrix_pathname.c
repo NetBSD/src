@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.4 1996/09/29 10:52:02 jonathan Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.5 1996/10/14 05:15:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
+#include <sys/proc.h>
 
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/ultrix/ultrix_util.h>
