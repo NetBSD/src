@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.16.4.5 1996/06/16 17:15:51 mhitch Exp $	*/
+/*	$NetBSD: dc.c,v 1.16.4.6 1996/09/17 21:10:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ struct dc_softc {
 int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
 
-int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
+int	dc_doprobe __P((void *addr, int unit, int flags, int pri, int cons));
 int	dcintr __P((void * xxxunit));
 
 extern struct cfdriver dc_cd;
@@ -130,17 +130,23 @@ struct  cfdriver dc_cd = {
 
 void dcstart	__P((struct tty *));
 void dcxint	__P((struct tty *));
-void dcPutc	__P((dev_t, int));
 void dcscan	__P((void *));
 extern void ttrstrt __P((void *));
-int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
+
+/* console I/O */
+int dcGetc	__P((dev_t));
+void dcPutc	__P((dev_t, int));
+void dc_consinit __P((dev_t dev, dcregs *dcaddr));
 
 struct	tty *dc_tty[NDCLINE];
 int	dc_cnt = NDCLINE;
-void	(*dcDivertXInput)();	/* X windows keyboard input routine */
-void	(*dcMouseEvent)();	/* X windows mouse motion event routine */
-void	(*dcMouseButtons)();	/* X windows mouse buttons event routine */
+
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */
+void	(*dcMouseEvent) __P((int));	/* X windows mouse motion event routine */
+void	(*dcMouseButtons) __P((int));	/* X windows mouse buttons event routine */
+
 #ifdef DEBUG
 int	debugChar;
 #endif
@@ -261,7 +267,7 @@ dcattach(parent, self, aux)
 		dcaddr = (caddr_t)d->iada_addr;
 		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 				  self->dv_unit, self->dv_cfdata->cf_flags,
-				  (int)d->iada_cookie);
+				  (int)d->iada_cookie, 3);
 		/* tie pseudo-slot to device */
 		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
 		    dcintr, self);
@@ -272,7 +278,7 @@ dcattach(parent, self, aux)
 		dcaddr = (caddr_t)ca->ca_addr;
 		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 				  self->dv_unit, self->dv_cfdata->cf_flags,
-				  ca->ca_slot);
+				  ca->ca_slot, 2);
 
 		/* tie pseudo-slot to device */
 		BUS_INTR_ESTABLISH(ca, dcintr, self);
@@ -295,14 +301,51 @@ raster_console()
 }
 
 
+
+/*
+ * Special-case code to attach a console.
+ * We were using PROM callbacks for console I/O,
+ * and we just reset the chip under the console.
+ * wire up this driver as console ASAP.
+ *
+ * Must be called at spltty() or higher.
+ */
+void
+dc_consinit(dev, dcaddr)
+	dev_t dev;
+	register dcregs *dcaddr;
+{
+	static struct consdev dccons = {
+		NULL, NULL, dcGetc, dcPutc, 0, NODEV, CN_REMOTE
+	};
+  	struct termios cterm;
+  	struct tty ctty;
+
+
+	dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
+		LPR_B9600 | (minor(dev) & 03);
+	wbflush();
+	DELAY(10);
+
+	bzero(&cterm, sizeof(cterm));
+	bzero(&ctty, sizeof(ctty));
+	ctty.t_dev = dev;
+	dccons.cn_dev = dev;
+	cterm.c_cflag = CS8;
+	cterm.c_cflag |= CLOCAL;
+	dcparam(&ctty, &cterm); /* XXX untested on 5000/200*/
+	cn_tab = &dccons;
+}
+
 /*
  * DC7085 (dz-11) probe routine from old-style config.
  * This is only here out of intertia.
  */
 int
-dc_doprobe(addr, unit, flags, priority)
+dc_doprobe(addr, unit, flags, priority, console_line)
 	void *addr;
 	int unit, flags, priority;
+	int console_line;
 {
 	register dcregs *dcaddr;
 	register struct pdma *pdp;
@@ -318,15 +361,20 @@ dc_doprobe(addr, unit, flags, priority)
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
+	 * XXX both (cn_dev == 0) and (cn_pri == CN_DEAD) are bug workarounds.
+	 * The interface between ttys and cpu_cons.c should be reworked.
 	 */
-	if (major(cn_tab->cn_dev) == DCDEV && unit == 0 &&
-		cn_tab->cn_pri == CN_REMOTE)
+	if ((major(cn_tab->cn_dev) == DCDEV || major(cn_tab->cn_dev) == 0) &&
+	    unit == 0 &&
+	    (cn_tab->cn_pri == CN_REMOTE || (cn_tab->cn_pri == CN_DEAD)))
 		DELAY(10000);
 
 	/* reset chip */
 	dcaddr = (dcregs *)addr;
 	dcaddr->dc_csr = CSR_CLR;
 	wbflush();
+	DELAY(10);
+
 	while (dcaddr->dc_csr & CSR_CLR)
 		;
 	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
@@ -338,6 +386,7 @@ dc_doprobe(addr, unit, flags, priority)
 		tp = dc_tty[unit * 4 + cntr] = ttymalloc();
 		if (cntr != DCKBD_PORT && cntr != DCMOUSE_PORT)
 			tty_attach(tp);
+		tp->t_dev = makedev(DCDEV, unit *4 +cntr);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -353,6 +402,12 @@ dc_doprobe(addr, unit, flags, priority)
 	 * Special handling for consoles.
 	 */
 	if (unit == 0) {
+	  	/* accommodate cpu_cons.c */
+		if (cn_tab->cn_dev == 0)
+			/*XXX*/
+			cn_tab->cn_dev = makedev(DCDEV,
+						 4 * unit + console_line);
+
 		if (cn_tab->cn_pri == CN_INTERNAL ||
 		    cn_tab->cn_pri == CN_NORMAL) {
 			s = spltty();
@@ -368,11 +423,7 @@ dc_doprobe(addr, unit, flags, priority)
 			splx(s);
 		} else if (major(cn_tab->cn_dev) == DCDEV) {
 			s = spltty();
-			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-				LPR_B9600 | minor(cn_tab->cn_dev);
-			wbflush();
-			DELAY(1000);
-			/*cn_tab.cn_disabled = 0;*/ /* FIXME */
+			dc_consinit(cn_tab->cn_dev, dcaddr);
 			splx(s);
 		}
 	}
