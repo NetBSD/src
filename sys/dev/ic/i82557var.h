@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.10 2000/02/09 22:15:58 joda Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.11 2000/02/12 04:05:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -320,9 +320,9 @@ do {									\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 void	fxp_attach __P((struct fxp_softc *));
+int	fxp_activate __P((struct device *, enum devact));
 int	fxp_detach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
 
 int	fxp_enable __P((struct fxp_softc*));
 void	fxp_disable __P((struct fxp_softc*));
-
