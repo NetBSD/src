@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.20.4.1 2001/11/24 22:07:27 he Exp $	*/
+/*	$NetBSD: fsck.h,v 1.20.4.2 2001/11/25 19:26:45 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -97,7 +97,7 @@ struct cg *cgrp;
 	do { \
 		memmove(sblk.b_un.b_fs, sblock, SBSIZE); \
 		if (needswap) \
-			ffs_sb_swap(sblock, sblk.b_un.b_fs, 1); \
+			ffs_sb_swap(sblock, sblk.b_un.b_fs); \
 		sblk.b_dirty = 1; \
 	} while (0)
 #define	cgdirty()	do {copyback_cg(&cgblk); cgblk.b_dirty = 1;} while (0)
