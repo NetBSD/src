@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.5 1993/10/06 12:08:11 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.6 1993/10/07 14:49:07 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -93,7 +93,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "machine/segments.h"
 #include "sys/device.h"
 #include "i386/isa/icu.h"
-#include "i386/isa/isa.h"
 #include "i386/isa/isavar.h"
 #include "i386/isa/nvram.h"
 #include "i386/isa/clockreg.h"
@@ -159,6 +158,8 @@ clockattach(parent, self, aux)
 	outb(iobase + 1, CLOCK_RATE_DIV2 | CLOCK_RATE_6);
 	outb(iobase, CLOCK_MODE);
 	outb(iobase + 1, CLOCK_MODE_HM);
+
+	isa_establish(&sc->sc_id, &sc->sc_dev);
 }
 
 u_char
@@ -190,6 +191,7 @@ struct timer_softc {
 static int timerprobe __P((struct device *, struct cfdata *, void *));
 static void timerforceintr __P((void *));
 static void timerattach __P((struct device *, struct device *, void *));
+static int timerintr __P((void *));
 
 struct cfdriver timercd =
 { NULL, "timer", timerprobe, timerattach, DV_DULL, sizeof(struct device) };
@@ -201,6 +203,11 @@ timerprobe(parent, cf, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+
+#ifdef DIAGNOSTIC
+	if (cf->cf_unit != 0)
+		panic("timerprobe: unit != 0");
+#endif
 
 	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
@@ -242,7 +249,7 @@ timerattach(parent, self, aux)
 	u_short iobase = ia->ia_iobase;
 	u_short limit = TIMER_DIV(hz);
 
-	printf(": Intel 8253\n");
+	printf(": i8253\n");
 	sc->sc_iobase = iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_limit = limit;
@@ -258,6 +265,20 @@ timerattach(parent, self, aux)
 		outb(iobase + TIMER_CNTR0, limit%256);
 		outb(iobase + TIMER_CNTR0, limit/256);
 	}
+
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	sc->sc_ih.ih_fun = timerintr;
+	sc->sc_ih.ih_arg = NULL;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_DULL);
+}
+
+static int
+timerintr(aux)
+	void *aux;
+{
+	hardclock((struct clockframe *)aux);
+	return 1;
 }
 
 void
