@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.5 1999/04/10 14:06:27 drochner Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.6 2000/09/29 06:35:57 deberg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,9 +83,11 @@ typedef u_long	bus_space_handle_t;
 #define NEXT68K_INTIO_BUS_SPACE	intiobase
 
 /*
- * Value for the next68k mono video bus space tag, not to be used directly by MI code.
+ * Values for the next68k video bus space tags, not to be used directly
+ * by MI code.
  */
 #define NEXT68K_MONO_VIDEO_BUS_SPACE	monobase
+#define NEXT68K_COLOR_VIDEO_BUS_SPACE	colorbase
 
 /*
  * Mapping and unmapping operations.
@@ -95,7 +97,8 @@ typedef u_long	bus_space_handle_t;
      ((*(hp)=(bus_space_handle_t)((t)+((a)-INTIOBASE))),0) :            \
      ((((a)>=MONOBASE)&&((a)+(s)<MONOTOP)) ?                          \
       ((*(hp)=(bus_space_handle_t)((t)+((a)-MONOBASE))),0) :           \
-      (-1)))
+      ((((a)>=COLORBASE)&&((a)+(s)<COLORTOP)) ?                         \
+       ((*(hp)=(bus_space_handle_t)((t)+((a)-COLORBASE))),0) : (-1))))
 
 #define	bus_space_unmap(t, h, s)
 	
