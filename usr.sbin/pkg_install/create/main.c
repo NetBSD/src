@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.24 2003/06/05 13:15:44 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2003/07/14 06:17:55 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2003/06/05 13:15:44 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2003/07/14 06:17:55 itojun Exp $");
 #endif
 #endif
 
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 			break;
 
 		case 't':
-			strcpy(PlayPen, optarg);
+			strlcpy(PlayPen, optarg, sizeof(PlayPen));
 			break;
 
 		case 'X':
