@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.64 2003/04/06 16:12:37 jmmv Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.65 2003/05/06 05:35:09 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -399,41 +399,19 @@ menu localdirbad, title "What do you want to do?";
 		{ yesno = 1; ignorerror = 1; };
 
 menu namesrv6, title "  Select IPv6 DNS server";
-	option "paradise.v6.kame.net", exit, action
+	option "ns9.iij.ad.jp", exit, action
 		{
 #ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:501:4819::42",
-		      sizeof(net_namesvr6));
+		  strlcpy(net_namesvr6, "2001:240::1", sizeof(net_namesvr6));
 		  yesno = 1;
 #else
 		  yesno = 0;
 #endif
 		}; 
-	option "kiwi.itojun.org", exit, action
+	option "ns-wide.wide.ad.jp", exit, action
 		{
 #ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:501:410:100:5254:ff:feda:48bf",
-		      sizeof(net_namesvr6));
-		  yesno = 1;
-#else
-		  yesno = 0;
-#endif
-		}; 
-	option "ns1.v6.intec.co.jp", exit, action 
-		{
-#ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:508:0:1::53",
-		      sizeof(net_namesvr6));
-		  yesno = 1;
-#else
-		  yesno = 0;
-#endif
-		}; 
-	option "nttv6.net", exit, action
-		{
-#ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:1800:1000::1",
-		      sizeof(net_namesvr6));
+		  strlcpy(net_namesvr6, "2001:200:0:1::3", sizeof(net_namesvr6));
 		  yesno = 1;
 #else
 		  yesno = 0;
@@ -442,7 +420,7 @@ menu namesrv6, title "  Select IPv6 DNS server";
 	option "light.imasy.or.jp", exit, action
 		{
 #ifdef INET6
-		  strncpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
+		  strlcpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
 		      sizeof(net_namesvr6));
 		  yesno = 1;
 #else
