@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.3 1997/08/20 16:02:48 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.4 1997/09/25 19:09:32 thorpej Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -36,7 +36,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
 # PORTSDIR		- The root of the ports tree.  Defaults:
 #					FreeBSD/OpenBSD: /usr/ports
-#					NetBSD:          /usr/pkg
+#					NetBSD:          /usr/pkgsrc
 # DISTDIR 		- Where to get gzip'd, tarballed copies of original sources
 #				  (default: ${PORTSDIR}/distfiles).
 # PREFIX		- Where to install things in general (default: /usr/pkg).
@@ -281,7 +281,7 @@ OPSYS!=	uname -s
 # tree we are and thus can't go relative.  They can, of course, be overridden
 # by individual Makefiles or local system make configuration.
 .if (${OPSYS} == "NetBSD")
-PORTSDIR?=		/usr/pkg/src
+PORTSDIR?=		/usr/pkgsrc
 LOCALBASE?=		${DESTDIR}/usr/pkg
 .else
 PORTSDIR?=		/usr/ports
