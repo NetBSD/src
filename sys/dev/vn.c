@@ -1,4 +1,4 @@
-/*	$NetBSD: vn.c,v 1.15 1994/12/14 19:09:15 mycroft Exp $	*/
+/*	$NetBSD: vn.c,v 1.16 1994/12/24 14:05:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,6 +72,7 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
+#include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -118,6 +119,11 @@ int numvnd = NVN;
 struct vn_softc *vn_softc;
 int numvnd;
 #endif
+
+void	vnclear __P((struct vn_softc *));
+void	vnstart __P((struct vn_softc *));
+int	vnsetcred __P((struct vn_softc *, struct ucred *));
+void	vnthrottle __P((struct vn_softc *, struct vnode *));
 
 void
 vnattach(num)
@@ -296,6 +302,7 @@ vnstrategy(bp)
  * to an NFS file.  This places the burden on the client rather than the
  * server.
  */
+void
 vnstart(vn)
 	register struct vn_softc *vn;
 {
@@ -358,6 +365,7 @@ vniodone(bp)
 }
 
 /* ARGSUSED */
+int
 vnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -443,6 +451,7 @@ vnioctl(dev, cmd, data, flag, p)
  * to this "disk" is essentially as root.  Note that credentials may change
  * if some other uid can write directly to the mapped file (NFS).
  */
+int
 vnsetcred(vn, cred)
 	register struct vn_softc *vn;
 	struct ucred *cred;
@@ -473,6 +482,7 @@ vnsetcred(vn, cred)
 /*
  * Set maxactive based on FS type
  */
+void
 vnthrottle(vn, vp)
 	register struct vn_softc *vn;
 	struct vnode *vp;
@@ -490,6 +500,7 @@ vnthrottle(vn, vp)
 		vn->sc_maxactive = 1;
 }
 
+void
 vnshutdown()
 {
 	register struct vn_softc *vn;
@@ -499,6 +510,7 @@ vnshutdown()
 			vnclear(vn);
 }
 
+void
 vnclear(vn)
 	register struct vn_softc *vn;
 {
@@ -519,6 +531,7 @@ vnclear(vn)
 	vn->sc_size = 0;
 }
 
+int
 vnsize(dev)
 	dev_t dev;
 {
@@ -530,8 +543,11 @@ vnsize(dev)
 	return(vn->sc_size);
 }
 
+int
 vndump(dev)
+	dev_t dev;
 {
+
 	return(ENXIO);
 }
 #endif
