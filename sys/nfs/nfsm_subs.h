@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.13 1997/02/22 23:33:05 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.14 1997/02/24 23:26:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,19 +92,7 @@
 		mb->m_len += (s); \
 		bpos += (s); }
 
-/*
- * XXX this is wrong for 64bit architectures, but we're dealing with 32bit
- * chunks only here and assume (safely) that they can be addressed on
- * 32bit boundaries. This needs to be changed if 64bit quantities will
- * be extracted from the mbufs. Also, this isn't even needed for the i386,
- * it handles misaligned accesses. So the ALIGN macro doesn't quite cut
- * it here.
- */
-#ifdef __i386__
-#define nfsm_aligned(p) 1
-#else
-#define nfsm_aligned(p) (((u_long)(p) & 3) == 0)
-#endif
+#define nfsm_aligned(p) ALIGNED_POINTER(p,u_int32_t)
 
 #define	nfsm_dissect(a, c, s) \
 		{ t1 = mtod(md, caddr_t)+md->m_len-dpos; \
