@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9.2.2 1999/04/23 21:35:12 perry Exp $	*/
+/*	$NetBSD: md.c,v 1.9.2.3 1999/06/24 22:44:28 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -17,7 +17,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -142,18 +142,7 @@ int	md_post_newfs (void)
 
 int	md_copy_filesystem (void)
 {
-	if (target_already_root()) {
-		return 0;
-	}
-
-	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
-	if (run_prog(0, 0, "Warning: unexpected error",
-		"pax -X -r -w -pe / /mnt") != 0)
-		return 1;
-
-	/* Copy next-stage profile into target /.profile. */
-	return cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return 0;
 }
 
 int md_make_bsd_partitions (void)
@@ -348,7 +337,8 @@ md_update(void)
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
-	puts (CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 	return 1;
 }
