@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.37 1999/10/13 18:52:54 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.37.2.1 1999/10/20 22:55:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ typedef struct {
 #define  UE_ISO_ASYNC	0x04
 #define  UE_ISO_ADAPT	0x08
 #define  UE_ISO_SYNC	0x0c
+#define UE_GET_ISO_TYPE(a)	((a) & UE_ISO_TYPE)
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
 } usb_endpoint_descriptor_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.8 1999/10/16 23:53:27 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.8.2.1 1999/10/20 22:56:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -393,7 +393,8 @@ filecore_unmount(mp, mntflags, p)
 
 	fcmp = VFSTOFILECORE(mp);
 
-	fcmp->fc_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (fcmp->fc_devvp->v_type != VBAD)
+		fcmp->fc_devvp->v_specflags &= ~SI_MOUNTEDON;
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED, p);
 	vput(fcmp->fc_devvp);
