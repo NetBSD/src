@@ -1,8 +1,8 @@
-/*	$NetBSD: targ.c,v 1.9 1996/08/30 17:59:43 thorpej Exp $	*/
+/*	$NetBSD: targ.c,v 1.10 1996/11/06 17:59:27 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91";
+static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$NetBSD: targ.c,v 1.9 1996/08/30 17:59:43 thorpej Exp $";
+static char *rcsid = "$NetBSD: targ.c,v 1.10 1996/11/06 17:59:27 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,11 +276,11 @@ Targ_FindNode (name, flags)
 /*-
  *-----------------------------------------------------------------------
  * Targ_FindList --
- *	Make a complete list of GNodes from the given list of names 
+ *	Make a complete list of GNodes from the given list of names
  *
  * Results:
  *	A complete list of graph nodes corresponding to all instances of all
- *	the names in names. 
+ *	the names in names.
  *
  * Side Effects:
  *	If flags is TARG_CREATE, nodes will be created for all names in
@@ -397,7 +397,7 @@ Targ_Precious (gn)
 /******************* DEBUG INFO PRINTING ****************/
 
 static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
-/*- 
+/*-
  *-----------------------------------------------------------------------
  * Targ_SetMain --
  *	Set our idea of the main target we'll be creating. Used for
@@ -479,7 +479,7 @@ Targ_FmtTime (time)
 	     months[parts->tm_mon], parts->tm_mday, 1900 + parts->tm_year);
     return(buf);
 }
-    
+
 /*-
  *-----------------------------------------------------------------------
  * Targ_PrintType --
@@ -497,7 +497,7 @@ Targ_PrintType (type)
     register int    type;
 {
     register int    tbit;
-    
+
 #ifdef __STDC__
 #define PRINTBIT(attr)	case CONCAT(OP_,attr): printf("." #attr " "); break
 #define PRINTDBIT(attr) case CONCAT(OP_,attr): if (DEBUG(TARG)) printf("." #attr " "); break
@@ -584,7 +584,7 @@ TargPrintNode (gnp, passp)
 	    Lst_ForEach (gn->parents, TargPrintName, (ClientData)0);
 	    fputc ('\n', stdout);
 	}
-	
+
 	printf("%-16s", gn->name);
 	switch (gn->type & OP_OPMASK) {
 	    case OP_DEPENDS:

@@ -1,8 +1,8 @@
-/*	$NetBSD: var.c,v 1.14 1996/08/13 16:42:25 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.15 1996/11/06 17:59:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.14 1996/08/13 16:42:25 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.15 1996/11/06 17:59:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,6 @@ typedef struct {
 #define VAR_SUB_GLOBAL	1   /* Apply substitution globally */
 #define VAR_MATCH_START	2   /* Match at start of word */
 #define VAR_MATCH_END	4   /* Match at end of word */
-#define VAR_NO_SUB	8   /* Substitution is non-global and already done */
 } VarPattern;
 
 static int VarCmp __P((ClientData, ClientData));
@@ -279,15 +278,15 @@ VarFind (name, ctxt, flags)
 
 	if ((env = getenv (name)) != NULL) {
 	    int	  	len;
-	    
+
 	    v = (Var *) emalloc(sizeof(Var));
 	    v->name = estrdup(name);
 
 	    len = strlen(env);
-	    
+
 	    v->val = Buf_Init(len);
 	    Buf_AddBytes(v->val, len, (Byte *)env);
-	    
+
 	    v->flags = VAR_FROM_ENV;
 	    return (v);
 	} else if (checkEnvFirst && (flags & FIND_GLOBAL) &&
@@ -755,7 +754,7 @@ VarRoot (word, addSpace, buf, dummy)
  * VarMatch --
  *	Place the word in the buffer if it matches the given pattern.
  *	Callback function for VarModify to implement the :M modifier.
- *	
+ *
  * Results:
  *	TRUE if a space should be placed in the buffer before the next
  *	word.
@@ -791,7 +790,7 @@ VarMatch (word, addSpace, buf, pattern)
  *	Place the word in the buffer if it matches the given pattern.
  *	Callback function for VarModify to implement the System V %
  *	modifiers.
- *	
+ *
  * Results:
  *	TRUE if a space should be placed in the buffer before the next
  *	word.
@@ -834,7 +833,7 @@ VarSYSVMatch (word, addSpace, buf, patp)
  * VarNoMatch --
  *	Place the word in the buffer if it doesn't match the given pattern.
  *	Callback function for VarModify to implement the :N modifier.
- *	
+ *
  * Results:
  *	TRUE if a space should be placed in the buffer before the next
  *	word.
@@ -891,9 +890,9 @@ VarSubstitute (word, addSpace, buf, patternp)
     VarPattern	*pattern = (VarPattern *) patternp;
 
     wordLen = strlen(word);
-    if ((pattern->flags & VAR_NO_SUB) == 0) {
+    if (1) { /* substitute in each word of the variable */
 	/*
-	 * Still substituting -- break it down into simple anchored cases
+	 * Break substitution down into simple anchored cases
 	 * and if none of them fits, perform the general substitution case.
 	 */
 	if ((pattern->flags & VAR_MATCH_START) &&
@@ -975,7 +974,7 @@ VarSubstitute (word, addSpace, buf, patternp)
 	     * Pattern is unanchored: search for the pattern in the word using
 	     * String_FindSubstring, copying unmatched portions and the
 	     * right-hand-side for each match found, handling non-global
-	     * subsititutions correctly, etc. When the loop is done, any
+	     * substitutions correctly, etc. When the loop is done, any
 	     * remaining part of the word (word and wordLen are adjusted
 	     * accordingly through the loop) is copied straight into the
 	     * buffer.
@@ -998,12 +997,8 @@ VarSubstitute (word, addSpace, buf, patternp)
 		    Buf_AddBytes(buf, pattern->rightLen, (Byte *)pattern->rhs);
 		    wordLen -= (cp - word) + pattern->leftLen;
 		    word = cp + pattern->leftLen;
-		    if (wordLen == 0) {
+		    if (wordLen == 0 || (pattern->flags & VAR_SUB_GLOBAL) == 0){
 			done = TRUE;
-		    }
-		    if ((pattern->flags & VAR_SUB_GLOBAL) == 0) {
-			done = TRUE;
-			pattern->flags |= VAR_NO_SUB;
 		    }
 		} else {
 		    done = TRUE;
@@ -1023,14 +1018,9 @@ VarSubstitute (word, addSpace, buf, patternp)
 	    return ((Buf_Size(buf) != origSize) || addSpace);
 	}
 	/*
-	 * Common code for anchored substitutions: if performed a substitution
-	 * and it's not supposed to be global, mark the pattern as requiring
-	 * no more substitutions. addSpace was set TRUE if characters were
-	 * added to the buffer.
+	 * Common code for anchored substitutions:
+	 * addSpace was set TRUE if characters were added to the buffer.
 	 */
-	if ((pattern->flags & VAR_SUB_GLOBAL) == 0) {
-	    pattern->flags |= VAR_NO_SUB;
-	}
 	return (addSpace);
     }
  nosub:
@@ -1076,7 +1066,7 @@ VarModify (str, modProc, datum)
 
     for (i = 1; i < ac; i++)
 	addSpace = (*modProc)(av[i], addSpace, buf, datum);
-    
+
     Buf_AddByte (buf, '\0');
     str = (char *)Buf_GetAll (buf, (int *)NULL);
     Buf_Destroy (buf, FALSE);
@@ -1127,11 +1117,11 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 				 * expanding it in a non-local context. This
 				 * is done to support dynamic sources. The
 				 * result is just the invocation, unaltered */
-    
+
     *freePtr = FALSE;
     dynamic = FALSE;
     start = str;
-    
+
     if (str[1] != '(' && str[1] != '{') {
 	/*
 	 * If it's not bounded by braces of some sort, life is much simpler.
@@ -1146,7 +1136,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if (v == (Var *)NIL) {
 	    *lengthPtr = 2;
-	    
+
 	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
 		/*
 		 * If substituting a local variable in a non-local context,
@@ -1204,7 +1194,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    return (var_Error);
 	}
 	*tstr = '\0';
- 	
+
 	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 	    ((tstr-str) == 4) && (str[3] == 'F' || str[3] == 'D'))
@@ -1230,7 +1220,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    vname[0] = str[2];
 		    vname[1] = '\0';
 		    v = VarFind(vname, ctxt, 0);
-		    
+
 		    if (v != (Var *)NIL) {
 			/*
 			 * No need for nested expansion or anything, as we're
@@ -1238,7 +1228,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * but nested invocations in them...
 			 */
 			val = (char *)Buf_GetAll(v->val, (int *)NULL);
-			
+
 			if (str[3] == 'D') {
 			    val = VarModify(val, VarHead, (ClientData)0);
 			} else {
@@ -1257,7 +1247,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		}
 	    }
 	}
-			    
+
 	if (v == (Var *)NIL) {
 	    if ((((tstr-str) == 3) ||
 		 ((((tstr-str) == 4) && (str[3] == 'F' ||
@@ -1286,7 +1276,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		       ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		int	len;
-		
+
 		len = (tstr-str) - 3;
 		if ((strncmp(str+2, ".TARGET", len) == 0) ||
 		    (strncmp(str+2, ".ARCHIVE", len) == 0) ||
@@ -1296,7 +1286,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    dynamic = TRUE;
 		}
 	    }
-	    
+
 	    if (!haveModifier) {
 		/*
 		 * No modifiers -- have specification length so we can return
@@ -1346,9 +1336,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	str = Var_Subst(NULL, str, ctxt, err);
 	*freePtr = TRUE;
     }
-    
+
     v->flags &= ~VAR_IN_USE;
-    
+
     /*
      * Now we need to apply any modifiers the user wants applied.
      * These are:
@@ -1374,7 +1364,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	while (*tstr != endc) {
 	    char	*newStr;    /* New value to return */
 	    char	termc;	    /* Character which terminated scan */
-	    
+
 	    if (DEBUG(VAR)) {
 		printf("Applying :%c to \"%s\"\n", *tstr, str);
 	    }
@@ -1451,7 +1441,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 
 		    buf = Buf_Init(0);
-		    
+
 		    /*
 		     * Pass through the lhs looking for 1) escaped delimiters,
 		     * '$'s and backslashes (place the escaped character in
@@ -1477,7 +1467,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 				char	    *cp2;
 				int	    len;
 				Boolean	    freeIt;
-				
+
 				cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
 				Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 				if (freeIt) {
@@ -1497,7 +1487,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 
 		    Buf_AddByte(buf, (Byte)'\0');
-		    
+
 		    /*
 		     * If lhs didn't end with the delimiter, complain and
 		     * return NULL
@@ -1532,7 +1522,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		     * it right here) and 3) expand any variable substitutions.
 		     */
 		    buf = Buf_Init(0);
-		    
+
 		    tstr = cp + 1;
 		    for (cp = tstr; *cp != '\0' && *cp != delim; cp++) {
 			if ((*cp == '\\') &&
@@ -1563,7 +1553,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 
 		    Buf_AddByte(buf, (Byte)'\0');
-		    
+
 		    /*
 		     * If didn't end in delimiter character, complain
 		     */
@@ -1657,7 +1647,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		     */
 		    VarPattern      pattern;
 		    Boolean         eqFound;
-		    
+
 		    pattern.flags = 0;
 		    eqFound = FALSE;
 		    /*
@@ -1680,7 +1670,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			    cp++;
 		    }
 		    if (*cp == endc && eqFound) {
-			
+
 			/*
 			 * Now we break this sucker into the lhs and
 			 * rhs. We must null terminate them of course.
@@ -1690,7 +1680,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			pattern.lhs = tstr;
 			pattern.leftLen = cp - tstr;
 			*cp++ = '\0';
-			
+
 			pattern.rhs = cp;
 			cnt = 1;
 			while (cnt) {
@@ -1703,7 +1693,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			}
 			pattern.rightLen = cp - pattern.rhs;
 			*cp = '\0';
-			
+
 			/*
 			 * SYSV modifications happen through the whole
 			 * string. Note the pattern is anchored at the end.
@@ -1723,7 +1713,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			Error ("Unknown modifier '%c'\n", *tstr);
 			for (cp = tstr+1;
 			     *cp != ':' && *cp != endc && *cp != '\0';
-			     cp++) 
+			     cp++)
 				 continue;
 			termc = *cp;
 			newStr = var_Error;
@@ -1733,7 +1723,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    if (DEBUG(VAR)) {
 		printf("Result is \"%s\"\n", newStr);
 	    }
-	    
+
 	    if (*freePtr) {
 		free (str);
 	    }
@@ -1757,10 +1747,10 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	*lengthPtr = tstr - start + 1;
 	*tstr = endc;
     }
-    
+
     if (v->flags & VAR_FROM_ENV) {
 	Boolean	  destroy = FALSE;
-	
+
 	if (str != (char *)Buf_GetAll(v->val, (int *)NULL)) {
 	    destroy = TRUE;
 	} else {
@@ -1867,9 +1857,9 @@ Var_Subst (var, str, ctxt, undefErr)
 			/*
 			 * Scan up to the end of the variable name.
 			 */
-			for (p = &str[2]; *p && 
+			for (p = &str[2]; *p &&
 			     *p != ':' && *p != ')' && *p != '}'; p++)
-			    if (*p == '$') 
+			    if (*p == '$')
 				break;
 			/*
 			 * A variable inside the variable. We cannot expand
@@ -1881,14 +1871,14 @@ Var_Subst (var, str, ctxt, undefErr)
 			    str = p;
 			    continue;
 			}
-				
-			if (strncmp(var, str + 2, p - str - 2) != 0 || 
+
+			if (strncmp(var, str + 2, p - str - 2) != 0 ||
 			    var[p - str - 2] != '\0') {
 			    /*
 			     * Not the variable we want to expand, scan
 			     * until the next variable
 			     */
-			    for (;*p != '$' && *p != '\0'; p++) 
+			    for (;*p != '$' && *p != '\0'; p++)
 				continue;
 			    Buf_AddBytes(buf, p - str, (Byte *) str);
 			    str = p;
@@ -1902,7 +1892,7 @@ Var_Subst (var, str, ctxt, undefErr)
 		if (!expand)
 		    continue;
 	    }
-			
+
 	    val = Var_Parse (str, ctxt, undefErr, &length, &doFree);
 
 	    /*
@@ -1942,7 +1932,7 @@ Var_Subst (var, str, ctxt, undefErr)
 		 * advance the string pointer.
 		 */
 		str += length;
-		
+
 		/*
 		 * Copy all the characters from the variable value straight
 		 * into the new string.
@@ -1954,7 +1944,7 @@ Var_Subst (var, str, ctxt, undefErr)
 	    }
 	}
     }
-	
+
     Buf_AddByte (buf, '\0');
     str = (char *)Buf_GetAll (buf, (int *)NULL);
     Buf_Destroy (buf, FALSE);
@@ -2013,7 +2003,7 @@ Var_GetHead(file)
  *	None
  *
  * Side Effects:
- *	The VAR_CMD and VAR_GLOBAL contexts are created 
+ *	The VAR_CMD and VAR_GLOBAL contexts are created
  *-----------------------------------------------------------------------
  */
 void
@@ -2031,7 +2021,7 @@ Var_End ()
 {
     Lst_Destroy(allVars, VarDelete);
 }
-	
+
 
 /****************** PRINT DEBUGGING INFO *****************/
 static int

@@ -1,11 +1,11 @@
-/*	$NetBSD: util.c,v 1.7 1996/08/30 17:59:44 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.8 1996/11/06 17:59:28 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.7 1996/08/30 17:59:44 thorpej Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.8 1996/11/06 17:59:28 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -25,8 +25,8 @@ extern int errno, sys_nerr;
 extern char *sys_errlist[];
 
 char *
-strerror(e) 
-    int e; 
+strerror(e)
+    int e;
 {
     static char buf[100];
     if (e < 0 || e >= sys_nerr) {
@@ -67,7 +67,7 @@ strdup(str)
 
 int
 setenv(name, value, dum)
-    const char *name; 
+    const char *name;
     const char *value;
     int dum;
 {
@@ -79,15 +79,15 @@ setenv(name, value, dum)
 
     if (ptr == NULL)
 	return -1;
-    
+
     p = ptr;
 
-    while (*name) 
+    while (*name)
 	*p++ = *name++;
 
     *p++ = '=';
 
-    while (*value) 
+    while (*value)
 	*p++ = *value++;
 
     *p = '\0';
@@ -236,14 +236,14 @@ getwd(pathname)
 	/* look in the parent for the entry with the same inode */
 	if (DEV_DEV_COMPARE(st_dotdot.st_dev, st_cur.st_dev)) {
 	    /* Parent has same device. No need to stat every member */
-	    for (d = readdir(dp); d != NULL; d = readdir(dp)) 
+	    for (d = readdir(dp); d != NULL; d = readdir(dp))
 		if (d->d_fileno == st_cur.st_ino)
 		    break;
 	}
 	else {
-	    /* 
-	     * Parent has a different device. This is a mount point so we 
-	     * need to stat every member 
+	    /*
+	     * Parent has a different device. This is a mount point so we
+	     * need to stat every member
 	     */
 	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
@@ -257,7 +257,7 @@ getwd(pathname)
 		}
 		/* check if we found it yet */
 		if (st_next.st_ino == st_cur.st_ino &&
-		    DEV_DEV_COMPARE(st_next.st_dev, st_cur.st_dev)) 
+		    DEV_DEV_COMPARE(st_next.st_dev, st_cur.st_dev))
 		    break;
 	    }
 	}
