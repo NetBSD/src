@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.72 1999/07/14 22:37:14 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.73 1999/07/22 12:56:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,6 +138,7 @@
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_var.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -392,6 +393,9 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	ip6 = NULL;
 #endif
 	if (m == 0) {
+		if (!template)
+			return EINVAL;
+
 		/* get family information from template */
 		switch (mtod(template, struct ip *)->ip_v) {
 		case 4:
@@ -411,7 +415,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m) {
 			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
+			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m = NULL;
 			}
@@ -1011,6 +1015,37 @@ tcp_notify(inp, error)
 
 #if defined(INET6) && !defined(TCP6)
 void
+tcp6_notify(in6p, error)
+	struct in6pcb *in6p;
+	int error;
+{
+	register struct tcpcb *tp = (struct tcpcb *)in6p->in6p_ppcb;
+	register struct socket *so = in6p->in6p_socket;
+
+	/*
+	 * Ignore some errors if we are hooked up.
+	 * If connection hasn't completed, has retransmitted several times,
+	 * and receives a second error, give up now.  This is better
+	 * than waiting a long time to establish a connection that
+	 * can never complete.
+	 */
+	if (tp->t_state == TCPS_ESTABLISHED &&
+	     (error == EHOSTUNREACH || error == ENETUNREACH ||
+	      error == EHOSTDOWN)) {
+		return;
+	} else if (TCPS_HAVEESTABLISHED(tp->t_state) == 0 &&
+	    tp->t_rxtshift > 3 && tp->t_softerror)
+		so->so_error = error;
+	else 
+		tp->t_softerror = error;
+	wakeup((caddr_t) &so->so_timeo);
+	sorwakeup(so);
+	sowwakeup(so);
+}
+#endif
+
+#if defined(INET6) && !defined(TCP6)
+void
 tcp6_ctlinput(cmd, sa, ip6, m, off)
 	int cmd;
 	struct sockaddr *sa;
@@ -1018,7 +1053,62 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 	struct mbuf *m;
 	int off;
 {
-	(void)tcp_ctlinput(cmd, sa, (void *)ip6);
+	register struct tcphdr *thp;
+	struct tcphdr th;
+	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
+	int nmatch;
+	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
+
+	if (cmd == PRC_QUENCH)
+		notify = tcp6_quench;
+	else if (cmd == PRC_MSGSIZE)
+		notify = tcp6_mtudisc;
+	else if (!PRC_IS_REDIRECT(cmd) &&
+		 ((unsigned)cmd > PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
+		return;
+	if (ip6) {
+		/*
+		 * XXX: We assume that when ip6 is non NULL,
+		 * M and OFF are valid.
+		 */
+
+		/* translate addresses into internal form */
+		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
+			ip6->ip6_src.s6_addr16[1] =
+				htons(m->m_pkthdr.rcvif->if_index);
+		}
+		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
+			ip6->ip6_dst.s6_addr16[1] =
+				htons(m->m_pkthdr.rcvif->if_index);
+		}
+
+		if (m->m_len < off + sizeof(th)) {
+			/*
+			 * this should be rare case,
+			 * so we compromise on this copy...
+			 */
+			m_copydata(m, off, sizeof(th), (caddr_t)&th);
+			thp = &th;
+		} else
+			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
+		nmatch = in6_pcbnotify(&tcb6, sa, thp->th_dport, &ip6->ip6_src,
+		    thp->th_sport, cmd, notify);
+		if (nmatch == 0 && syn_cache_count &&
+		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
+		     inet6ctlerrmap[cmd] == ENETUNREACH ||
+		     inet6ctlerrmap[cmd] == EHOSTDOWN)) {
+			struct sockaddr_in6 sin6;
+			bzero(&sin6, sizeof(sin6));
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_port = thp->th_sport;
+			sin6.sin6_addr = ip6->ip6_src;
+			syn_cache_unreach((struct sockaddr *)&sin6, sa, thp);
+		}
+	} else {
+		(void) in6_pcbnotify(&tcb6, sa, 0, &zeroin6_addr,
+				     0, cmd, notify);
+	}
 }
 #endif
 
@@ -1068,17 +1158,9 @@ tcp_ctlinput(cmd, sa, v)
 
 		/* XXX mapped address case */
 	}
-#ifdef INET6
-	else if (ip && ip->ip_v == 6 && sa->sa_family == AF_INET6) {
-		/* XXX do something for ip6 */
-	}
-#endif
 	else {
 		(void)in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
 		    notify);
-#ifdef INET6
-		/* XXX do something for ip6 */
-#endif
 	}
 	return NULL;
 }
@@ -1098,6 +1180,19 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_segsz;
 }
+
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_quench(in6p, errno)
+	struct in6pcb *in6p;
+	int errno;
+{
+	struct tcpcb *tp = in6totcpcb(in6p);
+
+	if (tp)
+		tp->snd_cwnd = tp->t_segsz;
+}
+#endif
 
 /*
  * On receipt of path MTU corrections, flush old route and replace it
@@ -1145,6 +1240,48 @@ tcp_mtudisc(inp, errno)
 	}
 }
 
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_mtudisc(in6p, errno)
+	struct in6pcb *in6p;
+	int errno;
+{
+	struct tcpcb *tp = in6totcpcb(in6p);
+	struct rtentry *rt = in6_pcbrtentry(in6p);
+
+	if (tp != 0) {
+		if (rt != 0) {
+			/*
+			 * If this was not a host route, remove and realloc.
+			 */
+			if ((rt->rt_flags & RTF_HOST) == 0) {
+				in6_rtchange(in6p, errno);
+				if ((rt = in6_pcbrtentry(in6p)) == 0)
+					return;
+			}
+
+			/*
+			 * Slow start out of the error condition.  We
+			 * use the MTU because we know it's smaller
+			 * than the previously transmitted segment.
+			 *
+			 * Note: This is more conservative than the
+			 * suggestion in draft-floyd-incr-init-win-03.
+			 */
+			if (rt->rt_rmx.rmx_mtu != 0)
+				tp->snd_cwnd =
+				    TCP_INITIAL_WINDOW(tcp_init_win,
+				    rt->rt_rmx.rmx_mtu);
+		}
+
+		/*
+		 * Resend unacknowledged packets.
+		 */
+		tp->snd_nxt = tp->snd_una;
+		tcp_output(tp);
+	}
+}
+#endif
 
 /*
  * Compute the MSS to advertise to the peer.  Called only during
