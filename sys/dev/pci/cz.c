@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.8 2000/06/09 18:00:45 wrstuden Exp $	*/
+/*	$NetBSD: cz.c,v 1.9 2000/06/14 17:54:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -698,8 +698,8 @@ cz_intr(void *arg)
 
 	while ((command = (CZ_PLX_READ(cz, PLX_LOCAL_PCI_DOORBELL) & 0xff))) {
 		rval = 1;
-		channel = CZ_FWCTL_READ(cz, BRDCTL_HCMD_CHANNEL);
-		param = CZ_FWCTL_READ(cz, BRDCTL_HCMD_PARAM);
+		channel = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_CHANNEL);
+		param = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
 
 		/* now clear this interrupt, posslibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
