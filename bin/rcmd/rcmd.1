@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.1,v 1.8 2001/04/03 10:53:45 wiz Exp $
+.\"	$NetBSD: rcmd.1,v 1.9 2001/12/20 20:06:32 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green.
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -143,9 +143,9 @@ to
 .El
 .Sh SEE ALSO
 .Xr rsh 1 ,
-.Xr kerberos 8 ,
+.Xr krb_realmofhost 3 ,
 .Xr krb_sendauth 3 ,
-.Xr krb_realmofhost 3
+.Xr kerberos 8
 .Sh HISTORY
 The
 .Nm
@@ -178,7 +178,7 @@ You cannot use
 to run an interactive command (like
 .Xr rogue  6
 or
-.Xr vi  1  ).
+.Xr vi  1 ) .
 Use
 .Xr rlogin  1
 instead.
