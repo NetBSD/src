@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.30 1997/12/13 21:02:40 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.31 1997/12/17 06:06:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -237,6 +237,7 @@ struct	tcpstat {
 	u_long	tcps_keeptimeo;		/* keepalive timeouts */
 	u_long	tcps_keepprobe;		/* keepalive probes sent */
 	u_long	tcps_keepdrops;		/* connections dropped in keepalive */
+	u_long	tcps_persistdrops;	/* connections dropped in persist */
 	u_long	tcps_connsdrained;	/* connections drained due to memory
 					   shortage */
 
