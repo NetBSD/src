@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.90 1998/03/04 09:06:52 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.91 1998/06/26 10:13:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
  * handled here.
  */
 
+#include "opt_nfsserver.h"
 #include "fs_nfs.h"
 
 #include <sys/param.h>
