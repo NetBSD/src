@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.24 1998/11/03 05:47:38 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.25 1998/11/25 17:19:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1194,7 +1194,7 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
-	int i, s, prm;
+	int i, s, prm, error;
 
 	s = splnet();
 	/*
@@ -1272,6 +1272,18 @@ fxp_init(xsc)
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
 	cbp->mc_all =		sc->all_mcasts;/* accept all multicasts */
 
+	/* Load the DMA map */
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_tx_dmamaps[0], cbp,
+	    sizeof(struct fxp_cb_config), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load config buffer, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return;
+	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+	    0, sizeof(struct fxp_cb_config),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	/*
 	 * Start the config command/DMA.
 	 */
@@ -1280,7 +1292,16 @@ fxp_init(xsc)
 	    sc->sc_cddma + FXP_CDOFF(fcd_txcbs[0].cb_status));
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	while (!(cbp->cb_status & FXP_CB_STATUS_C));
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+	    0, sizeof(struct fxp_cb_config),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	while (!(cbp->cb_status & FXP_CB_STATUS_C))
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+		    0, sizeof(struct fxp_cb_config),
+		    BUS_DMASYNC_POSTREAD);
+
+	/* Unload the DMA map */
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmamaps[0]);
 
 	/*
 	 * Now initialize the station address. Temporarily use the TxCB
@@ -1292,13 +1313,34 @@ fxp_init(xsc)
 	cb_ias->link_addr = -1;
 	bcopy(LLADDR(ifp->if_sadl), (void *)cb_ias->macaddr, 6);
 
+	/* Load the DMA map */
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_tx_dmamaps[0], cbp, 
+	    sizeof(struct fxp_cb_ias), NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load address buffer, error = %d\n",
+		    sc->sc_dev .dv_xname, error);
+		return;
+	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+		    0, sizeof(struct fxp_cb_ias),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	/*
 	 * Start the IAS (Individual Address Setup) command/DMA.
 	 */
 	fxp_scb_wait(sc);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	while (!(cb_ias->cb_status & FXP_CB_STATUS_C));
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+	    0, sizeof(struct fxp_cb_ias),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	while (!(cb_ias->cb_status & FXP_CB_STATUS_C))
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
+		    0, sizeof(struct fxp_cb_ias),
+		    BUS_DMASYNC_POSTREAD);
+
+	/* Unload the DMA map */
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_dmamaps[0]);
 
 	/*
 	 * Initialize transmit control block (TxCB) list.
