@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.9 2004/04/26 22:05:05 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.10 2004/05/14 14:23:35 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.9 2004/04/26 22:05:05 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.10 2004/05/14 14:23:35 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -139,7 +139,7 @@ CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
 #define TX_MAX_ENTRIES (TX_RING_SIZE - 2)
 #define RX_MAX_ENTRIES (RX_RING_SIZE - 2)
 #define TX_ENTRIES 32
-#define RX_ENTRIES 32
+#define RX_ENTRIES 128
 
 #define	TX_RING_INC(_i)    (((_i)+1) & (TX_RING_SIZE-1))
 #define RX_RING_INC(_i)    (((_i)+1) & (RX_RING_SIZE-1))
@@ -275,15 +275,10 @@ xennet_tx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 }
 
 static void
-xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+xennet_rx_push_buffer(struct xennet_softc *sc, int id)
 {
-	union xennet_bufarray *xb = (union xennet_bufarray *)arg;
-	struct xennet_softc *sc = xb->xb_rx.xbrx_sc;
 	netop_t netop;
-	int id = (xb - sc->sc_rx_bufa), ringidx;
-
-	DPRINTFN(XEDB_MBUF, ("xennet_rx_mbuf_free id %d, mbuf %p, buf %p, "
-	    "size %d\n", id, m, buf, size));
+	int ringidx;
 
 	ringidx = sc->sc_net_idx->rx_req_prod;
 
@@ -301,15 +296,29 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	ringidx = RX_RING_INC(ringidx);
 	sc->sc_net_idx->rx_req_prod = ringidx;
 
-	pool_cache_put(&mbpool_cache, m);
-
 	/* Batch Xen notifications. */
-	if (sc->sc_rx_bufs_to_notify > (RX_ENTRIES / 4)) {
+	if (sc->sc_rx_bufs_to_notify > (RX_ENTRIES / 4) ||
+		sc->sc_net_idx->rx_req_prod == sc->sc_net_idx->rx_resp_prod) {
 		netop.cmd = NETOP_PUSH_BUFFERS;
 		netop.vif = sc->sc_ifno;
 		(void)HYPERVISOR_net_io_op(&netop);
 		sc->sc_rx_bufs_to_notify = 0;
 	}
+}
+
+static void
+xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+{
+	union xennet_bufarray *xb = (union xennet_bufarray *)arg;
+	struct xennet_softc *sc = xb->xb_rx.xbrx_sc;
+	int id = (xb - sc->sc_rx_bufa);
+
+	DPRINTFN(XEDB_MBUF, ("xennet_rx_mbuf_free id %d, mbuf %p, buf %p, "
+	    "size %d\n", id, m, buf, size));
+
+	xennet_rx_push_buffer(sc, id);
+
+	pool_cache_put(&mbpool_cache, m);
 }
 
 static int
@@ -354,11 +363,30 @@ xen_network_handler(void *arg)
 		    (void *)(PTE_BASE[x86_btop
 			(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va)] & PG_FRAME)));
 
-		MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.xbrx_va +
-		    rx->offset), rx->size, M_DEVBUF, xennet_rx_mbuf_free,
-		    &sc->sc_rx_bufa[rx->id]);
 		m->m_len = m->m_pkthdr.len = rx->size;
 		m->m_pkthdr.rcvif = ifp;
+		if (sc->sc_net_idx->rx_req_prod != 
+		    sc->sc_net_idx->rx_resp_prod) {
+			MEXTADD(m, (void *)(sc->sc_rx_bufa[rx->id].xb_rx.
+			    xbrx_va + rx->offset), rx->size, M_DEVBUF,
+			    xennet_rx_mbuf_free,
+			    &sc->sc_rx_bufa[rx->id]);
+		} else {
+			/*
+			 * This was our last receive buffer, allocate
+			 * memory, copy data and push the receive
+			 * buffer back to the hypervisor.
+			 */
+			MEXTMALLOC(m, rx->size, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				printf("xennet: rx no mbuf 2\n");
+				m_free(m);
+				break;
+			}
+			memcpy(m->m_data, (void *)(sc->sc_rx_bufa[rx->id].
+			    xb_rx.xbrx_va + rx->offset), rx->size);
+			xennet_rx_push_buffer(sc, rx->id);
+		}
 
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len);
