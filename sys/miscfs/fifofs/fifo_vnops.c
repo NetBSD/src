@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.44 2003/11/29 06:15:00 perry Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.45 2003/11/29 10:02:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.44 2003/11/29 06:15:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.45 2003/11/29 10:02:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.44 2003/11/29 06:15:00 perry Exp $"
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/socket.h>
+#include <sys/protosw.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -174,7 +175,7 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_writesock = wso;
-		if ((error = unp_connect2(wso, rso)) != 0) {
+		if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0) {
 			(void)soclose(wso);
 			(void)soclose(rso);
 			free(fip, M_VNODE);
