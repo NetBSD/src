@@ -1,4 +1,4 @@
-.\"	$NetBSD: pim6stat.1,v 1.1 2000/01/28 19:32:50 itojun Exp $
+.\"	$NetBSD: pim6stat.1,v 1.2 2000/04/16 16:31:55 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: pim6stat.1,v 1.3 1999/12/16 05:38:06 jinmei Exp
+.\"     KAME Id: pim6stat.1,v 1.4 2000/04/16 15:38:06 itojun Exp
 .\"
 .Dd July 28, 1999
 .Dt PIM6STAT 1
@@ -37,11 +37,10 @@
 .Nd show PIM for IPv6 status
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
-.Op Fl f dumpfile
-.Op Fl p pidfile
-.Op Fl s
-.Op Fl w waitsec
+.Op Fl ds
+.Op Fl f Ar dumpfile
+.Op Fl p Ar pidfile
+.Op Fl w Ar waitsec
 .Sh DESCRIPTION
 .Nm Pim6stat
 shows status or statistics of the PIM for IPv6 daemon currently running.
