@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_value.3,v 1.7 2002/07/29 13:03:51 blymn Exp $
+.\"	$NetBSD: menu_item_value.3,v 1.8 2002/07/29 13:26:56 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -59,13 +59,13 @@ The
 .Fn item_selected
 fucntion returns the number of items that are selected in the menu, that
 is the number of items whose value is TRUE.  The indexes of the selected
-items will be returned in 
+items will be returned in
 .Fa array
 which will be dynamically allocated to hold the number of indexes.  It
 is the reponsibility of the caller to release this storage by calling
 .Xr free 3
 when the storage is no longer required.  If there are no elements selected
-in the items array then 
+in the items array then
 .Fn item_selected
 will return 0 and
 .Fa array
@@ -98,7 +98,6 @@ and
 .Pp
 The function
 .Fn item_selected
-is a 
+is a
 .Nx
 extension and must not be used in portable code.
-
