@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 1997/10/16 03:05:19 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.105 1997/11/13 10:13:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -297,6 +297,7 @@ trap(frame)
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
+	case T_NMI|T_USER:
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
@@ -451,7 +452,6 @@ trap(frame)
 #include "isa.h"
 #if	NISA > 0
 	case T_NMI:
-	case T_NMI|T_USER:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -460,7 +460,7 @@ trap(frame)
 			return;
 #endif
 #ifdef DDB
-		if (kdb_trap (type, 0, &frame))
+		if (kdb_trap(type, 0, &frame))
 			return;
 #endif
 #endif /* KGDB || DDB */
