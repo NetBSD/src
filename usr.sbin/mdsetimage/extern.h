@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.7 2000/06/14 17:26:17 cgd Exp $ */
+/* $NetBSD: extern.h,v 1.8 2000/12/18 20:43:58 scw Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -33,29 +33,6 @@
  * 
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
-
-#if defined(__alpha__)
-# define	NLIST_ECOFF
-# define	NLIST_ELF64
-#elif defined(__mips__)
-# define	NLIST_ECOFF
-# define	NLIST_ELF32
-# define	NLIST_AOUT
-#elif defined(__powerpc__)
-# define	NLIST_ELF32
-#elif defined(__i386__) || defined(__sparc__)
-# define	NLIST_ELF32
-# define	NLIST_AOUT
-#elif defined(__sh3__)
-# define	NLIST_COFF
-# define	NLIST_ELF32
-#else
-# define	NLIST_AOUT
-/* #define	NLIST_ECOFF */
-/* #define	NLIST_ELF32 */
-/* #define	NLIST_ELF64 */
-/* #define	NLIST_COFF */
-#endif
 
 #ifdef NLIST_AOUT
 int	check_aout __P((const char *, size_t));
