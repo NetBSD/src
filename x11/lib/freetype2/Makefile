@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/06 03:05:40 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -9,10 +9,11 @@ FREETYPESRC=	${FREETYPETOP}/src
 
 SUBDIR=	freetype
 
-SRCS=	autohint.c bdf.c cff.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
-	ftglyph.c ftinit.c ftmm.c ftsynth.c ftsystem.c fttype1.c \
-	ftxf86.c pcf.c pfr.c psaux.c pshinter.c psnames.c raster.c \
-	sfnt.c smooth.c truetype.c type1.c type1cid.c type42.c winfnt.c
+SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
+	ftinit.c ftmm.c ftpfr.c ftstroker.c ftsynth.c ftsystem.c \
+	fttype1.c ftwinfnt.c ftxf86.c autohint.c bdf.c cff.c \
+	type1cid.c ftgzip.c pcf.c pfr.c psaux.c pshinter.c psnames.c \
+	raster.c sfnt.c smooth.c truetype.c type1.c type42.c winfnt.c
 
 INCS=	ft2build.h
 INCSDIR=${X11INCDIR}/freetype2
@@ -26,6 +27,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
 .PATH:	${FREETYPESRC}/bdf
 .PATH:	${FREETYPESRC}/cff
 .PATH:	${FREETYPESRC}/cid
+.PATH:	${FREETYPESRC}/gzip
 .PATH:	${FREETYPESRC}/pcf
 .PATH:	${FREETYPESRC}/pfr
 .PATH:	${FREETYPESRC}/psaux
