@@ -1,3 +1,4 @@
+.\"	$NetBSD: autoconf.4,v 1.2 1997/08/27 07:38:42 mikel Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -27,17 +28,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: autoconf.4,v 1.1 1994/02/20 09:41:42 cgd Exp $
-.\"
-.Dd
+.Dd February 20, 1994
 .Dt AUTOCONF 4 i386
-.Os
+.Os NetBSD
 .Sh NAME
 .Nm autoconf
 .Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
-.Tn NetBSD
+.Nx
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
@@ -51,12 +50,12 @@ kernel are not detected.
 .Bl -diag
 .It CPU class not configured.
 You tried to boot
-.Tn NetBSD
+.Nx
 on a class of
 .Tn CPU
 type which it doesn't
 (or at least this compiled version of
-.Tn NetBSD
+.Nx
 doesn't) understand.
 .El
 .Sh SEE ALSO
