@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.435 2001/04/29 09:50:36 martin Exp $
+#	$NetBSD: files,v 1.436 2001/04/30 04:47:50 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -283,6 +283,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
+
+# Symbios/NCR 53c710 SCSI controllers
+device	osiop: scsi
+file	dev/ic/osiop.c			osiop
 
 # common stuff for siop and esiop
 define	siop_common
