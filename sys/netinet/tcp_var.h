@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.28 1997/12/11 06:53:07 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.29 1997/12/11 22:47:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -206,6 +206,16 @@ struct syn_cache_head {
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
 
+#ifdef _KERNEL
+/*
+ * Compute the initial window for slow start.
+ */
+extern int tcp_init_win;
+#define	TCP_INITIAL_WINDOW(segsz) \
+	((tcp_init_win == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
+	 ((segsz) * tcp_init_win))
+#endif /* _KERNEL */
+
 /*
  * TCP statistics.
  * Many of these should be kept per connection,
@@ -297,7 +307,8 @@ struct	tcpstat {
 #define	TCPCTL_SYN_CACHE_LIMIT	5	/* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
-#define	TCPCTL_MAXID		8
+#define	TCPCTL_INIT_WIN		8	/* initial window */
+#define	TCPCTL_MAXID		9
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -308,6 +319,7 @@ struct	tcpstat {
 	{ "syn_cache_limit", CTLTYPE_INT }, \
 	{ "syn_bucket_limit", CTLTYPE_INT }, \
 	{ "syn_cache_interval", CTLTYPE_INT },\
+	{ "init_win", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -316,6 +328,7 @@ struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
+extern	int tcp_init_win;	/* initial window */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */

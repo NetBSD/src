@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.23 1997/12/11 06:37:48 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.24 1997/12/11 22:47:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -141,7 +141,7 @@ tcp_output(tp)
 		 * expected to clock out any data we send --
 		 * slow start to get ack "clock" running again.
 		 */
-		tp->snd_cwnd = txsegsize;
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(txsegsize);
 again:
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;

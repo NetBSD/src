@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.35 1997/12/10 01:58:07 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.36 1997/12/11 22:47:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -71,6 +71,7 @@
 int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
+int	tcp_init_win = 1;
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
@@ -502,7 +503,6 @@ tcp_quench(inp, errno)
  * with the new one.  Retransmit all unacknowledged packets, to ensure
  * that all packets will be received.
  */
-
 void
 tcp_mtudisc(inp, errno)
 	struct inpcb *inp;
@@ -513,19 +513,28 @@ tcp_mtudisc(inp, errno)
 
 	if (tp != 0) {
 		if (rt != 0) {
-			/* If this was not a host route, remove and realloc */
-
+			/*
+			 * If this was not a host route, remove and realloc.
+			 */
 			if ((rt->rt_flags & RTF_HOST) == 0) {
 				in_rtchange(inp, errno);
 				if ((rt = in_pcbrtentry(inp)) == 0)
 					return;
 			}
+
+			/*
+			 * Slow start out of the error condition.  We
+			 * use the MTU because we know it's smaller
+			 * than the previously transmitted segment.
+			 */
 			if (rt->rt_rmx.rmx_mtu != 0)
-				tp->snd_cwnd = rt->rt_rmx.rmx_mtu;
+				tp->snd_cwnd =
+				    TCP_INITIAL_WINDOW(rt->rt_rmx.rmx_mtu);
 		}
 	    
-		/* Resend unacknowledged packets: */
-
+		/*
+		 * Resend unacknowledged packets.
+		 */
 		tp->snd_nxt = tp->snd_una;
 		tcp_output(tp);
 	}
@@ -620,7 +629,7 @@ tcp_mss_from_peer(tp, offer)
 	tp->t_segsz = mss;
 
 	/* Initialize the initial congestion window. */
-	tp->snd_cwnd = mss;
+	tp->snd_cwnd = TCP_INITIAL_WINDOW(mss);
 
 #ifdef RTV_SSTHRESH
 	if (rt != NULL && rt->rt_rmx.rmx_ssthresh) {
