@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.5 1994/01/25 13:10:21 mycroft Exp $
+ *	$Id: sd.c,v 1.6 1994/02/10 13:59:44 mycroft Exp $
  */
 
 /*
@@ -43,22 +43,21 @@
 #include "sd.h"
 #if NSD > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/disklabel.h"
-#include "sys/malloc.h"
-#include "sys/proc.h"
-#include "sys/fcntl.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/stat.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
 
-#include "device.h"
-#include "scsireg.h"
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/scsireg.h>
+
+#include <vm/vm.h>
 
 extern int scsi_test_unit_rdy();
 extern int scsi_request_sense();
