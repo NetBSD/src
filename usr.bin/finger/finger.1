@@ -1,4 +1,4 @@
-.\"	$NetBSD: finger.1,v 1.9 1997/10/19 08:13:29 mrg Exp $
+.\"	$NetBSD: finger.1,v 1.10 1998/09/18 20:39:48 frueauf Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,7 @@ described for the
 .Fl s
 option as well as the user's home directory, home phone number, login
 shell, mail status, and the contents of the files
+.Dq Pa .forward ,
 .Dq Pa .plan
 and
 .Dq Pa .project
@@ -123,11 +124,6 @@ last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked at their
 mailbox since new mail arriving, or ``New mail received ...'', ``Unread
 since ...'' if they have new mail.
 .Pp
-Mail status is shown as ``No Mail.'' if there is no mail at all,
-``Mail last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked
-at their mailbox since new mail arriving, or ``New mail received ...'',
-``  Unread since ...'' if they have new mail.
-.Pp
 .It Fl p
 Prevents
 the
@@ -135,6 +131,7 @@ the
 option of
 .Nm
 from displaying the contents of the
+.Dq Pa .forward ,
 .Dq Pa .plan
 and
 .Dq Pa .project
