@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.13 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: popen.c,v 1.14 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.13 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: popen.c,v 1.14 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,7 +229,7 @@ start_command(char *cmd, sigset_t *mask, int infd, int outfd,
 	int pid;
 
 	if ((pid = vfork()) < 0) {
-		perror("fork");
+		warn("fork");
 		return -1;
 	}
 	if (pid == 0) {
@@ -242,7 +242,7 @@ start_command(char *cmd, sigset_t *mask, int infd, int outfd,
 			argv[i] = NULL;
 		prepare_child(mask, infd, outfd);
 		execvp(argv[0], argv);
-		perror(argv[0]);
+		warn("%s", argv[0]);
 		_exit(1);
 	}
 	return pid;

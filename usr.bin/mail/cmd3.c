@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.16 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.17 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.16 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.17 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ help(void *v)
 	FILE *f;
 
 	if ((f = Fopen(_PATH_HELP, "r")) == NULL) {
-		perror(_PATH_HELP);
+		warn(_PATH_HELP);
 		return(1);
 	}
 	while ((c = getc(f)) != EOF)
@@ -182,7 +182,7 @@ schdir(void *v)
 		if ((cp = expand(*arglist)) == NULL)
 			return(1);
 	if (chdir(cp) < 0) {
-		perror(cp);
+		warn("%s", cp);
 		return(1);
 	}
 	return 0;
