@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2000/02/24 23:32:27 msaitoh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2000/04/25 12:17:06 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -401,6 +401,12 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+/*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ */
+#define PMAP_MAP_POOLPAGE(pa)	SH3_PHYS_TO_P1SEG((pa))
+#define PMAP_UNMAP_POOLPAGE(va)	SH3_P1SEG_TO_PHYS((va))
 
 /*
  * inline functions
