@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2001/07/07 04:55:21 eeh Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 2001/08/01 16:45:20 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, Eduardo E. Horvath
@@ -47,7 +47,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memset.S,v 1.2 2001/07/07 04:55:21 eeh Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3 2001/08/01 16:45:20 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 /*
@@ -82,14 +82,28 @@ ENTRY(bzero)
 	clr	%o2			! Initialize our pattern
 Lbzero_internal:
 	brz,pn	%o1, Lbzero_done	! No bytes to copy??
+	 cmp	%o1, 16			! <16 bytes?  use byte ops.
+	bge,pn	%xcc, 1f
+	 nop
+0:	
+	stb	%o2, [%o0]		! Small clear.
+	inc	%o0
+	deccc	%o1
+	bg,pt	%icc, 0b
+	 nop
+	ba,pt	%icc, Lbzero_done
+	 nop
 	
-	 btst	7, %o0			! 64-bit aligned?  Optimization
+1:	
+	btst	7, %o0			! 64-bit aligned?  Optimization
 	bz,pt	%xcc, 2f
-	 btst	3, %o0			! 32-bit aligned?
+	 nop
+	btst	3, %o0			! 32-bit aligned?
 	bz,pt	%xcc, 1f
-	 btst	1, %o0			! 16-bit aligned?
+	 nop
+	btst	1, %o0			! 16-bit aligned?
 	bz,pt	%xcc, 0f
-	 btst	3, %o0
+	 nop
 	
 	!! unaligned -- store 1 byte
 	stb	%o2, [%o0]
@@ -202,10 +216,13 @@ Lbzero_block:
 	 dec	8, %o1
 
 2:
-	stx	%o2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
+	brz	%o2, 3f					! Skip the memory op
+	 fzero	%f0					! for bzero
+	
+	stx	%o2, [%o0]				! Flush this puppy to RAM
 	membar	#StoreLoad
-	ldd	[%sp + BIAS + 0x50], %f0
-
+	ldd	[%o0], %f0
+3:	
 	fmovd	%f0, %f2				! Duplicate the pattern
 	fmovd	%f0, %f4
 	fmovd	%f0, %f6
