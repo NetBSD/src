@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.13 2002/07/15 20:45:59 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.14 2002/10/18 20:09:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.13 2002/07/15 20:45:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.14 2002/10/18 20:09:12 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1593,8 +1593,11 @@ nfs_remove(v)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	np->n_attrstamp = 0;
+	if (dvp == vp)
+		vrele(vp);
+	else
+		vput(vp);
 	vput(dvp);
-	vput(vp);
 	return (error);
 }
 
