@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.65 2001/05/07 17:25:58 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.66 2001/09/16 07:41:56 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,12 @@
 
 #include <sys/cdefs.h>
 
+#define adjtime		_adjtime
 #define brk		_brk
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define clock_settime	_clock_settime
 #define daylight	_daylight
 #define err		_err
 #define errx		_errx
@@ -332,6 +334,7 @@
 #define nlist			_nlist
 #endif
 #define nrand48			_nrand48
+#define ntp_adjtime		_ntp_adjtime
 #define nsdispatch		_nsdispatch
 #define offtime			_offtime
 #define opendir			_opendir
@@ -401,6 +404,7 @@
 #define setservent		_setservent
 #define setstate		_setstate
 #define setttyent		_setttyent
+#define settimeofday		_settimeofday
 #define setusershell		_setusershell
 #define shm_open		_shm_open
 #define shm_unlink		_shm_unlink

@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.7 2001/09/16 02:13:27 wiz Exp $
+.\" $NetBSD: clock_settime.2,v 1.8 2001/09/16 07:41:57 manu Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,6 +94,19 @@ and obtained by
 .Fn clock_gettime
 represent the amount of time (in seconds and nanoseconds)
 since 00:00 Universal Coordinated Time, January 1, 1970.
+.Pp
+If the calling user is not the syper-user, then the
+.Fn clock_settime
+function in the standard C library will try to use the
+.Xr clockctl 4
+device if present, thus making possible for non privileged users to
+set the system time. If
+.Xr clockctl 4
+is not present or not accessible, then
+.Fn clock_settime
+reverts to the
+.Fn clock_settime
+system call, which is restricted to the super user.
 .Sh RETURN VALUES
 A value of 0 is returned on success.  Otherwise, a value of -1 is returned and
 .Va errno
@@ -147,8 +160,9 @@ space.
 .El
 .Sh SEE ALSO
 .Xr ctime 3 ,
-.Xr time 3
-.\" .Xr timer_gettime 3
+.Xr time 3 ,
+.\" .Xr timer_gettime 3 ,
+.Xr clockctl 4 .
 .Sh STANDARDS
 The
 .Fn clock_settime ,
