@@ -16,8 +16,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@horsey.gshapiro.net on Tue Jul 31 16:28:58 PDT 2001
-##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.5/cf/cf
+##### built by gshapiro@horsey.gshapiro.net on Mon Aug 20 08:01:50 PDT 2001
+##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.6/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -117,7 +117,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.11.5
+DZ8.11.6
 
 
 ###############
