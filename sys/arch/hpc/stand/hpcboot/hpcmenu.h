@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.7 2001/05/17 01:50:35 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.8 2002/03/25 17:23:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ public:
 		BOOL	safety_message;
 		// serial console speed
 		int	serial_speed;
+#define MAX_BOOT_STR 256
+		TCHAR	boot_extra[MAX_BOOT_STR];
 	};
 	struct support_status {
 		u_int32_t cpu, machine;
@@ -169,7 +171,7 @@ public:
 	// when user click `boot button' inquires all options.
 	void get_options(void);
 	enum { MAX_KERNEL_ARGS = 16 };
-	int setup_kernel_args(vaddr_t, paddr_t);
+	int setup_kernel_args(vaddr_t, paddr_t, size_t);
 	void setup_bootinfo(struct bootinfo &bi);
 	void register_boot_hook(struct boot_hook_args &arg) {
 		_boot_hook = arg;

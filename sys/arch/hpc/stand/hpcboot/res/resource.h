@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.4 2001/05/17 01:50:36 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.5 2002/03/25 17:23:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #define IDC_OPT_PAUSE		202
 #define IDC_OPT_DEBUG		203
 #define IDC_OPT_SAFETY		205
+#define IDC_OPT_EXTKOPT		206
 
 // Console Dialog ID
 #define IDC_CONS_CHK_		300
