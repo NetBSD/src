@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.12.1 2002/05/17 13:49:57 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.12.1 2002/05/17 13:49:57 gehenna Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -764,7 +764,9 @@ static void
 prom_cninit(cn)
 	struct consdev *cn;
 {
-	cn->cn_dev = makedev(0, 0);
+	extern const struct cdevsw cn_cdevsw;
+
+	cn->cn_dev = makedev(cdevsw_lookup_major(&cn_cdevsw), 0);
 	cn->cn_pri = CN_REMOTE;
 }
 

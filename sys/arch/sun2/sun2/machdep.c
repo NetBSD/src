@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2002/03/20 17:59:26 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.4.1 2002/05/17 13:50:00 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -636,18 +636,18 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int maj;
 	int (*getsize)__P((dev_t));
 
 	if (dumpdev == NODEV)
 		return;
 
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	getsize = bdevsw[maj].d_psize;
+	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;
 	devblks = (*getsize)(dumpdev);
@@ -700,6 +700,9 @@ dumpsys()
 
 	if (dumpdev == NODEV)
 		return;
+	dsw = bdevsw_lookup(dumpdev);
+	if (dsw == NULL || dsw->d_psize == NULL)
+		return;
 	if (dumppage == 0)
 		return;
 
@@ -716,7 +719,6 @@ dumpsys()
 	}
 	savectx(&dumppcb);
 
-	dsw = &bdevsw[major(dumpdev)];
 	psize = (*(dsw->d_psize))(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");

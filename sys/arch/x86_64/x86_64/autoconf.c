@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2002/01/22 18:36:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.8.1 2002/05/17 13:50:03 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,8 +129,7 @@ matchbiosdisks()
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
 	struct device *dv;
-	struct devnametobdevmaj *d;
-	int i, ck, error, m, n;
+	int i, ck, error, m, n, bmajor;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
 
@@ -189,13 +188,11 @@ matchbiosdisks()
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
 			    dv->dv_unit);
 
-			for (d = dev_name2blk; d->d_name &&
-			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
-			   d++);
-			if (d->d_name == NULL)
+			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+			if (bmajor == -1)
 				return;
 
-			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
+			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
@@ -252,9 +249,8 @@ match_harddisk(dv, bid)
 	struct device *dv;
 	struct btinfo_bootdisk *bid;
 {
-	struct devnametobdevmaj *i;
 	struct vnode *tmpvn;
-	int error;
+	int bmajor, error;
 	struct disklabel label;
 	int found = 0;
 
@@ -270,18 +266,15 @@ match_harddisk(dv, bid)
 	/*
 	 * lookup major number for disk block device
 	 */
-	i = dev_name2blk;
-	while (i->d_name &&
-	       strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
-		i++;
-	if (i->d_name == NULL)
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == NULL)
 		return(0); /* XXX panic() ??? */
 
 	/*
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.14.1 2002/05/17 13:49:52 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -69,40 +69,37 @@ static void
 get_device(name)
 	char *name;
 {
-	int loop, unit, part;
-	char buf[32], *cp;
+	int unit, part;
+	char devname[16], buf[32], *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
-	for (loop = 0; dev_name2blk[loop].d_name != NULL; ++loop) {
-		if (strncmp(name, dev_name2blk[loop].d_name,
-		    strlen(dev_name2blk[loop].d_name)) == 0) {
-			name += strlen(dev_name2blk[loop].d_name);
-			unit = part = 0;
+	if (devsw_name2blk(name, devname, sizeof(devname)) == -1)
+		return;
 
-			cp = name;
-			while (*cp >= '0' && *cp <= '9')
-				unit = (unit * 10) + (*cp++ - '0');
-			if (cp == name)
-				return;
+	name += strlen(devname);
+	unit = part = 0;
 
-			if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
-				part = *cp - 'a';
-			else if (*cp != '\0' && *cp != ' ')
-				return;
-			sprintf(buf, "%s%d", dev_name2blk[loop].d_name, unit);
-			for (dv = alldevs.tqh_first; dv != NULL;
-			    dv = dv->dv_list.tqe_next) {
-				if (strcmp(buf, dv->dv_xname) == 0) {
-					booted_device = dv;
-					booted_partition = part;
-					return;
-				}
-			}
+	cp = name;
+	while (*cp >= '0' && *cp <= '9')
+		unit = (unit * 10) + (*cp++ - '0');
+	if (cp == name)
+		return;
+
+	if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
+		part = *cp - 'a';
+	else if (*cp != '\0' && *cp != ' ')
+		return;
+	sprintf(buf, "%s%d", devname, unit);
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
+			booted_device = dv;
+			booted_partition = part;
+			return;
 		}
-	} 
+	}
 }
 
 static void
