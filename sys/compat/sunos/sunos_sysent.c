@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sysent.c,v 1.44 1998/06/25 22:19:34 thorpej Exp $	*/
+/*	$NetBSD: sunos_sysent.c,v 1.45 1998/09/13 22:29:06 pk Exp $	*/
 
 /*
  * System call switch table.
@@ -261,8 +261,8 @@ struct sysent sunos_sysent[] = {
 	    compat_43_sys_sigblock },		/* 109 = sigblock */
 	{ 1, s(struct compat_43_sys_sigsetmask_args),
 	    compat_43_sys_sigsetmask },		/* 110 = sigsetmask */
-	{ 1, s(struct sys_sigsuspend_args),
-	    sys_sigsuspend },			/* 111 = sigsuspend */
+	{ 1, s(struct sunos_sys_sigsuspend_args),
+	    sunos_sys_sigsuspend },		/* 111 = sigsuspend */
 	{ 2, s(struct compat_43_sys_sigstack_args),
 	    compat_43_sys_sigstack },		/* 112 = sigstack */
 	{ 3, s(struct compat_43_sys_recvmsg_args),
