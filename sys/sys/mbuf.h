@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.65 2002/05/02 16:22:45 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.65.4.1 2002/08/09 22:41:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -547,7 +547,7 @@ do {									\
  */
 #define	M_PREPEND(m, plen, how)						\
 do {									\
-	if (M_LEADINGSPACE(m) >= (plen)) {				\
+	if (!((m)->m_flags & M_EXT) && M_LEADINGSPACE(m) >= (plen)) {	\
 		(m)->m_data -= (plen);					\
 		(m)->m_len += (plen);					\
 	} else								\
