@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2001/03/15 06:10:48 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2001/04/21 17:32:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -511,7 +511,7 @@ pmap_map_ptes(pmap)
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V | PG_N | PG_4K | PG_M);
 		if (pmap_valid_entry(opde))
-			pmap_update();
+			TLBFLUSH();
 	}
 	return(APTE_BASE);
 }
@@ -790,7 +790,7 @@ pmap_bootstrap(kva_start)
 	 * ensure the TLB is sync'd with reality by flushing it...
 	 */
 
-	pmap_update();
+	TLBFLUSH();
 }
 
 /*
@@ -1511,7 +1511,7 @@ pmap_steal_ptp(obj, offset)
 				pmaps_hand->pm_pdir[idx] = 0;	/* zap! */
 				pmaps_hand->pm_stats.resident_count--;
 				if (pmap_is_curpmap(pmaps_hand))
-					pmap_update();
+					TLBFLUSH();
 				else if (pmap_valid_entry(*APDP_PDE) &&
 					 (*APDP_PDE & PG_FRAME) ==
 					 pmaps_hand->pm_pdirpa) {
@@ -2208,7 +2208,7 @@ pmap_remove(pmap, sva, eva)
 
 	if (prr && prr->prr_npages) {
 		if (prr->prr_npages > PMAP_RR_MAX) {
-			pmap_update();
+			TLBFLUSH();
 		} else {
 			while (prr->prr_npages) {
 				pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
@@ -2609,7 +2609,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 	if (prr && prr->prr_npages) {
 		if (prr->prr_npages > PMAP_RR_MAX) {
-			pmap_update();
+			TLBFLUSH();
 		} else {
 			while (prr->prr_npages) {
 				pmap_update_pg(prr->prr_vas[--prr->prr_npages]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2001/04/17 20:14:46 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.188 2001/04/21 17:25:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6155,16 +6155,11 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 /*
  * Require that all active physical maps contain no
- * incorrect entries NOW.  [This update includes
- * forcing updates of any address map caching.]
+ * incorrect entries NOW.
  */
 void
 pmap_update()
 {
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		tlb_flush_all();	/* %%%: Extreme Paranoia?  */
-#endif
 }
 
 /*

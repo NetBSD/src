@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2001/03/15 06:10:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2001/04/21 17:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1544,25 +1544,15 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 /*
  *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
+ *	incorrect entries NOW.
  *
  *	Generally used to insure that a thread about
  *	to run will see a semantically correct world.
  */
 void pmap_update()
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-#if defined(M68060)
-#if defined(M68040) || defined(M68030) || defined(M68020)
-	if (cputype == CPU_68060)
-#endif
-		DCIA();
-#endif
-	TBIA();
+
+	/* Nothing (yet) */
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.8 2001/03/15 06:10:41 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.9 2001/04/21 17:25:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1435,10 +1435,6 @@ pmap_update()
 {
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
-
-#if defined(M68040)
-	TBIA_40();
-#endif
 }
 
 /*
