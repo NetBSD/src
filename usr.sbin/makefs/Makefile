@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/10/26 06:56:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/26 16:12:30 lukem Exp $
 #
 
 PROG=	makefs
@@ -6,6 +6,7 @@ SRCS=	makefs.c walk.c \
 	ffs.c mkfs.c buf.c \
 	misc.c spec.c pack_dev.c stat_flags.c \
 	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c ufs_bmap.c 
+MAN=	makefs.8
 LDADD+=-lutil
 
 LSSRC=		${.CURDIR}/../../bin/ls
