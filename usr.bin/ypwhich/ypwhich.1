@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ypwhich.1,v 1.1 1994/02/24 02:17:10 cgd Exp $
+.\"	$Id: ypwhich.1,v 1.2 1994/10/28 16:49:43 deraadt Exp $
 .\"
 .Dd February 23, 1994
 .Dt YPWHICH 1
@@ -44,10 +44,10 @@
 |
 .Ar host
 .Oc
-.Nm ypmatch
+.Nm ypwhich
 .Fl x
 .Sh DESCRIPTION
-.Nm Ypmatch
+.Nm Ypwhich
 tells which
 .Tn YP
 server supplies
@@ -88,7 +88,14 @@ will produce a list of available maps.
 Display the map nickname table.
 .El
 .Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr ypbind 8 ,
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr yppoll 8 ,
 .Xr ypset 8 ,
 .Xr yp 8
 .Sh AUTHOR
 Theo De Raadt
+
+
