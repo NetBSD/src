@@ -1,17 +1,17 @@
-/*	$NetBSD: mln_ipl.c,v 1.23 2000/05/03 11:12:04 veego Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.23.4.1 2002/02/09 16:56:17 he Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 /*
  * 29/12/94 Added code from Marc Huber <huber@fzi.de> to allow it to allocate
  * its own major char number! Way cool patch!
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.23.4.1 2002/02/09 16:56:17 he Exp $");
 
 #include <sys/param.h>
 
@@ -57,11 +57,6 @@
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
 #endif
-
-#ifndef	MIN
-#define	MIN(a,b)	(((a)<(b))?(a):(b))
-#endif
-
 
 #if NetBSD >= 199706
 int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
@@ -258,6 +253,7 @@ static int ipl_load()
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 		if (error)
 			return error;
+		vput(nd.ni_vp);
 	}
 	return error;
 }
