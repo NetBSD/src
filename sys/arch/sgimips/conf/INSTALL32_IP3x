@@ -3,7 +3,7 @@
 #
 
 # Pull in standard `install' config
-include 	"arch/sgimips/conf/GENERIC"
+include 	"arch/sgimips/conf/GENERIC_IP32"
 
 # Set load address for generic 32-bit systems (only O2 currently)
 makeoptions	TEXTADDR=0x80069000	# O2
@@ -12,5 +12,5 @@ makeoptions	TEXTADDR=0x80069000	# O2
 options         MEMORY_DISK_HOOKS
 options         MEMORY_DISK_IS_ROOT     # force root on memory disk
 options         MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options		MEMORY_DISK_ROOT_SIZE=6144# size of memory disk, in blocks (3MB)
+options		MEMORY_DISK_ROOT_SIZE=8192# size of memory disk, in blocks (4MB)
 
