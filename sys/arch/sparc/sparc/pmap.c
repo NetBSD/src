@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 1997/04/09 23:53:40 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.80 1997/04/11 20:00:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1767,7 +1767,7 @@ ctx_alloc(pm)
 		 * disjuction of the new and the previous map.
 		 */
 
-		setcontext(cnum);
+		setcontext4(cnum);
 		splx(s);
 		if (doflush)
 			cache_flush_context();
@@ -1798,6 +1798,7 @@ ctx_alloc(pm)
 
 	} else if (CPU_ISSUN4M) {
 
+#if defined(SUN4M)
 		/*
 		 * Reload page and context tables to activate the page tables
 		 * for this context.
@@ -1830,10 +1831,9 @@ ctx_alloc(pm)
 		setpgt4m(&cpuinfo.ctx_tbl[cnum],
 			(pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
-		setcontext(cnum);
+		setcontext4m(cnum);
 		if (doflush)
 			cache_flush_context();
-#if defined(SUN4M)
 		tlb_flush_context(); /* remove any remnant garbage from tlb */
 #endif
 		splx(s);
