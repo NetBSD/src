@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.55.2.1 2000/10/09 02:41:28 toshii Exp $	*/
+/*	$NetBSD: socket.h,v 1.55.2.2 2001/05/01 10:29:06 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,7 +77,7 @@
 #include <sys/ansi.h>
 #ifndef socklen_t
 typedef __socklen_t	socklen_t;
-#define socklen_t	socklen_t
+#define socklen_t	__socklen_t
 #endif
 
 /*
