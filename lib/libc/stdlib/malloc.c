@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.32 2000/05/20 15:13:31 simonb Exp $	*/
+/*	$NetBSD: malloc.c,v 1.33 2000/07/06 03:13:22 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -152,7 +152,7 @@ static size_t malloc_pagemask;
 #endif
 
 #define pageround(foo) (((foo) + (malloc_pagemask))&(~(malloc_pagemask)))
-#define ptr2idx(foo) (((size_t)(foo) >> malloc_pageshift)-malloc_origo)
+#define ptr2idx(foo) (((size_t)(u_long)(foo) >> malloc_pageshift)-malloc_origo)
 
 #ifndef THREAD_LOCK
 #define THREAD_LOCK()
@@ -298,7 +298,7 @@ map_pages(size_t pages)
 {
     caddr_t result, tail;
 
-    result = (caddr_t)pageround((size_t)sbrk(0));
+    result = (caddr_t)pageround((size_t)(u_long)sbrk(0));
     tail = result + (pages << malloc_pageshift);
 
     if (brk(tail)) {
@@ -307,7 +307,6 @@ map_pages(size_t pages)
 #endif /* MALLOC_EXTRA_SANITY */
 	return 0;
     }
-
     last_idx = ptr2idx(tail) - 1;
     malloc_brk = tail;
 
@@ -465,7 +464,7 @@ malloc_init (void)
      * We need a maximum of malloc_pageshift buckets, steal these from the
      * front of the page_directory;
      */
-    malloc_origo = pageround((size_t)sbrk(0)) >> malloc_pageshift;
+    malloc_origo = pageround((size_t)(u_long)sbrk(0)) >> malloc_pageshift;
     malloc_origo -= malloc_pageshift;
 
     malloc_ninfo = malloc_pagesize / sizeof *page_dir;
@@ -589,7 +588,7 @@ malloc_make_chunks(int bits)
 	return 0;
 
     /* Find length of admin structure */
-    l = offsetof(struct pginfo, bits[0]);
+    l = (int)offsetof(struct pginfo, bits[0]);
     l += sizeof bp->bits[0] *
 	(((malloc_pagesize >> bits)+MALLOC_BITS-1) / MALLOC_BITS);
 
@@ -758,7 +757,7 @@ irealloc(void *ptr, size_t size)
     if (*mp == MALLOC_FIRST) {			/* Page allocation */
 
 	/* Check the pointer */
-	if ((size_t)ptr & malloc_pagemask) {
+	if ((size_t)(u_long)ptr & malloc_pagemask) {
 	    wrtwarning("modified (page-) pointer.\n");
 	    return 0;
 	}
@@ -776,13 +775,13 @@ irealloc(void *ptr, size_t size)
     } else if (*mp >= MALLOC_MAGIC) {		/* Chunk allocation */
 
 	/* Check the pointer for sane values */
-	if (((size_t)ptr & ((*mp)->size-1))) {
+	if (((size_t)(u_long)ptr & ((*mp)->size-1))) {
 	    wrtwarning("modified (chunk-) pointer.\n");
 	    return 0;
 	}
 
 	/* Find the chunk index in the page */
-	i = ((size_t)ptr & malloc_pagemask) >> (*mp)->shift;
+	i = ((size_t)(u_long)ptr & malloc_pagemask) >> (*mp)->shift;
 
 	/* Verify that it isn't a free chunk already */
         if ((*mp)->bits[i/MALLOC_BITS] & (1<<(i%MALLOC_BITS))) {
@@ -841,7 +840,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 	return;
     }
 
-    if ((size_t)ptr & malloc_pagemask) {
+    if ((size_t)(u_long)ptr & malloc_pagemask) {
 	wrtwarning("modified (page-) pointer.\n");
 	return;
     }
@@ -961,9 +960,9 @@ free_bytes(void *ptr, size_t idx, struct pginfo *info)
     void *vp;
 
     /* Find the chunk number on the page */
-    i = ((size_t)ptr & malloc_pagemask) >> info->shift;
+    i = ((size_t)(u_long)ptr & malloc_pagemask) >> info->shift;
 
-    if (((size_t)ptr & (info->size-1))) {
+    if (((size_t)(u_long)ptr & (info->size-1))) {
 	wrtwarning("modified (chunk-) pointer.\n");
 	return;
     }
