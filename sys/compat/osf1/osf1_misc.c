@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.3 1995/04/22 19:48:39 christos Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.4 1995/06/28 04:41:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,11 +39,13 @@
 #include <sys/namei.h>
 #include <sys/reboot.h>
 #include <sys/signal.h>
+#include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <vm/vm.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 
 #ifdef SYSCALL_DEBUG
@@ -54,6 +56,8 @@ extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long, register_t *));
+
+extern char sigcode[], esigcode[];
 
 struct emul emul_osf1 = {
 	"osf1",
