@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.12.2.3 2000/09/11 23:50:13 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.12.2.4 2000/11/14 16:05:34 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.12.2.3 2000/09/11 23:50:13 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.12.2.4 2000/11/14 16:05:34 tv Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -171,7 +171,7 @@ k5_verify_creds(c, ccache)
 		com_err("login", kerror,
 		        "Unable to verify Kerberos V5 TGT: %s", phost);
 		syslog(LOG_NOTICE|LOG_AUTH, "Kerberos V5 TGT bad: %s", 
-		       error_message(kerror));
+		       krb5_get_err_text(kcontext, kerror));
 		retval = -1;
 		goto EGRESS;
 	}
@@ -200,7 +200,7 @@ k5_verify_creds(c, ccache)
 		}
 		com_err("login", kerror, "Unable to verify host ticket");
 		syslog(LOG_NOTICE|LOG_AUTH, "can't verify v5 ticket: %s; %s\n",
-		       error_message(kerror),
+		       krb5_get_err_text(kcontext, kerror),
 		       retval
 		         ? "keytab found, assuming failure"
 		         : "no keytab found, assuming success");
@@ -376,26 +376,26 @@ k5login(pw, instance, localhost, password)
 	
 	if ((kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s while getting default ccache",
-		error_message(kerror));
+		krb5_get_err_text(kcontext, kerror));
 	    return(1);
 	}
 
 	if ((kerror = krb5_parse_name(kcontext, principal, &me)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s when parsing name %s",
-		error_message(kerror), principal);
+		krb5_get_err_text(kcontext, kerror), principal);
 	    return(1);
 	}
     
 	if ((kerror = krb5_unparse_name(kcontext, me, &client_name)) != 0) {
 	    syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
-		error_message(kerror), principal);
+		krb5_get_err_text(kcontext, kerror), principal);
 	    return(1);
 	}
 
 	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
 	    syslog(LOG_NOTICE, "%s when initializing cache %s",
-		error_message(kerror), tkt_location);
+		krb5_get_err_text(kcontext, kerror), tkt_location);
 	    return(1);
 	}
 
@@ -413,7 +413,7 @@ k5login(pw, instance, localhost, password)
 					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
 					0)) != 0) {
 	    syslog(LOG_NOTICE, "%s while building server name",
-		error_message(kerror));
+		krb5_get_err_text(kcontext, kerror));
 	    return(1);
 	}
 
@@ -421,7 +421,7 @@ k5login(pw, instance, localhost, password)
 
 	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
 	    syslog(LOG_NOTICE, "%s while getting time of day",
-		error_message(kerror));
+		krb5_get_err_text(kcontext, kerror));
 	    return(1);
 	}
 	my_creds.times.starttime = 0;	/* start timer when request
@@ -447,7 +447,7 @@ k5login(pw, instance, localhost, password)
 	    if (kerror == KRB5KRB_AP_ERR_BAD_INTEGRITY)
 		printf("%s: Kerberos Password incorrect\n", principal);
 	    else
-		printf("%s while getting initial credentials\n", error_message(kerror));
+		printf("%s while getting initial credentials\n", krb5_get_err_text(kcontext, kerror));
 
 	    return(1);
 	}
