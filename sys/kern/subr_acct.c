@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  * 	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_acct.c,v 1.2 1993/05/18 18:19:18 cgd Exp $
+ *	$Id: subr_acct.c,v 1.3 1993/06/27 06:01:51 andrew Exp $
  */
 
 /*
@@ -40,6 +40,7 @@
  */
 
 #include "param.h"
+#include "systm.h"
 #include "proc.h"
 #include "vnode.h"
 #include "ioctl.h"
@@ -64,10 +65,16 @@ int		acct_open;		/* also used in acct() */
 struct acctbuf	*acctbufp;		/* the accounting buffer pointer */
 
 /*ARGSUSED*/
-acctopen(dev, flags, mode, p)
+int
+#ifdef __STDC__
+acctopen(dev_t dev, int flags, int mode, struct proc *p)
+/* gcc 1.x doesn't like non-ansi def for this */
+#else
+acctopen()
 	dev_t dev;
-	int flags, mode;
+	int flags, int mode;
 	struct proc *p;
+#endif
 {
 	if (acct_open)
 		return (EBUSY);
@@ -84,23 +91,37 @@ acctopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
-acctclose(dev, flag)
+int
+#ifdef __STDC__
+acctclose(dev_t dev, int flag)
+/* gcc 1.x doesn't like non-ansi def for this */
+#else
+acctclose()
 	dev_t dev;
+	int flag;
+#endif
 {
 	acct_open = 0;
 	acctsoftc.sc_state = 0;
 	bzero(&acctsoftc.sc_selp,sizeof(acctsoftc.sc_selp));
+
+	return 0;
 }
 
 /*ARGSUSED*/
-acctread(dev, uio, flag)
+int
+#ifdef __STDC__
+acctread(dev_t dev, struct uio *uio, int flag)
+/* gcc 1.x doesn't like non-ansi def for this */
+#else
+acctread()
 	dev_t dev;
 	struct uio *uio;
 	int flag;
+#endif
 {
 	register struct acctbuf *abp = acctbufp;
 	register long l;
-	register int s;
 	int error = 0;
 
 #ifdef ACCT_DEBUG
@@ -140,10 +161,16 @@ acctread(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-acctselect(dev, rw, p)
+int
+#ifdef __STDC__
+acctselect(dev_t dev, int rw, struct proc *p)
+/* gcc 1.x doesn't like non-ansi def for this */
+#else
+acctselect()
 	dev_t dev;
 	int rw;
 	struct proc *p;
+#endif
 {
 	switch (rw) {
 
@@ -160,6 +187,7 @@ acctselect(dev, rw, p)
 	return (0);
 }
 
+void
 acctwakeup()
 {
 	struct proc *p;
@@ -180,11 +208,19 @@ acctwakeup()
 }
 
 /*ARGSUSED*/
-acctioctl(dev, com, data, flag)
+int
+#ifdef __STDC__
+acctioctl(dev_t dev, int com, caddr_t data, int flag)
+/* gcc 1.x doesn't like non-ansi def for this */
+#else
+acctioctl()
+	dev_t dev;
+	int com;
 	caddr_t data;
+	int flag;
+#endif
 {
 	long l;
-	int s;
 
 	switch (com) {
 

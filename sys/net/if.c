@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.3 1993/05/22 11:42:08 cgd Exp $
+ *	$Id: if.c,v 1.4 1993/06/27 06:02:26 andrew Exp $
  */
 
 #include "param.h"
@@ -53,6 +53,8 @@
 
 int	ifqmaxlen = IFQ_MAXLEN;
 
+void if_slowtimo(caddr_t);
+
 /*
  * Network interface utility routines.
  *
@@ -60,6 +62,7 @@ int	ifqmaxlen = IFQ_MAXLEN;
  * parameters.
  */
 
+void
 ifinit()
 {
 	register struct ifnet *ifp;
@@ -67,7 +70,7 @@ ifinit()
 	for (ifp = ifnet; ifp; ifp = ifp->if_next)
 		if (ifp->if_snd.ifq_maxlen == 0)
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	if_slowtimo();
+	if_slowtimo(NULL);
 }
 
 #ifdef vax
@@ -366,7 +369,9 @@ if_qflush(ifq)
  * from softclock, we decrement timers (if set) and
  * call the appropriate interface routine on expiration.
  */
-if_slowtimo()
+/* ARGSUSED */
+void
+if_slowtimo(caddr_t arg)
 {
 	register struct ifnet *ifp;
 	int s = splimp();

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_loop.c	7.13 (Berkeley) 4/26/91
- *	$Id: if_loop.c,v 1.5 1993/05/20 03:06:02 cgd Exp $
+ *	$Id: if_loop.c,v 1.6 1993/06/27 06:02:27 andrew Exp $
  */
 
 /*
@@ -84,6 +84,7 @@ static caddr_t lo_bpf;
 struct	ifnet loif[NLOOP];
 int	looutput(), loioctl();
 
+void
 loattach()
 {
 	register int i;

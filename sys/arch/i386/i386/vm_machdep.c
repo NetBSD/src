@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.4 1993/06/18 02:03:46 brezak Exp $
+ *	$Id: vm_machdep.c,v 1.5 1993/06/27 06:02:55 andrew Exp $
  */
 
 /*
@@ -133,6 +133,8 @@ cpu_fork(p1, p2)
  * a special case].
  */
 struct proc *swtch_to_inactive();
+
+void
 cpu_exit(p)
 	register struct proc *p;
 {
@@ -155,6 +157,7 @@ cpu_exit(p)
 	/* NOTREACHED */
 }
 #else
+void
 cpu_exit(p)
 	register struct proc *p;
 {
@@ -166,7 +169,10 @@ cpu_exit(p)
 	swtch();
 }
 
-cpu_wait(p) struct proc *p; {
+void
+cpu_wait(p)
+	struct proc *p;
+{
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
