@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.43 1999/12/16 01:16:04 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.44 1999/12/16 02:21:37 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 13, 1999
+.Dd December 16, 1999
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -80,6 +80,7 @@ Internet File Transfer Protocol server
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
+.Op Fl h Ar hostname
 .Sh DESCRIPTION
 .Nm
 is the Internet File Transfer Protocol server process.
@@ -92,18 +93,22 @@ service specification; see
 .Pp
 Available options:
 .Bl -tag -width Ds
-.It Fl a
-Define the directory to
+.It Fl a Ar anondir
+Define
+.Ar anondir
+as the directory to
 .Xr chroot 2
 into for anonymous logins.
 Default is the home directory for the ftp user.
-.It Fl c
+.It Fl c Ar confdir
 Change the root directory of the configuration files from
 .Dq Pa /etc
 to
-.Ar directory .
-.It Fl C
-Check whether the specified user would be granted access under
+.Ar confdir .
+.It Fl C Ar user
+Check whether
+.Ar user
+would be granted access under
 the restrictions given in
 .Xr ftpusers 5
 and exit without attempting a connection.
@@ -112,6 +117,21 @@ exits with an exit code of 0 if access would be granted, or 1 otherwise.
 This can be useful for testing configurations.
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
+.It Fl h Ar hostname
+Hostname to advertise as (defaults to
+.Xr hostname 1 ) .
+If this option is used, each syslog messages has
+.Ar hostname
+inserted before the
+.Dq ftpd[\fIpid\fR]
+string.
+This option is useful when configuring
+.Sq virtual
+.Tn FTP
+servers, each listening on separate addresses as separate names.
+Refer to
+.Xr inetd.conf 5
+for more information on starting services to listen on specific IP addresses.
 .It Fl l
 Each successful and failed
 .Xr ftp 1
