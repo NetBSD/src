@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.13 1995/09/18 21:31:49 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.14 1995/09/26 20:07:53 chuck Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -181,7 +181,9 @@ devopen(f, fname, file)
 		return (error);
 	}
 
-#ifndef BOOTXX
+#ifdef BOOTXX
+	pd->devtype = DT_BLOCK;
+#else /* BOOTXX */
 	pd->devtype = getdevtype(fd, prom_bootdevice);
 	/* Assume type BYTE is a raw device */
 	if (pd->devtype != DT_BYTE)
@@ -196,7 +198,7 @@ devopen(f, fname, file)
 		}
 	} else
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-#endif
+#endif /* BOOTXX */
 
 	f->f_dev = &devsw[cputyp == CPU_SUN4 ? 0 : 1];
 	f->f_devdata = (void *)pd;
