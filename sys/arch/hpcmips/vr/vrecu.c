@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $ */
+/* $NetBSD: vrecu.c,v 1.3 2003/09/02 22:48:30 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.3 2003/09/02 22:48:30 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -222,9 +222,8 @@ pcic_vrip_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	h->ih_irq = irq;
 	if (h->flags & PCIC_FLAG_ENABLED) {
 		r = pcic_read(h, PCIC_INTR);
-		r &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
-		r |= irq;
-		pcic_write(h, PCIC_INTR, r);
+		r &= ~PCIC_INTR_IRQ_MASK;
+		pcic_write(h, PCIC_INTR, r | irq);
         }
 
 	vsc->sc_intr_mask &= ~(1 << irq);
