@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.1 2002/10/10 21:52:30 thorpej Exp $
+#	$NetBSD: files.bluetooth,v 1.2 2002/10/10 22:07:45 thorpej Exp $
 
 define	btbus { }
 
@@ -6,3 +6,6 @@ define	btbus { }
 define	bthcidrv
 device	bthci { }: bthcidrv
 attach	bthci at btbus
+
+file	dev/bluetooth/bluetooth.c	bthcidrv
+file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
