@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.12 2001/07/18 05:46:43 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.13 2002/06/06 00:56:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,19 +147,24 @@ typedef struct fs_info {
 }
 
 __BEGIN_DECLS
-int	 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
-int	 fs_getmntinfo(struct statfs **, char *, const char *);
-void	 get(int, off_t, void *, size_t);
-FS_INFO	*get_fs_info(struct statfs *, int);
-int 	 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO_15 **, int *);
-int	 mmap_segment(FS_INFO *, int, caddr_t *, int);
-void	 munmap_segment(FS_INFO *, caddr_t, int);
-void	 reread_fs_info(FS_INFO *, int);
-void	 toss __P((void *, int *, size_t,
-	      int (*)(const void *, const void *, const void *), void *));
+int		 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
+int		 fs_getmntinfo(struct statfs **, char *, const char *);
+void		 get(int, off_t, void *, size_t);
+struct dinode	*get_dinode (FS_INFO *, ino_t);
+int		 get_rawblock(FS_INFO *, char *, size_t, ufs_daddr_t);
+FS_INFO		*get_fs_info(struct statfs *, int);
+int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO_15 **, int *);
+int		 mmap_segment(FS_INFO *, int, caddr_t *, int);
+void		 munmap_segment(FS_INFO *, caddr_t, int);
+void		 reread_fs_info(FS_INFO *, int);
+void		 toss (void *, int *, size_t,
+		     int (*)(const void *, const void *, const void *), void *);
 
-void	 dump_super(struct lfs *);
-void	 dump_cleaner_info(void *);
-void	 print_SEGSUM(struct lfs *, SEGSUM *, daddr_t);
-void	 print_CLEANERINFO(CLEANERINFO *);
+void		 dump_super(struct lfs *);
+void		 dump_cleaner_info(void *);
+void		 print_SEGSUM(struct lfs *, SEGSUM *, daddr_t);
+void		 print_CLEANERINFO(CLEANERINFO *);
+int		 clean_inode(struct fs_info *, ino_t);
+int		 clean_all_inodes(struct fs_info *);
+int		 fork_coalesce(struct fs_info *);
 __END_DECLS

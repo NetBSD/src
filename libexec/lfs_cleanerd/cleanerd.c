@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.37 2002/04/29 19:50:05 yamt Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.38 2002/06/06 00:56:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.37 2002/04/29 19:50:05 yamt Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.38 2002/06/06 00:56:49 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: cleanerd.c,v 1.37 2002/04/29 19:50:05 yamt Exp $");
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
@@ -187,6 +188,7 @@ main(int argc, char **argv)
 	long clean_opts;		/* cleaning options */
 	int segs_per_clean;
 	int opt, cmd_err;
+	int do_coaleace;
 	pid_t childpid;
 	char *fs_name;			/* name of filesystem to clean */
 	time_t now, lasttime;
@@ -195,9 +197,9 @@ main(int argc, char **argv)
 	char *cp;
 
 	cmd_err = debug = do_quit = 0;
-	clean_opts = 0;
+	do_coaleace = clean_opts = 0;
 	segs_per_clean = 1;
-	while ((opt = getopt(argc, argv, "bdfl:mn:qr:st:")) != -1) {
+	while ((opt = getopt(argc, argv, "bcdfl:mn:qr:st:")) != -1) {
 		switch (opt) {
 			case 'b':
 				/*
@@ -205,6 +207,10 @@ main(int argc, char **argv)
 				 * how many segs to clean.
 				 */
 				clean_opts |= CLEAN_BYTES;
+				break;
+			case 'c':
+				debug++;
+				do_coaleace++;
 				break;
 			case 'd':	/* Debug mode. */
 				debug++;
@@ -269,6 +275,10 @@ main(int argc, char **argv)
 			while((cp = strchr(pidname, '/')) != NULL)
 				*cp = '|';
 			pidfile(pidname);
+			/* The cleaner wants to stay in core, really */
+			if (mlockall(MCL_FUTURE) != 0) {
+				syslog(LOG_WARNING, "mlockall failed: %m");
+			}
 		} else {
 			/* Record parent's pid */
 			pidname = malloc(strlen(fs_name) + 16);
@@ -315,6 +325,15 @@ main(int argc, char **argv)
 
 	for (fsp = get_fs_info(lstatfsp, do_mmap); ;
 	    reread_fs_info(fsp, do_mmap)) {
+		/*
+		 * If the user specified '-F', he doesn't want us
+		 * to do regular cleaning, only coalesce.
+		 */
+		if (do_coaleace) {
+			clean_all_inodes(fsp);
+			exit(0);
+		}
+
 		/*
 		 * clean the filesystem, and, if it needed cleaning
 		 * (i.e. it returned nonzero) try it again
@@ -853,15 +872,52 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 int
 clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 {
-	int maxblocks, clean_blocks;
+	int maxblocks, clean_blocks, icount, extra, ebytes, nbytes;
 	BLOCK_INFO_15 *bp;
 	int i, error;
 	double util;
+	ino_t ino, inino;
 
 	error = 0;
 
 	cleaner_stats.segs_cleaned += sbp->nsegs;
 	cleaner_stats.blocks_written += sbp->nb;
+	/*
+	 * Count up the number of indirect blocks and inodes we'll
+	 * have to write to take care of this (if we are asked to do this).
+	 * XXX this only cares about single indirect blocks.
+	 */
+	icount = 0;
+	ino = inino = 0;
+	extra = 0;
+	nbytes = 0;
+	for (i = sbp->nb, bp = sbp->ba; i > 0; bp++, i--) {
+		if (bp->bi_lbn != LFS_UNUSED_LBN)
+			nbytes += bp->bi_size;
+		if (ino != bp->bi_inode) {
+			ino = bp->bi_inode;
+			++icount;
+		}
+		if (bp->bi_lbn == -NDADDR)
+			inino = ino;
+		if (inino != ino && bp->bi_lbn > 0 && bp->bi_lbn > NDADDR) {
+			++extra;
+			inino = ino;
+		}
+	}
+	ebytes =  0 + INOPB(&fsp->fi_lfs) * fsp->fi_lfs.lfs_ibsize ;
+	ebytes += extra * fsp->fi_lfs.lfs_bsize;
+	if (debug) {
+		fprintf(stderr, "clean_segment: %d inodes %d indirect -> %d bytes + %d = %d total (to save %d)\n",
+			icount, extra, ebytes, nbytes, ebytes + nbytes,
+			fsp->fi_lfs.lfs_fsize * fsp->fi_lfs.lfs_fsbpseg * sbp->nsegs);
+	}
+	/* If we're writing more than we're saving, try coalescing */
+	if (ebytes + nbytes > fsp->fi_lfs.lfs_fsize * fsp->fi_lfs.lfs_fsbpseg * sbp->nsegs) {
+		syslog(LOG_NOTICE, "starting coalescing process");
+		fork_coalesce(fsp);
+	}
+
 	util = ((double)sbp->nb / segtod(&fsp->fi_lfs, 1));
 	cleaner_stats.util_tot += util;
 	cleaner_stats.util_sos += util * util;
