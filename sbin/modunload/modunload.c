@@ -1,4 +1,4 @@
-/*	$NetBSD: modunload.c,v 1.12 2003/09/06 19:55:24 jdolecek Exp $	*/
+/*	$NetBSD: modunload.c,v 1.13 2005/02/05 14:35:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modunload.c,v 1.12 2003/09/06 19:55:24 jdolecek Exp $");
+__RCSID("$NetBSD: modunload.c,v 1.13 2005/02/05 14:35:25 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,12 +52,11 @@ __RCSID("$NetBSD: modunload.c,v 1.12 2003/09/06 19:55:24 jdolecek Exp $");
 #include <unistd.h>
 #include "pathnames.h"
 
-void	cleanup __P((void));
-int	main __P((int, char *[]));
-void	usage __P((void));
+void	cleanup(void);
+void	usage(void);
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage:\n");
@@ -68,16 +67,14 @@ usage()
 int devfd;
 
 void
-cleanup()
+cleanup(void)
 {
 
 	close(devfd);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	int modnum = -1;
