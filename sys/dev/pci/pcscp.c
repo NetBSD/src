@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.20 2002/10/02 16:51:53 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.21 2002/11/15 22:13:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.20 2002/10/02 16:51:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.21 2002/11/15 22:13:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,6 @@ pcscp_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCSCSI_PCI:
-#if 0
-	case PCI_PRODUCT_AMD_PCNETS_PCI:
-#endif
 		return 1;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.485 2002/11/15 13:41:27 ad Exp $
+$NetBSD: pcidevs,v 1.486 2002/11/15 22:13:11 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -780,7 +780,6 @@ product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
