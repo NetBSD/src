@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.614 2003/09/09 22:01:57 itojun Exp $
+#	$NetBSD: mi,v 1.615 2003/09/09 22:10:33 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -633,6 +633,7 @@
 ./usr/include/pthread_queue.h		comp-c-include
 ./usr/include/pthread_types.h		comp-c-include
 ./usr/include/pwd.h			comp-c-include
+./usr/include/randomid.h		comp-c-include
 ./usr/include/ranlib.h			comp-c-include
 ./usr/include/re_comp.h			comp-c-include
 ./usr/include/readline			comp-c-include
@@ -3073,6 +3074,9 @@
 ./usr/share/man/cat3/rand48.0	comp-c-catman
 ./usr/share/man/cat3/rand_r.0	comp-c-catman
 ./usr/share/man/cat3/random.0	comp-c-catman
+./usr/share/man/cat3/randomid.0		comp-c-catman
+./usr/share/man/cat3/randomid_delete.0		comp-c-catman
+./usr/share/man/cat3/randomid_new.0		comp-c-catman
 ./usr/share/man/cat3/raw.0		comp-c-catman
 ./usr/share/man/cat3/rcmd.0	comp-c-catman
 ./usr/share/man/cat3/rcmd_af.0	comp-c-catman
@@ -6524,6 +6528,9 @@
 ./usr/share/man/man3/rand48.3		comp-c-man
 ./usr/share/man/man3/rand_r.3		comp-c-man
 ./usr/share/man/man3/random.3		comp-c-man
+./usr/share/man/man3/randomid.3		comp-c-man
+./usr/share/man/man3/randomid_delete.3		comp-c-man
+./usr/share/man/man3/randomid_new.3		comp-c-man
 ./usr/share/man/man3/raw.3		comp-c-man
 ./usr/share/man/man3/rcmd.3		comp-c-man
 ./usr/share/man/man3/rcmd_af.3		comp-c-man
