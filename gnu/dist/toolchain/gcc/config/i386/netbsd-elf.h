@@ -125,9 +125,7 @@ while (0)
 /* NetBSD Extension to GNU C: __KPRINTF_ATTRIBUTE__ */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "\
--Di386 -D__NetBSD__ -D__ELF__ -D__KPRINTF_ATTRIBUTE__ \
--Asystem(unix) -Asystem(NetBSD) -Acpu(i386) -Amachine(i386)"
+#define CPP_PREDEFINES "-D__NetBSD__ -D__ELF__ -Asystem(unix) -Asystem(NetBSD) -Acpu(i386) -Amachine(i386)"
 
 /* Make gcc agree with <machine/ansi.h> */
 
