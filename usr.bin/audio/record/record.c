@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.17 2002/01/15 08:19:38 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.18 2002/01/15 08:59:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -70,6 +70,10 @@ int	sample_rate;
 int	channels;
 struct timeval record_time;
 struct timeval start_time;	/* XXX because that's what gettimeofday returns */
+
+void (*conv_func) (char *, size_t);
+void swap16 (char *, size_t);
+void swap32 (char *, size_t);
 
 void usage (void);
 int main (int, char *[]);
@@ -269,6 +273,8 @@ main(argc, argv)
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
 		if (read(audiofd, buffer, bufsize) != bufsize)
 			err(1, "read failed");
+		if (conv_func)
+			conv_func(buffer, bufsize);
 		if (write(outfd, buffer, bufsize) != bufsize)
 			err(1, "write failed");
 		total_size += bufsize;
@@ -351,6 +357,37 @@ write_header_sun(hdrp, lenp, leftp)
 	return 0;
 }
 
+void
+swap16(buf, len)
+	char *buf;
+	size_t len;
+{
+	char *p, t;
+
+	for (p = buf; p < buf + len + 1; p += 2) {
+		t = p[0];
+		p[0] = p[1];
+		p[1] = t;
+	}
+}
+
+void
+swap32(buf, len)
+	char *buf;
+	size_t len;
+{
+	char *p, t;
+
+	for (p = buf; p < buf + len + 3; p += 4) {
+		t = p[0];
+		p[0] = p[3];
+		p[3] = t;
+		t = p[1];
+		p[1] = p[2];
+		p[2] = t;
+	}
+}
+
 int
 write_header_wav(hdrp, lenp, leftp)
 	void **hdrp;
@@ -395,7 +432,6 @@ write_header_wav(hdrp, lenp, leftp)
 	char	*riff = "RIFF", *wavefmt = "WAVEfmt ", *fact = "fact", *data = "data";
 	u_int32_t filelen, fmtsz, sps, abps, factsz = 4, nsample, datalen;
 	u_int16_t fmttag, nchan, align, bps, extln = 0;
-	static int ewarned = 0, pwarned = 0;
 
 	if (header_info)
 		warnx("header information not supported for WAV");
@@ -412,9 +448,13 @@ write_header_wav(hdrp, lenp, leftp)
 		bps = 32;
 		break;
 	default:
-		if (pwarned == 0) {
-			warnx("can not support precision of %d\n", precision);
-			pwarned = 1;
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				warnx("can not support precision of %d\n", precision);
+				warned = 1;
+			}
 		}
 		return (-1);
 	}
@@ -430,15 +470,34 @@ write_header_wav(hdrp, lenp, leftp)
 		fmtsz = 18;
 		align = channels;
 		break;
+	/*
+	 * we could try to support RIFX but it seems to be more portable
+	 * to output little-endian data for WAV files.
+	 *
+	 * XXX signed vs unsigned matters probably!  cope!
+	 */
+	case AUDIO_ENCODING_ULINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_BE:
+		if (bps == 16)
+			conv_func = swap16;
+		else if (bps == 32)
+			conv_func = swap32;
+		/* FALLTHROUGH */
 	case AUDIO_ENCODING_PCM16:
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_LE:
 		fmttag = WAVE_FORMAT_PCM;
 		fmtsz = 16;
 		align = channels * (bps / 8);
 		break;
 	default:
-		if (ewarned == 0) {
-			warnx("can not support encoding of %s\n", wav_enc_from_val(encoding));
-			ewarned = 1;
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				warnx("can not support encoding of %s\n", wav_enc_from_val(encoding));
+				warned = 1;
+			}
 		}
 		return (-1);
 	}
