@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.56 2002/11/28 13:41:41 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.57 2002/11/30 15:41:31 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1418,27 +1418,24 @@ sys/dev/pci/pcidevs				1.474
 sys/dev/pci/pcidevs.h				regenerate
 sys/dev/pci/pcidevs_data.h			regenerate
 
-	fix typos; "wiseman" is 82542, not 82452.
+	Fix typos; ``Wiseman'' is 82542, not 82452.
 	[yamt, ticket #925]
 
 sys/arch/sparc64/dev/pci_machdep.c		1.33
 
-	Set the PCI latency timer for bus master devices.
-
-	Slightly different to the patch suggested by Takeshi Nakayama in
-	PR 18451 (idea from FreeBSD). 
-
-	Additional input from Jason Thorpe: do not hard code the bus frequency,
+	Set the PCI latency timer for bus master devices, based
+	on PR#18451.  Additionally do not hard code the bus frequency,
 	instead get it from OpenFirmware.
 	[martin, ticket #875]
 
 sys/arch/sparc64/sparc64/machdep.c		1.131,1.133 via patch
 
-	Fix typo: set _asi depending on requested endianess, not _sasi (the
-	streaming accessors take care of this themselfs). Fixes 32-bit
-	kernels on PCI machines. Since we now use pmap_kenter_pa, which
-	ignores PMAP_LITTLE, don't bother to pass that as flags. We've
-	already changed the ASIs used to access the mapped pages acordingly.
+	Fix typo: set _asi depending on requested endianess, not
+	_sasi (the streaming accessors take care of this themselfs).
+	Fixes 32-bit kernels on PCI machines.  Since we now use
+	pmap_kenter_pa, which ignores PMAP_LITTLE, don't bother to
+	pass that as flags. We've already changed the ASIs used to
+	access the mapped pages acordingly.
 	[martin, ticket #917]
 
 sys/arch/sparc/include/bsd_openprom.h		1.18
@@ -1474,9 +1471,9 @@ sys/dev/sbus/qecvar.h				1.5
 sys/dev/sbus/sbusvar.h				1.18
 sys/dev/sbus/tcx.c				1.8
 
-	Use the structures defined in bsd_openprom.h for "reg", "range",
-	and "intr" properties, rather than having identical-except-for-names
-	sbus_* and iommu_* versions.
+	Use the structures defined in bsd_openprom.h for ``reg'',
+	``range'', and ``intr'' properties, rather than having
+	identical-except-for-names sbus_* and iommu_* versions.
 	[martin, ticket #948]
 
 sys/dev/ic/ncr53c9x.c				1.94-1.103
@@ -1493,24 +1490,21 @@ sys/dev/ic/lsi64854.c				1.21-1.22
 
 bin/rcp/rcp.c					1.30
 
-	It's a very bad habit to store file sizes in int's, so change it to
-	off_t instead. Obviously noone has tried to rcp files larger than 2GB.
+	Change storage for file size from int to off_t.
 	[ragge, ticket #1008]
 
 sys/lib/libkern/ffs.c				1.9
 
-	#undef ffs before the ffs() function definition, so that the name
-	isn't rewrote to __builtin_ffs() on gcc 2.95+; this fixes compilation
-	on sun2
-	also change the comment for function
+	#undef ffs before the ffs() function definition, so that
+	the name isn't rewritten to __builtin_ffs() on gcc 2.95+;
+	this fixes compilation on sun2.
+	Also change the comment for function
 	[skrll, ticket #1009]
 
 usr.sbin/pkg_install/Makefile.inc		1.20-1.21
 
-The new comment in the file says it all:
-
-	Under no circumstances should this Makefile test the output of "uname".
-	Doing do breaks cross compiling.
+	Under no circumstances should this Makefile test the output
+	of ``uname''.  Doing do breaks cross compiling.
 	[thorpej, tickets #830 and #831]
 
 share/man/man4/wm.4				1.5
@@ -1527,7 +1521,7 @@ sys/arch/macppc/pci/pci_machdep.c		1.19
 sys/arch/alpha/alpha/pmap.c			1.192
 
 	Add missing PMAP_TLB_SHOOTDOWN() after PMAP_INVALIDATE_TLB() in
-	pmap_page_protect().  Closes NetBSD Problem Report #18045.
+	pmap_page_protect().  Fixes PR#18045.
 	[mhitch, ticket #722]
 
 etc/rc.subr					1.52
@@ -1542,7 +1536,7 @@ share/man/man5/rc.conf.5			1.65
 etc/Makefile					1.228
 distrib/sets/lists/etc/mi			1.108
 
-	create /etc/mail/local-host-names, required by sendmail(8).
+	Create /etc/mail/local-host-names, required by sendmail(8).
 	[grant, ticket #904]
 
 gnu/usr.sbin/sendmail/cf/cf/netbsd-proto.mc	1.10
@@ -1562,7 +1556,7 @@ sys/arch/i386/i386/mtrr_k6.c			1.3
 
 crypto/dist/kame/racoon/isakmp.c		1.10
 
-	tighten isakmp header length validation.  from kame
+	Tighten isakmp header length validation.
 	[itojun, ticket #740]
 
 usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.10
@@ -1584,8 +1578,7 @@ gnu/dist/toolchain/gcc/config/i386/netbsd-elf.h	1.6
 
 crypto/dist/openssl/crypto/md32_common.h	1.4
 
-	somehow main trunk was not in sync with 0.9.6f for this file.
-	noted by havard.
+	Somehow main trunk was not in sync with 0.9.6f for this file.
 	[itojun, ticket #744]
 
 sys/dev/ic/siopreg.h				1.13
@@ -1599,7 +1592,6 @@ sys/dev/ic/siop_common.c			1.30
 	before being written (i.e. is used uninitialised). The esiop SCRIPT
 	may do this in some circonstances (and it is safe) so
 	bus_space_set_region_4() the RAM in reset routine.
-	Problem reported and fix tested by Allen Briggs.
 	[bouyer, ticket #747]
 
 usr.sbin/pkg_install/Makefile.inc		1.22-1.23
@@ -1626,8 +1618,7 @@ usr.sbin/pkg_install/lib/version.h		1.16-1.19
 
 share/man/man4/pciide.4				1.46
 
-	Remove the note about Ultra/133 from the bug section. Pointed out by
-	mipam@ibb.net, thanks !
+	Remove the note about Ultra/133 from the bug section.
 	[bouyer, ticket #1015]
 
 sys/dev/pci/pcidevs				1.488
@@ -1670,3 +1661,175 @@ share/man/man4/pciide.4				1.43-1.45
 	Fix a major whitespace error; new sentence, new line.
 	[kent, ticket #1019]
 
+sys/arch/hpcmips/vr/mq200_vrip.c		1.8
+
+	Fix this driver; revision 1.7 was incomplete.
+	[takemura, ticket #753]
+
+sys/dev/hpc/hpcfb.c				1.22
+
+	Make WSDISPLAYIO_SVIDEO and WSDISPLAYIO_GVIDEO work.
+	[takemura, ticket #754]
+
+sys/conf/Makefile.kern.inc			1.21
+sys/gdbscripts/Makefile.inc			1.1 (new)
+
+	Build a .gdbinit in the kernel build directory.  The new
+	.gdbinit will source all of the system-provided gdb scripts
+	in sys/gdbscripts, as well as any files specified by the
+	user in the GDBINIT make variable.
+	[thorpej, ticket #756]
+
+sys/arch/sparc/include/vmparam.h		1.31
+sys/arch/sparc64/include/vmparam.h		1.20
+
+	Increase the default stack limit to 2M (from 512K on sparc
+	and 1M on sparc64).
+	[thorpej, ticket #763]
+
+sys/dev/isapnp/isapnpdevs			1.48
+sys/dev/isapnp/isapnpdevs.c			regenerate
+sys/dev/isapnp/isapnpdevs.h			regenerate
+
+	Add Cabletron 22xx as a Lance Ethernet instance.
+	Fixes PR#17695.
+	[jdolecek, ticket #765]
+
+sys/dev/ic/lancereg.h				1.9
+
+	Fix the PARTID for the original 79c970.  Fixes PR#18029.
+	[thorpej, ticket #766]
+
+sys/dev/pci/if_pcn.c				1.11
+sys/dev/pci/if_pcnreg.h				1.3
+
+	Add support for memory-mapped PCnet-PCI chips.
+	[thorpej, ticket #767]
+
+sys/arch/sparc64/conf/GENERIC32			1.44
+
+	Add ``audio* at uaudio?'' so that uaudio is actually useful.
+	Fixes PR#15610.
+	[chs, ticket #769]
+
+sys/uvm/uvm_fault.c				1.77
+
+	Be sure that the page we allocate to break a loan is put
+	on a paging queue.  Fixes PR#18037.
+	[chs, ticket #770]
+
+sys/uvm/uvm_fault.c				1.78
+
+	When breaking a loan due to a page fault, check to see if
+	the other kind of reference-holder (anon or object) is
+	referencing the page.  If not, the page must be removed
+	from the paging queue.
+	[thorpej, ticket #759]
+
+etc/postinstall					1.27
+etc/mtree/special				1.64
+etc/rc.d/Makefile				1.34
+etc/rc.d/raidframe				1.7
+etc/rc.d/raidframeparity			1.1 (new)
+distrib/sets/lists/etc/mi			1.106
+
+	Split raidframe parity checking/rebuilding out into
+	raidframeparity, which is called after quota, so we don't
+	end up with fsck and raidframe parity rebuild taking forever
+	after a crash/reboot.
+	While here, check for raid[0-9].conf and raid[1-9][0-9].conf
+		      and not raid[0-9].conf and raid[0-9][0-9].conf
+	[abs, ticket #772]
+
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c	1.3
+libexec/ld.elf_so/arch/alpha/rtld_start.S	1.9
+
+	There is no need to do an imb after each call to the binder,
+	because we only patch the GOT, not the PLT.  However, do
+	an imb when setting up the PLT thunk, just in case.
+	[thorpej, ticket #774]
+
+gnu/dist/toolchain/bfd/elf32-vax.c		1.8
+
+	Apply changes which among other things fix -Bsymbolic links.
+	[matt, ticket #791]
+
+sys/netinet/tcp_output.c			1.86
+
+	In the txsegsize bounding code, it is not necessary to
+	adjust for the options length.
+	[thorpej, ticket #795]
+
+tools/mktemp/Makefile				1.3
+tools/Makefile					1.56-1.57
+
+	Re-add mktemp as a host tool.
+	[thorpej, ticket #804]
+
+usr.bin/mktemp/Makefile				1.5
+usr.bin/mktemp/mktemp.c				1.5
+
+	Allow mktemp to build as a host tool.
+	[thorpej, ticket #805]
+
+lib/libc/stdio/gettemp.c			1.8
+lib/libc/stdio/mkdtemp.c			1.6
+lib/libc/stdio/mkstemp.c			1.5
+
+	Allow mktemp to build as a host tool.
+	[thorpej, ticket #806]
+
+tools/compat/compat_defs.h			1.18
+tools/compat/config.h.in			1.21
+tools/compat/configure.ac			1.23 via patch
+tools/compat/configure				regenerate
+tools/compat/Makefile				1.15
+tools/compat/scripts/mktemp			delete
+
+	 o Check for mkstemp() and mkdtemp(), and build them into
+	   libcompat if necessary.
+	 o mktemp is now a host-tool, so remove the now obsoleted
+	   script.
+	[thorpej, ticket #807]
+
+usr.bin/lorder/lorder.sh			1.12
+
+	Get MKTEMP from the environment.
+	[thorpej, ticket #808]
+
+share/mk/bsd.own.mk				1.308
+
+	 o Add MKTEMP as a host tool.
+	 o Pass MKTEMP to lorder, and invoke lorder with sh.
+	[thorpej, ticket #809]
+
+usr.sbin/rpc.pcnfsd/Makefile			1.14
+
+	Resolve rpcgen's path in a way that works with other shells.
+	[thorpej, ticket #810]
+
+lib/libpcap/Makefile				1.23
+
+	Don't override the definition of LEX.
+	[thorpej, ticket #811]
+
+usr.bin/make/pathnames.h			1.10
+
+	If MAKE_BOOTSTRAP and HAVE_CONFIG_H, pull in "config.h" so
+	that we get the correct _PATH_BSHELL.
+	[thorpej, ticket #812]
+
+Makefile					1.186 via patch
+
+	Add a do-lib-libc target which is processed after do-lib-csu.
+	This ensures that the results of the libc build are available
+	to other lib builds (notably, llib-lc.ln).
+	[thorpej, ticket #813]
+
+share/mk/bsd.lib.mk				1.206
+
+	If DESTDIR is set, add ${DESTDIR}/usr/libdata to the lint
+	library search path.  This works around the problem of lint
+	using the wrong lint libraries until a "lint -d ..."
+	equivalent is implemented for libraries.
+	[thorpej, ticket #814]
