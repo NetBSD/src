@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.6 2000/09/03 02:01:32 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.7 2000/09/24 12:37:04 jdolecek Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.38 2000/06/26 09:41:32 roger Exp
@@ -51,11 +51,7 @@
 #include <machine/bus.h>		/* struct device */
 #include <sys/device.h>
 #include <sys/select.h>			/* struct selinfo */
-# ifdef DEBUG
-#  define	bootverbose 1
-# else
-#  define	bootverbose 0
-# endif
+#include <sys/reboot.h>			/* AB_* for bootverbose */
 #endif
 
 /*

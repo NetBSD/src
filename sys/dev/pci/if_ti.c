@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.8 2000/03/30 12:45:35 augustss Exp $ */
+/* $NetBSD: if_ti.c,v 1.9 2000/09/24 12:37:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -93,6 +93,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -127,8 +128,6 @@
 #ifdef M_HWCKSUM
 /*#define TI_CSUM_OFFLOAD*/
 #endif
-
-#define bootverbose 1
 
 /*
  * Various supported device vendors/types and their names.

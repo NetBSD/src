@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.18 2000/03/15 02:04:43 fvdl Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.19 2000/09/24 12:37:04 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -35,6 +35,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -51,16 +52,6 @@
 #include <dev/ic/aic7xxxvar.h>
 #include <dev/ic/aic77xxreg.h>
 #include <dev/ic/aic77xxvar.h>
-
-/*
- * Under normal circumstances, these messages are unnecessary
- * and not terribly cosmetic.
- */
-#ifdef DEBUG
-#define bootverbose	1
-#else
-#define bootverbose	1
-#endif
 
 int	ahc_eisa_match __P((struct device *, struct cfdata *, void *));
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));

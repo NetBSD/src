@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.103 2000/06/28 16:08:47 mrg Exp $	*/
+/*	$NetBSD: ncr.c,v 1.104 2000/09/24 12:37:03 jdolecek Exp $	*/
 
 /**************************************************************************
 **
@@ -214,7 +214,7 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #ifdef __NetBSD__
-#define bootverbose	1
+#include <sys/reboot.h>
 #endif
 #ifndef __NetBSD__
 #include <sys/sysctl.h>
@@ -1538,7 +1538,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.103 2000/06/28 16:08:47 mrg Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.104 2000/09/24 12:37:03 jdolecek Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -5449,7 +5449,7 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	OUTB (nc_stest3, TE     );	/*  TolerANT enable		     */
 	OUTB (nc_stime0, 0x0b	);	/*  HTH = disabled, STO = 0.1 sec.   */
 
-	if (bootverbose >= 2) {
+	if (bootverbose) {
 		printf ("\tACTUAL values:SCNTL3:%02x DMODE:%02x  DCNTL:%02x\n",
 			np->rv_scntl3, np->rv_dmode, np->rv_dcntl);
 		printf ("\t              CTEST3:%02x CTEST4:%02x CTEST5:%02x\n",
