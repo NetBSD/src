@@ -1,4 +1,4 @@
-.\"	$NetBSD: ncr.4,v 1.3 1997/01/15 06:25:55 mikel Exp $
+.\"	$NetBSD: ncr.4,v 1.4 1998/03/11 09:55:19 fair Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -32,11 +32,61 @@
 .Sh SYNOPSIS
 .Cd "ncr* at pci? dev ? function ?"
 .Cd "scsibus* at ncr?"
+.Pp
+.Cd "options FAILSAFE"
+.Cd "options NCR_CDROM_ASYNC"
+.Cd "options NCR_IOMAPPED"
+.Cd "options NCR_TEKRAM_EEPROM"
+.Cd "options SCSI_NCR_DFLT_TAGS=integer"
+.Cd "options SCSI_NCR_MAX_SYNC=integer"
+.Cd "options SCSI_NCR_MAX_WIDE=integer"
+.Cd "options SCSI_NCR_SYMBIOS_COMPAT"
+.Cd "options SCSI_NCR_TRUST_BIOS"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the NCR 53C810, 53C825, 53C860, and 53C875
-SCSI controller chips.
+driver provides support for the NCR (Symbios) 53C810, 53C815, 53C820,
+53C825, 53C860, 53C875, 53C885, 53C895, and 53C896 SCSI controller chips.
+.Pp
+The following kernel configuration options are available:
+.Bl -ohang
+.It Cd options FAILSAFE
+Disables tagged command queuing and forces asynchronous transfers for
+CDROM devices.
+.It Cd options NCR_CDROM_ASYNC
+Always use asynchronous transfers with CDROM devices.  By default,
+synchronous transfers are used if the CDROM supports it.
+.It Cd options NCR_IOMAPPED
+Attempt to access the controller chip via I/O port-mapped I/O, falling back
+to memory-mapped I/O if the I/O ports couldn't be mapped.  By default,
+memory-mapped I/O is tried first.
+.It Cd options NCR_TEKRAM_EEPROM
+Enables support for reading the configuration EEPROM of the Tekram DC-390
+series of SCSI cards.  Enable this only if using a Tekram DC-390 card.
+.It Cd options SCSI_NCR_DFLT_TAGS=integer
+Specifies the maximum number of tags per logical unit.  Unless
+.Dv FAILSAFE
+is defined, the default value is 4.  A value of 0 will disable tagged
+command queuing.
+.It Cd options SCSI_NCR_MAX_SYNC=integer
+Specifies the maximum synchronous transfer frequency to use, in kHz.  A
+value of 0 means asynchronous transfers only.  The default is 20000 (20MHz),
+unless the controller chip only supports fast transfers, in which case it's
+10000 (10MHz).
+.It Cd options SCSI_NCR_MAX_WIDE=integer
+Specifies the maximum SCSI bus width, in bytes.  Defaults to 1 on chips
+that support wide SCSI, 0 otherwise.  Set this to 0 to disable wide transfers
+even if both controller and device support them (e.g. when using a wide
+controller and wide drive through a narrow cable).
+.It Cd options SCSI_NCR_SYMBIOS_COMPAT
+Enables the use of the GPIO register as a disk activity indicator.  Enable
+this if the activity LED isn't working, but make sure the card doesn't
+use GPIO for something else.  Cards known to support this:
+ASUS SC875, Diamond FirePort 40, and Symbios SYM8751S.
+.It Cd options SCSI_NCR_TRUST_BIOS
+Specifies that the driver should use the register configuration set by the
+firmware instead of letting configuring the chip itself.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
