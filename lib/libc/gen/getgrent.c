@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.50 2004/10/24 14:52:46 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.51 2004/10/29 06:32:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -95,11 +95,12 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.50 2004/10/24 14:52:46 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.51 2004/10/29 06:32:08 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 
 #include <sys/param.h>
 
@@ -113,8 +114,6 @@ __RCSID("$NetBSD: getgrent.c,v 1.50 2004/10/24 14:52:46 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <threadlib.h>
-
 
 #ifdef HESIOD
 #include <hesiod.h>

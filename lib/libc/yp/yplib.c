@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.41 2004/05/27 18:41:11 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.42 2004/10/29 06:32:09 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,10 +28,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.41 2004/05/27 18:41:11 christos Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.42 2004/10/29 06:32:09 lukem Exp $");
 #endif
 
 #include "namespace.h"
+#include "reentrant.h"
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/file.h>
@@ -50,7 +52,6 @@ __RCSID("$NetBSD: yplib.c,v 1.41 2004/05/27 18:41:11 christos Exp $");
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
-#include <threadlib.h>
 #include "local.h"
 
 #define BINDINGDIR	"/var/yp/binding"
