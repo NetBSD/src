@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.7 1997/10/19 16:59:06 christos Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.8 1999/08/14 16:36:42 tron Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.7 1997/10/19 16:59:06 christos Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.8 1999/08/14 16:36:42 tron Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -269,7 +269,6 @@ bell()
 void
 delay_output()
 {
-	extern speed_t ospeed;
 	/* delay 50 ms - could also use a 'nap'-system call */
 	/*
 	 * BUG: if the padding character is visible, as it is on the 5620
