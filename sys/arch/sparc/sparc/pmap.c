@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 1997/03/20 23:48:37 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.73 1997/03/21 15:19:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4300,7 +4300,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		va = VSTOVA(vr,vs);		/* retract */
 
 		tlb_flush_segment(vr, vs); 	/* Paranoia? */
-		rp->rg_seg_ptps[vs] = SRMMU_TEINVALID;
+		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
 		free(pte0, M_VMPMAP);
 		sp->sg_pte = NULL;
 
@@ -4308,7 +4308,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
 			free(rp->rg_seg_ptps, M_VMPMAP);
-			pm->pm_reg_ptps[vr] = SRMMU_TEINVALID;
+			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 		}
 	}
 }
@@ -5556,26 +5556,27 @@ printf("pmap_enu4m: segment filled during sleep\n");	/* can this happen? */
 rgretry:
 	if (rp->rg_seg_ptps == NULL) {
 		/* Need a segment table */
-		register int size;
-		register caddr_t tblp;
+		int size, i, *ptd;
+
 		size = SRMMU_L2SIZE * sizeof(long);
-		tblp = malloc(size, M_VMPMAP, M_WAITOK);
+		ptd = (int *)malloc(size, M_VMPMAP, M_WAITOK);
 		if (rp->rg_seg_ptps != NULL) {
 #ifdef DEBUG
 printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 #endif
-			free(tblp, M_VMPMAP);
+			free(ptd, M_VMPMAP);
 			goto rgretry;
 		}
 #if 0
 		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-			kvm_uncache(tblp, (size+NBPG-1)/NBPG);
+			kvm_uncache((char *)ptd, (size+NBPG-1)/NBPG);
 #endif
 
-		rp->rg_seg_ptps = (int *)tblp;
-		qzero(tblp, size);
+		rp->rg_seg_ptps = ptd;
+		for (i = 0; i < SRMMU_L2SIZE; i++)
+			setpgt4m(ptd++, SRMMU_TEINVALID);
 		setpgt4m(&pm->pm_reg_ptps[vr],
-			 (VA2PA(tblp) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+			 (VA2PA((caddr_t)ptd) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 	}
 
 	sp = &rp->rg_segmap[vs];
@@ -5583,7 +5584,7 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 sretry:
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
-		register int size = SRMMU_L3SIZE * sizeof(*pte);
+		int i, size = SRMMU_L3SIZE * sizeof(*pte);
 
 		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
 		if (sp->sg_pte != NULL) {
@@ -5596,8 +5597,9 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			kvm_uncache((caddr_t)pte, (size+NBPG-1)/NBPG);
 #endif
 
-		qzero((caddr_t)pte, size);
 		sp->sg_pte = pte;
+		for (i = 0; i < SRMMU_L3SIZE; i++)
+			setpgt4m(pte++, SRMMU_TEINVALID);
 		sp->sg_npte = 1;
 		rp->rg_nsegmap++;
 		setpgt4m(&rp->rg_seg_ptps[vs],
