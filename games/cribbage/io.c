@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.10 1997/10/10 12:32:32 lukem Exp $	*/
+/*	$NetBSD: io.c,v 1.11 1999/09/08 21:17:47 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.10 1997/10/10 12:32:32 lukem Exp $");
+__RCSID("$NetBSD: io.c,v 1.11 1999/09/08 21:17:47 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,18 +69,18 @@ __RCSID("$NetBSD: io.c,v 1.10 1997/10/10 12:32:32 lukem Exp $");
 
 char    linebuf[LINESIZE];
 
-char   *rankname[RANKS] = {
+const char   *const rankname[RANKS] = {
 	"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 	"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"
 };
 
-char   *rankchar[RANKS] = {
+const char   *const rankchar[RANKS] = {
 	"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"
 };
 
-char   *suitname[SUITS] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
+const char *const suitname[SUITS] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 
-char   *suitchar[SUITS] = {"S", "H", "D", "C"};
+const char   *const suitchar[SUITS] = {"S", "H", "D", "C"};
 
 /*
  * msgcard:
@@ -105,7 +105,7 @@ int
 msgcrd(c, brfrank, mid, brfsuit)
 	CARD c;
 	BOOLEAN brfrank, brfsuit;
-	char *mid;
+	const char *mid;
 {
 	if (c.rank == EMPTY || c.suit == EMPTY)
 		return (FALSE);
@@ -169,7 +169,7 @@ prcard(win, y, x, c, blank)
  */
 void
 prhand(h, n, win, blank)
-	CARD h[];
+	const CARD h[];
 	int n;
 	WINDOW *win;
 	BOOLEAN blank;
@@ -189,9 +189,9 @@ prhand(h, n, win, blank)
  */
 int
 infrom(hand, n, prompt)
-	CARD hand[];
+	const CARD hand[];
 	int n;
-	char *prompt;
+	const char *prompt;
 {
 	int i, j;
 	CARD crd;
@@ -348,7 +348,7 @@ getuchar()
 int
 number(lo, hi, prompt)
 	int lo, hi;
-	char *prompt;
+	const char *prompt;
 {
 	char *p;
 	int sum;
@@ -496,7 +496,7 @@ endmsg()
 void
 do_wait()
 {
-	static char prompt[] = {'-', '-', 'M', 'o', 'r', 'e', '-', '-', '\0'};
+	static const char prompt[] = {'-', '-', 'M', 'o', 'r', 'e', '-', '-', '\0'};
 
 	if (Mpos + sizeof prompt < MSG_X)
 		wmove(Msgwin, Lineno > 0 ? Lineno - 1 : MSG_Y - 1, Mpos);

@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 1999/05/15 23:56:36 christos Exp $	*/
+/*	$NetBSD: move.c,v 1.9 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 1999/05/15 23:56:36 christos Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 1999/09/08 21:17:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ do_move(dy, dx)
  */
 bool
 eaten(pos)
-	COORD	*pos;
+	const COORD	*pos;
 {
 	int	x, y;
 

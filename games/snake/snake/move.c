@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.16 1999/08/14 16:38:45 tron Exp $	*/
+/*	$NetBSD: move.c,v 1.17 1999/09/08 21:17:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.16 1999/08/14 16:38:45 tron Exp $");
+__RCSID("$NetBSD: move.c,v 1.17 1999/09/08 21:17:59 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -192,7 +192,7 @@ move(sp)
 
 void
 gto(sp)
-	struct point *sp;
+	const struct point *sp;
 {
 
 	int     distance, f, tfield;
@@ -264,7 +264,7 @@ gto(sp)
 
 void
 right(sp)
-	struct point *sp;
+	const struct point *sp;
 {
 	int     field, tfield;
 	int     tabcol, strlength;
@@ -429,10 +429,10 @@ pch(c)
 
 void
 #if __STDC__
-apr(struct point * ps, const char *fmt,...)
+apr(const struct point * ps, const char *fmt,...)
 #else
 apr(ps, fmt, va_alist)
-	struct point *ps;
+	const struct point *ps;
 	char   *fmt;
 va_dcl
 #endif
@@ -512,7 +512,7 @@ pstring(s)
 
 void
 pchar(ps, ch)
-	struct point *ps;
+	const struct point *ps;
 	char    ch;
 {
 	struct point p;
@@ -546,7 +546,7 @@ outch(c)
 
 void
 putpad(str)
-	char *str;
+	const char *str;
 {
 	if (str)
 		tputs(str, 1, outch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1998/09/13 15:27:26 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1999/09/08 21:17:44 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,11 +35,11 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/11/93
  */
 
-void	 addword __P((char *));
+void	 addword __P((const char *));
 void	 badword __P((void));
 char	*batchword __P((FILE *));
 void	 checkdict __P((void));
-int	 checkword __P((char *, int, int *));
+int	 checkword __P((const char *, int, int *));
 void	 cleanup __P((void));
 void	 delay __P((int));
 long	 dictseek __P((FILE *, long, int));
@@ -50,24 +50,24 @@ void	 getword __P((char *));
 int	 help __P((void));
 int	 inputch __P((void));
 int	 loaddict __P((FILE *));
-int	 loadindex __P((char *));
-void	 newgame __P((char *));
+int	 loadindex __P((const char *));
+void	 newgame __P((const char *));
 char	*nextword __P((FILE *));
-FILE	*opendict __P((char *));
+FILE	*opendict __P((const char *));
 void	 playgame __P((void));
-void	 prompt __P((char *));
-void	 prtable __P((char *[],
-	    int, int, int, void (*)(char *[], int), int (*)(char *[], int)));
-void	 putstr __P((char *));
+void	 prompt __P((const char *));
+void	 prtable __P((const char *const [],
+	    int, int, int, void (*)(const char *const [], int), int (*)(const char *const [], int)));
+void	 putstr __P((const char *));
 void	 redraw __P((void));
 void	 results __P((void));
 int	 setup __P((int, time_t));
-void	 showboard __P((char *));
-void	 showstr __P((char *, int));
+void	 showboard __P((const char *));
+void	 showstr __P((const char *, int));
 void	 showword __P((int));
 void	 starttime __P((void));
 void	 startwords __P((void));
 void	 stoptime __P((void));
 int	 timerch __P((void));
 void	 usage __P((void)) __attribute__((__noreturn__));
-int	 validword __P((char *));
+int	 validword __P((const char *));

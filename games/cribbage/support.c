@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.4 1997/10/10 12:32:36 lukem Exp $	*/
+/*	$NetBSD: support.c,v 1.5 1999/09/08 21:17:47 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.4 1997/10/10 12:32:36 lukem Exp $");
+__RCSID("$NetBSD: support.c,v 1.5 1999/09/08 21:17:47 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: support.c,v 1.4 1997/10/10 12:32:36 lukem Exp $");
 #define	NTV	10		/* number scores to test */
 
 /* score to test reachability of, and order to test them in */
-int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
+const int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
 
 /*
  * computer chooses what to play in pegging...
@@ -60,7 +60,7 @@ int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
  */
 int
 cchose(h, n, s)
-	CARD h[];
+	const CARD h[];
 	int n, s;
 {
 	int i, j, l;
@@ -129,8 +129,8 @@ cchose(h, n, s)
  */
 int
 plyrhand(hand, s)
-	CARD    hand[];
-	char   *s;
+	const CARD    hand[];
+	const char   *s;
 {
 	static char prompt[BUFSIZ];
 	int i, j;
@@ -165,8 +165,8 @@ plyrhand(hand, s)
  */
 int
 comphand(h, s)
-	CARD h[];
-	char *s;
+	const CARD h[];
+	const char *s;
 {
 	int j;
 
@@ -299,7 +299,7 @@ cdiscard(mycrib)
  */
 int
 anymove(hand, n, sum)
-	CARD hand[];
+	const CARD hand[];
 	int n, sum;
 {
 	int i, j;
@@ -320,7 +320,7 @@ anymove(hand, n, sum)
  */
 int
 anysumto(hand, n, s, t)
-	CARD hand[];
+	const CARD hand[];
 	int n, s, t;
 {
 	int i;
@@ -337,7 +337,7 @@ anysumto(hand, n, s, t)
  */
 int
 numofval(h, n, v)
-	CARD h[];
+	const CARD h[];
 	int n, v;
 {
 	int i, j;
@@ -355,7 +355,7 @@ numofval(h, n, v)
  */
 void
 makeknown(h, n)
-	CARD h[];
+	const CARD h[];
 	int n;
 {
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.10 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.11 1999/09/08 21:17:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.10 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.11 1999/09/08 21:17:59 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: pl_7.c,v 1.10 1999/02/10 00:45:46 hubertf Exp $");
  */
 
 static char sc_hasprompt;
-static char *sc_prompt;
-static char *sc_buf;
+static const char *sc_prompt;
+static const char *sc_buf;
 static int sc_line;
 
 void
@@ -217,8 +217,8 @@ Scroll()
 
 void
 prompt(p, ship)
-char *p;
-struct ship *ship;
+	const char *p;
+	struct ship *ship;
 {
 	static char buf[BUFSIZ];
 
@@ -240,9 +240,9 @@ char flag;
 
 int
 sgetch(p, ship, flag)
-char *p;
-struct ship *ship;
-char flag;
+	const char *p;
+	struct ship *ship;
+	char flag;
 {
 	int c;
 	prompt(p, ship);
@@ -259,9 +259,9 @@ char flag;
 
 void
 sgetstr(pr, buf, n)
-char *pr;
-char *buf;
-int n;
+	const char *pr;
+	char *buf;
+	int n;
 {
 	int c;
 	char *p = buf;

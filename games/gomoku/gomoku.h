@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -248,11 +248,11 @@ struct	ovlp_info {
 	u_char		o_frameindex;	/* intersection frame index */
 };
 
-extern	char	*letters;
+extern	const char	*letters;
 extern	char	fmtbuf[];
-extern	char	pdir[];
+extern	const char	pdir[];
 
-extern	int     dd[4];
+extern	const int     dd[4];
 extern	struct	spotstr	board[BAREA];		/* info for board */
 extern	struct	combostr frames[FAREA];		/* storage for single frames */
 extern	struct	combostr *sortframes[2];	/* sorted, non-empty frames */
@@ -267,24 +267,24 @@ extern	int	debug;
 void	bdinit __P((struct spotstr *));
 void	init_overlap __P((void));
 int	getline __P((char *, int));
-void	ask __P((char *));
-void	dislog __P((char *));
+void	ask __P((const char *));
+void	dislog __P((const char *));
 void	bdump __P((FILE *));
 void	bdisp __P((void));
 void	bdisp_init __P((void));
 void	cursfini __P((void));
 void	cursinit __P((void));
 void	bdwho __P((int));
-void	panic __P((char *)) __attribute__((__noreturn__));
-void	log __P((char *));
-void	dlog __P((char *));
+void	panic __P((const char *)) __attribute__((__noreturn__));
+void	log __P((const char *));
+void	dlog __P((const char *));
 void	quit __P((void)) __attribute__((__noreturn__));
 void	quitsig __P((int)) __attribute__((__noreturn__));
 void	whatsup __P((int));
 int	readinput __P((FILE *));
-char   *stoc __P((int));
+const char   *stoc __P((int));
 int	lton __P((int));
-int	ctos __P((char *));
+int	ctos __P((const char *));
 void	update_overlap __P((struct spotstr *));
 int	makemove __P((int, int));
 int	list_eq __P((struct combostr **, struct combostr **, int));
@@ -301,5 +301,5 @@ int	checkframes __P((struct combostr *, struct combostr *, struct spotstr *,
 int, struct ovlp_info *));
 void	addframes __P((int));
 void	scanframes __P((int));
-int	better __P((struct spotstr *, struct spotstr *, int));
+int	better __P((const struct spotstr *, const struct spotstr *, int));
 int	pickmove __P((int));

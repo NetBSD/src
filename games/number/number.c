@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.6 1998/09/13 15:24:57 hubertf Exp $	*/
+/*	$NetBSD: number.c,v 1.7 1999/09/08 21:17:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.6 1998/09/13 15:24:57 hubertf Exp $");
+__RCSID("$NetBSD: number.c,v 1.7 1999/09/08 21:17:53 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,19 +58,19 @@ __RCSID("$NetBSD: number.c,v 1.6 1998/09/13 15:24:57 hubertf Exp $");
 
 #define	MAXNUM		65		/* Biggest number we handle. */
 
-static char	*name1[] = {
+static const char	*const name1[] = {
 	"",		"one",		"two",		"three",
 	"four",		"five",		"six",		"seven",
 	"eight",	"nine",		"ten",		"eleven",
 	"twelve",	"thirteen",	"fourteen",	"fifteen",
 	"sixteen",	"seventeen",	"eighteen",	"nineteen",
 },
-		*name2[] = {
+		*const name2[] = {
 	"",		"ten",		"twenty",	"thirty",
 	"forty",	"fifty",	"sixty",	"seventy",
 	"eighty",	"ninety",
 },
-		*name3[] = {
+		*const name3[] = {
 	"hundred",	"thousand",	"million",	"billion",
 	"trillion",	"quadrillion",	"quintillion",	"sextillion",
 	"septillion",	"octillion",	"nonillion",	"decillion",
@@ -82,10 +82,9 @@ static char	*name1[] = {
 
 void	convert __P((char *));
 int	main __P((int, char *[]));
-int	number __P((char *, int));
+int	number __P((const char *, int));
 void	pfract __P((int));
-void	toobig __P((void));
-int	unit __P((int, char *));
+int	unit __P((int, const char *));
 void	usage __P((void)) __attribute__((__noreturn__));
 
 int lflag;
@@ -201,7 +200,7 @@ badnum:			errx(1, "illegal number: %s", line);
 int
 unit(len, p)
 	int len;
-	char *p;
+	const char *p;
 {
 	int off, rval;
 
@@ -236,7 +235,7 @@ unit(len, p)
 
 int
 number(p, len)
-	char *p;
+	const char *p;
 	int len;
 {
 	int val, rval;
@@ -278,7 +277,7 @@ void
 pfract(len)
 	int len;
 {
-	static char *pref[] = { "", "ten-", "hundred-" };
+	static const char *const pref[] = { "", "ten-", "hundred-" };
 
 	switch(len) {
 	case 1:

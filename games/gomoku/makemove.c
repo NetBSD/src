@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.4 1997/10/10 13:36:05 lukem Exp $	*/
+/*	$NetBSD: makemove.c,v 1.5 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,18 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.4 1997/10/10 13:36:05 lukem Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.5 1999/09/08 21:17:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include "gomoku.h"
 
 		/* direction deltas */
-int     dd[4] = {
+const int     dd[4] = {
 	MRIGHT, MRIGHT+MDOWN, MDOWN, MDOWN+MLEFT
 };
 
-int	weight[5] = { 0, 1, 7, 22, 100 };
+const int	weight[5] = { 0, 1, 7, 22, 100 };
 
 /*
  * Return values:

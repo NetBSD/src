@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.8 1999/02/10 00:45:45 hubertf Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.9 1999/09/08 21:17:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.8 1999/02/10 00:45:45 hubertf Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.9 1999/09/08 21:17:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,11 +421,15 @@ next()
 			}
 		}
 		if (best > 0.0) {
-			char *p = getenv("WOTD");
-			if (p == 0)
+			char *tp = getenv("WOTD");
+			const char *p;
+			if (tp == 0)
 				p = "Driver";
-			if (islower(*p))
-				*p = toupper(*p);
+			else {
+				if (islower(*tp))
+					*tp = toupper(*tp);
+				p = tp;
+			}
 			(void) strncpy(bestship->file->captain, p,
 				sizeof bestship->file->captain);
 			bestship->file->captain

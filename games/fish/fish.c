@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.8 1999/07/14 17:30:21 hubertf Exp $	*/
+/*	$NetBSD: fish.c,v 1.9 1999/09/08 21:17:48 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.8 1999/07/14 17:30:21 hubertf Exp $");
+__RCSID("$NetBSD: fish.c,v 1.9 1999/09/08 21:17:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: fish.c,v 1.8 1999/07/14 17:30:21 hubertf Exp $");
 #define	COMPUTER	0
 #define	OTHER(a)	(1 - (a))
 
-char *cards[] = {
+const char *const cards[] = {
 	"A", "2", "3", "4", "5", "6", "7",
 	"8", "9", "10", "J", "Q", "K", NULL,
 };
@@ -80,10 +80,10 @@ int promode;
 int asked[RANKS], comphand[RANKS], deck[RANKS];
 int userasked[RANKS], userhand[RANKS];
 
-void	chkwinner __P((int, int *));
+void	chkwinner __P((int, const int *));
 int	compmove __P((void));
-int	countbooks __P((int *));
-int	countcards __P((int *));
+int	countbooks __P((const int *));
+int	countcards __P((const int *));
 int	drawcard __P((int, int *));
 int	gofish __P((int, int, int *));
 void	goodmove __P((int, int, int *, int *));
@@ -91,7 +91,7 @@ void	init __P((void));
 void	instructions __P((void));
 int	main __P((int, char *[]));
 int	nrandom __P((int));
-void	printhand __P((int *));
+void	printhand __P((const int *));
 void	printplayer __P((int));
 int	promove __P((void));
 void	usage __P((void)) __attribute__((__noreturn__));
@@ -155,7 +155,7 @@ int
 usermove()
 {
 	int n;
-	char **p;
+	const char *const *p;
 	char buf[256];
 
 	(void)printf("\nYour hand is:");
@@ -330,7 +330,7 @@ goodmove(player, move, hand, opphand)
 void
 chkwinner(player, hand)
 	int player;
-	int *hand;
+	const int *hand;
 {
 	int cb, i, ub;
 
@@ -373,7 +373,7 @@ printplayer(player)
 
 void
 printhand(hand)
-	int *hand;
+	const int *hand;
 {
 	int book, i, j;
 
@@ -394,7 +394,7 @@ printhand(hand)
 
 int
 countcards(hand)
-	int *hand;
+	const int *hand;
 {
 	int i, count;
 
@@ -405,7 +405,7 @@ countcards(hand)
 
 int
 countbooks(hand)
-	int *hand;
+	const int *hand;
 {
 	int i, count;
 

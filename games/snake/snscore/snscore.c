@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.8 1998/09/11 14:25:22 hubertf Exp $	*/
+/*	$NetBSD: snscore.c,v 1.9 1999/09/08 21:18:00 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.8 1998/09/11 14:25:22 hubertf Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.9 1999/09/08 21:18:00 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: snscore.c,v 1.8 1998/09/11 14:25:22 hubertf Exp $");
 #include <string.h>
 #include "pathnames.h"
 
-char *recfile = _PATH_RAWSCORES;
+const char *recfile = _PATH_RAWSCORES;
 #define MAXPLAYERS 256
 
 struct	player	{

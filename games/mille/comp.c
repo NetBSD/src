@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.5 1997/10/12 00:53:45 lukem Exp $	*/
+/*	$NetBSD: comp.c,v 1.6 1999/09/08 21:17:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.5 1997/10/12 00:53:45 lukem Exp $");
+__RCSID("$NetBSD: comp.c,v 1.6 1999/09/08 21:17:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -408,7 +408,7 @@ play_it:
  */
 int
 onecard(pp)
-	PLAY	*pp;
+	const PLAY	*pp;
 {
 	CARD	bat, spd, card;
 
@@ -441,7 +441,7 @@ onecard(pp)
 
 int
 canplay(pp, op, card)
-	PLAY	*pp, *op;
+	const PLAY	*pp, *op;
 	CARD	card;
 {
 	switch (card) {

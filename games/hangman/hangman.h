@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.7 1998/09/11 13:42:03 hubertf Exp $	*/
+/*	$NetBSD: hangman.h,v 1.8 1999/09/08 21:17:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -69,13 +69,14 @@ typedef struct {
 
 extern bool Guessed[];
 
-extern char Word[], Known[], *Noose_pict[];
+extern char Word[], Known[];
+extern const char *const Noose_pict[];
 
 extern int Errors, Wordnum;
 
 extern double Average;
 
-extern ERR_POS Err_pos[];
+extern const ERR_POS Err_pos[];
 
 extern FILE *Dict;
 

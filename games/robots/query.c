@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.4 1997/10/12 14:10:01 lukem Exp $	*/
+/*	$NetBSD: query.c,v 1.5 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: query.c,v 1.4 1997/10/12 14:10:01 lukem Exp $");
+__RCSID("$NetBSD: query.c,v 1.5 1999/09/08 21:17:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: query.c,v 1.4 1997/10/12 14:10:01 lukem Exp $");
  */
 int
 query(prompt)
-	char	*prompt;
+	const char	*prompt;
 {
 	int	c, retval;
 	int	y, x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.7 1999/05/16 00:03:35 christos Exp $	*/
+/*	$NetBSD: score.c,v 1.8 1999/09/08 21:17:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.7 1999/05/16 00:03:35 christos Exp $");
+__RCSID("$NetBSD: score.c,v 1.8 1999/09/08 21:17:57 jsm Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
 # include	"pathnames.h"
 
-char	*Scorefile = _PATH_SCORE;
+const char	*Scorefile = _PATH_SCORE;
 
 int	Max_per_uid = MAX_PER_UID;
 
@@ -199,9 +199,10 @@ set_name(scp)
 	SCORE	*scp;
 {
 	PASSWD	*pp;
+	static char unknown[] = "???";
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
-		pp->pw_name = "???";
+		pp->pw_name = unknown;
 	strncpy(scp->s_name, pp->pw_name, MAXNAME);
 }
 
@@ -213,7 +214,7 @@ int
 cmp_sc(s1, s2)
 	const void *s1, *s2;
 {
-	return ((SCORE *)s2)->s_score - ((SCORE *)s1)->s_score;
+	return ((const SCORE *)s2)->s_score - ((const SCORE *)s1)->s_score;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.9 1999/08/21 07:02:46 simonb Exp $	*/
+/*	$NetBSD: strfile.c,v 1.10 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.9 1999/08/21 07:02:46 simonb Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.10 1999/09/08 21:17:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -396,12 +396,12 @@ int
 cmp_str(vp1, vp2)
 	const void *vp1, *vp2;
 {
-	STR	*p1, *p2;
+	const STR	*p1, *p2;
 	int	c1, c2;
 	int	n1, n2;
 
-	p1 = (STR *)vp1;
-	p2 = (STR *)vp2;
+	p1 = (const STR *)vp1;
+	p2 = (const STR *)vp2;
 
 # define	SET_N(nf,ch)	(nf = (ch == '\n'))
 # define	IS_END(ch,nf)	(ch == Delimch && nf)

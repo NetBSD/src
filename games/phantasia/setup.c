@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.8 1997/11/24 01:47:26 mrg Exp $	*/
+/*	$NetBSD: setup.c,v 1.9 1999/09/08 21:17:55 jsm Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -38,7 +38,7 @@
 /
 /************************************************************************/
 
-static char *files[] = {		/* all files to create */
+static const char *const files[] = {		/* all files to create */
 	_PATH_MONST,
 	_PATH_PEOPLE,
 	_PATH_MESS,
@@ -50,14 +50,14 @@ static char *files[] = {		/* all files to create */
 	NULL,
 };
 
-char *monsterfile="monsters.asc";
+const char *monsterfile = "monsters.asc";
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char	**filename;	/* for pointing to file names */
+	register const char *const *filename; /* for pointing to file names */
 	register int	fd;		/* file descriptor */
 	FILE	*fp;			/* for opening files */
 	struct stat	fbuf;		/* for getting files statistics */
@@ -235,7 +235,7 @@ main(argc, argv)
 /************************************************************************/
 
 Error(str, file)
-char	*str, *file;
+	const char	*str, *file;
 {
     fprintf(stderr, "Error: ");
     fprintf(stderr, str, file);

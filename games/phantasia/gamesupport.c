@@ -1,4 +1,4 @@
-/*	$NetBSD: gamesupport.c,v 1.4 1997/10/13 02:18:16 lukem Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.5 1999/09/08 21:17:53 jsm Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
@@ -13,7 +13,7 @@ changestats(ingameflag)
 	static char flag[2] =	/* for printing values of bools */
 	{'F', 'T'};
 	struct player *playerp;	/* pointer to structure to alter */
-	char   *prompt;		/* pointer to prompt string */
+	const char   *prompt;		/* pointer to prompt string */
 	int     c;		/* input */
 	int     today;		/* day of year of today */
 	int     temp;		/* temporary variable */

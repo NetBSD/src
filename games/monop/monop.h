@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.7 1999/08/21 10:40:04 simonb Exp $	*/
+/*	$NetBSD: monop.h,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -76,7 +76,7 @@
 				}
 
 struct sqr_st {			/* structure for square			*/
-	char	*name;			/* place name			*/
+	const char	*name;		/* place name			*/
 	short	owner;			/* owner number			*/
 	short	type;			/* place type			*/
 	struct prp_st	*desc;		/* description struct		*/
@@ -86,13 +86,13 @@ struct sqr_st {			/* structure for square			*/
 typedef struct sqr_st	SQUARE;
 
 struct mon_st {			/* monopoly description structure	*/
-	char	*name;			/* monop. name (color)		*/
+	const char	*name;		/* monop. name (color)		*/
 	short	owner;			/* owner of monopoly		*/
 	short	num_in;			/* # in monopoly		*/
 	short	num_own;		/* # owned (-1: not poss. monop)*/
 	short	h_cost;			/* price of houses		*/
-	char	*not_m;			/* name if not monopoly		*/
-	char	*mon_n;			/* name if a monopoly		*/
+	const char	*not_m;		/* name if not monopoly		*/
+	const char	*mon_n;		/* name if a monopoly		*/
 	unsigned char	sqnums[3];	/* Square numbers (used to init)*/
 	SQUARE	*sq[3];			/* list of squares in monop	*/
 };
@@ -146,10 +146,10 @@ void do_move __P((void));
 void move __P((int));
 void save __P((void));
 void restore __P((void));
-int rest_f __P((char *));
+int rest_f __P((const char *));
 
 /* getinp.c */
-int getinp __P((char *, char *[]));
+int getinp __P((const char *, const char *const []));
 
 /* houses.c */
 void buy_houses __P((void));
@@ -163,10 +163,10 @@ int move_jail __P((int, int ));
 void printturn __P((void));
 
 /* misc.c */
-int getyn __P((char *));
+int getyn __P((const char *));
 void notify __P((void));
 void next_play __P((void));
-int get_int __P((char *));
+int get_int __P((const char *));
 void set_ownlist __P((int));
 void is_monop __P((MON *, int));
 void isnot_monop __P((MON *));

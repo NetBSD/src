@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.6 1998/11/18 14:22:32 hubertf Exp $	*/
+/*	$NetBSD: morse.c,v 1.7 1999/09/08 21:17:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.6 1998/11/18 14:22:32 hubertf Exp $");
+__RCSID("$NetBSD: morse.c,v 1.7 1999/09/08 21:17:53 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,8 @@ __RCSID("$NetBSD: morse.c,v 1.6 1998/11/18 14:22:32 hubertf Exp $");
 #define MORSE_PERIOD	".-.-.-"
 
 
-static char
-	*digit[] = {
+static const char
+	*const digit[] = {
 	"-----",
 	".----",
 	"..---",
@@ -69,7 +69,7 @@ static char
 	"---..",
 	"----.",
 },
-	*alph[] = {
+	*const alph[] = {
 	".-",
 	"-...",
 	"-.-.",
@@ -101,7 +101,7 @@ static char
 int	main __P((int, char *[]));
 void	morse __P((int));
 void	decode __P((const char *));
-void	show __P((char *));
+void	show __P((const char *));
 
 static int sflag;
 static int dflag;
@@ -188,7 +188,7 @@ decode(s)
 		putchar('.');
 	} else {
 		int found;
-		char **a;
+		const char *const *a;
 		int size;
 		int i;
 
@@ -242,7 +242,7 @@ morse(c)
 
 void
 show(s)
-	char *s;
+	const char *s;
 {
 	if (sflag)
 		printf(" %s", s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.7 1999/02/10 00:45:45 hubertf Exp $	*/
+/*	$NetBSD: assorted.c,v 1.8 1999/09/08 21:17:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.7 1999/02/10 00:45:45 hubertf Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.8 1999/09/08 21:17:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ int rig, shot, hittable, roll;
 	int crew[3];
 	int n;
 	int rigg[4];
-	char *message;
-	struct Tables *tp;
+	const char *message;
+	const struct Tables *tp;
 
 	pc = on->file->pcrew;
 	hull = on->specs->hull;

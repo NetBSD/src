@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.4 1997/10/10 13:36:07 lukem Exp $	*/
+/*	$NetBSD: stoc.c,v 1.5 1999/09/08 21:17:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.4 1997/10/10 13:36:07 lukem Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.5 1999/09/08 21:17:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,13 +49,13 @@ __RCSID("$NetBSD: stoc.c,v 1.4 1997/10/10 13:36:07 lukem Exp $");
 #include <stdlib.h>
 #include "gomoku.h"
 
-char	*letters	= "<ABCDEFGHJKLMNOPQRST>";
+const char	*letters	= "<ABCDEFGHJKLMNOPQRST>";
 
 struct mvstr {
 	int	m_code;
-	char	*m_text;
+	const char	*m_text;
 };
-static	struct	mvstr	mv[] = {
+static	const struct	mvstr	mv[] = {
 	{ RESIGN,	"resign" }, 
 	{ RESIGN,	"quit" },
 	{ SAVE,		"save" },
@@ -65,7 +65,7 @@ static	struct	mvstr	mv[] = {
 /*
  * Turn the spot number form of a move into the character form.
  */
-char *
+const char *
 stoc(s)
 	int s;
 {
@@ -84,7 +84,7 @@ stoc(s)
  */
 int
 ctos(mp)
-	char *mp;
+	const char *mp;
 {
 	int i;
 

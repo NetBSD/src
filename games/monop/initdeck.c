@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.7 1999/08/21 10:40:03 simonb Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.8 1999/09/08 21:17:52 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,8 @@ __RCSID("$NetBSD: initdeck.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
 
 #define	bool	char
 
-char	*infile		= "cards.inp",		/* input file		*/
-	*outfile	= "cards.pck";		/* "packed" file	*/
+const char	*infile		= "cards.inp",	/* input file		*/
+		*outfile	= "cards.pck";	/* "packed" file	*/
 
 DECK	deck[2];
 

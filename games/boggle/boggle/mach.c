@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.8 1997/10/13 21:09:59 cjs Exp $	*/
+/*	$NetBSD: mach.c,v 1.9 1999/09/08 21:17:44 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.8 1997/10/13 21:09:59 cjs Exp $");
+__RCSID("$NetBSD: mach.c,v 1.9 1999/09/08 21:17:44 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,16 +70,16 @@ static int colstarts[MAXCOLS], ncolstarts;
 static int lastline;
 int ncols, nlines;
 
-extern char *pword[], *mword[];
+extern const char *pword[], *mword[];
 extern int ngames, nmwords, npwords, tnmwords, tnpwords;
 
 static void	cont_catcher __P((int));
-static int	prwidth __P((char *[], int));
-static void	prword __P((char *[], int));
+static int	prwidth __P((const char *const [], int));
+static void	prword __P((const char *const [], int));
 static void	stop_catcher __P((int));
 static void	tty_cleanup __P((void));
 static int	tty_setup __P((void));
-static void	tty_showboard __P((char *));
+static void	tty_showboard __P((const char *));
 static void	winch_catcher __P((int));
 
 /*
@@ -150,7 +150,7 @@ results()
 
 static void
 prword(base, indx)
-	char *base[];
+	const char *const base[];
 	int indx;
 {
 	printw("%s", base[indx]);
@@ -158,7 +158,7 @@ prword(base, indx)
 
 static int
 prwidth(base, indx)
-	char *base[];
+	const char *const base[];
 	int indx;
 {
 	return (strlen(base[indx]));
@@ -339,7 +339,7 @@ startwords()
  */
 void
 addword(w)
-	char *w;
+	const char *w;
 {
 	int n;
 
@@ -410,7 +410,6 @@ findword()
 	char buf[MAXWORDLEN + 1];
 	extern char board[];
 	extern int usedbits, wordpath[];
-	extern char *mword[], *pword[];
 	extern int nmwords, npwords;
 
 	getyx(stdscr, r, c);
@@ -480,7 +479,7 @@ findword()
  */
 void
 showstr(str, delaysecs)
-	char *str;
+	const char *str;
 	int delaysecs;
 {
 	addstr(str);
@@ -493,7 +492,7 @@ showstr(str, delaysecs)
 
 void
 putstr(s)
-	char *s;
+	const char *s;
 {
 	addstr(s);
 }
@@ -561,14 +560,14 @@ getword(q)
 
 void
 showboard(b)
-	char *b;
+	const char *b;
 {
 	tty_showboard(b);
 }
 
 void
 prompt(mesg)
-	char *mesg;
+	const char *mesg;
 {
 	move(PROMPT_LINE, PROMPT_COL);
 	printw("%s", mesg);
@@ -660,7 +659,7 @@ tty_cleanup()
 
 static void
 tty_showboard(b)
-	char *b;
+	const char *b;
 {
 	int i;
 	int line;

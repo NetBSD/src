@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.9 1997/10/12 01:49:28 lukem Exp $	*/
+/*	$NetBSD: snake.c,v 1.10 1999/09/08 21:17:59 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.9 1997/10/12 01:49:28 lukem Exp $");
+__RCSID("$NetBSD: snake.c,v 1.10 1999/09/08 21:17:59 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -547,13 +547,13 @@ flushi()
 	tcflush(0, TCIFLUSH);
 }
 
-int     mx[8] = {
+const int     mx[8] = {
 	0, 1, 1, 1, 0, -1, -1, -1
 };
-int     my[8] = {
+const int     my[8] = {
 	-1, -1, 0, 1, 1, 1, 0, -1
 };
-float   absv[8] = {
+const float   absv[8] = {
 	1, 1.4, 1, 1.4, 1, 1.4, 1, 1.4
 };
 int     oldw = 0;
@@ -626,7 +626,7 @@ spacewarp(w)
 {
 	struct point p;
 	int     j;
-	char   *str;
+	const char   *str;
 
 	snrand(&you);
 	point(&p, COLUMNS / 2 - 8, LINES / 2 - 1);
@@ -693,7 +693,7 @@ snap()
 
 int
 stretch(ps)
-	struct point *ps;
+	const struct point *ps;
 {
 	struct point p;
 
@@ -771,7 +771,7 @@ surround(ps)
 
 void
 win(ps)
-	struct point *ps;
+	const struct point *ps;
 {
 	struct point x;
 	int     j, k;
@@ -854,7 +854,7 @@ pushsnake()
 
 int
 chk(sp)
-	struct point *sp;
+	const struct point *sp;
 {
 	int     j;
 

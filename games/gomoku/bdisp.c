@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.5 1997/10/10 13:36:02 lukem Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.6 1999/09/08 21:17:49 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.5 1997/10/10 13:36:02 lukem Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.6 1999/09/08 21:17:49 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,17 +211,15 @@ bdump(fp)
  */
 void
 dislog(str)
-	char *str;
+	const char *str;
 {
 
 	if (++lastline >= SCRNH - 1) {
 		/* move 'em up */
 		lastline = 1;
 	}
-	if (strlen(str) >= SCRNW - 46)
-		str[SCRNW - 46 - 1] = '\0';
 	move(lastline, 46);
-	addstr(str);
+	addnstr(str, SCRNW - 46 - 1);
 	clrtoeol();
 	move(lastline + 1, 46);
 	clrtoeol();
@@ -233,7 +231,7 @@ dislog(str)
 
 void
 ask(str)
-	char *str;
+	const char *str;
 {
 	int len = strlen(str);
 

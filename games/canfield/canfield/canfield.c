@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $	*/
+/*	$NetBSD: canfield.c,v 1.12 1999/09/08 21:17:46 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.11 1998/09/13 15:27:27 hubertf Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.12 1999/09/08 21:17:46 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,11 +210,11 @@ void	clearbelowmovebox __P((void));
 void	clearmsg __P((void));
 void	clearstat __P((void));
 void	destinerror __P((void));
-bool	diffcolor __P((struct cardtype *, struct cardtype *));
+bool	diffcolor __P((const struct cardtype *, const struct cardtype *));
 void	dumberror __P((void));
 bool	finish __P((void));
 void	fndbase __P((struct cardtype **, int, int));
-void	getcmd __P((int, int, char *));
+void	getcmd __P((int, int, const char *));
 void	initall __P((void));
 void	initdeck __P((struct cardtype *[]));
 void	initgame __P((void));
@@ -225,24 +225,24 @@ void	movebox __P((void));
 void	movecard __P((void));
 void	movetofound __P((struct cardtype **, int));
 void	movetotalon __P((void));
-bool	notempty __P((struct cardtype *));
+bool	notempty __P((const struct cardtype *));
 void	printbottombettingbox __P((void));
 void	printbottominstructions __P((void));
-void	printcard __P((int, int, struct cardtype *));
-void	printrank __P((int, int, struct cardtype *, bool));
+void	printcard __P((int, int, const struct cardtype *));
+void	printrank __P((int, int, const struct cardtype *, bool));
 void	printtopbettingbox __P((void));
 void	printtopinstructions __P((void));
-bool	rankhigher __P((struct cardtype *, int));
-bool	ranklower __P((struct cardtype *, struct cardtype *));
+bool	rankhigher __P((const struct cardtype *, int));
+bool	ranklower __P((const struct cardtype *, const struct cardtype *));
 void	removecard __P((int, int));
-int	samesuit __P((struct cardtype *, int));
+int	samesuit __P((const struct cardtype *, int));
 void	showcards __P((void));
 void	showstat __P((void));
 void	shuffle __P((struct cardtype *[]));
 void	simpletableau __P((struct cardtype **, int));
 void	startgame __P((void));
 void	suspend __P((void));
-bool	tabok __P((struct cardtype *, int));
+bool	tabok __P((const struct cardtype *, int));
 void	tabprint __P((int, int));
 void	tabtotab __P((int, int));
 void	transit __P((struct cardtype **, struct cardtype **));
@@ -581,7 +581,7 @@ removecard(a, b)
 void
 printrank(a, b, cp, inverse)
 	int a, b;
-	struct cardtype *cp;
+	const struct cardtype *cp;
 	bool inverse;
 {
 	move(b, a);
@@ -616,7 +616,7 @@ printrank(a, b, cp, inverse)
 void
 printcard(a, b, cp)
 	int a,b;
-	struct cardtype *cp;
+	const struct cardtype *cp;
 {
 	if (cp == NIL)
 		removecard(a, b);
@@ -831,7 +831,7 @@ destinerror()
  */
 bool
 notempty(cp)
-	struct cardtype *cp;
+	const struct cardtype *cp;
 {
 	if (cp == NIL) {
 		errmsg = TRUE;
@@ -847,7 +847,7 @@ notempty(cp)
  */
 bool
 ranklower(cp1, cp2)
-	struct cardtype *cp1, *cp2;
+	const struct cardtype *cp1, *cp2;
 {
 	if (cp2->rank == Ace) 
 		if (cp1->rank == King)
@@ -865,7 +865,7 @@ ranklower(cp1, cp2)
  */
 bool
 diffcolor(cp1, cp2)
-	struct cardtype *cp1, *cp2;
+	const struct cardtype *cp1, *cp2;
 {
 	if (cp1->color == cp2->color)
 		return (FALSE);
@@ -878,7 +878,7 @@ diffcolor(cp1, cp2)
  */
 bool
 tabok(cp, des)
-	struct cardtype *cp;
+	const struct cardtype *cp;
 	int des;
 {
 	if ((cp == stock) && (tableau[des] == NIL))
@@ -1282,7 +1282,7 @@ tabtotab(sour, des)
  */
 bool
 rankhigher(cp, let)
-	struct cardtype *cp;
+	const struct cardtype *cp;
 	int let;
 {
 	if (found[let]->rank == King)
@@ -1301,7 +1301,7 @@ rankhigher(cp, let)
  */
 int
 samesuit(cp, let)
-	struct cardtype *cp;
+	const struct cardtype *cp;
 	int let;
 {
 	if (cp->suit == found[let]->suit)
@@ -1368,7 +1368,7 @@ movetofound(cp, source)
 void
 getcmd(row, col, cp)
 	int row, col;
-	char *cp;
+	const char *cp;
 {
 	char cmd[2] = { '\0', '\0'}, ch;
 	int i;
@@ -1588,7 +1588,7 @@ movecard()
 	} while (!done);
 }
 
-char *basicinstructions[] = {
+const char *const basicinstructions[] = {
 	"Here are brief instuctions to the game of Canfield:\n\n",
 	"     If you have never played solitaire before, it is recom-\n",
 	"mended  that  you  consult  a solitaire instruction book. In\n",
@@ -1610,7 +1610,7 @@ char *basicinstructions[] = {
 	"push any key when you are finished: ",
 	0 };
 
-char *bettinginstructions[] = {
+const char *const bettinginstructions[] = {
 	"     The rules for betting are  somewhat  less  strict  than\n",
 	"those  used in the official version of the game. The initial\n",
 	"deal costs $13. You may quit at this point  or  inspect  the\n",
@@ -1638,7 +1638,7 @@ char *bettinginstructions[] = {
 void
 instruct()
 {
-	char **cp;
+	const char *const *cp;
 
 	move(originrow, origincol);
 	printw("This is the game of solitaire called Canfield.  Do\n");

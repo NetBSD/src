@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.h,v 1.5 1998/07/27 01:12:35 mycroft Exp $	*/
+/*	$NetBSD: phantglobs.h,v 1.6 1999/09/08 21:17:54 jsm Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
@@ -28,7 +28,7 @@ extern	jmp_buf Timeoenv;	/* used for timing out waiting for input */
 extern	long	Fileloc;	/* location in file of player statistics */
 
 extern	const char *Login;	/* pointer to login of current player */
-extern	char	*Enemyname;	/* pointer name of monster/player we are battling*/
+extern	const char	*Enemyname;	/* pointer name of monster/player we are battling*/
 
 extern	struct player	Player;	/* stats for player */
 extern	struct player	Other;	/* stats for another player */
@@ -37,11 +37,11 @@ extern	struct monster	Curmonster;/* stats for current monster */
 
 extern	struct energyvoid Enrgyvoid;/* energy void buffer */
 
-extern	struct charstats Stattable[];/* used for rolling and changing player stats*/
+extern	const struct charstats Stattable[];/* used for rolling and changing player stats*/
 
-extern	struct charstats *Statptr;/* pointer into Stattable[] */
+extern	const struct charstats *Statptr;/* pointer into Stattable[] */
 
-extern	struct menuitem	Menu[];	/* menu of items for purchase */
+extern	const struct menuitem	Menu[];	/* menu of items for purchase */
 
 extern	FILE	*Playersfp;	/* pointer to open player file */
 extern	FILE	*Monstfp;	/* pointer to open monster file */
@@ -51,18 +51,18 @@ extern	FILE	*Energyvoidfp;	/* pointer to open energy void file */
 extern	char	Databuf[];	/* a place to read data into */
 
 /* some canned strings for messages */
-extern	char	Illcmd[];
-extern	char	Illmove[];
-extern	char	Illspell[];
-extern	char	Nomana[];
-extern	char	Somebetter[];
-extern	char	Nobetter[];
+extern const	char	Illcmd[];
+extern const	char	Illmove[];
+extern const	char	Illspell[];
+extern const	char	Nomana[];
+extern const	char	Somebetter[];
+extern const	char	Nobetter[];
 
 /* functions which we need to know about */
 
-char	*descrlocation __P((struct player *, bool));
-char	*descrstatus __P((struct player *));
-char	*descrtype __P((struct player *, bool));
+const char	*descrlocation __P((struct player *, bool));
+const char	*descrstatus __P((struct player *));
+const char	*descrtype __P((struct player *, bool));
 void	activelist __P((void));
 void	adjuststats __P((void));
 long	allocrecord __P((void));
@@ -80,19 +80,19 @@ void	checktampered __P((void));
 void	cleanup __P((int));
 void	collecttaxes __P((double, double));
 void	cursedtreasure __P((void));
-void	death __P((char *));
+void	death __P((const char *));
 void	displaystats __P((void));
 double	distance __P((double, double, double, double));
 void	dotampered __P((void));
 double	drandom __P((void));
 void	encounter __P((int));
 void	enterscore __P((void));
-void	error __P((char *));
+void	error __P((const char *));
 double	explevel __P((double));
-long	findname __P((char *, struct player *));
+long	findname __P((const char *, struct player *));
 void	freerecord __P((struct player *, long));
 void	genchar __P((int));
-int	getanswer __P((char *, bool));
+int	getanswer __P((const char *, bool));
 void	getstring __P((char *, int));
 void	hitmonster __P((double));
 void	ill_sig __P((int));

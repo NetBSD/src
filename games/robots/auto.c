@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.3 1999/05/16 00:15:46 christos Exp $	*/
+/*	$NetBSD: auto.c,v 1.4 1999/09/08 21:17:56 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 static int distance __P((int, int, int, int));
 static int xinc __P((int));
 static int yinc __P((int));
-static char *find_moves __P((void));
+static const char *find_moves __P((void));
 static COORD *closest_robot __P((int *));
 static COORD *closest_heap __P((int *));
 static char move_towards __P((int, int));
@@ -137,13 +137,14 @@ yinc(dir)
 /* find_moves():
  *	Find possible moves
  */
-static char *
+static const char *
 find_moves()
 {
         int x, y;
         COORD test;
-        char *m, *a;
-        static char moves[] = ".hjklyubn";
+        const char *m;
+        char *a;
+        static const char moves[] = ".hjklyubn";
         static char ans[sizeof moves];
         a = ans;
 
@@ -167,10 +168,9 @@ find_moves()
         }
         *a = 0;
         if(ans[0])
-                a = ans;
+                return ans;
         else
-                a = "t";
-        return a;
+                return "t";
 }
 
 /* closest_robot():

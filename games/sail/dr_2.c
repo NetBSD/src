@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.9 1999/02/10 00:45:45 hubertf Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.10 1999/09/08 21:17:58 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.9 1999/02/10 00:45:45 hubertf Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.10 1999/09/08 21:17:58 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,9 @@ prizecheck()
 
 int
 strend(str)
-char *str;
+	const char *str;
 {
-	char *p;
+	const char *p;
 
 	for (p = str; *p; p++)
 		;
@@ -152,7 +152,7 @@ int ma, ta, af;
 	try(command, temp, ma, ta, af, ma, from->file->dir, from, to, &high, 0);
 }
 
-int dtab[] = {0,1,1,2,3,4,4,5};		/* diagonal distances in x==y */
+const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
 int
 score(movement, ship, to, onlytemp)
@@ -190,7 +190,7 @@ char onlytemp;
 
 void
 move_ship(p, ship, dir, row, col, drift)
-char *p;
+const char *p;
 struct ship *ship;
 unsigned char *dir;
 short *row, *col;
