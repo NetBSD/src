@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.70 2004/04/06 21:13:19 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.71 2004/04/07 04:33:41 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -460,3 +460,7 @@ share/termcap/termcap.src			1.87 via patch
 	with Xfree 4.4.0 needs this. Fixes PR lib/24770 by Matthias Scheler.
 	[jdc, ticket #1660]
 
+crypto/dist/kame/racoon/isakmp.c		patch
+
+	Reject packet with too big isakmp message length field.
+	[itojun, ticket #1644]
