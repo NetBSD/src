@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.5 2001/07/28 16:24:13 chs Exp $
+.\"	$NetBSD: pmap.9,v 1.6 2001/08/11 05:05:13 matt Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .Fn "pmap_init" "void"
 .Ft void
 .Fn "pmap_virtual_space" "vaddr_t *vstartp" "vaddr_t *vendp"
-.Ft void
+.Ft vaddr_t
 .Fn "pmap_steal_memory" "vsize_t size" "vaddr_t *vstartp" "vaddr_t *vendp"
 .Ft pmap_t
 .Fn "pmap_kernel" "void"
