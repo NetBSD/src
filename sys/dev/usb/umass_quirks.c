@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.52 2003/09/10 02:49:19 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.53 2003/09/10 03:13:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.52 2003/09/10 02:49:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.53 2003/09/10 03:13:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,6 @@ umass_fixup_sony(struct umass_softc *sc)
 	usb_interface_descriptor_t *id;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	if (id->bInterfaceSubClass == 0xff) {
-		sc->sc_cmd = UMASS_CPROTO_RBC;
-	}
+	if (id->bInterfaceSubClass == 0xff)
+		sc->sc_cmd = UMASS_CPROTO_SCSI;
 }
