@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.10 2003/03/15 02:11:43 kristerw Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.11 2003/03/23 08:28:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.10 2003/03/15 02:11:43 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.11 2003/03/23 08:28:06 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,9 +645,6 @@ smb_iod_thread(void *arg)
 {
 	struct smbiod *iod = arg;
 
-#ifdef __FreeBSD__
-	mtx_lock(&Giant);
-#endif
 	/*
 	 * Here we assume that the thread structure will be the same
 	 * for an entire kthread (kproc, to be more precise) life.
@@ -657,12 +654,10 @@ smb_iod_thread(void *arg)
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
 		SMBIODEBUG("going to sleep for %d ticks\n", iod->iod_sleeptimo);
-/*		mtx_unlock(&Giant, MTX_DEF);*/
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
 		tsleep(&iod->iod_flags, PWAIT, "smbidle", iod->iod_sleeptimo);
 	}
-/*	mtx_lock(&Giant, MTX_DEF);*/
 	kthread_exit(0);
 }
 
