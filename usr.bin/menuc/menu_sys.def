@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.1.1.1.2.1 1997/11/09 21:14:02 mellon Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.1.1.1.2.2 1997/11/18 01:46:33 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,9 +41,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#define REQ_EXECUTE   1000
-#define REQ_NEXT_ITEM 1001
-#define REQ_PREV_ITEM 1002
+#define REQ_EXECUTE    1000
+#define REQ_NEXT_ITEM  1001
+#define REQ_PREV_ITEM  1002
+#define REQ_REDISPLAY  1003
 
 #define KEYPAD_DOWN_ARROW 256
 #define KEYPAD_UP_ARROW   257
@@ -58,7 +59,7 @@ int __m_endwin = 0;
 
 static void init_menu (struct menudesc *m);
 static void post_menu (struct menudesc *m);
-static void process_req (struct menudesc *m, int req);
+static void process_req (struct menudesc *m, int num, int req);
 static void mbeep (void);
 static int menucmd (WINDOW *w);
 
@@ -125,6 +126,8 @@ static int menucmd (WINDOW *w)
 		case '\020':
 		case KEYPAD_UP_ARROW:
 			return REQ_PREV_ITEM;
+		case '\014':
+		        return REQ_REDISPLAY;
 		}
 		
 		if (isalpha(ch))
@@ -215,7 +218,7 @@ static void post_menu (struct menudesc *m)
 	wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
 }
 
-static void process_req (struct menudesc *m, int req)
+static void process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
 	int lastsel = m->cursel;
@@ -235,6 +238,14 @@ static void process_req (struct menudesc *m, int req)
 			m->cursel--;
 		else
 			mbeep();
+
+	} else if (req == REQ_REDISPLAY) {
+		wclear(stdscr);
+		wrefresh(stdscr);
+		process_item (&num, -2);
+		post_menu (m);
+		wrefresh (m->mw);
+
 	} else {
 		ch = tolower (req);
 		if (ch == 'x' && hasexit)
@@ -309,7 +320,7 @@ void process_menu (int num)
 		wrefresh (m->mw);
 
 		while ((req = menucmd (m->mw)) != REQ_EXECUTE)
-			process_req (m, req);
+			process_req (m, num, req);
 
 		sel = m->cursel;
 		wclear (m->mw);
