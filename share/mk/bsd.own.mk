@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.309 2002/09/15 17:07:14 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.310 2002/09/17 23:18:30 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -6,21 +6,31 @@ _BSD_OWN_MK_=1
 MAKECONF?=	/etc/mk.conf
 .-include "${MAKECONF}"
 
+# CPU model, derived from MACHINE_ARCH
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
+
 # NEED_OWN_INSTALL_TARGET is set to "no" by pkgsrc/mk/bsd.pkg.mk to
 # ensure that things defined by <bsd.own.mk> (default targets,
 # INSTALL_FILE, etc.) are not conflicting with bsd.pkg.mk.
 NEED_OWN_INSTALL_TARGET?=	yes
 
-# Temporary; this will become default when all platforms have migrated.
-# List all the platforms that have NOT switched, since the majority have.
-.if !(${MACHINE_ARCH} == "ns32k")
-USE_NEW_TOOLCHAIN=nowarn
+# This lists the platforms which do not have working in-tree toolchains.
+.if ${MACHINE_CPU} == "hppa" || \
+    ${MACHINE_CPU} == "ns32k" || \
+    ${MACHINE_CPU} == "sh5" || \
+    ${MACHINE_CPU} == "x86_64"
+TOOLCHAIN_MISSING?=	yes
+.else
+TOOLCHAIN_MISSING=	no
 .endif
 
-.if defined(USE_NEW_TOOLCHAIN)
-CPPFLAG_ISYSTEM=	-isystem
-.else
+# XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
+# to use -idirafter rather than -isystem, because the compiler is too old
+# to use -isystem.
+.if ${MACHINE_CPU} == "ns32k" && !defined(EXTERNAL_TOOLCHAIN)
 CPPFLAG_ISYSTEM=	-idirafter
+.else
+CPPFLAG_ISYSTEM=	-isystem
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -60,17 +70,21 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 .endif	# _SRC_TOP != ""		# }
 
 
-.if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
+.if (${_SRC_TOP_} != "") && \
+    (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))
 USETOOLS?=	yes
 .endif
 USETOOLS?=	no
 
 
-.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3" || ${MACHINE_ARCH} == "sh5"
+.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3" || \
+    ${MACHINE_ARCH} == "sh5"
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
-.elif defined(REQUIRETOOLS) && defined(USE_NEW_TOOLCHAIN) && ${USETOOLS} == "no"
+.elif defined(REQUIRETOOLS) && \
+      (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN)) && \
+      ${USETOOLS} == "no"
 .BEGIN:
 	@echo "USETOOLS=no, but this component requires a version-specific host toolchain"
 	@false
@@ -306,22 +320,31 @@ OBJECT_FMT?=	a.out		# allow overrides, to ease transition
 OBJECT_FMT=	ELF
 .endif
 
+# If this platform's toolchain is missing, we obviously cannot build it.
+.if ${TOOLCHAIN_MISSING} == "yes"
+MKBFD:= no
+MKGDB:= no
+MKGCC:= no
+.endif
+
+# If we are using an external toolchain, we can still build the target's
+# BFD stuff, but we cannot build GCC's support libraries, since those are
+# tightly-coupled to the version of GCC being used.
+.if defined(EXTERNAL_TOOLCHAIN)
+MKGCC:= no
+.endif
+
 # The sh3 port is incomplete.
-.if (${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el") && \
-    !defined(HAVE_GCC3)
+.if ${MACHINE_CPU} == "sh3" && !defined(HAVE_GCC3)
 NOPIC=		# defined
 .endif
 
 # The sh5 port is incomplete.
-.if (${MACHINE_ARCH} == "sh5eb" || ${MACHINE_ARCH} == "sh5el") && \
-    !defined(HAVE_GCC3)
+.if ${MACHINE_CPU} == "sh5" && !defined(HAVE_GCC3)
 NOPIC=		# defined
 NOPROFILE=	# defined
 NOLINT=		# defined
 NOGCCERROR=	# defined - The SuperH Gnu C compiler is too pedantic in places
-MKGDB:=	no
-MKBFD:=	no
-MKGCC:=	no
 .endif
 
 # The m68000 port is incomplete.
@@ -333,13 +356,11 @@ NOPIC=		# defined
 .if ${MACHINE_ARCH} == "hppa"
 NOLINT=		# defined
 NOPROFILE=	# defined
-MKGDB:=	no
-MKGCC:=	no
 .endif
 
 # If the ns32k port is using an external toolchain, shared libraries
 # are not yet supported.
-.if ${MACHINE_ARCH} == "ns32k" && defined(USE_NEW_TOOLCHAIN)
+.if ${MACHINE_ARCH} == "ns32k" && defined(EXTERNAL_TOOLCHAIN)
 NOPIC=		# defined
 .endif
 
@@ -375,9 +396,6 @@ MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsdelf
 .else
 MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 .endif
-
-# CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml
@@ -460,22 +478,6 @@ MKDOC:=		no
 MKINFO:=	no
 MKMAN:=		no
 MKNLS:=		no
-.endif
-
-# If using the "new toolchain" build framework for ns32k, we can't build
-# the in-tree toolchain.
-.if ${MACHINE_ARCH} == "ns32k" && defined(USE_NEW_TOOLCHAIN)
-MKBFD:= no
-MKGDB:= no      
-MKGCC:= no
-.endif
-
-# x86-64 cannot currently use the in-tree toolchain, but does
-# use the "new toolchain" build framework.
-.if ${MACHINE_ARCH} == "x86_64"
-MKBFD:=	no
-MKGDB:=	no
-MKGCC:=	no
 .endif
 
 # Set defaults for the USE_xxx variables.  They all default to "yes"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.186 2002/09/14 16:46:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.187 2002/09/17 23:18:25 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -184,10 +184,11 @@ release snapshot:
 # Special components of the "make build" process.
 
 check-tools:
-.if defined(USE_NEW_TOOLCHAIN) && (${USE_NEW_TOOLCHAIN} != "nowarn")
-	@echo '*** WARNING:  Building on MACHINE=${MACHINE} with USE_NEW_TOOLCHAIN.'
-	@echo '*** This platform is not yet verified to work with the new toolchain,'
-	@echo '*** and may result in a failed build or corrupt binaries!'
+.if ${TOOLCHAIN_MISSING} == "yes" && !defined(EXTERNAL_TOOLCHAIN)
+	@echo '*** WARNING:  Building on MACHINE=${MACHINE} with missing toolchain.'
+	@echo '*** May result in a failed build or corrupt binaries!'
+.elif defined(EXTERNAL_TOOLCHAIN)
+	@echo '*** Using external toolchain rooted at ${EXTERNAL_TOOLCHAIN}.'
 .endif
 .if defined(NBUILDJOBS)
 	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
