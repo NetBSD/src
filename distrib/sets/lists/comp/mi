@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.307 2001/02/03 02:44:15 jwise Exp $
+#	$NetBSD: mi,v 1.308 2001/02/04 17:05:13 ad Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -210,6 +210,8 @@
 ./usr/include/dev/ic/mc6845reg.h	comp-c-include
 ./usr/include/dev/ic/midwayreg.h	comp-c-include
 ./usr/include/dev/ic/midwayvar.h	comp-c-include
+./usr/include/dev/ic/mlxio.h		comp-c-include
+./usr/include/dev/ic/mlxvar.h		comp-c-include
 ./usr/include/dev/ic/ncr5380reg.h	comp-c-include
 ./usr/include/dev/ic/ncr5380var.h	comp-c-include
 ./usr/include/dev/ic/ncr53c400reg.h	comp-c-include

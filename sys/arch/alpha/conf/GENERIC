@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.180 2001/01/27 03:02:53 lukem Exp $
+# $NetBSD: GENERIC,v 1.181 2001/02/04 17:05:16 ad Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.180 $"
+#ident 		"GENERIC-$Revision: 1.181 $"
 
 maxusers 32
 
@@ -225,6 +225,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
@@ -383,6 +384,7 @@ fd*	at	fdc? drive ?
 
 # Hardware RAID devices
 ld*	at	cac? unit ?
+ld*	at	mlx? unix ?
 
 # USB bus support
 usb*	at uhci?

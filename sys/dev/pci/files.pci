@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.118 2001/01/22 17:40:14 ad Exp $
+#	$NetBSD: files.pci,v 1.119 2001/02/04 17:05:12 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -52,6 +52,10 @@ file	dev/pci/ld_twe.c		ld_twe
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
+
+# Mylex RAID controllers
+attach	mlx at pci with mlx_pci
+file	dev/pci/mlx_pci.c		mlx_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci

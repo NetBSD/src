@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.318 2001/02/02 22:01:19 is Exp $
+# $NetBSD: mi,v 1.319 2001/02/04 17:05:14 ad Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -672,6 +672,7 @@
 ./usr/share/man/cat4/mii.0			man-sys-catman
 ./usr/share/man/cat4/mixer.0			man-sys-catman
 ./usr/share/man/cat4/mk48txx.0			man-sys-catman
+./usr/share/man/cat4/mlx.0			man-sys-catman
 ./usr/share/man/cat4/mpu.0			man-sys-catman
 ./usr/share/man/cat4/mtio.0			man-sys-catman
 ./usr/share/man/cat4/music.0			man-sys-catman
@@ -2143,6 +2144,7 @@
 ./usr/share/man/man4/mii.4			man-sys-man
 ./usr/share/man/man4/mixer.4			man-sys-man
 ./usr/share/man/man4/mk48txx.4			man-sys-man
+./usr/share/man/man4/mlx.4			man-sys-man
 ./usr/share/man/man4/mpu.4			man-sys-man
 ./usr/share/man/man4/mtio.4			man-sys-man
 ./usr/share/man/man4/music.4			man-sys-man

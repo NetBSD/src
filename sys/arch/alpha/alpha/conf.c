@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.55 2001/01/14 11:17:28 martin Exp $ */
+/* $NetBSD: conf.c,v 1.56 2001/02/04 17:05:13 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.55 2001/01/14 11:17:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.56 2001/02/04 17:05:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,8 @@ cdev_decl(satlink);
 cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
+#include "mlx.h"
+cdev_decl(mlx);
 
 #include "a12dc.h"
 #include "scc.h"
@@ -332,6 +334,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NURIO,urio),	/* 62: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
 	cdev_altq_init(NALTQ,altq),	/* 64: ALTQ control interface */
+	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -438,6 +441,7 @@ static int chrtoblktbl[] = {
 	/* 62 */	NODEV,
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
+	/* 65 */	NODEV,
 };
 
 /*
