@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/04/14 22:46:26 kleink Exp $
+#	$NetBSD: Makefile,v 1.12 2001/04/15 15:29:12 kleink Exp $
 
 KDIR=	/sys/arch/sparc64/include
 INCSDIR= /usr/include/sparc64
@@ -10,7 +10,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \
 	fbio.h fbvar.h float.h frame.h fsr.h \
 	idprom.h ieee.h ieeefp.h instr.h \
-	int_const.h int_mwgwtypes.h int_types.h \
+	int_const.h int_limits.h int_mwgwtypes.h int_types.h \
 	kbd.h kbio.h kcore.h \
 	limits.h lock.h \
 	math.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/04/14 22:46:20 kleink Exp $
+#	$NetBSD: Makefile,v 1.14 2001/04/15 15:29:03 kleink Exp $
 
 KDIR=	/sys/arch/arm/include
 INCSDIR= /usr/include/arm
@@ -9,7 +9,8 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h \
 	db_machdep.h disklabel.h disklabel_acorn.h \
 	elf_machdep.h endian_machdep.h \
 	float.h fp.h frame.h \
-	ieee.h ieeefp.h int_const.h int_mwgwtypes.h int_types.h ipkdb.h \
+	ieee.h ieeefp.h \
+	int_const.h int_limits.h int_mwgwtypes.h int_types.h ipkdb.h \
 	isa_machdep.h isapnp_machdep.h \
 	limits.h lock.h \
 	math.h \
