@@ -379,6 +379,7 @@ Options:\n\
   --mapped           Use mapped symbol files if supported on this system.\n\
   --readnow          Fully read symbol files on first access.\n\
   --nw		     Do not use a window interface.\n\
+  -w		     Use a window interface.\n\
   --write            Set writing into executable and core files.\n\
 ", gdb_stdout);
 #ifdef ADDITIONAL_OPTION_HELP
