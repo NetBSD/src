@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.10 1998/01/12 20:23:57 thorpej Exp $ */
+/*	$NetBSD: tcx.c,v 1.11 1998/03/21 20:14:14 pk Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,13 +91,14 @@ struct tcx_cursor {		/* tcx hardware cursor status */
 
 /* per-display variables */
 struct tcx_softc {
-	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
-	struct	fbdevice sc_fb;		/* frame buffer device */
-	struct	rom_reg sc_physadr[TCX_NREG];	/* phys addr of h/w */
-	int	sc_bustype;		/* type of bus we live on */
-	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
-	volatile struct tcx_thc *sc_thc;	/* THC registers */
+	struct device	sc_dev;		/* base device */
+	struct sbusdev	sc_sd;		/* sbus device */
+	struct fbdevice	sc_fb;		/* frame buffer device */
+	bus_space_tag_t	sc_bustag;
+	struct rom_reg	sc_physadr[TCX_NREG];	/* phys addr of h/w */
+
+	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
+	volatile struct tcx_thc *sc_thc;/* THC registers */
 	short	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
@@ -136,21 +137,9 @@ tcxmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(ra->ra_name, OBPNAME))
-		return (0);
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-
-	return (0);
+	return (strcmp(sa->sa_name, OBPNAME) == 0);
 }
 
 /*
@@ -161,17 +150,38 @@ tcxattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	register struct tcx_softc *sc = (struct tcx_softc *)self;
-	register struct confargs *ca = args;
-	register int node = 0, ramsize, i;
-	register volatile struct bt_regs *bt;
+	struct tcx_softc *sc = (struct tcx_softc *)self;
+	struct sbus_attach_args *sa = args;
+	int node, ramsize, i;
+	volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
-	int isconsole = 0, sbus = 1;
+	bus_space_handle_t bh;
+	int nreg;
+	int isconsole;
+	void *p;
 	extern struct tty *fbconstty;
+
+	sc->sc_bustag = sa->sa_bustag;
+	node = sa->sa_node;
 
 	fb->fb_driver = &tcx_fbdriver;
 	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	/* Mask out invalid flags from the user. */
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_type.fb_depth = node_has_property(node, "tcx-24-bit")
+		? 24
+		: (node_has_property(node, "tcx-8-bit")
+			? 8
+			: 8);
+
+	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
+
+	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+	fb->fb_type.fb_cmsize = 256;
+	fb->fb_type.fb_size = ramsize;
+	printf(": %s, %d x %d", OBPNAME,
+		fb->fb_type.fb_width,
+		fb->fb_type.fb_height);
 
 	/*
 	 * XXX - should be set to FBTYPE_TCX.
@@ -180,48 +190,45 @@ tcxattach(parent, self, args)
 	 */
 	fb->fb_type.fb_type = FBTYPE_RESERVED3;
 
-	if (ca->ca_ra.ra_nreg != TCX_NREG)
-		panic("tcx: oops");
 
-	/* Copy register address spaces */
-	for (i = 0; i < TCX_NREG; i++)
-		sc->sc_physadr[i] = ca->ca_ra.ra_reg[i];
+	/* Get device registers */
+	p = sc->sc_physadr;
+	if (getpropA(node, "reg", sizeof(struct rom_reg), &nreg, &p) != 0) {
+		printf("%s: cannot get register property\n", self->dv_xname);
+		return;
+	}
+	if (nreg != TCX_NREG) {
+		printf("%s: only %d register sets\n", self->dv_xname, nreg);
+		return;
+	}
 
 	/* XXX - fix THC and TEC offsets */
 	sc->sc_physadr[TCX_REG_TEC].rr_paddr += 0x1000;
 	sc->sc_physadr[TCX_REG_THC].rr_paddr += 0x1000;
 
-	sc->sc_bt = bt = (volatile struct bt_regs *)
-		mapiodev(&ca->ca_ra.ra_reg[TCX_REG_CMAP], 0, sizeof *sc->sc_bt);
-	sc->sc_thc = (volatile struct tcx_thc *)
-		mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC], 0, sizeof *sc->sc_thc);
-
-	switch (ca->ca_bustype) {
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		break;
-
-	case BUS_OBIO:
-	default:
-		printf("TCX on bus 0x%x?\n", ca->ca_bustype);
+	/* Map the register banks we care about */
+	if (sbus_bus_map(sa->sa_bustag,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_THC].rr_iospace,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_THC].rr_paddr,
+			 sizeof (struct tcx_thc),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("tcxattach: cannot map thc registers\n");
 		return;
 	}
+	sc->sc_thc = (volatile struct tcx_thc *)bh;
 
-	fb->fb_type.fb_depth = node_has_property(node, "tcx-24-bit")
-		? 24
-		: (node_has_property(node, "tcx-8-bit")
-			? 8
-			: 8);
+	if (sbus_bus_map(sa->sa_bustag,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_CMAP].rr_iospace,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_CMAP].rr_paddr,
+			 sizeof (struct bt_regs),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("tcxattach: cannot map bt registers\n");
+		return;
+	}
+	sc->sc_bt = bt = (volatile struct bt_regs *)bh;
 
-	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900,
-		   node, ca->ca_bustype);
-
-	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-	fb->fb_type.fb_cmsize = 256;
-	fb->fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", OBPNAME,
-		fb->fb_type.fb_width,
-		fb->fb_type.fb_height);
 
 	isconsole = node == fbnode && fbconstty != NULL;
 
@@ -247,8 +254,7 @@ tcxattach(parent, self, args)
 	} else
 		printf("\n");
 
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb, isconsole);
 }
@@ -452,9 +458,10 @@ tcxmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
-	register struct mmo *mo;
-	register u_int u, sz;
+	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct rom_reg *rr = sc->sc_physadr;
+	struct mmo *mo;
+	u_int u, sz;
 	static struct mmo mmo[] = {
 		{ TCX_USER_RAM, 0, TCX_REG_DFB8 },
 		{ TCX_USER_RAM24, 0, TCX_REG_DFB24 },
@@ -489,9 +496,15 @@ tcxmmap(dev, off, prot)
 			continue;
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
-		if (u < sz)
-			return (REG2PHYS(&sc->sc_physadr[mo->mo_bank], u) |
-				PMAP_NC);
+		if (u < sz) {
+			bus_type_t t = (bus_type_t)rr[mo->mo_bank].rr_iospace;
+			bus_addr_t a = (bus_addr_t)rr[mo->mo_bank].rr_paddr;
+
+			return (bus_space_mmap (sc->sc_bustag,
+						t,
+						a + u,
+						BUS_SPACE_MAP_LINEAR));
+		}
 	}
 #ifdef DEBUG
 	{

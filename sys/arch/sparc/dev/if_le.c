@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.52 1998/01/12 20:23:52 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.53 1998/03/21 20:14:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,9 +113,16 @@
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 
-int	lematch __P((struct device *, struct cfdata *, void *));
-void	leattach __P((struct device *, struct device *, void *));
+int	lematch_byname __P((struct device *, struct cfdata *, void *));
+int	lematch_obio __P((struct device *, struct cfdata *, void *));
+void	leattach_sbus __P((struct device *, struct device *, void *));
+void	leattach_ledma __P((struct device *, struct device *, void *));
+void	leattach_lebuffer __P((struct device *, struct device *, void *));
+void	leattach_obio __P((struct device *, struct device *, void *));
 
+void	leattach __P((struct le_softc *, int));
+
+#if 0
 #if defined(SUN4M)	/* XXX */
 int	myleintr __P((void *));
 int	ledmaintr __P((struct dma_softc *));
@@ -142,6 +149,7 @@ static int dodrain=0;
 	return (am7990_intr(arg));
 }
 #endif
+#endif
 
 #if defined(SUN4M)
 /*
@@ -161,8 +169,21 @@ int	lemediachange __P((struct am7990_softc *));
 void	lemediastatus __P((struct am7990_softc *, struct ifmediareq *));
 #endif /* SUN4M */
 
-struct cfattach le_ca = {
-	sizeof(struct le_softc), lematch, leattach
+/* Four attachments for this device */
+struct cfattach le_sbus_ca = {
+	sizeof(struct le_softc), lematch_byname, leattach_sbus
+};
+
+struct cfattach le_ledma_ca = {
+	sizeof(struct le_softc), lematch_byname, leattach_ledma
+};
+
+struct cfattach le_lebuffer_ca = {
+	sizeof(struct le_softc), lematch_byname, leattach_lebuffer
+};
+
+struct cfattach le_obio_ca = {
+	sizeof(struct le_softc), lematch_obio, leattach_obio
 };
 
 extern struct cfdriver le_cd;
@@ -367,133 +388,299 @@ lenocarrier(sc)
 }
 
 int
-lematch(parent, cf, aux)
+lematch_byname(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
-		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-
-	return (probeget(ra->ra_vaddr, 2) != -1);
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
+int
+lematch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (0);
+
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 2, NULL, NULL));
+}
+
+
+#define SAME_LANCE(bp, sa) \
+	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
+	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
+
 void
-leattach(parent, self, aux)
+leattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
-	struct confargs *ca = aux;
-	int pri;
-	struct bootpath *bp;
-#if defined(SUN4C) || defined(SUN4M)
-	int sbuschild = strncmp(parent->dv_xname, "sbus", 4) == 0;
-	int lebufchild = strncmp(parent->dv_xname, "lebuffer", 8) == 0;
-	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
-	struct lebuf_softc *lebuf;
-#endif
+	struct sbusdev *sd;
+	bus_space_handle_t bh;
 
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	lesc->sc_bustag = sa->sa_bustag;
+	lesc->sc_dmatag = sa->sa_dmatag;
 
-	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset,
+			 sizeof(struct lereg1),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	pri = ca->ca_ra.ra_intr[0].int_pri;
-	printf(" pri %d", pri);
+	lesc->sc_r1 = (struct lereg1 *)bh;
 
-	lesc->sc_r1 = (struct lereg1 *)
-		mapiodev(ca->ca_ra.ra_reg, 0, sizeof(struct lereg1));
+	/*
+	 * Look for an "unallocated" lebuffer and pair it with
+	 * this `le' device on the assumption that we're on
+	 * a pre-historic ROM that doesn't establish le<=>lebuffer
+	 * parent-child relationships.
+	 */
+	for (sd = ((struct sbus_softc *)parent)->sc_sbdev; sd != NULL;
+	     sd = sd->sd_bchain) {
 
-#if defined(SUN4C) || defined(SUN4M)
-	lebuf = NULL;
-	if (lebufchild) {
-		lebuf = (struct lebuf_softc *)parent;
-	} else if (sbuschild) {
-		struct sbus_softc *sbus = (struct sbus_softc *)parent;
-		struct sbusdev *sd;
+		struct lebuf_softc *lebuf = (struct lebuf_softc *)sd->sd_dev;
 
-		/*
-		 * Find last "unallocated" lebuffer and pair it with
-		 * this `le' device on the assumption that we're on
-		 * a pre-historic ROM that doesn't establish le<=>lebuffer
-		 * parent-child relationships.
-		 */
-		for (sd = sbus->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
-			if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
-				continue;
-			if (((struct lebuf_softc *)sd->sd_dev)->attached == 0) {
-				lebuf = (struct lebuf_softc *)sd->sd_dev;
-				break;
-			}
-		}
-	}
-	if (lebuf != NULL) {
+		if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
+			continue;
+
+		if (lebuf->attached != 0)
+			continue;
+
 		sc->sc_mem = lebuf->sc_buffer;
 		sc->sc_memsize = lebuf->sc_bufsiz;
 		sc->sc_addr = 0; /* Lance view is offset by buffer location */
 		lebuf->attached = 1;
 
 		/* That old black magic... */
-		sc->sc_conf3 = getpropint(ca->ca_ra.ra_node,
-			 	"busmaster-regval",
-				LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
-	} else
-#endif
-	{
-		u_long laddr;
-		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
-#if defined (SUN4M)
-		if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
-			panic("if_le: Lance buffer crosses 16MB boundary");
-#endif
-		sc->sc_addr = laddr & 0xffffff;
-		sc->sc_memsize = MEMSIZE;
-		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-#if defined(SUN4C) || defined(SUN4M)
-		if (dmachild) {
-			lesc->sc_dma = (struct dma_softc *)parent;
-			lesc->sc_dma->sc_le = lesc;
-			lesc->sc_laddr = laddr;
-		}
-#endif
+		sc->sc_conf3 = getpropint(sa->sa_node,
+					  "busmaster-regval",
+					  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+		break;
 	}
 
-	bp = ca->ca_ra.ra_bp;
-	switch (ca->ca_bustype) {
-#if defined(SUN4C) || defined(SUN4M)
-#define SAME_LANCE(bp, ca) \
-	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
+	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 
-	case BUS_SBUS:
-		lesc->sc_sd.sd_reset = (void *)am7990_reset;
-		if (sbuschild) {
-			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
-		} else {
-			/* Assume SBus is grandparent */
-			sbus_establish(&lesc->sc_sd, parent);
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
+	    SAME_LANCE(sa->sa_bp, sa))
+		sa->sa_bp->dev = &sc->sc_dev;
+
+	leattach(lesc, sa->sa_pri);
+}
+
+void
+leattach_ledma(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+#if defined(SUN4M)
+	struct sbus_attach_args *sa = aux;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
+	bus_space_handle_t bh;
+	bus_dma_segment_t seg;
+	int rseg, error;
+
+	/* Establish link to `ledma' device */
+	lesc->sc_dma = (struct dma_softc *)parent;
+	lesc->sc_dma->sc_le = lesc;
+
+	lesc->sc_bustag = sa->sa_bustag;
+	lesc->sc_dmatag = sa->sa_dmatag;
+
+	/* Map device registers */
+	if (bus_space_map2(sa->sa_bustag,
+			   sa->sa_slot,
+			   sa->sa_offset,
+			   sizeof(struct lereg1),
+			   BUS_SPACE_MAP_LINEAR,
+			   0, &bh) != 0) {
+		printf("%s @ ledma: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	lesc->sc_r1 = (struct lereg1 *)bh;
+
+	/* Allocate buffer memory */
+	sc->sc_memsize = MEMSIZE;
+	error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
+				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("leattach_ledma: DMA buffer alloc error %d\n", error);
+		return;
+	}
+	error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
+			       (caddr_t *)&sc->sc_mem,
+			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	if (error) {
+		printf("%s @ ledma: DMA buffer map error %d\n",
+			self->dv_xname, error);
+		return;
+	}
+
+#if defined (SUN4M)
+	if ((seg.ds_addr & 0xffffff) >=
+	    (seg.ds_addr & 0xffffff) + MEMSIZE)
+		panic("leattach_ledma: Lance buffer crosses 16MB boundary");
+#endif
+	sc->sc_addr = seg.ds_addr & 0xffffff;
+	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
+
+	lesc->sc_laddr = seg.ds_addr;
+
+	/* Assume SBus is grandparent */
+	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	sbus_establish(&lesc->sc_sd, parent);
+
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
+	    SAME_LANCE(sa->sa_bp, sa))
+		sa->sa_bp->dev = &sc->sc_dev;
+
+	sc->sc_mediachange = lemediachange;
+	sc->sc_mediastatus = lemediastatus;
+	sc->sc_supmedia = lemediasun4m;
+	sc->sc_nsupmedia = NLEMEDIASUN4M;
+	sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
+
+	leattach(lesc, sa->sa_pri);
+#endif
+}
+
+void
+leattach_lebuffer(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct sbus_attach_args *sa = aux;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lebuf_softc *lebuf = (struct lebuf_softc *)parent;
+	bus_space_handle_t bh;
+
+	lesc->sc_bustag = sa->sa_bustag;
+	lesc->sc_dmatag = sa->sa_dmatag;
+
+	if (bus_space_map2(sa->sa_bustag,
+			   sa->sa_slot,
+			   sa->sa_offset,
+			   sizeof(struct lereg1),
+			   BUS_SPACE_MAP_LINEAR,
+			   0, &bh)) {
+		printf("%s @ lebuffer: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	lesc->sc_r1 = (struct lereg1 *)bh;
+
+	sc->sc_mem = lebuf->sc_buffer;
+	sc->sc_memsize = lebuf->sc_bufsiz;
+	sc->sc_addr = 0; /* Lance view is offset by buffer location */
+	lebuf->attached = 1;
+
+	/* That old black magic... */
+	sc->sc_conf3 = getpropint(sa->sa_node, "busmaster-regval",
+				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+
+	/* Assume SBus is grandparent */
+	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	sbus_establish(&lesc->sc_sd, parent);
+
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
+	    SAME_LANCE(sa->sa_bp, sa))
+		sa->sa_bp->dev = &sc->sc_dev;
+
+	leattach(lesc, sa->sa_pri);
+}
+
+void
+leattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
+	bus_space_handle_t bh;
+
+	lesc->sc_bustag = oba->oba_bustag;
+	lesc->sc_dmatag = oba->oba_dmatag;
+
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0, sizeof(struct lereg1),
+			 0, 0,
+			 &bh) != 0) {
+		printf("leattach_obio: cannot map registers\n");
+		return;
+	}
+	lesc->sc_r1 = (struct lereg1 *)bh;
+
+	if (oba->oba_bp != NULL &&
+	    strcmp(oba->oba_bp->name, le_cd.cd_name) == 0 &&
+	    sc->sc_dev.dv_unit == oba->oba_bp->val[1])
+		oba->oba_bp->dev = &sc->sc_dev;
+
+	/* Install interrupt */
+	leattach(lesc, oba->oba_pri);
+}
+
+void
+leattach(lesc, pri)
+	struct le_softc *lesc;
+	int pri;
+{
+	struct am7990_softc *sc = &lesc->sc_am7990;
+
+	/* XXX the following declarations should be elsewhere */
+	extern void myetheraddr __P((u_char *));
+
+	if (sc->sc_mem == 0) {
+#if 0
+		bus_dma_segment_t seg;
+		int rseg, error;
+
+		error = bus_dmamem_alloc(lesc->sc_dmat, MEMSIZE, NBPG, 0,
+					 &seg, 1, &rseg, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("if_le: DMA buffer alloc error %d\n", error);
+			return;
+		}
+		error = bus_dmamem_map(lesc->sc_dmat, &seg, rseg, MEMSIZE,
+				       (caddr_t *)&sc->sc_mem,
+				       BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+		if (error) {
+			printf("if_le: DMA buffer map error %d\n", error);
+			return;
 		}
 
-		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
-		    SAME_LANCE(bp, ca))
-			bp->dev = &sc->sc_dev;
-		break;
-#endif /* SUN4C || SUN4M */
+		sc->sc_addr = seg.ds_addr & 0xffffff;
 
-	default:
-		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
-		    sc->sc_dev.dv_unit == bp->val[1])
-			bp->dev = &sc->sc_dev;
-		break;
+#else
+		u_long laddr;
+		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
+		sc->sc_addr = laddr & 0xffffff;
+#endif/*0*/
+#if defined (SUN4M)
+		if ((sc->sc_addr & 0xffffff) >=
+		    (sc->sc_addr & 0xffffff) + MEMSIZE)
+			panic("if_le: Lance buffer crosses 16MB boundary");
+#endif
+		sc->sc_memsize = MEMSIZE;
+		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
 
 	myetheraddr(sc->sc_enaddr);
@@ -510,25 +697,9 @@ leattach(parent, self, aux)
 	sc->sc_nocarrier = lenocarrier;
 	sc->sc_hwreset = lehwreset;
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M && lesc->sc_dma) {
-		sc->sc_mediachange = lemediachange;
-		sc->sc_mediastatus = lemediastatus;
-		sc->sc_supmedia = lemediasun4m;
-		sc->sc_nsupmedia = NLEMEDIASUN4M;
-		sc->sc_defaultmedia = IFM_ETHER|IFM_AUTO;
-	}
-#endif
-
 	am7990_config(sc);
 
-	lesc->sc_ih.ih_fun = am7990_intr;
-#if defined(SUN4M) /*XXX*/
-	if (CPU_ISSUN4M && lesc->sc_dma)
-		lesc->sc_ih.ih_fun = myleintr;
-#endif
-	lesc->sc_ih.ih_arg = sc;
-	intr_establish(pri, &lesc->sc_ih);
+	(void)bus_intr_establish(lesc->sc_bustag, pri, 0, am7990_intr, sc);
 
 	/* now initialize DMA */
 	lehwreset(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.27 1998/02/06 00:24:41 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.28 1998/03/21 20:11:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,9 +71,7 @@
 
 #include <dev/vme/vmevar.h>
 
-#if defined(SUN4)
 #include <machine/eeprom.h>
-#endif
 #include <machine/conf.h>
 #include <machine/cgtworeg.h>
 
@@ -157,26 +155,26 @@ cgtwoattach(parent, self, aux)
 	bus_space_tag_t		bt = va->vma_bustag;
 	bus_space_handle_t	bh;
 	vme_mod_t		mod;
-	register struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
-	register int node = 0;
+	struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
+	struct fbdevice *fb = &sc->sc_fb;
+	struct eeprom *eep = (struct eeprom *)eeprom_va;
 	int isconsole = 0;
 	char *nam = NULL;
 
 	sc->sc_ct = ct;
 	sc->sc_bt = bt;
-	sc->sc_fb.fb_driver = &cgtwofbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
-	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_driver = &cgtwofbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_type.fb_type = FBTYPE_SUN2COLOR;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	sc->sc_fb.fb_type.fb_depth = 8;
-	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, BUS_VME16 /* XXX*/);
+	fb->fb_type.fb_depth = 8;
+	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
-	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
+	fb->fb_type.fb_cmsize = 256;
+	fb->fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
 	printf(": %s, %d x %d", nam,
-	       sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	       fb->fb_type.fb_width, fb->fb_type.fb_height);
 
 	/*
 	 * When the ROM has mapped in a cgtwo display, the address
@@ -184,30 +182,8 @@ cgtwoattach(parent, self, aux)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-#if defined(SUN4)
-	if (CPU_ISSUN4) {
-		struct eeprom *eep = (struct eeprom *)eeprom_va;
-		/*
-		 * Assume this is the console if there's no eeprom info
-		 * to be found.
-		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
-			isconsole = (fbconstty != NULL);
-		else
-			isconsole = 0;
-	}
-#endif
-
 	sc->sc_paddr = va->vma_reg[0];
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-
-	if (isconsole) {
-		if (vme_bus_map(ct, sc->sc_paddr + CG2_PIXMAP_OFF,
-				CG2_PIXMAP_SIZE, mod, bt, &bh) != 0)
-			panic("cgtwo: vme_map pixels");
-
-		sc->sc_fb.fb_pixels = (caddr_t)bh;
-	}
 
 	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
 				offsetof(struct cg2fb, status.reg),
@@ -221,16 +197,29 @@ cgtwoattach(parent, self, aux)
 		panic("cgtwo: vme_map cmap");
 	sc->sc_cmap = (volatile u_short *)bh;
 
+	/*
+	 * Assume this is the console if there's no eeprom info
+	 * to be found.
+	 */
+	if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
+		isconsole = (fbconstty != NULL);
+	else
+		isconsole = 0;
+
 	if (isconsole) {
+		if (vme_bus_map(ct, sc->sc_paddr + CG2_PIXMAP_OFF,
+				CG2_PIXMAP_SIZE, mod, bt, &bh) != 0)
+			panic("cgtwo: vme_map pixels");
+
+		fb->fb_pixels = (caddr_t)bh;
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(&sc->sc_fb);
+		fbrcons_init(fb);
 #endif
 	} else
 		printf("\n");
 
-	if (node == fbnode || CPU_ISSUN4)
-		fb_attach(&sc->sc_fb, isconsole);
+	fb_attach(fb, isconsole);
 }
 
 int

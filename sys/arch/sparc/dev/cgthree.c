@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.34 1998/01/12 20:23:45 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.35 1998/03/21 20:11:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,8 +64,9 @@
 
 #include <vm/vm.h>
 
-#include <machine/fbio.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/fbio.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 #include <machine/cpu.h>
@@ -78,25 +79,35 @@
 
 /* per-display variables */
 struct cgthree_softc {
-	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
-	struct	fbdevice sc_fb;		/* frame buffer device */
-	struct rom_reg	sc_phys;	/* phys address description */
+	struct device	sc_dev;		/* base device */
+	struct sbusdev	sc_sd;		/* sbus device */
+	struct fbdevice	sc_fb;		/* frame buffer device */
+	bus_space_tag_t	sc_bustag;
+	bus_type_t	sc_btype;	/* phys address description */
+	bus_addr_t	sc_paddr;	/* for device mmap() */
+
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
-	int	sc_bustype;		/* type of bus we live on */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
 /* autoconfiguration driver */
-static void	cgthreeattach(struct device *, struct device *, void *);
-static int	cgthreematch(struct device *, struct cfdata *, void *);
+static int	cgthreematch_sbus(struct device *, struct cfdata *, void *);
+static int	cgthreematch_obio(struct device *, struct cfdata *, void *);
+static void	cgthreeattach_sbus(struct device *, struct device *, void *);
+static void	cgthreeattach_obio(struct device *, struct device *, void *);
+
 static void	cgthreeunblank(struct device *);
+static void	cgthreeattach __P((struct cgthree_softc *, char *, int, int));
 
 /* cdevsw prototypes */
 cdev_decl(cgthree);
 
-struct cfattach cgthree_ca = {
-	sizeof(struct cgthree_softc), cgthreematch, cgthreeattach
+struct cfattach cgthree_sbus_ca = {
+	sizeof(struct cgthree_softc), cgthreematch_sbus, cgthreeattach_sbus
+};
+
+struct cfattach cgthree_obio_ca = {
+	sizeof(struct cgthree_softc), cgthreematch_obio, cgthreeattach_obio
 };
 
 extern struct cfdriver cgthree_cd;
@@ -132,81 +143,61 @@ struct cg3_videoctrl {
  * Match a cgthree.
  */
 int
-cgthreematch(parent, cf, aux)
+cgthreematch_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+}
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
-		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
-		return(1);
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 4) != -1);
+int
+cgthreematch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (strcmp(cf->cf_driver->cd_name, uoba->uoba_sbus.sa_name) == 0);
+
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 4, NULL, NULL));
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgthreeattach(parent, self, args)
+cgthreeattach_sbus(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	register struct cgthree_softc *sc = (struct cgthree_softc *)self;
-	register struct confargs *ca = args;
-	register int node = 0, ramsize, i;
-	register volatile struct bt_regs *bt;
+	struct cgthree_softc *sc = (struct cgthree_softc *)self;
+	struct sbus_attach_args *sa = args;
+	struct fbdevice *fb = &sc->sc_fb;
+	int node = sa->sa_node;
 	int isconsole;
-	int sbus = 1;
-	char *nam = NULL;
+	char *name;
+	bus_space_handle_t bh;
 
-	sc->sc_fb.fb_driver = &cgthreefbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
-	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		if (CPU_ISSUN4M) {	/* 4m has framebuffer on obio */
-			sbus = 0;
-			node = ca->ca_ra.ra_node;
-			nam = getpropstring(node, "model");
-			break;
-		}
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
-		nam = "cgthree";
-		break;
+	/* Remember cookies for cgthree_mmap() */
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_btype = (bus_type_t)sa->sa_slot;
+	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
 
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		nam = getpropstring(node, "model");
-		break;
-	}
+	fb->fb_driver = &cgthreefbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 
-	sc->sc_fb.fb_type.fb_depth = 8;
-	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
-
-	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
-	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", nam,
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	fb->fb_type.fb_depth = 8;
+	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
 	/*
 	 * When the ROM has mapped in a cgthree display, the address
@@ -214,15 +205,118 @@ cgthreeattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	isconsole = node == fbnode && fbconstty != NULL;
-	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
-		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
-					       ramsize);
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+			 sa->sa_offset + CG3REG_REG,
+			 sizeof(struct fbcontrol),
+			 BUS_SPACE_MAP_LINEAR,
+			 0,
+			 &bh) != 0) {
+		printf("%s: cannot map control registers\n", self->dv_xname);
+		return;
 	}
-	sc->sc_fbc = (volatile struct fbcontrol *)
-	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
-		     sizeof(struct fbcontrol));
+	sc->sc_fbc = (struct fbcontrol *)bh;
+
+	isconsole = node == fbnode && fbconstty != NULL;
+	name = getpropstring(node, "model");
+
+	fb->fb_pixels = sa->sa_promvaddr;
+	if (isconsole && fb->fb_pixels == NULL) {
+		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset + CG3REG_MEM,
+				 ramsize,
+				 BUS_SPACE_MAP_LINEAR,
+				 0,
+				 &bh) != 0) {
+			printf("%s: cannot map pixels\n", self->dv_xname);
+			return;
+		}
+		sc->sc_fb.fb_pixels = (char *)bh;
+	}
+
+	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	cgthreeattach(sc, name, isconsole, node == fbnode);
+}
+
+void
+cgthreeattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct cgthree_softc *sc = (struct cgthree_softc *)self;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+	struct fbdevice *fb = &sc->sc_fb;
+	int isconsole;
+	char *name;
+	bus_space_handle_t bh;
+
+	if (uoba->uoba_isobio4 == 0) {
+		cgthreeattach_sbus(parent, self, aux);
+		return;
+	}
+
+	oba = &uoba->uoba_oba4;
+
+	/* Remember cookies for cgthree_mmap() */
+	sc->sc_bustag = oba->oba_bustag;
+	sc->sc_btype = (bus_type_t)0;
+	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
+
+	fb->fb_driver = &cgthreefbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
+	fb->fb_type.fb_depth = 8;
+
+	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
+
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 CG3REG_REG,
+			 sizeof(struct fbcontrol),
+			 BUS_SPACE_MAP_LINEAR,
+			 0,
+			 &bh) != 0) {
+		printf("%s: cannot map control registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_fbc = (struct fbcontrol *)bh;
+
+	isconsole = fbconstty != NULL;
+	name = "cgthree";
+
+	if (isconsole) {
+		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+		if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+				 CG3REG_MEM,
+				 ramsize,
+				 BUS_SPACE_MAP_LINEAR,
+				 0,
+				 &bh) != 0) {
+			printf("%s: cannot map pixels\n", self->dv_xname);
+			return;
+		}
+		sc->sc_fb.fb_pixels = (char *)bh;
+	}
+
+	cgthreeattach(sc, name, isconsole, 1);
+}
+
+void
+cgthreeattach(sc, name, isconsole, isfb)
+	struct cgthree_softc *sc;
+	char *name;
+	int isconsole;
+	int isfb;
+{
+	int i;
+	struct fbdevice *fb = &sc->sc_fb;
+	volatile struct bt_regs *bt;
+
+	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
+	printf(": %s, %d x %d", name,
+		fb->fb_type.fb_width, fb->fb_type.fb_height);
+
 
 	/* Transfer video magic to board, if it's not running */
 	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
@@ -241,10 +335,8 @@ cgthreeattach(parent, self, args)
 			}
 		}
 
-	sc->sc_phys = ca->ca_ra.ra_reg[0];
-	sc->sc_bustype = ca->ca_bustype;
-
 	/* grab initial (current) color map */
+	fb->fb_type.fb_cmsize = 256;
 	bt = &sc->sc_fbc->fbc_dac;
 	bt->bt_addr = 0;
 	for (i = 0; i < 256 * 3 / 4; i++)
@@ -257,15 +349,15 @@ cgthreeattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		fbrcons_init(&sc->sc_fb);
+		fbrcons_init(fb);
 #endif
 	} else
 		printf("\n");
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
-		fb_attach(&sc->sc_fb, isconsole);
+
+	if (isfb)
+		fb_attach(fb, isconsole);
 }
+
 
 int
 cgthreeopen(dev, flags, mode, p)
@@ -395,12 +487,12 @@ cgthree_get_video(sc)
  */
 static void
 cgthreeloadcmap(sc, start, ncolors)
-	register struct cgthree_softc *sc;
-	register int start, ncolors;
+	struct cgthree_softc *sc;
+	int start, ncolors;
 {
-	register volatile struct bt_regs *bt;
-	register u_int *ip;
-	register int count;
+	volatile struct bt_regs *bt;
+	u_int *ip;
+	int count;
 
 	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
 	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
@@ -429,7 +521,7 @@ cgthreemmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
+	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 #define START		(128*1024 + 128*1024)
 #define NOOVERLAY	(0x04000000)
 
@@ -443,9 +535,12 @@ cgthreemmap(dev, off, prot)
 		off = 0;
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
-	/*
-	 * I turned on PMAP_NC here to disable the cache as I was
-	 * getting horribly broken behaviour with it on.
-	 */
+#if 0
 	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off) | PMAP_NC);
+#else
+	return (bus_space_mmap (sc->sc_bustag,
+				sc->sc_btype,
+				sc->sc_paddr + CG3REG_MEM + off,
+				BUS_SPACE_MAP_LINEAR));
+#endif
 }

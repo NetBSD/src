@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.1 1996/09/30 22:41:03 abrown Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.2 1998/03/21 20:11:31 pk Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -66,17 +66,15 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
  * per-cg14 variables/state
  */
 struct cgfourteen_softc {
-	struct	device sc_dev;		/* base device */
-	struct	fbdevice sc_fb;		/* frame buffer device */
+	struct device	sc_dev;		/* base device */
+	struct fbdevice	sc_fb;		/* frame buffer device */
+	bus_space_tag_t	sc_bustag;
+	struct rom_reg	sc_physadr[2];	/* phys addrs of h/w */
+#define CG14_CTL_IDX	0
+#define CG14_PXL_IDX	1
 
-	struct 	rom_reg	sc_phys;	/* phys address of frame buffer */
-#if defined(DEBUG) && defined(CG14_MAP_REGS)
-	struct	rom_reg	sc_regphys;	/* phys addr of fb regs; for debug */
-#endif
 	union	cg14cmap sc_cmap;	/* current colormap */
-
 	struct	cg14_cursor sc_cursor;	/* Hardware cursor state */
-
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
 	u_int8_t	sc_savexlut[256];
 	u_int8_t	sc_savectl;

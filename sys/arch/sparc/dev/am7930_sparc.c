@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.35 1998/01/12 20:23:40 thorpej Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.36 1998/03/21 20:14:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -40,6 +40,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
@@ -64,8 +65,9 @@ int     amd7930debug = 0;
  * Software state, per AMD79C30 audio chip.
  */
 struct amd7930_softc {
-	struct	device sc_dev;		/* base device */
-	struct	intrhand sc_hwih;	/* hardware interrupt vector */
+	struct device	sc_dev;		/* base device */
+	bus_space_tag_t	sc_bustag;
+	/*struct intrhand sc_hwih;	-* hardware interrupt vector */
 	struct	intrhand sc_swih;	/* software interrupt vector */
 
 	int	sc_open;		/* single use device */
@@ -111,11 +113,19 @@ void	audio_setmap __P((volatile struct amd7930 *, struct mapreg *));
 static void init_amd __P((volatile struct amd7930 *));
 
 /* autoconfiguration driver */
-void	amd7930attach __P((struct device *, struct device *, void *));
-int	amd7930match __P((struct device *, struct cfdata *, void *));
+void	amd7930attach_mainbus __P((struct device *, struct device *, void *));
+int	amd7930match_mainbus __P((struct device *, struct cfdata *, void *));
+void	amd7930attach_sbus __P((struct device *, struct device *, void *));
+int	amd7930match_sbus __P((struct device *, struct cfdata *, void *));
 
-struct cfattach audioamd_ca = {
-	sizeof(struct amd7930_softc), amd7930match, amd7930attach
+void	amd7930attach __P((struct amd7930_softc *, int));
+
+struct cfattach audioamd_mainbus_ca = {
+	sizeof(struct amd7930_softc), amd7930match_mainbus, amd7930attach_mainbus
+};
+
+struct cfattach audioamd_sbus_ca = {
+	sizeof(struct amd7930_softc), amd7930match_sbus, amd7930attach_sbus
 };
 
 struct audio_device amd7930_device = {
@@ -250,64 +260,113 @@ struct audio_hw_if sa_hw_if = {
 /* autoconfig routines */
 
 int
-amd7930match(parent, cf, aux)
+amd7930match_mainbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct mainbus_attach_args *ma = aux;
 
 	if (CPU_ISSUN4)
 		return (0);
-	return (strcmp(AUDIO_ROM_NAME, ra->ra_name) == 0);
+	return (strcmp(AUDIO_ROM_NAME, ma->ma_name) == 0);
+}
+
+int
+amd7930match_sbus(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct sbus_attach_args *sa = aux;
+
+	return (strcmp(AUDIO_ROM_NAME, sa->sa_name) == 0);
 }
 
 /*
  * Audio chip found.
  */
 void
-amd7930attach(parent, self, args)
+amd7930attach_mainbus(parent, self, aux)
 	struct device *parent, *self;
-	void *args;
+	void *aux;
 {
-	register struct amd7930_softc *sc = (struct amd7930_softc *)self;
-	register struct confargs *ca = args;
-	register struct romaux *ra = &ca->ca_ra;
-	register volatile struct amd7930 *amd;
-	register int pri;
+	struct mainbus_attach_args *ma = aux;
+	struct amd7930_softc *sc = (struct amd7930_softc *)self;
+	bus_space_handle_t bh;
 
-	if (ra->ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
+	sc->sc_bustag = ma->ma_bustag;
+
+	if (sparc_bus_map(
+			ma->ma_bustag,
+			ma->ma_iospace,
+			(bus_addr_t)ma->ma_paddr,
+			sizeof(struct amd7930),
+			BUS_SPACE_MAP_LINEAR,
+			0,
+			&bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	pri = ra->ra_intr[0].int_pri;
-	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
-	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
-		ra->ra_vaddr : mapiodev(ra->ra_reg, 0, sizeof (*amd)));
+	sc->sc_au.au_amd = (volatile struct amd7930 *)bh;
+	amd7930attach(sc, ma->ma_pri);
+}
+
+void
+amd7930attach_sbus(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct sbus_attach_args *sa = aux;
+	struct amd7930_softc *sc = (struct amd7930_softc *)self;
+	bus_space_handle_t bh;
+
+	sc->sc_bustag = sa->sa_bustag;
+
+	if (sbus_bus_map(
+			sa->sa_bustag,
+			sa->sa_slot,
+			sa->sa_offset,
+			sizeof(struct amd7930),
+			0, 0,
+			&bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_au.au_amd = (volatile struct amd7930 *)bh;
+	amd7930attach(sc, sa->sa_pri);
+}
+
+void
+amd7930attach(sc, pri)
+	struct amd7930_softc *sc;
+	int pri;
+{
+
+	printf(" softpri %d\n", PIL_AUSOFT);
 
 	sc->sc_map.mr_mmr1 = AMD_MMR1_GX | AMD_MMR1_GER |
 			     AMD_MMR1_GR | AMD_MMR1_STG;
-	sc->sc_au.au_amd = amd;
 	/* set boot defaults */
 	sc->sc_rlevel = 128;
 	sc->sc_plevel = 128;
 	sc->sc_mlevel = 0;
 	sc->sc_out_port = SUNAUDIO_SPEAKER;
 
-	init_amd(amd);
+	init_amd(sc->sc_au.au_amd);
 
 #ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
-	intr_fasttrap(pri, amd7930_trap);
+	(void)bus_intr_establish(sc->sc_bustag, pri,
+				 BUS_INTR_ESTABLISH_FASTTRAP,
+				 (int (*) __P((void *)))amd7930_trap, NULL);
 #else
-	sc->sc_hwih.ih_fun = amd7930hwintr;
-	sc->sc_hwih.ih_arg = &sc->sc_au;
-	intr_establish(pri, &sc->sc_hwih);
+	(void)bus_intr_establish(sc->sc_bustag, pri, 0,
+				 amd7930hwintr, &sc->sc_au);
 #endif
-	sc->sc_swih.ih_fun = amd7930swintr;
-	sc->sc_swih.ih_arg = sc;
-	intr_establish(PIL_AUSOFT, &sc->sc_swih);
+	(void)bus_intr_establish(sc->sc_bustag, PIL_AUSOFT,
+				 BUS_INTR_ESTABLISH_SOFTINTR,
+				 amd7930swintr, sc);
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 

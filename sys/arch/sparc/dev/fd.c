@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.57 1998/02/10 14:11:35 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.58 1998/03/21 20:14:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -110,8 +110,7 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device	sc_dev;		/* boilerplate */
-	struct intrhand sc_sih;
-	struct intrhand sc_hih;
+	bus_space_tag_t	sc_bustag;
 	caddr_t		sc_reg;
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -141,11 +140,18 @@ extern	struct fdcio	*fdciop;
 #endif
 
 /* controller driver configuration */
-int	fdcmatch __P((struct device *, struct cfdata *, void *));
-void	fdcattach __P((struct device *, struct device *, void *));
+int	fdcmatch_mainbus __P((struct device *, struct cfdata *, void *));
+int	fdcmatch_obio __P((struct device *, struct cfdata *, void *));
+void	fdcattach_mainbus __P((struct device *, struct device *, void *));
+void	fdcattach_obio __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcmatch, fdcattach
+void	fdcattach __P((struct fdc_softc *, int, struct bootpath *));
+
+struct cfattach fdc_mainbus_ca = {
+	sizeof(struct fdc_softc), fdcmatch_mainbus, fdcattach_mainbus
+};
+struct cfattach fdc_obio_ca = {
+	sizeof(struct fdc_softc), fdcmatch_obio, fdcattach_obio
 };
 
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
@@ -239,11 +245,11 @@ void	fdc_reset __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 #ifdef FDC_C_HANDLER
-int	fdchwintr __P((struct fdc_softc *));
+int	fdchwintr __P((void *));
 #else
 void	fdchwintr __P((void));
 #endif
-int	fdcswintr __P((struct fdc_softc *));
+int	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
@@ -274,38 +280,54 @@ static void fdconf __P((struct fdc_softc *));
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
 int
-fdcmatch(parent, match, aux)
+fdcmatch_mainbus(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Floppy doesn't exist on sun4.
-	 */
-	if (CPU_ISSUN4)
-		return (0);
+	struct mainbus_attach_args *ma = aux;
 
 	/*
 	 * Floppy controller is on mainbus on sun4c.
 	 */
-	if ((CPU_ISSUN4C) && (ca->ca_bustype != BUS_MAIN))
+	if (!CPU_ISSUN4C)
 		return (0);
+
+	/* sun4c PROMs call the controller "fd" */
+	if (strcmp("fd", ma->ma_name) != 0)
+		return (0);
+
+	if (ma->ma_promvaddr &&
+	    probeget(ma->ma_promvaddr, 1) == -1) {
+		return (0);
+	}
+
+	return (1);
+}
+
+int
+fdcmatch_obio(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa;
 
 	/*
 	 * Floppy controller is on obio on sun4m.
 	 */
-	if ((CPU_ISSUN4M) && (ca->ca_bustype != BUS_OBIO))
+	if (uoba->uoba_isobio4 != 0)
 		return (0);
 
-	/* Sun PROMs call the controller an "fd" or "SUNW,fdtwo" */
-	if (strcmp(OBP_FDNAME, ra->ra_name))
+	sa = &uoba->uoba_sbus;
+
+	/* sun4m PROMs call the controller "SUNW,fdtwo" */
+	if (strcmp("SUNW,fdtwo", sa->sa_name) != 0)
 		return (0);
 
-	if (ca->ca_ra.ra_vaddr &&
-	    probeget(ca->ca_ra.ra_vaddr, 1) == -1) {
+	if (sa->sa_promvaddr &&
+	    probeget(sa->sa_promvaddr, 1) == -1) {
 		return (0);
 	}
 
@@ -364,41 +386,117 @@ fdconf(fdc)
 	/* No result phase */
 }
 
+	/*
+	 * Controller and drives are represented by one and the same
+	 * Openprom node, so we can as well check for the floppy boots here.
+	 */
+
 void
-fdcattach(parent, self, aux)
+fdcattach_mainbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
 	struct fdc_softc *fdc = (void *)self;
-	struct fdc_attach_args fa;
+	struct mainbus_attach_args *ma = aux;
 	struct bootpath *bp;
-	int pri;
-	char code;
 
-	if (ca->ca_ra.ra_vaddr)
-		fdc->sc_reg = (caddr_t)ca->ca_ra.ra_vaddr;
-	else
-		fdc->sc_reg = (caddr_t)mapiodev(ca->ca_ra.ra_reg, 0,
-						ca->ca_ra.ra_len);
+	fdc->sc_bustag = ma->ma_bustag;
+
+	fdc->sc_reg = (caddr_t)ma->ma_promvaddr;
+
+	bp = NULL;
+	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, OBP_FDNAME) == 0) {
+		int v0 = ma->ma_bp->val[0];
+		int v1 = ma->ma_bp->val[1];
+		/*
+		 * We can get the bootpath in several different
+		 * formats! The faked v1 bootpath looks like /fd@0,0.
+		 * The v2 bootpath is either just /fd0, in which case
+		 * `bp->val[0]' will have been set to -1, or /fd@x,y
+		 * where <x,y> is the prom address specifier.
+		 */
+		if (((v0 == ma->ma_iospace) && (v1 == (int)ma->ma_paddr)) ||
+		    ((v0 == -1) && (v1 == 0)) ||	/* v2: /fd0 */
+		    ((v0 == 0) && (v1 == 0))		/* v1: /fd@0,0 */ )
+			bp = ma->ma_bp;
+	}
+
+	fdcattach(fdc, ma->ma_pri, bp);
+}
+
+void
+fdcattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct fdc_softc *fdc = (void *)self;
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	struct bootpath *bp;
+
+	fdc->sc_bustag = sa->sa_bustag;
+
+	if (sa->sa_promvaddr != 0)
+		fdc->sc_reg = (caddr_t)sa->sa_promvaddr;
+	else {
+		bus_space_handle_t bh;
+
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset,
+				 sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR,
+				 0,
+				 &bh) != 0) {
+			printf("%s: cannot map control registers\n",
+				self->dv_xname);
+			return;
+		}
+		fdc->sc_reg = (caddr_t)bh;
+	}
+
+	bp = NULL;
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, OBP_FDNAME) == 0) {
+		int v0 = sa->sa_bp->val[0];
+		int v1 = sa->sa_bp->val[1];
+		/*
+		 * floppy controller on obio (such as on the sun4m),
+		 * e.g.: `/obio0/SUNW,fdtwo@0,700000'.
+		 * We use "slot, offset" to determine if this is the
+		 * right one.
+		 */
+		if ((v0 != sa->sa_slot) || (v1 != sa->sa_offset))
+			bp = sa->sa_bp;
+	}
+
+	fdcattach(fdc, sa->sa_pri, bp);
+}
+
+void
+fdcattach(fdc, pri, bp)
+	struct fdc_softc *fdc;
+	int pri;
+	struct bootpath *bp;
+{
+	struct fdc_attach_args fa;
+	char code;
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_istate = ISTATE_IDLE;
 	fdc->sc_flags |= FDC_EIS;
 	TAILQ_INIT(&fdc->sc_drives);
 
-	pri = ca->ca_ra.ra_intr[0].int_pri;
 #ifdef FDC_C_HANDLER
-	fdc->sc_hih.ih_fun = (void *)fdchwintr;
-	fdc->sc_hih.ih_arg = fdc;
-	intr_establish(pri, &fdc->sc_hih);
+	(void)bus_intr_establish(fdc->sc_bustag, pri, 0,
+				 fdchwintr, fdc);
 #else
 	fdciop = &fdc->sc_io;
-	intr_fasttrap(pri, fdchwintr);
+	(void)bus_intr_establish(fdc->sc_bustag, pri,
+				 BUS_INTR_ESTABLISH_FASTTRAP,
+				 (int (*) __P((void *)))fdchwintr, NULL);
 #endif
-	fdc->sc_sih.ih_fun = (void *)fdcswintr;
-	fdc->sc_sih.ih_arg = fdc;
-	intr_establish(PIL_FDSOFT, &fdc->sc_sih);
+	(void)bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT,
+				 BUS_INTR_ESTABLISH_SOFTINTR,
+				 fdcswintr, fdc);
 
 	/* Assume a 82077 */
 	fdc->sc_reg_msr = &((struct fdreg_77 *)fdc->sc_reg)->fd_msr;
@@ -449,56 +547,15 @@ fdcattach(parent, self, aux)
 
 	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
-	printf(" pri %d, softpri %d: chip 8207%c\n", pri, PIL_FDSOFT, code);
+	printf(" softpri %d: chip 8207%c\n", PIL_FDSOFT, code);
 
-	/*
-	 * Controller and drives are represented by one and the same
-	 * Openprom node, so we can as well check for the floppy boots here.
-	 */
-	fa.fa_bootpath = 0;
-	if ((bp = ca->ca_ra.ra_bp) && strcmp(bp->name, OBP_FDNAME) == 0) {
-
-		switch (ca->ca_bustype) {
-		case BUS_MAIN:
-			/*
-			 * We can get the bootpath in several different
-			 * formats! The faked v1 bootpath looks like /fd@0,0.
-			 * The v2 bootpath is either just /fd0, in which case
-			 * `bp->val[0]' will have been set to -1, or /fd@x,y
-			 * where <x,y> is the prom address specifier.
-			 */
-			if (((bp->val[0] == ca->ca_ra.ra_iospace) &&
-			     (bp->val[1] == (int)ca->ca_ra.ra_paddr)) ||
-
-			    ((bp->val[0] == -1) &&	/* v2: /fd0 */
-			     (bp->val[1] == 0)) ||
-
-			    ((bp->val[0] == 0) &&	/* v1: /fd@0,0 */
-			     (bp->val[1] == 0))
-			   )
-				fa.fa_bootpath = bp;
-			break;
-
-		case BUS_OBIO:
-			/*
-			 * floppy controller on obio (such as on the sun4m),
-			 * e.g.: `/obio0/SUNW,fdtwo@0,700000'.
-			 * We use "slot, offset" to determine if this is the
-			 * right one.
-			 */
-			if ((bp->val[0] == ca->ca_slot) &&
-			    (bp->val[1] == ca->ca_offset))
-				fa.fa_bootpath = bp;
-			break;
-		}
-
-	}
+	fa.fa_bootpath = bp;
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
 	fa.fa_deftype = &fd_types[0];		/* XXX */
-		(void)config_found(self, (void *)&fa, fdprint);
+		(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
 	}
 
 	bootpath_store(1, NULL);
@@ -1091,9 +1148,10 @@ fdcpseudointr(arg)
  * (in-window) handler.
  */
 int
-fdchwintr(fdc)
-	struct fdc_softc *fdc;
+fdchwintr(arg)
+	void *arg;
 {
+	struct fdc_softc *fdc = arg;
 
 	switch (fdc->sc_istate) {
 	case ISTATE_IDLE:
@@ -1151,9 +1209,10 @@ fdchwintr(fdc)
 #endif
 
 int
-fdcswintr(fdc)
-	struct fdc_softc *fdc;
+fdcswintr(arg)
+	void *arg;
 {
+	struct fdc_softc *fdc = arg;
 	int s;
 
 	if (fdc->sc_istate != ISTATE_DONE)
