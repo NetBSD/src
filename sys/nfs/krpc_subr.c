@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.9 1995/05/20 01:52:49 mycroft Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.10 1995/08/08 20:43:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -71,8 +71,16 @@
  */
 
 struct auth_info {
-	int32_t	rp_atype;		/* auth type */
-	u_int32_t	rp_alen;	/* auth length */
+	u_int32_t 	authtype;	/* auth type */
+	u_int32_t	authlen;	/* auth length */
+};
+
+struct auth_unix {
+	int32_t   ua_time;
+	int32_t   ua_hostname;	/* null */
+	int32_t   ua_uid;
+	int32_t   ua_gid;
+	int32_t   ua_gidlist;	/* null */
 };
 
 struct rpc_call {
@@ -82,8 +90,9 @@ struct rpc_call {
 	u_int32_t	rp_prog;	/* program */
 	u_int32_t	rp_vers;	/* version */
 	u_int32_t	rp_proc;	/* procedure */
-	struct	auth_info rp_auth;
-	struct	auth_info rp_verf;
+	struct	auth_info rpc_auth;
+	struct	auth_unix rpc_unix;
+	struct	auth_info rpc_verf;
 };
 
 struct rpc_reply {
@@ -93,11 +102,14 @@ struct rpc_reply {
 	union {
 		u_int32_t	rpu_errno;
 		struct {
-			struct auth_info rp_auth;
-			u_int32_t	rp_rstatus;	/* reply status */
-		} rpu_ok;
+			struct auth_info rok_auth;
+			u_int32_t	rok_status;
+		} rpu_rok;
 	} rp_u;
 };
+#define rp_errno  rp_u.rpu_errno
+#define rp_auth   rp_u.rpu_rok.rok_auth
+#define rp_status rp_u.rpu_rok.rok_status
 
 #define MIN_REPLY_HDR 16	/* xid, dir, astat, errno */
 
@@ -281,6 +293,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);
 	bzero((caddr_t)call, sizeof(*call));
+	/* rpc_call part */
 	xid++;
 	call->rp_xid = txdr_unsigned(xid);
 	/* call->rp_direction = 0; */
@@ -288,8 +301,12 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	call->rp_prog = txdr_unsigned(prog);
 	call->rp_vers = txdr_unsigned(vers);
 	call->rp_proc = txdr_unsigned(func);
-	/* call->rp_auth = 0; */
-	/* call->rp_verf = 0; */
+	/* rpc_auth part (auth_unix as root) */
+	call->rpc_auth.authtype = txdr_unsigned(RPCAUTH_UNIX);
+	call->rpc_auth.authlen  = txdr_unsigned(sizeof(struct auth_unix));
+	/* rpc_verf part (auth_null) */
+	call->rpc_verf.authtype = 0;
+	call->rpc_verf.authlen  = 0;
 
 	/*
 	 * Setup packet header
@@ -371,14 +388,14 @@ krpc_call(sa, prog, vers, func, data, from_p)
 
 			/* Was RPC accepted? (authorization OK) */
 			if (reply->rp_astatus != 0) {
-				error = fxdr_unsigned(u_int32_t, reply->rp_u.rpu_errno);
+				error = fxdr_unsigned(u_int32_t, reply->rp_errno);
 				printf("rpc denied, error=%d\n", error);
 				continue;
 			}
 
 			/* Did the call succeed? */
-			if (reply->rp_u.rpu_ok.rp_rstatus != 0) {
-				error = fxdr_unsigned(u_int32_t, reply->rp_u.rpu_ok.rp_rstatus);
+			if (reply->rp_status != 0) {
+				error = fxdr_unsigned(u_int32_t, reply->rp_status);
 				printf("rpc denied, status=%d\n", error);
 				continue;
 			}
@@ -406,8 +423,8 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		}
 	}
 	reply = mtod(m, struct rpc_reply *);
-	if (reply->rp_u.rpu_ok.rp_auth.rp_atype != 0) {
-		len += fxdr_unsigned(u_int32_t, reply->rp_u.rpu_ok.rp_auth.rp_alen);
+	if (reply->rp_auth.authtype != 0) {
+		len += fxdr_unsigned(u_int32_t, reply->rp_auth.authlen);
 		len = (len + 3) & ~3; /* XXX? */
 	}
 	m_adj(m, len);
