@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133.4.2 1999/07/01 23:43:22 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133.4.3 1999/07/02 18:54:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1127,6 +1127,11 @@ sys_fhopen(p, v, retval)
 	}
 	if ((error = VOP_OPEN(vp, flags, cred, p)) != 0)
 		goto bad;
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
 	if (flags & FWRITE)
 		vp->v_writecount++;
 
