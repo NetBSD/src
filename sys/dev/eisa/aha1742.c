@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.51 1995/10/03 20:59:06 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.52 1995/10/04 00:35:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -736,7 +736,7 @@ ahb_init_ecb(ahb, ecb)
 	 * Never gets taken out.
 	 */
 	ecb->hashkey = KVTOPHYS(ecb);
-	hashnum = CCB_HASH(ecb->hashkey);
+	hashnum = ECB_HASH(ecb->hashkey);
 	ecb->nexthash = ahb->ecbhash[hashnum];
 	ahb->ecbhash[hashnum] = ecb;
 }
