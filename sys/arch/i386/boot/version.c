@@ -1,9 +1,12 @@
 /*
- *	$Id: version.c,v 1.20 1994/05/01 06:46:34 cgd Exp $
+ *	$Id: version.c,v 1.21 1994/06/13 19:15:24 cgd Exp $
  */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.20 -> 1.21
+ *		update for 4.4-Lite file system includes and macros (cgd)
  *
  *	1.19 -> 1.20
  *		display options in std. format, more changes for size (cgd)
@@ -29,4 +32,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.20 $";
+char *version = "$Revision: 1.21 $";

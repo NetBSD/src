@@ -25,15 +25,15 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.h,v 1.3 1994/04/27 21:32:00 cgd Exp $
+ *	$Id: boot.h,v 1.4 1994/06/13 19:15:14 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/quota.h>
-#include <ufs/fs.h>
-#include <ufs/inode.h>
+#include <ufs/ufs/quota.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/inode.h>
 
 extern char *devs[], *name, *iodest;
 extern struct fs *fs;
