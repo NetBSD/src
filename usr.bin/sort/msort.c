@@ -1,3 +1,5 @@
+/*	$NetBSD: msort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,12 +36,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 #include "sort.h"
 #include "fsort.h"
+
+#ifndef lint
+__RCSID("$NetBSD: msort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,15 +72,15 @@ void
 fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
 	union f_handle files;
 	int binno, nfiles;
-	int (*get)();
+	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
+	    struct field *));
 	FILE *outfd;
-	void (*fput)();
+	void (*fput) __P((struct recheader *, FILE *));
 	struct field *ftbl;
 {
 	FILE *tout;
 	int i, j, last;
 	void (*put)(struct recheader *, FILE *);
-	extern int geteasy();
 	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
@@ -137,7 +140,8 @@ fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
 void
 merge(infl0, nfiles, get, outfd, put, ftbl)
 	int infl0, nfiles;
-	int (*get)();
+	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
+	    struct field *));
 	void (*put)(struct recheader *, FILE *);
 	FILE *outfd;
 	struct field *ftbl;
@@ -245,7 +249,8 @@ insert(flist, rec, ttop, delete)
 void
 order(infile, get, ftbl)
 	union f_handle infile;
-	int (*get)();
+	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
+	    struct field *));
 	struct field *ftbl;
 {
 	u_char *end;
@@ -285,7 +290,7 @@ static int
 cmp(rec1, rec2)
 	struct recheader *rec1, *rec2;
 {
-	register r;
+	register int r;
 	register u_char *pos1, *pos2, *end;
 	register u_char *cwts;
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
@@ -296,7 +301,7 @@ cmp(rec1, rec2)
 		else
 			end = pos1 + min(rec1->length, rec2->length);
 		for (; pos1 < end; ) {
-			if (r = cwts[*pos1++] - cwts[*pos2++])
+			if ((r = cwts[*pos1++] - cwts[*pos2++]))
 				return (r);
 		}
 	}

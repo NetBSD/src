@@ -1,3 +1,5 @@
+/*	$NetBSD: files.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,12 +36,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 #include "sort.h"
 #include "fsort.h"
+
+#ifndef lint
+__RCSID("$NetBSD: files.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
 
 #include <string.h>
 
@@ -194,7 +197,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 	u_char *bufend;
 	struct field *ftbl;
 {
-	static int (*get)();
+	static int (*get) __P((FILE *, DBT *, DBT *));
 	static int fileno = 0;
 	static FILE *dbdesc = 0;
 	static DBT dbkey[1], line[1];

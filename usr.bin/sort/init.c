@@ -1,3 +1,5 @@
+/*	$NetBSD: init.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,14 +36,19 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
-
 #include "sort.h"
+
+#ifndef lint
+__RCSID("$NetBSD: init.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
+#endif /* not lint */
 
 #include <ctype.h>
 #include <string.h>
+
+static void insertcol __P((struct field *));
+char *setcolumn __P((char *, struct field *, int));
+int setfield __P((char *, struct field *, int));
 
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
@@ -129,7 +136,7 @@ setcolumn(pos, cur_fld, gflag)
 			errx(2, "illegal offset");
 	}
 	if (optval(*pos, cur_fld->tcol.num))	
-		while (tmp = optval(*pos, cur_fld->tcol.num)) {
+		while ((tmp = optval(*pos, cur_fld->tcol.num))) {
 			cur_fld->flags |= tmp;
 			pos++;
 	}
@@ -146,7 +153,7 @@ setfield(pos, cur_fld, gflag)
 {
 	static int nfields = 0;
 	int tmp;
-	char *setcolumn();
+	char *setcolumn __P((char *, struct field *, int));
 	if (++nfields == ND)
 		errx(2, "too many sort keys. (Limit is %d)", ND-1);
 	cur_fld->weights = ascii;
@@ -243,7 +250,7 @@ fixit(argc, argv)
 				if (*tpos == '.') {
 					tpos += sscanf(++tpos, "%d", &x);
 					while (isdigit(*tpos))
-						*tpos++;
+						tpos++;
 				}
 				if (x) {
 					vpos += sprintf(vpos, "%d", w+1);

@@ -1,3 +1,5 @@
+.\"	$NetBSD: sort.1,v 1.2 2000/10/07 18:37:10 bjh21 Exp $
+.\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -198,13 +200,14 @@ and
 .Pp
 The following operands are available:
 .Bl -tag -width indent
-.Ar file
+.It Ar file
 The pathname of a file to be sorted, merged, or checked.
 If no file
 operands are specified, or if
 a file operand is
 .Fl ,
 the standard input is used.
+.El
 .Pp
 A field is
 defined as a minimal sequence of characters followed by a
@@ -329,6 +332,7 @@ on disorder (or non-uniqueness) with the
 option
 .It Pa 2:
 an error occurred.
+.El
 .Sh BUGS
 Lines longer than 65522 characters are discarded and processing continues.
 To sort files larger than 60Mb, use
