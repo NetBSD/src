@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.9 1997/03/17 03:46:12 thorpej Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.10 1997/06/06 23:14:19 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: dc21040.h,v 1.23 1997/03/15 17:28:19 thomas Exp
+ * $Id: dc21040reg.h,v 1.10 1997/06/06 23:14:19 mellon Exp $
  */
 
 #if !defined(_DC21040_H)
@@ -369,7 +369,8 @@ typedef struct {
 #define	TULIP_OUI_COGENT_0		0x00
 #define	TULIP_OUI_COGENT_1		0x00
 #define	TULIP_OUI_COGENT_2		0x92
-#define	TULIP_COGENT_EM100_ID		0x12
+#define	TULIP_COGENT_EM100TX_ID		0x12
+#define	TULIP_COGENT_EM100FX_ID		0x15
 
 
 /*
