@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.5 1997/03/29 20:42:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.5 1997/03/29 20:42:21 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ protected:
 	if (pp == &Player[PLAYER])
 		account(card);
 	pp->hand[Card_no] = C_INIT;
-	Next = (Next == -1 ? FALSE : TRUE);
+	Next = (Next == (bool)-1 ? FALSE : TRUE);
 	return TRUE;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/03/29 20:42:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: misc.c,v 1.5 1997/03/29 20:42:24 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,15 +92,17 @@ reg char	*prompt; {
 
 	reg int		num;
 	reg char	*sp;
+	int		c;
 	char		buf[257];
 
 	for (;;) {
 inter:
 		printf(prompt);
 		num = 0;
-		for (sp = buf; (*sp=getchar()) != '\n'; sp++)
-			if (*sp == -1)	/* check for interrupted system call */
+		for (sp = buf; (c=getchar()) != '\n'; *sp++ = c)
+			if (c == -1)	/* check for interrupted system call */
 				goto inter;
+		*sp = c;
 		if (sp == buf)
 			continue;
 		for (sp = buf; isspace(*sp); sp++)

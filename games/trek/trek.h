@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
+/*	$NetBSD: trek.h,v 1.4 1997/03/29 20:42:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -76,7 +76,7 @@ struct quad		/* definition for each quadrant */
 	char	klings;		/* number of Klingons in this quadrant */
 	char	holes;		/* number of black holes in this quadrant */
 	int	scanned;	/* star chart entry (see below) */
-	char	stars;		/* number of stars in this quadrant */
+	short	stars;		/* number of stars in this quadrant */
 	char	qsystemname;	/* starsystem name (see below) */
 };
 
@@ -339,7 +339,7 @@ struct
 struct
 {
 	struct kling	klingon[MAXKLQUAD];	/* sorted Klingon list */
-	char		nkling;			/* number of Klingons in this sector */
+	short		nkling;			/* number of Klingons in this sector */
 						/* < 0 means automatic override mode */
 	char		fast;			/* set if speed > 300 baud */
 	struct xy	starbase;	/* starbase in current quadrant */
