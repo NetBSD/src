@@ -29,9 +29,25 @@
 /*
  * HISTORY
  * $Log: bios.S,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
+ * Revision 1.2  1993/07/11 12:02:20  andrew
+ * Fixes from bde, including support for loading @ any MB boundary (e.g. a
+ * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+ * buffering to speed booting from floppies.  Also works with aha174x
+ * controllers in enhanced mode.
  *
+ *
+ * 93/06/28  bde
+ *	Guess the disk size when the BIOS doesn't support the diskinfo
+ *	interrupt.
+ *
+ *	Change biosread() interface.  Sector count and io address are now
+ *	args.
+ *
+ *	Change all data16's to data32's.
+ *
+Revision 1.1  1993/03/21  18:08:23  cgd
+after 0.2.2 "stable" patches applied
+
  * Revision 2.2  92/04/04  11:34:26  rpd
  * 	Fix Intel Copyright as per B. Davies authorization.
  * 	[92/04/03            rvb]
@@ -74,9 +90,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 	.text
 
 /*
-# biosread(dev, cyl, head, sec)
-#	Read one sector from disk into the internal buffer "intbuf" which
-#	is the first 512 bytes of the boot loader.
+# biosread(dev, cyl, head, sec, nsec, offset)
+#	Read "nsec" sectors from disk to offset "offset" in boot segment
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
 #	Call with	%ah = 0x2
 #			%al = number of sectors
@@ -106,20 +121,21 @@ ENTRY(biosread)
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
 	movb	0x8(%ebp), %dl	# device
-	xor	%ebx, %ebx	# offset -- 0
+	movl	0x1c(%ebp), %ebx	# offset
 				# prot_to_real will set %es to BOOTSEG
 
 	call	EXT(prot_to_real)	# enter real mode
 	movb	$0x2, %ah	# subfunction
-	movb	$0x1, %al	# number of sectors -- one
+	addr32
+	movb	0x18(%ebp), %al	# number of sectors
 
 	sti
 	int	$0x13
 	cli
 
-	mov	%eax, %ebx	# save return value
+	mov	%eax, %ebx	# save return value (actually movw %ax, %bx)
 
-	data16
+	data32
 	call	EXT(real_to_prot) # back to protected mode
 
 	xor	%eax, %eax
@@ -154,7 +170,7 @@ ENTRY(putc)
 
 	call	EXT(prot_to_real)
 
-	data16
+	data32
 	mov	$0x1, %ebx	# %bh=0, %bl=1 (blue)
 	movb	$0xe, %ah
 	movb	%cl, %al
@@ -162,7 +178,7 @@ ENTRY(putc)
 	int	$0x10		# display a byte
 	cli
 
-	data16
+	data32
 	call	EXT(real_to_prot)
 
 	pop	%ecx
@@ -193,7 +209,7 @@ ENTRY(getc)
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
-	data16
+	data32
 	call	EXT(real_to_prot)
 
 	xor	%eax, %eax
@@ -227,12 +243,12 @@ ENTRY(ischar)
 	sti
 	int	$0x16
 	cli
-	data16
+	data32
 	jz	nochar
 	movb	%al, %bl
 
 nochar:
-	data16
+	data32
 	call	EXT(real_to_prot)
 
 	xor	%eax, %eax
@@ -266,15 +282,33 @@ ENTRY(get_diskinfo)
 	int	$0x13
 	cli
 
-	data16
+	jnc	ok
+	/*
+	 * Urk.  Call failed.  It is not supported for floppies by old BIOS's.
+	 * Guess it's a 15-sector floppy.  Initialize all the registers for
+	 * documentation, although we only need head and sector counts.
+	 */
+	subb	%ah, %ah		# %ax = 0
+	movb	%al, %al
+	movb	%ah, %bh		# %bh = 0
+	movb	$2, %bl			# %bl bits 0-3 = drive type, 2 = 1.2M
+	movb	$79, %ch		# max track
+	movb	$15, %cl		# max sector
+	movb	$1, %dh			# max head
+	movb	$1, %dl			# # floppy drives installed
+	# es:di = parameter table
+	# carry = 0
+ok:
+
+	data32
 	call	EXT(real_to_prot)	# back to protected mode
 
 	xor	%eax, %eax
 
 	/*form a longword representing all this gunk*/
-	movb	%dh, %ah		# # heads
+	movb	%dh, %ah		# max head
 	andb	$0x3f, %cl		# mask of cylinder gunk
-	movb	%cl, %al		# # sectors
+	movb	%cl, %al		# max sector (and # sectors)
 
 	pop	%edx
 	pop	%ecx
@@ -303,13 +337,13 @@ ENTRY(memsize)
 	call	EXT(prot_to_real)		# enter real mode
 
 	cmpb	$0x1, %bl
-	data16
+	data32
 	je	xext
 	
 	sti
 	int	$0x12
 	cli
-	data16
+	data32
 	jmp	xdone
 
 xext:	movb	$0x88, %ah
@@ -320,7 +354,7 @@ xext:	movb	$0x88, %ah
 xdone:
 	mov	%eax, %ebx
 
-	data16
+	data32
 	call	EXT(real_to_prot)
 
 	mov	%ebx, %eax

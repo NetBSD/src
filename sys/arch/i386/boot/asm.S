@@ -29,9 +29,24 @@
 /*
  * HISTORY
  * $Log: asm.S,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
+ * Revision 1.2  1993/07/11 12:02:19  andrew
+ * Fixes from bde, including support for loading @ any MB boundary (e.g. a
+ * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+ * buffering to speed booting from floppies.  Also works with aha174x
+ * controllers in enhanced mode.
  *
+ *
+ * 93/06/28  bde
+ *	Switch IDT for debugger.
+ *
+ *	Change all addr16's to addr32's and all data16's to data32's.
+ *
+ * 93/06/26  bde
+ *	Avoid "pushw $xreal".  Gas botches it even for 32-bit mode.
+ *
+Revision 1.1  1993/03/21  18:08:21  cgd
+after 0.2.2 "stable" patches applied
+
  * Revision 2.2  92/04/04  11:34:13  rpd
  * 	Fix Intel Copyright as per B. Davies authorization.
  * 	[92/04/03            rvb]
@@ -90,7 +105,7 @@ ENTRY(real_to_prot)
 	cli
 
 	# load the gdtr
-	addr16
+	addr32
 	data32
 	lgdt	EXT(Gdtr)
 
@@ -108,11 +123,14 @@ ENTRY(real_to_prot)
 
 xprot:
 	# we are in USE32 mode now
-	# set up the protective mode segment registers : DS, SS, ES
+	# set up the protected mode segment registers : DS, SS, ES
 	mov	$0x20, %eax
 	movw	%ax, %ds
 	movw	%ax, %ss
 	movw	%ax, %es
+
+	# load idtr so we can debug
+	lidt	EXT(Idtr_prot)
 
 	ret
 
@@ -129,7 +147,8 @@ ENTRY(prot_to_real)
 	movl 	_ouraddr, %eax
 	sarl	$4, %eax
 	pushw	%ax
-	pushw	$xreal
+	movw	$xreal, %ax	# gas botches pushw $xreal - extra bytes 0, 0
+	pushw	%ax		# decode to add %al, (%eax) (%al usually 0)
 
 	# Change to use16 mode.
 	ljmp	$0x28, $x16
@@ -141,12 +160,10 @@ x16:
 	and 	$CR0_PE_OFF, %eax
 	mov	%eax, %cr0
 
-
 	# make intersegment jmp to flush the processor pipeline
 	# using the fake stack frame set up earlier
 	# and reload CS register
 	lret
-
 
 xreal:
 	# we are in real mode now
@@ -155,6 +172,11 @@ xreal:
 	movw	%ax, %ds
 	movw	%ax, %ss
 	movw	%ax, %es
+
+	# load idtr so we can debug
+	addr32
+	data32
+	lidt	EXT(Idtr_real)
 
 	data32
 	ret
@@ -170,8 +192,6 @@ ENTRY(startprog)
 	push	%ebp
 	mov	%esp, %ebp
 
-
-
 	# get things we need into registers
 	movl	0x8(%ebp), %ecx		# entry offset 
 	movl	0x0c(%ebp), %eax	# &argv
@@ -179,9 +199,8 @@ ENTRY(startprog)
 	# make a new stack at 0:0xa0000 (big segs)
 	mov	$0x10, %ebx
 	movw	%bx, %ss
-	movl	$0xa0000,%ebx
-	movl	%ebx,%esp
-	
+	movl	$0xa0000, %ebx
+	movl	%ebx, %esp
 	
 	# push some number of args onto the stack
 	pushl	$0			# nominally a cyl offset in the boot.
@@ -223,7 +242,7 @@ ENTRY(pbzero)
 
 	mov	0x8(%ebp), %edi		# destination
 	mov	0xc(%ebp), %ecx		# count
-	mov	$0x0,%eax		# value
+	mov	$0x0, %eax		# value
 
 	rep
 	stosb
