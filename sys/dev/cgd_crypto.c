@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.2 2003/03/31 08:45:08 elric Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.3 2004/03/18 10:42:08 dan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.2 2003/03/31 08:45:08 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.3 2004/03/18 10:42:08 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ cgd_cipher_bf_init(int keylen, caddr_t key, int *blocksize)
 
 	if (!blocksize)
 		return NULL;
-	if (keylen < 40 || keylen > 448)
+	if (keylen < 40 || keylen > 448 || (keylen % 8 != 0))
 		return NULL;
 	if (*blocksize == -1)
 		*blocksize = 64;
@@ -401,7 +401,7 @@ cgd_cipher_bf_init(int keylen, caddr_t key, int *blocksize)
 	bp = malloc(sizeof(*bp), M_DEVBUF, 0);
 	if (!bp)
 		return NULL;
-	BF_set_key(&bp->bp_key, keylen, key);
+	BF_set_key(&bp->bp_key, keylen / 8, key);
 	return (caddr_t)bp;
 }
 
