@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.39 1997/11/08 09:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.39 1997/11/08 09:33:16 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 1997/11/08 09:33:16 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -177,7 +177,7 @@ MainParseArgs(argc, argv)
 #else
 # define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #endif
-rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
+rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
