@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.53 2000/08/02 12:24:11 itojun Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54 2000/09/19 23:26:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
 
 #include <sys/param.h>
@@ -136,7 +137,7 @@ settime(tv)
 	ci = curcpu();
 	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
 	    &ci->ci_schedstate.spc_runtime);
-#	if defined(NFS) || defined(NFSSERVER)
+#	if (defined(NFS) && !defined (NFS_V2_ONLY)) || defined(NFSSERVER)
 		nqnfs_lease_updatetime(delta.tv_sec);
 #	endif
 	splx(s);
