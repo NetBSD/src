@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.5 1995/10/02 17:21:39 jpo Exp $	*/
+/*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -309,6 +309,7 @@ typedef	struct dinfo {
 	u_int	d_vararg : 1;	/* ... in in current function decl. */
 	u_int	d_proto : 1;	/* current funct. decl. is prototype */
 	u_int	d_notyp : 1;	/* set if no type specifier was present */
+	u_int	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
 	type_t	*d_tagtyp;	/* tag during member declaration */
 	sym_t	*d_fargs;	/* list of arguments during function def. */
 	pos_t	d_fdpos;	/* position of function definition */
