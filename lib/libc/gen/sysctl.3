@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.127 2003/12/09 16:00:40 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.128 2004/01/03 06:06:36 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 9, 2003
+.Dd December 31, 2003
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -133,6 +133,7 @@ listed here, and described in separate sections below.
 .It CTL\_DDB	sys/sysctl.h	In-kernel debugger
 .It CTL\_PROC	sys/sysctl.h	Per-process
 .It CTL\_VENDOR	?	Vendor specific
+.It CTL\_EMUL	sys/sysctl.h	Emulation settings
 .El
 .Pp
 For example, the following retrieves the maximum number of processes allowed
@@ -185,6 +186,17 @@ as a debugging variable, the following declaration would be used:
 int dospecialcheck = 1;
 struct ctldebug debug5 = { "dospecialcheck", \*[Am]dospecialcheck };
 .Ed
+.Pp
+Note that the dynamic implementation of
+.Nm
+currently in use largely makes this particular
+.Nm
+interface obsolete.
+See
+.Xr sysctl 8
+and
+.Xr sysctl 9
+for more information.
 .Sh CTL_VFS
 A distinguished second level name, VFS_GENERIC,
 is used to get general information about all filesystems.
@@ -372,9 +384,11 @@ This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
 .It Li KERN_CP_TIME
-Return an array if CPUSTATES longs is returned.
+Returns an array of CPUSTATES longs.
 This array contains the
 number of clock ticks spent in different CPU states.
+On multi-processor system, the sum across all cpus is returned unless
+appropriate space is given for one data set for each cpu.
 .It Li KERN_DEFCORENAME
 Default template for the name of core dump files (see also PROC_PID_CORENAME
 in the per-process variables CTL_PROC, and
@@ -1693,6 +1707,219 @@ The "vendor" toplevel name is reserved to be used by vendors who wish to
 have their own private MIB tree.
 Intended use is to store values under
 .Dq vendor.\*[Lt]yourname\*[Gt].* .
+.Sh DYNAMIC OPERATIONS
+Several meta-identifiers are provided to perform operations on the
+.Nm
+tree itself, or support alternate means of accessing the data
+instrumented by the
+.Nm
+tree.
+.Bl -column CTLXCREATESUMXXX -offset indent
+.It Sy Name	Description
+.It CTL\_QUERY	Retrieve a mapping of names to numbers below a given node
+.It CTL\_CREATE	Create a new node
+.It CTL\_CREATESYM	Create a new node by its kernel symbol
+.It CTL\_DESTROY	Destroy a node
+.El
+.Pp
+The core interface to all of these meta-functions is the structure
+that the kernel uses to describe the tree internally, as defined in
+.Ao Pa sys/sysctl.h Ac
+as:
+.Pp
+.Bd -literal
+struct sysctlnode {
+        uint sysctl_flags;              /* flags and type */
+        int sysctl_num;                 /* mib number */
+        size_t sysctl_size;             /* size of instrumented data */
+        char sysctl_name[SYSCTL_NAMELEN]; /* node name */
+        union {
+                struct {
+                        uint scn_csize; /* size of child node array */
+                        uint scn_clen;  /* number of valid children */
+                        struct sysctlnode *scn_child; /* children */
+                } scu_node;
+                int scu_alias;          /* node this node refers to */
+                int scu_idata;          /* immediate "int" data */
+                u_quad_t scu_qdata;     /* immediate "u_quad_t" data */
+                void *scu_data;         /* pointer to external data */
+        } sysctl_un;
+        sysctlfn sysctl_func;           /* access helper function */
+        struct sysctlnode *sysctl_parent; /* parent of this node */
+        uint sysctl_ver;                /* individual node version */
+};
+
+#define sysctl_csize	sysctl_un.scu_node.scn_csize
+#define sysctl_clen	sysctl_un.scu_node.scn_clen
+#define sysctl_child	sysctl_un.scu_node.scn_child
+#define sysctl_alias	sysctl_un.scu_alias
+#define sysctl_data	sysctl_un.scu_data
+#define sysctl_idata	sysctl_un.scu_idata
+#define sysctl_qdata	sysctl_un.scu_qdata
+.Ed
+.Pp
+Querying the tree to discover the name to number mapping permits
+dynamic discovery of all the data that the tree currently has
+instrumented.
+For example, to discover all the nodes below the
+CTL_VFS node:
+.Pp
+.Bd -literal -offset indent -compact
+struct sysctlnode vfs[128];
+int mib[2];
+size_t len;
+.sp
+mib[0] = CTL_VFS;
+mib[1] = CTL_QUERY;
+len = sizeof(vfs);
+sysctl(mib, 2, \*[Am]vfs[0], \*[Am]len, NULL, 0);
+.Ed
+.Pp
+Creation and destruction of nodes works by constructing part of a new
+node description (or a description of the existing node) and invoking
+CTL_CREATE (or CTL_CREATESYM) or CTL_DESTROY at the parent of the new
+node, with a pointer to the new node passed via the
+.Fa new
+and
+.Fa newlen
+arguments.
+If valid values for
+.Fa old
+and
+.Fa oldlenp
+are passed, a copy of the new node once in the tree will be returned.
+If the create operation fails because a node with the same name or MIB
+number exists, a copy of the conflicting node will be returned.
+.Pp
+The minimum requirements for creating a node are setting the
+.Fa sysctl_flags
+to indicate the new node's type,
+.Fa sysctl_num
+to either the new node's number (or CTL_CREATE or CTL_CREATESYM if a
+dynamically allocated MIB number is acceptable),
+.Fa sysctl_size
+to the size of the data to be instrumented (which must agree with the
+given type), and
+.Fa sysctl_name
+must be set to the new node's name.
+Nodes that are not of type
+.Dq node
+must also have some description of the data to be instrumented, which
+will vary depending on what is to be instrumented.
+.Pp
+If existing kernel data is to be covered by this new node, its address
+should be given in
+.Fa sysctl_data
+or, if CTL_CREATESYM is used,
+.Fa sysctl_data
+should be set to a string containing its name from the kernel's symbol
+table.
+If new data is to be instrumented and an initial value is available,
+the new integer or quad type data should be placed into either
+.Fa sysctl_idata
+or
+.Fa sysctl_qdata ,
+respectively, along with the SYSCTL_IMMEDIATE flag being set, or
+.Fa sysctl_data
+should be set to point to a copy of the new data, and the
+SYSCTL_OWNDATA flag must be set.
+This latter method is the only way that new string and struct type
+nodes can be initialized.
+Invalid kernel addresses are accepted, but any attempt to access those
+nodes will return an error.
+.Pp
+The
+.Fa sysctl_csize ,
+.Fa sysctl_clen ,
+.Fa sysctl_child ,
+.Fa sysctl_parent ,
+and
+.Fa sysctl_alias
+members are used by the kernel to link the tree together and must be
+NULL or 0.
+Nodes created in this manner cannot have helper functions, so
+.Fa sysctl_func
+must also be NULL.
+If the
+.Fa sysctl_ver
+member is non-zero, it must match either the version of the parent or
+the version at the root of the MIB or an error is returned.
+This can be used to ensure that nodes are only added or removed from a
+known state of the tree.
+Note: It may not be possible to determine the version at the root
+of the tree.
+.Pp
+This example creates a new subtree and adds a node to it that controls the
+.Fa audiodebug
+kernel variable, thereby making it tunable at at any time, without
+needing to use
+.Xr ddb 4
+or
+.Xr kvm 3
+to alter the kernel's memory directly.
+.Pp
+.Bd -literal -offset indent -compact
+struct sysctlnode node;
+int mib[2];
+size_t len;
+.sp
+mib[0] = CTL_CREATE;		/* create at top-level */
+len = sizeof(node);
+memset(\*[Am]node, 0, len);
+node.sysctl_flags = SYSCTL_READWRITE|CTLTYPE_NODE;
+snprintf(node.sysctl_name, sizeof(node.sysctl_name), "local");
+node.sysctl_num = CTL_CREATE;	/* request dynamic MIB number */
+sysctl(\*[Am]mib[0], 1, \*[Am]node, \*[Am]len, \*[Am]node, len);
+.sp
+mib[0] = node.sysctl_num;	/* use new MIB number */
+mib[1] = CTL_CREATESYM;		/* create at second level */
+len = sizeof(node);
+memset(\*[Am]node, 0, len);
+node.sysctl_flags = SYSCTL_READWRITE|CTLTYPE_INT;
+snprintf(node.sysctl_name, sizeof(node.sysctl_name), "audiodebug");
+node.sysctl_num = CTL_CREATE;
+node.sysctl_data = "audiodebug"; /* kernel symbol to be used */
+sysctl(\*[Am]mib[0], 2, NULL, NULL, \*[Am]node, len);
+.Ed
+.Pp
+The process is for deleting nodes is similar, but less data needs to
+be supplied.
+Only the
+.Fa sysctl_num
+field
+needs to be filled in; almost all other fields must be left blank.
+The
+.Fa sysctl_name
+and/or
+.Fa sysctl_ver
+fields can be filled in with the name and version of the existing node
+as additional checks on what will be deleted.
+If all the given data fail to match any node, nothing will be deleted.
+If valid values for
+.Fa old
+and
+.Fa oldlenp
+are supplied and a node is deleted, a copy of what was in the MIB tree
+will be returned.
+.Pp
+This sample code shows the deletion of the two nodes created in the
+above example:
+.Pp
+.Bd -literal -offset indent -compact
+int mib[2];
+.sp
+len = sizeof(node);
+memset(\*[Am]node, 0, len);
+.sp
+mib[0] = 3214;			/* assumed number for "local" */
+mib[1] = CTL_DESTROY;
+node.sysctl_num = 3215;		/* assumed number for "audiodebug" */
+sysctl(\*[Am]mib[0], 2, NULL, NULL, \*[Am]node, len);
+.sp
+mib[0] = CTL_DESTROY;
+node.sysctl_num = 3214;		/* now deleting "local" */
+sysctl(\*[Am]mib[0], 1, NULL, NULL, \*[Am]node, len);
+.Ed
 .Sh RETURN VALUES
 If the call to
 .Nm
@@ -1728,6 +1955,8 @@ definitions for fourth level IPv6 UDP identifiers
 definitions for fourth level IPsec identifiers
 .It Aq Pa netkey/key_var.h
 definitions for third level PF_KEY identifiers
+.It Aq Pa machine/cpu.h
+definitions for second level machdep identifiers
 .El
 .Sh ERRORS
 The following errors may be reported:
@@ -1739,33 +1968,50 @@ The buffer
 .Fa newp ,
 or length pointer
 .Fa oldlenp
-contains an invalid address.
+contains an invalid address, or the requested value is temporarily
+unavailable.
 .It Bq Er EINVAL
 The
 .Fa name
-array is less than two or greater than CTL_MAXNAME.
+array is zero or greater than CTL_MAXNAME.
 .It Bq Er EINVAL
 A non-null
 .Fa newp
 is given and its specified length in
 .Fa newlen
-is too large or too small.
+is too large or too small, or the given value is not acceptable for
+the given node.
 .It Bq Er ENOMEM
 The length pointed to by
 .Fa oldlenp
 is too short to hold the requested value.
-.It Bq Er ENOTDIR
+.It Bq Er EISDIR
 The
 .Fa name
 array specifies an intermediate rather than terminal name.
+.It Bq Er ENOTDIR
+The
+.Fa name
+array specifies a node below a node that addresses data.
+.It Bq Er ENOENT
+The
+.Fa name
+array specifies a node that does not exist in the tree.
+.It Bq Er ENOENT
+An attempt was made to destroy a node that does not exist, or to
+create or destroy a node below a node that does not exist.
+.It Bq Er ENOTEMPTY
+An attempt was made to destroy a node that still has children.
 .It Bq Er EOPNOTSUPP
 The
 .Fa name
-array specifies a value that is unknown.
+array specifies a value that is unknown or a meta-operation was
+attempted that the requested node does not support.
 .It Bq Er EPERM
 An attempt is made to set a read-only value.
 .It Bq Er EPERM
-A process without appropriate privilege attempts to set a value.
+A process without appropriate privilege attempts to set a value or to
+create or destroy a node.
 .It Bq Er EPERM
 An attempt to change a value protected by the current kernel security
 level is made.
@@ -1773,7 +2019,8 @@ level is made.
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr sysctl 9
 .Sh HISTORY
 The
 .Nm
