@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.43 2004/05/12 02:07:38 jrf Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.44 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.43 2004/05/12 02:07:38 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.44 2004/09/13 19:25:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -906,8 +906,6 @@ smbfs_pathconf(v)
 		int a_name;
 		register_t *a_retval;
 	} */ *ap = v;
-	struct smbmount *smp = VFSTOSMBFS(VTOVFS(ap->a_vp));
-	struct smb_vc *vcp = SSTOVC(smp->sm_share);
 	register_t *retval = ap->a_retval;
 	int error = 0;
 	
@@ -922,7 +920,7 @@ smbfs_pathconf(v)
 		*retval = 0;
 		break;
 	case _PC_NAME_MAX:
-		*retval = (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
+		*retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
 		break;
 	case _PC_PATH_MAX:
 		*retval = 800;	/* XXX: a correct one ? */

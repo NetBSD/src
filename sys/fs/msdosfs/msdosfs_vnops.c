@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.11 2004/05/12 02:07:38 jrf Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.12 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.11 2004/05/12 02:07:38 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.12 2004/09/13 19:25:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1817,14 +1817,13 @@ msdosfs_pathconf(v)
 		int a_name;
 		register_t *a_retval;
 	} */ *ap = v;
-	struct msdosfsmount *pmp = VTODE(ap->a_vp)->de_pmp;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = pmp->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12;
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;

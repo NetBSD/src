@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.17 2004/08/15 07:19:54 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.17 2004/08/15 07:19:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.17 2004/08/15 07:19:54 mycroft E
 #include <sys/pool.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/dirent.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
@@ -421,6 +422,7 @@ iso_mountfs(devvp, mp, p, argp)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_CD9660);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = iso_bsize;
 	mp->mnt_fs_bshift = isomp->im_bshift;

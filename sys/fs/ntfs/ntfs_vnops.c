@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.18 2004/02/29 11:08:55 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.19 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.18 2004/02/29 11:08:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.19 2004/09/13 19:25:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ ntfs_pathconf(v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = NTFS_MAXFILENAME;
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
