@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.7 1998/09/03 08:12:56 msaitoh Exp $
+.\"	$NetBSD: ctxsw.9,v 1.8 1998/09/22 11:24:52 kleink Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,7 +111,7 @@ a process quickly.
 must remove the first process from the list on the queue
 with the highest priority
 (lower indices in 
-.Va sq
+.Va qs
 indicate higher priority),
 and assign the address of its process structure to the global variable
 .Va curproc .
