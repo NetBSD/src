@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_exec.h,v 1.3 2001/12/04 22:13:41 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.4 2002/01/07 22:05:03 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,19 +46,22 @@
 #define IRIX_ELF_AUX_ENTRIES 7
 
 #ifdef EXEC_ELF32
-#define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * sizeof(Aux32Info), \
-    sizeof (Elf32_Addr))
+#define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
+    sizeof(Aux32Info), sizeof (Elf32_Addr))
 
 int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
 
-int irix_elf32_probe __P((struct proc *, struct exec_package *, void *,  
+int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
+    char *, vaddr_t *));
+
+int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));
 #endif
 
 #ifdef EXEC_ELF64
-#define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * sizeof(Aux64Info), \
-    sizeof (Elf64_Addr))
+/* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
+    sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
 int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
@@ -67,6 +70,7 @@ int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 
-extern const struct emul emul_irix;
+extern const struct emul emul_irix_n32;
+extern const struct emul emul_irix_o32;
 
 #endif /* !_IRIX_EXEC_H_ */
