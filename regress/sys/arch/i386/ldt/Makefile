@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 01:24:13 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2002/09/18 05:41:50 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		testldt
-NOMAN=		# defined
 WARNS=		2
 DPADD+=		${LIBARCH}
 LDADD+=		-li386

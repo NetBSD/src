@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:24:13 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/18 05:41:36 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		stdargtest
 SRCS=		argtest.c
-NOMAN=		# defined
 CPPFLAGS+=	-DSTDARG
 
 .PATH:		${.CURDIR}/../stdarg
