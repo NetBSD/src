@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.42 2004/03/28 08:18:50 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.43 2004/03/28 08:45:37 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -263,3 +263,10 @@ sys/dev/pci/pciide.c			1.195
 	number). This makes cable detect work properly for newer promise 
 	(pdc268 and newer).
 	[bouyer, ticket #1630]
+
+sys/dev/pci/pcidevs			1.565 via patch
+sys/dev/pci/pcidevs_data.h		regen
+sys/dev/pci/pcidevs.h			regen
+
+	Add 3com 3c940 Gigabit Ethernet, and VIA KT600 PCI devices. PR#22453
+	[bouyer, ticket #1631]
