@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.99 2003/09/08 19:57:32 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.99 2003/09/08 19:57:32 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -125,6 +125,9 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $");
 #include <dev/usb/umass_quirks.h>
 #include <dev/usb/umass_scsipi.h>
 #include <dev/usb/umass_isdata.h>
+
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
 
 
 #ifdef UMASS_DEBUG
@@ -446,6 +449,8 @@ USB_ATTACH(umass)
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 			USB_ATTACH_ERROR_RETURN;
 		}
+		if (sc->maxlun > 0)
+			sc->sc_busquirks |= PQUIRK_FORCELUNS;
 	} else {
 		sc->maxlun = 0;
 	}
