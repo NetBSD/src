@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1998/03/25 04:12:32 mhitch Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1998/04/09 04:45:08 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -40,8 +40,9 @@ LEAF(rtld_start)
 					# 8(sp) for obj_main
 	move	s0,a0			# save stack pointer from a0
 	addu	a0, sp, 4		# _rtld argument
-	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp)
 	move	s1,a3			# save ps_strings pointer
+	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp)
+	nop				# [BD if jal not expanded]
 	lw	a1, 4(sp)		# our atexit function
 	lw	a2, 8(sp)		# obj_main entry
 	addu	sp, sp,12		# readjust stack
