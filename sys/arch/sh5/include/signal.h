@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2002/07/11 14:16:42 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2003/01/20 20:07:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,6 +69,7 @@ struct sigcontext {
 	int	sc_fpstate;		/* saved fp state flags */
 	int	sc_pad;
 	struct reg sc_regs;		/* saved register state */
+	struct fpreg sc_fpregs;		/* saved FP register state */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
