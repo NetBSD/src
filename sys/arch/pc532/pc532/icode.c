@@ -1,4 +1,3 @@
-#define DEBUG
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
@@ -32,7 +31,7 @@
  *
  *	icode.c
  *
- *	$Id: icode.c,v 1.3 1994/05/17 17:31:35 phil Exp $
+ *	$Id: icode.c,v 1.4 1994/05/20 06:44:28 phil Exp $
  */
 /*
  * This is the "user" code for process 1 that execs /sbin/init.
