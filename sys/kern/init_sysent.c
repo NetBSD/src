@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysent.c,v 1.84 1998/03/27 13:09:52 kleink Exp $	*/
+/*	$NetBSD: init_sysent.c,v 1.85 1998/05/02 18:33:19 christos Exp $	*/
 
 /*
  * System call switch table.
@@ -639,7 +639,7 @@ struct sysent sysent[] = {
 	{ 2, s(struct sys_nanosleep_args),
 	    sys_nanosleep },			/* 240 = nanosleep */
 	{ 0, 0,
-	    sys_nosys },			/* 241 = unimplemented */
+	    sys_nosys },			/* 241 = unimplemented fktrace */
 	{ 0, 0,
 	    sys_nosys },			/* 242 = unimplemented */
 	{ 0, 0,
@@ -730,5 +730,14 @@ struct sysent sysent[] = {
 	    sys___posix_lchown },		/* 285 = __posix_lchown */
 	{ 1, s(struct sys_getsid_args),
 	    sys_getsid },			/* 286 = getsid */
+	{ 0, 0,
+	    sys_nosys },			/* 287 = unimplemented */
+#ifdef KTRACE
+	{ 4, s(struct sys_fktrace_args),
+	    sys_fktrace },			/* 288 = fktrace */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 288 = unimplemented */
+#endif
 };
 
