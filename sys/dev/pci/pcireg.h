@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.12 1997/03/19 19:38:47 cgd Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.13 1997/04/11 05:24:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -126,9 +126,9 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_COMMUNICATIONS		0x07
 #define	PCI_CLASS_SYSTEM			0x08
 #define	PCI_CLASS_INPUT				0x09
-#define	PCI_CLASS_DOCK				0x0A
-#define	PCI_CLASS_PROCESSOR			0x0B
-#define	PCI_CLASS_SERIALBUS			0x0C
+#define	PCI_CLASS_DOCK				0x0a
+#define	PCI_CLASS_PROCESSOR			0x0b
+#define	PCI_CLASS_SERIALBUS			0x0c
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -194,11 +194,11 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_INPUT_MOUSE		0x02
 #define	PCI_SUBCLASS_INPUT_MISC			0x80
 
-/* 0x0A dock subclasses */
+/* 0x0a dock subclasses */
 #define	PCI_SUBCLASS_DOCK_GENERIC		0x00
 #define	PCI_SUBCLASS_DOCK_MISC			0x80
 
-/* 0x0B processor subclasses */
+/* 0x0b processor subclasses */
 #define	PCI_SUBCLASS_PROCESSOR_386		0x00
 #define	PCI_SUBCLASS_PROCESSOR_486		0x01
 #define	PCI_SUBCLASS_PROCESSOR_PENTIUM		0x02
@@ -206,7 +206,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
 #define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
 
-/* 0x0C serial bus subclasses */
+/* 0x0c serial bus subclasses */
 #define	PCI_SUBCLASS_SERIALBUS_FIREWIRE		0x00
 #define	PCI_SUBCLASS_SERIALBUS_ACCESS		0x01
 #define	PCI_SUBCLASS_SERIALBUS_SSA		0x02
