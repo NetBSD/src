@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.7 2003/10/31 20:52:47 mycroft Exp $
+#	$NetBSD: files.acpica,v 1.8 2003/11/26 16:06:12 kochi Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
@@ -141,7 +141,6 @@ file	dev/acpi/acpica/Subsystem/tbxfroot.c		acpi
 
 # utilities/
 file	dev/acpi/acpica/Subsystem/utalloc.c		acpi
-file	dev/acpi/acpica/Subsystem/utclib.c		acpi
 file	dev/acpi/acpica/Subsystem/utcopy.c		acpi
 file	dev/acpi/acpica/Subsystem/utdebug.c		acpi
 file	dev/acpi/acpica/Subsystem/utdelete.c		acpi
