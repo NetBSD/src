@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.6 2003/04/25 21:10:48 ragge Exp $
+#	$NetBSD: majors.alpha,v 1.7 2003/05/04 01:19:17 gmcgarry Exp $
 #
 # Device majors for alpha
 #
@@ -74,3 +74,4 @@ device-major	kttcp		char 72			kttcp
 device-major	cgd		char 73  block 18	cgd
 device-major	radio		char 74			radio
 device-major	ksyms		char 75			ksyms
+device-major	wsfont		char 76			wsfont
