@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.10 1999/11/12 01:05:07 lukem Exp $	*/
+/*	$NetBSD: refresh.c,v 1.11 1999/11/13 11:32:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.10 1999/11/12 01:05:07 lukem Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.11 1999/11/13 11:32:12 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,9 +66,6 @@ private	void	re_fastputc		__P((EditLine *, int));
 
 private	void	re__strncopy		__P((char *, char *, size_t));
 private	void	re__copy_and_pad	__P((char *, char *, size_t));
-
-private	coord_t	re_rprompt;
-
 
 #ifdef DEBUG_REFRESH
 private	void	re_printstr		__P((EditLine *, char *, char *,
@@ -186,8 +183,6 @@ re_refresh(el)
 
     /* temporarily draw rprompt to calculate its size */
     prompt_print(el, EL_RPROMPT);
-    re_rprompt.h = el->el_refresh.r_cursor.h;
-    re_rprompt.v = el->el_refresh.r_cursor.v;
 
     /* reset the Drawing cursor */
     el->el_refresh.r_cursor.h = 0;
@@ -212,9 +207,10 @@ re_refresh(el)
 	cur.v = el->el_refresh.r_cursor.v;
     }
 
-    rhdiff = el->el_term.t_size.h - el->el_refresh.r_cursor.h - re_rprompt.h;
-    if (re_rprompt.h && !re_rprompt.v && !el->el_refresh.r_cursor.v &&
-	rhdiff > 1) {
+    rhdiff = el->el_term.t_size.h - el->el_refresh.r_cursor.h -
+	el->el_rprompt.p_pos.h;
+    if (el->el_rprompt.p_pos.h && !el->el_rprompt.p_pos.v &&
+	!el->el_refresh.r_cursor.v && rhdiff > 1) {
 				/*
 				 * have a right-hand side prompt that will fit
 				 * on the end of the first line with at least
@@ -224,8 +220,8 @@ re_refresh(el)
 	    re_putc(el, ' ');
     	prompt_print(el, EL_RPROMPT);
     } else {
-	re_rprompt.h = 0;		/* flag "not using rprompt" */
-	re_rprompt.v = 0;
+	el->el_rprompt.p_pos.h = 0;	/* flag "not using rprompt" */
+	el->el_rprompt.p_pos.v = 0;
     }
 
     /* must be done BEFORE the NUL is written */
@@ -989,8 +985,8 @@ re_fastaddc(el)
 	return;
     }
 
-    rhdiff = el->el_term.t_size.h - el->el_cursor.h - re_rprompt.h;
-    if (re_rprompt.h && rhdiff < 3) {
+    rhdiff = el->el_term.t_size.h - el->el_cursor.h - el->el_rprompt.p_pos.h;
+    if (el->el_rprompt.p_pos.h && rhdiff < 3) {
 	re_refresh(el);		/* clear out rprompt if less than 1 char gap */
 	return;
     }				/* else (only do at end of line, no TAB) */
