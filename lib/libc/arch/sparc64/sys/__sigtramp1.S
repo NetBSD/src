@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/10 03:27:23 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.3 2002/10/29 00:22:18 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -56,6 +56,9 @@
 #include <machine/fsr.h>
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
+
+	.register	%g2,#ignore
+	.register	%g3,#ignore
 
 /*
  * When this code is run, the stack looks like:
