@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.32 1997/07/29 09:58:09 fair Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1657,7 +1657,7 @@ run_tdr(sc, cmd)
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else
 		printf("%s: TDR returned unknown status 0x%x\n",
-		    sc->sc_dev.dv_xname, result;
+		    sc->sc_dev.dv_xname, result);
 }
 
 #ifdef notdef
