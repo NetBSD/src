@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
+/*	$NetBSD: panic.c,v 1.3 1996/06/28 17:07:39 christos Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -41,7 +41,7 @@
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $";
+static char rcsid[] = "$NetBSD: panic.c,v 1.3 1996/06/28 17:07:39 christos Exp $";
 #endif
 
 /* External variables */
@@ -54,9 +54,9 @@ panic(a)
 {
 /* Something fatal has happened, print error message and exit.
  */
-	fprintf(stderr, "%s: %s\n", namep, a);
+	(void) fprintf(stderr, "%s: %s\n", namep, a);
 	if (fcreated)
-		unlink(atfile);
+		(void) unlink(atfile);
 
 	exit(EXIT_FAILURE);
 }
@@ -69,7 +69,7 @@ perr(a)
  */
 	perror(a);
 	if (fcreated)
-		unlink(atfile);
+		(void) unlink(atfile);
 
 	exit(EXIT_FAILURE);
 }
@@ -78,18 +78,19 @@ void
 perr2(a, b)
 	char *a, *b;
 {
-	fprintf(stderr, "%s", a);
+	(void) fprintf(stderr, "%s", a);
 	perr(b);
 }
 
 void
-usage(void)
+usage()
 {
 /* Print usage and exit.
 */
-	fprintf(stderr, "Usage: at [-q x] [-f file] [-m] time\n"
-	    "       atq [-q x] [-v]\n"
-	    "       atrm [-q x] job ...\n"
+	(void) fprintf(stderr, "%s%s%s%s",
+	    "Usage: at [-q x] [-f file] [-m] time\n",
+	    "       atq [-q x] [-v]\n",
+	    "       atrm [-q x] job ...\n",
 	    "       batch [-f file] [-m]\n");
 	exit(EXIT_FAILURE);
 }
