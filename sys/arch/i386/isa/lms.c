@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.11 1993/10/12 23:30:47 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.12 1993/10/16 06:39:37 mycroft Exp $
  */
 
 #include "param.h"
@@ -74,7 +74,7 @@ static void lmsattach __P((struct device *, struct device *, void *));
 static int lmsintr __P((void *));
 
 struct cfdriver lmscd =
-{ NULL, "lms", lmsprobe, lmsattach, sizeof (struct lms_softc) };
+{ NULL, "lms", lmsprobe, lmsattach, DV_TTY, sizeof (struct lms_softc) };
 
 #define LMSUNIT(dev)	(minor(dev))
 
