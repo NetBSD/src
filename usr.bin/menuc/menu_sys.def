@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.19 1999/06/20 02:07:18 cgd Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.20 1999/06/20 05:41:45 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -285,7 +285,9 @@ static void init_menu (struct menudesc *m)
 		exit(1);
 
 	}
-	if (m->x + m->w + wadd > max_cols)
+	if (m->x == -1)
+		m->x = (max_cols - (m->w + wadd)) / 2;	/* center */
+	else if (m->x + m->w + wadd > max_cols)
 		m->x = max_cols - (m->w + wadd);
 
 	/* Get the windows. */
