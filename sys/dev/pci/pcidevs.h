@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.54 1998/02/07 19:32:39 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.55 1998/02/07 20:07:37 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.47 1998/01/27 01:02:46 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.49 1998/02/07 20:05:25 augustss Exp 
  */
 
 /*
@@ -770,7 +770,7 @@
 #define	PCI_PRODUCT_INTEL_82371AB_USB	0x7112		/* 82371AB USB Host Controller (PIIX4) */
 #define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power Management Controller (PIIX4) */
 #define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI AGP Controller (PAC) */
-#define	PCI_PRODUCT_INTEL_82443LX	0x7181		/* 82443LX AGP Device (PAC) */
+#define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Device (PAC) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 82454KX/GX PCI Bridge (PB) */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 
