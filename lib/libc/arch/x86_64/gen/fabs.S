@@ -1,19 +1,17 @@
-/*	$NetBSD: fabs.S,v 1.2 2004/02/26 19:19:06 drochner Exp $	*/
+/*	$NetBSD: fabs.S,v 1.3 2004/03/23 17:11:35 drochner Exp $	*/
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fabs.S,v 1.2 2004/02/26 19:19:06 drochner Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.3 2004/03/23 17:11:35 drochner Exp $")
 #endif
 
-/*
- * Ok, this sucks. Is there really no way to push an xmm register onto
- * the FP stack directly?
- */
+	.section .rodata
+	.align 8
+__signmask:
+	.long 0xffffffff
+	.long 0x7fffffff
 
 ENTRY(fabs)
-	movsd	%xmm0, -8(%rsp)
-	fldl	-8(%rsp)
-	fabs
-	fstpl	-8(%rsp)
-	movsd	-8(%rsp),%xmm0
+	movsd	__signmask(%rip),%xmm1
+	andpd	%xmm1,%xmm0
 	ret
