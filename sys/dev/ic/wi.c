@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.94 2002/10/01 09:48:02 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.95 2002/10/01 16:11:19 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.94 2002/10/01 09:48:02 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.95 2002/10/01 16:11:19 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -572,8 +572,8 @@ wi_init(struct ifnet *ifp)
 	wi_write_txrate(sc);
 	wi_write_ssid(sc, WI_RID_NODENAME, sc->sc_nodename, sc->sc_nodelen);
 
-	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-		/* XXX: these configurations may be intersil only */
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
+	    sc->sc_firmware_type == WI_INTERSIL) {
 		wi_write_val(sc, WI_RID_OWN_BEACON_INT, ic->ic_lintval);
 		wi_write_val(sc, WI_RID_BASIC_RATE, 0x03);   /* 1, 2 */
 		wi_write_val(sc, WI_RID_SUPPORT_RATE, 0x0f); /* 1, 2, 5.5, 11 */
@@ -654,7 +654,7 @@ wi_init(struct ifnet *ifp)
  out:
 	if (error) {
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
-		wi_stop(ifp, 1);
+		wi_stop(ifp, 0);
 	}
 	DPRINTF(("wi_init: return %d\n", error));
 	return error;
@@ -1017,8 +1017,15 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		else {
 			/* convert to 802.11 rate */
 			rate = val * 2;
-			if (rate == 12)
-				rate = 11;	/* 5.5Mbps */
+			if (sc->sc_firmware_type == WI_LUCENT) {
+				if (rate == 10)
+					rate = 11;	/* 5.5Mbps */
+			} else {
+				if (rate == 4*2)
+					rate = 11;	/* 5.5Mbps */
+				else if (rate == 8*2)
+					rate = 22;	/* 11Mbps */
+			}
 		}
 	}
 	imr->ifm_active |= ieee80211_rate2media(rate, IEEE80211_T_DS);
@@ -1360,9 +1367,10 @@ wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 
 	if (buflen > IEEE80211_NWID_LEN)
 		return ENOBUFS;
+	memset(&ssid, 0, sizeof(ssid));
 	ssid.wi_len = htole16(buflen);
 	memcpy(ssid.wi_ssid, buf, buflen);
-	return wi_write_rid(sc, rid, &ssid, sizeof(ssid.wi_len) + buflen);
+	return wi_write_rid(sc, rid, &ssid, sizeof(ssid));
 }
 
 static int
