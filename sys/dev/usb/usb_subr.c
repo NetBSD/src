@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.28 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.29 1999/03/18 12:08:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -679,6 +679,8 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	p->refcnt = 1;
 	p->intrreqh = 0;
 	p->running = 0;
+	p->disco = 0;
+	p->discoarg = 0;
 	SIMPLEQ_INIT(&p->queue);
 	r = dev->bus->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
