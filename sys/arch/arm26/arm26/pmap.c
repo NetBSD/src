@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.25 2001/04/22 23:42:13 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.26 2001/04/25 14:42:31 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2001/04/22 23:42:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2001/04/25 14:42:31 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -137,6 +137,7 @@ struct pv_entry {
 	u_int8_t	pv_ppl;  /* Actual PPL */
 	u_int8_t	pv_vflags; /* Per-mapping flags */
 #define PV_WIRED	0x01 /* This is a wired mapping */
+#define PV_UNMANAGED	0x02 /* Mapping was entered by pmap_kenter_*() */
 	u_int8_t	pv_pflags; /* Per-physical-page flags */
 #define PV_REFERENCED	0x01
 #define PV_MODIFIED	0x02
@@ -188,6 +189,8 @@ static struct pv_entry *pv_alloc(void);
 static void pv_free(struct pv_entry *pv);
 static struct pv_entry *pv_get(pmap_t pmap, int ppn, int lpn);
 static void pv_release(pmap_t pmap, int ppn, int lpn);
+
+static int pmap_enter1(pmap_t, vaddr_t, paddr_t, vm_prot_t, int, int);
 
 static caddr_t pmap_find(paddr_t);
 
@@ -595,8 +598,19 @@ pv_release(pmap_t pmap, int ppn, int lpn)
  * information.  That is, this routine must actually insert this page
  * into the given map NOW.
  */
+
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
+{
+	UVMHIST_FUNC("pmap_enter");
+
+	UVMHIST_CALLED(pmaphist);
+	return pmap_enter1(pmap, va, pa, prot, flags, 0);
+}
+
+static int
+pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
+    int unmanaged)
 {
 	int ppn, lpn, s;
 	struct pv_entry *pv, *ppv;
@@ -625,6 +639,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/* pv->pv_pflags = 0; */
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
+	if (unmanaged)
+		pv->pv_vflags |= PV_UNMANAGED;
 	if (flags & VM_PROT_WRITE)
 		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
 	else if (flags & (VM_PROT_ALL))
@@ -686,7 +702,21 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	UVMHIST_FUNC("pmap_kenter_pa");
 
 	UVMHIST_CALLED(pmaphist);
-	pmap_enter(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED);
+	pmap_enter1(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED, 1);
+}
+
+void
+pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
+{
+	UVMHIST_FUNC("pmap_kenter_pgs");
+
+	UVMHIST_CALLED(pmaphist);
+	while (npages > 0) {
+		pmap_kenter_pa(va, (*pages)->phys_addr, VM_PROT_ALL);
+		va += NBPG;
+		pages++;
+		npages--;
+	}
 }
 
 void
@@ -826,29 +856,42 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	return FALSE;
 }
 
+/*
+ * Change access permissions on a given physical page.
+ *
+ * Pages mapped using pmap_kenter_*() are exempt.
+ */
 void
 pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 {
 	int ppn;
-	struct pv_entry *pv;
+	struct pv_entry *pv, *npv;
 	UVMHIST_FUNC("pmap_page_protect");
 
 	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	if (prot == VM_PROT_NONE) {
 		UVMHIST_LOG(pmaphist, "removing ppn %d\n", ppn, 0, 0, 0);
-		pv = &pv_table[ppn];
-		while (pv->pv_pmap != NULL) {
+		npv = pv = &pv_table[ppn];
+		while (pv != NULL && pv->pv_pmap != NULL) {
+			if (pv->pv_vflags & PV_UNMANAGED) {
+				pv = pv->pv_next;
+				continue;
+			}
 			if (pv->pv_pmap->pm_flags & PM_ACTIVE) {
 				MEMC_WRITE(pv->pv_deactivate);
 				cpu_cache_flush();
 			}
+			if (pv != &pv_table[ppn])
+				npv = pv->pv_next;
 			pv->pv_pmap->pm_entries[pv->pv_lpn] = NULL;
-			pv_release(pv->pv_pmap, pv->pv_ppn, pv->pv_lpn);
+			pv_release(pv->pv_pmap, ppn, pv->pv_lpn);
+			pv = npv;
 		}
 	} else if (prot != VM_PROT_ALL) {
 		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
-			if (pv->pv_pmap != NULL) {
+			if (pv->pv_pmap != NULL &&
+			    (pv->pv_vflags & PV_UNMANAGED) == 0) {
 				pv->pv_prot &= prot;
 				pv_update(pv);
 				if (pv->pv_pmap->pm_flags & PM_ACTIVE)
