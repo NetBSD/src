@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.11 2003/05/08 16:20:57 dsl Exp $	*/
+/*	$NetBSD: parse.y,v 1.12 2003/06/10 17:19:04 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@ static optn_info *cur_optn;
 
 %token <i_value> X Y W H NO BOX SUB HELP MENU NEXT EXIT ACTION ENDWIN OPTION 
 %token <i_value> TITLE DEFAULT DISPLAY ERROR EXITSTRING ALLOW DYNAMIC MENUS
-		 SCROLLABLE SHORTCUT
+		 SCROLLABLE SHORTCUT MESSAGES
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
 %type <s_value> init_code system helpstr text
@@ -85,10 +85,14 @@ menu_list :  /* empty */
 	  |  menu_list default_def
 	  |  menu_list initerror_def
 	  |  menu_list dynamic_def
+	  |  menu_list msgxlat_def
 	  ;
 
 dynamic_def : ALLOW DYNAMIC MENUS ';'
 		{ do_dynamic = 1; }
+
+msgxlat_def : ALLOW DYNAMIC MESSAGES ';'
+		{ do_msgxlat = 1; }
 
 initerror_def : ERROR action ';'
 		{ error_act = $2; }
