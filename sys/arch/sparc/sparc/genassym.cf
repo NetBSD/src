@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2000/01/21 13:24:06 pk Exp $
+#	$NetBSD: genassym.cf,v 1.25 2000/04/30 21:29:16 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ include <sys/disklabel.h>
 include <sys/disk.h>
 
 include <vm/vm.h>
+include <uvm/uvm.h>
 include <uvm/uvm_extern.h>
 
 include <machine/pmap.h>
@@ -130,6 +131,8 @@ define	SRUN		SRUN
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct uvmexp, swtch)
