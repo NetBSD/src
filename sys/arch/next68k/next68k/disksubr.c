@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2002/07/11 16:03:15 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2003/04/07 21:42:53 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -50,7 +50,7 @@
 #include <sys/disk.h>
 
 #include <ufs/ufs/dinode.h>             /* XXX for fs.h */
-#include <ufs/ffs/fs.h>                 /* XXX for SBSIZE */
+#include <ufs/ffs/fs.h>                 /* XXX for SBLOCKSIZE */
 
 #define	b_cylinder	b_resid
 
@@ -118,7 +118,7 @@ parse_nextstep_label(ondisk, lp, osdep)
 	lp->d_flags = ondisk->cd_flags;
 
 	lp->d_bbsize = LABELSIZE;
-	lp->d_sbsize = SBSIZE;
+	lp->d_sbsize = SBLOCKSIZE;
 
 	lp->d_npartitions = nbp = 0;
 	for (i = 0; i < CPUMAXPARTITIONS - 1; i++) {
