@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 1999/04/29 16:37:32 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 1999/04/30 09:26:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3358,7 +3358,13 @@ dostart:
 
 #ifdef DDB
 	/*
-	 * First, check for DDB arguments. The loader passes `esym' in %o4.
+	 * We now use the bootinfo method to pass arguments, and the new
+	 * magic number indicates that. A pointer to esym is passed in
+	 * %o4[0] and the bootinfo structure is passed in %o4[1].
+	 *
+	 * For compatibility with older versions, we check for DDB arguments
+	 * if the older magic number is there. The loader passes `esym' in
+	 * %o4.
 	 * A DDB magic number is passed in %o5 to allow for bootloaders
 	 * that know nothing about DDB symbol loading conventions.
 	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
@@ -3374,25 +3380,42 @@ dostart:
 	 * distinguish bootblock versions.
 	 */
 	mov	%g0, %l4
-	set	0x44444231, %l3
-	cmp	%o5, %l3		! chk magic
-	be	1f
+	set	KERNBASE, %l4
 
-	set	0x44444230, %l3
-	cmp	%o5, %l3		! chk compat magic
-	bne	2f
+	set	0x44444232, %l3		! bootinfo magic
+	cmp	%o5, %l3
+	bne	1f
+	!	1st word is esym
+	ld	[%o4], %l3
+	add	%l3, %l4, %o5		! relocate
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
+	st	%o5, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
+	add	%o4, 4, %o4
+	!	2nd word is bootinfo
+	ld	[%o4], %l3
+	add	%l3, %l4, %o5		! relocate
+	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
+	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
+	b	3f
 
-	set	KERNBASE, %l4		! compat magic found
+	set	0x44444231, %l3		! ddb magic
+	cmp	%o5, %l3
+	be	2f
+
+	set	0x44444230, %l3		! compat magic
+	cmp	%o5, %l3
+	bne	3f
+
 	set	0xf8000000, %l5		! compute correction term:
 	sub	%l5, %l4, %l4		!  old KERNBASE (0xf8000000 ) - KERNBASE
 
-1:
+2:
 	tst	%o4			! do we have the symbols?
-	bz	2f
+	bz	3f
 	 sub	%o4, %l4, %o4		! apply compat correction
 	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store esym
 	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
-2:
+3:
 #endif
 	/*
 	 * Sun4 passes in the `load address'.  Although possible, its highly
@@ -3753,6 +3776,7 @@ startmap_done:
 	sethi	%hi(_C_LABEL(trapbase)), %o0
 	st	%g6, [%o0+%lo(_C_LABEL(trapbase))]
 
+#ifdef notdef
 	/*
 	 * Step 2: clear BSS.  This may just be paranoia; the boot
 	 * loader might already do it for us; but what the hell.
@@ -3761,6 +3785,7 @@ startmap_done:
 	set	_end, %o1
 	call	_C_LABEL(bzero)
 	 sub	%o1, %o0, %o1
+#endif
 
 	/*
 	 * Stash prom vectors now, after bzero, as it lives in bss
@@ -6318,6 +6343,9 @@ Llongjmpbotch:
 #ifdef DDB
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
+	.word	0
+	.globl	_C_LABEL(bootinfo)
+_C_LABEL(bootinfo):
 	.word	0
 #endif
 	.globl	_C_LABEL(cold)
