@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.208 1999/03/24 05:51:00 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.209 1999/06/17 00:12:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
-#include "opt_pmap_new.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
@@ -187,16 +186,9 @@
  *
  * XXX 4 == sizeof pde
  */
-#ifdef PMAP_NEW
 	.set	_C_LABEL(PTmap),(PDSLOT_PTE << PDSHIFT)
 	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PDSLOT_PTE * NBPG)
 	.set	_C_LABEL(PTDpde),(_C_LABEL(PTD) + PDSLOT_PTE * 4)
-#else
-	.globl	_C_LABEL(PTmap),_C_LABEL(PTD),_C_LABEL(PTDpde)
-	.set	_C_LABEL(PTmap),(PTDPTDI << PDSHIFT)
-	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PTDPTDI * NBPG)
-	.set	_C_LABEL(PTDpde),(_C_LABEL(PTD) + PTDPTDI * 4)
-#endif
 
 /*
  * APTmap, APTD is the alternate recursive pagemap.
@@ -204,16 +196,9 @@
  *
  * XXX 4 == sizeof pde
  */
-#ifdef PMAP_NEW
 	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
 	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
 	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
-#else
-	.globl	_C_LABEL(APTmap),_C_LABEL(APTD),_C_LABEL(APTDpde)
-	.set	_C_LABEL(APTmap),(APTDPTDI << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + APTDPTDI * NBPG)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + APTDPTDI * 4)
-#endif
 
 
 /*
@@ -550,7 +535,6 @@ try586:	/* Use the `cpuid' instruction. */
 	 * Calculate the size of the kernel page table directory, and
 	 * how many entries it will have.
 	 */
-#if defined(PMAP_NEW)
 	movl	RELOC(nkpde),%ecx		# get nkpde
 	cmpl	$NKPTP_MIN,%ecx			# larger than min?
 	jge	1f
@@ -560,21 +544,6 @@ try586:	/* Use the `cpuid' instruction. */
 	jle	2f
 	movl	$NKPTP_MAX,%ecx
 2:
-#else
-	movl	RELOC(nkpde),%ecx		# get nkpde
-	testl	%ecx,%ecx			# if it's non-zero, use as-is
-	jnz	2f
-
-	movl	RELOC(biosextmem),%ecx
-	shrl	$10,%ecx			# cvt. # of KB to # of MB
-	imull	$NKPDE_SCALE,%ecx		# scale to # of KPDEs
-	addl	$NKPDE_BASE,%ecx		# and add the base.
-	cmpl	$NKPDE_MAX,%ecx			# clip to max.
-	jle	1f
-	movl	$NKPDE_MAX,%ecx
-1:	movl	%ecx,RELOC(nkpde)
-2:
-#endif
 
 	/* Clear memory for bootstrap tables. */
 	shll	$PGSHIFT,%ecx
@@ -649,21 +618,13 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Map kernel PDEs. */
 	movl	RELOC(nkpde),%ecx			# for this many pde s,
-#if defined(PMAP_NEW)
 	leal	(PROC0PDIR+PDSLOT_KERN*4)(%esi),%ebx	# kernel pde offset
-#else
-	leal	(PROC0PDIR+KPTDI*4)(%esi),%ebx		# offset of pde for kernel
-#endif
 	leal	(SYSMAP+PG_V|PG_KW)(%esi),%eax		# pte for KPT in proc 0,
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
-#ifdef PMAP_NEW
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
-#else
-	movl	%eax,(PROC0PDIR+PTDPTDI*4)(%esi)	# which is where PTmap maps!
-#endif
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	%esi,RELOC(PTDpaddr)
@@ -1150,10 +1111,8 @@ ENTRY(copyout)
 	/* Compute PTE offset for start address. */
 	shrl	$PGSHIFT,%edi
 
-#if defined(PMAP_NEW)
 	movl	_C_LABEL(curpcb),%edx
 	movl	$2f,PCB_ONFAULT(%edx)
-#endif
 
 1:	/* Check PTE for each page. */
 	testb	$PG_RW,_C_LABEL(PTmap)(,%edi,4)
@@ -1280,10 +1239,8 @@ ENTRY(copyoutstr)
 	movl	$NBPG,%ecx
 	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
 
-#if defined(PMAP_NEW)
 	movl	_C_LABEL(curpcb),%eax
 	movl	$6f,PCB_ONFAULT(%eax)
-#endif
 
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
@@ -1577,10 +1534,8 @@ ENTRY(suword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#ifdef PMAP_NEW
 	movl	_C_LABEL(curpcb),%eax
 	movl	$3f,PCB_ONFAULT(%eax)
-#endif
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1624,10 +1579,8 @@ ENTRY(susword)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#ifdef PMAP_NEW
 	movl	_C_LABEL(curpcb),%eax
 	movl	$3f,PCB_ONFAULT(%eax)
-#endif
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
@@ -1706,10 +1659,8 @@ ENTRY(subyte)
 	jne	2f
 #endif /* I486_CPU || I586_CPU || I686_CPU */
 
-#ifdef PMAP_NEW
 	movl	_C_LABEL(curpcb),%eax
 	movl	$3f,PCB_ONFAULT(%eax)
-#endif
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
