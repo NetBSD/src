@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.3 2002/10/20 20:55:38 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.4 2003/01/01 06:33:29 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,19 +87,22 @@ filename(str, ppart)
 #endif
 		*cp = savec;
 		if (dhandle == -1) {
-			/* if not, lp is the delimiter between device and path */
-			/* if the last component was a block device... */
+			/*
+			 * if not, lp is the delimiter between device and
+			 * path.  if the last component was a block device.
+			 */
 			if (!strcmp(devtype, "block")) {
 				/* search for arguments */
 #ifdef NOTDEF_DEBUG
-				printf("filename: hunting for arguments in %s\n", str);
+				printf("filename: hunting for arguments "
+				       "in %s\n", str);
 #endif
 				for (cp = lp; ; ) {
 					cp--;
-					if (cp < str) break;
-					if (cp[0] == '/') break;
-					if (cp[0] == ' ' && (cp+1) != lp &&
-					    cp[1] == '-')
+					if (cp < str ||
+					    cp[0] == '/' ||
+					    (cp[0] == ' ' && (cp+1) != lp &&
+					     cp[1] == '-'))
 						break;
 				}
 				if (cp >= str && *cp == '-') {
