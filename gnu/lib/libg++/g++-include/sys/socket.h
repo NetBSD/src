@@ -1,4 +1,4 @@
-//	$Id: socket.h,v 1.2 1993/08/02 17:21:46 mycroft Exp $
+//	$Id: socket.h,v 1.3 1993/08/15 16:47:00 mycroft Exp $
 
 #ifndef __libgxx_sys_socket_h
 
@@ -22,7 +22,7 @@ extern "C"
 
 // void* in select, since different systems use int* or fd_set*
 int       accept _G_ARGS((int, struct sockaddr*, int*));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 int       select _G_ARGS((int, void*, void*, void*, struct timeval*));
 
 int       bind _G_ARGS((int, const void*, int));
@@ -50,7 +50,7 @@ int       shutdown(int, int);
 int       socket(int, int, int);
 int       socketpair(int, int, int, int sv[2]);
 
-#ifndef __386BSD__
+#ifndef __NetBSD__
 int       recvfrom _G_ARGS((int, void*, int, int, void*, int *));
 int       sendto _G_ARGS((int, const void*, int, int, void*, int));
 int       setsockopt _G_ARGS((int, int, int, const char*, int));
