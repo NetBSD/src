@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2001/11/21 19:09:09 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2003/03/17 03:04:51 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,22 +65,39 @@ devopen(f, fname, file)
 	cp = fname;
 	ncp = (char *)fname;
 
-	/*
-	 * look for a string like 'scsi(0)disk(0)rdisk(0)partition(0)netbsd'
-	 * or 'dksc(0,0,0)netbsd'
+	/* 
+	 * If device starts with a PCI bus specifier, skip past it so the
+	 * device-matching code below gets the actual device type. Leave
+	 * fname as is, since it'll be passed back to ARCS to open the
+	 * device.  This is necessary for the IP32.
 	 */
-	if (cp[0] == 's' && cp[1] == 'c' && cp[2] == 's' && cp[3] == 'i') {
+	if (strncmp(cp, "pci", 3) == 0) {
+		while (*ncp && *ncp++ != ')')
+			;
+		if (*ncp)
+			cp = ncp;
+	}
+
+	/*
+	 * Look for a string like 'scsi(0)disk(0)rdisk(0)partition(0)netbsd'
+	 * or 'dksc(0,0,0)/netbsd' (the file can either be a relative path
+	 * or an abosolute path).
+	 */
+	if (strncmp(cp, "scsi", 4) == 0) {
 		strcpy(devtype, "scsi");
-	} else if (cp[0] == 'd' && cp[1] == 'k' && cp[2] == 's' && cp[3] == 'c') {
+	} else if (strncmp(cp, "dksc", 4) == 0) {
 		strcpy(devtype, "dksi");
-	} else
-		return (ENXIO);
+	} else {
+		return ENXIO;
+	}
+
 	while (ncp != NULL && *ncp != 0) {
 		while (*ncp && *ncp++ != ')')
 			;
 		if (*ncp)
 			cp = ncp;
 	}
+
 	strncpy(namebuf, fname, sizeof(namebuf));
 	namebuf[cp - fname] = 0;
 
@@ -96,18 +113,18 @@ devopen(f, fname, file)
 		if (dp->dv_name)
 			printf(" %s", dp->dv_name);
 	printf("\n");
-	return (ENXIO);
+	return ENXIO;
 
 fnd:
 	rc = (dp->dv_open)(f, namebuf);
 #endif /* !LIBSA_SINGLE_DEVICE */
 	if (rc)
-		return (rc);
+		return rc;
 
 #ifndef LIBSA_SINGLE_DEVICE
 	f->f_dev = dp;
 #endif
 	if (file && *cp != '\0')
 		*file = (char *)cp;	/* XXX */
-	return (0);
+	return 0;
 }
