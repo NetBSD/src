@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2003/08/07 16:30:34 agc Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2003/10/25 18:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2003/08/07 16:30:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2003/10/25 18:39:40 christos Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -812,7 +812,7 @@ _bus_dma_uiomove(buf, uio, n, direction)
 	int direction;
 {
 	struct iovec *iov;
-	int error;
+	int error = 0;
 	struct proc *p;
 	char *cp;
 	size_t resid, cnt;
