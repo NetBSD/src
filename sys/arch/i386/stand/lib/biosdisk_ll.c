@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosdisk_ll.c,v 1.2 1997/03/22 01:41:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,13 +33,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* shared by bootsector startup (bootsectmain)
- and biosdisk.c
- needs lowlevel parts from bios_disk.S
-*/
+/*
+ * shared by bootsector startup (bootsectmain) and biosdisk.c needs lowlevel
+ * parts from bios_disk.S
+ */
 
 #include <lib/libsa/stand.h>
 
@@ -47,92 +46,100 @@
 #include "diskbuf.h"
 
 extern int get_diskinfo __P((int));
-extern int biosread __P((int, int, int, int, int, char*));
+extern int biosread __P((int, int, int, int, int, char *));
 
 #define	SPT(di)		((di)&0xff)
 #define	HEADS(di)	((((di)>>8)&0xff)+1)
 
-int set_geometry(d)
-struct biosdisk_ll *d;
+int 
+set_geometry(d)
+	struct biosdisk_ll *d;
 {
-  int diskinfo;
+	int             diskinfo;
 
-  diskinfo = get_diskinfo(d->dev);
+	diskinfo = get_diskinfo(d->dev);
 
-  d->spc = (d->spt = SPT(diskinfo)) * HEADS(diskinfo);
+	d->spc = (d->spt = SPT(diskinfo)) * HEADS(diskinfo);
 
-  /* get_diskinfo assumes floppy if BIOS call
-   fails. Check at least "valid" geometry. */
-  return(!d->spc || !d->spt);
+	/*
+	 * get_diskinfo assumes floppy if BIOS call fails. Check at least
+	 * "valid" geometry.
+	 */
+	return (!d->spc || !d->spt);
 }
 
-/* Global shared "diskbuf" is used as read ahead buffer.  For
- * reading from floppies, the bootstrap has to be loaded on a 64K boundary
- * to ensure that this buffer doesn't cross a 64K DMA boundary.
+/*
+ * Global shared "diskbuf" is used as read ahead buffer.  For reading from
+ * floppies, the bootstrap has to be loaded on a 64K boundary to ensure that
+ * this buffer doesn't cross a 64K DMA boundary.
  */
 #define RA_SECTORS      (DISKBUFSIZE / BIOSDISK_SECSIZE)
-static int ra_dev;
-static int ra_end;
-static int ra_first;
+static int      ra_dev;
+static int      ra_end;
+static int      ra_first;
 
-int readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
-struct biosdisk_ll *d;
-int dblk, num;
-char *buf;
-int cold; /* don't use data segment or bss, don't call library functions */
+int 
+readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
+	struct biosdisk_ll *d;
+	int             dblk, num;
+	char           *buf;
+	int             cold;	/* don't use data segment or bss, don't call
+				 * library functions */
 {
-    while(num) {
-	int nsec;
+	while (num) {
+		int             nsec;
 
-	/* check for usable data in read-ahead buffer */
-	if (cold || diskbuf_user != &ra_dev || d->dev != ra_dev
-	    || dblk < ra_first || dblk >= ra_end) {
+		/* check for usable data in read-ahead buffer */
+		if (cold || diskbuf_user != &ra_dev || d->dev != ra_dev
+		    || dblk < ra_first || dblk >= ra_end) {
 
-	    /* no, read from disk */
-	    int cyl, head, sec;
-	    char *trbuf;
+			/* no, read from disk */
+			int             cyl, head, sec;
+			char           *trbuf;
 
-	    cyl = dblk / d->spc;
-	    head = (dblk % d->spc) / d->spt;
-	    sec = dblk % d->spt;
-	    nsec = d->spt - sec;
+			cyl = dblk / d->spc;
+			head = (dblk % d->spc) / d->spt;
+			sec = dblk % d->spt;
+			nsec = d->spt - sec;
 
-	    if(cold) {
-		/* transfer directly to buffer */
-		trbuf = buf;
-		if (nsec > num)
-		    nsec = num;
-	    } else {
-		/* fill read-ahead buffer */
-		trbuf = diskbuf;
-		if (nsec > RA_SECTORS)
-		    nsec = RA_SECTORS;
+			if (cold) {
+				/* transfer directly to buffer */
+				trbuf = buf;
+				if (nsec > num)
+					nsec = num;
+			} else {
+				/* fill read-ahead buffer */
+				trbuf = diskbuf;
+				if (nsec > RA_SECTORS)
+					nsec = RA_SECTORS;
 
-		ra_dev = d->dev;
-		ra_first = dblk;
-		ra_end = dblk + nsec;
-		diskbuf_user = &ra_dev;
-	    }
+				ra_dev = d->dev;
+				ra_first = dblk;
+				ra_end = dblk + nsec;
+				diskbuf_user = &ra_dev;
+			}
 
-	    if (biosread(d->dev, cyl, head, sec, nsec, trbuf)) {
-		if(!cold) diskbuf_user = 0; /* mark invalid */
-		return(-1); /* XXX cannot output here if (cold) */
-	    }
+			if (biosread(d->dev, cyl, head, sec, nsec, trbuf)) {
+				if (!cold)
+					diskbuf_user = 0; /* mark invalid */
+				return (-1);	/* XXX cannot output here if
+						 * (cold) */
+			}
+		} else		/* can take blocks from end of read-ahead
+				 * buffer */
+			nsec = ra_end - dblk;
 
-	} else /* can take blocks from end of read-ahead buffer */
-	    nsec = ra_end - dblk;
-
-	if(!cold) {
-	    /* copy data from read-ahead to user buffer */
-	    if(nsec > num) nsec = num;
-	    bcopy(diskbuf + (dblk - ra_first) * BIOSDISK_SECSIZE, buf,
-		  nsec * BIOSDISK_SECSIZE);
+		if (!cold) {
+			/* copy data from read-ahead to user buffer */
+			if (nsec > num)
+				nsec = num;
+			bcopy(diskbuf + (dblk - ra_first) * BIOSDISK_SECSIZE,
+			    buf, nsec * BIOSDISK_SECSIZE);
+		}
+		buf += nsec * BIOSDISK_SECSIZE;
+		num -= nsec;
+		dblk += nsec;
 	}
 
-	buf += nsec * BIOSDISK_SECSIZE;
-	num -= nsec;
-	dblk += nsec;
-    }
-
-    return(0);
+	return (0);
 }

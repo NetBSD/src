@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.2 1997/03/22 01:41:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -29,9 +29,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 int biosdiskstrategy __P((void*, int, daddr_t, size_t, void*, size_t*));
 int biosdiskopen __P((struct open_file*, ...));

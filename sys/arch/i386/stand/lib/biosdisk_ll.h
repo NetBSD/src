@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosdisk_ll.h,v 1.2 1997/03/22 01:41:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,21 +33,19 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* shared by bootsector startup (bootsectmain)
- and biosdisk.c
- needs lowlevel parts from bios_disk.S
-
+/*
+ * shared by bootsector startup (bootsectmain) and biosdisk.c needs lowlevel
+ * parts from bios_disk.S
  */
 
 struct biosdisk_ll {
-  int dev; /* BIOS device number */
-  int spt, spc; /* geometry */
+	int             dev;		/* BIOS device number */
+	int             spt, spc;	/* geometry */
 };
 
 #define BIOSDISK_SECSIZE 512
 
-int set_geometry __P((struct biosdisk_ll*));
-int readsects __P((struct biosdisk_ll*, int, int, char*, int));
+int set_geometry __P((struct biosdisk_ll *));
+int readsects   __P((struct biosdisk_ll *, int, int, char *, int));
