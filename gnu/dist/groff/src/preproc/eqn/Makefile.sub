@@ -37,8 +37,8 @@ HDRS=\
   $(srcdir)/eqn.h \
   $(srcdir)/pbox.h
 GRAM=$(srcdir)/eqn.y
-YTABC=$(srcdir)/eqn.cc
-YTABH=$(srcdir)/eqn_tab.h
+YTABC=eqn.cc
+YTABH=eqn_tab.h
 NAMEPREFIX=$(g)
 CLEANADD=neqn
 
@@ -55,3 +55,5 @@ install_data: neqn
 
 uninstall_sub:
 	-rm -f $(bindir)/$(NAMEPREFIX)neqn
+
+lex.o: eqn.cc
