@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.2.1 2004/03/29 10:45:33 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.11.2.2 2004/04/05 20:41:12 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/netinet
 CPPFLAGS+=	-DSTATETOP -D__UIO_EXPOSE
 
 IPFOBJDIR!=	cd $(.CURDIR)/../libipf && ${PRINTOBJDIR}
-DPADD+=		${IPFOBJDIR}/libipf.a
-LDADD+=		-L${IPFOBJDIR} -lipf
+DPADD+=		${IPFOBJDIR}/libipf.a ${LIBKVM}
+LDADD+=		-L${IPFOBJDIR} -lipf -lkvm
 
 CLEANFILES+=	y.tab.c y.tab.h
 
