@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.22 2001/02/04 21:33:19 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.23 2001/02/04 21:37:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -207,12 +207,12 @@ char	*rawname __P((char *cp));
 struct	dinode *getino __P((ino_t inum));
 
 /* rdump routines */
-#ifdef RDUMP
+#if defined(RDUMP) || defined(RRESTORE)
 void	rmtclose __P((void));
 int	rmthost __P((char *host));
 int	rmtopen __P((char *tape, int mode));
 int	rmtwrite __P((char *buf, int count));
-#endif /* RDUMP */
+#endif /* RDUMP || RRESTORE */
 
 void	interrupt __P((int signo));	/* in case operator bangs on console */
 
