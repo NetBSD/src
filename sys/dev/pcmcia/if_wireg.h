@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.6 2000/05/23 08:41:49 enami Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.7 2001/01/11 11:54:21 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,7 +37,7 @@
  * Oslo IETF plenary meeting.
  */
 
-#define WI_TIMEOUT	65536
+#define WI_TIMEOUT	70000
 
 #define WI_PORT0	0
 #define WI_PORT1	1
