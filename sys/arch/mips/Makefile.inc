@@ -1,11 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1996/09/29 23:51:22 jonathan Exp $
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
-
-# Makefile for mips tags file
-
-NOPROG=	noprog
-NOMAN=	noman
-
+#	$NetBSD: Makefile.inc,v 1.2 1997/10/11 16:12:55 mycroft Exp $
 
 SMIPS=	../mips/mips/*.[ch] ../mips/include/*.h
 AMIPS=	../mips/mips/*.S
