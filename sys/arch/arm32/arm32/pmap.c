@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1999/03/27 11:45:07 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1999/03/27 14:13:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -472,8 +472,10 @@ pmap_remove_pv(pmap, va, pv)
 			*pv = *npv;
 			flags = npv->pv_flags;
 			pmap_free_pv(npv);
-		} else
+		} else {
+			flags = pv->pv_flags;
 			pv->pv_pmap = NULL;
+		}
 	} else {
 		for (npv = pv->pv_next; npv; pv = npv, npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
