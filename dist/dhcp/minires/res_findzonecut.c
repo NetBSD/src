@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.2 2001/08/03 13:07:05 drochner Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.3 2002/03/18 20:25:58 bjh21 Exp $";
 #endif /* not lint */
 
 /*
@@ -290,7 +290,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			int rdlen;
 			ns_rr rr;
 
-			rcode = ns_parserr(&msg, sect, i, &rr) < 0;
+			rcode = ns_parserr(&msg, sect, i, &rr);
 			if (rcode != ISC_R_SUCCESS) {
 				DPRINTF(("get_soa: ns_parserr(%s, %d) failed",
 					 p_section(sect, ns_o_query), i));
@@ -585,7 +585,7 @@ do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
 		DPRINTF(("do_query: res_nsend returned 0"));
 		return ISC_R_NOTFOUND;
 	}
-	if (ns_initparse((u_char *)resp, n, msg) < 0) {
+	if (ns_initparse((u_char *)resp, n, msg) != ISC_R_SUCCESS) {
 		DPRINTF(("do_query: ns_initparse failed"));
 		return ISC_R_NOSPACE;
 	}
