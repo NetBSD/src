@@ -1,21 +1,15 @@
-#	$NetBSD: Makefile.cats.inc,v 1.1.2.6 2002/11/11 21:57:33 nathanw Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.1.2.7 2002/11/23 20:21:41 skrll Exp $
 
 .if (${OBJECT_FMT} == "ELF")
-# Need to convert the kernel from ELF to a.out so that OpenFirmware
+# Need to convert the kernel from ELF to a.out so that the firmware
 # can load it.
 
-# ZMAGIC a.out includes the a.out header in front of the text
-# segment, so if we link the kernel at the normal load address,
-# it will be wrong once the a.out header is stuck in the file.
-# XXX HOWEVER, by linking it +32 bytes to compensate, the resulting
-# XXX ELF kernel cannot be booted itself.
-LOADADDRESS=0xF0000020
+LINKFLAGS=	-T ${THISARM}/conf/kern.ldscript
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${DBSYM} $@ || true"; \
 	${DBSYM} $@ || true; \
-	echo OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@.aout; \
-	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@.aout
+	echo \
+	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout"; \
+	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout
 .endif
