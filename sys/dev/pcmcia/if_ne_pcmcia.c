@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.19 1998/09/23 21:22:41 veego Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.20 1998/10/07 01:08:37 jtk Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -134,9 +134,9 @@ struct ne2000dev {
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x08, 0x00, 0x5a } },
 
-    { PCMCIA_STR_LINKSYS_ECARD, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD,
-      PCMCIA_CIS_LINKSYS_ECARD, 
+    { PCMCIA_STR_LINKSYS_ECARD_1, 
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+      PCMCIA_CIS_LINKSYS_ECARD_1, 
       0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_STR_LINKSYS_COMBO_ECARD, 
@@ -148,6 +148,15 @@ struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
       0, 0x0120, { 0x20, 0x04, 0x49 } },
+
+    /* Although the comments above say to put VENDOR/PRODUCT INVALID IDs
+       above this list, we need to keep this one below the ECARD_1, or else
+       both will match the same more-generic entry rather than the more
+       specific one above with proper vendor and product IDs. */
+    { PCMCIA_STR_LINKSYS_ECARD_2, 
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_LINKSYS_ECARD_2,
+      0, -1, { 0x00, 0x80, 0xc8 } },
 
     { PCMCIA_STR_IODATA_PCLAT,
       PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
