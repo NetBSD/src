@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.59 2000/10/20 18:46:07 briggs Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60 2001/02/19 22:11:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -225,6 +225,7 @@
 #define getopt_long		_getopt_long
 #define getpagesize		_getpagesize
 #define getpass			_getpass
+#define getprogname		_getprogname
 #define getprotobyname		_getprotobyname
 #define getprotobynumber	_getprotobynumber
 #define getprotoent		_getprotoent
