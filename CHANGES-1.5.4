@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.99 2003/03/27 09:15:29 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.100 2003/03/31 06:53:39 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2032,3 +2032,11 @@ gnu/usr.bin/tar/extract.c		patched by hand
 	contained in the archive are created mode 0777. The attached patch
 	fixes this by honouring the umask in this special case.
 	[wennmach, ticket #38]
+
+gnu/dist/sendmail/sendmail/conf.c	1.16 via patch
+gnu/dist/sendmail/sendmail/parseaddr.c	1.11 via patch
+gnu/dist/sendmail/sendmail/version.c	via patch
+
+	Apply new patch from sendmail.org to address the new buffer overflow
+	in address parsing.  Change version number to 8.11.6p2.
+	[atatat, ticket #39]
