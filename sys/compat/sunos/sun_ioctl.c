@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.9 1994/04/26 19:52:29 pk Exp $
+ * $Id: sun_ioctl.c,v 1.10 1994/05/21 08:22:08 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -625,15 +625,8 @@ sun_ioctl(p, uap, retval)
 		break;
 
 	case _IOWR('i', 31, struct arpreq):
-	    {
-		struct arpreq arpreq;
-
-		if (error = copyin (uap->data, (caddr_t)&arpreq, sizeof (arpreq)))
-			return error;
-		if (error = (*ctl)(fp, OSIOCGARP, (caddr_t)&arpreq, p))
-			return error;
-		return copyout ((caddr_t)&arpreq, uap->data, sizeof (arpreq));
-	    }
+		/* SIOCGARP */
+		break;
 
 	case _IOW('i', 32, struct arpreq):
 		/* SIOCDARP */
