@@ -1,0 +1,308 @@
+.\"	$NetBSD: login.conf.5,v 1.1 2000/01/12 05:02:12 mjl Exp $
+.\"
+.\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Berkeley Software Design,
+.\"	Inc.
+.\" 4. The name of Berkeley Software Design, Inc.  may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY BERKELEY SOFTWARE DESIGN, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL BERKELEY SOFTWARE DESIGN, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
+.\"
+.Dd February 23, 1995
+.Dt LOGIN.CONF 5
+.Os
+.Sh NAME
+.Nm login.conf
+.Nd login class capability data base
+.Sh SYNOPSIS
+.Nm /etc/login.conf
+.Sh DESCRIPTION
+The
+.Nm login.conf
+file describes the various attributes of login classes.
+A login class determines what styles of authentication are available
+as well as session resource limits and environment setup.
+While designed primarily for the
+.Xr login 8
+program,
+it is also used by other programs, e.g.,
+.Xr rexecd 8 ,
+which need to set up a user environment.
+.Sh CAPABILITIES
+Refer to
+.Xr getcap 3
+for a description of the file layout.
+All entries in the
+.Nm login.conf
+file are either boolean or use a `=' to separate the capability
+from the value.
+The types are described after the capability table.
+.Bl -column minpasswordlenxx programxx xusxbin
+.Sy Name	Type	Default	Description
+.\"
+.\"XX .sp
+.\"XX .It copyright Ta file Ta "" Ta
+.\"XX File containing additional copyright information.
+.\"
+.\"XX .sp
+.\"XX .It coredumpsize Ta size Ta "" Ta
+.\"XX Maximum coredump size limit.
+.\"
+.\"XX .sp
+.\"XX .It cputime Ta time Ta "" Ta
+.\"XX CPU usage limit.
+.\"
+.\"XX .sp
+.\"XX .It datasize Ta size Ta "" Ta
+.\"XX Maximum data size limit.
+.\"
+.\"XX .sp
+.\"XX .It expireperiod Ta time Ta "" Ta
+.\"XX Time for expiry allocation.
+.\"XX .sp
+.\"XX .It filesize Ta size Ta "" Ta
+.\"XX Maximum file size limit.
+.\"
+.\"XX .sp
+.\"XX It hushlogin Ta bool Ta Dv false Ta
+.\"XX Same as having a
+.\"XX .Pa $HOME/.hushlogin
+.\"XX file.
+.\"XX See
+.\"XX .Xr login 8 .
+.\"
+.\"XX .sp
+.\"XX .It ignorenologin Ta bool Ta Dv false Ta
+.\"XX Not affected by
+.\"XX .Pa nologin
+.\"XX files.
+.\"XX See
+.\"XX .Xr login 8 .
+.\"XX .\"
+.\"XX .sp
+.\"XX .It stacksize Ta size Ta "" Ta
+.\"XX Maximum stack size limit.
+.\"XX .\"
+.\"XX .sp
+.\"XX .It maxproc Ta number Ta "" Ta
+.\"XX Maximum number of process.
+.\"
+.\"XX .sp
+.\"XX .It memorylocked Ta size Ta "" Ta
+.\"XX Maximum locked in core memory size limit.
+.\"
+.\"XX .sp
+.\"XX .It memoryuse Ta size Ta "" Ta
+.\"XX Maximum in core memoryuse size limit.
+.\"
+.sp
+.It minpasswordlen Ta number Ta "" Ta
+The minimum length a local password may be.
+Used by the
+.Xr passwd 1
+utility.
+.\"
+.\"XX .sp
+.\"XX .It nologin Ta file Ta "" Ta
+.\"XX If the file exists it will be displayed
+.\"XX and the login session will be terminated.
+.\"
+.\"XX .sp
+.\"XX .It openfiles Ta number Ta "" Ta
+.\"XX Maximum number of open files per process.
+.\"
+.\"XX .sp
+.\"XX .It password-dead Ta time Ta Dv 0 Ta
+.\"XX Length of time a password may be expired but not quite dead yet.
+.\"XX When set (for both the client and remote server machine when doing
+.\"XX remote authentication), a user is allowed to log in just one more
+.\"XX time after their password (but not account) has expired.  This allows
+.\"XX a grace period for updating their password.
+.\"
+.sp
+.It passwordtime Ta time Ta "" Ta
+Used by passwd(1) to set next password expiry date.
+.\"XX .sp
+.\"XX .It password-warn Ta time Ta Dv 2w Ta
+.\"XX If the user's password will expire within this length of time then
+.\"XX warn the user of this.
+.\"
+.\"XX .sp
+.\"XX .It path Ta path Ta Dv "/bin /usr/bin" Ta
+.\"XX .br
+.\"XX Default search path.
+.\"
+.\"XX .sp
+.\"XX .It priority Ta number Ta "" Ta
+.\"XX Initial priority (nice) level.
+.\"
+.\"XX .sp
+.\"XX .It requirehome Ta bool Ta Dv false Ta
+.\"XX Require home directory to login.
+.\"
+.\"XX .sp
+.\"XX .It shell Ta program Ta "" Ta
+.\"XX Session shell to execute rather than the shell specified in the password file.
+.\"XX The
+.\"XX .Ev SHELL
+.\"XX environment variable will contain the shell specified in the password file.
+.\"
+.\"XX .sp
+.\"XX .It term Ta string Ta Dv su Ta
+.\"XX Default terminal type if not able to determine from other means.
+.\"
+.\"XX .sp
+.\"XX .It umask Ta number Ta Dv 022 Ta
+.\"XX Initial umask.
+.\"XX Should always have a leading
+.\"XX .Li 0
+.\"XX to assure octal interpretation.
+.\"XX See
+.\"XX .Xr umask 2 .
+.\"
+.\"XX .sp
+.\"XX .It welcome Ta file Ta Pa /etc/motd Ta
+.\"XX File containing welcome message.
+.El
+.\"XX .Pp
+.\"XX The resource limit entries
+.\"XX .No ( Ns Va cputime , filesize , datasize , stacksize , coredumpsize ,
+.\"XX .Va memoryuse , memorylocked , maxproc ,
+.\"XX and
+.\"XX .Va openfiles )
+.\"XX actually specify both the maximum and current limits (see
+.\"XX .Xr getrlimit 2 ).
+.\"XX The current limit is the one normally used,
+.\"XX although the user is permitted to increase the current limit to the
+.\"XX maximum limit.
+.\"XX The maximum and current limits may be specified individually by appending
+.\"XX a
+.\"XX .Va \-max
+.\"XX or
+.\"XX .Va \-cur
+.\"XX to the capability name (e.g.,
+.\"XX .Va openfiles-max
+.\"XX and
+.\"XX .Va openfiles-cur Ns No ).
+.Pp
+\*(oSwill never define capabilities which start with
+Li x-
+or
+.Li X- ,
+these are reserved for external use (unless included through contributed
+software).
+.Pp
+The argument types are defined as:
+.Bl -tag -width programxx
+.\"
+.It file
+Path name to a text file.
+.\"
+.It list
+A comma separated list of values.
+.\"
+.It number
+A number.  A leading
+.Li 0x
+implies the number is expressed in hexadecimal.
+A leading
+.Li 0
+implies the number is expressed in octal.
+Any other number is treated as decimal.
+.\"
+.It path
+A space separated list of path names.
+If a
+.Li ~
+is the first character in the path name, the
+.Li ~
+is expanded to the user's home directory.
+.\"
+.It program
+A path name to program.
+.\"
+.It size
+A
+.Va number
+which expresses a size in bytes.
+It may have a trailing
+.Li b
+to multiply the value by 512, a
+.Li k
+to multiply the value by 1 K (1024), and a
+.Li m
+to multiply the value by 1 M (1048576).
+.\"
+.It time
+A time in seconds.
+A time may be expressed as a series of numbers
+which are added together.
+Each number may have a trailing character to
+represent time units:
+.Bl -tag -width xxx
+.\"
+.It y
+Indicates a number of 365 day years.
+.\"
+.It w
+Indicates a number of 7 day weeks.
+.\"
+.It d
+Indicates a number of 24 hour days.
+.\"
+.It h
+Indicates a number of 60 minute hours.
+.\"
+.It m
+Indicates a number of 60 second minutes.
+.\"
+.It s
+Indicates a number of seconds.
+.El
+.Pp
+For example, to indicate 1 and 1/2 hours, the following string
+could be used:
+.Li 1h30m .
+.El
+.\"
+.Pp
+The class to be used is normally determined by the
+.Li class
+field in the password file (see
+.Xr passwd 5 ).
+.Pp
+The class is used to look up a corresponding entry in the
+.Pa login.conf
+file.
+.Sh SEE ALSO
+.Xr getcap 3 ,
+.Xr login_cap 3 ,
+.Xr ttys 5 ,
+.Xr ftpd 8 ,
+.Xr login 8
+

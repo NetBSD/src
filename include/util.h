@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.14 1999/06/12 18:06:19 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.15 2000/01/12 05:02:11 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -86,6 +86,7 @@ int	ttylock __P((const char *, int, pid_t *));
 int	ttyunlock __P((const char *));
 int	ttyaction __P((const char *, const char *, const char *));
 char   *ttymsg __P((struct iovec *, int, const char *, int));
+int	secure_path __P((char *));
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
