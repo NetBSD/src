@@ -2,18 +2,20 @@
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.3 1993/06/26 01:17:52 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.4 1993/06/27 00:46:09 glass Exp $
  */
 
 #include "param.h"
 #include "kernel.h"
 #include "intersil7170.h"
 
-#include "psl.h"
-#include "cpu.h"
+#include <machine/psl.h>
+#include <machine/cpu.h>
 #include "obio.h"
 
-#define intersil_clock (struct intersil7170 *) CLOCK_ADDR)
+#define CLOCK_ADDR 0x6000000
+
+#define intersil_clock ((struct intersil7170 *) CLOCK_ADDR)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
@@ -46,10 +48,7 @@ static int month_days[12] = {
  *
  * Resettodr restores the time of day hardware after a time change.
  *
- * A note on the real-time clock:
- * We actually load the clock with CLK_INTERVAL-1 instead of CLK_INTERVAL.
- * This is because the counter decrements to zero after N+1 enabled clock
- * periods where N is the value loaded into the counter.
+ * also microtime support
  */
 
 /*
@@ -58,7 +57,7 @@ static int month_days[12] = {
 void startrtclock()
 {
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
-						   INTERSIL_IDISABLE);
+						   INTERSIL_CMD_IDISABLE);
     intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
 }
 
@@ -67,7 +66,7 @@ void enablertclock()
 	/* make sure irq5/7 stuff is resolved :) */
 
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
-						   INTERSIL_IENABLE);
+						   INTERSIL_CMD_IENABLE);
 }
 
 void intersil_counter_state(map)
@@ -95,10 +94,10 @@ struct timeval intersil_to_timeval()
     now.tv_sec = 0;
     now.tv_usec = 0;
 
-#define range_check_high(field, high)
-    now_state->field > high
-#define range_check(field, low, high)
-	now_state->field < low || now_state->field > high
+#define range_check_high(field, high) \
+    now_state.field > high
+#define range_check(field, low, high) \
+	now_state.field < low || now_state.field > high
 
     if (range_check_high(csecs, 99) ||
 	range_check_high(hours, 23) ||
@@ -109,21 +108,21 @@ struct timeval intersil_to_timeval()
 	range_check_high(year, 99) ||
 	range_check_high(day, 6)) return now;
 
-    if ((INTERSIL_UNIX_BASE - INTERSIL_YEAR_BASE) > now_state->year)
+    if ((INTERSIL_UNIX_BASE - INTERSIL_YEAR_BASE) > now_state.year)
 	return now;
 
     for (i = INTERSIL_UNIX_BASE-INTERSIL_YEAR_BASE;
-	 i < now_state->year, i++)
-	if (INTERSIL_LEAP_YEAR(INTERSIL_YEAR_BASE+now_state->year))
+	 i < now_state.year; i++)
+	if (INTERSIL_LEAP_YEAR(INTERSIL_YEAR_BASE+now_state.year))
 	    now.tv_sec += SECS_PER_LEAP;
 	else now.tv_sec += SECS_PER_YEAR;
     
-    for (i = 1; i < now_state->month; i++) 
-	now.tv_sec += SECS_PER_MONTH(i, INTERSIL_YEAR_BASE+now_state->year);
-    now.tv_sec += SECS_DAY*(now_state->date-1);
-    now.tv_sec += SECS_PER_HOUR * now_state->hours;
-    now.tv_sec += 60 * now_state->minutes;
-    now.tv_sec += 60 * now_state->seconds;
+    for (i = 1; i < now_state.month; i++) 
+	now.tv_sec += SECS_PER_MONTH(i, INTERSIL_YEAR_BASE+now_state.year);
+    now.tv_sec += SECS_DAY*(now_state.date-1);
+    now.tv_sec += SECS_HOUR * now_state.hours;
+    now.tv_sec += 60 * now_state.minutes;
+    now.tv_sec += 60 * now_state.seconds;
     return now;
 }
 /*
@@ -136,6 +135,7 @@ void inittodr(base)
     int s;
     struct timeval clock_time;
     long diff_time;
+    void resettodr();
 
     clock_time = intersil_to_timeval();
 
@@ -143,7 +143,7 @@ void inittodr(base)
 	
     if (clock_time.tv_sec < base) {
 	printf("WARNING: real-time clock reports a time earlier than last\n");
-	printf("         write to root filesystem.  Trusting filesystem..."\n);
+	printf("         write to root filesystem.  Trusting filesystem...\n");
 	time.tv_sec = base;
 	resettodr();
 	return;
@@ -160,29 +160,29 @@ set_time:
 }
 
 void timeval_to_intersil(now, map)
-    timeval now;
-    struct intersil_map *map;
+     struct timeval now;
+     struct intersil_map *map;
 {
 
-    for (map->year = INTERSIL_UNIX_BASE-INTERSIL_BASE_YEAR;
-	 now > SECS_YEAR(map->year);
+    for (map->year = INTERSIL_UNIX_BASE-INTERSIL_YEAR_BASE;
+	 now.tv_sec > SECS_YEAR(map->year);
 	 map->year++)
-	now -= SECS_YEAR(map->year);
+	now.tv_sec -= SECS_YEAR(map->year);
 
-    for (map->month = 1; now >=0; map->month++)
-	now -= SECS_PER_MONTH(map->monthINTERSIL_BASE_YEAR+map->year);
+    for (map->month = 1; now.tv_sec >=0; map->month++)
+	now.tv_sec -= SECS_PER_MONTH(map->month, INTERSIL_YEAR_BASE+map->year);
 
     map->month--;
-    now -= SECS_PER_MONTH(map->monthINTERSIL_BASE_YEAR+map->year);
+    now.tv_sec -= SECS_PER_MONTH(map->month, INTERSIL_YEAR_BASE+map->year);
 
-    map->date = now % SECS_DAY ;
-    map /= SECS_DAY;
-    map->minutes = now %60;
-    now /= 60;
-    map->seconds = now %60;
-    now /= 60;
+    map->date = now.tv_sec % SECS_DAY ;
+    now.tv_sec /= SECS_DAY;
+    map->minutes = now.tv_sec %60;
+    now.tv_sec /= 60;
+    map->seconds = now.tv_sec %60;
+    now.tv_sec /= 60;
     map->day = map->date %7;
-    map->csec = now / 10000;
+    map->csecs = now.tv_usec / 10000;
 }
 
 
@@ -195,21 +195,38 @@ void resettodr()
 
     timeval_to_intersil(time, &hdw_format);
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_STOP,
-						   INTERSIL_IDISABLE);
+						   INTERSIL_CMD_IDISABLE);
 
-    intersil_clock->counters.csecs    =    hdw_format->csecs   ;
-    intersil_clock->counters.hours    =    hdw_format->hours   ;
-    intersil_clock->counters.minutes  =    hdw_format->minutes ;
-    intersil_clock->counters.seconds  =    hdw_format->seconds ;
-    intersil_clock->counters.month    =    hdw_format->month   ;
-    intersil_clock->counters.date     =    hdw_format->date    ;
-    intersil_clock->counters.year     =    hdw_format->year    ;
-    intersil_clock->counters.day      =    hdw_format->day     ;
+    intersil_clock->counters.csecs    =    hdw_format.csecs   ;
+    intersil_clock->counters.hours    =    hdw_format.hours   ;
+    intersil_clock->counters.minutes  =    hdw_format.minutes ;
+    intersil_clock->counters.seconds  =    hdw_format.seconds ;
+    intersil_clock->counters.month    =    hdw_format.month   ;
+    intersil_clock->counters.date     =    hdw_format.date    ;
+    intersil_clock->counters.year     =    hdw_format.year    ;
+    intersil_clock->counters.day      =    hdw_format.day     ;
     
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
-						   INTERSIL_IENABLE);
+						   INTERSIL_CMD_IENABLE);
 }
 
+void microtime(tvp)
+     register struct timeval *tvp;
+{
+    int s;
+    static struct timeval lasttime;
 
+    /* as yet...... this makes little sense*/
+    
+    *tvp = time;
+    if (tvp->tv_sec == lasttime.tv_sec &&
+	tvp->tv_usec <= lasttime.tv_usec &&
+	(tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	tvp->tv_sec++;
+	tvp->tv_usec -= 1000000;
+    }
+    lasttime = *tvp;
+    splx(s);
+}
 
 
