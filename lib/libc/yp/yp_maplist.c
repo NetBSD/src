@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.7 1999/01/31 20:46:12 christos Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.8 1999/09/16 09:54:07 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_maplist.c,v 1.7 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: yp_maplist.c,v 1.8 1999/09/16 09:54:07 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -60,6 +60,8 @@ yp_maplist(indomain, outmaplist)
 	int r, nerrs = 0;
 
 	if (_yp_invalid_domain(indomain))
+		return YPERR_BADARGS;
+	if (outmaplist == NULL)
 		return YPERR_BADARGS;
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)

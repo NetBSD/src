@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.10 1999/01/31 20:46:12 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.11 1999/09/16 09:53:41 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.10 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.11 1999/09/16 09:53:41 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -66,7 +66,8 @@ yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
 	struct dom_binding *ysd;
 	int r, nerrs = 0;
 
-	if (outkey == NULL || outval == NULL)
+	if (outkey == NULL || outkeylen == NULL || \
+	    outval == NULL || outvallen == NULL)
 		return YPERR_BADARGS;
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
@@ -143,7 +144,9 @@ yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
 	struct dom_binding *ysd;
 	int r, nerrs = 0;
 
-	if (outkey == NULL || outval == NULL)
+	if (outkey == NULL || outkeylen == NULL || \
+	    outval == NULL || outvallen == NULL || \
+	    inkey == NULL)
 		return YPERR_BADARGS;
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
