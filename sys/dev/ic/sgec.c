@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.22 2003/02/26 06:31:10 matt Exp $ */
+/*      $NetBSD: sgec.c,v 1.22.6.1 2005/01/24 21:43:14 he Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22 2003/02/26 06:31:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.22.6.1 2005/01/24 21:43:14 he Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -534,7 +534,8 @@ zeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ze_setup(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ze_setup(sc);
 			error = 0;
 		}
 		break;
