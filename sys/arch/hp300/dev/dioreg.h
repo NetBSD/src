@@ -1,4 +1,4 @@
-/*	$NetBSD: dioreg.h,v 1.2 1997/01/12 21:27:27 thorpej Exp $	*/
+/*	$NetBSD: dioreg.h,v 1.3 1997/01/30 09:18:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
