@@ -27,18 +27,17 @@
 /*
  * Interface to new debugger.
  */
-#include "param.h"
-#include "proc.h"
-#include <machine/db_machdep.h>
-
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/systm.h> /* just for boothowto --eichin */
+
 #include <vm/vm_statistics.h>
 #include <vm/pmap.h>
 
-#include <setjmp.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
-#include "machine/trap.h"
-#include "machine/mon.h"
+#include <machine/trap.h>
+#include <machine/mon.h>
+#include <machine/db_machdep.h>
 
 extern jmp_buf	db_jmpbuf;		/* XXX used in i386. ? */
 extern jmp_buf	*db_recover;
@@ -49,14 +48,13 @@ int	db_active = 0;
  * Received keyboard interrupt sequence.
  */
 kdb_kintr(regs)
-     register struct mc68020_saved_state *regs;
+	register struct mc68020_saved_state *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
-	    printf("\n\nkernel: keyboard interrupt\n");
-	    kdb_trap(-1, regs);
+		printf("\n\nkernel: keyboard interrupt\n");
+		kdb_trap(-1, regs);
 	}
 }
-#define T_BRKPT T_TRAP15
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -65,65 +63,57 @@ kdb_trap(type, regs)
 	int	type;
 	register struct mc68020_saved_state *regs;
 {
-    switch (type)
-    {
-	case T_TRACE:	/* single-step */
-	case T_BRKPT:	/* breakpoint */
+	switch (type) {
+	case T_TRACE:		/* single-step */
+	case T_BREAKPOINT:	/* breakpoint */
 /*      case T_WATCHPOINT:*/
-	    break;
-#if 0
-	case EXC_BREAKPOINT:
-	    type = T_BRKPT;
-	    break;
-#endif
+		break;
 	case -1:
-	    break;
+		break;
 	default:
-	{
-	    kdbprinttrap(type, 0);
-	    if (db_recover != 0) {
-		db_printf("Caught exception in ddb.\n");
-		db_error("");
-		/*NOTREACHED*/
+	    {
+		kdbprinttrap(type, 0);
+		if (db_recover != 0) {
+			db_printf("Caught exception in ddb.\n");
+			db_error("");
+			/*NOTREACHED*/
+		}
 	    }
 	}
-    }
 
-    /*  Should switch to kdb's own stack here. */
+	/* Should switch to kdb's own stack here. */
 
-    ddb_regs = *regs;
+	ddb_regs = *regs;
 
-    db_active++;
-    cnpollc(TRUE);
-/*    (void) setvideoenable(1);*/
+	db_active++;
+	cnpollc(TRUE);
+/*	(void) setvideoenable(1);*/
 
-    db_trap(type, 0);
+	db_trap(type, 0);
 
-    cnpollc(FALSE);
-    db_active--;
+	cnpollc(FALSE);
+	db_active--;
 
-    *regs = ddb_regs;
+	*regs = ddb_regs;
 
-    /*
-     * Indicate that single_step is for KDB.
-     * But lock out interrupts to prevent TRACE_KDB from setting the
-     * trace bit in the current SR (and trapping while exiting KDB).
-     */
-    (void) spl7();
-/*
-    if (!USERMODE(regs->sr) && (regs->sr & SR_T1) && (current_thread())) {
-	current_thread()->pcb->pcb_flag |= TRACE_KDB;
-*/
-/*    if ((regs->sr & SR_T1) && (current_thread())) {
-	current_thread()->pcb->flag |= TRACE_KDB;
-    }*/
+	/*
+	 * Indicate that single_step is for KDB.
+	 * But lock out interrupts to prevent TRACE_KDB from setting the
+	 * trace bit in the current SR (and trapping while exiting KDB).
+	 */
+	(void) spl7();
+/*	if (!USERMODE(regs->sr) && (regs->sr & SR_T1) && (current_thread())) {
+		current_thread()->pcb->pcb_flag |= TRACE_KDB;
+	}*/
+/*	if ((regs->sr & SR_T1) && (current_thread())) {
+		current_thread()->pcb->flag |= TRACE_KDB;
+	}*/
 
-    return(1);
+	return(1);
 }
 
-extern char *	trap_type[];
-#define TRAP_TYPES 15
-/*extern int	TRAP_TYPES;*/
+extern char *trap_type[];
+extern int trap_types;
 
 /*
  * Print trap reason.
@@ -132,17 +122,16 @@ kdbprinttrap(type, code)
 	int	type, code;
 {
 	printf("kernel: ");
-	if (type >= TRAP_TYPES || type < 0)
-	    printf("type %d", type);
+	if (type >= trap_types || type < 0)
+		printf("type %d", type);
 	else
-	    printf("%s", trap_type[type]);
+		printf("%s", trap_type[type]);
 	printf(" trap\n");
 }
 
 /*
  * Read bytes from kernel address space for debugger.
  */
-
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
@@ -153,7 +142,7 @@ db_read_bytes(addr, size, data)
 
 	src = (char *)addr;
 	while (--size >= 0)
-	    *data++ = *src++;
+		*data++ = *src++;
 }
 
 /*
@@ -176,30 +165,29 @@ db_write_bytes(addr, size, data)
 	    addr <= (vm_offset_t)&etext)
 	{
 #ifdef 0	/* XXX - needs to be cpu_dependent, probably */
-	    oldmap0 = getpgmap(addr);
-	    setpgmap(addr, (oldmap0 & ~PG_PROT) | PG_KW);
+		oldmap0 = getpgmap(addr);
+		setpgmap(addr, (oldmap0 & ~PG_PROT) | PG_KW);
 
-	    addr1 = sun_trunc_page(addr + size - 1);
-	    if (sun_trunc_page(addr) != addr1) {
-		/* data crosses a page boundary */
+		addr1 = sun_trunc_page(addr + size - 1);
+		if (sun_trunc_page(addr) != addr1) {
+			/* data crosses a page boundary */
 
-		oldmap1 = getpgmap(addr1);
-		setpgmap(addr1, (oldmap1 & ~PG_PROT) | PG_KW);
-	    }
+			oldmap1 = getpgmap(addr1);
+			setpgmap(addr1, (oldmap1 & ~PG_PROT) | PG_KW);
+		}
 #endif
 	}
 
 	dst = (char *)addr;
 
 	while (--size >= 0)
-	    *dst++ = *data++;
+		*dst++ = *data++;
 
 #if 0
 	if (oldmap0) {
-	    setpgmap(addr, oldmap0);
-	    if (oldmap1) {
-		setpgmap(addr1, oldmap1);
-	    }
+		setpgmap(addr, oldmap0);
+		if (oldmap1)
+			setpgmap(addr1, oldmap1);
 	}
 #endif
 }
@@ -207,5 +195,5 @@ db_write_bytes(addr, size, data)
 int
 Debugger()
 {
-    asm ("trap #15");
+	asm ("trap #15");
 }
