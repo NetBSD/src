@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.14 1998/10/25 07:20:52 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.15 1998/11/03 18:52:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2333,7 +2333,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	caddr_t vaddr = buf;
 	int first, seg;
 	pmap_t pmap;
@@ -2346,17 +2346,15 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
 
 	lastaddr = ~0;		/* XXX gcc */
-	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
+	bmask  = ~(map->_dm_boundary - 1);
+
+	for (first = 1, seg = 0; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -2370,6 +2368,15 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 			sgsize = buflen;
 
 		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
 		 * Insert chunk into a segment, coalescing with
 		 * previous segment if possible.
 		 */
@@ -2380,10 +2387,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz)
+			     map->_dm_maxsegsz &&
+			     (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
+				if (++seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
