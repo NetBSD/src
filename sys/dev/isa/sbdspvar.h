@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.29 1997/08/24 22:31:36 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.30 1997/08/24 23:50:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -54,7 +54,23 @@
 #define SB_INPUT_CLASS	15
 #define SB_EQUALIZATION_CLASS 16
 
-#define SB_NDEVS	17
+#define SB_CD_IN_MUTE	17
+#define SB_MIC_IN_MUTE	18
+#define SB_LINE_IN_MUTE	19
+#define SB_MIDI_IN_MUTE	20
+
+#define SB_CD_SWAP	21
+#define SB_MIC_SWAP	22
+#define SB_LINE_SWAP	23
+#define SB_MIDI_SWAP	24
+
+#define SB_CD_OUT_MUTE	25
+#define SB_MIC_OUT_MUTE	26
+#define SB_LINE_OUT_MUTE 27
+
+#define SB_NDEVS	28
+
+#define SB_IS_IN_MUTE(x) ((x) < SB_CD_SWAP)
 
 /*
  * Software state, per SoundBlaster card.
@@ -90,6 +106,7 @@ struct sbdsp_softc {
 	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
 #define SB_LEFT 0
 #define SB_RIGHT 1
+#define SB_LR 0
 	
 	u_int	out_port;		/* output port */
 	u_int	in_mask;		/* input ports */
