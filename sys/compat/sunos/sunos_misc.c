@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.89 1998/03/03 13:46:42 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.90 1998/03/04 09:06:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,7 @@
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 
 #include <vm/vm.h>
 #include <vm/vm_swap.h>
@@ -440,7 +441,7 @@ sunos_sys_getdents(p, v, retval)
 	struct sunos_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
-	off_t *cookiebuf = NULL, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -530,8 +531,7 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	if (cookiebuf)
-		free(cookiebuf, M_TEMP);
+	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }
@@ -877,7 +877,7 @@ sunos_sys_vhangup(p, v, retval)
 
 	(void) ttywait(sp->s_ttyp);
 	if (sp->s_ttyvp)
-		vgoneall(sp->s_ttyvp);
+		VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
 	if (sp->s_ttyvp)
 		vrele(sp->s_ttyvp);
 	sp->s_ttyvp = NULL;
