@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.24 1999/05/16 20:58:49 ad Exp $
+.\"	$NetBSD: newfs.8,v 1.25 2000/12/01 12:48:09 simonb Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,7 +207,11 @@ See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl s Ar size
-The size of the file system in sectors.
+The size of the file system in sectors.  For
+.Nm mount_mfs
+an
+.Sq m
+suffix will be interpreted as a number of megabytes.
 .El
 .Pp
 The following options override the standard sizes for the disk geometry.
