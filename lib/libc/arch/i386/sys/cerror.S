@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cerror.s	5.1 (Berkeley) 4/23/90
- *	$Id: cerror.S,v 1.3 1994/01/27 06:35:02 mycroft Exp $
+ *	$Id: cerror.S,v 1.4 1994/04/02 05:36:52 cgd Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: cerror.S,v 1.3 1994/01/27 06:35:02 mycroft Exp $"
+	.asciz "$Id: cerror.S,v 1.4 1994/04/02 05:36:52 cgd Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -55,4 +55,5 @@ cerror:
 	movl	%eax,_errno
 #endif
 	movl	$-1,%eax
+	movl	$-1,%edx
 	ret
