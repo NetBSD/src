@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)option.c	5.11 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: option.c,v 1.2 1993/11/09 05:11:02 cgd Exp $";
+static char *rcsid = "$Id: option.c,v 1.3 1995/08/06 09:22:34 ghudson Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,6 +49,7 @@ int quit_at_eof;
 int squeeze;			/* Squeeze multiple blank lines into one */
 int tabstop = 8;		/* Tab settings */
 int tagoption;
+int novice = 0;
 
 char *firstsearch;
 extern int sc_height;
@@ -70,7 +71,7 @@ option(argc, argv)
 			(*a)[0] = '-';
 
 	optind = 1;		/* called twice, re-init getopt. */
-	while ((ch = getopt(argc, argv, "0123456789/:ceinst:ux:f")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789/:cdeinst:ux:f")) != EOF)
 		switch((char)ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -92,6 +93,9 @@ option(argc, argv)
 			break;
 		case 'c':
 			top_scroll = 1;
+			break;
+		case 'd':
+			novice = 1;
 			break;
 		case 'e':
 			quit_at_eof = 1;

@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)command.c	5.22 (Berkeley) 6/21/92"; */
-static char *rcsid = "$Id: command.c,v 1.5 1994/12/24 17:17:05 cgd Exp $";
+static char *rcsid = "$Id: command.c,v 1.6 1995/08/06 09:22:30 ghudson Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,11 +61,13 @@ extern int ac;
 extern int quitting;
 extern int scroll;
 extern int screen_trashed;	/* The screen has been overwritten */
+extern int novice;
 
 static char cmdbuf[120];	/* Buffer for holding a multi-char command */
 static char *cp;		/* Pointer into cmdbuf */
 static int cmd_col;		/* Current column of the multi-char command */
 static int longprompt;		/* if stat command instead of prompt */
+static int helpprompt;		/* If help directions instead of prompt */
 static int mca;			/* The multicharacter command (action) */
 static int last_mca;		/* The previous mca */
 static int number;		/* The number typed by the user */
@@ -205,6 +207,12 @@ prompt()
 		so_exit();
 		longprompt = 0;
 	}
+	else if (helpprompt) {
+		so_enter();
+		putstr("[Press 'h' for instructions.]");
+		so_exit();
+		helpprompt = 0;
+	}
 	else {
 		so_enter();
 		putstr(current_name);
@@ -222,6 +230,8 @@ prompt()
 			(void)sprintf(pbuf, " (%qd%%)", ((100 * pos) / len));
 			putstr(pbuf);
 		}
+		if (novice)
+			putstr(" [Press space to continue, 'q' to quit.]");
 		so_exit();
 	}
 	return(1);
@@ -603,7 +613,10 @@ again:		if (sigs)
 			c = getcc();
 			goto again;
 		default:
-			bell();
+			if (novice)
+				helpprompt = 1;
+			else
+				bell();
 			break;
 		}
 	}
