@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.2 1997/01/13 14:05:05 oki Exp $
+|	$NetBSD: vectors.s,v 1.2.14.1 1998/10/13 21:24:09 cgd Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #define _mfptrap	_badtrap
 #define _scctrap	_badtrap
 
-	.text
+	.data
 	.globl	_vectab,_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
@@ -49,7 +49,7 @@
 	.globl	_trap12
 
 _vectab:
-	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
+	.long	0x4ef80000	/* 0: jmp 0x0000:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
 	.long	_addrerr	/* 3: address error */
