@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.15 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.16 2000/04/16 15:28:00 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.31 2000/03/25 07:23:46 sumikawa Exp $	*/
 
 /*
@@ -394,6 +394,8 @@ struct	in6_rrenumreq {
 
 #define SIOCSDEFIFACE_IN6	_IOWR('i', 85, struct in6_ndifreq)
 #define SIOCGDEFIFACE_IN6	_IOWR('i', 86, struct in6_ndifreq)
+
+#define SIOCSIFINFO_FLAGS	_IOWR('i', 87, struct in6_ndireq) /* XXX */
 
 #define SIOCSIFPREFIX_IN6	_IOW('i', 100, struct in6_prefixreq) /* set */
 #define SIOCGIFPREFIX_IN6	_IOWR('i', 101, struct in6_prefixreq) /* get */

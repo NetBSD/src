@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.30 2000/04/16 15:00:56 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.31 2000/04/16 15:27:59 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.75 2000/04/12 03:51:29 itojun Exp $	*/
 
 /*
@@ -366,6 +366,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSPFXFLUSH_IN6:
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCSDEFIFACE_IN6:
+	case SIOCSIFINFO_FLAGS:
 		if (!privileged)
 			return(EPERM);
 		/*fall through*/

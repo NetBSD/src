@@ -148,7 +148,7 @@ static char *ether_str __P((struct sockaddr_dl *));
 int ndp_ether_aton __P((char *, u_char *));
 void usage __P((void));
 int rtmsg __P((int));
-void ifinfo __P((char *));
+void ifinfo __P((int, char **));
 void rtrlist __P((void));
 void plist __P((void));
 void pfx_flush __P((void));
@@ -196,9 +196,11 @@ main(argc, argv)
 			/*NOTREACHED*/
 #endif
 		case 'i' :
-			if (argc != 3)
+			argc -= optind;
+			argv += optind;
+			if (argc < 1)
 				usage();
-			ifinfo(argv[2]);
+			ifinfo(argc, argv);
 			exit(0);
 		case 'n':
 			nflag = 1;
@@ -480,12 +482,16 @@ delete(host)
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
-			goto delete;
+		    !(rtm->rtm_flags & RTF_GATEWAY)) {
+			switch (sdl->sdl_type) {
+			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
+			case IFT_ISO88024: case IFT_ISO88025:
+				goto delete;
+			}
 		}
 	}
+	return 0;
+
 delete:
 	if (sdl->sdl_family != AF_LINK) {
 		printf("cannot locate %s\n", host);
@@ -687,7 +693,7 @@ getnbrinfo(addr, ifindex, warning)
 	nbi.addr = *addr;
 	if (ioctl(s, SIOCGNBRINFO_IN6, (caddr_t)&nbi) < 0) {
 		if (warning)
-			warn("ioctl");
+			warn("ioctl(SIOCGNBRINFO_IN6)");
 		close(s);
 		return(NULL);
 	}
@@ -742,7 +748,7 @@ usage()
 	printf("       ndp -c[nt]\n");
 	printf("       ndp -d[nt] hostname\n");
 	printf("       ndp -f[nt] filename\n");
-	printf("       ndp -i interface\n");
+	printf("       ndp -i interface [flags...]\n");
 #ifdef SIOCSDEFIFACE_IN6
 	printf("       ndp -I [interface|delete]\n");
 #endif
@@ -819,11 +825,14 @@ doit:
 }
 
 void
-ifinfo(ifname)
-	char *ifname;
+ifinfo(argc, argv)
+	int argc;
+	char **argv;
 {
 	struct in6_ndireq nd;
-	int s;
+	int i, s;
+	char *ifname = argv[0];
+	u_int32_t newflags;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("ndp: socket");
@@ -836,13 +845,49 @@ ifinfo(ifname)
  		exit(1);
  	}
 #define ND nd.ndi
+	newflags = ND.flags;
+	for (i = 1; i < argc; i++) {
+		int clear = 0;
+		char *cp = argv[i];
+
+		if (*cp == '-') {
+			clear = 1;
+			cp++;
+		}
+
+#define SETFLAG(s, f) \
+	do {\
+		if (strcmp(cp, (s)) == 0) {\
+			if (clear)\
+				newflags &= ~(f);\
+			else\
+				newflags |= (f);\
+		}\
+	} while (0)
+		SETFLAG("nud", ND6_IFF_PERFORMNUD);
+
+		ND.flags = newflags;
+		if (ioctl(s, SIOCSIFINFO_FLAGS, (caddr_t)&nd) < 0) {
+			perror("ioctl(SIOCSIFINFO_FLAGS)");
+			exit(1);
+		}
+#undef SETFLAG
+	}
+
 	printf("linkmtu=%d", ND.linkmtu);
 	printf(", curhlim=%d", ND.chlim);
 	printf(", basereachable=%ds%dms",
 	       ND.basereachable / 1000, ND.basereachable % 1000);
 	printf(", reachable=%ds", ND.reachable);
-	printf(", retrans=%ds%dms\n", ND.retrans / 1000, ND.retrans % 1000);
+	printf(", retrans=%ds%dms", ND.retrans / 1000, ND.retrans % 1000);
+	if (ND.flags) {
+		printf("\nFlags: ");
+		if ((ND.flags & ND6_IFF_PERFORMNUD) != 0)
+			printf("PERFORMNUD ");
+	}
+	putc('\n', stdout);
 #undef ND
+	
 	close(s);
 }
 
