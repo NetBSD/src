@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.makedev,v 1.6 2003/05/08 13:04:37 christos Exp $
+#	$NetBSD: Makefile.makedev,v 1.7 2003/10/25 04:29:24 lukem Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
-# (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
+# (if set), otherwise copy .OJBDIR-of-etc/MAKEDEV to ./dev
 #
 # If this is to be used with Makefile.image, then this file should be
 # .include-d first.
@@ -11,10 +11,14 @@
 #	MACHINE		machine name (set externally by build framework)
 #
 # Optional variables:
-#	MAKEDEVTARGETS	targets to create with etc/etc.${MACHINE}/MAKEDEV
+#	MAKEDEVTARGETS	targets to create with .OBJDIR-of-etc/MAKEDEV
 #
 # Variables modified by this:
-#	MTREECONF	may get "devices.spec" added to it
+#	MAKEDEVSCRIPT	path to .OBJDIR-of-etc/MAKEDEV
+#	MTREECONF	may get "devices.spec" added
+#	LISTS		may get "list.makedev" added
+#	IMAGEDEPENDS	may get ${MAKEDEVSCRIPT} added
+#	PARSELISTENV	may get MAKEDEVSCRIPT=... added
 #
 
 .if !defined(_MAKEFILE_MAKEDEV_)
@@ -22,6 +26,9 @@ _MAKEFILE_MAKEDEV_=1
 
 
 MAKEDEVSPEC?=	devices.spec
+
+_MAKEDEVOBJDIR!=cd ${NETBSDSRCDIR}/etc && ${PRINTOBJDIR}
+MAKEDEVSCRIPT=	${_MAKEDEVOBJDIR}/MAKEDEV
 
 CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 
@@ -32,15 +39,14 @@ CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 #	MAKEDEVTARGETS is set; add those devices to the mtree spec that's
 #	used to build the file system
 #
-_MAKEDEVSCRIPT=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
 _MAKEDEVWRAP=	${DISTRIBDIR}/common/MAKEDEV.wrapper
 _MAKEDEV2SPEC=	${DISTRIBDIR}/common/makedev2spec.awk
 
 MTREECONF+=	${MAKEDEVSPEC}
 
-${MAKEDEVSPEC}:	${_MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
+${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
-	MAKEDEVSCRIPT=${_MAKEDEVSCRIPT:Q} \
+	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q} \
 	    ${HOST_SH} ${_MAKEDEVWRAP} ${MAKEDEVTARGETS} | \
 	    awk -f ${_MAKEDEV2SPEC} > ${.TARGET}.tmp \
 	&& sort -o ${.TARGET} ${.TARGET}.tmp
@@ -53,7 +59,8 @@ ${MAKEDEVSPEC}:	${_MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
 #	(effectively) running "cd /dev ; ./MAKEDEV all"
 #
 LISTS+=		${DISTRIBDIR}/common/list.makedev
-IMAGEDEPENDS+=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
+IMAGEDEPENDS+=	${MAKEDEVSCRIPT}
+PARSELISTENV+=	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q}
 
 ${MAKEDEVSPEC}:	.PHONY
 
