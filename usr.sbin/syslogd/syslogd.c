@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)syslogd.c	5.45 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: syslogd.c,v 1.2 1993/08/01 17:55:38 mycroft Exp $";
+static char rcsid[] = "$Id: syslogd.c,v 1.3 1995/05/14 04:18:45 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -548,12 +548,12 @@ logmsg(pri, msg, from, flags)
 			if (f->f_prevcount)
 				fprintlog(f, 0, (char *)NULL);
 			f->f_repeatcount = 0;
+			f->f_prevpri = pri;
 			(void) strncpy(f->f_lasttime, timestamp, 15);
 			(void) strncpy(f->f_prevhost, from,
 					sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
-				f->f_prevpri = pri;
 				(void) strcpy(f->f_prevline, msg);
 				fprintlog(f, flags, (char *)NULL);
 			} else {
