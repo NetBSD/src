@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/11/29 22:45:56 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/01/27 07:03:04 lukem Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -33,8 +33,8 @@ snap_md_post:
 		${MAKE} ${MAKEFLAGS} INSTALL_KERNEL=${k} release
 .endfor
 	cd ${KERNOBJDIR}/GENERICSBC &&	\
-		tar cf - netbsd |\
-		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern_sbc.tgz
+		GZIP=-9 ${PAX} -zwf	\
+		    ${RELEASEDIR}/binary/sets/kern_sbc.tgz netbsd
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} clean
 .endif
