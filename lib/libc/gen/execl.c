@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.1 1996/07/03 21:41:49 jtc Exp $	*/
+/*	$NetBSD: execl.c,v 1.2 1996/07/04 07:18:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execl.c,v 1.1 1996/07/03 21:41:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: execl.c,v 1.2 1996/07/04 07:18:56 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,6 +64,9 @@ execl(name, arg, va_alist)
 	va_dcl
 #endif
 {
+#if defined(__i386__) || defined(__m68k__) || defined(__ns32k__)
+	return execve(name, (char **) &arg, environ);
+#else
 	va_list ap;
 	char **argv;
 	int i;
@@ -82,4 +85,5 @@ execl(name, arg, va_alist)
 	va_end(ap);
 	
 	return execve(name, argv, environ);
+#endif
 }
