@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.31 1996/10/13 03:14:08 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.32 1996/10/14 07:14:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -393,6 +393,9 @@ dcmattach(hd)
 #endif
 	}
 #endif
+
+	/* XXX Set device class. */
+	hd->hp_dev.dv_class = DV_TTY;
 }
 
 /* ARGSUSED */

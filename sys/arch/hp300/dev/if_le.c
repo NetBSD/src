@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.33 1996/10/13 03:14:15 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.34 1996/10/14 07:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -162,6 +162,7 @@ leattach(hd)
 	/* XXXX kluge for now */
 	sc->sc_dev.dv_unit = hd->hp_unit;
 	sprintf(sc->sc_dev.dv_xname, "%s%d", le_cd.cd_name, hd->hp_unit);
+	hd->hp_dev.dv_class = DV_IFNET;
 
 	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)hd->hp_addr);
 	sc->sc_mem = (void *)(lestd[2] + (int)hd->hp_addr);
