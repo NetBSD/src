@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.distrib,v 1.3 2003/05/08 13:04:13 christos Exp $
+#	$NetBSD: Makefile.distrib,v 1.4 2003/05/09 09:06:14 lukem Exp $
 #
 # Makefile snippet to setup various make variables variables used in distrib/:
 #
@@ -16,6 +16,7 @@
 .if !defined(_MAKEFILE_DISTRIB_)
 _MAKEFILE_DISTRIB_=1
 
+.include <bsd.sys.mk>		# for HOST_SH
 
 DISTRIBDIR=	${NETBSDSRCDIR}/distrib
 DISTRIBREV!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
