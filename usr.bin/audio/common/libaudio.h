@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.4.2.1 2001/03/11 21:30:08 he Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.4.2.2 2002/01/29 23:10:53 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -27,6 +27,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ * audio formats
+ */
+#define AUDIO_FORMAT_NONE	1
+#define AUDIO_FORMAT_SUN	2
+#define AUDIO_FORMAT_WAV	3
+
+int	audio_format_from_str (char *);
 
 /*
  * We copy the Sun/NeXT on-disk audio header format and document what
@@ -80,10 +89,11 @@ typedef struct {
 #define	AUDIO_FILE_ENCODING_ADPCM_G723_5	26
 #define	AUDIO_FILE_ENCODING_ALAW_8		27
 
-char	*audio_enc_from_val __P((int));
-int	audio_enc_to_val __P((const char *));
+const char *audio_enc_from_val (int);
+int	audio_enc_to_val (const char *);
 
-int	audio_get_sun_encoding __P((int, int *, int *));
+int	audio_sun_to_encoding (int, int *, int *);
+int	audio_encoding_to_sun (int, int, int *);
 
 /*
  * M$ WAV files, info gleamed from sox sources
@@ -111,6 +121,8 @@ int	audio_get_sun_encoding __P((int, int *, int *));
 #define IBM_FORMAT_ALAW			(0x0102)
 #define IBM_FORMAT_ADPCM		(0x0103)
 
+const char *wav_enc_from_val (int);
+
 typedef struct {
 	char		name[4];
 	u_int32_t	len;
@@ -125,8 +137,8 @@ typedef struct {
 	u_int16_t	bits_per_sample;
 } wav_audioheaderfmt __attribute__((__packed__));
 
-/* returns size of header, or -1 */
-size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *, size_t *));
+/* returns size of header, or -ve for failure */
+ssize_t audio_wav_parse_hdr (void *, size_t, int *, int *, int *, int *, size_t *);
 
 /*
  * audio routine error codes
@@ -136,18 +148,19 @@ size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *, size
 #define AUDIO_EWAVUNSUPP	-3		/* WAV: unsupported file */
 #define AUDIO_EWAVBADPCM	-4		/* WAV: bad PCM bps */
 #define AUDIO_EWAVNODATA	-5		/* WAV: missing data */
+#define AUDIO_EINTERNAL		-6		/* internal error */
 
 #define AUDIO_MAXERRNO		5
 
 /* and something to get a string associated with this error */
-const char *audio_errstring __P((int));
+const char *audio_errstring (int);
 
 /*
  * generic routines?
  */
-void	decode_int __P((const char *, int *));
-void	decode_time __P((const char *, struct timeval *));
-void	decode_encoding __P((const char *, int *));
+void	decode_int (const char *, int *);
+void	decode_time (const char *, struct timeval *);
+void	decode_encoding (const char *, int *);
 
 /*
  * get/put 16/32 bits of big/little endian data
@@ -163,11 +176,21 @@ void	decode_encoding __P((const char *, int *));
 #define getbe16(v)	(v)
 #define getbe32(v)	(v)
 
+#define putle16(x,v)	(x) = bswap16(v)
+#define putle32(x,v)	(x) = bswap32(v)
+#define putbe16(x,v)	(x) = (v)
+#define putbe32(x,v)	(x) = (v)
+
 #else
 
 #define getle16(v)	(v)
 #define getle32(v)	(v)
 #define getbe16(v)	bswap16(v)
 #define getbe32(v)	bswap32(v)
+
+#define putle16(x,v)	(x) = (v)
+#define putle32(x,v)	(x) = (v)
+#define putbe16(x,v)	(x) = bswap16(v)
+#define putbe32(x,v)	(x) = bswap32(v)
 
 #endif
