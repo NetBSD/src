@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2.4.2 2002/08/01 02:42:15 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.4.3 2002/08/02 08:39:02 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -60,8 +60,8 @@ struct proc;
  * Machine-dependent part of the proc structure for m68k-based ports.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
-	void	(*md_syscall)(register_t, struct proc *, struct frame *);
+	int	mdp_flags;		/* machine-dependent flags */
+	void	(*md_syscall)(register_t, struct lwp *, struct frame *);
 };
 
 /*

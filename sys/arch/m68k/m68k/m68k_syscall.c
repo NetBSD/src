@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.10.7 2002/08/01 02:42:17 nathanw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.8 2002/08/02 08:39:03 gmcgarry Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,9 +116,9 @@ void	syscall_intern(struct proc *);
 #ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
 #endif
-static void syscall_plain(register_t, struct proc *, struct frame *);
+static void syscall_plain(register_t, struct lwp *, struct frame *);
 #if defined(KTRACE) || defined(SYSTRACE)
-static void syscall_fancy(register_t, struct proc *, struct frame *);
+static void syscall_fancy(register_t, struct lwp *, struct frame *);
 #endif
 
 
@@ -248,7 +248,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 
 	rval[0] = 0;
@@ -372,7 +372,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		goto bad;
 
 	rval[0] = 0;
-	rval[1] = frame.f_regs[D1];
+	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
@@ -383,8 +383,8 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 		 */
 		l = curlwp;
 		p = l->l_proc;
-		frame.f_regs[D0] = rval[0];
-		frame.f_regs[D1] = rval[1];
+		frame->f_regs[D0] = rval[0];
+		frame->f_regs[D1] = rval[1];
 		frame->f_sr &= ~PSL_C;	/* carry bit */
 #ifdef COMPAT_AOUT_M68K
 		{
