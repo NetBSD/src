@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.15 1999/01/29 18:47:58 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.16 1999/01/30 17:43:10 christos Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -9,10 +9,10 @@ I386_STAND_DIR?= $S/arch/i386/stand
 .PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
 BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o bios_disk.o diskbuf.o
 .PATH: ${I386_STAND_DIR}/lib/crt/rom
-ROMSTART= start_rom.o exec.o
+ROMSTART= start_rom.o
 GENPROMDIR= ${I386_STAND_DIR}/genprom
 .PATH: ${I386_STAND_DIR}/lib/crt/dos
-DOSSTART= start_dos.o doscommain.o exec.o
+DOSSTART= start_dos.o doscommain.o
 
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
@@ -47,16 +47,24 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
+.include <bsd.own.mk>
+
+.if ${OBJECT_FMT} == "ELF"
+LDFLAGS=-M -e start 	# -N does not work properly.
+.else
+LDFLAGS=-N -M -e _start 
+.endif
+
 vers.o: version
 	sh ${I386_STAND_DIR}/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
 ${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${BASE}.sym -M -e _start -N -Ttext 0 $(BSSTART) $(OBJS) \
+	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0 $(BSSTART) $(OBJS) \
 	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
 
 ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${BASE}.sym -M -e _start -N -Ttext ${RELOC} $(ROMSTART) $(OBJS) \
+	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} $(ROMSTART) $(OBJS) \
 	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
 	cp ${BASE}.sym ${BASE}.bin
 	strip ${BASE}.bin
@@ -65,7 +73,7 @@ ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI38
 	rm -f ${BASE}.bin
 
 ${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
-	${LD} -o ${BASE}.sym -M -e _start -N -Ttext 0x100 $(DOSSTART) $(OBJS) \
+	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 $(DOSSTART) $(OBJS) \
 	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
 	cp ${BASE}.sym ${BASE}.bin
 	strip ${BASE}.bin
