@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.21 1996/01/07 22:01:54 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.22 1996/03/23 15:09:54 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -618,8 +618,8 @@ sbic_scsidone(acb, stat)
 		xs->error = XS_SENSE;
 #ifdef DEBUG
 		if (report_sense)
-			printf(" => %02x %02x\n", xs->sense.extended_flags,
-			    xs->sense.extended_extra_bytes[3]);
+			printf(" => %02x %02x\n", xs->sense.flags,
+			    xs->sense.extra_bytes[3]);
 #endif
 	} else {
 		xs->resid = 0;		/* XXXX */
