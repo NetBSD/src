@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.6 1996/04/01 19:16:41 christos Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.7 1996/04/04 23:06:34 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,10 +89,8 @@ int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 void	setpte4m __P((vm_offset_t, int));
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
 #define	getpte4(va)		lda(va, ASI_PTE)
 #define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
-#endif
 
 void kgdb_copy __P((char *, char *, int));
 void kgdb_zero __P((char *, int));
