@@ -3,7 +3,6 @@
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
-./usr/lib/libg++_pic.a
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
