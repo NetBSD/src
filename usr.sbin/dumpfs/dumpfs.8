@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumpfs.8,v 1.15 2003/08/30 12:48:01 wiz Exp $
+.\"	$NetBSD: dumpfs.8,v 1.16 2003/09/26 07:02:43 dsl Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dumpfs.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd August 30, 2003
+.Dd September 26, 2003
 .Dt DUMPFS 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd dump file system information
 .Sh SYNOPSIS
 .Nm
-.Op Fl cFimsv
+.Op Fl acFimsv
 .Ar filesys No \&| Ar device
 .Op Ar ...
 .Sh DESCRIPTION
@@ -46,6 +46,8 @@ prints out detailed information about the specified filesystems.
 .Pp
 Options:
 .Bl -tag -width Ds
+.It Fl a
+Print details from each alternate superblock.
 .It Fl c
 Print details of each cylinder group.
 .It Fl F
@@ -61,6 +63,7 @@ Be even more verbose.
 .El
 .Pp
 If none of
+.Fl a ,
 .Fl c ,
 .Fl i ,
 .Fl m ,
@@ -96,6 +99,7 @@ The
 command appeared in
 .Bx 4.2 .
 The
+.Fl a ,
 .Fl c ,
 .Fl i ,
 .Fl m ,
