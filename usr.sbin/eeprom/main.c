@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1996/09/27 02:39:46 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1997/07/23 20:58:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT(
+"@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: main.c,v 1.5 1997/07/23 20:58:40 thorpej Exp $");
+#endif
 
 #include <sys/param.h>
 #include <err.h>
@@ -91,6 +98,7 @@ struct	keytabent eekeytab[] = {
 	{ NULL,			0,	ee_notsupp },
 };
 
+int	main __P((int, char *[]));
 static	void action __P((char *));
 static	void dump_prom __P((void));
 static	void usage __P((void));
@@ -114,7 +122,7 @@ extern	char *__progname;
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
