@@ -173,6 +173,7 @@
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
+./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/page.0
@@ -1247,6 +1248,7 @@
 ./usr/share/man/man1/nice.1
 ./usr/share/man/man1/nm.1
 ./usr/share/man/man1/nohup.1
+./usr/share/man/man1/objcopy.1
 ./usr/share/man/man1/objdump.1
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/page.1

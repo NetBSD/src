@@ -542,6 +542,7 @@
 ./usr/sbin/nfsd
 ./usr/sbin/nfsiod
 ./usr/sbin/nslookup
+./usr/sbin/nsupdate
 ./usr/sbin/ntpdate
 ./usr/sbin/ntpq
 ./usr/sbin/ntptime
