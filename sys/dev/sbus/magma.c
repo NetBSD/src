@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.1 1998/05/19 23:58:54 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.2 1998/05/20 22:08:10 pk Exp $	*/
 /*
  * magma.c
  *
@@ -30,8 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-#define MAGMA_DEBUG
  */
+#if 0
+#define MAGMA_DEBUG
+#endif
 
 /*
  * Driver for Magma SBus Serial/Parallel cards using the Cirrus Logic
@@ -315,9 +317,6 @@ magma_match(parent, cf, aux)
 		return(0);
 
 #if defined(MAGMA_DEBUG)
-	{
-	int i;
-
 	printf("magma: matched `%s'\n", sa->sa_name);
 	printf("magma: magma_prom `%s'\n",
 		getpropstring(sa->sa_node, "magma_prom"));
@@ -327,7 +326,6 @@ magma_match(parent, cf, aux)
 		getpropstring(sa->sa_node, "chiprev"));
 	printf("magma: clock `%s'\n",
 		getpropstring(sa->sa_node, "clock"));
-	}
 #endif
 
 	return (1);
@@ -353,7 +351,7 @@ magma_attach(parent, self, aux)
 	while (card->mb_name && strcmp(magma_prom, card->mb_name) != 0)
 		card++;
 
-	dprintf((" addr 0x%x", sc));
+	dprintf((" addr %p", sc));
 	printf(" softpri %d:", PIL_TTY);
 
 	if( card->mb_name == NULL ) {
@@ -395,7 +393,7 @@ magma_attach(parent, self, aux)
 		/* seemingly the Magma drivers just ignore the propstring */
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 
-		dprintf(("%s attach CD1400 %d addr 0x%x rev %x clock %dMhz\n",
+		dprintf(("%s attach CD1400 %d addr %p rev %x clock %dMhz\n",
 			sc->ms_dev.dv_xname, chip,
 			cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
 
@@ -429,7 +427,7 @@ magma_attach(parent, self, aux)
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
 		cd->cd_reg = (caddr_t)bh + card->mb_cd1190[chip];
-		dprintf(("%s attach CD1190 %d addr 0x%x (failed)\n",
+		dprintf(("%s attach CD1190 %d addr %p (failed)\n",
 			self->dv_xname, chip, cd->cd_reg));
 		/* XXX don't know anything about these chips yet */
 	}
@@ -447,7 +445,6 @@ magma_attach(parent, self, aux)
 	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 magma_soft, sc);
-
 	evcnt_attach(&sc->ms_dev, "intr", &sc->ms_intrcnt);
 }
 
@@ -545,7 +542,7 @@ magma_hard(arg)
 	} /* if(mdm_service...) */
 
 	if( ISSET(status, CD1400_SVRR_TXRDY) ) {
-	u_char tivr = *sc->ms_svcackt;	/* enter tx service context */
+		u_char tivr = *sc->ms_svcackt;	/* enter tx service context */
 		int port = tivr >> 4;
 
 		if( tivr & (1<<3) ) {	/* parallel port */
@@ -610,7 +607,7 @@ magma_hard(arg)
 				 * code for embedded transmit characters.
 				 */
 				while( mtty->mp_txc > 0 && count < CD1400_TX_FIFO_SIZE - 1 ) {
-				register u_char ch;
+					u_char ch;
 
 					ch = *mtty->mp_txp;
 
@@ -632,7 +629,7 @@ magma_hard(arg)
 			 * out the chars we have sent.
 			 */
 			if( mtty->mp_txc == 0 || ISSET(mtty->mp_flags, MTTYF_STOP) ) {
-			register int srer;
+				register int srer;
 
 				srer = cd1400_read_reg(cd, CD1400_SRER);
 				CLR(srer, CD1400_SRER_TXRDY);
@@ -683,25 +680,30 @@ magma_soft(arg)
 	int serviced = 0;
 	int s, flags;
 
+	if (mtty == NULL)
+		goto chkbpp;
+
 	/*
 	 * check the tty ports to see what needs doing
 	 */
 	for( port = 0 ; port < mtty->ms_nports ; port++ ) {
-	struct mtty_port *mp = &mtty->ms_port[port];
-	struct tty *tp = mp->mp_tty;
+		struct mtty_port *mp = &mtty->ms_port[port];
+		struct tty *tp = mp->mp_tty;
 
-		if( !ISSET(tp->t_state, TS_ISOPEN) ) continue;
+		if( !ISSET(tp->t_state, TS_ISOPEN) )
+			continue;
 
 		/*
 		 * handle any received data
 		 */
 		while( mp->mp_rget != mp->mp_rput ) {
-		u_char stat;
-		int data;
+			u_char stat;
+			int data;
 
 			stat = mp->mp_rget[0];
 			data = mp->mp_rget[1];
-			mp->mp_rget = ((mp->mp_rget + 2) == mp->mp_rend) ? mp->mp_rbuf : (mp->mp_rget + 2);
+			mp->mp_rget = ((mp->mp_rget + 2) == mp->mp_rend)
+				? mp->mp_rbuf : (mp->mp_rget + 2);
 
 			if( stat & (CD1400_RDSR_BREAK | CD1400_RDSR_FE) )
 				data |= TTY_FE;
@@ -709,7 +711,8 @@ magma_soft(arg)
 				data |= TTY_PE;
 
 			if( stat & CD1400_RDSR_OE )
-				log(LOG_WARNING, "%s%x: fifo overflow\n", mtty->ms_dev.dv_xname, port);
+				log(LOG_WARNING, "%s%x: fifo overflow\n",
+				    mtty->ms_dev.dv_xname, port);
 
 			(*linesw[tp->t_line].l_rint)(data, tp);
 			serviced = 1;
@@ -739,13 +742,19 @@ magma_soft(arg)
 		}
 	} /* for(each mtty...) */
 
-	/*
-	 * check the bpp ports to see what needs doing
-	 */
-	for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
-	struct mbpp_port *mp = &mbpp->ms_port[port];
 
-		if( !ISSET(mp->mp_flags, MBPPF_OPEN) ) continue;
+chkbpp:
+	/*
+	 * Check the bpp ports (if any) to see what needs doing
+	 */
+	if (mbpp == NULL)
+		return (serviced);
+
+	for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
+		struct mbpp_port *mp = &mbpp->ms_port[port];
+
+		if( !ISSET(mp->mp_flags, MBPPF_OPEN) )
+			continue;
 
 		s = splhigh();
 		flags = mp->mp_flags;
@@ -802,14 +811,15 @@ mtty_attach(parent, dev, args)
 	int port, chip, chan;
 
 	sc->ms_mtty = ms;
-	dprintf((" addr 0x%x", ms));
+	dprintf((" addr %p", ms));
 
 	for( port = 0, chip = 0, chan = 0 ; port < sc->ms_board->mb_nser ; port++ ) {
-	struct mtty_port *mp = &ms->ms_port[port];
-	struct tty *tp;
+		struct mtty_port *mp = &ms->ms_port[port];
+		struct tty *tp;
 
 		mp->mp_cd1400 = &sc->ms_cd1400[chip];
-		if( mp->mp_cd1400->cd_parmode && chan == 0 ) chan = 1; /* skip channel 0 if parmode */
+		if( mp->mp_cd1400->cd_parmode && chan == 0 )
+			chan = 1; /* skip channel 0 if parmode */
 		mp->mp_channel = chan;
 
 		tp = ttymalloc();
@@ -1395,7 +1405,7 @@ mbpp_attach(parent, dev, args)
 	int port = 0;
 
 	sc->ms_mbpp = ms;
-	dprintf((" addr 0x%x", ms));
+	dprintf((" addr %p", ms));
 
 	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
 		mp = &ms->ms_port[port];
@@ -1452,7 +1462,7 @@ mbppopen(dev, flags, mode, p)
 	splx(s);
 
 	if( mp->mp_cd1400 ) {	/* CD1400 chip */
-	struct cd1400 *cd = mp->mp_cd1400;
+		struct cd1400 *cd = mp->mp_cd1400;
 
 		/* set up CD1400 channel */
 		s = spltty();
