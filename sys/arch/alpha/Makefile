@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 1997/05/04 01:53:01 mjacob Exp $
+# $NetBSD: Makefile,v 1.7 1997/05/07 17:28:47 mycroft Exp $
 
 # Makefile for alpha tags file and boot blocks
 
@@ -28,8 +28,6 @@ tags:	FRC
 links:
 	-for i in ${DALPHA}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
-obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
 

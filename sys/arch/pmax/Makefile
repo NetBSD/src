@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/09/29 23:55:05 jonathan Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/07 17:29:00 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for pmax tags file and boot blocks
@@ -29,7 +29,5 @@ tags:	${COMM} ${SPMAX} ${SMIPS} ${APMAX} ${AMIPS}
 links:
 	-for i in ${DPMAX}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
-obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>

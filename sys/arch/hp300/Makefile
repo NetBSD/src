@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/08/04 07:40:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/07 17:28:55 mycroft Exp $
 
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -27,7 +27,5 @@ tags:
 links:
 	-for i in ${DHP300}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
-
-obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
