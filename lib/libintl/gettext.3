@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettext.3,v 1.6 2002/02/07 07:00:47 ross Exp $
+.\"	$NetBSD: gettext.3,v 1.7 2003/02/12 02:51:23 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 Citrus Project,
 .\" All rights reserved.
@@ -380,15 +380,16 @@ the name of the selected
 .\".Sh "RETURN VALUES"
 .\".Sh EXAMPLES
 .Sh SEE ALSO
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr nls 7
 .\".Sh STANDARDS
 .Sh HISTORY
 The functions are implemented by Citrus project,
 based on the documentations for GNU gettext.
 .Sh BUGS
-The text was ripped off from Annex C of
-.Dq LI18NUX 2000 Globalization Specification Version 1.0 .
-.Pp
+\." The text was ripped off from Annex C of
+\." .Dq LI18NUX 2000 Globalization Specification Version 1.0 .
+\." .Pp
 .Fn bind_textdomain_codeset
 does not work at this moment
 .Pq always fail .
