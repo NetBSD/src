@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1999/02/19 14:11:35 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1999/02/26 18:36:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -160,28 +160,6 @@ initppc(startkernel, endkernel, args)
 	extern void ext_intr __P((void));
 	int exc, scratch;
 
-	chosen = OF_finddevice("/chosen");
-	save_ofw_mapping();
-
-	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
-
-	curpcb = &proc0paddr->u_pcb;
-
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
-#if 0
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-#endif
-
-#ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
-	OF_set_callback(callback);
-#endif
 	/*
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
@@ -225,6 +203,29 @@ initppc(startkernel, endkernel, args)
 	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
 	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+
+	chosen = OF_finddevice("/chosen");
+	save_ofw_mapping();
+
+	proc0.p_addr = proc0paddr;
+	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+
+	curpcb = &proc0paddr->u_pcb;
+
+	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+
+#if 0
+	/*
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
+	 */
+	consinit();
+#endif
+
+#ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
+	OF_set_callback(callback);
+#endif
 
 	/*
 	 * Set up trap vectors
