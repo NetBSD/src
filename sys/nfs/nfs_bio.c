@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.31 1997/04/20 16:24:44 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.32 1997/07/04 20:22:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -508,7 +508,7 @@ again:
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
-			vnode_pager_setsize(vp, (u_long)np->n_size);
+			vnode_pager_setsize(vp, np->n_size);
 		}
 
 		/*

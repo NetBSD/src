@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.9 1997/06/11 10:09:57 bouyer Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.10 1997/07/04 20:22:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -175,7 +175,7 @@ lfs_truncate(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
-	vnode_pager_setsize(vp, (u_long)length);
+	vnode_pager_setsize(vp, length);
 
 	fs = ip->i_lfs;
 

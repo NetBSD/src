@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.1 1997/06/11 09:34:01 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.2 1997/07/04 20:22:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -255,7 +255,7 @@ ext2fs_write(v)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
-			vnode_pager_setsize(vp, (u_long)ip->i_e2fs_size);
+			vnode_pager_setsize(vp, ip->i_e2fs_size);
 		}
 		(void)vnode_pager_uncache(vp);
 
