@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 2001/06/10 13:12:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.125 2001/06/10 13:15:29 mrg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -25,11 +25,13 @@
 #	anything in /usr/share.
 #   NBUILDJOBS is the number of jobs to start in parallel during a
 #	'make build'. It defaults to 1.
-#   UPDATE will avoid a `make cleandir' at the start of `make build',
-#	as well as having the effects listed in /usr/share/mk/bsd.README.
-#   NOCLEANDIR will avoid a `make cleandir' at the start of `make build',
-#	but without having the effects listed in /usr/share/mk/bsd.README.
+#   UPDATE, if defined, will avoid a `make cleandir' at the start of
+#     `make build', as well as having the effects listed in
+#     /usr/share/mk/bsd.README.
+#   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
+#     of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
+
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR. If BUILD_DONE is
