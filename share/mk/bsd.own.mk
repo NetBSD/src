@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.32 1997/03/29 21:17:22 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.33 1997/04/17 06:34:15 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -56,7 +56,7 @@ KMODOWN?=	bin
 KMODMODE?=	${NONBINMODE}
 
 COPY?=		-c
-STRIP?=		-s
+STRIPFLAG?=	-s
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
