@@ -1,3 +1,5 @@
+/*	$NetBSD: local.h,v 1.1.1.5 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	local 3h

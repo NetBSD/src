@@ -1,3 +1,5 @@
+/*	$NetBSD: postconf.c,v 1.1.1.6 2004/05/31 00:24:42 heas Exp $	*/
+
 /*++
 /* NAME
 /*	postconf 1

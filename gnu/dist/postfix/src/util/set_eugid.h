@@ -1,3 +1,5 @@
+/*	$NetBSD: set_eugid.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+
 #ifndef _SET_EUGID_H_INCLUDED_
 #define _SET_EUGID_H_INCLUDED_
 

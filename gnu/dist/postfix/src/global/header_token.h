@@ -1,3 +1,5 @@
+/*	$NetBSD: header_token.h,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+
 #ifndef _HEADER_TOKEN_H_INCLUDED_
 #define _HEADER_TOKEN_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: cleanup_extracted.c,v 1.1.1.7 2004/05/31 00:24:27 heas Exp $	*/
+
 /*++
 /* NAME
 /*	cleanup_extracted 3

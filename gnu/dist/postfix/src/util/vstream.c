@@ -1,3 +1,5 @@
+/*	$NetBSD: vstream.c,v 1.1.1.5 2004/05/31 00:25:02 heas Exp $	*/
+
 /*++
 /* NAME
 /*	vstream 3

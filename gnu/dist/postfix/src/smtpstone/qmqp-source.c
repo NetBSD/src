@@ -1,3 +1,5 @@
+/*	$NetBSD: qmqp-source.c,v 1.1.1.4 2004/05/31 00:24:50 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmqp-source 1

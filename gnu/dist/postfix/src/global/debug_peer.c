@@ -1,3 +1,5 @@
+/*	$NetBSD: debug_peer.c,v 1.1.1.3 2004/05/31 00:24:29 heas Exp $	*/
+
 /*++
 /* NAME
 /*	debug_peer 3

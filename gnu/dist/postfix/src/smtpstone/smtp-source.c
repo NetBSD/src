@@ -1,3 +1,5 @@
+/*	$NetBSD: smtp-source.c,v 1.1.1.6 2004/05/31 00:24:51 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtp-source 1

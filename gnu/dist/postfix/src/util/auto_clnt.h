@@ -1,3 +1,5 @@
+/*	$NetBSD: auto_clnt.h,v 1.1.1.2 2004/05/31 00:24:56 heas Exp $	*/
+
 #ifndef _AUTO_CLNT_H_INCLUDED_
 #define _AUTO_CLNT_H_INCLUDED_
 

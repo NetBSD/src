@@ -1,3 +1,5 @@
+/*	$NetBSD: file_id.h,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+
 #ifndef _FILE_ID_H_INCLUDED_
 #define _FILE_ID_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: biff_notify.h,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+
 #ifndef _BIFF_H_INCLUDED_
 #define _BIFF_H_INCLUDED_
 

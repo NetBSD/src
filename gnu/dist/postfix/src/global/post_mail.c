@@ -1,3 +1,5 @@
+/*	$NetBSD: post_mail.c,v 1.1.1.5 2004/05/31 00:24:34 heas Exp $	*/
+
 /*++
 /* NAME
 /*	post_mail 3

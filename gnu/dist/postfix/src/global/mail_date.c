@@ -1,3 +1,5 @@
+/*	$NetBSD: mail_date.c,v 1.1.1.4 2004/05/31 00:24:31 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mail_date 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: mynetworks.h,v 1.1.1.2 2004/05/31 00:24:34 heas Exp $	*/
+
 #ifndef _MYNETWORKS_H_INCLUDED_
 #define _MYNETWORKS_H_INCLUDED_
 
