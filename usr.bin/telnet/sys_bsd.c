@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.30 2004/02/24 15:12:53 wiz Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.31 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.30 2004/02/24 15:12:53 wiz Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.31 2004/03/20 23:26:05 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,8 +310,6 @@ TerminalNewMode(int f)
 	     */
 	    tcsetattr(tin, TCSADRAIN, &tmp_tc);
 	    old = ttyflush(SYNCHing|flushout);
-	    if (old == -2)
-		return;
 	} while (old < 0 || old > 1);
     }
 
@@ -527,14 +525,6 @@ NetSetPgrp(int fd)
 
 /* ARGSUSED */
 SIG_FUNC_RET
-deadpeer(int sig)
-{
-	setcommandmode();
-	longjmp(peerdied, -1);
-}
-
-/* ARGSUSED */
-SIG_FUNC_RET
 intr(int sig)
 {
     if (localchars) {
@@ -595,7 +585,7 @@ sys_telnet_init(void)
 {
     (void) signal(SIGINT, intr);
     (void) signal(SIGQUIT, intr2);
-    (void) signal(SIGPIPE, deadpeer);
+    (void) signal(SIGPIPE, SIG_IGN);
     (void) signal(SIGWINCH, sendwin);
     (void) signal(SIGTSTP, susp);
     (void) signal(SIGINFO, ayt);
@@ -738,6 +728,10 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
     if (set[0].revents & POLLOUT) {
 	returnValue |= netflush();
     }
+
+    if (set[1].revents & (POLLHUP|POLLNVAL))
+	return(-1);
+
     if (set[1].revents & POLLOUT) {
 	returnValue |= (ttyflush(SYNCHing|flushout) > 0);
     }

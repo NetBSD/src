@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.16 2003/08/07 11:16:10 agc Exp $	*/
+/*	$NetBSD: network.c,v 1.17 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.16 2003/08/07 11:16:10 agc Exp $");
+__RCSID("$NetBSD: network.c,v 1.17 2004/03/20 23:26:05 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ netflush(void)
 	    perror(hostname);
 	    (void)NetClose(net);
 	    ring_clear_mark(&netoring);
-	    longjmp(peerdied, -1);
+	    ExitString("Connection closed by foreign host.\n", 1);
 	    /*NOTREACHED*/
 	}
 	n = 0;

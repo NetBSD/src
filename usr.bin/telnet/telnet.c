@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.27 2003/11/17 11:16:10 wiz Exp $	*/
+/*	$NetBSD: telnet.c,v 1.28 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.27 2003/11/17 11:16:10 wiz Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.28 2004/03/20 23:26:05 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,6 @@ unsigned char telopt_environ = TELOPT_NEW_ENVIRON;
 #endif
 
 jmp_buf	toplevel = { 0 };
-jmp_buf	peerdied;
 
 int	flushline;
 int	linemode;
