@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.10 2003/01/01 01:24:20 thorpej Exp $	*/
+/*	$NetBSD: pceb.c,v 1.11 2003/02/08 12:00:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.10 2003/01/01 01:24:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.11 2003/02/08 12:00:36 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,16 @@ pcebmatch(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/*
-	 * Match all known PCI-EISA bridges.
+	 * Match anything which claims to be PCI-EISA bridge.
+	 */
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_EISA)
+		return (1);
+
+	/*
+	 * Match some known PCI-EISA bridges explicitly.
+	 * XXX this is probably not necessary, should be matched by above
+	 * condition
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
