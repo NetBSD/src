@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.19 1999/01/15 13:32:06 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.19.4.1 1999/10/19 13:01:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -182,6 +182,7 @@ int	cvtlevel;		/* convert to newer file system format */
 int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
+char	usedsoftdep;		/* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
 int doswap;			/* convert byte order */
 int needswap;			/* need to convert byte order in memory */
@@ -195,6 +196,7 @@ int	fsmodified;		/* 1 => write done to file system */
 int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+char	resolved;		/* cleared if unresolved changes => not clean */
 
 ufs_daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
