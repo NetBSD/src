@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.76 2000/06/05 07:28:56 pk Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.77 2000/06/13 04:10:47 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -670,6 +670,7 @@ step3:
 		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = amap;
 	} else {
+		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = NULL;
 	}
 
