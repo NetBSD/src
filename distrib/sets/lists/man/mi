@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.477 2002/05/20 19:36:01 jwise Exp $
+# $NetBSD: mi,v 1.478 2002/05/21 00:49:54 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -754,7 +754,10 @@
 ./usr/share/man/cat4/mac68k/sn.0		man-sys-catman
 ./usr/share/man/cat4/macppc/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/macppc/awacs.0		man-sys-catman
+./usr/share/man/cat4/macppc/bm.0		man-sys-catman
+./usr/share/man/cat4/macppc/gm.0		man-sys-catman
 ./usr/share/man/cat4/macppc/intro.0		man-sys-catman
+./usr/share/man/cat4/macppc/mc.0		man-sys-catman
 ./usr/share/man/cat4/mainbus.0			man-sys-catman
 ./usr/share/man/cat4/makphy.0			man-sys-catman
 ./usr/share/man/cat4/mbe.0			man-sys-catman
@@ -2458,7 +2461,10 @@
 ./usr/share/man/man4/mac68k/sn.4		man-sys-man
 ./usr/share/man/man4/macppc/autoconf.4		man-sys-man
 ./usr/share/man/man4/macppc/awacs.4		man-sys-man
+./usr/share/man/man4/macppc/bm.4		man-sys-man
+./usr/share/man/man4/macppc/gm.4		man-sys-man
 ./usr/share/man/man4/macppc/intro.4		man-sys-man
+./usr/share/man/man4/macppc/mc.4		man-sys-man
 ./usr/share/man/man4/mainbus.4			man-sys-man
 ./usr/share/man/man4/makphy.4			man-sys-man
 ./usr/share/man/man4/mbe.4			man-sys-man
