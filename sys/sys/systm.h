@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125 2001/01/27 07:21:43 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.126 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -371,7 +371,7 @@ int cn_get_magic __P((char *magic, int len));
 				(s).cnm_state = 0;			\
 			}						\
 		}							\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #endif
 
 /* Encode out-of-band events this way when passing to cn_check_magic() */
@@ -390,7 +390,7 @@ void	cpu_Debugger __P((void));
 extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #define console_debugger() if (db_fromconsole) Debugger()
 #else
-#define console_debugger() do {} while (0) /* NOP */
+#define console_debugger() do {} while (/* CONSTCOND */ 0) /* NOP */
 #endif
 #endif /* _KERNEL */
 
@@ -414,7 +414,7 @@ extern struct lock kernel_lock;
 do {									\
 	SCHED_ASSERT_UNLOCKED();					\
 	spinlockmgr(&kernel_lock, (flag), 0);				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	KERNEL_UNLOCK()		spinlockmgr(&kernel_lock, LK_RELEASE, 0)
 
@@ -426,13 +426,13 @@ do {									\
 do {									\
 	KERNEL_LOCK(LK_EXCLUSIVE);					\
 	(p)->p_flag |= P_BIGLOCK;					\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	KERNEL_PROC_UNLOCK(p)						\
 do {									\
 	p->p_flag &= ~P_BIGLOCK;					\
 	KERNEL_UNLOCK();						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #else /* ! MULTIPROCESSOR */
 
