@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.2 1993/10/27 00:54:58 pk Exp $
+ *	$Id: md.c,v 1.3 1993/11/10 21:40:50 pk Exp $
  */
 
 #include <sys/param.h>
@@ -233,6 +233,14 @@ struct relocation_info	*rp, *r;
 	r->r_copy = 1;
 }
 
+void
+md_set_breakpoint(where, savep)
+long	where;
+long	*savep;
+{
+	*savep = *(long *)where;
+	*(char *)where = TRAP;
+}
 
 #ifdef NEED_SWAP
 
