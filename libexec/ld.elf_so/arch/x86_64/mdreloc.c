@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.9 2002/09/05 20:08:20 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.10 2002/09/05 21:21:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -98,7 +98,8 @@ _rtld_relocate_plt_object(Obj_Entry *obj, const Elf_Rela *rela, caddr_t *addrp,
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
 
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
+		def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
+		    true);
 		if (def == NULL)
 			return -1;
 
@@ -149,9 +150,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 		const Obj_Entry *defobj;
 		Elf64_Addr tmp64;
 		Elf32_Addr tmp32;
+		unsigned long	 symnum;
 
 		where64 = (Elf64_Addr *)(obj->relocbase + rela->r_offset);
 		where32 = (Elf32_Addr *)where64;
+		symnum = ELF_R_SYM(rela->r_info);
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(NONE):
@@ -160,8 +163,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 		case R_TYPE(32):	/* word32 S + A, truncate */
 		case R_TYPE(32S):	/* word32 S + A, signed truncate */
 		case R_TYPE(GOT32):	/* word32 G + A (XXX can we see these?) */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase +
@@ -174,8 +176,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			    (void *)(unsigned long)*where32, defobj->path));
 			break;
 		case R_TYPE(64):	/* word64 S + A */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 
@@ -189,8 +190,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			    (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(PC32):	/* word32 S + A - P */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 			tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase +
@@ -203,8 +203,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			    (void *)(unsigned long)*where32, defobj->path));
 			break;
 		case R_TYPE(GLOB_DAT):	/* word64 S */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
 			if (def == NULL)
 				return -1;
 
@@ -229,15 +228,12 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			break;
 
 		default:
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    true);
 			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
-			    (u_long)ELF_R_SYM(rela->r_info),
-			    (u_long)ELF_R_TYPE(rela->r_info),
+			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
 			    (void *)*where64,
-			    def ? defobj->strtab + def->st_name : "??"));
+			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations\n",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
