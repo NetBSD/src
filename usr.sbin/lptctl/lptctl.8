@@ -1,4 +1,4 @@
-.\"	$NetBSD: lptctl.8,v 1.7 2004/02/03 21:46:52 jdolecek Exp $
+.\"	$NetBSD: lptctl.8,v 1.8 2004/02/03 21:50:27 jdolecek Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,11 +54,6 @@ Multiple command-argument pairs can be specified.
 Available commands are:
 .Bl -item
 .It
-.Cm dma
-.Ar yes | no
-.Pp
-Enables or disables DMA.
-.It
 .Cm mode
 .Ar standard | nibble | ps2 | fast | ecp | epp
 .Pp
@@ -66,6 +61,12 @@ Sets port to use a mode of operation: standard centronics mode
 (standard), nibble mode, bidirectional mode (ps2), fast centronics
 mode (fast), enhanced capabilities port mode (ecp), or enhanced
 parallel port mode (epp).
+.It
+.Cm dma
+.Ar yes | no
+.Pp
+Enables or disables DMA. Note DMA is only used in some advanced
+modes such as ECP, and only if interrupts are enabled too.
 .It
 .Cm ieee
 .Ar yes | no
