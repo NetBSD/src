@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.69 2003/02/26 21:29:02 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.70 2003/03/03 22:13:16 fvdl Exp $	*/
 
 /*
  *
@@ -492,6 +492,9 @@ kvtopte(vaddr_t va)
 
 	return (PTE_BASE + x86_btop(va));
 }
+
+#define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
+#define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
 paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
