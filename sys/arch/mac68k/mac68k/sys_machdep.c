@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1995/09/21 11:27:43 briggs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 1995/10/10 03:48:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -177,7 +177,7 @@ cachectl(req, addr, len)
 	return(error);
 }
 
-int sysarch(p, v, retval)
+int sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
