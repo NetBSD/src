@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2002/03/24 20:48:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2002/03/24 21:10:25 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2002/03/24 20:48:59 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2002/03/24 21:10:25 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2713,7 +2713,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			/* enter_pv locks pvh when adding */
 			pmap_enter_pv(pg, pve, pmap, va, NULL, nflags);
 		} else {
-			pg = NULL;
 			if (pve != NULL)
 				pmap_free_pv(pmap, pve);
 		}
