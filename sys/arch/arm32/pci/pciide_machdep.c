@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.1 1998/09/06 03:01:38 mark Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2 1998/10/05 01:03:52 mark Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,7 @@
 
 #include <dev/isa/isavar.h>
 #include <machine/intr.h>
+#include "isa.h"
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
@@ -60,5 +61,13 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	int (*func) __P((void *));
 	void *arg;
 {
+#if NISA > 0
+	int irq;
+
+	irq = PCIIDE_COMPAT_IRQ(chan);
+	return (isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg));
+
+#else
 	panic("pciide_machdep_compat_intr_establish() called\n");
+#endif
 }
