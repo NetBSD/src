@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcmp.S,v 1.7 1994/02/14 17:45:17 jtc Exp $
+ *	$Id: strcmp.S,v 1.8 1994/02/14 20:06:04 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcmp.S,v 1.7 1994/02/14 17:45:17 jtc Exp $"
+	.asciz "$Id: strcmp.S,v 1.8 1994/02/14 20:06:04 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -66,56 +66,56 @@ L1:	incl	%eax
 	incl	%edx
 L2:	movb	(%eax),%cl
 	testb	%cl,%cl			/* null terminator??? */
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)		/* chars match??? */
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	jne	L3
 	incl	%eax
 	incl	%edx
 	movb	(%eax),%cl
 	testb	%cl,%cl
-	je	L3
+	jz	L3
 	cmpb	%cl,(%edx)
 	je	L1
 	.align 2, 0x90
