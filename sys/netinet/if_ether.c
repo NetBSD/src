@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	8.1 (Berkeley) 6/10/93
- *	$Id: if_ether.c,v 1.13 1994/06/03 02:54:26 gwr Exp $
+ *	$Id: if_ether.c,v 1.14 1994/06/04 03:15:09 gwr Exp $
  */
 
 /*
@@ -166,11 +166,11 @@ arp_rtrequest(req, rt, sa)
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
 			/*
-			 * This is a permanent route (no expiration).
-			 * Clones of it will get an expiration time
-			 * when RTM_RESOLVE is requested. -gwr
+			 * Give this route an expiration time, even though
+			 * it's a "permanent" route, so that routes cloned
+			 * from it do not need their expiration time set.
 			 */
-			rt->rt_expire = 0;
+			rt->rt_expire = time.tv_sec;
 			break;
 		}
 		/* Announce a new entry if requested. */
@@ -204,13 +204,6 @@ arp_rtrequest(req, rt, sa)
 		Bzero(la, sizeof(*la));
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
-		/*
-		 * This route was cloned, but it was cloned from a
-		 * permanent route, so give it an expiration time.
-		 */
-		if (rt->rt_expire == 0) {
-			rt->rt_expire = time.tv_sec;
-		}
 		insque(la, &llinfo_arp);
 		if (SIN(rt_key(rt))->sin_addr.s_addr ==
 		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
@@ -356,27 +349,30 @@ arpresolve(ac, rt, m, dst, desten)
 	 */
 	if (la->la_hold)
 		m_freem(la->la_hold);
-	la->la_hold = m;	/* +0x146 */
+	la->la_hold = m;
 	/*
 	 * Re-send the ARP request when appropriate.
 	 */
 #ifdef	DIAGNOSTIC
 	if (rt->rt_expire == 0) {
-		/* This should never happen, but... -gwr */
+		/* This should never happen. (Should it? -gwr) */
 		printf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
 		rt->rt_expire = time.tv_sec;
 	}
 #endif
-	rt->rt_flags &= ~RTF_REJECT;
-	if (la->la_asked++ < arp_maxtries)
-	    /* Ask again. */
-	    arpwhohas(ac, &(SIN(dst)->sin_addr));
-	else {
-	    /* We have asked enough times.  Give up. */
-	    rt->rt_flags |= RTF_REJECT;
-	    rt->rt_expire += arpt_down;
-	    la->la_asked = 0;
+	if (rt->rt_expire) {
+		rt->rt_flags &= ~RTF_REJECT;
+		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
+			rt->rt_expire = time.tv_sec;
+			if (la->la_asked++ < arp_maxtries)
+				arpwhohas(ac, &(SIN(dst)->sin_addr));
+			else {
+				rt->rt_flags |= RTF_REJECT;
+				rt->rt_expire += arpt_down;
+				la->la_asked = 0;
+			}
+		}
 	}
 	return (0);
 }
