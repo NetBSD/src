@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.10 1997/10/19 14:05:56 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.11 1998/02/04 15:21:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.10 1997/10/19 14:05:56 mrg Exp $");
+__RCSID("$NetBSD: edit.c,v 1.11 1998/02/04 15:21:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ display(tempname, fd, pw)
 {
 	FILE *fp;
 	char *bp, *p;
+	char chgstr[256], expstr[256];
 
 	if (!(fp = fdopen(fd, "w")))
 		(*Pw_error)(tempname, 1, 1);
@@ -113,9 +114,9 @@ display(tempname, fd, pw)
 		(void)fprintf(fp, "Uid [#]: %d\n", pw->pw_uid);
 		(void)fprintf(fp, "Gid [# or name]: %d\n", pw->pw_gid);
 		(void)fprintf(fp, "Change [month day year]: %s\n",
-		    ttoa(pw->pw_change));
+		    ttoa(chgstr, sizeof chgstr, pw->pw_change));
 		(void)fprintf(fp, "Expire [month day year]: %s\n",
-		    ttoa(pw->pw_expire));
+		    ttoa(expstr, sizeof expstr, pw->pw_expire));
 		(void)fprintf(fp, "Class: %s\n", pw->pw_class);
 		(void)fprintf(fp, "Home directory: %s\n", pw->pw_dir);
 		(void)fprintf(fp, "Shell: %s\n",
