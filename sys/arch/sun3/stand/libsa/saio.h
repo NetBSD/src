@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.h,v 1.4 1997/01/27 19:41:08 gwr Exp $	*/
+/*	$NetBSD: saio.h,v 1.5 1998/01/18 05:24:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  *
  * When using this interface, only one device can be open at once.
  */
-typedef struct boottab {
+struct boottab {
 	char	b_dev[2];		/* The name of the device */
 	int	(*b_probe)();		/* probe() --> -1 or found controller 
 					   number */
@@ -76,41 +76,43 @@ typedef struct boottab {
 	int	(*b_strategy)();	/* strategy(iobp,rw) --> -1 or 0 */
 	char	*b_desc;		/* Printable string describing dev */
 	struct devinfo *b_devinfo;	/* Information to configure device */
-} MachMonBootDevice;
-
-enum MAPTYPES { /* Page map entry types. */
-  MAP_MAINMEM, 
-  MAP_OBIO, 
-  MAP_MBMEM, 
-  MAP_MBIO,
-  MAP_VME16A16D, 
-  MAP_VME16A32D,
-  MAP_VME24A16D, 
-  MAP_VME24A32D,
-  MAP_VME32A16D, 
-  MAP_VME32A32D
 };
 
 /*
  * This table gives information about the resources needed by a device.  
  */
-typedef struct devinfo {
+struct devinfo {
   unsigned int      d_devbytes;   /* Bytes occupied by device in IO space.  */
   unsigned int      d_dmabytes;   /* Bytes needed by device in DMA memory.  */
   unsigned int      d_localbytes; /* Bytes needed by device for local info. */
   unsigned int      d_stdcount;   /* How many standard addresses.           */
   unsigned long     *d_stdaddrs;  /* The vector of standard addresses.      */
-  enum     MAPTYPES d_devtype;    /* What map space device is in.           */
+  unsigned int      d_devtype;    /* What map space device is in.           */
   unsigned int      d_maxiobytes; /* Size to break big I/O's into.          */
-} MachMonDevInfo;
+};
 
+/*
+ * These are the "page map entry types" specified in the
+ * d_devtype field of struct devinfo.
+ */
+#define MAP_MAINMEM 	0
+#define MAP_OBIO		1
+#define MAP_MBMEM		2
+#define MAP_MBIO		3
+#define MAP_VME16A16D	4
+#define MAP_VME16A32D	5
+#define MAP_VME24A16D	6
+#define MAP_VME24A32D	7
+#define MAP_VME32A16D	8
+#define MAP_VME32A32D	9
+#define MAP__NTYPES 	10
 
 /*
  * A "stand alone I/O request", (from SunOS saio.h)
  * This is passed as the main argument to the PROM I/O routines
  * in the MachMonBootDevice structure.
  */
-typedef struct saioreq {
+struct saioreq {
 	char	si_flgs;
 	struct boottab *si_boottab;	/* Points to boottab entry if any */
 	char	*si_devdata;		/* Device-specific data pointer */
@@ -125,8 +127,7 @@ typedef struct saioreq {
 	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
 	char 	*si_devaddr;		/* Points to mapped in device */
 	char	*si_dmaaddr;		/* Points to allocated DMA space */
-} MachMonIORequest;
-
+};
 
 #define SAIO_F_READ	0x01
 #define SAIO_F_WRITE	0x02
@@ -134,7 +135,6 @@ typedef struct saioreq {
 #define SAIO_F_FILE	0x08
 #define	SAIO_F_EOF	0x10	/* EOF on device */
 #define SAIO_F_AJAR	0x20	/* Descriptor "ajar" (stopped but not closed) */
-
 
 /*
  * Ethernet interface descriptor (from SunOS saio.h)
@@ -146,11 +146,22 @@ typedef struct saioreq {
  * Note that the buffer must be in DVMA space...
  */
 struct saif {
-	/* transmit packet, returns zero on success. */
+	/* Transmit packet, returns zero on success. */
 	int	(*sif_xmit)(void *devdata, char *buf, int len);
-	/* wait for packet, zero if none arrived */
+	/* Receive packet, return zero if none arrived. */
 	int	(*sif_poll)(void *devdata, char *buf);
-	/* reset interface, set addresses, etc. */
+	/* Reset interface, set addresses, etc. */
 	int	(*sif_reset)(void *devdata, struct saioreq *sip);
-	/* Later (sun4 only) proms have more stuff here. */
+	/*
+	 * Later proms have more stuff here, but what versions?
+	 * It appears that all V3.X PROMs support this...
+	 */
+	/* Copy our ethernet address to the passed array. */
+	int	(*sif_macaddr)(char *ea);
 };
+
+#ifdef	_STANDALONE
+/* libsa:promdev.c */
+int  prom_iopen (struct saioreq *sip);
+void prom_iclose(struct saioreq *sip);
+#endif	/* _STANDALONE */
