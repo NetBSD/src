@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.20 2002/01/01 12:37:49 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.21 2002/01/05 19:09:41 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -449,7 +449,7 @@ sys/nfs/nfs_subs.c				1.98
 
   Always initialize ni_rootdir in nfs_namei().  This fixes a problem
   where use of ``..'' would instead use the information for ``.'',
-  when using NetBSD/alpha NFS servers, and fixes PR#11618 ands
+  when using NetBSD/alpha NFS servers, and fixes PR#11618 and
   PR#12953.
 
 sys/arch/mips/mips/pmap.c			1.135 via patch
@@ -1195,3 +1195,58 @@ sys/dev/ic/elinkxlvar.h				1.10
 sys/dev/pci/if_ex_pci.c				1.18
 
   Improve intr_ack code to support 3c556 and 3c556B.
+
+sys/arch/macppc/conf/GENERIC			1.89
+sys/arch/macppc/conf/INSTALL			1.52 via patch
+
+  Add the tlp(4) driver to GENERIC, and make the choice of the
+  de(4) driver vs. the tlp(4) driver consistent between the INSTALL
+  and GENERIC kernels.  The choice is to use the de(4) driver for
+  the DEC-based Tulip cards, and tlp(4) for the Tulip clones
+  supported by that driver.
+
+sys/dev/cardbus/cardbusdevs			1.18-1.20 via patch
+sys/dev/cardbus/cardbusdevs.h			regenerate
+sys/dev/cardbus/cardbusdevs_data.h		regenerate
+sys/dev/cardbus/if_rtk_cardbus.c		1.4-1.5,1.7
+
+  Add support for the following cards:
+   o D-Link DFE-690TXD 10/100
+   o Realtek 8139 based cards
+   o Corega FEther CB-TXD
+  Fixes PR#15100, PR#13252 and PR#12709.
+
+sys/dev/ic/siop.c				1.47 via patch
+sys/dev/ic/siopvar.h				patch
+
+  Don't call siop_morecbd() in interrupt context, but pre-allocate
+  CBD at probe time instead.  Fixes PR#13827, PR#14866 and PR#15048.
+
+sys/kern/kern_sysctl.c				1.96
+
+  Fix a memory leak when pl_corename is changed more than once.
+
+sys/dev/ic/wdc.c				1.101
+
+  Do not allow forcing Ultra-DMA via config flags if the controller
+  does not support it.
+
+sys/dev/pci/pciide.c				1.135
+sys/dev/pci/pciide_cmd_reg.h			1.11 via patch
+
+  Support Ultra-DMA 100 on the CMD 0649.
+
+distrib/notes/alpha/install			1.22
+distrib/notes/common/main			1.148
+distrib/notes/common/postinstall		1.30
+distrib/notes/common/sysinst			1.28
+distrib/notes/hpcmips/install			1.8
+distrib/notes/macppc/install			1.17
+distrib/notes/macppc/prep			1.23
+distrib/notes/mvme68k/install			1.15
+distrib/notes/sparc/install			1.44
+distrib/notes/sparc64/install			1.11
+distrib/notes/vax/install			1.11
+
+  Quote > and < characters with \*> and \*< respectively so the
+  correctness of the generated HTML is improved.
