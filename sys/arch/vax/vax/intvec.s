@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.58 2001/01/15 20:19:58 thorpej Exp $   */
+/*	$NetBSD: intvec.s,v 1.59 2001/02/18 10:44:22 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -37,6 +37,7 @@
 
 #include "opt_cputype.h"
 #include "opt_emulate.h"
+#include "leds.h"
 
 #define SCBENTRY(name) \
 	.text			; \
@@ -359,6 +360,9 @@ SCBENTRY(hardclock)
 1:	pushl	sp
 	addl2	$24,(sp)
 	calls	$1,_C_LABEL(hardclock)
+#if NLEDS
+	calls	$0,_C_LABEL(leds_intr)
+#endif
 	popr	$0x3f
 	rei
 
