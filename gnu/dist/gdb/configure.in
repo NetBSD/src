@@ -127,6 +127,23 @@ AC_SUBST(ENABLE_CFLAGS)
 AC_SUBST(ENABLE_CLIBS)
 AC_SUBST(ENABLE_OBS)
 
+dnl Setup default location for mmalloc package, if any.
+mmalloc_dir=../mmalloc
+mmalloc_yn=MMALLOC_YES
+AC_ARG_WITH(mmalloc,
+[  --with-mmalloc=MMALLOC_DIR
+  use the GNU mapped-malloc package in MMALLOC_DIR ],
+[case "${withval}" in
+  no)	mmalloc_yn=MMALLOC_NO ;;
+  *)	mmalloc_dir="${withval}";;
+  esac],
+[if test ! -d "${mmalloc_dir}"; then
+    AC_MSG_WARN([mmalloc not found - building without it]);
+    mmalloc_yn=MMALLOC_NO
+  fi])
+AC_SUBST(mmalloc_dir)
+AC_SUBST(mmalloc_yn)
+
 # target_subdir is used by the testsuite to find the target libraries.
 target_subdir=
 if test "${host}" != "${target}"; then
