@@ -155,7 +155,7 @@ file	arch/arm32/podulebus/sbic.c		sbic
 # Acorn SCSI I specific layer for sbic
 device  asc: scsi, sbic
 attach	asc at podulebus
-file	arch/arm32/podulebus/asc.c		asc
+file	arch/arm32/podulebus/asc.c		asc needs-flag
 
 # Generic fas216 + esp216 driver
 define	sfas
