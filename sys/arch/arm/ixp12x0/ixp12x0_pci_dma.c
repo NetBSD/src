@@ -1,6 +1,6 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.4 2002/10/09 00:12:05 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
 /*
- * Copyright (c) 2002
+ * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
  * All rights reserved.
  *
@@ -43,13 +43,24 @@
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
+#include <arm/ixp12x0/ixp12x0_pcireg.h>
 #include <arm/ixp12x0/ixp12x0var.h>
 
 void
-ixp12x0_pci_dma_init(bus_dma_tag_t dmat, void *cookie)
+ixp12x0_pci_dma_init(struct ixp12x0_softc *sc)
 {
-	dmat->_ranges = 0;
-	dmat->_nranges = 0;
+	extern paddr_t physical_start, physical_end;
+
+	bus_dma_tag_t dmat = &sc->ia_pci_dmat;
+	struct arm32_dma_range *dr = &sc->ia_pci_dma_range;
+
+	dmat->_ranges = dr;
+	dmat->_nranges = 1;
+
+	dr->dr_sysbase = physical_start;
+	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(IXP1200_PCI_MEM_BAR +
+			 physical_start);
+	dr->dr_len = physical_end - physical_start;
 
 	dmat->_dmamap_create = _bus_dmamap_create;
 	dmat->_dmamap_destroy = _bus_dmamap_destroy;
@@ -60,6 +71,7 @@ ixp12x0_pci_dma_init(bus_dma_tag_t dmat, void *cookie)
 	dmat->_dmamap_unload = _bus_dmamap_unload;
 	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
 	dmat->_dmamap_sync_post = NULL;
+
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
 	dmat->_dmamem_free = _bus_dmamem_free;
 	dmat->_dmamem_map = _bus_dmamem_map;

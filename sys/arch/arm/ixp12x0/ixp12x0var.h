@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.2 2002/10/09 00:09:37 thorpej Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.3 2003/02/17 20:51:52 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -48,22 +48,26 @@
 struct ixp12x0_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;	/* IRQ handle */
+	bus_space_handle_t sc_ioh;		/* IRQ handle */
 
 	u_int32_t sc_intrmask;
 
 	/* Handles for the various subregions. */
-	bus_space_handle_t sc_pci_ioh;
+	/* PCI address */
+	bus_space_handle_t sc_pci_ioh;		/* PCI CSR */
+	bus_space_handle_t sc_conf0_ioh;	/* PCI Configuration 0 */
+	bus_space_handle_t sc_conf1_ioh;	/* PCI Configuration 1 */
 
 	/* I/O window vaddr */
-
-	/* PCI address */
 
 	/* Bus space, DMA, and PCI tags for the PCI bus */
 	struct bus_space ia_pci_iot;
         struct bus_space ia_pci_memt;
         struct arm32_bus_dma_tag ia_pci_dmat;
         struct arm32_pci_chipset ia_pci_chipset;
+
+	/* DMA window info for PCI DMA. */
+	struct arm32_dma_range ia_pci_dma_range;
 
 	/* GPIO */
 };
@@ -85,6 +89,7 @@ struct intrq {
 	u_int32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
 	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
+	int iq_ist;			/* share type */
 };
 
 struct pmap_ent {
@@ -100,7 +105,7 @@ void	ixp12x0_bs_init(bus_space_tag_t, void *);
 void	ixp12x0_io_bs_init(bus_space_tag_t, void *);
 void	ixp12x0_mem_bs_init(bus_space_tag_t, void *);
 void	ixp12x0_pci_init(pci_chipset_tag_t, void *);
-void	ixp12x0_pci_dma_init(bus_dma_tag_t, void *);
+void	ixp12x0_pci_dma_init(struct ixp12x0_softc *);
 void	ixp12x0_attach(struct ixp12x0_softc *);
 void	ixp12x0_intr_init(void);
 void	*ixp12x0_intr_establish(int irq, int ipl, int (*)(void *), void *);
