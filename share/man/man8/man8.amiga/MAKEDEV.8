@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.15 2001/06/26 02:28:47 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.16 2001/09/08 01:32:37 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd#
 Floppy disks, see
@@ -132,19 +132,19 @@ RAIDframe disk driver, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . El
-.It Console ports:
+.It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttye#
 Ite bitmapped consoles
 . It Ar ttyE#
 Wscons
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar mouse#
 Amiga mice
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar tty00
 Standard serial port, see
@@ -156,20 +156,20 @@ Msc serial ports
 . It Ar ttyC#
 Com style serial ports (DraCo, HyperCom) On the DraCo, units 0 and 1 are the builtin ``modem'' and ``mouse'' ports, if configured.
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar par0
 Amiga motherboard parallel port
 . It Ar lpt#
 Lpt parallel port (DraCo mainboard, HyperCom etc.)
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -182,7 +182,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar grf#
 Custom chip (grf0), Retina Z2/Z3 (grf1/grf2), Cirrus boards (grf3), A2410 (grf4) video, CyberVision 64 (grf5), ET4000 boards (grf6) or CyberVision 64/3D (grf7).

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2001/06/26 02:28:53 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2001/09/08 01:32:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar ht#
 Massbus tm03 & tu??, see
@@ -117,7 +117,7 @@ Tu58 cassettes on dl11 controller, see
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar hp#
 Massbus rm??, see
@@ -159,7 +159,7 @@ SCSI CD-ROM, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . El
-.It Terminal multiplexors:
+.It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
 . It Ar dz#
 Unibus dz11 and dz32, see
@@ -180,13 +180,13 @@ Unibus dmz32, see
 Unibus dl11, see
 .Xr \&dl 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Printers:
+.It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar ct#
 Unibus parallel interface to CAT typesetter, see
@@ -201,13 +201,13 @@ Unibus varian parallel interface, see
 Unibus versatec parallel interface, see
 .Xr \&vp 4
 . El
-.It Call units:
+.It Call units :
 . Bl -tag -width 0123456789 -compact
 . It Ar dn#
 Unibus dn11 and emulations (e.g. Able Quadracall), see
 .Xr \&dn 4
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar ik#
 Unibus interface to ikonas frame buffer, see

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.7 2001/06/26 02:28:49 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.8 2001/09/08 01:32:44 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,13 +97,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 Scsi tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar sd#
 SCSI disks, see
@@ -126,7 +126,7 @@ Memory pseudo-disk devices, see
 . It Ar fd#
 Floppy disk drives (3 1/2")
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttye#
 Ite consoles
@@ -136,30 +136,30 @@ Standard built-in serial ports (2), see
 . It Ar ttyE#
 Wscons
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wsmouse#
 Wscons mouse events, see
 .Xr \&wsmouse 4
 . El
-.It Keyboard devices:
+.It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
 Wscons keyboard events, see
 .Xr \&wskbd 4
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It Graphics devices:
+.It Graphics devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar grf#
 Bitmapped graphics device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar tun#
 Network tunnel driver, see

@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.13 2001/06/26 02:28:48 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.14 2001/09/08 01:32:40 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,13 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes:
+.It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tapes, see
 .Xr \&st 4
 . El
-.It Disks:
+.It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd#
 Floppy disks (fdxa: 360Kb, fdxb: 720Kb, fdxc: 1.44Mb)
@@ -131,22 +131,22 @@ Memory pseudo-disk devices, see
 IDE disks, see
 .Xr \&wd 4
 . El
-.It Console ports:
+.It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttye#
 Ite bitmapped consoles
 . El
-.It Pointing devices:
+.It Pointing devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar mouse#
 Atari mice
 . El
-.It Printer:
+.It Printer :
 . Bl -tag -width 0123456789 -compact
 . It Ar lpt0
 Centronics printer
 . El
-.It Terminal ports:
+.It Terminal ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyA0
 8530 Channel A (formerly ser02)
@@ -155,13 +155,13 @@ Centronics printer
 . It Ar ttyB0
 UART on first 68901 (formerly mdm01)
 . El
-.It Pseudo terminals:
+.It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
 .Xr \&pty 4
 . El
-.It ISDN devices:
+.It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
 Comunication between userland isdnd and kernel
@@ -174,7 +174,7 @@ Telephonie device
 . It Ar i4btrc#
 Trace device
 . El
-.It Special purpose devices:
+.It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar aconf
 Autoconfig information (not yet)
@@ -217,7 +217,7 @@ SCSI unknown, see
 . It Ar view#
 Generic interface to graphic displays.
 . El
-.It Video devices:
+.It Video devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar etvme
 Tseng et-compatible cards on VME
