@@ -1,6 +1,7 @@
+$NetBSD: LEGAL.NOTICE,v 1.6 1998/09/20 15:27:15 christos Exp $
 Copyright (c) Ian F. Darwin 1986, 1987, 1989, 1990, 1991, 1992, 1994, 1995.
 Software written by Ian F. Darwin and others; maintained by Christos Zoulas.
-$NetBSD: LEGAL.NOTICE,v 1.5 1997/01/09 20:18:45 tls Exp $
+Id: LEGAL.NOTICE,v 1.9 1995/10/27 23:14:20 christos Exp 
 
 This software (or derivative software) may not be made subject to any 
 license which denies anyone permission to alter it and redistribute it 

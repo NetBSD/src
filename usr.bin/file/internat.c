@@ -1,8 +1,27 @@
-/*	$NetBSD: internat.c,v 1.2 1998/01/09 08:05:32 perry Exp $	*/
+/*	$NetBSD: internat.c,v 1.3 1998/09/20 15:27:16 christos Exp $	*/
+
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <joerg@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return.   Joerg Wunsch
+ * ----------------------------------------------------------------------------
+ */
 
 #include "file.h"
 
 #include <string.h>
+#include <memory.h>
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)Id: internat.c,v 1.4 1998/06/27 13:23:39 christos Exp ")
+#else
+__RCSID("$NetBSD: internat.c,v 1.3 1998/09/20 15:27:16 christos Exp $");
+#endif
+#endif
 
 #define F 0
 #define T 1
@@ -56,7 +75,7 @@ internatmagic(buf, nbytes)
 	 */
 
 	for (i = 0; i < nbytes;) {
-		cp = memchr(buf, '\n', nbytes - i);
+		cp = (unsigned char *) memchr(buf, '\n', nbytes - i);
 		if (cp == NULL) {
 			/* Don't fail if we hit the end of buffer. */
 			if (i + MAXLINELEN >= nbytes)

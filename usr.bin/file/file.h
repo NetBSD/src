@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.11 1997/09/30 17:00:40 is Exp $	*/
+/*	$NetBSD: file.h,v 1.12 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)$NetBSD: file.h,v 1.11 1997/09/30 17:00:40 is Exp $
+ * @(#)Id: file.h,v 1.27 1998/06/27 13:57:23 christos Exp 
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -37,7 +37,7 @@ typedef unsigned int uint32;
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
 #endif
-#define MAXMAGIS 1000		/* max entries in MAGIC */
+#define MAXMAGIS 1000		/* max entries in /etc/magic */
 #define MAXDESC	50		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
 
@@ -90,7 +90,7 @@ struct magic {
 # endif
 #endif
 
-extern int   apprentice		__P((char *, int));
+extern int   apprentice		__P((const char *, int));
 extern int   ascmagic		__P((unsigned char *, int));
 extern void  error		__P((const char *, ...));
 extern void  ckfputs		__P((const char *, FILE *));
@@ -114,7 +114,7 @@ extern void tryelf		__P((int, char *, int));
 extern int errno;		/* Some unixes don't define this..	*/
 
 extern char *progname;		/* the program name 			*/
-extern char *magicfile;		/* name of the magic file		*/
+extern const char *magicfile;	/* name of the magic file		*/
 extern int lineno;		/* current line number in magic file	*/
 
 extern struct magic *magic;	/* array of magic entries		*/
@@ -147,6 +147,15 @@ extern char *sys_errlist[];
 
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512
+#endif
+
+#ifdef __STDC__
+#define FILE_RCSID(id) \
+static const char *rcsid(const char *p) { \
+	return rcsid(p = id); \
+}
+#else
+#define FILE_RCSID(id) static char *rcsid[] = id;
 #endif
 
 #endif /* __file_h__ */

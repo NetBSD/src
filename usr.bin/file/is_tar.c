@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.8 1997/10/18 14:53:56 lukem Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.9 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -7,7 +7,7 @@
  * Pubic Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
  * @(#)list.c 1.18 9/23/86 Public Domain - gnu
- * $NetBSD: is_tar.c,v 1.8 1997/10/18 14:53:56 lukem Exp $
+ * Id: is_tar.c,v 1.10 1998/06/27 13:23:39 christos Exp 
  *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
@@ -18,6 +18,16 @@
 #include <sys/types.h>
 #include "file.h"
 #include "tar.h"
+#include "file.h"
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)Id: is_tar.c,v 1.10 1998/06/27 13:23:39 christos Exp ")
+#else
+__RCSID("$NetBSD: is_tar.c,v 1.9 1998/09/20 15:27:16 christos Exp $");
+#endif
+#endif
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 

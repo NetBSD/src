@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 1997/10/18 14:53:58 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.14 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -42,7 +42,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.13 1997/10/18 14:53:58 lukem Exp $");
+#if 0
+FILE_RCSID("@(#)Id: print.c,v 1.26 1998/06/27 13:57:23 christos Exp ")
+#else
+__RCSID("$NetBSD: print.c,v 1.14 1998/09/20 15:27:16 christos Exp $");
+#endif
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -51,23 +55,23 @@ void
 mdump(m)
 struct magic *m;
 {
-	static char *typ[] = {   "invalid", "byte", "short", "invalid",
-				 "long", "string", "date", "beshort",
-				 "belong", "bedate", "leshort", "lelong",
-				 "ledate" };
+	static const char *typ[] = { "invalid", "byte", "short", "invalid",
+				     "long", "string", "date", "beshort",
+				     "belong", "bedate", "leshort", "lelong",
+				     "ledate" };
 	(void) fputc('[', stderr);
 	(void) fprintf(stderr, ">>>>>>>> %d" + 8 - (m->cont_level & 7),
 		       m->offset);
 
 	if (m->flag & INDIR)
 		(void) fprintf(stderr, "(%s,%d),",
-			       ((unsigned char)m->in.type < SZOF(typ)) ? 
+			       (m->in.type >= 0 && m->in.type < SZOF(typ)) ? 
 					typ[(unsigned char) m->in.type] :
 					"*bad*",
 			       m->in.offset);
 
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
-		       ((unsigned char)m->type < SZOF(typ)) ? 
+		       (m->type >= 0 && m->type < SZOF(typ)) ? 
 				typ[(unsigned char) m->type] : 
 				"*bad*");
 	if (m->mask != ~((uint32)0))
@@ -93,7 +97,9 @@ struct magic *m;
 	    case LEDATE:
 	    case BEDATE:
 		    {
-			    char *rt, *pp = ctime((time_t*) &m->value.l);
+			    time_t t = m->value.l;
+			    char *rt, *pp = ctime(&t);
+
 			    if ((rt = strchr(pp, '\n')) != NULL)
 				    *rt = '\0';
 			    (void) fprintf(stderr, "%s,", pp);

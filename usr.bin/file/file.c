@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.14 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -27,11 +27,6 @@
  * 4. This notice may not be removed or altered.
  */
 
-#include <sys/cdefs.h>
-#ifndef	lint
-__RCSID("$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $");
-#endif	/* lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,13 +34,15 @@ __RCSID("$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $");
 #include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
-#if (__COHERENT__ >= 0x420)
-# include <sys/utime.h>
-#else
-# ifdef USE_UTIMES
-#  include <sys/time.h>
+#ifdef RESTORE_TIME
+# if (__COHERENT__ >= 0x420)
+#  include <sys/utime.h>
 # else
-#  include <utime.h>
+#  ifdef USE_UTIMES
+#   include <sys/time.h>
+#  else
+#   include <utime.h>
+#  endif
 # endif
 #endif
 #include <unistd.h>	/* for read() */
@@ -55,10 +52,19 @@ __RCSID("$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $");
 #include "patchlevel.h"
 #include "file.h"
 
-#ifdef S_IFLNK
-# define USAGE  "Usage: %s [-vczL] [-f namefile] [-m magicfiles] file...\n"
+#ifndef	lint
+#if 0
+FILE_RCSID("@(#)Id: file.c,v 1.42 1998/09/12 13:17:52 christos Exp ")
 #else
-# define USAGE  "Usage: %s [-vcz] [-f namefile] [-m magicfiles] file...\n"
+__RCSID("$NetBSD: file.c,v 1.14 1998/09/20 15:27:16 christos Exp $");
+#endif
+#endif	/* lint */
+
+
+#ifdef S_IFLNK
+# define USAGE  "Usage: %s [-vbczL] [-f namefile] [-m magicfiles] file...\n"
+#else
+# define USAGE  "Usage: %s [-vbcz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC
@@ -68,6 +74,7 @@ __RCSID("$NetBSD: file.c,v 1.13 1997/10/18 14:53:52 lukem Exp $");
 int 			/* Global command-line options 		*/
 	debug = 0, 	/* debugging 				*/
 	lflag = 0,	/* follow Symlinks (BSD only) 		*/
+	bflag = 0,	/* brief output format	 		*/
 	zflag = 0;	/* follow (uncompress) compressed files */
 
 int			/* Misc globals				*/
@@ -75,18 +82,19 @@ int			/* Misc globals				*/
 
 struct  magic *magic;	/* array of magic entries		*/
 
-char *magicfile;	/* where magic be found 		*/
+const char *magicfile;	/* where magic be found 		*/
 
 char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
 
 
-	int	main __P((int, char **));
 static void	unwrap		__P((char *fn));
 #if 0
 static int	byteconv4	__P((int, int, int));
 static short	byteconv2	__P((int, int, int));
 #endif
+
+int main __P((int, char *[]));
 
 /*
  * main - parse arguments and handle options
@@ -107,12 +115,15 @@ main(argc, argv)
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
 
-	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != -1)
+	while ((c = getopt(argc, argv, "vbcdf:Lm:z")) != EOF)
 		switch (c) {
 		case 'v':
 			(void) fprintf(stdout, "%s-%d.%d\n", progname,
 				       FILE_VERSION_MAJOR, patchlevel);
 			return 1;
+		case 'b':
+			++bflag;
+			break;
 		case 'c':
 			++check;
 			break;
@@ -306,7 +317,7 @@ int wid;
 		inname = stdname;
 	}
 
-	if (wid > 0)
+	if (wid > 0 && !bflag)
 	     (void) printf("%s:%*s ", inname, 
 			   (int) (wid - strlen(inname)), "");
 
@@ -354,6 +365,9 @@ int wid;
 #ifdef RESTORE_TIME
 		/*
 		 * Try to restore access, modification times if read it.
+		 * This is really *bad* because it will modify the status
+		 * time of the file... And of course this will affect
+		 * backup programs
 		 */
 # ifdef USE_UTIMES
 		struct timeval  utsbuf[2];

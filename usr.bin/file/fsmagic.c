@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.11 1997/10/18 14:53:54 lukem Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.12 1998/09/20 15:27:16 christos Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -33,6 +33,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #ifndef major
 # if defined(__SVR4) || defined(_SVR4_SOURCE)
 #  include <sys/mkdev.h>
@@ -53,7 +56,11 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: fsmagic.c,v 1.11 1997/10/18 14:53:54 lukem Exp $");
+#if 0
+FILE_RCSID("@(#)Id: fsmagic.c,v 1.27 1998/06/27 13:23:39 christos Exp ")
+#else
+__RCSID("$NetBSD: fsmagic.c,v 1.12 1998/09/20 15:27:16 christos Exp $");
+#endif
 #endif	/* lint */
 
 int
@@ -91,12 +98,20 @@ struct stat *sb;
 		ckfputs("directory", stdout);
 		return 1;
 	case S_IFCHR:
+#ifdef HAVE_ST_RDEV
 		(void) printf("character special (%ld/%ld)",
 			(long) major(sb->st_rdev), (long) minor(sb->st_rdev));
+#else
+		(void) printf("character special");
+#endif
 		return 1;
 	case S_IFBLK:
+#ifdef HAVE_ST_RDEV
 		(void) printf("block special (%ld/%ld)",
 			(long) major(sb->st_rdev), (long) minor(sb->st_rdev));
+#else
+		(void) printf("block special");
+#endif
 		return 1;
 	/* TODO add code to handle V7 MUX and Blit MUX files */
 #ifdef	S_IFIFO

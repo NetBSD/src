@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.3 1998/01/09 08:05:34 perry Exp $	*/
+/*	$NetBSD: readelf.c,v 1.4 1998/09/20 15:27:16 christos Exp $	*/
 
 
 #ifdef BUILTIN_ELF
@@ -10,8 +10,26 @@
 #include <unistd.h>
 #include <errno.h>
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 #include "readelf.h"
 #include "file.h"
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)Id: readelf.c,v 1.9 1998/09/12 13:21:01 christos Exp ")
+#else
+__RCSID("$NetBSD: readelf.c,v 1.4 1998/09/20 15:27:16 christos Exp $");
+#endif
+#endif
+
+#ifdef	ELFCORE
+static void dophn_core __P((int, off_t, int, size_t, char *));
+#endif
+static void dophn_exec __P((int, off_t, int, size_t, char *));
+static void doshn __P((int, off_t, int, size_t, char *));
 
 static void
 doshn(fd, off, num, size, buf)
@@ -60,6 +78,8 @@ dophn_exec(fd, off, num, size, buf)
 {
 	/* I am not sure if this works for 64 bit elf formats */
 	Elf32_Phdr *ph = (Elf32_Phdr *) buf;
+	char *linking_style = "statically";
+	char *shared_libraries = "";
 
 	if (lseek(fd, off, SEEK_SET) == -1)
 		error("lseek failed (%s).\n", strerror(errno));
@@ -67,20 +87,22 @@ dophn_exec(fd, off, num, size, buf)
   	for ( ; num; num--) {
   		if (read(fd, buf, size) == -1)
   			error("read failed (%s).\n", strerror(errno));
-		if (ph->p_type == PT_INTERP) {
-			/*
-			 * Has an interpreter - must be a dynamically-linked
-			 * executable.
-			 */
-			printf(", dynamically linked");
-			return;
+
+		switch (ph->p_type) {
+		case PT_DYNAMIC:
+			linking_style = "dynamically";
+			break;
+		case PT_INTERP:
+			shared_libraries = " (uses shared libs)";
+			break;
 		}
 	}
-	printf(", statically linked");
+	printf(", %s linked%s", linking_style, shared_libraries);
 }
 
+#ifdef ELFCORE
 size_t	prpsoffsets[] = {
-	100,		/* SunOS 5.x */
+	84,		/* SunOS 5.x */
 	32,		/* Linux */
 };
 
@@ -105,10 +127,6 @@ dophn_core(fd, off, num, size, buf)
 	size_t size;
 	char *buf;
 {
-	/*
-	 * This doesn't work for 64-bit ELF, as the "p_offset" field is
-	 * 64 bits in 64-bit ELF.
-	 */
 	/*
 	 * This doesn't work for 64-bit ELF, as the "p_offset" field is
 	 * 64 bits in 64-bit ELF.
@@ -220,6 +238,7 @@ dophn_core(fd, off, num, size, buf)
 		}
 	}
 }
+#endif
 
 void
 tryelf(fd, buf, nbytes)
@@ -238,7 +257,8 @@ tryelf(fd, buf, nbytes)
 	 * Instead we traverse thru all section headers until a symbol table
 	 * one is found or else the binary is stripped.
 	 */
-	if (buf[EI_MAG0] != ELFMAG0 || buf[EI_MAG1] != ELFMAG1
+	if (buf[EI_MAG0] != ELFMAG0
+	    || (buf[EI_MAG1] != ELFMAG1 && buf[EI_MAG1] != OLFMAG1)
 	    || buf[EI_MAG2] != ELFMAG2 || buf[EI_MAG3] != ELFMAG3)
 	    return;
 
@@ -260,13 +280,18 @@ tryelf(fd, buf, nbytes)
 		 */
 		if ((u.c[sizeof(long) - 1] + 1) == elfhdr.e_ident[5]) {
 			if (elfhdr.e_type == ET_CORE) 
+#ifdef ELFCORE
 				dophn_core(fd, elfhdr.e_phoff, elfhdr.e_phnum, 
 				      elfhdr.e_phentsize, buf);
+#else
+				;
+#endif
 			else {
 				if (elfhdr.e_type == ET_EXEC) {
-					dophn_exec(fd, elfhdr.e_phoff,
-					    elfhdr.e_phnum, 
-					      elfhdr.e_phentsize, buf);
+					dophn_exec(fd,
+						   elfhdr.e_phoff,
+						   elfhdr.e_phnum, 
+						   elfhdr.e_phentsize, buf);
 				}
 				doshn(fd, elfhdr.e_shoff, elfhdr.e_shnum,
 				      elfhdr.e_shentsize, buf);
@@ -292,21 +317,38 @@ tryelf(fd, buf, nbytes)
 		 * byte order....
 		 */
 		if ((u.c[sizeof(long) - 1] + 1) == elfhdr.e_ident[5]) {
-#ifdef notyet
 			if (elfhdr.e_type == ET_CORE) 
-				dophn_core(fd, elfhdr.e_phoff, elfhdr.e_phnum, 
-				      elfhdr.e_phentsize, buf);
+#ifdef ELFCORE
+				dophn_core(fd,
+#ifndef __GNUC__
+					   elfhdr.e_phoff[1],
+#else
+					   elfhdr.e_phoff,
+#endif
+					   elfhdr.e_phnum, 
+					   elfhdr.e_phentsize, buf);
+#else
+				;
+#endif
 			else
-#endif
 			{
-#ifdef notyet
 				if (elfhdr.e_type == ET_EXEC) {
-					dophn_exec(fd, elfhdr.e_phoff,
-					    elfhdr.e_phnum, 
-					      elfhdr.e_phentsize, buf);
-				}
+					dophn_exec(fd,
+#ifndef __GNUC__
+						   elfhdr.e_phoff[1],
+#else
+						   elfhdr.e_phoff,
 #endif
-				doshn(fd, elfhdr.e_shoff, elfhdr.e_shnum,
+						   elfhdr.e_phnum, 
+						   elfhdr.e_phentsize, buf);
+				}
+				doshn(fd,
+#ifndef __GNUC__
+				      elfhdr.e_shoff[1],
+#else
+				      elfhdr.e_shoff,
+#endif
+				      elfhdr.e_shnum,
 				      elfhdr.e_shentsize, buf);
 			}
 		}

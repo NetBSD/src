@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.14 1997/10/18 14:53:48 lukem Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.15 1998/09/20 15:27:15 christos Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,11 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: apprentice.c,v 1.14 1997/10/18 14:53:48 lukem Exp $");
+#if 0
+FILE_RCSID("@(#)Id: apprentice.c,v 1.28 1998/09/12 13:17:52 christos Exp ")
+#else
+__RCSID("$NetBSD: apprentice.c,v 1.15 1998/09/20 15:27:15 christos Exp $");
+#endif
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -53,11 +57,11 @@ static void eatsize	__P((char **));
 
 static int maxmagic = 0;
 
-static int apprentice_1	__P((char *, int));
+static int apprentice_1	__P((const char *, int));
 
 int
 apprentice(fn, check)
-char *fn;			/* list of magic files */
+const char *fn;			/* list of magic files */
 int check;			/* non-zero? checking-only run. */
 {
 	char *p, *mfn;
@@ -96,7 +100,7 @@ int check;			/* non-zero? checking-only run. */
 
 static int
 apprentice_1(fn, check)
-char *fn;			/* name of magic file */
+const char *fn;			/* name of magic file */
 int check;			/* non-zero? checking-only run. */
 {
 	static const char hdr[] =
@@ -231,16 +235,25 @@ int *ndx, check;
 		 */
 		if (*l == '.') {
 			l++;
-			switch (LOWCASE(*l)) {
+			switch (*l) {
 			case 'l':
-				m->in.type = LONG;
+				m->in.type = LELONG;
+				break;
+			case 'L':
+				m->in.type = BELONG;
 				break;
 			case 'h':
 			case 's':
-				m->in.type = SHORT;
+				m->in.type = LESHORT;
+				break;
+			case 'H':
+			case 'S':
+				m->in.type = BESHORT;
 				break;
 			case 'c':
 			case 'b':
+			case 'C':
+			case 'B':
 				m->in.type = BYTE;
 				break;
 			default:

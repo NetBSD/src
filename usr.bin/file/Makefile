@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/24 09:00:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1998/09/20 15:27:15 christos Exp $
 
 FILESDIR=	/usr/share/misc
 FILES=		magic
@@ -14,8 +14,8 @@ CLEANFILES+=	magic
 all:		file magic
 
 MAGDIRF:sh=	echo $(.CURDIR)/magdir/[0-9a-z]*
-MAGFILES=	$(.CURDIR)/magdir/Header \
-		$(.CURDIR)/magdir/Localstuff \
+MAGFILES=	$(.CURDIR)/Header \
+		$(.CURDIR)/Localstuff \
 		$(.CURDIR)/magdir/netbsd \
 		${MAGDIRF}
 
