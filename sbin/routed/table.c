@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.12 2000/02/11 18:39:02 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.13 2000/03/02 21:01:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.12 2000/02/11 18:39:02 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.13 2000/03/02 21:01:34 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -45,12 +45,13 @@ __RCSID("$NetBSD: table.c,v 1.12 2000/02/11 18:39:02 christos Exp $");
 static struct rt_spare *rts_better(struct rt_entry *);
 static struct rt_spare rts_empty = {0,0,0,HOPCNT_INFINITY,0,0,0};
 
-void	set_need_flash(void);
+static void	set_need_flash(void);
 #ifdef _HAVE_SIN_LEN
-void	masktrim(struct sockaddr_in *ap);
+static void	masktrim(struct sockaddr_in *ap);
 #else
-void	masktrim(struct sockaddr_in_new *ap);
+static void	masktrim(struct sockaddr_in_new *ap);
 #endif
+
 
 struct radix_node_head *rhead;		/* root of the radix tree */
 
@@ -352,7 +353,7 @@ ag_check(naddr	dst,
 			 * then mark the suppressor redundant.
 			 */
 			if (AG_IS_REDUN(ag->ag_state)
-			    && ag_cors->ag_mask==ag->ag_mask<<1) {
+			    && ag_cors->ag_mask == ag->ag_mask<<1) {
 				if (ag_cors->ag_dst_h == dst)
 					ag_cors->ag_state |= AGS_REDUN0;
 				else
@@ -1095,7 +1096,7 @@ flush_kern(void)
 		if (rtm->rtm_msglen == 0) {
 			msglog("zero length kernel route at "
 			       " %#lx in buffer %#lx before %#lx",
-			       (long)rtm, (long)sysctl_buf, (long)lim);
+			       (u_long)rtm, (u_long)sysctl_buf, (u_long)lim);
 			break;
 		}
 
@@ -1640,7 +1641,7 @@ static struct sockaddr_in_new mask_sock = {_SIN_ADDR_SIZE, AF_INET};
 #endif
 
 
-void
+static void
 set_need_flash(void)
 {
 	if (!need_flash) {
@@ -1661,7 +1662,7 @@ rtget(naddr dst, naddr mask)
 	struct rt_entry *rt;
 
 	dst_sock.sin_addr.s_addr = dst;
-	mask_sock.sin_addr.s_addr = mask;
+	mask_sock.sin_addr.s_addr = htonl(mask);
 	masktrim(&mask_sock);
 	rt = (struct rt_entry *)rhead->rnh_lookup(&dst_sock,&mask_sock,rhead);
 	if (!rt
@@ -1712,7 +1713,7 @@ rtadd(naddr	dst,
 		if ((smask & ~mask) == 0 && mask > smask)
 			state |= RS_SUBNET;
 	}
-	mask_sock.sin_addr.s_addr = mask;
+	mask_sock.sin_addr.s_addr = htonl(mask);
 	masktrim(&mask_sock);
 	rt->rt_mask = mask;
 	rt->rt_state = state;
@@ -1852,7 +1853,7 @@ rtdelete(struct rt_entry *rt)
 	}
 
 	dst_sock.sin_addr.s_addr = rt->rt_dst;
-	mask_sock.sin_addr.s_addr = rt->rt_mask;
+	mask_sock.sin_addr.s_addr = htonl(rt->rt_mask);
 	masktrim(&mask_sock);
 	if (rt != (struct rt_entry *)rhead->rnh_deladdr(&dst_sock, &mask_sock,
 							rhead)) {
