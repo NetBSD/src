@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstFind.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstFind.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -63,7 +63,7 @@ LstNode
 Lst_Find (l, d, cProc)
     Lst		l;
     ClientData	d;
-    int		(*cProc)();
+    int		(*cProc) __P((ClientData, ClientData));
 {
     return (Lst_FindFrom (l, Lst_First(l), d, cProc));
 }

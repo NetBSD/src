@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)hash.c	5.5 (Berkeley) 12/28/90";
+static char sccsid[] = "@(#)hash.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /* hash.c --
@@ -47,8 +47,8 @@ static char sccsid[] = "@(#)hash.c	5.5 (Berkeley) 12/28/90";
  * 	table.  Hash tables grow automatically as the amount of
  * 	information increases.
  */
-
 #include "sprite.h"
+#include "make.h"
 #include "hash.h"
 
 /*
@@ -56,7 +56,7 @@ static char sccsid[] = "@(#)hash.c	5.5 (Berkeley) 12/28/90";
  * defined:
  */
 
-static void		RebuildTable();
+static void RebuildTable __P((Hash_Table *));
 
 /* 
  * The following defines the ratio of # entries to # buckets
@@ -100,7 +100,7 @@ Hash_InitTable(t, numBuckets)
 		i = 16;
 	else {
 		for (i = 2; i < numBuckets; i <<= 1)
-			 /* void */ ;
+			 continue;
 	}
 	t->numEntries = 0;
 	t->size = i;
@@ -132,7 +132,7 @@ void
 Hash_DeleteTable(t)
 	Hash_Table *t;
 {
-	register struct Hash_Entry **hp, *h, *nexth;
+	register struct Hash_Entry **hp, *h, *nexth = NULL;
 	register int i;
 
 	for (hp = t->bucketPtr, i = t->size; --i >= 0;) {
@@ -393,7 +393,7 @@ static void
 RebuildTable(t)
 	register Hash_Table *t;
 {
-	register Hash_Entry *e, *next, **hp, **xp;
+	register Hash_Entry *e, *next = NULL, **hp, **xp;
 	register int i, mask;
         register Hash_Entry **oldhp;
 	int oldsize;

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)make.1	5.7 (Berkeley) 7/24/91
+.\"	@(#)make.1	8.8 (Berkeley) 6/13/95
 .\"
-.Dd July 24, 1991
+.Dd June 13, 1995
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -74,7 +74,8 @@ and makefiles, please refer to
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D Ar variable
-Define Ar variable
+Define
+.Ar variable
 to be 1, in the global context.
 .It Fl d Ar flags
 Turn on debugging, and specify which portions of
@@ -162,9 +163,9 @@ to
 .Ar value .
 .El
 .Pp
-There are six different types of lines in a makefile: file dependency
+There are seven different types of lines in a makefile: file dependency
 specifications, shell commands, variable assignments, include statements,
-conditional directives, and comments.
+conditional directives, for loops, and comments.
 .Pp
 In general, lines may be continued from one line to the next by ending
 them with a backslash
@@ -278,13 +279,13 @@ between the previous contents of the variable and the appended value.
 Variables are expanded by surrounding the variable name with either
 curly braces
 .Pq Ql {}
-or parenthesis
+or parentheses
 .Pq Ql ()
 and preceding it with
 a dollar sign
 .Pq Ql \&$ .
 If the variable name contains only a single letter, the surrounding
-braces or parenthesis are not required.
+braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
 Variable substitution occurs at two distinct times, depending on where
@@ -382,6 +383,8 @@ was executed with
 A path to the directory where
 .Nm make
 was executed.
+.It Va .OBJDIR
+A path to the directory where the targets are built.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
@@ -484,13 +487,24 @@ This is the
 .At V
 style variable substitution.
 It must be the last modifier specified.
-.Ar Old_string
-is anchored at the end of each word, so only suffixes or entire
-words may be replaced.
+If 
+.Ar old_string
+or
+.Ar new_string
+do not contain the pattern matching character
+.Ar %
+then it is assumed that they are 
+anchored at the end of each word, so only suffixes or entire
+words may be replaced. Otherwise 
+.Ar %
+is the substring of 
+.Ar old_string 
+to be replaced in
+.Ar new_string
 .El
-.Sh INCLUDE STATEMENTS AND CONDITIONALS
-Makefile inclusion and conditional structures reminiscent of the C
-programming language are provided in
+.Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
+Makefile inclusion, conditional structures and for loops  reminiscent 
+of the C programming language are provided in
 .Nm make .
 All such structures are identified by a line beginning with a single
 dot
@@ -511,7 +525,7 @@ option are searched before the system
 makefile directory.
 .Pp
 Conditional expressions are also preceded by a single dot as the first
-chraracter of a line.
+character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
 .It Ic .undef Ar variable
@@ -528,19 +542,19 @@ Test the value of an expression.
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
-Test the value of an variable.
+Test the value of a variable.
 .It Xo
 .Ic .ifndef
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
-Test the value of an variable.
+Test the value of a variable.
 .It Xo
 .Ic .ifmake
 .Oo \&! Oc Ns Ar target
 .Op Ar operator target ...
 .Xc
-Test the the target being built.
+Test the target being built.
 .It Xo
 .Ic .ifnmake
 .Oo \&! Oc Ar target
@@ -620,7 +634,7 @@ The boolean operator
 .Ql Ic \&!
 may be used to logically negate an entire
 conditional.
-It is of higher precendence than
+It is of higher precedence than
 .Ql Ic \&&& .
 .Pp
 The value of
@@ -639,7 +653,7 @@ explicitly, see
 .Va .MAIN )
 before the line containing the conditional.
 .It Ic empty
-Takes a variable, with possible modifiers, and evalutes to true if
+Takes a variable, with possible modifiers, and evaluates to true if
 the expansion of the variable would result in an empty string.
 .It Ic exists
 Takes a file name as an argument and evaluates to true if the file exists.
@@ -651,20 +665,18 @@ has been defined.
 .El
 .Pp
 .Ar Expression
-may also be an arithmetic or string comparison, with the left-hand side
-being a variable expansion.
-The standard C relational operators are all supported, and the usual
-number/base conversion is performed.
-Note, octal numbers are not supported.
-If the righthand value of a
+may also be an arithmetic or string comparison.  Variable expansion is
+performed on both sides of the comparison, after which the integral
+values are compared.  A value is interpreted as hexadecimal if it is
+preceded by 0x, otherwise it is decimal; octal numbers are not supported.
+The standard C relational operators are all supported.  If after
+variable expansion, either the left or right hand side of a
 .Ql Ic ==
 or
 .Ql Ic "!="
-operator begins with a
-quotation mark
-.Pq Ql \*q
-a string comparison is done between the expanded
-variable and the text between the quotation marks.
+operator is not an integral value, then
+string comparison is performed between the expanded
+variables.
 If no relational operator is given, it is assumed that the expanded
 variable is being compared against 0.
 .Pp
@@ -693,6 +705,31 @@ In both cases this continues until a
 or
 .Ql Ic .endif
 is found.
+.Pp 
+For loops are typically used to apply a set of rules to a list of files.
+The syntax of a for loop is:
+.Bl -tag -width Ds
+.It Xo
+.Ic \&.for
+.Ar variable 
+.Ic in 
+.Ar expression
+.Xc
+.It Xo
+<make-rules>
+.Xc
+.It Xo
+.Ic \&.endfor
+.Xc
+.El
+After the for
+.Ic expression 
+is evaluated, it is split into words. The 
+iteration
+.Ic variable
+is successively set to each word, and substituted in the 
+.Ic make-rules 
+inside the body of the for loop.
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
@@ -723,6 +760,12 @@ If a target is marked with this attribute and
 .Nm make
 can't figure out how to create it, it will ignore this fact and assume
 the file isn't needed or already exists.
+.It Ic .PHONY
+If this special target is present in a Makefile, all sources for the
+target will considered to be `phony' targets. I.e. they don't refer
+to real files, and they will always be considered out-of-date. This
+is useful in case one wants to create a target called `install', in
+a directory where a file `install' already exists.
 .It Ic .PRECIOUS
 When
 .Nm make
@@ -817,7 +860,7 @@ command in the file.
 .It Ic .SUFFIXES
 Each source specifies a suffix to
 .Nm make .
-If no sources are specified, any previous specifies suffices are deleted.
+If no sources are specified, any previous specified suffices are deleted.
 .Sh ENVIRONMENT
 .Nm Make
 utilizes the following environment variables, if they exist:

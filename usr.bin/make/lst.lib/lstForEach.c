@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstForEach.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstForEach.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -64,7 +64,7 @@ static char sccsid[] = "@(#)lstForEach.c	5.3 (Berkeley) 6/1/90";
 void
 Lst_ForEach (l, proc, d)
     Lst	    	  	l;
-    register int	(*proc)();
+    register int	(*proc) __P((ClientData, ClientData));
     register ClientData	d;
 {
     Lst_ForEachFrom(l, Lst_First(l), proc, d);
