@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.127 2001/10/15 05:05:43 tacha Exp $	*/
+/*	$NetBSD: fetch.c,v 1.128 2001/11/25 11:24:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.127 2001/10/15 05:05:43 tacha Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.128 2001/11/25 11:24:45 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -831,26 +831,42 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			} else if (strncasecmp(cp, CONTENTRANGE,
 					sizeof(CONTENTRANGE) - 1) == 0) {
 				cp += sizeof(CONTENTRANGE) - 1;
-				rangestart = STRTOLL(cp, &ep, 10);
-				if (rangestart < 0 || *ep != '-')
+				if (*cp == '*') {
+					ep = cp + 1;
+				}
+				else {
+					rangestart = STRTOLL(cp, &ep, 10);
+					if (rangestart < 0 || *ep != '-')
+						goto improper;
+					cp = ep + 1;
+					rangeend = STRTOLL(cp, &ep, 10);
+					if (rangeend < 0 || rangeend < rangestart)
+						goto improper;
+				}
+				if (*ep != '/')
 					goto improper;
 				cp = ep + 1;
-				rangeend = STRTOLL(cp, &ep, 10);
-				if (rangeend < 0 || *ep != '/' ||
-				    rangeend < rangestart)
-					goto improper;
-				cp = ep + 1;
-				entitylen = STRTOLL(cp, &ep, 10);
-				if (entitylen < 0 || *ep != '\0')
+				if (*cp == '*') {
+					ep = cp + 1;
+				}
+				else {
+					entitylen = STRTOLL(cp, &ep, 10);
+					if (entitylen < 0)
+						goto improper;
+				}
+				if (*ep != '\0')
 					goto improper;
 
-				if (debug)
-					fprintf(ttyout,
-					    "parsed range as: "
-					    LLF "-" LLF "/" LLF "\n",
-					    (LLT)rangestart,
-					    (LLT)rangeend,
-					    (LLT)entitylen);
+				if (debug) {
+					fprintf(ttyout, "parsed range as: ");
+					if (rangestart == -1)
+						fprintf(ttyout, "*");
+					else
+						fprintf(ttyout, LLF "-" LLF,
+						    (LLT)rangestart,
+						    (LLT)rangeend);
+					fprintf(ttyout, "/" LLF "\n", (LLT)entitylen);
+				}
 				if (! restart_point) {
 					warnx(
 				    "Received unexpected Content-Range header");
