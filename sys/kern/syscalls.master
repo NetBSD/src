@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 1996/11/14 04:51:11 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.39 1996/11/15 22:44:28 jtc Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -431,3 +431,15 @@
 230	UNIMPL		shmdt
 231	UNIMPL		shmget
 #endif
+232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
+				struct timespec *tp); }
+233	STD		{ int sys_clock_settime(clockid_t clock_id, \
+				const struct timespec *tp); }
+234	STD		{ int sys_clock_getres(clockid_t clock_id, \
+				struct timespec *tp); }
+235	UNIMPL		timer_create
+236	UNIMPL		timer_delete
+237	UNIMPL		timer_settime
+238	UNIMPL		timer_gettime
+239	UNIMPL		timer_getoverrun
+240	UNIMPL		nanosleep
