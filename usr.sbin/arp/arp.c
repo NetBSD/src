@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.23.10.1 2000/10/17 19:50:19 tv Exp $ */
+/*	$NetBSD: arp.c,v 1.23.10.2 2001/05/01 12:43:30 he Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.23.10.1 2000/10/17 19:50:19 tv Exp $");
+__RCSID("$NetBSD: arp.c,v 1.23.10.2 2001/05/01 12:43:30 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: arp.c,v 1.23.10.1 2000/10/17 19:50:19 tv Exp $");
 
 int	delete __P((const char *, const char *));
 void	dump __P((u_long));
+void	delete_all __P((void));
 void	sdl_print __P((const struct sockaddr_dl *));
 int	atosdl __P((const char *s, struct sockaddr_dl *sdl));
 int	file __P((char *));
@@ -92,7 +93,7 @@ int	set __P((int, char **));
 void	usage __P((void));
 
 static int pid;
-static int nflag, vflag;
+static int aflag, nflag, vflag;
 static int s = -1;
 
 int	delete __P((const char *, const char *));
@@ -119,6 +120,8 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "andsfv")) != -1)
 		switch((char)ch) {
 		case 'a':
+			aflag = 1;
+			break;
 		case 'd':
 		case 's':
 		case 'f':
@@ -138,14 +141,21 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (!op && aflag)
+		op = 'a';
+
 	switch((char)op) {
 	case 'a':
 		dump(0);
 		break;
 	case 'd':
-		if (argc < 1 || argc > 2)
-			usage();
-		(void)delete(argv[0], argv[1]);
+		if (aflag && argc == 0)
+			delete_all();
+		else {
+			if (aflag || argc < 1 || argc > 2)
+				usage();
+			(void)delete(argv[0], argv[1]);
+		}
 		break;
 	case 's':
 		if (argc < 2 || argc > 5)
@@ -454,6 +464,44 @@ dump(addr)
 	}
 }
 
+/*
+ * Delete the entire arp table
+ */
+void
+delete_all(void)
+{
+	int mib[6];
+	size_t needed;
+	char addr[sizeof("000.000.000.000\0")];
+	char *lim, *buf, *next;
+	struct rt_msghdr *rtm;
+	struct sockaddr_inarp *sin;
+	struct sockaddr_dl *sdl;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = AF_INET;
+	mib[4] = NET_RT_FLAGS;
+	mib[5] = RTF_LLINFO;
+	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+		err(1, "route-sysctl-estimate");
+	if (needed == 0)
+		return;
+	if ((buf = malloc(needed)) == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		err(1, "actual retrieval of routing table");
+	lim = buf + needed;
+	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		sin = (struct sockaddr_inarp *)(rtm + 1);
+		sdl = (struct sockaddr_dl *)(sin + 1);
+		snprintf(addr, sizeof(addr), "%s", inet_ntoa(sin->sin_addr));
+		delete(addr, NULL);
+	}
+}
+
 void
 sdl_print(sdl)
 	const struct sockaddr_dl *sdl;
@@ -512,7 +560,7 @@ usage()
 
 	(void)fprintf(stderr, "usage: %s [-n] hostname\n", __progname);
 	(void)fprintf(stderr, "usage: %s [-n] -a\n", __progname);
-	(void)fprintf(stderr, "usage: %s -d hostname\n", __progname);
+	(void)fprintf(stderr, "usage: %s -d [-a|hostname]\n", __progname);
 	(void)fprintf(stderr,
 	    "usage: %s -s hostname ether_addr [temp] [pub]\n", __progname);
 	(void)fprintf(stderr, "usage: %s -f filename\n", __progname);
