@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.5 1994/06/30 16:42:48 cgd Exp $
+	$NetBSD: syscalls.master,v 1.6 1994/10/26 02:45:23 cgd Exp $
+
 ;	@(#)syscalls.master	8.3 (Berkeley) 2/7/94
 ; System call name/number master file (or rather, slave, from HP-UX).
 ; Processed to created hpux_sysent.c, hpux_syscalls.c and hpux_syscall.h.

@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux_termio.h,v 1.6 1994/10/26 02:45:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: hpux_termio.h 1.1 90/07/09$
  *
- *	from: @(#)hpux_termio.h	8.1 (Berkeley) 6/10/93
- *	$Id: hpux_termio.h,v 1.5 1994/05/23 08:04:24 mycroft Exp $
+ *	@(#)hpux_termio.h	8.1 (Berkeley) 6/10/93
  */
 
 /* HP-UX termio stuff */
