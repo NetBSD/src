@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.51 2002/09/21 16:19:34 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.52 2002/09/21 18:56:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.51 2002/09/21 16:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.52 2002/09/21 18:56:03 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -786,12 +786,12 @@ pci_conf_print_caplist(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs)
+    const pcireg_t *regs, int capoff)
 {
 	int off;
 	pcireg_t rval;
 
-	for (off = PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]);
+	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
 	     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
 		rval = regs[o2i(off)];
@@ -1142,7 +1142,7 @@ pci_conf_print(
     )
 {
 	pcireg_t regs[o2i(256)];
-	int off, endoff, hdrtype;
+	int off, capoff, endoff, hdrtype;
 	const char *typename;
 #ifdef _KERNEL
 	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
@@ -1189,23 +1189,27 @@ pci_conf_print(
 		/* Standard device header */
 		typename = "\"normal\" device";
 		typeprintfn = &pci_conf_print_type0;
+		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 1:
 		/* PCI-PCI bridge header */
 		typename = "PCI-PCI bridge";
 		typeprintfn = &pci_conf_print_type1;
+		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 2:
 		/* PCI-CardBus bridge header */
 		typename = "PCI-CardBus bridge";
 		typeprintfn = &pci_conf_print_type2;
+		capoff = PCI_CARDBUS_CAPLISTPTR_REG;
 		endoff = 72;
 		break;
 	default:
 		typename = NULL;
 		typeprintfn = 0;
+		capoff = -1;
 		endoff = 64;
 		break;
 	}
@@ -1227,11 +1231,12 @@ pci_conf_print(
 	printf("\n");
 
 	/* papability list, if present */
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT) {
+	if ((regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		&& (capoff > 0)) {
 #ifdef _KERNEL
-		pci_conf_print_caplist(pc, tag, regs);
+		pci_conf_print_caplist(pc, tag, regs, capoff);
 #else
-		pci_conf_print_caplist(regs);
+		pci_conf_print_caplist(regs, capoff);
 #endif
 		printf("\n");
 	}
