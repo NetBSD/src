@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)newvers.sh	7.4 (Berkeley) 12/7/90
-#	$Id: newvers.sh,v 1.10.2.1 1993/10/09 09:28:32 mycroft Exp $
+#	$Id: newvers.sh,v 1.10.2.2 1993/10/11 21:11:38 mycroft Exp $
 #
 
 if [ ! -r version ]
@@ -44,7 +44,7 @@ fi
 
 touch version
 
-kernvers="NetBSD 0.9a"
+kernvers="NetBSD 0.9b"
 v=`cat version`
 t=`date`
 user=${USER-root}
