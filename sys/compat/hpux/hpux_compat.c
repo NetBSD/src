@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.48 2000/03/28 23:57:32 simonb Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.49 2000/05/27 00:40:44 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -900,7 +900,7 @@ hpux_sys_getpgrp2(cp, v, retval)
 	if (p == 0)
 		return (ESRCH);
 	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
-	    !inferior(p))
+	    !inferior(p, cp))
 		return (EPERM);
 	*retval = p->p_pgid;
 	return (0);

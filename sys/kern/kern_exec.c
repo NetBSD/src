@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.109 2000/05/26 02:24:37 simonb Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.110 2000/05/27 00:40:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -499,7 +499,7 @@ sys_execve(p, v, retval)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p->p_tracep, p, p->p_emul->e_name);
+		ktremul(p);
 #endif
 
 	return (EJUSTRETURN);
