@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.8 1999/02/22 02:25:20 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.9 1999/03/22 07:27:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -216,31 +216,33 @@ ad1848_isa_probe(isc)
 	 */
 	tmp = ADREAD(sc, AD1848_IADDR);
 	if (tmp & SP_IN_INIT) { /* Not a AD1848 */
-#if 0
 		DPRINTF(("ad_detect_A %x\n", tmp));
-#endif
 		goto bad;
 	}
 
 	/*
 	 * Test if it's possible to change contents of the indirect registers.
-	 * Registers 0 and 1 are ADC volume registers. The bit 0x10 is read
-	 * only so try to avoid using it.
+	 * Registers 0 and 1 are ADC volume registers.  The bit 0x10 is read
+	 * only so try to avoid using it.  The bit 0x20 is the mic preamp
+	 * enable; on some chips it is always the same in both registers, so
+	 * we avoid tests where they are different.
 	 */
-	ad_write(sc, 0, 0xaa);
+	ad_write(sc, 0, 0x8a);
 	ad_write(sc, 1, 0x45);	/* 0x55 with bit 0x10 clear */
+	tmp1 = ad_read(sc, 0);
+	tmp2 = ad_read(sc, 1);
 
-	if ((tmp1 = ad_read(sc, 0)) != 0xaa ||
-	    (tmp2 = ad_read(sc, 1)) != 0x45) {
+	if (tmp1 != 0x8a || tmp2 != 0x45) {
 		DPRINTF(("ad_detect_B (%x/%x)\n", tmp1, tmp2));
 		goto bad;
 	}
 
-	ad_write(sc, 0, 0x45);
+	ad_write(sc, 0, 0x65);
 	ad_write(sc, 1, 0xaa);
+	tmp1 = ad_read(sc, 0);
+	tmp2 = ad_read(sc, 1);
 
-	if ((tmp1 = ad_read(sc, 0)) != 0x45 ||
-	    (tmp2 = ad_read(sc, 1)) != 0xaa) {
+	if (tmp1 != 0x65 || tmp2 != 0xaa) {
 		DPRINTF(("ad_detect_C (%x/%x)\n", tmp1, tmp2));
 		goto bad;
 	}
@@ -304,8 +306,10 @@ ad1848_isa_probe(isc)
 
 	for (i = 0; i < 16; i++)
 		if ((tmp1 = ad_read(sc, i)) != (tmp2 = ad_read(sc, i + 16))) {
-			DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
-			if (i != SP_TEST_AND_INIT) goto bad;
+			if (i != SP_TEST_AND_INIT) {
+				DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
+				goto bad;
+			}
 		}
 
 	/*
@@ -368,7 +372,7 @@ ad1848_isa_probe(isc)
 		;
 
 	return 1;
- bad:
+bad:
 	return 0;
 }
 
