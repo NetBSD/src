@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.h,v 1.3 2000/05/30 12:03:31 sjg Exp $	*/
+/*	$NetBSD: banner.h,v 1.4 2000/10/04 19:33:16 mjl Exp $	*/
 
 /*
  *	Various defines needed for code lifted from lpd.
@@ -24,5 +24,5 @@
 #define HEIGHT	9		/* height of characters */
 #define WIDTH	8		/* width of characters */
 
-extern char scnkey_lpd[][HEIGHT];
-extern char scnkey_def[][HEIGHT];
+extern const char scnkey_lpd[][HEIGHT];
+extern const char scnkey_def[][HEIGHT];
