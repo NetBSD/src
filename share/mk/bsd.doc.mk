@@ -34,6 +34,14 @@ clean cleandir:
 
 FILES?=	${SRCS}
 install:
+	@if [ ! -d "${DESTDIR}${BINDIR}/${DIR}" ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR}/${DIR}  ; \
+                mkdir -p ${DESTDIR}${BINDIR}/${DIR}  ; \
+                chown root.wheel ${DESTDIR}${BINDIR}/${DIR}  ; \
+                chmod 755 ${DESTDIR}${BINDIR}/${DIR}  ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
 

@@ -100,7 +100,7 @@ depend: .depend
 .if !target(install)
 .if !target(beforeinstall)
 beforeinstall:
-	@if [ ! -d ${DESTDIR}${LIBDIR} ]; then \
+	@if [ ! -d "${DESTDIR}${LIBDIR}" ]; then \
 		/bin/rm -f ${DESTDIR}${LIBDIR} ; \
 		mkdir -p ${DESTDIR}${LIBDIR} ; \
 		chown root.wheel ${DESTDIR}${LIBDIR} ; \
