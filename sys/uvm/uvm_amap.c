@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.40 2001/12/05 01:33:09 enami Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.41 2002/02/25 00:39:16 chs Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.40 2001/12/05 01:33:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.41 2002/02/25 00:39:16 chs Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -939,15 +939,16 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 	vsize_t slotlen;
 	int adjval;
 {
-	int stopslot, *ppref, lcv;
-	int ref, len;
+	int stopslot, *ppref, lcv, prevlcv;
+	int ref, len, prevref, prevlen;
 
 	stopslot = curslot + slotlen;
 	ppref = amap->am_ppref;
+	prevlcv = 0;
 
 	/*
-	 * first advance to the correct place in the ppref array, fragment
-	 * if needed.
+	 * first advance to the correct place in the ppref array,
+	 * fragment if needed.
 	 */
 
 	for (lcv = 0 ; lcv < curslot ; lcv += len) {
@@ -957,10 +958,13 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 			pp_setreflen(ppref, curslot, ref, len - (curslot -lcv));
 			len = curslot - lcv;   /* new length of entry @ lcv */
 		}
+		prevlcv = lcv;
 	}
+	pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
 
 	/*
-	 * now adjust reference counts in range (make sure we dont overshoot)
+	 * now adjust reference counts in range.  merge the first
+	 * changed entry with the last unchanged entry if possible.
 	 */
 
 	if (lcv != curslot)
@@ -974,10 +978,14 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 			    len - (stopslot - lcv));
 			len = stopslot - lcv;
 		}
-		ref = ref + adjval;    /* ADJUST! */
+		ref += adjval;
 		if (ref < 0)
 			panic("amap_pp_adjref: negative reference count");
-		pp_setreflen(ppref, lcv, ref, len);
+		if (lcv == prevlcv + prevlen && ref == prevref) {
+			pp_setreflen(ppref, prevlcv, ref, prevlen + len);
+		} else {
+			pp_setreflen(ppref, lcv, ref, len);
+		}
 		if (ref == 0)
 			amap_wiperange(amap, lcv, len);
 	}
