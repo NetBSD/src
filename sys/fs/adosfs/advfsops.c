@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.11.2.1 2004/05/29 09:03:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.11.2.1 2004/05/29 09:03:28 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -844,7 +844,8 @@ SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "adosfs", NULL,
+		       CTLTYPE_NODE, "adosfs",
+		       SYSCTL_DESCR("AmigaDOS file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 16, CTL_EOL);
 	/*
