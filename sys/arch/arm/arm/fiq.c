@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.1 2001/12/20 01:20:22 thorpej Exp $	*/
+/*	$NetBSD: fiq.c,v 1.2 2001/12/20 16:12:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.1 2001/12/20 01:20:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.2 2001/12/20 16:12:10 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,7 @@ fiq_claim(struct fiqhandler *fh)
 	/* Now copy the actual handler into place. */
 	fiq_installhandler(fh->fh_func, fh->fh_size);
 
-	/*
-	 * Make sure FIQs are enabled when we return.
-	 *
-	 * XXX This doesn't work on arm26 -- the caller's IRQ
-	 * XXX state is restored when we return from this function.
-	 */
+	/* Make sure FIQs are enabled when we return. */
 	oldirqstate &= ~FIQ_BIT;
 
  out:
@@ -166,12 +161,7 @@ fiq_release(struct fiqhandler *fh)
 		fiq_installhandler(fiq_nullhandler,
 		    (size_t)(fiq_nullhandler_end - fiq_nullhandler));
 
-		/*
-		 * Make sure FIQs are disabled when we return.
-		 *
-		 * XXX This doesn't work on arm26 -- the caller's IRQ
-		 * XXX state is restored when we return from this function.
-		 */
+		/* Make sure FIQs are disabled when we return. */
 		oldirqstate |= FIQ_BIT;
 	}
 
