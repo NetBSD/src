@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.16 2002/06/09 02:47:29 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.17 2002/06/15 01:28:39 matt Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ getconfig(intface)
 		syslog(LOG_ERR,
 		       "<%s> router lifetime (%ld) on %s is invalid "
 		       "(must be 0 or between %d and %d)",
-		       __FUNCTION__, val, intface, tmp->maxinterval,
+		       __FUNCTION__, val, intface,
 		       tmp->maxinterval, MAXROUTERLIFETIME);
 		exit(1);
 	}
