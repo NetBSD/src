@@ -1,4 +1,4 @@
-.\"	$NetBSD: amd.8,v 1.4 2003/03/09 01:38:39 christos Exp $
+.\"	$NetBSD: amd.8,v 1.5 2003/03/15 22:34:25 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2003 Erez Zadok
@@ -214,7 +214,7 @@ it.
 Specify the NFS timeout
 .IR interval ,
 in tenths of a second, between NFS/RPC retries (for UDP only).  The default
-is 0.8 seconds.  The second value alters the restransmit counter, which
+is 0.8 seconds.  The second value alters the retransmit counter, which
 defaults to 11 retransmissions.  Both of these values are used by the kernel
 to communicate with amd.  Useful defaults are supplied if either or both
 values are missing.
