@@ -27,7 +27,7 @@
  *	i4b_l2timer.c - layer 2 timer handling
  *	--------------------------------------
  *
- *	$Id: i4b_l2timer.c,v 1.6 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_l2timer.c,v 1.7 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.6 2002/05/21 10:31:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.6 2002/05/21 10:31:11 martin Exp $
 static void
 i4b_T200_timeout(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_T_ERR, "bri %d, RC = %d", l2sc->drv->bri, l2sc->RC);
+	NDBGL2(L2_T_ERR, "isdnif %d, RC = %d", l2sc->drv->isdnif, l2sc->RC);
 	i4b_next_l2state(l2sc, l2sc->drv, EV_T200EXP);
 }
 
@@ -91,7 +91,7 @@ i4b_T200_start(l2_softc_t *l2sc)
 	if(l2sc->T200 == TIMER_ACTIVE)
 		return;
 		
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 	l2sc->T200 = TIMER_ACTIVE;
 
 	START_TIMER(l2sc->T200_callout, i4b_T200_timeout, l2sc, T200DEF);
@@ -111,7 +111,7 @@ i4b_T200_stop(l2_softc_t *l2sc)
 		l2sc->T200 = TIMER_IDLE;
 	}
 	splx(s);
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 }
 
 /*---------------------------------------------------------------------------*
@@ -133,7 +133,7 @@ i4b_T200_restart(l2_softc_t *l2sc)
 
 	START_TIMER(l2sc->T200_callout, i4b_T200_timeout, l2sc, T200DEF);
 	splx(s);
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 }
 
 /*---------------------------------------------------------------------------*
@@ -142,7 +142,7 @@ i4b_T200_restart(l2_softc_t *l2sc)
 static void
 i4b_T202_timeout(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_T_ERR, "bri %d, N202 = %d", l2sc->drv->bri, l2sc->N202);
+	NDBGL2(L2_T_ERR, "isdnif %d, N202 = %d", l2sc->drv->isdnif, l2sc->N202);
 	
 	if(--(l2sc->N202))
 	{
@@ -159,7 +159,7 @@ i4b_T202_start(l2_softc_t *l2sc)
 	if (l2sc->N202 == TIMER_ACTIVE)
 		return;
 
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 	l2sc->N202 = N202DEF;	
 	l2sc->T202 = TIMER_ACTIVE;
 
@@ -180,7 +180,7 @@ i4b_T202_stop(l2_softc_t *l2sc)
 		l2sc->T202 = TIMER_IDLE;
 	}
 	splx(s);
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->drv->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->drv->isdnif);
 }
 
 /*---------------------------------------------------------------------------*
@@ -190,7 +190,7 @@ i4b_T202_stop(l2_softc_t *l2sc)
 static void
 i4b_T203_timeout(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_T_ERR, "bri %d", l2sc->bri);
+	NDBGL2(L2_T_ERR, "isdnif %d", l2sc->isdnif);
 	i4b_next_l2state(l2sc, EV_T203EXP);
 }
 #endif
@@ -205,7 +205,7 @@ i4b_T203_start(l2_softc_t *l2sc)
 	if (l2sc->T203 == TIMER_ACTIVE)
 		return;
 		
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->isdnif);
 	l2sc->T203 = TIMER_ACTIVE;
 
 	START_TIMER(l2sc->T203_callout, i4b_T203_timeout, l2sc, T203DEF);
@@ -227,7 +227,7 @@ i4b_T203_stop(l2_softc_t *l2sc)
 		l2sc->T203 = TIMER_IDLE;
 	}
 	splx(s);
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->isdnif);
 #endif
 }
 
@@ -252,7 +252,7 @@ i4b_T203_restart(l2_softc_t *l2sc)
 
 	START_TIMER(l2sc->T203_callout, i4b_T203_timerout, l2sc, T203DEF);	
 	splx(s);
-	NDBGL2(L2_T_MSG, "bri %d", l2sc->bri);
+	NDBGL2(L2_T_MSG, "isdnif %d", l2sc->isdnif);
 #endif
 }
 

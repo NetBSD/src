@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.1 2003/09/25 15:34:38 pooka Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.2 2003/10/03 16:38:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -92,7 +92,7 @@ typedef struct capi_softc {
     int sc_nbch;        /* number of b channels on this controller */
     int sc_enabled;     /* is daemon connected TRUE/FALSE          */
     int sc_msgid;       /* next CAPI message id                    */
-    int capi_bri;	/* bri identifier			   */
+    int capi_isdnif;    /* isdnif identifier                       */
     char sc_profile[64];/* CAPI profile data                       */
     enum capi_c_state sc_state;
 

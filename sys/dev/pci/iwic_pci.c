@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.6 2003/05/08 21:18:42 martin Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.7 2003/10/03 16:38:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.6 2003/05/08 21:18:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.7 2003/10/03 16:38:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -326,7 +326,7 @@ int iwic_ph_data_req(isdn_layer1token t, struct mbuf * m, int freeflag);
 int iwic_ph_activate_req(isdn_layer1token t);
 int iwic_mph_command_req(isdn_layer1token t, int command, void *parm);
 
-struct isdn_layer1_bri_driver iwic_bri_driver = {
+struct isdn_layer1_isdnif_driver iwic_bri_driver = {
 	iwic_ph_data_req,
 	iwic_ph_activate_req,
 	iwic_mph_command_req
@@ -359,7 +359,8 @@ iwic_attach_bri(struct iwic_softc * sc)
 {
 	struct isdn_l3_driver *drv;
 
-	drv = isdn_attach_bri(sc->sc_dev.dv_xname, sc->sc_cardname, &sc->sc_l2, &iwic_l3_driver);
+	drv = isdn_attach_isdnif(sc->sc_dev.dv_xname, sc->sc_cardname,
+	    &sc->sc_l2, &iwic_l3_driver, NBCH_BRI);
 
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = &iwic_bri_driver;
@@ -368,7 +369,7 @@ iwic_attach_bri(struct iwic_softc * sc)
 
 	isdn_layer2_status_ind(&sc->sc_l2, drv, STI_ATTACH, 1);
 
-	isdn_bri_ready(drv->bri);
+	isdn_isdnif_ready(drv->isdnif);
 
 	return 1;
 }
