@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.75 2001/04/10 21:51:21 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.76 2001/05/16 03:58:47 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -239,6 +239,9 @@ isp_reset(struct ispsoftc *isp)
 			break;
 		case ISP_HA_FC_2200:
 			revname = "2200";
+			break;
+		case ISP_HA_FC_2300:
+			revname = "2300";
 			break;
 		default:
 			break;
@@ -533,7 +536,7 @@ again:
 #endif
 	} else {
 		ISP_WRITE(isp, RISC_MTR2100, 0x1212);
-		if (IS_2200(isp)) {
+		if (IS_2200(isp) || IS_2300(isp)) {
 			ISP_WRITE(isp, HCCR, HCCR_2X00_DISABLE_PARITY_PAUSE);
 		}
 	}
@@ -1163,7 +1166,7 @@ isp_fibre_init(struct ispsoftc *isp)
 	 * Right now we just set extended options to prefer point-to-point
 	 * over loop based upon some soft config options.
 	 */
-	if (IS_2200(isp)) {
+	if (IS_2200(isp) || IS_2300(isp)) {
 		icbp->icb_fwoptions |= ICBOPT_EXTENDED;
 		/*
 		 * Prefer or force Point-To-Point instead Loop?
@@ -1440,7 +1443,7 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 		return (-1);
 	}
 	fcp->isp_loopid = mbs.param[1];
-	if (IS_2200(isp)) {
+	if (IS_2200(isp) || IS_2300(isp)) {
 		int topo = (int) mbs.param[6];
 		if (topo < TOPO_NL_PORT || topo > TOPO_PTP_STUB)
 			topo = TOPO_PTP_STUB;
@@ -1756,7 +1759,7 @@ isp_pdb_sync(struct ispsoftc *isp)
 			mbs.param[1] = loopid << 8;
 			mbs.param[2] = portid >> 16;
 			mbs.param[3] = portid & 0xffff;
-			if (IS_2200(isp)) {
+			if (IS_2200(isp) || IS_2300(isp)) {
 				/* only issue a PLOGI if not logged in */
 				mbs.param[1] |= 0x1;
 			}
@@ -2287,7 +2290,6 @@ isp_start(XS_T *xs)
 
 	XS_INITERR(xs);
 	isp = XS_ISP(xs);
-
 
 	/*
 	 * Check to make sure we're supporting initiator role.
