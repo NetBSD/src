@@ -104,7 +104,7 @@ $ ENETUNREACH
 $ ENETRESET
 52 La conexión a la red se interrumpió al reinicializar
 $ ECONNABORTED
-53 La conexi@@@n se ha abortado debid a problemas en el software
+53 La conexión se ha abortado debid a problemas en el software
 $ ECONNRESET
 54 El interlocutor ha reinicializado la comunicación
 $ ENOBUFS
@@ -163,6 +163,12 @@ $ ENEEDAUTH
 81 Authenticator de la necesidad
 $ EIDRM
 82 Identificador quitado
+$ ENOMSG
+83 Ninjún mensaje del tipo deseado
+$ EOVERFLOW
+84 Valor demasiado grande para almacenar en tipo des datos
+$ EILSEQ
+85 Sequencia de bytes no legal
 $set 2
 $ SIGHUP
 1 Bloqueo del sistema
