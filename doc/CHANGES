@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.1 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -533,6 +533,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[nisimura 20031031]
 	sun2: Switch to GCC 3.3.2.  [mrg 20031104]
 	libcrypto: upgrade to 0.9.7c. [itojun 20031104]
+	hp300: Switch DCA and APCI serial devices to use MI com(4) driver.
+		[tsutsui 20031108]
 	amiga: Add screen types suitable for PAL displays to amidisplaycc(4) 
 		[jandberg 20031112]
 	named(8): Upgrade to BIND 8.3.7. [itojun 20031126]
@@ -581,6 +583,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		available via -D by default, if present.  [hubertf 20040106]
 	sparc64: restartable atomic sequences (RAS) implemented.
 		[martin 20040106]
+	wm(4): Fix hardware checksum bug on big endian machines.
+		[tsutsui 20040114]
 	kernel: New "audiobell" code to play console bells through audio
 		device.  [bjh21 20040117]
 	acorn32: sysbeep(4) removed.  [bjh21 20040117]
