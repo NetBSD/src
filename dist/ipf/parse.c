@@ -1,10 +1,13 @@
-/*	$NetBSD: parse.c,v 1.4.4.2 2002/02/09 16:56:12 he Exp $	*/
+/*	$NetBSD: parse.c,v 1.4.4.3 2002/10/18 13:16:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
@@ -40,8 +43,10 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.8 1999/12/28 10:49:46 darrenr Exp $";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)parse.c	1.44 6/5/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)$IPFilter: parse.c,v 2.8 1999/12/28 10:49:46 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -146,7 +151,7 @@ int     linenum;
 				}
 				fil.fr_icode = j;
 			}
-		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
+		} else if (!strcasecmp(*(cpp+1), "return-rst")) {
 			fil.fr_flags |= FR_RETRST;
 			cpp++;
 		}
@@ -263,6 +268,11 @@ int     linenum;
 	}
 
 	if (*cpp && !strcasecmp("quick", *cpp)) {
+		if (fil.fr_skip != 0) {
+			fprintf(stderr, "%d: cannot use skip with quick\n",
+				linenum);
+			return NULL;
+		}
 		cpp++;
 		fil.fr_flags |= FR_QUICK;
 	}
@@ -468,6 +478,15 @@ int     linenum;
 			return NULL;
 		}
 
+		if ((ch != 0) && (fil.fr_proto != IPPROTO_TCP) &&
+		    (fil.fr_proto != IPPROTO_UDP) &&
+		    !(fil.fr_ip.fi_fl & FI_TCPUDP)) {
+			fprintf(stderr,
+				"%d: cannot use port and neither tcp or udp\n",
+				linenum);
+			return NULL;
+		}
+
 		fil.fr_scmp = ch;
 		if (!*cpp) {
 			fprintf(stderr, "%d: missing to fields\n", linenum);
@@ -504,6 +523,15 @@ int     linenum;
 			     &fil.fr_dtop, linenum)) {
 			return NULL;
 		}
+		if ((ch != 0) && (fil.fr_proto != IPPROTO_TCP) &&
+		    (fil.fr_proto != IPPROTO_UDP) &&
+		    !(fil.fr_ip.fi_fl & FI_TCPUDP)) {
+			fprintf(stderr,
+				"%d: cannot use port and neither tcp or udp\n",
+				linenum);
+			return NULL;
+		}
+
 		fil.fr_dcmp = ch;
 	}
 
@@ -583,6 +611,11 @@ int     linenum;
 	 * head of a new group ?
 	 */
 	if (*cpp && !strcasecmp(*cpp, "head")) {
+		if (fil.fr_skip != 0) {
+			fprintf(stderr, "%d: cannot use skip with head\n",
+				linenum);
+			return NULL;
+		}
 		if (!*++cpp) {
 			fprintf(stderr, "%d: head without group #\n", linenum);
 			return NULL;
@@ -765,9 +798,9 @@ int     linenum;
 		return -1;
 
 	while (**cp && (!strncasecmp(**cp, "ipopt", 5) ||
-	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 3) ||
-	       !strncasecmp(**cp, "frag", 4) || !strncasecmp(**cp, "no", 2) ||
-	       !strncasecmp(**cp, "short", 5))) {
+	       !strcasecmp(**cp, "not") || !strncasecmp(**cp, "opt", 3) ||
+	       !strncasecmp(**cp, "frag", 4) || !strcasecmp(**cp, "no") ||
+	       !strcasecmp(**cp, "short"))) {
 		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;
 			(*cp)++;
@@ -906,7 +939,6 @@ u_long optmsk, optbits;
 	u_short secmsk = sec[0], secbits = sec[1];
 	struct ipopt_names *io, *so;
 	char *s;
-	int secflag = 0;
 
 	s = " opt ";
 	for (io = ionames; io->on_name; io++)
@@ -918,8 +950,7 @@ u_long optmsk, optbits;
 				if (io->on_value == IPOPT_SECURITY)
 					io++;
 				s = ",";
-			} else
-				secflag = 1;
+			}
 		}
 
 
@@ -998,9 +1029,9 @@ int linenum;
 				linenum, **cp);
 			return -1;
 		}
- 	} else if (fp->fr_proto == IPPROTO_ICMPV6) {
-		fprintf(stderr, "%d: Unknown ICMPv6 type (%s) specified "
-			"(use numeric value instead)\n", linenum, **cp);
+	} else if (fp->fr_proto == IPPROTO_ICMPV6) {
+		fprintf(stderr, "%d: Unknown ICMPv6 type (%s) specified, %s",
+			linenum, **cp, "(use numeric value instead\n");
 		return -1;
 	} else {
 		for (t = icmptypes, i = 0; ; t++, i++) {
@@ -1098,21 +1129,16 @@ int linenum;
 
 	(*cp)++;
 	if (!**cp) {
-		fprintf(stderr, "%d: Missing state/frag after keep\n",
+		fprintf(stderr, "%d: Missing keyword after keep\n",
 			linenum);
 		return -1;
 	}
-	if (strcasecmp(**cp, "state") && strcasecmp(**cp, "frags")) {
-		fprintf(stderr, "%d: Unrecognised state keyword \"%s\"\n",
-			linenum, **cp);
-		return -1;
-	}
 
-	if (strncasecmp(**cp, "state", 5) == 0)
+	if (strcasecmp(**cp, "state") == 0)
 		fp->fr_flags |= FR_KEEPSTATE;
 	else if (strncasecmp(**cp, "frag", 4) == 0)
 		fp->fr_flags |= FR_KEEPFRAG;
-	else if (strncasecmp(**cp, "state-age", 9) == 0) {
+	else if (strcasecmp(**cp, "state-age") == 0) {
 		if (fp->fr_ip.fi_p == IPPROTO_TCP) {
 			fprintf(stderr, "%d: cannot use state-age with tcp\n",
 				linenum);
@@ -1136,6 +1162,10 @@ int linenum;
 			fp->fr_age[1] = atoi(s);
 		} else
 			fp->fr_age[1] = fp->fr_age[0];
+	} else {
+		fprintf(stderr, "%d: Unrecognised state keyword \"%s\"\n",
+			linenum, **cp);
+		return -1;
 	}
 	(*cp)++;
 	return 0;

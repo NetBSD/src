@@ -1,10 +1,13 @@
-/*	$NetBSD: ipft_pc.c,v 1.2.4.1 2002/02/09 16:55:32 he Exp $	*/
+/*	$NetBSD: ipft_pc.c,v 1.2.4.2 2002/10/18 13:16:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__GNUC__)
@@ -33,7 +36,8 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ipft_pc.c,v 2.2.2.2 2001/06/26 10:43:18 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipft_pc.c,v 2.2.2.3 2002/02/22 15:32:54 darrenr Exp";
 #endif
 
 struct	llc	{

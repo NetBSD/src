@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.4.4.2 2002/02/09 16:55:41 he Exp $	*/
+/*	$NetBSD: ipf.c,v 1.4.4.3 2002/10/18 13:16:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -13,6 +13,9 @@
 #   include <osreldate.h>
 #  endif
 # endif
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -48,8 +51,10 @@
 #include "ipl.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipf.c,v 2.10.2.11 2002/01/09 11:46:01 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipf.c,v 2.10.2.17 2002/06/27 14:29:17 darrenr Exp";
 #endif
 
 #if	SOLARIS
@@ -105,11 +110,9 @@ char *argv[];
 	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
-#ifdef	USE_INET6
 		case '6' :
 			use_inet6 = 1;
 			break;
-#endif
 		case 'A' :
 			opts &= ~OPT_INACTIVE;
 			break;
@@ -194,8 +197,11 @@ char *ipfdev;
 
 	if (!(opts & OPT_DONOTHING) && fd == -1)
 		if ((fd = open(ipfdev, O_RDWR)) == -1)
-			if ((fd = open(ipfdev, O_RDONLY)) == -1)
+			if ((fd = open(ipfdev, O_RDONLY)) == -1) {
 				perror("open device");
+				if (errno == ENODEV)
+					fprintf(stderr, "IPFilter enabled?\n");
+			}
 	return fd;
 }
 
@@ -226,7 +232,7 @@ u_int	enable;
 		if (ioctl(fd, SIOCFRENB, &enable) == -1) {
 			if (errno == EBUSY)
 				fprintf(stderr,
-					"IP FIlter: already initialized\n");
+					"IP Filter: already initialized\n");
 			else
 				perror("SIOCFRENB");
 		}
@@ -387,7 +393,7 @@ int	*linenum;
 static void packetlogon(opt)
 char	*opt;
 {
-	int	flag, err;
+	int	flag;
 
 	flag = get_flags();
 	if (flag != 0) {
@@ -413,7 +419,7 @@ char	*opt;
 			printf("set log flag: block\n");
 	}
 
-	if (opendevice(ipfname) != -2 && (err = ioctl(fd, SIOCSETFF, &flag)))
+	if (opendevice(ipfname) != -2 && (ioctl(fd, SIOCSETFF, &flag) != 0))
 		perror("ioctl(SIOCSETFF)");
 
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {

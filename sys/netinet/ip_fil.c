@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.55.2.5 2002/02/09 16:58:05 he Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.55.2.6 2002/10/18 13:16:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -26,6 +26,10 @@
 #  include <osreldate.h>
 # endif
 #endif
+#ifdef __sgi
+# define _KMEMUSER
+# include <sys/ptimers.h>
+#endif
 #ifndef	_KERNEL
 # include <stdio.h>
 # include <string.h>
@@ -46,7 +50,6 @@
 #ifdef	_KERNEL
 # include <sys/systm.h>
 #endif
-#include <sys/uio.h>
 #if !SOLARIS
 # if (NetBSD > 199609) || (OpenBSD > 199603) || (__FreeBSD_version >= 300000)
 #  include <sys/dirent.h>
@@ -120,10 +123,10 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.55.2.5 2002/02/09 16:58:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.55.2.6 2002/10/18 13:16:43 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.48 2002/01/01 13:34:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
 #endif
 #endif
 
@@ -161,13 +164,13 @@ static	int	ipfr_fastroute6 __P((struct mbuf *, struct mbuf **,
 				     fr_info_t *, frdest_t *));
 # endif
 # ifdef	__sgi
+extern	int		tcp_mtudisc;
 extern  kmutex_t        ipf_rw;
 extern	KRWLOCK_T	ipf_mutex;
 # endif
 #else
-int	ipllog __P((void));
 void	init_ifp __P((void));
-# ifdef __sgi
+# if defined(__sgi) && (IRIX < 605)
 static int 	no_output __P((struct ifnet *, struct mbuf *,
 			       struct sockaddr *));
 static int	write_output __P((struct ifnet *, struct mbuf *,
@@ -194,6 +197,15 @@ struct timeout ipfr_slowtimer_ch;
 #endif
 #if defined(__sgi) && defined(_KERNEL)
 toid_t ipfr_slowtimer_ch;
+#endif
+
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000) && \
+    defined(_KERNEL)
+#include <sys/conf.h>
+const struct cdevsw ipl_cdevsw = {
+	iplopen, iplclose, iplread, nowrite, iplioctl,
+	nostop, notty, nopoll, nommap,
+};
 #endif
 
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
@@ -365,7 +377,7 @@ int iplattach()
 	}
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if (__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011)
 #   if __NetBSD_Version__ >= 105110000
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 #    ifdef USE_INET6
@@ -490,7 +502,7 @@ int ipl_disable()
 int ipldetach()
 # endif
 {
-	int s, i = FR_INQUE|FR_OUTQUE;
+	int s, i;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
@@ -531,11 +543,12 @@ int ipldetach()
 	printf("%s unloaded\n", ipfilter_version);
 
 	fr_checkp = fr_savep;
-	i = frflush(IPL_LOGIPF, i);
+	i = frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	i += frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
 	fr_running = 0;
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 104200000
+#  if ((__NetBSD_Version__ >= 104200000) || (__FreeBSD_version >= 500011))
 #   if __NetBSD_Version__ >= 105110000
 	if (ph_inet != NULL)
 		error = pfil_remove_hook((void *)fr_check_wrapper, NULL,
@@ -650,6 +663,9 @@ int mode;
 #else
 	unit = dev;
 #endif
+
+	if (fr_running == 0 && (cmd != SIOCFRENB || unit != IPL_LOGIPF))
+		return ENODEV;
 
 	SPL_NET(s);
 
@@ -911,7 +927,8 @@ caddr_t data;
 	 * Check that the group number does exist and that if a head group
 	 * has been specified, doesn't exist.
 	 */
-	if ((req != SIOCZRLST) && fp->fr_grhead &&
+	if ((req != SIOCZRLST) && ((req == SIOCINAFR) || (req == SIOCINIFR) ||
+	     (req == SIOCADAFR) || (req == SIOCADIFR)) && fp->fr_grhead &&
 	    fr_findgroup((u_int)fp->fr_grhead, fp->fr_flags, unit, set, NULL))
 		return EEXIST;
 	if ((req != SIOCZRLST) && fp->fr_group &&
@@ -1181,7 +1198,7 @@ fr_info_t *fin;
 	if (m == NULL)
 		return -1;
 
-	tlen = oip->ip_len - fin->fin_hlen - (tcp->th_off << 2) +
+	tlen = fin->fin_dlen - (tcp->th_off << 2) +
 			((tcp->th_flags & TH_SYN) ? 1 : 0) +
 			((tcp->th_flags & TH_FIN) ? 1 : 0);
 
@@ -1245,13 +1262,18 @@ fr_info_t *fin;
 struct mbuf **mp;
 {
 	struct mbuf *m = *mp;
-	char *dpsave;
-	int error;
+	int error, hlen;
+	fr_info_t frn;
 	ip_t *ip;
 
-	dpsave = fin->fin_dp;
+	bzero((char *)&frn, sizeof(frn));
+	frn.fin_ifp = fin->fin_ifp;
+	frn.fin_v = fin->fin_v;
+	frn.fin_out = fin->fin_out;
+	frn.fin_mp = fin->fin_mp;
 
 	ip = mtod(m, ip_t *);
+	hlen = sizeof(*ip);
 
 	ip->ip_v = fin->fin_v;
 	if (ip->ip_v == 4) {
@@ -1259,28 +1281,41 @@ struct mbuf **mp;
 		ip->ip_v = IPVERSION;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_id = oip->ip_id;
-		ip->ip_off = 0;
+
+# if defined(__NetBSD__) || defined(__OpenBSD__)
+		if (ip_mtudisc != 0)
+			ip->ip_off = IP_DF;
+# else
+#  if defined(__sgi)
+		if (ip->ip_p == IPPROTO_TCP && tcp_mtudisc != 0)
+			ip->ip_off = IP_DF;
+#  endif
+# endif
+
 # if (BSD < 199306) || defined(__sgi)
 		ip->ip_ttl = tcp_ttl;
 # else
 		ip->ip_ttl = ip_defttl;
 # endif
 		ip->ip_sum = 0;
-		fin->fin_dp = (char *)(ip + 1);
+		frn.fin_dp = (char *)(ip + 1);
 	}
 # ifdef	USE_INET6
 	else if (ip->ip_v == 6) {
 		ip6_t *ip6 = (ip6_t *)ip;
 
+		hlen = sizeof(*ip6);
 		ip6->ip6_hlim = 127;
-		fin->fin_dp = (char *)(ip6 + 1);
+		frn.fin_dp = (char *)(ip6 + 1);
 	}
 # endif
 # ifdef	IPSEC
 	m->m_pkthdr.rcvif = NULL;
 # endif
-	error = ipfr_fastroute(m, mp, fin, NULL);
-	fin->fin_dp = dpsave;
+
+	fr_makefrip(hlen, ip, &frn);
+
+	error = ipfr_fastroute(m, mp, &frn, NULL);
 	return error;
 }
 
@@ -1468,7 +1503,8 @@ int dst;
 }
 
 
-# if !defined(IPFILTER_LKM) && (__FreeBSD_version < 300000) && !defined(__sgi)
+# if !defined(IPFILTER_LKM) && !defined(__sgi) && \
+     (!defined(__FreeBSD_version) || (__FreeBSD_version < 300000))
 #  if	(BSD < 199306)
 int iplinit __P((void));
 
@@ -1586,6 +1622,9 @@ frdest_t *fdp;
 	/*
 	 * Route packet.
 	 */
+#ifdef	__sgi
+	ROUTE_RDLOCK();
+#endif
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
@@ -1622,6 +1661,11 @@ frdest_t *fdp;
 # else
 	rtalloc(ro);
 # endif
+
+#ifdef	__sgi
+	ROUTE_UNLOCK();
+#endif
+
 	if (!ifp) {
 		if (!fr || !(fr->fr_flags & FR_FASTROUTE)) {
 			error = -2;
@@ -1674,7 +1718,8 @@ frdest_t *fdp;
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
 # ifndef sparc
-#  if (!defined(__FreeBSD__) && !(_BSDI_VERSION >= 199510))
+#  if (!defined(__FreeBSD__) && !(_BSDI_VERSION >= 199510)) && \
+      !(__NetBSD_Version__ >= 105110000)
 		ip->ip_id = htons(ip->ip_id);
 #  endif
 		ip->ip_len = htons(ip->ip_len);
@@ -1696,7 +1741,7 @@ frdest_t *fdp;
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # endif /* __NetBSD__ && M_CSUM_IPv4 */
-# if	BSD >= 199306
+# if	(BSD >= 199306) || (defined(IRIX) && (IRIX >= 605))
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 # else
@@ -1788,7 +1833,7 @@ sendorfree:
 		m0 = m->m_act;
 		m->m_act = 0;
 		if (error == 0)
-# if BSD >= 199306
+# if (BSD >= 199306) || (defined(IRIX) && (IRIX >= 605))
 			error = (*ifp->if_output)(ifp, m,
 			    (struct sockaddr *)dst, ro->ro_rt);
 # else
@@ -1941,7 +1986,7 @@ frdest_t *fdp;
 #else /* #ifdef _KERNEL */
 
 
-# ifdef __sgi
+# if defined(__sgi) && (IRIX < 605)
 static int no_output __P((struct ifnet *ifp, struct mbuf *m,
 			   struct sockaddr *s))
 # else
@@ -1954,7 +1999,7 @@ static int no_output __P((struct ifnet *ifp, struct mbuf *m,
 
 
 # ifdef __STDC__
-#  ifdef __sgi
+#  if defined(__sgi) && (IRIX < 605)
 static int write_output __P((struct ifnet *ifp, struct mbuf *m,
 			     struct sockaddr *s))
 #  else
@@ -1996,7 +2041,10 @@ struct ifnet *ifp;
      (defined(OpenBSD) && (OpenBSD >= 199603))
 	return ifp->if_xname;
 # else
-	return ifp->if_name;
+	static char fullifname[LIFNAMSIZ];
+
+	sprintf(fullifname, "%s%d", ifp->if_name, ifp->if_unit);
+	return fullifname;
 # endif
 }
 
@@ -2012,7 +2060,10 @@ int v;
      (defined(OpenBSD) && (OpenBSD >= 199603))
 		if (!strncmp(ifname, ifp->if_xname, sizeof(ifp->if_xname)))
 # else
-		if (!strcmp(ifname, ifp->if_name))
+		char fullname[LIFNAMSIZ];
+
+		sprintf(fullname, "%s%d", ifp->if_name, ifp->if_unit);
+		if (!strcmp(ifname, fullname))
 # endif
 			return ifp;
 	}
@@ -2053,11 +2104,13 @@ int v;
 # else
 	ifp->if_name = strdup(ifname);
 
+	ifname = ifp->if_name;
 	while (*ifname && !isdigit(*ifname))
 		ifname++;
-	if (*ifname && isdigit(*ifname))
+	if (*ifname && isdigit(*ifname)) {
 		ifp->if_unit = atoi(ifname);
-	else
+		*ifname = '\0';
+	} else
 		ifp->if_unit = -1;
 # endif
 	ifp->if_output = no_output;
@@ -2098,13 +2151,6 @@ void init_ifp()
 }
 
 
-int ipllog __P((void))
-{
-	verbose("l");
-	return 0;
-}
-
-
 int send_reset(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
@@ -2120,7 +2166,7 @@ int code;
 fr_info_t *fin;
 int dst;
 {
-	verbose("- ICMP UNREACHABLE RST sent\n");
+	verbose("- ICMP UNREACHABLE sent\n");
 	return 0;
 }
 
@@ -2128,5 +2174,53 @@ int dst;
 void frsync()
 {
 	return;
+}
+
+void m_copydata(m, off, len, cp)
+mb_t *m;
+int off, len;
+caddr_t cp;
+{
+	bcopy((char *)m + off, cp, len);
+}
+
+
+int ipfuiomove(buf, len, rwflag, uio)
+caddr_t buf;
+int len, rwflag;
+struct uio *uio;
+{
+	int left, ioc, num, offset;
+	struct iovec *io;
+	char *start;
+
+	if (rwflag == UIO_READ) {
+		left = len;
+		ioc = 0;
+
+		offset = uio->uio_offset;
+
+		while ((left > 0) && (ioc < uio->uio_iovcnt)) {
+			io = uio->uio_iov + ioc;
+			num = io->iov_len;
+			if (num > left)
+				num = left;
+			start = (char *)io->iov_base + offset;
+			if (start > (char *)io->iov_base + io->iov_len) {
+				offset -= io->iov_len;
+				ioc++;
+				continue;
+			}
+			bcopy(buf, start, num);
+			uio->uio_resid -= num;
+			uio->uio_offset += num;
+			left -= num;
+			if (left > 0)
+				ioc++;
+		}
+		if (left > 0)
+			return EFAULT;
+	}
+	return 0;
 }
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sirix.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
+/*	$NetBSD: sirix.c,v 1.1.1.1.8.2 2002/10/18 13:16:59 itojun Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed.
@@ -6,6 +6,9 @@
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
