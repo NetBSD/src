@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.41 1998/07/05 00:51:28 jonathan Exp $	*/
+/*	$NetBSD: in.c,v 1.42 1998/07/05 22:29:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #include <netinet/if_inarp.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
-
-#include "ether.h"
 
 #ifdef INET
 
