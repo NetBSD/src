@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.51 2000/12/28 11:10:15 jdolecek Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.52 2001/01/05 21:42:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -665,7 +665,7 @@ sys_utrace(p, v, retval)
 {
 #ifdef KTRACE
 	struct sys_utrace_args /* {
-		syscallarg(const char *) id;
+		syscallarg(const char *) label;
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
@@ -673,7 +673,7 @@ sys_utrace(p, v, retval)
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
 
-	ktruser(p, SCARG(uap, id), SCARG(uap, addr), SCARG(uap, len), 1);
+	ktruser(p, SCARG(uap, label), SCARG(uap, addr), SCARG(uap, len), 1);
 
 	return (0);
 #else /* !KTRACE */
