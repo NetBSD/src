@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.30 2003/09/02 07:35:03 jlam Exp $	*/
+/*	$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.30 2003/09/02 07:35:03 jlam Exp $");
+__RCSID("$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $");
 #endif
 #endif
 
@@ -122,23 +122,10 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	if (!find_play_pen(pen, pensize, sz))
 		return NULL;
 
-#if (defined(NetBSD1_3) || (NetBSD <= 199713)) && (NetBSD1_3 <9)
-	/* values from 1.3.2/1.3I */
-	/* mkdtemp(3) is not present on 1.3.3 and below */
-	if (!mktemp(pen)) {
-		cleanup(0);
-		errx(2, "can't mktemp '%s'", pen);
-	}
-	if (mkdir(pen, 0755) == FAIL) {
-		cleanup(0);
-		errx(2, "can't mkdir '%s'", pen);
-	}
-#else
 	if (!mkdtemp(pen)) {
 		cleanup(0);
 		errx(2, "can't mkdtemp '%s'", pen);
 	}
-#endif
 	if (Verbose) {
 		if (sz)
 			fprintf(stderr,
