@@ -1,4 +1,4 @@
-/*	$NetBSD: fraglist.S,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: fraglist.S,v 1.2 1999/01/22 22:43:44 thorpej Exp $	*/
 	
 /*
  * Copyright (c) 1996
@@ -32,16 +32,18 @@
  *
  */
 
-/* space for fragment list
-  goes to text section - must be loaded by primary boot
+/*
+ * space for fragment list
+ * goes to text section - must be loaded by primary boot
  */
 
+#include <machine/asm.h>
 #include "bbinfo.h"
 
 	.text
 
-	.globl _fraglist
-_fraglist:
+	.globl _C_LABEL(fraglist)
+_C_LABEL(fraglist):
 	.long FRAGLISTMAGIC
 	.long PRIM_LOADSZ  /* blocks already in memory */
 	.long 0
