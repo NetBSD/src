@@ -1,25 +1,25 @@
-/* $NetBSD: cfe_xiocb.h,v 1.1 2002/03/05 23:46:41 simonb Exp $ */
+/* $NetBSD: cfe_api_int.h,v 1.1 2002/11/08 19:35:38 cgd Exp $ */
+/* from: SiByte Id: cfe_api_int.h,v 1.21 2002/07/09 23:29:11 cgd Exp $ */
 
 /*
- * Copyright 2000, 2001
+ * Copyright 2000, 2001, 2002
  * Broadcom Corporation. All rights reserved.
- *
+ * 
  * This software is furnished under license and may be used and copied only
  * in accordance with the following terms and conditions.  Subject to these
  * conditions, you may download, copy, install, use, modify and distribute
  * modified or unmodified copies of this software in source and/or binary
  * form. No title or ownership is transferred hereby.
- *
+ * 
  * 1) Any source code used, modified or distributed must reproduce and
  *    retain this copyright notice and list of conditions as they appear in
  *    the source file.
- *
+ * 
  * 2) No right is granted to use any trade name, trademark, or logo of
- *    Broadcom Corporation. Neither the "Broadcom Corporation" name nor any
- *    trademark or logo of Broadcom Corporation may be used to endorse or
- *    promote products derived from this software without the prior written
- *    permission of Broadcom Corporation.
- *
+ *    Broadcom Corporation.  The "Broadcom Corporation" name may not be
+ *    used to endorse or promote products derived from this software
+ *    without the prior written permission of Broadcom Corporation.
+ * 
  * 3) THIS SOFTWARE IS PROVIDED "AS-IS" AND ANY EXPRESS OR IMPLIED
  *    WARRANTIES, INCLUDING BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OF
  *    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
@@ -34,82 +34,60 @@
  */
 
 /*  *********************************************************************
+    *
     *  Broadcom Common Firmware Environment (CFE)
     *
-    *  IOCB definitions				File: cfe_iocb.h
+    *  Device function prototypes		File: cfe_api_int.h
     *
-    *  This module describes CFE's IOCB structure, the main
-    *  data structure used to communicate API requests with CFE.
+    *  This header defines all internal types and macros for the
+    *  library.  This is stuff that's not exported to an app
+    *  using the library.
     *
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Authors:  Mitch Lichtenberg, Chris Demetriou
     *
     ********************************************************************* */
 
-#ifndef _CFE_XIOCB_H
-#define	_CFE_XIOCB_H
+#ifndef CFE_API_INT_H
+#define CFE_API_INT_H
 
 /*  *********************************************************************
     *  Constants
     ********************************************************************* */
 
-#define	CFE_CMD_FW_GETINFO	0
-#define	CFE_CMD_FW_RESTART	1
-#define	CFE_CMD_FW_BOOT		2
-#define	CFE_CMD_FW_CPUCTL	3
-#define	CFE_CMD_FW_GETTIME      4
-#define	CFE_CMD_FW_MEMENUM	5
-#define	CFE_CMD_FW_FLUSHCACHE	6
+#define CFE_CMD_FW_GETINFO	0
+#define CFE_CMD_FW_RESTART	1
+#define CFE_CMD_FW_BOOT		2
+#define CFE_CMD_FW_CPUCTL	3
+#define CFE_CMD_FW_GETTIME      4
+#define CFE_CMD_FW_MEMENUM	5
+#define CFE_CMD_FW_FLUSHCACHE	6
 
-#define	CFE_CMD_DEV_GETHANDLE	9
-#define	CFE_CMD_DEV_ENUM	10
-#define	CFE_CMD_DEV_OPEN	11
-#define	CFE_CMD_DEV_INPSTAT	12
-#define	CFE_CMD_DEV_READ	13
-#define	CFE_CMD_DEV_WRITE	14
-#define	CFE_CMD_DEV_IOCTL	15
-#define	CFE_CMD_DEV_CLOSE	16
-#define	CFE_CMD_DEV_GETINFO	17
+#define CFE_CMD_DEV_GETHANDLE	9
+#define CFE_CMD_DEV_ENUM	10
+#define CFE_CMD_DEV_OPEN	11
+#define CFE_CMD_DEV_INPSTAT	12
+#define CFE_CMD_DEV_READ	13
+#define CFE_CMD_DEV_WRITE	14
+#define CFE_CMD_DEV_IOCTL	15
+#define CFE_CMD_DEV_CLOSE	16
+#define CFE_CMD_DEV_GETINFO	17
 
-#define	CFE_CMD_ENV_ENUM	20
-#define	CFE_CMD_ENV_GET		22
-#define	CFE_CMD_ENV_SET		23
-#define	CFE_CMD_ENV_DEL		24
+#define CFE_CMD_ENV_ENUM	20
+#define CFE_CMD_ENV_GET		22
+#define CFE_CMD_ENV_SET		23
+#define CFE_CMD_ENV_DEL		24
 
-#define	CFE_CMD_MAX		32
+#define CFE_CMD_MAX		32
 
-#define	CFE_MI_RESERVED	0		/* memory is reserved, do not use */
-#define	CFE_MI_AVAILABLE 1		/* memory is available */
-
-#define	CFE_FLG_WARMSTART 0x00000001
-
-#define	CFE_FLG_ENV_PERMANENT 0x00000001
-
-#define	CFE_CPU_CMD_START 1
-#define	CFE_CPU_CMD_STOP 0
-
-#define	CFE_STDHANDLE_CONSOLE	0
-
-#define	CFE_DEV_NETWORK 	1
-#define	CFE_DEV_DISK		2
-#define	CFE_DEV_FLASH		3
-#define	CFE_DEV_SERIAL		4
-#define	CFE_DEV_CPU		5
-#define	CFE_DEV_NVRAM		6
-#define	CFE_DEV_OTHER		7
-#define	CFE_DEV_MASK		0x0F
-
-#define	CFE_CACHE_FLUSH_D	1
-#define	CFE_CACHE_INVAL_I	2
-#define	CFE_CACHE_INVAL_D	4
-#define	CFE_CACHE_INVAL_L2	8
+#define CFE_CMD_VENDOR_USE	0x8000	/* codes above this are for customer use */
 
 /*  *********************************************************************
     *  Structures
     ********************************************************************* */
 
-typedef unsigned long long cfe_xuint_t;
-typedef long long cfe_xint_t;
-typedef long long cfe_xptr_t;
+typedef uint64_t cfe_xuint_t;
+typedef int64_t cfe_xint_t;
+typedef int64_t cfe_xptr_t;
 
 typedef struct xiocb_buffer_s {
     cfe_xuint_t   buf_offset;		/* offset on device (bytes) */
@@ -119,7 +97,7 @@ typedef struct xiocb_buffer_s {
     cfe_xuint_t   buf_ioctlcmd;		/* IOCTL command (used only for IOCTLs) */
 } xiocb_buffer_t;
 
-#define	buf_devflags buf_ioctlcmd	/* returned device info flags */
+#define buf_devflags buf_ioctlcmd	/* returned device info flags */
 
 typedef struct xiocb_inpstat_s {
     cfe_xuint_t inp_status;		/* 1 means input available */
@@ -157,14 +135,6 @@ typedef struct xiocb_meminfo_s {
     cfe_xuint_t mi_size;		/* block size */
 } xiocb_meminfo_t;
 
-#define	CFE_FWI_64BIT		0x00000001
-#define	CFE_FWI_32BIT		0x00000002
-#define	CFE_FWI_RELOC		0x00000004
-#define	CFE_FWI_UNCACHED	0x00000008
-#define	CFE_FWI_MULTICPU	0x00000010
-#define	CFE_FWI_FUNCSIM		0x00000020
-#define	CFE_FWI_RTLSIM		0x00000040
-
 typedef struct xiocb_fwinfo_s {
     cfe_xint_t fwi_version;		/* major, minor, eco version */
     cfe_xint_t fwi_totalmem;		/* total installed mem */
@@ -176,7 +146,7 @@ typedef struct xiocb_fwinfo_s {
     cfe_xint_t fwi_reserved1;
     cfe_xint_t fwi_reserved2;
     cfe_xint_t fwi_reserved3;
-} xiocb_fwinfo_t,cfe_fwinfo_t;
+} xiocb_fwinfo_t;
 
 typedef struct cfe_xiocb_s {
     cfe_xuint_t xiocb_fcode;		/* IOCB function code */
@@ -196,6 +166,4 @@ typedef struct cfe_xiocb_s {
     } plist;
 } cfe_xiocb_t;
 
-
-#endif
-
+#endif /* CFE_API_INT_H */
