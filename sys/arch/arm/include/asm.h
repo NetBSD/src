@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 2001/07/14 18:24:41 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,9 +95,13 @@
 #define	ASMSTR		.asciz
 
 #if defined(__ELF__) && defined(PIC)
-#define	GOTSYM(x)	x(GOT)
+#ifdef __STDC__
+#define	PIC_SYM(x,y)	x ## ( ## y ## )
 #else
-#define	GOTSYM(x)	x
+#define	PIC_SYM(x,y)	x/**/(/**/y/**/)
+#endif
+#else
+#define	PIC_SYM(x,y)	x
 #endif
 
 #ifdef __ELF__
