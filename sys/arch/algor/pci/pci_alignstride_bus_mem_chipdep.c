@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_mem_chipdep.c,v 1.2 2001/09/04 16:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -108,6 +108,9 @@ void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 
 /* get kernel virtual address */
 void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		__C(CHIP,_mem_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -242,6 +245,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 
 	/* get kernel virtual address */
 	t->bs_vaddr =		__C(CHIP,_mem_vaddr);
+
+	/* mmap for user */
+	t->bs_mmap =		__C(CHIP,_mem_mmap);
 
 	/* barrier */
 	t->bs_barrier =	__C(CHIP,_mem_barrier);
@@ -687,6 +693,29 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 #else
 	return ((void *)bsh);
 #endif
+}
+
+paddr_t
+__C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+	struct mips_bus_space_translation mbst;
+	int error;
+
+	/*
+	 * Get the translation for this address.
+	 */
+	error = __C(CHIP,_mem_translate)(v, addr, off + PAGE_SIZE, flags,
+	    &mbst);
+	if (error)
+		return (-1);
+
+	return (mips_btop(mbst.mbst_sys_start +
+	    (memaddr - mbst.mbst_bus_start) + off));
 }
 
 inline void
