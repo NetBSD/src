@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.5 2001/02/06 10:32:34 mrg Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.6 2001/02/06 13:13:44 mrg Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -127,9 +127,9 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sunos32/sunos32.h>
+#include <compat/sunos32/sunos32_dirent.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
 #include <compat/common/compat_util.h>
-#include <compat/sunos/sunos_dirent.h>
 
 #include <netinet/in.h>
 
@@ -698,7 +698,7 @@ sunos32_sys_getdents(p, v, retval)
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
-	struct sunos_dirent idb;
+	struct sunos32_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf, *cookie;
@@ -763,7 +763,7 @@ again:
 			off = *cookie++;
 			continue;
 		}
-		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
+		sunos_reclen = SUNOS32_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < sunos_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
@@ -805,7 +805,7 @@ out:
 	return (error);
 }
 
-#define	SUNOS__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
+#define	SUNOS32__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
 int
 sunos32_sys_mmap(p, v, retval)
@@ -834,13 +834,13 @@ sunos32_sys_mmap(p, v, retval)
 	if (SCARG(uap, prot) & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
 		return (EINVAL);			/* XXX still needed? */
 
-	if ((SCARG(uap, flags) & SUNOS__MAP_NEW) == 0)
+	if ((SCARG(uap, flags) & SUNOS32__MAP_NEW) == 0)
 		return (EINVAL);
 
 	SUNOS32TOP_UAP(addr, void);
 	SUNOS32TOX_UAP(len, size_t);
 	SUNOS32TO64_UAP(prot);
-	SCARG(&ua, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
+	SCARG(&ua, flags) = SCARG(uap, flags) & ~SUNOS32__MAP_NEW;
 	SUNOS32TO64_UAP(fd);
 	SCARG(&ua, pad) = 0;
 	SUNOS32TOX_UAP(pos, off_t);
