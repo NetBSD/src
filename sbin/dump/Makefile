@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.12 (Berkeley) 3/7/91
-#	$Id: Makefile,v 1.11 1993/11/12 08:48:26 cgd Exp $
+#	$Id: Makefile,v 1.12 1993/11/14 15:35:48 cgd Exp $
 #
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates
@@ -23,9 +23,6 @@ CLEANFILES=dumprmain.o dumprtape.o dumprmt.o rdump
 
 all: rdump
 
-rdump: ${LIBCRT0} ${ROBJS} ${LIBC} ${DPADD}
-	${CC} ${LDSTATIC} ${LDFLAGS} -o ${.TARGET} ${ROBJS} ${LDADD}
-
 dumprmain.o: dumpmain.o
 	${CC} -c -DRDUMP ${CFLAGS} ${.CURDIR}/dumpmain.c -o ${.TARGET}
 
@@ -37,3 +34,6 @@ afterinstall:
 	    ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>
+
+rdump: ${LIBCRT0} ${ROBJS} ${LIBC} ${DPADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${ROBJS} ${LDADD}
