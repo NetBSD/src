@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.31 1998/01/16 09:07:46 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.32 1998/01/22 10:20:48 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -98,6 +98,8 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  ${DISTDIR}.  Also they will be fetched in this subdirectory 
 #				  from FreeBSD mirror sites.
 # ALLFILES		- All of ${DISTFILES} and ${PATCHFILES}.
+# MIRROR_DISTFILE	- Whether the distfile is redistributable without restrictions.
+#			  Defaults to "yes", set this to "no" if restrictions exist.
 # IGNOREFILES	- If some of the ${ALLFILES} are not checksum-able, set
 #				  this variable to their names.
 # PKGNAME		- Name of the package file to create if the DISTNAME 
@@ -473,6 +475,9 @@ FETCH_CMD?=		/usr/bin/fetch
 .else
 FETCH_CMD?=		/usr/bin/ftp
 .endif
+
+# By default, distfiles have no restrictions placed on them
+MIRROR_DISTFILE?=	yes
 
 TOUCH?=			/usr/bin/touch
 TOUCH_FLAGS?=	-f
@@ -1037,6 +1042,14 @@ do-fetch:
 	    fi \
 	 done)
 .endif
+.endif
+
+# This is for the use of sites which store distfiles which others may
+# fetch - only fetch the distfile if it is allowed to be
+# re-distributed freely
+mirror:
+.if (${MIRROR_DISTFILE} == "yes")
+	@make fetch
 .endif
 
 # Extract
