@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.6 1993/12/17 07:57:11 mycroft Exp $
+ *	$Id: vm_pageout.c,v 1.7 1993/12/20 12:40:21 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,11 +68,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/vmmeter.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
-#include <sys/vmmeter.h>
+
+#include <machine/cpu.h>
 
 int	vm_pages_needed;		/* Event on which pageout daemon sleeps */
 int	vm_pageout_free_min = 0;	/* Stop pageout to wait for pagers at this free level */
@@ -119,7 +121,7 @@ vm_pageout_scan()
 	 *	Acquire the resident page system lock,
 	 *	as we may be changing what's resident quite a bit.
 	 */
-	vm_page_lock_queues();
+	VM_PAGE_LOCK_QUEUES();
 
 	/*
 	 *	Start scanning the inactive queue for pages we can free.
@@ -142,7 +144,7 @@ vm_pageout_scan()
 		if (free >= vm_page_free_target)
 			break;
 
-		if (m->clean) {
+		if (m->flags & PG_CLEAN) {
 			next = (vm_page_t) queue_next(&m->pageq);
 			if (pmap_is_referenced(VM_PAGE_TO_PHYS(m))) {
 				vm_page_activate(m);
@@ -176,7 +178,7 @@ vm_pageout_scan()
 			 *	cleaning operation.
 			 */
 
-			if (m->laundry) {
+			if (m->flags & PG_LAUNDRY) {
 				/*
 				 *	Clean the page and remove it from the
 				 *	laundry.
@@ -209,7 +211,7 @@ vm_pageout_scan()
 
 				pmap_page_protect(VM_PAGE_TO_PHYS(m),
 						  VM_PROT_NONE);
-				m->busy = TRUE;
+				m->flags |= PG_BUSY;
 				vm_stat.pageouts++;
 
 				/*
@@ -217,7 +219,7 @@ vm_pageout_scan()
 				 *	making a pager for it.  We must
 				 *	unlock the page queues first.
 				 */
-				vm_page_unlock_queues();
+				VM_PAGE_UNLOCK_QUEUES();
 
 				vm_object_collapse(object);
 
@@ -254,13 +256,13 @@ vm_pageout_scan()
 					vm_pager_put(pager, m, FALSE) :
 					VM_PAGER_FAIL;
 				vm_object_lock(object);
-				vm_page_lock_queues();
+				VM_PAGE_LOCK_QUEUES();
 				next = (vm_page_t) queue_next(&m->pageq);
 
 				switch (pageout_status) {
 				case VM_PAGER_OK:
 				case VM_PAGER_PEND:
-					m->laundry = FALSE;
+					m->flags &= ~PG_LAUNDRY;
 					break;
 				case VM_PAGER_BAD:
 					/*
@@ -269,8 +271,8 @@ vm_pageout_scan()
 					 * changes by pretending it worked.
 					 * XXX dubious, what should we do?
 					 */
-					m->laundry = FALSE;
-					m->clean = TRUE;
+					m->flags &= ~PG_LAUNDRY;
+					m->flags |= PG_CLEAN;
 					pmap_clear_modify(VM_PAGE_TO_PHYS(m));
 					break;
 				case VM_PAGER_FAIL:
@@ -294,7 +296,7 @@ vm_pageout_scan()
 				 * object collapse.
 				 */
 				if (pageout_status != VM_PAGER_PEND) {
-					m->busy = FALSE;
+					m->flags &= ~PG_BUSY;
 					PAGE_WAKEUP(m);
 					object->paging_in_progress--;
 				}
@@ -333,7 +335,7 @@ vm_pageout_scan()
 	}
 
 	vm_page_pagesfreed += pages_freed;
-	vm_page_unlock_queues();
+	VM_PAGE_UNLOCK_QUEUES();
 }
 
 /*

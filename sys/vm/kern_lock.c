@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_lock.c	7.4 (Berkeley) 4/21/91
- *	$Id: kern_lock.c,v 1.3 1993/12/17 07:56:32 mycroft Exp $
+ *	$Id: kern_lock.c,v 1.4 1993/12/20 12:39:58 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,14 +68,15 @@
  */
 
 #include <sys/param.h>
-/* XXX */
 #include <sys/proc.h>
-typedef	int *thread_t;
-#define	current_thread()	((thread_t)&curproc->p_thread)
-/* XXX */
 
 #include <vm/vm_param.h>
 #include <vm/lock.h>
+
+/* XXX */
+typedef	int *thread_t;
+#define	current_thread()	((thread_t)&curproc->p_thread)
+/* XXX */
 
 #if	NCPUS > 1
 
