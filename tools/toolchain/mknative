@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.10 2003/03/01 13:09:10 mrg Exp $
+#	$NetBSD: mknative,v 1.11 2003/03/05 05:28:29 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -189,7 +189,9 @@ get_binutils () {
 
 	{
 		getvars binutils/Makefile \
-			DEFS INCLUDES man_MANS PROGRAMS TEXINFOS
+			DEFS INCLUDES PROGRAMS
+		getvars binutils/doc/Makefile \
+			man_MANS TEXINFOS
 
 		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
 			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
@@ -323,6 +325,28 @@ all)	# everything (uses "canadian cross" temp environment)
 	get_libiberty
 	get_libobjc
 	get_libstdcxx
+	exit 0
+	;;
+
+binutils)
+	get_binutils
+	get_libbfd
+	get_libopcodes
+	exit 0
+	;;
+
+gcc)
+	get_gcc
+	get_libg2c
+	get_libgcc
+	get_libiberty
+	get_libobjc
+	get_libstdcxx
+	exit 0
+	;;
+
+gdb)
+	[ -f $_TMPDIR/gdb/config.h ] && get_gdb && get_libbfd && get_libopcodes
 	exit 0
 	;;
 
