@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.9 2001/11/13 07:48:44 lukem Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.10 2002/09/27 20:40:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.9 2001/11/13 07:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.10 2002/09/27 20:40:18 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -298,7 +298,7 @@ void	stge_attach(struct device *, struct device *, void *);
 
 int	stge_copy_small = 0;
 
-struct cfattach stge_ca = {
+const struct cfattach stge_ca = {
 	sizeof(struct stge_softc), stge_match, stge_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.53 2002/09/27 15:37:26 provos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.54 2002/09/27 20:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.53 2002/09/27 15:37:26 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.54 2002/09/27 20:40:20 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -184,7 +184,7 @@ static __inline u_int8_t netsio_read(sc, bits)
 	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
 }
 
-struct cfattach tl_ca = {
+const struct cfattach tl_ca = {
 	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
 };
 

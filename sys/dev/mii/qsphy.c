@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.28 2002/07/03 06:25:53 simonb Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.29 2002/09/27 20:39:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.28 2002/07/03 06:25:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.29 2002/09/27 20:39:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: qsphy.c,v 1.28 2002/07/03 06:25:53 simonb Exp $");
 int	qsphymatch(struct device *, struct cfdata *, void *);
 void	qsphyattach(struct device *, struct device *, void *);
 
-struct cfattach qsphy_ca = {
+const struct cfattach qsphy_ca = {
 	sizeof(struct mii_softc), qsphymatch, qsphyattach, mii_phy_detach,
 	    mii_phy_activate
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.2 2002/02/18 04:52:27 uwe Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.3 2002/09/27 20:35:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -65,12 +65,12 @@ static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
 static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 /* Mr.Coffee */
-struct cfattach pckbc_obio_ca = {
+const struct cfattach pckbc_obio_ca = {
 	sizeof(struct pckbc_js_softc), pckbc_obio_match, pckbc_obio_attach
 };
 
 /* ms-IIep */
-struct cfattach pckbc_ebus_ca = {
+const struct cfattach pckbc_ebus_ca = {
 	sizeof(struct pckbc_js_softc), pckbc_ebus_match, pckbc_ebus_attach
 };
 

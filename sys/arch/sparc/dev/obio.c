@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.55 2002/09/27 03:18:06 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.56 2002/09/27 20:35:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ union obio_softc {
 static	int obiomatch  __P((struct device *, struct cfdata *, void *));
 static	void obioattach __P((struct device *, struct device *, void *));
 
-struct cfattach obio_ca = {
+const struct cfattach obio_ca = {
 	sizeof(union obio_softc), obiomatch, obioattach
 };
 

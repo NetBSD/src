@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.25 2002/09/13 03:00:18 chuck Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.26 2002/09/27 20:36:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.25 2002/09/13 03:00:18 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.26 2002/09/27 20:36:58 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,7 +105,7 @@ struct asc_vsbus_softc {
 static int asc_vsbus_match(struct device *, struct cfdata *, void *);
 static void asc_vsbus_attach(struct device *, struct device *, void *);
 
-struct cfattach asc_vsbus_ca = {
+const struct cfattach asc_vsbus_ca = {
 	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
 };
 

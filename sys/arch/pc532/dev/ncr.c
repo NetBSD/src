@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.46 2001/04/25 17:53:19 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.47 2002/09/27 20:34:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -81,7 +81,7 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
  */
 int ncr_default_options = 0;
 
-struct cfattach ncr_ca = {
+const struct cfattach ncr_ca = {
 	sizeof(struct ncr5380_softc), ncr_match, ncr_attach
 };
 

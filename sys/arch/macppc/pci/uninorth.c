@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.4 2002/05/16 01:01:38 thorpej Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.5 2002/09/27 20:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -48,7 +48,7 @@ int uninorth_print __P((void *, const char *));
 pcireg_t uninorth_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void uninorth_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
-struct cfattach uninorth_ca = {
+const struct cfattach uninorth_ca = {
 	sizeof(struct uninorth_softc), uninorth_match, uninorth_attach
 };
 

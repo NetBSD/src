@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.3 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.4 2002/09/27 20:32:33 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -135,7 +135,7 @@ static int intlv_regs[] = {
 	VRC2_EXGPINTLV1L
 };
 
-struct cfattach vrc4172gpio_ca = {
+const struct cfattach vrc4172gpio_ca = {
 	sizeof(struct vrc4172gpio_softc), vrc4172gpio_match, vrc4172gpio_attach
 };
 

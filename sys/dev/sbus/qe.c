@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.25 2002/09/27 02:24:33 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.26 2002/09/27 20:41:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.25 2002/09/27 02:24:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.26 2002/09/27 20:41:33 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -187,7 +187,7 @@ static struct mbuf	*qe_get __P((struct qe_softc *, int, int));
 void	qe_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int	qe_ifmedia_upd __P((struct ifnet *));
 
-struct cfattach qe_ca = {
+const struct cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
 

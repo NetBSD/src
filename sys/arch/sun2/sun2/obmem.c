@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.7 2002/09/27 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.8 2002/09/27 20:36:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct obmem_softc {
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-struct cfattach obmem_ca = {
+const struct cfattach obmem_ca = {
 	sizeof(struct obmem_softc), obmem_match, obmem_attach
 };
 

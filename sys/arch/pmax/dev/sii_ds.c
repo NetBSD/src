@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.18 2001/08/26 11:47:23 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.19 2002/09/27 20:34:49 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -57,7 +57,7 @@ static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
 static void	sii_ds_attach __P((struct device *parent, struct device *self,
 		    void *aux));
 
-struct cfattach sii_ds_ca = {
+const struct cfattach sii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
 

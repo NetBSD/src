@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.27 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.28 2002/09/27 20:35:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ static void	cgfourunblank __P((struct device *));
 
 static int	cg4_pfour_probe __P((void *, void *));
 
-struct cfattach cgfour_ca = {
+const struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.5 2002/07/03 06:25:52 simonb Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.6 2002/09/27 20:39:25 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.5 2002/07/03 06:25:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.6 2002/09/27 20:39:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.5 2002/07/03 06:25:52 simonb Exp $");
 int	pnaphymatch(struct device *, struct cfdata *, void *);
 void	pnaphyattach(struct device *, struct device *, void *);
 
-struct cfattach pnaphy_ca = {
+const struct cfattach pnaphy_ca = {
 	sizeof(struct mii_softc), pnaphymatch, pnaphyattach,
 	    mii_phy_detach, mii_phy_activate
 };

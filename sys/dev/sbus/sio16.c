@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.7 2002/09/27 15:37:32 provos Exp $	*/
+/*	$NetBSD: sio16.c,v 1.8 2002/09/27 20:41:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.7 2002/09/27 15:37:32 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.8 2002/09/27 20:41:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,7 +91,7 @@ struct sio16_softc {
 
 };
 
-struct cfattach siosixteen_ca = {
+const struct cfattach siosixteen_ca = {
 	sizeof(struct sio16_softc), sio16_match, sio16_attach
 };
 
@@ -281,7 +281,7 @@ sio16_ackfunc(v, who)
 static int	clcd_match(struct device *, struct cfdata *, void *);
 static void	clcd_attach(struct device *, struct device *, void *);
 
-struct cfattach clcd_ca = {
+const struct cfattach clcd_ca = {
 	sizeof(struct cd18xx_softc), clcd_match, clcd_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.1 2001/10/16 15:38:34 uch Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.2 2002/09/27 20:34:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct ohci_sbus_softc {
 	LIST_HEAD(, ohci_dma_segment) sc_dmaseg_head;
 };
 
-struct cfattach ohci_sbus_ca = {
+const struct cfattach ohci_sbus_ca = {
 	sizeof(struct ohci_sbus_softc), ohci_sbus_match,
 	ohci_sbus_attach,
 };

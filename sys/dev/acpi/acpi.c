@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.15 2002/07/29 03:26:20 augustss Exp $	*/
+/*	$NetBSD: acpi.c,v 1.16 2002/09/27 20:37:32 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.15 2002/07/29 03:26:20 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.16 2002/09/27 20:37:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ int	acpi_print(void *aux, const char *);
 
 extern struct cfdriver acpi_cd;
 
-struct cfattach acpi_ca = {
+const struct cfattach acpi_ca = {
 	sizeof(struct acpi_softc), acpi_match, acpi_attach,
 };
 

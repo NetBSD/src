@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.21 2002/09/27 03:17:50 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.22 2002/09/27 20:31:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.21 2002/09/27 03:17:50 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.22 2002/09/27 20:31:49 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.21 2002/09/27 03:17:50 thorpej Exp $");
 int	hpibbusmatch __P((struct device *, struct cfdata *, void *));
 void	hpibbusattach __P((struct device *, struct device *, void *));
 
-struct cfattach hpibbus_ca = {
+const struct cfattach hpibbus_ca = {
 	sizeof(struct hpibbus_softc), hpibbusmatch, hpibbusattach
 };
 

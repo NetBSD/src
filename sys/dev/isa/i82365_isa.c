@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.17 2002/01/07 21:47:05 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.18 2002/09/27 20:38:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.17 2002/01/07 21:47:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.18 2002/09/27 20:38:25 thorpej Exp $");
 
 #define	PCICISADEBUG
 
@@ -64,7 +64,7 @@ int	pcicisa_debug = 0;
 int	pcic_isa_probe __P((struct device *, struct cfdata *, void *));
 void	pcic_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pcic_isa_ca = {
+const struct cfattach pcic_isa_ca = {
 	sizeof(struct pcic_isa_softc), pcic_isa_probe, pcic_isa_attach
 };
 

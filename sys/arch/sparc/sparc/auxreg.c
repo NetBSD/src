@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.29 2002/03/11 16:27:03 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.30 2002/09/27 20:35:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,10 +66,10 @@ static void auxregattach_obio
 
 static void auxregattach __P((struct device *));
 
-struct cfattach auxreg_mainbus_ca = {
+const struct cfattach auxreg_mainbus_ca = {
 	sizeof(struct device), auxregmatch_mainbus, auxregattach_mainbus
 };
-struct cfattach auxreg_obio_ca = {
+const struct cfattach auxreg_obio_ca = {
 	sizeof(struct device), auxregmatch_obio, auxregattach_obio
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: p9100.c,v 1.11 2002/09/27 20:41:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.10 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.11 2002/09/27 20:41:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ static void	p9100_sbus_attach(struct device *, struct device *, void *);
 static void	p9100unblank(struct device *);
 static void	p9100_shutdown(void *);
 
-struct cfattach pnozz_ca = {
+const struct cfattach pnozz_ca = {
 	sizeof(struct p9100_softc), p9100_sbus_match, p9100_sbus_attach
 };
 

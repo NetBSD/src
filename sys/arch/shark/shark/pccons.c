@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $       */
+/*      $NetBSD: pccons.c,v 1.8 2002/09/27 20:35:34 thorpej Exp $       */
 
 /*
  * Copyright 1997
@@ -354,7 +354,7 @@ static void            cga_save_restore    __P((int));
 /*
 ** Data structures required by config
 */
-struct cfattach pc_ca = 
+const struct cfattach pc_ca = 
 {
     sizeof(struct pc_softc), pcprobe, pcattach
 };

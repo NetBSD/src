@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.3 2000/10/12 03:15:21 onoe Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.4 2002/09/27 20:34:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -60,7 +60,7 @@ static int	sn_ap_match __P((struct device *, struct cfdata *, void *));
 static void	sn_ap_attach __P((struct device *, struct device *, void *));
 static int	sn_ap_getaddr __P((struct sn_softc *, u_int8_t *));
 
-struct cfattach sn_ap_ca = {
+const struct cfattach sn_ap_ca = {
 	sizeof(struct sn_softc), sn_ap_match, sn_ap_attach
 };
 

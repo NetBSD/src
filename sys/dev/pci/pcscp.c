@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.17 2001/11/13 07:48:48 lukem Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.18 2002/09/27 20:40:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.17 2001/11/13 07:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.18 2002/09/27 20:40:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ struct pcscp_softc {
 int	pcscp_match __P((struct device *, struct cfdata *, void *)); 
 void	pcscp_attach __P((struct device *, struct device *, void *));  
 
-struct cfattach pcscp_ca = {
+const struct cfattach pcscp_ca = {
 	sizeof(struct pcscp_softc), pcscp_match, pcscp_attach
 };
 

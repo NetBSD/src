@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.6 2002/09/27 20:37:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.6 2002/09/27 20:37:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static int fwohci_cardbus_match(struct device *, struct cfdata *, void *);
 static void fwohci_cardbus_attach(struct device *, struct device *, void *);
 static int fwohci_cardbus_detach(struct device *, int);
 
-struct cfattach fwohci_cardbus_ca = {
+const struct cfattach fwohci_cardbus_ca = {
 	sizeof(struct fwohci_cardbus_softc), fwohci_cardbus_match, fwohci_cardbus_attach,
 	fwohci_cardbus_detach, fwohci_activate
 };

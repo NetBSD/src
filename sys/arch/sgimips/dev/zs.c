@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 2002/09/27 15:36:40 provos Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 2002/09/27 20:35:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ static int	zs_hpc_match __P((struct device *, struct cfdata *, void *));
 static void	zs_hpc_attach __P((struct device *, struct device *, void *));
 static int	zs_print __P((void *, const char *name));
 
-struct cfattach zsc_hpc_ca = {
+const struct cfattach zsc_hpc_ca = {
 	sizeof(struct zsc_softc), zs_hpc_match, zs_hpc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.3 2002/09/27 20:39:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ void clmpcc_pcctwo_attach __P((struct device *, struct device *, void *));
 void clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
 void clmpcc_pcctwo_consiackhook __P((struct clmpcc_softc *, int));
 
-struct cfattach clmpcc_pcctwo_ca = {
+const struct cfattach clmpcc_pcctwo_ca = {
 	sizeof(struct clmpcc_softc), clmpcc_pcctwo_match, clmpcc_pcctwo_attach
 };
 

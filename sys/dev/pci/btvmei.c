@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.8 2002/09/27 15:37:24 provos Exp $ */
+/* $NetBSD: btvmei.c,v 1.9 2002/09/27 20:39:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.8 2002/09/27 15:37:24 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.9 2002/09/27 20:39:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct b3_617_vmeresc {
 	int firstpage, maplen;
 };
 
-struct cfattach btvmei_ca = {
+const struct cfattach btvmei_ca = {
 	sizeof(struct b3_617_softc), b3_617_match, b3_617_attach,
 #ifdef notyet
 	b3_617_detach

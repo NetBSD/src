@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.5 2002/02/26 15:28:38 kleink Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.6 2002/09/27 20:35:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,7 +56,7 @@ struct mcclock_isa_softc {
 int	mcclock_isa_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mcclock_isa_ca = {
+const struct cfattach mcclock_isa_ca = {
 	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
 	    mcclock_isa_attach, 
 };

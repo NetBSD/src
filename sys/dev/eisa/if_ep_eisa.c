@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.24 2001/11/13 12:47:33 lukem Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.25 2002/09/27 20:37:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.24 2001/11/13 12:47:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.25 2002/09/27 20:37:53 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.24 2001/11/13 12:47:33 lukem Exp $"
 int ep_eisa_match __P((struct device *, struct cfdata *, void *));
 void ep_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ep_eisa_ca = {
+const struct cfattach ep_eisa_ca = {
 	sizeof(struct ep_softc), ep_eisa_match, ep_eisa_attach
 };
 

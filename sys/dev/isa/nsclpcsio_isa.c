@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.1 2002/07/17 21:10:29 drochner Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.2 2002/09/27 20:38:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.1 2002/07/17 21:10:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.2 2002/09/27 20:38:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct nsclpcsio_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-struct cfattach nsclpcsio_isa_ca = {
+const struct cfattach nsclpcsio_isa_ca = {
 	sizeof(struct nsclpcsio_softc),
 	nsclpcsio_isa_match, nsclpcsio_isa_attach
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.18 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mt.c,v 1.19 2002/09/27 20:31:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.18 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.19 2002/09/27 20:31:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ int	mtdebug = 0;
 int	mtmatch __P((struct device *, struct cfdata *, void *));
 void	mtattach __P((struct device *, struct device *, void *));
 
-struct cfattach mt_ca = {
+const struct cfattach mt_ca = {
 	sizeof(struct mt_softc), mtmatch, mtattach
 };
 

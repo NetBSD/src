@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.31 2001/02/12 18:49:03 thorpej Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.32 2002/09/27 20:33:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -73,7 +73,7 @@ static void	ae_nb_watchdog __P((struct ifnet *));
 
 void		ae_nubus_intr __P((void *));
 
-struct cfattach ae_nubus_ca = {
+const struct cfattach ae_nubus_ca = {
 	sizeof(struct dp8390_softc), ae_nubus_match, ae_nubus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.1 2002/02/12 20:38:48 scw Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.2 2002/09/27 20:39:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct osiop_pcctwo_softc {
 	struct evcnt		sc_evcnt;
 };
 
-struct cfattach osiop_pcctwo_ca = {
+const struct cfattach osiop_pcctwo_ca = {
 	sizeof(struct osiop_pcctwo_softc), osiop_pcctwo_match,
 	    osiop_pcctwo_attach
 };

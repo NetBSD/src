@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.2 2002/05/02 12:44:31 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.3 2002/09/27 20:38:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.2 2002/05/02 12:44:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.3 2002/09/27 20:38:05 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -75,7 +75,7 @@ static int	ld_aac_dump(struct ld_softc *, void *, int, int);
 static int	ld_aac_match(struct device *, struct cfdata *, void *);
 static int	ld_aac_start(struct ld_softc *, struct buf *);
 
-struct cfattach ld_aac_ca = {
+const struct cfattach ld_aac_ca = {
 	sizeof(struct ld_aac_softc), ld_aac_match, ld_aac_attach
 };
 

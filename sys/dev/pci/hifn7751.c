@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.8 2002/09/27 20:40:00 thorpej Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.8 2002/09/27 20:40:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ int hifn_probe		__P((struct device *, struct cfdata *, void *));
 #endif
 void hifn_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach hifn_ca = {
+const struct cfattach hifn_ca = {
 	sizeof(struct hifn_softc), hifn_probe, hifn_attach,
 };
 
