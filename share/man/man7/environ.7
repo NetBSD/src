@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)environ.7	6.6 (Berkeley) 7/19/91
+.\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd July 19, 1991
+.Dd April 19, 1994
 .Dt ENVIRON 7
 .Os BSD 4.2
 .Sh NAME
@@ -47,7 +47,19 @@ is made available by
 when a process begins.  By convention these strings have the form
 .Dq Ar name=value .
 The following names are used by various commands:
-.Bl -tag -width Fl
+.Bl -tag -width BLOCKSIZE
+.It Ev BLOCKSIZE
+The size of the block units used by several commands, most notably
+.Xr df 1 ,
+.Xr du 1
+and
+.Xr ls 1 .
+BLOCKSIZE may be specified in units of a byte by specifying a number, 
+in units of a kilobyte by specifying a number followed by ``K'' or
+``k'', in units of a megabyte by specifying a number followed by ``M''
+or ``m'' and in units of a gigabyte by specifying a number followed
+by ``G'' or ``g''.
+Sizes less than 512 bytes or greater than a gigabyte are ignored.
 .It Ev EXINIT
 A startup list of commands read by
 .Xr ex  1  ,
@@ -84,7 +96,7 @@ or
 .Xr plot 1
 which may exploit special terminal capabilities.  See
 .Pa /usr/share/misc/termcap
-.Pq Xr tmercap 5
+.Pq Xr termcap 5
 for a list of terminal types.
 .It Ev TERMCAP
 The string describing the terminal in TERM, or, if
@@ -108,6 +120,23 @@ of
 is ignored if
 .Ev TERMCAP
 contains a full pathname.
+.It Ev TMPDIR
+The directory in which to store temporary files.
+Most applications use either
+.Dq /tmp
+or
+.Dq /var/tmp .
+Setting this variable will make them use another directory.
+.It Ev TZ
+The timezone to use when displaying dates.
+The normal format is a pathname relative to
+.Dq /usr/share/zoneinfo .
+For example, the command
+.Dq env TZ=US/Pacific date
+displays the current time in California.
+See
+.Xr tzset 3
+for more information.
 .It Ev USER
 The login name of the user.
 .El
