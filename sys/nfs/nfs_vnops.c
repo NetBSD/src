@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.153 2002/10/21 12:52:35 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.154 2002/10/22 02:19:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.153 2002/10/21 12:52:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.154 2002/10/22 02:19:57 simonb Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -805,7 +805,6 @@ nfs_lookup(v)
 	u_int32_t *tl;
 	caddr_t cp;
 	int32_t t1, t2;
-	struct nfsmount *nmp;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	long len;
@@ -827,7 +826,6 @@ nfs_lookup(v)
 
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
-	nmp = VFSTONFS(dvp->v_mount);
 	np = VTONFS(dvp);
 
 	/*
