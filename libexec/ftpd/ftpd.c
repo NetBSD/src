@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.126 2001/06/11 01:50:51 wiz Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.127 2001/06/26 19:30:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.126 2001/06/11 01:50:51 wiz Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.127 2001/06/26 19:30:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2070,7 +2070,7 @@ statcmd(void)
 			    (void *)&curclass.advertise.su_addr,
 			    buf, sizeof(buf));
 			if (bp != NULL)
-				reply(0, "PASV advertise address: %s", bp);
+				reply(0, "PASV advertize address: %s", bp);
 		}
 		if (curclass.portmin && curclass.portmax)
 			reply(0, "PASV port range: %d - %d",
