@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.23 1993/08/16 00:26:07 mycroft Exp $
+#	$Id: Makefile,v 1.24 1993/10/01 00:22:00 jtc Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -57,7 +57,7 @@ realinstall:
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 	done
-	@chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include
+	@chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
 	@chmod -R a-w ${DESTDIR}/usr/include
 
 beforeinstall:
