@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.1.16.2 2002/03/16 10:38:12 ad Exp $	*/
+/*	$NetBSD: pm.c,v 1.1.16.3 2002/03/25 19:26:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.2 2002/03/16 10:38:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.1.16.3 2002/03/25 19:26:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,9 +285,7 @@ pm_common_init(void)
 	/*
 	 * Clear the screen.
 	 */
-#if 0
 	memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
-#endif
 
 	/*
 	 * Get a font to use.
@@ -314,7 +312,7 @@ pm_common_init(void)
 	/*
 	 * Set up the raster operations set.
 	 */
-	rasops_init(ri, 34, 80);
+	rasops_init(ri, 1000, 1000);
 
 	pm_stdscreen.nrows = ri->ri_rows;
 	pm_stdscreen.ncols = ri->ri_cols;
