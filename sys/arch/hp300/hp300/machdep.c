@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1995/05/12 12:54:51 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1995/05/16 14:34:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -430,6 +430,7 @@ setregs(p, pack, stack, retval)
 
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
