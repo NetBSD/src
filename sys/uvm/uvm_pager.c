@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.26 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.27 2000/03/30 02:49:55 simonb Exp $	*/
 
 /*
  *
@@ -56,7 +56,6 @@
  * list of uvm pagers in the system
  */
 
-extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
 
