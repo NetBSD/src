@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.3 1995/04/22 20:28:06 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.4 1995/04/25 19:16:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
 
 	setregs(p, pack, stack, retval);
 	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
+	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
 	p->p_md.md_regs[GP] = eap->ea_gp_value;
 }
 
