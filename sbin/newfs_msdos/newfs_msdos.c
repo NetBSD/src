@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.8 2001/09/10 19:25:35 pooka Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.9 2001/09/17 16:26:56 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.8 2001/09/10 19:25:35 pooka Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.9 2001/09/17 16:26:56 toshii Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,7 +733,6 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     int slice, part, fd1, i, e;
     int maxpartitions;
 
-#ifdef __FreeBSD__
     slice = part = -1;
     s1 = fname;
     if ((s2 = strrchr(s1, '/')))
@@ -744,6 +743,7 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     else
 	while (isdigit(*++s2));
     s1 = s2;
+#ifdef __FreeBSD__
     if (s2 && *s2 == 's') {
 	slice = strtol(s2 + 1, &s, 10);
 	if (slice < 1 || slice > MAX_SLICES - BASE_SLICE)
@@ -753,8 +753,6 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    s2 = s;
 	}
     }
-#else
-    slice = -1;
 #endif
 
 #ifdef __NetBSD__
