@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.10 1999/04/05 18:52:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.9 1998/02/03 18:23:44 perry Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.10 1999/04/05 18:52:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,11 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	/*
 	 * install primary group
 	 */
-	groups[ngroups++] = agroup;
+	if (ngroups < maxgroups)
+		groups[ngroups] = agroup;
+	else
+		ret = -1;
+	ngroups++;
 
 	/*
 	 * Scan the group file to find additional groups.
@@ -84,11 +88,11 @@ getgrouplist(uname, agroup, groups, grpcnt)
 			continue;
 		for (i = 0; grp->gr_mem[i]; i++) {
 			if (!strcmp(grp->gr_mem[i], uname)) {
-				if (ngroups >= maxgroups) {
+				if (ngroups < maxgroups)
+					groups[ngroups] = grp->gr_gid;
+				else
 					ret = -1;
-					goto out;
-				}
-				groups[ngroups++] = grp->gr_gid;
+				ngroups++;
 				break;
 			}
 		}
