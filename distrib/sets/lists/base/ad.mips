@@ -1,2 +1,2 @@
-# $NetBSD: ad.mips,v 1.7 2002/10/10 01:59:29 simonb Exp $
-./usr/lkm/ldscript		base-sys-usr
+# $NetBSD: ad.mips,v 1.8 2004/01/11 10:24:58 lukem Exp $
+./usr/lkm/ldscript				base-sys-usr
