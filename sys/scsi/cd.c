@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.17 1993/08/04 17:26:23 brezak Exp $
+ *	$Id: cd.c,v 1.18 1993/08/04 19:33:44 brezak Exp $
  */
 
 #define SPLCD splbio
@@ -710,12 +710,12 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 			if(error = cd_set_mode(unit,&data))
 				break;
 			return(cd_play_msf(unit
-						,args->start.minute
-						,args->start.second
-						,args->start.frame
-						,args->end.minute
-						,args->end.second
-						,args->end.frame
+						,args->start_m
+						,args->start_s
+						,args->start_f
+						,args->end_m
+						,args->end_s
+						,args->end_f
 						));
 		}
 		break;
@@ -1189,7 +1189,7 @@ int	unit,strack,sindex,etrack,eindex;
 	return(retval);
 }
 /*******************************************************\
-* Get scsi driver to send a "start playing" command	*
+* Get scsi driver to send a "play msf" command	*
 \*******************************************************/
 cd_play_msf(unit,sm,ss,sf,em,es,ef)
 int	unit;
