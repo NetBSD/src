@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.25 2001/02/12 19:17:05 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26 2001/02/13 19:53:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -72,8 +72,8 @@ struct ntfs_lookup_ctx {
 
 static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
 static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
-static int ntfs_uastricmp __P((const wchar *, size_t, const char *, size_t));
-static int ntfs_uastrcmp __P((const wchar *, size_t, const char *, size_t));
+static int ntfs_uastricmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
+static int ntfs_uastrcmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
@@ -86,7 +86,7 @@ static signed int ntfs_toupper_usecount;
 /* support macro for ntfs_ntvattrget() */
 #define NTFS_AALPCMP(aalp,type,name,namelen) (				\
   (aalp->al_type == type) && (aalp->al_namelen == namelen) &&		\
-  !ntfs_uastrcmp(aalp->al_name,aalp->al_namelen,name,namelen) )
+  !ntfs_uastrcmp(ntmp, aalp->al_name,aalp->al_namelen,name,namelen) )
 
 /*
  * 
@@ -669,28 +669,38 @@ ntfs_runtovrun(
  * Compare unicode and ascii string case insens.
  */
 static int
-ntfs_uastricmp(ustr, ustrlen, astr, astrlen)
+ntfs_uastricmp(ntmp, ustr, ustrlen, astr, astrlen)
+	struct ntfsmount *ntmp;
 	const wchar *ustr;
 	size_t ustrlen;
 	const char *astr;
 	size_t astrlen;
 {
-	size_t             i;
+	size_t  i;
 	int             res;
+	const char *astrend = astr + astrlen;
 
-	for (i = 0; i < ustrlen && i < astrlen; i++) {
-		res = NTFS_TOUPPER(NTFS_U28(ustr[i])) - NTFS_TOUPPER(astr[i]);
+	for (i = 0; i < ustrlen && astr < astrend; i++) {
+		res = (*ntmp->ntm_wcmp)(NTFS_TOUPPER(ustr[i]),
+				NTFS_TOUPPER((*ntmp->ntm_wget)(&astr)) );
 		if (res)
 			return res;
 	}
-	return (ustrlen - astrlen);
+
+	if (i == ustrlen && astr == astrend)
+		return 0;
+	else if (i == ustrlen)
+		return -1;
+	else
+		return 1;
 }
 
 /*
  * Compare unicode and ascii string case sens.
  */
 static int
-ntfs_uastrcmp(ustr, ustrlen, astr, astrlen)
+ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
+	struct ntfsmount *ntmp;
 	const wchar *ustr;
 	size_t ustrlen;
 	const char *astr;
@@ -698,13 +708,20 @@ ntfs_uastrcmp(ustr, ustrlen, astr, astrlen)
 {
 	size_t             i;
 	int             res;
+	const char *astrend = astr + astrlen;
 
-	for (i = 0; (i < ustrlen) && (i < astrlen); i++) {
-		res = NTFS_U28(ustr[i]) - (u_char) astr[i];
+	for (i = 0; (i < ustrlen) && (astr < astrend); i++) {
+		res = (*ntmp->ntm_wcmp)(ustr[i], (*ntmp->ntm_wget)(&astr));
 		if (res)
 			return res;
 	}
-	return (ustrlen - astrlen);
+
+	if (i == ustrlen && astr == astrend)
+		return 0;
+	else if (i == ustrlen)
+		return -1;
+	else
+		return 1;
 }
 
 /* 
@@ -924,8 +941,8 @@ ntfs_ntlookupfile(
 			/* check the name - the case-insensitible check
 			 * has to come first, to break from this for loop
 			 * if needed, so we can dive correctly */
-			res = ntfs_uastricmp(iep->ie_fname, iep->ie_fnamelen,
-				fname, fnamelen);
+			res = ntfs_uastricmp(ntmp, iep->ie_fname,
+				iep->ie_fnamelen, fname, fnamelen);
 			if (!fullscan) {
 				if (res > 0) break;
 				if (res < 0) continue;
@@ -934,7 +951,7 @@ ntfs_ntlookupfile(
 			if (iep->ie_fnametype == 0 ||
 			    !(ntmp->ntm_flag & NTFS_MFLAG_CASEINS))
 			{
-				res = ntfs_uastrcmp(iep->ie_fname,
+				res = ntfs_uastrcmp(ntmp, iep->ie_fname,
 					iep->ie_fnamelen, fname, fnamelen);
 				if (res != 0 && !fullscan) continue;
 			}
@@ -2014,13 +2031,14 @@ ntfs_toupper_use(mp, ntmp)
 	 * XXX for now, just the first 256 entries are used anyway,
 	 * so don't bother reading more
 	 */
-	MALLOC(ntfs_toupper_tab, wchar *, 256 * sizeof(wchar),
+	MALLOC(ntfs_toupper_tab, wchar *, 256 * 256 * sizeof(wchar),
 		M_NTFSRDATA, M_WAITOK);
 
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
 		goto out;
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
-			0, 256*sizeof(wchar), (char *) ntfs_toupper_tab, NULL);
+			0, 256*256*sizeof(wchar), (char *) ntfs_toupper_tab,
+			NULL);
 	vput(vp);
 
     out:
@@ -2054,17 +2072,3 @@ ntfs_toupper_unuse()
 	/* release the lock */
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
 } 
-
-/*
- * maps the Unicode char to 8bit equivalent
- * XXX currently only gets lower 8bit from the Unicode char
- * and substitutes a '_' for it if the result would be '\0';
- * something better has to be definitely though out
- */
-char
-ntfs_u28(unichar)
-  wchar unichar;
-{
-	return (char) NTFS_U28(unichar);
-}
-
