@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.5 2002/08/04 02:26:18 thorpej Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.6 2002/09/27 02:24:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.5 2002/08/04 02:26:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.6 2002/09/27 02:24:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -150,7 +150,7 @@ aau321_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
-	if (strcmp(match->cf_driver->cd_name, ia->ia_name) == 0)
+	if (strcmp(match->cf_name, ia->ia_name) == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.23 2002/03/22 09:18:09 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.24 2002/09/27 02:24:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -191,7 +191,7 @@ vripmatch(struct device *parent, struct cfdata *match, void *aux)
 	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
 		return (0);
 #endif /* SINGLE_VRIP_BASE && TX39XX */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, match->cf_name))
 		return (0);
 
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
+/*	$NetBSD: tc.c,v 1.30 2002/09/27 02:24:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.30 2002/09/27 02:24:33 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -63,7 +63,7 @@ tcmatch(parent, cf, aux)
 {
 	struct tcbus_attach_args *tba = aux;
 
-	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
+	if (strcmp(tba->tba_busname, cf->cf_name))
 		return (0);
 
 	return (1);

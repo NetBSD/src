@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.7 2002/01/29 18:53:21 uch Exp $ */
+/*	$NetBSD: txsim.c,v 1.8 2002/09/27 02:24:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ txsim_match(struct device *parent, struct cfdata *match, void *aux)
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
 	  return (0);
 #endif /* VR41XX */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, match->cf_name))
 		return (0);
 
 	return (1);

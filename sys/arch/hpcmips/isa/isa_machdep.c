@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.24 2002/01/31 17:56:35 uch Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.25 2002/09/27 02:24:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ vrisabmatch(struct device *parent, struct cfdata *match, void *aux)
 	platid_mask_t mask;
 	int n;
 
-	if (strcmp(haa->haa_busname, match->cf_driver->cd_name))
+	if (strcmp(haa->haa_busname, match->cf_name))
 		return (0);
 
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == HPCIOIFCF_PLATFORM_DEFAULT) 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.3 2002/08/12 02:06:21 simonb Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.4 2002/09/27 02:24:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -91,7 +91,7 @@ dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	u_int8_t x;
 
 	/* match only RTC devices */
-	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_name) != 0)
 		return 0;
 
 	if (bus_space_map(0, paa->pb_addr, DS_SIZE, 0, &h)) {

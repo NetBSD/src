@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.28 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: sci.c,v 1.29 2002/09/27 02:24:23 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -393,7 +393,7 @@ static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "sci")
+	if (strcmp(cfp->cf_name, "sci")
 	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
 		return 0;
 

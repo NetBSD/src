@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.29 2002/06/01 23:51:02 lukem Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.30 2002/09/27 02:24:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.29 2002/06/01 23:51:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.30 2002/09/27 02:24:31 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -115,7 +115,7 @@ pcmcia_match(parent, match, aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 
-	if (strcmp(paa->paa_busname, match->cf_driver->cd_name)) {
+	if (strcmp(paa->paa_busname, match->cf_name)) {
 	    return 0;
 	}
 	/* if the autoconfiguration got this far, there's a socket here */

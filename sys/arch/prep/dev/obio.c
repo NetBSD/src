@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2002/05/02 15:17:58 nonaka Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	for (; *p != NULL; p++) {
-		if (strcmp(cf->cf_driver->cd_name, *p) == 0) {
+		if (strcmp(cf->cf_name, *p) == 0) {
 			oa.oa_iot = &prep_isa_io_space_tag;
 			oa.oa_memt = &prep_isa_mem_space_tag;
 			oa.oa_iobase = cf->cf_iobase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 2002/09/26 20:51:44 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.39 2002/09/27 02:24:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ zs_match_mainbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+	if (strcmp(cf->cf_name, sa->sa_name) != 0)
 		return (0);
 
 	return (1);
@@ -364,7 +364,7 @@ zs_attach(zsc, zsd, pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (!strcmp(child->dv_cfdata->cf_driver->cd_name, "zstty"))
+		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
 		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	

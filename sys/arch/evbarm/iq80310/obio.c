@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 2002/02/08 02:30:12 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 2002/09/27 02:24:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 	/* XXX Shoot arch/arm/mainbus in the head. */
 	return (1);
 #else
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0)
+	if (strcmp(cf->cf_name, ma->ma_name) == 0)
 		return (1);
 
 	return (0);

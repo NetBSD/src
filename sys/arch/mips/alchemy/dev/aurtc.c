@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.1 2002/07/29 15:39:14 simonb Exp $ */
+/* $NetBSD: aurtc.c,v 1.2 2002/09/27 02:24:17 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@ aurtc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
-	if (strcmp(aa->aa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

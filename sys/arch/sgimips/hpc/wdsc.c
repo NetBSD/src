@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.7 2002/03/13 13:12:28 simonb Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.8 2002/09/27 02:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -103,7 +103,7 @@ wdsc_match(pdp, cf, auxp)
 {
 	struct hpc_attach_args *haa = auxp;
 
-	if (strcmp(haa->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(haa->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

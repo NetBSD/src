@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.1 2002/08/23 15:01:08 scw Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.2 2002/09/27 02:24:21 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@ ecc_plbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return (0);
 
 	if (cf->cf_loc[PLBCF_IRQ] == PLBCF_IRQ_DEFAULT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.53 2002/08/25 17:54:58 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.54 2002/09/27 02:24:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ obiomatch(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 void
@@ -268,7 +268,7 @@ obiosearch(parent, cf, aux)
 	struct obio4_attach_args *oba = &uoba.uoba_oba4;
 
 	/* Check whether we're looking for a specifically named device */
-	if (oap->name != NULL && strcmp(oap->name, cf->cf_driver->cd_name) != 0)
+	if (oap->name != NULL && strcmp(oap->name, cf->cf_name) != 0)
 		return (0);
 
 	/*
