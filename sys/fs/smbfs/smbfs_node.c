@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.5 2003/02/18 20:00:35 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.6 2003/02/20 15:39:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -120,52 +120,16 @@ smbfs_name_alloc(const u_char *name, int nmlen)
 {
 	u_char *cp;
 
-	nmlen++;
-#ifdef SMBFS_NAME_DEBUG
-	cp = malloc(nmlen + 2 + sizeof(int), M_SMBNODENAME, M_WAITOK);
-	*(int*)cp = nmlen;
-	cp += sizeof(int);
-	cp[0] = 0xfc;
-	cp++;
-	bcopy(name, cp, nmlen - 1);
-	cp[nmlen] = 0xfe;
-#else
 	cp = malloc(nmlen, M_SMBNODENAME, M_WAITOK);
-	bcopy(name, cp, nmlen - 1);
-#endif
-	cp[nmlen - 1] = 0;
+	memcpy(cp, name, nmlen);
+
 	return cp;
 }
 
 static void
 smbfs_name_free(u_char *name)
 {
-#ifdef SMBFS_NAME_DEBUG
-	int nmlen, slen;
-	u_char *cp;
-
-	cp = name;
-	cp--;
-	if (*cp != 0xfc) {
-		printf("First byte of name entry '%s' corrupted\n", name);
-		Debugger("ditto");
-	}
-	cp -= sizeof(int);
-	nmlen = *(int*)cp;
-	slen = strlen(name) + 1;
-	if (nmlen != slen) {
-		printf("Name length mismatch: was %d, now %d name '%s'\n",
-		    nmlen, slen, name);
-		Debugger("ditto");
-	}
-	if (name[nmlen] != 0xfe) {
-		printf("Last byte of name entry '%s' corrupted\n", name);
-		Debugger("ditto");
-	}
-	free(cp, M_SMBNODENAME);
-#else
 	free(name, M_SMBNODENAME);
-#endif
 }
 
 static int
@@ -184,7 +148,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		SMBERROR("do not allocate root vnode twice!\n");
 		return EINVAL;
 	}
-	if (nmlen == 2 && bcmp(name, "..", 2) == 0) {
+	if (nmlen == 2 && memcmp(name, "..", 2) == 0) {
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
@@ -209,7 +173,7 @@ loop:
 	LIST_FOREACH(np, nhpp, n_hash) {
 		vp = SMBTOV(np);
 		if (np->n_parent != dnp ||
-		    np->n_nmlen != nmlen || bcmp(name, np->n_name, nmlen) != 0)
+		    np->n_nmlen != nmlen || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
 		simple_lock(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
@@ -249,19 +213,20 @@ loop:
 			vref(dvp);
 			np->n_flag |= NREFPARENT;
 		}
-	} else if (vp->v_type == VREG)
-		SMBERROR("new vnode '%s' born without parent ?\n", np->n_name);
+	} else if (vp->v_type == VREG) {
+		SMBERROR("new vnode '%.*s' born without parent ?\n",
+			(int) nmlen, np->n_name);
+	}
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	smbfs_hash_lock(smp);
 	LIST_FOREACH(np2, nhpp, n_hash) {
-		if (np2->n_parent != dnp ||
-		    np2->n_nmlen != nmlen || bcmp(name, np2->n_name, nmlen) != 0)
+		if (np2->n_parent != dnp
+		    || np2->n_nmlen != nmlen
+		    || memcmp(name, np2->n_name, nmlen) != 0)
 			continue;
 		vput(vp);
-/*		smb_name_free(np->n_name);
-		FREE(np, M_SMBNODE);*/
 		goto loop;
 	}
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
@@ -304,7 +269,7 @@ smbfs_reclaim(v)
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
 	
-	SMBVDEBUG("%s,%d\n", np->n_name, vp->v_usecount);
+	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 
 	smbfs_hash_lock(smp);
 
@@ -343,7 +308,7 @@ smbfs_inactive(v)
 	struct smb_cred scred;
 	int error;
 
-	SMBVDEBUG("%s: %d\n", VTOSMB(vp)->n_name, vp->v_usecount);
+	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 	if (np->n_opencount) {
 		error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 		smb_makescred(&scred, p, cred);
