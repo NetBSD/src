@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.279 2000/12/27 15:32:33 tsutsui Exp $
+$NetBSD: pcidevs,v 1.280 2000/12/30 04:34:51 eeh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1549,6 +1549,7 @@ product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 product SUN EBUS	0x1000	PCIO Ebus2
 product SUN HMENETWORK	0x1001	PCIO Happy Meal Ethernet
 product SUN SIMBA	0x5000	Simba PCI bridge
+produce SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 
