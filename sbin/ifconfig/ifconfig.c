@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.72 2000/03/06 08:45:35 enami Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.73 2000/03/06 09:00:13 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.72 2000/03/06 08:45:35 enami Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.73 2000/03/06 09:00:13 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -654,7 +654,6 @@ printalias(iname, af)
 				default:
 					/*none*/
 				}
-			continue;
 		}
 	}
 }
