@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.1 2003/07/31 19:49:42 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.2 2003/08/04 12:15:22 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.1 2003/07/31 19:49:42 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.2 2003/08/04 12:15:22 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,16 +148,16 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(iot, S3C2410_TIMER_BASE,
 		S3C2410_TIMER_SIZE, 0, &sc->sc_timer_ioh))
-		FAIL("TIMER0");
-
+		FAIL("TIMER");
 
 	/* calculate current clock frequency */
 	s3c24x0_clock_freq(&sc->sc_sx);
-	printf("fclk %d MHz hclk %d MHz pclk %d MHz\n",
+	aprint_normal(": fclk %d MHz hclk %d MHz pclk %d MHz\n",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
 
-	printf("\n");
+	aprint_naive("\n");
+
 
 	/*
 	 *  Attach devices.
