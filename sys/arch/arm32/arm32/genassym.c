@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.2 1996/02/02 19:42:24 mycroft Exp $ */
+/* $NetBSD: genassym.c,v 1.3 1996/02/05 23:24:50 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: genassym.c,v 1.2 1996/02/02 19:42:24 mycroft Exp $
+ *	$Id: genassym.c,v 1.3 1996/02/05 23:24:50 mark Exp $
  */
 
 #include <sys/param.h>
@@ -137,5 +137,6 @@ main()
 	def("TF_PC", &tf->tf_pc);
 
 	def("PROCSIZE", sizeof(struct proc));
+	def("TRAPFRAMESIZE", sizeof(struct trapframe));
 	exit(0);
 }
