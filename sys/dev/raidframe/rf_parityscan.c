@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.16 2002/09/23 03:36:08 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.17 2002/09/24 00:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.16 2002/09/23 03:36:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.17 2002/09/24 00:53:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -267,11 +267,6 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		rf_bxor(p, pbuf, numbytes, NULL);
 	}
 	for (i = 0; i < numbytes; i++) {
-#if 0
-		if (pbuf[i] != 0 || buf[bytesPerStripe + i] != 0) {
-			printf("Bytes: %d %d %d\n", i, pbuf[i], buf[bytesPerStripe + i]);
-		}
-#endif
 		if (pbuf[i] != buf[bytesPerStripe + i]) {
 			if (!correct_it)
 				RF_ERRORMSG3("Parity verify error: byte %d of parity is 0x%x should be 0x%x\n",
