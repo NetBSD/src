@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.3 1999/07/02 19:58:27 itojun Exp $ */
+/* KAME $Id: key.c,v 1.4 1999/07/03 04:45:53 lukem Exp $ */
 
 /*
  * This code is referd to RFC 2367,
@@ -5942,7 +5942,7 @@ key_init()
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
 
-	printf("IPsec: Initialized Security Assocciation Processing.\n");
+	printf("IPsec: Initialized Security Association Processing.\n");
 
 	return;
 }
