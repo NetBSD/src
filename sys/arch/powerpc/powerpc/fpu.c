@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2004/04/04 19:21:36 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14 2004/04/04 22:20:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2004/04/04 19:21:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.14 2004/04/04 22:20:44 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -226,9 +226,9 @@ save_fpu_lwp(struct lwp *l)
 }
 
 #define	STICKYBITS	(FPSCR_VX|FPSCR_OX|FPSCR_UX|FPSCR_ZX|FPSCR_XX)
-#if STICKYBITS & (PCB_FE0|PCB_FE1|PCB_VEC|PCB_FPU)
-#error PCB flags overlap FPSCR STICKYBITS
-#endif
+#define	STICKYSHIFT	25
+#define	MASKBITS	(FPSCR_VE|FPSCR_OE|FPSCR_UE|FPSCR_ZE|FPSCR_XE)
+#define	MASKSHIFT	3
 
 int
 get_fpu_fault_code(void)
@@ -236,21 +236,22 @@ get_fpu_fault_code(void)
 #ifdef DIAGNOSTIC
 	struct cpu_info *ci = curcpu();
 #endif
-	struct lwp *l = curlwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = curpcb;
 	register_t msr;
-	uint64_t tmp;
-	uint32_t fpscr;
+	uint64_t tmp, fpscr64;
+	uint32_t fpscr, ofpscr;
 	int code;
 
 	KASSERT(pcb->pcb_fpcpu == ci);
 	KASSERT(pcb->pcb_flags & PCB_FPU);
-	KASSERT(ci->ci_fpulwp == l);
+	KASSERT(ci->ci_fpulwp == curlwp);
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
 	__asm __volatile ("isync");
 	__asm __volatile (
 		"stfd	0,0(%0)\n"	/* save f0 */
+		"mffs	0\n"		/* get FPSCR */
+		"stfd	0,0(%2)\n"	/* store a temp copy */
 		"mtfsb0	0\n"		/* clear FPSCR_FX */
 		"mtfsb0	24\n"		/* clear FPSCR_VE */
 		"mtfsb0	25\n"		/* clear FPSCR_OE */
@@ -260,29 +261,30 @@ get_fpu_fault_code(void)
 		"mffs	0\n"		/* get FPSCR */
 		"stfd	0,0(%1)\n"	/* store it */
 		"lfd	0,0(%0)\n"	/* restore f0 */
-	    :: "b"(&tmp), "b"(&pcb->pcb_fpu.fpscr));
+	    :: "b"(&tmp), "b"(&pcb->pcb_fpu.fpscr), "b"(&fpscr64));
         mtmsr(msr);
 	__asm __volatile ("isync");
 	/*
-	 * Now determine the fault type.  First we see if any of the sticky
-	 * bits have changed since the FP exception.  If so, we only want
-	 * to return the code for the new exception.  If not, we look at all
-	 * the bits.
+	 * Now determine the fault type.  First we test to see if any of sticky
+	 * bits correspond to the enabled exceptions.  If so, we only test
+	 * those bits.  If not, we look at all the bits.  (In reality, we only
+	 * could get an exception if FPSCR_FEX changed state.  So we should
+	 * have at least one bit that corresponds).
 	 */
+	ofpscr = (uint32_t)fpscr64;
+	ofpscr &= ofpscr << (STICKYSHIFT - MASKSHIFT);
 	fpscr = (uint32_t)(*(uint64_t *)&pcb->pcb_fpu.fpscr);
-	if ((fpscr & ~pcb->pcb_flags) & STICKYBITS)
-		fpscr &= ~pcb->pcb_flags;
+	if (fpscr & ofpscr & STICKYBITS)
+		fpscr &= ofpscr;
+
+	/*
+	 * Let's determine what the appropriate code is.
+	 */
 	if (fpscr & FPSCR_VX)		code = FPE_FLTINV;
 	else if (fpscr & FPSCR_OX)	code = FPE_FLTOVF;
 	else if (fpscr & FPSCR_UX)	code = FPE_FLTUND;
 	else if (fpscr & FPSCR_ZX)	code = FPE_FLTDIV;
 	else if (fpscr & FPSCR_XX)	code = FPE_FLTRES;
 	else				code = 0;
-	/*
-	 * Now we save the latest set of sticky bits.  This is so we can see
-	 * what's changed on the next SIGFPE.
-	 */
-	pcb->pcb_flags &= ~STICKYBITS;
-	pcb->pcb_flags |= fpscr & STICKYBITS;
 	return code;
 }
