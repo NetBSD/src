@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.119 2001/06/20 22:20:42 chris Exp $
+#	$NetBSD: files.arm32,v 1.120 2001/06/23 16:47:41 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -62,7 +62,8 @@ file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
 
 # OFW console initialization
 file	arch/arm32/ofw/consinit.c		ofw
-file	dev/cninit.c				ofw
+file	dev/cninit.c				ofw |
+						(vidc & (!rpckbd | !vidcvideo))
 
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
