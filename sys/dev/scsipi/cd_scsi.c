@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.1.2.3 1997/07/01 21:49:53 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.1.2.4 1997/07/01 22:08:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -66,20 +66,22 @@
 #include <dev/scsipi/cd_link.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	scsicdmatch __P((struct device *, void *, void *));
+int	cd_scsibus_match __P((struct device *, void *, void *));
 #else
-int	scsicdmatch __P((struct device *, struct cfdata *, void *));
+int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
 #endif
-void scsicdattach __P((struct device *, struct device *, void *));
-int	scsi_cd_get_mode __P((struct cd_softc *, struct scsi_cd_mode_data *, int));
-int	scsi_cd_set_mode __P((struct cd_softc *, struct scsi_cd_mode_data *));
+void	cd_scsibus_attach __P((struct device *, struct device *, void *));
+int	cd_scsibus_get_mode __P((struct cd_softc *,
+	    struct scsi_cd_mode_data *, int));
+int	cd_scsibus_set_mode __P((struct cd_softc *,
+	    struct scsi_cd_mode_data *));
 
 struct cfattach cd_scsi_ca = {
-	sizeof(struct cd_softc), scsicdmatch, scsicdattach
+	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach
 };
 
 
-struct scsipi_inquiry_pattern scsicd_patterns[] = {
+struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
 	{T_WORM, T_REMOV,
@@ -90,20 +92,20 @@ struct scsipi_inquiry_pattern scsicd_patterns[] = {
 #endif
 };
 
-int	scsi_cd_setchan __P((struct cd_softc *, int, int, int, int));
-int	scsi_cd_getvol __P((struct cd_softc *, struct ioc_vol *));
-int	scsi_cd_setvol __P((struct cd_softc *, const struct ioc_vol *));
-int	scsi_cd_set_pa_immed __P((struct cd_softc *));
+int	cd_scsibus_setchan __P((struct cd_softc *, int, int, int, int));
+int	cd_scsibus_getvol __P((struct cd_softc *, struct ioc_vol *));
+int	cd_scsibus_setvol __P((struct cd_softc *, const struct ioc_vol *));
+int	cd_scsibus_set_pa_immed __P((struct cd_softc *));
 
-const struct cd_ops cd_scsi_ops = {
-	scsi_cd_setchan,
-	scsi_cd_getvol,
-	scsi_cd_setvol,
-	scsi_cd_set_pa_immed,
+const struct cd_ops cd_scsibus_ops = {
+	cd_scsibus_setchan,
+	cd_scsibus_getvol,
+	cd_scsibus_setvol,
+	cd_scsibus_set_pa_immed,
 };
 
 int
-scsicdmatch(parent, match, aux)
+cd_scsibus_match(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
@@ -119,9 +121,9 @@ scsicdmatch(parent, match, aux)
 		return 0;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)scsicd_patterns,
-		sizeof(scsicd_patterns)/sizeof(scsicd_patterns[0]),
-	    sizeof(scsicd_patterns[0]), &priority);
+	    (caddr_t)cd_scsibus_patterns,
+		sizeof(cd_scsibus_patterns)/sizeof(cd_scsibus_patterns[0]),
+	    sizeof(cd_scsibus_patterns[0]), &priority);
 	return (priority);
 }
 
@@ -130,7 +132,7 @@ scsicdmatch(parent, match, aux)
  * A device suitable for this driver
  */
 void
-scsicdattach(parent, self, aux)
+cd_scsibus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -138,9 +140,9 @@ scsicdattach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsicdattach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
 
-	cdattach(parent, cd, sc_link, &cd_scsi_ops);
+	cdattach(parent, cd, sc_link, &cd_scsibus_ops);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
@@ -158,7 +160,7 @@ scsicdattach(parent, self, aux)
  * Get the requested page into the buffer given
  */
 int
-scsi_cd_get_mode(cd, data, page)
+cd_scsibus_get_mode(cd, data, page)
 	struct cd_softc *cd;
 	struct scsi_cd_mode_data *data;
 	int page;
@@ -180,7 +182,7 @@ scsi_cd_get_mode(cd, data, page)
  * Get the requested page into the buffer given
  */
 int
-scsi_cd_set_mode(cd, data)
+cd_scsibus_set_mode(cd, data)
 	struct cd_softc *cd;
 	struct scsi_cd_mode_data *data;
 {
@@ -198,38 +200,38 @@ scsi_cd_set_mode(cd, data)
 }
 
 int
-scsi_cd_set_pa_immed(cd)
+cd_scsibus_set_pa_immed(cd)
 	struct cd_softc *cd;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsi_cd_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
+	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
 		return error;
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return scsi_cd_set_mode(cd, &data);
+	return cd_scsibus_set_mode(cd, &data);
 }
 
 int
-scsi_cd_setchan(cd, p0, p1, p2, p3)
+cd_scsibus_setchan(cd, p0, p1, p2, p3)
 	struct cd_softc *cd;
 	int p0, p1, p2, p3;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsi_cd_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
+	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
 		return error;
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return scsi_cd_set_mode(cd, &data);
+	return cd_scsibus_set_mode(cd, &data);
 }
 
 int
-scsi_cd_getvol(cd, arg)
+cd_scsibus_getvol(cd, arg)
 	struct cd_softc *cd;
 	struct ioc_vol *arg;
 {
@@ -237,7 +239,7 @@ scsi_cd_getvol(cd, arg)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsi_cd_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
+	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
 		return error;
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
@@ -247,14 +249,14 @@ scsi_cd_getvol(cd, arg)
 }
 
 int
-scsi_cd_setvol(cd, arg)
+cd_scsibus_setvol(cd, arg)
 	struct cd_softc *cd;
 	const struct ioc_vol *arg;
 {
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = scsi_cd_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
+	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
 		return error;
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
@@ -262,5 +264,5 @@ scsi_cd_setvol(cd, arg)
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return scsi_cd_set_mode(cd, &data);
+	return cd_scsibus_set_mode(cd, &data);
 }
