@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.18 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: hardware,v 1.19 2002/06/20 13:24:37 itojun Exp $
 .
 .Nx*M
 \*V runs on several of the older Macintosh computers.
@@ -62,6 +62,9 @@ Onboard Ethernet based on the MACE (Am79C940) chip for the Quadra
 AV-series Macs
 .It
 Comm-slot Ethernet should be working for most machines/cards
+.It
+Ethernet port on Asante NetDock and Newer Ether MicroDock,
+for PowerBook Duo series
 .bullet)
 .Pp
 If your 68030 system is not listed above, it may be because of a problem
