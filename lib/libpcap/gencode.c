@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.21 1999/12/13 01:44:31 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.22 2000/03/01 03:47:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.21 1999/12/13 01:44:31 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.22 2000/03/01 03:47:48 itojun Exp $");
 #endif
 #endif
 
@@ -2047,15 +2047,21 @@ gen_scode(name, q)
 				tproto = Q_IP;
 				tproto6 = Q_IPV6;
 			}
-			while (res) {
+			for (res = res0; res; res = res->ai_next) {
 				switch (res->ai_family) {
 				case AF_INET:
+					if (tproto == Q_IPV6)
+						continue;
+
 					sin = (struct sockaddr_in *)
 						res->ai_addr;
 					tmp = gen_host(ntohl(sin->sin_addr.s_addr),
 						0xffffffff, tproto, dir);
 					break;
 				case AF_INET6:
+					if (tproto6 == Q_IP)
+						continue;
+
 					sin6 = (struct sockaddr_in6 *)
 						res->ai_addr;
 					tmp = gen_host6(&sin6->sin6_addr,
@@ -2065,10 +2071,10 @@ gen_scode(name, q)
 				if (b)
 					gen_or(b, tmp);
 				b = tmp;
-
-				res = res->ai_next;
 			}
 			freeaddrinfo(res0);
+			if (b == NULL)
+				bpf_error("unknown host '%s'", name);
 			return b;
 #endif /*INET6*/
 		}
