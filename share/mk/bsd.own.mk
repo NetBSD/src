@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.139 2000/06/27 21:12:42 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.140 2000/07/26 02:21:21 mycroft Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -78,7 +78,6 @@ STRIPFLAG?=	-s
 # The sparc64 port is incomplete.
 .if ${MACHINE_ARCH} == "sparc64"
 NOPROFILE=1
-NOPIC=1
 NOLINT=1
 .endif
 
