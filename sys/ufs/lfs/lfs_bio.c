@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.11 1999/06/01 03:00:40 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.12 1999/10/21 16:53:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -350,8 +350,6 @@ lfs_check(vp, blkno, flags)
 	struct lfs *fs;
 
 	error = 0;
-	if (incore(vp, blkno))
-		return (0);
 	
 	/* If out of buffers, wait on writer */
 	/* XXX KS - if it's the Ifile, we're probably the cleaner! */
