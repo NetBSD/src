@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.152 1999/08/16 21:36:39 mcr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.153 1999/08/17 09:42:14 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.144 1999/08/12 09:42:11 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.146 1999/08/17 09:40:25 drochner Exp 
  */
 
 /*
@@ -46,6 +46,7 @@
  * which replaces the database previously found at
  *
  *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *   or http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
  */
@@ -511,6 +512,7 @@
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
+#define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
@@ -646,6 +648,9 @@
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+
+/* Alteon products */
+#define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* ACEnic Gigabit Ethernet */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
