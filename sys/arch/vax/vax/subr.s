@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.36 2000/05/01 12:11:50 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.37 2000/05/09 18:59:58 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -253,7 +253,9 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 1:	movab	_uvm,r0
 	tstl	UVM_PAGE_IDLE_ZERO(r0)
 	beql	2f
+#if 0
 	calls	$0,_uvm_pageidlezero
+#endif
 2:	tstl	_whichqs		# Anything ready to run?
 	beql	1b			# no, continue to loop
 	brb	Swtch			# Yes, goto switch again.
@@ -341,14 +343,22 @@ ENTRY(cpu_exit,0)
 # copy/fetch/store routines. 
 #
 
-	.globl	_copyin, _copyout
-_copyout:
-_copyin:.word 0
-	movab	1f,*pcbtrap
-	movl	4(ap),r1
+ENTRY(copyout, 0)
 	movl	8(ap),r2
-	movc3	12(ap),(r1), (r2)
+	blss	3f		# kernel space
+	movl	4(ap),r1
+	brb	2f
+
+ENTRY(copyin, 0)
+	movl	4(ap),r1
+	blss	3f		# kernel space
+	movl	8(ap),r2
+2:	movab	1f,*pcbtrap
+	movc3	12(ap),(r1),(r2)
 1:	clrl	*pcbtrap
+	ret
+
+3:	mnegl	$1,r0
 	ret
 
 ENTRY(kcopy,0)
@@ -362,101 +372,88 @@ ENTRY(kcopy,0)
 	movl	r1,r0
 	ret
 
-_copystr:	.globl	_copystr
-_copyinstr:	.globl	_copyinstr
-_copyoutstr:	.globl	_copyoutstr
-	.word	0
-	movl	4(ap),r4	# from
-	movl	8(ap),r5	# to
-	movl	16(ap),r3	# copied
-	movl	12(ap),r2	# len
-
-	bneq	0f		# zero length?
-	tstl	r3
-	beql	1f		# Save zero length?
-	clrl	(r3)
-1:	clrl	r0
-	ret
-
-0:	movab	2f,*pcbtrap
-
 /*
- * This routine consists of two parts: One is for MV2 that doesn't have
- * locc in hardware, the other is a fast version with locc. But because
- * locc only handles <64k strings, we default to the slow version if the
- * string is longer.
+ * copy{in,out}str() copies data from/to user space to/from kernel space.
+ * Security checks:
+ *	1) user space address must be < KERNBASE
+ *	2) the VM system will do the checks while copying
  */
-	cmpl	_vax_cputype,$VAX_TYP_UV2
-	bneq	4f		# Check if locc emulated
+ENTRY(copyinstr, 0)
+	tstl	4(ap)		# kernel address?
+	bgeq	8f		# no, continue
+6:	movl	$EFAULT,r0
+	movl	16(ap),r2
+	beql	7f
+	clrl	(r2)
+7:	ret
 
-9:	movl	r2,r0
-7:	movb	(r4)+,(r5)+
-	beql	6f
-	sobgtr	r0,7b
-	brb 1f
+ENTRY(copyoutstr, 0)
+	tstl	8(ap)		# kernel address?
+	bgeq	8f		# no, continue
+	brb	6b		# yes, return EFAULT
 
-6:	tstl	r3
-	beql	5f
-	incl	r2
-	subl3	r0,r2,(r3)
-5:	clrl	r0
-	clrl	*pcbtrap
-	ret
+ENTRY(copystr,0)
+8:	movl	4(ap),r5	# from
+	movl	8(ap),r4	# to
+	movl	12(ap),r3	# len
+	movl	16(ap),r2	# copied
+	clrl	r0
+	movab	3f,*pcbtrap	# XXX - MULTIPROCESSOR
 
-4:	cmpl	r2,$65535	# maxlen < 64k?
-	blss	8f		# then use fast code.
+	tstl	r3		# any chars to copy?
+	bneq	1f		# yes, jump for more
+0:	tstl	r2		# save copied len?
+	beql	2f		# no
+	subl3	4(ap),r5,(r2)	# save copied len
+2:	ret
 
-	locc	$0,$65535,(r4)	# is strlen < 64k?
-	beql	9b		# No, use slow code
-	subl3	r0,$65535,r1	# Get string len
-	brb	0f		# do the copy
+1:	movb	(r5)+,(r4)+	# copy one char
+	beql	0b		# jmp if last char
+	sobgtr	r3,1b		# copy one more
+	movl	$ENAMETOOLONG,r0 # inform about too long string
+	brb	0b		# out of chars
 
-8:	locc	$0,r2,(r4)	# check for null byte
-	beql	1f
-
-	subl3	r0,r2,r1	# Calculate len to copy
-0:	incl	r1		# Copy null byte also
-	tstl	r3
-	beql	3f
-	movl	r1,(r3)		# save len copied
-3:	movc3	r1,(r4),(r5)
-	brb	2f
-
-1:	movl	$ENAMETOOLONG,r0
-2:	clrl	*pcbtrap
-	ret
+3:	clrl	*pcbtrap	# XXX - MULTIPROCESSOR
+	brb	0b
 
 ENTRY(subyte,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
 	movb	8(ap),(r0)
+	movab	1f,*pcbtrap
 	clrl	r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
 	ret
 
 ENTRY(suword,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
 	movl	8(ap),(r0)
+	movab	1f,*pcbtrap
 	clrl	r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
 	ret
 
 ENTRY(suswintr,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3f		# illegal space
 	movw	8(ap),(r0)
+	movab	1f,*pcbtrap
 	clrl	r1
 1:	clrl	*pcbtrap
 	movl	r1,r0
 	ret
 
+3:	mnegl	$1,r0
+	ret
+
 ENTRY(fuswintr,0)
-	movab	1f,*pcbtrap
 	movl	4(ap),r0
+	blss	3b
 	movzwl	(r0),r1
+	movab	1f,*pcbtrap
 1:	clrl	*pcbtrap
 	movl	r1,r0
 	ret
