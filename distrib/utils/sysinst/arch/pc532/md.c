@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.1.1 1997/09/26 23:02:56 phil Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1997/10/07 04:01:37 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -210,3 +210,11 @@ void md_make_bsd_partitions (void)
 	fclose (f);
 
 }
+
+/* update support */
+void 
+md_update(void)
+{
+	return 1;
+}
+

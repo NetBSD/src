@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.2 1997/10/01 05:04:25 phil Exp $	*/
+/*	$NetBSD: disks.c,v 1.3 1997/10/07 04:01:30 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,35 +41,51 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <sys/param.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 #include "txtwalk.h"
 
 /* Local prototypes */
-static void do_fsck(char *disk, char *part);
-void foundffs (struct data *list, int num);
-
+static void found_disk(struct data *list, int num);
+static void foundffs (struct data *list, int num);
 
 struct lookfor msgbuf[] = {
-	{"real mem", "real mem = %d", "a $0", (void *)&ramsize, NULL},
-	{"wd0:", "%i, %d cyl, %d head, %d sec, %d",
-	 	"a $0 $1 $2 $3", wd0, NULL},
-	{"wd1:", "%i, %d cyl, %d head, %d sec, %d", 
-	 	"a $0 $1 $2 $3", wd1, NULL},
-	{"sd0:", "%i, %d cyl, %d head, %d sec, %d b%i x %d", 
-	 	"a $0 $1 $2 $3 $4", sd0, NULL},
-	{"sd1:", "%i, %d cyl, %d head, %d sec, %d b%i x %d", 
-	 	"a $0 $1 $2 $3 $4", sd1, NULL}
+	{"wd", "%s: %i, %d cyl, %d head, %d sec, %d", "c", NULL, found_disk},
+	{"sd", "%s: %i, %d cyl, %d head, %d sec, %d b%i x %d", "c",
+	 NULL, found_disk}
 };
 int nummsgbuf = sizeof(msgbuf) / sizeof(struct lookfor);
 
-int find_disks_and_mem_size(void)
+static void found_disk(struct data *list, int num)
+{	int i;
+
+	if (numdisks < MAX_DISKS) {
+		strncpy (disks[numdisks].name, list[0].u.s_val, SSTRSIZE);
+		strncat (disknames, list[0].u.s_val,
+			 SSTRSIZE-1-strlen(disknames));
+		strncat (disknames, " ", SSTRSIZE-1-strlen(disknames));
+		disks[numdisks].geom[4] = 0;
+		for (i=0; i<num-1; i++)
+			disks[numdisks].geom[i] = list[i+1].u.i_val;
+		numdisks++;
+	}
+}
+
+int find_disks (void)
 {
 	char *textbuf;
 	int  textsize;
 	char *tp;
-	char defname[80];
+	char defname[STRSIZE];
+	int  i;
 
 	/* initialize */
 	disknames[0] = 0;
@@ -85,35 +101,6 @@ int find_disks_and_mem_size(void)
 
 	walk (textbuf, textsize, msgbuf, nummsgbuf);
 	free(textbuf);
-
-	if (ramsize == 0) {
-		/* Lost information in boot! */
-		msg_display (MSG_lostinfo);
-		process_menu (MENU_noyes);
-		if (!yesno)
-			return -1;
-	}
-
-	/* Find out how many Megs ... round up. */
-	rammb = (ramsize + MEG - 1) / MEG;
-
-	/* Ask for which disk */
-	if (wd0[0] > 0) {
-		numdisks++;
-		strcat (disknames, "wd0 ");
-	}
-	if (wd1[0] > 0) {
-		numdisks++;
-		strcat (disknames, "wd1 ");
-	}
-	if (sd0[0] > 0) {
-		numdisks++;
-		strcat (disknames, "sd0 ");
-	}
-	if (sd1[0] > 0) {
-		numdisks++;
-		strcat (disknames, "sd1 ");
-	}
 
 	if (numdisks == 0) {
 		/* No disks found! */
@@ -152,17 +139,14 @@ int find_disks_and_mem_size(void)
 		diskdev[strlen(diskdev)-1] = 0;
 	}
 	
-	/* Set diskgeom. */
-	if (strcmp(diskdev, "wd0") == 0)
-		diskgeom = wd0;
-	else if (strcmp(diskdev, "wd1") == 0)
-		diskgeom = wd1;
-	else if (strcmp(diskdev, "sd0") == 0)
-		diskgeom = sd0;
-	else if (strcmp(diskdev, "sd1") == 0)
-		diskgeom = sd1;
+	/* Set disk. */
+	for (i=0; i<numdisks; i++)
+		if (strcmp(diskdev, disks[i].name) == 0)
+			disk = &disks[i];
 
-	sectorsize = diskgeom[3];
+	sectorsize = disk->geom[3];
+	if (disk->geom[4] == 0)
+		disk->geom[4] = disk->geom[0] * disk->geom[1] * disk->geom[2];
 
 	return numdisks;
 }
@@ -211,10 +195,10 @@ void scsi_fake (void)
 
 	int geom[5][4] = {{0}};
 	int i, j;
-	int sects = diskgeom[4];
+	int sects = disk->geom[4];
 	int head, sec;
 
-	int stop = diskgeom[0]*diskgeom[1]*diskgeom[2]; 
+	int stop = disk->geom[0]*disk->geom[1]*disk->geom[2];
 
 	i=0;
 	while (i < 4 && sects > stop) {
@@ -239,14 +223,14 @@ void scsi_fake (void)
 	       sects--;
 	}
 	while (i < 5) {
-		geom[i][0] = diskgeom[0];
-		geom[i][1] = diskgeom[1];
-		geom[i][2] = diskgeom[2];
-		geom[i][3] = diskgeom[0]*diskgeom[1]*diskgeom[2];
+		geom[i][0] = disk->geom[0];
+		geom[i][1] = disk->geom[1];
+		geom[i][2] = disk->geom[2];
+		geom[i][3] = stop;
 		i++;
 	}
 	
-	msg_display (MSG_scsi_fake, diskgeom[4],
+	msg_display (MSG_scsi_fake, disk->geom[4],
 		     geom[0][0], geom[0][1], geom[0][2], geom[0][3],
 		     geom[1][0], geom[1][1], geom[1][2], geom[1][3],
 		     geom[2][0], geom[2][1], geom[2][2], geom[2][3],
@@ -254,10 +238,10 @@ void scsi_fake (void)
 		     geom[4][0], geom[4][1], geom[4][2], geom[4][3]);
 	process_menu (MENU_scsi_fake);
 	if (fake_sel >= 0) {
-		dlcyl  = diskgeom[0] = geom[fake_sel][0];
-		dlhead = diskgeom[1] = geom[fake_sel][1];
-		dlsec  = diskgeom[2] = geom[fake_sel][2];
-		dlsize = diskgeom[4] = geom[fake_sel][3];
+		dlcyl  = disk->geom[0] = geom[fake_sel][0];
+		dlhead = disk->geom[1] = geom[fake_sel][1];
+		dlsec  = disk->geom[2] = geom[fake_sel][2];
+		dlsize = disk->geom[4] = geom[fake_sel][3];
 	}
 }
 
@@ -318,6 +302,7 @@ void make_fstab (void)
 		else if (bsdlabel[i][D_FSTYPE] == T_MSDOS )
 			(void)fprintf (f, "/dev/%s%c %s msdos rw 0 0\n",
 				       diskdev, 'a'+i, fsmount[i]);
+	(void)fprintf (f, "/kern /kern kernfs rw\n");
 #ifndef DEBUG
 	fclose(f);
 #endif
@@ -328,32 +313,100 @@ void make_fstab (void)
  * inodes.  Fsck them.  Mount them.
  */
 
-struct lookfor fstabbuf[] = {
+
+static struct lookfor fstabbuf[] = {
 	{"/dev/", "/dev/%s %s ffs", "c", NULL, foundffs},
 	{"/dev/", "/dev/%s %s ufs", "c", NULL, foundffs},
 };
-int numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
+static int numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
 
-void foundffs (struct data *list, int num)
-{
-}
+#define MAXDEVS 40
+
+static char dev[MAXDEVS][SSTRSIZE];
+static char mnt[MAXDEVS][STRSIZE];
+static int  devcnt = 0;
 
 static void
+foundffs (struct data *list, int num)
+{
+	if (strcmp(list[1].u.s_val, "/") != 0) {
+		strncpy(dev[devcnt], list[0].u.s_val, SSTRSIZE);
+		strncpy(mnt[devcnt], list[1].u.s_val, STRSIZE);
+		devcnt++;
+	}
+}
+
+static int
+inode_kind (char *dev)
+{
+	union { struct fs fs; char pad[SBSIZE];} fs;
+	int fd;
+	int ret;
+
+	fd = open (dev, O_RDONLY, 0);
+	if (fd < 0)
+		return fd;
+        if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
+                return -1;
+        if ((ret = read(fd, &fs, SBSIZE)) != SBSIZE) {
+		close (fd);
+                return -1;
+	}
+	close (fd);
+	if (fs.fs.fs_magic != FS_MAGIC)
+		return -1;
+	if (fs.fs.fs_inodefmt < FS_44INODEFMT)
+		return 0;
+	return 1;
+}
+
+static int
 do_fsck(char *disk, char *part)
 {
+	char raw[SSTRSIZE];
+	int inodetype;
+	char * upgr = "";
 
+	snprintf (raw, SSTRSIZE, "/dev/r%s%s", disk, part);
+	inodetype = inode_kind (raw);
+
+	if (inodetype < 0) {
+		/* error */
+		return 0;
+	}
+	else if (inodetype == 0) {
+		/* Ask to upgrade */
+		msg_display (MSG_upgrinode, raw);
+		process_menu (MENU_yesno);
+		if (yesno)
+			upgr = "-c ";
+	}
+
+	endwin();
+	if (run_prog ("/sbin/fsck -f -p %s%s", upgr, raw)) {
+		wrefresh(stdscr);
+		return 0;
+	}
+	wrefresh(stdscr);
+	return 1;
 }
 
 int
 fsck_disks (void)
 {	char *fstab;
 	int   fstabsize;
+	int   i;
 
 	/* First the root device. */
-	do_fsck (diskdev, "a");
+	if (!do_fsck (diskdev, "a")) {
+		msg_display (MSG_badfs, diskdev, "a");
+		process_menu (MENU_ok);
+		return 0;
+	}
 
 	if (run_prog ("/sbin/mount /dev/%sa /mnt", diskdev)) {
-		/* error! */
+		msg_display (MSG_badmount, diskdev, "a");
+		process_menu (MENU_ok);
 		return 0;
 	}
 
@@ -367,5 +420,18 @@ fsck_disks (void)
 	walk (fstab, fstabsize, fstabbuf, numfstabbuf);
 	free(fstab);
 
+	for (i=0; i < devcnt; i++) {
+		if (!do_fsck (dev[i], "")) {
+			msg_display (MSG_badfs, dev[i], "");
+			process_menu (MENU_ok);
+			return 0;
+		}
+		if (run_prog ("/sbin/mount /dev/%s %s", dev[i], mnt[i])) {
+			msg_display (MSG_badmount, dev[i], "");
+			process_menu (MENU_ok);
+			return 0;
+		}
+	}
+	
 	return 1;
 }

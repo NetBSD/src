@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.3 1997/10/01 05:04:28 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.4 1997/10/07 04:01:32 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,12 +60,6 @@ message upgr
 {Sorry, the upgrade part of this is not working.
 }
 
-message lostinfo
-{It appears that your boot message buffer has lost information.  Your
-ram size information is not available.  It is possible that other information
-has also been lost.  Do you want to continue?
-}
-
 message installusure
 {Ok, lets get NetBSD installed on your hard disk.  As always, this will
 change information on your hard disk.  You should have made a full backup
@@ -100,14 +94,14 @@ The following disks are available: %s
 message scsigeom1
 {It appears that your disk, %s, has already been labeled with a BSD 
 disklabel and the disklabel reports geometry that is different from
-the the real geometry.  Also, the reporte geometry does not address all
+the the real geometry.  Also, the reported geometry does not address all
 possible sectors on your disk.  Your disk has %d sectors.
 
 disklabel: %d cylinders, %d heads, %d sectors = %d total sectors
 reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
 
 It may be possible to choose a fake geometry for your BSD disklabel that
-address most of your sectors.
+addresses most of your sectors.
 }
 
 message scsigeom2
@@ -117,7 +111,7 @@ on your disk.  Your disk has %d sectors.
 reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
 
 It may be possible to choose a fake geometry for your BSD disklabel that
-address most of your sectors.
+addresses most of your sectors.
 }
 
 message scsi_fake
@@ -376,3 +370,18 @@ message extracting
 message makedev
 {Making device files ...
 }
+
+message badfs
+{It appears that %s%s is not a BSD file system or the fsck was
+not successfull.  The upgrade has been aborted.
+}
+
+message badmount
+{Your file system %s%s was not successfully mounted.  Upgrade aborted.}
+
+message upgrinode
+{Your file system, %s, is using an old inode format.  If you are
+using only NetBSD on these file systems, it is recommended that 
+they are upgraded.  Do you want this file system upgraded?
+}
+
