@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.32 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.33 2003/04/12 09:03:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.32 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.33 2003/04/12 09:03:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ int ex_pci_enable __P((struct ex_softc *));
 void ex_pci_disable __P((struct ex_softc *));
 
 void ex_pci_confreg_restore __P((struct ex_pci_softc *));
+void ex_d3tod0 __P(( struct ex_softc *, struct pci_attach_args *));
 
 CFATTACH_DECL(ex_pci, sizeof(struct ex_pci_softc),
     ex_pci_match, ex_pci_attach, NULL, NULL);
@@ -351,6 +352,48 @@ ex_pci_intr_ack(sc)
         
 	bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR,
 	    PCI_INTRACK);
+}
+
+void
+ex_d3tod0(sc, pa)
+	struct ex_softc		*sc;
+	struct pci_attach_args	*pa;
+{
+
+#define PCI_CACHE_LAT_BIST	0x0c
+#define PCI_BAR0		0x10
+#define PCI_BAR1		0x14
+#define PCI_BAR2		0x18
+#define PCI_BAR3		0x1C
+#define PCI_BAR4		0x20
+#define PCI_BAR5		0x24
+#define PCI_EXP_ROM_BAR		0x30
+#define PCI_INT_GNT_LAT		0x3c
+
+	pci_chipset_tag_t pc = pa->pa_pc;
+
+	u_int32_t base0;
+	u_int32_t base1;
+	u_int32_t romaddr;
+	u_int32_t pci_command;
+	u_int32_t pci_int_lat;
+	u_int32_t pci_cache_lat;
+
+	pci_command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	base0 = pci_conf_read(pc, pa->pa_tag, PCI_BAR0);
+	base1 = pci_conf_read(pc, pa->pa_tag, PCI_BAR1);
+	romaddr	= pci_conf_read(pc, pa->pa_tag, PCI_EXP_ROM_BAR);
+	pci_cache_lat= pci_conf_read(pc, pa->pa_tag, PCI_CACHE_LAT_BIST);
+	pci_int_lat = pci_conf_read(pc, pa->pa_tag, PCI_INT_GNT_LAT);
+
+	pci_conf_write(pc, pa->pa_tag, PCI_POWERCTL, 0);
+	pci_conf_write(pc, pa->pa_tag, PCI_BAR0, base0);
+	pci_conf_write(pc, pa->pa_tag, PCI_BAR1, base1);
+	pci_conf_write(pc, pa->pa_tag, PCI_EXP_ROM_BAR, romaddr);
+	pci_conf_write(pc, pa->pa_tag, PCI_INT_GNT_LAT, pci_int_lat);
+	pci_conf_write(pc, pa->pa_tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, 
+	    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE));
 }
 
 void
