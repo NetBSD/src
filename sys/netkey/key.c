@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.70 2002/06/12 17:56:46 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.71 2002/06/14 14:47:25 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.70 2002/06/12 17:56:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.71 2002/06/14 14:47:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -6993,14 +6993,18 @@ key_init()
 	ip4_def_policy = key_newsp();
 	if (!ip4_def_policy)
 		panic("could not initialize IPv4 default security policy");
+	ip4_def_policy->state = IPSEC_SPSTATE_ALIVE;
 	ip4_def_policy->policy = IPSEC_POLICY_NONE;
+	ip4_def_policy->dir = IPSEC_DIR_ANY;
 	ip4_def_policy->readonly = 1;
 #endif
 #ifdef INET6
 	ip6_def_policy = key_newsp();
 	if (!ip6_def_policy)
 		panic("could not initialize IPv6 default security policy");
+	ip6_def_policy->state = IPSEC_SPSTATE_ALIVE;
 	ip6_def_policy->policy = IPSEC_POLICY_NONE;
+	ip6_def_policy->dir = IPSEC_DIR_ANY;
 	ip6_def_policy->readonly = 1;
 #endif
 
