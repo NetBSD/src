@@ -1,5 +1,3 @@
-/*	$NetBSD: optfunc.c,v 1.1.1.5 2001/07/26 12:00:34 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
@@ -31,7 +29,7 @@
 #include "option.h"
 
 extern int nbufs;
-extern int cbufs;
+extern int bufspace;
 extern int pr_type;
 extern int plusoption;
 extern int swindow;
@@ -44,6 +42,7 @@ extern char closequote;
 extern char *prproto[];
 extern char *eqproto;
 extern char *hproto;
+extern char *wproto;
 extern IFILE curr_ifile;
 extern char version[];
 #if LOGFILE
@@ -107,9 +106,8 @@ opt_o(type, s)
 			error("No log file", NULL_PARG);
 		else
 		{
-			parg.p_string = unquote_file(namelogfile);
+			parg.p_string = namelogfile;
 			error("Log file \"%s\"", &parg);
-			free(parg.p_string);
 		}
 		break;
 	}
@@ -169,9 +167,8 @@ opt_k(type, s)
 	case INIT:
 		if (lesskey(s, 0))
 		{
-			parg.p_string = unquote_file(s);
+			parg.p_string = s;
 			error("Cannot use lesskey file \"%s\"", &parg);
-			free(parg.p_string);
 		}
 		break;
 	}
@@ -237,9 +234,8 @@ opt__T(type, s)
 		tags = lglob(s);
 		break;
 	case QUERY:
-		parg.p_string = unquote_file(tags);
+		parg.p_string = tags;
 		error("Tags file \"%s\"", &parg);
-		free(parg.p_string);
 		break;
 	}
 }
@@ -293,6 +289,7 @@ opt__P(type, s)
 		case 'M':  proto = &prproto[PR_LONG];	s++;	break;
 		case '=':  proto = &eqproto;		s++;	break;
 		case 'h':  proto = &hproto;		s++;	break;
+		case 'w':  proto = &wproto;		s++;	break;
 		default:   proto = &prproto[PR_SHORT];		break;
 		}
 		free(*proto);
@@ -316,14 +313,14 @@ opt_b(type, s)
 {
 	switch (type)
 	{
-	case TOGGLE:
-	case QUERY:
-		/*
-		 * Allocate the new number of buffers.
-		 */
-		cbufs = ch_nbuf(cbufs);
-		break;
 	case INIT:
+	case TOGGLE:
+		/*
+		 * Set the new number of buffers.
+		 */
+		ch_setbufspace(bufspace);
+		break;
+	case QUERY:
 		break;
 	}
 }
@@ -370,10 +367,11 @@ opt__V(type, s)
 		any_display = 1;
 		putstr("less ");
 		putstr(version);
-		putstr("\nCopyright (C) 2000 Mark Nudelman\n\n");
+		putstr("\nCopyright (C) 2001 Mark Nudelman\n\n");
 		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
+		putstr("Homepage: http://www.greenwoodsoftware.com/less\n");
 		quit(QUIT_OK);
 		break;
 	}
@@ -463,6 +461,64 @@ opt_D(type, s)
 #endif
 
 /*
+ * Handler for the -x option.
+ */
+	public void
+opt_x(type, s)
+	int type;
+	register char *s;
+{
+	extern int tabstops[];
+	extern int ntabstops;
+	extern int tabdefault;
+	char msg[60+(4*TABSTOP_MAX)];
+	int i;
+	PARG p;
+
+	switch (type)
+	{
+	case INIT:
+	case TOGGLE:
+		/* Start at 1 because tabstops[0] is always zero. */
+		for (i = 1;  i < TABSTOP_MAX;  )
+		{
+			int n = 0;
+			s = skipsp(s);
+			while (*s >= '0' && *s <= '9')
+				n = (10 * n) + (*s++ - '0');
+			if (n > tabstops[i-1])
+				tabstops[i++] = n;
+			s = skipsp(s);
+			if (*s++ != ',')
+				break;
+		}
+		if (i < 2)
+			return;
+		ntabstops = i;
+		tabdefault = tabstops[ntabstops-1] - tabstops[ntabstops-2];
+		break;
+	case QUERY:
+		strcpy(msg, "Tab stops ");
+		if (ntabstops > 2)
+		{
+			for (i = 1;  i < ntabstops;  i++)
+			{
+				if (i > 1)
+					strcat(msg, ",");
+				sprintf(msg+strlen(msg), "%d", tabstops[i]);
+			}
+			sprintf(msg+strlen(msg), " and then ");
+		}
+		sprintf(msg+strlen(msg), "every %d spaces",
+			tabdefault);
+		p.p_string = msg;
+		error("%s", &p);
+		break;
+	}
+}
+
+
+/*
  * Handler for the -" option.
  */
 	public void
@@ -477,6 +533,11 @@ opt_quote(type, s)
 	{
 	case INIT:
 	case TOGGLE:
+		if (s[0] == '\0')
+		{
+			openquote = closequote = '\0';
+			break;
+		}
 		if (s[1] != '\0' && s[2] != '\0')
 		{
 			error("-\" must be followed by 1 or 2 chars", NULL_PARG);

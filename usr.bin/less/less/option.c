@@ -1,5 +1,3 @@
-/*	$NetBSD: option.c,v 1.1.1.5 2001/07/26 12:00:34 mrg Exp $	*/
-
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
  *
@@ -23,7 +21,7 @@
 #include "less.h"
 #include "option.h"
 
-static struct option *pendopt;
+static struct loption *pendopt;
 public int plusoption = FALSE;
 
 static char *propt();
@@ -41,7 +39,7 @@ extern char *every_first_cmd;
 scan_option(s)
 	char *s;
 {
-	register struct option *o;
+	register struct loption *o;
 	register int optc;
 	char *optname;
 	char *printopt;
@@ -118,11 +116,11 @@ scan_option(s)
 			 * EVERY input file.
 			 */
 			plusoption = TRUE;
-			if (*s == '+')
-				every_first_cmd = save(++s);
+			s = optstring(s, &str, propt('+'), NULL);
+			if (*str == '+')
+				every_first_cmd = save(++str);
 			else
-				ungetsc(s);
-			s = optstring(s, propt('+'));
+				ungetsc(str);
 			continue;
 		case '0':  case '1':  case '2':  case '3':  case '4':
 		case '5':  case '6':  case '7':  case '8':  case '9':
@@ -226,8 +224,7 @@ scan_option(s)
 			 * All processing of STRING options is done by 
 			 * the handling function.
 			 */
-			str = s;
-			s = optstring(s, printopt);
+			s = optstring(s, &str, printopt, o->odesc[1]);
 			break;
 		case NUMBER:
 			if (*s == '\0')
@@ -261,7 +258,7 @@ toggle_option(c, s, how_toggle)
 	char *s;
 	int how_toggle;
 {
-	register struct option *o;
+	register struct loption *o;
 	register int num;
 	int no_prompt;
 	int err;
@@ -481,7 +478,7 @@ propt(c)
 single_char_option(c)
 	int c;
 {
-	register struct option *o;
+	register struct loption *o;
 
 	o = findopt(c);
 	if (o == NULL)
@@ -497,7 +494,7 @@ single_char_option(c)
 opt_prompt(c)
 	int c;
 {
-	register struct option *o;
+	register struct loption *o;
 
 	o = findopt(c);
 	if (o == NULL || (o->otype & (STRING|NUMBER)) == 0)
@@ -545,9 +542,11 @@ nopendopt()
  * Return a pointer to the remainder of the string, if any.
  */
 	static char *
-optstring(s, printopt)
+optstring(s, p_str, printopt, validchars)
 	char *s;
+	char **p_str;
 	char *printopt;
+	char *validchars;
 {
 	register char *p;
 
@@ -556,12 +555,29 @@ optstring(s, printopt)
 		nostring(printopt);
 		quit(QUIT_ERROR);
 	}
+	*p_str = s;
 	for (p = s;  *p != '\0';  p++)
-		if (*p == END_OPTION_STRING)
+	{
+		if (*p == END_OPTION_STRING ||
+		    (validchars != NULL && strchr(validchars, *p) == NULL))
 		{
-			*p = '\0';
-			return (p+1);
+			switch (*p)
+			{
+			case END_OPTION_STRING:
+			case ' ':  case '\t':  case '-':
+				/* Replace the char with a null to terminate string. */
+				*p++ = '\0';
+				break;
+			default:
+				/* Cannot replace char; make a copy of the string. */
+				*p_str = (char *) ecalloc(p-s+1, sizeof(char));
+				strncpy(*p_str, s, p-s);
+				(*p_str)[p-s] = '\0';
+				break;
+			}
+			break;
 		}
+	}
 	return (p);
 }
 
