@@ -42,7 +42,7 @@
  *	@(#)sbus.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sbus.c,v 1.10 92/11/26 02:28:13 torek Exp  (LBL)
- * $Id: sbus.c,v 1.2 1994/09/17 23:57:38 deraadt Exp $
+ * $Id: sbus.c,v 1.3 1994/10/02 22:00:30 deraadt Exp $
  */
 
 /*
@@ -59,8 +59,9 @@
 
 /* autoconfiguration driver */
 void	sbus_attach __P((struct device *, struct device *, void *));
+int	sbus_match __P((struct device *, struct cfdata *, void *));
 struct cfdriver sbuscd = {
-	NULL, "sbus", matchbyname, sbus_attach,
+	NULL, "sbus", sbus_match, sbus_attach,
 	DV_DULL, sizeof(struct sbus_softc)
 };
 
@@ -81,6 +82,20 @@ sbus_print(args, sbus)
 		printf("%s at %s", ca->ca_ra.ra_name, sbus);
 	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
+}
+
+int
+sbus_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (cputyp==CPU_SUN4)
+		return (0);
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
 }
 
 /*
@@ -178,32 +193,4 @@ sbusreset(sbus)
 			printf(" %s", dev->dv_xname);
 		}
 	}
-}
-
-/* 
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
-{
-	struct device *dev = alldevs;
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_next) == NULL)
-			return NULL;
-	}
-	return dev;
 }

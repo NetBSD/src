@@ -1,4 +1,4 @@
-# $Id: TDR,v 1.17 1994/10/02 22:00:00 deraadt Exp $
+# $Id: SUN4,v 1.1 1994/10/02 21:59:56 deraadt Exp $
 #
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -50,7 +50,7 @@ options		LKM
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
 
-config		netbsd	root on sd0 swap on sd0
+config		netbsd	root nfs swap nfs
 
 scsibus* at esp?
 

@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.7 1994/09/17 23:57:34 deraadt Exp $
+ * $Id: cgthree.c,v 1.8 1994/10/02 22:00:14 deraadt Exp $
  */
 
 /*
@@ -118,20 +118,13 @@ cgthreematch(parent, cf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
 	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
-		    ra->ra_intr);
 		ra->ra_len = NBPG;
-
-		/*
-		 * On the VME or OBIO busses, if we don't bus error it
-		 * exists. The obio/vme functions will have mapped the 
-		 * first page for us, but we need to look at a register
-		 * much later on. So, map it instead.
-		 */
-		return (probeget(ra->ra_vaddr, 4) != 0);
+		return (probeget(ra->ra_vaddr, 4) != -1);
 	}
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (1);
 }
 
 /*

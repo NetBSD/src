@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 1994/09/17 23:49:58 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 1994/10/02 22:00:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -56,7 +56,7 @@ struct obio_softc {
 /* autoconfiguration driver */
 static int	obiomatch(struct device *, struct cfdata *, void *);
 static void	obioattach(struct device *, struct device *, void *);
-struct cfdriver obiocd = { NULL, "cgsix", obiomatch, obioattach,
+struct cfdriver obiocd = { NULL, "obio", obiomatch, obioattach,
 	DV_DULL, sizeof(struct obio_softc)
 };
 
@@ -65,17 +65,17 @@ void *		obio_tmp_map __P((void *));
 void		obio_tmp_unmap __P((void));
 
 int
-obiomatch(parent, cf, args)
+obiomatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void *args;
+	void *aux;
 {
-	/*
-	 * This exists for machines that don't have OpenPROM.
-	 */
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
 	if (cputyp != CPU_SUN4)
-		return 0;
-	return 1;
+		return (0);
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
 }
 
 int
@@ -88,21 +88,25 @@ obio_print(args, obio)
 	if (ca->ca_ra.ra_name == NULL)
 		ca->ca_ra.ra_name = "<unknown>";
 	if (obio)
-		printf("%s at %s", ca->ca_ra.ra_name, obio);
-	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
+		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
+	printf(" addr %x", ca->ca_ra.ra_paddr);
 	return (UNCONF);
 }
 
 void
-obioattach(parent, self, aux)
+obioattach(parent, self, args)
 	struct device *parent, *self;
-	void *aux;
+	void *args;
 {
 	register struct obio_softc *sc = (struct obio_softc *)self;
 	extern struct cfdata cfdata[];
-	struct confargs ca;
+	register struct confargs *ca = args;
+	struct confargs oca;
 	register short *p;
 	struct cfdata *cf;
+	caddr_t tmpmap;
+
+	printf("\n");
 
 	if (sc->sc_dev.dv_unit > 0) {
 		printf(" unsupported\n");
@@ -113,23 +117,41 @@ obioattach(parent, self, aux)
 		if (cf->cf_fstate == FSTATE_FOUND)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
-			if (parent->dv_cfdata == &cfdata[*p]) {
-				ca.ca_ra.ra_iospace = -1;
-				ca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
-				ca.ca_ra.ra_len = 0;
-				ca.ca_ra.ra_vaddr = obio_tmp_map(ca.ca_ra.ra_paddr);
-				ca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
-				ca.ca_ra.ra_intr[0].int_vec = 0;
-				ca.ca_ra.ra_nintr = 1;
-				if ((*cf->cf_driver->cd_match)(self, cf, &ca) == 0)
+			if (self->dv_cfdata == &cfdata[*p]) {
+				oca.ca_ra.ra_iospace = -1;
+				oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
+				oca.ca_ra.ra_len = 0;
+				tmpmap = NULL;
+				if (oca.ca_ra.ra_paddr)
+					tmpmap = obio_tmp_map(oca.ca_ra.ra_paddr);
+				oca.ca_ra.ra_vaddr = tmpmap;
+				oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
+				oca.ca_ra.ra_intr[0].int_vec = 0;
+				oca.ca_ra.ra_nintr = 1;
+				oca.ca_ra.ra_name = cf->cf_driver->cd_name;
+				oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
+				oca.ca_bustype = BUS_OBIO;
+
+				if ((*cf->cf_driver->cd_match)(self, cf, &oca) == 0)
 					continue;
 
-				if (ca.ca_ra.ra_len)
-					ca.ca_ra.ra_vaddr =
-					    obio_map(ca.ca_ra.ra_paddr,
-					    ca.ca_ra.ra_len);
-				ca.ca_bustype = BUS_OBIO;
-				config_attach(self, cf, &ca, NULL);
+				/*
+				 * check if XXmatch routine replaced the
+				 * temporary mapping with a real mapping.
+				 */
+				if (tmpmap == oca.ca_ra.ra_vaddr)
+					oca.ca_ra.ra_vaddr = NULL;
+				/*
+				 * or if it has asked us to create a mapping..
+				 * (which won't be seen on future XXmatch calls,
+				 * so not as useful as it seems.)
+				 */
+				if (oca.ca_ra.ra_len)
+					oca.ca_ra.ra_vaddr =
+					    obio_map(oca.ca_ra.ra_paddr,
+					    oca.ca_ra.ra_len);
+			
+				config_attach(self, cf, &oca, obio_print);
 			}
 	}
 	obio_tmp_unmap();
@@ -146,14 +168,16 @@ obio_map(pa, len)
 	void *pa;
 	int len;
 {
-	u_long	pf = (int)pa >> PGSHIFT;
+	u_long	pf = (u_long)pa >> PGSHIFT;
 	u_long	va, pte;
 
-	for (va = MONSTART; va < MONEND; va += NBPG) {
-		pte = getpte(va);
-		if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBIO &&
-		    (pte & PG_PFNUM) == pf)
-			return ((void *)va);
+	if (len <= NBPG) {
+		for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
+			pte = getpte(va);
+			if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBIO &&
+			    (pte & PG_PFNUM) == pf)
+				return ((void *)va);
+		}
 	}
 	return mapiodev(pa, len);
 }
@@ -162,8 +186,10 @@ void *
 obio_tmp_map(pa)
 	void *pa;
 {
+	vm_offset_t addr = (vm_offset_t)pa & ~PGOFSET;
+
 	pmap_enter(kernel_pmap, TMPMAP_VA,
-	    (vm_offset_t)pa | PMAP_OBIO | PMAP_NC,
+	    addr | PMAP_OBIO | PMAP_NC,
 	    VM_PROT_READ | VM_PROT_WRITE, 1);
 	return ((void *)TMPMAP_VA);
 }

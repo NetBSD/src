@@ -25,10 +25,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dmareg.h,v 1.2 1994/09/17 23:48:34 deraadt Exp $
+ *	$Id: dmareg.h,v 1.3 1994/10/02 22:00:17 deraadt Exp $
  */
 
-#define DMA_D_CSR		0x00		/* DMA CSR */
+struct dma_regs {
+	volatile u_long		csr;		/* DMA CSR */
 #define  D_INT_PEND		0x00000001	/* interrupt pending */
 #define  D_ERR_PEND		0x00000002	/* error pending */
 #define  D_DRAINING		0x0000000c	/* fifo draining */
@@ -54,10 +55,16 @@
 #define  D_A_LOADED		0x04000000	/* address loaded */
 #define  D_NA_LOADED		0x08000000	/* next address loaded */
 #define  D_DEV_ID		0xf0000000	/* device ID */
+#define   DMAREV_0		0x00000000	/* Sunray DMA */
 #define   DMAREV_1		0x80000000	/* 'DMA' */
 #define   DMAREV_PLUS		0x90000000	/* 'DMA+' */
 #define   DMAREV_2		0xa0000000	/* 'DMA2' */
+
+	volatile u_long		addr;
 #define DMA_D_ADDR		0x01		/* DMA ADDR (in u_longs) */
-#define DMA_D_BCNT		0x02		/* DMA COUNT (in u_longs) */
+
+	volatile u_long		bcnt;		/* DMA COUNT (in u_longs) */
 #define  D_BCNT_MASK		0x00ffffff	/* only 24 bits */
-#define DMA_D_TST_CSR		0x03		/* DMA TEST (in u_longs) */
+
+	volatile u_long		test;		/* DMA TEST (in u_longs) */
+};

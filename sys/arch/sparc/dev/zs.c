@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.13 1994/09/17 23:57:39 deraadt Exp $
+ * $Id: zs.c,v 1.14 1994/10/02 22:00:32 deraadt Exp $
  */
 
 /*
@@ -210,13 +210,15 @@ zsmatch(struct device *parent, struct cfdata *cf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
 	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
-		    ra->ra_intr);
 		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 1) != 0);
+		return (probeget(ra->ra_vaddr, 1) != -1);
 	}
-	return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
+	if (ca->ca_bustype == BUS_MAIN && cputyp!=CPU_SUN4)
+		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
+	return (0);
 }
 
 /*
@@ -240,8 +242,9 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = findzs(zs);
-	if ((void *)addr != ra->ra_vaddr)
-		panic("zsattach");
+	if (ca->ca_bustype==BUS_MAIN)
+		if ((void *)addr != ra->ra_vaddr)
+			panic("zsattach");
 	if (ra->ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ra->ra_nintr);
 		return;
@@ -271,10 +274,12 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 		extern int optionsnode;
 
 		softcar = 0;
+#ifdef notdef
 		if (*getpropstring(optionsnode, "ttya-ignore-cd") == 't')
 			softcar |= 1;
 		if (*getpropstring(optionsnode, "ttyb-ignore-cd") == 't')
 			softcar |= 2;
+#endif
 	} else
 		softcar = dev->dv_cfdata->cf_flags;
 
@@ -424,7 +429,7 @@ zscnputc(c)
 	 */
 	s = splhigh();
 #ifdef SUN4C		/* XXX */
-	if (s <= (12 << 8))
+	if (cputyp==CPU_SUN4C && s <= (12 << 8))
 		(void) splzs();
 #endif
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
@@ -718,18 +723,22 @@ zshard(void *intrarg)
 		}
 	}
 #undef b
-	if (intflags & 1) {
-#ifdef SUN4C /* XXX -- but this will go away when zshard moves to locore.s */
-		struct clockframe *p = intrarg;
 
-		if ((p->psr & PSR_PIL) < (PIL_TTY << 8)) {
-			zsshortcuts++;
-			(void) spltty();
-			if (zshardscope) {
-				LED_ON;
-				LED_OFF;
+	if (intflags & 1) {
+#if defined(SUN4C) || defined(SUN4M)
+		if (cputyp==CPU_SUN4M || cputyp==CPU_SUN4C) {
+			/* XXX -- but this will go away when zshard moves to locore.s */
+			struct clockframe *p = intrarg;
+
+			if ((p->psr & PSR_PIL) < (PIL_TTY << 8)) {
+				zsshortcuts++;
+				(void) spltty();
+				if (zshardscope) {
+					LED_ON;
+					LED_OFF;
+				}
+				return (zssoft(intrarg));
 			}
-			return (zssoft(intrarg));
 		}
 #endif
 		ienab_bis(IE_ZSSOFT);
@@ -778,13 +787,17 @@ zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 
 	/* clear receive error & interrupt condition */
 	zc->zc_csr = ZSWR0_RESET_ERRORS;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 
 	return (ZRING_MAKE(ZRING_RINT, c));
 
 clearit:
 	zc->zc_csr = ZSWR0_RESET_ERRORS;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 	return (0);
 }
 
@@ -795,12 +808,16 @@ zsxint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 
 	if (i == 0) {
 		zc->zc_csr = ZSWR0_RESET_TXINT;
+		ZS_DELAY();
 		zc->zc_csr = ZSWR0_CLR_INTR;
+		ZS_DELAY();
 		return (ZRING_MAKE(ZRING_XINT, 0));
 	}
 	cs->cs_tbc = i - 1;
 	zc->zc_data = *cs->cs_tba++;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 	return (0);
 }
 
@@ -811,7 +828,9 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 
 	rr0 = zc->zc_csr;
 	zc->zc_csr = ZSWR0_RESET_STATUS;
+	ZS_DELAY();
 	zc->zc_csr = ZSWR0_CLR_INTR;
+	ZS_DELAY();
 	/*
 	 * The chip's hardware flow control is, as noted in zsreg.h,
 	 * busted---if the DCD line goes low the chip shuts off the
@@ -837,8 +856,10 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 		 * XXX This might not be necessary. Test and
 		 * delete if it isn't.
 		 */
-		while (zc->zc_csr & ZSRR0_BREAK)
-			ZS_DELAY();
+		if (cputyp==CPU_SUN4) {
+			while (zc->zc_csr & ZSRR0_BREAK)
+				ZS_DELAY();
+		}
 #endif
 		zsabort();
 		return (0);
@@ -895,6 +916,7 @@ zssoft(void *arg)
 	register struct linesw *line;
 	register struct tty *tp;
 	register int get, n, c, cc, unit, s;
+	int	retval = 0;
 
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
 		get = cs->cs_rbget;
@@ -902,6 +924,7 @@ again:
 		n = cs->cs_rbput;	/* atomic */
 		if (get == n)		/* nothing more on this line */
 			continue;
+		retval = 1;
 		unit = cs->cs_unit;	/* set up to handle interrupts */
 		zc = cs->cs_zc;
 		tp = cs->cs_ttyp;
@@ -955,6 +978,7 @@ again:
 				if (cs->cs_heldchange) {
 					s = splzs();
 					c = zc->zc_csr;
+					ZS_DELAY();
 					if ((c & ZSRR0_DCD) == 0)
 						cs->cs_preg[3] &= ~ZSWR3_HFC;
 					bcopy((caddr_t)cs->cs_preg,
@@ -966,6 +990,7 @@ again:
 					    (tp->t_state & TS_TTSTOP) == 0) {
 						cs->cs_tbc = cs->cs_heldtbc - 1;
 						zc->zc_data = *cs->cs_tba++;
+						ZS_DELAY();
 						goto again;
 					}
 				}
@@ -1002,7 +1027,7 @@ again:
 		cs->cs_rbget = get;
 		goto again;
 	}
-	return (1);
+	return (retval);
 }
 
 int
@@ -1104,6 +1129,7 @@ zsstart(register struct tty *tp)
 		cs->cs_creg[1] |= ZSWR1_TIE;
 		ZS_WRITE(cs->cs_zc, 1, cs->cs_creg[1]);
 		cs->cs_zc->zc_data = *p;
+		ZS_DELAY();
 		cs->cs_tba = p + 1;
 		cs->cs_tbc = nch - 1;
 	} else {
@@ -1291,9 +1317,13 @@ zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
 	int i;
 
 	zc->zc_csr = ZSM_RESET_ERR;	/* reset error condition */
+	ZS_DELAY();
 	i = zc->zc_data;		/* drain fifo */
+	ZS_DELAY();
 	i = zc->zc_data;
+	ZS_DELAY();
 	i = zc->zc_data;
+	ZS_DELAY();
 	ZS_WRITE(zc, 4, reg[4]);
 	ZS_WRITE(zc, 10, reg[10]);
 	ZS_WRITE(zc, 3, reg[3] & ~ZSWR3_RX_ENABLE);
@@ -1319,7 +1349,7 @@ zs_kgdb_getc(void *arg)
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
 
 	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
-		continue;
+		ZS_DELAY();
 	return (zc->zc_data);
 }
 
@@ -1332,8 +1362,9 @@ zs_kgdb_putc(void *arg, int c)
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
 
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
-		continue;
+		ZS_DELAY();
 	zc->zc_data = c;
+	ZS_DELAY();
 }
 
 /*

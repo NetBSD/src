@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.11 1994/09/17 23:57:35 deraadt Exp $
+ * $Id: if_le.c,v 1.12 1994/10/02 22:00:25 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -177,20 +177,13 @@ lematch(parent, cf, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
 	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
-		    ra->ra_intr);
 		ra->ra_len = NBPG;
-
-		/*
-		 * On the VME or OBIO busses, if we don't bus error it
-		 * exists. The obio/vme functions will have mapped the 
-		 * first page for us, but we need to look at a register
-		 * much later on. So, map it instead.
-		 */
-		return (probeget(ra->ra_vaddr, 2) != 0);
+		return (probeget(ra->ra_vaddr, 2) != -1);
 	}
-	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+	return (1);
 }
 
 /*
@@ -254,7 +247,8 @@ leattach(parent, self, args)
 	 * Link into sbus, and establish interrupt handler.
 	 */
 	sc->sc_sd.sd_reset = lereset;
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	if (ca->ca_bustype==BUS_SBUS)
+		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	sc->sc_ih.ih_fun = leintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih);
@@ -286,8 +280,16 @@ leattach(parent, self, args)
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 	bp = ca->ca_ra.ra_bp;
-	if (bp != NULL && strcmp(bp->name, "le") == 0 && SAME_LANCE(bp, ca))
-		bootdv = &sc->sc_dev;
+	switch (ca->ca_bustype) {
+	case BUS_SBUS:
+		if (bp != NULL && strcmp(bp->name, "le") == 0 && SAME_LANCE(bp, ca))
+			bootdv = &sc->sc_dev;
+		break;
+	default:
+		if (bp != NULL && strcmp(bp->name, "le") == 0)
+			bootdv = &sc->sc_dev;
+		break;
+	}
 }
 
 /*

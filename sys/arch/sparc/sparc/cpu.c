@@ -42,7 +42,7 @@
  *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.9 1994/09/18 00:02:18 deraadt Exp $
+ * $Id: cpu.c,v 1.10 1994/10/02 22:00:45 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -69,9 +69,10 @@ char	cpu_model[100];
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));
+int  cpu_match __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver cpucd =
-    { NULL, "cpu", matchbyname, cpu_attach, DV_CPU, sizeof(struct device) };
+    { NULL, "cpu", cpu_match, cpu_attach, DV_CPU, sizeof(struct device) };
 
 static char *psrtoname __P((int, int, int, char *));
 static char *fsrtoname __P((int, int, int, char *));
@@ -103,6 +104,17 @@ static char *iu_vendor[16] = {
 	"vendor#15"
 };
 #endif
+
+int
+cpu_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
+}
 
 /*
  * Attach the CPU.
@@ -151,21 +163,21 @@ cpu_attach(parent, dev, aux)
 		vactype = VAC_WRITEBACK;
 		switch (idprom.id_machine) {
 		case SUN4_100:
-			sprintf(cpu_model,"SUN-4/100 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/100 series (%s FPU)", fpuname);
 			cacheinfo.c_totalsize = 0;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 0;
 			cacheinfo.c_l2linesize = 0;
 			break;
 		case SUN4_200:
-			sprintf(cpu_model,"SUN-4/200 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/200 series (%s FPU)", fpuname);
 	        	cacheinfo.c_totalsize = 128*1024;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 16;
 			cacheinfo.c_l2linesize = 4;
 			break;
 		case SUN4_300:
-			sprintf(cpu_model,"SUN-4/300 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/300 series (%s FPU)", fpuname);
 			bug = 1;
 	        	cacheinfo.c_totalsize = 128*1024;
 			cacheinfo.c_hwflush = 0;
@@ -173,7 +185,7 @@ cpu_attach(parent, dev, aux)
 			cacheinfo.c_l2linesize = 4;
 			break;
 		case SUN4_400:
-			sprintf(cpu_model,"SUN-4/400 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/400 series (%s FPU)", fpuname);
 			cacheinfo.c_totalsize = 128 * 1024;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 32;
