@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/03/28 04:51:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/29 06:36:04 matt Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -7,19 +7,21 @@
 INSTKERNOBJ!=	cd ${.CURDIR}/../ramdisk-kernel && ${PRINTOBJDIR}
 
 IMAGE=		boot.fs
-IMAGESIZE=	1440k
 
-LISTS=		${.CURDIR}/list
-IMAGEENDIAN=	le
-IMAGEDEPENDS=	${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/xxboot \
-		${INSTKERNOBJ}/netbsd.INSTALL.gz 
+IMAGEDEPENDS=	${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/xxboot_ustarfs \
+		netbsd.gz
+CLEANFILES+=	netbsd.gz ${IMAGE}.tar
 
-PARSELISTENV+=	INSTKERNOBJ=${INSTKERNOBJ:Q}
+realall: ${IMAGE} ${DESTDIR}/usr/mdec/xxboot_ustarfs ${DESTDIR}/usr/mdec/boot
 
-realall: ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
-	${DESTDIR}/usr/mdec/installboot -v ${IMAGE} ${DESTDIR}/usr/mdec/xxboot
-		# XXXDISTRIB
+netbsd.gz: ${INSTKERNOBJ}/netbsd.INSTALL.gz 
+	cp -f ${.ALLSRC} ${.TARGET}
 
-.include "${DISTRIBDIR}/common/Makefile.image"
+${IMAGE}: ${IMAGEDEPENDS}
+	( dd if=${DESTDIR}/usr/mdec/xxboot_ustarfs bs=8k conv=sync && \
+	  tar -cf - -b 2384 \
+		-C ${DESTDIR}/usr/mdec boot \
+		-C ${.OBJDIR} netbsd.gz) > ${IMAGE}.tmp
+	mv ${IMAGE}.tmp ${IMAGE}
 
 .include <bsd.prog.mk>
