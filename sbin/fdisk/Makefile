@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.6 1997/09/05 21:26:57 phil Exp $
+#	$NetBSD: Makefile,v 1.7 1997/09/14 13:52:26 lukem Exp $
 
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "powerpc"
+.if (${MACHINE} == "i386" || ${MACHINE} == "powerpc")
 PROG=	fdisk 
 SRCS=	fdisk.c
+
+.if (${MACHINE} == "i386")
+CFLAGS+= -DRAWPARTITION=\'d\'
+.endif
+
 .endif
 
 MAN=	fdisk.8
