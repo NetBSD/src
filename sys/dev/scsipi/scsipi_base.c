@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.97 2003/10/16 22:46:07 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.98 2003/10/17 16:44:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.97 2003/10/16 22:46:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.98 2003/10/17 16:44:48 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1080,6 +1080,17 @@ scsipi_inquire(periph, inqbuf, flags)
 	else
 		retries = SCSIPIRETRIES;
 
+	/*
+	 * If we request more data than the device can provide, it SHOULD just
+	 * return a short reponse.  However, some devices error with an
+	 * ILLEGAL REQUEST sense code, and yet others have even more special
+	 * failture modes (such as the GL641USB flash adapter, which goes loony
+	 * and sends corrupted CRCs).  To work around this, and to bring our
+	 * behavior more in line with other OSes, we do a shorter inquiry,
+	 * covering all the SCSI-2 information, first, and then request more
+	 * data iff the "additional length" field indicates there is more.
+	 * - mycroft, 2003/10/16
+	 */
 	scsipi_cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
