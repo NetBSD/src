@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)date.c	5.5 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: date.c,v 1.5 1993/08/01 19:00:18 mycroft Exp $";
+static char rcsid[] = "$Id: date.c,v 1.6 1993/08/16 23:08:52 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -110,7 +110,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	format = "%a %b %e %H:%M:%S %Z %Y\n";
+	format = "%a %b %e %H:%M:%S %Z %Y";
 
 	/* allow the operands in any order */
 	if (*argv && **argv == '+') {
@@ -127,7 +127,7 @@ main(argc, argv)
 		format = *argv + 1;
 
 	(void)strftime(buf, sizeof(buf), format, localtime(&tval));
-	(void)printf("%s", buf);
+	(void)printf("%s\n", buf);
 	exit(retval);
 }
 
