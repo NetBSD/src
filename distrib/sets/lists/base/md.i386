@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.86 2002/02/17 20:05:50 thorpej Exp $
+# $NetBSD: md.i386,v 1.87 2002/02/19 08:30:23 joda Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
@@ -27,7 +27,7 @@
 ./usr/mdec/netboot_ne2000_isa.rom	base-sysutil-bin
 ./usr/mdec/netboot_pcnet_isapnp.rom	base-sysutil-bin
 ./usr/mdec/netboot_pcnet_pci.rom	base-sysutil-bin
-./usr/mdec/netboot_pcnet_wd80x3.rom	base-sysutil-bin
+./usr/mdec/netboot_wd80x3.rom		base-sysutil-bin
 ./usr/mdec/pxeboot.bin			base-sysutil-bin
 ./usr/sbin/apm				base-sysutil-bin
 ./usr/sbin/apmd				base-sysutil-bin
