@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.12 1996/02/11 13:22:30 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.13 1996/03/02 14:06:07 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -128,7 +128,7 @@ extern int cold;
 		if ((udaddr->udasa & mask) != result) {			\
 			volatile int count = 0;				\
 			while ((udaddr->udasa & mask) != result) {	\
-				DELAY(1000);				\
+				DELAY(10000);				\
 				count += 1; 				\
 				if (count > DELAYTEN)			\
 					break;				\
@@ -488,7 +488,7 @@ again:
 		return (0);
 	timeout = 1000;
 	while (timeout-- > 0) {
-		DELAY(3000);
+		DELAY(10000);
 		if (sc->sc_state == ST_RUN)
 			goto findunit;
 	}
@@ -927,7 +927,7 @@ uda_rainit(ui, flags)
 		if (cold) {
 			i = 1000;
 			while ((ui->ui_flags & UNIT_ONLINE) == 0) {
-				DELAY(1000);
+				DELAY(10000);
 				if (i-- < 0)
 					break;
 			}

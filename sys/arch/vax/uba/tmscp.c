@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.9 1996/02/02 18:59:31 mycroft Exp $ */
+/*	$NetBSD: tmscp.c,v 1.10 1996/03/02 14:06:05 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -397,8 +397,8 @@ tmscpslave (ui, reg)
 	caddr_t reg;		/* addr of the device controller */
 {
 	register struct uba_ctlr *um = tmscpminfo[ui->ui_ctlr];
-	register struct tmscp_softc *sc = &tmscp_softc[ui->ui_ctlr];
-	register struct tms_info *tms = &tms_info[ui->ui_unit];
+	volatile struct tmscp_softc *sc = &tmscp_softc[ui->ui_ctlr];
+	volatile struct tms_info *tms = &tms_info[ui->ui_unit];
 	volatile struct tmscpdevice *tmscpaddr;	/* ptr to IP & SA */
 	volatile struct mscp *mp;
 	volatile int i;			/* Something to write into to start */
