@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.14 1999/06/20 02:07:18 cgd Exp $	*/
+/*	$NetBSD: mdb.c,v 1.15 2000/07/23 22:18:44 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -352,7 +352,8 @@ write_menu_file (char *initcode)
 		if (menus[i]->info->mopt & NOEXITOPT)
 			(void) fprintf (out_file, "NULL");
 		else if (menus[i]->info->exitstr != NULL)
-			(void) fprintf (out_file, menus[i]->info->exitstr);
+			(void) fprintf (out_file, "%s",
+				menus[i]->info->exitstr);
 		else
 			(void) fprintf (out_file, "\"Exit\"");
 		if (strlen(menus[i]->info->postact.code))
