@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2003/07/26 15:27:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.112 2003/08/27 16:03:18 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -35,7 +35,7 @@ INCS+=	ieeefp.h
 
 .include <bsd.own.mk>
 
-.if ${USE_TOOLS_TOOLCHAIN} == "no"
+.if ${HAVE_GCC3} == "yes"
 INCS+=	stdbool.h
 .endif
 
