@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp $
+$NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1732,6 +1732,7 @@ product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
 
 /* Titan Electronics products */
 product TITAN PCI800H		0xa003	PCI-800H
+product TITAN PCI100H		0xa001	PCI-100H
 
 /* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
