@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.25 2003/04/05 17:02:14 christos Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.26 2003/09/09 03:56:40 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,6 +45,11 @@
  * all the services and then executes the corresponding service
  * for the given prognum and procnum.
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: svc_simple.c,v 1.26 2003/09/09 03:56:40 itojun Exp $");
+#endif
 
 #include "namespace.h"
 #include "reentrant.h"
