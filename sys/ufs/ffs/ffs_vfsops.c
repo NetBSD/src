@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.79 2001/01/22 12:17:43 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80 2001/02/07 22:40:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -804,9 +804,6 @@ ffs_unmount(mp, mntflags, p)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	if (LIST_FIRST(&ump->um_devvp->v_dirtyblkhd)) {
-		panic("ffs_unmount: flush left dirty bufs %p", ump->um_devvp);
-	}
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);
