@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.4 2002/03/05 14:23:32 tron Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.5 2002/03/05 16:09:06 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,6 +79,10 @@
  * entries are stored in the files, and application should only access
  * entries using routines described in getutxent(3).
  */
+
+#define ut_name ut_user
+#define ut_xtime ut_tv.tv_sec
+
 struct utmpx {
 	char ut_user[_UTX_USERSIZE];	/* login name */
 	char ut_id[_UTX_IDSIZE];	/* inittab id */
@@ -115,7 +119,7 @@ struct utmpx *getutxline(const struct utmpx *);
 struct utmpx *pututxline(const struct utmpx *);
 
 #ifndef _XOPEN_SOURCE
-
+void updwtmpx(const char *, const struct utmpx *);
 int lastlogxname(const char *);
 struct lastlogx *getlastlogxuid(uid_t);
 void updlastlogx(const char *, struct lastlogx *);
