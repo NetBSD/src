@@ -1,6 +1,6 @@
-.\" $NetBSD: upgrade,v 1.10 2000/08/22 15:34:00 minoura Exp $	
+.\" $NetBSD: upgrade,v 1.11 2000/10/03 22:24:33 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,8 @@ to proceed with the upgrade process.  If you answer
 negatively, the upgrade process will stop, and your disk will
 not be modified.  If you answer affirmatively, the upgrade
 process will begin, and your disk will be modified.  You may
-hit Control-C to stop the upgrade process at any time.
-However, if you hit it at an inopportune moment, your system
+press Control-C to stop the upgrade process at any time.
+However, if you press it at an inopportune moment, your system
 may be left in an inconsistent (and possibly unusable) state.
 .It
 You will be asked if you wish to upgrade your file systems to
@@ -100,7 +100,7 @@ transfer them again now!)
 After the software has been transferred to the machine (or
 mounted, in the case of upgrading via NFS or CD-ROM), change
 into the directory containing the "base.tgz" distribution set.
-Once you are there, run the "Set_tmp_dir" command, and hit
+Once you are there, run the "Set_tmp_dir" command, and press
 return at the prompt to select the default answer for the
 temporary directory's path name.  (It should be the path name
 of the directory that you're in.)
