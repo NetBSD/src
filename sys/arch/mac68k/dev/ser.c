@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.10 1994/07/21 03:32:07 briggs Exp $
+ * $Id: ser.c,v 1.11 1994/08/05 01:27:58 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -78,8 +78,7 @@
  *	 1992 Data Book/Handbook.
  */
 
-#define NSER 2	/* Could be more later with proprietary serial iface? */
-
+#include "ser.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -95,6 +94,8 @@
 #include "serreg.h"
 #include <machine/cpu.h>
 #include <machine/frame.h>
+
+#include <dev/cons.h>
 
 /*#define DEBUG*/
 #undef DEBUG
@@ -129,16 +130,9 @@ struct ser_status {
 #define	SCC_INT		10
 #define	SCC_SPEED	11
 
-static char serial_id_string[] = "Two MacII serial devices built in.";
-static char serial_debug_id_string[] = "Two MacII serial devices--one in use for debugging.";
-static char serial_0_string[] = "MacBSD Serial Driver, Port 0\n\r";
-static char serial_1_string[] = "MacBSD Serial Driver, Port 1\n\r";
-
 
 /* SCC initialization string from Steve Allen (wormey@eskimo.com) */
-/* Same as from console.c, but w/ interrupts enabled. */
-static unsigned char ser_0_init_bytes[]={
-	 9, 0xc0,	/* hardware reset */
+static unsigned char ser_init_bytes[]={
 	 4, 0x44,	/* Transmit/Receive control.  Select Async or Sync
 			   mode and clock multiplier. */
 	 3, 0xc0,	/* select receiver control.  Bit d0 (rx enable)
@@ -149,36 +143,7 @@ static unsigned char ser_0_init_bytes[]={
 			   must be set to 0 at this time. */
 	10, 0x00,	/* miscellaneous control. */
 	11, 0x50,	/* clock control. */
-	12, 0x0b,	/* time constant LB. */
-	13, 0x00,	/* time constant HB. */
-	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
-			   must be set to 0 at this time. */
-	 3, 0xc1,	/* set d0 (rx enable). */
-	 5, 0xea,	/* set d3 (tx enable). */
-	 0, 0x80,	/* reset txCRC. */
-	14, 0x83,	/* BR gen enable.  Enable DPLL. */
-	 1, 0x00,	/* make sure DMA not set. */
-	15, 0x00,	/* disable external interrupts. */
-	 0, 0x10,	/* reset ext/status twice. */
-	 0, 0x10,
-	 1, 0x0a,	/* enable rcv and xmit interrupts. */
-	 9, 0x0e,	/* enable master interrupt bit d3. */
-};
-
-/* SCC initialization string from Steve Allen (wormey@eskimo.com) */
-static unsigned char ser_1_init_bytes[]={
-	 9, 0xc0,	/* hardware reset */
-	 4, 0x44,	/* Transmit/Receive control.  Select Async or Sync
-			   mode and clock multiplier. */
-	 3, 0xc0,	/* select receiver control.  Bit d0 (rx enable)
-			   must be set to 0 at this time. */
-	 5, 0xe2,	/* select transmit control.  Bit d3 (tx enable)
-			   must be set to 0 at this time. */
-	 9, 0x06,	/* select interrupt control.  Bit d3 (mie)
-			   must be set to 0 at this time. */
-	10, 0x00,	/* miscellaneous control. */
-	11, 0x50,	/* clock control. */
-	12, 0x0b,	/* time constant LB. */
+	12, 0x04,	/* time constant LB. */
 	13, 0x00,	/* time constant HB. */
 	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
 			   must be set to 0 at this time. */
@@ -196,47 +161,43 @@ static unsigned char ser_1_init_bytes[]={
 
 extern int matchbyname();
 
-extern void
-serinit(void)
+static void
+serinit(int running_interrupts)
 {
 static	int initted=0;
 	int bcount;
 	int i, s, spd;
 
 	/*
-	 * Should not be called twice, but we are paranoid.
+	 * Will be called twice if we're running a serial console.
 	 */
 	if (initted++)
 		return;
 
 	sccA = IOBase + sccA;
 
-	spd = SERBRD(19200);
+	spd = SERBRD(serdefaultrate);
 
 	s = splhigh();
 
-	/*
-	 * initialize port 0, substituting proper speed.
-	 */
-	bcount = sizeof(ser_0_init_bytes);
-	for(i = 0; i < bcount; i += 2){
-		if (ser_0_init_bytes[i] == 12)	/* baud rate low byte */
-			ser_0_init_bytes[i+1] = (spd & 0xff);
-		if (ser_0_init_bytes[i] == 13)	/* baud rate high byte */
-			ser_0_init_bytes[i+1] = ((spd>>8) & 0xff);
-		SER_DOCNTL(0, ser_0_init_bytes[i], ser_0_init_bytes[i + 1]);
-	}
+	SER_DOCNTL(0, 9, 0xc0);
 
 	/*
-	 * initialize port 1, substituting proper speed.
+	 * initialize ports, substituting proper speed.
 	 */
-	bcount = sizeof(ser_1_init_bytes);
+	bcount = sizeof(ser_init_bytes);
 	for(i = 0; i < bcount; i += 2){
-		if (ser_1_init_bytes[i] == 12)	/* baud rate low byte */
-			ser_1_init_bytes[i+1] = (spd & 0xff);
-		if (ser_1_init_bytes[i] == 13)	/* baud rate high byte */
-			ser_1_init_bytes[i+1] = ((spd>>8) & 0xff);
-		SER_DOCNTL(1, ser_1_init_bytes[i], ser_1_init_bytes[i + 1]);
+		if (ser_init_bytes[i] == 12)	/* baud rate low byte */
+			ser_init_bytes[i+1] = (spd & 0xff);
+		if (ser_init_bytes[i] == 13)	/* baud rate high byte */
+			ser_init_bytes[i+1] = ((spd>>8) & 0xff);
+		if (!running_interrupts) {
+			if (   ser_init_bytes[i]   == 0x00
+			    && ser_init_bytes[i+1] == 0x10)
+				break;
+		}
+		SER_DOCNTL(0, ser_init_bytes[i], ser_init_bytes[i + 1]);
+		SER_DOCNTL(1, ser_init_bytes[i], ser_init_bytes[i + 1]);
 	}
 
 	splx(s);
@@ -247,14 +208,12 @@ serattach(parent, dev, aux)
 	struct device	*parent, *dev;
 	void		*aux;
 {
-extern	int serial_boot_echo;
-
-	printf("\n");
-	if (serial_boot_echo) {
-		printf("(serial boot echo is on)\n");
+	if (mac68k_machine.serial_boot_echo) {
+		printf(" (serial boot echo is on)\n");
 	}
+	printf("\n");
 
-	serinit();
+	serinit(1);
 }
 
 struct cfdriver sercd =
@@ -425,17 +384,18 @@ static volatile unsigned int ser_outtail[NSER] = {0,0};
 
 static int outhead = 0, outtail = 0, outlen = 0, write_ack = 0;
 static unsigned char outbuf[OUTBUFLEN];
+
 ser_intr(struct frame *fp)
 {
    /* This function is called by locore.s on a level 4 interrupt. */
-extern	int serial_boot_echo;
    int reg0, ch, s;
    unsigned char c;
    char str[20];
 
-   if(!serial_boot_echo)
+   if(!mac68k_machine.serial_boot_echo)
 	return(serintr());
 
+#if 0
    while(*sccA & SER_R0_RXREADY)
    {
       ch = *(sccA+4);
@@ -451,8 +411,6 @@ extern	int serial_boot_echo;
    }
    if(reg0 & SER_R0_TXREADY)
    {
-/*    sprintf(str,"<%d>",outlen);
-      puts(vtnum, str); */
       write_ack = 0;
       *sccA = SER_W0_RSTTXPND;
       *sccA = SER_W0_RSTIUS; /* Reset highest interrupt pending */
@@ -467,6 +425,7 @@ extern	int serial_boot_echo;
         splx(s);
       }
    }
+#endif
    return(1);
 }
  
@@ -685,9 +644,28 @@ serioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = serctl(dev, 0, DMGET);
 		break;
 
+	case TIOCGFLAGS:
+		{
+			int	bits = 0;
+
+			*(int *)data = bits;
+			break;
+		}
+
+	case TIOCSFLAGS:
+		{
+			int	userbits, driverbits = 0;
+
+			error = suser(p->p_ucred, &p->p_acflag);
+			if (error != 0)
+				return (EPERM);
+			userbits = *(int *)data;
+			break;
+		}
+
 	default:
 #if defined(DEBUG)
-		printf("ser%d: unknown ioctl(,%d,)\n", UNIT(dev), cmd);
+		printf("ser%d: unknown ioctl(,0x%x,)\n", UNIT(dev), cmd);
 #endif
 		return (ENOTTY);
 	}
@@ -919,4 +897,24 @@ serctl(dev_t dev, int bits, int how)
 
 	(void) splx(s);
 	return(bits);
+}
+
+/*
+ * Console functions.
+ */
+
+sercnprobe(struct consdev *cp)
+{
+}
+
+sercninit(struct consdev *cp)
+{
+}
+
+sercngetc(dev_t dev)
+{
+}
+
+sercnputc(dev_t dev, int c)
+{
 }
