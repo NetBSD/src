@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2000/01/12 05:02:11 mjl Exp $
+#	$NetBSD: Makefile,v 1.83 2000/02/23 06:57:47 itojun Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 SRCTOP=	..
@@ -10,7 +10,8 @@ SRCTOP=	..
 
 INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	disktab.h dlfcn.h err.h errno.h fmtmsg.h fnmatch.h fstab.h fts.h \
-	glob.h grp.h hesiod.h ieeefp.h iso646.h kvm.h langinfo.h libgen.h \
+	glob.h grp.h hesiod.h ieeefp.h ifaddrs.h \
+	iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
 	login_cap.h malloc.h math.h md4.h \
 	memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
