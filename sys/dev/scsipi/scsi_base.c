@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.2 1993/11/24 09:45:04 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.3 1993/11/25 04:03:20 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -91,13 +91,15 @@ free_xs(xs, sc_link, flags)
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("free_xs\n"));
 	/* if was 0 and someone waits, wake them up */
-	if ((!sc_link->opennings++) && (sc_link->flags & SDEV_WAITING))
-		wakeup(sc_link);
-	else
+	if ((!sc_link->opennings++) && (sc_link->flags & SDEV_WAITING)) {
+		sc_link->flags &= ~SDEV_WAITING;
+		wakeup(sc_link);	/* remember, it wakes them ALL up */
+	} else {
 		if (sc_link->device->start) {
 			SC_DEBUG(sc_link, SDEV_DB2, ("calling private start()\n"));
 			(*(sc_link->device->start)) (sc_link->dev_unit);
 		}
+	}
 }
 
 /*
