@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.23 2001/11/03 12:51:41 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.24 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.23 2001/11/03 12:51:41 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.24 2001/11/07 08:01:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: mtree.c,v 1.23 2001/11/03 12:51:41 lukem Exp $");
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
-char	fullpath[MAXPATHLEN];
+char	fullpath[MAXPATHLEN + 1];
 
 	int	main(int, char **);
 static	void	usage(void);
@@ -77,7 +77,10 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 
 	dir = NULL;
-	while ((ch = getopt(argc, argv, "cdDeE:f:I:iK:k:lmp:rR:s:tUuWx")) != -1)
+	init_excludes();
+
+	while ((ch = getopt(argc, argv, "cdDeE:f:I:ik:K:lLmp:PrR:s:tuUWxX:"))
+	    != -1) {
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -98,16 +101,11 @@ main(int argc, char **argv)
 			if (!(freopen(optarg, "r", stdin)))
 				mtree_err("%s: %s", optarg, strerror(errno));
 			break;
-		case 'I':
-			parsetags(&includetags, optarg);
-			break;
 		case 'i':
 			iflag = 1;
 			break;
-		case 'K':
-			while ((p = strsep(&optarg, " \t,")) != NULL)
-				if (*p != '\0')
-					keys |= parsekey(p, NULL);
+		case 'I':
+			parsetags(&includetags, optarg);
 			break;
 		case 'k':
 			keys = F_TYPE;
@@ -115,14 +113,27 @@ main(int argc, char **argv)
 				if (*p != '\0')
 					keys |= parsekey(p, NULL);
 			break;
+		case 'K':
+			while ((p = strsep(&optarg, " \t,")) != NULL)
+				if (*p != '\0')
+					keys |= parsekey(p, NULL);
+			break;
 		case 'l':
 			lflag = 1;
+			break;
+		case 'L':
+			ftsoptions &= ~FTS_PHYSICAL;
+			ftsoptions |= FTS_LOGICAL;
 			break;
 		case 'm':
 			mflag = 1;
 			break;
 		case 'p':
 			dir = optarg;
+			break;
+		case 'P':
+			ftsoptions &= ~FTS_LOGICAL;
+			ftsoptions |= FTS_PHYSICAL;
 			break;
 		case 'r':
 			rflag = 1;
@@ -141,11 +152,11 @@ main(int argc, char **argv)
 		case 't':
 			tflag = 1;
 			break;
-		case 'U':
-			Uflag = uflag = 1;
-			break;
 		case 'u':
 			uflag = 1;
+			break;
+		case 'U':
+			Uflag = uflag = 1;
 			break;
 		case 'W':
 			Wflag = 1;
@@ -153,10 +164,14 @@ main(int argc, char **argv)
 		case 'x':
 			ftsoptions |= FTS_XDEV;
 			break;
+		case 'X':
+			read_excludes_file(optarg);
+			break;
 		case '?':
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -166,7 +181,7 @@ main(int argc, char **argv)
 	if (dir && chdir(dir))
 		mtree_err("%s: %s", dir, strerror(errno));
 
-	if ((cflag || sflag) && !getcwd(fullpath, MAXPATHLEN))
+	if ((cflag || sflag) && !getcwd(fullpath, sizeof(fullpath) - 1))
 		mtree_err("%s", strerror(errno));
 
 	if (cflag == 1 && Dflag == 1)
@@ -196,8 +211,9 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: mtree [-cdDelrUuWx] [-i|-m] [-f spec]"
+	fprintf(stderr, "usage: mtree [-cdDelLPruUWx] [-i|-m] [-f spec]"
 	    " [-k key] [-K addkey] [-R removekey]\n"
-	    "\t\t[-I inctags] [-E exctags] [-p path] [-s seed]\n");
+	    "\t\t[-I inctags] [-E exctags] [-X excludes]"
+	    " [-p path] [-s seed]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.34 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.34 2001/11/07 08:01:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $");
 #include <fcntl.h>
 #include <fts.h>
 #include <md5.h>
+#include <rmd160.h>
+#include <sha1.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -57,33 +59,33 @@ __RCSID("$NetBSD: compare.c,v 1.33 2001/10/25 14:47:39 lukem Exp $");
 #include "extern.h"
 
 #define	INDENTNAMELEN	8
-#define MARK                                                                  \
-do {                                                                          \
-	len = printf("%s: ", RP(p));                                          \
-	if (len > INDENTNAMELEN) {                                            \
-		tab = "\t";                                                   \
-		(void)printf("\n");                                           \
-	} else {                                                              \
-		tab = "";                                                     \
-		(void)printf("%*s", INDENTNAMELEN - (int)len, "");            \
-	}                                                                     \
+#define MARK								\
+do {									\
+	len = printf("%s: ", RP(p));					\
+	if (len > INDENTNAMELEN) {					\
+		tab = "\t";						\
+		printf("\n");						\
+	} else {							\
+		tab = "";						\
+		printf("%*s", INDENTNAMELEN - (int)len, "");		\
+	}								\
 } while (0)
 #define	LABEL if (!label++) MARK
 
-#define CHANGEFLAGS(path, oflags) \
-	if (flags != (oflags)) {                                              \
-		if (!label) {                                                 \
-			MARK;                                                 \
-			(void)printf("%sflags (\"%s\"", tab,                  \
+#define CHANGEFLAGS(path, oflags)					\
+	if (flags != (oflags)) {					\
+		if (!label) {						\
+			MARK;						\
+			printf("%sflags (\"%s\"", tab,			\
 			    flags_to_string(p->fts_statp->st_flags, "none")); \
-		}                                                             \
-		if (chflags(path, flags)) {                                   \
-			label++;                                              \
-			(void)printf(", not modified: %s)\n",                 \
-			    strerror(errno));                                 \
-		} else                                                        \
-			(void)printf(", modified to \"%s\")\n",               \
-			     flags_to_string(flags, "none"));                 \
+		}							\
+		if (chflags(path, flags)) {				\
+			label++;					\
+			printf(", not modified: %s)\n",			\
+			    strerror(errno));				\
+		} else							\
+			printf(", modified to \"%s\")\n",		\
+			     flags_to_string(flags, "none"));		\
 	}
 
 /* SETFLAGS:
@@ -91,10 +93,10 @@ do {                                                                          \
  * selected by mask (the other flags are left unchanged). oflags is
  * passed as reference to check if chflags is necessary.
  */
-#define SETFLAGS(path, sflags, pflags, oflags, mask)                          \
-do {                                                                          \
-	flags = ((sflags) & (mask)) | (pflags);                               \
-        CHANGEFLAGS(path, oflags);                                            \
+#define SETFLAGS(path, sflags, pflags, oflags, mask)			\
+do {									\
+	flags = ((sflags) & (mask)) | (pflags);				\
+	CHANGEFLAGS(path, oflags);					\
 } while (0)
 
 /* CLEARFLAGS:
@@ -102,19 +104,19 @@ do {                                                                          \
  * (the other flags are left unchanged). oflags is
  * passed as reference to check if chflags is necessary.
  */
-#define CLEARFLAGS(path, sflags, pflags, oflags, mask)                        \
-do {                                                                          \
-	flags = (~((sflags) & (mask)) & CH_MASK) & (pflags);                  \
-        CHANGEFLAGS(path, oflags);                                            \
+#define CLEARFLAGS(path, sflags, pflags, oflags, mask)			\
+do {									\
+	flags = (~((sflags) & (mask)) & CH_MASK) & (pflags);		\
+	CHANGEFLAGS(path, oflags);					\
 } while (0)
 
 int
-compare(const char *name, NODE *s, FTSENT *p)
+compare(NODE *s, FTSENT *p)
 {
 	u_int32_t len, val, flags;
 	int fd, label;
 	const char *cp, *tab;
-	char md5buf[35];
+	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
 
 	tab = NULL;
 	label = 0;
@@ -145,9 +147,10 @@ compare(const char *name, NODE *s, FTSENT *p)
 		break;
 	case F_SOCK:
 		if (!S_ISSOCK(p->fts_statp->st_mode)) {
-typeerr:		LABEL;
-			(void)printf("\ttype (%s, %s)\n",
+ typeerr:		LABEL;
+			printf("\ttype (%s, %s)\n",
 			    nodetype(s->type), inotype(p->fts_statp->st_mode));
+			return (label);
 		}
 		break;
 	}
@@ -162,39 +165,60 @@ typeerr:		LABEL;
         }
 	if (mflag && !uflag) {
 		if (s->flags & F_FLAGS)
-		    CLEARFLAGS(p->fts_accpath, s->st_flags, 
+		    CLEARFLAGS(p->fts_accpath, s->st_flags,
 			p->fts_statp->st_flags, p->fts_statp->st_flags,
 			SP_FLGS);
 		return (label);
         }
+	if (s->flags & F_DEV &&
+	    (s->type == F_BLOCK || s->type == F_CHAR) &&
+	    s->st_rdev != p->fts_statp->st_rdev) {
+		LABEL;
+		printf("%sdevice (%#x, %#x",
+		    tab, s->st_rdev, p->fts_statp->st_rdev);
+		if (uflag) {
+			if ((unlink(p->fts_accpath) == -1) ||
+			    (mknod(p->fts_accpath,
+			      s->st_mode | nodetoino(s->type),
+			      s->st_rdev) == -1) ||
+			    (chown(p->fts_accpath, p->fts_statp->st_uid,
+			      p->fts_statp->st_gid) == -1) )
+				printf(", not modified: %s)\n",
+				    strerror(errno));
+			 else
+				printf(", modified)\n");
+		} else
+			printf(")\n");
+		tab = "\t";
+	}
 	/* Set the uid/gid first, then set the mode. */
 	if (s->flags & (F_UID | F_UNAME) && s->st_uid != p->fts_statp->st_uid) {
 		LABEL;
-		(void)printf("%suser (%lu, %lu",
+		printf("%suser (%lu, %lu",
 		    tab, (u_long)s->st_uid, (u_long)p->fts_statp->st_uid);
 		if (uflag) {
 			if (chown(p->fts_accpath, s->st_uid, -1))
-				(void)printf(", not modified: %s)\n",
+				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
-				(void)printf(", modified)\n");
+				printf(", modified)\n");
 		} else
-			(void)printf(")\n");
+			printf(")\n");
 		tab = "\t";
 	}
 	if (s->flags & (F_GID | F_GNAME) && s->st_gid != p->fts_statp->st_gid) {
 		LABEL;
-		(void)printf("%sgid (%lu, %lu",
+		printf("%sgid (%lu, %lu",
 		    tab, (u_long)s->st_gid, (u_long)p->fts_statp->st_gid);
 		if (uflag) {
 			if (chown(p->fts_accpath, -1, s->st_gid))
-				(void)printf(", not modified: %s)\n",
+				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
-				(void)printf(", modified)\n");
+				printf(", modified)\n");
 		}
 		else
-			(void)printf(")\n");
+			printf(")\n");
 		tab = "\t";
 	}
 	if (s->flags & F_MODE &&
@@ -214,50 +238,33 @@ typeerr:		LABEL;
 				if ((mode | tmode) == tmode)
 					goto skip;
 		}
-		
+
 		LABEL;
-		(void)printf("%spermissions (%#lo, %#lo",
+		printf("%spermissions (%#lo, %#lo",
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);
 		if (uflag) {
 			if (chmod(p->fts_accpath, s->st_mode))
-				(void)printf(", not modified: %s)\n",
+				printf(", not modified: %s)\n",
 				    strerror(errno));
 			else
-				(void)printf(", modified)\n");
+				printf(", modified)\n");
 		}
 		else
-			(void)printf(")\n");
+			printf(")\n");
 		tab = "\t";
 	skip:	;
-	}
-	if (s->flags & F_DEV &&
-	    (s->type == F_BLOCK || s->type == F_CHAR) &&
-	    s->st_rdev != p->fts_statp->st_rdev) {
-		LABEL;
-		(void)printf("%sdevice (%#x, %#x",
-		    tab, s->st_rdev, p->fts_statp->st_rdev);
-		if (uflag) {
-	/* XXXLUKEM: unlink first ? */
-			if (mknod(p->fts_accpath, s->st_mode, s->st_rdev))
-				(void)printf(", not modified: %s)\n",
-				    strerror(errno));
-			else
-				(void)printf(", modified)\n");
-		} else
-			(void)printf(")\n");
-		tab = "\t";
 	}
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {
 		LABEL;
-		(void)printf("%slink count (%lu, %lu)\n",
+		printf("%slink count (%lu, %lu)\n",
 		    tab, (u_long)s->st_nlink, (u_long)p->fts_statp->st_nlink);
 		tab = "\t";
 	}
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
-		(void)printf("%ssize (%lld, %lld)\n",
+		printf("%ssize (%lld, %lld)\n",
 		    tab, (long long)s->st_size,
 		    (long long)p->fts_statp->st_size);
 		tab = "\t";
@@ -290,18 +297,18 @@ typeerr:		LABEL;
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
 			LABEL;
-			(void)printf("%smodification time (%.24s, ",
+			printf("%smodification time (%.24s, ",
 			    tab, ctime(&smtime));
-			(void)printf("%.24s", ctime(&pmtime));
+			printf("%.24s", ctime(&pmtime));
 			if (tflag) {
 				tv[1] = tv[0];
 				if (utimes(p->fts_accpath, tv))
-					(void)printf(", not modified: %s)\n",
+					printf(", not modified: %s)\n",
 					    strerror(errno));
 				else
-					(void)printf(", modified)\n");
+					printf(", modified)\n");
 			} else
-				(void)printf(")\n");
+				printf(")\n");
 			tab = "\t";
 		}
 	}
@@ -315,9 +322,9 @@ typeerr:		LABEL;
 	    || mflag || iflag)) {
 		if (s->st_flags != p->fts_statp->st_flags) {
 			LABEL;
-			(void)printf("%sflags (\"%s\" is not ", tab,
+			printf("%sflags (\"%s\" is not ", tab,
 			    flags_to_string(s->st_flags, "none"));
-			(void)printf("\"%s\"",
+			printf("\"%s\"",
 			    flags_to_string(p->fts_statp->st_flags, "none"));
 		}
 		if (uflag) {
@@ -332,7 +339,7 @@ typeerr:		LABEL;
 			     	    0, p->fts_statp->st_flags,
 				    (~SP_FLGS & CH_MASK));
 		} else
-			(void)printf(")\n");
+			printf(")\n");
 		tab = "\t";
 	}
 
@@ -344,44 +351,83 @@ typeerr:		LABEL;
 	if (s->flags & F_CKSUM) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {
 			LABEL;
-			(void)printf("%scksum: %s: %s\n",
+			printf("%scksum: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else if (crc(fd, &val, &len)) {
-			(void)close(fd);
+			close(fd);
 			LABEL;
-			(void)printf("%scksum: %s: %s\n",
+			printf("%scksum: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
-			(void)close(fd);
+			close(fd);
 			if (s->cksum != val) {
 				LABEL;
-				(void)printf("%scksum (%lu, %lu)\n", 
+				printf("%scksum (%lu, %lu)\n",
 				    tab, s->cksum, (unsigned long)val);
 			}
 			tab = "\t";
 		}
 	}
 	if (s->flags & F_MD5) {
-		if (MD5File(p->fts_accpath, md5buf) == NULL) {
+		if (MD5File(p->fts_accpath, digestbuf) == NULL) {
 			LABEL;
-			(void)printf("%smd5: %s: %s\n",
+			printf("%smd5: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
-			if (strcmp(s->md5sum, md5buf)) {
+			if (strcmp(s->md5digest, digestbuf)) {
 				LABEL;
-				(void)printf("%smd5 (0x%s, 0x%s)\n",
-				    tab, s->md5sum, md5buf);
+				printf("%smd5 (0x%s, 0x%s)\n",
+				    tab, s->md5digest, digestbuf);
 			}
 			tab = "\t";
 		}
 	}
-
-	if (s->flags & F_SLINK && strcmp(cp = rlink(name), s->slink)) {
+	if (s->flags & F_RMD160) {
+		if (RMD160File(p->fts_accpath, digestbuf) == NULL) {
+			LABEL;
+			printf("%srmd160: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->rmd160digest, digestbuf)) {
+				LABEL;
+				printf("%srmd160 (0x%s, 0x%s)\n",
+				    tab, s->rmd160digest, digestbuf);
+			}
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_SHA1) {
+		if (SHA1File(p->fts_accpath, digestbuf) == NULL) {
+			LABEL;
+			printf("%ssha1: %s: %s\n",
+			    tab, p->fts_accpath, strerror(errno));
+			tab = "\t";
+		} else {
+			if (strcmp(s->sha1digest, digestbuf)) {
+				LABEL;
+				printf("%ssha1 (0x%s, 0x%s)\n",
+				    tab, s->sha1digest, digestbuf);
+			}
+			tab = "\t";
+		}
+	}
+	if (s->flags & F_SLINK &&
+	    strcmp(cp = rlink(p->fts_accpath), s->slink)) {
 		LABEL;
-		(void)printf("%slink ref (%s, %s)\n", tab, cp, s->slink);
+		printf("%slink ref (%s, %s", tab, cp, s->slink);
+		if (uflag) {
+			if ((unlink(p->fts_accpath) == -1) ||
+			    (symlink(s->slink, p->fts_accpath) == -1) )
+				printf(", not modified: %s)\n",
+				    strerror(errno));
+			else
+				printf(", modified)\n");
+		} else
+			printf(")\n");
 	}
 	return (label);
 }
@@ -389,10 +435,10 @@ typeerr:		LABEL;
 const char *
 rlink(const char *name)
 {
-	static char lbuf[MAXPATHLEN];
+	static char lbuf[MAXPATHLEN + 1];
 	int len;
 
-	if ((len = readlink(name, lbuf, sizeof(lbuf))) == -1)
+	if ((len = readlink(name, lbuf, sizeof(lbuf) - 1)) == -1)
 		mtree_err("%s: %s", name, strerror(errno));
 	lbuf[len] = '\0';
 	return (lbuf);

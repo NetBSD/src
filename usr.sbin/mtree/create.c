@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.35 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.36 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.35 2001/10/22 07:07:46 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.36 2001/11/07 08:01:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: create.c,v 1.35 2001/10/22 07:07:46 lukem Exp $");
 #include <grp.h>
 #include <md5.h>
 #include <pwd.h>
+#include <rmd160.h>
+#include <sha1.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,42 +92,46 @@ cwalk(void)
 	char  dot[] = ".";		/* XXX: work around gcc warning */
 	char *argv[] = { dot, NULL };
 
-	(void)time(&clocktime);
-	(void)gethostname(host, sizeof(host));
+	time(&clocktime);
+	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
-	(void)printf(
+	printf(
 	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
 	    getlogin(), host, fullpath, ctime(&clocktime));
 
 	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
-	while ((p = fts_read(t)) != NULL)
+	while ((p = fts_read(t)) != NULL) {
+		if (check_excludes(p->fts_name, p->fts_path)) {
+			fts_set(t, p, FTS_SKIP);
+			continue;
+		}
 		switch(p->fts_info) {
 		case FTS_D:
-			(void)printf("\n# %s\n", p->fts_path);
+			printf("\n# %s\n", p->fts_path);
 			statd(t, p, &uid, &gid, &mode, &flags);
 			statf(p);
 			break;
 		case FTS_DP:
 			if (p->fts_level > 0)
-				(void)printf("# %s\n..\n\n", p->fts_path);
+				printf("# %s\n..\n\n", p->fts_path);
 			break;
 		case FTS_DNR:
 		case FTS_ERR:
 		case FTS_NS:
-			(void)fprintf(stderr,
-			    "mtree: %s: %s\n", p->fts_path, strerror(errno));
+			mtree_err("%s: %s",
+			    p->fts_path, strerror(p->fts_errno));
 			break;
 		default:
 			if (!dflag)
 				statf(p);
 			break;
-			
+
 		}
-	(void)fts_close(t);
+	}
+	fts_close(t);
 	if (sflag && keys & F_CKSUM)
-		(void)fprintf(stderr,
-		    "mtree: %s checksum: %u\n", fullpath, crc_total);
+		mtree_err("%s checksum: %u\n", fullpath, crc_total);
 }
 
 static void
@@ -133,12 +139,12 @@ statf(FTSENT *p)
 {
 	u_int32_t len, val;
 	int fd, indent;
-	char md5buf[33], *md5cp;
+	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
 	const char *name;
 
 	strsvis(codebuf, p->fts_name, VISFLAGS, extra);
 	if (S_ISDIR(p->fts_statp->st_mode))
-		indent = printf("%s", codebuf); 
+		indent = printf("%s", codebuf);
 	else
 		indent = printf("    %s", codebuf);
 
@@ -185,13 +191,23 @@ statf(FTSENT *p)
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
 		    crc(fd, &val, &len))
 			mtree_err("%s: %s", p->fts_accpath, strerror(errno));
-		(void)close(fd);
+		close(fd);
 		output(&indent, "cksum=%lu", (long)val);
 	}
 	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
-		if ((md5cp = MD5File(p->fts_accpath, md5buf)) == NULL)
+		if (MD5File(p->fts_accpath, digestbuf) == NULL)
 			mtree_err("%s: %s", p->fts_accpath, "MD5File");
-				  output(&indent, "md5=%s", md5cp);
+		output(&indent, "md5=%s", digestbuf);
+	}
+	if (keys & F_RMD160 && S_ISREG(p->fts_statp->st_mode)) {
+		if (RMD160File(p->fts_accpath, digestbuf) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "RMD160File");
+		output(&indent, "rmd160=%s", digestbuf);
+	}
+	if (keys & F_SHA1 && S_ISREG(p->fts_statp->st_mode)) {
+		if (SHA1File(p->fts_accpath, digestbuf) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "SHA1File");
+		output(&indent, "sha1=%s", digestbuf);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
@@ -199,7 +215,7 @@ statf(FTSENT *p)
 	if (keys & F_FLAGS && p->fts_statp->st_flags != flags)
 		output(&indent, "flags=%s",
 		    flags_to_string(p->fts_statp->st_flags, "none"));
-	(void)putchar('\n');
+	putchar('\n');
 }
 
 /* XXX
@@ -231,11 +247,12 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	u_short maxgid, maxuid, maxmode, maxflags;
 	u_short g[MTREE_MAXGID], u[MTREE_MAXUID],
 		m[MTREE_MAXMODE], f[MTREE_MAXFLAGS];
+	static int first = 1;
 
-	savegid = 0;
-	saveuid = 0;
-	savemode = 0;
-	saveflags = 0;
+	savegid = *pgid;
+	saveuid = *puid;
+	savemode = *pmode;
+	saveflags = *pflags;
 	if ((p = fts_children(t, 0)) == NULL) {
 		if (errno)
 			mtree_err("%s: %s", RP(parent), strerror(errno));
@@ -271,35 +288,45 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 			maxflags = f[sflags];
 		}
 	}
-	(void)printf("/set type=file");
-	if (keys & F_GID)
-		(void)printf(" gid=%lu", (u_long)savegid);
-	if (keys & F_GNAME) {
-		if ((name = group_from_gid(savegid, 1)) != NULL)
-			(void)printf(" gname=%s", name);
-		else
-			(void)printf(" gid=%lu", (u_long)savegid);
+	/*
+	 * If the /set record is the same as the last one we do not need to
+	 * output a new one.  So first we check to see if anything changed.
+	 * Note that we always output a /set record for the first directory.
+	 */
+	if (((keys & (F_UNAME | F_UID)) && (*puid != saveuid)) ||
+	    ((keys & (F_GNAME | F_GID)) && (*pgid != savegid)) ||
+	    ((keys & F_MODE) && (*pmode != savemode)) || 
+	    ((keys & F_FLAGS) && (*pflags != saveflags)) ||
+	    first) {
+		first = 0;
+		printf("/set type=file");
+		if (keys & (F_UID | F_UNAME)) {
+			if (keys & F_UNAME &&
+			    (name = user_from_uid(saveuid, 1)) != NULL)
+				printf(" uname=%s", name);
+			else /* if (keys & F_UID) */
+				printf(" uid=%lu", (u_long)saveuid);
+		}
+		if (keys & (F_GID | F_GNAME)) {
+			if (keys & F_GNAME &&
+			    (name = group_from_gid(savegid, 1)) != NULL)
+				printf(" gname=%s", name);
+			else /* if (keys & F_UID) */
+				printf(" gid=%lu", (u_long)savegid);
+		}
+		if (keys & F_MODE)
+			printf(" mode=%#lo", (u_long)savemode);
+		if (keys & F_NLINK)
+			printf(" nlink=1");
+		if (keys & F_FLAGS)
+			printf(" flags=%s",
+			    flags_to_string(saveflags, "none"));
+		printf("\n");
+		*puid = saveuid;
+		*pgid = savegid;
+		*pmode = savemode;
+		*pflags = saveflags;
 	}
-	if (keys & F_UNAME) {
-		if ((name = user_from_uid(saveuid, 1)) != NULL)
-			(void)printf(" uname=%s", name);
-		else
-			(void)printf(" uid=%lu", (u_long)saveuid);
-	}
-	if (keys & F_UID)
-		(void)printf(" uid=%lu", (u_long)saveuid);
-	if (keys & F_MODE)
-		(void)printf(" mode=%#lo", (u_long)savemode);
-	if (keys & F_NLINK)
-		(void)printf(" nlink=1");
-	if (keys & F_FLAGS)
-		(void)printf(" flags=%s",
-		    flags_to_string(saveflags, "none"));
-	(void)printf("\n");
-	*puid = saveuid;
-	*pgid = savegid;
-	*pmode = savemode;
-	*pflags = saveflags;
 	return (0);
 }
 
@@ -322,11 +349,11 @@ output(int *offset, const char *fmt, ...)
 	char buf[1024];
 
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
 	if (*offset + strlen(buf) > MAXLINELEN - 3) {
-		(void)printf(" \\\n%*s", INDENTNAMELEN, "");
+		printf(" \\\n%*s", INDENTNAMELEN, "");
 		*offset = INDENTNAMELEN;
 	}
 	*offset += printf(" %s", buf) + 1;

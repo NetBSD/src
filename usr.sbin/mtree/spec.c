@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.39 2001/11/03 12:51:41 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.40 2001/11/07 08:01:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.39 2001/11/03 12:51:41 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.40 2001/11/07 08:01:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ spec(FILE *fp)
 			continue;
 
 #ifdef DEBUG
-		(void)fprintf(stderr, "line %lu: {%s}\n",
+		fprintf(stderr, "line %lu: {%s}\n",
 		    (u_long)mtree_lineno, p);
 #endif
 		/* Grab file name, "$", "set", or "unset". */
@@ -299,7 +299,11 @@ dump_nodes(const char *dir, NODE *root)
 		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
 		if (MATCHFLAG(F_MD5))
-			printf("md5=%s ", cur->md5sum);
+			printf("md5=%s ", cur->md5digest);
+		if (MATCHFLAG(F_RMD160))
+			printf("rmd160=%s ", cur->rmd160digest);
+		if (MATCHFLAG(F_SHA1))
+			printf("sha1=%s ", cur->sha1digest);
 		if (MATCHFLAG(F_FLAGS))
 			printf("flags=%s ",
 			    flags_to_string(cur->st_flags, "none"));
@@ -411,7 +415,7 @@ set(char *t, NODE *ip)
 				md=&val[2];
 			else
 				md=val;
-			if ((ip->md5sum = strdup(md)) == NULL)
+			if ((ip->md5digest = strdup(md)) == NULL)
 				mtree_err("memory allocation error");
 			break;
 		case F_MODE:
@@ -428,8 +432,24 @@ set(char *t, NODE *ip)
 		case F_OPT:
 			/* just set flag bit */
 			break;
+		case F_RMD160:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->rmd160digest = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
+			break;
+		case F_SHA1:
+			if (val[0]=='0' && val[1]=='x')
+				md=&val[2];
+			else
+				md=val;
+			if ((ip->sha1digest = strdup(md)) == NULL)
+				mtree_err("memory allocation error");
+			break;
 		case F_SIZE:
-			ip->st_size = (off_t)strtoq(val, &ep, 10);
+			ip->st_size = (off_t)strtoll(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid size `%s'", val);
 			break;
@@ -449,7 +469,7 @@ set(char *t, NODE *ip)
 			if (*ep != '.')
 				mtree_err("invalid time `%s'", val);
 			val = ep + 1;
-			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
+			ip->st_mtimespec.tv_nsec = strtoul(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid time `%s'", val);
 			break;
