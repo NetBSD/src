@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.80 2002/12/19 12:48:42 lukem Exp $
+$NetBSD: UPDATING,v 1.81 2002/12/23 06:55:33 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,13 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20021223:
+	The METALOG format changed slightly, to remove the leading
+	"${DESTDIR}" from path names.
+	This only affects people building with UNPRIVED.
+	For complete safety, remove the DESTDIR entirely and
+	update tools/mtree, before running make build.
 
 20021219:
 	install(1) had a '-N dbdir' option added, to specify an
