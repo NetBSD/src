@@ -2,7 +2,7 @@
 
 PROG=	sendmail
 
-CFLAGS+=-I${.CURDIR} -DVMUNIX -DUSE_DB
+CFLAGS+=-I${.CURDIR} -DVMUNIX #-DUSE_DB
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c \
