@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1997/10/17 21:25:49 mark Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1998/08/05 04:21:51 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -127,9 +127,6 @@ unsigned char		*addr;
 /*
  * Put RELOCATION at ADDR according to relocation record RP.
  */
-#ifdef HACK
-static struct relocation_info *rrs_reloc; /* HACK HACK HACK		XXX */
-#endif
 void
 md_relocate(rp, relocation, addr, relocatable_output)
 struct relocation_info	*rp;
@@ -148,14 +145,6 @@ int			relocatable_output;
 		relocation -= rp->r_address;
 #endif
 
-#ifdef HACK
-	if (rp == rrs_reloc	/* HACK HACK HACK			XXX */
-	    || (RELOC_PCREL_P(rp) && relocatable_output)) {
-		rrs_reloc = NULL;
-		return;
-	}
-	rrs_reloc = NULL;
-#endif
 	if (rp->r_neg)		/* Not sure, whether this works in all cases XXX */
 		relocation = -relocation;
 	
@@ -169,15 +158,11 @@ int			relocatable_output;
 	case 2:
 		put_long(addr, relocation);
 		break;
-	case 3: {
-		int a;
-		a = (get_long(addr)&0xff000000)
-			 | ((relocation&0x3ffffff) >> 2);
+	case 3:
 		put_long(addr,
 			 (get_long(addr)&0xff000000)
 			 | ((relocation&0x3ffffff) >> 2));
 		break;
-		}
 	default:
 		errx(1, "Unsupported relocation size: %x",
 		    rp->r_length);
@@ -194,10 +179,6 @@ md_make_reloc(rp, r, type)
 struct relocation_info	*rp, *r;
 int			type;
 {
-#ifdef HACK
-	if (type == RELTYPE_EXTERN)
-		rrs_reloc = rp;	/* HACK HACK HACK			XXX */
-#endif
 	/* Copy most attributes */
 	r->r_pcrel = rp->r_pcrel;
 	r->r_length = rp->r_length;
@@ -287,26 +268,17 @@ u_long		addr;
 		sp->opcode1 = GETSLOTADDR;
 		sp->opcode2 = LDRPCADDR;
 		sp->address = addr;
-#ifdef RTLD
-		iflush(sp, sizeof(jmpslot_t));
-#endif	/* RTLD */
 	} else {
-#ifdef RTLD
-		/*
-		 * Change the relative offset to the binder
-		 * into a relative offset to the function
-		 */
-		sp->address = (addr - (long)sp - 12);
-/*		iflush(sp, sizeof(jmpslot_t));*/
-#else
 		/*
 		 * Build a direct transfer jump slot
 		 * as we not doing a run time fixup.
 		 */
 		sp->opcode1 = JUMP;
 		sp->address = addr;
-#endif	/* RTLD */
 	}
+#ifdef RTLD
+	iflush(sp, sizeof(jmpslot_t));
+#endif	/* RTLD */
 }
 
 /*
