@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.12 2001/07/31 10:50:06 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.13 2001/08/02 14:40:04 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.12 2001/07/31 10:50:06 sato Exp $";
+    "$NetBSD: hpcfb.c,v 1.13 2001/08/02 14:40:04 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,10 +781,13 @@ hpcfb_show_screen(void *v, void *cookie, int waitok,
 		hpcfb_refresh_screen(sc);
 		return (0);
 	}
-	odc->dc_state |= HPCFB_DC_SWITCHREQ;
 
-	if ((odc->dc_state&HPCFB_DC_DRAWING) != 0) {
-		odc->dc_state |= HPCFB_DC_ABORT;
+	if (odc != NULL) {
+		odc->dc_state |= HPCFB_DC_SWITCHREQ;
+
+		if ((odc->dc_state&HPCFB_DC_DRAWING) != 0) {
+			odc->dc_state |= HPCFB_DC_ABORT;
+		}
 	}
 
 	sc->sc_wantedscreen = cookie;
@@ -848,7 +851,8 @@ hpcfb_doswitch(struct hpcfb_softc *sc)
 	if (sc->sc_switchcb)
 		(*sc->sc_switchcb)(sc->sc_switchcbarg, 0, 0);
 
-	odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
+	if (odc != NULL)
+		odc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 	dc->dc_state &= ~HPCFB_DC_SWITCHREQ;
 	return;
 }
