@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.8 2000/06/25 19:37:03 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.9 2000/06/25 23:10:18 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,10 +158,11 @@
 	GET_CPUINFO(treg)		;	\
 	movl	$0,CPU_INFO_CURPROC(treg)
 	
-#define SET_CURPROC(reg,treg)			\
-	GET_CPUINFO(treg)		;	\
-	movl	reg,CPU_INFO_CURPROC(treg)
-
+#define SET_CURPROC(proc,cpu)				\
+	GET_CPUINFO(cpu)			;	\
+	movl	proc,CPU_INFO_CURPROC(cpu)	;	\
+	movl	cpu,P_CPU(proc)
+	
 #define GET_CURPCB(reg)				\
 	GET_CPUINFO(reg)		;	\
 	movl	CPU_INFO_CURPCB(reg),reg
@@ -2048,13 +2049,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
-
-#if defined(MULTIPROCESSOR)
-	/*
-	 * p->p_cpu = curcpu()
-	 * XXXSMP
-	 */
-#endif
 
 	/* Record new process. */
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
