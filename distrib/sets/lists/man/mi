@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.422 2001/11/18 16:48:13 augustss Exp $
+# $NetBSD: mi,v 1.423 2001/11/19 09:46:09 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1328,6 +1328,7 @@
 ./usr/share/man/cat8/identd.0			man-netutil-catman
 ./usr/share/man/cat8/ifconfig.0			man-netutil-catman
 ./usr/share/man/cat8/ifmcstat.0			man-netutil-catman
+./usr/share/man/cat8/ifwatchd.0			man-netutil-catman
 ./usr/share/man/cat8/inetd.0			man-netutil-catman
 ./usr/share/man/cat8/init.0			man-sysutil-catman
 ./usr/share/man/cat8/intro.0			man-sys-catman
@@ -2971,6 +2972,7 @@
 ./usr/share/man/man8/identd.8			man-netutil-man
 ./usr/share/man/man8/ifconfig.8			man-netutil-man
 ./usr/share/man/man8/ifmcstat.8			man-netutil-man
+./usr/share/man/man8/ifwatchd.8			man-netutil-man
 ./usr/share/man/man8/inetd.8			man-netutil-man
 ./usr/share/man/man8/init.8			man-sysutil-man
 ./usr/share/man/man8/intro.8			man-sys-man
