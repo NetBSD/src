@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.2 1999/11/17 07:34:48 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.3 1999/11/17 20:41:27 tron Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -204,7 +204,7 @@ pci*	at ppb? bus ?
 options 	PCIBIOS			# PCI BIOS support
 options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#optons 	PCIINTR_DEBUG		# super-verbse PCI interrupt fixup
+#options 	PCIINTR_DEBUG		# super-verbse PCI interrupt fixup
 options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 
 # PCI bridges
