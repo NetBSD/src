@@ -1,3 +1,4 @@
+.\" $NetBSD: beep.4,v 1.2 2003/04/17 10:32:39 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Mark Brinicombe
 .\" All rights reserved.
@@ -27,8 +28,6 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: beep.4,v 1.1 2003/04/17 10:16:12 wiz Exp $
-.\"
 .Dd December 15, 2000
 .Dt BEEP 4 acorn32
 .Os
@@ -36,7 +35,7 @@
 .Nm beep
 .Nd Simple VIDC20 audio beep device interface
 .Sh SYNOPSIS
-.Cd "beep0 at mainbus? base 0x00000000"
+.Cd beep0 at vidc?
 .Sh DESCRIPTION
 The
 .Nm
