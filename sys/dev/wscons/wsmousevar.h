@@ -1,4 +1,4 @@
-/* $NetBSD: wsmousevar.h,v 1.1 1998/03/22 14:24:04 drochner Exp $ */
+/* $NetBSD: wsmousevar.h,v 1.2 1998/07/27 22:33:22 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -64,4 +64,5 @@ int	wsmousedevprint __P((void *, const char *));
 /*
  * Callbacks from the mouse driver to the wsmouse interface driver.
  */
-void	wsmouse_input __P((struct device *kbddev, u_int btns, int dx, int dy));
+void	wsmouse_input __P((struct device *kbddev, u_int btns,
+			   int dx, int dy, int dz));

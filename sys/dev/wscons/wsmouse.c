@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.3 1998/07/25 20:02:21 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.4 1998/07/27 22:33:22 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.3 1998/07/25 20:02:21 augustss Exp $";
+    "$NetBSD: wsmouse.c,v 1.4 1998/07/27 22:33:22 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ struct wsmouse_softc {
 	u_int		sc_ub;		/* user button state */
 	int		sc_dx;		/* delta-x */
 	int		sc_dy;		/* delta-y */
+	int		sc_dz;		/* delta-z */
 };
 
 int	wsmouse_match __P((struct device *, struct cfdata *, void *));
@@ -168,10 +169,10 @@ wsmouse_attach(parent, self, aux)
 }
 
 void
-wsmouse_input(wsmousedev, btns, dx, dy)
+wsmouse_input(wsmousedev, btns, dx, dy, dz)
 	struct device *wsmousedev;
 	u_int btns;			/* 0 is up */
-	int dx, dy;
+	int dx, dy, dz;
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
@@ -186,6 +187,7 @@ wsmouse_input(wsmousedev, btns, dx, dy)
 	sc->sc_mb = btns;
 	sc->sc_dx += dx;
 	sc->sc_dy += dy;
+	sc->sc_dz += dz;
 
 	/*
 	 * We have at least one event (mouse button, delta-X, or
@@ -256,6 +258,14 @@ wsmouse_input(wsmousedev, btns, dx, dy)
 		TIMESTAMP;
 		ADVANCE;
 		sc->sc_dy = 0;
+	}
+	if (sc->sc_dz) {
+		NEXT;
+		ev->type = WSCONS_EVENT_MOUSE_DELTA_Z;
+		ev->value = sc->sc_dz;
+		TIMESTAMP;
+		ADVANCE;
+		sc->sc_dz = 0;
 	}
 out:
 	if (any) {
