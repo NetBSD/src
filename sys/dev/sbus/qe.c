@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.28 2002/10/02 16:52:42 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.29 2002/12/10 13:44:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.28 2002/10/02 16:52:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.29 2002/12/10 13:44:48 pk Exp $");
 
 #define QEDEBUG
 
@@ -257,7 +257,7 @@ qeattach(parent, self, aux)
 	qestop(sc);
 
 	/* Note: no interrupt level passed */
-	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc);
+	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, qeintr, sc);
 	myetheraddr(sc->sc_enaddr);
 
 	/*

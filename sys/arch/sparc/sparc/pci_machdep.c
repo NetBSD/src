@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2002/05/16 01:33:53 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.6 2002/12/10 13:44:51 pk Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -445,7 +445,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	DPRINTF(SPDB_INTR,
 		("pci_intr_establish(line %d, ipl %d)\n", ih, level));
 
-	cookie = bus_intr_establish(sc->sc_memt, ih, level, 0, func, arg);
+	cookie = bus_intr_establish(sc->sc_memt, ih, level, func, arg);
 
 	/*
 	 * TODO: to implement pci_intr_disestablish we need to capture

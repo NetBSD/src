@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.21 2002/10/02 16:52:39 thorpej Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.22 2002/12/10 13:44:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.21 2002/10/02 16:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.22 2002/12/10 13:44:48 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -442,7 +442,7 @@ leattach_ledma(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 am7990_intr, sc);
 
 	am7990_config(&lesc->sc_am7990);
