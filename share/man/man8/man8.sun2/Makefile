@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/08 14:32:14 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2003/04/29 13:00:57 fredette Exp $
 
-MAN=	MAKEDEV.8
+MAN=	MAKEDEV.8 boot.8
 MLINKS=	MAKEDEV.8 makedev.8
 MANSUBDIR=/sun2
 
