@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.7 2005/01/10 09:53:00 lukem Exp $
+# $NetBSD: rescue.mi,v 1.8 2005/01/10 10:04:31 lukem Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -8,6 +8,7 @@
 ./rescue/bzip2					base-rescue-root
 ./rescue/cat					base-rescue-root
 ./rescue/ccdconfig				base-rescue-root
+./rescue/cgdconfig				base-rescue-root	crypto
 ./rescue/chgrp					base-rescue-root
 ./rescue/chio					base-rescue-root
 ./rescue/chmod					base-rescue-root
