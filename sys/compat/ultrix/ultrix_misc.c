@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.49 1998/10/26 18:31:01 sommerfe Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.50 1999/02/09 20:32:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,8 +83,6 @@
 #include "opt_sysv.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.49 1998/10/26 18:31:01 sommerfe Exp $");
 
 /*
  * Ultrix compatibility module.
