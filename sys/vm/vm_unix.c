@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
  *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.7 1993/12/20 12:40:27 cgd Exp $
+ *	$Id: vm_unix.c,v 1.8 1994/01/07 22:34:41 mycroft Exp $
  */
 
 /*
@@ -55,6 +55,7 @@ struct obreak_args {
 };
 
 /* ARGSUSED */
+int
 obreak(p, uap, retval)
 	struct proc *p;
 	struct obreak_args *uap;
@@ -126,6 +127,7 @@ struct ovadvise_args {
 };
 
 /* ARGSUSED */
+int
 ovadvise(p, uap, retval)
 	struct proc *p;
 	struct ovadvise_args *uap;

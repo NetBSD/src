@@ -117,8 +117,6 @@
  *	occurs.
  */
 
-int vm_map_delete(vm_map_t, vm_offset_t, vm_offset_t);
-
 /*
  *	vm_map_startup:
  *
@@ -799,7 +797,7 @@ vm_map_simplify_entry(map, entry)
  *	This routine is called only when it is known that
  *	the entry must be split.
  */
-void
+static void
 _vm_map_clip_start(map, entry, start)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
@@ -843,8 +841,6 @@ _vm_map_clip_start(map, entry, start)
  *	the specified address; if necessary,
  *	it splits the entry into two.
  */
-
-void _vm_map_clip_end();
 #define vm_map_clip_end(map, entry, endaddr) \
 { \
 	if (endaddr < entry->end) \
@@ -855,7 +851,7 @@ void _vm_map_clip_end();
  *	This routine is called only when it is known that
  *	the entry must be split.
  */
-void
+static void
 _vm_map_clip_end(map, entry, end)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
