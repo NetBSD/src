@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.3 2003/05/12 14:35:54 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.4 2003/05/24 03:38:58 thorpej Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -32,7 +32,7 @@ LDFLAGS+= -N -e boot_start
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
-CPPFLAGS+= -DDEBUG_MEMSIZE
+#CPPFLAGS+= -DDEBUG_MEMSIZE
 CPPFLAGS+= -DX86_BOOT_MAGIC_1="('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)"
 CPPFLAGS+= -DX86_BOOT_MAGIC_2="('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)"
 
