@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.1 2002/01/01 21:51:41 augustss Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.2 2002/01/02 12:42:23 augustss Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -124,7 +124,7 @@ sf2r_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-
+	u_int r;
 	int iosize = 1, iobase = ia->ia_iobase;
 
 	if (!SF16FMR2_BASE_VALID(iobase)) {
@@ -135,13 +135,13 @@ sf2r_probe(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh))
 		return 0;
 
+	r = sf2r_find(iot, ioh);
+
 	bus_space_unmap(iot, ioh, iosize);
 
-	if (!sf2r_find(iot, ioh))
-		return 0;
-
 	ia->ia_iosize = iosize;
-	return 1;
+
+	return (r != 0);
 }
 
 void
