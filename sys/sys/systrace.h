@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.7 2002/11/10 10:01:03 jdolecek Exp $	*/
+/*	$NetBSD: systrace.h,v 1.8 2002/11/10 14:01:57 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -160,6 +160,11 @@ struct systrace_replace {
 #define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
+/* XXX: these shouldn't be here. */
+#define SET(t, f)	((t) |= (f))
+#define	ISSET(t, f)	((t) & (f))
+#define	CLR(t, f)	((t) &= ~(f))
+
 struct str_process;
 struct fsystrace {
 	struct lock lock;
