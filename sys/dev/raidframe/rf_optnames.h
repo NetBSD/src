@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.6 1999/12/07 02:54:08 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.7 2002/08/04 03:26:39 oster Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -37,7 +37,6 @@ RF_DBG_OPTION(accessDebug, 0)
 RF_DBG_OPTION(accessTraceBufSize, 0)
 RF_DBG_OPTION(cscanDebug, 0)	/* debug CSCAN sorting */
 RF_DBG_OPTION(dagDebug, 0)
-RF_DBG_OPTION(debugPrintUseBuffer, 0)
 RF_DBG_OPTION(degDagDebug, 0)
 RF_DBG_OPTION(disableAsyncAccs, 0)
 RF_DBG_OPTION(diskDebug, 0)
@@ -58,7 +57,6 @@ RF_DBG_OPTION(lockTableSize, RF_DEFAULT_LOCK_TABLE_SIZE)
 RF_DBG_OPTION(mapDebug, 0)
 RF_DBG_OPTION(maxNumTraces, -1)
 
-RF_DBG_OPTION(memChunkDebug, 0)
 RF_DBG_OPTION(memDebug, 0)
 RF_DBG_OPTION(memDebugAddress, 0)
 RF_DBG_OPTION(numBufsToAccumulate, 1)		/* number of buffers to
