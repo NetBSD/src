@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.33 1998/05/20 00:54:52 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.34 1998/05/20 09:43:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.33 1998/05/20 00:54:52 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.34 1998/05/20 09:43:41 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -1019,8 +1019,6 @@ break2:
 		break;
 	}
 	progressmeter(1);
-	progress = oprogress;
-	preserve = opreserve;
 	if (closefunc != NULL)
 		(*closefunc)(fout);
 	(void)signal(SIGINT, oldintr);
@@ -1046,6 +1044,8 @@ break2:
 			}
 		}
 	}
+	progress = oprogress;
+	preserve = opreserve;
 	return;
 
 abort:
