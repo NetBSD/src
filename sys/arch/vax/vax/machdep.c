@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.55 1998/06/04 15:52:48 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.56 1998/06/08 18:42:40 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -115,6 +115,8 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "smg.h"
 
 void	machinecheck __P((caddr_t));
 void	cmrerr __P((void));
@@ -460,9 +462,11 @@ consinit()
 {
 	extern int smgprobe(void), smgcninit(void);
 	cninit();
+#if NSMG
 	/* XXX - do this probe after everything else due to wscons trouble */
 	if (smgprobe())
 		smgcninit();
+#endif
 #ifdef DDB
 /*	db_machine_init(); */
 	ddb_init();
