@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.33 2002/10/02 05:15:55 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.34 2003/01/01 01:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.33 2002/10/02 05:15:55 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.34 2003/01/01 01:34:46 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,8 @@ scsi_print(aux, pnp)
 	char vendor[9], product[17], revision[5];
 
 	if (pnp == NULL)
-		printf(" targ %d lun %d: ", osa->osa_target, osa->osa_lun);
+		aprint_normal(" targ %d lun %d: ", osa->osa_target,
+		    osa->osa_lun);
 
 	memset(vendor, 0, sizeof(vendor));
 	memset(product, 0, sizeof(product));
@@ -493,16 +494,16 @@ scsi_print(aux, pnp)
 		scsi_str(inqbuf->product_id, product,
 		    sizeof(inqbuf->product_id));
 		scsi_str(inqbuf->rev, revision, sizeof(inqbuf->rev));
-		printf("<%s, %s, %s>", vendor, product, revision);
+		aprint_normal("<%s, %s, %s>", vendor, product, revision);
 		if (inqbuf->version >= 2)
-			printf(" (SCSI-%d)", inqbuf->version);
+			aprint_normal(" (SCSI-%d)", inqbuf->version);
 		break;
 	default:
-		printf("type 0x%x, qual 0x%x, ver %d",
+		aprint_normal("type 0x%x, qual 0x%x, ver %d",
 		    inqbuf->type, inqbuf->qual, inqbuf->version);
 	}
 	if (pnp != NULL)
-		printf(" at %s targ %d lun %d",
+		aprint_normal(" at %s targ %d lun %d",
 		    pnp, osa->osa_target, osa->osa_lun);
 
 	return (UNCONF);

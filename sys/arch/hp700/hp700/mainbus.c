@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2002/10/02 05:17:51 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2003/01/01 01:35:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1324,14 +1324,15 @@ mbprint(aux, pnp)
 	struct confargs *ca = aux;
 
 	if (pnp)
-		printf("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
+		aprint_normal("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
 		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		printf(" hpa %lx", ca->ca_hpa);
+		aprint_normal(" hpa %lx", ca->ca_hpa);
 		if (!pnp && ca->ca_irq >= 0) {
-			printf(" irq %d", ca->ca_irq);
+			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)
-				printf(" ipl %d", _hp700_intr_ipl_next());
+				aprint_normal(" ipl %d",
+				    _hp700_intr_ipl_next());
 		}
 	}
 
