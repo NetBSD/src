@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.13 2002/03/24 01:56:20 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.14 2003/04/20 19:37:08 christos Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.13 2002/03/24 01:56:20 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.14 2003/04/20 19:37:08 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -102,7 +102,8 @@ grow_hunkmax(void)
 	char *tp_char;
 
 	hunkmax *= 2;
-	assert(p_line != NULL && p_len != NULL && p_char != NULL);
+	if (p_line == NULL || p_len == NULL || p_char == NULL)
+		fatal("Out of memory\n");
 	tp_line = p_line;
 	tp_len = p_len;
 	tp_char = p_char;
@@ -112,7 +113,7 @@ grow_hunkmax(void)
 	if (p_line != NULL && p_len != NULL && p_char != NULL)
 		return;
 	if (!using_plan_a)
-		fatal("out of memory\n");
+		fatal("Out of memory\n");
 	out_of_mem = TRUE;	/* whatever is null will be allocated again */
 				/* from within plan_a(), of all places */
 	if (p_line == NULL)
@@ -412,13 +413,15 @@ skip_to(long file_pos, long file_line)
 {
 	char *ret;
 
-	assert(p_base <= file_pos);
+	if (p_base > file_pos)
+		fatal("seeked too far %ld > %ld\n", p_base, file_pos);
 	if (verbose && p_base < file_pos) {
 		Fseek(pfp, p_base, 0);
 		say("The text leading up to this was:\n--------------------------\n");
 		while (ftell(pfp) < file_pos) {
 			ret = fgets(buf, sizeof buf, pfp);
-			assert(ret != NULL);
+			if (ret == NULL)
+				fatal("Unexpected end of file\n");
 			say("|%s", buf);
 		}
 		say("--------------------------\n");
@@ -479,7 +482,8 @@ another_hunk(void)
 	    free(p_line[p_end]);
 	p_end--;
     }
-    assert(p_end == -1);
+    if (p_end != -1)
+	fatal("Internal error\n");
     p_efake = -1;
 
     p_max = hunkmax;			/* gets reduced when --- found */
@@ -523,7 +527,8 @@ another_hunk(void)
 		}
 	    }
 	    p_end++;
-	    assert(p_end < hunkmax);
+	    if (p_end >= hunkmax)
+		fatal("hunk larger than current buffer size\n");
 	    p_char[p_end] = *buf;
 	    p_line[p_end] = NULL;
 	    switch (*buf) {
@@ -798,8 +803,10 @@ another_hunk(void)
 		printf("fillsrc %ld, filldst %ld, rb %ld, e+1 %ld\n",
 		    fillsrc,filldst,repl_beginning,p_end+1);
 #endif
-	    assert(fillsrc==p_end+1 || fillsrc==repl_beginning);
-	    assert(filldst==p_end+1 || filldst==repl_beginning);
+	    if (fillsrc != p_end + 1 && fillsrc != repl_beginning)
+		malformed();
+	    if (filldst != p_end + 1 && filldst != repl_beginning)
+		malformed();
 	}
 
 	if (p_line[p_end] != NULL)
@@ -1190,7 +1197,9 @@ pch_swap(void)
 		p_len[n] = tp_len[i];
 		n++;
 	}
-	assert(p_char[0] == '=');
+	if (p_char[0] != '=')
+		fatal("malformed patch at line %ld: expected `=' found `%c'\n",
+		    p_input_line, p_char[0]);
 	p_char[0] = '*';
 	for (s=p_line[0]; *s; s++)
 		if (*s == '-')
@@ -1198,7 +1207,9 @@ pch_swap(void)
 
 	/* now turn the old into the new */
 
-	assert(tp_char[0] == '*');
+	if (tp_char[0] != '*')
+		fatal("malformed patch at line %ld: expected `*' found `%c'\n",
+		    p_input_line, tp_char[0]);
 	tp_char[0] = '=';
 	for (s=tp_line[0]; *s; s++)
 		if (*s == '*')
@@ -1210,7 +1221,9 @@ pch_swap(void)
 			p_char[n] = '+';
 		p_len[n] = tp_len[i];
 	}
-	assert(i == p_ptrn_lines + 1);
+	if (i != p_ptrn_lines + 1)
+		fatal("malformed patch at line %ld: need %ld lines, got %ld\n", 
+		    p_input_line, p_ptrn_lines + 1, i);
 	i = p_ptrn_lines;
 	p_ptrn_lines = p_repl_lines;
 	p_repl_lines = i;
