@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.1 2004/10/13 23:28:36 gavan Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.2 2004/10/14 01:45:54 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.1 2004/10/13 23:28:36 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.2 2004/10/14 01:45:54 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.1 2004/10/13 23:28:36 gavan Exp
  * This is machine architecture dependant as it varies depending
  * on where the ROM appears when you turn the MMU off.
  *
- * XXX Not actally used on Iyonix -- clean up the generic
+ * XXX Not actually used on Iyonix -- clean up the generic
  * ARM code.
  */
 
@@ -437,7 +437,7 @@ initarm(void *arg)
 	 */
 
 	/*
-	 * Fetch the SDRAM start/size from the i80321 SDRAM configration
+	 * Fetch the SDRAM start/size from the i80321 SDRAM configuration
 	 * registers.
 	 */
 	i80321_sdram_bounds(&obio_bs_tag, VERDE_PMMR_BASE + VERDE_MCU_BASE,
@@ -454,13 +454,13 @@ initarm(void *arg)
 	bootconfig = *passed_bootconfig;
 
 	/* Fake bootconfig structure for anything that still needs it */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 	bootconfig.dramblocks = 1;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.
 	 */
 	physical_start = memstart;
@@ -488,7 +488,7 @@ initarm(void *arg)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
+	 * tables must be on 4K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 4K boundaries otherwise.  Since we allocate
 	 * at least 3 L2 page tables, we are guaranteed to encounter at
@@ -723,7 +723,7 @@ initarm(void *arg)
 	 * Until then we will use a handler that just panics but tells us
 	 * why.
 	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
