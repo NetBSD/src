@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.151 2002/03/15 14:55:03 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.152 2002/03/16 08:58:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.151 2002/03/15 14:55:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.152 2002/03/16 08:58:49 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -184,7 +184,7 @@ int	au_portof(struct audio_softc *, char *);
 
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default = 
-	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1 };
+	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
 struct cfattach audio_ca = {
 	sizeof(struct audio_softc), audioprobe, audioattach, 
@@ -1133,7 +1133,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	u_char *outp;
 	int error, s, used, cc, n;
 	const struct audio_params *params;
-	int hw_bytes_per_sample;
+	int hw_bits_per_sample;
 
 	if (cb->mmapped)
 		return EINVAL;
@@ -1147,11 +1147,11 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		hw_bytes_per_sample = params->hw_channels * params->precision/8
+		hw_bits_per_sample = params->hw_channels * params->precision
 			* params->factor;
 		break;
 	default:
-		hw_bytes_per_sample = 1 * params->factor;
+		hw_bits_per_sample = 8 * params->factor / params->factor_denom;
 	}
 	error = 0;
 	/*
@@ -1194,7 +1194,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		if (sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin <= 0) {
 			s = splaudio();
-			while (cb->used < hw_bytes_per_sample) {
+			while (cb->used < hw_bits_per_sample / 8) {
 				if (!sc->sc_rbus) {
 					error = audiostartr(sc);
 					if (error) {
@@ -1213,7 +1213,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 					error = EIO;
 				if (error) {
 					splx(s);
-					return (error);
+					return error;
 				}
 			}
 
@@ -1229,11 +1229,11 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			if (cc > sc->sc_rconvbuffer_size)
 				cc = sc->sc_rconvbuffer_size;
 			/* cc must be aligned by the sample size */
-			cc = (cc / hw_bytes_per_sample) * hw_bytes_per_sample;
+			cc = (cc * 8 / hw_bits_per_sample) * hw_bits_per_sample / 8;
 #ifdef DIAGNOSTIC
 			if (cc == 0)
-				printf("audio_read: cc=0 hw_bytes_per_sample=%d\n",
-				       hw_bytes_per_sample);
+				printf("audio_read: cc=0 hw_bits_per_sample=%d\n",
+				       hw_bits_per_sample);
 #endif
 
 			/*
@@ -1277,11 +1277,13 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 					       ": cc=%d factor=%d\n", cc,
 					       params->factor);
 #endif
-				cc /= params->factor;
+				cc = cc * params->factor_denom / params->factor;
 #ifdef DIAGNOSTIC
 				if (cc == 0)
-					printf("audio_read: cc=0 factor=%d\n",
-					       params->factor);
+					printf("audio_read: cc=0 "
+					       "factor=%d/%d\n",
+					       params->factor,
+					       params->factor_denom);
 #endif
 				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
 						cc);
@@ -1452,7 +1454,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	u_char *inp, *einp;
 	int saveerror, error, s, n, cc, used;
 	struct audio_params *params;
-	int samples, hw_bytes_per_sample, user_bytes_per_sample;
+	int samples, hw_bits_per_sample, user_bits_per_sample;
 	int input_remain, space;
 
 	DPRINTFN(2,("audio_write: sc=%p count=%lu used=%d(hi=%d)\n", 
@@ -1503,27 +1505,27 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		hw_bytes_per_sample = params->hw_channels * params->precision/8
+		hw_bits_per_sample = params->hw_channels * params->precision
 			* params->factor;
-		user_bytes_per_sample = params->channels * params->precision/8;
+		user_bits_per_sample = params->channels * params->precision;
 		break;
 	default:
-		hw_bytes_per_sample = 1 * params->factor;
-		user_bytes_per_sample = 1;
+		hw_bits_per_sample = 8 * params->factor / params->factor_denom;
+		user_bits_per_sample = 8;
 	}
 #ifdef DIAGNOSTIC
-	if (hw_bytes_per_sample > MAX_SAMPLE_SIZE) {
+	if (hw_bits_per_sample > MAX_SAMPLE_SIZE * 8) {
 		printf("audio_write(): Invalid sample size: cur=%d max=%d\n",
-		       hw_bytes_per_sample, MAX_SAMPLE_SIZE);
+		       hw_bits_per_sample / 8, MAX_SAMPLE_SIZE);
 	}
 #endif
 	space = ((params->hw_sample_rate / params->sample_rate) + 1)
-		* hw_bytes_per_sample;
+		* hw_bits_per_sample / 8;
 	error = 0;
 	while ((input_remain = uio->uio_resid + sc->sc_input_fragment_length) > 0
 	       && !error) {
 		s = splaudio();
-		if (input_remain < user_bytes_per_sample) {
+		if (input_remain < user_bits_per_sample / 8) {
 			n = uio->uio_resid;
 			DPRINTF(("audio_write: fragment uiomove length=%d\n", n));
 			error = uiomove(sc->sc_input_fragment
@@ -1560,7 +1562,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			cc = cb->end - cb->start;
 
 		/* cc: # of bytes we can write to the ring buffer */
-		samples = cc / hw_bytes_per_sample;
+		samples = cc * 8 / hw_bits_per_sample;
 #ifdef DIAGNOSTIC
 		if (samples == 0)
 			printf("audio_write: samples (cc/hw_bps) == 0\n");
@@ -1573,22 +1575,26 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			       "usedhigh-used=%d cc/hw_bps=%d/%d "
 			       "rate/hw_rate=%ld/%ld space=%d\n",
 			       cb->usedhigh - cb->used, cc,
-			       hw_bytes_per_sample, params->sample_rate,
+			       hw_bits_per_sample / 8, params->sample_rate,
 			       params->hw_sample_rate, space);
 #endif
 		/* samples: # of samples in source data */
-		cc = samples * user_bytes_per_sample;
+		cc = samples * user_bits_per_sample / 8;
 		/* cc: # of bytes in source data */
 		if (input_remain < cc)	/* and no more than we have */
-			cc = (input_remain / user_bytes_per_sample)
-				* user_bytes_per_sample;
+			cc = (input_remain * 8 / user_bits_per_sample)
+				* user_bits_per_sample / 8;
 #ifdef DIAGNOSTIC
 		if (cc == 0)
 			printf("audio_write: cc == 0\n");
 #endif
-		if (cc * params->factor > sc->sc_pconvbuffer_size) {
-			cc = (sc->sc_pconvbuffer_size / params->factor
-			      / user_bytes_per_sample) * user_bytes_per_sample;
+		if (cc * params->factor / params->factor_denom > sc->sc_pconvbuffer_size) {
+			/*
+			 * cc = (pconv / factor / user_bps ) * user_bps
+			 */
+			cc = (sc->sc_pconvbuffer_size * params->factor_denom
+			      * 8 / params->factor / user_bits_per_sample)
+			     * user_bits_per_sample / 8;
 		}
 
 #ifdef DIAGNOSTIC
@@ -1597,8 +1603,11 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * block pointers are always nicely aligned. 
 		 */
 		if (cc == 0) {
-			printf("audio_write: cc == 0, swcode=%p, factor=%d\n",
-			       sc->sc_pparams.sw_code, sc->sc_pparams.factor);
+			printf("audio_write: cc == 0, swcode=%p, factor=%d "
+			       "remain=%d u_bps=%d hw_bps=%d\n",
+			       sc->sc_pparams.sw_code, sc->sc_pparams.factor,
+			       input_remain, user_bits_per_sample,
+			       hw_bits_per_sample);
 			cb->copying = 0;
 			return EINVAL;
 		}
@@ -1637,7 +1646,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			sc->sc_pparams.sw_code(sc->hw_hdl,
 					       sc->sc_pconvbuffer, cc);
 			/* Adjust count after the expansion. */
-			cc *= sc->sc_pparams.factor;
+			cc = cc * sc->sc_pparams.factor / sc->sc_pparams.factor_denom;
 			DPRINTFN(1, ("audio_write: expanded cc=%d\n", cc));
 		}
 		/*
@@ -2680,6 +2689,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		modechange = cleared = 1;
 		rp.sw_code = 0;
 		rp.factor = 1;
+		rp.factor_denom = 1;
 		rp.hw_sample_rate = rp.sample_rate;
 		rp.hw_encoding = rp.encoding;
 		rp.hw_precision = rp.precision;
@@ -2692,6 +2702,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		modechange = cleared = 1;
 		pp.sw_code = 0;
 		pp.factor = 1;
+		pp.factor_denom = 1;
 		pp.hw_sample_rate = pp.sample_rate;
 		pp.hw_encoding = pp.encoding;
 		pp.hw_precision = pp.precision;
