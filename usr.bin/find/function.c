@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.10 1993/12/30 21:15:24 jtc Exp $";
+static char rcsid[] = "$Id: function.c,v 1.11 1994/01/21 02:59:38 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -240,6 +240,10 @@ f_exec(plan, entry)
 
 	if (plan->flags == F_NEEDOK && !queryuser(plan->e_argv))
 		return (0);
+
+	/* don't mix output of command with find output */
+	fflush(stdout);
+	fflush(stderr);
 
 	switch (pid = vfork()) {
 	case -1:
