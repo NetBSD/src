@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.11 2001/09/02 00:13:07 reinoud Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.12 2002/07/06 22:08:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.11 2001/09/02 00:13:07 reinoud Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.12 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,7 @@ again:
  * only the type ACK is to be sent by a slave
  */
 void
-slaveack()
+slaveack(void)
 {
 	switch(msgin.tsp_type) {
 
@@ -375,7 +375,7 @@ slaveack()
  * These packets should be acknowledged.
  */
 void
-ignoreack()
+ignoreack(void)
 {
 	switch(msgin.tsp_type) {
 
@@ -403,7 +403,7 @@ ignoreack()
  * to the messages received by a master
  */
 void
-masterack()
+masterack(void)
 {
 	struct tsp resp;
 
@@ -446,9 +446,7 @@ masterack()
  * Print a TSP message
  */
 void
-print(msg, addr)
-struct tsp *msg;
-struct sockaddr_in *addr;
+print(struct tsp *msg, struct sockaddr_in *addr)
 {
 	char tm[26];
 	time_t msgtime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: networkdelta.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $	*/
+/*	$NetBSD: networkdelta.c,v 1.10 2002/07/06 22:08:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)networkdelta.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: networkdelta.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $");
+__RCSID("$NetBSD: networkdelta.c,v 1.10 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ static long median(float, float*, long*, long*, unsigned int);
  *	bad values.
  */
 long
-networkdelta()
+networkdelta(void)
 {
 	struct hosttbl *htp;
 	long med;
