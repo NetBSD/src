@@ -1,8 +1,8 @@
-/*	$NetBSD: fork.c,v 1.1 2003/04/10 18:50:05 lha Exp $	*/
+/*	$NetBSD: fork.c,v 1.2 2003/04/11 12:56:25 lha Exp $	*/
 
 /*
- * Regression test for sigsuspend in libpthread when pthread lib isn't
- * initialized.
+ * Check that child process doesn't get threads, also make sure sleep
+ * works in child.
  *
  * Written by Love Hörnquist Åstrand <lha@netbsd.org>, March 2003.
  * Public domain.
