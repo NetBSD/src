@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.2 2004/11/25 05:15:10 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.3 2004/12/16 05:30:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -127,7 +127,8 @@ struct ptyfs_args {
 #define UIO_MX 32
 
 #define PTYFS_FILENO(pty, type) \
-    ((((uint32_t)type) << 30) | (pty + 1))
+    ((type == PTYFSroot) ? 2 : \
+     ((((pty) + 1) * 2 + (((type) == PTYFSpts) ? 1 : 2))))
 
 #define PTYFS_MAKEDEV(ptyfs) \
     pty_makedev((ptyfs)->ptyfs_type == PTYFSpts ? 't' : 'p', (ptyfs)->ptyfs_pty)
