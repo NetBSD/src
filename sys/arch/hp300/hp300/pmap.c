@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 1999/01/09 18:40:12 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 1999/02/02 20:52:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -139,15 +139,6 @@ int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
-
-#ifdef M68K_MMU_HP
-#define	PVF_ENTER	0x01
-#define	PVF_REMOVE	0x02
-#define	PVF_PROTECT	0x04
-#define	PVF_TOTAL	0x80
-
-int pmapvacflush = 0;
-#endif
 
 #if defined(M68040)
 int dowriteback = 1;	/* 68040: enable writeback caching */
@@ -1035,16 +1026,6 @@ pmap_remove(pmap, sva, eva)
 	 */
 	if (pmap_aliasmask && !active_user_pmap(pmap))
 		needcflush = FALSE;
-#ifdef DEBUG
-	if (pmap_aliasmask && (pmapvacflush & PVF_REMOVE)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	} else
-#endif
 	if (needcflush) {
 		if (pmap == pmap_kernel()) {
 			DCIS();
@@ -1204,16 +1185,6 @@ pmap_protect(pmap, sva, eva, prot)
 			sva += NBPG;
 		}
 	}
-#if defined(M68K_MMU_HP) && defined(DEBUG)
-	if (pmap_aliasmask && (pmapvacflush & PVF_PROTECT)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
 }
 
 /*
@@ -1497,16 +1468,6 @@ validate:
 			pmap_pvdump(pa);
 #endif
 	}
-#ifdef DEBUG
-	else if (pmapvacflush & PVF_ENTER) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
 #endif
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
@@ -2505,16 +2466,6 @@ pmap_changebit(pa, set, mask)
 					TBIS(va);
 			}
 		}
-#if defined(M68K_MMU_HP) && defined(DEBUG)
-		if (set == PG_RO && (pmapvacflush & PVF_PROTECT)) {
-			if ((pmapvacflush & PVF_TOTAL) || toflush == 3)
-				DCIA();
-			else if (toflush == 2)
-				DCIS();
-			else
-				DCIU();
-		}
-#endif
 	}
 	splx(s);
 }
