@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.107 2000/03/10 22:39:03 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.108 2000/03/30 02:35:24 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -200,7 +200,6 @@ struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
 u_int16_t	ip_id;
-int	ip_defttl;
 
 struct ipqhead ipq;
 int	ipq_locked;
