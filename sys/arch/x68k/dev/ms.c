@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.3 1996/11/23 09:44:56 oki Exp $ */
+/*	$NetBSD: ms.c,v 1.4 1997/10/12 06:42:18 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,14 @@ struct ms_softc {
 	struct	evvar ms_events;	/* event queue state */
 } ms_softc;
 
+cdev_decl(ms);
+
+void ms_serial __P((struct tty *, void(*)(struct tty *),
+		    void(*)(struct tty *)));
+void ms_modem __P((int));
+void ms_rint __P((int));
+void mouseattach __P((void));
+
 /*
  * Attach the mouse serial (down-link) interface.
  * Do we need to set it to 4800 baud, 8 bits?
@@ -92,7 +100,8 @@ struct ms_softc {
 void
 ms_serial(tp, iopen, iclose)
 	struct tty *tp;
-	void (*iopen)(), (*iclose)();
+	void (*iopen) __P((struct tty *));
+	void (*iclose) __P((struct tty *));
 {
 
 	ms_softc.ms_mouse = tp;
