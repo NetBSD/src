@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $	*/
+
 /*+M***********************************************************************
  *Adaptec 274x/284x/294x device driver for Linux and FreeBSD.
  *
@@ -39,7 +41,7 @@
  *
  *-M************************************************************************/
 
-VERSION AIC7XXX_SEQ_VER "$Id: aic7xxx.seq,v 1.2 1996/05/16 03:51:45 mycroft Exp $"
+VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $"
 
 #if defined(__NetBSD__)
 #include "../../../../dev/ic/aic7xxxreg.h"
