@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.21 2002/11/10 03:12:17 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.22 2002/11/13 05:59:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.21 2002/11/10 03:12:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.22 2002/11/13 05:59:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
     db_expr_t *diffp)
 {
 	Elf_Sym *rsymp, *symp, *symtab_start, *symtab_end;
-	db_expr_t diff = *diffp;
+	db_addr_t diff = *diffp;
 
 	symtab_start = STAB_TO_SYMSTART(symtab);
 	symtab_end = STAB_TO_SYMEND(symtab);
@@ -284,7 +284,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
 #endif
 
 		if (off >= symp->st_value) {
-			if ((db_expr_t)(off - symp->st_value) < diff) {
+			if (off - symp->st_value < diff) {
 				diff = off - symp->st_value;
 				rsymp = symp;
 				if (diff == 0) {
@@ -299,7 +299,7 @@ db_elf_search_symbol(db_symtab_t *symtab, db_addr_t off, db_strategy_t strategy,
 					      != STB_LOCAL)
 						break;
 				}
-			} else if ((db_expr_t)(off - symp->st_value) == diff) {
+			} else if (off - symp->st_value == diff) {
 				if (rsymp == NULL)
 					rsymp = symp;
 				else if (ELFDEFNNAME(ST_BIND)(rsymp->st_info)
