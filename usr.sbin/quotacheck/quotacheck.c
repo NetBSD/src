@@ -42,14 +42,13 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotacheck.c	8.3 (Berkeley) 1/29/94";*/
-static char *rcsid = "$Id: quotacheck.c,v 1.8 1994/12/18 16:01:13 cgd Exp $";
+static char *rcsid = "$Id: quotacheck.c,v 1.9 1995/01/03 02:06:24 cgd Exp $";
 #endif /* not lint */
 
 /*
  * Fix up / report on disk quotas & usage
  */
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
