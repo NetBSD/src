@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.37 2004/06/18 20:17:01 thorpej Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.38 2004/06/18 20:24:03 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -316,6 +316,9 @@ long long strtoll(const char *, char **, int);
 
 #if !HAVE_USER_FROM_UID
 const char *user_from_uid(uid_t, int);
+#endif
+
+#if !HAVE_GROUP_FROM_GID
 const char *group_from_gid(gid_t, int);
 #endif
 
