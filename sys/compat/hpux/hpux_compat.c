@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.45 1999/08/25 04:50:08 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.46 2000/03/23 06:48:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1208,7 +1208,7 @@ hpux_sys_alarm_6x(p, v, retval)
 	} */ *uap = v;
 	int s = splhigh();
 
-	untimeout(realitexpire, (caddr_t)p);
+	callout_stop(&p->p_realit_ch);
 	timerclear(&p->p_realtimer.it_interval);
 	*retval = 0;
 	if (timerisset(&p->p_realtimer.it_value) &&
@@ -1221,7 +1221,8 @@ hpux_sys_alarm_6x(p, v, retval)
 	}
 	p->p_realtimer.it_value = time;
 	p->p_realtimer.it_value.tv_sec += SCARG(uap, deltat);
-	timeout(realitexpire, (caddr_t)p, hzto(&p->p_realtimer.it_value));
+	callout_reset(&p->p_realit_ch, hxto(&p->p_realtimer.it_value),
+	    realitexpire, p);
 	splx(s);
 	return (0);
 }

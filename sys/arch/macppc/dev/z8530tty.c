@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.4 1999/02/06 20:04:31 tsubai Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.5 2000/03/23 06:40:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -142,6 +142,8 @@ struct zstty_softc {
 	struct  tty *zst_tty;
 	struct	zs_chanstate *zst_cs;
 
+	struct callout zst_diag_ch;
+
 	u_int zst_overflows,
 	      zst_floods,
 	      zst_errors;
@@ -255,6 +257,8 @@ zstty_attach(parent, self, aux)
 	struct tty *tp;
 	int channel, s, tty_unit;
 	dev_t dev;
+
+	callout_init(&zst->zst_diag_ch);
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -1343,7 +1347,8 @@ zstty_rxsoft(zst, tp)
 	if (cc == zstty_rbuf_size) {
 		zst->zst_floods++;
 		if (zst->zst_errors++ == 0)
-			timeout(zstty_diag, zst, 60 * hz);
+			callout_start(&zst->zst_diag_ch, 60 * hz,
+			    zstty_diag, zst);
 	}
 
 	while (cc) {
@@ -1353,7 +1358,8 @@ zstty_rxsoft(zst, tp)
 			if (ISSET(rr1, ZSRR1_DO)) {
 				zst->zst_overflows++;
 				if (zst->zst_errors++ == 0)
-					timeout(zstty_diag, zst, 60 * hz);
+					callout_start(&zst->zst_diag_ch,
+					    60 * hz, zstty_diag, zst);
 			}
 			if (ISSET(rr1, ZSRR1_FE))
 				SET(code, TTY_FE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.12 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.13 2000/03/23 06:41:28 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -854,6 +854,7 @@ sbicinit(dev)
         TAILQ_INIT(&dev->ready_list);
         TAILQ_INIT(&dev->nexus_list);
         TAILQ_INIT(&dev->free_list);
+	callout_init(&dev->sc_timo_ch);
 
         dev->sc_nexus = NULL;
         dev->sc_xs    = NULL;
@@ -872,7 +873,7 @@ sbicinit(dev)
         /*
          * make sure timeout is really not needed
          */
-        timeout((void *)sbictimeout, dev, 30 * hz);
+	callout_reset(&dev->sc_timo_ch, 30 * hz, (void *)sbictimeout, dev);
 #endif
 
     } else
@@ -2701,6 +2702,6 @@ sbictimeout(dev)
 
     splx(s);
 
-    timeout((void *)sbictimeout, dev, 30 * hz);
+    callout_reset(&dev->sc_timo_ch, 30 * hz, (void *)sbictimeout, dev);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.25 2000/02/07 20:16:54 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.26 2000/03/23 06:46:17 thorpej Exp $	*/
 
 /*
  *
@@ -427,12 +427,14 @@ xycattach(parent, self, aux)
 	                 ca->ca_intpri, ca->ca_intvec);
 	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
 
+	callout_init(&xyc->sc_tick_ch);
+
 	/* now we must look for disks using autoconfig */
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, xyc_print);
 
 	/* start the watchdog clock */
-	timeout(xyc_tick, xyc, XYC_TICKCNT);
+	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
 }
 
 static int
@@ -1977,7 +1979,7 @@ xyc_tick(arg)
 
 	/* until next time */
 
-	timeout(xyc_tick, xycsc, XYC_TICKCNT);
+	callout_rest(&xycsc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xycsc);
 }
 
 /*

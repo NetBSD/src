@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.23 2000/02/06 16:45:56 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.24 2000/03/23 06:48:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2313,10 +2313,11 @@ netbsd32_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (which == ITIMER_REAL) {
-		untimeout(realitexpire, p);
+		callout_stop(&p->p_realit_ch);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, p, hzto(&aitv.it_value));
+			callout_reset(&p->p_realit_ch, hzto(&aitv.it_value),
+			    realitexpire, p);
 		}
 		p->p_realtimer = aitv;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.3 1999/12/28 13:49:20 tsubai Exp $	*/
+/*	$NetBSD: mesh.c,v 1.4 2000/03/23 06:40:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999	Internet Research Institute, Inc.
@@ -474,7 +474,7 @@ mesh_select(sc, scb)
 	sc->sc_prevphase = MESH_SELECTING;
 	sc->sc_nextstate = MESH_IDENTIFY;
 
-	timeout(mesh_timeout, scb, 10*hz);
+	callout_reset(&scb->xs->xs_callout, 10 * hz, mesh_timeout, scb);
 }
 
 void
@@ -1027,7 +1027,7 @@ mesh_done(sc, scb)
 	sc->sc_nextstate = MESH_BUSFREE;
 	sc->sc_nexus = NULL;
 
-	untimeout(mesh_timeout, scb);
+	callout_stop(&scb->xs->xs_callout);
 
 	if (scb->status == SCSI_BUSY) {
 		xs->error = XS_BUSY;
