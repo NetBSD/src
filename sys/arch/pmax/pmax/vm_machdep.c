@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 1996/05/19 02:00:58 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 1996/05/19 15:55:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,12 @@
 #include <machine/locore.h>
 #include <machine/machConst.h>
 
+#include <machine/locore.h>
+
+extern int  copykstack __P((struct user *up));
+extern void MachSaveCurFPState __P((struct proc *p));
+extern int switch_exit __P((void)); /* XXX never returns? */
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -70,6 +76,7 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -186,7 +193,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
+	/*register struct user *up = p->p_addr;*/
 	struct coreseg cseg;
 	extern struct proc *machFPCurProcPtr;
 
@@ -230,9 +237,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
 
@@ -367,18 +375,17 @@ kvtophys(vm_offset_t kva)
 			printf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
 		}
-kernelmapped:
 		if ((pte->pt_entry & PG_V) == 0) {
-			printf("kvtophys: pte not valid for %x\n", kva);
+			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
 		phys = (pte->pt_entry & PG_FRAME) |
 			(kva & PGOFSET);
 #ifdef DEBUG_VIRTUAL_TO_PHYSICAL
-		printf("kvtophys: kv %x, phys %x", kva, phys);
+		printf("kvtophys: kv %p, phys %x", kva, phys);
 #endif
 	}
 	else {
-		printf("Virtual address %x: cannot map to physical\n",
+		printf("Virtual address %lx: cannot map to physical\n",
 		       kva);
                 phys = 0;
 		/*panic("non-kernel address to kvtophys\n");*/
