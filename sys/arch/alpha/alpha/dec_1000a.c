@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.8 2000/06/09 04:58:32 soda Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.9 2000/06/25 17:21:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.8 2000/06/09 04:58:32 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.9 2000/06/25 17:21:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.8 2000/06/09 04:58:32 soda Exp $");
 #endif
 static int comcnrate = CONSPEED;
 
-void dec_1000a_init __P((void));
+void _dec_1000a_init __P((void));
 static void dec_1000a_cons_init __P((void));
 static void dec_1000a_device_register __P((struct device *, void *));
 
@@ -124,7 +124,7 @@ static const struct alpha_variation_table dec_1000a_variations[] = {
 };
 
 void
-dec_1000a_init()
+_dec_1000a_init()
 {
 	u_int64_t variation;
 
