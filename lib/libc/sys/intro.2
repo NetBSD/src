@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.38 2004/01/08 09:12:57 wiz Exp $
+.\"	$NetBSD: intro.2,v 1.39 2004/05/13 10:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,12 +55,12 @@ is implemented as a macro which expands to a modifiable lvalue of type
 .Pp
 When a system call detects an error,
 it returns an integer value
-indicating failure (usually -1)
+indicating failure (usually \-1)
 and sets the variable
 .Va errno
 accordingly.
-\*[Lt]This allows interpretation of the failure on receiving
-a -1 and to take action accordingly.\*[Gt]
+(This allows interpretation of the failure on receiving
+a \-1 and to take action accordingly.)
 Successful calls never set
 .Va errno ;
 once set, it remains until another error occurs.
@@ -374,7 +374,7 @@ A component of a path name exceeded 255
 .Pq Dv MAXNAMELEN
 characters, or an entire
 path name exceeded 1023
-.Pq Dv MAXPATHLEN Ns -1
+.Pq Dv MAXPATHLEN Ns \-1
 characters.
 .It Er 64 EHOSTDOWN Em "Host is down" .
 A socket operation failed because the destination host was down.
