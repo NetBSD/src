@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.12 2000/03/15 16:02:26 tron Exp $
+# $NetBSD: obsolete.mi,v 1.13 2000/05/28 19:49:52 ragge Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -283,6 +283,7 @@
 /usr/include/sys/dmap.h
 /usr/include/sys/vcmd.h
 /usr/include/sys/vlimit.h
+/usr/include/sys/vsio.h
 /usr/include/ufs/mfs/mfsiom.h
 /usr/include/vm/device_pager.h
 /usr/include/vm/lock.h
