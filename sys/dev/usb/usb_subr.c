@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.13 1998/12/09 00:18:11 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.14 1998/12/09 19:24:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -387,7 +387,8 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 	int endpt, nendpt;
 	usbd_status r;
 
-	DPRINTFN(5,("usbd_fill_iface_data: ifaceidx=%d altidx=%d\n", ifaceidx, altidx));
+	DPRINTFN(5,("usbd_fill_iface_data: ifaceidx=%d altidx=%d\n",
+		    ifaceidx, altidx));
 	ifc->device = dev;
 	ifc->idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
 	ifc->index = ifaceidx;
@@ -410,7 +411,8 @@ usbd_fill_iface_data(dev, ifaceidx, altidx)
 		DPRINTFN(10,("usbd_fill_iface_data: endpt=%d\n", endpt));
 		for (; p < end; p += ed->bLength) {
 			ed = (usb_endpoint_descriptor_t *)p;
-			DPRINTFN(10,("usbd_fill_iface_data: p=%p end=%p len=%d type=%d\n",
+			DPRINTFN(10,("usbd_fill_iface_data: p=%p end=%p "
+				     "len=%d type=%d\n",
 				 p, end, ed->bLength, ed->bDescriptorType));
 			if (p + ed->bLength <= end && 
 			    ed->bDescriptorType == UDESC_ENDPOINT)
@@ -538,12 +540,14 @@ usbd_set_config_index(dev, index, msg)
 				    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
 					selfpowered = 1;
 			}
-			DPRINTF(("usbd_set_config_index: status=0x%04x, error=%d(%s)\n",
+			DPRINTF(("usbd_set_config_index: status=0x%04x, "
+				 "error=%d(%s)\n",
 				 UGETW(ds.wStatus), r, usbd_error_strs[r]));
 		} else
 			selfpowered = 1;
 	}
-	DPRINTF(("usbd_set_config_index: (addr %d) attr=0x%02x, selfpowered=%d, power=%d, powerquirk=%x\n", 
+	DPRINTF(("usbd_set_config_index: (addr %d) attr=0x%02x, "
+		 "selfpowered=%d, power=%d, powerquirk=%x\n", 
 		 dev->address, cdp->bmAttributes, 
 		 selfpowered, cdp->bMaxPower * 2,
 		 dev->quirks->uq_flags & UQ_HUB_POWER));
@@ -557,7 +561,8 @@ usbd_set_config_index(dev, index, msg)
 	if (power > dev->powersrc->power) {
 		/* XXX print nicer message. */
 		if (msg)
-			printf("%s: device addr %d (config %d) exceeds power budget, %d mA > %d mA\n",
+			printf("%s: device addr %d (config %d) exceeds "
+			       "power budget, %d mA > %d mA\n",
 			       dev->bus->bdev.dv_xname, dev->address, 
 			       cdp->bConfigurationValue, 
 			       power, dev->powersrc->power);
@@ -569,7 +574,8 @@ usbd_set_config_index(dev, index, msg)
 
 	r = usbd_set_config(dev, cdp->bConfigurationValue);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("usbd_set_config_index: setting config=%d failed, error=%d(%s)\n",
+		DPRINTF(("usbd_set_config_index: setting config=%d failed, "
+			 "error=%d(%s)\n",
 			 cdp->bConfigurationValue, r, usbd_error_strs[r]));
 		goto bad;
 	}
@@ -737,12 +743,14 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		usbd_delay_ms(dev->bus, 200);
 	}
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc failed\n",
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
+			      "failed\n",
 			      addr));
 		goto bad;
 	}
 
-	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, subclass=%d, protocol=%d, maxpacket=%d, ls=%d\n", 
+	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
+		 "subclass=%d, protocol=%d, maxpacket=%d, ls=%d\n", 
 		 addr, UGETW(d->bcdUSB), d->bDeviceClass, d->bDeviceSubClass,
 		 d->bDeviceProtocol, d->bMaxPacketSize, dev->lowspeed));
 
@@ -751,7 +759,8 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	/* Get the full device descriptor. */
 	r = usbd_get_device_desc(dev, d);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc failed\n", addr));
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
 		goto bad;
 	}
 
@@ -793,8 +802,10 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		DPRINTFN(1,("usbd_new_device: trying config idx=%d\n", confi));
 		r = usbd_set_config_index(dev, confi, 1);
 		if (r != USBD_NORMAL_COMPLETION) {
-			printf("%s: set config at addr %d failed, error=%d(%s)\n",
-			       parent->dv_xname, addr, r, usbd_error_strs[r]);
+			DPRINTF(("%s: set config at addr %d failed, "
+				 "error=%d(%s)\n",
+				 parent->dv_xname, addr, r,
+				 usbd_error_strs[r]));
 			goto bad;
 		}
 		uaa.configno = confi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.9 1998/12/09 01:01:24 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.10 1998/12/09 19:24:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ uhub_attach(parent, self, aux)
 
 	r = usbd_set_config_index(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: configuration failed, error=%d(%s)\n",
-		       sc->sc_dev.dv_xname, r, usbd_error_strs[r]);
+		DPRINTF(("%s: configuration failed, error=%d(%s)\n",
+			 sc->sc_dev.dv_xname, r, usbd_error_strs[r]));
 		return;
 	}
 
@@ -156,8 +156,8 @@ uhub_attach(parent, self, aux)
 	/* XXX not correct for hubs with >7 ports */
 	r = usbd_do_request(dev, &req, &hubdesc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: getting hub descriptor failed, error=%d(%s)\n",
-		       sc->sc_dev.dv_xname, r, usbd_error_strs[r]);
+		DPRINTF(("%s: getting hub descriptor failed, error=%d(%s)\n",
+			 sc->sc_dev.dv_xname, r, usbd_error_strs[r]));
 		return;
 	}
 
@@ -171,13 +171,15 @@ uhub_attach(parent, self, aux)
 	hub->explore = uhub_explore;
 	hub->hubdesc = hubdesc;
 	
-	DPRINTFN(1,("usbhub_init_hub: selfpowered=%d, parent=%p, parent->selfpowered=%d\n",
+	DPRINTFN(1,("usbhub_init_hub: selfpowered=%d, parent=%p, "
+		    "parent->selfpowered=%d\n",
 		 dev->self_powered, dev->powersrc->parent,
 		 dev->powersrc->parent ? 
 		 dev->powersrc->parent->self_powered : 0));
 	if (!dev->self_powered && dev->powersrc->parent &&
 	    !dev->powersrc->parent->self_powered) {
-		printf("%s: bus powered hub connected to bus powered hub, ignored\n",
+		printf("%s: bus powered hub connected to bus powered hub, "
+		       "ignored\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -231,7 +233,8 @@ uhub_init_port(port, uport, dev)
 	if (r != USBD_NORMAL_COMPLETION)
 		return r;
 	pstatus = UGETW(uport->status.wPortStatus);
-	DPRINTF(("usbd_init_port: adding hub port=%d status=0x%04x change=0x%04x\n",
+	DPRINTF(("usbd_init_port: adding hub port=%d status=0x%04x "
+		 "change=0x%04x\n",
 		 port, pstatus, UGETW(uport->status.wPortChange)));
 	if ((pstatus & UPS_PORT_POWER) == 0) {
 		/* Port lacks power, turn it on */
@@ -246,7 +249,8 @@ uhub_init_port(port, uport, dev)
 		r = usbd_get_port_status(dev, port, &uport->status);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (r);
-		DPRINTF(("usb_init_port: turn on port %d power status=0x%04x change=0x%04x\n",
+		DPRINTF(("usb_init_port: turn on port %d power status=0x%04x "
+			 "change=0x%04x\n",
 			 port, UGETW(uport->status.wPortStatus),
 			 UGETW(uport->status.wPortChange)));
 		/* Wait for stable power. */
@@ -286,7 +290,8 @@ uhub_explore(parent, dev)
 		up = &dev->hub->ports[port-1];
 		r = usbd_get_port_status(dev, port, &up->status);
 		if (r != USBD_NORMAL_COMPLETION) {
-			DPRINTF(("uhub_explore: get port status failed, error=%d(%s)\n",
+			DPRINTF(("uhub_explore: get port status failed, "
+				 "error=%d(%s)\n",
 				 r, usbd_error_strs[r]));
 			continue;
 		}
@@ -313,7 +318,8 @@ uhub_explore(parent, dev)
 		 */
 		if (up->device) {
 			/* Disconnected */
-			DPRINTF(("uhub_explore: device %d disappeared on port %d\n", 
+			DPRINTF(("uhub_explore: device %d disappeared "
+				 "on port %d\n", 
 				 up->device->address, port));
 			uhub_disconnect(sc, parent, up, port);
 			usbd_clear_port_feature(dev, port, 
@@ -339,7 +345,8 @@ uhub_explore(parent, dev)
 				    port, up);
 		/* XXX retry a few times? */
 		if (r != USBD_NORMAL_COMPLETION) {
-			DPRINTFN(-1,("uhub_explore: usb_new_device failed, error=%d(%s)\n", r, usbd_error_strs[r]));
+			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
+				     "error=%d(%s)\n", r, usbd_error_strs[r]));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 /* XXX
@@ -353,7 +360,8 @@ uhub_explore(parent, dev)
 				 * address, and since we cannot leave
 				 * at 0 we have to disable the port
 				 * instead. */
-				printf("%s: device problem, disabling port %d\n",
+				printf("%s: device problem, disabling "
+				       "port %d\n",
 				       parent->dv_xname, port);
 				usbd_clear_port_feature(dev, port, 
 							UHF_PORT_ENABLE);
