@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.14 2003/01/21 04:06:07 matt Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.15 2003/03/03 22:07:39 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -192,6 +192,15 @@ typedef struct {
 	mach_msg_type_name_t	disposition : 8;
 	mach_msg_descriptor_type_t type : 8;
 } mach_msg_ool_ports_descriptor_t;
+
+typedef struct {
+       void *			  address;
+       mach_msg_size_t		  size;
+       mach_boolean_t		  deallocate : 8;
+       mach_msg_copy_options_t	  copy : 8;
+       unsigned int		  pad1 : 8;
+       mach_msg_descriptor_type_t type : 8;
+} mach_msg_ool_descriptor_t;
 
 typedef struct {
 	mach_msg_size_t	msgh_descriptor_count;
