@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.536 2004/11/12 06:57:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.537 2004/11/12 06:59:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8077,7 +8077,7 @@ sys/compat/common/vm_43.c				1.10
 sys/compat/darwin/darwin_mman.c				1.14
 sys/compat/hpux/hpux_compat.c				1.70
 sys/compat/hpux/hpux_file.c				1.26
-sys/compat/hpux/hpux_tty.c				1.27
+sys/compat/hpux/hpux_tty.c				1.27-1.28
 sys/compat/ibcs2/ibcs2_misc.c				1.71
 sys/compat/irix/irix_prctl.c				1.24
 sys/compat/irix/irix_signal.c				1.29
