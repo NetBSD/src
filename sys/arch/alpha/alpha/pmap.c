@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.49 1998/06/11 00:34:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.50 1998/06/11 02:45:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 1998/06/11 00:34:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 1998/06/11 02:45:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,7 +617,7 @@ do {									\
  *
  *	Invalidate the TLB entry for the pmap/va pair.
  */
-#define	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, doimb)		\
+#define	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive)			\
 do {									\
 	if ((hadasm) || (isactive)) {					\
 		/*							\
@@ -625,8 +625,6 @@ do {									\
 		 * works in this case.					\
 		 */							\
 		ALPHA_TBIS((va));					\
-		if ((doimb))						\
-			alpha_pal_imb();				\
 	} else if ((pmap)->pm_asngen == pmap_asn_generation) {		\
 		/*							\
 		 * We can't directly invalidate the TLB entry		\
@@ -641,6 +639,19 @@ do {									\
 		 * pmap becomes active on this processor, a new		\
 		 * ASN will be allocated anyway.			\
 		 */							\
+} while (0)
+
+/*
+ * PMAP_SYNC_ISTREAM:
+ *
+ *	Synchronize the I-stream.  We assume that if we're doing this,
+ *	the TLB has already been taken care of.  Thus we do not need
+ *	to invalidate the ASN if the pmap is not active.
+ */
+#define	PMAP_SYNC_ISTREAM(isactive, isexecute)				\
+do {									\
+	if ((isexecute) && (isactive)) 					\
+		alpha_pal_imb();					\
 } while (0)
 
 /*
@@ -1457,7 +1468,8 @@ pmap_protect(pmap, sva, eva, prot)
 		if (pmap_pte_v(l3pte) && pmap_pte_prot_chg(l3pte, bits)) {
 			hadasm = (pmap_pte_asm(l3pte) != 0);
 			pmap_pte_set_prot(l3pte, bits);
-			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive,
+			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive);
+			PMAP_SYNC_ISTREAM(isactive,
 			    (prot & VM_PROT_EXECUTE) != 0);
 #ifdef PMAPSTATS
 			protect_stats.changed++;
@@ -1503,6 +1515,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	vm_offset_t opa;
 	boolean_t tflush = TRUE;
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
+	boolean_t isactive = active_pmap(pmap);
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1746,9 +1759,10 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	if (tflush)
-		PMAP_INVALIDATE_TLB(pmap, va, hadasm, active_pmap(pmap),
-		    (prot & VM_PROT_EXECUTE) != 0);
+	if (tflush) {
+		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
+		PMAP_SYNC_ISTREAM(isactive, (prot & VM_PROT_EXECUTE) != 0);
+	}
 
 	simple_unlock(&pmap->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -1802,8 +1816,8 @@ pmap_kenter_pa(va, pa, prot)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE,
-	    (prot & VM_PROT_EXECUTE) != 0);
+	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE);
+	PMAP_SYNC_ISTREAM(TRUE, (prot & VM_PROT_EXECUTE) != 0);
 }
 
 /*
@@ -2506,6 +2520,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	int s;
 	boolean_t onpv;
 	boolean_t hadasm;
+	boolean_t isactive;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -2525,6 +2540,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 	pa = pmap_pte_pa(pte);
 	onpv = (pmap_pte_pv(pte) != 0);
 	hadasm = (pmap_pte_asm(pte) != 0);
+	isactive = active_pmap(pmap);
 
 #ifdef PMAPSTATS
 	remove_stats.removes++;
@@ -2545,7 +2561,8 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 #endif
 	*pte = PG_NV;
 
-	PMAP_INVALIDATE_TLB(pmap, va, hadasm, active_pmap(pmap), TRUE);
+	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive);
+	PMAP_SYNC_ISTREAM(isactive, TRUE);
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2582,7 +2599,7 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 			 */
 			PMAP_INVALIDATE_TLB(pmap,
 			    (vm_offset_t)(&VPT[VPT_INDEX(va)]), FALSE,
-			    active_pmap(pmap), FALSE);
+			    active_pmap(pmap));
 
 			/*
 			 * We've freed a level 3 table, so delete the
@@ -2652,7 +2669,7 @@ pmap_changebit(pa, bit, setem)
 	pv_entry_t pv;
 	pt_entry_t *pte, npte;
 	vm_offset_t va;
-	boolean_t hadasm;
+	boolean_t hadasm, isactive;
 	int s;
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
@@ -2706,9 +2723,10 @@ pmap_changebit(pa, bit, setem)
 			npte = *pte & ~bit;
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
+			isactive = active_pmap(pv->pv_pmap);
 			*pte = npte;
-			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm,
-			    active_pmap(pv->pv_pmap), TRUE);
+			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive);
+			PMAP_SYNC_ISTREAM(isactive, TRUE);
 #ifdef PMAPSTATS
 			if (setem)
 				chgp->sethits++;
