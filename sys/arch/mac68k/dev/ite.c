@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.27 1996/11/10 09:35:04 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.28 1996/11/19 07:17:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -160,7 +160,7 @@ static int	scrreg_bottom;
 static int	polledkey;
 extern int	adb_polling;
 
-extern u_long	conspa;
+extern u_int32_t mac68k_vidphys;
 
 struct tty	*ite_tty;		/* Our tty */
 
@@ -859,7 +859,7 @@ itematch(parent, match, aux)
 		return 0;
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase);
 
-	return (pa == (vm_offset_t) conspa);
+	return (pa == (vm_offset_t) mac68k_vidphys);
 }
 
 static void 

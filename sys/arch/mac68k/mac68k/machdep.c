@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 1996/11/05 07:20:09 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 1996/11/19 07:17:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,7 +140,6 @@ struct mac68k_machine_S mac68k_machine;
 volatile u_char *Via1Base, *Via2Base;
 u_long  NuBusBase = NBBASE;
 u_long  IOBase;
-u_long	conspa;
 
 vm_offset_t SCSIBase;
 
@@ -2336,6 +2335,7 @@ setmachdep()
 {
 	static int firstpass = 1;
 	int setup_mrg_vectors = 0;
+	u_long phys;
 	struct cpu_model_info *cpui;
 
 	/*
@@ -2355,11 +2355,15 @@ setmachdep()
 		return;
 
 	/*
-	 * Get the console buffer physical address.  If we can't, we
-	 * assume that videoaddr is already a physical address.
+	 * Get the PA of the console framebuffer, iff we're on an 040.  
+	 * We can't call get_physical() on the 851/030 this early, but
+	 * neither can we call it later on the 040; by the time
+	 * we've figured out we have an 851 or 030, we've disabled the
+	 * 040 MMU.  XXX This sucks.
 	 */
-	if (!get_physical(videoaddr, &conspa))
-		conspa = videoaddr;
+	if (mmutype == MMU_68040)
+		mac68k_vidphys = get_physical(videoaddr, &phys) ?
+		    phys : videoaddr;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
