@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2001/11/08 06:32:02 gmcgarry Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2001/12/02 01:20:33 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * Only allowed for regions mapped with BUS_SPACE_MAP_LINEAR.
  *  (XXX not enforced)
  */
-#define bus_space_vaddr(t, h)	(h)
+#define bus_space_vaddr(t, h)	(void *)(h)
 
 /*
  *	int hp300_bus_space_probe __P((bus_space_tag_t t,
