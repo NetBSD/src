@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.14 2000/02/04 03:38:06 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.15 2000/02/04 03:40:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,12 +73,6 @@ struct cfattach mbe_pcmcia_ca = {
 	sizeof(struct mbe_pcmcia_softc), mbe_pcmcia_match, mbe_pcmcia_attach,
 	    mbe_pcmcia_detach, mb86960_activate
 };
-
-#if NetBSD <= 199712
-struct cfdriver mbe_cd = {			/* XXX shouldn't be here */
-	NULL, "mbe", DV_IFNET
-};
-#endif
 
 int	mbe_pcmcia_enable __P((struct mb86960_softc *));
 void	mbe_pcmcia_disable __P((struct mb86960_softc *));
