@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
+/*	$NetBSD: uyap.c,v 1.7 2004/04/23 17:25:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.7 2004/04/23 17:25:27 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ USB_ATTACH(uyap)
 	usbd_status err;
 	char devinfo[1024];
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));

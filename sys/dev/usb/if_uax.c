@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.10 2003/12/22 10:27:51 sekiya Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.11 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.10 2003/12/22 10:27:51 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.11 2004/04/23 17:25:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -298,7 +298,7 @@ USB_ATTACH(uax)
 
 	DPRINTFN(5,(" : uax_attach: sc=%p", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.18 2003/11/24 00:00:07 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.19 2004/04/23 17:25:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.18 2003/11/24 00:00:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.19 2004/04/23 17:25:26 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ USB_ATTACH(urio)
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

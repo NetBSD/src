@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.20 2004/01/19 07:36:35 gson Exp $	*/
+/*	$NetBSD: umidi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.20 2004/01/19 07:36:35 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ USB_ATTACH(umidi)
 
 	DPRINTFN(1,("umidi_attach\n"));
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_iface = uaa->iface;

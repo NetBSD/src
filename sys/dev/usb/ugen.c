@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.66 2003/09/04 03:47:03 mycroft Exp $	*/
+/*	$NetBSD: ugen.c,v 1.67 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.66 2003/09/04 03:47:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.67 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ USB_ATTACH(ugen)
 	usbd_status err;
 	int conf;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

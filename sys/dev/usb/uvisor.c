@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.24 2004/01/28 22:01:38 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.25 2004/04/23 17:25:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.24 2004/01/28 22:01:38 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.25 2004/04/23 17:25:27 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.20 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.20 2004/04/23 17:25:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -247,7 +247,7 @@ USB_ATTACH(upl)
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

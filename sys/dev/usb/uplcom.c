@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.35 2004/04/09 19:06:52 martin Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.36 2004/04/23 17:25:26 itojun Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.35 2004/04/09 19:06:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.36 2004/04/23 17:25:26 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ USB_ATTACH(uplcom)
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 

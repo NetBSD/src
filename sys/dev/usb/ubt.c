@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.10 2004/01/04 05:47:43 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.11 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.10 2004/01/04 05:47:43 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.11 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ USB_ATTACH(ubt)
 
 	DPRINTFN(10,("ubt_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
