@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.9 1995/08/13 23:37:56 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.10 1995/08/14 00:51:12 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -87,10 +87,6 @@
 #define SVR4_SIG_BLOCK		1
 #define SVR4_SIG_UNBLOCK	2
 #define SVR4_SIG_SETMASK	3
-
-typedef struct {
-        u_long bits[4];
-} svr4_sigset_t;
 
 struct svr4_sigaction {
 	int		  sa_flags;
