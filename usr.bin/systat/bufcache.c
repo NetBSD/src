@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.6 2000/02/14 05:35:21 soren Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.7 2000/04/27 00:30:51 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.6 2000/02/14 05:35:21 soren Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.7 2000/04/27 00:30:51 jdc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ showbufcache()
 			mvwprintw(wnd, i, 0, "%-20.20s", ml->ml_addr == NULL ?
 			    "NULL" : ml->ml_mount.mnt_stat.f_mntonname);
 			wprintw(wnd,
-			    "    %6d %3d    %8ld %3d    %8ld %3d     %3d",
+			    "    %6d %3d    %8ld %3ld    %8ld %3ld     %3ld",
 			    ml->ml_count, (100 * ml->ml_count) / nbuf,
 			    ml->ml_valid, (100 * ml->ml_valid) / bufkb,
 			    ml->ml_size, (100 * ml->ml_size) / bufkb,
@@ -179,7 +179,7 @@ showbufcache()
 
 	wclrtobot(wnd);
 	mvwprintw(wnd, lastrow + 2, 0,
-	    "%-20s    %6d %3d    %8d %3d    %8d %3d     %3d",
+	    "%-20s    %6d %3d    %8ld %3ld    %8ld %3ld     %3ld",
 	    "Total:", tbuf, (100 * tbuf) / nbuf,
 	    tvalid, (100 * tvalid) / bufkb,
 	    tsize, (100 * tsize) / bufkb, (100 * tvalid) / tsize); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $	*/
+/*	$NetBSD: canfield.c,v 1.16 2000/04/27 00:30:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.16 2000/04/27 00:30:52 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1167,24 +1167,25 @@ updatebettinginfo()
 	if (status != BETTINGBOX)
 		return;
 	move(tboxrow + 2, boxcol + 13);
-	printw("%4d%8d%9d", this.hand, game.hand, total.hand);
+	printw("%4ld%8ld%9ld", this.hand, game.hand, total.hand);
 	move(tboxrow + 3, boxcol + 13);
-	printw("%4d%8d%9d", this.inspection, game.inspection, total.inspection);
+	printw("%4ld%8ld%9ld", this.inspection, game.inspection,
+	    total.inspection);
 	move(tboxrow + 4, boxcol + 13);
-	printw("%4d%8d%9d", this.game, game.game, total.game);
+	printw("%4ld%8ld%9ld", this.game, game.game, total.game);
 	move(tboxrow + 5, boxcol + 13);
-	printw("%4d%8d%9d", this.runs, game.runs, total.runs);
+	printw("%4ld%8ld%9ld", this.runs, game.runs, total.runs);
 	move(tboxrow + 6, boxcol + 13);
-	printw("%4d%8d%9d", this.information, game.information,
+	printw("%4ld%8ld%9ld", this.information, game.information,
 		total.information);
 	move(tboxrow + 7, boxcol + 13);
-	printw("%4d%8d%9d", this.thinktime, game.thinktime, total.thinktime);
+	printw("%4ld%8ld%9ld", this.thinktime, game.thinktime, total.thinktime);
 	move(tboxrow + 8, boxcol + 13);
-	printw("%4d%8d%9d", thiscosts, gamecosts, totalcosts);
+	printw("%4ld%8ld%9ld", thiscosts, gamecosts, totalcosts);
 	move(tboxrow + 9, boxcol + 13);
-	printw("%4d%8d%9d", this.wins, game.wins, total.wins);
+	printw("%4ld%8ld%9ld", this.wins, game.wins, total.wins);
 	move(tboxrow + 10, boxcol + 13);
-	printw("%4d%8d%9d", this.worth, game.worth, total.worth);
+	printw("%4ld%8ld%9ld", this.worth, game.worth, total.worth);
 	move(tboxrow + 11, boxcol + 13);
 	printw("%4.0f%%%7.1f%%%8.1f%%", thisreturn, gamereturn, totalreturn);
 }
