@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.21 1999/05/24 19:10:57 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.22 1999/05/25 00:09:01 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -866,7 +866,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 */
 
 	use_reserve = (flags & UVM_PGA_USERESERVE) ||
-		(obj && obj->uo_refs == UVM_OBJ_KERN);
+		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
 	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
 	     !(use_reserve && curproc == uvm.pagedaemon_proc)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.41 1999/05/23 06:27:13 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.42 1999/05/25 00:09:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -548,8 +548,9 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 	} else {
 		if (uoffset == UVM_UNKNOWN_OFFSET) {
 #ifdef DIAGNOSTIC
-			if (uobj->uo_refs != UVM_OBJ_KERN)
-	panic("uvm_map: unknown offset with non-kernel object");
+			if (UVM_OBJ_IS_KERN_OBJECT(uobj) == 0)
+				panic("uvm_map: unknown offset with "
+				    "non-kernel object");
 #endif
 			uoffset = *startp - vm_map_min(kernel_map);
 		}
@@ -981,11 +982,11 @@ uvm_unmap_remove(map, start, end, entry_list)
 		 * we want to free these pages right away...
 		 */
 		if (UVM_ET_ISOBJ(entry) &&
-		    entry->object.uvm_obj->uo_refs == UVM_OBJ_KERN) {
-
+		    UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
 #ifdef DIAGNOSTIC
 			if (vm_map_pmap(map) != pmap_kernel())
-	panic("uvm_unmap_remove: kernel object mapped by non-kernel map");
+				panic("uvm_unmap_remove: kernel object "
+				    "mapped by non-kernel map");
 #endif
 
 			/*
@@ -2974,7 +2975,7 @@ uvm_object_printit(uobj, full, pr)
 
 	(*pr)("OBJECT %p: pgops=%p, npages=%d, ", uobj, uobj->pgops,
 	    uobj->uo_npages);
-	if (uobj->uo_refs == UVM_OBJ_KERN)
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else
 		(*pr)("refs=%d\n", uobj->uo_refs);
