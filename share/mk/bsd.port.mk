@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.13.2.9 1998/01/29 09:47:37 mellon Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.10 1998/02/07 00:29:25 mellon Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -22,10 +22,11 @@
 # contact information on the person(s) to contact if you have questions/
 # suggestions about that specific port.  By default (if no MAINTAINER
 # is listed), a port is maintained by the subscribers of the ports@freebsd.org
-# mailing list, and any correspondece should be directed there.
+# mailing list (NetBSD: packages@netbsd.org), and any correspondece
+# should be directed there.  
 #
 FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
-OpenBSD_MAINTAINER=	imp@OpenBSD.ORG
+OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 NetBSD_MAINTAINER=	agc@netbsd.org
 
 # Supported Variables and their behaviors:
@@ -68,7 +69,8 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # GMAKE			- Set to path of GNU make if not in $PATH (default: gmake).
 # XMKMF			- Set to path of `xmkmf' if not in $PATH (default: xmkmf -a ).
 # MAINTAINER	- The e-mail address of the contact person for this port
-#				  (default: ports@FreeBSD.ORG).
+#				  Defaults: ports@FreeBSD.ORG      (FreeBSD)
+#                           packages@NetBSD.ORG    (NetBSD)
 # CATEGORIES	- A list of descriptive categories into which this port falls.
 # WRKOBJDIR		- A top level directory where, if defined, the separate working
 #				  directories will get created, and symbolically linked to from
@@ -98,6 +100,8 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  ${DISTDIR}.  Also they will be fetched in this subdirectory 
 #				  from FreeBSD mirror sites.
 # ALLFILES		- All of ${DISTFILES} and ${PATCHFILES}.
+# MIRROR_DISTFILE	- Whether the distfile is redistributable without restrictions.
+#			  Defaults to "yes", set this to "no" if restrictions exist.
 # IGNOREFILES	- If some of the ${ALLFILES} are not checksum-able, set
 #				  this variable to their names.
 # PKGNAME		- Name of the package file to create if the DISTNAME 
@@ -201,11 +205,19 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  (default: none).
 #
 # FETCH_CMD		  - Full path to ftp/http fetch command if not in $PATH
-#				  (default: /usr/bin/fetch).
+#				  (default: /usr/bin/ftp if available, else /usr/bin/ftp).
 # FETCH_BEFORE_ARGS -
 #				  Arguments to ${FETCH_CMD} before filename (default: none).
 # FETCH_AFTER_ARGS -
 #				  Arguments to ${FETCH_CMD} following filename (default: none).
+# NO_IGNORE     - Set this to YES (most probably in a "make fetch" in
+#                 ${PORTSDIR}) if you want to fetch all distfiles,
+#                 even for packages not built due to limitation by
+#                 absent X or Motif ...
+# __ARCH_OK     - Internal variable set if the package is ok to build
+#                 on this architecture. Set to YES to insist on
+#                 e.g. fetching all distfiles (for interactive use in
+#                 ${PORTSDIR}, mostly. 
 #
 # Motif support:
 #
@@ -277,6 +289,11 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  the same file.
 # checksum		- Use files/md5 to ensure that your distfiles are valid.
 # makesum		- Generate files/md5 (only do this for your own ports!).
+# readme		- Create a README.html file describing the category or package
+# mirror-distfiles	- Mirror the distfile(s) if they are freely redistributable
+#			Setting MIRROR_DISTFILE to "no" in the package Makefile
+#			will override the default "yes", and the distfile will
+#			not be fetched.
 #
 # Default sequence for "all" is:  fetch checksum extract patch configure build
 #
@@ -297,20 +314,12 @@ OPSYS!=	uname -s
 .if defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
 .if ${MACHINE_ARCH} == "${__ARCH}"
-__ARCH_OK=	1
+__ARCH_OK?=	1
 .endif
 .endfor
 .else
-__ARCH_OK=	1
+__ARCH_OK?=	1
 .endif
-
-.if !defined(__ARCH_OK)
-.MAIN:	all
-
-fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
-	@echo "This port is only for ${ONLY_FOR_ARCHS},"
-	@echo "and you are running ${MACHINE_ARCH}."
-.else
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -465,6 +474,7 @@ MD5_FILE?=		${FILESDIR}/md5
 
 MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
+MAKE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 MAKE_ENV+=		PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
 .if exists(/usr/bin/fetch)
@@ -472,6 +482,9 @@ FETCH_CMD?=		/usr/bin/fetch
 .else
 FETCH_CMD?=		/usr/bin/ftp
 .endif
+
+# By default, distfiles have no restrictions placed on them
+MIRROR_DISTFILE?=	yes
 
 TOUCH?=			/usr/bin/touch
 TOUCH_FLAGS?=	-f
@@ -529,6 +542,12 @@ MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -p
 .if (${OPSYS} == "OpenBSD")
 .include <bsd.own.mk>
 MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
+.elif (${OPSYS} == "NetBSD")
+NEED_OWN_INSTALL_TARGET=	no
+.include <bsd.own.mk>
+SHAREOWN = ${DOCOWN}
+SHAREGRP = ${DOCGRP}
+SHAREMODE = ${DOCMODE}
 .endif
 
 # A few aliases for *-install targets
@@ -667,6 +686,7 @@ MASTER_SITE_OVERRIDE=  ${MASTER_SITE_BACKUP}
 
 # Where to put distfiles that don't have any other master site
 MASTER_SITE_LOCAL?= \
+	ftp://ftp.netbsd.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ \
 	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/LOCAL_PORTS/
 
 # I guess we're in the master distribution business! :)  As we gain mirror
@@ -706,6 +726,8 @@ CKSUMFILES!=	\
 		done; \
 		if [ "$$ignore" = 0 ]; then \
 			echo "$$file"; \
+		else \
+			echo ""; \
 		fi; \
 	done
 .else
@@ -726,7 +748,11 @@ _IGNOREFILES?=	${IGNOREFILES}
 EXTRACT_ONLY?=	${DISTFILES}
 
 # Documentation
+.if (${OPSYS} == "NetBSD")
+MAINTAINER?=	packages@NetBSD.ORG
+.else
 MAINTAINER?=	ports@FreeBSD.ORG
+.endif
 
 .if !defined(CATEGORIES)
 .BEGIN:
@@ -745,6 +771,7 @@ PKGFILE?=		${PKGNAME}${PKG_SUFX}
 .endif
 
 CONFIGURE_SCRIPT?=	configure
+CONFIGURE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin
 
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
@@ -752,7 +779,8 @@ HAS_CONFIGURE=		yes
 .endif
 
 # Passed to most of script invocations
-SCRIPTS_ENV+=	CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
+SCRIPTS_ENV+= CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
+          PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin \
 		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
 		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
 		  PORTSDIR=${PORTSDIR} DEPENDS="${DEPENDS}" \
@@ -871,8 +899,16 @@ install:
 	@${IGNORECMD}
 package:
 	@${IGNORECMD}
-.endif
-.endif
+.endif # IGNORE
+.endif # !NO_IGNORE
+
+.if !defined(__ARCH_OK)
+.MAIN:	all
+
+fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "This port is only for ${ONLY_FOR_ARCHS},"
+	@echo "and you are running ${MACHINE_ARCH}."
+.else
 
 .if defined(ALL_HOOK)
 all:
@@ -1019,6 +1055,14 @@ do-fetch:
 	    fi \
 	 done)
 .endif
+.endif
+
+# This is for the use of sites which store distfiles which others may
+# fetch - only fetch the distfile if it is allowed to be
+# re-distributed freely
+mirror-distfiles:
+.if (${MIRROR_DISTFILE} == "yes")
+	@make fetch __ARCH_OK=yes NO_IGNORE=yes
 .endif
 
 # Extract
@@ -1361,6 +1405,10 @@ reinstall:
 	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
 .endif
 
+.endif # __ARCH_OK
+       # The functions below may be useful even if _ARCH_OK is not set
+
+
 ################################################################
 # Some more targets supplied for users' convenience
 ################################################################
@@ -1381,7 +1429,7 @@ clean: pre-clean
 .if !defined(NO_WRKDIR)
 .if  defined(WRKOBJDIR)
 	@${RM} -rf ${WRKOBJDIR}/${PORTSUBDIR}
-	@${RM} ${WRKDIR}
+	@${RM} -f ${WRKDIR}
 .else
 	@if [ -d ${WRKDIR} ]; then \
 		if [ -w ${WRKDIR} ]; then \
@@ -1587,7 +1635,8 @@ _DEPENDS_USE:	.USE
 		else \
 			for d in `echo $$PATH | tr ':' ' '`; do \
 				if [ -x $$d/$$prog ]; then \
-					found=""; \
+					found="$$d/$$prog"; \
+					break; \
 				fi \
 			done; \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - $$found found"; \
@@ -1874,7 +1923,8 @@ ${PLIST}: ${PLIST_SRC}
 		${CAT} ${PLIST_SRC} | ${SED} \
 			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
 			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
-			-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
+			-e 's/<\$$ARCH>/'${ARCH}'/g' \
+			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
 	fi
 .else   # !MANZ
@@ -1882,20 +1932,10 @@ ${PLIST}: ${PLIST_SRC}
 		${CAT} ${PLIST_SRC} | ${SED} \
 			-e '/man\/man/s/\.gz$$//g' \
 			-e '/man\/cat/s/\.gz$$//g' \
-			-e 's/\<\$$ARCH\>/'${ARCH}'/g' \
+			-e 's/<\$$ARCH>/'${ARCH}'/g' \
+			-e 's/\$${MACHINE_ARCH}/'${MACHINE_ARCH}'/g' \
 			>${PLIST} ; \
 	fi
 .endif  # MANZ
 
-
-.endif # __ARCH_OK
-
-.if (${OPSYS} == "NetBSD")
-.include <bsd.own.mk>
-
-SHAREOWN = ${DOCOWN}
-SHAREGRP = ${DOCGRP}
-SHAREMODE = ${DOCMODE}
-
-.endif
 
