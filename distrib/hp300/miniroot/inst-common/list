@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 1995/11/13 17:41:38 thorpej Exp $
+#	$NetBSD: list,v 1.4 1995/11/14 10:12:38 thorpej Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -53,6 +53,7 @@ SYMLINK	/instbin		usr/bin/gunzip
 SYMLINK	/instbin		usr/bin/gzcat
 SYMLINK	/instbin		usr/bin/gzip
 SYMLINK	/instbin		usr/bin/more
+SYMLINK	/instbin		usr/bin/netstat
 SYMLINK	/instbin		usr/bin/rsh
 SYMLINK	/instbin		usr/bin/sed
 SYMLINK	/instbin		usr/bin/strings
