@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.57 2002/06/30 22:40:39 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.58 2002/09/11 02:41:25 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.57 2002/06/30 22:40:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.58 2002/09/11 02:41:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -811,11 +811,11 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 
 	if (ip6_process_hopopts(m, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
 				hbhlen, rtalertp, plenp) < 0)
-		return(-1);
+		return (-1);
 
 	*offp = off;
 	*mp = m;
-	return(0);
+	return (0);
 }
 
 /*
@@ -975,14 +975,14 @@ ip6_unknown_opt(optp, m, off)
 
 	switch (IP6OPT_TYPE(*optp)) {
 	case IP6OPT_TYPE_SKIP: /* ignore the option */
-		return((int)*(optp + 1));
+		return ((int)*(optp + 1));
 	case IP6OPT_TYPE_DISCARD:	/* silently discard */
 		m_freem(m);
-		return(-1);
+		return (-1);
 	case IP6OPT_TYPE_FORCEICMP: /* send ICMP even if multicasted */
 		ip6stat.ip6s_badoptions++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, off);
-		return(-1);
+		return (-1);
 	case IP6OPT_TYPE_ICMP: /* send ICMP if not multicasted */
 		ip6stat.ip6s_badoptions++;
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -992,11 +992,11 @@ ip6_unknown_opt(optp, m, off)
 		else
 			icmp6_error(m, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_OPTION, off);
-		return(-1);
+		return (-1);
 	}
 
 	m_freem(m);		/* XXX: NOTREACHED */
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -1243,7 +1243,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
  * carefully. Moreover, it will not be used in the near future when
  * we develop `neater' mechanism to process extension headers.
  */
-char *
+u_int8_t *
 ip6_get_prevhdr(m, off)
 	struct mbuf *m;
 	int off;
@@ -1251,7 +1251,7 @@ ip6_get_prevhdr(m, off)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
 	if (off == sizeof(struct ip6_hdr))
-		return(&ip6->ip6_nxt);
+		return (&ip6->ip6_nxt);
 	else {
 		int len, nxt;
 		struct ip6_ext *ip6e = NULL;
@@ -1275,7 +1275,7 @@ ip6_get_prevhdr(m, off)
 			nxt = ip6e->ip6e_nxt;
 		}
 		if (ip6e)
-			return(&ip6e->ip6e_nxt);
+			return (&ip6e->ip6e_nxt);
 		else
 			return NULL;
 	}

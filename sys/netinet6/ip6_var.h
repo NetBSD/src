@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.22 2002/06/30 22:40:40 thorpej Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.23 2002/09/11 02:41:26 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ void	ip6intr __P((void));
 void	ip6_input __P((struct mbuf *));
 void	ip6_freemoptions __P((struct ip6_moptions *));
 int	ip6_unknown_opt __P((u_int8_t *, struct mbuf *, int));
-char *	ip6_get_prevhdr __P((struct mbuf *, int));
+u_int8_t *ip6_get_prevhdr __P((struct mbuf *, int));
 int	ip6_nexthdr __P((struct mbuf *, int, int, int *));
 int	ip6_lasthdr __P((struct mbuf *, int, int, int *));
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
