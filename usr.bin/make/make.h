@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.51 2004/07/01 20:38:09 jmc Exp $	*/
+/*	$NetBSD: make.h,v 1.52 2004/07/15 09:01:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,6 +98,16 @@
 #  endif
 # endif
 #endif
+
+#if !defined(__GNUC_PREREQ__)
+#if defined(__GNUC__)
+#define	__GNUC_PREREQ__(x, y)						\
+	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
+	 (__GNUC__ > (x)))
+#else /* defined(__GNUC__) */
+#define	__GNUC_PREREQ__(x, y)	0
+#endif /* defined(__GNUC__) */
+#endif /* !defined(__GNUC_PREREQ__) */
 
 #if !defined(__unused)
 #if __GNUC_PREREQ__(2, 7)
