@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2000/08/13 01:31:17 itojun Exp $
+# $NetBSD: GENERIC,v 1.9 2000/08/16 23:56:13 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -92,6 +92,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	NTP		# Kernel PLL for ntpd(8).
 
 # Disable kernel security.
 #options 	INSECURE
@@ -99,6 +100,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # NFS boot options
 options 	NFS_BOOT_DHCP		# superset of BOOTP
 options 	NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_RWSIZE=1024	# XXX "ea" driver bug workaround
 
 # WS console uses DUMB, SUN or VT100 terminal emulation
 #options 	WSEMUL_NODUMB
@@ -138,6 +140,11 @@ ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
 
 #asc*		at podulebus0 slot ?	# Acorn SCSI card (AKA30, AKA31)
 #scsibus*	at asc?
+
+upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
+com0		at upc0			# Serial port
+lpt0		at upc0			# Parallel port
+wdc*		at upc0			# IDE controller
 
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
