@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.10 2002/10/26 13:50:34 jdolecek Exp $
+#	$NetBSD: files.mipsco,v 1.11 2003/07/27 01:19:27 thorpej Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -59,7 +59,6 @@ file arch/mipsco/mipsco/clock.c
 file arch/mipsco/mipsco/bus_space.c
 file arch/mipsco/mipsco/bus_dma.c
 file arch/mipsco/mipsco/prom.c
-file dev/clock_subr.c
 file dev/cons.c
 
 # Memory Disk

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.12 2002/10/27 23:23:48 chs Exp $
+#	$NetBSD: files.sun2,v 1.13 2003/07/27 01:19:32 thorpej Exp $
 
 #
 # sun2-specific configuration info
@@ -92,7 +92,6 @@ attach zs at obio with zs_obio
 device clock
 attach clock at obio
 file arch/sun2/sun2/clock.c
-file dev/clock_subr.c
 
 # National Semiconductor Time-Of-Day clock
 device tod: mm58167
