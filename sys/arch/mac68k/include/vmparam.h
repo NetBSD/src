@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2000/02/11 19:25:16 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.27 2000/11/14 19:07:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,14 @@
 /*
  * Machine dependent constants for mac68k -- mostly derived from hp300.
  */
+
+/*
+ * We use 4K pages on the mac68k.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
