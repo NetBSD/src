@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1994/10/26 21:10:14 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1994/11/24 17:50:50 dean Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,6 +92,12 @@ setstatclockrate(newhz)
 }
 
 /*
+ * This is the amount to add to the value stored in the clock chip
+ * to get the current year.
+ */
+#define YR_OFFSET	22
+
+/*
  * This code is defunct after 2099.
  * Will Unix still be here then??
  */
@@ -132,7 +138,7 @@ inittodr(base)
 	hour = c->hour;
 	day = c->day;
 	mon = c->mon;
-	year = c->year + 20; /* must be multiple of 4 because chip knows leap */
+	year = c->year + YR_OFFSET;
 	splx(s);
 
 	/* simple sanity checks */
@@ -144,7 +150,7 @@ inittodr(base)
 		 */
 		time.tv_sec = base;
 		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
+			printf("WARNING: preposterous clock chip time");
 			resettodr();
 		}
 		goto bad;
@@ -225,7 +231,7 @@ resettodr()
 	c->hour = hour;
 	c->day = day;
 	c->mon = mon;
-	c->year = year - 20; /* must be multiple of 4 because chip knows leap */
+	c->year = year - YR_OFFSET;
 	c->regb = t;
 	MachEmptyWriteBuffer();
 	splx(s);
