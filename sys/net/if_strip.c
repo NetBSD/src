@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.58 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.59 2005/03/31 15:48:13 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.58 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.59 2005/03/31 15:48:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -871,21 +871,10 @@ stripoutput(ifp, m, dst, rt)
 	splx(s);
 
 	s = splnet();
-	if (ifq != NULL) {
-		if (IF_QFULL(ifq)) {
-			IF_DROP(ifq);
-			m_freem(m);
-			error = ENOBUFS;
-		} else {
-			IF_ENQUEUE(ifq, m);
-			error = 0;
-		}
-	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
+	if ((error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA
+	    ALTQ_DECL(&pktattr))) != 0) {
 		splx(s);
-		ifp->if_oerrors++;
-		return (error);
+		return error;
 	}
 	sc->sc_lastpacket = time;
 	splx(s);

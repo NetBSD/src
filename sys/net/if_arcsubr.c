@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.46 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.47 2005/03/31 15:48:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.46 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.47 2005/03/31 15:48:13 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -125,7 +125,7 @@ arc_output(ifp, m0, dst, rt0)
 	struct arccom		*ac;
 	struct arc_header	*ah;
 	struct arphdr		*arph;
-	int			s, error, newencoding, len;
+	int			error, newencoding;
 	u_int8_t		atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
@@ -298,22 +298,9 @@ arc_output(ifp, m0, dst, rt0)
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
-			len = m->m_pkthdr.len;
-			s = splnet();
-			/*
-			 * Queue message on interface, and start output if
-			 * interface not yet active.
-			 */
-			IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-			if (error) {
-				/* mbuf is already freed */
-				splx(s);
+			if ((error = ifq_enqueue(ifp, m ALTQ_COMMA
+			    ALTQ_DECL(&pktattr))) != 0)
 				return (error);
-			}
-			ifp->if_obytes += len;
-			if ((ifp->if_flags & IFF_OACTIVE) == 0)
-				(*ifp->if_start)(ifp);
-			splx(s);
 
 			m = m1;
 			sflag += 2;
@@ -360,24 +347,7 @@ arc_output(ifp, m0, dst, rt0)
 		ah->arc_shost = myself;
 	}
 
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-
-	return (error);
+	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
 	if (m1)
