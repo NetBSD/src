@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1995/08/17 09:27:18 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1995/09/01 20:06:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1057,7 +1057,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -1067,11 +1067,11 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fsize = sizeof(struct sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
+	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
 					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -1189,9 +1189,9 @@ sigreturn(p, uap, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
 	regs[MULLO] = scp->mullo;

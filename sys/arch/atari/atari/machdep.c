@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1995/08/28 20:07:04 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1995/09/01 20:06:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -499,7 +499,7 @@ sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -512,7 +512,7 @@ sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -671,9 +671,9 @@ sigreturn(p, uap, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else 
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;

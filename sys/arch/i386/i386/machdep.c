@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 1995/08/27 21:30:00 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 1995/09/01 20:06:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -497,7 +497,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_signum = sig;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -506,7 +506,7 @@ sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct sigframe *)tf->tf_esp - 1;
 	}
@@ -612,9 +612,9 @@ sigreturn(p, uap, retval)
 		return (EINVAL);
 
 	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1995/07/05 18:40:50 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.48 1995/09/01 20:06:18 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -446,7 +446,7 @@ sendsig(catcher, sig, mask, code)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
@@ -455,7 +455,7 @@ sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
 					 psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -588,9 +588,9 @@ sigreturn(p, uap, retval)
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
 	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }

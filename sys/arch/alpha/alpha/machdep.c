@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1995/08/03 01:04:03 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1995/09/01 20:06:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -1008,7 +1008,7 @@ sendsig(catcher, sig, mask, code)
 	extern struct proc *fpcurproc;
 
 	frame = p->p_md.md_tf;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	fsize = sizeof ksc;
 	rndfsize = ((fsize + 15) / 16) * 16;
 	/*
@@ -1022,7 +1022,7 @@ sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		scp = (struct sigcontext *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - rndfsize);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		scp = (struct sigcontext *)(frame->tf_regs[FRAME_SP] -
 		    rndfsize);
@@ -1159,9 +1159,9 @@ sigreturn(p, uap, retval)
 	 * Restore the user-supplied information
 	 */
 	if (ksc.sc_onstack)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
 
 	p->p_md.md_tf->tf_pc = ksc.sc_pc;

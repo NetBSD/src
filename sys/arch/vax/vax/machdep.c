@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 1995/07/05 08:29:27 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.16 1995/09/01 20:06:31 mycroft Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -371,9 +371,9 @@ sigreturn(p, uap, retval)
 		return (EINVAL);
 	}
 	if (cntx->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = cntx->sc_mask & ~sigcantmask;
 
 	scf->fp = cntx->sc_fp;
@@ -421,7 +421,7 @@ sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		cursp = (u_int *) (psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		cursp = (u_int *) mfpr(PR_USP);
 	if ((u_int) cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))

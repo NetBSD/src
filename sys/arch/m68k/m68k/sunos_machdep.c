@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.3 1995/04/23 18:22:14 chopps Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.4 1995/09/01 20:06:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@ sunos_sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * if this is a hardware fault (ft >= FMT9), sunos_sendsig
@@ -136,7 +136,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sunos_sigframe *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - sizeof(struct sunos_sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -249,9 +249,9 @@ sunos_sigreturn(p, uap, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else 
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;

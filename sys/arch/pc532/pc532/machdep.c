@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1995/08/29 22:37:49 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1995/09/01 20:06:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -525,7 +525,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = ps->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -534,7 +534,7 @@ sendsig(catcher, sig, mask, code)
 	    (ps->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
 		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
-		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
+		ps->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct sigframe *)(regs[REG_SP]
 				- sizeof(struct sigframe));
@@ -620,9 +620,9 @@ sigreturn(p, uap, retval)
 	}
 #endif
 	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
 	regs[REG_FP] = scp->sc_fp;
