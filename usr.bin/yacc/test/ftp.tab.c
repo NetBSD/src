@@ -1,6 +1,6 @@
 #ifndef lint
 /*static char yysccsid[] = "from: @(#)yaccpar	1.9 (Berkeley) 02/21/93";*/
-static char rcsid[] = "$Id: ftp.tab.c,v 1.3 1993/08/01 18:00:45 mycroft Exp $";
+static char rcsid[] = "$Id: ftp.tab.c,v 1.4 1994/03/27 09:08:58 cgd Exp $";
 #endif
 #define YYBYACC 1
 #define YYMAJOR 1
@@ -873,7 +873,7 @@ char *filename;
 		    (stbuf.st_mode&S_IFMT) != S_IFREG)
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%lu", stbuf.st_size);
+			reply(213, "%qu", stbuf.st_size);
 		break;}
 	case TYPE_A: {
 		FILE *fin;
