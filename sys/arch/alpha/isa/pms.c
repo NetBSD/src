@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.10 1997/04/07 23:40:24 cgd Exp $ */
+/* $NetBSD: pms.c,v 1.11 1997/09/02 13:19:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -31,10 +31,9 @@
  * may result in dropped characters and/or corrupted mouse events.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.10 1997/04/07 23:40:24 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.11 1997/09/02 13:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

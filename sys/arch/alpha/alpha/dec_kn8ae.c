@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.10 1997/08/27 11:22:58 bouyer Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.11 1997/09/02 13:18:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.10 1997/08/27 11:22:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.11 1997/09/02 13:18:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
