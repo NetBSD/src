@@ -1,9 +1,12 @@
-# $NetBSD: Makefile,v 1.26 1999/04/05 06:56:23 cgd Exp $
+# $NetBSD: Makefile,v 1.27 1999/08/18 20:01:06 cgd Exp $
 
 PROG = boot
 
 SRCS = start.S boot.c loadfile.c blkdev.c prom.c prom_disp.S OSFpal.c
 SRCS+= filesystem.c prom_swpal.S booted_dev.c
+
+# XXX for debugging primary and secondary together
+# SRCS+= putstr.c putulong.c
 
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
