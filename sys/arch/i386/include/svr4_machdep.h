@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.1 1995/01/08 21:23:31 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.2 1995/01/09 01:05:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -82,7 +82,7 @@ typedef struct {
 
 } svr4_fregset_t;
 
-
+struct svr4_ucontext;
 void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
 			  int, int));
 int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
