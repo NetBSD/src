@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.185 2003/07/26 10:40:33 martin Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.186 2003/09/11 11:34:46 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.184 2003/07/26 10:39:32 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.185 2003/09/11 11:34:18 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -811,6 +811,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Psion",
 	    "Psion Gold Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_QUATECH, PCMCIA_PRODUCT_QUATECH_SPP_100,
+	    PCMCIA_CIS_QUATECH_SPP_100,
+	    0,
+	    "Quatech",
+	    "Quatech Enhanced Parallel Port",	}
 	,
 	{
 	    PCMCIA_VENDOR_QUATECH, PCMCIA_PRODUCT_QUATECH_DSP_225,
