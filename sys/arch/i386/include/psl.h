@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,8 +35,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.5 1994/01/09 14:58:14 mycroft Exp $
+ *	$Id: psl.h,v 1.6 1994/03/08 13:24:47 mycroft Exp $
  */
+
+#ifndef _I386_PSL_H_
+#define _I386_PSL_H_
 
 /*
  * 386 processor status longword.
@@ -63,3 +67,38 @@
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
 #define	PSL_USERCLR	(PSL_MBZ | PSL_VIP | PSL_VIF | PSL_NT)
+
+/*
+ * Software-based interrupt masks.
+ */
+#define	PIL_AST		0	/* splnet() and splsoftclock() */
+#define	PIL_IMP		1	/* splimp() */
+#define	PIL_TTY		2	/* spltty() */
+#define	PIL_BIO		3	/* splbio() */
+#define	PIL_CLOCK	4	/* splclock() */
+
+#if defined(KERNEL) && !defined(LOCORE)
+volatile int cpl;		/* current priority level mask */
+int imask[5];			/* interrupt masks per level */
+
+#define	SPL(name, ipl) \
+static __inline int name() { \
+	int newcpl = ipl | cpl; \
+	__asm __volatile("xchg %0,_cpl" : "=r" (newcpl) : "0" (newcpl)); \
+	return newcpl; \
+}
+
+SPL(splnet, imask[PIL_AST])
+SPL(splsoftclock, imask[PIL_AST])
+SPL(splimp, imask[PIL_IMP])
+SPL(spltty, imask[PIL_TTY])
+SPL(splbio, imask[PIL_BIO])
+SPL(splclock, imask[PIL_CLOCK])
+#define	splstatclock()	splclock()
+SPL(splhigh, -1)
+
+int spl0 __P((void));
+int splx __P((int));
+#endif
+
+#endif /* !_I386_PSL_H_ */

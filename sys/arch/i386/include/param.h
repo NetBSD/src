@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.14 1994/02/22 17:16:41 hpeyerl Exp $
+ *	$Id: param.h,v 1.15 1994/03/08 13:24:46 mycroft Exp $
  */
 
 /*
@@ -44,6 +44,10 @@
 #define MACHINE		"i386"
 #define MACHINE_ARCH	"i386"
 #define MID_MACHINE	MID_I386
+
+#ifdef KERNEL
+#include <machine/psl.h>	/* XXX */
+#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
