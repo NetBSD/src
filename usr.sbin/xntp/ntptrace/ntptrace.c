@@ -127,7 +127,7 @@ main(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, "do:nr:t:v")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "do:nr:t:v")) != -1)
 		switch (c) {
 		case 'd':
 			++debug;
