@@ -1,6 +1,6 @@
-#	$NetBSD: NOSY,v 1.10.2.2 1997/01/25 01:29:55 cgd Exp $
+#	$NetBSD: NOSY,v 1.10.2.3 1997/01/31 17:14:48 cgd Exp $
 #
-# Jason's DEC 3000/400 in the lab...
+# Kernel for nostromo.nas.nasa.gov.
 #
 
 include	"arch/alpha/conf/std.alpha"
@@ -13,23 +13,29 @@ options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
+options 	NTP			# NTP PLL
+
+# File systems
+file-system 	FFS		# Fast file system
+file-system 	MFS		# Memory-based file system
+file-system 	NFS		# Sun NFS-compatible file system client
+file-system 	KERNFS		# Kernel data-structure file system (/kern)
+file-system 	PROCFS		# Process file system (/proc)
+file-system 	FDESC		# user file descriptor file system (/dev/fd)
+#file-system 	UNION		# Union filesystem
 
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
-options		FFS		# Fast file system
-options		MFS		# Memory-based file system
 options		NFSSERVER	# Sun NFS-compatible file system server
-options		NFSCLIENT	# Sun NFS-compatible file system client
-options		UNION		# Union filesystem
 
 # Networking options
 options		INET		# Internet protocol suite
+options 	PFIL_HOOKS	# packet filter hooks
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
-#options	COMPAT_09
 options		COMPAT_10
 options		COMPAT_11
 options		COMPAT_12
@@ -38,12 +44,12 @@ options		COMPAT_12
 #options	COMPAT_OSF1
 
 # Loadable Kernel Modules
-options		LKM
+#options 	LKM
 
 # Disable kernel security.
 options		INSECURE
 
-config		netbsd	swap generic
+config		netbsd root on ? type ?
 
 mainbus0 at	root
 cpu*	at	mainbus0
@@ -64,7 +70,7 @@ tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
-fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # SCSI bus support
 scsibus* at	esp?
@@ -73,6 +79,7 @@ scsibus* at	esp?
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
+ch*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
 #wsdisplay*	at	sfb?
