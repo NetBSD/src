@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.22 2001/04/20 12:56:08 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.23 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,12 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.22 2001/04/20 12:56:08 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.23 2002/07/19 13:22:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
+#ifdef DEBUG
+#include <assert.h>
+#endif
 
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
 #define	SYNCH_OUT	{win->cury = y; win->curx = x;}
@@ -106,8 +109,16 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	int		 c, newx, x, y;
 	attr_t		 attributes;
 	__LINE		*lp;
+#ifdef DEBUG
+	int             i;
 
+	for (i = 0; i < win->maxy; i++) {
+		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
+	}
+#endif
+	
 	SYNCH_IN;
+	lp = win->lines[y];
 
 	while (count--) {
 		c = *bytes++;
@@ -214,5 +225,12 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 		}
 	}
 	SYNCH_OUT;
+	
+#ifdef DEBUG
+	for (i = 0; i < win->maxy; i++) {
+		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
+	}
+#endif
+
 	return (OK);
 }

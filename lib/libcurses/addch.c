@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.11 2000/04/15 13:17:02 blymn Exp $	*/
+/*	$NetBSD: addch.c,v 1.12 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.11 2000/04/15 13:17:02 blymn Exp $");
+__RCSID("$NetBSD: addch.c,v 1.12 2002/07/19 13:22:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -107,5 +107,6 @@ __waddch(WINDOW *win, __LDATA *dp)
 	char	buf[2];
 
 	buf[0] = dp->ch;
+	buf[1] = '\0';
 	return (__waddbytes(win, buf, 1, dp->attr));
 }

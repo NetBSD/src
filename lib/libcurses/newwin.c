@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.28 2002/01/02 10:38:28 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.29 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.28 2002/01/02 10:38:28 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.29 2002/07/19 13:22:41 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -179,6 +179,9 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 	for (lp = win->lspace, i = 0; i < win->maxy; i++, lp++) {
 		win->lines[i] = lp;
 		olp = orig->lines[i + win->begy - orig->begy];
+#ifdef DEBUG
+		lp->sentinel = SENTINEL_VALUE;
+#endif
 		lp->line = &olp->line[win->ch_off];
 		lp->firstchp = &olp->firstch;
 		lp->lastchp = &olp->lastch;
@@ -261,6 +264,9 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub)
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
 			win->lines[i] = lp;
 			lp->line = &win->wspace[i * ncols];
+#ifdef DEBUG
+			lp->sentinel = SENTINEL_VALUE;
+#endif
 			lp->firstchp = &lp->firstch;
 			lp->lastchp = &lp->lastch;
 			lp->firstch = 0;
@@ -276,7 +282,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub)
 
 	win->begy = by;
 	win->begx = bx;
-	win->flags = 0;
+	win->flags = (__IDLINE | __IDCHAR);
 	win->delay = -1;
 	win->wattr = 0;
 	win->bch = ' ';

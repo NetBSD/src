@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.64 2001/12/11 11:18:17 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.65 2002/07/19 13:22:41 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -528,6 +528,7 @@ bool	 has_colors(void);
 bool	 has_ic(void);
 bool	 has_il(void);
 int	 hline(chtype, int);
+int	 idcok(WINDOW *, bool);
 int	 idlok(WINDOW *, bool);
 int	 init_color(short, short, short, short);
 int	 init_pair(short, short, short);
