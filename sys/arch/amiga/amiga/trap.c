@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2004/05/16 15:44:10 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2004/08/28 17:53:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2004/05/16 15:44:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2004/08/28 17:53:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,6 @@ trapmmufault(type, code, v, fp, l, sticks)
 	vaddr_t va;
 	struct vm_map *map;
 	ksiginfo_t ksi;
-	u_int nss;
 	int rv;
 
 	KSI_INIT_TRAP(&ksi);
@@ -426,21 +425,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 		printf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
 		panictrap(type, code, v, fp);
 	}
-#endif
-#ifndef no_386bsd_code
-	/*
-	 * XXX: rude hack to make stack limits "work"
-	 */
-	nss = 0;
-	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		nss = btoc(USRSTACK - (unsigned)va);
-		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			nss = 0;
-		}
-	}
-#endif
 
-#ifdef DEBUG
 	if (mmudebug)
 		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
 #endif
@@ -510,7 +495,6 @@ trapmmufault(type, code, v, fp, l, sticks)
 		}
 	}
 
-#ifdef no_386bsd_code
 	/*
 	 * If this was a stack access we keep track of the maximum
 	 * accessed stack size.  Also, if vm_fault gets a protection
@@ -518,28 +502,10 @@ trapmmufault(type, code, v, fp, l, sticks)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			nss = btoc(USRSTACK-(unsigned)va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		}
-	}
+	if (rv == 0) {
+		if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			uvm_grow(p, va); 
 
-	if (rv == 0) {
-		if (type == T_MMUFLT)
-			return;
-		l->l_flag &= ~L_SA_PAGEFAULT;
-		userret(l, fp->f_pc, sticks);
-		return;
-	}
-#else /* use hacky 386bsd_code */
-	if (rv == 0) {
-		/*
-		 * XXX: continuation of rude stack hack
-		 */
-		if (nss > vm->vm_ssize)
-			vm->vm_ssize = nss;
 		if (type == T_MMUFLT)
 			return;
 		l->l_flag &= ~L_SA_PAGEFAULT;
@@ -547,7 +513,6 @@ trapmmufault(type, code, v, fp, l, sticks)
 		return;
 	}
 nogo:
-#endif
 	if (rv == EACCES) {
 		ksi.ksi_code = SEGV_ACCERR;
 		rv = EFAULT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2004/08/28 17:53:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2004/08/28 17:53:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -320,14 +320,9 @@ trap(struct lwp *l, struct trapframe *tf)
 		 * error.
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (rv == 0) {
-				unsigned long nss;
-
-				nss = btoc(USRSTACK - (unsigned long)va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			} else
-			if (rv == EACCES)
+			if (rv == 0)
+				uvm_grow(p, va);
+			else if (rv == EACCES)
 				rv = EFAULT;
 		}
 
