@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130.2.1 2004/04/01 23:31:53 jmc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130.2.2 2004/06/22 09:27:31 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130.2.1 2004/04/01 23:31:53 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130.2.2 2004/06/22 09:27:31 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -526,6 +526,7 @@ cninit_kd()
 #if NAKBD > 0
 	memset(name, 0, sizeof(name));
 	OF_getprop(OF_parent(node), "name", name, sizeof(name));
+	printf("OF_getprop: name = %s\n", name);
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
 		akbd_cnattach();
@@ -534,32 +535,58 @@ cninit_kd()
 #endif
 
 	/*
-	 * We're not an ADB keyboard; must be USB.  Unfortunately,
-	 * we have a few problems:
+	 * It is not obviously an ADB keyboard. Could be USB,
+	 * or ADB on some firmware versions (e.g.: iBook G4)
+	 * This is not enough, we have a few more problems:
 	 *
 	 *	(1) The stupid Macintosh firmware uses a
-	 *	    `psuedo-hid' (yes, they even spell it
-	 *	    incorrectly!) which apparently merges
-	 *	    all USB keyboard input into a single
-	 *	    input stream.  Because of this, we can't
-	 *	    actually determine which USB controller
-	 *	    or keyboard is really the console keyboard!
+	 *	    `psuedo-hid' (no typo) or `pseudo-hid',  
+	 *	    which apparently merges all keyboards 
+	 *	    input into a single input stream.  
+	 *	    Because of this, we can't actually 
+	 *	    determine which controller or keyboard 
+	 *	    is really the console keyboard!
 	 *
-	 *	(2) Even if we could, USB requires a lot of
-	 *	    the kernel to be running in order for it
-	 *	    to work.
+	 *	(2) Even if we could, the keyboard can be USB,
+	 *	    and this requires a lot of the kernel to 
+	 *	    be running in order for it to work.
 	 *
 	 * So, what we do is this:
 	 *
-	 *	(1) Tell the ukbd driver that it is the console.
+	 *	(1) First check for OpenFirmware implementation
+	 *	    that will not let us distinguish between 
+	 *	    USB and ADB. In that situation, try attaching 
+	 *	    anything as we can, and hope things get better 
+	 *	    at autoconfiguration time.
+	 *
+	 *	(2) Assume the keyboard is USB.
+	 *	    Tell the ukbd driver that it is the console.
 	 *	    At autoconfiguration time, it will attach the
 	 *	    first USB keyboard instance as the console
 	 *	    keyboard.
 	 *
-	 *	(2) Until then, so that we have _something_, we
+	 *	(3) Until then, so that we have _something_, we
 	 *	    use the OpenFirmware I/O facilities to read
 	 *	    the keyboard.
 	 */
+
+	/*
+	 * stdin is /pseudo-hid/keyboard.  There is no 
+	 * `adb-kbd-ihandle or `usb-kbd-ihandles methods
+	 * available. Try attaching anything.
+	 *
+	 * XXX This must be called before pmap_bootstrap().
+	 */
+	if (strcmp(name, "pseudo-hid") == 0) {
+		printf("console keyboard type: unknown\n");
+#if NAKBD > 0
+		akbd_cnattach();
+#endif
+#if NUKBD > 0
+		ukbd_cnattach();
+#endif
+		goto kbd_found;
+	}
 
 	/*
 	 * stdin is /psuedo-hid/keyboard.  Test `adb-kbd-ihandle and
@@ -572,6 +599,7 @@ cninit_kd()
 	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) >= 0 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
+		printf("usb-kbd-ihandles matches\n");
 		printf("console keyboard type: USB\n");
 		ukbd_cnattach();
 		goto kbd_found;
@@ -580,6 +608,7 @@ cninit_kd()
 	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &ukbd) >= 0 &&
 	    ukbd != 0 &&
 	    OF_instance_to_package(ukbd) != -1) {
+		printf("usb-kbd-ihandle matches\n");
 		printf("console keyboard type: USB\n");
 		stdin = ukbd;
 		ukbd_cnattach();
@@ -591,6 +620,7 @@ cninit_kd()
 	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) >= 0 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
+		printf("adb-kbd-ihandle matches\n");
 		printf("console keyboard type: ADB\n");
 		stdin = akbd;
 		akbd_cnattach();
@@ -603,6 +633,7 @@ cninit_kd()
 	 * XXX Old firmware does not have `usb-kbd-ihandles method.  Assume
 	 * XXX USB keyboard anyway.
 	 */
+	printf("defaulting to USB...");
 	printf("console keyboard type: USB\n");
 	ukbd_cnattach();
 	goto kbd_found;
