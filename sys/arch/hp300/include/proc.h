@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 1997/10/05 02:12:52 carrel Exp $	*/
+/*	$NetBSD: proc.h,v 1.8.34.1 2001/11/18 18:09:34 scw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,18 +35,21 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _HP300_PROC_H
+#define _HP300_PROC_H
+
+#include <m68k/lwp.h>
+
 /*
  * Machine-dependent part of the proc structure for hp300.
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
-	int	md_flags;		/* machine-dependent flags */
+	int	mdp_flags;		/* machine-dependent flags */
 };
 
 /* md_flags */
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
 #define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
-#define MDP_STACKADJ	0x0040	/* Frame SP adjusted, might have to
-				 * undo when system call returns
-				 * ERESTART. */
+
+#endif /* _HP300_PROC */
