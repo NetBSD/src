@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.22 1996/10/10 17:52:01 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.23 1996/10/13 00:08:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,6 +37,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec_elf.h>
+#include <sys/exec.h>
 
 #include <sys/mman.h>
 #include <vm/vm.h>
