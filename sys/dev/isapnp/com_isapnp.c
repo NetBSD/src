@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.9 1997/11/30 15:13:30 drochner Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.10 1997/12/02 06:10:45 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,8 +85,9 @@ com_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	if (strcmp(ipa->ipa_devlogic, "ROK0010") &&
+	if (strcmp(ipa->ipa_devlogic, "BDP3336") && /* Best Data Prods. 336F */
 	    strcmp(ipa->ipa_devlogic, "BRI1400") && /* Boca 33.6 PnP */
+	    strcmp(ipa->ipa_devlogic, "ROK0010") && /* Rockwell ? */
 	    strcmp(ipa->ipa_devcompat, "PNP0500") && /* generic 8250/16450 */
 	    strcmp(ipa->ipa_devcompat, "PNP0501")) /* generic 16550A */
 		return (0);
