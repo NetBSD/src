@@ -39,7 +39,7 @@
  *
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *      $Id: param.h,v 1.4 1994/05/27 09:01:33 glass Exp $
+ *      $Id: param.h,v 1.5 1994/08/23 19:13:54 glass Exp $
  */
 
 /*
@@ -83,6 +83,7 @@
 
 #define	UPAGES		2		/* pages of u-area */
 #define	UADDR		0xffffd000	/* address of u */
+#define USPACE          (UPAGES*NBPG)   /* size of u-area in bytes */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
 
