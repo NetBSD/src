@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.48 2002/09/12 22:56:29 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.49 2002/09/13 03:22:08 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -66,11 +66,7 @@ extern int _rtld_pagesz;
 #   define PAGESIZE	_rtld_pagesz
 #  endif
 # else
-#  ifndef __sparc__
-#   define PAGESIZE	NBPG
-#  else
-   #error "Sparc has a variable page size"
-#  endif
+#  define PAGESIZE	NBPG
 # endif
 #endif
 
