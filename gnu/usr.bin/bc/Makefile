@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/04/29 00:28:51 phil Exp $
+#	$NetBSD: Makefile,v 1.11 1997/04/29 23:30:15 phil Exp $
 
 PROG=	bc
 CFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
@@ -11,8 +11,9 @@ DPADD+=	${LIBL}
 
 CLEANFILES+= bc.c scan.c bc.h
 
+beforedepend: bc.h
 bc.c bc.h: bc.y
-	$(YACC) -d bc.y
+	${YACC} -d ${.ALLSRC}
 	mv y.tab.c bc.c
 	mv y.tab.h bc.h
 
