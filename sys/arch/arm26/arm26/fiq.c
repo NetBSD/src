@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.2 2001/08/20 23:08:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq.c,v 1.1 2001/08/20 23:08:10 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -27,39 +27,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM26_FIQ_H_
-#define _ARM26_FIQ_H_
-#include <arch/arm26/iobus/iocreg.h>
+#include <sys/param.h>
 
-/*
- * These definitions specify how the devices are wired to the IOC
- * interrupt lines.
- */
-/* All systems */
-#define FIQ_EFIQ	IOC_FIQ_FL	/* Econet interrupt request */
-#define FIQ_PFIQ	IOC_FIQ_IL0	/* Podule FIQ request */
-/* Archimedes systems */
-#define FIQ_FFDQ	IOC_FIQ_FH0	/* Floppy disc data request */
-#define FIQ_FFIQ	IOC_FIQ_FH1	/* Floppy disc interrupt request */
-/* IOEB systems */
-#define FIQ_FDDRQ	IOC_FIQ_FH0	/* Floppy disc data request */
-#define FIQ_SINTR	IOC_FIQ_C4	/* Serial line interrupt */
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.1 2001/08/20 23:08:10 bjh21 Exp $");
 
-struct fiq_regs {
-	register_t	r8_fiq;
-	register_t	r9_fiq;
-	register_t	r10_fiq;
-	register_t	r11_fiq;
-	register_t	r12_fiq;
-	register_t	r13_fiq;
-};
+#include <sys/systm.h>
 
-extern int fiq_claim(void *, size_t);
-extern void fiq_release(void);
-extern void fiq_enable(int);
-extern void fiq_disable(void);
-extern void fiq_setregs(const struct fiq_regs *);
-extern void fiq_getregs(struct fiq_regs *);
-extern void (*fiq_downgrade_handler)(void);
+#include <machine/fiq.h>
 
-#endif
+int fiq_claimed;
+
+extern char fiqhandler[];
+
+void (*fiq_downgrade_handler)(void);
+
+int
+fiq_claim(void *handler, size_t size)
+{
+	int s;
+
+	if (size > 0x100)
+		return -1;
+	s = splhigh();
+	if (fiq_claimed)
+		return -1;
+	fiq_claimed = 1;
+	splx(s);
+	memcpy(fiqhandler, handler, size);
+	return 0;
+}
+
+void
+fiq_release()
+{
+
+	KASSERT(fiq_claimed);
+	fiq_claimed = 0;
+}
+
+

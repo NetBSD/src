@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.19 2001/08/20 23:08:10 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.19 2001/08/20 23:08:10 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -54,11 +54,15 @@ __RCSID("$NetBSD: irq.c,v 1.18 2001/05/01 22:19:09 bjh21 Exp $");
 #include <arch/arm26/iobus/iocvar.h>
 
 #include "opt_ddb.h"
+#include "fiq.h"
 #include "ioeb.h"
 #include "unixbp.h"
 
 #ifdef DDB
 #include <ddb/db_output.h>
+#endif
+#if NFIQ > 0
+#include <machine/fiq.h>
 #endif
 #if NIOEB > 0
 #include <arch/arm26/ioc/ioebvar.h>
@@ -130,7 +134,11 @@ irq_handler(struct irqframe *irqf)
 #endif
 
 	/* Get interrupt-disabling back to the IOC */
+#if NFIQ > 0
+	s = hardsplx(IPL_HIGH); /* In case it's a FIQ downgrade. */
+#else
 	s = splhigh();
+#endif
 	int_on();
 
 #if 0
@@ -139,6 +147,13 @@ irq_handler(struct irqframe *irqf)
 	uvmexp.intrs++;
 
 	stray = 1;
+#if NFIQ > 0
+	/* Check for downgraded FIQs. */
+	if (status & (1 << IOC_IRQ_1)) {
+		fiq_downgrade_handler();
+		goto handled;
+	}
+#endif
 	/* Find the highest-priority requested interrupt. */
 	for (h = irq_list_head.lh_first;
 	     h != NULL && h->ipl > s;
@@ -171,6 +186,7 @@ irq_handler(struct irqframe *irqf)
 	if (__predict_false(stray))
 		log(LOG_WARNING, "Stray IRQ, status = 0x%x, spl = %d, "
 		    "mask = 0x%x\n", status, s, irqmask[s]);
+handled:
 #if 0
 	printf(" handled\n");
 #endif
