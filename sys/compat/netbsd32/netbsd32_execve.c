@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.9 2002/03/22 21:36:46 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.9.4.1 2002/06/07 19:44:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.9 2002/03/22 21:36:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.9.4.1 2002/06/07 19:44:48 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -327,7 +327,8 @@ netbsd32_execve2(p, uap, retval)
 	stack = (char *) (vm->vm_minsaddr - len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)(stack - sizeof(struct ps_strings));
+	p->p_psstr = (struct ps_strings *)(vm->vm_minsaddr -
+	    sizeof(struct ps_strings));
 	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
 	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
 	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
