@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.36 2000/07/17 02:55:53 matt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.37 2000/07/18 22:33:55 eeh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -70,7 +70,7 @@ typedef void    (*funcptr) __P((void));
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t));
+static void     _rtld_init __P((caddr_t, int));
 static void     _rtld_exit __P((void));
 
 Elf_Addr        _rtld __P((Elf_Word *));
@@ -157,8 +157,9 @@ _rtld_call_init_functions(first)
  * this function is to relocate the dynamic linker.
  */
 static void
-_rtld_init(mapbase)
+_rtld_init(mapbase, pagesz)
 	caddr_t mapbase;
+	int pagesz;
 {
 	Obj_Entry objself;/* The dynamic linker shared object */
 	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
@@ -178,7 +179,16 @@ _rtld_init(mapbase)
 	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
 	for (i = 0; i < hdr->e_phnum; i++) {
 		if (objself.phdr[i].p_type == PT_LOAD) {
+#ifdef	VARPSZ
+			/* We can't touch _rtld_pagesz yet so we can't use round_*() */
+#define	_rnd_down(x)	((x) & ~((long)pagesz-1))
+#define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
+			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - _rnd_down(objself.phdr[i].p_vaddr);
+#undef	_rnd_down(x)
+#undef	_rnd_up(x)
+#else
 			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
+#endif
 			break;
 		}
 	}
@@ -312,7 +322,7 @@ _rtld(sp)
 
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
-	sp += sp[0] + 2;	/* Skip over argc, arguments, and NULL
+	sp += ((int *)sp)[0] + 2;	/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
@@ -358,7 +368,7 @@ _rtld(sp)
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v);
+	_rtld_init((caddr_t) pAUX_base->a_v, (pAUX_pagesz)?(int)pAUX_pagesz->a_v:0);
 
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
