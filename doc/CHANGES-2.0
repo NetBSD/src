@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.192 2004/05/09 08:36:18 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.193 2004/05/09 09:02:27 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1913,11 +1913,11 @@ sbin/mount_nfs/mount_nfs.8			1.25
 	[fair, ticket #264]
 
 usr.bin/vi/common/line.c			1.7
-usr.bin/vi/ex/version.h				r1.15
+usr.bin/vi/ex/version.h				1.15
 
 	Flush the current line cache on every operation on the DB.
 	We can't keep a reference to data returned by libdb after a
-	subsequent call to  any other libdb function on that DB.
+	subsequent call to any other libdb function on that DB.
 	Bump version.
 	[aymeric, ticket #261]
 
@@ -1946,4 +1946,26 @@ sys/dev/pci/pciide_common.c			1.10
 	pciide_mapchan() will attach an atabus, and we don't know yet if
 	this channel is enabled or not.  PR#25455.
 	[bouyer, ticket #267]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.97
+
+	Recognize tlp and ethernet as bootpath.
+	[petrov, ticket #268]
+
+sys/conf/files					1.670
+sys/uvm/uvm_map.c				1.169
+sys/uvm/uvm_stat.c				1.24
+sys/uvm/uvm_stat.h				1.32
+
+	Replace uvm counters with evcnt, initialize them through __link_set
+	(from Matt  Thomas), disable counters by default and add configuration
+	option UVMMAP_COUNTERS.
+	[petrov, ticket #269]
+
+sys/conf/files					1.671
+sys/uvm/uvm_map.c				1.170
+
+	Revert default uvm counters, rename UVMMAP_COUNTERS to
+	UVMMAP_NOCOUNTERS.
+	[petrov, ticket #270]
 
