@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.4 2001/11/13 07:48:40 lukem Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.5 2002/01/12 16:17:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.4 2001/11/13 07:48:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.5 2002/01/12 16:17:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,11 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt *gatt;
 	pcireg_t reg;
 
-	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT);
+	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
 		return ENOMEM;
 	}
-	memset(isc, 0, sizeof *isc);
 
 	sc->as_methods = &agp_intel_methods;
 	sc->as_chipc = isc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.17 2001/11/13 07:48:41 lukem Exp $	*/
+/*	$NetBSD: cz.c,v 1.18 2002/01/12 16:17:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.17 2001/11/13 07:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.18 2002/01/12 16:17:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,10 +405,8 @@ cz_attach(struct device *parent,
 	}
 
 	cz->cz_ports = malloc(sizeof(struct cztty_softc) * cz->cz_nchannels,
-	    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	cztty_attached_ttys += cz->cz_nchannels;
-	memset(cz->cz_ports, 0,
-	    sizeof(struct cztty_softc) * cz->cz_nchannels);
 
 	for (i = 0; i < cz->cz_nchannels; i++) {
 		sc = &cz->cz_ports[i];
