@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.1.1.9 2001/09/27 02:00:49 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.1.1.10 2001/11/27 04:04:19 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.89 2001/08/16 19:18:34 jakob Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.92 2001/11/17 19:14:34 stevesk Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>
@@ -211,10 +211,15 @@ fill_default_server_options(ServerOptions *options)
 		options->client_alive_interval = 0;  
 	if (options->client_alive_count_max == -1)
 		options->client_alive_count_max = 3;
+	if (options->authorized_keys_file2 == NULL) {
+		/* authorized_keys_file2 falls back to authorized_keys_file */
+		if (options->authorized_keys_file != NULL)
+			options->authorized_keys_file2 = options->authorized_keys_file;
+		else
+			options->authorized_keys_file2 = _PATH_SSH_USER_PERMITTED_KEYS2;
+	}
 	if (options->authorized_keys_file == NULL)
 		options->authorized_keys_file = _PATH_SSH_USER_PERMITTED_KEYS;
-	if (options->authorized_keys_file2 == NULL)
-		options->authorized_keys_file2 = _PATH_SSH_USER_PERMITTED_KEYS2;
 }
 
 /* Keyword tokens. */
@@ -314,7 +319,7 @@ static struct {
 	{ "clientalivecountmax", sClientAliveCountMax },
 	{ "authorizedkeysfile", sAuthorizedKeysFile },
 	{ "authorizedkeysfile2", sAuthorizedKeysFile2 },
-	{ NULL, 0 }
+	{ NULL, sBadOption }
 };
 
 /*

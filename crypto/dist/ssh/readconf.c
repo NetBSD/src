@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.11 2001/11/07 06:20:20 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.12 2001/11/27 04:04:13 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.91 2001/10/01 21:51:16 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.92 2001/11/17 19:14:34 stevesk Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -188,7 +188,7 @@ static struct {
 	{ "smartcarddevice", oSmartcardDevice },
 	{ "clearallforwardings", oClearAllForwardings }, 
 	{ "nohostauthenticationforlocalhost", oNoHostAuthenticationForLocalhost }, 
-	{ NULL, 0 }
+	{ NULL, oBadOption }
 };
 
 /*

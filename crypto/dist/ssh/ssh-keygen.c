@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.1.1.10 2001/11/07 06:20:34 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.1.1.11 2001/11/27 04:04:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.83 2001/10/25 21:14:32 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.84 2001/11/17 19:14:34 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -531,7 +531,9 @@ do_fingerprint(struct passwd *pw)
 	FILE *f;
 	Key *public;
 	char *comment = NULL, *cp, *ep, line[16*1024], *fp;
-	int i, skip = 0, num = 1, invalid = 1, rep, fptype;
+	int i, skip = 0, num = 1, invalid = 1;
+	enum fp_rep rep;
+	enum fp_type fptype;
 	struct stat st;
 
 	fptype = print_bubblebabble ? SSH_FP_SHA1 : SSH_FP_MD5;

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.8 2001/09/27 02:00:54 itojun Exp $	*/
-/*	$OpenBSD: ssh-agent.c,v 1.72 2001/08/03 10:31:30 jakob Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.1.1.9 2001/11/27 04:04:30 itojun Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.73 2001/11/17 19:14:34 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.72 2001/08/03 10:31:30 jakob Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.73 2001/11/17 19:14:34 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -62,11 +62,15 @@ RCSID("$OpenBSD: ssh-agent.c,v 1.72 2001/08/03 10:31:30 jakob Exp $");
 #include "scard.h"
 #endif
 
+typedef enum {
+	AUTH_UNUSED,
+	AUTH_SOCKET,
+	AUTH_CONNECTION
+} sock_type;
+
 typedef struct {
 	int fd;
-	enum {
-		AUTH_UNUSED, AUTH_SOCKET, AUTH_CONNECTION
-	} type;
+	sock_type type;
 	Buffer input;
 	Buffer output;
 } SocketEntry;
@@ -624,7 +628,7 @@ process_message(SocketEntry *e)
 }
 
 static void
-new_socket(int type, int fd)
+new_socket(sock_type type, int fd)
 {
 	u_int i, old_alloc;
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)

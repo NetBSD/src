@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.9 2001/11/07 06:20:34 itojun Exp $	*/
+/*	$NetBSD: ssh-keyscan.c,v 1.1.1.10 2001/11/27 04:04:33 itojun Exp $	*/
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.30 2001/10/08 19:05:05 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.32 2001/11/22 05:27:29 stevesk Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -624,6 +624,8 @@ do_host(char *host)
 	char *name = strnnsep(&host, " \t\n");
 	int j;
 
+	if (name == NULL)
+		return;
 	for (j = KT_RSA1; j <= KT_RSA; j *= 2) {
 		if (get_keytypes & j) {
 			while (ncon >= MAXCON)
@@ -716,7 +718,7 @@ main(int argc, char **argv)
 					get_keytypes |= KT_RSA;
 					break;
 				case KEY_UNSPEC:
-					fatal("unknown key type %s\n", tname);
+					fatal("unknown key type %s", tname);
 				}
 				tname = strtok(NULL, ",");
 			}
