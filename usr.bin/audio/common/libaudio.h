@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.4 2000/06/18 07:20:15 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.4.2.1 2001/03/11 21:30:08 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -126,7 +126,7 @@ typedef struct {
 } wav_audioheaderfmt __attribute__((__packed__));
 
 /* returns size of header, or -1 */
-size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *));
+size_t audio_parse_wav_hdr __P((void *, size_t, int *, int *, int *, int *, size_t *));
 
 /*
  * audio routine error codes
