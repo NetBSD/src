@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.10 1995/03/08 02:56:55 cgd Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.11 1995/04/05 21:38:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -358,7 +358,7 @@ ether_input(ifp, eh, m)
 #endif
 	default:
 #if defined (ISO) || defined (LLC)
-		if (eh->ether_type > ETHERMTU)
+		if (etype > ETHERMTU)
 			goto dropanyway;
 		l = mtod(m, struct llc *);
 		switch (l->llc_dsap) {
@@ -370,8 +370,8 @@ ether_input(ifp, eh, m)
 				if ((l->llc_dsap == LLC_ISO_LSAP) &&
 				    (l->llc_ssap == LLC_ISO_LSAP)) {
 					/* LSAP for ISO */
-					if (m->m_pkthdr.len > eh->ether_type)
-						m_adj(m, eh->ether_type - m->m_pkthdr.len);
+					if (m->m_pkthdr.len > etype)
+						m_adj(m, etype - m->m_pkthdr.len);
 					m->m_data += 3;		/* XXX */
 					m->m_len -= 3;		/* XXX */
 					m->m_pkthdr.len -= 3;	/* XXX */
@@ -431,8 +431,8 @@ ether_input(ifp, eh, m)
 #ifdef LLC
 		case LLC_X25_LSAP:
 		{
-			if (m->m_pkthdr.len > eh->ether_type)
-				m_adj(m, eh->ether_type - m->m_pkthdr.len);
+			if (m->m_pkthdr.len > etype)
+				m_adj(m, etype - m->m_pkthdr.len);
 			M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
 			if (m == 0)
 				return;
@@ -440,7 +440,7 @@ ether_input(ifp, eh, m)
 					    eh->ether_dhost, LLC_X25_LSAP, 6, 
 					    mtod(m, struct sdl_hdr *)))
 				panic("ETHER cons addr failure");
-			mtod(m, struct sdl_hdr *)->sdlhdr_len = eh->ether_type;
+			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;
 #ifdef LLC_DEBUG
 				printf("llc packet\n");
 #endif /* LLC_DEBUG */
