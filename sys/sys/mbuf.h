@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.39 1999/01/09 22:10:12 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.40 1999/01/24 01:07:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -364,6 +364,19 @@ struct mbuf {
 
 #define	MEXTREMOVE(m) \
 	MBUFLOCK(_MEXTREMOVE((m));)
+
+/*
+ * Reset the data pointer on an mbuf.
+ */
+#define	MRESETDATA(m)							\
+do {									\
+	if ((m)->m_flags & M_EXT)					\
+		(m)->m_data = (m)->m_ext.ext_buf;			\
+	else if ((m)->m_flags & M_PKTHDR)				\
+		(m)->m_data = (m)->m_pktdat;				\
+	else								\
+		(m)->m_data = (m)->m_dat;				\
+} while (0)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
