@@ -1,4 +1,4 @@
-/* $Id: ispvar.h,v 1.11 1998/09/08 07:27:04 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.12 1998/09/10 17:10:27 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -375,6 +375,7 @@ int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
  * For: 	Aborting a running command	- arg is an ISP_SCSI_XFER_T *
  *		Resetting a Device		- arg is target to reset
  *		Resetting a BUS			- arg is ignored
+ *		Updating parameters		- arg is ignored
  *
  * Second argument is an index into xflist array.
  * Assumes all locks must be held already.
@@ -382,7 +383,8 @@ int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
 typedef enum {
 	ISPCTL_RESET_BUS,
 	ISPCTL_RESET_DEV,
-	ISPCTL_ABORT_CMD
+	ISPCTL_ABORT_CMD,
+	ISPCTL_UPDATE_PARAMS,
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
 

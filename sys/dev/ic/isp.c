@@ -1,4 +1,4 @@
-/* $Id: isp.c,v 1.25 1998/09/08 07:28:50 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.26 1998/09/10 17:10:27 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -227,8 +227,8 @@ isp_reset(isp)
 		mbs.param[0] = MBOX_ABOUT_FIRMWARE;
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			PRINTF("%s: initial ABOUT FIRMWARE command failed",
-				isp->isp_name);
+			IDPRINTF(3, ("%s: initial ABOUT FIRMWARE command "
+			    "failed\n", isp->isp_name));
 		} else {
 			isp->isp_romfw_rev =
 			    (((u_int16_t) mbs.param[1]) << 10) + mbs.param[2];
@@ -1081,6 +1081,10 @@ isp_control(isp, ctl, arg)
 		PRINTF("%s: command for target %d lun %d was aborted\n",
 		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
 		return (0);
+
+	case ISPCTL_UPDATE_PARAMS:
+		isp_update(isp);
+		return(0);
 	}
 	return (-1);
 }
@@ -2170,10 +2174,10 @@ isp_update(isp)
 				break;
 			}
 			if (x) {
-				IDPRINTF(2, ("%s: Target %d maximum Sync Mode "
+				IDPRINTF(3, ("%s: Target %d maximum Sync Mode "
 				    "at %dMHz%s", isp->isp_name, tgt, x, wt));
 			} else {
-				IDPRINTF(2, ("%s: Target %d Async Mode%s",
+				IDPRINTF(3, ("%s: Target %d Async Mode%s",
 				    isp->isp_name, tgt, wt));
 			}
 		}
