@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.57 1998/02/10 14:10:28 mrg Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.58 1998/02/14 01:33:18 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -1035,11 +1035,11 @@ svr4_sys_pgrpsys(p, v, retval)
 		if (SCARG(uap, pid) != 0 &&
 		    (p = svr4_pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		/* 
-		 * we return the pid of the session leader for this
-		 * process
+		/*
+		 * This has already been initialized to the pid of
+		 * the session leader.
 		 */
-		*retval = (register_t) p->p_session->s_leader->p_pid;
+		*retval = (register_t) p->p_session->s_sid;
 		return 0;
 
 	case 3:			/* setsid() */
