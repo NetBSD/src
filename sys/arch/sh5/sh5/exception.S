@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.13 2002/09/10 12:27:21 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.14 2002/09/11 10:55:05 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -971,8 +971,6 @@ Ltlbmiss_user_ipt:
 	LDPTR	r0, 0, r0
 	add	r2, r0, r2		/* r2 points to required PTE group */
 	getcon	tea, r4			/* Get missed virtual address */
-	movi	NBPG-1,r1
-	andc	r4, r1, r4		/* Mask off PGOFSET bits */
 
 	/*
 	 * r0/r1 available
@@ -983,13 +981,12 @@ Ltlbmiss_user_ipt:
 	 *
 	 * XXX: Register allocation could be optimised a wee bit here...
 	 */
-Ltlbmiss_lookup:
 	pta/l	1f, tr0
 	pta/l	2f, tr1
 
 	movi	SH5_PTE_PN_MASK_MOVI, r1/* Mask for EPN */
 	movi	SH5_PTEG_SIZE, r6	/* How many PTEs per group */
-
+	and	r4, r1, r4
 1:	LDPTE	r2, SH5_PTE_VSID, r0	/* Fetch VSID */
 	bne/l	r5, r0, tr1		/* Jump if PTE's VSID doesn't match */
 	LDPTE	r2, SH5_PTE_PTEH, r0	/* Fetch PTEH */
