@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2000/11/09 11:58:09 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2000/11/14 21:55:25 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -85,22 +85,34 @@ cpumatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
-	int hammerhead;
+	int q;
 
 	if (strcmp(ca->ca_name, cpu_cd.cd_name))
 		return 0;
 
+	q = OF_finddevice("/cpus");
+	if (q != -1 && q != 0) {
+		for (q = OF_child(q); q != 0; q = OF_peer(q)) {
+			uint32_t cpunum;
+			int l;
+			l = OF_getprop(q, "reg", &cpunum, sizeof(cpunum));
+			if (l == 4 && reg[0] == cpunum)
+				return 1;
+		}
+	}
 	switch (reg[0]) {
 	case 0:	/* master CPU */
 		return 1;
 	case 1:	/* secondary CPU */
-		hammerhead = OF_finddevice("/hammerhead");
-		if (hammerhead == -1)
+		q = OF_finddevice("/hammerhead");
+		if (q != -1) {
+			if (in32rb(HH_ARBCONF) & 0x02)
+				return 1;
 			return 0;
-		if (in32rb(HH_ARBCONF) & 0x02)
-			return 1;
+		}
+	default: /* impossible CPU */
+		return 0;
 	}
-	return 0;
 }
 
 #define MPC601		1
