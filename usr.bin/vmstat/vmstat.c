@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.107 2002/11/22 13:30:34 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.108 2002/12/12 20:03:32 atatat Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.107 2002/11/22 13:30:34 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.108 2002/12/12 20:03:32 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 	reps = todo = verbose = 0;
 	interval.tv_sec = 0;
 	interval.tv_nsec = 0;
-	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:suUvw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:su:Uvw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
