@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.59 2000/01/02 18:44:07 itojun Exp $	
+.\"	$NetBSD: hardware,v 1.60 2000/01/24 23:15:50 mcr Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -93,6 +93,7 @@ Supported devices include:
 		16550/16650/16750-based ports
 		AST-style 4-port serial cards [*]
 		BOCA 8-port serial cards [*] 
+		BOCA 6-port (ioat) serial cards [*] 
 		IBM PC-RT 4-port serial cards [*]
 		Single-port Hayes ESP serial cards [*]
 		Cyclades Cyclom-Y serial cards [*] [+]
