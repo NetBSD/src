@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.25 1998/03/22 06:31:40 mhitch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.26 1998/04/27 07:34:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.25 1998/03/22 06:31:40 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.26 1998/04/27 07:34:28 jonathan Exp $");
 
 #include "opt_uvm.h"
 
@@ -323,6 +323,14 @@ mips_vector_init()
 	}
 }
 
+void
+mips_set_wbflush(flush_fn)
+	void (*flush_fn) __P((void));
+{
+#undef wbflush
+	mips_locore_jumpvec.wbflush = flush_fn;
+	(*flush_fn)();
+}
 
 /*
  * Identify cpu and fpu type and revision.
