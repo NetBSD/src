@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.32 2003/11/08 04:49:17 ross Exp $
+$NetBSD: README,v 1.33 2004/02/13 10:08:55 wiz Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -58,13 +58,13 @@ vax:		Digital Equipment Corp. VAX machines (vax, 19940802)
 x68k:		Sharp X68000, X68030 (m68k, 19960505)
 
 Generic architectural features shared among multiple ports
-arm:		ARM cpu based platform files
+arm:		ARM CPU based platform files
 hpc:		Handheld PC reference platform files
-hppa:		Hewlett Packard PA-RISC cpu based platform files
-m68k:		Motorola 680x0 cpu based platform files
-m88k:		Motorola 88xxx cpu based platform files
-mips:		MIPS cpu based platform files
-powerpc:	PowerPC cpu based platform files
-sh3:		Hitachi SuperH(TM) sh3 and sh4 cpu based platform files
-sh5:		Hitachi SuperH(TM) sh5 cpu based platform files
-sun68k:		Sun Motorola 680x0 cpu based platform files
+hppa:		Hewlett Packard PA-RISC CPU based platform files
+m68k:		Motorola 680x0 CPU based platform files
+m88k:		Motorola 88xxx CPU based platform files
+mips:		MIPS CPU based platform files
+powerpc:	PowerPC CPU based platform files
+sh3:		Hitachi SuperH(TM) sh3 and sh4 CPU based platform files
+sh5:		Hitachi SuperH(TM) sh5 CPU based platform files
+sun68k:		Sun Motorola 680x0 CPU based platform files
