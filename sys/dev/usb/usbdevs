@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.172 2001/06/10 13:10:25 tron Exp $
+$NetBSD: usbdevs,v 1.173 2001/07/04 16:37:26 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -326,6 +326,7 @@ product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* AboCom products */
 product ABOCOM URE450		0x4000	URE450 Ethernet Adapter
+product ABOCOM DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
