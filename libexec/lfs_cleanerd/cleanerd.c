@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.9 1998/10/07 14:56:22 christos Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.10 1998/10/07 14:57:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.9 1998/10/07 14:56:22 christos Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.10 1998/10/07 14:57:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,8 +260,8 @@ clean_loop(fsp, nsegs, options)
 	 * Compute the maximum possible number of free segments, given the
 	 * number of free blocks.
 	 */
-	db_per_seg = fsbtodb(&fsp->fi_lfs, fsp->fi_lfs.lfs_ssize);
-	max_free_segs = fsp->fi_statfsp->f_bfree / fsp->fi_lfs.lfs_ssize;
+	db_per_seg = fragstodb(&fsp->fi_lfs, fsp->fi_lfs.lfs_ssize);
+	max_free_segs = (fsp->fi_statfsp->f_bfree / fsp->fi_lfs.lfs_ssize) >> fsp->fi_lfs.lfs_fbshift;
 	
 	/* 
 	 * We will clean if there are not enough free blocks or total clean
