@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.2 1995/04/11 22:08:10 pk Exp $	*/
+/*	$NetBSD: cninit.c,v 1.3 1998/06/21 22:36:46 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,8 +62,10 @@ extern struct	consdev *cn_tab;	/* physical console device info */
 void
 cninit()
 {
-	register struct consdev *cp;
-
+	struct consdev *cp;
+	struct consdev *bestMatch;
+	
+	bestMatch = cn_tab = NULL;
 	/*
 	 * Collect information about all possible consoles
 	 * and find the one with highest priority
@@ -71,16 +73,29 @@ cninit()
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
 		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
-			cn_tab = cp;
+		    (bestMatch == NULL || cp->cn_pri > bestMatch->cn_pri)) {
+			bestMatch = cp;
+		}
 	}
 	/*
 	 * No console, we can handle it
 	 */
-	if ((cp = cn_tab) == NULL)
+	if ((cp = bestMatch) == NULL)
 		return;
 	/*
 	 * Turn on console
 	 */
-	(*cp->cn_init)(cp);
+	{
+		struct consdev *old_cn_tab = cn_tab;
+
+ 		(*cp->cn_init)(cp);
+		/*
+		 * Now let everyone know we have an active console they can
+		 * use for diagnostics. If we use cn_tab in the search loop
+		 * then interrupts from the ethernet at boot may cause system
+		 * hang.
+		 */
+		if (cn_tab == old_cn_tab)
+			cn_tab = bestMatch;
+	}
 }
