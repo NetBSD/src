@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.17 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.18 2004/02/21 20:06:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.17 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.18 2004/02/21 20:06:29 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -477,7 +477,6 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			     const RF_RedFuncs_t *qfuncs)
 {
 	RF_DagNode_t *readDataNodes, *readParityNodes, *readQNodes, *termNode;
-	RF_DagNode_t *unlockDataNodes, *unlockParityNodes, *unlockQNodes;
 	RF_DagNode_t *xorNodes, *qNodes, *blockNode, *commitNode, *nodes;
 	RF_DagNode_t *writeDataNodes, *writeParityNodes, *writeQNodes;
 	int     i, j, nNodes, totalNumNodes;
@@ -549,7 +548,6 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	i += numParityNodes;
 	termNode = &nodes[i];
 	i += 1;
-	unlockDataNodes = unlockParityNodes = NULL;
 
 	if (nfaults == 2) {
 		readQNodes = &nodes[i];
@@ -558,9 +556,8 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		i += numParityNodes;
 		qNodes = &nodes[i];
 		i += numParityNodes;
-		unlockQNodes = NULL;
 	} else {
-		readQNodes = writeQNodes = qNodes = unlockQNodes = NULL;
+		readQNodes = writeQNodes = qNodes = NULL;
 	}
 	RF_ASSERT(i == totalNumNodes);
 
