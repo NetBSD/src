@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.3 2001/11/04 01:16:01 thorpej Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.4 2001/11/04 01:23:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _ARM_XSCALE_I80312REG_H_ 
 #define _ARM_XSCALE_I80312REG_H_ 
+
+/*
+ * Register definitions for the Intel 80310 I/O Companion Chip.
+ */
 
 /*
  * Physical addresses 0x1000..0x1fff are used by the Periphial Memory
