@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.327 2001/05/14 22:37:24 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.328 2001/05/17 17:37:01 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.321 2001/05/14 22:36:06 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.322 2001/05/17 17:36:30 drochner Exp 
  */
 
 /*
@@ -1360,6 +1360,9 @@
 /* Newbridge / Tundra products */
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
 
+/* National Instruments products */
+#define	PCI_PRODUCT_NATIONALINST_MXI3	0x2c30		/* MXI-3 PCI extender */
+
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
@@ -1684,6 +1687,7 @@
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-to-DSP Bridge */
 
 /* Titan Electronics products */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
