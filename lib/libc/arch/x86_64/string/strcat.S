@@ -1,65 +1,164 @@
 /*
- * Written by J.T. Conklin <jtc@NetBSD.org>.
+ * Written by J.T. Conklin <jtc@acorntoolworks.com>
  * Public domain.
- * Adapted for NetBSD/x86_64 by Frank van der Linden <fvdl@wasabisystems.com>
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcat.S,v 1.2 2003/07/26 19:24:39 salo Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.3 2004/07/19 20:04:41 drochner Exp $")
 #endif
 
-/*
- * NOTE: I've unrolled the loop eight times: large enough to make a
- * significant difference, and small enough not to totally trash the
- * cache.
- */
-
 ENTRY(strcat)
-	movq	%rdi,%r11
+	movq	%rdi,%rax
+	movabsq	$0x0101010101010101,%r8
+	movabsq	$0x8080808080808080,%r9
 
-	cld				/* set search forward */
-	xorl	%eax,%eax		/* set search for null terminator */
-	movq	$-1,%rcx		/* set search for lots of characters */
-	repne				/* search! */
-	scasb
+	/*
+	 * Align destination to word boundary.
+	 * Consider unrolling loop?
+	 */
+.Lscan:
+.Lscan_align:
+	testb	$7,%dil
+	je	.Lscan_aligned
+	cmpb	$0,(%rdi)
+	je	.Lcopy
+	incq	%rdi
+	jmp	.Lscan_align
 
-	decq	%rdi
-
-L1:	movb	(%rsi),%al		/* unroll loop, but not too much */
-	movb	%al,(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	1(%rsi),%al
-	movb	%al,1(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	2(%rsi),%al
-	movb	%al,2(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	3(%rsi),%al
-	movb	%al,3(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	4(%rsi),%al
-	movb	%al,4(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	5(%rsi),%al
-	movb	%al,5(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	6(%rsi),%al
-	movb	%al,6(%rdi)
-	testb	%al,%al
-	jz	L2
-	movb	7(%rsi),%al
-	movb	%al,7(%rdi)
-	addq	$8,%rsi
+	_ALIGN_TEXT
+.Lscan_aligned:
+.Lscan_loop:
+	movq	(%rdi),%rdx
 	addq	$8,%rdi
-	testb	%al,%al
-	jnz	L1
-L2:	movq	%r11,%rax
+	subq	%r8,%rdx
+	testq	%r9,%rdx
+	je	.Lscan_loop
+
+	/*
+	 * In rare cases, the above loop may exit prematurely. We must
+	 * return to the loop if none of the bytes in the word equal 0.
+	 */
+
+	cmpb	$0,-8(%rdi)	/* 1st byte == 0? */
+	jne	1f
+	subq	$8,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-7(%rdi)	/* 2nd byte == 0? */
+	jne	1f
+	subq	$7,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-6(%rdi)	/* 3rd byte == 0? */
+	jne	1f
+	subq	$6,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-5(%rdi)	/* 4th byte == 0? */
+	jne	1f
+	subq	$5,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-4(%rdi)	/* 5th byte == 0? */
+	jne	1f
+	subq	$4,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-3(%rdi)	/* 6th byte == 0? */
+	jne	1f
+	subq	$3,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-2(%rdi)	/* 7th byte == 0? */
+	jne	1f
+	subq	$2,%rdi
+	jmp	.Lcopy
+
+1:	cmpb	$0,-1(%rdi)	/* 8th byte == 0? */
+	jne	.Lscan_loop
+	subq	$1,%rdi
+
+	/*
+	 * Align source to a word boundary.
+	 * Consider unrolling loop?
+	 */
+.Lcopy:
+.Lcopy_align:
+	testb	$3,%sil
+	je	.Lcopy_aligned
+	movb	(%rsi),%dl
+	incq	%rsi
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl
+	jne	.Lcopy_align
+	ret
+
+	_ALIGN_TEXT
+.Lcopy_loop:
+	movq	%rdx,(%rdi)
+	addq	$8,%rdi
+.Lcopy_aligned:
+	movq	(%rsi),%rdx
+	movq	%rdx,%rcx
+	addq	$8,%rsi
+	subq	%r8,%rcx
+	testq	%r9,%rcx
+	je	.Lcopy_loop
+
+	/*
+	 * In rare cases, the above loop may exit prematurely. We must
+	 * return to the loop if none of the bytes in the word equal 0.
+	 */
+
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 1st byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 2nd byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 3rd byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 4th byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 5th byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 6th byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 7th byte == 0? */
+	je	.Ldone
+
+	shrq	$8,%rdx
+	movb	%dl,(%rdi)
+	incq	%rdi
+	testb	%dl,%dl		/* 8th byte == 0? */
+	jne	.Lcopy_aligned
+
+.Ldone:
 	ret
