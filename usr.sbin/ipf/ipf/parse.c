@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 1997/03/28 21:54:41 thorpej Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1997/04/19 06:25:10 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -35,7 +35,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.5 1997/03/28 21:54:41 thorpej Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.6 1997/04/19 06:25:10 thorpej Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -120,13 +120,14 @@ char	*line;
 			fil.fr_flags |= FR_RETICMP;
 			cpp++;
 			if (*(*cpp + 11) == '(') {
-				fil.fr_icode = icmpcode(*cpp + 12);
-				if (fil.fr_icode == -1) {
+				int tmp = icmpcode(*cpp + 12);
+				if (tmp == -1) {
 					fprintf(stderr,
 						"uncrecognised icmp code %s\n",
 						*cpp + 12);
 					return NULL;
 				}
+				fil.fr_icode = tmp;
 			}
 		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
 			fil.fr_flags |= FR_RETRST;
