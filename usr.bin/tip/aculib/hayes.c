@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
+/*	$NetBSD: hayes.c,v 1.7 1997/11/22 07:28:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $";
+__RCSID("$NetBSD: hayes.c,v 1.7 1997/11/22 07:28:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -65,15 +66,10 @@ static char rcsid[] = "$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $";
  */
 #include "tip.h"
 
-#include <termios.h>
-#include <sys/ioctl.h>
-
 #define	min(a,b)	((a < b) ? a : b)
 
-static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
-static 	char gobble();
 #define DUMBUFLEN	40
 static char dumbuf[DUMBUFLEN];
 
@@ -83,12 +79,19 @@ static char dumbuf[DUMBUFLEN];
 #define	FAILED		4
 static	int state = IDLE;
 
+static	void	error_rep __P((char));
+static	char	gobble __P((char *));
+static	void	goodbye __P((void));
+static	int	hay_sync __P((void));
+static	void	sigALRM __P((int));
+
+int
 hay_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
-	register int connected = 0;
+	char *cp;
+	int connected = 0;
 	char dummy;
 	struct termios cntrl;
 #ifdef ACULOG
@@ -130,7 +133,7 @@ hay_dialer(num, acu)
 #ifdef ACULOG
 	if (timeout) {
 		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			number(value(DIALTIMEOUT)));
+			(int)number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "hayes", line);
 	}
 #endif
@@ -140,10 +143,9 @@ hay_dialer(num, acu)
 }
 
 
+void
 hay_disconnect()
 {
-	char c;
-	int len, rlen;
 
 	/* first hang up the modem*/
 #ifdef DEBUG
@@ -155,17 +157,17 @@ hay_disconnect()
 	goodbye();
 }
 
+void
 hay_abort()
 {
-
-	char c;
 
 	write(FD, "\r", 1);	/* send anything to abort the call */
 	hay_disconnect();
 }
 
 static void
-sigALRM()
+sigALRM(dummy)
+	int dummy;
 {
 
 	printf("\07timeout waiting for reply\n\r");
@@ -175,11 +177,15 @@ sigALRM()
 
 static char
 gobble(match)
-	register char *match;
+	char *match;
 {
 	char c;
 	sig_t f;
 	int i, status = 0;
+
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&status;
+#endif
 
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
@@ -209,8 +215,9 @@ gobble(match)
 	return (status);
 }
 
+static void
 error_rep(c)
-	register char c;
+	char c;
 {
 	printf("\n\r");
 	switch (c) {
@@ -249,9 +256,10 @@ error_rep(c)
 /*
  * set modem back to normal verbose status codes.
  */
+void
 goodbye()
 {
-	int len, rlen;
+	int len;
 	char c;
 
 	tcflush(FD, TCIOFLUSH);
@@ -293,6 +301,7 @@ goodbye()
 
 #define MAXRETRY	5
 
+int
 hay_sync()
 {
 	int len, retry = 0;
@@ -303,8 +312,8 @@ hay_sync()
 		ioctl(FD, FIONREAD, &len);
 		if (len) {
 			len = read(FD, dumbuf, min(len, DUMBUFLEN));
-			if (index(dumbuf, '0') || 
-		   	(index(dumbuf, 'O') && index(dumbuf, 'K')))
+			if (strchr(dumbuf, '0') || 
+		   	(strchr(dumbuf, 'O') && strchr(dumbuf, 'K')))
 				return(1);
 #ifdef DEBUG
 			dumbuf[len] = '\0';

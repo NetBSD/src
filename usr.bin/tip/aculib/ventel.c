@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
+/*	$NetBSD: ventel.c,v 1.7 1997/11/22 07:28:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $";
+__RCSID("$NetBSD: ventel.c,v 1.7 1997/11/22 07:28:59 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -45,35 +46,32 @@ static char rcsid[] = "$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $";
  * The Ventel is expected to be strapped for local echo (just like uucp)
  */
 #include "tip.h"
-#include <termios.h>
-#include <sys/ioctl.h>
 
 #define	MAXRETRY	5
 
-static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
 
-static	int gobble(), vensync();
-static	void echo();
+static	void	echo __P((char *));
+static	int	gobble __P((char, char *));
+static	void	sigALRM __P((int));
+static	int	vensync __P((int));
 
 /*
- * some sleep calls have been replaced by this macro
+ * some sleep calls have been replaced by usleep(DELAYUS)
  * because some ventel modems require two <cr>s in less than
- * a second in order to 'wake up'... yes, it is dirty...
+ * a second in order to 'wake up'
  */
-#define delay(num,denom) busyloop(CPUSPEED*num/denom)
-#define CPUSPEED 1000000	/* VAX 780 is 1MIPS */
-#define	DELAY(n)	{ register long N = (n); while (--N > 0); }
-busyloop(n) { DELAY(n); }
+#define	DELAYUS		100000		/* delay in microseconds */
 
+int
 ven_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
-	register int connected = 0;
-	char *msg, *index(), line[80];
+	char *cp;
+	int connected = 0;
+	char *msg, line[80];
 	struct termios	cntrl;
 
 	/*
@@ -94,10 +92,10 @@ ven_dialer(num, acu)
 	tcsetattr(FD, TCSANOW, &cntrl);
 	echo("#k$\r$\n$D$I$A$L$:$ ");
 	for (cp = num; *cp; cp++) {
-		delay(1, 10);
+		usleep(DELAYUS);
 		write(FD, cp, 1);
 	}
-	delay(1, 10);
+	usleep(DELAYUS);
 	write(FD, "\r", 1);
 	gobble('\n', line);
 	if (gobble('\n', line))
@@ -106,7 +104,7 @@ ven_dialer(num, acu)
 #ifdef ACULOG
 	if (timeout) {
 		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			number(value(DIALTIMEOUT)));
+			(int)number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "ventel", line);
 	}
 #endif
@@ -115,10 +113,10 @@ ven_dialer(num, acu)
 	if (connected || timeout || !boolean(value(VERBOSE)))
 		return (connected);
 	/* call failed, parse response for user */
-	cp = index(line, '\r');
+	cp = strchr(line, '\r');
 	if (cp)
 		*cp = '\0';
-	for (cp = line; cp = index(cp, ' '); cp++)
+	for (cp = line; (cp = strchr(cp, ' ')) != NULL; cp++)
 		if (cp[1] == ' ')
 			break;
 	if (cp) {
@@ -135,12 +133,14 @@ ven_dialer(num, acu)
 	return (connected);
 }
 
+void
 ven_disconnect()
 {
 
 	close(FD);
 }
 
+void
 ven_abort()
 {
 
@@ -150,11 +150,11 @@ ven_abort()
 
 static void
 echo(s)
-	register char *s;
+	char *s;
 {
 	char c;
 
-	while (c = *s++) switch (c) {
+	while ((c = *s++) != 0) switch (c) {
 
 	case '$':
 		read(FD, &c, 1);
@@ -173,7 +173,8 @@ echo(s)
 }
 
 static void
-sigALRM()
+sigALRM(dummy)
+	int dummy;
 {
 	printf("\07timeout waiting for reply\n");
 	timeout = 1;
@@ -182,12 +183,16 @@ sigALRM()
 
 static int
 gobble(match, response)
-	register char match;
+	char match;
 	char response[];
 {
-	register char *cp = response;
+	char *cp = response;
 	sig_t f;
 	char c;
+
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&cp;
+#endif
 
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
@@ -219,6 +224,7 @@ gobble(match, response)
  */
 static int
 vensync(fd)
+	int fd;
 {
 	int already = 0, nread;
 	char buf[60];
@@ -241,7 +247,7 @@ vensync(fd)
 		 * so the modem can frame the incoming characters.
 		 */
 		write(fd, "\r", 1);
-		delay(1,10);
+		usleep(DELAYUS);
 		write(fd, "\r", 1);
 		sleep(2);
 		if (ioctl(fd, FIONREAD, (caddr_t)&nread) < 0) {

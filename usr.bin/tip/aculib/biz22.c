@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
+/*	$NetBSD: biz22.c,v 1.7 1997/11/22 07:28:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,22 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $";
+__RCSID("$NetBSD: biz22.c,v 1.7 1997/11/22 07:28:52 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
 #define DISCONNECT_CMD	"\20\04"	/* disconnection string */
 
-static	void sigALRM();
-static	int timeout = 0;
+static	int btimeout = 0;
 static	jmp_buf timeoutbuf;
 
-static int cmd(), detect();
+static	int	biz_dialer __P((char *, char *));
+static	int	cmd __P((char *));
+static	int	detect __P((char *));
+static	void	sigALRM __P((int));
 
 /*
  * Dial up on a BIZCOMP Model 1022 with either
@@ -59,7 +62,7 @@ static int
 biz_dialer(num, mod)
 	char *num, *mod;
 {
-	register int connected = 0;
+	int connected = 0;
 	char cbuf[40];
 
 	if (boolean(value(VERBOSE)))
@@ -93,19 +96,20 @@ biz_dialer(num, mod)
 	 */
 	connected = detect("1\r");
 #ifdef ACULOG
-	if (timeout) {
+	if (btimeout) {
 		char line[80];
 
 		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			number(value(DIALTIMEOUT)));
+			(int)number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}
 #endif
-	if (timeout)
+	if (btimeout)
 		biz22_disconnect();	/* insurance */
 	return (connected);
 }
 
+int
 biz22w_dialer(num, acu)
 	char *num, *acu;
 {
@@ -113,6 +117,7 @@ biz22w_dialer(num, acu)
 	return (biz_dialer(num, "W"));
 }
 
+int
 biz22f_dialer(num, acu)
 	char *num, *acu;
 {
@@ -120,15 +125,16 @@ biz22f_dialer(num, acu)
 	return (biz_dialer(num, "V"));
 }
 
+void
 biz22_disconnect()
 {
-	int rw = 2;
 
 	write(FD, DISCONNECT_CMD, 4);
 	sleep(2);
 	tcflush(FD, TCIOFLUSH);
 }
 
+void
 biz22_abort()
 {
 
@@ -136,16 +142,17 @@ biz22_abort()
 }
 
 static void
-sigALRM()
+sigALRM(dummy)
+	int dummy;
 {
 
-	timeout = 1;
+	btimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
 static int
 cmd(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;
@@ -167,13 +174,17 @@ cmd(s)
 
 static int
 detect(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;
 
+#if __GNUC__	/* XXX pacify gcc */
+	(void)&s;
+#endif
+
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	btimeout = 0;
 	while (*s) {
 		if (setjmp(timeoutbuf)) {
 			biz22_abort();
@@ -187,5 +198,5 @@ detect(s)
 			return (0);
 	}
 	signal(SIGALRM, f);
-	return (timeout == 0);
+	return (btimeout == 0);
 }

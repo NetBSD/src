@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.4 1997/11/22 07:28:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,18 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $";
+__RCSID("$NetBSD: cmdtab.c,v 1.4 1997/11/22 07:28:42 lukem Exp $");
 #endif /* not lint */
 
 #include "tip.h"
-
-extern	int shell(), getfl(), sendfile(), chdirectory();
-extern	int finish(), help(), pipefile(), pipeout(), consh(), variable();
-extern	int cu_take(), cu_put(), dollar(), genbrk(), suspend();
 
 esctable_t etable[] = {
 	{ '!',	NORM,	"shell",			 shell },
