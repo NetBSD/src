@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.32 2004/05/01 19:40:39 petrov Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.33 2004/11/23 04:51:56 yamt Exp $	*/
 
 /*
  *
@@ -88,6 +88,7 @@ LIST_HEAD(uvm_history_head, uvm_history);
 #define	UVMHIST_MAPHIST		0x00000001	/* maphist */
 #define	UVMHIST_PDHIST		0x00000002	/* pdhist */
 #define	UVMHIST_UBCHIST		0x00000004	/* ubchist */
+#define	UVMHIST_LOANHIST	0x00000008	/* loanhist */
 
 #ifdef _KERNEL
 
