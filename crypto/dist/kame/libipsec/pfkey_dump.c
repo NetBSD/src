@@ -1,4 +1,4 @@
-/*	$KAME: pfkey_dump.c,v 1.44 2003/07/25 09:35:28 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -438,11 +438,12 @@ pfkey_spdump(m)
 		}
 		str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 	}
-
 #ifdef SADB_X_EXT_TAG
-	if (m_tag)
+	else if (m_tag)
 		printf("tagged \"%s\" ", m_tag->sadb_x_tag_name);
 #endif
+	else
+		printf("(no selector, probably per-socket policy) ");
 
 	/* policy */
     {
