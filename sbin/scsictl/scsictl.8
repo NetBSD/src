@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.10 2001/06/05 11:22:53 wiz Exp $
+.\"	$NetBSD: scsictl.8,v 1.11 2001/07/18 20:36:36 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,19 @@ Either may be wildcarded by specifying the keyword
 .Dq any
 or
 .Dq all .
+.Pp
+.Nm detach
+.Ar target
+.Ar lun
+.Pp
+Detach the specified device from the bus. Usefull if a device is powered down
+after use.  The
+.Ar target
+and
+.Ar lun
+arguments have the same meaning as for the
+.Nm scan
+command, and may also be wildcarded.
 .Sh NOTES
 When scanning the scsi bus, information about newly recognized devices
 is printed to console. No information is printed for already probed
