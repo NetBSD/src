@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/03/13 02:51:29 perry Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/07 11:08:51 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
+WARNS?=	1
 PROG=	rmail
 MAN=	rmail.8
 # we need the link because of all the braindead UUCPs in the world that
