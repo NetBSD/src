@@ -54,7 +54,9 @@ int ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
 #endif
 void ep_pcmcia_attach __P((struct device *, struct device *, void *));
 
-int ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
+int ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
+int ep_pcmcia_enable __P((void *arg));
+void ep_pcmcia_disable __P((void *arg));
 
 struct ep_pcmcia_softc {
 	struct ep_softc sc_ep;			/* real "ep" softc */
@@ -94,6 +96,16 @@ ep_pcmcia_match(parent, match, aux)
     return(0);
 }
 
+int ep_pcmcia_enable(void *arg)
+{
+    return(pcmcia_function_enable(arg));
+}
+
+void ep_pcmcia_disable(void *arg)
+{
+    pcmcia_function_disable(arg);
+}
+
 void
 ep_pcmcia_attach(parent, self, aux)
      struct device *parent, *self;
@@ -115,6 +127,8 @@ ep_pcmcia_attach(parent, self, aux)
     pcmcia_function_init(pa->pf, cfe);
     if (pcmcia_function_enable(pa->pf))
 	printf(": function enable failed\n");
+
+    sc->enabled = 1;
 
     /* turn off the bit which disables the modem */
     if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
@@ -189,6 +203,10 @@ ep_pcmcia_attach(parent, self, aux)
 
     printf(": %s\n", model);
 
+    sc->enable = ep_pcmcia_enable;
+    sc->disable = ep_pcmcia_disable;
+    sc->able_arg = pa->pf;
+
     epconfig(sc, EP_CHIPSET_3C509, enaddr);
 
     /* establish the interrupt. */
@@ -198,6 +216,10 @@ ep_pcmcia_attach(parent, self, aux)
 	       sc->sc_dev.dv_xname);
 	return;
     }
+
+    sc->enabled = 0;
+
+    pcmcia_function_disable(pa->pf);
 }
 
 int
