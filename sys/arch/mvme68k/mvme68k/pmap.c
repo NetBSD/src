@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2001/05/13 18:35:19 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.60 2001/05/16 19:06:47 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2737,6 +2737,24 @@ _pmap_set_page_cacheinhibit(pm, va)
 		*pte |= PG_CI;
 		TBIS(va);
 	}
+}
+
+int
+_pmap_page_is_cacheable(pm, va)
+	struct pmap *pm;
+	vaddr_t va;
+{
+	pt_entry_t *pte;
+
+	if (!pmap_ste_v(pm, va))
+		return (0);
+
+	pte = pmap_pte(pm, va);
+
+	if (pmap_pte_ci(pte))
+		return (0);
+	else
+		return (1);
 }
 
 #ifdef DEBUG
