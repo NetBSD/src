@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.18 1996/03/02 14:27:55 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.19 1996/03/04 05:04:43 cgd Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,7 +47,9 @@
  * Machine dependent constants for VAX.
  */
 
+#define	_MACHINE	vax
 #define	MACHINE		"vax"
+#define	_MACHINE_ARCH	vax
 #define	MACHINE_ARCH	"vax"
 #define	MID_MACHINE	MID_VAX
 
