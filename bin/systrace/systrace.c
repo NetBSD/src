@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.14 2002/12/06 01:43:18 thorpej Exp $	*/
+/*	$NetBSD: systrace.c,v 1.15 2002/12/15 19:05:31 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -285,6 +285,10 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
 	action = filter_evaluate(NULL, pflq, ipid);
+
+	if (ipid->uflags & SYSCALL_LOG)
+		dolog = 1;
+	
 	if (action != ICPOLICY_ASK)
 		goto out;
 
