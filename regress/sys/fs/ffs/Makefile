@@ -1,7 +1,9 @@
 ##  Notes:
 ##    This set of tests creates a dummy directory tree in /tmp and
 ##    populates it with several files.  The test requires around 1100
-##    inodes and 6.8MB.
+##    inodes and 6.8MB. The test system needs to run a kernel with
+##    FFS Endian Independent support (options FFS_EI) to be able to
+##    perform this test.
 ##
 ##    This test verifies that newfs can create filesystems in both bytes
 ##    orders. For each byte order it is checked that:
