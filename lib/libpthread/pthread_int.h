@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.18 2003/09/07 14:47:44 cl Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.19 2003/09/12 00:37:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -295,6 +295,7 @@ int	pthread__find(pthread_t self, pthread_t target);
 	} while (/*CONSTCOND*/0)
 
 #ifdef __PTHREAD_SIGNAL_PRIVATE
+#ifndef __HAVE_SIGINFO
 
 /*
  * Macros for converting from ucontext to sigcontext and vice-versa.
@@ -340,6 +341,8 @@ void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
 	    ucontext_t *);
 #endif /* PTHREAD_UCONTEXT_TO_SIGCONTEXT */
 
+#endif /* __HAVE_SIGINFO */
+
 #endif /* __PTHREAD_SIGNAL_PRIVATE */
 
 #ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
@@ -379,8 +382,8 @@ void	pthread__locked_switch(pthread_t self, pthread_t next,
 
 void	pthread__signal_init(void);
 
-void	pthread__signal(pthread_t self, pthread_t t, int sig, int code);
-void	pthread__deliver_signal(pthread_t self, pthread_t t, int sig, int code);
+void	pthread__signal(pthread_t self, pthread_t t, siginfo_t *si);
+void	pthread__deliver_signal(pthread_t self, pthread_t t, siginfo_t *si);
 void	pthread__signal_deferred(pthread_t self, pthread_t t);
 
 void	pthread__destroy_tsd(pthread_t self);
