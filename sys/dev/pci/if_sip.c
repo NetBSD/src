@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.93 2004/05/15 22:26:49 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.94 2004/05/15 22:33:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.93 2004/05/15 22:26:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.94 2004/05/15 22:33:13 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -267,7 +267,9 @@ struct sip_softc {
 	struct evcnt sc_ev_txiintr;	/* Tx idle interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
 	struct evcnt sc_ev_hiberr;	/* HIBERR interrupts */
+	struct evcnt sc_ev_rxpause;	/* PAUSE received */
 #ifdef DP83820
+	struct evcnt sc_ev_txpause;	/* PAUSE transmitted */
 	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
 	struct evcnt sc_ev_rxtcpsum;	/* TCP checksums checked in-bound */
 	struct evcnt sc_ev_rxudpsum;	/* UDP checksums checked in-boudn */
@@ -1065,7 +1067,15 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_hiberr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "hiberr");
+#ifndef DP83820
+	evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "rxpause");
+#endif /* !DP83820 */
 #ifdef DP83820
+	evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxpause");
+	evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpause");
 	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
@@ -1652,6 +1662,7 @@ SIP_DECL(intr)(void *arg)
 		if (sc->sc_imr & (ISR_PAUSE_END|ISR_PAUSE_ST)) {
 			if (isr & ISR_PAUSE_ST) {
 				sc->sc_paused = 1;
+				SIP_EVCNT_INCR(&sc->sc_ev_rxpause);
 				ifp->if_flags |= IFF_OACTIVE;
 			}
 			if (isr & ISR_PAUSE_END) {
@@ -2187,6 +2198,18 @@ SIP_DECL(tick)(void *arg)
 	int s;
 
 	s = splnet();
+#ifdef DP83820
+#ifdef SIP_EVENT_COUNTERS
+	/* Read PAUSE related counts from MIB registers. */
+	sc->sc_ev_rxpause.ev_count +=
+	    bus_space_read_4(sc->sc_st, sc->sc_sh,
+			     SIP_NS_MIB(MIB_RXPauseFrames)) & 0xffff;
+	sc->sc_ev_txpause.ev_count +=
+	    bus_space_read_4(sc->sc_st, sc->sc_sh,
+			     SIP_NS_MIB(MIB_TXPauseFrames)) & 0xffff;
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_MIBC, MIBC_ACLR);
+#endif /* SIP_EVENT_COUNTERS */
+#endif /* DP83820 */
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
