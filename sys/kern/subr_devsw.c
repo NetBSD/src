@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.1.2.5 2002/05/22 10:57:12 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.1.2.6 2002/06/05 14:22:14 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,99 +63,186 @@ extern const struct bdevsw **bdevsw, *bdevsw0[];
 extern const struct cdevsw **cdevsw, *cdevsw0[];
 extern struct devsw_conv *devsw_conv, devsw_conv0[];
 extern const int sys_bdevsws, sys_cdevsws;
-extern int max_bdevsws, max_cdevsws;
+extern int max_bdevsws, max_cdevsws, max_devsw_convs;
+
+static int bdevsw_attach(const char *, const struct bdevsw *, int *);
+static int cdevsw_attach(const char *, const struct cdevsw *, int *);
 
 int
 devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 	     const struct cdevsw *cdev, int *cmajor)
 {
-	int i;
+	struct devsw_conv *conv;
+	char *name;
+	int error, i;
 
 	if (devname == NULL || cdev == NULL)
 		return (EINVAL);
 
-	if (bdevsw_lookup_major(bdev) != -1 ||
-	    cdevsw_lookup_major(cdev) != -1)
+	for (i = 0 ; i < max_devsw_convs ; i++) {
+		conv = &devsw_conv[i];
+		if (conv->d_name == NULL || strcmp(devname, conv->d_name) != 0)
+			continue;
+
+		if (*bmajor < 0)
+			*bmajor = conv->d_bmajor;
+		if (*cmajor < 0)
+			*cmajor = conv->d_cmajor;
+
+		if (*bmajor != conv->d_bmajor || *cmajor != conv->d_cmajor)
+			return (EINVAL);
+		if ((*bmajor >= 0 && bdev == NULL) || *cmajor < 0)
+			return (EINVAL);
+
+		if ((*bmajor >= 0 && bdevsw[*bmajor] != NULL) ||
+		    cdevsw[*cmajor] != NULL)
+			return (EEXIST);
+
+		if (bdev != NULL)
+			bdevsw[*bmajor] = bdev;
+		cdevsw[*cmajor] = cdev;
+
+		return (0);
+	}
+
+	error = bdevsw_attach(devname, bdev, bmajor);
+	if (error != 0)
+		return (error);
+	error = cdevsw_attach(devname, cdev, cmajor);
+	if (error != 0) {
+		devsw_detach(bdev, NULL);
+		return (error);
+	}
+
+	for (i = 0 ; i < max_devsw_convs ; i++) {
+		if (devsw_conv[i].d_name == NULL)
+			break;
+	}
+	if (i == max_devsw_convs) {
+		struct devsw_conv *newptr;
+		int old, new;
+
+		old = max_devsw_convs;
+		new = old + 1;
+
+		newptr = malloc(new * DEVSWCONV_SIZE, M_DEVBUF, M_NOWAIT);
+		if (newptr == NULL) {
+			devsw_detach(bdev, cdev);
+			return (ENOMEM);
+		}
+		newptr[old].d_name = NULL;
+		newptr[old].d_bmajor = -1;
+		newptr[old].d_cmajor = -1;
+		memcpy(newptr, devsw_conv, old * DEVSWCONV_SIZE);
+		if (devsw_conv != devsw_conv0)
+			free(devsw_conv, M_DEVBUF);
+		devsw_conv = newptr;
+		max_devsw_convs = new;
+	}
+
+	name = malloc(strlen(devname) + 1, M_DEVBUF, M_NOWAIT);
+	if (name == NULL) {
+		devsw_detach(bdev, cdev);
+		return (ENOMEM);
+	}
+	strcpy(name, devname);
+
+	devsw_conv[i].d_name = name;
+	devsw_conv[i].d_bmajor = *bmajor;
+	devsw_conv[i].d_cmajor = *cmajor;
+
+	return (0);
+}
+
+static int
+bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
+{
+	int bmajor, i;
+
+	if (devsw == NULL)
+		return (0);
+
+	if (*devmajor < 0) {
+		for (bmajor = sys_bdevsws ; bmajor < max_bdevsws ; bmajor++) {
+			if (bdevsw[bmajor] != NULL)
+				continue;
+			for (i = 0 ; i < max_devsw_convs ; i++) {
+				if (devsw_conv[i].d_bmajor == bmajor)
+					break;
+			}
+			if (i != max_devsw_convs)
+				continue;
+			*devmajor = bmajor;
+			break;
+		}
+	}
+	if (*devmajor >= MAXDEVSW) {
+#ifdef DEVSW_DEBUG
+		panic("bdevsw_attach: block majors exhausted");
+#endif /* DEVSW_DEBUG */
+		return (ENOMEM);
+	}
+
+	if (*devmajor >= max_bdevsws) {
+		const struct bdevsw **newptr;
+		int old, new;
+
+		old = max_bdevsws;
+		new = *devmajor + 1;
+
+		newptr = malloc(new * CDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
+		if (newptr == NULL)
+			return (ENOMEM);
+		memset(newptr + old, 0, (new - old) * CDEVSW_SIZE);
+		if (old != 0) {
+			memcpy(newptr, bdevsw, old * CDEVSW_SIZE);
+			if (bdevsw != bdevsw0)
+				free(bdevsw, M_DEVBUF);
+		}
+		bdevsw = newptr;
+		max_bdevsws = new;
+	}
+
+	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	if (*cmajor < 0) {
-		for (i = 0 ; i < max_cdevsws ; i++) {
-			if (devsw_conv[i].d_name == NULL ||
-			    strcmp(devname, devsw_conv[i].d_name) != 0)
+	bdevsw[*devmajor] = devsw;
+
+	return (0);
+}
+
+static int
+cdevsw_attach(const char *devname, const struct cdevsw *devsw, int *devmajor)
+{
+	int cmajor, i;
+
+	if (*devmajor < 0) {
+		for (cmajor = sys_cdevsws ; cmajor < max_cdevsws ; cmajor++) {
+			if (cdevsw[cmajor] != NULL)
 				continue;
-			*cmajor = i;
-			if (devsw_conv[i].d_bmajor != -1) {
-				if (bdev == NULL)
-					return (EINVAL);
-				if (*bmajor != -1 &&
-				    *bmajor != devsw_conv[i].d_bmajor)
-					return (EINVAL);
-				*bmajor = devsw_conv[i].d_bmajor;
+			for (i = 0 ; i < max_devsw_convs ; i++) {
+				if (devsw_conv[i].d_cmajor == cmajor)
+					break;
 			}
+			if (i != max_devsw_convs)
+				continue;
+			*devmajor = cmajor;
 			break;
 		}
 	}
-
-	if (bdev != NULL) {
-		if (*bmajor < 0) {
-			for (i = sys_bdevsws ; i < max_bdevsws ; i++) {
-				int j;
-
-				if (bdevsw[i] != NULL)
-					continue;
-				for (j = sys_cdevsws ; j < max_cdevsws ; j++) {
-					if (i == devsw_conv[i].d_bmajor)
-						break;
-				}
-				if (j != max_cdevsws)
-					continue;
-				*bmajor = i;
-				break;
-			}
-			if (*bmajor < 0)
-				*bmajor = max_bdevsws;
-			if (*bmajor >= MAXDEVSW)
-				return (EINVAL);
-		}
-
-		if (*bmajor >= max_bdevsws) {
-			int old = max_bdevsws, new = *bmajor + 1;
-			const struct bdevsw **newptr;
-
-			newptr = malloc(new * BDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
-			if (newptr == NULL)
-				return (ENOMEM);
-			memset(newptr + old, 0, (new - old) * BDEVSW_SIZE);
-			if (old != 0) {
-				memcpy(newptr, bdevsw, old * BDEVSW_SIZE);
-				if (bdevsw != bdevsw0)
-					free(bdevsw, M_DEVBUF);
-			}
-			bdevsw = newptr;
-			max_bdevsws = new;
-		}
-
-		if (bdevsw[*bmajor] != NULL)
-			return (EEXIST);
+	if (*devmajor >= MAXDEVSW) {
+#ifdef DEVSW_DEBUG
+		panic("cdevsw_attach: character majors exhausted");
+#endif /* DEVSW_DEBUG */
+		return (ENOMEM);
 	}
 
-	if (*cmajor < 0) {
-		for (i = sys_cdevsws ; i < max_cdevsws ; i++) {
-			if (cdevsw[i] != NULL || devsw_conv[i].d_name != NULL)
-				continue;
-			*cmajor = i;
-			break;
-		}
-		if (*cmajor < 0)
-			*cmajor = max_cdevsws;
-		if (*cmajor >= MAXDEVSW)
-			return (EINVAL);
-	}
-
-	if (*cmajor >= max_cdevsws) {
-		int old = max_cdevsws, new = *cmajor + 1;
+	if (*devmajor >= max_cdevsws) {
 		const struct cdevsw **newptr;
-		struct devsw_conv *newconv;
+		int old, new;
+
+		old = max_cdevsws;
+		new = *devmajor + 1;
 
 		newptr = malloc(new * CDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
 		if (newptr == NULL)
@@ -168,39 +255,12 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 		}
 		cdevsw = newptr;
 		max_cdevsws = new;
-
-		newconv = malloc(new * DEVSWCONV_SIZE, M_DEVBUF, M_NOWAIT);
-		if (newconv == NULL)
-			return (ENOMEM);
-		for (i = old ; i < new ; i++) {
-			newconv[i].d_name = NULL;
-			newconv[i].d_bmajor = -1;
-		}
-		if (old != 0) {
-			memcpy(newconv, devsw_conv, old * DEVSWCONV_SIZE);
-			if (devsw_conv != devsw_conv0)
-				free(devsw_conv, M_DEVBUF);
-		}
-		devsw_conv = newconv;
 	}
 
-	if (cdevsw[*cmajor] != NULL)
+	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	if (devsw_conv[*cmajor].d_name == NULL) {
-		char *name;
-		name = malloc(strlen(devname) + 1, M_DEVBUF, M_NOWAIT);
-		if (name == NULL)
-			return (ENOMEM);
-		strcpy(name, devname);
-		devsw_conv[*cmajor].d_name = name;
-	}
-
-	if (bdev != NULL) {
-		bdevsw[*bmajor] = bdev;
-		devsw_conv[*cmajor].d_bmajor = *bmajor;
-	}
-	cdevsw[*cmajor] = cdev;
+	cdevsw[*devmajor] = devsw;
 
 	return (0);
 }
@@ -288,17 +348,17 @@ cdevsw_lookup_major(const struct cdevsw *cdev)
 const char *
 devsw_blk2name(int bmajor)
 {
-	int i;
+	int cmajor, i;
 
-	if (bmajor < 0 || bmajor >= max_bdevsws)
-		return (NULL);
-	if (bdevsw[bmajor] == NULL)
+	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL)
 		return (NULL);
 
-	for (i = 0 ; i < max_cdevsws ; i++) {
+	for (i = 0 ; i < max_devsw_convs ; i++) {
 		if (devsw_conv[i].d_bmajor != bmajor)
 			continue;
-		if (cdevsw[i] == NULL)
+		cmajor = devsw_conv[i].d_cmajor;
+		if (cmajor < 0 || cmajor >= max_cdevsws ||
+		    cdevsw[cmajor] == NULL)
 			return (NULL);
 		return (devsw_conv[i].d_name);
 	}
@@ -318,7 +378,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 	if (name == NULL)
 		return (-1);
 
-	for (i = 0 ; i < max_cdevsws ; i++) {
+	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
 		if (conv->d_name == NULL)
 			continue;
@@ -331,7 +391,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_debug: too short buffer");
+				printf("devsw_name2blk: too short buffer");
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, name, devnamelen);
 			devname[devnamelen - 1] = '\0';
@@ -348,17 +408,25 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 dev_t
 devsw_chr2blk(dev_t cdev)
 {
-	int bmajor;
+	int bmajor, cmajor, i;
 
 	if (cdevsw_lookup(cdev) == NULL)
 		return (NODEV);
 
-	bmajor = devsw_conv[major(cdev)].d_bmajor;
-	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL)
-		return (NODEV);
+	cmajor = major(cdev);
 
-	return (makedev(bmajor, minor(cdev)));
-};
+	for (i = 0 ; i < max_devsw_convs ; i++) {
+		if (devsw_conv[i].d_cmajor != cmajor)
+			continue;
+		bmajor = devsw_conv[i].d_bmajor;
+		if (bmajor < 0 || bmajor >= max_bdevsws ||
+		    bdevsw[bmajor] == NULL)
+			return (NODEV);
+		return (makedev(bmajor, minor(cdev)));
+	}
+
+	return (NODEV);
+}
 
 /*
  * Convert from block dev_t to character dev_t.
@@ -366,19 +434,21 @@ devsw_chr2blk(dev_t cdev)
 dev_t
 devsw_blk2chr(dev_t bdev)
 {
-	int bmajor, i;
+	int bmajor, cmajor, i;
 
 	if (bdevsw_lookup(bdev) == NULL)
 		return (NODEV);
 
 	bmajor = major(bdev);
 
-	for (i = 0 ; i < max_cdevsws ; i++) {
+	for (i = 0 ; i < max_devsw_convs ; i++) {
 		if (devsw_conv[i].d_bmajor != bmajor)
 			continue;
-		if (cdevsw[i] == NULL)
+		cmajor = devsw_conv[i].d_cmajor;
+		if (cmajor < 0 || cmajor >= max_cdevsws ||
+		    cdevsw[cmajor] == NULL)
 			return (NODEV);
-		return (makedev(i, minor(bdev)));
+		return (makedev(cmajor, minor(bdev)));
 	}
 
 	return (NODEV);
