@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.15 1994/02/25 19:32:18 jtc Exp $
+#  $Id: Makefile,v 1.16 1994/03/01 17:14:34 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -66,6 +66,7 @@ OBJS = 	k_standard.o k_rem_pio2.o k_cos.o k_sin.o k_tan.o \
 	w_j1.o w_jn.o w_lgamma.o w_lgamma_r.o \
 	w_log.o w_log10.o w_pow.o w_remainder.o \
 	w_scalb.o w_sinh.o w_sqrt.o \
+	w_cabs.o w_drem.o \
 	s_asinh.o s_atan.o s_cbrt.o s_ceil.o s_copysign.o \
 	s_cos.o s_erf.o s_expm1.o s_finite.o s_floor.o \
 	s_ilogb.o s_lib_version.o \
