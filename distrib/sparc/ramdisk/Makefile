@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/10/31 20:54:47 pk Exp $
+#	$NetBSD: Makefile,v 1.24 2000/11/01 07:58:00 garbled Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -25,6 +25,8 @@ IMAGE?=		ramdisk.fs
 
 LISTS=		list
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 # image size in 512-byte blocks
 SIZE=		1360
@@ -56,7 +58,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
-	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${.CURDIR}/${LISTS} > ${CBIN}.conf

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2000/05/02 16:06:46 sjg Exp $
+# $NetBSD: Makefile.inc,v 1.9 2000/11/01 07:57:56 garbled Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,6 +15,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 DISKTYPE=	floppy
 
@@ -39,7 +41,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/10/26 04:53:57 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2000/11/01 07:58:01 garbled Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -47,6 +47,7 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
+CRUNCHGEN?=	crunchgen
 DISKTYPE?=	miniroot
 
 all: ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS} dot.profile
@@ -85,7 +86,7 @@ ${CBIN}.conf: ${CBIN}.m4
 				${.ALLSRC} > ${.TARGET}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${SRCROOT} -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${SRCROOT} -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

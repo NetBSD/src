@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/08/30 23:51:49 jhawk Exp $
+#	$NetBSD: Makefile,v 1.14 2000/11/01 07:57:56 garbled Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -22,6 +22,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 DISKTYPE=	install-ramdisk
 RDSIZE=		3800
@@ -57,7 +59,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

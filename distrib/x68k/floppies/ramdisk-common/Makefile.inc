@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/09/12 16:42:51 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/11/01 07:58:02 garbled Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -17,6 +17,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 realall: ${IMAGE}
 
@@ -44,7 +46,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

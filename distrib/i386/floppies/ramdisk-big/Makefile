@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/27 16:04:15 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2000/11/01 07:57:57 garbled Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -24,6 +24,8 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 RAMDISKSPC=	128
 RAMDISKCYLS=	32
@@ -56,7 +58,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
