@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_syssgi.c,v 1.15 2002/02/03 17:28:19 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.15 2002/02/03 17:28:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.16 2002/02/17 20:44:17 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.15 2002/02/03 17:28:19 manu Exp $"
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,21 +107,20 @@ irix_sys_syssgi(p, v, retval)
 		*retval = (register_t)hostid;
 		break;
 
-	case IRIX_SGI_GETPGID: {	/* Get parent process GID */
-		struct proc *tp;
+	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
+		struct sys_getsid_args cup;
 
-		arg1 = SCARG(uap, arg1); /* Process group GID */ 
-		if (arg1 == 0)
-			tp = p;
-		else
-			tp = pfind((pid_t)arg1);
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		return (sys_getsid(p, &cup, retval)); 
+		break;
+	}
 
-		if (tp == NULL || tp->p_pgrp == NULL)
-			return 0;
+	case IRIX_SGI_GETPGID: {/* Get parent process GID: getpgid(2) */
+		struct sys_getpgid_args cup;
 
-		*retval = (register_t)tp->p_pgid;
-
-		return 0;
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		return (sys_getpgid(p, &cup, retval)); 
+		break;
 	}
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
