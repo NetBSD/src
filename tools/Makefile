@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2004/07/28 09:17:31 skrll Exp $
+#	$NetBSD: Makefile,v 1.84 2004/11/25 08:09:15 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -70,6 +70,11 @@ SUBDIR+=	sparkcrc
 
 .if (${MACHINE} == "sparc" || ${MACHINE} == "sparc64")
 SUBDIR+=	fgen
+.endif
+
+.if ${MACHINE} == "bebox"
+SUBDIR+=	bebox-elf2pef
+SUBDIR+=	bebox-mkbootimage
 .endif
 
 .endif	# ! NOSUBDIR					# }
