@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.2 1996/05/20 14:56:29 oki Exp $
+#	$NetBSD: files.x68k,v 1.3 1996/08/11 15:34:56 oki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -39,7 +39,7 @@ file	arch/m68k/m68k/copy.s
 file	arch/m68k/fpe/fpe_emulate.c	fpu_emulate
 file	dev/cons.c
 file	dev/cninit.c			ite
-major	{vnd = 14}
+major	{vnd = 6}
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
@@ -49,7 +49,7 @@ include "../../m68k/fpe/files.fpe"
 # SCSI drivers
 #
 include "../../../scsi/files.scsi"
-major	{cd = 6}
+major	{cd = 7}
 major	{sd = 4}
 major	{st = 5}
 
