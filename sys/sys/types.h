@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.41 1999/12/11 05:19:08 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.42 1999/12/30 15:51:35 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -88,6 +88,7 @@ typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
+typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 #if defined(_KERNEL) || defined(_LIBC)
 /*
