@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.2 2001/07/29 19:30:57 christos Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.3 2002/11/03 23:17:19 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ typedef int mach_timespec_t;
 typedef int mach_absolute_time_t;
 typedef unsigned int mach_vm_size_t;
 typedef unsigned long mach_vm_offset_t;
+typedef void *mach_cproc_t;	/* Unkown, see xnu/osfmk/ppc/hw_exception.s */
 
 typedef struct {
 	u_int32_t	numer;
