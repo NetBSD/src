@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.18 2000/12/13 08:19:54 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.19 2000/12/22 11:38:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -45,10 +45,10 @@
 
 #include "libaudio.h"
 
-int main __P((int, char *[]));
-void usage __P((void));
-void play_fd __P((int, char *));
-ssize_t audioctl_write_fromhdr __P((void *, size_t, int));
+int main (int, char *[]);
+void usage (void);
+void play_fd (int, char *);
+ssize_t audioctl_write_fromhdr (void *, size_t, int);
 
 audio_info_t	info;
 int	volume;
