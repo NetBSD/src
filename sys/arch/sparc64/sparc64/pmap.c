@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1998/08/13 02:10:47 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1998/08/23 15:51:23 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -183,6 +183,7 @@ static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 static void tsb_enter __P((int ctx, int64_t va, int64_t data));
 static void pmap_pinit __P((struct pmap *));
 static void pmap_release __P((pmap_t));
+static int pv_syncflags __P((pv_entry_t));
 
 struct pmap_stats {
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
@@ -2424,6 +2425,54 @@ int64_t data;
 	splx(s);
 }
 
+/*
+ * Do whatever is needed to sync the MOD/REF flags
+ */
+int
+pv_syncflags(pv)
+	pv_entry_t pv;
+{
+	pv_entry_t npv;
+	int s = splimp();
+	int flags = pv->pv_va&PV_MASK;
+		
+	if (pv->pv_pmap != NULL)
+		for (npv = pv; npv; npv = npv->pv_next) {
+			int64_t data;
+
+			/* First clear the mod bit in the PTE and make it R/O */
+			ASSERT(npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]);
+			data = pseg_get(npv->pv_pmap, npv->pv_va&PV_VAMASK);
+			/* Need to both clear the modify and write bits */
+			if (data & (TLB_MODIFY|TLB_W))
+				flags |= PV_MOD;
+#ifdef HWREF
+			if (data & (TLB_ACCESS))
+				flags |= PV_REF;
+#else
+			if (data < 0)
+				flags |= PV_REF;
+#endif
+			data &= ~(TLB_MODIFY|TLB_ACCESS);
+			ASSERT((data & TLB_NFO) == 0);
+			if (pseg_set(npv->pv_pmap, npv->pv_va&PV_VAMASK, data)) {
+				printf("pmap_clear_modify: gotten pseg empty!\n");
+				Debugger();
+				/* panic? */
+			}
+			/* Then clear the mod bit in the pv */
+			flags |= npv->pv_va&PV_MASK;
+			npv->pv_va &= ~(PV_MOD|PV_REF);
+		}
+	pv->pv_va |= flags&(PV_MOD|PV_REF);
+#ifdef DEBUG
+	if (pv->pv_va & PV_MOD)
+		pv->pv_va |= PV_WE;	/* Remember this was modified */
+#endif
+	splx(s);
+	return (flags);
+}
+
 #if defined(PMAP_NEW)
 boolean_t
 pmap_clear_modify(pg)
@@ -2496,6 +2545,19 @@ pmap_clear_modify(pa)
 		}
 	splx(s);
 	pv_check();
+#ifdef DEBUG
+#if defined(PMAP_NEW)
+	if (pmap_is_modified(pg)) {
+		printf("pmap_clear_modify(): %p still modified!\n", pg);
+		Debugger();
+	}
+#else
+	if (pmap_is_modified(pa)) {
+		printf("pmap_clear_modify(): %p still modified!\n", (long)pa);
+		Debugger();
+	}
+#endif
+#endif
 #if defined(PMAP_NEW)
 	return (changed);
 #endif
@@ -2530,6 +2592,10 @@ pmap_clear_reference(pa)
 	/* Clear all references */
 	s = splimp();
 	pv = pa_to_pvh(pa);
+#ifdef NOT_DEBUG
+	if (pv->pv_va & PV_MOD)
+		printf("pmap_clear_reference(): pv %p still modified\n", (long)pa);
+#endif
 #if defined(PMAP_NEW)
 	if (pv->pv_va & PV_REF)
 		changed |= 1;
@@ -2571,6 +2637,19 @@ pmap_clear_reference(pa)
 	blast_vcache();
 	splx(s);
 	pv_check();
+#ifdef DEBUG
+#if defined(PMAP_NEW)
+	if (pmap_is_referenced(pg)) {
+		printf("pmap_clear_reference(): %p still referenced!\n", pg);
+		Debugger();
+	}
+#else
+	if (pmap_is_referenced(pa)) {
+		printf("pmap_clear_reference(): %p still referenced!\n", (long)pa);
+		Debugger();
+	}
+#endif
+#endif
 #if defined(PMAP_NEW)
 	return (changed);
 #endif
