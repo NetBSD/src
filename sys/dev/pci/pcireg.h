@@ -1,7 +1,8 @@
-/*	$NetBSD: pcireg.h,v 1.19 1998/12/21 20:31:54 drochner Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.20 1999/09/27 03:20:47 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1999
+ *     Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -132,6 +133,11 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_DOCK				0x0a
 #define	PCI_CLASS_PROCESSOR			0x0b
 #define	PCI_CLASS_SERIALBUS			0x0c
+#define	PCI_CLASS_WIRELESS			0x0d
+#define	PCI_CLASS_I2O				0x0e
+#define	PCI_CLASS_SATCOM			0x0f
+#define	PCI_CLASS_CRYPTO			0x10
+#define	PCI_CLASS_DASP				0x11
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -151,16 +157,19 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_TOKENRING		0x01
 #define	PCI_SUBCLASS_NETWORK_FDDI		0x02
 #define	PCI_SUBCLASS_NETWORK_ATM		0x03
+#define	PCI_SUBCLASS_NETWORK_ISDN		0x04
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
 #define	PCI_SUBCLASS_DISPLAY_VGA		0x00
 #define	PCI_SUBCLASS_DISPLAY_XGA		0x01
+#define	PCI_SUBCLASS_DISPLAY_3D			0x02
 #define	PCI_SUBCLASS_DISPLAY_MISC		0x80
 
 /* 0x04 multimedia subclasses */
 #define	PCI_SUBCLASS_MULTIMEDIA_VIDEO		0x00
 #define	PCI_SUBCLASS_MULTIMEDIA_AUDIO		0x01
+#define	PCI_SUBCLASS_MULTIMEDIA_TELEPHONY	0x02
 #define	PCI_SUBCLASS_MULTIMEDIA_MISC		0x80
 
 /* 0x05 memory subclasses */
@@ -172,16 +181,19 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_HOST		0x00
 #define	PCI_SUBCLASS_BRIDGE_ISA			0x01
 #define	PCI_SUBCLASS_BRIDGE_EISA		0x02
-#define	PCI_SUBCLASS_BRIDGE_MC			0x03
+#define	PCI_SUBCLASS_BRIDGE_MC			0x03	/* XXX _MCA? */
 #define	PCI_SUBCLASS_BRIDGE_PCI			0x04
 #define	PCI_SUBCLASS_BRIDGE_PCMCIA		0x05
 #define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
 #define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
+#define	PCI_SUBCLASS_BRIDGE_RACEWAY		0x08
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /* 0x07 communications subclasses */
 #define	PCI_SUBCLASS_COMMUNICATIONS_SERIAL	0x00
 #define	PCI_SUBCLASS_COMMUNICATIONS_PARALLEL	0x01
+#define	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL	0x02
+#define	PCI_SUBCLASS_COMMUNICATIONS_MODEM	0x03
 #define	PCI_SUBCLASS_COMMUNICATIONS_MISC	0x80
 
 /* 0x08 system subclasses */
@@ -189,12 +201,15 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SYSTEM_DMA			0x01
 #define	PCI_SUBCLASS_SYSTEM_TIMER		0x02
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
+#define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
 /* 0x09 input subclasses */
 #define	PCI_SUBCLASS_INPUT_KEYBOARD		0x00
 #define	PCI_SUBCLASS_INPUT_DIGITIZER		0x01
 #define	PCI_SUBCLASS_INPUT_MOUSE		0x02
+#define	PCI_SUBCLASS_INPUT_SCANNER		0x03
+#define	PCI_SUBCLASS_INPUT_GAMEPORT		0x04
 #define	PCI_SUBCLASS_INPUT_MISC			0x80
 
 /* 0x0a dock subclasses */
@@ -207,6 +222,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_PROCESSOR_PENTIUM		0x02
 #define	PCI_SUBCLASS_PROCESSOR_ALPHA		0x10
 #define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
+#define	PCI_SUBCLASS_PROCESSOR_MIPS		0x30
 #define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
 
 /* 0x0c serial bus subclasses */
@@ -214,7 +230,33 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SERIALBUS_ACCESS		0x01
 #define	PCI_SUBCLASS_SERIALBUS_SSA		0x02
 #define	PCI_SUBCLASS_SERIALBUS_USB		0x03
-#define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04
+#define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04	/* XXX _FIBRECHANNEL */
+#define	PCI_SUBCLASS_SERIALBUS_SMBUS		0x05
+
+/* 0x0d wireless subclasses */
+#define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
+#define	PCI_SUBCLASS_WIRELESS_CONSUMERIR	0x01
+#define	PCI_SUBCLASS_WIRELESS_RF		0x10
+#define	PCI_SUBCLASS_WIRELESS_MISC		0x80
+
+/* 0x0e I2O (Intelligent I/O) subclasses */
+#define	PCI_SUBCLASS_I2O_10			0x00	/* I2O 1.0 XXX ??? */
+
+/* 0x0f satellite communication subclasses */
+/*	PCI_SUBCLASS_SATCOM_???			0x00	/ * XXX ??? */
+#define	PCI_SUBCLASS_SATCOM_TV			0x01
+#define	PCI_SUBCLASS_SATCOM_AUDIO		0x02
+#define	PCI_SUBCLASS_SATCOM_VOICE		0x03
+#define	PCI_SUBCLASS_SATCOM_DATA		0x04
+
+/* 0x10 encryption/decryption subclasses */
+#define	PCI_SUBCLASS_CRYPTO_NETCOMP		0x00
+#define	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT	0x10
+#define	PCI_SUBCLASS_CRYPTO_MISC		0x80
+
+/* 0x11 data acquisition and signal processing subclasses */
+#define	PCI_SUBCLASS_DASP_DPIO			0x00
+#define	PCI_SUBCLASS_DASP_MISC			0x80
 
 /*
  * PCI BIST/Header Type/Latency Timer/Cache Line Size Register.

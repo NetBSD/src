@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.31 1998/12/21 20:56:06 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.32 1999/09/27 03:20:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -96,6 +96,7 @@ struct pci_class pci_subclass_network[] = {
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
 	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
+	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -103,6 +104,7 @@ struct pci_class pci_subclass_network[] = {
 struct pci_class pci_subclass_display[] = {
 	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,		},
 	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,		},
+	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DISPLAY_MISC,		},
 	{ 0 },
 };
@@ -110,6 +112,7 @@ struct pci_class pci_subclass_display[] = {
 struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
+	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,		},
 	{ 0 },
 };
@@ -130,6 +133,7 @@ struct pci_class pci_subclass_bridge[] = {
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,		},
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
+	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
 	{ 0 },
 };
@@ -137,6 +141,8 @@ struct pci_class pci_subclass_bridge[] = {
 struct pci_class pci_subclass_communications[] = {
 	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
+	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
+	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
 	{ 0 },
 };
@@ -146,6 +152,7 @@ struct pci_class pci_subclass_system[] = {
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
+	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_RTC,		},
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
 	{ 0 },
 };
@@ -154,6 +161,8 @@ struct pci_class pci_subclass_input[] = {
 	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
 	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
 	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
+	{ "scanner",		PCI_SUBCLASS_INPUT_SCANNER,		},
+	{ "game port",		PCI_SUBCLASS_INPUT_GAMEPORT,		},
 	{ "miscellaneous",	PCI_SUBCLASS_INPUT_MISC,		},
 	{ 0 },
 };
@@ -170,6 +179,7 @@ struct pci_class pci_subclass_processor[] = {
 	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
 	{ "Alpha",		PCI_SUBCLASS_PROCESSOR_ALPHA,		},
 	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC,		},
+	{ "MIPS",		PCI_SUBCLASS_PROCESSOR_MIPS,		},
 	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,		},
 	{ 0 },
 };
@@ -179,7 +189,43 @@ struct pci_class pci_subclass_serialbus[] = {
 	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
 	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
 	{ "USB",		PCI_SUBCLASS_SERIALBUS_USB,		},
+	/* XXX Fiber Channel/_FIBRECHANNEL */
 	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
+	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_wireless[] = {
+	{ "iRDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
+	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
+	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
+	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_i2o[] = {
+	{ "1.0",		PCI_SUBCLASS_I2O_10,			},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_satcom[] = {
+	{ "TV",			PCI_SUBCLASS_SATCOM_TV,			},
+	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,		},
+	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,		},
+	{ "data",		PCI_SUBCLASS_SATCOM_DATA,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_crypto[] = {
+	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,		},
+	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	},
+	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,		},
+	{ 0 },
+};
+
+struct pci_class pci_subclass_dasp[] = {
+	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
+	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
 
@@ -210,6 +256,16 @@ struct pci_class pci_class[] = {
 	    pci_subclass_processor,				},
 	{ "serial bus",		PCI_CLASS_SERIALBUS,
 	    pci_subclass_serialbus,				},
+	{ "wireless",		PCI_CLASS_WIRELESS,
+	    pci_subclass_wireless,				},
+	{ "I2O",		PCI_CLASS_I2O,
+	    pci_subclass_i2o,					},
+	{ "satellite comm",	PCI_CLASS_SATCOM,
+	    pci_subclass_satcom,				},
+	{ "crypto",		PCI_CLASS_CRYPTO,
+	    pci_subclass_crypto,				},
+	{ "DASP",		PCI_CLASS_DASP,
+	    pci_subclass_dasp,					},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    0,							},
 	{ 0 },
