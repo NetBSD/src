@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.4 2002/04/01 07:43:54 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.5 2002/04/01 22:07:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.10.2.4 2002/04/01 07:43:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.10.2.5 2002/04/01 22:07:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,6 @@ ibcs2_sys_access(l, v, retval)
         struct sys_access_args cup;
 	struct proc *p = l->l_proc;
         caddr_t sg = stackgap_init(p, 0);
-        struct sys_access_args cup;
 
         CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
         SCARG(&cup, path) = SCARG(uap, path);
