@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.19 1999/07/30 20:46:10 fvdl Exp $ */
+/*	$NetBSD: mbr.c,v 1.20 1999/09/04 19:49:23 soren Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -86,13 +86,18 @@ struct part_id {
 	char *name;
 } part_ids[] = {
 	{0, "unused"},
-	{MBR_PTYPE_FAT12, "Primary DOS, 12 bit FAT"},
-	{MBR_PTYPE_FAT16S, "Primary DOS, 16 bit FAT <32M"},
-	{MBR_PTYPE_EXT, "Extended DOS"},
-	{MBR_PTYPE_FAT16B, "Primary DOS, 16-bit FAT >32MB"},
+	{MBR_PTYPE_FAT12, "DOS FAT12"},
+	{MBR_PTYPE_FAT16S, "DOS FAT16, <32M"},
+	{MBR_PTYPE_EXT, "Extended partition"},
+	{MBR_PTYPE_FAT16B, "DOS FAT16, >32M"},
 	{MBR_PTYPE_NTFS, "NTFS"},
+	{MBR_PTYPE_FAT32, "Windows FAT32"},
+	{MBR_PTYPE_FAT32L, "Windows FAT32, LBA"},
+	{MBR_PTYPE_FAT16L, "Windows FAT16, LBA"},
+	{MBR_PTYPE_EXT_LBA, "Extended partition, LBA"},
 	{MBR_PTYPE_LNXSWAP, "Linux swap"},
 	{MBR_PTYPE_LNXEXT2, "Linux native"},
+	{MBR_PTYPE_NTFSVOL, "NTFS volume set"},
 	{MBR_PTYPE_386BSD, "old NetBSD/FreeBSD/386BSD"},
 	{MBR_PTYPE_NETBSD, "NetBSD"},
 	{-1, "Unknown"},
