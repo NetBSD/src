@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $	*/
+/*	$NetBSD: net.c,v 1.2 1999/01/17 20:07:52 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -52,9 +52,9 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
-#include <lib/libsa/if_ether.h>
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
