@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.5 1998/11/11 20:57:33 is Exp $	*/
+/*	$NetBSD: startit.s,v 1.6 2001/02/26 14:58:37 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,17 +31,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.5 1998/11/11 20:57:33 is Exp $
+ * From: $NetBSD: startit.s,v 1.6 2001/02/26 14:58:37 is Exp $
  */
+#include <machine/asm.h>
 
 	.set	ABSEXECBASE,4
 
 	.text
 
-	.globl	_startit
-	.globl	_startit_end
-
-_startit:
+ENTRY_NOPROFILE(startit)
 #if TESTONAMIGA
 	movew	#0x999,0xdff180		| gray
 #endif
@@ -301,4 +299,4 @@ noDraCo:
 nullrp:	.long	0x7fff0001
 zero:	.long	0
 
-_startit_end:
+ENTRY_NOPROFILE(startit_end)
