@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.27 2003/04/02 10:39:26 fvdl Exp $	*/
+/*	$NetBSD: pass1.c,v 1.28 2003/04/02 22:27:09 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.27 2003/04/02 10:39:26 fvdl Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.28 2003/04/02 22:27:09 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ checkinode(inumber, idesc)
 				(long long)ndb);
 			else
 			    printf("bad direct addr ix %d: %lld [ndb %lld]\n",
-				j, iswap64(dp->dp2.di_db[j]),
+				j, (long long)iswap64(dp->dp2.di_db[j]),
 				(long long)ndb);
 		    }
 		    goto unknown;
