@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.59 1999/02/03 01:16:20 msaitoh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.60 1999/02/06 11:57:35 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -901,16 +901,16 @@ out:
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
-#define KPRINTF_PUTCHAR(C) {									\
-	if (oflags == TOBUFONLY) {									\
-		if ((vp != NULL) && (sbuf == tailp)) {					\
-			ret += 1;		/* indicate error */				\
-			goto overflow;										\
-		}														\
-		*sbuf++ = (C);											\
-	} else {													\
-		putchar((C), oflags, (struct tty *)vp);					\
-	}															\
+#define KPRINTF_PUTCHAR(C) {						\
+	if (oflags == TOBUFONLY) {					\
+		if ((vp != NULL) && (sbuf == tailp)) {			\
+			ret += 1;		/* indicate error */	\
+			goto overflow;					\
+		}							\
+		*sbuf++ = (C);						\
+	} else {							\
+		putchar((C), oflags, (struct tty *)vp);			\
+	}								\
 }
 
 /*
@@ -943,8 +943,9 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp = NULL;	/* tail pointer for snprintf */
 
-	if (oflags == TOBUFONLY)
-		tailp = (vp != NULL) ?  *(char **)vp : NULL;
+	tailp = NULL;
+	if (oflags == TOBUFONLY && (vp != NULL))
+		tailp = *(char **)vp;
 
 	cp = NULL;	/* XXX: shutup gcc */
 	size = 0;	/* XXX: shutup gcc */
