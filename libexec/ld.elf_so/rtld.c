@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.102 2004/05/12 20:23:29 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.103 2004/05/17 10:23:58 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -147,11 +147,14 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase)
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 
 	_rtld_digest_dynamic(&_rtld_objself);
-	assert(!_rtld_objself.needed && !_rtld_objself.pltrel &&
-	    !_rtld_objself.pltrela);
+	assert(!_rtld_objself.needed)
+	assert(!_rtld_objself.pltrel && !_rtld_objself.pltrela);
+#if !defined(__mips__)
+	assert(!_rtld_objself.pltgot)
+#endif
 #if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
 	/* ARM, MIPS and SH{3,5} have a bogus DT_TEXTREL. */
-	assert(!_rtld_objself.pltgot && !_rtld_objself.textrel);
+	assert(!_rtld_objself.textrel);
 #endif
 
 	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
