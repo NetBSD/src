@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.2 2002/12/12 17:42:10 christos Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.3 2003/01/22 17:48:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.2 2002/12/12 17:42:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.3 2003/01/22 17:48:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ darwin_sendsig(sig, mask, code)
 }
 
 int
-darwin_sys_sigreturn(p, v, retval)
-	struct proc *p;
+darwin_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
