@@ -1,4 +1,4 @@
-.\"	$NetBSD: extent.9,v 1.12 1998/09/03 08:12:57 msaitoh Exp $
+.\"	$NetBSD: extent.9,v 1.13 1998/09/10 16:04:36 pk Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,10 @@
 .Ft int
 .Fn extent_alloc_subregion "struct extent *ex" "u_long substart" "u_long subend" "u_long size" "u_long alignment" "u_long boundary" "u_long flags" "u_long *result"
 .Ft int
+.Fn extent_alloc1 "struct extent *ex" "u_long size" "u_long alignment" "u_long skew" "u_long boundary" "int flags" "u_long *result"
+.Ft int
+.Fn extent_alloc_subregion1 "struct extent *ex" "u_long substart" "u_long subend" "u_long size" "u_long alignment" "u_long skew" "u_long boundary" "u_long flags" "u_long *result"
+.Ft int
 .Fn extent_alloc_region "struct extent *ex" "u_long start" "u_long size" "int flags"
 .Ft int
 .Fn extent_free "struct extent *ex" "u_long start" "u_long size" "int flags"
@@ -80,8 +84,10 @@ to
 .Fa end
 inclusive.  All memory allocation will use the memory type
 .Fa mtype
-(see
-.Xr malloc 9 ).
+.Po
+see
+.Xr malloc 9
+.Pc .
 The extent map will have the name
 .Fa name ,
 used for identification in case of an error.  If the flag
@@ -211,6 +217,27 @@ The caller must also specify, using the
 or
 .Dv EX_WAITOK
 flags, if waiting for overhead allocation is allowed.
+.Pp
+The
+.Fn extent_alloc1
+and
+.Fn extent_alloc_subregion1
+functions are extensions that take one additional argument, 
+.Fa skew ,
+that modifies the requested alignment result in the following way:
+the value
+.Po Fa result
+\& -
+.Fa skew
+.Pc
+is aligned to
+.Fa alignment
+boundaries.
+.Fa skew
+must be a smaller number than
+.Fa alignment .
+Also, a boundary argument smaller than the sum of the requested skew
+and the size of the request is invalid.
 .Pp
 .Fn extent_free
 frees a region of
