@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 1996/03/11 20:56:50 phil Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 1997/04/01 16:31:19 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -76,20 +76,31 @@
 /*
  * movs[bdw] for fast blockmoves.
  */
-#define movs(type, from, to, n) do { \
-		register int r0 __asm ("r0") = n; \
-		register u_char *r1 __asm("r1") = from; \
-		register u_char *r2 __asm("r2") = to; \
-		__asm __volatile ("movs" type \
-			: "=r" (r1), "=r" (r2) \
-			: "0" (r1), "1" (r2), "r" (r0) \
-			: "r0", "memory" \
-		); \
+#define movs(type, from, to, n) \
+	register int r0 __asm ("r0") = n; \
+	register void *r1 __asm("r1") = from; \
+	register void *r2 __asm("r2") = to; \
+	__asm __volatile ("movs" type \
+		: "=r" (r1), "=r" (r2) \
+		: "0" (r1), "1" (r2), "r" (r0) \
+		: "r0", "memory" \
+	);
+#define movs_update(type, from, to, n) do { \
+		movs(type, from, to, n); \
 		from = r1; to = r2; \
 	} while (0)
-#define movsd(from, to, n)	movs("d", from, to, n)
-#define movsw(from, to, n)	movs("w", from, to, n)
-#define movsb(from, to, n)	movs("b", from, to, n)
+
+#define movs_noupdate(type, from, to, n) do { \
+		movs(type, from, to, n); \
+	} while (0)
+
+#define movsd(from, to, n)	movs_update("d", from, to, n)
+#define movsw(from, to, n)	movs_update("w", from, to, n)
+#define movsb(from, to, n)	movs_update("b", from, to, n)
+
+#define movsdnu(from, to, n)	movs_noupdate("d", from, to, n)
+#define movswnu(from, to, n)	movs_noupdate("w", from, to, n)
+#define movsbnu(from, to, n)	movs_noupdate("b", from, to, n)
 
 /*
  * Invalidate data and/or instruction cache lines.
@@ -108,6 +119,10 @@
  * kernelmode and usermode translations.
  */
 #define tlbflush() __asm __volatile("smr ptb0,r0; lmr ptb0,r0; lmr ptb1,r0" : : : "r0")
+#define tlbflush_entry(p) do { \
+		lmr(ivar0, p); \
+		lmr(ivar1, p); \
+	} while(0)
 
 /*
  * Bits in the cfg register.
