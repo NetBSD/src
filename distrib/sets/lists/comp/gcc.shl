@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.shl,v 1.2 2003/12/04 12:20:43 mrg Exp $
+#	$NetBSD: gcc.shl,v 1.3 2003/12/13 22:03:48 chs Exp $
 ./usr/lib/libbfd.so.6				comp-c-shlib
 ./usr/lib/libbfd.so.6.0				comp-c-shlib
 ./usr/lib/libg2c.so				comp-fortran-lib
@@ -10,6 +10,5 @@
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.1			comp-c-shlib
 ./usr/lib/libopcodes.so.1.0			comp-c-shlib
-./usr/lib/libsupc++.a				comp-cxx-lib
 ./usr/lib/libstdc++.so				comp-cxx-lib
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib
