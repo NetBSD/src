@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.10 1994/04/05 02:48:23 mycroft Exp $
+ *	$Id: trap.c,v 1.11 1994/04/10 08:23:02 mycroft Exp $
  */
 
 #include "param.h"
@@ -117,6 +117,7 @@ userret(p, pc, oticks)
 	struct timeval oticks;
 {
 	int sig;
+	int s;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -516,7 +517,7 @@ syscall(code, frame)
 
 	case SYS___syscall:
 #ifdef HPUXCOMPAT
-		if (p->p_flags & SHPUX)
+		if (p->p_flag & SHPUX)
 			break;
 #endif
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
