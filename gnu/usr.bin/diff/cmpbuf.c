@@ -15,10 +15,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#ifndef lint
-static char *rcsid = "$Id: cmpbuf.c,v 1.1 1993/09/16 17:39:04 jtc Exp $";
-#endif
-
 #include "system.h"
 #include "cmpbuf.h"
 

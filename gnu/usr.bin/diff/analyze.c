@@ -17,10 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#ifndef lint
-static char *rcsid = "$Id: analyze.c,v 1.6 1993/11/12 02:25:52 jtc Exp $";
-#endif
-
 /* The basic algorithm is described in:
    "An O(ND) Difference Algorithm and its Variations", Eugene Myers,
    Algorithmica Vol. 1 No. 2, 1986, pp. 251-266;
