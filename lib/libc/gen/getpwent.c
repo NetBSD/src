@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.24 1998/02/02 02:41:25 perry Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.25 1998/02/10 03:56:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.24 1998/02/02 02:41:25 perry Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.25 1998/02/10 03:56:33 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -913,8 +913,12 @@ __initdb()
 #ifdef YP
 	__ypmode = YPMODE_NONE;
 #endif
-	p = (geteuid()) ? _PATH_MP_DB : _PATH_SMP_DB;
-	_pw_db = dbopen(p, O_RDONLY, 0, DB_HASH, NULL);
+	if (geteuid() == 0) {
+		_pw_db = dbopen((p = _PATH_SMP_DB), O_RDONLY, 0, DB_HASH, NULL);
+		if (_pw_db)
+			return(1);
+	}
+	_pw_db = dbopen((p = _PATH_MP_DB), O_RDONLY, 0, DB_HASH, NULL);
 	if (_pw_db)
 		return(1);
 	if (!warned)
