@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.10 2005/02/28 01:27:01 christos Exp $
+# $NetBSD: TODO,v 1.11 2005/02/28 01:59:21 thorpej Exp $
 
 Status:
 
@@ -32,7 +32,7 @@ imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
 login		- Nothing
 other		- Internal
-passwd		- passwd -p usage.
+passwd		- Nothing
 pop3		- Pkgsrc, nothing to do
 pppd		- Nothing
 racoon		- Check racoon.conf(5). XXX: No /etc/pam.d/racoon, this is
