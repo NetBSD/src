@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.59 2003/05/02 03:15:25 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.60 2003/05/16 04:54:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.59 2003/05/02 03:15:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.60 2003/05/16 04:54:56 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -849,7 +849,7 @@ rt_ifannouncemsg(ifp, what)
 	memset(&info, 0, sizeof(info));
 	memset(&ifan, 0, sizeof(ifan));
 	ifan.ifan_index = ifp->if_index;
-	strcpy(ifan.ifan_name, ifp->if_xname);
+	strlcpy(ifan.ifan_name, ifp->if_xname, sizeof(ifan.ifan_name));
 	ifan.ifan_what = what;
 	m = rt_msg1(RTM_IFANNOUNCE, &info, (caddr_t)&ifan, sizeof(ifan));
 	if (m == 0)
