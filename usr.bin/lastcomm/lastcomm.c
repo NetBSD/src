@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lastcomm.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lastcomm.c,v 1.3 1993/08/01 18:14:04 mycroft Exp $";
+static char rcsid[] = "$Id: lastcomm.c,v 1.4 1993/12/04 01:57:10 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ static char rcsid[] = "$Id: lastcomm.c,v 1.3 1993/08/01 18:14:04 mycroft Exp $";
 #include <struct.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "pathnames.h"
 
 struct	acct buf[DEV_BSIZE / sizeof (struct acct)];
@@ -177,7 +178,7 @@ ok(argv, acp)
 	return(0);
 }
 
-#include <sys/dir.h>
+#include <dirent.h>
 
 #define N_DEVS		43		/* hash value for device names */
 #define NDEVS		500		/* max number of file names in /dev */
@@ -196,8 +197,7 @@ setupdevs()
 	register DIR * fd;
 	register struct devhash * hashtab;
 	register ndevs = NDEVS;
-	struct direct * dp;
-	char *malloc();
+	struct dirent * dp;
 
 	/*NOSTRICT*/
 	hashtab = (struct devhash *)malloc(NDEVS * sizeof(struct devhash));
