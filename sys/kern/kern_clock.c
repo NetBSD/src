@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.57 2000/05/29 15:05:10 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.58 2000/05/29 23:48:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -724,6 +724,18 @@ hardclock(frame)
 		 * (and then multiply by 1000000 to get ppm).
 		 */
 		switch (hz) {
+		case 60:
+			/* A factor of 1.000100010001 gives about 15ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 4);
+				time_adj -= (-time_adj >> 8);
+			} else {
+				time_adj += (time_adj >> 4);
+				time_adj += (time_adj >> 8);
+			}
+			break;
+
 		case 96:
 			/* A factor of 1.0101010101 gives about 244ppm error. */
 			if (time_adj < 0) {
@@ -745,14 +757,6 @@ hardclock(frame)
 				time_adj += (time_adj >> 2) + (time_adj >> 5);
 				time_adj -= (time_adj >> 10);
 			}
-			break;
-
-		case 60:
-			/* A factor of 1.00010001 gives about 244ppm error. */
-			if (time_adj < 0)
-				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
-			else
-				time_adj += (time_adj >> 4) + (time_adj >> 8);
 			break;
 
 		case 1000:
