@@ -1,3 +1,5 @@
+/*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: state.c,v 1.8 1996/02/24 01:22:19 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
+#else
+static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include "telnetd.h"
