@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.34 2002/10/16 16:38:25 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.35 2002/10/22 13:48:30 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.34 2002/10/16 16:38:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.35 2002/10/22 13:48:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,7 @@ u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
 int ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src);
 
 static void ac97_alc650_init(struct ac97_softc *);
+static void ac97_vt1616_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -454,10 +455,18 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('H', 'R', 'S', 0),
 	  AC97_VENDOR_ID_MASK,		"Intersil unknown",	},
 
+	/*
+	 * IC Ensemble (VIA)
+	 *	http://www.viatech.com/en/datasheet/DS1616.pdf
+	 */
 	{ AC97_CODEC_ID('I', 'C', 'E', 0x01),
-	  0xffffffff,			"ICEnsemble ICE1230",	},
+	  0xffffffff,			"ICEnsemble ICE1230/VT1611",	},
 	{ AC97_CODEC_ID('I', 'C', 'E', 0x11),
-	  0xffffffff,			"ICEnsemble ICE1232",	},
+	  0xffffffff,			"ICEnsemble ICE1232/VT1611A",	},
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x14),
+	  0xffffffff,			"ICEnsemble ICE1232A",	},
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x51),
+	  0xffffffff,			"VIA Technologies VT1616", ac97_vt1616_init },
 	{ AC97_CODEC_ID('I', 'C', 'E', 0),
 	  AC97_VENDOR_ID_MASK,		"ICEnsemble unknown",	},
 
@@ -495,13 +504,8 @@ static const struct ac97_codecid {
 
 	/*
 	 * VIA
-	 * No datasheets are available.
 	 * http://www.viatech.com/en/multimedia/audio.jsp
-	 *
-	 * What about VT1616?
 	 */
-	{ AC97_CODEC_ID('V', 'I', 'A', 0x43),
-	  0xffffffff,			"VIA Technologies VT1611A", },
 	{ AC97_CODEC_ID('V', 'I', 'A', 0x61),
 	  0xffffffff,			"VIA Technologies VT1612A", },
 	{ AC97_CODEC_ID('V', 'I', 'A', 0),
@@ -1421,27 +1425,31 @@ ac97_add_port(struct ac97_softc *as, const struct ac97_source_info *src)
 
 #define ALC650_REG_MULTI_CHANNEL_CONTROL	0x6a
 #define		ALC650_MCC_SLOT_MODIFY_MASK		0xc000
-#define		ALC650_MCC_FRONTDAC_FROM_SPDIFIN	0x2000
-#define		ALC650_MCC_SPDIFOUT_FROM_ADC		0x1000
-#define		ALC650_MCC_PCM_FROM_SPDIFIN		0x0800
-#define		ALC650_MCC_MIC_OR_CENTERLFE		0x0400
-#define		ALC650_MCC_LINEIN_OR_SURROUND		0x0200
-#define		ALC650_MCC_INDEPENDENT_MASTER_L		0x0080
-#define		ALC650_MCC_INDEPENDENT_MASTER_R		0x0040
-#define		ALC650_MCC_ANALOG_TO_CENTERLFE		0x0020
-#define		ALC650_MCC_ANALOG_TO_SURROUND		0x0010
-#define		ALC650_MCC_EXCHANGE_CENTERLFE		0x0008
-#define		ALC650_MCC_CENTERLFE_DOWNMIX		0x0004
-#define		ALC650_MCC_SURROUND_DOWNMIX		0x0002
-#define		ALC650_MCC_LINEOUT_TO_SURROUND		0x0001
+#define		ALC650_MCC_FRONTDAC_FROM_SPDIFIN	0x2000 /* 13 */
+#define		ALC650_MCC_SPDIFOUT_FROM_ADC		0x1000 /* 12 */
+#define		ALC650_MCC_PCM_FROM_SPDIFIN		0x0800 /* 11 */
+#define		ALC650_MCC_MIC_OR_CENTERLFE		0x0400 /* 10 */
+#define		ALC650_MCC_LINEIN_OR_SURROUND		0x0200 /* 9 */
+#define		ALC650_MCC_INDEPENDENT_MASTER_L		0x0080 /* 7 */
+#define		ALC650_MCC_INDEPENDENT_MASTER_R		0x0040 /* 6 */
+#define		ALC650_MCC_ANALOG_TO_CENTERLFE		0x0020 /* 5 */
+#define		ALC650_MCC_ANALOG_TO_SURROUND		0x0010 /* 4 */
+#define		ALC650_MCC_EXCHANGE_CENTERLFE		0x0008 /* 3 */
+#define		ALC650_MCC_CENTERLFE_DOWNMIX		0x0004 /* 2 */
+#define		ALC650_MCC_SURROUND_DOWNMIX		0x0002 /* 1 */
+#define		ALC650_MCC_LINEOUT_TO_SURROUND		0x0001 /* 0 */
 static void
 ac97_alc650_init(struct ac97_softc *as)
 {
-	static const struct ac97_source_info sources[3] = {
+	static const struct ac97_source_info sources[6] = {
 		{ AudioCoutputs, AudioNsurround, "lineinjack",
 		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
 		  ALC650_REG_MULTI_CHANNEL_CONTROL,
 		  0x0000, 1, 9, 0, 0, CHECK_SURROUND },
+		{ AudioCoutputs, AudioNsurround, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  ALC650_REG_MULTI_CHANNEL_CONTROL,
+		  0x0000, 1, 1, 0, 0, CHECK_SURROUND },
 		{ AudioCoutputs, AudioNcenter, "micjack",
 		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
 		  ALC650_REG_MULTI_CHANNEL_CONTROL,
@@ -1449,9 +1457,52 @@ ac97_alc650_init(struct ac97_softc *as)
 		{ AudioCoutputs, AudioNlfe, "micjack",
 		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
 		  ALC650_REG_MULTI_CHANNEL_CONTROL,
-		  0x0000, 1, 10, 0, 0, CHECK_LFE }};
+		  0x0000, 1, 10, 0, 0, CHECK_LFE },
+		{ AudioCoutputs, AudioNcenter, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  ALC650_REG_MULTI_CHANNEL_CONTROL,
+		  0x0000, 1, 2, 0, 0, CHECK_CENTER },
+		{ AudioCoutputs, AudioNlfe, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  ALC650_REG_MULTI_CHANNEL_CONTROL,
+		  0x0000, 1, 2, 0, 0, CHECK_LFE },
+	};
+
+	ac97_add_port(as, &sources[0]);
+	ac97_add_port(as, &sources[1]);
+	ac97_add_port(as, &sources[2]);
+	ac97_add_port(as, &sources[3]);
+	ac97_add_port(as, &sources[4]);
+	ac97_add_port(as, &sources[5]);
+}
+
+#define VT1616_REG_IO_CONTROL	0x5a
+#define		VT1616_IC_LVL			(1 << 15)
+#define		VT1616_IC_LFECENTER_TO_FRONT	(1 << 12)
+#define		VT1616_IC_SURROUND_TO_FRONT	(1 << 11)
+#define		VT1616_IC_BPDC			(1 << 10)
+#define		VT1616_IC_DC			(1 << 9)
+#define		VT1616_IC_IB_MASK		0x000c
+static void
+ac97_vt1616_init(struct ac97_softc *as)
+{
+	static const struct ac97_source_info sources[3] = {
+		{ AudioCoutputs, AudioNsurround, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  VT1616_REG_IO_CONTROL,
+		  0x0000, 1, 11, 0, 0, CHECK_SURROUND },
+		{ AudioCoutputs, AudioNcenter, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  VT1616_REG_IO_CONTROL,
+		  0x0000, 1, 12, 0, 0, CHECK_CENTER },
+		{ AudioCoutputs, AudioNlfe, "mixtofront",
+		  AUDIO_MIXER_ENUM, WRAP(ac97_on_off),
+		  VT1616_REG_IO_CONTROL,
+		  0x0000, 1, 12, 0, 0, CHECK_LFE },
+	};
 
 	ac97_add_port(as, &sources[0]);
 	ac97_add_port(as, &sources[1]);
 	ac97_add_port(as, &sources[2]);
 }
+
