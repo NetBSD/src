@@ -189,7 +189,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			EVP_PKEY_free(pkey);
 			if (max < jj) max=jj;
 			}
-		if ((tmp=(unsigned char *)Malloc(max)) == NULL)
+		if ((tmp=(unsigned char *)OPENSSL_malloc(max)) == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -203,12 +203,12 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			if (jj <= 0)
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,ERR_R_EVP_LIB);
-				Free(tmp);
+				OPENSSL_free(tmp);
 				goto err;
 				}
 			M_ASN1_OCTET_STRING_set(ri->enc_key,tmp,jj);
 			}
-		Free(tmp);
+		OPENSSL_free(tmp);
 		memset(key, 0, keylen);
 
 		if (out == NULL)
@@ -265,13 +265,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	X509_ALGOR *xalg=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
-#ifndef NO_RC2
-	char is_rc2 = 0;
-#endif
-/*	EVP_PKEY *pkey; */
-#if 0
-	X509_STORE_CTX s_ctx;
-#endif
 
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
@@ -310,16 +303,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	default:
 		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
-		}
-
-	if(EVP_CIPHER_nid(evp_cipher) == NID_rc2_cbc)
-		{
-#ifndef NO_RC2		
-		is_rc2 = 1; 
-#else
-		PKCS7err(PKCS7_F_PKCS7_DATADECODE,PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
-		goto err;
-#endif
 		}
 
 	/* We will be checking the signature */
@@ -387,11 +370,11 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (ri == NULL) {
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 				 PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
-			return(NULL);
+			goto err;
 		}
 
 		jj=EVP_PKEY_size(pkey);
-		tmp=(unsigned char *)Malloc(jj+10);
+		tmp=(unsigned char *)OPENSSL_malloc(jj+10);
 		if (tmp == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_MALLOC_FAILURE);
@@ -410,27 +393,21 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		BIO_get_cipher_ctx(etmp,&evp_ctx);
 		EVP_CipherInit(evp_ctx,evp_cipher,NULL,NULL,0);
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
-			return(NULL);
+			goto err;
 
 		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
-			/* HACK: some S/MIME clients don't use the same key
+			/* Some S/MIME clients don't use the same key
 			 * and effective key length. The key length is
 			 * determined by the size of the decrypted RSA key.
-			 * So we hack things to manually set the RC2 key
-			 * because we currently can't do this with the EVP
-			 * interface.
 			 */
-#ifndef NO_RC2		
-			if(is_rc2) RC2_set_key(&(evp_ctx->c.rc2_ks),jj, tmp,
-					EVP_CIPHER_CTX_key_length(evp_ctx)*8);
-			else
-#endif
+			if(!EVP_CIPHER_CTX_set_key_length(evp_ctx, jj))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
 				goto err;
 				}
-		} else EVP_CipherInit(evp_ctx,NULL,tmp,NULL,0);
+		} 
+		EVP_CipherInit(evp_ctx,NULL,tmp,NULL,0);
 
 		memset(tmp,0,jj);
 
@@ -479,7 +456,7 @@ err:
 		out=NULL;
 		}
 	if (tmp != NULL)
-		Free(tmp);
+		OPENSSL_free(tmp);
 	return(out);
 	}
 
@@ -557,7 +534,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				if (EVP_MD_CTX_type(mdc) == j)
 					break;
 				else
-					btmp=btmp->next_bio;
+					btmp=BIO_next(btmp);
 				}
 			
 			/* We now have the EVP_MD_CTX, lets do the
@@ -601,18 +578,20 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				x=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,
 					   i2d_X509_ATTRIBUTE,
 					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
-				pp=(unsigned char *)Malloc(x);
+				pp=(unsigned char *)OPENSSL_malloc(x);
 				p=pp;
 				i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,
 				           i2d_X509_ATTRIBUTE,
 					   V_ASN1_SET,V_ASN1_UNIVERSAL,IS_SET);
 				EVP_SignUpdate(&ctx_tmp,pp,x);
-				Free(pp);
+				OPENSSL_free(pp);
 				pp=NULL;
 				}
 
+#ifndef NO_DSA
 			if (si->pkey->type == EVP_PKEY_DSA)
 				ctx_tmp.digest=EVP_dss1();
+#endif
 
 			if (!EVP_SignFinal(&ctx_tmp,(unsigned char *)buf->data,
 				(unsigned int *)&buf->length,si->pkey))
@@ -650,7 +629,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			(unsigned char *)buf_mem->data,buf_mem->length);
 #endif
 		}
-	if (pp != NULL) Free(pp);
+	if (pp != NULL) OPENSSL_free(pp);
 	pp=NULL;
 
 	ret=1;
@@ -749,7 +728,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 			}
 		if (EVP_MD_CTX_type(mdc) == md_type)
 			break;
-		btmp=btmp->next_bio;	
+		btmp=BIO_next(btmp);
 		}
 
 	/* mdc is the digest ctx that we want, unless there are attributes,
@@ -795,18 +774,25 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		 */
 		i=i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,NULL,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
-		pp=Malloc(i);
+		pp=OPENSSL_malloc(i);
 		p=pp;
 		i2d_ASN1_SET_OF_X509_ATTRIBUTE(sk,&p,i2d_X509_ATTRIBUTE,
 			V_ASN1_SET,V_ASN1_UNIVERSAL, IS_SEQUENCE);
 		EVP_VerifyUpdate(&mdc_tmp,pp,i);
 
-		Free(pp);
+		OPENSSL_free(pp);
 		}
 
 	os=si->enc_digest;
 	pkey = X509_get_pubkey(x509);
+	if (!pkey)
+		{
+		ret = -1;
+		goto err;
+		}
+#ifndef NO_DSA
 	if(pkey->type == EVP_PKEY_DSA) mdc_tmp.digest=EVP_dss1();
+#endif
 
 	i=EVP_VerifyFinal(&mdc_tmp,os->data,os->length, pkey);
 	EVP_PKEY_free(pkey);
@@ -932,7 +918,7 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 
 	if (*sk == NULL)
 		{
-		*sk = sk_X509_ATTRIBUTE_new(NULL);
+		*sk = sk_X509_ATTRIBUTE_new_null();
 new_attrib:
 		attr=X509_ATTRIBUTE_create(nid,atrtype,value);
 		sk_X509_ATTRIBUTE_push(*sk,attr);

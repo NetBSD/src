@@ -237,9 +237,9 @@ start:
 		else	{
 			/* unknown */
 			}
-		if (name != NULL) Free(name);
-		if (header != NULL) Free(header);
-		if (data != NULL) Free(data);
+		if (name != NULL) OPENSSL_free(name);
+		if (header != NULL) OPENSSL_free(header);
+		if (data != NULL) OPENSSL_free(data);
 		name=NULL;
 		header=NULL;
 		data=NULL;
@@ -268,9 +268,9 @@ err:
 		ret=NULL;
 		}
 		
-	if (name != NULL) Free(name);
-	if (header != NULL) Free(header);
-	if (data != NULL) Free(data);
+	if (name != NULL) OPENSSL_free(name);
+	if (header != NULL) OPENSSL_free(header);
+	if (data != NULL) OPENSSL_free(data);
 	return(ret);
 	}
 
@@ -305,7 +305,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 		{
 		if ( (xi->enc_data!=NULL) && (xi->enc_len>0) )
 			{
-			/* copy from wierdo names into more normal things */
+			/* copy from weirdo names into more normal things */
 			iv=xi->enc_cipher.iv;
 			data=(unsigned char *)xi->enc_data;
 			i=xi->enc_len;
