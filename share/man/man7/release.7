@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.11 2000/11/01 04:29:47 tv Exp $
+.\"	$NetBSD: release.7,v 1.12 2001/04/09 17:31:03 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,7 +164,7 @@ using the following layout:
 .Pp
 .Bl -tag -width "source/"
 .It Sy source/
-Source codes of the operating system and patches for it. 
+Source codes of the operating system and patches for it.
 .Bl -tag -width "patches/"
 .It Sy patches/
 This directory contains various patch files appropriate for
@@ -189,7 +189,7 @@ Diff against the last release, usually generatec by
 .Cm cvs rdiff .
 For patche releases, diffs against the last release
 are included.  If the last release was a patch release itself, the
-diff is against that patch release is included. 
+diff is against that patch release is included.
 .El
 .It Sy sets/
 Sources for the various system sets, based on their modules
@@ -217,23 +217,23 @@ command.
 .It Sy gnusrc.tgz
 Contains sources for all GPLed and possibly other programs that
 contains restrictions in their licensing that prevent others from
-using these programs in closed-source environments. 
+using these programs in closed-source environments.
 .It Sy pkgsrc.tgz
 Package-sources for third party software ready to compile. See
-pkgsrc/README for more information. 
+pkgsrc/README for more information.
 .It Sy sharesrc.tgz
 Contains machine-independent data files that can be shared across
-architectures/systems. 
+architectures/systems.
 .It Sy src.tgz
 The operating system's userland source code, including all programs,
-tools, toolchain, etc. 
+tools, toolchain, etc.
 .It Sy syssrc.tgz
 Kernel sources for all architectures plus sources of the tools needed
-to build kernels
-.Xr (config 8 , ...).
+to build kernels (like
+.Xr config 8 ) .
 .It Sy xsrc.tgz
 Source code of the X Window System used on all NetBSD architectures.
-Includes X clients and servers. 
+Includes X clients and servers.
 .El
 .El
 .El
@@ -260,7 +260,7 @@ Installation notes, including complete descriptions of files contained
 within the release hierarchy
 .It Sy INSTALL.more
 pretty version of this, suited for viewing with
-.Xr more 1 
+.Xr more 1
 .It Sy INSTALL.html
 HTML version of this
 .It Sy INSTALL.ps
@@ -361,13 +361,13 @@ platforms may have differently named kernels.
 installation helper items
 .Bl -tag -width "diskimage/"
 .It Sy cdrom/
-CDROM images in ISO 9660 format, usually created with 
+CDROM images in ISO 9660 format, usually created with
 .Dq make iso-image
-in 
+in
 .Pa src/etc
-after a 
-.Dq make release 
-in both 
+after a
+.Dq make release
+in both
 .Pa src
 and
 .Pa xsrc .
