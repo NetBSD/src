@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.32 2000/02/09 14:42:33 enami Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.33 2000/02/09 15:40:23 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -296,7 +296,7 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_RBCR1, 0);
 
 	/* Tell RCR to do nothing for now. */
-	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON);
+	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON | sc->rcr_proto);
 
 	/* Place NIC in internal loopback mode. */
 	NIC_PUT(regt, regh, ED_P0_TCR, ED_TCR_LB0);
@@ -352,7 +352,7 @@ dp8390_init(sc)
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
 	/* Accept broadcast and multicast packets by default. */
-	i = ED_RCR_AB | ED_RCR_AM;
+	i = ED_RCR_AB | ED_RCR_AM | sc->rcr_proto;
 	if (ifp->if_flags & IFF_PROMISC) {
 		/*
 		 * Set promiscuous mode.  Multicast filter was set earlier so
@@ -650,6 +650,13 @@ dp8390_intr(arg)
 		 * (Writing a '1' *clears* the bit.)
 		 */
 		NIC_PUT(regt, regh, ED_P0_ISR, isr);
+
+		/* Work around for AX88190 bug */
+		if ((sc->sc_flags & DP8390_DO_AX88190_WORKAROUND) != 0)
+			while ((NIC_GET(regt, regh, ED_P0_ISR) & isr) != 0) {
+				NIC_PUT(regt, regh, ED_P0_ISR, 0);
+				NIC_PUT(regt, regh, ED_P0_ISR, isr);
+			}
 
 		/*
 		 * Handle transmitter interrupts.  Handle these first because
