@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.92 2003/05/16 19:34:00 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.93 2003/05/30 22:17:00 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,8 +268,8 @@ again:
 	run_prog(0, NULL, "/sbin/umount /mnt2");
 
 	/* Mount it */
-	if (run_prog(0, NULL,
-	    "/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
+	if (run_prog(0, NULL, "/sbin/mount -rt cd9660 /dev/%s%c /mnt2",
+	    cdrom_dev, 'a' + getrawpartition())) {
 		if (retries++ < 5) {
 			sleep(1);
 			goto again;

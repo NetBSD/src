@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.30 2003/05/21 10:05:25 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.31 2003/05/30 22:17:04 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,18 +101,12 @@ message askfsroot
 {I will be asking for partition information.
 
 First the root partition.  You have %d %s left on your disk.
-}
-
-message askfsroot2
-{Root partition size? }
+Root partition size? }
 
 message askfsswap
 {
 Next the swap partition.  You have %d %s left on your disk.
 Swap partition size? }
-
-message askfsswap2
-{Swap partition size? }
 
 message askfsusr
 {
@@ -127,10 +121,7 @@ give sizes and mount points for the following partitions.
 
 message askfspart
 {The next partition is /dev/%s%c.  You have %d %s left on your disk.
-}
-
-message askfspart2
-{Partition size? }
+Partition size? }
 
 message cyl1024
 {The disklabel (set of partitions) you specified has a root partition that
