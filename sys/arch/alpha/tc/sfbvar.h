@@ -1,4 +1,4 @@
-/* $NetBSD: sfbvar.h,v 1.3 1998/04/15 21:15:08 drochner Exp $ */
+/* $NetBSD: sfbvar.h,v 1.4 1998/10/19 00:32:44 briggs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,16 +37,16 @@ struct fbcursor;
 struct fbcurpos;
 
 struct sfb_devconfig {
-	vm_offset_t dc_vaddr;		/* memory space virtual base address */
-	vm_offset_t dc_paddr;		/* memory space physical base address */
-	vm_offset_t dc_size;		/* size of slot memory */
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
+	psize_t dc_size;		/* size of slot memory */
 
 	int	    dc_wid;		/* width of frame buffer */
 	int	    dc_ht;		/* height of frame buffer */
 	int	    dc_depth;		/* depth, bits per pixel */
 	int	    dc_rowbytes;	/* bytes in a FB scan line */
 
-	vm_offset_t dc_videobase;	/* base of flat frame buffer */
+	vaddr_t dc_videobase;	/* base of flat frame buffer */
 
 	struct raster	dc_raster;	/* raster description */
 	struct rcons	dc_rcons;	/* raster blitter control info */
