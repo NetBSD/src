@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.14 1997/07/19 15:35:27 kleink Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.15 1997/07/19 22:42:18 kleink Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -207,6 +207,13 @@ ipl_load()
 	struct vattr vattr;
 	int error = 0, fmode = S_IFCHR|0600, i;
 	char *name;
+
+	/*
+	 * XXX Remove existing device nodes prior to creating new ones
+	 * XXX using the assigned LKM device slot's major number.  In a
+	 * XXX perfect world we could use the ones specified by cdevsw[].
+	 */
+	(void)ipl_remove();
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
 		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
