@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.20 1998/06/05 17:16:31 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.21 1998/06/05 17:22:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -155,6 +155,7 @@
 #define		CTRL_RL_TYPE		0x03000000
 #define		CTRL_RM_TYPE		0x30000000
 
+/* a.k.a. CIA_CSR_PYXIS_CTRL1 */
 #define	CIA_CSR_CNFG	(CIA_CSRS + 0x140)
 
 #define		CNFG_BWEN		0x00000001
