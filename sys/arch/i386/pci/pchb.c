@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.18.4.3 2002/01/16 10:07:02 he Exp $	*/
+/*	$NetBSD: pchb.c,v 1.18.4.4 2002/03/20 22:36:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -190,6 +190,11 @@ pchbattach(parent, self, aux)
 			 * (It would be easier to attach all the buses
 			 * at the MIOC, but less aesthetical imho.)
 			 */
+			if ((attachflags &
+			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
+			    PCI_FLAGS_MEM_ENABLED)
+				attachflags |= PCI_FLAGS_IO_ENABLED;
+
 			pbnum = 0;
 			switch (pa->pa_device) {
 			case 18: /* PXB 0 bus A - primary bus */
