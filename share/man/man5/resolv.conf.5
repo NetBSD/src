@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.5 1994/11/30 19:31:29 jtc Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.6 1994/12/12 06:13:29 deraadt Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -94,18 +94,18 @@ and
 .Xr gethostbyaddr 3 .
 It specifies which databases should be searched,
 and the order to do so.
-The legal space-seperated values are
+The legal space-separated values are
 .Bl -tag -width bind
 .It Sy bind
 use the Domain Name server by querying the
 .Xr named 8
+.It Sy file
+search for entries in
+.Nm /etc/hosts
 .It Sy yp
 talk to the YP system if
 .Xr ypbind 8
 is running
-.It Sy file
-search for entries in
-.Nm /etc/hosts
 .El
 .Pp
 If the
