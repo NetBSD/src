@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.2 1995/10/02 12:58:43 chopps Exp $
+#	$Id: install.sh,v 1.3 1995/10/09 02:41:28 chopps Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -201,7 +201,7 @@ $DONTDOIT mount -v /dev/${rdev}a /mnt
 echo	""
 echo -n	"Creating a fstab..."
 mkdir -p $FSTABDIR
-echo "/dev/${rdev}a	/	ufs	rw	1	1" > $FSTAB
+echo "/dev/${rdev}a	/	ffs	rw	1	1" > $FSTAB
 
 # get rid of this partition
 shiftvar $rdev
@@ -273,7 +273,7 @@ $DONTDOIT mkdir -p /mnt/usr
 $DONTDOIT mount -v /dev/${usrpart} /mnt/usr
 echo	""
 echo -n	"Adding to fstab..."
-echo "/dev/${usrpart}	/usr	ufs	rw	1	2" >> $FSTAB
+echo "/dev/${usrpart}	/usr	ffs	rw	1	2" >> $FSTAB
 sync
 echo	" done."
 
