@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.12 1996/02/13 22:04:39 christos Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,6 +45,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
+
+#include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 
 #include <net/if.h>
 #include <net/if_types.h>
