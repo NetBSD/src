@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.4 2000/12/11 05:29:01 mycroft Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.5 2001/01/18 18:41:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -127,7 +127,5 @@
 #define LINUX_EISNAM		120
 #define LINUX_EREMOTEIO		121
 #define LINUX_EDQUOT		122
-
-extern int native_to_linux_errno[];
 
 #endif /* !_I386_LINUX_ERRNO_H */
