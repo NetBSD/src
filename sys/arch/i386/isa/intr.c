@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.21 1994/05/05 16:05:57 mycroft Exp $
+ *	$Id: intr.c,v 1.22 1994/10/26 01:30:59 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
 extern IDTVEC(wild), IDTVEC(intr)[], IDTVEC(fast)[];
+extern struct gate_descriptor idt[];
 
 /*
  * Fill in default interrupt table (in case of spuruious interrupt
@@ -67,13 +68,10 @@ isa_defaultirq()
 	imask[IPL_TTY] |= SIR_TTYMASK;
 	imask[IPL_CLOCK] |= SIR_CLOCKMASK;
 
-	/* out of range vectors */
-	for (i = NRSVIDT; i < NIDT; i++)
-		setidt(i, &IDTVEC(wild), SDT_SYS386IGT, SEL_KPL);
-
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
-		setidt(ICU_OFFSET + i, IDTVEC(intr)[i],  SDT_SYS386IGT, SEL_KPL);
+		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0, SDT_SYS386IGT,
+		    SEL_KPL);
   
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
@@ -102,9 +100,6 @@ isa_defaultirq()
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
 	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
-
-	splhigh();
-	enable_intr();
 }
 
 /*

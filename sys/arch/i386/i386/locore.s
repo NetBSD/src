@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.88 1994/10/25 15:13:44 mycroft Exp $
+ *	$Id: locore.s,v 1.89 1994/10/26 01:32:18 mycroft Exp $
  */
 
 /*
@@ -617,8 +617,6 @@ reloc_gdt:
 
 /*****************************************************************************/
 
-#define	LCALL(x,y)	.byte 0x9a ; .long y ; .word x
-
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -629,9 +627,9 @@ ENTRY(sigcode)
 	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS_sigreturn,%eax
-	LCALL(7,0)			# enter kernel with args on stack
+	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
-	LCALL(7,0)			# exit if sigreturn fails
+	int	$0x80			# exit if sigreturn fails
 	.globl	_esigcode
 _esigcode:
 
@@ -1962,34 +1960,6 @@ IDTVEC(fpu)
 IDTVEC(align)
 	ZTRAP(T_ALIGNFLT)
 	/* 18 - 31 reserved for future exp */
-IDTVEC(rsvd1)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd2)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd3)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd4)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd5)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd6)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd7)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd8)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd9)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd10)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd11)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd12)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd13)
-	ZTRAP(T_RESERVED)
-IDTVEC(rsvd14)
-	ZTRAP(T_RESERVED)
 
 ENTRY(alltraps)
 	INTRENTRY
@@ -2041,17 +2011,25 @@ ENTRY(bpttraps)
 #endif /* KGDB */
 
 /*
- * Call gate entry for syscall
+ * Old call gate entry for syscall
  */
-IDTVEC(syscall)
-	pushl	$0	# Room for tf_err
-	pushfl		# Room for tf_trapno
-	pushfl		# turn off trace bit
+IDTVEC(osyscall)
+	/* Set eflags in trap frame. */
+	pushfl
+	popl	8(%esp)
+	/* Turn off trace bit. */
+	pushfl
 	andb	$~(PSL_T>>8),1(%esp)
 	popfl
+	/* FALLTHROUGH */
+
+/*
+ * Trap gate entry for syscall
+ */
+IDTVEC(syscall)
+	pushl	$0		# dummy error code
+	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movl	TF_TRAPNO(%esp),%eax	# copy eflags from tf_trapno to tf_eflags
-	movl	%eax,TF_EFLAGS(%esp)
 #ifdef DIAGNOSTIC
 	movl	_cpl,%ebx
 #endif /* DIAGNOSTIC */
@@ -2064,7 +2042,6 @@ IDTVEC(syscall)
 	btrl	$0,_astpending
 	jnc	1f
 	sti
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT

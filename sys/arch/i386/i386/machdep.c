@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.123 1994/10/20 04:43:21 cgd Exp $
+ *	$Id: machdep.c,v 1.124 1994/10/26 01:32:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1030,32 +1030,29 @@ struct soft_segment_descriptor ldt_segs[] = {
 	1  			/* limit granularity (byte/page units)*/ } };
 
 void
-setidt(idx, func, typ, dpl)
-	int idx;
-	char *func;
-	int typ, dpl;
+setgate(gdp, func, args, typ, dpl)
+	struct gate_descriptor *gdp;
+	void *func;
+	int args, typ, dpl;
 {
-	struct gate_descriptor *ip = idt + idx;
 
-	ip->gd_looffset = (int)func;
-	ip->gd_selector = 8;
-	ip->gd_stkcpy = 0;
-	ip->gd_xx = 0;
-	ip->gd_type = typ;
-	ip->gd_dpl = dpl;
-	ip->gd_p = 1;
-	ip->gd_hioffset = ((int)func)>>16;
+	gdp->gd_looffset = (int)func;
+	gdp->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
+	gdp->gd_stkcpy = args;
+	gdp->gd_xx = 0;
+	gdp->gd_type = typ;
+	gdp->gd_dpl = dpl;
+	gdp->gd_p = 1;
+	gdp->gd_hioffset = (int)func >> 16;
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
-	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
-	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
-	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align),
-	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
-	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
-	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
-	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
+extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
+	IDTVEC(ofl),     IDTVEC(bnd),     IDTVEC(ill),     IDTVEC(dna),
+	IDTVEC(dble),    IDTVEC(fpusegm), IDTVEC(tss),     IDTVEC(missing),
+	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
+	IDTVEC(fpu),     IDTVEC(align),
+	IDTVEC(syscall), IDTVEC(osyscall);
 
 void
 init386(first_avail)
@@ -1089,42 +1086,31 @@ init386(first_avail)
 		ssdtosd(ldt_segs + x, ldt + x);
 
 	/* exceptions */
-	setidt(0, &IDTVEC(div), SDT_SYS386TGT, SEL_KPL);
-	setidt(1, &IDTVEC(dbg), SDT_SYS386TGT, SEL_KPL);
-	setidt(2, &IDTVEC(nmi), SDT_SYS386TGT, SEL_KPL);
-	setidt(3, &IDTVEC(bpt), SDT_SYS386TGT, SEL_UPL);	/* XXXX */
-	setidt(4, &IDTVEC(ofl), SDT_SYS386TGT, SEL_KPL);
-	setidt(5, &IDTVEC(bnd), SDT_SYS386TGT, SEL_KPL);
-	setidt(6, &IDTVEC(ill), SDT_SYS386TGT, SEL_KPL);
-	setidt(7, &IDTVEC(dna), SDT_SYS386TGT, SEL_KPL);
-	setidt(8, &IDTVEC(dble), SDT_SYS386TGT, SEL_KPL);
-	setidt(9, &IDTVEC(fpusegm), SDT_SYS386TGT, SEL_KPL);
-	setidt(10, &IDTVEC(tss), SDT_SYS386TGT, SEL_KPL);
-	setidt(11, &IDTVEC(missing), SDT_SYS386TGT, SEL_KPL);
-	setidt(12, &IDTVEC(stk), SDT_SYS386TGT, SEL_KPL);
-	setidt(13, &IDTVEC(prot), SDT_SYS386TGT, SEL_KPL);
-	setidt(14, &IDTVEC(page), SDT_SYS386TGT, SEL_KPL);
-	setidt(15, &IDTVEC(rsvd), SDT_SYS386TGT, SEL_KPL);
-	setidt(16, &IDTVEC(fpu), SDT_SYS386TGT, SEL_KPL);
-	setidt(17, &IDTVEC(align), SDT_SYS386TGT, SEL_KPL);
-	setidt(18, &IDTVEC(rsvd1), SDT_SYS386TGT, SEL_KPL);
-	setidt(19, &IDTVEC(rsvd2), SDT_SYS386TGT, SEL_KPL);
-	setidt(20, &IDTVEC(rsvd3), SDT_SYS386TGT, SEL_KPL);
-	setidt(21, &IDTVEC(rsvd4), SDT_SYS386TGT, SEL_KPL);
-	setidt(22, &IDTVEC(rsvd5), SDT_SYS386TGT, SEL_KPL);
-	setidt(23, &IDTVEC(rsvd6), SDT_SYS386TGT, SEL_KPL);
-	setidt(24, &IDTVEC(rsvd7), SDT_SYS386TGT, SEL_KPL);
-	setidt(25, &IDTVEC(rsvd8), SDT_SYS386TGT, SEL_KPL);
-	setidt(26, &IDTVEC(rsvd9), SDT_SYS386TGT, SEL_KPL);
-	setidt(27, &IDTVEC(rsvd10), SDT_SYS386TGT, SEL_KPL);
-	setidt(28, &IDTVEC(rsvd11), SDT_SYS386TGT, SEL_KPL);
-	setidt(29, &IDTVEC(rsvd12), SDT_SYS386TGT, SEL_KPL);
-	setidt(30, &IDTVEC(rsvd13), SDT_SYS386TGT, SEL_KPL);
-	setidt(31, &IDTVEC(rsvd14), SDT_SYS386TGT, SEL_KPL);
+	for (x = 0; x < NIDT; x++)
+		setgate(&idt[x], &IDTVEC(rsvd), 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  3], &IDTVEC(bpt),     0, SDT_SYS386TGT, SEL_UPL);
+	setgate(&idt[  4], &IDTVEC(ofl),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  5], &IDTVEC(bnd),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  6], &IDTVEC(ill),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  7], &IDTVEC(dna),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  8], &IDTVEC(dble),    0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[  9], &IDTVEC(fpusegm), 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 10], &IDTVEC(tss),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 11], &IDTVEC(missing), 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 12], &IDTVEC(stk),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 13], &IDTVEC(prot),    0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 14], &IDTVEC(page),    0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 16], &IDTVEC(fpu),     0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[ 17], &IDTVEC(align),   0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
 
 #if NISA > 0
 	isa_defaultirq();
 #endif
+
 	r_gdt.rd_limit = sizeof(gdt)-1;
 	r_gdt.rd_base = (int) gdt;
 	lgdt(&r_gdt);
@@ -1134,6 +1120,9 @@ init386(first_avail)
 	_default_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	lldt(_default_ldt);
 	currentldt = _default_ldt;
+
+	splhigh();
+	enable_intr();
 
 #ifdef DDB
 	ddb_init();
@@ -1208,17 +1197,9 @@ init386(first_avail)
 
 	ltr(_gsel_tss);
 
-	/* make a call gate to reenter kernel with */
-	gdp = &ldt[LSYS5CALLS_SEL].gd;
-
-	x = (int) &IDTVEC(syscall);
-	gdp->gd_looffset = x++;
-	gdp->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
-	gdp->gd_stkcpy = 1;	/* leaves room for eflags like a trap */
-	gdp->gd_type = SDT_SYS386CGT;
-	gdp->gd_dpl = SEL_UPL;
-	gdp->gd_p = 1;
-	gdp->gd_hioffset = ((int) &IDTVEC(syscall)) >>16;
+	/* Set up the old-style call gate descriptor for system calls. */
+	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
+	    SEL_UPL);
 
 	/* transfer to user mode */
 	_ucodesel = LSEL(LUCODE_SEL, SEL_UPL);
