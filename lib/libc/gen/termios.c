@@ -32,11 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)termios.c	5.9 (Berkeley) 5/20/91";
+/* from: static char sccsid[] = "@(#)termios.c	5.9 (Berkeley) 5/20/91"; */
+static char rcsid = "$Id: termios.c,v 1.2 1993/05/20 11:26:10 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/select.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #define KERNEL	/* XXX - FREAD and FWRITE was ifdef'd KERNEL*/
