@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.11 2001/05/03 04:37:43 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.12 2001/05/11 06:06:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #define	OHCI_SELFID_TIMEOUT	(hz * 3)
 
 struct fwohci_softc;
+struct fwohci_pkt;
 
 struct fwohci_buf {
 	TAILQ_ENTRY(fwohci_buf) fb_list;
@@ -70,7 +71,9 @@ struct fwohci_buf {
 	bus_addr_t fb_daddr;
 	int fb_off;
 	struct mbuf *fb_m;
+	void *fb_statusarg;
 	void (*fb_callback)(struct device *, struct mbuf *);
+	int (*fb_statuscb)(struct fwohci_softc *, void *, struct fwohci_pkt *);
 };
 
 struct fwohci_pkt {
@@ -82,6 +85,9 @@ struct fwohci_pkt {
 	struct iovec fp_iov[6];
 	u_int32_t *fp_trail;
 	struct mbuf *fp_m;
+	u_int16_t fp_status;
+	void *fp_statusarg;
+	int (*fp_statuscb)(struct fwohci_softc *, void *, struct fwohci_pkt *);
 	void (*fp_callback)(struct device *, struct mbuf *);
 };
 
