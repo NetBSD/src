@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.11 2001/02/05 10:42:40 chs Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.12 2002/05/25 03:54:36 simonb Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -85,6 +85,16 @@
 /* Mach only defines this if KERNEL, NetBSD defines it always */
 # define ns532_round_page(addr) (((addr) + NBPG - 1) & ~(NBPG - 1))
 #endif
+
+const union t_conv infty =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0, mantissa2: 0}};
+
+const union t_conv snan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x40000, mantissa2: 0}};
+
+const union t_conv qnan =
+    {d_bits: { sign: 0, exp: 0x7ff, mantissa: 0x80000, mantissa2: 0}};
+
 
 static void get_fstate(state *state) {
   asm("sfsr %0" : "=g" (state->FSR));
@@ -494,8 +504,8 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
       state->SP -= op->size;
       addr =  state->SP;
       break;
-    default:
-      /* Keep gcc quit */
+    default: ;
+      /* Keep gcc quiet */
     }
     break;
   case 0x18:
