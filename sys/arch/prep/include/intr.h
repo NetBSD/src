@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2001/06/17 15:57:12 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2001/06/19 11:56:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,8 +104,6 @@ extern int imask[];
 extern long intrcnt[];
 extern struct intrhand *intrhand[];
 extern int intrtype[];
-
-extern paddr_t prep_intr_reg;
 
 /*
  *  Reorder protection in the following inline functions is
