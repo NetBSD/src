@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.21 1998/06/02 18:02:56 thorpej Exp $	*/
+/*	$NetBSD: trace.c,v 1.22 1998/10/25 14:56:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.21 1998/06/02 18:02:56 thorpej Exp $");
+__RCSID("$NetBSD: trace.c,v 1.22 1998/10/25 14:56:09 christos Exp $");
 #endif
 
 #define	RIPCMDS
@@ -154,7 +154,7 @@ ts(time_t secs) {
 #ifdef sgi
 	(void)cftime(s, "%T", &secs);
 #else
-	memmove(s, ctime(&secs)+11, 8);
+	memcpy(s, ctime(&secs)+11, 8);
 	s[8] = '\0';
 #endif
 	return s;
@@ -874,7 +874,7 @@ trace_rip(char *dir1, char *dir2,
 	  int size)			/* total size of message */
 {
 	struct netinfo *n, *lim;
-#	define NA (msg->rip_auths)
+#	define NA ((struct netauth*)n)
 	int i, seen_route;
 
 	if (!TRACEPACKETS || ftrace == 0)
@@ -944,20 +944,21 @@ trace_rip(char *dir1, char *dir2,
 				if (NA->a_type == RIP_AUTH_MD5
 				    && n == msg->rip_nets) {
 					(void)fprintf(ftrace,
-						      "\tMD5 Authentication"
-						      " len=%d KeyID=%u"
-						      " seqno=%u"
+						      "\tMD5 Auth"
+						      " pkt_len=%d KeyID=%u"
+						      " auth_len=%d"
+						      " seqno=%#x"
 						      " rsvd=%#x,%#x\n",
-						      NA->au.a_md5.md5_pkt_len,
-						      NA->au.a_md5.md5_keyid,
-						      NA->au.a_md5.md5_seqno,
-						      NA->au.a_md5.rsvd[0],
-						      NA->au.a_md5.rsvd[1]);
+					      ntohs(NA->au.a_md5.md5_pkt_len),
+					      NA->au.a_md5.md5_keyid,
+					      NA->au.a_md5.md5_auth_len,
+					      ntohl(NA->au.a_md5.md5_seqno),
+					      ntohs(NA->au.a_md5.rsvd[0]),
+					      ntohs(NA->au.a_md5.rsvd[1]));
 					continue;
 				}
 				(void)fprintf(ftrace,
-					      "\tAuthentication"
-					      " type %d: ",
+					      "\tAuthentication type %d: ",
 					      ntohs(NA->a_type));
 				for (i = 0;
 				     i < sizeof(NA->au.au_pw);

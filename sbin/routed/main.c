@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1998/07/06 06:50:28 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1998/10/25 14:56:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.19 1998/07/06 06:50:28 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 1998/10/25 14:56:07 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -73,7 +73,7 @@ int	default_gateway;		/* 1=advertise default */
 int	background = 1;
 int	ridhosts;			/* 1=reduce host routes */
 int	mhome;				/* 1=want multi-homed host route */
-int	advertise_mhome;		/* 1=must continue adverising it */
+int	advertise_mhome;		/* 1=must continue advertising it */
 int	auth_ok = 1;			/* 1=ignore auth if we do not care */
 
 struct timeval epoch;			/* when started */
@@ -223,7 +223,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.10");
+			msglog("version 2.15");
 			break;
 
 		default:
@@ -422,7 +422,7 @@ usage:
 				/* It is desirable to send routing updates
 				 * regularly.  So schedule the next update
 				 * 30 seconds after the previous one was
-				 * secheduled, instead of 30 seconds after
+				 * scheduled, instead of 30 seconds after
 				 * the previous update was finished.
 				 * Even if we just started after discovering
 				 * a 2nd interface or were otherwise delayed,
@@ -809,7 +809,7 @@ timevaladd(struct timeval *t1,
 {
 
 	t1->tv_sec += t2->tv_sec;
-	if ((t1->tv_usec += t2->tv_usec) > 1000000) {
+	if ((t1->tv_usec += t2->tv_usec) >= 1000000) {
 		t1->tv_sec++;
 		t1->tv_usec -= 1000000;
 	}
