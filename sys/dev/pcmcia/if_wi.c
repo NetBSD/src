@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $
+ *	$Id: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $
  */
 
 /*
@@ -117,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $";
+	"$Id: if_wi.c,v 1.19 2000/05/23 08:25:51 enami Exp $";
 #endif
 
 #ifdef foo
@@ -1078,6 +1078,9 @@ wi_getdef(sc, wreq)
 		break;
 	case WI_RID_MAX_SLEEP:
 		wreq->wi_val[0] = sc->wi_max_sleep;
+		break;
+	case WI_RID_WEP_AVAIL:
+		wreq->wi_val[0] = sc->wi_has_wep;
 		break;
 	case WI_RID_ENCRYPTION:
 		wreq->wi_val[0] = sc->wi_use_wep;
