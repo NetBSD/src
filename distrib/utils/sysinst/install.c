@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.5.2.1 1997/11/02 20:55:40 mellon Exp $	*/
+/*	$NetBSD: install.c,v 1.5.2.2 1997/11/06 00:34:08 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,12 +91,14 @@ void do_install(void)
 	md_post_newfs ();
 
 	/* Done to here. */
-	printf ("\n\nThis part of the installation completed."
-		"  CR to continue\n");
+	printf("%s", msg_string(MSG_disksetupdone));
+
 	getchar();
 	puts (CL); /* just to make sure */
 	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
 	get_and_unpack_sets(MSG_instcomplete, MSG_abortinst);
+
+	sanity_check();
 }
