@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.30 2000/01/23 21:01:52 soda Exp $
+#	$NetBSD: Makefile.arc,v 1.31 2000/01/24 20:36:10 tron Exp $
 #	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
 
 # Makefile for NetBSD
@@ -200,6 +200,8 @@ depend: .depend
 	  ${CPPFLAGS} ${PROF} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration
