@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1997/03/27 21:01:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 1997/03/30 10:38:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,7 +113,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#ifdef NARP
+#if NARP > 0
 #include <netinet/if_inarp.h>
 #endif
 #include <netinet/ip_var.h>
