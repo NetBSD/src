@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.46 2002/04/28 01:00:26 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.47 2002/05/02 16:22:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.46 2002/04/28 01:00:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47 2002/05/02 16:22:45 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -195,7 +195,7 @@ static void ti_cmd_ext		__P((struct ti_softc *, struct ti_cmd_desc *,
 static void ti_handle_events	__P((struct ti_softc *));
 static int ti_alloc_jumbo_mem	__P((struct ti_softc *));
 static void *ti_jalloc		__P((struct ti_softc *));
-static void ti_jfree		__P((caddr_t, u_int, void *));
+static void ti_jfree		__P((struct mbuf *, caddr_t, u_int, void *));
 static int ti_newbuf_std	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_mini	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_jumbo	__P((struct ti_softc *, int, struct mbuf *));
@@ -682,13 +682,14 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(buf, size, arg)
+static void ti_jfree(m, buf, size, arg)
+	struct mbuf		*m;
 	caddr_t			buf;
 	u_int			size;
 	void *arg;
 {
 	struct ti_softc		*sc;
-	int		        i;
+	int		        i, s;
 	struct ti_jpool_entry   *entry;
 
 	/* Extract the softc struct pointer. */
@@ -704,6 +705,8 @@ static void ti_jfree(buf, size, arg)
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jfree: asked to free buffer that we don't manage!");
+
+	s = splvm();
 	entry = SIMPLEQ_FIRST(&sc->ti_jinuse_listhead);
 	if (entry == NULL)
 		panic("ti_jfree: buffer not in use!");
@@ -713,7 +716,9 @@ static void ti_jfree(buf, size, arg)
 	SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, 
 	     entry, jpool_entries);
 
-	return;
+	if (__predict_true(m != NULL))
+		pool_cache_put(&mbpool_cache, m);
+	splx(s);
 }
 
 
