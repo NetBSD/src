@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.28 1994/06/08 11:28:33 mycroft Exp $
+ *	$Id: kern_acct.c,v 1.29 1994/06/19 22:58:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -192,7 +192,7 @@ acct_process(p)
 	else
 		acct.ac_mem = 0;
 
-	/* (5) The number of disk I/O 
+	/* (5) The number of disk I/O operations done */
 	acct.ac_io = encode_comp_t(r->ru_inblock + r->ru_oublock, 0);
 
 	/* (6) The UID and GID of the process */
