@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.33 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: cfb.c,v 1.34 1999/09/05 11:34:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,10 +86,8 @@
 #if NCFB > 0
 #include <sys/param.h>
 #include <sys/systm.h>					/* printf() */
-#include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
 

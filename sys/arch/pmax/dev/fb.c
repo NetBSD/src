@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.27 1999/07/28 17:13:54 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.28 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,14 +67,9 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/tty.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/vnode.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/mman.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 

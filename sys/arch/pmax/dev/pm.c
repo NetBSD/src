@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.28 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: pm.c,v 1.29 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,19 +56,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.28 1999/07/25 22:50:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.29 1999/09/05 11:34:30 simonb Exp $");
 
 
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/mman.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <vm/vm.h>
