@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.9 2000/10/12 03:18:41 onoe Exp $
+#	$NetBSD: files.newsmips,v 1.10 2000/10/29 12:36:35 tsutsui Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -126,7 +126,7 @@ include "dev/mii/files.mii"
 #
 # Memory Disk for install floppy
 #
-file arch/newsmips/newsmips/md_root.c		memory_disk_hooks
+file dev/md_root.c				memory_disk_hooks
 
 major { sd = 0 }
 major { fd = 1 }
