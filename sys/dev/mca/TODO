@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.7 2001/03/17 00:19:36 jdolecek Exp $
+# $NetBSD: TODO,v 1.8 2001/03/17 17:00:38 jdolecek Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -6,8 +6,6 @@ Bugs:
 * i386: keyboard freezes in fd_mountroothook when booting from floppy;
 	if the fd_mountroothook is not executed, the keyboard works
 	just fine
-* 3Com 3c523 driver - seems like it's not initialized properly
-	by the driver under some circumstances - see if_elmc_mca.c for details
 
 Projects:
 * bus_dma(9) support (primarily for AHA-1640 ATM)
