@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.23 1999/07/07 00:02:09 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.24 1999/07/09 02:37:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,10 +216,6 @@ include(fname, ateof, conditional)
 		havedirs = 1;
 		setupdirs();
 	}
-
-	/* Kludge until files.* files are fixed. */
-	if (conditional == 0 && strncmp(fname, "../../../", 9) == 0)
-		fname += 9;
 
 	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
