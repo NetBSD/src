@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/14 10:24:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2000/06/17 18:37:43 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.subdir.mk>
 
 IMAGE=		boot.fs
 .if !make(print-objdir)
@@ -72,4 +73,3 @@ real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=45k
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
