@@ -463,7 +463,9 @@ void perror P((char const*));
 /* <stdlib.h> */
 char *getenv P((char const*));
 exiting void _exit P((int));
+#ifndef __NetBSD__
 exiting void exit P((int));
+#endif
 malloc_type malloc P((size_t));
 malloc_type realloc P((malloc_type,size_t));
 void free P((malloc_type));
