@@ -159,8 +159,8 @@ fdattach(struct isa_device *dev)
 	
 		/* is there a unit? */
 		if ((fdt & 0xf0) == RTCFDT_NONE) {
-			printf("fd%d: <no drive> on fdc%d slave %d\n", fddrive,
-				dev->id_unit, fdunit);
+			/*printf("fd%d: <no drive> on fdc%d slave %d\n", fddrive,
+				dev->id_unit, fdunit);*/
 			continue;
 		}
 
