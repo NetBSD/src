@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.15 1994/03/29 04:36:08 mycroft Exp $
+ *	$Id: lpt.c,v 1.16 1994/04/07 06:51:01 mycroft Exp $
  */
 
 /*
@@ -86,6 +86,7 @@ int lptdebug = 1;
 
 struct lpt_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	size_t sc_count;
 	struct buf *sc_inbuf;
@@ -106,7 +107,7 @@ struct lpt_softc {
 
 int lptprobe();
 void lptattach();
-int lptintr __P((int));
+int lptintr __P((struct lpt_softc *));
 
 struct cfdriver lptcd = {
 	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
@@ -239,17 +240,23 @@ lptattach(parent, self, aux)
 	struct lpt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
-	u_short irq = ia->ia_irq;
 
-	if (irq)
+	if (ia->ia_irq)
 		printf("\n");
 	else
 		printf(": polled\n");
 
 	sc->sc_iobase = iobase;
-	sc->sc_irq = irq;
+	sc->sc_irq = ia->ia_irq;
 	sc->sc_state = 0;
 	outb(iobase + lpt_control, LPC_NINIT);
+
+	if (ia->ia_irq) {
+		sc->sc_ih.ih_fun = lptintr;
+		sc->sc_ih.ih_arg = sc;
+		sc->sc_ih.ih_level = IPL_NONE;
+		intr_establish(ia->ia_irq, &sc->sc_ih);
+	}
 }
 
 /*
@@ -360,7 +367,7 @@ lptout(sc)
 		return;
 
 	s = spltty();
-	lptintr(sc->sc_dev.dv_unit);
+	lptintr(sc);
 	splx(s);
 
 	timeout((timeout_t)lptout, (caddr_t)sc, STEP);
@@ -437,7 +444,7 @@ pushbytes(sc)
 				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
 				    sc->sc_count);
 				s = spltty();
-				(void) lptintr(sc->sc_dev.dv_unit);
+				(void) lptintr(sc);
 				splx(s);
 			}
 			if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
@@ -482,10 +489,9 @@ lptwrite(dev, uio)
  * another char.
  */
 int
-lptintr(unit)
-	int unit;
+lptintr(sc)
+	struct lpt_softc *sc;
 {
-	struct lpt_softc *sc = lptcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 
 #if 0

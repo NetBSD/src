@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.94 1994/04/05 19:09:14 mycroft Exp $
+ *	$Id: machdep.c,v 1.95 1994/04/07 06:48:46 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -984,7 +984,7 @@ init386(first_avail)
 	setidt(30, &IDTVEC(rsvd13), SDT_SYS386TGT, SEL_KPL);
 	setidt(31, &IDTVEC(rsvd14), SDT_SYS386TGT, SEL_KPL);
 
-#if	NISA >0
+#if NISA > 0
 	isa_defaultirq();
 #endif
 	r_gdt.rd_limit = sizeof(gdt)-1;

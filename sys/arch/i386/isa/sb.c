@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.6 1994/03/29 04:36:26 mycroft Exp $
+ *	$Id: sb.c,v 1.7 1994/04/07 06:51:10 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@
 struct sb_softc {
 	struct device sc_dev;		/* base device */
 	struct isadev sc_id;		/* ISA device */
-	struct  intrhand sc_ih;		/* interrupt vectoring */
+	struct intrhand sc_ih;		/* interrupt vectoring */
 
 	u_short	sc_open;		/* reference count of open calls */
 	u_short sc_dmachan;		/* dma channel */
@@ -102,7 +102,7 @@ struct {
 	int wmidi;
 } sberr;
 
-int	sbintr __P((int));
+int	sbintr __P((struct sb_softc *));
 int	sbprobe();
 void	sbattach();
 #ifdef NEWCONFIG
@@ -207,11 +207,13 @@ sbattach(parent, self, aux)
 
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
 	sc->sc_ih.ih_fun = sbintr;
-	sc->sc_ih.ih_arg = (void *)sc;
-	/* XXX DV_TAPE? */
-	intr_establish(ia->ia_irq, &sc->sc_ih, DV_TAPE);
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 
+#ifdef NEWCONFIG
 	/*
 	 * We limit DMA transfers to a page, and use the generic DMA handling
 	 * code in isa.c.  This code can end up copying a buffer, but since
@@ -591,10 +593,9 @@ sb_dma_output(sc, p, cc, intr, arg)
  * exclusive so we know a priori which event has occurred.
  */
 int
-sbintr(unit)
-	int unit;
+sbintr(sc)
+	register struct sb_softc *sc;
 {
-	register struct sb_softc *sc = sbcd.cd_devs[SBUNIT(unit)];
 
 	sc->sc_locked = 0;
 	/* clear interrupt */

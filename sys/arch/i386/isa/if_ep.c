@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.25 1994/03/29 04:35:53 mycroft Exp $
+ *	$Id: if_ep.c,v 1.26 1994/04/07 06:50:48 mycroft Exp $
  */
 /*
  * TODO:
@@ -99,7 +99,7 @@ struct cfdriver epcd = {
 	NULL, "ep", epprobe, epattach, DV_IFNET, sizeof(struct ep_softc)
 };
 
-int epintr __P((int));
+int epintr __P((struct ep_softc *));
 static void epinit __P((struct ep_softc *));
 static int epioctl __P((struct ifnet *, int, caddr_t));
 static int epstart __P((struct ifnet *));
@@ -294,6 +294,11 @@ epattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	sc->sc_ih.ih_fun = epintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NET;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 /*
@@ -538,11 +543,10 @@ readcheck:
 }
 
 int
-epintr(unit)
-	int     unit;
+epintr(sc)
+	register struct ep_softc *sc;
 {
 	int     status, i;
-	register struct ep_softc *sc = epcd.cd_devs[unit];
 	struct ifnet *ifp = &sc->ep_ac.ac_if;
 
 	status = 0;

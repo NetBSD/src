@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.39 1994/03/29 04:35:47 mycroft Exp $
+ *	$Id: if_ed.c,v 1.40 1994/04/07 06:50:41 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -63,6 +63,7 @@
  */
 struct ed_softc {
 	struct	device sc_dev;
+	struct	intrhand sc_ih;
 
 	struct	arpcom sc_arpcom;	/* ethernet common */
 
@@ -104,7 +105,7 @@ struct ed_softc {
 
 int edprobe();
 void edattach();
-int edintr __P((int));
+int edintr __P((struct ed_softc *));
 int ed_ioctl __P((struct ifnet *, int, caddr_t));
 int ed_start __P((struct ifnet *));
 int ed_watchdog __P((/* short */));
@@ -988,6 +989,7 @@ edattach(parent, self, aux)
 	void *aux;
 {
 	struct ed_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
@@ -1054,6 +1056,11 @@ edattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	sc->sc_ih.ih_fun = edintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NET;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
  
 /*
@@ -1559,10 +1566,9 @@ ed_rint(sc)
 
 /* Ethernet interface interrupt processor. */
 int
-edintr(unit)
-	int unit;
+edintr(sc)
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = edcd.cd_devs[unit];
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */

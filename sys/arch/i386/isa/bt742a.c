@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.22 1994/04/06 00:27:49 mycroft Exp $
+ *      $Id: bt742a.c,v 1.23 1994/04/07 06:50:19 mycroft Exp $
  */
 
 /*
@@ -358,7 +358,7 @@ int     bt_debug = 0;
 
 int bt_cmd();	/* XXX must be varargs to prototype */
 u_int bt_adapter_info __P((struct bt_softc *));
-int btintr __P((int));
+int btintr __P((struct bt_softc *));
 void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
 struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, physaddr));
@@ -618,11 +618,11 @@ btattach(parent, self, aux)
 
 #ifdef NEWCONFIG
 	isa_establish(&bt->sc_id, &bt->sc_dev);
+#endif
 	bt->sc_ih.ih_fun = btintr;
 	bt->sc_ih.ih_arg = bt;
-	/* XXX and DV_TAPE, but either gives us splbio */
-	intr_establish(ia->ia_irq, &bt->sc_ih, DV_DISK);
-#endif
+	bt->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &bt->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -646,10 +646,9 @@ bt_adapter_info(bt)
  * Catch an interrupt from the adaptor
  */
 int
-btintr(unit)
-	int unit;
+btintr(bt)
+	struct bt_softc *bt;
 {
-	struct bt_softc *bt = btcd.cd_devs[unit];
 	BT_MBI *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;
@@ -1395,7 +1394,7 @@ bt_poll(bt, xs, ccb)
 		 */
 		stat = inb(BT_INTR_PORT);
 		if (stat & BT_ANY_INTR)
-			btintr(bt->sc_dev.dv_unit);
+			btintr(bt);
 		if (xs->flags & ITSDONE)
 			break;
 		delay(1000);	/* only happens in boot so ok */
@@ -1421,7 +1420,7 @@ bt_poll(bt, xs, ccb)
 			 */
 			stat = inb(BT_INTR_PORT);
 			if (stat & BT_ANY_INTR)
-				btintr(bt->sc_dev.dv_unit);
+				btintr(bt);
 			if (xs->flags & ITSDONE)
 				break;
 			delay(1000);	/* only happens in boot so ok */

@@ -35,17 +35,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.48 1994/04/03 22:51:48 mycroft Exp $
+ *	$Id: isa.c,v 1.49 1994/04/07 06:50:54 mycroft Exp $
  */
 
 /*
- * code to manage AT bus
- *
- * 92/08/18  Frank P. MacLachlan (fpm@crash.cts.com):
- * Fixed uninitialized variable problem and added code to deal
- * with DMA page boundaries in isa_dmarangecheck().  Fixed word
- * mode DMA count compution and reorganized DMA setup code in
- * isa_dmastart()
+ * Code to manage AT bus
  */
 
 #include <sys/param.h>
@@ -67,7 +61,6 @@
 #include <i386/isa/isa.h>
 #include <i386/isa/isa_device.h>
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/ic/i8237.h>
 #include <i386/isa/ic/i8042.h>
 #include <i386/isa/timerreg.h>
@@ -287,16 +280,6 @@ isasubmatch(parent, self, aux)
 
 	config_attach(parent, self->dv_cfdata, &ia, isaprint);
 
-	if (id->id_irq) {
-		int intrno;
-
-		intrno = ffs(id->id_irq) - 1;
-		setidt(ICU_OFFSET+intrno, id->id_intr, SDT_SYS386IGT, SEL_KPL);
-		if (id->id_mask)
-			INTRMASK(*id->id_mask, id->id_irq);
-		INTREN(id->id_irq);
-	}
-
 	return 1;
 }
 
@@ -304,81 +287,13 @@ void
 isa_configure()
 {
 
-	splhigh();
-	INTREN(IRQ_SLAVE);
-	enable_intr();
-
 	while (config_search(isasubmatch, NULL, NULL));
 
-	printf("biomask %x ttymask %x netmask %x\n",
-	       biomask, ttymask, netmask);
-
-	clockmask |= astmask;
-	biomask |= astmask;
-	ttymask |= astmask;
-	netmask |= astmask;
-	impmask = netmask | ttymask;
+	printf("biomask %x netmask %x ttymask %x\n",
+	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
+	    (u_short)imask[IPL_TTY]);
 
 	spl0();
-}
-
-#define	IDTVEC(name)	__CONCAT(X,name)
-/* default interrupt vector table entries */
-extern	IDTVEC(intr0), IDTVEC(intr1), IDTVEC(intr2), IDTVEC(intr3),
-	IDTVEC(intr4), IDTVEC(intr5), IDTVEC(intr6), IDTVEC(intr7),
-	IDTVEC(intr8), IDTVEC(intr9), IDTVEC(intr10), IDTVEC(intr11),
-	IDTVEC(intr12), IDTVEC(intr13), IDTVEC(intr14), IDTVEC(intr15);
-
-static *defvec[16] = {
-	&IDTVEC(intr0), &IDTVEC(intr1), &IDTVEC(intr2), &IDTVEC(intr3),
-	&IDTVEC(intr4), &IDTVEC(intr5), &IDTVEC(intr6), &IDTVEC(intr7),
-	&IDTVEC(intr8), &IDTVEC(intr9), &IDTVEC(intr10), &IDTVEC(intr11),
-	&IDTVEC(intr12), &IDTVEC(intr13), &IDTVEC(intr14), &IDTVEC(intr15) };
-
-/* out of range default interrupt vector gate entry */
-extern	IDTVEC(intrdefault);
-
-/*
- * Fill in default interrupt table (in case of spuruious interrupt
- * during configuration of kernel, setup interrupt control unit
- */
-void
-isa_defaultirq() {
-	int i;
-
-	/* icu vectors */
-	for (i = NRSVIDT ; i < NRSVIDT+ICU_LEN ; i++)
-		setidt(i, defvec[i],  SDT_SYS386IGT, SEL_KPL);
-  
-	/* out of range vectors */
-	for (i = NRSVIDT; i < NIDT; i++)
-		setidt(i, &IDTVEC(intrdefault), SDT_SYS386IGT, SEL_KPL);
-
-	/* initialize 8259's */
-	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU1+1, NRSVIDT);	/* starting at this vector index */
-	outb(IO_ICU1+1, 1<<2);		/* slave on line 2 */
-#ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU1+1, 1);		/* 8086 mode */
-#endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x0a);		/* default to IRR on read */
-#ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
-#endif
-
-	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU2+1, NRSVIDT+8);	/* staring at this vector index */
-	outb(IO_ICU2+1,2);		/* my slave id is 2 */
-#ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU2+1,1);		/* 8086 mode */
-#endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
 }
 
 /* region of physical memory known to be contiguous */
@@ -637,43 +552,8 @@ isa_freephysmem(caddr_t va, unsigned length) {
 	}
 }
 	
-/*
- * Handle a NMI, possibly a machine check.
- * return true to panic system, false to ignore.
- */
-int
-isa_nmi(cd) {
+static int beeping;
 
-	log(LOG_CRIT, "\nNMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-	return(0);
-}
-
-/*
- * Caught a stray interrupt, notify
- */
-void
-isa_strayintr(d) {
-
-	/* DON'T BOTHER FOR NOW! */
-	/* for some reason, we get bursts of intr #7, even if not enabled! */
-	/*
-	 * Well the reason you got bursts of intr #7 is because someone
-	 * raised an interrupt line and dropped it before the 8259 could
-	 * prioritize it.  This is documented in the intel data book.  This
-	 * means you have BAD hardware!  I have changed this so that only
-	 * the first 5 get logged, then it quits logging them, and puts
-	 * out a special message. rgrimes 3/25/1993
-	 */
-	extern u_long intrcnt_stray;
-
-	intrcnt_stray++;
-	if (intrcnt_stray <= 5)
-		log(LOG_ERR,"ISA strayintr %x\n", d);
-	if (intrcnt_stray == 5)
-		log(LOG_CRIT,"Too many ISA strayintr not logging any more\n");
-}
-
-static beeping;
 static void
 sysbeepstop(int f)
 {
@@ -717,19 +597,4 @@ sysbeep(int pitch, int period)
 	timeout((timeout_t)sysbeepstop, (caddr_t)(period/2), period);
 
 	splx(s);
-}
-
-/*
- * Return nonzero if a (masked) irq is pending for a given device.
- */
-int
-isa_irq_pending(dvp)
-	struct isa_device *dvp;
-{
-	unsigned id_irq;
-
-	id_irq = (unsigned short) dvp->id_irq;	/* XXX silly type in struct */
-	if (id_irq & 0xff)
-		return (inb(IO_ICU1) & id_irq);
-	return (inb(IO_ICU2) & (id_irq >> 8));
 }

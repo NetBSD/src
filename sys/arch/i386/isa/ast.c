@@ -5,7 +5,7 @@
  *
  * Modified by: Charles Hannum, 3/22/94
  *
- *	$Id: ast.c,v 1.6 1994/03/29 06:58:29 mycroft Exp $
+ *	$Id: ast.c,v 1.7 1994/04/07 06:50:15 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -20,13 +20,16 @@
 
 struct ast_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
+
 	u_short sc_iobase;
 	int sc_alive;		/* mask of slave units attached */
-	int sc_slaves[8];	/* com device unit numbers */
+	void *sc_slaves[4];	/* com device unit numbers */
 };
 
 int astprobe();
 void astattach();
+int astintr __P((struct ast_softc *));
 
 struct cfdriver astcd = {
 	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
@@ -84,7 +87,7 @@ astsubmatch(parent, self, aux)
 #endif
 	found = isasubmatch(parent, self, aux);
 	if (found) {
-		sc->sc_slaves[aa->aa_slave] = cf->cf_unit;
+		sc->sc_slaves[aa->aa_slave] = self;
 		sc->sc_alive |= 1 << aa->aa_slave;
 	}
 	/*
@@ -122,13 +125,17 @@ astattach(parent, self, aux)
 	    aa.aa_slave < 4;
 	    aa.aa_slave++, aa.aa_iobase += 8)
 		config_search(astsubmatch, self, &aa);
+
+	sc->sc_ih.ih_fun = astintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_TTY;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 int
-astintr(unit)
-	int unit;
+astintr(sc)
+	struct ast_softc *sc;
 {
-	struct ast_softc *sc = astcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 	int bits;

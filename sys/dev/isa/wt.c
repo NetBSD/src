@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.10 1994/03/29 04:32:12 mycroft Exp $
+ *	$Id: wt.c,v 1.11 1994/04/07 06:51:21 mycroft Exp $
  */
 
 /*
@@ -125,6 +125,7 @@ enum wttype {
 
 struct wt_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	enum wttype type;	/* type of controller */
 	u_short sc_iobase;	/* base i/o port */
@@ -163,6 +164,7 @@ u_char wtpoll __P((struct wt_softc *sc, int mask, int bits));
 
 int wtprobe();
 void wtattach();
+int wtintr __P((struct wt_softc *sc));
 
 struct cfdriver wtcd = {
 	NULL, "wt", wtprobe, wtattach, DV_TAPE, sizeof(struct wt_softc)
@@ -231,6 +233,7 @@ wtattach(parent, self, aux)
 	void *aux;
 {
 	struct wt_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 
 	if (sc->type == ARCHIVE) {
 		printf(": type <Archive>\n");
@@ -240,6 +243,11 @@ wtattach(parent, self, aux)
 		printf(": type <Wangtek>\n");
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
+
+	sc->sc_ih.ih_fun = wtintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 int
@@ -585,16 +593,10 @@ xit:
  * Interrupt routine.
  */
 int
-wtintr(unit)
-	int unit;
+wtintr(sc)
+	struct wt_softc *sc;
 {
-	struct wt_softc *sc = wtcd.cd_devs[unit];
 	u_char s;
-
-	if (unit >= wtcd.cd_ndevs || !sc) {
-		DEBUG(("wtintr() -- device not configured\n"));
-		return 0;
-	}
 
 	s = inb(sc->STATPORT);			/* get status */
 	DEBUG(("wtintr() status=0x%x -- ", s));
@@ -895,7 +897,7 @@ wttimer(sc)
 	s = splbio();
 	if ((inb(sc->STATPORT) & (sc->BUSY | sc->NOEXCEP)) != (sc->BUSY | sc->NOEXCEP)) {
 		DEBUG(("wttimer() -- "));
-		wtintr(sc->sc_dev.dv_unit);
+		wtintr(sc);
 	}
 	splx(s);
 

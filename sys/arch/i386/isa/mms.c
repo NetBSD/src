@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.10 1994/03/30 00:54:45 mycroft Exp $
+ *	$Id: mms.c,v 1.11 1994/04/07 06:51:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@
 
 struct mms_softc {		/* driver status information */
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -65,7 +66,7 @@ struct mms_softc {		/* driver status information */
 
 int mmsprobe();
 void mmsattach();
-int mmsintr __P((int));
+int mmsintr __P((struct mms_softc *));
 
 struct cfdriver mmscd = {
 	NULL, "mms", mmsprobe, mmsattach, DV_TTY, sizeof(struct mms_softc)
@@ -107,6 +108,11 @@ mmsattach(parent, self, aux)
 	/* Other initialization was done by mmsprobe. */
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
+
+	sc->sc_ih.ih_fun = mmsintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NONE;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 int
@@ -257,10 +263,9 @@ mmsioctl(dev, cmd, addr, flag)
 }
 
 int
-mmsintr(unit)
-	int unit;
+mmsintr(sc)
+	struct mms_softc *sc;
 {
-	struct mms_softc *sc = mmscd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	u_char buttons, changed, status;
 	char dx, dy;
@@ -314,7 +319,7 @@ mmsintr(unit)
 		selwakeup(&sc->sc_rsel);
 	}
 
-	return 1;
+	return -1;
 }
 
 int

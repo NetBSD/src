@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.8 1994/03/31 06:16:35 mycroft Exp $
+ *	$Id: if_ie.c,v 1.9 1994/04/07 06:50:50 mycroft Exp $
  */
 
 /*
@@ -212,6 +212,7 @@ const char *ie_hardware_names[] = {
  */
 struct ie_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	u_short sc_iobase;
 	caddr_t sc_maddr;
@@ -251,7 +252,7 @@ struct ie_softc {
 };
 
 int iewatchdog __P((/* short */));
-int ieintr __P((int));
+int ieintr __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *sc));
 int ieioctl __P((struct ifnet *ifp, int command, caddr_t data));
 int iestart __P((struct ifnet *ifp));
@@ -520,6 +521,7 @@ ieattach(parent, self, aux)
 	void *aux;
 {
 	struct ie_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -564,6 +566,11 @@ ieattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	sc->sc_ih.ih_fun = ieintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_NET;
+	intr_establish(ia->ia_irq, &sc->sc_ih);
 }
 
 /*
@@ -586,10 +593,9 @@ iewatchdog(unit)
  * What to do upon receipt of an interrupt.
  */
 int
-ieintr(unit)
-	int unit;
+ieintr(sc)
+	struct ie_softc *sc;
 {
-	struct ie_softc *sc = iecd.cd_devs[unit];
 	register u_short status;
 
 	status = sc->scb->ie_status;

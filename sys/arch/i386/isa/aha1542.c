@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.24 1994/03/29 04:30:15 mycroft Exp $
+ *	$Id: aha1542.c,v 1.25 1994/04/07 06:49:57 mycroft Exp $
  */
 
 /*
@@ -324,7 +324,7 @@ struct aha_softc {
 
 int aha_cmd();	/* XXX must be varargs to prototype */
 u_int aha_adapter_info __P((struct aha_softc *));
-int ahaintr __P((int));
+int ahaintr __P((struct aha_softc *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *, int));
 struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
 void aha_done __P((struct aha_softc *, struct aha_ccb *));
@@ -604,11 +604,11 @@ ahaattach(parent, self, aux)
 
 #ifdef NEWCONFIG
 	isa_establish(&aha->sc_id, &aha->sc_dev);
+#endif
 	aha->sc_ih.ih_fun = ahaintr;
 	aha->sc_ih.ih_arg = aha;
-	/* XXX and DV_TAPE, but either gives us splbio */
-	intr_establish(ia->ia_irq, &aha->sc_ih, DV_DISK);
-#endif
+	aha->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &aha->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -632,10 +632,9 @@ aha_adapter_info(aha)
  * Catch an interrupt from the adaptor
  */
 int
-ahaintr(unit)
-	int unit;
+ahaintr(aha)
+	struct aha_softc *aha;
 {
-	struct aha_softc *aha = ahacd.cd_devs[unit];
 	struct aha_ccb *ccb;
 	u_char stat;
 	register i;
@@ -1232,7 +1231,7 @@ aha_poll(aha, xs, ccb)
 		 */
 		stat = inb(AHA_INTR_PORT);
 		if (stat & AHA_ANY_INTR)
-			ahaintr(aha->sc_dev.dv_unit);
+			ahaintr(aha);
 		if (xs->flags & ITSDONE)
 			break;
 		delay(1000);	/* only happens in boot so ok */
@@ -1258,7 +1257,7 @@ aha_poll(aha, xs, ccb)
 			 */
 			stat = inb(AHA_INTR_PORT);
 			if (stat & AHA_ANY_INTR)
-				ahaintr(aha->sc_dev.dv_unit);
+				ahaintr(aha);
 			if (xs->flags & ITSDONE)
 				break;
 			delay(1000);	/* only happens in boot so ok */

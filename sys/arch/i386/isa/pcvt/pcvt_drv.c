@@ -120,11 +120,14 @@ pcprobe(struct isa_device *dev)
 #if PCVT_NETBSD > 9
 void
 pcattach(struct device *parent, struct device *self, void *aux)
+{
+	struct isa_attach_args *ia = aux;
+	static struct intrhand vthand;
 #else
 int
 pcattach(struct isa_device *dev)
-#endif
 {
+#endif
 	int i;
 
 	vt_coldmalloc();		/* allocate memory for screens */
@@ -266,7 +269,13 @@ pcattach(struct isa_device *dev)
 #endif /* !PCVT_NETBSD */
 
 	async_update(0);		/* start asynchronous updates */
-#if PCVT_NETBSD <= 9
+
+#if PCVT_NETBSD > 9
+	vthand.ih_fun = pcrint;
+	vthand.ih_arg = 0;
+	vthand.ih_level = IPL_TTY;
+	intr_establish(ia->ia_irq, &vthand);
+#else
 	return 1;
 #endif
 }
@@ -600,8 +609,8 @@ pcmmap(Dev_t dev, int offset, int nprot)
  *	the vgapage() routine
  *
  *---------------------------------------------------------------------------*/
-void
-pcrint(Dev_t dev, int irq, int cpl)
+int
+pcrint(void)
 {
 	u_char *cp;
 	
@@ -610,25 +619,26 @@ pcrint(Dev_t dev, int irq, int cpl)
 #endif /* PCVT_SCREENSAVER */
 
 	if((cp = sgetc(1)) == 0)
-		return;
+		return -1;
 
 	if (kbd_polling)
-		return;
+		return 1;
 
 	if(!(vs[current_video_screen].openf))	/* XXX was vs[minor(dev)] */
-		return;
+		return 1;
 	
 #if PCVT_NULLCHARS
-	if(*cp == 0)
+	if(*cp == '\0')
 	{
 		/* pass a NULL character */
-		(*linesw[pcconsp->t_line].l_rint)(0, pcconsp);
-		return;
+		(*linesw[pcconsp->t_line].l_rint)('\0', pcconsp);
+		return 1;
 	}
 #endif /* PCVT_NULLCHARS */
 
 	while (*cp)
 		(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff, pcconsp);
+	return 1;
 }
 
 

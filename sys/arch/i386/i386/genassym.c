@@ -68,11 +68,6 @@ main()
 
 	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
 
-	def("SIR_AST", SIR_AST);
-	def("SIR_NET", SIR_NET);
-	def("SIR_CLOCK", SIR_CLOCK);
-	def("SIR_COM", SIR_COM);
-
 	def("P_ADDR", &p->p_addr);
 	def("P_LINK", &p->p_link);
 	def("P_PRI", &p->p_pri);

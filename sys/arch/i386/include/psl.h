@@ -34,8 +34,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.7 1994/03/09 07:59:03 mycroft Exp $
+ *	$Id: psl.h,v 1.8 1994/04/07 06:49:32 mycroft Exp $
  */
+
+#ifndef _I386_PSL_H_
+#define _I386_PSL_H_
 
 /*
  * 386 processor status longword.
@@ -63,3 +66,70 @@
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
 #define	PSL_USERCLR	(PSL_MBZ | PSL_VIP | PSL_VIF | PSL_NT)
+
+#ifdef KERNEL
+#define	IPL_NONE	-1
+#define	IPL_BIO		0
+#define	IPL_NET		1
+#define	IPL_TTY		2
+#define	IPL_CLOCK	3
+
+#define	SIR_CLOCK	31
+#define	SIR_CLOCKMASK	(1 << SIR_CLOCK)
+#define	SIR_NET		30
+#define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
+#define	SIR_TTY		29
+#define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
+
+#ifndef LOCORE
+int cpl, ipending, astpending, imask[4];
+
+#define	SPL(name, adjust) \
+static __inline int			\
+__CONCAT(spl,name)()				\
+{ 					\
+	register int ocpl = cpl;	\
+	adjust;				\
+	return ocpl;			\
+}
+
+SPL(bio, cpl |= imask[IPL_BIO])
+SPL(imp, cpl |= imask[IPL_NET])
+SPL(tty, cpl |= imask[IPL_TTY])
+SPL(clock, cpl |= imask[IPL_CLOCK])
+SPL(high, cpl = -1)
+/*
+ * splsoftclock() is used by hardclock() to lower the priority from clock to
+ * softclock before it calls softclock().
+ */
+SPL(softclock, cpl = SIR_CLOCKMASK)
+SPL(softnet, cpl |= SIR_NETMASK)
+#define	splnet()	splsoftnet()
+SPL(softtty, cpl |= SIR_TTYMASK)
+
+static __inline void
+spl0()
+{
+	cpl = 0;
+	if (ipending)
+		spllower();
+}
+
+static __inline void
+splx(ncpl)
+	register int ncpl;
+{
+	cpl = ncpl;
+	if (ipending & ~ncpl)
+		spllower();
+}
+
+#define	softintr(n)	(ipending |= (1 << (n)))
+#define	setsoftast()	(astpending = 1)
+#define	setsoftclock()	softintr(SIR_CLOCK)
+#define	setsoftnet()	softintr(SIR_NET)
+#define	setsofttty()	softintr(SIR_TTY)
+#endif /* !LOCORE */
+#endif /* KERNEL */
+
+#endif /* !_I386_PSL_H_ */

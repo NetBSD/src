@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.29 1994/03/29 04:35:44 mycroft Exp $
+ *	$Id: com.c,v 1.30 1994/04/07 06:50:28 mycroft Exp $
  */
 
 /*
@@ -65,6 +65,7 @@
 
 struct com_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	u_short sc_iobase;
 	u_char sc_hwflags;
@@ -85,7 +86,7 @@ int comprobe();
 void comattach();
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
-int comintr __P((int));
+int comintr __P((struct com_softc *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
@@ -207,6 +208,13 @@ comattach(parent, self, aux)
 	/* disable interrupts */
 	outb(iobase + com_ier, 0);
 	outb(iobase + com_mcr, 0);
+
+	if (!parent) {	/* XXX no master */
+		sc->sc_ih.ih_fun = comintr;
+		sc->sc_ih.ih_arg = sc;
+		sc->sc_ih.ih_level = IPL_TTY;
+		intr_establish(ia->ia_irq, &sc->sc_ih);
+	}
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
@@ -719,10 +727,9 @@ commint(sc)
 }
 
 int
-comintr(unit)
-	int unit;
+comintr(sc)
+	struct com_softc *sc;
 {
-	struct com_softc *sc = comcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char code;
