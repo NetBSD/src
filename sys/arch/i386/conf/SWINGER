@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.4 2000/05/28 21:49:02 thorpej Exp $
+#	$NetBSD: SWINGER,v 1.5 2000/06/01 04:24:01 david Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.4 $"
+#ident 		"SWINGER-$Revision: 1.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -689,7 +689,6 @@ lpt*	at pnpbios? index ?
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -732,7 +731,6 @@ audio*	at eap?
 #audio*	at guspnp?
 #audio*	at pas?
 audio*	at sb?
-#audio*	at sbl?
 #audio*	at sp?
 #audio*	at sv?
 audio*	at uaudio?

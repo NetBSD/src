@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.16 2000/05/28 21:48:52 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.17 2000/06/01 04:24:00 david Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -702,7 +702,6 @@ ugen*	at uhub? port ? configuration ? interface ?
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -748,7 +747,6 @@ ugen*	at uhub? port ? configuration ? interface ?
 #audio*	at guspnp?
 #audio*	at pas?
 #audio*	at sb?
-#audio* at sbl?
 #audio*	at sp?
 #audio*	at sv?
 audio* at uaudio?

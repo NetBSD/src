@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.28 2000/05/12 03:14:21 jhawk Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.29 2000/06/01 04:24:01 david Exp $
 #	From: GENERIC,v 1.299 2000/02/03 20:31:42 dante Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32		# estimated number of users
 
@@ -655,7 +655,6 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -698,7 +697,6 @@ opl*	at sv?
 #audio*	at guspnp?
 #audio*	at pas?
 #audio*	at sb?
-#audio*	at sbl?
 #audio*	at sp?
 audio*	at sv?
 #audio*	at uaudio?
