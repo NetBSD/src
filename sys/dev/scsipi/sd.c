@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.215 2004/02/28 06:28:48 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.216 2004/03/14 00:17:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.215 2004/02/28 06:28:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.216 2004/03/14 00:17:37 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -957,7 +957,7 @@ sdminphys(bp)
 			bp->b_bcount = max;
 	}
 
-	(*sd->sc_periph->periph_channel->chan_adapter->adapt_minphys)(bp);
+	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);
 }
 
 int
