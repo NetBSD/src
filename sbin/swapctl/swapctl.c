@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.16 2000/11/17 11:43:41 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.17 2000/11/17 12:35:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -38,7 +38,7 @@
  *	-t [blk|noblk]	if -A or -U , add (remove) either all block device
  *			or all non-block devices
  *	-a <dev>	add this device
- *	-d <dev>	remove this swap device (not supported yet)
+ *	-d <dev>	remove this swap device
  *	-l		list swap devices
  *	-s		short listing of swap devices
  *	-k		use kilobytes
