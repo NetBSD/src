@@ -1,9 +1,10 @@
-# $NetBSD: obsolete.mi,v 1.11 2000/02/18 09:40:56 veego Exp $
+# $NetBSD: obsolete.mi,v 1.12 2000/03/15 16:02:26 tron Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
 /usr/include/bfd/libiberty.h
 /usr/include/bfd
+/usr/include/dev/ic/aic7xxxreg.h
 /usr/include/dev/ic/isp_netbsd.h
 /usr/include/dev/ic/opl3sa3.h
 /usr/include/dev/isa/ahareg.h
