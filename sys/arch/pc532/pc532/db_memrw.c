@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.5 1997/04/21 16:17:32 matthias Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.6 1998/04/21 20:12:17 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -92,7 +92,7 @@ set_pte(addr, pte)
 	vm_offset_t addr;
 	pt_entry_t pte;
 {
-	*(pt_entry_t *)pmap_pte(pmap_kernel(), addr) = pte;
+	*kvtopte(addr) = pte;
 	pmap_update();
 }
 
@@ -133,7 +133,7 @@ db_write_text(addr, size, data)
 			set_pte(prevpg, oldpte);
 
 		firstpage:
-			oldpte = *(pt_entry_t *)pmap_pte(pmap_kernel(), pgva);
+			oldpte = *kvtopte(pgva);
 			if ((oldpte & PG_V) == 0) {
 				printf(" address %p not a valid page\n", dst);
 				return;

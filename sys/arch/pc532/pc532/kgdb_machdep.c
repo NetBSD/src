@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.5 1997/04/21 16:17:39 matthias Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6 1998/04/21 20:12:17 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -50,15 +50,15 @@ kgdb_acc(va, len)
 	size_t len;
 {
 	vm_offset_t last_va;
-	pt_entry_t pte;
+	pt_entry_t *pte;
 
 	last_va = va + len;
 	va  &= ~PGOFSET;
 	last_va &= ~PGOFSET;
 
 	do {
-		pte = *(pt_entry_t *)pmap_pte(pmap_kernel(), va);
-		if ((pte & PG_V) == 0)
+		pte = kvtopte(va);
+		if ((*pte & PG_V) == 0)
 			return (0);
 		va  += NBPG;
 	} while (va < last_va);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1998/04/11 17:44:11 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1998/04/21 20:12:18 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -406,11 +406,11 @@ vmapbuf(bp, len)
 	 * where we we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
-	tpte = PTE_BASE + i386_btop(taddr);
+	tpte = PTE_BASE + ns532_btop(taddr);
 	while (len) {
 		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 				   faddr);
-		*tpte = fpa | PG_RW | PG_V | pmap_pg_g;
+		*tpte = fpa | PG_RW | PG_V;
 		tpte++;
 		faddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
