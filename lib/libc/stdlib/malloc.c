@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.31 2000/04/07 15:15:08 enami Exp $	*/
+/*	$NetBSD: malloc.c,v 1.32 2000/05/20 15:13:31 simonb Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -208,7 +208,7 @@ static int suicide;
 static int malloc_realloc;
 
 /* pass the kernel a hint on free pages ?  */
-static int malloc_hint = 1;
+static int malloc_hint = 0;
 
 /* xmalloc behaviour ?  */
 static int malloc_xmalloc;
