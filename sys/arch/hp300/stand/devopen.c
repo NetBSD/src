@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1994/10/26 07:27:16 cgd Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 1995/08/04 07:55:42 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -54,7 +54,9 @@ Usage: device(adaptor, controller, drive, partition)file\n\
 ");
 }
 
-devlookup(char *d, int len)
+devlookup(d, len)
+	const char *d;
+	int len;
 {
     struct devsw *dp = devsw;
     int i;
@@ -79,13 +81,16 @@ devlookup(char *d, int len)
  * [A-Za-z]*[0-9]*[A-Za-z]:file
  *    dev   unit  part
  */
-devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, char **file)
+devparse(fname, dev, adapt, ctlr, unit, part, file)
+	const char *fname;
+	int *dev, *adapt, *ctlr, *unit, *part;
+	char **file;
 {
     int *argp, i;
     char *s, *args[4];
     
     /* get device name and make lower case */
-    for (s = fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
+    for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
 	if (isupper(*s)) *s = tolower(*s);
 
     /* first form */
@@ -130,7 +135,7 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 	int unit;
 
 	/* isolate device */
-	for (s = fname; *s != ':' && !isdigit(*s); s++);
+	for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
 	
 	/* lookup device and get index */
 	if ((*dev = devlookup(fname, s - fname)) < 0)
@@ -155,7 +160,7 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 
     /* no device present */
     else
-	*file = fname;
+	*file = (char *)fname;
     
     /* return the remaining unparsed part as the file to boot */
     return(0);
@@ -170,7 +175,7 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 
 devopen(f, fname, file)
 	struct open_file *f;
-	char *fname;
+	const char *fname;
 	char **file;
 {
 	int n, error;

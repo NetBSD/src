@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.7 1994/10/26 07:27:29 cgd Exp $	*/
+/*	$NetBSD: ite.c,v 1.8 1995/08/04 07:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,6 @@
 /*
  * Standalone Internal Terminal Emulator (CRT and keyboard)
  */
-#include <hp300/stand/samachdep.h>
 
 #ifdef ITECONSOLE
 
@@ -54,6 +53,8 @@
 #include <hp300/dev/device.h>
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/grfreg.h>
+#include <hp300/stand/consdefs.h>
+#include <hp300/stand/samachdep.h>
 
 extern int nodev();
 extern u_char ite_readbyte();
@@ -164,6 +165,7 @@ iteconfig()
 int	whichconsole = -1;
 #endif
 
+void
 iteprobe(cp)
 	struct consdev *cp;
 {
@@ -176,7 +178,7 @@ iteprobe(cp)
 #endif
 
 	if (itecons != -1)
-		return(1);
+		return;
 
 	iteconfig();
 	unit = -1;
@@ -202,6 +204,7 @@ iteprobe(cp)
 	cp->cn_pri = pri;
 }
 
+void
 iteinit(cp)
 	struct consdev *cp;
 {
@@ -209,7 +212,7 @@ iteinit(cp)
 	struct ite_softc *ip;
 
 	if (itecons != -1)
-		return(1);
+		return;
 
 	ip = &ite_softc[ite];
 
@@ -225,7 +228,10 @@ iteinit(cp)
 	kbdinit();
 }
 
-iteputchar(c)
+/* ARGSUSED */
+void
+iteputchar(dev, c)
+	dev_t dev;
 	register int c;
 {
 	register struct ite_softc *ip = &ite_softc[itecons];
@@ -291,7 +297,10 @@ ite_clrtoeol(ip, sp, y, x)
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 
-itegetchar()
+/* ARGSUSED */
+int
+itegetchar(dev)
+	dev_t dev;
 {
 #ifdef SMALL
 	return (0);
