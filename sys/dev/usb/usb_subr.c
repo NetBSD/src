@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.83 2001/01/08 20:21:16 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.84 2001/01/18 20:28:22 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct usb_knowndev {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-Static const char *usbd_error_strs[] = {
+Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -227,7 +227,7 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
 #ifdef USBVERBOSE
-	struct usb_knowndev *kdp;
+	const struct usb_knowndev *kdp;
 #endif
 
 	if (dev == NULL) {

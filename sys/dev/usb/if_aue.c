@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.50 2000/12/14 07:51:36 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.51 2001/01/18 20:28:23 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -184,7 +184,7 @@ struct aue_type {
 	char			aue_linksys;
 };
 
-Static struct aue_type aue_devs[] = {
+Static const struct aue_type aue_devs[] = {
   { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
   { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	0 },
   { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	0 },
@@ -204,7 +204,7 @@ Static struct aue_type aue_devs[] = {
 
 USB_DECLARE_DRIVER(aue);
 
-Static struct aue_type *aue_lookup(u_int16_t vendor, u_int16_t product);
+Static const struct aue_type *aue_lookup(u_int16_t vendor, u_int16_t product);
 Static int aue_tx_list_init(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
 Static int aue_newbuf(struct aue_softc *, struct aue_chain *, struct mbuf *);
@@ -254,7 +254,7 @@ Static void aue_rxstart(struct ifnet *);
 
 Static struct usb_qdat aue_qdat;
 
-Static device_method_t aue_methods[] = {
+Static const device_method_t aue_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		aue_match),
 	DEVMETHOD(device_attach,	aue_attach),
@@ -701,10 +701,10 @@ aue_reset(struct aue_softc *sc)
 	delay(10000);		/* XXX */
 }
 
-Static struct aue_type *
+Static const struct aue_type *
 aue_lookup(u_int16_t vendor, u_int16_t product)
 {
-	struct aue_type	*t;
+	const struct aue_type	*t;
 
 	for (t = aue_devs; t->aue_vid != 0; t++)
 		if (vendor == t->aue_vid && product == t->aue_did)

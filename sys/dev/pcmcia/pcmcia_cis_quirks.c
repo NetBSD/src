@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.7 2001/01/10 17:37:27 aymeric Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8 2001/01/18 20:28:26 jdolecek Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -48,7 +48,7 @@
 /* these structures are just static templates which are then copied
    into "live" allocated structures */
 
-static struct pcmcia_function pcmcia_dlink_de650_func0 = {
+static const struct pcmcia_function pcmcia_dlink_de650_func0 = {
 	0,
 	PCMCIA_FUNCTION_NETWORK,
 	0x23,
@@ -56,7 +56,7 @@ static struct pcmcia_function pcmcia_dlink_de650_func0 = {
 	0x0b,
 };
 
-static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe0 = {
 	0x20,
 	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -69,7 +69,7 @@ static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe0 = {
 	0,
 };
 
-static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe1 = {
+static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe1 = {
 	0x21,
 	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -82,7 +82,7 @@ static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe1 = {
 	0,
 };
 
-static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe2 = {
+static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe2 = {
 	0x22,
 	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -95,7 +95,7 @@ static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe2 = {
 	0,
 };
 
-static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe3 = {
+static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe3 = {
 	0x23,
 	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -108,7 +108,7 @@ static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe3 = {
 	0,
 };
 
-static struct pcmcia_function pcmcia_3cxem556_func0 = {
+static const struct pcmcia_function pcmcia_3cxem556_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
 	0x07,			/* last cfe number */
@@ -116,7 +116,7 @@ static struct pcmcia_function pcmcia_3cxem556_func0 = {
 	0x63,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
 	0x07,			/* cfe number */
 	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -129,7 +129,7 @@ static struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_3cxem556_func1 = {
+static const struct pcmcia_function pcmcia_3cxem556_func1 = {
 	1,			/* function number */
 	PCMCIA_FUNCTION_SERIAL,
 	0x27,			/* last cfe number */
@@ -137,7 +137,7 @@ static struct pcmcia_function pcmcia_3cxem556_func1 = {
 	0x63,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
 	0x27,			/* cfe number */
 	PCMCIA_CFE_IO8 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -150,7 +150,7 @@ static struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_3ccfem556bi_func0 = {
+static const struct pcmcia_function pcmcia_3ccfem556bi_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
 	0x07,			/* last cfe number */
@@ -158,7 +158,7 @@ static struct pcmcia_function pcmcia_3ccfem556bi_func0 = {
 	0x267,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_3ccfem556bi_func0_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_3ccfem556bi_func0_cfe0 = {
 	0x07,			/* cfe number */
 	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -171,7 +171,7 @@ static struct pcmcia_config_entry pcmcia_3ccfem556bi_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_3ccfem556bi_func1 = {
+static const struct pcmcia_function pcmcia_3ccfem556bi_func1 = {
 	1,			/* function number */
 	PCMCIA_FUNCTION_SERIAL,
 	0x27,			/* last cfe number */
@@ -179,7 +179,7 @@ static struct pcmcia_function pcmcia_3ccfem556bi_func1 = {
 	0x277,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_3ccfem556bi_func1_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_3ccfem556bi_func1_cfe0 = {
 	0x27,			/* cfe number */
 	PCMCIA_CFE_IO8 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -192,7 +192,7 @@ static struct pcmcia_config_entry pcmcia_3ccfem556bi_func1_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_sveclancard_func0 = {
+static const struct pcmcia_function pcmcia_sveclancard_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
 	0x1,			/* last cfe number */
@@ -200,7 +200,7 @@ static struct pcmcia_function pcmcia_sveclancard_func0 = {
 	0x1,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
 	0x1,			/* cfe number */
 	PCMCIA_CFE_MWAIT_REQUIRED | PCMCIA_CFE_RDYBSY_ACTIVE |
 	PCMCIA_CFE_WP_ACTIVE | PCMCIA_CFE_BVD_ACTIVE | PCMCIA_CFE_IO16,
@@ -214,7 +214,7 @@ static struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_function pcmcia_ndc_nd5100_func0 = {
+static const struct pcmcia_function pcmcia_ndc_nd5100_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
 	0x23,			/* last cfe number */
@@ -222,7 +222,7 @@ static struct pcmcia_function pcmcia_ndc_nd5100_func0 = {
 	0x3,			/* ccr_mask */
 };
 
-static struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
+static const struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
 	0x20,			/* cfe number */
 	PCMCIA_CFE_MWAIT_REQUIRED | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -235,7 +235,7 @@ static struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
-static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
+static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
 	  PCMCIA_CIS_INVALID,
 	  &pcmcia_dlink_de650_func0, &pcmcia_dlink_de650_func0_cfe0 },
@@ -276,7 +276,8 @@ void pcmcia_check_cis_quirks(sc)
 {
 	int wiped = 0;
 	int i, j;
-	struct pcmcia_function *pf, *pf_next, *pf_last;
+	struct pcmcia_function *pf, *pf_next;
+	const struct pcmcia_function *pf_last;
 	struct pcmcia_config_entry *cfe, *cfe_next;
 
 	pf = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.69 2000/03/23 07:01:34 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.70 2001/01/18 20:28:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -449,11 +449,11 @@ struct cfattach gus_ca = {
  * registers.  A zero means that the referenced IRQ/DRQ is invalid
  */
 
-static int gus_irq_map[] = {
+static const int gus_irq_map[] = {
 	IRQUNK, IRQUNK, 1, 3, IRQUNK, 2, IRQUNK, 4, IRQUNK, 1, IRQUNK, 5, 6,
 	IRQUNK, IRQUNK, 7
 };
-static int gus_drq_map[] = {
+static const int gus_drq_map[] = {
 	DRQUNK, 1, DRQUNK, 2, DRQUNK, 3, 4, 5
 };
 
@@ -461,10 +461,10 @@ static int gus_drq_map[] = {
  * A list of valid base addresses for the GUS
  */
 
-static int gus_base_addrs[] = {
+static const int gus_base_addrs[] = {
 	0x210, 0x220, 0x230, 0x240, 0x250, 0x260
 };
-static int gus_addrs = sizeof(gus_base_addrs) / sizeof(gus_base_addrs[0]);
+static const int gus_addrs = sizeof(gus_base_addrs) / sizeof(gus_base_addrs[0]);
 
 /*
  * Maximum frequency values of the GUS based on the number of currently active
@@ -472,7 +472,7 @@ static int gus_addrs = sizeof(gus_base_addrs) / sizeof(gus_base_addrs[0]);
  * is dependent on the number of active voices.  Yes, it is pretty weird.
  */
 
-static int gus_max_frequency[] = {
+static const int gus_max_frequency[] = {
 		44100,		/* 14 voices */
 		41160,		/* 15 voices */
 		38587,		/* 16 voices */
@@ -498,7 +498,7 @@ static int gus_max_frequency[] = {
  * by the GF1 chip on the GUS.  From GUS SDK vol1.c.
  */
 
-static unsigned short gus_log_volumes[512] = {
+static const unsigned short gus_log_volumes[512] = {
  0x0000,
  0x0700, 0x07ff, 0x0880, 0x08ff, 0x0940, 0x0980, 0x09c0, 0x09ff, 0x0a20,
  0x0a40, 0x0a60, 0x0a80, 0x0aa0, 0x0ac0, 0x0ae0, 0x0aff, 0x0b10, 0x0b20,

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.4 2000/08/14 11:28:03 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ static void awi_null_copy __P((void *ctx, u_int8_t *dst, u_int8_t *src, int len)
 
 /* XXX: the order should be known to wiconfig/user */
 
-static struct awi_wep_algo awi_wep_algo[] = {
+static const struct awi_wep_algo awi_wep_algo[] = {
 /* 0: no wep */
 	{ "no" },	/* dummy for no wep */
 
@@ -232,7 +232,7 @@ awi_wep_setalgo(sc, algo)
 	struct awi_softc *sc;
 	int algo;
 {
-	struct awi_wep_algo *awa;
+	const struct awi_wep_algo *awa;
 	int ctxlen;
 
 	awi_crc_init();	/* XXX: not belongs here */
@@ -303,7 +303,7 @@ awi_wep_encrypt(sc, m0, txflag)
 {
 	struct mbuf *m, *n, *n0;
 	struct ieee80211_frame *wh;
-	struct awi_wep_algo *awa;
+	const struct awi_wep_algo *awa;
 	int left, len, moff, noff, keylen, kid;
 	u_int32_t iv, crc;
 	u_int8_t *key, *ivp;
