@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.2.2.2 1997/08/27 23:33:04 thorpej Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.2.2.3 1997/09/06 19:05:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -83,8 +83,6 @@ struct cfattach cd_scsibus_ca = {
 
 struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 	{T_CDROM, T_REMOV,
-	 "",         "",                 ""},
-	{T_WORM, T_REMOV,
 	 "",         "",                 ""},
 #if 0
 	{T_CDROM, T_REMOV, /* more luns */
