@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.2 2002/03/17 11:36:37 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.3 2002/03/17 16:14:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.2 2002/03/17 11:36:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.3 2002/03/17 16:14:21 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -54,20 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.2 2002/03/17 11:36:37 kent Exp $");
 
 static int auconv_play_slinear16_le(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear16_channels_le(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
 static int auconv_play_slinear24_le(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear24_channels_le(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
 
 static int auconv_record_slinear16_le(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear16_channels_le(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
 static int auconv_record_slinear24_le(struct auconv_context *,
-	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear24_channels_le(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
 
 int
@@ -85,11 +77,19 @@ auconv_check_params(const struct audio_params *params)
 	    || (params->hw_precision != 16 && params->hw_precision != 24))
 		return (EINVAL);
 
-	/* Only 1:2 or 2:1 */
-	if (params->hw_channels != params->channels)
-		if (!((params->hw_channels == 1 && params->channels == 2)
-		      || (params->hw_channels == 2 && params->channels == 1)))
+	if (params->hw_channels != params->channels) {
+		if (params->hw_channels == 1 && params->channels == 2) {
+			/* Ok */
+		} else if (params->hw_channels == 2 && params->channels == 1) {
+			/* Ok */
+		} else if (params->hw_channels > params->channels) {
+			/* Ok */
+		} else
 			return (EINVAL);
+	}
+	if (params->hw_channels > AUDIO_MAX_CHANNELS
+	    || params->channels > AUDIO_MAX_CHANNELS)
+		return (EINVAL);
 
 	if (params->hw_sample_rate != params->sample_rate)
 		if (params->hw_sample_rate <= 0 || params->sample_rate <= 0)
@@ -144,19 +144,11 @@ auconv_record(struct auconv_context *context,
 	}
 	switch (params->hw_precision) {
 	case 16:
-		if (params->hw_channels != params->channels)
-			return auconv_record_slinear16_channels_le(context,
-				params, dest, src, srcsize);
-		else
-			return auconv_record_slinear16_le(context,
-				params, dest, src, srcsize);
+		return auconv_record_slinear16_le(context, params,
+						  dest, src, srcsize);
 	case 24:
-		if (params->hw_channels != params->channels)
-			return auconv_record_slinear24_channels_le(context,
-				params, dest, src, srcsize);
-		else
-			return auconv_record_slinear24_le(context,
-				params, dest, src, srcsize);
+		return auconv_record_slinear24_le(context, params,
+						  dest, src, srcsize);
 	}
 	printf("auconv_record: unimplemented precision: %d\n",
 	       params->hw_precision);
@@ -192,19 +184,11 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 	}
 	switch (params->hw_precision) {
 	case 16:
-		if (params->hw_channels != params->channels)
-			return auconv_play_slinear16_channels_le(context,
-				params, dest, src, srcsize);
-		else
-			return auconv_play_slinear16_le(context,
-				params, dest, src, srcsize);
+		return auconv_play_slinear16_le(context, params,
+						dest, src, srcsize);
 	case 24:
-		if (params->hw_channels != params->channels)
-			return auconv_play_slinear24_channels_le(context,
-				params, dest, src, srcsize);
-		else
-			return auconv_play_slinear24_le(context,
-				params, dest, src, srcsize);
+		return auconv_play_slinear24_le(context, params,
+						dest, src, srcsize);
 	}
 	printf("auconv_play: unimplemented precision: %d\n",
 	       params->hw_precision);
@@ -239,192 +223,73 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[2] = vvv >> 16; \
 	} while (0)
 
-#define P_READ_LR_S16LE(LV, RV, RP, PAR)	\
+#define P_READ_SnLE(BITS, V, RP, PAR)	\
 	do { \
-		LV = READ_S16LE(RP); \
-		RP += sizeof(int16_t); \
-		if ((PAR)->channels == 1) \
-			RV = LV; \
-		else { \
-			RV = READ_S16LE(RP); \
-			RP += sizeof(int16_t); \
+		int j; \
+		for (j = 0; j < (PAR)->channels; j++) { \
+			(V)[j] = READ_S##BITS##LE(RP); \
+			RP += (BITS) / NBBY; \
 		} \
 	} while (0)
-#define P_WRITE_LR_S16LE(LV, RV, WP, PAR, CON, WC)	\
+#define P_WRITE_SnLE(BITS, V, WP, PAR, CON, WC)	\
 	do { \
-		if ((PAR)->hw_channels == 1) { \
-			WRITE_S16LE(WP, (LV + RV) / 2); \
-			WP += sizeof(int16_t); \
-			WC += sizeof(int16_t); \
-		} else { \
-			WRITE_S16LE(WP, LV); \
-			WP += sizeof(int16_t); \
+		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
+			WRITE_S##BITS##LE(WP, ((V)[0] + (V)[1]) / 2); \
+			WP += (BITS) / NBBY; \
 			RING_CHECK(CON, WP); \
-			WRITE_S16LE(WP, RV); \
-			WP += sizeof(int16_t); \
-			WC += sizeof(int16_t) * 2; \
+			WC += (BITS) / NBBY; \
+		} else { /* channels <= hw_channels */ \
+			int j; \
+			for (j = 0; j < (PAR)->channels; j++) { \
+				WRITE_S##BITS##LE(WP, (V)[j]); \
+				WP += (BITS) / NBBY; \
+				RING_CHECK(CON, WP); \
+			} \
+			if (j == 1 && 1 < (PAR)->hw_channels) { \
+				WRITE_S##BITS##LE(WP, (V)[0]); \
+				WP += (BITS) / NBBY; \
+				RING_CHECK(CON, WP); \
+				j++; \
+			} \
+			for (; j < (PAR)->hw_channels; j++) { \
+				WRITE_S##BITS##LE(WP, 0); \
+				WP += (BITS) / NBBY; \
+				RING_CHECK(CON, WP); \
+			} \
+			WC += (BITS) / NBBY * j; \
 		} \
-		RING_CHECK(CON, WP); \
-	} while (0)
-#define P_READ_N_S16LE(V, RP, PAR)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			(V)[i] = READ_S16LE(RP); \
-			RP += sizeof(int16_t); \
-		} \
-	} while (0)
-#define P_WRITE_N_S16LE(V, WP, PAR, CON, WC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			WRITE_S16LE(WP, (V)[i]); \
-			WP += sizeof(int16_t); \
-			RING_CHECK(CON, WP); \
-		} \
-		WC += sizeof(int16_t) * i; \
-	} while (0)
-#define P_READ_LR_S24LE(LV, RV, RP, PAR)	\
-	do { \
-		LV = READ_S24LE(RP); \
-		RP += 3; \
-		if ((PAR)->channels == 1) \
-			RV = LV; \
-		else { \
-			RV = READ_S24LE(RP); \
-			RP += 3; \
-		} \
-	} while (0)
-#define P_WRITE_LR_S24LE(LV, RV, WP, PAR, CON, WC)	\
-	do { \
-		if ((PAR)->hw_channels == 1) { \
-			WRITE_S24LE(WP, (LV + RV) / 2); \
-			WP += 3; \
-			WC += 3; \
-		} else { \
-			WRITE_S24LE(WP, LV); \
-			WP += 3; \
-			RING_CHECK(CON, WP); \
-			WRITE_S24LE(WP, RV); \
-			WP += 3; \
-			WC += 3 * 2; \
-		} \
-		RING_CHECK(CON, WP); \
-	} while (0)
-#define P_READ_N_S24LE(V, RP, PAR)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			(V)[i] = READ_S24LE(RP); \
-			RP += 3; \
-		} \
-	} while (0)
-#define P_WRITE_N_S24LE(V, WP, PAR, CON, WC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			WRITE_S24LE(WP, (V)[i]); \
-			WP += 3; \
-			RING_CHECK(CON, WP); \
-		} \
-		WC += 3 * i; \
 	} while (0)
 
-#define R_READ_LR_S16LE(LV, RV, RP, PAR, CON, RC)	\
+#define R_READ_SnLE(BITS, V, RP, PAR, CON, RC)	\
 	do { \
-		LV = READ_S16LE(RP); \
-		RP += sizeof(int16_t); \
-		RING_CHECK(CON, RP); \
-		RC += sizeof(int16_t); \
-		if ((PAR)->hw_channels == 1) \
-			RV = LV; \
-		else { \
-			RV = READ_S16LE(RP); \
-			RP += sizeof(int16_t); \
+		int j; \
+		for (j = 0; j < (PAR)->hw_channels; j++) { \
+			(V)[j] = READ_S##BITS##LE(RP); \
+			RP += (BITS) / NBBY; \
 			RING_CHECK(CON, RP); \
-			RC += sizeof(int16_t); \
+			RC += (BITS) / NBBY; \
 		} \
 	} while (0)
-#define R_WRITE_LR_S16LE(LV, RV, WP, PAR, WC)	\
+#define R_WRITE_SnLE(BITS, V, WP, PAR, WC)	\
 	do { \
-		if ((PAR)->channels == 1) { \
-			WRITE_S16LE(WP, (LV + RV) / 2); \
-			WP += sizeof(int16_t); \
-			WC += sizeof(int16_t); \
-		} else { \
-			WRITE_S16LE(WP, LV); \
-			WP += sizeof(int16_t); \
-			WRITE_S16LE(WP, RV); \
-			WP += sizeof(int16_t); \
-			WC += sizeof(int16_t) * 2; \
+		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
+			WRITE_S##BITS##LE(WP, (V)[0]); \
+			WP += (BITS) / NBBY; \
+			WRITE_S##BITS##LE(WP, (V)[0]); \
+			WP += (BITS) / NBBY; \
+			WC += (BITS) / NBBY * 2; \
+		} else if ((PAR)->channels == 1 && (PAR)->hw_channels >= 2) { \
+			WRITE_S##BITS##LE(WP, ((V)[0] + (V)[1]) / 2); \
+			WP += (BITS) / NBBY; \
+			WC += (BITS) / NBBY; \
+		} else {	/* channels <= hw_channels */ \
+			int j; \
+			for (j = 0; j < (PAR)->channels; j++) { \
+				WRITE_S##BITS##LE(WP, (V)[j]); \
+				WP += (BITS) / NBBY; \
+			} \
+			WC += (BITS) / NBBY * j; \
 		} \
-	} while (0)
-#define R_READ_N_S16LE(V, RP, PAR, CON, RC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			(V)[i] = READ_S16LE(RP); \
-			RP += sizeof(int16_t); \
-			RING_CHECK(CON, RP); \
-			RC += sizeof(int16_t); \
-		} \
-	} while (0)
-#define R_WRITE_N_S16LE(V, WP, PAR, WC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			WRITE_S16LE(WP, (V)[i]); \
-			WP += sizeof(int16_t); \
-		} \
-		WC += sizeof(int16_t) * i; \
-	} while (0)
-#define R_READ_LR_S24LE(LV, RV, RP, PAR, CON, RC)	\
-	do { \
-		LV = READ_S24LE(RP); \
-		RP += 3; \
-		RING_CHECK(CON, RP); \
-		RC += 3; \
-		if ((PAR)->hw_channels == 1) \
-			RV = LV; \
-		else { \
-			RV = READ_S24LE(RP); \
-			RP += 3; \
-			RING_CHECK(CON, RP); \
-			RC += 3; \
-		} \
-	} while (0)
-#define R_WRITE_LR_S24LE(LV, RV, WP, PAR, WC)	\
-	do { \
-		if ((PAR)->channels == 1) { \
-			WRITE_S24LE(WP, (LV + RV) / 2); \
-			WP += 3; \
-			WC += 3; \
-		} else { \
-			WRITE_S24LE(WP, LV); \
-			WP += 3; \
-			WRITE_S24LE(WP, RV); \
-			WP += 3; \
-			WC += 3 * 2; \
-		} \
-	} while (0)
-#define R_READ_N_S24LE(V, RP, PAR, CON, RC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			(V)[i] = READ_S24LE(RP); \
-			RP += 3; \
-			RING_CHECK(CON, RP); \
-			RC += 3; \
-		} \
-	} while (0)
-#define R_WRITE_N_S24LE(V, WP, PAR, WC)	\
-	do { \
-		int i; \
-		for (i = 0; i < (PAR)->channels; i++) { \
-			WRITE_S24LE(WP, (V)[i]); \
-			WP += 3; \
-		} \
-		WC += 3 * i; \
 	} while (0)
 
 /*
@@ -435,66 +300,6 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
  *   Don't use them for 32bit data because this linear interpolation overflows
  *   for 32bit data.
  */
-#define AUCONV_PLAY_SLINEAR_CHANNELS_LE(BITS)	\
-static int \
-auconv_play_slinear##BITS##_channels_le(struct auconv_context *context, \
-					const struct audio_params *params, \
-					uint8_t *dest, const uint8_t *src, \
-					int srcsize) \
-{ \
-	int wrote; \
-	uint8_t *w; \
-	const uint8_t *r; \
-	const uint8_t *src_end; \
-	register int32_t lv, rv; \
-	int32_t prev_l, prev_r, next_l, next_r, c256; \
- \
-	wrote = 0; \
-	w = dest; \
-	r = src; \
-	src_end = src + srcsize; \
-	if (params->sample_rate == params->hw_sample_rate) { \
-		while (r < src_end) { \
-			P_READ_LR_S##BITS##LE(lv, rv, r, params); \
-			P_WRITE_LR_S##BITS##LE(lv, rv, w, params, context, wrote); \
-		} \
-	} else if (params->hw_sample_rate < params->sample_rate) { \
-		for (;;) { \
-			do { \
-				if (r >= src_end) \
-					return wrote; \
-				P_READ_LR_S##BITS##LE(lv, rv, r, params); \
-				context->count += params->hw_sample_rate; \
-			} while (context->count < params->sample_rate); \
-			context->count -= params->sample_rate; \
-			P_WRITE_LR_S##BITS##LE(lv, rv, w, params, context, wrote); \
-		} \
-	} else { \
-		/* Initial value of context->count is params->sample_rate */ \
-		prev_l = context->prev[0]; \
-		prev_r = context->prev[1]; \
-		P_READ_LR_S##BITS##LE(next_l, next_r, r, params); \
-		for (;;) { \
-			c256 = context->count * 256 / params->hw_sample_rate; \
-			lv = (c256 * next_l + (256 - c256) * prev_l) >> 8; \
-			rv = (c256 * next_r + (256 - c256) * prev_r) >> 8; \
-			P_WRITE_LR_S##BITS##LE(lv, rv, w, params, context, wrote); \
-			context->count += params->sample_rate; \
-			if (context->count >= params->hw_sample_rate) { \
-				context->count -= params->hw_sample_rate; \
-				prev_l = next_l; \
-				prev_r = next_r; \
-				if (r >= src_end) \
-					break; \
-				P_READ_LR_S##BITS##LE(next_l, next_r, r, params); \
-			} \
-		} \
-		context->prev[0] = next_l; \
-		context->prev[1] = next_r; \
-	} \
-	return wrote; \
-}
-
 #define AUCONV_PLAY_SLINEAR_LE(BITS)	\
 static int \
 auconv_play_slinear##BITS##_le(struct auconv_context *context, \
@@ -516,101 +321,40 @@ auconv_play_slinear##BITS##_le(struct auconv_context *context, \
 	src_end = src + srcsize; \
 	if (params->sample_rate == params->hw_sample_rate) { \
 		while (r < src_end) { \
-			P_READ_N_S##BITS##LE(v, r, params); \
-			P_WRITE_N_S##BITS##LE(v, w, params, context, wrote); \
+			P_READ_SnLE(BITS, v, r, params); \
+			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
 		} \
 	} else if (params->hw_sample_rate < params->sample_rate) { \
 		for (;;) { \
 			do { \
 				if (r >= src_end) \
 					return wrote; \
-				P_READ_N_S##BITS##LE(v, r, params); \
+				P_READ_SnLE(BITS, v, r, params); \
 				context->count += params->hw_sample_rate; \
 			} while (context->count < params->sample_rate); \
 			context->count -= params->sample_rate; \
-			P_WRITE_N_S##BITS##LE(v, w, params, context, wrote); \
+			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
 		} \
 	} else { \
 		/* Initial value of context->count is params->sample_rate */ \
 		values_size = sizeof(int32_t) * params->channels; \
 		memcpy(prev, context->prev, values_size); \
-		P_READ_N_S##BITS##LE(next, r, params); \
+		P_READ_SnLE(BITS, next, r, params); \
 		for (;;) { \
 			c256 = context->count * 256 / params->hw_sample_rate; \
 			for (i = 0; i < params->channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			P_WRITE_N_S##BITS##LE(v, w, params, context, wrote); \
+			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
 			context->count += params->sample_rate; \
 			if (context->count >= params->hw_sample_rate) { \
 				context->count -= params->hw_sample_rate; \
 				memcpy(prev, next, values_size); \
 				if (r >= src_end) \
 					break; \
-				P_READ_N_S##BITS##LE(next, r, params); \
+				P_READ_SnLE(BITS, next, r, params); \
 			} \
 		} \
 		memcpy(context->prev, next, values_size); \
-	} \
-	return wrote; \
-}
-
-#define AUCONV_RECORD_SLINEAR_CHANNELS_LE(BITS)	\
-static int \
-auconv_record_slinear##BITS##_channels_le(struct auconv_context *context, \
-					  const struct audio_params *params, \
-					  uint8_t *dest, const uint8_t *src, \
-					  int srcsize) \
-{ \
-	int wrote, rsize; \
-	uint8_t *w; \
-	const uint8_t *r; \
-	register int32_t lv, rv; \
-	int32_t prev_l, prev_r, next_l, next_r, c256; \
- \
-	wrote = 0; \
-	rsize = 0; \
-	w = dest; \
-	r = src; \
-	if (params->sample_rate == params->hw_sample_rate) { \
-		while (rsize < srcsize) { \
-			R_READ_LR_S##BITS##LE(lv, rv, r, params, context, rsize); \
-			R_WRITE_LR_S##BITS##LE(lv, rv, w, params, wrote); \
-		} \
-	} else if (params->sample_rate < params->hw_sample_rate) { \
-		for (;;) { \
-			do { \
-				if (rsize >= srcsize) \
-					return wrote; \
-				R_READ_LR_S##BITS##LE(lv, rv, r, params, \
-						      context, rsize); \
-				context->count += params->sample_rate; \
-			} while (context->count < params->hw_sample_rate); \
-			context->count -= params->hw_sample_rate; \
-			R_WRITE_LR_S##BITS##LE(lv, rv, w, params, wrote); \
-		} \
-	} else { \
-		/* Initial value of context->count is params->hw_sample_rate */ \
-		prev_l = context->prev[0]; \
-		prev_r = context->prev[1]; \
-		R_READ_LR_S##BITS##LE(next_l, next_r, r, params, context, rsize); \
-		for (;;) { \
-			c256 = context->count * 256 / params->sample_rate; \
-			lv = (c256 * next_l + (256 - c256) * prev_l) >> 8; \
-			rv = (c256 * next_r + (256 - c256) * prev_r) >> 8; \
-			R_WRITE_LR_S##BITS##LE(lv, rv, w, params, wrote); \
-			context->count += params->hw_sample_rate; \
-			if (context->count >= params->sample_rate) { \
-				context->count -= params->sample_rate; \
-				prev_l = next_l; \
-				prev_r = next_r; \
-				if (rsize >= srcsize) \
-					break; \
-				R_READ_LR_S##BITS##LE(next_l, next_r, r, \
-						      params, context, rsize); \
-			} \
-		} \
-		context->prev[0] = next_l; \
-		context->prev[1] = next_r; \
 	} \
 	return wrote; \
 }
@@ -635,37 +379,37 @@ auconv_record_slinear##BITS##_le(struct auconv_context *context, \
 	r = src; \
 	if (params->sample_rate == params->hw_sample_rate) { \
 		while (rsize < srcsize) { \
-			R_READ_N_S##BITS##LE(v, r, params, context, rsize); \
-			R_WRITE_N_S##BITS##LE(v, w, params, wrote); \
+			R_READ_SnLE(BITS, v, r, params, context, rsize); \
+			R_WRITE_SnLE(BITS, v, w, params, wrote); \
 		} \
 	} else if (params->sample_rate < params->hw_sample_rate) { \
 		for (;;) { \
 			do { \
 				if (rsize >= srcsize) \
 					return wrote; \
-				R_READ_N_S##BITS##LE(v, r, params, context, rsize); \
+				R_READ_SnLE(BITS, v, r, params, context, rsize); \
 				context->count += params->sample_rate; \
 			} while (context->count < params->hw_sample_rate); \
 			context->count -= params->hw_sample_rate; \
-			R_WRITE_N_S##BITS##LE(v, w, params, wrote); \
+			R_WRITE_SnLE(BITS, v, w, params, wrote); \
 		} \
 	} else { \
 		/* Initial value of context->count is params->hw_sample_rate */ \
-		values_size = sizeof(int32_t) * params->channels; \
+		values_size = sizeof(int32_t) * params->hw_channels; \
 		memcpy(prev, context->prev, values_size); \
-		R_READ_N_S##BITS##LE(next, r, params, context, rsize); \
+		R_READ_SnLE(BITS, next, r, params, context, rsize); \
 		for (;;) { \
 			c256 = context->count * 256 / params->sample_rate; \
-			for (i = 0; i < params->channels; i++) \
+			for (i = 0; i < params->hw_channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			R_WRITE_N_S##BITS##LE(v, w, params, wrote); \
+			R_WRITE_SnLE(BITS, v, w, params, wrote); \
 			context->count += params->hw_sample_rate; \
 			if (context->count >= params->sample_rate) { \
 				context->count -= params->sample_rate; \
 				memcpy(prev, next, values_size); \
 				if (rsize >= srcsize) \
 					break; \
-				R_READ_N_S##BITS##LE(next, r, params, context, rsize); \
+				R_READ_SnLE(BITS, next, r, params, context, rsize); \
 			} \
 		} \
 		memcpy(context->prev, next, values_size); \
@@ -675,9 +419,5 @@ auconv_record_slinear##BITS##_le(struct auconv_context *context, \
 
 AUCONV_PLAY_SLINEAR_LE(16)
 AUCONV_PLAY_SLINEAR_LE(24)
-AUCONV_PLAY_SLINEAR_CHANNELS_LE(16)
-AUCONV_PLAY_SLINEAR_CHANNELS_LE(24)
 AUCONV_RECORD_SLINEAR_LE(16)
 AUCONV_RECORD_SLINEAR_LE(24)
-AUCONV_RECORD_SLINEAR_CHANNELS_LE(16)
-AUCONV_RECORD_SLINEAR_CHANNELS_LE(24)
