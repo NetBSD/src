@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.13 2002/04/12 08:11:23 gmcgarry Exp $
+# $NetBSD: RAMDISK,v 1.14 2002/04/25 15:06:38 atatat Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -10,6 +10,8 @@
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE

@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.50 2002/04/12 08:11:27 gmcgarry Exp $
+#	$NetBSD: ALL,v 1.51 2002/04/25 15:06:40 atatat Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -6,7 +6,9 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"ALL-$Revision: 1.50 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"ALL-$Revision: 1.51 $"
 
 maxusers	32
 

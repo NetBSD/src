@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.16 2002/04/12 08:10:57 gmcgarry Exp $
+#	$NetBSD: KZSH401,v 1.17 2002/04/25 15:06:26 atatat Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,6 +7,8 @@
 include "arch/evbsh3/conf/std.evbsh3.eb"
 # for little endian
 #include "arch/evbsh3/conf/std.evbsh3.el"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

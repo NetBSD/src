@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2002/04/12 08:10:57 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.79 2002/04/25 15:06:26 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.78 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.79 $"
 
 # Support for various CPU types
 options 	HP320

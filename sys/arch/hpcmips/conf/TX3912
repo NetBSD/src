@@ -2,9 +2,11 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.41 2002/04/12 08:10:59 gmcgarry Exp $
+#	$NetBSD: TX3912,v 1.42 2002/04/25 15:06:27 atatat Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 

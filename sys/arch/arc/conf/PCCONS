@@ -1,10 +1,12 @@
-#	$NetBSD: PCCONS,v 1.20 2002/04/17 02:22:45 mycroft Exp $
+#	$NetBSD: PCCONS,v 1.21 2002/04/25 15:06:23 atatat Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.84 2002/04/18 12:54:12 wiz Exp $
+#	$NetBSD: DISKLESS,v 1.85 2002/04/25 15:06:28 atatat Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -6,6 +6,8 @@
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 options 	I386_CPU	# CPU classes; at least one is REQUIRED
 options 	I486_CPU

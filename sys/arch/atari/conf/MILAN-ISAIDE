@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.11 2002/04/16 22:44:28 bjh21 Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.12 2002/04/25 15:06:24 atatat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -13,6 +13,8 @@
 #Generic atari
 
 include "arch/atari/conf/std.milan"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -87,7 +89,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				# immutable) behave as system flags.
+				#immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -258,12 +260,12 @@ fdisa0 		at fdcisa0 drive 0
 #a little endian (ISA) bus, in PIO mode this is essentially the same as
 #swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode
 #provided by the PCI_ISA bridge on the Milan. CDROM's are OK, but the data
-#on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
+# on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
 #developers have thought up a solution, you can make a byteswapped disk
 #during the partioning with HDDRIVER and TOS supports booting from it!
 #Ok, now you have to choose:
 #- If _none_ of your disks are marked byteswapped by HDDRIVER, choose
-#the 1 version.
+#the 1  version.
 #- If _all_ of your disks are byteswapped, use the  MILAN_PCIIDE version
 #The is no way to mix things!
 
@@ -275,7 +277,7 @@ atapibus* 	at wdc?	channel ?			# ATAPI bus support
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
-
+#
 options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console

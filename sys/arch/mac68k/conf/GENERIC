@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2002/04/12 08:11:05 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.125 2002/04/25 15:06:30 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	16		# estimated number of users
 

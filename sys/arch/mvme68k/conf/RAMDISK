@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.16 2002/04/12 08:11:09 gmcgarry Exp $
+#	$NetBSD: RAMDISK,v 1.17 2002/04/25 15:06:32 atatat Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -11,6 +11,8 @@
 #
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Boards this kernel supports
 options 	MVME147

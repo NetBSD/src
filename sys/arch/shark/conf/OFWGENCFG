@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.3 2002/04/12 08:11:19 gmcgarry Exp $
+#	$NetBSD: OFWGENCFG,v 1.4 2002/04/25 15:06:37 atatat Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -8,6 +8,8 @@
 
 include	"arch/shark/conf/std.arm32"
 include "arch/shark/conf/std.ofwgencfg"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 

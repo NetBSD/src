@@ -1,11 +1,13 @@
-#	$NetBSD: P5064,v 1.13 2002/04/17 02:22:41 mycroft Exp $
+#	$NetBSD: P5064,v 1.14 2002/04/25 15:06:21 atatat Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.13 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"P5064-$Revision: 1.14 $"
 
 maxusers 32
 

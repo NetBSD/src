@@ -1,9 +1,11 @@
-#	$NetBSD: MMEYE,v 1.13 2002/04/12 08:11:08 gmcgarry Exp $
+#	$NetBSD: MMEYE,v 1.14 2002/04/25 15:06:32 atatat Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16		# estimated number of users
 

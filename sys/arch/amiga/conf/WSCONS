@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.3 2002/04/19 16:14:02 heinz Exp $
+# $NetBSD: WSCONS,v 1.4 2002/04/25 15:06:23 atatat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,9 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.3 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident  		"GENERIC-$Revision: 1.4 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -34,11 +36,11 @@ options 	RTC_OFFSET=0
 options 	DRACO
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# MC68060 with an OS ROM up to (at least)
-				# V40 (OS3.1) and want to boot with the
-				# bootblock.
-				# You do not need this if you have a DraCo,
-				# have no 68060 or NEVER use the bootblock
+				#MC68060 with an OS ROM up to (at least)
+				#V40 (OS3.1) and want to boot with the
+				#bootblock.
+				#You do not need this if you have a DraCo,
+				#have no 68060 or NEVER use the bootblock
 options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
@@ -107,7 +109,7 @@ options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
-				# immutable) behave as system flags.
+				#immutable) behave as system flags.
 
 #Compatibility options for various existing systems
 
@@ -162,14 +164,13 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #Amiga specific options
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
-				# first bank of RAM. (default: unlimited)
+				#first bank of RAM. (default: unlimited)
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
-
+				#per 16 MB (1<<24 bytes) of RAM
+				#uncomment and decrease this, or uncomment and
+				#increase NKPTADD if you get "out of PT pages"
+				#panics.
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
 #options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
@@ -288,7 +289,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 wskbd0		at kbd0 console ?
 

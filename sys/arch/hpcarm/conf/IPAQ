@@ -1,9 +1,11 @@
-#	$NetBSD: IPAQ,v 1.18 2002/04/12 08:10:58 gmcgarry Exp $
+#	$NetBSD: IPAQ,v 1.19 2002/04/25 15:06:27 atatat Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 maxusers	32

@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.14 2002/04/17 02:22:44 mycroft Exp $
+# $NetBSD: RAWHIDE,v 1.15 2002/04/25 15:06:22 atatat Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -12,6 +12,8 @@ options 	KMEMSTATS	# Collect kmem usage statistics
 #options 	USERCONF	# userconf(4) support
 options 	DIAGNOSTIC	# Cheap kernel consistency checks
 options 	DDB		# Kernel Dynamic Debugger
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 file-system	FFS		# Fast file system
 file-system	MFS		# Memory-based file system

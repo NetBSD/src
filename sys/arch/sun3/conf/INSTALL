@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.16 2002/04/12 08:11:25 gmcgarry Exp $
+# $NetBSD: INSTALL,v 1.17 2002/04/25 15:06:39 atatat Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -8,6 +8,8 @@
 #
 
 include "arch/sun3/conf/std.sun3"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"	# Optimise for space. Implies -O2
 

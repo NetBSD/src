@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.16 2002/04/24 09:46:16 kleink Exp $
+#	$NetBSD: INSTALL,v 1.17 2002/04/25 15:06:36 atatat Exp $
 #
 #	INSTALL -- Installation kernel
 #
 
 include "arch/prep/conf/std.prep"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 

@@ -1,8 +1,10 @@
-# 	$NetBSD: DEJIKO,v 1.5 2002/04/12 08:11:12 gmcgarry Exp $
+# 	$NetBSD: DEJIKO,v 1.6 2002/04/25 15:06:34 atatat Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
 include		"arch/newsmips/conf/std.newsmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 

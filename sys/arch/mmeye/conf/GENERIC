@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2002/04/12 08:11:08 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.39 2002/04/25 15:06:31 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	16		# estimated number of users
 

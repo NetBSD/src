@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.33 2002/04/12 08:11:25 gmcgarry Exp $
+#	$NetBSD: RAMDISK,v 1.34 2002/04/25 15:06:39 atatat Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -7,6 +7,8 @@
 #	install the miniroot in the swap partition
 
 include "arch/sun3/conf/std.sun3"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE		# No FP code here!

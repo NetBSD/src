@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.65 2002/04/19 16:14:02 heinz Exp $
+# $NetBSD: DRACO,v 1.66 2002/04/25 15:06:22 atatat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,9 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.65 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident  		"GENERIC-$Revision: 1.66 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -224,7 +226,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 

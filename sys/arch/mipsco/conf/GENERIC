@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2002/04/12 08:11:07 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.18 2002/04/25 15:06:31 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include		"arch/mipsco/conf/std.mipsco"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 

@@ -1,11 +1,13 @@
-#	$NetBSD: P6032,v 1.7 2002/04/17 02:22:41 mycroft Exp $
+#	$NetBSD: P6032,v 1.8 2002/04/25 15:06:21 atatat Exp $
 #
 # Algorithmics P-6032 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P6032-$Revision: 1.7 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"P6032-$Revision: 1.8 $"
 
 maxusers 32
 

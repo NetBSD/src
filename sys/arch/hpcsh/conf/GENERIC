@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2002/04/12 08:11:00 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.24 2002/04/25 15:06:28 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -26,6 +26,8 @@
 #
 
 include 	"arch/hpcsh/conf/std.hpcsh"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 

@@ -1,8 +1,10 @@
-#	$NetBSD: MYSTERY,v 1.28 2002/04/12 08:11:05 gmcgarry Exp $
+#	$NetBSD: MYSTERY,v 1.29 2002/04/25 15:06:30 atatat Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16		# estimated number of users
 

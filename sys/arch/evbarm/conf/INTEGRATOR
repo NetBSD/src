@@ -1,9 +1,11 @@
-#	$NetBSD: INTEGRATOR,v 1.10 2002/04/17 02:22:47 mycroft Exp $
+#	$NetBSD: INTEGRATOR,v 1.11 2002/04/25 15:06:26 atatat Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
 
 include	"arch/evbarm/conf/std.integrator"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 

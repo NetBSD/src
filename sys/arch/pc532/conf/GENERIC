@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2002/04/12 08:11:14 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.27 2002/04/25 15:06:35 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	8			# estimated number of users
 

@@ -1,9 +1,11 @@
-#	$NetBSD: NATSUMI,v 1.16 2002/04/17 02:22:54 mycroft Exp $
+#	$NetBSD: NATSUMI,v 1.17 2002/04/25 15:06:36 atatat Exp $
 #
 #	for development
 #
 
 include "arch/prep/conf/std.prep"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 

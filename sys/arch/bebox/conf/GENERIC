@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2002/04/18 15:44:22 wiz Exp $
+# $NetBSD: GENERIC,v 1.55 2002/04/25 15:06:24 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 maxusers	32
 

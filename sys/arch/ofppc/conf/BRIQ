@@ -1,11 +1,13 @@
-#	$NetBSD: BRIQ,v 1.6 2002/04/12 08:11:13 gmcgarry Exp $
+#	$NetBSD: BRIQ,v 1.7 2002/04/25 15:06:34 atatat Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32
 

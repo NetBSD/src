@@ -1,10 +1,12 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.11 2002/04/17 02:26:49 mycroft Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.12 2002/04/25 15:06:38 atatat Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
 # Configuration for Ultra5/Ultra10
 
 include "arch/sparc64/conf/std.sparc64"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	64
 

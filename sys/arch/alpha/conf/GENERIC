@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2002/04/17 02:22:44 mycroft Exp $
+# $NetBSD: GENERIC,v 1.208 2002/04/25 15:06:22 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,9 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 maxusers 32
 

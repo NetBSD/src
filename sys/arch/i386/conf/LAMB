@@ -1,11 +1,13 @@
-#	$NetBSD: LAMB,v 1.21 2002/04/18 12:54:14 wiz Exp $
+#	$NetBSD: LAMB,v 1.22 2002/04/25 15:06:29 atatat Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32		# estimated number of users
 

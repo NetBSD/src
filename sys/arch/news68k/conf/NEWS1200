@@ -1,8 +1,10 @@
-# 	$NetBSD: NEWS1200,v 1.17 2002/04/12 08:11:12 gmcgarry Exp $
+# 	$NetBSD: NEWS1200,v 1.18 2002/04/25 15:06:33 atatat Exp $
 
 #	news1200 config file
 #
 include		"arch/news68k/conf/std.news68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 

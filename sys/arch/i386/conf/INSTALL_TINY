@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.51 2002/04/22 21:05:23 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.52 2002/04/25 15:06:29 atatat Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -11,6 +11,8 @@
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 

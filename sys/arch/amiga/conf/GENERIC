@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.178 2002/04/19 16:11:26 heinz Exp $
+# $NetBSD: GENERIC,v 1.179 2002/04/25 15:06:22 atatat Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,9 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.178 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.179 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"

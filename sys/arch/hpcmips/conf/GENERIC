@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2002/04/12 08:10:58 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.119 2002/04/25 15:06:27 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.119 $"
 
 maxusers	16
 

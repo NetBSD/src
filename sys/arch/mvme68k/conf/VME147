@@ -1,6 +1,8 @@
-#	$NetBSD: VME147,v 1.39 2002/04/12 08:11:09 gmcgarry Exp $
+#	$NetBSD: VME147,v 1.40 2002/04/25 15:06:32 atatat Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Boards this kernel supports; need at lest the correct one
 options 	MVME147

@@ -1,7 +1,9 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.18 2002/04/12 08:11:19 gmcgarry Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.19 2002/04/25 15:06:37 atatat Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 

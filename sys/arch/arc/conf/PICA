@@ -1,9 +1,11 @@
-#	$NetBSD: PICA,v 1.33 2002/04/15 14:47:04 tsutsui Exp $
+#	$NetBSD: PICA,v 1.34 2002/04/25 15:06:23 atatat Exp $
 #
 #	configuration file for ACER PICA system
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 

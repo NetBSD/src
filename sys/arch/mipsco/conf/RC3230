@@ -1,7 +1,9 @@
 #
-# 	$NetBSD: RC3230,v 1.9 2002/04/12 08:11:07 gmcgarry Exp $
+# 	$NetBSD: RC3230,v 1.10 2002/04/25 15:06:31 atatat Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 

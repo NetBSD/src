@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.10 2002/04/12 08:10:54 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.11 2002/04/25 15:06:25 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include 	"arch/cesfic/conf/std.cesfic"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Need to set locally
 maxusers	32

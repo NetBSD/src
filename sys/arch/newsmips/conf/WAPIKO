@@ -1,9 +1,11 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.16 2002/04/12 08:11:13 gmcgarry Exp $
+# 	$NetBSD: WAPIKO,v 1.17 2002/04/25 15:06:34 atatat Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 

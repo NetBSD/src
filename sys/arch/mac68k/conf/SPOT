@@ -1,8 +1,10 @@
-#	$NetBSD: SPOT,v 1.44 2002/04/12 08:11:06 gmcgarry Exp $
+#	$NetBSD: SPOT,v 1.45 2002/04/25 15:06:31 atatat Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 

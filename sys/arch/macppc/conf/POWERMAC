@@ -1,9 +1,11 @@
-#	$NetBSD: POWERMAC,v 1.35 2002/04/17 02:22:53 mycroft Exp $
+#	$NetBSD: POWERMAC,v 1.36 2002/04/25 15:06:31 atatat Exp $
 #
 # POWERMAC config file
 #
 
 include		"arch/macppc/conf/std.macppc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 

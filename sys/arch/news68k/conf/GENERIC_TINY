@@ -1,10 +1,12 @@
-# 	$NetBSD: GENERIC_TINY,v 1.13 2002/04/12 08:11:11 gmcgarry Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.14 2002/04/25 15:06:33 atatat Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC_TINY-$Revision: 1.13 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC_TINY-$Revision: 1.14 $"
 
 maxusers	4
 

@@ -1,9 +1,11 @@
-#	$NetBSD: IQ80321,v 1.4 2002/04/12 08:10:56 gmcgarry Exp $
+#	$NetBSD: IQ80321,v 1.5 2002/04/25 15:06:26 atatat Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
 
 include	"arch/evbarm/conf/std.iq80321"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
