@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.4 1996/03/01 23:30:15 cgd Exp $ */
+/* $NetBSD: param.h,v 1.5 1996/03/04 05:04:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: param.h,v 1.4 1996/03/01 23:30:15 cgd Exp $
+ *	$Id: param.h,v 1.5 1996/03/04 05:04:16 cgd Exp $
  */
 
 #ifndef	_ARM32_PARAM_H_
@@ -46,7 +46,9 @@
  */
 /*#define	ovbcopy	bcopy	*/	/* XXX should probably have long gone by now */
 
+#define	_MACHINE	arm32
 #define	MACHINE		"arm32"
+#define	_MACHINE_ARCH	arm32
 #define	MACHINE_ARCH	"arm32"
 #define	MID_MACHINE	MID_ARM6
 

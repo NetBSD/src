@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 1996/03/01 23:30:43 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.15 1996/03/04 05:04:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,9 @@
 /*
  * Machine dependent constants for DEC Station 3100.
  */
+#define	_MACHINE	pmax
 #define	MACHINE		"pmax"
+#define	_MACHINE_ARCH	mips
 #define	MACHINE_ARCH	"mips"
 #define	MID_MACHINE	MID_PMAX
 

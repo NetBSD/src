@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 1996/03/01 23:30:38 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.15 1996/03/04 05:04:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,7 +52,9 @@
 #include <machine/cpu.h>
 #endif
 
+#define	_MACHINE 	pc532
 #define	MACHINE		"pc532"
+#define	_MACHINE_ARCH	ns32k
 #define	MACHINE_ARCH	"ns32k"
 #define	MID_MACHINE	MID_NS32532
 

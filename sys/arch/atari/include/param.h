@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1996/03/01 23:30:19 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1996/03/04 05:04:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,9 @@
 /*
  * Machine dependent constants for atari
  */
+#define	_MACHINE	atari
 #define	MACHINE		"atari"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1996/02/17 14:50:40 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1996/03/04 05:04:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,9 @@
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
  */
+#define	_MACHINE	mac68k
 #define	MACHINE		"mac68k"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
 

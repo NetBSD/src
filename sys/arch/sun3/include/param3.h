@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.33 1996/03/01 23:30:49 cgd Exp $	*/
+/*	$NetBSD: param3.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -48,7 +48,9 @@
 /*
  * Machine dependent constants for the Sun3 series.
  */
+#define	_MACHINE	sun3
 #define	MACHINE		"sun3"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
 
