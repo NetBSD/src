@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.43 2005/01/25 11:20:37 tron Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.44 2005/01/25 17:22:08 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.43 2005/01/25 11:20:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.44 2005/01/25 17:22:08 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -311,18 +311,18 @@ static struct in6_ifaddr *
 stf_getsrcifa6(ifp)
 	struct ifnet *ifp;
 {
-	struct ifaddr *ia;
+	struct ifaddr *ifa;
 	struct in_ifaddr *ia4;
 	struct sockaddr_in6 *sin6;
 	struct in_addr in;
 
-	IFADDR_FOREACH(ia, ifp)
+	IFADDR_FOREACH(ifa, ifp)
 	{
-		if (ia->ifa_addr == NULL)
+		if (ifa->ifa_addr == NULL)
 			continue;
-		if (ia->ifa_addr->sa_family != AF_INET6)
+		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-		sin6 = (struct sockaddr_in6 *)ia->ifa_addr;
+		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 		if (!IN6_IS_ADDR_6TO4(&sin6->sin6_addr))
 			continue;
 
@@ -331,7 +331,7 @@ stf_getsrcifa6(ifp)
 		if (ia4 == NULL)
 			continue;
 
-		return (struct in6_ifaddr *)ia;
+		return (struct in6_ifaddr *)ifa;
 	}
 
 	return NULL;
