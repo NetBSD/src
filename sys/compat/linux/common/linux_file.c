@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.28 1999/12/05 21:24:30 tron Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.29 2000/08/29 14:33:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -494,10 +494,9 @@ linux_stat1(p, v, retval, dolstat)
 	struct linux_sys_stat_args *uap = v;
 
 	sg = stackgap_init(p->p_emul);
-
+	st = stackgap_alloc(&sg, sizeof (struct stat));
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
