@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedbm.8,v 1.1.1.1 1996/08/09 10:14:54 thorpej Exp $
+.\"	$NetBSD: makedbm.8,v 1.2 1997/10/02 14:16:21 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,19 +36,19 @@
 .Nm makedbm
 .Nd create a YP database
 .Sh SYNOPSIS
-.Nm makedbm
+.Nm
 .Op Fl u Ar file
-.Nm /usr/sbin/makedbm
+.Nm makedbm
 .Op Fl bls
-.Op Fl i Ar yp_input_file
-.Op Fl o Ar yp_output_file
 .Op Fl d Ar yp_domain_name
+.Op Fl i Ar yp_input_file
 .Op Fl m Ar yp_master_name
+.Op Fl o Ar yp_output_file
 .Ar infile
 .Ar outfile
 .Sh DESCRIPTION
-.Nm Makedbm
-is the utiliy in YP that creates the
+.Nm
+is the utility in YP that creates the
 .Xr db 3
 database file containing the YP map.
 .Pp
@@ -68,22 +68,22 @@ Secure map. Include an entry in the database informing
 and
 .Xr ypserv 8
 that the YP map is going to be handled as secure.
-.It Fl i Ar yp_input_file
-Include an entry the in the map with the key YP_INPUT_FILE and the argument
-as value.
-.It Fl o Ar yp_output_file
-Include an entry the in the map with the key YP_OUTPUT_FILE and the argument
-as value.
 .It Fl d Ar yp_domain_name
-Include an entry the in the map with the key YP_DOMAIN_NAME and the argument
+Include an entry in the map with the key YP_DOMAIN_NAME and the argument
+as value.
+.It Fl i Ar yp_input_file
+Include an entry in the map with the key YP_INPUT_FILE and the argument
 as value.
 .It Fl m Ar yp_master_name
-Include an entry the in the map with the key YP_MASTER_NAME and the argument
+Include an entry in the map with the key YP_MASTER_NAME and the argument
+as value.
+.It Fl o Ar yp_output_file
+Include an entry in the map with the key YP_OUTPUT_FILE and the argument
 as value.
 .El
 .Sh SEE ALSO
-.Xr yp 8 ,
 .Xr db 3 ,
+.Xr yp 8 ,
 .Xr ypxfr 8 ,
 .Xr ypserv 8 
 .Sh AUTHOR

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.acl.5,v 1.1.1.1 1996/08/09 10:15:03 thorpej Exp $
+.\"	$NetBSD: ypserv.acl.5,v 1.2 1997/10/02 14:16:52 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -39,78 +39,64 @@
 configuration file
 .Sh DESCRIPTION
 The 
-.Nm ypserv.acl
-file controls which hosts can connect to the
-.Nm YP
-server.
+.Nm
+file controls which hosts can connect to the YP server.
 .Pp
 The format is more complex than the format for
 .Xr securenet 5 .
 The first two verbs on each line controls if the line will
-.Nm allow
+.Em allow
 or
-.Nm deny
+.Em deny
 access for a
-.Nm host ,
+.Em host ,
 network
-.Nm (net)
+.Em (net)
 or
-.Nm all
+.Em all
 hosts.
 .Pp
-The
-.Nm YP
-server reads the configuration file and build a list in memory. This list
-is processed from the beginning for every incomming request. As soon a
-match is found in the list the search terminates and it returns success
-or failure depending on 
-.Nm allow
+The YP server reads the configuration file and build a list in memory.
+This list is processed from the beginning for every incomming request.
+As soon a match is found in the list the search terminates and it
+returns success or failure depending on 
+.Em allow
 or 
-.Nm deny .
+.Em deny .
 If no match was found in the list success is returned.
 .Pp
 If access is denied every call will cause a 
-.Nm no such domain
+.Dq no such domain
 error for the caller.
 .Pp
 There is no default name for this file. Start 
 .Nm ypserv
 with a
-.Ar -a filename
+.Fl a Ar filename
 to read a file with this format.
 .Pp
 The following different syntax can be used:
 .Pp
-<
-.Nm allow|deny
->
-.Nm host
-<
-.Nm hostname|ip-address
->
+.Aq Em allow|deny
+.Em host
+.Aq Em hostname|ip-address
 .Pp
 If 
-.Nm hostname
+.Em hostname
 has more than one ip address then all will be added to the list.
 .Pp
-<
-.Nm allow|deny
->
-.Nm net
-<
-.Nm netname|netnumber
->
-.Op Nm netmask <netname|netnumber>
+.Aq Em allow|deny
+.Em net
+.Aq Em netname|netnumber
+.Op Em netmask Aq netname|netnumber
 .Pp
-If
-.Nm netmask
+If the
+.Em netmask
 part of the command isn't given then the netmask will be assumed to be a
 class A, B or C net depending on the net number.
 .Pp
-<
-.Nm allow|deny 
->
-.Nm all
+.Aq Em allow|deny 
+.Em all
 .Pp
 A line containing one of these commands will always match any host.
 .Sh EXAMPLES
@@ -170,8 +156,8 @@ A
 configuration file.
 .El
 .Sh SEE ALSO
+.Xr securenet 5 ,
 .Xr yp 8 ,
-.Xr ypserv 8 ,
-.Xr securenet 5
+.Xr ypserv 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
