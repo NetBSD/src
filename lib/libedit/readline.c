@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.8 1999/07/03 11:55:51 lukem Exp $	*/
+/*	$NetBSD: readline.c,v 1.9 2000/03/10 12:55:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.8 1999/07/03 11:55:51 lukem Exp $");
+__RCSID("$NetBSD: readline.c,v 1.9 2000/03/10 12:55:15 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ static char *_rl_compat_sub __P((const char *, const char *,
 static int rl_complete_internal __P((int));
 
 /*
- * needed for easy prompt switching
+ * needed for prompt switching in readline()
  */
 static char    *el_rl_prompt = NULL;
 
@@ -210,11 +210,13 @@ readline(const char *prompt)
 	if (e == NULL || h == NULL)
 		rl_initialize();
 
-	/* set the prompt */
+	/* update prompt accordingly to what has been passed */
+	if (!prompt) prompt = "";
 	if (strcmp(el_rl_prompt, prompt) != 0) {
 		free(el_rl_prompt);
 		el_rl_prompt = strdup(prompt);
 	}
+
 	/* get one line from input stream */
 	ret = el_gets(e, &count);
 
@@ -701,7 +703,7 @@ loop:
 }
 
 /*
- * returns array of tokens parsed out of string, much as the shell might
+ * Parse the string into individual tokens, similarily to how shell would do it.
  */
 char **
 history_tokenize(str)
@@ -716,9 +718,10 @@ history_tokenize(str)
 			i++;
 		start = i;
 		for (; str[i]; i++) {
-			if (str[i] == '\\')
-				i++;
-			else if (str[i] == delim)
+			if (str[i] == '\\') {
+				if (str[i] != '\0')
+					i++;
+			} else if (str[i] == delim)
 				delim = '\0';
 			else if (!delim &&
 			    (isspace((unsigned char) str[i]) ||
