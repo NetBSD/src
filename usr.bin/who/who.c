@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: who.c,v 1.14 2004/11/22 17:20:02 peter Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: who.c,v 1.14 2004/11/22 17:20:02 peter Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,8 +79,11 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "");
 
 	only_current_term = show_term = show_idle = show_labels = 0;
-	while ((c = getopt(argc, argv, "mTuH")) != -1) {
+	while ((c = getopt(argc, argv, "HmTu")) != -1) {
 		switch (c) {
+		case 'H':
+			show_labels = 1;
+			break;
 		case 'm':
 			only_current_term = 1;
 			break;
@@ -89,9 +92,6 @@ main(int argc, char **argv)
 			break;
 		case 'u':
 			show_idle = 1;
-			break;
-		case 'H':
-			show_labels = 1;
 			break;
 		default:
 			usage();
@@ -246,7 +246,7 @@ output_labels()
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-mTuH] [ file ]\n       %s am i\n",
+	(void)fprintf(stderr, "usage: %s [-HmTu] [file]\n       %s am i\n",
 	    getprogname(), getprogname());
 	exit(1);
 }
