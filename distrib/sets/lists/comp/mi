@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.687 2004/03/28 08:59:54 jdc Exp $
+#	$NetBSD: mi,v 1.688 2004/03/28 15:40:20 drochner Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2079,6 +2079,7 @@
 ./usr/share/man/cat2/siginfo.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sigpending.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigprocmask.0		comp-c-catman		.cat
+./usr/share/man/cat2/sigreturn.0		comp-obsolete		obsolete
 ./usr/share/man/cat2/sigstack.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sigsuspend.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigtimedwait.0		comp-c-catman		.cat
@@ -5729,6 +5730,7 @@
 ./usr/share/man/man2/siginfo.2			comp-c-man		.man
 ./usr/share/man/man2/sigpending.2		comp-c-man		.man
 ./usr/share/man/man2/sigprocmask.2		comp-c-man		.man
+./usr/share/man/man2/sigreturn.2		comp-obsolete		obsolete
 ./usr/share/man/man2/sigstack.2			comp-c-man		.man
 ./usr/share/man/man2/sigsuspend.2		comp-c-man		.man
 ./usr/share/man/man2/sigtimedwait.2		comp-c-man		.man
