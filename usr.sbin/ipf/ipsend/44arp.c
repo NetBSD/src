@@ -1,4 +1,4 @@
-/*	$NetBSD: 44arp.c,v 1.4 1997/09/21 18:02:03 veego Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.4.2.1 1997/10/30 07:17:07 mrg Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
@@ -24,6 +24,9 @@
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include "ipsend.h"
 
 
