@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.50 2003/09/06 03:25:30 itojun Exp $
+# 	$NetBSD: INSTALL,v 1.51 2003/10/25 13:21:13 simonb Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -36,7 +36,6 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 # Standard system options
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-#options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
@@ -61,11 +60,6 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	INET			# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
 options 	FONT_BOLD8x16		# Font for fb devices
