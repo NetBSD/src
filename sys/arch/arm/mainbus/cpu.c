@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2001/02/25 21:31:14 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 2001/02/26 13:45:07 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -263,16 +263,11 @@ identify_master_cpu(cpu_number, dev_name)
 
 	/*
 	 * Ok if ARMFPE is defined and the boot options request the ARM FPE
-	 * then it will be installed as the FPE. If the installation fails
-	 * the existing FPE is used as a fall back.
-	 * If either ARMFPE is not defined or the boot args did not request
-	 * it the old FPE is installed.
+	 * then it will be installed as the FPE.
 	 * This is just while I work on integrating the new FPE.
 	 * It means the new FPE gets installed if compiled int (ARMFPE
 	 * defined) and also gives me a on/off option when I boot in case
 	 * the new FPE is causing panics.
-	 * In all cases it falls back on the existing FPE is the ARMFPE
-	 * was not successfully installed.
 	 */
 
 #ifdef ARMFPE
@@ -283,27 +278,12 @@ identify_master_cpu(cpu_number, dev_name)
 		if (!ptr) {
 			if (initialise_arm_fpe(&cpus[cpu_number]) != 0) {
 				identify_arm_fpu(cpu_number);
-#ifdef FPE
-				initialise_fpe(&cpus[cpu_number]);
-#endif
 			}
-#ifdef FPE
-		} else
-			initialise_fpe(&cpus[cpu_number]);
-
-	} else
-		initialise_fpe(&cpus[cpu_number]);
-#else
 		}
 	}
-#endif
 
 #else
-#ifdef FPE
-		initialise_fpe(&cpus[cpu_number]);
-#else
 		/* Now we support softfloat libraries we may not have an FPE. */
-#endif
 #endif
 	}
 
