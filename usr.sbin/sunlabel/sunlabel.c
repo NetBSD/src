@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.11 2003/07/13 12:12:58 itojun Exp $ */
+/* $NetBSD: sunlabel.c,v 1.12 2003/11/12 02:17:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.11 2003/07/13 12:12:58 itojun Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.12 2003/11/12 02:17:53 matt Exp $");
 #endif
 
 #include <stdio.h>
@@ -46,12 +46,15 @@ __RCSID("$NetBSD: sunlabel.c,v 1.11 2003/07/13 12:12:58 itojun Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef NO_TERMCAP_WIDTH
 #include <termcap.h>
+#endif
 #include <string.h>
 #include <strings.h>
 #include <inttypes.h>
 #include <err.h>
 
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
