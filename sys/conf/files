@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.639 2003/10/10 06:13:02 grog Exp $
+#	$NetBSD: files,v 1.640 2003/10/10 21:26:38 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -188,7 +188,7 @@ defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 defflag	opt_perfctrs.h		PERFCTRS
 
 # Machine-independant device majors assignements
-include "dev/majors"
+include "conf/majors"
 
 # generic attributes
 #
