@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.73 1996/02/26 22:48:32 scottr Exp $	*/
+/*	$NetBSD: com.c,v 1.74 1996/03/09 01:02:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -61,6 +61,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 #include <dev/ic/ns16550reg.h>
 #ifdef COM_HAYESP
 #include <dev/ic/hayespreg.h>
