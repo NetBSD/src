@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.14 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: pvr.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.14 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,9 +238,6 @@ int	pvr_is_console;
 int
 pvr_match(struct device *parent, struct cfdata *match, void *aux)
 {
-
-	if (strcmp("pvr", match->cf_driver->cd_name) != 0)
-		return (0);
 
 	return (1);
 }
