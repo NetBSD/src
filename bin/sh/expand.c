@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.32 1997/11/30 20:57:33 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.33 1997/12/01 14:43:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.32 1997/11/30 20:57:33 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.33 1997/12/01 14:43:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,10 +96,10 @@ struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
 struct ifsregion *ifslastp;	/* last struct in list */
 struct arglist exparg;		/* holds expanded arg list */
 
-STATIC void argstr __P((char *, int));
+STATIC int argstr __P((char *, int));
 STATIC char *exptilde __P((char *, int));
 STATIC void expbackq __P((union node *, int, int));
-STATIC int subevalvar __P((char *, char *, int, int, int, int));
+STATIC int subevalvar __P((char *, char *, int, int, int, int, int *));
 STATIC char *evalvar __P((char *, int));
 STATIC int varisset __P((char *, int));
 STATIC void varvalue __P((char *, int, int));
@@ -148,7 +148,7 @@ expandarg(arg, arglist, flag)
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
 	ifslastp = NULL;
-	argstr(arg->narg.text, flag);
+	(void)argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		return;			/* here document expanded */
 	}
@@ -194,7 +194,7 @@ expandarg(arg, arglist, flag)
  * $@ like $* since no splitting will be performed.
  */
 
-STATIC void
+STATIC int
 argstr(p, flag)
 	char *p;
 	int flag;
@@ -202,6 +202,7 @@ argstr(p, flag)
 	char c;
 	int quotes = flag & (EXP_FULL | EXP_CASE);	/* do CTLESC */
 	int firsteq = 1;
+	int recorded = 0;
 
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
@@ -221,6 +222,7 @@ argstr(p, flag)
 			break;
 		case CTLBACKQ:
 		case CTLBACKQ|CTLQUOTE:
+			recorded |= (c & CTLQUOTE) == 0;
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
 			break;
@@ -249,6 +251,7 @@ argstr(p, flag)
 		}
 	}
 breakloop:;
+	return recorded;
 }
 
 STATIC char *
@@ -374,9 +377,7 @@ expbackq(cmd, quoted, flag)
 	struct ifsregion saveifs, *savelastp;
 	struct nodelist *saveargbackq;
 	char lastc;
-#if 0
 	int startloc = dest - stackblock();
-#endif
 	char const *syntax = quoted? DQSYNTAX : BASESYNTAX;
 	int saveherefd;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
@@ -426,15 +427,8 @@ expbackq(cmd, quoted, flag)
 		ckfree(in.buf);
 	if (in.jp)
 		exitstatus = waitforjob(in.jp);
-#if 0
-	/*
-	 * XXX: We cannot record-region here, because in the case
-	 * of echo ${foo:=`echo 1 2 3 4`} we end up recording the
-	 * region twice. Is that really needed anyway?
-	 */
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
-#endif
 	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
 		(dest - stackblock()) - startloc,
 		(dest - stackblock()) - startloc,
@@ -446,13 +440,14 @@ expbackq(cmd, quoted, flag)
 
 
 STATIC int
-subevalvar(p, str, strloc, subtype, startloc, varflags)
+subevalvar(p, str, strloc, subtype, startloc, varflags, recorded)
 	char *p;
 	char *str;
 	int strloc;
 	int subtype;
 	int startloc;
 	int varflags;
+	int *recorded;
 {
 	char *startp;
 	char *loc = NULL;
@@ -462,7 +457,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 	int amount;
 
 	herefd = -1;
-	argstr(p, 0);
+	*recorded = argstr(p, 0);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
 	argbackq = saveargbackq;
@@ -569,6 +564,7 @@ evalvar(p, flag)
 	int startloc;
 	int varlen;
 	int easy;
+	int recorded;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
 	varflags = *p++;
@@ -642,7 +638,7 @@ record:
 	case VSPLUS:
 	case VSMINUS:
 		if (!set) {
-			argstr(p, flag);
+			(void)argstr(p, flag);
 			break;
 		}
 		if (easy)
@@ -662,7 +658,7 @@ record:
 		STPUTC('\0', expdest);
 		pat = expdest;
 		if (subevalvar(p, NULL, expdest - stackblock(), subtype,
-			       startloc, varflags))
+			       startloc, varflags, &recorded))
 			goto record;
 		else {
 			int amount = (expdest - pat) + 1;
@@ -673,13 +669,14 @@ record:
 	case VSASSIGN:
 	case VSQUESTION:
 		if (!set) {
-			if (subevalvar(p, var, 0, subtype, startloc, varflags)) {
+			if (subevalvar(p, var, 0, subtype, startloc, varflags,
+			    &recorded)) {
 				varflags &= ~VSNUL;
 				goto again;
 			}
 			break;
 		}
-		if (easy)
+		if (easy && !recorded)
 			goto record;
 		break;
 
@@ -1358,7 +1355,7 @@ casematch(pattern, val)
 	argbackq = pattern->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifslastp = NULL;
-	argstr(pattern->narg.text, EXP_TILDE | EXP_CASE);
+	(void)argstr(pattern->narg.text, EXP_TILDE | EXP_CASE);
 	STPUTC('\0', expdest);
 	p = grabstackstr(expdest);
 	result = patmatch(p, val);
