@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/07/26 01:50:44 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/09/17 18:37:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -49,7 +49,6 @@ extern void ls __P((char*));
 extern int bios2dev __P((int, char**, int*));
 
 int errno;
-static char *consdev;
 extern int boot_biosdev;
 
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
@@ -70,28 +69,24 @@ char *names[] = {
 #define MAXDEVNAME 16
 
 #define TIMEOUT 5
-#define POLL_FREQ 10
 
 static char *default_devname;
 static int default_unit, default_partition;
 static char *default_filename;
 
-char	*sprint_bootsel __P((const char*));
-
 void	command_help __P((char *));
 void	command_ls __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
+void	command_dev __P((char *));
 
-struct bootblk_command {
-	const char *c_name;
-	void (*c_fn) __P((char *));
-} commands[] = {
+struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
 	{ "ls",		command_ls },
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
+	{ "dev",	command_dev },
 	{ NULL,		NULL },
 };
 
@@ -195,199 +190,11 @@ bootit(filename, howto, tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto, 0, consdev) < 0)
+	if (exec_netbsd(filename, 0, howto) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
 		printf("boot returned\n");
-}
-
-/*
- * chops the head from the arguments and returns the arguments if any,
- * or possibly an empty string.
- */
-char *
-gettrailer(arg)
-	char *arg;
-{
-	char *options;
-
-	if ((options = strchr(arg, ' ')) == NULL)
-		return ("");
-	else
-		*options++ = '\0';
-
-	/* trim leading blanks */
-	while (*options && *options == ' ')
-		options++;
-
-	return (options);
-}
-
-int
-parseopts(opts, howto)
-	char *opts;
-	int *howto;
-{
-	int r, tmpopt = 0;
-
-	opts++; 	/* skip - */
-	while (*opts && *opts != ' ') {
-		r = netbsd_opt(*opts);
-		if (r == -1) {
-			printf("-%c: unknown flag\n", *opts);
-			command_help(NULL);
-			return(0);
-		}
-		tmpopt |= r;
-		opts++;
-	}
-
-	*howto = tmpopt;
-	return(1);
-}
-
-int
-parseboot(arg, filename, howto)
-	char *arg;
-	char **filename;
-	int *howto;
-{
-	char *opts = NULL;
-
-	*filename = 0;
-	*howto = 0;
-
-	/* if there were no arguments */
-	if (!*arg)
-		return(1);
-
-	/* format is... */
-	/* [[xxNx:]filename] [-adrs] */
-
-	/* check for just args */
-	if (arg[0] == '-')
-		opts = arg;
-	else {
-		/* there's a file name */
-		*filename = arg;
-
-		opts = gettrailer(arg);
-		if (!*opts)
-			opts = NULL;
-		else if (*opts != '-') {
-			printf("invalid arguments\n");
-			command_help(NULL);
-			return(0);
-		}
-	}
-
-	/* at this point, we have dealt with filenames. */
-
-	/* now, deal with options */
-	if (opts) {
-		if (parseopts(opts, howto) == 0)
-			return(0);
-	}
-
-	return(1);
-}
-
-void
-docommand(arg)
-	char *arg;
-{
-	char *options;
-	int i;
-
-	options = gettrailer(arg);
-
-	for (i = 0; commands[i].c_name != NULL; i++) {
-		if (strcmp(arg, commands[i].c_name) == 0) {
-			(*commands[i].c_fn)(options);
-			return;
-		}
-	}
-
-#ifdef MATTHIAS
-	if (strchr(arg, ':')) { /* DOS-like(!) change drive */
-		static char savedevname[MAXDEVNAME + 1];
-		char *fsname, *devname;
-		const char *file; /* dummy */
-
-		if (!parsebootfile(arg, &fsname, &devname, &default_unit,
-		    &default_partition, &file)) {
-			/* put to own static storage */
-			strncpy(savedevname, devname, MAXDEVNAME + 1);
-			default_devname = savedevname;
-			return;
-		}
-	}
-#endif
-	printf("unknown command\n");
-	command_help(NULL);
-}
-
-void
-bootmenu()
-{
-	char input[80];
-	int i;
-
-	printf("type \"?\" or \"help\" for help.\n");
-	for (;;) {
- loop:
-		input[0] = '\0';
-		printf("> ");
-		gets(input);
-
-		/*
-		 * Skip leading whitespace.
-		 */
-		for (i = 0; i < sizeof(input); i++) {
-			if (input[i] == '\0')
-				goto loop;
-			if (input[i] != ' ' && input[i] != '\t')
-				break;
-		}
-		if (i >= sizeof(input)) {
-			/*
-			 * Uhh, what?  Can't happen, but what the heck.
-			 */
-			goto loop;
-		}
-
-		docommand(&input[i]);
-	}
-}
-
-char
-awaitkey(timeout, tell)
-	int timeout, tell;
-{
-	int i;
-	char c = 0;
-
-	i = timeout * POLL_FREQ;
-
-	while (i) {
-		if (tell && (i % POLL_FREQ) == 0)
-			printf("%d\b", i/POLL_FREQ);
-		if (iskey()) {
-			/* flush input buffer */
-			while (iskey())
-				c = getchar();
-			goto out; /* XXX what happens if c == 0? */
-		}
-		delay(1000000 / POLL_FREQ);
-		i--;
-	}
-
-out:
-	if (tell)
-		printf("0\n");
-
-	return(c);
 }
 
 void
@@ -413,7 +220,7 @@ main()
 	int currname;
 	char c;
 
-	consdev = initio(CONSDEV_PC);
+	initio(CONSDEV_PC);
 	gateA20();
 
 	print_banner();
@@ -431,8 +238,10 @@ main()
 		       sprint_bootsel(names[currname]));
 
 		c = awaitkey(TIMEOUT, 1);
-		if ((c != '\r') && (c != '\n') && (c != '\0'))
+		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+			printf("\ntype \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
+		}
 
 		/*
 		 * try pairs of names[] entries, foo and foo.gz
@@ -460,8 +269,8 @@ command_help(arg)
 	printf("commands are:\n"
 	    "boot [xdNx:][filename] [-adrs]\n"
 	    "     (ex. \"sd0a:netbsd.old -s\"\n"
-	    "xd[N[x]]:\n"
 	    "ls [path]\n"
+	    "dev xd[N[x]]:\n"
 	    "help|?\n"
 	    "quit\n");
 }
@@ -500,4 +309,30 @@ command_boot(arg)
 
 	if (parseboot(arg, &filename, &howto))
 		bootit(filename, howto, 1);
+}
+
+void
+command_dev(arg)
+	char *arg;
+{
+	static char savedevname[MAXDEVNAME + 1];
+	char *fsname, *devname;
+	const char *file; /* dummy */
+
+	if (*arg == '\0') {
+		printf("%s%d%c:\n", default_devname, default_unit,
+		       'a' + default_partition);
+		return;
+	}
+
+	if (!strchr(arg, ':') ||
+	    parsebootfile(arg, &fsname, &devname, &default_unit,
+			  &default_partition, &file)) {
+		command_help(NULL);
+		return;
+	}
+	    
+	/* put to own static storage */
+	strncpy(savedevname, devname, MAXDEVNAME + 1);
+	default_devname = savedevname;
 }
