@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.33 1998/01/22 11:27:54 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.34 1998/01/23 09:47:57 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1622,7 +1622,8 @@ _DEPENDS_USE:	.USE
 		else \
 			for d in `echo $$PATH | tr ':' ' '`; do \
 				if [ -x $$d/$$prog ]; then \
-					found=""; \
+					found="$$d/$$prog"; \
+					break; \
 				fi \
 			done; \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - $$found found"; \
