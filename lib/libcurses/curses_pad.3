@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_pad.3,v 1.1 2002/12/23 12:27:43 jdc Exp $
+.\"	$NetBSD: curses_pad.3,v 1.2 2002/12/23 12:48:12 wiz Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -57,7 +57,7 @@ The
 .Fn newpad
 function creates a new pad of size
 .Fa lines ,
-.Fa cols
+.Fa cols .
 .Pp
 .Fn subpad
 is similar to
@@ -82,7 +82,7 @@ A rectangular area of the pad starting at column and row
 .Fa pbeg_x
 is copied to the corresponding rectangular area of the screen buffer starting
 at column and row
-.Fa sbeg_y ,  
+.Fa sbeg_y ,
 .Fa sbeg_x
 and extending to
 .Fa smax_y ,
@@ -98,7 +98,7 @@ A rectangular area of the pad starting at column and row
 .Fa pbeg_x
 is copied to the corresponding rectangular area of the terminal starting
 at column and row
-.Fa sbeg_y ,  
+.Fa sbeg_y ,
 .Fa sbeg_x
 and extending to
 .Fa smax_y ,
@@ -111,7 +111,6 @@ and
 functions can be used together to speed up terminal redraws by
 deferring the actual terminal updates until after a batch of updates
 to multiple pads has been done.
-.Pp
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
