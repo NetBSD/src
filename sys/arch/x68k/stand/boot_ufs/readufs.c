@@ -1,4 +1,4 @@
-/*	$Id: readufs.c,v 1.1 2001/09/27 10:14:50 minoura Exp $	*/
+/*	from Id: readufs.c,v 1.7 2002/01/26 15:55:51 itohy Exp 	*/
 
 /*
  * Read UFS (FFS / LFS)
@@ -33,7 +33,7 @@ int fd;
 void
 RAW_READ(buf, blkpos, bytelen)
 	void *buf;
-	u_int32_t blkpos;
+	ufs_daddr_t blkpos;
 	size_t bytelen;
 {
 	if (pread(fd, buf, bytelen, (off_t)dbtob(blkpos)) != (ssize_t) bytelen)
@@ -67,7 +67,7 @@ raw_read_queue(buf, blkpos, bytelen)
 			printf("raw_read_queue: read: buf %p, blk %d, len %d\n",
 				 rq_buf, rq_start, rq_len);
 #endif
-			RAW_READ(rq_buf, (unsigned int) rq_start, rq_len);
+			RAW_READ(rq_buf, rq_start, rq_len);
 		}
 	}
 	rq_buf = buf;
@@ -112,9 +112,9 @@ ufs_read(di, buf, off, count)
 	for ( ; off < NDADDR && count > 0; off++) {
 #if 0
 		printf("ufs_read: read: blk: %d\n",
-			di->di_db[off] << fs.iblkshift);
+			di->di_db[off] << fs.fsbtodb);
 #endif
-		raw_read_queue(b, di->di_db[off] << fs.iblkshift, bsize);
+		raw_read_queue(b, di->di_db[off] << fs.fsbtodb, bsize);
 		b += bsize;
 		count -= bsize;
 	}
@@ -165,7 +165,7 @@ ufs_read_indirect(blk, level, buf, poff, count)
 		b = 0;
 
 	/* read the indirect block */
-	RAW_READ(idbuf, (unsigned int) blk << fs.iblkshift, bsize);
+	RAW_READ(idbuf, blk << fs.fsbtodb, bsize);
 
 	for ( ; b < fs.nindir && count > 0; b++) {
 		if (level)
@@ -173,9 +173,9 @@ ufs_read_indirect(blk, level, buf, poff, count)
 		else {
 #if 0
 			printf("ufs_read: read: blk: %d\n",
-				idbuf[b] << fs.iblkshift);
+				idbuf[b] << fs.fsbtodb);
 #endif
-			raw_read_queue(*buf, idbuf[b] << fs.iblkshift, bsize);
+			raw_read_queue(*buf, idbuf[b] << fs.fsbtodb, bsize);
 			*buf += bsize;
 			count -= bsize;
 		}
@@ -194,7 +194,7 @@ ufs_lookup(dirino, fn)
 {
 	struct dinode dirdi;
 	struct direct *pdir;
-	char *p;
+	char *p, *endp;
 
 	if (ufs_get_inode(dirino, &dirdi))
 		return 0;
@@ -208,8 +208,9 @@ ufs_lookup(dirino, fn)
 	p = alloca((size_t) dirdi.di_size + fs.bsize);
 #endif
 	ufs_read(&dirdi, p, 0, (size_t) dirdi.di_size);
-	for ( ; pdir = (void *) p, pdir->d_ino; p += pdir->d_reclen) {
-		if (!strcmp(fn, pdir->d_name))
+	endp = p + dirdi.di_size;
+	for ( ; pdir = (void *) p, p < endp; p += pdir->d_reclen) {
+		if (pdir->d_ino && !strcmp(fn, pdir->d_name))
 			return pdir->d_ino;
 	}
 	return 0;				/* No such file or directory */
@@ -276,15 +277,17 @@ ufs_list_dir(dirino)
 {
 	struct dinode dirdi;
 	struct direct *pdir;
-	char *p;
+	char *p, *endp;
 
 	if (ufs_get_inode(dirino, &dirdi))
 		errx(1, "ino = %d: not found", dirino);
 
 	p = alloca(((size_t) dirdi.di_size + fs.bsize - 1) & ~(fs.bsize - 1));
 	ufs_read(&dirdi, p, 0, (size_t) dirdi.di_size);
-	for ( ; pdir = (void *) p, pdir->d_ino; p += pdir->d_reclen) {
-		printf("%6d %s\n", pdir->d_ino, pdir->d_name);
+	endp = p + dirdi.di_size;
+	for ( ; pdir = (void *) p, p < endp; p += pdir->d_reclen) {
+		if (pdir->d_ino)
+			printf("%6d %s\n", pdir->d_ino, pdir->d_name);
 	}
 }
 #endif
