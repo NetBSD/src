@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.47 1997/10/11 12:36:23 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.48 1997/10/19 07:42:26 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -363,17 +363,11 @@ int	gus_get_out_gain __P((caddr_t));
 int 	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int 	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
-int	gus_set_out_port __P((void *, int));
-int	gus_get_out_port __P((void *));
-int	gus_set_in_port __P((void *, int));
-int	gus_get_in_port __P((void *));
 int	gus_commit_settings __P((void *));
 int	gus_dma_output __P((void *, void *, int, void (*)(void *), void *));
 int	gus_dma_input __P((void *, void *, int, void (*)(void *), void *));
 int	gus_halt_out_dma __P((void *));
 int	gus_halt_in_dma __P((void *));
-int	gus_cont_out_dma __P((void *));
-int	gus_cont_in_dma __P((void *));
 int	gus_speaker_ctl __P((void *, int));
 int	gusmaxopen __P((void *, int));
 int	gusmax_round_blocksize __P((void *, int));
@@ -382,13 +376,7 @@ int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
 int	gusmax_dma_input __P((void *, void *, int, void (*)(void *), void *));
 int	gusmax_halt_out_dma __P((void *));
 int	gusmax_halt_in_dma __P((void *));
-int	gusmax_cont_out_dma __P((void *));
-int	gusmax_cont_in_dma __P((void *));
 int	gusmax_speaker_ctl __P((void *, int));
-int	gusmax_set_out_port __P((void *, int));
-int	gusmax_get_out_port __P((void *));
-int	gusmax_set_in_port __P((void *, int));
-int	gusmax_get_in_port __P((void *));
 int	gus_getdev __P((void *, struct audio_device *));
 
 STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
@@ -608,11 +596,6 @@ struct audio_hw_if gus_hw_if = {
 
 	gus_round_blocksize,
 
-	gus_set_out_port,
-	gus_get_out_port,
-	gus_set_in_port,
-	gus_get_in_port,
-
 	gus_commit_settings,
 
 	NULL,
@@ -622,9 +605,6 @@ struct audio_hw_if gus_hw_if = {
 	gus_dma_input,
 	gus_halt_out_dma,
 	gus_halt_in_dma,
-	gus_cont_out_dma,
-	gus_cont_in_dma,
-
 	gus_speaker_ctl,
 
 	gus_getdev,
@@ -650,11 +630,6 @@ static struct audio_hw_if gusmax_hw_if = {
 	
 	gusmax_round_blocksize,
 	
-	gusmax_set_out_port,
-	gusmax_get_out_port,
-	gusmax_set_in_port,
-	gusmax_get_in_port,
-	
 	gusmax_commit_settings,
 	
 	NULL,
@@ -664,8 +639,6 @@ static struct audio_hw_if gusmax_hw_if = {
 	gusmax_dma_input,
 	gusmax_halt_out_dma,
 	gusmax_halt_in_dma,
-	gusmax_cont_out_dma,
-	gusmax_cont_in_dma,
 	
 	gusmax_speaker_ctl,
 	
@@ -2957,107 +2930,6 @@ gus_get_in_gain(addr)
 }
 
 int
-gusmax_set_out_port(addr, port)
-	void * addr;
-	int port;
-{
-	struct ad1848_softc *sc = addr;
-	return gus_set_out_port(sc->parent, port);
-}
-
-int
-gus_set_out_port(addr, port)
-	void * addr;
-	int port;
-{
-	struct gus_softc *sc = addr;
-	DPRINTF(("gus_set_out_port called\n"));
-	sc->sc_out_port = port;
-
-	return 0;
-}
-
-int
-gusmax_get_out_port(addr)
-	void * addr;
-{
-	struct ad1848_softc *sc = addr;
-	return gus_get_out_port(sc->parent);
-}
-
-int
-gus_get_out_port(addr)
-	void * addr;
-{
-	struct gus_softc *sc = addr;
-	DPRINTF(("gus_get_out_port() called\n"));
-	return sc->sc_out_port;
-}
-
-int
-gusmax_set_in_port(addr, port)
-	void * addr;
-	int port;
-{
-	struct ad1848_softc *sc = addr;
-	DPRINTF(("gusmax_set_in_port: %d\n", port));
-
-	switch(port) {
-	case MIC_IN_PORT:
-	case LINE_IN_PORT:
-	case AUX1_IN_PORT:
-	case DAC_IN_PORT:
-		break;
-	default:
-		return(EINVAL);
-		/*NOTREACHED*/
-	}
-	return(ad1848_set_rec_port(sc, port));
-}
-
-int
-gusmax_get_in_port(addr)
-	void * addr;
-{
-	struct ad1848_softc *sc = addr;
-	int port;
-    
-	port = ad1848_get_rec_port(sc);
-	DPRINTF(("gusmax_get_in_port: %d\n", port));
-
-	return(port);
-}
-
-int
-gus_set_in_port(addr, port)
-	void * addr;
-	int port;
-{
-	struct gus_softc *sc = addr;
-	DPRINTF(("gus_set_in_port called\n"));
-	/*
-	 * On the GUS with ICS mixer, the ADC input is after the mixer stage,
-	 * so we can't set the input port.
-	 *
-	 * On the GUS with CS4231 codec/mixer, see gusmax_set_in_port().
-	 */
-	sc->sc_in_port = port;
-
-	return 0;
-}
-
-
-int
-gus_get_in_port(addr)
-	void * addr;
-{
-	struct gus_softc *sc = addr;
-	DPRINTF(("gus_get_in_port called\n"));
-	return sc->sc_in_port;
-}
-
-
-int
 gusmax_dma_input(addr, buf, size, callback, arg)
 	void * addr;
 	void *buf;
@@ -3169,22 +3041,6 @@ gusmax_halt_in_dma(addr)
 	return gus_halt_in_dma(sc->parent);
 }
 
-int
-gusmax_cont_out_dma(addr)
-	void * addr;
-{
-	struct ad1848_softc *sc = addr;
-	return gus_cont_out_dma(sc->parent);
-}
-
-int
-gusmax_cont_in_dma(addr)
-	void * addr;
-{
-	struct ad1848_softc *sc = addr;
-	return gus_cont_in_dma(sc->parent);
-}
-
 /*
  * Stop any DMA output.  Called at splgus().
  */
@@ -3250,23 +3106,6 @@ gus_halt_in_dma(addr)
 
 	return 0;
 }
-
-int
-gus_cont_out_dma(addr)
-	void * addr;
-{
-	DPRINTF(("gus_cont_out_dma called\n"));
-	return EOPNOTSUPP;
-}
-
-int
-gus_cont_in_dma(addr)
-	void * addr;
-{
-	DPRINTF(("gus_cont_in_dma called\n"));
-	return EOPNOTSUPP;
-}
-
 
 STATIC __inline int
 gus_to_vol(cp, vol)
@@ -4037,7 +3876,7 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_SPEAKER_MUTE;
-	strcpy(dip->label.name, AudioNspeaker);
+	strcpy(dip->label.name, AudioNmaster);
 	dip->un.v.num_channels = 2;
 	strcpy(dip->un.v.units.name, AudioNvolume);
 	break;
@@ -4213,7 +4052,7 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_MASTER_MUTE;
-		strcpy(dip->label.name, AudioNvolume);
+		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;

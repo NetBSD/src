@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.16 1997/10/16 23:57:56 is Exp $	*/
+/*	$NetBSD: audioio.h,v 1.17 1997/10/19 07:42:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -48,14 +48,17 @@ struct audio_prinfo {
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
 	u_long	seek;		/* BSD extension */
-	u_int	ispare[3];
+	u_int	avail_ports;	/* available I/O ports */
+	u_int	buffer_size;	/* total size audio buffer */
+	u_int	_ispare[1];
 	/* Current state of device: */
 	u_int	samples;	/* number of samples */
 	u_int	eof;		/* End Of File (zero-size writes) counter */
 	u_char	pause;		/* non-zero if paused, zero to resume */
 	u_char	error;		/* non-zero if underflow/overflow ocurred */
 	u_char	waiting;	/* non-zero if another process hangs in open */
-	u_char	cspare[3];
+	u_char	balance;	/* stereo channel balance */
+	u_char	cspare[2];
 	u_char	open;		/* non-zero if currently open */
 	u_char	active;		/* non-zero if I/O is currently active */
 };
@@ -64,12 +67,13 @@ typedef struct audio_prinfo audio_prinfo_t;
 struct audio_info {
 	struct	audio_prinfo play;	/* Info for play (output) side */
 	struct	audio_prinfo record;	/* Info for record (input) side */
-	u_int	buffersize;		/* total size audio buffer */
+
+	u_int	monitor_gain;	/* input to output mix */
 	/* BSD extensions */
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
-	u_int	backlog;	/* samples of output backlog to gen. */
+	u_int	_ispare1;
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
@@ -79,8 +83,8 @@ typedef struct audio_info audio_info_t;
 
 #ifdef _KERNEL
 #define AUDIO_INITINFO(p)\
-	{ register int n = sizeof(struct audio_info); \
-	  register u_char *q = (u_char *) p; \
+	{ int n = sizeof(struct audio_info); \
+	  u_char *q = (u_char *) p; \
 	  while (n-- > 0) *q++ = 0xff; }
 
 #else
@@ -113,8 +117,9 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_ULAW		1
 #define AUDIO_ENCODING_ALAW		2
 #define AUDIO_ENCODING_PCM16		3 /* obsolete */
-#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* obsolete */
+#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* SunOS compat */
 #define AUDIO_ENCODING_PCM8		4 /* obsolete */
+#define AUDIO_ENCODING_LINEAR8		AUDIO_ENCODING_PCM8 /* SunOS compat */
 #define AUDIO_ENCODING_ADPCM		5
 #define AUDIO_ENCODING_SLINEAR_LE	6
 #define AUDIO_ENCODING_SLINEAR_BE	7
@@ -130,13 +135,36 @@ typedef struct audio_offset {
 #define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
 
 typedef struct audio_encoding {
-	int index;
-	char name[MAX_AUDIO_DEV_LEN];
-	int encoding;
-	int precision;
-	int flags;
+	int	index;
+	char	name[MAX_AUDIO_DEV_LEN];
+	int	encoding;
+	int	precision;
+	int	flags;
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
+
+/*
+ * Balance settings.
+ */
+#define	AUDIO_LEFT_BALANCE	0	/* left channel only	*/
+#define	AUDIO_MID_BALANCE	32	/* equal left/right channel */
+#define	AUDIO_RIGHT_BALANCE	64	/* right channel only	*/
+#define	AUDIO_BALANCE_SHIFT	3
+
+/*
+ * Output ports
+ */
+#define	AUDIO_SPEAKER		0x01	/* built-in speaker */
+#define	AUDIO_HEADPHONE		0x02	/* headphone jack */
+#define	AUDIO_LINE_OUT		0x04	/* line out	 */
+
+/*
+ * Input ports
+ */
+#define	AUDIO_MICROPHONE	0x01	/* microphone */
+#define	AUDIO_LINE_IN		0x02	/* line in	 */
+#define	AUDIO_CD		0x04	/* on-board CD inputs */
+#define	AUDIO_INTERNAL_CD_IN	AUDIO_CD	/* internal CDROM */
 
 /*
  * Audio device operations
@@ -267,15 +295,21 @@ typedef struct mixer_ctrl {
 #define AudioNmixerout	"mixerout"
 #define AudioNswap	"swap"	/* swap left and right channels */
 
-#define AudioEmulaw "mulaw"
-#define AudioEalaw "alaw"
-#define AudioEadpcm "adpcm"
-#define AudioEslinear "slinear"
-#define AudioEslinear_le "slinear_le"
-#define AudioEslinear_be "slinear_be"
-#define AudioEulinear "ulinear"
-#define AudioEulinear_le "ulinear_le"
-#define AudioEulinear_be "ulinear_be"
+#define AudioEmulaw		"mulaw"
+#define AudioEalaw		"alaw"
+#define AudioEadpcm 		"adpcm"
+#define AudioEslinear		"slinear"
+#define AudioEslinear_le	"slinear_le"
+#define AudioEslinear_be	"slinear_be"
+#define AudioEulinear		"ulinear"
+#define AudioEulinear_le	"ulinear_le"
+#define AudioEulinear_be	"ulinear_be"
+#define AudioEmpeg_l1_stream	"mpeg_l1_stream"
+#define AudioEmpeg_l1_packets	"mpeg_l1_packets"
+#define AudioEmpeg_l1_system	"mpeg_l1_system"
+#define AudioEmpeg_l2_stream	"mpeg_l2_stream"
+#define AudioEmpeg_l2_packets	"mpeg_l2_packets"
+#define AudioEmpeg_l2_system	"mpeg_l2_system"
 
 #define AudioCinputs	"inputs"
 #define AudioCoutputs	"outputs"

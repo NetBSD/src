@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.1 1997/10/16 23:58:16 is Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.2 1997/10/19 07:42:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -57,17 +57,11 @@ int tav_query_encoding __P((void *, struct audio_encoding *));
 int tav_set_params __P((void *, int, int, struct audio_params *, 
     struct audio_params *));
 int tav_round_blocksize __P((void *, int));
-int tav_set_out_port __P((void *, int));
-int tav_get_out_port __P((void *));
-int tav_set_in_port __P((void *, int));
-int tav_get_in_port __P((void *));
 int tav_init_output __P((void *, void *, int));
 int tav_start_output __P((void *, void *, int, void (*)(void *), void *));
 int tav_start_input __P((void *, void *, int, void (*)(void *), void *));
 int tav_halt_output __P((void *));
 int tav_halt_input __P((void *));
-int tav_cont_output __P((void *));
-int tav_cont_input __P((void *));
 int tav_speaker_ctl __P((void *, int));
 int tav_getdev __P((void *, struct audio_device *));
 int tav_setfd __P((void *, int));
@@ -83,10 +77,6 @@ struct audio_hw_if tav_audio_if = {
 	tav_query_encoding,
 	tav_set_params,
 	tav_round_blocksize,
-	tav_set_out_port,
-	tav_get_out_port,
-	tav_set_in_port,
-	tav_get_in_port,
 	0 /* commit_settings */,	/* optional */
 	tav_init_output,		/* optional */
 	0 /* tav_init_input */,		/* optional */
@@ -94,8 +84,6 @@ struct audio_hw_if tav_audio_if = {
 	tav_start_input,
 	tav_halt_output,
 	tav_halt_input,
-	tav_cont_output,
-	tav_cont_input,
 	tav_speaker_ctl,		/* optional */
 	tav_getdev,
 	0 /* setfd */,			/* optional */
@@ -175,10 +163,10 @@ tms320av110_intr(p)
 }
 
 struct audio_encoding tav_encodings[] = {
-	{0, "mpg_l2_str", AUDIO_ENCODING_MPEG_L2_STREAM, 1, 0,},
-	{1, "mpg_l2_pkt", AUDIO_ENCODING_MPEG_L2_PACKETS, 1, 0,},
-	{2, "mpg_l2_sys", AUDIO_ENCODING_MPEG_L2_SYSTEM, 1, 0,},
-	{3, "slinear_be", AUDIO_ENCODING_SLINEAR_BE, 16, 0,},
+	{0, AudioEmpeg_l2_stream, AUDIO_ENCODING_MPEG_L2_STREAM, 1, 0,},
+	{1, AudioEmpeg_l2_packets, AUDIO_ENCODING_MPEG_L2_PACKETS, 1, 0,},
+	{2, AudioEmpeg_l2_stream, AUDIO_ENCODING_MPEG_L2_SYSTEM, 1, 0,},
+	{3, AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16, 0,},
 };
 
 int
@@ -511,53 +499,7 @@ tav_query_devinfo(hdl, di)
 	void *hdl;
 	mixer_devinfo_t *di;
 {
-	return EINVAL;
-}
-
-int
-tav_get_in_port(hdl)
-	void *hdl;
-{
-	return -1;
-}
-
-int
-tav_set_in_port(hdl, port)
-	void *hdl;
-	int port;
-{
-	return EINVAL;
-}
-
-int
-tav_get_out_port(hdl)
-	void *hdl;
-{
-	return 0;
-}
-
-int
-tav_set_out_port(hdl, port)
-	void *hdl;
-	int port;
-{
-	if (port)
-		return EINVAL;
-	return 0;
-}
-
-int
-tav_cont_input(hdl)
-	void *hdl;
-{
-	return EINVAL;
-}
-
-int
-tav_cont_output(hdl)
-	void *hdl;
-{
-	return EINVAL;
+	return ENXIO;
 }
 
 int

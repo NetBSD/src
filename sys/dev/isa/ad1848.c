@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.42 1997/10/11 12:36:39 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.43 1997/10/19 07:42:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1441,36 +1441,6 @@ ad1848_halt_in_dma(addr)
     reg = ad_read(sc, SP_INTERFACE_CONFIG);
     ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
     sc->sc_locked = 0;
-
-    return(0);
-}
-
-int
-ad1848_cont_out_dma(addr)
-    void *addr;
-{
-    struct ad1848_softc *sc = addr;
-    u_char reg;
-	
-    DPRINTF(("ad1848: ad1848_cont_out_dma %s\n", sc->sc_locked?"(locked)":""));
-
-    reg = ad_read(sc, SP_INTERFACE_CONFIG);
-    ad_write(sc, SP_INTERFACE_CONFIG, (reg | PLAYBACK_ENABLE));
-
-    return(0);
-}
-
-int
-ad1848_cont_in_dma(addr)
-    void *addr;
-{
-    struct ad1848_softc *sc = addr;
-    u_char reg;
-	
-    DPRINTF(("ad1848: ad1848_cont_in_dma %s\n", sc->sc_locked?"(locked)":""));
-
-    reg = ad_read(sc, SP_INTERFACE_CONFIG);
-    ad_write(sc, SP_INTERFACE_CONFIG, (reg | CAPTURE_ENABLE));
 
     return(0);
 }

@@ -1,7 +1,7 @@
 #ifndef INTERWAVEVAR_H
 #define INTERWAVEVAR_H
 
-/*	$NetBSD: interwavevar.h,v 1.2 1997/10/09 08:03:50 jtc Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.3 1997/10/19 07:42:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,8 +151,6 @@ struct iw_softc {
 	u_char	recfmtbits;
 	u_char	playfmtbits;
 	u_char	sc_recsrcbits;
-	int	out_port;
-	int	in_port;
 	int	(*sc_ih)__P((void *));
 	iw_port_info_t sc_mic;
 	iw_port_info_t sc_aux1;
@@ -220,12 +218,6 @@ int     iw_set_params __P((void *, int, int, struct audio_params *,  struct audi
 	/* Hardware may have some say in the blocksize to choose */
 int     iw_round_blocksize __P((void *, int));
 
-	/* Ports (in/out ports) */
-int     iw_set_out_port __P((void *, int));
-int     iw_get_out_port __P((void *));
-int     iw_set_in_port __P((void *, int));
-int     iw_get_in_port __P((void *));
-
 int     iw_commit_settings __P((void *));
 
 	/* Software en/decode functions, set if SW coding required by HW */
@@ -242,8 +234,6 @@ int     iw_init_input __P((void *,void *,int));
 int     iw_init_output __P((void *,void *,int));
 int     iw_halt_output __P((void *));
 int     iw_halt_input __P((void *));
-int     iw_cont_output __P((void *));
-int     iw_cont_input __P((void *));
 
 int     iw_speaker_ctl __P((void *, int));
 int     iw_getdev __P((void *, struct audio_device *));

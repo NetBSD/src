@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.76 1997/10/16 23:58:01 is Exp $	*/
+/*	$NetBSD: audio.c,v 1.77 1997/10/19 07:41:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -149,6 +149,39 @@ int	audioprobe __P((struct device *, struct cfdata *, void *));
 #endif
 void	audioattach __P((struct device *, struct device *, void *));
 
+struct portname {
+	char 	*name;
+	int 	mask;
+};
+static struct portname itable[] = {
+	{ AudioNmicrophone,	AUDIO_MICROPHONE },
+	{ AudioNline,		AUDIO_LINE_IN },
+	{ AudioNcd,		AUDIO_CD },
+	{ 0 }
+};
+static struct portname otable[] = {
+	{ AudioNspeaker,	AUDIO_SPEAKER },
+	{ AudioNheadphone,	AUDIO_HEADPHONE },
+	{ AudioNline,		AUDIO_LINE_OUT },
+	{ 0 }
+};
+void	au_check_ports __P((struct audio_softc *, struct au_mixer_ports *, 
+			    mixer_devinfo_t *, int, char *, char *,
+			    struct portname *));
+int	au_set_gain __P((struct audio_softc *, struct au_mixer_ports *, 
+			 int, int));
+void	au_get_gain __P((struct audio_softc *, struct au_mixer_ports *,
+			 u_int *, u_char *));
+int	au_set_port __P((struct audio_softc *, struct au_mixer_ports *,
+			 u_int));
+int	au_get_port __P((struct audio_softc *, struct au_mixer_ports *));
+int	au_get_lr_value __P((struct audio_softc *, mixer_ctrl_t *,
+			     int *, int *r));
+int	au_set_lr_value __P((struct audio_softc *, mixer_ctrl_t *,
+			     int, int));
+int	au_portof __P((struct audio_softc *, char *));
+
+
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default = 
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1 };
@@ -190,6 +223,8 @@ audioattach(parent, self, aux)
 	struct audio_hw_if *hwp = sa->ahw;
 	void *hdlp = sa->hdl;
 	int error;
+	mixer_devinfo_t mi;
+	int iclass, oclass;
 
 	printf("\n");
 
@@ -201,10 +236,6 @@ audioattach(parent, self, aux)
 	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
 	    hwp->set_params == 0 ||
-	    hwp->set_out_port == 0 ||
-	    hwp->get_out_port == 0 ||
-	    hwp->set_in_port == 0 ||
-	    hwp->get_in_port == 0 ||
 	    hwp->start_output == 0 ||
 	    hwp->start_input == 0 ||
 	    hwp->halt_output == 0 ||
@@ -249,6 +280,107 @@ audioattach(parent, self, aux)
 	audio_init_ringbuffer(&sc->sc_rr);
 	audio_init_ringbuffer(&sc->sc_pr);
 	audio_calcwater(sc);
+
+	iclass = oclass = -1;
+	sc->sc_inports.index = -1;
+	sc->sc_inports.nports = 0;
+	sc->sc_inports.isenum = 0;
+	sc->sc_inports.allports = 0;
+	sc->sc_outports.index = -1;
+	sc->sc_outports.nports = 0;
+	sc->sc_outports.isenum = 0;
+	sc->sc_outports.allports = 0;
+	sc->sc_monitor_port = -1;
+	for(mi.index = 0; ; mi.index++) {
+		if (hwp->query_devinfo(hdlp, &mi) != 0)
+			break;
+		if (mi.type == AUDIO_MIXER_CLASS &&
+		    strcmp(mi.label.name, AudioCrecord) == 0)
+			iclass = mi.index;
+		if (mi.type == AUDIO_MIXER_CLASS &&
+		    strcmp(mi.label.name, AudioCmonitor) == 0)
+			oclass = mi.index;
+	}
+	for(mi.index = 0; ; mi.index++) {
+		if (hwp->query_devinfo(hdlp, &mi) != 0)
+			break;
+		au_check_ports(sc, &sc->sc_inports,  &mi, iclass, 
+			       AudioNsource, AudioNrecord, itable);
+		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
+			       AudioNoutput, AudioNmaster, otable);
+		if (mi.mixer_class == oclass && 
+		    strcmp(mi.label.name, AudioNmonitor))
+			sc->sc_monitor_port = mi.index;
+	}
+	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
+		 sc->sc_inports.allports, sc->sc_outports.allports));
+}
+
+int
+au_portof(sc, name)
+	struct	audio_softc *sc;
+	char	*name;
+{
+	mixer_devinfo_t mi;
+
+	for(mi.index = 0; 
+	    sc->hw_if->query_devinfo(sc->hw_hdl, &mi) == 0;
+	    mi.index++)
+		if (strcmp(mi.label.name, name) == 0)
+			return mi.index;
+	return -1;
+}
+
+void
+au_check_ports(sc, ports, mi, cls, name, mname, tbl)
+	struct	audio_softc *sc;
+	struct	au_mixer_ports *ports;
+	mixer_devinfo_t *mi;
+	int	cls;
+	char	*name;
+	char	*mname;
+	struct	portname *tbl;
+{
+	int i, j;
+
+	if (mi->mixer_class != cls)
+		return;
+	if (strcmp(mi->label.name, mname) == 0) {
+		ports->master = mi->index;
+		return;
+	}
+	if (strcmp(mi->label.name, name) != 0)
+		return;
+	if (mi->type == AUDIO_MIXER_ENUM) {
+	    ports->index = mi->index;
+	    for(i = 0; tbl[i].name; i++) {
+		for(j = 0; j < mi->un.e.num_mem; j++) {
+		    if (strcmp(mi->un.e.member[j].label.name,
+			       tbl[i].name) == 0) {
+			ports->aumask[ports->nports] = tbl[i].mask;
+			ports->misel [ports->nports] = mi->un.e.member[j].ord;
+			ports->miport[ports->nports++] = 
+				au_portof(sc, mi->un.e.member[j].label.name);
+			ports->allports |= tbl[i].mask;
+		    }
+		}
+	    }
+	    ports->isenum = 1;
+	} else if (mi->type == AUDIO_MIXER_SET) {
+	    ports->index = mi->index;
+	    for(i = 0; tbl[i].name; i++) {
+		for(j = 0; j < mi->un.s.num_mem; j++) {
+		    if (strcmp(mi->un.s.member[j].label.name,
+			       tbl[i].name) == 0) {
+			ports->aumask[ports->nports] = tbl[i].mask;
+			ports->misel [ports->nports] = mi->un.s.member[j].mask;
+			ports->miport[ports->nports++] = 
+				au_portof(sc, mi->un.s.member[j].label.name);
+			ports->allports |= tbl[i].mask;
+		    }
+		}
+	    }
+	}
 }
 
 /*
@@ -1053,7 +1185,7 @@ audio_fill_silence(params, p, n)
 			auzero0 = 0x80;
 		break;
 	default:
-		printf("audio: bad encoding %d\n", params->encoding);
+		DPRINTF(("audio: bad encoding %d\n", params->encoding));
 		auzero0 = 0;
 		break;
 	}
@@ -1575,9 +1707,6 @@ audio_pint_silence(sc, cb, inp, cc)
 {
 	u_char *s, *e, *p, *q;
 
-        if (!sc->sc_open)
-        	return;         /* ignore interrupt if not open */
-
 	if (sc->sc_sil_count > 0) {
 		s = sc->sc_sil_start; /* start of silence */
 		e = s + sc->sc_sil_count; /* end of silence, may be beyond end */
@@ -1764,6 +1893,9 @@ audio_rint(v)
 	struct audio_ringbuffer *cb = &sc->sc_rr;
 	int error;
 
+        if (!sc->sc_open)
+        	return;         /* ignore interrupt if not open */
+
 	cb->inp += cb->blksize;
 	if (cb->inp >= cb->end)
 		cb->inp = cb->start;
@@ -1907,6 +2039,263 @@ audio_check_params(p)
 }
 
 int
+au_set_lr_value(sc, ct, l, r)
+	struct	audio_softc *sc;
+	mixer_ctrl_t *ct;
+	int l, r;
+{
+	ct->type = AUDIO_MIXER_VALUE;
+	ct->un.value.num_channels = 2;
+	ct->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
+	ct->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
+	if (sc->hw_if->set_port(sc->hw_hdl, ct) == 0)
+		return 0;
+	ct->un.value.num_channels = 1;
+	ct->un.value.level[AUDIO_MIXER_LEVEL_MONO] = (l+r)/2;
+	return sc->hw_if->set_port(sc->hw_hdl, ct);
+}
+
+int
+au_set_gain(sc, ports, gain, balance)
+	struct	audio_softc *sc;
+	struct	au_mixer_ports *ports;
+	int	gain;
+	int	balance;
+{
+	mixer_ctrl_t ct;
+	int i, error;
+	int l, r;
+	u_int mask;
+	int nset;
+
+	if (balance == AUDIO_MID_BALANCE) {
+		l = r = gain;
+	} else if (balance < AUDIO_MID_BALANCE) {
+		r = gain;
+		l = (balance * gain) / AUDIO_MID_BALANCE;
+	} else {
+		l = gain;
+		r = ((AUDIO_RIGHT_BALANCE - balance) * gain)
+		    / AUDIO_MID_BALANCE;
+	}
+	DPRINTF(("au_set_gain: gain=%d balance=%d, l=%d r=%d\n",
+		 gain, balance, l, r));
+
+	if (ports->index == -1) {
+	usemaster:
+		if (ports->master == -1)
+			return 0; /* just ignore it silently */
+		ct.dev = ports->master;
+		error = au_set_lr_value(sc, &ct, l, r);
+	} else {
+		ct.dev = ports->index;
+		if (ports->isenum) {
+			ct.type = AUDIO_MIXER_ENUM;
+			error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+			if (error)
+				return error;
+			for(i = 0; i < ports->nports; i++) {
+				if (ports->misel[i] == ct.un.ord) {
+					ct.dev = ports->miport[i];
+					if (ct.dev == -1 ||
+					    au_set_lr_value(sc, &ct, l, r))
+						goto usemaster;
+					else
+						break;
+				}
+			}
+		} else {
+			ct.type = AUDIO_MIXER_SET;
+			error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+			if (error)
+				return error;
+			mask = ct.un.mask;
+			nset = 0;
+			for(i = 0; i < ports->nports; i++) {
+				if (ports->misel[i] & mask) {
+				    ct.dev = ports->miport[i];
+				    if (ct.dev != -1 &&
+					au_set_lr_value(sc, &ct, l, r) == 0)
+					    nset++;
+				}
+			}
+			if (nset == 0)
+				goto usemaster;
+		}
+	}
+	if (!error)
+		mixer_signal(sc);
+	return error;
+}
+
+int
+au_get_lr_value(sc, ct, l, r)
+	struct	audio_softc *sc;
+	mixer_ctrl_t *ct;
+	int *l, *r;
+{
+	int error;
+
+	ct->un.value.num_channels = 2;
+	if (sc->hw_if->get_port(sc->hw_hdl, ct) == 0) {
+		*l = ct->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		*r = ct->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+	} else {
+		ct->un.value.num_channels = 1;
+		error = sc->hw_if->get_port(sc->hw_hdl, ct);
+		if (error)
+			return error;
+		*r = *l = ct->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+	}
+	return 0;
+}
+
+void
+au_get_gain(sc, ports, pgain, pbalance)
+	struct	audio_softc *sc;
+	struct	au_mixer_ports *ports;
+	u_int	*pgain;
+	u_char	*pbalance;
+{
+	mixer_ctrl_t ct;
+	int i, l, r, n;
+	int lgain = AUDIO_MAX_GAIN/2, rgain = AUDIO_MAX_GAIN/2;
+
+	if (ports->index == -1) {
+	usemaster:
+		if (ports->master == -1)
+			goto bad;
+		ct.dev = ports->master;
+		ct.type = AUDIO_MIXER_VALUE;
+		if (au_get_lr_value(sc, &ct, &lgain, &rgain))
+			goto bad;
+	} else {
+		ct.dev = ports->index;
+		if (ports->isenum) {
+			ct.type = AUDIO_MIXER_ENUM;
+			if (sc->hw_if->get_port(sc->hw_hdl, &ct))
+				goto bad;
+			ct.type = AUDIO_MIXER_VALUE;
+			for(i = 0; i < ports->nports; i++) {
+				if (ports->misel[i] == ct.un.ord) {
+					ct.dev = ports->miport[i];
+					if (ct.dev == -1 ||
+					    au_get_lr_value(sc, &ct, 
+							    &lgain, &rgain))
+						goto usemaster;
+					else
+						break;
+				}
+			}
+		} else {
+			ct.type = AUDIO_MIXER_SET;
+			if (sc->hw_if->get_port(sc->hw_hdl, &ct))
+				goto bad;
+			ct.type = AUDIO_MIXER_VALUE;
+			lgain = rgain = n = 0;
+			for(i = 0; i < ports->nports; i++) {
+				if (ports->misel[i] & ct.un.mask) {
+					ct.dev = ports->miport[i];
+					if (ct.dev == -1 ||
+					    au_get_lr_value(sc, &ct, &l, &r))
+						goto usemaster;
+					else {
+						lgain += l;
+						rgain += r;
+						n++;
+					}
+				}
+			}
+			if (n != 0) {
+				lgain /= n;
+				rgain /= n;
+			}
+		}
+	}
+bad:
+	if (lgain == rgain) {	/* handles lgain==rgain==0 */
+		*pgain = lgain;
+		*pbalance = AUDIO_MID_BALANCE;
+	} else if (lgain < rgain) {
+		*pgain = rgain;
+		*pbalance = (AUDIO_MID_BALANCE * lgain) / rgain;
+	} else /* lgain > rgain */ {
+		*pgain = lgain;
+		*pbalance = AUDIO_RIGHT_BALANCE -
+			    (AUDIO_MID_BALANCE * rgain) / lgain;
+	}
+}
+
+int
+au_set_port(sc, ports, port)
+	struct	audio_softc *sc;
+	struct	au_mixer_ports *ports;
+	u_int	port;
+{
+	mixer_ctrl_t ct;
+	int i, error;
+
+	if (port == 0 && ports->allports == 0)
+		return 0;	/* allow this special case */
+
+	if (ports->index == -1)
+		return EINVAL;
+	ct.dev = ports->index;
+	if (ports->isenum) {
+		if (port & (port-1))
+			return EINVAL; /* Only one port allowed */
+		ct.type = AUDIO_MIXER_ENUM;
+		error = EINVAL;
+		for(i = 0; i < ports->nports; i++)
+			if (ports->aumask[i] == port) {
+				ct.un.ord = ports->misel[i];
+				error = sc->hw_if->set_port(sc->hw_hdl, &ct);
+				break;
+			}
+	} else {
+		ct.type = AUDIO_MIXER_SET;
+		ct.un.mask = 0;
+		for(i = 0; i < ports->nports; i++)
+			if (ports->aumask[i] & port) 
+				ct.un.mask |= ports->misel[i];
+		if (port != 0 && ct.un.mask == 0)
+			error = EINVAL;
+		else
+			error = sc->hw_if->set_port(sc->hw_hdl, &ct);
+	}
+	if (!error)
+		mixer_signal(sc);
+	return error;
+}
+
+int
+au_get_port(sc, ports)
+	struct	audio_softc *sc;
+	struct	au_mixer_ports *ports;
+{
+	mixer_ctrl_t ct;
+	int i, aumask;
+
+	if (ports->index == -1)
+		return 0;
+	ct.dev = ports->index;
+	ct.type = ports->isenum ? AUDIO_MIXER_ENUM : AUDIO_MIXER_SET;
+	if (sc->hw_if->get_port(sc->hw_hdl, &ct))
+		return 0;
+	aumask = 0;
+	if (ports->isenum) {
+		for(i = 0; i < ports->nports; i++)
+			if (ct.un.ord == ports->misel[i])
+				aumask = ports->aumask[i];
+	} else {
+		for(i = 0; i < ports->nports; i++)
+			if (ct.un.mask & ports->misel[i])
+				aumask |= ports->aumask[i];
+	}
+	return aumask;
+}
+
+int
 audiosetinfo(sc, ai)
 	struct audio_softc *sc;
 	struct audio_info *ai;
@@ -1916,12 +2305,13 @@ audiosetinfo(sc, ai)
 	int s, setmode;
 	int error;
 	struct audio_hw_if *hw = sc->hw_if;
-	mixer_ctrl_t ct;
 	struct audio_params pp, rp;
 	int np, nr;
 	unsigned int blks;
 	int oldpblksize, oldrblksize;
 	int rbus, pbus;
+	u_int gain;
+	u_char balance;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -2056,7 +2446,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 
-		error = hw->set_out_port(sc->hw_hdl, p->port);
+		error = au_set_port(sc, &sc->sc_outports, p->port);
 		if (error)
 			return(error);
 	}
@@ -2065,29 +2455,49 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 
-		error = hw->set_in_port(sc->hw_hdl, r->port);
+		error = au_set_port(sc, &sc->sc_inports, r->port);
 		if (error)
 			return(error);
 	}
 	if (p->gain != ~0) {
-		ct.dev = hw->get_out_port(sc->hw_hdl);
-		ct.type = AUDIO_MIXER_VALUE;
-		ct.un.value.num_channels = 1;
-		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = p->gain;
-		error = hw->set_port(sc->hw_hdl, &ct);
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		error = au_set_gain(sc, &sc->sc_outports, p->gain, balance);
 		if (error)
 			return(error);
 	}
 	if (r->gain != ~0) {
-		ct.dev = hw->get_in_port(sc->hw_hdl);
-		ct.type = AUDIO_MIXER_VALUE;
-		ct.un.value.num_channels = 1;
-		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = r->gain;
-		error = hw->set_port(sc->hw_hdl, &ct);
+		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+		error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
 		if (error)
 			return(error);
 	}
 	
+	if (p->balance != (u_char)~0) {
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		error = au_set_gain(sc, &sc->sc_outports, gain, p->balance);
+		if (error)
+			return(error);
+	}
+	if (r->balance != (u_char)~0) {
+		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
+		error = au_set_gain(sc, &sc->sc_inports, gain, r->balance);
+		if (error)
+			return(error);
+	}
+
+	if (ai->monitor_gain != ~0 &&
+	    sc->sc_monitor_port != -1) {
+		mixer_ctrl_t ct;
+		
+		ct.dev = sc->sc_monitor_port;
+		ct.type = AUDIO_MIXER_VALUE;
+		ct.un.value.num_channels = 1;
+		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = ai->monitor_gain;
+		error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+		if (error)
+			return(error);
+	}
+
 	if (p->pause != (u_char)~0) {
 		sc->sc_pr.pause = p->pause;
 		if (!p->pause && !sc->sc_pbus) {
@@ -2139,8 +2549,6 @@ audiosetinfo(sc, ai)
 		error = hw->commit_settings(sc->hw_hdl);
 		if (error)
 			return (error);
-		if (p->gain != ~0 || r->gain != ~0)
-			mixer_signal(sc);
 	}
 
 	if (cleared) {
@@ -2193,7 +2601,6 @@ audiogetinfo(sc, ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	struct audio_hw_if *hw = sc->hw_if;
-	mixer_ctrl_t ct;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -2207,23 +2614,28 @@ audiogetinfo(sc, ai)
 	p->encoding = sc->sc_pparams.encoding;
 	r->encoding = sc->sc_rparams.encoding;
 
-	r->port = hw->get_in_port(sc->hw_hdl);
-	p->port = hw->get_out_port(sc->hw_hdl);
+	r->port = au_get_port(sc, &sc->sc_inports);
+	p->port = au_get_port(sc, &sc->sc_outports);
 
-	ct.dev = r->port;
-	ct.type = AUDIO_MIXER_VALUE;
-	ct.un.value.num_channels = 1;
-	if (hw->get_port(sc->hw_hdl, &ct) == 0)
-	    r->gain = ct.un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	else
-	    r->gain = AUDIO_MAX_GAIN/2;
+	r->avail_ports = sc->sc_inports.allports;
+	p->avail_ports = sc->sc_outports.allports;
 
-	ct.dev = p->port;
-	ct.un.value.num_channels = 1;
-	if (hw->get_port(sc->hw_hdl, &ct) == 0)
-	    p->gain = ct.un.value.level[AUDIO_MIXER_LEVEL_MONO];
-	else
-	    p->gain = AUDIO_MAX_GAIN/2;
+	au_get_gain(sc, &sc->sc_inports,  &r->gain, &r->balance);
+	au_get_gain(sc, &sc->sc_outports, &p->gain, &p->balance);
+
+	if (sc->sc_monitor_port != -1) {
+		mixer_ctrl_t ct;
+		
+		ct.dev = sc->sc_monitor_port;
+		ct.type = AUDIO_MIXER_VALUE;
+		ct.un.value.num_channels = 1;
+		if (sc->hw_if->get_port(sc->hw_hdl, &ct))
+			ai->monitor_gain = 0;
+		else
+			ai->monitor_gain = 
+				ct.un.value.level[AUDIO_MIXER_LEVEL_MONO];
+	} else
+		ai->monitor_gain = 0;
 
 	p->seek = sc->sc_pr.used;
 	r->seek = sc->sc_rr.used;
@@ -2248,11 +2660,12 @@ audiogetinfo(sc, ai)
 	p->active = sc->sc_pbus;
 	r->active = sc->sc_rbus;
 
-	ai->buffersize = sc->sc_pr.bufsize;
+	p->buffer_size = sc->sc_pr.bufsize;
+	r->buffer_size = sc->sc_rr.bufsize;
+
 	ai->blocksize = sc->sc_pr.blksize;
 	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
 	ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
-	ai->backlog = 0;	/* unused */
 	ai->mode = sc->sc_mode;
 
 	return (0);

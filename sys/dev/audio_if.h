@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.21 1997/09/06 01:14:49 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.22 1997/10/19 07:41:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -73,12 +73,6 @@ struct audio_hw_if {
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
 
-	/* Ports (in/out ports) */
-	int	(*set_out_port)__P((void *, int));
-	int	(*get_out_port)__P((void *));
-	int	(*set_in_port)__P((void *, int));
-	int	(*get_in_port)__P((void *));
-
 	/*
 	 * Changing settings may require taking device out of "data mode",
 	 * which can be quite expensive.  Also, audiosetinfo() may
@@ -98,8 +92,6 @@ struct audio_hw_if {
 				   void (*)(void *), void *));
 	int	(*halt_output)__P((void *));
 	int	(*halt_input)__P((void *));
-	int	(*cont_output)__P((void *));
-	int	(*cont_input)__P((void *));
 
 	int	(*speaker_ctl)__P((void *, int));
 #define SPKR_ON		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.36 1997/10/11 11:29:08 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.37 1997/10/19 07:42:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -184,10 +184,6 @@ int	pss_speaker_ctl __P((void *, int));
 
 int	pss_getdev __P((void *, struct audio_device *));
 
-int	pss_set_out_port __P((void *, int));
-int	pss_get_out_port __P((void *));
-int	pss_set_in_port __P((void *, int));
-int	pss_get_in_port __P((void *));
 int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -234,10 +230,6 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_query_encoding,
 	ad1848_set_params,
 	ad1848_round_blocksize,
-	pss_set_out_port,
-	pss_get_out_port,
-	pss_set_in_port,
-	pss_get_in_port,
 	ad1848_commit_settings,
 	ad1848_dma_init_output,
 	ad1848_dma_init_input,
@@ -245,8 +237,6 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
 	ad1848_halt_in_dma,
-	ad1848_cont_out_dma,
-	ad1848_cont_in_dma,
 	pss_speaker_ctl,
 	pss_getdev,
 	NULL,
@@ -1372,87 +1362,6 @@ pss_getdev(addr, retp)
 }
 
 int
-pss_set_out_port(addr, port)
-    void *addr;
-    int port;
-{
-    struct ad1848_softc *ac = addr;
-    struct pss_softc *sc = ac->parent;
-	
-    DPRINTF(("pss_set_out_port: %d\n", port));
-
-    if (port != PSS_MASTER_VOL)
-	return(EINVAL);
-    
-    sc->out_port = port;
-
-    return(0);
-}
-
-int
-pss_get_out_port(addr)
-    void *addr;
-{
-    struct ad1848_softc *ac = addr;
-    struct pss_softc *sc = ac->parent;
-
-    DPRINTF(("pss_get_out_port: %d\n", sc->out_port));
-
-    return(sc->out_port);
-}
-
-int
-pss_set_in_port(addr, port)
-    void *addr;
-    int port;
-{
-    struct ad1848_softc *ac = addr;
-	
-    DPRINTF(("pss_set_in_port: %d\n", port));
-
-    switch(port) {
-    case PSS_MIC_IN_LVL:
-	port = MIC_IN_PORT;
-	break;
-    case PSS_LINE_IN_LVL:
-	port = LINE_IN_PORT;
-	break;
-    case PSS_DAC_LVL:
-	port = DAC_IN_PORT;
-	break;
-    default:
-	return(EINVAL);
-	/*NOTREACHED*/
-    }
-    
-    return(ad1848_set_rec_port(ac, port));
-}
-
-int
-pss_get_in_port(addr)
-    void *addr;
-{
-    struct ad1848_softc *ac = addr;
-    int port = PSS_MIC_IN_LVL;
-    
-    switch(ad1848_get_rec_port(ac)) {
-    case MIC_IN_PORT:
-	port = PSS_MIC_IN_LVL;
-	break;
-    case LINE_IN_PORT:
-	port = PSS_LINE_IN_LVL;
-	break;
-    case DAC_IN_PORT:
-	port = PSS_DAC_LVL;
-	break;
-    }
-
-    DPRINTF(("pss_get_in_port: %d\n", port));
-
-    return(port);
-}
-
-int
 pss_mixer_set_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
@@ -1743,7 +1652,7 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_OUTPUT_MODE;
-	strcpy(dip->label.name, AudioNvolume);
+	strcpy(dip->label.name, AudioNmaster);
 	dip->un.v.num_channels = 2;
 	strcpy(dip->un.v.units.name, AudioNvolume);
 	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.38 1997/10/11 11:29:20 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.39 1997/10/19 07:42:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -140,10 +140,6 @@ struct audio_device wss_device = {
 
 int	wss_getdev __P((void *, struct audio_device *));
 
-int	wss_set_out_port __P((void *, int));
-int	wss_get_out_port __P((void *));
-int	wss_set_in_port __P((void *, int));
-int	wss_get_in_port __P((void *));
 int	wss_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	wss_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	wss_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -168,10 +164,6 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_query_encoding,
 	ad1848_set_params,
 	ad1848_round_blocksize,
-	wss_set_out_port,
-	wss_get_out_port,
-	wss_set_in_port,
-	wss_get_in_port,
 	ad1848_commit_settings,
 	ad1848_dma_init_output,
 	ad1848_dma_init_input,
@@ -179,8 +171,6 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
 	ad1848_halt_in_dma,
-	ad1848_cont_out_dma,
-	ad1848_cont_in_dma,
 	NULL,
 	wss_getdev,
 	NULL,
@@ -402,74 +392,6 @@ wss_getdev(addr, retp)
 {
     *retp = wss_device;
     return 0;
-}
-
-int
-wss_set_out_port(addr, port)
-    void *addr;
-    int port;
-{
-    DPRINTF(("wss_set_out_port:\n"));
-    return(EINVAL);
-}
-
-int
-wss_get_out_port(addr)
-    void *addr;
-{
-    DPRINTF(("wss_get_out_port:\n"));
-    return(WSS_DAC_LVL);
-}
-
-int
-wss_set_in_port(addr, port)
-    void *addr;
-    int port;
-{
-    struct ad1848_softc *ac = addr;
-	
-    DPRINTF(("wss_set_in_port: %d\n", port));
-
-    switch(port) {
-    case WSS_MIC_IN_LVL:
-	port = MIC_IN_PORT;
-	break;
-    case WSS_LINE_IN_LVL:
-	port = LINE_IN_PORT;
-	break;
-    case WSS_DAC_LVL:
-	port = DAC_IN_PORT;
-	break;
-    default:
-	return(EINVAL);
-	/*NOTREACHED*/
-    }
-    
-    return(ad1848_set_rec_port(ac, port));
-}
-
-int
-wss_get_in_port(addr)
-    void *addr;
-{
-    struct ad1848_softc *ac = addr;
-    int port = WSS_MIC_IN_LVL;
-    
-    switch(ad1848_get_rec_port(ac)) {
-    case MIC_IN_PORT:
-	port = WSS_MIC_IN_LVL;
-	break;
-    case LINE_IN_PORT:
-	port = WSS_LINE_IN_LVL;
-	break;
-    case DAC_IN_PORT:
-	port = WSS_DAC_LVL;
-	break;
-    }
-
-    DPRINTF(("wss_get_in_port: %d\n", port));
-
-    return(port);
 }
 
 int
