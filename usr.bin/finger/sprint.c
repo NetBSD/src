@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -35,29 +35,36 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)sprint.c	5.8 (Berkeley) 12/4/90";
+static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <time.h>
 #include <tzfile.h>
+#include <db.h>
+#include <err.h>
+#include <pwd.h>
+#include <errno.h>
+#include <utmp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "finger.h"
 
-extern int entries;
+static void	  stimeprint __P((WHERE *));
 
+void
 sflag_print()
 {
 	extern time_t now;
 	register PERSON *pn;
 	register WHERE *w;
-	register int cnt;
+	register int sflag, r;
 	register char *p;
-	PERSON **list, **sort();
-	time_t time();
-	char *ctime(), *prphone();
+	PERSON *tmp;
+	DBT data, key;
 
-	list = sort();
 	/*
 	 * short format --
 	 *	login name
@@ -74,8 +81,16 @@ sflag_print()
 #define	MAXREALNAME	20
 	(void)printf("%-*s %-*s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
 	    "Name", "Tty  Idle  Login Time   Office     Office Phone");
-	for (cnt = 0; cnt < entries; ++cnt) {
-		pn = list[cnt];
+
+	for (sflag = R_FIRST;; sflag = R_NEXT) {
+		r = (*db->seq)(db, &key, &data, sflag);
+		if (r == -1)
+			err(1, "db seq");
+		if (r == 1)
+			break;
+		memmove(&tmp, data.data, sizeof tmp);
+		pn = tmp;
+
 		for (w = pn->whead; w != NULL; w = w->next) {
 			(void)printf("%-*.*s %-*.*s ", UT_NAMESIZE, UT_NAMESIZE,
 			    pn->name, MAXREALNAME, MAXREALNAME,
@@ -115,30 +130,7 @@ office:			if (pn->office)
 	}
 }
 
-PERSON **
-sort()
-{
-	register PERSON *pn, **lp;
-	PERSON **list;
-	int psort();
-	char *malloc();
-
-	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *))))) {
-		(void)fprintf(stderr, "finger: out of space.\n");
-		exit(1);
-	}
-	for (lp = list, pn = phead; pn != NULL; pn = pn->next)
-		*lp++ = pn;
-	(void)qsort(list, entries, sizeof(PERSON *), psort);
-	return(list);
-}
-
-psort(p, t)
-	PERSON **p, **t;
-{
-	return(strcmp((*p)->name, (*t)->name));
-}
-
+static void
 stimeprint(w)
 	WHERE *w;
 {

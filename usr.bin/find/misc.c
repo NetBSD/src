@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Cimarron D. Taylor of the University of California, Berkeley.
@@ -35,15 +35,19 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	5.8 (Berkeley) 5/24/91";
+static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/1/94";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/errno.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "find.h"
  
 /*
@@ -59,12 +63,12 @@ brace_subst(orig, store, path, len)
 	register char ch, *p;
 
 	plen = strlen(path);
-	for (p = *store; ch = *orig; ++orig)
+	for (p = *store; (ch = *orig) != '\0'; ++orig)
 		if (ch == '{' && orig[1] == '}') {
 			while ((p - *store) + plen > len)
 				if (!(*store = realloc(*store, len *= 2)))
-					err("%s", strerror(errno));
-			bcopy(path, p, plen);
+					err(1, NULL);
+			memmove(p, path, plen);
 			p += plen;
 			++orig;
 		} else
@@ -77,6 +81,7 @@ brace_subst(orig, store, path, len)
  *	print a message to standard error and then read input from standard
  *	input. If the input is 'y' then 1 is returned.
  */
+int
 queryuser(argv)
 	register char **argv;
 {
@@ -103,7 +108,7 @@ queryuser(argv)
 		(void)fprintf(stderr, "\n");
 		(void)fflush(stderr);
 	}
-        return(first == 'y');
+        return (first == 'y');
 }
  
 /*
@@ -116,37 +121,7 @@ emalloc(len)
 {
 	void *p;
 
-	if (p = malloc(len))
-		return(p);
-	err("%s", strerror(errno));
-	/* NOTREACHED */
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "find: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
+	if ((p = malloc(len)) == NULL)
+		err(1, NULL);
+	return (p);
 }
