@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.20 1998/02/16 08:13:06 kleink Exp $	*/
+/*	$NetBSD: termios.h,v 1.21 1998/03/31 10:05:59 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -253,8 +253,8 @@ struct termios {
 #define TCIOFF		3
 #define TCION		4
 
-#ifndef _POSIX_SOURCE
-#include <sys/types.h>		/* for pid_t */
+#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#include <sys/types.h>		/* XXX for pid_t */
 #endif
 #include <sys/cdefs.h>
 
@@ -297,6 +297,6 @@ __END_DECLS
  */
 #endif /* !_SYS_TERMIOS_H_ */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #include <sys/ttydefaults.h>
 #endif
