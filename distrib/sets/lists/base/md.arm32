@@ -1,6 +1,7 @@
-# $NetBSD: md.arm32,v 1.30 2001/01/27 23:48:33 jdolecek Exp $
+# $NetBSD: md.arm32,v 1.31 2001/03/30 11:29:09 toddpw Exp $
 ./dev/mouse			base-sys-devlinks
 ./dev/vidc			base-sys-devlinks
+./dev/vidcvideo0		base-sys-devlinks
 ./sbin/ldconfig			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
 ./usr/lib/libarm32.so.0.0	base-sys-shlib
