@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.7 1996/10/23 00:32:31 gwr Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.8 1996/12/13 21:02:39 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,6 +164,8 @@
 #define	ZSWR1_PE_SC		0x04	/* parity error is special condition */
 #define	ZSWR1_TIE		0x02	/* transmit interrupt enable */
 #define	ZSWR1_SIE		0x01	/* external/status interrupt enable */
+
+#define	ZSWR1_IMASK 	0x1F	/* mask of all itr. enable bits. */
 
 /* HSIS compat */
 #define	ZSWR1_REQ_ENABLE	(ZSWR1_REQ_WAIT | ZSWR1_REQ_TX)
