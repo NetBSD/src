@@ -2,11 +2,17 @@
  * NS32K Monitor SCSI low-level driver
  * Bruce Culbertson
  * 8 March 1990
+ * (This source is public domain source.)
  *
- * Adapted from Minix SCSI driver.  Do not use DMA -- makes 32016 and pc532
- * versions compatible.  Do not use interrupts -- makes it harder for the
- * user code to bomb this code.
+ * Originally written by Bruce Culbertson for a ns32016 port of Minix.
+ * Adapted from that for the pc532 (ns32632) monitor.
+ * Adapted from that for NetBSD/pc532 by Philip L. Bunde.
+ *
+ * Do not use DMA -- makes 32016 and pc532 versions compatible.
+ * Do not use interrupts -- makes it harder for the user code to bomb
+ * this code.
  ****************************************************************************/
+
 #include "so.h"
 
 #define OK 		0
