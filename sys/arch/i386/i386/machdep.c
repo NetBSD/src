@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.327 1998/10/13 11:43:51 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.328 1998/10/15 11:41:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -224,11 +224,6 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-#ifndef CPURESET_DELAY
-/* default to 2s */
-#define CPURESET_DELAY 2000
-#endif
-
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -243,6 +238,12 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
+#ifdef CPURESET_DELAY
+int	cpureset_delay = CPURESET_DELAY;
+#else
+int     cpureset_delay = 2000; /* default to 2s */
+#endif
+
 
 int	physmem;
 int	dumpmem_low;
@@ -1367,9 +1368,8 @@ haltsys:
 	}
 
 	printf("rebooting...\n");
-#if CPURESET_DELAY > 0
-	delay(CPURESET_DELAY * 1000);
-#endif
+	if (cpureset_delay > 0)
+		delay(cpureset_delay * 1000);
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
