@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.28 1993/11/03 15:25:15 mycroft Exp $
+#	$Id: Makefile,v 1.29 1993/11/14 16:30:45 cgd Exp $
 
 SUBDIR=	ar asa biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	crontab ctags cut dirname du elvis elvisrecover \
 	env error expand false file find finger fmt fold fpr from \
-	fsplit fstat ftp getopt gprof groups head hexdump \
-	id indent join ktrace last lastcomm leave locate lock logger \
+	fsplit fstat ftp getopt gprof groups head hexdump id indent \
+	ipcrm ipcs join ktrace last lastcomm leave locate lock logger \
 	login logname look lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr modstat more msgs netstat newsyslog nfsstat nice nm nohup \
 	pagesize passwd paste patch printenv printf quota ranlib \
