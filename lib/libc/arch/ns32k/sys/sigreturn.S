@@ -1,3 +1,5 @@
+/*	$NetBSD: sigreturn.S,v 1.6 1997/05/08 13:39:09 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,25 +19,18 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: sigreturn.S,v 1.5 1996/11/30 02:31:52 jtc Exp $
  */
 
-#include "SYS.h"
-
+#ifdef GPROF
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-#ifdef GPROF
-#undef ENTRY
-#define	ENTRY(x) \
-	.globl EX(x); \
-	.align ALIGN; \
-	EX(x): save [r0,r1,r2]; \
-	.data; 1:; .long 0; \
-	.text; addr 1b(pc),r0; bsr mcount; \
-	restore [r0,r1,r2]
-#endif /* PROF */
+# define _SAVELIST r0,r1,r2
+#endif
+#include "SYS.h"
 
-SYSCALL(sigreturn)
-	ret	0
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: sigreturn.S,v 1.6 1997/05/08 13:39:09 matthias Exp $")
+#endif
+
+RSYSCALL(sigreturn)

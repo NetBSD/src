@@ -1,3 +1,5 @@
+/*	$NetBSD: syscall.S,v 1.3 1997/05/08 13:39:10 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,14 +19,15 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: syscall.S,v 1.2 1994/03/07 23:20:55 phil Exp $
  */
 
 #include "SYS.h"
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: syscall.S,v 1.3 1997/05/08 13:39:10 matthias Exp $")
+#endif
+
 ENTRY(syscall)
-	movqd	0, r0	/* Tell system this is syscall! */
-	SVC
-	bcs	cerror
+	SYSTRAP(syscall)
+	bcs	_ASM_LABEL(cerror)
 	ret	0

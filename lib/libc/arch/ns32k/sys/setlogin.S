@@ -1,3 +1,5 @@
+/*	$NetBSD: setlogin.S,v 1.6 1997/05/08 13:39:07 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,16 +19,16 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: setlogin.S,v 1.5 1994/05/03 20:40:38 phil Exp $
  */
 
 #include "SYS.h"
 
-	.globl  ___logname_valid         /* in getlogin() */
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: setlogin.S,v 1.6 1997/05/08 13:39:07 matthias Exp $")
+#endif
 
 SYSCALL(setlogin)
 	PIC_PROLOGUE
-	movqd	0, PIC_GOT(___logname_valid)
+	movqd	0,PIC_GOT(_C_LABEL(__logname_valid))
 	PIC_EPILOGUE
-	ret	0			/* setlogin(name) */
+	ret	0				/* setlogin(name) */

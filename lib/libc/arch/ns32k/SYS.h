@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.8 1997/05/08 13:38:29 matthias Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,6 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$NetBSD: SYS.h,v 1.7 1997/05/02 18:15:26 kleink Exp $
- *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
  */
@@ -46,11 +46,11 @@
 
 #define SYSTRAP(x)							\
 	movd CAT(SYS_,x),r0;						\
-	SVC
+	svc
 
 #define _SYSCALL_NOERROR(x,y)						\
 	ENTRY(x);							\
-	SYSTRAP(y)							\
+	SYSTRAP(y)
 
 #define _SYSCALL(x,y)							\
 	_SYSCALL_NOERROR(x,y);						\
@@ -79,5 +79,3 @@
 #define CALL(x,y)							\
 	bsr CAT(_,y);							\
 	adjspd -4*x
-
-	.globl	cerror

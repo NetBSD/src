@@ -1,3 +1,5 @@
+/*	$NetBSD: modf.S,v 1.2 1997/05/08 13:38:40 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,8 +19,6 @@
  * HISTORY
  * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: modf.S,v 1.1 1993/10/07 00:20:22 cgd Exp $
  */
 
 /*
@@ -31,26 +31,30 @@
 
 #include <machine/asm.h>
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: modf.S,v 1.2 1997/05/08 13:38:40 matthias Exp $")
+#endif
+
 ENTRY(modf)
-	FRAME
+	enter	[],0
 	movl	8(fp),f0	/* value */
 	movd	12(fp),r0	/* higher 32 bit of value */
 	lshd	-20,r0		/* extract exponent */
 	andd	0x7ff,r0	/* 11 lower bits */
 	cmpd	r0,1023+30	/* compare if it's int part can fit in int */
-	bgt	modf_overflow	/* nope else it's ok to truncld it to int*/
+	bgt	0f		/* nope else it's ok to truncld it to int */
 	truncld	f0,r0		/* get integer part */
 	movdl	r0,f2		/* convert back to float */
 	movl	f2,0(16(fp))	/* move integer part to *iptr */
 	subl	f2,f0		/* return fract. part = value - *iptr */
-	EMARF
+	exit	[]
 	ret	0
-modf_overflow:
-	subd	1023+20,r0	/* bias 1023, and upper part of
+
+0:	subd	1023+20,r0	/* bias 1023, and upper part of
 				   floating point mantissa part */
 	movqd	-1,r2		/* generate mask to get fract. part */
 	cmpd	r0,32		/* if value > 2^52 (20+32) then all int part */
-	bhi	modf_all_ip
+	bhi	1f
 	negd	r0,r0		/* shift right */
 	lshd	r0,r2		/* here */
 	comd	r2,r2		/* get fractional part complement mask */
@@ -59,10 +63,10 @@ modf_overflow:
 	movd	r1,0(16(fp))	/* store ip part to *iptr */
 	movd	12(fp),4(16(fp)) /* store other half to *iptr */
 	subl	0(16(fp)),f0	/* return fract. part = value - *iptr */
-	EMARF
+	exit	[]
 	ret	0
-modf_all_ip:
-	movl	8(fp),0(16(fp))	/* copy value to *iptr */
+
+1:	movl	8(fp),0(16(fp))	/* copy value to *iptr */
 	movdl	0,f0		/* return 0 for fract. part */
-	EMARF
+	exit	[]
 	ret	0

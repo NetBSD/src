@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.2 1997/05/08 13:38:48 matthias Exp $	*/
+
 /* 
  * Written by Matthias Pfaller, 1996
  * Public domain.
@@ -6,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ffs.S,v 1.1 1996/09/24 09:29:55 matthias Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.2 1997/05/08 13:38:48 matthias Exp $")
 #endif
 
 ENTRY(ffs)

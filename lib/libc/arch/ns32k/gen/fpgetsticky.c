@@ -1,7 +1,13 @@
+/*	$NetBSD: fpgetsticky.c,v 1.2 1997/05/08 13:38:35 matthias Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 11, 1995
  * Public domain.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$NetBSD: fpgetsticky.c,v 1.2 1997/05/08 13:38:35 matthias Exp $";
+#endif /* LIBC_SCCS and not lint */
 
 #include <ieeefp.h>
 #include <machine/cpufunc.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntohl.S,v 1.2 1997/05/08 13:38:44 matthias Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,13 +31,14 @@
  * HISTORY
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: ntohl.S,v 1.1 1993/12/05 01:36:58 cgd Exp $
  */
 
 #include <machine/asm.h>
 
-	.text
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: ntohl.S,v 1.2 1997/05/08 13:38:44 matthias Exp $")
+#endif
+
 ENTRY(ntohl)
 	movd	S_ARG0,r0
 	rotw	8,r0

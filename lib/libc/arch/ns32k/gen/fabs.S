@@ -1,3 +1,5 @@
+/*	$NetBSD: fabs.S,v 1.2 1997/05/08 13:38:33 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,11 +19,13 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- * 	$Id: fabs.S,v 1.1 1993/10/07 00:20:16 cgd Exp $
  */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: fabs.S,v 1.2 1997/05/08 13:38:33 matthias Exp $")
+#endif
 
 ENTRY(fabs)
 	absl	S_ARG0,f0

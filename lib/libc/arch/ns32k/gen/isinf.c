@@ -1,3 +1,5 @@
+/*	$NetBSD: isinf.c,v 1.3 1997/05/08 13:38:39 matthias Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -32,12 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91"; */
-static char rcsid[] = "";
+#if 0
+static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91";
+#endif
+static char rcsid[] = "$NetBSD: isinf.c,v 1.3 1997/05/08 13:38:39 matthias Exp $";
 #endif /* LIBC_SCCS and not lint */
-
-
-/* I have not verified that this is correct for the ns32532 -- PAN */
 
 #include <sys/types.h>
 

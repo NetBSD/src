@@ -1,3 +1,5 @@
+/*	$NetBSD: memchr.S,v 1.2 1997/05/08 13:38:50 matthias Exp $	*/
+
 /* 
  * Written by Matthias Pfaller, 1996
  * Public domain.
@@ -5,15 +7,15 @@
 
 #include <machine/asm.h>
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: memchr.S,v 1.2 1997/05/08 13:38:50 matthias Exp $")
+#endif
+
 /*
  * void *
  * memchr (const void *b, int c, size_t len)
  *	locate the first occurrence of c in string b.
  */
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memchr.S,v 1.1 1996/09/24 09:29:57 matthias Exp $")
-#endif
 
 ENTRY(memchr)
 	enter	[r4],0
