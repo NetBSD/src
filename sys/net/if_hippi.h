@@ -1,3 +1,5 @@
+/*	$NetBSD: if_hippi.h,v 1.2 1998/05/16 00:49:45 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
