@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.30 1999/07/08 01:06:02 wrstuden Exp $	*/
+/*	$NetBSD: denode.h,v 1.31 1999/07/27 05:39:10 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -239,13 +239,13 @@ struct denode {
  * This overlays the fid structure (see mount.h)
  */
 struct defid {
-	u_short defid_len;	/* length of structure */
-	u_short defid_pad;	/* force long alignment */
+	u_int16_t defid_len;	/* length of structure */
+	u_int16_t defid_pad;	/* force 4-byte alignment */
 
-	u_long defid_dirclust;	/* cluster this dir entry came from */
-	u_long defid_dirofs;	/* offset of entry within the cluster */
+	u_int32_t defid_dirclust; /* cluster this dir entry came from */
+	u_int32_t defid_dirofs;	/* offset of entry within the cluster */
 #if 0
-	u_long	defid_gen;	/* generation number */
+	u_int32_t defid_gen;	/* generation number */
 #endif
 };
 
