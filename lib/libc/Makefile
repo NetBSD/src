@@ -5,6 +5,9 @@
 # not contain these strings, delete -DLIBC_SCCS and -DSYSLIBC_SCCS
 # from CFLAGS below.  To remove these strings from just the system call
 # stubs, remove just -DSYSLIBC_SCCS from CFLAGS.
+#
+# To produce a library that does YP, add -DYP to CFLAGS below.
+
 LIB=c
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS 
 AINC=	-I${.CURDIR}/${MACHINE}
@@ -18,5 +21,7 @@ AINC=	-I${.CURDIR}/${MACHINE}
 .include "${.CURDIR}/stdlib/Makefile.inc"
 .include "${.CURDIR}/string/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
+.include "${.CURDIR}/yp/Makefile.inc"
+.include "${.CURDIR}/rpc/Makefile.inc"
 
 .include <bsd.lib.mk>
