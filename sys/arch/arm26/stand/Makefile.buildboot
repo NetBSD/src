@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 2001/09/22 03:34:18 tv Exp $
+#	$NetBSD: Makefile.buildboot,v 1.6 2001/11/23 12:58:03 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -58,7 +58,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
 ${PROG},${RISCOSTYPE}: ${PROG}
 	${OBJCOPY} --output-target=binary ${.ALLSRC} ${.TARGET}
 
-all: ${PROG},${RISCOSTYPE}
+realall: ${PROG},${RISCOSTYPE}
 
 CLEANFILES+=	${PROG},${RISCOSTYPE}
 FILES+=		${PROG},${RISCOSTYPE}
