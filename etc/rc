@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.95 1997/10/10 09:37:54 drochner Exp $
+#	$NetBSD: rc,v 1.96 1997/11/11 02:28:58 jonathan Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -14,7 +14,7 @@ trap : 2
 trap : 3	# shouldn't be needed
 
 export HOME=/
-export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/X11R6/bin
 
 # Configure ccd devices.
 if [ -f /etc/ccd.conf ]; then
@@ -404,6 +404,11 @@ if checkyesno sendmail; then
 	fi
 fi
 
+# Start xfs before boot daemons, so its ready before client xterminals.
+if checkyesno xfs; then
+	echo -n ' xfs';			xfs $xfs_flags &
+fi
+
 if checkyesno rarpd; then
 	if [ -r /etc/ethers ]; then
 		echo -n ' rarpd';	rarpd $rarpd_flags
@@ -440,6 +445,10 @@ if checkyesno inetd; then
 		logger -s "WARNING: /etc/inetd.conf not readable; " \
 		    "inetd not started."
 	fi
+fi
+
+if checkyesno xdm; then
+	echo -n ' xdm';			xdm $xdm_flags
 fi
 
 echo '.'
