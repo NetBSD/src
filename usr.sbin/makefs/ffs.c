@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.5 2001/12/05 11:08:53 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.6 2002/01/07 05:07:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.5 2001/12/05 11:08:53 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.6 2002/01/07 05:07:50 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -354,8 +354,8 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (fsopts->size < fsopts->minsize)	/* ensure meets minimum size */
 		fsopts->size = fsopts->minsize;
 
-		/* round up to the next sector */
-	fsopts->size = roundup(fsopts->size, fsopts->sectorsize);
+		/* round up to the next block */
+	fsopts->size = roundup(fsopts->size, fsopts->bsize);
 
 		/* calculate density if necessary */
 	if (fsopts->density == 0)
@@ -508,7 +508,7 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 	 *	by indirect blocks, etc.
 	 */
 #define	ADDSIZE(x) do {							\
-	fsopts->size += roundup((x), fsopts->bsize);			\
+	fsopts->size += roundup((x), fsopts->fsize);			\
 } while (0);
 
 	curdirsize = 0;
