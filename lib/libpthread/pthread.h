@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.10 2003/06/02 16:59:27 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.11 2003/07/16 21:26:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@ int	pthread_join(pthread_t, void **);
 int	pthread_equal(pthread_t, pthread_t);
 pthread_t	pthread_self(void);
 int	pthread_detach(pthread_t);
-
-int	pthread_kill(pthread_t, int);
 
 int	pthread_getrrtimer_np(void);
 int	pthread_setrrtimer_np(int);
