@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.99 2004/07/28 15:32:49 he Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.100 2004/08/06 21:39:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.99 2004/07/28 15:32:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.100 2004/08/06 21:39:47 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2428,14 +2428,12 @@ pccbb_pcmcia_socket_enable(pch)
 		return;
 	}
 
-	/* disable socket: negate output enable bit and power off */
+	/* power down the socket to reset it, clear the card reset pin */
+	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
+	/* disable socket: negate output enable bit and power off */
 	power = 0;
 	Pcic_write(ph, PCIC_PWRCTL, power);
-
-	/* power down the socket to reset it, clear the card reset pin */
-
-	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	/* 
 	 * wait 200ms until power fails (Tpf).  Then, wait 100ms since
@@ -2458,11 +2456,11 @@ pccbb_pcmcia_socket_enable(pch)
 	Pcic_write(ph, PCIC_PWRCTL, power | PCIC_PWRCTL_OE);
 
 	if (pccbb_power(sc, voltage) == 0) {
-		power &= PCIC_PWRCTL_OE;
+		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+		power &= ~PCIC_PWRCTL_OE;
 		Pcic_write(ph, PCIC_PWRCTL, power);
 		intr |= PCIC_INTR_RESET;
 		Pcic_write(ph, PCIC_INTR, intr);
-		pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 		return;
 	}
 
@@ -2544,18 +2542,15 @@ pccbb_pcmcia_socket_disable(pch)
 
 	DPRINTF(("pccbb_pcmcia_socket_disable\n"));
 
-	/* reset signal asserting... */
-
-	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_CARDTYPE_MASK);
-	Pcic_write(ph, PCIC_INTR, intr);
 	delay(2 * 1000);
 
-	/* power down the socket */
-	power = Pcic_read(ph, PCIC_PWRCTL);
-	power &= ~PCIC_PWRCTL_OE;
-	Pcic_write(ph, PCIC_PWRCTL, power);
+	/* power down the socket to reset it, clear the card reset pin */
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
+	/* disable socket: negate output enable bit and power off */
+	power = 0;
+	Pcic_write(ph, PCIC_PWRCTL, power);
+
 	/* 
 	 * wait 300ms until power fails (Tpf).
 	 */
@@ -2564,6 +2559,12 @@ pccbb_pcmcia_socket_disable(pch)
 #else
 	delay(300 * 1000);
 #endif
+
+	/* reset signal asserting... */
+
+	intr = Pcic_read(ph, PCIC_INTR);
+	intr &= ~(PCIC_INTR_CARDTYPE_MASK);
+	Pcic_write(ph, PCIC_INTR, intr);
 }
 
 /*
