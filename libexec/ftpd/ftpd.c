@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.27 1997/06/21 18:01:35 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.28 1997/06/22 22:33:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.27 1997/06/21 18:01:35 cjs Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.28 1997/06/22 22:33:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -745,9 +745,9 @@ void
 retrieve(cmd, name)
 	char *cmd, *name;
 {
-	FILE *fin, *dout;
+	FILE *fin = NULL, *dout;
 	struct stat st;
-	int (*closefunc) __P((FILE *));
+	int (*closefunc) __P((FILE *)) = NULL;
 	int log;
 
 	log = (cmd == 0);
