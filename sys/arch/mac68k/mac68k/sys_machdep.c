@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 1995/10/10 03:48:33 briggs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 1996/02/02 18:06:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,18 +69,18 @@
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/file.h"
-#include "sys/time.h"
-#include "sys/proc.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/mtio.h"
-#include "sys/buf.h"
-#include "sys/trace.h"
-#include "sys/mount.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/mtio.h>
+#include <sys/buf.h>
+#include <sys/trace.h>
+#include <sys/mount.h>
 
 #include <sys/syscallargs.h>
 
@@ -140,7 +140,7 @@ vdoualarm(arg)
 }
 #endif
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.2 1994/10/26 08:25:11 cgd Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.3 1996/02/02 18:07:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1988 Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)ns_cksum.c	7.7 (Berkeley) 4/29/91
  */
 
-#include "sys/param.h"
-#include "sys/mbuf.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
 
 /*
  * Checksum routine for Network Systems Protocol Packets (Big-Endian).

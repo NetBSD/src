@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 1995/02/05 13:59:38 mycroft Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 1996/02/02 18:05:58 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,8 +31,8 @@
 /*
  * Instruction disassembler.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1995/08/08 06:23:08 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1996/02/02 18:05:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -40,11 +40,11 @@
  *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "disklabel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 #define	b_cylinder	b_resid
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.4 1995/08/12 20:31:10 mycroft Exp $	*/
+/*	$NetBSD: aic.c,v 1.5 1996/02/02 18:06:52 mycroft Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -48,21 +48,21 @@
  *
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "machine/stdarg.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/dkbad.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsiconf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <machine/stdarg.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
-#include "device.h"
+#include <sys/device.h>
 
 /* Some constants (may need to be changed!) */
 #define AIC_NSEG		16

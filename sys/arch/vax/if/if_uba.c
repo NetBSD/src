@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.7 1995/11/10 19:25:56 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.8 1996/02/02 18:08:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,24 +35,24 @@
  *	@(#)if_uba.c	7.16 (Berkeley) 12/16/90
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/malloc.h"
-#include "sys/mbuf.h"
-#include "sys/map.h"
-#include "sys/buf.h"
-#include "sys/socket.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/map.h>
+#include <sys/buf.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
 
-#include "net/if.h"
+#include <net/if.h>
 
-#include "machine/pte.h"
-#include "machine/mtpr.h"
-#include "machine/vmparam.h"
-#include "machine/macros.h"
+#include <machine/pte.h>
+#include <machine/mtpr.h>
+#include <machine/vmparam.h>
+#include <machine/macros.h>
 #include "if_uba.h"
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 static if_ubaalloc(struct ifubinfo *, struct ifrw *, int);
 static rcv_xmtbuf(struct ifxmt *);

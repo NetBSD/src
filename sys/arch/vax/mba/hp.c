@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1 1995/02/13 00:43:59 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.2 1996/02/02 18:08:30 mycroft Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,15 +35,15 @@
 
 /* hp.c - drivrutiner f|r massbussdiskar 940325/ragge */
 
-#include "param.h"
+#include <sys/param.h>
 #include "types.h"
-#include "fcntl.h"
-#include "syslog.h"
-#include "disklabel.h"
-#include "buf.h"
-#include "vax/mba/mbareg.h"
-#include "vax/mba/mbavar.h"
-#include "vax/mba/hpdefs.h"
+#include <sys/fcntl.h>
+#include <sys/syslog.h>
+#include <sys/disklabel.h>
+#include <sys/buf.h>
+#include <vax/mba/mbareg.h>
+#include <vax/mba/mbavar.h>
+#include <vax/mba/hpdefs.h>
 #include "hp.h"
 
 struct	mba_device	*hpinfo[NHP];

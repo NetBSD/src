@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.3 1994/10/26 08:25:20 cgd Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.4 1996/02/02 18:13:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
  *	@(#)subr_prf.c	7.30 (Berkeley) 6/29/91
  */
 
-#include <stdarg.h>
+#include <machine/stdarg.h>
 static char *ksprintn __P((u_long num, int base, int *len));
 
 void

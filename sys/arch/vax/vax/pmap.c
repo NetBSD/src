@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.19 1995/12/13 18:50:20 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.20 1996/02/02 18:09:02 mycroft Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,26 +30,26 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/queue.h"
-#include "sys/malloc.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/msgbuf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/msgbuf.h>
 
-#include "vm/vm.h"
-#include "vm/vm_page.h"
-#include "vm/vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
-#include "machine/pte.h"
-#include "machine/pcb.h"
-#include "machine/mtpr.h"
-#include "machine/macros.h"
-#include "machine/sid.h"
-#include "machine/uvaxII.h"
-#include "machine/cpu.h"
-#include "machine/scb.h"
+#include <machine/pte.h>
+#include <machine/pcb.h>
+#include <machine/mtpr.h>
+#include <machine/macros.h>
+#include <machine/sid.h>
+#include <machine/uvaxII.h>
+#include <machine/cpu.h>
+#include <machine/scb.h>
 
 
 pt_entry_t *pmap_virt2pte(pmap_t, u_int);

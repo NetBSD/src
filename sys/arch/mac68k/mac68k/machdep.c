@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 1996/01/15 12:29:48 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 1996/02/02 18:12:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include <param.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>

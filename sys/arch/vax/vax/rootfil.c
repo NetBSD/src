@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.7 1996/01/28 12:09:34 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.8 1996/02/02 18:09:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,17 +44,17 @@
  */
  /* All bugs are subject to removal without further notice */
 
-#include "param.h"
-#include "vax/include/sid.h"
-#include "buf.h"
-#include "mbuf.h"
-#include "vax/include/pte.h"
+#include <sys/param.h>
+#include <machine/sid.h>
+#include <sys/buf.h>
+#include <sys/mbuf.h>
+#include <machine/pte.h>
 #include "uda.h"
-#include "reboot.h"
-#include "conf.h"
-#include "vax/include/macros.h"
-#include "vax/include/nexus.h"
-#include "vax/uba/ubavar.h"
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <machine/macros.h>
+#include <machine/nexus.h>
+#include <vax/uba/ubavar.h>
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 u_long  bootdev;                /* should be dev_t, but not until 32 bits */

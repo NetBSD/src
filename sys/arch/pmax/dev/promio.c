@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.7 1996/01/29 22:52:31 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.8 1996/02/02 18:07:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,16 +77,16 @@
 #include <pmax/dev/lk201.h>
 #include <dev/tc/tcvar.h>
 
-#include <pm.h>
-#include <cfb.h>
-#include <mfb.h>
-#include <xcfb.h>
-#include <sfb.h>
-#include <dc.h>
-#include <dtop.h>
-#include <scc.h>
-#include <le.h>
-#include <asc.h>
+#include "pm.h"
+#include "cfb.h"
+#include "mfb.h"
+#include "xcfb.h"
+#include "sfb.h"
+#include "dc.h"
+#include "dtop.h"
+#include "scc.h"
+#include "le.h"
+#include "asc.h"
 
 #if NDC > 0
 #include <machine/dc7085cons.h>

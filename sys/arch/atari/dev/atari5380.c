@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.5 1996/01/14 13:06:37 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.6 1996/02/02 18:05:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -837,4 +837,4 @@ int	sr;	/* sr at time of interrupt */
 /*
  * Last but not least... Include the general driver code
  */
-#include "atari/dev/ncr5380.c"
+#include <atari/dev/ncr5380.c>

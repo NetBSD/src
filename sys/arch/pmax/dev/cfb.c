@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.12 1996/01/29 22:52:15 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.13 1996/02/02 18:07:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: cfb.c,v 1.12 1996/01/29 22:52:15 jonathan Exp $
+ *      $Id: cfb.c,v 1.13 1996/02/02 18:07:13 mycroft Exp $
  */
 
 /*
@@ -81,8 +81,8 @@
  * rights to redistribute these changes.
  */
 
-#include <fb.h>
-#include <cfb.h>
+#include "fb.h"
+#include "cfb.h"
 #if NCFB > 0
 #include <sys/param.h>
 #include <sys/kernel.h>

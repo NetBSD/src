@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.7 1996/02/01 22:33:32 mycroft Exp $	*/
+/*	$NetBSD: nexus.h,v 1.8 1996/02/02 18:08:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -77,7 +77,7 @@
 
 #ifndef ASSEMBLER
 
-#include "sys/types.h"
+#include <sys/types.h>
 
 struct	nexus {
 	union nexcsr {

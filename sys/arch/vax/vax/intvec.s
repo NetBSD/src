@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.13 1996/01/28 12:22:55 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.14 1996/02/02 18:08:54 mycroft Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,9 +34,9 @@
 		
 
 
-#include "machine/mtpr.h"
-#include "machine/pte.h"
-#include "machine/trap.h"
+#include <machine/mtpr.h>
+#include <machine/pte.h>
+#include <machine/trap.h>
 
 #define	TRAPCALL(namn, typ)	\
 	.align 2; namn ## :;.globl namn ;pushl $0; pushl $typ; jbr trap;
