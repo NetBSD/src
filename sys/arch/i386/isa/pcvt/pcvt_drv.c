@@ -1240,7 +1240,7 @@ pccngetc(Dev_t dev)
 	register u_char *cp;
 
 #ifdef XSERVER
- 	if (vs[minor(dev)].kbd_state == K_RAW)
+ 	if (dev != NODEV && vs[minor(dev)].kbd_state == K_RAW)
 		return 0;
 #endif /* XSERVER */
 
