@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.2 1998/09/29 11:47:51 christos Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.3 1998/12/31 15:28:52 castor Exp $
 
 # Notes:
 #	* no obj dir support
@@ -112,7 +112,7 @@ incinstall::
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -rf $$t"; \
 		echo "	@ln -s $$l $$t"; \
-	done | make -f-
+	done | ${MAKE} -f-
 .endif
 
 .if !target(incinstall)
