@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.47 2001/03/10 22:46:51 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.48 2001/05/09 19:21:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -219,7 +219,6 @@ lock_data_t swap_syscall_lock;
 /*
  * prototypes
  */
-static void		 swapdrum_add __P((struct swapdev *, int));
 static struct swapdev	*swapdrum_getsdp __P((int));
 
 static struct swapdev	*swaplist_find __P((struct vnode *, int));
@@ -413,27 +412,6 @@ swaplist_trim()
 }
 
 /*
- * swapdrum_add: add a "swapdev"'s blocks into /dev/drum's area.
- *
- * => caller must hold swap_syscall_lock
- * => uvm.swap_data_lock should be unlocked (we may sleep)
- */
-static void
-swapdrum_add(sdp, npages)
-	struct swapdev *sdp;
-	int	npages;
-{
-	u_long result;
-
-	if (extent_alloc(swapmap, npages, EX_NOALIGN, EX_NOBOUNDARY,
-	    EX_WAITOK, &result))
-		panic("swapdrum_add");
-
-	sdp->swd_drumoffset = result;
-	sdp->swd_drumsize = npages;
-}
-
-/*
  * swapdrum_getsdp: given a page offset in /dev/drum, convert it back
  *	to the "swapdev" that maps that section of the drum.
  *
@@ -451,11 +429,14 @@ swapdrum_getsdp(pgno)
 	     spp = LIST_NEXT(spp, spi_swappri))
 		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
 		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp, swd_next))
+		     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
+			if (sdp->swd_flags & SWF_FAKE)
+				continue;
 			if (pgno >= sdp->swd_drumoffset &&
 			    pgno < (sdp->swd_drumoffset + sdp->swd_drumsize)) {
 				return sdp;
 			}
+		}
 	return NULL;
 }
 
@@ -662,14 +643,16 @@ sys_swapctl(p, v, retval)
 		 */
 
 		priority = SCARG(uap, misc);
-		simple_lock(&uvm.swap_data_lock);
-		if ((sdp = swaplist_find(vp, 0)) != NULL) {
-			error = EBUSY;
-			simple_unlock(&uvm.swap_data_lock);
-			break;
-		}
 		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
+		simple_lock(&uvm.swap_data_lock);
+		if (swaplist_find(vp, 0) != NULL) {
+			error = EBUSY;
+			simple_unlock(&uvm.swap_data_lock);
+			free(sdp, M_VMSWAP);
+			free(spp, M_VMSWAP);
+			break;
+		}
 		memset(sdp, 0, sizeof(*sdp));
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
@@ -771,6 +754,7 @@ swap_on(p, sdp)
 	struct vnode *vp;
 	int error, npages, nblocks, size;
 	long addr;
+	u_long result;
 	struct vattr va;
 #ifdef NFS
 	extern int (**nfsv2_vnodeop_p) __P((void *));
@@ -942,9 +926,14 @@ swap_on(p, sdp)
 	/*
 	 * now add the new swapdev to the drum and enable.
 	 */
-	simple_lock(&uvm.swap_data_lock);
-	swapdrum_add(sdp, npages);
+	if (extent_alloc(swapmap, npages, EX_NOALIGN, EX_NOBOUNDARY,
+	    EX_WAITOK, &result))
+		panic("swapdrum_add");
+
+	sdp->swd_drumoffset = (int)result;
+	sdp->swd_drumsize = npages;
 	sdp->swd_npages = size;
+	simple_lock(&uvm.swap_data_lock);
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
 	uvmexp.swpages += size;
@@ -1023,6 +1012,7 @@ swap_off(p, sdp)
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
 		panic("swap_off: swapdev not in list\n");
 	swaplist_trim();
+	simple_unlock(&uvm.swap_data_lock);
 
 	/*
 	 * free all resources!
@@ -1031,7 +1021,6 @@ swap_off(p, sdp)
 		    EX_WAITOK);
 	extent_destroy(sdp->swd_ex);
 	free(sdp, M_VMSWAP);
-	simple_unlock(&uvm.swap_data_lock);
 	return (0);
 }
 
