@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.56 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.57 2001/12/12 15:24:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 usbd_status usbd_abort_pipe(usbd_pipe_handle pipe);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle pipe);
 usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe);
+void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe);
 usbd_status usbd_endpoint_count(usbd_interface_handle dev, u_int8_t *count);
 usbd_status usbd_interface_count(usbd_device_handle dev, u_int8_t *count);
 void usbd_interface2device_handle(usbd_interface_handle iface,
