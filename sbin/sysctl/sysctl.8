@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.71 2001/12/24 00:49:36 chs Exp $
+.\"	$NetBSD: sysctl.8,v 1.72 2002/01/27 13:04:21 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,8 +149,8 @@ privilege can change the value.
 .It ddb.tabstops	integer		yes
 .It hw.alignbytes	integer	no
 .It hw.byteorder	integer	no
-.\".It hw.disknames	struct	no
-.\".It hw.diskstats	struct	no
+.It hw.disknames	string	no
+.It hw.diskstats	struct	no
 .It hw.machine	string	no
 .It hw.machine_arch	string	no
 .It hw.model	string	no
