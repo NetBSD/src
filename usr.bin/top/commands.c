@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.4 1999/04/12 06:02:25 ross Exp $	*/
+/*	$NetBSD: commands.c,v 1.5 2000/01/21 17:08:37 mycroft Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -32,8 +32,6 @@
 #include "machine.h"
 #include "utils.h"
 #include "commands.h"
-
-extern int  errno;
 
 extern char *copyright;
 

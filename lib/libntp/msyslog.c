@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.5 1999/07/03 12:30:31 simonb Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.6 2000/01/21 17:08:34 mycroft Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -46,10 +46,7 @@ FILE *syslog_file = NULL;
 
 u_long ntp_syslogmask =  ~ (u_long) 0;
 
-#ifndef VMS
-#ifndef SYS_WINNT
-extern	int errno;
-#else
+#ifdef SYS_WINNT
 HANDLE  hEventSource;
 LPTSTR lpszStrings[1];
 static WORD event_type[] = {
@@ -58,7 +55,6 @@ static WORD event_type[] = {
 	EVENTLOG_INFORMATION_TYPE, EVENTLOG_INFORMATION_TYPE, EVENTLOG_INFORMATION_TYPE,
 };
 #endif /* SYS_WINNT */
-#endif /* VMS */
 extern	char *progname;
 
 #if defined(__STDC__)

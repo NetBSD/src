@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptrace.c,v 1.7 1998/08/12 14:11:52 christos Exp $	*/
+/*	$NetBSD: ntptrace.c,v 1.8 2000/01/21 17:08:40 mycroft Exp $	*/
 
 /*
  * ntptrace - show the chain from an NTP host leading back to
@@ -89,7 +89,9 @@ fd_set fdmask;
 int verbose = 0;
 int always_step = 0;
 
+#ifdef NEED_DECLARATION_ERRNO
 extern int errno;
+#endif /* NEED_DECLARATION_ERRNO */
 
 static	void	DoTrace		P((struct server *));
 static	void	DoTransmit	P((struct server *));

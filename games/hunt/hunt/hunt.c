@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
+/*	$NetBSD: hunt.c,v 1.9 2000/01/21 17:08:33 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.9 2000/01/21 17:08:33 mycroft Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
@@ -104,7 +104,6 @@ main(ac, av)
 {
 	char		*term;
 	int		c;
-	extern int	errno;
 	extern int	Otto_mode;
 	extern int	optind;
 	extern char	*optarg;
@@ -390,7 +389,6 @@ list_drivers()
 	static int		initial = TRUE;
 	static struct in_addr	local_address;
 	struct hostent		*hp;
-	extern int		errno;
 # ifdef BROADCAST
 	static	int		brdc;
 	static	SOCKET		*brdv;
