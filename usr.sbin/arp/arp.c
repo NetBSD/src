@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.10 1995/03/01 11:51:01 chopps Exp $ */
+/*	$NetBSD: arp.c,v 1.11 1995/03/01 11:56:13 chopps Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.10 1995/03/01 11:51:01 chopps Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.11 1995/03/01 11:56:13 chopps Exp $";
 #endif /* not lint */
 
 /*
