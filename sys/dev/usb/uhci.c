@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.121 2000/07/23 19:43:37 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.122 2000/08/08 19:51:47 tv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -97,6 +97,9 @@ uhci_softc_t *thesc;
 #define DPRINTF(x)	if (uhcidebug) printf x
 #define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
 int uhcidebug = 0;
+#ifndef __NetBSD__
+#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -723,6 +726,8 @@ uhci_dumpregs(uhci_softc_t *sc)
 void
 uhci_dump_td(uhci_soft_td_t *p)
 {
+	char sbuf[128], sbuf2[128];
+
 	DPRINTFN(-1,("TD(%p) at %08lx = link=0x%08lx status=0x%08lx "
 		     "token=0x%08lx buffer=0x%08lx\n",
 		     p, (long)p->physaddr,
@@ -730,13 +735,16 @@ uhci_dump_td(uhci_soft_td_t *p)
 		     (long)le32toh(p->td.td_status),
 		     (long)le32toh(p->td.td_token),
 		     (long)le32toh(p->td.td_buffer)));
-	DPRINTFN(-1,("  %b %b,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
-		     "D=%d,maxlen=%d\n",
-		     (int)le32toh(p->td.td_link),
-		     "\20\1T\2Q\3VF",
-		     (int)le32toh(p->td.td_status),
-		     "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
-		     "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
+
+	bitmask_snprintf((int)le32toh(p->td.td_link), "\20\1T\2Q\3VF",
+			 sbuf, sizeof(sbuf));
+	bitmask_snprintf((int)le32toh(p->td.td_status),
+			 "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
+			 "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
+			 sbuf2, sizeof(sbuf2));
+
+	DPRINTFN(-1,("  %s %s,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
+		     "D=%d,maxlen=%d\n", sbuf, sbuf2,
 		     UHCI_TD_GET_ERRCNT(le32toh(p->td.td_status)),
 		     UHCI_TD_GET_ACTLEN(le32toh(p->td.td_status)),
 		     UHCI_TD_GET_PID(le32toh(p->td.td_token)),
@@ -1235,14 +1243,21 @@ uhci_idone(uhci_intr_info_t *ii)
 		      actlen, status));
 	xfer->actlen = actlen;
 	if (status != 0) {
+#ifdef UHCI_DEBUG
+		char sbuf[128];
+
+		bitmask_snprintf((int)status, "\20\22BITSTUFF\23CRCTO\24NAK\25"
+				 "BABBLE\26DBUFFER\27STALLED\30ACTIVE",
+				 sbuf, sizeof(sbuf));
+
 		DPRINTFN((status == UHCI_TD_STALLED)*10,
 			 ("uhci_idone: error, addr=%d, endpt=0x%02x, "
-			  "status 0x%b\n",
+			  "status 0x%s\n",
 			  xfer->pipe->device->address,
 			  xfer->pipe->endpoint->edesc->bEndpointAddress,
-			  (int)status, 
-			  "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
-			  "STALLED\30ACTIVE"));
+			  sbuf));
+#endif
+
 		if (status == UHCI_TD_STALLED)
 			xfer->status = USBD_STALLED;
 		else
