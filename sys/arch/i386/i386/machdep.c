@@ -207,15 +207,10 @@ again:
 	    else
 		bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
 
-	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);  /* XXX ? - cgd */
-
 	if (nbuf == 0) {
-		nbuf = bufpages / 2;
-		if (nbuf < 16) {
+		nbuf = bufpages;
+		if (nbuf < 16)
 			nbuf = 16;
-			/* XXX (cgd) -- broken vfs_bio currently demands this */
-			bufpages = 32;
-		}
 	}
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
