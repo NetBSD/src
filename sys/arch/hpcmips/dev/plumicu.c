@@ -1,7 +1,7 @@
-/*	$NetBSD: plumicu.c,v 1.2 1999/12/07 17:53:04 uch Exp $ */
+/*	$NetBSD: plumicu.c,v 1.3 2000/02/26 15:14:19 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/queue.h>
-#define TAILQ_FOREACH(var, head, field)					\
-	for (var = TAILQ_FIRST(head); var; var = TAILQ_NEXT(var, field))
-#define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -45,7 +40,6 @@
 #include <hpcmips/dev/plumicuvar.h>
 #include <hpcmips/dev/plumicureg.h>
 
-#define PLUMICUDEBUG
 #ifdef PLUMICUDEBUG
 #define	DPRINTF(arg) printf arg
 #else
@@ -56,7 +50,10 @@ int	plumicu_match __P((struct device*, struct cfdata*, void*));
 void	plumicu_attach __P((struct device*, struct device*, void*));
 int	plumicu_intr __P((void*));
 
-struct plum_intr_ctrl {
+__inline__ void	plum_di __P((plum_chipset_tag_t));
+__inline__ void	plum_ei __P((plum_chipset_tag_t));
+
+const struct plum_intr_ctrl {
 	plumreg_t	ic_ackpat1;
 	plumreg_t	ic_ackpat2;	int	ic_ackreg2;
 	plumreg_t	ic_ienpat;	int	ic_ienreg;
@@ -133,11 +130,11 @@ struct plum_intr_ctrl {
 };
 
 struct plum_intr_entry {
+	int pi_enabled;
 	int pi_line;
 	int (*pi_fun) __P((void*));
 	void *pi_arg;
-	struct plum_intr_ctrl *pi_ctrl;
-	TAILQ_ENTRY(plum_intr_entry) pi_link;
+	const struct plum_intr_ctrl *pi_ctrl;
 };
 
 struct plumicu_softc {
@@ -147,14 +144,16 @@ struct plumicu_softc {
 	bus_space_handle_t	sc_regh;
 	void			*sc_ih;
 	int			sc_enable_count;
-	TAILQ_HEAD(, plum_intr_entry) sc_pi_head[PLUM_INTR_MAX];
+	struct plum_intr_entry  sc_intr[PLUM_INTR_MAX];
 };
 
 struct cfattach plumicu_ca = {
 	sizeof(struct plumicu_softc), plumicu_match, plumicu_attach
 };
 
+#ifdef PLUMICUDEBUG
 void	plumicu_dump __P((struct plumicu_softc*));
+#endif
 
 int
 plumicu_match(parent, cf, aux)
@@ -162,7 +161,7 @@ plumicu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 2; /* 1st attach group */
+	return (2); /* 1st attach group */
 }
 
 void
@@ -173,7 +172,7 @@ plumicu_attach(parent, self, aux)
 {
 	struct plum_attach_args *pa = aux;
 	struct plumicu_softc *sc = (void*)self;
-	struct plum_intr_ctrl *pic;
+	const struct plum_intr_ctrl *pic;
 	bus_space_tag_t regt;
 	bus_space_handle_t regh;
 	plumreg_t reg;
@@ -188,7 +187,9 @@ plumicu_attach(parent, self, aux)
 		printf(":interrupt register map failed\n");
 		return;
 	}
-
+#ifdef PLUMICUDEBUG
+	plumicu_dump(sc);
+#endif
 	/* disable all interrupt */
 	regt = sc->sc_regt;
 	regh = sc->sc_regh;
@@ -206,23 +207,37 @@ plumicu_attach(parent, self, aux)
 		}
 	}
 	
-	for (i = 0; i < PLUM_INTR_MAX; i++) {
-		TAILQ_INIT(&sc->sc_pi_head[i]);		
-	}
-
 	/* register handle to plum_chipset_tag */
 	plum_conf_register_intr(sc->sc_pc, (void*)sc);
 	
 	/* disable interrupt redirect to TX39 core */
-	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_INT_INTIEN_REG, 0);
+	plum_di(sc->sc_pc);
 
 	if (!(sc->sc_ih = tx_intr_establish(sc->sc_pc->pc_tc, pa->pa_irq,
-					      IST_EDGE, IPL_BIO, plumicu_intr, sc))) {
+					    IST_EDGE, IPL_BIO,
+					    plumicu_intr, sc))) {
 		printf(": can't establish interrupt\n");
 	}
 	printf("\n");
+}
 
-	plumicu_dump(sc);
+__inline__ void
+plum_di(pc)
+	plum_chipset_tag_t pc;
+{
+	struct plumicu_softc *sc = pc->pc_intrt;
+
+	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_INT_INTIEN_REG, 0);
+}
+
+__inline__ void
+plum_ei(pc)
+	plum_chipset_tag_t pc;
+{
+	struct plumicu_softc *sc = pc->pc_intrt;
+
+	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_INT_INTIEN_REG,
+			PLUM_INT_INTIEN);
 }
 
 void*
@@ -244,19 +259,14 @@ plum_intr_establish(pc, line, mode, level, ih_fun, ih_arg)
 		panic("plum_intr_establish: bogus interrupt line");
 	}
 
-	if (!(pi = malloc(sizeof(struct plum_intr_entry), 
-			  M_DEVBUF, M_NOWAIT))) {
-		panic ("plum_intr_establish: no memory.");
-	}
-
-	memset(pi, 0, sizeof(struct plum_intr_entry));
+	pi = &sc->sc_intr[line];
 	pi->pi_line = line;
 	pi->pi_fun  = ih_fun;
 	pi->pi_arg  = ih_arg;
 	pi->pi_ctrl = &pi_ctrl[line];
-	TAILQ_INSERT_TAIL(&sc->sc_pi_head[line], pi, pi_link);
 	
 	/* Enable interrupt */
+	
 	/* status enable */
 	if (pi->pi_ctrl->ic_senreg) {
 		reg = plum_conf_read(regt, regh, pi->pi_ctrl->ic_senreg);
@@ -271,13 +281,15 @@ plum_intr_establish(pc, line, mode, level, ih_fun, ih_arg)
 	}
 
 	/* Enable redirect to TX39 core */
-	DPRINTF(("plum_intr_establish: %d (count=%d)\n", line, sc->sc_enable_count));
+	DPRINTF(("plum_intr_establish: %d (count=%d)\n", line,
+		 sc->sc_enable_count));
 
-	if (!sc->sc_enable_count++) {
-		plum_conf_write(regt, regh, PLUM_INT_INTIEN_REG, PLUM_INT_INTIEN);
-	}
+	if (sc->sc_enable_count++ == 0)
+		plum_ei(pc);
 
-	return ih_fun;
+	pi->pi_enabled = 1;
+
+	return (ih_fun);
 }
 
 void
@@ -291,20 +303,21 @@ plum_intr_disestablish(pc, arg)
 	plumreg_t reg;
 	struct plum_intr_entry *pi;
 	int i;
-
+	
 	sc = pc->pc_intrt;
+
 	for (i = 0; i < PLUM_INTR_MAX; i++) {
-		TAILQ_FOREACH(pi, &sc->sc_pi_head[i], pi_link) {
-			if (pi->pi_fun == arg) {
-				TAILQ_REMOVE(&sc->sc_pi_head[i], pi, pi_link);
-				DPRINTF(("plum_intr_disestablish: %d (count=%d)\n",  
-					 pi->pi_line, sc->sc_enable_count - 1));
-				goto found;
-			}
-		}
+		pi = &sc->sc_intr[i];
+		if (pi->pi_fun != arg)
+			continue;
+		DPRINTF(("plum_intr_disestablish: %d (count=%d)\n",
+			 pi->pi_line, sc->sc_enable_count - 1));
+		goto found;
 	}
 	panic("plum_intr_disestablish: can't find entry.");
+	/* NOTREACHED */
  found:
+	pi->pi_enabled = 0;
 	/* Disable interrupt */
 	if (pi->pi_ctrl->ic_ienreg) {
 		reg = plum_conf_read(regt, regh, pi->pi_ctrl->ic_ienreg);
@@ -316,13 +329,10 @@ plum_intr_disestablish(pc, arg)
 		reg &= ~(pi->pi_ctrl->ic_senpat);
 		plum_conf_write(regt, regh, pi->pi_ctrl->ic_senreg, reg);
 	}
-	free(pi, M_DEVBUF);
 	
-	/* Disable redirect to TX39 core */
-	if (--sc->sc_enable_count == 0) {
-		/* Disable redirect to TX39 core */
-		plum_conf_write(regt, regh, PLUM_INT_INTIEN_REG, 0);
-	}
+	/* Disable/Enable interrupt redirect to TX39 core */
+	if (--sc->sc_enable_count == 0)
+		plum_di(pc);
 }
 
 int
@@ -330,44 +340,50 @@ plumicu_intr(arg)
 	void *arg;
 {
 	struct plumicu_softc *sc = arg;
-	struct plum_intr_entry *pi;
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	plumreg_t reg1, reg2;
+	plumreg_t reg1, reg2, reg_ext, reg_pccard;
 	int i;
 	
+	plum_di(sc->sc_pc);
+	/* read level 1 status */
 	reg1 = plum_conf_read(regt, regh, PLUM_INT_INTSTA_REG);
 
-	for (i = 0; i < PLUM_INTR_MAX; i++) {
-		struct plum_intr_ctrl *pic = &pi_ctrl[i];
-		if (pic->ic_ackpat1 & reg1) {
-			if (pic->ic_ackpat2) {
-				reg2 = plum_conf_read(regt, regh, 
-						      pic->ic_ackreg2);
-				if (pic->ic_ackpat2 & reg2) {
-					plum_conf_write(
-						regt, regh,
-						pic->ic_ackreg2,
-						pic->ic_ackpat2);
-					TAILQ_FOREACH(pi, 
-						      &sc->sc_pi_head[i], 
-						      pi_link) {
-						(*pi->pi_fun)(pi->pi_arg);
-					}
-				} 
-			} else {
-				TAILQ_FOREACH(pi, &sc->sc_pi_head[i], 
-					      pi_link) {
-					(*pi->pi_fun)(pi->pi_arg);
-					printf("INT(2) %d:", i);
-				} 
-			}
-		}
-	}
+	/* read level 2 status and acknowledge */
+	reg_ext = plum_conf_read(regt, regh, PLUM_INT_EXTINTS_REG);
+	plum_conf_write(regt, regh, PLUM_INT_EXTINTS_REG, reg_ext);
 
-	return 0;
+	reg_pccard = plum_conf_read(regt, regh, PLUM_INT_PCCINTS_REG);
+	plum_conf_write(regt, regh, PLUM_INT_PCCINTS_REG, reg_pccard);
+
+	for (i = 0; i < PLUM_INTR_MAX; i++) {
+		register struct plum_intr_entry *pi;
+		register const struct plum_intr_ctrl *pic = &pi_ctrl[i];
+
+		if (!(pic->ic_ackpat1 & reg1))
+			continue;
+
+		pi = &sc->sc_intr[i];
+		if (!pi->pi_enabled)
+			continue;
+
+		if (pic->ic_ackreg2 == 0) {
+			(*pi->pi_fun)(pi->pi_arg);
+			continue;
+		}
+			
+		reg2 = pic->ic_ackreg2 == PLUM_INT_PCCINTS_REG
+			? reg_pccard : reg_ext;
+		
+		if (pic->ic_ackpat2 & reg2)
+			(*pi->pi_fun)(pi->pi_arg);
+	}
+	plum_ei(sc->sc_pc);
+
+	return (0);
 }
 
+#ifdef PLUMICUDEBUG
 void
 plumicu_dump(sc)
 	struct plumicu_softc *sc;
@@ -388,3 +404,4 @@ plumicu_dump(sc)
  	bitdisp(reg);
 
 }
+#endif /* PLUMICUDEBUG */
