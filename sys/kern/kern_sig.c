@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.183 2003/12/20 19:01:30 fvdl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.184 2003/12/24 22:53:59 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.183 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.184 2003/12/24 22:53:59 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1009,13 +1009,6 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 #endif
 
 	/*
-	 * Allow emulation-specific signal filtering
-	 */
-	if ((p->p_emul->e_sigfilter != NULL) &&
-	    ((*p->p_emul->e_sigfilter)(proc_representative_lwp(p), ksi) == 0))
-		return;
-
-	/*
 	 * Notify any interested parties in the signal.
 	 */
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
@@ -1455,6 +1448,12 @@ issignal(struct lwp *l)
 			 * stopped until released by the debugger.
 			 */
 			p->p_xstat = signum;
+
+			/* Emulation-specific handling of signal trace */
+			if ((p->p_emul->e_tracesig != NULL) &&
+			    ((*p->p_emul->e_tracesig)(p, signum) != 0))
+				goto childresumed;
+
 			if ((p->p_flag & P_FSTRACE) == 0)
 				child_psignal(p, dolock);
 			if (dolock)
@@ -1468,6 +1467,7 @@ issignal(struct lwp *l)
 			else
 				dolock = 1;
 
+		childresumed:
 			/*
 			 * If we are no longer being traced, or the parent
 			 * didn't give us a signal, look for more signals.
