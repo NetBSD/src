@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static char rcsid[] =
-"@(#) $Header: /cvsroot/src/libexec/bootpd/Attic/print-bootp.c,v 1.1 1994/05/24 15:20:45 gwr Exp $";
+"@(#) $Header: /cvsroot/src/libexec/bootpd/Attic/print-bootp.c,v 1.1.1.1 1994/05/27 21:46:01 gwr Exp $";
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 

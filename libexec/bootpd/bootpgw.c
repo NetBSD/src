@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/libexec/bootpd/Attic/bootpgw.c,v 1.1 1994/05/24 15:20:18 gwr Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/bootpd/Attic/bootpgw.c,v 1.1.1.1 1994/05/27 21:45:13 gwr Exp $";
 #endif
 
 /*
