@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.2 2002/08/01 02:43:07 nathanw Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.3 2002/08/01 04:03:52 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -49,6 +49,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -134,9 +135,9 @@ mpc6xx_init(void (*handler)(void))
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
 	 */
-	proc0.p_cpu = ci;
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
+	lwp0.l_cpu = ci;
+	lwp0.l_addr = proc0paddr;
+	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.8 2002/08/01 02:43:03 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.9 2002/08/01 04:03:21 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp *ci_fprlwp;
+	struct lwp *ci_fpulwp;
 	struct lwp *ci_veclwp;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
