@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.29 2000/05/19 05:26:17 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.30 2000/06/08 21:25:18 eeh Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -7,6 +7,20 @@
 maxpartitions 8
 
 maxusers 2 8 1024
+
+#
+# XXXXXXXXXXX
+#
+# These files must be compiled w/no omtimization in 64-bit mode
+#
+
+file net/if_ppp.c	ppp	needs-count	compile-with "${NOOPT_C}"
+file net/if_loop.c	loop	needs-count	compile-with "${NOOPT_C}"
+file net/if_sl.c	sl	needs-count	compile-with "${NOOPT_C}"
+
+#
+# XXXXXXXXXXX
+#
 
 define mainbus {}
 device mainbus: pcibus, mainbus

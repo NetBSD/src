@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.23 2000/05/09 00:56:27 hubertf Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.24 2000/06/08 21:25:18 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
 CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
 STRIPFLAGS=	-g
@@ -95,6 +95,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # HOSTED, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOOPT_C=	${CC} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 %OBJS
