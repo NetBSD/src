@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.31 2000/04/19 06:50:36 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.32 2000/05/08 13:49:49 augustss Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -98,6 +98,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
 options 	PCIVERBOSE
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).

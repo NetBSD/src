@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.19 2000/05/04 10:25:45 takemura Exp $
+#	$NetBSD: TX3922,v 1.20 2000/05/08 13:49:47 augustss Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -39,6 +39,7 @@ options 	COMPAT_43
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)

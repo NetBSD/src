@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.12 2000/01/14 13:41:45 pk Exp $
+#	$NetBSD: INSTALL,v 1.13 2000/05/08 13:49:49 augustss Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -106,6 +106,8 @@ options 	DDB			# kernel dynamic debugger
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
+
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 #options 	SCSIVERBOSE

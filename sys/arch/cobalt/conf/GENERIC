@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.4 2000/04/27 10:52:43 soren Exp $
+#	$NetBSD: GENERIC,v 1.5 2000/05/08 13:49:46 augustss Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -101,6 +101,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options         SCSIVERBOSE     # human readable SCSI error messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
 
