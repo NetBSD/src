@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.32 2000/05/28 06:02:12 gmcgarry Exp $
+# 	$NetBSD: INSTALL,v 1.33 2000/09/13 03:44:38 nisimura Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -130,9 +130,6 @@ sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 oldscsibus*	at sii?
 oldscsibus*	at asc?
 include 	"arch/pmax/conf/scsi.pmax"
-
-# MI SCSI configuration
-#include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
 
 #########################################################################
 # Pseudo-devices							#
