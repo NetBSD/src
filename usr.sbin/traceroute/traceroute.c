@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.11 1996/06/30 22:51:11 jtc Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.12 1996/08/16 20:47:31 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.11 1996/06/30 22:51:11 jtc Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.12 1996/08/16 20:47:31 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -493,6 +493,17 @@ main(argc, argv)
 			send_probe(++seq, ttl, &to);
 			while (cc = wait_for_reply(s, &from)) {
 				(void) gettimeofday(&t2, &tz);
+				/*
+				 * Since we'll be receiving all ICMP
+				 * messages to this host above, we may
+				 * never end up with cc=0, so we need
+				 * an additional termination check.
+				 */
+				if (t2.tv_sec - t1.tv_sec > waittime) {
+					Printf(" *");
+					(void) fflush(stdout);
+					break;
+				}
 				if ((i = packet_ok(packet, cc, &from, seq))) {
 					if (from.sin_addr.s_addr != lastaddr) {
 						print(packet, cc, &from);
@@ -696,8 +707,8 @@ packet_ok(buf, cc, from, seq)
 		int i;
 		u_long *lp = (u_long *)&icp->icmp_ip;
 
-		Printf("\n%d bytes from %s to %s", cc,
-			inet_ntoa(from->sin_addr), inet_ntoa(ip->ip_dst));
+		Printf("\n%d bytes from %s", cc, inet_ntoa(from->sin_addr));
+		Printf(" to %s", inet_ntoa(ip->ip_dst));
 		Printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
 		       icp->icmp_code);
 		for (i = 4; i < cc ; i += sizeof(long))
