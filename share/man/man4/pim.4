@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/pim.4,v 1.2 2004/07/09 09:22:36 ru Exp $
-.\" $NetBSD: pim.4,v 1.1 2004/09/04 23:54:51 manu Exp $
+.\" $NetBSD: pim.4,v 1.2 2004/09/12 13:06:14 wiz Exp $
 .\"
 .Dd September 4, 2003
 .Dt PIM 4
@@ -95,12 +95,12 @@ Note that those options require certain privilege
 .Bd -literal
 /* IPv4 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_PIM, (void *)&v, sizeof(v));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_PIM, (void *)\*[Am]v, sizeof(v));
 .Ed
 .Bd -literal
 /* IPv6 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_PIM, (void *)&v, sizeof(v));
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_PIM, (void *)\*[Am]v, sizeof(v));
 .Ed
 .Pp
 After PIM processing is enabled, the multicast-capable interfaces
@@ -113,23 +113,23 @@ This can be accomplished by using the following options:
 .Bd -literal
 /* IPv4 */
 struct vifctl vc;
-memset(&vc, 0, sizeof(vc));
+memset(\*[Am]vc, 0, sizeof(vc));
 /* Assign all vifctl fields as appropriate */
 \&...
 if (is_pim_register_vif)
     vc.vifc_flags |= VIFF_REGISTER;
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)&vc,
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)\*[Am]vc,
            sizeof(vc));
 .Ed
 .Bd -literal
 /* IPv6 */
 struct mif6ctl mc;
-memset(&mc, 0, sizeof(mc));
+memset(\*[Am]mc, 0, sizeof(mc));
 /* Assign all mif6ctl fields as appropriate */
 \&...
 if (is_pim_register_vif)
     mc.mif6c_flags |= MIFF_REGISTER;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)&mc,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)\*[Am]mc,
            sizeof(mc));
 .Ed
 .Pp
