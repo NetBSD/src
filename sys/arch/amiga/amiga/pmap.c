@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 1998/08/12 19:46:13 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 1998/09/26 19:26:58 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -237,7 +237,7 @@ u_int	*Sysseg;
 u_int	*Sysseg_pa;
 u_int	*Sysmap, *Sysptmap;
 u_int	*Segtabzero, *Segtabzeropa;
-vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES + 4 / NPTEPG;
+vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
 vm_map_t	st_map, pt_map;
