@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.46 1999/06/28 22:40:15 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.47 2000/01/11 12:59:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ obioattach(parent, self, aux)
 		sc->sc_dmatag = ma->ma_dmatag;
 		sc->sc_intr2ipl = intr_obio2ipl;
 
-		sbus_attach_common(sc, "obio", ma->ma_node, ma->ma_bp, special4m);
+		sbus_attach_common(sc, "obio", ma->ma_node, special4m);
 	} else {
 		printf("obio on this machine?\n");
 	}
@@ -266,7 +266,6 @@ obiosearch(parent, cf, aux)
 	struct obio4_busattachargs *oap = aux;
 	union obio_attach_args uoba;
 	struct obio4_attach_args *oba = &uoba.uoba_oba4;
-	struct bootpath *bp;
 
 	/* Check whether we're looking for a specifically named device */
 	if (oap->name != NULL && strcmp(oap->name, cf->cf_driver->cd_name) != 0)
@@ -296,12 +295,6 @@ obiosearch(parent, cf, aux)
 	oba->oba_dmatag = oap->ma->ma_dmatag;
 	oba->oba_paddr = cf->cf_loc[0];
 	oba->oba_pri = cf->cf_loc[1];
-
-	bp = oap->ma->ma_bp;
-	if (bp != NULL && strcmp(bp->name, "obio") == 0)
-		oba->oba_bp = bp + 1;
-	else
-		oba->oba_bp = NULL;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &uoba) == 0)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.35 1999/04/14 09:50:01 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.36 2000/01/11 12:59:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ sbus_attach_mainbus(parent, self, aux)
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
-	sbus_attach_common(sc, "sbus", node, ma->ma_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, NULL);
 }
 
 
@@ -352,7 +352,7 @@ sbus_attach_iommu(parent, self, aux)
 
 	sbus_sc = sc;
 	sbuserr_handler = sbus_error;
-	sbus_attach_common(sc, "sbus", node, ia->iom_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, NULL);
 }
 
 void
@@ -378,15 +378,14 @@ sbus_attach_xbox(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbus_attach_common(sc, "sbus", node, xa->xa_bp, NULL);
+	sbus_attach_common(sc, "sbus", node, NULL);
 }
 
 void
-sbus_attach_common(sc, busname, busnode, bp, specials)
+sbus_attach_common(sc, busname, busnode, specials)
 	struct sbus_softc *sc;
 	char *busname;
 	int busnode;
-	struct bootpath *bp;
 	const char * const *specials;
 {
 	int node0, node, error;
@@ -412,12 +411,6 @@ sbus_attach_common(sc, busname, busnode, bp, specials)
 		 */
 		sc->sc_burst &= ~SBUS_BURST_64;
 	}
-
-	/* Propagate bootpath */
-	if (bp != NULL && strcmp(bp->name, busname) == 0)
-		bp++;
-	else
-		bp = NULL;
 
 	/*
 	 * Collect address translations from the OBP.
@@ -451,7 +444,7 @@ sbus_attach_common(sc, busname, busnode, bp, specials)
 		}
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
-					   node, bp, &sa) != 0) {
+					   node, &sa) != 0) {
 			panic("sbus_attach: %s: incomplete", sp);
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
@@ -471,7 +464,7 @@ sbus_attach_common(sc, busname, busnode, bp, specials)
 			continue;
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
-					   node, bp, &sa) != 0) {
+					   node, &sa) != 0) {
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
@@ -481,12 +474,11 @@ sbus_attach_common(sc, busname, busnode, bp, specials)
 }
 
 int
-sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
+sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	struct sbus_softc	*sc;
 	bus_space_tag_t		bustag;
 	bus_dma_tag_t		dmatag;
 	int			node;
-	struct bootpath		*bp;
 	struct sbus_attach_args	*sa;
 {
 	int n, error;
@@ -500,7 +492,6 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
-	sa->sa_bp = bp;
 
 	error = getprop(node, "reg", sizeof(struct sbus_reg),
 			&sa->sa_nreg, (void **)&sa->sa_reg);
