@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.164 2004/03/24 17:21:02 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.165 2004/03/24 17:40:02 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.164 2004/03/24 17:21:02 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.165 2004/03/24 17:40:02 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -410,6 +410,9 @@ sysctl_dispatch(SYSCTLFN_RWARGS)
 		case CTL_MMAP:
 			fn = (sysctlfn)sysctl_mmap; /* we own the rnode */
 			break;
+		case CTL_DESCRIBE:
+			fn = sysctl_describe;
+			break;
 		default:
 			error = EOPNOTSUPP;
 			break;
@@ -573,9 +576,8 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 }
 
 /*
- * sysctl_query -- The auto-discovery engine.  Copies out the
- * descriptions on nodes under the given node and handles overlay
- * trees.
+ * sysctl_query -- The auto-discovery engine.  Copies out the structs
+ * describing nodes under the given node and handles overlay trees.
  */
 int
 sysctl_query(SYSCTLFN_ARGS)
@@ -1576,6 +1578,29 @@ sysctl_mmap(SYSCTLFN_RWARGS)
 	 * well...okay, they asked for it.
 	 */
 	return ((*node->sysctl_func)(SYSCTLFN_CALL(node)));
+}
+
+int
+sysctl_describe(SYSCTLFN_ARGS)
+{
+
+	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
+		printf("sysctl_query: rnode %p wrong version\n", rnode);
+		return (EINVAL);
+	}
+
+	if (SYSCTL_TYPE(rnode->sysctl_flags) != CTLTYPE_NODE)
+		return (ENOTDIR);
+	if (namelen != 1 || name[0] != CTL_DESCRIBE)
+		return (EINVAL);
+
+	/*
+	 * implementation to be filled in later
+	 */
+
+	*oldlenp = 0;
+
+	return (0);
 }
 
 /*
