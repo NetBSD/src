@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1994/12/05 19:27:38 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1995/01/18 08:14:29 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -298,8 +298,13 @@ membusprobe(parent, cf, aux)
 }
 
 static	char *name_list[] =
-	{"scn", "scn", "scn", "scn", "scn", "scn", "scn", "scn",
-	 "ncr", /* "dp", "aic", */ NULL };
+	{
+#ifdef RAMD_SIZE
+	 "rd",
+#endif
+	 "scn", "scn", "scn", "scn", "scn", "scn", "scn", "scn",
+	 "ncr", /* "dp", "aic", */
+	 NULL };
 
 void
 membusattach(parent, dev, aux)
