@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.46 1997/10/17 21:29:36 mark Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.46 1997/10/17 21:29:36 mark Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,13 @@ writelabel(f, boot, lp)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
+
+#ifdef __sparc__
+	/* Let the kernel deal with SunOS disklabel compatibility */
+	if (0) {
+#else
 	if (rflag) {
+#endif
 #ifdef __i386__
 		struct partition *pp = &lp->d_partitions[2];
 
@@ -507,6 +513,7 @@ writelabel(f, boot, lp)
 			dp[63] = sum;
 		}
 #endif
+
 		if (write(f, boot, lp->d_bbsize) != lp->d_bbsize) {
 			perror("write");
 			return (1);
@@ -518,16 +525,6 @@ writelabel(f, boot, lp)
 		if (bootbuf && write(f, bootbuf, bootsize) != bootsize) {
 			perror("write");
 			return(1);
-		}
-#endif
-
-#ifdef __sparc__
-		/*
-		 * Let the kernel deal with SunOS disklabel compatibility.
-		 */
-		if (ioctl(f, DIOCWDINFO, lp) < 0) {
-			l_perror("ioctl DIOCWDINFO");
-			return (1);
 		}
 #endif
 
