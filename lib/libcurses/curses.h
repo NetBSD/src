@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.38 2000/04/18 12:23:01 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.39 2000/04/20 13:12:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -496,6 +496,7 @@ int	 def_prog_mode(void);
 int	 def_shell_mode(void);
 int	 delwin(WINDOW *win);
 WINDOW  *derwin(WINDOW *orig, int nlines, int ncols, int by, int bx);
+WINDOW  *dupwin(WINDOW *win);
 int	 echo(void);
 int	 endwin(void);
 int	 flash(void);
