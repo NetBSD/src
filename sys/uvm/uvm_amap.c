@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.13 1998/08/29 01:05:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.14 1998/08/31 02:43:14 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1049,7 +1049,11 @@ uvm_anon_init()
 	    "amappl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAMAP);
 
-	MALLOC(anon, struct vm_anon *, sizeof(*anon) * nanon, M_UVMAMAP, M_NOWAIT);
+	/*
+	 * Allocate the initial anons.
+	 */
+	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
+	    sizeof(*anon) * nanon);
 	if (anon == NULL) {
 		printf("uvm_anon_init: can not allocate %d anons\n", nanon);
 		panic("uvm_anon_init");
@@ -1076,8 +1080,14 @@ uvm_anon_add(pages)
 	struct vm_anon *anon;
 	int lcv;
 
-	MALLOC(anon, struct vm_anon *, sizeof(*anon) * pages, M_UVMAMAP,
-	    M_WAITOK);
+	anon = (struct vm_anon *)uvm_km_alloc(kernel_map,
+	    sizeof(*anon) * pages);
+
+	/* XXX Should wait for VM to free up. */
+	if (anon == NULL) {
+		printf("uvm_anon_add: can not allocate %d anons\n", pages);
+		panic("uvm_anon_add");
+	}
 
 	simple_lock(&uvm.afreelock);
 	memset(anon, 0, sizeof(*anon) * pages);
