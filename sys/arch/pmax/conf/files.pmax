@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.73 1999/11/25 02:53:46 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.74 1999/11/27 05:35:00 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -196,7 +196,7 @@ attach	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
 
-#  PixelStamp graphics boards
+# PixelStamp graphics boards
 device	px
 attach	px at tc
 file	arch/pmax/dev/px.c 		px needs-flag
@@ -218,7 +218,7 @@ file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-file	arch/pmax/stand/lib/callvec.c
+file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
 file	arch/pmax/dev/findcons.c	# find and set up console.
 #file	arch/pmax/pmax/kadb.c		# obsolute kadb
