@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.6 2002/03/05 12:28:34 mrg Exp $	*/
+/*	$NetBSD: line.c,v 1.7 2002/03/05 12:54:34 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -48,7 +48,6 @@ static int attr_swidth __P((int));
 static int attr_ewidth __P((int));
 static int pwidth __P((int, int));
 static void backc __P((void));
-static int storec __P((int, int, POSITION));
 static int do_append __P((int, POSITION));
 
 extern int bs_mode;
