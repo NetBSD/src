@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2000/12/14 18:42:07 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/21 14:38:17 tsutsui Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/osf1 $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
-CPPFLAGS+=	-DVM86 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_OSF1
+CPPFLAGS+=	-DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_OSF1
 CPPFLAGS+=	-nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D_KERNEL \
 		-I. -I${S}
