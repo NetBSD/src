@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 1999/12/05 21:24:30 tron Exp $
+	$NetBSD: syscalls.master,v 1.39 1999/12/12 00:00:17 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -83,7 +83,8 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
-26	UNIMPL		ptrace
+26	STD		{ int linux_sys_ptrace(int request, int pid, \
+			  int addr, int data); }
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }
