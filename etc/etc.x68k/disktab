@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.3 2001/12/06 04:18:01 minoura Exp $
+#	$NetBSD: disktab,v 1.4 2002/04/09 12:40:45 tron Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -63,3 +63,10 @@ floppy1232|1024byte sector format for 2HD floppy:\
 	:pa#2464:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#0:ob#0:\
 	:pc#2464:oc#0:
+
+# This entry is required for the FFS regression test.
+floppy288|2.88MB 3.5in Extra High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
+	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
+	:pb#5760:ob#0:\
+	:pc#5760:oc#0:
