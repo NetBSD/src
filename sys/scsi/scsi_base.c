@@ -1,6 +1,6 @@
 /*
  * Written by Julian Elischer (julian@dialix.oz.au)
- *      $Id: scsi_base.c,v 1.4 1993/11/27 19:49:09 mycroft Exp $
+ *      $Id: scsi_base.c,v 1.5 1993/12/13 11:50:13 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -350,7 +350,7 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	xs->resid = datalen;
 	xs->bp = bp;
 /*XXX*/ /*use constant not magic number */
-	if (datalen && ((caddr_t) data_addr < (caddr_t) 0xfe000000)) {
+	if (datalen && ((caddr_t) data_addr < (caddr_t) KERNBASE)) {
 		if (bp) {
 			printf("Data buffered space not in kernel context\n");
 #ifdef	SCSIDEBUG
