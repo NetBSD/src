@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.62 2003/10/22 15:03:04 briggs Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.63 2003/10/23 03:56:36 briggs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.62 2003/10/22 15:03:04 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.63 2003/10/23 03:56:36 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,6 +74,7 @@ struct wdc_pcmcia_softc {
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
 	int sc_flags;
+#define WDC_PCMCIA_ATTACH	0x0001
 #define WDC_PCMCIA_MEMMODE	0x0002
 };
 
@@ -375,10 +376,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 
+	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
-
-	/* Disable the function */
-	pcmcia_function_disable(sc->sc_pf);
 
 	return;
 
@@ -418,6 +417,16 @@ wdc_pcmcia_detach(self, flags)
 		/* Nothing to detach */
 		return (0);
 
+	/*
+	 * If the WDC_PCMCIA_ATTACH flag is still set, then we didn't get
+	 * a chance * enable/disable the card in the wdc/atabus layer, so
+	 * we still need to disable the function here.
+	 */
+	if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
+		sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+		pcmcia_function_disable(sc->sc_pf);
+	}
+
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
 
@@ -454,11 +463,22 @@ wdc_pcmcia_enable(self, onoff)
 			return (EIO);
 		}
 
-		if (pcmcia_function_enable(sc->sc_pf)) {
-			printf("%s: couldn't enable PCMCIA function\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-			return (EIO);
+		/*
+		 * If the WDC_PCMCIA_ATTACH flag is set, we've already
+		 * enabled the card in the attach routine, so don't
+		 * re-enable it here (to save power cycle time).  Clear
+		 * the flag, though, so that the next disable/enable
+		 * will do the right thing.
+		 */
+		if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
+			sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+		} else {
+			if (pcmcia_function_enable(sc->sc_pf)) {
+				printf("%s: couldn't enable PCMCIA function\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+				return (EIO);
+			}
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
