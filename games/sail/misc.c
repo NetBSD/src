@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/10/13 19:44:38 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 2000/02/09 22:27:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.5 1997/10/13 19:44:38 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 2000/02/09 22:27:56 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,8 +208,12 @@ struct ship *s;
 	float net;
 	struct logs *lp;
 
-	if ((fp = fopen(_PATH_LOGFILE, "r+")) == NULL)
+	setegid(egid);
+	if ((fp = fopen(_PATH_LOGFILE, "r+")) == NULL) {
+		setegid(gid);
 		return;
+	}
+	setegid(gid);
 #ifdef LOCK_EX
 	if (flock(fileno(fp), LOCK_EX) < 0)
 		return;
