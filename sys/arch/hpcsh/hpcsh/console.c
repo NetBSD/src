@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.8 2002/03/02 22:26:26 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.9 2002/03/03 14:35:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -119,11 +119,11 @@ struct consdev constab[] = {
 #endif
 	{ 0 } /* terminator */
 };
-#define CN_ENABLE(x)	set_console(x ## cnputc, x ## cnprobe)
+#define CN_ENABLE(x)	set_console(x ## cninit, x ## cnprobe)
 
 static int initialized;
 static int attach_kbd  __attribute__((__unused__)) = 1;
-static void set_console(void (*)(dev_t, int), void (*)(struct consdev *));
+static void set_console(void (*)(struct consdev *), void (*)(struct consdev *));
 static void disable_console(void);
 static void cn_nonprobe(struct consdev *);
 #if NBICONSDEV > 0
@@ -202,13 +202,13 @@ consinit()
 }
 
 static void
-set_console(void (*putc_func)(dev_t, int),
+set_console(void (*init_func)(struct consdev *),
     void (*probe_func)(struct consdev *))
 {
 	struct consdev *cp;
 
 	for (cp = constab; cp->cn_probe; cp++) {
-		if (cp->cn_putc == putc_func) {
+		if (cp->cn_init == init_func) {
 			cp->cn_probe = probe_func;
 			initialized = 1;
 			break;
