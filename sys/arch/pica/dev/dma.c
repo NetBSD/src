@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 1996/10/13 03:31:21 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.7 1997/06/16 08:41:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,9 +52,9 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <mips/locore.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/pio.h>
 
@@ -253,7 +253,7 @@ picaDmaStart(sc, addr, size, datain)
 		sc->mode |= DMA_DIR_WRITE;
 		regs->dma_enab = PICA_DMA_ENAB_RUN | PICA_DMA_ENAB_WRITE;
 	}
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.9 1997/03/26 22:42:55 gwr Exp $	*/
+/*	$NetBSD: asc.c,v 1.10 1997/06/16 08:41:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,6 +136,7 @@
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <pica/dev/dma.h>
 #include <pica/dev/scsi.h>
@@ -713,17 +714,17 @@ asc_reset(asc, regs)
 	 * Reset chip and wait till done
 	 */
 	regs->asc_cmd = ASC_CMD_RESET;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 
 	/* spec says this is needed after reset */
 	regs->asc_cmd = ASC_CMD_NOP;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 
 	/*
 	 * Set up various chip parameters
 	 */
 	regs->asc_ccf = asc->ccf;
-	MachEmptyWriteBuffer(); DELAY(25);
+	wbflush(); DELAY(25);
 	regs->asc_sel_timo = asc->timeout_250;
 	/* restore our ID */
 	regs->asc_cnfg1 = asc->sc_id | ASC_CNFG1_P_CHECK;
@@ -734,7 +735,7 @@ asc_reset(asc, regs)
 	ASC_TC_PUT(regs, 0);
 	regs->asc_syn_p = asc->min_period;
 	regs->asc_syn_o = 0;	/* async for now */
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*
@@ -1250,7 +1251,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 	 */
 
 done:
-	MachEmptyWriteBuffer();
+	wbflush();
 	/*
 	 * If the next interrupt comes in immediatly the interrupt
 	 * dispatcher (which we are returning to) will catch it
@@ -1774,13 +1775,13 @@ asc_sendsync(asc, status, ss, ir)
 
 	/* send the extended synchronous negotiation message */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_MIN_PERIOD;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = ASC_MAX_OFFSET;
 	/* state to resume after we see the sync reply message */
 	state->script = asc->script + 2;
@@ -1805,13 +1806,13 @@ asc_replysync(asc, status, ss, ir)
 #endif
 	/* send synchronous transfer in response to a request */
 	regs->asc_fifo = SCSI_EXTENDED_MSG;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = 3;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = SCSI_SYNCHRONOUS_XFER;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = asc_to_scsi_period[state->sync_period] * asc->tb_ticks;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->asc_fifo = state->sync_offset;
 	regs->asc_cmd = ASC_CMD_XFER_INFO;
 	readback(regs->asc_cmd);

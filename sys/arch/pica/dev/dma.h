@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.2 1996/07/16 23:24:11 thorpej Exp $	*/
+/*	$NetBSD: dma.h,v 1.3 1997/06/16 08:41:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -149,3 +149,9 @@ typedef struct dma_softc {
 #define	DMA_INTR(r)		((r->intr)(r))
 #define	DMA_DRAIN(r)
 #define	DMA_END(r)		((r->end)(r))
+
+/*
+ * declarations of device-specific motherboard DMA hooks.
+ */
+void	fdc_dma_init __P((dma_softc_t *sc));
+void	sn_dma_init __P((dma_softc_t *sc, int pages));

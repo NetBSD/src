@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.6 1996/10/13 03:31:27 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.7 1997/06/16 08:41:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -68,6 +68,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/display.h>
 #include <machine/pccons.h>
 #include <pica/pica/pica.h>
@@ -1869,7 +1870,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.6 1996/10/13 03:31:27 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.7 1997/06/16 08:41:19 jonathan Exp $	*/
 
 #include <machine/mouse.h>
 
