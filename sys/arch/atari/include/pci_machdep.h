@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2000/06/04 19:14:33 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2000/12/28 22:59:08 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -35,6 +35,12 @@
 #define _ATARI_PCI_MACHDEP_H_
 
 #include <atari/atari/intr.h>
+
+/*
+ * Forward declarations.
+ */
+struct pci_attach_args;
+
 /*
  * Types provided to machine-independent PCI code
  */
@@ -60,8 +66,7 @@ int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		pci_intr_map(pci_chipset_tag_t, pcitag_t, int, int,
-			pci_intr_handle_t *);
+int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,

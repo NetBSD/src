@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.95 2000/11/15 01:02:14 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.96 2000/12/28 22:59:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5879,8 +5879,7 @@ tulip_pci_attach(
 
 	    printf("\n");
 
-	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			     pa->pa_intrline, &intrhandle)) {
+	    if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->tulip_dev.dv_xname);
 		return;
 	    }

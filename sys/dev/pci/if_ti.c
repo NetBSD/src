@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.16 2000/12/14 06:42:57 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.17 2000/12/28 22:59:13 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1656,8 +1656,7 @@ static void ti_attach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	/* Allocate interrupt */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;;
 	}

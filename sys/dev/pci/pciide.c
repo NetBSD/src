@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.98 2000/12/21 01:19:24 mycroft Exp $	*/
+/*	$NetBSD: pciide.c,v 1.99 2000/12/28 22:59:15 sommerfeld Exp $	*/
 
 
 /*
@@ -639,8 +639,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	cp->compat = 0;
 
 	if (sc->sc_pci_ih == NULL) {
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		    pa->pa_intrline, &intrhandle) != 0) {
+		if (pci_intr_map(pa, &intrhandle) != 0) {
 			printf("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
 			return 0;

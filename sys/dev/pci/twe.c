@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.4 2000/11/14 18:42:58 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.5 2000/12/28 22:59:15 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -200,8 +200,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: can't map interrupt\n", sc->sc_dv.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.2 2000/06/25 01:05:18 eeh Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -184,8 +184,7 @@ printf("%s: ", sc->sc_dev.dv_xname);
 pci_conf_print(pa->pa_pc, pa->pa_tag, 0);
 #endif
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle) != 0) {
+	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;	/* bus_unmap ? */
