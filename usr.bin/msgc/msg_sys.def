@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.1.1.1.4.1 1999/06/24 00:34:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,19 +37,41 @@
  */
 
 static WINDOW *msg_win = NULL;
-static char cbuffer [ MAXSTR ];
+static char *cbuffer;
+static size_t cbuffersize;
 static int do_echo = 1;
+
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+static int last_i_was_nl, last_i_was_space;
+static int last_o_was_punct, last_o_was_space;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+
 
 /* Routines */
 
-void beep (void)
+void msg_beep (void)
 {
 	fprintf (stderr, "\a");
 }
 
-void msg_window(WINDOW *window)
+int msg_window(WINDOW *window)
 {
+	size_t ncbuffersize;
+	char *ncbuffer;
+
 	msg_win = window;
+
+	ncbuffersize = getmaxx(window) * getmaxy(window) + 1;
+	if (ncbuffersize > cbuffersize) {
+		ncbuffer = malloc(ncbuffersize);
+		if (ncbuffer == NULL)
+			return 1;
+		if (cbuffer != NULL)
+			free(cbuffer);
+		cbuffer = ncbuffer;
+		cbuffersize = ncbuffersize;
+	}
+	return 0;
 }
 
 char *msg_string (int msg_no)
@@ -61,6 +83,10 @@ void msg_clear(void)
 {
 	wclear (msg_win);
 	wrefresh (msg_win);
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	last_o_was_punct = 0;
+	last_o_was_space = 1;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 }
 
 void msg_standout(void)
@@ -75,10 +101,118 @@ void msg_standend(void)
 
 int msg_vprintf (char *fmt, va_list ap)
 {
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	const char *wstart, *afterw;
+	int wordlen, nspaces;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	int ret;
 
-	ret = vsnprintf (cbuffer, MAXSTR, fmt, ap);
+	ret = vsnprintf (cbuffer, cbuffersize, fmt, ap);
+
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	for (wstart = afterw = cbuffer; *wstart; wstart = afterw) {
+
+		/* eat one space, or a whole word of non-spaces */
+		if (isspace(*afterw))
+			afterw++;
+		else
+			while (*afterw && !isspace(*afterw))
+				afterw++;
+
+		/* last was an nl, this is an nl: paragraph break */
+		/* this is an nl: special formatting necessary */
+		if (*wstart == '\n') {
+			if (last_i_was_nl || last_i_was_space) {
+
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+				if (last_i_was_nl) {
+					/* last was an nl: paragraph break */
+					waddch(msg_win, '\n');
+				} else {
+					/* last was space: line break */
+				}
+				last_o_was_punct = 0;
+				last_o_was_space = 1;
+			} else {
+				/* last_o_was_punct unchanged */
+				/* last_o_was_space unchanged */
+			}
+			last_i_was_space = 1;
+			last_i_was_nl = 1;
+			continue;
+		}
+
+		/* this is a tab: special formatting necessary. */
+		if (*wstart == '\t') {
+			if (last_i_was_nl) {
+				/* last was an nl: list indent */
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+			} else {
+				/* last was not an nl: columns */
+			}
+			waddch(msg_win, '\t');
+			last_i_was_nl = 0;
+			last_i_was_space = 1;
+			last_o_was_punct = 0;
+			last_o_was_space = 1;
+			continue;
+		}
+
+		/* this is a space: ignore it but set flags */
+		last_i_was_nl = 0;	/* all newlines handled above */
+		last_i_was_space = isspace(*wstart);
+		if (last_i_was_space)
+			continue;
+
+		/*
+		 * we have a real "word," i.e. a sequence of non-space
+		 * characters.  wstart is now the start of the word,
+		 * afterw is the next character after the end.
+		 */
+		wordlen = afterw - wstart;
+		nspaces = last_o_was_space ? 0 : (last_o_was_punct ? 2 : 1);
+		if ((getcurx(msg_win) + nspaces + wordlen) >=
+		      getmaxx(msg_win) &&
+		    wordlen < (getmaxx(msg_win) / 3)) {
+			/* wrap the line */
+			waddch(msg_win, '\n');
+			nspaces = 0;
+		}
+
+		/* output the word, preceded by spaces if necessary */
+		while (nspaces-- > 0)
+			waddch(msg_win, ' ');
+		waddbytes(msg_win, wstart, wordlen);
+
+		/* set up the 'last' state for the next time around */
+		switch (afterw[-1]) {
+		case '.':
+		case '?':
+		case '!':
+			last_o_was_punct = 1;
+			break;
+		default:
+			last_o_was_punct = 0;
+			break;
+		}
+		last_o_was_space = 0;
+
+		/* ... and do it all again! */
+	}
+
+	/* String ended with a newline.  They really want a line break. */
+	if (last_i_was_nl) {
+		if (getcurx(msg_win) != 0)
+			waddch(msg_win, '\n');
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+	}
+#else /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	waddstr (msg_win, cbuffer);
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+
 	wrefresh (msg_win);
 	return ret;
 }
@@ -87,9 +221,9 @@ void msg_display(int msg_no, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start(ap, msg_no);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	(void)msg_vprintf (msg_list[msg_no], ap);
 	va_end(ap);
 }
@@ -108,9 +242,9 @@ int msg_printf (char *fmt, ...)
 	va_list ap;
 	int  res;
 
+	msg_clear();
+
 	va_start (ap, fmt);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	res = msg_vprintf (fmt, ap);
 	va_end (ap);
 	return res;
@@ -134,6 +268,7 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	int ch;
 	int count = 0;
 	int y,x;
+	char *ibuf = alloca(max_chars);
 
 	msg_vprintf (msg, ap);
 	if (def != NULL && *def) {
@@ -155,27 +290,66 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 					wdelch(msg_win);
 				}
 			} else
-				beep ();
-		}
-		else if (count < max_chars && isprint(ch)) {
+				msg_beep ();
+		} else if (ch == 0x15) {	/* ^U; line kill */
+			while (count > 0) {
+				count--;
+				if (do_echo) {
+					getyx(msg_win, y, x);
+					x--;
+					wmove(msg_win, y, x);
+					wdelch(msg_win);
+				}
+			}
+		} else if (ch == 0x17) {        /* ^W; word kill */
+			/*
+			 * word kill kills the spaces and the 'word'
+			 * (non-spaces) last typed.  the spaces before
+			 * the 'word' aren't killed.
+			 */
+			while (count > 0 && isspace(ibuf[count - 1])) {
+				count--;
+				if (do_echo) {
+					getyx(msg_win, y, x);
+					x--;
+					wmove(msg_win, y, x);
+					wdelch(msg_win);
+				}
+			}
+			while (count > 0 && !isspace(ibuf[count - 1])) {
+				count--;
+				if (do_echo) {
+					getyx(msg_win, y, x);
+					x--;
+					wmove(msg_win, y, x);
+					wdelch(msg_win);
+				}
+			}
+		} else if (count < (max_chars - 1) && isprint(ch)) {
 			if (do_echo)
 				waddch (msg_win, ch);
-			val[count++] = ch;
+			ibuf[count++] = ch;
 		} else
-			beep ();
+			msg_beep ();
 		if (do_echo)
 			wrefresh(msg_win);
 	}
-	if (do_echo)
+	if (do_echo) {
 		waddch(msg_win, '\n');
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+	}
 
-	if (count != 0)
-		val[count] = '\0';
-
-	/* Do a string copy if needed to get default */
-	if (count == 0 && def != NULL && val != def)
-		strncpy (val, def, max_chars);
-
+	/* copy the appropriate string to the output */
+	if (count != 0) {
+		ibuf[count] = '\0';
+		strcpy(val, ibuf);		/* size known to be OK */
+	} else if (def != NULL && val != def) {
+		strncpy(val, def, max_chars);
+		val[max_chars - 1] = '\0';
+	}
 }
 
 void msg_prompt_addstr (char *fmt, char *def, char *val, int max_chars, ...)
@@ -200,9 +374,9 @@ void msg_prompt_str (char *msg, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start (ap, max_chars);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	msg_vprompt (msg, def, val, max_chars, ap);
 	va_end (ap);
 }
@@ -211,9 +385,9 @@ void msg_prompt (int msg_no, char *def, char *val, int max_chars, ...)
 {
 	va_list ap;
 
+	msg_clear();
+
 	va_start (ap, max_chars);
-	wclear (msg_win);
-	wmove (msg_win, 0, 0);
 	msg_vprompt (msg_list[msg_no], def, val, max_chars, ap);
 	va_end (ap);
 }
