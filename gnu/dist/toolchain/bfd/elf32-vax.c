@@ -722,37 +722,6 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 		
 		}
 	    }
-	  else
-	    {
-	      /* This is a global offset table entry for a local symbol.  */
-	      if (local_got_refcounts == NULL)
-		{
-		  size_t size;
-
-		  size = symtab_hdr->sh_info * sizeof (bfd_signed_vma);
-		  local_got_refcounts = ((bfd_signed_vma *)
-					 bfd_alloc (abfd, size));
-		  if (local_got_refcounts == NULL)
-		    return false;
-		  elf_local_got_refcounts (abfd) = local_got_refcounts;
-		  memset (local_got_refcounts, -1, size);
-		}
-	      if (local_got_refcounts[r_symndx] == -1)
-		{
-		  local_got_refcounts[r_symndx] = 1;
-
-		  sgot->_raw_size += 4;
-		  if (info->shared)
-		    {
-		      /* If we are generating a shared object, we need to
-			 output a R_VAX_RELATIVE reloc so that the dynamic
-			 linker can adjust this GOT entry.  */
-		      srelgot->_raw_size += sizeof (Elf32_External_Rela);
-		    }
-		}
-	      else
-		local_got_refcounts[r_symndx]++;
-	    }
 	  break;
 
 	case R_VAX_PLT32:
@@ -1676,96 +1645,52 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	  {
 	    bfd_vma off;
 
+	    if (!elf_hash_table (info)->dynamic_sections_created
+		|| (h == NULL)
+	        || (info->shared
+	         && info->symbolic
+	         && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
+	      {
+	        /* This is actually a static link, or it is a -Bsymbolic link
+		   and the symbol is defined locally or there is no symbol.
+		   Change the GOT32 entry to a PC32 entry. */
+		break;
+	      }
+
 	    if (sgot == NULL)
 	      {
 		sgot = bfd_get_section_by_name (dynobj, ".got");
 		BFD_ASSERT (sgot != NULL);
 	      }
 
-	    if (!elf_hash_table (info)->dynamic_sections_created
-	        || (info->shared
-	         && info->symbolic
-	         && (h == NULL
-	          || (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))))
+	    BFD_ASSERT (h != NULL);
+	    off = h->got.offset;
+	    BFD_ASSERT (off != (bfd_vma) -1);
+
+	    if (info->shared
+		&& h->dynindx == -1
+		&& (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
 	      {
-	        /* This is actually a static link, or it is a
-	           -Bsymbolic link and the symbol is defined
-	           locally.  Change the GOT32 entry to a PC32
-	           entry. */
-		break;
-	      }
+		/* The symbol was forced to be local
+		   because of a version file..  We must initialize
+		   this entry in the global offset table.  Since
+		   the offset must always be a multiple of 4, we
+		   use the least significant bit to record whether
+		   we have initialized it already.
 
-	    if (h != NULL)
-	      {
-		off = h->got.offset;
-		BFD_ASSERT (off != (bfd_vma) -1);
-
-	        if (info->shared
-		    && h->dynindx == -1
-		    && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR))
-		  {
-		    /* The symbol was forced to be local
-		       because of a version file..  We must initialize
-		       this entry in the global offset table.  Since
-		       the offset must always be a multiple of 4, we
-		       use the least significant bit to record whether
-		       we have initialized it already.
-
-		       When doing a dynamic link, we create a .rela.got
-		       relocation entry to initialize the value.  This
-		       is done in the finish_dynamic_symbol routine.  */
-		    if ((off & 1) != 0)
-		      off &= ~1;
-		    else
-		      {
-			bfd_put_32 (output_bfd, relocation + rel->r_addend,
-				    sgot->contents + off);
-			h->got.offset |= 1;
-		      }
-		  } else {
-		    bfd_put_32 (output_bfd, rel->r_addend,
-				sgot->contents + off);
-		  }
-	      }
-	    else
-	      {
-		BFD_ASSERT (local_got_offsets != NULL
-			    && local_got_offsets[r_symndx] != (bfd_vma) -1);
-
-		off = local_got_offsets[r_symndx];
-
-		/* The offset must always be a multiple of 4.  We use
-		   the least significant bit to record whether we have
-		   already generated the necessary reloc.  */
+		   When doing a dynamic link, we create a .rela.got
+		   relocation entry to initialize the value.  This
+		   is done in the finish_dynamic_symbol routine.  */
 		if ((off & 1) != 0)
 		  off &= ~1;
 		else
 		  {
 		    bfd_put_32 (output_bfd, relocation + rel->r_addend,
 				sgot->contents + off);
-
-		    if (info->shared)
-		      {
-			asection *srelgot;
-			Elf_Internal_Rela outrel;
-
-			srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
-			BFD_ASSERT (srelgot != NULL);
-
-			outrel.r_offset = (sgot->output_section->vma
-					   + sgot->output_offset
-					   + off);
-			outrel.r_info = ELF32_R_INFO (0, R_VAX_RELATIVE);
-			outrel.r_addend = relocation + rel->r_addend;
-			bfd_elf32_swap_reloca_out (output_bfd, &outrel,
-						   (((Elf32_External_Rela *)
-						     srelgot->contents)
-						    + srelgot->reloc_count));
-			++srelgot->reloc_count;
-		      }
-
-		    local_got_offsets[r_symndx] |= 1;
+		    h->got.offset |= 1;
 		  }
+	      } else {
+		bfd_put_32 (output_bfd, rel->r_addend, sgot->contents + off);
 	      }
 
 	    relocation = sgot->output_offset + off;
