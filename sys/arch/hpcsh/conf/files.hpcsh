@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.7 2001/02/21 16:28:02 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.8 2001/02/24 20:17:45 uch Exp $
 #
 maxpartitions 8
 
@@ -11,17 +11,20 @@ file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 file	arch/hpcsh/hpcsh/debug.c
 
+define mainbus { }
+
 #
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
-include "dev/hpc/files.bicons"
 file	arch/hpc/hpc/disksubr.c			disk
+include "dev/hpc/files.bicons"
+include "dev/hpc/files.hpckbd"
+include "dev/hpc/files.hpcfb"
 
 #
 # Machine-independent SCSI drivers
 #
-
 include "dev/scsipi/files.scsipi"
 major	{sd = 3}
 major	{st = 4}
@@ -30,7 +33,6 @@ major	{cd = 5}
 #
 # Machine-independent ATA drivers
 #
-
 include "dev/ata/files.ata"
 major	{wd = 1}
 
@@ -42,15 +44,18 @@ major	{md = 6}
 # System bus types
 #
 
-define mainbus { }
 device	mainbus:  mainbus
 attach	mainbus at root
-file	arch/hpcsh/hpcsh/mainbus.c	mainbus
+file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
 #
 # SH3 bus
 #
-include "arch/hpcsh/conf/files.shbus"
+include	"arch/hpcsh/conf/files.shbus"
+
+device	pfckbd: hpckbdif
+attach	pfckbd at mainbus
+file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 
 #
 # HD64461
@@ -65,13 +70,10 @@ attach	hd64461pcmcia at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
 
 # network devices MII bus
-include "dev/mii/files.mii"
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
+include	"dev/mii/files.mii"
 
 #
 # Workstation Console
 #
-include "dev/wscons/files.wscons"
+include	"dev/wscons/files.wscons"
+

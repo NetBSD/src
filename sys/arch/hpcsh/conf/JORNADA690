@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.4 2001/02/21 16:28:02 uch Exp $
+#	$NetBSD: JORNADA690,v 1.5 2001/02/24 20:17:45 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -51,12 +51,32 @@ options 	NFS_BOOT_DHCP
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 
+options 	WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_VT220L8x10
+options 	WS_KERNEL_FG=WSCOL_BROWN
+options 	WS_KERNEL_BG=WSCOL_BLUE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
 #
 # Device configuration
 #
 mainbus0 at root
 
 shb* at mainbus?
+
+# Workstation Console attachments
+bivideo0	at mainbus0
+hpcfb*		at bivideo0
+
+wsdisplay*	at hpcfb?
+pfckbd*		at mainbus?
+hpckbd*		at pfckbd?
+wskbd*		at hpckbd? mux 1
 
 # Serial Devices
 # don't need to define SCICONSOLE. you can select from bootloader.
@@ -88,8 +108,8 @@ mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 # PC-Card slot
 wdc1	at pcmcia0 function ?
 wd*	at wdc1 channel ? drive ? flags 0x0000
-# Compact Flash slot (only memory-mapped CF can attach)
-#wdc0	at pcmcia1 function ?	flags 0x0001	# memory mapped mode.
+# Compact Flash slot (only memory mapped mode CF can attach) 
+#wdc0	at pcmcia1 function ?
 #wd*	at wdc0 channel ? drive ? flags 0x0000
 
 # SCSI devices
@@ -107,3 +127,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
