@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.1 2000/05/09 21:55:48 bjh21 Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.1 2000/06/06 08:15:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -36,18 +36,18 @@
 #include <machine/asm.h>
 
 /*
- * Return the current FP cumulative flags
+ * Set the current FP exception enable mask
  */
 
-ENTRY(fpgetsticky)
-#ifdef SOFTFLOAT
-	b	_C_FUNC(sfp_getsticky)
-#else
-	rfs	r0
-	and	r0, r0, #0x1f
+ENTRY(fpsetmask)
+	rfs	r1
+	bic	r1, r1, #0x001f0000
+	and	r0, r0, #0x0000001f
+	orr	r0, r1, r0, lsl #16
+	wfs	r0
+	mov	r0, r1, lsr #16		/* Return old mask */
 #ifdef __APCS_26__
 	movs	r15, r14		/* return */ 
 #else
 	mov	r15, r14		/* return */
 #endif
-#endif	/* SOFTFLOAT */
