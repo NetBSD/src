@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.62 2003/01/18 09:42:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.63 2003/01/22 12:52:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.62 2003/01/18 09:42:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.63 2003/01/22 12:52:17 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -324,7 +324,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/*
 	 * fill stack with magic number
 	 */
-	kstack_setup_magic(p2);
+	kstack_setup_magic(l2);
 #endif
 
 	/*

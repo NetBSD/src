@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.153 2003/01/18 09:53:19 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.154 2003/01/22 12:52:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -466,8 +466,8 @@ void	proc_trampoline_mp(void);	/* XXX */
 #endif
 
 #ifdef KSTACK_CHECK_MAGIC
-void kstack_setup_magic(const struct proc *);
-void kstack_check_magic(const struct proc *);
+void kstack_setup_magic(const struct lwp *);
+void kstack_check_magic(const struct lwp *);
 #endif
 
 /*
@@ -476,7 +476,7 @@ void kstack_check_magic(const struct proc *);
  */
 /* the lowest address of kernel stack */
 #ifndef KSTACK_LOWEST_ADDR
-#define	KSTACK_LOWEST_ADDR(p)	((caddr_t)ALIGN((p)->p_addr + 1))
+#define	KSTACK_LOWEST_ADDR(l)	((caddr_t)ALIGN((l)->l_addr + 1))
 #endif
 /* size of kernel stack */
 #ifndef KSTACK_SIZE

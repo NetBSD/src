@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.55 2003/01/18 10:06:28 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.56 2003/01/22 12:52:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.55 2003/01/18 10:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.56 2003/01/22 12:52:16 yamt Exp $");
 
 #include "opt_kstack.h"
 
@@ -620,67 +620,69 @@ int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
 					  less than this */
 
 void
-kstack_setup_magic(const struct proc *p)
+kstack_setup_magic(const struct lwp *l)
 {
 	u_int32_t *ip;
 	u_int32_t const *end;
 
-	KASSERT(p != 0);
-	KASSERT(p != &proc0);
+	KASSERT(l != NULL);
+	KASSERT(l != &lwp0);
 
 	/*
 	 * fill all the stack with magic number
 	 * so that later modification on it can be detected.
 	 */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
 }
 
 void
-kstack_check_magic(const struct proc *p)
+kstack_check_magic(const struct lwp *l)
 {
 	u_int32_t const *ip, *end;
 	int stackleft;
 
-	KASSERT(p != 0);
+	KASSERT(l != NULL);
 
 	/* don't check proc0 */ /*XXX*/
-	if (p == &proc0)
+	if (l == &lwp0)
 		return;
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
-	end = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	end = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
 		
-	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE - (caddr_t)ip;
+	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
-	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;
 
-	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(p);
+	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(l);
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	if (kstackleftmin > stackleft) {
 		kstackleftmin = stackleft;
 		if (stackleft < kstackleftthres)
-			printf("warning: kernel stack left %d bytes(pid %u)\n",
-			    stackleft, p->p_pid);
+			printf("warning: kernel stack left %d bytes"
+			    "(pid %u:lid %u)\n", stackleft,
+			    (u_int)l->l_proc->p_pid, (u_int)l->l_lid);
 	}
 
 	if (stackleft <= 0) {
-		panic("magic on the top of kernel stack changed for pid %u: "
-		    "maybe kernel stack overflow", p->p_pid);
+		panic("magic on the top of kernel stack changed for "
+		    "pid %u, lid %u: maybe kernel stack overflow",
+		    (u_int)l->l_proc->p_pid, (u_int)l->l_lid);
 	}
 }
 #endif /* KSTACK_CHECK_MAGIC */
