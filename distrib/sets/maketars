@@ -1,10 +1,16 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.34 2002/12/25 23:44:06 lukem Exp $
+# $NetBSD: maketars,v 1.35 2002/12/25 23:47:32 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
 #	[-M metalog] [-N etcdir] [-d destdir] [-t tardir] [setname ...]
+#
+# The default sets are "base comp etc games man misc text"
+#
+# If '-i installdir' is given, copy the given sets to installdir
+# (using pax -rw ...) instead of creating tar files.
+# In this case, remove "etc" from the list of default sets.
 #
 
 # set defaults
