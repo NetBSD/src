@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.4 1994/10/26 05:44:40 cgd Exp $	*/
+/*	$NetBSD: close.c,v 1.5 1995/09/06 19:53:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -77,9 +77,9 @@ close(fd)
 		errno = EBADF;
 		return (-1);
 	}
-	if (!(f->f_flags & F_RAW))
+	if (!(f->f_flags & F_RAW) && f->f_ops)
 		err1 = (f->f_ops->close)(f);
-	if (!(f->f_flags & F_NODEV))
+	if (!(f->f_flags & F_NODEV) && f->f_dev)
 		err2 = (f->f_dev->dv_close)(f);
 	f->f_flags = 0;
 	if (err1) {
