@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.50 2002/06/09 14:43:13 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.51 2002/06/11 17:26:52 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.50 2002/06/09 14:43:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.51 2002/06/11 17:26:52 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -141,8 +141,8 @@ static int ipsec6_setspidx_ipaddr __P((struct mbuf *, struct secpolicyindex *));
 static struct inpcbpolicy *ipsec_newpcbpolicy __P((void));
 static void ipsec_delpcbpolicy __P((struct inpcbpolicy *));
 static struct secpolicy *ipsec_deepcopy_policy __P((struct secpolicy *src));
-static int ipsec_set_policy __P((struct secpolicy **pcb_sp,
-	int optname, caddr_t request, size_t len, int priv));
+static int ipsec_set_policy
+	__P((struct secpolicy **, int, caddr_t, size_t, int));
 static int ipsec_get_policy __P((struct secpolicy *pcb_sp, struct mbuf **mp));
 static void vshiftl __P((unsigned char *, int, int));
 static int ipsec_in_reject __P((struct secpolicy *, struct mbuf *));
@@ -1362,8 +1362,8 @@ fail:
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(pcb_sp, optname, request, len, priv)
-	struct secpolicy **pcb_sp;
+ipsec_set_policy(spp, optname, request, len, priv)
+	struct secpolicy **spp;
 	int optname;
 	caddr_t request;
 	size_t len;
@@ -1374,7 +1374,7 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 	int error;
 
 	/* sanity check. */
-	if (pcb_sp == NULL || *pcb_sp == NULL || request == NULL)
+	if (spp == NULL || *spp == NULL || request == NULL)
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
@@ -1401,8 +1401,8 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 	newsp->state = IPSEC_SPSTATE_ALIVE;
 
 	/* clear old SP and set new SP */
-	key_freesp(*pcb_sp);
-	*pcb_sp = newsp;
+	key_freesp(*spp);
+	*spp = newsp;
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
 		printf("ipsec_set_policy: new policy\n");
 		kdebug_secpolicy(newsp));
@@ -1411,16 +1411,16 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 }
 
 static int
-ipsec_get_policy(pcb_sp, mp)
-	struct secpolicy *pcb_sp;
+ipsec_get_policy(sp, mp)
+	struct secpolicy *sp;
 	struct mbuf **mp;
 {
 
 	/* sanity check. */
-	if (pcb_sp == NULL || mp == NULL)
+	if (sp == NULL || mp == NULL)
 		return EINVAL;
 
-	*mp = key_sp2msg(pcb_sp);
+	*mp = key_sp2msg(sp);
 	if (!*mp) {
 		ipseclog((LOG_DEBUG, "ipsec_get_policy: No more memory.\n"));
 		return ENOBUFS;
@@ -1443,7 +1443,7 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	int priv;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **spp;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL)
@@ -1455,10 +1455,10 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &inp->inp_sp->sp_in;
+		spp = &inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &inp->inp_sp->sp_out;
+		spp = &inp->inp_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
@@ -1467,7 +1467,7 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	}
 
 	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(spp, optname, request, len, priv);
 }
 
 int
@@ -1478,7 +1478,7 @@ ipsec4_get_policy(inp, request, len, mp)
 	struct mbuf **mp;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *sp;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL || mp == NULL)
@@ -1492,10 +1492,10 @@ ipsec4_get_policy(inp, request, len, mp)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = inp->inp_sp->sp_in;
+		sp = inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = inp->inp_sp->sp_out;
+		sp = inp->inp_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
@@ -1503,7 +1503,7 @@ ipsec4_get_policy(inp, request, len, mp)
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(sp, mp);
 }
 
 /* delete policy in PCB */
@@ -1546,7 +1546,7 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	int priv;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **spp;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL)
@@ -1558,10 +1558,10 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_in;
+		spp = &in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_out;
+		spp = &in6p->in6p_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
@@ -1570,7 +1570,7 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	}
 
 	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(spp, optname, request, len, priv);
 }
 
 int
@@ -1581,7 +1581,7 @@ ipsec6_get_policy(in6p, request, len, mp)
 	struct mbuf **mp;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *sp;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL || mp == NULL)
@@ -1595,10 +1595,10 @@ ipsec6_get_policy(in6p, request, len, mp)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = in6p->in6p_sp->sp_in;
+		sp = in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = in6p->in6p_sp->sp_out;
+		sp = in6p->in6p_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
@@ -1606,7 +1606,7 @@ ipsec6_get_policy(in6p, request, len, mp)
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(sp, mp);
 }
 
 int
@@ -1942,7 +1942,7 @@ ipsec_hdrsiz(sp)
 	size_t siz, clen;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec_in_reject: using SP\n");
+		printf("ipsec_hdrsiz: using SP\n");
 		kdebug_secpolicy(sp));
 
 	/* check policy */
@@ -2450,7 +2450,7 @@ ok:
 }
 
 /*
- * shift variable length bunffer to left.
+ * shift variable length buffer to left.
  * IN:	bitmap: pointer to the buffer
  * 	nbit:	the number of to shift.
  *	wsize:	buffer size (bytes).
@@ -3197,14 +3197,16 @@ ipsec6_output_tunnel(state, sp, flags)
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
 #ifdef IPSEC_ESP
-			error = esp6_output(state->m, &ip6->ip6_nxt, state->m->m_next, isr);
+			error = esp6_output(state->m, &ip6->ip6_nxt,
+					    state->m->m_next, isr);
 #else
 			m_freem(state->m);
 			error = EINVAL;
 #endif
 			break;
 		case IPPROTO_AH:
-			error = ah6_output(state->m, &ip6->ip6_nxt, state->m->m_next, isr);
+			error = ah6_output(state->m, &ip6->ip6_nxt,
+					   state->m->m_next, isr);
 			break;
 		case IPPROTO_IPCOMP:
 			/* XXX code should be here */
@@ -3413,11 +3415,12 @@ ipsec_copypkt(m)
 	for (n = m, mpp = &m; n; n = n->m_next) {
 		if (n->m_flags & M_EXT) {
 			/*
-			 * Make a copy only if there are more than one
+			 * Make a copy only if there is more than one
 			 * references to the cluster.
 			 * XXX: is this approach effective?
 			 */
-			if (M_READONLY(n)) {
+			if (M_READONLY(n))
+			{
 				int remain, copied;
 				struct mbuf *mm;
 
