@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.26 1997/10/10 02:12:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,6 +76,7 @@ struct buf {
 	struct	ucred *b_wcred;		/* Write credentials reference. */
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
+	off_t	b_dcookie;		/* Offset cookie if dir block */
 };
 
 /*
