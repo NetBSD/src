@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2000/04/30 21:09:43 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.46 2000/05/01 14:06:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -301,6 +301,7 @@ boolean_t	pmap_clear_modify4m __P((struct vm_page *));
 boolean_t	pmap_clear_reference4m __P((struct vm_page *));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
 void		pmap_copy_page_viking_mxcc(paddr_t, paddr_t);
+void		pmap_copy_page_hypersparc(paddr_t, paddr_t);
 int		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    int));
 boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
@@ -313,6 +314,7 @@ void		pmap_page_protect4m __P((struct vm_page *, vm_prot_t));
 void		pmap_protect4m __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
 void		pmap_zero_page4m __P((paddr_t));
 void		pmap_zero_page_viking_mxcc(paddr_t);
+void		pmap_zero_page_hypersparc(paddr_t);
 void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 
 #endif /* defined SUN4M */
