@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.6 2003/06/23 12:15:01 agc Exp $	*/
+/*	$NetBSD: wav.c,v 1.7 2004/01/21 11:55:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.6 2003/06/23 12:15:01 agc Exp $");
+__RCSID("$NetBSD: wav.c,v 1.7 2004/01/21 11:55:07 mrg Exp $");
 #endif
 
 
@@ -94,17 +94,17 @@ ssize_t
 audio_wav_parse_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 	void	*hdr;
 	size_t	sz;
-	int	*enc;
-	int	*prec;
-	int	*sample;
-	int	*channels;
+	u_int	*enc;
+	u_int	*prec;
+	u_int	*sample;
+	u_int	*channels;
 	size_t *datasize;
 {
 	char	*where = hdr, *owhere;
 	wav_audioheaderpart part;
 	wav_audioheaderfmt fmt;
 	char	*end = (((char *)hdr) + sz);
-	int	newenc, newprec;
+	u_int	newenc, newprec;
 	static const char
 	    strfmt[4] = "fmt ",
 	    strRIFF[4] = "RIFF",
@@ -185,7 +185,7 @@ audio_wav_parse_hdr(hdr, sz, enc, prec, sample, channels, datasize)
 
 	if ((where - getle32(part.len)) <= end) {
 		if (channels)
-			*channels = getle16(fmt.channels);
+			*channels = (u_int)getle16(fmt.channels);
 		if (sample)
 			*sample = getle32(fmt.sample_rate);
 		if (enc)
