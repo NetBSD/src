@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.350 2003/10/28 10:32:54 augustss Exp $
+$NetBSD: usbdevs,v 1.351 2003/11/07 00:59:38 kivinen Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1326,6 +1326,7 @@ product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
 product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
+product SHUTTLE ORCA		0x0325	eUSB ORCA Quad Reader
 product SHUTTLE SCM		0x1010	SCM Micro
 
 /* Siemens products */
