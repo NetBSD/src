@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.7 2002/02/09 19:33:53 pooka Exp $	*/
+/*	$NetBSD: exf.c,v 1.8 2002/03/25 00:13:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -414,7 +414,7 @@ file_init(sp, frp, rcv_name, flags)
 	file_cinit(sp);
 
 	/* Redraw the screen from scratch, schedule a welcome message. */
-	F_SET(sp, SC_SCR_REFORMAT | SC_SCR_TOP | SC_STATUS);
+	F_SET(sp, SC_SCR_REFORMAT | SC_STATUS);
 
 	return (0);
 
