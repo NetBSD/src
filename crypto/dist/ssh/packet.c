@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.1 2000/09/28 22:10:07 thorpej Exp $	*/
+/*	$NetBSD: packet.c,v 1.2 2000/12/30 14:54:38 toshii Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: packet.c,v 1.1.1.1 2000/09/28 22:10:07 thorpej Exp $");
+__RCSID("$NetBSD: packet.c,v 1.2 2000/12/30 14:54:38 toshii Exp $");
 #endif
 
 #include "includes.h"
@@ -1263,23 +1263,24 @@ packet_set_interactive(int interactive, int keepalives)
 			error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 	}
 	/*
-	 * IPTOS_LOWDELAY, TCP_NODELAY and IPTOS_THROUGHPUT are IPv4 only
+	 * IPTOS_LOWDELAY and IPTOS_THROUGHPUT are IPv4 only
 	 */
-	if (!packet_connection_is_ipv4())
-		return;
 	if (interactive) {
 		/*
 		 * Set IP options for an interactive connection.  Use
 		 * IPTOS_LOWDELAY and TCP_NODELAY.
 		 */
-		int lowdelay = IPTOS_LOWDELAY;
-		if (setsockopt(connection_in, IPPROTO_IP, IP_TOS, (void *) &lowdelay,
-		    sizeof(lowdelay)) < 0)
-			error("setsockopt IPTOS_LOWDELAY: %.100s", strerror(errno));
+		if (packet_connection_is_ipv4()) {
+			int lowdelay = IPTOS_LOWDELAY;
+			if (setsockopt(connection_in, IPPROTO_IP, IP_TOS,
+			    (void *) &lowdelay, sizeof(lowdelay)) < 0)
+				error("setsockopt IPTOS_LOWDELAY: %.100s",
+				    strerror(errno));
+		}
 		if (setsockopt(connection_in, IPPROTO_TCP, TCP_NODELAY, (void *) &on,
 		    sizeof(on)) < 0)
 			error("setsockopt TCP_NODELAY: %.100s", strerror(errno));
-	} else {
+	} else if (packet_connection_is_ipv4()) {
 		/*
 		 * Set IP options for a non-interactive connection.  Use
 		 * IPTOS_THROUGHPUT.
