@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.1 2002/05/16 12:57:03 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.2 2002/05/16 12:58:25 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -440,6 +440,9 @@ void	setupdirs(void);
 
 /* main.c */
 void	logconfig_include(FILE *, const char *);
+
+/* mkdevsw.c */
+int	mkdevsw(void);
 
 /* mkheaders.c */
 int	mkheaders(void);
