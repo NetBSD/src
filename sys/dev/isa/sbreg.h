@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.15 1996/03/01 04:08:13 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.16 1996/03/16 04:00:14 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -172,6 +172,47 @@
 #define 	SB_SPKR_OFF	0x00
 #define 	SB_SPKR_ON	0xff
 #define SB_DSP_VERSION		0xe1	/* get version number */
+
+/* Some of these come from linux driver (It serves as convenient unencumbered
+   documentation) */
+#define	JAZZ16_READ_VER		0xFA	/* 0x12 means ProSonic/Jazz16? */
+#define		JAZZ16_VER_JAZZ	0x12
+#define	JAZZ16_SET_DMAINTR	0xFB
+
+#define JAZZ16_CONFIG_PORT	0x201
+#define	JAZZ16_WAKEUP		0xAF
+#define	JAZZ16_SETBASE		0x50
+
+#define	JAZZ16_RECORD_STEREO	0xAC	/* 16-bit record */
+#define	JAZZ16_RECORD_MONO	0xA4	/* 16-bit record */
+
+/*
+ * These come from Jazz16 chipset documentation, which doesn't include
+ * full register details, alas.  Their source code CD-ROM probably includes
+ * details, but it has an NDA attached.
+ */
+#define	JAZZ16_DIR_PB 		0x10
+#define	JAZZ16_SINGLE_PB	0x14
+#define	JAZZ16_SINGLE_ALAW_PB 	0x17
+#define	JAZZ16_CONT_PB		0x1C
+#define	JAZZ16_CONT_ALAW_PB 	0x1F
+#define	JAZZ16_DIR_PCM_REC	0x20
+#define	JAZZ16_SINGLE_REC	0x24
+#define	JAZZ16_SINGLE_ALAW_REC 	0x27
+#define	JAZZ16_CONT_REC		0x2C
+#define	JAZZ16_CONT_ALAW_REC 	0x2F
+#define	JAZZ16_SINGLE_ADPCM_PB 	0x74
+#define	JAZZ16_SINGLE_MULAW_PB 	0x77
+#define	JAZZ16_CONT_ADPCM_PB 	0x7C
+#define	JAZZ16_SINGLE_ADPCM_REC 0x84
+#define	JAZZ16_SINGLE_MULAW_REC 0x87
+#define	JAZZ16_CONT_ADPCM_REC 	0x8C
+#define	JAZZ16_CONT_MULAW_REC 	0x8F
+#define	JAZZ16_CONT_PB_XX 	0x90
+#define	JAZZ16_SINGLE_PB_XX	0x91
+#define	JAZZ16_SINGLE_REC_XX	0x98
+#define	JAZZ16_CONT_REC_XX	0x99
+
 
 /*
  * The ADPCM encodings are differential, meaning each sample represents

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.23 1996/03/01 04:08:38 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.24 1996/03/16 04:00:11 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -81,6 +81,10 @@ struct {
 	int wmidi;
 } sberr;
 
+int sbdsp_srtotc __P((struct sbdsp_softc *sc, int sr, int isdac,
+		      int *tcp, int *modep));
+u_int sbdsp_jazz16_probe __P((struct sbdsp_softc *));
+
 /*
  * Time constant routines follow.  See SBK, section 12.
  * Although they don't come out and say it (in the docs),
@@ -154,9 +158,60 @@ sbdsp_probe(sc)
 		DPRINTF(("sbdsp: couldn't reset card\n"));
 		return 0;
 	}
-	sc->sc_model = sbversion(sc);
+	/* if flags set, go and probe the jazz16 stuff */
+	if (sc->sc_dev.dv_cfdata->cf_flags != 0)
+		sc->sc_model = sbdsp_jazz16_probe(sc);
+	else
+		sc->sc_model = sbversion(sc);
 
 	return 1;
+}
+
+/*
+ * Try add-on stuff for Jazz16.
+ */
+u_int
+sbdsp_jazz16_probe(sc)
+	struct sbdsp_softc *sc;
+{
+	static u_char jazz16_irq_conf[16] = {
+	    -1, -1, 0x02, 0x03,
+	    -1, 0x01, -1, 0x04,
+	    -1, 0x02, 0x05, -1,
+	    -1, -1, -1, 0x06};
+	static u_char jazz16_drq_conf[8] = {
+	    -1, 0x01, -1, 0x02,
+	    -1, 0x03, -1, 0x04};
+
+	u_int rval = sbversion(sc);
+	register int iobase = sc->sc_iobase;
+
+	if (jazz16_drq_conf[sc->sc_drq] == (u_char)-1 ||
+	    jazz16_irq_conf[sc->sc_irq] == (u_char)-1)
+		return rval;		/* give up, we can't do it. */
+	outb(JAZZ16_CONFIG_PORT, JAZZ16_WAKEUP);
+	delay(10000);			/* delay 10 ms */
+	outb(JAZZ16_CONFIG_PORT, JAZZ16_SETBASE);
+	outb(JAZZ16_CONFIG_PORT, iobase & 0x70);
+
+	if (sbdsp_reset(sc) < 0)
+		return rval;		/* XXX? what else could we do? */
+
+	if (sbdsp_wdsp(iobase, JAZZ16_READ_VER))
+		return rval;
+	if (sbdsp_rdsp(iobase) != JAZZ16_VER_JAZZ)
+		return rval;
+
+	if (sbdsp_wdsp(iobase, JAZZ16_SET_DMAINTR) ||
+	    /* set both 8 & 16-bit drq to same channel, it works fine. */
+	    sbdsp_wdsp(iobase,
+		       (jazz16_drq_conf[sc->sc_drq] << 4) |
+		       jazz16_drq_conf[sc->sc_drq]) ||
+	    sbdsp_wdsp(iobase, jazz16_irq_conf[sc->sc_irq])) {
+		DPRINTF(("sbdsp: can't write jazz16 probe stuff"));
+		return rval;
+	}
+	return (rval | MODEL_JAZZ16);
 }
 
 /*
@@ -203,8 +258,9 @@ sbdsp_attach(sc)
 		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
-	printf(": dsp v%d.%02d\n",
-	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
+	printf(": dsp v%d.%02d%s\n",
+	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model),
+	       ISJAZZ16(sc) ? ": <Jazz16>" : "");
 
 #ifdef notyet
 	sbdsp_mix_write(sc, SBP_SET_IRQ, 0x04);
@@ -356,7 +412,7 @@ sbdsp_set_precision(addr, precision)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	if (ISSB16CLASS(sc)) {
+	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
 		if (precision != 16 && precision != 8)
 			return (EINVAL);
 		sc->sc_precision = precision;
@@ -607,6 +663,40 @@ sbdsp_commit_settings(addr)
 	   (adjust the proper channels), number of input channels (hit the
 	   record rate and set mode) */
 
+	if (ISSBPRO(sc)) {
+		/*
+		 * With 2 channels, SBPro can't do more than 22kHz.
+		 * Whack the rates down to speed if necessary.
+		 * Reset the time constant anyway
+		 * because it may have been adjusted with a different number
+		 * of channels, which means it might have computed the wrong
+		 * mode (low/high speed).
+		 */
+		if (sc->sc_channels == 2 &&
+		    sbdsp_tctosr(sc, sc->sc_itc) > 22727) {
+			sbdsp_srtotc(sc, 22727, SB_INPUT_RATE,
+				     &sc->sc_itc, &sc->sc_imode);
+		} else
+			sbdsp_srtotc(sc, sbdsp_tctosr(sc, sc->sc_itc),
+				     SB_INPUT_RATE, &sc->sc_itc,
+				     &sc->sc_imode);
+
+		if (sc->sc_channels == 2 &&
+		    sbdsp_tctosr(sc, sc->sc_otc) > 22727) {
+			sbdsp_srtotc(sc, 22727, SB_OUTPUT_RATE,
+				     &sc->sc_otc, &sc->sc_omode);
+		} else
+			sbdsp_srtotc(sc, sbdsp_tctosr(sc, sc->sc_otc),
+				     SB_OUTPUT_RATE, &sc->sc_otc,
+				     &sc->sc_omode);
+	}
+	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
+		if (sc->encoding == AUDIO_ENCODING_ULAW &&
+		    sc->sc_precision == 16) {
+			sc->sc_precision = 8;
+			return EINVAL;	/* XXX what should we really do? */
+		}
+	}
 	/*
 	 * XXX
 	 * Should wait for chip to be idle.
@@ -894,8 +984,13 @@ sbdsp_srtotc(sc, sr, isdac, tcp, modep)
 	int isdac;
 	int *tcp, *modep;
 {
-	int tc, mode;
+	int tc, realtc, mode;
 
+	/*
+	 * Don't forget to compute which mode we'll be in based on whether
+	 * we need to double the rate for stereo on SBPRO.
+	 */
+	 
 	if (sr == 0) {
 		tc = SB_LS_MIN;
 		mode = SB_ADAC_LS;
@@ -903,13 +998,20 @@ sbdsp_srtotc(sc, sr, isdac, tcp, modep)
 	}
 
 	tc = 256 - (1000000 / sr);
+
+	if (sc->sc_channels == 2 && ISSBPRO(sc))
+		/* compute based on 2x sample rate when needed */
+		realtc = 256 - ( 500000 / sr);
+	else
+		realtc = tc;
 	
 	if (tc < SB_LS_MIN) {
 		tc = SB_LS_MIN;
-		mode = SB_ADAC_LS;
+		mode = SB_ADAC_LS;	/* NB: 2x minimum speed is still low
+					 * speed mode. */
 		goto out;
 	} else if (isdac) {
-		if (tc <= SB_DAC_LS_MAX)
+		if (realtc <= SB_DAC_LS_MAX)
 			mode = SB_ADAC_LS;
 		else {
 			mode = SB_ADAC_HS;
@@ -929,7 +1031,7 @@ sbdsp_srtotc(sc, sr, isdac, tcp, modep)
 			adc_hs_max = SBCLA_ADC_HS_MAX;
 		}
 	    
-		if (tc <= adc_ls_max)
+		if (realtc <= adc_ls_max)
 			mode = SB_ADAC_LS;
 		else {
 			mode = SB_ADAC_HS;
@@ -1014,13 +1116,25 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	if (sc->sc_dmadir != SB_DMA_IN) {
 		if (ISSBPRO(sc)) {
 			if (sc->sc_channels == 2) {
-				if (sbdsp_wdsp(iobase, SB_DSP_RECORD_STEREO) < 0)
+				if (ISJAZZ16(sc) && sc->sc_precision == 16) {
+					if (sbdsp_wdsp(iobase,
+						       JAZZ16_RECORD_STEREO) < 0) {
+						goto badmode;
+					} 
+				} else if (sbdsp_wdsp(iobase,
+						      SB_DSP_RECORD_STEREO) < 0)
 					goto badmode;
 				sbdsp_mix_write(sc, SBP_INFILTER,
 				    (sbdsp_mix_read(sc, SBP_INFILTER) &
 				    ~SBP_IFILTER_MASK) | SBP_FILTER_OFF);
 			} else {
-				if (sbdsp_wdsp(iobase, SB_DSP_RECORD_MONO) < 0)
+				if (ISJAZZ16(sc) && sc->sc_precision == 16) {
+					if (sbdsp_wdsp(iobase,
+						       JAZZ16_RECORD_MONO) < 0)
+					{
+						goto badmode;
+					}
+				} else if (sbdsp_wdsp(iobase, SB_DSP_RECORD_MONO) < 0)
 					goto badmode;
 				sbdsp_mix_write(sc, SBP_INFILTER,
 				    (sbdsp_mix_read(sc, SBP_INFILTER) &
@@ -1045,7 +1159,8 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = cc;		/* DMA controller is strange...? */
 
-	if (sc->sc_precision == 16)
+	if ((ISSB16CLASS(sc) && sc->sc_precision == 16) ||
+	    (ISJAZZ16(sc) && sc->sc_drq > 3))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
@@ -1121,6 +1236,21 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 			sbdsp_mix_write(sc, SBP_STEREO,
 			    (sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
 			    (sc->sc_channels == 2 ?  SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
+			if (ISJAZZ16(sc)) {
+				/* Yes, we write the record mode to set
+				   16-bit playback mode. weird, huh? */
+				if (sc->sc_precision == 16) {
+					sbdsp_wdsp(iobase,
+						   sc->sc_channels == 2 ?
+						   JAZZ16_RECORD_STEREO :
+						   JAZZ16_RECORD_MONO);
+				} else {
+					sbdsp_wdsp(iobase,
+						   sc->sc_channels == 2 ?
+						   SB_DSP_RECORD_STEREO :
+						   SB_DSP_RECORD_MONO);
+				}
+			}
 		}
 
 		if (ISSB16CLASS(sc)) {
@@ -1140,7 +1270,8 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = cc;	/* a vagary of how DMA works, apparently. */
 
-	if (sc->sc_precision == 16)
+	if ((ISSB16CLASS(sc) && sc->sc_precision == 16) ||
+	    (ISJAZZ16(sc) && sc->sc_drq > 3))
 		cc >>= 1;
 	--cc;
 	if (ISSB16CLASS(sc)) {
