@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.11 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: legal,v 1.12 2002/05/20 23:48:46 itojun Exp $
 .
 .ig
 
@@ -12,6 +12,7 @@ the following checks:
 ..
 .
 .
+.It
 In the following statement, "This software" refers to the Mitsumi CD-ROM driver:
 .(item -offset indent
 This software was developed by Holger Veit and Brian Moore for
@@ -20,7 +21,7 @@ use with "386BSD" and similar operating systems.
 research and education, including but not restricted to "NetBSD" , "FreeBSD" ,
 "Mach" (by CMU).
 .item)
-.Pp
+.It
 In the following statement, "This software" refers to the parallel port driver:
 .(item -offset indent
 This software is a component of "386BSD" developed by
