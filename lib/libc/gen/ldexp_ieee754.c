@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $	*/
+/*	$NetBSD: ldexp_ieee754.c,v 1.2 2003/10/27 00:05:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $");
+__RCSID("$NetBSD: ldexp_ieee754.c,v 1.2 2003/10/27 00:05:46 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,18 +53,15 @@ double
 ldexp(double val, int expon)
 {
 	int oldexp, newexp;
-	union {
-		double v;
-		struct ieee_double s;
-	} u, mul;
+	union ieee_double_u u, mul;
 
-	u.v = val;
-	oldexp = u.s.dbl_exp;
+	u.dlbu_d = val;
+	oldexp = u.dblu_dbl.dbl_exp;
 
 	/*
 	 * If input is zero, Inf or NaN, just return it.
 	 */
-	if (u.v == 0.0 || oldexp == DBL_EXP_INFNAN)
+	if (u.dblu_d == 0.0 || oldexp == DBL_EXP_INFNAN)
 		return (val);
 
 	if (oldexp == 0) {
@@ -81,25 +78,25 @@ ldexp(double val, int expon)
 				errno = ERANGE;
 				return (0.0);
 			}
-			mul.v = 0.0;
-			mul.s.dbl_exp = expon + DBL_EXP_BIAS;
-			u.v *= mul.v;
-			if (u.v == 0.0) {
+			mul.dblu_d = 0.0;
+			mul.dblu_dbl.dbl_exp = expon + DBL_EXP_BIAS;
+			u.dblu_d *= mul.dblu_d;
+			if (u.dblu_d == 0.0) {
 				errno = ERANGE;
 				return (0.0);
 			}
-			return (u.v);
+			return (u.dblu_d);
 		} else {
 			/*
 			 * We know that expon is very large, and therefore the
 			 * result cannot be denormal (though it may be Inf).
 			 * Shift u.v by just enough to make it normal.
 			 */
-			mul.v = 0.0;
-			mul.s.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
-			u.v *= mul.v;
+			mul.dblu_d = 0.0;
+			mul.dblu_dbl.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
+			u.dblu_d *= mul.dblu_d;
 			expon -= DBL_FRACBITS;
-			oldexp = u.s.dbl_exp;
+			oldexp = u.dblu_dbl.dbl_exp;
 		}
 	}
 
@@ -125,28 +122,28 @@ ldexp(double val, int expon)
 		 * that u.v is normal at this point.
 		 */
 		if (expon <= -DBL_EXP_BIAS) {
-			u.s.dbl_exp = 1;
+			u.dblu_dbl.dbl_exp = 1;
 			expon += oldexp - 1;
 		}
-		mul.v = 0.0;
-		mul.s.dbl_exp = expon + DBL_EXP_BIAS;
-		u.v *= mul.v;
-		return (u.v);
+		mul.dblu_d = 0.0;
+		mul.dblu_dbl.dbl_exp = expon + DBL_EXP_BIAS;
+		u.dblu_d *= mul.dblu_d;
+		return (u.dblu_d);
 	} else if (newexp >= DBL_EXP_INFNAN) {
 		/*
 		 * The result overflowed; return +/-Inf.
 		 */
-		u.s.dbl_exp = DBL_EXP_INFNAN;
-		u.s.dbl_frach = 0;
-		u.s.dbl_fracl = 0;
+		u.dblu_dbl.dbl_exp = DBL_EXP_INFNAN;
+		u.dblu_dbl.dbl_frach = 0;
+		u.dblu_dbl.dbl_fracl = 0;
 		errno = ERANGE;
-		return (u.v);
+		return (u.dblu_d);
 	} else {
 		/*
 		 * The result is normal; just replace the old exponent with the
 		 * new one.
 		 */
-		u.s.dbl_exp = newexp;
-		return (u.v);
+		u.dblu_dbl.dbl_exp = newexp;
+		return (u.dblu_d);
 	}
 }
