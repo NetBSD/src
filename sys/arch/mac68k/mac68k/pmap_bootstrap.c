@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 1995/07/06 03:44:46 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 1995/07/06 13:30:24 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -596,6 +596,10 @@ bootstrap_mac68k(tc)
 
 	if (mac68k_vidlog)
 		videoaddr = mac68k_vidlog;
-	else
-		videoaddr = videoaddr - NBBASE + NuBusBase;
+	else {
+		if (NBBASE <= videoaddr && videoaddr <= NBTOP)
+			videoaddr = videoaddr - NBBASE + NuBusBase;
+		else
+			panic("Don't know how to relocate video!\n");
+	}
 }
