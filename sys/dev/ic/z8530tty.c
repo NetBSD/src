@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.18 1997/08/07 19:22:45 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.19 1997/10/17 22:55:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -408,8 +408,8 @@ zsopen(dev, flags, mode, p)
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
 			tp->t_lflag = TTYDEF_LFLAG;
-			ttychars(tp);
 		}
+		ttychars(tp);
 		ttsetwater(tp);
 		/* Flush any pending input. */
 		zst->zst_rbget = zst->zst_rbput;
