@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.28 1998/09/24 22:22:07 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.29 1998/09/25 03:21:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -61,6 +61,7 @@ struct alpha_pcb {
 	unsigned int	apcb_cpc;	/* charged process cycles */
 	unsigned int	apcb_asn;	/* address space number */
 	unsigned long	apcb_unique;	/* process unique value */
+#define	apcb_backup_ksp	apcb_unique	/* backup kernel stack ptr */
 	unsigned long	apcb_flags;	/* flags; see below */
 	unsigned long	apcb_decrsv0;	/* DEC reserved */
 	unsigned long	apcb_decrsv1;	/* DEC reserved */
