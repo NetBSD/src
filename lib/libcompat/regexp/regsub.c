@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: regsub.c,v 1.2 1993/08/02 17:49:33 mycroft Exp $";
+static char *rcsid = "$Id: regsub.c,v 1.3 1993/08/26 00:45:37 jtc Exp $";
 #endif /* not lint */
 
 #include <regexp.h>

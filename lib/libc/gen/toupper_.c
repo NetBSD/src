@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: toupper_.c,v 1.1 1993/08/23 21:04:56 jtc Exp $
+ *	$Id: toupper_.c,v 1.2 1993/08/26 00:45:18 jtc Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-static char rcsid[] = "$Id: toupper_.c,v 1.1 1993/08/23 21:04:56 jtc Exp $";
+static char *rcsid = "$Id: toupper_.c,v 1.2 1993/08/26 00:45:18 jtc Exp $";
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
