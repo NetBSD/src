@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.1 1997/10/16 17:31:01 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.2 1997/10/19 07:47:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -251,14 +251,14 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		setblocksize(fd, &tmpinfo);
 		idat = INTARG;
 		if (idat == 0)
-			idat = tmpinfo.buffersize / tmpinfo.blocksize;
-		idat = (tmpinfo.buffersize / idat) & -4;
+			idat = tmpinfo.play.buffer_size / tmpinfo.blocksize;
+		idat = (tmpinfo.play.buffer_size / idat) & -4;
 		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.blocksize = idat;
 		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		INTARG = tmpinfo.buffersize / tmpinfo.blocksize;
+		INTARG = tmpinfo.play.buffer_size / tmpinfo.blocksize;
 		break;
 	case SNDCTL_DSP_SETFRAGMENT:
 		AUDIO_INITINFO(&tmpinfo);
@@ -339,8 +339,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.buffersize / bufinfo.fragsize;
-		bufinfo.bytes = tmpinfo.buffersize;
+		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
+		bufinfo.bytes = tmpinfo.play.buffer_size;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
