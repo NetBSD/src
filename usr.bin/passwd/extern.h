@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/10/19 12:29:35 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2000/01/26 01:18:48 aidan Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,6 +36,7 @@
  */
 
 int	kadm_passwd __P((char *, char *, char *, char *));
+int	kadm5_passwd __P((char *));
 int	krb_check __P((void));
 int	krb_passwd __P((void));
 int	local_passwd __P((char *));
