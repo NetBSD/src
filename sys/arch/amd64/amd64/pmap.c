@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2004/08/08 09:38:50 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2004/08/08 09:38:50 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -207,7 +207,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $");
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
+ * 	- call uvm_pagealloc()
  * 		=> success: zero page, add to pm_pdir
  * 		=> failure: we are out of free vm_pages, let pmap_enter()
  *		   tell UVM about it.
@@ -234,6 +234,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2004/06/15 11:28:04 fvdl Exp $");
  *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
+ *
  */
 
 /*
@@ -314,7 +315,7 @@ static struct lock pmap_main_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
 #define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-  
+
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
  
@@ -395,7 +396,7 @@ int pmap_largepages;
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
- * hole toward the front of it...  the following 4 paddr_t's
+ * hole toward the front of it...  the following two paddr_t's
  * (shared with machdep.c) describe the physical address space
  * of this machine.
  */
@@ -443,14 +444,14 @@ pv_compare(struct pv_entry *a, struct pv_entry *b)
 	else if (a->pv_pmap > b->pv_pmap)
 		return (1);
 	else if (a->pv_va < b->pv_va)
-		return (-1);  
+		return (-1);
 	else if (a->pv_va > b->pv_va)
 		return (1);
 	else
 		return (0);
 }
 
-SPLAY_PROTOTYPE(pvtree, pv_entry, pv_node, pv_compare); 
+SPLAY_PROTOTYPE(pvtree, pv_entry, pv_node, pv_compare);
 SPLAY_GENERATE(pvtree, pv_entry, pv_node, pv_compare);
 
 /*
@@ -711,13 +712,9 @@ pmap_apte_flush(struct pmap *pmap)
 		if (pmap_is_active(pmap, ci->ci_cpuid)) {
 			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 			s = splipi();
-#ifdef MULTIPROCESSOR
 			__cpu_simple_lock(&pq->pq_slock);
-#endif
 			pq->pq_flushu++;
-#ifdef MULTIPROCESSOR
 			__cpu_simple_unlock(&pq->pq_slock);
-#endif
 			splx(s);
 			x86_send_ipi(ci, X86_IPI_TLB);
 		}
@@ -1025,7 +1022,7 @@ pmap_bootstrap(kva_start)
 
 #if defined(LARGEPAGES) && 0	/* XXX non-functional right now */
 	/*
-	 * enable large pages of they are supported.
+	 * enable large pages if they are supported.
 	 */
 
 	if (cpu_feature & CPUID_PSE) {
@@ -1121,6 +1118,9 @@ pmap_bootstrap(kva_start)
 	early_zero_pte = zero_pte;
 #endif
 
+	/*
+	 * Nothing after this point actually needs pte;
+	 */
 	pte = (void *)0xdeadbeef;
 
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
@@ -1178,7 +1178,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  &pool_allocator_nointr);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -1455,8 +1455,8 @@ pmap_alloc_pvpage(pmap, mode)
 
 	if (pv_cachedva == 0) {
 		s = splvm();   /* must protect kmem_map with splvm! */
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
-		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE,
+		    UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
 		splx(s);
 		if (pv_cachedva == 0) {
 			return (NULL);
@@ -2913,7 +2913,7 @@ pmap_test_attrs(pg, testbits)
 }
 
 /*
- * pmap_clear_attrs: change a page's attributes
+ * pmap_clear_attrs: clear the specified attribute for a page.
  *
  * => we set pv_head => pmap locking
  * => we return TRUE if we cleared one of the bits we were asked to
