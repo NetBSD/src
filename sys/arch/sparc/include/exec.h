@@ -24,10 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.2 1993/10/11 02:28:26 deraadt Exp $
+ *	$Id: exec.h,v 1.3 1993/10/15 06:01:06 deraadt Exp $
  */
 
 #ifndef _SPARC_EXEC_H_
 #define _SPARC_EXEC_H_
+
+#define __LDPGSZ	8192	/* linker page size */
 
 #endif  /* _SPARC_EXEC_H_ */
