@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.86 2003/02/20 12:02:56 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.87 2003/02/20 22:21:25 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -576,7 +576,7 @@ cleanup_dist(name)
 {
 	char file_path[MAXPATHLEN];
 	char file_name[MAXPATHLEN];
-	char *file_prefix;
+	const char *file_prefix;
 	FILE *list_file;
 	struct filelist *head = NULL;
 	struct filelist *current;
