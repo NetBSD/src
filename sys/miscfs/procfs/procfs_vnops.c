@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.90 2002/08/03 04:52:45 simonb Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.91 2003/01/03 13:21:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,13 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.90 2002/08/03 04:52:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.91 2003/01/03 13:21:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -91,6 +92,7 @@ const struct proc_target {
 	/*	  name		type		validp */
 	{ DT_DIR, N("."),	Pproc,		NULL },
 	{ DT_DIR, N(".."),	Proot,		NULL },
+	{ DT_DIR, N("fd"),	Pfd,		NULL },
 	{ DT_REG, N("file"),	Pfile,		procfs_validfile },
 	{ DT_REG, N("mem"),	Pmem,		NULL },
 	{ DT_REG, N("regs"),	Pregs,		procfs_validregs },
@@ -167,7 +169,7 @@ int	procfs_pathconf	__P((void *));
 #define	procfs_bwrite	genfs_eopnotsupp
 #define procfs_putpages	genfs_null_putpages
 
-static pid_t atopid __P((const char *, u_int));
+static int atoi __P((const char *, size_t));
 
 /*
  * procfs vnode operations.
@@ -331,7 +333,7 @@ procfs_inactive(v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
 	VOP_UNLOCK(ap->a_vp, 0);
-	if (PFIND(pfs->pfs_pid) == 0)
+	if (PFIND(pfs->pfs_pid) == NULL)
 		vgone(ap->a_vp);
 
 	return (0);
@@ -481,7 +483,7 @@ procfs_getattr(v)
 
 	default:
 		procp = PFIND(pfs->pfs_pid);
-		if (procp == 0)
+		if (procp == NULL)
 			return (ENOENT);
 		break;
 	}
@@ -586,6 +588,26 @@ procfs_getattr(v)
 		vap->va_bytes = vap->va_size = sizeof("curproc");
 		break;
 
+	case Pfd:
+		if (pfs->pfs_fd != -1) {
+			struct file *fp;
+			if ((error = procfs_getfp(pfs, &fp)) != 0)
+				return error;
+			vap->va_nlink = 1;
+			vap->va_uid = fp->f_cred->cr_uid;
+			vap->va_gid = fp->f_cred->cr_gid;
+			switch (fp->f_type) {
+			case DTYPE_VNODE:
+				vap->va_bytes = vap->va_size =
+				    ((struct vnode *)fp->f_data)->v_size;
+				break;
+			default:
+				vap->va_bytes = vap->va_size = 0;
+				break;
+			}
+			break;
+		}
+		/*FALLTHROUGH*/
 	case Pproc:
 		vap->va_nlink = 2;
 		vap->va_uid = procp->p_ucred->cr_uid;
@@ -761,7 +783,7 @@ procfs_lookup(v)
 
 		if (iscurproc || isself) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
-			    iscurproc ? Pcurproc : Pself);
+			    iscurproc ? Pcurproc : Pself, -1);
 			if ((error == 0) && (wantpunlock)) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
@@ -780,7 +802,7 @@ procfs_lookup(v)
 
 		if (i != nproc_root_targets) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
-			    pt->pt_pfstype);
+			    pt->pt_pfstype, -1);
 			if ((error == 0) && (wantpunlock)) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
@@ -788,15 +810,15 @@ procfs_lookup(v)
 			return (error);
 		}
 
-		pid = atopid(pname, cnp->cn_namelen);
-		if (pid == NO_PID)
+		pid = (pid_t)atoi(pname, cnp->cn_namelen);
+		if (pid > PID_MAX)
 			break;
 
 		p = PFIND(pid);
-		if (p == 0)
+		if (p == NULL)
 			break;
 
-		error = procfs_allocvp(dvp->v_mount, vpp, pid, Pproc);
+		error = procfs_allocvp(dvp->v_mount, vpp, pid, Pproc, -1);
 		if ((error == 0) && (wantpunlock)) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -821,7 +843,7 @@ procfs_lookup(v)
 		}
 
 		p = PFIND(pfs->pfs_pid);
-		if (p == 0)
+		if (p == NULL)
 			break;
 
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
@@ -848,13 +870,62 @@ procfs_lookup(v)
 		}
 
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-					pt->pt_pfstype);
+		    pt->pt_pfstype, -1);
 		if ((error == 0) && (wantpunlock)) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (error);
 
+	case Pfd: {
+		int fd;
+		struct file *fp;
+		/*
+		 * do the .. dance. We unlock the directory, and then
+		 * get the proc dir. That will automatically return ..
+		 * locked. Then if the caller wanted dvp locked, we
+		 * re-lock.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+			    Pproc, -1);
+			if ((error == 0) && (wantpunlock == 0) &&
+				    ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			return (error);
+		}
+		fd = atoi(pname, cnp->cn_namelen);
+		if (fd == -1)
+			return EINVAL;
+		p = PFIND(pfs->pfs_pid);
+		if (p == NULL)
+			return ESRCH;
+		/* XXX: avoid locking issue */
+		if (p == curproc)
+			return EDEADLK;
+		if ((fp = p->p_fd->fd_ofiles[fd]) == NULL)
+			return ENOENT;
+		switch (fp->f_type) {
+		case DTYPE_VNODE:
+			fvp = (struct vnode *)fp->f_data;
+			VREF(fvp);
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
+			*vpp = fvp;
+			error = 0;
+			break;
+		default:
+			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+			    Pfd, fd);
+			break;
+		}
+		if ((error == 0) && (wantpunlock)) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+		return error;
+	}
 	default:
 		return (ENOTDIR);
 	}
@@ -959,7 +1030,8 @@ procfs_readdir(v)
 			    (*pt->pt_valid)(p, vp->v_mount) == 0)
 				continue;
 			
-			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
+			    pt->pt_pfstype, -1);
 			d.d_namlen = pt->pt_namlen;
 			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
@@ -971,6 +1043,63 @@ procfs_readdir(v)
 		}
 
 	    	break;
+	}
+	case Pfd: {
+		struct proc *p;
+		struct filedesc	*fdp;
+		int lim, last, nc = 0;
+
+		p = PFIND(pfs->pfs_pid);
+		if (p == NULL)
+			return ESRCH;
+
+		fdp = p->p_fd;
+
+		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+		last = min(fdp->fd_nfiles, lim);
+		if (i >= lim)
+			return 0;
+
+		if (ap->a_ncookies) {
+			ncookies = min(ncookies, (fdp->fd_nfiles + 2 - i));
+			cookies = malloc(ncookies * sizeof (off_t),
+			    M_TEMP, M_WAITOK);
+			*ap->a_cookies = cookies;
+		}
+
+		for (; i < 2 && uio->uio_resid >= UIO_MX; i++) {
+			pt = &proc_targets[i];
+			d.d_fileno = (pfs->pfs_pid << 8) + i;
+			d.d_namlen = pt->pt_namlen;
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
+			    pt->pt_pfstype, -1);
+			(void)memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
+			d.d_type = pt->pt_type;
+			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+				break;
+			if (cookies)
+				*cookies++ = i + 1;
+			nc++;
+		}
+		if (error) {
+			ncookies = nc;
+			break;
+		}
+		for (; uio->uio_resid >= UIO_MX && i < fdp->fd_nfiles; i++) {
+			if (fdp->fd_ofiles[i - 2] == NULL)
+				continue;
+			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, Pfd, i - 2);
+			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
+			    "%lld", i - 2);
+			d.d_type = VREG;
+			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+				break;
+			if (cookies)
+				*cookies++ = i + 1;
+			nc++;
+		}
+		ncookies = nc;
+		break;
 	}
 
 	/*
@@ -1013,7 +1142,7 @@ procfs_readdir(v)
 			switch (i) {
 			case 0:		/* `.' */
 			case 1:		/* `..' */
-				d.d_fileno = PROCFS_FILENO(0, Proot);
+				d.d_fileno = PROCFS_FILENO(0, Proot, -1);
 				d.d_namlen = i + 1;
 				memcpy(d.d_name, "..", d.d_namlen);
 				d.d_name[i + 1] = '\0';
@@ -1021,14 +1150,14 @@ procfs_readdir(v)
 				break;
 
 			case 2:
-				d.d_fileno = PROCFS_FILENO(0, Pcurproc);
+				d.d_fileno = PROCFS_FILENO(0, Pcurproc, -1);
 				d.d_namlen = sizeof("curproc") - 1;
 				memcpy(d.d_name, "curproc", sizeof("curproc"));
 				d.d_type = DT_LNK;
 				break;
 
 			case 3:
-				d.d_fileno = PROCFS_FILENO(0, Pself);
+				d.d_fileno = PROCFS_FILENO(0, Pself, -1);
 				d.d_namlen = sizeof("self") - 1;
 				memcpy(d.d_name, "self", sizeof("self"));
 				d.d_type = DT_LNK;
@@ -1041,7 +1170,7 @@ procfs_readdir(v)
 					if (!p)
 						goto done;
 				}
-				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
+				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc, -1);
 				d.d_namlen = sprintf(d.d_name, "%ld",
 				    (long)p->p_pid);
 				d.d_type = DT_DIR;
@@ -1074,7 +1203,7 @@ procfs_readdir(v)
 			if (pt->pt_valid &&
 			    (*pt->pt_valid)(NULL, vp->v_mount) == 0)
 				continue;
-			d.d_fileno = PROCFS_FILENO(0, pt->pt_pfstype);
+			d.d_fileno = PROCFS_FILENO(0, pt->pt_pfstype, -1);
 			d.d_namlen = pt->pt_namlen;
 			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
@@ -1119,9 +1248,9 @@ procfs_readlink(v)
 	char buf[16];		/* should be enough */
 	int len;
 
-	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc))
+	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc, -1))
 		len = sprintf(buf, "%ld", (long)curproc->p_pid);
-	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
+	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself, -1))
 		len = sprintf(buf, "%s", "curproc");
 	else
 		return (EINVAL);
@@ -1130,23 +1259,21 @@ procfs_readlink(v)
 }
 
 /*
- * convert decimal ascii to pid_t
+ * convert decimal ascii to int
  */
-static pid_t
-atopid(b, len)
+static int
+atoi(b, len)
 	const char *b;
-	u_int len;
+	size_t len;
 {
-	pid_t p = 0;
+	int p = 0;
 
 	while (len--) {
 		char c = *b++;
 		if (c < '0' || c > '9')
-			return (NO_PID);
+			return -1;
 		p = 10 * p + (c - '0');
-		if (p > PID_MAX)
-			return (NO_PID);
 	}
 
-	return (p);
+	return p;
 }

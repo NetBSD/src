@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.43 2002/09/21 18:09:30 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.44 2003/01/03 13:21:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.43 2002/09/21 18:09:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.44 2003/01/03 13:21:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -180,7 +180,7 @@ procfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 
-	return (procfs_allocvp(mp, vpp, 0, Proot));
+	return (procfs_allocvp(mp, vpp, 0, Proot, -1));
 }
 
 /* ARGSUSED */
@@ -257,7 +257,6 @@ procfs_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-
 	return (EOPNOTSUPP);
 }
 
