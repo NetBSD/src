@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.16 2001/11/15 07:03:29 lukem Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.17 2002/06/17 16:33:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.16 2001/11/15 07:03:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.17 2002/06/17 16:33:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #endif
 
 #include <sys/param.h>
@@ -52,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.16 2001/11/15 07:03:29 lukem Exp
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -74,13 +78,19 @@ void
 ibcs2_syscall_intern(p)
 	struct proc *p;
 {
-
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = ibcs2_syscall_fancy;
-	else
+		return;
+	}
 #endif
-		p->p_md.md_syscall = ibcs2_syscall_plain;
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = ibcs2_syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = ibcs2_syscall_plain;
 }
 
 /*
@@ -213,13 +223,8 @@ ibcs2_syscall_fancy(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -249,12 +254,7 @@ ibcs2_syscall_fancy(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
+	trace_exit(p, code, args, rval, error);
+
 	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif /* KTRACE */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 2002/03/16 16:55:59 martin Exp $ */
+/*	$NetBSD: conf.c,v 1.22 2002/06/17 16:33:18 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 /* XXX KEEP THIS FILE IN SYNC WITH THE arch/sparc/sparc/conf.c VERSION */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +284,11 @@ struct cdevsw	cdevsw[] =
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Cirrus-Logic CD18xx */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 126: system call tracing */
+#else
+	cdev_notdef(),			/* 126: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

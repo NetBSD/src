@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.66 2002/06/17 06:27:26 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.67 2002/06/17 16:32:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -35,10 +35,11 @@
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
-#include "opt_compat_svr4.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.66 2002/06/17 06:27:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.67 2002/06/17 16:32:59 christos Exp $");
+
+#include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +197,11 @@ struct cdevsw	cdevsw[] =
 
 	cdev_mouse_init(NWSKBD,wskbd),  /* 54: keyboard */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 55: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 56: system call tracing */
+#else
+	cdev_notdef(),			/* 56: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -311,6 +317,10 @@ static int chrtoblktab[] = {
 	/* 50 */	16,
 	/* 51 */	NODEV,
 	/* 52 */	17,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2002/03/24 18:13:01 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2002/06/17 16:33:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +221,11 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NGDROM,gdrom),	/* 57: GDROM */
 	cdev__oci_init(NMAPLE, maple),	/* 58: Maple bus */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 59: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 60: system call tracing */
+#else
+	cdev_notdef(),			/* 60: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -320,6 +327,7 @@ static int chrtoblktbl[] = {
 	/* 57 */	19,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
+	/* 60 */	NODEV,
 };
 
 /*

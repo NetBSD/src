@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/06/06 19:48:05 fredette Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2002/06/17 16:33:03 christos Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
@@ -206,13 +206,18 @@ struct cdevsw   cdevsw[] =
 	cdev_mouse_init(NWSKBD,wskbd),	/* 28: keyboards */
 	cdev_mouse_init(NWSMOUSE,wsmouse), /* 29: mice */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 30: mux */
-					/* 31 */
+	cdev_notdef(),			/* 31 */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
 #else
 	cdev_notdef(),			/* 32 */
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 34: system call tracing */
+#else
+	cdev_notdef(),			/* 34 */
+#endif
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
@@ -264,7 +269,15 @@ static int chrtoblktbl[] = {
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	7,
-	/* 25 */	8,
+	/* 26 */	8,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
 };
 
 /*
