@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.83 1998/09/03 01:51:43 sakamoto Exp $
+#	$NetBSD: bsd.own.mk,v 1.84 1998/09/03 15:13:51 tsubai Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -75,6 +75,7 @@ STRIPFLAG?=	-s
 	(${MACHINE} == "hp300") || \
 	(${MACHINE} == "i386") || \
 	(${MACHINE} == "mac68k") || \
+	(${MACHINE} == "macppc") || \
 	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "ofppc") || \
 	(${MACHINE} == "pc532") || \
