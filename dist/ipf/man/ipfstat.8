@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfstat.8,v 1.10 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipfstat.8,v 1.10.2.1 2004/05/30 11:22:33 tron Exp $
 .\"
 .TH ipfstat 8
 .SH NAME
@@ -6,12 +6,12 @@ ipfstat \- reports on packet filter statistics and filter list
 .SH SYNOPSIS
 .B ipfstat
 [
-.B \-6aACdfghIinosv
+.B \-6aAdfghIilnoRsv
 ]
-
+.br
 .B ipfstat -t
 [
-.B \-C
+.B \-6C
 ] [
 .B \-D
 <addrport>
@@ -26,7 +26,6 @@ ipfstat \- reports on packet filter statistics and filter list
 <refresh time>
 ]
 .SH DESCRIPTION
-.PP
 \fBipfstat\fP examines /dev/kmem using the symbols \fB_fr_flags\fP,
 \fB_frstats\fP, \fB_filterin\fP, and \fB_filterout\fP.
 To run and work, it needs to be able to read both /dev/kmem and the
@@ -38,7 +37,7 @@ accumulated over time as the kernel has put packets through the filter.
 .SH OPTIONS
 .TP
 .B \-6
-Display filter lists for IPv6, if available.
+Display filter lists and states for IPv6, if available.
 .TP
 .B \-a
 Display the accounting filter list and show bytes counted against each rule.
@@ -58,7 +57,7 @@ Produce debugging output when displaying data.
 .BR \-D \0<addrport>
 This option is only valid in combination with \fB\-t\fP. Limit the state top
 display to show only state entries whose destination IP address and port
-match the addport argument. The addrport specification is of the form
+match the addrport argument. The addrport specification is of the form
 ipaddress[,port].  The ipaddress and port should be either numerical or the
 string "any" (specifying any IP address resp. any port). If the \fB\-D\fP
 option is not specified, it defaults to "\fB\-D\fP any,any".
@@ -94,6 +93,10 @@ argument can be a protocol name (as defined in \fB/etc/protocols\fP) or a
 protocol number. If this option is not specified, state entries for any
 protocol are specified.
 .TP
+.BR \-R
+Don't try to resolve addresses to hostnames and ports to services while
+printing statistics.
+.TP
 .B \-s
 Show packet/flow state information (statistics only).
 .TP
@@ -103,14 +106,14 @@ Show held state information (in the kernel) if any is present (no statistics).
 .BR \-S \0<addrport>
 This option is only valid in combination with \fB\-t\fP. Limit the state top
 display to show only state entries whose source IP address and port match
-the addport argument. The addrport specification is of the form
+the addrport argument. The addrport specification is of the form
 ipaddress[,port].  The ipaddress and port should be either numerical or the
 string "any" (specifying any IP address resp. any port). If the \fB\-S\fP
 option is not specified, it defaults to "\fB\-S\fP any,any".
 .TP
 .B \-t
-Show the state table in a way similar to they way \fBtop(1)\fP shows the process
-table. States can be sorted using a number of different ways. This options
+Show the state table in a way similar to the way \fBtop(1)\fP shows the process
+table. States can be sorted using a number of different ways. This option
 requires \fBcurses(3)\fP and needs to be compiled in. It may not be available on
 all operating systems. See below, for more information on the keys that can
 be used while ipfstat is in top mode.
@@ -142,7 +145,9 @@ shown and to specify the frequency of display updates.
 In state top mode, the following keys can be used to influence the displayed
 information:
 .TP
-\fBd\fP select information to display.
+\fBb\fP show packets/bytes from backward direction.
+.TP
+\fBf\fP show packets/bytes from forward direction. (default)
 .TP
 \fBl\fP redraw the screen.
 .TP
@@ -162,13 +167,12 @@ and protocol filters or the refresh frequency. This must be done from the
 command line.
 .PP
 The screen must have at least 80 columns. This is however not checked.
+When running state top in IPv6 mode, the screen must be much wider to display
+the very long IPv6 addresses.
 .PP
 Only the first X-5 entries that match the sort and filter criteria are
-displayed (where X is the number of rows on the display. There is no way to 
-see more entries.
-.PP
-No support for IPv6
-.PP
+displayed (where X is the number of rows on the display. The only way to see
+more entries is to resize the screen.
 .SH FILES
 /dev/kmem
 .br
