@@ -7,9 +7,18 @@
  * for which no specific BIO method is available.
  * See ssl/ssltest.c for some hints on how this can be used. */
 
+/* BIO_DEBUG implies BIO_PAIR_DEBUG */
+#ifdef BIO_DEBUG
+# ifndef BIO_PAIR_DEBUG
+#  define BIO_PAIR_DEBUG
+# endif
+#endif
+
+/* disable assert() unless BIO_PAIR_DEBUG has been defined */
 #ifndef BIO_PAIR_DEBUG
-# undef NDEBUG /* avoid conflicting definitions */
-# define NDEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
 #endif
 
 #include <assert.h>
@@ -23,16 +32,21 @@
 #include <openssl/crypto.h>
 
 #include "openssl/e_os.h"
-#ifndef SSIZE_MAX
+
+/* VxWorks defines SSiZE_MAX with an empty value causing compile errors */
+#if defined(VXWORKS)
+# undef SSIZE_MAX
+# define SSIZE_MAX INT_MAX
+#elif !defined(SSIZE_MAX)
 # define SSIZE_MAX INT_MAX
 #endif
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);
-static int bio_write(BIO *bio, char *buf, int num);
+static int bio_write(BIO *bio, const char *buf, int num);
 static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr);
-static int bio_puts(BIO *bio, char *str);
+static int bio_puts(BIO *bio, const char *str);
 
 static int bio_make_pair(BIO *bio1, BIO *bio2);
 static void bio_destroy_pair(BIO *bio);
@@ -80,7 +94,7 @@ static int bio_new(BIO *bio)
 	{
 	struct bio_bio_st *b;
 	
-	b = Malloc(sizeof *b);
+	b = OPENSSL_malloc(sizeof *b);
 	if (b == NULL)
 		return 0;
 
@@ -108,10 +122,10 @@ static int bio_free(BIO *bio)
 	
 	if (b->buf != NULL)
 		{
-		Free(b->buf);
+		OPENSSL_free(b->buf);
 		}
 
-	Free(b);
+	OPENSSL_free(b);
 
 	return 1;
 	}
@@ -283,7 +297,7 @@ static ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 	}
 
 
-static int bio_write(BIO *bio, char *buf, int num_)
+static int bio_write(BIO *bio, const char *buf, int num_)
 	{
 	size_t num = num_;
 	size_t rest;
@@ -464,7 +478,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 				{
 				if (b->buf) 
 					{
-					Free(b->buf);
+					OPENSSL_free(b->buf);
 					b->buf = NULL;
 					}
 				b->size = new_size;
@@ -474,7 +488,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		break;
 
 	case BIO_C_GET_WRITE_BUF_SIZE:
-		num = (long) b->size;
+		ret = (long) b->size;
+		break;
 
 	case BIO_C_MAKE_BIO_PAIR:
 		{
@@ -628,7 +643,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	return ret;
 	}
 
-static int bio_puts(BIO *bio, char *str)
+static int bio_puts(BIO *bio, const char *str)
 	{
 	return bio_write(bio, str, strlen(str));
 	}
@@ -652,7 +667,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 	
 	if (b1->buf == NULL)
 		{
-		b1->buf = Malloc(b1->size);
+		b1->buf = OPENSSL_malloc(b1->size);
 		if (b1->buf == NULL)
 			{
 			BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
@@ -664,7 +679,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
 	
 	if (b2->buf == NULL)
 		{
-		b2->buf = Malloc(b2->size);
+		b2->buf = OPENSSL_malloc(b2->size);
 		if (b2->buf == NULL)
 			{
 			BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
