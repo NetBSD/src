@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.28 2003/08/07 16:33:52 agc Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.29 2003/11/20 16:17:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.28 2003/08/07 16:33:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.29 2003/11/20 16:17:25 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -223,7 +223,7 @@ nfsrv_getcache(nd, slp, repp)
 	struct nfssvc_sock *slp;
 	struct mbuf **repp;
 {
-	struct nfsrvcache *rp;
+	struct nfsrvcache *rp, *rpdup;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
 	caddr_t bpos;
@@ -313,12 +313,14 @@ found:
 	};
 	rp->rc_proc = nd->nd_procnum;
 	simple_lock(&nfsrv_reqcache_lock);
-	if (nfsrv_lookupcache(nd)) {
+	rpdup = nfsrv_lookupcache(nd);
+	if (rpdup != NULL) {
 		/*
 		 * other thread made duplicate cache entry.
 		 */
 		simple_unlock(&nfsrv_reqcache_lock);
 		pool_put(&nfs_reqcache_pool, rp);
+		rp = rpdup;
 		goto found;
 	}
 	TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);
