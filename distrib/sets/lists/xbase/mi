@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17.2.2 2001/03/11 22:13:06 he Exp $
+# $NetBSD: mi,v 1.17.2.3 2001/05/09 20:52:09 he Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -571,3 +571,8 @@
 ./usr/X11R6/man/cat1/xwininfo.0
 ./usr/X11R6/man/cat1/xwud.0
 ./usr/X11R6/man/cat3
+./usr/X11R6/man/cat7
+./usr/X11R6/man/cat7/X.0
+./usr/X11R6/man/cat7/XConsortium.0
+./usr/X11R6/man/cat7/XStandards.0
+./usr/X11R6/man/cat7/Xsecurity.0
