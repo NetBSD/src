@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.762 2005/02/20 00:39:48 christos Exp $
+#	$NetBSD: mi,v 1.763 2005/02/20 00:49:06 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1652,6 +1652,8 @@
 ./usr/lib/libpthread_dbg.a			comp-c-lib
 ./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
 ./usr/lib/libpthread_p.a			comp-c-proflib		profile
+./usr/lib/libradius.a				comp-c-lib
+./usr/lib/libradius.a				comp-c-proflib		profile
 ./usr/lib/libresolv.a				comp-c-lib
 ./usr/lib/libresolv_p.a				comp-c-proflib		profile
 ./usr/lib/librmt.a				comp-c-lib
@@ -3640,6 +3642,7 @@
 ./usr/share/man/cat3/lh_stats.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/lhash.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
+./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/link_addr.0		comp-c-catman		.cat
@@ -7476,6 +7479,7 @@
 ./usr/share/man/man3/lh_stats.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/lhash.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
+./usr/share/man/man3/libradius.3		comp-c-man		.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
 ./usr/share/man/man3/link_addr.3		comp-c-man		.man

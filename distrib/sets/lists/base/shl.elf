@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.96 2005/02/13 06:09:00 christos Exp $
+# $NetBSD: shl.elf,v 1.97 2005/02/20 00:49:06 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -132,6 +132,8 @@
 ./usr/lib/libpthread.so.0			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.0			base-sys-shlib
+./usr/lib/libradius.so				base-net-shlib
+./usr/lib/libradius.so.0			base-net-shlib
 ./usr/lib/libresolv.so				base-net-shlib
 ./usr/lib/libresolv.so.1			base-net-shlib
 ./usr/lib/libroken.so				base-krb5-shlib		kerberos
