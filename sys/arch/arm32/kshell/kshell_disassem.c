@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_disassem.c,v 1.1 1996/01/31 23:23:56 mark Exp $ */
+/* $NetBSD: kshell_disassem.c,v 1.2 1996/03/06 23:52:15 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * Debug / Monitor shell disassembler
  *
  * Created      : 09/10/94
- * Last updated : 28/08/95
- *
- *    $Id: kshell_disassem.c,v 1.1 1996/01/31 23:23:56 mark Exp $
  */
 
 /* Include standard header files */
@@ -56,8 +53,6 @@
 #include <machine/katelib.h>
 
 /* Declare external variables */
-
-extern caddr_t shell_ident;
 
 /* Local function prototypes */
 
@@ -107,7 +102,7 @@ do_disassemble(addr)
 		if (count == 0) {
 			count = 1;
 
-			key = WaitForKey(shell_ident);
+			key = cngetc();
 
 			switch (key) {
 			case 'Q' :
