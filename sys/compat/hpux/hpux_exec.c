@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.5 1996/10/14 06:53:24 thorpej Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.6 1997/03/16 03:48:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -76,7 +76,7 @@ static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
 struct emul emul_hpux = {
 	"hpux",
 	bsdtohpuxerrnomap,
-	sendsig,
+	hpux_sendsig,
 	HPUX_SYS_syscall,
 	HPUX_SYS_MAXSYSCALL,
 	hpux_sysent,
