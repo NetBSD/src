@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.26 1997/03/19 12:36:03 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.27 1997/03/19 12:44:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.26 1997/03/19 12:36:03 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.27 1997/03/19 12:44:08 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -1632,7 +1632,7 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s %s\n%s\n", __progname, 
-	    "[-dfnqrvRLP] [-c count] [-s size] [-l preload] [-p pattern]", 
+	    "[-dfnoqrvRLP] [-c count] [-s size] [-l preload] [-p pattern]", 
 	    "[-i interval] [-T ttl] [-I addr] [-g gateway] [-w maxwait] host");
 	exit(1);
 }
