@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.16 1996/10/10 17:51:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -815,8 +815,10 @@ linux_sys_fdatasync(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef notdef
 	struct linux_sys_fdatasync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
+#endif
 	return sys_fsync(p, v, retval);
 }

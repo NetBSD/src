@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.30 1996/09/07 12:40:22 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.31 1996/10/10 17:47:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -206,7 +206,7 @@ adosfs_getattr(v)
 		vap->va_blocksize = amp->dbsize;
 	}
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	kprintf(" 0)");
 #endif
 	return(0);
 }
@@ -294,15 +294,15 @@ adosfs_read(v)
 				error = EIO; /* OFS needs the complete block */
 			else if (adoswordn(bp, 0) != BPT_DATA) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: bad primary type blk %ld\n",
-				       bp->b_blkno / amp->secsperblk);
+				kprintf("adosfs: bad primary type blk %ld\n",
+				    bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
 			}
 			else if ( adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: blk %ld failed cksum.\n",
-				       bp->b_blkno / amp->secsperblk);
+				kprintf("adosfs: blk %ld failed cksum.\n",
+				    bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
 			}
@@ -313,7 +313,7 @@ adosfs_read(v)
 			goto reterr;
 		}
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d+%d-%d+%d", lbn, on, lbn, n);
+		kprintf(" %d+%d-%d+%d", lbn, on, lbn, n);
 #endif
 		n = min(n, (u_int)size - bp->b_resid);
 		error = uiomove(bp->b_un.b_addr + on +
@@ -322,7 +322,7 @@ adosfs_read(v)
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", error);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -339,7 +339,7 @@ adosfs_write(v)
 		struct ucred *a_cred;
 	} */ *sp = v;
 	advopprint(sp);
-	printf(" EOPNOTSUPP)");
+	kprintf(" EOPNOTSUPP)");
 #endif
 	return(EOPNOTSUPP);
 }
@@ -362,7 +362,7 @@ adosfs_ioctl(v)
 		struct proc *a_p;
 	} */ *sp = v;
 	advopprint(sp);
-	printf(" ENOTTY)");
+	kprintf(" ENOTTY)");
 #endif
 	return(ENOTTY);
 }
@@ -413,7 +413,7 @@ adosfs_strategy(v)
 	VOCALL(vp->v_op, VOFFSET(vop_strategy), sp);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", error);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -482,7 +482,7 @@ start:
 	}
 	ap->flags |= ALOCKED;
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	kprintf(" 0)");
 #endif
 	return(0);
 }
@@ -510,7 +510,7 @@ adosfs_unlock(v)
 	}
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	kprintf(" 0)");
 #endif
 	return(0);
 }
@@ -589,7 +589,7 @@ adosfs_bmap(v)
 			brelse(flbp);
 		if (nb == 0) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: bad file list chain.\n");
+			kprintf("adosfs: bad file list chain.\n");
 #endif
 			error = EINVAL;
 			goto reterr;
@@ -600,7 +600,7 @@ adosfs_bmap(v)
 			goto reterr;
 		if (adoscksum(flbp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: blk %ld failed cksum.\n", nb);
+			kprintf("adosfs: blk %ld failed cksum.\n", nb);
 #endif
 			brelse(flbp);
 			error = EINVAL;
@@ -626,7 +626,7 @@ adosfs_bmap(v)
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
+		kprintf("flblk offset %ld too large in lblk %ld blk %d\n", 
 		    flblkoff, bn / ap->amp->secsperblk , flbp->b_blkno);
 #endif
 		error = EINVAL;
@@ -635,8 +635,8 @@ adosfs_bmap(v)
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	if (error == 0 && bnp)
-		printf(" %d => %d", bn, *bnp);
-	printf(" %d)", error);
+		kprintf(" %d => %d", bn, *bnp);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -820,7 +820,7 @@ adosfs_readdir(v)
 #endif
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", error);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -855,7 +855,7 @@ adosfs_access(v)
 	error = vaccess(adunixprot(ap->adprot) & ap->amp->mask, ap->uid,
 	    ap->gid, sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", error);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -886,7 +886,7 @@ adosfs_readlink(v)
 	if (error == 0)
 		error = uiomove(ap->slinkto, strlen(ap->slinkto)+1, sp->a_uio);
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", error);
+	kprintf(" %d)", error);
 #endif
 	return(error);
 }
@@ -906,7 +906,7 @@ adosfs_inactive(v)
 		vgone(sp->a_vp);
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	kprintf(" 0)");
 #endif
 	return(0);
 }
@@ -927,7 +927,7 @@ adosfs_islocked(v)
 	locked = (VTOA(sp->a_vp)->flags & ALOCKED) == ALOCKED;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", locked);
+	kprintf(" %d)", locked);
 #endif
 	return(locked);
 }
@@ -947,7 +947,7 @@ adosfs_reclaim(v)
 	struct anode *ap;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("(reclaim 0)");
+	kprintf("(reclaim 0)");
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.5 1996/06/23 11:17:50 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.6 1996/10/10 17:51:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -129,9 +129,9 @@ ibcs2_socksys(p, v, retval)
 		return sys_setitimer(p, realargs + 1, retval);
 
 	default:
-		printf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",
-                       realargs[0], realargs[1], realargs[2], realargs[3], 
-                       realargs[4], realargs[5], realargs[6]);
+		kprintf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",
+		    realargs[0], realargs[1], realargs[2], realargs[3], 
+                    realargs[4], realargs[5], realargs[6]);
 		return EINVAL;
 	}
 	/* NOTREACHED */

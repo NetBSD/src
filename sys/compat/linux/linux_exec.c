@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.23 1996/10/07 21:47:33 cgd Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.24 1996/10/10 17:51:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -40,7 +40,6 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.14 1996/05/24 20:16:02 is Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.15 1996/10/10 17:47:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -192,7 +192,7 @@ adosfs_lookup(v)
 	while (bn != 0) {
 		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
-			printf("[aget] %d)", error);
+			kprintf("[aget] %d)", error);
 #endif
 			/* XXX check to unlock parent possibly? */
 			return(error);
@@ -226,7 +226,7 @@ adosfs_lookup(v)
 	if ((nameiop == CREATE || nameiop == RENAME) && last) {
 		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
-			printf("[VOP_ACCESS] %d)", error);
+			kprintf("[VOP_ACCESS] %d)", error);
 #endif
 			return (error);
 		}
@@ -234,14 +234,14 @@ adosfs_lookup(v)
 			VOP_UNLOCK(vdp);
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
-		printf("EJUSTRETURN)");
+		kprintf("EJUSTRETURN)");
 #endif
 		return(EJUSTRETURN);
 	}
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, NULL, cnp);
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("ENOENT)");
+	kprintf("ENOENT)");
 #endif
 	return(ENOENT);
 
@@ -275,7 +275,7 @@ found_lockdone:
 		cache_enter(vdp, *vpp, cnp);
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf("0)\n");
+	kprintf("0)\n");
 #endif
 	return(0);
 }
