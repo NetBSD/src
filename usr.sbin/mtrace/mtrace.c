@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.16 2000/10/12 06:11:40 augustss Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.17 2001/04/06 11:13:49 wiz Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.16 2000/10/12 06:11:40 augustss Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.17 2001/04/06 11:13:49 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1356,7 +1356,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	(connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0) ||
 	getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
 	perror("Determining local address");
-	exit(-1);
+	exit(1);
     }
 
 #ifdef SUNOS5
@@ -1375,14 +1375,14 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 	error = sysinfo(SI_HOSTNAME, myhostname, sizeof(myhostname));
 	if (error == -1) {
 	    perror("Getting my hostname");
-	    exit(-1);
+	    exit(1);
 	}
 
 	hp = gethostbyname(myhostname);
 	if (hp == NULL || hp->h_addrtype != AF_INET ||
 	    hp->h_length != sizeof(addr.sin_addr)) {
 	    perror("Finding IP address for my hostname");
-	    exit(-1);
+	    exit(1);
 	}
 
 	memcpy((char *)&addr.sin_addr.s_addr, hp->h_addr,
@@ -1745,7 +1745,7 @@ log(severity, syserr, format, va_alist)
 	    else
 		fprintf(stderr, ": %s\n", strerror(syserr));
     }
-    if (severity <= LOG_ERR) exit(-1);
+    if (severity <= LOG_ERR) exit(1);
 }
 
 /* dummies */

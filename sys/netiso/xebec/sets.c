@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.4 1994/06/29 06:41:16 cgd Exp $	*/
+/*	$NetBSD: sets.c,v 1.5 2001/04/06 11:13:56 wiz Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -180,11 +180,11 @@ struct Object *o;
 		fprintf(OUT, "insert(%s)\n", OBJ_NAME(o) );
 		if(o->obj_right != NULL) {
 			fprintf(OUT, "insert: unclean Object right\n");
-			exit(-1);
+			exit(1);
 		}
 		if(o->obj_left != NULL) {
 			fprintf(OUT, "insert: unclean Object left\n");
-			exit(-1);
+			exit(1);
 		}
 		fflush(OUT);
 	ENDDEBUG
@@ -198,7 +198,7 @@ struct Object *o;
 		if(!(val = strcmp(o->obj_name, p->obj_name)) ) {
 			/* equal */
 			fprintf(stderr, "re-inserting %s\n",o->obj_name);
-			exit(-1);
+			exit(1);
 		}
 		if(val < 0) {
 			/* left */
@@ -326,7 +326,7 @@ char *struc;
 		fprintf(stderr, 
 	"Internal error at defineitem: trying to redefine obj type 0x%x, adr %s\n",
 			type, adr);
-		exit(-1);
+		exit(1);
 	} else {
 		onew = (struct Object *)Malloc(sizeof (struct Object));
 		bzero(onew, sizeof(struct Object));
@@ -369,7 +369,7 @@ char *adr;
 	} else {
 		if(oold->obj_kind != OBJ_ITEM) {
 			fprintf(stderr, "Sets cannot be members of sets; %s\n", adr);
-			exit(-1);
+			exit(1);
 		}
 		bcopy(oold, onew, sizeof(struct Object));
 		onew->obj_members = onew->obj_left = onew->obj_right = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.2 2000/10/21 13:51:01 takemura Exp $	*/
+/*	$NetBSD: panic.c,v 1.3 2001/04/06 11:13:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Kazuma Arino.
@@ -33,7 +33,7 @@
 void
 abort()
 {
-	exit (-1);
+	exit (1);
 }
 
 /* dummy! */

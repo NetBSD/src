@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2000/09/23 22:39:37 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2001/04/06 11:13:50 wiz Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.100 2000/07/06 11:17:02 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2000/09/23 22:39:37 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2001/04/06 11:13:50 wiz Exp $");
 #endif
 #endif
 
@@ -1516,7 +1516,7 @@ run_program(prog, args, must_exist, done, arg)
 	    syslog(LOG_ERR, "Can't execute %s: %m", prog);
 	    closelog();
 	}
-	_exit(-1);
+	_exit(1);
     }
 
     if (debug)
