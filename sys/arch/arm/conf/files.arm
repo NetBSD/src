@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.24 2001/05/06 18:01:42 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.25 2001/05/06 18:31:14 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -12,6 +12,9 @@ defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
 
 # Floating point emulator
 defopt	ARMFPE
+
+# PMAP_DEBUG (heavily abused option)
+defopt	PMAP_DEBUG
 
 # MI console support
 file	dev/cons.c
