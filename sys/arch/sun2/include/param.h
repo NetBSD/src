@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/03/29 04:35:09 fredette Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2001/04/10 12:24:05 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,12 @@
  */
 #define	NMBCLUSTERS	64	/* map size, max cluster allocation */
 #define MCLSHIFT	10
+
+/*
+ * XXX fredette - we must define this, otw UBC consumes 8MB of kernel VM.
+ * For now, we make it absurdly small, perhaps it can grow later.
+ */
+#define	UBC_NWINS	32
 
 #endif	/* _KERNEL */
 
