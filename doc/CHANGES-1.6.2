@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.268 2004/02/27 22:44:01 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.269 2004/03/15 04:28:53 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2988,6 +2988,7 @@ crypto/dist/openssl/ssl/ssl_ciph.c		patched by hand
 	*) Fix additional bug revealed by the NISCC test suite:
 	    Stop bug triggering large recursion when presented with
             certain ASN.1 tags (CAN-2003-0851). from Steve Henson
+	SA#2004-003
 	[itojun, ticket #1557]
 
 distrib/notes/pmax/hardware			1.14
@@ -3383,7 +3384,7 @@ sys/kern/sysv_shm.c			1.74
 
 	Don't use uao_ functions directly; use them through the pgops methods.
 	Fix missing reference leak in the error path of shmat() mentioned in 
-	Full-Disclosure.
+	Full-Disclosure. SA#2004-004
 	[groo, ticket #1604]
 
 sys/netinet6/ip6_output.c			1.78 (via patch)
@@ -3392,6 +3393,7 @@ sys/netinet/tcp_output.c			1.107 (via patch)
 	Strictly follow RFC2460 section 5 last paragraph (sending rule when 
 	PMTU < 1280). Deal with IPv6 path MTU < 1280 (RFC2460 section 5 
 	last paragraph) Check if there really is room for TCP data.
+	SA#2004-002
 	[itojun, ticket #1605]
 
 	(Moved tags on last 3 files + doc/CHANGES-1.6.2)
@@ -3405,14 +3407,11 @@ xsrc/xfree/xc/lib/font/fontfile/dirfile.c	1.2
 	(Moved tags on last 2 files + doc/CHANGES-1.6.2)
 
 crypto/dist/kame/racoon/isakmp_inf.c		1.5-1.6
+usr.sbin/racoon/Makefile.inc			patch
 
 	Validate hash on info exchange.
 	Fix endian mismatch.
-	[itojun, #1608]
-
-usr.sbin/racoon/Makefile.inc			patch
-
-	Bump version string by appending ``-nb1''.
+	Bump version string by appending ``-nb1''. SA#2004-001
 	[itojun, #1608]
 
 	(Moved tags on last 2 files + doc/CHANGES-1.6.2)
