@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.67 1998/01/04 03:45:21 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.68 1998/02/14 00:39:33 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -520,3 +520,7 @@
 281	STD		{ int sys___sigaltstack14(const struct sigaltstack \
 			    *nss, struct sigaltstack *oss); }
 282	STD		{ int sys___vfork14(void); }
+283	UNIMPL		__posix_chown
+284	UNIMPL		__posix_fchown
+285	UNIMPL		__posix_lchown
+286	STD		{ pid_t sys_getsid(pid_t pid); }
