@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.2 1997/04/09 21:15:55 thorpej Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.3 1997/04/23 18:47:40 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_m68k_cmn.c,v 1.2 1997/04/09 21:15:55 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_m68k_cmn.c,v 1.3 1997/04/23 18:47:40 scottr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,10 +149,10 @@ _kvm_cmn_pa2off(kd, pa)
 	for (i = 0; i < M68K_NPHYS_RAM_SEGS && rsp[i].size != 0; i++) {
 		if (pa >= rsp[i].start &&
 		    pa < (rsp[i].start + rsp[i].size)) {
-			pa -= rsp->start;
+			pa -= rsp[i].start;
 			break;
 		}
-		off += rsp->size;
+		off += rsp[i].size;
 	}
 	return (kd->dump_off + off + pa);
 }
