@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.57 1998/05/03 19:54:56 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.58 1998/05/06 01:21:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -664,7 +664,7 @@ after_listen:
 	 */
 	tp->t_idle = 0;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
-		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 	/*
 	 * Process options.
@@ -736,9 +736,11 @@ after_listen:
 				 * decide between more output or persist.
 				 */
 				if (tp->snd_una == tp->snd_max)
-					tp->t_timer[TCPT_REXMT] = 0;
-				else if (tp->t_timer[TCPT_PERSIST] == 0)
-					tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+					TCP_TIMER_DISARM(tp, TCPT_REXMT);
+				else if (TCP_TIMER_ISARMED(tp,
+				    TCPT_PERSIST) == 0)
+					TCP_TIMER_ARM(tp, TCPT_REXMT,
+					    tp->t_rxtcur);
 
 				sowwakeup(so);
 				if (so->so_snd.sb_cc)
@@ -824,7 +826,7 @@ after_listen:
 			if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 				tp->snd_nxt = tp->snd_una;
 		}
-		tp->t_timer[TCPT_REXMT] = 0;
+		TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->irs = ti->ti_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
@@ -1163,7 +1165,7 @@ after_listen:
 				 * to keep a constant cwnd packets in the
 				 * network.
 				 */
-				if (tp->t_timer[TCPT_REXMT] == 0 ||
+				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 ||
 				    ti->ti_ack != tp->snd_una)
 					tp->t_dupacks = 0;
 				else if (++tp->t_dupacks == tcprexmtthresh) {
@@ -1175,7 +1177,7 @@ after_listen:
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_segsz;
-					tp->t_timer[TCPT_REXMT] = 0;
+					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtt = 0;
 					tp->snd_nxt = ti->ti_ack;
 					tp->snd_cwnd = tp->t_segsz;
@@ -1231,10 +1233,10 @@ after_listen:
 		 * timer, using current (possibly backed-off) value.
 		 */
 		if (ti->ti_ack == tp->snd_max) {
-			tp->t_timer[TCPT_REXMT] = 0;
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 			needoutput = 1;
-		} else if (tp->t_timer[TCPT_PERSIST] == 0)
-			tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+		} else if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST) == 0)
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		/*
 		 * When new data is acked, open the congestion window.
 		 * If the window gives us less than ssthresh packets
@@ -1284,7 +1286,8 @@ after_listen:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+					TCP_TIMER_ARM(tp, TCPT_2MSL,
+					    tcp_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -1300,7 +1303,7 @@ after_listen:
 			if (ourfinisacked) {
 				tp->t_state = TCPS_TIME_WAIT;
 				tcp_canceltimers(tp);
-				tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+				TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 				soisdisconnected(so);
 			}
 			break;
@@ -1324,7 +1327,7 @@ after_listen:
 		 * it and restart the finack timer.
 		 */
 		case TCPS_TIME_WAIT:
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			goto dropafterack;
 		}
 	}
@@ -1468,7 +1471,7 @@ dodata:							/* XXX */
 		case TCPS_FIN_WAIT_2:
 			tp->t_state = TCPS_TIME_WAIT;
 			tcp_canceltimers(tp);
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			soisdisconnected(so);
 			break;
 
@@ -1476,7 +1479,7 @@ dodata:							/* XXX */
 		 * In TIME_WAIT state restart the 2 MSL time_wait timer.
 		 */
 		case TCPS_TIME_WAIT:
-			tp->t_timer[TCPT_2MSL] = 2 * TCPTV_MSL;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			break;
 		}
 	}
@@ -2113,7 +2116,7 @@ syn_cache_get(so, m)
 	tcp_sendseqinit(tp);
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
-	tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 	tcpstat.tcps_accepts++;
 
 	/* Initialize tp->t_ourmss before we deal with the peer's! */
@@ -2139,7 +2142,7 @@ syn_cache_get(so, m)
 	 */
 	tp->snd_up = tp->snd_una;
 	tp->snd_max = tp->snd_nxt = tp->iss+1;
-	tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
+	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
