@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.149 2003/01/17 23:36:13 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.150 2003/01/21 04:26:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,7 +164,7 @@ LEAF(mips_idle)
 #endif
 #ifdef 	IPL_ICU_MASK
 	# all interrupts enable.
-	sw	zero, _C_LABEL(md_imask)	
+	sw	zero, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 #endif
@@ -236,9 +236,9 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
 	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a2)
 #ifdef IPL_ICU_MASK
-	lw	t0, _C_LABEL(md_imask)	
+	lw	t0, _C_LABEL(md_imask)
 	sw	t0, U_PCB_PPL(a2)
-#endif	
+#endif
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
@@ -324,8 +324,8 @@ cpu_switch_queuescan:
 	 * s0 is clear before jumping here to find a new process.
 	 */
 	beq	s0, s7, 4f			# oldproc == newproc ??
-	li	s5, 0				# BDslot: didn't switch 
-		
+	li	s5, 0				# BDslot: didn't switch
+
 /*
  * Switch to new context.
  */
@@ -355,7 +355,7 @@ cpu_switch_queuescan:
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
-	lw	t1, L_PROC(s7)	
+	lw	t1, L_PROC(s7)
 	lw	a0, L_ADDR(s7)
 	lw	v1, P_NRAS(t1)
 
@@ -370,7 +370,7 @@ cpu_switch_queuescan:
 	beq	v1, v0, 1f
 	addu	t0, a0, USPACE - FRAME_SIZ
 	sw	v0, FRAME_EPC(t0)
-1:		
+1:
 	li	s5, 1				# remember that we switched
 4:
 	/* New context is now active */
@@ -409,7 +409,7 @@ cpu_switch_queuescan:
 END(cpu_switch)
 
 
-/* 
+/*
  * cpu_switchto(struct lwp *cur, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
@@ -433,9 +433,9 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
 	REG_S	t0, U_PCB_CONTEXT+SF_REG_SR(a2)
 #ifdef IPL_ICU_MASK
-	lw	t0, _C_LABEL(md_imask)	
+	lw	t0, _C_LABEL(md_imask)
 	sw	t0, U_PCB_PPL(a2)
-#endif	
+#endif
 	REG_EPILOGUE
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
@@ -454,12 +454,12 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	a0, s7				# restore proc
 #endif
 	/*
-	 * regardless of whether a context switch is requites, we need
+	 * regardless of whether a context switch is required, we need
 	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
 	 * cpu_switch() from idle() - in which case curlwp would be NULL
 	 * This needs to be set before conext switch on MIPS
-	 */	
+	 */
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
 	sw	s7, _C_LABEL(curlwp)		# curlwp = l
@@ -475,8 +475,8 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	 * s0 is clear before jumping here to find a new process.
 	 */
 	beq	s0, s7, 4f			# oldproc == newproc ??
-	li	s5, 0				# BDslot: didn't switch 
-	
+	li	s5, 0				# BDslot: didn't switch
+
 /*
  * Switch to new context.
  */
@@ -567,7 +567,7 @@ LEAF(switch_exit)
 	 * s0 will be restored when a new process is resumed.
 	 */
 	li	s0, 0
-	
+
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
