@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.5 1996/04/09 20:56:45 jonathan Exp $	*/
+/*	$NetBSD: endian.h,v 1.5.4.1 1996/06/05 23:53:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -61,6 +61,7 @@
 #define	BYTE_ORDER	LITTLE_ENDIAN
 
 #include <sys/cdefs.h>
+#include <mips/types.h>
 
 __BEGIN_DECLS
 u_int32_t	htonl __P((u_int32_t));
