@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.3 1997/04/22 14:16:18 mrg Exp $	*/
+/*	$NetBSD: command.c,v 1.4 1997/09/21 12:40:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -616,7 +616,7 @@ multi_search(pattern, n)
 	int changed_file;
 
 	changed_file = 0;
-	save_ifile = curr_ifile;
+	save_ifile = save_curr_ifile();
 
 	if (search_type & SRCH_FIRST_FILE)
 	{
@@ -629,7 +629,10 @@ multi_search(pattern, n)
 		else
 			nomore = edit_last();
 		if (nomore)
+		{
+			unsave_ifile(save_ifile);
 			return;
+		}
 		changed_file = 1;
 		search_type &= ~SRCH_FIRST_FILE;
 	}
@@ -644,10 +647,13 @@ multi_search(pattern, n)
 		 */
 		search_type &= ~SRCH_NO_MOVE;
 		if (n == 0)
+		{
 			/*
 			 * Found it.
 			 */
+			unsave_ifile(save_ifile);
 			return;
+		}
 
 		if (n < 0)
 			/*
@@ -702,7 +708,7 @@ commands()
 	register char *cbuf;
 	int newaction;
 	int save_search_type;
-	char *s;
+	char *extra;
 	char tbuf[2];
 	PARG parg;
 
@@ -726,7 +732,13 @@ commands()
 			if (quitting)
 				quit(QUIT_SAVED_STATUS);
 		}
-			
+
+		/*
+		 * See if window size changed, for systems that don't
+		 * generate SIGWINCH.
+		 */
+		check_winch();
+
 		/*
 		 * Display prompt and accept a character.
 		 */
@@ -804,14 +816,14 @@ commands()
 				tbuf[1] = '\0';
 				cbuf = tbuf;
 			}
-			s = NULL;
-			action = fcmd_decode(cbuf, &s);
+			extra = NULL;
+			action = fcmd_decode(cbuf, &extra);
 			/*
 			 * If an "extra" string was returned,
 			 * process it as a string of command characters.
 			 */
-			if (s != NULL)
-				ungetsc(s);
+			if (extra != NULL)
+				ungetsc(extra);
 		}
 		/*
 		 * Clear the cmdbuf string.
@@ -1053,6 +1065,8 @@ commands()
 				if (edit_prev(1) == 0)
 					break;
 			}
+			if (extra != NULL)
+				quit(*extra);
 			quit(QUIT_OK);
 			break;
 
@@ -1191,12 +1205,6 @@ commands()
 			make_display();
 			cmd_exec();
 			lsystem(pr_expand(editproto, 0), (char*)NULL);
-			/*
-			 * Re-edit the file, since data may have changed.
-			 * Some editors even recreate the file, so flushing
-			 * buffers is not sufficient.
-			 */
-			reedit_ifile(curr_ifile);
 			break;
 #else
 			error("Command not available", NULL_PARG);
