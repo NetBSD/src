@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.1 2000/06/02 23:11:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.2 2000/06/03 14:55:43 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -74,6 +74,7 @@ static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #include <unistd.h>
 #include <netdb.h>
 #include <err.h>
+#include <string.h>
 
 #include "rpc_com.h"
 
