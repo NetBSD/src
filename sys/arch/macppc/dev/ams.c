@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.5 1999/02/17 14:56:56 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.6 1999/06/17 06:59:05 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -175,6 +175,9 @@ amsattach(parent, self, aux)
 			case MSCLASS_TRACKBALL:
 				printf("trackball");
 				break;
+			case MSCLASS_TRACKPAD:
+				printf("trackpad");
+				break;
 			default:
 				printf("unknown device");
 				break;
@@ -237,7 +240,7 @@ ems_init(sc)
 		 * buffer[4]'s locking mask enables a
 		 * click to toggle the button down state--sort of
 		 * like the "Easy Access" shift/control/etc. keys.
-		 * buffer[3]'s alternative speed mask enables using 
+		 * buffer[3]'s alternative speed mask enables using
 		 * different speed when the corr. button is down
 		 */
 		buffer[0] = 4;
@@ -260,7 +263,7 @@ ems_init(sc)
 		sc->sc_res = 200;
 		return;
 	}
-	if ((sc->handler_id == ADBMS_100DPI) || 
+	if ((sc->handler_id == ADBMS_100DPI) ||
 	    (sc->handler_id == ADBMS_200DPI)) {
 		/* found a mouse */
 		cmd = ((adbaddr << 4) & 0xf0) | 0x3;
@@ -292,7 +295,7 @@ ems_init(sc)
 		while (!extdms_done)
 			/* busy wait until done */;
 
-		/* 
+		/*
 		 * Check to see if successful, if not
 		 * try to initialize it as other types
 		 */
@@ -303,7 +306,7 @@ ems_init(sc)
 		    (Ptr)&extdms_done, cmd);
 		while (!extdms_done)
 			/* busy wait until done */;
-			
+
 		if (buffer[2] == ADBMS_EXTENDED) {
 			sc->handler_id = ADBMS_EXTENDED;
 			extdms_done = 0;
@@ -318,9 +321,9 @@ ems_init(sc)
 				sc->sc_buttons = buffer[8];
 				sc->sc_res = (int)*(short *)&buffer[5];
 				bcopy(&(buffer[1]), sc->sc_devid, 4);
-			} else if (buffer[1] == 0x9a && 
+			} else if (buffer[1] == 0x9a &&
 			    ((buffer[2] == 0x20) || (buffer[2] == 0x21))) {
-				/* 
+				/*
 				 * Set up non-EMP Mouseman/Trackman to put
 				 * button bits in 3rd byte instead of sending
 				 * via pseudo keyboard device.
@@ -367,7 +370,7 @@ ems_init(sc)
 					sc->sc_class = MSCLASS_TRACKBALL;
 				else
 					sc->sc_class = MSCLASS_MOUSE;
-			} else 
+			} else
 				/* unknown device? */;
 		} else {
 			/* Attempt to initialize as an A3 mouse */
@@ -378,8 +381,8 @@ ems_init(sc)
 			    (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
 				/* busy wait until done */;
-	
-			/* 
+
+			/*
 			 * Check to see if successful, if not
 			 * try to initialize it as other types
 			 */
@@ -390,7 +393,7 @@ ems_init(sc)
 			    (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
 				/* busy wait until done */;
-				
+
 			if (buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
 				/* Initialize as above */
@@ -400,7 +403,7 @@ ems_init(sc)
 				buffer[1] = 0x00;
 				/* Irrelevant, buffer has 0x77 */
 				buffer[2] = 0x07;
-				/* 
+				/*
 				 * enable 3 button mode = 0111b,
 				 * speed = normal
 				 */
@@ -414,7 +417,7 @@ ems_init(sc)
 			} else {
 				/* No special support for this mouse */
 			}
-		} 
+		}
 	}
 }
 
@@ -422,7 +425,7 @@ ems_init(sc)
  * Handle putting the mouse data received from the ADB into
  * an ADB event record.
  */
-void 
+void
 ms_adbcomplete(buffer, data_area, adb_command)
 	caddr_t buffer;
 	caddr_t data_area;
