@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.119 2003/08/09 21:36:27 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.120 2003/08/19 14:33:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -517,8 +517,8 @@ message dev
 {device}
 
 message nfssource
-{Enter the nfs host and server directory where the distribution is
-located.  Remember, the directory should contain the .tgz files and
+{Enter the nfs host and server directory where the distribution is located. 
+Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
 host:		%s 
@@ -530,26 +530,26 @@ message nfsbadmount
 
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
-the distribution is located.  Remember, the directory should contain
-the .tgz files.
+the distribution is located. 
+Remember, the directory should contain the .tgz files.
 
-device:		%s
+device:		%s 
 directory:	%s
 }
 
 message localfssource
 {Enter the unmounted local device and directory on that device where
-the distribution is located.  Remember, the directory should contain
-the .tgz files.
+the distribution is located. 
+Remember, the directory should contain the .tgz files.
 
-device:		%s
-file system:	%s
+device:		%s 
+file system:	%s 
 directory:	%s
 }
 
 message localdir
-{Enter the already-mounted local directory where the distribution is
-located.  Remember, the directory should contain the .tgz files.
+{Enter the already-mounted local directory where the distribution is located. 
+Remember, the directory should contain the .tgz files.
 
 directory:	%s
 }
