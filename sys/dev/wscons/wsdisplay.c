@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.16 1999/01/17 15:56:33 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.17 1999/01/18 20:03:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.16 1999/01/17 15:56:33 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.17 1999/01/18 20:03:59 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1523,20 +1523,6 @@ wsdisplay_is_console(dv)
 
 	KASSERT(sc != NULL);
 	return (sc->sc_isconsole);
-}
-
-int
-wsdisplay_has_emulator(dv)
-	struct device *dv;
-{
-	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dv;
-	struct wsscreen *scr;
-
-	scr = sc->sc_focus; /* ??? */
-
-	KASSERT(sc != NULL);
-	KASSERT(scr != NULL);
-	return (WSSCREEN_HAS_EMULATOR(scr)); /* XXX XXX */
 }
 
 struct device *
