@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 1994/10/26 00:56:24 cgd Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 1995/01/05 06:01:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,6 +60,44 @@ int	sigismember __P((const sigset_t *, int));
 int	sigpending __P((sigset_t *));
 int	sigprocmask __P((int, const sigset_t *, sigset_t *));
 int	sigsuspend __P((const sigset_t *));
+
+#if defined(__GNUC__) && defined(__STDC__)
+extern __inline int sigaddset(sigset_t *set, int signo) {
+	extern int errno;
+
+	if (signo <= 0 || signo >= 32) {
+		errno = 22;			/* EINVAL */
+		return -1;
+	}
+	*set |= (1 << ((signo)-1));		/* sigmask(signo) */
+	return (0);
+}
+
+extern __inline int sigdelset(sigset_t *set, int signo) {
+	extern int errno;
+
+	if (signo <= 0 || signo >= 32) {
+		errno = 22;			/* EINVAL */
+		return -1;
+	}
+	*set &= ~(1 << ((signo)-1));		/* sigmask(signo) */
+	return (0);
+}
+
+extern __inline int sigismember(const sigset_t *set, int signo) {
+	extern int errno;
+
+	if (signo <= 0 || signo >= 32) {
+		errno = 22;			/* EINVAL */
+		return -1;
+	}
+	return ((*set & (1 << ((signo)-1))) != 0);
+}
+#endif
+
+/* List definitions after function declarations, or Reiser cpp gets upset. */
+#define	sigemptyset(set)	(*(set) = 0, 0)
+#define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
 #ifndef _POSIX_SOURCE
 int	killpg __P((pid_t, int));
 int	sigblock __P((int));
@@ -73,9 +111,5 @@ void	psignal __P((unsigned int, const char *));
 #endif	/* !_POSIX_SOURCE */
 #endif	/* !_ANSI_SOURCE */
 __END_DECLS
-
-/* List definitions after function declarations, or Reiser cpp gets upset. */
-#define	sigemptyset(set)	(*(set) = 0, 0)
-#define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
 
 #endif	/* !_USER_SIGNAL_H */
