@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.7 2003/05/17 02:57:39 gmcgarry Exp $
+.\"     $NetBSD: nls.7,v 1.8 2003/05/17 03:03:32 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -371,6 +371,8 @@ If suitable fonts are available to the X server, then X clients can
 include support for different character sets.
 .Xr xterm 1
 includes support for UTF-8 character sets.
+.Xr xfd 1
+is useful for displaying all the characters in an X font.
 .Pp
 The NetBSD
 .Xr wscons 4
@@ -498,6 +500,7 @@ formatted I/O functions.
 .Sh SEE ALSO
 .Xr gencat 1 ,
 .Xr xterm 1 ,
+.Xr xfd 1 ,
 .Xr catgets 3 ,
 .Xr gettext 3 ,
 .Xr nl_langinfo 3 ,
