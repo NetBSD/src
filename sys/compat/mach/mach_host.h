@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.3 2002/11/10 21:53:40 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.4 2002/11/11 09:28:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,6 +67,14 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_host_info_reply_t;
 
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_host_info_reply_simple_t;
+
 #define MACH_HOST_BASIC_INFO		1
 #define MACH_HOST_SCHED_INFO		3
 #define MACH_HOST_RESOURCE_SIZES	4
@@ -117,6 +125,7 @@ typedef struct {
 	mach_ndr_record_t rep_ndr;
 	mach_kern_return_t rep_retval;
 	mach_vm_size_t rep_page_size;
+	mach_msg_trailer_t rep_trailer;
 } mach_host_page_size_reply_t;
 
 /* host_get_clock_service */
@@ -131,7 +140,7 @@ typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_clock_serv;
-	mach_msg_trailer_t req_trailer;
+	mach_msg_trailer_t rep_trailer;
 } mach_host_get_clock_service_reply_t;
 
 int mach_host_info __P((struct proc *, mach_msg_header_t *));

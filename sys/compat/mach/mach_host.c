@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.5 2002/11/11 01:18:44 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.6 2002/11/11 09:28:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.5 2002/11/11 01:18:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.6 2002/11/11 09:28:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -60,22 +60,27 @@ mach_host_info(p, msgh)
 {
 	mach_host_info_request_t req;
 	mach_host_info_reply_t rep;
+	mach_host_info_reply_simple_t *reps;
 	int error;
+	int msglen;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
 	bzero(&rep, sizeof(rep));
 
-	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	msglen = sizeof(rep);
 
 	switch(req.req_flavor) {
 	case MACH_HOST_BASIC_INFO: {
 		struct mach_host_basic_info *info;
-
-		rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
 
 		info = (struct mach_host_basic_info *)&rep.rep_data[0];
 		info->max_cpus = 1; /* XXX fill this  accurately */
@@ -87,8 +92,11 @@ mach_host_info(p, msgh)
 	}
 
 	case MACH_HOST_MACH_MSG_TRAP:
-		rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
-		rep.rep_msgh.msgh_size = 0x28; /* only headers, no data */
+		reps = (mach_host_info_reply_simple_t *)&rep;
+		reps->rep_msgh.msgh_size = 
+		    sizeof(*reps) - sizeof(reps->rep_trailer);
+		reps->rep_trailer.msgh_trailer_size = 8;
+		msglen = sizeof(*reps);
 		break;
 
 	case MACH_HOST_SCHED_INFO:
@@ -102,7 +110,7 @@ mach_host_info(p, msgh)
 		break;
 	}
 
-	if ((error = copyout(&rep, msgh, rep.rep_msgh.msgh_size)) != 0)
+	if ((error = copyout(&rep, msgh, msglen)) != 0)
 		return error;
 
 	return 0;
@@ -123,11 +131,13 @@ mach_host_page_size(p, msgh)
 
 	bzero(&rep, sizeof(rep));
 
-	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_page_size = PAGE_SIZE;
+	rep.rep_trailer.msgh_trailer_size = 8;
 	
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
@@ -143,14 +153,21 @@ mach_host_get_clock_service(p, msgh)
 	mach_host_get_clock_service_reply_t rep;
 	int error;
 
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
 	bzero(&rep, sizeof(rep));
-	rep.rep_msgh.msgh_bits = 0x80001200; /* XXX why? */
-	rep.rep_msgh.msgh_size = sizeof(rep);
+
+	rep.rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_body.msgh_descriptor_count = 1; /* XXX why? */
 	rep.rep_clock_serv.name = 0x60b; /* XXX */
 	rep.rep_clock_serv.disposition = 0x11; /* XXX */
+	rep.rep_trailer.msgh_trailer_size = 8;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
