@@ -25,7 +25,7 @@ pseudo-device imp
 
 # legitimate pseudo-devices
 pseudo-device vn: disk
-pseudo-device cd: disk
+#pseudo-device cd: disk
 
 pseudo-device pty: tty
 
@@ -62,7 +62,7 @@ file kern/dead_vnops.c
 file kern/fifo_vnops.c	 	fifo
 file kern/init_main.c	
 file kern/init_sysent.c	
-file kern/kern_acct.c	
+file kern/kern_acct.c
 file kern/kern_clock.c	
 file kern/kern_descrip.c	
 file kern/kern_exec.c	
@@ -224,17 +224,17 @@ file pcfs/pcfs_vfsops.c	 	pcfs
 file pcfs/pcfs_vnops.c	 	pcfs
 file ufs/mfs_vfsops.c	 	mfs
 file ufs/mfs_vnops.c		mfs
-file ufs/ufs_alloc.c		
-file ufs/ufs_bmap.c		
-file ufs/ufs_disksubr.c	
-file ufs/ufs_inode.c		
-file ufs/ufs_lockf.c		
-file ufs/ufs_lookup.c	
+file ufs/ufs_alloc.c		ffs
+file ufs/ufs_bmap.c		ffs
+file ufs/ufs_disksubr.c		ffs
+file ufs/ufs_inode.c		ffs
+file ufs/ufs_lockf.c		ffs
+file ufs/ufs_lookup.c		ffs
 file ufs/ufs_quota.c		quota
-file ufs/ufs_subr.c		
-file ufs/ufs_tables.c	
-file ufs/ufs_vfsops.c	
-file ufs/ufs_vnops.c		
+file ufs/ufs_subr.c		ffs
+file ufs/ufs_tables.c		ffs
+file ufs/ufs_vfsops.c		ffs mfs
+file ufs/ufs_vnops.c		ffs
 file vm/device_pager.c	 	devpager
 file vm/kern_lock.c		
 file vm/swap_pager.c		swappager
