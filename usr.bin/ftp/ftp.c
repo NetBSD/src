@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.78 1999/10/05 13:05:41 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.79 1999/10/05 13:44:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.78 1999/10/05 13:05:41 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.79 1999/10/05 13:44:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -747,6 +747,7 @@ sendrequest(cmd, local, remote, printnames)
 		while (cpend) {
 			(void)getreply(0);
 		}
+		code = -1;
 		goto cleanupsend;
 	}
 	oldintr = xsignal(SIGINT, abortsend);
@@ -758,6 +759,7 @@ sendrequest(cmd, local, remote, printnames)
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
 			warn("%s", local + 1);
+			code = -1;
 			goto cleanupsend;
 		}
 		progress = 0;
@@ -766,16 +768,19 @@ sendrequest(cmd, local, remote, printnames)
 		fin = fopen(local, "r");
 		if (fin == NULL) {
 			warn("local: %s", local);
+			code = -1;
 			goto cleanupsend;
 		}
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode)) {
 			fprintf(ttyout, "%s: not a plain file.\n", local);
+			code = -1;
 			goto cleanupsend;
 		}
 		filesize = st.st_size;
 	}
 	if (initconn()) {
+		code = -1;
 		goto cleanupsend;
 	}
 	if (setjmp(sendabort))
@@ -931,6 +936,8 @@ sendrequest(cmd, local, remote, printnames)
 		(*closefunc)(fin);
 		fin = NULL;
 	}
+	(void)fclose(dout);
+	dout = NULL;
 	(void)getreply(0);
 	if (bytes > 0)
 		ptransfer(0);
@@ -938,9 +945,11 @@ sendrequest(cmd, local, remote, printnames)
 
 abort:
 	if (!cpend) {
+		code = -1;
 		goto cleanupsend;
 	}
 	(void)getreply(0);
+	code = -1;
 	if (bytes > 0)
 		ptransfer(0);
 
@@ -957,7 +966,6 @@ cleanupsend:
 		(void)close(data);
 		data = -1;
 	}
-	code = -1;
 	progress = oprogress;
 	restart_point = 0;
 	bytes = 0;
@@ -1034,6 +1042,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		while (cpend) {
 			(void)getreply(0);
 		}
+		code = -1;
 		goto cleanuprecv;
 	}
 	oldintr = xsignal(SIGINT, abortrecv);
@@ -1043,6 +1052,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 
 			if (errno != ENOENT && errno != EACCES) {
 				warn("local: %s", local);
+				code = -1;
 				goto cleanuprecv;
 			}
 			if (dir != NULL)
@@ -1053,19 +1063,23 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 				*dir = '/';
 			if (d < 0) {
 				warn("local: %s", local);
+				code = -1;
 				goto cleanuprecv;
 			}
 			if (!runique && errno == EACCES &&
 			    chmod(local, (S_IRUSR|S_IWUSR)) < 0) {
 				warn("local: %s", local);
+				code = -1;
 				goto cleanuprecv;
 			}
 			if (runique && errno == EACCES &&
 			   (local = gunique(local)) == NULL) {
+				code = -1;
 				goto cleanuprecv;
 			}
 		}
 		else if (runique && (local = gunique(local)) == NULL) {
+			code = -1;
 			goto cleanuprecv;
 		}
 	}
@@ -1078,6 +1092,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		filesize = remotesize(remote, 0);
 	}
 	if (initconn()) {
+		code = -1;
 		goto cleanuprecv;
 	}
 	if (setjmp(recvabort))
@@ -1267,6 +1282,8 @@ break2:
 		(*closefunc)(fout);
 		fout = NULL;
 	}
+	(void)fclose(din);
+	din = NULL;
 	(void)getreply(0);
 	if (bare_lfs) {
 		fprintf(ttyout,
@@ -1297,6 +1314,7 @@ abort:
 			/*
 			 * abort using RFC 959 recommended IP,SYNC sequence
 			 */
+	code = -1;
 	(void)xsignal(SIGINT, SIG_IGN);
 	if (!cpend) {
 		goto cleanuprecv;
@@ -1318,7 +1336,6 @@ cleanuprecv:
 		(void)close(data);
 		data = -1;
 	}
-	code = -1;
 	progress = oprogress;
 	preserve = opreserve;
 	bytes = 0;
