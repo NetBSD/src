@@ -1,0 +1,153 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)MAKEDEV.8	8.1 (Berkeley) 6/5/93
+.\"	$NetBSD: MAKEDEV.8,v 1.1 1997/07/23 15:17:06 oki Exp $
+.\"
+.Dd July 23, 1997
+.Dt MAKEDEV 8 x68k
+.Sh NAME
+.Nm MAKEDEV
+.Nd create system and device special files
+.Sh SYNOPSIS
+.Nm MAKEDEV
+.Ar device_name Ar ...
+.Sh DESCRIPTION
+The shell script
+.Nm MAKEDEV ,
+found in the
+.Pa /dev
+directory, is used to create the common special
+files.
+.\"See
+.\".Xr special (8)
+.\"for a more complete discussion of special files.
+.Pp
+.Nm MAKEDEV
+takes any number of device names as arguments, where the names are
+the common abbreviation for the device.
+There are two special devices,
+.Ar std
+and
+.Ar local .
+The former creates the standard devices for the architecture.
+The latter is for devices specific to the local site, and
+executes the shell file 
+.Pa MAKEDEV.local .
+.Pp
+The
+.Tn x68k
+supports the following devices.
+Where a device name is followed by a hash sign
+.Ql \&# ,
+the hash sign
+must be replaced by a unit number.
+.Pp
+.Bl -tag -width indent -compact
+.It Ar std
+the standard devices
+.Pf ( Ar console ,
+.Ar drum ,
+.Ar io ,
+.Ar klog ,
+.Ar kmem ,
+.Ar mem ,
+.Ar null ,
+.Ar stderr ,
+.Ar stdin ,
+.Ar stdout ,
+.Ar tty ,
+.Ar zero ) .
+.It Ar local
+configuration specific devices.
+.It Ar audio
+generic audio interface (not yet implemented).
+.It Ar bell#
+keyboard bell emulator.
+.It Ar bpf#
+Berkeley packet filters.
+.It Ar ccd#
+``concatenated'' pseudo-disks.
+.It Ar cd#
+SCSI CD-ROM drives.
+.It Ar ch#
+SCSI changer devices.
+.It Ar com#
+PSX16550 serial board.
+.It Ar fd
+file descriptors.
+.It Ar fd#
+``floppy'' disk drives (90mm, 130mm).
+.It Ar kbd
+the keyboard.
+.It Ar klog
+kernel logging device.
+.It Ar lkm
+loadable kernel module interface.
+.It Ar md#
+``memorydisk'' pseudo-disks.
+.It Ar mouse#
+serial mice.
+.It Ar par#
+motherboard parallel port.
+.It Ar pow#
+power switch device.
+.It Ar pty#
+set of 16 master and slave pseudo terminals.
+.It Ar sd#
+SCSI disk drives.
+.It Ar sram
+non-volatile static memory.
+.It Ar ss#
+SCSI scanner devices.
+.It Ar st#
+SCSI tape drives.
+.It Ar tty#
+standard serial ports.
+.It Ar ttye#
+ite bitmapped console.
+.It Ar tun#
+network tunnel driver.
+.It Ar uk#
+unknown SCSI devices.
+.It Ar vnd#
+``file'' pseudo-disks.
+.El
+.Sh FILES
+.Bl -tag -width xxxx -compact
+.It Pa /dev
+The special file directory.
+.El
+.Sh SEE ALSO
+.Xr mknod 1 , 
+.Xr intro 4 ,
+.Xr config 8
+.\".Xr special (8)
