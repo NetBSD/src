@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.2 1993/10/22 21:10:42 pk Exp $
+#	$Id: Makefile,v 1.3 1993/12/02 07:22:48 mycroft Exp $
 
 PROG=	ldd
 SRCS=	ldd.c
-BINDIR= ${DESTDIR}/usr/bin
+BINDIR= /usr/bin
 
 .include <bsd.prog.mk>
