@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.90 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.91 2004/12/04 08:07:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.90 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.91 2004/12/04 08:07:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,6 +688,8 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			if (error) {
 				sokvafree(lva, npages << PAGE_SHIFT);
 				m_free(m);
+				if (error == EBUSY)
+					goto loan_fail;
 				goto read_error;
 			}
 
