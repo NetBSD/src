@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.10 2000/02/01 22:52:10 thorpej Exp $	*/
+/*	$NetBSD: in6.c,v 1.11 2000/02/02 13:44:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -946,6 +946,20 @@ in6_purgeaddr(ifa, ifp)
 	}
 
 	IFAFREE(&oia->ia_ifa);
+
+	/*
+	 * if the interface is going away, and this was the last IPv6
+	 * address on the interface, remove route to link-local
+	 * allnodes multicast address
+	 */
+	if (ifp->if_output == if_nulloutput) {
+		/* was it the last IPv6 address for the interface? */
+		for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
+			if (ifa->ifa_addr->sa_family == AF_INET6)
+				return;
+
+		in6_ifdetach(ifp);
+	}
 }
 
 /*

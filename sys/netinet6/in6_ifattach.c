@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.15 2000/02/01 22:52:11 thorpej Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.16 2000/02/02 13:44:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -619,6 +619,7 @@ in6_ifdetach(ifp)
 	struct ifaddr *ifa;
 	struct rtentry *rt;
 	short rtflags;
+	struct sockaddr_in6 sin6;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{
@@ -661,5 +662,17 @@ in6_ifdetach(ifp)
 		}
 
 		free(ia, M_IFADDR);
+	}
+
+	/* remove route to link-local allnodes multicast (ff02::1) */
+	bzero(&sin6, sizeof(sin6));
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_addr = in6addr_linklocal_allnodes;
+	sin6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	if ((rt = rtalloc1((struct sockaddr *)&sin6, 0)) != NULL) {
+		rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
+			rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		rtfree(rt);
 	}
 }
