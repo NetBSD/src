@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.21 1999/07/06 15:11:14 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.22 1999/07/10 19:59:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.21 1999/07/06 15:11:14 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.22 1999/07/10 19:59:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,22 +243,19 @@ typeerr:		LABEL;
 	if (s->flags & F_TIME) {
 		struct timeval tv[2];
 		struct stat *ps = p->fts_statp;
-#ifdef BSD4_4
 		time_t smtime = s->st_mtimespec.tv_sec;
+
+#ifdef BSD4_4
 		time_t pmtime = ps->st_mtimespec.tv_sec;
 
-		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &ps->st_mtimespec);
 #else
-		time_t smtime = s->st_mtime;
-		time_t pmtime = ps->st_mtime;
+		time_t pmtime = (time_t)ps->st_mtime;
 
-		tv[0].tv_sec = s->st_mtime;
-		tv[0].tv_usec = 0;
 		tv[1].tv_sec = ps->st_mtime;
 		tv[1].tv_usec = 0;
 #endif
-
+		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
 
 		if (tv[0].tv_sec != tv[1].tv_sec ||
 		    tv[0].tv_usec != tv[1].tv_usec) {
