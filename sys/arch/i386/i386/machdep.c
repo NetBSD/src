@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.28 1993/06/07 19:52:28 cgd Exp $
+ *	$Id: machdep.c,v 1.29 1993/06/15 21:56:58 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -1208,10 +1208,6 @@ cpu_exec_checkmid(int mid)
 
 	case MID_I386:
 		return 1;
-
-	case MID_I486:
-		return ((cpu_class == CPUCLASS_486) ||
-			(cpu_class == CPUCLASS_586));
 
 	default:
 		return 0;
