@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.132 1999/11/14 18:06:09 soren Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.133 2000/01/13 00:18:27 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -644,6 +644,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNC|SDEV_NOWIDE},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "TEAC    ", "MT-2ST/N50      ", ""},     SDEV_NOLUNS},
 
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS60            ", "1R08"}, SDEV_NOLUNS},
