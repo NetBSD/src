@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.24 2003/10/03 20:56:11 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.25 2003/10/26 19:09:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.24 2003/10/03 20:56:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.25 2003/10/26 19:09:44 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -424,7 +424,7 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0)
 	struct ieee1394_fraghdr *ifh;
 	struct ieee1394_unfraghdr *iuh;
 	struct ieee1394_reassq *rq;
-	struct ieee1394_reass_pkt *rp, *trp, *nrp;
+	struct ieee1394_reass_pkt *rp, *trp, *nrp = NULL;
 	int len;
 	u_int16_t off, ftype, size, dgl;
 
