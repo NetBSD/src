@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.35 1995/04/04 01:44:23 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.36 1995/04/04 01:59:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -596,7 +596,7 @@ loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
 	ie_ack(sc, status);
 
-	if (status & (IE_ST_RECV | IE_ST_RNR)) {
+	if (status & (IE_ST_FR | IE_ST_RNR)) {
 #ifdef IEDEBUG
 		in_ierint++;
 		if (sc->sc_debug & IED_RINT)
@@ -608,7 +608,7 @@ loop:
 #endif
 	}
 
-	if (status & IE_ST_DONE) {
+	if (status & IE_ST_CX) {
 #ifdef IEDEBUG
 		in_ietint++;
 		if (sc->sc_debug & IED_TINT)
@@ -627,7 +627,7 @@ loop:
 	}
 
 #ifdef IEDEBUG
-	if ((status & IE_ST_ALLDONE) && (sc->sc_debug & IED_CNA))
+	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
