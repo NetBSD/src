@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.53 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.54 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -201,3 +201,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		from command line.  [bouyer 20021204]
 	build.sh: add -E, to enable "expert mode", which allows builds
 		to DESTDIR=/.  [lukem 20021208]
+	Added arch/evbppc for PowerPC-based evaluation boards, with the
+		existing Walnut port as its first member. [scw 20021209]
