@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicu.c,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumicu.c,v 1.2 1999/12/07 17:53:04 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -58,13 +58,10 @@ int	plumicu_intr __P((void*));
 
 struct plum_intr_ctrl {
 	plumreg_t	ic_ackpat1;
-	plumreg_t	ic_ackpat2;
-	int		ic_ackreg2;
-	plumreg_t	ic_ienpat;
-	int		ic_ienreg;
-	plumreg_t	ic_senpat;
-	int		ic_senreg;
-} pi_ctrl[] = {
+	plumreg_t	ic_ackpat2;	int	ic_ackreg2;
+	plumreg_t	ic_ienpat;	int	ic_ienreg;
+	plumreg_t	ic_senpat;	int	ic_senreg;
+} pi_ctrl[PLUM_INTR_MAX] = {
 	[PLUM_INT_C1IO]	= {PLUM_INT_INTSTA_PCCINT,	
 			   PLUM_INT_PCCINTS_C1IO,	PLUM_INT_PCCINTS_REG,
 			   PLUM_INT_PCCIEN_IENC1IO,	PLUM_INT_PCCIEN_REG,		
@@ -260,21 +257,25 @@ plum_intr_establish(pc, line, mode, level, ih_fun, ih_arg)
 	TAILQ_INSERT_TAIL(&sc->sc_pi_head[line], pi, pi_link);
 	
 	/* Enable interrupt */
-	if (pi->pi_ctrl->ic_ienreg) {
-		reg = plum_conf_read(regt, regh, pi->pi_ctrl->ic_ienreg);
-		reg |= pi->pi_ctrl->ic_ienpat;
-		plum_conf_write(regt, regh, pi->pi_ctrl->ic_ienreg, reg);
-	}
+	/* status enable */
 	if (pi->pi_ctrl->ic_senreg) {
 		reg = plum_conf_read(regt, regh, pi->pi_ctrl->ic_senreg);
 		reg |= pi->pi_ctrl->ic_senpat;
 		plum_conf_write(regt, regh, pi->pi_ctrl->ic_senreg, reg);
 	}
+	/* interrupt enable */
+	if (pi->pi_ctrl->ic_ienreg) {
+		reg = plum_conf_read(regt, regh, pi->pi_ctrl->ic_ienreg);
+		reg |= pi->pi_ctrl->ic_ienpat;
+		plum_conf_write(regt, regh, pi->pi_ctrl->ic_ienreg, reg);
+	}
 
 	/* Enable redirect to TX39 core */
 	DPRINTF(("plum_intr_establish: %d (count=%d)\n", line, sc->sc_enable_count));
-	sc->sc_enable_count++;
-	plum_conf_write(regt, regh, PLUM_INT_INTIEN_REG, 1);
+
+	if (!sc->sc_enable_count++) {
+		plum_conf_write(regt, regh, PLUM_INT_INTIEN_REG, PLUM_INT_INTIEN);
+	}
 
 	return ih_fun;
 }
@@ -298,7 +299,6 @@ plum_intr_disestablish(pc, arg)
 				TAILQ_REMOVE(&sc->sc_pi_head[i], pi, pi_link);
 				DPRINTF(("plum_intr_disestablish: %d (count=%d)\n",  
 					 pi->pi_line, sc->sc_enable_count - 1));
-				free(pi, M_DEVBUF);
 				goto found;
 			}
 		}
@@ -316,10 +316,11 @@ plum_intr_disestablish(pc, arg)
 		reg &= ~(pi->pi_ctrl->ic_senpat);
 		plum_conf_write(regt, regh, pi->pi_ctrl->ic_senreg, reg);
 	}
+	free(pi, M_DEVBUF);
 	
 	/* Disable redirect to TX39 core */
 	if (--sc->sc_enable_count == 0) {
-		/* Disable redirect to TX39 core to avoid lost interrupt */
+		/* Disable redirect to TX39 core */
 		plum_conf_write(regt, regh, PLUM_INT_INTIEN_REG, 0);
 	}
 }
@@ -336,19 +337,21 @@ plumicu_intr(arg)
 	int i;
 	
 	reg1 = plum_conf_read(regt, regh, PLUM_INT_INTSTA_REG);
+
 	for (i = 0; i < PLUM_INTR_MAX; i++) {
 		struct plum_intr_ctrl *pic = &pi_ctrl[i];
 		if (pic->ic_ackpat1 & reg1) {
 			if (pic->ic_ackpat2) {
 				reg2 = plum_conf_read(regt, regh, 
 						      pic->ic_ackreg2);
-				TAILQ_FOREACH(pi, &sc->sc_pi_head[i], 
-					      pi_link) {
-					if (pi->pi_ctrl->ic_ackpat2 & reg2) {
-						plum_conf_write(
-							regt, regh, 
-							pic->ic_ackreg2, 
-							pi->pi_ctrl->ic_ackpat2);
+				if (pic->ic_ackpat2 & reg2) {
+					plum_conf_write(
+						regt, regh,
+						pic->ic_ackreg2,
+						pic->ic_ackpat2);
+					TAILQ_FOREACH(pi, 
+						      &sc->sc_pi_head[i], 
+						      pi_link) {
 						(*pi->pi_fun)(pi->pi_arg);
 					}
 				} 
