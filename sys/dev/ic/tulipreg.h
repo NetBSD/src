@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.20 2000/05/25 22:50:11 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.21 2000/08/03 03:07:30 castor Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
  *	  an internal NWay block.  The 98715, 98715A, and 98725
  *	  have only GPR media and the NWay block.  The 98715,
  *	  98715A, and 98725 support power management.
+ *
+ *        The 98715AEC adds 802.3x flow Frame based Flow Control to the
+ *	  98715A.
  *
  *	- Lite-On 82C115 (PNIC II):
  *
@@ -746,6 +749,7 @@ struct tulip_desc {
 						   (21041) */
 #define	SIASTAT_ANS_DIS		0x00000000	/*     disabled */
 #define	SIASTAT_ANS_TXDIS	0x00001000	/*     transmit disabled */
+#define	SIASTAT_ANS_START	0x00001000	/*     (MX98715AEC) */
 #define	SIASTAT_ANS_ABD		0x00002000	/*     ability detect */
 #define	SIASTAT_ANS_ACKD	0x00003000	/*     acknowledge detect */
 #define	SIASTAT_ANS_ACKC	0x00004000	/*     complete acknowledge */
@@ -1059,7 +1063,7 @@ struct tulip_desc {
 
 
 /*
- * Macronix 98713, 98713A, 98715, 98715A, 98725 and
+ * Macronix 98713, 98713A, 98715, 98715A, 98715AEC, 98725 and
  * Lite-On 82C115 registers.
  */
 
@@ -1119,7 +1123,12 @@ struct tulip_desc {
 	 * this does not appear to be necessary.  This is probably
 	 * one of the things that frobbing the Test Operation Register
 	 * does.
+	 *
+	 * MX98715AEC uses this register for Auto Compensation.
+	 * CSR20<14> and CSR20<9> are called DS130 and DS120
 	 */
+#define	PMAC_NWAYSTAT_DS120	0x00000200	/* Auto-compensation circ */
+#define	PMAC_NWAYSTAT_DS130	0x00004000	/* Auto-compensation circ */
 #define	PMAC_NWAYSTAT_EQTEST	0x00001000	/* EQ test */
 #define	PMAC_NWAYSTAT_PCITEST	0x00010000	/* PCI test */
 #define	PMAC_NWAYSTAT_10TXH	0x08000000	/* 10t accepted */

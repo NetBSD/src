@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.36 2000/05/26 16:38:14 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.37 2000/08/03 03:07:30 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -137,14 +137,15 @@ typedef enum {
 	TULIP_CHIP_MX98713A  = 12,	/* Macronix 98713A PMAC */
 	TULIP_CHIP_MX98715   = 13,	/* Macronix 98715 PMAC */
 	TULIP_CHIP_MX98715A  = 14,	/* Macronix 98715A PMAC */
-	TULIP_CHIP_MX98725   = 15,	/* Macronix 98725 PMAC */
-	TULIP_CHIP_WB89C840F = 16,	/* Winbond 89C840F */
-	TULIP_CHIP_DM9102    = 17,	/* Davicom DM9102 */
-	TULIP_CHIP_DM9102A   = 18,	/* Davicom DM9102A */
-	TULIP_CHIP_AL981     = 19,	/* ADMtek AL981 */
-	TULIP_CHIP_AX88140   = 20,	/* ASIX AX88140 */
-	TULIP_CHIP_AX88141   = 21,	/* ASIX AX88141 */
-	TULIP_CHIP_X3201_3   = 22,	/* Xircom X3201-3 */
+	TULIP_CHIP_MX98715AEC_X = 15,	/* Macronix 98715AEC-C, -E PMAC */
+	TULIP_CHIP_MX98725   = 16,	/* Macronix 98725 PMAC */
+	TULIP_CHIP_WB89C840F = 17,	/* Winbond 89C840F */
+	TULIP_CHIP_DM9102    = 18,	/* Davicom DM9102 */
+	TULIP_CHIP_DM9102A   = 19,	/* Davicom DM9102A */
+	TULIP_CHIP_AL981     = 20,	/* ADMtek AL981 */
+	TULIP_CHIP_AX88140   = 21,	/* ASIX AX88140 */
+	TULIP_CHIP_AX88141   = 22,	/* ASIX AX88141 */
+	TULIP_CHIP_X3201_3   = 23,	/* Xircom X3201-3 */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -164,6 +165,7 @@ typedef enum {
 	"Macronix MX98713A",						\
 	"Macronix MX98715",						\
 	"Macronix MX98715A",						\
+	"Macronix MX98715AEC-x",					\
 	"Macronix MX98725",						\
 	"Winbond 89C840F",						\
 	"Davicom DM9102",						\
@@ -318,6 +320,7 @@ struct tulip_stats {
 	u_long		ts_tx_lc;	/* late collision count */
 };
 
+#ifndef _STANDALONE
 /*
  * Software state per device.
  */
@@ -437,6 +440,7 @@ struct tulip_softc {
 
 	int	sc_rxptr;		/* next ready RX descriptor/descsoft */
 };
+#endif
 
 /* sc_flags */
 #define	TULIPF_WANT_SETUP	0x00000001	/* want filter setup */

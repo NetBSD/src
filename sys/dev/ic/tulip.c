@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.70 2000/07/04 04:18:17 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.71 2000/08/03 03:07:30 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -313,6 +313,7 @@ tlp_attach(sc, enaddr)
 	case TULIP_CHIP_MX98713A:	/* 21143-like */
 	case TULIP_CHIP_MX98715:	/* 21143-like */
 	case TULIP_CHIP_MX98715A:	/* 21143-like */
+	case TULIP_CHIP_MX98715AEC_X:	/* 21143-like */
 	case TULIP_CHIP_MX98725:	/* 21143-like */
 		/*
 		 * Run these chips in ring mode.
@@ -1759,6 +1760,7 @@ tlp_init(sc)
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		TULIP_WRITE(sc, CSR_PMAC_TOR, PMAC_TOR_98715);
 		break;
@@ -2035,6 +2037,7 @@ tlp_stop(sc, drain)
 	TULIP_WRITE(sc, CSR_INTEN, 0);
 
 	/* Stop the transmit and receive processes. */
+	sc->sc_opmode = 0;
 	TULIP_WRITE(sc, CSR_OPMODE, 0);
 	TULIP_WRITE(sc, CSR_RXLIST, 0);
 	TULIP_WRITE(sc, CSR_TXLIST, 0);
@@ -3021,6 +3024,8 @@ tlp_mediachange(ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return (0);
 	return ((*sc->sc_mediasw->tmsw_set)(sc));
 }
 
@@ -3568,6 +3573,15 @@ tlp_pmac_reset(sc)
 		 */
 		TULIP_WRITE(sc, CSR_MIIROM, sc->sc_srom[0x77] << 24);
 		break;
+	case TULIP_CHIP_MX98715AEC_X:
+		/*
+		 * Set the LED operating mode.  This information is located
+		 * in the EEPROM at byte offset 0x76, per the MX98715AEC
+		 * application note.
+		 */
+		TULIP_WRITE(sc, CSR_MIIROM, ((0xf & sc->sc_srom[0x76]) << 28)
+		    | ((0xf0 & sc->sc_srom[0x76]) << 20));
+		break;
 
 	default:
 		/* Nothing. */
@@ -3804,6 +3818,7 @@ tlp_srom_media_info(sc, tsti, tm)
 	case TULIP_CHIP_82C115:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		tm->tm_sia = tsti->tsti_21142;	/* struct assignment */
 		break;
@@ -4023,6 +4038,7 @@ tlp_sia_fixup(sc)
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		siaconn = PMAC_SIACONN_MASK;
 		siatxrx = PMAC_SIATXRX_MASK;
@@ -5440,7 +5456,7 @@ tlp_pnic_nway_acomp(sc)
  *	MX98713A			21143-like MII or SIA/SYM media.
  *
  *	MX98715, MX98715A, MX98725,	21143-like SIA/SYM media.
- *	82C115
+ *	82C115, MX98715AEC-C, -E
  *
  * So, what we do here is fake MII-on-SIO or ISV media info, and
  * use the ISV media switch get/set functions to handle the rest.
