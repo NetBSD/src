@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2002/06/15 02:15:15 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2002/06/24 14:49:15 mrg Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -28,7 +28,7 @@ all:
 .endif
 
 CD_RELEASE?=
-RELEASENAME=		NetBSD-${CD_RELEASE}
+RELEASENAME?=		NetBSD-${CD_RELEASE}
 MKISOFS_ARGS=		-f -A "NetBSD ${CD_RELEASE}" \
 			-hide-rr-moved -m Split -m cdrom
 #			-hide-list ${.CURDIR}/hide-iso.lst
@@ -73,7 +73,7 @@ MKSUNBOOTCD?=	/usr/src/distrib/utils/mksunbootcd/mksunbootcd
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	/sys/arch/alpha/stand/installboot/installboot
 PMAX_IBOOT?=	/sys/arch/pmax/stand/installboot/installboot
-VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot
+VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot -sa
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
@@ -82,7 +82,7 @@ RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
-DISTDIR?=	${.OBJDIR}/download
+DISTRIBDIR?=	${.OBJDIR}/download
 STAGEDIR?=	${.OBJDIR}/staging
 IMAGEDIR?=	${.OBJDIR}
 EXTFILEDIR?=	${.OBJDIR}/extfiles
@@ -287,22 +287,22 @@ stage-${image}:
 	mkdir -p ${STAGEDIR}/${image}/${dir}
 .endfor
 .for arch in ${BASE_PORTS.${image}}
-	ln -sf `cd ${DISTDIR} && pwd -P`/${RELEASENAME}/${arch} ${STAGEDIR}/${image}/${RELEASE_SUBDIR}/
+	ln -sf `cd ${DISTRIBDIR} && pwd -P`/${RELEASENAME}/${arch} ${STAGEDIR}/${image}/${RELEASE_SUBDIR}/
 .endfor
 .endif
 
 extfileprep:
 .for file in ${EXTFILES}
 extfileprep: ${EXTFILEDIR}/${file:C/:.*$//}
-${EXTFILEDIR}/${file:C/:.*$//}: ${DISTDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
-${DISTDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
+${EXTFILEDIR}/${file:C/:.*$//}: ${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
+${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
 .endfor
 
 fileprep-${image}:
 .for file in ${INTFILES.${image}}
 fileprep-${image}: ${STAGEDIR}/${image}/${file:C/:.*$//}
-${STAGEDIR}/${image}/${file:C/:.*$//}: ${DISTDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
-${DISTDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
+${STAGEDIR}/${image}/${file:C/:.*$//}: ${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
+${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
 .endfor
 .for file in ${ADDFILES.${image}}
 fileprep-${image}: ${STAGEDIR}/${image}/${file:C/:.*$//}
@@ -366,7 +366,7 @@ ${IMAGEDIR}/${image}.iso: fetch size-${image}
 	${PMAX_IBOOT} -sa $@ ${BOOTFILE.pmax}
 .endif
 .if !empty(BASE_PORTS.${image}:Mvax)
-	${VAX_IBOOT} -sa $@ ${BOOTFILE.vax}
+	${VAX_IBOOT} $@ ${BOOTFILE.vax}
 .endif
 .if !empty(BASE_PORTS.${image}:Malpha)
 	${ALPHA_IBOOT} -s $@ ${BOOTFILE.alpha}
@@ -381,13 +381,13 @@ ${IMAGEDIR}/${image}.iso: fetch size-${image}
 
 fetch:
 .if !defined(NO_FETCH)
-	@mkdir -p ${DISTDIR}
+	@mkdir -p ${DISTRIBDIR}
 	@echo Fetching distributions....
-	@${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE} ${DISTDIR}
+	@${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE} ${DISTRIBDIR}
 .endif
 
 clean: cleanstagedir cleanimages
-cleandir distclean: cleandistdir
+cleandir distclean: cleandistribdir
 
 cleanimages:
 .for image in ${CD_IMAGES}
@@ -397,5 +397,5 @@ cleanimages:
 cleanstagedir:
 	-rm -rf ${STAGEDIR} ${EXTFILEDIR}
 
-cleandistdir:
-	-rm -rf ${DISTDIR}
+cleandistribdir:
+	-rm -rf ${DISTRIBDIR}
