@@ -1,5 +1,5 @@
-/* $NetBSD: isp_pci.c,v 1.36 1999/03/17 06:16:42 mjacob Exp $ */
-/* release_03_16_99 */
+/* $NetBSD: isp_pci.c,v 1.37 1999/03/26 22:42:57 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *

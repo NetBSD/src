@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.11 1999/03/17 06:15:48 mjacob Exp $ */
-/* release_03_16_99 */
+/* $NetBSD: isp_netbsd.c,v 1.12 1999/03/26 22:39:45 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -403,15 +403,34 @@ isp_async(isp, cmd, arg)
 		if (isp->isp_type & ISP_HA_SCSI) {
 			sdparam *sdp = isp->isp_param;
 			char *wt;
-			int ns, flags, tgt;
+			int mhz, flags, tgt, period;
 
 			tgt = *((int *) arg);
-	
-			flags = sdp->isp_devparam[tgt].dev_flags;
-			if (flags & DPARM_SYNC) {
-				ns = sdp->isp_devparam[tgt].sync_period * 4;
+
+			flags = sdp->isp_devparam[tgt].cur_dflags;
+			period = sdp->isp_devparam[tgt].cur_period;
+			if ((flags & DPARM_SYNC) && period &&
+			    (sdp->isp_devparam[tgt].cur_offset) != 0) {
+				if (sdp->isp_lvdmode) {
+					switch (period) {
+					case 0xa:
+						mhz = 40;
+						break;
+					case 0xb:
+						mhz = 33;
+						break;
+					case 0xc:
+						mhz = 25;
+						break;
+					default:
+						mhz = 1000 / (period * 4);
+						break;
+					}
+				} else {
+					mhz = 1000 / (period * 4);
+				}
 			} else {
-				ns = 0;
+				mhz = 0;
 			}
 			switch (flags & (DPARM_WIDE|DPARM_TQING)) {
 			case DPARM_WIDE:
@@ -427,10 +446,10 @@ isp_async(isp, cmd, arg)
 				wt = "\n";
 				break;
 			}
-			if (ns) {
+			if (mhz) {
 				printf("%s: Target %d at %dMHz Max Offset %d%s",
-				    isp->isp_name, tgt, 1000 / ns,
-				    sdp->isp_devparam[tgt].sync_offset, wt);
+				    isp->isp_name, tgt, mhz,
+				    sdp->isp_devparam[tgt].cur_offset, wt);
 			} else {
 				printf("%s: Target %d Async Mode%s",
 				    isp->isp_name, tgt, wt);
