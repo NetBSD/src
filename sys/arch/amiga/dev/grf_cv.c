@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.24 1997/07/30 11:05:55 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.24.4.1 1998/11/22 07:23:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -359,6 +359,7 @@ cv_has_4mb(fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)(fb + 0x02000000);
 	*testfbw = 0x87654321;
+	asm volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -366,12 +367,15 @@ cv_has_4mb(fb)
 	testfbw = (volatile unsigned long *)(fb + 0x00200000);
 	testfbr = (volatile unsigned long *)(fb + 0x02200000);
 	*testfbw = 0x87654321;
+	asm volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
+	asm volatile("nop");
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
+	asm volatile("nop");
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
