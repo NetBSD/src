@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.34 1996/10/12 21:50:14 christos Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.35 1996/10/21 01:32:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -461,8 +461,10 @@ swfree(p, index)
 	 * root (sure beats rewriting standalone restor).
 	 */
 	if (vp == rootvp) {
+#ifndef	MINIROOTSIZE
 		struct mount *mp;
 		struct statfs *sp;
+#endif
 		long firstblk;
 		int rootblks;
 
