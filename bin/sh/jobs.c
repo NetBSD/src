@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.51 2002/09/28 01:25:01 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.52 2002/09/28 03:08:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.51 2002/09/28 01:25:01 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.52 2002/09/28 03:08:00 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -680,16 +680,7 @@ forkparent(jp, n, mode, pid)
 	int mode;
 	pid_t pid;
 {
-	int pgrp;
 
-	if (rootshell && mode != FORK_NOJOB && mflag) {
-		if (jp == NULL || jp->nprocs == 0)
-			pgrp = pid;
-		else
-			pgrp = jp->ps[0].pid;
-		/* This can fail because we are doing it in the child also */
-		(void)setpgid(pid, pgrp);
-	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
 	if (jp) {
@@ -739,8 +730,9 @@ forkchild(jp, n, mode, vforked)
 			pgrp = getpid();
 		else
 			pgrp = jp->ps[0].pid;
-		/* This can fail because we are doing it in the parent also */
-		(void)setpgid(0, pgrp);
+		if (setpgid(0, pgrp) == -1)
+			error("Cannot set process group (%s) at %d",
+			    strerror(errno), __LINE__);
 		if (mode == FORK_FG) {
 			if (tcsetpgrp(ttyfd, pgrp) == -1)
 				error("Cannot set tty process group (%s) at %d",
