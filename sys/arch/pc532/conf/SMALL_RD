@@ -1,11 +1,11 @@
 #
 # SMALL 532 Distribution - 
 #
-#	$Id: SMALL_NS,v 1.5 1994/03/22 00:12:40 phil Exp $
+#	$Id: SMALL_RD,v 1.1 1994/03/22 00:12:44 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
-ident		SMALL_NS
+ident		SMALL_RD
 timezone	0 dst
 maxusers	10
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
@@ -13,11 +13,15 @@ options		FFS
 options		INET
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"RAMD_SIZE=1536000"
+#options		"RAMD_ADR=0x400000"
 options		"COMDEF_SPEED=B19200"
 
 options		SCSI
 
-config		"netbsd"	root on sd0 swap on sd0
+config		"netbsd"	root on rd0
+
+controller	rd0
 
 controller	ncr0
 disk		sd0	at ncr0 flags 0 drive ? bio
@@ -38,3 +42,4 @@ pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl	1
 pseudo-device	pty	10
+
