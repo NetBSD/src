@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.36 2002/08/09 02:40:57 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.37 2002/08/11 07:04:00 grant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.36 2002/08/09 02:40:57 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.37 2002/08/11 07:04:00 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -636,7 +636,7 @@ chkhost(struct sockaddr *f, int check_opts)
 	error = getnameinfo(f, f->sa_len, NULL, 0, serv, sizeof(serv),
 			    NI_NUMERICSERV);
 	if (error)
-		fatal("Malformed from address");
+		fatal("Malformed from address: %s", gai_strerror(error));
 
          if (!(check_opts & LPD_NOPORTCHK) &&
 	       atoi(serv) >= IPPORT_RESERVED)
