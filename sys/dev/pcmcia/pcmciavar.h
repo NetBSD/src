@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.22 2004/08/09 20:02:36 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.23 2004/08/10 02:50:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -91,6 +91,9 @@ struct pcmcia_config_entry {
 	struct {
 		u_long	length;
 		u_long	start;
+
+		struct	pcmcia_io_handle handle;
+		int	window;
 	} iospace[4];		/* XXX this could be as high as 16 */
 	u_int16_t	irqmask;
 	int		num_memspace;
@@ -98,6 +101,11 @@ struct pcmcia_config_entry {
 		u_long	length;
 		u_long	cardaddr;
 		u_long	hostaddr;
+
+		struct	pcmcia_mem_handle handle;
+		bus_size_t offset;
+		int	window;
+		
 	} memspace[2];		/* XXX this could be as high as 8 */
 	int		maxtwins;
 	SIMPLEQ_ENTRY(pcmcia_config_entry) cfe_list;
@@ -283,6 +291,16 @@ void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 void	pcmcia_socket_enable __P((struct device *));
 void	pcmcia_socket_disable __P((struct device *));
 
+int	pcmcia_config_alloc __P((struct pcmcia_function *,
+	    struct pcmcia_config_entry *));
+void	pcmcia_config_free __P((struct pcmcia_function *));
+int	pcmcia_config_map __P((struct pcmcia_function *));
+void	pcmcia_config_unmap __P((struct pcmcia_function *));
+
+
+int	pcmcia_function_configure __P((struct pcmcia_function *,
+	    int (*validator)(struct pcmcia_config_entry *)));
+void	pcmcia_function_unconfigure __P((struct pcmcia_function *));
 void	pcmcia_function_init __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));
 int	pcmcia_function_enable __P((struct pcmcia_function *));
