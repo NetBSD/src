@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.68 2001/11/20 14:34:28 lukem Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.69 2002/02/28 20:26:17 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.68 2001/11/20 14:34:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.69 2002/02/28 20:26:17 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -931,6 +931,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
+	int error, saved_value = 0;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -938,12 +939,29 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
 	    && tcp_ctlvars[name[0]].valid) {
-		if (tcp_ctlvars[name[0]].rdonly)
+		if (tcp_ctlvars[name[0]].rdonly) {
 			return (sysctl_rdint(oldp, oldlenp, newp, 
 			    tcp_ctlvars[name[0]].val));
-		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen,
+		} else {
+			switch (name[0]) {
+			case TCPCTL_MSSDFLT:
+			    saved_value = tcp_mssdflt;
+			    break;
+			}
+			error = (sysctl_int(oldp, oldlenp, newp, newlen,
 			    tcp_ctlvars[name[0]].var));
+			if (error)
+			    return error;
+			switch (name[0]) {
+			case TCPCTL_MSSDFLT:
+			    if (tcp_mssdflt < 32) {
+				tcp_mssdflt = saved_value;
+				return EINVAL;
+			    }
+			    break;
+			}
+			return 0;
+		}
 	}
 
 	return (ENOPROTOOPT);
