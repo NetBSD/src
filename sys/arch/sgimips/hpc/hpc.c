@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.29 2004/08/17 00:57:42 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.30 2004/12/30 02:35:41 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.29 2004/08/17 00:57:42 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.30 2004/12/30 02:35:41 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ static struct hpc_values hpc1_values = {
 	.enet_regs =		HPC1_ENET_REGS,
 	.enet_regs_size =	HPC1_ENET_REGS_SIZE,
 	.enet_intdelay =	HPC1_ENET_INTDELAY,
-	.enet_intdelayval =	HPC1_ENET_INTDELAYVAL,
+	.enet_intdelayval =	HPC1_ENET_INTDELAY_OFF,
 	.enetr_cbp =		HPC1_ENETR_CBP,
 	.enetr_ndbp =		HPC1_ENETR_NDBP,
 	.enetr_bc =		HPC1_ENETR_BC,
@@ -221,13 +221,13 @@ static struct hpc_values hpc1_values = {
 	.enetr_ctl_active =	HPC1_ENETR_CTL_ACTIVE,
 	.enetr_reset =		HPC1_ENETR_RESET,
 	.enetr_dmacfg =		0,
-	.enetr_piocfg =		HPC1_ENETR_PIOCFG,
+	.enetr_piocfg =		0,
 	.enetx_cbp =		HPC1_ENETX_CBP,
 	.enetx_ndbp =		HPC1_ENETX_NDBP,
 	.enetx_bc =		HPC1_ENETX_BC,
 	.enetx_ctl =		HPC1_ENETX_CTL,
 	.enetx_ctl_active =	HPC1_ENETX_CTL_ACTIVE,
-	.enetx_dev =		HPC1_ENETX_DEV,
+	.enetx_dev =		0,
 	.enetr_fifo =		HPC1_ENETR_FIFO,
 	.enetr_fifo_size =	HPC1_ENETR_FIFO_SIZE,
 	.enetx_fifo =		HPC1_ENETX_FIFO,
@@ -236,9 +236,9 @@ static struct hpc_values hpc1_values = {
 	.scsi1_devregs_size =	HPC1_SCSI0_DEVREGS_SIZE,
 	.enet_devregs =		HPC1_ENET_DEVREGS,
 	.enet_devregs_size =	HPC1_ENET_DEVREGS_SIZE,
-	.pbus_fifo =		HPC1_PBUS_FIFO,
-	.pbus_fifo_size =	HPC1_PBUS_FIFO_SIZE,
-	.pbus_bbram =		HPC1_PBUS_BBRAM,
+	.pbus_fifo =		0,	
+	.pbus_fifo_size =	0,
+	.pbus_bbram =		0,
 #define MAX_SCSI_XFER   (512*1024)
 	.scsi_max_xfer =	MAX_SCSI_XFER,
 	.scsi_dma_segs =	(MAX_SCSI_XFER / 4096),

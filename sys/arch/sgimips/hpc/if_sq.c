@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.24 2004/12/30 02:26:20 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.25 2004/12/30 02:35:42 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.24 2004/12/30 02:26:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.25 2004/12/30 02:35:42 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -399,7 +399,7 @@ sq_init(struct ifnet *ifp)
 	 * (see Hollywood HPC Specification 2.1.4.3)
 	 */ 
 	if (sc->hpc_regs->revision != 3)
-		sq_hpc_write(sc, HPC1_ENET_INTDELAY, HPC1_ENET_INTDELAYVAL);
+		sq_hpc_write(sc, HPC1_ENET_INTDELAY, HPC1_ENET_INTDELAY_OFF);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
