@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.14 2000/02/19 18:39:01 mycroft Exp $
+#	$NetBSD: dot.profile,v 1.15 2000/02/19 19:00:14 mycroft Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
@@ -6,7 +6,7 @@ export PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
 export BLOCKSIZE=1k
 
 if [ -x /usr/bin/tset ]; then
-	tset -Qrm 'unknown:?unknown'
+	eval `tset -sQrm 'unknown:?unknown'`
 fi
 
 
