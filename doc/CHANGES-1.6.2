@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.170 2003/10/02 20:34:46 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.171 2003/10/02 20:40:04 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2208,4 +2208,10 @@ sys/netinet6/nd6_nbr.c				1.39
 	- lo0 does not get ::1 automatically.  it will get ::1 when lo0 comes
 	  up.
 	[itojun, ticket #1491]
+
+sys/netinet6/ip6_forward.c			1.37
+
+	Correctly look at outer IPv6 header when forwarding packet into ipsec
+	tunnel. iij seil team
+	[itojun, ticket #1500]
 
