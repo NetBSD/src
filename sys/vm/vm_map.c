@@ -273,7 +273,7 @@ vm_map_init(map, min, max, pageable)
  *	Allocates a VM map entry for insertion.
  *	No entry fields are filled in.  This routine is
  */
-vm_map_entry_t
+static vm_map_entry_t
 vm_map_entry_create(map)
 	vm_map_t	map;
 {
@@ -298,7 +298,7 @@ vm_map_entry_create(map)
  *
  *	Inverse of vm_map_entry_create.
  */
-void
+static void
 vm_map_entry_dispose(map, entry)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
@@ -339,7 +339,7 @@ vm_map_entry_dispose(map, entry)
  *	Creates another valid reference to the given map.
  *
  */
-void
+static void
 vm_map_reference(map)
 	register vm_map_t	map;
 {
@@ -722,7 +722,7 @@ vm_map_find(map, object, offset, addr, length, find_space)
  *		removing extra sharing maps
  *		[XXX maybe later] merging with a neighbor
  */
-void
+static void
 vm_map_simplify_entry(map, entry)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
@@ -1321,7 +1321,7 @@ vm_map_pageable(map, start, end, new_pageable)
  *	The map in question should be locked.
  *	[This is the reason for this routine's existence.]
  */
-void
+static void
 vm_map_entry_unwire(map, entry)
 	vm_map_t		map;
 	register vm_map_entry_t	entry;
@@ -1335,7 +1335,7 @@ vm_map_entry_unwire(map, entry)
  *
  *	Deallocate the given entry from the target map.
  */		
-void
+static void
 vm_map_entry_delete(map, entry)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
@@ -1533,7 +1533,7 @@ vm_map_check_protection(map, start, end, protection)
  *	Copies the contents of the source entry to the destination
  *	entry.  The entries *must* be aligned properly.
  */
-void
+static void
 vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 	vm_map_t		src_map, dst_map;
 	register vm_map_entry_t	src_entry, dst_entry;
