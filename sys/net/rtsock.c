@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.68 2004/04/21 04:17:28 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.69 2004/04/21 21:03:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.68 2004/04/21 04:17:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.69 2004/04/21 21:03:43 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -98,14 +98,13 @@ struct walkarg {
 	caddr_t	w_tmem;
 };
 
-static struct mbuf *rt_msg1 __P((int, struct rt_addrinfo *, caddr_t, int));
-static int rt_msg2 __P((int, struct rt_addrinfo *, caddr_t, struct walkarg *,
-    int *));
-static int rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
-static int sysctl_dumpentry __P((struct radix_node *, void *));
-static int sysctl_iflist __P((int, struct walkarg *, int));
-static int sysctl_rtable __P((SYSCTLFN_PROTO));
-static __inline void rt_adjustcount __P((int, int));
+static struct mbuf *rt_msg1(int, struct rt_addrinfo *, caddr_t, int);
+static int rt_msg2(int, struct rt_addrinfo *, caddr_t, struct walkarg *, int *);
+static int rt_xaddrs(const char *, const char *, struct rt_addrinfo *);
+static int sysctl_dumpentry(struct radix_node *, void *);
+static int sysctl_iflist(int, struct walkarg *, int);
+static int sysctl_rtable(SYSCTLFN_PROTO);
+static __inline void rt_adjustcount(int, int);
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -117,8 +116,7 @@ static __inline void rt_adjustcount __P((int, int));
 #define brdaddr	info.rti_info[RTAX_BRD]
 
 static __inline void
-rt_adjustcount(af, cnt)
-	int af, cnt;
+rt_adjustcount(int af, int cnt)
 {
 	route_cb.any_count += cnt;
 	switch (af) {
@@ -144,11 +142,8 @@ rt_adjustcount(af, cnt)
 
 /*ARGSUSED*/
 int
-route_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	int error = 0;
 	struct rawcb *rp = sotorawcb(so);
@@ -196,13 +191,7 @@ route_usrreq(so, req, m, nam, control, p)
 
 /*ARGSUSED*/
 int
-#if __STDC__
 route_output(struct mbuf *m, ...)
-#else
-route_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct rt_msghdr *rtm = 0;
 	struct radix_node *rn = 0;
@@ -462,9 +451,7 @@ flush:
 }
 
 void
-rt_setmetrics(which, in, out)
-	u_long which;
-	struct rt_metrics *in, *out;
+rt_setmetrics(u_long which, const struct rt_metrics *in, struct rt_metrics *out)
 {
 #define metric(f, e) if (which & (f)) out->e = in->e;
 	metric(RTV_RPIPE, rmx_recvpipe);
@@ -483,11 +470,9 @@ rt_setmetrics(which, in, out)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static int
-rt_xaddrs(cp, cplim, rtinfo)
-	caddr_t cp, cplim;
-	struct rt_addrinfo *rtinfo;
+rt_xaddrs(const char *cp, const char *cplim, struct rt_addrinfo *rtinfo)
 {
-	struct sockaddr *sa = NULL;	/* Quell compiler warning */
+	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
@@ -517,11 +502,7 @@ rt_xaddrs(cp, cplim, rtinfo)
 }
 
 static struct mbuf *
-rt_msg1(type, rtinfo, data, datalen)
-	int type;
-	struct rt_addrinfo *rtinfo;
-	caddr_t data;
-	int datalen;
+rt_msg1(int type, struct rt_addrinfo *rtinfo, caddr_t data, int datalen)
 {
 	struct rt_msghdr *rtm;
 	struct mbuf *m;
@@ -607,12 +588,8 @@ rt_msg1(type, rtinfo, data, datalen)
  *	if the allocation fails ENOBUFS is returned.
  */
 static int
-rt_msg2(type, rtinfo, cp, w, lenp)
-	int type;
-	struct rt_addrinfo *rtinfo;
-	caddr_t cp;
-	struct walkarg *w;
-	int *lenp;
+rt_msg2(int type, struct rt_addrinfo *rtinfo, caddr_t cp, struct walkarg *w,
+	int *lenp)
 {
 	int i;
 	int len, dlen, second_time = 0;
@@ -696,9 +673,7 @@ again:
  * destination.
  */
 void
-rt_missmsg(type, rtinfo, flags, error)
-	int type, flags, error;
-	struct rt_addrinfo *rtinfo;
+rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 {
 	struct rt_msghdr rtm;
 	struct mbuf *m;
@@ -722,8 +697,7 @@ rt_missmsg(type, rtinfo, flags, error)
  * socket indicating that the status of a network interface has changed.
  */
 void
-rt_ifmsg(ifp)
-	struct ifnet *ifp;
+rt_ifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr ifm;
 #ifdef COMPAT_14
@@ -786,10 +760,7 @@ rt_ifmsg(ifp)
  * copies of it.
  */
 void
-rt_newaddrmsg(cmd, ifa, error, rt)
-	int cmd, error;
-	struct ifaddr *ifa;
-	struct rtentry *rt;
+rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 {
 	struct rt_addrinfo info;
 	struct sockaddr *sa = NULL;
@@ -848,9 +819,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
  * network interface arrival and departure.
  */
 void
-rt_ifannouncemsg(ifp, what)
-	struct ifnet *ifp;
-	int what;
+rt_ifannouncemsg(struct ifnet *ifp, int what)
 {
 	struct if_announcemsghdr ifan;
 	struct mbuf *m;
@@ -874,9 +843,7 @@ rt_ifannouncemsg(ifp, what)
  * This is used in dumping the kernel table via sysctl().
  */
 static int
-sysctl_dumpentry(rn, v)
-	struct radix_node *rn;
-	void *v;
+sysctl_dumpentry(struct radix_node *rn, void *v)
 {
 	struct walkarg *w = v;
 	struct rtentry *rt = (struct rtentry *)rn;
@@ -916,10 +883,7 @@ sysctl_dumpentry(rn, v)
 }
 
 static int
-sysctl_iflist(af, w, type)
-	int	af;
-	struct	walkarg *w;
-	int type;
+sysctl_iflist(int af, struct walkarg *w, int type)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -1126,17 +1090,17 @@ again:
  */
 
 struct protosw routesw[] = {
-{ SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,
-  raw_input,	route_output,	raw_ctlinput,	0,
-  route_usrreq,
-  raw_init,	0,		0,		0,
-  NULL /* @@@ */,
-}
-};
+{
+	SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,
+	raw_input,	route_output,	raw_ctlinput,	0,
+	route_usrreq,
+	raw_init,	0,		0,		0,
+} };
 
-struct domain routedomain =
-    { PF_ROUTE, "route", route_init, 0, 0,
-      routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])] };
+struct domain routedomain = {
+	PF_ROUTE, "route", route_init, 0, 0,
+	routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])]
+};
 
 SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 {
