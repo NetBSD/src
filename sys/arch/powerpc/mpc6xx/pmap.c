@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2001/11/06 06:25:28 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2001/11/11 23:07:02 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -506,13 +506,13 @@ pmap_pte_synch(volatile pte_t *pt, pte_t *pvo_pt)
 }
 
 static __inline void
-pmap_pte_clear(volatile pte_t *pt, int ptebit)
+pmap_pte_clear(volatile pte_t *pt, vaddr_t va, int ptebit)
 {
 	/*
-	 * As shown in Section 7.6.3.2.2
+	 * As shown in Section 7.6.3.2.3
 	 */
 	pt->pte_lo &= ~ptebit;
-	TLBIE(pt);
+	TLBIE(va);
 	EIEIO();
 	TLBSYNC();
 	SYNC();
@@ -1041,6 +1041,11 @@ volatile pte_t *
 pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
+
+#ifndef DIAGNOSTIC
+	if ((pvo->pvo_pte.hi & PTE_VALID) == 0)
+		return NULL;
+#endif
 
 	/*
 	 * If we haven't been supplied the ptegidx, calculate it.
@@ -2049,7 +2054,8 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
 			pmap_pte_synch(pt, &pvo->pvo_pte);
-			pmap_pte_clear(pt, ptebit);
+			if (pvo->pvo_pte.pte_lo & ptebit)
+				pmap_pte_clear(pt, PVO_VADDR(pvo), ptebit);
 		}
 		rv |= pvo->pvo_pte.pte_lo;
 		pvo->pvo_pte.pte_lo &= ~ptebit;
