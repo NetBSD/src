@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.6 1994/10/30 21:47:45 cgd Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.7 1995/01/25 06:08:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,6 +53,7 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/disklabel.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -275,6 +276,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+	case KERN_MAXPARTITIONS:
+		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
 	default:
 		return (EOPNOTSUPP);
 	}
