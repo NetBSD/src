@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 1998/10/05 22:12:13 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.30 1998/10/13 20:53:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,13 @@ extern int eintstack[];
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
+#if defined(MULTIPROCESSOR)
+#define	CLKF_INTR(framep)						\
+	((framep)->fp > (u_int)cpuinfo.eintstack - INT_STACK_SIZE &&	\
+	 (framep)->fp < (u_int)cpuinfo.eintstack)
+#else
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
+#endif
 
 /*
  * Software interrupt request `register'.
