@@ -1,20 +1,16 @@
-/*	$NetBSD: ibusvar.h,v 1.2 1998/08/29 16:15:11 mrg Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.2.2.1 1998/10/15 02:41:16 nisimura Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
 
-
-void config_ibus __P((struct device *mb, void *,
-	int	printfn __P((void *, const char *)) ));	/* XXX */
-
 /*
- * function types for interrupt establish/diestablish
+ * Arguments used to attach devices to an ibus
  */
-struct ibus_attach_args;
-typedef int (ibus_intr_establish_t) __P((void * cookie, int level,
-			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-typedef int (ibus_intr_disestablish_t)  __P((struct ibus_attach_args *));
-
+struct ibus_attach_args {
+	char	*ia_name;		/* Device name. */
+	tc_addr_t ia_addr;		/* Device address. */
+	void	*ia_cookie;		/* Device cookie */
+};
 
 /* 
  * Arguments used to attach a ibus "device" to its parent
@@ -24,31 +20,31 @@ struct ibus_dev_attach_args {
 #ifdef notyet
 	bus_space_tag_t	iba_memt;
 #endif
-	ibus_intr_establish_t	(*ibd_establish);
-	ibus_intr_disestablish_t (*ibd_disestablish);
-	int			ibd_ndevs;
+	void (*ibd_establish)
+		__P((struct device *, void *, int, int (*)(void *), void *));
+	void (*ibd_disestablish) __P((struct device *, void *));
+	int ibd_ndevs;
 	struct ibus_attach_args	*ibd_devs;
 };
 
-/*
- * Arguments used to attach devices to an ibus
- */
-struct ibus_attach_args {
-	char	*ia_name;		/* Device name. */
-	int	ia_slot;		/* Device slot (table entry). */
-	tc_addr_t ia_addr;		/* Device address. */
-	int	ia_cookie;		/* Device interrupt "priority" */
+struct ibus_softc {
+	struct device	ibd_dev;
+	int		ibd_ndevs;
+	struct ibus_attach_args *ibd_devs;
+	void (*ibd_establish)
+		__P((struct device *, void *, int, int (*)(void *), void *));
+	void (*ibd_disestablish) __P((struct device *, void *));
 };
 
+void ibus_devattach __P((struct device *, void *));
 
 /*
  * interrrupt estalish functions.
  * These call up to system-specific code to 
  * recompute spl levels.
  */
-void	ibus_intr_establish __P((void * cookie, int level,
-			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
-void	ibus_intr_disestablish __P((struct ibus_attach_args *));
-int ibusprint __P((void *aux, const char *pnp));
+void ibus_intr_establish
+		__P((struct device *, void *, int, int (*)(void *), void *));
+void ibus_intr_disestablish __P((struct device *, void *));
 
 #endif /* __IBUSVAR_H */
