@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.3 1997/10/07 14:46:48 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.4 1997/10/08 00:11:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -267,7 +267,7 @@ read_passwd(pfile, fname)
 		line_no++;
 		len = strlen(line);
 
-		if (len <= 1 || data_line[0] == '#')
+		if (len <= 1 || line[0] == '#')
 			continue;
 
 		/*
