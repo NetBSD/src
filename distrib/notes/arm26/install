@@ -1,0 +1,3 @@
+.\"	$NetBSD: install,v 1.1 2000/08/22 21:46:48 bjh21 Exp $
+.Nx Ns /arm26
+doesn't currently have a nice GUI installer.  This is a problem.

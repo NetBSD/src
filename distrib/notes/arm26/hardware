@@ -1,0 +1,34 @@
+.\"	$NetBSD: hardware,v 1.1 2000/08/22 21:46:48 bjh21 Exp $
+.Pp
+NetBSD/arm26 \*V should support all common Acorn machines fitted with
+ARM2, ARM3 and ARM250 CPUs.  This includes all Archimedes systems except
+for the A500 and A680 prototypes, all R-series workstations, the BBC A3000,
+the A5000, A4, A3010, A3020 and A4000.
+.Pp
+NetBSD/arm26 currently requires exactly eight megabytes of RAM to work.
+Four-megabyte systems should work, but tend to run out of memory very easily.
+.Pp
+NetBSD/arm26 supports a subset of the on-board I/O systems on these machines.
+The on-board video system is supported, as are the standard keyboard and
+mouse.  Other on-board device support differs between two classes of machine:
+.Bl -tag -width 5em
+.It "Old machines (Archimedes, R-series and BBC A3000)"
+None of the other on-board devices are supported.
+.It "New machines (A5000, A4, A3010, A3020 and A4000)"
+The on-board IDE controller, serial port and parallel port are believed to
+be supported, but this support is mostly untested.
+.El
+.Pp
+NetBSD/arm26 supports a few Expansion Cards (otherwise known as "podules").
+At present, the following are known to work:
+.Bl -bullet
+.It
+Acorn AKA25 Ethernet (Ether1) (ei)
+.It
+Atomwide Ethernet III (Ether3) (ea)
+.El
+.Pp
+NetBSD/arm26 uses the machine's ROM OS to boot, and hence depends slightly on
+it.  It's been tested with RISC OS 3.10 and RISC OS 3.11, and should work
+with other versions of RISC OS as well.  It hasn't been tested with Arthur at
+all.
