@@ -98,8 +98,13 @@ esac
 
 if test "${commonbfdlib}" = "true"; then
   # when a shared libbfd is built with --enable-commonbfdlib,
-  # all of libopcodes is available in libbfd.so
-  OPCODES=
+  # all of libopcodes is available in libbfd.so.  Unfortunately, on
+  # HP/UX, when using gcc -g, the linker does a static link, so we
+  # need to continue linking against opcodes on that platform.
+  case "${host}" in
+  *-*-hpux*) ;;
+  *) OPCODES= ;;
+  esac
 fi
 
 AC_SUBST(BFDLIB)

@@ -1,3 +1,50 @@
+Mon May 26 13:24:25 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* doc/as.texinfo: Don't use @value in section names or index
+	entries; it confuses texinfo.tex.
+
+Tue May 13 10:42:20 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (VERSION): Set to 2.8.1.
+
+Mon May 12 13:33:08 1997  H.J. Lu  <hjl@gnu.ai.mit.edu>
+
+	* config/tc-i386.c (pi): Check for RegMMX.
+
+Thu May  8 11:10:15 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* expr.c (expr): When subtracting values in the same frag,
+	subtract X_add_number rather than adding it.
+
+Wed May  7 15:39:48 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c (write_object_file): Just pass NULL to
+ 	md_do_align, not the address of a char holding NOP_OPCODE.
+
+Tue May  6 12:18:09 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-i386.c (md_section_align): If a.out and BFD, force
+	section size to be aligned.
+
+Mon May  5 17:16:55 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cond.c: Include "macro.h".
+	(struct conditional_frame): Add macro_nest field.
+	(initialize_cframe): Initialize macro_nest.
+	(cond_finish_check): Add nest parameter.  Change all callers.
+	(cond_exit_macro): New function.
+	* as.h (cond_finish_check): Update declaration.
+	(cond_exit_macro): Declare.
+	* input-scrub.c (macro_nest): Make globally visible.
+	(input_scrub_next_buffer): Call cond_finish_check.
+	* macro.h (macro_nest): Declare.
+	* read.c (s_mexit): Call cond_exit_macro.
+
+	* config/tc-i386.h (RegMMX): Define.
+	* config/tc-i386.c (pi): Check for all register types.
+	(type_names): Add RegMMX.
+	(md_assemble): Handle RegMMX.
+
 Wed Apr 30 12:47:00 1997  Manfred Hollstein  <manfred@s-direktnet.de>
 
 	* config/obj-coff.c (c_section_symbol): Clear the LOCAL bit #ifdef
@@ -9,6 +56,11 @@ Tue Apr 29 20:23:10 1997  Jim Wilson  <wilson@cygnus.com>
 	before_relaxing.  Use it when testing ecoff_extern_size.
 	(load_address, macro, md_estimate_size_before_relax): Fix all
 	callers.
+
+Tue Apr 29 19:52:47 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c (coff_header_append): Don't reset string_size
+	each time through the loop.
 
 Fri Apr 25 14:17:46 1997  H.J. Lu  <hjl@gnu.ai.mit.edu>
 

@@ -144,6 +144,10 @@ fetch_data (info, addr)
 #define fs OP_REG, fs_reg
 #define gs OP_REG, gs_reg
 
+#define MX OP_MMX, 0
+#define EM OP_EM, v_mode
+#define MS OP_MS, b_mode
+
 typedef int (*op_rtn) PARAMS ((int bytemode, int aflag, int dflag));
 
 static int OP_E PARAMS ((int, int, int));
@@ -167,6 +171,9 @@ static int OP_STi  PARAMS ((int, int, int));
 #if 0
 static int OP_ONE PARAMS ((int, int, int));
 #endif
+static int OP_MMX PARAMS ((int, int, int));
+static int OP_EM PARAMS ((int, int, int));
+static int OP_MS PARAMS ((int, int, int));
 
 static void append_prefix PARAMS ((void));
 static void set_op PARAMS ((int op));
@@ -235,6 +242,9 @@ static void ckprefix PARAMS ((void));
 #define GRP7 NULL, NULL, 14
 #define GRP8 NULL, NULL, 15
 #define GRP9 NULL, NULL, 16
+#define GRP10 NULL, NULL, 17
+#define GRP11 NULL, NULL, 18
+#define GRP12 NULL, NULL, 19
 
 #define FLOATCODE 50
 #define FLOAT NULL, NULL, FLOATCODE
@@ -593,17 +603,36 @@ static struct dis386 dis386_twobyte[] = {
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 60 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "punpcklbw", MX, EM },
+  { "punpcklwd", MX, EM },
+  { "punpckldq", MX, EM },
+  { "packsswb", MX, EM },
+  { "pcmpgtb", MX, EM },
+  { "pcmpgtw", MX, EM },
+  { "pcmpgtd", MX, EM },
+  { "packuswb", MX, EM },
   /* 68 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "punpckhbw", MX, EM },
+  { "punpckhwd", MX, EM },
+  { "punpckhdq", MX, EM },
+  { "packssdw", MX, EM },
+  { "(bad)" },  { "(bad)" },
+  { "movd", MX, Ev },
+  { "movq", MX, EM },
   /* 70 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },
+  { GRP10 },
+  { GRP11 },
+  { GRP12 },
+  { "pcmpeqb", MX, EM },
+  { "pcmpeqw", MX, EM },
+  { "pcmpeqd", MX, EM },
+  { "emms" },
   /* 78 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },  { "(bad)" },
+  { "movd", Ev, MX },
+  { "movq", EM, MX },
   /* 80 */
   { "jo", Jv },
   { "jno", Jv },
@@ -695,23 +724,56 @@ static struct dis386 dis386_twobyte[] = {
   { "bswap", eSI },
   { "bswap", eDI },
   /* d0 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },
+  { "psrlw", MX, EM },
+  { "psrld", MX, EM },
+  { "psrlq", MX, EM },
+  { "(bad)" },
+  { "pmullw", MX, EM },
+  { "(bad)" },  { "(bad)" },  
   /* d8 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "psubusb", MX, EM },
+  { "psubusw", MX, EM },
+  { "pand", MX, EM },
+  { "(bad)" },
+  { "paddusb", MX, EM },
+  { "paddusw", MX, EM },
+  { "(bad)" },
+  { "pand", MX, EM },
   /* e0 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },
+  { "psraw", MX, EM },
+  { "psrad", MX, EM },
+  { "(bad)" },
+  { "(bad)" },
+  { "pmulhw", MX, EM },
+  { "(bad)" },  { "(bad)" },  
   /* e8 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "psubsb", MX, EM },
+  { "psubsw", MX, EM },
+  { "(bad)" },
+  { "por", MX, EM },
+  { "paddsb", MX, EM },
+  { "paddsw", MX, EM },
+  { "(bad)" },
+  { "pxor", MX, EM },
   /* f0 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "(bad)" },
+  { "psllw", MX, EM },
+  { "pslld", MX, EM },
+  { "psllq", MX, EM },
+  { "(bad)" },
+  { "pmaddwd", MX, EM },
+  { "(bad)" },  { "(bad)" },  
   /* f8 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "psubb", MX, EM },
+  { "psubw", MX, EM },
+  { "psubd", MX, EM },
+  { "(bad)" },  
+  { "paddb", MX, EM },
+  { "paddw", MX, EM },
+  { "paddd", MX, EM },
+  { "(bad)" }
 };
 
 static const unsigned char onebyte_has_modrm[256] = {
@@ -734,22 +796,22 @@ static const unsigned char onebyte_has_modrm[256] = {
 };
 
 static const unsigned char twobyte_has_modrm[256] = {
-  1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  /* 00 */ 1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0, /* 0f */
+  /* 10 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 1f */
+  /* 20 */ 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0, /* 2f */
+  /* 30 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 3f */
+  /* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 4f */
+  /* 50 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 5f */
+  /* 60 */ 1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1, /* 6f */
+  /* 70 */ 0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1, /* 7f */
+  /* 80 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 8f */
+  /* 90 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 9f */
+  /* a0 */ 0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1, /* af */
+  /* b0 */ 1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1, /* bf */
+  /* c0 */ 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0, /* cf */
+  /* d0 */ 0,1,1,1,0,1,0,0,1,1,1,0,1,1,0,1, /* df */
+  /* e0 */ 0,1,1,0,0,1,0,0,1,1,0,1,1,1,0,1, /* ef */
+  /* f0 */ 0,1,1,1,0,1,0,0,1,1,1,0,1,1,1,0  /* ff */
 };
 
 static char obuf[100];
@@ -965,6 +1027,39 @@ static struct dis386 grps[][8] = {
     { "(bad)" },
     { "(bad)" },
     { "(bad)" },
+    { "(bad)" },
+  },
+  /* GRP10 */
+  {
+    { "(bad)" },
+    { "(bad)" },
+    { "psrlw", MS, Ib },
+    { "(bad)" },
+    { "psraw", MS, Ib },
+    { "(bad)" },
+    { "psllw", MS, Ib },
+    { "(bad)" },
+  },
+  /* GRP11 */
+  {
+    { "(bad)" },
+    { "(bad)" },
+    { "psrld", MS, Ib },
+    { "(bad)" },
+    { "psrad", MS, Ib },
+    { "(bad)" },
+    { "pslld", MS, Ib },
+    { "(bad)" },
+  },
+  /* GRP12 */
+  {
+    { "(bad)" },
+    { "(bad)" },
+    { "psrlq", MS, Ib },
+    { "(bad)" },
+    { "(bad)" },
+    { "(bad)" },
+    { "psllq", MS, Ib },
     { "(bad)" },
   }
 };
@@ -1402,10 +1497,10 @@ static struct dis386 float_reg[][8] = {
     { "fmulp",	STi, ST },
     { "(bad)" },
     { FGRPde_3 },
-    { "fsubrp",	STi, ST },
     { "fsubp",	STi, ST },
-    { "fdivrp",	STi, ST },
+    { "fsubrp",	STi, ST },
     { "fdivp",	STi, ST },
+    { "fdivrp",	STi, ST },
   },
   /* df */
   {
@@ -2117,4 +2212,42 @@ OP_rm (bytemode, aflag, dflag)
       break;
     }
   return (0);
+}
+
+static int
+OP_MMX (bytemode, aflag, dflag)
+     int bytemode;
+     int aflag;
+     int dflag;
+{
+  sprintf (scratchbuf, "%%mm%d", reg);
+  oappend (scratchbuf);
+  return 0;
+}
+
+static int
+OP_EM (bytemode, aflag, dflag)
+     int bytemode;
+     int aflag;
+     int dflag;
+{
+  if (mod != 3)
+    return OP_E (bytemode, aflag, dflag);
+
+  codep++;
+  sprintf (scratchbuf, "%%mm%d", rm);
+  oappend (scratchbuf);
+  return 0;
+}
+
+static int
+OP_MS (bytemode, aflag, dflag)
+     int bytemode;
+     int aflag;
+     int dflag;
+{
+  ++codep;
+  sprintf (scratchbuf, "%%mm%d", rm);
+  oappend (scratchbuf);
+  return 0;
 }
