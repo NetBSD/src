@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.168 2002/04/02 06:39:32 chs Exp $ */
+/*	$NetBSD: autoconf.c,v 1.169 2002/06/21 14:38:36 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1650,6 +1650,7 @@ static struct {
 	{ "ptisp",	"isp" },
 	{ "SUNW,fdtwo",	"fdc" },
 	{ "network",	"hme" }, /* Krups */
+	{ "SUNW,hme",   "hme" },
 };
 
 static char *
