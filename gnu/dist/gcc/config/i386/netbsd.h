@@ -93,3 +93,7 @@
   else									\
     readonly_data_section ();						\
 }
+
+/* NetBSD's linker cannot align greater than 8 bytes anyway. */
+#undef DATA_ALIGNMENT
+#undef CONSTANT_ALIGNMENT
