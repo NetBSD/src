@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.114 2000/12/09 07:06:52 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.115 2000/12/09 12:34:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -83,7 +83,6 @@ struct	pgrp {
  */
 struct exec_package;
 struct ps_strings;
-struct trapframe;
 
 struct	emul {
 	char	e_name[8];		/* Symbolic name */
@@ -105,7 +104,7 @@ struct	emul {
 
 	int	e_flags;		/* Miscellaneous flags */
 					/* Syscall handling function */
-	void	(*e_syscall) __P((struct trapframe *));
+	void	(*e_syscall) __P((void));
 
 };
 
