@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.11 1998/01/20 01:18:23 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.12 1998/02/21 22:52:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -50,7 +50,8 @@
 #include <sys/vmmeter.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/katelib.h>
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/psl.h>
 
 int want_resched = 0;
