@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.22 2005/02/12 09:51:05 rearnsha Exp $
+#	$NetBSD: IQ31244,v 1.23 2005/02/12 09:53:27 rearnsha Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -140,6 +140,7 @@ options 	SYMTAB_SPACE=360000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
+config		netbsd-wd0	root on wd0 type nfs
 
 # The main bus device
 mainbus0	at root
