@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.11 2004/01/06 12:41:43 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.12 2004/04/03 19:43:08 matt Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ typedef struct ksiginfo {
 } ksiginfo_t;
 
 #define	KSI_TRAP	0x01	/* signal caused by trap */
+#define	KSI_EMPTY	0x02	/* no additional information */
 
 /* Macros to initialize a ksiginfo_t. */
 #define	KSI_INIT(ksi)							\
@@ -103,10 +104,16 @@ do {									\
 	memset((ksi), 0, sizeof(*(ksi)));				\
 } while (/*CONSTCOND*/0)
 
+#define	KSI_INIT_EMPTY(ksi)						\
+do {									\
+	KSI_INIT((ksi));						\
+	(ksi)->ksi_flags = KSI_EMPTY;					\
+} while (/*CONSTCOND*/0)
+
 #define	KSI_INIT_TRAP(ksi)						\
 do {									\
 	KSI_INIT((ksi));						\
-	(ksi)->ksi_flags |= KSI_TRAP;					\
+	(ksi)->ksi_flags = KSI_TRAP;					\
 } while (/*CONSTCOND*/0)
 
 /* Copy the part of ksiginfo_t without the queue pointers */
@@ -119,6 +126,7 @@ do {									\
 
 /* Predicate macros to test how a ksiginfo_t was generated. */
 #define	KSI_TRAP_P(ksi)		(((ksi)->ksi_flags & KSI_TRAP) != 0)
+#define	KSI_EMPTY_P(ksi)	(((ksi)->ksi_flags & KSI_EMPTY) != 0)
 
 /*
  * Old-style signal handler "code" arguments were only non-zero for
