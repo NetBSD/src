@@ -42,7 +42,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
- *	$Id: gram.y,v 1.6 1995/01/25 20:44:41 cgd Exp $
+ *	$Id: gram.y,v 1.7 1995/04/17 06:59:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -191,7 +191,7 @@ dev_def:
 
 one_def:
 	file |
-	/* include | */
+	include |
 	DEFINE WORD interface_opt	= { (void)defattr($2, $3); } |
 	DEVICE devbase AT atlist veclist_opt interface_opt attrs_opt
 					= { defdev($2, 0, $4, $5, $6, $7); } |
