@@ -1,5 +1,37 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2002/05/22 21:35:47 petrov Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2002/09/19 23:08:34 petrov Exp $ */
 
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * This file implements low-level routines that are exported to
@@ -20,31 +52,6 @@
 
 #define NOTREACHED	illtrap	10
 
-#if 0
-#define DBP(n)		\
-	or	%g0,n,%o3	; \
-	mov	%i0,%o0		; \
-	mov	%i1,%o1		; \
-	call	_C_LABEL(pthread__md_debug); \
-	 mov	%i2,%o2
-
-#define DBR(n,a0,a1,a2)		\
-	or	%g0,n,%o3	; \
-	mov	a0,%o0		; \
-	mov	a1,%o1		; \
-	call	_C_LABEL(pthread__md_debug); \
-	 mov	a2,%o2
-
-#define DBSNAP(x)		\
-	call _C_LABEL(pthread__md_snapshot); \
-	 mov	x,%o0
-
-#else
-#define DBP(n)
-#define DBR(n,a0,a1,a2)
-#define DBSNAP(x)
-#endif
-
 ENTRY(pthread__switch)
 	/*
 	 * XXX Get space on stack for return address and ucontext,
@@ -52,8 +59,6 @@ ENTRY(pthread__switch)
 	 * then swapcontext
 	 */
 	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
-
-DBP(1)
 
 	add	%fp, BIAS - CONTEXTSIZE, %l0
 	stx	%l0, [%i0 + PT_UC]
@@ -94,8 +99,6 @@ DBP(1)
 
 ENTRY(pthread__switch_away)
 
-DBP(2)
-
 	STACK_SWITCH(%i1,%l2)
 
 	/* If we're invoked from the switch-to-next provisions of
@@ -127,13 +130,10 @@ ENTRY(pthread__upcall_switch)
 	inc	%l0
 	st	%l0, [%i1 + PT_SPINLOCKS]
 
-DBP(3)
 	/*
 	 * switch to next thread stack so we could recycle self's one
 	 */
 	STACK_SWITCH(%i1,%l2)
-
-! DBP(4)
 
 	/* Check if the upcall code was preempted and continued to here. */
 	ldx	[%i0 + PT_NEXT], %l0
@@ -195,8 +195,6 @@ DBP(3)
 ENTRY(pthread__locked_switch)
 	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
 
-DBR(5,%i0,%i1,%fp)
-
 	/* Make sure we get continuted */
 	ld	[%i1 + PT_SPINLOCKS], %l0
 	inc	%l0
@@ -209,18 +207,14 @@ DBR(5,%i0,%i1,%fp)
 	 mov %l3, %o0
 
 	/* Edit the context to make it continue below, rather than here */
+#ifdef PIC
+	PICCY_SET(locked_return_point,%l1,%l5)
+#else
 	set _C_LABEL(locked_return_point), %l1
+#endif
 	stx %l1, [%l3 + UC_GREGS + _REG_PC * 8]
 
-!DBR(6,%i0,%sp,%l3)
-!DBSNAP(%i0)
-!DBSNAP(%i1)
-
 	STACK_SWITCH(%i1, %l2)
-
-!DBR(61,%i0, %sp, %l2)
-
-!DBSNAP(%i1)
 
 	/* Check if the switcher was preempted and continued to here. */
 	ldx	[%i0 + PT_NEXT], %l4
@@ -288,27 +282,12 @@ DBR(5,%i0,%i1,%fp)
 	NOTREACHED
 
 2:	/* %l2 points to next thread's ucontext */
-#if 0
-DBSNAP(%i1)
-DBR(7,%l2,%fp,%i0)
-!DBSNAP(%i0)
-!DBSNAP(%i1)
-#endif
-
 	call	_C_LABEL(_setcontext_u)
 	 mov	 %l2, %o0
 	NOTREACHED
 
 locked_return_point:
-!DBR(8,%i0,%o7,%fp)
 	ret
 	 restore
 
 
-ENTRY(__caller_pc)
-	retl
-	 mov	%i7, %o0
-
-ENTRY(__get_fp)
-	retl
-	 mov %fp, %o0
