@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)isofs_inode.c
- *	$Id: isofs_node.c,v 1.9 1993/12/18 04:31:46 mycroft Exp $
+ *	from: @(#)ufs_inode.c (unknown version)
+ *	$Id: isofs_node.c,v 1.10 1994/01/12 23:20:15 cgd Exp $
  */
 
 #include <sys/param.h>
