@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.15 2001/04/24 04:30:53 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.16 2001/06/02 10:44:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.15 2001/04/24 04:30:53 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.16 2001/06/02 10:44:02 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -192,8 +192,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
-	prot = bp->b_flags & B_READ ? VM_PROT_READ :
-				      VM_PROT_READ | VM_PROT_WRITE;
+	prot = bp->b_flags & B_READ ? VM_PROT_READ | VM_PROT_WRITE :
+				      VM_PROT_READ;
 	while (len--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
 		    &pa) == FALSE)
