@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.192 2000/01/25 09:06:51 haya Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.193 2000/01/31 18:34:51 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.187 2000/01/25 09:04:03 haya Exp 
+ *	NetBSD: pcidevs,v 1.188 2000/01/31 18:34:19 thorpej Exp 
  */
 
 /*
@@ -2923,7 +2923,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
 	    "Silicon Integrated System",
-	    "SiS900 10/100 Ethernet",
+	    "SiS 900 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
@@ -2954,6 +2954,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7016 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_E,
