@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.21 1998/07/05 00:51:21 jonathan Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.22 1998/07/21 17:36:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -147,14 +149,26 @@ void le_isa_attach __P((struct device *, struct le_softc *,
 
 int le_isa_intredge __P((void *));
 
-hide void le_isa_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_isa_rdcsr __P((struct am7990_softc *, u_int16_t));  
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_isa_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_isa_rdcsr __P((struct lance_softc *, u_int16_t));  
 
 #define	LE_ISA_MEMSIZE	16384
 
 hide void
 le_isa_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -167,7 +181,7 @@ le_isa_wrcsr(sc, port, val)
 
 hide u_int16_t
 le_isa_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -284,7 +298,7 @@ le_isa_attach(parent, lesc, ia, p)
 	struct isa_attach_args *ia;
 	struct le_isa_params *p;
 {
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	bus_dma_tag_t dmat = ia->ia_dmat;
@@ -348,11 +362,11 @@ le_isa_attach(parent, lesc, ia, p)
 	sc->sc_addr = lesc->sc_dmam->dm_segs[0].ds_addr;
 	sc->sc_memsize = LE_ISA_MEMSIZE;
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_isa_rdcsr;
 	sc->sc_wrcsr = le_isa_wrcsr;
@@ -370,7 +384,7 @@ le_isa_attach(parent, lesc, ia, p)
 	    IPL_NET, le_isa_intredge, sc);
 
 	printf("%s", sc->sc_dev.dv_xname);
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 }
 
 /*

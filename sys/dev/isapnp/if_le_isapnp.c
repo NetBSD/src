@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.13 1998/07/05 06:49:14 jonathan Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.14 1998/07/21 17:36:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,6 +113,8 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 #include <dev/isapnp/if_levar.h>
@@ -125,8 +127,8 @@ struct cfattach le_isapnp_ca = {
 };
 
 int	le_isapnp_intredge __P((void *));
-static void le_isapnp_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-static u_int16_t le_isapnp_rdcsr __P((struct am7990_softc *, u_int16_t));
+static void le_isapnp_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+static u_int16_t le_isapnp_rdcsr __P((struct lance_softc *, u_int16_t));
 
 
 /*
@@ -141,7 +143,7 @@ static char *if_le_isapnp_devnames[] = {
 
 static void
 le_isapnp_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -154,7 +156,7 @@ le_isapnp_wrcsr(sc, port, val)
 
 static u_int16_t
 le_isapnp_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -189,7 +191,7 @@ le_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *lesc = (void *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -254,11 +256,11 @@ le_isapnp_attach(parent, self, aux)
 	sc->sc_addr = lesc->sc_dmam->dm_segs[0].ds_addr;
 	sc->sc_memsize = LE_ISAPNP_MEMSIZE;
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = le_isapnp_rdcsr;
 	sc->sc_wrcsr = le_isapnp_wrcsr;
@@ -278,7 +280,7 @@ le_isapnp_attach(parent, self, aux)
 
 	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 }
 
 

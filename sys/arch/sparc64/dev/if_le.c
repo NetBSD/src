@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1998/07/07 03:05:02 eeh Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1998/07/21 17:36:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,6 +107,8 @@
 #include <sparc64/dev/dmavar.h>
 #include <sparc64/dev/lebuffervar.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -162,11 +164,11 @@ int lemediasun4m[] = {
 };
 #define NLEMEDIASUN4M	(sizeof(lemediasun4m) / sizeof(lemediasun4m[0]))
 
-void	lesetutp __P((struct am7990_softc *));
-void	lesetaui __P((struct am7990_softc *));
+void	lesetutp __P((struct lance_softc *));
+void	lesetaui __P((struct lance_softc *));
 
-int	lemediachange __P((struct am7990_softc *));
-void	lemediastatus __P((struct am7990_softc *, struct ifmediareq *));
+int	lemediachange __P((struct lance_softc *));
+void	lemediastatus __P((struct lance_softc *, struct ifmediareq *));
 #endif /* SUN4M */
 
 /* Four attachments for this device */
@@ -188,15 +190,27 @@ struct cfattach le_obio_ca = {
 
 extern struct cfdriver le_cd;
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-hide void lehwreset __P((struct am7990_softc *));
-hide void lehwinit __P((struct am7990_softc *));
-hide void lenocarrier __P((struct am7990_softc *));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
+hide void lehwreset __P((struct lance_softc *));
+hide void lehwinit __P((struct lance_softc *));
+hide void lenocarrier __P((struct lance_softc *));
 
 hide void
 lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -219,7 +233,7 @@ lewrcsr(sc, port, val)
 
 hide u_int16_t
 lerdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -233,7 +247,7 @@ lerdcsr(sc, port)
 #if defined(SUN4M)
 void
 lesetutp(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -243,7 +257,7 @@ lesetutp(sc)
 
 void
 lesetaui(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -253,7 +267,7 @@ lesetaui(sc)
 
 int
 lemediachange(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 	struct ifmedia *ifm = &sc->sc_media;
 
@@ -287,7 +301,7 @@ lemediachange(sc)
 
 void
 lemediastatus(sc, ifmr)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	struct ifmediareq *ifmr;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -307,7 +321,7 @@ lemediastatus(sc, ifmr)
 
 hide void
 lehwreset(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 #if defined(SUN4M) 
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -328,7 +342,7 @@ lehwreset(sc)
 
 hide void
 lehwinit(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 #if defined(SUN4M) 
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -353,7 +367,7 @@ lehwinit(sc)
 
 hide void
 lenocarrier(sc)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 {
 #if defined(SUN4M)
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -430,7 +444,7 @@ leattach_sbus(parent, self, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct sbusdev *sd;
 	bus_space_handle_t bh;
 
@@ -477,7 +491,7 @@ leattach_sbus(parent, self, aux)
 		break;
 	}
 
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 
 	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
@@ -495,7 +509,7 @@ leattach_ledma(parent, self, aux)
 #if defined(SUN4M)
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_handle_t bh;
 	bus_dma_segment_t seg;
 	int rseg, error;
@@ -547,7 +561,7 @@ leattach_ledma(parent, self, aux)
 	lesc->sc_laddr = seg.ds_addr;
 
 	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, parent);
 
 	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
@@ -571,7 +585,7 @@ leattach_lebuffer(parent, self, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct lebuf_softc *lebuf = (struct lebuf_softc *)parent;
 	bus_space_handle_t bh;
 
@@ -599,7 +613,7 @@ leattach_lebuffer(parent, self, aux)
 				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
 	/* Assume SBus is grandparent */
-	lesc->sc_sd.sd_reset = (void *)am7990_reset;
+	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, parent);
 
 	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
@@ -617,7 +631,7 @@ leattach_obio(parent, self, aux)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_handle_t bh;
 
 	lesc->sc_bustag = oba->oba_bustag;
@@ -646,7 +660,7 @@ leattach(lesc, pri)
 	struct le_softc *lesc;
 	int pri;
 {
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
@@ -688,11 +702,11 @@ leattach(lesc, pri)
 
 	myetheraddr(sc->sc_enaddr);
 
-	sc->sc_copytodesc = am7990_copytobuf_contig;
-	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-	sc->sc_copytobuf = am7990_copytobuf_contig;
-	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
-	sc->sc_zerobuf = am7990_zerobuf_contig;
+	sc->sc_copytodesc = lance_copytobuf_contig;
+	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+	sc->sc_copytobuf = lance_copytobuf_contig;
+	sc->sc_copyfrombuf = lance_copyfrombuf_contig;
+	sc->sc_zerobuf = lance_zerobuf_contig;
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
@@ -700,7 +714,7 @@ leattach(lesc, pri)
 	sc->sc_nocarrier = lenocarrier;
 	sc->sc_hwreset = lehwreset;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	(void)bus_intr_establish(lesc->sc_bustag, pri, 0, am7990_intr, sc);
 

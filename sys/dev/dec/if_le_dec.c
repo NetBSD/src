@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.9 1998/07/05 00:51:17 jonathan Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.10 1998/07/21 17:36:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jonathan Stone. All rights reserved.
@@ -59,6 +59,8 @@
 #include <netinet/if_inarp.h>
 #endif
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -72,8 +74,20 @@ void le_dec_writereg __P((volatile u_short *regptr, u_short val));
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-hide void le_dec_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_dec_rdcsr __P((struct am7990_softc *, u_int16_t));  
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_dec_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_dec_rdcsr __P((struct lance_softc *, u_int16_t));  
 
 void
 dec_le_common_attach(sc, eap)
@@ -82,19 +96,19 @@ dec_le_common_attach(sc, eap)
 {
 	int i;
 
-	sc->sc_rdcsr = le_dec_rdcsr;
-	sc->sc_wrcsr = le_dec_wrcsr;
-	sc->sc_hwinit = NULL;
+	sc->lsc.sc_rdcsr = le_dec_rdcsr;
+	sc->lsc.sc_wrcsr = le_dec_wrcsr;
+	sc->lsc.sc_hwinit = NULL;
 
-	sc->sc_conf3 = 0;
-	sc->sc_addr = 0;
-	sc->sc_memsize = 65536;
+	sc->lsc.sc_conf3 = 0;
+	sc->lsc.sc_addr = 0;
+	sc->lsc.sc_memsize = 65536;
 
 	/*
 	 * Get the ethernet address out of rom
 	 */
-	for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
-		sc->sc_enaddr[i] = *eap;
+	for (i = 0; i < sizeof(sc->lsc.sc_enaddr); i++) {
+		sc->lsc.sc_enaddr[i] = *eap;
 		eap += 4;
 	}
 
@@ -103,7 +117,7 @@ dec_le_common_attach(sc, eap)
 
 hide void
 le_dec_wrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
@@ -114,7 +128,7 @@ le_dec_wrcsr(sc, port, val)
 
 hide u_int16_t
 le_dec_rdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;

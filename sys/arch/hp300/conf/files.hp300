@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.36 1998/07/15 17:45:52 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.37 1998/07/21 17:36:02 drochner Exp $
 #
 # hp300-specific configuration info
 
@@ -113,7 +113,7 @@ attach	dcm at dio
 file	arch/hp300/dev/dcm.c		dcm needs-flag
 
 # LANCE ethernet
-attach	le at dio
+attach	le at dio: le24
 file	arch/hp300/dev/if_le.c		le
 
 # HP-IB interfaces

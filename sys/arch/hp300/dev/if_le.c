@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.45 1998/07/05 00:51:09 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.46 1998/07/21 17:36:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -122,19 +124,31 @@ struct cfattach le_ca = {
 
 int	leintr __P((void *));
 
-hide void le_copytobuf __P((struct am7990_softc *, void *, int, int));
-hide void le_copyfrombuf __P((struct am7990_softc *, void *, int, int));
-hide void le_zerobuf __P((struct am7990_softc *, int, int));
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_copytobuf __P((struct lance_softc *, void *, int, int));
+hide void le_copyfrombuf __P((struct lance_softc *, void *, int, int));
+hide void le_zerobuf __P((struct lance_softc *, int, int));
 
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));  
+hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
 
 hide void
 lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port, val;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -152,7 +166,7 @@ lewrcsr(sc, port, val)
 
 hide u_int16_t
 lerdcsr(sc, port)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	u_int16_t port;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
@@ -196,7 +210,7 @@ leattach(parent, self, aux)
 {
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
-	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_tag_t bst = da->da_bst;
 	bus_space_handle_t bsh0, bsh1, bsh2;
 	bus_size_t offset;
@@ -259,7 +273,7 @@ leattach(parent, self, aux)
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = NULL;
 
-	am7990_config(sc);
+	am7990_config(&lesc->sc_am7990);
 
 	/* Establish the interrupt handler. */
 	(void) dio_intr_establish(leintr, sc, ipl, IPL_NET);
@@ -270,7 +284,7 @@ int
 leintr(arg)
 	void *arg;
 {
-	struct am7990_softc *sc = arg;
+	struct lance_softc *sc = arg;
 #ifdef USELEDS
 	u_int16_t isr;
 
@@ -291,7 +305,7 @@ leintr(arg)
 
 hide void
 le_copytobuf(sc, from, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *from;
 	int boff, len;
 {
@@ -302,7 +316,7 @@ le_copytobuf(sc, from, boff, len)
 
 hide void
 le_copyfrombuf(sc, to, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *to;
 	int boff, len;
 {
@@ -313,7 +327,7 @@ le_copyfrombuf(sc, to, boff, len)
 
 hide void
 le_zerobuf(sc, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	struct le_softc *lesc = (struct le_softc *)sc;

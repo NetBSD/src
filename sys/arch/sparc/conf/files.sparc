@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.56 1998/07/15 17:45:53 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.57 1998/07/21 17:36:04 drochner Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -195,10 +195,10 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
-attach le at sbus with le_sbus
-attach le at ledma with le_ledma
-attach le at lebuffer with le_lebuffer
-attach le at obio with le_obio
+attach le at sbus with le_sbus: le24
+attach le at ledma with le_ledma: le24
+attach le at lebuffer with le_lebuffer: le24
+attach le at obio with le_obio: le24
 file	arch/sparc/dev/if_le.c		le
 
 attach ie at obio with ie_obio

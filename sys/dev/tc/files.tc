@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.12 1998/02/16 22:12:49 thorpej Exp $
+#	$NetBSD: files.tc,v 1.13 1998/07/21 17:36:06 drochner Exp $
 #
 # Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
@@ -17,8 +17,8 @@ attach	ioasic at tc
 #  lance device defined in sys/conf/files
 #  le_dec_subr	attribute defined in sys/dev/dec/files.dec
 
-attach le at ioasic with le_ioasic:	le_dec_subr
-attach le at tc with le_tc:		le_dec_subr
+attach le at ioasic with le_ioasic:	le24, le_dec_subr
+attach le at tc with le_tc:		le24, le_dec_subr
 
 file	dev/tc/if_le_ioasic.c		le_ioasic needs-flag # for le_iomem
 file	dev/tc/if_le_tc.c		le_tc

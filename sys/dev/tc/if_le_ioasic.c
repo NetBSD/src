@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.11 1998/07/05 00:51:25 jonathan Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.12 1998/07/21 17:36:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.11 1998/07/05 00:51:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.12 1998/07/21 17:36:07 drochner Exp $");
 
 #include "opt_inet.h"
 
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.11 1998/07/05 00:51:25 jonathan E
 #include <netinet/if_inarp.h>
 #endif
 
+#include <dev/ic/lancereg.h>
+#include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -64,16 +66,28 @@ extern caddr_t le_iomem;
 int	le_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	le_ioasic_attach __P((struct device *, struct device *, void *));
 
-hide void le_ioasic_copytobuf_gap2 __P((struct am7990_softc *, void *,
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
+
+hide void le_ioasic_copytobuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
-hide void le_ioasic_copyfrombuf_gap2 __P((struct am7990_softc *, void *,
+hide void le_ioasic_copyfrombuf_gap2 __P((struct lance_softc *, void *,
 	    int, int));
 
-hide void le_ioasic_copytobuf_gap16 __P((struct am7990_softc *, void *,
+hide void le_ioasic_copytobuf_gap16 __P((struct lance_softc *, void *,
 	    int, int));
-hide void le_ioasic_copyfrombuf_gap16 __P((struct am7990_softc *, void *,
+hide void le_ioasic_copyfrombuf_gap16 __P((struct lance_softc *, void *,
 	    int, int));
-hide void le_ioasic_zerobuf_gap16 __P((struct am7990_softc *, int, int));
+hide void le_ioasic_zerobuf_gap16 __P((struct lance_softc *, int, int));
 
 struct cfattach le_ioasic_ca = {
 	sizeof(struct le_softc), le_ioasic_match, le_ioasic_attach
@@ -102,7 +116,7 @@ le_ioasic_attach(parent, self, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	register struct le_softc *lesc = (void *)self;
-	register struct am7990_softc *sc = &lesc->sc_am7990;
+	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
 
 	lesc->sc_r1 = (struct lereg1 *)
 		TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->iada_addr));
@@ -123,7 +137,7 @@ le_ioasic_attach(parent, self, aux)
 	ioasic_lance_dma_setup(le_iomem);	/* XXX more thought */
 #endif
 
-	dec_le_common_attach(sc, ioasic_lance_ether_address());
+	dec_le_common_attach(&lesc->sc_am7990, ioasic_lance_ether_address());
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_NET,
 	    am7990_intr, sc);
@@ -143,7 +157,7 @@ le_ioasic_attach(parent, self, aux)
 
 void
 le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
-	struct am7990_softc *sc;  
+	struct lance_softc *sc;  
 	void *fromv;
 	int boff;
 	register int len;
@@ -172,7 +186,7 @@ le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
 
 void
 le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *tov;
 	int boff, len;
 {
@@ -208,7 +222,7 @@ le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
 
 void
 le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *fromv;
 	int boff;
 	register int len;
@@ -293,7 +307,7 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 
 void
 le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	void *tov;
 	int boff, len;
 {
@@ -369,7 +383,7 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 
 void
 le_ioasic_zerobuf_gap16(sc, boff, len)
-	struct am7990_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
