@@ -1,3 +1,5 @@
+/*	$NetBSD: fp.S,v 1.2 1996/07/16 23:24:41 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.1.1.1 1996/03/13 04:58:10 jonathan Exp $
  */
 
 /*

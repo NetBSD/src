@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.2 1996/07/16 23:24:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machAsmDefs.h	8.1 (Berkeley) 6/10/93
- *      $Id: asm.h,v 1.1.1.1 1996/03/13 04:58:09 jonathan Exp $
  */
 
 /*
@@ -52,7 +53,6 @@
  *
  * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machAsmDefs.h,
  *	v 1.2 89/08/15 18:28:24 rab Exp  SPRITE (DECWRL)
- * $Id: asm.h,v 1.1.1.1 1996/03/13 04:58:09 jonathan Exp $
  */
 
 #ifndef _MACHASMDEFS

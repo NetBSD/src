@@ -1,3 +1,5 @@
+/*	$NetBSD: minidebug.c,v 1.2 1996/07/16 23:24:51 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.1.1.1 1996/03/13 04:58:12 jonathan Exp $
  */
 
 /*

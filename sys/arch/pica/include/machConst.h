@@ -1,4 +1,4 @@
-/*	$NetBSD: machConst.h,v 1.2 1996/03/28 11:34:10 jonathan Exp $
+/*	$NetBSD: machConst.h,v 1.3 1996/07/16 23:24:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
