@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.14 1997/03/24 00:35:07 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.15 1998/01/12 08:51:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -536,7 +536,5 @@ struct cfattach fea_ca = {
     sizeof(pdq_softc_t), pdq_eisa_match, pdq_eisa_attach
 };
 
-struct cfdriver fea_cd = {
-    0, "fea", DV_IFNET
-};
+extern struct cfdriver fea_cd;
 #endif
