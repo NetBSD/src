@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.219.2.2 2002/05/30 23:59:12 tv Exp $
+#	$NetBSD: Makefile,v 1.219.2.3 2002/06/11 16:15:57 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -141,12 +141,12 @@ install-etc-files: check_DESTDIR
 	${PWD_MKDB} -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
 		${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
-	echo "${DESTDIR}/etc/passwd type=file mode=0644 uname=root gname=wheel" \
-		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
-	echo "${DESTDIR}/etc/pwd.db type=file mode=0644 uname=root gname=wheel" \
-		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
-	echo "${DESTDIR}/etc/spwd.db type=file mode=0600 uname=root gname=wheel" \
-		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+	( \
+	    echo "/etc/passwd type=file mode=0644 uname=root gname=wheel"; \
+	    echo "/etc/pwd.db type=file mode=0644 uname=root gname=wheel"; \
+	    echo "/etc/spwd.db type=file mode=0600 uname=root gname=wheel"; \
+	) | \
+	    sed -e "s|^/|./${DESTDIR}/|g" -e "s|//|/|g" | ${CAT} -l >>${METALOG}
 .endif	# UNPRIVED
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
