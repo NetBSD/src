@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.391 2003/03/24 15:24:46 atatat Exp $
+# $NetBSD: mi,v 1.392 2003/03/25 18:26:51 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1159,6 +1159,8 @@
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
 ./usr/share/locale/zh_CN			base-locale-zh
+./usr/share/locale/zh_CN.GB18030		base-locale-zh
+./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_CN/LC_MESSAGES		base-locale-zh
