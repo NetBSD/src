@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2000/03/28 03:11:26 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2000/04/11 02:30:14 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -183,6 +183,7 @@ extern struct proc *fpcurproc;
 
 /* trap.c */
 void	child_return __P((void *));
+void	netintr __P((void));
 int	kdbpeek __P((vaddr_t));
 
 /* mips_machdep.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 2000/04/11 02:30:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,8 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $");
+
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2000/04/11 02:30:16 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -61,14 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/socket.h>
+#include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -89,22 +89,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $");
 #include <mips/regnum.h>			/* symbolic register indices */
 #include <mips/pte.h>
 
-#include <sys/cdefs.h>
-#include <sys/syslog.h>
-#include <miscfs/procfs/procfs.h>
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#endif
-
-/* all this to get prototypes for ipintr() and arpintr() */
-#include <sys/socket.h>
+#include <net/netisr.h>
 #include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
 
+#ifdef INET
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include "arp.h"
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
+#endif
 #ifdef INET6
 # ifndef INET
 #  include <netinet/in.h>
@@ -112,26 +108,40 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2000/03/28 03:11:28 simonb Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
-
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 #include "ppp.h"
-
 #if NPPP > 0
-#include <net/ppp_defs.h>		/* decls of struct pppstat for..  */
-#include <net/if_pppvar.h>		/* decl of enum for... */
-#include <net/if_ppp.h>			/* pppintr() prototype */
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
 #endif
 
-
-/*
- * Port-specific hardware interrupt handler
- */
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#endif
 
 int astpending;
 int want_resched;
+unsigned ssir;
 
-int  (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned)) = 0;
-void (*mips_software_intr) __P((int)) = 0;
-int  softisr;	/* for extensible software interrupt framework */
+int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned)) = 0;
 
 #if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
 u_int32_t mips3_intr_cycle_count;
@@ -179,15 +189,12 @@ void syscall __P((unsigned, unsigned, unsigned));
 void interrupt __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
 void dealfpu __P((unsigned, unsigned, unsigned));
+void netintr __P((void));
+extern void softserial __P((void));
 
-void MachEmulateFP __P((unsigned));
-void MachFPInterrupt __P((unsigned, unsigned, unsigned,
-			  struct frame *));
-
-/*
- * Other forward declarations.
- */
 vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
+extern void MachEmulateFP __P((unsigned));
+extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
 
 void
 userret(p, pc, sticks)
@@ -363,7 +370,6 @@ syscall(status, cause, opc)
 /*
  * fork syscall returns directly to user process via proc_trampoline,
  * which will be called the very first time when child gets running.
- * no more FORK_BRAINDAMAGED.
  */
 void
 child_return(arg)
@@ -407,7 +413,8 @@ trap(status, cause, vaddr, opc, frame)
 	u_quad_t sticks = 0;
 	struct proc *p = curproc;
 	vm_prot_t ftype;
-	void fswintrberr __P((void));
+	extern struct proc *fpcurproc;
+	extern void fswintrberr __P((void));
 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
@@ -715,104 +722,23 @@ trap(status, cause, vaddr, opc, frame)
 	return;
 }
 
-#include <net/netisr.h>
-#include "arp.h"
-#include "ppp.h"
-
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-
-/*
- * Handle an interrupt.
- * N.B., curproc might be NULL.
- */
 void
-interrupt(status, cause, pc)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
+netintr()
 {
-	unsigned mask;
+#define DONETISR(bit, fn)			\
+	do {					\
+		if (n & (1 << bit))		\
+			fn();			\
+	} while (0)
 
-	mask = cause & status;	/* pending interrupts & enable mask */
+	int n;
+	n = netisr; netisr = 0;
 
-#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
-	if ((mask & MIPS_INT_MASK_CLOCK) && CPUISMIPS3) {
-		mips3_intr_cycle_count = mips3_cycle_count();
-		/*
-		 *  Writing a value to the Compare register,
-		 *  as a side effect, clears the timer interrupt request.
-		 */
-		mips3_write_compare(mips3_intr_cycle_count + mips3_timer_delta);
-	}
-#endif
-
-	uvmexp.intrs++;
-	/* real device interrupt */
-	if ((mask & INT_MASK_REAL_DEV) && mips_hardware_intr) {
-		_splset((*mips_hardware_intr)(mask, pc, status, cause));
-	}
-
-#ifdef INT_MASK_FPU_DEAL
-	if (mask & INT_MASK_FPU_DEAL) {
-		intrcnt[FPU_INTR]++;
-		if (!USERMODE(status))
-			panic("kernel used FPU: PC %x, CR %x, SR %x",
-			    pc, cause, status);
-		/* dealfpu(status, cause, pc); */
-		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
-	}
-#endif
-
-	/* simulated interrupt */
-	if ((mask & MIPS_SOFT_INT_MASK_1)
-		    || ((netisr|softisr) && (status & MIPS_SOFT_INT_MASK_1))) {
-		int isr, sisr;
-		isr = netisr; netisr = 0;
-		sisr = softisr; softisr = 0;
-		clearsoftnet();
-		uvmexp.softs++;
-		if (isr) {
-			intrcnt[SOFTNET_INTR]++;
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
+	intrcnt[SOFTNET_INTR]++;
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
-		}
-		if (sisr && mips_software_intr)
-			(*mips_software_intr)(sisr);
-	}
-
-	/* 'softclock' interrupt */
-	if (mask & MIPS_SOFT_INT_MASK_0) {
-		clearsoftclock();
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock();
-	}
 }
 
 /*
@@ -1084,6 +1010,8 @@ mips_singlestep(p)
 
 #if defined(DEBUG) || defined(DDB)
 mips_reg_t kdbrpeek __P((vaddr_t));
+extern void stacktrace __P((void)); /*XXX*/
+extern void logstacktrace __P((void)); /*XXX*/
 
 
 int
@@ -1135,7 +1063,9 @@ extern char mips3_UserGenException[];
 extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
-int main __P((void*));
+extern int main __P((void*));
+extern void mips_idle __P((void));
+extern void cpu_switch __P((struct proc *));
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -1418,7 +1348,6 @@ static struct { void *addr; char *name;} names[] = {
 	Name(stacktrace),
 	Name(stacktrace_subr),
 	Name(main),
-	Name(interrupt),
 	Name(trap),
 
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
