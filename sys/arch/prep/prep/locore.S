@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2001/06/17 16:01:28 nonaka Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2001/06/23 02:12:34 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
+
+#include <powerpc/spr.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)
@@ -155,7 +157,7 @@ __start:
 	rlwinm	9,9,16,16,31
 	cmpi	0,9,1
 	beq	3f			/* not needed for 601 */
-	mfspr	11,1008
+	mfspr	11,SPR_HID0
 	andi.	0,11,HID0_DCE
 	ori	11,11,HID0_ICE|HID0_DCE
 	ori	8,11,HID0_ICFI
@@ -163,9 +165,9 @@ __start:
 	ori	8,8,HID0_DCI		/* unless it wasn't enabled */
 1:
 	sync
-	mtspr	1008,8			/* enable and invalidate caches */
+	mtspr	SPR_HID0,8		/* enable and invalidate caches */
 	sync
-	mtspr	1008,11			/* enable caches */
+	mtspr	SPR_HID0,11		/* enable caches */
 	sync
 	isync
 	cmpi	0,9,4			/* check for 604 */
@@ -178,7 +180,7 @@ __start:
 	bne	2,2f
 	ori	11,11,HID0_BTCD
 2:
-	mtspr	1008,11
+	mtspr	SPR_HID0,11
 3:
 	sync
 	isync
