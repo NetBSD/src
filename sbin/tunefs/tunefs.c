@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.22 2001/08/19 09:39:24 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.23 2001/09/03 15:04:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.22 2001/08/19 09:39:24 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.23 2001/09/03 15:04:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,9 @@ main(int argc, char *argv[])
 {
 #ifdef TUNEFS_SOFTDEP
 	int		softdep;
-#define	OPTSTRING	"AFNa:d:e:m:n:o:t:"
+#define	OPTSTRING	"AFNa:d:e:k:m:n:o:t:"
 #else
-#define	OPTSTRING	"AFNa:d:e:m:o:t:"
+#define	OPTSTRING	"AFNa:d:e:k:m:o:t:"
 #endif
 	struct stat	st;
 	int		i, ch, Aflag, Fflag, Nflag;
@@ -176,7 +176,8 @@ main(int argc, char *argv[])
 				    "optimization preference");
 			break;
 
-		case 't':
+		case 'k':
+		case 't':	/* for compatibility with old syntax */
 			trackskew = getnum(optarg,
 			    "track skew in sectors", 0, INT_MAX);
 			break;
@@ -213,29 +214,27 @@ main(int argc, char *argv[])
 		errx(10, "%s: not a block or character device", special);
 	getsb(&sblock, special);
 
-	if (maxcontig != -1) {
-		warnx("%s changes from %d to %d",
-		    "maximum contiguous block count",
-		    sblock.fs_maxcontig, maxcontig);
-		sblock.fs_maxcontig = maxcontig;
-	}
-	if (rotdelay != -1) {
-		warnx("%s changes from %dms to %dms",
-		    "rotational delay between contiguous blocks",
-		    sblock.fs_rotdelay, rotdelay);
-		sblock.fs_rotdelay = rotdelay;
-	}
-	if (maxbpg != -1) {
-		warnx("%s changes from %d to %d",
-		    "maximum blocks per file in a cylinder group",
-		    sblock.fs_maxbpg, maxbpg);
-		sblock.fs_maxbpg = maxbpg;
-	}
+#define CHANGEVAL(old, new, type, suffix) do				\
+	if ((new) != -1) {						\
+		if ((new) == (old))					\
+			warnx("%s remains unchanged at %d%s",		\
+			    (type), (old), (suffix));			\
+		else {							\
+			warnx("%s changes from %d%s to %d%s",		\
+			    (type), (old), (suffix), (new), (suffix));	\
+			(old) = (new);					\
+		}							\
+	} while (/* CONSTCOND */0)
+
+	CHANGEVAL(sblock.fs_maxcontig, maxcontig,
+	    "maximum contiguous block count", "");
+	CHANGEVAL(sblock.fs_rotdelay, rotdelay,
+	    "rotational delay between contiguous blocks", "ms");
+	CHANGEVAL(sblock.fs_maxbpg, maxbpg,
+	    "maximum blocks per file in a cylinder group", "");
+	CHANGEVAL(sblock.fs_minfree, minfree,
+	    "minimum percentage of free space", "%");
 	if (minfree != -1) {
-		warnx("%s changes from %d%% to %d%%",
-		    "minimum percentage of free space",
-		    sblock.fs_minfree, minfree);
-		sblock.fs_minfree = minfree;
 		if (minfree >= MINFREE &&
 		    sblock.fs_optim == FS_OPTSPACE)
 			warnx(OPTWARN, "time", ">=", MINFREE);
@@ -270,11 +269,8 @@ main(int argc, char *argv[])
 				warnx(OPTWARN, "space", "<", MINFREE);
 		}
 	}
-	if (trackskew != -1) {
-		warnx("%s changes from %d to %d",
-		    "track skew in sectors", sblock.fs_trackskew, trackskew);
-		sblock.fs_trackskew = trackskew;
-	}
+	CHANGEVAL(sblock.fs_trackskew, trackskew,
+	    "track skew in sectors", "");
 
 	if (Nflag) {
 		fprintf(stdout, "tunefs: current settings of %s\n", special);
@@ -295,7 +291,7 @@ main(int argc, char *argv[])
 		fprintf(stdout, "\toptimization preference: %s\n",
 		    chg[sblock.fs_optim]);
 		fprintf(stdout, "\ttrack skew %d sectors\n",
-			sblock.fs_trackskew);
+		    sblock.fs_trackskew);
 		fprintf(stdout, "tunefs: no changes made\n");
 		exit(0);
 	}
@@ -337,15 +333,15 @@ usage(void)
 
 	fprintf(stderr, "Usage: tunefs [-AFN] tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
-	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-a maximum contiguous blocks\n");
+	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
+	fprintf(stderr, "\t-k track skew in sectors\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
-	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 #ifdef TUNEFS_SOFTDEP
 	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
 #endif
-	fprintf(stderr, "\t-t track skew in sectors\n");
+	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 	exit(2);
 }
 
