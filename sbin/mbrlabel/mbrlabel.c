@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.11 2000/12/24 13:57:37 lukem Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.12 2000/12/27 04:22:11 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.11 2000/12/24 13:57:37 lukem Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.12 2000/12/27 04:22:11 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: mbrlabel.c,v 1.11 2000/12/24 13:57:37 lukem Exp $");
 int	main(int, char **);
 void	usage(void);
 void	getlabel(int);
-void	setlabel(int);
+void	setlabel(int, int);
 int	getparts(int, int, u_int32_t, u_int32_t, int);
 int	nbsdtype(int);
 u_int32_t getlong(void *p);
@@ -81,12 +81,12 @@ getlabel(int sd)
 }
 
 void
-setlabel(int sd)
+setlabel(int sd, int doraw)
 {
 
 	label.d_checksum = 0;
 	label.d_checksum = dkcksum(&label);
-	if (ioctl(sd, DIOCWDINFO, &label) < 0) {
+	if (ioctl(sd, doraw ? DIOCWDINFO : DIOCSDINFO, &label) < 0) {
 		perror("set label");
 		exit(1);
 	}
@@ -251,7 +251,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-fq] rawdisk\n", __progname);
+	fprintf(stderr, "usage: %s [-fqrw] rawdisk\n", __progname);
 	exit(1);
 }
 
@@ -262,17 +262,27 @@ main(int argc, char **argv)
 	int	sd, ch, changed;
 	char	name[MAXPATHLEN];
 	int	force;			/* force label update */
+	int	raw;			/* update on-disk label as well */
 	int	verbose;		/* verbose output */
+	int	write;			/* update in-core label if changed */
 
 	force = 0;
+	raw = 0;
 	verbose = 1;
-	while ((ch = getopt(argc, argv, "fq")) != -1) {
+	write = 0;
+	while ((ch = getopt(argc, argv, "fqrw")) != -1) {
 		switch (ch) {
 		case 'f':
 			force = 1;
 			break;
 		case 'q':
 			verbose = 0;
+			break;
+		case 'r':
+			raw = 1;
+			break;
+		case 'w':
+			write = 1;
 			break;
 		default:
 			usage();
@@ -292,17 +302,17 @@ main(int argc, char **argv)
 
 	if (verbose) {
 		putchar('\n');
-		if (0) showinfo(stdout, &label, name);
 		showpartitions(stdout, &label, 0);
 		putchar('\n');
 	}
-	if (force) {
-		if (! changed)
+	if (write) {
+		if (! changed && ! force)
 			printf("No change; not updating disk label.\n");
 		else {
 			if (verbose)
-				printf("Updating disk label.\n");
-			setlabel(sd);
+				printf("Updating in-core %sdisk label.\n",
+				    raw ? "and on-disk " : "");
+			setlabel(sd, raw);
 		}
 	} else {
 		printf("Not updating disk label.\n");
