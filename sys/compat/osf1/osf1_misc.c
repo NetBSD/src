@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.49 1999/05/04 02:45:35 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.50 1999/05/04 05:17:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -333,4 +333,15 @@ osf1_sys_wait4(p, v, retval)
 	}
 
 	return (error);
+}
+
+int
+osf1_sys_classcntl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	/* XXX */
+	return (ENOSYS);
 }
