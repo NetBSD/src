@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.41 1997/03/23 22:54:29 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.42 1997/04/27 22:12:40 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -514,7 +514,6 @@ espdmaintr(sc)
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
-		NCRCMD(nsc, NCRCMD_FLUSH);
 	}
 
 	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
