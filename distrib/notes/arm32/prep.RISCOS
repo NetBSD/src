@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.5 2000/10/29 14:08:05 lukem Exp $
+	$NetBSD: prep.RISCOS,v 1.6 2001/03/30 22:56:15 chris Exp $
 
 These instructions are specific to NetBSD/arm32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+) running RiscOS, but may be relevant to futures
@@ -551,7 +551,7 @@ This manual has been written from scratch based on version 1.2
 of the installation manual that Mark Brinicombe wrote.
 
 It was mainly written by Kjetil B. Thomassen
-(mailto:kjetil.b.thomassen@eunet.no) with contributions from:
+(mailto:kjetil@thomassen.priv.no) with contributions from:
 Neil Hoggarth (mailto:neil.hoggarth@physiol.ox.ac.uk)
 Markus Baeurle (mailto:emw4maba@gp.fht-esslingen.de)
 Jasper Wallace (mailto:jasper@ivision.co.uk)
