@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/01/23 22:11:49 mycroft Exp $
+#	$NetBSD: Makefile,v 1.20 2000/04/24 15:15:05 pk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>		# for UNPRIVILEGED
@@ -17,7 +17,7 @@ CLEANFILES+=map setup setup.o host_phantglobs.o
 realall: setup phantasia
 
 setup: host_phantglobs.o setup.o monsters.asc ${LIBM} 
-	${HOST_CC} host_phantglobs.o setup.o -o ${.TARGET} -lm
+	${HOST_LINK.c} host_phantglobs.o setup.o -o ${.TARGET} -lm
 
 host_phantglobs.o: ${.CURDIR}/phantglobs.c
 	${HOST_COMPILE.c} -o host_phantglobs.o ${.CURDIR}/phantglobs.c
