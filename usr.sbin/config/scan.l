@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.30.8.2 2002/06/20 13:36:44 gehenna Exp $	*/
+/*	$NetBSD: scan.l,v 1.30.8.3 2002/07/15 04:38:16 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@ with		return WITH;
 			unput(tok);
 		}
 		yylval.str = intern(yytext + 1);
-		return WORD;
+		return QSTRING;
 	}
 0[0-7]*	{
 		yylval.val = strtol(yytext, NULL, 8);
