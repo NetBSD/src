@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.16 1994/06/29 06:32:38 cgd Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.17 1994/08/25 07:13:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -398,21 +398,34 @@ osetreuid(p, uap, retval)
 	struct setreuid_args *uap;
 	int *retval;
 {
-	register struct pcred *pc = p->p_cred;
-	struct seteuid_args args;
+	struct seteuid_args seuidargs;
+	struct setuid_args suidargs;
 
 	/*
-	 * we assume that the intent of setting ruid is to be able to get
-	 * back ruid priviledge. So we make sure that we will be able to
-	 * do so, but do not actually set the ruid.
+	 * There are five cases, and we attempt to emulate them in
+	 * the following fashion:
+	 * -1, -1: return 0. This is correct emulation.
+	 * -1,  N: call seteuid(N). This is correct emulation.
+	 *  N, -1: if we called setuid(N), our euid would be changed
+	 *         to N as well. the theory is that we don't want to
+	 * 	   revoke root access yet, so we call seteuid(N)
+	 * 	   instead. This is incorrect emulation, but often
+	 *	   suffices enough for binary compatibility.
+	 *  N,  N: call setuid(N). This is correct emulation.
+	 *  N,  M: call setuid(N). This is close to correct emulation.
 	 */
-	if (uap->ruid != (uid_t)-1 && uap->ruid != pc->p_ruid &&
-	    uap->ruid != pc->p_svuid)
-		return (EPERM);
-	if (uap->euid == (uid_t)-1)
-		return (0);
-	args.euid = uap->euid;
-	return (seteuid(p, &args, retval));
+	if (uap->ruid == (uid_t)-1) {
+		if (uap->euid == (uid_t)-1)
+			return (0);			/* -1, -1 */
+		seuidargs.euid = uap->euid;		/* -1,  N */
+		return (seteuid(p, &seuidargs, retval));
+	}
+	if (uap->euid == (uid_t)-1) {
+		seuidargs.euid = uap->ruid;		/* N, -1 */
+		return (seteuid(p, &seuidargs, retval));
+	}
+	suidargs.uid = uap->ruid;			/* N, N and N, M */
+	return (setuid(p, &suidargs, retval));
 }
 
 struct setregid_args {
@@ -425,21 +438,24 @@ osetregid(p, uap, retval)
 	struct setregid_args *uap;
 	int *retval;
 {
-	register struct pcred *pc = p->p_cred;
-	struct setegid_args args;
+	struct setegid_args segidargs;
+	struct setgid_args sgidargs;
 
 	/*
-	 * we assume that the intent of setting rgid is to be able to get
-	 * back rgid priviledge. So we make sure that we will be able to
-	 * do so, but do not actually set the rgid.
+	 * There are five cases, described above in osetreuid()
 	 */
-	if (uap->rgid != (gid_t)-1 && uap->rgid != pc->p_rgid &&
-	    uap->rgid != pc->p_svgid)
-		return (EPERM);
-	if (uap->egid == (gid_t)-1)
-		return (0);
-	args.egid = uap->egid;
-	return (setegid(p, &args, retval));
+	if (uap->rgid == (gid_t)-1) {
+		if (uap->egid == (gid_t)-1)
+			return (0);			/* -1, -1 */
+		segidargs.egid = uap->egid;		/* -1,  N */
+		return (setegid(p, &segidargs, retval));
+	}
+	if (uap->egid == (gid_t)-1) {
+		segidargs.egid = uap->rgid;		/* N, -1 */
+		return (setegid(p, &segidargs, retval));
+	}
+	sgidargs.gid = uap->rgid;			/* N, N and N, M */
+	return (setgid(p, &sgidargs, retval));
 }
 #endif /* defined(COMPAT_43) || defined(COMPAT_SUNOS) */
 
