@@ -1,4 +1,4 @@
-/*	$NetBSD: size.c,v 1.8 1997/01/16 22:23:16 perry Exp $	*/
+/*	$NetBSD: size.c,v 1.9 1997/08/25 06:42:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,36 +33,41 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$NetBSD: size.c,v 1.8 1997/01/16 22:23:16 perry Exp $";
+__RCSID("$NetBSD: size.c,v 1.9 1997/08/25 06:42:19 mikel Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
+
 #include <a.out.h>
 #include <ar.h>
-#include <ranlib.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <ctype.h>
 #include <err.h>
+#include <ranlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 unsigned long total_text, total_data, total_bss, total_total;
 int ignore_bad_archive_entries = 1;
 int print_totals = 0;
 
+int	main __P((int, char**));
 int	process_file __P((int, char *));
 int	show_archive __P((int, char *, FILE *));
-int	show_object __P((int, char *, FILE *));
+int	show_objfile __P((int, char *, FILE *));
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
 void	usage __P((void));
@@ -309,9 +314,9 @@ emalloc(size)
 	char *p;
 
 	/* NOSTRICT */
-	if (p = malloc(size))
+	if ((p = malloc(size)) != NULL)
 		return(p);
-	err(1, NULL);
+	err(1, "malloc");
 }
 
 void *
@@ -320,14 +325,14 @@ erealloc(p, size)
 	size_t size;
 {
 	/* NOSTRICT */
-	if (p = realloc(p, size))
+	if ((p = realloc(p, size)) != NULL)
 		return(p);
-	err(1, NULL);
+	err(1, "realloc");
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: size [-w] [file ...]\n");
+	(void)fprintf(stderr, "usage: size [-tw] file ...\n");
 	exit(1);
 }
