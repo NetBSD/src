@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/12/17 14:34:51 pk Exp $
+#	$NetBSD: Makefile,v 1.6 1999/07/30 04:07:25 mycroft Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -11,8 +11,6 @@ SRCS=	ld.c symbol.c lib.c shlib.c warnings.c rrs.c xbits.c md.c
 .if defined(DEBUG)
 CPPFLAGS+=-DDEBUG
 .endif
-LDADD+= -lgnumalloc
-DPADD+= /usr/lib/libgnumalloc.a
 BINDIR=/usr/bin
 .endif
 

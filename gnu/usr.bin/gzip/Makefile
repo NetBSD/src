@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1999/07/25 07:06:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.28 1999/07/30 04:07:25 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -20,8 +20,8 @@ MATCHCPPFLAGS+=-DNO_UNDERLINE
 .endif	# m68k || i386
 
 LDSTATIC?= -static
-LDADD+=	-lgnumalloc -lbz2
-DPADD+=	${LIBGNUMALLOC} ${LIBBZ2}
+LDADD+=	-lbz2
+DPADD+=	${LIBBZ2}
 
 MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 zcat.1
 MLINKS+= zdiff.1 zcmp.1
