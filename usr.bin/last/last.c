@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)last.c	5.18 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: last.c,v 1.3 1994/03/28 07:26:41 cgd Exp $";
+static char rcsid[] = "$Id: last.c,v 1.4 1994/04/01 03:33:00 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -169,7 +169,7 @@ wtmp()
 	(void)signal(SIGQUIT, onintr);
 
 	while (--bl >= 0) {
-		if (lseek(wfd, (long)(bl * sizeof(buf)), L_SET) == -1 ||
+		if (lseek(wfd, (bl * sizeof(buf)), L_SET) == -1 ||
 		    (bytes = read(wfd, (char *)buf, sizeof(buf))) == -1) {
 			fprintf(stderr, "last: %s: ", file);
 			perror((char *)NULL);

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$Id: util.c,v 1.3 1993/10/07 19:58:32 brezak Exp $";
+static char rcsid[] = "$Id: util.c,v 1.4 1994/04/01 03:33:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -159,7 +159,6 @@ enter_lastlog(pn)
 	static int opened, fd;
 	struct lastlog ll;
 	char doit = 0;
-	off_t lseek();
 
 	/* some systems may not maintain lastlog, don't report errors. */
 	if (!opened) {
@@ -167,7 +166,7 @@ enter_lastlog(pn)
 		opened = 1;
 	}
 	if (fd == -1 ||
-	    lseek(fd, (long)pn->uid * sizeof(ll), L_SET) !=
+	    lseek(fd, pn->uid * sizeof(ll), L_SET) !=
 	    (long)pn->uid * sizeof(ll) ||
 	    read(fd, (char *)&ll, sizeof(ll)) != sizeof(ll)) {
 			/* as if never logged in */
