@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.201 2002/01/27 06:49:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.202 2002/02/09 11:09:29 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -138,23 +138,23 @@ TARGET_ENDIANNESS=
 obj:
 	mkdir -p ${KERNOBJDIR}
 
-.if !defined(DESTDIR) || ${DESTDIR} == ""				# {
-__warndestdir: .USE
-	@echo setenv DESTDIR before doing that!
+check_destdir: .PHONY
+.if !defined(DESTDIR)
+	@echo "setenv DESTDIR before doing that!"
 	@false
-distribution install-etc-files distrib-dirs \
-    release snapshot iso-image iso_image_mi iso-image_md_pre iso-image_md_post \
-    snap_pre snap_md_pre: __warndestdir
-.if !target(snap_md_post)
-snap_md_post: __warndestdir
-.endif
-.if !target(snap_kern)
-snap_kern: __warndestdir
+.else
+	@true
 .endif
 
-.else	# DESTDIR != ""							# } {
+check_releasedir: .PHONY
+.if !defined(RELEASEDIR)
+	@echo "setenv RELEASEDIR before doing that!"
+	@false
+.else
+	@true
+.endif
 
-distribution: distrib-dirs
+distribution: check_destdir .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	(cd ..; ${MAKE} _DISTRIB= includes)
@@ -163,19 +163,15 @@ distribution: distrib-dirs
 	${MAKE} install-etc-files
 .endif	# !DISTRIBUTION_DONE
 
-install-etc-files:
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} \
-	    ${DESTDIR}/etc
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} \
-	    ${DESTDIR}/etc
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} \
-	    ${DESTDIR}/etc
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
+install-etc-files: check_destdir
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
 	    ${DESTDIR}/etc/mail
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 crontab \
+	${INSTALL_FILE} -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 master.passwd \
-	    ${DESTDIR}/etc
+	${INSTALL_FILE} -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	${PWD_MKDB} -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
 		${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
@@ -186,97 +182,94 @@ install-etc-files:
 	echo "${DESTDIR}/etc/spwd.db type=file mode=0600 uname=root gname=wheel" \
 		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
 .endif	# UNPRIVED
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 minfree \
-	    ${DESTDIR}/var/crash
+	${INSTALL_FILE} -o root -g wheel -m 600 minfree ${DESTDIR}/var/crash
 	(cd root; \
-		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.cshrc \
+		${INSTALL_FILE} -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
-		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 dot.klogin \
+		${INSTALL_FILE} -o root -g wheel -m 600 dot.klogin \
 		    ${DESTDIR}/root/.klogin; \
-		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.login \
+		${INSTALL_FILE} -o root -g wheel -m 644 dot.login \
 		    ${DESTDIR}/root/.login; \
-		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.profile \
+		${INSTALL_FILE} -o root -g wheel -m 644 dot.profile \
 		    ${DESTDIR}/root/.profile; \
-		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.shrc \
+		${INSTALL_FILE} -o root -g wheel -m 644 dot.shrc \
 		    ${DESTDIR}/root/.shrc; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
-		${INSTALL} ${INSTPRIV} -l h \
-			${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
-		${INSTALL} ${INSTPRIV} -l h \
-			${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+		${INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
+		${INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
 	(cd defaults; ${MAKE} install)
 	(cd mtree; ${MAKE} install)
 	(cd namedb; \
-		${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
+		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
 	(cd rc.d; ${MAKE} install)
-	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
+	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
 		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
-	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
+	${INSTALL_SYMLINK} -o root -g wheel -m 755 \
 		/usr/sbin/rmt ${DESTDIR}/etc/rmt
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 664 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 600 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g operator -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
+	${INSTALL_FILE} -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/at/at.deny
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
+	${INSTALL_FILE} -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
-	${INSTALL} ${INSTPRIV} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL_FILE} -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
-	${INSTALL} ${INSTPRIV} -c -o uucp -g dialer -m 640 /dev/null \
+	${INSTALL_FILE} -o uucp -g dialer -m 640 /dev/null \
 		${DESTDIR}/var/log/aculog
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/authlog
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/maillog
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/messages
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/secure
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/sendmail.st
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/xferlog
-	${INSTALL} ${INSTPRIV} -c -o daemon -g staff -m 664 /dev/null \
+	${INSTALL_FILE} -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/atc_scores
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/battlestar.log
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/cfscores
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/criblog
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/robots_roll
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/rogue.scores
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/saillog
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/snakerawscores
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/snake.log
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/tetris.scores
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/larn/llog12.0
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/larn/lscore12.0
-	${INSTALL} ${INSTPRIV} -c -o games -g games -m 664 /dev/null \
+	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/larn/playerids
-	(cd etc.${MACHINE}; ${INSTALL} ${INSTPRIV} -c -o ${BINOWN} \
+	(cd etc.${MACHINE}; ${INSTALL_FILE} -o ${BINOWN} \
 	    -g ${BINGRP} -m 444 fstab.* ${DESTDIR}/etc)
 	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
@@ -288,37 +281,22 @@ install-etc-files:
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
-distrib-dirs:
-	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${DESTDIR}
+distrib-dirs: check_destdir
+	${INSTALL_DIR} -o root -g wheel -m 755 ${DESTDIR}
 	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 	rm -f ${DESTDIR}/sys
-	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
-		usr/src/sys ${DESTDIR}/sys
+	${INSTALL_SYMLINK} -o root -g wheel -m 755 usr/src/sys ${DESTDIR}/sys
 
-.if !defined(RELEASEDIR)						# {
-__warnreleasedir: .USE
-	@echo setenv RELEASEDIR before doing that!
-	@false
-release snapshot iso-image iso_image_mi iso-image_md_pre iso-image_md_post \
-    snap_pre snap_md_pre: __warnreleasedir
-.if !target(snap_md_post)
-snap_md_post: __warnreleasedir
-.endif
-.if !target(snap_kern)
-snap_kern: __warnreleasedir
-.endif
-
-.else	# RELEASEDIR							# } {
-
-release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
+release snapshot: check_destdir check_releasedir .WAIT \
+    distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
 
 # Standalone target to create a CDROM image after the release
 # was composed. Should be run after "make build" in both src and xsrc
-iso-image: iso-image_md_post
+iso-image: check_destdir check_releasedir .WAIT iso-image_md_post
 
-iso-image_mi: iso-image_md_pre
+iso-image_mi: check_destdir check_releasedir .WAIT iso-image_md_pre
 	@if ${MKISOFS} --version; then \
 		mkdir -p ${RELEASEDIR}/installation/cdrom ; \
 		${MKISOFS} ${MKISOFS_FLAGS} \
@@ -330,19 +308,19 @@ iso-image_mi: iso-image_md_pre
 	fi
 
 # Setup the $RELEASEDIR to produce a bootable CD image:
-iso-image_md_pre:
+iso-image_md_pre: check_destdir check_releasedir
 # nothing here -- look in the machine-dependent Makefile.inc
 
 # Fixup the  CD-image to be bootable
-iso-image_md_post: iso-image_mi
+iso-image_md_post: check_destdir check_releasedir .WAIT iso-image_mi
 # nothing here -- look in the machine-dependent Makefile.inc
 
-snap_pre:
+snap_pre: check_destdir check_releasedir
 # Could be a mount point, ignore the errors
 	-/bin/rm -rf ${RELEASEDIR}
-	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}
+	${INSTALL} -d -m 755 ${RELEASEDIR}
 .for dir in ${INSTALLATION_DIRS}
-	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${RELEASEDIR}/${dir}
+	${INSTALL} -d -m 755 ${RELEASEDIR}/${dir}
 .endfor
 
 # This target builds the kernels specified by each port.  A port may
@@ -379,7 +357,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
 .if !target(snap_kern)
-snap_kern:
+snap_kern: check_destdir check_releasedir
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
@@ -423,14 +401,10 @@ snap_kern:
 .endif # KERNELS_DONE							# }
 .endif # no target(snap_kern)
 
-.endif # RELEASEDIR							# }
-
-snap_md_pre:
+snap_md_pre: check_destdir check_releasedir
 # nothing here -- look in the machine-dependent Makefile.inc
 
-snap_md_post:
+snap_md_post: check_destdir check_releasedir
 # nothing here -- look in the machine-dependent Makefile.inc
-
-.endif	# DESTDIR							# }
 
 .include <bsd.prog.mk>
