@@ -11,6 +11,7 @@
 # Disks:
 #	rz*	SCSI disks
 #	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk driver
 # Terminal multiplexors:
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
 #	scc*	82530 serial interface
@@ -102,11 +103,12 @@ bpf*)
 #	chmod 640 lkm
 #	;;
 
-rz*|vnd*|vn*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+rz*|vnd*|vn*|ccd*)
+	umask 2 ; unit=`expr $i : '.*[dz]\(.*\)'`
 	case $i in
 	rz*) name=rz; blk=21; chr=56;;
 	vn*) name=vnd; blk=2; chr=11;;
+	ccd*) name=ccd; blk=24; chr=87;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6)

@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.3 1995/07/07 15:46:44 gwr Exp $
+#	$Id: MAKEDEV,v 1.4 1995/08/17 18:02:48 thorpej Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -43,6 +43,7 @@
 #	sd*	Sun SCSI disks
 #	fd*	Floppies
 #	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk driver
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -143,12 +144,13 @@ pty*)
 	done
 	;;
 
-cd*|sd*|xy*|vnd*)
+cd*|sd*|xy*|vnd*|ccd*)
 	case $arg in
 	  cd*) name=cd; blk=18; chr=58;;
 	  sd*) name=sd; blk=7; chr=17;;
 	  xy*) name=xy; blk=3; chr=9 ;;
 	  vnd*) name=vnd; blk=5; chr=19;;
+	  ccd*) name=ccd; blk=9; chr=33;;
 	esac
 	case $unit in
 	  0|1|2|3|4) offset=`expr $unit \* 8`;;
