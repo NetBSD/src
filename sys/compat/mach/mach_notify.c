@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.2 2003/04/05 19:27:51 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.2.2.1 2003/08/19 19:53:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2 2003/04/05 19:27:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2.2.1 2003/08/19 19:53:48 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -86,7 +86,7 @@ mach_notify_port_destroyed(l, mr)
 	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(l->l_proc, "notify_port_destroyed", NULL, 0, 0);
+	ktruser(l, "notify_port_destroyed", NULL, 0, 0);
 #endif
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
@@ -132,7 +132,7 @@ mach_notify_port_no_senders(l, mr)
 	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(l->l_proc, "notify_port_no_senders", NULL, 0, 0);
+	ktruser(l, "notify_port_no_senders", NULL, 0, 0);
 #endif
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
@@ -176,7 +176,7 @@ mach_notify_port_dead_name(l, mr)
 	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(l->l_proc, "notify_port_dead_name", NULL, 0, 0);
+	ktruser(l, "notify_port_dead_name", NULL, 0, 0);
 #endif
 
 	mr->mr_refcount++;
