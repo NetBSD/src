@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.21 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.22 2004/01/23 01:57:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.21 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.22 2004/01/23 01:57:08 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -256,6 +256,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 		     RF_LockReqDesc_t *lockReqDesc)
 {
 	RF_StripeLockDesc_t *lockDesc;
+	RF_StripeLockDesc_t *newlockDesc;
 	RF_LockReqDesc_t *p;
 #if defined(DEBUG) && (RF_DEBUG_STRIPELOCK > 0)
 	int     tid = 0;
@@ -281,6 +282,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 	if (stripeID == -1)
 		return (0);
 	lockReqDesc->next = NULL;	/* just to be sure */
+	newlockDesc = AllocStripeLockDesc(stripeID);
 
 	RF_LOCK_MUTEX(lockTable[hashval].mutex);
 	for (lockDesc = lockTable[hashval].descList; lockDesc; 
@@ -291,7 +293,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 
 	if (!lockDesc) {	
 		/* no entry in table => no one reading or writing */
-		lockDesc = AllocStripeLockDesc(stripeID);
+		lockDesc = newlockDesc;
 		lockDesc->next = lockTable[hashval].descList;
 		lockTable[hashval].descList = lockDesc;
 		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
@@ -305,6 +307,8 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 		}
 #endif
 	} else {
+		/* we won't be needing newlockDesc after all.. pity.. */
+		FreeStripeLockDesc(newlockDesc);
 
 		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
 			lockDesc->nWriters++;
