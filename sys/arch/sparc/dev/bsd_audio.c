@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_audio.c,v 1.8 1995/03/02 20:37:46 pk Exp $ */
+/*	$NetBSD: bsd_audio.c,v 1.9 1995/03/04 09:55:40 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -131,6 +131,8 @@ struct audio_softc {
 
 	/* sc_au is special in that the hardware interrupt handler uses it */
 	struct	auio sc_au;		/* recv and xmit buffers, etc */
+	int	sc_async;/*XXX*/
+	pid_t	sc_pgid;
 
 };
 
@@ -355,11 +357,6 @@ static void ausetpgain __P((struct audio_softc *, int));
 static void ausetmgain __P((struct audio_softc *, int));
 static int audiosetinfo __P((struct audio_softc *, struct audio_info *));
 static int audiogetinfo __P((struct audio_softc *, struct audio_info *));
-struct sun_audio_info;
-static int sunaudiosetinfo __P((struct audio_softc *,
-				struct sun_audio_info *));
-static int sunaudiogetinfo __P((struct audio_softc *,
-				struct sun_audio_info *));
 static void audio_setmmr2 __P((volatile struct amd7930 *, int));
 
 /* ARGSUSED */
@@ -410,6 +407,7 @@ AUDIOOPEN(dev, flags, ifmt, p)
 	amd->cr = AMDR_INIT;
 	amd->dr = AMD_INIT_PMS_ACTIVE;
 
+sc->sc_pgid = p->p_pid;/*XXX*/
 	return (0);
 }
 
@@ -457,6 +455,7 @@ AUDIOCLOSE(dev, flags, ifmt, p)
 	amd->dr = AMD_INIT_PMS_ACTIVE | AMD_INIT_INT_DISABLE;
 	splx(s);
 	sc->sc_open = 0;
+sc->sc_pgid = 0;/*XXX*/
 	return (0);
 }
 
@@ -627,39 +626,6 @@ AUDIOWRITE(dev, uio, ioflag)
 	return (error);
 }
 
-/* Sun audio compatibility */
-struct sun_audio_prinfo {
-	u_int	sample_rate;
-	u_int	channels;
-	u_int	precision;
-	u_int	encoding;
-	u_int	gain;
-	u_int	port;
-	u_int	reserved0[4];
-	u_int	samples;
-	u_int	eof;
-	u_char	pause;
-	u_char	error;
-	u_char	waiting;
-	u_char	reserved1[3];
-	u_char	open;
-	u_char	active;
-};
-struct sun_audio_info {
-	struct sun_audio_prinfo play;
-	struct sun_audio_prinfo record;
-	u_int monitor_gain;
-	u_int reserved[4];
-};
-
-#ifndef SUNOS
-#define SUNAUDIO_GETINFO	_IOR('A', 1, struct sun_audio_info)
-#define SUNAUDIO_SETINFO	_IOWR('A', 2, struct sun_audio_info)
-#else
-#define SUNAUDIO_GETINFO	_IOR(A, 1, struct sun_audio_info)
-#define SUNAUDIO_SETINFO	_IOWR(A, 2, struct sun_audio_info)
-#endif
-
 /* ARGSUSED */
 int
 AUDIOIOCTL(dev, cmd, addr, flag, p)
@@ -716,16 +682,15 @@ AUDIOIOCTL(dev, cmd, addr, flag, p)
 		error = audiogetinfo(sc, (struct audio_info *)addr);
 		break;
 
-	case SUNAUDIO_GETINFO:
-		error = sunaudiogetinfo(sc, (struct sun_audio_info *)addr);
-		break;
-
-	case SUNAUDIO_SETINFO:
-		error = sunaudiosetinfo(sc, (struct sun_audio_info *)addr);
-		break;
-
 	case AUDIO_DRAIN:
 		error = audio_drain(sc);
+		break;
+
+	case FIOASYNC:                  /* set/clear async i/o */
+		if (*(int *)addr)
+			sc->sc_async |= 1/*ASYNC*/;
+		else
+			sc->sc_async &= 1/*~ASYNC*/;
 		break;
 
 	default:
@@ -832,6 +797,7 @@ audioswintr(sc0)
 {
 	register struct audio_softc *sc;
 	register int s, ret = 0;
+	struct proc *p;
 #ifdef SUNOS
 	sc = &audio_softc;
 #else
@@ -844,6 +810,13 @@ audioswintr(sc0)
 		ret = 1;
 		wakeup((caddr_t)&sc->sc_au.au_rb);
 		SELWAKEUP(&sc->sc_rsel);
+		if (sc->sc_async) {
+			if (sc->sc_pgid < 0)
+				gsignal(-sc->sc_pgid, SIGIO);
+			else if (sc->sc_pgid > 0 &&
+				 (p = pfind(sc->sc_pgid)) != 0)
+				psignal(p, SIGIO);
+		}
 	}
 	if (sc->sc_au.au_wb.cb_waking != 0) {
 		sc->sc_au.au_wb.cb_waking = 0;
@@ -851,6 +824,13 @@ audioswintr(sc0)
 		ret = 1;
 		wakeup((caddr_t)&sc->sc_au.au_wb);
 		SELWAKEUP(&sc->sc_wsel);
+		if (sc->sc_async) {
+			if (sc->sc_pgid < 0)
+				gsignal(-sc->sc_pgid, SIGIO);
+			else if (sc->sc_pgid > 0 &&
+				 (p = pfind(sc->sc_pgid)) != 0)
+				psignal(p, SIGIO);
+		}
 	} else
 		splx(s);
 	return (ret);
@@ -1105,45 +1085,6 @@ audiosetinfo(sc, ai)
 }
 
 static int
-sunaudiosetinfo(sc, ai)
-	struct audio_softc *sc;
-	struct sun_audio_info *ai;
-{
-	struct sun_audio_prinfo *r = &ai->record, *p = &ai->play;
-
-	if (p->gain != ~0)
-		ausetpgain(sc, p->gain);
-	if (r->gain != ~0)
-		ausetrgain(sc, r->gain);
-	if (ai->monitor_gain != ~0)
-		ausetmgain(sc, ai->monitor_gain);
-	if (p->port == AUDIO_SPEAKER) {
-		sc->sc_map.mr_mmr2 |= AMD_MMR2_LS;
-		audio_setmmr2(sc->sc_au.au_amd, sc->sc_map.mr_mmr2);
-	} else if (p->port == AUDIO_HEADPHONE) {
-		sc->sc_map.mr_mmr2 &=~ AMD_MMR2_LS;
-		audio_setmmr2(sc->sc_au.au_amd, sc->sc_map.mr_mmr2);
-	}
-	/*
-	 * The bsd driver does not distinguish between paused and active.
-	 * (In the sun driver, not active means samples are not ouput
-	 * at all, but paused means the last streams buffer is drained
-	 * and then output stops.)  If either are 0, then when stop output.
-	 * Otherwise, if either are non-zero, we resume.
-	 */
-	if (p->pause == 0 || p->active == 0)
-		sc->sc_au.au_wb.cb_pause = 0;
-	else if (p->pause != (u_char)~0 || p->active != (u_char)~0)
-		sc->sc_au.au_wb.cb_pause = 1;
-	if (r->pause == 0 || r->active == 0)
-		sc->sc_au.au_rb.cb_pause = 0;
-	else if (r->pause != (u_char)~0 || r->active != (u_char)~0)
-		sc->sc_au.au_rb.cb_pause = 1;
-
-	return (0);
-}
-
-static int
 audiogetinfo(sc, ai)
 	struct audio_softc *sc;
 	struct audio_info *ai;
@@ -1179,43 +1120,7 @@ audiogetinfo(sc, ai)
 	ai->hiwat = sc->sc_au.au_hiwat;
 	ai->lowat = sc->sc_au.au_lowat;
 	ai->backlog = sc->sc_au.au_backlog;
-
-	return (0);
-}
-
-static int
-sunaudiogetinfo(sc, ai)
-	struct audio_softc *sc;
-	struct sun_audio_info *ai;
-{
-	struct sun_audio_prinfo *r = &ai->record, *p = &ai->play;
-
-	p->sample_rate = r->sample_rate = 8000;
-	p->channels = r->channels = 1;
-	p->precision = r->precision = 8;
-	p->encoding = r->encoding = AUDIO_ENCODING_ULAW;
-
-	ai->monitor_gain = sc->sc_mlevel;
-	r->gain = sc->sc_rlevel;
-	p->gain = sc->sc_plevel;
-	r->port = 1; p->port = (sc->sc_map.mr_mmr2 & AMD_MMR2_LS) ?
-		AUDIO_SPEAKER : AUDIO_HEADPHONE;
-
-	p->active = p->pause = sc->sc_au.au_wb.cb_pause;
-	r->active = r->pause = sc->sc_au.au_rb.cb_pause;
-	p->error = sc->sc_au.au_wb.cb_drops != 0;
-	r->error = sc->sc_au.au_rb.cb_drops != 0;
-
-	p->waiting = 0;
-	r->waiting = 0;
-	p->eof = 0;
-	r->eof = 0;
-
-	p->open = sc->sc_open;
-	r->open = sc->sc_open;
-
-	p->samples = sc->sc_au.au_stamp - sc->sc_au.au_wb.cb_pdrops;
-	r->samples = sc->sc_au.au_stamp - sc->sc_au.au_rb.cb_pdrops;
+	ai->mode = 0;
 
 	return (0);
 }
