@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.20 1999/09/18 19:38:49 jsm Exp $	*/
+/*	$NetBSD: fortune.c,v 1.21 1999/09/22 18:56:32 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.20 1999/09/18 19:38:49 jsm Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.21 1999/09/22 18:56:32 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,6 +200,10 @@ regex_t *Re_pat = NULL;
 # else
 	#error "Need to define HAVE_REGCMP, HAVE_RE_COMP, or HAVE_REGCOMP"
 # endif
+#endif
+
+#ifndef NAMLEN
+#define		NAMLEN(d)	((d)->d_namlen)
 #endif
 
 int
@@ -717,9 +721,9 @@ add_dir(fp)
 	DPRINTF(1, (stderr, "adding dir \"%s\"\n", fp->path));
 	fp->num_children = 0;
 	while ((dirent = readdir(dir)) != NULL) {
-		if (dirent->d_namlen == 0)
+		if (NAMLEN(dirent) == 0)
 			continue;
-		name = copy(dirent->d_name, dirent->d_namlen);
+		name = copy(dirent->d_name, NAMLEN(dirent));
 		if (add_file(NO_PROB, name, fp->path, &fp->child, &tailp, fp))
 			fp->num_children++;
 		else
