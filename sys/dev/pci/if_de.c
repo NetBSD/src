@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.29 1996/10/25 21:33:30 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.30 1996/12/05 01:25:23 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -2391,7 +2391,11 @@ tulip_pci_shutdown(
 static int
 tulip_pci_probe(
     struct device *parent,
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
+#else
+    struct cfdata *match,
+#endif
     void *aux)
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.14 1996/12/05 01:25:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -82,7 +82,11 @@
 #define PCI_CONN		0x48    /* Connector type */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int ep_pci_match __P((struct device *, void *, void *));
+#else
+int ep_pci_match __P((struct device *, struct cfdata *, void *));
+#endif
 void ep_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ep_pci_ca = {
@@ -92,7 +96,12 @@ struct cfattach ep_pci_ca = {
 int
 ep_pci_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
