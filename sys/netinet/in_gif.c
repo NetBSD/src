@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.6 1999/08/20 10:07:40 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.7 1999/12/13 15:17:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,7 +38,9 @@
 #endif
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -47,6 +49,10 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
+#ifdef __FreeBSD__
+#include <sys/kernel.h>
+#include <sys/sysctl.h>
+#endif
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
 #endif
@@ -75,14 +81,18 @@
 
 #include "gif.h"
 
-#ifdef __NetBSD__
 #include <machine/stdarg.h>
-#endif
+
+#include <net/net_osdep.h>
 
 #if NGIF > 0
 int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
+#endif
+#ifdef __FreeBSD__
+SYSCTL_INT(_net_inet_ip, IPCTL_GIF_TTL, gifttl, CTLFLAG_RW,
+	&ip_gif_ttl,	0, "");
 #endif
 
 int
@@ -155,6 +165,10 @@ in_gif_output(ifp, family, m, rt)
 		if (sin_dst->sin_addr.s_addr != INADDR_ANY)
 			iphdr.ip_dst = sin_dst->sin_addr;
 		else if (rt) {
+			if (family != AF_INET) {
+				m_freem(m);
+				return EINVAL;	/*XXX*/
+			}
 			iphdr.ip_dst = ((struct sockaddr_in *)
 					(rt->rt_gateway))->sin_addr;
 		} else {
@@ -216,20 +230,19 @@ in_gif_output(ifp, family, m, rt)
 	}
 	
 #ifdef IPSEC
+#ifndef __OpenBSD__	/*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
+#endif
 #endif /*IPSEC*/
-	error = ip_output(m, 0, &sc->gif_ro, 0, 0);
+#ifndef __OpenBSD__
+	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
+#else
+	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
+#endif
 	return(error);
 }
 
 void
-#ifndef __NetBSD__
-in_gif_input(m, off, proto)
-	struct mbuf *m;
-	int off;
-	int proto;
-{
-#else /* __NetBSD__ */
 #if __STDC__
 in_gif_input(struct mbuf *m, ...)
 #else
@@ -239,22 +252,17 @@ in_gif_input(m, va_alist)
 #endif
 {
 	int off, proto;
-#endif /* __NetBSD__ */
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
 	int i, af;
-#ifdef __NetBSD__
 	va_list ap;
-#endif /* __NetBSD__ */
 	u_int8_t otos;
 
-#ifdef __NetBSD__
 	va_start(ap, m);
 	off = va_arg(ap, int);
 	proto = va_arg(ap, int);
 	va_end(ap);
-#endif /* __NetBSD__ */
 
 	ip = mtod(m, struct ip *);
 

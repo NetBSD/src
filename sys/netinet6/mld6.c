@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.6 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.7 1999/12/13 15:17:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -86,11 +86,12 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #include <netinet6/mld6_var.h>
+
+#include <net/net_osdep.h>
 
 /*
  * Protocol constants
@@ -140,7 +141,11 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
+#ifdef __NetBSD__
 	int s = splsoftnet();
+#else
+	int s = splnet();
+#endif
 
 	/*
 	 * (draft-ietf-ipngwg-mld, page 10)
@@ -191,6 +196,9 @@ mld6_input(m, off)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+	struct ifmultiaddr *ifma;
+#endif
 	int timer;		/* timer value in the MLD query header */
 
 	/* source address validation */
@@ -218,109 +226,126 @@ mld6_input(m, off)
 	 * if we sent the last report.
 	 */
 	switch(mldh->mld6_type) {
-	 case MLD6_LISTENER_QUERY:
-		 if (ifp->if_flags & IFF_LOOPBACK)
-			 break;
+	case MLD6_LISTENER_QUERY:
+		if (ifp->if_flags & IFF_LOOPBACK)
+			break;
 
-		 if (!IN6_IS_ADDR_UNSPECIFIED(&mldh->mld6_addr) &&
-		     !IN6_IS_ADDR_MULTICAST(&mldh->mld6_addr))
-			 break;	/* print error or log stat? */
-		 if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
-			 mldh->mld6_addr.s6_addr16[1] =
-				 htons(ifp->if_index); /* XXX */
+		if (!IN6_IS_ADDR_UNSPECIFIED(&mldh->mld6_addr) &&
+		!IN6_IS_ADDR_MULTICAST(&mldh->mld6_addr))
+			break;	/* print error or log stat? */
+		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
+			mldh->mld6_addr.s6_addr16[1] =
+				htons(ifp->if_index); /* XXX */
 
 		/*
-		 * - Start the timers in all of our membership records
-		 *   that the query applies to for the interface on
-		 *   which the query arrived excl. those that belong
-		 *   to the "all-nodes" group (ff02::1).
-		 * - Restart any timer that is already running but has
-		 *   A value longer than the requested timeout.
-		 * - Use the value specified in the query message as
-		 *   the maximum timeout.
-		 */
-		 IFP_TO_IA6(ifp, ia);
-		 if (ia == NULL)
-			 break;
+		* - Start the timers in all of our membership records
+		*   that the query applies to for the interface on
+		*   which the query arrived excl. those that belong
+		*   to the "all-nodes" group (ff02::1).
+		* - Restart any timer that is already running but has
+		*   A value longer than the requested timeout.
+		* - Use the value specified in the query message as
+		*   the maximum timeout.
+		*/
+		IFP_TO_IA6(ifp, ia);
+		if (ia == NULL)
+			break;
 
-		 /*
-		  * XXX: System timer resolution is too low to handle Max
-		  * Response Delay, so set 1 to the internal timer even if
-		  * the calculated value equals to zero when Max Response
-		  * Delay is positive.
-		  */
-		 timer = ntohs(mldh->mld6_maxdelay)*PR_FASTHZ/MLD6_TIMER_SCALE;
-		 if (timer == 0 && mldh->mld6_maxdelay)
-			 timer = 1;
-		 mld6_all_nodes_linklocal.s6_addr16[1] =
-			 htons(ifp->if_index); /* XXX */
-		 
-		 for (in6m = ia->ia6_multiaddrs.lh_first;
-		      in6m;
-		      in6m = in6m->in6m_entry.le_next) {
-			 if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
+		/*
+		* XXX: System timer resolution is too low to handle Max
+		* Response Delay, so set 1 to the internal timer even if
+		* the calculated value equals to zero when Max Response
+		* Delay is positive.
+		*/
+		timer = ntohs(mldh->mld6_maxdelay)*PR_FASTHZ/MLD6_TIMER_SCALE;
+		if (timer == 0 && mldh->mld6_maxdelay)
+			timer = 1;
+		mld6_all_nodes_linklocal.s6_addr16[1] =
+			htons(ifp->if_index); /* XXX */
+		
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+		LIST_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link)
+#else
+		for (in6m = ia->ia6_multiaddrs.lh_first;
+		     in6m;
+		     in6m = in6m->in6m_entry.le_next)
+#endif
+		{
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+			if (ifma->ifma_addr->sa_family != AF_INET6)
+				continue;
+			in6m = (struct in6_multi *)ifma->ifma_protospec;
+			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
+					&mld6_all_nodes_linklocal) ||
+			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
+			    IPV6_ADDR_SCOPE_LINKLOCAL)
+				continue;
+#else
+			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
 						&mld6_all_nodes_linklocal) ||
-			     IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
-			     IPV6_ADDR_SCOPE_LINKLOCAL)
-			     continue;
+			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
+			    IPV6_ADDR_SCOPE_LINKLOCAL)
+				continue;
+#endif
 
-			 if (IN6_IS_ADDR_UNSPECIFIED(&mldh->mld6_addr) ||
-			     IN6_ARE_ADDR_EQUAL(&mldh->mld6_addr,
-						&in6m->in6m_addr)) {
-				 if (timer == 0) {
-					 /* send a report immediately */
-					 mld6_sendpkt(in6m, MLD6_LISTENER_REPORT,
-						      NULL);
-					 in6m->in6m_timer = 0; /* reset timer */
-					 in6m->in6m_state = MLD6_IREPORTEDLAST;
-				 }
-				 else if (in6m->in6m_timer == 0 || /*idle state*/
-					  in6m->in6m_timer > timer) {
-					 in6m->in6m_timer =
-						 MLD6_RANDOM_DELAY(timer);
-					 mld6_timers_are_running = 1;
-				 }
-			 }
-		 }
+			if (IN6_IS_ADDR_UNSPECIFIED(&mldh->mld6_addr) ||
+			    IN6_ARE_ADDR_EQUAL(&mldh->mld6_addr,
+						&in6m->in6m_addr))
+			{
+				if (timer == 0) {
+					/* send a report immediately */
+					mld6_sendpkt(in6m, MLD6_LISTENER_REPORT,
+						NULL);
+					in6m->in6m_timer = 0; /* reset timer */
+					in6m->in6m_state = MLD6_IREPORTEDLAST;
+				}
+				else if (in6m->in6m_timer == 0 || /*idle state*/
+					in6m->in6m_timer > timer) {
+					in6m->in6m_timer =
+						MLD6_RANDOM_DELAY(timer);
+					mld6_timers_are_running = 1;
+				}
+			}
+		}
 
-		 if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
-			 mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
-		 break;
-	 case MLD6_LISTENER_REPORT:
+		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
+			mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
+		break;
+	case MLD6_LISTENER_REPORT:
 		/*
-		 * For fast leave to work, we have to know that we are the
-		 * last person to send a report for this group.  Reports
-		 * can potentially get looped back if we are a multicast
-		 * router, so discard reports sourced by me.
-		 * Note that it is impossible to check IFF_LOOPBACK flag of
-		 * ifp for this purpose, since ip6_mloopback pass the physical
-		 * interface to looutput.
-		 */
-		 if (m->m_flags & M_LOOP) /* XXX: grotty flag, but efficient */
-			 break;
+		* For fast leave to work, we have to know that we are the
+		* last person to send a report for this group.  Reports
+		* can potentially get looped back if we are a multicast
+		* router, so discard reports sourced by me.
+		* Note that it is impossible to check IFF_LOOPBACK flag of
+		* ifp for this purpose, since ip6_mloopback pass the physical
+		* interface to looutput.
+		*/
+		if (m->m_flags & M_LOOP) /* XXX: grotty flag, but efficient */
+			break;
 
-		 if (!IN6_IS_ADDR_MULTICAST(&mldh->mld6_addr))
-			 break;
+		if (!IN6_IS_ADDR_MULTICAST(&mldh->mld6_addr))
+			break;
 
-		 if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
-			 mldh->mld6_addr.s6_addr16[1] =
-				 htons(ifp->if_index); /* XXX */
+		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
+			mldh->mld6_addr.s6_addr16[1] =
+				htons(ifp->if_index); /* XXX */
 		/*
-		 * If we belong to the group being reported, stop
-		 * our timer for that group.
-		 */
-		 IN6_LOOKUP_MULTI(mldh->mld6_addr, ifp, in6m);
-		 if (in6m) {
-			 in6m->in6m_timer = 0; /* transit to idle state */
-			 in6m->in6m_state = MLD6_OTHERLISTENER; /* clear flag */
-		 }
+		* If we belong to the group being reported, stop
+		* our timer for that group.
+		*/
+		IN6_LOOKUP_MULTI(mldh->mld6_addr, ifp, in6m);
+		if (in6m) {
+			in6m->in6m_timer = 0; /* transit to idle state */
+			in6m->in6m_state = MLD6_OTHERLISTENER; /* clear flag */
+		}
 
-		 if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
-			 mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
-		 break;
-	 default:		/* this is impossible */
-		 log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
-		 break;
+		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
+			mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
+		break;
+	default:		/* this is impossible */
+		log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
+		break;
 	}
 }
 
@@ -338,7 +363,11 @@ mld6_fasttimeo()
 	if (!mld6_timers_are_running)
 		return;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	mld6_timers_are_running = 0;
 	IN6_FIRST_MULTI(step, in6m);
 	while (in6m != NULL) {
@@ -367,6 +396,7 @@ mld6_sendpkt(in6m, type, dst)
 	struct ip6_moptions im6o;
 	struct in6_ifaddr *ia;
 	struct ifnet *ifp = in6m->in6m_ifp;
+	struct ifnet *outif = NULL;
 
 	/*
 	 * At first, find a link local address on the outgoing interface
@@ -391,7 +421,9 @@ mld6_sendpkt(in6m, type, dst)
 	mh->m_next = md;
 
 #ifdef IPSEC
+#ifndef __OpenBSD__ /*KAME IPSEC*/
 	mh->m_pkthdr.rcvif = NULL;
+#endif
 #endif 
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld6_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);
@@ -436,5 +468,19 @@ mld6_sendpkt(in6m, type, dst)
 	/* increment output statictics */
 	icmp6stat.icp6s_outhist[type]++;
 
-	ip6_output(mh, &ip6_opts, NULL, 0, &im6o);
+	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, &outif);
+	if (outif) {
+		icmp6_ifstat_inc(outif, ifs6_out_msg);
+		switch(type) {
+		 case MLD6_LISTENER_QUERY:
+			 icmp6_ifstat_inc(outif, ifs6_out_mldquery);
+			 break;
+		 case MLD6_LISTENER_REPORT:
+			 icmp6_ifstat_inc(outif, ifs6_out_mldreport);
+			 break;
+		 case MLD6_LISTENER_DONE:
+			 icmp6_ifstat_inc(outif, ifs6_out_mlddone);
+			 break;
+		}
+	}
 }

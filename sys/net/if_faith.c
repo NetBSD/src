@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.6 1999/12/02 07:22:19 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.7 1999/12/13 15:17:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,9 +54,15 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#if defined(__FreeBSD__) && __FreeBSD__ >= 3
+#include <sys/sockio.h>
+#else
 #include <sys/ioctl.h>
+#endif
 #include <sys/time.h>
+#ifdef __bsdi__
 #include <machine/cpu.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -81,7 +87,9 @@
 
 #include "bpfilter.h"
 
-#ifdef __FreeBSD__
+#include <net/net_osdep.h>
+
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
 static int faithioctl __P((struct ifnet *, int, caddr_t));
 #else
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
@@ -90,9 +98,11 @@ int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
 	register struct rtentry *));
 static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
-void faithattach __P((void *));
 #ifdef __FreeBSD__
+void faithattach __P((void *));
 PSEUDO_SET(faithattach, if_faith);
+#else
+void faithattach __P((int));
 #endif
 
 static struct ifnet faithif[NFAITH];
@@ -102,7 +112,11 @@ static struct ifnet faithif[NFAITH];
 /* ARGSUSED */
 void
 faithattach(faith)
+#ifdef __FreeBSD__
 	void *faith;
+#else
+	int faith;
+#endif
 {
 	register struct ifnet *ifp;
 	register int i;
@@ -110,7 +124,7 @@ faithattach(faith)
 	for (i = 0; i < NFAITH; i++) {
 		ifp = &faithif[i];
 		bzero(ifp, sizeof(faithif[i]));
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(ifp->if_xname, "faith%d", i);
 #else
 		ifp->if_name = "faith";
@@ -126,7 +140,7 @@ faithattach(faith)
 		ifp->if_addrlen = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-#ifdef __FreeBSD__
+#ifdef HAVE_OLD_BPF
 		bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #else
 		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
@@ -171,7 +185,7 @@ faithoutput(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
-#ifdef __FreeBSD__
+#ifdef HAVE_OLD_BPF
 		bpf_mtap(ifp, &m0);
 #else
 		bpf_mtap(ifp->if_bpf, &m0);
@@ -187,6 +201,12 @@ faithoutput(ifp, m, dst, rt)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	switch (dst->sa_family) {
+#ifdef INET
+	case AF_INET:
+		ifq = &ipintrq;
+		isr = NETISR_IP;
+		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		ifq = &ip6intrq;
@@ -242,7 +262,7 @@ faithrtrequest(cmd, rt, sa)
 static int
 faithioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) && __FreeBSD__ < 3
 	int cmd;
 #else
 	u_long cmd;
@@ -271,6 +291,10 @@ faithioctl(ifp, cmd, data)
 			break;
 		}
 		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
 #ifdef INET6
 		case AF_INET6:
 			break;
@@ -283,9 +307,11 @@ faithioctl(ifp, cmd, data)
 		break;
 
 #ifdef SIOCSIFMTU
+#ifndef __OpenBSD__
 	case SIOCSIFMTU:
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
+#endif
 #endif
 
 	case SIOCSIFFLAGS:
