@@ -1,4 +1,4 @@
-.\"	$Id: dbsym.8,v 1.1 1994/08/25 20:40:32 gwr Exp $
+.\"	$NetBSD: dbsym.8,v 1.2 1997/10/17 05:47:27 lukem Exp $
 .\"
 .Dd 12 May 1994
 .Dt DBSYM 8 sun3
@@ -7,14 +7,14 @@
 .Nm dbsym
 .Nd copy kernel symbol table into db_symtab space
 .Sh SYNOPSIS
-.Nm dbsym
+.Nm
 .Ar kernel
 .Sh DESCRIPTION
-.Nm dbsym
+.Nm
 is used to copy the symbol table in a newly linked kernel into the
-.Nm db_symtab
+.Va db_symtab
 array (in the data section) so that the
-.Nm ddb
+.Xr ddb 4
 kernel debugger can find the symbols.  This is program is only used
 on systems for which the boot program does not load the symbol table
 into memory with the kernel.  The space for these symbols is
@@ -27,20 +27,19 @@ at least as large as the kernel symbol table.  If insufficient space
 is reserved, dbsym will refuse to copy the symbol table.
 .Pp
 Note that debugging symbols are not useful to the
-.Nm ddb
+.Xr ddb 4
 kernel debugger, so to minimize the size of the kernel, one should
 either compile the kernel without debugging symbols (no
-.Nm -g
+.Fl g
 flag) or use the
-.Nm strip
+.Xr strip 1
 command to strip debugging symbols from the kernel before
-.Nm dbsym
+.Nm
 is used to copy the symbol table.  The command
 .Pp
 .Li strip -d netbsd
 .Pp
 will strip out debugging symbols.
 .Sh "SEE ALSO"
-.Xr strip 1
-.Xr ddb 8
-.\" XXX - Reminder, need: /src/share/man/man8/ddb.8
+.Xr strip 1 ,
+.Xr ddb 4
