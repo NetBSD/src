@@ -38,9 +38,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rmp.h	8.1 (Berkeley) 6/4/93
+ *	from: @(#)rmp.h	8.1 (Berkeley) 6/4/93
+ *	      $Id: rmp.h,v 1.2 1994/01/11 16:41:49 brezak Exp $
  *
- * Utah $Hdr: rmp.h 3.1 92/07/06$
+ * From: Utah Hdr: rmp.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
 
