@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.71 1999/12/07 05:30:54 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.72 1999/12/09 11:18:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.71 1999/12/07 05:30:54 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.72 1999/12/09 11:18:05 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2000,6 +2000,8 @@ passive()
 	int len;
 	char *p, *a;
 
+	if (pdata >= 0)
+		close(pdata);
 	pdata = socket(AF_INET, SOCK_STREAM, 0);
 	if (pdata < 0 || !logged_in) {
 		perror_reply(425, "Can't open passive connection");
@@ -2078,6 +2080,8 @@ long_passive(char *cmd, int pf)
 		}
 	}
  		
+	if (pdata >= 0)
+		close(pdata);
 	pdata = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
 	if (pdata < 0) {
 		perror_reply(425, "Can't open passive connection");
