@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 1998/12/15 19:36:36 itohy Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 1999/03/18 04:56:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -542,7 +542,14 @@ nogo:
 		       type, code);
 		panictrap(type, code, v, fp);
 	}
-	trapsignal(p, SIGSEGV, v);
+	if (rv == KERN_RESOURCE_SHORTAGE) {
+		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+		       p->p_pid, p->p_comm,
+		       p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1);
+		trapsignal(p, SIGKILL, v);
+	} else { 
+		trapsignal(p, SIGSEGV, v);
+	}
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, fp->f_pc, sticks); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1999/03/15 01:29:07 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1999/03/18 04:56:03 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -145,7 +145,15 @@ trap(frame)
 				break;
 #endif
 		}
-		trapsignal(p, SIGSEGV, EXC_DSI);
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			trapsignal(p, SIGKILL, EXC_DSI);
+		} else {
+			trapsignal(p, SIGSEGV, EXC_DSI);
+		}
 		break;
 	case EXC_ISI|EXC_USER:
 		{

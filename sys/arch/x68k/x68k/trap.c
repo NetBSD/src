@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 1999/03/18 04:56:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -730,7 +730,15 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		ucode = v;
-		i = SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			i = SIGKILL;
+		} else {
+			i = SIGSEGV;
+		}
 		break;
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1999/01/13 09:26:00 abs Exp $ */
+/*	$NetBSD: trap.c,v 1.11 1999/03/18 04:56:03 chs Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -641,7 +641,15 @@ copyfault:
 			goto dopanic;
 		}
 		ucode = v;
-		i = SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			i = SIGKILL;
+		} else {
+			i = SIGSEGV;
+		}
 		break;
 	    }
 	}
