@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.8 1999/05/20 21:02:43 tsarna Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.9 1999/05/21 00:25:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -87,7 +87,7 @@
 #define	ETHERTYPE_VINESECHO	0x0BAF	/* Banyan VINES Echo */
 
 /*		       0x1000 - 0x100F	   Berkeley Trailer */
- *
+/*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
  * (type-ETHERTYPE_TRAIL)*512 bytes of data followed
  * by an ETHER type (as given above) and then the (variable-length) header.
