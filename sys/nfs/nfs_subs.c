@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.101 2002/02/28 21:38:08 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.102 2002/03/11 22:56:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.101 2002/02/28 21:38:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.102 2002/03/11 22:56:47 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1304,8 +1304,8 @@ struct nfsdircache *
 nfs_enterdircache(vp, off, blkoff, en, blkno)
 	struct vnode *vp;
 	off_t off, blkoff;
-	daddr_t blkno;
 	int en;
+	daddr_t blkno;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
