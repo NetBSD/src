@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.70 2003/01/06 19:14:51 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.71 2003/01/14 08:49:07 fair Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -111,6 +111,8 @@
 #	systrace syscall tracer
 #	kttcp	Kernel ttcp helper device
 #	mlx*	Mylex DAC960 control interface
+#	bktr	Brooktree 848/849/878/879 based TV cards
+#	radio*	control radio receivers
 #
 
 dialin=0
@@ -154,6 +156,8 @@ all)
 	makedev clockctl
 	makedev sysmon
 	makedev systrace
+	makedev bktr
+	makedev radio
 	;;
 
 audio)
@@ -772,6 +776,37 @@ kttcp)
 	rm -f kttcp
 	mknod kttcp c 65 0
 	chmod 600 kttcp
+	;;
+
+bktr)
+	makedev bktr0 bktr1
+	ln -fs bktr0 bktr
+	ln -fs tuner0 tuner
+	ln -fs vbi0 vbi
+	;;
+
+bktr*)
+	unit=${i#bktr}
+	rm -f bktr$unit tuner$unit vbi$unit
+	mknod bktr$unit c 71 $(($unit + 0))
+	mknod tuner$unit c 71 $(($unit + 16))
+	mknod vbi$unit c 71 $(($unit + 32))
+	chmod 444 bktr$unit tuner$unit vbi$unit
+	;;
+
+radio)
+	makedev radio0 radio1
+	ln -fs radio0 radio
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=72
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chmod 666 $radio
 	;;
 
 local)
