@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.18 1995/12/23 17:21:26 perry Exp $	*/
+/*	$NetBSD: io.c,v 1.19 1996/06/18 07:47:04 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -34,7 +34,7 @@
 void gateA20 __P((int on));
 /*void printf __P((const char *format, int data));*/ /* not quite right XXX */
 void putchar __P((int c));
-int gets __P((char *buf));
+void gets __P((char *buf));
 int strcmp __P((const char *s1, const char *s2));
 void bcopy __P((char *from, char *to, int len));
 int awaitkey __P((int seconds));
@@ -143,7 +143,7 @@ putchar(c)
 	putc(c);
 }
 
-int
+void
 gets(buf)
 	char *buf;
 {
@@ -154,7 +154,7 @@ gets(buf)
 		if (c == '\n' || c == '\r') {
 			putchar('\n');
 			*ptr = '\0';
-			return 1;
+			return;
 		} else if (c == '\b' || c == '\177') {
 			if (ptr > buf) {
 				putchar('\b');
