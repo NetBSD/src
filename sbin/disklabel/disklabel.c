@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.48 1998/01/01 04:38:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.47 1997/10/19 20:45:42 pk Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.48 1998/01/01 04:38:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1725,15 +1725,27 @@ usage()
 		char *name;
 		char *expn;
 	} usages[] = {
-#if NUMBOOT > 0
 	{ "%s [-rt] [-C] disk",
 	    "(to read label)" },
 	{ "%s -w [-r] disk type [ packid ]",
-	    "(to write label with existing boot program)" },
+#if NUMBOOT > 0
+	    "(to write label with existing boot program)"
+#else
+	    "(to write label)"
+#endif
+	},
 	{ "%s -e [-r] [-C] disk",
 	    "(to edit label)" },
+	{ "%s -i [-r] disk",
+	    "(to create a label interactively)" },
 	{ "%s -R [-r] disk protofile",
-	    "(to restore label with existing boot program)" },
+#if NUMBOOT > 0
+	    "(to restore label with existing boot program)"
+#else
+	    "(to restore label)"
+#endif
+	},
+#if NUMBOOT > 0
 # if NUMBOOT > 1
 	{ "%s -B [ -b xxboot [ -s bootxx ] ] disk [ type ]",
 	    "(to install boot program with existing label)" },
@@ -1748,24 +1760,13 @@ usage()
 	    "(to write label and install boot program)" },
 	{ "%s -R -B [ -b bootprog ] disk protofile [ type ]",
 	    "(to restore label and install boot program)" },
-#endif
-#else
-	{ "%s [-rt] disk",
-	    "(to read label)" },
-	{ "%s -w [-r] disk type [ packid ]",
-	    "(to write label)" },
-	{ "%s -e [-r] disk",
-	    "(to edit label)" },
-	{ "%s -i [-r] disk",
-	    "(to create a label interactively)" },
-	{ "%s -R [-r] disk protofile",
-	    "(to restore label)" },
+# endif
 #endif
 	{ "%s [-NW] disk",
 	    "(to write disable/enable label)" },
 	{ NULL,
 	    NULL }
-};
+	};
 	int i;
 
 	for (i = 0; usages[i].name; i++) {
