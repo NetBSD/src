@@ -1,50 +1,34 @@
-/* $NetBSD: isp_netbsd.c,v 1.14 1999/05/12 18:59:24 mjacob Exp $ */
-/* release_5_11_99 */
+/* $NetBSD: isp_netbsd.c,v 1.15 1999/07/05 20:31:36 mjacob Exp $ */
+/* release_6_5_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
- *
- *---------------------------------------
- * Copyright (c) 1997, 1998 by Matthew Jacob
- * NASA/Ames Research Center
+ * Matthew Jacob <mjacob@nas.nasa.gov>
+ */
+/*
+ * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
- *---------------------------------------
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The author may be reached via electronic communications at
- *
- *  mjacob@nas.nasa.gov
- *  mjacob@feral.com
- *
- * or, via United States Postal Address
- *
- *  Matthew Jacob
- *  Feral Software
- *  2339 3rd Street
- *  Suite 24
- *  San Francisco, CA, 94107
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <dev/ic/isp_netbsd.h>
@@ -78,7 +62,7 @@ isp_attach(isp)
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 	TAILQ_INIT(&isp->isp_osinfo.waitq);
 
-	if (isp->isp_type & ISP_HA_FC) {
+	if (IS_FC(isp)) {
 		/*
 		 * Give it another chance here to come alive...
 		 */
@@ -489,57 +473,86 @@ isp_async(isp, cmd, arg)
 		timeout(isp_internal_restart, isp, 1);
 		printf("%s: Loop UP\n", isp->isp_name);
 		break;
-	case ISPASYNC_PDB_CHANGE_COMPLETE:
-	if (isp->isp_type & ISP_HA_FC) {
-		static char *roles[4] = {
+	case ISPASYNC_PDB_CHANGED:
+	if (IS_FC(isp)) {
+		const char *fmt = "%s: Target %d (Loop 0x%x) Port ID 0x%x "
+		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x\n";
+		const static char *roles[4] = {
 		    "No", "Target", "Initiator", "Target/Initiator"
 		};
-		long tgt = (long) arg;
-		isp_pdb_t *pdbp = &((fcparam *)isp->isp_param)->isp_pdb[tgt];
-		printf("%s: Loop ID %d, %s role\n",
-		    isp->isp_name, pdbp->pdb_loopid,
-		    roles[(pdbp->pdb_prli_svc3 >> 4) & 0x3]);
-		printf("     Node Address 0x%x WWN 0x"
-		    "%02x%02x%02x%02x%02x%02x%02x%02x\n",
-		    BITS2WORD(pdbp->pdb_portid_bits),
-		    pdbp->pdb_portname[0], pdbp->pdb_portname[1],
-		    pdbp->pdb_portname[2], pdbp->pdb_portname[3],
-		    pdbp->pdb_portname[4], pdbp->pdb_portname[5],
-		    pdbp->pdb_portname[6], pdbp->pdb_portname[7]);
-		if (pdbp->pdb_options & PDB_OPTIONS_ADISC)
-			printf("     Hard Address 0x%x WWN 0x"
-			    "%02x%02x%02x%02x%02x%02x%02x%02x\n",
-			    BITS2WORD(pdbp->pdb_hardaddr_bits),
-			    pdbp->pdb_nodename[0],
-			    pdbp->pdb_nodename[1],
-			    pdbp->pdb_nodename[2],
-			    pdbp->pdb_nodename[3],
-			    pdbp->pdb_nodename[4],
-			    pdbp->pdb_nodename[5],
-			    pdbp->pdb_nodename[6],
-			    pdbp->pdb_nodename[7]);
-		switch (pdbp->pdb_prli_svc3 & SVC3_ROLE_MASK) {
-		case SVC3_TGT_ROLE|SVC3_INI_ROLE:
-			printf("     Master State=%s, Slave State=%s\n",
-			    isp2100_pdb_statename(pdbp->pdb_mstate),
-			    isp2100_pdb_statename(pdbp->pdb_sstate));
-			break;
-		case SVC3_TGT_ROLE:
-			printf("     Master State=%s\n",
-			    isp2100_pdb_statename(pdbp->pdb_mstate));
-			break;
-		case SVC3_INI_ROLE:
-			printf("     Slave State=%s\n",
-			    isp2100_pdb_statename(pdbp->pdb_sstate));
-			break;
-		default:
-			break;
+		char *ptr;
+		fcparam *fcp = isp->isp_param;
+		int tgt = *((int *) arg);
+		struct lportdb *lp = &fcp->portdb[tgt]; 
+
+		if (lp->valid) {
+			ptr = "arrived";
+		} else {
+			ptr = "disappeared";
 		}
+		printf(fmt, isp->isp_name, tgt, lp->loopid, lp->portid,
+		    roles[lp->roles & 0x3], ptr,
+		    (u_int32_t) (lp->port_wwn >> 32),
+		    (u_int32_t) (lp->port_wwn & 0xffffffffLL),
+		    (u_int32_t) (lp->node_wwn >> 32),
+		    (u_int32_t) (lp->node_wwn & 0xffffffffLL));
 		break;
 	}
+#ifdef	ISP2100_FABRIC
 	case ISPASYNC_CHANGE_NOTIFY:
 		printf("%s: Name Server Database Changed\n", isp->isp_name);
 		break;
+	case ISPASYNC_FABRIC_DEV:
+	{
+		int target;
+		struct lportdb *lp;
+		sns_scrsp_t *resp = (sns_scrsp_t *) arg;
+		u_int32_t portid;
+		u_int64_t wwn;
+		fcparam *fcp = isp->isp_param;
+
+		portid =
+		    (((u_int32_t) resp->snscb_port_id[0]) << 16) |
+		    (((u_int32_t) resp->snscb_port_id[1]) << 8) |
+		    (((u_int32_t) resp->snscb_port_id[2]));
+		wwn =
+		    (((u_int64_t)resp->snscb_portname[0]) << 56) |
+		    (((u_int64_t)resp->snscb_portname[1]) << 48) |
+		    (((u_int64_t)resp->snscb_portname[2]) << 40) |
+		    (((u_int64_t)resp->snscb_portname[3]) << 32) |
+		    (((u_int64_t)resp->snscb_portname[4]) << 24) |
+		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
+		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
+		    (((u_int64_t)resp->snscb_portname[7]));
+		printf("%s: Fabric Device (Type 0x%x)@PortID 0x%x WWN "
+		    "0x%08x%08x\n", isp->isp_name, resp->snscb_port_type,
+		    portid, ((u_int32_t)(wwn >> 32)),
+		    ((u_int32_t)(wwn & 0xffffffff)));
+		if (resp->snscb_port_type != 2)
+			break;
+		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
+			lp = &fcp->portdb[target];
+			if (lp->port_wwn == wwn)
+				break;
+		}
+		if (target < MAX_FC_TARG) {
+			break;
+		}
+		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
+			lp = &fcp->portdb[target];
+			if (lp->port_wwn == 0)
+				break;
+		}
+		if (target == MAX_FC_TARG) {
+			printf("%s: no more space for fabric devices\n",
+			    isp->isp_name);
+			return (-1);
+		}
+		lp->port_wwn = lp->node_wwn = wwn;
+		lp->portid = portid;
+		break;
+	}
+#endif
 	default:
 		break;
 	}

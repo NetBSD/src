@@ -1,39 +1,36 @@
-/* $NetBSD: ispvar.h,v 1.22 1999/05/12 18:59:24 mjacob Exp $ */
-/* release_5_11_99 */
+/* $NetBSD: ispvar.h,v 1.23 1999/07/05 20:31:36 mjacob Exp $ */
+/* release_6_5_99 */
 /*
- * Soft Definitions for for Qlogic ISP SCSI adapters.
- *
- *---------------------------------------
- * Copyright (c) 1997, 1998 by Matthew Jacob
- * NASA/Ames Research Center
+ * Copyright (C) XXXX National Aeronautics & Space Administration
  * All rights reserved.
- *---------------------------------------
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Soft Definitions for for Qlogic ISP SCSI adapters.
+ * Matthew Jacob <mjacob@nas.nasa.gov>
+ */
 #ifndef	_ISPVAR_H
 #define	_ISPVAR_H
 
@@ -48,7 +45,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	8
+#define	ISP_CORE_VERSION_MINOR	9
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -82,7 +79,6 @@ struct ispmdvec {
 #else
 #define	MAX_FC_TARG	126
 #endif
-#define	DEFAULT_LOOPID	113
 
 /* queue length must be a power of two */
 #define	QENTRY_LEN			64
@@ -161,40 +157,68 @@ typedef struct {
  * Fibre Channel Specifics
  */
 typedef struct {
-	u_int8_t		isp_gotdparms;
-	u_int8_t		isp_reserved;
+	u_int			isp_fwoptions	: 16,
+						: 7,
+				loop_seen_once	: 1,
+				isp_loopstate	: 3,	/* Current Loop State */
+				isp_fwstate	: 3,	/* ISP F/W state */
+				isp_gotdparms	: 1,
+				isp_onfabric	: 1;
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
+	u_int32_t		isp_portid;
 	u_int8_t		isp_execthrottle;
         u_int8_t		isp_retry_delay;
         u_int8_t		isp_retry_count;
-	u_int8_t		isp_fwstate;	/* ISP F/W state */
-	u_int64_t		isp_wwn;	/* WWN of adapter */
 	u_int16_t		isp_maxalloc;
 	u_int16_t		isp_maxfrmlen;
-	u_int16_t		isp_fwoptions;
+	u_int64_t		isp_nodewwn;
+	u_int64_t		isp_portwwn;
 	/*
-	 * Port Data Base
+	 * Port Data Base. This is indexed by 'target', which is invariate.
+	 * However, elements within can move around due to loop changes,
+	 * so the actual loop ID passed to the F/W is in this structure.
+	 * The first time the loop is seen up, loopid will match the index
+	 * (except for fabric nodes which are above mapped above FC_SNS_ID
+	 * and are completely virtual), but subsequent LIPs can cause things
+	 * to move around.
 	 */
-	isp_pdb_t		isp_pdb[MAX_FC_TARG];
+	struct lportdb {
+		u_int	
+					loopid	: 8,
+						: 4,
+					fabdev	: 1,
+					roles	: 2,
+					valid	: 1;
+		u_int32_t		portid;	
+		u_int64_t		node_wwn;
+		u_int64_t		port_wwn;
+	} portdb[MAX_FC_TARG];
 
 	/*
 	 * Scratch DMA mapped in area to fetch Port Database stuff, etc.
 	 */
-	volatile caddr_t	isp_scratch;
+	caddr_t			isp_scratch;
 	u_int32_t		isp_scdma;
 } fcparam;
 
-#define	ISP2100_SCRLEN		0x100
+#define	FW_CONFIG_WAIT		0
+#define	FW_WAIT_AL_PA		1
+#define	FW_WAIT_LOGIN		2
+#define	FW_READY		3
+#define	FW_LOSS_OF_SYNC		4
+#define	FW_ERROR		5
+#define	FW_REINIT		6
+#define	FW_NON_PART		7
 
-#define	FW_CONFIG_WAIT		0x0000
-#define	FW_WAIT_AL_PA		0x0001
-#define	FW_WAIT_LOGIN		0x0002
-#define	FW_READY		0x0003
-#define	FW_LOSS_OF_SYNC		0x0004
-#define	FW_ERROR		0x0005
-#define	FW_REINIT		0x0006
-#define	FW_NON_PART		0x0007
+#define	LOOP_NIL		0
+#define	LOOP_LIP_RCVD		1
+#define	LOOP_PDB_RCVD		2
+#define	LOOP_READY		7
+
+#define	FL_PORT_ID		0x7e	/* FL_Port Special ID */
+#define	FC_PORT_ID		0x7f	/* Fabric Controller Special ID */
+#define	FC_SNS_ID		0x80	/* SNS Server Special ID */
 
 #ifdef	ISP_TARGET_MODE
 /*
@@ -298,8 +322,8 @@ struct ispsoftc {
 	/*
 	 * request/result queues and dma handles for them.
 	 */
-	volatile caddr_t	isp_rquest;
-	volatile caddr_t	isp_result;
+	caddr_t			isp_rquest;
+	caddr_t			isp_result;
 	u_int32_t		isp_rquest_dma;
 	u_int32_t		isp_result_dma;
 
@@ -339,6 +363,7 @@ struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
+#define	ISP_CFG_FULL_DUPLEX	0x01	/* Fibre Channel Only */
 
 #define	ISP_FW_REV(maj, min, mic)	((maj << 24) | (min << 16) | mic)
 #define	ISP_FW_REVX(xp)	((xp[0]<<24) | (xp[1] << 16) | xp[2])
@@ -365,6 +390,7 @@ struct ispsoftc {
 #define	ISP_HA_SCSI_12X0	0xe
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
+#define	ISP_HA_FC_2200		0x20
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
 #define	IS_1080(isp)	(isp->isp_type == ISP_HA_SCSI_1080)
@@ -437,21 +463,15 @@ int32_t ispscsicmd __P((ISP_SCSI_XFER_T *));
 /*
  * Platform Dependent to External to Internal Control Function
  *
- * For: 	Aborting a running command	- arg is an ISP_SCSI_XFER_T *
- *		Resetting a Device		- arg is target to reset
- *		Resetting a BUS			- arg is ignored
- *		Updating parameters		- arg is ignored
+ * Assumes all locks are held and that no reentrancy issues need be dealt with.
  *
- * First argument is this instance's softc pointer.
- * Second argument is an index into xflist array.
- * Assumes all locks must be held already.
  */
 typedef enum {
-	ISPCTL_RESET_BUS,
-	ISPCTL_RESET_DEV,
-	ISPCTL_ABORT_CMD,
-	ISPCTL_UPDATE_PARAMS,
-	ISPCTL_FCLINK_TEST
+	ISPCTL_RESET_BUS,		/* Reset Bus */
+	ISPCTL_RESET_DEV,		/* Reset Device */
+	ISPCTL_ABORT_CMD,		/* Abort Command */
+	ISPCTL_UPDATE_PARAMS,		/* Update Operating Parameters */
+	ISPCTL_FCLINK_TEST		/* Test FC Link Status */
 } ispctl_t;
 int isp_control __P((struct ispsoftc *, ispctl_t, void *));
 
@@ -460,18 +480,18 @@ int isp_control __P((struct ispsoftc *, ispctl_t, void *));
  * Platform Dependent to Internal to External Control Function
  * (each platform must provide such a function)
  *
- * For: 	Announcing Target Paramter Changes (arg is target)
+ * Assumes all locks are held and that no reentrancy issues need be dealt with.
  *
- * Assumes all locks are held.
  */
 
 typedef enum {
 	ISPASYNC_NEW_TGT_PARAMS,
-	ISPASYNC_BUS_RESET,		/* Bus Reset */
-	ISPASYNC_LOOP_DOWN,		/* Obvious FC only */
-	ISPASYNC_LOOP_UP,		/* "" */
-	ISPASYNC_PDB_CHANGE_COMPLETE,	/* "" */
-	ISPASYNC_CHANGE_NOTIFY		/* "" */
+	ISPASYNC_BUS_RESET,		/* Bus Was Reset */
+	ISPASYNC_LOOP_DOWN,		/* FC Loop Down */
+	ISPASYNC_LOOP_UP,		/* FC Loop Up */
+	ISPASYNC_PDB_CHANGED,		/* FC Port Data Base Changed */
+	ISPASYNC_CHANGE_NOTIFY,		/* FC SNS Change Notification */
+	ISPASYNC_FABRIC_DEV,		/* FC New Fabric Device */
 } ispasync_t;
 int isp_async __P((struct ispsoftc *, ispasync_t, void *));
 
