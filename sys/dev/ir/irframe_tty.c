@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.17 2001/12/20 09:26:35 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.18 2001/12/20 11:30:13 augustss Exp $	*/
 
 /*
  * TODO
@@ -314,17 +314,19 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 
 /*
  * Start output on async tty interface.
- * Called at spltty or higher.
  */
 int
 irframetstart(struct tty *tp)
 {
 	/*struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;*/
+	int s;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
+	s = spltty();
 	if (tp->t_oproc != NULL)
 		(*tp->t_oproc)(tp);
+	splx(s);
 
 	return (0);
 }
@@ -751,6 +753,8 @@ irt_setspeed(struct tty *tp, u_int speed)
 
 	irt_ioctl(tp, TIOCGETA,  &tt);
 	tt.c_ispeed = tt.c_ospeed = speed;
+	tt.c_cflag &= ~HUPCL;
+	tt.c_cflag |= CLOCAL;
 	irt_ioctl(tp, TIOCSETAF, &tt);
 }
 
@@ -825,6 +829,8 @@ irts_tekram(struct tty *tp, u_int speed)
 	default:     s = TEKRAM_9600; break;
 	}
 	irt_putc(tp, s);
+	irframetstart(tp);
+
 	irt_delay(tp, 100);
 
 	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
@@ -980,6 +986,7 @@ irts_girbil(struct tty *tp, u_int speed)
 	irt_putc(tp, GIRBIL_TXEN|GIRBIL_RXEN);
 	irt_putc(tp, s);
 	irt_putc(tp, GIRBIL_LOAD);
+	irframetstart(tp);
 	irt_delay(tp, 100);
 	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
 	if (speed != 9600)
