@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.118 2003/07/10 07:10:42 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.119 2003/07/12 10:28:30 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -526,11 +526,13 @@ Responsible:	mcr, thorpej, itojun
 Notes:
 modified internal types to u_int32_t and alike, for non-32bit friendliness.
 removed #ifdefs in header files so that they do not affect ABI.
-on RC5/IDEA handling, please see the note from itojun on 9/29/2000,
+on RC5/IDEA/MDC2 handling, please see the note from itojun on 9/29/2000,
 to tech-security.
 crypto/dist/openssl/openssl-unifdef.pl strips off most of #if in headers
 (should be done after the import - for some of the past imports done before
 import by mistake).
+upgrade to 0.9.7 seems difficult for several reasons - (1) des API changes,
+(2) incompatibity w/ heimdal.
 
 Package:	pdisk
 Version:	0.8a2
