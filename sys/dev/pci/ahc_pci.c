@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.42 2003/07/14 15:47:22 lukem Exp $
+ * $Id: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.42 2003/07/14 15:47:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 
 #define ID_AIC7892			0x008F9005FFFF9005ull
 #define ID_AIC7892_ARO			0x00839005FFFF9005ull
+#define ID_AHA_2915LP			0x0082900502109005ull
 #define ID_AHA_29160			0x00809005E2A09005ull
 #define ID_AHA_29160_CPQ		0x00809005E2A00E11ull
 #define ID_AHA_29160N			0x0080900562A09005ull
@@ -486,6 +487,12 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		ID_AIC7892_ARO,
 		ID_ALL_MASK,
 		"Adaptec aic7892 Ultra160 SCSI adapter (ARO)",
+		ahc_aic7892_setup
+	},
+	{
+		ID_AHA_2915LP,
+		ID_ALL_MASK,
+		"Adaptec 2915LP Ultra160 SCSI adapter",
 		ahc_aic7892_setup
 	},
 	/* aic7895 based controllers */	
