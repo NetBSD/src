@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 1998/10/05 19:58:19 pk Exp $ */
+/*	$NetBSD: lock.h,v 1.3 1998/11/04 06:19:55 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,12 @@ simple_unlock (alp)
 
 	alp->lock_data = 0;
 }
+
+#if defined(LOCKDEBUG)
+#define simple_lock_dump()
+#define simple_lock_freecheck(start, end)
+#endif /* LOCKDEBUG */
+
 #endif /* _KERNEL */
 
 #endif /* _MACHINE_LOCK_H */
