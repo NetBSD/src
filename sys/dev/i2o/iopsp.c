@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.7 2001/04/25 17:53:28 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.8 2001/06/26 12:48:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -437,7 +437,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 
-		SC_DEBUG(periph, SDEV_DB2, ("iopsp_scsi_request run_xfer\n"));
+		SC_DEBUG(periph, SCSIPI_DB2, ("iopsp_scsi_request run_xfer\n"));
 
 		/* Need to reset the target? */
 		if ((flags & XS_CTL_RESET) != 0) {
@@ -581,7 +581,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	iop = (struct iop_softc *)dv->dv_parent;
 	rb = reply;
 
-	SC_DEBUG(xs->xs_periph, SDEV_DB2, ("iopsp_intr\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("iopsp_intr\n"));
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;

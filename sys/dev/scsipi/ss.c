@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.34 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.35 2001/06/26 12:46:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -147,7 +147,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	SC_DEBUG(periph, SDEV_DB2, ("ssattach:\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach:\n"));
 	if (memcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6) == 0)
 		mustek_attach(ss, sa);
 	if (memcmp(sa->sa_inqbuf.vendor, "HP      ", 8) == 0 &&
