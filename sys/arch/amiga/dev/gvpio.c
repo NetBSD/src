@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.7 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: gvpio.c,v 1.8 2002/01/27 14:51:10 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -170,7 +170,7 @@ gvpioprint(void *auxp, const char *pnp)
 }
 
 void
-gvp_com_intr_establish(struct device *self, struct gvpcom_int_hdl *p) {
+gvp_com_intr_establish(struct device *self, struct gvpcom_int_hdl *p)
 {
 	struct gvpio_softc *sc;
 
