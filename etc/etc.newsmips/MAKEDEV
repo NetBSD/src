@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.38 2003/03/31 03:59:08 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.39 2003/04/17 18:03:17 fvdl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,7 +93,7 @@ for i
 do
 case $i in
 
-all)
+init|all)
 	makedev std wscons fd sd0 sd1 sd2 sd3 cd0 st0 st1
 	makedev pty0 tty0 tty1
 	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 md0 md1

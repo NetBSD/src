@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.56 2002/10/21 04:14:59 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2003/04/17 18:03:18 fvdl Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -14,6 +14,8 @@
 
 # Device "make" file.  Valid arguments:
 #	all	all known devices, including local devices.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
 #	minimal A minimal set of devices for install disks, etc.
 #	std	standard devices
 #	local	configuration specific devices
@@ -77,7 +79,7 @@ for i
 do
 case $i in
 
-all)
+init|all)
 	makedev minimal fd
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
