@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.5 1995/10/29 00:49:50 pk Exp $	*/
+/*	$NetBSD: courier.c,v 1.6 1996/12/29 10:41:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: courier.c,v 1.5 1995/10/29 00:49:50 pk Exp $";
+static char rcsid[] = "$NetBSD: courier.c,v 1.6 1996/12/29 10:41:57 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -54,7 +54,8 @@ static	void sigALRM();
 static	int timeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf, intbuf;
-static	int coursync();
+static	int coursync(), cour_connect(), cour_swallow();
+static	void cour_napx();
 
 cour_dialer(num, acu)
 	register char *num;
@@ -65,7 +66,6 @@ cour_dialer(num, acu)
 	char line[80];
 #endif
 	struct termios cntrl;
-	static int cour_connect(), cour_swallow();
 
 	if (boolean(value(VERBOSE)))
 		printf("Using \"%s\"\n", acu);
@@ -350,7 +350,6 @@ static int ringring;
 cour_nap()
 {
 	
-        static void cour_napx();
 	int omask;
         struct itimerval itv, oitv;
         register struct itimerval *itp = &itv;
