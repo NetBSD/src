@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.6 2001/11/25 10:13:03 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.7 2001/12/01 18:20:36 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,26 +45,17 @@
  *
  * We only need to save the `callee' saved registers.
  */
-#if 0
 #define	GETC	\
 	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
 	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
 	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
 	clrl	%a0@(UC_REGS + (_REG_PS * 4))		;	\
 	fnop						;	\
-	fmovem	%fp0-%fp7,%a0@(UC_FPREGS + _FPREG_REGS)	;	\
 	fmovem	%fpcr,%a0@(UC_FPREGS + _FPREG_PCR)	;	\
 	fmovem	%fpsr,%a0@(UC_FPREGS + _FPREG_PSR)	;	\
-	fmovem	%fpi,%a0@(UC_FPREGS + _FPREG_PIADDR)	;	\
+	fmovem	%fpiar,%a0@(UC_FPREGS + _FPREG_PIADDR)	;	\
+	fmovem	%fp0-%fp7,%a0@(UC_FPREGS + _FPREG_FP0)	;	\
 	movl	#(_UC_CPU+_UC_FPU+_UC_USER),%a0@/*(UC_FLAGS)*/
-#else
-#define	GETC	\
-	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
-	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
-	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
-	clrl	%a0@(UC_REGS + (_REG_PS * 4))		;	\
-	movl	#(_UC_CPU+_UC_USER),%a0@/*(UC_FLAGS)*/
-#endif
 
 /*
  * Restore the complete context from the ucontext_t structure pointed
@@ -74,7 +65,6 @@
  * a chance the ucontext_t structure is allocated at the base of the new
  * context's stack.
  */
-#if 0
 #define	SETC	\
 	movl	%a0@/*(UC_FLAGS)*/,%d0			;	\
 	btstl	#_UC_USER_BIT,%d0			;	\
@@ -84,42 +74,18 @@
 	fnop						;	\
 	fmovem	%a0@(UC_FPREGS + _FPREG_PCR),%fpcr	;	\
 	fmovem	%a0@(UC_FPREGS + _FPREG_PSR),%fpsr	;	\
-	fmovem	%a0@(UC_FPREGS + _FPREG_PIADDR),%fpi	;	\
-	fmovem	%a0@(UC_FPREGS + _FPREG_REGS),%fp0-%fp7	;	\
-1:	moveml	%a0@(UC_REGS + (_REG_D0 * 4)),%d0-%d7	;	\
+	fmovem	%a0@(UC_FPREGS + _FPREG_PIADDR),%fpiar	;	\
+	fmovem	%a0@(UC_FPREGS + _FPREG_FP0),%fp0-%fp7	;	\
+1:	moveml	%a0@(UC_REGS + (_REG_D2 * 4)),%d2-%d7	;	\
 	moveml	%a0@(UC_REGS + (_REG_A2 * 4)),%a2-%a6	;	\
 	movl	%a0@(UC_REGS + (_REG_SP * 4)),%a1	;	\
 	movl	%a0@(UC_REGS + (_REG_PC * 4)),%a1@-	;	\
-	movl	%a0@(UC_REGS + (_REG_A1 * 4)),%a1@-	;	\
-	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%a1@-	;	\
-	movl	%a0@(UC_REGS + (_REG_A0 * 4)),%a0	;	\
-	movw	%a1@+,%cc				;	\
+	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%cc	;	\
 	movl	%a1,%sp					;	\
-	movl	%sp@+,%a1				;	\
 	rts						;	\
 2:	pea	%a0@					;	\
 	jbsr	PIC_PLT(_C_LABEL(setcontext))
 	/* NOTREACHED */
-#else
-#define	SETC	\
-	movl	%a0@/*(UC_FLAGS)*/,%d0			;	\
-	btstl	#_UC_USER_BIT,%d0			;	\
-	beqs	1f					;	\
-	moveml	%a0@(UC_REGS + (_REG_D0 * 4)),%d0-%d7	;	\
-	moveml	%a0@(UC_REGS + (_REG_A2 * 4)),%a2-%a6	;	\
-	movl	%a0@(UC_REGS + (_REG_SP * 4)),%a1	;	\
-	movl	%a0@(UC_REGS + (_REG_PC * 4)),%a1@-	;	\
-	movl	%a0@(UC_REGS + (_REG_A1 * 4)),%a1@-	;	\
-	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%a1@-	;	\
-	movl	%a0@(UC_REGS + (_REG_A0 * 4)),%a0	;	\
-	movw	%a1@+,%cc				;	\
-	movl	%a1,%sp					;	\
-	movl	%sp@+,%a1				;	\
-	rts						;	\
-1:	pea	%a0@					;	\
-	jbsr	PIC_PLT(_C_LABEL(setcontext))
-	/* NOTREACHED */
-#endif
 
 #if 1
 /*
