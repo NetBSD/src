@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.1.1.2.4.1 2001/04/05 09:45:27 jhawk Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.1.1.2.4.2 2001/04/21 20:38:55 he Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -1814,8 +1814,7 @@ ctl_getitem(
 						cp++;
 					while (cp < reqend && *cp != ',') {
 						*tp++ = *cp++;
-						if (tp >=
-						    buf + sizeof(buf) - 1) {
+						if (tp >= buf + sizeof(buf)) {
 #if 0	/* don't syslog for now - DoS potential on filling syslog */
 							msyslog(LOG_WARNING,
     "Attempted \"ntpdx\" exploit from IP %d.%d.%d.%d:%d (possibly spoofed)\n",
@@ -1831,7 +1830,7 @@ ctl_getitem(
 					if (cp < reqend)
 						cp++;
 					*tp = '\0';
-					while (isspace((int)(*(tp-1))))
+					while (tp > buf && isspace((int)(*(tp-1))))
 						*(--tp) = '\0';
 					reqpt = cp;
 					*data = buf;
