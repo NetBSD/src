@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.14 2000/10/01 03:45:33 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.15 2000/10/22 12:44:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.14 2000/10/01 03:45:33 takemura Exp $";
+    "$Id: hpcfb.c,v 1.15 2000/10/22 12:44:16 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,8 @@ static void	hpcfb_free_screen __P((void *, void *));
 static int	hpcfb_show_screen __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
 static void	hpcfb_power __P((int, void *));
+static void	hpcfb_cmap_reorder __P((struct hpcfb_fbconf *,
+					struct hpcfb_devconfig *));
 
 static int	pow __P((int, int));
 
@@ -386,33 +388,10 @@ hpcfb_init(fbconf, dc)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_devconfig *dc;
 {
-	int i;
-	int32_t fg, bg;
 	struct rasops_info *ri;
 	vaddr_t fbaddr;
 
 	fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
-
-	/*
-	 * Set forground and background so that the screen 
-	 * looks black on white.
-	 * Normally, black = 00 and white = ff.
-	 * HPCFB_ACCESS_REVERSE means black = ff and white = 00.
-	 */
-	if (fbconf->hf_access_flags & HPCFB_ACCESS_REVERSE) {
-		bg = 0;
-		fg = ~0;
-	} else {
-		bg = ~0;
-		fg = 0;
-	}
-
-	/* clear the screen */
-	for (i = 0;
-	     i < fbconf->hf_height * fbconf->hf_bytes_per_line;
-	     i += sizeof(u_int32_t)) {
-		*(u_int32_t *)(fbaddr + i) = bg;
-	}
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
@@ -432,9 +411,7 @@ hpcfb_init(fbconf, dc)
 	}
 
 	/* over write color map of rasops */
-	ri->ri_devcmap[0] = bg;
-	for (i = 1; i < 16; i++)
-		ri->ri_devcmap[i] = fg;
+	hpcfb_cmap_reorder (fbconf, dc);
 
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
@@ -466,6 +443,63 @@ hpcfb_init(fbconf, dc)
 	ri->ri_ops = hpcfb_emulops; /* struct copy */
 
 	return (0);
+}
+
+static void
+hpcfb_cmap_reorder(fbconf, dc)
+	struct hpcfb_fbconf *fbconf;
+	struct hpcfb_devconfig *dc;
+{
+	struct rasops_info *ri = &dc->dc_rinfo;
+	int reverse = fbconf->hf_access_flags & HPCFB_ACCESS_REVERSE;
+	int *cmap = ri->ri_devcmap;
+	vaddr_t fbaddr = (vaddr_t)fbconf->hf_baseaddr + fbconf->hf_offset;
+	int i, j, bg, fg, tmp;
+
+	/*
+	 * Set forground and background so that the screen 
+	 * looks black on white.
+	 * Normally, black = 00 and white = ff.
+	 * HPCFB_ACCESS_REVERSE means black = ff and white = 00.
+	 */
+	switch (fbconf->hf_pixel_width) {
+	case 1:
+		/* FALLTHROUGH */
+	case 2:
+		/* FALLTHROUGH */
+	case 4:
+		if (reverse) {
+			bg = 0;
+			fg = ~0;
+		} else {
+			bg = ~0;
+			fg = 0;
+		}
+		/* for gray-scale LCD, hi-contrast color map */
+		cmap[0] = bg;
+		for (i = 1; i < 16; i++)
+			cmap[i] = fg;
+		break;
+	case 8:
+		/* FALLTHROUGH */
+	case 16:
+		if (reverse) {
+			for (i = 0, j = 15; i < 8; i++, j--) {
+				tmp = cmap[i];
+				cmap[i] = cmap[j];
+				cmap[j] = tmp;
+			}
+		}
+		break;
+	}
+
+	/* clear the screen */
+	bg = cmap[0];
+	for (i = 0;
+	     i < fbconf->hf_height * fbconf->hf_bytes_per_line;
+	     i += sizeof(u_int32_t)) {
+		*(u_int32_t *)(fbaddr + i) = bg;
+	}
 }
 
 int
