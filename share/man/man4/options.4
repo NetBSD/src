@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.55 1998/07/31 01:36:47 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.56 1998/08/26 03:03:33 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1269,6 +1269,68 @@ Include software support for 68060.
 This provides emulation of unimplemented
 integer instructions as well as emulation of unimplemented floating point
 instructions and data types and software support for floating point traps.
+.El
+.Ss sparc-specific Options
+.Bl -ohang
+.It Cd options AUDIO_DEBUG
+Enable simple event debugging of the logging of the
+.Xr audio 4 
+device.
+.It Cd options BLINK
+Enable blinking of LED.  Blink rate is full cycle every N seconds for
+N < then current load average.  See
+.Xr getloadavg 3 .
+.\" .It Cd options COLORFONT_CACHE
+.\" this is totally fucked up.. what does this do?
+.It Cd options COUNT_SW_LEFTOVERS
+Count how many times the sw SCSI device has left 3, 2, 1 and 0 in the
+sw_3_leftover, sw_2_leftover, sw_1_leftover, and sw_0_leftover
+variables accessable from
+.Xr ddb 4 .
+See
+.Xr sw 4 .
+.It Cd options DEBUG_ALIGN
+Adds debugging messages calls when user-requested alignment fault
+handling happens.
+.It Cd options DEBUG_EMUL
+Adds debugging messages calls for emulated floating point and
+alignment fixing operations.
+.It Cd options DEBUG_SVR4
+Prints registers messages calls for emulated SVR4 getcontext and
+setcontext operations.  See
+.Em options COMPAT_SVR4 .
+.It Cd options EXTREME_DEBUG
+Adds debugging functions callable from
+.Xr ddb 4 .  The debug_pagetables, test_region and print_fe_map
+functions print information about page tables for the SUN4M
+platforms only.
+.It Cd options EXTREME_EXTREME_DEBUG
+Adds extra info to
+.CD options EXTREME_DEBUG .
+.It Cd options FPU_CONTEXT
+Make
+.Em options COMPAT_SVR4
+getcontext and setcontext include floating point registers.
+.It Cd options MAGMA_DEBUG
+Adds debugging messages to the
+.Xr magma 4
+device.
+.It Cd options RASTERCONS_FULLSCREEN
+Use the entire screen for the console.
+.It Cd options RASTERCONS_SMALLFONT
+Use a the fixed font on the console, instead of the normal font.
+.It Cd options SUN4
+Support sun4 class machines.
+.It Cd options SUN4C
+Support sun4c class machines.
+.It Cd options SUN4M
+Support sun4m class machines.
+.It Cd options SUN4_MMU3L
+.\" XXX ???
+Enable support for sun4 3-level MMU machines.
+.It Cd options V9
+Enable SPARC V9 assembler in
+.Xr ddb 4 .
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
