@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.212 2004/12/14 09:13:13 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.213 2004/12/14 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.212 2004/12/14 09:13:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.213 2004/12/14 09:15:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -129,12 +129,12 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, nfs_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, nfs_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, nfs_vfree },			/* vfree */
-	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
-	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
+	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
+	{ &vop_valloc_desc, genfs_badop },		/* valloc */
+	{ &vop_reallocblks_desc, genfs_badop },		/* reallocblks */
+	{ &vop_vfree_desc, genfs_badop },		/* vfree */
+	{ &vop_truncate_desc, genfs_badop },		/* truncate */
+	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -186,12 +186,12 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, spec_vfree },		/* vfree */
-	{ &vop_truncate_desc, spec_truncate },		/* truncate */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
+	{ &vop_valloc_desc, genfs_badop },		/* valloc */
+	{ &vop_reallocblks_desc, genfs_badop },		/* reallocblks */
+	{ &vop_vfree_desc, genfs_badop },		/* vfree */
+	{ &vop_truncate_desc, genfs_badop },		/* truncate */
+	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -240,12 +240,12 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_blkatoff_desc, genfs_badop },		/* blkatoff */
+	{ &vop_valloc_desc, genfs_badop },		/* valloc */
+	{ &vop_reallocblks_desc, genfs_badop },	/* reallocblks */
+	{ &vop_vfree_desc, genfs_badop },		/* vfree */
+	{ &vop_truncate_desc, genfs_badop },		/* truncate */
+	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
@@ -3461,41 +3461,6 @@ nfs_print(v)
 		fifo_printinfo(vp);
 	printf("\n");
 	return (0);
-}
-
-/*
- * NFS file truncation.
- */
-int
-nfs_truncate(v)
-	void *v;
-{
-#if 0
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	/* Use nfs_setattr */
-	return (EOPNOTSUPP);
-}
-
-/*
- * Just call bwrite().
- */
-int
-nfs_bwrite(v)
-	void *v;
-{
-	struct vop_bwrite_args /* {
-		struct vnode *a_bp;
-	} */ *ap = v;
-
-	return (bwrite(ap->a_bp));
 }
 
 /*
