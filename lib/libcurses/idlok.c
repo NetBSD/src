@@ -32,21 +32,21 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)idlok.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: idlok.c,v 1.2 1993/08/01 18:35:38 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)idlok.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: idlok.c,v 1.3 1993/08/07 05:48:55 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- * idlok:
- *	Turn on and off using insert/deleteln sequences for the given
- *	window.
- *
+ * idlok --
+ *	Turn on and off using insert/deleteln sequences for the
+ *	given window.
  */
+void
 idlok(win, bf)
-register WINDOW	*win;
-bool		bf;
+	WINDOW *win;
+	int bf;
 {
 	if (bf)
 		win->_flags |= _IDLINE;

@@ -32,18 +32,19 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)putchar.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: putchar.c,v 1.2 1993/08/01 18:35:27 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)putchar.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: putchar.c,v 1.3 1993/08/07 05:49:04 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
-char
-_putchar(c)
-reg char	c; {
+void
+__cputchar(ch)
+	int ch;
+{
 
-	putchar(c);
 #ifdef DEBUG
-	fprintf(outf, "_PUTCHAR(%s)\n", unctrl(c));
+	__TRACE("__cputchar: %s\n", unctrl(ch));
 #endif
+	(void)putchar(ch);
 }
