@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.113 2000/05/29 14:57:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.112 2000/05/25 15:35:51 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.113 2000/05/29 14:57:27 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -733,6 +733,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 		s = -1;
 		for (res = res0; res; res = res->ai_next) {
+			/*
+			 * see comment in hookup()
+			 */
+			ai_unmapped(res);
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
 					hbuf, sizeof(hbuf), NULL, 0,
 					NI_NUMERICHOST) != 0)

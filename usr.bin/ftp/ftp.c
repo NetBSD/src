@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.96 2000/05/29 14:57:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.95 2000/05/01 10:35:18 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.96 2000/05/29 14:57:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,6 +215,13 @@ hookup(char *host, char *port)
 	hostname = hostnamebuf;
 	
 	for (res = res0; res; res = res->ai_next) {
+		/*
+		 * make sure that ai_addr is NOT an IPv4 mapped address.
+		 * IPv4 mapped address complicates too many things in FTP
+		 * protocol handling, as FTP protocol is defined differently
+		 * between IPv4 and IPv6.
+		 */
+		ai_unmapped(res);
 #if 0	/*old behavior*/
 		if (res != res0)	/* not on the first address */
 #else
@@ -2182,4 +2189,31 @@ abort_remote(FILE *din)
 		(void)getreply(0);
 	}
 	(void)getreply(0);
+}
+
+void
+ai_unmapped(struct addrinfo *ai)
+{
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in sin;
+
+	if (ai->ai_family != AF_INET6)
+		return;
+	if (ai->ai_addrlen != sizeof(struct sockaddr_in6) ||
+	    sizeof(sin) > ai->ai_addrlen)
+		return;
+	sin6 = (struct sockaddr_in6 *)ai->ai_addr;
+	if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
+		return;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(struct sockaddr_in);
+	memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[12],
+	    sizeof(sin.sin_addr));
+	sin.sin_port = sin6->sin6_port;
+
+	ai->ai_family = AF_INET;
+	memcpy(ai->ai_addr, &sin, sin.sin_len);
+	ai->ai_addrlen = sin.sin_len;
 }
