@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.21.2.2 2000/10/19 14:54:26 he Exp $	*/
+/*	$NetBSD: create.c,v 1.21.2.3 2000/10/19 17:01:29 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.21.2.2 2000/10/19 14:54:26 he Exp $");
+__RCSID("$NetBSD: create.c,v 1.21.2.3 2000/10/19 17:01:29 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ static u_long flags;
 static char codebuf[4*MAXPATHLEN + 1];
 
 static int	dsort __P((const FTSENT **, const FTSENT **));
-static void	output __P((int *, const char *, ...));
+static void	output __P((int *, const char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *,
 			   u_long *));
 static void	statf __P((FTSENT *));
@@ -180,7 +181,7 @@ statf(p)
 		    crc(fd, &val, &len))
 			mtree_err("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
-		output(&indent, "cksum=%lu", val);
+		output(&indent, "cksum=%lu", (long)val);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
