@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2004/06/28 08:24:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2004/06/28 08:24:01 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -183,7 +183,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + PAGE_SIZE - 16;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
+	    + PAGE_SIZE - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 

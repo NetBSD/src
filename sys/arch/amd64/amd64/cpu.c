@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.7 2004/06/28 08:23:21 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2004/06/15 11:35:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2004/06/28 08:23:21 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -305,7 +305,8 @@ cpu_attach(parent, self, aux)
 	pcb->pcb_tss.tss_rsp0 = kstack + USPACE - 16;
 	pcb->pcb_rbp = pcb->pcb_rsp = kstack + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = kstack + PAGE_SIZE - 16;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
+	    + PAGE_SIZE - 16;
 	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
