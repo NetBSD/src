@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.12 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.13 2001/01/24 00:56:29 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.12 2001/01/23 23:58:32 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.13 2001/01/24 00:56:29 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -306,6 +306,7 @@ arccons_init(void)
 	long defattr;
 	int clear = 0;
 	int crow;
+	int i;
 	struct rasops_info *ri = &arccons_ri;
 
 	/* Force the screen to be at a known location */
@@ -336,6 +337,12 @@ arccons_init(void)
 
 	if (ri->ri_depth == 8)
 		arccons_8bpp_hack(&arccons_ri);
+	else if (ri->ri_depth == 4)
+		for (i = 0; i < 1 << ri->ri_depth; i++)
+			VIDC_WRITE(VIDC_PALETTE_LCOL(i) | 
+			    VIDC_PALETTE_ENTRY(rasops_cmap[3*i + 0] >> 4,
+					       rasops_cmap[3*i + 1] >> 4,
+					       rasops_cmap[3*i + 2] >> 4, 0));
 
 	/* Take rcons stuff and put it in arcscreen */
 	/* XXX shouldn't this kind of thing be done by rcons_init? */
