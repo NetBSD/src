@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 1996/08/10 23:29:00 explorer Exp $
+#	$NetBSD: Makefile,v 1.37 1996/11/27 02:04:06 cjs Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -47,8 +47,7 @@ build:
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
-	# XXX should do the whole of domestic/lib
-	(cd ${.CURDIR}/domestic/lib/libcrypt && ${MAKE} depend && ${MAKE} && \
+	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
