@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.1.4.3 2002/08/31 15:03:46 gehenna Exp $	*/
+/*	$NetBSD: sab.c,v 1.1.4.4 2002/09/02 14:46:16 gehenna Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 
 #include <dev/cons.h>
 
