@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.54 2002/01/28 02:07:40 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.55 2002/01/31 20:15:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.54 2002/01/28 02:07:40 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.55 2002/01/31 20:15:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,8 @@ static int sysctl_tkstat(char *, char **, int[], int, int *);
 static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
-#define USEAPP(s, a) printf("%s: use '%s' to view this information\n", s, a)
+#define USEAPP(s, a) \
+    if (flags) printf("%s: use '%s' to view this information\n", s, a)
 
 
 int
@@ -360,15 +361,11 @@ parse(char *string, int flags)
 			return;
 		case KERN_VNODE:
 		case KERN_FILE:
-			if (flags == 0)
-				return;
 			USEAPP(string, "pstat");
 			return;
 		case KERN_PROC:
 		case KERN_PROC2:
 		case KERN_PROC_ARGS:
-			if (flags == 0)
-				return;
 			USEAPP(string, "ps");
 			return;
 		case KERN_CLOCKRATE:
@@ -378,8 +375,6 @@ parse(char *string, int flags)
 			special |= BOOTTIME;
 			break;
 		case KERN_NTPTIME:
-			if (flags == 0)
-				return;
 			USEAPP(string, "ntpdc -c kerninfo");
 			return;
 		case KERN_MBUF:
@@ -391,8 +386,6 @@ parse(char *string, int flags)
 			special |= CPTIME;
 			break;
 		case KERN_MSGBUF:
-			if (flags == 0)
-				return;
 			USEAPP(string, "dmesg");
 			return;
 		case KERN_CONSDEV:
@@ -432,9 +425,7 @@ parse(char *string, int flags)
 		case VM_METER:
 		case VM_UVMEXP:
 		case VM_UVMEXP2:
-			if (flags) {
-				USEAPP(string, "vmstat' or 'systat");
-			}
+			USEAPP(string, "vmstat' or 'systat");
 			return;
 		}
 		break;
@@ -493,8 +484,6 @@ parse(char *string, int flags)
 
 		/* XXX Special-case for NFS stats. */
 		if (mib[1] == 2 && mib[2] == NFS_NFSSTATS) {
-			if (flags == 0)
-				return;
 			USEAPP(string, "nfsstat");
 			return;
 		}
