@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.197 2003/05/17 22:22:41 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.198 2003/05/23 01:45:07 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.197 2003/05/17 22:22:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.198 2003/05/23 01:45:07 dbj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2929,7 +2929,7 @@ vfs_buf_print(bp, full, pr)
 {
 	char buf[1024];
 
-	(*pr)("  vp %p lblkno 0x%x blkno 0x%x dev 0x%x\n",
+	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" dev 0x%x\n",
 		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
 
 	bitmask_snprintf(bp->b_flags, buf_flagbits, buf, sizeof(buf));
