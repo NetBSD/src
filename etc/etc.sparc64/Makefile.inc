@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/03/12 14:10:04 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2001/07/21 05:58:28 eeh Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -8,8 +8,7 @@ TOP= $(.CURDIR)/..
 # Set this for any kernels beyond GENERIC you want to include
 # in the distribution.
 #EXTRA_KERNELS+= POWEROFSEVEN
-# XXX; no ramdisk install yet.
-#BUILD_KERNELS+= INSTALL
+BUILD_KERNELS+= INSTALL
 
 
 # Add sparc64 installation directories
