@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.c,v 1.9 1998/04/19 07:50:25 jonathan Exp $	*/
+/*	$NetBSD: mcclock_pad32.c,v 1.10 2001/11/13 12:49:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,8 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.9 1998/04/19 07:50:25 jonathan Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.10 2001/11/13 12:49:45 lukem Exp $");
 
 
 /*
