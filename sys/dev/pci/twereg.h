@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.5 2001/01/22 17:32:11 ad Exp $	*/
+/*	$NetBSD: twereg.h,v 1.6 2003/09/22 01:28:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 #define	TWE_CTL_ENABLE_INTRS		0x00000080
 #define	TWE_CTL_DISABLE_INTRS		0x00000040
 #define	TWE_CTL_ISSUE_HOST_INTR		0x00000020
+#define	TWE_CTL_CLEAR_PARITY_ERROR	0x00800000
+#define	TWE_CTL_CLEAR_PCI_ABORT		0x00100000
 
 /* Status register bit definitions. */
 #define	TWE_STS_MAJOR_VERSION_MASK	0xf0000000
@@ -122,6 +124,7 @@
 #define TWE_OP_FLUSH			0x0e
 #define TWE_OP_ABORT			0x0f
 #define TWE_OP_CHECKSTATUS		0x10
+#define	TWE_OP_ATA_PASSTHROUGH		0x11
 #define TWE_OP_GET_PARAM		0x12
 #define TWE_OP_SET_PARAM		0x13
 #define TWE_OP_CREATEUNIT		0x14
@@ -130,6 +133,7 @@
 #define TWE_OP_SECTOR_INFO		0x1a
 #define TWE_OP_AEN_LISTEN		0x1c
 #define TWE_OP_CMD_PACKET		0x1d
+#define	TWE_OP_CMD_WITH_DATA		0x1f
 
 /* Response queue entries.  Masking and shifting yields request ID. */
 #define	TWE_RESP_MASK			0x00000ff0
