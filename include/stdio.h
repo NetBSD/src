@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.24 1998/07/27 09:58:49 mycroft Exp $	*/
+/*	$NetBSD: stdio.h,v 1.25 1998/07/27 13:35:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -248,7 +248,6 @@ void	 setbuf __P((FILE *, char *));
 int	 setvbuf __P((FILE *, char *, int, size_t));
 int	 sscanf __P((const char *, const char *, ...));
 FILE	*tmpfile __P((void));
-char	*tmpnam __P((char *));
 int	 ungetc __P((int, FILE *));
 int	 vfprintf __P((FILE *, const char *, _BSD_VA_LIST_));
 int	 vprintf __P((const char *, _BSD_VA_LIST_));
@@ -256,6 +255,7 @@ int	 vprintf __P((const char *, _BSD_VA_LIST_));
 #ifndef __AUDIT__
 char	*gets __P((char *));
 int	 sprintf __P((char *, const char *, ...));
+char	*tmpnam __P((char *));
 int	 vsprintf __P((char *, const char *, _BSD_VA_LIST_));
 #endif
 
