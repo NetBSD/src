@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1989 Stephen Deering
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1992 Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Stephen Deering of Stanford University.
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ip_mroute.c	8.2 (Berkeley) 11/15/93
- *	$Id: ip_mroute.c,v 1.11 1994/06/04 08:29:51 mycroft Exp $
+ *	from: @(#)ip_mroute.c	7.4 (Berkeley) 11/19/92
+ *	$Id $
  */
 
 /*
@@ -85,15 +85,17 @@ static	int del_vif __P((vifi_t *vifip));
 static	int add_lgrp __P((struct lgrplctl *));
 static	int del_lgrp __P((struct lgrplctl *));
 static	int grplst_member __P((struct vif *, struct in_addr));
-static	u_long nethash __P((struct in_addr in));
+static	u_long nethash __P((u_long in));
 static	int add_mrt __P((struct mrtctl *));
 static	int del_mrt __P((struct in_addr *));
-static	struct mrt *mrtfind __P((struct in_addr));
-static	void phyint_send __P((struct mbuf *, struct vif *));
-static	void tunnel_send __P((struct mbuf *, struct vif *));
+static	struct mrt *mrtfind __P((u_long));
+static	void phyint_send __P((struct ip *, struct vif *, struct mbuf *));
+static	void srcrt_send __P((struct ip *, struct vif *, struct mbuf *));
+static	void encap_send __P((struct ip *, struct vif *, struct mbuf *));
+static	void multiencap_decap __P((struct mbuf *, int hlen));
 
-#define INSIZ sizeof(struct in_addr)
-#define	same(a1, a2) (bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
+#define	INSIZ	sizeof(struct in_addr)
+#define	same(a1, a2)	(bcmp((caddr_t)(a1), (caddr_t)(a2), INSIZ) == 0)
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 
 /*
@@ -108,12 +110,107 @@ struct	vif viftable[MAXVIFS];
 struct	mrtstat	mrtstat;
 
 /*
+ * 'Interfaces' associated with decapsulator (so we can tell
+ * packets that went through it from ones that get reflected
+ * by a broken gateway).  These interfaces are never linked into
+ * the system ifnet list & no routes point to them.  I.e., packets
+ * can't be sent this way.  They only exist as a placeholder for
+ * multicast source verification.
+ */
+struct ifnet multicast_decap_if[MAXVIFS];
+
+#define	ENCAP_TTL 64
+#define	ENCAP_PROTO 4
+
+/* prototype IP hdr for encapsulated packets */
+struct ip multicast_encap_iphdr = {
+#if defined(ultrix) || defined(i386)
+	sizeof(struct ip) >> 2, IPVERSION,
+#else
+	IPVERSION, sizeof(struct ip) >> 2,
+#endif
+	0,				/* tos */
+	sizeof(struct ip),		/* total length */
+	0,				/* id */
+	0,				/* frag offset */
+	ENCAP_TTL, ENCAP_PROTO,
+	0,				/* checksum */
+};
+
+/*
  * Private variables.
  */
 static	vifi_t numvifs = 0;
 static	struct mrt *cached_mrt = NULL;
 static	u_long cached_origin;
 static	u_long cached_originmask;
+
+static void (*encap_oldrawip)();
+
+/*
+ * one-back cache used by multiencap_decap to locate a tunnel's vif
+ * given a datagram's src ip address.
+ */
+static u_long last_encap_src;
+static struct vif *last_encap_vif;
+
+/*
+ * A simple hash function: returns MRTHASHMOD of the low-order octet of
+ * the argument's network or subnet number.
+ */
+static u_long
+nethash(n)
+	u_long n;
+{
+	struct in_addr in;
+
+	in.s_addr = n;
+	n = in_netof(in);
+	while ((n & 0xff) == 0)
+		n >>= 8;
+	return (MRTHASHMOD(n));
+}
+
+/*
+ * this is a direct-mapped cache used to speed the mapping from a
+ * datagram source address to the associated multicast route.  Note
+ * that unlike mrttable, the hash is on IP address, not IP net number.
+ */
+#define	MSRCHASHSIZ	1024
+#define	MSRCHASH(a)	((((a) >> 20) ^ ((a) >> 10) ^ (a)) & (MSRCHASHSIZ - 1))
+struct mrt *mrtsrchash[MSRCHASHSIZ];
+
+/*
+ * Find a route for a given origin IP address.
+ */
+#define	MRTFIND(o, rt) { \
+	register u_int _mrhash = o; \
+	_mrhash = MSRCHASH(_mrhash); \
+	++mrtstat.mrts_mrt_lookups; \
+	rt = mrtsrchash[_mrhash]; \
+	if (rt == NULL || \
+	    (o & rt->mrt_originmask.s_addr) != rt->mrt_origin.s_addr) \
+		if ((rt = mrtfind(o)) != NULL) \
+		    mrtsrchash[_mrhash] = rt; \
+}
+
+static struct mrt *
+mrtfind(origin)
+	u_long origin;
+{
+	register struct mrt *rt;
+	register u_int hash;
+
+	mrtstat.mrts_mrt_misses++;
+
+	hash = nethash(origin);
+	for (rt = mrttable[hash]; rt; rt = rt->mrt_next) {
+		if ((origin & rt->mrt_originmask.s_addr) ==
+		    rt->mrt_origin.s_addr)
+			return (rt);
+	}
+	return (NULL);
+}
 
 /*
  * Handle DVMRP setsockopt commands to modify the multicast routing tables.
@@ -245,7 +342,7 @@ ip_mrouter_done()
 		if (mrttable[i])
 			free(mrttable[i], M_MRTABLE);
 	bzero((caddr_t)mrttable, sizeof(mrttable));
-	cached_mrt = NULL;
+	bzero((caddr_t)mrtsrchash, sizeof(mrtsrchash));
 
 	ip_mrouter = NULL;
 
@@ -277,35 +374,60 @@ add_vif(vifcp)
 	ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
 	if (ifa == 0)
 		return (EADDRNOTAVAIL);
+	ifp = ifa->ifa_ifp;
 
-	s = splnet();
+	if (vifcp->vifc_flags & VIFF_TUNNEL) {
+		if ((vifcp->vifc_flags & VIFF_SRCRT) == 0) {
+			/*
+			 * An encapsulating tunnel is wanted.  If we
+			 * haven't done so already, put our decap routine
+			 * in front of raw_input so we have a chance to
+			 * decapsulate incoming packets.  Then set the
+			 * arrival 'interface' to be the decapsulator.
+			 */
+			if (encap_oldrawip == 0) {
+				extern struct protosw inetsw[];
+				extern u_char ip_protox[];
+				register int pr = ip_protox[ENCAP_PROTO];
 
-	if (vifcp->vifc_flags & VIFF_TUNNEL)
-		vifp->v_rmt_addr = vifcp->vifc_rmt_addr;
-	else {
+				encap_oldrawip = inetsw[pr].pr_input;
+				inetsw[pr].pr_input = multiencap_decap;
+				for (s = 0; s < MAXVIFS; ++s) {
+					multicast_decap_if[s].if_name =
+						"mdecap";
+					multicast_decap_if[s].if_unit = s;
+				}
+			}
+			ifp = &multicast_decap_if[vifcp->vifc_vifi];
+		} else {
+			ifp = 0;
+		}
+	} else {
 		/* Make sure the interface supports multicast */
-		ifp = ifa->ifa_ifp;
-		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-			splx(s);
-			return (EOPNOTSUPP);
-		}
+		if ((ifp->if_flags & IFF_MULTICAST) == 0)
+			return EOPNOTSUPP;
+
 		/*
-		 * Enable promiscuous reception of all IP multicasts
-		 * from the interface.
+		 * Enable promiscuous reception of all
+		 * IP multicasts from the if
 		 */
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
+		((struct sockaddr_in *)&ifr.ifr_addr)->sin_family = AF_INET;
+		((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr =
+			INADDR_ANY;
+		s = splnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-		if (error) {
-			splx(s);
-			return (error);
-		}
+		splx(s);
+		if (error)
+			return error;
 	}
 
+	s = splnet();
 	vifp->v_flags = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
-	vifp->v_ifp = ifa->ifa_ifp;
+	vifp->v_ifp = ifp;
+	vifp->v_rmt_addr  = vifcp->vifc_rmt_addr;
+	splx(s);
 
 	/* Adjust numvifs up if the vifi is higher than numvifs */
 	if (numvifs <= vifcp->vifc_vifi)
@@ -342,7 +464,10 @@ del_vif(vifip)
 		ifp = vifp->v_ifp;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 	}
-
+	if (vifp == last_encap_vif) {
+		last_encap_vif = 0;
+		last_encap_src = 0;
+	}
 	bzero((caddr_t)vifp, sizeof (*vifp));
 
 	/* Adjust numvifs down */
@@ -414,7 +539,6 @@ add_lgrp(gcp)
  * Delete the the local multicast group associated with the vif
  * indexed by gcp->lgc_vifi.
  */
-
 static int
 del_lgrp(gcp)
 	register struct lgrplctl *gcp;
@@ -437,10 +561,9 @@ del_lgrp(gcp)
 	for (i = 0; i < vifp->v_lcl_grps_n; ++i)
 		if (same(&gcp->lgc_gaddr, &vifp->v_lcl_grps[i])) {
 			error = 0;
-			vifp->v_lcl_grps_n--;
-			bcopy((caddr_t)&vifp->v_lcl_grps[i + 1],
-			    (caddr_t)&vifp->v_lcl_grps[i],
-			    (vifp->v_lcl_grps_n - i) * sizeof(struct in_addr));
+			--vifp->v_lcl_grps_n;
+			for (; i < vifp->v_lcl_grps_n; ++i)
+				vifp->v_lcl_grps[i] = vifp->v_lcl_grps[i + 1];
 			error = 0;
 			break;
 		}
@@ -484,22 +607,6 @@ grplst_member(vifp, gaddr)
 }
 
 /*
- * A simple hash function: returns MRTHASHMOD of the low-order octet of
- * the argument's network or subnet number.
- */
-static u_long
-nethash(in)
-	struct in_addr in;
-{
-	register u_long n;
-
-	n = in_netof(in);
-	while ((n & 0xff) == 0)
-		n >>= 8;
-	return (MRTHASHMOD(n));
-}
-
-/*
  * Add an mrt entry
  */
 static int
@@ -510,7 +617,7 @@ add_mrt(mrtcp)
 	u_long hash;
 	int s;
 
-	if (rt = mrtfind(mrtcp->mrtc_origin)) {
+	if (rt = mrtfind(mrtcp->mrtc_origin.s_addr)) {
 		/* Just update the route */
 		s = splnet();
 		rt->mrt_parent = mrtcp->mrtc_parent;
@@ -537,7 +644,7 @@ add_mrt(mrtcp)
 	VIFM_COPY(mrtcp->mrtc_children, rt->mrt_children);
 	VIFM_COPY(mrtcp->mrtc_leaves, rt->mrt_leaves);
 	/* link into table */
-	hash = nethash(mrtcp->mrtc_origin);
+	hash = nethash(mrtcp->mrtc_origin.s_addr);
 	rt->mrt_next = mrttable[hash];
 	mrttable[hash] = rt;
 
@@ -553,7 +660,8 @@ del_mrt(origin)
 	register struct in_addr *origin;
 {
 	register struct mrt *rt, *prev_rt;
-	register u_long hash = nethash(*origin);
+	register u_long hash = nethash(origin->s_addr);
+	register struct mrt **cmrt, **cmrtend;
 	register int s;
 
 	for (prev_rt = rt = mrttable[hash]; rt; prev_rt = rt, rt = rt->mrt_next)
@@ -564,8 +672,11 @@ del_mrt(origin)
 
 	s = splnet();
 
-	if (rt == cached_mrt)
-		cached_mrt = NULL;
+	cmrt = mrtsrchash;
+	cmrtend = cmrt + MSRCHASHSIZ;
+	for ( ; cmrt < cmrtend; ++cmrt)
+		if (*cmrt == rt)
+			*cmrt = 0;
 
 	if (prev_rt == rt)
 		mrttable[hash] = rt->mrt_next;
@@ -575,39 +686,6 @@ del_mrt(origin)
 
 	splx(s);
 	return (0);
-}
-
-/*
- * Find a route for a given origin IP address.
- */
-static struct mrt *
-mrtfind(origin)
-	struct in_addr origin;
-{
-	register struct mrt *rt;
-	register u_int hash;
-	register int s;
-
-	mrtstat.mrts_mrt_lookups++;
-
-	if (cached_mrt != NULL &&
-	    (origin.s_addr & cached_originmask) == cached_origin)
-		return (cached_mrt);
-
-	mrtstat.mrts_mrt_misses++;
-
-	hash = nethash(origin);
-	for (rt = mrttable[hash]; rt; rt = rt->mrt_next)
-		if ((origin.s_addr & rt->mrt_originmask.s_addr) ==
-		    rt->mrt_origin.s_addr) {
-			s = splnet();
-			cached_mrt = rt;
-			cached_origin = rt->mrt_origin.s_addr;
-			cached_originmask = rt->mrt_originmask.s_addr;
-			splx(s);
-			return (rt);
-		}
-	return (NULL);
 }
 
 /*
@@ -621,8 +699,8 @@ mrtfind(origin)
  * discard it.
  */
 
-#define IP_HDR_LEN  20	/* # bytes of fixed IP header (excluding options) */
-#define TUNNEL_LEN  12  /* # bytes of IP option for tunnel encapsulation  */
+#define	IP_HDR_LEN  20	/* # bytes of fixed IP header (excluding options) */
+#define	TUNNEL_LEN  12	/* # bytes of IP option for tunnel encapsulation  */
 
 int
 ip_mforward(m, ifp)
@@ -637,11 +715,17 @@ ip_mforward(m, ifp)
 	u_long tunnel_src;
 
 	if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
-	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR ) {
+	    (ipoptions = (u_char *)(ip + 1))[1] != IPOPT_LSRR) {
 		/*
-		 * Packet arrived via a physical interface.
+		 * Packet arrived via a physical interface or was
+		 * decapsulated off an encapsulating tunnel.
+		 * If ifp is one of the multicast_decap_if[]
+		 * dummy interfaces, we know it arrived on an
+		 * encapsulating tunnel, and we set tunnel_src to 1.
+		 * We can detect the dummy interface easily since
+		 * it's output function is null.
 		 */
-		tunnel_src = 0;
+		tunnel_src = (ifp->if_output == 0) ? 1 : 0;
 	} else {
 		/*
 		 * Packet arrived through a tunnel.
@@ -683,6 +767,8 @@ ip_mforward(m, ifp)
 		m->m_len -= TUNNEL_LEN;
 		ip->ip_len -= TUNNEL_LEN;
 		ip->ip_hl -= TUNNEL_LEN >> 2;
+
+		ifp = 0;
 	}
 
 	/*
@@ -696,23 +782,29 @@ ip_mforward(m, ifp)
 	/*
 	 * Don't forward if we don't have a route for the packet's origin.
 	 */
-	if (!(rt = mrtfind(ip->ip_src))) {
+	MRTFIND(ip->ip_src.s_addr, rt)
+	if (rt == NULL) {
 		mrtstat.mrts_no_route++;
 		return ((int)tunnel_src);
 	}
 
 	/*
-	 * Don't forward if it didn't arrive from the parent vif for its origin.
+	 * Don't forward if it didn't arrive from the
+	 * parent vif for its origin.
+	 *
+	 * Notes: v_ifp is zero for src route tunnels, multicast_decap_if
+	 * for encapsulated tunnels and a real ifnet for non-tunnels so
+	 * the first part of the if catches wrong physical interface or
+	 * tunnel type; v_rmt_addr is zero for non-tunneled packets so
+	 * the 2nd part catches both packets that arrive via a tunnel
+	 * that shouldn't and packets that arrive via the wrong tunnel.
 	 */
 	vifi = rt->mrt_parent;
-	if (tunnel_src == 0 ) {
-		if ((viftable[vifi].v_flags & VIFF_TUNNEL) ||
-		    viftable[vifi].v_ifp != ifp )
-			return ((int)tunnel_src);
-	} else {
-		if (!(viftable[vifi].v_flags & VIFF_TUNNEL) ||
-		    viftable[vifi].v_rmt_addr.s_addr != tunnel_src )
-			return ((int)tunnel_src);
+	if (viftable[vifi].v_ifp != ifp ||
+	    (ifp == 0 && viftable[vifi].v_rmt_addr.s_addr != tunnel_src)) {
+		/* came in the wrong interface */
+		++mrtstat.mrts_wrong_if;
+		return (int)tunnel_src;
 	}
 
 	/*
@@ -730,22 +822,23 @@ ip_mforward(m, ifp)
 		    VIFM_ISSET(vifi, rt->mrt_children) &&
 		    (!VIFM_ISSET(vifi, rt->mrt_leaves) ||
 		    grplst_member(vifp, ip->ip_dst))) {
-			if (vifp->v_flags & VIFF_TUNNEL)
-				tunnel_send(m, vifp);
+			if (vifp->v_flags & VIFF_SRCRT)
+				srcrt_send(ip, vifp, m);
+			else if (vifp->v_flags & VIFF_TUNNEL)
+				encap_send(ip, vifp, m);
 			else
-				phyint_send(m, vifp);
+				phyint_send(ip, vifp, m);
 		}
 	}
-
 	return ((int)tunnel_src);
 }
 
 static void
-phyint_send(m, vifp)
-	register struct mbuf *m;
+phyint_send(ip, vifp, m)
+	register struct ip *ip;
 	register struct vif *vifp;
+	register struct mbuf *m;
 {
-	register struct ip *ip = mtod(m, struct ip *);
 	register struct mbuf *mb_copy;
 	register struct ip_moptions *imo;
 	register int error;
@@ -764,11 +857,11 @@ phyint_send(m, vifp)
 }
 
 static void
-tunnel_send(m, vifp)
-	register struct mbuf *m;
+srcrt_send(ip, vifp, m)
+	register struct ip *ip;
 	register struct vif *vifp;
+	register struct mbuf *m;
 {
-	register struct ip *ip = mtod(m, struct ip *);
 	register struct mbuf *mb_copy, *mb_opts;
 	register struct ip *ip_copy;
 	register int error;
@@ -783,32 +876,10 @@ tunnel_send(m, vifp)
 		return;
 	}
 
-	/* 
-	 * Get a private copy of the IP header so that changes to some 
-	 * of the IP fields don't damage the original header, which is
-	 * examined later in ip_input.c.
-	 */
-	mb_copy = m_copy(m, IP_HDR_LEN, M_COPYALL);
+	mb_copy = m_copy(m, 0, M_COPYALL);
 	if (mb_copy == NULL)
 		return;
-	MGETHDR(mb_opts, M_DONTWAIT, MT_HEADER);
-	if (mb_opts == NULL) {
-		m_freem(mb_copy);
-		return;
-	}
-	/*
-	 * Make mb_opts be the new head of the packet chain.
-	 * Any options of the packet were left in the old packet chain head
-	 */
-	mb_opts->m_next = mb_copy;
-	mb_opts->m_len = IP_HDR_LEN + TUNNEL_LEN;
-	mb_opts->m_data += MSIZE - mb_opts->m_len;
-
-	ip_copy = mtod(mb_opts, struct ip *);
-	/*
-	 * Copy the base ip header to the new head mbuf.
-	 */
-	*ip_copy = *ip;
+	ip_copy = mtod(mb_copy, struct ip *);
 	ip_copy->ip_ttl--;
 	ip_copy->ip_dst = vifp->v_rmt_addr;	/* remote tunnel end-point */
 	/*
@@ -816,10 +887,33 @@ tunnel_send(m, vifp)
 	 */
 	ip_copy->ip_hl += TUNNEL_LEN >> 2;
 	ip_copy->ip_len += TUNNEL_LEN;
+	MGETHDR(mb_opts, M_DONTWAIT, MT_HEADER);
+	if (mb_opts == NULL) {
+		m_freem(mb_copy);
+		return;
+	}
+	/*
+	 * 'Delete' the base ip header from the mb_copy chain
+	 */
+	mb_copy->m_len -= IP_HDR_LEN;
+	mb_copy->m_data += IP_HDR_LEN;
+	/*
+	 * Make mb_opts be the new head of the packet chain.
+	 * Any options of the packet were left in the old packet chain head
+	 */
+	mb_opts->m_next = mb_copy;
+	mb_opts->m_len = IP_HDR_LEN + TUNNEL_LEN;
+	mb_opts->m_pkthdr.len = mb_copy->m_pkthdr.len + TUNNEL_LEN;
+	mb_opts->m_pkthdr.rcvif = mb_copy->m_pkthdr.rcvif;
+	mb_opts->m_data += MSIZE - mb_opts->m_len;
+	/*
+	 * Copy the base ip header from the mb_copy chain to the new head mbuf
+	 */
+	bcopy((caddr_t)ip_copy, mtod(mb_opts, caddr_t), IP_HDR_LEN);
 	/*
 	 * Add the NOP and LSRR after the base ip header
 	 */
-	cp = (u_char *)(ip_copy + 1);
+	cp = mtod(mb_opts, u_char *) + IP_HDR_LEN;
 	*cp++ = IPOPT_NOP;
 	*cp++ = IPOPT_LSRR;
 	*cp++ = 11;		/* LSRR option length */
@@ -829,5 +923,142 @@ tunnel_send(m, vifp)
 	*(u_long*)cp = ip->ip_dst.s_addr;		/* destination group */
 
 	error = ip_output(mb_opts, NULL, NULL, IP_FORWARDING, NULL);
+}
+
+static void
+encap_send(ip, vifp, m)
+	register struct ip *ip;
+	register struct vif *vifp;
+	register struct mbuf *m;
+{
+	register struct mbuf *mb_copy;
+	register struct ip *ip_copy;
+	register int i, len = ip->ip_len;
+
+	/*
+	 * copy the old packet & pullup it's IP header into the
+	 * new mbuf so we can modify it.  Try to fill the new
+	 * mbuf since if we don't the ethernet driver will.
+	 */
+	MGETHDR(mb_copy, M_DONTWAIT, MT_HEADER);
+	if (mb_copy == NULL)
+		return;
+	mb_copy->m_data += 16;
+	mb_copy->m_len = sizeof(multicast_encap_iphdr);
+	if ((mb_copy->m_next = m_copy(m, 0, M_COPYALL)) == NULL) {
+		m_freem(mb_copy);
+		return;
+	}
+	i = MHLEN - 16;
+	if (i > len)
+		i = len;
+	mb_copy = m_pullup(mb_copy, i);
+	if (mb_copy == NULL)
+		return;
+
+	/*
+	 * fill in the encapsulating IP header.
+	 */
+	ip_copy = mtod(mb_copy, struct ip *);
+	*ip_copy = multicast_encap_iphdr;
+	ip_copy->ip_id = htons(ip_id++);
+	ip_copy->ip_len += len;
+	ip_copy->ip_src = vifp->v_lcl_addr;
+	ip_copy->ip_dst = vifp->v_rmt_addr;
+
+	/*
+	 * turn the encapsulated IP header back into a valid one.
+	 */
+	ip = (struct ip *)((caddr_t)ip_copy + sizeof(multicast_encap_iphdr));
+	--ip->ip_ttl;
+	HTONS(ip->ip_len);
+	HTONS(ip->ip_off);
+	ip->ip_sum = 0;
+#if defined(LBL) && !defined(ultrix) && !defined(i386)
+	ip->ip_sum = ~oc_cksum((caddr_t)ip, ip->ip_hl << 2, 0);
+#else
+	mb_copy->m_data += sizeof(multicast_encap_iphdr);
+	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
+	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
+	mb_copy->m_pkthdr.len = m->m_pkthdr.len + sizeof(multicast_encap_iphdr);
+	mb_copy->m_pkthdr.rcvif = m->m_pkthdr.rcvif;
+#endif
+	ip_output(mb_copy, (struct mbuf *)0, (struct route *)0,
+		  IP_FORWARDING, (struct ip_moptions *)0);
+}
+
+/*
+ * De-encapsulate a packet and feed it back through ip input (this
+ * routine is called whenever IP gets a packet with proto type
+ * ENCAP_PROTO and a local destination address).
+ */
+static void
+multiencap_decap(m, hlen)
+	register struct mbuf *m;
+	int hlen;
+{
+	struct ifnet *ifp;
+	register struct ip *ip = mtod(m, struct ip *);
+	register int s;
+	register struct ifqueue *ifq;
+	register struct vif *vifp;
+
+	if (ip->ip_p != ENCAP_PROTO) {
+		(*encap_oldrawip)(m, hlen);
+		return;
+	}
+	/*
+	 * dump the packet if it's not to a multicast destination or if
+	 * we don't have an encapsulating tunnel with the source.
+	 * Note:  This code assumes that the remote site IP address
+	 * uniquely identifies the tunnel (i.e., that this site has
+	 * at most one tunnel with the remote site).
+	 */
+	if (! IN_MULTICAST(ntohl(((struct ip *)((char *)ip + hlen))->ip_dst.s_addr))) {
+		++mrtstat.mrts_bad_tunnel;
+		m_freem(m);
+		return;
+	}
+	if (ip->ip_src.s_addr != last_encap_src) {
+		register struct vif *vife;
+
+		vifp = viftable;
+		vife = vifp + numvifs;
+		last_encap_src = ip->ip_src.s_addr;
+		last_encap_vif = 0;
+		for ( ; vifp < vife; ++vifp)
+			if (vifp->v_rmt_addr.s_addr == ip->ip_src.s_addr) {
+				if ((vifp->v_flags & (VIFF_TUNNEL|VIFF_SRCRT))
+				    == VIFF_TUNNEL)
+					last_encap_vif = vifp;
+				break;
+			}
+	}
+	if ((vifp = last_encap_vif) == 0) {
+		mrtstat.mrts_cant_tunnel++; /*XXX*/
+		m_freem(m);
+		return;
+	}
+	ifp = vifp->v_ifp;
+	m->m_data += hlen;
+	m->m_len -= hlen;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len -= hlen;
+	ifq = &ipintrq;
+	s = splimp();
+	if (IF_QFULL(ifq)) {
+		IF_DROP(ifq);
+		m_freem(m);
+	} else {
+		IF_ENQUEUE(ifq, m);
+		/*
+		 * normally we would need a "schednetisr(NETISR_IP)"
+		 * here but we were called by ip_input and it is going
+		 * to loop back & try to dequeue the packet we just
+		 * queued as soon as we return so we avoid the
+		 * unnecessary software interrrupt.
+		 */
+	}
+	splx(s);
 }
 #endif
