@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.14 1994/06/29 21:23:15 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.14.2.1 1994/07/15 22:32:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -124,7 +124,7 @@ static int	bpf_movein __P((struct uio *, int,
 		    struct mbuf **, struct sockaddr *, int *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-static inline void
+static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int,
 		    u_int, void (*)(const void *, void *, u_int)));
@@ -489,7 +489,7 @@ bpfread(dev, uio)
 /*
  * If there are processes sleeping on this descriptor, wake them up.
  */
-static inline void
+static __inline void
 bpf_wakeup(d)
 	register struct bpf_d *d;
 {
