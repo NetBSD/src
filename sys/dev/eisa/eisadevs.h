@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.19 1999/09/29 17:45:22 ad Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.19.12.1 2000/07/12 23:08:38 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.17 1999/09/29 17:40:18 ad Exp 
+ *	NetBSD: eisadevs,v 1.17.12.1 2000/07/12 23:08:21 thorpej Exp 
  */
 
 /*
@@ -63,6 +63,7 @@
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
 
 /* Digital Equipment products */
+#define	EISA_PRODUCT_DEC4220	"Digital Equipment DE422 Ethernet"
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"
 #define	EISA_PRODUCT_DEC3001	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
