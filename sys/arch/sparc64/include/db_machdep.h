@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 2000/06/29 07:37:56 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -57,6 +57,7 @@ typedef struct {
 	struct frame64		ddb_fr;
 	struct trapstate	ddb_ts[5];
 	int			ddb_tl;
+	struct fpstate64	ddb_fpstate;
 } db_regs_t;
 #else
 typedef struct db_regs {
@@ -82,6 +83,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 #define	DDB_TF		(&ddb_regs.ddb_tf)
 #define	DDB_FR		(&ddb_regs.ddb_fr)
+#define	DDB_FP		(&ddb_regs.ddb_fpstate)
 
 #if defined(lint)
 #define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
