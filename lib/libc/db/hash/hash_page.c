@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)hash_page.c	8.2 (Berkeley) 9/6/93"; */
-static char *rcsid = "$Id: hash_page.c,v 1.4 1993/09/09 02:42:07 cgd Exp $";
+static char *rcsid = "$Id: hash_page.c,v 1.5 1993/09/17 01:49:27 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,7 +56,6 @@ static char *rcsid = "$Id: hash_page.c,v 1.4 1993/09/09 02:42:07 cgd Exp $";
  */
 
 #include <sys/types.h>
-#include <machine/endian.h>
 
 #include <errno.h>
 #include <fcntl.h>
