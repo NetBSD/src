@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.32 1994/10/30 21:48:55 cgd Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.33 1994/12/11 21:39:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -410,7 +410,7 @@ sloutput(ifp, m, dst, rtp)
 		struct timeval tv = time;
 
 		/* if output's been stalled for too long, and restart */
-		timevalsub(&tv, &sc->sc_if.if_lastchange);
+		__timersub(&tv, &sc->sc_if.if_lastchange);
 		if (tv.tv_sec > 0) {
 			sc->sc_otimeout++;
 			slstart(sc->sc_ttyp);
