@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 1999/07/04 20:07:52 fvdl Exp $
+# $NetBSD: mi,v 1.149 1999/07/09 11:55:33 fvdl Exp $
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
@@ -701,6 +701,7 @@
 ./usr/share/man/cat8/mkalias.0
 ./usr/share/man/cat8/mknetid.0
 ./usr/share/man/cat8/mknod.0
+./usr/share/man/cat8/mld6query.0
 ./usr/share/man/cat8/modload.0
 ./usr/share/man/cat8/modstat.0
 ./usr/share/man/cat8/modunload.0
@@ -1833,6 +1834,7 @@
 ./usr/share/man/man8/mkalias.8
 ./usr/share/man/man8/mknetid.8
 ./usr/share/man/man8/mknod.8
+./usr/share/man/man8/mld6query.8
 ./usr/share/man/man8/modload.8
 ./usr/share/man/man8/modstat.8
 ./usr/share/man/man8/modunload.8

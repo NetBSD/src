@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.149 1999/07/08 03:06:02 wrstuden Exp $
+# $NetBSD: mi,v 1.150 1999/07/09 11:55:33 fvdl Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -953,7 +953,6 @@
 ./usr/include/ufs/lfs/lfs.h
 ./usr/include/ufs/lfs/lfs_extern.h
 ./usr/include/ufs/mfs/mfs_extern.h
-./usr/include/ufs/mfs/mfsiom.h
 ./usr/include/ufs/mfs/mfsnode.h
 ./usr/include/ufs/ufs/dinode.h
 ./usr/include/ufs/ufs/dir.h
@@ -1082,6 +1081,7 @@
 ./usr/libdata/lint/llib-lcurses.ln
 ./usr/libdata/lint/llib-ledit.ln
 ./usr/libdata/lint/llib-lgnumalloc.ln
+./usr/libdata/lint/llib-lipsec.ln
 ./usr/libdata/lint/llib-lkvm.ln
 ./usr/libdata/lint/llib-ll.ln
 ./usr/libdata/lint/llib-lntp.ln

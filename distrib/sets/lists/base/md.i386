@@ -1,7 +1,8 @@
-# $NetBSD: md.i386,v 1.54 1999/07/04 20:07:51 fvdl Exp $
+# $NetBSD: md.i386,v 1.55 1999/07/09 11:55:32 fvdl Exp $
 ./sbin/fdisk
 ./usr/bin/fdformat
 ./usr/bin/fontedit
+./usr/bin/vttest
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libi386.so.0
 ./usr/lkm/adosfs.o
