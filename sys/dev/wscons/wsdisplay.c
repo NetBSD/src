@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.7 1998/06/12 18:15:27 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.8 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.7 1998/06/12 18:15:27 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.8 1998/06/15 17:48:33 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,6 +51,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/cons.h>
@@ -922,13 +924,14 @@ wsdisplay_emulinput(v, data, count)
  * Calls from the keyboard interface.
  */
 void
-wsdisplay_kbdinput(dev, data, count)
+wsdisplay_kbdinput(dev, ks)
 	struct device *dev;
-	const u_char *data;
-	u_int count;
+	keysym_t ks;
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *scr;
+	char *dp;
+	int count;
 	struct tty *tp;
 
 	KASSERT(sc != NULL);
@@ -940,8 +943,15 @@ wsdisplay_kbdinput(dev, data, count)
 		return;
 
 	tp = scr->scr_tty;
-	while (count-- > 0)
-		(*linesw[tp->t_line].l_rint)(*data++, tp);
+
+	if (KS_GROUP(ks) == KS_GROUP_Ascii)
+		(*linesw[tp->t_line].l_rint)(KS_VALUE(ks), tp);
+	else if (WSSCREEN_HAS_EMULATOR(scr)) {
+		count = (*scr->scr_dconf->wsemul->translate)
+		    (scr->scr_dconf->wsemulcookie, ks, &dp);
+		while (count-- > 0)
+			(*linesw[tp->t_line].l_rint)(*dp++, tp);
+	}
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD

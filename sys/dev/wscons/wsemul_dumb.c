@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.2 1998/05/14 20:49:57 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.3 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_dumb.c,v 1.2 1998/05/14 20:49:57 drochner Exp $";
+    "$NetBSD: wsemul_dumb.c,v 1.3 1998/06/15 17:48:33 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ void	*wsemul_dumb_attach __P((int console, const struct wsscreen_descr *,
 				 void *, int, int, void *, long));
 void	wsemul_dumb_output __P((void *cookie, const u_char *data, u_int count,
 				int));
+int	wsemul_dumb_translate __P((void *cookie, keysym_t, char **));
 void	wsemul_dumb_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
 
 const struct wsemul_ops wsemul_dumb_ops = {
@@ -59,6 +60,7 @@ const struct wsemul_ops wsemul_dumb_ops = {
 	wsemul_dumb_cnattach,
 	wsemul_dumb_attach,
 	wsemul_dumb_output,
+	wsemul_dumb_translate,
 	wsemul_dumb_detach,
 };
 
@@ -205,6 +207,15 @@ wsemul_dumb_output(cookie, data, count, kernel)
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
+}
+
+int
+wsemul_dumb_translate(cookie, in, out)
+	void *cookie;
+	keysym_t in;
+	char **out;
+{
+	return (0);
 }
 
 void
