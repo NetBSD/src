@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $ */
+/*	$NetBSD: print-mobile.c,v 1.4 2001/01/28 10:05:06 itojun Exp $ */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $");
+__RCSID("$NetBSD: print-mobile.c,v 1.4 2001/01/28 10:05:06 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@ static u_int16_t mob_in_cksum(u_short *p, int len)
 	if (len & 1) {
 		union {
 			u_int16_t w;
-			u_int32_t c[2]; 
+			u_int8_t c[2]; 
 		} u;
 		u.c[0] = *(u_char *)p;
 		u.c[1] = 0;

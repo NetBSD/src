@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.11 2001/01/19 09:10:13 kleink Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.12 2001/01/28 10:05:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.11 2001/01/19 09:10:13 kleink Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.12 2001/01/28 10:05:06 itojun Exp $");
 #endif
 #endif
 
@@ -253,6 +253,62 @@ ip_printroute(const char *type, register const u_char *cp, u_int length)
 	printf("%s}", ptr == len? "#" : "");
 }
 
+static void
+ip_printts(register const u_char *cp, u_int length)
+{
+	register u_int ptr = cp[2] - 1;
+	register u_int len = 0;
+	int hoplen;
+	char *type;
+
+	printf(" TS{");
+	hoplen = ((cp[3]&0xF) != IPOPT_TS_TSONLY) ? 8 : 4;
+	if ((length - 4) & (hoplen-1))
+		printf("[bad length %d]", length);
+	if (ptr < 4 || ((ptr - 4) & (hoplen-1)) || ptr > length + 1)
+		printf("[bad ptr %d]", cp[2]);
+	switch (cp[3]&0xF) {
+	case IPOPT_TS_TSONLY:
+		printf("TSONLY");
+		break;
+	case IPOPT_TS_TSANDADDR:
+		printf("TS+ADDR");
+		break;
+	/*
+	 * prespecified should really be 3, but some ones might send 2
+	 * instead, and the IPOPT_TS_PRESPEC constant can apparently
+	 * have both values, so we have to hard-code it here.
+	 */
+
+	case 2:
+		printf("PRESPEC2.0");
+		break;
+	case 3:			/* IPOPT_TS_PRESPEC */
+		printf("PRESPEC");
+		break;
+	default:	
+		printf("[bad ts type %d]", cp[3]&0xF);
+		goto done;
+	}
+
+	type = " ";
+	for (len = 4; len < length; len += hoplen) {
+		if (ptr == len)
+			type = " ^ ";
+		printf("%s%d@%s", type, EXTRACT_32BITS(&cp[len+hoplen-4]),
+		       hoplen!=8 ? "" : ipaddr_string(&cp[len]));
+		type = " ";
+	}
+
+done:
+	printf("%s", ptr == len ? " ^ " : "");
+
+	if (cp[3]>>4)
+		printf(" [%d hops not recorded]} ", cp[3]>>4);
+	else
+		printf("}");
+}
+
 /*
  * print IP options.
  */
@@ -264,7 +320,15 @@ ip_optprint(register const u_char *cp, u_int length)
 	for (; length > 0; cp += len, length -= len) {
 		int tt = *cp;
 
-		len = (tt == IPOPT_NOP || tt == IPOPT_EOL) ? 1 : cp[1];
+		if (tt == IPOPT_NOP || tt == IPOPT_EOL)
+			len = 1;
+		else {
+			if (&cp[1] >= snapend) {
+				printf("[|ip]");
+				return;
+			}
+			len = cp[1];
+		}
 		if (len <= 0) {
 			printf("[|ip op len %d]", len);
 			return;
@@ -286,15 +350,17 @@ ip_optprint(register const u_char *cp, u_int length)
 			break;
 
 		case IPOPT_TS:
-			printf(" TS{%d}", len);
+			ip_printts(cp, len);
 			break;
 
+#ifndef IPOPT_SECURITY
+#define IPOPT_SECURITY 130
+#endif /* IPOPT_SECURITY */
 		case IPOPT_SECURITY:
 			printf(" SECURITY{%d}", len);
 			break;
 
 		case IPOPT_RR:
-			printf(" RR{%d}=", len);
 			ip_printroute("RR", cp, len);
 			break;
 
@@ -412,6 +478,9 @@ ip_print(register const u_char *bp, register u_int length)
 again:
 		switch (nh) {
 
+#ifndef IPPROTO_AH
+#define IPPROTO_AH	51
+#endif
 		case IPPROTO_AH:
 			nh = *cp;
 			advance = ah_print(cp, (const u_char *)ip);
@@ -419,6 +488,9 @@ again:
 			len -= advance;
 			goto again;
 
+#ifndef IPPROTO_ESP
+#define IPPROTO_ESP	50
+#endif
 		case IPPROTO_ESP:
 		    {
 			int enh;
@@ -447,11 +519,11 @@ again:
 		    }
 
 		case IPPROTO_TCP:
-			tcp_print(cp, len, (const u_char *)ip);
+			tcp_print(cp, len, (const u_char *)ip, (off &~ 0x6000));
 			break;
 
 		case IPPROTO_UDP:
-			udp_print(cp, len, (const u_char *)ip);
+			udp_print(cp, len, (const u_char *)ip, (off &~ 0x6000));
 			break;
 
 		case IPPROTO_ICMP:
@@ -489,10 +561,6 @@ again:
 #endif
 		case IPPROTO_IGMP:
 			igmp_print(cp, len, (const u_char *)ip);
-			break;
-
-		case IPPROTO_PIM:
-			pim_print(cp, len);
 			break;
 
 		case 4:
@@ -544,8 +612,8 @@ again:
 			if (! vflag) {
 				printf(" (gre encap)");
 				return;
-  			}
-  			break;
+			}
+			break;
 
 #ifndef IPPROTO_MOBILE
 #define IPPROTO_MOBILE 55
@@ -562,10 +630,21 @@ again:
 			}
 			break;
 
+#ifndef IPPROTO_PIM
+#define IPPROTO_PIM	103
+#endif
+		case IPPROTO_PIM:
+			pim_print(cp, len);
+			break;
+
 #ifndef IPPROTO_VRRP
-#define IPPROTO_VRRP 112
+#define IPPROTO_VRRP	112
 #endif
 		case IPPROTO_VRRP:
+			if (vflag)
+				(void)printf("vrrp %s > %s: ",
+					     ipaddr_string(&ip->ip_src),
+					     ipaddr_string(&ip->ip_dst));
 			vrrp_print(cp, len, (const u_char *)ip);
 			break;
 
@@ -574,7 +653,7 @@ again:
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				ipaddr_string(&ip->ip_dst));
 #endif
-			(void)printf(" ip-proto-%d %d", ip->ip_p, len);
+			(void)printf(" ip-proto-%d %d", nh, len);
 			break;
 		}
 	}
@@ -583,7 +662,7 @@ again:
 	 * but the last stick a "+".  For unfragmented datagrams, note
 	 * the don't fragment flag.
 	 */
-	len = len0;
+	len = len0;	/* get the original length */
 	if (off & 0x3fff) {
 		/*
 		 * if this isn't the first frag, we're missing the
@@ -592,9 +671,16 @@ again:
 		if (off & 0x1fff)
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
 				      ipaddr_string(&ip->ip_dst));
-		(void)printf(" (frag %d:%d@%d%s)", ntohs(ip->ip_id), len,
+#ifndef IP_MF
+#define IP_MF 0x2000
+#endif /* IP_MF */
+#ifndef IP_DF
+#define IP_DF 0x4000
+#endif /* IP_DF */
+		(void)printf(" (frag %d:%u@%d%s)", ntohs(ip->ip_id), len,
 			(off & 0x1fff) * 8,
 			(off & IP_MF)? "+" : "");
+
 	} else if (off & IP_DF)
 		(void)printf(" (DF)");
 
