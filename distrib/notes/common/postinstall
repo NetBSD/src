@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.33.2.3 2002/07/02 04:20:05 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.4 2002/07/09 08:09:04 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -216,6 +216,14 @@ For the Milan, you will have to disable the
 .Pa ttyex
 devices.
 This is easy, just change 'on' to 'off' on the corresponding lines.
+.\}
+.if r_cats \{\
+.Pp
+For the
+.Xr savecore 8
+facility to work with the a.out and elf kernel images supplied with
+\*M installations you will need to set
+.Li savecore_flags="-z -N /netbsd"
 .\}
 .It
 Logging in
