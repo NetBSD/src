@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.4.4.1 2001/03/22 01:52:40 he Exp $	*/
+/*	$NetBSD: puc.c,v 1.4.4.2 2001/03/22 03:13:47 he Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -95,8 +95,6 @@ struct cfattach puc_ca = {
 	sizeof(struct puc_softc), puc_match, puc_attach
 };
 
-static const struct puc_device_description *
-	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));
 static const char *
 	puc_port_type_name __P((int));
 
@@ -319,7 +317,7 @@ puc_submatch(parent, cf, aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-static const struct puc_device_description *
+const struct puc_device_description *
 puc_find_description(vend, prod, svend, sprod)
 	pcireg_t vend, prod, svend, sprod;
 {
