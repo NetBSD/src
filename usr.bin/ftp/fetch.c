@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.116.2.1 2001/11/12 23:51:20 he Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.116.2.1 2001/11/12 23:51:20 he Exp $");
 #endif /* not lint */
 
 /*
@@ -429,7 +429,7 @@ sigjmp_buf	httpabort;
  * If proxyenv is set, use that for the proxy, otherwise try ftp_proxy or
  * http_proxy as appropriate.
  * Supports HTTP redirects.
- * Returns -1 on failure, 0 on completed xfer, 1 if ftp connection
+ * Returns 1 on failure, 0 on completed xfer, -1 if ftp connection
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
@@ -620,6 +620,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					}
 				}
 				FREEPTR(np_copy);
+				if (isproxy == 0 && urltype == FTP_URL_T) {
+					rval = fetch_ftp(url);
+					goto cleanup_fetch_url;
+				}
 			}
 
 			if (isproxy) {
