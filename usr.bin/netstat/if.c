@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	5.15 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: if.c,v 1.3 1993/08/01 18:10:53 mycroft Exp $";
+static char rcsid[] = "$Id: if.c,v 1.4 1994/02/22 04:19:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,7 +127,7 @@ intpr(interval, ifnetaddr)
 			    (strcmp(name, interface) != 0 || unit != ifnet.if_unit))
 				continue;
 			cp = index(name, '\0');
-			*cp++ = ifnet.if_unit + '0';
+			cp += sprintf(cp, "%d", ifnet.if_unit);
 			if ((ifnet.if_flags&IFF_UP) == 0)
 				*cp++ = '*';
 			*cp = '\0';
