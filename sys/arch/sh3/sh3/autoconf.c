@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1999/09/15 18:10:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1999/09/17 20:04:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,13 +67,6 @@ static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 void findroot __P((struct device **, int *));
 
 /*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-extern int	cold;		/* cold start flag initialized in locore.s */
-
-/*
  * Determine i/o configuration for a machine.
  */
 void
@@ -89,7 +82,6 @@ cpu_configure()
 	       imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 
 	spl0();
-	cold = 0;
 }
 
 void

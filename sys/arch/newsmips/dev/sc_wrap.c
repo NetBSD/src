@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.9 1998/12/05 19:43:46 mjacob Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.10 1999/09/17 20:04:43 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -26,8 +26,6 @@
 #include <machine/adrsmap.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
-
-extern int cold;
 
 static int cxd1185_match __P((struct device *, struct cfdata *, void *));
 static void cxd1185_attach __P((struct device *, struct device *, void *));

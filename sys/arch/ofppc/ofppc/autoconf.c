@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1999/09/15 18:10:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1999/09/17 20:04:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,8 +39,6 @@
 
 #include <machine/powerpc.h>
 
-extern int cold;
-
 void configure __P((void));
 void findroot __P((void));
 
@@ -57,7 +55,6 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	(void)spl0();
-	cold = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1999/09/15 18:10:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1999/09/17 20:04:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,13 +68,6 @@
 #include <mvme68k/mvme68k/isr.h>
 
 struct device *booted_device;	/* boot device */
-
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	cold;			/* if 1, still working on cold-start */
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, struct cfdata *, void *));
@@ -188,8 +181,6 @@ cpu_configure()
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
-
-	cold = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.14 1998/02/10 00:25:32 perry Exp $	*/
+/*	$NetBSD: kernel.h,v 1.15 1999/09/17 20:09:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,6 +58,7 @@ extern volatile struct timeval time;
 
 extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
+extern int cold;		/* still working on startup */
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickfix;		/* periodic tick adj. tick not integral */
 extern int tickfixinterval;	/* interval at which to apply adjustment */

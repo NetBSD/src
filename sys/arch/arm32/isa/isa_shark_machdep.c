@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.4 1999/01/01 12:42:47 mark Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.5 1999/09/17 19:59:39 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -35,6 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -147,7 +148,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	void *ih_arg;
 {
 	    irqhandler_t *ih;
-	    extern int cold;
 
 	    /* no point in sleeping unless someone can free memory. */
 	    ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);

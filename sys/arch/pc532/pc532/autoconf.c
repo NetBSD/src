@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1999/09/15 18:10:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1999/09/17 20:04:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,7 +59,6 @@
  * the machine.
  */
 
-extern int cold;		/* cold start flag initialized in locore.s */
 u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
 struct device *booted_device;	/* boot device, set by dk_establish */
 
@@ -87,7 +86,6 @@ cpu_configure()
 
 	safepri = imask[IPL_ZERO];
 	spl0();
-	cold = 0;
 }
 
 void
