@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.79 2002/06/01 00:28:52 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.80 2002/06/01 00:32:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.79 2002/06/01 00:28:52 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.80 2002/06/01 00:32:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,11 +277,7 @@ int	options;
 int	timingout;
 struct	servent *sp;
 char	*curdom;
-#ifdef NI_WITHSCOPEID
-const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
-#else
 const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
-#endif
 
 #ifndef OPEN_MAX
 #define OPEN_MAX	64
@@ -2411,7 +2407,6 @@ rfc931_name(there, ctrl)
 	(void)snprintf(buf, sizeof buf, "%u,%u\r\n", ntohs(hisport),
 	    ntohs(myport));
 
-
 	for (len = 0, cp = buf; len < strlen(buf); ) {
 		int	n;
 
@@ -2438,10 +2433,8 @@ rfc931_name(there, ctrl)
 	}
 	*cp = '\0';
 
-	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote, &local, user) == 3
-		&& ntohs(hisport) == remote
-		&& ntohs(myport) == local) {
-
+	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote, &local,
+	    user) == 3 && ntohs(hisport) == remote && ntohs(myport) == local) {
 		/* Strip trailing carriage return. */
 		if ((cp = strchr(user, '\r')) != NULL)
 			*cp = 0;
@@ -2512,8 +2505,8 @@ port_good_dg(sa)
 	return (1);
 
 bad:
-	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf),
-			NULL, 0, niflags) != 0)
+	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
+	    niflags) != 0)
 		strcpy(hbuf, "?");
 	syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
 		hbuf, port);
