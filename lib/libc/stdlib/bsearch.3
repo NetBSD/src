@@ -1,7 +1,7 @@
-.\"	$NetBSD: bsearch.3,v 1.4 1995/12/28 08:52:09 thorpej Exp $
+.\"	$NetBSD: bsearch.3,v 1.5 1998/01/30 23:37:49 perry Exp $
 .\"
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the American National Standards Committee X3, on Information
@@ -35,9 +35,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)bsearch.3	5.6 (Berkeley) 6/29/91
+.\"     from: @(#)bsearch.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd June 29, 1991
+.Dd April 19, 1994
 .Dt BSEARCH 3
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ to the comparison function referenced by
 The
 .Fa compar
 routine
-is expected to have two
+is expected to have
 two arguments which point to the
 .Fa key
 object and to an array member, in that order, and should return an integer

@@ -1,8 +1,8 @@
-/*	$NetBSD: malloc.c,v 1.10 1997/07/21 14:08:55 jtc Exp $	*/
+/*	$NetBSD: malloc.c,v 1.11 1998/01/30 23:38:00 perry Exp $	*/
 
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.10 1997/07/21 14:08:55 jtc Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.11 1998/01/30 23:38:00 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -307,11 +307,11 @@ free(cp)
  * back.  We have to search all the free lists for the block in order
  * to determine its bucket: 1st we make one pass thru the lists
  * checking only the first block in each; if that fails we search
- * ``realloc_srchlen'' blocks in each list for a match (the variable
+ * ``__realloc_srchlen'' blocks in each list for a match (the variable
  * is extern so the caller can modify it).  If that fails we just copy
  * however many bytes was given to realloc() and hope it's not huge.
  */
-int realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
+int __realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
 realloc(cp, nbytes)
@@ -341,7 +341,7 @@ realloc(cp, nbytes)
 		 * Search for the old block of memory on the
 		 * free list.  First, check the most common
 		 * case (last element free'd), then (this failing)
-		 * the last ``realloc_srchlen'' items free'd.
+		 * the last ``__realloc_srchlen'' items free'd.
 		 * If all lookups fail, then assume the size of
 		 * the memory block being realloc'd is the
 		 * largest possible (so that all "nbytes" of new
@@ -350,7 +350,7 @@ realloc(cp, nbytes)
 		 * is gibbous.  However, that is very unlikely.
 		 */
 		if ((i = findbucket(op, 1)) < 0 &&
-		    (i = findbucket(op, realloc_srchlen)) < 0)
+		    (i = findbucket(op, __realloc_srchlen)) < 0)
 			i = NBUCKETS;
 	}
 	onb = 1 << (i + 3);

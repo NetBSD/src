@@ -1,8 +1,8 @@
-/*	$NetBSD: strtouq.c,v 1.7 1997/07/13 20:17:04 christos Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.8 1998/01/30 23:38:10 perry Exp $	*/
 
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)strtouq.c	5.1 (Berkeley) 6/26/92";
+static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.7 1997/07/13 20:17:04 christos Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.8 1998/01/30 23:38:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,6 +117,6 @@ _strtouq(nptr, endptr, base)
 	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
-		*endptr = (char *) (any ? s - 1 : nptr);
+		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }
