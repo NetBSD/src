@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.9 1998/12/13 18:00:10 kleink Exp $ */
+/*	$NetBSD: dma.c,v 1.10 1999/04/08 04:46:41 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -35,12 +35,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/autoconf.h>
 #include <machine/dvma.h>
@@ -55,81 +51,95 @@
 #include <sun3/dev/dmareg.h>
 #include <sun3/dev/dmavar.h>
 
-/*
- * Pseudo-attach function.  Called from the esp driver during its
- * attach function.  This needs to be silent.
- */
-void
+#define MAX_DMA_SZ	0x01000000	/* 16MB */
+
+static int	dmamatch  __P((struct device *, struct cfdata *, void *));
+static void	dmaattach __P((struct device *, struct device *, void *));
+
+struct cfattach dma_ca = {
+	sizeof(struct dma_softc), dmamatch, dmaattach
+};
+
+extern struct cfdriver dma_cd;
+
+static int
+dmamatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	/*
+	 * Check for the DMA registers.
+	 */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 4) == -1)
+		return (0);
+
+	/* If default ipl, fill it in. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 2;
+
+	return (1);
+}
+
+static void
 dmaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct confargs *ca = aux;
 	struct dma_softc *sc = (void *)self;
-
-	/*
-	 * The esp driver has filled in the virtual address used to
-	 * address the dma registers at this point.  Normally we would
-	 * map them in here and assign them ourselves.
-	 *
-	 * It has also filled itself in to our sc->sc_esp register.
-	 */
-
-	/*
-	 * Get transfer burst size from PROM and plug it into the
-	 * controller registers. This is needed on the Sun4m; do
-	 * others need it too?
-	 *
-	 * Sun3x works ok (so far) without it.
-	 */
-
-	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
+	int id;
 
 #if 0
 	/* indirect functions */
 	sc->intr = espdmaintr;
-	sc->enintr = dma_enintr;
-	sc->isintr = dma_isintr;
-	sc->reset = dma_reset;
 	sc->setup = dma_setup;
-	sc->go = dma_go;
+	sc->reset = dma_reset;
 #endif
-}
 
-void
-dma_print_rev(sc)
-	struct dma_softc *sc;
-{
+	/*
+	 * Map in the registers.
+	 */
+	sc->sc_regs = bus_mapin(ca->ca_bustype, ca->ca_paddr,
+					  sizeof(struct dma_regs));
+	sc->sc_rev = DMACSR(sc) & D_DEV_ID;
+	id = (sc->sc_rev >> 28) & 0xf;
+	printf(": rev %d\n", id);
 
-	printf("espdma: rev ");
+	/*
+	 * Make sure the DMA chip is supported revision.
+	 * The Sun3/80 used only the old rev zero chip,
+	 * so the initialization has been simplified.
+	 */
 	switch (sc->sc_rev) {
 	case DMAREV_0:
-		printf("0");
-		break;
-	case DMAREV_ESC:
-		printf("esc");
-		break;
 	case DMAREV_1:
-		printf("1");
-		break;
-	case DMAREV_PLUS:
-		printf("1+");
-		break;
-	case DMAREV_2:
-		printf("2");
 		break;
 	default:
-		printf("unknown (0x%x)", sc->sc_rev);
+		panic("unsupported dma rev");
 	}
-	printf("\n");
 }
 
+/*
+ * This is called by espattach to get our softc.
+ */
+struct dma_softc *
+espdmafind(int unit)
+{
+	if (unit < 0 || unit >= dma_cd.cd_ndevs ||
+		dma_cd.cd_devs[unit] == NULL)
+		panic("no dma");
+	return (dma_cd.cd_devs[unit]);
+}
 
 #define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
-	int count = 500000;						\
-	while ((COND) && --count > 0) DELAY(1);				\
+	int count = 100000;						\
+	while ((COND) && --count > 0) DELAY(5);				\
 	if (count == 0) {						\
-		printf("%s: line %d: CSR = 0x%lx\n", __FILE__, __LINE__, \
-			(SC)->sc_regs->csr);				\
+		printf("%s: line %d: CSR = 0x%x\n",			\
+			__FILE__, __LINE__, DMACSR(SC));		\
 		if (DONTPANIC)						\
 			printf(MSG);					\
 		else							\
@@ -144,54 +154,55 @@ dma_print_rev(sc)
 	 *     request.							\
 	 * other revs: D_R_PEND bit reads as 0				\
 	 */								\
-	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	DMAWAIT(sc, DMACSR(sc) & D_R_PEND, "R_PEND", dontpanic);	\
 	/*								\
-	 * Select drain bit based on revision				\
+	 * Select drain bit (always rev 0,1)				\
 	 * also clears errors and D_TC flag				\
 	 */								\
-	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
-		DMACSR(sc) |= D_DRAIN;					\
-	else								\
-		DMACSR(sc) |= D_INVALIDATE;				\
+	DMACSR(sc) |= D_DRAIN;						\
 	/*								\
 	 * Wait for draining to finish					\
-	 *  rev0 & rev1 call this PACKCNT				\
 	 */								\
-	DMAWAIT(sc, sc->sc_regs->csr & D_DRAINING, "DRAINING", dontpanic);\
+	DMAWAIT(sc, DMACSR(sc) & D_PACKCNT, "DRAINING", dontpanic);	\
+} while(0)
+
+#define DMA_FLUSH(sc, dontpanic) do {					\
+	/*								\
+	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
+	 *     and "drain" bits while it is still thinking about a	\
+	 *     request.							\
+	 * other revs: D_R_PEND bit reads as 0				\
+	 */								\
+	DMAWAIT(sc, DMACSR(sc) & D_R_PEND, "R_PEND", dontpanic);	\
+	DMACSR(sc) &= ~(D_WRITE|D_EN_DMA);				\
+	DMACSR(sc) |= D_FLUSH;						\
 } while(0)
 
 void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
-	DMA_DRAIN(sc, 1);
-	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
-	DMACSR(sc) |= D_RESET;			/* reset DMA */
-	DELAY(200);				/* what should this be ? */
+
+	DMA_FLUSH(sc, 1);
+	DMACSR(sc) |= D_RESET;		/* reset DMA */
+	DELAY(200);			/* what should this be ? */
 	/*DMAWAIT1(sc); why was this here? */
-	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
-	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
+	DMACSR(sc) &= ~D_RESET;		/* de-assert reset line */
+	DELAY(5);			/* allow a few ticks to settle */
 
-	sc->sc_active = 0;			/* and of course we aren't */
+	/*
+	 * Get transfer burst size from (?) and plug it into the
+	 * controller registers. This is needed on the Sun4m...
+	 * Do we need it too?  Apparently not, because the 3/80
+	 * always has the old, REV zero DMA chip.
+	 */
+	DMACSR(sc) |= D_INT_EN;		/* enable interrupts */
+
+	sc->sc_active = 0;
 }
 
 
-void
-dma_enintr(sc)
-	struct dma_softc *sc;
-{
-	sc->sc_regs->csr |= D_INT_EN;
-}
-
-int
-dma_isintr(sc)
-	struct dma_softc *sc;
-{
-	return (sc->sc_regs->csr & (D_INT_PEND|D_ERR_PEND));
-}
-
-#define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
-
+#define DMAMAX(a)	(MAX_DMA_SZ - ((a) & (MAX_DMA_SZ-1)))
 
 /*
  * setup a dma transfer
@@ -204,9 +215,9 @@ dma_setup(sc, addr, len, datain, dmasize)
 	int datain;
 	size_t *dmasize;	/* IN-OUT */
 {
-	u_long csr;
+	u_int32_t csr;
 
-	DMA_DRAIN(sc, 0);
+	DMA_FLUSH(sc, 0);
 
 #if 0
 	DMACSR(sc) &= ~D_INT_EN;
@@ -239,17 +250,13 @@ dma_setup(sc, addr, len, datain, dmasize)
 			panic("dma: cannot allocate DVMA address");
 		sc->sc_dmasaddr = dvma_kvtopa(sc->sc_dvmakaddr, BUS_OBIO);
 		DMADDR(sc) = sc->sc_dmasaddr;
-	} else
-		DMADDR(sc) = (u_long) *sc->sc_dmaaddr;
-
-	if (sc->sc_rev == DMAREV_ESC) {
-		/* DMA ESC chip bug work-around */
-		register long bcnt = sc->sc_dmasize;
-		register long eaddr = bcnt + (long)*sc->sc_dmaaddr;
-		if ((eaddr & PGOFSET) != 0)
-			bcnt = roundup(bcnt, NBPG);
-		DMACNT(sc) = bcnt;
+	} else {
+		/* XXX: What is this about? -gwr */
+		DMADDR(sc) = (u_int32_t) *sc->sc_dmaaddr;
 	}
+
+	/* We never have DMAREV_ESC. */
+
 	/* Setup DMA control register */
 	csr = DMACSR(sc);
 	if (datain)
@@ -262,19 +269,9 @@ dma_setup(sc, addr, len, datain, dmasize)
 	return 0;
 }
 
-void
-dma_go(sc)
-	struct dma_softc *sc;
-{
-
-	/* Start DMA */
-	DMACSR(sc) |= D_EN_DMA;
-	sc->sc_active = 1;
-}
-
 /*
  * Pseudo (chained) interrupt from the esp driver to kick the
- * current running DMA transfer. I am replying on espintr() to
+ * current running DMA transfer. I am relying on espintr() to
  * pickup and clean errors for now
  *
  * return 1 if it was a DMA continue.
@@ -286,19 +283,20 @@ espdmaintr(sc)
 	struct ncr53c9x_softc *nsc = sc->sc_esp;
 	char bits[64];
 	int trans, resid;
-	u_long csr;
+	u_int32_t csr;
+
 	csr = DMACSR(sc);
 
-	NCR_DMA(("%s: intr: addr 0x%lx, csr %s\n",
+	NCR_DMA(("%s: intr: addr 0x%x, csr %s\n",
 		 sc->sc_dev.dv_xname, DMADDR(sc),
 		 bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits))));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
-		DMACSR(sc) |= D_INVALIDATE;
+		DMACSR(sc) |= D_FLUSH;
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
-		return -1;
+		return (-1);
 	}
 
 	/* This is an "assertion" :) */
@@ -352,7 +350,7 @@ espdmaintr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-#if	0
+#if 0
 		/*
 		 * This situation can happen in perfectly normal operation
 		 * if the ESP is reselected while using DMA to select

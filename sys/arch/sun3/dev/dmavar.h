@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.3 1997/03/20 16:01:39 gwr Exp $ */
+/*	$NetBSD: dmavar.h,v 1.4 1999/04/08 04:46:41 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -31,7 +31,7 @@
 struct dma_softc {
 	struct device sc_dev;			/* us as a device */
 	struct ncr53c9x_softc *sc_esp;		/* my scsi */
-	struct dma_regs *sc_regs;		/* the registers */
+	volatile struct dma_regs *sc_regs;	/* the registers */
 	int	sc_active;			/* DMA active ? */
 	u_int	sc_rev;				/* revision */
 	int	sc_burst;			/* DVMA burst size in effect */
@@ -43,25 +43,18 @@ struct dma_softc {
 	size_t  *sc_dmalen;
 #if 0
 	void (*reset)(struct dma_softc *);	/* reset routine */
-	void (*enintr)(struct dma_softc *);	/* enable interrupts */
-	int (*isintr)(struct dma_softc *);	/* interrupt ? */
 	int (*intr)(struct dma_softc *);	/* interrupt ! */
 	int (*setup)(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
-	void (*go)(struct dma_softc *);
 #endif
 };
 
-#define DMACSR(sc)	(sc->sc_regs->csr)
-#define DMADDR(sc)	(sc->sc_regs->addr)
-#define DMACNT(sc)	(sc->sc_regs->bcnt)
+#define DMACSR(sc)	((sc)->sc_regs->csr)
+#define DMADDR(sc)	((sc)->sc_regs->addr)
+#define DMACNT(sc)	((sc)->sc_regs->bcnt)
 
-void dmaattach __P((struct device *, struct device *, void *));
-void dma_print_rev __P((struct dma_softc *));
+struct dma_softc * espdmafind __P((int));
 
 void dma_reset __P((struct dma_softc *));
-void dma_enintr __P((struct dma_softc *));
-int  dma_isintr __P((struct dma_softc *));
 int  dma_setup __P((struct dma_softc *, caddr_t *, size_t *, int, size_t *));
-void dma_go __P((struct dma_softc *));
 
 int espdmaintr __P((struct dma_softc *));
