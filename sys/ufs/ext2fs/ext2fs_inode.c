@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.17 2000/05/28 08:44:32 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.18 2000/05/29 18:34:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -96,7 +96,7 @@ ext2fs_inactive(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
 	}
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
 		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);
@@ -135,6 +135,7 @@ ext2fs_update(v)
 	int error;
 	struct timespec ts;
 	caddr_t cp;
+	int flags;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -143,10 +144,12 @@ ext2fs_update(v)
 	EXT2FS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & IN_MODIFIED) == 0)
+	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	if (flags == 0)
 		return (0);
-	ip->i_flag &= ~IN_MODIFIED;
+	ip->i_flag &= ~flags;
 	fs = ip->i_e2fs;
+
 	error = bread(ip->i_devvp,
 			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, NOCRED, &bp);
@@ -157,7 +160,8 @@ ext2fs_update(v)
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
-	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) &&
+	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) != 0&&
+	    (flags & IN_MODIFIED) != 0 &&
 	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
