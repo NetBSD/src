@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	5.14 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mountd.c,v 1.8 1993/09/07 15:40:37 ws Exp $";
+static char rcsid[] = "$Id: mountd.c,v 1.9 1993/09/09 16:34:34 ws Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ struct exportlist {
 	struct grouplist *ex_groups;
 	int	ex_rootuid;
 	int	ex_exflags;
+	int	ex_alldirflg;
 	dev_t	ex_dev;
 	char	ex_dirp[MNTPATHLEN+1];
 };
@@ -251,7 +252,8 @@ mntsrv(rqstp, transp)
 		omask = sigblock(sigmask(SIGHUP));
 		ep = exphead.ex_next;
 		while (ep != NULL) {
-			if (!strcmp(ep->ex_dirp, dirpath)) {
+			if (!strcmp(ep->ex_dirp, dirpath) ||
+			    (stb.st_dev == ep->ex_dev && ep->ex_alldirflg)) {
 				grp = ep->ex_groups;
 				if (grp == NULL)
 					break;
@@ -458,7 +460,7 @@ get_exportlist()
 	char *cp, *endcp;
 	char savedc;
 	int len, dirplen;
-	int rootuid, exflags;
+	int rootuid, exflags, alldirflg;
 	u_long saddr;
 	struct exportlist *fep;
         static int first = 0;
@@ -504,6 +506,7 @@ get_exportlist()
 	while (fgets(line, LINESIZ, inf)) {
 		exflags = MNT_EXPORTED;
 		rootuid = def_rootuid;
+		alldirflg = 0;
 		cp = line;
 		nextfield(&cp, &endcp);
 
@@ -556,7 +559,8 @@ get_exportlist()
 			if (len > MNTNAMLEN)
 				goto more;
 			if (*cp == '-') {
-				do_opt(cp + 1, fep, ep, &exflags, &rootuid);
+				do_opt(cp + 1, fep, ep, &exflags, &rootuid,
+					&alldirflg);
 				goto more;
 			}
 			if (isdigit(*cp)) {
@@ -652,9 +656,17 @@ get_exportlist()
 				*cp = savedc;
 			ep->ex_rootuid = rootuid;
 			ep->ex_exflags = exflags;
+			ep->ex_alldirflg = alldirflg;
 		} else {
+			if (alldirflg || fep->ex_alldirflg) {
+				syslog(LOG_WARNING,
+				    "Can't export alldirs plus other exports");
+				free_exp(ep);
+				goto nextline;
+			}
 			ep->ex_rootuid = fep->ex_rootuid;
 			ep->ex_exflags = fep->ex_exflags;
+			ep->ex_alldirflg = 0;
 		}
 		ep->ex_dev = sb.st_dev;
 		ep->ex_next = exphead.ex_next;
@@ -697,10 +709,10 @@ nextfield(cp, endcp)
 /*
  * Parse the option string
  */
-do_opt(cpopt, fep, ep, exflagsp, rootuidp)
+do_opt(cpopt, fep, ep, exflagsp, rootuidp, alldirflgp)
 	register char *cpopt;
 	struct exportlist *fep, *ep;
-	int *exflagsp, *rootuidp;
+	int *exflagsp, *rootuidp, *alldirflgp;
 {
 	register char *cpoptarg, *cpoptend;
 
@@ -726,6 +738,8 @@ do_opt(cpopt, fep, ep, exflagsp, rootuidp)
 				syslog(LOG_WARNING,
 				       "uid failed for %s",
 				       ep->ex_dirp);
+		} else if (!strcmp(cpopt, "alldirs") || !strcmp(cpopt, "a")) {
+			*alldirflgp = 1;
 		} else
 			syslog(LOG_WARNING, "opt %s ignored for %s", cpopt,
 			       ep->ex_dirp);

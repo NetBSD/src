@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exports.5	5.2 (Berkeley) 5/10/91
-.\"	$Id: exports.5,v 1.4 1993/08/01 07:38:52 mycroft Exp $
+.\"	$Id: exports.5,v 1.5 1993/09/09 16:34:33 ws Exp $
 .\"
 .Dd May 10, 1991
 .Dt EXPORTS 5
@@ -83,12 +83,20 @@ is synonyms for
 .Fl ro
 in an effort to be backward compatible with older export file formats.
 .Pp
+.Fl alldirs
+specifies that all subdirectories of the given directory are exported.
+This is sometimes necessary, e.g. for PCNFS spool directories.
+The option
+.Fl a
+is synonym for
+.Fl alldirs.
+.Pp
 For example:
 .Bd -literal -offset indent
 /usr -root=0 rickers snowhite.cis.uoguelph.ca
 /usr/local 131.104.48.16
 /u -root=5
-/u2 -ro
+/u2 -ro -alldirs
 .Ed
 .Pp
 Given that
@@ -116,7 +124,8 @@ with root mapped to root.
 is exported to all hosts with root mapped to uid 5.
 .Pp
 .Sy /u2
-is exported to all hosts Read-only with root mapped to -2.
+is exported to all hosts Read-only with root mapped to -2. All subdirectories
+of /u2 may be mounted by remote hosts.
 .Ed
 .Pp
 Note that
