@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 1999/02/13 02:54:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.87 1999/02/16 03:37:26 cjs Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -117,5 +117,8 @@ build: beforeinstall
 	${MAKE} whatis.db
 	@echo -n "Build finished at: "
 	@date
+
+release snapshot: build
+	(cd ${.CURDIR}/etc && make INSTALL_DONE=1 release)
 
 .include <bsd.subdir.mk>
