@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.2 1999/11/11 20:23:16 thorpej Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.3 1999/11/13 21:17:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -27,6 +27,12 @@
  *
  *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
+
+#ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 
 #include "stand.h"
 
