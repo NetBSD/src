@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.5 1996/05/03 19:26:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.6 1998/06/11 22:26:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -84,7 +84,8 @@ dev_t linux_fakedev __P((dev_t));
  * ugly patch to fake device numbers.
  */
 #define LINUX_CONS_MAJOR   4
-#define NETBSD_CONS_MAJOR 12
+#define NETBSD_PCCONS_MAJOR 12
+#define NETBSD_WSCONS_MAJOR 47
 
 /*
  * Linux ioctl calls for the keyboard.
@@ -97,6 +98,9 @@ dev_t linux_fakedev __P((dev_t));
 #define LINUX_KDDISABIO   0x4b37
 #define LINUX_KDGETLED    0x4b31
 #define LINUX_KDSETLED    0x4b32
+#define LINUX_KDGKBTYPE   0x4B33
+#define LINUX_KDGKBENT    0x4B46
+
 /*
  * Mode for KDSKBMODE which we don't have (we just use plain mode for this)
  */
@@ -108,6 +112,7 @@ dev_t linux_fakedev __P((dev_t));
 #define LINUX_VT_OPENQRY    0x5600
 #define LINUX_VT_GETMODE    0x5601
 #define LINUX_VT_SETMODE    0x5602
+#define LINUX_VT_GETSTATE   0x5603
 #define LINUX_VT_RELDISP    0x5605
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
