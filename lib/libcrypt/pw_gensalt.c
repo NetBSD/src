@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.4 2005/01/12 03:32:52 christos Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.5 2005/01/12 05:27:48 christos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.4 2005/01/12 03:32:52 christos Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.5 2005/01/12 05:27:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -79,9 +79,9 @@ getnum(const char *str, size_t *num)
 		return 0;
 	}
 
-	rv = strtoul(next, &ep, 0);
+	rv = strtoul(str, &ep, 0);
 
-	if (next == ep || *ep) {
+	if (str == ep || *ep) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -175,6 +175,8 @@ __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 int
 pw_gensalt(char *salt, size_t saltlen, const char *type, const char *option)
 {
+	const struct pw_salt *sp;
+
 	for (sp = salts; sp->name; sp++)
 		if (strcmp(sp->name, type) == 0)
 			return (*sp->gensalt)(salt, saltlen, option);
