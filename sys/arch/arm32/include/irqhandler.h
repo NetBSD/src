@@ -1,7 +1,7 @@
-/* $NetBSD: irqhandler.h,v 1.1 1996/01/31 23:22:07 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.2 1996/03/06 23:22:56 mark Exp $ */
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * IRQ related stuff
  *
  * Created      : 30/09/94
- * Last updated : 01/07/95
- *
- *    $Id: irqhandler.h,v 1.1 1996/01/31 23:22:07 mark Exp $
  */
 
 #include <sys/types.h>
@@ -63,9 +60,9 @@ typedef struct irqhandler {
 
 /* Define the IRQ bits */
 
-#define IRQ_PRINTER	0x00
+/*#define IRQ_PRINTER	0x00*/
 #define IRQ_RESERVED0	0x01
-#define IRQ_FLOPPYIDX	0x02
+/*#define IRQ_FLOPPYIDX	0x02*/
 #define IRQ_FLYBACK	0x03
 #define IRQ_POR		0x04
 #define IRQ_TIMER0	0x05
@@ -73,10 +70,10 @@ typedef struct irqhandler {
 #define IRQ_RESERVED1	0x07
 
 #define IRQ_RESERVED2	0x08
-#define IRQ_HD		0x09
-#define IRQ_SERIAL	0x0A
+/*#define IRQ_HD		0x09*/
+/*#define IRQ_SERIAL	0x0A*/
 #define IRQ_EXTENDED	0x0B
-#define IRQ_FLOPPY	0x0C
+/*#define IRQ_FLOPPY	0x0C*/
 #define IRQ_PODULE	0x0D
 #define IRQ_KBDTX	0x0E
 #define IRQ_KBDRX	0x0F
@@ -103,8 +100,9 @@ typedef struct irqhandler {
 #define IRQ_NETSLOT	IRQ_EXTENDED
 
 #define IRQ_SOFTNET	IRQ_RESERVED0	/* Emulated */
-
 #define IRQMASK_SOFTNET	(1 << IRQ_SOFTNET)
+#define IRQ_SOFTCLOCK	IRQ_RESERVED1	/* Emulated */
+#define IRQMASK_SOFTCLOCK	(1 << IRQ_SOFTCLOCK)
 
 #define NIRQS		0x20
 
