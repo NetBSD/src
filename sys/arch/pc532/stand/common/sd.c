@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.3 2003/08/07 16:29:04 agc Exp $	*/
+/*	$NetBSD: sd.c,v 1.4 2003/12/06 13:09:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -80,14 +80,11 @@
  * SCSI CCS disk driver
  */
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+
+#include <machine/stdarg.h>
 
 #include <lib/libsa/stand.h>
 
@@ -108,8 +105,7 @@ int debug = SD_DEBUG;
 
 #define	SDRETRY		2
 
-sdinit(ctlr, unit)
-	int ctlr, unit;
+sdinit(int ctlr, int unit)
 {
 	struct sd_softc *ss = &sd_softc[ctlr][unit];
 
@@ -120,15 +116,14 @@ sdinit(ctlr, unit)
 	return (1);
 }
 
-sdreset(ctlr, unit)
-	int ctlr, unit;
+sdreset(int ctlr, int unit)
 {
+
 }
 
 char io_buf[MAXBSIZE];
 
-sdgetinfo(ss)
-	struct sd_softc *ss;
+sdgetinfo(struct sd_softc *ss)
 {
 	struct disklabel *lp;
 	char *msg, *getdisklabel();
@@ -147,7 +142,7 @@ sdgetinfo(ss)
 	    printf("sdgetinfo: sdstrategy error %d\n", err);
 	    return 0;
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
 		printf("sd(%d,%d,%d): %s\n",
@@ -158,24 +153,14 @@ sdgetinfo(ss)
 }
 
 int
-#if __STDC__
 sdopen(struct open_file *f, ...)
-#else
-sdopen(f, va_alist)
-	struct open_file *f;
-	va_dcl
-#endif
 {
 	struct sd_softc *ss;
 	struct disklabel *lp;
 	int ctlr, unit, part;
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, f);
-#else
-	va_start(ap);
-#endif
 	ctlr = va_arg(ap, int);
 	unit = va_arg(ap, int);
 	part = va_arg(ap, int);
@@ -209,8 +194,7 @@ sdopen(f, va_alist)
 	return (0);
 }
 
-sdclose(f)
-	struct open_file *f;
+sdclose(struct open_file *f)
 {
 	struct sd_softc *ss = f->f_devdata;
 
@@ -225,13 +209,8 @@ sdclose(f)
 }
 
 int
-sdstrategy(ss_vp, func, dblk, size, buf, rsize)
-	void *ss_vp;
-	int func;
-	daddr_t dblk;		/* block number */
-	u_int size;		/* request size in bytes */
-	void *buf;
-	u_int *rsize;		/* out: bytes transferred */
+sdstrategy(void *ss_vp, int func, daddr_t dblk, u_int size, void *buf,
+    u_int *rsize)
 {
 	struct sd_softc *ss = ss_vp;
 	int ctlr = ss->sc_ctlr;
@@ -266,6 +245,6 @@ retry:
 		goto retry;
 	}
 	*rsize = size;
-	
+
 	return(0);
 }
