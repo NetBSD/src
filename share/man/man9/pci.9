@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.3 2001/09/04 03:00:47 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.4 2001/09/10 20:13:17 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nm pci_conf_read ,
 .Nm pci_conf_write ,
 .Nm pci_conf_print ,
+.Nm pci_find_device ,
 .Nm pci_get_capability ,
 .Nm pci_mapreg_type ,
 .Nm pci_mapreg_map ,
@@ -72,6 +73,9 @@
 .Ft void
 .Fn pci_conf_print "pci_chipset_tag_t pc" "pcitag_t tag" \
 "void (*func)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)"
+.Ft int
+.Fn pci_find_device "struct pci_attach_args *pa" \
+"int (*func)(struct pci_attach_args *)"
 .Ft int
 .Fn pci_get_capability "pci_chipset_tag_t pc" "pcitag_t tag" \
 "int capid" "int *offsetp" "pcireg_t *valuep"
@@ -202,6 +206,20 @@ is a function called by
 to print the device-dependent registers.  This function is only useful
 for driver development and is usually wrapped in pre-processor
 declarations.
+.It Fn pci_find_device "pa" "func"
+Find a device using a match function on all probed busses.  The
+argument
+.Fa func
+is called by
+.Fn pci_find_device
+to match a device.  The argument
+.Fa pa
+is filled in if the device is matched.
+.Fn pci_find_device
+returns 1 if the device is matched, and zero otherwise.  This function
+is specifically for use by LKMs (see
+.Xr lkm 4 )
+and its use otherwise is strongly discouraged.
 .It Fn pci_get_capability "pc" "tag" "capid" "offsetp" "valuep"
 Parse the device capability list in configuration space looking for
 capability
@@ -454,7 +472,7 @@ file.  The database can be regenerated using the Makefile
 .Xr driver 9 ,
 .Xr pci_configure_bus 9 ,
 .Xr pci_intr 9 ,
-.Xr shutdownhook_establish 9 .
+.Xr shutdownhook_establish 9
 .Sh HISTORY
 The machine-independent PCI subsystem appeared in
 .Nx 1.2 .
