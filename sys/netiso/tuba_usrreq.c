@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.4 1995/06/13 07:58:26 mycroft Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.5 1995/06/13 08:11:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,8 +136,8 @@ tuba_usrreq(so, req, m, nam, control)
 			iso_pcbdetach(isop);
 		} else {
 			inp = sotoinpcb(so);
-			remque(inp);
-			insque(inp, &tuba_inpcb);
+			LIST_REMOVE(inp, inp_list);
+			LIST_INSERT_HEAD(&tuba_inpcb.inpt_list, inp, inp_list);
 			inp->inp_table = &tuba_inpcb;
 			tp = intotcpcb(inp);
 			if (tp == 0)
