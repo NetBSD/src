@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.8 1996/05/14 04:01:01 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.8.4.1 1996/06/01 03:40:58 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -77,6 +77,9 @@ extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
 extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
 extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
+
+extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
+					  /* InitEgret on AV machines */
 
 	/* Types */
 
