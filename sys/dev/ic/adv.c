@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.9 1998/12/09 08:47:17 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.10 1999/02/25 20:21:33 dante Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -60,8 +60,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
+#include <dev/ic/adv.h>
 
 #ifndef DDB
 #define	Debugger()	panic("should call debugger here (adv.c)")
@@ -232,7 +232,7 @@ adv_init_ccb(sc, ccb)
 	ASC_SOFTC      *sc;
 	ADV_CCB        *ccb;
 {
-	int             error;
+	int	hashnum, error;
 
 	/*
          * Create the DMA map for this CCB.
@@ -246,6 +246,17 @@ adv_init_ccb(sc, ccb)
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
+
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	ccb->hashkey = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    ADV_CCB_OFF(ccb);
+	hashnum = CCB_HASH(ccb->hashkey);
+	ccb->nexthash = sc->sc_ccbhash[hashnum];
+	sc->sc_ccbhash[hashnum] = ccb;
+
 	adv_reset_ccb(ccb);
 	return (0);
 }
@@ -286,6 +297,26 @@ adv_get_ccb(sc, flags)
 
 out:
 	splx(s);
+	return (ccb);
+}
+
+
+/*
+ * Given a physical address, find the ccb that it corresponds to.
+ */
+ADV_CCB *
+adv_ccb_phys_kv(sc, ccb_phys)
+	ASC_SOFTC	*sc;
+	u_long		ccb_phys;
+{
+	int hashnum = CCB_HASH(ccb_phys);
+	ADV_CCB *ccb = sc->sc_ccbhash[hashnum];
+
+	while (ccb) {
+		if (ccb->hashkey == ccb_phys)
+			break;
+		ccb = ccb->nexthash;
+	}
 	return (ccb);
 }
 
@@ -666,7 +697,8 @@ adv_scsi_cmd(xs)
          */
 	memset(&ccb->scsiq, 0, sizeof(ASC_SCSI_Q));
 
-	ccb->scsiq.q2.ccb_ptr = (ulong) ccb;
+	ccb->scsiq.q2.ccb_ptr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    ADV_CCB_OFF(ccb);
 
 	ccb->scsiq.cdbptr = &xs->cmd->opcode;
 	ccb->scsiq.q2.cdb_len = xs->cmdlen;
@@ -874,7 +906,7 @@ adv_timeout(arg)
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
-		AscAbortCCB(sc, (u_int32_t) ccb);
+		AscAbortCCB(sc, ccb);
 		ccb->xs->error = XS_TIMEOUT;
 		ccb->timeout = ADV_ABORT_TIMEOUT;
 		ccb->flags |= CCB_ABORT;
@@ -905,7 +937,7 @@ adv_watchdog(arg)
 
 
 /******************************************************************************/
-/*                  NARROW and WIDE boards Interrupt callbacks                */
+/*                      NARROW boards Interrupt callbacks                     */
 /******************************************************************************/
 
 
@@ -920,10 +952,13 @@ adv_narrow_isr_callback(sc, qdonep)
 	ASC_QDONE_INFO *qdonep;
 {
 	bus_dma_tag_t   dmat = sc->sc_dmat;
-	ADV_CCB        *ccb = (ADV_CCB *) qdonep->d2.ccb_ptr;
-	struct scsipi_xfer *xs = ccb->xs;
+	ADV_CCB        *ccb;
+	struct scsipi_xfer *xs;
 	struct scsipi_sense_data *s1, *s2;
 
+
+	ccb = adv_ccb_phys_kv(sc, qdonep->d2.ccb_ptr);
+	xs = ccb->xs;
 
 #ifdef ASC_DEBUG
 	printf(" - ccb=0x%lx, id=%d, lun=%d, cmd=%d, ",
