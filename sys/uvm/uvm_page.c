@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.95 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.96 2004/02/13 13:47:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.95 2004/02/13 11:36:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.96 2004/02/13 13:47:16 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -150,6 +150,7 @@ vaddr_t uvm_zerocheckkva;
  */
 
 static void uvm_pageinsert __P((struct vm_page *));
+static void uvm_pageinsert_after __P((struct vm_page *, struct vm_page *));
 static void uvm_pageremove __P((struct vm_page *));
 
 /*
@@ -158,6 +159,7 @@ static void uvm_pageremove __P((struct vm_page *));
 
 /*
  * uvm_pageinsert: insert a page in the object and the hash table
+ * uvm_pageinsert_after: insert a page into the specified place in listq
  *
  * => caller must lock object
  * => caller must lock page queues
@@ -166,13 +168,16 @@ static void uvm_pageremove __P((struct vm_page *));
  */
 
 __inline static void
-uvm_pageinsert(pg)
+uvm_pageinsert_after(pg, where)
 	struct vm_page *pg;
+	struct vm_page *where;
 {
 	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
 
 	KASSERT((pg->flags & PG_TABLED) == 0);
+	KASSERT(where == NULL || (where->flags & PG_TABLED));
+	KASSERT(where == NULL || (where->uobject == uobj));
 	buck = &uvm.page_hash[uvm_pagehash(uobj, pg->offset)];
 	simple_lock(&uvm.hashlock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
@@ -193,9 +198,20 @@ uvm_pageinsert(pg)
 		uvmexp.anonpages++;
 	}
 
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+	if (where)
+		TAILQ_INSERT_AFTER(&uobj->memq, where, pg, listq);
+	else
+		TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
+}
+
+__inline static void
+uvm_pageinsert(pg)
+	struct vm_page *pg;
+{
+
+	uvm_pageinsert_after(pg, NULL);
 }
 
 /*
@@ -1194,6 +1210,31 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
  fail:
 	uvm_unlock_fpageq(s);
 	return (NULL);
+}
+
+/*
+ * uvm_pagereplace: replace a page with another
+ *
+ * => object must be locked
+ */
+
+void
+uvm_pagereplace(oldpg, newpg)
+	struct vm_page *oldpg;
+	struct vm_page *newpg;
+{
+	
+	KASSERT((oldpg->flags & PG_TABLED) != 0);
+	KASSERT(oldpg->uobject != NULL);
+	KASSERT((newpg->flags & PG_TABLED) == 0);
+	KASSERT(newpg->uobject == NULL);
+	LOCK_ASSERT(simple_lock_held(&oldpg->uobject->vmobjlock));
+
+	newpg->uobject = oldpg->uobject;
+	newpg->offset = oldpg->offset;
+
+	uvm_pageinsert_after(newpg, oldpg);
+	uvm_pageremove(oldpg);
 }
 
 /*
