@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.6 2002/10/27 23:35:01 thorpej Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.7 2002/11/03 12:23:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -140,5 +140,3 @@ pthread__stackid_setup(void *base, int size)
 
 	return t;
 }
-
-
