@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.12 1999/12/23 06:26:08 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.13 1999/12/28 03:15:17 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -145,6 +145,11 @@ file arch/hpcmips/vr/vrpmu.c			vrpmu needs-flag
 device vrdsu
 attach vrdsu at vrip
 file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
+
+device vrpiu: wsmousedev
+attach vrpiu at vrip
+file arch/hpcmips/vr/vrpiu.c			vrpiu
+file arch/hpcmips/vr/mra.c			vrpiu
 
 #
 #	TOSHIBA TX3912/3922
