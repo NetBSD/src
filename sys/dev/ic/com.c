@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.44 1995/01/04 00:47:56 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.45 1995/01/11 09:56:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -795,7 +795,7 @@ comintr(sc)
 							kgdb_connect(0);
 					}
 #endif
-				} else
+				} else if (code & LSR_RXRDY)
 					comeint(sc, code);
 			}
 		} else if (code == IIR_TXRDY) {
