@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_copysign.S,v 1.3 1995/04/28 22:43:54 jtc Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.4 1995/05/08 23:53:02 jtc Exp $")
 
 ENTRY(copysign)
 	movl	16(%esp),%edx
