@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.2 2000/01/11 08:22:38 nisimura Exp $ */
+/* $NetBSD: disksubr.c,v 1.3 2000/01/18 19:43:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -56,8 +56,6 @@
 /* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkpart(dev)		(minor(dev) & 7)
 
-#define	b_cylin	b_resid
-
 #if LABELSECTOR != 0
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
@@ -103,7 +101,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -218,7 +216,7 @@ writedisklabel(dev, strat, lp, clp)
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
@@ -273,7 +271,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1999/09/27 17:02:44 wrstuden Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 2000/01/18 19:44:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -118,8 +118,6 @@
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
-
-#define	b_cylin	b_resid
 
 #define NUM_PARTS 32
 
@@ -311,7 +309,7 @@ read_mac_label(dev, strat, lp, osdep)
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -400,7 +398,7 @@ read_dos_label(dev, strat, lp, osdep)
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/* if successful, wander through dos partition table */
@@ -519,7 +517,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 1 / lp->d_secpercyl;
+	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
 	osdep->cd_start = -1;
