@@ -18,9 +18,10 @@
 #include <isc/dst.h>
 
 /* res_nsendsigned */
-int
-res_nsendsigned(res_state statp, double *msg, unsigned msglen,
-		ns_tsig_key *key, double *answer, unsigned anslen)
+isc_result_t
+res_nsendsigned(res_state statp,
+		double *msg, unsigned msglen, ns_tsig_key *key,
+		double *answer, unsigned anslen, unsigned *anssize)
 {
 	res_state nstatp;
 	DST_KEY *dstkey;
@@ -31,23 +32,20 @@ res_nsendsigned(res_state statp, double *msg, unsigned msglen,
 	u_char sig[64];
 	HEADER *hp;
 	time_t tsig_time;
-	int ret;
+	unsigned ret;
+	isc_result_t rcode;
 
 	dst_init();
 
 	nstatp = (res_state) malloc(sizeof(*statp));
-	if (nstatp == NULL) {
-		errno = ENOMEM;
-		return (-1);
-	}
+	if (nstatp == NULL)
+		return ISC_R_NOMEMORY;
 	memcpy(nstatp, statp, sizeof(*statp));
 
 	bufsize = msglen + 1024;
 	newmsg = (double *) malloc(bufsize);
-	if (newmsg == NULL) {
-		errno = ENOMEM;
-		return (-1);
-	}
+	if (newmsg == NULL)
+		return ISC_R_NOMEMORY;
 	memcpy(newmsg, msg, msglen);
 	newmsglen = msglen;
 
@@ -59,25 +57,20 @@ res_nsendsigned(res_state statp, double *msg, unsigned msglen,
 					   NS_KEY_PROT_ANY,
 					   key->data, key->len);
 	if (dstkey == NULL) {
-		errno = EINVAL;
 		free(nstatp);
 		free(newmsg);
-		return (-1);
+		return ISC_R_INVALIDARG;
 	}
 
 	nstatp->nscount = 1;
 	siglen = sizeof(sig);
-	ret = ns_sign((u_char *)newmsg, &newmsglen, bufsize,
-		      NOERROR, dstkey, NULL, 0,
-		      sig, &siglen, 0);
-	if (ret < 0) {
+	rcode = ns_sign((u_char *)newmsg, &newmsglen, bufsize,
+			NOERROR, dstkey, NULL, 0,
+			sig, &siglen, 0);
+	if (rcode != ISC_R_SUCCESS) {
 		free (nstatp);
 		free (newmsg);
-		if (ret == NS_TSIG_ERROR_NO_SPACE)
-			errno  = EMSGSIZE;
-		else if (ret == -1)
-			errno  = EINVAL;
-		return (ret);
+		return rcode;
 	}
 
 	if (newmsglen > PACKETSZ || (nstatp->options & RES_IGNTC))
@@ -89,27 +82,23 @@ res_nsendsigned(res_state statp, double *msg, unsigned msglen,
 
 retry:
 
-	ret = res_nsend(nstatp, newmsg, newmsglen, answer, anslen);
-	if (ret < 0) {
+	rcode = res_nsend(nstatp, newmsg, newmsglen, answer, anslen, &ret);
+	if (rcode != ISC_R_SUCCESS) {
 		free (nstatp);
 		free (newmsg);
-		return (ret);
+		return rcode;
 	}
 
 	anslen = ret;
-	ret = ns_verify((u_char *)answer, &anslen, dstkey, sig, siglen,
-			NULL, NULL, &tsig_time,
-			(nstatp->options & RES_KEEPTSIG) ? 1 : 0);
-	if (ret != 0) {
+	rcode = ns_verify((u_char *)answer, &anslen, dstkey, sig, siglen,
+			  NULL, NULL, &tsig_time,
+			  (nstatp->options & RES_KEEPTSIG) ? 1 : 0);
+	if (rcode != ISC_R_SUCCESS) {
 		Dprint(nstatp->pfcode & RES_PRF_REPLY,
 		       (stdout, ";; TSIG invalid (%s)\n", p_rcode(ret)));
 		free (nstatp);
 		free (newmsg);
-		if (ret == -1)
-			errno = EINVAL;
-		else
-			errno = ENOTTY;
-		return (-1);
+		return rcode;
 	}
 	Dprint(nstatp->pfcode & RES_PRF_REPLY, (stdout, ";; TSIG ok\n"));
 
@@ -122,5 +111,6 @@ retry:
 
 	free (nstatp);
 	free (newmsg);
-	return (anslen);
+	*anssize = anslen;
+	return ISC_R_SUCCESS;
 }
