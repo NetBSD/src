@@ -14,6 +14,7 @@ all:
 	@echo machine_cpu=\${MACHINE_CPU}
 	@echo object_fmt=\${OBJECT_FMT}
 	@echo toolchain_missing=\${TOOLCHAIN_MISSING}
+	@echo use_tools_toolchain=\${USE_TOOLS_TOOLCHAIN}
 .if defined(USE_XF86_4) && (\${USE_XF86_4} != no)
 	@echo x11_version=4
 .else

@@ -18,6 +18,7 @@
 # 	lkm
 # 	lintlibs
 # 	toolchain_missing
+#	use_tools_toolchain
 #
 list_set_files () {
 	for setname; do
@@ -41,7 +42,7 @@ list_set_files () {
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.1 2003/06/23 09:02:32 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.2 2003/08/04 05:53:20 mrg Exp $
 # 	.			base-sys-root
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -64,6 +65,7 @@ list_set_files () {
 # 	lkm
 # 	lintlibs
 # 	toolchain_missing
+#	use_tools_toolchain
 #
 list_set_lists () {
 	setname=$1
@@ -113,12 +115,23 @@ list_set_lists () {
 		fi
 	fi
 	if [ "$toolchain_missing" != "yes" ]; then
-		if [ -f $setd/lists/$setname/tc.mi ]; then
-			echo $setd/lists/$setname/tc.mi
-		fi
-		if [ "$shlib" != "no" ]; then
-			if [ -f $setd/lists/$setname/tc.shl ]; then
-				echo $setd/lists/$setname/tc.shl
+		if [ "$use_tools_toolchain" != "yes" ]; then
+			if [ -f $setd/lists/$setname/gcc.mi ]; then
+				echo $setd/lists/$setname/gcc.mi
+			fi
+			if [ "$shlib" != "no" ]; then
+				if [ -f $setd/lists/$setname/gcc.shl ]; then
+					echo $setd/lists/$setname/gcc.shl
+				fi
+			fi
+		else
+			if [ -f $setd/lists/$setname/tc.mi ]; then
+				echo $setd/lists/$setname/tc.mi
+			fi
+			if [ "$shlib" != "no" ]; then
+				if [ -f $setd/lists/$setname/tc.shl ]; then
+					echo $setd/lists/$setname/tc.shl
+				fi
 			fi
 		fi
 	fi
