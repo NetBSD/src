@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.11 1998/10/25 23:48:29 scottr Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.12 1998/10/26 04:42:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -56,18 +56,18 @@
 #ifdef NCR5380_USE_BUS_SPACE
 # include <machine/bus.h>
 /* bus_space() variety */
-# define NCR5380_READ(reg)		bus_space_read_1(sc->sc_regt, \
+# define NCR5380_READ(sc, reg)		bus_space_read_1(sc->sc_regt, \
 					    sc->sc_regh, sc->reg)
-# define NCR5380_WRITE(reg, val)	bus_space_write_1(sc->sc_regt, \
+# define NCR5380_WRITE(sc, reg, val)	bus_space_write_1(sc->sc_regt, \
 					    sc->sc_regh, sc->reg, val)
 #else
 /* legacy memory-mapped variety */
-# define NCR5380_READ(reg)		(*sc->reg)
-# define NCR5380_WRITE(reg, val)	do { *(sc->reg) = val; } while (0)
+# define NCR5380_READ(sc, reg)		(*sc->reg)
+# define NCR5380_WRITE(sc, reg, val)	do { *(sc->reg) = val; } while (0)
 #endif
 
-#define SCI_CLR_INTR(sc)	NCR5380_READ(sci_iack)
-#define	SCI_BUSY(sc)		(NCR5380_READ(sci_bus_csr) & SCI_BUS_BSY)
+#define SCI_CLR_INTR(sc)	NCR5380_READ(sc, sci_iack)
+#define	SCI_BUSY(sc)		(NCR5380_READ(sc, sci_bus_csr) & SCI_BUS_BSY)
 
 /* These are NOT artibtrary, but map to bits in sci_tcmd */
 #define PHASE_DATA_OUT	0x0
