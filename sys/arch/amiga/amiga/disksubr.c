@@ -14,63 +14,23 @@
  * Returns null on success and an error string on failure.
  */
 char *
-cpu_readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-#ifdef amiga
 	/* I don't want BSD to fiddle with the RDBs, let the user use
 	   HDToolbox under AmigaDOS to partition disk drives. */
 	return "partition drive under AmigaDOS";
-#else
-	register struct buf *bp;
-	struct disklabel *dlp;
-	char *msg = NULL;
-
-	if (lp->d_secperunit == 0)
-		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
-
-	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
-	(*strat)(bp);
-	if (biowait(bp)) {
-		msg = "I/O error";
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-			if (msg == NULL)
-				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
-			msg = "disk label corrupted";
-		else {
-			*lp = *dlp;
-			msg = NULL;
-			break;
-		}
-	}
-	bp->b_flags = B_INVAL | B_AGE;
-	brelse(bp);
-	return (msg);
-#endif
 }
 
 /*
  * Check new disk label for sensibility
  * before setting it.
  */
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+int
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -115,51 +75,12 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
-cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-#ifdef amiga
 	return EINVAL;
-#else
-	struct buf *bp;
-	struct disklabel *dlp;
-	int labelpart;
-	int error = 0;
-
-	labelpart = dkpart(dev);
-	if (lp->d_partitions[labelpart].p_offset != 0) {
-		if (lp->d_partitions[0].p_offset != 0)
-			return (EXDEV);			/* not quite right */
-		labelpart = 0;
-	}
-	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = makedev(major(dev), dkminor(dkunit(dev), labelpart));
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
-	(*strat)(bp);
-	if (error = biowait(bp))
-		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-		    dkcksum(dlp) == 0) {
-			*dlp = *lp;
-			bp->b_flags = B_WRITE;
-			(*strat)(bp);
-			error = biowait(bp);
-			goto done;
-		}
-	}
-	error = ESRCH;
-done:
-	brelse(bp);
-	return (error);
-#endif
 }
 

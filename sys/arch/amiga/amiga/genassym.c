@@ -133,12 +133,15 @@ main()
 	printf("#define\tSPL5 %d\n", PSL_S | PSL_IPL5);
 	printf("#define\tSPL6 %d\n", PSL_S | PSL_IPL6);
 	printf("#define\tFC_USERD %d\n", FC_USERD);
+	printf("#define\tFC_SUPERD %d\n", FC_SUPERD);
 	printf("#define\tMAXADDR %d\n", MAXADDR);
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
 	printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
 	printf("#define\tDC_CLEAR %d\n", DC_CLEAR);
+	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
+	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
 	printf("#define\tPG_V %d\n", PG_V);
 	printf("#define\tPG_NV %d\n", PG_NV);
 	printf("#define\tPG_RO %d\n", PG_RO);
@@ -151,6 +154,7 @@ main()
 	printf("#define\tSG_RW %d\n", SG_RW);
 	printf("#define\tSG_FRAME %d\n", SG_FRAME);
 	printf("#define\tSG_ISHIFT %d\n", SG_ISHIFT);
+	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
 	printf("#define\tPCB_PS %d\n", &pcb->pcb_ps);
 	printf("#define\tPCB_USTP %d\n", &pcb->pcb_ustp);
@@ -169,5 +173,6 @@ main()
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
 	printf("#define\tCIAICR %d\n", &cia->icr);
+	printf("#define\tAMIGA_68040 %d\n", AMIGA_68040);
 	exit(0);
 }

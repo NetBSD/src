@@ -143,7 +143,11 @@ configure()
 
 #define same_hw_ctlr(hw, ac) \
 	(HW_ISFLOPPY(hw) && dr_type((ac)->amiga_driver, "floppy") || \
-	 HW_ISSCSI(hw) && (dr_type((ac)->amiga_driver, "a3000scsi")||dr_type((ac)->amiga_driver, "a2091scsi")||dr_type((ac)->amiga_driver, "GVPIIscsi")))
+	 HW_ISSCSI(hw) && (dr_type((ac)->amiga_driver, "a3000scsi") \
+	 || dr_type((ac)->amiga_driver, "a2091scsi") \
+	 || dr_type((ac)->amiga_driver, "GVPIIscsi") \
+	 || dr_type((ac)->amiga_driver, "Zeusscsi") \
+	 || dr_type((ac)->amiga_driver, "Magnumscsi")))
 
 find_controller(hw)
 	register struct amiga_hw *hw;
@@ -314,7 +318,11 @@ find_slaves(ac)
 {
 	if (dr_type(ac->amiga_driver, "floppy"))
 		find_busslaves(ac, 4);
-	else if (dr_type(ac->amiga_driver, "a3000scsi")||dr_type(ac->amiga_driver, "a2091scsi")||dr_type(ac->amiga_driver, "GVPIIscsi"))
+	else if (dr_type(ac->amiga_driver, "a3000scsi")
+            || dr_type(ac->amiga_driver, "a2091scsi")
+	    || dr_type(ac->amiga_driver, "GVPIIscsi")
+	    || dr_type(ac->amiga_driver, "Zeusscsi")
+	    || dr_type(ac->amiga_driver, "Magnumscsi"))
 		find_busslaves(ac, 7);
 }
 
@@ -506,7 +514,9 @@ same_hw_device(hw, ad)
 	case C_SCSI:
 		found = (dr_type(ad->amiga_driver, "a3000scsi")
 			 || dr_type(ad->amiga_driver, "a2091scsi")
-			 || dr_type(ad->amiga_driver, "GVPIIscsi"));
+			 || dr_type(ad->amiga_driver, "GVPIIscsi")
+			 || dr_type(ad->amiga_driver, "Zeusscsi")
+			 || dr_type(ad->amiga_driver, "Magnumscsi"));
 		break;
 	case D_BITMAP:
 		found = dr_type(ad->amiga_driver, "grf");
@@ -555,7 +565,22 @@ find_devs()
   
   /* first enter builtin devices */
   
-  if (is_a3000 ())
+  if (is_a4000 ())
+    {
+      /* The A4000 appears to use the same realtime clock as the A3000.
+         Add the IDE controller when that information becomes available.
+	 */
+  
+      hw->hw_pa	      	  = 0xdc0000;
+      hw->hw_size	  = NBPG;
+      hw->hw_kva	  = zorro2map (0xdc0000);
+      hw->hw_manufacturer = MANUF_BUILTIN;
+      hw->hw_product      = PROD_BUILTIN_CLOCK;
+      hw->hw_type	  = B_BUILTIN | D_CLOCK;
+      hw->hw_serno	  = 0;
+      hw++;
+    }
+  else if (is_a3000 ())
     {
       /* hm, this doesn't belong here... */
       volatile u_char *magic_reset_reg = zorro2map (0xde0002);
@@ -728,7 +753,14 @@ find_devs()
 	  switch (hw->hw_product)
 	    {
 	    case PROD_GVP_SERIES_II:
-	      hw->hw_type = B_ZORROII | C_SCSI;
+	      /* Kludge for I/O extender:
+		 if er_notused != 0, it's a SCSI controller
+		 if er_notused == 0, it's either an I/O extender or might
+		 possibly be a SCSI controller with autoboot disabled */
+	      if (cd->cd_Rom.er_notused)
+	        hw->hw_type = B_ZORROII | C_SCSI;
+	      else
+		hw->hw_type = B_ZORROII | D_COMMSER;
 	      break;
 
 	    case PROD_GVP_IV24:
@@ -740,7 +772,30 @@ find_devs()
 	    }
 	  break;
 
-            
+	case MANUF_PPI:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_PPI_ZEUS:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
+	case MANUF_CSA:
+	  switch (hw->hw_product)
+	    {
+	    case PROD_CSA_MAGNUM:
+	      hw->hw_type = B_ZORROII | C_SCSI;
+	      break;
+
+	    default:
+	      continue;
+	    }
+	  break;
+
         default:
           continue;
 	}
@@ -880,6 +935,7 @@ static	char devname[][2] = {
 	'r','d',	/* 2 = rd */
 	0,0,		/* 3 = sw */
 	's','d',	/* 4 = sd */
+	'r','z',	/* 5 = sz */
 };
 
 #define	PARTITIONMASK	0x7
@@ -1027,12 +1083,52 @@ found_it:
 /* try to determine, of this machine is an A3000, which has a builtin
    realtime clock and scsi controller, so that this hardware is only
    included as "configured" if this IS an A3000  */
+
+int a3000_flag = 1;		/* patchable */
+#ifdef A4000
+int a4000_flag = 1;		/* patchable - default to A4000 */
+#else
+int a4000_flag = 0;		/* patchable */
+#endif
+
 int
 is_a3000 ()
 {
   /* this is a dirty kludge.. but how do you do this RIGHT ? :-) */
   extern long orig_fastram_start;
+  short sc;
+  extern int num_ConfigDev;
+  extern struct ConfigDev *ConfigDev;
+  struct ConfigDev *cd;
 
   /* where is fastram on the A4000 ?? */
-  return orig_fastram_start >= 0x07000000;
+  /* if fastram is below 0x07000000, assume it's not an A3000 */
+  if (orig_fastram_start < 0x07000000)
+    return (0);
+
+  /* OK, fastram starts at or above 0x07000000, check specific machines */
+  for (sc = 0, cd = ConfigDev; sc < num_ConfigDev; sc++, cd++) {
+    switch (cd->cd_Rom.er_Manufacturer) {
+    case MANUF_PPI:			/* Progressive Peripherals, Inc */
+      switch (cd->cd_Rom.er_Product) {
+#if 0
+      case PROD_PPI_MECURY:		/* PPI Mecury - it's an A3000 */
+        return (1);
+      case PROD_PPI_2000:
+      case PROD_PPI_500:
+#endif
+      case PROD_PPI_ZEUS:
+        return (0);
+      }
+    }
+  }
+  /* assume it's an A3000 */
+  return (a3000_flag);
+}
+
+int
+is_a4000 ()
+{
+  /* This is a real dirty kludge.. */
+  return (a4000_flag);
 }

@@ -40,6 +40,8 @@
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
  */
 
+#ifndef _PTE_H
+#define _PTE_H
 /*
  * AMIGA hardware segment/page table entries
  */
@@ -58,7 +60,7 @@ struct pte {
 	unsigned int	pg_w:1;		/* is wired */
 	unsigned int	:1;		/* reserved at zero */
 	unsigned int	pg_ci:1;	/* cache inhibit bit */
-	unsigned int	:1;		/* reserved at zero */
+	unsigned int	pg_cm1:1;	/* cache mode, lsb (68040) */
 	unsigned int	pg_m:1;		/* hardware modified (dirty) bit */
 	unsigned int	pg_u:1;		/* hardware used (reference) bit */
 	unsigned int	pg_prot:1;	/* write protect bit */
@@ -77,6 +79,12 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	SG_RO		0x00000004
 #define	SG_RW		0x00000000
 #define	SG_FRAME	0xffffe000
+#define SG_IMASK1	0xfe000000
+#define SG_IMASK2	0x01fc0000
+#define SG_040IMASK	0xfffc0000
+#define SG_040PMASK	0x0003e000
+#define SG_ISHIFT1	25
+#define SG_040ISHIFT	18
 #define SG_IMASK	0xff000000
 #define SG_PMASK	0x00ffe000
 #define SG_ISHIFT	24
@@ -92,10 +100,15 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	PG_RO		0x00000004
 #define	PG_RW		0x00000000
 #define	PG_CI		0x00000040
+#define PG_CC		0x00000020	/* Cachable, copyback */
+#define PG_CIN		0x00000060	/* Cache inhibited, nonserialized */
 #define PG_FRAME	0xffffe000
 #define PG_SHIFT	13
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
+#define AMIGA_040RTSIZE		512		/* root (level 1) table size */
+#define AMIGA_040STSIZE		512		/* segment (level 2) table size */
+#define	AMIGA_040PTSIZE		128		/* page (level 3) table size */
 #define AMIGA_STSIZE		1024		/* segment table size */
 #define AMIGA_MAX_PTSIZE	(2*1024*1024)	/* max size of UPT */
 /* XXX probably have to reduce this to 512k */
@@ -113,3 +126,5 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
+
+#endif /* _PTE_H */

@@ -64,10 +64,6 @@
 #include "vm/pmap.h"
 #include "vmmeter.h"
 
-#ifdef HPUXCOMPAT
-#include "../hpux/hpux.h"
-#endif
-
 #ifdef COMPAT_SUNOS
 #include "../../sunos/sun_syscall.h"
 #endif
@@ -95,7 +91,7 @@ char	*trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-#define	TRAP_TYPES	(sizeof trap_type / sizeof trap_type[0])
+int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -104,9 +100,9 @@ short	exframesize[] = {
 	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
 	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	-1,		/* type 3 - FP post-instruction (68040) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
 	-1, -1, -1,	/* type 4-6 - undefined */
-	-1,		/* type 7 - access error (68040) */
+	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
 	FMTASIZE,	/* type A - short bus fault (68020/030) */
@@ -117,6 +113,8 @@ short	exframesize[] = {
 #ifdef DEBUG
 int mmudebug = 0;
 #endif
+
+extern struct pcb *curpcb;
 
 /*
  * Trap is called from locore to handle most types of processor traps,
@@ -144,6 +142,14 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		p->p_regs = frame.f_regs;
 	}
+
+#ifdef DDB
+	if (type == T_TRACE || type == T_BREAKPOINT) {
+		if (kdb_trap(type, &frame))
+			return;
+	}
+#endif
+
 	switch (type) {
 
 	default:
@@ -154,7 +160,8 @@ dopanic:
 		    regdump(frame.f_regs, 128);
 		  }
 		type &= ~T_USER;
-		if ((unsigned)type < TRAP_TYPES)
+DCIS(); /* push cache */
+		if ((unsigned)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
@@ -221,56 +228,22 @@ copyfault:
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
-			ucode = HPUX_ILL_ILLINST_TRAP;
-			i = SIGILL;
-			break;
-		}
-		/* fall through */
-#endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
-			ucode = HPUX_ILL_PRIV_TRAP;
-		else
-#endif
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		i = SIGILL;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
-			ucode = HPUX_FPE_INTDIV_TRAP;
-		else
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
 		i = SIGFPE;
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_CHK_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
 		i = SIGFPE;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
-			/* handled differently under hp-ux */
-			i = SIGILL;
-			ucode = HPUX_ILL_TRAPV_TRAP;
-			break;
-		}
-#endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
 		i = SIGFPE;
 		break;
@@ -298,7 +271,7 @@ copyfault:
 #ifdef COMPAT_SUNOS
 		/* SunOS seems to use Trap #2 for some obscure fpu operations.
 		   So far, just ignore it, but DONT trap on it.. */
-		if (p->p_md.md_emul == MDPE_SUNOS)
+		if (p->p_emul == EMUL_SUNOS)
 		  goto out;
 #endif
 		frame.f_sr &= ~PSL_T;
@@ -371,13 +344,29 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
+#ifdef DEBUG
+		/*
+		 * Print out some data about the fault
+		 */
+		if (mmudebug && cpu040) {
+			printf ("68040 access error: pc %x, code %x, ea %x, fa %x\n",
+			    frame.f_pc, code, frame.f_fmt7.f_ea, v);
+			if (curpcb)
+			    printf (" curpcb %x ->pcb_ustp %x / %x\n", curpcb,
+				curpcb->pcb_ustp, curpcb->pcb_ustp << PG_SHIFT);
+		}
+#endif
 		if (type == T_MMUFLT &&
 		    (!p->p_addr->u_pcb.pcb_onfault ||
-		     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD)))
+		     (cpu040 && (code & SSW_TMMASK) == FC_SUPERD) ||
+		     (!cpu040 && (code & (SSW_DF|FC_SUPERD)) ==
+		     (SSW_DF|FC_SUPERD))))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if ((code & (SSW_DF|SSW_RW)) == SSW_DF)	/* what about RMW? */
+		if ((cpu040 && (code & SSW_RW040) == 0) ||
+		    (!cpu040 && (code & (SSW_DF|SSW_RW)) ==
+		    SSW_DF))	/* what about RMW? */
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
@@ -403,8 +392,72 @@ copyfault:
 		}
 #endif
 
+#ifdef DEBUG
+if (mmudebug)
+  printf("vm_fault(%x,%x,%d,0)\n", map, va, ftype);
+#endif
 		rv = vm_fault(map, va, ftype, FALSE);
-/*printf("vmfault %s %x returned %d\n", map == kernel_map ? "kernel" : "user", va, rv);*/
+#ifdef DEBUG
+if (mmudebug)
+  printf("vmfault %s %x returned %d\n", map == kernel_map ? "kernel" : "user", va, rv);
+#endif
+
+		if (cpu040) {
+			if(rv != KERN_SUCCESS) {
+				goto nogo;
+			}
+
+
+		/* Okay folks, here's the deal.  The 68040 doesn't re-run instructions
+		   that cause write page faults (unless due to a move16 isntruction).
+		   So once the page is repaired, we have to write the value of WB2D
+		   out to memory ourselves.  Because the writeback could possibly span
+		   two pages in memory, so we need to check both "ends" of the address
+		   to see if they are in the same page or not.  If not, then we need
+		   to make sure the second page is valid, and bring it into memory if
+		   it's not.
+
+		   This whole process needs to be repeated for WB3 as well. <sigh> */
+
+			/* WB1 Valid? */
+			if (frame.f_fmt7.f_wb1s & WBS_VALID)
+			{
+			    /* Panic for now */
+			    printf ("trap: wb1 was valid, but I'm not ready to do it\n");
+			    goto dopanic;
+			}
+
+	                /* WB2 Valid? */
+			if(frame.f_fmt7.f_wb2s & WBS_VALID &&
+			  /* We can skip WB2 if it's for a move16 instruction */
+			  !((frame.f_fmt7.f_wb2s & WBS_TTMASK) == WBS_TT_MOVE16))
+			{
+			    if (_write_back (2, frame.f_fmt7.f_wb2s, frame.f_fmt7.f_wb2d,
+			      frame.f_fmt7.f_wb2a, map) != KERN_SUCCESS)
+				goto nogo;
+			    if ((frame.f_fmt7.f_wb2s & WBS_TMMASK) != (code & SSW_TMMASK))
+				goto dopanic;
+			}
+
+	                /* WB3 Valid? */
+			if(frame.f_fmt7.f_wb3s & WBS_VALID)
+			{
+			    vm_map_t wb3_map;
+
+			    if ((frame.f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
+				wb3_map = kernel_map;
+			    else
+				wb3_map = &vm->vm_map;
+			    if (_write_back (3, frame.f_fmt7.f_wb3s, frame.f_fmt7.f_wb3d,
+			      frame.f_fmt7.f_wb3a, wb3_map) != KERN_SUCCESS)
+				goto nogo;
+#ifdef DEBUG
+			    if (mmudebug & 2)
+				goto dopanic;
+#endif
+			}
+		}
+
 #ifdef no_386bsd_code
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -454,7 +507,12 @@ nogo:
 		break;
 	    }
 	}
-printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i, ucode, v, frame.f_regs[PC]);
+if (i != SIGTRAP)
+  printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i, ucode, v, frame.f_regs[PC]);
+#ifdef DEBUG
+if (mmudebug & 2)	/* Panic if bit 1 of mmudebug set */
+  goto dopanic;
+#endif
 	trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
@@ -523,10 +581,11 @@ syscall(code, frame)
 		panic("syscall");
 	p->p_regs = frame.f_regs;
 	opc = frame.f_pc - 2;
-	switch (p->p_md.md_emul)
+	p->p_md.md_flags &= ~MDP_STACKADJ;
+	switch (p->p_emul)
 	  {
 #ifdef COMPAT_SUNOS
-	  case MDPE_SUNOS:
+	  case EMUL_SUNOS:
 	    systab = sun_sysent;
 	    numsys = nsun_sysent;
 
@@ -549,7 +608,7 @@ syscall(code, frame)
 	    break;
 #endif
 
-	  case MDPE_NETBSD:
+	  case EMUL_NETBSD:
 	  default:
 	    systab = sysent;
 	    numsys = nsysent;
@@ -582,7 +641,7 @@ syscall(code, frame)
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
 #if 0
-if (p->p_md.md_emul == MDPE_SUNOS)
+if (p->p_emul == EMUL_SUNOS)
   {
     int arg;
     extern char *sun_syscallnames[];
@@ -591,7 +650,7 @@ if (p->p_md.md_emul == MDPE_SUNOS)
 #endif
 	error = (*callp->sy_call)(p, &args, rval);
 #if 0
-if (p->p_md.md_emul == MDPE_SUNOS)
+if (p->p_emul == EMUL_SUNOS)
   {
     int arg;
     extern char *sun_syscallnames[];
@@ -671,4 +730,137 @@ done:
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
+}
+
+/*
+ * Process a pending write back
+ */
+
+_write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
+u_int wb;	/* writeback type: 1, 2, or 3 */
+u_int wb_sts;	/* writeback status information */
+u_int wb_data;	/* data to writeback */
+u_int wb_addr;	/* address to writeback to */
+vm_map_t wb_map;
+{
+	u_int wb_extra_page = 0;
+	u_int wb_rc, mmusr;
+	void _wb_fault ();	/* fault handler for write back */
+
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb%d valid: %x %x %x\n",wb,wb_sts,wb_addr,wb_data);
+#endif
+
+	/* See if we're going to span two pages (for word or long transfers) */
+
+	if((wb_sts & WBS_SZMASK) == WBS_SIZE_WORD)
+		if(trunc_page((vm_offset_t)wb_addr) !=
+		    trunc_page((vm_offset_t)wb_addr+1))
+			wb_extra_page = 1;
+
+	if((wb_sts & WBS_SZMASK) == WBS_SIZE_LONG)
+		if(trunc_page((vm_offset_t)wb_addr) !=
+		    trunc_page((vm_offset_t)wb_addr+3))
+			wb_extra_page = 3;
+
+	/*
+	 * if it's writeback 3, we need to check the first page
+	 */
+	if (wb == 3) {
+
+		mmusr = probeva(wb_addr, wb_sts & WBS_TMMASK);
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb3: probeva(%x,%x) = %x\n",wb_addr+wb_extra_page,wb_sts & WBS_TMMASK,mmusr);
+#endif
+
+		if(!(mmusr & MMUSR_R)) {
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb3: need to bring in first page\n");
+#endif
+			wb_rc = vm_fault(wb_map, trunc_page((vm_offset_t)wb_addr), VM_PROT_READ | VM_PROT_WRITE, FALSE);
+
+			if(wb_rc != KERN_SUCCESS)
+				return (wb_rc);
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb3: first page brought in.\n");
+#endif
+		}
+	}
+
+	/*
+	 * now check to see if a second page is required
+	 */
+	if(wb_extra_page) {
+
+		mmusr = probeva(wb_addr+wb_extra_page, wb_sts & WBS_TMMASK);
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb%d: probeva %x %x = %x\n",wb,wb_addr+wb_extra_page,wb_sts & WBS_TMMASK,mmusr);
+#endif
+
+		if(!(mmusr & MMUSR_R)) {
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb%d: page boundary crossed.  Bringing in extra page.\n",wb);
+#endif
+
+			wb_rc = vm_fault(wb_map, trunc_page((vm_offset_t)wb_addr+wb_extra_page),VM_PROT_READ | VM_PROT_WRITE,FALSE);
+
+			if(wb_rc != KERN_SUCCESS)
+				return (wb_rc);
+		}
+#ifdef DEBUG
+if (mmudebug)
+  printf("wb%d: extra page brought in okay.\n", wb);
+#endif
+	}
+
+	/* Actually do the write now */
+
+	if ((wb_sts & WBS_TMMASK) == FC_USERD &&
+	    !curpcb->pcb_onfault) {
+	    	curpcb->pcb_onfault = (caddr_t) _wb_fault;
+	}
+
+	switch(wb_sts & WBS_SZMASK) {
+
+	case WBS_SIZE_BYTE :
+		asm volatile ("movec %0,dfc ; movesb %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+								 "d" (wb_data),
+								 "a" (wb_addr));
+		break;
+
+	case WBS_SIZE_WORD :
+		asm volatile ("movec %0,dfc ; movesw %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+								 "d" (wb_data),
+								 "a" (wb_addr));
+		break;
+
+	case WBS_SIZE_LONG :
+		asm volatile ("movec %0,dfc ; movesl %1,%2@" : : "d" (wb_sts & WBS_TMMASK),
+								 "d" (wb_data),
+								 "a" (wb_addr));
+		break;
+
+	}
+	if (curpcb->pcb_onfault == (caddr_t) _wb_fault)
+		curpcb->pcb_onfault = NULL;
+	if ((wb_sts & WBS_TMMASK) != FC_USERD)
+		asm volatile ("movec %0,dfc\n" : : "d" (FC_USERD));
+	return (KERN_SUCCESS);
+}
+
+/*
+ * fault handler for write back
+ */
+void _wb_fault()
+{
+#ifdef DEBUG
+	printf ("trap: writeback fault\n");
+#endif
+	return;
 }
