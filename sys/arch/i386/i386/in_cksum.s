@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.6 1996/10/13 16:53:31 christos Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.7 1997/04/24 05:46:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -113,7 +113,7 @@ mbuf_loop_2:
 1:
 	subl	%edx, %esi
 
-	cmpl	$16, %edx
+	cmpl	$32, %edx
 	jb	short_mbuf
 
 	testb	$3, %bl
@@ -215,6 +215,7 @@ loop_32:
 	jnb	loop_32
 
 finished_32:
+short_mbuf:
 	testb	$16, %dl
 	jz	finished_16
 
@@ -226,7 +227,6 @@ finished_32:
 	MOP
 
 finished_16:
-short_mbuf:
 	testb	$8, %dl
 	jz	finished_8
 
