@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.50 2003/12/30 00:15:46 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.51 2004/01/01 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.50 2003/12/30 00:15:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.51 2004/01/01 22:48:54 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,8 @@ mach_port_destroy(args)
 	mn = req->req_name;
 	if ((mr = mach_right_check(mn, 
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) != NULL) { 
-		mr->mr_refcount = 0; /* Make sure it will be kicked away */	
+		MACH_PORT_UNREF(mr->mr_port);
+		mr->mr_port = NULL;
 		mach_right_put(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	}
 
@@ -632,11 +633,12 @@ mach_port_put(mp)
 {
 	struct mach_message *mm;
 
-	printf("port_put: %p\n", mp);
+#ifdef DIAGNOSTIC
 	if (mp->mp_refcount > 0) {
 		uprintf("mach_port_put: trying to free a referenced port\n");
 		return;
 	}
+#endif
 
 	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
 	while ((mm = TAILQ_FIRST(&mp->mp_msglist)) != NULL)
@@ -669,6 +671,9 @@ mach_right_get(mp, l, type, hint)
 #endif
 	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
 
+	if (mp != NULL)
+		MACH_PORT_REF(mp);
+
 	/* Send and receive right must return an existing right */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE);
 	if (type & rights) {
@@ -699,9 +704,6 @@ mach_right_get(mp, l, type, hint)
 	mr->mr_notify_no_senders = NULL;
 
 	LIST_INIT(&mr->mr_set);
-
-	if (mp != NULL)
-		mp->mp_refcount++;
 
 	/* Insert the right in the right lists */
 	if (type & MACH_PORT_TYPE_ALL_RIGHTS) {
@@ -810,9 +812,7 @@ mach_right_put_exclocked(mr, right)
 #endif
 			mr->mr_port->mp_recv = NULL;
 
-			mr->mr_port->mp_refcount--;
-			if (mr->mr_port->mp_refcount <= 0)
-				mach_port_put(mr->mr_port);
+			MACH_PORT_UNREF(mr->mr_port);
 			mr->mr_port = NULL;
 		}
 	}
