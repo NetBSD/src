@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	5.15 (Berkeley) 9/27/90";*/
-static char rcsid[] = "$Id: edquota.c,v 1.3 1994/03/30 02:28:43 cgd Exp $";
+static char rcsid[] = "$Id: edquota.c,v 1.4 1994/06/13 20:49:42 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -52,7 +52,7 @@ static char rcsid[] = "$Id: edquota.c,v 1.3 1994/03/30 02:28:43 cgd Exp $";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/wait.h>
-#include <ufs/quota.h>
+#include <ufs/ufs/quota.h>
 #include <errno.h>
 #include <fstab.h>
 #include <pwd.h>
