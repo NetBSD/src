@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.139 2001/05/15 14:03:27 lukem Exp $ */
+/*	$NetBSD: st.c,v 1.140 2001/05/30 20:28:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1710,7 +1710,7 @@ st_cmprss(st, onoff)
 	struct scsi_tape_dev_conf_page *ptr;
 	struct scsi_tape_dev_compression_page *cptr;
 	struct scsipi_periph *periph = st->sc_periph;
-	int error, ison, flags;
+	int error, ison, flags = 0;
 
 	scsi_dlen = sizeof(scsi_pdata);
 
