@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.24 1995/10/05 05:55:09 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.25 1995/12/27 06:30:38 mycroft Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -86,10 +86,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-
-#ifdef i386
-#include <machine/psl.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -202,18 +198,6 @@ pppattach()
 	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
 #endif
     }
-
-#ifdef i386
-    /*
-     * XXX kludge to fix the bug in the i386 interrupt handling code,
-     * where software interrupts could be taken while hardware
-     * interrupts were blocked.
-     */
-    if ((imask[IPL_TTY] & SIR_NETMASK) == 0) {
-	imask[IPL_TTY] |= SIR_NETMASK;
-	intr_calculatemasks();
-    }
-#endif
 }
 
 /*
