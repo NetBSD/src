@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tape.c	8.2 (Berkeley) 3/17/94";*/
-static char *rcsid = "$Id: tape.c,v 1.4 1994/09/23 14:27:06 mycroft Exp $";
+static char *rcsid = "$Id: tape.c,v 1.5 1994/10/31 04:21:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ extern	int cartridge;
 extern	char *host;
 char	*nexttape;
 
-static	int atomic __P((int (*)(), int, char *, int));
+static	ssize_t atomic __P((ssize_t (*)(), int, char *, int));
 static	void doslave __P((int, int));
 static	void enslave __P((void));
 static	void flushtape __P((void));
@@ -846,13 +846,14 @@ doslave(cmd, slave_number)
  * or a write may not write all we ask if we get a signal,
  * loop until the count is satisfied (or error).
  */
-static int
+static ssize_t
 atomic(func, fd, buf, count)
-	int (*func)(), fd;
+	ssize_t (*func)();
+	int fd;
 	char *buf;
 	int count;
 {
-	int got, need = count;
+	ssize_t got, need = count;
 
 	while ((got = (*func)(fd, buf, need)) > 0 && (need -= got) > 0)
 		buf += got;
