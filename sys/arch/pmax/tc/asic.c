@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.20 1997/06/16 23:52:06 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.21 1997/07/17 01:26:15 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -71,9 +71,8 @@ void	asicattach __P((struct device *, struct device *, void *));
 int     asicprint(void *, const char *);
 
 /* Device locators. */
-#define	ioasiccf_offset	cf_loc[0]		/* offset */
-
-#define	IOASIC_OFFSET_UNKNOWN	-1
+#include "locators.h"
+#define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
 
 struct cfattach ioasic_ca = {
 	sizeof(struct asic_softc), asicmatch, asicattach
@@ -265,7 +264,7 @@ ioasic_submatch(match, d)
 {
 
 	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
+		(match->ioasiccf_offset == IOASIC_OFFSET_DEFAULT));
 }
 
 /*
