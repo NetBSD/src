@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.146 2004/02/19 19:31:06 christos Exp $
+#	$NetBSD: shlib_version,v 1.147 2004/03/04 23:43:56 kleink Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -11,6 +11,8 @@
 # - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0
 # - libc/gen/utmpx.c, utmpx.h: remove lastlogxname, __getlastlogx13 -> getlastlogx
 # - infinity{,f,l}.c, math.h: __infinity -> __huge_val
+# - libc/gen/is{inf,nan}d_ieee754.c: remove is{inf,nan} aliases
+# - libc/arch/vax/gen/is{inf,nan}.c: remove
 #
 major=12
-minor=112
+minor=113
