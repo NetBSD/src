@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.40 1994/10/30 21:49:14 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.41 1994/11/20 22:36:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -86,6 +86,10 @@ struct cd_data {
 	struct device sc_dev;
 	struct dkdevice sc_dk;
 
+	int flags;
+#define	CDF_LOCKED	0x01
+#define	CDF_WANTED	0x02
+#define	CDF_BSDLABEL	0x04
 	struct scsi_link *sc_link;	/* address of scsi low level switch */
 	u_int32 ad_info;	/* info about the adapter */
 	u_int32 cmdscount;	/* cmds allowed outstanding by board */
@@ -103,7 +107,7 @@ struct cfdriver cdcd = {
 	NULL, "cd", scsi_targmatch, cdattach, DV_DISK, sizeof(struct cd_data)
 };
 
-int cdgetdisklabel __P((struct cd_data *));
+void cdgetdisklabel __P((struct cd_data *));
 int cd_get_parms __P((struct cd_data *, int));
 void cdstrategy __P((struct buf *));
 void cdstart __P((int));
@@ -178,81 +182,109 @@ cdattach(parent, self, aux)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int 
-cdopen(dev, flag, fmt, p)
+cdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
 {
 	int error = 0;
 	int unit, part;
 	struct cd_data *cd;
 	struct scsi_link *sc_link;
+	int s;
 
 	unit = CDUNIT(dev);
-	part = CDPART(dev);
-
 	if (unit >= cdcd.cd_ndevs)
 		return ENXIO;
 	cd = cdcd.cd_devs[unit];
 	if (!cd)
 		return ENXIO;
 
+	part = CDPART(dev);
 	sc_link = cd->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    cdcd.cd_ndevs, part));
 
+	s = splbio();
+
+	while ((cd->flags & CDF_LOCKED) != 0) {
+		cd->flags |= CDF_WANTED;
+		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdopn", 0)) != 0) {
+			splx(s);
+			return error;
+		}
+	}
+
 	/*
-	 * If it's been invalidated, and not everybody has closed it then
-	 * forbid re-entry.  (may have changed media)
+	 * If any partition is open, but the disk has been invalidated,
+	 * disallow further opens.
 	 */
-	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
-	    cd->sc_dk.dk_openmask != 0)
+	if (cd->sc_dk.dk_openmask != 0 &&
+	    (sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		splx(s);
 		return ENXIO;
-
-	/*
-	 * Check that it is still responding and ok.
-	 * if the media has been changed this will result in a
-	 * "unit attention" error which the error code will
-	 * disregard because the SDEV_MEDIA_LOADED flag is not yet set
-	 */
-	scsi_test_unit_ready(sc_link, SCSI_SILENT);
-
-	/*
-	 * In case it is a funny one, tell it to start
-	 * not needed for some drives
-	 */
-	scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
-
-	/*
-	 * Next time actually take notice of error returns
-	 */
-	sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
-	if (scsi_test_unit_ready(sc_link, 0) != 0) {
-		SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
-		error = ENXIO;
-		goto bad;
 	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("device ok\n"));
 
-	/* Lock the pack in. */
-	scsi_prevent(sc_link, PR_PREVENT, SCSI_ERR_OK | SCSI_SILENT);
+	if (cd->sc_dk.dk_openmask == 0) {
+		cd->flags |= CDF_LOCKED;
 
-	/*
-	 * Load the physical device parameters 
-	 */
-	if (cd_get_parms(cd, 0)) {
-		error = ENXIO;
-		goto bad;
+		splx(s);
+
+		/*
+		 * Check that it is still responding and ok.
+		 * if the media has been changed this will result in a
+		 * "unit attention" error which the error code will
+		 * disregard because the SDEV_MEDIA_LOADED flag is not yet set
+		 */
+		scsi_test_unit_ready(sc_link, SCSI_SILENT);
+
+		/*
+		 * In case it is a funny one, tell it to start
+		 * not needed for some drives
+		 */
+		scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
+
+		/*
+		 * Next time actually take notice of error returns
+		 */
+		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
+		if (scsi_test_unit_ready(sc_link, 0) != 0) {
+			SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
+			error = ENXIO;
+			goto bad;
+		}
+		SC_DEBUG(sc_link, SDEV_DB3, ("device ok\n"));
+
+		/* Lock the pack in. */
+		scsi_prevent(sc_link, PR_PREVENT, SCSI_ERR_OK | SCSI_SILENT);
+
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+			cd->flags &= ~CDF_BSDLABEL;
+			sc_link->flags |= SDEV_MEDIA_LOADED;
+
+			/* Load the physical device parameters. */
+			if (cd_get_parms(cd, 0) != 0) {
+				error = ENXIO;
+				goto bad2;
+			}
+			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+
+			/* Fabricate a disk label. */
+			cdgetdisklabel(cd);
+			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
+		}
+
+		s = splbio();
+
+		cd->flags &= ~CDF_LOCKED;
+		if ((cd->flags & CDF_WANTED) != 0) {
+			cd->flags &= ~CDF_WANTED;
+			wakeup(cd);
+		}
 	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
 
-	/*
-	 * Make up some partition information
-	 */
-	cdgetdisklabel(cd);
-	SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
+	splx(s);
 
 	/*
 	 *  Check that the partition exists
@@ -276,14 +308,26 @@ cdopen(dev, flag, fmt, p)
 	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
-	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
+
+bad2:
+	sc_link->flags &= ~SDEV_MEDIA_LOADED;
 
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
+
+	s = splbio();
+
+	cd->flags &= ~CDF_LOCKED;
+	if ((cd->flags & CDF_WANTED) != 0) {
+		cd->flags &= ~CDF_WANTED;
+		wakeup(cd);
+	}
+
+	splx(s);
 	return error;
 }
 
@@ -376,6 +420,10 @@ cdstrategy(bp)
 	 * Decide which unit and partition we are talking about
 	 */
 	if (CDPART(bp->b_dev) != RAW_PART) {
+		if ((cd->flags & CDF_BSDLABEL) == 0) {
+			bp->b_error = EIO;
+			goto bad;
+		}
 		/*
 		 * do bounds checking, adjust transfer. if error, process.
 		 * if end of partition, just return
@@ -527,16 +575,9 @@ cdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
+	struct cd_data *cd = cdcd.cd_devs[CDUNIT(dev)];
 	int error;
-	int unit, part;
-	register struct cd_data *cd;
 
-	/*
-	 * Find the device that the user is talking about
-	 */
-	unit = CDUNIT(dev);
-	part = CDPART(dev);
-	cd = cdcd.cd_devs[unit];
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%x ", cmd));
 
 	/*
@@ -559,16 +600,16 @@ cdioctl(dev, cmd, addr, flag)
 		    &cd->sc_dk.dk_label.d_partitions[CDPART(dev)];
 		return 0;
 
-		/*
-		 * a bit silly, but someone might want to test something on a 
-		 * section of cdrom.
-		 */
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&cd->sc_dk.dk_label,
-		    (struct disklabel *)addr, 0, (struct cpu_disklabel *)0);
+		    (struct disklabel *)addr,
+		    /*(cd->flags & CDF_BSDLABEL) ? cd->sc_dk.dk_openmask : */0,
+		    &cd->sc_dk.dk_cpulabel);
+		if (error == 0)
+			cd->flags |= CDF_BSDLABEL;
 		return error;
 
 	case DIOCWLABEL:
@@ -772,10 +813,11 @@ cdioctl(dev, cmd, addr, flag)
 	case CDIOCRESET:
 		return cd_reset(cd);
 	default:
-		if (part != RAW_PART)
+		if (CDPART(dev) != RAW_PART)
 			return ENOTTY;
 		return scsi_do_ioctl(cd->sc_link, dev, cmd, addr, flag);
 	}
+
 #ifdef DIAGNOSTIC
 	panic("cdioctl: impossible");
 #endif
@@ -788,46 +830,44 @@ cdioctl(dev, cmd, addr, flag)
  * EVENTUALLY take information about different
  * data tracks from the TOC and put it in the disklabel
  */
-int 
+void 
 cdgetdisklabel(cd)
 	struct cd_data *cd;
 {
-	char *errstring;
+
+	if ((cd->flags & CDF_BSDLABEL) != 0)
+		return;
 
 	bzero(&cd->sc_dk.dk_label, sizeof(struct disklabel));
 	bzero(&cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
-	/*
-	 * make partition 0 the whole disk
-	 * remember that comparisons with the partition are done
-	 * assuming the blocks are 512 bytes so fudge it.
-	 */
-	cd->sc_dk.dk_label.d_partitions[0].p_offset = 0;
-	cd->sc_dk.dk_label.d_partitions[0].p_size =
-	    cd->params.disksize * (cd->params.blksize / DEV_BSIZE);
-	cd->sc_dk.dk_label.d_partitions[0].p_fstype = FS_ISO9660;
-	cd->sc_dk.dk_label.d_npartitions = 1;
 
 	cd->sc_dk.dk_label.d_secsize = cd->params.blksize;
 	cd->sc_dk.dk_label.d_ntracks = 1;
 	cd->sc_dk.dk_label.d_nsectors = 100;
 	cd->sc_dk.dk_label.d_ncylinders = (cd->params.disksize / 100) + 1;
-	cd->sc_dk.dk_label.d_secpercyl = 100;
+	cd->sc_dk.dk_label.d_secpercyl =
+	    cd->sc_dk.dk_label.d_ntracks * cd->sc_dk.dk_label.d_nsectors;
 
-	strncpy(cd->sc_dk.dk_label.d_typename, "scsi cd_rom", 16);
+	strncpy(cd->sc_dk.dk_label.d_typename, "SCSI CD-ROM", 16);
+	cd->sc_dk.dk_label.d_type = DTYPE_SCSI;
 	strncpy(cd->sc_dk.dk_label.d_packname, "ficticious", 16);
 	cd->sc_dk.dk_label.d_secperunit = cd->params.disksize;
 	cd->sc_dk.dk_label.d_rpm = 300;
 	cd->sc_dk.dk_label.d_interleave = 1;
 	cd->sc_dk.dk_label.d_flags = D_REMOVABLE;
+
+	cd->sc_dk.dk_label.d_partitions[0].p_offset = 0;
+	cd->sc_dk.dk_label.d_partitions[0].p_size =
+	    cd->sc_dk.dk_label.d_secperunit *
+	    (cd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
+	cd->sc_dk.dk_label.d_partitions[0].p_fstype = FS_ISO9660;
+	cd->sc_dk.dk_label.d_npartitions = 1;
+
 	cd->sc_dk.dk_label.d_magic = DISKMAGIC;
 	cd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
 	cd->sc_dk.dk_label.d_checksum = dkcksum(&cd->sc_dk.dk_label);
 
-	/*
-	 * Signal to other users and routines that we now have a
-	 * disklabel that represents the media (maybe)
-	 */
-	return 0;
+	cd->flags |= CDF_BSDLABEL;
 }
 
 /*
@@ -1118,19 +1158,12 @@ cd_get_parms(cd, flags)
 {
 
 	/*
-	 * First check if we have it all loaded
-	 */
-	if (cd->sc_link->flags & SDEV_MEDIA_LOADED)
-		return 0;
-
-	/*
 	 * give a number of sectors so that sec * trks * cyls
 	 * is <= disk_size 
 	 */
-	if (!cd_size(cd, flags))
+	if (cd_size(cd, flags) == 0)
 		return ENXIO;
 
-	cd->sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 }
 
