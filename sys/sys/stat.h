@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.27 1997/10/22 00:51:59 fvdl Exp $	*/
+/*	$NetBSD: stat.h,v 1.28 1997/11/02 17:16:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -232,6 +232,7 @@ int	chflags __P((const char *, u_long));
 int	fchflags __P((int, u_long));
 int	fchmod __P((int, mode_t));
 int	lchmod __P((const char *, mode_t));
+int	mknod __P((const char *, mode_t, dev_t));
 #ifdef __LIBC12_SOURCE__
 int	lstat __P((const char *, struct stat12 *));
 int	__lstat13 __P((const char *, struct stat *));
