@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2001/10/29 22:50:44 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2001/12/11 20:50:06 kleink Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	cfs*	Coda file system device
+#	wsfont	Console font control
 #	wsmux*	wscons event multiplexor
 #
 
@@ -165,6 +166,7 @@ wscons)
 	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
 	sh $0 wsmouse wskbd
 	sh $0 ttyEcfg
+	sh $0 wsfont
 	;;
 
 wsmouse)
@@ -229,6 +231,13 @@ wskbd*)
 	mknod $wskbd c $major $unit
 	chown root.wheel $wskbd
 	chmod 600 $wskbd
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 71 0
+	chown root.wheel wsfont
+	chmod 600 wsfont
 	;;
 
 fd)
