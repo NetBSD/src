@@ -10,6 +10,7 @@ EX=	ex
 VIEW=	view
 PROG=	${VI}
 LINKS=	${BINDIR}/${VI} ${BINDIR}/${EX} ${BINDIR}/${VI} ${BINDIR}/${VIEW}
+MLINKS=	${VI}.1 ${EX}.1 ${VI}.1 ${VIEW}.1
 
 #CFLAGS=-g -DDEBUG
 #CFLAGS+=-pg
