@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.12 1997/03/15 18:12:22 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.13 1997/03/16 23:27:07 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -56,6 +56,7 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_arc.h>
 #include <net/if_arp.h>
 #include <net/if_ether.h>
 
@@ -63,7 +64,6 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #endif
-#include <netinet/if_arc.h>
 
 #define ARCNET_ALLOW_BROKEN_ARP
 
