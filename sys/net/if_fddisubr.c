@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.10 1997/03/15 18:12:28 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.11 1997/03/19 16:17:04 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -139,7 +139,9 @@ fddi_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct fddi_header *fh;
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	struct arphdr *ah;
+#else
 	struct arpcom *ac = (struct arpcom *)ifp;
 #endif
 
@@ -184,14 +186,45 @@ fddi_output(ifp, m0, dst, rt0)
 		} else if (!arpresolve(ifp, rt, m, dst, edst))
 #else
 		if (!ARPRESOLVE(ac, rt, m, dst, edst, rt0))
-#endif
+#endif /* __NetBSD__ */
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		type = htons(ETHERTYPE_IP);
 		break;
+#if defined(__NetBSD__)
+	case AF_ARP:
+		ah = mtod(m, struct arphdr *);
+		if (m->m_flags & M_BCAST) {
+                	bcopy((caddr_t)fddibroadcastaddr, (caddr_t)edst,
+				sizeof(edst));
+#if 0 /* XXX do we need this? */
+                	bcopy((caddr_t)fddibroadcastaddr,
+			      (caddr_t)ar_tha(ah), sizeof(edst));
 #endif
+		} else
+			bcopy((caddr_t)ar_tha(ah),
+				(caddr_t)edst, sizeof(edst));
+		
+		ah->ar_hrd = htons(ARPHRD_ETHER);
+
+		switch(ntohs(ah->ar_op)) {
+		case ARPOP_REVREQUEST:
+		case ARPOP_REVREPLY:
+			type = htons(ETHERTYPE_REVARP);
+			break;
+
+		case ARPOP_REQUEST:
+		case ARPOP_REPLY:
+		default:
+			type = htons(ETHERTYPE_ARP);
+		}
+
+		break;
+
+#endif /* __NetBSD */
+#endif /* INET */
 #ifdef NS
 	case AF_NS:
 		type = htons(ETHERTYPE_NS);
