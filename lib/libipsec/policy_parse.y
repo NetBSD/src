@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.7.2.2 2003/10/02 20:55:52 tron Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.7.2.3 2003/10/05 09:10:05 tron Exp $	*/
 /*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -295,13 +295,13 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	tlen = sizeof(struct sadb_x_policy);
-
 	pbuf = malloc(tlen);
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen = sizeof(struct sadb_x_policy);
+
 	p = (struct sadb_x_policy *)pbuf;
 	p->sadb_x_policy_len = 0;	/* must update later */
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -327,7 +327,7 @@ set_x_request(src, dst)
 		+ (dst ? dst->sa_len : 0);
 
 	n = realloc(pbuf, tlen + reqlen);
-	if (pbuf == NULL) {
+	if (n == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
