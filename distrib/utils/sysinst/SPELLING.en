@@ -1,4 +1,4 @@
-$NetBSD: SPELLING.en,v 1.1 1999/06/20 06:53:06 cgd Exp $
+$NetBSD: SPELLING.en,v 1.2 2002/07/29 02:51:07 grant Exp $
 
 right:		wrong:				authority:
 
@@ -12,3 +12,4 @@ accurately	acurately
 anomalies	anomolies
 hard disk	harddisk			www.m-w.com
 overlapping	overlaping
+file system	filesystem			www.m-w.com
