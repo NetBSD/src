@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.21 2002/10/23 09:10:29 jdolecek Exp $ */
+/* $NetBSD: promcons.c,v 1.22 2003/06/29 15:14:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.21 2002/10/23 09:10:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.22 2003/06/29 15:14:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ int	promparam(struct tty *, struct termios *);
 struct callout prom_ch = CALLOUT_INITIALIZER;
 
 int
-promopen(dev_t dev, int flag, int mode, struct proc *p)
+promopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -111,7 +111,7 @@ promopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
 		splx(s);
 		return EBUSY;
 	}
@@ -129,7 +129,7 @@ promopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-promclose(dev_t dev, int flag, int mode, struct proc *p)
+promclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
@@ -157,27 +157,27 @@ promwrite(dev_t dev, struct uio *uio, int flag)
 }
  
 int
-prompoll(dev, events, p)
+prompoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp = prom_tty[minor(dev)];
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 int
