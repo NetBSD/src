@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 1999/03/24 23:47:46 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6.18.1 2001/04/01 16:46:03 he Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -187,6 +187,12 @@ pmap_bootstrap(nextpa, firstpa)
 		nextpa += 4 * NBPG;
 	} /* XXXCDC */
 #endif
+
+	/*
+	 * Clear all PTEs to zero
+	 */
+	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nextpa; pte++)
+		*pte = 0;
 
 	/*
 	 * Initialize segment table and kernel page table map.
