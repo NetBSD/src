@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.11 1994/07/03 11:41:33 mycroft Exp $
+#	$Id: DUALITY,v 1.12 1994/07/05 17:11:21 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -54,9 +54,9 @@ options		GATEWAY
 options		INET
 
 config		netbsd root on sd0 swap on sd0b and rd0b
-#config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
-#config		rdnetbsd root on rd0 swap on rd0b and rd1b
-#config		gennetbsd swap generic
+config		sdnetbsd root on sd0 swap on sd0b and sd1b and sd2b and sd3b
+config		rdnetbsd root on rd0 swap on rd0b and rd1b and rd2b and rd3b
+config		gennetbsd swap generic
 
 master		hpib0	at scode7
 master		hpib1	at scode?
