@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1994/12/03 23:34:45 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1995/01/15 06:28:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,7 +261,7 @@ static int
 target_to_unit(u_long bus, u_long target, u_long lun)
 {
 	int			targ;
-	struct scsibus_data	*scsi;
+	struct scsibus_softc	*scsi;
 	struct scsi_link	*sc_link;
 	struct device		*sc_dev;
 extern	struct cfdriver		scsibuscd;
@@ -275,7 +275,7 @@ extern	struct cfdriver		scsibuscd;
 	if (bus == -1) {
 		for (bus = 0 ; bus < scsibuscd.cd_ndevs ; bus++) {
 			if (scsibuscd.cd_devs[bus]) {
-				scsi = (struct scsibus_data *)
+				scsi = (struct scsibus_softc *)
 						scsibuscd.cd_devs[bus];
 				if (scsi->sc_link[target][lun]) {
 					sc_link = scsi->sc_link[target][lun];
@@ -292,7 +292,7 @@ extern	struct cfdriver		scsibuscd;
 		return -1;
 	}
 	if (scsibuscd.cd_devs[bus]) {
-		scsi = (struct scsibus_data *) scsibuscd.cd_devs[bus];
+		scsi = (struct scsibus_softc *) scsibuscd.cd_devs[bus];
 		if (scsi->sc_link[target][lun]) {
 			sc_link = scsi->sc_link[target][lun];
 			sc_dev = (struct device *) sc_link->device_softc;
