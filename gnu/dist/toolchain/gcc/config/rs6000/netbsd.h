@@ -71,3 +71,53 @@
 %{posix:-D_POSIX_SOURCE} \
 %{msoft-float:-D_SOFT_FLOAT} \
 %{mcall-sysv: -D_CALL_SYSV} %{mcall-aix: -D_CALL_AIX} %{!mcall-sysv: %{!mcall-aix: -D_CALL_SYSV}}"
+
+/* <netbsd.h> redefined a bunch of these things, but we actually want the
+   <rs6000/sysv4.h> versions.  */
+
+#undef  ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
+  do {									\
+    char *orig_name;							\
+    char *init_ptr = (TARGET_64BIT) ? ".quad" : ".long";		\
+    STRIP_NAME_ENCODING (orig_name, NAME);				\
+									\
+    if (TARGET_RELOCATABLE && (get_pool_size () != 0 || profile_flag))	\
+      {									\
+	char buf[256], *buf_ptr;					\
+									\
+	ASM_OUTPUT_INTERNAL_LABEL (FILE, "LCL", rs6000_pic_labelno);	\
+									\
+	ASM_GENERATE_INTERNAL_LABEL (buf, "LCTOC", 1);			\
+	STRIP_NAME_ENCODING (buf_ptr, buf);				\
+	fprintf (FILE, "\t%s %s-", init_ptr, buf_ptr);			\
+									\
+	ASM_GENERATE_INTERNAL_LABEL (buf, "LCF", rs6000_pic_labelno);	\
+	fprintf (FILE, "%s\n", buf_ptr);				\
+      }									\
+									\
+    fprintf (FILE, "\t%s\t %s,", TYPE_ASM_OP, orig_name);		\
+    fprintf (FILE, TYPE_OPERAND_FMT, "function");			\
+    putc ('\n', FILE);							\
+    ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));			\
+									\
+    if (DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_NT)		\
+      {									\
+	char *desc_name = orig_name;					\
+									\
+	while (*desc_name == '.')					\
+	  desc_name++;							\
+									\
+	if (TREE_PUBLIC (DECL))						\
+	  fprintf (FILE, "\t.globl %s\n", desc_name);			\
+									\
+	fprintf (FILE, "%s\n", MINIMAL_TOC_SECTION_ASM_OP);		\
+	fprintf (FILE, "%s:\n", desc_name);				\
+	fprintf (FILE, "\t%s %s\n", init_ptr, orig_name);		\
+	fprintf (FILE, "\t%s _GLOBAL_OFFSET_TABLE_\n", init_ptr);	\
+	if (DEFAULT_ABI == ABI_AIX)					\
+	  fprintf (FILE, "\t%s 0\n", init_ptr);				\
+	fprintf (FILE, "\t.previous\n");				\
+      }									\
+    fprintf (FILE, "%s:\n", orig_name);					\
+  } while (0)
