@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_impl.h,v 1.1.2.2 2002/03/17 06:33:15 thorpej Exp $	*/
+/*	$NetBSD: rwlock_impl.h,v 1.1.2.3 2002/03/17 06:50:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -118,6 +118,17 @@ do {									\
 		: "=&r" (_tmp0_), "=&r" (_tmp1_), "=m" ((rwl)->rwl_owner) \
 		: "r" (need_wait), "r" (set_wait), "m" ((rwl)->rwl_owner) \
 		: "memory");						\
+} while (/*CONSTCOND*/0)
+
+#define	RWLOCK_GIVE(rwl, new)						\
+do {									\
+	alpha_mb();							\
+	(rwl)->rwl_owner = new;						\
+} while (/*CONSTCOND*/0)
+
+#define	RWLOCK_RECEIVE(rwl)						\
+do {									\
+	alpha_mb();							\
 } while (/*CONSTCOND*/0)
 
 #endif /* _ALPHA_RWLOCK_IMPL_H_ */
