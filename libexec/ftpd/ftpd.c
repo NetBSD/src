@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.30 1997/08/14 02:06:17 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.31 1997/08/25 19:31:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.30 1997/08/14 02:06:17 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.31 1997/08/25 19:31:48 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -793,7 +793,7 @@ retrieve(cmd, name)
 				if (c == '\n')
 					i++;
 			}
-		} else if (lseek(fileno(fin), restart_point, L_SET) < 0) {
+		} else if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
 			perror_reply(550, name);
 			goto done;
 		}
@@ -860,7 +860,7 @@ store(name, mode, unique)
 				perror_reply(550, name);
 				goto done;
 			}
-		} else if (lseek(fileno(fout), restart_point, L_SET) < 0) {
+		} else if (lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			perror_reply(550, name);
 			goto done;
 		}

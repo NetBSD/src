@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /* static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95"; */
-static char *rcsid = "$NetBSD: edquota.c,v 1.13 1997/03/08 21:39:06 mikel Exp $";
+static char *rcsid = "$NetBSD: edquota.c,v 1.14 1997/08/25 19:32:04 kleink Exp $";
 #endif /* not lint */
 
 /*
@@ -272,7 +272,8 @@ getprivs(id, quotatype)
 				    getentry(quotagroup, GRPQUOTA));
 				(void) fchmod(fd, 0640);
 			}
-			lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET);
+			(void)lseek(fd, (off_t)(id * sizeof(struct dqblk)),
+			    SEEK_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
 			case 0:			/* EOF */
 				/*
@@ -327,8 +328,9 @@ putprivs(id, quotatype, quplist)
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
 		} else {
-			lseek(fd,
-			    (off_t)(id * (long)sizeof (struct dqblk)), L_SET);
+			(void)lseek(fd,
+			    (off_t)(id * (long)sizeof (struct dqblk)),
+			    SEEK_SET);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk)) {
 				fprintf(stderr, "edquota: ");
@@ -399,7 +401,7 @@ writeprivs(quplist, outfd, name, quotatype)
 	FILE *fd;
 
 	ftruncate(outfd, 0);
-	lseek(outfd, 0, L_SET);
+	(void)lseek(outfd, (off_t)0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL) {
 		fprintf(stderr, "edquota: ");
 		perror(tmpfil);
@@ -435,7 +437,7 @@ readprivs(quplist, infd)
 	struct dqblk dqblk;
 	char *fsp, line1[BUFSIZ], line2[BUFSIZ];
 
-	lseek(infd, 0, L_SET);
+	(void)lseek(infd, (off_t)0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
 		fprintf(stderr, "Can't re-read temp file!!\n");
@@ -544,7 +546,7 @@ writetimes(quplist, outfd, quotatype)
 	FILE *fd;
 
 	ftruncate(outfd, 0);
-	lseek(outfd, 0, L_SET);
+	(void)lseek(outfd, (off_t)0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL) {
 		fprintf(stderr, "edquota: ");
 		perror(tmpfil);
@@ -578,7 +580,7 @@ readtimes(quplist, infd)
 	time_t itime, btime, iseconds, bseconds;
 	char *fsp, bunits[10], iunits[10], line1[BUFSIZ];
 
-	lseek(infd, 0, L_SET);
+	(void)lseek(infd, (off_t)0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
 		fprintf(stderr, "Can't re-read temp file!!\n");

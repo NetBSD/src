@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.11 1997/06/24 07:48:12 mikel Exp $	*/
+/*	$NetBSD: bad144.c,v 1.12 1997/08/25 19:32:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: bad144.c,v 1.11 1997/06/24 07:48:12 mikel Exp $";
+static char rcsid[] = "$NetBSD: bad144.c,v 1.12 1997/08/25 19:32:03 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -312,8 +312,8 @@ usage:
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
 		if (lseek(f,
-		    (off_t)dp->d_secsize * (size - dp->d_nsectors + i),
-		    L_SET) < 0)
+		    (off_t)(dp->d_secsize * (size - dp->d_nsectors + i)),
+		    SEEK_SET) < 0)
 			Perror("lseek");
 		if (verbose)
 			printf("write badsect file at %d\n",
@@ -364,7 +364,7 @@ getold(f, bad)
 		i = badfile * 2;
 	for (; i < 10 && i < dp->d_nsectors; i += 2) {
 		sn = size - dp->d_nsectors + i;
-		if (lseek(f, (off_t)sn * dp->d_secsize, L_SET) < 0)
+		if (lseek(f, (off_t)(sn * dp->d_secsize), SEEK_SET) < 0)
 			Perror("lseek");
 		if (read(f, (char *) bad, dp->d_secsize) == dp->d_secsize) {
 			if (i > 0)
@@ -492,7 +492,7 @@ blkcopy(f, s1, s2)
 		}
 	}
 	for (tries = 0; tries < RETRIES; tries++) {
-		if (lseek(f, (off_t)dp->d_secsize * s1, L_SET) < 0)
+		if (lseek(f, (off_t)(dp->d_secsize * s1), SEEK_SET) < 0)
 			Perror("lseek");
 		if ((n = read(f, buf, dp->d_secsize)) == dp->d_secsize)
 			break;
@@ -503,7 +503,7 @@ blkcopy(f, s1, s2)
 			perror((char *)0);
 		return(0);
 	}
-	if (lseek(f, (off_t)dp->d_secsize * s2, L_SET) < 0)
+	if (lseek(f, (off_t)(dp->d_secsize * s2), SEEK_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("copying %d to %d\n", s1, s2);
@@ -531,7 +531,7 @@ blkzero(f, sn)
 			exit(20);
 		}
 	}
-	if (lseek(f, (off_t)dp->d_secsize * sn, L_SET) < 0)
+	if (lseek(f, (off_t)(dp->d_secsize * sn), SEEK_SET) < 0)
 		Perror("lseek");
 	if (verbose)
 		printf("zeroing %d\n", sn);

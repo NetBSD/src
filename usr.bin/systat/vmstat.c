@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.8 1997/07/21 07:05:10 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.9 1997/08/25 19:32:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.8 1997/07/21 07:05:10 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.9 1997/08/25 19:32:01 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -532,7 +532,7 @@ ucount()
 		if (utmp.ut_name[0] != '\0')
 			nusers++;
 
-	lseek(ut, 0L, L_SET);
+	lseek(ut, (off_t)0, SEEK_SET);
 	return (nusers);
 }
 

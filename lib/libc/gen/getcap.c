@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.14 1997/07/21 14:07:03 jtc Exp $	*/
+/*	$NetBSD: getcap.c,v 1.15 1997/08/25 19:31:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.14 1997/07/21 14:07:03 jtc Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.15 1997/08/25 19:31:45 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -260,7 +260,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		 */
 
 		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, L_SET);
+			(void)lseek(fd, (off_t)0, SEEK_SET);
 		} else {
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
 			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))

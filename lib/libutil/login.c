@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.7 1997/06/29 18:44:05 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.8 1997/08/25 19:31:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.7 1997/06/29 18:44:05 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.8 1997/08/25 19:31:46 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ login(ut)
 
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
-		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), L_SET);
+		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), SEEK_SET);
 		(void)write(fd, ut, sizeof(struct utmp));
 		(void)close(fd);
 	}

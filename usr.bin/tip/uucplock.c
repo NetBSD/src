@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.8 1997/08/25 19:32:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $";
+static char rcsid[] = "$NetBSD: uucplock.c,v 1.8 1997/08/25 19:32:02 kleink Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -96,7 +96,7 @@ uu_lock(ttyname)
 		 */
 		fprintf(stderr, "Stale lock on %s PID=%d... overriding.\n",
 			ttyname, pid);
-		if (lseek(fd, (off_t)0, L_SET) < 0) {
+		if (lseek(fd, (off_t)0, SEEK_SET) < 0) {
 			perror(tbuf);
 			(void)close(fd);
 			fprintf(stderr, "Can't seek lock file.\n");

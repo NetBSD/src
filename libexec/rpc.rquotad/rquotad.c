@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.7 1996/08/30 20:15:10 thorpej Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.8 1997/08/25 19:31:50 kleink Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -269,7 +269,8 @@ getfsquota(id, path, dqblk)
 			syslog(LOG_ERR, "open error: %s: %m", fs->qfpathname);
 			return (0);
 		}
-		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET) == (off_t)-1) {
+		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET)
+		    == (off_t)-1) {
 			close(fd);
 			return (1);
 		}

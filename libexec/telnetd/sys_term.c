@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.10 1997/08/25 19:31:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $";
+static char rcsid[] = "$NetBSD: sys_term.c,v 1.10 1997/08/25 19:31:51 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -2259,7 +2259,8 @@ rmut()
 				if (SCMPN(u->ut_line, line+5) ||
 				    u->ut_name[0]==0)
 					continue;
-				(void) lseek(f, ((long)u)-((long)utmp), L_SET);
+				(void)lseek(f, (off_t)((long)u)-((long)utmp),
+				    SEEK_SET);
 				SCPYN(u->ut_name, "");
 				SCPYN(u->ut_host, "");
 				(void) time(&u->ut_time);
