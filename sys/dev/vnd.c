@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.19 1995/06/26 05:34:47 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.20 1995/07/04 07:18:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -371,6 +371,32 @@ vndiodone(vbp)
 	else
 		vnd->sc_tab.b_active--;
 	splx(s);
+}
+
+int
+vndread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+#ifdef DEBUG
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndread(%x, %x)\n", dev, uio);
+#endif
+	return (physio(vndstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+vndwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+#ifdef DEBUG
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndwrite(%x, %x)\n", dev, uio);
+#endif
+	return (physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.26 1995/01/09 02:47:38 cgd Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.27 1995/07/04 07:22:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -263,6 +263,24 @@ swstrategy(bp)
 		brelvp(bp);
 	bp->b_vp = sp->sw_vp;
 	VOP_STRATEGY(bp);
+}
+
+int
+swread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(swstrategy, NULL, B_READ, minphys, uio));
+}
+
+int
+swwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(swstrategy, NULL, B_WRITE, minphys, uio));
 }
 
 /*

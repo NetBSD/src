@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1995/06/25 19:06:46 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1995/07/04 07:15:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,9 +48,6 @@
 #include <sys/bankeddev.h>
 #endif
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -71,6 +68,7 @@ bdev_decl(rd);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
 #undef	fdopen
+bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
 #include "st.h"
@@ -85,7 +83,7 @@ struct bdevsw	bdevsw[] =
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 #undef	fdopen
-	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
@@ -103,20 +101,21 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
+	dev_init(c,n,select), dev_init(c,n,mmap) }
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_view_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
+	dev_init(c,n,select), dev_init(c,n,mmap) }
 
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
