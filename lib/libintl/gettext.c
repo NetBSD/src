@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.4 2000/10/31 16:02:52 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.5 2000/11/03 14:29:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.4 2000/10/31 16:02:52 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.5 2000/11/03 14:29:22 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -519,11 +519,14 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	const char *language;
 	const char *cname;
 	const char *v;
+	char *ocname = NULL;
+	char *odomainname = NULL;
+	struct domainbinding *db;
 
 	msgid = (n == 1) ? msgid1 : msgid2;
 
 	if (!domainname)
-		domainname = __domainname;
+		domainname = __binding.domainname;
 	cname = lookup_category(category);
 	if (!domainname || !cname)
 		goto fail;
@@ -547,16 +550,30 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	} else
 		goto fail;
 
+	for (db = __binding.next; db; db = db->next)
+		if (strcmp(db->domainname, domainname) == 0)
+			break;
+	if (!db)
+		db = &__binding;
+
 	/* don't bother looking it up if the values are the same */
-	if (strcmp(lpath, olpath) == 0)
+	if (odomainname && strcmp(domainname, odomainname) == 0 &&
+	    ocname && strcmp(cname, ocname) == 0 && strcmp(lpath, olpath) == 0)
 		goto found;
 
-	strlcpy(olpath, lpath, sizeof(olpath));
-
 	/* try to find appropriate file, from $LANGUAGE */
-	if (lookup_mofile(path, sizeof(path), __domainpath, lpath, cname,
+	if (lookup_mofile(path, sizeof(path), db->path, lpath, cname,
 	    domainname) == NULL)
 		goto fail;
+
+	if (odomainname)
+		free(odomainname);
+	odomainname = strdup(domainname);
+	if (ocname)
+		free(ocname);
+	ocname = strdup(cname);
+
+	strlcpy(olpath, lpath, sizeof(olpath));
 
 found:
 	v = lookup(msgid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.3 2000/10/31 16:02:52 itojun Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.4 2000/11/03 14:29:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -25,9 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-extern const char *__domainpath;
-extern const char *__domainname;
 
 #define MO_MAGIC		0x950412de
 #define MO_MAGIC_SWAPPED	0xde120495
@@ -75,3 +72,11 @@ struct mohandle {
 	size_t len;
 	struct mo_h mo;		/* endian-flipped mo file header */
 };
+
+struct domainbinding {
+	struct domainbinding *next;
+	char domainname[PATH_MAX];
+	char path[PATH_MAX];
+};
+
+extern struct domainbinding __binding;
