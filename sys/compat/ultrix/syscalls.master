@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 1998/12/18 18:49:59 drochner Exp $
+	$NetBSD: syscalls.master,v 1.30 1999/02/09 20:30:38 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -47,17 +47,18 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int ultrix_sys_open(char *path, int flags, \
+5	STD		{ int ultrix_sys_open(const char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int compat_43_sys_wait(void); } owait
-8	STD		{ int ultrix_sys_creat(char *path, int mode); }
+8	STD		{ int ultrix_sys_creat(const char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
-11	STD		{ int ultrix_sys_execv(char *path, char **argp); }
+11	STD		{ int ultrix_sys_execv(const char *path, char **argp); }
 12	NOARGS		{ int sys_chdir(char *path); }
 13	OBSOL		time
-14	STD		{ int ultrix_sys_mknod(char *path, int mode, int dev); }
+14	STD		{ int ultrix_sys_mknod(const char *path, int mode, \
+			    int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys___posix_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
@@ -78,15 +79,15 @@
 30	OBSOL		v7 utime
 31	OBSOL		v7 stty
 32	OBSOL		v7 gtty
-33	STD		{ int ultrix_sys_access(char *path, int flags); }
+33	STD		{ int ultrix_sys_access(const char *path, int flags); }
 34	OBSOL		v7 nice
 35	OBSOL		v7 ftime
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int ultrix_sys_stat(char *path, \
+38	STD		{ int ultrix_sys_stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	OBSOL		v7 setpgrp
-40	STD		{ int ultrix_sys_lstat(char *path, \
+40	STD		{ int ultrix_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -107,7 +108,7 @@
 56	UNIMPL		v7 mpxchan
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
 58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	STD		{ int ultrix_sys_execve(char *path, char **argp, \
+59	STD		{ int ultrix_sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
@@ -252,7 +253,7 @@
 #endif
 159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-160	STD		{ int ultrix_sys_statfs(char *path, \
+160	STD		{ int ultrix_sys_statfs(const char *path, \
 			    struct ultrix_statfs *buf); }
 161	STD		{ int ultrix_sys_fstatfs(int fd, \
 			    struct ultrix_statfs *buf); }
