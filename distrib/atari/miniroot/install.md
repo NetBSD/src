@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 1996/05/30 07:09:20 leo Exp $
+#	$NetBSD: install.md,v 1.4 1996/06/28 22:08:42 leo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,15 +81,25 @@ md_get_ifdevs() {
 		sort -u
 }
 
+md_get_partition_range() {
+	# return an expression describing the valid partition id's on the Atari
+	echo '[a-p]'
+}
+
 md_installboot() {
 	if [ -x /mnt/usr/mdec/installboot ]; then
 		echo "Installing boot block..."
 		chroot /mnt /usr/mdec/installboot -v $1
-	else
+	elif [ "$MODE" = "install" ]; then
 		cat << \__md_installboot_1
-There is no installboot program found on the ${MODE}ed filesystems. No boot
+There is no installboot program found on the installed filesystems. No boot
 programs are installed.
 __md_installboot_1
+	else
+		cat << \__md_installboot_2
+There is no installboot program found on the upgraded filesystems. No boot
+programs are installed.
+__md_installboot_2
 	fi
 }
 
@@ -101,25 +111,23 @@ md_native_fsopts() {
 	echo "-G,ro"
 }
 
-md_checkfordisklabel() {
-	# $1 is the disk to check
-
-	edlabel /dev/rdsk/r${1}c >/dev/null 2> /tmp/checkfordisklabel </dev/null
-	rval=`sed '/no disk label/!d' < /tmp/checkfordisklabel`
-	if [ ! -z $rval ]; then
-		rval="1"
-	else
-		rval="0"
-	fi
-
-	rm -f /tmp/checkfordisklabel
-}
-
 md_prep_disklabel()
 {
+	# $1 is the root disk
+	# Note that the first part of this function is just a *very* verbose
+	# version of md_label_disk().
+
+	cat << \__md_prep_disklabel_1
+You now have to prepare your root disk for the installation of NetBSD. This
+is further referred to as 'labeling' a disk.
+
+Hit the <return> key when you have read this...
+__md_prep_disklabel_1
+	getresp ""
+
 	edahdi /dev/r${1}c < /dev/null > /dev/null 2>&1
 	if [ $? -eq 0 ]; then
-		cat << \__md_prep_disklabel_1
+		cat << \__md_prep_disklabel_2
 The disk you wish to install on is partitioned with AHDI or an AHDI compatible
 program. You have to assign some partitions to NetBSD before NetBSD is able
 to use the disk. Change the 'id' of all partitions you want to use for NetBSD
@@ -127,13 +135,13 @@ filesystems to 'NBD'. Change the 'id' of the partition you wish to use for swap
 to 'NBS' or 'SWP'.
 
 Hit the <return> key when you have read this...
-__md_prep_disklabel_1
+__md_prep_disklabel_2
 		getresp ""
  		edahdi /dev/r${1}c
 	fi
 
 	# display example
-	cat << \__md_prep_disklabel_2
+	cat << \__md_prep_disklabel_3
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units.
@@ -153,9 +161,21 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
 
 Hit the <return> key when you have read this...
 
-__md_prep_disklabel_2
+__md_prep_disklabel_3
 	getresp ""
 	edlabel /dev/r${1}c
+
+	cat << \__md_prep_disklabel_4
+
+You will now be given the opportunity to place disklabels on any additional
+disks on your system.
+__md_prep_disklabel_4
+
+	_DKDEVS=`rmel ${1} ${_DKDEVS}`
+	resp="X"	# force at least one iteration
+	while [ "X$resp" != X"done" ]; do
+		labelmoredisks
+	done
 }
 
 md_labeldisk() {
