@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1997/05/24 05:28:17 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1997/05/24 08:19:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,7 +143,8 @@ cdev_decl(ccd);
 cdev_decl(bpf);
 #include "dtop.h"
 cdev_decl(dtop);
-#include "dc.h"
+#include "dc_ioasic.h"
+#include "dc_ds.h"
 cdev_decl(dc);
 #include "scc.h"
 cdev_decl(scc);
@@ -166,6 +167,13 @@ dev_decl(filedesc,open);
 cdev_decl(tun);
 cdev_decl(vnd);
 #include "ipfilter.h"
+
+#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+# define NDC 1
+#else
+# define NDC 0
+#endif
+
 
 /* a framebuffer with an attached mouse: */
 /* open, close, ioctl, poll, mmap */

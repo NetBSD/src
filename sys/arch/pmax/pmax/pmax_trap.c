@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.42 1997/05/15 05:03:42 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.43 1997/05/24 08:19:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,7 +92,7 @@ struct ifnet; struct ethercom;
 #include "asc.h"
 #include "sii.h"
 #include "le_pmax.h"
-#include "dc.h"
+#include "dc_ds.h"
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
@@ -177,7 +177,7 @@ int leintr __P((void *));
 #if NSII > 0
 int siiintr __P((void *));
 #endif
-#if NDC > 0
+#if NDC_DS > 0
 int dcintr __P((void *));
 #endif
 
@@ -233,12 +233,12 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	}
 #endif /* NLE_PMAX */
 
-#if NDC > 0
+#if NDC_DS > 0
 	if (mask & MACH_INT_MASK_2) {
 		dcintr(dc_cd.cd_devs[0]);
 		intrcnt[SERIAL0_INTR]++;
 	}
-#endif /* NDC */
+#endif /* NDC_DS */
 
 	if (mask & MACH_INT_MASK_4) {
 		pmax_errintr();
