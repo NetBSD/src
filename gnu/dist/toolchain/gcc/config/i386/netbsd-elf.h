@@ -631,6 +631,9 @@ do {									 \
 /* Default to pcc-struct-return, because this is the ELF abi and
    we don't care about compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 1
+
+/* Attempt to enable execute permissions on the stack.  */
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
 
 /* Profiling routines, partially copied from i386/osfrose.h.  */
 

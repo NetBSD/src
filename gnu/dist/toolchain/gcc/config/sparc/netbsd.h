@@ -46,3 +46,6 @@
 
 /* Name the default cpu target */
 #define TARGET_CPU_DEFAULT	TARGET_CPU_sparc
+
+/* Attempt to enable execute permissions on the stack.  */
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK

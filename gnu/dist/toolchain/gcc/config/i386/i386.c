@@ -5734,3 +5734,26 @@ memory_address_info (addr, disp_length)
 
   return len;
 }
+
+/* Emit RTL insns to initialize the variable parts of a trampoline.
+   FNADDR is an RTX for the address of the function's pure code.
+   CXT is an RTX for the static chain value for the function.  */
+void
+x86_initialize_trampoline (tramp, fnaddr, cxt)
+     rtx tramp, fnaddr, cxt;
+{
+  /* Compute offset from the end of the jmp to the target function.  */
+  rtx disp = expand_binop (SImode, sub_optab, fnaddr,
+			   plus_constant (tramp, 10),
+			   NULL_RTX, 1, OPTAB_DIRECT);
+  emit_move_insn (gen_rtx_MEM (QImode, tramp), GEN_INT (0xb9));
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 1)), cxt);
+  emit_move_insn (gen_rtx_MEM (QImode, plus_constant (tramp, 5)),
+		  GEN_INT (0xe9));
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 6)), disp);
+
+#ifdef TRANSFER_FROM_TRAMPOLINE
+  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+		     0, VOIDmode, 1, tramp, Pmode);
+#endif
+}
