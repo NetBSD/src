@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.6 2003/02/10 09:10:01 ross Exp $ */
+/*	$NetBSD: progress.c,v 1.7 2003/02/12 00:58:34 ross Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.6 2003/02/10 09:10:01 ross Exp $");
+__RCSID("$NetBSD: progress.c,v 1.7 2003/02/12 00:58:34 ross Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 {
 	static char fb_buf[BUFSIZ];
 	char *infile = NULL;
-	pid_t pid;
+	pid_t pid = 0, gzippid = 0;
 	int ch, fd, outpipe[2], waitstat;
 	int lflag = 0, zflag = 0;
 	ssize_t nr, nw, off;
@@ -152,7 +152,6 @@ main(int argc, char *argv[])
 	}
 	/* Pipe input through gzip -dc if -z is given */
 	if (zflag) {
-		pid_t gzippid;
 		int gzippipe[2];
 
 		if (pipe(gzippipe) < 0)
@@ -211,8 +210,21 @@ main(int argc, char *argv[])
 							(unsigned) nr);
 	close(outpipe[1]);
 
-	while(wait(&waitstat) != -1)
-		continue;
+	while (pid || gzippid) {
+		int deadpid;
+
+		deadpid = wait(&waitstat);
+
+		if (deadpid == pid)
+			pid = 0;
+		else if (deadpid == gzippid)
+			gzippid = 0;
+		else if (deadpid != -1)
+			continue;
+		else if (errno == EINTR)
+			continue;
+		else break;
+	}
 
 	progressmeter(1);
 	return 0;
