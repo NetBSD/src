@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 1997/02/08 09:33:55 matthias Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 1997/03/01 09:49:44 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -208,13 +208,16 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 	imask[IPL_NET] |= imask[IPL_BIO];
 
 	/*
+	 * Enable this interrupt for spl0.
+	 */
+	imask[IPL_ZERO] &= ~(1 << intr);
+
+	/*
 	 * Update run masks for all handlers.
 	 */
 	for (i = 0; i < INTS; i++)
 		ivt[i].iv_mask = imask[ivt[i].iv_level] |
 				 (1 << i) | (1 << IR_SOFT);
-
-	imask[IPL_ZERO] &= ~(1 << intr);
 
 	return(intr);
 }
