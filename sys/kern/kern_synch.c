@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.44 1997/05/07 18:49:10 gwr Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.44.6.1 1997/09/08 23:10:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -383,7 +383,7 @@ resume:
 		if (KTRPOINT(p, KTR_CSW))
 			ktrcsw(p->p_tracep, 0, 0);
 #endif
-		if (p->p_sigacts->ps_sigintr & sigmask(sig))
+		if ((p->p_sigacts->ps_sigact[sig].sa_flags & SA_RESTART) == 0)
 			return (EINTR);
 		return (ERESTART);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.16.6.1 1997/09/08 23:17:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,6 +92,7 @@ hpux_sys_sigvec(p, v, retval)
 	struct hpux_sys_sigvec_args *uap = v;
 	struct sigvec vec;
 	struct sigacts *ps = p->p_sigacts;
+	struct sigaction *sa;
 	struct sigvec *sv;
 	int sig;
 	int bit, error;
@@ -99,19 +100,18 @@ hpux_sys_sigvec(p, v, retval)
 	sig = hpuxtobsdsig(SCARG(uap, signo));
 	if (sig <= 0 || sig >= NSIG || sig == SIGKILL || sig == SIGSTOP)
 		return (EINVAL);
+	sa = &ps->ps_sigact[sig];
 	sv = &vec;
 	if (SCARG(uap, osv)) {
-		sv->sv_handler = ps->ps_sigact[sig];
-		sv->sv_mask = ps->ps_catchmask[sig];
-		bit = sigmask(sig);
+		sv->sv_handler = sa->sa_handler;
+		sv->sv_mask = sa->sa_mask & ~sigmask(sig);
 		sv->sv_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
+		if (sa->sa_flags & SA_ONSTACK)
 			sv->sv_flags |= SV_ONSTACK;
-		if ((ps->ps_sigintr & bit) != 0)
+		if ((sa->sa_flags & SA_RESTART) == 0)
 			sv->sv_flags |= SV_INTERRUPT;
-		if ((ps->ps_sigreset & bit) != 0)
+		if (sa->sa_flags & SA_RESETHAND)
 			sv->sv_flags |= HPUXSV_RESET;
-		sv->sv_mask &= ~bit;
 		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
 		    sizeof (vec));
 		if (error)
@@ -297,7 +297,8 @@ hpux_sys_sigaction(p, v, retval)
 	struct hpux_sys_sigaction_args *uap = v;
 	struct hpux_sigaction action;
 	struct sigacts *ps = p->p_sigacts;
-	struct hpux_sigaction *sa;
+	struct sigaction *sa;
+	struct hpux_sigaction *hsa;
 	int sig;
 	int bit;
 
@@ -305,19 +306,19 @@ hpux_sys_sigaction(p, v, retval)
 	if (sig <= 0 || sig >= NSIG || sig == SIGKILL || sig == SIGSTOP)
 		return (EINVAL);
 
-	sa = &action;
+	sa = &ps->ps_sigact[sig];
+	hsa = &action;
 	if (SCARG(uap, osa)) {
-		sa->sa_handler = ps->ps_sigact[sig];
-		bzero((caddr_t)&sa->sa_mask, sizeof(sa->sa_mask));
-		sa->sa_mask.sigset[0] = bsdtohpuxmask(ps->ps_catchmask[sig]);
-		bit = sigmask(sig);
-		sa->sa_flags = 0;
-		if ((ps->ps_sigonstack & bit) != 0)
-			sa->sa_flags |= HPUXSA_ONSTACK;
-		if ((ps->ps_sigreset & bit) != 0)
-			sa->sa_flags |= HPUXSA_RESETHAND;
-		if (p->p_flag & P_NOCLDSTOP)
-			sa->sa_flags |= HPUXSA_NOCLDSTOP;
+		hsa->sa_handler = sa->sa_handler;
+		bzero(&hsa->sa_mask, sizeof(hsa->sa_mask));
+		hsa->sa_mask.sigset[0] = bsdtohpuxmask(sa->sa_mask);
+		hsa->sa_flags = 0;
+		if (sa->sa_flags & SA_ONSTACK)
+			hsa->sa_flags |= HPUXSA_ONSTACK;
+		if (sa->sa_flags & SA_RESETHAND)
+			hsa->sa_flags |= HPUXSA_RESETHAND;
+		if (sa->sa_flags & SA_NOCLDSTOP)
+			hsa->sa_flags |= HPUXSA_NOCLDSTOP;
 		if (copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
 		    sizeof (action)))
 			return (EFAULT);
@@ -325,10 +326,10 @@ hpux_sys_sigaction(p, v, retval)
 	if (SCARG(uap, nsa)) {
 		struct sigaction act;
 
-		if (copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
+		if (copyin((caddr_t)SCARG(uap, nsa), (caddr_t)hsa,
 		    sizeof (action)))
 			return (EFAULT);
-		if (sig == SIGCONT && sa->sa_handler == SIG_IGN)
+		if (sig == SIGCONT && hsa->sa_handler == SIG_IGN)
 			return (EINVAL);
 		/*
 		 * Create a sigaction struct for setsigvec
@@ -381,7 +382,7 @@ hpux_sys_ssig_6x(p, v, retval)
 		return (EINVAL);
 	sa->sa_mask = 0;
 	sa->sa_flags = 0;
-	*retval = (int)p->p_sigacts->ps_sigact[a];
+	*retval = (int)SIGACTION(p, a);
 	setsigvec(p, a, sa);
 #if 0
 	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */
