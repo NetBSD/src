@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.5 2002/02/18 17:00:16 yamt Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.6 2003/05/04 11:54:59 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,8 +220,11 @@ main(argc, argv)
 				if (field_tab[i].flags & FLG_GET)
 					pr_field(field_tab + i, sep);
 		}
-	} else
+	} else {
+		close(fd);
 		usage(NULL);
+	}
 
+	close(fd);
 	exit(0);
 }
