@@ -23,11 +23,11 @@
 #include "filter_filename.h"
 
 /* Shorten traces by eliminating the directory component to filenames.  */
-extern char *
-filter_filename (char *filename)
+extern const char *
+filter_filename (const char *filename)
 {
-  char *p = filename;
-  char *last = filename;
+  const char *p = filename;
+  const char *last = filename;
   int ch;
 
   while ((ch = *p++) != '\0' && ch != ':')

@@ -38,6 +38,8 @@
      *_NN       Size according to the number of bytes
      *_word     Size based on the target architecture's word
      		word size (32/64 bits)
+     *_cell     Size based on the target architecture's
+     		IEEE 1275 cell size (almost always 32 bits)
 
 */
 
@@ -96,5 +98,10 @@ typedef signed32 signed_word;
 
 /* Other instructions */
 typedef unsigned32 instruction_word;
+
+/* IEEE 1275 cell size - only support 32bit mode at present */
+typedef natural32 natural_cell;
+typedef unsigned32 unsigned_cell;
+typedef signed32 signed_cell;
 
 #endif /* _WORDS_H_ */

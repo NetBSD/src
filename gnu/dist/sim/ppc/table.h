@@ -44,7 +44,7 @@ struct _table_entry {
 
 
 extern table *table_open
-(char *file_name,
+(const char *file_name,
  int max_nr_fields,
  int max_nr_model_fields);
 
@@ -55,6 +55,6 @@ extern void dump_table_entry
 (table_entry *entry,
  int indent);
 
-extern void table_entry_lf_c_line_nr
+extern void table_entry_print_cpp_line_nr
 (lf *file,
  table_entry *entry);

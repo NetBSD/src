@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -11,11 +11,11 @@
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- 
+
     */
 
 
@@ -57,7 +57,9 @@
 int getrusage();
 #endif
 
+#if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
 
 #if HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
@@ -81,6 +83,7 @@ int getrusage();
 #endif
 
 #ifdef HAVE_UNISTD_H
+#undef MAXPATHLEN		/* sys/param.h might define this also */
 #include <unistd.h>
 #endif
 
@@ -93,6 +96,11 @@ int getrusage();
 #include <sys/syscall.h> /* FIXME - should not be including this one */
 #include <sys/sysctl.h>
 extern int getdirentries(int fd, char *buf, int nbytes, long *basep);
+#else
+
+/* If this is not netbsd, don't allow fstatfs or getdirentries at this time */
+#undef HAVE_FSTATFS
+#undef HAVE_GETDIRENTRIES
 #endif
 
 #if (BSD < 199306) /* here BSD as just a bug */
@@ -117,6 +125,15 @@ extern int errno;
 #endif
 
 
+/* EMULATION
+
+   NetBSD - Emulation of user programs for NetBSD/PPC
+
+   DESCRIPTION
+
+   */
+
+
 /* NetBSD's idea of what is needed to implement emulations */
 
 struct _os_emul_data {
@@ -138,7 +155,6 @@ write_stat(unsigned_word addr,
   H2T(buf.st_nlink);
   H2T(buf.st_uid);
   H2T(buf.st_gid);
-  H2T(buf.st_rdev);
   H2T(buf.st_size);
   H2T(buf.st_atime);
   /* H2T(buf.st_spare1); */
@@ -146,8 +162,15 @@ write_stat(unsigned_word addr,
   /* H2T(buf.st_spare2); */
   H2T(buf.st_ctime);
   /* H2T(buf.st_spare3); */
+#ifdef AC_STRUCT_ST_RDEV
+  H2T(buf.st_rdev);
+#endif
+#ifdef AC_STRUCT_ST_BLKSIZE
   H2T(buf.st_blksize);
+#endif
+#ifdef AC_STRUCT_ST_BLOCKS
   H2T(buf.st_blocks);
+#endif
 #if WITH_NetBSD_HOST
   H2T(buf.st_flags);
   H2T(buf.st_gen);
@@ -155,8 +178,8 @@ write_stat(unsigned_word addr,
   emul_write_buffer(&buf, addr, sizeof(buf), processor, cia);
 }
 
-  
-#if NetBSD
+
+#ifdef HAVE_FSTATFS
 STATIC_INLINE_EMUL_NETBSD void
 write_statfs(unsigned_word addr,
 	     struct statfs buf,
@@ -183,7 +206,7 @@ write_statfs(unsigned_word addr,
 }
 #endif
 
-  
+
 STATIC_INLINE_EMUL_NETBSD void
 write_timeval(unsigned_word addr,
 	      struct timeval t,
@@ -195,7 +218,7 @@ write_timeval(unsigned_word addr,
   emul_write_buffer(&t, addr, sizeof(t), processor, cia);
 }
 
-  
+
 STATIC_INLINE_EMUL_NETBSD void
 write_timezone(unsigned_word addr,
 	       struct timezone tz,
@@ -207,8 +230,8 @@ write_timezone(unsigned_word addr,
   emul_write_buffer(&tz, addr, sizeof(tz), processor, cia);
 }
 
-  
-#if WITH_NetBSD_HOST
+
+#ifdef HAVE_GETDIRENTRIES
 STATIC_INLINE_EMUL_NETBSD void
 write_direntries(unsigned_word addr,
 		 char *buf,
@@ -264,7 +287,7 @@ write_rusage(unsigned_word addr,
   emul_write_buffer(&rusage, addr, sizeof(rusage), processor, cia);
 }
 #endif
-  
+
 static void
 do_exit(os_emul_data *emul,
 	unsigned call,
@@ -294,16 +317,16 @@ do_read(os_emul_data *emul,
   int nbytes = cpu_registers(processor)->gpr[arg0+2];
   int status;
   SYS(read);
-  
+
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx, %d", d, (long)buf, nbytes);
 
   /* get a tempoary bufer */
   scratch_buffer = zalloc(nbytes);
-  
+
   /* check if buffer exists by reading it */
   emul_read_buffer(scratch_buffer, buf, nbytes, processor, cia);
-  
+
   /* read */
 #if 0
   if (d == 0) {
@@ -313,16 +336,11 @@ do_read(os_emul_data *emul,
   }
 #endif
   status = read (d, scratch_buffer, nbytes);
-  
-  if (status == -1) {
-    cpu_registers(processor)->gpr[0] = errno;
-  } else {
-    cpu_registers(processor)->gpr[3] = status;
-    
-    if (status > 0)
-      emul_write_buffer(scratch_buffer, buf, status, processor, cia);
-  }
-  
+
+  emul_write_status(processor, status, errno);
+  if (status > 0)
+    emul_write_buffer(scratch_buffer, buf, status, processor, cia);
+
   zfree(scratch_buffer);
 }
 
@@ -335,30 +353,22 @@ do_write(os_emul_data *emul,
 	 unsigned_word cia)
 {
   void *scratch_buffer = NULL;
-  int nr_moved;
   int d = (int)cpu_registers(processor)->gpr[arg0];
   unsigned_word buf = cpu_registers(processor)->gpr[arg0+1];
   int nbytes = cpu_registers(processor)->gpr[arg0+2];
   int status;
   SYS(write);
-  
+
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx, %d", d, (long)buf, nbytes);
 
   /* get a tempoary bufer */
   scratch_buffer = zalloc(nbytes); /* FIXME - nbytes == 0 */
-  
+
   /* copy in */
-  nr_moved = vm_data_map_read_buffer(cpu_data_map(processor),
-				     scratch_buffer,
-				     buf,
-				     nbytes);
-  if (nr_moved != nbytes) {
-    /* FIXME - should handle better */
-    error("system_call()write copy failed (nr_moved=%d != nbytes=%d)\n",
-	  nr_moved, nbytes);
-  }
-  
+  emul_read_buffer(scratch_buffer, buf, nbytes,
+		   processor, cia);
+
   /* write */
   status = write(d, scratch_buffer, nbytes);
   emul_write_status(processor, status, errno);
@@ -414,21 +424,25 @@ do_break(os_emul_data *emul,
 	 unsigned_word cia)
 {
   /* just pass this onto the `vm' device */
-  psim *system = cpu_system(processor);
+  unsigned_word new_break = cpu_registers(processor)->gpr[arg0];
+  int status;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx", (long)cpu_registers(processor)->gpr[arg0]);
 
   SYS(break);
-  device_ioctl(emul->vm,
-	       system,
-	       processor,
-	       cia,
-	       0, /*ioctl*/
-	       NULL); /*ioctl-data*/
+  status = device_ioctl(emul->vm,
+			processor,
+			cia,
+			device_ioctl_break,
+			new_break); /*ioctl-data*/
+  emul_write_status(processor, 0, status);
 }
 
 
+#ifndef HAVE_GETPID
+#define do_getpid 0
+#else
 static void
 do_getpid(os_emul_data *emul,
 	  unsigned call,
@@ -437,10 +451,13 @@ do_getpid(os_emul_data *emul,
 	  unsigned_word cia)
 {
   SYS(getpid);
-  cpu_registers(processor)->gpr[3] = (int)getpid();
+  emul_write_status(processor, (int)getpid(), 0);
 }
+#endif
 
-
+#ifndef HAVE_GETUID
+#define do_getuid 0
+#else
 static void
 do_getuid(os_emul_data *emul,
 	  unsigned call,
@@ -449,10 +466,13 @@ do_getuid(os_emul_data *emul,
 	  unsigned_word cia)
 {
   SYS(getuid);
-  cpu_registers(processor)->gpr[3] = (int)getuid();
+  emul_write_status(processor, (int)getuid(), 0);
 }
+#endif
 
-
+#ifndef HAVE_GETEUID
+#define do_geteuid 0
+#else
 static void
 do_geteuid(os_emul_data *emul,
 	   unsigned call,
@@ -461,10 +481,13 @@ do_geteuid(os_emul_data *emul,
 	   unsigned_word cia)
 {
   SYS(geteuid);
-  cpu_registers(processor)->gpr[3] = (int)geteuid();
+  emul_write_status(processor, (int)geteuid(), 0);
 }
+#endif
 
-
+#ifndef HAVE_KILL
+#define do_kill 0
+#else
 static void
 do_kill(os_emul_data *emul,
 	unsigned call,
@@ -483,8 +506,11 @@ do_kill(os_emul_data *emul,
 		  (long)cia);
   cpu_halt(processor, cia, was_signalled, sig);
 }
+#endif
 
-
+#ifndef HAVE_DUP
+#define do_dup 0
+#else
 static void
 do_dup(os_emul_data *emul,
        unsigned call,
@@ -494,15 +520,19 @@ do_dup(os_emul_data *emul,
 {
   int oldd = cpu_registers(processor)->gpr[arg0];
   int status = dup(oldd);
+  int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d", oldd);
 
   SYS(dup);
-  emul_write_status(processor, status, errno);
+  emul_write_status(processor, status, err);
 }
+#endif
 
-
+#ifndef HAVE_GETEGID
+#define do_getegid 0
+#else
 static void
 do_getegid(os_emul_data *emul,
 	   unsigned call,
@@ -511,10 +541,13 @@ do_getegid(os_emul_data *emul,
 	   unsigned_word cia)
 {
   SYS(getegid);
-  cpu_registers(processor)->gpr[3] = (int)getegid();
+  emul_write_status(processor, (int)getegid(), 0);
 }
+#endif
 
-
+#ifndef HAVE_GETGID
+#define do_getgid 0
+#else
 static void
 do_getgid(os_emul_data *emul,
 	  unsigned call,
@@ -523,10 +556,13 @@ do_getgid(os_emul_data *emul,
 	  unsigned_word cia)
 {
   SYS(getgid);
-  cpu_registers(processor)->gpr[3] = (int)getgid();
+  emul_write_status(processor, (int)getgid(), 0);
 }
+#endif
 
-
+#ifndef HAVE_SIGPROCMASK
+#define do_sigprocmask 0
+#else
 static void
 do_sigprocmask(os_emul_data *emul,
 	       unsigned call,
@@ -542,11 +578,14 @@ do_sigprocmask(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%ld, 0x%ld, 0x%ld", (long)how, (long)set, (long)oset);
 
-  cpu_registers(processor)->gpr[3] = 0;
+  emul_write_status(processor, 0, 0);
   cpu_registers(processor)->gpr[4] = set;
 }
+#endif
 
-
+#ifndef HAVE_IOCTL
+#define do_ioctl 0
+#else
 static void
 do_ioctl(os_emul_data *emul,
 	 unsigned call,
@@ -576,8 +615,11 @@ do_ioctl(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%x, 0x%lx", d, request, (long)argp_addr);
 }
+#endif
 
-
+#ifndef HAVE_UMASK
+#define do_umask 0
+#else
 static void
 do_umask(os_emul_data *emul,
 	 unsigned call,
@@ -591,10 +633,13 @@ do_umask(os_emul_data *emul,
     printf_filtered ("0%o", mask);
 
   SYS(umask);
-  cpu_registers(processor)->gpr[3] = umask(mask);
+  emul_write_status(processor, umask(mask), 0);
 }
+#endif
 
-
+#ifndef HAVE_DUP2
+#define do_dup2 0
+#else
 static void
 do_dup2(os_emul_data *emul,
 	unsigned call,
@@ -605,15 +650,19 @@ do_dup2(os_emul_data *emul,
   int oldd = cpu_registers(processor)->gpr[arg0];
   int newd = cpu_registers(processor)->gpr[arg0+1];
   int status = dup2(oldd, newd);
+  int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, %d", oldd, newd);
 
   SYS(dup2);
-  emul_write_status(processor, status, errno);
+  emul_write_status(processor, status, err);
 }
+#endif
 
-
+#ifndef HAVE_FCNTL
+#define do_fcntl 0
+#else
 static void
 do_fcntl(os_emul_data *emul,
 	 unsigned call,
@@ -633,8 +682,11 @@ do_fcntl(os_emul_data *emul,
   status = fcntl(fd, cmd, arg);
   emul_write_status(processor, status, errno);
 }
+#endif
 
-
+#ifndef HAVE_GETTIMEOFDAY
+#define do_gettimeofday 0
+#else
 static void
 do_gettimeofday(os_emul_data *emul,
 		unsigned call,
@@ -648,12 +700,13 @@ do_gettimeofday(os_emul_data *emul,
   struct timezone tz;
   int status = gettimeofday((t_addr != 0 ? &t : NULL),
 			    (tz_addr != 0 ? &tz : NULL));
+  int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx, 0x%lx", (long)t_addr, (long)tz_addr);
 
   SYS(gettimeofday);
-  emul_write_status(processor, status, errno);
+  emul_write_status(processor, status, err);
   if (status == 0) {
     if (t_addr != 0)
       write_timeval(t_addr, t, processor, cia);
@@ -661,7 +714,7 @@ do_gettimeofday(os_emul_data *emul,
       write_timezone(tz_addr, tz, processor, cia);
   }
 }
-
+#endif
 
 #ifndef HAVE_GETRUSAGE
 #define do_getrusage 0
@@ -677,12 +730,13 @@ do_getrusage(os_emul_data *emul,
   unsigned_word rusage_addr = cpu_registers(processor)->gpr[arg0+1];
   struct rusage rusage;
   int status = getrusage(who, (rusage_addr != 0 ? &rusage : NULL));
+  int err = errno;
 
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", who, (long)rusage_addr);
 
   SYS(getrusage);
-  emul_write_status(processor, status, errno);
+  emul_write_status(processor, status, err);
   if (status == 0) {
     if (rusage_addr != 0)
       write_rusage(rusage_addr, rusage, processor, cia);
@@ -691,7 +745,7 @@ do_getrusage(os_emul_data *emul,
 #endif
 
 
-#if !WITH_NetBSD_HOST
+#ifndef HAVE_FSTATFS
 #define do_fstatfs 0
 #else
 static void
@@ -719,7 +773,9 @@ do_fstatfs(os_emul_data *emul,
 }
 #endif
 
-
+#ifndef HAVE_STAT
+#define do_stat 0
+#else
 static void
 do_stat(os_emul_data *emul,
 	unsigned call,
@@ -739,8 +795,11 @@ do_stat(os_emul_data *emul,
   if (status == 0)
     write_stat(stat_buf_addr, buf, processor, cia);
 }
+#endif
 
-
+#ifndef HAVE_FSTAT
+#define do_fstat 0
+#else
 static void
 do_fstat(os_emul_data *emul,
 	 unsigned call,
@@ -755,8 +814,11 @@ do_fstat(os_emul_data *emul,
   emul_write_status(processor, fstat(fd, &buf), errno);
   write_stat(stat_buf_addr, buf, processor, cia);
 }
+#endif
 
-
+#ifndef HAVE_LSTAT
+#define do_lstat 0
+#else
 static void
 do_lstat(os_emul_data *emul,
 	 unsigned call,
@@ -773,9 +835,9 @@ do_lstat(os_emul_data *emul,
   emul_write_status(processor, stat(path, &buf), errno);
   write_stat(stat_buf_addr, buf, processor, cia);
 }
+#endif
 
-
-#if !WITH_NetBSD_HOST
+#ifndef HAVE_GETDIRENTRIES
 #define do_getdirentries 0
 #else
 static void
@@ -828,7 +890,9 @@ do___syscall(os_emul_data *emul,
 		      cia);
 }
 
-
+#ifndef HAVE_LSEEK
+#define do_lseek 0
+#else
 static void
 do_lseek(os_emul_data *emul,
 	 unsigned call,
@@ -845,10 +909,11 @@ do_lseek(os_emul_data *emul,
   if (status == -1)
     emul_write_status(processor, -1, errno);
   else {
+    emul_write_status(processor, 0, 0); /* success */
     emul_write_gpr64(processor, 3, status);
   }
 }
-
+#endif
 
 static void
 do___sysctl(os_emul_data *emul,
@@ -875,7 +940,7 @@ do___sysctl(os_emul_data *emul,
 			      processor,
 			      cia);
   name += sizeof(mib);
-  
+
   /* see what to do with it ... */
   switch ((int)mib) {
   case 6/*CTL_HW*/:
@@ -914,7 +979,7 @@ do___sysctl(os_emul_data *emul,
     error("sysctl() name[0]=%d unknown\n", (int)mib);
     break;
   }
-  cpu_registers(processor)->gpr[3] = 0;
+  emul_write_status(processor, 0, 0); /* always succeed */
 }
 
 
@@ -922,7 +987,7 @@ do___sysctl(os_emul_data *emul,
 static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 0 */ { 0, "syscall" },
   /* 1 */ { do_exit, "exit" },
-  /* 2 */ { 0, "fork" },	  
+  /* 2 */ { 0, "fork" },
   /* 3 */ { do_read, "read" },
   /* 4 */ { do_write, "write" },
   /* 5 */ { do_open, "open" },
@@ -1126,7 +1191,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 203 */ { 0, "mlock" },
   /* 204 */ { 0, "munlock" },
 };
-    
+
 static char *(netbsd_error_names[]) = {
   /* 0 */ "ESUCCESS",
   /* 1 */ "EPERM",
@@ -1300,26 +1365,25 @@ emul_netbsd_create(device *root,
 			0 /*oea-interrupt-prefix*/);
 
   /* virtual memory - handles growth of stack/heap */
-  vm = device_tree_add_parsed(root, "/openprom/vm@0x%lx",
-			      (unsigned long)(top_of_stack - stack_size));
-  device_tree_add_parsed(vm, "./stack-base 0x%lx",
-			 (unsigned long)(top_of_stack - stack_size));
-  device_tree_add_parsed(vm, "./nr-bytes 0x%x", stack_size);
+  vm = tree_parse(root, "/openprom/vm");
+  tree_parse(vm, "./stack-base 0x%lx",
+	     (unsigned long)(top_of_stack - stack_size));
+  tree_parse(vm, "./nr-bytes 0x%x", stack_size);
 
-  device_tree_add_parsed(root, "/openprom/vm/map-binary/file-name %s",
-			 bfd_get_filename(image));
+  tree_parse(root, "/openprom/vm/map-binary/file-name %s",
+	     bfd_get_filename(image));
 
   /* finish the init */
-  device_tree_add_parsed(root, "/openprom/init/register/pc 0x%lx",
-			 (unsigned long)bfd_get_start_address(image));
-  device_tree_add_parsed(root, "/openprom/init/register/sp 0x%lx",
-			 (unsigned long)top_of_stack);
-  device_tree_add_parsed(root, "/openprom/init/register/msr 0x%x",
-			 (device_find_boolean_property(root, "/options/little-endian?")
-			  ? msr_little_endian_mode
-			  : 0));
-  device_tree_add_parsed(root, "/openprom/init/stack/stack-type %s",
-			 (elf_binary ? "elf" : "xcoff"));
+  tree_parse(root, "/openprom/init/register/pc 0x%lx",
+	     (unsigned long)bfd_get_start_address(image));
+  tree_parse(root, "/openprom/init/register/sp 0x%lx",
+	     (unsigned long)top_of_stack);
+  tree_parse(root, "/openprom/init/register/msr 0x%x",
+	     (tree_find_boolean_property(root, "/options/little-endian?")
+	      ? msr_little_endian_mode
+	      : 0));
+  tree_parse(root, "/openprom/init/stack/stack-type %s",
+	     (elf_binary ? "ppc-elf" : "ppc-xcoff"));
 
   /* finally our emulation data */
   bsd_data = ZALLOC(os_emul_data);
