@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 1999/07/02 09:28:16 itojun Exp $
+#	$NetBSD: Makefile,v 1.121 1999/07/04 22:11:06 fvdl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -84,10 +84,8 @@ BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	shells syslog.conf weekly weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
-.if	(${MACHINE_ARCH} == "i386") || \
-	(${MACHINE_ARCH} == "m68k") || \
+.if	(${MACHINE_ARCH} == "m68k") || \
 	(${MACHINE_ARCH} == "ns32k") || \
-	(${MACHINE_ARCH} == "sparc") || \
 	(${MACHINE_ARCH} == "vax") || \
 	(${MACHINE_ARCH} == "arm32")
 BIN1+=	ld.so.conf
