@@ -1,4 +1,4 @@
-.\"     $NetBSD: bitmask_snprintf.9,v 1.6 2004/10/26 20:58:10 heas Exp $
+.\"     $NetBSD: bitmask_snprintf.9,v 1.7 2004/10/27 00:41:31 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ and
 .Dq new .
 The main advantage of the
 .Dq new
-formating being that it is capable of handling multi-bit fields.
+formatting is that it is capable of handling multi-bit fields.
 .Pp
 The first character of
 .Fa fmt
@@ -78,11 +78,11 @@ indicating that the remainder of the format string follows the
 .Dq new
 syntax.
 The second character
-.Pq "the first for the old format"
+.Pq the first for the old format
 is a binary character representation of the
 output numeral base in which the bitfield will be printed before it is decoded.
 Recognized radix values
-.Pq "in C escape-character format"
+.Pq in C escape-character format
 are
 .Li \e10
 .Pq octal ,
@@ -104,14 +104,14 @@ Each begins with a binary character value that represents the position
 of the bit being described.
 A bit position value of one describes the least significant bit.
 Whereas a position value of 32
-.Pq "octal 40, hexadecimal 20, the ASCII space character"
+.Pq octal 40, hexadecimal 20, the ASCII space character
 describes the most significant bit.
 .Pp
 The remaining characters in a bit-position\(endescription pair are the
 characters to print should the bit being described be set.
 Description strings are delimited by the next bit position value character
 encountered
-.Pq "distinguishable by its value being \*[Le] 32" ,
+.Pq distinguishable by its value being \*[Le] 32 ,
 or the end of the decoding directive string itself.
 .Pp
 For the
@@ -124,7 +124,7 @@ syntax where it is one.
 .Bl -tag -width "xxxxx"
 .It Cm b\eB
 Describes a bit position.
-The bit-position 
+The bit-position
 .Fa B
 indicates the corresponding bit, as in the
 .Dq old
@@ -146,7 +146,7 @@ Describes a multi-bit field like
 .Sq f ,
 but just extracts the value for use with the
 .Sq \&=
-and 
+and
 .Sq \&:
 formatting directives described below.
 .It Cm \&=\eV
@@ -156,7 +156,7 @@ or
 .Sq F
 operator is compared to the byte
 .Sq Cm V
-.Pq "for values 0 through 255" .
+.Pq for values 0 through 255 .
 If they are equal,
 .Sq \&=
 followed by the string following
@@ -172,10 +172,10 @@ operator, but omits the leading
 .Sq \&= .
 .El
 .Pp
-Finally, each field is delimited by a NULL
-.Pq "\e0"
+Finally, each field is delimited by a NUL
+.Pq Sq\e0
 character.
-By convention, the format string has an additional NULL character at
+By convention, the format string has an additional NUL character at
 the end, following that delimiting the last bit-position\(endescription
 pair.
 .Pp
@@ -240,4 +240,4 @@ and earlier releases.
 The
 .Dq new
 format was the invention of
-.An "Chris Torek" .
+.An Chris Torek .
