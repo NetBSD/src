@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.4 2000/03/05 10:03:16 shin Exp $   */
+/*     $NetBSD: bus.h,v 1.5 2000/03/15 16:44:49 drochner Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <mips/locore.h>
 
 #ifdef BUS_SPACE_DEBUG
+#include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for sanity-checking the aligned-ness of pointers passed to
  * bus space ops.  These are not strictly necessary on the x86, but
