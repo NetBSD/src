@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.41 1998/03/25 02:16:42 ross Exp $
+# $NetBSD: Makefile.alpha,v 1.42 1998/04/12 23:47:41 tv Exp $
 
 # Makefile for NetBSD
 #
@@ -40,12 +40,16 @@ S!=	cd ../../../..; pwd
 .endif
 ALPHA=	$S/arch/alpha
 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dalpha
 COPTS?=		-O2
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-format
+.if (${HAVE_GCC28} != "")
+CWARNFLAGS+=	-Wno-main
+.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
 LOADADDRESS?=	fffffc0000300000
