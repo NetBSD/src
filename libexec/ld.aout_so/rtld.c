@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.73 1999/02/27 03:34:05 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.74 1999/04/23 19:29:30 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -349,7 +349,7 @@ rtld(version, crtp, dp)
 	ld_suppress_warnings = getenv("LD_SUPPRESS_WARNINGS") != NULL;
 	ld_warn_non_pure_code = getenv("LD_WARN_NON_PURE_CODE") != NULL;
 
-	no_intern_search = careful || getenv("LD_NO_INTERN_SEARCH") != 0;
+	no_intern_search = getenv("LD_NO_INTERN_SEARCH") != 0;
 
 	anon_open();
 
