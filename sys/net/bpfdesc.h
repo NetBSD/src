@@ -1,10 +1,10 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,14 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
- * 	$Id: bpfdesc.h,v 1.7 1993/11/23 04:51:29 cgd Exp $
+ *	from: @(#)bpfdesc.h	8.1 (Berkeley) 6/10/93
+ *	$Id: bpfdesc.h,v 1.8 1994/05/13 06:02:24 mycroft Exp $
  */
 
-#ifndef _NET_BPFDESC_H_
-#define _NET_BPFDESC_H_
-
-#include "select.h"
+#include <sys/select.h>
 
 /*
  * Descriptor associated with each open bpf file.
@@ -75,11 +72,11 @@ struct bpf_d {
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
-#if (BSD <= 199103) && !defined(__NetBSD__)
+#if BSD < 199103
 	u_char		bd_selcoll;	/* true if selects collide */
 	int		bd_timedout;
 	struct proc *	bd_selproc;	/* process that last selected us */
-#else /* BSD > 199103 */
+#else
 	u_char		bd_pad;		/* explicit alignment */
 	struct selinfo	bd_sel;		/* bsd select info */
 #endif
@@ -97,4 +94,6 @@ struct bpf_if {
 	struct ifnet *bif_ifp;		/* correspoding interface */
 };
 
-#endif /* !_NET_BPFDESC_H_ */
+#ifdef KERNEL
+int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
+#endif

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket2.c	8.1 (Berkeley) 6/10/93
- *	$Id: uipc_socket2.c,v 1.7 1994/05/04 11:04:58 mycroft Exp $
+ *	$Id: uipc_socket2.c,v 1.8 1994/05/13 06:01:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -40,7 +40,6 @@
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <sys/select.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>

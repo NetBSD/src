@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,31 +30,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
- *	$Id: uipc_domain.c,v 1.10 1994/05/07 00:46:28 cgd Exp $
+ *	from: @(#)uipc_domain.c	8.2 (Berkeley) 10/18/93
+ *	$Id: uipc_domain.c,v 1.11 1994/05/13 06:01:30 mycroft Exp $
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+void	pffasttimo __P((void *));
+void	pfslowtimo __P((void *));
 
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
 	__CONCAT(x,domain.dom_next) = domains; \
 	domains = &__CONCAT(x,domain); \
 }
-
-void pffasttimo __P((void *));
-void pfslowtimo __P((void *));
 
 void
 domaininit()
@@ -75,14 +74,14 @@ domaininit()
 #ifdef ISO
 	ADDDOMAIN(iso);
 #endif
-#ifdef RMP
-	ADDDOMAIN(rmp);
-#endif
 #ifdef CCITT
 	ADDDOMAIN(ccitt);
 #endif
-#ifdef IMP
+#ifdef notdef /* XXXX */
+#include "imp.h"
+#if NIMP > 0
 	ADDDOMAIN(imp);
+#endif
 #endif
 #endif
 
@@ -146,6 +145,7 @@ found:
 	return (maybe);
 }
 
+int
 net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -166,6 +166,20 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	 */
 	if (namelen < 3)
 		return (EISDIR);		/* overloaded */
+	family = name[0];
+	protocol = name[1];
+
+	if (family == 0)
+		return (0);
+	for (dp = domains; dp; dp = dp->dom_next)
+		if (dp->dom_family == family)
+			goto found;
+	return (ENOPROTOOPT);
+found:
+	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
+		if (pr->pr_protocol == protocol && pr->pr_sysctl)
+			return ((*pr->pr_sysctl)(name + 2, namelen - 2,
+			    oldp, oldlenp, newp, newlen));
 	return (ENOPROTOOPT);
 }
 
@@ -180,10 +194,9 @@ pfctlinput(cmd, sa)
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_ctlinput)
-				(*pr->pr_ctlinput)(cmd, sa, (caddr_t) 0);
+				(*pr->pr_ctlinput)(cmd, sa, (caddr_t)0);
 }
 
-/* ARGSUSED */
 void
 pfslowtimo(arg)
 	void *arg;
@@ -198,7 +211,6 @@ pfslowtimo(arg)
 	timeout(pfslowtimo, NULL, hz/2);
 }
 
-/* ARGSUSED */
 void
 pffasttimo(arg)
 	void *arg;

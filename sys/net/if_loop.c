@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_loop.c	7.13 (Berkeley) 4/26/91
- *	$Id: if_loop.c,v 1.10 1994/02/02 01:21:35 hpeyerl Exp $
+ *	from: @(#)if_loop.c	8.1 (Berkeley) 6/10/93
+ *	$Id: if_loop.c,v 1.11 1994/05/13 06:02:44 mycroft Exp $
  */
 
 /*
@@ -43,11 +43,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/protosw.h>
+#include <sys/time.h>
+
+#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -72,31 +75,26 @@
 #endif
 
 #if NBPFILTER > 0
-#include <sys/time.h>
 #include <net/bpf.h>
-static caddr_t lo_bpf;
 #endif
 
-#include <machine/cpu.h>
-
-#define	LOMTU	(1024+512)
+#define	LOMTU	(32768)
 
 struct	ifnet loif[NLOOP];
-int	looutput(), loioctl();
 
 void
-loopattach()
+loopattach(n)
+	int n;
 {
 	register int i;
 	register struct ifnet *ifp;
 
-	for (i = 0; i < NLOOP; i++)
-	{
+	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
 		ifp->if_unit = i;
 		ifp->if_name = "lo";
 		ifp->if_mtu = LOMTU;
-		ifp->if_flags = IFF_LOOPBACK|IFF_MULTICAST;
+		ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
 		ifp->if_ioctl = loioctl;
 		ifp->if_output = looutput;
 		ifp->if_type = IFT_LOOP;
@@ -104,11 +102,12 @@ loopattach()
 		ifp->if_addrlen = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&lo_bpf, ifp, DLT_NULL, sizeof(u_int));
+		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
 #endif
 	}
 }
 
+int
 looutput(ifp, m, dst, rt)
 	struct ifnet *ifp;
 	register struct mbuf *m;
@@ -120,8 +119,9 @@ looutput(ifp, m, dst, rt)
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput no HDR");
+	ifp->if_lastchange = time;
 #if NBPFILTER > 0
-	if (lo_bpf) {
+	if (ifp->if_bpf) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
@@ -136,14 +136,15 @@ looutput(ifp, m, dst, rt)
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 
-		bpf_mtap(lo_bpf, &m0);
+		bpf_mtap(ifp->if_bpf, &m0);
 	}
 #endif
 	m->m_pkthdr.rcvif = ifp;
 
-	if (rt && rt->rt_flags & RTF_REJECT) {
+	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);
-		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
+			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
@@ -189,10 +190,13 @@ looutput(ifp, m, dst, rt)
 }
 
 /* ARGSUSED */
+void
 lortrequest(cmd, rt, sa)
-struct rtentry *rt;
-struct sockaddr *sa;
+	int cmd;
+	struct rtentry *rt;
+	struct sockaddr *sa;
 {
+
 	if (rt)
 		rt->rt_rmx.rmx_mtu = LOMTU;
 }
@@ -201,6 +205,7 @@ struct sockaddr *sa;
  * Process an ioctl request.
  */
 /* ARGSUSED */
+int
 loioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	int cmd;
@@ -208,7 +213,7 @@ loioctl(ifp, cmd, data)
 {
 	register struct ifaddr *ifa;
 	register struct ifreq *ifr;
-	int error = 0;
+	register int error = 0;
 
 	switch (cmd) {
 
@@ -235,11 +240,13 @@ loioctl(ifp, cmd, data)
 		case AF_INET:
 			break;
 #endif
+
 		default:
 			error = EAFNOSUPPORT;
 			break;
 		}
 		break;
+
 	default:
 		error = EINVAL;
 	}
