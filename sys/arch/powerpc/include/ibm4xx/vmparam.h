@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2003/04/01 23:52:35 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2003/04/02 07:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,7 @@
  * the way other PPC ports lay out their 256MB kernel address space.
  */
 #define	VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xffff0000-NBPG)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xffff0000-PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x80000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xff000000)
@@ -91,7 +91,7 @@
  * Would like to have MAX addresses = 0, but this doesn't (currently) work
  */
 #define	VM_MIN_ADDRESS		((vaddr_t)0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000-NBPG)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000-PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH - 1)
@@ -107,7 +107,7 @@
 #define PAGER_MAP_SIZE		(4 * 1024 * 1024)
 #endif
 
-#define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
+#define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 #define	__HAVE_PMAP_PHYSSEG
 

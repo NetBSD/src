@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2002/08/19 18:58:31 fredette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2003/04/02 07:35:57 thorpej Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -224,7 +224,7 @@ int	cpu_dump __P((void));
  * Boot arguments stuff
  */
 
-#define	BOOTARG_LEN	(NBPG)
+#define	BOOTARG_LEN	(PAGE_SIZE)
 #define	BOOTARG_OFF	(0x10000)
 
 /*

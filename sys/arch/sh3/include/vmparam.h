@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2003/04/02 02:39:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2003/04/02 07:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,10 +85,10 @@
 
 /* Size of user raw I/O map */
 #ifndef USRIOSIZE
-#define	USRIOSIZE		(MAXBSIZE / NBPG * 8)
+#define	USRIOSIZE		(MAXBSIZE / PAGE_SIZE * 8)
 #endif
 
-#define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
+#define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 /* Physical memory segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
