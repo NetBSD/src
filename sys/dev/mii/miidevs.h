@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.7 1999/09/04 23:59:32 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.8 1999/09/07 19:29:52 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -147,3 +147,5 @@
 /* TDK Semiconductor PHYs */
 #define	MII_MODEL_TSC_78Q2120	0x0014
 #define	MII_STR_TSC_78Q2120	"78Q2120 10/100 media interface"
+#define	MII_MODEL_TSC_78Q2121	0x0015
+#define	MII_STR_TSC_78Q2121	"78Q2121 100baseTX media interface"
