@@ -1,6 +1,8 @@
+/*	$NetBSD: md.h,v 1.2 1995/03/06 19:10:33 mycroft Exp $	*/
+
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code distributions
@@ -18,11 +20,16 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: md-hp300.h,v 1.3 90/09/21 02:22:58 mccanne Exp (LBL)
- * $Id: md.h,v 1.1 1993/11/14 21:20:19 deraadt Exp $
+ * @(#) Header: md-i386.h,v 1.5 94/06/14 20:14:40 leres Exp (LBL)
  */
 
-/*
- * We don't need the contents of this file, mostly because our
- * endian.h is in good shape.
- */
+#define TCPDUMP_ALIGN
+
+#include <machine/endian.h>
+
+/* 32-bit data types */
+/* N.B.: this doesn't address printf()'s %d vs. %ld formats */
+typedef	int32_t		int32;		/* signed 32-bit integer */
+#ifndef	AUTH_UNIX
+typedef	u_int32_t	u_int32;	/* unsigned 32-bit integer */
+#endif

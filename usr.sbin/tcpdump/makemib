@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: makemib,v 1.2 1995/03/06 19:10:22 mycroft Exp $
+#
 # Copyright (c) 1990, by John Robert LoVerso.
 # All rights reserved.
 #

@@ -1,6 +1,8 @@
+/*	$NetBSD: os.h,v 1.2 1995/03/06 19:10:56 mycroft Exp $	*/
+
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code distributions
@@ -18,8 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * from: @(#) Header: os-bsd.h,v 1.15 91/05/05 23:59:11 mccanne Exp (LBL)
- * $Id: os.h,v 1.1 1993/11/14 21:20:27 deraadt Exp $
+ * @(#) Header: os-bsd.h,v 1.18 94/06/14 20:15:17 leres Exp (LBL)
  */
 
 #include <sys/param.h>
@@ -58,29 +59,4 @@
 #endif
 #ifndef	RIPCMD_POLLENTRY
 #define	RIPCMD_POLLENTRY 6
-#endif
-
-/*
- * Map BSD names to SunOS names.
- */
-#if BSD >= 199006
-#define RFS_NULL	NFSPROC_NULL
-#define RFS_GETATTR	NFSPROC_GETATTR
-#define RFS_SETATTR	NFSPROC_SETATTR
-#define RFS_ROOT	NFSPROC_ROOT
-#define RFS_LOOKUP	NFSPROC_LOOKUP
-#define RFS_READLINK	NFSPROC_READLINK
-#define RFS_READ	NFSPROC_READ
-#define RFS_WRITECACHE	NFSPROC_WRITECACHE
-#define RFS_WRITE	NFSPROC_WRITE
-#define RFS_CREATE	NFSPROC_CREATE
-#define RFS_REMOVE	NFSPROC_REMOVE
-#define RFS_RENAME	NFSPROC_RENAME
-#define RFS_LINK	NFSPROC_LINK
-#define RFS_SYMLINK	NFSPROC_SYMLINK
-#define RFS_MKDIR	NFSPROC_MKDIR
-#define RFS_RMDIR	NFSPROC_RMDIR
-#define RFS_READDIR	NFSPROC_READDIR
-#define RFS_STATFS	NFSPROC_STATFS
-#define RFS_NPROC	NFSPROC_NPROC
 #endif
