@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.7 1998/07/24 21:09:07 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.8 1998/07/26 17:42:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ void		uhci_root_intr_abort __P((usbd_request_handle));
 void		uhci_root_intr_close __P((usbd_pipe_handle));
 
 usbd_status	uhci_open __P((usbd_pipe_handle));
+void		uhci_poll __P((struct usbd_bus *));
 
 usbd_status	uhci_device_request __P((usbd_request_handle reqh));
 void		uhci_ctrl_done __P((uhci_intr_info_t *ii));
@@ -321,6 +322,7 @@ uhci_init(sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.open_pipe = uhci_open;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
+	sc->sc_bus.do_poll = uhci_poll;
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
@@ -804,6 +806,16 @@ uhci_waitintr(sc, reqh)
 	}
 	reqh->status = USBD_TIMEOUT;
 	reqh->xfercb(reqh);
+}
+
+void
+uhci_poll(bus)
+	struct usbd_bus *bus;
+{
+	uhci_softc_t *sc = (uhci_softc_t *)bus;
+
+	if (UREAD2(sc, UHCI_STS) & UHCI_STS_USBINT)
+		uhci_intr(sc);
 }
 
 #if 0
@@ -1924,17 +1936,10 @@ uhci_root_ctrl_transfer(reqh)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 1: /* Vendor */
-				if (sc->sc_model == UHCI_PIIX3 ||
-				    sc->sc_model == UHCI_PIIX4)
-					totlen = uhci_str(buf, len, "Intel");
+				totlen = uhci_str(buf, len, sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				if (sc->sc_model == UHCI_PIIX3)
-					totlen = uhci_str(buf, len,
-							  "PIIX3 root hub");
-				if (sc->sc_model == UHCI_PIIX4)
-					totlen = uhci_str(buf, len, 
-							  "PIIX4 root hub");
+				totlen = uhci_str(buf, len, "UHCI root hub");
 				break;
 			}
 			break;

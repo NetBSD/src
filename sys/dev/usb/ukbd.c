@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd.c,v 1.2 1998/07/25 15:36:30 augustss Exp $	*/
+/*	$NetBSD: ukbd.c,v 1.3 1998/07/26 17:42:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,6 +150,9 @@ struct ukbd_softc {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
+
+	int sc_polling;
+	int sc_pollchar;
 };
 
 #define	UKBDUNIT(dev)	(minor(dev))
@@ -158,6 +161,9 @@ struct ukbd_softc {
 
 int	ukbd_match __P((struct device *, struct cfdata *, void *));
 void	ukbd_attach __P((struct device *, struct device *, void *));
+
+void	ukbd_cngetc __P((void *, u_int *, int *));
+void	ukbd_cnpollc __P((void *, int));
 
 void	ukbd_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 void	ukbd_disco __P((void *));
@@ -254,8 +260,8 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 #endif
 	a.keydesc = pckbd_keydesctab;
 	a.num_keydescs = sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]);
-	a.getc = NULL;
-	a.pollc = NULL;
+	a.getc = ukbd_cngetc;
+	a.pollc = ukbd_cnpollc;
 	a.set_leds = ukbd_set_leds;
 	a.ioctl = ukbd_ioctl;
 	a.accesscookie = sc;
@@ -354,6 +360,11 @@ ukbd_intr(reqh, addr, status)
 	}
 	sc->sc_odata = *ud;
 
+	if (sc->sc_polling) {
+		if (nkeys > 0)
+			sc->sc_pollchar = ibuf[0];
+		return;
+	}
 	for (i = 0; i < nkeys; i++) {
 		c = ibuf[i];
 		wskbd_input(sc->sc_wskbddev, 
@@ -412,3 +423,33 @@ ukbd_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
  
+void
+ukbd_cngetc(v, type, data)
+	void *v;
+	u_int *type;
+	int *data;
+{
+	struct ukbd_softc *sc = v;
+	usbd_lock_token s;
+	extern int usbd_use_polling;
+
+	s = usbd_lock();
+	usbd_use_polling = 1;
+	sc->sc_polling = 1;
+	sc->sc_pollchar = -1;
+	while(sc->sc_pollchar == -1)
+		usbd_dopoll(sc->sc_iface);
+	sc->sc_polling = 0;
+	usbd_use_polling = 0;
+	*type = sc->sc_pollchar&0x80?WSCONS_EVENT_KEY_UP:WSCONS_EVENT_KEY_DOWN;
+	*data = sc->sc_pollchar & 0x7f;
+	usbd_unlock(s);
+}
+
+void
+ukbd_cnpollc(v, on)
+	void *v;
+        int on;
+{
+	DPRINTF(("ukbd_cnpollc: sc=%p on=%d\n", v, on));
+}
