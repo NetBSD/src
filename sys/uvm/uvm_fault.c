@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.72 2001/12/31 22:34:39 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.73 2002/01/01 22:18:39 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.72 2001/12/31 22:34:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.73 2002/01/01 22:18:39 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -533,7 +533,7 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 {
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot, check_prot;
-	boolean_t wired, narrow, promote, locked, shadowed, wire_fault;
+	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
 	vaddr_t startva, objaddr, currva, offset, uoff;
 	paddr_t pa;
@@ -614,8 +614,12 @@ ReFault:
 
 	enter_prot = ufi.entry->protection;
 	wired = VM_MAPENT_ISWIRED(ufi.entry) || wire_fault;
-	if (wired)
+	if (wired) {
 		access_type = enter_prot; /* full access for wired */
+		cow_now = (check_prot & VM_PROT_WRITE) != 0;
+	} else {
+		cow_now = (access_type & VM_PROT_WRITE) != 0;
+	}
 
 	/*
 	 * handle "needs_copy" case.   if we need to copy the amap we will
@@ -626,8 +630,7 @@ ReFault:
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
 		KASSERT(fault_type != VM_FAULT_WIREMAX);
-		if ((access_type & VM_PROT_WRITE) ||
-		    (ufi.entry->object.uvm_obj == NULL)) {
+		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
 			/* need to clear */
 			UVMHIST_LOG(maphist,
 			    "  need to clear needs_copy and refault",0,0,0,0);
@@ -1041,7 +1044,7 @@ ReFault:
 
 	if (anon->u.an_page->loan_count) {
 
-		if ((access_type & VM_PROT_WRITE) == 0) {
+		if (!cow_now) {
 
 			/*
 			 * for read faults on loaned pages we just cap the
@@ -1124,7 +1127,7 @@ ReFault:
 	 * if we are out of anon VM we kill the process (XXX: could wait?).
 	 */
 
-	if ((access_type & VM_PROT_WRITE) != 0 && anon->an_ref > 1) {
+	if (cow_now && anon->an_ref > 1) {
 
 		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 		uvmexp.flt_acow++;
@@ -1272,8 +1275,7 @@ Case2:
 		promote = TRUE;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = (access_type & VM_PROT_WRITE) &&
-		     UVM_ET_ISCOPYONWRITE(ufi.entry);
+		promote = cow_now && UVM_ET_ISCOPYONWRITE(ufi.entry);
 	}
 	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
 	    promote, (uobj == NULL), 0,0);
@@ -1427,7 +1429,7 @@ Case2:
 		 */
 
 		if (uobjpage->loan_count) {
-			if ((access_type & VM_PROT_WRITE) == 0) {
+			if (!cow_now) {
 				/* read fault: cap the protection at readonly */
 				/* cap! */
 				enter_prot = enter_prot & ~VM_PROT_WRITE;
