@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.179 2000/09/23 17:17:12 sommerfeld Exp $	*/
+/*	$NetBSD: com.c,v 1.180 2000/09/26 14:12:42 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -418,7 +418,7 @@ com_attach_subr(sc)
 #endif
 
 	callout_init(&sc->sc_diag_callout);
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
 #endif
 
