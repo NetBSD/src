@@ -1,4 +1,4 @@
-.\"	$NetBSD: instopt,v 1.1 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: instopt,v 1.2 2004/05/13 11:15:38 wiz Exp $
 .
 There are two different installation procedures for
 .Nx*M .
