@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.13 1998/09/30 06:50:10 jonathan Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.13.6.1 1999/04/15 23:10:42 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,7 +303,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	if (takelock) {
 		if (!locked)
 			vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY);
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(NULLFS_DIAGNOSTIC)
+#ifdef NULLFS_DIAGNOSTIC
 		else
 			printf ("null_node_create: already locked\n");
 #endif
