@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.47 1999/05/16 22:24:16 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.48 1999/05/26 00:37:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 1999/05/16 22:24:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 1999/05/26 00:37:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
-	int i;
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -155,16 +154,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	 * swap to it easily.
 	 */
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-
-	/*
-	 * Simulate a write to the process's U-area pages,
-	 * so that the system doesn't lose badly.
-	 * (If this isn't done, the kernel can't read or
-	 * write the kernel stack.  "Ouch!")
-	 */
-	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p2, (vaddr_t)up + i * PAGE_SIZE,
-		    0, 1);
 
 	/*
 	 * Copy floating point state from the FP chip to the PCB
@@ -286,23 +275,12 @@ cpu_swapin(p)
 	register struct proc *p;
 {
 	struct user *up = p->p_addr;
-	int i;
 
 	/*
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
 	p->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-
-	/*
-	 * Simulate a write to the process's U-area pages,
-	 * so that the system doesn't lose badly.
-	 * (If this isn't done, the kernel can't read or
-	 * write the kernel stack.  "Ouch!")
-	 */
-	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p, (vaddr_t)up + i * PAGE_SIZE,
-		    0, 1);
 }
 
 /*
