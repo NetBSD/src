@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.4 2000/12/11 19:12:35 ad Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.5 2001/01/04 03:56:17 lukem Exp $	*/
 
 /********************************************************************\
  *
@@ -20,7 +20,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160.c,v 1.4 2000/12/11 19:12:35 ad Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.5 2001/01/04 03:56:17 lukem Exp $");
 #endif	/* not lint */
 
 /* header files */
@@ -29,10 +29,11 @@ __RCSID("$NetBSD: rmd160.c,v 1.4 2000/12/11 19:12:35 ad Exp $");
 
 #include "namespace.h"
 
+#include <assert.h>
+#include <rmd160.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <rmd160.h>
 
 #if !defined(_KERNEL) && defined(__weak_alias)
 __weak_alias(RMD160Transform,_RMD160Transform)
@@ -121,6 +122,8 @@ void
 RMD160Init(RMD160_CTX *context)
 {
 
+	_DIAGASSERT(context != NULL);
+
 	/* ripemd-160 initialization constants */
 	context->state[0] = 0x67452301U;
 	context->state[1] = 0xefcdab89U;
@@ -136,10 +139,17 @@ RMD160Init(RMD160_CTX *context)
 void
 RMD160Transform(u_int32_t state[5], const u_int32_t block[16])
 {
-	u_int32_t aa = state[0],  bb = state[1],  cc = state[2],
-	    dd = state[3],  ee = state[4];
-	u_int32_t aaa = state[0], bbb = state[1], ccc = state[2],
-	    ddd = state[3], eee = state[4];
+	u_int32_t aa, bb, cc, dd, ee;
+	u_int32_t aaa, bbb, ccc, ddd, eee;
+
+	_DIAGASSERT(state != NULL);
+	_DIAGASSERT(block != NULL);
+
+	aa = aaa = state[0];
+	bb = bbb = state[1];
+	cc = ccc = state[2];
+	dd = ddd = state[3];
+	ee = eee = state[4];
 
 	/* round 1 */
 	FF(aa, bb, cc, dd, ee, block[ 0], 11);
@@ -342,6 +352,9 @@ RMD160Update(RMD160_CTX *context, const u_char *data, u_int32_t nbytes)
 	u_int32_t j;
 #endif
 
+	_DIAGASSERT(context != NULL);
+	_DIAGASSERT(data != NULL);
+
 	/* update length[] */
 	if (context->length[0] + nbytes < context->length[0])
 		context->length[1]++;		/* overflow to msb of length */
@@ -397,6 +410,9 @@ RMD160Final(u_char digest[20], RMD160_CTX *context)
 #if BYTE_ORDER != LITTLE_ENDIAN
 	u_int32_t j;
 #endif
+
+	_DIAGASSERT(digest != NULL);
+	_DIAGASSERT(context != NULL);
 
 	/* append the bit m_n == 1 */
 	context->bbuffer[context->buflen] = (u_char)'\200';
