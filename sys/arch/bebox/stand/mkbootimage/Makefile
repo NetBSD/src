@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2002/04/08 16:03:18 sakamoto Exp $
+# $NetBSD: Makefile,v 1.4 2004/11/25 08:09:15 jmc Exp $
 
-HOSTPROG=	mkbootimage
+PROG=	mkbootimage
 NOMAN=	# defined
 
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>

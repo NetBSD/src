@@ -1,16 +1,28 @@
-#	$NetBSD: Makefile,v 1.20 2004/06/21 18:20:08 jmc Exp $
+#	$NetBSD: Makefile,v 1.21 2004/11/25 08:09:15 jmc Exp $
 
 S= ${.CURDIR}/../../../..
 
-BOOTPROG= boot
+PROG= boot
 NEWVERSWHAT= "BOOT"
+
+BINMODE?=       444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
+realall: ${PROG}
 
 ASRCS+= srt0.s
 CSRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 CSRCS+= fd.c filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
-CLEANFILES+= vers.c vers.o ${BOOTPROG}
+SRCS=	${ASRCS} ${CSRCS}
+
+CLEANFILES+= vers.c vers.o
 
 COPTS+= -ffreestanding
 CPPFLAGS= -I. -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
@@ -21,9 +33,6 @@ CPPFLAGS+= -DUSE_SCAN
 CPPFLAGS+= -DCONS_VGA
 #CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3F8
 
-AOBJS=	${ASRCS:.s=.o}
-COBJS=	${CSRCS:.c=.o}
-OBJS=	${AOBJS} ${COBJS}
 CFLAGS= -Wno-main
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 NOMAN=	# defined
@@ -58,12 +67,11 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "bebox" \
+		${NEWVERSWHAT}
 
-realall: ${BOOTPROG}
-
-${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} vers.o
-	${LD} -o ${BOOTPROG} -s -N -T ${.CURDIR}/ld.script -Ttext ${RELOC} ${OBJS} \
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} vers.o
+	${LD} -o ${PROG} -s -N -T ${.CURDIR}/ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 
 cleandir distclean: cleanlibdir
