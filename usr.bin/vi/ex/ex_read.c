@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.8 2000/05/31 19:49:25 jdc Exp $	*/
+/*	$NetBSD: ex_read.c,v 1.9 2000/10/18 01:42:10 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -336,7 +336,8 @@ ex_readfp(sp, name, fp, fm, nlinesp, silent)
 	if (!silent) {
 		p = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
-		    "148|%s: %lu lines, %lu characters", p, lcnt, ccnt);
+		    "148|%s: %lu lines, %lu characters", p,
+		    (unsigned long)lcnt, (unsigned long)ccnt);
 		if (nf)
 			FREE_SPACE(sp, p, 0);
 	}
