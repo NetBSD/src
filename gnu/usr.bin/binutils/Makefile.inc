@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/07/25 18:58:42 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/08/22 19:03:46 tv Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -6,6 +6,8 @@ __MAKEFILE_INC_INCLUDED__=1
 TOP=	${.CURDIR}/../../..
 dist=	${TOP}/dist
 srcdir=	${dist}/binutils
+BFDOBJ!=cd ${TOP}/lib/bfd; \
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 .PATH:	${srcdir}
 
@@ -27,7 +29,7 @@ TARGET=${TARGET_ARCH}-unknown-netbsd
 
 INCLS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common
 
-INCLS+=	-I${TOP}/lib/bfd
+INCLS+=	-I${BFDOBJ}
 INCLS+=	-I${dist}/bfd
 INCLS+=	-I${dist}/binutils
 INCLS+=	-I${dist}/include
@@ -39,8 +41,8 @@ LIBCOMMONDIR != cd ${.CURDIR}/../common; \
 LIBCOMMON= ${LIBCOMMONDIR}/libcommon.a
 COMMONLIB= -L${LIBCOMMONDIR} -lcommon
 
-DPADD=	${LIBCOMMON} ${LIBBFD}
-LDADD=	${COMMONLIB} -lbfd
+DPADD=	${LIBCOMMON} ${BFDOBJ}/libbfd.a
+LDADD=	${COMMONLIB} -L${BFDOBJ} -lbfd
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
