@@ -26,11 +26,11 @@
    trying to identify the correct address for anything.  */
 
 #include <stdio.h>
-#include <ctype.h>
 
 #include "bfd.h"
 #include "bucomm.h"
 #include "libiberty.h"
+#include "safe-ctype.h"
 #include "demangle.h"
 #include "debug.h"
 #include "budbg.h"
@@ -307,11 +307,11 @@ parse_number (pp, poverflow)
 	  int d;
 
 	  d = *p++;
-	  if (isdigit ((unsigned char) d))
+	  if (ISDIGIT (d))
 	    d -= '0';
-	  else if (isupper ((unsigned char) d))
+	  else if (ISUPPER (d))
 	    d -= 'A';
-	  else if (islower ((unsigned char) d))
+	  else if (ISLOWER (d))
 	    d -= 'a';
 	  else
 	    break;
@@ -366,7 +366,6 @@ warn_stab (p, err)
 
 /* Create a handle to parse stabs symbols with.  */
 
-/*ARGSUSED*/
 PTR
 start_stab (dhandle, abfd, sections, syms, symcount)
      PTR dhandle ATTRIBUTE_UNUSED;
@@ -562,7 +561,7 @@ parse_stab (dhandle, handle, type, desc, value, string)
 
 	  f = info->so_string;
 
-          if (IS_ABSOLUTE_PATH (string))
+	  if (IS_ABSOLUTE_PATH (string))
 	    info->so_string = xstrdup (string);
 	  else
 	    info->so_string = concat (info->so_string, string,
@@ -781,7 +780,7 @@ parse_stab_string (dhandle, info, stabtype, desc, value, string)
     }
 
   ++p;
-  if (isdigit ((unsigned char) *p) || *p == '(' || *p == '-')
+  if (ISDIGIT (*p) || *p == '(' || *p == '-')
     type = 'l';
   else
     type = *p++;
@@ -1185,7 +1184,7 @@ parse_stab_type (dhandle, info, typename, pp, slotp)
   /* Read type number if present.  The type number may be omitted.
      for instance in a two-dimensional array declared with type
      "ar1;1;10;ar1;1;10;4".  */
-  if (! isdigit ((unsigned char) **pp) && **pp != '(' && **pp != '-')
+  if (! ISDIGIT (**pp) && **pp != '(' && **pp != '-')
     {
       /* 'typenums=' not present, type is anonymous.  Read and return
 	 the definition, but don't put it in the type vector.  */
@@ -1228,7 +1227,7 @@ parse_stab_type (dhandle, info, typename, pp, slotp)
 	  const char *p = *pp + 1;
 	  const char *attr;
 
-	  if (isdigit ((unsigned char) *p) || *p == '(' || *p == '-')
+	  if (ISDIGIT (*p) || *p == '(' || *p == '-')
 	    {
 	      /* Member type.  */
 	      break;
@@ -1912,7 +1911,7 @@ parse_stab_sun_builtin_type (dhandle, pp)
     }
   ++*pp;
 
-  /* The second number is always 0, so ignore it too. */
+  /* The second number is always 0, so ignore it too.  */
   (void) parse_number (pp, (boolean *) NULL);
   if (**pp != ';')
     {
@@ -1921,7 +1920,7 @@ parse_stab_sun_builtin_type (dhandle, pp)
     }
   ++*pp;
 
-  /* The third number is the number of bits for this type. */
+  /* The third number is the number of bits for this type.  */
   bits = parse_number (pp, (boolean *) NULL);
 
   /* The type *should* end with a semicolon.  If it are embedded
@@ -1974,7 +1973,7 @@ parse_stab_sun_floating_type (dhandle, pp)
       || details == NF_COMPLEX32)
     return debug_make_complex_type (dhandle, bytes);
 
-  return debug_make_float_type (dhandle, bytes);      
+  return debug_make_float_type (dhandle, bytes);
 }
 
 /* Handle an enum type.  */
@@ -2308,7 +2307,7 @@ parse_stab_struct_fields (dhandle, info, pp, retp, staticsp)
       /* Look for the ':' that separates the field name from the field
 	 values.  Data members are delimited by a single ':', while member
 	 functions are delimited by a pair of ':'s.  When we hit the member
-	 functions (if any), terminate scan loop and return. */
+	 functions (if any), terminate scan loop and return.  */
 
       p = strchr (p, ':');
       if (p == NULL)
@@ -2759,27 +2758,27 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
 		  /* Figure out from whence this virtual function
 		     came.  It may belong to virtual function table of
 		     one of its baseclasses.  */
-		    look_ahead_type = parse_stab_type (dhandle, info,
-						       (const char *) NULL,
-						       pp,
-						       (debug_type **) NULL);
-		    if (**pp == ':')
-		      {
-			/* g++ version 1 overloaded methods.  */
-			context = DEBUG_TYPE_NULL;
-		      }
-		    else
-		      {
-			context = look_ahead_type;
-			look_ahead_type = DEBUG_TYPE_NULL;
-			if (**pp != ';')
-			  {
-			    bad_stab (orig);
-			    return false;
-			  }
-			++*pp;
-		      }
-		  }
+		  look_ahead_type = parse_stab_type (dhandle, info,
+						     (const char *) NULL,
+						     pp,
+						     (debug_type **) NULL);
+		  if (**pp == ':')
+		    {
+		      /* g++ version 1 overloaded methods.  */
+		      context = DEBUG_TYPE_NULL;
+		    }
+		  else
+		    {
+		      context = look_ahead_type;
+		      look_ahead_type = DEBUG_TYPE_NULL;
+		      if (**pp != ';')
+			{
+			  bad_stab (orig);
+			  return false;
+			}
+		      ++*pp;
+		    }
+		}
 	      break;
 
 	    case '?':
@@ -2913,7 +2912,7 @@ parse_stab_argtypes (dhandle, info, class_type, fieldname, tagname,
   /* Constructors are sometimes handled specially.  */
   is_full_physname_constructor = ((argtypes[0] == '_'
 				   && argtypes[1] == '_'
-				   && (isdigit ((unsigned char) argtypes[2])
+				   && (ISDIGIT (argtypes[2])
 				       || argtypes[2] == 'Q'
 				       || argtypes[2] == 't'))
 				  || strncmp (argtypes, "__ct", 4) == 0);
@@ -3035,7 +3034,7 @@ parse_stab_tilde_field (dhandle, info, pp, typenums, retvptrbase, retownvptr)
 
   orig = *pp;
 
-  /* If we are positioned at a ';', then skip it. */
+  /* If we are positioned at a ';', then skip it.  */
   if (**pp == ';')
     ++*pp;
 
@@ -3047,7 +3046,7 @@ parse_stab_tilde_field (dhandle, info, pp, typenums, retvptrbase, retownvptr)
   if (**pp == '=' || **pp == '+' || **pp == '-')
     {
       /* Obsolete flags that used to indicate the presence of
-	 constructors and/or destructors. */
+	 constructors and/or destructors.  */
       ++*pp;
     }
 
@@ -3088,7 +3087,7 @@ parse_stab_tilde_field (dhandle, info, pp, typenums, retvptrbase, retownvptr)
       *pp = p + 1;
     }
 
-  return true;    
+  return true;
 }
 
 /* Read a definition of an array type.  */
@@ -3149,7 +3148,7 @@ parse_stab_array_type (dhandle, info, pp, stringp)
 
   adjustable = false;
 
-  if (! isdigit ((unsigned char) **pp) && **pp != '-')
+  if (! ISDIGIT (**pp) && **pp != '-')
     {
       ++*pp;
       adjustable = true;
@@ -3163,7 +3162,7 @@ parse_stab_array_type (dhandle, info, pp, stringp)
     }
   ++*pp;
 
-  if (! isdigit ((unsigned char) **pp) && **pp != '-')
+  if (! ISDIGIT (**pp) && **pp != '-')
     {
       ++*pp;
       adjustable = true;
@@ -3772,7 +3771,7 @@ stab_demangle_count (pp)
   unsigned int count;
 
   count = 0;
-  while (isdigit ((unsigned char) **pp))
+  while (ISDIGIT (**pp))
     {
       count *= 10;
       count += **pp - '0';
@@ -3789,12 +3788,12 @@ stab_demangle_get_count (pp, pi)
      const char **pp;
      unsigned int *pi;
 {
-  if (! isdigit ((unsigned char) **pp))
+  if (! ISDIGIT (**pp))
     return false;
 
   *pi = **pp - '0';
   ++*pp;
-  if (isdigit ((unsigned char) **pp))
+  if (ISDIGIT (**pp))
     {
       unsigned int count;
       const char *p;
@@ -3807,7 +3806,7 @@ stab_demangle_get_count (pp, pi)
 	  count += *p - '0';
 	  ++p;
 	}
-      while (isdigit ((unsigned char) *p));
+      while (ISDIGIT (*p));
       if (*p == '_')
 	{
 	  *pp = p + 1;
@@ -3902,7 +3901,7 @@ stab_demangle_prefix (minfo, pp)
     scan += i - 2;
 
   if (scan == *pp
-      && (isdigit ((unsigned char) scan[2])
+      && (ISDIGIT (scan[2])
 	  || scan[2] == 'Q'
 	  || scan[2] == 't'))
     {
@@ -3911,7 +3910,7 @@ stab_demangle_prefix (minfo, pp)
       return true;
     }
   else if (scan == *pp
-	   && ! isdigit ((unsigned char) scan[2])
+	   && ! ISDIGIT (scan[2])
 	   && scan[2] != 't')
     {
       /* Look for the `__' that separates the prefix from the
@@ -4126,13 +4125,13 @@ stab_demangle_qualified (minfo, pp, ptype)
 	 preceded by an underscore (to distinguish it from the <= 9
 	 case) and followed by an underscore.  */
       p = *pp + 2;
-      if (! isdigit ((unsigned char) *p) || *p == '0')
+      if (! ISDIGIT (*p) || *p == '0')
 	{
 	  stab_bad_demangle (orig);
 	  return false;
 	}
       qualifiers = atoi (p);
-      while (isdigit ((unsigned char) *p))
+      while (ISDIGIT (*p))
 	++p;
       if (*p != '_')
 	{
@@ -4397,7 +4396,7 @@ stab_demangle_template (minfo, pp, pname)
 	    {
 	      if (**pp == 'm')
 		++*pp;
-	      while (isdigit ((unsigned char) **pp))
+	      while (ISDIGIT (**pp))
 		++*pp;
 	    }
 	  else if (charp)
@@ -4428,18 +4427,18 @@ stab_demangle_template (minfo, pp, pname)
 	    {
 	      if (**pp == 'm')
 		++*pp;
-	      while (isdigit ((unsigned char) **pp))
+	      while (ISDIGIT (**pp))
 		++*pp;
 	      if (**pp == '.')
 		{
 		  ++*pp;
-		  while (isdigit ((unsigned char) **pp))
+		  while (ISDIGIT (**pp))
 		    ++*pp;
 		}
 	      if (**pp == 'e')
 		{
 		  ++*pp;
-		  while (isdigit ((unsigned char) **pp))
+		  while (ISDIGIT (**pp))
 		    ++*pp;
 		}
 	    }
@@ -4461,7 +4460,7 @@ stab_demangle_template (minfo, pp, pname)
      regular demangling routine.  */
   if (pname != NULL)
     {
-      char *s1, *s2, *s3, *s4;
+      char *s1, *s2, *s3, *s4 = NULL;
       char *from, *to;
 
       s1 = savestring (orig, *pp - orig);
@@ -4692,7 +4691,7 @@ stab_demangle_type (minfo, pp, ptype)
 	high = 0;
 	while (**pp != '\0' && **pp != '_')
 	  {
-	    if (! isdigit ((unsigned char) **pp))
+	    if (! ISDIGIT (**pp))
 	      {
 		stab_bad_demangle (orig);
 		return false;
@@ -4796,7 +4795,7 @@ stab_demangle_type (minfo, pp, ptype)
 	varargs = false;
 
 	++*pp;
-	if (isdigit ((unsigned char) **pp))
+	if (ISDIGIT (**pp))
 	  {
 	    n = stab_demangle_count (pp);
 	    if (strlen (*pp) < n)
@@ -5106,7 +5105,7 @@ stab_demangle_fund_type (minfo, pp, ptype)
 
     case 'G':
       ++*pp;
-      if (! isdigit ((unsigned char) **pp))
+      if (! ISDIGIT (**pp))
 	{
 	  stab_bad_demangle (orig);
 	  return false;

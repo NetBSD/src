@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright 2000 Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    after text, but with those, we don't have any choice besides reading
    symbol info, and luckily there's no pressing need for correctness for
    those vma:s at this time.  */
-#define N_TXTADDR(x) ((x).a_entry & ~0xffff)
+#define N_TXTADDR(x) ((x).a_entry & ~(bfd_vma) 0xffff)
 
 /* If you change this to 4, you can not link to an address N*4+2.  */
 #define SEGMENT_SIZE 2
@@ -64,10 +64,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* The definition here seems not used; just provided as a convention.  */
 #define DEFAULT_ARCH bfd_arch_cris
 
-/* ??? Spacing might be essential for the parameters in this macro.
-   Do Not Change.  */
-#define MY(OP) CAT (cris_aout_,OP)
-#define NAME(x,y) CAT3(cris_aout,_32_,y)
+/* Do not "beautify" the CONCAT* macro args.  Traditional C will not
+   remove whitespace added here, and thus will fail to concatenate
+   the tokens.  */
+#define MY(OP) CONCAT2 (cris_aout_,OP)
+#define NAME(x, y) CONCAT3 (cris_aout,_32_,y)
 
 #include "bfd.h"
 
@@ -111,6 +112,8 @@ static boolean MY(set_sizes) PARAMS ((bfd *));
 #ifndef MY_get_section_contents
 #define MY_get_section_contents aout_32_get_section_contents
 #endif
+
+#define MACHTYPE_OK(mtype) ((mtype) == M_CRIS)
 
 /* Include generic functions (some are overridden above).  */
 #include "aout32.c"
@@ -156,7 +159,7 @@ MY(swap_ext_reloc_out) (abfd, g, natptr)
   int r_index;
   int r_extern;
   unsigned int r_type;
-  unsigned int r_addend;
+  bfd_vma r_addend;
   asymbol *sym = *(g->sym_ptr_ptr);
   asection *output_section = sym->section->output_section;
 
@@ -247,7 +250,7 @@ MY(swap_ext_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   if (r_type > 2)
     {
       (*_bfd_error_handler) (_("%s: Invalid relocation type imported: %d"),
-			     bfd_get_filename (abfd), r_type);
+			     bfd_archive_filename (abfd), r_type);
 
       bfd_set_error(bfd_error_wrong_format);
     }
@@ -258,7 +261,7 @@ MY(swap_ext_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
     {
       (*_bfd_error_handler)
         (_("%s: Bad relocation record imported: %d"),
-         bfd_get_filename (abfd), r_index);
+         bfd_archive_filename (abfd), r_index);
 
       bfd_set_error (bfd_error_wrong_format);
 

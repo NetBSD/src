@@ -1,6 +1,6 @@
 /* VMS object file format
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
-   Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000,
+   2002 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -33,8 +33,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
  * Doing the alignment here (on initialized data) can
  * mess up the calculation of global data PSECT sizes.
  */
-#define SUB_SEGMENT_ALIGN(SEG)	\
-		(((SEG) == data_section) ? 0 : LONGWORD_ALIGNMENT)
+#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)	\
+  (((SEG) == data_section) ? 0 : LONGWORD_ALIGNMENT)
 
 /* This flag is used to remember whether we are in the const or the
    data section.  By and large they are identical, but we set a no-write

@@ -25,7 +25,7 @@ extern void ldemul_after_open PARAMS ((void));
 extern void ldemul_after_allocation PARAMS ((void));
 extern void ldemul_before_allocation PARAMS ((void));
 extern void ldemul_set_output_arch PARAMS ((void));
-extern char *ldemul_choose_target PARAMS ((void));
+extern char *ldemul_choose_target PARAMS ((int, char**));
 extern void ldemul_choose_mode PARAMS ((char *));
 extern void ldemul_list_emulations PARAMS ((FILE *));
 extern void ldemul_list_emulation_options PARAMS ((FILE *));
@@ -43,7 +43,7 @@ extern boolean ldemul_recognized_file
 extern boolean ldemul_open_dynamic_archive
   PARAMS ((const char *, struct search_dirs *,
 	   struct lang_input_statement_struct *));
-extern char *ldemul_default_target PARAMS ((void));
+extern char *ldemul_default_target PARAMS ((int, char**));
 extern void after_parse_default PARAMS ((void));
 extern void after_open_default PARAMS ((void));
 extern void after_allocation_default PARAMS ((void));
@@ -53,6 +53,8 @@ extern void syslib_default PARAMS ((char*));
 extern void hll_default PARAMS ((char*));
 extern int  ldemul_find_potential_libraries
   PARAMS ((char *, struct lang_input_statement_struct *));
+extern struct bfd_elf_version_expr *ldemul_new_vers_pattern
+  PARAMS ((struct bfd_elf_version_expr *));
 
 typedef struct ld_emulation_xfer_struct {
   /* Run before parsing the command line and script file.
@@ -78,7 +80,7 @@ typedef struct ld_emulation_xfer_struct {
   void   (*set_output_arch) PARAMS ((void));
 
   /* Decide which target name to use.  */
-  char * (*choose_target) PARAMS ((void));
+  char * (*choose_target) PARAMS ((int, char**));
 
   /* Run before allocating output sections.  */
   void   (*before_allocation) PARAMS ((void));
@@ -138,6 +140,11 @@ typedef struct ld_emulation_xfer_struct {
      (For VMS files matching ":lib*.a" have also been scanned).  */
   int (* find_potential_libraries)
     PARAMS ((char *, struct lang_input_statement_struct *));
+
+  /* Called when adding a new version pattern.  PowerPC64-ELF uses
+     this hook to add a pattern matching ".foo" for every "foo".  */
+  struct bfd_elf_version_expr * (*new_vers_pattern)
+    PARAMS ((struct bfd_elf_version_expr *));
 
 } ld_emulation_xfer_type;
 

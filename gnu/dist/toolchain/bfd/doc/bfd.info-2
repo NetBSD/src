@@ -1,4 +1,4 @@
-This is bfd.info, produced by makeinfo version 4.0 from bfd.texinfo.
+This is bfd.info, produced by makeinfo version 4.3 from bfd.texinfo.
 
 START-INFO-DIR-ENTRY
 * Bfd: (bfd).                   The Binary File Descriptor library.
@@ -6,7 +6,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the BFD library.
 
-   Copyright (C) 1991, 2000 Free Software Foundation, Inc.
+   Copyright (C) 1991, 2000, 2001 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
      under the terms of the GNU Free Documentation License, Version 1.1
@@ -45,25 +45,20 @@ typedef asection
      {
        /* The name of the section; the name isn't a copy, the pointer is
           the same as that passed to bfd_make_section.  */
-     
        const char *name;
      
        /* A unique sequence number.  */
-     
        int id;
      
-       /* Which section is it; 0..nth.  */
-     
+       /* Which section in the bfd; 0..n-1 as sections are created in a bfd.  */
        int index;
      
        /* The next section in the list belonging to the BFD, or NULL.  */
-     
        struct sec *next;
      
        /* The field flags contains attributes of the section. Some
           flags are read in from the object file, and some are
           synthesized from other information.  */
-     
        flagword flags;
      
      #define SEC_NO_FLAGS   0x000
@@ -80,9 +75,11 @@ typedef asection
           some relocation information too.  */
      #define SEC_RELOC      0x004
      
-     #if 0   /* Obsolete ? */
-     #define SEC_BALIGN     0x008
-     #endif
+       /* ELF reserves 4 processor specific bits and 8 operating system
+          specific bits in sh_flags; at present we can get away with just
+          one in communicating between the assembler and BFD, but this
+          isn't a good long-term solution.  */
+     #define SEC_ARCH_BIT_0 0x008
      
        /* A signal to the OS that the section contains read only data.  */
      #define SEC_READONLY   0x010
@@ -108,12 +105,6 @@ typedef asection
           standard data.  */
      #define SEC_CONSTRUCTOR 0x100
      
-       /* The section is a constructor, and should be placed at the
-          end of the text, data, or bss section(?).  */
-     #define SEC_CONSTRUCTOR_TEXT 0x1100
-     #define SEC_CONSTRUCTOR_DATA 0x2100
-     #define SEC_CONSTRUCTOR_BSS  0x3100
-     
        /* The section has contents - a data section could be
           `SEC_ALLOC' | `SEC_HAS_CONTENTS'; a debug section could be
           `SEC_HAS_CONTENTS'  */
@@ -133,6 +124,9 @@ typedef asection
           allow the back end to control what the linker does with
           sections.  */
      #define SEC_COFF_SHARED_LIBRARY 0x800
+     
+       /* The section contains thread local data.  */
+     #define SEC_THREAD_LOCAL 0x1000
      
        /* The section has GOT references.  This flag is only for the
           linker, and is currently only used by the elf32-hppa back end.
@@ -165,9 +159,10 @@ typedef asection
           objects are to be further relocated.  */
      #define SEC_EXCLUDE 0x40000
      
-       /* The contents of this section are to be sorted by the
-          based on the address specified in the associated symbol
-          table.  */
+       /* The contents of this section are to be sorted based on the sum of
+          the symbol and addend values specified by the associated relocation
+          entries.  Entries without associated relocation entries will be
+          appended to the end of the section in an unspecified order.  */
      #define SEC_SORT_ENTRIES 0x80000
      
        /* When linking, duplicate sections of the same name should be
@@ -225,6 +220,18 @@ typedef asection
           references found to any symbol in the section.  */
      #define SEC_CLINK 0x10000000
      
+       /* Attempt to merge identical entities in the section.
+          Entity size is given in the entsize field.  */
+     #define SEC_MERGE 0x20000000
+     
+       /* If given with SEC_MERGE, entities to merge are zero terminated
+          strings where entsize specifies character size instead of fixed
+          size entries.  */
+     #define SEC_STRINGS 0x40000000
+     
+       /* This section contains data about section groups.  */
+     #define SEC_GROUP 0x80000000
+     
        /*  End of section flags.  */
      
        /* Some internal packed boolean fields.  */
@@ -239,13 +246,14 @@ typedef asection
        unsigned int linker_mark : 1;
      
        /* Another mark flag used by some of the linker backends.  Set for
-          output sections that have a input section.  */
+          output sections that have an input section.  */
        unsigned int linker_has_input : 1;
      
        /* A mark flag used by some linker backends for garbage collection.  */
        unsigned int gc_mark : 1;
      
-       /* Used by the ELF code to mark sections which have been allocated to segments.  */
+       /* Used by the ELF code to mark sections which have been allocated
+          to segments.  */
        unsigned int segment_mark : 1;
      
        /* End of internal packed boolean fields.  */
@@ -256,25 +264,21 @@ typedef asection
            backend can assign addresses (for example, in `a.out', where
            the default address for `.data' is dependent on the specific
            target and various flags).  */
-     
        bfd_vma vma;
      
        /*  The load address of the section - where it would be in a
            rom image; really only used for writing section header
-           information. */
-     
+           information.  */
        bfd_vma lma;
      
        /* The size of the section in octets, as it will be output.
           Contains a value even if the section has no contents (e.g., the
           size of `.bss').  This will be filled in after relocation.  */
-     
        bfd_size_type _cooked_size;
      
        /* The original size on disk of the section, in octets.  Normally this
           value is the same as the size, but if some relaxing has
           been done, then this value will be bigger.  */
-     
        bfd_size_type _raw_size;
      
        /* If this section is going to be output, then this value is the
@@ -284,49 +288,39 @@ typedef asection
           100th octet (8-bit quantity) in the output section, this value
           would be 100.  However, if the target byte size is 16 bits
           (bfd_octets_per_byte is "2"), this value would be 50.  */
-     
        bfd_vma output_offset;
      
        /* The output section through which to map on output.  */
-     
        struct sec *output_section;
      
        /* The alignment requirement of the section, as an exponent of 2 -
           e.g., 3 aligns to 2^3 (or 8).  */
-     
        unsigned int alignment_power;
      
        /* If an input section, a pointer to a vector of relocation
           records for the data in this section.  */
-     
        struct reloc_cache_entry *relocation;
      
        /* If an output section, a pointer to a vector of pointers to
           relocation records for the data in this section.  */
-     
        struct reloc_cache_entry **orelocation;
      
-       /* The number of relocation records in one of the above  */
-     
+       /* The number of relocation records in one of the above.  */
        unsigned reloc_count;
      
        /* Information below is back end specific - and not always used
           or updated.  */
      
        /* File position of section data.  */
-     
        file_ptr filepos;
      
        /* File position of relocation info.  */
-     
        file_ptr rel_filepos;
      
        /* File position of line data.  */
-     
        file_ptr line_filepos;
      
        /* Pointer to data for applications.  */
-     
        PTR userdata;
      
        /* If the SEC_IN_MEMORY flag is set, this points to the actual
@@ -334,48 +328,40 @@ typedef asection
        unsigned char *contents;
      
        /* Attached line number information.  */
-     
        alent *lineno;
      
        /* Number of line number records.  */
-     
        unsigned int lineno_count;
      
+       /* Entity size for merging purposes.  */
+       unsigned int entsize;
+     
        /* Optional information about a COMDAT entry; NULL if not COMDAT.  */
-     
        struct bfd_comdat_info *comdat;
-     
-       /* Points to the kept section if this section is a link-once section,
-          and is discarded.  */
-       struct sec *kept_section;
      
        /* When a section is being output, this value changes as more
           linenumbers are written out.  */
-     
        file_ptr moving_line_filepos;
      
        /* What the section number is in the target world.  */
-     
        int target_index;
      
        PTR used_by_bfd;
      
        /* If this is a constructor section then here is a list of the
           relocations created to relocate items within it.  */
-     
        struct relent_chain *constructor_chain;
      
        /* The BFD which owns the section.  */
-     
        bfd *owner;
      
-       /* A symbol which points at this section only */
+       /* A symbol which points at this section only.  */
        struct symbol_cache_entry *symbol;
        struct symbol_cache_entry **symbol_ptr_ptr;
      
        struct bfd_link_order *link_order_head;
        struct bfd_link_order *link_order_tail;
-     } asection ;
+     } asection;
      
      /* These sections are global, and are managed by BFD.  The application
         and target back end are not permitted to change the values in
@@ -387,21 +373,27 @@ typedef asection
      #define BFD_COM_SECTION_NAME "*COM*"
      #define BFD_IND_SECTION_NAME "*IND*"
      
-     /* the absolute section */
+     /* The absolute section.  */
      extern const asection bfd_abs_section;
      #define bfd_abs_section_ptr ((asection *) &bfd_abs_section)
      #define bfd_is_abs_section(sec) ((sec) == bfd_abs_section_ptr)
-     /* Pointer to the undefined section */
+     /* Pointer to the undefined section.  */
      extern const asection bfd_und_section;
      #define bfd_und_section_ptr ((asection *) &bfd_und_section)
      #define bfd_is_und_section(sec) ((sec) == bfd_und_section_ptr)
-     /* Pointer to the common section */
+     /* Pointer to the common section.  */
      extern const asection bfd_com_section;
      #define bfd_com_section_ptr ((asection *) &bfd_com_section)
-     /* Pointer to the indirect section */
+     /* Pointer to the indirect section.  */
      extern const asection bfd_ind_section;
      #define bfd_ind_section_ptr ((asection *) &bfd_ind_section)
      #define bfd_is_ind_section(sec) ((sec) == bfd_ind_section_ptr)
+     
+     #define bfd_is_const_section(SEC)              \
+      (   ((SEC) == bfd_abs_section_ptr)            \
+       || ((SEC) == bfd_und_section_ptr)            \
+       || ((SEC) == bfd_com_section_ptr)            \
+       || ((SEC) == bfd_ind_section_ptr))
      
      extern const struct symbol_cache_entry * const bfd_abs_symbol;
      extern const struct symbol_cache_entry * const bfd_com_symbol;
@@ -413,6 +405,31 @@ typedef asection
      #define bfd_get_section_size_after_reloc(section) \
           ((section)->reloc_done ? (section)->_cooked_size \
                                  : (abort (), (bfd_size_type) 1))
+     
+     /* Macros to handle insertion and deletion of a bfd's sections.  These
+        only handle the list pointers, ie. do not adjust section_count,
+        target_index etc.  */
+     #define bfd_section_list_remove(ABFD, PS) \
+       do                                                   \
+         {                                                  \
+           asection **_ps = PS;                             \
+           asection *_s = *_ps;                             \
+           *_ps = _s->next;                                 \
+           if (_s->next == NULL)                            \
+             (ABFD)->section_tail = _ps;                    \
+         }                                                  \
+       while (0)
+     #define bfd_section_list_insert(ABFD, PS, S) \
+       do                                                   \
+         {                                                  \
+           asection **_ps = PS;                             \
+           asection *_s = S;                                \
+           _s->next = *_ps;                                 \
+           *_ps = _s;                                       \
+           if (_s->next == NULL)                            \
+             (ABFD)->section_tail = &_s->next;              \
+         }                                                  \
+       while (0)
 
 
 File: bfd.info,  Node: section prototypes,  Prev: typedef asection,  Up: Sections
@@ -421,6 +438,15 @@ Section prototypes
 ------------------
 
    These are the functions exported by the section handling part of BFD.
+
+`bfd_section_list_clear'
+........................
+
+   *Synopsis*
+     void bfd_section_list_clear (bfd *);
+   *Description*
+Clears the section list, and also resets the section count and hash
+table entries.
 
 `bfd_get_section_by_name'
 .........................
@@ -549,11 +575,8 @@ returned, else `false'.
 ..........................
 
    *Synopsis*
-     boolean bfd_set_section_contents
-        (bfd *abfd,
-         asection *section,
-         PTR data,
-         file_ptr offset,
+     boolean bfd_set_section_contents (bfd *abfd, asection *section,
+         PTR data, file_ptr offset,
          bfd_size_type count);
    *Description*
 Sets the contents of the section SECTION in BFD ABFD to the data
@@ -573,9 +596,9 @@ are:
 ..........................
 
    *Synopsis*
-     boolean bfd_get_section_contents
-        (bfd *abfd, asection *section, PTR location,
-         file_ptr offset, bfd_size_type count);
+     boolean bfd_get_section_contents (bfd *abfd, asection *section,
+         PTR location, file_ptr offset,
+         bfd_size_type count);
    *Description*
 Read data from SECTION in BFD ABFD into memory starting at LOCATION.
 The data is read at an offset of OFFSET from the start of the input
@@ -590,7 +613,8 @@ flag set, then the LOCATION is filled with zeroes. If no errors occur,
 ...............................
 
    *Synopsis*
-     boolean bfd_copy_private_section_data(bfd *ibfd, asection *isec, bfd *obfd, asection *osec);
+     boolean bfd_copy_private_section_data (bfd *ibfd, asection *isec,
+         bfd *obfd, asection *osec);
    *Description*
 Copy private section information from ISEC in the BFD IBFD to the
 section OSEC in the BFD OBFD.  Return `true' on success, `false' on
@@ -611,8 +635,19 @@ error.  Possible error returns are:
         (struct bfd_link_info *info, asection *section);
    *Description*
 Remove SECTION from the output.  If the output section becomes empty,
-remove it from the output bfd.  INFO may be NULL; if it is not, it is
-used to decide whether the output section is empty.
+remove it from the output bfd.
+
+   This function won't actually do anything except twiddle flags if
+called too late in the linking process, when it's not safe to remove
+sections.
+
+`bfd_generic_discard_group'
+...........................
+
+   *Synopsis*
+     boolean bfd_generic_discard_group (bfd *abfd, asection *group);
+   *Description*
+Remove all members of GROUP from the output.
 
 
 File: bfd.info,  Node: Symbols,  Next: Archives,  Prev: Sections,  Up: BFD front end
@@ -767,126 +802,127 @@ typedef asymbol
 
      typedef struct symbol_cache_entry
      {
-            /* A pointer to the BFD which owns the symbol. This information
-               is necessary so that a back end can work out what additional
-               information (invisible to the application writer) is carried
-               with the symbol.
+       /* A pointer to the BFD which owns the symbol. This information
+          is necessary so that a back end can work out what additional
+          information (invisible to the application writer) is carried
+          with the symbol.
      
-               This field is *almost* redundant, since you can use section->owner
-               instead, except that some symbols point to the global sections
-               bfd_{abs,com,und}_section.  This could be fixed by making
-               these globals be per-bfd (or per-target-flavor).  FIXME. */
+          This field is *almost* redundant, since you can use section->owner
+          instead, except that some symbols point to the global sections
+          bfd_{abs,com,und}_section.  This could be fixed by making
+          these globals be per-bfd (or per-target-flavor).  FIXME.  */
+       struct _bfd *the_bfd; /* Use bfd_asymbol_bfd(sym) to access this field.  */
      
-       struct _bfd *the_bfd; /* Use bfd_asymbol_bfd(sym) to access this field. */
+       /* The text of the symbol. The name is left alone, and not copied; the
+          application may not alter it.  */
+       const char *name;
      
-            /* The text of the symbol. The name is left alone, and not copied; the
-               application may not alter it. */
-       CONST char *name;
-     
-            /* The value of the symbol.  This really should be a union of a
-               numeric value with a pointer, since some flags indicate that
-               a pointer to another symbol is stored here.  */
+       /* The value of the symbol.  This really should be a union of a
+          numeric value with a pointer, since some flags indicate that
+          a pointer to another symbol is stored here.  */
        symvalue value;
      
-            /* Attributes of a symbol: */
-     
+       /* Attributes of a symbol.  */
      #define BSF_NO_FLAGS    0x00
      
-            /* The symbol has local scope; `static' in `C'. The value
-               is the offset into the section of the data. */
+       /* The symbol has local scope; `static' in `C'. The value
+          is the offset into the section of the data.  */
      #define BSF_LOCAL      0x01
      
-            /* The symbol has global scope; initialized data in `C'. The
-               value is the offset into the section of the data. */
+       /* The symbol has global scope; initialized data in `C'. The
+          value is the offset into the section of the data.  */
      #define BSF_GLOBAL     0x02
      
-            /* The symbol has global scope and is exported. The value is
-               the offset into the section of the data. */
-     #define BSF_EXPORT     BSF_GLOBAL /* no real difference */
+       /* The symbol has global scope and is exported. The value is
+          the offset into the section of the data.  */
+     #define BSF_EXPORT     BSF_GLOBAL /* No real difference.  */
      
-            /* A normal C symbol would be one of:
-               `BSF_LOCAL', `BSF_FORT_COMM',  `BSF_UNDEFINED' or
-               `BSF_GLOBAL' */
+       /* A normal C symbol would be one of:
+          `BSF_LOCAL', `BSF_FORT_COMM',  `BSF_UNDEFINED' or
+          `BSF_GLOBAL'.  */
      
-            /* The symbol is a debugging record. The value has an arbitary
-               meaning, unless BSF_DEBUGGING_RELOC is also set.  */
+       /* The symbol is a debugging record. The value has an arbitary
+          meaning, unless BSF_DEBUGGING_RELOC is also set.  */
      #define BSF_DEBUGGING  0x08
      
-            /* The symbol denotes a function entry point.  Used in ELF,
-               perhaps others someday.  */
+       /* The symbol denotes a function entry point.  Used in ELF,
+          perhaps others someday.  */
      #define BSF_FUNCTION    0x10
      
-            /* Used by the linker. */
+       /* Used by the linker.  */
      #define BSF_KEEP        0x20
      #define BSF_KEEP_G      0x40
      
-            /* A weak global symbol, overridable without warnings by
-               a regular global symbol of the same name.  */
+       /* A weak global symbol, overridable without warnings by
+          a regular global symbol of the same name.  */
      #define BSF_WEAK        0x80
      
-            /* This symbol was created to point to a section, e.g. ELF's
-               STT_SECTION symbols.  */
+       /* This symbol was created to point to a section, e.g. ELF's
+          STT_SECTION symbols.  */
      #define BSF_SECTION_SYM 0x100
      
-            /* The symbol used to be a common symbol, but now it is
-               allocated. */
+       /* The symbol used to be a common symbol, but now it is
+          allocated.  */
      #define BSF_OLD_COMMON  0x200
      
-            /* The default value for common data. */
+       /* The default value for common data.  */
      #define BFD_FORT_COMM_DEFAULT_VALUE 0
      
-            /* In some files the type of a symbol sometimes alters its
-               location in an output file - ie in coff a `ISFCN' symbol
-               which is also `C_EXT' symbol appears where it was
-               declared and not at the end of a section.  This bit is set
-               by the target BFD part to convey this information. */
-     
+       /* In some files the type of a symbol sometimes alters its
+          location in an output file - ie in coff a `ISFCN' symbol
+          which is also `C_EXT' symbol appears where it was
+          declared and not at the end of a section.  This bit is set
+          by the target BFD part to convey this information.  */
      #define BSF_NOT_AT_END    0x400
      
-            /* Signal that the symbol is the label of constructor section. */
+       /* Signal that the symbol is the label of constructor section.  */
      #define BSF_CONSTRUCTOR   0x800
      
-            /* Signal that the symbol is a warning symbol.  The name is a
-               warning.  The name of the next symbol is the one to warn about;
-               if a reference is made to a symbol with the same name as the next
-               symbol, a warning is issued by the linker. */
+       /* Signal that the symbol is a warning symbol.  The name is a
+          warning.  The name of the next symbol is the one to warn about;
+          if a reference is made to a symbol with the same name as the next
+          symbol, a warning is issued by the linker.  */
      #define BSF_WARNING       0x1000
      
-            /* Signal that the symbol is indirect.  This symbol is an indirect
-               pointer to the symbol with the same name as the next symbol. */
+       /* Signal that the symbol is indirect.  This symbol is an indirect
+          pointer to the symbol with the same name as the next symbol.  */
      #define BSF_INDIRECT      0x2000
      
-            /* BSF_FILE marks symbols that contain a file name.  This is used
-               for ELF STT_FILE symbols.  */
+       /* BSF_FILE marks symbols that contain a file name.  This is used
+          for ELF STT_FILE symbols.  */
      #define BSF_FILE          0x4000
      
-            /* Symbol is from dynamic linking information.  */
+       /* Symbol is from dynamic linking information.  */
      #define BSF_DYNAMIC       0x8000
      
-            /* The symbol denotes a data object.  Used in ELF, and perhaps
-               others someday.  */
+       /* The symbol denotes a data object.  Used in ELF, and perhaps
+          others someday.  */
      #define BSF_OBJECT        0x10000
      
-            /* This symbol is a debugging symbol.  The value is the offset
-               into the section of the data.  BSF_DEBUGGING should be set
-               as well.  */
+       /* This symbol is a debugging symbol.  The value is the offset
+          into the section of the data.  BSF_DEBUGGING should be set
+          as well.  */
      #define BSF_DEBUGGING_RELOC 0x20000
+     
+       /* This symbol is thread local.  Used in ELF.  */
+     #define BSF_THREAD_LOCAL  0x40000
      
        flagword flags;
      
-            /* A pointer to the section to which this symbol is
-               relative.  This will always be non NULL, there are special
-               sections for undefined and absolute symbols.  */
+       /* A pointer to the section to which this symbol is
+          relative.  This will always be non NULL, there are special
+          sections for undefined and absolute symbols.  */
        struct sec *section;
      
-            /* Back end special data.  */
+       /* Back end special data.  */
        union
          {
            PTR p;
            bfd_vma i;
-         } udata;
-     
-     } asymbol;
+         }
+       udata;
+     }
+     asymbol;
 
 
 File: bfd.info,  Node: symbol handling functions,  Prev: typedef asymbol,  Up: Symbols
@@ -950,7 +986,7 @@ COUNT pointers to symbols will be written.
 ........................
 
    *Synopsis*
-     void bfd_print_symbol_vandf(PTR file, asymbol *symbol);
+     void bfd_print_symbol_vandf(bfd *abfd, PTR file, asymbol *symbol);
    *Description*
 Print the value and flags of the SYMBOL supplied to the stream FILE.
 
@@ -967,6 +1003,16 @@ pointing to it will not create the private information, and will cause
 problems later on.
      #define bfd_make_empty_symbol(abfd) \
           BFD_SEND (abfd, _bfd_make_empty_symbol, (abfd))
+
+`_bfd_generic_make_empty_symbol'
+................................
+
+   *Synopsis*
+     asymbol *_bfd_generic_make_empty_symbol (bfd *);
+   *Description*
+Create a new `asymbol' structure for the BFD ABFD and return a pointer
+to it.  Used by core file routines, binary back-end and anywhere else
+where no private info is needed.
 
 `bfd_make_debug_symbol'
 .......................
@@ -1189,7 +1235,7 @@ then an error occurs.
 ...................
 
    *Synopsis*
-     CONST char *bfd_format_string(bfd_format format);
+     const char *bfd_format_string(bfd_format format);
    *Description*
 Return a pointer to a const string `invalid', `object', `archive',
 `core', or `unknown', depending upon the value of FORMAT.

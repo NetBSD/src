@@ -1,5 +1,6 @@
 /* Disassemble h8300 instructions.
-   Copyright 1993, 1994, 1996, 1998, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1998, 2000, 2001, 2002
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "opcode/h8300.h"
 #include "dis-asm.h"
 #include "opintl.h"
+
+static void bfd_h8_disassemble_init PARAMS ((void));
+static unsigned int bfd_h8_disassemble
+  PARAMS ((bfd_vma, disassemble_info *, int));
 
 /* Run through the opcodes and sort them into order to make them easy
    to disassemble.  */
@@ -58,24 +63,24 @@ bfd_h8_disassemble_init ()
     }
 }
 
-unsigned int
+static unsigned int
 bfd_h8_disassemble (addr, info, mode)
      bfd_vma addr;
      disassemble_info *info;
      int mode;
 {
   /* Find the first entry in the table for this opcode.  */
-  static CONST char *regnames[] =
+  static const char *regnames[] =
     {
       "r0h", "r1h", "r2h", "r3h", "r4h", "r5h", "r6h", "r7h",
       "r0l", "r1l", "r2l", "r3l", "r4l", "r5l", "r6l", "r7l"
     };
-  static CONST char *wregnames[] =
+  static const char *wregnames[] =
     {
       "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
       "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7"
     };
-  static CONST char *lregnames[] =
+  static const char *lregnames[] =
     {
       "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7",
       "er0", "er1", "er2", "er3", "er4", "er5", "er6", "er7"
@@ -88,7 +93,7 @@ bfd_h8_disassemble (addr, info, mode)
   int plen = 0;
   static boolean init = 0;
   struct h8_opcode *q;
-  char CONST **pregnames = mode != 0 ? lregnames : wregnames;
+  char const **pregnames = mode != 0 ? lregnames : wregnames;
   int status;
   int l;
   unsigned char data[20];

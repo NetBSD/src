@@ -1,6 +1,6 @@
 /* tc-i960.c - All the i80960-specific stuff
    Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001
+   1999, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -64,10 +64,10 @@
         a relocation directive.  */
 
 #include <stdio.h>
-#include <ctype.h>
 
 #include "as.h"
 
+#include "safe-ctype.h"
 #include "obstack.h"
 
 #include "opcode/i960.h"
@@ -912,7 +912,7 @@ md_number_to_field (instrP, val, bfixP)
 
   ****************************************************************************/
 
-CONST char *md_shortopts = "A:b";
+const char *md_shortopts = "A:b";
 struct option md_longopts[] =
 {
 #define OPTION_LINKRELAX (OPTION_MD_BASE)
@@ -1085,7 +1085,8 @@ md_estimate_size_before_relax (fragP, segment_type)
       relax_cobr (fragP);
       return 4;
     }
-  return 0;
+
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }				/* md_estimate_size_before_relax() */
 
 #if defined(OBJ_AOUT) | defined(OBJ_BOUT)
@@ -1389,8 +1390,8 @@ get_args (p, args)
     {
 
       if (*p == ' '
-	  && (! isalnum ((unsigned char) p[1])
-	      || ! isalnum ((unsigned char) p[-1])))
+	  && (! ISALNUM (p[1])
+	      || ! ISALNUM (p[-1])))
 	{
 	  p++;
 
@@ -2806,21 +2807,13 @@ md_pcrel_from (fixP)
   return fixP->fx_where + fixP->fx_frag->fr_address;
 }
 
-#ifdef BFD_ASSEMBLER
-int
-md_apply_fix (fixP, valp)
-     fixS *fixP;
-     valueT *valp;
-#else
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
-#endif
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
-#ifdef BFD_ASSEMBLER
-  long val = *valp;
-#endif
+  long val = * (long *) valP;
   char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (!fixP->fx_bit_fixP)
@@ -2839,9 +2832,8 @@ md_apply_fix (fixP, val)
   else
     md_number_to_field (place, val, fixP->fx_bit_fixP);
 
-#ifdef BFD_ASSEMBLER
-  return 0;
-#endif
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 #if defined(OBJ_AOUT) | defined(OBJ_BOUT)

@@ -60,7 +60,7 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir/$subdir/relax.t tmpdir/
     # computes the start of the function.
 
     # Get the symbol table.
-    if ![ld_nm $nm tmpdir/relax] {
+    if ![ld_nm $nm "" tmpdir/relax] {
 	unresolved $testname
 	return
     }

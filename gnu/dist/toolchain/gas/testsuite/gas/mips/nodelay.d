@@ -1,6 +1,6 @@
 #objdump: -dr --prefix-addresses -mmips:5000
 #name: MIPS nodelay
-#as: -mips4 -mcpu=r8000
+#as: -mips4 -mtune=r8000
 #source: delay.s
 
 # For -mips4 

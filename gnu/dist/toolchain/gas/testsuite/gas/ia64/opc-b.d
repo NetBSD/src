@@ -871,77 +871,77 @@ Disassembly of section .text:
     11f6:	40 14 00 c2 03 80 	      \(p02\) br\.ret\.dpnt\.many\.clr b2
     11fc:	28 00 84 07       	            br\.ret\.dpnt\.many\.clr b2;;
     1200:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1206:	00 10 00 00 08 00 	      \(p02\) br\.call\.sptk\.few b0=b2
-    120c:	20 00 00 10       	            br\.call\.sptk\.few b0=b2;;
+    1206:	00 10 00 40 08 00 	      \(p02\) br\.call\.sptk\.few b0=b2
+    120c:	20 00 80 10       	            br\.call\.sptk\.few b0=b2;;
     1210:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1216:	00 10 00 00 0a 00 	      \(p02\) br\.call\.sptk\.few\.clr b0=b2
-    121c:	20 00 00 14       	            br\.call\.sptk\.few\.clr b0=b2;;
+    1216:	00 10 00 40 0a 00 	      \(p02\) br\.call\.sptk\.few\.clr b0=b2
+    121c:	20 00 80 14       	            br\.call\.sptk\.few\.clr b0=b2;;
     1220:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1226:	00 10 00 00 08 00 	      \(p02\) br\.call\.sptk\.few b0=b2
-    122c:	20 00 00 10       	            br\.call\.sptk\.few b0=b2;;
+    1226:	00 10 00 40 08 00 	      \(p02\) br\.call\.sptk\.few b0=b2
+    122c:	20 00 80 10       	            br\.call\.sptk\.few b0=b2;;
     1230:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1236:	00 10 00 00 0a 00 	      \(p02\) br\.call\.sptk\.few\.clr b0=b2
-    123c:	20 00 00 14       	            br\.call\.sptk\.few\.clr b0=b2;;
+    1236:	00 10 00 40 0a 00 	      \(p02\) br\.call\.sptk\.few\.clr b0=b2
+    123c:	20 00 80 14       	            br\.call\.sptk\.few\.clr b0=b2;;
     1240:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1246:	00 14 00 00 08 00 	      \(p02\) br\.call\.sptk\.many b0=b2
-    124c:	28 00 00 10       	            br\.call\.sptk\.many b0=b2;;
+    1246:	00 14 00 40 08 00 	      \(p02\) br\.call\.sptk\.many b0=b2
+    124c:	28 00 80 10       	            br\.call\.sptk\.many b0=b2;;
     1250:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1256:	00 14 00 00 0a 00 	      \(p02\) br\.call\.sptk\.many\.clr b0=b2
-    125c:	28 00 00 14       	            br\.call\.sptk\.many\.clr b0=b2;;
+    1256:	00 14 00 40 0a 00 	      \(p02\) br\.call\.sptk\.many\.clr b0=b2
+    125c:	28 00 80 14       	            br\.call\.sptk\.many\.clr b0=b2;;
     1260:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1266:	00 10 00 80 08 00 	      \(p02\) br\.call\.spnt\.few b0=b2
-    126c:	20 00 00 11       	            br\.call\.spnt\.few b0=b2;;
+    1266:	00 10 00 c0 08 00 	      \(p02\) br\.call\.spnt\.few b0=b2
+    126c:	20 00 80 11       	            br\.call\.spnt\.few b0=b2;;
     1270:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1276:	00 10 00 80 0a 00 	      \(p02\) br\.call\.spnt\.few\.clr b0=b2
-    127c:	20 00 00 15       	            br\.call\.spnt\.few\.clr b0=b2;;
+    1276:	00 10 00 c0 0a 00 	      \(p02\) br\.call\.spnt\.few\.clr b0=b2
+    127c:	20 00 80 15       	            br\.call\.spnt\.few\.clr b0=b2;;
     1280:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1286:	00 10 00 80 08 00 	      \(p02\) br\.call\.spnt\.few b0=b2
-    128c:	20 00 00 11       	            br\.call\.spnt\.few b0=b2;;
+    1286:	00 10 00 c0 08 00 	      \(p02\) br\.call\.spnt\.few b0=b2
+    128c:	20 00 80 11       	            br\.call\.spnt\.few b0=b2;;
     1290:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1296:	00 10 00 80 0a 00 	      \(p02\) br\.call\.spnt\.few\.clr b0=b2
-    129c:	20 00 00 15       	            br\.call\.spnt\.few\.clr b0=b2;;
+    1296:	00 10 00 c0 0a 00 	      \(p02\) br\.call\.spnt\.few\.clr b0=b2
+    129c:	20 00 80 15       	            br\.call\.spnt\.few\.clr b0=b2;;
     12a0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12a6:	00 14 00 80 08 00 	      \(p02\) br\.call\.spnt\.many b0=b2
-    12ac:	28 00 00 11       	            br\.call\.spnt\.many b0=b2;;
+    12a6:	00 14 00 c0 08 00 	      \(p02\) br\.call\.spnt\.many b0=b2
+    12ac:	28 00 80 11       	            br\.call\.spnt\.many b0=b2;;
     12b0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12b6:	00 14 00 80 0a 00 	      \(p02\) br\.call\.spnt\.many\.clr b0=b2
-    12bc:	28 00 00 15       	            br\.call\.spnt\.many\.clr b0=b2;;
+    12b6:	00 14 00 c0 0a 00 	      \(p02\) br\.call\.spnt\.many\.clr b0=b2
+    12bc:	28 00 80 15       	            br\.call\.spnt\.many\.clr b0=b2;;
     12c0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12c6:	00 10 00 00 09 00 	      \(p02\) br\.call\.dptk\.few b0=b2
-    12cc:	20 00 00 12       	            br\.call\.dptk\.few b0=b2;;
+    12c6:	00 10 00 40 09 00 	      \(p02\) br\.call\.dptk\.few b0=b2
+    12cc:	20 00 80 12       	            br\.call\.dptk\.few b0=b2;;
     12d0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12d6:	00 10 00 00 0b 00 	      \(p02\) br\.call\.dptk\.few\.clr b0=b2
-    12dc:	20 00 00 16       	            br\.call\.dptk\.few\.clr b0=b2;;
+    12d6:	00 10 00 40 0b 00 	      \(p02\) br\.call\.dptk\.few\.clr b0=b2
+    12dc:	20 00 80 16       	            br\.call\.dptk\.few\.clr b0=b2;;
     12e0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12e6:	00 10 00 00 09 00 	      \(p02\) br\.call\.dptk\.few b0=b2
-    12ec:	20 00 00 12       	            br\.call\.dptk\.few b0=b2;;
+    12e6:	00 10 00 40 09 00 	      \(p02\) br\.call\.dptk\.few b0=b2
+    12ec:	20 00 80 12       	            br\.call\.dptk\.few b0=b2;;
     12f0:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    12f6:	00 10 00 00 0b 00 	      \(p02\) br\.call\.dptk\.few\.clr b0=b2
-    12fc:	20 00 00 16       	            br\.call\.dptk\.few\.clr b0=b2;;
+    12f6:	00 10 00 40 0b 00 	      \(p02\) br\.call\.dptk\.few\.clr b0=b2
+    12fc:	20 00 80 16       	            br\.call\.dptk\.few\.clr b0=b2;;
     1300:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1306:	00 14 00 00 09 00 	      \(p02\) br\.call\.dptk\.many b0=b2
-    130c:	28 00 00 12       	            br\.call\.dptk\.many b0=b2;;
+    1306:	00 14 00 40 09 00 	      \(p02\) br\.call\.dptk\.many b0=b2
+    130c:	28 00 80 12       	            br\.call\.dptk\.many b0=b2;;
     1310:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1316:	00 14 00 00 0b 00 	      \(p02\) br\.call\.dptk\.many\.clr b0=b2
-    131c:	28 00 00 16       	            br\.call\.dptk\.many\.clr b0=b2;;
+    1316:	00 14 00 40 0b 00 	      \(p02\) br\.call\.dptk\.many\.clr b0=b2
+    131c:	28 00 80 16       	            br\.call\.dptk\.many\.clr b0=b2;;
     1320:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1326:	00 10 00 80 09 00 	      \(p02\) br\.call\.dpnt\.few b0=b2
-    132c:	20 00 00 13       	            br\.call\.dpnt\.few b0=b2;;
+    1326:	00 10 00 c0 09 00 	      \(p02\) br\.call\.dpnt\.few b0=b2
+    132c:	20 00 80 13       	            br\.call\.dpnt\.few b0=b2;;
     1330:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1336:	00 10 00 80 0b 00 	      \(p02\) br\.call\.dpnt\.few\.clr b0=b2
-    133c:	20 00 00 17       	            br\.call\.dpnt\.few\.clr b0=b2;;
+    1336:	00 10 00 c0 0b 00 	      \(p02\) br\.call\.dpnt\.few\.clr b0=b2
+    133c:	20 00 80 17       	            br\.call\.dpnt\.few\.clr b0=b2;;
     1340:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1346:	00 10 00 80 09 00 	      \(p02\) br\.call\.dpnt\.few b0=b2
-    134c:	20 00 00 13       	            br\.call\.dpnt\.few b0=b2;;
+    1346:	00 10 00 c0 09 00 	      \(p02\) br\.call\.dpnt\.few b0=b2
+    134c:	20 00 80 13       	            br\.call\.dpnt\.few b0=b2;;
     1350:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1356:	00 10 00 80 0b 00 	      \(p02\) br\.call\.dpnt\.few\.clr b0=b2
-    135c:	20 00 00 17       	            br\.call\.dpnt\.few\.clr b0=b2;;
+    1356:	00 10 00 c0 0b 00 	      \(p02\) br\.call\.dpnt\.few\.clr b0=b2
+    135c:	20 00 80 17       	            br\.call\.dpnt\.few\.clr b0=b2;;
     1360:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1366:	00 14 00 80 09 00 	      \(p02\) br\.call\.dpnt\.many b0=b2
-    136c:	28 00 00 13       	            br\.call\.dpnt\.many b0=b2;;
+    1366:	00 14 00 c0 09 00 	      \(p02\) br\.call\.dpnt\.many b0=b2
+    136c:	28 00 80 13       	            br\.call\.dpnt\.many b0=b2;;
     1370:	17 00 00 00 00 88 	\[BBB\]       nop\.b 0x0
-    1376:	00 14 00 80 0b 00 	      \(p02\) br\.call\.dpnt\.many\.clr b0=b2
-    137c:	28 00 00 17       	            br\.call\.dpnt\.many\.clr b0=b2;;
+    1376:	00 14 00 c0 0b 00 	      \(p02\) br\.call\.dpnt\.many\.clr b0=b2
+    137c:	28 00 80 17       	            br\.call\.dpnt\.many\.clr b0=b2;;
     1380:	17 00 00 00 00 00 	\[BBB\]       break\.b 0x0
     1386:	00 00 00 00 10 40 	            nop\.b 0x0
     138c:	80 ec ff 78       	            brp\.sptk 0x0,0x13a0;;

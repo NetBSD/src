@@ -1,26 +1,59 @@
 #
 # Some ARM tests
 #
+proc run_errors_test { name opts tname} {
+    global srcdir subdir
+    set testname "$tname"
+    set file $srcdir/$subdir/$name
+    gas_run ${name}.s $opts ">&${name}.out"
+    if { [regexp_diff "${name}.out" "${file}.l"] } then {
+        fail $testname
+        verbose "output is [file_contents "${name}.out"]" 2
+        return
+    }
+    pass $testname
+}
+
 if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
     run_dump_test "inst"
 
-    gas_test "arm3.s" "" $stdoptlist "Arm 3 instructions"
+    run_dump_test "ldconst"
 
-    gas_test "arm6.s" "" $stdoptlist "Arm 6 instructions"
+    run_dump_test "armv1"
 
-    gas_test "arm7dm.s" "" $stdoptlist "Arm 7DM instructions"
+    run_errors_test "armv1-bad" "-mcpu=arm7m" "ARM v1 errors"
+
+    gas_test "arm3.s" "-mcpu=arm3" $stdoptlist "Arm 3 instructions"
+
+    gas_test "arm6.s" "-mcpu=arm6" $stdoptlist "Arm 6 instructions"
+
+    gas_test "arm7dm.s" "-mcpu=arm7dm" $stdoptlist "Arm 7DM instructions"
 
     run_dump_test "arm7t"
 
-    gas_test "thumb.s" "" $stdoptlist "Thumb instructions"
+    gas_test "thumb.s" "-mcpu=arm7t" $stdoptlist "Thumb instructions"
 
-    gas_test "arch4t.s" "" $stdoptlist "Arm architecture 4t instructions"
+    gas_test "arch4t.s" "-march=armv4t" $stdoptlist "Arm architecture 4t instructions"
+
+    run_dump_test "arch5tej"
 
     gas_test "copro.s" "" $stdoptlist "Co processor instructions"
 
     gas_test "immed.s" "" $stdoptlist "immediate expressions"
 
     gas_test "float.s" "" $stdoptlist "Core floating point instructions"
+
+    run_dump_test "fpa-monadic"
+
+    run_dump_test "fpa-dyadic"
+
+    run_dump_test "fpa-mem"
+
+    run_dump_test "vfp1xD"
+
+    run_dump_test "vfp1"
+
+    run_errors_test "vfp-bad" "-mfpu=vfp" "VFP errors"
 
     run_dump_test "xscale"
 
@@ -39,4 +72,8 @@ if [istarget arm-*-pe] {
 
     # Since big-endian numbers have the normal format, this doesn't exist.
     #run_dump_test "be-fpconst"
+}
+
+if [istarget arm9e-*] {
+    run_dump_test "maverick"
 }

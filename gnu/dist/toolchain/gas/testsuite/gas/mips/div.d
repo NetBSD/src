@@ -1,5 +1,5 @@
+#as: -march=r4000 -mtune=r4000
 #objdump: -dr --prefix-addresses -mmips:4000
-#as: -mcpu=r4000
 #name: MIPS div
 
 # Test the div macro.

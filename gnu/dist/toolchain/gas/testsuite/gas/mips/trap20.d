@@ -1,4 +1,4 @@
-#as: -mcpu=r4000
+#as: -march=r4000
 #objdump: -dr --prefix-addresses -mmips:4000
 #name: MIPS 20-bit trap
 

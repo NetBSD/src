@@ -1,6 +1,6 @@
 /* source.c - Keep track of source files.
 
-   Copyright 2000, 2001 Free Software Foundation, Inc.
+   Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -28,14 +28,15 @@
 #define EXT_ANNO "-ann"		/* Postfix of annotated files.  */
 
 /* Default option values.  */
-bool create_annotation_files = FALSE;
+boolean create_annotation_files = false;
 
 Search_List src_search_list = {0, 0};
 Source_File *first_src_file = 0;
 
 
 Source_File *
-DEFUN (source_file_lookup_path, (path), const char *path)
+source_file_lookup_path (path)
+     const char *path;
 {
   Source_File *sf;
 
@@ -62,7 +63,8 @@ DEFUN (source_file_lookup_path, (path), const char *path)
 
 
 Source_File *
-DEFUN (source_file_lookup_name, (filename), const char *filename)
+source_file_lookup_name (filename)
+     const char *filename;
 {
   const char *fname;
   Source_File *sf;
@@ -89,14 +91,15 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
 
 
 FILE *
-DEFUN (annotate_source, (sf, max_width, annote, arg),
-       Source_File * sf AND int max_width
-       AND void (*annote) PARAMS ((char *buf, int w, int l, void *arg))
-       AND void *arg)
+annotate_source (sf, max_width, annote, arg)
+     Source_File *sf;
+     unsigned int max_width;
+     void (*annote) PARAMS ((char *, unsigned int, int, void *));
+     void *arg;
 {
-  static bool first_file = TRUE;
+  static boolean first_file = true;
   int i, line_num, nread;
-  bool new_line;
+  boolean new_line;
   char buf[8192];
   char fname[PATH_MAX];
   char *annotation, *name_only;
@@ -111,7 +114,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
     sle = 0;			/* Don't use search list for absolute paths.  */
 
   name_only = 0;
-  while (TRUE)
+  while (true)
     {
       DBG (SRCDEBUG, printf ("[annotate_source]: looking for %s, trying %s\n",
 			     sf->name, fname));
@@ -226,12 +229,12 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
   if (ofp == stdout)
     {
       if (first_file)
-	first_file = FALSE;
+	first_file = false;
       else
 	fputc ('\n', ofp);
 
       if (first_output)
-	first_output = FALSE;
+	first_output = false;
       else
 	fprintf (ofp, "\f\n");
 
@@ -240,7 +243,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 
   annotation = xmalloc (max_width + 1);
   line_num = 1;
-  new_line = TRUE;
+  new_line = true;
 
   while ((nread = fread (buf, 1, sizeof (buf), ifp)) > 0)
     {
@@ -251,7 +254,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	      (*annote) (annotation, max_width, line_num, arg);
 	      fputs (annotation, ofp);
 	      ++line_num;
-	      new_line = FALSE;
+	      new_line = false;
 	    }
 
 	  new_line = (buf[i] == '\n');

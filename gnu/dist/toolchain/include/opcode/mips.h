@@ -133,6 +133,16 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define OP_MASK_SEL		0x7	/* The sel field of mfcZ and mtcZ.  */
 #define OP_SH_CODE19		6       /* 19 bit wait code.  */
 #define OP_MASK_CODE19		0x7ffff
+#define OP_SH_ALN		21
+#define OP_MASK_ALN		0x7
+#define OP_SH_VSEL		21
+#define OP_MASK_VSEL		0x1f
+
+/* Values in the 'VSEL' field.  */
+#define MDMX_FMTSEL_IMM_QH	0x1d
+#define MDMX_FMTSEL_IMM_OB	0x1e
+#define MDMX_FMTSEL_VEC_QH	0x15
+#define MDMX_FMTSEL_VEC_OB	0x16
 
 /* This structure holds information for a particular instruction.  */
 
@@ -209,8 +219,8 @@ struct mips_opcode
    Coprocessor instructions:
    "E" 5 bit target register (OP_*_RT)
    "G" 5 bit destination register (OP_*_RD)
+   "H" 3 bit sel field for (d)mtc* and (d)mfc* (OP_*_SEL)
    "P" 5 bit performance-monitor register (OP_*_PERFREG)
-   "H" 3 bit sel field (OP_*_SEL)
 
    Macro instructions:
    "A" General 32 bit expression
@@ -220,13 +230,21 @@ struct mips_opcode
    "f" 32 bit floating point constant
    "l" 32 bit floating point constant in .lit4
 
+   MDMX instruction operands (note that while these use the FP register
+   fields, they accept both $fN and $vN names for the registers):  
+   "O"	MDMX alignment offset (OP_*_ALN)
+   "Q"	MDMX vector/scalar/immediate source (OP_*_VSEL and OP_*_FT)
+   "X"	MDMX destination register (OP_*_FD) 
+   "Y"	MDMX source register (OP_*_FS)
+   "Z"	MDMX source register (OP_*_FT)
+
    Other:
    "()" parens surrounding optional value
    ","  separates operands
 
    Characters used so far, for quick reference when adding more:
    "<>(),"
-   "ABCDEFGHIJLMNPRSTUVW"
+   "ABCDEFGHIJLMNOPQRSTUVWXYZ"
    "abcdfhijklopqrstuvwxz"
 */
 
@@ -297,6 +315,10 @@ struct mips_opcode
 #define INSN_MULT                   0x40000000
 /* Instruction synchronize shared memory.  */
 #define INSN_SYNC		    0x80000000
+/* Instruction reads MDMX accumulator.  XXX FIXME: No bits left!  */
+#define INSN_READ_MDMX_ACC	    0
+/* Instruction writes MDMX accumulator.  XXX FIXME: No bits left!  */
+#define INSN_WRITE_MDMX_ACC	    0
 
 /* Instruction is actually a macro.  It should be ignored by the
    disassembler, and requires special treatment by the assembler.  */
@@ -307,7 +329,7 @@ struct mips_opcode
    ORs of these bits, indicatingthat they support the instructions
    defined at the given level.  */
 
-#define INSN_ISA_MASK		  0x0000ffff
+#define INSN_ISA_MASK		  0x00000fff
 #define INSN_ISA1                 0x00000010
 #define INSN_ISA2                 0x00000020
 #define INSN_ISA3                 0x00000040
@@ -315,6 +337,16 @@ struct mips_opcode
 #define INSN_ISA5                 0x00000100
 #define INSN_ISA32                0x00000200
 #define INSN_ISA64                0x00000400
+
+/* Masks used for MIPS-defined ASEs.  */
+#define INSN_ASE_MASK		  0x0000f000
+
+/* MIPS 16 ASE */
+#define INSN_MIPS16               0x00002000
+/* MIPS-3D ASE */
+#define INSN_MIPS3D               0x00004000
+/* MDMX ASE */ 
+#define INSN_MDMX                 0x00008000
 
 /* Chip specific instructions.  These are bitmasks.  */
 
@@ -326,8 +358,10 @@ struct mips_opcode
 #define INSN_4100                 0x00040000
 /* Toshiba R3900 instruction.  */
 #define INSN_3900                 0x00080000
-/* 32-bit code running on a ISA3+ CPU.  */
-#define INSN_GP32                 0x00100000
+/* MIPS R10000 instruction.  */
+#define INSN_10000                0x00100000
+/* Broadcom SB-1 instruction.  */
+#define INSN_SB1                  0x00200000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -361,28 +395,26 @@ struct mips_opcode
 #define CPU_R12000	12000
 #define CPU_MIPS16	16
 #define CPU_MIPS32	32
-#define CPU_MIPS32_4K	3204113         /* 32, 04, octal 'K'.  */
 #define CPU_MIPS5       5
 #define CPU_MIPS64      64
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
 
-/* Test for membership in an ISA including chip specific ISAs.
-   INSN is pointer to an element of the opcode table; ISA is the
-   specified ISA to test against; and CPU is the CPU specific ISA
-   to test, or zero if no CPU specific ISA test is desired.
-   The gp32 arg is set when you need to force 32-bit register usage on
-   a machine with 64-bit registers; see the documentation under -mgp32
-   in the MIPS gas docs.  */
+/* Test for membership in an ISA including chip specific ISAs.  INSN
+   is pointer to an element of the opcode table; ISA is the specified
+   ISA/ASE bitmask to test against; and CPU is the CPU specific ISA to
+   test, or zero if no CPU specific ISA test is desired.  */
 
-#define OPCODE_IS_MEMBER(insn, isa, cpu, gp32)				\
-    ((((insn)->membership & isa) != 0                           	\
-      && ((insn)->membership & INSN_GP32 ? gp32 : 1)			\
-     )									\
+#define OPCODE_IS_MEMBER(insn, isa, cpu)				\
+    (((insn)->membership & isa) != 0					\
      || (cpu == CPU_R4650 && ((insn)->membership & INSN_4650) != 0)	\
      || (cpu == CPU_R4010 && ((insn)->membership & INSN_4010) != 0)	\
      || ((cpu == CPU_VR4100 || cpu == CPU_R4111)			\
 	 && ((insn)->membership & INSN_4100) != 0)			\
-     || (cpu == CPU_R3900  && ((insn)->membership & INSN_3900) != 0))
+     || (cpu == CPU_R3900 && ((insn)->membership & INSN_3900) != 0)	\
+     || ((cpu == CPU_R10000 || cpu == CPU_R12000)			\
+	 && ((insn)->membership & INSN_10000) != 0)			\
+     || (cpu == CPU_SB1 && ((insn)->membership & INSN_SB1) != 0)	\
+     || 0)	/* Please keep this term for easier source merging.  */
 
 /* This is a list of macro expanded instructions.
 
@@ -508,6 +540,7 @@ enum
   M_LWR_A,
   M_LWR_AB,
   M_LWU_AB,
+  M_MOVE,
   M_MUL,
   M_MUL_I,
   M_MULO,
@@ -520,9 +553,13 @@ enum
   M_REM_3I,
   M_REMU_3,
   M_REMU_3I,
+  M_DROL,
   M_ROL,
+  M_DROL_I,
   M_ROL_I,
+  M_DROR,
   M_ROR,
+  M_DROR_I,
   M_ROR_I,
   M_S_DA,
   M_S_DOB,

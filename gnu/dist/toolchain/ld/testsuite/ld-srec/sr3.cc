@@ -116,3 +116,12 @@ Foo::~Foo ()
 {
   foos--;
 }
+
+void *__dso_handle;
+
+extern "C"
+int
+__cxa_atexit (void)
+{
+  return 0;
+}

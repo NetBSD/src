@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@worldnet.fr)
 
 This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,14 @@ static const char *const reg_dst_table[] = {
 };
 
 #define OP_PAGE_MASK (M6811_OP_PAGE2|M6811_OP_PAGE3|M6811_OP_PAGE4)
+
+/* Prototypes for local functions.  */
+static int read_memory
+  PARAMS ((bfd_vma, bfd_byte *, int, struct disassemble_info *));
+static int print_indexed_operand
+  PARAMS ((bfd_vma, struct disassemble_info *, int));
+static int print_insn
+  PARAMS ((bfd_vma, struct disassemble_info *, int));
 
 static int
 read_memory (memaddr, buffer, size, info)
@@ -358,14 +366,35 @@ print_insn (memaddr, info, arch)
 	  (*info->fprintf_func) (info->stream, "\t");
 	}
 
-      /* The movb and movw must be handled in a special way...  */
-      offset = 0;
-      if (format & (M6812_OP_IDX_P2 | M6812_OP_IND16_P2))
-	{
-	  if ((format & M6812_OP_IDX_P2)
-	      && (format & (M6811_OP_IMM8 | M6811_OP_IMM16 | M6811_OP_IND16)))
-	    offset = 1;
-	}
+      /* The movb and movw must be handled in a special way...
+         The source constant 'ii' is not always at the same place.
+         This is the same for the destination for the post-indexed byte.
+         The 'offset' is used to do the appropriate correction.
+
+                                   offset          offset
+                              for constant     for destination
+         movb   18 OB ii hh ll       0          0
+                18 08 xb ii          1          -1
+                18 0C hh ll hh ll    0          0
+                18 09 xb hh ll       1          -1
+                18 0D xb hh ll       0          0
+                18 0A xb xb          0          0
+
+         movw   18 03 jj kk hh ll    0          0
+                18 00 xb jj kk       1          -1
+                18 04 hh ll hh ll    0          0
+                18 01 xb hh ll       1          -1
+                18 05 xb hh ll       0          0
+                18 02 xb xb          0          0
+
+         After the source operand is read, the position 'pos' is incremented
+         this explains the negative offset for destination.
+
+         movb/movw above are the only instructions with this matching
+         format.  */
+      offset = ((format & M6812_OP_IDX_P2)
+                && (format & (M6811_OP_IMM8 | M6811_OP_IMM16 |
+                              M6811_OP_IND16)));
 
       /* Operand with one more byte: - immediate, offset,
          direct-low address.  */
@@ -379,7 +408,10 @@ print_insn (memaddr, info, arch)
 	    }
 
 	  pos++;
-	  offset = -1;
+
+          /* This movb/movw is special (see above).  */
+          offset = -offset;
+
 	  if (format & M6811_OP_IMM8)
 	    {
 	      (*info->fprintf_func) (info->stream, "#%d", (int) buffer[0]);

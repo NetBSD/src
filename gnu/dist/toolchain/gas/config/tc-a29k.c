@@ -1,5 +1,5 @@
 /* tc-a29k.c -- Assemble for the AMD 29000.
-   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -23,8 +23,8 @@
    to convert it to new machines' assemblers as desired.  There was too
    much bloody rewriting required before.  There still probably is.  */
 
-#include <ctype.h>
 #include "as.h"
+#include "safe-ctype.h"
 
 #include "opcode/a29k.h"
 
@@ -188,7 +188,7 @@ insert_sreg (regname, regnum)
   symbol_table_insert (symbol_new (regname, SEG_REGISTER, (valueT) regnum,
 				   &zero_address_frag));
   for (i = 0; regname[i]; i++)
-    buf[i] = islower (regname[i]) ? toupper (regname[i]) : regname[i];
+    buf[i] = TOUPPER (regname[i]);
   buf[i] = '\0';
 
   symbol_table_insert (symbol_new (buf, SEG_REGISTER, (valueT) regnum,
@@ -397,10 +397,9 @@ machine_ip (str)
 
   /* Must handle `div0' opcode.  */
   s = str;
-  if (isalpha (*s))
-    for (; isalnum (*s); ++s)
-      if (isupper (*s))
-	*s = tolower (*s);
+  if (ISALPHA (*s))
+    for (; ISALNUM (*s); ++s)
+      *s = TOLOWER (*s);
 
   switch (*s)
     {
@@ -783,26 +782,25 @@ md_number_to_chars (buf, val, n)
 }
 
 void
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, valP, seg)
      fixS *fixP;
-     long val;
+     valueT * valP;
+     segT seg ATTRIBUTE_UNUSED;
 {
+  long val = * (long *) valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
-  fixP->fx_addnumber = val;	/* Remember value for emit_reloc */
+  fixP->fx_addnumber = val;	/* Remember value for emit_reloc.  */
 
   know (fixP->fx_size == 4);
   know (fixP->fx_r_type < NO_RELOC);
 
   /* This is a hack.  There should be a better way to handle this.  */
   if (fixP->fx_r_type == RELOC_WDISP30 && fixP->fx_addsy)
-    {
-      val += fixP->fx_where + fixP->fx_frag->fr_address;
-    }
+    val += fixP->fx_where + fixP->fx_frag->fr_address;
 
   switch (fixP->fx_r_type)
     {
-
     case RELOC_32:
       buf[0] = val >> 24;
       buf[1] = val >> 16;
@@ -864,12 +862,13 @@ md_apply_fix (fixP, val)
       else if (fixP->fx_pcrel)
 	{
 	  long v = val >> 17;
+
 	  if (v != 0 && v != -1)
 	    as_bad_where (fixP->fx_file, fixP->fx_line,
 			  "call/jmp target out of range");
 	}
       else
-	/* this case was supposed to be handled in machine_ip */
+	/* This case was supposed to be handled in machine_ip.  */
 	abort ();
       buf[1] = val >> 10;	/* Holds bits 0003FFFC of address */
       buf[3] = val >> 2;
@@ -890,6 +889,9 @@ md_apply_fix (fixP, val)
       as_bad (_("bad relocation type: 0x%02x"), fixP->fx_r_type);
       break;
     }
+
+  if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
+    fixP->fx_done = 1;
 }
 
 #ifdef OBJ_COFF
@@ -1036,7 +1038,7 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 
 #endif /* OBJ_AOUT */
 
-CONST char *md_shortopts = "";
+const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
@@ -1067,13 +1069,13 @@ a29k_unrecognized_line (c)
   char *s;
 
   if (c != '$'
-      || ! isdigit ((unsigned char) input_line_pointer[0]))
+      || ! ISDIGIT (input_line_pointer[0]))
     return 0;
 
   s = input_line_pointer;
 
   lab = 0;
-  while (isdigit ((unsigned char) *s))
+  while (ISDIGIT (*s))
     {
       lab = lab * 10 + *s - '0';
       ++s;
@@ -1176,7 +1178,7 @@ md_operand (expressionP)
 	expressionP->X_op = O_constant;
     }
   else if (input_line_pointer[0] == '$'
-	   && isdigit ((unsigned char) input_line_pointer[1]))
+	   && ISDIGIT (input_line_pointer[1]))
     {
       long lab;
       char *name;
@@ -1238,7 +1240,7 @@ md_operand (expressionP)
 	  return;
 	}
 
-      if (isdigit (*s))
+      if (ISDIGIT (*s))
 	{
 	  fieldnum = *s - '0';
 	  ++s;

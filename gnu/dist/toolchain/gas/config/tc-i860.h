@@ -1,5 +1,5 @@
 /* tc-i860.h -- Header file for the i860.
-   Copyright 1991, 1992, 1995, 1998, 2000
+   Copyright 1991, 1992, 1995, 1998, 2000, 2001
    Free Software Foundation, Inc.
 
    Brought back from the dead and completely reworked
@@ -71,8 +71,6 @@ extern int target_big_endian;
 #endif
 
 #define WORKING_DOT_WORD
-#define MD_APPLY_FIX3
-#define TC_HANDLES_FX_DONE
 #define DIFF_EXPR_OK
 
 /* Permit temporary numeric labels.  */

@@ -94,6 +94,10 @@ struct som_exec_data
        null pointer dereferencing is allowed and the like.  */
     long exec_flags;
 
+    /* We must preserve the version identifier too.  Some versions
+       of the HP linker do not grok NEW_VERSION_ID for reasons unknown.  */
+    unsigned int version_id;
+
     /* Add more stuff here as needed.  Good examples of information
        we might want to pass would be presumed_dp, entry_* and maybe
        others from the file header.  */
@@ -103,7 +107,7 @@ struct somdata
   {
     /* All the magic information about an executable which lives
        in the private BFD structure and needs to be copied from
-       the input bfd to the output bfd during a objcopy/strip.  */
+       the input bfd to the output bfd during an objcopy/strip.  */
     struct som_exec_data *exec_data;
 
     /* These three fields are only used when writing files and are
