@@ -16,7 +16,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_msg.c,v 1.6 1994/05/25 02:14:33 hpeyerl Exp $
+ *	$Id: sysv_msg.c,v 1.7 1994/05/25 08:15:47 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -195,12 +195,8 @@ msgctl(p, uap, retval)
 	case IPC_RMID:
 	{
 		struct msg *msghdr;
-
-		if (cred->cr_uid != 0 &&
-		    msqptr->msg_perm.cuid != cred->cr_uid &&
-		    msqptr->msg_perm.uid != cred->cr_uid)
-			return(EPERM);
-
+		if ((eval = ipcperm(cred, &msgptr->msg_perm, IPC_M)))
+			return(eval);
 		/* Free the message headers */
 		msghdr = msqptr->msg_first;
 		while (msghdr != NULL) {
@@ -227,10 +223,8 @@ msgctl(p, uap, retval)
 		break;
 
 	case IPC_SET:
-		if (cred->cr_uid != 0 &&
-		    msqptr->msg_perm.cuid != cred->cr_uid &&
-		    msqptr->msg_perm.uid != cred->cr_uid)
-			return(EPERM);
+		if ((eval = ipcperm(cred, &msgptr->msg_perm, IPC_M)))
+			return(eval);
 		if ((eval = copyin(user_msqptr, &msqbuf, sizeof(msqbuf))) != 0)
 			return(eval);
 		if (msqbuf.msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)

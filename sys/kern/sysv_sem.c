@@ -5,7 +5,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_sem.c,v 1.7 1994/05/25 02:14:29 hpeyerl Exp $
+ *	$Id: sysv_sem.c,v 1.8 1994/05/25 08:15:49 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -324,10 +324,8 @@ semctl(p, uap, retval)
 
 	switch (cmd) {
 	case IPC_RMID:
-		if (cred->cr_uid != 0 &&
-		    semaptr->sem_perm.cuid != cred->cr_uid &&
-		    semaptr->sem_perm.uid != cred->cr_uid)
-			return(EPERM);
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+			return(eval);
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
 		semtot -= semaptr->sem_nsems;
@@ -344,10 +342,8 @@ semctl(p, uap, retval)
 		break;
 
 	case IPC_SET:
-		if (cred->cr_uid != 0 &&
-		    semaptr->sem_perm.cuid != cred->cr_uid &&
-		    semaptr->sem_perm.uid != cred->cr_uid)
-			return(EPERM);
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+			return(eval);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
 		if ((eval = copyin(real_arg.buf, (caddr_t)&sbuf,
