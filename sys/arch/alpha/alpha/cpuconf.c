@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.c,v 1.12 1998/04/16 04:04:15 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.c,v 1.13 1998/04/29 02:41:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -137,7 +137,7 @@ struct cpuinit cpuinit[] = {
 	cpu_notsupp("ST_DEC_1000A"),		     /* 27: ST_DEC_1000A */
 	cpu_notsupp("ST_DEC_ALPHAVME_224"),	   /* 28: ST_DEC_ALPHAVME_224 */
 	cpu_notsupp("???"),			     /* 29: ??? */
-	cpu_notsupp("???"),			     /* 30: ??? */
+	cpu_notsupp("ST_DEC_550"),		     /* 30: ST_DEC_550 */
 	cpu_notsupp("???"),			     /* 31: ??? */
 	cpu_notsupp("ST_DEC_EV56_PBP"),		     /* 32: ST_DEC_EV56_PBP */
 	cpu_notsupp("ST_DEC_ALPHAVME_320"),	   /* 33: ST_DEC_ALPHAVME_320 */
