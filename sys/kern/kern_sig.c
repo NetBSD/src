@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.58 1996/10/18 08:39:34 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.59 1996/10/23 23:13:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -60,6 +60,7 @@
 #include <sys/stat.h>
 #include <sys/core.h>
 #include <sys/ptrace.h>
+#include <sys/filedesc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1053,11 +1054,28 @@ coredump(p)
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
 
+	/*
+	 * Make sure the process has not set-id, to prevent data leaks.
+	 */
 	if (p->p_flag & P_SUGID)
-		return (EFAULT);
+		return (EPERM);
+
+	/*
+	 * Refuse to core if the data + stack + user size is larger than
+	 * the core dump limit.  XXX THIS IS WRONG, because of mapped
+	 * data.
+	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
-		return (EFAULT);
+		return (EFBIG);		/* better error code? */
+
+	/*
+	 * The core dump will go in the current working directory.  Make
+	 * sure that mount flags allow us to write core dumps there.
+	 */
+	if (p->p_fd->fd_cdir->v_mount->mnt_flag & MNT_NOCOREDUMP)
+		return (EPERM);
+
 	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
@@ -1068,7 +1086,7 @@ coredump(p)
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
 	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
-		error = EFAULT;
+		error = EINVAL;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
