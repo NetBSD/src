@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.31 1994/06/29 13:12:45 chopps Exp $
+ *	$Id: locore.s,v 1.32 1994/07/04 20:27:44 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -204,7 +204,7 @@ _fpfline:
 
 _fpunsupp:
 	jra	_illinst
-
+#ifdef FPSP
 | FPSP entry points and support routines
 	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
 	.globl	real_unsupp,real_inex
@@ -264,7 +264,7 @@ real_operr:
 real_ovfl:
 real_snan:
 | Fall through into FP coprocessor exceptions
-
+#endif /* FPSP */
 /*
  * Handles all other FP coprocessor exceptions.
  * Note that since some FP exceptions generate mid-instruction frames
@@ -827,6 +827,7 @@ Lsetcpu040:
 	jeq	Lstartnot040		| it's not 68040
 	movl	#-2,_mmutype		| same as hp300 for compat
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
+#ifdef FPSP
 	lea	Lvectab+0xc0,a0		| set up 68040 floating point
 	movl	#fpsp_bsun,a0@+		|  exception vectors
 	movl	#real_inex,a0@+
@@ -836,7 +837,7 @@ Lsetcpu040:
 	movl	#fpsp_ovfl,a0@+
 	movl	#fpsp_snan,a0@+
 	movl	#fpsp_unsupp,a0@+
-
+#endif
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
