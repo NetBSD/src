@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 1997/03/27 21:01:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 1997/04/04 20:48:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -622,6 +622,7 @@ cpu_dumpconf()
 	}
 }
 
+/* Note: gdb looks for "dumppcb" in a kernel crash dump. */
 struct pcb dumppcb;
 extern vm_offset_t avail_start;
 

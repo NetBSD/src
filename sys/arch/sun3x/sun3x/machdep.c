@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1997/03/27 21:01:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 1997/04/04 20:49:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -615,6 +615,7 @@ cpu_dumpconf()
 	}
 }
 
+/* Note: gdb looks for "dumppcb" in a kernel crash dump. */
 struct pcb dumppcb;
 
 /*
