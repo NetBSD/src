@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmp.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmp.c,v 1.5 1993/12/02 01:56:04 mycroft Exp $";
+static char rcsid[] = "$Id: cmp.c,v 1.6 1994/03/25 17:07:02 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ cmp()
 		len1 -= len;
 		len2 -= len;
 		if (len1)
-			buf1 += cnt;
+			buf1 += len;
 		else
 			switch (len1 = read(fd1, buf1 = buffer1, MAXBSIZE)) {
 			case -1:
@@ -183,7 +183,7 @@ cmp()
 				}
 			}
 		if (len2)
-			buf2 += cnt;
+			buf2 += len;
 		else
 			switch (len2 = read(fd2, buf2 = buffer2, MAXBSIZE)) {
 			case -1:
