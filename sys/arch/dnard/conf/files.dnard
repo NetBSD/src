@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.1 2001/02/26 02:49:25 matt Exp $
+#	$NetBSD: files.dnard,v 1.2 2001/02/26 13:26:14 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,9 +8,6 @@ maxusers 2 8 64
 
 # Floating point emulator
 defopt	ARMFPE
-
-# CPU types
-defopt	opt_cputypes.h CPU_ARM6 CPU_ARM7 CPU_ARM7500 CPU_ARM8 CPU_SA110
 
 # COMPAT_OLD_OFW for SHARKs
 defopt	COMPAT_OLD_OFW
