@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.50 1997/05/27 23:24:56 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.51 1997/07/15 07:46:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -875,8 +875,8 @@ audio_fill_silence(params, p, n)
 		auzero[0] = 0x55;
 		break;
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
-	case AUDIO_ENCODING_LINEAR_LE:
-	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_BE:
 		auzero[0] = 0;	/* fortunately this works for both 8 and 16 bits */
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
@@ -1503,11 +1503,25 @@ int
 audio_check_params(p)
 	struct audio_params *p;
 {
-	if (p->encoding == AUDIO_ENCODING_LINEAR)
+#if defined(COMPAT_12)
+	if (p->encoding == AUDIO_ENCODING_PCM16) {
+		if (p->precision == 8)
+			p->encoding = AUDIO_ENCODING_ULINEAR;
+		else
+			p->encoding = AUDIO_ENCODING_SLINEAR;
+	} else if (p->encoding == AUDIO_ENCODING_PCM8) {
+		if (p->precision == 8)
+			p->encoding = AUDIO_ENCODING_ULINEAR;
+		else
+			return EINVAL;
+	}
+#endif
+
+	if (p->encoding == AUDIO_ENCODING_SLINEAR)
 #if BYTE_ORDER == LITTLE_ENDIAN
-		p->encoding = AUDIO_ENCODING_LINEAR_LE;
+		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
 #else
-		p->encoding = AUDIO_ENCODING_LINEAR_BE;
+		p->encoding = AUDIO_ENCODING_SLINEAR_BE;
 #endif
 	if (p->encoding == AUDIO_ENCODING_ULINEAR)
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1523,8 +1537,8 @@ audio_check_params(p)
 		if (p->precision != 8)
 			return (EINVAL);
 		break;
-	case AUDIO_ENCODING_LINEAR_LE:
-	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision != 8 && p->precision != 16)

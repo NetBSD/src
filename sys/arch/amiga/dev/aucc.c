@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.10 1997/07/10 22:18:42 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.11 1997/07/15 07:46:04 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -385,7 +385,7 @@ aucc_query_encoding(addr, fp)
 	switch (fp->index) {	
 	case 0:
 		strcpy(fp->name, AudioElinear);
-		fp->encoding = AUDIO_ENCODING_LINEAR;
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
@@ -430,9 +430,9 @@ aucc_set_params(addr, mode, p, q)
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_LINEAR:
-	case AUDIO_ENCODING_LINEAR_BE:
-	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 		break;		
@@ -977,9 +977,9 @@ aucc_encode(enc, channels, i, p, dmap)
 	case AUDIO_ENCODING_ULINEAR_LE:
 		off=-128;
 		break;
-	case AUDIO_ENCODING_LINEAR:
-	case AUDIO_ENCODING_LINEAR_BE:
-	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_LE:
 		break;
 	default:
 		return;

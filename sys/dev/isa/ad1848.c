@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.31 1997/06/06 23:43:45 thorpej Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.32 1997/07/15 07:46:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -953,7 +953,7 @@ ad1848_query_encoding(addr, fp)
 	break;
     case 2:
 	strcpy(fp->name, AudioElinear_le);
-	fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+	fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	fp->precision = 16;
 	fp->flags = 0;
 	break;
@@ -966,7 +966,7 @@ ad1848_query_encoding(addr, fp)
 
     case 4: /* only on CS4231 */
 	strcpy(fp->name, AudioElinear_be);
-	fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+	fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 	fp->precision = 16;
 	fp->flags = sc->mode == 1;
 	break;
@@ -974,7 +974,7 @@ ad1848_query_encoding(addr, fp)
     /* emulate some modes */
     case 5:
 	strcpy(fp->name, AudioElinear);
-	fp->encoding = AUDIO_ENCODING_LINEAR;
+	fp->encoding = AUDIO_ENCODING_SLINEAR;
 	fp->precision = 8;
 	fp->flags = 1;
 	break;
@@ -1016,27 +1016,27 @@ ad1848_set_params(addr, mode, p, q)
     enc = p->encoding;
     swcode = 0;
     switch (enc) {
-    case AUDIO_ENCODING_LINEAR_LE:
+    case AUDIO_ENCODING_SLINEAR_LE:
 	if (p->precision == 8) {
 	    enc = AUDIO_ENCODING_ULINEAR_LE;
 	    swcode = change_sign8;
 	}
 	break;
-    case AUDIO_ENCODING_LINEAR_BE:
+    case AUDIO_ENCODING_SLINEAR_BE:
 	if (p->precision == 16 && sc->mode == 1) {
-	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    enc = AUDIO_ENCODING_SLINEAR_LE;
 	    swcode = swap_bytes;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_LE:
 	if (p->precision == 16) {
-	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    enc = AUDIO_ENCODING_SLINEAR_LE;
 	    swcode = change_sign16;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_BE:
 	if (p->precision == 16) {
-	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    enc = AUDIO_ENCODING_SLINEAR_LE;
 	    swcode = mode == AUMODE_PLAY ?
 	      swap_bytes_change_sign16 : change_sign16_swap_bytes;
 	}
@@ -1052,13 +1052,13 @@ ad1848_set_params(addr, mode, p, q)
     case AUDIO_ENCODING_ADPCM:
 	bits = FMT_ADPCM >> 5;
 	break;
-    case AUDIO_ENCODING_LINEAR_LE:
+    case AUDIO_ENCODING_SLINEAR_LE:
 	if (p->precision == 16)
 	    bits = FMT_TWOS_COMP >> 5;
 	else
 	    return EINVAL;
 	break;
-    case AUDIO_ENCODING_LINEAR_BE:
+    case AUDIO_ENCODING_SLINEAR_BE:
 	if (p->precision == 16)
 	    bits = FMT_TWOS_COMP_BE >> 5;
 	else

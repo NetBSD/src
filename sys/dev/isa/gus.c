@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.31 1997/07/09 03:03:21 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.32 1997/07/15 07:46:16 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -911,7 +911,7 @@ gusattach(parent, self, aux)
 	 */
 
 	sc->sc_irate = sc->sc_orate = 44100;
-	sc->sc_encoding = AUDIO_ENCODING_LINEAR_LE;
+	sc->sc_encoding = AUDIO_ENCODING_SLINEAR_LE;
 	sc->sc_precision = 16;
 	sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_DATA_SIZE16;
 	sc->sc_voc[GUS_VOICE_RIGHT].voccntl |= GUSMASK_DATA_SIZE16;
@@ -1378,8 +1378,8 @@ gus_dmaout_dointr(sc)
 	if (sc->sc_dmabuf == sc->sc_nbufs - 1) {
 	  register int i;
 	  switch (sc->sc_encoding) {
-	  case AUDIO_ENCODING_LINEAR_LE:
-	  case AUDIO_ENCODING_LINEAR_BE:
+	  case AUDIO_ENCODING_SLINEAR_LE:
+	  case AUDIO_ENCODING_SLINEAR_BE:
 	    if (sc->sc_precision == 8)
 	      goto byte;
 	    /* we have the native format */
@@ -2106,9 +2106,9 @@ gus_set_params(addr, mode, p, q)
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 		break;
 	default:
@@ -2144,7 +2144,7 @@ gus_set_params(addr, mode, p, q)
 			mulaw_to_ulinear8 : ulinear8_to_mulaw;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_BE:
 		p->sw_code = swap_bytes;
 		break;
 	default:
@@ -4193,13 +4193,13 @@ gus_query_encoding(addr, fp)
 		break;
 	case 1:
 		strcpy(fp->name, AudioElinear);
-		fp->encoding = AUDIO_ENCODING_LINEAR;
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
 		strcpy(fp->name, AudioElinear_le);
-		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
@@ -4217,7 +4217,7 @@ gus_query_encoding(addr, fp)
 		break;
 	case 5:
 		strcpy(fp->name, AudioElinear_be);
-		fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;

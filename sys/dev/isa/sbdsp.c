@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.58 1997/06/13 19:21:59 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.59 1997/07/15 07:46:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -444,7 +444,7 @@ sbdsp_query_encoding(addr, fp)
 		return 0;
 	case 3:
 		strcpy(fp->name, AudioElinear);
-		fp->encoding = AUDIO_ENCODING_LINEAR;
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = emul;
 		return 0;
@@ -455,7 +455,7 @@ sbdsp_query_encoding(addr, fp)
         switch(fp->index) {
         case 4:
 		strcpy(fp->name, AudioElinear_le);
-		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		return 0;
@@ -467,7 +467,7 @@ sbdsp_query_encoding(addr, fp)
 		return 0;
 	case 6:
 		strcpy(fp->name, AudioElinear_be);
-		fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
@@ -509,11 +509,11 @@ sbdsp_set_params(addr, mode, p, q)
 	swcode = 0;
 	if (m->model == SB_16) {
 		switch (p->encoding) {
-		case AUDIO_ENCODING_LINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->precision == 16)
 				swcode = swap_bytes;
 			/* fall into */
-		case AUDIO_ENCODING_LINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_LE:
 			bmode = 0x10;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
@@ -540,12 +540,12 @@ sbdsp_set_params(addr, mode, p, q)
 			bmode |= 0x20;
 	} else if (m->model == SB_JAZZ && m->precision == 16) {
 		switch (p->encoding) {
-		case AUDIO_ENCODING_LINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_LE:
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			swcode = change_sign16;
 			break;
-		case AUDIO_ENCODING_LINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_BE:
 			swcode = swap_bytes;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
@@ -567,8 +567,8 @@ sbdsp_set_params(addr, mode, p, q)
 		p->sample_rate = SB_TC_TO_RATE(tc) / p->channels;
 	} else {
 		switch (p->encoding) {
-		case AUDIO_ENCODING_LINEAR_BE:
-		case AUDIO_ENCODING_LINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_LE:
 			swcode = change_sign8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:

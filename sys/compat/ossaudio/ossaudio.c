@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.11 1997/05/19 23:05:14 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.12 1997/07/15 07:46:09 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -130,19 +130,19 @@ oss_ioctl_audio(p, uap, retval)
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 8;
 			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR;
+			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR;
 			break;
 		case OSS_AFMT_S16_LE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 16;
 			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR_LE;
+			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
 			break;
 		case OSS_AFMT_S16_BE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 16;
 			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR_BE;
+			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
 			break;
 		case OSS_AFMT_U16_LE:
 			tmpinfo.play.precision =
@@ -172,13 +172,13 @@ oss_ioctl_audio(p, uap, retval)
 		case AUDIO_ENCODING_ALAW:
 			idat = OSS_AFMT_A_LAW;
 			break;
-		case AUDIO_ENCODING_LINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_LE:
 			if (tmpinfo.play.precision == 16)
 				idat = OSS_AFMT_S16_LE;
 			else
 				idat = OSS_AFMT_S8;
 			break;
-		case AUDIO_ENCODING_LINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR_BE:
 			if (tmpinfo.play.precision == 16)
 				idat = OSS_AFMT_S16_BE;
 			else
