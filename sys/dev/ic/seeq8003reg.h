@@ -1,4 +1,4 @@
-/*	$NetBSD: seeq8003reg.h,v 1.1 2000/09/22 05:48:50 soren Exp $	*/
+/*	$NetBSD: seeq8003reg.h,v 1.2 2001/06/06 22:11:42 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -28,7 +28,8 @@
 /*
  * Register definitions for the Seeq 8003 and 80C03 ethernet controllers
  *
- * Based on documentation at http://www.lsilogic.com/techlib/seeq/80c03.pdf .
+ * Based on documentation available at
+ * http://www.lsilogic.com/techlib/techdocs/networking/eol/80c03.pdf .
  */
 
 #define	SEEQ_ADDR0	0		/* Station Address Byte 0 */
