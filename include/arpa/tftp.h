@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.5.10.1 2001/02/26 16:59:50 he Exp $	*/
+/*	$NetBSD: tftp.h,v 1.5.10.2 2004/04/09 04:23:03 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,11 @@
 /*
  * Trivial File Transfer Protocol (IEN-133)
  */
-#define	SEGSIZE		512		/* data segment size */
+#define	SEGSIZE		512	/* data segment size */
+#define	MAXSEGSIZE	65464	/* maximum negotiated data segment size */
+
+#define PKTSIZE		SEGSIZE + 4
+#define MAXPKTSIZE	MAXSEGSIZE + 4
 
 /*
  * Packet types.
@@ -51,6 +55,7 @@
 #define	DATA	03			/* data packet */
 #define	ACK	04			/* acknowledgement */
 #define	ERROR	05			/* error code */
+#define	OACK	06			/* option acknowledgement */
 
 struct	tftphdr {
 	short	th_opcode;		/* packet type */
@@ -78,5 +83,6 @@ struct	tftphdr {
 #define	EBADID		5		/* unknown transfer ID */
 #define	EEXISTS		6		/* file already exists */
 #define	ENOUSER		7		/* no such user */
+#define	EOPTNEG		8		/* option negotiation failed */
 
 #endif /* _ARPA_TFTP_H_ */
