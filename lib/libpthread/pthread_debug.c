@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.5 2001/07/31 00:15:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.6 2001/12/30 02:25:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@ void pthread__debug_init(void)
 {
 	time_t t;
 
+	if (getenv("PTHREAD_DEBUGLOG") == NULL)
+		return;
+
 	t = time(NULL);
 	debugbuf = pthread__debuglog_init(0);
 	DPRINTF(("Started debugging %s (pid %d) at %s\n", getprogname(), 
@@ -104,6 +107,9 @@ pthread__debuglog_printf(const char *fmt, ...)
 	static char tmpbuf[200];
 	long len, cplen, diff1, diff2;
 	va_list ap;
+
+	if (debugbuf == NULL) 
+		return;
 
 	va_start(ap, fmt);
 	len = vsnprintf(tmpbuf, 200, fmt, ap);
