@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.3 2002/08/27 17:27:30 abs Exp $	*/
+/*	$NetBSD: path.c,v 1.4 2002/08/29 21:46:34 abs Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.3 2002/08/27 17:27:30 abs Exp $");
+__RCSID("$NetBSD: path.c,v 1.4 2002/08/29 21:46:34 abs Exp $");
 #endif
 
 #include <err.h>
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: path.c,v 1.3 2002/08/27 17:27:30 abs Exp $");
 #include "lib.h"
 
 struct pathhead PkgPath = TAILQ_HEAD_INITIALIZER(PkgPath);
+static struct path *prepend = 0;
 
 static struct path *path_new_entry(const char *cp, size_t len);
 
@@ -134,28 +135,28 @@ path_new_entry(const char *cp, size_t len)
 }
 
 /*
- * Given a package name, push its path onto the start of 'PkgPath'
+ * path_prepend_from_pkgname: prepend the path for a package onto 'PkgPath'
  */
 void
 path_prepend_from_pkgname(const char *pkgname)
 {
-	struct path *new;
 	char *ptr;
-	if ((ptr = strrchr(pkgname , '/')))
-		new = path_new_entry(pkgname, ptr - pkgname);
-	else
-		new = path_new_entry(".", 1);
-
-	TAILQ_INSERT_HEAD(&PkgPath, new, pl_entry);
+	if ((ptr = strrchr(pkgname , '/'))) {
+		prepend = path_new_entry(pkgname, ptr - pkgname);
+		TAILQ_INSERT_HEAD(&PkgPath, prepend, pl_entry);
+	}
 }
 
 /*
- * Remove the first entry of 'PkgPath' - used after path_prepend_from_pkgname()
+ * path_prepend_clear: Remove any prepended entry from 'PkgPath'
  */
 void
-path_remove_first()
+path_prepend_clear()
 {
-	TAILQ_REMOVE(&PkgPath, TAILQ_FIRST(&PkgPath), pl_entry);
+	if (prepend) {
+		TAILQ_REMOVE(&PkgPath, prepend, pl_entry);
+		prepend = 0;
+	}
 }
 
 /*
