@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.15 2001/06/18 19:01:53 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.16 2001/06/19 14:22:45 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -786,8 +786,7 @@ isc_result_t got_one (h)
 		ifrom.len = 4;
 		memcpy (ifrom.iabuf, &from.sin_addr, ifrom.len);
 
-		(*bootp_packet_handler) (ip, &u.packet,
-					 (unsigned)result,
+		(*bootp_packet_handler) (ip, &u.packet, (unsigned)result,
 					 from.sin_port, ifrom, &hfrom);
 	}
 
