@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.12 1997/02/03 19:56:03 cgd Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.13 1997/02/03 23:43:36 mycroft Exp $	*/
 
 /*
  * Mach Operating System
@@ -112,40 +112,40 @@ db_examine(addr, fmt, count)
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*r", width, value);
+				db_printf("%-*lr", width, value);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*x", width, value);
+				db_printf("%-*lx", width, value);
 				break;
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*z", width, value);
+				db_printf("%-*lz", width, value);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*d", width, value);
+				db_printf("%-*ld", width, value);
 				break;
 			case 'u':	/* unsigned decimal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*u", width, value);
+				db_printf("%-*lu", width, value);
 				break;
 			case 'o':	/* unsigned octal */
 				value = db_get_value(addr, size, FALSE);
 				addr += size;
-				db_printf("%-*o", width, value);
+				db_printf("%-*lo", width, value);
 				break;
 			case 'c':	/* character */
 				value = db_get_value(addr, 1, FALSE);
 				addr += 1;
 				if (value >= ' ' && value <= '~')
-					db_printf("%c", value);
+					db_printf("%c", (char)value);
 				else
-					db_printf("\\%03o", value);
+					db_printf("\\%03lo", value);
 				break;
 			case 's':	/* null-terminated string */
 				for (;;) {
@@ -154,9 +154,9 @@ db_examine(addr, fmt, count)
 					if (value == 0)
 						break;
 					if (value >= ' ' && value <= '~')
-						db_printf("%c", value);
+						db_printf("%c", (char)value);
 					else
-						db_printf("\\%03o", value);
+						db_printf("\\%03lo", value);
 				}
 				break;
 			case 'i':	/* instruction */
@@ -198,29 +198,29 @@ db_print_cmd(addr, have_addr, count, modif)
 		db_printsym((db_addr_t)addr, DB_STGY_ANY);
 		break;
 	case 'r':
-		db_printf("%11r", addr);
+		db_printf("%11lr", addr);
 		break;
 	case 'x':
-		db_printf("%8x", addr);
+		db_printf("%8lx", addr);
 		break;
 	case 'z':
-		db_printf("%8z", addr);
+		db_printf("%8lz", addr);
 		break;
 	case 'd':
-		db_printf("%11d", addr);
+		db_printf("%11ld", addr);
 		break;
 	case 'u':
-		db_printf("%11u", addr);
+		db_printf("%11lu", addr);
 		break;
 	case 'o':
-		db_printf("%16o", addr);
+		db_printf("%16lo", addr);
 		break;
 	case 'c':
 		value = addr & 0xFF;
 		if (value >= ' ' && value <= '~')
-			db_printf("%c", value);
+			db_printf("%c", (char)value);
 		else
-			db_printf("\\%03o", value);
+			db_printf("\\%03lo", value);
 		break;
 	}
 	db_printf("\n");
