@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.619 2003/09/21 19:35:42 jdolecek Exp $
+#	$NetBSD: mi,v 1.620 2003/09/22 12:54:46 atatat Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1049,7 +1049,6 @@
 ./usr/lib/libskey_p.a		comp-c-proflib
 ./usr/lib/libsl.a		comp-krb5-lib
 ./usr/lib/libsl_p.a		comp-krb5-proflib
-./usr/lib/libsm.a		comp-sendmail-lib
 ./usr/lib/libss.a		comp-krb5-lib
 ./usr/lib/libss_p.a		comp-krb5-proflib
 ./usr/lib/libssl.a		comp-c-lib
