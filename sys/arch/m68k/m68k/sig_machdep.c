@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.3 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.4 2001/11/17 18:18:24 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,14 +95,6 @@ sendsig(catcher, sig, mask, code)
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
-
-	if (p->p_flag & P_SA) {
-		if (code)
-			sa_upcall(l, SA_UPCALL_SIGNAL, l, NULL, sig, code,NULL);
-		else
-			sa_upcall(l, SA_UPCALL_SIGNAL, NULL, l, sig, 0, NULL);
-		return;
-	}
 
 	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
@@ -336,8 +328,6 @@ cpu_upcall(l)
 	sf.sa_sas = sapp;
 	sf.sa_events = nevents;
 	sf.sa_interrupted = nint;
-	sf.sa_sig = sau->sau_sig;
-	sf.sa_code = sau->sau_code;
 	sf.sa_arg = sau->sau_arg;
 	sf.sa_upcall = sd->sa_upcall;
 

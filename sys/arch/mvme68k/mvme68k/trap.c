@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61.4.2 2001/11/17 13:07:57 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.61.4.3 2001/11/17 18:18:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -223,9 +223,9 @@ again:
 			postsig(sig);
 	}
 
-	/* If our process is on the way out, die */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
