@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1995/08/10 19:36:41 chuck Exp $ */
+/*	$NetBSD: disksubr.c,v 1.3 1996/04/18 17:43:04 chuck Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -47,6 +47,20 @@
 #include <sys/syslog.h>
 
 #define	b_cylinder	b_resid
+
+/*
+ * dk_establish
+ */
+
+int
+dk_establish(dk, dev)
+
+struct disk *dk;
+struct device *dev;
+
+{
+	return(-1);
+}
 
 /*
  * Attempt to read a disk label from a device using the indicated stategy
