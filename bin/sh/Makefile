@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2000/04/09 23:27:03 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2000/12/29 16:30:31 bjh21 Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 WARNS=2
@@ -47,7 +47,8 @@ mknodes: mknodes.c
 	${HOST_LINK.c} -o mknodes ${.IMPSRC}
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
-	(${MACHINE_ARCH} == "arm32")
+	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "arm26")
 TARGET_CHARFLAG= -DTARGET_CHAR="u_int8_t"
 .else
 TARGET_CHARFLAG= -DTARGET_CHAR="int8_t"
