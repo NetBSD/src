@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.2 1998/08/29 21:43:46 pk Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.3 1998/10/10 00:28:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,7 @@ struct cfattach esp_obio_ca = {
 static struct scsipi_adapter esp_obio_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 static struct scsipi_device esp_obio_dev = {

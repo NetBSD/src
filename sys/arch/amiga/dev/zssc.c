@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.24 1998/01/12 10:40:17 thorpej Exp $	*/
+/*	$NetBSD: zssc.c,v 1.25 1998/10/10 00:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,8 +61,7 @@ void zssc_dump __P((void));
 struct scsipi_adapter zssc_scsiswitch = {
 	siop_scsicmd,
 	siop_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device zssc_scsidev = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.24 1998/08/21 19:13:28 is Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.25 1998/10/10 00:28:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -69,8 +69,7 @@ void gtsc_dump __P((void));
 struct scsipi_adapter gtsc_scsiswitch = {
 	sbic_scsicmd,
 	sbic_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device gtsc_scsidev = {

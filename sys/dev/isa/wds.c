@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.34 1998/07/04 22:18:51 jonathan Exp $	*/
+/*	$NetBSD: wds.c,v 1.35 1998/10/10 00:28:35 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -207,10 +207,9 @@ void	wds_enqueue __P((struct wds_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *wds_dequeue __P((struct wds_softc *));
 
 struct scsipi_adapter wds_switch = {
-	wds_scsi_cmd,
-	wdsminphys,
-	0,
-	0,
+	wds_scsi_cmd,		/* scsipi_cmd */
+	wdsminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for our link struct */

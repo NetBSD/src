@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.4 1998/09/17 22:51:05 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.5 1998/10/10 00:28:34 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -52,7 +52,9 @@ static void ispminphys __P((struct buf *));
 static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
 
 static struct scsipi_adapter isp_switch = {
-	ispcmd, ispminphys, 0, 0
+	ispcmd,			/* scsipi_cmd */
+	ispminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };

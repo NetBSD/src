@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.33 1998/05/19 04:31:27 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.34 1998/10/10 00:28:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,8 +90,7 @@ struct scsipi_adapter asc_switch = {
 #else
 	SII_MAX_DMA_XFER_LENGTH,
 #endif
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device sii_dev = {

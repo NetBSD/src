@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.21 1998/01/12 10:40:13 thorpej Exp $	*/
+/*	$NetBSD: wesc.c,v 1.22 1998/10/10 00:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,8 +61,7 @@ void wesc_dump __P((void));
 struct scsipi_adapter wesc_scsiswitch = {
 	siop_scsicmd,
 	siop_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device wesc_scsidev = {

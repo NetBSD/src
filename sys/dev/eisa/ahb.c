@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.23 1998/08/17 00:26:33 mycroft Exp $	*/
+/*	$NetBSD: ahb.c,v 1.24 1998/10/10 00:28:28 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -148,10 +148,9 @@ integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 
 struct scsipi_adapter ahb_switch = {
-	ahb_scsi_cmd,
-	ahbminphys,
-	0,
-	0,
+	ahb_scsi_cmd,		/* scsipi_cmd */
+	ahbminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
