@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.20 2002/02/24 00:17:45 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.21 2002/05/21 05:40:21 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.20 2002/02/24 00:17:45 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134.2.21 2002/05/21 05:40:21 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -178,6 +178,7 @@ trap(frame)
 	int resume;
 	caddr_t onfault;
 	int error;
+	uint32_t cr2;
 
 	uvmexp.traps++;
 
@@ -415,6 +416,7 @@ copyfault:
 		if (frame.tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
+		cr2 = rcr2();
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		goto faultcommon;
 
@@ -426,12 +428,13 @@ copyfault:
 		extern struct vm_map *kernel_map;
 		unsigned nss;
 
+		cr2 = rcr2();
 		KERNEL_PROC_LOCK(p);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
-		pcb->pcb_cr2 = rcr2();
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)pcb->pcb_cr2);
 		/*
 		 * It is only a kernel address space fault iff:
