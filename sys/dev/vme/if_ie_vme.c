@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.5 1998/02/28 01:15:51 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.6 1999/03/23 12:01:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -460,7 +460,7 @@ ie_vme_attach(parent, self, aux)
 	iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
 
 	/* Clear all ram */
-	bus_space_set_multi_2(sc->bt, sc->bh, 0, 0, sc->sc_msize/2);
+	bus_space_set_region_2(sc->bt, sc->bh, 0, 0, sc->sc_msize/2);
 
 	/*
 	 * We use the first page to set up SCP, ICSP and SCB data
