@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.10 1998/06/17 07:38:28 ross Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.11 1998/07/08 18:41:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1425,9 +1425,7 @@ sw_reg_iodone(bp)
 			putvndxfer(vnx);
 			biodone(pbp);
 		}
-	}
-
-	if (pbp->b_resid == 0) {
+	} else if (pbp->b_resid == 0) {
 #ifdef DIAGNOSTIC
 		if (vnx->vx_pending != 0)
 			panic("sw_reg_iodone: vnx pending: %d",vnx->vx_pending);
