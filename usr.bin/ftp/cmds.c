@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.67 1999/10/01 06:18:32 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.68 1999/10/01 08:01:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.67 1999/10/01 06:18:32 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.68 1999/10/01 08:01:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -717,7 +717,8 @@ status(argc, argv)
 	    "Socket buffer sizes: send %d, receive %d.\n",
 	    sndbuf_size, rcvbuf_size);
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
-	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s.\n", onoff(epsv4));
+	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
+	    epsv4bad ? " (disabled for this connection)" : "");
 #ifndef NO_EDITCOMPLETE
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
 #endif /* !NO_EDITCOMPLETE */
@@ -1619,6 +1620,7 @@ disconnect(argc, argv)
 	cout = NULL;
 	connected = 0;
 	data = -1;
+	epsv4bad = 0;
 	if (!proxy) {
 		macnum = 0;
 	}
@@ -2033,6 +2035,17 @@ setpassive(argc, argv)
 
 	code = togglevar(argc, argv, &passivemode,
 	    verbose ? "Passive mode" : NULL);
+}
+
+void
+setepsv4(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	code = togglevar(argc, argv, &epsv4,
+	    verbose ? "EPSV/EPRT on IPv4" : NULL);
+	epsv4bad = 0;
 }
 
 void
@@ -2453,15 +2466,4 @@ setxferbuf(argc, argv)
 		rcvbuf_size = size;
 	fprintf(ttyout, "Socket buffer sizes: send %d, receive %d.\n",
 	    sndbuf_size, rcvbuf_size);
-}
-
-
-void
-setepsv4(argc, argv)
-	int argc;
-	char *argv[];
-{
-
-	code = togglevar(argc, argv, &epsv4,
-	    verbose ? "EPSV/EPRT on IPv4" : NULL);
 }

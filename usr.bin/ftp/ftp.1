@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.49 1999/10/01 05:08:32 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.50 1999/10/01 08:01:12 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -409,20 +409,21 @@ completion.
 This is automatically enabled if input is from a terminal, and
 disabled otherwise.
 .It Ic epsv4
-Toggle the use of 
+Toggle the use of the extended
 .Dv EPSV
 and
 .Dv EPRT
-commands on IPv4 connections.
-This is enabled by default
-.Po
-first try
+commands on IPv4 connections; first try
 .Dv EPSV /
 .Dv EPRT ,
 and then
 .Dv PASV /
-.Dv PORT
-.Pc .
+.Dv PORT .
+This is enabled by default.
+If an extended command fails then this option will be temporarily
+disabled for the duration of the current connection, or until
+.Ic epsv4
+is executed again.
 .It Ic exit
 A synonym for
 .Ic bye .
