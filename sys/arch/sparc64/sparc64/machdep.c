@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2002/03/20 18:54:49 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.119.6.1 2002/06/05 04:09:19 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,6 +314,9 @@ setregs(p, pack, stack)
 #ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
 #endif
+
+	/* Clear the P_32 flag. */
+	p->p_flag &= ~P_32;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
