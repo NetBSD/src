@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4.2.1 2000/07/13 01:06:35 thorpej Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.2 2000/12/13 21:18:09 he Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4.2.1 2000/07/13 01:06:35 thorpej Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.2 2000/12/13 21:18:09 he Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -787,14 +787,20 @@ mlsname(FILE *fp, factelem *fe)
 static void
 replydirname(const char *name, const char *message)
 {
+	char *p, *ep;
 	char npath[MAXPATHLEN];
-	int i;
 
-	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
-		npath[i] = *name;
-		if (*name == '"')
-			npath[++i] = '"';
+	p = npath;
+	ep = &npath[sizeof(npath) - 1];
+	while (*name) {
+		if (*name == '"' && ep - p >= 2) {
+			*p++ = *name++;
+			*p++ = '"';
+		} else if (ep - p >= 1)
+			*p++ = *name++;
+		else
+			break;
 	}
-	npath[i] = '\0';
+	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
 }
