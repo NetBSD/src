@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.15 2001/04/01 03:28:11 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.16 2001/04/02 13:38:14 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,6 +152,8 @@ static const struct uplcom_product {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
 	/* I/O DATA USB-RSAQ */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
+	/* PLANEX USB-RS232 URS-03 */
+	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 
 	{ 0, 0 }
 };
