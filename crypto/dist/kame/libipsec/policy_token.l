@@ -1,4 +1,4 @@
-/*	$KAME: policy_token.l,v 1.11 2000/12/01 10:08:29 sakane Exp $	*/
+/*	$KAME: policy_token.l,v 1.13 2003/05/09 05:19:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -132,18 +132,26 @@ unique		{ yylval.num = IPSEC_LEVEL_UNIQUE; return(LEVEL); }
 %%
 
 void __policy__strbuffer__init__ __P((char *));
+void __policy__strbuffer__free__ __P((void));
+
+static YY_BUFFER_STATE strbuffer;
 
 void
 __policy__strbuffer__init__(msg)
 	char *msg;
 {
-	YY_BUFFER_STATE yyb;
-
 	if (yy_current_buffer)
 		yy_delete_buffer(yy_current_buffer);
-	yyb = (YY_BUFFER_STATE)yy_scan_string(msg);
-	yy_switch_to_buffer(yyb);
+	strbuffer = (YY_BUFFER_STATE)yy_scan_string(msg);
+	yy_switch_to_buffer(strbuffer);
 
 	return;
 }
 
+void
+__policy__strbuffer__free__()
+{
+	yy_delete_buffer(strbuffer);
+
+	return;
+}

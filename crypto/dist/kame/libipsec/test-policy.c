@@ -1,4 +1,4 @@
-/*	$KAME: test-policy.c,v 1.15 2001/06/28 12:44:50 sakane Exp $	*/
+/*	$KAME: test-policy.c,v 1.16 2003/08/26 03:24:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
