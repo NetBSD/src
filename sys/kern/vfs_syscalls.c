@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.48 1995/03/05 08:52:24 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.49 1995/03/05 20:48:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1129,7 +1129,8 @@ lseek(p, uap, retval)
 	return (0);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) \
+    || defined (COMPAT_LINUX)
 /*
  * Reposition read/write file offset.
  */
@@ -1158,7 +1159,7 @@ compat_43_lseek(p, uap, retval)
 	*(long *)retval = qret;
 	return (error);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 || COMPAT_LINUX */
 
 /*
  * Check access permissions.
