@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.conf.5,v 1.13 2003/02/21 22:35:47 jhawk Exp $
+.\"	$NetBSD: daily.conf.5,v 1.14 2003/12/07 22:22:48 perry Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -98,6 +98,15 @@ database, and runs
 .Xr ruptime 1
 if there are hosts in
 .Pa /var/rwho .
+.It Sy full_netstat
+By default,
+.Sy check_network
+outputs a summarized version of the
+.Xr netstat 1
+report.
+If a full version of the output run with the
+.Fl inv
+options is desired, set this variable.
 .It Sy run_fsck
 This runs
 .Xr fsck 8
