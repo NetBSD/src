@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $	*/
+/*	$NetBSD: whatis.c,v 1.14 2002/06/11 05:55:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.14 2002/06/11 05:55:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ main(argc, argv)
 		whatis(argv, p_path, 1);
 	else {
 		config(conffile);
-		ep = (tp = getlist("_whatdb")) == NULL ?
+		ep = (tp = getlist("_whatdb", 0)) == NULL ?
 		   NULL : TAILQ_FIRST(&tp->list);
 		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
 			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
