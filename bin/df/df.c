@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.63 2004/07/04 15:31:50 martin Exp $	*/
+/*	$NetBSD: df.c,v 1.64 2004/07/07 01:10:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.63 2004/07/04 15:31:50 martin Exp $");
+__RCSID("$NetBSD: df.c,v 1.64 2004/07/07 01:10:58 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,6 @@ prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 	prthumanval(bavail * sfsp->f_frsize, "   ");
 }
 
-
 /*
  * Convert statvfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
@@ -379,7 +378,8 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %8ld %8ld %6s ", (u_long)used, (u_long)sfsp->f_ffree,
+		(void)printf(" %8ld %8ld %6s ",
+		    (u_long)used, (u_long)sfsp->f_ffree,
 		    inodes == 0 ? (used == 0 ? empty : full) :
 		    strpct((u_long)used, (u_long)inodes, 0));
 	} else
