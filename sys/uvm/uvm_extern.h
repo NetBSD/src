@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21.2.1 1998/11/09 06:06:37 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.2 1999/02/25 04:11:15 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -141,6 +141,14 @@
 #define UBC_WRITE	1
 
 /*
+ * flags for uvn_findpage().
+ */
+#define UFP_ALL		0x0
+#define UFP_NOWAIT	0x1
+#define UFP_NOALLOC	0x2
+#define UFP_NOCACHE	0x4
+
+/*
  * structures
  */
 
@@ -155,6 +163,10 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct uvm_aiodesc;
+struct pool;
+
+extern struct pool *uvm_aiobuf_pool;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -369,6 +381,10 @@ void			uvm_page_physload __P((vaddr_t, vaddr_t,
 					       vaddr_t, vaddr_t, int));
 void			uvm_setpagesize __P((void));
 
+/* uvm_pager.c */
+void			uvm_aio_biodone __P((struct buf *));
+void			uvm_aio_aiodone __P((struct uvm_aiodesc *));
+
 /* uvm_pdaemon.c */
 void			uvm_pageout __P((void));
 
@@ -396,10 +412,11 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
-int			uvm_vnp_relocate __P((struct vnode *, vaddr_t,
-					      vsize_t, daddr_t));
-void			uvn_findpage __P((struct uvm_object *, vaddr_t,
-					  struct vm_page **));
+void			uvn_findpages __P((struct uvm_object *, vaddr_t,
+					   int *, struct vm_page **, int));
+void			uvm_vnp_setpageblknos __P((struct vnode *, off_t, off_t,
+						   daddr_t, int, boolean_t));
+void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
 
 #endif /* _UVM_UVM_EXTERN_H_ */
 
