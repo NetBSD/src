@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.36 2003/07/17 08:33:44 lukem Exp $	*/
+/*	$NetBSD: mdb.c,v 1.37 2003/07/25 07:22:05 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.36 2003/07/17 08:33:44 lukem Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.37 2003/07/25 07:22:05 dsl Exp $");
 #endif
 
 
@@ -222,21 +222,20 @@ write_menu_file (char *initcode)
 		"extern int __m_endwin;\n"
 		"\n"
 		"/* Prototypes */\n"
-		"int menu_init (void);\n"
-		"void process_menu (int num, void *arg);\n"
-		"void __menu_initerror (void);\n"
+		"int menu_init(void);\n"
+		"void process_menu(int, void *);\n"
+		"void __menu_initerror(void);\n"
 		);
 
 	if (do_dynamic)
 		(void) fprintf (out_file, "%s",
-			"int new_menu(const char *title, menu_ent *opts, "
-			    "int numopts, \n"
-			    "\tint x, int y, int h, int w, int mopt,\n"
-			    "\tvoid (*post_act)(menudesc *, void *), "
-			    "void (*draw_line)(menudesc *, int, void *),\n"
-			    "\tvoid (*exit_act)(menudesc *, void *), "
-			    "const char *help, const char *exit);\n"
-			"void free_menu(int menu_no);\n"
+			"int new_menu(const char *, menu_ent *, int, \n"
+			    "\tint, int, int, int, int,\n"
+			    "\tvoid (*)(menudesc *, void *), "
+			    "void (*)(menudesc *, int, void *),\n"
+			    "\tvoid (*)(menudesc *, void *), "
+			    "const char *, const char *);\n"
+			"void free_menu(int);\n"
 			"void set_menu_numopts(int, int);\n"
 			);
 
