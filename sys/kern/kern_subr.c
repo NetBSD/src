@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.70 2000/05/31 06:18:03 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.71 2000/07/26 12:24:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -336,15 +336,20 @@ doshutdownhooks()
 
 /*
  * "Power hook" types, functions, and variables.
+ * The list of power hooks is kept ordered with the last registered hook
+ * first.
+ * When running the hooks on power down the hooks are called in reverse
+ * registration order, when powering up in registration order.
  */
 
 struct powerhook_desc {
-	LIST_ENTRY(powerhook_desc) sfd_list;
+	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn) __P((int, void *));
 	void	*sfd_arg;
 };
 
-LIST_HEAD(, powerhook_desc) powerhook_list;
+CIRCLEQ_HEAD(, powerhook_desc) powerhook_list = 
+	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(fn, arg)
@@ -360,7 +365,7 @@ powerhook_establish(fn, arg)
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
-	LIST_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
+	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
 	return (ndp);
 }
@@ -372,15 +377,15 @@ powerhook_disestablish(vhook)
 #ifdef DIAGNOSTIC
 	struct powerhook_desc *dp;
 
-	for (dp = powerhook_list.lh_first; dp != NULL;
-	    dp = dp->sfd_list.le_next)
+	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
-			break;
-	if (dp == NULL)
-		panic("powerhook_disestablish: hook not established");
+			goto found;
+	panic("powerhook_disestablish: hook not established");
+ found:
 #endif
 
-	LIST_REMOVE((struct powerhook_desc *)vhook, sfd_list);
+	CIRCLEQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
+	    sfd_list);
 	free(vhook, M_DEVBUF);
 }
 
@@ -393,10 +398,14 @@ dopowerhooks(why)
 {
 	struct powerhook_desc *dp;
 
-	for (dp = LIST_FIRST(&powerhook_list); 
-	     dp != NULL; 
-	     dp = LIST_NEXT(dp, sfd_list)) {
-		(*dp->sfd_fn)(why, dp->sfd_arg);
+	if (why == PWR_RESUME) {
+		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
+	} else {
+		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+			(*dp->sfd_fn)(why, dp->sfd_arg);
+		}
 	}
 }
 
