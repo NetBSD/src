@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Id: pcfs_vnops.c,v 1.4 1993/08/02 23:15:14 mycroft Exp $
+ *	$Id: pcfs_vnops.c,v 1.5 1993/08/07 08:12:06 cgd Exp $
  */
 
 #include "param.h"
@@ -1546,7 +1546,7 @@ pcfs_print(vp)
 {
 	struct denode *dep = VTODE(vp);
 
-	printf("tag VT_PCFS, startcluster %d, dircluster %d, diroffset %d ",
+	printf("tag VT_MSDOSFS, startcluster %d, dircluster %d, diroffset %d ",
 		dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d, %s\n",
 		major(dep->de_dev), minor(dep->de_dev),

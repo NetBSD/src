@@ -13,53 +13,8 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Id: if_tun.c,v 1.3 1993/05/22 11:42:13 cgd Exp $
+ * $Id: if_tun.c,v 1.4 1993/08/07 08:11:46 cgd Exp $
  * 
- * $Log: if_tun.c,v $
- * Revision 1.3  1993/05/22 11:42:13  cgd
- * add include of select.h if necessary for protos, or delete if extraneous
- *
- * Revision 1.2  1993/05/18  18:19:58  cgd
- * make kernel select interface be one-stop shopping & clean it all up.
- *
- * Revision 1.1.1.1  1993/03/21  09:46:06  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.13  88/07/11  08:28:51  jpo
- * Some tidying up
- * 
- * Revision 1.12  87/12/10  09:16:29  jpo
- * Decided the vax/mtpr was unnecessay.
- * 
- * Revision 1.11  87/12/10  09:10:36  jpo
- * Fixed some minor things & 1 major bug.
- * 
- * Revision 1.10  87/11/04  14:27:41  jpo
- * A few sanity checks added.
- * 
- * Revision 1.9  87/11/04  14:13:45  jpo
- * Added some ioctls for non-blocking & async I/O
- * 
- * Revision 1.8  87/10/19  10:28:14  jpo
- * Another touch up (sigh)
- * 
- * Revision 1.7  87/10/19  10:25:48  jpo
- * Touch up.
- * 
- * Revision 1.6  87/10/19  09:15:14  jpo
- * Touch up.
- * 
- * Revision 1.5  87/10/19  08:34:51  jpo
- * General clean up - plus sun specific fixes
- * 
- * Revision 1.4  87/10/16  17:10:12  jpo
- * Purged all ioctl read/writes and non-standard routing stuff.
- *
- * Revision 1.3  87/10/05  11:57:09  jpo
- * More debugging - in error mainly.
- * 
- * Revision 1.2  87/10/04  18:29:45  jpo
- * Select & read/write working.
  */
 
 #include "tun.h"
@@ -472,7 +427,7 @@ struct uio     *uio;
                                 return EWOULDBLOCK;
                         }
                         tp->tun_flags |= TUN_RWAIT;
-                        sleep ((caddr_t) tp, PZERO + 1);
+                        tsleep ((caddr_t) tp, PZERO + 1, "tunread", 0);
                 }
         } while (m0 == 0);
         splx (s);

@@ -10,11 +10,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: uname.c,v 1.2 1993/08/02 17:56:27 mycroft Exp $";
+static char rcsid[] = "$Id: uname.c,v 1.3 1993/08/07 07:58:19 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <unistd.h>
+#include <sysexits.h>
 #include <sys/utsname.h>
 
 #define SYSNAME 	0
@@ -71,7 +72,9 @@ register int c,space, all=0;
 			}
 			puts("");
 		}
-	}
-	else
+		exit (EX_OK);
+	} else {
 		perror("uname");
+		exit (EX_OSERR);
+	}
 }

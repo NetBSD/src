@@ -21,7 +21,7 @@
  *	this and resubmit it to the patchkit!
  *	Rodney W. Grimes
  *
- *	$Id: pcfs_vfsops.c,v 1.4 1993/07/19 16:33:05 cgd Exp $
+ *	$Id: pcfs_vfsops.c,v 1.5 1993/08/07 08:12:02 cgd Exp $
  */
 
 #include "param.h"
@@ -244,7 +244,7 @@ mountpcfs(devvp, mp, p)
 		goto error_exit;
 	}
 
-	pmp = malloc(sizeof *pmp, M_PCFSMNT, M_WAITOK);
+	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
 	pmp->pm_inusemap = NULL;
 	pmp->pm_mountp = mp;
 
@@ -324,7 +324,7 @@ mountpcfs(devvp, mp, p)
  *  and then fill it in.
  */
 	pmp->pm_inusemap = malloc((pmp->pm_maxcluster / 8) + 1,
-		M_PCFSFAT, M_WAITOK);
+		M_MSDOSFSFAT, M_WAITOK);
 
 /*
  *  fillinusemap() needs pm_devvp.
@@ -381,8 +381,8 @@ error_exit:;
 			NOCRED, p);
 	if (pmp) {
 		if (pmp->pm_inusemap)
-			free((caddr_t)pmp->pm_inusemap, M_PCFSFAT);
-		free((caddr_t)pmp, M_PCFSMNT);
+			free((caddr_t)pmp->pm_inusemap, M_MSDOSFSFAT);
+		free((caddr_t)pmp, M_MSDOSFSMNT);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return error;
@@ -440,8 +440,8 @@ printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
 	error = VOP_CLOSE(pmp->pm_devvp, pmp->pm_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vrele(pmp->pm_devvp);
-	free((caddr_t)pmp->pm_inusemap, M_PCFSFAT);
-	free((caddr_t)pmp, M_PCFSMNT);
+	free((caddr_t)pmp->pm_inusemap, M_MSDOSFSFAT);
+	free((caddr_t)pmp, M_MSDOSFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return error;

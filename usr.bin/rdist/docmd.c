@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)docmd.c	5.8 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: docmd.c,v 1.2 1993/08/01 18:09:47 mycroft Exp $";
+static char rcsid[] = "$Id: docmd.c,v 1.3 1993/08/07 07:57:53 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -580,7 +580,7 @@ except(file)
 					return(1);
 				continue;
 			}
-			if (regexec(file, regcomp(nl->n_name)) > 0)
+			if (regexec(regcomp(nl->n_name), file) > 0)
 				return(1);
 		}
 	}

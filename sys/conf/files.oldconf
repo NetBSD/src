@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.18 1993/07/19 16:38:52 cgd Exp $
+#	$Id: files.oldconf,v 1.19 1993/08/07 08:11:35 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -179,12 +179,12 @@ nfs/nfs_subs.c		optional nfsserver or nfsclient requires inet
 nfs/nfs_syscalls.c	optional nfsserver or nfsclient requires inet
 nfs/nfs_vfsops.c	optional nfsclient requires inet
 nfs/nfs_vnops.c		optional nfsclient requires inet
-pcfs/pcfs_conv.c	optional pcfs
-pcfs/pcfs_denode.c	optional pcfs
-pcfs/pcfs_fat.c		optional pcfs
-pcfs/pcfs_lookup.c	optional pcfs
-pcfs/pcfs_vfsops.c	optional pcfs
-pcfs/pcfs_vnops.c	optional pcfs
+pcfs/pcfs_conv.c	optional msdosfs
+pcfs/pcfs_denode.c	optional msdosfs
+pcfs/pcfs_fat.c		optional msdosfs
+pcfs/pcfs_lookup.c	optional msdosfs
+pcfs/pcfs_vfsops.c	optional msdosfs
+pcfs/pcfs_vnops.c	optional msdosfs
 ufs/mfs_vfsops.c	optional mfs
 ufs/mfs_vnops.c		optional mfs
 ufs/ufs_alloc.c		standard
