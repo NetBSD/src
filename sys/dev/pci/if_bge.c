@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.56 2003/12/09 15:19:33 pooka Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.57 2003/12/14 03:08:12 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.56 2003/12/09 15:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.57 2003/12/14 03:08:12 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1165,18 +1165,14 @@ bge_chipinit(sc)
 		 * the low-order MINDMA bits.  In addition, the 5704
 		 * uses a different encoding of read/write watermarks.
 		 */
-		if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0 ||
-		    sc->bge_chipid == BGE_CHIPID_BCM5704_A1 ||
-		    sc->bge_chipid == BGE_CHIPID_BCM5704_A2 ||
-		    sc->bge_chipid == BGE_CHIPID_BCM5704_A3) {
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 			  /* should be 0x1f0000 */
 			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 			  (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
 		}
-		else if ((sc->bge_chipid >> 28) ==
-			 (BGE_CHIPID_BCM5703_A0 >> 28)) {
+		else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703) {
 			dma_rw_ctl &=  0xfffffff0;
 			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
 		}
