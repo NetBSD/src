@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.37 2003/06/26 17:13:55 dsl Exp $	*/
+/*	$NetBSD: newwin.c,v 1.38 2003/07/05 19:03:32 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.37 2003/06/26 17:13:55 dsl Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.38 2003/07/05 19:03:32 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -172,7 +172,7 @@ WINDOW *
 subwin(WINDOW *orig, int nlines, int ncols, int by, int bx)
 {
 
-	return __subwin(orig, nlines, ncols, by, bx, TRUE);
+	return __subwin(orig, nlines, ncols, by, bx, FALSE);
 }
 
 WINDOW *
