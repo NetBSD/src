@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.11 1999/05/29 19:11:52 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.12 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -48,11 +48,12 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
+#include <machine/bus.h>
 #include <machine/sid.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpreg.h>
-#include <vax/mscp/mscpvar.h>
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
 
 #include "ra.h"
 #include "mt.h"
@@ -70,6 +71,11 @@ struct	cfattach mscpbus_ca = {
 	sizeof(struct mscp_softc), mscp_match, mscp_attach
 };
 
+#define	READ_SA		(bus_space_read_2(mi->mi_iot, mi->mi_sah, 0))
+#define	READ_IP		(bus_space_read_2(mi->mi_iot, mi->mi_iph, 0))
+#define	WRITE_IP(x)	bus_space_write_2(mi->mi_iot, mi->mi_iph, 0, (x))
+#define	WRITE_SW(x)	bus_space_write_2(mi->mi_iot, mi->mi_swh, 0, (x))
+
 struct	mscp slavereply;
 
 /*
@@ -86,9 +92,9 @@ mscp_waitstep(mi, mask, result)
 {
 	int	status = 1;
 
-	if ((*mi->mi_sa & mask) != result) {
+	if ((READ_SA & mask) != result) {
 		volatile int count = 0;
-		while ((*mi->mi_sa & mask) != result) {
+		while ((READ_SA & mask) != result) {
 			DELAY(10000);
 			count += 1;
 			if (count > DELAYTEN)
@@ -133,11 +139,13 @@ mscp_attach(parent, self, aux)
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
 	mi->mi_type = ma->ma_type;
-	mi->mi_uuda = ma->ma_uuda;
 	mi->mi_uda = ma->ma_uda;
-	mi->mi_ip = ma->ma_ip;
-	mi->mi_sa = ma->ma_sa;
-	mi->mi_sw = ma->ma_sw;
+	mi->mi_dmat = ma->ma_dmat;
+	mi->mi_dmam = ma->ma_dmam;
+	mi->mi_iot = ma->ma_iot;
+	mi->mi_iph = ma->ma_iph;
+	mi->mi_sah = ma->ma_sah;
+	mi->mi_swh = ma->ma_swh;
 	mi->mi_ivec = ma->ma_ivec;
 	mi->mi_adapnr = ma->ma_adapnr;
 	mi->mi_ctlrnr = ma->ma_ctlrnr;
@@ -152,14 +160,22 @@ mscp_attach(parent, self, aux)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = mi->mi_uda->mp_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = mi->mi_uda->mp_rsp;
-	mi->mi_actf = (void *)&mi->mi_actf; /* Circular wait queue */
-	mi->mi_actb = (void *)&mi->mi_actf;
+	SIMPLEQ_INIT(&mi->mi_resq);
 
 	if (mscp_init(mi)) {
 		printf("%s: can't init, controller hung\n",
 		    mi->mi_dev.dv_xname);
 		return;
 	}
+	for (i = 0; i < NCMD; i++) {
+		mi->mi_mxiuse |= (1 << i);
+		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 1, (64*1024),
+		    0, BUS_DMA_NOWAIT, &mi->mi_xi[i].mxi_dmam)) {
+			printf("Couldn't alloc dmamap %d\n", i);
+			return;
+		}
+	}
+	
 
 #if NRA
 	if (ma->ma_type & MSCPBUS_DISK) {
@@ -189,7 +205,7 @@ findunit:
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 	slavereply.mscp_opcode = 0;
 
-	i = *mi->mi_ip;	 /* Kick off polling */
+	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	mp = &slavereply;
 	timeout = 1000;
 	while (timeout-- > 0) {
@@ -295,19 +311,19 @@ mscp_init(mi)
 	mi->mi_flags |= MSC_IGNOREINTR;
 
 	if ((mi->mi_type & MSCPBUS_KDB) == 0)
-		*mi->mi_ip = 0; /* Kick off */
+		WRITE_IP(0); /* Kick off */;
 
 	status = mscp_waitstep(mi, MP_STEP1, MP_STEP1);/* Wait to it wakes up */
 	if (status == 0)
 		return 1; /* Init failed */
-	if (*mi->mi_sa & MP_ERR) {
+	if (READ_SA & MP_ERR) {
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
 		return 1;
 	}
 
 	/* step1 */
-	*mi->mi_sw = MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) |
-	    MP_IE | (mi->mi_ivec >> 2);
+	WRITE_SW(MP_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) |
+	    MP_IE | (mi->mi_ivec >> 2));
 	status = mscp_waitstep(mi, STEP1MASK, STEP1GOOD);
 	if (status == 0) {
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
@@ -315,8 +331,9 @@ mscp_init(mi)
 	}
 
 	/* step2 */
-	*mi->mi_sw = (int)&mi->mi_uuda->mp_ca.ca_rspdsc[0] | 
-	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0);
+	WRITE_SW(((mi->mi_dmam->dm_segs[0].ds_addr & 0xffff) + 
+	    offsetof(struct mscp_pack, mp_ca.ca_rspdsc[0])) |
+	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
 	if (status == 0) {
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
@@ -324,22 +341,23 @@ mscp_init(mi)
 	}
 
 	/* step3 */
-	*mi->mi_sw = ((int)&mi->mi_uuda->mp_ca.ca_rspdsc[0]) >> 16;
+	
+	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) { 
 		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
 		return 1;
 	}
-	i = *mi->mi_sa & 0377;
+	i = READ_SA & 0377;
 	printf(": version %d model %d\n", i & 15, i >> 4);
 
 #define BURST 4 /* XXX */
 	if (mi->mi_type & MSCPBUS_UDA) {
-		*mi->mi_sw = MP_GO | (BURST - 1) << 2;
+		WRITE_SW(MP_GO | (BURST - 1) << 2);
 		printf("%s: DMA burst size set to %d\n", 
 		    mi->mi_dev.dv_xname, BURST);
 	}
-	*mi->mi_sw = MP_GO;
+	WRITE_SW(MP_GO);
 
 	mscp_initds(mi);
 	mi->mi_flags &= ~MSC_IGNOREINTR;
@@ -359,13 +377,13 @@ mscp_init(mi)
 	    mp->mscp_sccc.sccc_errlgfl = 0;
 	mp->mscp_sccc.sccc_ctlrflags = M_CF_ATTN | M_CF_MISC | M_CF_THIS;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-	i = *mi->mi_ip;
+	i = READ_IP;
 
 	count = 0;
 	while (count < DELAYTEN) {
 		if (((volatile int)mi->mi_flags & MSC_READY) != 0)
 			break;
-		if ((j = *mi->mi_sa) & MP_ERR)
+		if ((j = READ_SA) & MP_ERR)
 			goto out;
 		DELAY(10000);
 		count += 1;
@@ -386,26 +404,29 @@ void
 mscp_initds(mi)
 	struct mscp_softc *mi;
 {
-	struct mscp_pack *uud = mi->mi_uuda;
 	struct mscp_pack *ud = mi->mi_uda;
 	struct mscp *mp;
 	int i;
 
 	for (i = 0, mp = ud->mp_rsp; i < NRSP; i++, mp++) {
 		ud->mp_ca.ca_rspdsc[i] = MSCP_OWN | MSCP_INT |
-		    (long)&uud->mp_rsp[i].mscp_cmdref;
+		    (mi->mi_dmam->dm_segs[0].ds_addr +
+		    offsetof(struct mscp_pack, mp_rsp[i].mscp_cmdref));
 		mp->mscp_addr = &ud->mp_ca.ca_rspdsc[i];
 		mp->mscp_msglen = MSCP_MSGLEN;
 	}
 	for (i = 0, mp = ud->mp_cmd; i < NCMD; i++, mp++) {
 		ud->mp_ca.ca_cmddsc[i] = MSCP_INT |
-		    (long)&uud->mp_cmd[i].mscp_cmdref;
+		    (mi->mi_dmam->dm_segs[0].ds_addr +
+		    offsetof(struct mscp_pack, mp_cmd[i].mscp_cmdref));
 		mp->mscp_addr = &ud->mp_ca.ca_cmddsc[i];
 		mp->mscp_msglen = MSCP_MSGLEN;
 		if (mi->mi_type & MSCPBUS_TAPE)
 			mp->mscp_vcid = 1;
 	}
 }
+
+static	void mscp_kickaway(struct mscp_softc *);
 
 void
 mscp_intr(mi)
@@ -428,18 +449,10 @@ mscp_intr(mi)
 	}
 
 	/*
-	 * If there are any not-yet-handled requeset, try them now.
-	 * XXX - We handles them (erroneous) in last-in first-handled order.
-	 * Must we fix this???
+	 * If there are any not-yet-handled request, try them now.
 	 */
-	while (mi->mi_w) {
-		struct buf *bp = mi->mi_w;
-
-		mi->mi_w = (void *)bp->b_actb;
-		mscp_strategy(bp, (struct device *)mi);
-		if (mi->mi_w == bp)
-			break;
-	}
+	if (SIMPLEQ_FIRST(&mi->mi_resq))
+		mscp_kickaway(mi);
 }
 
 int
@@ -463,7 +476,6 @@ mscp_print(aux, name)
 
 /*
  * common strategy routine for all types of MSCP devices.
- * bp is the current buf, dp is the drive queue.
  */
 void
 mscp_strategy(bp, usc)
@@ -471,42 +483,70 @@ mscp_strategy(bp, usc)
 	struct device *usc;
 {
 	struct	mscp_softc *mi = (void *)usc;
-	struct	mscp *mp;
-	int s = spl6();
+	int s = splimp();
 
-	/*
-	 * Ok; we are ready to try to start a xfer. Get a MSCP packet
-	 * and try to start...
-	 */
-	if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
-		if (mi->mi_credits > MSCP_MINCREDITS)
-			printf("%s: command ring too small\n",
-			    mi->mi_dev.dv_parent->dv_xname);
-		/*
-		 * By some (strange) reason we didn't get a MSCP packet.
-		 * Put it on queue and wait for free packets.
-		 */
-		(void *)bp->b_actb = mi->mi_w;
-		mi->mi_w = bp;
-		splx(s);
-		return;
-	}
-
-	/*
-	 * Set up the MSCP packet and ask the ctlr to start.
-	 */
-	mp->mscp_opcode = (bp->b_flags & B_READ) ? M_OP_READ : M_OP_WRITE;
-	(*mi->mi_me->me_fillin)(bp, mp);
-	(void *)bp->b_actb = mp; /* b_actb is unused, save mscp packet here */
-	(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, bp);
+/*	SIMPLEQ_INSERT_TAIL(&mi->mi_resq, bp, xxx) */
+	bp->b_actf = NULL;
+	*mi->mi_resq.sqh_last = bp;
+	mi->mi_resq.sqh_last = &bp->b_actf;
+	mscp_kickaway(mi);
 	splx(s);
 }
 
+
 void
-mscp_dgo(mi, buffer, info, bp)
-	struct mscp_softc *mi;
-	long buffer, info;
+mscp_kickaway(mi)
+	struct	mscp_softc *mi;
+{
 	struct buf *bp;
+	struct	mscp *mp;
+	int next;
+
+	while ((bp = SIMPLEQ_FIRST(&mi->mi_resq))) {
+		/*
+		 * Ok; we are ready to try to start a xfer. Get a MSCP packet
+		 * and try to start...
+		 */
+		if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
+			if (mi->mi_credits > MSCP_MINCREDITS)
+				printf("%s: command ring too small\n",
+				    mi->mi_dev.dv_parent->dv_xname);
+			/*
+			 * By some (strange) reason we didn't get a MSCP packet.
+			 * Just return and wait for free packets.
+			 */
+			return;
+		}
+	
+		if ((next = (ffs(mi->mi_mxiuse) - 1)) < 0)
+			panic("no mxi buffers");
+		mi->mi_mxiuse &= ~(1 << next);
+		if (mi->mi_xi[next].mxi_inuse)
+			panic("mxi inuse");
+		/*
+		 * Set up the MSCP packet and ask the ctlr to start.
+		 */
+		mp->mscp_opcode =
+		    (bp->b_flags & B_READ) ? M_OP_READ : M_OP_WRITE;
+		mp->mscp_cmdref = next;
+		mi->mi_xi[next].mxi_bp = bp;
+		mi->mi_xi[next].mxi_mp = mp;
+		mi->mi_xi[next].mxi_inuse = 1;
+		bp->b_resid = next;
+		(*mi->mi_me->me_fillin)(bp, mp);
+		(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, &mi->mi_xi[next]);
+		if ((mi->mi_resq.sqh_first = bp->b_actf) == NULL)
+			mi->mi_resq.sqh_last = &mi->mi_resq.sqh_first;
+#if 0
+		mi->mi_w = bp->b_actf;
+#endif
+	}
+}
+
+void
+mscp_dgo(mi, mxi)
+	struct mscp_softc *mi;
+	struct mscp_xi *mxi;
 {
 	volatile int i;
 	struct	mscp *mp;
@@ -514,17 +554,11 @@ mscp_dgo(mi, buffer, info, bp)
 	/*
 	 * Fill in the MSCP packet and move the buffer to the I/O wait queue.
 	 */
-	mp = (void *)bp->b_actb;
+	mp = mxi->mxi_mp;
+	mp->mscp_seq.seq_buffer = mxi->mxi_dmam->dm_segs[0].ds_addr;
 
-	mp->mscp_seq.seq_buffer = buffer;
-
-	_insque(&bp->b_actf, &mi->mi_actf);
-
-	bp->b_resid = info;
-	mp->mscp_cmdref = (long) bp;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-
-	i = *mi->mi_ip;
+	i = READ_IP;
 }
 
 #ifdef DIAGNOSTIC

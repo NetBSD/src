@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.13 1999/05/29 19:12:42 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.14 1999/06/06 19:16:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,10 +51,12 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
-#include <vax/mscp/mscp.h>
-#include <vax/mscp/mscpvar.h>
+#include <dev/mscp/mscp.h>
+#include <dev/mscp/mscpreg.h>
+#include <dev/mscp/mscpvar.h>
 
 #include "locators.h"
 
@@ -176,7 +178,7 @@ mt_putonline(mt)
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 
 	/* Poll away */
-	i = *mi->mi_ip;
+	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	if (tsleep(&mt->mt_state, PRIBIO, "mtonline", 240 * hz))
 		return MSCP_FAILED;
 
@@ -542,7 +544,7 @@ mtcmd(mt, cmd, count, complete)
 		break;
 	}
 
-	i = *mi->mi_ip;
+	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	tsleep(&mt->mt_inuse, PRIBIO, "mtioctl", 0);
 	return mt->mt_ioctlerr;
 }
