@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.15 2000/01/12 05:02:11 mjl Exp $	*/
+/*	$NetBSD: util.h,v 1.16 2000/07/06 11:28:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -61,32 +61,33 @@ struct termios;
 struct winsize;
 struct iovec;
 
-void	login __P((const struct utmp *));
-int	login_tty __P((int));
-int	logout __P((const char *));
-void	logwtmp __P((const char *, const char *, const char *));
-int	pw_lock __P((int));
-int	pw_mkdb __P((void));
-int	pw_abort __P((void));
-void	pw_init __P((void));
-void	pw_edit __P((int, const char *));
-void	pw_prompt __P((void));
-void	pw_copy __P((int, int, struct passwd *, struct passwd *));
-void	pw_error __P((const char *, int, int));
-int	openpty __P((int *, int *, char *, struct termios *,
-		     struct winsize *));
-char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
-pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
-int	getmaxpartitions __P((void));
-int	getrawpartition __P((void));
-int	opendisk __P((const char *, int, char *, size_t, int));
-void	pidfile __P((const char *));
-int	pidlock __P((const char *, int, pid_t *, const char *));
-int	ttylock __P((const char *, int, pid_t *));
-int	ttyunlock __P((const char *));
-int	ttyaction __P((const char *, const char *, const char *));
-char   *ttymsg __P((struct iovec *, int, const char *, int));
-int	secure_path __P((char *));
+void	login(const struct utmp *);
+int	login_tty(int);
+int	logout(const char *);
+void	logwtmp(const char *, const char *, const char *);
+void	pw_getconf(char *data, size_t max, const char *key, const char *option);
+int	pw_lock(int);
+int	pw_mkdb(void);
+int	pw_abort(void);
+void	pw_init(void);
+void	pw_edit(int, const char *);
+void	pw_prompt(void);
+void	pw_copy(int, int, struct passwd *, struct passwd *);
+void	pw_error(const char *, int, int);
+int	openpty(int *, int *, char *, struct termios *, struct winsize *);
+char   *fparseln(FILE *, size_t *, size_t *, const char[3], int);
+pid_t	forkpty(int *, char *, struct termios *, struct winsize *);
+int	getmaxpartitions(void);
+int	getrawpartition(void);
+int	opendisk(const char *, int, char *, size_t, int);
+void	pidfile(const char *);
+int	pidlock(const char *, int, pid_t *, const char *);
+int	ttylock(const char *, int, pid_t *);
+int	ttyunlock(const char *);
+int	ttyaction(const char *, const char *, const char *);
+char   *ttymsg(struct iovec *, int, const char *, int);
+int	secure_path(char *);
+int	parseuserspec(const char *name, struct passwd **pw, struct group **gr);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
