@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.1.1.1 1995/03/01 04:56:27 gwr Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.2 1995/03/10 01:43:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -452,6 +452,7 @@ static int decode_ea(struct frame *frame,
 	case 060:	/* (d8,An,Xn) */
 		ea->flags = EA_INDEXED;
 		immed_bytes = 2;
+		break;
 
 	case 070:	/* misc. */
 		ea->regnum = (modreg & 7);
