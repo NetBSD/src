@@ -24,6 +24,7 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
+#	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -62,6 +63,7 @@
 # Call units:
 #
 # Special purpose devices:
+#	fd	file descriptors
 #	bpf*	packet filter
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
@@ -76,12 +78,17 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
+	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV lpt0 lpt1 lpt2 vga bpf0 bpf1 bpf2 bpf3 speaker lkm
 	sh MAKEDEV mms0 lms0 pms0 audio local
 # MISSING:
 #	sh MAKEDEV mouse-?
+	;;
+
+floppy)
+	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1
+	sh MAKEDEV sd0 st1 cd0 cd1 mcd0 vga
 	;;
 
 std)
@@ -98,6 +105,9 @@ std)
 	mknod stdin		c 22 0	; chmod 666 stdin
 	mknod stdout		c 22 1	; chmod 666 stdout
 	mknod stderr		c 22 2	; chmod 666 stderr
+	;;
+
+fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
 	(cd fd && eval `echo "" | awk ' BEGIN { \
