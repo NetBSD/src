@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.34 2004/04/18 18:48:03 matt Exp $	*/
+/*	$NetBSD: un.h,v 1.35 2004/04/18 21:43:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,10 @@ struct	sockaddr_un {
 #ifdef _KERNEL
 struct unpcb;
 struct socket;
+
+int	uipc_usrreq(struct socket *, int, struct mbuf *,
+	    struct mbuf *, struct mbuf *, struct proc *);
+int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 
 int	unp_attach (struct socket *);
 int	unp_bind (struct unpcb *, struct mbuf *, struct proc *);
