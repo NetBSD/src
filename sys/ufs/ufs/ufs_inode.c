@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_inode.c	8.4 (Berkeley) 1/21/94
- *	$Id: ufs_inode.c,v 1.1 1994/06/08 11:43:17 mycroft Exp $
+ *	$Id: ufs_inode.c,v 1.2 1994/06/13 15:37:58 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -53,7 +53,6 @@
 #include <ufs/ufs/ufs_extern.h>
 
 u_long	nextgennumber;		/* Next generation number to assign. */
-int	prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 int
 ufs_init()
@@ -145,6 +144,7 @@ ufs_reclaim(vp)
 {
 	register struct inode *ip;
 	int i;
+	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
