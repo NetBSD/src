@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.85 1997/10/19 18:48:00 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.86 1997/10/21 00:58:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -254,14 +254,13 @@ sunos_sys_omsync(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_omsync_args *uap = v;
-	struct sys_msync_args ouap;
+	struct sys___msync13_args ouap;
 
-	if (SCARG(uap, flags))
-		return (EINVAL);
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 	SCARG(&ouap, len) = SCARG(uap, len);
+	SCARG(&ouap, flags) = SCARG(uap, flags);
 
-	return (sys_msync(p, &ouap, retval));
+	return (sys___msync13(p, &ouap, retval));
 }
 
 int
@@ -552,7 +551,6 @@ sunos_sys_mmap(p, v, retval)
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
-	void *rp;
 
 	/*
 	 * Verify the arguments.
@@ -566,10 +564,10 @@ sunos_sys_mmap(p, v, retval)
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 
-	rp = (void *) round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&ouap, addr) != 0 && SCARG(&ouap, addr) < rp)
-		SCARG(&ouap, addr) = rp;
+	    SCARG(&ouap, addr) != 0 &&
+	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
@@ -611,7 +609,7 @@ sunos_sys_mctl(p, v, retval)
 	case MC_ADVISE:		/* ignore for now */
 		return (0);
 	case MC_SYNC:		/* translate to msync */
-		return (sys_msync(p, uap, retval));
+		return (sys___msync13(p, uap, retval));
 	default:
 		return (EINVAL);
 	}
