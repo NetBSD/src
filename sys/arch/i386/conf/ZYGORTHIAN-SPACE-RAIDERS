@@ -1,5 +1,5 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.14 1999/09/27 23:59:51 ad Exp $
-#	From: GENERIC,v 1.246 1999/07/29 19:36:59 augustss Exp
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.15 1999/10/05 03:31:43 mycroft Exp $
+#	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -94,7 +94,7 @@ file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system
+#file-system 	NTFS		# Windows/NT file system (experimental)
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
@@ -242,13 +242,13 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-wsdisplay*	at vga? console ?
-#wsdisplay*	at pcdisplay? console ?
+wsdisplay0	at vga? console ?
+#wsdisplay0	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 #wsmouse*	at pmsi? mux 0
@@ -443,9 +443,12 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+#rl*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -461,6 +464,11 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
+#wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+#com*	at mhzc?
+#sm*	at mhzc?
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
@@ -529,6 +537,16 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?
 
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+
+# USB Mass Storage
+#umass*	at uhub? port ? configuration ? interface ?
+#scsibus* at umass? channel ?
+
+# USB audio
+#uaudio*	at uhub? port ? configuration ?
+
 # USB Generic driver
 #ugen*	at uhub? port ?
 
@@ -564,6 +582,7 @@ sv*	at pci? dev ? function ?	# S3 SonicVibes
 #opl*	at ess?
 #opl*	at sb?
 opl*	at sv?
+#opl*	at wss?
 
 # Audio support
 #audio*	at aria?
@@ -576,14 +595,20 @@ opl*	at sv?
 #audio*	at sb?
 #audio*	at sp?
 audio*	at sv?
+#audio*	at uaudio?
 #audio*	at wss?
 #audio*	at ym?
 
+# MPU 401 UARTs
+#mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+#mpu*	at eso?
+#mpu*	at sb?
+
 # MIDI support
-midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at sb?			# SB MPU401 port
+#midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
-#midi*	at mpu?			# MPU401 UARTs
+midi*	at pcppi?		# MIDI interface to the PC speaker
+#midi*	at sb?			# SB1 MIDI port
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
