@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.3 1997/03/15 18:11:16 is Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.4 1997/10/14 17:25:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,10 +123,6 @@ clock_ymdhms_to_secs(dt)
 	return (secs);
 }
 
-/* This function uses a copy of month_days[] */
-#undef	days_in_month
-#define	days_in_month(a) 	(mthdays[(a) - 1])
-
 void
 clock_secs_to_ymdhms(secs, dt)
 	time_t secs;
@@ -136,7 +132,13 @@ clock_secs_to_ymdhms(secs, dt)
 	int i, days;
 	int rsec;	/* remainder seconds */
 
+	/*
+	 * This function uses a local copy of month_days[]
+	 * so the copy can be modified (and thread-safe).
+	 * See the definition of days_in_month() above.
+	 */
 	bcopy(month_days, mthdays, sizeof(mthdays));
+#define month_days mthdays
 
 	days = secs / SECDAY;
 	rsec = secs % SECDAY;
@@ -165,4 +167,5 @@ clock_secs_to_ymdhms(secs, dt)
 	dt->dt_min  = rsec / 60;
 	rsec = rsec % 60;
 	dt->dt_sec  = rsec;
+#undef month_days
 }
