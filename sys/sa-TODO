@@ -1,0 +1,52 @@
+Things to do for scheduler activations/LWP code.
+
+- Document! Not everyone wants to read the thesis. Man pages, etc.
+
+- Port to other architectures. I have alpha, m68k, arm32, mips, sparc.
+  Other people will need to do the intimately MD parts for ppc, sh3, sparc64,
+  pc532, vax. Documenting what is needed and what changes have been made
+  to the MI/MD boundary would be a good step here.
+
+- Rethink scheduler. Verify that behavior is still correct for a system
+  of single-LWP ("traditional") processes (I believe it is, but it should 
+  still be verified). Study scheduling behavior of multi-LWP and SA processes.
+  Notions of fairness and appropriate scheduling may need changing.
+  XXX when combined with multiprocessor support, usefully scheduling multi-lwp
+  processes requires a whole new kind of scheduling. Implementing such a thing
+  (such as an "equal-space" scheduler) is a major project unto itself.
+
+- Make multi-LWP process core dumps include multiple CORE_CPU sections, and
+  rework coredump() to only dump memory regions once per process, not once
+  per LWP.
+
+- Adapt gdb to cope with above (somehow).
+
+- Adapt /proc and libkvm interfaces to support examining LWP/SA data
+  structures. Adapt ps and friends to display such.
+
+- scheduler activation "preemption" upcall: currently called once per
+  clock tick, as preempt() is called whether or not there are other
+  runnable processes. This introduces a large upcall-handling overhead
+  on a process. Figure out how to make this cheaper, or ideally, only
+  invoke the preemption upcall for "real" preemption.
+
+- scheduler activation upcalls: user-stack storage of all upcall state
+  has problems if a process causes multiple upcalls in one kernel entry.
+  Upcalls will be lost, and stacks will be leaked (never returned to process). 
+  Obvious alternate solution of storing upcall state in process and checking
+  at return to userspace has per-context-switch overhead for all processes,
+  sa or otherwise. This needs a solution; perhaps making some part of the
+  return-to-userlevel path dispactched through a function pointer, like
+  syscalls.
+
+- Implement better management of the lwp cache for a sa process. High-water 
+  mark needed, at the very least.
+
+- exit1() is too fragile. A cleaner solution to the LWPWAIT_EXITCONTROL
+  problem is also needed.
+
+- Debugging interface needs work; ptrace(2) interface can't handle multi-LWP
+  or SA processes. 
+
+- Of course, check all new XXX'd parts.
+
