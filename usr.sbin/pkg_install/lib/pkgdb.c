@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.10 2003/01/05 21:27:33 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.11 2003/01/05 21:49:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.10 2003/01/05 21:27:33 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.11 2003/01/05 21:49:59 agc Exp $");
 #endif
 
 /*
@@ -56,7 +56,7 @@ static int pkgdb_iter_flag;
  *  -1: error, see errno
  */
 int
-pkgdb_open(int ro)
+pkgdb_open(int mode)
 {
 	BTREEINFO info;
 	char	cachename[FILENAME_MAX];
@@ -73,9 +73,9 @@ pkgdb_open(int ro)
 	info.prefix = NULL;
 	info.lorder = 0;
 	pkgdbp = (DB *) dbopen(_pkgdb_getPKGDB_FILE(cachename, sizeof(cachename)),
-	    ro ? O_RDONLY : O_RDWR | O_CREAT,
+	    (mode == ReadOnly) ? O_RDONLY : O_RDWR | O_CREAT,
 	    0644, DB_BTREE, (void *) &info);
-	return (pkgdbp == NULL) ? -1 : 0;
+	return (pkgdbp != NULL);
 }
 
 /*
