@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2003/11/06 02:25:07 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2003/11/25 04:57:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2003/11/06 02:25:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2003/11/25 04:57:05 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -494,8 +494,10 @@ cpu_getmcontext(l, mcp, flags)
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
+	struct reg *regs = l->l_md.md_regs;
 
-	(void)memcpy(mcp->__gregs, l->l_md.md_regs, sizeof (mcp->__gregs));
+	(void)memcpy(mcp->__gregs, regs, sizeof (mcp->__gregs));
+	mcp->__gregs[_REG_PS] = regs->r_psr;
 	*flags |= _UC_CPU;
 
 #ifdef NS381
@@ -529,8 +531,9 @@ cpu_setmcontext(l, mcp, flags)
 		if (((mcp->__gregs[_REG_PS] ^ regs->r_psr) & PSL_USERSTATIC)
 		    != 0)
 			return (EINVAL);
-		(void)memcpy(l->l_md.md_regs, mcp->__gregs,
-		    sizeof (l->l_md.md_regs));
+		(void)memcpy(regs, mcp->__gregs, sizeof (*regs));
+		regs->r_mod = 0;
+		regs->r_psr = mcp->__gregs[_REG_PS];
 	}
 
 #ifdef NS381
