@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.3 2002/08/08 18:23:46 briggs Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.4 2002/08/09 05:27:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.3 2002/08/08 18:23:46 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.4 2002/08/09 05:27:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,46 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.3 2002/08/08 18:23:46 briggs Exp $"
 #include <arch/arm/xscale/xscalereg.h>
 
 extern int	profsrc;
-
-void	xscale_fork(struct proc *p1, struct proc *p2);
-int	xscale_num_counters(void);
-int	xscale_counter_type(int ctr);
-void	xscale_save_context(struct proc *p);
-void	xscale_restore_context(struct proc *p);
-void	xscale_enable_counter(struct proc *p, int ctr);
-void	xscale_disable_counter(struct proc *p, int ctr);
-void	xscale_accumulate(struct proc *parent, struct proc *child);
-void	xscale_process_exit(struct proc *p);
-int	xscale_configure_counter(struct proc *p, int ctr,
-				 struct pmc_counter_cfg *cfg);
-int	xscale_get_counter_value(struct proc *p, int ctr, int flags,
-				 uint64_t *pval);
-int	xscale_counter_isconfigured(struct proc *p, int ctr);
-int	xscale_counter_isrunning(struct proc *p, int ctr);
-int	xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg);
-int	xscale_stop_profiling(int ctr);
-int	xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg);
-int	xscale_free_kernel_counter(int ctr);
-
-struct arm_pmc_funcs xscale_pmc_funcs = {
-	xscale_fork,
-	xscale_num_counters,
-	xscale_counter_type,
-	xscale_save_context,
-	xscale_restore_context,
-	xscale_enable_counter,
-	xscale_disable_counter,
-	xscale_accumulate,
-	xscale_process_exit,
-	xscale_configure_counter,
-	xscale_get_counter_value,
-	xscale_counter_isconfigured,
-	xscale_counter_isrunning,
-	xscale_start_profiling,
-	xscale_stop_profiling,
-	xscale_alloc_kernel_counter,
-	xscale_free_kernel_counter
-};
 
 struct xscale_pmc_state {
 	uint32_t	pmnc;		/* performance monitor ctrl */
@@ -112,12 +72,6 @@ uint32_t	pmc_profiling_enabled = 0;
 uint32_t	pmc_reset_vals[3] = {0x80000000, 0x80000000, 0x80000000};
 
 int		pmc_usecount[3] = {0, 0, 0};
-
-void
-xscale_pmu_init(void)
-{
-	arm_pmc = &xscale_pmc_funcs;
-}
 
 static __inline uint32_t
 xscale_pmnc_read(void)
@@ -225,7 +179,7 @@ xscale_pmc_dispatch(struct clockframe *frame)
 	return 1;
 }
 
-void
+static void
 xscale_fork(struct proc *p1, struct proc *p2)
 {
 	struct xscale_pmc_state *pmcs_p1, *pmcs_p2;
@@ -258,13 +212,13 @@ xscale_fork(struct proc *p1, struct proc *p2)
 		pmc_usecount[__PMC1_I]++;
 }
 
-int
+static int
 xscale_num_counters(void)
 {
 	return __PMC_NCTRS;
 }
 
-int
+static int
 xscale_counter_type(int ctr)
 {
 	int	ret;
@@ -278,7 +232,7 @@ xscale_counter_type(int ctr)
 		ret = PMC_TYPE_I80200_PMCx;
 		break;
 	case -1:
-		ret = PMC_TYPE_I80200;
+		ret = PMC_CLASS_I80200;
 		break;
 	default:
 		ret = -1;
@@ -288,7 +242,7 @@ xscale_counter_type(int ctr)
 	return ret;
 }
 
-void
+static void
 xscale_save_context(struct proc *p)
 {
 	struct xscale_pmc_state *pmcs;
@@ -334,7 +288,7 @@ xscale_save_context(struct proc *p)
 	}
 }
 
-void
+static void
 xscale_restore_context(struct proc *p)
 {
 	struct xscale_pmc_state *pmcs;
@@ -376,7 +330,7 @@ xscale_restore_context(struct proc *p)
 	}
 }
 
-void
+static void
 xscale_accumulate(struct proc *parent, struct proc *child)
 {
 	struct xscale_pmc_state *pmcs_parent, *pmcs_child;
@@ -391,7 +345,7 @@ xscale_accumulate(struct proc *parent, struct proc *child)
 	}
 }
 
-void
+static void
 xscale_process_exit(struct proc *p)
 {
 	int	i;
@@ -411,7 +365,7 @@ xscale_process_exit(struct proc *p)
 	p->p_md.pmc_enabled = 0;
 }
 
-void
+static void
 xscale_enable_counter(struct proc *p, int ctr)
 {
 
@@ -430,7 +384,7 @@ xscale_enable_counter(struct proc *p, int ctr)
 		pmc_restore_context(p);
 }
 
-void
+static void
 xscale_disable_counter(struct proc *p, int ctr)
 {
 
@@ -449,7 +403,7 @@ xscale_disable_counter(struct proc *p, int ctr)
 		pmc_restore_context(p);
 }
 
-int
+static int
 xscale_counter_isrunning(struct proc *p, int ctr)
 {
 
@@ -459,14 +413,14 @@ xscale_counter_isrunning(struct proc *p, int ctr)
 	return ((pmc_kernel_enabled | p->p_md.pmc_enabled) & (1 << ctr));
 }
 
-int
+static int
 xscale_counter_isconfigured(struct proc *p, int ctr)
 {
 
 	return ((ctr >= 0) && (ctr < __PMC_NCTRS));
 }
 
-int
+static int
 xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 {
 	struct xscale_pmc_state *pmcs;
@@ -524,7 +478,7 @@ xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 	return 0;
 }
 
-int
+static int
 xscale_get_counter_value(struct proc *p, int ctr, int flags, uint64_t *pval)
 {
 	struct xscale_pmc_state *pmcs;
@@ -569,7 +523,7 @@ xscale_get_counter_value(struct proc *p, int ctr, int flags, uint64_t *pval)
 	return 0;
 }
 
-int
+static int
 xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 {
 	int s;
@@ -637,7 +591,7 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 	return 0;
 }
 
-int
+static int
 xscale_stop_profiling(int ctr)
 {
 	uint32_t save;
@@ -676,7 +630,7 @@ xscale_stop_profiling(int ctr)
 	return 0;
 }
 
-int
+static int
 xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 {
 	if (ctr < 0 || ctr >= __PMC_NCTRS)
@@ -727,7 +681,7 @@ xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 	return 0;
 }
 
-int
+static int
 xscale_free_kernel_counter(int ctr)
 {
 	if (ctr < 0 || ctr >= __PMC_NCTRS)
@@ -739,4 +693,30 @@ xscale_free_kernel_counter(int ctr)
 	pmc_kernel_enabled &= ~(1 << ctr);
 
 	return 0;
+}
+
+struct arm_pmc_funcs xscale_pmc_funcs = {
+	xscale_fork,
+	xscale_num_counters,
+	xscale_counter_type,
+	xscale_save_context,
+	xscale_restore_context,
+	xscale_enable_counter,
+	xscale_disable_counter,
+	xscale_accumulate,
+	xscale_process_exit,
+	xscale_configure_counter,
+	xscale_get_counter_value,
+	xscale_counter_isconfigured,
+	xscale_counter_isrunning,
+	xscale_start_profiling,
+	xscale_stop_profiling,
+	xscale_alloc_kernel_counter,
+	xscale_free_kernel_counter
+};
+
+void
+xscale_pmu_init(void)
+{
+	arm_pmc = &xscale_pmc_funcs;
 }
