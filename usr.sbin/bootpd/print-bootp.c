@@ -24,8 +24,8 @@
  * There is an e-mail list for tcpdump: <tcpdump@ee.lbl.gov>
  */
 #ifndef lint
-/* from: print-bootp.c,v 1.17 91/11/14 22:21:34 leres Exp */
-static char rcsid[] = "$Id: print-bootp.c,v 1.1.1.1 1994/06/27 21:25:50 gwr Exp $";
+static char rcsid[] = "$Id: print-bootp.c,v 1.2 1994/08/22 22:15:01 gwr Exp $";
+/* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
 #include <stdio.h>
@@ -39,13 +39,7 @@ static char rcsid[] = "$Id: print-bootp.c,v 1.1.1.1 1994/06/27 21:25:50 gwr Exp 
 #include <ctype.h>
 
 #include "bootp.h"
-
-#ifdef	BOOTPTEST
 #include "bootptest.h"
-#else /* BOOTPTEST */
-#include "interface.h"
-#include "addrtoname.h"
-#endif /* BOOTPTEST */
 
 /* These decode the vendor data. */
 static void rfc1048_print();

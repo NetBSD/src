@@ -6,7 +6,15 @@ bootptest \- send BOOTP queries and print responses
 .LP
 .B bootptest
 [
+.B \-f
+.I bootfile
+]
+[
 .B \-h
+]
+[
+.B \-m
+.I magic_number
 ]
 .I server\-name
 .RI [ template-file ]
@@ -21,10 +29,20 @@ After a response is received,
 will wait one more second listening for additional responses.
 .SH OPTIONS
 .TP
+.B \-f
+.I bootfile
+Fill in the boot file field of the request with
+.IR bootfile .
+.TP
 .B \-h
 Use the hardware (Ethernet) address to identify the client.
 By default, the IP address is copied into the request
 indicating that this client already knows its IP address.
+.TP
+.B \-m
+.I magic_number
+Initialize the first word of the vendor options field with
+.IR magic_number .
 .LP
 A
 .I template-file
