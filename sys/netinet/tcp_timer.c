@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.42 1998/09/04 22:29:55 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.43 1998/09/10 10:47:00 mouse Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ tcp_timers(tp, timer)
 	 */
 	case TCPT_2MSL:
 		if (tp->t_state != TCPS_TIME_WAIT &&
-		    tp->t_idle <= tcp_maxidle)
+		    ((tcp_maxidle == 0) || (tp->t_idle <= tcp_maxidle)))
 			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 		else
 			tp = tcp_close(tp);
@@ -365,7 +365,8 @@ tcp_timers(tp, timer)
 			goto dropit;
 		if (tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE &&
 		    tp->t_state <= TCPS_CLOSE_WAIT) {
-		    	if (tp->t_idle >= tcp_keepidle + tcp_maxidle)
+		    	if ((tcp_maxidle > 0) &&
+			    (tp->t_idle >= tcp_keepidle + tcp_maxidle))
 				goto dropit;
 			/*
 			 * Send a packet designed to force a response

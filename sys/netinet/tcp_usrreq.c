@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.37 1998/05/06 01:21:24 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.38 1998/09/10 10:47:01 mouse Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -587,13 +587,18 @@ tcp_usrclosed(tp)
 		 * a full close, we start a timer to make sure sockets are
 		 * not left in FIN_WAIT_2 forever.
 		 */
-		if (tp->t_state == TCPS_FIN_WAIT_2)
+		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tcp_maxidle > 0))
 			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 	}
 	return (tp);
 }
 
-static int *tcp_ctlvars[] = TCPCTL_VARIABLES;
+static struct {
+	 unsigned int valid : 1;
+	 unsigned int rdonly : 1;
+	 int *var;
+	 int val;
+	 } tcp_ctlvars[] = TCPCTL_VARIABLES;
 
 /*
  * Sysctl for tcp variables.
@@ -612,9 +617,13 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOTDIR);
 
 	if (name[0] < sizeof(tcp_ctlvars)/sizeof(tcp_ctlvars[0])
-	    && tcp_ctlvars[name[0]] != NULL)
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    tcp_ctlvars[name[0]]));
-	
+	    && tcp_ctlvars[name[0]].valid)
+		if (tcp_ctlvars[name[0]].rdonly)
+			return (sysctl_rdint(oldp, oldlenp, newp, 
+			    tcp_ctlvars[name[0]].val));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    tcp_ctlvars[name[0]].var));
+
 	return (ENOPROTOOPT);
 }
