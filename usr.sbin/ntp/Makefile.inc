@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2004/01/27 02:17:46 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2005/01/10 03:03:28 lukem Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -11,6 +11,12 @@ CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=	-DOPENSSL
+.endif
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=	-DWANT_IPV6
+.else
+CPPFLAGS+=	-DISC_PLATFORM_NEEDIN6ADDRANY
 .endif
 
 .if defined(PROG)
@@ -30,7 +36,7 @@ CLEANFILES+=version.c version.o .version
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${.CURDIR}/../scripts/mkver ${PROG} > /dev/null
 version.c: .version ${LIBNTP}/libntp.a
-.endif
+.endif # defined(PROG)
 
 NTPSRCDIR?= ${PROG}
 .PATH:		${DIST}/${NTPSRCDIR}
