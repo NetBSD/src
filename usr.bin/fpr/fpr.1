@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpr.1,v 1.7 2002/09/30 11:09:01 grant Exp $
+.\"	$NetBSD: fpr.1,v 1.8 2002/10/12 22:57:49 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,18 +66,17 @@ The first character of each line determines the vertical spacing as follows:
 .El
 .Ed
 .Pp
-A blank line is treated as if its first
-character is a blank.
-A blank that appears as a carriage control
-character is deleted.
+A blank line is treated as if its first character is a blank.
+A blank that appears as a carriage control character is deleted.
 A zero is changed to a newline.
 A one is changed to a form feed.
-The effects of a "+" are simulated using
-backspaces.
+The effects of a
+.Sq +
+are simulated using backspaces.
 .Sh EXAMPLES
 .Dl a.out \&| fpr \&| lpr
 .Pp
-.Dl fpr \&\*[Lt] f77.output \&| lpr
+.Dl fpr \*[Lt] f77.output \&| lpr
 .Sh HISTORY
 The
 .Nm
