@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.29 1998/08/16 02:03:30 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.30 1998/08/29 04:08:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -379,7 +379,8 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (user == 0 && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
+		if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS
+		    || va <= VM_MIN_ADDRESS)) {
 			/* Was the fault due to the FPE/IPKDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
@@ -494,7 +495,8 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (user == 0 && (va >= KERNEL_BASE || va < VM_MIN_ADDRESS))
+		if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS
+		    || va < VM_MIN_ADDRESS))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -606,7 +608,7 @@ nogo:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (user == 0 && va >= KERNEL_BASE)
+		if (user == 0 && va >= VM_MIN_KERNEL_ADDRESS)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
