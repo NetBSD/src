@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.11 1997/07/18 08:16:58 thorpej Exp $	*/
+/*	$NetBSD: ypset.c,v 1.12 2000/04/14 06:26:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypset.c,v 1.11 1997/07/18 08:16:58 thorpej Exp $");
+__RCSID("$NetBSD: ypset.c,v 1.12 2000/04/14 06:26:55 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -66,8 +66,6 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sockaddr_in sin;
-	extern char *optarg;
-	extern int optind;
 	char *domainname;
 	int c;
 

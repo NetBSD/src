@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.11 1999/09/08 02:39:36 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.12 2000/04/14 06:26:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,8 +168,6 @@ main(argc, argv)
 {
 	int ch, i, f;
 	char buf[50];
-	extern int optind;
-	extern char *optarg;
 	char *dev = 0;
 	int addr = 0;
 	int ncont;

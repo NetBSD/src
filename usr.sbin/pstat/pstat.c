@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.50 1999/11/18 08:34:38 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.51 2000/04/14 06:26:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.50 1999/11/18 08:34:38 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.51 2000/04/14 06:26:54 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,8 +191,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, i, quit, ret;
 	int fileflag, swapflag, ttyflag, vnodeflag;
 	gid_t egid = getegid();
