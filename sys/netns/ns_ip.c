@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.31 2002/09/27 15:37:58 provos Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.32 2003/06/26 21:59:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.31 2002/09/27 15:37:58 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.32 2003/06/26 21:59:42 itojun Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -239,8 +239,8 @@ idpip_input(va_alist)
 	idp = mtod(m, struct idp *);
 	len = ntohs(idp->idp_len);
 	if (len & 1) len++;		/* Preserve Garbage Byte */
-	if (ntohs(ip->ip_len) != len) {
-		if (len > ntohs(ip->ip_len)) {
+	if (ntohs(ip->ip_len) - (ip->ip_hl << 2) != len) {
+		if (len > ntohs(ip->ip_len) - (ip->ip_hl << 2)) {
 			nsipif.if_ierrors++;
 			if (nsip_badlen) m_freem(nsip_badlen);
 			nsip_badlen = m;
