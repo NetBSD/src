@@ -1,4 +1,4 @@
-/* $NetBSD: sysconf.h,v 1.2.4.4 1999/11/12 11:07:21 nisimura Exp $ */
+/* $NetBSD: sysconf.h,v 1.2.4.5 1999/11/12 11:47:26 nisimura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,9 +49,7 @@
 /*
  * Platform Specific Information and Function Hooks.
  *
- * The tags family and model information are strings describing the platform.
- * 
- * The tag iobus describes the primary iobus for the platform- primarily
+ * The tag iobus describes the primary iobus for the platform, primarily
  * to give a hint as to where to start configuring.
  */
 
@@ -61,11 +59,10 @@ struct platform {
 	/*
 	 * Platform Specific Function Hooks
 	 *	bus_reset	-	clear memory error condition
-	 *	cons_init 	-	console initialization
-	 *	device_register	-	boot configuration aid
+	 *	cons_init	-	console initialization
+	 *	device_register -	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
 	 *	clkread		-	interporate HZ with hi-resolution timer
-	 *	wbflush		-	WB drain specfic to platform
 	 */
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
@@ -75,19 +72,8 @@ struct platform {
 };
 
 /*
- * There is an array of functions to initialize the platform structure.
- *
- * It's responsible for filling in the family, model_name and iobus
- * tags. It may optionally fill in the cons_init, device_register and
- * mcheck_handler tags.
- *
- * The iointr tag is filled in by set_iointr (in interrupt.c).
- * The clockintr tag is filled in by sys_initclocks (in clock.c).
- *
- * nocpu is function to call when you can't figure what platform you're on.
- * There's no return from this function.
+ * An array of functions to initialize the platform structure.
  */
-
 struct sysinit {
 	void	(*init) __P((void));
 	const char *option;
