@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.27 2001/07/19 15:32:12 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.28 2002/01/07 07:17:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -514,6 +514,16 @@ struct atari_bus_space {
  *  (XXX not enforced)
  */
 #define bus_space_vaddr(t, h)	((void)(t), (void *)(h))
+
+/*
+ *	paddr_t bus_space_mmap __P((bus_space_tag_t t, bus_addr_t base,
+ *	    off_t offset, int prot, int flags));
+ *
+ * Mmap an area of bus space.
+ */
+
+paddr_t bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+	    int, int));
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
