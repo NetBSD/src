@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.90 2003/08/07 16:33:09 agc Exp $	*/
+/*	$NetBSD: in.c,v 1.91 2003/08/16 11:30:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.90 2003/08/07 16:33:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.91 2003/08/16 11:30:35 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -564,6 +564,7 @@ in_purgeaddr(ifa, ifp)
 			IFAREF(&nia->ia_ifa); 
 			LIST_INSERT_HEAD(&nia->ia_inpcbs, inp, inp_ialink);
 		} else if (inp->inp_socket != NULL) {
+#if 0
 			if ((inp->inp_socket->so_state & SS_NOFDREF) &&
 			    inp->inp_socket->so_head == NULL) {
 				soabort(inp->inp_socket);
@@ -572,6 +573,7 @@ in_purgeaddr(ifa, ifp)
 				sorwakeup(inp->inp_socket);
 				sowwakeup(inp->inp_socket);
 			}
+#endif
 		}
 	}
 
