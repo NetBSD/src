@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.78 1999/02/10 20:23:42 tv Exp $
+#	$NetBSD: Makefile,v 1.79 1999/02/11 00:49:43 tv Exp $
 
 SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep gprof groff
 SUBDIR+=	gzip ld.new rcs sdiff send-pr sort tar
 
 .if (${MACHINE_ARCH} == "i386")
-#SUBDIR+=	gdb
+SUBDIR+=	gdb
 .endif
 
 .if (${MACHINE_ARCH} == "m68k") || \
