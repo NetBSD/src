@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.5 1996/11/17 13:39:40 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.6 1997/01/10 20:59:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -59,6 +59,7 @@
 #include <machine/iomap.h>
 #include <machine/video.h>
 #include <machine/mfp.h>
+#include <machine/cpu.h>
 #include <atari/atari/device.h>
 #include <atari/dev/grfioctl.h>
 #include <atari/dev/grfabs_reg.h>
@@ -305,9 +306,9 @@ u_char   depth;
 	 * Initialize the bitmap
 	 */
 	bm->plane         = et_priv.memkva;
-	bm->hw_address    = et_priv.memkva; /* XXX: kvtop? */
+	bm->hw_address    = (caddr_t)kvtop(et_priv.memkva);
 	bm->regs          = et_priv.regkva;
-	bm->hw_regs       = et_priv.regkva; /* XXX: kvtop? */
+	bm->hw_regs       = (caddr_t)kvtop(et_priv.regkva);
 	bm->reg_size      = et_priv.regsz;
 
 	bm->bytes_per_row = (mode->size.width * depth) / NBBY;
