@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.24 2004/04/10 11:48:10 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.25 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.24 2004/04/10 11:48:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.25 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,14 +288,14 @@ EcIsLocked(struct acpi_ec_softc *sc)
 static __inline void
 EcLock(struct acpi_ec_softc *sc)
 {
-	ACPI_STATUS status;
+	ACPI_STATUS rv;
 	int s;
 
 	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
 	if (sc->sc_glk) {
-		status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
+		rv = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT,
 		    &sc->sc_glkhandle);
-		if (ACPI_FAILURE(status)) {
+		if (ACPI_FAILURE(rv)) {
 			printf("%s: failed to acquire global lock\n",
 			    sc->sc_dev.dv_xname);
 			lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
@@ -313,7 +313,7 @@ EcLock(struct acpi_ec_softc *sc)
 static __inline void
 EcUnlock(struct acpi_ec_softc *sc)
 {
-	ACPI_STATUS status;
+	ACPI_STATUS rv;
 	int s;
 
 	/*
@@ -328,13 +328,13 @@ EcUnlock(struct acpi_ec_softc *sc)
 	s = splvm(); /* XXX */
 	simple_lock(&sc->sc_slock);
 	if (sc->sc_flags & EC_F_PENDQUERY) {
-		ACPI_STATUS Status2;
+		ACPI_STATUS rv2;
 
-		Status2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
+		rv2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
 		    EcGpeQueryHandler, sc);
-		if (ACPI_FAILURE(Status2))
+		if (ACPI_FAILURE(rv2))
 			printf("%s: unable to queue pending query: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(Status2));
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv2));
 		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
 	sc->sc_flags &= ~EC_F_TRANSACTION;
@@ -342,8 +342,8 @@ EcUnlock(struct acpi_ec_softc *sc)
 	splx(s);
 
 	if (sc->sc_glk) {
-		status = AcpiReleaseGlobalLock(sc->sc_glkhandle);
-		if (ACPI_FAILURE(status))
+		rv = AcpiReleaseGlobalLock(sc->sc_glkhandle);
+		if (ACPI_FAILURE(rv))
 			printf("%s: failed to release global lock\n",
 			    sc->sc_dev.dv_xname);
 	}
@@ -361,9 +361,9 @@ acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid));
+	return acpi_match_hid(aa->aa_node->ad_devinfo, ec_hid);
 }
 
 void
@@ -384,7 +384,8 @@ acpiec_early_attach(struct device *parent)
 	    ep->EcData.RegisterBitWidth != 8) {
 		printf("%s: ECDT data is invalid, RegisterBitWidth=%d/%d\n",
 		    parent->dv_xname,
-		    ep->EcControl.RegisterBitWidth, ep->EcData.RegisterBitWidth);
+		    ep->EcControl.RegisterBitWidth,
+		    ep->EcData.RegisterBitWidth);
 		return;
 	}
 
@@ -615,7 +616,7 @@ EcGpeQueryHandler(void *Context)
 {
 	struct acpi_ec_softc *sc = Context;
 	UINT8 Data;
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 	char qxx[5];
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
@@ -641,16 +642,16 @@ EcGpeQueryHandler(void *Context)
 		/*
 		 * Find out why the EC is signalling us
 		 */
-		Status = EcQuery(sc, &Data);
+		rv = EcQuery(sc, &Data);
 
 		EcUnlock(sc);
 
 		/*
 		 * If we failed to get anything from the EC, give up.
 		 */
-		if (ACPI_FAILURE(Status)) {
+		if (ACPI_FAILURE(rv)) {
 			printf("%s: GPE query failed: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(Status));
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 			break;
 		}
 
@@ -658,25 +659,25 @@ EcGpeQueryHandler(void *Context)
 		 * Evaluate _Qxx to respond to the controller.
 		 */
 		sprintf(qxx, "_Q%02X", Data);
-		Status = AcpiEvaluateObject(sc->sc_handle, qxx,
+		rv = AcpiEvaluateObject(sc->sc_handle, qxx,
 		    NULL, NULL);
 
 		/*
 		 * Ignore spurious query requests.
 		 */
-		if (ACPI_FAILURE(Status) &&
-		    (Data != 0 || Status != AE_NOT_FOUND)) {
+		if (ACPI_FAILURE(rv) &&
+		    (Data != 0 || rv != AE_NOT_FOUND)) {
 			printf("%s: evaluation of GPE query method %s "
 			    "failed: %s\n", sc->sc_dev.dv_xname, qxx,
-			    AcpiFormatException(Status));
+			    AcpiFormatException(rv));
 		}
 	}
 
 	/* I know I request Level trigger cleanup */
-	Status = AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(Status))
+	rv = AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
+	if (ACPI_FAILURE(rv))
 		printf("%s: AcpiClearGpe failed: %s\n", sc->sc_dev.dv_xname,
-		    AcpiFormatException(Status));
+		    AcpiFormatException(rv));
 
 	return_VOID;
 }
@@ -686,7 +687,7 @@ EcGpeHandler(void *Context)
 {
 	struct acpi_ec_softc *sc = Context;
 	uint32_t csrvalue;
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 
 	/*
 	 * If EC is locked, the intr must process EcRead/Write wait only.
@@ -707,11 +708,11 @@ EcGpeHandler(void *Context)
 	} else {
 		simple_unlock(&sc->sc_slock);
 		/* Enqueue GpeQuery handler. */
-		Status = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
+		rv = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
 		    EcGpeQueryHandler, Context);
-		if (ACPI_FAILURE(Status))
+		if (ACPI_FAILURE(rv))
 			printf("%s: failed to enqueue query handler: %s\n",
-			    sc->sc_dev.dv_xname, AcpiFormatException(Status));
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	}
 }
 
@@ -738,7 +739,7 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
     ACPI_INTEGER *Value, void *Context, void *RegionContext)
 {
 	struct acpi_ec_softc *sc = Context;
-	ACPI_STATUS Status = AE_OK;
+	ACPI_STATUS rv = AE_OK;
 	EC_REQUEST EcRequest;
 	int i;
 
@@ -775,8 +776,8 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 		else
 			EcRequest.Data = (UINT8)((*Value) >> i);
 
-		Status = EcTransaction(sc, &EcRequest);
-		if (ACPI_FAILURE(Status))
+		rv = EcTransaction(sc, &EcRequest);
+		if (ACPI_FAILURE(rv))
 			break;
 
 		(*Value) |= (UINT32)EcRequest.Data << i;
@@ -784,7 +785,7 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 			return_ACPI_STATUS(AE_BAD_PARAMETER);
 	}
 
-	return_ACPI_STATUS(Status);
+	return_ACPI_STATUS(rv);
 }
 
 static ACPI_STATUS
@@ -859,43 +860,43 @@ EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
 
 		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
 		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
-			return (AE_OK);
+			return AE_OK;
 
 		if ((Event == EC_EVENT_INPUT_BUFFER_EMPTY) &&
 		    (EcStatus & EC_FLAG_INPUT_BUFFER) == 0)
-			return (AE_OK);
+			return AE_OK;
 
 		AcpiOsStall(10);
 	}
 
-	return (AE_ERROR);
+	return AE_ERROR;
 }
 
 static ACPI_STATUS
 EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 {
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 
 	if (EcIsLocked(sc) == 0)
 		printf("%s: EcQuery called without EC lock!\n",
 		    sc->sc_dev.dv_xname);
 
 	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
-	Status = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
-	if (ACPI_SUCCESS(Status))
+	rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
+	if (ACPI_SUCCESS(rv))
 		*Data = EC_DATA_READ(sc);
 
-	if (ACPI_FAILURE(Status))
+	if (ACPI_FAILURE(rv))
 		printf("%s: timed out waiting for EC to respond to "
 		    "EC_COMMAND_QUERY\n", sc->sc_dev.dv_xname);
 
-	return (Status);
+	return rv;
 }
 
 static ACPI_STATUS
 EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 {
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 
 	EcLock(sc);
 
@@ -904,27 +905,27 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 	 */
 	switch (EcRequest->Command) {
 	case EC_COMMAND_READ:
-		Status = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
+		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
 		break;
 
 	case EC_COMMAND_WRITE:
-		Status = EcWrite(sc, EcRequest->Address, &(EcRequest->Data));
+		rv = EcWrite(sc, EcRequest->Address, &(EcRequest->Data));
 		break;
 
 	default:
-		Status = AE_SUPPORT;
+		rv = AE_SUPPORT;
 		break;
 	}
 
 	EcUnlock(sc);
 
-	return(Status);
+	return rv;
 }
 
 static ACPI_STATUS
 EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 {
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 
 	if (EcIsLocked(sc) == 0)
 		printf("%s: EcRead called without EC lock!\n",
@@ -933,32 +934,32 @@ EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstEnable(EmbeddedController); */
 
 	EC_CSR_WRITE(sc, EC_COMMAND_READ);
-	if ((Status = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcRead: timeout waiting for EC to process "
 		    "read command\n", sc->sc_dev.dv_xname);
-		return (Status);
+		return rv;
 	}
 
 	EC_DATA_WRITE(sc, Address);
-	if ((Status = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL)) !=
+	if ((rv = EcWaitEventIntr(sc, EC_EVENT_OUTPUT_BUFFER_FULL)) !=
 	    AE_OK) {
 		printf("%s: EcRead: timeout waiting for EC to send data\n",
 		    sc->sc_dev.dv_xname);
-		return (Status);
+		return rv;
 	}
 
 	(*Data) = EC_DATA_READ(sc);
 
 	/* EcBurstDisable(EmbeddedController); */
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 static ACPI_STATUS
 EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 {
-	ACPI_STATUS Status;
+	ACPI_STATUS rv;
 
 	if (EcIsLocked(sc) == 0)
 		printf("%s: EcWrite called without EC lock!\n",
@@ -967,30 +968,30 @@ EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstEnable(EmbeddedController); */
 
 	EC_CSR_WRITE(sc, EC_COMMAND_WRITE);
-	if ((Status = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "write command\n", sc->sc_dev.dv_xname);
-		return (Status);
+		return rv;
 	}
 
 	EC_DATA_WRITE(sc, Address);
-	if ((Status = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "address\n", sc->sc_dev.dv_xname);
-		return (Status);
+		return rv;
 	}
 
 	EC_DATA_WRITE(sc, *Data);
-	if ((Status = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
+	if ((rv = EcWaitEventIntr(sc, EC_EVENT_INPUT_BUFFER_EMPTY)) !=
 	    AE_OK) {
 		printf("%s: EcWrite: timeout waiting for EC to process "
 		    "data\n", sc->sc_dev.dv_xname);
-		return (Status);
+		return rv;
 	}
 
 	/* EcBurstDisable(EmbeddedController); */
 
-	return (AE_OK);
+	return AE_OK;
 }

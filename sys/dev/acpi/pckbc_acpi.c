@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.11 2003/11/03 19:11:41 mycroft Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.12 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.11 2003/11/03 19:11:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.12 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,15 +123,15 @@ pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	int rv;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return (0);
+		return 0;
 
 	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd);
 	if (rv)
-		return (rv);
+		return rv;
 	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms);
 	if (rv)
-		return (rv);
-	return (0);
+		return rv;
+	return 0;
 }
 
 void

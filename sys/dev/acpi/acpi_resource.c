@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.10 2004/04/10 11:48:10 kochi Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.11 2004/04/11 06:48:25 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.10 2004/04/10 11:48:10 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.11 2004/04/11 06:48:25 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,9 +373,9 @@ acpi_res_io(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_io, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_iorange *
@@ -385,9 +385,9 @@ acpi_res_iorange(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_iorange, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_mem *
@@ -397,9 +397,9 @@ acpi_res_mem(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_mem, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_memrange *
@@ -409,9 +409,9 @@ acpi_res_memrange(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_memrange, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_irq *
@@ -421,9 +421,9 @@ acpi_res_irq(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_irq, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct acpi_drq *
@@ -433,9 +433,9 @@ acpi_res_drq(struct acpi_resources *res, int idx)
 
 	SIMPLEQ_FOREACH(ar, &res->ar_drq, ar_list) {
 		if (ar->ar_index == idx)
-			return (ar);
+			return ar;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*****************************************************************************
