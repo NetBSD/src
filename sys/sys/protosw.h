@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.16 1998/05/07 01:30:08 thorpej Exp $	*/
+/*	$NetBSD: protosw.h,v 1.17 1998/06/02 20:55:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -153,7 +153,7 @@ struct protosw {
 #define	PRU_PROTORCV		20	/* receive from below */
 #define	PRU_PROTOSEND		21	/* send to below */
 
-#define	PRU_NREQ		21
+#define	PRU_NREQ		22
 
 #ifdef PRUREQUESTS
 char *prurequests[] = {
