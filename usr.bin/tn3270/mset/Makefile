@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1997/10/24 07:52:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 1999/03/06 16:21:58 itohy Exp $
 
 PROG=	mset
 MAN=	mset.1 map3270.5
@@ -20,3 +20,5 @@ astosc.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 .include <bsd.prog.mk>
 
 .PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii
+
+astosc.o:	astosc.out

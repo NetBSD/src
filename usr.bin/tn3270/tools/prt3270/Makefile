@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/04/12 15:30:15 veego Exp $
+#	$NetBSD: Makefile,v 1.6 1999/03/06 16:21:58 itohy Exp $
 
 PROG=	prt3270
 SRCS=	prt3270.c asc_ebc.c ebc_disp.c astosc.c
@@ -33,3 +33,6 @@ astosc.out: ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/function.h \
 .include <bsd.prog.mk>
 
 .PATH: ${.CURDIR}/../../api ${.CURDIR}/../../ascii
+
+astosc.o:	astosc.out
+prt3270.o:	kbd.out
