@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/03/25 07:43:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/03/26 01:12:36 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -14,9 +14,10 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	std md0 sd0 sd1 sd2 st0 cd0
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile rd.fstab rd.passwd rd.welcome \
+		dot.profile rd.fstab rd.welcome \
 		${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/bootst \
 		${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/usr/mdec/stboot \
+		${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
 
