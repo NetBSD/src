@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.6 2000/03/30 12:45:40 augustss Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.7 2001/02/03 12:51:10 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,8 +47,8 @@
  *    to check to find out whether or not the acquire was suppressed.
  */
 
-#include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
 
 #include "rf_archs.h"
 #include "rf_raid.h"
