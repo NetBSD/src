@@ -1,14 +1,14 @@
-/*	$NetBSD: iplang_y.y,v 1.2.2.4 1998/07/23 01:31:01 mellon Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2.2.5 1998/11/24 07:22:03 cgd Exp $	*/
 
 %{
 /*
- * Copyright (C) 1997 by Darren Reed.
+ * Copyright (C) 1997-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.0.2.18.2.7 1998/05/23 14:29:53 darrenr Exp 
+ * Id: iplang_y.y,v 2.0.2.18.2.10 1998/11/22 01:51:04 darrenr Exp 
  */
  
 #include <stdio.h>
@@ -166,6 +166,7 @@ void	end_tcp __P((void));
 void	end_data __P((void));
 void	yyerror __P((char *));
 void	iplang __P((FILE *));
+int	arp_getipv4 __P((char *ip, char *addr));
 int	yyparse __P((void));
 %}
 %union {
@@ -1430,6 +1431,21 @@ char **arg;
 	carp->arp_addr = getipv4addr(*arg);
 	free(*arg);
 	*arg = NULL;
+}
+
+
+int arp_getipv4(ip, addr)
+char *ip;
+char *addr;
+{
+	arp_t *a;
+
+	for (a = arplist; a; a = a->arp_next)
+		if (!bcmp(ip, (char *)&a->arp_addr, 4)) {
+			bcopy((char *)&a->arp_eaddr, addr, 6);
+			return 0;
+		}
+	return -1;
 }
 
 
