@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.4 2002/01/26 13:40:57 aymeric Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.5 2002/01/27 14:39:28 is Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ struct iobz_softc {
 int iobzmatch(struct device *, struct cfdata *, void *);
 void iobzattach(struct device *, struct device *, void *);
 int iobzprint(void *auxp, const char *);
+void iobz_shutdown(void *);
 
 struct cfattach iobl_zbus_ca = {
 	sizeof(struct iobz_softc), iobzmatch, iobzattach
@@ -141,6 +142,7 @@ iobzattach(struct device *parent, struct device *self, void *auxp)
 	}
 
 	p = (volatile u_int8_t *)zap->va + 2;
+	(void)shutdownhook_establish(iobz_shutdown, (void *)p);
 	*p = ((*p) & 0x1F) | 0x80;
 }
 
@@ -157,4 +159,17 @@ iobzprint(void *auxp, const char *pnp)
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);
+}
+
+/*
+ * Disable board interupts at shutdown time.
+ */
+
+void
+iobz_shutdown(void *p) {
+	volatile int8_t *q;
+
+	q = p;
+
+	*q &= 0x1F;
 }
