@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.34 1998/11/19 02:23:15 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.35 1999/02/23 02:56:04 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -37,12 +37,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.34 1998/11/19 02:23:15 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.35 1999/02/23 02:56:04 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
+#include <sys/sched.h>
 
 #if defined(UVM)
 #include <vm/vm.h>
@@ -63,11 +64,14 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.34 1998/11/19 02:23:15 ross Exp $");
 #include <alpha/alpha/cpuvar.h>
 #endif
 
+static u_int schedclk2;
+
 void
 interrupt(a0, a1, a2, framep)
 	unsigned long a0, a1, a2;
 	struct trapframe *framep;
 {
+	struct proc *p;
 #if defined(MULTIPROCESSOR)
 	u_long cpu_id = alpha_pal_whami();
 #endif
@@ -123,8 +127,13 @@ interrupt(a0, a1, a2, framep)
 		cnt.v_intr++;
 #endif
 		intrcnt[INTRCNT_CLOCK]++;
-		if (platform.clockintr)
+		if (platform.clockintr) {
 			(*platform.clockintr)(framep);
+			if((++schedclk2 & 0x3f) == 0
+			&& (p = curproc) != NULL
+			&& schedhz)
+				schedclk(p);
+		}
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
