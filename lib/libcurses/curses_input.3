@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.4 2002/10/21 14:31:36 wiz Exp $
+.\"	$NetBSD: curses_input.3,v 1.5 2002/10/22 12:07:20 blymn Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@netbsd.org, brett_lymn@yahoo.com.au)
@@ -37,6 +37,8 @@
 .Nm curses_input ,
 .Nm getch ,
 .Nm wgetch ,
+.Nm define_key ,
+.Nm keyok ,
 .Nm getnstr ,
 .Nm wgetnstr ,
 .Nm mvgetnstr ,
@@ -60,6 +62,10 @@
 .Fn getch "void"
 .Ft int
 .Fn wgetch "WINDOW *win"
+.Ft int
+.Fn keyok "int key_symbol" "bool flag"
+.Ft int
+.Fn define_key "char *sequence" "int key_symbol"
 .Ft int
 .Fn getnstr "char *str" "int limit"
 .Ft int
@@ -118,6 +124,55 @@ function is the same as the
 function, exceptng that it reads from the input file descriptor associated
 with the window specified by
 .Fa win .
+.Pp
+If the 
+.Fn keypad
+flag is
+.Dv TRUE
+then the assembly of specific key symbols can be disabled by using the 
+.Fn keyok
+function.
+If the 
+.Fa flag
+is set to 
+.Dv FALSE
+on a key symbol then
+.Fn getch
+will behave as if the character sequence associated with that key symbol
+was not recognised and will return the component characters one at a time to
+the caller.
+.Pp
+Custom associations between sequences of characters and a key symbol can
+be made by using the
+.Fn define_key
+function.
+Normally, these associations are made by the information in the
+.Xr termcap 5
+database but the
+.Fn define_key
+function gives the capability to remove or add more associations.
+If
+.Fn define_key
+is passed a non-NULL string in
+.Fa sequence
+it will associate that sequence with the key symbol passed in
+.Fa key_symbol .
+The key symbol may be one of the ones listed below or a custom value that
+is application defined.
+It is valid to have multiple character sequences map to the same key
+symbol and there are no constraints on the length of the sequence allowed.
+The assembly of custom sequences follow the same rules for inter-character
+timing and so forth as the
+.Xr termcap 5
+derived ones.
+If 
+.Fn define_key
+is passed a NULL in
+.Fa sequence
+then all associations for the key symbol in
+.Fa key_symbol
+will be deleted, this includes any associations that were derived from
+.Xr termcap 5 .
 .Pp
 The
 .Fn mvgetch
@@ -482,6 +537,14 @@ The
 .Nx
 Curses library complies with the X/Open Curses specification, part of the
 Single Unix Specification.
+.Sh NOTES
+The
+.Fn keyok
+and
+.Fn define_key
+functions are implementations of extensions made by the NCurses library
+to the Curses standard.
+Portable implementations should avoid the use of these functions.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .

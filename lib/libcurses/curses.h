@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.68 2002/10/14 16:25:52 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.69 2002/10/22 12:07:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -496,6 +496,7 @@ int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
 int	 curs_set(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
+int      define_key(char *, int);
 int	 delay_output(int);
 void     delscreen(SCREEN *);
 int	 delwin(WINDOW *);
@@ -534,6 +535,7 @@ int	 intrflush(WINDOW *, bool);
 bool	 isendwin(void);
 bool	 is_linetouched(WINDOW *, int);
 bool	 is_wintouched(WINDOW *);
+int      keyok(int, bool);
 void	 keypad(WINDOW *, bool);
 char     killchar(void);
 int	 leaveok(WINDOW *, bool);
