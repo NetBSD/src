@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.5 2002/12/23 12:18:53 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.6 2003/02/10 23:24:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.5 2002/12/23 12:18:53 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.6 2003/02/10 23:24:27 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -191,6 +191,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	__LINE			*lp, *olp, **newlines, *newlspace;
 	__LDATA                 *newwspace;
 	int			 i;
+	WINDOW			*swin;
 
 #ifdef	DEBUG
 	__CTRACE("resize: (%d, %d)\n", nlines, ncols);
@@ -255,6 +256,9 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			olp = win->orig->lines[i + win->begy
 					      - win->orig->begy];
 			lp->line = &olp->line[win->ch_off];
+#ifdef DEBUG
+			lp->sentinel = SENTINEL_VALUE;
+#endif
 			lp->firstchp = &olp->firstch;
 			lp->lastchp = &olp->lastch;
 			lp->hash = __hash((char *)(void *)lp->line,
@@ -280,6 +284,10 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	__CTRACE("resize: win->scr_t = %d\n", win->scr_t);
 	__CTRACE("resize: win->scr_b = %d\n", win->scr_b);
 #endif
+	if (win->orig == NULL) {
+		for (swin = win->nextp; swin != win; swin = swin->nextp)
+			wresize(swin, nlines - swin->begy, ncols - swin->begx);
+	}
 	return OK;
 }
 
