@@ -1,4 +1,4 @@
-/* $NetBSD: infcodes.h,v 1.4 2002/03/12 00:42:23 fvdl Exp $ */
+/* $NetBSD: infcodes.h,v 1.5 2003/03/18 20:00:48 mycroft Exp $ */
 
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-2002 Mark Adler
@@ -15,7 +15,7 @@ typedef struct inflate_codes_state FAR inflate_codes_statef;
 
 extern inflate_codes_statef *inflate_codes_new __P((
     uInt, uInt,
-    inflate_huft *, inflate_huft *,
+    const inflate_huft *, const inflate_huft *,
     z_streamp ));
 
 extern int inflate_codes __P((
