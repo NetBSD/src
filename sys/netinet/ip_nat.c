@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.24 1999/02/02 19:57:32 cjs Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.25 1999/03/05 07:27:09 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.24 1999/02/02 19:57:32 cjs Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.25 1999/03/05 07:27:09 mycroft Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.30 1998/11/22 01:50:27 darrenr Exp ";
@@ -672,10 +672,8 @@ int direction;
 		nat->nat_outip.s_addr = htonl(in.s_addr);
 		nat->nat_oip = ip->ip_dst;
 
-		sum1 = (ntohl(ip->ip_src.s_addr) & 0xffff) +
-			(ntohl(ip->ip_src.s_addr) >> 16) + ntohs(sport);
-
-		sum2 = (in.s_addr & 0xffff) + (in.s_addr >> 16) + ntohs(port);
+		sum1 = LONG_SUM(ntohl(ip->ip_src.s_addr)) + ntohs(sport);
+		sum2 = LONG_SUM(in.s_addr) + ntohs(port);
 
 		if (flags & IPN_TCPUDP) {
 			nat->nat_inport = sport;
@@ -698,10 +696,8 @@ int direction;
 		nat->nat_outip = ip->ip_dst;
 		nat->nat_oip = ip->ip_src;
 
-		sum1 = (ntohl(ip->ip_dst.s_addr) & 0xffff) +
-			(ntohl(ip->ip_dst.s_addr) >> 16) + ntohs(dport);
-
-		sum2 = (in.s_addr & 0xffff) + (in.s_addr >> 16) + ntohs(nport);
+		sum1 = LONG_SUM(ntohl(ip->ip_dst.s_addr)) + ntohs(dport);
+		sum2 = LONG_SUM(in.s_addr) + ntohs(nport);
 
 		if (flags & IPN_TCPUDP) {
 			nat->nat_inport = nport;
@@ -710,39 +706,17 @@ int direction;
 		}
 	}
 
-
-	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-	/* Do it twice */
-	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-
-	if (sum1 > sum2)
-		sum2--; /* Because ~1 == -2, We really need ~1 == -1 */
-	sumd = sum2 - sum1;
-	sumd = (sumd & 0xffff) + (sumd >> 16);
+	CALC_SUMD(sum1, sum2, sumd);
 	nat->nat_sumd = (sumd & 0xffff) + (sumd >> 16);
 
 	if ((flags & IPN_TCPUDP) && ((sport != port) || (dport != nport))) {
 		if (direction == NAT_OUTBOUND)
-			sum1 = (ntohl(ip->ip_src.s_addr) & 0xffff) +
-				(ntohl(ip->ip_src.s_addr) >> 16);
+			sum1 = LONG_SUM(ntohl(ip->ip_src.s_addr));
 		else
-			sum1 = (ntohl(ip->ip_dst.s_addr) & 0xffff) +
-				(ntohl(ip->ip_dst.s_addr) >> 16);
+			sum1 = LONG_SUM(ntohl(ip->ip_dst.s_addr));
+		sum2 = LONG_SUM(in.s_addr);
 
-		sum2 = (in.s_addr & 0xffff) + (in.s_addr >> 16);
-
-		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-		/* Do it twice */
-		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-
-		if (sum1 > sum2)
-			sum2--; /* Because ~1 == -2, We really need ~1 == -1 */
-		sumd = sum2 - sum1;
-		sumd = (sumd & 0xffff) + (sumd >> 16);
+		CALC_SUMD(sum1, sum2, sumd);
 		nat->nat_ipsumd = (sumd & 0xffff) + (sumd >> 16);
 	} else
 		nat->nat_ipsumd = nat->nat_sumd;
@@ -1398,19 +1372,8 @@ void *ifp;
 				/*
 				 * Readjust the checksum adjustment to take
 				 * into account the new IP#.
-				 *
-				 * Do it twice
 				 */
-				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-
-				 /* Because ~1 == -2, We really need ~1 == -1 */
-				if (sum1 > sum2)
-					sum2--;
-				sumd = sum2 - sum1;
-				sumd = (sumd & 0xffff) + (sumd >> 16);
+				CALC_SUMD(sum1, sum2, sumd);
 				sumd += nat->nat_sumd;
 				nat->nat_sumd = (sumd & 0xffff) + (sumd >> 16);
 			}
