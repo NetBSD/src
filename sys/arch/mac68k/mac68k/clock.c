@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1994/10/26 08:46:55 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 1994/12/03 14:03:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -361,10 +361,45 @@ void resettodr(void)
       printf("WARNING: cannot set battery-backed clock.\n");
 }
 
+/*
+ * The Macintosh timers decrement once every 1.2766 microseconds.
+ * MGFH2, p. 180
+ */
+#define	CLK_RATE	12766
+
+/*
+ * delay(usec)
+ *	Delay usec microseconds.  This is inaccurate because it
+ * assumes that it takes no time to actually execute.  We should
+ * try to compensate for this sometime because access to the via
+ * is hardly cheap.
+ *
+ * Paranoia can be removed whenever...  ;-)
+ */
 void
-delay(n)
-int n;
+delay(int usec)
 {
-	n *= 1000;
-	while (n--);
+	int	ticks, paranoia=0x10000000;
+	int	t, timerh, timerl;
+
+	if (usec <= 0) usec = 1;
+
+	ticks = usec / CLK_RATE;
+	ticks = ticks * 10000;
+
+	while (ticks) {
+		t = min (ticks, 65535);
+
+		timerh = (t & 0xff00) >> 8;
+		timerl = (t & 0xff);
+
+		via_reg(VIA1, vT2C) = timerl;
+		via_reg(VIA1, vT2CH) = timerh;
+
+		while (!(via_reg(VIA1, vIFR) & V1IF_T2) && paranoia)
+			paranoia--;
+
+		ticks -= t;
+	}
+	if (!paranoia) printf("paranoia in delay()!!!\n");
 }
