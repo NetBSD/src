@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.71 2002/11/16 16:39:55 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.72 2003/04/14 10:18:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.71 2002/11/16 16:39:55 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.72 2003/04/14 10:18:37 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, &p, 0);
-			if (*p != '\0' || datalen <= 0)
+			if (*p != '\0' || datalen < 0)
 				errx(1, "Bad/invalid packet size %s", optarg);
 			if (datalen > MAXPACKET)
 				errx(1, "packet size is too large");
