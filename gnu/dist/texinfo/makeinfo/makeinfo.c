@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.c,v 1.9 2003/07/03 15:09:19 wiz Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.10 2003/09/08 13:33:01 wiz Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
    Id: makeinfo.c,v 1.34 2003/06/02 12:32:29 karl Exp
@@ -554,11 +554,9 @@ main (argc, argv)
   setlocale (LC_COLLATE, "");
 #endif
 
-#ifdef ENABLE_NLS
   /* Set the text message domain.  */
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-#endif
 
   /* Parse argument flags from the input line. */
   while ((c = getopt_long (argc, argv, "D:de:E:f:hI:o:p:P:r:s:U:vV:wx",
