@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.11 1998/02/13 05:52:15 lukem Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.12 1998/11/15 17:25:39 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.11 1998/02/13 05:52:15 lukem Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.12 1998/11/15 17:25:39 christos Exp $");
 #endif
 #endif
 
@@ -93,7 +93,9 @@ clnt_create(hostname, prog, vers, proto)
 	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = h->h_addrtype;
 	sin.sin_port = 0;
-	memmove((char*)&sin.sin_addr, h->h_addr, h->h_length);
+	if (h->h_length > sin.sin_len)
+		h->h_length = sin.sin_len;
+	memcpy(&sin.sin_addr.s_addr, h->h_addr, (size_t)h->h_length);
 	p = getprotobyname(proto);
 	if (p == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
