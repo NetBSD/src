@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.28 1999/10/09 08:13:00 erh Exp $	*/
+/*	$NetBSD: route.c,v 1.29 1999/10/09 18:55:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -578,7 +578,7 @@ rt_maskedcopy(src, dst, netmask)
 }
 
 /*
- * Set up a routing table entry, normally
+ * Set up or tear down a routing table entry, normally
  * for an interface.
  */
 int
@@ -587,34 +587,28 @@ rtinit(ifa, cmd, flags)
 	int cmd, flags;
 {
 	register struct rtentry *rt;
-	register struct sockaddr *dst;
-	register struct sockaddr *deldst;
-	struct mbuf *m = 0;
+	register struct sockaddr *dst, *odst;
+	struct sockaddr_storage deldst;
 	struct rtentry *nrt = 0;
 	int error;
 
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
 	if (cmd == RTM_DELETE) {
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
-			m = m_get(M_WAIT, MT_SONAME);
-			deldst = mtod(m, struct sockaddr *);
-			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
-			dst = deldst;
+			/* Delete subnet route for this interface */
+			odst = dst;
+			dst = (struct sockaddr *)&deldst;
+			rt_maskedcopy(odst, dst, ifa->ifa_netmask);
 		}
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
-			if (rt->rt_ifa != ifa) {
-				if (m)
-					(void) m_free(m);
+			if (rt->rt_ifa != ifa)
 				return (flags & RTF_HOST ? EHOSTUNREACH
 							: ENETUNREACH);
-			}
 		}
 	}
 	error = rtrequest(cmd, dst, ifa->ifa_addr, ifa->ifa_netmask,
 			flags | ifa->ifa_flags, &nrt);
-	if (m)
-		(void) m_free(m);
 	if (cmd == RTM_DELETE && error == 0 && (rt = nrt)) {
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
