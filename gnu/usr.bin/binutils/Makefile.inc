@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2001/08/06 19:11:59 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2001/11/26 18:19:47 jmc Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -6,9 +6,6 @@ __MAKEFILE_INC_INCLUDED__=1
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
-
-# Make sure we use the pre-generated C files
-.l.c .y.c:
 
 GCPPFLAGS=	${G_DEFS} ${G_INCLUDES}
 CPPFLAGS+=	${GCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GCPPFLAGS:M-I*:N-I.*} \

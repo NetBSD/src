@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.1 2001/06/18 16:18:30 tv Exp $
+#	$NetBSD: Makefile.backend,v 1.2 2001/11/26 18:19:48 jmc Exp $
 
 MKMAN=		no
 BINDIR=		/usr/libexec
@@ -15,3 +15,7 @@ DPADD=		${BACKENDOBJ}/libbackend.a ${LIBIBERTYOBJ}/libiberty.a
 LDADD=		-L${BACKENDOBJ} -lbackend -L${LIBIBERTYOBJ} -liberty
 
 .include <bsd.prog.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
