@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.5 2001/11/20 12:56:21 lukem Exp $
+# $NetBSD: NULL,v 1.6 2001/12/03 21:12:57 aymeric Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -23,6 +23,7 @@ options 	RTC_OFFSET=0
 
 #processors this kernel should support
 
+options		PPC_MPC6XX
 options 	PPC604E
 options 	PPC603E
 
