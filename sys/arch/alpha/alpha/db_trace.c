@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.11 2003/10/23 10:05:53 ragge Exp $ */
+/* $NetBSD: db_trace.c,v 1.12 2003/10/27 07:07:35 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2003/10/23 10:05:53 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
 		have_trapframe = 1;
+		callpc = 0;
+		frame = 0;
 	} else {
 		if (trace_thread) {
 			(*pr)("trace: pid %d ", (int)addr);
@@ -229,7 +231,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			return;
 		}
 		frame = addr;
+		tf = NULL;
 	}
+	ra_from_tf = FALSE;
 
 	while (count--) {
 		if (have_trapframe) {
