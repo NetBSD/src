@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.57 2002/02/16 19:39:30 thorpej Exp $	*/
+/*	$NetBSD: newfs.c,v 1.58 2002/02/20 04:04:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.57 2002/02/16 19:39:30 thorpej Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.58 2002/02/20 04:04:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 	struct disklabel mfsfakelabel;
 	struct partition oldpartition;
 	struct statfs *mp;
-	int ch, fsi, fso, len, maxpartitions, n, Fflag, Zflag;
+	int ch, fsi, fso, len, maxpartitions, n, Fflag, Iflag, Zflag;
 	char *cp, *endp, *s1, *s2, *special;
 	const char *opstring;
 	long long llsize;
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 
 	cp = NULL;
 	fsi = fso = -1;
-	Fflag = Zflag = 0;
+	Fflag = Iflag = Zflag = 0;
 	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
 		mfsmode = 01777; /* default mode for a /tmp-type directory */
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:g:h:i:m:o:p:s:u:" :
-	    "B:FNOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:x:";
+	    "B:FINOS:T:Za:b:c:d:e:f:g:h:i:k:l:m:n:o:p:r:s:t:u:x:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -265,6 +265,9 @@ main(int argc, char *argv[])
 			break;
 		case 'F':
 			Fflag = 1;
+			break;
+		case 'I':
+			Iflag = 1;
 			break;
 		case 'N':
 			Nflag = 1;
@@ -555,15 +558,8 @@ main(int argc, char *argv[])
 			pp = &lp->d_partitions[*cp - 'a'];
 		if (pp->p_size == 0)
 			errx(1, "`%c' partition is unavailable", *cp);
-#if 0
-		/*
-		 * While one might think this test is useful, newfs
-		 * has historically allowed this operation, and some
-		 * people make use of this feature.
-		 */
-		if (pp->p_fstype != FS_BSDFFS)
+		if (!Iflag && pp->p_fstype != FS_BSDFFS)
 			errx(1, "`%c' partition type is not `4.2BSD'", *cp);
-#endif
 	}	/* !Fflag && !mfs */
 
 	if (fssize == 0)
@@ -887,6 +883,7 @@ struct help_strings {
 } const help_strings[] = {
 	{ NEWFS,	"-B byteorder\tbyte order (`be' or `le')" },
 	{ NEWFS,	"-F \t\tcreate file system image in regular file" },
+	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
 	{ NEWFS,	"-O \t\tcreate a 4.3BSD format filesystem" },
