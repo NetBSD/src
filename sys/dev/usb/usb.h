@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.19 1999/05/09 14:35:50 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.20 1999/05/16 12:05:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -446,7 +446,7 @@ struct usb_device_info {
 	u_int8_t	addr;	/* device address */
 	char		product[USB_MAX_STRING_LEN];
 	char		vendor[USB_MAX_STRING_LEN];
-	char		revision[8];
+	char		release[8];
 	u_int16_t	productNo;
 	u_int16_t	vendorNo;
 	u_int8_t	class;
