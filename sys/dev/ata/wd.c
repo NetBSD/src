@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.210 2000/12/14 23:56:18 lukem Exp $ */
+/*	$NetBSD: wd.c,v 1.211 2001/01/07 18:09:01 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -923,6 +923,9 @@ wdioctl(dev, xfer, addr, flag, p)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
 
@@ -943,7 +946,15 @@ wdioctl(dev, xfer, addr, flag, p)
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
 		return 0;
-	
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(wd->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return 0;
+#endif
+
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
@@ -952,6 +963,22 @@ wdioctl(dev, xfer, addr, flag, p)
 	
 	case DIOCWDINFO:
 	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+#endif
+	{
+		struct disklabel *lp;
+
+#ifdef __HAVE_OLD_DISKLABEL
+		if (xfer == ODIOCSDINFO || xfer == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
@@ -960,12 +987,16 @@ wdioctl(dev, xfer, addr, flag, p)
 		wd->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
+		    lp, /*wd->sc_dk.dk_openmask : */0,
 		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (wd->drvp->state > RECAL)
 				wd->drvp->drive_flags |= DRIVE_RESET;
-			if (xfer == DIOCWDINFO)
+			if (xfer == DIOCWDINFO
+#ifdef __HAVE_OLD_DISKLABEL
+			    || xfer == ODIOCWDINFO
+#endif
+			    )
 				error = writedisklabel(WDLABELDEV(dev),
 				    wdstrategy, wd->sc_dk.dk_label,
 				    wd->sc_dk.dk_cpulabel);
@@ -974,6 +1005,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		wd->sc_flags &= ~WDF_LABELLING;
 		wdunlock(wd);
 		return error;
+	}
 
 	case DIOCKLABEL:
 		if (*(int *)addr)
@@ -994,6 +1026,14 @@ wdioctl(dev, xfer, addr, flag, p)
 	case DIOCGDEFLABEL:
 		wdgetdefaultlabel(wd, (struct disklabel *)addr);
 		return 0;
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		wdgetdefaultlabel(wd, &newlabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return 0;
+#endif
 
 #ifdef notyet
 	case DIOCWFORMAT:

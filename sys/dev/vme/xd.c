@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.32 2000/07/24 15:00:41 scw Exp $	*/
+/*	$NetBSD: xd.c,v 1.33 2001/01/07 18:09:03 fvdl Exp $	*/
 
 /*
  *
@@ -996,6 +996,9 @@ xdioctl(dev, command, addr, flag, p)
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
 	int     error, s, unit;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel, *lp;
+#endif
 
 	unit = DISKUNIT(dev);
 
@@ -1016,6 +1019,14 @@ xdioctl(dev, command, addr, flag, p)
 	case DIOCGDINFO:	/* get disk label */
 		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
 		return 0;
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(xd->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return 0;
+#endif
 
 	case DIOCGPART:	/* get partition info */
 		((struct partinfo *) addr)->disklab = xd->sc_dk.dk_label;
@@ -1024,10 +1035,20 @@ xdioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCSDINFO:	/* set disk label */
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCSDINFO:
+		if (command == ODIOCSDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xd->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
+		    lp, /* xd->sc_dk.dk_openmask : */ 0,
 		    xd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
@@ -1045,10 +1066,20 @@ xdioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCWDINFO:	/* write disk label */
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+		if (command == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xd->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
+		    lp, /* xd->sc_dk.dk_openmask : */ 0,
 		    xd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
@@ -1056,7 +1087,8 @@ xdioctl(dev, command, addr, flag, p)
 
 			/* Simulate opening partition 0 so write succeeds. */
 			xd->sc_dk.dk_openmask |= (1 << 0);
-			error = writedisklabel(MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
+			error = writedisklabel(MAKEDISKDEV(major(dev),
+			    DISKUNIT(dev), RAW_PART),
 			    xdstrategy, xd->sc_dk.dk_label,
 			    xd->sc_dk.dk_cpulabel);
 			xd->sc_dk.dk_openmask =

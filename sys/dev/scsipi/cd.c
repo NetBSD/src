@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.141 2000/06/09 08:54:19 enami Exp $	*/
+/*	$NetBSD: cd.c,v 1.142 2001/01/07 18:09:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -814,6 +814,9 @@ cdioctl(dev, cmd, addr, flag, p)
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	int part = CDPART(dev);
 	int error;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
 
@@ -864,6 +867,14 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(cd->sc_dk.dk_label);
 		return (0);
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(cd->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return (0);
+#endif
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = cd->sc_dk.dk_label;
@@ -873,6 +884,22 @@ cdioctl(dev, cmd, addr, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+#endif
+	{
+		struct disklabel *lp;
+
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
@@ -881,7 +908,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		cd->flags |= CDF_LABELLING;
 
 		error = setdisklabel(cd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
+		    lp, /*cd->sc_dk.dk_openmask : */0,
 		    cd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			/* XXX ? */
@@ -890,6 +917,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		cd->flags &= ~CDF_LABELLING;
 		cdunlock(cd);
 		return (error);
+	}
 
 	case DIOCWLABEL:
 		return (EBADF);
@@ -897,6 +925,15 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCGDEFLABEL:
 		cdgetdefaultlabel(cd, (struct disklabel *)addr);
 		return (0);
+
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		cdgetdefaultlabel(cd, &newlabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return (0);
+#endif
 
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;

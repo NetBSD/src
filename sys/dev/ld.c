@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.3 2001/01/03 21:01:28 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.4 2001/01/07 18:09:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -281,6 +281,9 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 {
 	struct ld_softc *sc;
 	int part, unit, error;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel, *lp;
+#endif
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
@@ -292,6 +295,15 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
 		return (0);
 
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(sc->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof(struct olddisklabel));
+		return (0);
+#endif
+
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
@@ -300,6 +312,18 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
@@ -308,9 +332,13 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		sc->sc_flags |= LDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
+		    lp, /*sc->sc_dk.dk_openmask : */0,
 		    sc->sc_dk.dk_cpulabel);
-		if (error == 0 && cmd == DIOCWDINFO)
+		if (error == 0 && (cmd == DIOCWDINFO
+#ifdef __HAVE_OLD_DISKLABEL
+		    || cmd == ODIOCWDINFO
+#endif
+		    ))
 			error = writedisklabel(
 			    MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART), 
 			    ldstrategy, sc->sc_dk.dk_label, 
@@ -332,6 +360,15 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 	case DIOCGDEFLABEL:
 		ldgetdefaultlabel(sc, (struct disklabel *)addr);
 		break;
+
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		ldgetdefaultlabel(sc, &newlabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			newlabel.d_npartitions = OLDMAXPARTITIONS;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		break;
+#endif
 
 	default:
 		error = ENOTTY;
