@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1996/10/23 07:30:57 matthias Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1996/12/07 09:25:01 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -65,9 +65,9 @@
  * One page directory, shared between
  * kernel and user modes.
  */
-#define	PTDPTDI		0x3f7		/* ptd entry that points to ptd! */
-#define	KPTDI		0x3f8		/* start of kernel virtual pde's */
-#define	NKPDE		8
+#define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
+#define	KPTDI		0x3e0		/* start of kernel virtual pde's */
+#define	NKPDE		12
 #define	APTDPTDI	0x3fe		/* start of alternate page directory */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1996/10/23 07:46:07 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1996/12/07 09:24:58 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -645,6 +645,9 @@ pmap_pinit(pmap)
 	pmap->pm_pdir[PTDPTDI] =
 	    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
 
+	/* wire in i/o page */
+	pmap->pm_pdir[APTDPTDI + 1] = PTD[APTDPTDI + 1];
+	
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 }
