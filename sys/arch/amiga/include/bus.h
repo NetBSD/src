@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 2000/03/04 11:49:18 aymeric Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 2000/03/23 22:44:43 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -245,5 +245,6 @@ const struct amiga_bus_space_methods amiga_bus_stride_1;
 const struct amiga_bus_space_methods amiga_bus_stride_2;
 const struct amiga_bus_space_methods amiga_bus_stride_4;
 const struct amiga_bus_space_methods amiga_bus_stride_4swap;
+const struct amiga_bus_space_methods amiga_bus_stride_16;
 
 #endif /* _AMIGA_BUS_H_ */

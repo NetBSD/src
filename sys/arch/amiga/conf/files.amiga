@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.97 2000/03/14 15:56:52 oster Exp $
+#	$NetBSD: files.amiga,v 1.98 2000/03/23 22:44:42 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -39,6 +39,9 @@ file	arch/amiga/amiga/amiga_bus_simple_2word.c
 
 define amibus_wb
 file	arch/amiga/amiga/amiga_bus_simple_1word.c
+
+define	amibus_b16
+file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
 
 # zorro expansion bus.
 device	zbus {}
@@ -228,6 +231,12 @@ file	arch/amiga/dev/drsupio.c	drsupio
 device	hyper: supio
 attach	hyper at zbus
 file	arch/amiga/dev/hyper.c		hyper
+
+# IOBlix
+device	iobl: supio, amibus_b16
+attach	iobl at zbus with iobl_zbus
+file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
+
 
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
