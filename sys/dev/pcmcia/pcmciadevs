@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.115 2001/01/23 19:24:00 tv Exp $
+$NetBSD: pcmciadevs,v 1.116 2001/01/28 07:14:47 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -108,6 +108,7 @@ product 3COM 3CCFEM556BI	0x0556 3Com/Megahertz 3CCFEM556BI Ethernet/Modem
 
 /* Compaq Products */
 product COMPAQ2 CPQ_10_100	0x010a Compaq Netelligent 10/100 Ethernet
+product COMPAQ NC5004		0x0002 Compaq Agency NC5004 Wireless Card
 
 /* Compex Products */
 product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
