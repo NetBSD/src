@@ -1,5 +1,8 @@
-#       $NetBSD: files.m68k,v 1.28 2000/04/06 13:37:50 jdolecek Exp $
+#       $NetBSD: files.m68k,v 1.29 2000/05/14 14:13:55 minoura Exp $
 #
+
+defopt	opt_fpsp.h		FPSP
+
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s

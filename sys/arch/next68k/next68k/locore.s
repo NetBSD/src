@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.21 2000/01/08 12:38:27 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.22 2000/05/14 14:13:55 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -53,6 +53,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
+#include "opt_fpsp.h"
 
 #include "assym.h"
 #include <machine/asm.h>
