@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.32 1997/01/31 02:58:50 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.33 1997/02/04 21:33:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -663,6 +663,7 @@ nfs_reply(myrep)
 			 */
 			if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 				nmp->nm_so->so_error = 0;
+				printf("nfs_reply: ignoring error %d\n", error);
 				if (myrep->r_flags & R_GETONEREP)
 					return (0);
 				continue;
@@ -1305,8 +1306,11 @@ nfs_timer(arg)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
 			    nmp->nm_nam, (struct mbuf *)0, (struct proc *)0);
 			if (error) {
-				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
+				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
+					printf("nfs_timer: ignoring error %d\n",
+						error);
 					so->so_error = 0;
+				}
 			} else {
 				/*
 				 * Iff first send, start timing
