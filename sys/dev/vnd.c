@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.36 1997/05/25 19:37:36 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.37 1997/05/25 22:27:16 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -264,11 +264,11 @@ vndstrategy(bp)
 	register struct buf *bp;
 {
 	int unit = vndunit(bp->b_dev);
-	register struct vnd_softc *vnd = &vnd_softc[unit];
-	register struct vndbuf *nbp;
+	struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vndbuf *nbp;
 	struct vndxfer *vnx;
-	register int bn, bsize, resid;
-	register caddr_t addr;
+	int bn, bsize, resid;
+	caddr_t addr;
 	int sz, flags, error;
 
 #ifdef DEBUG
@@ -312,8 +312,21 @@ vndstrategy(bp)
 		VOP_LOCK(vnd->sc_vp);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		VOP_UNLOCK(vnd->sc_vp);
+
+#ifdef VND_FILLHOLES
+		if (error == 0 && (long)nbn == -1) {
+			int rw = (flags & B_READ) ? UIO_READ : UIO_WRITE;
+			sz = resid;
+			error = vn_rdwr(rw, vnd->sc_vp, addr, sz,
+					dbtob(bp->b_blkno), UIO_SYSSPACE,
+					IO_SYNC | IO_NODELOCKED,
+					vnd->sc_cred, &resid, bp->b_proc);
+			bp->b_resid -= (sz - resid);
+		}
+#else
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
+#endif
 
 		/*
 		 * If there was an error or a hole in the file...punt.
@@ -324,11 +337,13 @@ vndstrategy(bp)
 		 * XXX we could deal with holes here but it would be
 		 * a hassle (in the write case).
 		 */
-		if (error) {
+		if (error || (long)nbn == -1) {
 			vnx->vx_error = error;
 			if (vnx->vx_pending == 0) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
+				if (error) {
+					bp->b_error = error;
+					bp->b_flags |= B_ERROR;
+				}
 				putvndxfer(vnx);
 				biodone(bp);
 			}
