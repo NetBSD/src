@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel.c,v 1.4 2001/11/13 08:01:34 lukem Exp $	*/
+/*	$NetBSD: weasel.c,v 1.5 2001/12/16 22:30:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel.c,v 1.4 2001/11/13 08:01:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel.c,v 1.5 2001/12/16 22:30:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: weasel.c,v 1.4 2001/11/13 08:01:34 lukem Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 
-int	weasel_wdog_setmode(struct sysmon_wdog *);
-int	weasel_wdog_tickle(struct sysmon_wdog *);
-int	weasel_wdog_arm_disarm(struct weasel_handle *, u_int8_t);
-int	weasel_wdog_query_state(struct weasel_handle *);
+int	weasel_isa_wdog_setmode(struct sysmon_wdog *);
+int	weasel_isa_wdog_tickle(struct sysmon_wdog *);
+int	weasel_isa_wdog_arm_disarm(struct weasel_handle *, u_int8_t);
+int	weasel_isa_wdog_query_state(struct weasel_handle *);
 
 
 void	pcweaselattach(int);
@@ -73,7 +73,7 @@ pcweaselattach(int count)
 }
 
 void
-weasel_init(struct weasel_handle *wh)
+weasel_isa_init(struct weasel_handle *wh)
 {
 	struct weasel_config_block cfg;
 	int i, j; 
@@ -195,7 +195,7 @@ weasel_init(struct weasel_handle *wh)
 		cfg.wdt_msec = 3000;
 	}
 
-	if ((wh->wh_wdog_armed = weasel_wdog_query_state(wh)) == -1)
+	if ((wh->wh_wdog_armed = weasel_isa_wdog_query_state(wh)) == -1)
 		wh->wh_wdog_armed = 0;
 	wh->wh_wdog_period = cfg.wdt_msec / 1000;
 
@@ -207,8 +207,8 @@ weasel_init(struct weasel_handle *wh)
 	 */
 	wh->wh_smw.smw_name = "weasel";
 	wh->wh_smw.smw_cookie = wh;
-	wh->wh_smw.smw_setmode = weasel_wdog_setmode;
-	wh->wh_smw.smw_tickle = weasel_wdog_tickle;
+	wh->wh_smw.smw_setmode = weasel_isa_wdog_setmode;
+	wh->wh_smw.smw_tickle = weasel_isa_wdog_tickle;
 	wh->wh_smw.smw_period = wh->wh_wdog_period;
 
 	if (sysmon_wdog_register(&wh->wh_smw) != 0)
@@ -217,13 +217,13 @@ weasel_init(struct weasel_handle *wh)
 }
 
 int
-weasel_wdog_setmode(struct sysmon_wdog *smw)
+weasel_isa_wdog_setmode(struct sysmon_wdog *smw)
 {
 	struct weasel_handle *wh = smw->smw_cookie;
 	int error = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		error = weasel_wdog_arm_disarm(wh, WDT_DISABLE);
+		error = weasel_isa_wdog_arm_disarm(wh, WDT_DISABLE);
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 			smw->smw_period = wh->wh_wdog_period;
@@ -231,15 +231,15 @@ weasel_wdog_setmode(struct sysmon_wdog *smw)
 			/* Can't change the period on the Weasel. */
 			return (EINVAL);
 		}
-		error = weasel_wdog_arm_disarm(wh, WDT_ENABLE);
-		weasel_wdog_tickle(smw);
+		error = weasel_isa_wdog_arm_disarm(wh, WDT_ENABLE);
+		weasel_isa_wdog_tickle(smw);
 	}
 
 	return (error);
 }
 
 int
-weasel_wdog_tickle(struct sysmon_wdog *smw)
+weasel_isa_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct weasel_handle *wh = smw->smw_cookie; 
 	u_int8_t reg;
@@ -261,7 +261,7 @@ weasel_wdog_tickle(struct sysmon_wdog *smw)
 	 * servicing nothing. Let the user know that the machine is no
 	 * longer being monitored by the weasel.
 	 */
-	if((x = weasel_wdog_query_state(wh)) == -1)
+	if((x = weasel_isa_wdog_query_state(wh)) == -1)
 		error = EIO;
 	if (x == 1) { 
 		error = 0;
@@ -277,7 +277,7 @@ weasel_wdog_tickle(struct sysmon_wdog *smw)
 }
 
 int
-weasel_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
+weasel_isa_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
 {
 	u_int8_t reg;
 	int timeout;
@@ -324,7 +324,7 @@ weasel_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
 	 * Ensure that the Weasel thinks it's in the same mode we want it to
 	 * be in.   EIO if not.
 	 */
-	x = weasel_wdog_query_state(wh);
+	x = weasel_isa_wdog_query_state(wh);
 	switch (x) {
 		case -1:
 			error = EIO;
@@ -350,7 +350,7 @@ weasel_wdog_arm_disarm(struct weasel_handle *wh, u_int8_t mode)
 }
 
 int
-weasel_wdog_query_state(struct weasel_handle *wh)
+weasel_isa_wdog_query_state(struct weasel_handle *wh)
 {
 	int timeout, reg;
 

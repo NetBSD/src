@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselvar.h,v 1.1 2000/11/04 18:47:20 thorpej Exp $	*/
+/*	$NetBSD: weaselvar.h,v 1.2 2001/12/16 22:30:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -52,4 +52,4 @@ struct weasel_handle {
 	u_int wh_wdog_period;
 };
 
-void	weasel_init(struct weasel_handle *);
+void	weasel_isa_init(struct weasel_handle *);
