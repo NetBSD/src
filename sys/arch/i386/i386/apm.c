@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.39 1999/06/26 08:25:25 augustss Exp $ */
+/*	$NetBSD: apm.c,v 1.40 1999/08/17 19:04:24 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -130,7 +130,9 @@ static void	apm_disconnect __P((void *));
 static void	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
 static int	apm_get_event __P((struct bioscallregs *));
 static int	apm_get_powstat __P((struct bioscallregs *));
+#if 0
 static void	apm_get_powstate __P((u_int));
+#endif
 static void	apm_periodic_check __P((void *));
 static void	apm_perror __P((const char *, struct bioscallregs *, ...))
 		    __kprintf_attribute__((__format__(__printf__,1,3)));
@@ -138,6 +140,7 @@ static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
 static void	apm_powmgt_enable __P((int));
 static void	apm_powmgt_engage __P((int, u_int));
 static int	apm_record_event __P((struct apm_softc *, u_int));
+static void	apm_get_capabilities __P((void));
 static void	apm_set_ver __P((struct apm_softc *));
 static void	apm_standby __P((void));
 static const char *apm_strerror __P((int));
@@ -179,8 +182,10 @@ int	apm_v11_enabled = 0;
 #else
 int	apm_v11_enabled = 1;
 #endif
-#ifdef APMDEBUG
+#ifdef APM_NO_V12
 int	apm_v12_enabled = 0;
+#else
+int	apm_v12_enabled = 1;
 #endif
 
 /* variables used during operation (XXX cgd) */
@@ -332,6 +337,7 @@ apm_power_print(sc, regs)
 	return;
 }
 
+#if 0 /* currently unused */
 static void
 apm_get_powstate(dev)
 	u_int dev;
@@ -345,6 +351,7 @@ apm_get_powstate(dev)
 		printf("apm dev %04x state %04x\n", dev, regs.CX);
 	}
 }
+#endif
 
 static void
 apm_suspend()
@@ -510,6 +517,16 @@ apm_event_handle(sc, regs)
 		apm_record_event(sc, regs->BX);
 		break;
 
+	case APM_CAP_CHANGE:
+		DPRINTF(APMDEBUG_EVENTS, ("apmev: capability change\n"));
+		if (apm_minver < 2) {
+			DPRINTF(APMDEBUG_EVENTS, ("apm: unexpected event\n"));
+		} else {
+			apm_get_capabilities();
+			apm_get_powstat(&nregs); /* XXX */
+		}
+		break;
+
 	default:
 		printf("APM nonstandard event code %x\n", regs->BX);
 	}
@@ -660,6 +677,41 @@ apm_cpu_idle()
 	}
 }
 
+/* V1.2 */
+static void
+apm_get_capabilities()
+{
+	struct bioscallregs regs;
+
+	regs.BX = APM_DEV_APM_BIOS;
+	if (apmcall(APM_GET_CAPABILITIES, &regs) != 0) {
+		apm_perror("get capabilities", &regs);
+		return;
+	}
+
+#ifdef APMDEBUG
+	/* print out stats */
+	printf("apm: %d batteries", APM_NBATTERIES(&regs));
+	if (regs.CX & APM_GLOBAL_STANDBY)
+	    printf(", global standby");
+	if (regs.CX & APM_GLOBAL_SUSPEND)
+	    printf(", global suspend");
+	if (regs.CX & APM_RTIMER_STANDBY)
+	    printf(", rtimer standby");
+	if (regs.CX & APM_RTIMER_SUSPEND)
+	    printf(", rtimer suspend");
+	if (regs.CX & APM_IRRING_STANDBY)
+	    printf(", internal standby");
+	if (regs.CX & APM_IRRING_SUSPEND)
+	    printf(", internal suspend");
+	if (regs.CX & APM_PCRING_STANDBY)
+	    printf(", pccard standby");
+	if (regs.CX & APM_PCRING_SUSPEND)
+	    printf(", pccard suspend");
+	printf("\n");
+#endif
+}
+
 static void
 apm_set_ver(self)
 	struct apm_softc *self;
@@ -667,33 +719,15 @@ apm_set_ver(self)
 	struct bioscallregs regs;
 	int error;
 
-#ifdef APMDEBUG
-	if (apm_v12_enabled && (apmdebug & APMDEBUG_ATTACH)) {
-	  /* call APM_GET_CAPABILITIES */
-	  regs.BX = APM_DEV_APM_BIOS;
-	  if (apmcall(APM_GET_CAPABILITIES, &regs) == 0) {
-	    /* print out stats */
-	    printf("%d batteries", APM_NBATTERIES(&regs));
-	    if (regs.CX & APM_GLOBAL_STANDBY)
-	      printf(", global standby");
-	    if (regs.CX & APM_GLOBAL_SUSPEND)
-	      printf(", global suspend");
-	    if (regs.CX & APM_RTIMER_STANDBY)
-	      printf(", rtimer standby");
-	    if (regs.CX & APM_RTIMER_SUSPEND)
-	      printf(", rtimer suspend");
-	    if (regs.CX & APM_IRRING_STANDBY)
-	      printf(", internal standby");
-	    if (regs.CX & APM_IRRING_SUSPEND)
-	      printf(", internal suspend");
-	    if (regs.CX & APM_PCRING_STANDBY)
-	      printf(", pccard standby");
-	    if (regs.CX & APM_PCRING_SUSPEND)
-	      printf(", pccard suspend");
-	    printf("\n");
-	  }
+	regs.CX = 0x0102;	/* APM Version 1.2 */
+	regs.BX = APM_DEV_APM_BIOS;
+	
+	if (apm_v12_enabled &&
+	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
+		apm_majver = 1;
+		apm_minver = 2;
+		goto ok;
 	}
-#endif /* APMDEBUG */
 
 	regs.CX = 0x0101;	/* APM Version 1.1 */
 	regs.BX = APM_DEV_APM_BIOS;
@@ -706,6 +740,7 @@ apm_set_ver(self)
 		apm_majver = 1;
 		apm_minver = 0;
 	}
+ok:
 	printf("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
 	if (apminfo.apm_detail & APM_IDLE_SLOWS) {
@@ -834,7 +869,7 @@ apmattach(parent, self, aux)
 	struct bioscallregs regs;
 	int error, apm_data_seg_ok;
 	u_int okbases[] = { 0, biosbasemem*1024 };
-	u_int oklimits[] = { NBPG, IOM_END-1 };
+	u_int oklimits[] = { NBPG, IOM_END};
 	u_int i;
 #ifdef APMDEBUG
 	char bits[128];
@@ -879,7 +914,7 @@ apmattach(parent, self, aux)
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
 	apminfo.apm_code32_seg_base = regs.AX << 4;
-	apminfo.apm_entrypt = regs.BX;
+	apminfo.apm_entrypt = regs.BX; /* spec says EBX, can't map >=64k */
 	apminfo.apm_code16_seg_base = regs.CX << 4;
 	apminfo.apm_data_seg_base = regs.DX << 4;
 	apminfo.apm_code32_seg_len = regs.SI;
@@ -889,17 +924,21 @@ apmattach(parent, self, aux)
 
 	if (apm_force_64k_segments) {
 		apminfo.apm_code32_seg_len = 65536;
+		apminfo.apm_code16_seg_len = 65536;
 		apminfo.apm_data_seg_len = 65536;
 	} else {
 		switch ((APM_MAJOR_VERS(apminfo.apm_detail) << 8) +
 			APM_MINOR_VERS(apminfo.apm_detail)) {
 		case 0x0100:
 			apminfo.apm_code32_seg_len = 65536;
+			apminfo.apm_code16_seg_len = 65536;
 			apminfo.apm_data_seg_len = 65536;
 			apm_v11_enabled = 0;
+			apm_v12_enabled = 0;
 			break;
 		case 0x0101:
 			apminfo.apm_code16_seg_len = apminfo.apm_code32_seg_len;
+			apm_v12_enabled = 0;
 			/* fall through */
 		case 0x0102:
 		default:
@@ -912,6 +951,19 @@ apmattach(parent, self, aux)
 				apminfo.apm_code32_seg_len = 65536;
 				DPRINTF(APMDEBUG_ATTACH,
 				    ("lame v%d.%d bios gave zero len code32, pegged to 64k\n%s: ",
+				    APM_MAJOR_VERS(apminfo.apm_detail),
+				    APM_MINOR_VERS(apminfo.apm_detail),
+				    apmsc->sc_dev.dv_xname));
+			}
+			if (apminfo.apm_code16_seg_len == 0) {
+				/*
+				 * some BIOSes are lame, even if v1.1.
+				 * (Or maybe they want 64k even though they can
+				 * only ask for 64k-1?)
+				 */
+				apminfo.apm_code16_seg_len = 65536;
+				DPRINTF(APMDEBUG_ATTACH,
+				    ("lame v%d.%d bios gave zero len code16, pegged to 64k\n%s: ",
 				    APM_MAJOR_VERS(apminfo.apm_detail),
 				    APM_MINOR_VERS(apminfo.apm_detail),
 				    apmsc->sc_dev.dv_xname));
@@ -974,11 +1026,11 @@ apmattach(parent, self, aux)
 		goto bail;
 	}
 	if (apminfo.apm_code16_seg_base +
-	    apminfo.apm_code32_seg_len > IOM_END) {
+	    apminfo.apm_code16_seg_len > IOM_END) {
 		DPRINTF(APMDEBUG_ATTACH,
 		    ("code16 segment oversized: [%x,%x), giving up\n%s: ",
 		    apminfo.apm_code16_seg_base,
-		    apminfo.apm_code16_seg_base + apminfo.apm_code32_seg_len - 1,
+		    apminfo.apm_code16_seg_base + apminfo.apm_code16_seg_len - 1,
 		    apmsc->sc_dev.dv_xname));
 		/*
 		 * give up since we may have to trash the
@@ -1001,7 +1053,7 @@ apmattach(parent, self, aux)
 		    apminfo.apm_data_seg_base < oklimits[i]-1) {
 			/* starts OK */
 			if (apminfo.apm_data_seg_base +
-			    apminfo.apm_data_seg_len-1 > oklimits[i]) {
+			    apminfo.apm_data_seg_len > oklimits[i]) {
 				DPRINTF(APMDEBUG_ATTACH,
 				    ("data segment oversized: [%x,%x)",
 				    apminfo.apm_data_seg_base,
@@ -1065,7 +1117,7 @@ apmattach(parent, self, aux)
 	    SDT_MEMERA, SEL_KPL, 1, 0);
 	setsegment(&gdt[GAPM16CODE_SEL].sd,
 	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
-	    IOM_END - apminfo.apm_code16_seg_base - 1,
+	    apminfo.apm_code16_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
 	if (apminfo.apm_data_seg_len == 0) {
 		/*
@@ -1076,8 +1128,7 @@ apmattach(parent, self, aux)
 		setsegment(&gdt[GAPMDATA_SEL].sd,
 		    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 		    0, SDT_MEMROA, SEL_KPL, 0, 0);
-	} else if (apminfo.apm_data_seg_base < IOM_BEGIN &&
-	    apminfo.apm_data_seg_len > 0) {
+	} else if (apminfo.apm_data_seg_base < IOM_BEGIN) {
 		bus_space_handle_t memh;
 
 		/*
@@ -1108,13 +1159,14 @@ apmattach(parent, self, aux)
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 
 	DPRINTF(APMDEBUG_ATTACH,
-	    ("detail %x 32b:%x/%p/%x 16b:%x/%p data %x/%p/%x ep %x (%x:%p) %p\n%s: ",
+	    ("detail %x 32b:%x/%p/%x 16b:%x/%p/%x data %x/%p/%x ep %x (%x:%p) %p\n%s: ",
 	    apminfo.apm_detail,
 	    apminfo.apm_code32_seg_base,
 	    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len,
 	    apminfo.apm_code16_seg_base,
 	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
+	    apminfo.apm_code16_seg_len,
 	    apminfo.apm_data_seg_base,
 	    ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
 	    apminfo.apm_data_seg_len,
@@ -1125,15 +1177,10 @@ apmattach(parent, self, aux)
 	    &apminfo.apm_segsel,
 	    apmsc->sc_dev.dv_xname));
 
-#ifdef APMDEBUG
-	/* support isn't complete yet */
-	if (APM_MAJOR_VERS(apminfo.apm_detail) == 0x01 &&
-	    APM_MINOR_VERS(apminfo.apm_detail) == 0x02)
-	  apm_v12_enabled = 1;
-#endif
-
 	apm_set_ver(apmsc);		/* prints version info */
 	printf("\n");
+	if (apm_minver >= 2)
+		apm_get_capabilities();
 
 	/*
 	 * enable power management if it's disabled.
@@ -1268,7 +1315,9 @@ apmioctl(dev, cmd, data, flag, p)
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 	struct bioscallregs regs;
+#if 0
 	struct apm_ctl *actl;
+#endif
 	int i;
 
 	switch (cmd) {
@@ -1287,12 +1336,14 @@ apmioctl(dev, cmd, data, flag, p)
 		apm_suspends++;
 		return (0);
 
+#if 0 /* is this used at all? */
 	case APM_IOC_DEV_CTL:
 		actl = (struct apm_ctl *)data;
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		apm_get_powstate(actl->dev); /* XXX */
 		return (apm_set_powstate(actl->dev, actl->mode));
+#endif
 
 	case APM_IOC_NEXTEVENT:
 		if (!sc->event_count)
