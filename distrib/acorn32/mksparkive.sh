@@ -101,9 +101,9 @@ makeheader()
 	# CRC
 	if [ "$compressed" -ne 0 ]
 	then
-		print2 `${TOOL_SPARKCRC} $statfilename`
+		print2 `${TOOL_SPARKCRC} "$statfilename"`
 	else
-		print2 `${TOOL_SPARKCRC} $filename`
+		print2 `${TOOL_SPARKCRC} "$filename"`
 	fi
 	# Original file length
 	if [ "$compressed" -ne 0 ]
