@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.6 2000/12/21 11:29:48 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.7 2000/12/22 05:24:03 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -120,6 +120,9 @@ int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemmove __P((wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemset __P((wchar_t *, wchar_t, size_t));
+
+size_t	wcslcat __P((wchar_t *, const wchar_t *, size_t));
+size_t	wcslcpy __P((wchar_t *, const wchar_t *, size_t));
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */
