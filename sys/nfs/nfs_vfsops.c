@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.79 1998/11/12 22:31:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.80 1999/02/21 15:11:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -307,8 +307,10 @@ nfs_mountroot()
 	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
 	memset((caddr_t)nd, 0, sizeof(*nd));
 	error = nfs_boot_init(nd, procp);
-	if (error)
-		goto out;
+	if (error) {
+		free(nd, M_NFSMNT);
+		return (error);
+	}
 
 	/*
 	 * Create the root mount point.
@@ -338,73 +340,9 @@ nfs_mountroot()
 #endif
 	inittodr(n);
 
-#if 0
-	/* 
-	 * XXX splnet, so networks will receive...
-	 * XXX Which port needed this hack?
-	 * XXX Should already be at spl0.
-	 */
-	splnet();
-#endif
-
-#if 0	/* swap now comes in from swapctl(2) */
-#ifdef notyet
-	/* Set up swap credentials. */
-	proc0.p_ucred->cr_uid = 0;
-	proc0.p_ucred->cr_gid = 0;
-	proc0.p_ucred->cr_ngroups = 0;
-#endif
-
-	/*
-	 * "Mount" the swap device.
-	 *
-	 * On a "dataless" configuration (swap on disk) we will have:
-	 *	(swdevt[0].sw_dev != NODEV) identifying the swap device.
-	 */
-	if (bdevvp(swapdev, &swapdev_vp))
-		panic("nfs_mountroot: can't setup swap vp");
-	if (swdevt[0].sw_dev != NODEV) {
-		printf("swap on device 0x%x\n", swdevt[0].sw_dev);
-		error = 0;
-		goto out;
-	}
-
-	/*
-	 * If swapping to an nfs node:  (swdevt[0].sw_dev == NODEV)
-	 * Create a fake mount point just for the swap vnode so that the
-	 * swap file can be on a different server from the rootfs.
-	 */
-	error = nfs_mount_diskless(&nd->nd_swap, "/swap", &mp, &vp, procp);
-	if (error) {
-		printf("nfs_boot: warning: mount(swap), error=%d\n", error);
-		error = 0;
-		goto out;
-	}
-	vfs_unbusy(mp);
-	printf("swap on %s\n", nd->nd_swap.ndm_host);
-
-	/*
-	 * Since the swap file is not the root dir of a file system,
-	 * hack it to a regular file.
-	 */
-	vp->v_type = VREG;
-	vp->v_flag = 0;
-	swdevt[0].sw_vp = vp;
-
-	/*
-	 * Find out how large the swap file is.
-	 */
-	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
-	if (error)
-		panic("nfs_mountroot: getattr for swap");
-	n = (long) (attr.va_size >> DEV_BSHIFT);
-#ifdef	DEBUG
-	printf("swap size: 0x%lx (blocks)\n", n);
-#endif
-	swdevt[0].sw_nblks = n;
-#endif
-
 out:
+	if (error)
+		nfs_boot_cleanup(nd, procp);
 	free(nd, M_NFSMNT);
 	return (error);
 }
