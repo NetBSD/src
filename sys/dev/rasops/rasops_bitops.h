@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.5 1999/10/23 23:14:14 ad Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.6 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,10 +52,10 @@ NAME(erasecols)(cookie, row, col, num, attr)
 	struct rasops_info *ri;
 	int32_t *dp, *rp;
 	int height, cnt;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
+#ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -66,14 +66,14 @@ NAME(erasecols)(cookie, row, col, num, attr)
 
 	if ((col + num) > ri->ri_cols)
 		num = ri->ri_cols - col;
-	
+
 	if (num <= 0)
 		return;
 #endif
 	col *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	num *= ri->ri_font->fontwidth << PIXEL_SHIFT;
 	height = ri->ri_font->fontheight;
-	clr = ri->ri_devcmap[(attr >> 16) & 15];	
+	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + ((col >> 3) & ~3));
 
 	if ((col & 31) + num <= 32) {
@@ -89,12 +89,12 @@ NAME(erasecols)(cookie, row, col, num, attr)
 	} else {
 		lmask = rasops_rmask[col & 31];
 		rmask = rasops_lmask[(col + num) & 31];
-		
+
 		if (lmask)
 			num = (num - (32 - (col & 31))) >> 5;
 		else
 			num = num >> 5;
-		
+
 		lclr = clr & ~lmask;
 		rclr = clr & ~rmask;
 
@@ -123,13 +123,13 @@ NAME(do_cursor)(ri)
 {
 	int lmask, rmask, height, row, col, num;
 	int32_t *dp, *rp;
-	
+
 	row = ri->ri_crow;
 	col = ri->ri_ccol * ri->ri_font->fontwidth << PIXEL_SHIFT;
 	height = ri->ri_font->fontheight;
 	num = ri->ri_font->fontwidth << PIXEL_SHIFT;
 	rp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale + ((col >> 3) & ~3));
-	
+
 	if ((col & 31) + num <= 32) {
 		lmask = rasops_pmask[col & 31][num];
 
@@ -166,17 +166,17 @@ NAME(copycols)(cookie, row, src, dst, num)
 	int tmp, lmask, rmask, height, lnum, rnum, sb, db, cnt, full;
 	int32_t *sp, *dp, *srp, *drp;
 	struct rasops_info *ri;
-	
+
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
 		return;
-		
+
 	/* Catches < 0 case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
-	
+
 	if (src < 0) {
 		num += src;
 		src = 0;
@@ -192,11 +192,11 @@ NAME(copycols)(cookie, row, src, dst, num)
 
 	if ((dst + num) > ri->ri_cols)
 		num = ri->ri_cols - dst;
-	
+
 	if (num <= 0)
 		return;
 #endif
-	
+
 	cnt = ri->ri_font->fontwidth << PIXEL_SHIFT;
 	src *= cnt;
 	dst *= cnt;
@@ -205,7 +205,7 @@ NAME(copycols)(cookie, row, src, dst, num)
 	height = ri->ri_font->fontheight;
 	db = dst & 31;
 
-	if (db + num <= 32) { 
+	if (db + num <= 32) {
 		/* Destination is contained within a single word */
 		srp = (int32_t *)(ri->ri_bits + row + ((src >> 3) & ~3));
 		drp = (int32_t *)(ri->ri_bits + row + ((dst >> 3) & ~3));
@@ -214,18 +214,18 @@ NAME(copycols)(cookie, row, src, dst, num)
 		while (height--) {
 			GETBITS(srp, sb, num, tmp);
 			PUTBITS(tmp, db, num, drp);
-			DELTA(srp, ri->ri_stride, int32_t *); 
-			DELTA(drp, ri->ri_stride, int32_t *); 
+			DELTA(srp, ri->ri_stride, int32_t *);
+			DELTA(drp, ri->ri_stride, int32_t *);
 		}
-		
+
 		return;
 	}
 
 	lmask = rasops_rmask[db];
 	rmask = rasops_lmask[(dst + num) & 31];
 	lnum = (32 - db) & 31;
-	rnum = (dst + num) & 31; 
-		
+	rnum = (dst + num) & 31;
+
 	if (lmask)
 		full = (num - (32 - (dst & 31))) >> 5;
 	else
@@ -242,18 +242,18 @@ NAME(copycols)(cookie, row, src, dst, num)
 		src = src & 31;
 		rnum = 32 - lnum;
 		db = dst & 31;
-		
+
 		if ((src -= db) < 0) {
 			sp--;
 			src += 32;
 		}
-		
+
 		while (height--) {
 			sp = srp;
 			dp = drp;
-			DELTA(srp, ri->ri_stride, int32_t *); 
+			DELTA(srp, ri->ri_stride, int32_t *);
 			DELTA(drp, ri->ri_stride, int32_t *);
-			
+
 			if (db) {
 				GETBITS(sp, src, db, tmp);
 				PUTBITS(tmp, 0, db, dp);
@@ -286,20 +286,20 @@ NAME(copycols)(cookie, row, src, dst, num)
 			sb = src & 31;
 			sp = srp;
 			dp = drp;
-			DELTA(srp, ri->ri_stride, int32_t *); 
-			DELTA(drp, ri->ri_stride, int32_t *); 
-		
+			DELTA(srp, ri->ri_stride, int32_t *);
+			DELTA(drp, ri->ri_stride, int32_t *);
+
 			if (lmask) {
 				GETBITS(sp, sb, lnum, tmp);
 				PUTBITS(tmp, db, lnum, dp);
 				dp++;
-			
+
 				if ((sb += lnum) > 31) {
 					sp++;
 					sb -= 32;
 				}
 			}
-	
+
 			/* Now aligned to 32-bits wrt dp */
 			for (cnt = full; cnt; cnt--, sp++) {
 				GETBITS(sp, sb, 32, tmp);
