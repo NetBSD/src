@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.10 2000/03/12 17:05:23 veego Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.11 2000/03/22 00:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,10 +129,11 @@ fxp_cardbus_match(parent, match, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) != CARDBUS_VENDOR_INTEL &&
-	    CARDBUS_PRODUCT(ca->ca_id) != CARDBUS_PRODUCT_INTEL_82557)
-		return 0;
-	return 1;
+	if (CARDBUS_VENDOR(ca->ca_id) == CARDBUS_VENDOR_INTEL &&
+	    CARDBUS_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_INTEL_82557)
+		return (1);
+
+	return (0);
 }
 
 static void
