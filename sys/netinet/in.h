@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.58 2002/05/13 13:34:32 kleink Exp $	*/
+/*	$NetBSD: in.h,v 1.59 2003/01/27 09:57:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -241,7 +241,11 @@ struct sockaddr_in {
  */
 struct ip_opts {
 	struct in_addr	ip_dst;		/* first hop, 0 w/o src rt */
+#if defined(__cplusplus)
+	__int8_t	Ip_opts[40];	/* actually variable in size */
+#else
 	__int8_t	ip_opts[40];	/* actually variable in size */
+#endif
 };
 
 /*
