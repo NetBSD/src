@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.8 1999/10/31 15:22:32 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.9 2000/04/06 12:49:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -458,7 +458,7 @@ OF_read(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, addr += l) {
+	for (; len > 0; len -= l, (char *)addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -507,7 +507,7 @@ Debugger();
 panic("OF_write");
 #endif
 }
-	for (; len > 0; len -= l, addr += l) {
+	for (; len > 0; len -= l, (char *)addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -615,8 +615,8 @@ OF_poweroff()
 }
 
 void
-(*OF_set_callback(newfunc))()
-	void (*newfunc)();
+(*OF_set_callback(newfunc))(void *)
+	void (*newfunc)(void *);
 {
 	struct {
 		cell_t name;
@@ -690,7 +690,7 @@ void OF_sym2val(cells)
 		args->result = -1;
 		return;
 	} 
-	symbol = (db_sym_t)args->symbol;
+	symbol = (db_sym_t)(u_long)args->symbol;
 prom_printf("looking up symbol %s\n", symbol);
 	db_symbol_values(symbol, (char**)NULL, &value);
 	args->result = 0;
