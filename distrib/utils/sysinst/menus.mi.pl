@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.2 2002/04/16 02:06:10 mycroft Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.3 2002/04/16 02:20:17 mycroft Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -72,7 +72,7 @@ menu netbsd, title "System Instalacyjny NetBSD-@@VERSION@@",
 	option "Przeinstaluj albo zainstaluj dodatkowe pakiety",
 		action { do_reinstall_sets(); };
 	option "Zrestartuj komputer", exit,
-		action (endwin) { run_prog(0, NULL, "/sbin/reboot -q"); };
+		action (endwin) { system("/sbin/reboot -q"); };
 	option "Menu Narzedziowe", sub menu utility;
 
 menu utility, title "Narzedzia NetBSD-@@VERSION@@", exit;
@@ -93,7 +93,7 @@ menu utility, title "Narzedzia NetBSD-@@VERSION@@", exit;
 /*	option "Skonfiguruj dysk"; XXX add later.  */
 	option "Funkcje logowania", action { do_logging(); };
 	option "Zatrzymaj system", exit,
-		action (endwin) { run_prog(0, NULL, "/sbin/halt -q"); };
+		action (endwin) { system("/sbin/halt -q"); };
 
 menu yesno, title "tak lub nie?";
 	option "Tak", exit, action  {yesno = 1;};
