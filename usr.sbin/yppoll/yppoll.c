@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.10 2002/07/20 08:40:22 grant Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.11 2002/12/06 15:24:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.10 2002/07/20 08:40:22 grant Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.11 2002/12/06 15:24:08 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ main(argc, argv)
 		    inmap, yperr_string(r));
 
 	printf("Map %s has order number %d. %s", inmap, order,
-	    ctime((time_t *)&order));
+	    ctime((void *)&order));
 	printf("The master server is %s.\n", master);
 	exit(0);
 }
