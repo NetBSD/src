@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: xdryp.c,v 1.3 1993/05/16 02:47:20 deraadt Exp $";
+static char rcsid[] = "$Id: xdryp.c,v 1.4 1993/06/12 19:46:31 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ xdr_yp_inaddr(xdrs, objp)
 XDR *xdrs;
 struct in_addr *objp;
 {
-	if (!xdr_opaque(xdrs, &objp->s_addr, sizeof objp->s_addr)) {
+	if (!xdr_opaque(xdrs, (caddr_t)&objp->s_addr, sizeof objp->s_addr)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -145,7 +145,7 @@ struct ypbind_binding *objp;
 	if (!xdr_yp_inaddr(xdrs, &objp->ypbind_binding_addr)) {
 		return (FALSE);
 	}
-	if (!xdr_opaque(xdrs, &objp->ypbind_binding_port,
+	if (!xdr_opaque(xdrs, (void *)&objp->ypbind_binding_port,
 	    sizeof objp->ypbind_binding_port)) {
 		return (FALSE);
 	}
@@ -184,7 +184,7 @@ struct ypbind_resp *objp;
 	}
 	switch (objp->ypbind_status) {
 	case YPBIND_FAIL_VAL:
-		if (!xdr_u_int(xdrs, &objp->ypbind_respbody.ypbind_error)) {
+		if (!xdr_u_int(xdrs, (u_int *)&objp->ypbind_respbody.ypbind_error)) {
 			return (FALSE);
 		}
 		break;
@@ -282,12 +282,12 @@ u_long *objp;
 	bzero(&out, sizeof out);
 	while(1) {
 		if( !xdr_ypresp_all(xdrs, &out)) {
-			xdr_free(xdr_ypresp_all, &out);
+			xdr_free(xdr_ypresp_all, (char *)&out);
 			*objp = YP_YPERR;
 			return FALSE;
 		}
 		if(out.more == 0) {
-			xdr_free(xdr_ypresp_all, &out);
+			xdr_free(xdr_ypresp_all, (char *)&out);
 			return FALSE;
 		}
 		status = out.ypresp_all_u.val.status;
@@ -301,7 +301,7 @@ u_long *objp;
 			bcopy(out.ypresp_all_u.val.valdat.dptr, val,
 				out.ypresp_all_u.val.valdat.dsize);
 			val[out.ypresp_all_u.val.valdat.dsize] = '\0';
-			xdr_free(xdr_ypresp_all, &out);
+			xdr_free(xdr_ypresp_all, (char *)&out);
 
 			r = (*ypresp_allfn)(status,
 				key, out.ypresp_all_u.val.keydat.dsize,
@@ -314,10 +314,10 @@ u_long *objp;
 				return TRUE;
 			break;
 		case YP_NOMORE:
-			xdr_free(xdr_ypresp_all, &out);
+			xdr_free(xdr_ypresp_all, (char *)&out);
 			return TRUE;
 		default:
-			xdr_free(xdr_ypresp_all, &out);
+			xdr_free(xdr_ypresp_all, (char *)&out);
 			*objp = status;
 			return TRUE;
 		}
@@ -357,7 +357,8 @@ struct ypmaplist *objp;
 	if (!xdr_ypmaplist_str(xdrs, objp->ypml_name)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, &objp->ypml_next, sizeof(struct ypmaplist), xdr_ypmaplist)) {
+	if (!xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
+	    sizeof(struct ypmaplist), xdr_ypmaplist)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -371,7 +372,8 @@ struct ypresp_maplist *objp;
 	if (!xdr_ypstat(xdrs, &objp->status)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, &objp->list, sizeof(struct ypmaplist), xdr_ypmaplist)) {
+	if (!xdr_pointer(xdrs, (caddr_t *)&objp->list,
+	    sizeof(struct ypmaplist), xdr_ypmaplist)) {
 		return (FALSE);
 	}
 	return (TRUE);
