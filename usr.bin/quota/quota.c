@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.24 2003/01/06 12:38:51 wiz Exp $	*/
+/*	$NetBSD: quota.c,v 1.25 2003/02/14 14:55:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.24 2003/01/06 12:38:51 wiz Exp $");
+__RCSID("$NetBSD: quota.c,v 1.25 2003/02/14 14:55:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -610,18 +610,14 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	int quotatype;
 {
 	struct getquota_args gq_args;
+	struct ext_getquota_args ext_gq_args;
 	struct getquota_rslt gq_rslt;
 	struct dqblk *dqp = &qup->dqblk;
 	struct timeval tv;
 	char *cp;
+	int ret;
 
 	if (fst->f_flags & MNT_LOCAL)
-		return (0);
-
-	/*
-	 * rpc.rquotad does not support group quotas
-	 */
-	if (quotatype != USRQUOTA)
 		return (0);
 
 	/*
@@ -639,11 +635,26 @@ getnfsquota(fst, fs, qup, id, quotatype)
 		return (0);
 	}
 
-	gq_args.gqa_pathp = cp + 1;
-	gq_args.gqa_uid = id;
-	if (callaurpc(fst->f_mntfromname, RQUOTAPROG, RQUOTAVERS,
-	    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
-	    xdr_getquota_rslt, &gq_rslt) != 0) {
+	ext_gq_args.gqa_pathp = cp + 1;
+	ext_gq_args.gqa_id = id;
+	ext_gq_args.gqa_type =
+	    (quotatype == USRQUOTA) ? RQUOTA_USRQUOTA : RQUOTA_GRPQUOTA;
+	ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, EXT_RQUOTAVERS,
+	    RQUOTAPROC_GETQUOTA, xdr_ext_getquota_args, &ext_gq_args,
+	    xdr_getquota_rslt, &gq_rslt);
+	if (ret == RPC_VERSMISMATCH) {
+		if (quotatype != USRQUOTA) {
+			*cp = ':';
+			return (0);
+		}
+		/* try RQUOTAVERS */
+		gq_args.gqa_pathp = cp + 1;
+		gq_args.gqa_uid = id;
+		ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, RQUOTAVERS,
+		    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
+			    xdr_getquota_rslt, &gq_rslt);
+	}
+	if (ret != RPC_SUCCESS) {
 		*cp = ':';
 		return (0);
 	}
