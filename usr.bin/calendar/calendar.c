@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.31 2004/11/29 17:03:43 jwise Exp $	*/
+/*	$NetBSD: calendar.c,v 1.32 2004/11/29 18:25:14 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.31 2004/11/29 17:03:43 jwise Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.32 2004/11/29 18:25:14 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -171,7 +171,8 @@ main(argc, argv)
 		if(!chdir(caldir))
 			cal();
 	} else {
-		cal();
+		if (((pw = getpwuid(geteuid())) != NULL) && !chdir(pw->pw_dir))
+			cal();
 	}
 	exit(0);
 }
