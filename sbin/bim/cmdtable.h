@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtable.h,v 1.2 1995/03/18 12:28:13 cgd Exp $	*/
+/*	$NetBSD: cmdtable.h,v 1.3 1997/09/15 01:29:29 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
@@ -62,7 +62,7 @@ CMD_PROC (initialize);
    NOTE:  For an alphabetical list from the help command, list the
    commands in alphabetical order on the name field. */
 
-CONST
+const
 struct command cmd_table [] = {		/* Command Table */
 
 { add_image, "add",
