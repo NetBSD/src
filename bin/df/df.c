@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.41 2001/10/11 09:23:31 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.41 2001/10/11 09:23:31 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ regetmntinfo(struct statfs **mntbufp, long mntsize)
 	int i, j;
 	struct statfs *mntbuf;
 
-	if (!lflag && typelist == NULL)
+	if (!lflag && typelist == NULL && aflag)
 		return (nflag ? mntsize : getmntinfo(mntbufp, MNT_WAIT));
 
 	mntbuf = *mntbufp;
