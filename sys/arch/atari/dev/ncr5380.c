@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.1.1.1 1995/03/26 07:12:10 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.2 1995/04/28 11:33:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -101,6 +101,12 @@
 #else
 #	define	PID(a)
 #endif
+#ifdef NO_TTRAM_DMA
+int	no_ttram_dma = 1;
+#else
+int	no_ttram_dma = 0;
+#endif
+
 
 /*
  * Return values of check_intr()
@@ -390,6 +396,8 @@ void		*auxp;
 	SCSI_5380->scsi_idstat = 0;
 
 	printf("\n");
+	if(no_ttram_dma)
+		printf("DMA to TT-RAM is disabled!\n");
 
 
 	/*
@@ -1834,16 +1842,14 @@ SC_REQ	*reqp;
 		req_len      -= phy_len;
 		dm->dm_count += phy_len;
 
-#ifdef NO_TTRAM_DMA
 		/*
 		 * LWP: DMA transfers to TT-ram causes data to be garbeled
 		 * without notice on some revisons of the TT-mainboard.
 		 * When program's generate misterious Segmentations faults,
-		 * try turning on NO_TTRAM_DMA.
+		 * try turning on no_ttram_dma.
 		 */
-		if(dm->dm_addr > 0x1000000) /* XXX: should be a define??? */
+		if(no_ttram_dma && (dm->dm_addr > 0x1000000))
 			return(0);
-#endif
 
 		if(req_len) {
 			u_long	tmp = kvtop(req_addr);
