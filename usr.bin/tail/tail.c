@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.5 1997/10/19 23:45:11 lukem Exp $");
+__RCSID("$NetBSD: tail.c,v 1.6 1998/02/09 22:39:43 cjs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,8 +111,11 @@ main(argc, argv)
 
 	obsolete(argv);
 	style = NOTSET;
-	while ((ch = getopt(argc, argv, "b:c:fn:r")) != -1)
+	while ((ch = getopt(argc, argv, "Fb:c:fn:r")) != -1)
 		switch(ch) {
+		case 'F':
+			fflag = 2;
+			break;
 		case 'b':
 			ARG(512, FBYTES, RBYTES);
 			break;
@@ -136,7 +139,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (fflag && argc > 1)
-		err(1, "-f option only appropriate for a single file");
+		err(1, "-f and -F options only appropriate for a single file");
 
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
