@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.66 1998/11/05 19:46:18 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.67 1998/11/29 15:04:36 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -206,7 +206,7 @@ cpu_startup()
 
 	sz = (int) allocsys((caddr_t) 0);
 #if defined(UVM)
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
 #else
 	if ((v = (caddr_t) kmem_alloc(kernel_map, round_page(sz))) == 0)
