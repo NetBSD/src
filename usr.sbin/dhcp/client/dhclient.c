@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.6 1999/02/02 09:40:46 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.7 1999/02/05 08:52:50 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -167,6 +167,10 @@ int main (argc, argv, envp)
 #endif
 	inaddr_any.s_addr = INADDR_ANY;
 
+	/* Set up cleanup function. */
+	if (atexit (cleanup))
+		error ("Unable to register cleanup function.");
+
 	/* Discover all the network interfaces. */
 	discover_interfaces (DISCOVER_UNCONFIGURED);
 
@@ -252,6 +256,9 @@ static void usage ()
 
 void cleanup ()
 {
+
+	/* Make sure the pidfile is gone. */
+	(void) unlink (path_dhclient_pid);
 }
 
 /* Individual States:
