@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2003/10/29 23:40:42 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2005/01/24 10:03:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,15 +41,13 @@
 
 #ifndef _LOCORE
 
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_compat_ultrix.h"
+#endif
+
 #include <sys/signal.h>
 #include <sys/sa.h>
-
-/*
- * Signal frame
- */
-struct sigframe {
-	struct	sigcontext sf_sc;	/* actual context */
-};
 
 /*
  * Scheduler activations upcall frame.  Pushed onto user stack before
@@ -67,7 +65,7 @@ struct saframe {
 };
 
 void *getframe(struct lwp *, int, int *);
-#ifdef COMPAT_16
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 
