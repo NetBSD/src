@@ -1,5 +1,5 @@
 /*
- * $Id: krb-archaeology.h,v 1.1.1.2 2000/12/29 01:43:14 assar Exp $
+ * $Id: krb-archaeology.h,v 1.2 2001/02/04 18:04:03 christos Exp $
  *
  * Most of the cruft in this file is probably:
  *
@@ -18,10 +18,6 @@
 #define krb_lsb_antinet_ulong_less(x, y) (((x) == (y)) ? 0 :  krb_lsb_antinet_ulong_cmp(x, y))
 
 #define krb_lsb_antinet_ushort_less(x, y) (((x) == (y)) ? 0 : krb_lsb_antinet_ushort_cmp(x, y))
-
-int krb_lsb_antinet_ulong_cmp(u_int32_t x, u_int32_t y);
-int krb_lsb_antinet_ushort_cmp(u_int16_t x, u_int16_t y);
-u_int32_t lsb_time(time_t t, struct sockaddr_in *src, struct sockaddr_in *dst);
 
 /* Macro's to obtain various fields from a packet */
 
