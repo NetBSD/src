@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.9.4.4 2005/01/02 15:54:45 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.9.4.5 2005/01/05 03:31:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.4 2005/01/02 15:54:45 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.9.4.5 2005/01/05 03:31:36 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -343,33 +343,27 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 	audio_stream_t *src; \
 	int32_t v[AUDIO_MAX_CHANNELS]; \
 	int32_t *prev, *next, c256; \
-	int i, values_size, used_src, used_dst; \
+	int i, values_size; \
  \
 	src = this->base.src; \
 	w = dst->inp; \
 	r = src->outp; \
-	used_dst = audio_stream_get_used(dst); \
-	used_src = audio_stream_get_used(src); \
 	DPRINTF(("%s: ENTER w=%p r=%p used_dst=%d used_src=%d\n", \
 		__func__, w, r, used_dst, used_src)); \
 	from = &this->from; \
 	to = &this->to; \
 	if (this->from.sample_rate == this->to.sample_rate) { \
-		while (used_dst < m && used_src >= frame_src) { \
+		while (dst->used < m && src->used >= frame_src) { \
 			READ_Sn(BITS, EN, v, src, r, from); \
-			used_src -= frame_src; \
 			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
-			used_dst += frame_dst; \
 		} \
 	} else if (to->sample_rate < from->sample_rate) { \
-		while (used_dst < m && used_src >= frame_src) { \
+		while (dst->used < m && src->used >= frame_src) { \
 			READ_Sn(BITS, EN, v, src, r, from); \
-			used_src -= frame_src; \
 			this->count += to->sample_rate; \
 			if (this->count >= from->sample_rate) { \
 				this->count -= from->sample_rate; \
 				WRITE_Sn(BITS, EN, v, dst, w, from, to); \
-				used_dst += frame_dst; \
 			} \
 		} \
 	} else { \
@@ -377,20 +371,18 @@ aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
 		values_size = sizeof(int32_t) * from->channels; \
 		prev = this->prev; \
 		next = this->next; \
-		while (used_dst < m \
-		       && ((this->count >= to->sample_rate && used_src >= frame_src) \
+		while (dst->used < m \
+		       && ((this->count >= to->sample_rate && src->used >= frame_src) \
 			   || this->count < to->sample_rate)) { \
 			if (this->count >= to->sample_rate) { \
 				this->count -= to->sample_rate; \
 				memcpy(prev, next, values_size); \
 				READ_Sn(BITS, EN, next, src, r, from); \
-				used_src -= frame_src; \
 			} \
 			c256 = this->count * 256 / to->sample_rate; \
 			for (i = 0; i < from->channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
 			WRITE_Sn(BITS, EN, v, dst, w, from, to); \
-			used_dst += frame_dst; \
 			this->count += from->sample_rate; \
 		} \
 	} \

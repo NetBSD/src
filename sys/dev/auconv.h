@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11.2.5 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11.2.6 2005/01/05 03:31:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,21 @@ extern void stream_filter_set_inputbuffer(stream_filter_t *, audio_stream_t *);
 extern stream_filter_t *auconv_nocontext_filter_factory
 	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
 extern void auconv_nocontext_filter_dtor(struct stream_filter *);
+#define FILTER_LOOP_PROLOGUE(SRC, SRCFRAME, DST, DSTFRAME, MAXUSED) \
+do { \
+	const uint8_t *s; \
+	uint8_t *d; \
+	s = (SRC)->outp; \
+	d = (DST)->inp; \
+	for (; audio_stream_get_used(DST) < MAXUSED \
+		&& audio_stream_get_used(SRC) >= SRCFRAME; \
+		s = audio_stream_add_outp(SRC, s, SRCFRAME), \
+		d = audio_stream_add_inp(DST, d, DSTFRAME))
+#define FILTER_LOOP_EPILOGUE(SRC, DST)	\
+	(SRC)->outp = s; \
+	(DST)->inp = d; \
+} while (/*CONSTCOND*/0)
+
 
 /* Convert between signed and unsigned. */
 extern stream_filter_factory_t change_sign8;

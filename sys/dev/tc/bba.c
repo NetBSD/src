@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.22.2.1 2005/01/03 16:48:08 kent Exp $ */
+/* $NetBSD: bba.c,v 1.22.2.2 2005/01/05 03:31:37 kent Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.22.2.1 2005/01/03 16:48:08 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.22.2.2 2005/01/05 03:31:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,29 +670,16 @@ bba_input_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 			int max_used)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	if ((err = this->prev->fetch_to(this->prev, this->src, max_used * 4)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src >= 4) {
+	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 1, m) {
 		*d = ((*(uint32_t *)s) >> 16) & 0xff;
-		d = audio_stream_add_inp(dst, d, 1);
-		s = audio_stream_add_outp(this->src, s, 4);
-		used_dst += 1;
-		used_src += 4;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
@@ -708,10 +695,7 @@ bba_output_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 			  int max_used)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 3) & ~3;
@@ -719,19 +703,9 @@ bba_output_conv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 		return err;
 	m = (dst->end - dst->start) & ~3;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src > 0) {
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
 		*(uint32_t *)d = (*s << 16);
-		d = audio_stream_add_inp(dst, d, 4);
-		s = audio_stream_add_outp(this->src, s, 1);
-		used_dst += 4;
-		used_src--;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
