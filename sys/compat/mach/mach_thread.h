@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_thread.h,v 1.10 2003/09/06 23:52:25 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.11 2003/11/11 17:31:59 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -153,9 +153,31 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_info_reply_t;
 
+/* thread_get_state */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_thread_state_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_thread_get_state_request_t;
+	
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_state[144];
+	mach_msg_trailer_t rep_trailer;
+} mach_thread_get_state_reply_t;
+
 int mach_thread_policy(struct mach_trap_args *);
 int mach_thread_create_running(struct mach_trap_args *);
 int mach_thread_info(struct mach_trap_args *);
+int mach_thread_get_state(struct mach_trap_args *);
+
+/* Theses are machine dependent functions */
+int mach_thread_state(struct lwp *, int, void *, int *);
 void mach_create_thread_child(void *);
 
 #endif /* _MACH_THREAD_H_ */
