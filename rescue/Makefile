@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/01/13 03:08:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2005/01/13 03:25:31 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -46,7 +46,7 @@ CPPFLAGS.rcmd.c+=-I${NETBSDSRCDIR}/lib/libc/include -DRESCUEDIR=\"${RESCUEDIR}\"
 
 LIBOVERRIDE=	liboverride.o
 ${LIBOVERRIDE}: ${OVERRIDEOBJS}
-	${_MKMSG_CREATE}
+	${_MKTARGET_LINK}
 	${LD} -r -o $@ ${OVERRIDEOBJS}
 
 CLEANFILES+=	${OVERRIDEOBJS} ${LIBOVERRIDE}
