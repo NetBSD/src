@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.11 1997/10/14 07:56:48 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.12 1998/04/01 22:55:05 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,38 +45,27 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
-	.align	0
-
 /*
  * Glue for calling the core entry points
  */
 
-ENTRY(arm_fpe_core_disable)
+ENTRY_NP(arm_fpe_core_disable)
 	stmfd	sp!, {r0-r7, lr}
 	bl	_fpe_arm_core_disable
 	ldmfd	sp!, {r0-r7, pc}
 
-
-ENTRY(arm_fpe_core_enable)
+ENTRY_NP(arm_fpe_core_enable)
 	stmfd	sp!, {r0-r7, lr}
 	bl	_fpe_arm_core_enable
 	ldmfd	sp!, {r0-r7, pc}
 
-
-ENTRY(arm_fpe_core_initws)
+ENTRY_NP(arm_fpe_core_initws)
 	stmfd	sp!, {r10, lr}
 	mov	r10, r0
 	bl	_fpe_arm_core_initws
 	ldmfd	sp!, {r10, pc}
 
-
-ENTRY(arm_fpe_core_abort)
+ENTRY_NP(arm_fpe_core_abort)
 	stmfd	sp!, {r1-r7, r10, lr}
 	mov	r10, r0
 	mov	r0, r1
@@ -84,35 +73,32 @@ ENTRY(arm_fpe_core_abort)
 	bl	_fpe_arm_core_abort
 	ldmfd	sp!, {r1-r7, r10, pc}
 
-
 /* Only needs to preserve r10 */
 
-ENTRY(arm_fpe_core_initcontext)
+ENTRY_NP(arm_fpe_core_initcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
 	bl	_fpe_arm_core_initcontext
 	ldmfd	sp!, {r0-r7, r10, pc}
 
-
 /* Only needs to preserve r10 */
 
-ENTRY(arm_fpe_core_changecontext)
+ENTRY_NP(arm_fpe_core_changecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
 	mov	r10, r0
 	bl	_fpe_arm_core_changecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
+/* All regs preserved */
 
-/* All regs preerved */
-
-ENTRY(arm_fpe_core_shutdown)
+ENTRY_NP(arm_fpe_core_shutdown)
 	stmfd	sp!, {r0-r7, r10, lr}
 	bl	_fpe_arm_core_shutdown
 	ldmfd	sp!, {r0-r7, r10, pc}
 
-
 /* Preserve r10 */
-ENTRY(arm_fpe_core_savecontext)
+
+ENTRY_NP(arm_fpe_core_savecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
 	mov	r10, r0
 	mov	r0, r1
@@ -120,10 +106,9 @@ ENTRY(arm_fpe_core_savecontext)
 	bl	_fpe_arm_core_savecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
-
 /* Preserve r10 */
 
-ENTRY(arm_fpe_core_loadcontext)
+ENTRY_NP(arm_fpe_core_loadcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
 	mov	r0, r1
@@ -133,16 +118,15 @@ ENTRY(arm_fpe_core_loadcontext)
 
 /* Only needs to preserve r10 */
 
-ENTRY(arm_fpe_core_activatecontext)
+ENTRY_NP(arm_fpe_core_activatecontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
 	bl	_fpe_arm_core_activatecontext
 	ldmfd	sp!, {r0-r7, r10, pc}
 
-
 /* Only needs to preserve r10 */
 
-ENTRY(arm_fpe_core_deactivatecontext)
+ENTRY_NP(arm_fpe_core_deactivatecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
 	bl	_fpe_arm_core_deactivatecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
@@ -151,8 +135,7 @@ ENTRY(arm_fpe_core_deactivatecontext)
  * Call back functions from the core
  */
 
-	.global	_arm_fpe_newhandler
-_arm_fpe_newhandler:
+ENTRY_NP(arm_fpe_newhandler)
 	stmfd	sp!, {r0, lr}
 	ldr	r0, Llocal_handler_addr
 	str	r1, [r0]
@@ -161,8 +144,7 @@ _arm_fpe_newhandler:
 Llocal_handler_addr:
 	.word	_undefined_handler_address
 
-	.global	_arm_fpe_restorehandler
-_arm_fpe_restorehandler:
+ENTRY_NP(arm_fpe_restorehandler)
 	stmfd	sp!, {r0-r1, lr}
 	ldr	r0, Llocal_handler_addr
 	ldr	r1, Lold_handler_addr
@@ -173,13 +155,10 @@ _arm_fpe_restorehandler:
 Lold_handler_addr:
 	.word	_arm_fpe_old_handler_address
 
-	.text
-	.global	_arm_fpe_handle_exception
-_arm_fpe_handle_exception:
+ENTRY_NP(arm_fpe_handle_exception)
 	b	_arm_fpe_exception_glue
 
-	.global	_arm_fpe_get_ws
-_arm_fpe_get_ws:
+ENTRY_NP(arm_fpe_get_ws)
 	sub	sp, sp, #8
 	str	r0, [sp]
 	ldr	r0, Larm_fpe_core_workspace
@@ -191,19 +170,17 @@ _arm_fpe_get_ws:
 Larm_fpe_core_workspace:
 	.word	_arm_fpe_core_workspace
 
-	.global	_arm_fpe_post_proc
-_arm_fpe_post_proc:
+ENTRY_NP(arm_fpe_post_proc)
 	b	_arm_fpe_post_proc_glue
 
 
 /* Simple call back function that panics */
 
-	.global	_arm_fpe_panic
-_arm_fpe_panic:
-	adr	r0, fpe_panic_text
+ENTRY_NP(arm_fpe_panic)
+	adr	r0, Lfpe_panic_text
 	b	_panic
 
-fpe_panic_text:
+Lfpe_panic_text:
 	.asciz	"armfpe: we are panicing"
 	.align	0
 
@@ -239,7 +216,7 @@ Lcurpriority:
 
 #endif
 
-ENTRY(arm_fpe_post_proc_glue)
+ENTRY_NP(arm_fpe_post_proc_glue)
 	stmfd	sp!, {r0-r3, lr}
 
 #ifdef CHECK_BEFORE_USERRET
@@ -387,7 +364,7 @@ Lwe_need_userret:
  * Call back routine from FPE when the an exception occurs
  */
 
-ENTRY(arm_fpe_exception_glue)
+ENTRY_NP(arm_fpe_exception_glue)
 	stmfd	sp!, {r0-r6, r10-r12, lr}
 
 	mov	r10, r0
@@ -483,7 +460,7 @@ ENTRY(arm_fpe_exception_glue)
 	ldmfd	sp!, {pc}^
 
 
-ENTRY(arm_fpe_set_exception_mask)
+ENTRY_NP(arm_fpe_set_exception_mask)
 	rfs	r1			/* Get FP status */
 	bic	r1, r1, #0x001f0000	/* Zero exception mask */
 	and	r0, r0, #0x0000001f	/* Mask new bits */
