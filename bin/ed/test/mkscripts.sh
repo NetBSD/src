@@ -6,7 +6,8 @@ PATH="/bin:/usr/bin:/usr/local/bin/:."
 
 for i in *.t; do
 #	base=${i%.*}
-	base=`echo $i | sed 's/\..*//'`
+#	base=`echo $i | sed 's/\..*//'`
+	base=`expr $i : '\([^.]*\)'`
 	(
 	echo "#!/bin/sh -" 
 	echo "$ED - <<\EOT" 
