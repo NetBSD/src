@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 1999/03/02 18:22:29 itohy Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.4 1999/04/19 20:58:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -551,12 +551,12 @@ bad:		sigexit(p, SIGSEGV);
 			 * Extra stack space is required but not allocated.
 			 * Allocate and re-enter syscall().
 			 */
-			linux_reenter_syscall(frame, sz);
+			reenter_syscall(frame, sz);
 			/* NOTREACHED */
 		}
 	}
 #ifdef DEBUG
-	/* linux_reenter_syscall() doesn't adjust stack. */
+	/* reenter_syscall() doesn't adjust stack. */
 	if (sz != frame->f_stackadj)
 		panic("linux_sys_sigreturn: adj: %d != %d",
 			sz, frame->f_stackadj);
@@ -700,12 +700,12 @@ bad:		sigexit(p, SIGSEGV);
 			 * Extra stack space is required but not allocated.
 			 * Allocate and re-enter syscall().
 			 */
-			linux_reenter_syscall(frame, sz);
+			reenter_syscall(frame, sz);
 			/* NOTREACHED */
 		}
 	}
 #ifdef DEBUG
-	/* linux_reenter_syscall() doesn't adjust stack. */
+	/* reenter_syscall() doesn't adjust stack. */
 	if (sz != frame->f_stackadj)
 		panic("linux_sys_rt_sigreturn: adj: %d != %d",
 			sz, frame->f_stackadj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 1998/12/15 19:25:40 itohy Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.2 1999/04/19 20:58:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,10 +164,6 @@ struct linux_rt_sigframe {
 /* linux_machdep.c */
 void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
-
-/* linux_sig_machdep.S */
-__dead void linux_reenter_syscall __P((struct frame *fp, int stkadj))
-					__attribute__((__noreturn__));
 
 #endif /* _KERNEL */
 
