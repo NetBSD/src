@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.39 1997/06/30 22:51:29 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.40 1997/07/10 08:30:47 veego Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.39 1997/06/30 22:51:29 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.40 1997/07/10 08:30:47 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,9 @@ static int	bootsize;    /* size of remaining boot program */
 static char	*xxboot;     /* primary boot */
 static char	*bootxx;     /* secondary boot */
 static char	boot0[MAXPATHLEN];
+#if NUMBOOT > 1
 static char	boot1[MAXPATHLEN];
+#endif
 #endif
 
 static enum	{
