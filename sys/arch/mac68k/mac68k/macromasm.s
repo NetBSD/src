@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.13 1996/10/13 16:55:24 christos Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.14 1997/04/08 03:21:17 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -121,6 +121,11 @@
 	.global _panic
 	.global _printf
 
+#ifdef MRG_ADB
+/*
+ * These functions are defined in adb_direct.c if we are not using
+ * the MRG method of accessing the ADB/PRAM/RTC.
+ */
 /*
  * Most of the following glue just takes C function calls, converts
  * the parameters to the MacOS Trap parameters, and then tries to
@@ -215,6 +220,7 @@ _ADBOp:
 	movl	sp@(16), d0
 	.word 0xa07c
 	rts
+#endif /* MRG_ADB */
 
 
 #if 0

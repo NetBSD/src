@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.24 1997/01/13 07:01:23 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.25 1997/04/08 03:19:05 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -33,12 +33,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/adbsys.h>
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
+#include <arch/mac68k/mac68k/macrom.h>
 #include "adbvar.h"
-#include "../mac68k/macrom.h"
 
 extern	struct mac68k_machine_S mac68k_machine;
 
@@ -180,10 +179,12 @@ adb_init()
 		return;
 	}
 
+#ifdef MRG_ADB
 	if (!mrg_romready()) {
 		printf("adb: no ROM ADB driver in this kernel for this machine\n");
 		return;
 	}
+
 	printf("adb: bus subsystem\n");
 #ifdef MRG_DEBUG
 	printf("adb: call mrg_initadbintr\n");
@@ -203,6 +204,9 @@ adb_init()
 #endif
 
 	ADBAlternateInit();
+#else
+	ADBReInit();
+#endif /* MRG_ADB */
 
 #ifdef MRG_DEBUG
 	printf("adb: done with ADBReInit\n");

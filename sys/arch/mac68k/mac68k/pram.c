@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.12 1997/04/08 03:21:18 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -36,12 +36,17 @@
 
 /* #include "stand.h"  */
 #include <sys/types.h>
+#include <sys/param.h>
 #ifdef DEBUG
 #include <sys/systm.h>
 #endif
 #include <machine/viareg.h>
-#include "pram.h"
-#include "macrom.h"
+
+#include <arch/mac68k/mac68k/pram.h>
+#include <arch/mac68k/mac68k/macrom.h>
+#ifndef MRG_ADB
+#include <arch/mac68k/dev/adbvar.h>
+#endif
 
 #if DEBUG
 static char *convtime(unsigned long t)
@@ -145,3 +150,72 @@ pram_settime(unsigned long time)
    else
 	return setPramTime(time);
 }
+
+#ifndef MRG_ADB
+/*
+ * These functions are defined here only if we are not using
+ * the MRG method of accessing the ADB/PRAM/RTC.
+ */
+
+extern int adbHardware;	/* from newadb.c */
+
+/*
+ * getPramTime
+ * This function can be called regrardless of the machine
+ * type. It calls the correct hardware-specific code.
+ * (It's sort of redundant with the above, but it was
+ * added later.)
+ */
+unsigned long
+getPramTime(void)
+{
+	unsigned long time;
+
+	switch (adbHardware) {
+	case ADB_HW_II:		/* access PRAM via VIA interface */
+		time = (long)getPramTimeII();
+		return time;
+
+	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
+		if (0 != adb_read_date_time(&time))
+			return 0;
+		else
+			return time;
+
+	case ADB_HW_PB:		/* don't know how to access this yet */
+		return 0;
+
+	case ADB_HW_UNKNOWN:
+	default:
+		return 0;
+	}
+}
+
+/*
+ * setPramTime
+ * This function can be called regrardless of the machine
+ * type. It calls the correct hardware-specific code.
+ * (It's sort of redundant with the above, but it was
+ * added later.)
+ */
+void
+setPramTime(unsigned long time)
+{
+	switch (adbHardware) {
+	case ADB_HW_II:		/* access PRAM via ADB interface */
+		setPramTimeII(time);
+		return;
+
+	case ADB_HW_IISI:	/* access PRAM via pseudo-adb functions */
+		adb_set_date_time(time);
+		return;
+
+	case ADB_HW_PB:		/* don't know how to access this yet */
+		return;
+
+	case ADB_HW_UNKNOWN:
+		return;
+	}
+}
+
+#endif  /* !MRG_ADB */

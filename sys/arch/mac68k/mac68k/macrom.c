@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.32 1997/04/08 03:21:14 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,20 +46,21 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/systm.h>
 
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/pmap.h>
 
-#include <machine/viareg.h>
-#include "macrom.h"
-#include <sys/malloc.h>
 #include <machine/cpu.h>
-
 #include <machine/frame.h>
+#include <machine/viareg.h>
+
+#include <arch/mac68k/mac68k/macrom.h>
+#include <arch/mac68k/dev/adbvar.h>
 
 	/* trap modifiers (put it macrom.h) */
 #define TRAP_TOOLBOX(a)	((a) & 0x800)
@@ -105,17 +106,27 @@ u_int32_t mrg_AVInitEgretJT[] = {
 };
 
 caddr_t	mrg_romadbintr = (caddr_t)0;	/* ROM ADB interrupt */
-caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
-char *mrg_romident = NULL;			/* ident string for ROMs */
-caddr_t mrg_ADBAlternateInit = 0;
-caddr_t mrg_InitEgret = 0;
+caddr_t	mrg_rompmintr = 0;		/* ROM PM (?) interrupt */
+char	*mrg_romident = NULL;		/* ident string for ROMs */
+caddr_t	mrg_ADBAlternateInit = 0;
+caddr_t	mrg_InitEgret = 0;
 caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
-caddr_t ROMResourceMap = 0;
+caddr_t	ROMResourceMap = 0;
 extern romvec_t *mrg_MacOSROMVectors;
 #if defined(MRG_TEST) || defined(MRG_DEBUG)
-caddr_t ResHndls[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+caddr_t	ResHndls[] = {
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0
+};
 #else
-caddr_t ResHndls[]={0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+caddr_t	ResHndls[] = {
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0
+};
 #endif
 
 /*
@@ -128,7 +139,6 @@ int
 mrg_Delay()
 {
 #define TICK_DURATION 16625
-
 	u_int32_t ticks;
 
 	asm volatile ("	movl	a0, %0"		/* get arguments */
@@ -140,10 +150,14 @@ mrg_Delay()
 	printf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);
 #endif
 	delay(ticks * TICK_DURATION);
-	return(ticks);	/* The number of ticks since startup should be
-			 * returned here. Until someone finds a need for
-			 * this, we just return the requested number
-			 *  of ticks */
+
+	/*
+	 * The number of ticks since startup should be
+	 * returned here. Until someone finds a need for
+	 * this, we just return the requested number
+	 * of ticks
+	 */
+	return (ticks);
 }
 
 
@@ -155,64 +169,56 @@ mrg_VBLQueue()
 #define vblAddr 6
 #define vblCount 10
 #define vblPhase 12
-
 	caddr_t vbltask;
 	caddr_t last_vbltask;
 	
-	last_vbltask = (caddr_t) &VBLQueue_head;
+	last_vbltask = (caddr_t)&VBLQueue_head;
 	vbltask = VBLQueue_head;
-	while (0 != vbltask)
-	{
-	    if ( 0 != *((u_int16_t *)(vbltask + vblPhase)) )
-	    {
-		*((u_int16_t *)(vbltask + vblPhase)) -= 1;
-	    } else
-	    {
-		if ( 0 != *((u_int16_t *)(vbltask + vblCount)) )
-		{
-		    *((u_int16_t *)(vbltask + vblCount)) -= 1;
-		} else
-		{
+	while (0 != vbltask) {
+		if (0 != *((u_int16_t *)(vbltask + vblPhase)))
+			*((u_int16_t *)(vbltask + vblPhase)) -= 1;
+		else if (0 != *((u_int16_t *)(vbltask + vblCount)))
+			*((u_int16_t *)(vbltask + vblCount)) -= 1;
+		else {
 #if defined(MRG_DEBUG)
-printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
-			   *((u_int32_t *)(vbltask + vblAddr)), vbltask);
-#endif	      
-		    asm("   movml	#0xfffe, sp@-
-			    movl	%0, a0
-			    movl	%1, a1
-			    jbsr	a1@
-			    movml	sp@+, #0x7fff"
-			:
-			: "g" (vbltask), "g" (*((caddr_t)(vbltask + vblAddr)))
-			: "a0", "a1");
+			printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at %p\n",
+			    *((u_int32_t *)(vbltask + vblAddr)), vbltask);
+#endif
+			asm("   movml	#0xfffe, sp@-
+				movl	%0, a0
+				movl	%1, a1
+				jbsr	a1@
+				movml	sp@+, #0x7fff"
+				: : "g" (vbltask),
+				    "g" (*((caddr_t)(vbltask + vblAddr)))
+				: "a0", "a1");
 #if defined(MRG_DEBUG)
-		    printf("mrg: mrg_VBLQueue: back from VBL task\n");
-#endif	      
-		    if ( 0 == *((u_int16_t *)(vbltask + vblCount)) )
-		    {
+			printf("mrg: mrg_VBLQueue: back from VBL task\n");
+#endif
+			if (0 == *((u_int16_t *)(vbltask + vblCount))) {
 #if defined(MRG_DEBUG)
-		printf("mrg: mrg_VBLQueue: removing VBLTask block at %p\n",
-			       vbltask);
-#endif	      
-			*((u_int32_t *)(last_vbltask + qLink)) = *((u_int32_t *)(vbltask + qLink));
-			    /* can't free memory from VBLTask block as
-		             * we don't know where it came from */
-			if (vbltask == VBLQueue_tail)
-			{ /* last task of do{}while */
-			    VBLQueue_tail = last_vbltask;
+				printf("mrg: mrg_VBLQueue: removing VBLTask block at %p\n",
+				    vbltask);
+#endif
+				*((u_int32_t *)(last_vbltask + qLink)) =
+				    *((u_int32_t *)(vbltask + qLink));
+				/*
+				 * can't free memory from VBLTask block as
+				 * we don't know where it came from
+				 */
+				if (vbltask == VBLQueue_tail)
+					VBLQueue_tail = last_vbltask;
 			}
-		    }
 		}
-	    }
-	    last_vbltask = vbltask;
-	    vbltask = (caddr_t) *((u_int32_t *)(vbltask + qLink));
-	} /* while */
+		last_vbltask = vbltask;
+		vbltask = (caddr_t) *((u_int32_t *)(vbltask + qLink));
+	}
 }
 
 void
 mrg_init_stub_1()
 {
-  	asm("movml #0xffff, sp@-");
+	asm("movml #0xffff, sp@-");
 	printf("mrg: hit mrg_init_stub_1\n");
   	asm("movml sp@+, #0xffff");
 }
@@ -226,82 +232,83 @@ mrg_init_stub_2()
 short
 Count_Resources(u_int32_t rsrc_type)
 {
-    rsrc_t *rsrc = (rsrc_t *)ROMResourceMap;
-    short count = 0;
+	rsrc_t *rsrc = (rsrc_t *)ROMResourceMap;
+	short count = 0;
 
 #if defined(MRG_DEBUG)
-    printf("Count_Resources looking for 0x%08lx at 0x%08lx\n",
-	(long)rsrc_type, (long)rsrc);
+	printf("Count_Resources looking for 0x%08lx at 0x%08lx\n",
+	    (long)rsrc_type, (long)rsrc);
 #endif
-/*
- * Return a Count of all the ROM Resouces of the requested type.
- */
-    if (ROMResourceMap == 0)
-        panic("Oops! Need ROM Resource Map ListHead address!\n");
+	/*
+	 * Return a Count of all the ROM Resouces of the requested type.
+	 */
+	if (ROMResourceMap == 0)
+		panic("Oops! Need ROM Resource Map ListHead address!\n");
 
-    while (rsrc != 0) {
+	while (rsrc != 0) {
 #if defined(MRG_DEBUG)
-	if (rsrc_type == 0)
-            printf("0x%08lx: %04x %04x %04x %04x %08x %08x %08x %04x\n",
-                (long)rsrc, rsrc->unknown[0], rsrc->unknown[1],
-		rsrc->unknown[2], rsrc->unknown[3], rsrc->next,
-		rsrc->body, rsrc->name, rsrc->index);
+		if (rsrc_type == 0)
+			printf("0x%08lx: %04x %04x %04x %04x %08x %08x %08x %04x\n",
+			    (long)rsrc, rsrc->unknown[0], rsrc->unknown[1],
+			    rsrc->unknown[2], rsrc->unknown[3], rsrc->next,
+			    rsrc->body, rsrc->name, rsrc->index);
 #endif
-        if (rsrc_type == 0 || (rsrc_type == rsrc->name))
-            count++;
-        rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
-    }
+		if (rsrc_type == 0 || (rsrc_type == rsrc->name))
+			count++;
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+	}
+
 #if defined(MRG_DEBUG)
-    printf("Count_Resources found %d\n", count);
+	printf("Count_Resources found %d\n", count);
 #endif
-    return count;
+	return count;
 }
 
 caddr_t *
 Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 {
-    rsrc_t *rsrc = (rsrc_t *)ROMResourceMap;
-    short i = 0;
+	rsrc_t *rsrc = (rsrc_t *)ROMResourceMap;
+	short i = 0;
 
-/*
- * This routine return the "Handle" to a ROM Resource.  Since few
- *  ROM Resources are called for in NetBSD we keep a small table
- *  for the Handles we return. (Can't reuse the Handle without
- *  defeating the purpose for a Handle in the first place!)  If
- *  we get more requests than we have space for, we panic.
- */
+	/*
+	 * This routine return the "Handle" to a ROM Resource.  Since few
+	 * ROM Resources are called for in NetBSD we keep a small table
+	 * for the Handles we return. (Can't reuse the Handle without
+	 * defeating the purpose for a Handle in the first place!)  If
+	 * we get more requests than we have space for, we panic.
+	 */
+	if (ROMResourceMap == 0)
+		panic("Oops! Need ROM Resource Map ListHead address!\n");
 
-    if (ROMResourceMap == 0)
-        panic("Oops! Need ROM Resource Map ListHead address!\n");
-
-    while (rsrc != 0) {
-        if (rsrc_type == rsrc->name) {
-            rsrc_ind--;
-            if (rsrc_ind == 0) {
-                for (i = 0;i < sizeof(ResHndls)/sizeof(caddr_t);i++)
-                    if ((ResHndls[i] == 0) ||
-                        (ResHndls[i] == (caddr_t)(rsrc->next + ROMBase))) {
-                            ResHndls[i] = (caddr_t)(rsrc->body + ROMBase);
-                            return (caddr_t *)&ResHndls[i];
-                    }
-                panic("ResHndls table too small!\n");
-            }
-        }
-        rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
-    }
-    return (caddr_t *) 0;
+	while (rsrc != 0) {
+		if (rsrc_type == rsrc->name) {
+			rsrc_ind--;
+			if (rsrc_ind == 0) {
+				for (i = 0;
+				    i < sizeof(ResHndls) / sizeof(caddr_t); i++)
+					if ((ResHndls[i] == 0) ||
+					    (ResHndls[i] == (caddr_t)(rsrc->next + ROMBase))) {
+						ResHndls[i] = (caddr_t)(rsrc->body + ROMBase);
+						return (caddr_t *)&ResHndls[i];
+					}
+				panic("ResHndls table too small!\n");
+			}
+		}
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+	}
+	return (caddr_t *)0;
 }
 
 void
 mrg_FixDiv()
 {
-    panic("Oops! Need ROM address of _FixDiv for this system!\n");
+	panic("Oops! Need ROM address of _FixDiv for this system!\n");
 }
 
 void
 mrg_FixMul()
 {
-    panic("Oops! Need ROM address of _FixMul for this system!\n");
+	panic("Oops! Need ROM address of _FixMul for this system!\n");
 }
 
 void
@@ -345,11 +352,16 @@ mrg_jkybdtaskpanic()	/* JKybdTask stopper */
 	panic("Agh!  Called JKybdTask!\n");
 }
 
+#ifdef MRG_ADB
+/*
+ * mrg_adbintr() and mrg_pmintr() are defined in adb_direct.c if we
+ * not using the MRG method of accessing the ADB/PRAM/RTC.
+ */
+
 long
 mrg_adbintr()	/* Call ROM ADB Interrupt */
 {
-	if(mrg_romadbintr != NULL)
-	{
+	if (mrg_romadbintr != NULL) {
 #if defined(MRG_TRACE)
 		tron();
 #endif
@@ -371,14 +383,13 @@ mrg_adbintr()	/* Call ROM ADB Interrupt */
 #endif
 
 	}
-	return(1);
+	return (1);
 }
 
 long
 mrg_pmintr()	/* Call ROM PM Interrupt */
 {
-	if(mrg_rompmintr != NULL)
-	{
+	if (mrg_rompmintr != NULL) {
 #if defined(MRG_TRACE)
 		tron();
 #endif
@@ -399,8 +410,9 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 		troff();
 #endif
 	}
-	return(1);
+	return (1);
 }
+#endif	/* MRG_ADB */
 
 
 void
@@ -414,7 +426,7 @@ int
 myowntrap()
 {
 	printf("Oooo!  My Own Trap Routine!\n");
-	return(50);
+	return (50);
 }
 
 int
@@ -437,7 +449,7 @@ mrg_NewPtr()
 		/* We ignore "Sys;" where else would it come from? */
 		/* plus, (I think), malloc clears block for us */
 
-	if(ptr == NULL){
+	if (ptr == NULL) {
 		result = memFullErr;
 #if defined(MRG_SHOWTRAPS)
 		printf(" failed.\n");
@@ -452,7 +464,7 @@ mrg_NewPtr()
 	}
 
 	asm("	movl	%0, a0" :  : "g" (ptr) : "a0");
-	return(result);
+	return (result);
 }
 
 int
@@ -467,13 +479,12 @@ mrg_DisposPtr()
 	printf("mrg: DisposPtr(%p)\n", ptr);
 #endif
 
-	if(ptr == 0){
+	if (ptr == 0)
 		result = memWZErr;
-	}else{
+	else
 		free(ptr - 4, M_DEVBUF);
-	}
 
-	return(result);
+	return (result);
 }
 
 int
@@ -487,10 +498,10 @@ mrg_GetPtrSize()
 	printf("mrg: GetPtrSize(%p)\n", ptr);
 #endif
 
-	if(ptr == 0){
-		return(memWZErr);
-	}else
-		return(*(int *)(ptr - 4));
+	if (ptr == 0)
+		return (memWZErr);
+	else
+		return (*(int *)(ptr - 4));
 }
 
 int
@@ -507,7 +518,7 @@ mrg_SetPtrSize()
 	printf("mrg: SetPtrSize(%p, %d) failed\n", ptr, newbytes);
 #endif
 
-	return(memFullErr);	/* How would I handle this, anyway? */
+	return (memFullErr);	/* How would I handle this, anyway? */
 }
 
 int
@@ -524,29 +535,29 @@ mrg_StripAddress()
 int
 mrg_SetTrapAddress()
 {
-        extern caddr_t mrg_OStraps[];
-        caddr_t ptr;
-        int trap_num;
+	extern caddr_t mrg_OStraps[];
+	caddr_t ptr;
+	int trap_num;
 
-        asm("   movl a0, %0
-                movl d0, %1"
-                : "=g" (ptr), "=g" (trap_num) : : "d0", "a0");
+	asm("	movl a0, %0
+		movl d0, %1"
+		: "=g" (ptr), "=g" (trap_num) : : "d0", "a0");
 
 #if defined(MRG_DEBUG)
-        printf("mrg: trap 0x%x set to 0x%lx\n", trap_num, (long)ptr);
+	printf("mrg: trap 0x%x set to 0x%lx\n", trap_num, (long)ptr);
 #endif
-        mrg_OStraps[trap_num] = ptr;
+	mrg_OStraps[trap_num] = ptr;
 /*
  * If the Trap for Egret was changed, we'd better remember it!
  */
-        if (trap_num == 0x92) {
+	if (trap_num == 0x92) {
 #if defined(MRG_DEBUG)
-            printf("mrg: reconfigured Egret address from 0x%lx to 0x%lx\n",
-                (long)jEgret, (long)ptr);
+		printf("mrg: reconfigured Egret address from 0x%lx to 0x%lx\n",
+		    (long)jEgret, (long)ptr);
 #endif
-            jEgret = (void (*))ptr;
-        }
-        return 0;
+		jEgret = (void (*))ptr;
+	}
+	return 0;
 }
 
 /*
@@ -596,7 +607,7 @@ mrg_aline_super(struct frame *frame)
 	int trapnum;
 	int a0passback;
 	u_int32_t a0bucket, d0bucket;
-        int danprint=0; /* This shouldn't be necessary, but seems to be.  */
+	int danprint=0; /* This shouldn't be necessary, but seems to be.  */
 
 #if defined(MRG_DEBUG)
 	printf("mrg: a super");
@@ -604,8 +615,8 @@ mrg_aline_super(struct frame *frame)
 
 	trapword = *(u_short *)frame->f_pc;
 
-        if (trapword == 0xa71e)
-          danprint = 1;
+	if (trapword == 0xa71e)
+		danprint = 1;
 
 #if defined(MRG_DEBUG)
 	printf(" wd 0x%lx", (long)trapword);
@@ -638,7 +649,7 @@ mrg_aline_super(struct frame *frame)
  	printf("    got:    d0 = 0x%8x,  a0 = 0x%8x, called from: 0x%8x\n",
 		frame->f_regs[0], frame->f_regs[8], frame->f_pc	);
 #endif
-	if(trapaddr == NULL){
+	if (trapaddr == NULL) {
 		printf("unknown %s trap 0x%x, no trap address available\n",
 			isOStrap ? "OS" : "ToolBox", trapword);
 		panic("mrg_aline_super()");
@@ -691,7 +702,7 @@ mrg_aline_super(struct frame *frame)
 #endif
 
 	frame->f_regs[0] = d0bucket;
-	if(a0passback)
+	if (a0passback)
 		frame->f_regs[8] = a0bucket;
 
 	frame->f_pc += 2;	/* skip offending instruction */
@@ -727,10 +738,9 @@ dumptrace()
 
 	printf("instruction trace:\n");
 	traceindex = traceloopptr + 1;
-	while(traceindex != traceloopptr)
-	{
+	while (traceindex != traceloopptr) {
 		printf("    %08x\n", *traceindex++);
-		if(traceindex == &traceloopend)
+		if (traceindex == &traceloopend)
 			traceindex = &traceloopstart[0];
 	}
 #else
@@ -742,7 +752,7 @@ dumptrace()
 int
 mrg_romready()
 {
-	return(mrg_romident != NULL);
+	return (mrg_romident != NULL);
 }
 
 extern unsigned long	IOBase;
@@ -771,51 +781,51 @@ mrg_init()
 					 
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
-        printf("mrg: testing CountResources\n");
-        asm("   clrl    sp@-
-                clrl    sp@-
-                .word   0xa99c
-                movw    sp@+, %0"
-                : "=g" (rcnt));
-        printf("mrg: found %d resources in ROM\n", rcnt);
-        asm("   clrl    sp@-
-                movl    #0x44525652, sp@-
-                .word   0xa99c
-                movw    sp@+, %0"
-                : "=g" (rcnt));
-        printf("mrg: %d are DRVR resources\n", rcnt);
-        if (rcnt == 0)
-            panic("Oops! No DRVR Resources found in ROM\n");
+		printf("mrg: testing CountResources\n");
+		asm("	clrl    sp@-
+			clrl    sp@-
+			.word   0xa99c
+			movw    sp@+, %0"
+			: "=g" (rcnt));
+		printf("mrg: found %d resources in ROM\n", rcnt);
+		asm("	clrl    sp@-
+			movl    #0x44525652, sp@-
+			.word   0xa99c
+			movw    sp@+, %0"
+			: "=g" (rcnt));
+		printf("mrg: %d are DRVR resources\n", rcnt);
+		if (rcnt == 0)
+			panic("Oops! No DRVR Resources found in ROM\n");
 	}
 #endif
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {
-        printf("mrg: testing GetIndResource\n");
-        asm("   clrl    sp@-
-                movl    #0x44525652, sp@-
-                movw    #0x01, sp@-
-                .word   0xa99d
-                movl    sp@+, %0"
-                : "=g" (handle));
-        printf("Handle to first DRVR resource is 0x%08lx\n", (long)handle);
-        printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
-            (long)Get_Ind_Resource(0x44525652, 1),
-	    (long)*Get_Ind_Resource(0x44525652, 1),
-               (long) *((u_int32_t *) *Get_Ind_Resource(0x44525652, 1)));
-        asm("   clrl    sp@-
-                movl    #0x44525652, sp@-
-                movw    #0x02, sp@-
-                .word   0xa99d
-                movl    sp@+, %0"
-                : "=g" (handle));
-        printf("Handle to second DRVR resource is 0x%08lx\n", (long)handle);
-        printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
-            (long)Get_Ind_Resource(0x44525652, 2),
-	    (long)*Get_Ind_Resource(0x44525652, 2),
-              (long)  *((u_int32_t *) *Get_Ind_Resource(0x44525652, 2)));
+		printf("mrg: testing GetIndResource\n");
+		asm("	clrl    sp@-
+			movl    #0x44525652, sp@-
+			movw    #0x01, sp@-
+			.word   0xa99d
+			movl    sp@+, %0"
+			: "=g" (handle));
+		printf("Handle to first DRVR resource is 0x%p\n", handle);
+		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
+		    (long)Get_Ind_Resource(0x44525652, 1),
+		    (long)*Get_Ind_Resource(0x44525652, 1),
+		    (long)*((u_int32_t *)*Get_Ind_Resource(0x44525652, 1)));
+		asm("	clrl    sp@-
+			movl    #0x44525652, sp@-
+			movw    #0x02, sp@-
+			.word   0xa99d
+			movl    sp@+, %0"
+			: "=g" (handle));
+		printf("Handle to second DRVR resource is 0x%p\n", handle);
+		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
+		    (long)Get_Ind_Resource(0x44525652, 2),
+		    (long)*Get_Ind_Resource(0x44525652, 2),
+		    (long)*((u_int32_t *)*Get_Ind_Resource(0x44525652, 2)));
 	}
 #endif
-	if(mrg_romready()){
+	if (mrg_romready()) {
 		printf("mrg: '%s' ROM glue", mrg_romident);
 
 #if defined(MRG_TRACE)
@@ -870,9 +880,9 @@ mrg_init()
 	Lo3Bytes = 0x00ffffff;
 	VIA = (caddr_t)Via1Base;
 	MMU32Bit = 1; /* ?means MMU is in 32 bit mode? */
-  	if(TimeDBRA == 0)
+  	if (TimeDBRA == 0)
 		TimeDBRA = 0xa3b;		/* BARF default is Mac II */
-  	if(ROMBase == 0)
+  	if (ROMBase == 0)
 		panic("ROMBase not set in mrg_init()!\n");
 
 	strcpy(&FinderName[1], findername);
@@ -882,9 +892,9 @@ mrg_init()
 #endif
 
 		/* Fake jump points */
-	for(i = 0; i < 8; i++) /* Set up fake Lvl1DT */
+	for (i = 0; i < 8; i++) /* Set up fake Lvl1DT */
 		Lvl1DT[i] = mrg_lvl1dtpanic;
-	for(i = 0; i < 8; i++) /* Set up fake Lvl2DT */
+	for (i = 0; i < 8; i++) /* Set up fake Lvl2DT */
 		Lvl2DT[i] = mrg_lvl2dtpanic;
 	Lvl1DT[0] = (void (*)(void))mrg_1sec_timer_tick;
 	Lvl1DT[2] = (void (*)(void))mrg_romadbintr;
@@ -901,7 +911,7 @@ mrg_init()
 	/* AV ROMs want this low memory vector to point to a jump table */
 	InitEgretJTVec = (u_int32_t **)&mrg_AVInitEgretJT;
 
-	switch(mach_cputype()){
+	switch (mach_cputype()) {
 		case MACH_68020:	CPUFlag = 2;	break;
 		case MACH_68030:	CPUFlag = 3;	break;
 		case MACH_68040:	CPUFlag = 4;	break;
@@ -920,8 +930,8 @@ mrg_init()
 	DisposPtr((Ptr)ptr);
 	printf("Free'd.\n");
 
-	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)printf(".");
+	for (i = 0; i < 500000; i++)
+		if ((i % 100000) == 0)printf(".");
 	printf("\n");
 
 	mrg_ResErr = 0xdead;	/* set an error we know */
@@ -935,8 +945,8 @@ mrg_init()
 	i = ResError();
 	printf("Result code (-192?) : %d\n", i);
 
-	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)printf(".");
+	for (i = 0; i < 500000; i++)
+		if ((i % 100000) == 0)printf(".");
 	printf("\n");
 
 #if defined(MRG_TRACE)
@@ -948,8 +958,9 @@ mrg_init()
 	dumptrace();
 #endif /* MRG_TRACE */
 
-	for(i = 0; i < 500000; i++)
-		if((i % 100000) == 0)printf(".");
+	for (i = 0; i < 500000; i++)
+		if ((i % 100000) == 0)
+			printf(".");
 	printf("\n");
 #endif /* MRG_TEST */
 
@@ -977,12 +988,13 @@ mrg_init()
 	}
 }
 
+#ifdef MRG_ADB
 static void	setup_egret __P((void));
 
 static void
 setup_egret(void)
 {
-	if (0 != mrg_InitEgret){
+	if (0 != mrg_InitEgret) {
 
 	/* This initializes ADBState (mrg_ADBStore2) and
 	   enables interrupts */
@@ -1006,6 +1018,7 @@ setup_egret(void)
 			(long) mrg_OStraps[0x92]);
 #endif
 }
+#endif
 
 void
 mrg_initadbintr()
@@ -1014,8 +1027,7 @@ mrg_initadbintr()
 		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
 				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);
 
-        if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
-
+	if ((HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0)) {
 		printf("Caution: No HwCfgFlags from Booter, please "
 			"use at least booter version 1.8.\n");
 
@@ -1032,6 +1044,7 @@ mrg_initadbintr()
 			HwCfgFlags, HwCfgFlags2, HwCfgFlags3);
 	}
 
+#ifdef MRG_ADB	
 	/*
 	 * If we think there is an Egret in the machine, attempt to
 	 * set it up.  If not, just enable the interrupts (only on
@@ -1058,6 +1071,10 @@ mrg_initadbintr()
 		if (mac68k_machine.do_graybars)
 			printf("mrg: ADB interrupts enabled.\n");
 	}	
+#else
+	/* Extra Egret setup required only for MRG ADB functions. */
+	printf("mrg: skipping egret setup\n");
+#endif /* MRG_ADB */
 }
 
 /*
@@ -1076,161 +1093,161 @@ mrg_fixupROMBase(obase, nbase)
 
 	oldbase = (u_int32_t) obase;
 	newbase = (u_int32_t) nbase;
-/*
- * Grab the pointer to the Mac ROM Glue Vector table
- */ 
-        rom = mrg_MacOSROMVectors;
 
-        if (rom == NULL)
-                return;         /* whoops!  ROM vectors not defined! */
+	/*
+	 * Grab the pointer to the Mac ROM Glue Vector table
+	 */ 
+	rom = mrg_MacOSROMVectors;
 
-        mrg_romident = rom->romident;
+	if (rom == NULL)
+		return;		/* whoops!  ROM vectors not defined! */
 
-        if (0 != mrg_ADBIntrPtr) {
-                mrg_romadbintr = mrg_ADBIntrPtr;
-                printf("mrg_fixup: using ADBIntrPtr from booter: 0x%08lx\n",
-                        (long)mrg_ADBIntrPtr);
-        } else
-            mrg_romadbintr = rom->adbintr == 0 ?
-                0 : rom->adbintr - oldbase + newbase;
+	mrg_romident = rom->romident;
 
-        mrg_rompmintr = rom->pmintr == 0 ?
-                0 : rom->pmintr - oldbase + newbase;
-        mrg_ADBAlternateInit = rom->ADBAlternateInit == 0 ?
-                0 : rom->ADBAlternateInit - oldbase + newbase;
+	if (0 != mrg_ADBIntrPtr) {
+		mrg_romadbintr = mrg_ADBIntrPtr;
+		printf("mrg_fixup: using ADBIntrPtr from booter: 0x%08lx\n",
+		    (long)mrg_ADBIntrPtr);
+	} else
+		mrg_romadbintr = rom->adbintr == 0 ?
+		    0 : rom->adbintr - oldbase + newbase;
 
-        /*
-         * mrg_adbstore becomes ADBBase
-         */
-        *((u_int32_t *)(mrg_adbstore + 0x130)) = rom->adb130intr == 0 ?
-                0 : (u_int32_t) rom->adb130intr - oldbase + newbase;
+	mrg_rompmintr = rom->pmintr == 0 ?
+	    0 : rom->pmintr - oldbase + newbase;
+	mrg_ADBAlternateInit = rom->ADBAlternateInit == 0 ?
+	    0 : rom->ADBAlternateInit - oldbase + newbase;
 
-        mrg_OStraps[0x77] = rom->CountADBs == 0 ?
-                0 : rom->CountADBs - oldbase + newbase;
-        mrg_OStraps[0x78] = rom->GetIndADB == 0 ?
-                0 : rom->GetIndADB - oldbase + newbase;
-        mrg_OStraps[0x79] = rom-> GetADBInfo == 0 ?
-                0 : rom->GetADBInfo - oldbase + newbase;
-        mrg_OStraps[0x7a] = rom->SetADBInfo == 0 ?
-                0 : rom->SetADBInfo - oldbase + newbase;
-        mrg_OStraps[0x7b] = rom->ADBReInit == 0 ?
-                0 : rom->ADBReInit - oldbase + newbase;
-        mrg_OStraps[0x7c] = rom->ADBOp == 0 ?
-                0 : rom->ADBOp - oldbase + newbase;
-        mrg_OStraps[0x85] = rom->PMgrOp == 0 ?
-                0 : rom->PMgrOp - oldbase + newbase;
-        mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-                0 : rom->ReadXPRam - oldbase + newbase;
-        mrg_OStraps[0x38] = rom->WriteParam == 0 ?
-                0 : rom->WriteParam - oldbase + newbase;/* WriteParam*/
-        mrg_OStraps[0x3a] = rom->SetDateTime == 0 ?
-                0 : rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
-        mrg_OStraps[0x3f] = rom->InitUtil == 0 ?
-                0 : rom->InitUtil - oldbase + newbase;  /* InitUtil */
-        mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-                0 : rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
-        mrg_OStraps[0x52] = rom->WriteXPRam == 0 ?
-                0 : rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
+	/*
+	 * mrg_adbstore becomes ADBBase
+	 */
+	*((u_int32_t *)(mrg_adbstore + 0x130)) = rom->adb130intr == 0 ?
+	    0 : (u_int32_t) rom->adb130intr - oldbase + newbase;
 
-        if (rom->Egret == 0) {
-            jEgret = 0;
-            mrg_OStraps[0x92] = 0;
-        }
-        else {
-            jEgret = (void (*))rom->Egret - oldbase + newbase;
-            mrg_OStraps[0x92] = rom->Egret - oldbase + newbase;
-        }
-        mrg_InitEgret = rom->InitEgret == 0 ?
-                0 : rom->InitEgret - oldbase + newbase;
+	mrg_OStraps[0x77] = rom->CountADBs == 0 ?
+	    0 : rom->CountADBs - oldbase + newbase;
+	mrg_OStraps[0x78] = rom->GetIndADB == 0 ?
+	    0 : rom->GetIndADB - oldbase + newbase;
+	mrg_OStraps[0x79] = rom-> GetADBInfo == 0 ?
+	    0 : rom->GetADBInfo - oldbase + newbase;
+	mrg_OStraps[0x7a] = rom->SetADBInfo == 0 ?
+	    0 : rom->SetADBInfo - oldbase + newbase;
+	mrg_OStraps[0x7b] = rom->ADBReInit == 0 ?
+	    0 : rom->ADBReInit - oldbase + newbase;
+	mrg_OStraps[0x7c] = rom->ADBOp == 0 ?
+	    0 : rom->ADBOp - oldbase + newbase;
+	mrg_OStraps[0x85] = rom->PMgrOp == 0 ?
+	    0 : rom->PMgrOp - oldbase + newbase;
+	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
+	    0 : rom->ReadXPRam - oldbase + newbase;
+	mrg_OStraps[0x38] = rom->WriteParam == 0 ?
+	    0 : rom->WriteParam - oldbase + newbase;/* WriteParam*/
+	mrg_OStraps[0x3a] = rom->SetDateTime == 0 ?
+	    0 : rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
+	mrg_OStraps[0x3f] = rom->InitUtil == 0 ?
+	    0 : rom->InitUtil - oldbase + newbase;  /* InitUtil */
+	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
+	    0 : rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
+	mrg_OStraps[0x52] = rom->WriteXPRam == 0 ?
+	    0 : rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
 
-        if (rom->jClkNoMem == 0) {
-                printf("WARNING: don't have a value for jClkNoMem, please contac
-t:  walter@ghpc8.ihf.rwth-aachen.de\n");
-                printf("Can't read RTC without it. Using MacOS boot time.\n");
-                jClkNoMem = 0;
-        }
-        else
-            jClkNoMem = (void (*)) rom->jClkNoMem - oldbase + newbase;
-        /*
-         * Get the ToolBox Routines we may need.  These are
-         *  used in the ADB Initialization of some systems.
-         *  If we don't have the ROM addresses for these routines
-         *  we'll setup to catch the calls in our own dummy
-         *  routines. That way we can politely tell the user
-         *  what we'll need to complete initialization on the system.
-         */
-        mrg_ToolBoxtraps[0x04d] = rom->FixDiv == 0 ?
-                (caddr_t)mrg_FixDiv : rom->FixDiv - oldbase + newbase;
-        mrg_ToolBoxtraps[0x068] = rom->FixMul == 0 ?
-                (caddr_t)mrg_FixMul : rom->FixMul - oldbase + newbase;
+	if (rom->Egret == 0) {
+		jEgret = 0;
+		mrg_OStraps[0x92] = 0;
+	} else {
+		jEgret = (void (*))rom->Egret - oldbase + newbase;
+		mrg_OStraps[0x92] = rom->Egret - oldbase + newbase;
+	}
+	mrg_InitEgret = rom->InitEgret == 0 ?
+	    0 : rom->InitEgret - oldbase + newbase;
 
-        /*
-         * Some systems also require this to be setup for use in
-         *  ADB Initialization.  Use whatever address was provided
-         *  to us in the romvec table for this system. This may
-         *  cause a problem on some systems, and may need a better
-         *  Trap handler in the future.
-         */
-        ADBReInit_JTBL = rom->ADBReInit_JTBL == 0 ?
-                0 : (u_int32_t)rom->ADBReInit_JTBL - oldbase + newbase;
+	if (rom->jClkNoMem == 0) {
+		printf("WARNING: don't have a value for jClkNoMem, ");
+		printf("please contact:  walter@ghpc8.ihf.rwth-aachen.de\n");
+		printf("Can't read RTC without it. Using MacOS boot time.\n");
+		jClkNoMem = 0;
+	} else
+		jClkNoMem = (void (*)) rom->jClkNoMem - oldbase + newbase;
+	/*
+	 * Get the ToolBox Routines we may need.  These are
+	 * used in the ADB Initialization of some systems.
+	 * If we don't have the ROM addresses for these routines
+	 * we'll setup to catch the calls in our own dummy
+	 * routines. That way we can politely tell the user
+	 * what we'll need to complete initialization on the system.
+	 */
+	mrg_ToolBoxtraps[0x04d] = rom->FixDiv == 0 ?
+	    (caddr_t)mrg_FixDiv : rom->FixDiv - oldbase + newbase;
+	mrg_ToolBoxtraps[0x068] = rom->FixMul == 0 ?
+	    (caddr_t)mrg_FixMul : rom->FixMul - oldbase + newbase;
 
-        /*
-         * Setup to trap unexpected access to ADBProc which is used in
-         * ADB Initialization on some systems. If the correct entry
-         * point in the ADBInit code is selected, this address is
-         * re-configured by the ROM during initialization. This feature
+	/*
+	 * Some systems also require this to be setup for use in
+	 * ADB Initialization.  Use whatever address was provided
+	 * to us in the romvec table for this system. This may
+	 * cause a problem on some systems, and may need a better
+	 * Trap handler in the future.
+	 */
+	ADBReInit_JTBL = rom->ADBReInit_JTBL == 0 ?
+	   0 : (u_int32_t)rom->ADBReInit_JTBL - oldbase + newbase;
+
+	/*
+	 * Setup to trap unexpected access to ADBProc which is used in
+	 * ADB Initialization on some systems. If the correct entry
+	 * point in the ADBInit code is selected, this address is
+	 * re-configured by the ROM during initialization. This feature
 	 * is not currently used by NetBSD.
-         */
-        JADBProc = mrg_jadbprocpanic;
+	 */
+	JADBProc = mrg_jadbprocpanic;
 
-        /*
-         * Get the address of the first (top) Resource in the ROM.
-         *  This will be the head of a linked list of all Resources
-         *  in the ROM which will be mapped in mrg_InitResources.
-         */
-        ROMResourceMap = rom->ROMResourceMap == 0 ?
-                0 : (void (*))rom->ROMResourceMap - oldbase + newbase;
+	/*
+	 * Get the address of the first (top) Resource in the ROM.
+	 * This will be the head of a linked list of all Resources
+	 * in the ROM which will be mapped in mrg_InitResources.
+	 */
+	ROMResourceMap = rom->ROMResourceMap == 0 ?
+	    0 : (void (*))rom->ROMResourceMap - oldbase + newbase;
 
 	for (i = 0; i < sizeof(mrg_AVInitEgretJT) / sizeof(mrg_AVInitEgretJT[0]); i++)
 		mrg_AVInitEgretJT[i] = mrg_AVInitEgretJT[i] == 0 ?
 		    0 : mrg_AVInitEgretJT[i] - oldbase + newbase;
 
 #if defined(MRG_DEBUG)
-        printf("mrg: ROM adbintr 0x%08lx -> 0x%08lx\n",
-                (long)rom->adbintr, (long)mrg_romadbintr);
-        printf("mrg: ROM pmintr 0x%08lx -> 0x%08lx\n",
-                (long)rom->pmintr, (long)mrg_rompmintr);
-        printf("mrg: OS trap 0x77 (CountADBs) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->CountADBs, (long)mrg_OStraps[0x77]);
-        printf("mrg: OS trap 0x78 (GetIndADB) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->GetIndADB, (long)mrg_OStraps[0x78]);
-        printf("mrg: OS trap 0x79 (GetADBInfo) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->GetADBInfo, (long)mrg_OStraps[0x79]);
-        printf("mrg: OS trap 0x7a (SetADBInfo) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->SetADBInfo, (long)mrg_OStraps[0x7a]);
-        printf("mrg: OS trap 0x7b (ADBReInit) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->ADBReInit, (long)mrg_OStraps[0x7b]);
-        printf("mrg: OS trap 0x7c (ADBOp) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->ADBOp, (long)mrg_OStraps[0x7c]);
-        printf("mrg: OS trap 0x85 (PMgrOp) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->PMgrOp, (long)mrg_OStraps[0x85]);
-        printf("mrg: OS trap 0x92 (Egret) = 0x%08lx -> 0x%08lx\n",
-                (long)rom->Egret, (long)mrg_OStraps[0x92]);
-        printf("mrg: ROM ADBAltInit 0x%08lx -> 0x%08lx\n",
-                (long)rom->ADBAlternateInit, (long)mrg_ADBAlternateInit);
-        printf("mrg: ROM ADBReInit_JTBL 0x%08lx -> 0x%08lx\n",
-                (long)rom->ADBReInit_JTBL, (long)ADBReInit_JTBL);
-        printf("mrg: ROM InitEgret  0x%08lx -> 0x%08lx\n",
-                (long)rom->InitEgret, (long)mrg_InitEgret);
-        printf("mrg: ROM Resource list-head 0x%08lx -> 0x%08lx\n",
-                (long)rom->ROMResourceMap, (long)ROMResourceMap);
+	printf("mrg: ROM adbintr 0x%08lx -> 0x%08lx\n",
+	    (long)rom->adbintr, (long)mrg_romadbintr);
+	printf("mrg: ROM pmintr 0x%08lx -> 0x%08lx\n",
+	    (long)rom->pmintr, (long)mrg_rompmintr);
+	printf("mrg: OS trap 0x77 (CountADBs) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->CountADBs, (long)mrg_OStraps[0x77]);
+	printf("mrg: OS trap 0x78 (GetIndADB) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->GetIndADB, (long)mrg_OStraps[0x78]);
+	printf("mrg: OS trap 0x79 (GetADBInfo) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->GetADBInfo, (long)mrg_OStraps[0x79]);
+	printf("mrg: OS trap 0x7a (SetADBInfo) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->SetADBInfo, (long)mrg_OStraps[0x7a]);
+	printf("mrg: OS trap 0x7b (ADBReInit) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->ADBReInit, (long)mrg_OStraps[0x7b]);
+	printf("mrg: OS trap 0x7c (ADBOp) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->ADBOp, (long)mrg_OStraps[0x7c]);
+	printf("mrg: OS trap 0x85 (PMgrOp) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->PMgrOp, (long)mrg_OStraps[0x85]);
+	printf("mrg: OS trap 0x92 (Egret) = 0x%08lx -> 0x%08lx\n",
+	    (long)rom->Egret, (long)mrg_OStraps[0x92]);
+	printf("mrg: ROM ADBAltInit 0x%08lx -> 0x%08lx\n",
+	    (long)rom->ADBAlternateInit, (long)mrg_ADBAlternateInit);
+	printf("mrg: ROM ADBReInit_JTBL 0x%08lx -> 0x%08lx\n",
+	    (long)rom->ADBReInit_JTBL, (long)ADBReInit_JTBL);
+	printf("mrg: ROM InitEgret  0x%08lx -> 0x%08lx\n",
+	    (long)rom->InitEgret, (long)mrg_InitEgret);
+	printf("mrg: ROM Resource list-head 0x%08lx -> 0x%08lx\n",
+	    (long)rom->ROMResourceMap, (long)ROMResourceMap);
 #endif
 }   
 
+#ifdef MRG_DEBUG
 void
 ADBAlternateInit(void)
 {
-	if (0 == mrg_ADBAlternateInit){
+	if (0 == mrg_ADBAlternateInit) {
 		ADBReInit();
 	} else {
  		asm("
@@ -1244,3 +1261,4 @@ ADBAlternateInit(void)
 			: "a1", "a3");
 	}
 }
+#endif /* MRG_DEBUG */
