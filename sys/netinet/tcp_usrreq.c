@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.31 1997/12/13 21:02:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.32 1998/01/05 09:12:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -139,7 +139,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		if (error)
 			break;
 		if ((so->so_options & SO_LINGER) && so->so_linger == 0)
-			so->so_linger = TCP_LINGERTIME * hz;
+			so->so_linger = TCP_LINGERTIME;
 		tp = sototcpcb(so);
 		break;
 
