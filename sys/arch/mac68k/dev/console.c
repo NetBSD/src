@@ -33,7 +33,7 @@
  */
 /*
  * The console device driver for Alice.
- * $Id: console.c,v 1.3 1993/12/06 04:27:52 briggs Exp $
+ * $Id: console.c,v 1.4 1993/12/15 03:09:05 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -66,16 +66,14 @@ char serial_boot_echo=0;
 #include "8x14.h"
 #include "6x10.h"
 
-# include <sys/cdefs.h>
-# include <sys/errno.h>
-# include <sys/ioctl.h>
-# include <sys/types.h>
-# include <sys/systm.h>
-# include <sys/tty.h>
-# include <sys/conf.h>
-/* # include "../macII/cons.h" */
-/* # include "macII/include/adb.h" */
-# include <types.h>
+#include <sys/cdefs.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <types.h>
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,7 +81,7 @@ char serial_boot_echo=0;
 #include "device.h"
 #include "../mac68k/cons.h"
 #include "../mac68k/myframe.h"
-#include "../dev/serreg.h"
+#include "serreg.h"
 #include "console.h"
 
 #include "grf.h"
@@ -892,8 +890,8 @@ static scrolldown(int vtnum)
     }
   for (j = 0; j < v->numtcols; j++)
   {
-    v->scr[0][j] = 32;
-    v->att[0][j] = T_NORMAL;
+    v->scr[v->toptrow-1][j] = 32;
+    v->att[v->toptrow-1][j] = T_NORMAL;
   }
 
   if (!v->visible )
@@ -1753,9 +1751,7 @@ macinit(struct consdev *cntab)
   }
 }
 
-static int cons_saved=0;
-static char cons_save;
-
+#if 0
 extern unsigned char keyboard[128][3];
 
 int mactestkey(unsigned char key)
@@ -1784,19 +1780,13 @@ int mactestkey(unsigned char key)
   }
   return(-1);
 }
+#endif
 
-macgetchar()
+macgetchar() /* THIS WILL BLOCK!!!! */
 {
-   unsigned char buf[8];
-   int length, key;
-
-   /* Brad's ADB keyboard reader goes here. */
-   if(cons_saved){
-      cons_saved = 0;
-      return(cons_save);
-   }
-
-   return(-1);
+   char c;
+   c = adb_poll_for_char();
+   return c;
 }
 
 enable_interrupt_console()
@@ -1906,4 +1896,12 @@ macputchar(dev_t dev, u_char c)
 	macserputchar((unsigned char)c); 
   restoresb();  /* Try to take this line out */
   macconputchar(minor(dev), c);
+}
+
+macconputstr(char *str)
+{
+  char *s=str;
+
+  vtselect(0);
+  while (*s) macconputchar(0, *s++);
 }
