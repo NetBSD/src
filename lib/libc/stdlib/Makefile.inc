@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.35 1998/01/30 23:37:40 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.36 1998/02/01 14:03:47 frueauf Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
 
 # add getsubopt.c later
-SRCS+=	_rand48.c _strtouq.c a64l.c abort.c atexit.c atof.c atoi.c \
+SRCS+=	_rand48.c _strtoq.c _strtouq.c a64l.c abort.c atexit.c atof.c atoi.c \
 	atol.c bsearch.c calloc.c drand48.c erand48.c exit.c getenv.c \
 	getopt.c heapsort.c jrand48.c l64a.c lcong48.c \
 	lrand48.c malloc.c merge.c mrand48.c multibyte.c nrand48.c \
