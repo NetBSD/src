@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.35 2002/03/24 17:58:21 sommerfeld Exp $
+# $NetBSD: network,v 1.36 2002/03/27 07:37:56 lukem Exp $
 #
 
 # PROVIDE: network
@@ -152,7 +152,7 @@ network_start()
 			echo 'IPv6 mode: host'
 			;;
 
-		*)	echo 'WARNING: invalid value in ip6mode'
+		*)	warn "invalid \$ip6mode value "\"$ip6mode\"
 			;;
 
 		esac
