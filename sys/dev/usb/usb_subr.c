@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.40 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.41 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -733,7 +733,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int r, found, i, confi, nifaces;
-	struct device *dv;
+	bdevice *dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)

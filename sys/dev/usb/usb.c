@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.17 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.18 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -448,7 +448,7 @@ usb_needs_explore(bus)
 
 int
 usb_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	panic("usb_activate\n");
@@ -457,7 +457,7 @@ usb_activate(self, act)
 
 int
 usb_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	panic("usb_detach\n");
