@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.51 1995/12/12 01:52:39 cgd Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.52 1996/02/27 00:06:42 cgd Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -76,6 +76,7 @@ config		netbsd	root on wd0 swap on wd0
 #options	GENERIC
 
 isa0	at root
+#eisa0	at root
 #pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -107,7 +108,7 @@ com*	at ast? slave ? flags 1
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
