@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.4 2001/11/17 09:00:32 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.5 2001/11/17 21:01:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.4 2001/11/17 09:00:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.5 2001/11/17 21:01:36 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -205,12 +205,13 @@ cpu_upcall(struct lwp *l)
 	struct sa_t *sas[3];
 	struct sadata_upcall *sau;
 	struct trapframe *tf;
-	void *stack;
+	void *stack, *ap;
 	ucontext_t u, *up;
-	int i, nsas, nevents, nint;
+	int i, nsas, nevents, nint, error;
 	int x, y;
 
 	extern char sigcode[], upcallcode[];
+	extern struct pool siginfo_pool;
 
 	tf = process_frame(l);
 
@@ -284,6 +285,32 @@ cpu_upcall(struct lwp *l)
 		}
 	}
 
+	/*
+	 * Copy out the arg, if any.
+	 * XXX Assume alignment works out; everything so far has been
+	 * a structure, so...
+	 */
+	if (sau->sau_arg) {
+		ap = (char *)sapp - sau->sau_argsize;
+		error = copyout(sau->sau_arg, ap, sau->sau_argsize);
+		/*
+		 * XXX We have to know what the origin of arg is in order
+		 * to do the right thing, here.  Sucks to be a non-
+		 * garbage-collected kernel.
+		 */
+		if (sau->sau_type == SA_UPCALL_SIGNAL)
+			pool_put(&siginfo_pool, sau->sau_arg);
+		else
+			panic("cpu_upcall: unknown type of non-null arg");
+
+		if (error) {
+			/* Copying onto the stack didn't work. Die. */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
+		}
+	} else
+		ap = NULL;
+
 	/* Finally, copy out the rest of the frame. */
 	sf = (struct saframe *)sapp - 1;
 
@@ -293,7 +320,7 @@ cpu_upcall(struct lwp *l)
 	frame.sa_events = nevents;
 	frame.sa_interrupted = nint;
 #endif
-	frame.sa_arg = sau->sau_arg;
+	frame.sa_arg = ap;
 	frame.sa_upcall = sd->sa_upcall;
 
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
