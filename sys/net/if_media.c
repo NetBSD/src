@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $	*/
+/*	$NetBSD: if_media.c,v 1.21.4.1 2005/01/07 15:27:00 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.21.4.1 2005/01/07 15:27:00 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.21 2004/02/19 11:58:30 ragge Exp $");
 int	ifmedia_debug = 0;
 static	void ifmedia_printword __P((int));
 #endif
+
+MALLOC_DEFINE(M_IFMEDIA, "ifmedia", "interface media state");
 
 /*
  * Initialize if_media struct for a specific interface instance.
@@ -151,7 +153,7 @@ ifmedia_add(ifm, mword, data, aux)
 	}
 #endif
 
-	entry = malloc(sizeof(*entry), M_IFADDR, M_NOWAIT);
+	entry = malloc(sizeof(*entry), M_IFMEDIA, M_NOWAIT);
 	if (entry == NULL)
 		panic("ifmedia_add: can't malloc entry");
 
@@ -414,7 +416,7 @@ ifmedia_delete_instance(ifm, inst)
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_DEVBUF);
+			free(ife, M_IFMEDIA);
 		}
 	}
 }
