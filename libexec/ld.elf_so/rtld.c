@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.17 1999/03/08 10:44:25 kleink Exp $	 */
+/*	$NetBSD: rtld.c,v 1.18 1999/04/18 19:40:06 ws Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -84,6 +84,9 @@ Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 char            _rtld_path[] = _PATH_RTLD;
+#ifdef	VARPSZ
+int		_rtld_pagesz;	/* Page size, as provided by kernel */
+#endif
 
 Search_Path    *_rtld_paths;
 /*
@@ -241,6 +244,9 @@ _rtld(sp)
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
 	               *pAUX_phent, *pAUX_phnum;
+#ifdef	VARPSZ
+	const AuxInfo  *pAUX_pagesz;
+#endif
 	char          **env;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
@@ -284,6 +290,9 @@ _rtld(sp)
 	/* Digest the auxiliary vector. */
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
+#ifdef	VARPSZ
+	pAUX_pagesz = NULL;
+#endif
 	for (auxp = aux; auxp->au_id != AUX_null; ++auxp) {
 		switch (auxp->au_id) {
 		case AUX_base:
@@ -304,12 +313,22 @@ _rtld(sp)
 		case AUX_phnum:
 			pAUX_phnum = auxp;
 			break;
+#ifdef	VARPSZ
+		case AUX_pagesz:
+			pAUX_pagesz = auxp;
+			break;
+#endif
 		}
 	}
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
 	_rtld_init((caddr_t) pAUX_base->au_v);
+
+#ifdef	VARPSZ
+	assert(pAUX_pagesz != NULL);
+	_rtld_pagesz = (int)pAUX_pagesz->au_v;
+#endif
 
 #ifdef RTLD_DEBUG
 	dbg(("_ctype_ is %p\n", _ctype_));

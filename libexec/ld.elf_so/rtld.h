@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.9 1999/03/19 18:25:57 kleink Exp $	 */
+/*	$NetBSD: rtld.h,v 1.10 1999/04/18 19:40:06 ws Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -51,10 +51,19 @@
 #define SVR4_LIBDIRLEN	(sizeof SVR4_LIBDIR - 1)
 
 #ifndef	PAGESIZE
-# ifndef __sparc__
-#  define PAGESIZE	CLBYTES
+# ifdef VARPSZ
+extern int _rtld_pagesz;
+#  ifdef RTLD_DEBUG
+#   define PAGESIZE	(assert(_rtld_pagesz), _rtld_pagesz)
+#  else
+#   define PAGESIZE	_rtld_pagesz
+#  endif
 # else
-#  define PAGESIZE	8192	/* NPBG is not constant! */
+#  ifndef __sparc__
+#   define PAGESIZE	CLBYTES
+#  else
+#   define PAGESIZE	8192	/* NPBG is not constant! */
+#  endif
 # endif
 #endif
 
