@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.2.24.1 1999/04/07 08:12:57 pk Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.2.24.2 1999/04/12 21:27:09 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 

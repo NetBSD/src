@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16.4.1 1999/04/07 08:12:48 pk Exp $	*/
+/*	$NetBSD: asc.c,v 1.16.4.2 1999/04/12 21:27:07 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 

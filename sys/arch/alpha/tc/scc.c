@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.42.8.1 1999/04/07 08:12:42 pk Exp $ */
+/* $NetBSD: scc.c,v 1.42.8.2 1999/04/12 21:27:03 pk Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -10,7 +10,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.42.8.1 1999/04/07 08:12:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.42.8.2 1999/04/12 21:27:03 pk Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha

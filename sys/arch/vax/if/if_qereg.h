@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qereg.h,v 1.2 1997/05/15 20:10:23 ragge Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.2.16.1 1999/04/12 21:27:11 pk Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -57,8 +57,8 @@
  *								*
  *        If the Regents of the University of California or its *
  *   licensees modify the software in a manner creating  	*
- *   diriviative copyright rights, appropriate copyright  	*
- *   legends may be placed on  the drivative work in addition   *
+ *   derivative copyright rights, appropriate copyright  	*
+ *   legends may be placed on  the derivative work in addition  *
  *   to that set forth above. 					*
  *								*
  ****************************************************************/
