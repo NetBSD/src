@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.1 2001/11/17 23:12:03 wdk Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.2 2001/11/21 08:56:25 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,15 +41,17 @@
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,
- * MIPS(tm) Processor Supplement, 3rd Edition. (p 6-79)
+ * MIPS(tm) Processor Supplement, 3rd Edition, Feburary 1996 (p 6-79)
  */  
 
 /*
  * General register state
  */
-#define _NGREG		36		/* R0-R31, MDLO, MDHI, CAUSE, PC */
-typedef	mips_reg_t	__greg_t;
-typedef	__greg_t	__gregset_t[_NGREG];
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#define _NGREG		36	/* R0-R31, MDLO, MDHI, CAUSE, PC */
+#else
+#define _NGREG		37	/* R0-R31, MDLO, MDHI, CAUSE, PC, SR */
+#endif
 
 #define _REG_R0		0
 #define _REG_AT		1
@@ -89,8 +91,12 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define _REG_MDHI	33
 #define _REG_CAUSE	34
 #define _REG_EPC	35
+#define _REG_SR		36
 
-#define _REG_ZERO	_REG_R0
+#ifndef __ASSEMBLER__
+
+typedef	mips_reg_t	__greg_t;
+typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
  * Floating point register state
@@ -110,6 +116,17 @@ typedef struct {
 	__fpregset_t	__fpregs;
 } mcontext_t;
 
+#endif /* !__ASSEMBLER__ */
+
 #define _UC_MACHINE_PAD	48	/* Padding appended to ucontext_t */
+
+/*
+ * Offsets relative to ucontext_t; intended to be used by assembly stubs.
+ */
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#define _OFFSETOF_UC_GREGS	40
+#else
+#define _OFFSETOF_UC_GREGS	56
+#endif
 
 #endif	/* _MIPS_MCONTEXT_H_ */
