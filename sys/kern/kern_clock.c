@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.45 1999/02/23 02:56:04 ross Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.46 1999/02/23 17:41:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -605,42 +605,55 @@ hardclock(frame)
 		 * When the CPU clock oscillator frequency is not a
 		 * power of 2 in Hz, shifthz is only an approximate
 		 * scale factor.
+		 *
+		 * To determine the adjustment, you can do the following:
+		 *   bc -q
+		 *   scale=24
+		 *   obase=2
+		 *   idealhz/realhz
+		 * where `idealhz' is the next higher power of 2, and `realhz'
+		 * is the actual value.
+		 *
+		 * Likewise, the error can be calculated with (e.g. for 100Hz):
+		 *   bc -q
+		 *   scale=24
+		 *   ((1+2^-2+2^-5)*realhz-idealhz)/idealhz
+		 * (and then multiply by 100 to get %).
 		 */
 		switch (hz) {
 		case 96:
+			/* A factor of 1.0101010101 gives about .025% error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 2);
+				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
+			} else {
+				time_adj += (time_adj >> 2);
+				time_adj += (time_adj >> 4) + (time_adj >> 8);
+			}
+			break;
+
 		case 100:
-			/*
-			 * In the following code the overall gain is increased
-			 * by a factor of 1.25, which results in a residual
-			 * error less than 3 percent.
-			 */
+			/* A factor of 1.01001 gives about .1% error. */
 			if (time_adj < 0)
-				time_adj -= -time_adj >> 2;
+				time_adj -= (-time_adj >> 2) + (-time_adj >> 5);
 			else
-				time_adj += time_adj >> 2;
+				time_adj += (time_adj >> 2) + (time_adj >> 5);
 			break;
+
 		case 60:
-			/*
-			 * 60 Hz m68k and vaxes have a PLL gain factor of of
-			 * 60/64 (15/16) of what it should be.  In the following code
-			 * the overall gain is increased by a factor of 1.0625,
-			 * (17/16) which results in a residual error of just less
-			 * than 0.4 percent.
-			 */
+			/* A factor of 1.00010001 gives about .025% error. */
 			if (time_adj < 0)
-				time_adj -= -time_adj >> 4;
+				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
 			else
-				time_adj += time_adj >> 4;
+				time_adj += (time_adj >> 4) + (time_adj >> 8);
 			break;
+
 		case 1000:
-			 /*
-			  * Do this the simple way; we're on an alpha, are
-			  * the shift police going to come and get us? We
-			  * would get a residual error of only .82% with
-			  * a 5 bit right shift, but we also have 64 bits
-			  * in time_adj to work with for fixed point scaling.
-			  */
-			time_adj = (time_adj * 1024) / 1000;
+			 /* A factor of 1.0000011 gives about .055% error. */
+			if (time_adj < 0)
+				time_adj -= (-time_adj >> 6) + (-time_adj >> 7);
+			else
+				time_adj += (time_adj >> 6) + (time_adj >> 7);
 			break;
 		}
 
