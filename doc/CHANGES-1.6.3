@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.112 2004/06/14 17:08:49 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.113 2004/06/14 18:28:46 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1080,4 +1080,10 @@ usr.bin/vi/cl/cl_screen.c			1.7
 	. if tcsetattr() fails due to EINTR, ignore it
 	Fixes PR bin/25849.
 	[aymeric, ticket #1713]
+
+build.sh                                        patch
+
+	Print out starttime, endtime and various other paramaters after
+	finishing a build. This fixes PR toolchain/25872.
+	[jmc, ticket #1712]
 
