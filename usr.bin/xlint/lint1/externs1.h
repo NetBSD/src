@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.16 2002/10/21 21:14:52 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.17 2002/10/22 13:48:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -200,7 +200,7 @@ extern	tnode_t	*bldszof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);
 extern	tnode_t	*funccall(tnode_t *, tnode_t *);
-extern	val_t	*constant(tnode_t *);
+extern	val_t	*constant(tnode_t *, int);
 extern	void	expr(tnode_t *, int, int);
 extern	void	chkmisc(tnode_t *, int, int, int, int, int, int);
 extern	int	conaddr(tnode_t *, sym_t **, ptrdiff_t *);

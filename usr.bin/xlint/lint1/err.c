@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.21 2002/10/22 13:31:34 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.22 2002/10/22 13:48:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.21 2002/10/22 13:31:34 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.22 2002/10/22 13:48:50 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -373,6 +373,7 @@ const	char *msgs[] = {
 	"GCC style struct or union member name in initializer",	      /* 315 */
 	"__FUNCTION__ is a GCC extension",			      /* 316 */
 	"__func__ is a C9X feature",				      /* 317 */
+	"variable array dimension is a GCC extension",		      /* 318 */
 };
 
 /*

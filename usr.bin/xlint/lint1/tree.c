@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.30 2002/10/22 13:31:34 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.31 2002/10/22 13:48:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.30 2002/10/22 13:31:34 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.31 2002/10/22 13:48:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3278,7 +3278,7 @@ parg(	int	n,		/* pos of arg */
  * type, an error message is printed.
  */
 val_t *
-constant(tnode_t *tn)
+constant(tnode_t *tn, int required)
 {
 	val_t	*v;
 
@@ -3313,7 +3313,10 @@ constant(tnode_t *tn)
 	}
 
 	/* integral constant expression expected */
-	error(55);
+	if (required)
+		error(55);
+	else
+		gnuism(318);
 
 	if (!isityp(v->v_tspec))
 		v->v_tspec = INT;

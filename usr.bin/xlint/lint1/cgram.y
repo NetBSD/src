@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.26 2002/10/21 21:14:51 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.27 2002/10/22 13:48:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.26 2002/10/21 21:14:51 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.27 2002/10/22 13:48:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,7 +64,7 @@ int	mblklev;
  */
 static int onowarn = -1;
 
-static	int	toicon(tnode_t *);
+static	int	toicon(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
 static	void	ignuptorp(void);
 
@@ -681,12 +681,12 @@ notype_member_decl:
 		$$ = $1;
 	  }
 	| notype_decl T_COLON constant {
-		$$ = bitfield($1, toicon($3));
+		$$ = bitfield($1, toicon($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant {
-		$$ = bitfield(NULL, toicon($3));
+		$$ = bitfield(NULL, toicon($3, 1));
 	  }
 	;
 
@@ -695,12 +695,12 @@ type_member_decl:
 		$$ = $1;
 	  }
 	| type_decl T_COLON constant {
-		$$ = bitfield($1, toicon($3));
+		$$ = bitfield($1, toicon($3, 1));
 	  }
 	| {
 		symtyp = FVFT;
 	  } T_COLON constant {
-		$$ = bitfield(NULL, toicon($3));
+		$$ = bitfield(NULL, toicon($3, 1));
 	  }
 	;
 
@@ -783,7 +783,7 @@ enumerator:
 		$$ = ename($1, enumval, 1);
 	  }
 	| ename T_ASSIGN constant {
-		$$ = ename($1, toicon($3), 0);
+		$$ = ename($1, toicon($3, 1), 0);
 	  }
 	;
 
@@ -848,7 +848,7 @@ notype_direct_decl:
 		$$ = addarray($1, 0, 0);
 	  }
 	| notype_direct_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3));
+		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| notype_direct_decl param_list {
 		$$ = addfunc($1, $2);
@@ -877,7 +877,7 @@ type_direct_decl:
 		$$ = addarray($1, 0, 0);
 	  }
 	| type_direct_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3));
+		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| type_direct_decl param_list {
 		$$ = addfunc($1, $2);
@@ -913,7 +913,7 @@ direct_param_decl:
 		$$ = addarray($1, 0, 0);
 	  }
 	| direct_param_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3));
+		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| direct_param_decl param_list {
 		$$ = addfunc($1, $2);
@@ -942,7 +942,7 @@ direct_notype_param_decl:
 		$$ = addarray($1, 0, 0);
 	  }
 	| direct_notype_param_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3));
+		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| direct_notype_param_decl param_list {
 		$$ = addfunc($1, $2);
@@ -1200,13 +1200,13 @@ direct_abs_decl:
 		$$ = addarray(aname(), 0, 0);
 	  }
 	| T_LBRACK constant T_RBRACK {
-		$$ = addarray(aname(), 1, toicon($2));
+		$$ = addarray(aname(), 1, toicon($2, 0));
 	  }
 	| direct_abs_decl T_LBRACK T_RBRACK {
 		$$ = addarray($1, 0, 0);
 	  }
 	| direct_abs_decl T_LBRACK constant T_RBRACK {
-		$$ = addarray($1, 1, toicon($3));
+		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| abs_decl_param_list {
 		$$ = addfunc(aname(), $1);
@@ -1691,13 +1691,13 @@ q_gt(int64_t a, int64_t b)
  * expressions, it frees the memory used for the expression.
  */
 static int
-toicon(tnode_t *tn)
+toicon(tnode_t *tn, int required)
 {
 	int	i;
 	tspec_t	t;
 	val_t	*v;
 
-	v = constant(tn);
+	v = constant(tn, required);
 
 	/*
 	 * Abstract declarations are used inside expression. To free
