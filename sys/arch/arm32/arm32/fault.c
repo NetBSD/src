@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.27 1998/07/06 02:40:42 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.28 1998/08/10 15:15:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -429,8 +429,11 @@ copyfault:
 		/* STR instruction ? */
 		if ((fault_instruction & 0x0c100000) == 0x04000000)
 			ftype |= VM_PROT_WRITE; 
-		/* STM instruction ? */
+		/* STM or CDT instruction ? */
 		else if ((fault_instruction & 0x0a100000) == 0x08000000)
+			ftype |= VM_PROT_WRITE; 
+		/* STRH, STRSH or STRSB instruction ? */
+		else if ((fault_instruction & 0x0e100090) == 0x00000090)
 			ftype |= VM_PROT_WRITE; 
 		/* SWP instruction ? */
 		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
@@ -519,8 +522,11 @@ copyfault:
 		/* STR instruction ? */
 		if ((fault_instruction & 0x0c100000) == 0x04000000)
 			ftype |= VM_PROT_WRITE; 
-		/* STM instruction ? */
+		/* STM or CDT instruction ? */
 		else if ((fault_instruction & 0x0a100000) == 0x08000000)
+			ftype |= VM_PROT_WRITE; 
+		/* STRH, STRSH or STRSB instruction ? */
+		else if ((fault_instruction & 0x0e100090) == 0x00000090)
 			ftype |= VM_PROT_WRITE; 
 		/* SWP instruction ? */
 		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
