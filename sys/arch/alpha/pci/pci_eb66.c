@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.12 2002/09/27 15:35:38 provos Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.13 2005/03/29 04:06:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.12 2002/09/27 15:35:38 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.13 2005/03/29 04:06:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -279,7 +279,8 @@ eb66_iointr(arg, vec)
 		    "eb66 irq");
 		if (ALPHA_SHARED_INTR_DISABLE(eb66_pci_intr, irq))
 			eb66_intr_disable(irq);
-	}
+	} else
+		alpha_shared_intr_reset_strays(eb66_pci_intr, irq);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb66_intr.S. */
