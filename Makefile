@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 1998/10/07 02:35:38 tv Exp $
+#	$NetBSD: Makefile,v 1.70 1998/10/15 02:50:00 mycroft Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -88,6 +88,9 @@ build: beforeinstall
 .endif
 	(cd ${.CURDIR}/domestic/lib && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
+.endif
+.if !defined(DESTDIR)
+	ldconfig -m /usr/lib
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 .if defined(USE_EGCS)
