@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.655 2004/10/13 14:14:19 drochner Exp $
+$NetBSD: pcidevs,v 1.656 2004/10/13 18:42:17 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -731,6 +731,7 @@ product ALI M1461	0x1461	M1461 Host-PCI Bridge
 product ALI M1531	0x1531	M1531 Host-PCI Bridge
 product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
+product ALI M1563	0x1563	M1563 PCI-ISA Bridge
 product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5257	0x5257	M5257 PCI Software Modem
