@@ -1,4 +1,4 @@
-/* $NetBSD: usermgmt.h,v 1.2 1999/12/07 10:14:03 lukem Exp $ */
+/* $NetBSD: usermgmt.h,v 1.3 1999/12/08 18:22:54 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -79,7 +79,7 @@ enum {
 #define CHOWN		"/usr/sbin/chown"
 #define CP		"/bin/cp"
 #define FALSE_PROG	"/usr/bin/false"
-#define MKDIR		"/bin/mkdir -p"
+#define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
 #define RM		"/bin/rm"
 
