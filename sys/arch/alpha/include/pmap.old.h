@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.25 1998/03/12 01:24:53 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.26 1998/03/12 06:47:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,14 +83,6 @@
 #include <sys/queue.h>
 #include <machine/pte.h>
 
-extern vm_offset_t       vtophys(vm_offset_t);
-
-#define	ALPHA_PAGE_SIZE	NBPG
-#define	ALPHA_SEG_SIZE	NBSEG
-
-#define alpha_trunc_seg(x)	(((u_long)(x)) & ~(ALPHA_SEG_SIZE-1))
-#define alpha_round_seg(x)	alpha_trunc_seg((u_long)(x) + ALPHA_SEG_SIZE-1)
-
 /*
  * Pmap stuff
  */
@@ -170,10 +162,11 @@ struct pv_page {
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-extern	char *vmmap;			/* map for mem, dumps, etc. */
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
+
+vm_offset_t vtophys __P((vm_offset_t));
 
 /* Machine-specific functions. */
 void	pmap_bootstrap __P((vm_offset_t ptaddr));
