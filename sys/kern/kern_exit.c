@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.111 2003/02/21 16:32:19 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.112 2003/02/22 01:00:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.111 2003/02/21 16:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.112 2003/02/22 01:00:14 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -170,6 +170,8 @@ exit1(struct lwp *l, int rv)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
+	p->p_flag |= P_WEXIT;
+
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	/*
 	 * Disable scheduler activation upcalls. 
@@ -192,7 +194,6 @@ exit1(struct lwp *l, int rv)
 	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
 	 * wake up the parent early to avoid deadlock.
 	 */
-	p->p_flag |= P_WEXIT;
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
