@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.16 1994/02/02 10:44:25 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.17 1994/02/08 03:12:59 mycroft Exp $
  */
 
 #include "ed.h"
@@ -2042,24 +2042,29 @@ ed_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked down and it is running, then stop it
-		 */
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
 			ed_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+		} else if ((ifp->if_flags & IFF_UP) &&
+		    	   ((ifp->if_flags & IFF_RUNNING) == 0)) {
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			ed_init(sc);
 		} else {
-		/*
-		 * If interface is marked up and it is stopped, then start it
-		 */
-			if ((ifp->if_flags & IFF_UP) &&
-		    	    ((ifp->if_flags & IFF_RUNNING) == 0))
-				ed_init(sc);
+			/*
+			 * Reset the interface to pick up changes in any other
+			 * flags that affect hardware registers.
+			 */
+			ed_stop(ifp->if_unit);
+			ed_init(ifp->if_unit);
 		}
-		/*
-		 * NB: There was a bunch of code here that's now in ed_init.
-		 */
 		break;
 
 	case SIOCADDMULTI:
