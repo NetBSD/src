@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1998/07/07 04:36:15 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 1999/01/27 21:30:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,56 +39,9 @@
 #define	MAXPARTITIONS	16		/* number of partitions */
 #define	RAW_PART	2		/* raw partition: XX?c */
 
-/* MBR partition table */
-#define	MBRSECTOR	0		/* MBR sector number */
-#define	MBRPARTOFF	446		/* Offset of MBR partition table */
-#define	NMBRPART	4		/* # of partitions in MBR */
-#define	MBRMAGICOFF	510		/* Offset of magic number */
-#define	MBRMAGIC	0xaa55		/* Actual magic number */
-
-struct mbr_partition {
-	u_int8_t	mbr_flag;	/* default boot flag */
-	u_int8_t	mbr_shd;	/* start head, IsN't Always Meaningful */
-	u_int8_t	mbr_ssect;	/* start sector, INAM */
-	u_int8_t	mbr_scyl;	/* start cylinder, INAM */
-	u_int8_t	mbr_type;	/* partition type */
-	u_int8_t	mbr_ehd;	/* end head, INAM */
-	u_int8_t	mbr_esect;	/* end sector, INAM */
-	u_int8_t	mbr_ecyl;	/* end cylinder, INAM */
-	u_int32_t	mbr_start;	/* absolute start sector number */
-	u_int32_t	mbr_size;	/* partition size in sectors */
-};
-
-/* Known partition types: */
-#define	MBR_EXTENDED	0x05		/* Extended partition */
-#define	MBR_NETBSD	0xa9		/* NetBSD partition */
-#define	MBR_386BSD	0xa5		/* 386BSD partition */
-
-/* For compatibility reasons (mainly for fdisk): */
-#define	dos_partition	mbr_partition
-#define	dp_flag		mbr_flag
-#define	dp_shd		mbr_shd
-#define	dp_ssect	mbr_ssect
-#define	dp_scyl		mbr_scyl
-#define	dp_typ		mbr_type
-#define	dp_ehd		mbr_ehd
-#define	dp_esect	mbr_esect
-#define	dp_ecyl		mbr_ecyl
-#define	dp_start	mbr_start
-#define	dp_size		mbr_size
-
-#define	DOSPARTOFF	MBRPARTOFF
-#define	NDOSPART	NMBRPART
-
-#define	DOSPTYP_NETBSD	MBR_NETBSD
-
 struct cpu_disklabel {
 	int cd_start;		/* Offset to NetBSD partition in blocks */
 };
-
-/* Isolate the relevant bits to get sector and cylinder. */
-#define	DPSECT(s)	((s) & 0x3f)
-#define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
 #ifdef	_KERNEL
 struct disklabel;
