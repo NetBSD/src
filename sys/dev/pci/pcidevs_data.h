@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.670 2004/12/06 12:55:26 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.671 2004/12/07 04:30:59 jdarrow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp 
+ *	NetBSD: pcidevs,v 1.672 2004/12/07 04:28:07 jdarrow Exp 
  */
 
 /*
@@ -2164,6 +2164,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "FZ Juelich / ZEL",
 	},
 	{
+	    PCI_VENDOR_BELKIN,
+	    "Belkin",
+	},
+	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
 	},
@@ -2308,7 +2312,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 567;
+const int pci_nvendors = 568;
 
 const struct pci_product pci_products[] = {
 	{
@@ -3874,6 +3878,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
+	    "F5D6020v3 802.11b",
 	},
 	{
 	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
@@ -9848,4 +9856,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1884;
+const int pci_nproducts = 1885;
