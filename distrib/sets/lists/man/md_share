@@ -253,6 +253,7 @@
 ./usr/share/man/cat8/i386/kbdio.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/vgaio.0
+./usr/share/man/cat8/i386/w95boot.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/iteconfig.0
 ./usr/share/man/cat8/mac68k/boot.0
@@ -540,6 +541,7 @@
 ./usr/share/man/man8/i386/kbdio.8
 ./usr/share/man/man8/i386/makedev.8
 ./usr/share/man/man8/i386/vgaio.8
+./usr/share/man/man8/i386/w95boot.8
 ./usr/share/man/man8/i386/zzz.8
 ./usr/share/man/man8/iteconfig.8
 ./usr/share/man/man8/mac68k/boot.8
