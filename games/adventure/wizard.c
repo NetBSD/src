@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.8 1998/08/24 22:07:37 hubertf Exp $	*/
+/*	$NetBSD: wizard.c,v 1.9 1999/02/10 00:11:28 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.8 1998/08/24 22:07:37 hubertf Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.9 1999/02/10 00:11:28 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -136,9 +136,14 @@ ciao()
 	char    fname[80];
 
 	printf("What would you like to call the saved version?\n");
-	for (c = fname;; c++)
-		if ((*c = getchar()) == '\n')
+	/* XXX - should use fgetln to avoid arbitrary limit */
+	for (c = fname; c < fname + sizeof fname - 1; c++) {
+		int ch;
+		ch = getchar();
+		if (ch == '\n' || ch == EOF)
 			break;
+		*c = ch;
+	}
 	*c = 0;
 	if (save(fname) != 0)
 		return;		/* Save failed */
