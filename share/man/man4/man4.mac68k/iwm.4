@@ -1,5 +1,5 @@
-.\" $NetBSD: iwm.4,v 1.6 2001/04/11 19:09:30 wiz Exp $
-.\"	$Id: iwm.4,v 1.6 2001/04/11 19:09:30 wiz Exp $
+.\" $NetBSD: iwm.4,v 1.7 2001/06/05 12:30:46 wiz Exp $
+.\"	$Id: iwm.4,v 1.7 2001/06/05 12:30:46 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
 .\"
@@ -32,19 +32,19 @@
 .Sh NAME
 .Nm iwm ,
 .Nm fd
-.Nd floppy disk driver for IWM and non-DMA SWIM controllers.
+.Nd floppy disk driver for IWM and non-DMA SWIM controllers
 .Sh SYNOPSIS
 .Cd "iwm0 at obio?"
 .Cd "fd* at iwm0 drive ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver interfaces to the built-in and external floppy disk drives on the 
-Macintosh. It supports double-density media, written in 
-Apple's proprietary GCR format. Currently, there is no disklabel 
-support for the floppy drives. Instead, the 
+driver interfaces to the built-in and external floppy disk drives on the
+Macintosh. It supports double-density media, written in
+Apple's proprietary GCR format. Currently, there is no disklabel
+support for the floppy drives. Instead, the
 .Nm
-driver sets up a fake in-core disklabel, using the minor device 
+driver sets up a fake in-core disklabel, using the minor device
 number to select from the supported disk formats.
 .Pp
 The following formats are supported:
@@ -59,37 +59,37 @@ The following formats are supported:
 driver; the physical layout of GCR floppies has 8..12 sectors per track.)
 .\"
 .Sh FORMATTING
-The 
+The
 .Nm
 driver does currently not support floppy disk formatting.
-.\" 
+.\"
 .Sh SEE ALSO
 .\" Cross-references should be ordered by section (low to high), then in
 .\"     alphabetical order.
 Apple Computer, Inc.: "Inside Macintosh", Vol III-33f. (Addison-Wesley)
-.Pp 
+.Pp
 Apple Computer, Inc.: "New Technical Notes DV 17 - Sony Driver"
-.Pp 
+.Pp
 Neil Parker: "iwmstuff"
-.Pp 
+.Pp
 .Xr eject 1
-.\" 
+.\"
 .Sh HISTORY
 The
 .Nm
 interface first appeared in
-.Nx 1.4 .  
-.\" 
+.Nx 1.4 .
+.\"
 .Sh AUTHORS
-Hauke Fath put together the beginnings of the 
+Hauke Fath put together the beginnings of the
 .Nm
-driver in 1996 from the sparse documentation in "Inside Macintosh", 
-Neil Parker's "iwmstuff" documentation for the Apple IIgs and a long, 
+driver in 1996 from the sparse documentation in "Inside Macintosh",
+Neil Parker's "iwmstuff" documentation for the Apple IIgs and a long,
 hard look at the .Sony driver.
-.\" 
+.\"
 .Sh BUGS
-The FFS code is incapable of dealing with a varying number of 
-sectors per track. We have to fake a mapping and so lose FFS support 
+The FFS code is incapable of dealing with a varying number of
+sectors per track. We have to fake a mapping and so lose FFS support
 for hardware parameters like transition times.
 .Pp
 The driver only supports an obsolete format.
