@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.69 2000/05/20 03:08:42 jhawk Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.69.4.1 2003/10/01 09:07:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -954,10 +954,15 @@ arplookup(addr, create, proxy)
 	else
 		return ((struct llinfo_arp *)rt->rt_llinfo);
 
-	if (create)
+	if (create) {
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s (%s)\n",
 		    in_fmtaddr(*addr), why);
+		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
+			rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		}
+	}
 	return (0);
 }
 
