@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.45 1995/10/29 04:15:59 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.46 1996/01/24 22:40:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -368,28 +368,3 @@ chrtoblk(dev)
 	return (makedev(blkmaj, minor(dev)));
 }
 
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console could be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-cons_decl(kd);
-#define	zscnpollc	nullcnpollc
-
-cons_decl(zs);
-dev_type_cnprobe(zscnprobe_a);
-dev_type_cnprobe(zscnprobe_b);
-
-struct	consdev constab[] = {
-#if NZS > 0
-	{ zscnprobe_a, zscninit, zscngetc, zscnputc, zscnpollc },
-	{ zscnprobe_b, zscninit, zscngetc, zscnputc, zscnpollc },
-#endif
-#if NKD > 0
-	cons_init(kd),
-#endif
-	{ 0 },	/* REQIURED! */
-};
