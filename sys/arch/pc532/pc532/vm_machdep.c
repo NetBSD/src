@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 1995/05/08 19:37:52 phil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 1995/08/29 22:37:54 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -77,7 +77,7 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_onstack = 
-	    (struct on_stack *) p2->p_addr + UPAGES*NBPG 
+	    (struct on_stack *) p2->p_addr + USPACE
 	    - sizeof (struct on_stack);
 
 	/*
@@ -85,7 +85,7 @@ cpu_fork(p1, p2)
 	 * First, fault in a page of pte's to map it.
 	 */
         addr = trunc_page((u_int)vtopte(USRSTACK));
-	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
+	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+USPACE, FALSE);
 	for (i=0; i < UPAGES; i++)
 	  pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK+i*NBPG,
 	     pmap_extract(pmap_kernel(), ((int)p2->p_addr)+i*NBPG),
@@ -176,9 +176,9 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
-	struct cpustate {
-		struct trapframe regs;
+	struct {
+		struct reg regs;
+		struct fpreg fpregs;
 	} cpustate;
 	struct coreseg cseg;
 
@@ -186,7 +186,8 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(cpustate);
-	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
+	cpustate.regs = *((struct reg *)p->p_md.md_regs);
+	cpustate.fpregs = *((struct fpreg *)&p->p_addr->u_pcb.pcb_fsr);
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_NS32532, CORE_CPU);
 	cseg.c_addr = 0;
