@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.8 2002/08/01 02:43:11 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.9 2002/08/01 04:05:45 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -133,7 +133,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	/* Remember that we're now on the signal stack. */
@@ -211,8 +211,8 @@ cpu_getmcontext(l, mcp, flagp)
 	/* Save FPR context, if any. */
 	if ((pcb->pcb_flags & PCB_FPU) != 0) {
 		/* If we're the FPU owner, dump its context to the PCB first. */
-		if (l == fpuproc)
-			save_fpu(l);
+		if (l == curcpu()->ci_fpulwp)
+			save_fpu_lwp(l);
 		(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpr,
 		    sizeof (mcp->__fpregs.__fpu_regs));
 		mcp->__fpregs.__fpu_fpscr =
@@ -263,8 +263,8 @@ cpu_setmcontext(l, mcp, flags)
 		pcb->pcb_fpu.fpscr = *(double *)&mcp->__fpregs.__fpu_fpscr;
 
 		/* If we're the FPU owner, force a reload from the PCB. */
-		if (l == fpuproc)
-			enable_fpu(l);
+		if (l == curcpu()->ci_fpulwp)
+			enable_fpu();
 	}
 #endif
 

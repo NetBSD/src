@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5.6.4 2002/08/01 02:43:09 nathanw Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5.6.5 2002/08/01 04:05:45 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -46,7 +46,6 @@ enable_fpu(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = trapframe(l);
 	int msr;
@@ -59,10 +58,10 @@ enable_fpu(void)
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
 	asm volatile ("isync");
-	if (ci->ci_fpuproc) {
+	if (ci->ci_fpulwp) {
 		save_fpu_cpu();
 	}
-	KASSERT(ci->ci_fpuproc == NULL);
+	KASSERT(ci->ci_fpulwp == NULL);
 	asm volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm ("lfd 0,0(%0);"
 	     "lfd 1,8(%0);"
@@ -98,7 +97,7 @@ enable_fpu(void)
 	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
 	asm volatile ("isync");
 	tf->srr1 |= PSL_FP;
-	ci->ci_fpuproc = p;
+	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
 	asm volatile ("sync");
 	mtmsr(msr);
@@ -158,7 +157,7 @@ save_fpu_cpu(void)
 	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
 	asm volatile ("sync");
 	pcb->pcb_fpcpu = NULL;
-	ci->ci_fpuproc = NULL;
+	ci->ci_fpulwp = NULL;
 	ci->ci_ev_fpusw.ev_count++;
 	asm volatile ("sync");
  out:
@@ -172,10 +171,10 @@ save_fpu_cpu(void)
  * this function).
  */
 void
-save_fpu_proc(p)
-	struct proc *p;
+save_fpu_lwp(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct cpu_info *ci = curcpu();
 
 	/*
@@ -191,7 +190,7 @@ save_fpu_proc(p)
 	 * state.
 	 */
 
-	if (p == ci->ci_fpuproc) {
+	if (l == ci->ci_fpulwp) {
 		save_fpu_cpu();
 		return;
 	}
@@ -202,6 +201,6 @@ save_fpu_proc(p)
 	 * It must be on another CPU, flush it from there.
 	 */
 
-	mp_save_fpu_proc(p);
+	mp_save_fpu_lwp(l);
 #endif
 }

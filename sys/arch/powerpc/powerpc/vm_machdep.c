@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.8 2002/08/01 02:43:12 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.9 2002/08/01 04:05:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,14 +99,14 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef PPC_HAVE_FPU
 	if (l1->l_addr->u_pcb.pcb_fpcpu)
-		save_fpu_proc(l1);
+		save_fpu_lwp(l1);
 #endif
 	*pcb = l1->l_addr->u_pcb;
 #ifdef ALTIVEC
-	if (l1->p_addr->u_pcb.pcb_vr != NULL) {
-		save_vec_proc(l1);
+	if (l1->l_addr->u_pcb.pcb_vr != NULL) {
+		save_vec_lwp(l1);
 		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
-		*pcb->pcb_vr = *l1->p_addr->u_pcb.pcb_vr;
+		*pcb->pcb_vr = *l1->l_addr->u_pcb.pcb_vr;
 	}
 #endif
 
@@ -247,7 +247,7 @@ pagemove(from, to, size)
 void
 cpu_exit(struct lwp *l, int proc)
 {
-	void switchexit(struct lwp *);		/* Defined in locore.S */
+	void switch_exit(struct lwp *);		/* Defined in locore.S */
 	void switch_lwp_exit(struct lwp *);	/* Defined in locore_subr.S */
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -255,11 +255,11 @@ cpu_exit(struct lwp *l, int proc)
 
 #ifdef PPC_HAVE_FPU
 	if (pcb->pcb_fpcpu)			/* release the FPU */
-		save_fpu_proc(l);
+		save_fpu_lwp(l);
 #endif
 #ifdef ALTIVEC
 	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
-		save_vec_proc(l);
+		save_vec_lwp(l);
 		__asm __volatile("dssall;sync"); /* stop any streams */
 /* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
 	}
@@ -299,7 +299,7 @@ cpu_coredump(l, vp, cred, chdr)
 	if (pcb->pcb_flags & PCB_FPU) {
 #ifdef PPC_HAVE_FPU
 		if (l->l_addr->u_pcb.pcb_fpcpu)
-			save_fpu_proc(l);
+			save_fpu_lwp(l);
 #endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
@@ -308,7 +308,7 @@ cpu_coredump(l, vp, cred, chdr)
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
 		if (pcb->pcb_veccpu)
-			save_vec_proc(l);
+			save_vec_lwp(l);
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif
