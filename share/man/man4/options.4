@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.20 1997/06/16 13:38:52 mrg Exp $
+.\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -162,6 +162,10 @@ On those architectures that support it, this enables binary
 compatibility with Digital UNIX (formerly OSF/1)
 applications built for the same architecture.  This is currently
 limited to the alpha, and may not even work.
+.It Cd options COMPAT_NOMID
+Enable compatibility with a.out executables that lack a machine id.
+This includes NetBSD 0.8's ZMAGIC format, and 386BSD and BSDI's
+QMAGIC, NMAGIC, and OMAGIC a.out formats.
 .El
 .Ss Debugging Options
 .Bl -ohang
