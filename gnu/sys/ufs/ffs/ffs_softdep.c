@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.8 2000/03/23 08:18:11 enami Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.9 2000/03/23 08:33:59 enami Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4420,10 +4420,9 @@ request_cleanup(resource, islocked)
 	if (--proc_waiting)
 		callout_reset(&pause_timer_ch,
 		    tickdelay > 2 ? tickdelay : 2, pause_timer, NULL);
-	else
+	else {
 		callout_stop(&pause_timer_ch);
 #if 0
-	else {
 		switch (resource) {
 
 		case FLUSH_INODES:
@@ -4434,8 +4433,8 @@ request_cleanup(resource, islocked)
 			stat_blk_limit_hit += 1;
 			break;
 		}
-	}
 #endif
+	}
 	if (islocked == 0)
 		FREE_LOCK(&lk);
 	return (1);
