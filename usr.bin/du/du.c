@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)du.c	5.17 (Berkeley) 5/20/92";*/
-static char rcsid[] = "$Id: du.c,v 1.7 1994/01/27 20:32:37 cgd Exp $";
+static char rcsid[] = "$Id: du.c,v 1.8 1994/03/30 03:08:45 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -154,7 +154,7 @@ main(argc, argv)
 			 * the root of a traversal, display the total.
 			 */
 			if (listfiles || !p->fts_level)
-				(void)printf("%ld\t%s\n",
+				(void)printf("%qd\t%s\n",
 				    howmany(p->fts_statp->st_blocks, blocksize),
 				    p->fts_path);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
@@ -198,6 +198,6 @@ linkchk(p)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: du [-a | -s] [-x] [file ...]\n");
+	(void)fprintf(stderr, "usage: du [-a | -s] [-kx] [file ...]\n");
 	exit(1);
 }
