@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.7.2.4 1994/08/07 00:56:31 mycroft Exp $
+ *	$Id: if_le.c,v 1.7.2.5 1994/10/09 21:19:29 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1219,11 +1219,11 @@ lesetladrf(ac, af)
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
 			c = *cp++;
 			for (i = 8; --i >= 0;) {
-				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
-					crc <<= 1;
-					crc ^= 0x04c11db6 | 1;
+				if ((crc & 0x01) ^ (c & 0x01)) {
+					crc >>= 1;
+					crc ^= 0x6db88320 | 0x80000000;
 				} else
-					crc <<= 1;
+					crc >>= 1;
 				c >>= 1;
 			}
 		}
@@ -1231,7 +1231,7 @@ lesetladrf(ac, af)
 		crc >>= 26;
 
 		/* Turn on the corresponding bit in the filter. */
-		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 24);
+		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 0);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
