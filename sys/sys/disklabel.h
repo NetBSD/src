@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.52 1999/05/06 15:29:23 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.53 1999/09/21 03:08:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -62,8 +62,10 @@
  */
 #define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
+#define	DISKMINOR(unit, part) \
+    (((unit) * MAXPARTITIONS) + (part))
 #define	MAKEDISKDEV(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+    (makedev((maj), DISKMINOR((unit), (part))))
 
 #define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
 
