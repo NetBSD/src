@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.94 2003/07/23 13:50:46 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.95 2003/07/23 13:52:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.94 2003/07/23 13:50:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.95 2003/07/23 13:52:23 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1138,6 +1138,12 @@ tryagain:
 				if (trylater_cnt + 1 <
 				   sizeof(nfs_backoff) / sizeof(nfs_backoff[0]))
 					trylater_cnt++;
+				/*
+				 * RFC1813:
+				 * The client should wait and then try
+				 * the request with a new RPC transaction ID.
+				 */
+				nfs_renewxid(rep);
 				goto tryagain;
 			}
 
