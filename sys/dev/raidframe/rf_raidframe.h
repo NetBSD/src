@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.7 1999/08/11 02:20:35 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -91,7 +91,7 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_FAIL_DISK         _IOW ('r',  5, struct rf_recon_req)	/* fail a disk &
 									 * optionally start
 									 * recon */
-#define RAIDFRAME_CHECKRECON        _IOWR('r',  6, int)	/* get reconstruction %
+#define RAIDFRAME_CHECK_RECON_STATUS _IOWR('r',  6, int)	/* get reconstruction %
 							 * complete on indicated
 							 * row */
 #define RAIDFRAME_REWRITEPARITY     _IO  ('r',  7)	/* rewrite (initialize)
@@ -128,4 +128,6 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
 #define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
 #define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
+#define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
+#define RAIDFRAME_CHECK_COPYBACK_STATUS _IOWR ('r', 27, int)
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

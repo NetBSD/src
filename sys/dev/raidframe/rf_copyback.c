@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.9 1999/08/14 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.10 2000/01/05 02:57:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -271,6 +271,8 @@ rf_ContinueCopyback(desc)
 	old_pctg = (-1);
 	while (1) {
 		stripeAddr = desc->stripeAddr;
+		desc->raidPtr->copyback_stripes_done = stripeAddr
+			/ desc->sectPerStripe;
 		if (rf_prReconSched) {
 			old_pctg = 100 * desc->stripeAddr / raidPtr->totalSectors;
 		}
