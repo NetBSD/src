@@ -1,4 +1,4 @@
-$NetBSD: TODO.users,v 1.4 1996/06/13 20:36:14 cgd Exp $
+$NetBSD: TODO.users,v 1.5 1996/10/01 21:24:37 cgd Exp $
 
 The NetBSD/Alpha "User" To-Do List
 
@@ -20,19 +20,9 @@ cgd@cs.cmu.edu
 --
 Test programs; find and fix bugs.  In particular:
 	(1) make sure accounting works
-	(2) last i checked, 'file' core dumped
-	(3) /usr/games
+	(2) /usr/games
 
 Test TurboChannel option slot support.  Write TurboChannel option
 board drivers.  Test PMAD-A (TC le) driver.
 
-Get the GNU tools to generate a.out binaries for the alpha.  Once that
-is done, make the rest of the NetBSD a.out-manipulation tools (e.g. nm)
-work.
-
-Make DDB work.  (For completeness, may require a.out kernel binaries
-and/or some ecoff symbol handling code to be written; the former is
-strongly preferred.)
-
-Track down any bugs caused by compiling the kernel with -O.  (At least
-some of these may be code generation bugs.)
+Make DDB work.
