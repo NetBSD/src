@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.31 1996/08/28 18:47:55 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.32 1996/09/03 18:20:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -139,6 +139,7 @@ struct scsi_device {
 struct scsi_link {
 	int	 channel;		/* channel, i.e. bus # on controller */
 
+	u_int8_t scsi_version;		/* SCSI-I, SCSI-II, etc. */
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t target;		/* targ of this dev */
 	u_int8_t lun;			/* lun of this dev */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.62 1996/08/28 18:47:51 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.63 1996/09/03 18:20:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -586,6 +586,7 @@ scsi_probedev(scsi, target, lun)
 	if ((inqbuf.version & SID_ANSII) == 0 &&
 	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
+	sc_link->scsi_version = inqbuf.version;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		scsi->moreluns |= (1 << target);

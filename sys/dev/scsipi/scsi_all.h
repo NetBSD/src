@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.8 1996/07/10 22:48:56 explorer Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.9 1996/09/03 18:20:31 thorpej Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -34,8 +34,14 @@
 #define SCSI_CTL_LINK		0x01
 #define SCSI_CTL_FLAG		0x02
 #define SCSI_CTL_VENDOR		0xC0
-#define	SCSI_CMD_LUN		0xA0	/* these two should not be needed */
-#define	SCSI_CMD_LUN_SHIFT	5	/* LUN in the cmd is no longer SCSI */
+
+
+/*
+ * Some old SCSI devices need the LUN to be set in the top 3 bits of the
+ * second byte of the CDB.
+ */
+#define	SCSI_CMD_LUN_MASK	0xe0
+#define	SCSI_CMD_LUN_SHIFT	5
 
 
 struct scsi_generic {
