@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.50 1999/10/13 02:25:26 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.51 1999/10/13 03:01:52 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.50 1999/10/13 02:24:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.51 1999/10/13 03:01:37 augustss Exp 
  */
 
 /*
@@ -123,6 +123,7 @@
 
 /* Kodak products */
 #define	USB_PRODUCT_KODAK_DC260	0x0110		/* Digital Science DC260 */
+#define	USB_PRODUCT_KODAK_DC240	0x0120		/* Digital Science DC240 */
 
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
