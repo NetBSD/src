@@ -36,7 +36,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1.2.6 1994/02/02 09:09:48 mycroft Exp $
+ *	$Id: mcd.c,v 1.1.2.7 1994/02/02 11:43:54 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -57,8 +57,8 @@
 #include <sys/errno.h>
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
-#include <sys/disk.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -561,7 +561,7 @@ mcdprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	strict mcd_softc *sc = (void *)self;
+	struct mcd_softc *sc = (void *)self;
 	u_short iobase = ia->ia_iobase;
 	int i, j;
 	u_char st, check, junk;
@@ -581,7 +581,7 @@ mcdprobe(parent, self, aux)
 
 	delay(2000);
 	outb(iobase + MCD_DATA, MCD_CMDCONTINFO);
-	for (i = 30000; i; i--)
+	for (i = 30000; i; i--) {
 		if ((inb(iobase + MCD_FLAGS) & M_STATUS_AVAIL) == M_STATUS_AVAIL) {	/* XXX looks bogus */
 			delay(600);
 			st = inb(iobase + MCD_DATA);
@@ -602,7 +602,7 @@ mcdprobe(parent, self, aux)
 
 found:
 	/* XXXX check irq and drq */
-	printf("mcd%d: config register says %x\n", cf->cf_unit,
+	printf("mcd%d: config register says %x\n", sc->sc_dev.dv_unit,
 		inb(iobase + mcd_config));
 
 	ia->ia_iosize = 4;
@@ -1093,7 +1093,7 @@ mcd_toc_entry(sc, te)
 {
 	struct ret_toc {
 		struct ioc_toc_header th;
-		struct sc_toc_entry rt;
+		struct cd_toc_entry rt;
 	} ret_toc;
 	struct ioc_toc_header th;
 	int rc, i;
@@ -1114,7 +1114,7 @@ mcd_toc_entry(sc, te)
 
 	/* do we have room */
 	if (te->data_len < sizeof(struct ioc_toc_header) +
-	    sizeof(struct sc_toc_entry))
+	    sizeof(struct cd_toc_entry))
 		return EINVAL;
 
 	/* Copy the toc header */
@@ -1133,7 +1133,7 @@ mcd_toc_entry(sc, te)
 	}
 
 	/* copy the data back */
-	copyout(&ret_toc, te->data, sizeof(struct sc_toc_entry)
+	copyout(&ret_toc, te->data, sizeof(struct cd_toc_entry)
 		+ sizeof(struct ioc_toc_header));
 
 	return 0;
@@ -1169,18 +1169,18 @@ mcd_getqchan(sc, q)
 }
 
 static int
-mcd_subchan(sc, sc)
+mcd_subchan(sc, ch)
 	struct mcd_softc *sc;
-	struct ioc_read_subchannel *sc;
+	struct ioc_read_subchannel *ch;
 {
 	struct mcd_qchninfo q;
-	struct sc_sub_channel_info data;
+	struct cd_sub_channel_info data;
 
 	printf("%s: subchan af=%d, df=%d\n", sc->sc_dev.dv_xname,
-		sc->address_format, sc->data_format);
-	if (sc->address_format != CD_MSF_FORMAT)
+		ch->address_format, ch->data_format);
+	if (ch->address_format != CD_MSF_FORMAT)
 		return EIO;
-	if (sc->data_format != CD_CURRENT_POSITION)
+	if (ch->data_format != CD_CURRENT_POSITION)
 		return EIO;
 
 	if (mcd_getqchan(sc, &q) < 0)
@@ -1190,7 +1190,7 @@ mcd_subchan(sc, sc)
 	data.what.position.data_format = CD_MSF_FORMAT;
 	data.what.position.track_number = bcd2bin(q.trk_no);
 
-	if (copyout(&data, sc->data, sizeof(struct sc_sub_channel_info)) != 0)
+	if (copyout(&data, ch->data, sizeof(struct cd_sub_channel_info)) != 0)
 		return EFAULT;
 	return 0;
 }
