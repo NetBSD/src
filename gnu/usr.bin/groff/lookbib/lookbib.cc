@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ static void usage()
   exit(1);
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   program_name = argv[0];
   static char stderr_buf[BUFSIZ];
@@ -106,7 +106,8 @@ main(int argc, char **argv)
     search_list_iterator iter(&list, line);
     const char *start;
     int len;
-    int count; for (count = 0; iter.next(&start, &len); count++) {
+    int count;
+    for (count = 0; iter.next(&start, &len); count++) {
       if (fwrite(start, 1, len, stdout) != len)
 	fatal("write error on stdout: %1", strerror(errno));
       // Can happen for last reference in file.

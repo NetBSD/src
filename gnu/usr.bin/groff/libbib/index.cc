@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +41,10 @@ extern "C" {
   int unmap(void *, int len);
 }
 
-const int minus_one = -1;
+#if 0
+const 
+#endif
+int minus_one = -1;
 
 int verify_flag = 0;
 
@@ -136,10 +139,14 @@ public:
   file_closer(int &fd) : fdp(&fd) { }
   ~file_closer() { close(*fdp); }
 };
-  
+ 
+// Tell the compiler that a variable is intentionally unused.
+inline void unused(void *) { }
+
 int index_search_item::load(int fd)
 {
   file_closer fd_closer(fd);	// close fd on return
+  unused(&fd_closer);
   struct stat sb;
   if (fstat(fd, &sb) < 0) {
     error("can't fstat `%1': %2", name, strerror(errno));
@@ -385,7 +392,7 @@ int index_search_item_iterator::get_tag(int tagno,
 	error("can't stat `%1': %2", filename, strerror(errno));
 	err = 1;
       }
-      else if ((sb.st_mode & S_IFMT) != S_IFREG) {
+      else if (!S_ISREG(sb.st_mode)) {
 	error("`%1' is not a regular file", filename);
 	err = 1;
       }
@@ -506,7 +513,8 @@ const int *index_search_item::search(const char *ptr, int length,
     return first_list;
   if (*second_list < 0)
     return second_list;
-  const int *p; for (p = first_list; *p >= 0; p++)
+  const int *p;
+  for (p = first_list; *p >= 0; p++)
     ;
   int len = p - first_list;
   for (p = second_list; *p >= 0; p++)
@@ -586,7 +594,8 @@ void index_search_item::read_common_words_file()
 void index_search_item::add_out_of_date_file(int fd, const char *filename,
 					     int fid)
 {
-  search_item **pp; for (pp = &out_of_date_files; *pp; pp = &(*pp)->next)
+  search_item **pp;
+  for (pp = &out_of_date_files; *pp; pp = &(*pp)->next)
     if ((*pp)->is_named(filename))
       return;
   *pp = make_linear_search_item(fd, filename, fid);

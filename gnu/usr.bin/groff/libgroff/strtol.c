@@ -15,11 +15,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
-
-#ifndef lint
-static char rcsid[] = "$Id: strtol.c,v 1.2 1993/08/02 17:44:06 mycroft Exp $";
-#endif /* not lint */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <string.h>
 #include <ctype.h>
@@ -40,6 +36,12 @@ extern int errno;
 #define LONG_MIN (-LONG_MAX-1)
 #endif
 
+#ifdef isascii
+#define ISASCII(c) isascii(c)
+#else
+#define ISASCII(c) (1)
+#endif
+
 long strtol(str, ptr, base)
      char *str, **ptr;
      int base;
@@ -50,7 +52,7 @@ long strtol(str, ptr, base)
   char *p;
   static char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-  while (isascii(*str) && isspace(*str))
+  while (ISASCII((unsigned char)*str) && isspace((unsigned char)*str))
     str++;
 
   if (*str == '-') {
@@ -74,7 +76,10 @@ long strtol(str, ptr, base)
   else if (base == 16 && *str == '0' && (str[1] == 'x' || str[1] == 'X'))
     str += 2;
 
-  p = strchr(digits, isascii(*str) && isupper(*str) ? tolower(*str) : *str);
+  p = strchr(digits, (ISASCII((unsigned char)*str)
+		      && isupper((unsigned char)*str)
+		      ? tolower((unsigned char)*str)
+		      : *str));
   if (p == 0 || (val = (p - digits)) >= base) {
     if (base == 16 && str > start && (str[-1] == 'x' || str[-1] == 'X')) {
       if (ptr)
@@ -93,7 +98,9 @@ long strtol(str, ptr, base)
   while (*++str != '\0') {
     int n;
 
-    p = strchr(digits, isascii(*str) && isupper(*str) ? tolower(*str) : *str);
+    p = strchr(digits, (ISASCII((unsigned char)*str)
+			&& isupper((unsigned char)*str)
+			? tolower((unsigned char)*str) : *str));
     if (p == 0)
       break;
     n = p - digits;

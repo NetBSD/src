@@ -4,10 +4,6 @@
  * convert X font metrics into troff font metrics
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: xtotroff.c,v 1.2 1993/08/02 17:46:05 mycroft Exp $";
-#endif /* not lint */
-
 #include	<X11/Xlib.h>
 #include	<stdio.h>
 #include	<ctype.h>

@@ -8,7 +8,7 @@ font path.
 Have character substitutions (currently done in draw.c:FakeCharacter)
 specified in a resource (similar format to FontMap).
 
-The initial width of the dialog box should expand to accomodate the
+The initial width of the dialog box should expand to accommodate the
 default value.
 
 Option in Print dialog to specify that only the current page should be

@@ -16,17 +16,12 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-	$Id: token.h,v 1.3 1993/08/02 17:45:41 mycroft Exp $
-*/
 
 struct charinfo;
 struct node;
 struct vunits;
-
-// See ARM p251.
-static void process_input_stack();
 
 class token {
   symbol nm;
@@ -102,6 +97,7 @@ extern token tok;		// the current token
 extern symbol get_name(int required = 0);
 extern symbol get_long_name(int required = 0);
 extern charinfo *get_optional_char();
+extern void check_missing_character();
 extern void skip_line();
 extern void handle_initial_title();
 

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "pic.h"
 #include "common.h"
@@ -408,6 +408,7 @@ static const char *choose_delimiter(const char *text)
 void troff_output::text(const position &center, text_piece *v, int n,
 			double ang)
 {
+  line_thickness(BAD_THICKNESS); // the text might use lines (eg in equations)
   int rotate_flag = 0;
   if (driver_extension_flag && ang != 0.0) {
     rotate_flag = 1;

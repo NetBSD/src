@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "eqn.h"
 #include "pbox.h"
@@ -84,45 +84,45 @@ struct {
   const char *name;
   int *ptr;
 } param_table[] = {
-"fat_offset", &fat_offset,
-"over_hang", &over_hang,
-"accent_width", &accent_width,
-"delimiter_factor", &delimiter_factor,
-"delimiter_shortfall", &delimiter_shortfall,
-"null_delimiter_space", &null_delimiter_space,
-"script_space", &script_space,
-"thin_space", &thin_space,
-"medium_space", &medium_space,
-"thick_space", &thick_space,
-"num1", &num1,
-"num2", &num2,
-"denom1", &denom1,
-"denom2", &denom2,
-"axis_height", &axis_height,
-"sup1", &sup1,
-"sup2", &sup2,
-"sup3", &sup3,
-"default_rule_thickness", &default_rule_thickness,
-"sub1", &sub1,
-"sub2", &sub2,
-"sup_drop", &sup_drop,
-"sub_drop", &sub_drop,
-"x_height", &x_height,
-"big_op_spacing1", &big_op_spacing1,
-"big_op_spacing2", &big_op_spacing2,
-"big_op_spacing3", &big_op_spacing3,
-"big_op_spacing4", &big_op_spacing4,
-"big_op_spacing5", &big_op_spacing5,
-"minimum_size", &minimum_size,
-"baseline_sep", &baseline_sep,
-"shift_down", &shift_down,
-"column_sep", &column_sep,
-"matrix_side_sep", &matrix_side_sep,
-"draw_lines", &draw_flag,
-"body_height", &body_height,
-"body_depth", &body_depth,
-"nroff", &nroff,
-0, 0
+  { "fat_offset", &fat_offset },
+  { "over_hang", &over_hang },
+  { "accent_width", &accent_width },
+  { "delimiter_factor", &delimiter_factor },
+  { "delimiter_shortfall", &delimiter_shortfall },
+  { "null_delimiter_space", &null_delimiter_space },
+  { "script_space", &script_space },
+  { "thin_space", &thin_space },
+  { "medium_space", &medium_space },
+  { "thick_space", &thick_space },
+  { "num1", &num1 },
+  { "num2", &num2 },
+  { "denom1", &denom1 },
+  { "denom2", &denom2 },
+  { "axis_height", &axis_height },
+  { "sup1", &sup1 },
+  { "sup2", &sup2 },
+  { "sup3", &sup3 },
+  { "default_rule_thickness", &default_rule_thickness },
+  { "sub1", &sub1 },
+  { "sub2", &sub2 },
+  { "sup_drop", &sup_drop },
+  { "sub_drop", &sub_drop },
+  { "x_height", &x_height },
+  { "big_op_spacing1", &big_op_spacing1 },
+  { "big_op_spacing2", &big_op_spacing2 },
+  { "big_op_spacing3", &big_op_spacing3 },
+  { "big_op_spacing4", &big_op_spacing4 },
+  { "big_op_spacing5", &big_op_spacing5 },
+  { "minimum_size", &minimum_size },
+  { "baseline_sep", &baseline_sep },
+  { "shift_down", &shift_down },
+  { "column_sep", &column_sep },
+  { "matrix_side_sep", &matrix_side_sep },
+  { "draw_lines", &draw_flag },
+  { "body_height", &body_height },
+  { "body_depth", &body_depth },
+  { "nroff", &nroff },
+  { 0, 0 }
 };
 
 void set_param(const char *name, int value)

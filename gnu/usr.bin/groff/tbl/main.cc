@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "table.h"
 
@@ -652,7 +652,7 @@ format::~format()
   a_delete entry;
 }
 
-struct input_entry_format : entry_format {
+struct input_entry_format : public entry_format {
   input_entry_format *next;
   string width;
   int separation;
@@ -690,7 +690,8 @@ void free_input_entry_format_list(input_entry_format *list)
 
 void input_entry_format::debug_print()
 {
-  int i; for (i = 0; i < pre_vline; i++)
+  int i;
+  for (i = 0; i < pre_vline; i++)
     putc('|', stderr);
   entry_format::debug_print();
   if (!width.empty()) {
@@ -765,6 +766,7 @@ format *process_format(table_input &in, options *opt,
 	t = FORMAT_VSPAN;
 	break;
       case '_':
+      case '-':			// tbl also accepts this
 	got_format = 1;
 	t = FORMAT_HLINE;
 	break;
@@ -1174,6 +1176,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	  format_index = f->nrows - 1;
 	// A format row that is all lines doesn't use up a data line.
 	while (format_index < f->nrows - 1) {
+	  int c;
 	  for (c = 0; c < ncolumns; c++) {
 	    entry_format *e = f->entry[format_index] + c;
 	    if (e->type != FORMAT_HLINE
@@ -1195,6 +1198,7 @@ table *process_data(table_input &in, format *f, options *opt)
 	}
 	entry_format *line_format = f->entry[format_index];
 	int col = 0;
+	int row_comment = 0;
 	for (;;) {
 	  if (c == tab_char || c == '\n') {
 	    int ln = current_lineno;
@@ -1308,13 +1312,19 @@ table *process_data(table_input &in, format *f, options *opt)
 	    }
 	    if (col >= ncolumns) {
 	      if (!input_entry.empty()) {
-		if (c == '\n')
-		  in.unget(c);
-		input_entry += '\0';
-		error("excess data entry `%1' discarded",
-		      input_entry.contents());
-		if (c == '\n')
-		  (void)in.get();
+		if (input_entry.length() >= 2
+		    && input_entry[0] == '\\'
+		    && input_entry[1] == '"')
+		  row_comment = 1;
+		else if (!row_comment) {
+		  if (c == '\n')
+		    in.unget(c);
+		  input_entry += '\0';
+		  error("excess data entry `%1' discarded",
+			input_entry.contents());
+		  if (c == '\n')
+		    (void)in.get();
+		}
 	      }
 	    }
 	    else
@@ -1393,7 +1403,8 @@ table *process_data(table_input &in, format *f, options *opt)
   }
   // Do this here rather than at the beginning in case continued formats
   // change it.
-  int i; for (i = 0; i < ncolumns - 1; i++)
+  int i;
+  for (i = 0; i < ncolumns - 1; i++)
     if (f->separation[i] >= 0)
       tbl->set_column_separation(i, f->separation[i]);
   for (i = 0; i < ncolumns; i++)
@@ -1440,7 +1451,7 @@ int main(int argc, char **argv)
   static char stderr_buf[BUFSIZ];
   setbuf(stderr, stderr_buf);
   int opt;
-  while ((opt = getopt(argc, argv, "vC")) != EOF)
+  while ((opt = getopt(argc, argv, "vCT:")) != EOF)
     switch (opt) {
     case 'C':
       compatible_flag = 1;
@@ -1452,6 +1463,9 @@ int main(int argc, char **argv)
 	fflush(stderr);
 	break;
       }
+    case 'T':
+      // I'm sick of getting bug reports from IRIX users
+      break;
     case '?':
       usage();
       break;
@@ -1492,6 +1506,6 @@ int main(int argc, char **argv)
   }
   if (ferror(stdout) || fflush(stdout) < 0)
     fatal("output error");
-  exit(0);
+  return 0;
 }
 

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "driver.h"
 
@@ -305,7 +305,8 @@ void dvi_printer::set_char(int index, font *f, const environment *env, int w)
   if (env->size != cur_point_size || f != cur_font) {
     cur_font = f;
     cur_point_size = env->size;
-    int i; for (i = 0;; i++) {
+    int i;
+    for (i = 0;; i++) {
       if (i >= FONTS_MAX) {
 	fatal("too many output fonts required");
       }
@@ -884,7 +885,7 @@ int main(int argc, char **argv)
       do_file(argv[i]);
   }
   delete pr;
-  exit(0);
+  return 0;
 }
 
 static void usage()

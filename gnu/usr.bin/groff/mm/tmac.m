@@ -1,9 +1,14 @@
-.\"	Version:
-.ds RE 1.16
+.\"  
+.de @revision
+.ds RE \\$2
+..
+.\"
+.\" $Id: tmac.m,v 1.2 1996/08/13 07:06:41 explorer Exp $
+.@revision $Revision: 1.2 $
 .ig
 
-Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
-mgm is written by Jörgen Hägg (jh@efd.lth.se)
+Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+mgm is written by Jörgen Hägg <jh@axis.se>
 
 mgm is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
@@ -17,13 +22,13 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Almost complete. The letter format is not included.
 Maybe as a separate package.
 Should be better as time goes.
 
-Please send bugreports with examples to jh@efd.lth.se.
+Please send bugreports with examples to jh@axis.se.
 
 Naming convention stolen from mgs.
 Local names	module*name
@@ -32,7 +37,7 @@ Env.var		environ:name
 Index		array!index
 ..
 .warn
-.\" ####### init ######
+.\" ######## init #######
 .\"	Contents level [0:7], contents saved if heading level <= Cl
 .nr Cl 2
 .\"	Eject page between LIST OF XXXX if Cp == 0
@@ -47,7 +52,7 @@ Index		array!index
 .nr Ds 1
 .\"	Eject page
 .nr Ej 0
-.\"	Eqation lable adjust 0=left, 1=right
+.\"	Equation lable adjust 0=left, 1=right
 .nr Eq 0
 .\"	Em dash string
 .ds EM \-
@@ -85,7 +90,7 @@ Index		array!index
 .\"	hyphenation in body
 .\"	0 -> no hyphenation
 .\"	1 -> hyphenation 14 on
-.nr Hy 1
+.nr Hy 0
 .\"	text for toc, selfexplanatory. Look in the new variable section
 .ds Lf LIST OF FIGURES
 .nr Lf 1
@@ -129,23 +134,28 @@ Index		array!index
 .\"---------------------------------------------
 .\"	Internal global variables
 .\"
-.\" These two are for cover macro .MT
-.\" Change @langage in the national file.
-.ds @cur-lib /usr/local/lib/groff/tmac
+.\" This is for cover macro .MT
 .\" .ds @language
 .\"
 .\"	Current pointsize and vertical space, always in points.
-.nr @ps 10
-.nr @vs 12
+.ie r S \{\
+.	nr @ps \n[S]
+.	nr @vs \n[S]+2
+.\}
+.el \{\
+.	nr @ps 10
+.	nr @vs 12
+.\}
+.\"
 .\"	Page length
 .ie r L .nr @pl \n[L]
-.el .nr @pl 11i
+.el .nr @pl \n[.p]
 .\"	page width
 .ie r W .nr @ll \n[W]
 .el .nr @ll 6i
 .\"	page offset
 .ie r O .nr @po \n[O]
-.el .nr @po 1i
+.el .nr @po \n(.o
 .\"
 .\" cheating...
 .pl \n[@pl]u
@@ -204,8 +214,10 @@ Index		array!index
 .ds MO12 December
 .\" for GETR
 .ds Qrf See chapter \\*[Qrfh], page \\*[Qrfp].
-.\"	test for mgm macro. This can be used if the text must test
-.\"	what macros is used.
+.\"
+.\" header- and footer-size will only change to the current
+.\" if Pgps is > 0.
+.nr Pgps 1
 .\"
 .\" section-page if Sectp > 0
 .nr Sectp 0
@@ -222,6 +234,46 @@ Index		array!index
 .\" indent for VERBON
 .nr Verbin 5n
 .\"
+.\" Letter section
+.\" Formal closing (.FC)
+.ds Letfc Yours very truly,
+.\"
+.\" Approval line
+.ds Letapp APPROVED:
+.\" Approval date-string
+.ds Letdate Date
+.\"
+.ds LetCN CONFIDENTIAL\"		Confidential default
+.ds LetSA To Whom It May Concern:\"	Salutation default
+.ds LetAT ATTENTION:\"			Attention string
+.ds LetSJ SUBJECT:\"			Subject string
+.ds LetRN In reference to:\"		Reference string
+.\"
+.\" Copy to (.NS)
+.ds Letnsdef 0
+.ds Letns!copy Copy \" space!
+.ds Letns!to " to
+.ds Letns!0 Copy to
+.ds Letns!1 Copy (with att.) to
+.ds Letns!2 Copy (without att.) to
+.ds Letns!3 Att.
+.ds Letns!4 Atts.
+.ds Letns!5 Enc.
+.ds Letns!6 Encs.
+.ds Letns!7 Under separate cover
+.ds Letns!8 Letter to
+.ds Letns!9 Memorandum to
+.ds Letns!10 Copy (with atts.) to
+.ds Letns!11 Copy (without atts.) to
+.ds Letns!12 Abstract Only to
+.ds Letns!13 Complete Memorandum to
+.ds Letns!14 CC:
+.\"
+.\" Max lines in return address
+.nr Letwam 14
+.\"--------------------------
+.\"	test for mgm macro. This can be used if the text must test
+.\"	what macros is used.
 .nr .mgm 1
 .\"
 .\"---------------------------------------------
@@ -242,24 +294,35 @@ Index		array!index
 'ps \\n[@ps]
 'vs \\n[@vs]
 ..
-.de @error
-.tm ******************
-.tm ERROR:(\\n[.F]) input line \\n[.c]:\\$*
+.de @warning
+'tm WARNING:(\\n[.F]) input line \\n[.c]:\\$*
 .if \\n[D] .backtrace
-.tm ******************
-.ab
+..
+.de @error
+'tm ******************
+'tm ERROR:(\\n[.F]) input line \\n[.c]:\\$*
+.if \\n[D] .backtrace
+'tm ******************
+.ab "Input aborted, syntax error"
+..
+.de misc@toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+.br
+\\$1
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+.br
 ..
 .\" ####### module debug #################################
 .de debug
-.tm \\$1:\\n[.F]:\\n[c.] ll=\\n[.l] vs=\\n[.v] ps=\\n[.s],\\n[.ps] \
+'tm \\$1:\\n[.F]:\\n[c.] ll=\\n[.l] vs=\\n[.v] ps=\\n[.s],\\n[.ps] \
 in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .de debug-all
 .nr debug*n 1n
 .nr debug*m 1m
-.tm \\$1:\\n[.F]:\\n[c.] ll=\\n[.l] vs=\\n[.v] ps=\\n[.s] in=\\n[.i]\
+'tm \\$1:\\n[.F]:\\n[c.] ll=\\n[.l] vs=\\n[.v] ps=\\n[.s] in=\\n[.i]\
  ad=\\n[.j] fi=\\n[.u] pl=\\n[.p] page=\\n[%] .o=\\n[.o]
-.tm _______ .d=\\n[.d] .f=\\n[.f] .h=\\n[.h] .k=\\n[.k] .n=\\n[.n]\
+'tm _______ .d=\\n[.d] .f=\\n[.f] .h=\\n[.h] .k=\\n[.k] .n=\\n[.n]\
  .p=\\n[.p] .t=\\n[.t] .z=\\n[.z] nl=\\n[nl] dn=\\n[dn] n=\\n[debug*n]
 ..
 .\" ####### module par #################################
@@ -268,6 +331,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .nr hd*last-hpos -1
 .nr par*number 0 1
 .af par*number 01
+.nr par*number2 0 1
+.af par*number2 01
 .nr par*num-count 0 1
 .af par*num-count 01
 .\"	reset numbered paragraphs, arg1 = headerlevel
@@ -282,13 +347,31 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ie !((\\n[nl]=\\n[hd*last-pos]):(\\n[nl]=(\\n[hd*last-pos]-.5v))) \{\
 .	if \\n[D]>2 .tm Paragraph 
 .	par@doit \\$*
+.	if \\n[Np] \\n[H1].\\n+[par*number]\ \ \c
 .\}
 .el .if !(\\n[hd*last-hpos]=\\n[.k]) \{\
 .	if \\n[D]>2 .tm Paragraph 
 .	par@doit \\$*
+.	if \\n[Np] \\n[H1].\\n+[par*number]\ \ \c
 .\}
 .nr par@ind-flag 1
 ..
+.\"------------
+.de nP
+.\"	skip P if previous heading
+.ie !((\\n[nl]=\\n[hd*last-pos]):(\\n[nl]=(\\n[hd*last-pos]-.5v))) \{\
+.	if \\n[D]>2 .tm Paragraph 
+.	par@doit \\$*
+\\n[H2].\\n+[par*number2]\ \ \c
+.\}
+.el .if !(\\n[hd*last-hpos]=\\n[.k]) \{\
+.	if \\n[D]>2 .tm Paragraph 
+.	par@doit \\$*
+\\n[H2].\\n+[par*number2]\ \ \c
+.\}
+.nr par@ind-flag 1
+..
+.\"------------
 .de par@doit
 .SP (u;\\n[Ps]*\\n[Lsp])
 .ie  \\n[.$] \{\
@@ -297,10 +380,6 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .el \{\
 .	if \\n[Pt]=1 .ti +\\n[Pi]n
 .	if (\\n[Pt]=2)&\\n[par@ind-flag] .ti +\\n[Pi]n
-.\}
-.if \\n[Np] \{\
-\\n[H1].\\n+[par*number]\ \ \c
-.\" $$$ 'br
 .\}
 ..
 .\" ####### module line #######################################
@@ -383,11 +462,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ta T 5n
 ..
 .\"-------------
-.\" .PGFORM linelength [ pagelength [ pageoffset ] ]
+.\" .PGFORM linelength [ pagelength [ pageoffset [1]]]
 .de PGFORM
 .\" Break here to avoid problems with new linesetting of the previous line.
 .\" Hope this doesn't break anything else :-)
-.br
+.\" Don't break if arg_4 is a '1'.
+.if ''\\$4' .br
 .if !''\\$1' .nr @ll \\$1
 .if !''\\$2' .nr @pl \\$2
 .if !''\\$3' .nr @po \\$3
@@ -396,7 +476,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .po \\n[@po]u
 .pl \\n[@pl]u
 .nr @cur-ll \\n[@ll]
-.in 0
+'in 0
 .pg@move-trap
 ..
 .\"-------------
@@ -488,7 +568,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de RD
 .di misc*rd
 'fl
-.rd \\$1
+.rd \\$1\t
 .br
 .di
 .ie !''\\$3' \{\
@@ -507,31 +587,33 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"	0	escape on
 .\"	1	add an empty line before verbose text
 .\"	2	add an empty line after verbose text
-.\"	4	numbered lines (controlled by the string Verbnm)
-.\"	8	indent text by the numbervariable Verbin.
+.\"	3	numbered lines (controlled by the string Verbnm)
+.\"	4	indent text by the numbervariable Verbin.
 .de VERBON
+.br
 .nr misc*verb 0\\$1
 .if (0\\n[misc*verb]%4)/2 .SP \\n[Lsp]u
-.br
 .misc@ev-keep misc*verb-ev
 .nf
 .if (0\\n[misc*verb]%16)/8 .nm \\*[Verbnm]
 .ie !'\\$3'' .ft \\$3
 .el .ft CR
-.ss 12
-.ta T 8u*\w@n@u
-.if 0\\$2 \{\
+.ie 0\\$2 \{\
+.	ss \\$2
 .	ps \\$2
 .	vs \\$2
 .\}
+.el .ss 12
+.ta T 8u*\w@n@u
 .if (0\\n[misc*verb]%32)/16 .in +\\n[Verbin]u
-.if !(0\\n[misc*verb]%2) \{\
+.if 0\\n[misc*verb]%2 \{\
 .	eo
 .	nr @verbose-flag 1		\" tell pageheader to set ec/eo
 .\}
 ..
 .de VERBOFF
 .ec
+.br
 .if (0\\n[misc*verb]%8)/4 .SP \\n[Lsp]u
 .if (0\\n[misc*verb]%16)/8 .nm
 .if (0\\n[misc*verb]%32)/16 .in
@@ -558,10 +640,10 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" ######## module uni #################
 .\" unimplemented macros
 .de OK
-.tm "OK: not implemented"
+'tm "OK: not implemented"
 ..
 .de PM
-.tm "PM: not implemented"
+'tm "PM: not implemented"
 ..
 .\" ######## module hd #################
 .\" support for usermacro
@@ -589,9 +671,9 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de H
 .if !r hd*cur-bline .nr hd*cur-bline \\n[nl]
 .br
-.ds@print-float 2\"	$$$ could be wrong...
+.df@print-float 2\"	$$$ could be wrong...
 .\" terminate all lists
-.LC 0
+.LC
 .init@reset
 .nr hd*level 0\\$1
 .nr hd*arg1 0\\$1
@@ -608,8 +690,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" increment current counter
 .nr H\\n[hd*level] +1
 .\"
-.\" if level==1 -> prepare for new section.
-.if \\n[hd*level]=1 .rr hd*h1-page
+.\" update pagenumber if section-page is used
+.if \\n[hd*level]=1 .hd@set-page \\n[%]
 .\"
 .\"
 .\" hd*mark is the text written to the left of the header.
@@ -745,26 +827,31 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" set page-nr, called from header 
 .\" 
 .de hd@set-page
-.if !r hd*h1-page .nr hd*h1-page \\n[%]
+.if \\n[.$]>0 .nr hd*h1-page \\$1
 .\"
 .ie \\n[Sectp] .nr P \\n[%]-\\n[hd*h1-page]+1
 .el .nr P \\n[%]
 .\"
 .\" Set section-page-string
 .ds hd*sect-pg \\n[H1]-\\n[P]
+.if \\n[Sectp]>1 .if '\\n[H1]'0' .ds hd*sect-pg "
 ..
 .\"########### module pg ####################
 .\" set end of text trap
 .wh 0 pg@header
 .em pg@end-of-text
 .\"
-.ie \n[N]=4 .ds pg*header ''''
-.el .ds pg*header ''- % -''
+.ds pg*header ''- % -''
+.ds pg*footer
+.if \n[N]=4 .ds pg*header ''''
+.if \n[N]=5 \{\
+.	ds pg*header ''''
+.	ds pg*footer ''\\*[hd*sect-pg]''
+.\}
 .ds pg*even-footer
 .ds pg*odd-footer
 .ds pg*even-header
 .ds pg*odd-header
-.ds pg*footer
 .\"
 .nr pg*top-margin 0
 .nr pg*foot-margin 0
@@ -785,7 +872,9 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" footer traps: set, enable and disable
 .de pg@set-new-trap
 .nr pg*foot-trap \\n[@pl]u-(\\n[pg*block-size]u+\\n[ft*note-size]u+\\n[pg*foot-margin]u+\\n[pg*footer-size]v+\\n[pg*extra-footer-size]u)
+.\"
 .if \\n[D]>2 .tm pg*foot-trap \\n[@pl]u-(\\n[pg*block-size]u+\\n[ft*note-size]u+\\n[pg*foot-margin]u+\\n[pg*footer-size]v) = \\n[pg*foot-trap]
+.\"
 .\" last-pos points to the position of the footer and bottom 
 .\" block below foot-notes.
 .nr pg*last-pos \\n[@pl]u-(\\n[pg*block-size]u+\\n[pg*foot-margin]u+\\n[pg*footer-size]v)
@@ -827,10 +916,17 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" .pg@footer
 ..
 .\"-------------------------
-.\" support for PX and TP
+.\" support for PX, TP and EOP.
 .als }t pg*header
 .als }e pg*even-header
 .als }o pg*odd-header
+.als TPh pg*header
+.als TPeh pg*even-header
+.als TPoh pg*odd-header
+.\"
+.als EOPf pg*footer
+.als EOPef pg*even-footer
+.als EOPof pg*odd-footer
 .\"------------------------------------------------------------
 .\" HEADER
 .de pg@header
@@ -843,20 +939,24 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"
 .\" suppress pageheader if pagenumber == 1 and N == [124]
 .if \\n[pg*top-enabled] \{\
+.\"	must be fixed!!
+.\".	pg@disable-top-trap
 .	if \\n[pg*extra-header-size] 'sp \\n[pg*extra-header-size]u
 .	if \\n[pg*top-margin] 'sp \\n[pg*top-margin]u
 .	ev pg*tl-ev
 .	pg@set-env
-.	ie !d TP \{\
-'		sp 3
-.		lt \\n[@ll]u
-.		ie ((\\n[%]=1)&(\\n[N]=1):(\\n[N]=2)) .sp
-.		el .tl \\*[pg*header]
-.		ie o .tl \\*[pg*odd-header]
-.		el .tl \\*[pg*even-header]
-'		sp 2
+.	ie d let@header .let@header
+.	el \{\
+.		ie d TP .TP
+.		el \{\
+'			sp 3
+.			ie ((\\n[%]=1)&((\\n[N]=1):(\\n[N]=2))) .sp
+.			el .tl \\*[pg*header]
+.			ie o .tl \\*[pg*odd-header]
+.			el .tl \\*[pg*even-header]
+'			sp 2
+.		\}
 .	\}
-.	el .TP
 .	ev
 .	\" why no-space??
 .	if d PX \{\
@@ -868,14 +968,16 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	ft@check-old
 .	\"
 .	\" back to normal text processing
-.	\" .pg@enable-trap
+.	pg@enable-trap
 .	\" mark for multicolumn
 .	nr pg*head-mark \\n[nl]u
+.	\" reset NCOL pointer at each new page.
+.	nr pg*last-ncol 0
 .	\" set multicolumn
 .	\" 
 .	pg@set-po
 .	\" print floating displays
-.	ds@print-float 4
+.	df@print-float 4
 .	tbl@top-hook
 .	ns
 .\}
@@ -915,13 +1017,18 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" print the footer and eject new page
 .ev pg*tl-ev
 .pg@set-env
-.lt \\n[@ll]u
-.ie o .tl \\*[pg*odd-footer]
-.el .tl \\*[pg*even-footer]
-.ie (\\n[%]=1)&(\\n[N]=1) .tl \\*[pg*header]
-.el .tl \\*[pg*footer]
+.\" user defined end-of-page macro
+.ie d EOP .EOP
+.el \{\
+.	ie o .tl \\*[pg*odd-footer]
+.	el .tl \\*[pg*even-footer]
+.	ie (\\n[%]=1)&(\\n[N]=1) .tl \\*[pg*header]
+.	el .tl \\*[pg*footer]
+.\}
 .ev
-.ie (\\n[ds*fnr]>=\\n[ds*o-fnr]):\\n[ft*exist] \{\
+.\" be sure that floating displays and footnotes will be
+.\" printed at the end of the document.
+.ie (\\n[df*fnr]>=\\n[df*o-fnr]):\\n[ft*exist] \{\
 .	ev ne
 '	bp
 .	ev
@@ -936,8 +1043,15 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 'nh
 'in 0
 'ti 0
-'ps \\n[pg*ps]
-'vs \\n[pg*vs]
+.ie \\n[Pgps] \{\
+.	ps \\n[@ps]
+.	vs \\n[@vs]
+.\}
+.el \{\
+.	ps \\n[pg*ps]
+.	vs \\n[pg*vs]
+.\}
+.lt \\n[@ll]u
 ..
 .\"-------------------------
 .de PH
@@ -1017,7 +1131,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" print out all pending text
 .de pg@end-of-text
 .if \\n[D]>2 .tm ---------- End of text processing ----------------
-.ds@eot-print
+.df@eot-print
 .ref@eot-print
 ..
 .\"-------------------------
@@ -1058,17 +1172,29 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	\}
 .\}
 ..
+.\" An argument disables the page-break.
 .de 1C
 .br
 .if \\n[pg*cols-per-page]<=1 .@error "1C: multicolumn mode not active"
 .nr pg*cols-per-page 1
 .nr pg*column-sep 0
 .nr pg*column-size \\n[@ll]
+.nr pg*ncol-i \\n[pg*cur-column]\"	temp variable
 .nr pg*cur-column 0 1
 .nr pg*cur-po \\n[@po]u
 .PGFORM
-.\".pg@next-page
-.SK
+.ie !'\\$1'1' .SK
+.el \{\
+.	if d ft*div \{\
+.		if \\n[pg*ncol-i]>0 \{\
+.			@warning 1C: footnotes will be messy
+.		\}
+.	\}
+.	if \\n[pg*last-ncol]>0 \{\
+.		sp |\\n[pg*last-ncol]u
+.		nr pg*last-ncol 0
+.	\}
+.\}
 ..
 .de 2C
 .br
@@ -1080,7 +1206,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .nr pg*cur-column 0 1
 .nr pg*cur-po \\n[@po]u
 .ll \\n[pg*column-size]u
-.lt \\n[pg*column-size]u
+.\" .lt \\n[pg*column-size]u
 ..
 .\" MC column-size [ column-separation ]
 .de MC
@@ -1096,11 +1222,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .nr pg*cur-column 0 1
 .nr pg*cur-po \\n[@po]u
 .ll \\n[pg*column-size]u
-.lt \\n[pg*column-size]u
+.\" .lt \\n[pg*column-size]u
 ..
 .\" begin a new column
 .de NCOL
 .br
+.if \\n[nl]>\\n[pg*last-ncol] .nr pg*last-ncol \\n[nl]
 .pg@footer
 ..
 .\" skip pages
@@ -1131,6 +1258,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ds pg*mul-fam \\n[.fam]
 .nr pg*mul-font \\n[.f]
 .ev pg*mul-ev
+.ps \\n[@ps]
+.vs \\n[@vs]
 .fam \\*[pg*mul-fam]
 .ft \\n[pg*mul-font]
 .fi
@@ -1242,10 +1371,21 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	if '\\*[ft*x]'WF' .nr ft*wide 1
 .	if '\\*[ft*x]'-FF' .nr ft*first-fn 0
 .	if '\\*[ft*x]'FF' .nr ft*first-fn 1
-.	if '\\*[ft*x]'-WD' .nr ds*wide 0
-.	if '\\*[ft*x]'WD' .nr ds*wide 1
+.	if '\\*[ft*x]'-WD' \{\
+.		nr ds*wide 0
+.		if r ft*df-save \{\
+.			nr Df \\n[ft*df-save]
+.			rm ft*df-save 
+.		\}
+.	\}
+.	if '\\*[ft*x]'WD' \{\
+.		nr ds*wide 1
+.		nr ft*df-save \\n[Df]
+.		nr Df 4
+.	\}
 .	if '\\*[ft*x]'-FB' .nr ds*float-break 0
 .	if '\\*[ft*x]'FB' .nr ds*float-break 1
+.	if \\n[D]>1 .tm WC WF=\\n[ft*wide] WD=\\n[ds*wide]
 .\}
 ..
 .\"-----------------
@@ -1256,7 +1396,6 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ev ft*ev
 .ft@init
 .if !\\n[ft*wide] .pg@set-po
-.if !d ft*div .ft@init-footnote
 .di ft*tmp-div
 .nr ft*space (u;\\n[Fs]*\\n[Lsp])
 .sp \\n[ft*space]u
@@ -1293,6 +1432,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .	di
 .\}
 .el \{\
+.	if !d ft*div .ft@init-footnote
 .	da ft*div
 .	ft*tmp-div
 .	di
@@ -1337,191 +1477,88 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\"########### module display ###################
 .nr ds*wide 0\"		>0 if wide displays wanted
-.nr ds*fnr 0 1\"	floating display counter
-.nr ds*o-fnr 1\"	floating display counter, already printed
+.nr df*fnr 0 1\"	floating display counter
+.nr df*o-fnr 1\"	floating display counter, already printed
 .nr ds*snr 0 1\"	static display counter
 .nr ds*lvl 0 1\"	display level
 .nr ds*float-busy 0\"	>0 if printing float
-.nr ds*ffloat 0\"	>0 if DF, 0 if DS
-.\" static display start
-.\" nested DS/DE is allowed. No limit on depth.
-.de DS
-.br
-.ds@start 0 DS \\$@
+.nr df*float 0		>0 if previous display was floating
+.\"--------------------------------------------
+.de DE
+.ie \\n[df*float] .df@end \\$@
+.el .ds@end \\$@
 ..
+.\"--------------------------------------------
 .\" floating display start
 .\" nested DF/DE is not allowed.
 .de DF
-.if \\n[ds*lvl] .@error "DF:nested floating is not allowed. Use DS."
-.ds@start 1 DF \\$@
-..
-.\"---------------
-.nr ds*format 0\"	dummy value for .En/.EQ
-.nr ds*format! 0\"	no indent
-.nr ds*format!0 0\"	no indent
-.nr ds*format!L 0\"	no indent
-.nr ds*format!I 1\"	indent
-.nr ds*format!1 1\"	indent
-.nr ds*format!C 2\"	center each line
-.nr ds*format!2 2\"	center each line
-.nr ds*format!CB 3\"	center as block
-.nr ds*format!3 3\"	center as block
-.nr ds*format!R 4\"	right justify each line
-.nr ds*format!4 4\"	right justify each line
-.nr ds*format!RB 5\"	right justify as block
-.nr ds*format!5 5\"	right justify as block
-.\"---------------
-.nr ds*fill! 0\"	no fill
-.nr ds*fill!N 0\"	no fill
-.nr ds*fill!0 0\"	no fill
-.nr ds*fill!F 1\"	fill on
-.nr ds*fill!1 1\"	fill on
-.\"---------------
-.de ds@start
-.nr ds*ffloat \\$1
-.ds ds*type \\$2
-.shift 2
-.nr ds*lvl +1
-.\" get format of the display
-.ie \\n[.$] \{\
-.	ie r ds*format!\\$1 .nr ds*format \\n[ds*format!\\$1]
-.	el .@error "\\*[ds*type]:wrong format:\\$1"
-.\}
-.el .nr ds*format 0
-.\" fill or not to fill, that is the...
-.nr ds*fill 0
-.ie \\n[.$]>1 \{\
-.	ie r ds*fill!\\$2 .nr ds*fill \\n[ds*fill!\\$2]
-.	el .@error "\\*[ds*type]:wrong fill:\\$2"
-.\}
-.nr ds*rindent 0
-.if \\n[.$]>2 .nr ds*rindent \\$3
+.if \\n[df*float] .@error "DF:nested floating is not allowed. Use DS."
+.ds@set-format \\$@
 .\"
-.\"---------------
-.nr ds*old-ll \\n[.l]
-.misc@push ds-ll \\n[.l]
-.misc@push ds-form \\n[ds*format]
-.misc@push ds-ffloat \\n[ds*ffloat]
+.nr df*old-ll \\n[.l]
 .nr ds*i \\n[.i]
 .nr ds*ftmp \\n[.f]
-.misc@ev-keep ds*ev!\\n+[ds*snr]
+.misc@ev-keep df*ev
 .ft \\n[ds*ftmp]
 .\"
 .init@reset
+.di df*div
 'in \\n[ds*i]u
-.di ds*div!\\n[ds*snr]
 .\"
-.ll \\n[ds*old-ll]u
-.lt \\n[ds*old-ll]u
-.if \\n[ds*rindent] \{\
-.	ll -\\n[ds*rindent]n
-.	lt -\\n[ds*rindent]n
-.\}
-.if \\n[ds*wide] \{\
-.	ll \\n[@ll]u
-.	lt \\n[@ll]u
-.\}
-.\"
-.ie \\n[ds*fill] 'fi
-.el 'nf
-.\"
-.if \\n[ds*format]=1 \{\
-.	ll -\\n[Si]n
-.	lt -\\n[Si]n
-'	in +\\n[Si]n
-.\}
-.if (\\n[ds*format]=3):(\\n[ds*format]=5) 'in 0
+.ds@set-new-ev \\n[df*old-ll]
+.SP \\n[Lsp]u
+.nr df*float 1
 ..
-.\"---------------
-.de DE
-.if \\n-[ds*lvl]<0 .@error "DE: no corresponding DS or DF"
+.\"--------------------------------------------
+.de df@end
 .br
-.if \\n[ds*ffloat] .SP \\n[Lsp]u
+.SP \\n[Lsp]u
 .di
-.nr ds*width \\n[dl]
-.nr ds*height \\n[dn]
-.misc@pop-nr ds-ll ds*old-ll
-.misc@pop-nr ds-form ds*format
-.misc@pop-nr ds-ffloat ds*ffloat
-.if (\\n[ds*format]>=2)&(\\n[ds*width]>\\n[ds*old-ll]) \{\
-.	@error "DE: display too wide for current line-length"
-.\}
-.\" prepare copy to floating display
-.if \\n[ds*ffloat] .di ds*fdiv!\\n+[ds*fnr]
-.\"
-'in 0
-'nf
-.if \\n[ds*format]=2 'ce 9999
-.if \\n[ds*format]=3 'in (u;(\\n[ds*old-ll]-\\n[ds*width])/2)
-.if \\n[ds*format]=4 'rj 9999
-.if \\n[ds*format]=5 'in (u;\\n[ds*old-ll]-\\n[ds*width])
-.\"
-.ie !\\n[ds*ffloat] \{\
-.	\"
-.	\"	Print static display
-.	\"	Eject page if display will fit one page and
-.	\"	there are less than half of the page left.
-.	nr ds*i \\n[pg*foot-trap]-\\n[pg*header-size]v-\\n[pg*extra-header-size]v
-.	if (\\n[ds*height]>\\n[ds*i])&(\\n[.t]<(\\n[ds*i]/2)) \{\
-.		ne \\n[.t]u+1v
-.	\}
-.	if (\\n[ds*height]<\\n[ds*i])&(\\n[.t]<(\\n[ds*height])) \{\
-.		ne \\n[.t]u+1v
-.	\}
-.	if \\n[Ds] .SP \\n[Lsp]u
-.\}
-.el .SP \\n[Lsp]u
-.ds*div!\\n[ds*snr]
-.ie !\\n[ds*ffloat] .if \\n[Ds] .SP \\n[Lsp]u
-.el \{\
-.	SP \\n[Lsp]u
-.	di
-.\}
-.if \\n[ds*format]=2 'ce 0
-.if \\n[ds*format]=4 'rj 0
-.rm ds*div!\\n[ds*snr]
-.nr ds*snr -1
-.nr par@ind-flag 0
-.\"		move div to the floating display list
+.nr df*width!\\n+[df*fnr] \\n[dl]
+.nr df*height!\\n[df*fnr] \\n[dn]
+.nr df*wide!\\n[df*fnr] \\n[ds*wide]
+.nr df*format!\\n[df*fnr] \\n[ds*format]
 .ev
-.if \\n[ds*ffloat] \{\
-.	nr ds*fsize!\\n[ds*fnr] \\n[dn]
-.	\" print float if queue is empty and the display fits into
-.	\" the current page
-.	if (\\n[ds*fnr]>\\n[ds*o-fnr])&(\\n[ds*height]<\\n[.t]) \{\
-.		ds@print-float 1
-.	\}
-.\}
+.if \\n[D]>2 .tm DF:fnr=\\n[df*fnr] w=\\n[dl] h=\\n[dn] wide=\\n[ds*wide] \
+ form=\\n[ds*format]
+.\"	move div to the floating display list
+.rn df*div df*fdiv!\\n[df*fnr]
+.\"
+.nr par@ind-flag 0
+.\" print float if queue is empty and the display fits into
+.\" the current page
+.if ((\\n[df*fnr]>=\\n[df*o-fnr])&(\\n[dn]<\\n[.t])) .df@print-float 1
+.nr df*float 0
 ..
 .\"-------------
 .\" called by end-of-text
-.de ds@eot-print
-.if \\n[ds*o-fnr]<=\\n[ds*fnr] \{\
+.de df@eot-print
+.if \\n[df*o-fnr]<=\\n[df*fnr] \{\
 .	if \\n[D]>2 .tm Print remaining displays.
 .\" still some floats left, make non-empty environment
 .	misc@ev-keep ne
 .	init@reset
 \c
-.	ds@print-float 3
+.	df@print-float 3
 .	ev
 .\}
 ..
 .\"---------------
 .\" print according to Df and De.
-.\" .ds@print-float type
+.\" .df@print-float type
 .\"	type	called from
 .\"	1	.DE
 .\"	2	end of section
 .\"	3	end of document
 .\"	4	beginning of new page
 .\"
-.de ds@print-float
+.de df@print-float
 .if \\n[Df]>5 .@error "Df=\\n[Df], max value is 5"
 .if !\\n[ds*float-busy] \{\
 .	nr ds*float-busy 1
 .\" at .DE
 .	if (\\$1=1)&((\\n[Df]%2)=1) \{\
-.		if \\n[.t]>\\n[ds*fsize!\\n[ds*fnr]] \{\
+.		if \\n[.t]>\\n[df*height!\\n[df*o-fnr]] \{\
 .			\" Df = 1,3 or 5
 .			ds@print-one-float
 .		\}
@@ -1545,21 +1582,34 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"---------------
 .\" print a floating diversion
 .de ds@output-div
+.nr df*old-ll \\n[.l]
 .ev ds*fev
 .in 0
 .nf
-.ds*fdiv!\\n[ds*o-fnr]
+.nr df*i \\n[df*o-fnr]
+.nr df*f \\n[df*format!\\n[df*i]]
+.\"
+.if \\n[df*f]=2 'ce 9999
+.if \\n[df*f]=3 'in (u;(\\n[df*old-ll]-\\n[df*width!\\n[df*i]])/2)
+.if \\n[df*f]=4 'rj 9999
+.if \\n[df*f]=5 'in (u;\\n[df*old-ll]-\\n[df*width!\\n[df*i]])
+.\"
+.df*fdiv!\\n[df*o-fnr]
+.\"
+.if \\n[df*f]=2 'ce 0
+.if \\n[df*f]=4 'rj 0
 .ev
-.rm ds*fdiv!\\n[ds*o-fnr]
-.rm ds*fsize!\\n[ds*o-fnr]
-.rm ds*fformat!\\n[ds*o-fnr]
-.nr ds*o-fnr +1
+.rm df*fdiv!\\n[df*i]
+.rm df*height!\\n[df*i]
+.rm df*format!\\n[df*i]
+.if \\n[df*wide!\\n[df*i]] .nr pg*head-mark \\n[nl]u
+.nr df*o-fnr +1
 ..
 .\"---------------
 .\" print one floating display if there is one.
 .de ds@print-one-float
-.if \\n[ds*o-fnr]<=\\n[ds*fnr] \{\
-.	if \\n[.t]<\\n[ds*fsize!\\n[ds*o-fnr]] .pg@next-page
+.if \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .pg@next-page
 .	ds@output-div
 .	if \\n[De] .pg@next-page
 .\}
@@ -1568,8 +1618,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" print all queued floats.
 .\" if De>0 do a page eject between the floats.
 .de ds@print-all-floats
-.while \\n[ds*o-fnr]<=\\n[ds*fnr] \{\
-.	if \\n[.t]<\\n[ds*fsize!\\n[ds*o-fnr]] .pg@next-page
+.while \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .pg@next-page
 .	ds@output-div
 .	if \\n[De] .pg@next-page
 .\}
@@ -1577,10 +1627,135 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"---------------
 .\" print as many floats as will fit on the current page
 .de ds@print-this-page
-.while \\n[ds*o-fnr]<=\\n[ds*fnr] \{\
-.	if \\n[.t]<\\n[ds*fsize!\\n[ds*o-fnr]] .break
+.while \\n[df*o-fnr]<=\\n[df*fnr] \{\
+.	if \\n[.t]<\\n[df*height!\\n[df*o-fnr]] .break
 .	ds@output-div
 .\}
+..
+.\"---------------------------------------------------
+.\" get format of the display
+.de ds@set-format
+.ie \\n[.$] \{\
+.	ie r ds*format!\\$1 .nr ds*format \\n[ds*format!\\$1]
+.	el .@error "DS/DF:wrong format:\\$1"
+.\}
+.el .nr ds*format 0
+.if \\n[D]>2 .tm set format=\\n[ds*format]
+.\" fill or not to fill, that is the...
+.nr ds*fill 0
+.ie \\n[.$]>1 \{\
+.	ie r ds*fill!\\$2 .nr ds*fill \\n[ds*fill!\\$2]
+.	el .@error "\\*[ds*type]:wrong fill:\\$2"
+.\}
+.if \\n[D]>2 .tm set fill=\\n[ds*fill]
+.nr ds*rindent 0
+.if \\n[.$]>2 .nr ds*rindent \\$3
+.if \\n[D]>2 .tm set indent=\\n[ds*rindent]
+..
+.\"-----------------------------
+.\" .ds@set-new-ev previous-line-length
+.de ds@set-new-ev
+.ll \\$1u
+.lt \\$1u
+.if \\n[ds*rindent] \{\
+.	ll -\\n[ds*rindent]n
+.	lt -\\n[ds*rindent]n
+.\}
+.if \\n[ds*wide] \{\
+.	ll \\n[@ll]u
+.	lt \\n[@ll]u
+.\}
+.\"
+.ie \\n[ds*fill] 'fi
+.el 'nf
+.\"
+.if \\n[ds*format]=1 \{\
+.	ll -\\n[Si]n
+.	lt -\\n[Si]n
+'	in +\\n[Si]n
+.\}
+.if (\\n[ds*format]=3):(\\n[ds*format]=5) 'in 0
+..
+.\"--------------------------------------------------------
+.nr ds*format 0\"	dummy value for .En/.EQ
+.nr ds*format! 0\"	no indent
+.nr ds*format!0 0\"	no indent
+.nr ds*format!L 0\"	no indent
+.nr ds*format!I 1\"	indent
+.nr ds*format!1 1\"	indent
+.nr ds*format!C 2\"	center each line
+.nr ds*format!2 2\"	center each line
+.nr ds*format!CB 3\"	center as block
+.nr ds*format!3 3\"	center as block
+.nr ds*format!R 4\"	right justify each line
+.nr ds*format!4 4\"	right justify each line
+.nr ds*format!RB 5\"	right justify as block
+.nr ds*format!5 5\"	right justify as block
+.\"---------------
+.nr ds*fill! 0\"	no fill
+.nr ds*fill!N 0\"	no fill
+.nr ds*fill!0 0\"	no fill
+.nr ds*fill!F 1\"	fill on
+.nr ds*fill!1 1\"	fill on
+.\"--------------------------------------------
+.\" static display start
+.\" nested DS/DE is allowed. No limit on depth.
+.de DS
+.br
+.nr ds*lvl +1
+.ds@set-format \\$@
+.\"
+.nr ds*old-ll \\n[.l]
+.misc@push ds-ll \\n[.l]
+.misc@push ds-form \\n[ds*format]
+.nr ds*i \\n[.i]
+.nr ds*ftmp \\n[.f]
+.misc@ev-keep ds*ev!\\n+[ds*snr]
+.ft \\n[ds*ftmp]
+.\"
+.init@reset
+'in \\n[ds*i]u
+.di ds*div!\\n[ds*snr]
+.\"
+.ds@set-new-ev \\n[ds*old-ll]
+.nr df*float 0
+..
+.\"--------------------------------------------
+.de ds@end
+.if \\n-[ds*lvl]<0 .@error "DE: no corresponding DS"
+.br
+.di
+.nr ds*width \\n[dl]
+.nr ds*height \\n[dn]
+.misc@pop-nr ds-ll ds*old-ll
+.misc@pop-nr ds-form ds*format
+.if (\\n[ds*format]>=2)&(\\n[ds*width]>\\n[ds*old-ll]) \{\
+.	@error "DE: display too wide for current line-length"
+.\}
+.\"
+'in 0
+'nf
+.if \\n[ds*format]=2 'ce 9999
+.if \\n[ds*format]=3 'in (u;(\\n[ds*old-ll]-\\n[ds*width])/2)
+.if \\n[ds*format]=4 'rj 9999
+.if \\n[ds*format]=5 'in (u;\\n[ds*old-ll]-\\n[ds*width])
+.\"
+.\"	Print static display
+.\"	Eject page if display will fit one page and
+.\"	there are less than half of the page left.
+.nr ds*i \\n[pg*foot-trap]-\\n[pg*header-size]v-\\n[pg*extra-header-size]v
+.if (\\n[ds*height]>\\n[ds*i])&(\\n[.t]<(\\n[ds*i]/2)) .ne \\n[.t]u+1v
+.if (\\n[ds*height]<\\n[ds*i])&(\\n[.t]<(\\n[ds*height])) .ne \\n[.t]u+1v
+.if \\n[Ds] .SP \\n[Lsp]u
+.ds*div!\\n[ds*snr]
+.if \\n[Ds] .SP \\n[Lsp]u
+.\"
+.if \\n[ds*format]=2 'ce 0
+.if \\n[ds*format]=4 'rj 0
+.rm ds*div!\\n[ds*snr]
+.nr ds*snr -1
+.nr par@ind-flag 0
+.ev
 ..
 .\"########### module list ###################
 .\" .LI text-indent mark-indent pad type [mark [LI-space [LB-space] ] ]
@@ -1592,6 +1767,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .ds li*mark 0
 .nr li*li-spc 0
 .nr li*lvl 0 1
+.aln :g li*lvl
 .nr li*cur-vpos 0
 .\"--------------------------
 .\"	the major list-begin macro.
@@ -1645,6 +1821,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"
 .\" determine where the text begins
 .nr li*text-begin \\n[li*tind]>?\w@\\*[li*c-mark]\ @
+.nr x \w@\\*[li*c-mark]\ @
 .\"
 .\" determine where the mark begin
 .ie !\\n[li*pad] .nr li*in \\n[li*mind]
@@ -1677,10 +1854,12 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\"-------------
 .\"	list status clear.
+.\"	terminate all lists to level i
 .de LC
-.if !\\n[.$]=1 .@error "LC: no argument"
-.if \\$1>\\n[li*lvl] .@error "LC: incorrect argument: \\$1 (too big)"
-.while \\n[li*lvl]>\\$1 .li@pop
+.ie \\n[.$]<1 .nr li*i 0
+.el .nr li*i \\$1
+.if \\n[li*i]>\\n[li*lvl] .@error "LC: incorrect argument: \\n[li*i] (too big)"
+.while \\n[li*lvl]>\\n[li*i] .li@pop
 .nr par@ind-flag 0
 ..
 .\"-------------
@@ -1789,6 +1968,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .nr tbl*header-written 1
 ..
 .de TH
+.if '\\$1'N' @error TH: N not implemented yet. Sorry.
 .ie '\\n[.z]'tbl*header-div' \{\
 .	nr T. 0
 .	T#
@@ -1896,7 +2076,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de TC
 .br
 .\" print any pending displays and references
-.ds@print-float 3
+.df@print-float 3
 .if \\n[ref*flag] .RP 0 1
 .\"
 .if \w@\\$1@>0 .nr toc*slevel \\$1
@@ -2085,7 +2265,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 \!.init@reset
 \!.br
 \!.ie (\w@\\$1\\$2@)>(\\n[.l]-\\n[.i]) \{\
-\!.	in +\w@\\$1@u
+.	in +\w@\\$1@u
 \!.	ti 0
 \!.\}
 \!.el .ce 1
@@ -2186,6 +2366,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" jump to new environment.
 .ev box*ev
 .di box*div
+.ps \\n[@ps]
+.vs \\n[@vs]
 .in 1n
 .ll (u;\\n[box*wid]-1n)
 .hy \\n[.hy]
@@ -2218,33 +2400,51 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 ..
 .\"########################### module ref ############################
 .nr ref*nr 0 1
+.aln :R ref*nr
 .nr ref*nr-width 5n
 .nr ref*flag 0		\" for end-of-text
 .ds Rf \v'-.4m'\s-3[\\n+[ref*nr]]\s0\v'.4m'
 .\"
 .\" start reference
+.\"------------
 .de RS
-.if !''\\$1' .ds \\$1 \\n[ref*nr]
+.if !''\\$1' .ds \\$1 \v'-.4m'\s-3[\\n[ref*nr]]\s0\v'.4m'
 .nr ref*flag 1
-.ev ref*ev
-.da ref*div
-.init@reset
-.ll \\n[@ll]u
+.am ref*mac
+.ref@start-print \\n[ref*nr]
+\\..
+.eo
+.am ref*mac RF
+..
+.\"------------
+.de RF
+.ec
+.am ref*mac
+.ref@stop-print
+\\..
+..
+.\"------------
+.de ref@start-print
+.di ref*div
 .in \\n[ref*nr-width]u
-.ti -(\w@\\n[ref*nr].@u+1n)
-\\n[ref*nr].
+.ti -(\w@\\$1.@u+1n)
+\\$1.
 .sp -1
 ..
-.de RF
+.de ref@stop-print
 .br
-.if \\n[Ls] .SP \\n[Lsp]u
 .di
+.ne \\n[dn]u
+.ev ref*ev2
+.nf
+.ref*div
 .ev
+.rm ref*div
+.if \\n[Ls] .SP \\n[Lsp]u
 ..
 .\"-----------
 .de RP
-.if !d ref*div .@error "RP: No references!"
-.nr ref*flag 0
+.if !d ref*mac .@error "RP: No references!"
 .nr ref*i 0\\$2
 .if \\n[ref*i]<2 .SK
 .SP 2
@@ -2255,7 +2455,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"-----------
 .\" called by end-of-text!
 .de ref@eot-print
-.if \\n[ref*flag] \{\
+.\".if \\n[ref*flag] \{
+.if d ref*mac \{\
 .	if \\n[D]>2 .tm Print references, called by eot
 .	nr ref*flag 0
 .	br
@@ -2271,16 +2472,18 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\" prints the references
 .de ref@print-refs
 .toc@save 1 "" "\\*[Rp]" \\n[%]
-.ev ref*ev
 .ce
 \fI\\*[Rp]\fP
 .sp
+.nr ref*ll \\n[.l]
+.misc@ev-keep ref*ev
+.ll \\n[ref*ll]u
 .in 0
-.nf
-.ref*div
+.ref*mac
 .in
-.rm ref*div
+.rm ref*mac
 .ev
+.nr ref*flag 0 1
 ..
 .\"########################### module app ############################
 .\" 
@@ -2358,6 +2561,7 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .\"
 .nr cov*au 0
 .de TL
+.rm IA IE WA WE LO LT
 .if \\n[.$]>0 .ds cov*title-charge-case \\$1
 .if \\n[.$]>1 .ds cov*title-file-case \\$2
 .pg@disable-top-trap
@@ -2420,7 +2624,6 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .el .ds cov*new-date \\*[MO\\n[mo]] \\n[dy], 19\\n[yr]
 .als DT cov*new-date
 .de ND
-.\" don't remember why I did this: .pg@disable-top-trap
 .ds cov*new-date \\$1
 ..
 .\"-------------------
@@ -2579,4 +2782,305 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 \\*[Qrf]
 .	\}
 .\}
+..
+.\"########################### module let ############################
+.\" Letter macros
+.\"------------------------
+.\" Formal closing
+.de FC
+.df@print-float 3
+.ie \\n[.$] .ds let*i \\$1
+.el .ds let*i \\*[Letfc]
+.ie d let*type .let@fc_\\*[let*type] "\\*[let*i]" \\$@
+.el .let@mt-closing "\\*[let*i]" \\$@
+..
+.\"-------
+.de let@mt-closing
+.ne 5v
+.in (u;\\n[.l]/2)
+.sp
+\\$1
+.in
+..
+.\"------------------------
+.\" Signature line
+.de SG
+.ie d let*type .let*lt-sign \\$@
+.el .let*mt-sign \\$@
+..
+.\"------------------------
+.de let*lt-sign
+.if !d let@sg_\\*[let*type] .@error "SG: letter type \\*[let*type] undefined"
+.df@print-float 3
+.nr let*i 0 1
+.nr let*j 0
+.while \\n+[let*i]<=\\n[let*wa-n] \{\
+.if \\n[let*i]=\\n[let*wa-n] .nr let*j 1
+.let@sg_\\*[let*type] "\\*[let*wa-name!\\n[let*i]]" "\\*[let*wa-title!\\n[let*i]]" \\n[let*i] \\n[let*j] \\$@
+.\}
+..
+.\"------------------------
+.\" Memorandum signature
+.de let*mt-sign
+.df@print-float 3
+.ne \\n[cov*au]u*4v
+.ie \\n[.$]>1 .nr let*k 1
+.el .nr let*k \\n[cov*au]
+.ds let*tmp \\*[cov*au!\\n[let*k]!3]-\\*[cov*au!\\n[let*k]!4]-
+.nr let*i 0 1
+.while \\n+[let*i]<=\\n[cov*au] \{\
+.	if \\n[let*i]>1 .as let*tmp /
+.	as let*tmp \\*[cov*au!\\n[let*k]!2]
+.\}
+.if !''\\$1' .as let*tmp -\\$1
+.in (u;\\n[.l]/2)
+.nf
+.nr let*i 0 1
+.while \\n+[let*i]<=\\n[cov*au] \{\
+.	SP 3v
+.	if \\n[let*i]=\\n[let*k] \{\
+\Z'\h'-(u;\\n[.l]/2)'\\*[let*tmp]'\c
+.	\}
+\\*[cov*au!\\n[let*i]!1]
+.\}
+.fi
+.in
+..
+.\"------------------------
+.\" Approval signature
+.de AV
+.ne 6v
+.nf
+.sp
+.ie \\n[.$]<2 \\*[Letapp]
+.el .sp
+.sp 2
+.ie n ______________________________      ______________
+.el \D'l 25m 0'\h'4m'\D'l 12m 0'
+\Z'\\$1'\h'29m'\\*[Letdate]
+.fi
+..
+.\"------------------------
+.\" Letter type
+.\" let@header is called from the header. It is supposed
+.\" to remove the alias itself.
+.de LT
+.rm AF AS AE AT AU CS OK TL MT
+.ds let*type BL
+.nr Pi 5
+.nr Pt 0
+.if !''\\$1' .ds let*type \\$1
+.if !d let@head_\\*[let*type] .@error "LT: unknown letter type \\$1"
+.shift
+.als let@header let@head_\\*[let*type]
+.let@init_\\*[let*type] \\$@
+.if \n[D]>1 .tm Letter type \\*[let*type]
+..
+.\"-----------
+.\" Blocked letter
+.de let@init_BL
+..
+.de let@head_BL
+.rm let@header
+.let@print-head 1
+..
+.de let@sg_BL
+.ne 5v
+.nf
+.in (u;\\n[.l]/2)
+.sp 3v
+\\$1
+\\$2
+.in
+.if \\$4 .sp
+.if \w'\\$5'&\\$4 \\$5
+.fi
+..
+.als let@fc_BL let@mt-closing
+.\"-----------
+.\" Semiblocked letter
+.de let@init_SB
+.nr Pt 1
+..
+.de let@head_SB
+.rm let@header
+.let@print-head 1
+..
+.als let@sg_SB let@sg_BL
+.als let@fc_SB let@mt-closing
+.\"-----------
+.\" Full-blocked letter
+.de let@init_FB
+..
+.de let@head_FB
+.rm let@header
+.let@print-head
+..
+.de let@sg_FB
+.ne 5v
+.nf
+.sp 3v
+\\$1
+\\$2
+.if \\$4 .sp
+.if \w'\\$5'&\\$4 \\$5
+.fi
+..
+.de let@fc_FB
+.ne 5v
+.sp
+\\$1
+..
+.\"-----------
+.\" Simplified letter
+.de let@init_SP
+..
+.de let@head_SP
+.rm let@header
+.let@print-head
+..
+.de let@sg_SP
+.nf
+.if \\$3=1 .sp
+.sp
+.misc@toupper "\\$1, \\$2"
+.if \\$4 .sp
+.if \w'\\$5'&\\$4 \\$5
+.fi
+..
+.de let@fc_SP
+.sp 2
+..
+.\"--------------------------------------
+.\" Print the letter-head
+.de let@print-head
+.nf
+.sp |11
+.if '1'\\$1' .in (u;\\n[.l]/2)
+.\" ---- WA
+.ie d let@wa-div .let@wa-div
+.el .sp 3
+.\" ---- datum
+\\*[cov*new-date]
+.sp
+.if '1'\\$1' .if !d let*lo-CN .if !d let*lo-RN .sp 2
+.\" ---- Confidential
+.if d let*lo-CN \{\
+.	ti 0
+.	ie !''\\*[let*lo-CN]' \\*[let*lo-CN]
+.	el \\*[LetCN]
+.	sp
+.\}
+.\" ---- Reference
+.if d let*lo-RN \{\
+\\*[LetRN] \\*[let*lo-RN]
+.	sp
+.\}
+.\" ---- IA
+.sp
+.in 0
+.nr let*i 0 1
+.while \\n+[let*i]<=\\n[let*ia-n] \{\
+\\*[let*ia-name!\\n[let*i]]
+\\*[let*ia-title!\\n[let*i]]
+.\}
+.if d let@ia-div .let@ia-div
+.\" ---- Attention
+.if d let*lo-AT \{\
+.	sp
+\\*[LetAT] \\*[let*lo-AT]
+.\}
+.\" ---- Salutation
+.if !'\\*[let*type]'SP' .if d let*lo-SA \{\
+.	sp
+.	ti 0
+.	ie !''\\*[let*lo-SA]' \\*[let*lo-SA]
+.	el \\*[LetSA]
+.\}
+.\" ---- Subject
+.if d let*lo-SJ \{\
+.	ie '\\*[let*type]'SP' \{\
+.		sp 2
+.		misc@toupper \\*[let*lo-SJ]
+.		sp
+.	\}
+.	el \{\
+.		sp
+.		if '\\*[let*type]'SB' .ti +5m
+\\*[LetSJ] \\*[let*lo-SJ]
+.	\}
+.\}
+..
+.\"-------------------
+.\" .IA [name [title]]
+.nr let*ia-n 0 1
+.de IA
+.if \\n[.$] .ds let*ia-name!\\n+[let*ia-n] \\$1
+.if \\n[.$]>1 .ds let*ia-title!\\n[let*ia-n] \\$2
+.ev let@ev
+'nf
+.di let@ia-div
+.eo
+..
+.de IE
+.di
+.ec
+.ev
+..
+.\"-------------------
+.\" .WA [name [title]]
+.nr let*wa-n 0 1
+.de WA
+.if \\n[.$] .ds let*wa-name!\\n+[let*wa-n] \\$1
+.if \\n[.$]>1 .ds let*wa-title!\\n[let*wa-n] \\$2
+.ev let@ev
+'nf
+.di let@wa-div
+.it \\n[Letwam] let@wa-drain
+.eo
+..
+.\"------
+.de let@wa-drain
+.it
+.di
+.di let@wa-junk
+..
+.\"------
+.de WE
+.it
+.ec
+.di
+.ev
+.if d let@wa-junk .rm let@wa-junk
+..
+.\"-------------------
+.\" Copy to
+.de NS
+.sp
+.ie !''\\$2' .ds let*str \\$1
+.el \{\
+.	ie \\n[.$]>0 \{\
+.		ie !\w'\\$1' .ds let*str \\*[Letns!\\*[Letnsdef]]
+.		el \{\
+.			ie d Letns!\\$1 .ds let*str \\*[Letns!\\$1]
+.			el .ds let*str \\*[Letns!copy](\\$1)\\*[Letns!to]
+.		\}
+.	\}
+.	el .ds let*str \\*[Letns!\\*[Letnsdef]]
+.\}
+.ne 2
+.nf
+\\*[let*str]
+..
+.de NE
+.fi
+..
+.\"-------------------
+.\" Letter options
+.de LO
+.rm AF AS AE AT AU CS OK TL MT
+.if ''\\$1' .@error "LO: missing option"
+.if !d Let\\$1 .@error "LO: unknown option (\\$1)"
+.ds let*lo-\\$1 \\$2
+.if \n[D]>1 .tm Letter option \\$1 \\$2
 ..

@@ -16,10 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: object.h,v 1.3 1993/08/02 17:44:46 mycroft Exp $
-*/
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 struct place;
 
@@ -81,12 +78,14 @@ struct string_list;
 class path {
   corner crn;
   string_list *label_list;
+  path *ypath;
 public:
   path(corner = 0);
   path(char *, corner = 0);
   ~path();
   void append(corner);
   void append(char *);
+  void set_ypath(path *);
   int follow(const place &, place *) const;
 };
 
@@ -113,7 +112,7 @@ struct graphics_state {
   direction dir;
 };
 
-struct saved_state : graphics_state {
+struct saved_state : public graphics_state {
   saved_state *prev;
   PTABLE(place) *tbl;
 };

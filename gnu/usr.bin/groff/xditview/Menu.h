@@ -1,4 +1,6 @@
-/*	$Id: Menu.h,v 1.2 1993/08/02 17:45:55 mycroft Exp $ */
+/*
+ * $XConsortium: Menu.h,v 1.2 89/07/21 14:22:10 jim Exp $
+ */
 
 #ifndef _XtMenu_h
 #define _XtMenu_h

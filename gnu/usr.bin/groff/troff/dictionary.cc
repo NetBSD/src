@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 
 #include "troff.h"
@@ -28,7 +28,8 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 static int is_good_size(int p)
 {
   const int SMALL = 10;
-  unsigned i; for (i = 2; i <= p/2; i++)
+  unsigned i;
+  for (i = 2; i <= p/2; i++)
     if (p % i == 0)
       return 0;
   for (i = 0x100; i != 0; i <<= 8)
@@ -40,8 +41,6 @@ static int is_good_size(int p)
 dictionary::dictionary(int n) : threshold(0.5), factor(1.5), used(0), size(n)
 {
   table = new association[n];
-  for (int i = 0; i < n; i++)
-    table[i].v = 0;
 }
 
 // see Knuth, Sorting and Searching, p518, Algorithm L
@@ -49,7 +48,8 @@ dictionary::dictionary(int n) : threshold(0.5), factor(1.5), used(0), size(n)
 
 void *dictionary::lookup(symbol s, void *v)
 {
-  int i; for (i = int(s.hash() % size); 
+  int i;
+  for (i = int(s.hash() % size); 
        table[i].v != 0;
        i == 0 ? i = size - 1: --i)
     if (s == table[i].s) {
@@ -96,7 +96,8 @@ void *dictionary::lookup(const char *p)
 void *dictionary::remove(symbol s)
 {
   // this relies on the fact that we are using linear probing
-  int i; for (i = int(s.hash() % size);
+  int i;
+  for (i = int(s.hash() % size);
        table[i].v != 0 && s != table[i].s;
        i == 0 ? i = size - 1: --i)
     ;
@@ -112,7 +113,7 @@ void *dictionary::remove(symbol s)
       if (table[i].v == 0)
 	break;
       r = int(table[i].s.hash() % size);
-    } while ((i <= r && r < j) || (j < i && i <= r));
+    } while ((i <= r && r < j) || (r < j && j < i) || (j < i && i <= r));
     table[j] = table[i];
   }
   if (p != 0)

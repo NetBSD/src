@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "troff.h"
 #include "symbol.h"
@@ -36,6 +36,17 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 // Needed for getpid().
 #include "posix.h"
+
+#ifdef ISATTY_MISSING
+#undef isatty
+#define isatty(n) (1)
+#else /* not ISATTY_MISSING */
+#ifndef isatty
+extern "C" {
+  int isatty(int);
+}
+#endif /* not isatty */
+#endif /* not ISATTY_MISSING */
 
 #define USAGE_EXIT_CODE 1
 #define MACRO_PREFIX "tmac."
@@ -69,25 +80,33 @@ const char *program_name = 0;
 token tok;
 int break_flag = 0;
 static int backtrace_flag = 0;
+#ifndef POPEN_MISSING
 char *pipe_command = 0;
+#endif
 charinfo *charset_table[256];
 
 static int warning_mask = DEFAULT_WARNING_MASK;
 static int inhibit_errors = 0;
+static int ignoring = 0;
 
 static void enable_warning(const char *);
 static void disable_warning(const char *);
 
 static int escape_char = '\\';
 static symbol end_macro_name;
+static symbol blank_line_macro_name;
 static int compatible_flag = 0;
-static void process_input_stack();
 int ascii_output_flag = 0;
 int suppress_output_flag = 0;
 
 int tcommand_flag = 0;
 
 static int get_copy(node**, int = 0);
+static void copy_mode_error(const char *,
+			    const errarg & = empty_errarg,
+			    const errarg & = empty_errarg,
+			    const errarg & = empty_errarg);
+
 static symbol read_escape_name();
 static void interpolate_string(symbol);
 static void interpolate_macro(symbol);
@@ -102,6 +121,7 @@ static int get_line_arg(units *res, int si, charinfo **cp);
 static int read_size(int *);
 static symbol get_delim_name();
 static void init_registers();
+static void trapping_blank_line();
 
 struct input_iterator;
 input_iterator *make_temp_iterator(const char *);
@@ -225,11 +245,13 @@ class file_iterator : public input_iterator {
   FILE *fp;
   int lineno;
   const char *filename;
+  int popened;
   int newline_flag;
   enum { BUF_SIZE = 512 };
   unsigned char buf[BUF_SIZE];
+  void close();
 public:
-  file_iterator(FILE *, const char *);
+  file_iterator(FILE *, const char *, int = 0);
   ~file_iterator();
   int fill(node **);
   int peek();
@@ -240,17 +262,26 @@ public:
   int is_file();
 };
 
-file_iterator::file_iterator(FILE *f, const char *fn)
-: fp(f), filename(fn), lineno(1), newline_flag(0)
+file_iterator::file_iterator(FILE *f, const char *fn, int po)
+: fp(f), filename(fn), lineno(1), newline_flag(0), popened(po)
 {
 }
 
 file_iterator::~file_iterator()
 {
-  if (fp != stdin)
-    fclose(fp);
-  else
+  close();
+}
+
+void file_iterator::close()
+{
+  if (fp == stdin)
     clearerr(stdin);
+#ifndef POPEN_MISSING
+  else if (popened)
+    pclose(fp);
+#endif /* not POPEN_MISSING */
+  else
+    fclose(fp);
 }
 
 int file_iterator::is_file()
@@ -260,14 +291,12 @@ int file_iterator::is_file()
 
 int file_iterator::next_file(FILE *f, const char *s)
 {
-  if (fp != stdin)
-    fclose(fp);
-  else
-    clearerr(stdin);
+  close();
   filename = s;
   fp = f;
   lineno = 1;
   newline_flag = 0;
+  popened = 0;
   ptr = 0;
   eptr = 0;
   return 1;
@@ -330,7 +359,8 @@ int file_iterator::get_location(int /*allow_macro*/,
 
 void file_iterator::backtrace()
 {
-  errprint("%1:%2: backtrace: file `%1'\n", filename, lineno);
+  errprint("%1:%2: backtrace: %3 `%1'\n", filename, lineno,
+	   popened ? "process" : "file");
 }
 
 int file_iterator::set_location(const char *f, int ln)
@@ -513,7 +543,8 @@ int input_stack::set_location(const char *filename, int lineno)
 
 void input_stack::next_file(FILE *fp, const char *s)
 {
-  input_iterator **pp; for (pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
+  input_iterator **pp;
+  for (pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
     if ((*pp)->next_file(fp, s))
       return;
   if (++level > limit && limit > 0)
@@ -589,18 +620,21 @@ static int get_char_for_escape_name()
   int c = get_copy(NULL);
   switch (c) {
   case EOF:
-    error("end of input in escape name");
+    copy_mode_error("end of input in escape name");
     return '\0';
   default:
     if (!illegal_input_char(c))
       break;
     // fall through
-  case ' ':
   case '\n':
+    if (c == '\n')
+      input_stack::push(make_temp_iterator("\n"));
+  case ' ':
   case '\t':
   case '\001':
   case '\b':
-    error("%1 is not allowed in an escape name", input_char_description(c));
+    copy_mode_error("%1 is not allowed in an escape name",
+		    input_char_description(c));
     return '\0';
   }
   return c;
@@ -655,7 +689,7 @@ static symbol read_long_escape_name()
   buf[i] = 0;
   if (buf == abuf) {
     if (i == 0) {
-      error("empty escape name");
+      copy_mode_error("empty escape name");
       return NULL_SYMBOL;
     }
     return symbol(abuf);
@@ -1400,7 +1434,8 @@ void token::next()
 	  symbol s = read_escape_name();
 	  if (s.is_null())
 	    break;
-	  const char *p; for (p = s.contents(); *p != '\0'; p++)
+	  const char *p;
+	  for (p = s.contents(); *p != '\0'; p++)
 	    if (!csdigit(*p))
 	      break;
 	  if (*p)
@@ -1822,7 +1857,7 @@ symbol get_long_name(int required)
   }
 }
 
-NO_RETURN void exit_troff()
+void exit_troff()
 {
   exit_started = 1;
   topdiv->set_last_page();
@@ -1869,6 +1904,20 @@ void end_macro()
 {
   end_macro_name = get_name();
   skip_line();
+}
+
+void blank_line_macro()
+{
+  blank_line_macro_name = get_name();
+  skip_line();
+}
+
+static void trapping_blank_line()
+{
+  if (!blank_line_macro_name.is_null())
+    spring_trap(blank_line_macro_name);
+  else
+    blank_line();
 }
 
 void do_request()
@@ -1980,7 +2029,7 @@ int node::reread(int *)
 int diverted_space_node::reread(int *bolp)
 {
   if (curenv->get_fill())
-    blank_line();
+    trapping_blank_line();
   else
     curdiv->space(n);
   *bolp = 1;
@@ -1994,7 +2043,7 @@ int diverted_copy_file_node::reread(int *bolp)
   return 1;
 }
 
-static void process_input_stack()
+void process_input_stack()
 {
   int_stack trap_bol_stack;
   int bol = 1;
@@ -2061,7 +2110,7 @@ static void process_input_stack()
     case token::TOKEN_NEWLINE:
       {
 	if (bol && !curenv->get_prev_line_interrupted())
-	  blank_line();
+	  trapping_blank_line();
 	else {
 	  curenv->newline();
 	  bol = 1;
@@ -2105,7 +2154,7 @@ static void process_input_stack()
 	    tok.next();
 	  } while (tok.space());
 	  if (tok.newline())
-	    blank_line();
+	    trapping_blank_line();
 	  else {
 	    push_token(tok);
 	    curenv->do_break();
@@ -2702,7 +2751,7 @@ class macro_iterator : public string_iterator {
   arg_list *args;
   int argc;
 public:
-  macro_iterator(symbol, macro &);
+  macro_iterator(symbol, macro &, const char *how_invoked = "macro");
   macro_iterator();
   ~macro_iterator();
   int has_args() { return 1; }
@@ -2730,7 +2779,8 @@ input_iterator *macro_iterator::get_arg(int i)
 
 void macro_iterator::add_arg(const macro &m)
 {
-  arg_list **p; for (p = &args; *p; p = &((*p)->next))
+  arg_list **p;
+  for (p = &args; *p; p = &((*p)->next))
     ;
   *p = new arg_list(m);
   ++argc;
@@ -2800,7 +2850,8 @@ static void interpolate_macro(symbol nm)
 	macro *m = r->to_macro();
 	if (!m || !m->empty())
 	  warned = warning(WARN_SPACE,
-			   "space required between `%1' and argument", buf);
+			   "`%1' not defined (probable missing space after `%2')",
+			   nm.contents(), buf);
       }
     }
     if (!warned) {
@@ -2829,6 +2880,7 @@ static void decode_args(macro_iterator *mi)
 	break;
       macro arg;
       int quote_input_level = 0;
+      int done_tab_warning = 0;
       if (c == '\"') {
 	quote_input_level = input_stack::get_level();
 	c = get_copy(&n);
@@ -2848,8 +2900,13 @@ static void decode_args(macro_iterator *mi)
 	else {
 	  if (c == 0)
 	    arg.append(n);
-	  else
+	  else {
+	    if (c == '\t' && quote_input_level == 0 && !done_tab_warning) {
+	      warning(WARN_TAB, "tab character in unquoted macro argument");
+	      done_tab_warning = 1;
+	    }
 	    arg.append(c);
+	  }
 	  c = get_copy(&n);
 	}
       }
@@ -2876,8 +2933,8 @@ int macro::empty()
   return length == 0;
 }
 
-macro_iterator::macro_iterator(symbol s, macro &m)
-: string_iterator(m, "macro", s), args(0), argc(0)
+macro_iterator::macro_iterator(symbol s, macro &m, const char *how_invoked)
+: string_iterator(m, how_invoked, s), args(0), argc(0)
 {
 }
 
@@ -2894,9 +2951,51 @@ macro_iterator::~macro_iterator()
   }
 }
 
+int trap_sprung_flag = 0;
+int postpone_traps_flag = 0;
+symbol postponed_trap;
+
+void spring_trap(symbol nm)
+{
+  assert(!nm.is_null());
+  trap_sprung_flag = 1;
+  if (postpone_traps_flag) {
+    postponed_trap = nm;
+    return;
+  }
+  static char buf[2] = { BEGIN_TRAP, 0 };
+  static char buf2[2] = { END_TRAP, '\0' };
+  input_stack::push(make_temp_iterator(buf2));
+  request_or_macro *p = lookup_request(nm);
+  macro *m = p->to_macro();
+  if (m)
+    input_stack::push(new macro_iterator(nm, *m, "trap-invoked macro"));
+  else
+    error("you can't invoke a request with a trap");
+  input_stack::push(make_temp_iterator(buf));
+}
+
+void postpone_traps()
+{
+  postpone_traps_flag = 1;
+}
+
+int unpostpone_traps()
+{
+  postpone_traps_flag = 0;
+  if (!postponed_trap.is_null()) {
+    spring_trap(postponed_trap);
+    postponed_trap = NULL_SYMBOL;
+    return 1;
+  }
+  else
+    return 0;
+}
+
 void read_request()
 {
   macro_iterator *mi = new macro_iterator;
+  int reading_from_terminal = isatty(fileno(stdin));
   int had_prompt = 0;
   if (!tok.newline() && !tok.eof()) {
     int c = get_copy(NULL);
@@ -2904,7 +3003,8 @@ void read_request()
       c = get_copy(NULL);
     while (c != EOF && c != '\n' && c != ' ') {
       if (!illegal_input_char(c)) {
-	fputc(c, stderr);
+	if (reading_from_terminal)
+	  fputc(c, stderr);
 	had_prompt = 1;
       }
       c = get_copy(NULL);
@@ -2914,8 +3014,10 @@ void read_request()
       decode_args(mi);
     }
   }
-  fputc(had_prompt ? ':' : '\007', stderr);
-  fflush(stderr);
+  if (reading_from_terminal) {
+    fputc(had_prompt ? ':' : '\007', stderr);
+    fflush(stderr);
+  }
   input_stack::push(mi);
   macro mac;
   int nl = 0;
@@ -2935,10 +3037,11 @@ void read_request()
       mac.append(c);
     }
   }
+  if (reading_from_terminal)
+    clearerr(stdin);
   input_stack::push(new string_iterator(mac));
   tok.next();
 }
-
 
 void do_define_string(int append)
 {
@@ -3089,7 +3192,7 @@ static void interpolate_arg(symbol nm)
 {
   const char *s = nm.contents();
   if (!s || *s == '\0')
-    error("missing argument name");
+    copy_mode_error("missing argument name");
   else if (s[1] == 0 && csdigit(s[0]))
     input_stack::push(input_stack::get_arg(s[0] - '0'));
   else if (s[0] == '*' && s[1] == '\0') {
@@ -3107,10 +3210,11 @@ static void interpolate_arg(symbol nm)
     }
   }
   else {
-    const char *p; for (p = s; *p && csdigit(*p); p++)
+    const char *p;
+    for (p = s; *p && csdigit(*p); p++)
       ;
     if (*p)
-      error("bad argument name `%1'", s);
+      copy_mode_error("bad argument name `%1'", s);
     else
       input_stack::push(input_stack::get_arg(atoi(s)));
   }
@@ -3154,47 +3258,6 @@ void handle_initial_request(unsigned char code)
 void handle_initial_title()
 {
   handle_initial_request(TITLE_REQUEST);
-}
-
-int trap_sprung_flag = 0;
-int postpone_traps_flag = 0;
-symbol postponed_trap;
-
-void spring_trap(symbol nm)
-{
-  assert(!nm.is_null());
-  trap_sprung_flag = 1;
-  if (postpone_traps_flag) {
-    postponed_trap = nm;
-    return;
-  }
-  static char buf[2] = { BEGIN_TRAP, 0 };
-  static char buf2[2] = { END_TRAP, '\0' };
-  input_stack::push(make_temp_iterator(buf2));
-  request_or_macro *p = lookup_request(nm);
-  macro *m = p->to_macro();
-  if (m)
-    input_stack::push(new string_iterator(*m, "trap-invoked macro", nm));
-  else
-    error("you can't invoke a request with a trap");
-  input_stack::push(make_temp_iterator(buf));
-}
-
-void postpone_traps()
-{
-  postpone_traps_flag = 1;
-}
-
-int unpostpone_traps()
-{
-  postpone_traps_flag = 0;
-  if (!postponed_trap.is_null()) {
-    spring_trap(postponed_trap);
-    postponed_trap = NULL_SYMBOL;
-    return 1;
-  }
-  else
-    return 0;
 }
 
 // this should be local to define_macro, but cfront 1.2 doesn't support that
@@ -3245,7 +3308,8 @@ void do_define_macro(define_mode mode)
       const char *s = term.contents();
       int d;
       // see if it matches term
-      int i; for (i = 0; s[i] != 0; i++) {
+      int i;
+      for (i = 0; s[i] != 0; i++) {
 	d = get_copy(&n);
 	if ((unsigned char)s[i] != d)
 	  break;
@@ -3265,8 +3329,10 @@ void do_define_macro(define_mode mode)
 		  }
 		  *mm = mac;
 		}
-		if (term != dot_symbol)
+		if (term != dot_symbol) {
+		  ignoring = 0;
 		  interpolate_macro(term);
+		}
 		else
 		  skip_line();
 		return;
@@ -3320,7 +3386,9 @@ void append_macro()
 
 void ignore()
 {
+  ignoring = 1;
   do_define_macro(DEFINE_IGNORE);
+  ignoring = 0;
 }
 
 void remove_macro()
@@ -3370,6 +3438,66 @@ void chop_macro()
       error("cannot chop empty macro");
     else
       m->length -= 1;
+  }
+  skip_line();
+}
+
+void substring_macro()
+{
+  int start;
+  symbol s = get_name(1);
+  if (!s.is_null() && get_integer(&start)) {
+    request_or_macro *p = lookup_request(s);
+    macro *m = p->to_macro();
+    if (!m)
+      error("cannot substring request");
+    else {
+      if (start <= 0)
+	start += m->length;
+      else
+	start--;
+      int end = 0;
+      if (!has_arg() || get_integer(&end)) {
+	if (end <= 0)
+	  end += m->length;
+	else
+	  end--;
+	if (start > end) {
+	  int tem = start;
+	  start = end;
+	  end = tem;
+	}
+	if (start >= m->length || start == end) {
+	  m->length = 0;
+	  if (m->p) {
+	    if (--(m->p->count) <= 0)
+	      delete m->p;
+	    m->p = 0;
+	  }
+	}
+	else if (start == 0)
+	  m->length = end;
+	else {
+	  string_iterator iter(*m);
+	  int i;
+	  for (i = 0; i < start; i++)
+	    if (iter.get(0) == EOF)
+	      break;
+	  macro mac;
+	  for (; i < end; i++) {
+	    node *nd;
+	    int c = iter.get(&nd);
+	    if (c == EOF)
+	      break;
+	    if (c == 0)
+	      mac.append(nd);
+	    else
+	      mac.append((unsigned char)c);
+	  }
+	  *m = mac;
+	}
+      }
+    }
   }
   skip_line();
 }
@@ -4016,8 +4144,8 @@ int do_if_request()
     result = same_node_list(n1, n2);
     delete_node_list(n1);
     delete_node_list(n2);
-    tok.next();
     curenv = oldenv;
+    tok.next();
   }
   else {
     units n;
@@ -4169,6 +4297,50 @@ void source()
       error("can't open `%1': %2", nm.contents(), strerror(errno));
     tok.next();
   }
+}
+
+// like .so but use popen()
+
+void pipe_source()
+{
+#ifdef POPEN_MISSING
+  error("pipes not available on this system");
+  skip_line();
+#else /* not POPEN_MISSING */
+  if (tok.newline() || tok.eof())
+    error("missing command");
+  else {
+    int c;
+    while ((c = get_copy(NULL)) == ' ' || c == '\t')
+      ;
+    int buf_size = 24;
+    char *buf = new char[buf_size];
+    int buf_used = 0;
+    for (; c != '\n' && c != EOF; c = get_copy(NULL)) {
+      const char *s = asciify(c);
+      int slen = strlen(s);
+      if (buf_used + slen + 1> buf_size) {
+	char *old_buf = buf;
+	int old_buf_size = buf_size;
+	buf_size *= 2;
+	buf = new char[buf_size];
+	memcpy(buf, old_buf, old_buf_size);
+	a_delete old_buf;
+      }
+      strcpy(buf + buf_used, s);
+      buf_used += slen;
+    }
+    buf[buf_used] = '\0';
+    errno = 0;
+    FILE *fp = popen(buf, "r");
+    if (fp)
+      input_stack::push(new file_iterator(fp, symbol(buf).contents(), 1));
+    else
+      error("can't open pipe to process `%1': %2", buf, strerror(errno));
+    a_delete buf;
+  }
+  tok.next();
+#endif /* not POPEN_MISSING */
 }
 
 const char *asciify(int c)
@@ -4364,6 +4536,41 @@ void write_request()
   tok.next();
 }
 
+void write_macro_request()
+{
+  symbol stream = get_name(1);
+  if (stream.is_null()) {
+    skip_line();
+    return;
+  }
+  FILE *fp = (FILE *)stream_dictionary.lookup(stream);
+  if (!fp) {
+    error("no stream named `%1'", stream.contents());
+    skip_line();
+    return;
+  }
+  symbol s = get_name(1);
+  if (s.is_null()) {
+    skip_line();
+    return;
+  }
+  request_or_macro *p = lookup_request(s);
+  macro *m = p->to_macro();
+  if (!m)
+    error("cannot write request");
+  else {
+    string_iterator iter(*m);
+    for (;;) {
+      int c = iter.get(0);
+      if (c == EOF)
+	break;
+      fputs(asciify(c), fp);
+    }
+    fflush(fp);
+  }
+  skip_line();
+}
+
 static void init_charset_table()
 {
   char buf[16];
@@ -4389,6 +4596,7 @@ static void init_charset_table()
   get_charinfo(symbol("em"))->set_flags(charinfo::BREAK_AFTER);
   get_charinfo(symbol("ul"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
   get_charinfo(symbol("rn"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
+  get_charinfo(symbol("radicalex"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
   get_charinfo(symbol("ru"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
   get_charinfo(symbol("br"))->set_flags(charinfo::OVERLAPS_VERTICALLY);
   page_character = charset_table['%'];
@@ -4487,6 +4695,7 @@ void hyphenation_code()
     }
     ci->set_hyphenation_code(c);
     tok.next();
+    tok.skip();
   }
   skip_line();
 }
@@ -4521,15 +4730,19 @@ charinfo *get_optional_char()
   while (tok.space())
     tok.next();
   charinfo *ci = tok.get_char();
-  if (!ci) {
-    if (!tok.newline() && !tok.eof() && !tok.right_brace() && !tok.tab())
-      error("normal or special character expected (got %1): "
-	    "treated as missing",
-	    tok.description());
-  }
+  if (!ci)
+    check_missing_character();
   else
     tok.next();
   return ci;
+}
+
+void check_missing_character()
+{
+  if (!tok.newline() && !tok.eof() && !tok.right_brace() && !tok.tab())
+    error("normal or special character expected (got %1): "
+	  "treated as missing",
+	  tok.description());
 }
 
 int token::add_to_node_list(node **pp)
@@ -4758,8 +4971,14 @@ const char *constant_int_reg::get_string()
 void abort_request()
 {
   int c;
-  while ((c = get_copy(0)) == ' ')
-    ;
+  if (tok.eof())
+    c = EOF;
+  else if (tok.newline())
+    c = '\n';
+  else {
+    while ((c = get_copy(0)) == ' ')
+      ;
+  }
   if (c == EOF || c == '\n')
     fputs("User Abort.", stderr);
   else {
@@ -4802,6 +5021,10 @@ char *read_string()
 
 void pipe_output()
 {
+#ifdef POPEN_MISSING
+  error("pipes not available on this system");
+  skip_line();
+#else /* not POPEN_MISSING */
   if (the_output) {
     error("can't pipe: output already started");
     skip_line();
@@ -4810,6 +5033,7 @@ void pipe_output()
     if ((pipe_command = read_string()) == 0)
       error("can't pipe to empty command");
   }
+#endif /* not POPEN_MISSING */
 }
 
 static int system_status;
@@ -4951,6 +5175,10 @@ static void parse_output_page_list(char *p)
     }
     else
       j = i;
+    if (j == 0)
+      last_page_number = -1;
+    else if (last_page_number >= 0 && j > last_page_number)
+      last_page_number = j;
     output_page_list = new page_range(i, j, output_page_list);
     if (*p != ',')
       break;
@@ -5284,6 +5512,7 @@ int main(int argc, char **argv)
   if (optind >= argc || iflag)
     process_input_file("-");
   exit_troff();
+  return 0;			// not reached
 }
 
 void warn_request()
@@ -5343,6 +5572,7 @@ void init_input_requests()
   init_request("tm", terminal);
   init_request("ex", exit_request);
   init_request("em", end_macro);
+  init_request("blm", blank_line_macro);
   init_request("tr", translate);
   init_request("trnt", translate_no_transparent);
   init_request("ab", abort_request);
@@ -5363,12 +5593,14 @@ void init_input_requests()
   init_request("als", alias_macro);
   init_request("backtrace", backtrace_request);
   init_request("chop", chop_macro);
+  init_request("substring", substring_macro);
   init_request("asciify", asciify_macro);
   init_request("warn", warn_request);
   init_request("open", open_request);
   init_request("opena", opena_request);
   init_request("close", close_request);
   init_request("write", write_request);
+  init_request("writem", write_macro_request);
   init_request("trf", transparent_file);
 #ifdef WIDOW_CONTROL
   init_request("fpl", flush_pending_lines);
@@ -5380,6 +5612,9 @@ void init_input_requests()
 #endif /* COLUMN */
   init_request("mso", macro_source);
   init_request("do", do_request);
+#ifndef POPEN_MISSING
+  init_request("pso", pipe_source);
+#endif /* not POPEN_MISSING */
   number_reg_dictionary.define("systat", new variable_reg(&system_status));
   number_reg_dictionary.define("slimit",
 			       new variable_reg(&input_stack::limit));
@@ -5563,27 +5798,28 @@ static struct {
   const char *name;
   int mask;
 } warning_table[] = {
-  "char", WARN_CHAR,
-  "range", WARN_RANGE,
-  "break", WARN_BREAK,
-  "delim", WARN_DELIM,
-  "el", WARN_EL,
-  "scale", WARN_SCALE,
-  "number", WARN_NUMBER,
-  "syntax", WARN_SYNTAX,
-  "tab", WARN_TAB,
-  "right-brace", WARN_RIGHT_BRACE,
-  "missing", WARN_MISSING,
-  "input", WARN_INPUT,
-  "escape", WARN_ESCAPE,
-  "space", WARN_SPACE,
-  "font", WARN_FONT,
-  "di", WARN_DI,
-  "mac", WARN_MAC,
-  "reg", WARN_REG,
-  "all", WARN_TOTAL & ~(WARN_DI | WARN_MAC | WARN_REG),
-  "w", WARN_TOTAL,
-  "default", DEFAULT_WARNING_MASK,
+  { "char", WARN_CHAR },
+  { "range", WARN_RANGE },
+  { "break", WARN_BREAK },
+  { "delim", WARN_DELIM },
+  { "el", WARN_EL },
+  { "scale", WARN_SCALE },
+  { "number", WARN_NUMBER },
+  { "syntax", WARN_SYNTAX },
+  { "tab", WARN_TAB },
+  { "right-brace", WARN_RIGHT_BRACE },
+  { "missing", WARN_MISSING },
+  { "input", WARN_INPUT },
+  { "escape", WARN_ESCAPE },
+  { "space", WARN_SPACE },
+  { "font", WARN_FONT },
+  { "di", WARN_DI },
+  { "mac", WARN_MAC },
+  { "reg", WARN_REG },
+  { "ig", WARN_IG },
+  { "all", WARN_TOTAL & ~(WARN_DI | WARN_MAC | WARN_REG) },
+  { "w", WARN_TOTAL },
+  { "default", DEFAULT_WARNING_MASK },
 };
 
 static int lookup_warning(const char *name)
@@ -5612,6 +5848,23 @@ static void disable_warning(const char *name)
     warning_mask &= ~mask;
   else
     error("unknown warning `%1'", name);
+}
+
+static void copy_mode_error(const char *format,
+			    const errarg &arg1,
+			    const errarg &arg2,
+			    const errarg &arg3)
+{
+  if (ignoring) {
+    static const char prefix[] = "(in ignored input) ";
+    char *s = new char[sizeof(prefix) + strlen(format)];
+    strcpy(s, prefix);
+    strcat(s, format);
+    warning(WARN_IG, s, arg1, arg2, arg3);
+    a_delete s;
+  }
+  else
+    error(format, arg1, arg2, arg3);
 }
 
 enum error_type { WARNING, ERROR, FATAL };

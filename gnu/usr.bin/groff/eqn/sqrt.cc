@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "eqn.h"
 #include "pbox.h"
@@ -41,10 +41,10 @@ sqrt_box::sqrt_box(box *pp) : pointer_box(pp)
 }
 
 #define SQRT_CHAR "\\(sr"
-#define RADICAL_EXTENSION_CHAR "\\(rn"
+#define RADICAL_EXTENSION_CHAR "\\[radicalex]"
 
 #define SQRT_CHAIN "\\[sr\\\\n[" INDEX_REG "]]"
-#define BAR_CHAIN "\\[rn\\\\n[" INDEX_REG "]]"
+#define BAR_CHAIN "\\[radicalex\\\\n[" INDEX_REG "]]"
 
 int sqrt_box::compute_metrics(int style)
 {

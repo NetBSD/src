@@ -16,10 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-	$Id: command.h,v 1.2 1993/08/02 17:45:01 mycroft Exp $
-*/
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 void process_commands(const char *file);
 void process_commands(string &s, const char *file, int lineno);

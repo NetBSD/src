@@ -93,6 +93,7 @@
 .tty-char \(%0 %o
 .tty-char \(ao o
 .tty-char \(a" """"
+.tty-char \(ab \z'`
 .tty-char \(ah v
 .tty-char \(ho \(ac
 .tty-char \(/_ \z_/
@@ -192,5 +193,6 @@
 .tty-char \(Tp \zpb
 .tty-char \(:y \z"y
 .\"tty-char \(:y \ij
+.tty-char \[arrowvertex] |
 .cp \n(_C
 .do mso tmac.latin1
