@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.44 2003/09/21 19:46:44 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.45 2003/09/22 01:13:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.44 2003/09/21 19:46:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.45 2003/09/22 01:13:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.44 2003/09/21 19:46:44 thorpej Exp $");
 #define	PCI_CBIO	0x10
 
 static void	twe_aen_handler(struct twe_ccb *, int);
+static void	twe_aen_enqueue(struct twe_softc *sc, uint16_t, int);
+static uint16_t	twe_aen_dequeue(struct twe_softc *);
+
 static void	twe_attach(struct device *, struct device *, void *);
 static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
@@ -195,6 +198,50 @@ const struct twe_code_table twe_table_stripedepth[] = {
 	{ 0,					NULL }
 };
 
+/*
+ * Asynchronous event notification messages are qualified:
+ *	a - not unit/port specific
+ *	u - unit specific
+ *	p - port specific
+ */
+const struct twe_code_table twe_table_aen[] = {
+	{ 0x00,	"a queue empty" },
+	{ 0x01,	"a soft reset" },
+	{ 0x02,	"u degraded mode" },
+	{ 0x03,	"a controller error" },
+	{ 0x04,	"u rebuild fail" },
+	{ 0x05,	"u rebuild done" },
+	{ 0x06,	"u incomplete unit" },
+	{ 0x07,	"u initialization done" },
+	{ 0x08,	"u unclean shutdown detected" },
+	{ 0x09,	"p drive timeout" },
+	{ 0x0a,	"p drive error" },
+	{ 0x0b,	"u rebuild started" },
+	{ 0x0c,	"u initialization started" },
+	{ 0x0d,	"u logical unit deleted" },
+	{ 0x0f,	"p SMART threshold exceeded" },
+	{ 0x15,	"a table undefined" },	/* XXX: Not in FreeBSD's table */
+	{ 0x21,	"p ATA UDMA downgrade" },
+	{ 0x22,	"p ATA UDMA upgrade" },
+	{ 0x23,	"p sector repair occurred" },
+	{ 0x24,	"a SBUF integrity check failure" },
+	{ 0x25,	"p lost cached write" },
+	{ 0x26,	"p drive ECC error detected" },
+	{ 0x27,	"p DCB checksum error" },
+	{ 0x28,	"p DCB unsupported version" },
+	{ 0x29,	"u verify started" },
+	{ 0x2a,	"u verify failed" },
+	{ 0x2b,	"u verify complete" },
+	{ 0x2c,	"p overwrote bad sector during rebuild" },
+	{ 0x2d,	"p encountered bad sector during rebuild" },
+	{ 0x2e,	"p replacement drive too small" },
+	{ 0x2f,	"u array not previously initialized" },
+	{ 0x30,	"p drive not supported" },
+	{ 0xff,	"a aen queue full" },
+
+	{ 0,	NULL },
+};
+
 const char *
 twe_describe_code(const struct twe_code_table *table, uint32_t code)
 {
@@ -205,55 +252,6 @@ twe_describe_code(const struct twe_code_table *table, uint32_t code)
 	}
 	return (NULL);
 }
-
-struct {
-	const u_int	aen;	/* High byte indicates type of message */
-	const char	*desc;
-} static const twe_aen_names[] = {
-	{ 0x0000, "queue empty" },
-	{ 0x0001, "soft reset" },
-	{ 0x0102, "degraded mirror" },
-	{ 0x0003, "controller error" },
-	{ 0x0104, "rebuild fail" },
-	{ 0x0105, "rebuild done" },
-	{ 0x0106, "incompatible unit" },
-	{ 0x0107, "initialisation done" },
-	{ 0x0108, "unclean shutdown detected" },
-	{ 0x0109, "drive timeout" },
-	{ 0x010a, "drive error" },
-	{ 0x010b, "rebuild started" },
-	{ 0x010c, "init started" },
-	{ 0x010d, "logical unit deleted" },
-	{ 0x020f, "SMART threshold exceeded" },
-	{ 0x0015, "table undefined" },	/* XXX: Not in FreeBSD's table */
-	{ 0x0221, "ATA UDMA downgrade" },
-	{ 0x0222, "ATA UDMA upgrade" },
-	{ 0x0222, "ATA UDMA upgrade" },
-	{ 0x0223, "Sector repair occurred" },
-	{ 0x0024, "SBUF integrity check failure" },
-	{ 0x0225, "lost cached write" },
-	{ 0x0226, "drive ECC error detected" },
-	{ 0x0227, "DCB checksum error" },
-	{ 0x0228, "DCB unsupported version" },
-	{ 0x0129, "verify started" },
-	{ 0x012a, "verify failed" },
-	{ 0x012b, "verify complete" },
-	{ 0x022c, "overwrote bad sector during rebuild" },
-	{ 0x022d, "encountered bad sector during rebuild" },
-	{ 0x00ff, "aen queue full" },
-};
-
-/*
- * The high byte of the message above determines the format,
- * currently we know about format 0 (no unit/port specific)
- * format 1 (unit specific message), and format 2 (port specific message).
- */
-static const char * const aenfmt[] = {
-	"",		/* No message */
-	"unit %d: ",	/* Unit message */
-	"port %d: "	/* Port message */
-};
-
 
 static inline u_int32_t
 twe_inl(struct twe_softc *sc, int off)
@@ -540,24 +538,34 @@ twe_reset(struct twe_softc *sc)
 	    TWE_CTL_CLEAR_ERROR_STS |
 	    TWE_CTL_DISABLE_INTRS);
 
+	/* Wait for attention... */
 	if (twe_status_wait(sc, TWE_STS_ATTN_INTR, 15)) {
 		printf("%s: no attention interrupt\n",
 		    sc->sc_dv.dv_xname);
 		return (-1);
 	}
 
-	/* Pull AENs out of the controller; look for a soft reset AEN. */
+	/* ...and ACK it. */
+	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+
+	/*
+	 * Pull AENs out of the controller; look for a soft reset AEN.
+	 * Open code this, since we want to detect reset even if the
+	 * queue for management tools is full.
+	 */
 	for (got = 0;;) {
 		rv = twe_param_get_2(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
 		    &aen);
 		if (rv != 0)
-			printf("%s: error %d while draining response queue\n",
+			printf("%s: error %d while draining event queue\n",
 			    sc->sc_dv.dv_xname, rv);
 		if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY)
 			break;
 		if (TWE_AEN_CODE(aen) == TWE_AEN_SOFT_RESET)
 			got = 1;
+		twe_aen_enqueue(sc, aen, 1);
 	}
+
 	if (!got) {
 		printf("%s: reset not reported\n", sc->sc_dv.dv_xname);
 		return (-1);
@@ -649,18 +657,14 @@ twe_intr(void *arg)
 	 * state change has occurred.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
-		if ((sc->sc_flags & TWEF_AEN) == 0) {
-			rv = twe_param_get(sc, TWE_PARAM_AEN,
-			    TWE_PARAM_AEN_UnitCode, 2, twe_aen_handler,
-			    NULL);
-			if (rv != 0) {
-				printf("%s: unable to retrieve AEN (%d)\n",
-				    sc->sc_dv.dv_xname, rv);
-				twe_outl(sc, TWE_REG_CTL,
-				    TWE_CTL_CLEAR_ATTN_INTR);
-			} else
-				sc->sc_flags |= TWEF_AEN;
-		}
+		rv = twe_param_get(sc, TWE_PARAM_AEN,
+		    TWE_PARAM_AEN_UnitCode, 2, twe_aen_handler,
+		    NULL);
+		if (rv != 0)
+			printf("%s: unable to retrieve AEN (%d)\n",
+			    sc->sc_dv.dv_xname, rv);
+		else
+			twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
 		caught = 1;
 	}
 
@@ -694,9 +698,8 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 {
 	struct twe_softc *sc;
 	struct twe_param *tp;
-	const char *str;
-	u_int aen;
-	int i, hu, rv;
+	uint16_t aen;
+	int rv;
 
 	sc = (struct twe_softc *)ccb->ccb_tx.tx_dv;
 	tp = ccb->ccb_tx.tx_context;
@@ -712,25 +715,10 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 
 	if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY) {
 		twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
-		sc->sc_flags &= ~TWEF_AEN;
 		return;
 	}
 
-	str = "<unknown>";
-	i = 0;
-	hu = 0;
-		
-	while (i < sizeof(twe_aen_names) / sizeof(twe_aen_names[0])) {
-		if (TWE_AEN_CODE(twe_aen_names[i].aen) == TWE_AEN_CODE(aen)) {
-			str = twe_aen_names[i].desc;
-			hu = TWE_AEN_UNIT(twe_aen_names[i].aen);
-			break;
-		}
-		i++;
-	}
-	printf("%s: ", sc->sc_dv.dv_xname);
-	printf(aenfmt[hu], TWE_AEN_UNIT(aen));
-	printf("AEN 0x%04x (%s) received\n", TWE_AEN_CODE(aen), str);
+	twe_aen_enqueue(sc, aen, 0);
 
 	/*
 	 * Chain another retrieval in case interrupts have been
@@ -741,6 +729,81 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	if (rv != 0)
 		printf("%s: unable to retrieve AEN (%d)\n",
 		    sc->sc_dv.dv_xname, rv);
+}
+
+static void
+twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
+{
+	const char *str, *msg;
+	int s, next, nextnext;
+
+	/*
+	 * First report the AEN on the console.  Maybe.
+	 */
+	if (! quiet) {
+		str = twe_describe_code(twe_table_aen, TWE_AEN_CODE(aen));
+		if (str == NULL) {
+			printf("%s: unknown AEN 0x%04x\n",
+			    sc->sc_dv.dv_xname, aen);
+		} else {
+			msg = str + 2;
+			switch (*str) {
+			case 'u':
+				printf("%s: unit %d: %s\n",
+				    sc->sc_dv.dv_xname, TWE_AEN_UNIT(aen), msg);
+				break;
+
+			case 'p':
+				printf("%s: port %d: %s\n",
+				    sc->sc_dv.dv_xname, TWE_AEN_UNIT(aen), msg);
+				break;
+
+			default:
+				printf("%s: %s\n", sc->sc_dv.dv_xname, msg);
+			}
+		}
+	}
+
+	/* Now enqueue the AEN for mangement tools. */
+	s = splbio();
+
+	next = (sc->sc_aen_head + 1) % TWE_AEN_Q_LENGTH;
+	nextnext = (sc->sc_aen_head + 2) % TWE_AEN_Q_LENGTH;
+
+	/*
+	 * If this is the last free slot, then queue up a "queue
+	 * full" message.
+	 */
+	if (nextnext == sc->sc_aen_tail)
+		aen = TWE_AEN_QUEUE_FULL;
+
+	if (next != sc->sc_aen_tail) {
+		sc->sc_aen_queue[sc->sc_aen_head] = aen;
+		sc->sc_aen_head = next;
+	}
+
+	if (sc->sc_flags & TWEF_AENQ_WAIT) {
+		sc->sc_flags &= ~TWEF_AENQ_WAIT;
+		wakeup(&sc->sc_aen_queue);
+	}
+
+	splx(s);
+}
+
+/* NOTE: Must be called at splbio(). */
+static uint16_t
+twe_aen_dequeue(struct twe_softc *sc)
+{
+	uint16_t aen;
+
+	if (sc->sc_aen_tail == sc->sc_aen_head)
+		aen = TWE_AEN_QUEUE_EMPTY;
+	else {
+		aen = sc->sc_aen_queue[sc->sc_aen_tail];
+		sc->sc_aen_tail = (sc->sc_aen_tail + 1) & TWE_AEN_Q_LENGTH;
+	}
+
+	return (aen);
 }
 
 /*
@@ -1408,14 +1471,22 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENOENT);
 
 	case TWEIO_AEN_POLL:
-		if ((twe->sc_flags & TWEF_AEN) == 0)
-			return (ENOENT);
+		s = splbio();
+		*(u_int *)data = twe_aen_dequeue(twe);
+		splx(s);
 		return (0);
 
 	case TWEIO_AEN_WAIT:
 		s = splbio();
-		while ((twe->sc_flags & TWEF_AEN) == 0) {
-			/* tsleep(); */
+		while ((*(u_int *)data =
+		    twe_aen_dequeue(twe)) == TWE_AEN_QUEUE_EMPTY) {
+			twe->sc_flags |= TWEF_AENQ_WAIT;
+			error = tsleep(&twe->sc_aen_queue, PRIBIO | PCATCH,
+			    "tweaen", 0);
+			if (error == EINTR) {
+				splx(s);
+				return (error);
+			}
 		}
 		splx(s);
 		return (0);

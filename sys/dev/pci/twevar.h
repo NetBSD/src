@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.16 2003/09/21 19:27:28 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.17 2003/09/22 01:13:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,9 +69,15 @@ struct twe_softc {
 	int			sc_flags;
 	int			sc_nunits;
 	struct twe_drive	sc_units[TWE_MAX_UNITS];
+
+	/* Asynchronous event notification queue for management tools. */
+#define	TWE_AEN_Q_LENGTH	256
+	uint16_t		sc_aen_queue[TWE_AEN_Q_LENGTH];
+	int			sc_aen_head;
+	int			sc_aen_tail;
 };
-#define	TWEF_AEN	0x01	/* retrieving an AEN */
-#define	TWEF_OPEN	0x02	/* control device is opened */
+#define	TWEF_OPEN	0x01	/* control device is opened */
+#define	TWEF_AENQ_WAIT	0x02	/* someone waiting for AENs */
 
 /* Optional per-command context. */
 struct twe_context {
@@ -146,6 +152,7 @@ extern const struct twe_code_table twe_table_status[];
 extern const struct twe_code_table twe_table_unitstate[];
 extern const struct twe_code_table twe_table_unittype[];
 extern const struct twe_code_table twe_table_stripedepth[];
+extern const struct twe_code_table twe_table_aen[];
 
 const char *twe_describe_code(const struct twe_code_table *, uint32_t);
 
