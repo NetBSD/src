@@ -1,8 +1,8 @@
-The sparc-specific portion of the NetBSD RELEASE release is found in the
+The sparc-specific portion of the NetBSD _VER release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-RELEASE/sparc/
+.../NetBSD-_VER/sparc/
 			binary/		sparc binary distribution sets;
 					see below.
 
@@ -13,12 +13,12 @@ out as follows:
 					and installation/upgrade scripts.
 
 The NetBSD/sparc binary distribution sets contain the binaries which
-comprise the NetBSD RELEASE release for the sparc.  There are seven binary
+comprise the NetBSD _VER release for the sparc.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "sparc/binary"
-subdirectory of the NetBSD RELEASE distribution tree, and are as follows:
+subdirectory of the NetBSD _VER distribution tree, and are as follows:
 
-	base1X	The NetBSD/sparc RELEASE base binary distribution.  You
+	base1X	The NetBSD/sparc _VER base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -82,7 +82,7 @@ subdirectory of the NetBSD RELEASE distribution tree, and are as follows:
 		[ 0.5M gzipped, 2.9M uncompressed ]
 
 The sparc security distribution set is named "secr1X" and can be found
-in the "sparc/security" subdirectory of the NetBSD RELEASE distribution
+in the "sparc/security" subdirectory of the NetBSD _VER distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that
