@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.148 2003/09/10 19:44:22 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.149 2003/09/12 19:17:07 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1689,3 +1689,39 @@ sys/arch/x86_64/x86_64/vm_machdep.c		delete
 	supported on the netbsd-1-6 branch, there is no sense in keeping this
 	obsolete code on the branch.
 	[tron, ticket #1456]
+
+sys/dev/ic/ld_icp.c				1.2
+
+	Remove an unnecessary printf argument.
+	[martti, ticket #1458]
+
+share/man/man4/daic.4				1.8
+share/man/man4/ippp.4				1.3
+share/man/man4/irip.4				1.2
+share/man/man4/isdn.4				1.2
+share/man/man4/isdnbchan.4			1.2
+share/man/man4/isdnctl.4			1.2
+share/man/man4/isdntel.4			1.2
+share/man/man4/isdntrc.4			1.2
+share/man/man4/isic.4				1.11
+
+	Uppercase ISDN and some unrelated fixes ispell stumbled over.
+	[grant, ticket #1459]
+
+sys/crypto/blowfish/bf_cbc.c			1.6-1.8
+sys/crypto/des/des_cbc.c			1.6
+
+	repoint include file for kernel use.
+	Include <sys/types.h> to allow compilation to occur.
+	Modified to avoid compiler warnings.  The specific warning related
+	to const BF_KEY * vars, and I chose to ``fix'' it in this file
+	rather than elsewhere in the framework because, although the other
+	fix was more appropriate, nothing seems to use the code in this
+	file and hence the risk of disrupting other people was lower.  In
+	the future, the more appropriate change would be to change blowfish.h
+	and bf_enc.c to have functions with signatures:
+	BF_encrypt(BF_LONG *, const BF_KEY *);
+	BF_decrypt(BF_LONG *, const BF_KEY *);
+	Added an include of sys/types.h to get u_int32_t and so on.
+	[tv, ticket #1455]
+
