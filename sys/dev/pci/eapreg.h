@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.4 2002/11/11 22:17:47 pooka Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.5 2002/12/05 11:26:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -278,6 +278,8 @@
 
 #define EAP_EV1938_A  0x00
 #define EAP_CT5880_C  0x02
+#define EAP_CT5880_D  0x03
+#define EAP_CT5880_E  0x04
 #define EAP_ES1373_A  0x04
 #define EAP_ES1373_B  0x06
 #define EAP_CT5880_A  0x07
