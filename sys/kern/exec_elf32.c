@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.82 2003/02/26 21:18:22 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.83 2003/02/27 01:58:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.82 2003/02/26 21:18:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.83 2003/02/27 01:58:56 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -280,8 +280,6 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		psize = *size;
 	}
 
-	if ((flags & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) == VMCMD_TOPDOWN)
-		*addr -= round_page(msize);
 	if (psize > 0) {
 		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
 		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
@@ -290,7 +288,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	if (psize < *size) {
 		NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
 		    *addr + psize, vp, offset + psize, *prot, 
-		    psize > 0 ? flags & (VMCMD_RELATIVE | VMCMD_TOPDOWN) : flags);
+		    psize > 0 ? flags & VMCMD_RELATIVE : flags);
 	}
 
 	/*
@@ -301,7 +299,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 
 	if (rm != rf) {
 		NEW_VMCMD2(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP,
-		    0, *prot, flags & (VMCMD_RELATIVE | VMCMD_TOPDOWN));
+		    0, *prot, flags & VMCMD_RELATIVE);
 		*size = msize;
 	}
 }
@@ -318,15 +316,15 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
     struct exec_vmcmd_set *vcset, u_long *entryoff, struct elf_args *ap,
     Elf_Addr *last)
 {
-	int error, i, direction, end;
-	const int topdown =
-	    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN ? VMCMD_TOPDOWN : 0;
+	int error, i;
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
-	Elf_Phdr *base_ph = NULL;
+	const Elf_Phdr *ph0;
+	const Elf_Phdr *base_ph;
+	const Elf_Phdr *last_ph;
 	u_long phsize;
 	Elf_Addr addr = *last;
 
@@ -389,66 +387,95 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	if ((error = exec_read_from(p, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
 
+	/* this breaks on, e.g., OpenBSD-compatible mips shared binaries. */
+#ifndef ELF_INTERP_NON_RELOCATABLE
 	/*
-	 * Load all the necessary sections.  If TOPDOWN, load the
-	 * psections last to first to properly deal with spacing and
-	 * alignment between psections, if any.  Note that end is one
-	 * past the last (before or after) valid array index.
+	 * If no position to load the interpreter was set by a probe
+	 * function, pick the same address that a non-fixed mmap(0, ..)
+	 * would (i.e. something safely out of the way).
 	 */
-	if (topdown) {
-		i = eh.e_phnum - 1;
-		end = -1;
-		direction = -1;
-	} else {
-		i = 0;
-		end = eh.e_phnum;
-		direction = 1;
-	}
-	for (; i != end; i += direction) {
-		u_long size = 0;
-		int prot = 0;
-		int flags;
+	if (*last == ELFDEFNNAME(NO_ADDR)) {
+		u_long limit = 0;
+		/*
+		 * Find the start and ending addresses of the psections to
+		 * be loaded.  This will give us the size.
+		 */
+		for (i = 0, ph0 = ph, base_ph = NULL; i < eh.e_phnum;
+		     i++, ph0++) {
+			if (ph0->p_type == PT_LOAD) {
+				u_long psize = ph0->p_vaddr + ph0->p_memsz;
+				if (base_ph == NULL)
+					base_ph = ph0;
+				if (psize > limit)
+					limit = psize;
+			}
+		}
 
-		switch (ph[i].p_type) {
-		case PT_LOAD:
+		/*
+		 * Now compute the size and load address.
+		 */
+		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr,
+		    round_page(limit) - trunc_page(base_ph->p_vaddr));
+	} else
+#endif	/* !ELF_INTERP_NON_RELOCATABLE */
+		addr = *last;
+
+	/*
+	 * Load all the necessary sections
+	 */
+	for (i = 0, ph0 = ph, base_ph = NULL, last_ph = NULL;
+	     i < eh.e_phnum; i++, ph0++) {
+		switch (ph0->p_type) {
+		case PT_LOAD: {
+			u_long size;
+			int prot = 0;
+			int flags;
+
 			if (base_ph == NULL) {
 				/*
 				 * First encountered psection is always the
 				 * base psection.
 				 */
-				base_ph = &ph[i];
-				addr = *last;
+				base_ph = ph0;
 				flags = VMCMD_BASE;
 			} else {
+				u_long limit = round_page(last_ph->p_vaddr
+				    + last_ph->p_memsz);
+
 				/*
-				 * If TOPDOWN, the last psection may not be
-				 * page aligned.  Make sure that the address
-				 * we are using is page aligned.  If TOPDOWN
-				 * addr will be a "negative" offset.
+				 * If there is a gap in between the psections,
+				 * map it as inaccessible so nothing else
+				 * mmap'ed will be placed there.
 				 */
-				addr = ph[i].p_vaddr -
-				    trunc_page(base_ph->p_vaddr);
+				if (limit != trunc_page(ph0->p_vaddr)) {
+					NEW_VMCMD2(vcset, vmcmd_map_zero,
+					    trunc_page(ph0->p_vaddr) - limit,
+					    limit - base_ph->p_vaddr,
+					    NULLVP, 0, 0, VMCMD_RELATIVE);
+				}
+
+				addr = ph0->p_vaddr - base_ph->p_vaddr;
 				flags = VMCMD_RELATIVE;
 			}
+			last_ph = ph0;
 			ELFNAME(load_psection)(vcset, vp, &ph[i], &addr,
-			    &size, &prot, flags|topdown);
+			    &size, &prot, flags);
 			/*
 			 * If entry is within this psection then this
 			 * must contain the .text section.  *entryoff is
-			 * relative to the (page aligned) base psection.
-			 * If TOPDOWN, entryoff may be backwards.
+			 * relative to the base psection.
 			 */
-			if (eh.e_entry >= ph[i].p_vaddr &&
-			    eh.e_entry < (ph[i].p_vaddr + size)) {
-				*entryoff = eh.e_entry -
-				    trunc_page(base_ph->p_vaddr);
+			if (eh.e_entry >= ph0->p_vaddr &&
+			    eh.e_entry < (ph0->p_vaddr + size)) {
+				*entryoff = eh.e_entry - base_ph->p_vaddr;
 			}
 			/*
 			 * This value is ignored if TOPDOWN.
 			 */
-			if (ph[i].p_vaddr != 0)
+			if (ph0->p_vaddr != 0)
 				addr += size;
 			break;
+		}
 
 		case PT_DYNAMIC:
 		case PT_PHDR:
@@ -625,18 +652,6 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			break;
 		}
 	}
-
-	/* this breaks on, e.g., OpenBSD-compatible mips shared binaries. */
-#ifndef ELF_INTERP_NON_RELOCATABLE
-	/*
-	 * If no position to load the interpreter was set by a probe
-	 * function, pick the same address that a non-fixed mmap(0, ..)
-	 * would (i.e. something safely out of the way).
-	 */
-	if (pos == ELFDEFNNAME(NO_ADDR))
-		/* XXX size will be accounted for in load_psection */
-		pos = VM_DEFAULT_ADDRESS(epp->ep_daddr, 0);
-#endif	/* !ELF_INTERP_NON_RELOCATABLE */
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
