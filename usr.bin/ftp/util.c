@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 1997/09/21 01:06:32 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.15 1997/10/11 12:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.14 1997/09/21 01:06:32 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 1997/10/11 12:05:15 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -581,9 +581,11 @@ progressmeter(flag)
 	static off_t lastsize;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
-	double elapsed;
-	int ratio, barlength, i, remaining;
+	double elapsed, remaining;
+	int ratio, barlength, i, len;
 	char buf[256];
+
+	len = 0;
 
 	if (flag == -1) {
 		(void)gettimeofday(&start, (struct timezone *)0);
@@ -598,12 +600,12 @@ progressmeter(flag)
 	ratio = cursize * 100 / filesize;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
+	len += snprintf(buf + len, sizeof(buf) - len, "\r%3d%% ", ratio);
 
 	barlength = ttywidth - 30;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		len += snprintf(buf + len, sizeof(buf) - len,
 		    "|%.*s%*s|", i, 
 "*****************************************************************************"
 "*****************************************************************************",
@@ -616,7 +618,7 @@ progressmeter(flag)
 		i++;
 		abbrevsize >>= 10;
 	}
-	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+	len += snprintf(buf + len, sizeof(buf) - len,
 	    " %5qd %c%c ", (long long)abbrevsize, prefixes[i],
 	    prefixes[i] == ' ' ? ' ' : 'B');
 
@@ -635,26 +637,31 @@ progressmeter(flag)
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		len += snprintf(buf + len, sizeof(buf) - len,
 		    "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		len += snprintf(buf + len, sizeof(buf) - len,
 		    " - stalled -");
 	} else {
-		remaining = (int)((filesize - restart_point) /
-				  (bytes / elapsed) - elapsed);
-		i = remaining / 3600;
-		if (i)
-			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			    "%2d:", i);
-		else
-			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			    "   ");
-		i = remaining % 3600;
-		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-		    "%02d:%02d ETA", i / 60, i % 60);
+		remaining =
+		    (filesize - restart_point) / (bytes / elapsed) - elapsed;
+		if (remaining >= 100 * 3600)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    "   --:-- ETA");
+		else {
+			i = (int)remaining / 3600;
+			if (i)
+				len += snprintf(buf + len, sizeof(buf) - len,
+				    "%2d:", i);
+			else
+				len += snprintf(buf + len, sizeof(buf) - len,
+				    "   ");
+			i = (int)remaining % 3600;
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    "%02d:%02d ETA", i / 60, i % 60);
+		}
 	}
-	(void)write(STDOUT_FILENO, buf, strlen(buf));
+	(void)write(STDOUT_FILENO, buf, len);
 
 	if (flag == -1) {
 		(void)signal(SIGALRM, updateprogressmeter);
