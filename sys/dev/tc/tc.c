@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.12 1996/03/17 22:09:17 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.13 1996/04/09 20:50:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,11 +28,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
+
+#include <machine/autoconf.h>
 
 struct tc_softc {
 	struct	device sc_dv;
@@ -92,7 +95,6 @@ tcattach(parent, self, aux)
 	const struct tc_builtin *builtin;
 	struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
-	void *match;
 	int i;
 
 	printf("%s MHz clock\n",
