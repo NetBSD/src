@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.84 2002/06/24 10:52:15 enami Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.85 2002/06/24 21:25:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.84 2002/06/24 10:52:15 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.85 2002/06/24 21:25:34 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1085,8 +1085,21 @@ reply:
 	bcopy((caddr_t)&itaddr, (caddr_t)ar_spa(ah), ah->ar_pln);
 	ah->ar_op = htons(ARPOP_REPLY);
 	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
-	m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
-	m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + (2 * ah->ar_hln);
+	switch (ifp->if_type) {
+	case IFT_IEEE1394:
+		/*
+		 * ieee1394 arp reply is broadcast
+		 */
+		m->m_flags &= ~M_MCAST;
+		m->m_flags |= M_BCAST;
+		m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + ah->ar_hln;
+		break;
+
+	default:
+		m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
+		m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + (2 * ah->ar_hln);
+		break;
+	}
 	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
