@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2001/06/11 01:50:49 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2002/09/27 18:56:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.41 2001/06/11 01:50:49 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2002/09/27 18:56:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ state3:
 		int i;
 
 		for (i = 0; i < SIGSSIZE; i++)
-		    setsignal(sigs[i]);
+		    setsignal(sigs[i], 0);
 	}
 
 	if (minusc)
