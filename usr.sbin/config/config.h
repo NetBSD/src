@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.27 1996/11/07 22:59:40 gwr Exp $	*/
+/*	$NetBSD: config.h,v 1.28 1996/11/11 23:40:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,6 +322,7 @@ void	addoption __P((const char *name, const char *value));
 void	addmkoption __P((const char *name, const char *value));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));
+void	setupdirs __P((void));
 
 /* mkheaders.c */
 int	mkheaders __P((void));
