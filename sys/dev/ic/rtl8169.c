@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.15 2005/03/23 20:23:08 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.16 2005/03/29 09:52:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1527,13 +1527,23 @@ re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 		rtk_flags = RTK_TDESC_CMD_LGSEND |
 		    (segsz << RTK_TDESC_CMD_MSSVAL_SHIFT);
 	} else {
+
+		/*
+		 * set RTK_TDESC_CMD_IPCSUM if any checksum offloading
+		 * is requested.  otherwise, RTK_TDESC_CMD_TCPCSUM/
+		 * RTK_TDESC_CMD_UDPCSUM doesn't make effects.
+		 */
+
 		rtk_flags = 0;
-		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
+		if ((m->m_pkthdr.csum_flags &
+		    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 			rtk_flags |= RTK_TDESC_CMD_IPCSUM;
-		if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4)
-			rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
-		if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4)
-			rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+			if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
+				rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
+			} else if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
+				rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+			}
+		}
 	}
 
 	txq = &sc->rtk_ldata.rtk_txq[*idx];
