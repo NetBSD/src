@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.90 2000/01/26 11:31:55 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.91 2000/01/31 22:01:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.90 2000/01/26 11:31:55 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.91 2000/01/31 22:01:05 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1512,10 +1512,10 @@ xstrdup(str)
  * Install a POSIX signal handler, allowing the invoker to set whether
  * the signal should be restartable or not
  */
-sig_t
+sigfunc
 xsignal_restart(sig, func, restartable)
 	int sig;
-	void (*func) __P((int));
+	sigfunc func;
 	int restartable;
 {
 	struct sigaction act, oact;
@@ -1538,10 +1538,10 @@ xsignal_restart(sig, func, restartable)
  * Install a signal handler with the `restartable' flag set dependent upon
  * which signal is being set. (This is a wrapper to xsignal_restart())
  */
-sig_t
+sigfunc
 xsignal(sig, func)
 	int sig;
-	void (*func) __P((int));
+	sigfunc func;
 {
 	int restartable;
 

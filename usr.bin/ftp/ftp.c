@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.90 2000/01/31 22:01:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.89 1999/12/11 02:02:21 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.90 2000/01/31 22:01:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,7 +432,7 @@ command(va_alist)
 {
 	va_list ap;
 	int r;
-	sig_t oldsigint;
+	sigfunc oldsigint;
 #ifndef __STDC__
 	const char *fmt;
 #endif
@@ -490,7 +490,7 @@ getreply(expecteof)
 	int c, n, line;
 	int dig;
 	int originalcode = 0, continuation = 0;
-	sig_t oldsigint, oldsigalrm;
+	sigfunc oldsigint, oldsigalrm;
 	int pflag = 0;
 	char *cp, *pt = pasv;
 
@@ -733,7 +733,7 @@ sendrequest(cmd, local, remote, printnames)
 	int c, d;
 	FILE *fin, *dout;
 	int (*closefunc) __P((FILE *));
-	sig_t oldintr, oldintp;
+	sigfunc oldintr, oldintp;
 	volatile off_t hashbytes;
 	char *lmode, *bufp;
 	static size_t bufsize;
@@ -1035,7 +1035,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 {
 	FILE *fout, *din;
 	int (*closefunc) __P((FILE *));
-	sig_t oldintr, oldintp;
+	sigfunc oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
 	static size_t bufsize;
@@ -1848,7 +1848,7 @@ void
 pswitch(flag)
 	int flag;
 {
-	sig_t oldintr;
+	sigfunc oldintr;
 	static struct comvars {
 		int connect;
 		char name[MAXHOSTNAMELEN];
@@ -1950,7 +1950,7 @@ void
 proxtrans(cmd, local, remote)
 	const char *cmd, *local, *remote;
 {
-	sig_t oldintr;
+	sigfunc oldintr;
 	int prox_type, nfnd;
 	volatile int secndflag;
 	char *cmd2;
