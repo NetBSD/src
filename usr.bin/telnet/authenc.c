@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.7 1998/11/06 19:54:18 christos Exp $	*/
+/*	$NetBSD: authenc.c,v 1.8 2000/02/01 02:26:57 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.7 1998/11/06 19:54:18 christos Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.8 2000/02/01 02:26:57 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: authenc.c,v 1.7 1998/11/06 19:54:18 christos Exp $");
 #include "types.h"
 
 	int
-net_write(str, len)
+telnet_net_write(str, len)
 	unsigned char *str;
 	int len;
 {
