@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.21 2003/06/23 11:53:35 agc Exp $	*/
+/*	$NetBSD: atactl.c,v 1.22 2003/10/21 02:30:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.21 2003/06/23 11:53:35 agc Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.22 2003/10/21 02:30:03 fvdl Exp $");
 #endif
 
 
@@ -113,7 +113,7 @@ struct bitinfo ata_caps[] = {
 	{ ATA_CAP_STBY, "ATA standby timer values" },
 	{ WDC_CAP_IORDY, "IORDY operation" },
 	{ WDC_CAP_IORDY_DSBL, "IORDY disabling" },
-	{ NULL, NULL },
+	{ 0, NULL },
 };
 
 struct bitinfo ata_vers[] = {
@@ -121,7 +121,7 @@ struct bitinfo ata_vers[] = {
 	{ WDC_VER_ATA2,	"ATA-2" },
 	{ WDC_VER_ATA3,	"ATA-3" },
 	{ WDC_VER_ATA4,	"ATA-4" },
-	{ NULL, NULL },
+	{ 0, NULL },
 };
 
 struct bitinfo ata_cmd_set1[] = {
@@ -139,7 +139,7 @@ struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_REMOV, "Removable Media feature set" },
 	{ WDC_CMD1_SEC, "Security Mode feature set" },
 	{ WDC_CMD1_SMART, "SMART feature set" },
-	{ NULL, NULL },
+	{ 0, NULL },
 };
 
 struct bitinfo ata_cmd_set2[] = {
@@ -148,7 +148,7 @@ struct bitinfo ata_cmd_set2[] = {
 	{ ATA_CMD2_CFA, "CFA feature set" },
 	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
-	{ NULL, NULL },
+	{ 0, NULL },
 };
 
 static const struct {
@@ -294,7 +294,7 @@ void
 print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 {
 
-	for (; binfo->bitmask != NULL; binfo++)
+	for (; binfo->bitmask != 0; binfo++)
 		if (bits & binfo->bitmask)
 			printf("%s%s%s", bf, binfo->string, af);
 }
