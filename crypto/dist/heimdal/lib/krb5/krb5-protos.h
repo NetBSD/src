@@ -2445,6 +2445,26 @@ krb5_set_ignore_addresses (
 	krb5_context /*context*/,
 	const krb5_addresses */*addresses*/);
 
+krb5_error_code
+krb5_set_password (
+	krb5_context /*context*/,
+	krb5_creds */*creds*/,
+	char */*newpw*/,
+	krb5_principal /*targprinc*/,
+	int */*result_code*/,
+	krb5_data */*result_code_string*/,
+	krb5_data */*result_string*/);
+
+krb5_error_code
+krb5_set_password_using_ccache (
+	krb5_context /*context*/,
+	krb5_ccache /*ccache*/,
+	char */*newpw*/,
+	krb5_principal /*targprinc*/,
+	int */*result_code*/,
+	krb5_data */*result_code_string*/,
+	krb5_data */*result_string*/);
+
 void
 krb5_set_use_admin_kdc (
 	krb5_context /*context*/,
