@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.25 2002/07/23 06:44:53 tron Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.26 2002/07/23 06:59:51 tron Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.25 2002/07/23 06:44:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.26 2002/07/23 06:59:51 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -366,13 +366,16 @@ stf_output(ifp, m, dst, rt)
 	ia6 = stf_getsrcifa6(ifp);
 	if (ia6 == NULL) {
 		m_freem(m);
+		ifp->if_oerrors++;
 		return ENETDOWN;
 	}
 
 	if (m->m_len < sizeof(*ip6)) {
 		m = m_pullup(m, sizeof(*ip6));
-		if (!m)
+		if (m == NULL) {
+			ifp->if_oerrors++;
 			return ENOBUFS;
+		}
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
 	tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
@@ -387,6 +390,7 @@ stf_output(ifp, m, dst, rt)
 		in4 = GET_V4(&dst6->sin6_addr);
 	else {
 		m_freem(m);
+		ifp->if_oerrors++;
 		return ENETUNREACH;
 	}
 
@@ -417,8 +421,10 @@ stf_output(ifp, m, dst, rt)
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
-	if (m == NULL)
+	if (m == NULL) {
+		ifp->if_oerrors++;
 		return ENOBUFS;
+	}
 	ip = mtod(m, struct ip *);
 
 	memset(ip, 0, sizeof(*ip));
@@ -451,6 +457,7 @@ stf_output(ifp, m, dst, rt)
 		rtalloc(&sc->sc_ro);
 		if (sc->sc_ro.ro_rt == NULL) {
 			m_freem(m);
+			ifp->if_oerrors++;
 			return ENETUNREACH;
 		}
 	}
