@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/10/08 00:36:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1996/10/18 05:36:42 thorpej Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN defn on alpha
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1996/10/18 05:27:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1996/10/18 05:36:48 thorpej Exp $
 
 CFLAGS+=	-DLIBC_SCCS -fpic
 OBJS=		c++rt0.o
