@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.12 1995/04/13 06:36:06 cgd Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.13 1995/05/14 08:23:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -140,6 +140,7 @@ struct	ipstat {
 	u_long	ips_noroute;		/* packets discarded due to no route */
 	u_long	ips_badvers;		/* ip version != 4 */
 	u_long	ips_rawout;		/* total raw ip packets generated */
+	u_long	ips_badfrags;		/* malformed fragments (bad length) */
 };
 
 #ifdef _KERNEL
