@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.22 1999/06/15 23:27:48 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.23 1999/06/17 21:07:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,14 @@ typedef	_BSD_SIZE_T_	size_t;
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
+
+#ifdef _KERNEL
+/*
+ * Deprecated flag; these are treated as MAP_PRIVATE internally by
+ * the kernel.
+ */
 #define	MAP_COPY	0x0004	/* "copy" region at mmap time */
+#endif
 
 /*
  * Other flags
