@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.85 2002/08/25 22:28:42 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.86 2002/08/25 22:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.85 2002/08/25 22:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.86 2002/08/25 22:32:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1202,9 +1202,9 @@ humanize_number(buf, len, bytes, suffix, divisor)
 		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
 	static const char prefixes[] = " KMGTPE";
 
-	int		i, r;
+	int		r;
 	u_int64_t	max;
-	size_t		suffixlen;
+	size_t		i, suffixlen;
 
 	if (buf == NULL || suffix == NULL)
 		return (-1);
