@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.14 1999/01/19 17:02:00 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.15 1999/03/04 00:35:05 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 1999/01/19 17:02:00 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 1999/03/04 00:35:05 hubertf Exp $");
 #endif
 #endif
 
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	    /* Reasonable definition of 'everything' */
 	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
 		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
-		SHOW_REQBY;
+		SHOW_REQBY | SHOW_DEPENDS;
 	    break;
 
 	case 'h':
@@ -171,7 +171,7 @@ main(int argc, char **argv)
 
     /* Set some reasonable defaults */
     if (!Flags)
-	Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY;
+	Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY | SHOW_DEPENDS;
 
     /* -Fe /filename -> change CheckPkg to real packagename */
     if (CheckPkg && File2Pkg) {
