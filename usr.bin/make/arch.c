@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.31 1999/09/15 08:43:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.31 1999/09/15 08:43:21 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.31 1999/09/15 08:43:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -134,7 +134,9 @@ typedef struct Arch {
 } Arch;
 
 static int ArchFindArchive __P((ClientData, ClientData));
+#ifdef CLEANUP
 static void ArchFree __P((ClientData));
+#endif
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
 #if defined(__svr4__) || defined(__SVR4) || defined(__ELF__)
@@ -142,6 +144,7 @@ static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
 static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
 #endif
 
+#ifdef CLEANUP
 /*-
  *-----------------------------------------------------------------------
  * ArchFree --
@@ -175,6 +178,7 @@ ArchFree(ap)
     Hash_DeleteTable(&a->members);
     free((Address) a);
 }
+#endif
 
 
 
@@ -1265,7 +1269,9 @@ Arch_Init ()
 void
 Arch_End ()
 {
+#ifdef CLEANUP
     Lst_Destroy(archives, ArchFree);
+#endif
 }
 
 /*-

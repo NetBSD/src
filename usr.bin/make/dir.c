@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23 1999/09/15 05:56:33 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.23 1999/09/15 05:56:33 mycroft Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23 1999/09/15 05:56:33 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.24 1999/09/15 08:43:22 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -275,6 +275,7 @@ Dir_Init (cdname)
 void
 Dir_End()
 {
+#ifdef CLEANUP
     if (cur) {
 	cur->refCount -= 1;
 	Dir_Destroy((ClientData) cur);
@@ -288,6 +289,7 @@ Dir_End()
     Dir_ClearPath(openDirectories);
     Lst_Destroy(openDirectories, NOFREE);
     Hash_DeleteTable(&mtimes);
+#endif
 }
 
 /*-

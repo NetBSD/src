@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.17 1999/09/15 02:56:35 mycroft Exp $	*/
+/*	$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.17 1999/09/15 02:56:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.17 1999/09/15 02:56:35 mycroft Exp $");
+__RCSID("$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -101,7 +101,9 @@ __RCSID("$NetBSD: targ.c,v 1.17 1999/09/15 02:56:35 mycroft Exp $");
 #include	  "dir.h"
 
 static Lst        allTargets;	/* the list of all targets found so far */
+#ifdef CLEANUP
 static Lst	  allGNs;	/* List of all the GNodes */
+#endif
 static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
@@ -109,7 +111,9 @@ static Hash_Table targets;	/* a hash table of same */
 static int TargPrintOnlySrc __P((ClientData, ClientData));
 static int TargPrintName __P((ClientData, ClientData));
 static int TargPrintNode __P((ClientData, ClientData));
+#ifdef CLEANUP
 static void TargFreeGN __P((ClientData));
+#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -145,10 +149,12 @@ Targ_Init ()
 void
 Targ_End ()
 {
+#ifdef CLEANUP
     Lst_Destroy(allTargets, NOFREE);
     if (allGNs)
 	Lst_Destroy(allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
+#endif
 }
 
 /*-
@@ -212,13 +218,16 @@ Targ_NewGN (name)
     gn->commands =  	Lst_Init (FALSE);
     gn->suffix =	NULL;
 
+#ifdef CLEANUP
     if (allGNs == NULL)
 	allGNs = Lst_Init(FALSE);
     Lst_AtEnd(allGNs, (ClientData) gn);
+#endif
 
     return (gn);
 }
 
+#ifdef CLEANUP
 /*-
  *-----------------------------------------------------------------------
  * TargFreeGN  --
@@ -254,6 +263,7 @@ TargFreeGN (gnp)
     Lst_Destroy(gn->commands, NOFREE);
     free((Address)gn);
 }
+#endif
 
 
 /*-
