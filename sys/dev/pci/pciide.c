@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.20 1998/12/02 10:52:25 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.21 1998/12/03 13:24:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -85,7 +85,8 @@ pciide_pci_read(pc, pa, reg)
 	pcitag_t pa;
 	int reg;
 {
-	return ((pci_conf_read(pc, pa, (reg & ~0x03)) >> (reg & 0x03)) & 0xff);
+	return (
+	    pci_conf_read(pc, pa, (reg & ~0x03)) >> ((reg & 0x03) * 8) & 0xff);
 }
 
 
@@ -101,8 +102,8 @@ pciide_pci_write(pc, pa, reg, val)
 	pcireg_t pcival;
 
 	pcival = pci_conf_read(pc, pa, (reg & ~0x03));
-	pcival &= ~(0xff << (reg & 0x03));
-	pcival |= (val << (reg & 0x03));
+	pcival &= ~(0xff << ((reg & 0x03) * 8));
+	pcival |= (val << ((reg & 0x03) * 8));
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
 
