@@ -117,8 +117,10 @@
 #include "i386/i386/cons.h"
 #endif
 
+#if PCVT_NETBSD <= 9
 #include "machine/psl.h"
 #include "machine/frame.h"
+#endif
 #include "machine/stdarg.h"
 #if PCVT_NETBSD > 9
 #include "i386/isa/pcvt/pcvt_ioctl.h"
