@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	8.1 (Berkeley) 7/15/93
- *	     $Id: ct.c,v 1.3 1994/01/26 02:38:23 brezak Exp $
+ * 	     $Id: ct.c,v 1.4 1994/03/09 20:17:40 brezak Exp $
  */
 
 /*
@@ -159,12 +159,12 @@ ctopen(f, ctlr, unit, part)
 	if (unit >= NCT)
 		return(ECTLR);
 	rs = &ct_softc[ctlr][unit];
+	rs->sc_unit = unit;
+	rs->sc_ctlr = ctlr;
 	if (rs->sc_alive == 0)
 		if (ctinit(ctlr, unit) == 0)
 			return(ENXIO);
 
-	rs->sc_unit = unit;
-	rs->sc_ctlr = ctlr;
 	f->f_devdata = (void *)rs;
 
 	ctstrategy(f, MTREW);
