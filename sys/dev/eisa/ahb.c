@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.36 2002/09/27 20:37:49 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.37 2002/09/30 21:04:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.36 2002/09/27 20:37:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.37 2002/09/30 21:04:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,9 +152,8 @@ integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahbmatch __P((struct device *, struct cfdata *, void *));
 void	ahbattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ahb_ca = {
-	sizeof(struct ahb_softc), ahbmatch, ahbattach
-};
+CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
+    ahbmatch, ahbattach, NULL, NULL)
 
 #define	AHB_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.9 2002/09/27 20:37:54 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.10 2002/09/30 21:04:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.9 2002/09/27 20:37:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.10 2002/09/30 21:04:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,8 @@ static int	mlx_v1_fw_handshake(struct mlx_softc *, int *, int *, int *);
 static int	mlx_v1_reset(struct mlx_softc *);
 #endif
 
-const struct cfattach mlx_eisa_ca = {
-	sizeof(struct mlx_softc), mlx_eisa_match, mlx_eisa_attach
-};
+CFATTACH_DECL(mlx_eisa, sizeof(struct mlx_softc),
+    mlx_eisa_match, mlx_eisa_attach, NULL, NULL)
 
 struct mlx_eisa_prod {
 	const char	*mp_idstr;
