@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.6 2003/04/10 05:45:29 elric Exp $ */
+/* $NetBSD: params.c,v 1.7 2003/07/13 07:58:19 itojun Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.6 2003/04/10 05:45:29 elric Exp $");
+__RCSID("$NetBSD: params.c,v 1.7 2003/07/13 07:58:19 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: params.c,v 1.6 2003/04/10 05:45:29 elric Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
@@ -604,6 +605,8 @@ print_kvpair_int(FILE *f, int ts, const char *key, int val)
 		return;
 
 	asprintf(&tmp, "%d", val);
+	if (!tmp)
+		err(1, "malloc");
 	print_kvpair_cstr(f, ts, key, tmp);
 	free(tmp);
 }
