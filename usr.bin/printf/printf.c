@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.9 1993/11/25 04:42:11 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.10 1993/12/31 01:46:16 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -197,8 +197,7 @@ main(argc, argv)
 				for (; index(SKIP2, *fmt); ++fmt) ;
 				if (!*fmt) {
 					warnx ("missing format character");
-					rval = 1;
-					return;		/* XXX */
+					return(1);
 				}
 
 				convch = *fmt;
@@ -237,7 +236,7 @@ main(argc, argv)
 				}
 				default:
 					warnx ("%s: invalid directive", start);
-					rval = 1;
+					return(1);
 				}
 				*(fmt + 1) = nextch;
 				break;
