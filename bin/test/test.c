@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)test.c	5.4 (Berkeley) 2/12/93";*/
-static char rcsid[] = "$Id: test.c,v 1.4 1993/09/08 00:10:06 alm Exp $";
+static char rcsid[] = "$Id: test.c,v 1.5 1993/09/08 00:46:55 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -520,11 +520,20 @@ static int
 int_tcheck(v)
 	char *v;
 {
-	char *p;
+	char *p = v;;
 
-	for (p = v; *p != '\0'; p++)
-		if (!isdigit(*p) && !isspace(*p))
-			err("illegal operand \"%s\" -- expected integer.", v);
+	while (isspace(*p))
+		p++;
+	
+	if (*p == '-' || *p == '+')
+		p++;
+
+	while (*p) {
+		if (!isdigit(*p))
+			errx(2, "illegal operand \"%s\" -- expected integer.", v);
+		p++;
+	}
+
 	return (1);
 }
 
