@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.1 2001/11/07 00:33:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,16 +71,16 @@ static __inline void
 timer_enable(uint8_t bit)
 {
 
-	bus_space_write_1(&obio_bs_tag, IQ80310_TIMER_ENABLE, 0,
-	    bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_ENABLE, 0) | bit);
+	CPLD_WRITE(IQ80310_TIMER_ENABLE,
+	    CPLD_READ(IQ80310_TIMER_ENABLE) | bit);
 }
 
 static __inline void
 timer_disable(uint8_t bit)
 {
 
-	bus_space_write_1(&obio_bs_tag, IQ80310_TIMER_ENABLE, 0,
-	    bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_ENABLE, 0) & ~bit);
+	CPLD_WRITE(IQ80310_TIMER_ENABLE,
+	    CPLD_READ(IQ80310_TIMER_ENABLE) & ~bit);
 }
 
 static __inline uint32_t
@@ -95,12 +95,11 @@ timer_read(void)
 	 * latched.  The loop appears to work around the problem.
 	 */
 	do {
-		la[0] =
-		  bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_LA0, 0) & 0x5f;
+		la[0] = CPLD_READ(IQ80310_TIMER_LA0) & 0x5f;
 	} while (la[0] == 0);
-	la[1] = bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_LA1, 0) & 0x5f;
-	la[2] = bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_LA2, 0) & 0x5f;
-	la[3] = bus_space_read_1(&obio_bs_tag, IQ80310_TIMER_LA3, 0) & 0x0f;
+	la[1] = CPLD_READ(IQ80310_TIMER_LA1) & 0x5f;
+	la[2] = CPLD_READ(IQ80310_TIMER_LA2) & 0x5f;
+	la[3] = CPLD_READ(IQ80310_TIMER_LA3) & 0x0f;
 
 #define	SWIZZLE(x) \
 	x = (((x) & 0x40) >> 1) | ((x) | 0x1f)
@@ -118,12 +117,9 @@ static __inline void
 timer_write(uint32_t x)
 {
 
-	bus_space_write_1(&obio_bs_tag, IQ80310_TIMER_LA0, 0,
-	    x & 0xff);
-	bus_space_write_1(&obio_bs_tag, IQ80310_TIMER_LA1, 0,
-	    (x >> 8) & 0xff);
-	bus_space_write_1(&obio_bs_tag, IQ80310_TIMER_LA2, 0,
-	    (x >> 16) & 0x3f);
+	CPLD_WRITE(IQ80310_TIMER_LA0, x & 0xff);
+	CPLD_WRITE(IQ80310_TIMER_LA1, (x >> 8) & 0xff);
+	CPLD_WRITE(IQ80310_TIMER_LA2, (x >> 16) & 0x3f);
 }
 
 /*
