@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.57 2002/03/20 00:29:24 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.58 2002/03/24 00:11:00 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.57 2002/03/20 00:29:24 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.58 2002/03/24 00:11:00 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ struct list secondlevel[] = {
 	{ 0, 0},
 };
 
-int	Aflag, aflag, nflag, wflag;
+int	Aflag, aflag, nflag, qflag, wflag;
 
 /*
  * Variables requiring special processing.
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 	char *fn = NULL;
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "Aaf:nw")) != -1) {
+	while ((ch = getopt(argc, argv, "Aaf:nqw")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -236,6 +236,10 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 
+		case 'q':
+			qflag = 1;
+			break;
+
 		case 'w':
 			wflag = 1;
 			break;
@@ -244,6 +248,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	if (qflag && !wflag)
+		usage();
+
 	argc -= optind;
 	argv += optind;
 
@@ -257,7 +265,7 @@ main(int argc, char *argv[])
 	if (fn) {
 		FILE *fp;
 		char *l;
-		
+
 		fp = fopen(fn, "r");
 		if (fp == NULL) {
 			err(1, "%s", fn);
@@ -538,7 +546,7 @@ parse(char *string, int flags)
 	default:
 		warnx("Illegal top level value: %d", mib[0]);
 		return;
-	
+
 	}
 	if (bufp) {
 		warnx("Name %s in %s is unknown", bufp, string);
@@ -588,6 +596,8 @@ parse(char *string, int flags)
 			return;
 		}
 	}
+	if (qflag && (newsize > 0))
+		return;
 	if (special & CLOCK) {
 		struct clockinfo *clkp = (struct clockinfo *)buf;
 
@@ -636,7 +646,7 @@ parse(char *string, int flags)
 		    (unsigned long long) cp_time[4]);
 		return;
 	}
-		
+
 	switch (type) {
 	case CTLTYPE_INT:
 		if (newsize == 0) {
@@ -921,7 +931,6 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 }
 #endif /* INET6 */
 
-
 struct ctlname ffsname[] = FFS_NAMES;
 struct ctlname nfsname[] = NFS_NAMES;
 struct list vfsvars[] = {
@@ -1129,10 +1138,10 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
-	    progname, "[-n] variable ...", 
-	    progname, "[-n] -w variable=value ...",
+	    progname, "[-n] variable ...",
+	    progname, "[-n] [-q] -w variable=value ...",
 	    progname, "[-n] -a",
 	    progname, "[-n] -A",
-	    progname, "[-n] -f file");
+	    progname, "[-n] [-q] -f file");
 	exit(1);
 }
