@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.6 1997/01/09 20:19:16 tls Exp $	*/
+/*	$NetBSD: option.c,v 1.7 1997/10/19 11:52:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: option.c,v 1.6 1997/01/09 20:19:16 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: option.c,v 1.7 1997/10/19 11:52:59 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +55,8 @@ static char rcsid[] = "$NetBSD: option.c,v 1.6 1997/01/09 20:19:16 tls Exp $";
 #include <string.h>
 
 #include "find.h"
+
+int typecompare __P((const void *, const void *));
 
 /* NB: the following table must be sorted lexically. */
 static OPTION options[] = {
@@ -100,7 +106,7 @@ PLAN *
 find_create(argvp)
 	char ***argvp;
 {
-	register OPTION *p;
+	OPTION *p;
 	PLAN *new;
 	char **argv;
 
@@ -137,7 +143,6 @@ option(name)
 	char *name;
 {
 	OPTION tmp;
-	int typecompare __P((const void *, const void *));
 
 	tmp.name = name;
 	return ((OPTION *)bsearch(&tmp, options,
