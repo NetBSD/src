@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.4 1999/11/01 22:54:17 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.5 2000/02/04 23:06:10 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -137,6 +137,7 @@ struct isposinfo {
 #define	XS_SNSKEY(xs)		((xs)->sense.scsi_sense.flags)
 
 #define	HBA_NOERROR		XS_NOERROR
+#define	HBA_RESSHORT		XS_RESOURCE_SHORTAGE
 #define	HBA_BOTCH		XS_DRIVER_STUFFUP
 #define	HBA_CMDTIMEOUT		XS_TIMEOUT
 #define	HBA_SELTIMEOUT		XS_SELTIMEOUT

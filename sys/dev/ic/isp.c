@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.39 1999/10/17 01:38:27 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.39.2.1 2000/02/04 23:06:09 thorpej Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -2238,7 +2238,7 @@ isp_intr(arg)
 				IDPRINTF(2, ("%s: internal queues full\n",
 				    isp->isp_name));
 				/*
-				 * We'll synthesize a QUEUE FULL message below.
+				 * This is handled below...
 				 */
 			}
 			if (sp->req_header.rqs_flags & RQSFLAG_BADHEADER) {
@@ -2303,8 +2303,18 @@ isp_intr(arg)
 				sp->req_state_flags |= RQSF_GOT_SENSE;
 			}
 		}
-		if (XS_NOERR(xs) && XS_STS(xs) == SCSI_BUSY) {
-			XS_SETERR(xs, HBA_TGTBSY);
+
+		if (XS_NOERR(xs)) {
+			switch (XS_STS(xs)) {
+			case SCSI_BUSY:
+			case SCSI_QFULL:
+				/*
+				 * If the target returns QUEUE FULL,
+				 * it's busy (because it's queue is
+				 * full!).
+				 */
+				XS_SETERR(xs, HBA_TGTBSY);
+			}
 		}
 
 		if (sp->req_header.rqs_entry_type == RQSTYPE_RESPONSE) {
@@ -2318,10 +2328,10 @@ isp_intr(arg)
 		} else if (sp->req_header.rqs_entry_type == RQSTYPE_REQUEST) {
 			if (sp->req_header.rqs_flags & RQSFLAG_FULL) {
 				/*
-				 * Force Queue Full status.
+				 * The RISC's internal queues are full,
+				 * so note this is a resource shortage.
 				 */
-				XS_STS(xs) = SCSI_QFULL;
-				XS_SETERR(xs, HBA_NOERROR);
+				XS_SETERR(xs, HBA_RESSHORT);
 			} else if (XS_NOERR(xs)) {
 				XS_SETERR(xs, HBA_BOTCH);
 			}
@@ -2788,15 +2798,8 @@ isp_parse_status(isp, sp, xs)
 		IDPRINTF(3, ("%s: internal queues full for target %d lun %d "
 		    "status 0x%x\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs),
 		    XS_STS(xs)));
-		/*
-		 * If QFULL or some other status byte is set, then this
-		 * isn't an error, per se.
-		 */
-		if (XS_STS(xs) != 0) {
-			XS_SETERR(xs, HBA_NOERROR);
-			return;
-		}
-		break;
+		XS_SETERR(xs, HBA_RESSHORT);
+		return;
 
 	case RQCS_PHASE_SKIPPED:
 		PRINTF("%s: SCSI phase skipped (e.g., COMMAND COMPLETE w/o "
