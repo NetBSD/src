@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2003/01/24 21:55:15 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.139 2003/02/09 19:44:20 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -663,7 +663,6 @@ sendsig(sig, mask, code)
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		addr = (vaddr_t)p->p_sigctx.ps_sigcode;
-		addr += 8; /* XXX skip the upcall code */
 		break;
 #endif /* COMPAT_16 */
 

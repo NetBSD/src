@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.29 2003/01/24 16:54:34 nakayama Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.30 2003/02/09 19:44:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -270,7 +270,6 @@ netbsd32_sendsig(sig, mask, code)
 	 */
 	addr = (long)p->p_psstr - szsigcode;
 	tf->tf_global[1] = (long)catcher;
-	addr += 8; /* XXX skip the upcall code */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
