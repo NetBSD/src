@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.43 1996/11/06 20:20:00 cgd Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.44 1997/05/07 18:49:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -690,52 +690,3 @@ resetpriority(p)
 	if (newpriority < curpriority)
 		need_resched();
 }
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-
-#include <ddb/db_interface.h>
-#include <ddb/db_output.h>
-
-void
-db_show_all_procs(addr, haddr, count, modif)
-	db_expr_t addr;
-	int haddr;
-	db_expr_t count;
-	char *modif;
-{
-	int map = modif[0] == 'm';
-	int doingzomb = 0;
-	struct proc *p, *pp;
-    
-	p = allproc.lh_first;
-	db_printf("  pid proc     addr     %s comm         wchan\n",
-	    map ? "map     " : "uid  ppid  pgrp  flag stat em ");
-	while (p != 0) {
-		pp = p->p_pptr;
-		if (p->p_stat) {
-			db_printf("%5d %p %p ",
-			    p->p_pid, p, p->p_addr);
-			if (map)
-				db_printf("%p %s   ",
-				    p->p_vmspace, p->p_comm);
-			else
-				db_printf("%3d %5d %5d  %06x  %d  %s  %s   ",
-				    p->p_cred->p_ruid, pp ? pp->p_pid : -1,
-				    p->p_pgrp->pg_id, p->p_flag, p->p_stat,
-				    p->p_emul->e_name, p->p_comm);
-			if (p->p_wchan) {
-				if (p->p_wmesg)
-					db_printf("%s ", p->p_wmesg);
-				db_printf("%p", p->p_wchan);
-			}
-			db_printf("\n");
-		}
-		p = p->p_list.le_next;
-		if (p == 0 && doingzomb == 0) {
-			doingzomb = 1;
-			p = zombproc.lh_first;
-		}
-	}
-}
-#endif
