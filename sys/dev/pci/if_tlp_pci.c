@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.18 1999/09/28 23:12:23 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.19 1999/09/29 18:52:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -178,10 +178,12 @@ const struct tulip_pci_product {
 #if 0
 	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
 	  TULIP_CHIP_DM9102,		0 },
+#endif
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
-	  TULIP_CHIP_AL981,		0 },
+	  TULIP_CHIP_AL981,		0xc4 },
 
+#if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
 	  TULIP_CHIP_AX88140,		0 },
 #endif
@@ -695,26 +697,40 @@ tlp_pci_attach(parent, self, aux)
 		break;
 
 	case TULIP_CHIP_MX98713:
+		/*
+		 * The Macronix MX98713 has an MII and GPIO, but no
+		 * internal Nway block.  This chip is basically a
+		 * perfect 21140A clone, with the exception of the
+		 * a magic register frobbing in order to make the
+		 * interface function.
+		 */
+		if (tlp_isv_srom_enaddr(sc, enaddr)) {
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+			break;
+		}
+		/* FALLTHROUGH */
+
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98725:
 		/*
-		 * Happily, Macronix chips use the ISV SROM format!
-		 * Wow, a clone that's actually Tulip-like!
+		 * The MX98713A has an MII as well as an internal Nway block,
+		 * but no GPIO.  The MX98715 and MX98725 have an internal
+		 * Nway block only.
+		 *
+		 * The internal Nway block, unlike the Lite-On PNIC's, does
+		 * just that - performs Nway.  Once autonegotiation completes,
+		 * we must program the GPR media information into the chip.
+		 *
+		 * The Ethernet address is at offset 20 in the SROM, like
+		 * the Tulip ISV.
+		 *
+		 * XXX Do some more investigating; do these chips also
+		 * XXX have ISV-like SROMs?
 		 */
-		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
-			/*
-			 * Not ISV SROM; can't cope right now.
-			 */
-			goto cant_cope;
-		} else {
-			/*
-			 * We start out with the 2114x ISV media switch.
-			 * When we search for quirks, we may change to
-			 * a different switch.
-			 */
-			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
-		}
+		memcpy(enaddr, &sc->sc_srom[TULIP_ROM_IEEE_NETWORK_ADDRESS],
+		    ETHER_ADDR_LEN);
+		sc->sc_mediasw = &tlp_pmac_mediasw;
 		break;
 
 	case TULIP_CHIP_WB89C840F:
@@ -728,6 +744,20 @@ tlp_pci_attach(parent, self, aux)
 		 * Winbond 89C840F has an MII attached to the SIO.
 		 */
 		sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		break;
+
+	case TULIP_CHIP_AL981:
+		/*
+		 * The ADMtek AL981's Ethernet address is located
+		 * at offset 8 of its EEPROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[8], ETHER_ADDR_LEN);
+
+		/*
+		 * ADMtek AL981 has a built-in PHY accessed through
+		 * special registers.
+		 */
+		sc->sc_mediasw = &tlp_al981_mediasw;
 		break;
 
 	default:

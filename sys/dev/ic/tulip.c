@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.20 1999/09/28 21:56:45 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.21 1999/09/29 18:52:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ void	tlp_srom_idle __P((struct tulip_softc *));
 
 void	tlp_filter_setup __P((struct tulip_softc *));
 void	tlp_winb_filter_setup __P((struct tulip_softc *));
+void	tlp_al981_filter_setup __P((struct tulip_softc *));
 
 void	tlp_rxintr __P((struct tulip_softc *));
 void	tlp_txintr __P((struct tulip_softc *));
@@ -168,6 +169,9 @@ void	tlp_sio_mii_writereg __P((struct device *, int, int, int));
 
 int	tlp_pnic_mii_readreg __P((struct device *, int, int));
 void	tlp_pnic_mii_writereg __P((struct device *, int, int, int));
+
+int	tlp_al981_mii_readreg __P((struct device *, int, int));
+void	tlp_al981_mii_writereg __P((struct device *, int, int, int));
 
 void	tlp_2114x_preinit __P((struct tulip_softc *));
 void	tlp_pnic_preinit __P((struct tulip_softc *));
@@ -224,6 +228,10 @@ tlp_attach(sc, enaddr)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_filter_setup = tlp_winb_filter_setup;
+		break;
+
+	case TULIP_CHIP_AL981:
+		sc->sc_filter_setup = tlp_al981_filter_setup;
 		break;
 
 	default:
@@ -1508,6 +1516,22 @@ tlp_init(sc)
 		break;
 	    }
 
+	case TULIP_CHIP_AL981:
+	    {
+		u_int32_t reg;
+		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+
+		reg = enaddr[0] |
+		      (enaddr[1] << 8) |
+		      (enaddr[2] << 16) |
+		      (enaddr[3] << 24);
+		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR0, reg);
+
+		reg = enaddr[4] |
+		      (enaddr[5] << 8);
+		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR1, reg);
+	    }
+
 	default:
 		/* Nothing. */
 	}
@@ -2311,6 +2335,69 @@ tlp_winb_filter_setup(sc)
 }
 
 /*
+ * tlp_al981_filter_setup:
+ *
+ *	Set the ADMtek AL981's receive filter.
+ */
+void
+tlp_al981_filter_setup(sc)
+	struct tulip_softc *sc;
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	u_int32_t hash, mchash[2];
+
+	DPRINTF(sc, ("%s: tlp_al981_filter_setup: sc_flags 0x%08x\n",
+	    sc->sc_dev.dv_xname, sc->sc_flags));
+
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	sc->sc_opmode &= ~(OPMODE_PR|OPMODE_PM);
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_opmode |= OPMODE_PR;
+		goto allmulti;
+	}
+
+	mchash[0] = mchash[1] = 0;
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
+		}
+
+		hash = (tlp_crc32(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26)
+		    & 0x3f;
+		mchash[hash >> 5] |= 1 << (hash & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	goto setit;
+
+ allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	mchash[0] = mchash[1] = 0xffffffff;
+
+ setit:
+	TULIP_WRITE(sc, CSR_ADM_MAR0, mchash[0]);
+	TULIP_WRITE(sc, CSR_ADM_MAR1, mchash[1]);
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+	DPRINTF(sc, ("%s: tlp_al981_filter_setup: returning\n",
+	    sc->sc_dev.dv_xname));
+}
+
+/*
  * tlp_idle:
  *
  *	Cause the transmit and/or receive processes to go idle.
@@ -2443,18 +2530,15 @@ tlp_mii_statchg(self)
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
-	/*
-	 * XXX What about Heartbeat Disable?  Is it magically frobbed
-	 * XXX by the PHY?  I hope so...
-	 */
-
-	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD);
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_HBD);
 
 	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
 		sc->sc_opmode |= OPMODE_TTM;
+	else
+		sc->sc_opmode |= OPMODE_HBD;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
-		sc->sc_opmode |= OPMODE_FD;
+		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
 
 	/*
 	 * Write new OPMODE bits.  This also restarts the transmit
@@ -2479,11 +2563,6 @@ tlp_winb_mii_statchg(self)
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
-
-	/*
-	 * XXX What about Heartbeat Disable?  Is it magically frobbed
-	 * XXX by the PHY?  I hope so...
-	 */
 
 	sc->sc_opmode &= ~(OPMODE_WINB_FES|OPMODE_FD);
 
@@ -2720,6 +2799,69 @@ tlp_pnic_mii_writereg(self, phy, reg, val)
 	printf("%s: MII write timed out\n", sc->sc_dev.dv_xname);
 }
 
+bus_addr_t tlp_al981_phy_regmap[] = {
+	CSR_ADM_BMCR,
+	CSR_ADM_BMSR,
+	CSR_ADM_PHYIDR1,
+	CSR_ADM_PHYIDR2,
+	CSR_ADM_ANAR,
+	CSR_ADM_ANLPAR,
+	CSR_ADM_ANER,
+
+	CSR_ADM_XMC,
+	CSR_ADM_XCIIS,
+	CSR_ADM_XIE,
+	CSR_ADM_100CTR,
+};
+const int tlp_al981_phy_regmap_size = sizeof(tlp_al981_phy_regmap) /
+    sizeof(tlp_al981_phy_regmap[0]);
+
+/*
+ * tlp_al981_mii_readreg:
+ *
+ *	Read a PHY register on the ADMtek AL981.
+ */
+int
+tlp_al981_mii_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/* AL981 only has an internal PHY. */
+	if (phy != 0)
+		return (0);
+
+	if (reg >= tlp_al981_phy_regmap_size)
+		return (0);
+
+	return (bus_space_read_4(sc->sc_st, sc->sc_sh,
+	    tlp_al981_phy_regmap[reg]) & 0xffff);
+}
+
+/*
+ * tlp_al981_mii_writereg:
+ *
+ *	Write a PHY register on the ADMtek AL981.
+ */
+void
+tlp_al981_mii_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/* AL981 only has an internal PHY. */
+	if (phy != 0)
+		return;
+
+	if (reg >= tlp_al981_phy_regmap_size)
+		return;
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh,
+	    tlp_al981_phy_regmap[reg], val);
+}
+
 /*****************************************************************************
  * Chip-specific pre-init and reset functions.
  *****************************************************************************/
@@ -2741,7 +2883,10 @@ tlp_2114x_preinit(sc)
 	 */
 	sc->sc_opmode |= OPMODE_MBO;
 
-	if (tm != NULL &&
+	/*
+	 * If `tm' is NULL, we must be doing pure MII-over-SIO.
+	 */
+	if (tm == NULL ||
 	    (tm->tm_type == TULIP_ROM_MB_21140_MII ||
 	     tm->tm_type == TULIP_ROM_MB_21142_MII)) {
 		/*
@@ -3909,13 +4054,8 @@ tlp_pnic_nway_statchg(self)
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
 
-	/*
-	 * XXX What about Heartbeat Disable?  Is it magically frobbed
-	 * XXX by the PHY?  I hope so...
-	 */
-
 	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
-	    OPMODE_SCR);
+	    OPMODE_SCR|OPMODE_HBD);
 
 	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T) {
 		sc->sc_opmode |= OPMODE_TTM;
@@ -3923,14 +4063,14 @@ tlp_pnic_nway_statchg(self)
 		    GPP_PNIC_OUT(GPP_PNIC_PIN_SPEED_RLY, 0) |
 		    GPP_PNIC_OUT(GPP_PNIC_PIN_100M_LPKB, 1));
 	} else {
-		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR;
+		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD;
 		TULIP_WRITE(sc, CSR_GPP,
 		    GPP_PNIC_OUT(GPP_PNIC_PIN_SPEED_RLY, 1) |
 		    GPP_PNIC_OUT(GPP_PNIC_PIN_100M_LPKB, 1));
 	}
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
-		sc->sc_opmode |= OPMODE_FD;
+		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
 
 	/*
 	 * Write new OPMODE bits.  This also restarts the transmit
@@ -4178,4 +4318,418 @@ tlp_pnic_nway_acomp(sc)
 		reg |= PNIC_NWAY_FD;
 
 	TULIP_WRITE(sc, CSR_PNIC_NWAY, reg);
+}
+
+/*
+ * Macronix PMAC media switch.  MX98713 and MX98713A have MII.
+ * All have GPR media.  MX98713A, MX98715, MX98725 have internal
+ * Nway blocks for autonegotiation.
+ */
+void	tlp_pmac_tmsw_init __P((struct tulip_softc *));
+void	tlp_pmac_tmsw_get __P((struct tulip_softc *, struct ifmediareq *));
+int	tlp_pmac_tmsw_set __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_pmac_mediasw = {
+	tlp_pmac_tmsw_init, tlp_pmac_tmsw_get, tlp_pmac_tmsw_set
+};
+
+void	tlp_pmac_nway_statchg __P((struct device *));
+void	tlp_pmac_nway_tick __P((void *));
+int	tlp_pmac_nway_service __P((struct tulip_softc *, int));
+void	tlp_pmac_nway_reset __P((struct tulip_softc *));
+int	tlp_pmac_nway_auto __P((struct tulip_softc *, int));
+void	tlp_pmac_nway_auto_timeout __P((void *));
+void	tlp_pmac_nway_status __P((struct tulip_softc *));
+void	tlp_pmac_nway_acomp __P((struct tulip_softc *));
+
+void
+tlp_pmac_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	const char *sep = "";
+
+#define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+	if (sc->sc_chip == TULIP_CHIP_MX98713 ||
+	    sc->sc_chip == TULIP_CHIP_MX98713A) {
+		mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+		if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL) {
+			sc->sc_flags |= TULIPF_HAS_MII;
+			sc->sc_tick = tlp_mii_tick;
+			sc->sc_preinit = tlp_2114x_preinit;
+			ifmedia_set(&sc->sc_mii.mii_media,
+			    IFM_ETHER|IFM_AUTO);
+			return;
+		}
+	}
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	tlp_pmac_nway_reset(sc);
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0),
+	    PMAC_10TCTL_LTE|PMAC_10TCTL_HDE);
+	PRINT("10baseT");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, 0),
+	    PMAC_10TCTL_LTE);
+	PRINT("10baseT-FDX");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, 0),
+	    PMAC_10TCTL_LTE|PMAC_10TCTL_TXH);
+	PRINT("100baseTX");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, 0),
+	    PMAC_10TCTL_LTE|PMAC_10TCTL_TXF);
+	PRINT("100baseTX-FDX");
+
+	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0),
+	    PMAC_10TCTL_LTE|PMAC_10TCTL_HDE|PMAC_10TCTL_TXH|PMAC_10TCTL_TXF|
+	    PMAC_10TCTL_ANE);
+	PRINT("auto");
+
+	printf("\n");
+
+	sc->sc_statchg = tlp_pmac_nway_statchg;
+	sc->sc_tick = tlp_pmac_nway_tick;
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+
+#undef ADD
+#undef PRINT
+}
+
+void
+tlp_pmac_tmsw_get(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+	struct mii_data *mii = &sc->sc_mii;
+
+	if (sc->sc_flags & TULIPF_HAS_MII)
+		tlp_mii_getmedia(sc, ifmr);
+	else {
+		mii->mii_media_status = 0;
+		mii->mii_media_active = IFM_NONE;
+		tlp_pmac_nway_service(sc, MII_POLLSTAT);
+		ifmr->ifm_status = sc->sc_mii.mii_media_status;
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	}
+}
+
+int
+tlp_pmac_tmsw_set(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
+
+	if (sc->sc_flags & TULIPF_HAS_MII)
+		return (tlp_mii_setmedia(sc));
+
+	if (ifp->if_flags & IFF_UP) {
+		mii->mii_media_status = 0;
+		mii->mii_media_active = IFM_NONE;
+		return (tlp_pmac_nway_service(sc, MII_MEDIACHG));
+	}
+
+	return (0);
+}
+
+void
+tlp_pmac_nway_statchg(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+
+	/* Idle the transmit and receive processes. */
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
+	    OPMODE_SCR|OPMODE_HBD);
+
+	if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
+		sc->sc_opmode |= OPMODE_TTM;
+	else
+		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD;
+
+	if (sc->sc_mii.mii_media_active & IFM_FDX)
+		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+
+	/*
+	 * Write new OPMODE bits.  This also restarts the transmit
+	 * and receive processes.
+	 */
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	/* XXX Update ifp->if_baudrate */
+}
+
+void
+tlp_pmac_nway_tick(arg)
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	tlp_pmac_nway_service(sc, MII_TICK);
+	splx(s);
+
+	timeout(tlp_pmac_nway_tick, sc, hz);
+}
+
+/*
+ * Support for the Macronix PMAC internal NWay block.  This is constructed
+ * somewhat like a PHY driver for simplicity.
+ */
+
+int
+tlp_pmac_nway_service(sc, cmd)
+	struct tulip_softc *sc;
+	int cmd;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		return (0);
+
+	switch (cmd) {
+	case MII_POLLSTAT:
+		/* Nothing special to do here. */
+		break;
+
+	case MII_MEDIACHG: 
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_AUTO:
+			(void) tlp_pnic_nway_auto(sc, 1);
+			break;
+		case IFM_100_T4:
+			/*
+			 * XXX Not supported as a manual setting right now.
+			 */
+			return (EINVAL);
+		default:
+			/*
+			 * 10TCTL register data is stored in the ifmedia entry.
+			 */
+			TULIP_WRITE(sc, CSR_PMAC_10TCTL, ife->ifm_data);
+		}
+		break;
+
+	case MII_TICK:
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			return (0);
+
+		/*
+		 * Check to see if we have link.  If we do, we don't
+		 * need to restart the autonegotiation process.
+		 */
+		if (sc->sc_flags & TULIPF_LINK_UP)
+			return (0);
+
+		/*
+		 * Only retry autonegotiation every 5 seconds.
+		 */
+		if (++sc->sc_nway_ticks != 5)
+			return (0);
+
+		sc->sc_nway_ticks = 0;
+		tlp_pmac_nway_reset(sc);
+		if (tlp_pmac_nway_auto(sc, 0) == EJUSTRETURN)
+			return (0);
+		break;
+	}
+
+	/* Update the media status. */
+	tlp_pmac_nway_status(sc);
+
+	/* Callback if something changed. */
+	if (sc->sc_nway_active != mii->mii_media_active ||
+	    cmd == MII_MEDIACHG) {
+		(*sc->sc_statchg)(&sc->sc_dev);
+		sc->sc_nway_active = mii->mii_media_active;
+	}
+	return (0);
+}
+
+void
+tlp_pmac_nway_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	TULIP_WRITE(sc, CSR_PMAC_NWAYRESET, 0);
+	delay(100);
+}
+
+int
+tlp_pmac_nway_auto(sc, waitfor)
+	struct tulip_softc *sc;
+	int waitfor;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int i;
+
+	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0) {
+		TULIP_WRITE(sc, CSR_STATUS, STATUS_LNPANC);
+		TULIP_WRITE(sc, CSR_PMAC_10TCTL, ife->ifm_data);
+	}
+
+	if (waitfor) {
+		/* Wait 500ms for it to complete. */
+		for (i = 0; i < 500; i++) {
+			if (TULIP_ISSET(sc, CSR_STATUS, STATUS_LNPANC)) {
+				tlp_pmac_nway_acomp(sc);
+				return (0);
+			}
+			delay(1000);
+		}
+#if 0
+		if (TULIP_ISSET(sc, CSR_STATUS, STATUS_LNPANC) == 0)
+			printf("%s: autonegotiation faild to complete\n",
+			    sc->sc_dev.dv_xname);
+#endif
+
+		/*
+		 * Don't need to worry about clearing DOINGAUTO.
+		 * If that's set, a timeout is pending, and it will
+		 * clear the flag.
+		 */
+		return (EIO);
+	}
+
+	/*
+	 * Just let it finish asynchronously.  This is for the benefit of
+	 * the tick handler driving autonegotiation.  Don't want 500ms
+	 * delays all the time while the system us running!
+	 */
+	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0) {
+		sc->sc_flags |= TULIPF_DOINGAUTO;
+		timeout(tlp_pmac_nway_auto_timeout, sc, hz >> 1);
+	}
+	return (EJUSTRETURN);
+}
+
+void
+tlp_pmac_nway_auto_timeout(arg)
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	sc->sc_flags &= ~TULIPF_DOINGAUTO;
+#if 0
+	if (TULIP_ISSET(sc, CSR_STATUS, STATUS_LNPANC) == 0)
+		printf("%s: autonegotiation failed to complete\n",
+		    sc->sc_dev.dv_xname);
+#endif
+
+	tlp_pmac_nway_acomp(sc);
+
+	/* Update the media status. */
+	(void) tlp_pmac_nway_service(sc, MII_POLLSTAT);
+	splx(s);
+}
+
+void
+tlp_pmac_nway_status(sc)
+	struct tulip_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	u_int32_t reg;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	if (sc->sc_flags & TULIPF_LINK_UP)
+		mii->mii_media_status |= IFM_ACTIVE;
+
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		if (TULIP_ISSET(sc, CSR_STATUS, STATUS_LNPANC) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+		reg = TULIP_READ(sc, CSR_PMAC_NWAYSTAT);
+
+#if 0
+		if (reg & PMAC_NWAYSTAT_T4)
+			mii->mii_media_active |= IFM_100_T4;
+		else
+#endif
+		if (reg & PMAC_NWAYSTAT_100TXF)
+			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+		else if (reg & PMAC_NWAYSTAT_100TXH)
+			mii->mii_media_active |= IFM_100_TX;
+		else if (reg & PMAC_NWAYSTAT_10TXF)
+			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+		else if (reg & PMAC_NWAYSTAT_10TXH)
+			mii->mii_media_active |= IFM_10_T;
+		else
+			mii->mii_media_active |= IFM_NONE;
+	} else {
+		/*
+		 * Non-autosensing case; currently selected media
+		 * is the active media.
+		 */
+		mii->mii_media_active = ife->ifm_media;
+	}
+}
+
+void
+tlp_pmac_nway_acomp(sc)
+	struct tulip_softc *sc;
+{
+	u_int32_t reg;
+
+	reg = TULIP_READ(sc, CSR_PMAC_10TCTL);
+	reg &= ~PMAC_10TCTL_ANE;
+	TULIP_WRITE(sc, CSR_PMAC_10TCTL, reg);
+}
+
+/*
+ * ADMtek AL981 media switch.  Only has internal PHY.
+ */
+void	tlp_al981_tmsw_init __P((struct tulip_softc *));
+
+const struct tulip_mediasw tlp_al981_mediasw = {
+	tlp_al981_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
+};
+
+void
+tlp_al981_tmsw_init(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_al981_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_al981_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
 }
