@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.h,v 1.1 2003/10/05 11:10:25 tsutsui Exp $	*/
+/*	$NetBSD: cache_r10k.h,v 1.2 2003/11/01 04:42:56 shin Exp $	*/
 
 /*
  * Copyright (c) 2003 KIYOHARA Takashi <kiyohara@kk.iij4u.or.jp>
@@ -69,94 +69,19 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-/*
- * cache_r10k_op_8lines_64:
- *
- *	Perform the specified cache operation on 8 64-byte cache lines.
- */
-#define	cache_r10k_op_8lines_64(va, op)					\
-do {									\
-	__asm __volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x000(%0); cache %1, 0x040(%0)	\n\t"	\
-		"cache %1, 0x080(%0); cache %1, 0x0c0(%0)	\n\t"	\
-		"cache %1, 0x100(%0); cache %1, 0x140(%0)	\n\t"	\
-		"cache %1, 0x180(%0); cache %1, 0x1c0(%0)	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
- * cache_r10k_op_32lines_64:
- *
- *	Perform the specified cache operation on 32 64-byte
- *	cache lines.
- */
-#define	cache_r10k_op_32lines_64(va, op)				\
-do {									\
-	__asm __volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %1, 0x000(%0); cache %1, 0x040(%0);	\n\t"	\
-		"cache %1, 0x080(%0); cache %1, 0x0c0(%0);	\n\t"	\
-		"cache %1, 0x100(%0); cache %1, 0x140(%0);	\n\t"	\
-		"cache %1, 0x180(%0); cache %1, 0x1c0(%0);	\n\t"	\
-		"cache %1, 0x200(%0); cache %1, 0x240(%0);	\n\t"	\
-		"cache %1, 0x280(%0); cache %1, 0x2c0(%0);	\n\t"	\
-		"cache %1, 0x300(%0); cache %1, 0x340(%0);	\n\t"	\
-		"cache %1, 0x380(%0); cache %1, 0x3c0(%0);	\n\t"	\
-		"cache %1, 0x400(%0); cache %1, 0x440(%0);	\n\t"	\
-		"cache %1, 0x480(%0); cache %1, 0x4c0(%0);	\n\t"	\
-		"cache %1, 0x500(%0); cache %1, 0x540(%0);	\n\t"	\
-		"cache %1, 0x580(%0); cache %1, 0x5c0(%0);	\n\t"	\
-		"cache %1, 0x600(%0); cache %1, 0x640(%0);	\n\t"	\
-		"cache %1, 0x680(%0); cache %1, 0x6c0(%0);	\n\t"	\
-		"cache %1, 0x700(%0); cache %1, 0x740(%0);	\n\t"	\
-		"cache %1, 0x780(%0); cache %1, 0x7c0(%0);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va), "i" (op)					\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-/*
- * cache_r10k_op_16lines_32_2way:
- *
- *	Perform the specified cache operation on 16 64-byte
- * 	cache lines, 2-ways.
- */
-#define	cache_r10k_op_16lines_64_2way(va1, va2, op)			\
-do {									\
-	__asm __volatile(						\
-		".set noreorder					\n\t"	\
-		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
-		"cache %2, 0x040(%0); cache %2, 0x040(%1);	\n\t"	\
-		"cache %2, 0x080(%0); cache %2, 0x080(%1);	\n\t"	\
-		"cache %2, 0x0c0(%0); cache %2, 0x0c0(%1);	\n\t"	\
-		"cache %2, 0x100(%0); cache %2, 0x100(%1);	\n\t"	\
-		"cache %2, 0x140(%0); cache %2, 0x140(%1);	\n\t"	\
-		"cache %2, 0x180(%0); cache %2, 0x180(%1);	\n\t"	\
-		"cache %2, 0x1c0(%0); cache %2, 0x1c0(%1);	\n\t"	\
-		"cache %2, 0x200(%0); cache %2, 0x200(%1);	\n\t"	\
-		"cache %2, 0x240(%0); cache %2, 0x240(%1);	\n\t"	\
-		"cache %2, 0x280(%0); cache %2, 0x280(%1);	\n\t"	\
-		"cache %2, 0x2c0(%0); cache %2, 0x2c0(%1);	\n\t"	\
-		"cache %2, 0x300(%0); cache %2, 0x300(%1);	\n\t"	\
-		"cache %2, 0x340(%0); cache %2, 0x340(%1);	\n\t"	\
-		"cache %2, 0x380(%0); cache %2, 0x380(%1);	\n\t"	\
-		"cache %2, 0x3c0(%0); cache %2, 0x3c0(%1);	\n\t"	\
-		".set reorder"						\
-	    :								\
-	    : "r" (va1), "r" (va2), "i" (op)				\
-	    : "memory");						\
-} while (/*CONSTCOND*/0)
-
-void	r10k_icache_sync_all_64(void);
-void	r10k_icache_sync_range_64(vaddr_t, vsize_t);
-void	r10k_icache_sync_range_index_64(vaddr_t, vsize_t);
-
+void	r10k_icache_sync_all(void);
+void	r10k_icache_sync_range(vaddr_t, vsize_t);
+void	r10k_icache_sync_range_index(vaddr_t, vsize_t);
+void	r10k_pdcache_wbinv_all(void);
+void	r10k_pdcache_wbinv_range(vaddr_t, vsize_t);
+void	r10k_pdcache_wbinv_range_index(vaddr_t, vsize_t);
+void	r10k_pdcache_inv_range(vaddr_t, vsize_t);
 void	r10k_pdcache_wb_range(vaddr_t, vsize_t);
+void	r10k_sdcache_wbinv_all(void);
+void	r10k_sdcache_wbinv_range(vaddr_t, vsize_t);
+void	r10k_sdcache_wbinv_range_index(vaddr_t, vsize_t);
+void	r10k_sdcache_inv_range(vaddr_t, vsize_t);
+void	r10k_sdcache_wb_range(vaddr_t, vsize_t);
 
 #endif /* _KERNEL && !_LOCORE */
 
