@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.12 2002/08/05 08:04:03 tron Exp $	*/
+/*	$NetBSD: sprint.c,v 1.13 2002/08/20 14:02:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.12 2002/08/05 08:04:03 tron Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.13 2002/08/20 14:02:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: sprint.c,v 1.12 2002/08/05 08:04:03 tron Exp $");
 #include <err.h>
 #include <pwd.h>
 #include <errno.h>
-#include <utmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,7 +96,7 @@ sflag_print()
 	 *		office phone
 	 */
 #define	MAXREALNAME	20
-	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
+	(void)printf("%-*s %-*s %s %s\n", maxname, "Login", MAXREALNAME,
 	    "Name", "Tty  Idle  Login Time  ", (gflag) ? "" :
 	    (oflag) ? "Office     Office Phone" : "Where");
 
@@ -111,8 +110,8 @@ sflag_print()
 		pn = tmp;
 
 		for (w = pn->whead; w != NULL; w = w->next) {
-			(void)printf("%-*.*s %-*.*s ", (int)UT_NAMESIZE, 
-			    (int)UT_NAMESIZE,
+			(void)printf("%-*.*s %-*.*s ", (int)maxname, 
+			    (int)maxname,
 			    pn->name, MAXREALNAME, MAXREALNAME,
 			    pn->realname ? pn->realname : "");
 			if (!w->loginat) {
