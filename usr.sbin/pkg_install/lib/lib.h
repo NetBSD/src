@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.49 2003/03/15 20:49:27 agc Exp $ */
+/* $NetBSD: lib.h,v 1.50 2003/04/10 16:25:25 grant Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -61,6 +61,15 @@
 /* Define tar as a string, in case it's called gtar or something */
 #ifndef TAR_CMD
 #define TAR_CMD	"tar"
+#endif
+
+/* Define gzip and bzip2, used to unpack binary packages */
+#ifndef GZIP_CMD
+#define GZIP_CMD "gzip"
+#endif
+
+#ifndef BZIP2_CMD
+#define BZIP2_CMD "bzip2"
 #endif
 
 /* Define ftp as a string, in case the ftp client is called something else */
