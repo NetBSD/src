@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.9 2001/02/18 00:55:31 reinoud Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.10 2001/03/20 12:48:37 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -67,7 +67,7 @@ typedef struct _BootConfig {
 	u_int display_size;
 	u_int width;
 	u_int height;
-	u_int bitsperpixel;
+	u_int log2_bpp;
 
 	PhysMem dram[DRAM_BLOCKS];
 	PhysMem vram[1];
