@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.27 2003/08/15 14:40:42 tron Exp $
+$NetBSD: pcidevs,v 1.428.2.28 2003/09/10 19:09:12 grant Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1484,6 +1484,9 @@ product INTEL E7500_HI_D2	0x2548	E7500 MCH HI_C vppb 2
 product INTEL 82845G_DRAM	0x2560	82845G/GL DRAM Controller / Host-Hub I/F Bridge
 product INTEL 82845G_AGP	0x2561	82845G/GL Host-to-AGP Bridge
 product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
+product INTEL 82865_HB		0x2570	82865 Host
+product INTEL 82865_AGP		0x2571	82865 AGP
+product INTEL 82801EB_HPB	0x2573	82801EB Hub-to-PCI Bridge
 product INTEL 82875P_DRAM	0x2578  82875P DRAM Controller / Host-Hub Bridge
 product INTEL 82875P_AGP	0x2579  82875P Host-to-AGP Bridge
 product INTEL 31244		0x3200	31244 Serial ATA Controller
