@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 1997/05/24 19:59:25 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.27 1997/06/28 19:56:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -381,7 +381,5 @@ extern void	       	(*pmap_changeprot_p) __P((pmap_t, vm_offset_t,
 #endif
 
 #endif /* _KERNEL */
-
-#define	__VM_PMAP_HACK
 
 #endif /* _SPARC_PMAP_H_ */
