@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 1995/07/08 12:39:12 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 1995/07/18 04:10:51 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -41,6 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>
+#include <sys/reboot.h>
 #include <machine/pte.h>
 #include <mac68k/mac68k/clockreg.h>
 #include <machine/vmparam.h>
@@ -578,7 +579,7 @@ bootstrap_mac68k(tc)
 	int	tc;
 {
 	extern caddr_t	esym;
-	extern u_long	videoaddr;
+	extern u_long	videoaddr, boothowto;
 	vm_offset_t	nextpa;
 
 	if (tc & 0x80000000) {
@@ -596,6 +597,18 @@ bootstrap_mac68k(tc)
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 	}
 	nextpa = load_addr + ((int)esym + NBPG - 1) & PG_FRAME;
+
+#if MFS
+	if (boothowto & RB_MINIROOT) {
+		int	v;
+		boothowto |= RB_DFLTROOT;
+		nextpa = mac68k_round_page(nextpa);
+		if ((v = mfs_initminiroot(nextpa-load_addr)) == 0) {
+			printf("Error loading miniroot.\n");
+		}
+		nextpa += v;
+	}
+#endif
 
 	pmap_bootstrap(nextpa, load_addr);
 
