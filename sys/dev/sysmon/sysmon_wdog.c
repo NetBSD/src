@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.8.2.4 2004/09/21 13:33:42 skrll Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.8.2.5 2005/01/17 19:31:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.8.2.4 2004/09/21 13:33:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.8.2.5 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct lwp *l)
 	 */
 	SYSMON_WDOG_LOCK(s);
 	if ((smw = sysmon_armed_wdog) != NULL) {
-		if (smw->smw_mode == WDOG_MODE_UTICKLE) {
+		if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_UTICKLE) {
 			error = sysmon_wdog_setmode(smw,
 			    WDOG_MODE_DISARMED, smw->smw_period);
 			if (error) {
@@ -382,6 +382,7 @@ sysmon_wdog_setmode(struct sysmon_wdog *smw, int mode, u_int period)
 
 	case WDOG_MODE_KTICKLE:
 	case WDOG_MODE_UTICKLE:
+	case WDOG_MODE_ETICKLE:
 		if (sysmon_armed_wdog != NULL) {
 			error = EBUSY;
 			goto out;

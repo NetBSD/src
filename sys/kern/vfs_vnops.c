@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.72.2.7 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.72.2.8 2005/01/17 19:32:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.7 2004/12/18 09:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.8 2005/01/17 19:32:26 skrll Exp $");
 
 #include "fs_union.h"
 
@@ -901,4 +901,108 @@ vn_cow_disestablish(struct vnode *vp,
 	SPEC_COW_UNLOCK(vp->v_specinfo, s);
 
 	return e ? 0 : EINVAL;
+}
+
+/*
+ * Simplified in-kernel wrapper calls for extended attribute access.
+ * Both calls pass in a NULL credential, authorizing a "kernel" access.
+ * Set IO_NODELOCKED in ioflg if the vnode is already locked.
+ */
+int
+vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
+    const char *attrname, size_t *buflen, void *buf, struct lwp *l)
+{
+	struct uio auio;
+	struct iovec aiov;
+	int error;
+
+	aiov.iov_len = *buflen;
+	aiov.iov_base = buf;
+
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_lwp = l;
+	auio.uio_offset = 0;
+	auio.uio_resid = *buflen;
+
+	if ((ioflg & IO_NODELOCKED) == 0)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	
+	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, NULL,
+	    l);
+	
+	if ((ioflg & IO_NODELOCKED) == 0)
+		VOP_UNLOCK(vp, 0);
+	
+	if (error == 0)
+		*buflen = *buflen - auio.uio_resid;
+	
+	return (error);
+}
+
+/*
+ * XXX Failure mode if partially written?
+ */
+int
+vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
+    const char *attrname, size_t buflen, const void *buf, struct lwp *l)
+{
+	struct uio auio;
+	struct iovec aiov;
+	struct mount *mp;
+	int error;
+
+	aiov.iov_len = buflen;
+	aiov.iov_base = (caddr_t) buf;		/* XXX kills const */
+
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_lwp = l;
+	auio.uio_offset = 0;
+	auio.uio_resid = buflen;
+
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if ((error = vn_start_write(vp, &mp, V_WAIT)) != 0)
+			return (error);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, l);
+
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		vn_finished_write(mp, 0);
+		VOP_UNLOCK(vp, 0);
+	}
+
+	return (error);
+}
+
+int
+vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
+    const char *attrname, struct lwp *l)
+{
+	struct mount *mp;
+	int error;
+
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if ((error = vn_start_write(vp, &mp, V_WAIT)) != 0)
+			return (error);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, NULL, l);
+	if (error == EOPNOTSUPP)
+		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
+		    NULL, l);
+	
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		vn_finished_write(mp, 0);
+		VOP_UNLOCK(vp, 0);
+	}
+
+	return (error);
 }

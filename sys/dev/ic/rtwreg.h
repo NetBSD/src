@@ -1,10 +1,8 @@
-/*	$NetBSD: rtwreg.h,v 1.1.2.2 2004/10/19 15:56:56 skrll Exp $	*/
-
-/*
- * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
+/*	$NetBSD: rtwreg.h,v 1.1.2.3 2005/01/17 19:30:40 skrll Exp $	*/
+/*-
+ * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by David Young.
+ * Programmed for NetBSD by David Young.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,30 +12,30 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the author nor the names of any co-contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. The name of David Young may not be used to endorse or promote
+ *    products derived from this software without specific prior
+ *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY David Young AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL David Young
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL David
+ * Young BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
  */
-
 /* Macros for bit twiddling. */
 /* TBD factor w/ dev/ic/atwreg.h. */
 
 #ifndef _BIT_TWIDDLE
 #define _BIT_TWIDDLE
 /* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((u_int32_t)1 << (n)))
+#define BIT(n) (((n) == 32) ? 0 : ((uint32_t)1 << (n)))
 
 /* bits m through n, m < n. */
 #define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
@@ -110,10 +108,10 @@
 				 * 0: use long PLCP header
 				 */
 #define RTW_BRSR_MBR8180_MASK	BITS(1,0)	/* Maximum Basic Service Rate */
-#define RTW_BRSR_MBR8180_1MBPS	LSHIFT(0, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_2MBPS	LSHIFT(1, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_5MBPS	LSHIFT(2, RTW_BRSR_MBR_MASK)
-#define RTW_BRSR_MBR8180_11MBPS	LSHIFT(3, RTW_BRSR_MBR_MASK)
+#define RTW_BRSR_MBR8180_1MBPS	LSHIFT(0, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_2MBPS	LSHIFT(1, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_5MBPS	LSHIFT(2, RTW_BRSR_MBR8180_MASK)
+#define RTW_BRSR_MBR8180_11MBPS	LSHIFT(3, RTW_BRSR_MBR8180_MASK)
 
 /* 8181 and 8180 docs conflict! */
 #define RTW_BRSR_MBR8181_1MBPS	BIT(0)
@@ -121,6 +119,7 @@
 #define RTW_BRSR_MBR8181_5MBPS	BIT(2)
 #define RTW_BRSR_MBR8181_11MBPS	BIT(3)
 
+#define RTW_BSSID	0x2e
 /* BSSID, 6 bytes */
 #define RTW_BSSID16	0x2e		/* first two bytes */
 #define RTW_BSSID32	(0x2e + 4)	/* remaining four bytes */
@@ -194,8 +193,9 @@
 /* Convenient interrupt conjunctions. */
 #define RTW_INTR_RX	(RTW_INTR_RER|RTW_INTR_ROK)
 #define RTW_INTR_TX	(RTW_INTR_TLPDER|RTW_INTR_TLPDOK|RTW_INTR_THPDER|\
-			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK)
-#define RTW_INTR_BEACON	(RTW_INTR_TBDER|RTW_INTR_TBDOK|RTW_INTR_BCNINT)
+			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK|\
+			 RTW_INTR_TBDER|RTW_INTR_TBDOK)
+#define RTW_INTR_BEACON	(RTW_INTR_BCNINT)
 #define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW|RTW_INTR_RXFOVW|RTW_INTR_RDU)
 
 #define	RTW_TCR		0x40	/* Transmit Configuration Register, 32b */
@@ -238,7 +238,14 @@
 #define RTW_TCR_LBK_BBP		LSHIFT(2, RTW_TCR_LBK_MASK) /* baseband loop. */
 #define RTW_TCR_LBK_CONT	LSHIFT(3, RTW_TCR_LBK_MASK) /* continuous Tx */
 
-#define RTW_TCR_CRC	BIT(16)		/* host lets RTL8180 append CRC32 */
+#define RTW_TCR_CRC	BIT(16)		/* 0: RTL8180 appends CRC32
+					 * 1: host appends CRC32
+					 *
+					 * (I *think* this is right.
+					 *  The docs have a mysterious
+					 *  description in the
+					 *  passive voice.)
+					 */
 #define RTW_TCR_SRL_MASK	BITS(15,8)	/* Short Retry Limit */
 #define RTW_TCR_LRL_MASK	BITS(7,0)	/* Long Retry Limit */
 
@@ -297,6 +304,37 @@
 /* accept physical match frames. XXX means PLCP header ok? */
 #define RTW_RCR_APM		BIT(1)
 #define RTW_RCR_AAP		BIT(0)	/* accept frames w/ destination */
+
+/* Additional bits to set in monitor mode. */
+#define RTW_RCR_MONITOR (		\
+    RTW_RCR_AAP |			\
+    RTW_RCR_ACF |			\
+    RTW_RCR_ACRC32 |			\
+    RTW_RCR_AICV |			\
+    0)
+
+/* The packet filter bits. */
+#define	RTW_RCR_PKTFILTER_MASK (\
+    RTW_RCR_AAP |		\
+    RTW_RCR_AB |		\
+    RTW_RCR_ACF |		\
+    RTW_RCR_ACRC32 |		\
+    RTW_RCR_ADD3 |		\
+    RTW_RCR_ADF |		\
+    RTW_RCR_AICV |		\
+    RTW_RCR_AM |		\
+    RTW_RCR_AMF |		\
+    RTW_RCR_APM |		\
+    RTW_RCR_APWRMGT |		\
+    0)
+
+/* Receive power-management frames and mgmt/ctrl/data frames. */
+#define	RTW_RCR_PKTFILTER_DEFAULT	(	\
+    RTW_RCR_ADF |				\
+    RTW_RCR_AMF |				\
+    RTW_RCR_APM |				\
+    RTW_RCR_APWRMGT |				\
+    0)
 
 #define RTW_TINT	0x48	/* Timer Interrupt Register, 32b */
 #define	RTW_TBDA	0x4c	/* Transmit Beacon Descriptor Start Address,
@@ -406,19 +444,8 @@
 							 * state of the RF
 							 * components
 							 */
-#define RTW_ANAPARM_RFPOW0_RFMD_ON	LSHIFT(0x4, RTW_ANAPARM_RFPOW0_MASK)
-/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
-#define RTW_ANAPARM_RFPOW0_RFMD_SLEEP	LSHIFT(0x3, RTW_ANAPARM_RFPOW0_MASK)
-/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
-#define	RTW_ANAPARM_RFPOW0_RFMD_OFF	LSHIFT(0x3, RTW_ANAPARM_RFPOW0_MASK)
-
-#define RTW_ANAPARM_RFPOW0_PHILIPS_ON	LSHIFT(0x3, RTW_ANAPARM_RFPOW0_MASK)
-/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
-#define RTW_ANAPARM_RFPOW0_PHILIPS_SLEEP\
-    LSHIFT(0x3, RTW_ANAPARM_RFPOW0_MASK)
-/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
-#define RTW_ANAPARM_RFPOW0_PHILIPS_OFF\
-    LSHIFT(0x3, RTW_ANAPARM_RFPOW0_MASK)
+#define	RTW_ANAPARM_RFPOW_MASK	\
+    (RTW_ANAPARM_RFPOW0_MASK|RTW_ANAPARM_RFPOW1_MASK)
 
 #define RTW_ANAPARM_TXDACOFF	BIT(27)			/* 1: disable Tx DAC,
 							 * 0: enable
@@ -429,15 +456,46 @@
 							 * state of the RF
 							 * components
 							 */
-#define RTW_ANAPARM_RFPOW1_RFMD_ON	LSHIFT(0x8, RTW_ANAPARM_RFPOW1_MASK)
-#define RTW_ANAPARM_RFPOW1_RFMD_SLEEP	LSHIFT(0x78, RTW_ANAPARM_RFPOW1_MASK)
-#define RTW_ANAPARM_RFPOW1_RFMD_OFF	LSHIFT(0x79, RTW_ANAPARM_RFPOW1_MASK)
 
-#define RTW_ANAPARM_RFPOW1_PHILIPS_ON	LSHIFT(0x28, RTW_ANAPARM_RFPOW1_MASK)
-#define RTW_ANAPARM_RFPOW1_PHILIPS_SLEEP\
-    LSHIFT(0x78, RTW_ANAPARM_RFPOW1_MASK)
-#define RTW_ANAPARM_RFPOW1_PHILIPS_OFF\
-    LSHIFT(0x79, RTW_ANAPARM_RFPOW1_MASK)
+/*
+ * Maxim On/Sleep/Off control
+ */
+#define RTW_ANAPARM_RFPOW_MAXIM_ON	LSHIFT(0x8, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_MAXIM_SLEEP	LSHIFT(0x378, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_MAXIM_OFF	LSHIFT(0x379, RTW_ANAPARM_RFPOW1_MASK)
+
+/*
+ * RFMD On/Sleep/Off control
+ */
+#define RTW_ANAPARM_RFPOW_RFMD_ON	LSHIFT(0x408, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_RFMD_SLEEP	LSHIFT(0x378, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_RFMD_OFF	LSHIFT(0x379, RTW_ANAPARM_RFPOW1_MASK)
+
+/*
+ * Philips On/Sleep/Off control
+ */
+#define RTW_ANAPARM_RFPOW_ANA_PHILIPS_ON	\
+    LSHIFT(0x328, RTW_ANAPARM_RFPOW1_MASK)
+#define RTW_ANAPARM_RFPOW_DIG_PHILIPS_ON	\
+    LSHIFT(0x008, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_PHILIPS_SLEEP\
+    LSHIFT(0x378, RTW_ANAPARM_RFPOW1_MASK)
+
+/* reg[RTW_ANAPARM] |= RTW_ANAPARM_TXDACOFF; */
+#define RTW_ANAPARM_RFPOW_PHILIPS_OFF\
+    LSHIFT(0x379, RTW_ANAPARM_RFPOW1_MASK)
+
+#define RTW_ANAPARM_RFPOW_PHILIPS_ON	LSHIFT(0x328, RTW_ANAPARM_RFPOW1_MASK)
 
 #define RTW_ANAPARM_CARDSP_MASK	BITS(19,0)		/* undocumented
 							 * card-specific
@@ -546,7 +604,7 @@
 					 */
 
 #define	RTW_BCNITV	0x70	/* Beacon Interval Register, 16b */
-#define	RTW_BCNITV_BCNITV	BITS(9,0)	/* TU between TBTT, written
+#define	RTW_BCNITV_BCNITV_MASK	BITS(9,0)	/* TU between TBTT, written
 						 * by host.
 						 */
 #define	RTW_ATIMWND	0x72	/* ATIM Window Register, 16b */
@@ -710,17 +768,20 @@
 #define RTW_TPPOLL_SHPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
 				 * stop high-priority DMA.
 				 */
-#define RTW_TPPOLL_SNPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SNPQ	BIT(1)	/* Host writes 1 to tell RTL8180 to
 				 * stop normal-priority DMA. This bit is invalid
 				 * when RTW_CONFIG2_DPS is set.
 				 */
-#define RTW_TPPOLL_SLPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SLPQ	BIT(0)	/* Host writes 1 to tell RTL8180 to
 				 * stop low-priority DMA.
 				 */
-#define RTW_TPPOLL_FSWINT	BIT(0)	/* Force software interrupt. From
-				 	 * reference driver.
-					 */
 
+/* Start all queues. */
+#define	RTW_TPPOLL_ALL	(RTW_TPPOLL_BQ | RTW_TPPOLL_HPQ | \
+			 RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ)
+/* Stop all queues. */
+#define	RTW_TPPOLL_SALL	(RTW_TPPOLL_SBQ | RTW_TPPOLL_SHPQ | \
+			 RTW_TPPOLL_SNPQ | RTW_TPPOLL_SLPQ)
 
 #define	RTW_CWR		0xdc	/* Contention Window Register, 16b, read-only */
 /* Contention Window: indicates number of contention windows before Tx
@@ -818,15 +879,15 @@
 
 /* Tx descriptor */ 
 struct rtw_txdesc {
-	u_int32_t	htx_ctl0;
-	u_int32_t	htx_ctl1;
-	u_int32_t	htx_buf;
-	u_int32_t	htx_len;
-	u_int32_t	htx_next;
-	u_int32_t	htx_rsvd[3];
+	uint32_t	td_ctl0;
+	uint32_t	td_ctl1;
+	uint32_t	td_buf;
+	uint32_t	td_len;
+	uint32_t	td_next;
+	uint32_t	td_rsvd[3];
 };
 
-#define htx_stat htx_ctl0
+#define td_stat td_ctl0
 
 #define RTW_TXCTL0_OWN			BIT(31)		/* 1: ready to Tx */
 #define RTW_TXCTL0_RSVD0		BIT(30)		/* reserved */
@@ -834,18 +895,18 @@ struct rtw_txdesc {
 #define RTW_TXCTL0_LS			BIT(28)		/* last segment */
 
 #define RTW_TXCTL0_RATE_MASK		BITS(27,24)	/* Tx rate */
-#define RTW_TXCTL0_RATE_1MBPS		LSHIFT(0, RTW_TXCTL_RATE_MASK)
-#define RTW_TXCTL0_RATE_2MBPS		LSHIFT(1, RTW_TXCTL_RATE_MASK)
-#define RTW_TXCTL0_RATE_5MBPS		LSHIFT(2, RTW_TXCTL_RATE_MASK)
-#define RTW_TXCTL0_RATE_11MBPS		LSHIFT(3, RTW_TXCTL_RATE_MASK)
+#define RTW_TXCTL0_RATE_1MBPS		LSHIFT(0, RTW_TXCTL0_RATE_MASK)
+#define RTW_TXCTL0_RATE_2MBPS		LSHIFT(1, RTW_TXCTL0_RATE_MASK)
+#define RTW_TXCTL0_RATE_5MBPS		LSHIFT(2, RTW_TXCTL0_RATE_MASK)
+#define RTW_TXCTL0_RATE_11MBPS		LSHIFT(3, RTW_TXCTL0_RATE_MASK)
 
 #define RTW_TXCTL0_RTSEN		BIT(23)		/* RTS Enable */
 
 #define RTW_TXCTL0_RTSRATE_MASK		BITS(22,19)	/* Tx rate */
-#define RTW_TXCTL0_RTSRATE_1MBPS	LSHIFT(0, RTW_TXCTL_RTSRATE_MASK)
-#define RTW_TXCTL0_RTSRATE_2MBPS	LSHIFT(1, RTW_TXCTL_RTSRATE_MASK)
-#define RTW_TXCTL0_RTSRATE_5MBPS	LSHIFT(2, RTW_TXCTL_RTSRATE_MASK)
-#define RTW_TXCTL0_RTSRATE_11MBPS	LSHIFT(3, RTW_TXCTL_RTSRATE_MASK)
+#define RTW_TXCTL0_RTSRATE_1MBPS	LSHIFT(0, RTW_TXCTL0_RTSRATE_MASK)
+#define RTW_TXCTL0_RTSRATE_2MBPS	LSHIFT(1, RTW_TXCTL0_RTSRATE_MASK)
+#define RTW_TXCTL0_RTSRATE_5MBPS	LSHIFT(2, RTW_TXCTL0_RTSRATE_MASK)
+#define RTW_TXCTL0_RTSRATE_11MBPS	LSHIFT(3, RTW_TXCTL0_RTSRATE_MASK)
 
 #define RTW_TXCTL0_BEACON		BIT(18)	/* packet is a beacon */
 #define RTW_TXCTL0_MOREFRAG		BIT(17)	/* another fragment follows */
@@ -858,11 +919,10 @@ struct rtw_txdesc {
 							 * in bytes
 							 */
 
-#define RTW_TXSTAT_OWN		RTW_TXCTL_OWN
-#define RTW_TXSTAT_RSVD0	RTW_TXCTL_RSVD0
-#define RTW_TXSTAT_FS		RTW_TXCTL_FS
-#define RTW_TXSTAT_LS		RTW_TXCTL_LS		
-#define RTW_TXSTAT_RSVD0	RTW_TXCTL_RSVD0
+#define RTW_TXSTAT_OWN		RTW_TXCTL0_OWN
+#define RTW_TXSTAT_RSVD0	RTW_TXCTL0_RSVD0
+#define RTW_TXSTAT_FS		RTW_TXCTL0_FS
+#define RTW_TXSTAT_LS		RTW_TXCTL0_LS		
 #define RTW_TXSTAT_RSVD1_MASK	BITS(27,16)
 #define RTW_TXSTAT_TOK		BIT(15)
 #define RTW_TXSTAT_RTSRETRY_MASK	BITS(14,8)	/* RTS retry count */
@@ -881,16 +941,16 @@ struct rtw_txdesc {
 
 /* Rx descriptor */ 
 struct rtw_rxdesc {
-    u_int32_t	hrx_ctl;
-    u_int32_t	hrx_rsvd0;
-    u_int32_t	hrx_buf;
-    u_int32_t	hrx_rsvd1;
+    uint32_t	rd_ctl;
+    uint32_t	rd_rsvd0;
+    uint32_t	rd_buf;
+    uint32_t	rd_rsvd1;
 };
 
-#define hrx_stat hrx_ctl
-#define hrx_rssi hrx_rsvd0
-#define hrx_tsftl hrx_buf	/* valid only when RTW_RXSTAT_LS is set */
-#define hrx_tsfth hrx_rsvd1	/* valid only when RTW_RXSTAT_LS is set */
+#define rd_stat rd_ctl
+#define rd_rssi rd_rsvd0
+#define rd_tsftl rd_buf		/* valid only when RTW_RXSTAT_LS is set */
+#define rd_tsfth rd_rsvd1	/* valid only when RTW_RXSTAT_LS is set */
 
 #define RTW_RXCTL_OWN		BIT(31)		/* 1: owned by NIC */
 #define RTW_RXCTL_EOR		BIT(30)		/* end of ring */
@@ -1041,13 +1101,19 @@ struct rtw_rxdesc {
  * Registers for RTL8180L's built-in baseband modem.
  */
 #define RTW_BBP_SYS1		0x00
-#define RTW_BBP_TXAGC		0x03
-#define RTW_BBP_LNADET		0x04
-#define RTW_BBP_IFAGCINI	0x05
-#define RTW_BBP_IFAGCLIMIT	0x06
-#define RTW_BBP_IFAGCDET	0x07
+#define RTW_BBP_TXAGC		0x03	/* guess: transmit auto gain control */
+#define RTW_BBP_LNADET		0x04	/* guess: low-noise amplifier activation
+					 * threshold
+					 */
+#define RTW_BBP_IFAGCINI	0x05	/* guess: intermediate frequency (IF)
+					 * auto-gain control (AGC) initial value
+					 */
+#define RTW_BBP_IFAGCLIMIT	0x06	/* guess: IF AGC maximum value */
+#define RTW_BBP_IFAGCDET	0x07	/* guess: activation threshold for
+					 * IF AGC loop
+					 */
 
-#define RTW_BBP_ANTATTEN	0x10
+#define RTW_BBP_ANTATTEN	0x10	/* guess: antenna & attenuation */
 #define RTW_BBP_ANTATTEN_PHILIPS_MAGIC		0x91
 #define RTW_BBP_ANTATTEN_INTERSIL_MAGIC		0x92
 #define RTW_BBP_ANTATTEN_RFMD_MAGIC		0x93
@@ -1055,7 +1121,9 @@ struct rtw_rxdesc {
 #define	RTW_BBP_ANTATTEN_DFLANTB		0x40
 #define	RTW_BBP_ANTATTEN_CHAN14			0x0c
 
-#define RTW_BBP_TRL			0x11
+#define RTW_BBP_TRL			0x11	/* guess: transmit/receive
+						 * switch latency
+						 */
 #define RTW_BBP_SYS2			0x12
 #define RTW_BBP_SYS2_ANTDIV		0x80	/* enable antenna diversity */
 #define RTW_BBP_SYS2_RATE_MASK		BITS(5,4)	/* loopback rate?
@@ -1067,6 +1135,9 @@ struct rtw_rxdesc {
 #define RTW_BBP_SYS3			0x13
 /* carrier-sense threshold */
 #define RTW_BBP_SYS3_CSTHRESH_MASK	BITS(0,3)
-#define RTW_BBP_CHESTLIM	0x19
-#define RTW_BBP_CHSQLIM		0x1a
-
+#define RTW_BBP_CHESTLIM	0x19	/* guess: channel energy-detect
+					 * threshold
+					 */
+#define RTW_BBP_CHSQLIM		0x1a	/* guess: channel signal-quality
+					 * threshold
+					 */

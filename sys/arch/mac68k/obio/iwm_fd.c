@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.6 2004/12/18 09:31:14 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.7 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.6 2004/12/18 09:31:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.7 2005/01/17 19:29:49 skrll Exp $");
 
-#ifndef _LKM
+#ifdef _LKM
+#define IWMCF_DRIVE 0
+#else
 #include "locators.h"
 #endif
 
@@ -72,46 +74,46 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.6 2004/12/18 09:31:14 skrll Exp $"
 /**
  **	Private functions
  **/
-static int map_iwm_base __P((vm_offset_t base));
+static int map_iwm_base(vm_offset_t);
 
 /* Autoconfig */
-int	iwm_match __P((struct device *, struct cfdata *, void *));
-void	iwm_attach __P((struct device *, struct device *, void *));
-int	iwm_print __P((void *, const char *));
-int	fd_match __P((struct device *, struct cfdata *, void *));
-void	fd_attach __P((struct device *, struct device *, void *));
-int	fd_print __P((void *, const char *));
+int	iwm_match(struct device *, struct cfdata *, void *);
+void	iwm_attach(struct device *, struct device *, void *);
+int	iwm_print(void *, const char *);
+int	fd_match(struct device *, struct cfdata *, void *);
+void	fd_attach(struct device *, struct device *, void *);
+int	fd_print(void *, const char *);
 
 /* Disklabel stuff */
-static void fdGetDiskLabel __P((fd_softc_t *fd, dev_t dev));
-static void fdPrintDiskLabel __P((struct disklabel *lp));
+static void fdGetDiskLabel(fd_softc_t *, dev_t);
+static void fdPrintDiskLabel(struct disklabel *);
 
-static fdInfo_t *getFDType __P((short unit));
-static fdInfo_t *fdDeviceToType __P((fd_softc_t *fd, dev_t dev));
+static fdInfo_t *getFDType(short);
+static fdInfo_t *fdDeviceToType(fd_softc_t *, dev_t);
 
-static void fdstart __P((fd_softc_t *fd));
-static void remap_geometry __P((daddr_t block, int heads, diskPosition_t *loc));
-static void motor_off __P((void *param));
-static int seek __P((fd_softc_t *fd, int style));
-static int checkTrack __P((diskPosition_t *loc, int debugFlag));
-static int initCylinderCache __P((fd_softc_t *fd));
-static void invalidateCylinderCache __P((fd_softc_t *fd));
+static void fdstart(fd_softc_t *);
+static void remap_geometry(daddr_t, int, diskPosition_t *);
+static void motor_off(void *);
+static int seek(fd_softc_t *, int);
+static int checkTrack(diskPosition_t *, int);
+static int initCylinderCache(fd_softc_t *);
+static void invalidateCylinderCache(fd_softc_t *);
 
 #ifdef _LKM
-static int probe_fd __P((void));
-int fd_mod_init __P((void));
-void fd_mod_free __P((void));
+static int probe_fd(void);
+int fd_mod_init(void);
+void fd_mod_free(void);
 #endif
 
-static int fdstart_Init __P((fd_softc_t *fd));
-static int fdstart_Seek __P((fd_softc_t *fd));
-static int fdstart_Read __P((fd_softc_t *fd));
-static int fdstart_Write __P((fd_softc_t *fd));
-static int fdstart_Flush __P((fd_softc_t *fd));
-static int fdstart_IOFinish __P((fd_softc_t *fd));
-static int fdstart_IOErr __P((fd_softc_t *fd));
-static int fdstart_Fault __P((fd_softc_t *fd));
-static int fdstart_Exit __P((fd_softc_t *fd));
+static int fdstart_Init(fd_softc_t *);
+static int fdstart_Seek(fd_softc_t *);
+static int fdstart_Read(fd_softc_t *);
+static int fdstart_Write(fd_softc_t *);
+static int fdstart_Flush(fd_softc_t *);
+static int fdstart_IOFinish(fd_softc_t *);
+static int fdstart_IOErr(fd_softc_t *);
+static int fdstart_Fault(fd_softc_t *);
+static int fdstart_Exit(fd_softc_t *);
 
 
 /**
@@ -123,7 +125,7 @@ static int fdstart_Exit __P((fd_softc_t *fd));
 #endif
 
 
-static void hexDump __P((u_char *buf, int len));
+static void hexDump(u_char *, int);
 
 /*
  * Stuff taken from Egan/Teixeira ch 8: 'if(TRACE_FOO)' debug output 
@@ -271,10 +273,7 @@ struct dkdriver fd_dkDriver = {
  * on machine type.
  */
 int
-iwm_match(parent, match, auxp)
-	struct device *parent;
-	struct cfdata *match;
-	void *auxp;
+iwm_match(struct device *parent, struct cfdata *match, void *auxp)
 {
 	int matched;
 #ifdef _LKM
@@ -317,10 +316,7 @@ iwm_match(parent, match, auxp)
  * and attach them.
  */
 void
-iwm_attach(parent, self, auxp)
-	struct device *parent;
-	struct device *self;
-	void *auxp;
+iwm_attach(struct device *parent, struct device *self, void *auxp)
 {
 	int iwmErr;
 	iwm_softc_t *iwm;
@@ -361,9 +357,7 @@ iwm_attach(parent, self, auxp)
  * of *Print() is ignored.
  */
 int
-iwm_print(auxp, controller)
-	void *auxp;
-	const char *controller;
+iwm_print(void *auxp, const char *controller)
 {
 	return UNCONF;
 }
@@ -375,8 +369,7 @@ iwm_print(auxp, controller)
  * Map physical IO address of IWM to VM address
  */
 static int
-map_iwm_base(base)
-	vm_offset_t base;
+map_iwm_base(vm_offset_t base)
 {
 	int known;
 	extern u_long IWMBase;
@@ -421,10 +414,7 @@ map_iwm_base(base)
  * fd_match
  */
 int
-fd_match(parent, match, auxp)
-	struct device *parent;
-	struct cfdata *match;
-	void *auxp;
+fd_match(struct device *parent, struct cfdata *match, void *auxp)
 {
 	int matched, cfUnit;
 	struct cfdata *cfp;
@@ -432,11 +422,7 @@ fd_match(parent, match, auxp)
 
 	cfp = match;
 	fdParams = (iwmAttachArgs_t *)auxp;
-#ifdef _LKM
-	cfUnit = cfp->cf_loc[0];
-#else
 	cfUnit = cfp->cf_loc[IWMCF_DRIVE];
-#endif
 	matched = (cfUnit == fdParams->unit || cfUnit == -1) ? 1 : 0;
 	if (TRACE_CONFIG) {
 		printf("fdMatch() drive %d ? cfUnit = %d\n",
@@ -453,10 +439,7 @@ fd_match(parent, match, auxp)
  * so we can attach it.
  */
 void
-fd_attach(parent, self, auxp)
-	struct device *parent;
-	struct device *self;
-	void *auxp;
+fd_attach(struct device *parent, struct device *self, void *auxp)
 {
 	iwm_softc_t *iwm;
 	fd_softc_t *fd;
@@ -520,9 +503,7 @@ fd_attach(parent, self, auxp)
  * return value of *Print() is ignored.
  */
 int
-fd_print(auxp, controller)
-	void *auxp;
-	const char *controller;
+fd_print(void *auxp, const char *controller)
 {
 	iwmAttachArgs_t *ia;
 
@@ -654,11 +635,7 @@ probe_fd(void)
  * Open a floppy disk device.
  */
 int
-fdopen(dev, flags, devType, proc)
-	dev_t dev;
-	int flags;
-	int devType;
-	struct proc *proc;
+fdopen(dev_t dev, int flags, int devType, struct proc *proc)
 {
 	fd_softc_t *fd;
 	fdInfo_t *info;
@@ -795,11 +772,7 @@ fdopen(dev, flags, devType, proc)
  * fdclose
  */
 int
-fdclose(dev, flags, devType, proc)
-	dev_t dev;
-	int flags;
-	int devType;
-	struct proc *proc;
+fdclose(dev_t dev, int flags, int devType, struct proc *proc)
 {
 	fd_softc_t *fd;
 	int partitionMask, fdUnit, fdType;
@@ -843,12 +816,7 @@ fdclose(dev, flags, devType, proc)
  * we do not support them.
  */
 int
-fdioctl(dev, cmd, data, flags, proc)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *proc;
+fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *proc)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
@@ -984,10 +952,7 @@ fdioctl(dev, cmd, data, flags, proc)
  * fdread
  */
 int
-fdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdread(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
 }
@@ -997,10 +962,7 @@ fdread(dev, uio, flags)
  * fdwrite
  */
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
@@ -1015,8 +977,7 @@ fdwrite(dev, uio, flags)
  * transfers - no queue.
  */
 void
-fdstrategy(bp)
-	struct buf *bp;
+fdstrategy(struct buf *bp)
 {
 	int fdUnit, err, done, spl;
 	int sectSize, transferSize;
@@ -1176,8 +1137,7 @@ enum {
 };
 
 static void
-fdstart(fd)
-	fd_softc_t *fd;
+fdstart(fd_softc_t *fd)
 {
 	int st;
 
@@ -1225,8 +1185,7 @@ fdstart(fd)
  * Set up things
  */
 static int
-fdstart_Init(fd)
-	fd_softc_t *fd;
+fdstart_Init(fd_softc_t *fd)
 {
 	struct buf *bp;
 	
@@ -1265,8 +1224,7 @@ fdstart_Init(fd)
  * fdstart_Seek
  */
 static int
-fdstart_Seek(fd)
-	fd_softc_t *fd;
+fdstart_Seek(fd_softc_t *fd)
 {
 	int state;
 
@@ -1315,8 +1273,7 @@ fdstart_Seek(fd)
  * o  Read that sector directly to fs buffer and return.
  */
 static int
-fdstart_Read(fd)
-	fd_softc_t *fd;
+fdstart_Read(fd_softc_t *fd)
 {
 	int i;
 	diskPosition_t *pos;
@@ -1403,8 +1360,7 @@ fdstart_Read(fd)
  * Insert a sector into a write buffer slot and mark the slot dirty.
  */
 static int
-fdstart_Write(fd)
-	fd_softc_t *fd;
+fdstart_Write(fd_softc_t *fd)
 {
 	int i;
 	
@@ -1432,8 +1388,7 @@ fdstart_Write(fd)
  * Flush dirty buffers in the track cache to disk.
  */
 static int
-fdstart_Flush(fd)
-	fd_softc_t *fd;
+fdstart_Flush(fd_softc_t *fd)
 {
 	int state;
 	int i, dcnt;
@@ -1508,8 +1463,7 @@ fdstart_Flush(fd)
  * Prepare for next block, if any is available
  */
 static int
-fdstart_IOFinish(fd)
-	fd_softc_t *fd;
+fdstart_IOFinish(fd_softc_t *fd)
 {
 	int state;
 
@@ -1567,8 +1521,7 @@ fdstart_IOFinish(fd)
  * Bad IO, repeat
  */
 static int
-fdstart_IOErr(fd)
-	fd_softc_t *fd;
+fdstart_IOErr(fd_softc_t *fd)
 {
 	int state;
 #ifndef _LKM
@@ -1597,8 +1550,7 @@ fdstart_IOErr(fd)
  * A non-recoverable error
  */
 static int
-fdstart_Fault(fd)
-	fd_softc_t *fd;
+fdstart_Fault(fd_softc_t *fd)
 {
 #ifdef DIAGNOSTIC
 	printf("Seek retries %d, IO retries %d, sect retries %d :\n" \
@@ -1619,8 +1571,7 @@ fdstart_Fault(fd)
  * We are done, for good or bad
  */
 static int
-fdstart_Exit(fd)
-	fd_softc_t *fd;
+fdstart_Exit(fd_softc_t *fd)
 {
 	struct buf *bp;
 #ifdef DIAGNOSTIC
@@ -1687,10 +1638,7 @@ fdstart_Exit(fd)
  * }
  */
 static void
-remap_geometry(block, heads, loc)
-	daddr_t block;
-	int heads;
-	diskPosition_t *loc;
+remap_geometry(daddr_t block, int heads, diskPosition_t *loc)
 {
 	int zone, spt;
 	extern diskZone_t diskZones[];
@@ -1723,8 +1671,7 @@ remap_geometry(block, heads, loc)
  * Callback for timeout()
  */
 static void
-motor_off(param)
-	void *param;
+motor_off(void *param)
 {
 	int spl;
 	fd_softc_t *fd;
@@ -1748,9 +1695,7 @@ motor_off(param)
  * our defaults.
  */
 static void
-fdGetDiskLabel(fd, dev)
-	fd_softc_t *fd;
-	dev_t dev;
+fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 {
 	const char *msg;
 	int fdType;
@@ -1822,8 +1767,7 @@ fdGetDiskLabel(fd, dev)
  * Allocate cylinder cache and set up pointers to sectors.
  */
 static int
-initCylinderCache(fd) 
-	fd_softc_t *fd;
+initCylinderCache(fd_softc_t *fd)
 {
 	int i;
 	int err;
@@ -1855,8 +1799,7 @@ initCylinderCache(fd)
  * Switching cylinders (tracks?) invalidates the read cache.
  */
 static void
-invalidateCylinderCache(fd)
-	fd_softc_t *fd;	
+invalidateCylinderCache(fd_softc_t *fd)
 {
 	int i;
 	
@@ -1873,8 +1816,7 @@ invalidateCylinderCache(fd)
  * return pointer to disk format description
  */
 static fdInfo_t *
-getFDType(unit)
-	short unit;
+getFDType(short unit)
 {
 	int driveFlags;
 	fdInfo_t *thisType;
@@ -1916,9 +1858,7 @@ getFDType(unit)
  *	fdXc	800K GCR
  */
 static fdInfo_t *
-fdDeviceToType(fd, dev)
-	fd_softc_t *fd;
-	dev_t dev;
+fdDeviceToType(fd_softc_t *fd, dev_t dev)
 {
 	int type;
 	fdInfo_t *thisInfo;
@@ -1943,9 +1883,7 @@ fdDeviceToType(fd, dev)
  * We keep the current position on disk in a 'struct diskPosition'.
  */
 static int
-seek(fd, style)
-	fd_softc_t *fd;
-	int style;
+seek(fd_softc_t *fd, int style)
 {
 	int state, done;
 	int err, ierr;
@@ -2074,9 +2012,7 @@ seek(fd, style)
  * After positioning, get a sector header for validation
  */
 static int
-checkTrack(loc, debugFlag)
-	diskPosition_t *loc;
-	int debugFlag;
+checkTrack(diskPosition_t *loc, int debugFlag)
 {
 	int spl;
 	int iwmErr;
@@ -2097,9 +2033,7 @@ checkTrack(loc, debugFlag)
 /* Debugging stuff */
 
 static void
-hexDump(buf, len)
-	u_char *buf;
-	int len;
+hexDump(u_char *buf, int len)
 {
 	int i, j;
 	u_char ch;
@@ -2128,8 +2062,7 @@ hexDump(buf, len)
 
 
 static void
-fdPrintDiskLabel(lp)
-	struct disklabel *lp;
+fdPrintDiskLabel(struct disklabel *lp)
 {
 	int i;
 

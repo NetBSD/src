@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.1.4.1 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.1.4.2 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.1 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.2 2005/01/17 19:32:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1.4.1 2004/11/29 07:24:51 skrll Exp 
  * and return the character.
  */
 wchar
-ntfs_utf8_wget(const char **str)
+ntfs_utf8_wget(const char **str, size_t *sz)
 {
-	return (wchar) wget_utf8(str);
+	return (wchar) wget_utf8(str, sz);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.41.2.6 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.41.2.7 2005/01/17 19:31:23 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.6 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.7 2005/01/17 19:31:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -988,7 +988,18 @@ rriodone(usc, bp)
 	/* We assume that this is a reasonable drive. ra_strategy should
 	   already have verified it. Thus, no checks here... /bqt */
 	unit = DISKUNIT(bp->b_dev);
-	ra = ra_cd.cd_devs[unit];
+#if NRA
+	if (cdevsw_lookup(bp->b_dev) == &ra_cdevsw)
+		ra = ra_cd.cd_devs[unit];
+	else
+#endif
+#if NRX
+	if (cdevsw_lookup(bp->b_dev) == &rx_cdevsw)
+		ra = rx_cd.cd_devs[unit];
+	else
+#endif
+		panic("rriodone: unexpected major %d unit %d",
+		    major(bp->b_dev), unit);
 	disk_unbusy(&ra->ra_disk, bp->b_bcount, (bp->b_flags & B_READ));
 
 	biodone(bp);

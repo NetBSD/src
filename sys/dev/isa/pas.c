@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.57.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: pas.c,v 1.57.2.5 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,7 +34,7 @@
  *
  */
 /*
- * jfw 7/13/97 - The soundblaster code requires the generic bus-space 
+ * jfw 7/13/97 - The soundblaster code requires the generic bus-space
  * structures to be set up properly.  Rather than go to the effort of making
  * code for a dead line fully generic, properly set up the SB structures and
  * leave the rest x86/ISA/default-configuration specific.  If you have a
@@ -42,8 +42,8 @@
  */
 /*
  * Todo:
- * 	- look at other PAS drivers (for PAS native suport)
- * 	- use common sb.c once emulation is setup
+ *	- look at other PAS drivers (for PAS native suport)
+ *	- use common sb.c once emulation is setup
  */
 /*
  * jfw 6/21/98 - WARNING:  the PAS native IO ports are scattered all around
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.57.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.57.2.5 2005/01/17 19:31:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,14 +108,14 @@ int	pasdebug = 0;
  */
 struct pas_softc {
 	struct sbdsp_softc sc_sbdsp;	/* base device, &c. */
-        bus_space_handle_t pas_port_handle;    /* the pas-specific port */
+	bus_space_handle_t pas_port_handle;    /* the pas-specific port */
 
 	int model;
 	int rev;
 };
 
-int	pas_getdev __P((void *, struct audio_device *));
-void	pasconf __P((int, int, int, int));
+int	pas_getdev(void *, struct audio_device *);
+void	pasconf(int, int, int, int);
 
 
 /*
@@ -145,7 +145,7 @@ const struct audio_hw_if pas_hw_if = {
 	sb_malloc,
 	sb_free,
 	sb_round_buffersize,
-        sb_mappage,
+	sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
@@ -155,7 +155,7 @@ const struct audio_hw_if pas_hw_if = {
 /* The Address Translation code is used to convert I/O register addresses to
    be relative to the given base -register */
 
-static char *pasnames[] = {
+static const char *pasnames[] = {
 	"",
 	"Plus",
 	"CDPC",
@@ -174,12 +174,9 @@ static struct audio_device pas_device = {
 #define paswrite(d, p) outb((p), (d))
 
 void
-pasconf(model, sbbase, sbirq, sbdrq)
-	int model;
-	int sbbase;
-	int sbirq;
-	int sbdrq;
+pasconf(int model, int sbbase, int sbirq, int sbdrq)
 {
+
 	paswrite(0x00, INTERRUPT_MASK);
 	/* Local timer control register */
 	paswrite(0x36, SAMPLE_COUNTER_CONTROL);
@@ -193,23 +190,23 @@ pasconf(model, sbbase, sbirq, sbdrq)
 	paswrite(0, SAMPLE_BUFFER_COUNTER);
 
 	paswrite(P_C_PCM_MONO | P_C_PCM_DAC_MODE |
-		  P_C_MIXER_CROSS_L_TO_L | P_C_MIXER_CROSS_R_TO_R,
-		  PCM_CONTROL);
+	    P_C_MIXER_CROSS_L_TO_L | P_C_MIXER_CROSS_R_TO_R,
+	    PCM_CONTROL);
 	paswrite(S_M_PCM_RESET | S_M_FM_RESET |
-		  S_M_SB_RESET | S_M_MIXER_RESET, SERIAL_MIXER);
+	    S_M_SB_RESET | S_M_MIXER_RESET, SERIAL_MIXER);
 
 /*XXX*/
 	paswrite(I_C_1_BOOT_RESET_ENABLE|1, IO_CONFIGURATION_1);
 
 	paswrite(I_C_2_PCM_DMA_DISABLED, IO_CONFIGURATION_2);
 	paswrite(I_C_3_PCM_IRQ_DISABLED, IO_CONFIGURATION_3);
-	
-#ifdef BROKEN_BUS_CLOCK 
+
+#ifdef BROKEN_BUS_CLOCK
 	paswrite(S_C_1_PCS_ENABLE | S_C_1_PCS_STEREO | S_C_1_PCS_REALSOUND |
-		  S_C_1_FM_EMULATE_CLOCK, SYSTEM_CONFIGURATION_1);
+	    S_C_1_FM_EMULATE_CLOCK, SYSTEM_CONFIGURATION_1);
 #else
 	paswrite(S_C_1_PCS_ENABLE | S_C_1_PCS_STEREO | S_C_1_PCS_REALSOUND,
-		  SYSTEM_CONFIGURATION_1);     
+	    SYSTEM_CONFIGURATION_1);
 #endif
 
 	/*XXX*/
@@ -226,37 +223,39 @@ pasconf(model, sbbase, sbirq, sbdrq)
 
 	paswrite(P_M_MV508_ADDRESS | P_M_MV508_PCM, PARALLEL_MIXER);
 	paswrite(5, PARALLEL_MIXER);
-		
+
 	/*
 	 * Setup SoundBlaster emulation.
 	 */
 	paswrite((sbbase >> 4) & 0xf, EMULATION_ADDRESS);
 	paswrite(E_C_SB_IRQ_translate[sbirq] | E_C_SB_DMA_translate[sbdrq],
-		 EMULATION_CONFIGURATION);
+	    EMULATION_CONFIGURATION);
 	paswrite(C_E_SB_ENABLE, COMPATIBILITY_ENABLE);
 
 	/*
 	 * Set mid-range levels.
 	 */
 	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MODE, PARALLEL_MIXER);
-	paswrite(P_M_MV508_LOUDNESS | P_M_MV508_ENHANCE_NONE, PARALLEL_MIXER);	
+	paswrite(P_M_MV508_LOUDNESS | P_M_MV508_ENHANCE_NONE, PARALLEL_MIXER);
 
 	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MASTER_A, PARALLEL_MIXER);
 	paswrite(50, PARALLEL_MIXER);
 	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MASTER_B, PARALLEL_MIXER);
 	paswrite(50, PARALLEL_MIXER);
 
-	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MIXER | P_M_MV508_SB, PARALLEL_MIXER);
+	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MIXER | P_M_MV508_SB,
+	    PARALLEL_MIXER);
 	paswrite(P_M_MV508_OUTPUTMIX | 30, PARALLEL_MIXER);
 
-	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MIXER | P_M_MV508_MIC, PARALLEL_MIXER);
+	paswrite(P_M_MV508_ADDRESS | P_M_MV508_MIXER | P_M_MV508_MIC,
+	    PARALLEL_MIXER);
 	paswrite(P_M_MV508_INPUTMIX | 30, PARALLEL_MIXER);
 }
 
-int	pasprobe __P((struct device *, struct cfdata *, void *));
-void	pasattach __P((struct device *, struct device *, void *));
-static	int pasfind __P((struct device *, struct pas_softc *, 
-			struct isa_attach_args *, int));
+int	pasprobe(struct device *, struct cfdata *, void *);
+void	pasattach(struct device *, struct device *, void *);
+static	int pasfind(struct device *, struct pas_softc *,
+    struct isa_attach_args *, int);
 /* argument to pasfind */
 #define PASPROBE  1
 #define PASATTACH 0
@@ -269,23 +268,22 @@ CFATTACH_DECL(pas, sizeof(struct pas_softc),
  */
 
 int
-pasprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pasprobe(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct isa_attach_args *ia = aux;
-	struct pas_softc probesc, *sc = &probesc;
+	struct isa_attach_args *ia;
+	struct pas_softc probesc, *sc;
 
+	ia = aux;
+	sc = &probesc;
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 	if (ia->ia_ndrq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	memset(sc, 0, sizeof *sc);
 	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
@@ -297,27 +295,25 @@ pasprobe(parent, match, aux)
  * Probe for the soundblaster hardware.
  */
 static int
-pasfind(parent, sc, ia, probing)
-	struct device *parent;
-	struct pas_softc *sc;
-	struct isa_attach_args *ia;
-	int probing;
+pasfind(struct device *parent, struct pas_softc *sc,
+    struct isa_attach_args *ia, int probing)
 {
 	int iobase;
 	u_char id, t;
-	int rc = 0;  /* failure */
+	int rc;
 
-        /* ensure we can set this up as a sound blaster */
-       	if (!SB_BASE_VALID(ia->ia_io[0].ir_addr)) {
+	rc = 0;			/* failure */
+	/* ensure we can set this up as a sound blaster */
+	if (!SB_BASE_VALID(ia->ia_io[0].ir_addr)) {
 		printf("pas: configured SB iobase 0x%x invalid\n",
 		    ia->ia_io[0].ir_addr);
 		return 0;
 	}
 
 	if (bus_space_map(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1, 0,
-                          &sc->pas_port_handle)) {
+	    &sc->pas_port_handle)) {
 		printf("pas: can't map base register %x in probe\n",
-		       PAS_DEFAULT_BASE);
+		    PAS_DEFAULT_BASE);
 		return 0;
 	}
 
@@ -326,7 +322,7 @@ pasfind(parent, sc, ia, probing)
 	 * warm boot reset of the card will screw up this detect code
 	 * something fierce.  Adding code to handle this means possibly
 	 * interfering with other cards on the bus if you have something
-	 * on base port 0x388.  SO be forewarned. 
+	 * on base port 0x388.  SO be forewarned.
 	 */
 	/* Talk to first board */
 	outb(MASTER_DECODE, 0xbc);
@@ -375,23 +371,22 @@ pasfind(parent, sc, ia, probing)
 	sc->model = O_M_1_to_card[t];
 	if (sc->model != 0) {
 		sc->rev = pasread(BOARD_REV_ID);
-	}
-	else {
+	} else {
 		DPRINTF(("pas: bogus model id\n"));
 		goto unmap1;
 	}
 
-        if (sc->model >= 0) {
-                if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
-                        printf("pas: sb emulation requires known irq\n");
+	if (sc->model >= 0) {
+		if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
+			printf("pas: sb emulation requires known irq\n");
 			goto unmap1;
-                } 
-                pasconf(sc->model, ia->ia_io[0].ir_addr,
-                    ia->ia_irq[0].ir_irq, 1);
-        } else {
-                DPRINTF(("pas: could not probe pas\n"));
+		}
+		pasconf(sc->model, ia->ia_io[0].ir_addr,
+		    ia->ia_irq[0].ir_irq, 1);
+	} else {
+		DPRINTF(("pas: could not probe pas\n"));
 		goto unmap1;
-        }
+	}
 
 	/* Now a SoundBlaster, so set up proper bus-space hooks
          * appropriately
@@ -430,7 +425,7 @@ pasfind(parent, sc, ia, probing)
 	sc->sc_sbdsp.sc_irq = ia->ia_irq[0].ir_irq;
 	sc->sc_sbdsp.sc_drq8 = ia->ia_drq[0].ir_drq;
 	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
-	
+
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
 		goto unmap;
@@ -450,11 +445,11 @@ pasfind(parent, sc, ia, probing)
 
  unmap:
 	if (rc == 0 || probing)
-	        bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh,
-	            SBP_NPORT);
+		bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh,
+		    SBP_NPORT);
  unmap1:
 	if (rc == 0 || probing)
-	        bus_space_unmap(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1);
+		bus_space_unmap(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1);
 	return rc;
 }
 
@@ -463,14 +458,15 @@ pasfind(parent, sc, ia, probing)
  * pseudo-device driver .
  */
 void
-pasattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pasattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pas_softc *sc = (struct pas_softc *)self;
-	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	int iobase = ia->ia_io[0].ir_addr;
-	
+	struct pas_softc *sc;
+	struct isa_attach_args *ia;
+	int iobase;
+
+	sc = (struct pas_softc *)self;
+	ia = (struct isa_attach_args *)aux;
+	iobase = ia->ia_io[0].ir_addr;
 	if (!pasfind(parent, sc, ia, PASATTACH)) {
 		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
 		return;
@@ -483,7 +479,7 @@ pasattach(parent, self, aux)
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
 	    sc->rev);
-	
+
 	sbdsp_attach(&sc->sc_sbdsp);
 
 	snprintf(pas_device.name, sizeof(pas_device.name), "pas,%s",
@@ -495,10 +491,9 @@ pasattach(parent, self, aux)
 }
 
 int
-pas_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+pas_getdev(void *addr, struct audio_device *retp)
 {
+
 	*retp = pas_device;
 	return 0;
 }

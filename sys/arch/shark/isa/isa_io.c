@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.2.6.3 2004/09/21 13:21:48 skrll Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.2.6.4 2005/01/17 19:30:19 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.2.6.3 2004/09/21 13:21:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.2.6.4 2005/01/17 19:30:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ struct bus_space isa_io_bs_tag = {
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
+	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
@@ -214,7 +214,7 @@ struct bus_space isa_mem_bs_tag = {
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	bs_notimpl_bs_c_2,
+	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
@@ -223,8 +223,8 @@ struct bus_space isa_mem_bs_tag = {
 
 void
 isa_io_init(isa_io_addr, isa_mem_addr)
-	vm_offset_t isa_io_addr;
-	vm_offset_t isa_mem_addr;
+	vaddr_t isa_io_addr;
+	vaddr_t isa_mem_addr;
 {
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
@@ -235,16 +235,16 @@ isa_io_init(isa_io_addr, isa_mem_addr)
  * (e.g. X servers) need to map ISA space directly.  use these
  * functions sparingly!
  */
-vm_offset_t
+vaddr_t
 isa_io_data_vaddr(void)
 {
-	return (vm_offset_t)isa_io_bs_tag.bs_cookie;
+	return (vaddr_t)isa_io_bs_tag.bs_cookie;
 }
 
-vm_offset_t
+vaddr_t
 isa_mem_data_vaddr(void)
 {
-	return (vm_offset_t)isa_mem_bs_tag.bs_cookie;
+	return (vaddr_t)isa_mem_bs_tag.bs_cookie;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73.2.3 2004/09/21 13:19:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73.2.4 2005/01/17 19:29:58 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73.2.3 2004/09/21 13:19:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73.2.4 2005/01/17 19:29:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1170,7 +1170,7 @@ pmap_free_pvpage()
 		/* unmap the page */
 		dead_entries = NULL;
 		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + PAGE_SIZE,
-		    &dead_entries);
+		    &dead_entries, NULL);
 		vm_map_unlock(map);
 
 		if (dead_entries != NULL)

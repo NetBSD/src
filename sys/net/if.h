@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90.2.5 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.6 2005/01/17 19:32:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ struct ifnet {				/* and the entries */
 		__P((struct ifnet *));
 	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
-	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
+	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
 	struct pfil_head if_pfil;	/* filtering point */

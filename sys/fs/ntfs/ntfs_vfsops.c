@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.6 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.7 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.6 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.7 2005/01/17 19:32:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,12 +174,6 @@ ntfs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("ntfs_mountroot: can't setup rootvp");
-
 	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -194,7 +188,6 @@ ntfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 
@@ -277,42 +270,9 @@ ntfs_mount (
 	struct lwp *l )
 #endif
 {
-	int		err = 0;
+	int		err = 0, flags;
 	struct vnode	*devvp;
 	struct ntfs_args args;
-
-#ifdef __FreeBSD__
-	/*
-	 * Use NULL path to flag a root mount
-	 */
-	if( path == NULL) {
-		/*
-		 ***
-		 * Mounting root file system
-		 ***
-		 */
-	
-		/* Get vnode for root device*/
-		if( bdevvp( rootdev, &rootvp))
-			panic("ffs_mountroot: can't setup bdevvp for root");
-
-		/*
-		 * FS specific handling
-		 */
-		mp->mnt_flag |= MNT_RDONLY;	/* XXX globally applicable?*/
-
-		/*
-		 * Attempt mount
-		 */
-		if( ( err = ntfs_mountfs(rootvp, mp, &args, p)) != 0) {
-			/* fs specific cleanup (if any)*/
-			goto error_1;
-		}
-
-		goto dostatvfs;		/* success*/
-
-	}
-#endif /* FreeBSD */
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct ntfsmount *ntmp = VFSTONTFS(mp);
@@ -335,7 +295,7 @@ ntfs_mount (
 	/* copy in user arguments*/
 	err = copyin(data, &args, sizeof (struct ntfs_args));
 	if (err)
-		goto error_1;		/* can't get arguments*/
+		return (err);		/* can't get arguments*/
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -349,13 +309,11 @@ ntfs_mount (
 			 * will return the vfs_export() error code.
 			 */
 			struct ntfsmount *ntm = VFSTONTFS(mp);
-			err = vfs_export(mp, &ntm->ntm_export, &args.export);
-			goto success;
+			return (vfs_export(mp, &ntm->ntm_export, &args.export));
 		}
 
 		printf("ntfs_mount(): MNT_UPDATE not supported\n");
-		err = EINVAL;
-		goto error_1;
+		return (EINVAL);
 	}
 
 	/*
@@ -370,14 +328,14 @@ ntfs_mount (
 	err = namei(ndp);
 	if (err) {
 		/* can't get devvp!*/
-		goto error_1;
+		return (err);
 	}
 
 	devvp = ndp->ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		err = ENOTBLK;
-		goto error_2;
+		goto fail;
 	}
 #ifdef __FreeBSD__
 	if (bdevsw(devvp->v_rdev) == NULL) {
@@ -385,7 +343,7 @@ ntfs_mount (
 	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 #endif
 		err = ENXIO;
-		goto error_2;
+		goto fail;
 	}
 	if (mp->mnt_flag & MNT_UPDATE) {
 #if 0
@@ -395,17 +353,20 @@ ntfs_mount (
 		 ********************
 		 */
 
-		if (devvp != ntmp->um_devvp)
+		if (devvp != ntmp->um_devvp) {
 			err = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
+			goto fail;
+		}
+
 		/*
 		 * Update device name only on success
 		 */
-		if( !err) {
-			err = set_statvfs_info(NULL, UIO_USERSPACE, args.fspec,
-			    UIO_USERSPACE, mp, p);
-		}
+		err = set_statvfs_info(NULL, UIO_USERSPACE, args.fspec,
+		    UIO_USERSPACE, mp, p);
+		if (err)
+			goto fail;
+
+		vrele(devvp);
 #endif
 	} else {
 		/*
@@ -420,15 +381,40 @@ ntfs_mount (
 		 * error occurs,  the mountpoint is discarded by the
 		 * upper level code.
 		 */
+
 		/* Save "last mounted on" info for mount point (NULL pad)*/
 		err = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 		    UIO_USERSPACE, mp, l);
-		if ( !err) {
-			err = ntfs_mountfs(devvp, mp, &args, l);
+		if (err)
+			goto fail;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		err = vfs_mountedon(devvp);
+		if (err)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			err = EBUSY;
+			goto fail;
 		}
-	}
-	if (err) {
-		goto error_2;
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		err = VOP_OPEN(devvp, flags, FSCRED, l);
+		if (err)
+			goto fail;
+		err = ntfs_mountfs(devvp, mp, &args, l);
+		if (err) {
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, flags, NOCRED, l);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
+		}
 	}
 
 #ifdef __FreeBSD__
@@ -441,19 +427,11 @@ dostatvfs:
 	 * This code is common to root and non-root mounts
 	 */
 	(void)VFS_STATVFS(mp, &mp->mnt_stat, l);
+	return (err);
 
-	goto success;
-
-
-error_2:	/* error with devvp held*/
-
-	/* release devvp before failing*/
+fail:
 	vrele(devvp);
-
-error_1:	/* no state to back out*/
-
-success:
-	return(err);
+	return (err);
 }
 
 /*
@@ -469,29 +447,19 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	struct buf *bp;
 	struct ntfsmount *ntmp;
 	dev_t dev = devvp->v_rdev;
-	int error, ronly, ncount, i;
+	int error, ronly, i;
 	struct vnode *vp;
 
 	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
 	 * Flush out any old buffers remaining from a previous use.
 	 */
-	error = vfs_mountedon(devvp);
-	if (error)
-		return (error);
-	ncount = vcount(devvp);
-	if (ncount > 1 && devvp != rootvp)
-		return (EBUSY);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
-	if (error)
-		return (error);
 
 	bp = NULL;
 
@@ -646,11 +614,6 @@ out:
 	if (bp)
 		brelse(bp);
 
-	/* lock the device vnode before calling VOP_CLOSE() */
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
-	VOP_UNLOCK(devvp, 0);
-	
 	return (error);
 }
 
@@ -1077,6 +1040,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_mountroot,
 	ntfs_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	vfs_stdextattrctl,
 	ntfs_vnodeopv_descs,
 };
 #endif

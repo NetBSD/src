@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpcivar.h,v 1.4.16.4 2004/11/14 08:15:43 skrll Exp $	*/
+/*	$NetBSD: cmpcivar.h,v 1.4.16.5 2005/01/17 19:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ struct cmpci_softc {
 
 	/* each channel */
 	struct {
-		void		(*intr) __P((void *));
+		void		(*intr)(void *);
 		void		*intr_arg;
 		int		md_divide;
 	} sc_play, sc_rec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14.6.3 2004/09/21 13:18:07 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.6.3 2004/09/21 13:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.6.3 2004/09/21 13:18:07 skrll Exp $
 #define _M68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 
-static int	mainbus_match __P((struct device *, struct cfdata *, void *));
-static void	mainbus_attach __P((struct device *, struct device *, void *));
-static int	mainbus_search __P((struct device *, struct cfdata *, void *));
+static int	mainbus_match(struct device *, struct cfdata *, void *);
+static void	mainbus_attach(struct device *, struct device *, void *);
+static int	mainbus_search(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -75,10 +75,7 @@ struct m68k_bus_dma_tag mac68k_bus_dma_tag = {
 };
 
 static int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int mainbus_matched = 0;
 
@@ -91,9 +88,7 @@ mainbus_match(parent, cf, aux)
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args	mba;
 
@@ -107,10 +102,7 @@ mainbus_attach(parent, self, aux)
 }
 
 static int
-mainbus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, NULL);

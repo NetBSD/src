@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.35.2.5 2004/09/24 10:53:43 skrll Exp $
+#	$NetBSD: vnode_if.src,v 1.35.2.6 2005/01/17 19:32:26 skrll Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -598,4 +598,71 @@ vop_putpages {
 	IN voff_t offlo;
 	IN voff_t offhi;
 	IN int flags;
+};
+
+#
+#% closeextattr	vp L L L
+#
+vop_closeextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int commit;
+	IN struct ucred *cred;
+	IN struct lwp *l;
+};
+
+#
+#% getextattr	vp L L L
+#
+vop_getextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	OUT size_t *size;
+	IN struct ucred *cred;
+	IN struct lwp *l;
+};
+
+#
+#% listextattr	vp L L L
+#
+vop_listextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	INOUT struct uio *uio;
+	OUT size_t *size;
+	IN struct ucred *cred;
+	IN struct lwp *l;
+};
+
+#
+#% openextattr	vp L L L
+#
+vop_openextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN struct ucred *cred;
+	IN struct lwp *l;
+};
+
+#
+#% deleteextattr vp L L L
+#
+vop_deleteextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	IN struct ucred *cred;
+	IN struct lwp *l;
+};
+
+#
+#% setextattr	vp L L L
+#
+vop_setextattr {
+	IN LOCKED=YES struct vnode *vp;
+	IN int attrnamespace;
+	IN const char *name;
+	INOUT struct uio *uio;
+	IN struct ucred *cred;
+	IN struct lwp *l;
 };

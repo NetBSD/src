@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.201.2.9 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.201.2.10 2005/01/17 19:32:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.9 2004/12/18 09:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.10 2005/01/17 19:32:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.9 2004/12/18 09:32:35 skrll Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
+#include <sys/extattr.h>
 #include <sys/dirent.h>
 #include <sys/filedesc.h>
 
@@ -616,7 +617,7 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
-	simple_lock_init(&vp->v_uobj.vmobjlock);
+	simple_lock_init(&vp->v_interlock);
 
 	/*
 	 * initialize uvm_object within vnode.
@@ -2726,6 +2727,7 @@ int
 vfs_mountroot()
 {
 	struct vfsops *v;
+	int error = ENODEV;
 
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
@@ -2741,6 +2743,13 @@ vfs_mountroot()
 	case DV_DISK:
 		if (rootdev == NODEV)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
+	        if (bdevvp(rootdev, &rootvp))
+	                panic("vfs_mountroot: can't get vnode for rootdev");
+		error = VOP_OPEN(rootvp, FREAD, FSCRED, curlwp);
+		if (error) {
+			printf("vfs_mountroot: can't open root device\n");
+			return (error);
+		}
 		break;
 
 	default:
@@ -2752,8 +2761,10 @@ vfs_mountroot()
 	/*
 	 * If user specified a file system, use it.
 	 */
-	if (mountroot != NULL)
-		return ((*mountroot)());
+	if (mountroot != NULL) {
+		error = (*mountroot)();
+		goto done;
+	}
 
 	/*
 	 * Try each file system currently configured into the kernel.
@@ -2764,7 +2775,8 @@ vfs_mountroot()
 #ifdef DEBUG
 		aprint_normal("mountroot: trying %s...\n", v->vfs_name);
 #endif
-		if ((*v->vfs_mountroot)() == 0) {
+		error = (*v->vfs_mountroot)();
+		if (!error) {
 			aprint_normal("root file system type: %s\n",
 			    v->vfs_name);
 			break;
@@ -2776,9 +2788,15 @@ vfs_mountroot()
 		if (root_device->dv_class == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
-		return (EFTYPE);
+		error = EFTYPE;
 	}
-	return (0);
+
+done:
+	if (error && root_device->dv_class == DV_DISK) {
+		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
+		vrele(rootvp);
+	}
+	return (error);
 }
 
 /*
@@ -3044,6 +3062,51 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 		    sizeof(sfs->f_mntfromname) - size);
 	}
 	return 0;
+}
+
+/*
+ * Default vfs_extattrctl routine for file systems that do not support
+ * it.
+ */
+/*ARGSUSED*/
+int
+vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
+    int attrnamespace, const char *attrname, struct lwp *l)
+{
+
+	if (vp != NULL)
+		VOP_UNLOCK(vp, 0);
+	return (EOPNOTSUPP);
+}
+
+/*
+ * Credential check based on process requesting service, and per-attribute
+ * permissions.
+ *
+ * NOTE: Vnode must be locked.
+ */
+int
+extattr_check_cred(struct vnode *vp, int attrnamespace,
+    struct ucred *cred, struct lwp *l, int access)
+{
+
+	if (cred == NOCRED)
+		return (0);
+
+	switch (attrnamespace) {
+	case EXTATTR_NAMESPACE_SYSTEM:
+		/*
+		 * Do we really want to allow this, or just require that
+		 * these requests come from kernel code (NOCRED case above)?
+		 */
+		return (suser(cred, &l->l_proc->p_acflag));
+	
+	case EXTATTR_NAMESPACE_USER:
+		return (VOP_ACCESS(vp, access, cred, l));
+	
+	default:
+		return (EPERM);
+	}
 }
 
 #ifdef DDB

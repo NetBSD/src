@@ -1,7 +1,7 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.6.6.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.6.6.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.6.6.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.6.6.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: mot_ulmb60xa.c,v 1.6.6.3 2004/09/21 13:21:00 skrll E
 
 
 static int mot_ulmb60xa_match(struct platform *);
-static void pci_intr_fixup_mot_ulmb60xa(int, int, int *);
+static void pci_intr_fixup_mot_ulmb60xa(int, int, int, int *);
 
 struct platform platform_mot_ulmb60xa = {
 	"BULL ESTRELLA (e0)         (e0)",	/* model */ /* XXX */
@@ -107,27 +107,28 @@ mot_ulmb60xa_match(struct platform *p)
 }
 
 static void
-pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int *line)
+pci_intr_fixup_mot_ulmb60xa(int bus, int dev, int swiz, int *line)
 {
 
-	if (bus != 0)
-		return;
-
-	switch (dev) {
-	case 12:		/* NCR 53c810 */
-		*line = 11;
-		break;
-	case 14:		/* DEC 21440 */
-		*line = 9;
-		break;
-	case 16:		/* Slot #1 */
-		*line = 9;
-		break;
-	case 17:		/* Slot #2 */
-		*line = 9;
-		break;
-	case 18:		/* Slot #3 */
-		*line = 11;
-		break;
+	if (bus == 0) {
+		switch (dev) {
+		case 12:		/* NCR 53c810 */
+			*line = 11;
+			break;
+		case 14:		/* DEC 21440 */
+			*line = 9;
+			break;
+		case 16:		/* Slot #1 */
+			*line = 9;
+			break;
+		case 17:		/* Slot #2 */
+			*line = 9;
+			break;
+		case 18:		/* Slot #3 */
+			*line = 11;
+			break;
+		}
+	} else {
+		*line = 9 + ((swiz + dev + 0) & 2);
 	}
 }

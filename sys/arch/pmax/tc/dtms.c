@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.1.12.4 2005/01/13 08:33:11 skrll Exp $	*/
+/*	$NetBSD: dtms.c,v 1.1.12.5 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.12.4 2005/01/13 08:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.12.5 2005/01/17 19:30:09 skrll Exp $");
 
 #include "locators.h"
 
@@ -140,14 +140,15 @@ dtms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (0);
 	}
 
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 void
 dtms_handler(void *cookie, struct dt_msg *msg)
 {
 	struct dtms_softc *sc;
-	int buttons, dx, dy, tmp;
+	int buttons, dx, dy;
+	short tmp;
 
 	sc = cookie;
 
@@ -155,7 +156,11 @@ dtms_handler(void *cookie, struct dt_msg *msg)
 		return;
 
 	tmp = DT_GET_SHORT(msg->body[0], msg->body[1]);
-	buttons = ((tmp >> 1) & 0x3) | ((tmp << 2) & 0x4);
+	buttons = tmp & 1;
+	if (tmp & 2)
+		buttons |= 4;
+	if (tmp & 4)
+		buttons |= 2;
 
 	tmp = DT_GET_SHORT(msg->body[2], msg->body[3]);
 	if (tmp < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.7.22.3 2004/09/21 13:27:52 skrll Exp $	*/
+/*	$NetBSD: anvar.h,v 1.7.22.4 2005/01/17 19:30:39 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -70,6 +70,8 @@ struct an_wepkey {
 	int			an_wep_key[16];
 	int			an_wep_keylen;
 };
+
+#define	AN_GAPLEN_MAX	8
 
 struct an_softc	{
 	struct device		sc_dev;

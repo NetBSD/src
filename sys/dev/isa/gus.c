@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.5 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * TODO:
  *	. figure out why mixer activity while sound is playing causes problems
  *	  (phantom interrupts?)
- *  	. figure out a better deinterleave strategy that avoids sucking up
+ *	. figure out a better deinterleave strategy that avoids sucking up
  *	  CPU, memory and cache bandwidth.  (Maybe a special encoding?
  *	  Maybe use the double-speed sampling/hardware deinterleave trick
  *	  from the GUS SDK?)  A 486/33 isn't quite fast enough to keep
@@ -77,17 +77,17 @@
  *   |         | play (dram)  |      +----+    |	|
  *   |         |--------------(------|-\  |    |   +-+  |
  *   +---------+              |      |  >-|----|---|C|--|------  DMA chan 1
- *                            |  +---|-/  |    |   +-+ 	|
+ *                            |  +---|-/  |    |   +-+	|
  *                            |  |   +----+    |    |   |
  *                            |	 |   +----+    |    |   |
  *   +---------+        +-+   +--(---|-\  |    |    |   |
  *   |         | play   |8|      |   |  >-|----|----+---|------  DMA chan 2
  *   | ---C----|--------|/|------(---|-/  |    |        |
  *   |    ^    |record  |1|      |   +----+    |	|
- *   |    |    |   /----|6|------+   	       +--------+
+ *   |    |    |   /----|6|------+	       +--------+
  *   | ---+----|--/     +-+
  *   +---------+
- *     CS4231   	8-to-16 bit bus conversion, if needed
+ *     CS4231		8-to-16 bit bus conversion, if needed
  *
  *
  * "C" is an optional combiner.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.5 2005/01/17 19:31:11 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -227,19 +227,19 @@ struct gus_softc {
 	u_char sc_out_port;		/* Current out port (generic only) */
 	u_char sc_in_port;		/* keep track of it when no codec */
 
-	void (*sc_dmaoutintr) __P((void*)); /* DMA completion intr handler */
+	void (*sc_dmaoutintr)(void*);	/* DMA completion intr handler */
 	void *sc_outarg;		/* argument for sc_dmaoutintr() */
 	u_char *sc_dmaoutaddr;		/* for isa_dmadone */
 	u_long sc_gusaddr;		/* where did we just put it? */
 	int sc_dmaoutcnt;		/* for isa_dmadone */
 
-	void (*sc_dmainintr) __P((void*)); /* DMA completion intr handler */
+	void (*sc_dmainintr)(void*);	/* DMA completion intr handler */
 	void *sc_inarg;			/* argument for sc_dmaoutintr() */
 	u_char *sc_dmainaddr;		/* for isa_dmadone */
 	int sc_dmaincnt;		/* for isa_dmadone */
 
 	struct stereo_dma_intr {
-		void (*intr)__P((void *));
+		void (*intr)(void *);
 		void *arg;
 		u_char *buffer;
 		u_long dmabuf;
@@ -343,12 +343,12 @@ int	gus_dostereo = 1;
 #ifdef GUSPLAYDEBUG
 int	gusstats = 0;
 struct dma_record {
-    struct timeval tv;
-    u_long gusaddr;
-    caddr_t bsdaddr;
-    u_short count;
-    u_char channel;
-    u_char direction;
+	struct timeval tv;
+	u_long gusaddr;
+	caddr_t bsdaddr;
+	u_short count;
+	u_char channel;
+	u_char direction;
 } dmarecords[NDMARECS];
 
 int dmarecord_index = 0;
@@ -358,89 +358,91 @@ int dmarecord_index = 0;
  * local routines
  */
 
-int	gusopen __P((void *, int));
-void	gusclose __P((void *));
-void	gusmax_close __P((void *));
-int	gusintr __P((void *));
-int	gus_set_in_gain __P((caddr_t, u_int, u_char));
-int	gus_get_in_gain __P((caddr_t));
-int	gus_set_out_gain __P((caddr_t, u_int, u_char));
-int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int 	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
-int	gus_round_blocksize __P((void *, int));
-int	gus_commit_settings __P((void *));
-int	gus_dma_output __P((void *, void *, int, void (*)(void *), void *));
-int	gus_dma_input __P((void *, void *, int, void (*)(void *), void *));
-int	gus_halt_out_dma __P((void *));
-int	gus_halt_in_dma __P((void *));
-int	gus_speaker_ctl __P((void *, int));
-int	gusmaxopen __P((void *, int));
-int	gusmax_round_blocksize __P((void *, int));
-int	gusmax_commit_settings __P((void *));
-int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
-int	gusmax_dma_input __P((void *, void *, int, void (*)(void *), void *));
-int	gusmax_halt_out_dma __P((void *));
-int	gusmax_halt_in_dma __P((void *));
-int	gusmax_speaker_ctl __P((void *, int));
-int	gus_getdev __P((void *, struct audio_device *));
+int	gusopen(void *, int);
+void	gusclose(void *);
+void	gusmax_close(void *);
+int	gusintr(void *);
+int	gus_set_in_gain(caddr_t, u_int, u_char);
+int	gus_get_in_gain(caddr_t);
+int	gus_set_out_gain(caddr_t, u_int, u_char);
+int	gus_get_out_gain(caddr_t);
+int	gus_set_params(void *, int, int, audio_params_t *,
+	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int	gusmax_set_params(void *, int, int, audio_params_t *,
+	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
+int	gus_round_blocksize(void *, int, int, const audio_params_t *);
+int	gus_commit_settings(void *);
+int	gus_dma_output(void *, void *, int, void (*)(void *), void *);
+int	gus_dma_input(void *, void *, int, void (*)(void *), void *);
+int	gus_halt_out_dma(void *);
+int	gus_halt_in_dma(void *);
+int	gus_speaker_ctl(void *, int);
+int	gusmaxopen(void *, int);
+int	gusmax_round_blocksize(void *, int, int, const audio_params_t *);
+int	gusmax_commit_settings(void *);
+int	gusmax_dma_output(void *, void *, int, void (*)(void *), void *);
+int	gusmax_dma_input(void *, void *, int, void (*)(void *), void *);
+int	gusmax_halt_out_dma(void *);
+int	gusmax_halt_in_dma(void *);
+int	gusmax_speaker_ctl(void *, int);
+int	gus_getdev(void *, struct audio_device *);
 
-STATIC void	gus_deinterleave __P((struct gus_softc *, void *, int));
+STATIC void	gus_deinterleave(struct gus_softc *, void *, int);
 
-STATIC int	gus_mic_ctl __P((void *, int));
-STATIC int	gus_linein_ctl __P((void *, int));
-STATIC int	gus_test_iobase __P((bus_space_tag_t, int));
-STATIC void	guspoke __P((bus_space_tag_t, bus_space_handle_t, long, u_char));
-STATIC void	gusdmaout __P((struct gus_softc *, int, u_long, caddr_t, int));
-STATIC int	gus_init_cs4231 __P((struct gus_softc *));
-STATIC void	gus_init_ics2101 __P((struct gus_softc *));
+STATIC int	gus_mic_ctl(void *, int);
+STATIC int	gus_linein_ctl(void *, int);
+STATIC int	gus_test_iobase(bus_space_tag_t, int);
+STATIC void	guspoke(bus_space_tag_t, bus_space_handle_t, long, u_char);
+STATIC void	gusdmaout(struct gus_softc *, int, u_long, caddr_t, int);
+STATIC int	gus_init_cs4231(struct gus_softc *);
+STATIC void	gus_init_ics2101(struct gus_softc *);
 
-STATIC void	gus_set_chan_addrs __P((struct gus_softc *));
-STATIC void	gusreset __P((struct gus_softc *, int));
-STATIC void	gus_set_voices __P((struct gus_softc *, int));
-STATIC void	gus_set_volume __P((struct gus_softc *, int, int));
-STATIC void	gus_set_samprate __P((struct gus_softc *, int, int));
-STATIC void	gus_set_recrate __P((struct gus_softc *, u_long));
-STATIC void	gus_start_voice __P((struct gus_softc *, int, int));
-STATIC void	gus_stop_voice __P((struct gus_softc *, int, int));
-STATIC void	gus_set_endaddr __P((struct gus_softc *, int, u_long));
+STATIC void	gus_set_chan_addrs(struct gus_softc *);
+STATIC void	gusreset(struct gus_softc *, int);
+STATIC void	gus_set_voices(struct gus_softc *, int);
+STATIC void	gus_set_volume(struct gus_softc *, int, int);
+STATIC void	gus_set_samprate(struct gus_softc *, int, int);
+STATIC void	gus_set_recrate(struct gus_softc *, u_long);
+STATIC void	gus_start_voice(struct gus_softc *, int, int);
+STATIC void	gus_stop_voice(struct gus_softc *, int, int);
+STATIC void	gus_set_endaddr(struct gus_softc *, int, u_long);
 #ifdef GUSPLAYDEBUG
-STATIC void	gus_set_curaddr __P((struct gus_softc *, int, u_long));
-STATIC u_long	gus_get_curaddr __P((struct gus_softc *, int));
+STATIC void	gus_set_curaddr(struct gus_softc *, int, u_long);
+STATIC u_long	gus_get_curaddr(struct gus_softc *, int);
 #endif
-STATIC int	gus_dmaout_intr __P((struct gus_softc *));
-STATIC void	gus_dmaout_dointr __P((struct gus_softc *));
-STATIC void	gus_dmaout_timeout __P((void *));
-STATIC int	gus_dmain_intr __P((struct gus_softc *));
-STATIC int	gus_voice_intr __P((struct gus_softc *));
-STATIC void	gus_start_playing __P((struct gus_softc *, int));
-STATIC int	gus_continue_playing __P((struct gus_softc *, int));
-STATIC u_char guspeek __P((bus_space_tag_t, bus_space_handle_t, u_long));
-STATIC u_long convert_to_16bit __P((u_long));
-STATIC int	gus_mixer_set_port __P((void *, mixer_ctrl_t *));
-STATIC int	gus_mixer_get_port __P((void *, mixer_ctrl_t *));
-STATIC int	gusmax_mixer_set_port __P((void *, mixer_ctrl_t *));
-STATIC int	gusmax_mixer_get_port __P((void *, mixer_ctrl_t *));
-STATIC int	gus_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
-STATIC int	gusmax_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
-STATIC int	gus_query_encoding __P((void *, struct audio_encoding *));
-STATIC int	gus_get_props __P((void *));
-STATIC int	gusmax_get_props __P((void *));
+STATIC int	gus_dmaout_intr(struct gus_softc *);
+STATIC void	gus_dmaout_dointr(struct gus_softc *);
+STATIC void	gus_dmaout_timeout(void *);
+STATIC int	gus_dmain_intr(struct gus_softc *);
+STATIC int	gus_voice_intr(struct gus_softc *);
+STATIC void	gus_start_playing(struct gus_softc *, int);
+STATIC int	gus_continue_playing(struct gus_softc *, int);
+STATIC u_char guspeek(bus_space_tag_t, bus_space_handle_t, u_long);
+STATIC u_long convert_to_16bit(u_long);
+STATIC int	gus_mixer_set_port(void *, mixer_ctrl_t *);
+STATIC int	gus_mixer_get_port(void *, mixer_ctrl_t *);
+STATIC int	gusmax_mixer_set_port(void *, mixer_ctrl_t *);
+STATIC int	gusmax_mixer_get_port(void *, mixer_ctrl_t *);
+STATIC int	gus_mixer_query_devinfo(void *, mixer_devinfo_t *);
+STATIC int	gusmax_mixer_query_devinfo(void *, mixer_devinfo_t *);
+STATIC int	gus_query_encoding(void *, struct audio_encoding *);
+STATIC int	gus_get_props(void *);
+STATIC int	gusmax_get_props(void *);
 
-STATIC void	gusics_master_mute __P((struct ics2101_softc *, int));
-STATIC void	gusics_dac_mute __P((struct ics2101_softc *, int));
-STATIC void	gusics_mic_mute __P((struct ics2101_softc *, int));
-STATIC void	gusics_linein_mute __P((struct ics2101_softc *, int));
-STATIC void	gusics_cd_mute __P((struct ics2101_softc *, int));
+STATIC void	gusics_master_mute(struct ics2101_softc *, int);
+STATIC void	gusics_dac_mute(struct ics2101_softc *, int);
+STATIC void	gusics_mic_mute(struct ics2101_softc *, int);
+STATIC void	gusics_linein_mute(struct ics2101_softc *, int);
+STATIC void	gusics_cd_mute(struct ics2101_softc *, int);
 
-void	stereo_dmaintr __P((void *));
+void	stereo_dmaintr(void *);
 
 /*
  * ISA bus driver routines
  */
 
-int	gusprobe __P((struct device *, struct cfdata *, void *));
-void	gusattach __P((struct device *, struct device *, void *));
+int	gusprobe(struct device *, struct cfdata *, void *);
+void	gusattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gus, sizeof(struct gus_softc),
     gusprobe, gusattach, NULL, NULL);
@@ -586,24 +588,17 @@ const struct audio_hw_if gus_hw_if = {
 	gusopen,
 	gusclose,
 	NULL,				/* drain */
-
 	gus_query_encoding,
-
 	gus_set_params,
-
 	gus_round_blocksize,
-
 	gus_commit_settings,
-
 	NULL,
 	NULL,
-
 	gus_dma_output,
 	gus_dma_input,
 	gus_halt_out_dma,
 	gus_halt_in_dma,
 	gus_speaker_ctl,
-
 	gus_getdev,
 	NULL,
 	gus_mixer_set_port,
@@ -611,8 +606,8 @@ const struct audio_hw_if gus_hw_if = {
 	gus_mixer_query_devinfo,
 	ad1848_isa_malloc,
 	ad1848_isa_free,
-	ad1848_isa_round_buffersize, 
-	ad1848_isa_mappage, 
+	ad1848_isa_round_buffersize,
+	ad1848_isa_mappage,
 	gus_get_props,
 	NULL,
 	NULL,
@@ -622,26 +617,18 @@ const struct audio_hw_if gus_hw_if = {
 static const struct audio_hw_if gusmax_hw_if = {
 	gusmaxopen,
 	gusmax_close,
-	NULL,				/* drain */
-	
-	gus_query_encoding, /* query encoding */
-	
+	NULL,			/* drain */
+	gus_query_encoding,	/* query encoding */
 	gusmax_set_params,
-	
 	gusmax_round_blocksize,
-	
 	gusmax_commit_settings,
-	
 	NULL,
 	NULL,
-	
 	gusmax_dma_output,
 	gusmax_dma_input,
 	gusmax_halt_out_dma,
 	gusmax_halt_in_dma,
-	
 	gusmax_speaker_ctl,
-	
 	gus_getdev,
 	NULL,
 	gusmax_mixer_set_port,
@@ -649,8 +636,8 @@ static const struct audio_hw_if gusmax_hw_if = {
 	gusmax_mixer_query_devinfo,
 	ad1848_isa_malloc,
 	ad1848_isa_free,
-	ad1848_isa_round_buffersize, 
-	ad1848_isa_mappage, 
+	ad1848_isa_round_buffersize,
+	ad1848_isa_mappage,
 	gusmax_get_props,
 	NULL,
 	NULL,
@@ -671,23 +658,21 @@ struct audio_device gus_device = {
 
 
 int
-gusprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gusprobe(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct isa_attach_args *ia = aux;
+	struct isa_attach_args *ia;
 	int iobase, recdrq;
 
+	ia = aux;
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 	if (ia->ia_ndrq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	iobase = ia->ia_io[0].ir_addr;
 	if (ia->ia_ndrq > 1)
@@ -717,16 +702,16 @@ gusprobe(parent, match, aux)
 
 	if (recdrq != ISA_UNKNOWN_DRQ) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == -1) {
-		   printf("gus: invalid second DMA channel (%d), card not "
-		       "probed\n", recdrq);
-		   return 0;
-	        }
+			printf("gus: invalid second DMA channel (%d), card not "
+			    "probed\n", recdrq);
+			return 0;
+		}
 	} else
 		recdrq = ia->ia_drq[0].ir_drq;
 
 	if (iobase == ISA_UNKNOWN_PORT) {
 		int i;
-		for(i = 0; i < gus_addrs; i++)
+		for (i = 0; i < gus_addrs; i++)
 			if (gus_test_iobase(ia->ia_iot, gus_base_addrs[i])) {
 				iobase = gus_base_addrs[i];
 				goto done;
@@ -759,14 +744,13 @@ done:
  */
 
 STATIC int
-gus_test_iobase (iot, iobase)
-	bus_space_tag_t iot;
-	int iobase;
+gus_test_iobase (bus_space_tag_t iot, int iobase)
 {
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
 	u_char s1, s2;
-	int s, rv = 0;
+	int s, rv;
 
+	rv = 0;
 	/* Map i/o space */
 	if (bus_space_map(iot, iobase, GUS_NPORT1, 0, &ioh1))
 		return 0;
@@ -788,15 +772,15 @@ gus_test_iobase (iot, iobase)
 	s = splgus();
 	delay(500);
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0x00);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0x00);
 
- 	delay(500);
+	delay(500);
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, GUSMASK_MASTER_RESET);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, GUSMASK_MASTER_RESET);
 
- 	delay(500);
+	delay(500);
 
 	splx(s);
 
@@ -804,13 +788,13 @@ gus_test_iobase (iot, iobase)
 	 * See if we can write to the board's memory
 	 */
 
- 	s1 = guspeek(iot, ioh2, 0L);
- 	s2 = guspeek(iot, ioh2, 1L);
+	s1 = guspeek(iot, ioh2, 0L);
+	s2 = guspeek(iot, ioh2, 1L);
 
- 	guspoke(iot, ioh2, 0L, 0xaa);
- 	guspoke(iot, ioh2, 1L, 0x55);
+	guspoke(iot, ioh2, 0L, 0xaa);
+	guspoke(iot, ioh2, 1L, 0x55);
 
- 	if (guspeek(iot, ioh2, 0L) != 0xaa)
+	if (guspeek(iot, ioh2, 0L) != 0xaa)
 		goto bad;
 
 	guspoke(iot, ioh2, 0L, s1);
@@ -834,18 +818,18 @@ bad1:
  */
 
 void
-gusattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct gus_softc *sc = (void *) self;
-	struct isa_attach_args *ia = aux;
+	struct gus_softc *sc;
+	struct isa_attach_args *ia;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
- 	int		iobase, i;
+	int		iobase, i;
 	unsigned char	c,d,m;
 	const struct audio_hw_if *hwif;
 
+	sc = (void *) self;
+	ia = aux;
 	callout_init(&sc->sc_dmaout_ch);
 
 	sc->sc_iot = iot = ia->ia_iot;
@@ -883,17 +867,17 @@ gusattach(parent, self, aux)
 
 	sc->sc_ic = ia->ia_ic;
 
- 	delay(500);
+	delay(500);
 
- 	c = bus_space_read_1(iot, ioh3, GUS_BOARD_REV);
+	c = bus_space_read_1(iot, ioh3, GUS_BOARD_REV);
 	if (c != 0xff)
 		sc->sc_revision = c;
 	else
 		sc->sc_revision = 0;
 
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0x00);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0x00);
 
 	gusreset(sc, GUS_MAX_VOICES); /* initialize all voices */
 	gusreset(sc, GUS_MIN_VOICES); /* then set to just the ones we use */
@@ -990,24 +974,24 @@ gusattach(parent, self, aux)
 	/* XXX WILL THIS ALWAYS WORK THE WAY THEY'RE OVERLAYED?! */
 	sc->sc_codec.sc_ic = sc->sc_ic;
 
- 	if (sc->sc_revision >= 5 && sc->sc_revision <= 9) {
- 		sc->sc_flags |= GUS_MIXER_INSTALLED;
- 		gus_init_ics2101(sc);
+	if (sc->sc_revision >= 5 && sc->sc_revision <= 9) {
+		sc->sc_flags |= GUS_MIXER_INSTALLED;
+		gus_init_ics2101(sc);
 	}
 	hwif = &gus_hw_if;
 	if (sc->sc_revision >= 10)
 		if (gus_init_cs4231(sc))
 			hwif = &gusmax_hw_if;
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
- 	/*
- 	 * Check to see how much memory we have on this card; see if any
- 	 * "mirroring" occurs.  We're assuming at least 256K already exists
- 	 * on the card; otherwise the initial probe would have failed
- 	 */
+	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
+	/*
+	 * Check to see how much memory we have on this card; see if any
+	 * "mirroring" occurs.  We're assuming at least 256K already exists
+	 * on the card; otherwise the initial probe would have failed
+	 */
 
 	guspoke(iot, ioh2, 0L, 0x00);
-	for(i = 1; i < 1024; i++) {
+	for (i = 1; i < 1024; i++) {
 		u_long loc;
 
 		/*
@@ -1047,8 +1031,8 @@ gusattach(parent, self, aux)
 
 	/* A GUS MAX should always have a CODEC installed */
 	if ((sc->sc_revision >= 10) & !(HAS_CODEC(sc)))
-		printf("%s: WARNING: did not attach CODEC on MAX\n", 
-                       sc->sc_dev.dv_xname);
+		printf("%s: WARNING: did not attach CODEC on MAX\n",
+		    sc->sc_dev.dv_xname);
 
 	/*
 	 * Setup a default interrupt handler
@@ -1096,12 +1080,11 @@ gusattach(parent, self, aux)
 }
 
 int
-gusopen(addr, flags)
-	void *addr;
-	int flags;
+gusopen(void *addr, int flags)
 {
-	struct gus_softc *sc = addr;
+	struct gus_softc *sc;
 
+	sc = addr;
 	DPRINTF(("gusopen() called\n"));
 
 	if (sc->sc_flags & GUS_OPEN)
@@ -1138,24 +1121,22 @@ gusopen(addr, flags)
 			gus_mic_ctl(sc, SPKR_ON);
 	}
 	if (sc->sc_nbufs == 0)
-	    gus_round_blocksize(sc, GUS_BUFFER_MULTIPLE); /* default blksiz */
+	    gus_round_blocksize(sc, GUS_BUFFER_MULTIPLE, /* default blksiz */
+				0, NULL); /* XXX */
 	return 0;
 }
 
 int
-gusmaxopen(addr, flags)
-	void *addr;
-	int flags;
+gusmaxopen(void *addr, int flags)
 {
-	struct ad1848_isa_softc *ac = addr;
+	struct ad1848_isa_softc *ac;
+
+	ac = addr;
 	return gusopen(ac->sc_ad1848.parent, flags);
 }
 
 STATIC void
-gus_deinterleave(sc, buf, size)
-	struct gus_softc *sc;
-	void *buf;
-	int size;
+gus_deinterleave(struct gus_softc *sc, void *buf, int size)
 {
 	/* deinterleave the stereo data.  We can use sc->sc_deintr_buf
 	   for scratch space. */
@@ -1208,14 +1189,12 @@ gus_deinterleave(sc, buf, size)
  */
 
 int
-gusmax_dma_output(addr, buf, size, intr, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*intr) __P((void *));
-	void *arg;
+gusmax_dma_output(void *addr, void *buf, int size,
+		  void (*intr)(void *), void *arg)
 {
-	struct ad1848_isa_softc *ac = addr;
+	struct ad1848_isa_softc *ac;
+
+	ac = addr;
 	return gus_dma_output(ac->sc_ad1848.parent, buf, size, intr, arg);
 }
 
@@ -1223,41 +1202,42 @@ gusmax_dma_output(addr, buf, size, intr, arg)
  * called at splgus() from interrupt handler.
  */
 void
-stereo_dmaintr(arg)
-	void *arg;
+stereo_dmaintr(void *arg)
 {
-    struct gus_softc *sc = arg;
-    struct stereo_dma_intr *sa = &sc->sc_stereo;
+	struct gus_softc *sc;
+	struct stereo_dma_intr *sa;
 
-    DMAPRINTF(("stereo_dmaintr"));
+	DMAPRINTF(("stereo_dmaintr"));
+	sc = arg;
+	sa = &sc->sc_stereo;
 
-    /*
-     * Put other half in its place, then call the real interrupt routine :)
-     */
+	/*
+	 * Put other half in its place, then call the real interrupt routine :)
+	 */
 
-    sc->sc_dmaoutintr = sa->intr;
-    sc->sc_outarg = sa->arg;
+	sc->sc_dmaoutintr = sa->intr;
+	sc->sc_outarg = sa->arg;
 
 #ifdef GUSPLAYDEBUG
-    if (gusstats) {
-      microtime(&dmarecords[dmarecord_index].tv);
-      dmarecords[dmarecord_index].gusaddr = sa->dmabuf;
-      dmarecords[dmarecord_index].bsdaddr = sa->buffer;
-      dmarecords[dmarecord_index].count = sa->size;
-      dmarecords[dmarecord_index].channel = 1;
-      dmarecords[dmarecord_index].direction = 1;
-      dmarecord_index = (dmarecord_index + 1) % NDMARECS;
-    }
+	if (gusstats) {
+		microtime(&dmarecords[dmarecord_index].tv);
+		dmarecords[dmarecord_index].gusaddr = sa->dmabuf;
+		dmarecords[dmarecord_index].bsdaddr = sa->buffer;
+		dmarecords[dmarecord_index].count = sa->size;
+		dmarecords[dmarecord_index].channel = 1;
+		dmarecords[dmarecord_index].direction = 1;
+		dmarecord_index = (dmarecord_index + 1) % NDMARECS;
+	}
 #endif
 
-    gusdmaout(sc, sa->flags, sa->dmabuf, (caddr_t) sa->buffer, sa->size);
+	gusdmaout(sc, sa->flags, sa->dmabuf, (caddr_t) sa->buffer, sa->size);
 
-    sa->flags = 0;
-    sa->dmabuf = 0;
-    sa->buffer = 0;
-    sa->size = 0;
-    sa->intr = 0;
-    sa->arg = 0;
+	sa->flags = 0;
+	sa->dmabuf = 0;
+	sa->buffer = 0;
+	sa->size = 0;
+	sa->intr = 0;
+	sa->arg = 0;
 }
 
 /*
@@ -1266,34 +1246,32 @@ stereo_dmaintr(arg)
  * generic audio code.
  */
 int
-gus_dma_output(addr, buf, size, intr, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*intr) __P((void *));
-	void *arg;
+gus_dma_output(void *addr, void *buf, int size,
+	       void (*intr)(void *), void *arg)
 {
-	struct gus_softc *sc = addr;
-	u_char *buffer = buf;
+	struct gus_softc *sc;
+	u_char *buffer;
 	u_long boarddma;
 	int flags;
 
 	DMAPRINTF(("gus_dma_output %d @ %p\n", size, buf));
+	sc = addr;
+	buffer = buf;
 
 	if (size != sc->sc_blocksize) {
-	    DPRINTF(("gus_dma_output reqsize %d not sc_blocksize %d\n",
+		DPRINTF(("gus_dma_output reqsize %d not sc_blocksize %d\n",
 		     size, sc->sc_blocksize));
-	    return EINVAL;
+		return EINVAL;
 	}
 
 	flags = GUSMASK_DMA_WRITE;
 	if (sc->sc_precision == 16)
-	    flags |= GUSMASK_DMA_DATA_SIZE; 
+		flags |= GUSMASK_DMA_DATA_SIZE;
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
 	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE)
-	    flags |= GUSMASK_DMA_INVBIT;
+		flags |= GUSMASK_DMA_INVBIT;
 
 	if (sc->sc_channels == 2) {
 		if (sc->sc_precision == 16) {
@@ -1312,7 +1290,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 
 		size >>= 1;
 
- 		boarddma = size * sc->sc_dmabuf + GUS_MEM_OFFSET;
+		boarddma = size * sc->sc_dmabuf + GUS_MEM_OFFSET;
 
 		sc->sc_stereo.intr = intr;
 		sc->sc_stereo.arg = arg;
@@ -1321,8 +1299,8 @@ gus_dma_output(addr, buf, size, intr, arg)
 		sc->sc_stereo.buffer = buffer + size;
 		sc->sc_stereo.flags = flags;
 		if (gus_dostereo) {
-		  intr = stereo_dmaintr;
-		  arg = sc;
+			intr = stereo_dmaintr;
+			arg = sc;
 		}
 	} else
 		boarddma = size * sc->sc_dmabuf + GUS_MEM_OFFSET;
@@ -1334,13 +1312,13 @@ gus_dma_output(addr, buf, size, intr, arg)
 
 #ifdef GUSPLAYDEBUG
 	if (gusstats) {
-	  microtime(&dmarecords[dmarecord_index].tv);
-	  dmarecords[dmarecord_index].gusaddr = boarddma;
-	  dmarecords[dmarecord_index].bsdaddr = buffer;
-	  dmarecords[dmarecord_index].count = size;
-	  dmarecords[dmarecord_index].channel = 0;
-	  dmarecords[dmarecord_index].direction = 1;
-	  dmarecord_index = (dmarecord_index + 1) % NDMARECS;
+		microtime(&dmarecords[dmarecord_index].tv);
+		dmarecords[dmarecord_index].gusaddr = boarddma;
+		dmarecords[dmarecord_index].bsdaddr = buffer;
+		dmarecords[dmarecord_index].count = size;
+		dmarecords[dmarecord_index].channel = 0;
+		dmarecords[dmarecord_index].direction = 1;
+		dmarecord_index = (dmarecord_index + 1) % NDMARECS;
 	}
 #endif
 
@@ -1350,11 +1328,13 @@ gus_dma_output(addr, buf, size, intr, arg)
 }
 
 void
-gusmax_close(addr)
-	void *addr;
+gusmax_close(void *addr)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
+
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
 #if 0
 	ac->mute[AD1848_AUX1_CHANNEL] = MUTE_ALL;
 	ad1848_mute_channel(ac, MUTE_ALL); /* turn off DAC output */
@@ -1367,12 +1347,12 @@ gusmax_close(addr)
  * Close out device stuff.  Called at splgus() from generic audio layer.
  */
 void
-gusclose(addr)
-	void *addr;
+gusclose(void *addr)
 {
-	struct gus_softc *sc = addr;
+	struct gus_softc *sc;
 
-        DPRINTF(("gus_close: sc=%p\n", sc));
+	sc = addr;
+	DPRINTF(("gus_close: sc=%p\n", sc));
 
 
 /*	if (sc->sc_flags & GUS_DMAOUT_ACTIVE) */ {
@@ -1406,18 +1386,21 @@ int gusvocintrcnt;
 #endif
 
 int
-gusintr(arg)
-	void *arg;
+gusintr(void *arg)
 {
-	struct gus_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
+	bus_space_handle_t ioh2;
 	unsigned char intr;
-
-	int retval = 0;
+	int retval;
 
 	DPRINTF(("gusintr\n"));
+	sc = arg;
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
+	ioh2 = sc->sc_ioh2;
+	retval = 0;
 #ifdef DIAGNOSTIC
 	gusintrcnt++;
 #endif
@@ -1430,11 +1413,11 @@ gusintr(arg)
 #endif
 		retval += gus_dmaout_intr(sc);
 		if (sc->sc_flags & GUS_DMAIN_ACTIVE) {
-		    SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
-		    intr = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
-		    if (intr & GUSMASK_SAMPLE_DMATC) {
-			retval += gus_dmain_intr(sc);
-		    }
+			SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
+			intr = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
+			if (intr & GUSMASK_SAMPLE_DMATC) {
+				retval += gus_dmain_intr(sc);
+			}
 		}
 	}
 	if (intr & (GUSMASK_IRQ_VOICE | GUSMASK_IRQ_VOLUME)) {
@@ -1470,30 +1453,30 @@ struct playcont {
 int playcntr;
 
 STATIC void
-gus_dmaout_timeout(arg)
- 	void *arg;
+gus_dmaout_timeout(void *arg)
 {
- 	struct gus_softc *sc = arg;
- 	bus_space_tag_t iot = sc->sc_iot;
- 	bus_space_handle_t ioh2 = sc->sc_ioh2;
- 	int s;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
+	int s;
 
- 	printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
- 	/*
- 	 * Stop any DMA.
- 	 */
-
- 	s = splgus();
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
- 	
+	sc = arg;
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
+	printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
+	/*
+	 * Stop any DMA.
+	 */
+	s = splgus();
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
- 	/* XXX we will dmadone below? */
- 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
+	/* XXX we will dmadone below? */
+	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
 #endif
- 	
- 	gus_dmaout_dointr(sc);
- 	splx(s);
+
+	gus_dmaout_dointr(sc);
+	splx(s);
 }
 
 
@@ -1503,37 +1486,39 @@ gus_dmaout_timeout(arg)
  */
 
 STATIC int
-gus_dmaout_intr(sc)
-	struct gus_softc *sc;
+gus_dmaout_intr(struct gus_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/*
 	 * If we got a DMA transfer complete from the GUS DRAM, then deal
 	 * with it.
 	 */
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
- 	if (bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & GUSMASK_DMA_IRQPEND) {
-	    callout_stop(&sc->sc_dmaout_ch);
-	    gus_dmaout_dointr(sc);
-	    return 1;
+	if (bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & GUSMASK_DMA_IRQPEND) {
+		callout_stop(&sc->sc_dmaout_ch);
+		gus_dmaout_dointr(sc);
+		return 1;
 	}
 	return 0;
 }
 
 STATIC void
-gus_dmaout_dointr(sc)
-	struct gus_softc *sc;
+gus_dmaout_dointr(struct gus_softc *sc)
 {
- 	bus_space_tag_t iot = sc->sc_iot;
- 	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
- 	isa_dmadone(sc->sc_ic, sc->sc_playdrq);
+	isa_dmadone(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
- 	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
+	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
 
 	/*
@@ -1544,42 +1529,42 @@ gus_dmaout_dointr(sc)
 	 * byte rather than the one we have in memory.
 	 */
 	if (sc->sc_dmabuf == sc->sc_nbufs - 1) {
-	  int i;
-	  switch (sc->sc_encoding) {
-	  case AUDIO_ENCODING_SLINEAR_LE:
-	  case AUDIO_ENCODING_SLINEAR_BE:
-	    if (sc->sc_precision == 8)
-	      goto byte;
-	    /* we have the native format */
-	    for (i = 1; i <= 2; i++)
-	      guspoke(iot, ioh2, sc->sc_gusaddr -
-		      (sc->sc_nbufs - 1) * sc->sc_chanblocksize - i,
-		      sc->sc_dmaoutaddr[sc->sc_dmaoutcnt-i]);
-	    break;
-	  case AUDIO_ENCODING_ULINEAR_LE:
-	  case AUDIO_ENCODING_ULINEAR_BE:
-	    guspoke(iot, ioh2, sc->sc_gusaddr -
-		    (sc->sc_nbufs - 1) * sc->sc_chanblocksize - 2,
-		    guspeek(iot, ioh2,
-			    sc->sc_gusaddr + sc->sc_chanblocksize - 2));
-	  case AUDIO_ENCODING_ALAW:
-	  case AUDIO_ENCODING_ULAW:
-	  byte:
-	    /* we need to fetch the translated byte, then stuff it. */
-	    guspoke(iot, ioh2, sc->sc_gusaddr -
-		    (sc->sc_nbufs - 1) * sc->sc_chanblocksize - 1,
-		    guspeek(iot, ioh2,
-			    sc->sc_gusaddr + sc->sc_chanblocksize - 1));
-	    break;
-	  }
+		int i;
+		switch (sc->sc_encoding) {
+		case AUDIO_ENCODING_SLINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_BE:
+			if (sc->sc_precision == 8)
+				goto byte;
+			/* we have the native format */
+			for (i = 1; i <= 2; i++)
+				guspoke(iot, ioh2, sc->sc_gusaddr -
+					(sc->sc_nbufs - 1) * sc->sc_chanblocksize - i,
+					sc->sc_dmaoutaddr[sc->sc_dmaoutcnt-i]);
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+		case AUDIO_ENCODING_ULINEAR_BE:
+			guspoke(iot, ioh2, sc->sc_gusaddr -
+				(sc->sc_nbufs - 1) * sc->sc_chanblocksize - 2,
+				guspeek(iot, ioh2,
+					sc->sc_gusaddr + sc->sc_chanblocksize - 2));
+		case AUDIO_ENCODING_ALAW:
+		case AUDIO_ENCODING_ULAW:
+		byte:
+			/* we need to fetch the translated byte, then stuff it. */
+			guspoke(iot, ioh2, sc->sc_gusaddr -
+				(sc->sc_nbufs - 1) * sc->sc_chanblocksize - 1,
+				guspeek(iot, ioh2,
+					sc->sc_gusaddr + sc->sc_chanblocksize - 1));
+			break;
+		}
 	}
 	/*
 	 * If this is the first half of stereo, "ignore" this one
 	 * and copy out the second half.
 	 */
 	if (sc->sc_dmaoutintr == stereo_dmaintr) {
-	    (*sc->sc_dmaoutintr)(sc->sc_outarg);
-	    return;
+		(*sc->sc_dmaoutintr)(sc->sc_outarg);
+		return;
 	}
 	/*
 	 * If the voice is stopped, then start it.  Reset the loop
@@ -1591,85 +1576,93 @@ gus_dmaout_dointr(sc)
 	sc->sc_flags &= ~GUS_LOCKED;
 	if (sc->sc_voc[GUS_VOICE_LEFT].voccntl &
 	    GUSMASK_VOICE_STOPPED) {
-	    if (sc->sc_flags & GUS_PLAYING) {
-		printf("%s: playing yet stopped?\n", sc->sc_dev.dv_xname);
-	    }
-	    sc->sc_bufcnt++; /* another yet to be played */
-	    gus_start_playing(sc, sc->sc_dmabuf);
-	    gus_restart++;
+		if (sc->sc_flags & GUS_PLAYING) {
+			printf("%s: playing yet stopped?\n", sc->sc_dev.dv_xname);
+		}
+		sc->sc_bufcnt++; /* another yet to be played */
+		gus_start_playing(sc, sc->sc_dmabuf);
+		gus_restart++;
 	} else {
-	    /*
-	     * set the sound action based on which buffer we
-	     * just transferred.  If we just transferred buffer 0
-	     * we want the sound to loop when it gets to the nth
-	     * buffer; if we just transferred
-	     * any other buffer, we want the sound to roll over
-	     * at least one more time.  The voice interrupt
-	     * handlers will take care of accounting &
-	     * setting control bits if it's not caught up to us
-	     * yet.
-	     */
-	    if (++sc->sc_bufcnt == 2) {
 		/*
-		 * XXX 
-		 * If we're too slow in reaction here,
-		 * the voice could be just approaching the
-		 * end of its run.  It should be set to stop,
-		 * so these adjustments might not DTRT.
+		 * set the sound action based on which buffer we
+		 * just transferred.  If we just transferred buffer 0
+		 * we want the sound to loop when it gets to the nth
+		 * buffer; if we just transferred
+		 * any other buffer, we want the sound to roll over
+		 * at least one more time.  The voice interrupt
+		 * handlers will take care of accounting &
+		 * setting control bits if it's not caught up to us
+		 * yet.
 		 */
-		if (sc->sc_dmabuf == 0 &&
-		    sc->sc_playbuf == sc->sc_nbufs - 1) {
-		    /* player is just at the last buf, we're at the
-		       first.  Turn on looping, turn off rolling. */
-		    sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_LOOP_ENABLE;
-		    sc->sc_voc[GUS_VOICE_LEFT].volcntl &= ~GUSMASK_VOICE_ROLL;
-		    playstats[playcntr].vaction = 3;
-		} else {
-		    /* player is at previous buf:
-		       turn on rolling, turn off looping */
-		    sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_LOOP_ENABLE;
-		    sc->sc_voc[GUS_VOICE_LEFT].volcntl |= GUSMASK_VOICE_ROLL;
-		    playstats[playcntr].vaction = 4;
-		}
+		if (++sc->sc_bufcnt == 2) {
+			/*
+			 * XXX 
+			 * If we're too slow in reaction here,
+			 * the voice could be just approaching the
+			 * end of its run.  It should be set to stop,
+			 * so these adjustments might not DTRT.
+			 */
+			if (sc->sc_dmabuf == 0 &&
+			    sc->sc_playbuf == sc->sc_nbufs - 1) {
+				/* player is just at the last buf, we're at the
+				   first.  Turn on looping, turn off rolling. */
+				sc->sc_voc[GUS_VOICE_LEFT].voccntl |= GUSMASK_LOOP_ENABLE;
+				sc->sc_voc[GUS_VOICE_LEFT].volcntl &= ~GUSMASK_VOICE_ROLL;
+				playstats[playcntr].vaction = 3;
+			} else {
+				/* player is at previous buf:
+				   turn on rolling, turn off looping */
+				sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_LOOP_ENABLE;
+				sc->sc_voc[GUS_VOICE_LEFT].volcntl |= GUSMASK_VOICE_ROLL;
+				playstats[playcntr].vaction = 4;
+			}
 #ifdef GUSPLAYDEBUG
-		if (gusstats) {
-		  microtime(&playstats[playcntr].tv);
-		  playstats[playcntr].endaddr = sc->sc_voc[GUS_VOICE_LEFT].end_addr;
-		  playstats[playcntr].voccntl = sc->sc_voc[GUS_VOICE_LEFT].voccntl;
-		  playstats[playcntr].volcntl = sc->sc_voc[GUS_VOICE_LEFT].volcntl;
-		  playstats[playcntr].playbuf = sc->sc_playbuf;
-		  playstats[playcntr].dmabuf = sc->sc_dmabuf;
-		  playstats[playcntr].bufcnt = sc->sc_bufcnt;
-		  playstats[playcntr].curaddr = gus_get_curaddr(sc, GUS_VOICE_LEFT);
-		  playcntr = (playcntr + 1) % NDMARECS;
-		}
+			if (gusstats) {
+				microtime(&playstats[playcntr].tv);
+				playstats[playcntr].endaddr
+				    = sc->sc_voc[GUS_VOICE_LEFT].end_addr;
+				playstats[playcntr].voccntl
+				    = sc->sc_voc[GUS_VOICE_LEFT].voccntl;
+				playstats[playcntr].volcntl
+				    = sc->sc_voc[GUS_VOICE_LEFT].volcntl;
+				playstats[playcntr].playbuf = sc->sc_playbuf;
+				playstats[playcntr].dmabuf = sc->sc_dmabuf;
+				playstats[playcntr].bufcnt = sc->sc_bufcnt;
+				playstats[playcntr].curaddr
+				    = gus_get_curaddr(sc, GUS_VOICE_LEFT);
+				playcntr = (playcntr + 1) % NDMARECS;
+			}
 #endif
-		bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, GUS_VOICE_LEFT);
-		SELECT_GUS_REG(iot, ioh2, GUSREG_VOICE_CNTL);
-		bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, sc->sc_voc[GUS_VOICE_LEFT].voccntl);
-		SELECT_GUS_REG(iot, ioh2, GUSREG_VOLUME_CONTROL);
-		bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, sc->sc_voc[GUS_VOICE_LEFT].volcntl);
-	    }
+			bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, GUS_VOICE_LEFT);
+			SELECT_GUS_REG(iot, ioh2, GUSREG_VOICE_CNTL);
+			bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+					  sc->sc_voc[GUS_VOICE_LEFT].voccntl);
+			SELECT_GUS_REG(iot, ioh2, GUSREG_VOLUME_CONTROL);
+			bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+					  sc->sc_voc[GUS_VOICE_LEFT].volcntl);
+		}
 	}
 	gus_bufcnt[sc->sc_bufcnt-1]++;
 	/*
 	 * flip to the next DMA buffer
 	 */
 
-	sc->sc_dmabuf = ++sc->sc_dmabuf % sc->sc_nbufs; 
+	sc->sc_dmabuf = ++sc->sc_dmabuf % sc->sc_nbufs;
 	/*
 	 * See comments below about DMA admission control strategy.
 	 * We can call the upper level here if we have an
 	 * idle buffer (not currently playing) to DMA into.
 	 */
 	if (sc->sc_dmaoutintr && sc->sc_bufcnt < sc->sc_nbufs) {
-	    /* clean out to prevent double calls */
-	    void (*pfunc) __P((void *)) = sc->sc_dmaoutintr;
-	    void *arg = sc->sc_outarg;
+		/* clean out to prevent double calls */
+		void (*pfunc)(void *);
+		void *arg;
 
-	    sc->sc_outarg = 0;
-	    sc->sc_dmaoutintr = 0;
-	    (*pfunc)(arg);
+		pfunc = sc->sc_dmaoutintr;
+		arg = sc->sc_outarg;
+		sc->sc_outarg = 0;
+		sc->sc_dmaoutintr = 0;
+		(*pfunc)(arg);
 	}
 }
 
@@ -1678,21 +1671,24 @@ gus_dmaout_dointr(sc)
  */
 
 STATIC int
-gus_voice_intr(sc)
-	struct gus_softc *sc;
+gus_voice_intr(struct gus_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
-	int ignore = 0, voice, rval = 0;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
+	int ignore, voice, rval;
 	unsigned char intr, status;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
+	ignore = 0;
+	rval = 0;
 	/*
 	 * The point of this may not be obvious at first.  A voice can
 	 * interrupt more than once; according to the GUS SDK we are supposed
 	 * to ignore multiple interrupts for the same voice.
 	 */
 
-	while(1) {
+	while (1) {
 		SELECT_GUS_REG(iot, ioh2, GUSREG_IRQ_STATUS);
 		intr = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
 
@@ -1701,116 +1697,118 @@ gus_voice_intr(sc)
 			/*
 			 * No more interrupts, time to return
 			 */
-		 	return rval;
+			return rval;
 
 		if ((intr & GUSMASK_WIRQ_VOICE) == 0) {
 
-		    /*
-		     * We've got a voice interrupt.  Ignore previous
-		     * interrupts by the same voice.
-		     */
-
-		    rval = 1;
-		    voice = intr & GUSMASK_WIRQ_VOICEMASK;
-
-		    if ((1 << voice) & ignore)
-			break;
-
-		    ignore |= 1 << voice;
-
-		    /*
-		     * If the voice is stopped, then force it to stop
-		     * (this stops it from continuously generating IRQs)
-		     */
-
-		    SELECT_GUS_REG(iot, ioh2, GUSREG_VOICE_CNTL+0x80);
-		    status = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
-		    if (status & GUSMASK_VOICE_STOPPED) {
-			if (voice != GUS_VOICE_LEFT) {
-			    DMAPRINTF(("%s: spurious voice %d stop?\n",
-				       sc->sc_dev.dv_xname, voice));
-			    gus_stop_voice(sc, voice, 0);
-			    continue;
-			}
-			gus_stop_voice(sc, voice, 1);
-			/* also kill right voice */
-			gus_stop_voice(sc, GUS_VOICE_RIGHT, 0);
-			sc->sc_bufcnt--; /* it finished a buffer */
-			if (sc->sc_bufcnt > 0) {
-			    /*
-			     * probably a race to get here: the voice
-			     * stopped while the DMA code was just trying to
-			     * get the next buffer in place. 
-			     * Start the voice again.
-			     */
-			    printf("%s: stopped voice not drained? (%x)\n",
-				   sc->sc_dev.dv_xname, sc->sc_bufcnt);
-			    gus_falsestops++;
-
-			    sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
-			    gus_start_playing(sc, sc->sc_playbuf);
-			} else if (sc->sc_bufcnt < 0) {
-			    panic("%s: negative bufcnt in stopped voice",
-				  sc->sc_dev.dv_xname);
-			} else {
-			    sc->sc_playbuf = -1; /* none are active */
-			    gus_stops++;
-			}
-			/* fall through to callback and admit another
-			   buffer.... */
-		    } else if (sc->sc_bufcnt != 0) {
 			/*
-			 * This should always be taken if the voice
-			 * is not stopped.
+			 * We've got a voice interrupt.  Ignore previous
+			 * interrupts by the same voice.
 			 */
-			gus_continues++;
-			if (gus_continue_playing(sc, voice)) {
-				/*
-				 * we shouldn't have continued--active DMA
-				 * is in the way in the ring, for
-				 * some as-yet undebugged reason.
-				 */
-				gus_stop_voice(sc, GUS_VOICE_LEFT, 1);
+
+			rval = 1;
+			voice = intr & GUSMASK_WIRQ_VOICEMASK;
+
+			if ((1 << voice) & ignore)
+				break;
+
+			ignore |= 1 << voice;
+
+			/*
+			 * If the voice is stopped, then force it to stop
+			 * (this stops it from continuously generating IRQs)
+			 */
+
+			SELECT_GUS_REG(iot, ioh2, GUSREG_VOICE_CNTL+0x80);
+			status = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
+			if (status & GUSMASK_VOICE_STOPPED) {
+				if (voice != GUS_VOICE_LEFT) {
+					DMAPRINTF(("%s: spurious voice %d stop?\n",
+						   sc->sc_dev.dv_xname, voice));
+					gus_stop_voice(sc, voice, 0);
+					continue;
+				}
+				gus_stop_voice(sc, voice, 1);
 				/* also kill right voice */
 				gus_stop_voice(sc, GUS_VOICE_RIGHT, 0);
-				sc->sc_playbuf = -1;
-				gus_stops++;
-			}
-		    }
-		    /*
-		     * call the upper level to send on down another
-		     * block. We do admission rate control as follows:
-		     *
-		     * When starting up output (in the first N
-		     * blocks), call the upper layer after the DMA is
-		     * complete (see above in gus_dmaout_intr()).
-		     *
-		     * When output is already in progress and we have
-		     * no more GUS buffers to use for DMA, the DMA
-		     * output routines do not call the upper layer.
-		     * Instead, we call the DMA completion routine
-		     * here, after the voice interrupts indicating
-		     * that it's finished with a buffer.
-		     *
-		     * However, don't call anything here if the DMA
-		     * output flag is set, (which shouldn't happen)
-		     * because we'll squish somebody else's DMA if
-		     * that's the case.  When DMA is done, it will
-		     * call back if there is a spare buffer.
-		     */
-		    if (sc->sc_dmaoutintr && !(sc->sc_flags & GUS_LOCKED)) {
-			if (sc->sc_dmaoutintr == stereo_dmaintr)
-			    printf("gusdmaout botch?\n");
-			else {
-			    /* clean out to avoid double calls */
-			    void (*pfunc) __P((void *)) = sc->sc_dmaoutintr;
-			    void *arg = sc->sc_outarg;
+				sc->sc_bufcnt--; /* it finished a buffer */
+				if (sc->sc_bufcnt > 0) {
+					/*
+					 * probably a race to get here: the
+					 * voice stopped while the DMA code was
+					 * just trying to get the next buffer
+					 * in place.  Start the voice again.
+					 */
+					printf("%s: stopped voice not drained? (%x)\n",
+					       sc->sc_dev.dv_xname, sc->sc_bufcnt);
+					gus_falsestops++;
 
-			    sc->sc_outarg = 0;
-			    sc->sc_dmaoutintr = 0;
-			    (*pfunc)(arg);
+					sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
+					gus_start_playing(sc, sc->sc_playbuf);
+				} else if (sc->sc_bufcnt < 0) {
+					panic("%s: negative bufcnt in stopped voice",
+					      sc->sc_dev.dv_xname);
+				} else {
+					sc->sc_playbuf = -1; /* none are active */
+					gus_stops++;
+				}
+				/* fall through to callback and admit another
+				   buffer.... */
+			} else if (sc->sc_bufcnt != 0) {
+				/*
+				 * This should always be taken if the voice
+				 * is not stopped.
+				 */
+				gus_continues++;
+				if (gus_continue_playing(sc, voice)) {
+					/*
+					 * we shouldn't have continued--active
+					 * DMA is in the way in the ring, for
+					 * some as-yet undebugged reason.
+					 */
+					gus_stop_voice(sc, GUS_VOICE_LEFT, 1);
+					/* also kill right voice */
+					gus_stop_voice(sc, GUS_VOICE_RIGHT, 0);
+					sc->sc_playbuf = -1;
+					gus_stops++;
+				}
 			}
-		    }
+			/*
+			 * call the upper level to send on down another
+			 * block. We do admission rate control as follows:
+			 *
+			 * When starting up output (in the first N
+			 * blocks), call the upper layer after the DMA is
+			 * complete (see above in gus_dmaout_intr()).
+			 *
+			 * When output is already in progress and we have
+			 * no more GUS buffers to use for DMA, the DMA
+			 * output routines do not call the upper layer.
+			 * Instead, we call the DMA completion routine
+			 * here, after the voice interrupts indicating
+			 * that it's finished with a buffer.
+			 *
+			 * However, don't call anything here if the DMA
+			 * output flag is set, (which shouldn't happen)
+			 * because we'll squish somebody else's DMA if
+			 * that's the case.  When DMA is done, it will
+			 * call back if there is a spare buffer.
+			 */
+			if (sc->sc_dmaoutintr && !(sc->sc_flags & GUS_LOCKED)) {
+				if (sc->sc_dmaoutintr == stereo_dmaintr)
+					printf("gusdmaout botch?\n");
+				else {
+					/* clean out to avoid double calls */
+					void (*pfunc)(void *);
+					void *arg;
+
+					pfunc = sc->sc_dmaoutintr;
+					arg = sc->sc_outarg;
+					sc->sc_outarg = 0;
+					sc->sc_dmaoutintr = 0;
+					(*pfunc)(arg);
+				}
+			}
 		}
 
 		/*
@@ -1820,17 +1818,17 @@ gus_voice_intr(sc)
 	return 0;
 }
 
+/*
+ * Start the voices playing, with buffer BUFNO.
+ */
 STATIC void
-gus_start_playing(sc, bufno)
-	struct gus_softc *sc;
-	int bufno;
+gus_start_playing(struct gus_softc *sc, int bufno)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
-	/*
-	 * Start the voices playing, with buffer BUFNO.
-	 */
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/*
 	 * Loop or roll if we have buffers ready.
 	 */
@@ -1857,12 +1855,12 @@ gus_start_playing(sc, bufno)
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, sc->sc_voc[GUS_VOICE_LEFT].volcntl);
 
 	sc->sc_voc[GUS_VOICE_LEFT].current_addr =
-		GUS_MEM_OFFSET + sc->sc_chanblocksize * bufno;
+	    GUS_MEM_OFFSET + sc->sc_chanblocksize * bufno;
 	sc->sc_voc[GUS_VOICE_LEFT].end_addr =
-		sc->sc_voc[GUS_VOICE_LEFT].current_addr + sc->sc_chanblocksize - 1;
+	    sc->sc_voc[GUS_VOICE_LEFT].current_addr + sc->sc_chanblocksize - 1;
 	sc->sc_voc[GUS_VOICE_RIGHT].current_addr =
-		sc->sc_voc[GUS_VOICE_LEFT].current_addr + 
-		(gus_dostereo && sc->sc_channels == 2 ? GUS_LEFT_RIGHT_OFFSET : 0);
+	    sc->sc_voc[GUS_VOICE_LEFT].current_addr +
+	    (gus_dostereo && sc->sc_channels == 2 ? GUS_LEFT_RIGHT_OFFSET : 0);
 	/*
 	 * set up right channel to just loop forever, no interrupts,
 	 * starting at the buffer we just filled.  We'll feed it data
@@ -1901,26 +1899,27 @@ gus_start_playing(sc, bufno)
 }
 
 STATIC int
-gus_continue_playing(sc, voice)
-	struct gus_softc *sc;
-	int voice;
+gus_continue_playing(struct gus_softc *sc, int voice)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
 	/*
 	 * stop this voice from interrupting while we work.
 	 */
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_VOICE_CNTL);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, sc->sc_voc[voice].voccntl & ~(GUSMASK_VOICE_IRQ));
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    sc->sc_voc[voice].voccntl & ~(GUSMASK_VOICE_IRQ));
 
-	/* 
+	/*
 	 * update playbuf to point to the buffer the hardware just started
 	 * playing
 	 */
 	sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
-    
+
 	/*
 	 * account for buffer just finished
 	 */
@@ -1937,7 +1936,7 @@ gus_continue_playing(sc, voice)
 	 * buffer, [plus extra contiguous buffers (if ready)].
 	 */
 
-	/* 
+	/*
 	 * set endpoint at end of buffer we just started playing.
 	 *
 	 * The total gets -1 because end addrs are one less than you might
@@ -2000,19 +1999,18 @@ gus_continue_playing(sc, voice)
 /*
  * Send/receive data into GUS's DRAM using DMA.  Called at splgus()
  */
-
 STATIC void
-gusdmaout(sc, flags, gusaddr, buffaddr, length)
-	struct gus_softc *sc;
-	int flags, length;
-	u_long gusaddr;
-	caddr_t buffaddr;
+gusdmaout(struct gus_softc *sc, int flags,
+	  u_long gusaddr, caddr_t buffaddr, int length)
 {
-	unsigned char c = (unsigned char) flags;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	unsigned char c;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
 	DMAPRINTF(("gusdmaout flags=%x scflags=%x\n", flags, sc->sc_flags));
+	c = (unsigned char) flags;
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 
 	sc->sc_gusaddr = gusaddr;
 
@@ -2036,7 +2034,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	 * Make sure the GUS _isn't_ setup for DMA
 	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
 	/*
@@ -2045,8 +2043,8 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
- 	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buffaddr, length,
- 	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
+	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buffaddr, length,
+	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 	/*
 	 * Set up DMA address - use the upper 16 bits ONLY
@@ -2054,14 +2052,14 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_flags |= GUS_DMAOUT_ACTIVE;
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_START);
- 	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (int) (gusaddr >> 4));
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_START);
+	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (int) (gusaddr >> 4));
 
- 	/*
- 	 * Tell the GUS to start doing DMA
- 	 */
+	/*
+	 * Tell the GUS to start doing DMA
+	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, c);
 
 	/*
@@ -2076,33 +2074,32 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
  */
 
 STATIC void
-gus_start_voice(sc, voice, intrs)
-	struct gus_softc *sc;
-	int voice;
-	int intrs;
+gus_start_voice(struct gus_softc *sc, int voice, int intrs)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	u_long start;
 	u_long current;
 	u_long end;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/*
 	 * Pick all the values for the voice out of the gus_voice struct
 	 * and use those to program the voice
 	 */
 
- 	start = sc->sc_voc[voice].start_addr;
- 	current = sc->sc_voc[voice].current_addr;
- 	end = sc->sc_voc[voice].end_addr;
+	start = sc->sc_voc[voice].start_addr;
+	current = sc->sc_voc[voice].current_addr;
+	end = sc->sc_voc[voice].end_addr;
 
- 	/*
+	/*
 	 * If we're using 16 bit data, mangle the addresses a bit
 	 */
 
 	if (sc->sc_voc[voice].voccntl & GUSMASK_DATA_SIZE16) {
-	        /* -1 on start so that we get onto sample boundary--other
-		   code always sets it for 1-byte rollover protection */
+		/* -1 on start so that we get onto sample boundary--other
+		 * code always sets it for 1-byte rollover protection */
 		start = convert_to_16bit(start-1);
 		current = convert_to_16bit(current);
 		end = convert_to_16bit(end);
@@ -2140,7 +2137,7 @@ gus_start_voice(sc, voice, intrs)
 	} else
 		sc->sc_voc[voice].voccntl &= ~GUSMASK_VOICE_IRQ;
 	sc->sc_voc[voice].voccntl &= ~(GUSMASK_VOICE_STOPPED |
-		GUSMASK_STOP_VOICE);
+	    GUSMASK_STOP_VOICE);
 
 	/*
 	 * Tell the GUS about it.  Note that we're doing volume ramping here
@@ -2150,7 +2147,8 @@ gus_start_voice(sc, voice, intrs)
 	SELECT_GUS_REG(iot, ioh2, GUSREG_START_VOLUME);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0x00);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_END_VOLUME);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, sc->sc_voc[voice].current_volume >> 4);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    sc->sc_voc[voice].current_volume >> 4);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_CUR_VOLUME);
 	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, 0x00);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_VOLUME_RATE);
@@ -2171,22 +2169,20 @@ gus_start_voice(sc, voice, intrs)
 /*
  * Stop a given voice.  called at splgus()
  */
-
 STATIC void
-gus_stop_voice(sc, voice, intrs_too)
-	struct gus_softc *sc;
-	int voice;
-	int intrs_too;
+gus_stop_voice(struct gus_softc *sc, int voice, int intrs_too)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	sc->sc_voc[voice].voccntl |= GUSMASK_VOICE_STOPPED |
-		GUSMASK_STOP_VOICE;
+	    GUSMASK_STOP_VOICE;
 	if (intrs_too) {
-	  sc->sc_voc[voice].voccntl &= ~(GUSMASK_VOICE_IRQ);
-	  /* no more DMA to do */
-	  sc->sc_flags &= ~GUS_PLAYING;
+		sc->sc_voc[voice].voccntl &= ~(GUSMASK_VOICE_IRQ);
+		/* no more DMA to do */
+		sc->sc_flags &= ~GUS_PLAYING;
 	}
 	DMAPRINTF(("gusintr voice notplaying=%x\n", sc->sc_flags));
 
@@ -2216,14 +2212,14 @@ gus_stop_voice(sc, voice, intrs_too)
  * Set the volume of a given voice.  Called at splgus().
  */
 STATIC void
-gus_set_volume(sc, voice, volume)
-	struct gus_softc *sc;
-	int voice, volume;
+gus_set_volume(struct gus_softc *sc, int voice, int volume)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	unsigned int gusvol;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	gusvol = gus_log_volumes[volume < 512 ? volume : 511];
 
 	sc->sc_voc[voice].current_volume = gusvol;
@@ -2248,31 +2244,41 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+gusmax_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
+		  audio_params_t *r, stream_filter_list_t *pfil,
+		  stream_filter_list_t *rfil)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
 	int error;
 
-	error = ad1848_set_params(ac, setmode, usemode, p, r);
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
+	error = ad1848_set_params(ac, setmode, usemode, p, r, pfil, rfil);
 	if (error)
 		return error;
-	error = gus_set_params(sc, setmode, usemode, p, r);
+	/*
+	 * ad1848_set_params() sets a filter for
+	 *  SLINEAR_LE 8, SLINEAR_BE 16, ULINEAR_LE 16, ULINEAR_BE 16.
+	 * gus_set_params() sets a filter for
+	 *  ULAW, ALAW, ULINEAR_BE (16), SLINEAR_BE (16)
+	 */
+	error = gus_set_params(sc, setmode, usemode, p, r, pfil, rfil);
 	return error;
 }
 
 int
-gus_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+gus_set_params(
+	void *addr,
+	int setmode, int usemode,
+	audio_params_t *p, audio_params_t *r,
+	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct gus_softc *sc = addr;
+	audio_params_t hw;
+	struct gus_softc *sc;
 	int s;
 
+	sc = addr;
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_ALAW:
@@ -2282,7 +2288,7 @@ gus_set_params(addr, setmode, usemode, p, r)
 	case AUDIO_ENCODING_ULINEAR_BE:
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	s = splaudio();
@@ -2308,18 +2314,33 @@ gus_set_params(addr, setmode, usemode, p, r)
 	if (setmode & AUMODE_PLAY)
 		sc->sc_orate = p->sample_rate;
 
+	hw = *p;
+	/* clear req_size before setting a filter to avoid confliction
+	 * in gusmax_set_params() */
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-		p->sw_code = mulaw_to_ulinear8;
-		r->sw_code = ulinear8_to_mulaw;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		pfil->req_size = rfil->req_size = 0;
+		pfil->append(pfil, mulaw_to_linear8, &hw);
+		rfil->append(rfil, linear8_to_mulaw, &hw);
 		break;
 	case AUDIO_ENCODING_ALAW:
-		p->sw_code = alaw_to_ulinear8;
-		r->sw_code = ulinear8_to_alaw;
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		pfil->req_size = rfil->req_size = 0;
+		pfil->append(pfil, alaw_to_linear8, &hw);
+		rfil->append(rfil, linear8_to_alaw, &hw);
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
+		hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		pfil->req_size = rfil->req_size = 0;
+		pfil->append(pfil, swap_bytes, &hw);
+		rfil->append(rfil, swap_bytes, &hw);
+		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		r->sw_code = p->sw_code = swap_bytes;
+		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		pfil->req_size = rfil->req_size = 0;
+		pfil->append(pfil, swap_bytes, &hw);
+		rfil->append(rfil, swap_bytes, &hw);
 		break;
 	}
 
@@ -2332,25 +2353,26 @@ gus_set_params(addr, setmode, usemode, p, r)
  */
 
 int
-gusmax_round_blocksize(addr, blocksize)
-	void * addr;
-	int blocksize;
+gusmax_round_blocksize(void * addr, int blocksize,
+		       int mode, const audio_params_t *param)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
 
-/*	blocksize = ad1848_round_blocksize(ac, blocksize);*/
-	return gus_round_blocksize(sc, blocksize);
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
+/*	blocksize = ad1848_round_blocksize(ac, blocksize, mode, param);*/
+	return gus_round_blocksize(sc, blocksize, mode, param);
 }
 
 int
-gus_round_blocksize(addr, blocksize)
-	void * addr;
-	int blocksize;
+gus_round_blocksize(void * addr, int blocksize,
+		    int mode, const audio_params_t *param)
 {
-	struct gus_softc *sc = addr;
+	struct gus_softc *sc;
 
 	DPRINTF(("gus_round_blocksize called\n"));
+	sc = addr;
 
 	if ((sc->sc_encoding == AUDIO_ENCODING_ULAW ||
 	     sc->sc_encoding == AUDIO_ENCODING_ALAW) && blocksize > 32768)
@@ -2380,25 +2402,26 @@ gus_round_blocksize(addr, blocksize)
 }
 
 int
-gus_get_out_gain(addr)
-	caddr_t addr;
+gus_get_out_gain(caddr_t addr)
 {
-	struct gus_softc *sc = (struct gus_softc *) addr;
+	struct gus_softc *sc;
 
 	DPRINTF(("gus_get_out_gain called\n"));
+	sc = (struct gus_softc *) addr;
 	return sc->sc_ogain / 2;
 }
 
-STATIC inline void gus_set_voices(sc, voices)
-struct gus_softc *sc;
-int voices;
+STATIC inline void
+gus_set_voices(struct gus_softc *sc, int voices)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
+
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/*
 	 * Select the active number of voices
 	 */
-
 	SELECT_GUS_REG(iot, ioh2, GUSREG_ACTIVE_VOICES);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (voices-1) | 0xc0);
 
@@ -2408,15 +2431,15 @@ int voices;
 /*
  * Actually set the settings of various values on the card
  */
-
 int
-gusmax_commit_settings(addr)
-	void * addr;
+gusmax_commit_settings(void * addr)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
 	int error;
 
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
 	error = ad1848_commit_settings(ac);
 	if (error)
 		return error;
@@ -2427,12 +2450,12 @@ gusmax_commit_settings(addr)
  * Commit the settings.  Called at normal IPL.
  */
 int
-gus_commit_settings(addr)
-	void * addr;
+gus_commit_settings(void *addr)
 {
-	struct gus_softc *sc = addr;
+	struct gus_softc *sc;
 	int s;
 
+	sc = addr;
 	DPRINTF(("gus_commit_settings called (gain = %d)\n",sc->sc_ogain));
 
 
@@ -2450,9 +2473,9 @@ gus_commit_settings(addr)
 }
 
 STATIC void
-gus_set_chan_addrs(sc)
-struct gus_softc *sc;
+gus_set_chan_addrs(struct gus_softc *sc)
 {
+
 	/*
 	 * We use sc_nbufs * blocksize bytes of storage in the on-board GUS
 	 * ram. 
@@ -2486,17 +2509,17 @@ struct gus_softc *sc;
 /*
  * Set the sample rate of the given voice.  Called at splgus().
  */
-
 STATIC void
-gus_set_samprate(sc, voice, freq)
-	struct gus_softc *sc;
-	int voice, freq;
+gus_set_samprate(struct gus_softc *sc, int voice, int freq)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	unsigned int fc;
-	u_long temp, f = (u_long) freq;
+	u_long temp, f;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
+	f = (u_long) freq;
 	/*
 	 * calculate fc based on the number of active voices;
 	 * we need to use longs to preserve enough bits
@@ -2504,10 +2527,8 @@ gus_set_samprate(sc, voice, freq)
 
 	temp = (u_long) gus_max_frequency[sc->sc_voices-GUS_MIN_VOICES];
 
- 	fc = (unsigned int)(((f << 9L) + (temp >> 1L)) / temp);
-
- 	fc <<= 1;
-
+	fc = (unsigned int)(((f << 9L) + (temp >> 1L)) / temp);
+	fc <<= 1;
 
 	/*
 	 * Program the voice frequency, and set it in the voice data record
@@ -2525,16 +2546,16 @@ gus_set_samprate(sc, voice, freq)
  * Set the sample rate of the recording frequency.  Formula is from the GUS
  * SDK.  Called at splgus().
  */
-
 STATIC void
-gus_set_recrate(sc, rate)
-	struct gus_softc *sc;
-	u_long rate;
+gus_set_recrate(struct gus_softc *sc, u_long rate)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	u_char realrate;
+
 	DPRINTF(("gus_set_recrate %lu\n", rate));
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 
 #if 0
 	realrate = 9878400/(16*(rate+2)); /* formula from GUS docs */
@@ -2542,7 +2563,7 @@ gus_set_recrate(sc, rate)
 	realrate = (9878400 >> 4)/rate - 2; /* formula from code, sigh. */
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_FREQ);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, realrate);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, realrate);
 }
 
 /*
@@ -2551,23 +2572,24 @@ gus_set_recrate(sc, rate)
  */
 
 int
-gusmax_speaker_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gusmax_speaker_ctl(void *addr, int newstate)
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *sc;
+
+	sc = addr;
 	return gus_speaker_ctl(sc->sc_ad1848.parent, newstate);
 }
 
 int
-gus_speaker_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_speaker_ctl(void *addr, int newstate)
 {
-	struct gus_softc *sc = (struct gus_softc *) addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
 
+	sc = (struct gus_softc *) addr;
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
 	/* Line out bit is flipped: 0 enables, 1 disables */
 	if ((newstate == SPKR_ON) &&
 	    (sc->sc_mixcontrol & GUSMASK_LINE_OUT)) {
@@ -2584,14 +2606,15 @@ gus_speaker_ctl(addr, newstate)
 }
 
 STATIC int
-gus_linein_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_linein_ctl(void *addr, int newstate)
 {
-	struct gus_softc *sc = (struct gus_softc *) addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
 
+	sc = (struct gus_softc *) addr;
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
 	/* Line in bit is flipped: 0 enables, 1 disables */
 	if ((newstate == SPKR_ON) &&
 	    (sc->sc_mixcontrol & GUSMASK_LINE_IN)) {
@@ -2608,14 +2631,15 @@ gus_linein_ctl(addr, newstate)
 }
 
 STATIC int
-gus_mic_ctl(addr, newstate)
-	void * addr;
-	int newstate;
+gus_mic_ctl(void *addr, int newstate)
 {
-	struct gus_softc *sc = (struct gus_softc *) addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
 
+	sc = (struct gus_softc *) addr;
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
 	/* Mic bit is normal: 1 enables, 0 disables */
 	if ((newstate == SPKR_ON) &&
 	    (sc->sc_mixcontrol & GUSMASK_MIC_IN) == 0) {
@@ -2634,16 +2658,14 @@ gus_mic_ctl(addr, newstate)
 /*
  * Set the end address of a give voice.  Called at splgus()
  */
-
 STATIC void
-gus_set_endaddr(sc, voice, addr)
-	struct gus_softc *sc;
-	int voice;
-	u_long addr;
+gus_set_endaddr(struct gus_softc *sc, int voice, u_long addr)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	sc->sc_voc[voice].end_addr = addr;
 
 	if (sc->sc_voc[voice].voccntl & GUSMASK_DATA_SIZE16)
@@ -2661,14 +2683,13 @@ gus_set_endaddr(sc, voice, addr)
  * Set current address.  called at splgus()
  */
 STATIC void
-gus_set_curaddr(sc, voice, addr)
-	struct gus_softc *sc;
-	int voice;
-	u_long addr;
+gus_set_curaddr(struct gus_softc *sc, int voice, u_long addr)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	sc->sc_voc[voice].current_addr = addr;
 
 	if (sc->sc_voc[voice].voccntl & GUSMASK_DATA_SIZE16)
@@ -2687,14 +2708,14 @@ gus_set_curaddr(sc, voice, addr)
  * Get current GUS playback address.  Called at splgus().
  */
 STATIC u_long
-gus_get_curaddr(sc, voice)
-	struct gus_softc *sc;
-	int voice;
+gus_get_curaddr(struct gus_softc *sc, int voice)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	u_long addr;
 
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, (unsigned char) voice);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_CUR_ADDR_HIGH|GUSREG_READ);
 	addr = (bus_space_read_2(iot, ioh2, GUS_DATA_LOW) & 0x1fff) << 7;
@@ -2707,7 +2728,7 @@ gus_get_curaddr(sc, voice)
 		 voice, addr, sc->sc_voc[voice].end_addr));
 	/* XXX sanity check the address? */
 
-	return(addr);
+	return addr;
 }
 #endif
 
@@ -2717,8 +2738,7 @@ gus_get_curaddr(sc, voice)
  */
 
 STATIC u_long
-convert_to_16bit(address)
-	u_long address;
+convert_to_16bit(u_long address)
 {
 	u_long old_address;
 
@@ -2727,29 +2747,25 @@ convert_to_16bit(address)
 	address &= 0x0001ffffL;
 	address |= (old_address & 0x000c0000L);
 
-	return (address);
+	return address;
 }
 
 /*
  * Write a value into the GUS's DRAM
  */
-
 STATIC void
-guspoke(iot, ioh2, address, value)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh2;
-	long address;
-	unsigned char value;
+guspoke(bus_space_tag_t iot, bus_space_handle_t ioh2,
+	long address, unsigned char value)
 {
 
 	/*
 	 * Select the DRAM address
 	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
- 	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
+	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
 
 	/*
 	 * Actually write the data
@@ -2761,22 +2777,18 @@ guspoke(iot, ioh2, address, value)
 /*
  * Read a value from the GUS's DRAM
  */
-
 STATIC unsigned char
-guspeek(iot, ioh2, address)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh2;
-	u_long address;
+guspeek(bus_space_tag_t iot, bus_space_handle_t ioh2, u_long address)
 {
 
 	/*
 	 * Select the DRAM address
 	 */
 
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
- 	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
- 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
+	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
 
 	/*
 	 * Read in the data from the board
@@ -2788,18 +2800,19 @@ guspeek(iot, ioh2, address)
 /*
  * Reset the Gravis UltraSound card, completely
  */
-
 STATIC void
-gusreset(sc, voices)
-	struct gus_softc *sc;
-	int voices;
+gusreset(struct gus_softc *sc, int voices)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
-	bus_space_handle_t ioh4 = sc->sc_ioh4;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
+	bus_space_handle_t ioh2;
+	bus_space_handle_t ioh4;
 	int i,s;
 
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
+	ioh2 = sc->sc_ioh2;
+	ioh4 = sc->sc_ioh4;
 	s = splgus();
 
 	/*
@@ -2920,14 +2933,16 @@ gusreset(sc, voices)
 
 
 STATIC int
-gus_init_cs4231(sc)
-	struct gus_softc *sc;
+gus_init_cs4231(struct gus_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh1 = sc->sc_ioh1;
-	int port = sc->sc_iobase;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh1;
+	int port;
 	u_char ctrl;
 
+	iot = sc->sc_iot;
+	ioh1 = sc->sc_ioh1;
+	port = sc->sc_iobase;
 	ctrl = (port & 0xf0) >> 4;	/* set port address middle nibble */
 	/*
 	 * The codec is a bit weird--swapped DMA channels.
@@ -2945,7 +2960,7 @@ gus_init_cs4231(sc)
 
 	if (ad1848_isa_mapprobe(&sc->sc_codec, sc->sc_codec.sc_iobase) == 0) {
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
-		return (0);
+		return 0;
 	} else {
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
@@ -2959,12 +2974,12 @@ gus_init_cs4231(sc)
 		sc->sc_mixcontrol &= ~GUSMASK_LINE_IN; /* 0 enables. */
 		sc->sc_mixcontrol |= GUSMASK_MIC_IN; /* 1 enables. */
 		bus_space_write_1(iot, ioh1, GUS_MIX_CONTROL, sc->sc_mixcontrol);
-		
+
 		ad1848_isa_attach(&sc->sc_codec);
 		/* turn on pre-MUX microphone gain. */
 		ad1848_set_mic_gain(&sc->sc_codec.sc_ad1848, &vol);
 
-		return (1);
+		return 1;
 	}
 }
 
@@ -2972,12 +2987,10 @@ gus_init_cs4231(sc)
 /*
  * Return info about the audio device, for the AUDIO_GETINFO ioctl
  */
-
 int
-gus_getdev(addr, dev)
-	void * addr;
-	struct audio_device *dev;
+gus_getdev(void * addr, struct audio_device *dev)
 {
+
 	*dev = gus_device;
 	return 0;
 }
@@ -2987,32 +3000,28 @@ gus_getdev(addr, dev)
  */
 
 int
-gus_set_in_gain(addr, gain, balance)
-	caddr_t addr;
-	u_int gain;
-	u_char balance;
+gus_set_in_gain(caddr_t addr, u_int gain, u_char balance)
 {
+
 	DPRINTF(("gus_set_in_gain called\n"));
 	return 0;
 }
 
 int
-gus_get_in_gain(addr)
-	caddr_t addr;
+gus_get_in_gain(caddr_t addr)
 {
+
 	DPRINTF(("gus_get_in_gain called\n"));
 	return 0;
 }
 
 int
-gusmax_dma_input(addr, buf, size, callback, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*callback) __P((void *));
-	void *arg;
+gusmax_dma_input(void *addr, void *buf, int size,
+		 void (*callback)(void *), void *arg)
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *sc;
+
+	sc = addr;
 	return gus_dma_input(sc->sc_ad1848.parent, buf, size, callback, arg);
 }
 
@@ -3021,39 +3030,39 @@ gusmax_dma_input(addr, buf, size, callback, arg)
  * Called at splgus(), either from top-half or from interrupt handler.
  */
 int
-gus_dma_input(addr, buf, size, callback, arg)
-	void * addr;
-	void *buf;
-	int size;
-	void (*callback) __P((void *));
-	void *arg;
+gus_dma_input(void *addr, void *buf, int size,
+	      void (*callback)(void *), void *arg)
 {
-	struct gus_softc *sc = addr;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 	u_char dmac;
+
 	DMAPRINTF(("gus_dma_input called\n"));
-    
+	sc = addr;
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
+
 	/*
 	 * Sample SIZE bytes of data from the card, into buffer at BUF.
 	 */
 
 	if (sc->sc_precision == 16)
-	    return EINVAL;		/* XXX */
+		return EINVAL;		/* XXX */
 
 	/* set DMA modes */
 	dmac = GUSMASK_SAMPLE_IRQ|GUSMASK_SAMPLE_START;
 	if (sc->sc_recdrq >= 4)
 		dmac |= GUSMASK_SAMPLE_DATA16;
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
- 	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
- 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE ||
- 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE)
-	    dmac |= GUSMASK_SAMPLE_INVBIT;
+	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
+	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE ||
+	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE)
+		dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
-	    dmac |= GUSMASK_SAMPLE_STEREO;
- 	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf, size,
- 	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
+		dmac |= GUSMASK_SAMPLE_STEREO;
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf, size,
+	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
 	sc->sc_flags |= GUS_DMAIN_ACTIVE;
@@ -3072,47 +3081,48 @@ gus_dma_input(addr, buf, size, callback, arg)
 }
 
 STATIC int
-gus_dmain_intr(sc)
-	struct gus_softc *sc;
+gus_dmain_intr(struct gus_softc *sc)
 {
-        void (*callback) __P((void *));
+	void (*callback)(void *);
 	void *arg;
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
- 	    isa_dmadone(sc->sc_ic, sc->sc_recdrq);
-	    callback = sc->sc_dmainintr;
-	    arg = sc->sc_inarg;
+		isa_dmadone(sc->sc_ic, sc->sc_recdrq);
+		callback = sc->sc_dmainintr;
+		arg = sc->sc_inarg;
 
-	    sc->sc_dmainaddr = 0;
-	    sc->sc_dmaincnt = 0;
-	    sc->sc_dmainintr = 0;
-	    sc->sc_inarg = 0;
+		sc->sc_dmainaddr = 0;
+		sc->sc_dmaincnt = 0;
+		sc->sc_dmainintr = 0;
+		sc->sc_inarg = 0;
 
-	    sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
-	    DMAPRINTF(("calling dmain_intr callback %p(%p)\n", callback, arg));
-	    (*callback)(arg);
-	    return 1;
+		sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
+		DMAPRINTF(("calling dmain_intr callback %p(%p)\n", callback, arg));
+		(*callback)(arg);
+		return 1;
 	} else {
-	    DMAPRINTF(("gus_dmain_intr false?\n"));
-	    return 0;			/* XXX ??? */
+		DMAPRINTF(("gus_dmain_intr false?\n"));
+		return 0;			/* XXX ??? */
 	}
 }
 
 int
-gusmax_halt_out_dma(addr)
-	void * addr;
+gusmax_halt_out_dma(void *addr)
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *sc;
+
+	sc = addr;
 	return gus_halt_out_dma(sc->sc_ad1848.parent);
 }
 
 
 int
-gusmax_halt_in_dma(addr)
-	void * addr;
+gusmax_halt_in_dma(void *addr)
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *sc;
+
+	sc = addr;
 	return gus_halt_in_dma(sc->sc_ad1848.parent);
 }
 
@@ -3120,23 +3130,25 @@ gusmax_halt_in_dma(addr)
  * Stop any DMA output.  Called at splgus().
  */
 int
-gus_halt_out_dma(addr)
-	void * addr;
+gus_halt_out_dma(void *addr)
 {
- 	struct gus_softc *sc = addr;
- 	bus_space_tag_t iot = sc->sc_iot;
- 	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
 
 	DMAPRINTF(("gus_halt_out_dma called\n"));
+	sc = addr;
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 	/*
 	 * Make sure the GUS _isn't_ setup for DMA
 	 */
 
-  	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
 	callout_stop(&sc->sc_dmaout_ch);
- 	isa_dmaabort(sc->sc_ic, sc->sc_playdrq);
+	isa_dmaabort(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3156,23 +3168,27 @@ gus_halt_out_dma(addr)
  * Stop any DMA output.  Called at splgus().
  */
 int
-gus_halt_in_dma(addr)
-	void * addr;
+gus_halt_in_dma(void *addr)
 {
- 	struct gus_softc *sc = addr;
- 	bus_space_tag_t iot = sc->sc_iot;
- 	bus_space_handle_t ioh2 = sc->sc_ioh2;
+	struct gus_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh2;
+
 	DMAPRINTF(("gus_halt_in_dma called\n"));
+	sc = addr;
+	iot = sc->sc_iot;
+	ioh2 = sc->sc_ioh2;
 
 	/*
 	 * Make sure the GUS _isn't_ setup for DMA
 	 */
 
-  	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
- 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
- 	     bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
-  
- 	isa_dmaabort(sc->sc_ic, sc->sc_recdrq);
+	SELECT_GUS_REG(iot, ioh2, GUSREG_SAMPLE_CONTROL);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    bus_space_read_1(iot, ioh2, GUS_DATA_HIGH)
+	    & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
+
+	isa_dmaabort(sc->sc_ic, sc->sc_recdrq);
 	sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = 0;
 	sc->sc_inarg = 0;
@@ -3202,18 +3218,18 @@ static ad1848_devmap_t gusmapping[] = {
 static int nummap = sizeof(gusmapping) / sizeof(gusmapping[0]);
 
 STATIC int
-gusmax_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gusmax_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
 	struct ad1848_volume vol;
-	int error = ad1848_mixer_get_port(&ac->sc_ad1848, gusmapping,
-					  nummap, cp);
-    
+	int error;
+
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
+	error = ad1848_mixer_get_port(&ac->sc_ad1848, gusmapping, nummap, cp);
 	if (error != ENXIO)
-	  return (error);
+		return error;
 
 	error = EINVAL;
 
@@ -3240,24 +3256,25 @@ gusmax_mixer_get_port(addr, cp)
 		break;
 	}
 
-	return(error);
+	return error;
 }
 
 STATIC int
-gus_mixer_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gus_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct gus_softc *sc = addr;
-	struct ics2101_softc *ic = &sc->sc_mixer;
+	struct gus_softc *sc;
+	struct ics2101_softc *ic;
 	struct ad1848_volume vol;
-	int error = EINVAL;
+	int error;
 
 	DPRINTF(("gus_mixer_get_port: dev=%d type=%d\n", cp->dev, cp->type));
+	sc = addr;
+	ic = &sc->sc_mixer;
+	error = EINVAL;
 
 	if (!HAS_MIXER(sc) && cp->dev > GUSICS_MASTER_MUTE)
 		return ENXIO;
-    
+
 	switch (cp->dev) {
 
 	case GUSICS_MIC_IN_MUTE:	/* Microphone */
@@ -3324,7 +3341,7 @@ gus_mixer_get_port(addr, cp)
 				error = 0;
 		}
 		break;
-	
+
 	case GUSICS_LINE_IN_LVL:	/* line in */
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			vol.left = ic->sc_setting[GUSMIX_CHAN_LINE][ICSMIX_LEFT];
@@ -3363,69 +3380,64 @@ gus_mixer_get_port(addr, cp)
 
 	default:
 		return ENXIO;
-	    /*NOTREACHED*/
+		/*NOTREACHED*/
 	}
 	return error;
 }
 
 STATIC void
-gusics_master_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_master_mute(struct ics2101_softc *ic, int mute)
 {
+
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MASTER, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MASTER, ICSMIX_RIGHT, mute);
 }
 
 STATIC void
-gusics_mic_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_mic_mute(struct ics2101_softc *ic, int mute)
 {
+
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MIC, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_MIC, ICSMIX_RIGHT, mute);
 }
 
 STATIC void
-gusics_linein_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_linein_mute(struct ics2101_softc *ic, int mute)
 {
+
 	ics2101_mix_mute(ic, GUSMIX_CHAN_LINE, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_LINE, ICSMIX_RIGHT, mute);
 }
 
 STATIC void
-gusics_cd_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_cd_mute(struct ics2101_softc *ic, int mute)
 {
+
 	ics2101_mix_mute(ic, GUSMIX_CHAN_CD, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_CD, ICSMIX_RIGHT, mute);
 }
 
 STATIC void
-gusics_dac_mute(ic, mute)
-	struct ics2101_softc *ic;
-	int mute;
+gusics_dac_mute(struct ics2101_softc *ic, int mute)
 {
+
 	ics2101_mix_mute(ic, GUSMIX_CHAN_DAC, ICSMIX_LEFT, mute);
 	ics2101_mix_mute(ic, GUSMIX_CHAN_DAC, ICSMIX_RIGHT, mute);
 }
 
 STATIC int
-gusmax_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gusmax_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct ad1848_isa_softc *ac = addr;
-	struct gus_softc *sc = ac->sc_ad1848.parent;
+	struct ad1848_isa_softc *ac;
+	struct gus_softc *sc;
 	struct ad1848_volume vol;
-	int error = ad1848_mixer_set_port(&ac->sc_ad1848, gusmapping,
-					  nummap, cp);
-    
+	int error;
+
+	ac = addr;
+	sc = ac->sc_ad1848.parent;
+	error = ad1848_mixer_set_port(&ac->sc_ad1848, gusmapping, nummap, cp);
 	if (error != ENXIO)
-	  return (error);
+		return error;
 
 	DPRINTF(("gusmax_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
 
@@ -3450,26 +3462,27 @@ gusmax_mixer_set_port(addr, cp)
 
 	default:
 		return ENXIO;
-	    /*NOTREACHED*/
-    }
-    return error;
+		/*NOTREACHED*/
+	}
+	return error;
 }
 
 STATIC int
-gus_mixer_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+gus_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct gus_softc *sc = addr;
-	struct ics2101_softc *ic = &sc->sc_mixer;
+	struct gus_softc *sc;
+	struct ics2101_softc *ic;
 	struct ad1848_volume vol;
-	int error = EINVAL;
+	int error;
 
 	DPRINTF(("gus_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
+	sc = addr;
+	ic = &sc->sc_mixer;
+	error = EINVAL;
 
 	if (!HAS_MIXER(sc) && cp->dev > GUSICS_MASTER_MUTE)
 		return ENXIO;
-    
+
 	switch (cp->dev) {
 
 	case GUSICS_MIC_IN_MUTE:	/* Microphone */
@@ -3550,7 +3563,7 @@ gus_mixer_set_port(addr, cp)
 			}
 		}
 		break;
-	
+
 	case GUSICS_LINE_IN_LVL:	/* line in */
 		if (cp->type == AUDIO_MIXER_VALUE) {
 			if (ad1848_to_vol(cp, &vol)) {
@@ -3610,239 +3623,238 @@ gus_mixer_set_port(addr, cp)
 
 	default:
 		return ENXIO;
-	    /*NOTREACHED*/
+		/*NOTREACHED*/
 	}
 	return error;
 }
 
 STATIC int
-gus_get_props(addr)
-	void *addr;
+gus_get_props(void *addr)
 {
-	struct gus_softc *sc = addr;
-	return (AUDIO_PROP_MMAP |
-	    (sc->sc_recdrq == sc->sc_playdrq ? 0 : AUDIO_PROP_FULLDUPLEX));
+	struct gus_softc *sc;
+
+	sc = addr;
+	return AUDIO_PROP_MMAP |
+	    (sc->sc_recdrq == sc->sc_playdrq ? 0 : AUDIO_PROP_FULLDUPLEX);
 }
 
 STATIC int
-gusmax_get_props(addr)
-	void *addr;
+gusmax_get_props(void *addr)
 {
-	struct ad1848_isa_softc *ac = addr;
+	struct ad1848_isa_softc *ac;
+
+	ac = addr;
 	return gus_get_props(ac->sc_ad1848.parent);
 }
 
 STATIC int
-gusmax_mixer_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+gusmax_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
+
 	DPRINTF(("gusmax_query_devinfo: index=%d\n", dip->index));
 
 	switch(dip->index) {
 #if 0
-    case GUSMAX_MIC_IN_LVL:	/* Microphone */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_MIC_IN_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_MIC_IN_LVL:	/* Microphone */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_MIC_IN_MUTE;
+		strcpy(dip->label.name, AudioNmicrophone);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 #endif
 
-    case GUSMAX_MONO_LVL:	/* mono/microphone mixer */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_MONO_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
-	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_MONO_LVL:	/* mono/microphone mixer */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_MONO_MUTE;
+		strcpy(dip->label.name, AudioNmicrophone);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_DAC_LVL:		/*  dacout */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_DAC_MUTE;
-	strcpy(dip->label.name, AudioNdac);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_DAC_LVL:		/*  dacout */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_DAC_MUTE;
+		strcpy(dip->label.name, AudioNdac);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_LINE_IN_LVL:	/* line */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_LINE_IN_MUTE;
-	strcpy(dip->label.name, AudioNline);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_LINE_IN_LVL:	/* line */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_LINE_IN_MUTE;
+		strcpy(dip->label.name, AudioNline);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_CD_LVL:		/* cd */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_CD_MUTE;
-	strcpy(dip->label.name, AudioNcd);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_CD_LVL:		/* cd */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_CD_MUTE;
+		strcpy(dip->label.name, AudioNcd);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
 
-    case GUSMAX_MONITOR_LVL:	/* monitor level */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_MONITOR_CLASS;
-	dip->next = GUSMAX_MONITOR_MUTE;
-	dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmonitor);
-	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_MONITOR_LVL:	/* monitor level */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_MONITOR_CLASS;
+		dip->next = GUSMAX_MONITOR_MUTE;
+		dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNmonitor);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_OUT_LVL:		/* cs4231 output volume: not useful? */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_MONITOR_CLASS;
-	dip->prev = dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNoutput);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_OUT_LVL:		/* cs4231 output volume: not useful? */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_MONITOR_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNoutput);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_SPEAKER_LVL:		/* fake speaker volume */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_MONITOR_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_SPEAKER_MUTE;
-	strcpy(dip->label.name, AudioNmaster);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_SPEAKER_LVL:		/* fake speaker volume */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_MONITOR_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_SPEAKER_MUTE;
+		strcpy(dip->label.name, AudioNmaster);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_LINE_IN_MUTE:
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_LINE_IN_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	goto mute;
-	
-    case GUSMAX_DAC_MUTE:
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_DAC_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	goto mute;
+	case GUSMAX_LINE_IN_MUTE:
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_LINE_IN_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
 
-    case GUSMAX_CD_MUTE:
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_CD_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	goto mute;
-	
-    case GUSMAX_MONO_MUTE:
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_MONO_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	goto mute;
+	case GUSMAX_DAC_MUTE:
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_DAC_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
 
-    case GUSMAX_MONITOR_MUTE:
-	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_MONITOR_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	goto mute;
+	case GUSMAX_CD_MUTE:
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_CD_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
 
-    case GUSMAX_SPEAKER_MUTE:
-	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_SPEAKER_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-    mute:
-	strcpy(dip->label.name, AudioNmute);
-	dip->un.e.num_mem = 2;
-	strcpy(dip->un.e.member[0].label.name, AudioNoff);
-	dip->un.e.member[0].ord = 0;
-	strcpy(dip->un.e.member[1].label.name, AudioNon);
-	dip->un.e.member[1].ord = 1;
-	break;
-	
-    case GUSMAX_REC_LVL:	/* record level */
-	dip->type = AUDIO_MIXER_VALUE;
-	dip->mixer_class = GUSMAX_RECORD_CLASS;
-	dip->prev = AUDIO_MIXER_LAST;
-	dip->next = GUSMAX_RECORD_SOURCE;
-	strcpy(dip->label.name, AudioNrecord);
-	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
-	break;
+	case GUSMAX_MONO_MUTE:
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_MONO_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
 
-    case GUSMAX_RECORD_SOURCE:
-	dip->mixer_class = GUSMAX_RECORD_CLASS;
-	dip->type = AUDIO_MIXER_ENUM;
-	dip->prev = GUSMAX_REC_LVL;
-	dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNsource);
-	dip->un.e.num_mem = 4;
-	strcpy(dip->un.e.member[0].label.name, AudioNoutput);
-	dip->un.e.member[0].ord = DAC_IN_PORT;
-	strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
-	dip->un.e.member[1].ord = MIC_IN_PORT;
-	strcpy(dip->un.e.member[2].label.name, AudioNdac);
-	dip->un.e.member[2].ord = AUX1_IN_PORT;
-	strcpy(dip->un.e.member[3].label.name, AudioNline);
-	dip->un.e.member[3].ord = LINE_IN_PORT;
-	break;
+	case GUSMAX_MONITOR_MUTE:
+		dip->mixer_class = GUSMAX_OUTPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_MONITOR_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		goto mute;
 
-    case GUSMAX_INPUT_CLASS:			/* input class descriptor */
-	dip->type = AUDIO_MIXER_CLASS;
-	dip->mixer_class = GUSMAX_INPUT_CLASS;
-	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCinputs);
-	break;
+	case GUSMAX_SPEAKER_MUTE:
+		dip->mixer_class = GUSMAX_OUTPUT_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_SPEAKER_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+	mute:
+		strcpy(dip->label.name, AudioNmute);
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
+		break;
 
-    case GUSMAX_OUTPUT_CLASS:			/* output class descriptor */
-	dip->type = AUDIO_MIXER_CLASS;
-	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
-	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCoutputs);
-	break;
+	case GUSMAX_REC_LVL:	/* record level */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = GUSMAX_RECORD_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = GUSMAX_RECORD_SOURCE;
+		strcpy(dip->label.name, AudioNrecord);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
 
-    case GUSMAX_MONITOR_CLASS:			/* monitor class descriptor */
-	dip->type = AUDIO_MIXER_CLASS;
-	dip->mixer_class = GUSMAX_MONITOR_CLASS;
-	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCmonitor);
-	break;
-	    
-    case GUSMAX_RECORD_CLASS:			/* record source class */
-	dip->type = AUDIO_MIXER_CLASS;
-	dip->mixer_class = GUSMAX_RECORD_CLASS;
-	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCrecord);
-	break;
+	case GUSMAX_RECORD_SOURCE:
+		dip->mixer_class = GUSMAX_RECORD_CLASS;
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->prev = GUSMAX_REC_LVL;
+		dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNsource);
+		dip->un.e.num_mem = 4;
+		strcpy(dip->un.e.member[0].label.name, AudioNoutput);
+		dip->un.e.member[0].ord = DAC_IN_PORT;
+		strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
+		dip->un.e.member[1].ord = MIC_IN_PORT;
+		strcpy(dip->un.e.member[2].label.name, AudioNdac);
+		dip->un.e.member[2].ord = AUX1_IN_PORT;
+		strcpy(dip->un.e.member[3].label.name, AudioNline);
+		dip->un.e.member[3].ord = LINE_IN_PORT;
+		break;
 
-    default:
-	return ENXIO;
-	/*NOTREACHED*/
-    }
-    DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
+	case GUSMAX_INPUT_CLASS:		/* input class descriptor */
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = GUSMAX_INPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCinputs);
+		break;
+
+	case GUSMAX_OUTPUT_CLASS:		/* output class descriptor */
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = GUSMAX_OUTPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCoutputs);
+		break;
+
+	case GUSMAX_MONITOR_CLASS:		/* monitor class descriptor */
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = GUSMAX_MONITOR_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCmonitor);
+		break;
+
+	case GUSMAX_RECORD_CLASS:		/* record source class */
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = GUSMAX_RECORD_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCrecord);
+		break;
+
+	default:
+		return ENXIO;
+		/*NOTREACHED*/
+	}
+	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
 	return 0;
 }
 
 STATIC int
-gus_mixer_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+gus_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
-	struct gus_softc *sc = addr;
+	struct gus_softc *sc;
 
 	DPRINTF(("gusmax_query_devinfo: index=%d\n", dip->index));
-
+	sc = addr;
 	if (!HAS_MIXER(sc) && dip->index > GUSICS_MASTER_MUTE)
 		return ENXIO;
 
@@ -3905,7 +3917,7 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->prev = GUSICS_LINE_IN_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-	
+
 	case GUSICS_DAC_MUTE:
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -3919,7 +3931,7 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->prev = GUSICS_CD_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 		goto mute;
-	
+
 	case GUSICS_MIC_IN_MUTE:
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -3940,7 +3952,7 @@ mute:
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
 		dip->un.e.member[1].ord = 1;
 		break;
-	
+
 	case GUSICS_RECORD_SOURCE:
 		dip->mixer_class = GUSICS_RECORD_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
@@ -3974,17 +3986,16 @@ mute:
 
 	default:
 		return ENXIO;
-	/*NOTREACHED*/
+		/*NOTREACHED*/
 	}
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
 	return 0;
 }
 
 STATIC int
-gus_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+gus_query_encoding(void *addr, struct audio_encoding *fp)
 {
+
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEmulaw);
@@ -4036,22 +4047,22 @@ gus_query_encoding(addr, fp)
 		break;
 
 	default:
-		return(EINVAL);
+		return EINVAL;
 		/*NOTREACHED*/
 	}
-	return (0);
+	return 0;
 }
 
 /*
  * Setup the ICS mixer in "transparent" mode: reset everything to a sensible
  * level.  Levels as suggested by GUS SDK code.
  */
-
 STATIC void
-gus_init_ics2101(sc)
-	struct gus_softc *sc;
+gus_init_ics2101(struct gus_softc *sc)
 {
-	struct ics2101_softc *ic = &sc->sc_mixer;
+	struct ics2101_softc *ic;
+
+	ic = &sc->sc_mixer;
 	sc->sc_mixer.sc_iot = sc->sc_iot;
 	sc->sc_mixer.sc_selio = GUS_MIXER_SELECT;
 	sc->sc_mixer.sc_selio_ioh = sc->sc_ioh3;

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.12.2.6 2004/11/14 08:15:45 skrll Exp $	*/
+/*	$NetBSD: viaide.c,v 1.12.2.7 2005/01/17 19:31:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -91,6 +91,16 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  "NVIDIA nForce2 IDE Controller",
 	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133,
+	  0,
+	  "NVIDIA nForce2 Ultra 400 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
+	  0,
+	  "NVIDIA nForce2 Ultra 400 Serial ATA Controller",
+	  via_sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_ATA133,
 	  0,
@@ -291,6 +301,7 @@ unknown:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			break;
 		case PCI_PRODUCT_NVIDIA_NFORCE2_ATA133:
+		case PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_ATA133:
 		case PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.6.6.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.6.6.4 2005/01/17 19:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
 #define  E1371_SRC_RBUSY	0x00800000
 #define  E1371_SRC_DISABLE	0x00400000
 #define  E1371_SRC_DISP1	0x00200000
-#define  E1371_SRC_DISP2        0x00100000
+#define  E1371_SRC_DISP2	0x00100000
 #define  E1371_SRC_DISREC       0x00080000
 #define  E1371_SRC_DATAMASK	0x0000ffff
 #define  E1371_SRC_ADDR(a)	((a)<<25)
@@ -250,7 +250,7 @@
 #define AK_CS			0x17
 #define AK_ADSEL		0x18
 #define AK_MGAIN		0x19
-#define AK_NPORTS               0x20
+#define AK_NPORTS		0x20
 
 /* Not sensical for AC97? */
 #define VOL_TO_ATT5(v) (0x1f - ((v) >> 3))
@@ -262,15 +262,15 @@
 /* Futzable parms */
 #define EAP_MASTER_VOL		0
 #define EAP_VOICE_VOL		1
-#define EAP_FM_VOL		2 
+#define EAP_FM_VOL		2
 #define EAP_VIDEO_VOL		2	/* ES1371 */
 #define EAP_CD_VOL		3
 #define EAP_LINE_VOL		4
 #define EAP_AUX_VOL		5
 #define EAP_MIC_VOL		6
-#define	EAP_RECORD_SOURCE 	7
+#define	EAP_RECORD_SOURCE	7
 #define EAP_OUTPUT_SELECT	8
-#define	EAP_MIC_PREAMP		9  
+#define	EAP_MIC_PREAMP		9
 #define EAP_OUTPUT_CLASS	10
 #define EAP_RECORD_CLASS	11
 #define EAP_INPUT_CLASS		12

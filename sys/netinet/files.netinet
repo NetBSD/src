@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.1.8.3 2004/09/21 13:37:10 skrll Exp $
+#	$NetBSD: files.netinet,v 1.1.8.4 2005/01/17 19:32:54 skrll Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -27,7 +27,7 @@ file	netinet/ip_mroute.c	inet & mrouting
 file	netinet/ip_output.c	inet
 file	netinet/raw_ip.c	inet
 
-file	netinet/tcp_debug.c	inet | inet6
+file	netinet/tcp_debug.c	(inet | inet6) & tcp_debug
 file	netinet/tcp_input.c	inet | inet6
 file	netinet/tcp_output.c	inet | inet6
 file	netinet/tcp_subr.c	inet | inet6

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $ */
+/* $NetBSD: lapic.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -485,7 +485,9 @@ int
 x86_ipi(vec,target,dl)
 	int vec,target,dl;
 {
-	int result;
+	int result, s;
+
+	s = splclock();
 
 	i82489_icr_wait();
 
@@ -498,6 +500,8 @@ x86_ipi(vec,target,dl)
 	i82489_icr_wait();
 
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
+
+	splx(s);
 
 	return result;
 }

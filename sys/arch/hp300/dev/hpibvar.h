@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.13.50.4 2004/09/21 13:15:14 skrll Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.13.50.5 2005/01/17 19:29:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ struct hpibdev_attach_args {
  * Attach an HP-IB device to an HP-IB bus.
  */
 struct hpibbus_attach_args {
-	u_int16_t ha_id;		/* device id */
+	uint16_t ha_id;			/* device id */
 	int	ha_slave;		/* HP-IB bus slave */
 	int	ha_punit;		/* physical unit on slave */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.19.6.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.19.6.4 2005/01/17 19:29:57 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -31,8 +31,14 @@
  */
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
+/*
+ * TODO : Check bounds on PMData in pmgrop
+ *		callers should specify how much room for data is in the buffer
+ *		and that should be respected by the pmgrop
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.19.6.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.19.6.4 2005/01/17 19:29:57 skrll Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -844,10 +850,11 @@ pm_intr_pm2()
 			printf("pm: PM is not ready. error code: %08x\n", rval);
 #endif
 		splx(s);
+		return;
 	}
 
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
-	case 0x00:		/* 1 sec interrupt? */
+	case 0x00:		/* no event pending? */
 		break;
 	case 0x80:		/* 1 sec interrupt? */
 		pm_counter++;

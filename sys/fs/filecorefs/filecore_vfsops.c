@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5.2.8 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5.2.9 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.8 2004/09/21 13:34:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.9 2005/01/17 19:32:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,6 +121,7 @@ struct vfsops filecore_vfsops = {
 	NULL,				/* filecore_mountroot */
 	filecore_checkexp,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	vfs_stdextattrctl,
 	filecore_vnodeopv_descs,
 };
 

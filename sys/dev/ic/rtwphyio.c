@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.1.2.3 2004/12/18 09:31:57 skrll Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.1.2.3 2004/12/18 09:31:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.1.2.3 2004/12/18 09:31:57 skrll Exp $
 
 static int rtw_macbangbits_timeout = 100;
 
-u_int8_t
+uint8_t
 rtw_bbp_read(struct rtw_regs *regs, u_int addr)
 {
 	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
@@ -80,7 +80,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	int i;
 	uint32_t wrbbp, rdbbp;
 
-	RTW_DPRINTF(("%s: bbp[%u] <- %u\n", __func__, addr, val));
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: bbp[%u] <- %u\n", __func__, addr, val));
 
 	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
 	KASSERT((val & ~PRESHIFT(RTW_BB_WR_MASK)) == 0);
@@ -91,8 +92,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	rdbbp = LSHIFT(addr, RTW_BB_ADDR_MASK) |
 	    RTW_BB_WR_MASK | RTW_BB_RD_MASK;
 
-	RTW_DPRINTF2(("%s: rdbbp = %#08x, wrbbp = %#08x\n", __func__,
-	    rdbbp, wrbbp));
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: rdbbp = %#08x, wrbbp = %#08x\n", __func__, rdbbp, wrbbp));
 
 	for (i = BBP_WRITE_ITERS; --i >= 0; ) {
 		RTW_RBW(regs, RTW_BB, RTW_BB);
@@ -103,7 +104,8 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 		delay(BBP_WRITE_DELAY);	/* 1 microsecond */
 		if (MASK_AND_RSHIFT(RTW_READ(regs, RTW_BB),
 		                    RTW_BB_RD_MASK) == val) {
-			RTW_DPRINTF2(("%s: finished in %dus\n", __func__,
+			RTW_DPRINTF(RTW_DEBUG_PHYIO,
+			    ("%s: finished in %dus\n", __func__,
 			    BBP_WRITE_DELAY * (BBP_WRITE_ITERS - i)));
 			return 0;
 		}
@@ -115,15 +117,16 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 
 /* Help rtw_rf_hostwrite bang bits to RF over 3-wire interface. */
 static __inline void
-rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
+rtw_rf_hostbangbits(struct rtw_regs *regs, uint32_t bits, int lo_to_hi,
     u_int nbits)
 {
 	int i;
-	u_int32_t mask, reg;
+	uint32_t mask, reg;
 
 	KASSERT(nbits <= 32);
 
-	RTW_DPRINTF(("%s: %u bits, %#08x, %s\n", __func__, nbits, bits,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO,
+	    ("%s: %u bits, %#08x, %s\n", __func__, nbits, bits,
 	    (lo_to_hi) ? "lo to hi" : "hi to lo"));
 
 	reg = RTW_PHYCFG_HST;
@@ -136,7 +139,8 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 		mask = 1 << (nbits - 1);
 
 	for (i = 0; i < nbits; i++) {
-		RTW_DPRINTF2(("%s: bits %#08x mask %#08x -> bit %#08x\n",
+		RTW_DPRINTF(RTW_DEBUG_PHYBITIO,
+		    ("%s: bits %#08x mask %#08x -> bit %#08x\n",
 		    __func__, bits, mask, bits & mask));
 
 		if ((bits & mask) != 0)
@@ -170,25 +174,20 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
  * interface.
  */
 static __inline int
-rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
+rtw_rf_macbangbits(struct rtw_regs *regs, uint32_t reg)
 {
 	int i;
 
-	RTW_DPRINTF(("%s: %#08x\n", __func__, reg));
+	RTW_DPRINTF(RTW_DEBUG_PHY, ("%s: %#08x\n", __func__, reg));
 
 	RTW_WRITE(regs, RTW_PHYCFG, RTW_PHYCFG_MAC_POLL | reg);
 
 	RTW_WBR(regs, RTW_PHYCFG, RTW_PHYCFG);
 
-	if (rtw_flush_rfio)
-		RTW_READ(regs, RTW_PHYADDR);
-
-	if (rtw_rfio_delay > 0)
-		DELAY(rtw_rfio_delay);
-
 	for (i = rtw_macbangbits_timeout; --i >= 0; delay(1)) {
 		if ((RTW_READ(regs, RTW_PHYCFG) & RTW_PHYCFG_MAC_POLL) == 0) {
-			RTW_DPRINTF2(("%s: finished in %dus\n", __func__,
+			RTW_DPRINTF(RTW_DEBUG_PHY,
+			    ("%s: finished in %dus\n", __func__,
 			    rtw_macbangbits_timeout - i));
 			return 0;
 		}
@@ -199,19 +198,19 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 	return -1;
 }
 
-static u_int32_t
-rtw_grf5101_host_crypt(u_int addr, u_int32_t val)
+static uint32_t
+rtw_grf5101_host_crypt(u_int addr, uint32_t val)
 {
 	/* TBD */
 	return 0;
 }
 
-static u_int32_t
-rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
+static uint32_t
+rtw_grf5101_mac_crypt(u_int addr, uint32_t val)
 {
-	u_int32_t data_and_addr;
+	uint32_t data_and_addr;
 #define EXTRACT_NIBBLE(d, which) (((d) >> (4 * (which))) & 0xf)
-	static u_int8_t caesar[16] = {0x0, 0x8, 0x4, 0xc,
+	static uint8_t caesar[16] = {0x0, 0x8, 0x4, 0xc,
 	                              0x2, 0xa, 0x6, 0xe,
 				      0x1, 0x9, 0x5, 0xd,
 				      0x3, 0xb, 0x7, 0xf};
@@ -249,13 +248,13 @@ rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 /* Bang bits over the 3-wire interface. */
 int
 rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+    u_int addr, uint32_t val)
 {
 	u_int nbits;
 	int lo_to_hi;
-	u_int32_t bits;
+	uint32_t bits;
 
-	RTW_DPRINTF(("%s: %s[%u] <- %#08x\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
 
 	switch (rfchipid) {
@@ -313,11 +312,11 @@ rtw_maxim_swizzle(u_int addr, uint32_t val)
 /* Tell the MAC what to bang over the 3-wire interface. */
 int
 rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    u_int addr, u_int32_t val)
+    u_int addr, uint32_t val)
 {
 	uint32_t reg;
 
-	RTW_DPRINTF(("%s: %s[%u] <- %#08x\n", __func__,
+	RTW_DPRINTF(RTW_DEBUG_PHYIO, ("%s: %s[%u] <- %#08x\n", __func__,
 	    rtw_rfchipid_string(rfchipid), addr, val));
 
 	switch (rfchipid) {

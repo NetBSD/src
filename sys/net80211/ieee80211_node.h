@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.13.2.5 2004/09/21 13:36:55 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.13.2.6 2005/01/17 19:32:39 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -95,7 +95,13 @@ struct ieee80211_node {
 	u_int8_t		ni_bssid[IEEE80211_ADDR_LEN];
 
 	/* beacon, probe response */
-	u_int8_t		ni_tstamp[8];	/* from last rcv'd beacon */
+	union {
+		/* from last rcv'd beacon */
+		u_int8_t		tu_tstamp[8];
+		uint64_t		tu_tsf;
+	} ni_tstampu;
+#define	ni_tstamp	ni_tstampu.tu_tstamp
+#define	ni_tsf		ni_tstampu.tu_tsf
 	u_int16_t		ni_intval;	/* beacon interval */
 	u_int16_t		ni_capinfo;	/* capabilities */
 	u_int8_t		ni_esslen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.1.4.4 2004/11/29 07:24:50 skrll Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.1.4.5 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.1.4.4 2004/11/29 07:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.1.4.5 2005/01/17 19:32:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.1.4.4 2004/11/29 07:24:50 skrll Ex
 
 #include <fs/unicode.h>
 
-static u_int16_t wget(const u_char **, int);
+static u_int16_t wget(const u_char **, size_t *, int);
 static int wput(u_char *, size_t, u_int16_t, int);
 
 int cd9660_utf8_joliet = 1;
@@ -100,16 +100,16 @@ isochar(isofn, isoend, joliet_level, c)
 int
 isofncmp(fn, fnlen, isofn, isolen, joliet_level)
 	const u_char *fn, *isofn;
-	int fnlen, isolen, joliet_level;
+	size_t fnlen, isolen;
+	int joliet_level;
 {
 	int i, j;
 	u_int16_t fc, ic;
 	const u_char *isoend = isofn + isolen;
 
-	/* fn should always contain standard C string, and wget() needs it */
-	KASSERT(fn[fnlen] == 0);
+	while (fnlen > 0) {
+		fc = wget(&fn, &fnlen, joliet_level);
 
-	while ((fc = wget(&fn, joliet_level)) && fc) {
 		if (isofn == isoend)
 			return fc;
 		isofn += isochar(isofn, isoend, joliet_level, &ic);
@@ -213,11 +213,11 @@ isofntrans(infn, infnlen, outfn, outfnlen, original, casetrans, assoc, joliet_le
 }
 
 static u_int16_t
-wget(const u_char **str, int joliet_level)
+wget(const u_char **str, size_t *sz, int joliet_level)
 {
 	if (joliet_level > 0 && cd9660_utf8_joliet) {
 		/* decode UTF-8 sequence */
-		return wget_utf8((const char **) str);
+		return wget_utf8((const char **) str, sz);
 	} else {
 		/*
 		 * Raw 8-bit characters without any conversion. For Joliet,

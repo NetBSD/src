@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.39.2.3 2004/09/21 13:38:48 skrll Exp $	*/
+/*	$NetBSD: pool.h,v 1.39.2.4 2005/01/17 19:33:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct pool {
 	struct pool_pagelist
 			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
+	struct pool	*pr_phpool;	/* Pool item header pool */
 	TAILQ_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
 	unsigned int	pr_size;	/* Size of item */
@@ -156,6 +157,7 @@ struct pool {
 #define PR_LOGGING	0x80
 #define PR_LIMITFAIL	0x100	/* even if waiting, fail if we hit limit */
 #define PR_RECURSIVE	0x200	/* pool contains pools, for vmstat(8) */
+#define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing

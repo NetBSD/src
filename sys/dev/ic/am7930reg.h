@@ -1,4 +1,4 @@
-/* $NetBSD: am7930reg.h,v 1.5 2000/05/08 02:44:31 mycroft Exp $ */
+/* $NetBSD: am7930reg.h,v 1.5.28.1 2005/01/17 19:30:39 skrll Exp $ */
 
 /*
  * Am79C30A direct registers
@@ -73,15 +73,15 @@
 #define AM7930_IREG_MUX_MCR1	0x41	/* MUX command register 1 (rw) */
 #define AM7930_IREG_MUX_MCR2	0x42	/* MUX command register 2 (rw) */
 #define AM7930_IREG_MUX_MCR3	0x43	/* MUX command register 3 (rw) */
-#define 	AM7930_MCRCHAN_NC		0x00
-#define 	AM7930_MCRCHAN_B1		0x01
-#define 	AM7930_MCRCHAN_B2		0x02
-#define 	AM7930_MCRCHAN_BA		0x03
-#define 	AM7930_MCRCHAN_BB		0x04
-#define 	AM7930_MCRCHAN_BC		0x05
-#define 	AM7930_MCRCHAN_BD		0x06
-#define 	AM7930_MCRCHAN_BE		0x07
-#define 	AM7930_MCRCHAN_BF		0x08
+#define		AM7930_MCRCHAN_NC		0x00
+#define		AM7930_MCRCHAN_B1		0x01
+#define		AM7930_MCRCHAN_B2		0x02
+#define		AM7930_MCRCHAN_BA		0x03
+#define		AM7930_MCRCHAN_BB		0x04
+#define		AM7930_MCRCHAN_BC		0x05
+#define		AM7930_MCRCHAN_BD		0x06
+#define		AM7930_MCRCHAN_BE		0x07
+#define		AM7930_MCRCHAN_BF		0x08
 #define AM7930_IREG_MUX_MCR4	0x44	/* MUX command register 4 (rw) */
 #define		AM7930_MCR4_INT_ENABLE		(1 << 3)
 #define		AM7930_MCR4_SWAPBB		(1 << 4)

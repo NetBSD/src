@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40.2.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.40.2.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.2.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.2.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.2.3 2004/09/21 13:18:06 skrll Exp $")
 int	clock_debug = 0;
 #endif
 
-void	rtclock_intr __P((void));
+void	rtclock_intr(void);
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -149,7 +149,7 @@ void	rtclock_intr __P((void));
  * We use VIA1 timer 1.
  */
 void
-startrtclock()
+startrtclock(void)
 {
 /*
  * BARF MF startrt clock is called twice in init_main, configure,
@@ -171,7 +171,7 @@ startrtclock()
 }
 
 void
-enablertclock()
+enablertclock(void)
 {
 	/* clear then enable clock interrupt. */
 	via_reg(VIA1, vIFR) |= V1IF_T1;
@@ -179,19 +179,18 @@ enablertclock()
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	enablertclock();
 }
 
 void
-setstatclockrate(rateinhz)
-	int rateinhz;
+setstatclockrate(int rateinhz)
 {
 }
 
 void
-disablertclock()
+disablertclock(void)
 {
 	/* disable clock interrupt */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -204,7 +203,7 @@ disablertclock()
  * (race condition?)
  */
 u_long
-clkread()
+clkread(void)
 {
 	int high, high2, low;
 
@@ -242,7 +241,7 @@ char    profon = 0;		/* Is profiling clock on? */
 #define	PRF_KERNEL	0x80
 
 void
-initprofclock()
+initprofclock(void)
 {
 	/* profile interval must be even divisor of system clock interval */
 	if (profint > CLK_INTERVAL)
@@ -259,7 +258,7 @@ initprofclock()
 }
 
 void
-startprofclock()
+startprofclock(void)
 {
 	via_reg(VIA2, vT1L) = (profint - 1) & 0xff;
 	via_reg(VIA2, vT1LH) = (profint - 1) >> 8;
@@ -269,7 +268,7 @@ startprofclock()
 }
 
 void
-stopprofclock()
+stopprofclock(void)
 {
 	via_reg(VIA2, vT1L) = 0;
 	via_reg(VIA2, vT1LH) = 0;
@@ -285,8 +284,7 @@ stopprofclock()
  * Assumes it is called with clock interrupts blocked.
  */
 void
-profclock(pclk)
-	clockframe *pclk;
+profclock(clockframe *pclk)
 {
 	/*
 	 * Came from user mode.
@@ -321,16 +319,15 @@ profclock(pclk)
 #endif
 #endif
 
-static u_long	ugmt_2_pramt __P((u_long));
-static u_long	pramt_2_ugmt __P((u_long));
+static u_long	ugmt_2_pramt(u_long);
+static u_long	pramt_2_ugmt(u_long);
 
 /*
  * Convert GMT to Mac PRAM time, using rtc_offset
  * GMT bias adjustment is done elsewhere.
  */
 static u_long
-ugmt_2_pramt(t)
-	u_long t;
+ugmt_2_pramt(u_long t)
 {
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
@@ -343,8 +340,7 @@ ugmt_2_pramt(t)
  * GMT bias adjustment is done elsewhere.
  */
 static u_long
-pramt_2_ugmt(t)
-	u_long t;
+pramt_2_ugmt(u_long t)
 {
 	return (t = t - DIFF19041970 + 60 * rtc_offset);
 }
@@ -372,8 +368,7 @@ int	mac68k_trust_pram = 1;
  * and sanity checking.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	u_long timbuf;
 
@@ -430,7 +425,7 @@ inittodr(base)
  * changed system time.
  */
 void
-resettodr()
+resettodr(void)
 {
 	if (mac68k_trust_pram)
 		/*
@@ -458,12 +453,11 @@ resettodr()
 u_int		delay_factor = DELAY_CALIBRATE;
 volatile int	delay_flag = 1;
 
-int		_delay __P((u_int));
-static void	delay_timer1_irq __P((void *));
+int		_delay(u_int);
+static void	delay_timer1_irq(void *);
 
 static void
-delay_timer1_irq(dummy)
-	void *dummy;
+delay_timer1_irq(void *dummy)
 {
 	delay_flag = 0;
 }
@@ -472,7 +466,7 @@ delay_timer1_irq(dummy)
  * Calibrate delay_factor with VIA1 timer T1.
  */
 void
-mac68k_calibrate_delay()
+mac68k_calibrate_delay(void)
 {
 	u_int sum, n;
 

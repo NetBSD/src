@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.57.10.3 2004/09/21 13:18:09 skrll Exp $	*/
+/*	$NetBSD: nubus.h,v 1.57.10.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -361,26 +361,21 @@ struct nubus_softc {
 };
 
 
-void	nubus_get_main_dir __P((nubus_slot *slot, nubus_dir *dir_return));
-void	nubus_get_dir_from_rsrc __P((nubus_slot *slot, nubus_dirent *dirent,
-	    nubus_dir *dir_return));
+void	nubus_get_main_dir(nubus_slot *, nubus_dir *);
+void	nubus_get_dir_from_rsrc(nubus_slot *, nubus_dirent *, nubus_dir *);
 
-int	nubus_find_rsrc __P((bus_space_tag_t, bus_space_handle_t,
-	    nubus_slot *slot, nubus_dir *dir, u_int8_t rsrcid,
-	    nubus_dirent *dirent_return));
-int	nubus_get_ind_data __P((bus_space_tag_t, bus_space_handle_t,
-	    nubus_slot *slot, nubus_dirent *dirent,
-	    caddr_t data_return, int nbytes));
-int	nubus_get_c_string __P((bus_space_tag_t, bus_space_handle_t,
-	    nubus_slot *slot, nubus_dirent *dirent,
-	    caddr_t data_return, int max_bytes));
-int	nubus_get_smem_addr_rangelist __P((bus_space_tag_t, bus_space_handle_t,
-    	    nubus_slot *fmt, nubus_dirent *dirent, caddr_t data_return));
+int	nubus_find_rsrc(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
+	    nubus_dir *, u_int8_t, nubus_dirent *);
+int	nubus_get_ind_data(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
+	    nubus_dirent *, caddr_t, int);
+int	nubus_get_c_string(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
+	    nubus_dirent *, caddr_t, int);
+int	nubus_get_smem_addr_rangelist(bus_space_tag_t, bus_space_handle_t,
+    	    nubus_slot *, nubus_dirent *, caddr_t);
 
-char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
-	    nubus_slot *slot, int rsrc));
-char	*nubus_get_card_name __P((bus_space_tag_t, bus_space_handle_t,
-	    nubus_slot *slot));
+char	*nubus_get_vendor(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
+	    int);
+char	*nubus_get_card_name(bus_space_tag_t, bus_space_handle_t, nubus_slot *);
 #ifdef DEBUG
-void	nubus_scan_slot __P((bus_space_tag_t, int));
+void	nubus_scan_slot(bus_space_tag_t, int);
 #endif
