@@ -1,10 +1,7 @@
-/*	$NetBSD: apmvar.h,v 1.2 2002/10/14 02:08:39 takemura Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.1 2002/10/14 02:08:38 takemura Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by John Kohl.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,10 +31,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __SPARC_APM_H__
-#define __SPARC_APM_H__
+#ifndef __HPCMIPS_APMVAR_H__
+#define __HPCMIPS_APMVAR_H__
 
 #include <dev/apm/apmbios.h>
 #include <dev/apm/apmio.h>
 
-#endif /* __SPARC_APM_H__ */
+#endif /* __HPCMIPS_APMVAR_H__ */
