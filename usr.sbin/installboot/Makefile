@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/04/04 23:01:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/04/06 13:59:12 bjh21 Exp $
 #
 
 PROG=	installboot
@@ -17,6 +17,7 @@ IB_MACHINES?=	alpha pmax sparc64 vax
 SRCS+=		${IB_MACHINES:S/$/.c/}
 
 
+.ifndef HOSTPROG
 # list of MACHINEs to enable the compat symlink /usr/mdec/installboot
 # XXX: eventually this should be done for all machines in ${IB_MACHINES}
 #
@@ -36,6 +37,5 @@ regenmachines: mkmachines.awk Makefile
 	mv ${.TARGET} ${.CURDIR}/machines.c
 
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
 .endif
