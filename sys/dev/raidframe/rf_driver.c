@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.66 2002/10/22 03:15:28 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.67 2002/11/09 19:50:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.66 2002/10/22 03:15:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.67 2002/11/09 19:50:03 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,6 @@ rf_FailDisk(
     int fcol,
     int initRecon)
 {
-	printf("raid%d: Failing disk r%d c%d\n", raidPtr->raidid, frow, fcol);
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->numFailures++;
 	raidPtr->Disks[frow][fcol].status = rf_ds_failed;
