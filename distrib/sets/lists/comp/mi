@@ -3152,8 +3152,6 @@
 ./usr/share/mk/bsd.nls.mk
 ./usr/share/mk/bsd.obj.mk
 ./usr/share/mk/bsd.own.mk
-./usr/share/mk/bsd.port.mk
-./usr/share/mk/bsd.port.subdir.mk
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
