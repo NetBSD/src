@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/04/27 12:32:08 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2000/04/19 13:45:24 simonb Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -26,5 +26,5 @@ snap_md_post: ${DISKIMAGE} ${DISKIMAGE_TAR} ${INSTALLKERN}
 		-m ${BINMODE} ${NFSKERN}.ecoff \
 		${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
 	gzip -9 ${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
-	(cd ${.CURDIR}/../distrib/pmax && \
-	    ${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install)
+	cd ${.CURDIR}/../distrib/pmax && \
+	    ${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install
