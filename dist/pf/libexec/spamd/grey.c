@@ -1,3 +1,4 @@
+/*	$NetBSD: grey.c,v 1.2 2004/06/22 16:04:40 itojun Exp $	*/
 /*	$OpenBSD: grey.c,v 1.12 2004/03/13 17:46:15 beck Exp $	*/
 
 /*
@@ -57,6 +58,16 @@ static char *pargv[11]= {
 	"spamd-white", "-T", "replace", "-f" "-", NULL
 };
 
+#define MIN(a, b)	((a) > (b) ? (b) : (a))
+
+int	configure_pf(char **, int);
+int	addwhiteaddr(char *);
+void	freewhiteaddr(void);
+int	greyscan(char *);
+int	greyupdate(char *, char *, char *, char *);
+int	greyreader(void);
+void	greyscanner(void);
+int	greywatcher(void);
 
 /* If the parent gets a signal, kill off the children and exit */
 static void
@@ -85,7 +96,11 @@ configure_pf(char **addrs, int count)
 		return(-1);
 	pargv[2] = fdpath;
 	if (pipe(pdes) != 0) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_INFO, &sdata, "pipe failed (%m)");
+#else
+		syslog(LOG_INFO, "pipe failed (%m)");
+#endif
 		free(fdpath);
 		fdpath = NULL;
 		return(-1);
@@ -93,7 +108,11 @@ configure_pf(char **addrs, int count)
 	signal(SIGCHLD, SIG_DFL);
 	switch (pid = fork()) {
 	case -1:
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_INFO, &sdata, "fork failed (%m)");
+#else
+		syslog(LOG_INFO, "fork failed (%m)");
+#endif
 		free(fdpath);
 		fdpath = NULL;
 		close(pdes[0]);
@@ -108,7 +127,11 @@ configure_pf(char **addrs, int count)
 			close(pdes[0]);
 		}
 		execvp(PATH_PFCTL, pargv);
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sdata, "can't exec %s:%m", PATH_PFCTL);
+#else
+		syslog(LOG_ERR, "can't exec %s:%m", PATH_PFCTL);
+#endif
 		_exit(1);
 	}
 
@@ -118,7 +141,11 @@ configure_pf(char **addrs, int count)
 	close(pdes[0]);
 	pf = fdopen(pdes[1], "w");
 	if (pf == NULL) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_INFO, &sdata, "fdopen failed (%m)");
+#else
+		syslog(LOG_INFO, "fdopen failed (%m)");
+#endif
 		close(pdes[1]);
 		signal(SIGCHLD, sig_term_chld);
 		return(-1);
@@ -190,7 +217,11 @@ greyscan(char *dbname)
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_INFO, &sdata, "dbopen failed (%m)");
+#else
+		syslog(LOG_INFO, "dbopen failed (%m)");
+#endif
 		return(-1);
 	}
 	memset(&dbk, 0, sizeof(dbk));
@@ -211,8 +242,13 @@ greyscan(char *dbname)
 				memset(a, 0, sizeof(a));
 				memcpy(a, dbk.data, MIN(sizeof(a),
 				    dbk.size));
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_DEBUG, &sdata,
 				    "deleting %s from %s", a, dbname);
+#else
+				syslog(LOG_DEBUG,
+				    "deleting %s from %s", a, dbname);
+#endif
 			}
 			if (db->del(db, &dbk, 0)) {
 				db->close(db);
@@ -258,9 +294,13 @@ greyscan(char *dbname)
 					goto bad;
 				}
 				db->sync(db, 0);
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_DEBUG, &sdata,
 				    "whitelisting %s in %s", a, dbname);
-
+#else
+				syslog(LOG_DEBUG,
+				    "whitelisting %s in %s", a, dbname);
+#endif
 			}
 			if (debug)
 				fprintf(stderr, "whitelisted %s\n", a);
@@ -372,7 +412,11 @@ greyreader(void)
 
 	state = 0;
 	if (grey == NULL) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sdata, "No greylist pipe stream!\n");
+#else
+		syslog(LOG_ERR, "No greylist pipe stream!\n");
+#endif
 		exit(1);
 	}
 	while ((buf = fgetln(grey, &len))) {
@@ -428,9 +472,15 @@ greyscanner(void)
 	for (;;) {
 		sleep(DB_SCAN_INTERVAL);
 		i = greyscan(PATH_SPAMD_DB);
-		if (i == -1)
+		if (i == -1) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_NOTICE, &sdata, "scan of %s failed",
 			    PATH_SPAMD_DB);
+#else
+			syslog(LOG_NOTICE, "scan of %s failed",
+			    PATH_SPAMD_DB);
+#endif
+		}
 	}
 	/* NOTREACHED */
 }
@@ -442,7 +492,11 @@ greywatcher(void)
 
 	pfdev = open("/dev/pf", O_RDWR);
 	if (pfdev == -1) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sdata, "open of /dev/pf failed (%m)");
+#else
+		syslog(LOG_ERR, "open of /dev/pf failed (%m)");
+#endif
 		exit(1);
 	}
 
@@ -450,14 +504,24 @@ greywatcher(void)
 	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
 		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
 		if (i == -1) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)", 
 			    PATH_SPAMD_DB);
+#else
+			syslog(LOG_ERR, "create %s failed (%m)", 
+			    PATH_SPAMD_DB);
+#endif
 			exit(1);
 		}
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)", 
 			    PATH_SPAMD_DB);
+#else
+			syslog(LOG_ERR, "chown %s failed (%m)", 
+			    PATH_SPAMD_DB);
+#endif
 			exit(1);
 		}
 	}
@@ -479,7 +543,11 @@ greywatcher(void)
 	db_pid = fork();
 	switch(db_pid) {
 	case -1:
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_ERR, &sdata, "fork failed (%m)"); 
+#else
+		syslog(LOG_ERR, "fork failed (%m)"); 
+#endif
 		exit(1);
 	case 0:
 		/*
