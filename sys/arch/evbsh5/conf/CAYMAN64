@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN64,v 1.1 2002/10/23 13:28:01 scw Exp $
+#	$NetBSD: CAYMAN64,v 1.2 2003/12/20 22:12:21 jdolecek Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -8,4 +8,7 @@ include 	"arch/evbsh5/conf/CAYMAN"
 
 makeoptions 	SH5_ABI=64
 options 	EXEC_ELF64
-options 	COMPAT_NETBSD32
+
+# COMPAT_NETBSD32 doesn't compile - some required datatypes are not
+# defined on evbsh5
+# options 	COMPAT_NETBSD32
