@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.15 2004/01/05 12:01:52 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.16 2004/01/05 12:16:25 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.15 2004/01/05 12:01:52 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.16 2004/01/05 12:16:25 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -69,6 +69,7 @@ static struct mouse Mouse;
 static char *Pid_File = NULL;
 static int Foreground = 1;
 static int X_Console = -1;
+static int X_Console_Delay = 5;
 
 #ifdef WSMOUSED_SELECTION_MODE
 extern struct mode_bootstrap Action_Mode;
@@ -342,7 +343,7 @@ generic_wscons_event(struct wscons_event evt)
 			Mouse.m_devfd = -1;
 		} else {
 			if (Mouse.m_disabled) {
-				open_device(5);
+				open_device(X_Console_Delay);
 				Mouse.m_disabled = 0;
 			} else {
 				(void)close(Mouse.m_devfd);
@@ -521,6 +522,8 @@ main(int argc, char **argv)
 	if (nodaemon == -1)
 		nodaemon = block_get_propval_int(conf, "nodaemon", 0);
 	X_Console = block_get_propval_int(conf, "xconsole", -1);
+	X_Console_Delay = block_get_propval_int(conf, "xconsole_delay",
+	    X_Console_Delay);
 
 	/* Open wsdisplay status device */
 	tstat = block_get_propval(conf, "ttystat", _PATH_TTYSTAT);
