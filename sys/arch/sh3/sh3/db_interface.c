@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2003/07/15 03:35:56 lukem Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24 2005/03/08 20:54:58 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2003/07/15 03:35:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2005/03/08 20:54:58 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,8 +68,8 @@ extern int exp_types;
 void kdb_printtrap(u_int, int);
 
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
-void __db_tlbdump_page_size_sh4(u_int32_t);
-void __db_tlbdump_pfn(u_int32_t);
+void __db_tlbdump_page_size_sh4(uint32_t);
+void __db_tlbdump_pfn(uint32_t);
 void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
 
 void __db_cachedump_sh3(vaddr_t);
@@ -225,7 +225,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	    "   VPN      ASID    PFN  AREA VDCGWtPR  SZ";
 	static const char title2[] =
 	    "          U/K                       U/K";
-	u_int32_t r, e;
+	uint32_t r, e;
 	int i;
 #ifdef SH3
 	if (CPU_IS_SH3) {
@@ -242,7 +242,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		for (i = 0; i < SH3_MMU_WAY; i++) {
 			db_printf(" [way %d]\n", i);
 			for (e = 0; e < SH3_MMU_ENTRY; e++) {
-				u_int32_t a;
+				uint32_t a;
 				/* address/data array common offset. */
 				a = (e << SH3_MMU_VPN_SHIFT) |
 				    (i << SH3_MMU_WAY_SHIFT);
@@ -340,9 +340,9 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 void
-__db_tlbdump_pfn(u_int32_t r)
+__db_tlbdump_pfn(uint32_t r)
 {
-	u_int32_t pa = (r & SH3_MMUDA_D_PPN_MASK);
+	uint32_t pa = (r & SH3_MMUDA_D_PPN_MASK);
 
 	db_printf(" 0x%08x %d", pa, (pa >> 26) & 7);
 }
@@ -363,7 +363,7 @@ __db_procname_by_asid(int asid)
 
 #ifdef SH4
 void
-__db_tlbdump_page_size_sh4(u_int32_t r)
+__db_tlbdump_page_size_sh4(uint32_t r)
 {
 	switch (r & SH4_PTEL_SZ_MASK) {
 	case SH4_PTEL_SZ_1K:
@@ -402,7 +402,7 @@ db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 __db_cachedump_sh3(vaddr_t va_start)
 {
-	u_int32_t r;
+	uint32_t r;
 	vaddr_t va, va_end, cca;
 	int entry, way;
 
@@ -447,7 +447,7 @@ __db_cachedump_sh3(vaddr_t va_start)
 void
 __db_cachedump_sh4(vaddr_t va)
 {
-	u_int32_t r, e;
+	uint32_t r, e;
 	int i, istart, iend;
 
 	RUN_P2; /* must access from P2 */
@@ -580,8 +580,8 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	struct proc *p;
 	struct user *u;
 	struct pcb *pcb;
-	u_int32_t *t32;
-	u_int8_t *t8;
+	uint32_t *t32;
+	uint8_t *t8;
 	int i, j;
 #define	MAX_STACK	(USPACE - PAGE_SIZE)
 #define	MAX_FRAME	(PAGE_SIZE - sizeof(struct user))
@@ -594,13 +594,13 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		u = p->p_addr;
 		pcb = &u->u_pcb;
 		/* stack */
-		t32 = (u_int32_t *)(pcb->pcb_sf.sf_r7_bank - MAX_STACK);
+		t32 = (uint32_t *)(pcb->pcb_sf.sf_r7_bank - MAX_STACK);
 		for (i = 0; *t32++ == 0xa5a5a5a5; i++)
 			;
 		i = MAX_STACK - i * sizeof(int);
 
 		/* frame */
-		t8 = (u_int8_t *)((vaddr_t)pcb + PAGE_SIZE - MAX_FRAME);
+		t8 = (uint8_t *)((vaddr_t)pcb + PAGE_SIZE - MAX_FRAME);
 		for (j = 0; *t8++ == 0x5a; j++)
 			;
 		j = MAX_FRAME - j;
