@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 1997/01/04 00:08:46 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 1997/02/02 07:27:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1005,36 +1005,6 @@ _esigcode:
 #include <m68k/asm.h>
 
 /*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- * dbra will work better perhaps.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		|  source address
-	movl	sp@(8),a1		|  destination address
-	movl	#NBPG/32,d0		|  number of 32 byte chunks
-	cmpl	#MMU_68040,_mmutype
-	jne	Lmlloop			|  no, use movl
-Lm16loop:
-	.long	0xf6209000		|  move16 a0@+,a1@+
-	.long	0xf6209000		|  move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
-/*
  * update profiling information for the user
  * addupc(pc, &u.u_prof, ticks)
  */
@@ -1959,7 +1929,7 @@ Ldorebootend:
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_mmutype,_protorp
+	.globl	_protorp
 _protorp:
 	.long	0x80000002,0		|  prototype root pointer
 	.globl	_cold
