@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.121 2003/04/18 05:42:52 thorpej Exp $
+# $NetBSD: mi,v 1.122 2003/04/20 20:55:39 thorpej Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -66,6 +66,7 @@
 ./etc/postfix/postfix-script		etc-postfix-etc
 ./etc/postinstall			etc-sys-etc
 ./etc/powerd/scripts/power_button	etc-sysutil-etc
+./etc/powerd/scripts/reset_button	etc-sysutil-etc
 ./etc/printcap				etc-lpr-etc
 ./etc/profile				etc-util-etc
 ./etc/protocols				etc-net-etc
