@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.116 1999/06/18 14:26:38 ad Exp $
+# $NetBSD: mi,v 1.117 1999/06/30 06:51:13 augustss Exp $
 .
 ./altroot
 ./bin
@@ -627,7 +627,6 @@
 ./usr/sbin/trpt
 ./usr/sbin/trsp
 ./usr/sbin/update
-./usr/sbin/usbd
 ./usr/sbin/usbdevs
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
