@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.111 2001/01/20 01:56:16 imp Exp $
+$NetBSD: pcmciadevs,v 1.112 2001/01/20 08:49:53 taca Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -239,9 +239,6 @@ product ROLAND SCP55		0x0001 Roland SCP-55
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
-
-/* RATOC System Inc. Products */
-product RATOC REX_R280		0x0001 RATOC REX-R280
 
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
