@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.12 1993/11/29 22:39:19 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.13 1994/01/28 20:02:54 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -143,8 +143,7 @@ rmtree(argv)
 	if (!(fts = fts_open(argv,
 	    needstat ? FTS_PHYSICAL : FTS_PHYSICAL|FTS_NOSTAT,
 		(int (*)())NULL))) {
-		if (!fflag)
-			(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
+		(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
 		exit (1);
 	}
 
@@ -190,15 +189,11 @@ rmtree(argv)
 		 * message unless the remove fails.
 		 */
 		if (p->fts_info == FTS_DP || p->fts_info == FTS_DNR) {
-			if (!rmdir(p->fts_accpath))
+			if (!rmdir(p->fts_accpath) || fflag && errno == ENOENT) 
 				continue;
-			if (errno == ENOENT) {
-				if (fflag)
-					continue;
-			} else if (p->fts_info != FTS_DP && !fflag)
-				(void)fprintf(stderr,
-				    "rm: unable to read %s.\n", p->fts_path);
-		} else if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
+			error(p->fts_path, errno);
+		} 
+		if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
 			continue;
 		error(p->fts_path, errno);
 	}
@@ -301,7 +296,8 @@ checkdot(argv)
 			    (void)fprintf(stderr,
 				"rm: \".\" and \"..\" may not be removed.\n");
 			retval = 1;
-			for (save = t; t[0] = t[1]; ++t);
+			for (save = t; t[0] = t[1]; ++t)
+				continue;
 			t = save;
 		} else
 			++t;
@@ -313,8 +309,7 @@ error(name, val)
 	char *name;
 	int val;
 {
-	if (!fflag)
-		(void)fprintf(stderr, "rm: %s: %s.\n", name, strerror(val));
+	(void)fprintf(stderr, "rm: %s: %s.\n", name, strerror(val));
 	retval = 1;
 }
 
