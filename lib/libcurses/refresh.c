@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.38 2000/07/03 03:56:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.38 2000/07/03 03:56:20 matt Exp $");
 #endif
 #endif				/* not lint */
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "curses.h"
