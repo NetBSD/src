@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6 1995/04/10 07:04:18 mycroft Exp $ */
+/*	$NetBSD: fb.c,v 1.7 1995/09/17 20:43:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ fbopen(dev, flags, mode, p)
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (cdevsw[devfb->fb_major].d_open(dev, flags, mode, p));
+	return (devfb->fb_driver->fbd_open)(dev, flags, mode, p);
 }
 
 int
@@ -95,7 +95,7 @@ fbclose(dev, flags, mode, p)
 	struct proc *p;
 {
 
-	return (cdevsw[devfb->fb_major].d_close(dev, flags, mode, p));
+	return (devfb->fb_driver->fbd_close)(dev, flags, mode, p);
 }
 
 int
@@ -107,7 +107,7 @@ fbioctl(dev, cmd, data, flags, p)
 	struct proc *p;
 {
 
-	return (cdevsw[devfb->fb_major].d_ioctl(dev, cmd, data, flags, p));
+	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
 }
 
 int
@@ -115,9 +115,67 @@ fbmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	int (*map)() = cdevsw[devfb->fb_major].d_mmap;
+	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);
 	return (map(dev, off, prot));
 }
+
+#ifdef RCONSOLE
+#include <machine/autoconf.h>
+#include <machine/kbd.h>
+
+extern int (*v_putc) __P((int));
+
+static int
+a2int(cp, deflt)
+	register char *cp;
+	register int deflt;
+{
+	register int i = 0;
+
+	if (*cp == '\0')
+		return (deflt);
+	while (*cp != '\0')
+		i = i * 10 + *cp++ - '0';
+	return (i);
+}
+
+static void
+fb_bell(on)
+	int on;
+{
+	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
+}
+
+void
+fbrcons_init(fb)
+	struct fbdevice *fb;
+{
+
+	/*
+	 * Common glue for rconsole initialization
+	 * XXX - mostly duplicates values with fbdevice.
+	 */
+	fb->fb_rcons.rc_linebytes = fb->fb_linebytes;
+	fb->fb_rcons.rc_pixels = fb->fb_pixels;
+	fb->fb_rcons.rc_width = fb->fb_type.fb_width;
+	fb->fb_rcons.rc_height = fb->fb_type.fb_height;
+	fb->fb_rcons.rc_depth = fb->fb_type.fb_depth;
+
+	fb->fb_rcons.rc_maxcol =
+		a2int(getpropstring(optionsnode, "screen-#columns"), 80);
+	fb->fb_rcons.rc_maxrow =
+		a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+
+	/* Determine addresses of prom emulator row and column */
+	if (romgetcursoraddr(&fb->fb_rcons.rc_row, &fb->fb_rcons.rc_col))
+		fb->fb_rcons.rc_row = fb->fb_rcons.rc_col = NULL;
+
+	fb->fb_rcons.rc_bell = fb_bell;
+	rcons_init(&fb->fb_rcons);
+	/* Hook up virtual console */
+	v_putc = (int (*) __P((int)))rcons_cnputc;
+}
+#endif

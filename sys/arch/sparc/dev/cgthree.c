@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.13 1995/04/10 07:04:22 mycroft Exp $ */
+/*	$NetBSD: cgthree.c,v 1.14 1995/09/17 20:43:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,14 +86,21 @@ struct cgthree_softc {
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
 static int	cgthreematch(struct device *, void *, void *);
+int		cgthreeopen __P((dev_t, int, int, struct proc *));
+int		cgthreeclose __P((dev_t, int, int, struct proc *));
+int		cgthreeioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int		cgthreemmap __P((dev_t, int, int));
+static void	cgthreeunblank(struct device *);
+
 struct cfdriver cgthreecd = {
 	NULL, "cgthree", cgthreematch, cgthreeattach,
 	DV_DULL, sizeof(struct cgthree_softc)
 };
 
 /* frame buffer generic driver */
-static void	cgthreeunblank(struct device *);
-static struct fbdriver cgthreefbdriver = { cgthreeunblank };
+static struct fbdriver cgthreefbdriver = {
+	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreemmap
+};
 
 extern int fbnode;
 extern struct tty *fbconstty;
@@ -102,8 +109,6 @@ extern int nullop();
 static int cgthree_cnputc();
 
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
-
-#define	CGTHREE_MAJOR	55		/* XXX */
 
 /*
  * Match a cgthree.
@@ -141,8 +146,6 @@ cgthreeattach(parent, self, args)
 	int isconsole;
 	int sbus = 1;
 	char *nam;
-
-	sc->sc_fb.fb_major = CGTHREE_MAJOR;	/* XXX to be removed */
 
 	sc->sc_fb.fb_driver = &cgthreefbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
@@ -207,7 +210,7 @@ cgthreeattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RCONSOLE
-		rcons_init(&sc->sc_fb);
+		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
 		printf("\n");
