@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv.c,v 1.3 1996/05/19 21:05:58 veego Exp $	*/
+/*	$NetBSD: ite_cv.c,v 1.4 1999/03/25 23:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -37,6 +37,7 @@
  * Ezra Story, Kari Mettinen, Markus Wild, Lutz Vieweg.
  */
 
+#include "opt_amigacons.h"
 #include "grfcv.h"
 #if NGRFCV > 0
 
