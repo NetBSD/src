@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.2 2002/10/12 11:15:08 jdolecek Exp $	*/
+/*	$NetBSD: file.c,v 1.3 2002/12/06 02:06:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
 
