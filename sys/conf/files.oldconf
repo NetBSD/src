@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.33 1993/12/22 12:48:25 cgd Exp $
+#	$Id: files.oldconf,v 1.34 1994/01/08 07:14:47 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -25,6 +25,7 @@ isofs/isofs_util.c	optional isofs
 isofs/isofs_vfsops.c	optional isofs
 isofs/isofs_vnops.c	optional isofs
 kern/exec_aout.c	standard
+kern/exec_subr.c	standard
 kern/init_main.c	standard
 kern/init_sysent.c	standard
 kern/kern_acct.c	standard

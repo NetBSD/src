@@ -27,32 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.2 1993/12/12 19:26:18 deraadt Exp $
+ *	$Id: exec_aout.c,v 1.3 1994/01/08 07:14:58 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/mount.h>
 #include <sys/malloc.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <sys/wait.h>
-#include <sys/mman.h>
-
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_pager.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
+#include <sys/exec_aout.h>
 #include <machine/exec.h>
 
 /*
@@ -101,8 +88,8 @@ exec_aout_makecmds(p, epp)
 		error = cpu_exec_aout_makecmds(p, epp);
 	}
 
-	if (error && epp->ep_vcp)
-		kill_vmcmd(&epp->ep_vcp);
+	if (error)
+		KILL_VMCMDS(&epp->ep_vmcmds);
 
 bad:
 
@@ -128,7 +115,6 @@ exec_aout_prep_zmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_execp;
-	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
@@ -147,39 +133,25 @@ exec_aout_prep_zmagic(p, epp)
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-		epp->ep_vcp = NULL;
 		return ETXTBSY;
 	}
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    0,
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, 0, VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    execp->a_text,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, execp->a_text,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    execp->a_bss,
-	    epp->ep_daddr + execp->a_data,
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, 0, 0,
+	    VM_PROT_READ|VM_PROT_WRITE |VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -192,7 +164,6 @@ exec_aout_prep_nmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_execp;
-	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
@@ -202,33 +173,23 @@ exec_aout_prep_nmagic(p, epp)
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    sizeof(struct exec),
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, sizeof(struct exec),
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    execp->a_text + sizeof(struct exec),
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, execp->a_text + sizeof(struct exec),
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0) {
-		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		ccmdp = ccmdp->ev_next;
-	}
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -241,7 +202,6 @@ exec_aout_prep_omagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_execp;
-	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
@@ -251,24 +211,18 @@ exec_aout_prep_omagic(p, epp)
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text and data segments */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
-	    execp->a_text + execp->a_data,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    sizeof(struct exec),
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
+	    sizeof(struct exec), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
-	if (bsize > 0) {
-		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
-		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-		ccmdp = ccmdp->ev_next;
-	}
+	if (bsize > 0)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
+		    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -279,13 +233,15 @@ exec_aout_prep_omagic(p, epp)
  * limit; this is adjusted in the body of execve() to yield the
  * appropriate stack segment usage once the argument length is
  * calculated.
+ *
+ * This function returns an int for uniformity with other (future) formats'
+ * stack setup functions.  They might have errors to return.
  */
 
 int
-exec_aout_setup_stack(p, epp, ccmdp)
+exec_aout_setup_stack(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
-	struct exec_vmcmd *ccmdp;
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
@@ -303,19 +259,12 @@ exec_aout_setup_stack(p, epp, ccmdp)
 	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
 	 * <stack> ep_minsaddr
 	 */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr,
-	    0,
-	    0,
-	    VM_PROT_NONE);
-	ccmdp = ccmdp->ev_next;
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize),
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	    epp->ep_maxsaddr, 0, 0, VM_PROT_NONE);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    (epp->ep_minsaddr - epp->ep_ssize), 0, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return 0;
 }
