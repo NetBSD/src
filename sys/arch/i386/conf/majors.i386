@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.1.2.2 2002/05/30 07:14:46 gehenna Exp $
+#	$NetBSD: majors.i386,v 1.1.2.3 2002/06/08 10:31:39 gehenna Exp $
 #
 # Device majors for i386
 #
@@ -35,7 +35,7 @@ device-major	lkm		char 28			lkm
 
 device-major	omms		char 35			omms
 device-major	olms		char 36			olms
-
+device-major	opms		char 37			opms
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
