@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.353 2004/07/24 06:21:43 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.354 2004/07/24 11:52:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6110,3 +6110,26 @@ sys/kern/vfs_cache.c				1.57
 	cache entry.  Handle this, and upon detection free the
 	tentative entry and return.  Fixes PR#26400.
 	[hannken, ticket #706]
+
+etc/etc.i386/Makefile.inc			1.39
+
+	Allow the user to specify which file system image to use as the
+	boot image of the CD-ROM via the CDROM_BOOT_IMAGE variable.  The
+	user may want to create a bootable image with bootlap-big.fs which
+	uses the INSTALL_LAPTOP kernel configuration instead of the default
+	boot-big.fs image which uses the INSTALL kernel configuration.
+	[he, ticket #707]
+
+sys/arch/i386/conf/INSTALL_LAPTOP		1.64
+
+	Add an attachment for ath* at pci, since some laptops have mini-PCI
+	atheros wireless hardware, such as IBM TP41p and TP40p.
+	[he, ticket #708]
+
+xfree/xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c	1.4
+xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c	1.8
+xfree/xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h	1.2
+
+	Stop XFree86 from losing mouse events on LP64 platforms.
+	[heas, ticket #709]
+
