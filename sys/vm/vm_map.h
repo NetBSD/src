@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.26 1999/05/28 20:31:42 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.27 1999/06/05 04:12:31 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -149,6 +149,43 @@ struct vm_map {
 /* vm_map flags */
 #define	VM_MAP_PAGEABLE		0x01		/* entries are pageable */
 #define	VM_MAP_INTRSAFE		0x02		/* interrupt safe map */
+
+/*
+ *	Interrupt-safe maps must also be kept on a special list,
+ *	to assist uvm_fault() in avoiding locking problems.
+ */
+struct vm_map_intrsafe {
+	struct vm_map	vmi_map;
+	LIST_ENTRY(vm_map_intrsafe) vmi_list;
+};
+
+LIST_HEAD(vmi_list, vm_map_intrsafe);
+#ifdef _KERNEL
+extern simple_lock_data_t vmi_list_slock;
+extern struct vmi_list vmi_list;
+
+static __inline int vmi_list_lock __P((void));
+static __inline void vmi_list_unlock __P((int));
+
+static __inline int
+vmi_list_lock()
+{
+	int s;
+
+	s = splhigh();
+	simple_lock(&vmi_list_slock);
+	return (s);
+}
+
+static __inline void
+vmi_list_unlock(s)
+	int s;
+{
+
+	simple_unlock(&vmi_list_slock);
+	splx(s);
+}
+#endif /* _KERNEL */
 
 /*
  * VM map locking operations:
