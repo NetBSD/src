@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.26 2002/07/28 07:06:27 chs Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.27 2002/08/02 03:46:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -753,6 +753,54 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
+	lis	3,_C_LABEL(astpending)@ha
+	lwz	4,_C_LABEL(astpending)@l(3)
+	andi.	4,4,1
+	beq	1f
+	li	6,EXC_AST
+	stw	6,FRAME_EXC+8(1)
+	b	trapagain
+1:
+	FRAME_LEAVE(tempsave)
+	rfi
+
+/* 
+ * Trap handler for syscalls (EXC_SC)
+ */
+
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+_C_LABEL(sctrap):
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	bla	s_sctrap
+	_C_LABEL(scsize) = .-_C_LABEL(sctrap)
+
+s_sctrap:
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
+	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
+	CPU601_KERN_ENTRY(30,31)
+	FRAME_SETUP(tempsave)
+/* Now we can recover interrupts again: */
+	mfmsr	7
+	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
+	mtmsr	7
+	isync
+	addi	3,1,8
+/* Call the appropriate syscall handler: */
+	lis	4,_C_LABEL(curproc)@ha
+	lwz	4,_C_LABEL(curproc)@l(4)
+	lwz	4,P_MD_SYSCALL@l(4)
+	mtctr	4
+	bctrl
+/* Disable interrupts: */
+	mfmsr	3
+	andi.	3,3,~PSL_EE@l
+	mtmsr	3
+/* Test AST pending: */
 	lis	3,_C_LABEL(astpending)@ha
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
