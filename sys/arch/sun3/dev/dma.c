@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.1.1.1 1997/02/24 01:45:13 jeremy Exp $ */
+/*	$NetBSD: dma.c,v 1.2 1997/02/24 15:02:23 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -66,11 +66,11 @@ void dma_go		__P((struct dma_softc *));
 struct cfattach dma_ca = {
 	sizeof(struct dma_softc), dmamatch, dmaattach
 };
-#endif	/* 0 */
 
 struct cfdriver dma_cd = {
 	NULL, "dma", DV_DULL
 };
+#endif	/* 0 */
 
 /*
  * Pseudo-attach function.  Called from the esp driver during its
