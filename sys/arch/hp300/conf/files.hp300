@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.30 1997/10/05 02:11:21 carrel Exp $
+#	$NetBSD: files.hp300,v 1.31 1998/01/11 21:42:44 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -193,6 +193,7 @@ file	arch/hp300/dev/hil_keymaps.c
 #
 
 file	arch/hp300/hp300/autoconf.c
+file	arch/hp300/hp300/bus_space.c
 file	arch/hp300/hp300/clock.c
 file	arch/hp300/hp300/conf.c
 file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
