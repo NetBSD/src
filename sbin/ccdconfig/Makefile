@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/07/20 05:01:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/09/15 12:45:50 lukem Exp $
 
 PROG=	ccdconfig
 MAN=	ccdconfig.8
@@ -8,7 +8,5 @@ BINMODE=2555
 
 DPADD=	${LIBKVM} ${LIBUTIL}
 LDADD=	-lkvm -lutil
-
-WARNS=1
 
 .include <bsd.prog.mk>

@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 1997/08/01 14:51:44 jtk Exp $
+#	$NetBSD: Makefile,v 1.13 1997/09/15 12:45:53 lukem Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/27/94
 
-WARNS=	1
 PROG=	mount
 MAN=	mount.8
 # We do NOT install the getmntopts.3 man page.
