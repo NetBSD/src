@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.63 2003/03/23 15:59:24 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.64 2003/04/09 18:22:14 thorpej Exp $	*/
 
 /*
- * Copyright (c 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -439,6 +439,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
 				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : 0))
+
+/*
+ * Hooks for the pool allocator.
+ */
+#define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 #endif /* _KERNEL */
 
