@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.137 2001/01/14 11:17:30 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.138 2001/02/04 17:05:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -298,6 +298,8 @@ cdev_decl(i4btel);
 cdev_decl(vmegeneric);
 #include "iop.h"
 cdev_decl(iop);
+#include "mlx.h"
+cdev_decl(mlx);
 
 #include <altq/altqconf.h>
 
@@ -388,6 +390,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
+	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -507,6 +510,7 @@ static int chrtoblktbl[] = {
 	/* 75 */	NODEV,
 	/* 76 */	NODEV,
 	/* 77 */	NODEV,
+	/* 78 */	NODEV,
 };
 
 /*
