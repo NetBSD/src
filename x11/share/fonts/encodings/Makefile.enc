@@ -1,0 +1,31 @@
+#	$NetBSD: Makefile.enc,v 1.1.1.1 2003/09/11 18:58:23 lukem Exp $
+
+FILESDIR=	${X11FONTDIR}/${ENCDIR}
+.PATH:  	${X11SRCDIR.xc}/fonts/${ENCDIR}
+
+
+FILES+=		${GZFILES}
+CLEANFILES+=	${GZFILES}
+CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
+
+.SUFFIXES: .enc .enc.gz
+.enc.enc.gz:
+	rm -f ${.TARGET}
+	gzip -9fc ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+
+
+realall: ${FILES}
+
+
+MKFONTDIRDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontdir && ${PRINTOBJDIR}
+MKFONTDIR=	${MKFONTDIRDIR}/mkfontdir
+
+afterinstall:
+	(cd ${DESTDIR}/${FILESDIR} && \
+	    rm -f encodings.dir ; \
+	    ${MKFONTDIR} -n -r -p ${X11FONTDIR}/${ENCDIR}/ -e . ${ENCARGS} . ; \
+	)
+	echo ".${FILESDIR}/encodings.dir type=file mode=0644 uname=root gname=wheel" \
+	    | ${METALOG.add}
+
