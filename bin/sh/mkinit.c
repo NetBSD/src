@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkinit.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mkinit.c,v 1.10 1994/12/04 07:12:20 cgd Exp $";
+static char *rcsid = "$Id: mkinit.c,v 1.11 1994/12/23 13:22:13 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -60,6 +60,8 @@ static char *rcsid = "$Id: mkinit.c,v 1.10 1994/12/04 07:12:20 cgd Exp $";
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -528,7 +530,6 @@ ckmalloc(nbytes)
 	int nbytes;
 {
 	register char *p;
-	char *malloc();
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");

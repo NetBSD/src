@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mknodes.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mknodes.c,v 1.8 1994/12/04 07:12:22 cgd Exp $";
+static char *rcsid = "$Id: mknodes.c,v 1.9 1994/12/23 13:22:14 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,8 @@ static char *rcsid = "$Id: mknodes.c,v 1.8 1994/12/04 07:12:22 cgd Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 #define MAXTYPES 50		/* max number of node types */
@@ -440,7 +442,6 @@ savestr(s)
 	char *s;
 	{
 	register char *p;
-	char *malloc();
 
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");
