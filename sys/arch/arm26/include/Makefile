@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/11/23 20:43:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12 2001/11/23 21:23:33 thorpej Exp $
 
 KDIR=	/sys/arch/arm26/include
 INCSDIR= /usr/include/arm26
@@ -18,7 +18,6 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
-	undefined.h \
 	varargs.h vmparam.h
 
 .include <bsd.kinc.mk>
