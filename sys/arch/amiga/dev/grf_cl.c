@@ -169,14 +169,20 @@ grfclmatch(pdp, cfp, auxp)
 	if (cltype == 0) {
 		switch (zap->manid) {
 		case PICASSO:
+			if (zap->prodid != 12 && zap->prodid != 11)
+				return (0);
 			regprod = 12;
 			fbprod = 11;
 			break;
 		case SPECTRUM:
+			if (zap->prodid != 2 && zap->prodid != 1)
+				return (0);
 			regprod = 2;
 			fbprod = 1;
 			break;
 		case PICCOLO:
+			if (zap->prodid != 6 && zap->prodid != 5)
+				return (0);
 			regprod = 6;
 			fbprod = 5;
 			break;
