@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.50 2003/03/04 01:06:38 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.51 2003/05/29 20:22:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.50 2003/03/04 01:06:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.51 2003/05/29 20:22:31 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,16 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
+#if defined(MPACPI) && defined(MPACPI_SCANPCI)
+		if (mpacpi_active)
+			mpacpi_scan_pci(self, &mba.mba_pba, mainbus_print);
+		else
+#endif
+#if defined(MPBIOS) && defined(MPBIOS_SCANPCI)
+		if (mpbios_scanned != 0)
+			mpbios_scan_pci(self, &mba.mba_pba, mainbus_print);
+		else
+#endif
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
 #endif
