@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.139 2003/11/07 14:52:28 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.140 2003/11/07 17:55:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.139 2003/11/07 14:52:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.140 2003/11/07 17:55:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -444,12 +444,14 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	int error;
 	struct vnode *vp;
 	struct inode *ip;
-	daddr_t odaddr, ooff;
-	struct indir a[NIADDR], *ap;
+#ifdef DEBUG_LFS_RFW
+	daddr_t odaddr;
+	struct indir a[NIADDR];
+	int num;
+	int i;
+#endif /* DEBUG_LFS_RFW */
 	struct buf *bp;
 	SEGUSE *sup;
-	int num;
-	int bb;
 
 	KASSERT(lbn >= 0);	/* no indirect blocks */
 
@@ -457,7 +459,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 #ifdef DEBUG_LFS_RFW
 		printf("update_meta: ino %d: lfs_rf_valloc returned %d\n", ino,
 		       error);
-#endif
+#endif /* DEBUG_LFS_RFW */
 		return error;
 	}
 
@@ -500,89 +502,28 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 		}
 	}
 
-	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
-	if (error) {
-#ifdef DEBUG_LFS_RFW
-		printf("update_meta: ufs_bmaparray returned %d\n", error);
-#endif
-		vput(vp);
-		return error;
-	}
+	lfs_update_single(fs, NULL, vp, lbn, ndaddr, size);
 
-	bb = fragstofsb(fs, numfrags(fs, size));
-	switch (num) {
-	    case 0:
-		ooff = ip->i_ffs1_db[lbn];
-		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += bb;
-		else {
-			/* possible fragment truncation or extension */
-			int obb = btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs1_blocks += (bb - obb);
-		}
-		ip->i_ffs1_db[lbn] = ndaddr;
-		break;
-	    case 1:
-		panic("update_meta: indirect block?\n");
-		/* NOTREACHED */
-	    default:
-#ifdef DIAGNOSTIC
-		{
-			int i;
-
-			for (i = num - 1; i > 0; i--)
-				if (a[i].in_exists == 0)
-					panic("update_meta: "
-					    "no indirect block lv=%d\n", i);
-		}
-#endif /* DIAGNOSTIC */
-		KASSERT(ip->i_ffs1_ib[a[0].in_off] != 0);
-		ap = &a[num - 1];
-		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
-			panic("update_meta: bread bno %lld",
-			    (long long)ap->in_lbn);
-
-		/* XXX ondisk32 */
-		ooff = ((int32_t *)bp->b_data)[ap->in_off];
-		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += bb;
-		/* XXX ondisk32 */
-		((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
-		(void) VOP_BWRITE(bp);
-	}
-
-	/* as we did balloc above, the block should be allocated. */
-	KASSERT(ooff != 0);
-
-	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
-
-	/* Update segment usage information. */
-	if (odaddr > 0) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, odaddr)), bp);
-#ifdef DIAGNOSTIC
-		if (sup->su_nbytes < size) {
-			panic("update_meta: negative bytes "
-			      "(segment %" PRIu32 " short by %ld)\n",
-			      dtosn(fs, dbtofsb(fs, odaddr)), (long)size - sup->su_nbytes);
-			sup->su_nbytes = size;
-		}
-#endif
-		sup->su_nbytes -= size;
-		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, odaddr)), bp);
-	}
 	LFS_SEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 	sup->su_nbytes += size;
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 
-	KASSERT(ip->i_lfs_effnblks >= ip->i_ffs1_blocks);
+	/* differences here should be due to UNWRITTEN indirect blocks. */
+	KASSERT((lblkno(fs, ip->i_size) > NDADDR &&
+	    ip->i_lfs_effnblks == ip->i_ffs1_blocks) ||
+	    ip->i_lfs_effnblks >= ip->i_ffs1_blocks);
 
 #ifdef DEBUG_LFS_RFW
 	/* Now look again to make sure it worked */
 	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
+	for (i = num; i > 0; i--) {
+		if (!a[i].in_exists)
+			panic("update_meta: absent %d lv indirect block", i);
+	}
 	if (dbtofsb(fs, odaddr) != ndaddr)
 		printf("update_meta: failed setting ino %d lbn %" PRId64
 		    " to %" PRId64 "\n", ino, lbn, ndaddr);
-#endif
+#endif /* DEBUG_LFS_RFW */
 	vput(vp);
 	return 0;
 }
