@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.25 1995/11/17 23:31:12 gwr Exp $
+#	$NetBSD: GENERIC,v 1.26 1996/02/20 22:03:20 gwr Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -53,7 +53,7 @@ options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
 options 	DIAGNOSTIC
-options 	SCSIDEBUG
+#options 	SCSIDEBUG
 
 config		netbsd swap generic
 
