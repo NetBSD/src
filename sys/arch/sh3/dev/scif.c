@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.37 2004/10/19 02:12:21 uwe Exp $ */
+/*	$NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.37 2004/10/19 02:12:21 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.38 2004/12/13 02:14:13 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -267,6 +267,8 @@ CFATTACH_DECL(scif, sizeof(struct scif_softc),
     scif_match, scif_attach, NULL, NULL);
 
 extern struct cfdriver scif_cd;
+
+static int scif_attached;
 
 dev_type_open(scifopen);
 dev_type_close(scifclose);
@@ -445,19 +447,11 @@ scif_getc(void)
 
 }
 
-#if 0
-#define	SCIF_MAX_UNITS 2
-#else
-#define	SCIF_MAX_UNITS 1
-#endif
-
-
 static int
 scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_name, "scif")
-	    || cfp->cf_unit >= SCIF_MAX_UNITS)
+	if (strcmp(cfp->cf_name, "scif") || scif_attached)
 		return 0;
 
 	return 1;
@@ -468,6 +462,8 @@ scif_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct scif_softc *sc = (struct scif_softc *)self;
 	struct tty *tp;
+
+	scif_attached = 1;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */

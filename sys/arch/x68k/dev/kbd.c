@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.20 2003/09/28 21:14:41 cl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.21 2004/12/13 02:14:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.20 2003/09/28 21:14:41 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.21 2004/12/13 02:14:13 chs Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -84,6 +84,8 @@ static void kbdattach	__P((struct device *, struct device *, void *));
 CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
     kbdmatch, kbdattach, NULL, NULL);
 
+static int kbd_attached;
+
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);
 dev_type_read(kbdread);
@@ -104,7 +106,7 @@ kbdmatch(parent, cf, aux)
 {
 	if (strcmp(aux, "kbd") != 0)
 		return (0);
-	if (cf->cf_unit != 0)
+	if (kbd_attached)
 		return (0);
 
 	return (1);
@@ -118,6 +120,8 @@ kbdattach(parent, self, aux)
 	struct kbd_softc *k = (void*) self;
 	struct mfp_softc *mfp = (void*) parent;
 	int s = spltty();
+
+	kbd_attached = 1;
 
 	/* MFP interrupt #12 is for USART receive buffer full */
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
