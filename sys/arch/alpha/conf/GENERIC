@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.178 2001/01/10 17:32:08 nathanw Exp $
+# $NetBSD: GENERIC,v 1.179 2001/01/16 03:38:22 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.178 $"
+#ident 		"GENERIC-$Revision: 1.179 $"
 
 maxusers 32
 
@@ -426,6 +426,9 @@ ucom*	at uftdi? portno ?
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

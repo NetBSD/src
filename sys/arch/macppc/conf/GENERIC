@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.90 2001/01/08 17:35:29 nathanw Exp $
+#	$NetBSD: GENERIC,v 1.91 2001/01/16 03:38:23 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 maxusers	32
 
@@ -274,6 +274,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
