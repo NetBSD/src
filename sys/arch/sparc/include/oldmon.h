@@ -31,7 +31,7 @@
  *
  *	from: Sprite /cdrom/src/kernel/Cvsroot/kernel/mach/sun3.md/machMon.h,v
  *	    9.1 90/10/03 13:52:34 mgbaker Exp SPRITE (Berkeley)
- *	$Id: oldmon.h,v 1.1 1994/08/08 05:43:58 deraadt Exp $
+ *	$Id: oldmon.h,v 1.2 1994/08/20 01:20:59 deraadt Exp $
  */
 #ifndef _MACHINE_OLDMON_H
 #define _MACHINE_OLDMON_H
@@ -102,10 +102,10 @@ struct om_vector {
  	u_long	*memorySize;		/* Usable memory in bytes */
 
 	/* Single-character input and output */
-	u_char	(*getChar)();		/* Get char from input source */
-	int	(*putChar)();		/* Put char to output sink */
-	int	(*mayGet)();		/* Maybe get char, or -1 */
-	int	(*mayPut)();		/* Maybe put char, or -1 */
+	int	(*getChar)(void);	/* Get char from input source */
+	void	(*putChar)(int);	/* Put char to output sink */
+	int	(*mayGet)(void);	/* Maybe get char, or -1 */
+	int	(*mayPut)(int);		/* Maybe put char, or -1 */
 	u_char	*echo;			/* Should getchar echo? */
 	u_char	*inSource;		/* Input source selector */
 	u_char	*outSink;		/* Output sink selector */
@@ -130,10 +130,10 @@ struct om_vector {
 	int	(*fbWriteChar)();	/* Write a character to FB */
 	int	*fbAddr;		/* Address of frame buffer */
 	char	**font;			/* Font table for FB */
-	int	(*fbWriteStr)();	/* Quickly write string to FB */
+	void	(*fbWriteStr)(char *, int); /* Quickly write string to FB */
 
 	/* Reboot interface routine -- resets and reboots system. */
-	int	(*reBoot)();		/* e.g. reBoot("xy()vmunix") */
+	void	(*reBoot)(char *);	/* e.g. reBoot("xy()vmunix") */
 
 	/* Line input and parsing */
 	u_char	*lineBuf;		/* The line input buffer */
@@ -155,7 +155,7 @@ struct om_vector {
 
 	/* Non-maskable interrupt  (nmi) information */ 
 	int	(*nmiAddr)();		/* Addr for level 7 vector */
-	int	(*abortEntry)();	/* Entry for keyboard abort */
+	void	(*abortEntry)(void);	/* Entry for keyboard abort */
 	int	*nmiClock;		/* Counts up in msec */
 
 	/* Frame buffer type: see <machine/fbio.h> */
@@ -173,7 +173,7 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	int	(*exitToMon)();		/* Exit from user program */
+	__dead void (*exitToMon)(void);	/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)();	/* Set seg in any context */
 	void	(**vector_cmd)();	/* V2: Handler for 'v' cmd */
