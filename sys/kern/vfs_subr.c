@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.224 2004/05/02 12:21:02 pk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.225 2004/05/06 22:01:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.224 2004/05/02 12:21:02 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.225 2004/05/06 22:01:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -565,8 +565,13 @@ getnewvnode(tag, mp, vops, vpp)
 		simple_lock_init(&vp->v_interlock);
 		uobj = &vp->v_uobj;
 		uobj->pgops = &uvm_vnodeops;
-		uobj->uo_npages = 0;
 		TAILQ_INIT(&uobj->memq);
+		/*
+		 * done by memset() above.
+		 *	uobj->uo_npages = 0;
+		 *	LIST_INIT(&vp->v_nclist);
+		 *	LIST_INIT(&vp->v_dnclist);
+		 */
 	} else {
 		vp = getcleanvnode(p);
 		/*
@@ -596,7 +601,8 @@ getnewvnode(tag, mp, vops, vpp)
 	vp->v_type = VNON;
 	vp->v_vnlock = &vp->v_lock;
 	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
-	cache_purge(vp);
+	KASSERT(LIST_EMPTY(&vp->v_nclist));
+	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
