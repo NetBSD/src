@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.8 2002/04/09 01:47:34 thorpej Exp $	*/
+/*	$NetBSD: ex_usage.c,v 1.9 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -122,7 +122,7 @@ ex_usage(sp, cmdp)
 				name = "^D";
 			else if (F_ISSET(cp, E_NEWSCREEN)) {
 				nb[0] = '[';
-				nb[1] = toupper(cp->name[0]);
+				nb[1] = toupper((unsigned char)cp->name[0]);
 				nb[2] = cp->name[0];
 				nb[3] = ']';
 				for (name = cp->name + 1,

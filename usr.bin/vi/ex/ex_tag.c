@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.14 2003/09/09 21:03:15 erh Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.15 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -965,7 +965,7 @@ ctag_search(sp, search, slen, tag)
 	 * used a line number, not a search string.  I got complaints, so
 	 * people are still using the format.  POSIX 1003.2 permits it.
 	 */
-	if (isdigit(search[0])) {
+	if (isdigit((unsigned char)search[0])) {
 		m.lno = atoi(search);
 		if (!db_exist(sp, m.lno)) {
 			tag_msg(sp, TAG_BADLNO, tag);
@@ -1027,27 +1027,27 @@ getentry(buf, tag, file, line)
 {
 	char *p = buf;
 
-	for (*tag = p; *p && !isspace(*p); p++)		/* tag name */
+	for (*tag = p; *p && !isspace((unsigned char)*p); p++)		/* tag name */
 		;
 	if (*p == 0)
 		goto err;
 	*p++ = 0;
-	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+	for (; *p && isspace((unsigned char)*p); p++)			/* (skip blanks) */
 		;
 	if (*p == 0)
 		goto err;
 	*line = p;					/* line no */
-	for (*line = p; *p && !isspace(*p); p++)
+	for (*line = p; *p && !isspace((unsigned char)*p); p++)
 		;
 	if (*p == 0)
 		goto err;
 	*p++ = 0;
-	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+	for (; *p && isspace((unsigned char)*p); p++)			/* (skip blanks) */
 		;
 	if (*p == 0)
 		goto err;
 	*file = p;					/* file name */
-	for (*file = p; *p && !isspace(*p); p++)
+	for (*file = p; *p && !isspace((unsigned char)*p); p++)
 		;
 	if (*p == 0)
 		goto err;

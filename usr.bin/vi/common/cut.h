@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.h,v 1.3 2001/10/20 10:04:49 aymeric Exp $	*/
+/*	$NetBSD: cut.h,v 1.4 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,7 +66,7 @@ struct _text {				/* Text: a linked list of lines. */
  */
 #define	CBNAME(sp, cbp, nch) {						\
 	CHAR_T L__name;							\
-	L__name = isupper(nch) ? tolower(nch) : (nch);			\
+	L__name = isupper((unsigned char)nch) ? tolower((unsigned char)nch) : (nch);			\
 	for (cbp = sp->gp->cutq.lh_first;				\
 	    cbp != NULL; cbp = cbp->q.le_next)				\
 		if (cbp->name == L__name)				\

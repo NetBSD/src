@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.7 2003/01/20 16:10:51 aymeric Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.8 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -132,18 +132,18 @@ ex_cscope(sp, cmdp)
 
 	/* Skip leading whitespace. */
 	for (p = cmdp->argv[0]->bp, i = cmdp->argv[0]->len; i > 0; --i, ++p)
-		if (!isspace(*p))
+		if (!isspace((unsigned char)*p))
 			break;
 	if (i == 0)
 		goto usage;
 
 	/* Skip the command to any arguments. */
 	for (cmd = p; i > 0; --i, ++p)
-		if (isspace(*p))
+		if (isspace((unsigned char)*p))
 			break;
 	if (*p != '\0') {
 		*p++ = '\0';
-		for (; *p && isspace(*p); ++p);
+		for (; *p && isspace((unsigned char)*p); ++p);
 	}
 
 	if ((ccp = lookup_ccmd(cmd)) == NULL) {

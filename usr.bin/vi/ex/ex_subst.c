@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.15 2004/02/13 17:56:18 wiz Exp $	*/
+/*	$NetBSD: ex_subst.c,v 1.16 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -939,7 +939,7 @@ re_compile(sp, ptrn, plen, ptrnp, lenp, rep, flags)
 			reflags |= REG_ICASE;
 		if (O_ISSET(sp, O_ICLOWER)) {
 			for (p = ptrn, len = plen; len > 0; ++p, --len)
-				if (isupper(*p))
+				if (isupper((unsigned char)*p))
 					break;
 			if (len == 0)
 				reflags |= REG_ICASE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_argv.c,v 1.10 2002/04/09 01:47:32 thorpej Exp $	*/
+/*	$NetBSD: ex_argv.c,v 1.11 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -191,7 +191,7 @@ argv_exp2(sp, excp, cmd, cmdlen)
 		n = 0;
 	else {
 		for (p = mp = O_STR(sp, O_SHELLMETA); *p != '\0'; ++p)
-			if (isblank(*p) || isalnum(*p))
+			if (isblank(*p) || isalnum((unsigned char)*p))
 				break;
 		p = bp + SHELLOFFSET;
 		n = len - SHELLOFFSET;
@@ -201,8 +201,8 @@ argv_exp2(sp, excp, cmd, cmdlen)
 					break;
 		} else
 			for (; n > 0; --n, ++p)
-				if (!isblank(*p) &&
-				    !isalnum(*p) && strchr(mp, *p) != NULL)
+				if (!isblank(*p) && !isalnum((unsigned char)*p)
+				    && strchr(mp, *p) != NULL)
 					break;
 	}
 

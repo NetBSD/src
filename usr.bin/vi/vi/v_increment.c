@@ -1,4 +1,4 @@
-/*	$NetBSD: v_increment.c,v 1.8 2002/04/09 01:47:35 thorpej Exp $	*/
+/*	$NetBSD: v_increment.c,v 1.9 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_increment.c	10.12 (Berkeley) 3/19/96";
 #else
-__RCSID("$NetBSD: v_increment.c,v 1.8 2002/04/09 01:47:35 thorpej Exp $");
+__RCSID("$NetBSD: v_increment.c,v 1.9 2004/11/05 19:50:13 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ v_increment(sp, vp)
 	 * implies moving the cursor to its beginning, if we moved, refresh
 	 * now.
 	 */
-	for (beg = vp->m_start.cno; beg < len && isspace(p[beg]); ++beg);
+	for (beg = vp->m_start.cno; beg < len && isspace((unsigned char)p[beg]); ++beg);
 	if (beg >= len)
 		goto nonum;
 	if (beg != vp->m_start.cno) {
@@ -107,9 +107,9 @@ v_increment(sp, vp)
 	}
 
 #undef	ishex
-#define	ishex(c)	(isdigit(c) || strchr("abcdefABCDEF", c))
+#define	ishex(c)	(isdigit((unsigned char)c) || strchr("abcdefABCDEF", c))
 #undef	isoctal
-#define	isoctal(c)	(isdigit(c) && (c) != '8' && (c) != '9')
+#define	isoctal(c)	(isdigit((unsigned char)c) && (c) != '8' && (c) != '9')
 
 	/*
 	 * Look for 0[Xx], or leading + or - signs, guess at the base.
@@ -135,13 +135,13 @@ v_increment(sp, vp)
 		base = 10;
 		end = beg + 1;
 		ntype = fmt[SDEC];
-		if (!isdigit(p[end]))
+		if (!isdigit((unsigned char)p[end]))
 			goto nonum;
 	} else {
 decimal:	base = 10;
 		end = beg;
 		ntype = fmt[DEC];
-		if (!isdigit(p[end])) {
+		if (!isdigit((unsigned char)p[end])) {
 nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			return (1);
 		}
@@ -160,7 +160,7 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			}
 			break;
 		case 10:
-			if (isdigit(p[end]))
+			if (isdigit((unsigned char)p[end]))
 				continue;
 			break;
 		case 16:

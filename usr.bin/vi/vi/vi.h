@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.h,v 1.3 2001/03/31 11:37:52 aymeric Exp $	*/
+/*	$NetBSD: vi.h,v 1.4 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
  */
 
 /* Definition of a vi "word". */
-#define	inword(ch)	(isalnum(ch) || (ch) == '_')
+#define	inword(ch)	(isalnum((unsigned char)ch) || (ch) == '_')
 
 typedef struct _vikeys VIKEYS;
 
