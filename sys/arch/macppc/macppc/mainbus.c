@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1998/10/15 14:39:53 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1999/05/05 04:40:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -90,13 +90,12 @@ mainbus_attach(parent, self, aux)
 
 	pci_init();
 
-#if NPCI > 0
-	for (n = 0; n < 2; n++)
+	for (n = 0; n < 2; n++) {
 		if (pci_bridges[n].addr) {
 			bzero(&pba, sizeof(pba));
 			pba.pba_busname = "pci";
 			pba.pba_iot = pci_bridges[n].iot;
-			pba.pba_memt = (bus_space_tag_t)0;
+			pba.pba_memt = pci_bridges[n].memt;
 			pba.pba_dmat = &pci_bus_dma_tag;
 			pba.pba_bus = pci_bridges[n].bus;
 			pba.pba_pc = pci_bridges[n].pc;
@@ -104,7 +103,7 @@ mainbus_attach(parent, self, aux)
 				PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 			config_found(self, &pba, mainbus_print);
 		}
-#endif
+	}
 }
 
 int
