@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/03/15 16:25:58 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/24 08:18:47 lukem Exp $
 #	install these sources in /usr/share/sendmail
 
 .include <bsd.own.mk>
@@ -15,5 +15,5 @@ SUBDIR=		domain feature hack m4 mailer ostype sh siteconfig
 
 all:
 
-.include <bsd.files.mk>
+.include <bsd.prog.mk>
 .include <bsd.subdir.mk>
