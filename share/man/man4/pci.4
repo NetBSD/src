@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.38 2000/11/08 21:40:24 ad Exp $
+.\"	$NetBSD: pci.4,v 1.39 2000/11/28 12:42:51 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -201,22 +201,24 @@ Cyclades-Z series multi-port serial interfaces.
 .Pp
 .Ss Audio devices
 .Bl -tag -width pcdisplay -offset indent
+.It auich
+Intel I/O Controller Hub integrated AC'97 audio device.
 .It auvia
-VIA VT82C686A integrated AC'97 sound device.
+VIA VT82C686A integrated AC'97 audio device.
 .It clcs
-Cirrus Logic CS4280 sound device.
+Cirrus Logic CS4280 audio device.
 .It cmpci
-C-Media CMI8x38 sound device.
+C-Media CMI8x38 audio device.
 .It eap
-Ensoniq AudioPCI sound device.
+Ensoniq AudioPCI audio device.
 .It eso
-ESS Solo-1 PCI AudioDrive sound device.
+ESS Solo-1 PCI AudioDrive audio device.
 .It fms
-Forte Media FM801 sound device.
+Forte Media FM801 audio device.
 .It neo
-NeoMagic MagicMedia 256 sound device.
+NeoMagic MagicMedia 256 audio device.
 .It sv
-S3 SonicVibes sound device.
+S3 SonicVibes audio device.
 .El
 .Pp
 .Ss Bridges
@@ -266,6 +268,7 @@ VGA graphics boards.
 .Xr adv 4 ,
 .Xr adw 4 ,
 .Xr ahc 4 ,
+.Xr auich 4 ,
 .Xr auvia 4 ,
 .Xr bha 4 ,
 .Xr bktr 4 ,
