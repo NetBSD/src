@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.h,v 1.2.4.1 1997/10/21 19:57:53 thorpej Exp $	*/
+/*	$NetBSD: rmt.h,v 1.2.4.2 1997/10/22 07:05:38 thorpej Exp $	*/
 
 /*
  *	rmt.h
@@ -42,16 +42,13 @@ __END_DECLS
 #define creat rmtcreat
 #define dup rmtdup
 #define fcntl rmtfcntl
-#undef fstat
 #define fstat rmtfstat
 #define ioctl rmtioctl
 #define isatty rmtisatty
 #define lseek rmtlseek
-#undef lstat
 #define lstat rmtlstat
 #define open rmtopen
 #define read rmtread
-#undef stat
 #define stat rmtstat
 #define write rmtwrite
 #endif /* __RMTLIB_PRIVATE */
