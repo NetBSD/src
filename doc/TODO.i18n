@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.2 2003/07/04 06:07:48 tshiozak Exp $
+# $NetBSD: TODO.i18n,v 1.3 2003/07/04 06:59:52 tshiozak Exp $
 
 NetBSD I18N support status / TODO
 
@@ -124,7 +124,7 @@ wcstoumax      s
 
 user tools
              status     spec            remarks
-iconv          s        SUSv3
+iconv          sm       SUSv3
 localedef      -        SUSv3
 locale         sm       SUSv3
 
