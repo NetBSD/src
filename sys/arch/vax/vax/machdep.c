@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.106 2000/07/26 11:55:55 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.107 2000/09/08 11:41:59 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -275,7 +275,6 @@ void
 setstatclockrate(hzrate)
 	int hzrate;
 {
-	panic("setstatclockrate");
 }
 
 void
