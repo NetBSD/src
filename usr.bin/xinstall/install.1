@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.17 1999/03/22 18:16:47 garbled Exp $
+.\"	$NetBSD: install.1,v 1.18 1999/08/01 05:02:06 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd install binaries
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl bcps
+.Op Fl Ubcps
 .Bk -words
 .Op Fl B Ar suffix
 .Ek
@@ -65,7 +65,7 @@
 .Ek
 .Ar file1 file2
 .Nm ""
-.Op Fl bcprs
+.Op Fl Ubcprs
 .Bk -words
 .Op Fl B Ar suffix
 .Ek
@@ -90,7 +90,8 @@
 .Ar file1 ...\&
 .Ar fileN directory
 .Nm ""
-.Fl pd
+.Op Fl Up
+.Fl d
 .Bk -words
 .Op Fl m Ar mode
 .Ek
@@ -217,6 +218,11 @@ directly. This flag implies -s.
 .It Fl d
 Create directories. 
 Missing parent directories are created as required.
+.It Fl U
+Indicate that install is running unpriviledged, and that it should not
+try to change the owner or the group of the destination.
+A future version of this file may log the owner/group information
+elsewhere; currently, it's just discarded.
 .El
 .Pp
 By default,
