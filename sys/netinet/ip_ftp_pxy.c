@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.5.2.1 1997/10/30 07:13:47 mrg Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.5.2.2 1997/11/17 16:33:04 mrg Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -123,9 +123,10 @@ nat_t *nat;
 	void	*savep;
 	nat_t	*ipn;
 	struct	in_addr	swip;
+	mb_t *m = *(mb_t **)fin->fin_mp;
 
 #if	SOLARIS
-	mblk_t *m1, *m = *(mblk_t **)fin->fin_mp;
+	mb_t *m1;
 
 	/* skip any leading M_PROTOs */
 	while(m && (MTYPE(m) != M_DATA))
@@ -136,8 +137,6 @@ nat_t *nat;
 	bzero(portbuf, sizeof(portbuf));
 	copyout_mblk(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #else
-	struct mbuf *m = *(struct mbuf **)fin->fin_mp;
-
 	dlen = mbufchainlen(m) - off;
 	bzero(portbuf, sizeof(portbuf));
 	m_copydata(m, off, MIN(sizeof(portbuf), dlen), portbuf);
@@ -233,12 +232,14 @@ nat_t *nat;
 	 */
 	savep = fin->fin_dp;
 	fin->fin_dp = (char *)tcp2;
+	bzero((char *)tcp2, sizeof(*tcp2));
 	tcp2->th_sport = htons(a5 << 8 | a6);
 	tcp2->th_dport = htons(20);
 	swip = ip->ip_src;
 	ip->ip_src = nat->nat_inip;
 	if ((ipn = nat_new(nat->nat_ptr, ip, fin, IPN_TCP, NAT_OUTBOUND)))
 		ipn->nat_age = fr_defnatage;
+	(void) fr_addstate(ip, fin, FR_INQUE|FR_PASS|FR_QUICK|FR_KEEPSTATE);
 	ip->ip_src = swip;
 	fin->fin_dp = (char *)savep;
 
