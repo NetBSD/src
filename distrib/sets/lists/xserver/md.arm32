@@ -3,6 +3,7 @@
 ./usr/X11R6/bin/XF86_Mono
 ./usr/X11R6/bin/XF86_SVGA
 ./usr/X11R6/bin/XF86_VGA16
+./usr/X11R6/bin/Xarm32VIDC
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/Xwrapper
