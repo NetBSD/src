@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.251 2004/10/25 06:13:47 dan Exp $
+.\"	$NetBSD: options.4,v 1.252 2004/10/27 00:01:34 dan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -973,9 +973,6 @@ Such systems are likely to see the most benefit from this option.
 Finally, the performance interaction of this option with ffs soft
 dependencies can be subtle, as that mechanism can drastically alter
 the workload for filesystem metadata writes.
-.Em NOTE :
-NEW_BUFQ_STRATEGY is not yet proven to be stable, so use it at your
-own risk.
 .It Cd options LKM
 Enable loadable kernel modules.
 See
