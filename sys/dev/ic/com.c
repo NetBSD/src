@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.159.2.1 1999/04/19 20:37:57 perry Exp $	*/
+/*	$NetBSD: com.c,v 1.159.2.2 2000/01/05 23:44:41 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2193,7 +2193,7 @@ com_common_putc(iot, ioh, c)
 }
 
 /*
- * Initialize UART to known state.
+ * Initialize UART for use as console or KGDB line.
  */
 int
 cominit(iot, iobase, rate, frequency, cflag, iohp)
@@ -2215,7 +2215,7 @@ cominit(iot, iobase, rate, frequency, cflag, iohp)
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, cflag2lcr(cflag));
-	bus_space_write_1(iot, ioh, com_mcr, 0);
+	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	bus_space_write_1(iot, ioh, com_ier, 0);
