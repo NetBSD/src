@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.110.2.7 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.110.2.8 2005/02/24 17:22:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.7 2005/02/15 21:33:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.8 2005/02/24 17:22:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,8 +549,8 @@ int
 finishdup(struct lwp *l, int old, int new, register_t *retval)
 {
 	struct proc *p = l->l_proc;
-	struct file *fp, *delfp;
 	struct filedesc	*fdp;
+	struct file	*fp, *delfp;
 
 	fdp = p->p_fd;
 
@@ -601,8 +601,8 @@ int
 fdrelease(struct lwp *l, int fd)
 {
 	struct proc *p = l->l_proc;
-	struct file **fpp, *fp;
 	struct filedesc	*fdp;
+	struct file	**fpp, *fp;
 
 	fdp = p->p_fd;
 	simple_lock(&fdp->fd_slock);
