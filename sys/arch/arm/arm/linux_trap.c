@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1.4.2 2002/02/28 04:07:18 nathanw Exp $ */
+/*	$NetBSD: linux_trap.c,v 1.1.4.3 2002/05/04 04:16:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,6 @@
 #include <compat/linux/common/linux_exec.h>
 
 void
-linux_trapsignal(struct proc *p, int signo, u_long type) {
-	trapsignal(p, signo, type);
+linux_trapsignal(struct lwp *l, int signo, u_long type) {
+	trapsignal(l, signo, type);
 }
