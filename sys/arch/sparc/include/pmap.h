@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70.2.1 2004/04/08 21:01:57 jdc Exp $ */
+/*	$NetBSD: pmap.h,v 1.70.2.2 2004/04/24 18:26:05 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,7 +173,8 @@ struct regmap {
 struct segmap {
 	int	*sg_pte;		/* points to NPTESG PTEs */
 	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
-	u_char	sg_npte;		/* number of valid PTEs per seg */
+	u_char	sg_npte;		/* number of valid PTEs in sg_pte
+					 * (not used for 4m/4d kernel_map) */
 	int8_t	sg_nwired;		/* number of wired pages */
 };
 
@@ -237,9 +238,8 @@ extern psize_t		vm_num_phys;
 #define PMAP_IOENC(io)	(CPU_HAS_SRMMU ? PMAP_IOENC_SRMMU(io) \
 				       : PMAP_IOENC_4(io))
 
-int             pmap_dumpsize __P((void));
-int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
-                                 daddr_t));
+int	pmap_dumpsize(void);
+int	pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
@@ -250,71 +250,70 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 /* FUNCTION DECLARATIONS FOR COMMON PMAP MODULE */
 
-void		pmap_activate __P((struct lwp *));
-void		pmap_deactivate __P((struct lwp *));
-void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
-void		pmap_prefer __P((vaddr_t, vaddr_t *));
-int		pmap_pa_exists __P((paddr_t));
-void		pmap_unwire __P((pmap_t, vaddr_t));
-void		pmap_collect __P((pmap_t));
-void		pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
-pmap_t		pmap_create __P((void));
-void		pmap_destroy __P((pmap_t));
-void		pmap_init __P((void));
-vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
-paddr_t		pmap_phys_address __P((int));
-void		pmap_reference __P((pmap_t));
-void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
+void		pmap_activate(struct lwp *);
+void		pmap_deactivate(struct lwp *);
+void		pmap_bootstrap(int nmmu, int nctx, int nregion);
+void		pmap_prefer(vaddr_t, vaddr_t *);
+int		pmap_pa_exists(paddr_t);
+void		pmap_unwire(pmap_t, vaddr_t);
+void		pmap_collect(pmap_t);
+void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
+pmap_t		pmap_create(void);
+void		pmap_destroy(pmap_t);
+void		pmap_init(void);
+vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
+paddr_t		pmap_phys_address(int);
+void		pmap_reference(pmap_t);
+void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
 #define		pmap_update(pmap)		/* nothing (yet) */
-void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
+void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 #ifdef PMAP_GROWKERNEL
-vaddr_t		pmap_growkernel __P((vaddr_t));
+vaddr_t		pmap_growkernel(vaddr_t);
 #endif
-void		pmap_redzone __P((void));
-void		kvm_uncache __P((caddr_t, int));
+void		pmap_redzone(void);
+void		kvm_uncache(caddr_t, int);
 struct user;
-int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
-void		pmap_writetext __P((unsigned char *, int));
-void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
+int		mmu_pagein(struct pmap *pm, vaddr_t, int);
+void		pmap_writetext(unsigned char *, int);
+void		pmap_globalize_boot_cpuinfo(struct cpu_info *);
 void		pmap_remove_all(struct pmap *pm);
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
 #if defined(SUN4) || defined(SUN4C)
-boolean_t	pmap_clear_modify4_4c __P((struct vm_page *));
-boolean_t	pmap_clear_reference4_4c __P((struct vm_page *));
-void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
-int		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-		    int));
-boolean_t	pmap_extract4_4c __P((pmap_t, vaddr_t, paddr_t *));
-boolean_t	pmap_is_modified4_4c __P((struct vm_page *));
-boolean_t	pmap_is_referenced4_4c __P((struct vm_page *));
-void		pmap_kenter_pa4_4c __P((vaddr_t, paddr_t, vm_prot_t));
-void		pmap_kremove4_4c __P((vaddr_t, vsize_t));
-void		pmap_kprotect4_4c __P((vaddr_t, vsize_t, vm_prot_t));
-void		pmap_page_protect4_4c __P((struct vm_page *, vm_prot_t));
-void		pmap_protect4_4c __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-void		pmap_zero_page4_4c __P((paddr_t));
+boolean_t	pmap_clear_modify4_4c(struct vm_page *);
+boolean_t	pmap_clear_reference4_4c(struct vm_page *);
+void		pmap_copy_page4_4c(paddr_t, paddr_t);
+int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+boolean_t	pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
+boolean_t	pmap_is_modified4_4c(struct vm_page *);
+boolean_t	pmap_is_referenced4_4c(struct vm_page *);
+void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kremove4_4c(vaddr_t, vsize_t);
+void		pmap_kprotect4_4c(vaddr_t, vsize_t, vm_prot_t);
+void		pmap_page_protect4_4c(struct vm_page *, vm_prot_t);
+void		pmap_protect4_4c(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+void		pmap_zero_page4_4c(paddr_t);
 #endif /* defined SUN4 || defined SUN4C */
 
 /* SIMILAR DECLARATIONS FOR SUN4M/SUN4D MODULE */
 
 #if defined(SUN4M) || defined(SUN4D)
-boolean_t	pmap_clear_modify4m __P((struct vm_page *));
-boolean_t	pmap_clear_reference4m __P((struct vm_page *));
-void		pmap_copy_page4m __P((paddr_t, paddr_t));
+boolean_t	pmap_clear_modify4m(struct vm_page *);
+boolean_t	pmap_clear_reference4m(struct vm_page *);
+void		pmap_copy_page4m(paddr_t, paddr_t);
 void		pmap_copy_page_viking_mxcc(paddr_t, paddr_t);
 void		pmap_copy_page_hypersparc(paddr_t, paddr_t);
-int		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
-boolean_t	pmap_is_modified4m __P((struct vm_page *));
-boolean_t	pmap_is_referenced4m __P((struct vm_page *));
-void		pmap_kenter_pa4m __P((vaddr_t, paddr_t, vm_prot_t));
-void		pmap_kremove4m __P((vaddr_t, vsize_t));
-void		pmap_kprotect4m __P((vaddr_t, vsize_t, vm_prot_t));
-void		pmap_page_protect4m __P((struct vm_page *, vm_prot_t));
-void		pmap_protect4m __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
-void		pmap_zero_page4m __P((paddr_t));
+int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+boolean_t	pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
+boolean_t	pmap_is_modified4m(struct vm_page *);
+boolean_t	pmap_is_referenced4m(struct vm_page *);
+void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kremove4m(vaddr_t, vsize_t);
+void		pmap_kprotect4m(vaddr_t, vsize_t, vm_prot_t);
+void		pmap_page_protect4m(struct vm_page *, vm_prot_t);
+void		pmap_protect4m(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
+void		pmap_zero_page4m(paddr_t);
 void		pmap_zero_page_viking_mxcc(paddr_t);
 void		pmap_zero_page_hypersparc(paddr_t);
 #endif /* defined SUN4M || defined SUN4D */
@@ -349,18 +348,17 @@ void		pmap_zero_page_hypersparc(paddr_t);
 
 #else  /* must use function pointers */
 
-extern boolean_t(*pmap_clear_modify_p) __P((struct vm_page *));
-extern boolean_t(*pmap_clear_reference_p) __P((struct vm_page *));
-extern int	(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-		    int));
-extern boolean_t (*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
-extern boolean_t(*pmap_is_modified_p) __P((struct vm_page *));
-extern boolean_t(*pmap_is_referenced_p) __P((struct vm_page *));
-extern void	(*pmap_kenter_pa_p) __P((vaddr_t, paddr_t, vm_prot_t));
-extern void	(*pmap_kremove_p) __P((vaddr_t, vsize_t));
-extern void	(*pmap_kprotect_p) __P((vaddr_t, vsize_t, vm_prot_t));
-extern void	(*pmap_page_protect_p) __P((struct vm_page *, vm_prot_t));
-extern void	(*pmap_protect_p) __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
+extern boolean_t(*pmap_clear_modify_p)(struct vm_page *);
+extern boolean_t(*pmap_clear_reference_p)(struct vm_page *);
+extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+extern boolean_t (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+extern boolean_t(*pmap_is_modified_p)(struct vm_page *);
+extern boolean_t(*pmap_is_referenced_p)(struct vm_page *);
+extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+extern void	(*pmap_kremove_p)(vaddr_t, vsize_t);
+extern void	(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
+extern void	(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
+extern void	(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
 #define		pmap_clear_modify	(*pmap_clear_modify_p)
 #define		pmap_clear_reference	(*pmap_clear_reference_p)
