@@ -63,13 +63,14 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 #define	MAXINT	0x7fffffff
 
-#define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define	INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS && \
+			 (((vm_offset_t)(va)) < (USRSTACK - MAXSSIZ) || \
+			  ((vm_offset_t)(va)) >= USRSTACK))
 
-#define	printf	db_printf
 #define	get(addr, space) \
 		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
 
-#define	NREGISTERS	48
+#define	NREGISTERS	16
 
 struct stackpos {
 	 int	k_pc;
@@ -80,6 +81,7 @@ struct stackpos {
 	 int	k_flags;
 	 int	k_regloc[NREGISTERS];
 };
+
 #define FR_SAVFP	0
 #define FR_SAVPC	4
 #define K_CALLTRAMP	1	/* for k_flags: caller is __sigtramp */
@@ -104,9 +106,10 @@ stacktop(regs, sp)
 	sp->k_regloc[12] = (int) &regs->a4;
 	sp->k_regloc[13] = (int) &regs->a5;
 
-	sp->k_fp = db_get_value((db_addr_t) &regs->a6, sizeof(int), FALSE);
-	sp->k_pc = db_get_value((db_addr_t) &regs->pc, sizeof(int), FALSE);
+	sp->k_fp = get(&regs->a6, 0);
+	sp->k_pc = get(&regs->pc, 0);
 	sp->k_flags = 0;
+
 	findentry(sp);
 }
 
@@ -185,7 +188,7 @@ nextframe(sp, kerneltrace)
 		addr = get(sp->k_fp + sizeof(int) * 11, DSP);
 		sp->k_nargs = 0;
 #if DEBUG
-		printf("nextframe: sigcontext at 0x%X, signaled at 0x%X\n",
+		db_printf("nextframe: sigcontext at 0x%x, signaled at 0x%x\n",
 		    addr, sp->k_caller);
 #endif
 		errflg = 0;
@@ -194,7 +197,7 @@ nextframe(sp, kerneltrace)
 		if (addr == MAXINT) {
 			/* we don't know what registers are involved here--
 			   invalidate all */
-			for (i = 0; i < 14; i++)
+			for (i = 0; i < NREGISTERS; i++)
 				sp->k_regloc[i] = -1;
 		} else
 			findregs(sp, addr);
@@ -324,13 +327,13 @@ findentry(sp)
 
 					errflg = 0;
 #ifdef DEBUG
-					printf("Caller is sigtramp: signal is %d: entry is %x\n",
+					db_printf("Caller is sigtramp: signal is %d: entry is %x\n",
 					    signl, sp->k_entry);
 #endif
 				}
 #ifdef DEBUG
 				else
-				printf("Non-tramp jsr a0@\n");
+				db_printf("Non-tramp jsr a0@\n");
 #endif
 #endif	0
 			}
@@ -343,16 +346,23 @@ findentry(sp)
 		instruc = get(addr += 2, ISP);
 	if ((instruc & ADQMSK) == ADDQSP ||
 	    (instruc & ADQMSK) == ADDQWSP) {
-		val = (instruc >> (16+9)) & 07;
-		if (val == 0)
-			val = 8;
+		val = 0;
+		do {
+			int n;
+			n = (instruc >> (16+9)) & 07;
+			if (n == 0)
+				n = 8;
+			val += n;
+			instruc = get(addr += 2, ISP);
+		} while ((instruc & ADQMSK == ADDQSP) ||
+			 (instruc & ADQMSK == ADDQWSP));
 	} else if ((instruc & HIWORD) == ADDLSP)
 		val = get(addr + 2, ISP);
 	else if ((instruc & HIWORD) == ADDWSP ||
 		 (instruc & HIWORD) == LEASP)
 		val = instruc & LOWORD;
 	else
-		val = 0;
+		val = 20;
 	sp->k_nargs = val / 4;
 }
 
@@ -461,7 +471,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		
 		t_pcb = (pcb_t) get(&th->pcb, 0);
 		user_regs = (struct mc68020_saved_state *)
-		db_get_value((db_addr_t) &t_pcb->user_regs, sizeof(int), FALSE);
+		get(&t_pcb->user_regs, 0);
 		
 		stacktop(user_regs, &pos);
 
@@ -493,7 +503,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			if (name == 0)
 				name = "?";
 		}
-		printf("%s", name);
+		db_printf("%s", name);
 		if (pos.k_entry != MAXINT && name) {
 			char *	entry_name;
 			int	e_val;
@@ -502,23 +512,22 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			    &e_val);
 			if (entry_name != 0 && entry_name != name &&
 			    e_val != val) {
-				printf("(?)\n");
-				printf("%s", entry_name);
+				db_printf("(?)\n%s", entry_name);
 			}
 		}
-		printf("(");
+		db_printf("(");
 		regp = pos.k_fp + FR_SAVFP + 4;
 		if ((nargs = pos.k_nargs)) {
 			while (nargs--) {
-				printf("%X", get(regp += 4, DSP));
+				db_printf("%x", get(regp += 4, DSP));
 				if (nargs)
-					printf(",");
+					db_printf(",");
 			}
 		}
 		if (val == MAXINT)
-			printf(") at %X\n", pos.k_pc );
+			db_printf(") at %x\n", pos.k_pc);
 		else
-			printf(") + %X\n", val);
+			db_printf(") + %x\n", val);
 
 		/*
 		 * Stop tracing if frame ptr no longer points into kernel
