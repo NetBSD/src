@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.21 2002/10/02 04:55:51 thorpej Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.22 2003/01/01 00:28:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.21 2002/10/02 04:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.22 2003/01/01 00:28:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,9 +165,9 @@ gvpbusprint(void *auxp, const char *pnp)
 	 * doesn't support io yet.
 	 */
 	if (gap->prod == GVP_IOEXTEND)
-		printf("gio at %s", pnp);
+		aprint_normal("gio at %s", pnp);
 	else
-		printf("gtsc at %s", pnp);
+		aprint_normal("gtsc at %s", pnp);
 	return(UNCONF);
 }
 
