@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.187 2002/11/16 11:35:47 manu Exp $
+.\"	$NetBSD: options.4,v 1.188 2002/11/16 11:42:33 grant Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -299,7 +299,8 @@ are adjusted and some binaries which use
 to retrieve network details would not work properly.
 .It Cd options EXEC_MACHO
 On those architectures that support it, this adds support for running 
-Mach-O executables. This is currently limited to the i386 and powerpc 
+Mach-O executables.
+This is currently limited to the i386 and powerpc 
 ports of 
 .Nx .
 .It Cd options EXEC_ELF_NOTELESS
@@ -1894,7 +1895,7 @@ for details.
 .It Cd options KSTACK_CHECK_DR0
 Detect kernel stack overflow using DR0 register.
 This option uses DR0 register exclusively so you can't use DR0 register for
-other purpose (e.g.  hardware breakpoint) if you turn this on.
+other purpose (e.g. hardware breakpoint) if you turn this on.
 .El
 .Ss isa-specific Options
 Options specific to
