@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.4 2001/11/28 16:49:03 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.5 2002/01/06 22:42:41 deberg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,7 +452,7 @@ For stacked filesystems,
 will generally point to
 .Em v_vlock
 of the lowest file system.  Additionally, the implementation of the
-vnode lock is the repsonsibility of the individual file systems and
+vnode lock is the responsibility of the individual file systems and
 .Em v_vnlock
 may also be NULL indicating that a leaf node does not export a lock
 for vnode locking.  In this case, stacked file systems (such as
@@ -633,9 +633,9 @@ and
 are passed directly to
 .Xr VOP_ACCESS 9 .
 .It Fn checkalias "vp" "nvp_rdev" "mp"
-Check to se eif the new vnode
+Check to see if the new vnode
 .Fa vp
-represents a special device for which a another vnode represents the
+represents a special device for which another vnode represents the
 same device.  If such an aliases exists the existing contents and the
 aliased vnode are deallocated.  The caller is responsible for filling
 the new vnode with its new contents.
