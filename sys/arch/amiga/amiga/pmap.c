@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1996/05/09 20:30:46 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 1996/05/10 01:47:45 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -235,6 +235,8 @@ vm_offset_t	vm_first_phys;	/* PA of first managed page */
 vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
+TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
+int		pv_nfree;
 #if defined(M68040) || defined(M68060)
 static int	pmap_ishift;	/* segment table index shift */
 int		protostfree;	/* prototype (default) free ST map */
@@ -267,6 +269,9 @@ extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 static void amiga_protection_init __P((void));
 void pmap_check_wiring __P((char *, vm_offset_t));
 static void pmap_changebit __P((register vm_offset_t, int, boolean_t));
+struct pv_entry * pmap_alloc_pv __P((void));
+void pmap_free_pv __P((struct pv_entry *));
+
 #ifdef DEBUG            
 void pmap_pvdump __P((vm_offset_t));  
 #endif
@@ -680,6 +685,122 @@ pmap_virtual_space(startp, endp)
 #define pmap_page_index(pa) (pa_index(pa))
 #endif	/* MACHINE_NONCONTIG */
 
+struct pv_entry *
+pmap_alloc_pv()
+{
+	struct pv_page *pvp;
+	struct pv_entry *pv;
+	int i;
+
+	if (pv_nfree == 0) {
+		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
+		if (pvp == 0)
+			panic("pmap_alloc_pv: kmem_alloc() failed");
+		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
+		for (i = NPVPPG - 2; i; i--, pv++)
+			pv->pv_next = pv + 1;
+		pv->pv_next = 0;
+		pv_nfree += pvp->pvp_pgi.pgi_nfree = NPVPPG - 1;
+		TAILQ_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		pv = &pvp->pvp_pv[0];
+	} else {
+		--pv_nfree;
+		pvp = pv_page_freelist.tqh_first;
+		if (--pvp->pvp_pgi.pgi_nfree == 0) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		}
+		pv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+		if (pv == 0)
+			panic("pmap_alloc_pv: pgi_nfree inconsistent");
+#endif
+		pvp->pvp_pgi.pgi_freelist = pv->pv_next;
+	}
+	return pv;
+}
+
+void
+pmap_free_pv(pv)
+	struct pv_entry *pv;
+{
+	register struct pv_page *pvp;
+
+	pvp = (struct pv_page *) trunc_page(pv);
+	switch (++pvp->pvp_pgi.pgi_nfree) {
+	case 1:
+		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+	default:
+		pv->pv_next = pvp->pvp_pgi.pgi_freelist;
+		pvp->pvp_pgi.pgi_freelist = pv;
+		++pv_nfree;
+		break;
+	case NPVPPG:
+		pv_nfree -= NPVPPG - 1;
+		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+		break;
+	}
+}
+
+#ifdef not_used		/* ?? */
+void
+pmap_collect_pv()
+{
+	struct pv_page_list pv_page_collectlist;
+	struct pv_page *pvp, *npvp;
+	struct pv_entry *ph, *ppv, *pv, *npv;
+	int s;
+
+	TAILQ_INIT(&pv_page_collectlist);
+
+	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
+		if (pv_nfree < NPVPPG)
+			break;
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
+			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			pvp->pvp_pgi.pgi_nfree = -1;
+		}
+	}
+
+	if (pv_page_collectlist.tqh_first == 0)
+		return;
+
+	for (ph = &pv_table[npages - 1]; ph >= &pv_table[0]; ph--) {
+		if (ph->pv_pmap == 0)
+			continue;
+		s = splimp();
+		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
+			pvp = (struct pv_page *) trunc_page(pv);
+			if (pvp->pvp_pgi.pgi_nfree == -1) {
+				pvp = pv_page_freelist.tqh_first;
+				if (--pvp->pvp_pgi.pgi_nfree == 0) {
+					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+				}
+				npv = pvp->pvp_pgi.pgi_freelist;
+#ifdef DIAGNOSTIC
+				if (npv == 0)
+					panic("pmap_collect_pv: pgi_nfree inconsistent");
+#endif
+				pvp->pvp_pgi.pgi_freelist = npv->pv_next;
+				*npv = *pv;
+				ppv->pv_next = npv;
+				ppv = npv;
+			} else
+				ppv = pv;
+		}
+		splx(s);
+	}
+
+	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
+		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+	}
+}
+#endif
+
 /*
  *	Used to map a range of physical addresses into kernel
  *	virtual address space.
@@ -826,7 +947,8 @@ pmap_release(pmap)
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 AMIGA_UPTSIZE);
 	if (pmap->pm_stab != Segtabzero)
-		kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab, AMIGA_STSIZE);
+		kmem_free_wakeup(kernel_map, (vm_offset_t)pmap->pm_stab,
+				 AMIGA_STSIZE);
 }
 
 /*
@@ -955,7 +1077,7 @@ pmap_remove(pmap, sva, eva)
 			npv = pv->pv_next;
 			if (npv) {
 				*pv = *npv;
-				free((caddr_t)npv, M_VMPVENT);
+				pmap_free_pv(npv);
 			} else
 				pv->pv_pmap = NULL;
 #ifdef DEBUG
@@ -979,7 +1101,7 @@ printf ("pmap_remove: PA %lx index %d\n", pa, pa_index(pa));
 			ste = (int *)npv->pv_ptste;
 			ptpmap = npv->pv_ptpmap;
 			pv->pv_next = npv->pv_next;
-			free((caddr_t)npv, M_VMPVENT);
+			pmap_free_pv(npv);
 			pv = pa_to_pvh(pa);
 		}
 		/*
@@ -1038,7 +1160,7 @@ printf ("pmap_remove: PA %lx index %d\n", pa, pa_index(pa));
 					printf("remove: free stab %p\n",
 					       ptpmap->pm_stab);
 #endif
-					kmem_free(kernel_map,
+					kmem_free_wakeup(kernel_map,
 						  (vm_offset_t)ptpmap->pm_stab,
 						  AMIGA_STSIZE);
 					ptpmap->pm_stab = Segtabzero;
@@ -1377,10 +1499,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				if (pmap == npv->pv_pmap && va == npv->pv_va)
 					panic("pmap_enter: already in pv_tab");
 #endif
-			npv = (pv_entry_t)
-				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
-			if (npv == NULL)
-				panic("pmap_enter: PV allocation failure");
+			npv = pmap_alloc_pv();
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
 			npv->pv_next = pv->pv_next;
@@ -2090,7 +2209,9 @@ pmap_enter_ptpage(pmap, va)
 {
 	register vm_offset_t ptpa;
 	register pv_entry_t pv;
+#ifdef M68060
 	u_int stpa;
+#endif
 	u_int *ste;
 	int s;
 
