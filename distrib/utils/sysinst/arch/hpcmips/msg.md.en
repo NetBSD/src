@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2002/03/23 03:24:34 shin Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 2002/07/09 14:49:25 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- english, i386 version */
+/* MD Message catalog -- English, i386 version */
 
 message md_hello
 {If you booted from a floppy, you may now remove the disk.
@@ -136,7 +136,7 @@ message parttable
 }
 
 message editpart
-{You are editing partition %d. The highlighthed partition is the partition
+{You are editing partition %d. The highlighted partition is the partition
 you are editing.}
 
 message editparttable
@@ -161,9 +161,9 @@ message mbrpart_size_special
 
 message reeditpart
 {There are overlapping MBR partitions or there is not exactly one NetBSD
-partition. You should reedit the MBR partition table.
+partition. You should re-edit the MBR partition table.
 
-Do you want to reedit it?
+Do you want to re-edit it?
 }
 
 message nobsdpart
@@ -329,7 +329,7 @@ message bootsel_row
 
 message emulbackup
 {Either the /emul/aout or /emul directory on your system was a symbolic link
-pointing to an unmounted filesystem. It has been given a '.old' extension.
+pointing to an unmounted file system. It has been given a '.old' extension.
 Once you bring your upgraded system back up, you may need to take care
 of merging the newly created /emul/aout directory with the old one.
 }
