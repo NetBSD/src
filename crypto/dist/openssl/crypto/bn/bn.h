@@ -94,8 +94,8 @@ extern "C" {
 #define BN_MASK2h	(0xffff0000L)
 #define BN_TBIT		(0x80000000L)
 #define BN_DEC_CONV	(1000000000L)
-#define BN_DEC_FMT1	"%lu"
-#define BN_DEC_FMT2	"%09lu"
+#define BN_DEC_FMT1	"%u"
+#define BN_DEC_FMT2	"%09u"
 #define BN_DEC_NUM	9
 
 #undef SIXTY_FOUR_BIT_LONG
