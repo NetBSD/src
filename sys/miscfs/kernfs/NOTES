@@ -1,0 +1,7 @@
+name		type		ro/rw
+version		string		ro
+copyright	string		ro
+hostname	string		rw
+loadavg		int[3]		ro
+hz		int		ro
+physmem		int		ro
