@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.66 2005/01/06 11:56:39 agc Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.66.2.1 2005/03/19 13:16:56 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.66 2005/01/06 11:56:39 agc Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.66.2.1 2005/03/19 13:16:56 tron Exp $");
 #endif
 
 /*-
@@ -139,7 +139,7 @@ static int
 expect(int fd, const char *str, int *ftprc)
 {
 	int rc;
-	char buf[90];  
+	char buf[256];  
 #if EXPECT_DEBUG
 	char *vstr;
 #endif /* EXPECT_DEBUG */
@@ -654,7 +654,7 @@ ftp_expand_URL(const char *base, char *pattern)
 	}
 
 	/* Sync - don't remove */
-	rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
+	rc = ftp_cmd("cd .\n", "\n(550|250|257).*\n");
 	if (rc != 250) {
 		warnx("chdir failed!");
 		unlink(tmpname);	/* remove clutter */
