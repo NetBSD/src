@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.3 2004/04/24 17:35:28 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.3 2004/04/24 17:35:28 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,11 +307,11 @@ init_interface(void)
 			resp_cons = req_prod = 0;
 
 		event_set_handler(_EVENT_BLKDEV, &xbd_response_handler,
-		    IPL_BIO);
+		    NULL, IPL_BIO);
 		hypervisor_enable_event(_EVENT_BLKDEV);
 #if 0
 		event_set_handler(_EVENT_VBD_UPD, &xbd_update_handler,
-		    IPL_BIO);
+		    NULL, IPL_BIO);
 		hypervisor_enable_event(_EVENT_VBD_UPD);
 #endif
 	}

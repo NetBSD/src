@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2004/04/17 21:49:55 cl Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2004/04/24 19:32:37 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2004/04/17 21:49:55 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2004/04/24 19:32:37 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ xen_initclocks()
 {
 
 	event_set_handler(_EVENT_TIMER, (int (*)(void *))xen_timer_handler,
-	    IPL_CLOCK);
+	    NULL, IPL_CLOCK);
 	hypervisor_enable_event(_EVENT_TIMER);
 }
 
