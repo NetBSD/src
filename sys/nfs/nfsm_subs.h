@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsm_subs.h	7.11 (Berkeley) 4/16/91
+ *	from: @(#)nfsm_subs.h	7.11 (Berkeley) 4/16/91
+ *	$Id: nfsm_subs.h,v 1.2 1993/05/20 03:19:06 cgd Exp $
  */
 
 #ifndef _NFS_NFSM_SUBS_H_

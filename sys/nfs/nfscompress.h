@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfscompress.h	7.2 (Berkeley) 10/2/90
+ *	from: @(#)nfscompress.h	7.2 (Berkeley) 10/2/90
+ *	$Id: nfscompress.h,v 1.3 1993/05/20 03:19:02 cgd Exp $
  */
 
 #ifndef _NFS_NFSCOMPRESS_H_

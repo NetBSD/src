@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs.h	7.11 (Berkeley) 4/19/91
+ *	from: @(#)nfs.h	7.11 (Berkeley) 4/19/91
+ *	$Id: nfs.h,v 1.2 1993/05/20 03:18:35 cgd Exp $
  */
 
 #ifndef _NFS_NFS_H_

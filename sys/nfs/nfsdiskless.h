@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsdiskless.h	7.1 (Berkeley) 3/4/91
+ *	from: @(#)nfsdiskless.h	7.1 (Berkeley) 3/4/91
+ *	$Id: nfsdiskless.h,v 1.3 1993/05/20 03:19:03 cgd Exp $
  */
 
 #ifndef _NFS_NFSDISKLESS_H_
