@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: config.h,v 1.8 2004/08/19 23:00:22 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -194,7 +194,11 @@
 #define HAVE_DEV_FD 1
 
 /* Default PATH */
+#ifdef RESCUEDIR
+#define DEFAULT_PATH RESCUEDIR ":/bin:/usr/bin:/sbin:/usr/sbin"
+#else
 #define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
+#endif
 
 /* Define if your C library's getwd/getcwd function dumps core in unreadable
  * directories.  */
