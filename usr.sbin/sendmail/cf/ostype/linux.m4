@@ -34,6 +34,5 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)dgux.m4	8.2 (Berkeley) 11/13/95')
-ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', m)')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+VERSIONID(`@(#)linux.m4	8.2 (Berkeley) 8/21/93')
+define(`LOCAL_MAILER_PATH', /bin/mail.local)dnl

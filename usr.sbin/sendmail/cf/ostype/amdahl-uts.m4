@@ -34,5 +34,11 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)bsdi1.0.m4	8.2 (Berkeley) 8/16/95')dnl
-include(_CF_DIR_`'ostype/bsd4.4.m4)dnl
+VERSIONID(`@(#)amdahl-uts.m4	8.4 (Berkeley) 9/25/96')
+divert(-1)
+
+define(`ALIAS_FILE', /etc/mail/aliases)
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /etc/mail/sendmail.hf)')
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/lib/sendmail.st)')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `fSn9')')
+define(`confCW_FILE', /etc/mail/sendmail.cw)

@@ -34,9 +34,12 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)domainos.m4	8.2 (Berkeley) 11/13/95')
-divert(-1)
+VERSIONID(`@(#)svr4.m4	8.4 (Berkeley) 9/25/96')
 
-ifdef(`ALIAS_FILE',, `define(`ALIAS_FILE', /usr/lib/aliases)')
-ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/lib/sendmail.st)')
-ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')
+define(`ALIAS_FILE', /usr/ucblib/aliases)dnl
+ifdef(`HELP_FILE',,`define(`HELP_FILE', /usr/ucblib/sendmail.hf)')dnl
+ifdef(`STATUS_FILE',,`define(`STATUS_FILE', /usr/ucblib/sendmail.st)')dnl
+define(`LOCAL_MAILER_PATH', `/usr/ucblib/binmail')dnl
+define(`LOCAL_MAILER_FLAGS', `rmn9')dnl
+define(`LOCAL_SHELL_FLAGS', `ehuP')dnl
+define(`UUCP_MAILER_ARGS', `uux - -r -a$g -gmedium $h!rmail ($u)')dnl
