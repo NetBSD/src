@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp 
+ *	NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp 
  */
@@ -234,18 +234,18 @@ struct vnodeop_desc vop_ioctl_desc = {
 	NULL,
 };
 
-int vop_select_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_select_args,a_vp),
+int vop_poll_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_poll_args,a_vp),
 	VDESC_NO_OFFSET
 };
-struct vnodeop_desc vop_select_desc = {
+struct vnodeop_desc vop_poll_desc = {
 	0,
-	"vop_select",
+	"vop_poll",
 	0,
-	vop_select_vp_offsets,
+	vop_poll_vp_offsets,
 	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_select_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_select_args, a_p),
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_poll_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -770,7 +770,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_read_desc,
 	&vop_write_desc,
 	&vop_ioctl_desc,
-	&vop_select_desc,
+	&vop_poll_desc,
 	&vop_mmap_desc,
 	&vop_fsync_desc,
 	&vop_seek_desc,

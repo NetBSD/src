@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp 
+ *	NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp 
  */
@@ -322,32 +322,25 @@ static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
 }
 
-struct vop_select_args {
+struct vop_poll_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	int a_which;
-	int a_fflags;
-	struct ucred *a_cred;
+	int a_events;
 	struct proc *a_p;
 };
-extern struct vnodeop_desc vop_select_desc;
-static __inline int VOP_SELECT __P((struct vnode *, int, int, 
-    struct ucred *, struct proc *));
-static __inline int VOP_SELECT(vp, which, fflags, cred, p)
+extern struct vnodeop_desc vop_poll_desc;
+static __inline int VOP_POLL __P((struct vnode *, int, struct proc *));
+static __inline int VOP_POLL(vp, events, p)
 	struct vnode *vp;
-	int which;
-	int fflags;
-	struct ucred *cred;
+	int events;
 	struct proc *p;
 {
-	struct vop_select_args a;
-	a.a_desc = VDESC(vop_select);
+	struct vop_poll_args a;
+	a.a_desc = VDESC(vop_poll);
 	a.a_vp = vp;
-	a.a_which = which;
-	a.a_fflags = fflags;
-	a.a_cred = cred;
+	a.a_events = events;
 	a.a_p = p;
-	return (VCALL(vp, VOFFSET(vop_select), &a));
+	return (VCALL(vp, VOFFSET(vop_poll), &a));
 }
 
 struct vop_mmap_args {
