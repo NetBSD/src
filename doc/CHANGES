@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.141 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.142 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -367,3 +367,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		performance.
 	pkg_install: improve bzip2 support, especially for non-NetBSD
 		systems. [grant 20030410]
+	less: update to less-381.  [mrg 20030414]
