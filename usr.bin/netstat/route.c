@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.48 2000/01/17 18:03:51 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.49 2000/07/06 12:40:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.48 2000/01/17 18:03:51 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.49 2000/07/06 12:40:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,9 +140,6 @@ static void p_rtentry __P((struct rtentry *));
 static void ntreestuff __P((void));
 static u_long forgemask __P((u_long));
 static void domask __P((char *, size_t, u_long, u_long));
-#ifdef INET6
-char *netname6 __P((struct sockaddr_in6 *, struct in6_addr *));
-#endif 
 
 /*
  * Print routing tables.
@@ -230,9 +227,15 @@ pr_family(af)
 #define	WID_GW(af)	18	/* width of gateway column */
 #else
 /* width of destination/gateway column */
+#ifdef KAME_SCOPEID
+/* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#else
 /* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
 #define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
 #define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
+#endif
 #endif /* INET6 */
 
 /*
@@ -818,7 +821,7 @@ netname6(sa6, mask)
 	sin6 = *sa6;
 	if (mask) {
 		masklen = 0;
-		lim = (u_char *)mask + 16;
+		lim = (u_char *)(mask + 1);
 		for (p = (u_char *)mask, q = (u_char *)&sin6.sin6_addr;
 		     p < lim;
 		     p++, q++) {
@@ -874,15 +877,12 @@ netname6(sa6, mask)
 			else
 				*q = 0;
 		}
-	}
-	else
+	} else
 		masklen = 128;
 
 	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
 		return("default");
 
-	if (illegal)
-		fprintf(stderr, "illegal prefixlen\n");
 	if (nflag)
 		flag |= NI_NUMERICHOST;
 	error = getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
