@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 2000/08/12 22:58:57 wdk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ struct cfattach le_ca = {
 #define	integrate	static __inline
 #define hide		static
 #endif
+
+int le_intr  __P((void *));
 
 hide void lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));  
@@ -244,6 +246,8 @@ le_attach(parent, self, aux)
 
 	evcnt_attach_dynamic(&lesc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     self->dv_xname, "intr");
+	bus_intr_establish(lesc->sc_bustag, SYS_INTR_ETHER, 0, 0,
+			   le_intr, lesc);
 
 	am7990_config(&lesc->sc_am7990);
 	return;
@@ -254,16 +258,11 @@ bad:
 }
 
 int
-leintr(unit)
-	int unit;
+le_intr(arg)
+	void *arg;
 {
-	struct am7990_softc *sc;
-	extern struct cfdriver le_cd;
+	struct le_softc *lesc = arg;
 
-	if (unit >= le_cd.cd_ndevs)
-		return 0;
-
-	sc = le_cd.cd_devs[unit];
-	((struct le_softc *)sc)->sc_intrcnt.ev_count++;
-	return am7990_intr(sc);
+	lesc->sc_intrcnt.ev_count++;
+	return am7990_intr(&lesc->sc_am7990);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.2 2000/08/14 21:04:44 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.3 2000/08/15 04:56:46 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -83,8 +83,6 @@ struct asc_softc {
 static int	ascmatch  __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
 
-static struct asc_softc  *asc0;
-
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
 };
@@ -115,6 +113,8 @@ static struct ncr53c9x_glue asc_glue = {
 	asc_dma_isactive,
 	NULL,			/* gl_clear_latched_intr */
 };
+
+static int	asc_intr __P((void *));
 
 #define MAX_SCSI_XFER   (64*1024)
 #define	MAX_DMA_SZ	MAX_SCSI_XFER
@@ -200,10 +200,10 @@ ascattach(parent, self, aux)
 	}
 #endif
 
+	ncr53c9x_dmaselect = 0;
 	ncr53c9x_attach(sc, NULL, NULL);
 
-	ncr53c9x_dmaselect = 0;
-	asc0 = esc;
+	bus_intr_establish(esc->sc_bst, SYS_INTR_SCSI, 0, 0, asc_intr, esc); 
 }
 
 /*
@@ -522,22 +522,24 @@ rambo_dma_chain(esc)
  	bus_space_write_2(esc->sc_bst, esc->dm_bsh, RAMBO_BLKCNT, blocks);
 }    
 
-void
-asc_intr()
+int
+asc_intr(arg)
+	void *arg;
 {
-    register u_int32_t dma_stat;
-    struct asc_softc *esc = asc0;
-    struct ncr53c9x_softc *sc = (void *)asc0;
+	register u_int32_t dma_stat;
+	struct asc_softc *esc = arg;
+	struct ncr53c9x_softc *sc = arg;
 
-    esc->sc_intrcnt.ev_count++;
+	esc->sc_intrcnt.ev_count++;
 
-    /* Check for NCR 53c94 interrupt */
-    if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) {
-	    ncr53c9x_intr((struct ncr53c9x_softc *) asc0);
-    }
-    /* Check for RAMBO DMA Interrupt */
-    dma_stat = bus_space_read_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE);
-    if (dma_stat & RB_INTR_PEND) {
-	    rambo_dma_chain(esc);
-    }
+	/* Check for NCR 53c94 interrupt */
+	if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) {
+		ncr53c9x_intr(sc);
+	}
+	/* Check for RAMBO DMA Interrupt */
+	dma_stat = bus_space_read_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE);
+	if (dma_stat & RB_INTR_PEND) {
+		rambo_dma_chain(esc);
+	}
+	return 0;
 }

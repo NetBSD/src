@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2000/08/12 22:58:59 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 2000/08/15 04:56:47 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct cfattach zsc_ca = {
 
 extern struct cfdriver zsc_cd;
 
-static void zshard __P((void *));
+static int zshard __P((void *));
 static void zssoft __P((void *));
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -218,7 +218,6 @@ zs_attach(parent, self, aux)
 	struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
-	static int didintr;
 
 	zsc->zsc_bustag = ca->ca_bustag;
 	if (bus_space_map(ca->ca_bustag, ca->ca_addr,
@@ -290,18 +289,8 @@ zs_attach(parent, self, aux)
 		}
 	}
 
-	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
-	 */
-	if (!didintr) {
-		didintr = 1;
-#if 0
-		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
-		isr_add_autovect(zshard, NULL, ca->ca_intpri);
-#endif
-	}
+	/* bus_intr_establish(zssoft, NULL, ZSSOFT_PRI); */
+	bus_intr_establish(zsc->zsc_bustag, SYS_INTR_SCC0, 0, 0, zshard, NULL);
 
 	evcnt_attach_dynamic(&zsc->zs_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     self->dv_xname, "intr");
@@ -341,7 +330,7 @@ static volatile int zssoftpending;
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
-static void
+static int
 zshard(arg)
 	void *arg;
 {
@@ -364,7 +353,7 @@ zshard(arg)
 		zssoftpending = 1;
 		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
 	}
-	return;
+	return 0;
 }
 
 /*
@@ -682,19 +671,4 @@ zscnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
-}
-
-/*
- * ZS vector interrupt service routine.
- */
-void
-zs_intr()
-{
-	int vec;
-
-	/*
-	 *  TODO:   We can read the interrupt vector from the SCC
-         *          registers.
-	 */
-	zshard((void *)vec);		/* XXX vec is not used */
 }

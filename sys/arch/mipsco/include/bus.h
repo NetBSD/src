@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/08/12 22:58:09 wdk Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/08/15 04:56:45 wdk Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -163,6 +163,15 @@ struct mipsco_bus_space {
 	void	(*bs_free) __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t));
 
+	/* interrupt attach */
+	void	(*bs_intr_establish) __P((
+				bus_space_tag_t,
+				int,			/*bus-specific intr*/
+				int,			/*priority/class*/
+				int,			/*flags*/
+				int (*) __P((void *)),	/*handler*/
+				void *));		/*handler arg*/
+
 	void	*bs_aux;
 };
 
@@ -310,6 +319,17 @@ int	mipsco_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 
 #define bus_space_free(t, h, s)						\
 	(*(t)->bs_free)((t), (h), (s))
+
+/*
+ *	void bus_intr_establish __P((bus_space_tag_t bst,
+ *	     int level, int pri, int flags, int (*func) __P((void *))
+ *	     void *arg));
+ *
+ *  Attach interrupt handler and softc argument 
+ */
+
+#define bus_intr_establish(t, i, c, f, ihf, iha)			\
+	(*(t)->bs_intr_establish)((t), (i), (c), (f), (ihf), (iha))
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

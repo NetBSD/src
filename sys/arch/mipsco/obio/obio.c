@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2000/08/12 22:58:57 wdk Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,11 +43,14 @@
 #include <machine/autoconf.h>
 #include <machine/mainboard.h>
 #include <machine/bus.h>
+#include <machine/sysconf.h>
 
 static int	obio_match __P((struct device *, struct cfdata *, void *));
 static void	obio_attach __P((struct device *, struct device *, void *));
 static int	obio_search __P((struct device *, struct cfdata *, void *));
 static int	obio_print __P((void *, const char *));
+static void	obio_intr_establish  __P((bus_space_tag_t, int, int, int,
+					  int (*)(void *), void *));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -86,12 +89,13 @@ obio_attach(parent, self, aux)
 			      0xb8000000, 0x08000000);
 
 	_bus_dma_tag_init(&obio_dmatag);
+	obio_bustag.bs_intr_establish = obio_intr_establish; /* XXX */
+
 	ca->ca_bustag = &obio_bustag;
 	ca->ca_dmatag = &obio_dmatag;
 
 	printf("\n");
 	config_search(obio_search, self, ca);
-
 }
 
 static int
@@ -131,3 +135,14 @@ obio_print(args, name)
 	return(UNCONF);
 }
 
+void
+obio_intr_establish(bst, level, pri, flags, func, arg)
+	bus_space_tag_t bst;
+	int level;
+	int pri;
+	int flags;
+	int (*func) __P((void *));
+	void *arg;
+{
+	(*platform.intr_establish)(level, func, arg);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2000/08/12 22:58:22 wdk Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/08/15 04:56:45 wdk Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -111,11 +111,27 @@ extern void _clrsoftintr __P((int));
 #define splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
 
-/* handle i/o device interrupts */
-extern void mipsco_intr __P((u_int, u_int, u_int, u_int));
+struct intrhandler {
+	int	(*func) __P((void *));
+	void	*arg;
+};
+extern struct intrhandler intrtab[];
 
-extern void (*enable_intr) __P((void));
-extern void (*disable_intr) __P((void));
+#define SYS_INTR_LEVEL0	0
+#define SYS_INTR_LEVEL1	1
+#define SYS_INTR_LEVEL2	2
+#define SYS_INTR_LEVEL3	3
+#define SYS_INTR_LEVEL4	4
+#define SYS_INTR_LEVEL5	5
+#define SYS_INTR_SCSI	6
+#define SYS_INTR_TIMER	7
+#define SYS_INTR_ETHER	8
+#define SYS_INTR_SCC0	9
+#define SYS_INTR_FDC	10
+
+#define MAX_INTR_COOKIES 16
+
+#define	CALL_INTR(lev)	((*intrtab[lev].func)(intrtab[lev].arg))
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

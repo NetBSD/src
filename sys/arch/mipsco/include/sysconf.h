@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.1 2000/08/12 22:58:43 wdk Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -59,6 +59,7 @@ struct platform {
 	unsigned (*clkread) __P((void));
 	void	(*read_todr) __P((struct clock_ymdhms *));
 	void	(*write_todr) __P((struct clock_ymdhms *));
+	void	(*intr_establish) __P((int, int (*)__P((void *)), void *)); 
 };
 
 extern struct platform platform;

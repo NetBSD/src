@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.1 2000/08/12 22:58:58 wdk Exp $	*/
+/*	$NetBSD: rambo.c,v 1.2 2000/08/15 04:56:47 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 static int	rambo_match  __P((struct device *, struct cfdata *, void *));
 static void	rambo_attach __P((struct device *, struct device *, void *));
 static unsigned rambo_clkread __P((void));
+void rambo_clkintr __P((struct clockframe *));
 
 struct rambo_softc {
         struct device		dev; 
@@ -117,23 +118,23 @@ rambo_attach(parent, self, aux)
 
 void
 rambo_clkintr(cf)
-    struct clockframe *cf;
+	struct clockframe *cf;
 {
-    register u_int32_t tbreak, tclast;
-    register int       cycles = 0;
+	register u_int32_t tbreak, tclast;
+	register int cycles = 0;
 	
-    rambo->sc_intrcnt.ev_count++;
-    tbreak = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK);
-    /* This will also clear the interrupt */
-    while ((tclast=bus_space_read_4(rambo->sc_bst, rambo->sc_bsh,
-				    RB_TCOUNT)) >= tbreak) { 
-	    hardclock(cf);
-	    tbreak += rambo->sc_hzticks;
-	    cycles++;
-    }
+	rambo->sc_intrcnt.ev_count++;
+	tbreak = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK);
+	/* This will also clear the interrupt */
+	while ((tclast=bus_space_read_4(rambo->sc_bst, rambo->sc_bsh,
+					RB_TCOUNT)) >= tbreak) { 
+		hardclock(cf);
+		tbreak += rambo->sc_hzticks;
+		cycles++;
+	}
 
-    bus_space_write_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK, tbreak);
-    rambo->sc_tclast = tclast;
+	bus_space_write_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK, tbreak);
+	rambo->sc_tclast = tclast;
 }    
 
 /*

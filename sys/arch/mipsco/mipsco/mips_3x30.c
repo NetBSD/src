@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.1 2000/08/12 22:58:54 wdk Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,16 +49,12 @@
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 
-#include "le.h"
-
-extern void asc_intr __P(());
-extern void kbm_rint __P((int));
-
 extern void MachFPInterrupt __P((u_int, u_int, u_int, struct frame *));
 
 /* Local functions */
 void pizazz_intr __P((u_int, u_int, u_int, u_int));
-void pizazz_level0_intr __P((void));
+int  pizazz_level0_intr __P((void *));
+void pizazz_intr_establish  __P((int, int (*)(void *), void *));
 
 void
 pizazz_init()
@@ -66,10 +62,20 @@ pizazz_init()
 	platform.iobus = "obio";
 	platform.cons_init = NULL;
 	platform.iointr = pizazz_intr;
+	platform.intr_establish = pizazz_intr_establish;
+
+	pizazz_intr_establish(SYS_INTR_LEVEL0, pizazz_level0_intr, NULL);
 
 	strcpy(cpu_model, "Mips 3230 Magnum (Pizazz)");
 	cpuspeed = 25;
 }
+
+#define	HANDLE_INTR(intr, mask)					\
+	do {							\
+		if (ipending & (mask)) {			\
+			CALL_INTR(intr);			\
+		}						\
+	} while (0)
 
 void
 pizazz_intr(status, cause, pc, ipending)
@@ -95,25 +101,19 @@ pizazz_intr(status, cause, pc, ipending)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
+	HANDLE_INTR(SYS_INTR_FDC,	MIPS_INT_MASK_4);
+	HANDLE_INTR(SYS_INTR_SCSI,	MIPS_INT_MASK_1);
+	HANDLE_INTR(SYS_INTR_LEVEL0,	MIPS_INT_MASK_0);
+
 	if (ipending & MIPS_INT_MASK_5) {		/* level 5 interrupt */
 	    printf("level 5 interrupt: PC %x CR %x SR %x\n",
 		   pc, cause, status);
 	    /* cause &= ~MIPS_INT_MASK_5; */
 	    /* panic("level 5 interrupt"); */
 	}
-	if (ipending & MIPS_INT_MASK_4) {		/* level 4 interrupt */
-		void fdintr __P((int));
-		fdintr(0);
-		/*	cause &= ~MIPS_INT_MASK_4; */
-	}
-	if (ipending & MIPS_INT_MASK_1) {		/* level 1 interrupt */
-		asc_intr();
-		cause &= ~MIPS_INT_MASK_1;
-	}
-	if (ipending & MIPS_INT_MASK_0) {		/* level 0 interrupt */
-		pizazz_level0_intr();
-		cause &= ~MIPS_INT_MASK_0;
-	}
+
+	/* XXX:  Keep FDC interrupt masked off */
+	cause &= ~(MIPS_INT_MASK_0 | MIPS_INT_MASK_1 | MIPS_INT_MASK_5);
 
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
@@ -127,30 +127,44 @@ pizazz_intr(status, cause, pc, ipending)
 	}
 }
 
-
 /*
  * Level 0 interrupt handler 
+ *
+ * Pizazz shares Lance, SCC, Expansion slot and Keyboard on level 0
+ * A secondary interrupt status register shows the real interrupt source
  */
-void
-pizazz_level0_intr()
+int
+pizazz_level0_intr(arg)
+	void *arg;
 {
 	register int stat;
 
 	/* stat register is active low */
 	stat = ~*(volatile u_char *)INTREG_0;
 
-	if (stat & INT_Lance) {
-		extern int leintr __P((int));
-		int s = splimp();
+	if (stat & INT_Lance)
+		CALL_INTR(SYS_INTR_ETHER);
 
-		leintr(0);
-		splx(s);
-	}
-	if (stat & INT_SCC) {
-		extern void zs_intr __P((void));
+	if (stat & INT_SCC)
+		CALL_INTR(SYS_INTR_SCC0);
 
-		zs_intr();
-	}
+	return 0;
+}
+
+void
+pizazz_intr_establish(level, func, arg)
+	int level;
+	int (*func) __P((void *));
+	void *arg;
+{
+	if (level < 0 || level >= MAX_INTR_COOKIES)
+		panic("invalid interrupt level");
+
+	if (intrtab[level].func != NULL)
+		panic("cannot share interrupt %d", level);
+
+	intrtab[level].func = func;
+	intrtab[level].arg = arg;
 }
 
 
