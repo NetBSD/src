@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2003/04/22 00:24:49 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.24 2003/05/22 19:18:31 thorpej Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -60,12 +60,8 @@ endif
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
-ifndef ARM32_PMAP_NEW
-define	PTE_BASE		PTE_BASE
-else
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
-endif
 
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
@@ -91,12 +87,10 @@ define	LSONPROC		LSONPROC
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
-ifdef ARM32_PMAP_NEW
 define	PCB_PL1VEC		offsetof(struct pcb, pcb_pl1vec)
 define	PCB_L1VEC		offsetof(struct pcb, pcb_l1vec)
 define	PCB_DACR		offsetof(struct pcb, pcb_dacr)
 define	PCB_CSTATE		offsetof(struct pcb, pcb_cstate)
-endif
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
 define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
@@ -118,7 +112,6 @@ define	V_SOFT			offsetof(struct uvmexp, softs)
 define	VM_MAP			offsetof(struct vmspace, vm_map)
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 
-ifdef ARM32_PMAP_NEW
 define	CS_TLB_ID		offsetof(union pmap_cache_state, cs_tlb_id)
 define	CS_TLB_D		offsetof(union pmap_cache_state, cs_tlb_d)
 define	CS_TLB			offsetof(union pmap_cache_state, cs_tlb)
@@ -127,7 +120,6 @@ define	CS_CACHE_D		offsetof(union pmap_cache_state, cs_cache_d)
 define	CS_CACHE		offsetof(union pmap_cache_state, cs_cache)
 define	CS_ALL			offsetof(union pmap_cache_state, cs_all)
 define	PMAP_CSTATE		offsetof(struct pmap, pm_cstate)
-endif
 
 define	PR_BASE			offsetof(struct uprof, pr_base)
 define	PR_SIZE			offsetof(struct uprof, pr_size)
@@ -145,10 +137,8 @@ define	PROCSIZE		sizeof(struct proc)
 define	TRAPFRAMESIZE		sizeof(struct trapframe)
 
 define	CF_IDCACHE_WBINV_ALL	offsetof(struct cpu_functions, cf_idcache_wbinv_all)
-ifdef ARM32_PMAP_NEW
 define	CF_DCACHE_WB_RANGE	offsetof(struct cpu_functions, cf_dcache_wb_range)
 define	CF_TLB_FLUSHID_SE	offsetof(struct cpu_functions, cf_tlb_flushID_SE)
-endif
 define	CF_CONTEXT_SWITCH	offsetof(struct cpu_functions, cf_context_switch)
 define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 
