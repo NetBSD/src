@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2001/02/19 17:51:22 msaitoh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2001/04/21 17:32:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -359,14 +359,17 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * macros
  */
 
+/* XXX XXX XXX */
+#ifdef SH4
+#define	TLBFLUSH()			((cacheflush(), tlbflush())
+#else
+#define	TLBFLUSH()			tlbflush()
+#endif
+
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#ifdef SH4
-#define	pmap_update()			(cacheflush(), tlbflush())
-#else
-#define	pmap_update()			tlbflush()
-#endif
+#define	pmap_update()			/* nothing (yet) */
 
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PGA_REFERENCED)
 #define	pmap_is_modified(pg)		pmap_test_attrs(pg, PGA_MODIFIED)
