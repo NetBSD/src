@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.58.2.7 2004/03/12 04:00:47 jmc Exp $
+#  $NetBSD: build.sh,v 1.58.2.8 2004/06/14 18:27:30 tron Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -359,6 +359,7 @@ fi
 
 # Recreate $TOOLDIR.
 $runcmd mkdir -p "$TOOLDIR/bin" || bomb "mkdir of '$TOOLDIR/bin' failed"
+build_start=$(date)
 
 # Install nbmake if it was built.
 if $do_rebuildmake; then
@@ -387,7 +388,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.7 2004/03/12 04:00:47 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.8 2004/06/14 18:27:30 tron Exp $
 #
 
 EOF
@@ -416,3 +417,7 @@ elif $do_buildonlytools; then
 		${runcmd-exec} "$makewrapper" dependall install
 	fi
 fi
+echo "===> Build started: ${build_start}"
+echo "===> Build ended:   $(date)"
+echo "===> DESTDIR path: $DESTDIR"
+echo "===> TOOLDIR path: $TOOLDIR"
