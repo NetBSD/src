@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1999/01/09 22:10:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.1 1999/01/31 14:27:30 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,6 +102,7 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <mvme68k/mvme68k/seglist.h>
+#include <mvme68k/mvme68k/machdep.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 
@@ -1318,7 +1319,7 @@ cpu_exec_aout_makecmds(p, epp)
 
 void
 myetheraddr(ether)
-	char *ether;
+	u_char *ether;
 {
 	int e = myea;
 
@@ -1326,9 +1327,9 @@ myetheraddr(ether)
 	ether[1] = 0x00;
 	ether[2] = 0x3e;
 	e = e >> 8;
-	ether[5] = e & 0xff;
+	ether[5] = (u_char)(e & 0xff);
 	e = e >> 8;
-	ether[4] = e & 0xff;
+	ether[4] = (u_char)(e & 0xff);
 	e = e >> 8;
-	ether[3] = e;
+	ether[3] = (u_char)e;
 }
