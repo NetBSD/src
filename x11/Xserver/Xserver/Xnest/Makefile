@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/21 08:32:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/27 15:30:03 soren Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ DPADD+=	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.hw/xnest} \
 	${DPADD.hw/xnest} ${DPADD.Xext/ext} ${DPADD.dbe} ${DPADD.record} \
 	${DPADD.GL/glx} ${DPADD.GL/GLcore} ${DPADD.xtrap} ${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${DPADD.dix/xpstubs} \
-	${LIBXEXT} ${LIBX11} ${LIBZ} ${LIBM} ${LIBI386}
+	${LIBXEXT} ${LIBX11} ${LIBZ} ${LIBM}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
