@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.290 1999/06/05 14:32:08 mrg Exp $
+#	$NetBSD: files,v 1.291 1999/06/20 16:34:38 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -275,6 +275,10 @@ file	dev/ic/hd64570.c		hd64570
 # Intel 82586 Ethernet Controller
 define	i82586
 file	dev/ic/i82586.c			i82586
+
+# Intel 82557/82558/82559 Ethernet Controller
+device	fxp: ether, ifnet, arp, mii
+file	dev/ic/i82557.c			fxp
 
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet
