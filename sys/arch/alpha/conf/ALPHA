@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.47 1997/04/07 23:40:15 cgd Exp $
+# $NetBSD: ALPHA,v 1.48 1997/04/10 23:10:33 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -18,7 +18,7 @@ options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options		DEC_3000_300	# Pelican etc:	3000/300*
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 options		DEC_EB164	# EB164:	AlphaPC 164
-#options	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
+options		DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options		DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options		DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
 
