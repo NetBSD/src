@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 2001/02/06 05:01:31 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9 2001/06/06 17:42:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@ struct pci_attach_args;
 typedef void *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
-extern struct bebox_bus_dma_tag pci_bus_dma_tag;
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.

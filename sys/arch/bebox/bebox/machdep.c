@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2001/06/02 18:09:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2001/06/06 17:42:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,8 +57,9 @@
 
 #include <net/netisr.h>
 
-#include <machine/bat.h>
+#include <powerpc/mpc6xx/bat.h>
 #include <machine/bootinfo.h>
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pmap.h>
@@ -215,6 +216,11 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * boothowto
 	 */
 	boothowto = args;
+
+	/*
+	 * Init the I/O stuff before the console
+	 */
+	bebox_bus_space_init();
 
 	/*
 	 * i386 port says, that this shouldn't be here,
@@ -543,11 +549,20 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, FALSE, NULL);
 
+#ifndef PMAP_MAP_POOLPAGE
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
 	 * are allocated via the pool allocator, and we use direct-mapped
 	 * pool pages.
 	 */
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
+#endif
+
+	/*
+	 * Now that we have VM, malloc's are OK in bus_space.
+	 */
+	bebox_bus_space_mallocok();
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -615,7 +630,7 @@ consinit()
 	if (!strcmp(consinfo->devname, "be")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(BEBOX_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -625,7 +640,7 @@ consinit()
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(BEBOX_BUS_SPACE_IO, BEBOX_BUS_SPACE_MEM,
+		if (!vga_cnattach(&bebox_io_bs_tag, &bebox_mem_bs_tag,
 				  -1, 1))
 			goto dokbd;
 #endif
@@ -634,7 +649,7 @@ consinit()
 #endif
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(BEBOX_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -643,7 +658,7 @@ dokbd:
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = BEBOX_BUS_SPACE_IO;
+		bus_space_tag_t tag = &bebox_isa_io_bs_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
