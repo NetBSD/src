@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.1 2000/08/20 14:33:26 pk Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.2 2000/09/12 19:13:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
 static void	cgsixattach __P((struct device *, struct device *, void *));
 
-/* Allocate an `sbusdev' in addition to the bwtwo softc */
+/* Allocate an `sbusdev' in addition to the cgsix softc */
 struct cgsix_sbus_softc {
 	struct cgsix_softc bss_softc;
 	struct sbusdev bss_sd;
