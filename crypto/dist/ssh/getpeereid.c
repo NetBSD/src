@@ -1,6 +1,7 @@
-/*	$NetBSD: uuencode.c,v 1.7 2002/10/01 14:07:48 itojun Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.1 2002/10/01 14:07:30 itojun Exp $	*/
+
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2002 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,53 +25,31 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: uuencode.c,v 1.16 2002/09/09 14:54:15 markus Exp $");
+#include "getpeereid.h"
 
-#include "xmalloc.h"
-#include "uuencode.h"
+RCSID("Id: bsd-getpeereid.c,v 1.1 2002/09/12 00:33:02 djm Exp");
 
-#include <resolv.h>
-
+#if defined(SO_PEERCRED)
 int
-uuencode(u_char *src, u_int srclength,
-    char *target, size_t targsize)
+getpeereid(int s, uid_t *euid, gid_t *gid)
 {
-	return __b64_ntop(src, srclength, target, targsize);
-}
+	struct ucred cred;
+	size_t len = sizeof(cred);
 
+	if (getsockopt(s, SOL_SOCKET, SO_PEERCRED, &cred, &len) < 0)
+		return (-1);
+	*euid = cred.uid;
+	*gid = cred.gid;
+
+	return (0);
+}
+#else
 int
-uudecode(const char *src, u_char *target, size_t targsize)
+getpeereid(int s, uid_t *euid, gid_t *gid)
 {
-	int len;
-	char *encoded, *p;
+	*euid = geteuid();
+	*gid = getgid();
 
-	/* copy the 'readonly' source */
-	encoded = xstrdup(src);
-	/* skip whitespace and data */
-	for (p = encoded; *p == ' ' || *p == '\t'; p++)
-		;
-	for (; *p != '\0' && *p != ' ' && *p != '\t'; p++)
-		;
-	/* and remove trailing whitespace because __b64_pton needs this */
-	*p = '\0';
-	len = __b64_pton(encoded, target, targsize);
-	xfree(encoded);
-	return len;
+	return (0);
 }
-
-void
-dump_base64(FILE *fp, u_char *data, u_int len)
-{
-	char *buf = xmalloc(2*len);
-	int i, n;
-
-	n = uuencode(data, len, buf, 2*len);
-	for (i = 0; i < n; i++) {
-		fprintf(fp, "%c", buf[i]);
-		if (i % 70 == 69)
-			fprintf(fp, "\n");
-	}
-	if (i % 70 != 69)
-		fprintf(fp, "\n");
-	xfree(buf);
-}
+#endif /* defined(SO_PEERCRED) */
