@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.9 2003/04/28 05:20:33 nakayama Exp $ */
+/*	$NetBSD: pciide_pdc202xx_reg.h,v 1.10 2003/06/28 23:13:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -90,8 +90,9 @@
 #define PDC2xx_SCR_FLOAT	0x08000000
 #define PDC2xx_SCR_RSET		0x10000000
 #define PDC2xx_SCR_TST		0x20000000
-/* Values for "General Purpose Register" (PDC20262 only) */
+/* Values for "General Purpose Register" (PDC2026{2|5} only) */
 #define PDC262_SCR_GEN_LAT	0x20
+#define PDC265_SCR_GEN_LAT	0x03
 
 /* ATAPI port ((PDC20262 only) (4 bytes) */
 #define PDC262_ATAPI(chan) (0x20 + (4 * (chan)))
