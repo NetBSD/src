@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.4 1997/10/07 14:23:56 lukem Exp $
+.\"	$NetBSD: ypinit.8,v 1.4.2.1 1997/11/28 09:41:02 mellon Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,11 @@
 .Op Ar domainname
 .Sh DESCRIPTION
 .Nm
-initialises the directories that hold the maps for a YP domain on a
-YP server.
+initialises the directories that hold the maps for a
+.Tn YP
+domain on a
+.Tn YP
+server.
 .Pp
 If
 .Ar domainname
@@ -62,7 +65,9 @@ is used.
 The following options are available:
 .Bl -tag -width indent
 .It Fl m
-Create a master YP server.
+Create a master
+.Tn YP
+server.
 Generates map data from local files
 .Pa ( /etc/master.passwd ,
 .Pa /etc/group ,
@@ -71,19 +76,27 @@ etc.).
 Create a slave server.
 Downloads the maps from
 .Ar master_server ,
-which should be the active master YP server.
+which should be the active master
+.Tn YP
+server.
 .El
 .Pp
-To rebuild or refresh the maps, change to the
-.Pa /var/yp
+To rebuild or refresh the maps for the
+.Tn YP
+domain <domain>, change to the
+.Pa /var/yp/<domain>
 directory and run
 .Ic make .
 .Sh FILES
 .Bl -tag -width /var/yp/ypserv.log -compact
 .It Pa /var/yp
-- master YP directory; contains the template makefiles.
+- master
+.Tn YP
+directory; contains the template makefiles.
 .It Pa /var/yp/<domain>
-- directory to store YP maps for <domain>.
+- directory to store
+.Tn YP
+maps for <domain>.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
