@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2002/10/14 14:19:29 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2002/10/22 09:30:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -123,42 +123,11 @@ Lmapped_start:
 	/* Now safe to call C code */
 
 	/*
-	 * Do basic pre-pmap initialisation. This is mostly to do with
-	 * sizing physical memory.
+	 * Do basic initialisation, including setting up the pmap.
 	 *
-	 * vaddr_t evbsh5_memory_init(vaddr_t endkernel, struct mem_region *mr);
+	 * void evbsh5_init(vaddr_t endkernel)
 	 */
 	LEA(_C_LABEL(end), r2)
-	LEA(Lmem_regions, r3)
-	LEAF(_C_LABEL(evbsh5_memory_init), r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r18
-
-	/*
-	 * Bootstrap the pmap:
-	 *
-	 * void pmap_bootstrap(vaddr_t avail, paddr_t kseg0base,
-	 *                     struct mem_region *mr);
-	 */
-	LDUC32(0x80000000, r3)
-	LEA(Lmem_regions, r4)
-	LEAF(_C_LABEL(pmap_bootstrap), r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r18
-
-	/*
-	 * We can now deal with exceptions, particularly TLB misses
-	 */
-	getcon	sr, r1
-	movi	1, r0
-	shlli	r0, SH5_CONREG_SR_BL_SHIFT, r0
-	andc	r1, r0, r1
-	putcon	r1, sr
-
-	/*
-	 * Secondary initialisation. The pmap has been set up enough
-	 * to map device register into kernel virtual address space.
-	 */
 	LEAF(_C_LABEL(evbsh5_init), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18

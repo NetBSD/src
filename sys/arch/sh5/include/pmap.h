@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2002/10/04 09:17:57 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2002/10/22 09:30:26 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,6 +112,8 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 /* Private pmap data and functions */
+struct mem_region;
+extern void	pmap_bootstrap(vaddr_t, paddr_t, struct mem_region *);
 extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
