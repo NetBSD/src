@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.8 2003/04/07 19:41:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.9 2004/03/14 01:19:41 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.8 2003/04/07 19:41:22 nathanw Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.9 2004/03/14 01:19:41 cl Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -121,6 +121,7 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 	next = NULL;
 	pthread_spinlock(self, &pthread_alarmqlock);
 	pthread_spinlock(self, &alarm->pta_lock);
+	SDPRINTF(("(del %p) alarm %p\n", self, alarm));
 	if (alarm->pta_fired == 0) {
 		if (alarm == PTQ_FIRST(&pthread_alarmqueue)) {
 			next = PTQ_NEXT(alarm, pta_next);
@@ -178,8 +179,7 @@ pthread__alarm_process(pthread_t self, void *arg)
 		next = PTQ_NEXT(iterator, pta_next);
 		PTQ_REMOVE(&pthread_alarmqueue, iterator, pta_next);
 		PTQ_INSERT_TAIL(&runq, iterator, pta_next);
-		iterator = next;
-		
+		SDPRINTF(("(pro %p) collect alarm %p\n", self, iterator));
 	}
 
 	/* 2. Reset the timer for the next element in the queue. */
@@ -194,12 +194,14 @@ pthread__alarm_process(pthread_t self, void *arg)
 	pthread_spinunlock(self, &pthread_alarmqlock);
 
 	/* 3. Call the functions for all passed alarms. */
-	PTQ_FOREACH(iterator, &runq, pta_next) {
+	for (iterator = next = PTQ_FIRST(&runq);
+	     iterator;
+	     iterator = next) {
 		SDPRINTF(("(pro %p) calling function for alarm %p\n", self, iterator));
 		(*iterator->pta_func)(iterator->pta_arg);
 		iterator->pta_fired = 1;
+		next = PTQ_NEXT(iterator, pta_next);
 		pthread_spinunlock(self, &iterator->pta_lock);
 	}
-		SDPRINTF(("(pro %p) done\n", self, iterator));
-
+	SDPRINTF(("(pro %p) done\n", self, iterator));
 }

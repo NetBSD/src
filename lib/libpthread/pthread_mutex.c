@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.17 2003/11/24 23:54:13 cl Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.17 2003/11/24 23:54:13 cl Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.18 2004/03/14 01:19:42 cl Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -209,6 +209,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 		 * sleep queue. If it's not held, we can try taking it
 		 * again.
 		 */
+		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
 		if (mutex->ptm_lock == __SIMPLELOCK_LOCKED) {
 			struct mutex_private *mp;
 
@@ -217,6 +218,8 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			if (pthread__id(mutex->ptm_owner) == self) {
 				switch (mp->type) {
 				case PTHREAD_MUTEX_ERRORCHECK:
+					PTQ_REMOVE(&mutex->ptm_blocked, self,
+					    pt_sleep);
 					pthread_spinunlock(self,
 					    &mutex->ptm_interlock);
 					return EDEADLK;
@@ -228,6 +231,8 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 					 * we only modify it if we know we
 					 * own the mutex.
 					 */
+					PTQ_REMOVE(&mutex->ptm_blocked, self,
+					    pt_sleep);
 					pthread_spinunlock(self,
 					    &mutex->ptm_interlock);
 					if (mp->recursecount == INT_MAX)
@@ -237,7 +242,6 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 				}
 			}
 
-			PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
 			/*
 			 * Locking a mutex is not a cancellation
 			 * point, so we don't need to do the
@@ -256,6 +260,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			pthread__block(self, &mutex->ptm_interlock);
 			/* interlock is not held when we return */
 		} else {
+			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
 			pthread_spinunlock(self, &mutex->ptm_interlock);
 		}
 		/* Go around for another try. */

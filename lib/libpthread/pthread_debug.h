@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.7 2004/01/02 14:13:16 cl Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.8 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,9 +104,10 @@ struct	pthread_msgbuf {
 	char	msg_bufc[1];
 };
 
-void pthread__debug_init(void);
+void pthread__debug_init(int ncpu);
 struct pthread_msgbuf* pthread__debuglog_init(int force);
 void pthread__debuglog_printf(const char *fmt, ...);
+int pthread__debuglog_newline(void);
 
 #ifdef PTHREAD__DEBUG
 
@@ -119,9 +120,9 @@ void pthread__debuglog_printf(const char *fmt, ...);
 #undef	PTHREAD_SIG_DEBUG
 #define PTHREAD_SPIN_DEBUG
 #undef	PTHREAD_SPIN_DEBUG_PRINT
+#undef	PTHREAD_VP_DEBUG
 
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
-extern int pthread__debug_newline;
 
 extern int pthread__dbg; /* Set by libpthread_dbg */
 

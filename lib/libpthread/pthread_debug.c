@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.7 2004/01/02 14:13:16 cl Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.8 2004/03/14 01:19:41 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.7 2004/01/02 14:13:16 cl Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.8 2004/03/14 01:19:41 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -59,15 +59,23 @@ int pthread__dbg;
 #ifdef PTHREAD__DEBUG
 
 int pthread__debug_counters[PTHREADD_NCOUNTERS];
-int pthread__debug_newline;
-static struct pthread_msgbuf* debugbuf;
+static struct pthread_msgbuf *debugbuf;
+#define	MAXLINELEN 1000
+struct linebuf {
+	char buf[MAXLINELEN];
+	int len;
+};
+static struct linebuf *linebuf;
 
 static void pthread__debug_printcounters(void);
 static const char *pthread__counternames[] = PTHREADD_INITCOUNTERNAMES;
 
-void pthread__debug_init(void)
+extern int pthread__maxconcurrency, pthread__started;
+
+void pthread__debug_init(int ncpu)
 {
 	time_t t;
+	int i;
 
 	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
 		atexit(pthread__debug_printcounters);
@@ -75,10 +83,15 @@ void pthread__debug_init(void)
 	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
 		t = time(NULL);
 		debugbuf = pthread__debuglog_init(0);
+		linebuf = (struct linebuf *)
+			malloc(ncpu * sizeof(struct linebuf));
+		if (linebuf == NULL)
+			err(1, "Couldn't allocate linebuf");
+		for (i = 0; i < ncpu; i++)
+			linebuf[i].len = 0;
+
 		DPRINTF(("Started debugging %s (pid %d) at %s\n", 
 		    getprogname(), getpid(), ctime(&t)));
-
-		pthread__debug_newline = 1;
 	}
 }
 
@@ -139,25 +152,44 @@ pthread__debuglog_init(int force)
 void
 pthread__debuglog_printf(const char *fmt, ...)
 {
-	char tmpbuf[200+6];
+	char *tmpbuf;
 	size_t len, cplen, r, w, s;
 	long diff1, diff2;
+	int vpid;
 	va_list ap;
 
 	if (debugbuf == NULL) 
 		return;
 
+	if (pthread__maxconcurrency > 1) {
+		vpid = pthread_self()->pt_vpid;
+	} else
+		vpid = 0;
+
+	tmpbuf = linebuf[vpid].buf;
+	len = linebuf[vpid].len;
+
+#if defined(PTHREAD_PID_DEBUG) || defined(PTHREAD_VP_DEBUG)
+	if (len == 0) {
 #ifdef PTHREAD_PID_DEBUG
-	if (pthread__debug_newline == 1)
-		len = sprintf(tmpbuf, "%05d ", getpid());
-	else
+		len += sprintf(tmpbuf, "[%05d]", getpid());
 #endif
-	len = 0;
+#ifdef PTHREAD_VP_DEBUG
+		if (pthread__maxconcurrency > 1)
+			len += sprintf(tmpbuf + len, "[%d]", vpid);
+#endif
+	}
+#endif
+
 	va_start(ap, fmt);
-	len += vsnprintf(tmpbuf, 200, fmt, ap);
+	len += vsnprintf(tmpbuf + len, (unsigned int)(MAXLINELEN - len),
+	    fmt, ap);
 	va_end(ap);
 	
-	pthread__debug_newline = (tmpbuf[len - 1] == '\n') ? 1 : 0;
+	linebuf[vpid].len = len;
+
+	if (tmpbuf[len - 1] != '\n')
+		return;
 
 	r = debugbuf->msg_bufr;
 	w = debugbuf->msg_bufw;
@@ -190,6 +222,22 @@ pthread__debuglog_printf(const char *fmt, ...)
 			debugbuf->msg_bufr = (w + 1) % s;
 	}
 
+	linebuf[vpid].len = 0;
+}
 
+int
+pthread__debuglog_newline(void)
+{
+	int vpid;
+
+	if (debugbuf == NULL) 
+		return 1;
+
+	if (pthread__maxconcurrency > 1)
+		vpid = pthread_self()->pt_vpid;
+	else
+		vpid = 0;
+	
+	return (linebuf[vpid].len == 0);
 }
 #endif

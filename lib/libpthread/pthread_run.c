@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.16 2004/01/16 15:23:31 cl Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.17 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.16 2004/01/16 15:23:31 cl Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.17 2004/03/14 01:19:42 cl Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -57,7 +57,9 @@ extern struct pthread_queue_t pthread__idlequeue;
 extern struct pthread_queue_t pthread__suspqueue;
 
 extern pthread_spin_t pthread__deadqueue_lock;
-extern struct pthread_queue_t pthread__reidlequeue;
+extern struct pthread_queue_t *pthread__reidlequeue;
+
+extern int pthread__concurrency, pthread__maxconcurrency;
 
 __strong_alias(__libc_thr_yield,sched_yield)
 
@@ -80,10 +82,11 @@ sched_yield(void)
 	        next = PTQ_FIRST(&pthread__runqueue);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 		next->pt_state = PT_STATE_RUNNING;
-		if (next != self)
+		if (next != self) {
+			next->pt_vpid = self->pt_vpid;
 			pthread__locked_switch(self, next,
 			    &pthread__runqueue_lock);
-		else
+		} else
 			pthread_spinunlock(self, &pthread__runqueue_lock);
 	}
 
@@ -119,6 +122,9 @@ pthread__next(pthread_t self)
 		pthread__assert(next->pt_type == PT_THREAD_NORMAL);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 		SDPRINTF(("(next %p) returning thread %p\n", self, next));
+		if (pthread__maxconcurrency > pthread__concurrency &&
+		    PTQ_FIRST(&pthread__runqueue))
+			pthread__setconcurrency(1);
 	} else {
 		next = PTQ_FIRST(&pthread__idlequeue);
 		pthread__assert(next != 0);
@@ -126,6 +132,7 @@ pthread__next(pthread_t self)
 		pthread__assert(next->pt_type == PT_THREAD_IDLE);
 		SDPRINTF(("(next %p) returning idle thread %p\n", self, next));
 	}
+	next->pt_vpid = self->pt_vpid;
 	pthread_spinunlock(self, &pthread__runqueue_lock);
 
 	return next;
@@ -214,19 +221,25 @@ pthread__sched_idle2(pthread_t self)
 {
 	pthread_t idlethread, qhead, next;
 
-	/* XXXconcurrency: only reidle threads on same vp */
-
 	qhead = NULL;
 	pthread_spinlock(self, &pthread__deadqueue_lock);
-	idlethread = PTQ_FIRST(&pthread__reidlequeue);
+	idlethread = PTQ_FIRST(&pthread__reidlequeue[self->pt_vpid]);
 	while (idlethread != NULL) {
 		SDPRINTF(("(sched_idle2 %p) reidling %p\n", self, idlethread));
 		next = PTQ_NEXT(idlethread, pt_runq);
 		if ((idlethread->pt_next == NULL) &&
 		    (idlethread->pt_blockgen == idlethread->pt_unblockgen)) {
-			PTQ_REMOVE(&pthread__reidlequeue, idlethread, pt_runq);
+			PTQ_REMOVE(&pthread__reidlequeue[self->pt_vpid],
+			    idlethread, pt_runq);
 			idlethread->pt_next = qhead;
 			qhead = idlethread;
+
+			pthread__concurrency++;
+			SDPRINTF(("(sched_idle2 %p concurrency) now %d from %p\n",
+				     self, pthread__concurrency, idlethread));
+			pthread__assert(pthread__concurrency <=
+			    pthread__maxconcurrency);
+
 		} else {
 		SDPRINTF(("(sched_idle2 %p) %p is in a preemption loop\n", self, idlethread));
 		}
