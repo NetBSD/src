@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.3 1997/07/07 22:21:21 fvdl Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.4 1997/09/21 18:03:09 veego Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.11 1997/06/23 09:20:44 darrenr Exp";
+static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.14 1997/09/13 07:13:04 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -44,7 +44,6 @@ static	char	rcsid[] = "Id: ip_auth.c,v 2.0.2.11 1997/06/23 09:20:44 darrenr Exp"
 #ifdef	__NetBSD__
 # include <machine/cpu.h>
 #endif
-
 #include <net/if.h>
 #ifdef sun
 #include <net/af.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.3 1997/09/21 16:49:13 veego Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.2 1997/09/21 18:02:14 veego Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -19,8 +19,10 @@ static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <netinet/ip_compat.h>
+#include "ipsend.h"
 
 
 #ifndef	__P
@@ -31,13 +33,6 @@ static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
 # endif
 #endif
 
-
-struct ipopt_names {
-	int	on_value;
-	int	on_bit;
-	int	on_siz;
-	char	*on_name;
-};
 
 struct ipopt_names ionames[] = {
 	{ IPOPT_EOL,	0x01,	1, "eol" },
@@ -61,12 +56,6 @@ struct	ipopt_names secnames[] = {
 	{ IPOPT_SECUR_TOPSECRET, 0x4000,0, "topsecret" },
 	{ 0, 0, 0, NULL }	/* must be last */
 };
-
-
-u_short	seclevel __P((char *));
-u_long	optname __P((char *, char *));
-int	addipopt __P((char *, struct ipopt_names *, int, char *));
-u_32_t	buildopts __P((char *, char *, int));
 
 
 u_short seclevel(slevel)

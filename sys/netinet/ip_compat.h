@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.8 1997/07/06 05:29:14 thorpej Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.9 1997/09/21 18:03:11 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.18 1997/07/05 04:38:40 darrenr Exp
+ * Id: ip_compat.h,v 2.0.2.22 1997/09/09 14:26:36 darrenr Exp 
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -159,7 +159,7 @@ typedef unsigned long   u_32_t;
 #define	IPOPT_FINN	205	/* FINN */
 
 
-#ifdef	__FreeBSD__
+#if defined(__FreeBSD__) && defined(KERNEL)
 # include <machine/spl.h>
 # if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
 #  define	ACTUALLY_LKM_NOT_KERNEL
@@ -198,10 +198,10 @@ typedef	struct	qif	{
 	void	*qf_optr;
 	queue_t	*qf_in;
 	queue_t	*qf_out;
-	void	*qf_wqinfo;
-	void	*qf_rqinfo;
-	int	(*qf_inp) __P((queue_t *, mblk_t *));
-	int	(*qf_outp) __P((queue_t *, mblk_t *));
+	struct	qinit	*qf_wqinfo;
+	struct	qinit	*qf_rqinfo;
+	struct	qinit	qf_wqinit;
+	struct	qinit	qf_rqinit;
 	mblk_t	*qf_m;	/* These three fields are for passing data up from */
 	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
 	int	qf_off;
@@ -235,7 +235,7 @@ extern	ill_t	*get_unit __P((char *));
 # endif /* sun */
 
 # if defined(sun) && !defined(linux)
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
+#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	WAKEUP(id)	wakeup(id)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
@@ -307,24 +307,127 @@ typedef struct mbuf mb_t;
 #endif
 
 #ifdef linux
+/*
+ * These #ifdef's are here mainly for linux, but who knows, they may
+ * not be in other places or maybe one day linux will grow up and some
+ * of these will turn up there too.
+ */
+#ifndef	ICMP_UNREACH
 # define	ICMP_UNREACH	ICMP_DEST_UNREACH
+#endif
+#ifndef	ICMP_SOURCEQUENCH
 # define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
+#endif
+#ifndef	ICMP_TIMXCEED
 # define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
+#endif
+#ifndef	ICMP_PARAMPROB
 # define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
-
+#endif
+#ifndef	IPVERSION
+# define	IPVERSION	4
+#endif
+#ifndef	IPOPT_MINOFF
+# define	IPOPT_MINOFF	4
+#endif
+#ifndef	IPOPT_COPIED
+# define	IPOPT_COPIED(x)	((x)&0x80)
+#endif
+#ifndef	IPOPT_EOL
+# define	IPOPT_EOL	0
+#endif
+#ifndef	IPOPT_NOP
+# define	IPOPT_NOP	1
+#endif
+#ifndef	IP_MF
+# define	IP_MF	((u_short)0x2000)
+#endif
+#ifndef	ETHERTYPE_IP
+# define	ETHERTYPE_IP	((u_short)0x0800)
+#endif
+#ifndef	TH_FIN
 # define	TH_FIN	0x01
+#endif
+#ifndef	TH_SYN
 # define	TH_SYN	0x02
+#endif
+#ifndef	TH_RST
 # define	TH_RST	0x04
+#endif
+#ifndef	TH_PUSH
 # define	TH_PUSH	0x08
+#endif
+#ifndef	TH_ACK
 # define	TH_ACK	0x10
+#endif
+#ifndef	TH_URG
 # define	TH_URG	0x20
+#endif
+#ifndef	IPOPT_EOL
+# define	IPOPT_EOL	0
+#endif
+#ifndef	IPOPT_NOP
+# define	IPOPT_NOP	1
+#endif
+#ifndef	IPOPT_RR
+# define	IPOPT_RR	7
+#endif
+#ifndef	IPOPT_TS
+# define	IPOPT_TS	68
+#endif
+#ifndef	IPOPT_SECURITY
+# define	IPOPT_SECURITY	130
+#endif
+#ifndef	IPOPT_LSRR
+# define	IPOPT_LSRR	131
+#endif
+#ifndef	IPOPT_SATID
+# define	IPOPT_SATID	136
+#endif
+#ifndef	IPOPT_SSRR
+# define	IPOPT_SSRR	137
+#endif
+#ifndef	IPOPT_SECUR_UNCLASS
+# define	IPOPT_SECUR_UNCLASS	((u_short)0x0000)
+#endif
+#ifndef	IPOPT_SECUR_CONFID
+# define	IPOPT_SECUR_CONFID	((u_short)0xf135)
+#endif
+#ifndef	IPOPT_SECUR_EFTO
+# define	IPOPT_SECUR_EFTO	((u_short)0x789a)
+#endif
+#ifndef	IPOPT_SECUR_MMMM
+# define	IPOPT_SECUR_MMMM	((u_short)0xbc4d)
+#endif
+#ifndef	IPOPT_SECUR_RESTR
+# define	IPOPT_SECUR_RESTR	((u_short)0xaf13)
+#endif
+#ifndef	IPOPT_SECUR_SECRET
+# define	IPOPT_SECUR_SECRET	((u_short)0xd788)
+#endif
+#ifndef IPOPT_SECUR_TOPSECRET
+# define	IPOPT_SECUR_TOPSECRET	((u_short)0x6bc5)
+#endif
+
+# if LINUX < 0200
+#  define	icmp	icmphdr
+#  define	icmp_type	type
+#  define	icmp_code	code
+# endif
 
 typedef	struct	{
 	__u16	th_sport;
 	__u16	th_dport;
 	__u32	th_seq;
 	__u32	th_ack;
-	__u8	th_x;
+# if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
+    defined(vax)
+	__u8	th_res:4;
+	__u8	th_off:4;
+#else
+	__u8	th_off:4;
+	__u8	th_res:4;
+#endif
 	__u8	th_flags;
 	__u16	th_win;
 	__u16	th_sum;
@@ -409,6 +512,12 @@ struct ipovly {
 	struct	in_addr ih_dst;		/* destination internet address */
 };
 
+typedef struct  {
+	__u8	ether_dhost[6];
+	__u8	ether_shost[6];
+	__u16	ether_type;
+} ether_header_t;
+
 # define	SPLX(x)		(void)
 # define	SPLNET(x)	(void)
 # define	SPLIMP(x)	(void)
@@ -439,6 +548,13 @@ typedef	struct	tcphdr	tcphdr_t;
 typedef	struct	udphdr	udphdr_t;
 typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
+typedef	struct	ether_header	ether_header_t;
 #endif /* linux */
 
+#ifndef	ICMP_ROUTERADVERT
+# define	ICMP_ROUTERADVERT	9
+#endif
+#ifndef	ICMP_ROUTERSOLICIT
+# define	ICMP_ROUTERSOLICIT	10
+#endif
 #endif	/* __IP_COMPAT_H__ */

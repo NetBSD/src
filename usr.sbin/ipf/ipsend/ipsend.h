@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.2 1997/05/28 03:04:44 thorpej Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.3 1997/09/21 18:02:12 veego Exp $	*/
 
 /*
  * ipsend.h (C) 1997 Darren Reed
@@ -23,20 +23,13 @@
 # endif
 #endif
 
-#include "ip_compat.h"
+#include <netinet/ip_compat.h>
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
-/*
- * XXX use the version in <netinet/tcpip.h> right now; the ipfilter
- * XXX version cannot be redistributed!
- */
-#if 0
 #include "tcpip.h"
-#else
-#include <netinet/tcpip.h>
-#endif
 #include "ipt.h"
+#include "ipf.h"
 
 extern	int	resolve __P((char *, char *));
 extern	int	arp __P((char *, char *));
@@ -49,7 +42,8 @@ extern	int	send_icmp __P((int, int, ip_t *, struct in_addr));
 extern	int	send_packet __P((int, int, ip_t *, struct in_addr));
 extern	int	send_packets __P((char *, int, ip_t *, struct in_addr));
 extern	u_short	seclevel __P((char *));
-extern	u_long	optname __P((char *, char *));
+extern	u_32_t	buildopts __P((char *, char *, int));
+extern	int	addipopt __P((char *, struct ipopt_names *, int, char *));
 extern	int	initdevice __P((char *, int, int));
 extern	int	sendip __P((int, char *, int));
 #ifdef	linux
@@ -72,3 +66,5 @@ extern	int	openkmem __P((void));
 extern	int	kmemcpy __P((char *, void *, int));
 
 #define	KMCPY(a,b,c)	kmemcpy((char *)(a), (void *)(b), (int)(c))
+
+#define	OPT_RAW	0x80000

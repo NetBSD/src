@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.8 1997/07/05 05:43:59 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.9 1997/09/21 18:01:55 veego Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -57,7 +57,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.8 1997/07/05 05:43:59 darrenr Exp $";
+static	char	rcsid[] = "Id: ipnat.c,v 2.0.2.17 1997/09/10 13:08:21 darrenr Exp ";
 #endif
 
 #if	SOLARIS
@@ -100,7 +100,7 @@ int argc;
 char *argv[];
 {
 	char	*file = NULL;
-	int	fd, opts = 1, c;
+	int	fd = -1, opts = 1, c;
 
 	while ((c = getopt(argc, argv, "CFf:lnrsv")) != -1)
 		switch (c)
@@ -188,7 +188,7 @@ void *ptr;
 	switch (np->in_redir)
 	{
 	case NAT_REDIRECT :
-		printf("redir ");
+		printf("rdr ");
 		break;
 	case NAT_MAP :
 		printf("map ");
@@ -214,11 +214,11 @@ void *ptr;
 		printf("-> %s", inet_ntoa(np->in_in[0]));
 		if (np->in_pnext)
 			printf(" port %d", ntohs(np->in_pnext));
-		if (np->in_flags & IPN_TCPUDP)
+		if ((np->in_flags & IPN_TCPUDP) == IPN_TCPUDP)
 			printf(" tcp/udp");
-		else if (np->in_flags & IPN_TCP)
+		else if ((np->in_flags & IPN_TCP) == IPN_TCP)
 			printf(" tcp");
-		else if (np->in_flags & IPN_UDP)
+		else if ((np->in_flags & IPN_UDP) == IPN_UDP)
 			printf(" udp");
 		printf("\n");
 		if (verbose)
