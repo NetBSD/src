@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.29 2000/10/06 16:39:04 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.30 2000/10/06 20:07:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -54,7 +54,7 @@
 #include <dev/ic/siopvar.h>
 #include <dev/ic/siopvar_common.h>
 
-#define DEBUG
+#undef DEBUG
 #undef DEBUG_DR
 #undef DEBUG_INTR
 #undef DEBUG_SHED
