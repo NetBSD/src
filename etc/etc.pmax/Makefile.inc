@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2000/04/19 13:45:24 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.6.4.1 2001/09/30 11:57:19 he Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -17,8 +17,7 @@ INSTALLATION_DIRS+=installation/diskimage installation/netboot
 # location and name of the stripped down NFS install kernel
 NFSCONF=		INSTALL
 NFSKERNNAME=		nfsnetbsd
-# We don't know about ${KERNOBJDIR} yet ...
-NFSKERNDIR=		${.CURDIR:C/[^\/]+$//}sys/arch/${MACHINE}/compile/${NFSCONF}
+NFSKERNDIR=		${KERNOBJDIR}/${NFSCONF}
 NFSKERN=		${NFSKERNDIR}/${NFSKERNNAME}
 
 snap_md_post: ${DISKIMAGE} ${DISKIMAGE_TAR} ${INSTALLKERN}
