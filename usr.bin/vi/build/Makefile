@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/03/24 22:00:00 christos Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/27 08:59:22 mycroft Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
@@ -33,7 +33,7 @@ MLINKS= vi.1 ex.1 vi.1 view.1
 
 cat=	dutch english german ru_SU.KOI8-R swedish
 FILES=${cat:S@^@${.CURDIR}/../catalog/@g}
-FILESDIR=/usr/share
+FILESDIR=/usr/share/vi/catalog
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
