@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sigprocmask.S,v 1.1 1993/10/07 00:21:04 cgd Exp $
+ *	$Id: sigprocmask.S,v 1.2 1994/03/07 23:20:50 phil Exp $
  */
 
 /* 
@@ -26,7 +26,6 @@
  */
 
 
-#include <sys/syscall.h>
 #include "SYS.h"
 
 ENTRY(sigprocmask)
