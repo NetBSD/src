@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.23 2001/12/08 19:17:03 wiz Exp $
+.\"	$NetBSD: su.1,v 1.24 2002/10/05 14:07:04 hubertf Exp $
 .\"
 .Dd March 7, 2001
 .Dt SU 1
@@ -98,6 +98,9 @@ Do not attempt to use Kerberos to authenticate the user.
 .It Fl c
 Specify a login class.
 You may only override the default class if you're already root.
+See
+.Xr login.conf 5
+for details.
 .It Fl f
 If the invoked shell is
 .Xr csh 1 ,
@@ -216,7 +219,25 @@ execute:
 su -l username
 .Ed
 .Pp
-To execute arbitrary command with privileges of user username, execute:
+When a
+.Fl c
+option is included
+.Em after
+the
+.Ar login
+name it is not a
+.Nm
+option, because any arguments after the
+.Ar login
+are passed to the shell. (See
+.Xr csh 1 ,
+.Xr ksh 1
+or
+.Xr sh 1
+for details.)
+To execute arbitrary command with privileges of user 
+.Em username ,
+execute:
 .Bd -literal -offset indent
 su username -c "command args"
 .Ed
