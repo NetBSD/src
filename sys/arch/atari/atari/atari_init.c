@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.1.1.1 1995/03/26 07:12:21 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.2 1995/04/28 11:41:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -61,7 +61,7 @@
 extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, Umap, proc0paddr;
 u_int		*Sysmap;
-int		machineid, mmutype, cpu040, astpending, cpuspeed;
+int		machineid, mmutype, cpu040, astpending;
 char		*vmmap;
 pv_entry_t	pv_table;
 
@@ -99,32 +99,6 @@ vm_offset_t	page_zero;
 
 u_long	st_pool_size = ST_POOL_SIZE;	/* Patchable	*/
 u_long	st_pool_virt, st_pool_phys;
-
-#if 0
-void
-*stmem_steal(amount, phys)
-long amount;
-vm_offset_t	*phys;
-{
-	/*
-	 * steal from top of st-memory, so we don't collide with 
-	 * the kernel loaded into st-memory in the not-yet-mapped state.
-	 */
-	vm_offset_t p = st_pool_virt;
-
-	if(amount & 1)
-		amount++;
-	if(amount > st_pool_size)
-		panic("not enough ST memory");
-	*phys = st_pool_phys;
-
-	st_pool_virt  += amount;
-	st_pool_phys  += amount;
-	st_pool_size  -= amount;
-
-	return((void *)p);
-}
-#endif
 
 /*
  * this is the C-level entry function, it's called from locore.s.
@@ -175,7 +149,10 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * The following is a hack. We do not know how much ST memory we
 	 * really need until after configuration has finished. At this
 	 * time I have no idea how to grab ST memory at that time.
+	 * The round_page() call is ment to correct errors made by
+	 * binpatching!
 	 */
+	st_pool_size   = atari_round_page(st_pool_size);
 	st_pool_phys   = stphysize - st_pool_size;
 	stphysize      = st_pool_phys;
 
