@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.4 1998/05/03 18:49:54 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.4.2.1 1998/08/12 02:57:28 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -265,9 +265,11 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	for (symp = symtab_start; symp < symtab_end; symp++) {
 		if (symp->st_name == 0)
 			continue;
+#if 0
 		if (ELF_SYM_TYPE(symp->st_info) != Elf_estt_object &&
 		    ELF_SYM_TYPE(symp->st_info) != Elf_estt_func)
 			continue;
+#endif
 
 		if (off >= symp->st_value) {
 			if ((off - symp->st_value) < diff) {
