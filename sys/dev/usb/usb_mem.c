@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.4 1998/12/11 00:05:07 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.5 1998/12/14 23:44:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,11 @@ usb_allocmem(tag, size, align, p)
 	if (!f) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
 		r = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL, &b);
+		if (r != USBD_NORMAL_COMPLETION) {
+			splx(s);
+			return (r);
+		}
+		b->fullblock = 0;
 		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
 			f = (struct usb_frag_dma *)(b->kaddr + i);
 			f->block = b;
