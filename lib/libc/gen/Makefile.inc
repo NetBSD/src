@@ -1,12 +1,12 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.50 1994/08/19 20:57:43 cgd Exp $
+#	$Id: Makefile.inc,v 1.51 1994/08/29 04:47:31 mycroft Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
-	daemon.c devname.c difftime.c \
-	directory.c disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
+SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
+	ctype_.c daemon.c devname.c difftime.c \
+	disklabel.c err.c errlst.c errno.c exec.c fnmatch.c \
 	fstab.c ftok.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
 	gethostname.c getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
@@ -14,12 +14,13 @@ SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
 	getusershell.c glob.c infinity.c initgroups.c isatty.c isctype.c \
 	isinf.c \
 	msgctl.c msgget.c msgsnd.c msgrcv.c \
-	mktemp.c nice.c nlist.c pause.c popen.c psignal.c pwcache.c raise.c \
-	scandir.c semconfig.c semctl.c semget.c semop.c \
+	mktemp.c nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c \
+	raise.c readdir.c rewinddir.c scandir.c seekdir.c semconfig.c semctl.c \
+	semget.c semop.c \
 	setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c shmat.c shmctl.c shmdt.c shmget.c siginterrupt.c \
 	siglist.c signal.c signame.c sigsetops.c sleep.c sysconf.c sysctl.c \
-	syslog.c \
+	syslog.c telldir.c \
 	termios.c time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c \
 	toupper_.c ualarm.c uname.c unvis.c usleep.c \
 	utime.c valloc.c vis.c wait.c wait3.c \
