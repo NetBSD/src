@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1997/03/22 12:51:00 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1997/03/26 22:39:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -74,11 +74,19 @@ struct devnametobdevmaj vax_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device = NULL;
-	int booted_partition = 0;
 
 	if (config_rootfound("backplane", NULL) == NULL)
 		panic("backplane not configured");
+
+	cold = 0;
+	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device = NULL;
+	int booted_partition = 0;
 
 	/*
 	 * The device we booted from are looked for during autoconfig.
@@ -93,11 +101,6 @@ configure()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, vax_nam2blk);
-
-	swapconf();
-	dumpconf();
-	cold = 0;
-	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }
 
 int	printut __P((void *, const char *));

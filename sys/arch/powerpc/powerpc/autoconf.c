@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1997/01/31 02:04:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1997/03/26 22:39:14 gwr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,20 +63,23 @@ configure()
 {
 	ofrootfound();
 	(void)spl0();
+	cold = 0;
+}
 
-	/*
-	 * Setup root device.
-	 * Configure swap area.
-	 */
+/*
+ * Setup root device.
+ * Configure swap area.
+ */
+void
+cpu_rootconf()
+{
+
 	findroot();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, powerpc_nam2blk);
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 /*

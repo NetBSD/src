@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1997/01/31 01:51:17 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/03/26 22:39:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,8 +84,6 @@ struct devnametobdevmaj i386_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
 
 	startrtclock();
 
@@ -97,6 +95,14 @@ configure()
 	    (u_short)imask[IPL_TTY]);
 
 	spl0();
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
 
@@ -104,14 +110,6 @@ configure()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, i386_nam2blk);
-
-	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
-	 */
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
