@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.29 2003/07/15 07:38:29 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.30 2003/07/15 07:39:55 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -322,10 +322,10 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	 * in the "exports" array can be resolved from the dynamic linker.
 	 */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
-		symp = _rtld_symlook_obj(name, hash, &_rtld_obj_rtld, in_plt);
+		symp = _rtld_symlook_obj(name, hash, &_rtld_objself, in_plt);
 		if (symp != NULL && is_exported(symp)) {
 			def = symp;
-			defobj = &_rltd_obj_rtld;
+			defobj = &_rtld_objself;
 		}
 	}
 #endif
