@@ -1,4 +1,4 @@
-/*	$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $	*/
+/*	$NetBSD: rent.c,v 1.4 1997/10/12 17:45:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,24 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rent.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $";
+__RCSID("$NetBSD: rent.c,v 1.4 1997/10/12 17:45:24 christos Exp $");
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include	"monop.ext"
 
 /*
  *	This routine has the player pay rent
  */
+void
 rent(sqp)
-reg SQUARE	*sqp; {
+SQUARE	*sqp;
+{
 
-	reg int		rnt;
-	reg PROP	*pp;
+	int		rnt = 0;
+	PROP	*pp;
 	PLAY		*plp;
 
 	plp = &play[sqp->owner];

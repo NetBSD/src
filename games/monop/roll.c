@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $	*/
+/*	$NetBSD: roll.c,v 1.6 1997/10/12 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $";
+__RCSID("$NetBSD: roll.c,v 1.6 1997/10/12 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include "monop.ext"
 #include <stdlib.h>
 
 /*
@@ -52,11 +54,13 @@ static char rcsid[] = "$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $";
 # if defined(pdp11)
 # define	MAXRAND	32767L
 
+int
 roll(ndie, nsides)
-int	ndie, nsides; {
+int	ndie, nsides;
+{
 
-	reg long	tot;
-	reg unsigned	n, r;
+	long	tot;
+	unsigned	n, r;
 
 	tot = 0;
 	n = ndie;
@@ -67,11 +71,12 @@ int	ndie, nsides; {
 
 # else
 
+int
 roll(ndie, nsides)
-reg int	ndie, nsides; {
+int	ndie, nsides; {
 
-	reg int		tot, r;
-	reg double	num_sides;
+	int		tot, r;
+	double	num_sides;
 
 	num_sides = nsides;
 	tot = 0;
