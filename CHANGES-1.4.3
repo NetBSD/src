@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.38 2000/07/06 17:22:25 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.39 2000/07/07 18:10:57 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -816,3 +816,56 @@ domestic/lib/libss/Makefile			patch
 distrib/sets/lists/comp/mi			patch
 
   Include <dev/pcmcia/if_wi_ieee.h> header file in distrib set.
+
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+  Add Intel i810 PCI ID, and a few PCI IDE controllers.
+
+distrib/notes/i386/hardware			patch
+share/man/man4/pciide.4				patch
+sys/arch/macppc/dev/wdc_obio.c			patch
+sys/dev/ata/ata.c				patch
+sys/dev/ata/ata_wdc.c				patch
+sys/dev/ata/atareg.h				patch
+sys/dev/ata/atavar.h				patch
+sys/dev/ata/wd.c				patch
+sys/dev/ata/wdvar.h				patch
+sys/dev/ic/wdc.c				patch
+sys/dev/ic/wdcvar.h				patch
+sys/dev/isa/wdc_isa.c				patch
+sys/dev/pci/pciide.c				patch
+sys/dev/pci/pciide_acer_reg.h			patch
+sys/dev/pci/pciide_amd_reg.h			patch (new)
+sys/dev/pci/pciide_apollo_reg.h			patch
+sys/dev/pci/pciide_cmd_reg.h			patch
+sys/dev/pci/pciide_cy693_reg.h			patch
+sys/dev/pci/pciide_hpt_reg.h			patch (new)
+sys/dev/pci/pciide_opti_reg.h			patch (new)
+sys/dev/pci/pciide_pdc202xx_reg.h		patch (new)
+sys/dev/pci/pciide_piix_reg.h			patch
+sys/dev/pci/pciide_sis_reg.h			patch
+sys/dev/pci/pciidereg.h				patch
+sys/dev/pci/pciidevar.h				patch
+sys/dev/scsipi/atapi_wdc.c			patch
+sys/dev/scsipi/atapiconf.h			patch
+
+  Add support for the following PCIIDE controllers:
+   o AMD 756
+   o CMD PCI0648 and PCI0649
+   o Hightpoint HPT366
+   o OPTi 82c621 (and a few of its derivatives)
+   o Promise Ultra/33 and Ultra/66
+   o Intel 82801 (ICH/ICH0)
+  Also fix PR#10437 (detect more ATAPI devices).
+
+sbin/mount/mount.8				1.27-1.28
+
+  Add an EXAMPLES section to the mount(8) manual page.
+  Fixes PR#10232.
+
+lib/libc/sys/nanosleep.2			1.3
+
+  Provide text in the DESCRIPTION section.
+  Fixes PR#10072.
