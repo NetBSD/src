@@ -1,3 +1,11 @@
+970609
+
+- Don't trust hostnames provided by client - Win95 allows *spaces* in
+  client-supplied hostnames!
+
+- Be lenient in parsing client-hostname statement in case a bad hostname
+  got recorded.
+
 970607
 
 - Change size_t to ssize_t in return values where a negative number
