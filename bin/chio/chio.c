@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.16 2001/09/13 10:00:44 wiz Exp $ */
+/* $NetBSD: chio.c,v 1.17 2001/09/16 12:13:33 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.16 2001/09/13 10:00:44 wiz Exp $");
+__RCSID("$NetBSD: chio.c,v 1.17 2001/09/16 12:13:33 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -146,6 +146,7 @@ main(int argc, char *argv[])
 {
 	int ch, i;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "f:")) != -1) {
 		switch (ch) {
 		case 'f':
