@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.597 2003/07/23 21:57:19 itojun Exp $
+#	$NetBSD: mi,v 1.598 2003/07/24 07:51:01 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2910,6 +2910,7 @@
 ./usr/share/man/cat3/printf.0	comp-c-catman
 ./usr/share/man/cat3/printw.0		comp-c-catman
 ./usr/share/man/cat3/psignal.0	comp-c-catman
+./usr/share/man/cat3/pthread.0	comp-c-catman
 ./usr/share/man/cat3/pthread_atfork.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_destroy.0	comp-c-catman
@@ -6291,6 +6292,7 @@
 ./usr/share/man/man3/printf.3		comp-c-man
 ./usr/share/man/man3/printw.3		comp-c-man
 ./usr/share/man/man3/psignal.3		comp-c-man
+./usr/share/man/man3/pthread.3		comp-c-man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man
 ./usr/share/man/man3/pthread_attr.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man
