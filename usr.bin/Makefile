@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 1996/06/14 17:22:07 cgd Exp $
+#	$NetBSD: Makefile,v 1.64 1996/11/29 16:32:18 jtk Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -31,6 +31,10 @@ SUBDIR+=telnet
 # Don't use the standard tool chain on the alpha.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
 SUBDIR+= ar gprof nm ranlib size strip
+.endif
+
+.if (${MACHINE_ARCH} == "i386")
+SUBDIR+= fdformat
 .endif
 
 .include <bsd.subdir.mk>
