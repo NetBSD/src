@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.54 2002/09/27 20:42:13 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.55 2002/09/30 17:36:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -271,7 +271,8 @@ extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
-void configure(void);
+void	config_init(void);
+void	configure(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);
