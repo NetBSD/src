@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2002/01/10 17:04:20 tv Exp $
+#	$NetBSD: Makefile,v 1.30 2002/01/25 05:01:17 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		groff \
 	lex .WAIT \
 		asn1_compile compile_et config lint1 msgc menuc makefs \
-		mklocale pwd_mkdb zic
+		mklocale pax pwd_mkdb zic
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	m4 .WAIT autoconf
