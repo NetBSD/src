@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.8 1994/06/27 04:00:52 hpeyerl Exp $
+#	     $Id: Makefile,v 1.9 1994/07/18 06:27:12 mycroft Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -149,11 +149,11 @@ install: mkboot installboot ${ALL}
 	rm -f ${DESTDIR}/usr/mdec/bootsd
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/bootsd
 	install -c -o bin -g bin -m 644 tapeboot.lif ${DESTDIR}/usr/mdec/bootct
-	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
-	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
-	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
-	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
-	install -o bin -g bin -m 444 ndiskboot.lif ${DESTDIR}/sys/hpdist/tp
+#	install -o bin -g bin -m 755 -d ${DESTDIR}/sys/hpdist/tp
+#	install -o bin -g bin -m 444 netbsdboot.lif ${DESTDIR}/sys/hpdist/tp
+#	install -o bin -g bin -m 444 tapeboot.lif ${DESTDIR}/sys/hpdist/tp
+#	install -o bin -g bin -m 444 diskboot.lif ${DESTDIR}/sys/hpdist/tp
+#	install -o bin -g bin -m 444 ndiskboot.lif ${DESTDIR}/sys/hpdist/tp
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
