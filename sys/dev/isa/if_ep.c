@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.74 1995/07/23 16:42:49 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.75 1995/07/23 16:43:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -467,7 +467,7 @@ startagain:
 		return;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
-	if ((m->m_flags & M_PKTHDR) == 0)
+	if ((m0->m_flags & M_PKTHDR) == 0)
 		panic("epstart: no header mbuf");
 	len = m0->m_pkthdr.len;
 
