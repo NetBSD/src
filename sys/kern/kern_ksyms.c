@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.19 2004/02/18 20:41:09 matt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.20 2004/02/18 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.19 2004/02/18 20:41:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.20 2004/02/18 23:44:49 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -604,43 +604,62 @@ ksyms_sizes_calc(void)
 #endif
 
 /*
- * Temporary work buffers for dynamic loaded symbol tables.
+ * Temporary work structure for dynamic loaded symbol tables.
  * Will go away when in-kernel linker is in place.
  */
-#define	NSAVEDSYMS 512
-#define	SZSYMNAMES NSAVEDSYMS*8		/* Just an approximation */
-static Elf_Sym savedsyms[NSAVEDSYMS];
-static int symnmoff[NSAVEDSYMS];
-static char symnames[SZSYMNAMES];
-static int cursyms, curnamep;
+
+struct syminfo {
+	size_t cursyms;
+	size_t curnamep;
+	size_t maxsyms;
+	size_t maxnamep;
+	Elf_Sym *syms;
+	int *symnmoff;
+	char *symnames;
+};
+	
 
 /*
  * Add a symbol to the temporary save area for symbols.
  * This routine will go away when the in-kernel linker is in place.
  */
 static void
-addsym(Elf_Sym *sym, char *name)
+addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
+       const char *mod)
 {
-	int len;
+	int len, mlen;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_MORE_CALLS)
 		printf("addsym: name %s val %lx\n", name, (long)sym->st_value);
 #endif
-	if (cursyms == NSAVEDSYMS || 
-	    ((len = strlen(name) + 1) + curnamep) > SZSYMNAMES) {
+	len = strlen(name) + 1;
+	if (mod)
+		mlen = 1 + strlen(mod);
+	else
+		mlen = 0;
+	if (info->cursyms == info->maxsyms || 
+	    (len + mlen + info->curnamep) > info->maxnamep) {
 		printf("addsym: too many symbols, skipping '%s'\n", name);
 		return;
 	}
-	strlcpy(&symnames[curnamep], name, sizeof(symnames) - curnamep);
-	savedsyms[cursyms] = *sym;
-	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
-	curnamep += len;
+	strlcpy(&info->symnames[info->curnamep], name,
+	    info->maxnamep - info->curnamep);
+	if (mlen) {
+		info->symnames[info->curnamep + len - 1] = '.';
+		strlcpy(&info->symnames[info->curnamep + len], mod,
+		    info->maxnamep - (info->curnamep + len));
+		len += mlen;
+	}
+	info->syms[info->cursyms] = *sym;
+	info->syms[info->cursyms].st_name = info->curnamep;
+	info->symnmoff[info->cursyms] = info->curnamep;
+	info->curnamep += len;
 #if NKSYMS
 	if (len > ksyms_maxlen)
 		ksyms_maxlen = len;
 #endif
-	cursyms++;
+	info->cursyms++;
 }
 /*
  * Adds a symbol table.
@@ -657,7 +676,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	struct symtab *st;
 	unsigned long rval;
 	int i;
-	char *str, *name;
+	char *name;
+	struct syminfo info;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
@@ -683,10 +703,11 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	/*
 	 * XXX - Only add a symbol if it do not exist already.
 	 * This is because of a flaw in the current LKM implementation,
-	 * the loop will be removed once the in-kernel linker is in place.
+	 * these loops will be removed once the in-kernel linker is in place.
 	 */
-	cursyms = curnamep = 0;
+	memset(&info, 0, sizeof(info));
 	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
+		char * const symname = strstart + sym[i].st_name;
 		if (sym[i].st_name == 0)
 			continue; /* Just ignore */
 
@@ -696,36 +717,80 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 			continue;
 			
 		/* Check if the symbol exists */
-		if (ksyms_getval_from_kernel(NULL, strstart + sym[i].st_name,
+		if (ksyms_getval_from_kernel(NULL, symname,
 		    &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval) {
-				printf("%s: symbol '%s' redeclared with "
-				    "different value (%lx != %lx)\n",
-				    mod, strstart + sym[i].st_name,
-				    rval, (long)sym[i].st_value);
+				if (!strcmp(symname, "__bss_start") ||
+				    !strcmp(symname, "_edata") ||
+				    !strcmp(symname, "_end") ||
+				    !strncmp(symname, "__start_link_set_",17) ||
+				    !strncmp(symname, "__stop_link_set_",16)) {
+					info.maxsyms++;
+					info.maxnamep += strlen(symname) + 1 +
+					    strlen(mod) + 1;
+				} else {
+					printf("%s: symbol '%s' redeclared with"
+					    " different value (%lx != %lx)\n",
+					    mod, symname,
+					    rval, (long)sym[i].st_value);
+				}
+			}
+		} else {
+			/*
+			 * Count this symbol
+			 */
+			info.maxsyms++;
+			info.maxnamep += strlen(symname) + 1;
+		}
+	}
+
+	/*
+	 * Now that we know the sizes, malloc the structures.
+	 */
+	info.syms = malloc(sizeof(Elf_Sym)*info.maxsyms, M_DEVBUF, M_WAITOK);
+	info.symnames = malloc(info.maxnamep, M_DEVBUF, M_WAITOK);
+	info.symnmoff = malloc(sizeof(int)*info.maxsyms, M_DEVBUF, M_WAITOK);
+
+	/*
+	 * Now that we have the symbols, actually fill in the structures.
+	 */
+	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
+		char * const symname = strstart + sym[i].st_name;
+		if (sym[i].st_name == 0)
+			continue; /* Just ignore */
+
+		/* check validity of the symbol */
+		/* XXX - save local symbols if DDB */
+		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
+			continue;
+			
+		/* Check if the symbol exists */
+		if (ksyms_getval_from_kernel(NULL, symname,
+		    &rval, KSYMS_EXTERN) == 0) {
+			if ((sym[i].st_value != rval) &&
+			    (!strcmp(symname, "__bss_start") ||
+			     !strcmp(symname, "_edata") ||
+			     !strcmp(symname, "_end") ||
+			     !strncmp(symname, "__start_link_set_",17) ||
+			     !strncmp(symname, "__stop_link_set_",16))) {
+				addsym(&info, &sym[i], symname, mod);
 			}
 		} else
 			/* Ok, save this symbol */
-			addsym(&sym[i], strstart + sym[i].st_name);
+			addsym(&info, &sym[i], symname, NULL);
 	}
-
-	sym = malloc(sizeof(Elf_Sym)*cursyms, M_DEVBUF, M_WAITOK);
-	str = malloc(curnamep, M_DEVBUF, M_WAITOK);
-	memcpy(sym, savedsyms, sizeof(Elf_Sym)*cursyms);
-	memcpy(str, symnames, curnamep);
 
 	st = malloc(sizeof(struct symtab), M_DEVBUF, M_WAITOK);
 	i = strlen(mod) + 1;
 	name = malloc(i, M_DEVBUF, M_WAITOK);
 	strlcpy(name, mod, i);
 	st->sd_name = name;
-	st->sd_symnmoff = malloc(sizeof(int)*cursyms, M_DEVBUF, M_WAITOK);
-	memcpy(st->sd_symnmoff, symnmoff, sizeof(int)*cursyms);
-	st->sd_symstart = sym;
-	st->sd_symsize = sizeof(Elf_Sym)*cursyms;
-	st->sd_strstart = str;
-	st->sd_strsize = curnamep;
+	st->sd_symnmoff = info.symnmoff;
+	st->sd_symstart = info.syms;
+	st->sd_symsize = sizeof(Elf_Sym)*info.maxsyms;
+	st->sd_strstart = info.symnames;
+	st->sd_strsize = info.maxnamep;
 
 	/* Make them absolute references */
 	sym = st->sd_symstart;
