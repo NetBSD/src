@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.21 2003/05/18 11:18:02 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.22 2003/05/25 12:34:28 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 18, 2003
+.Dd May 25, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -922,6 +922,15 @@ Perform
 .It Sy tools
 Build and install the host tools from
 .Pa src/tools .
+.
+.It Sy install Ns = Ns Ar idir
+Install the contents of
+.Sy DESTDIR
+to
+.Ar idir ,
+using
+.Dq make installworld .
+.
 .It Sy kernel Ns = Ns Ar kconf
 Build a new kernel.
 The
@@ -947,13 +956,21 @@ it is strongly recommended that the tools be rebuilt (using the
 .Sy tools
 operation).
 .
-.It Sy install Ns = Ns Ar idir
-Install the contents of
-.Sy DESTDIR
-to
-.Ar idir ,
-using
-.Dq make installworld .
+.It Sy releasekernel Ns = Ns Ar kconf
+Install a
+.Xr gzip 1 Ns ed
+copy of the kernel built by
+.Sy kernel Ns = Ns Ar kconf
+into
+.Sy RELEASEDIR/MACHINE Ns Pa /binary/kernel ,
+usually as
+.Pa netbsd- Ns Ar kconf Ns Pa .gz ,
+although the
+.Dq Pa netbsd
+prefix is determined from the
+.Dq Sy config
+directives in
+.Ar kconf .
 .
 .It Sy sets
 Perform
