@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.473 2002/08/28 08:00:21 gmcgarry Exp $
+#	$NetBSD: mi,v 1.474 2002/08/28 08:01:31 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -764,6 +764,7 @@
 ./usr/include/sys/ptrace.h		comp-c-include
 ./usr/include/sys/queue.h		comp-c-include
 ./usr/include/sys/radioio.h		comp-c-include
+./usr/include/sys/ras.h			comp-c-include
 ./usr/include/sys/reboot.h		comp-c-include
 ./usr/include/sys/resource.h		comp-c-include
 ./usr/include/sys/resourcevar.h		comp-c-include
