@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.6 1999/07/16 08:59:59 christos Exp $
+$NetBSD: acronyms,v 1.7 1999/07/16 09:00:42 christos Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -11,8 +11,8 @@ BRB	[I'll] be right back
 BTW	by the way
 DNDK	don't know, don't care
 DTRT	do the right thing
-DWIM	do what I mean
 DTWT	do the wrong thing
+DWIM	do what I mean
 FWIW	for what it's worth
 FYI	for your information
 L8R	later
