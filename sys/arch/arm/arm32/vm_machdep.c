@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 2003/07/15 00:24:42 lukem Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 2003/10/23 08:59:10 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 2003/07/15 00:24:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2003/10/23 08:59:10 scw Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -197,7 +197,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
@@ -211,7 +210,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_pc = (u_int)proc_trampoline;
