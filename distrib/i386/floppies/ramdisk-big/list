@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2002/10/17 06:38:17 lukem Exp $
+#	$NetBSD: list,v 1.16 2003/01/15 00:11:59 thorpej Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -81,7 +81,10 @@ LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
 # we need the boot block in /usr/mdec + the MBR copy
-COPY	${DESTDIR}/usr/mdec/biosboot_com0.sym	usr/mdec/biosboot_com0.sym
+COPY	${DESTDIR}/usr/mdec/biosboot_com0_9600.sym	usr/mdec/biosboot_com0_9600.sym
+COPY	${DESTDIR}/usr/mdec/biosboot_com0_38400.sym	usr/mdec/biosboot_com0_38400.sym
+COPY	${DESTDIR}/usr/mdec/biosboot_com0_57600.sym	usr/mdec/biosboot_com0_57600.sym
+COPY	${DESTDIR}/usr/mdec/biosboot_com0_115200.sym	usr/mdec/biosboot_com0_115200.sym
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
