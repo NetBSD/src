@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.12 2001/09/05 23:53:23 wiz Exp $
+.\"	$NetBSD: dosboot.8,v 1.13 2001/12/26 01:45:03 wiz Exp $
 .Dd May 13, 2000
 .Os
 .Dt DOSBOOT 8 i386
@@ -121,6 +121,8 @@ is also installed in the
 .Xr release 7
 hierarchy, under
 .Pa installation/misc/dosboot.com .
+.Sh FILES
+.Pa /usr/mdec/dosboot.com
 .Sh EXAMPLES
 To boot a
 .Nx
@@ -137,8 +139,16 @@ floppy into single user mode, type eg:
 .Bd -literal -offset indent
 dosboot -u fd0a:netbsd -s
 .Ed
-.Sh FILES
-.Pa /usr/mdec/dosboot.com
+.Sh SEE ALSO
+.Xr release 7 ,
+.Xr boot 8 ,
+.Xr w95boot 8
+.Sh HISTORY
+The
+.Nx Ns Tn /i386
+.Nm
+command first appeared in
+.Nx 1.3 .
 .Sh BUGS
 .Nm
 assumes that the processor is in real mode at startup. It does not work
@@ -169,13 +179,3 @@ mode, no useful boot device specification is passed to
 .Nx .
 It is necessary to have the root device hardwired into the kernel
 configuration or to enter it manually.
-.Sh SEE ALSO
-.Xr release 7 ,
-.Xr boot 8 ,
-.Xr w95boot 8
-.Sh HISTORY
-The
-.Nx Ns Tn /i386
-.Nm
-command first appeared in
-.Nx 1.3 .
