@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.9 1993/12/18 04:22:28 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.10 1994/01/23 06:06:27 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -89,6 +89,10 @@ socreate(dom, aso, type, proto)
 		sofree(so);
 		return (error);
 	}
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS && type == SOCK_DGRAM)
+		so->so_options |= SO_BROADCAST;
+#endif
 	*aso = so;
 	return (0);
 }
