@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.245 2001/04/06 10:47:16 wiz Exp $
+# $NetBSD: mi,v 1.246 2001/04/10 05:14:34 enami Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -67,6 +67,7 @@
 ./sbin/ccdconfig	base-sysutil-root
 ./sbin/clri		base-sysutil-root
 ./sbin/dhclient		base-dhclient-root
+./sbin/dhclient-script	base-dhclient-root
 ./sbin/disklabel	base-sysutil-root
 ./sbin/dmesg		base-sysutil-root
 ./sbin/dump		base-sysutil-root
