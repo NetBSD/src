@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.13 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.14 1998/09/22 03:01:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -346,6 +346,9 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 
 	if (align == 0)
 		align = ALIGN(1);
+
+	if (size < sizeof(struct pool_item))
+		size = sizeof(struct pool_item);
 
 	/*
 	 * Initialize the pool structure.
