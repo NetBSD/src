@@ -1,4 +1,4 @@
-.\"     $NetBSD: et.4,v 1.8 1999/12/23 12:28:06 jdc Exp $
+.\"     $NetBSD: et.4,v 1.9 2000/02/05 19:50:24 jdc Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,24 +63,38 @@ The clock generator on the Crazy Dots card is an ICS 1394M.  Setting the
 clock is done by writing to a register at offset 0x0.  This address cannot
 be read.  The values that can be written to the register and the associated
 clock are:
-.Bd -unfilled -offset indent
-.Bl -column "Value " "Clock"
-.Em "Value	Clock"
-.It 0x00	14318
-.It 0x10	16257
-.It 0x17	20000
-.It 0x0c	24000
-.It 0x04	25175
-.It 0x14	28332
-.It 0x18	32514
-.It 0x1a	36000
-.It 0x1c	40000
-.It 0x03	44900
-.It 0x0f	50000
-.It 0x13	50344
-.It 0x07	56644
-.It 0x11	65028
-.It 0x1f	80000
+.Bl -column "Value " "Clock" -offset indent
+.It Em Value Ta Em Clock
+.It Li 0x00 Ta
+14318
+.It Li 0x10 Ta
+16257
+.It Li 0x17 Ta
+20000
+.It Li 0x0c Ta
+24000
+.It Li 0x04 Ta
+25175
+.It Li 0x14 Ta
+28332
+.It Li 0x18 Ta
+32514
+.It Li 0x1a Ta
+36000
+.It Li 0x1c Ta
+40000
+.It Li 0x03 Ta
+44900
+.It Li 0x0f Ta
+50000
+.It Li 0x13 Ta
+50344
+.It Li 0x07 Ta
+56644
+.It Li 0x11 Ta
+65028
+.It Li 0x1f Ta
+80000
 .El
 .Sh FILES
 .Bl -tag -width "xxxxxxxxxx" -compact
