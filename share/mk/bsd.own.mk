@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.125 1999/08/16 13:57:03 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.126 1999/08/21 06:16:21 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -70,6 +70,9 @@ PRESERVE?=	-p
 PRESERVE?=
 .endif
 RENAME?=	-r
+.if defined(UNPRIVILEGED)
+INSTPRIV?=	-U
+.endif
 STRIPFLAG?=	-s
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
