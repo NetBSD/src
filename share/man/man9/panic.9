@@ -1,4 +1,4 @@
-.\"     $NetBSD: panic.9,v 1.12 2002/02/13 08:18:47 ross Exp $
+.\"     $NetBSD: panic.9,v 1.13 2002/08/06 13:02:52 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Fd #include \*[Lt]sys/types.h\*[Gt]
 .Fd #include \*[Lt]sys/systm.h\*[Gt]
 .Ft void
-.Fn panic "const char *fmt, ..."
+.Fn panic "const char *fmt" "..."
 .Sh DESCRIPTION
 The
 .Fn panic
