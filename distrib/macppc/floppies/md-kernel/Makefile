@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/30 07:36:54 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/09 15:23:22 tsutsui Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ CLEANFILES+= ${KERNELS} netbsd
 RAMDISKDIR!= cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK= ${RAMDISKDIR}/ramdisk.fs
 
-all dependall: ${KERNELS}
+realall: ${KERNELS}
 
 netbsd.INSTALL.gz: ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/INSTALL/netbsd .
