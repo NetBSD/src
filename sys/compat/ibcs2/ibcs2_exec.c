@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.22 1999/02/09 20:22:37 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.23 1999/04/30 23:07:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -69,7 +69,7 @@
 #include <compat/ibcs2/ibcs2_syscall.h>
 
 
-#define IBCS2_ELF_AUX_ARGSIZ	(sizeof(AuxInfo) * 8 / sizeof(char *))
+#define IBCS2_ELF_AUX_ARGSIZ	howmany(sizeof(AuxInfo) * 8, sizeof(char *))
 
 
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
