@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/06/06 03:27:06 thorpej Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,13 +33,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.12 1999/06/06 03:27:06 thorpej Exp $");
 #endif
+
+#include <err.h>
+#include <util.h>
 
 extern char *configfilename;
 char versionstring[100];
 
-static char pidfilename[]  = _PATH_MROUTED_PID;
 static char dumpfilename[] = _PATH_MROUTED_DUMP;
 static char cachefilename[] = _PATH_MROUTED_CACHE;
 static char genidfilename[] = _PATH_MROUTED_GENID;
@@ -158,29 +160,9 @@ usage:	fprintf(stderr,
 	/*
 	 * Detach from the terminal
 	 */
-	int t;
-
-	if (fork()) exit(0);
-	(void)close(0);
-	(void)close(1);
-	(void)close(2);
-	(void)open("/", 0);
-	(void)dup2(0, 1);
-	(void)dup2(0, 2);
-#ifdef SYSV
-	(void)setpgrp();
-#else
-#ifdef TIOCNOTTY
-	t = open("/dev/tty", 2);
-	if (t >= 0) {
-	    (void)ioctl(t, TIOCNOTTY, (char *)0);
-	    (void)close(t);
-	}
-#else
-	if (setsid() < 0)
-	    perror("setsid");
-#endif
-#endif
+	if (daemon(0, 0))
+	    err(1, "can't fork");
+	pidfile(NULL);
     }
     else
 	fprintf(stderr, "debug level %u\n", debug);
@@ -271,12 +253,6 @@ usage:	fprintf(stderr,
 
     if (debug)
 	fprintf(stderr, "pruning %s\n", pruning ? "on" : "off");
-
-    fp = fopen(pidfilename, "w");		
-    if (fp != NULL) {
-	fprintf(fp, "%d\n", (int)getpid());
-	(void) fclose(fp);
-    }
 
     (void)signal(SIGALRM, fasttimer);
 
