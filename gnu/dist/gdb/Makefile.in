@@ -561,6 +561,7 @@ init.c: $(OBS) $(TSOBS)
 	    -e '/udip2soc.o/d' \
 	    -e '/udi2go32.o/d' \
 	    -e '/version.o/d' \
+	    -e 's/arm-convert\.o/arm-convert.s/' \
 	    -e '/^[a-z0-9A-Z_]*_[SU].o/d' \
 	    -e '/[a-z0-9A-Z_]*-exp.tab.o/d' \
 	    -e 's/\.o/.c/'` ; \

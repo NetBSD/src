@@ -405,6 +405,7 @@ arm_frame_find_saved_regs (frame_info, saved_regs_addr)
 	next_addr -= 4;
 	saved_regs_addr->regs[regnum] = next_addr;
       }
+#if defined(F0_REGNUM)
   if (read_memory_integer (return_data_save + 4, 4) == 0xed6d7103)
     {
       next_addr -= 12;
@@ -425,6 +426,7 @@ arm_frame_find_saved_regs (frame_info, saved_regs_addr)
       next_addr -= 12;
       saved_regs_addr->regs[F0_REGNUM + 4] = next_addr;
     }
+#endif
   saved_regs_addr->regs[SP_REGNUM] = next_addr;
   saved_regs_addr->regs[PC_REGNUM] = frame - 4;
   saved_regs_addr->regs[PS_REGNUM] = frame - 4;
@@ -443,6 +445,7 @@ int flags;
     putchar('\n');
 }
 
+#if defined(FPS_REGNUM)
 void
 arm_float_info()
 {
@@ -458,6 +461,7 @@ arm_float_info()
     fputs("flags: ", stdout);
     print_fpu_flags(status);
 }
+#endif
 
 
 static void arm_othernames()
@@ -478,7 +482,7 @@ _initialize_arm_tdep ()
 
 /* FIXME:  Fill in with the 'right thing', see asm 
    template in arm-convert.s */
-
+#if 0
 void 
 convert_from_extended (ptr, dbl)
 void *ptr;
@@ -495,7 +499,7 @@ double *dbl;
 {
   *(double*)ptr = *dbl;
 }
-
+#endif
 
 int
 arm_nullified_insn (inst)
@@ -824,3 +828,30 @@ arm_get_next_pc (pc)
   return nextpc;
 }
 
+
+#ifdef GET_LONGJMP_TARGET
+
+/* Figure out where the longjmp will land.  Slurp the args out of the stack.
+   We expect the first arg to be a pointer to the jmp_buf structure from which
+   we extract the pc (JB_PC) that we will land at.  The pc is copied into PC.
+   This routine returns true on success. */
+
+int
+get_longjmp_target(pc)
+     CORE_ADDR *pc;
+{
+  CORE_ADDR jb_addr;
+  char raw_buffer[MAX_REGISTER_RAW_SIZE];
+
+  jb_addr = read_register(0);
+
+  if (target_read_memory(jb_addr + JB_PC * JB_ELEMENT_SIZE, raw_buffer,
+			 sizeof(CORE_ADDR)))
+    return 0;
+
+  *pc = extract_address (raw_buffer, sizeof(CORE_ADDR));
+  return 1;
+
+}
+
+#endif /* GET_LONGJMP_TARGET */

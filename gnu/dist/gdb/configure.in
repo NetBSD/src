@@ -187,6 +187,7 @@ alpha-*-osf1*)		gdb_host=alpha-osf1 ;;
 alpha-*-osf2*)		gdb_host=alpha-osf2 ;;
 alpha-*-osf[3456789]*)	gdb_host=alpha-osf3 ;;
 
+arm-*-netbsd*)		gdb_host=nbsd ;;
 arm-*-*)		gdb_host=arm ;;
 
 c[12]-*-*)		gdb_host=convex ;;
@@ -345,7 +346,9 @@ alpha-*-netbsd*)	gdb_target=nbsd ;;
 alpha-*-osf*)		gdb_target=alpha-osf1 ;;
 
 
-arm-*-*)		gdb_target=arm ;;
+arm-*-netbsd*)		gdb_target=nbsd ;;
+arm-*-netbsdkgdb*)	gdb_target=nbsdkgdb ;;
+#arm-*-*)		gdb_target=arm ;;
 
 c1-*-*)			gdb_target=convex ;;
 c2-*-*)			gdb_target=convex ;;
