@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.22 1996/12/23 01:46:30 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -363,6 +363,7 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	}
 }
 
+
 #ifdef RASTERCONSOLE
 #include <machine/kbd.h>
 
@@ -451,7 +452,19 @@ fbrcons_init(fb)
 	/* Hook up virtual console */
 	v_putc = rcons_cnputc;
 }
-#endif
+
+int
+fbrcons_rows()
+{
+	return (devfb ? devfb->fb_rcons.rc_maxrow : 0);
+}
+
+int
+fbrcons_cols()
+{
+	return (devfb ? devfb->fb_rcons.rc_maxcol : 0);
+}
+#endif /* RASTERCONSOLE */
 
 #if defined(SUN4)
 /*
