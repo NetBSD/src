@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1997/10/22 03:40:24 phil Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 1998/03/18 21:59:39 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -44,6 +44,9 @@
  * 532 Trap and System call handling
  */
 
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -60,9 +63,9 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -178,7 +181,11 @@ trap(frame)
 	extern char cinvstart[], cinvend[];
 #endif
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -291,7 +298,11 @@ trap(frame)
 		goto out;
 
 	case T_AST | T_USER:		/* Allow process switch */
+#if defined(UVM)
+		uvmexp.softs++;
+#else
 		cnt.v_soft++;
+#endif
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
@@ -361,7 +372,7 @@ trap(frame)
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
-		unsigned nss, v;
+		unsigned nss;
 
 		va = trunc_page((vm_offset_t)frame.tf_tear);
 		/*
@@ -400,19 +411,51 @@ trap(frame)
 			}
 		}
 
+/*
+ * PMAP_NEW allocates PTPs at pmap_enter time, not here.
+ */
+#if !defined(PMAP_NEW)
 		/* Create a page table page if necessary, and wire it. */
 		if ((PTD[pdei(va)] & PG_V) == 0) {
+			unsigned v;
 			v = trunc_page(vtopte(va));
+#if defined(UVM)
+			rv = uvm_map_pageable(map, v, v + NBPG, FALSE);
+#else
 			rv = vm_map_pageable(map, v, v + NBPG, FALSE);
+#endif
 			if (rv != KERN_SUCCESS)
 				goto nogo;
 		}
+#endif	/* PMAP_NEW */
 
 		/* Fault the original page in. */
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#else
 		rv = vm_fault(map, va, ftype, FALSE);
+#endif
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
+
+#if !defined(PMAP_NEW)
+			/*
+			 * If this is a pagefault for a PT page,
+			 * wire it. Normally we fault them in
+			 * ourselves, but this can still happen on
+			 * a ns32532 in copyout & friends.
+			 */
+			if (map != kernel_map && va >= UPT_MIN_ADDRESS &&
+			    va < UPT_MAX_ADDRESS) {
+				va = trunc_page(va);
+#if defined(UVM)
+				uvm_map_pageable(map, va, va + NBPG, FALSE);
+#else
+				vm_map_pageable(map, va, va + NBPG, FALSE);
+#endif
+			}
+#endif
 			if (type == T_ABT)
 				return;
 			goto out;
@@ -425,11 +468,22 @@ trap(frame)
 				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
+#if defined(UVM)
+			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			    map, va, ftype, rv);
+#else
 			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
+#endif
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, T_ABT);
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: process %d killed: out of swap space\n",
+				p->p_pid);
+			trapsignal(p, SIGKILL, T_ABT);
+		} else {
+			trapsignal(p, SIGSEGV, T_ABT);
+		}
 		break;
 	}
 
@@ -481,7 +535,11 @@ syscall(frame)
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.sf_regs.r_psr))
 		panic("syscall");
 	p = curproc;
@@ -535,7 +593,7 @@ syscall(frame)
 	if (error)
 		goto bad;
 	rval[0] = 0;
-	rval[1] =  frame.sf_regs.r_r1;
+	rval[1] = frame.sf_regs.r_r1;
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
