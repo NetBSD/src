@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.125 2004/07/17 10:55:03 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.126 2004/07/17 11:28:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -918,6 +918,7 @@ set_tz_select(menudesc *m, void *arg)
 	char *new;
 
 	if (m && strcmp(tz_selected, m->opts[m->cursel].opt_name) != 0) {
+		/* Change the displayed timezone */
 		new = strdup(m->opts[m->cursel].opt_name);
 		if (new == NULL)
 			return 0;
@@ -927,6 +928,11 @@ set_tz_select(menudesc *m, void *arg)
 			 zonerootlen, zoneinfo_dir, tz_selected);
 		setenv("TZ", tz_env, 1);
 	}
+	if (m)
+		/* Warp curser to 'Exit' line on menu */
+		m->cursel = -1;
+
+	/* Update displayed time */
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
