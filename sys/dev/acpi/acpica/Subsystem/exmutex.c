@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.12 2004/02/14 16:57:24 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.13 2004/04/07 18:19:34 kochi Exp $");
 
 #define __EXMUTEX_C__
 
@@ -288,6 +288,7 @@ AcpiExAcquireMutex (
     ObjDesc->Mutex.OwnerThread      = WalkState->Thread;
     ObjDesc->Mutex.AcquisitionDepth = 1;
 
+    ObjDesc->Mutex.PreviousSyncLevel = WalkState->Thread->CurrentSyncLevel;
     WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.SyncLevel;
 
     /* Link the mutex to the current thread for force-unlock at method exit */
@@ -389,7 +390,7 @@ AcpiExReleaseMutex (
     /* Update the mutex and walk state */
 
     ObjDesc->Mutex.OwnerThread = NULL;
-    WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.SyncLevel;
+    WalkState->Thread->CurrentSyncLevel = ObjDesc->Mutex.PreviousSyncLevel;
 
     return_ACPI_STATUS (Status);
 }
