@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2001/07/12 19:24:40 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2001/11/30 18:11:56 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@ struct cfattach obio_ca = {
 	sizeof(struct obio_softc), obio_match, obio_attach
 };
 
-static	int obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       int, bus_space_handle_t *));
+static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+			       off_t, int, int));
 static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
@@ -169,17 +169,19 @@ _obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 				size, flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp));
 }
 
-int
-obio_bus_mmap(t, btype, paddr, flags, hp)
+paddr_t
+obio_bus_mmap(t, btype, paddr, off, prot, flags)
 	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags, hp));
+	return (bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off,
+				prot, flags));
 }
 
 /*
@@ -197,7 +199,7 @@ _obio_addr_bad(t, h, o, s)
 	paddr_t pa;
 
 	/* Get the physical address for this page. */
-	pte = get_pte((vm_offset_t) (h + o));
+	pte = get_pte((vaddr_t) (h + o));
 	if (!(pte & PG_VALID))
 		return (-1);
 	pa = PG_PA(pte);
