@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.4 1996/06/07 10:41:37 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.5 1996/10/29 05:42:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -175,6 +175,7 @@ void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
 void	enable_nubus_intr __P((void));
 void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
+void	mac68k_register_scsi_b_irq __P((void (*)(void *), void *clnt));
 void	mac68k_register_scsi_drq __P((void (*)(void *), void *clnt));
 void	mac68k_register_via1_t1_irq __P((void (*)(void *)));
 
