@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.51 2002/02/26 15:13:26 simonb Exp $ */
+/*	$NetBSD: param.h,v 1.52 2002/07/17 02:43:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,6 +168,7 @@ extern int nbpg, pgofset, pgshift;
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
 #define CPU_SUN4U	3
+#define	CPU_SUN4D	4
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifndef _LOCORE
