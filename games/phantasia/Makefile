@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 1998/12/06 09:06:46 dbj Exp $
+#	$NetBSD: Makefile,v 1.18 1999/08/21 06:30:11 simonb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
+
+.include <bsd.own.mk>		# for UNPRIVILEGED
 
 PROG=	phantasia
 SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
@@ -25,7 +27,9 @@ setup.o: ${.CURDIR}/setup.c
 
 afterinstall:
 	DESTDIR=${DESTDIR} ./setup -m ${.CURDIR}/monsters.asc
+.if !defined(UNPRIVILEGED)
 	chown games:games ${DESTDIR}/var/games/phantasia/*
+.endif
 
 # Make Phantasia map.  Change the map commands reflect your installation.
 # PLOTDEVICE is used for plotting the map.  Change as appropriate.
