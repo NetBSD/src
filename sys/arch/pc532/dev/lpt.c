@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.40 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: lpt.c,v 1.41 2005/02/22 14:42:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.40 2004/01/23 04:12:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.41 2005/02/22 14:42:17 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -232,14 +232,12 @@ lptmatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	volatile struct i8255 *i8255 =
-		(volatile struct i8255 *)((struct cfdata *)cf)->cf_addr;
-	int unit = ((struct cfdata *)cf)->cf_unit;
+		(volatile struct i8255 *)cf->cf_addr;
 
-	if (unit >= LPT_MAX)
-		return(0);
-
-	if ((int) i8255 == -1)
-		i8255 = LPT_ADR(unit);
+	if (cf->cf_addr == MAINBUSCF_ADDR_DEFAULT)
+		return 0;
+	if (cf->cf_irq == MAINBUSCF_IRQ_DEFAULT)
+		return 0;
 
 	i8255->port_control = LPT_PROBE_MODE;
 
@@ -259,8 +257,6 @@ lptmatch(parent, cf, aux)
 	i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
 
 	ca->ca_addr = (int)i8255;
-	if (ca->ca_irq == -1)
-		ca->ca_irq = LPT_IRQ(unit);
 
 	return 1;
 }
@@ -682,57 +678,57 @@ plipsoftint(arg)
 #ifdef __OPTIMIZE__
 int plipreceive __P((volatile struct i8255 *, u_char *, int))
 	__asm("plipreceive");
-__asm("
-plipreceive:
-	enter	[r3,r4,r5,r6,r7],0
-	movqd	0,r0
-	movd	8(fp),r1
-	movd	12(fp),r2
-	movd	16(fp),r3
-	cmpqd	0,r3
-	beq	5f
-
-	movqd	0,r7
-	movd	50000,r4
-
-	.align	2,0xa2
-0:	movb	8,r5
-1:	movb	2(r1),r6
-	andb	r6,r5
-	cmpqb	0,r5
-	beq	2f
-	acbd	-1,r4,1b
-	br	6f
-
-	.align	2,0xa2
-2:	movb	0x11,1(r1)
-	lshb	-4,r6
-	addd	r7,r0
-	addqd	1,r2
-
-	movb	8,r5
-3:	movb	2(r1),r7
-	bicb	r7,r5
-	cmpqb	0,r5
-	beq	4f
-	acbd	-1,r4,3b
-	br	6f
-
-	.align	2,0xa2
-4:	movqb	0x01,1(r1)
-	andb	0xf0,r7
-	orb	r6,r7
-	movb	r7,-1(r2)
-	acbd	-1,r3,0b
-
-	addd	r7,r0
-	andd	0xff,r0
-5:	exit	[r3,r4,r5,r6,r7]
-	ret	0
-
-6:	movqd	-1,r0
-	exit	[r3,r4,r5,r6,r7]
-	ret	0
+__asm(" \
+plipreceive: \
+	enter	[r3,r4,r5,r6,r7],0 ; \
+	movqd	0,r0 ; \
+	movd	8(fp),r1 ; \
+	movd	12(fp),r2 ; \
+	movd	16(fp),r3 ; \
+	cmpqd	0,r3 ; \
+	beq	5f ; \
+\
+	movqd	0,r7 ; \
+	movd	50000,r4 ; \
+\
+	.align	2,0xa2 ; \
+0:	movb	8,r5 ; \
+1:	movb	2(r1),r6 ; \
+	andb	r6,r5 ; \
+	cmpqb	0,r5 ; \
+	beq	2f ; \
+	acbd	-1,r4,1b ; \
+	br	6f ; \
+\
+	.align	2,0xa2 ; \
+2:	movb	0x11,1(r1) ; \
+	lshb	-4,r6 ; \
+	addd	r7,r0 ; \
+	addqd	1,r2 ; \
+\
+	movb	8,r5 ; \
+3:	movb	2(r1),r7 ; \
+	bicb	r7,r5 ; \
+	cmpqb	0,r5 ; \
+	beq	4f ; \
+	acbd	-1,r4,3b ; \
+	br	6f ; \
+\
+	.align	2,0xa2 ; \
+4:	movqb	0x01,1(r1) ; \
+	andb	0xf0,r7 ; \
+	orb	r6,r7 ; \
+	movb	r7,-1(r2) ; \
+	acbd	-1,r3,0b ; \
+\
+	addd	r7,r0 ; \
+	andd	0xff,r0 ; \
+5:	exit	[r3,r4,r5,r6,r7] ; \
+	ret	0 ; \
+\
+6:	movqd	-1,r0 ; \
+	exit	[r3,r4,r5,r6,r7] ; \
+	ret	0 \
 ");
 #else
 static int
@@ -885,61 +881,61 @@ err:
 #ifdef __OPTIMIZE__
 int pliptransmit __P((volatile struct i8255 *, u_char *, int))
 	__asm("pliptransmit");
-__asm("
-pliptransmit:
-	enter	[r3,r4,r5,r6,r7],0
-	movqd	0,r0
-	movd	8(fp),r1
-	movd	12(fp),r2
-	movd	16(fp),r3
-	cmpqd	0,r3
-	beq	5f
-
-	movqd	0,r7
-	movd	50000,r4
-
-	.align	2,0xa2
-0:	movb	8,r5
-1:	movb	2(r1),r6
-	bicb	r6,r5
-	cmpqb	0,r5
-	beq	2f
-	acbd	-1,r4,1b
-	br	6f
-
-	.align	2,0xa2
-2:	movb	0(r2),r7
-	movb	0x0f,r5
-	andb	r7,r5
-	addqd	1,r2
-	movb	r5,1(r1)
-	orb	0x10,r5
-	movb	r5,1(r1)
-
-	movb	8,r5
-3:	movb	2(r1),r6
-	andb	r6,r5
-	cmpqb	0,r5
-	beq	4f
-	acbd	-1,r4,3b
-	br	6f
-
-	.align	2,0xa2
-4:	addd	r7,r0
-	lshb	-4,r7
-	movb	0x10,r5
-	orb	r7,r5
-	movb	r5,1(r1)
-	movb	r7,1(r1)
-	acbd	-1,r3,0b
-
-	andd	0xff,r0
-5:	exit	[r3,r4,r5,r6,r7]
-	ret	0
-
-6:	movqd	-1,r0
-	exit	[r3,r4,r5,r6,r7]
-	ret	0
+__asm(" \
+pliptransmit: \
+	enter	[r3,r4,r5,r6,r7],0 ; \
+	movqd	0,r0 ; \
+	movd	8(fp),r1 ; \
+	movd	12(fp),r2 ; \
+	movd	16(fp),r3 ; \
+	cmpqd	0,r3 ; \
+	beq	5f ; \
+\
+	movqd	0,r7 ; \
+	movd	50000,r4 ; \
+\
+	.align	2,0xa2 ; \
+0:	movb	8,r5 ; \
+1:	movb	2(r1),r6 ; \
+	bicb	r6,r5 ; \
+	cmpqb	0,r5 ; \
+	beq	2f ; \
+	acbd	-1,r4,1b ; \
+	br	6f ; \
+\
+	.align	2,0xa2 ; \
+2:	movb	0(r2),r7 ; \
+	movb	0x0f,r5 ; \
+	andb	r7,r5 ; \
+	addqd	1,r2 ; \
+	movb	r5,1(r1) ; \
+	orb	0x10,r5 ; \
+	movb	r5,1(r1) ; \
+\
+	movb	8,r5 ; \
+3:	movb	2(r1),r6 ; \
+	andb	r6,r5 ; \
+	cmpqb	0,r5 ; \
+	beq	4f ; \
+	acbd	-1,r4,3b ; \
+	br	6f ; \
+\
+	.align	2,0xa2 ; \
+4:	addd	r7,r0 ; \
+	lshb	-4,r7 ; \
+	movb	0x10,r5 ; \
+	orb	r7,r5 ; \
+	movb	r5,1(r1) ; \
+	movb	r7,1(r1) ; \
+	acbd	-1,r3,0b ; \
+\
+	andd	0xff,r0 ; \
+5:	exit	[r3,r4,r5,r6,r7] ; \
+	ret	0 ; \
+\
+6:	movqd	-1,r0 ; \
+	exit	[r3,r4,r5,r6,r7] ; \
+	ret	0 \
 ");
 #else
 static int
