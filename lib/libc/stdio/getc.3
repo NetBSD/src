@@ -1,4 +1,4 @@
-.\"	$NetBSD: getc.3,v 1.9 2003/01/18 11:29:55 thorpej Exp $
+.\"	$NetBSD: getc.3,v 1.10 2003/01/28 20:26:04 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,8 +136,11 @@ until the condition is cleared with
 .Xr clearerr 3 .
 .Sh SEE ALSO
 .Xr ferror 3 ,
+.Xr flockfile 3 ,
 .Xr fopen 3 ,
 .Xr fread 3 ,
+.Xr ftrylockfile 3 ,
+.Xr funlockfile 3 ,
 .Xr putc 3 ,
 .Xr ungetc 3
 .Sh STANDARDS

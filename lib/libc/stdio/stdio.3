@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.16 2003/01/18 11:29:58 thorpej Exp $
+.\"	$NetBSD: stdio.3,v 1.17 2003/01/28 20:26:04 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stdio.3	8.7 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd January 28, 2003
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -168,6 +168,21 @@ sections of the following manual pages indicate which include files
 are to be used, what the compiler declaration for the function
 looks like and which external variables are of interest.
 .Pp
+In multi-threaded applications, operations on streams perform implicit
+locking, except for the
+.Fa getc_unlocked ,
+.Fa getchar_unlocked ,
+.Fa putc_unlocked ,
+and
+.Fa putchar_unlocked
+functions.
+Explicit control of stream locking is available through the
+.Fa flockfile ,
+.Fa ftrylockfile ,
+and
+.Fa funlockfile
+functions .
+.Pp
 The following are defined as macros; these names may not be re-used
 without first removing their current definitions with
 .Dv #undef :
@@ -190,9 +205,13 @@ without first removing their current definitions with
 .Fn freopen ,
 .Fn fwopen ,
 .Fn getc ,
+.Fn getc_unlocked ,
 .Fn getchar ,
+.Fn getchar_unlocked ,
 .Fn putc ,
+.Fn putc_unlocked ,
 .Fn putchar ,
+.Fn putchar_unlocked ,
 .Dv stderr ,
 .Dv stdin ,
 .Dv stdout .
@@ -202,10 +221,14 @@ Function versions of the macro functions
 .Fn clearerr ,
 .Fn fileno ,
 .Fn getc ,
+.Fn getc_unlocked ,
 .Fn getchar ,
+.Fn getchar_unlocked ,
 .Fn putc ,
+.Fn putc_unlocked ,
+.Fn putchar ,
 and
-.Fn putchar
+.Fn putchar_unlocked
 exist and will be used if the macros definitions are explicitly removed.
 .Sh SEE ALSO
 .Xr close 2 ,
@@ -218,7 +241,7 @@ The
 library conforms to
 .St -ansiC .
 .Sh LIST OF FUNCTIONS
-.Bl -column "Description"
+.Bl -column "Functionxxxxxxxx" "Description"
 .Sy Function	Description
 clearerr	check and reset stream status
 fclose	close a stream
@@ -232,6 +255,7 @@ fgetpos	reposition a stream
 fgets	get a line from a stream
 fgetwc	get next wide character from input stream
 fileno	check and reset stream status
+flockfile	lock a stream
 fopen	stream open functions
 fprintf	formatted output conversion
 fpurge	flush a stream
@@ -245,12 +269,18 @@ fscanf	input format conversion
 fseek	reposition a stream
 fsetpos	reposition a stream
 ftell	reposition a stream
+ftrylockfile	lock a stream (non-blocking)
+funlockfile	unlock a stream
 funopen	open a stream
 fwide	set/get orientation of a stream
 fwopen	open a stream
 fwrite	binary stream input/output
 getc	get next character or word from input stream
+getc_unlocked	get next character or word from input stream
+	(no implicit locking)
 getchar	get next character or word from input stream
+getchar_unlocked	get next character or word from input stream
+	(no implicit locking)
 gets	get a line from a stream
 getw	get next character or word from input stream
 getwc	get next wide character from input stream
@@ -260,7 +290,11 @@ mktemp	create unique temporary file
 perror	system error messages
 printf	formatted output conversion
 putc	output a character or word to a stream
+putc_unlocked	output a character or word to a stream
+	(no implicit locking)
 putchar	output a character or word to a stream
+putchar_unlocked	output a character or word to a stream
+	(no implicit locking)
 puts	output a line to a stream
 putw	output a character or word to a stream
 putwc	output a wide character to a stream
