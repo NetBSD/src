@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 1998/07/06 00:49:20 mark Exp $
+#	$NetBSD: GENERIC,v 1.43 1998/07/06 00:59:21 mark Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -35,7 +35,7 @@ options 	RISCPC		# We are a RiscPC
 
 # FPA options
 
-options 	ARMFPE		# ARM Ltd FPE
+#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 
