@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.183 2003/03/15 12:23:34 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.184 2003/03/18 01:13:08 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.183 2003/03/15 12:23:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.184 2003/03/18 01:13:08 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -157,6 +157,8 @@ pciide_pci_write(pc, pa, reg, val)
 
 void default_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 
+void sata_setup_channel __P((struct channel_softc*));
+
 void piix_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void piix_setup_channel __P((struct channel_softc*));
 void piix3_4_setup_channel __P((struct channel_softc*));
@@ -226,6 +228,8 @@ void pciide_dma_start __P((void*, int, int));
 int  pciide_dma_finish __P((void*, int, int, int));
 void pciide_irqack __P((struct channel_softc *));
 void pciide_print_modes __P((struct pciide_channel *));
+
+void artisea_chip_map __P((struct pciide_softc*, struct pci_attach_args *));
 
 struct pciide_product_desc {
 	u_int32_t ide_product;
@@ -307,6 +311,11 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  "Intel 82801DB IDE Controller (ICH4)",
 	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_31244,
+	  0,
+	  "Intel 31244 Serial ATA Controller",
+	  artisea_chip_map,
 	},
 	{ 0,
 	  0,
@@ -1555,6 +1564,49 @@ next:
 			    idedma_ctl);
 		}
 	}
+}
+
+void
+sata_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.wdc;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	idedma_ctl = 0;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		}
+	}
+
+	/*
+	 * Nothing to do to setup modes; it is meaningless in S-ATA
+	 * (but many S-ATA drives still want to get the SET_FEATURE
+	 * command).
+	 */
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
+	}
+	pciide_print_modes(cp);
 }
 
 void
@@ -5186,4 +5238,60 @@ serverworks_pci_intr(arg)
 			rv = 1;
 	}
 	return rv;
+}
+
+void
+artisea_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf("%s: bus-master DMA support resent",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+#ifndef PCIIDE_I31244_ENABLEDMA
+	if (PCI_REVISION(pa->pa_class) == 0) {
+		printf(" but disabled due to rev. 0");
+		sc->sc_dma_ok = 0;
+	} else
+#endif
+		pciide_mapreg_dma(sc, pa);
+	printf("\n");
+
+	/*
+	 * XXX Configure LEDs to show activity.
+	 */
+
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.UDMA_cap = 6;
+	}
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	interface = PCI_INTERFACE(pa->pa_class);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		sata_setup_channel(&cp->wdc_channel);
+	}
 }
