@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.74 1999/11/08 03:48:06 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.75 1999/11/08 06:41:31 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1015,3 +1015,18 @@ sys/arch/i386/isa/pms.c				1.43
 
   Disable a diagnostic printout ("opmsprobe: command error" if no mouse
   is connected) which is often misunderstood to be an error message.
+
+sys/ufs/lfs/lfs_vnops.c				1.29-1.30
+
+  Check for cross-device rename before setting up dirop markers in
+  lfs_rename.  Addresses PR#8577.
+
+bin/ps/extern.h					1.14
+bin/ps/print.c					1.45-1.46
+bin/ps/procfs_ops.c				1.5-1.7
+bin/ps/ps.c					1.29-1.31
+
+  When using the procfs for extracting process information, extract process
+  start time, arguments, and session leadership status.  Also, fall back to
+  procfs when kvm_openfiles() completely fails (e.g. when /dev/mem is not
+  readable).  Fixes PR#7772.
