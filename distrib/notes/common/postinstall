@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.27 2001/05/25 08:04:13 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.28 2001/07/30 16:58:55 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -279,16 +279,16 @@ usually in the
 subdir.  You can install them with the following commands:
 .Pp
 .Bd -unfilled
-.Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
-.Ic # pkg_add -v cvs
 .Ic # pkg_add -v apache
 .Ic # pkg_add -v perl
 \&...
 .Ed
 .Pp
-The above commands will install the tcsh shell, the CVS source code
-management system, the Apache web server and
+The above commands will install the tcsh shell,
+the Apache web server and
 the perl programming language as well as all the packages they
 depend on. 
 .It
