@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2000/06/01 15:38:24 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2000/06/01 17:43:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -67,8 +67,6 @@ extern int	netboot;
 
 void
 findroot(void)
-	struct device **devpp;
-	int *partp;
 {
 	struct device *dv;
 
