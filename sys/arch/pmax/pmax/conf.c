@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1996/03/14 21:31:56 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.4.1 1996/08/13 07:58:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,12 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#ifndef LKM
+#define	lkmenodev	enodev
+#else
+int	lkmenodev __P((void));
+#endif
+
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "vnd.h"
@@ -89,6 +95,14 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
+
+	bdev_lkm_dummy(),		/* 25 */
+	bdev_lkm_dummy(),		/* 26 */
+	bdev_lkm_dummy(),		/* 27 */
+	bdev_lkm_dummy(),		/* 28 */
+	bdev_lkm_dummy(),		/* 29 */
+	bdev_lkm_dummy(),		/* 30 */
+
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -147,6 +161,13 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
+#ifdef LKM
+#define	NLKM	1
+#else
+#define	NLKM	0
+#endif
+cdev_decl(lkm);
+
 
 /* a framebuffer with an attached mouse: */
 /* open, close, ioctl, select, mmap */
@@ -160,7 +181,7 @@ dev_decl(filedesc,open);
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_cn_init(1,cn),		/* 0: virtual console */
+	cdev_cn_init(1,cn),		/* 0: virtual console */  /* (dz?) */
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
@@ -250,6 +271,17 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
+
+	cdev_lkm_dummy(),		/* 88 */
+	cdev_lkm_dummy(),		/* 89 */
+	cdev_lkm_init(NLKM,lkm),	/* 90: loadable module driver */
+	cdev_lkm_dummy(),		/* 91 */
+	cdev_lkm_dummy(),		/* 92 */
+	cdev_lkm_dummy(),		/* 93 */
+	cdev_lkm_dummy(),		/* 94 */
+	cdev_lkm_dummy(),		/* 95 */
+	cdev_lkm_dummy(),		/* 96 */
+	
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
