@@ -97,12 +97,10 @@ el_parse(el, argc, argv)
     char *ptr;
     int i;
 
-    for (ptr = argv[0]; *ptr && *ptr != ':'; ptr++)
-	continue;
-
-    if (*ptr == ':') {
-	*ptr = '\0';
-	if (el_match(el->el_prog, ptr))
+    ptr = strchr(argv[0], ':');
+    if (ptr != NULL) {
+	*ptr++ = '\0';
+	if (! el_match(el->el_prog, argv[0]))
 	    return 0;
     }
     else
