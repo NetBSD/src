@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.27 2003/03/13 04:30:39 thorpej Exp $	*/
+/*	$NetBSD: config.h.in,v 1.28 2003/03/14 03:38:42 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -68,6 +68,7 @@
 #undef HAVE_MKDTEMP
 #undef HAVE_POLL
 #undef HAVE_PREAD
+#undef HAVE_PUTC_UNLOCKED
 #undef HAVE_PWCACHE_USERDB
 #undef HAVE_PWRITE
 #undef HAVE_RANDOM
