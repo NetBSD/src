@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.6 2001/12/31 18:45:04 thorpej Exp $	*/
+/*	$NetBSD: init.c,v 1.7 2002/12/24 13:20:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.6 2001/12/31 18:45:04 thorpej Exp $");
+__RCSID("$NetBSD: init.c,v 1.7 2002/12/24 13:20:25 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -50,8 +50,6 @@ static void insertcol __P((struct field *));
 static const char *setcolumn __P((const char *, struct field *, int));
 int setfield __P((const char *, struct field *, int));
 
-extern struct coldesc clist[(ND+1)*2];
-extern int ncols;
 u_char gweights[NBINS];
 
 /*
