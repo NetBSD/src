@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.2.1 1997/12/25 07:35:18 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.2 1998/02/07 05:53:09 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1036,6 +1036,8 @@ pmap_page_protect(pa, prot)
 				printf("%s wired mapping for %lx not removed\n",
 				       "pmap_page_protect:", pa);
 #endif
+			if (pv == NULL)
+				break;
 		}
 	}
 	splx(s);
