@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.218 2000/05/18 13:03:31 drochner Exp $
+$NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1149,6 +1149,9 @@ product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 /* NEC products */
 product NEC USB		0x0035	USB Host Controller
 product NEC POWERVR2	0x0046	PowerVR PCX2
+product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI PCI Controller
+product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI PCI Controller
+product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI PCI Controller
 
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
