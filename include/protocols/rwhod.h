@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.h,v 1.5 1998/02/02 16:37:49 perry Exp $	*/
+/*	$NetBSD: rwhod.h,v 1.6 1998/02/10 00:38:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,8 @@
  *	@(#)rwhod.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _RWHOD_H_
-#define	_RWHOD_H_
+#ifndef _PROTOCOLS_RWHOD_H_
+#define	_PROTOCOLS_RWHOD_H_
 
 /*
  * rwho protocol packet format.
@@ -67,4 +67,4 @@ struct	whod {
 
 #define	_PATH_RWHODIR	"/var/rwho"
 
-#endif /* !_RWHOD_H_ */
+#endif /* !_PROTOCOLS_RWHOD_H_ */
