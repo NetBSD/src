@@ -5,7 +5,7 @@
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.64";
+static char	elsieid[] = "@(#)localtime.c	7.66";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -1040,6 +1040,18 @@ const time_t * const	timep;
 }
 
 /*
+ * Re-entrant version of localtime
+ */
+struct tm *
+localtime_r(timep, tm)
+const time_t * const	timep;
+struct tm *		tm;
+{
+	localsub(timep, 0L, tm);
+	return tm;
+}
+
+/*
 ** gmtsub is to gmtime as localsub is to localtime.
 */
 
@@ -1085,6 +1097,18 @@ const time_t * const	timep;
 {
 	gmtsub(timep, 0L, &tm);
 	return &tm;
+}
+
+/*
+ * Re-entrant version of gmtime
+ */
+struct tm *
+gmtime_r(timep, tm)
+const time_t * const	timep;
+struct tm *		tm;
+{
+	gmtsub(timep, 0L, tm);
+	return tm;
 }
 
 #ifdef STD_INSPIRED
@@ -1207,11 +1231,21 @@ const time_t * const	timep;
 {
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
-**	The ctime funciton converts the calendar time pointed to by timer
+**	The ctime function converts the calendar time pointed to by timer
 **	to local time in the form of a string.  It is equivalent to
 **		asctime(localtime(timer))
 */
 	return asctime(localtime(timep));
+}
+
+char *
+ctime_r(timep, buf)
+const time_t * const	timep;
+char *			buf;
+{
+	struct tm	tm;
+
+	return asctime_r(localtime_r(timep, &tm), buf);
 }
 
 /*
