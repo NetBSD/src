@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.39 2000/03/07 06:35:22 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.40 2000/03/18 08:07:50 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2151,7 +2151,19 @@ adb_reinit(void)
 		command = ((int)(i & 0xf) << 4) | 0xf;	/* talk R3 */
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
-		if (0x00 != send_string[0]) {	/* anything come back ?? */
+
+		/* anything come back? */
+		if (send_string[0] != 0) {
+			/* check for valid device handler */
+			switch (send_string[2]) {
+			case 0:
+			case 0xfd:
+			case 0xfe:
+			case 0xff:
+				continue;	/* invalid, skip */
+			}
+
+			/* found a device */
 			++ADBNumDevices;
 			KASSERT(ADBNumDevices < 16);
 			ADBDevTable[ADBNumDevices].devType =
@@ -2221,6 +2233,15 @@ adb_reinit(void)
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 			if (send_string[0] != 0) {
+				/* check for valid device handler */
+				switch (send_string[2]) {
+				case 0:
+				case 0xfd:
+				case 0xfe:
+				case 0xff:
+					continue;	/* invalid, skip */
+				}
+
 				/* new device found */
 				/* update data for previously moved device */
 				ADBDevTable[i].currentAddr = saveptr;
