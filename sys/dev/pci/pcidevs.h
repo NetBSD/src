@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615 2004/03/26 22:06:31 gendalia Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.616 2004/04/01 08:00:32 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615 2004/03/26 22:05:08 gendalia Exp 
+ *	NetBSD: pcidevs,v 1.616 2004/04/01 08:00:01 tron Exp 
  */
 
 /*
@@ -467,7 +467,7 @@
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On Communications */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex Corporation */
-#define	PCI_VENDOR_PROLOG	0x11af		/* Pro-Log Corporation */
+#define	PCI_VENDOR_AVID	0x11af		/* Avid Technology Inc. */
 #define	PCI_VENDOR_V3	0x11b0		/* V3 Semiconductor */
 #define	PCI_VENDOR_APRICOT	0x11b1		/* Apricot Computer */
 #define	PCI_VENDOR_KODAK	0x11b2		/* Eastman Kodak */
