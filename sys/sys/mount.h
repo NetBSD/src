@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.36 1994/12/16 04:22:56 mycroft Exp $	*/
+/*	$NetBSD: mount.h,v 1.37 1995/01/08 22:53:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -294,7 +294,6 @@ struct iso_args {
 	char	*fspec;			/* block special device to mount */
 	struct	export_args export;	/* network export info */
 	int	flags;			/* mounting flags, see below */
-
 };
 #define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
 #define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
