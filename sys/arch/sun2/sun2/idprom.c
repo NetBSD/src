@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.2 2001/11/30 18:06:55 fredette Exp $	*/
+/*	$NetBSD: idprom.c,v 1.3 2003/04/01 15:47:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
@@ -143,7 +145,7 @@ idprom_get(dst)
 	len = IDPROM_SIZE;
 	do {
 		x = get_control_byte(src);
-		src += NBPG;
+		src += PAGE_SIZE;
 		*dst++ = x;
 	} while (--len > 0);
 }
