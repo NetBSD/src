@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.4 1996/02/10 00:12:46 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.5 1996/03/14 19:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -214,8 +214,9 @@ compat_43_sys_recvmsg(p, v, retval)
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	if (error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
-	    sizeof (struct omsghdr)))
+	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
+	    sizeof (struct omsghdr));
+	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
@@ -226,8 +227,9 @@ compat_43_sys_recvmsg(p, v, retval)
 	} else
 		iov = aiov;
 	msg.msg_flags = SCARG(uap, flags) | MSG_COMPAT;
-	if (error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec))))
+	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+	if (error)
 		goto done;
 	msg.msg_iov = iov;
 	error = recvit(p, SCARG(uap, s), &msg,
@@ -285,8 +287,9 @@ compat_43_sys_sendmsg(p, v, retval)
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	if (error = copyin(SCARG(uap, msg), (caddr_t)&msg,
-	    sizeof (struct omsghdr)))
+	error = copyin(SCARG(uap, msg), (caddr_t)&msg,
+	    sizeof (struct omsghdr));
+	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
@@ -296,8 +299,9 @@ compat_43_sys_sendmsg(p, v, retval)
 		      M_WAITOK);
 	} else
 		iov = aiov;
-	if (error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec))))
+	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+	if (error)
 		goto done;
 	msg.msg_flags = MSG_COMPAT;
 	msg.msg_iov = iov;
