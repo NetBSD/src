@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.3 2002/07/14 00:37:47 wiz Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.4 2003/10/21 02:37:22 fvdl Exp $	*/
 /*	$KAME: rtsock.c,v 1.4 2001/09/19 06:59:41 sakane Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ static struct {
 	{ RTM_IFANNOUNCE, sizeof(struct if_announcemsghdr),
 	  rtsock_input_ifannounce },
 #endif
-	{ 0, NULL },
+	{ 0, 0, NULL },
 };
 
 int
