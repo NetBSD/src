@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.27 1998/07/29 07:26:29 fair Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.28 1998/09/29 09:21:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.27 1998/07/29 07:26:29 fair Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.28 1998/09/29 09:21:35 mrg Exp $");
 #endif
 
 
@@ -133,7 +133,7 @@ main(argc, argv)
 {
 	extern char *__progname;
 
-	int     op, pid, devnull;
+	int     op;
 	char   *ifname, *hostname;
 
 	/* All error reporting is done through syslogs. */
@@ -176,32 +176,13 @@ main(argc, argv)
 	if ((!fflag) && (!dflag)) {
 		FILE *fp;
 
-		pid = fork();
-		if (pid > 0)
-			/* Parent exits, leaving child in background. */
-			exit(0);
-		else
-			if (pid == -1) {
-				rarperr(FATAL, "cannot fork");
-				/* NOTREACHED */
-			}
+		if (daemon(0, 0))
+			rarperr(FATAL, "daemon");
 
 		/* write pid file */
 		if ((fp = fopen(_PATH_RARPDPID, "w")) != NULL) {
 			fprintf(fp, "%u\n", getpid());
 			(void)fclose(fp);
-		}
-
-		/* Fade into the background */
-		(void)setsid();
-		(void)chdir("/");
-		devnull = open("/dev/null", O_RDWR);
-		if (devnull >= 0) {
-			(void)dup2(devnull, 0);
-			(void)dup2(devnull, 1);
-			(void)dup2(devnull, 2);
-			if (devnull > 2)
-				(void)close(devnull);
 		}
 	}
 	rarp_loop();
@@ -630,8 +611,9 @@ rarp_process(ii, pkt)
 	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
 
 	if (target_ipaddr == 0) {
+
 		in.s_addr = ii->ii_ipaddr & ii->ii_netmask;
-		rarperr(NONFATAL, "cannot find %s on net %s\n",
+		rarperr(NONFATAL, "cannot find %s on net %s",
 		    ename, inet_ntoa(in));
 		return;
 	}
