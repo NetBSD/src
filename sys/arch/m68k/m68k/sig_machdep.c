@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.11 1998/10/03 21:58:52 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.12 1998/10/04 23:56:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ sendsig(catcher, sig, mask, code)
 		       p->p_pid, sig, &onstack, fp, &fp->sf_sc, ft);
 #endif
 
-	/* Build stack frame for signal trampiline. */
+	/* Build stack frame for signal trampoline. */
 	kf.sf_signum = sig;
 	kf.sf_code = code;
 	kf.sf_scp = &fp->sf_sc;
