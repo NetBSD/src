@@ -365,6 +365,22 @@ pcattach(struct isa_device *dev)
 	 */
 	while (config_found(self, ia->ia_ic, NULL) != NULL)
 		/* will break when no more children */ ;
+
+	if(pcvt_is_console) {
+		int maj;
+
+		/* locate the major number */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == pcopen)
+				break;
+
+		cn_tab->cn_dev = makedev(maj, 0);
+		/* minor number selects virtual screen,
+		 console always uses "0" (hardwired at
+		 various places) */
+
+		printf("%s: console\n", sc->sc_dev.dv_xname);
+	}
 #endif /* PCVT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
@@ -1110,6 +1126,7 @@ consinit()		/* init for kernel messages during boot */
 }
 #endif /* PCVT_NETBSD */
 
+#if 0
 #if (PCVT_NETBSD > 101 || PCVT_FREEBSD > 205)
 void
 pccnprobe(struct consdev *cp)
@@ -1169,6 +1186,20 @@ pccninit(struct consdev *cp)
      (PCVT_FREEBSD && (PCVT_FREEBSD <= 205)))
 	return 0;
 #endif
+}
+#endif /* 0 */
+
+int
+pccnattach()
+{
+	static struct consdev pccons = { NULL, NULL,
+	pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL};
+
+	cn_tab = &pccons;
+
+	pcvt_is_console = 1;
+
+	return(0);
 }
 
 #if (PCVT_NETBSD > 101 || PCVT_FREEBSD > 205)
