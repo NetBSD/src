@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.29.8.4 2002/06/20 13:36:44 gehenna Exp $	*/
+/*	$NetBSD: sem.c,v 1.29.8.5 2002/09/02 07:03:02 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -555,17 +555,17 @@ setmajor(struct devbase *d, int n)
 static const char *
 makedevstr(int maj, int min)
 {
-	struct devbase *dev;
+	struct devm *dm;
 	char buf[32];
 
-	TAILQ_FOREACH(dev, &allbases, d_next) {
-		if (dev->d_major == maj)
+	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (dm->dm_bmajor == maj)
 			break;
 	}
-	if (dev == NULL)
+	if (dm == NULL)
 		(void)sprintf(buf, "<%d/%d>", maj, min);
 	else
-		(void)sprintf(buf, "%s%d%c", dev->d_name,
+		(void)sprintf(buf, "%s%d%c", dm->dm_name,
 		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));
@@ -582,6 +582,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 {
 	struct nvlist *nv;
 	struct devbase *dev;
+	struct devm *dm;
 	const char *cp;
 	int maj, min, i, l;
 	int unit;
@@ -653,13 +654,17 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		nv->nv_int = NODEV;
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
-		if (dev->d_major == NODEV) {
+		TAILQ_FOREACH(dm, &alldevms, dm_next) {
+			if (strcmp(dm->dm_name, dev->d_name) == 0)
+				break;
+		}
+		if (dm == NULL) {
 			error("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
 			return (1);
 		}
 		nv->nv_int =
-		    makedev(dev->d_major, unit * maxpartitions + part);
+		    makedev(dm->dm_bmajor, unit * maxpartitions + part);
 	}
 
 	nv->nv_name = dev->d_name;
