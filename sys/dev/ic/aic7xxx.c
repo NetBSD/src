@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.4 1999/10/26 23:10:15 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.5 1999/10/29 22:19:30 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -622,7 +622,7 @@ ahc_attach(ahc)
 	adapt->adapt_dev = &ahc->sc_dev;
 	adapt->adapt_nchannels = (ahc->type & AHC_TWIN) ? 2 : 1;
 	adapt->adapt_openings = ahc->maxscbs;
-	adapt->adapt_max_periph = adapt->adapt_openings;
+	adapt->adapt_max_periph = 1;	/* increased later of we can TQING */
 	adapt->adapt_request = ahc_scsipi_request;
 	adapt->adapt_minphys = ahcminphys;
 
@@ -1968,45 +1968,6 @@ ahc_done(ahc, scb)
 	 * (SCSI_ERR_OK in FreeBSD), we don't have to care this case.
 	 */
 #endif
-	xs->xs_status |= XS_STS_DONE;
-#ifdef AHC_TAGENABLE
-#if 0
-	if(xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR)
-	{
-		struct scsipi_inquiry_data *inq_data;
-		u_short mask = 0x01 << (xs->xs_periph->periph_target |
-				(scb->tcl & 0x08));
-		/*
-		 * Sneak a look at the results of the SCSI Inquiry
-		 * command and see if we can do Tagged queing.  This
-		 * should really be done by the higher level drivers.
-		 */
-		inq_data = (struct scsipi_inquiry_data *)xs->data;
-		if((inq_data->flags & SID_CmdQue) && !(ahc->tagenable & mask))
-		{
-		        printf("%s: target %d Tagged Queuing Device\n",
-				ahc_name(ahc), xs->xs_periph->periph_target);
-			ahc->tagenable |= mask;
-			if(ahc->maxhscbs >= 16 || (ahc->flags & AHC_PAGESCBS)) {
-				/* Default to 8 tags */
-				xs->sc_link->openings += 6;
-			}
-			else
-			{
-				/*
-				 * Default to 4 tags on whimpy
-				 * cards that don't have much SCB
-				 * space and can't page.  This prevents
-				 * a single device from hogging all
-				 * slots.  We should really have a better
-				 * way of providing fairness.
-				 */
-				xs->sc_link->openings += 2;
-			}
-		}
-	}
-#endif
-#endif
 	ahc_free_scb(ahc, scb);
 	scsipi_done(xs);
 }
@@ -2466,14 +2427,8 @@ ahc_scsipi_request(chan, req, arg)
 		/*
 		 * Put all the arguments for the xfer in the scb
 		 */
-		if(ahc->tagenable & mask) {
-			scb->control |= TAG_ENB;
-			if(ahc->orderedtag & mask) {
-				printf("Ordered Tag sent\n");
-				scb->control |= 0x02;
-				ahc->orderedtag &= ~mask;
-			}
-		}
+		if (XS_CTL_TAGTYPE(xs) != 0)
+			scb->control |= xs->xs_tag_type;
 		if(ahc->discenable & mask)
 			scb->control |= DISCENB;
 		if((ahc->needwdtr & mask) && !(ahc->wdtrpending & mask))
@@ -2633,8 +2588,31 @@ ahc_scsipi_request(chan, req, arg)
 
 		tmask = 1 << xm->xm_target;
 
-		if (xm->xm_mode & PERIPH_CAP_TQING)
+#ifdef AHC_TAGENABLE
+		if (xm->xm_mode & PERIPH_CAP_TQING) {
+			struct scsipi_max_openings mo;
+
 			ahc->tagenable |= tmask;
+
+			mo.mo_target = xm->xm_target;
+			mo.mo_lun = -1;	/* all LUNs */
+
+			/*
+			 * Default to 8 openings per periph if we have
+			 * a decent amount of SCB space or can page them.
+			 *
+			 * Otherwise, go with 4 openings in an effort to
+			 * avoid letting one device hog the adapter.
+			 */
+			if (ahc->maxhscbs >= 16 ||
+			    (ahc->flags & AHC_PAGESCBS) != 0)
+				mo.mo_openings = 8;
+			else
+				mo.mo_openings = 4;
+
+			scsipi_async_event(chan, ASYNC_EVENT_MAX_OPENINGS, &mo);
+		}
+#endif /* AHC_TAGENABLE */
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ahc->needsdtr_orig & tmask) != 0)
 			ahc->needsdtr |= tmask;
@@ -3000,6 +2978,9 @@ ahc_timeout(arg)
 		 * We could be starving this command
 		 * try sending an ordered tag command
 		 * to the target we come from.
+		 *
+		 * XXX This doesn't actually do anything right now.
+		 * XXX --thorpej
 		 */
 		scb->flags |= SCB_ABORTED|SCB_SENTORDEREDTAG;
 		ahc->orderedtag |= 0xFF;
