@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1995/03/01 05:07:39 gwr Exp $
+#	$NetBSD: GENERIC,v 1.16 1995/03/10 02:31:29 gwr Exp $
 
 #
 # GENERIC kernel - supports root on: ie0, le0, sd*, ...
@@ -58,6 +58,9 @@ options 	SCSIDEBUG
 config		netbsd swap generic
 
 # Devices
+
+bwtwo0 at obmem? addr ?
+cgfour0 at obmem? addr ?
 
 ie0 at obio0 addr ? level ?
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
