@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.31 1997/10/19 13:29:22 mycroft Exp $	*/
+/*	$NetBSD: dirs.c,v 1.32 1998/03/18 17:18:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.31 1997/10/19 13:29:22 mycroft Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.32 1998/03/18 17:18:21 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ extractdirs(genmode)
 	nulldir.d_type = DT_DIR;
 	nulldir.d_namlen = 1;
 	(void) strcpy(nulldir.d_name, "/");
-	nulldir.d_reclen = DIRSIZ(0, &nulldir);
+	nulldir.d_reclen = DIRSIZ(0, &nulldir, 0);
 	for (;;) {
 		curfile.name = "<directory file - name unknown>";
 		curfile.action = USING;
@@ -382,16 +382,16 @@ putdir(buf, size)
 			i = DIRBLKSIZ - (loc & (DIRBLKSIZ - 1));
 			if ((dp->d_reclen & 0x3) != 0 ||
 			    dp->d_reclen > i ||
-			    dp->d_reclen < DIRSIZ(0, dp) ||
+			    dp->d_reclen < DIRSIZ(0, dp, 0) ||
 			    dp->d_namlen > NAME_MAX) {
 				vprintf(stdout, "Mangled directory: ");
 				if ((dp->d_reclen & 0x3) != 0)
 					vprintf(stdout,
 					   "reclen not multiple of 4 ");
-				if (dp->d_reclen < DIRSIZ(0, dp))
+				if (dp->d_reclen < DIRSIZ(0, dp, 0))
 					vprintf(stdout,
 					   "reclen less than DIRSIZ (%d < %lu) ",
-					   dp->d_reclen, (u_long)DIRSIZ(0, dp));
+					   dp->d_reclen, (u_long)DIRSIZ(0, dp, 0));
 				if (dp->d_namlen > NAME_MAX)
 					vprintf(stdout,
 					   "reclen name too big (%d > %d) ",
@@ -422,7 +422,7 @@ static void
 putent(dp)
 	struct direct *dp;
 {
-	dp->d_reclen = DIRSIZ(0, dp);
+	dp->d_reclen = DIRSIZ(0, dp, 0);
 	if (dirloc + dp->d_reclen > DIRBLKSIZ) {
 		((struct direct *)(dirbuf + prev))->d_reclen =
 		    DIRBLKSIZ - prev;
@@ -457,7 +457,7 @@ dcvt(odp, ndp)
 	ndp->d_type = DT_UNKNOWN;
 	(void) strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
 	ndp->d_namlen = strlen(ndp->d_name);
-	ndp->d_reclen = DIRSIZ(0, ndp);
+	ndp->d_reclen = DIRSIZ(0, ndp, 0);
 }
 
 /*
