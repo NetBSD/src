@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2004/03/17 14:14:02 aymeric Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2004/02/13 11:36:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2004/03/17 14:14:02 aymeric Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -108,7 +108,11 @@ int pmap_use_altivec;
 volatile struct pteg *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
 unsigned int pmap_pteg_mask;
+#ifdef PMAP_MEMLIMIT
+paddr_t pmap_memlimit = PMAP_MEMLIMIT;
+#else
 paddr_t pmap_memlimit = -PAGE_SIZE;		/* there is no limit */
+#endif
 
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
