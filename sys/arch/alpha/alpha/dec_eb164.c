@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_eb164.c,v 1.2 1996/11/12 05:14:34 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.3 1996/11/19 05:08:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -107,9 +107,12 @@ dec_eb164_cons_init()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(ccp->cc_iot, ccp->cc_memt, &ccp->cc_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(ccp->cc_iot, ccp->cc_memt);
+		else
+			pci_display_console(ccp->cc_iot, ccp->cc_memt,
+			    &ccp->cc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
