@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.8 2000/06/29 08:53:02 mrg Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.9 2001/11/09 00:34:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -72,8 +72,6 @@ extern char *_intrnames;
 /* Prototypes */
 
 int podule_irqhandler		__P((void));
-extern void zero_page_readonly	__P((void));
-extern void zero_page_readwrite	__P((void));
 extern int fiq_setregs		__P((fiqhandler_t *));
 extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.1 2001/10/05 22:27:46 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.2 2001/11/09 00:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -196,8 +196,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 
 static void process_kernel_args	__P((void));
 
