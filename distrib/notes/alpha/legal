@@ -1,8 +1,8 @@
-.\"	$NetBSD: legal,v 1.8 2002/05/20 23:48:42 itojun Exp $
+.\"	$NetBSD: legal,v 1.8.2.1 2002/06/18 13:28:12 lukem Exp $
 .
 .It
 In the following statement, "This software" refers to the parallel port driver:
-.(item -offset indent
+.(item -offset indent -compact
 .It
 This software is a component of "386BSD" developed by
 William F. Jolitz, TeleMuse.
