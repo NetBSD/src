@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.2 2005/01/18 14:41:52 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.3 2005/01/21 10:03:39 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.2 2005/01/18 14:41:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.3 2005/01/21 10:03:39 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.2 2005/01/18 14:41:52 b
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+
+/* #define PORT_DEBUG -1 */
 
 /*
  * Force a proper event-channel callback from Xen after clearing the
@@ -151,7 +153,8 @@ stipending()
 	return (ret);
 }
 
-void do_hypervisor_callback(struct intrframe *regs)
+void
+do_hypervisor_callback(struct intrframe *regs)
 {
 	uint32_t l1;
 	unsigned long l2;
@@ -181,7 +184,10 @@ void do_hypervisor_callback(struct intrframe *regs)
 				l2 &= ~(1 << l2i);
 
 				port = (l1i << 5) + l2i;
-				// DDD printf("do_hypervisor_callback port %d\n", port);
+#ifdef PORT_DEBUG
+				if (port == PORT_DEBUG)
+					printf("do_hypervisor_callback event %d irq %d\n", port, evtchn_to_irq[port]);
+#endif
 				if ((irq = evtchn_to_irq[port]) != -1)
 					do_event(irq, regs);
 				else
@@ -202,10 +208,14 @@ void do_hypervisor_callback(struct intrframe *regs)
 #endif
 }
 
-void hypervisor_unmask_event(unsigned int ev)
+void
+hypervisor_unmask_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	// DDD if (ev) printf("hypervisor_unmask_event %d\n", ev);
+#ifdef PORT_DEBUG
+	if (ev == PORT_DEBUG)
+		printf("hypervisor_unmask_event %d\n", ev);
+#endif
 
 	x86_atomic_clear_bit(&s->evtchn_mask[0], ev);
 	/*
@@ -221,18 +231,26 @@ void hypervisor_unmask_event(unsigned int ev)
 	}
 }
 
-void hypervisor_mask_event(unsigned int ev)
+void
+hypervisor_mask_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	// DDD if (ev) printf("hypervisor_mask_event %d\n", ev);
+#ifdef PORT_DEBUG
+	if (ev == PORT_DEBUG)
+		printf("hypervisor_mask_event %d\n", ev);
+#endif
 
 	x86_atomic_set_bit(&s->evtchn_mask[0], ev);
 }
 
-void hypervisor_clear_event(unsigned int ev)
+void
+hypervisor_clear_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	// DDD if (ev) printf("hypervisor_clear_event %d\n", ev);
+#ifdef PORT_DEBUG
+	if (ev == PORT_DEBUG)
+		printf("hypervisor_clear_event %d\n", ev);
+#endif
 
 	x86_atomic_clear_bit(&s->evtchn_pending[0], ev);
 }
