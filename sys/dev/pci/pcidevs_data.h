@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.579 2003/10/14 11:32:19 martti Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.580 2003/10/15 20:31:52 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.583 2003/10/14 11:30:36 martti Exp 
+ *	NetBSD: pcidevs,v 1.584 2003/10/15 20:31:38 itojun Exp 
  */
 
 /*
@@ -2044,10 +2044,70 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "S5920 PCI Target",
 	},
 	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5001,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201,
 	    0,
 	    "Atheros Communications, Inc.",
-	    "AR5001 Wireless LAN Reference Card",
+	    "AR5201 Wireless LAN",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5311,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5211 Wireless LAN",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5211 Wireless LAN",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5212 Wireless LAN",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_AP,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5201 Wireless LAN Reference Card (Early AP11)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_DEFAULT,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5201 Wireless LAN (no eeprom)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5212 Wireless LAN (no eeprom)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5211 Wireless LAN (no eeprom)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5212 Wireless LAN Reference Card (emulation board)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_FPGA11B,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5211 Wireless LAN Reference Card (11b emulation board)",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
+	    0,
+	    "Atheros Communications, Inc.",
+	    "AR5211 Wireless LAN Reference Card (original emulation board)",
 	},
 	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
