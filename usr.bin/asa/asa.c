@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.8 1995/03/25 18:05:06 glass Exp $	*/
+/*	$NetBSD: asa.c,v 1.9 1995/03/26 02:25:06 glass Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: asa.c,v 1.8 1995/03/25 18:05:06 glass Exp $";
+static char rcsid[] = "$NetBSD: asa.c,v 1.9 1995/03/26 02:25:06 glass Exp $";
 #endif
 
 #include <stdio.h>
