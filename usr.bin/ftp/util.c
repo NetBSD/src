@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.23 1998/05/20 00:55:52 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.24 1998/06/04 08:28:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.23 1998/05/20 00:55:52 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.24 1998/06/04 08:28:36 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ setpeer(argc, argv)
 	in_port_t port;
 
 	if (connected) {
-		printf("Already connected to %s, use close first.\n",
+		fprintf(ttyout, "Already connected to %s, use close first.\n",
 		    hostname);
 		code = -1;
 		return;
@@ -84,7 +84,7 @@ setpeer(argc, argv)
 	if (argc < 2)
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
-		printf("usage: %s host-name [port]\n", argv[0]);
+		fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -98,8 +98,10 @@ setpeer(argc, argv)
 
 		nport = strtol(argv[2], &ep, 10);
 		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
-			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
-			printf("usage: %s host-name [port]\n", argv[0]);
+			fprintf(ttyout, "%s: bad port number '%s'.\n",
+			    argv[1], argv[2]);
+			fprintf(ttyout, "usage: %s host-name [port]\n",
+			    argv[0]);
 			code = -1;
 			return;
 		}
@@ -120,7 +122,8 @@ setpeer(argc, argv)
 			if (command("PASSERVE %s", argv[1]) != COMPLETE)
 				return;
 			if (verbose)
-				printf("Connected via pass-through server %s\n",
+				fprintf(ttyout,
+				    "Connected via pass-through server %s\n",
 				    gateserver);
 		}
 
@@ -143,9 +146,9 @@ setpeer(argc, argv)
 		if (command("SYST") == COMPLETE && overbose) {
 			char *cp, c;
 			c = 0;
-			cp = strchr(reply_string+4, ' ');
+			cp = strchr(reply_string + 4, ' ');
 			if (cp == NULL)
-				cp = strchr(reply_string+4, '\r');
+				cp = strchr(reply_string + 4, '\r');
 			if (cp) {
 				if (cp[-1] == '.')
 					cp--;
@@ -153,7 +156,8 @@ setpeer(argc, argv)
 				*cp = '\0';
 			}
 
-			printf("Remote system type is %s.\n", reply_string + 4);
+			fprintf(ttyout, "Remote system type is %s.\n",
+			    reply_string + 4);
 			if (cp)
 				*cp = c;
 		}
@@ -171,7 +175,8 @@ setpeer(argc, argv)
 			type = 0;
 			(void)strcpy(typename, "binary");
 			if (overbose)
-			    printf("Using %s mode to transfer files.\n",
+			    fprintf(ttyout,
+				"Using %s mode to transfer files.\n",
 				typename);
 		} else {
 			if (proxy)
@@ -180,13 +185,13 @@ setpeer(argc, argv)
 				unix_server = 0;
 			if (overbose &&
 			    !strncmp(reply_string, "215 TOPS20", 10))
-				puts(
-"Remember to set tenex mode when transferring binary files from this machine.");
+				fputs(
+"Remember to set tenex mode when transferring binary files from this machine.\n",
+				    ttyout);
 		}
 		verbose = overbose;
 	}
 }
-
 
 /*
  * login to remote host, using given username & password if supplied
@@ -252,9 +257,9 @@ login(host, user, pass)
 		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
 			myname = pw->pw_name;
 		if (myname)
-			printf("Name (%s:%s): ", host, myname);
+			fprintf(ttyout, "Name (%s:%s): ", host, myname);
 		else
-			printf("Name (%s): ", host);
+			fprintf(ttyout, "Name (%s): ", host);
 		*tmp = '\0';
 		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
 		tmp[strlen(tmp) - 1] = '\0';
@@ -309,10 +314,10 @@ another(pargc, pargv, prompt)
 	int len = strlen(line), ret;
 
 	if (len >= sizeof(line) - 3) {
-		puts("sorry, arguments too long.");
+		fputs("sorry, arguments too long.\n", ttyout);
 		intr();
 	}
-	printf("(%s) ", prompt);
+	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
 	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL)
 		intr();
@@ -389,7 +394,9 @@ remglob(argv, doswitch, errbuf)
                 (void)unlink(temp);
                 if (ftemp == NULL) {
 			if (errbuf == NULL)
-				puts("can't find list of remote files, oops.");
+				fputs(
+				    "can't find list of remote files, oops.\n",
+				    ttyout);
 			else
 				*errbuf =
 				    "can't find list of remote files, oops.";
@@ -414,8 +421,8 @@ confirm(cmd, file)
 
 	if (!interactive || confirmrest)
 		return (1);
-	printf("%s %s? ", cmd, file);
-	(void)fflush(stdout);
+	fprintf(ttyout, "%s %s? ", cmd, file);
+	(void)fflush(ttyout);
 	if (fgets(line, sizeof(line), stdin) == NULL)
 		return (0);
 	switch (tolower(*line)) {
@@ -423,11 +430,12 @@ confirm(cmd, file)
 			return (0);
 		case 'p':
 			interactive = 0;
-			puts("Interactive mode: off.");
+			fputs("Interactive mode: off.\n", ttyout);
 			break;
 		case 'a':
 			confirmrest = 1;
-			printf("Prompting off for duration of %s.\n", cmd);
+			fprintf(ttyout, "Prompting off for duration of %s.\n",
+			    cmd);
 			break;
 	}
 	return (1);
@@ -494,8 +502,10 @@ remotesize(file, noisy)
 			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
-	} else if (noisy && debug == 0)
-		puts(reply_string);
+	} else if (noisy && debug == 0) {
+		fputs(reply_string, ttyout);
+		putc('\n', ttyout);
+	}
 	verbose = overbose;
 	return (size);
 }
@@ -532,15 +542,18 @@ remotemodtime(file, noisy)
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
 		if (rtime == -1 && (noisy || debug != 0))
-			printf("Can't convert %s to a time.\n", reply_string);
+			fprintf(ttyout, "Can't convert %s to a time.\n",
+			    reply_string);
 		else
 #ifndef __SVR4
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
 #else
 			rtime -= timezone;
 #endif
-	} else if (noisy && debug == 0)
-		puts(reply_string);
+	} else if (noisy && debug == 0) {
+		fputs(reply_string, ttyout);
+		putc('\n', ttyout);
+	}
 	verbose = overbose;
 	if (rtime == -1)
 		code = ocode;
@@ -548,11 +561,12 @@ remotemodtime(file, noisy)
 }
 
 #ifndef	SMALL
-static void updateprogressmeter __P((int));
 
-void
-updateprogressmeter(dummy)
-	int dummy;
+/*
+ * return non-zero if we're the current foreground process
+ */
+int
+foregroundproc()
 {
 	static pid_t pgrp = -1;
 	int ctty_pgrp;
@@ -560,11 +574,22 @@ updateprogressmeter(dummy)
 	if (pgrp == -1)
 		pgrp = getpgrp();
 
+	return ((ioctl(fileno(ttyout), TIOCGPGRP, &ctty_pgrp) != -1 &&
+	    ctty_pgrp == (int)pgrp));
+}
+
+
+static void updateprogressmeter __P((int));
+
+static void
+updateprogressmeter(dummy)
+	int dummy;
+{
+
 	/*
 	 * print progress bar only if we are foreground process.
 	 */
-	if (ioctl(STDOUT_FILENO, TIOCGPGRP, &ctty_pgrp) != -1 &&
-	    ctty_pgrp == (int)pgrp)
+	if (foregroundproc())
 		progressmeter(0);
 }
 #endif	/* SMALL */
@@ -676,16 +701,16 @@ progressmeter(flag)
 			    "%02d:%02d ETA", i / 60, i % 60);
 		}
 	}
-	(void)write(STDOUT_FILENO, buf, len);
+	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
 		(void)signal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
 		alarmtimer(0);
-		(void)putchar('\n');
+		(void)putc('\n', ttyout);
 	}
-	fflush(stdout);
+	fflush(ttyout);
 #endif	/* SMALL */
 }
 
@@ -694,8 +719,8 @@ progressmeter(flag)
  * Requires start to be initialised by progressmeter(-1),
  * direction to be defined by xfer routines, and filesize and bytes
  * to be updated by xfer routines
- * If siginfo is nonzero, an ETA is displayed, and the output goes to STDERR
- * instead of STDOUT.
+ * If siginfo is nonzero, an ETA is displayed, and the output goes to stderr
+ * instead of ttyout.
  */
 void
 ptransfer(siginfo)
@@ -762,7 +787,7 @@ ptransfer(siginfo)
 			    "  (stalled)");
 	}
 	len += snprintf(buf + len, sizeof(buf) - len, "\n");
-	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, len);
+	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
 #endif	/* SMALL */
 }
 
@@ -794,15 +819,15 @@ list_vertical(sl)
 		for (j = 0; j < columns; j++) {
 			p = sl->sl_str[j * lines + i];
 			if (p)
-				fputs(p, stdout);
+				fputs(p, ttyout);
 			if (j * lines + i + lines >= sl->sl_cur) {
-				putchar('\n');
+				putc('\n', ttyout);
 				break;
 			}
 			w = strlen(p);
 			while (w < width) {
 				w = (w + 8) &~ 7;
-				(void)putchar('\t');
+				(void)putc('\t', ttyout);
 			}
 		}
 	}
@@ -817,7 +842,7 @@ setttywidth(a)
 {
 	struct winsize winsize;
 
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) != -1)
+	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1)
 		ttywidth = winsize.ws_col;
 	else
 		ttywidth = 80;
@@ -848,7 +873,7 @@ controlediting()
 	if (editing && el == NULL && hist == NULL) {
 		HistEvent ev;
 
-		el = el_init(__progname, stdin, stdout, stderr);
+		el = el_init(__progname, stdin, ttyout, stderr);
 		/* init editline */
 		hist = history_init();		/* init the builtin history */
 		history(hist, &ev, H_SETSIZE, 100);/* remember 100 events */

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.24 1998/05/20 00:38:46 msaitoh Exp $
+.\" 	$NetBSD: ftp.1,v 1.25 1998/06/04 08:28:36 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm
+.Op Fl A
 .Op Fl a
 .Op Fl d
 .Op Fl e
@@ -51,15 +52,19 @@ file transfer program
 .Op Fl n
 .Op Fl p
 .Op Fl P Ar port
+.Op Fl r Ar seconds
 .Op Fl t
 .Op Fl v
 .Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
+.Op Fl o Ar output
 ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
+.Op Fl o Ar output
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
+.Op Fl o Ar output
 \fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
 .Nm
@@ -78,7 +83,18 @@ below for more information.
 .Pp
 Options may be specified at the command line, or to the
 command interpreter.
-.Bl -tag -width "port    "
+.Bl -tag -width "port   "
+.It Fl A
+Force active mode ftp.
+By default,
+.Nm
+will try to use passive mode ftp and fall back to active mode
+if passive is not supported by the server.
+This option causes
+.Nm
+to always use an active connection.
+It is only useful for connecting to very old servers that do not
+implement passive mode properly.
 .It Fl a
 Causes
 .Nm
@@ -87,6 +103,7 @@ to bypass normal login procedure, and use an anonymous login instead.
 Enables debugging.
 .It Fl e
 Disables command line editing.
+This is useful for Emacs ange-ftp mode.
 .It Fl g
 Disables file name globbing.
 .It Fl i
@@ -109,11 +126,36 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
+.It Fl o Ar output
+When auto-fetching files, save the contents in
+.Ar output .
+.Ar output
+is parsed according to the
+.Sx FILE NAMING CONVENTIONS
+below.
+If
+.Ar output
+is not
+.Sq -
+or doesn't start with
+.Sq \&| ,
+then only the first file specified will be retrieved into
+.Ar output ;
+all other files will be retreived into the basename of their
+remote name.
 .It Fl p
 Enable passive mode operation for use behind connection filtering firewalls.
+This option has been deprecated as
+.Nm
+now tries to use passive mode by default, falling back to active mode
+if the server does not support passive connections.
 .It Fl P Ar port
 Sets the port number to
 .Ar port .
+.It Fl r Ar wait
+Retry the connection attempt if it failed, pausing for
+.Ar wait
+seconds.
 .It Fl t
 Enables packet tracing.
 .It Fl v
@@ -1329,6 +1371,19 @@ By default, this is bound to the TAB key.
 .Nm
 utilizes the following environment variables.
 .Bl -tag -width "FTPSERVERPORT"
+.It Ev FTPMODE
+Overrides the default operation mode.
+Support values are:
+.Bl -tag -width "passive"
+.It active
+active mode ftp only
+.It auto
+automatic determination of passive or active (this is the default)
+.It gate
+gate-ftp mode
+.It passive
+passive mode ftp only
+.El
 .It Ev FTPSERVER
 Host to use as gate-ftp server when
 .Ic gate
