@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.17 1999/01/15 03:43:56 castor Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.18 2000/03/07 21:12:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,7 +61,7 @@ typedef long jmp_buf[_JBLEN] _JB_ATTRIBUTES;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if defined(__LIBC12_SOURCE__)
+#ifdef __LIBC12_SOURCE__
 int	__setjmp14 __P((jmp_buf));
 void	__longjmp14 __P((jmp_buf, int));
 
