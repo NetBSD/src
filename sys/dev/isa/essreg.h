@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.10 1999/03/18 07:11:21 mycroft Exp $	*/
+/*	$NetBSD: essreg.h,v 1.11 1999/03/19 12:40:21 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.10 $ (SHARK) $Date: 1999/03/18 07:11:21 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.11 $ (SHARK) $Date: 1999/03/19 12:40:21 $
 **
 **++
 **
@@ -172,7 +172,7 @@
 
 #define ESS_DRQ1_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 
-#define ESS_DRQ2_VALID(chan, model) (((model) != ESS_1887) ? ((chan) == 5) : ((chan) == 0 || (chan) == 1 || (chan) == 3 || (chan) == 5))
+#define ESS_DRQ2_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || (chan) == 5)
 
 #define ESS_BASE_VALID(base) ((base) == 0x220 || (base) == 0x230 || (base) == 0x240 || (base) == 0x250)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.43 1999/03/18 06:04:21 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.44 1999/03/19 12:40:21 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -786,7 +786,7 @@ essmatch(sc)
 	if (!isa_drq_isfree(sc->sc_ic, sc->sc_audio1.drq))
 		return (0);
 	if (sc->sc_model != ESS_1788) {
-		if (!ESS_DRQ2_VALID(sc->sc_audio2.drq, sc->sc_model)) {
+		if (!ESS_DRQ2_VALID(sc->sc_audio2.drq)) {
 			printf("ess: play drq %d invalid\n", sc->sc_audio2.drq);
 			return (0);
 		}
