@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.31 2003/08/07 16:33:56 agc Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.32 2003/09/26 11:51:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -217,9 +217,12 @@
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
-			if (f) \
-				ttretf = (VTONFS(v)->n_mtime == \
-					fxdr_unsigned(u_int32_t, *(tl + 2))); \
+			if (f) { \
+				struct timespec mtime; \
+				fxdr_nfsv3time(tl + 2, &mtime); \
+				ttretf = timespeccmp(&VTONFS(v)->n_mtime, \
+				    &mtime, ==); \
+			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
 		if (f) { \

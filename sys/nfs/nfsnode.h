@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.43 2003/09/17 09:10:02 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.44 2003/09/26 11:51:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -119,7 +119,7 @@ struct nfsnode {
 	struct lockf		*n_lockf;	/* Locking record of file */
 	unsigned		*n_dirgens;	/* 32<->64bit xlate gen. no. */
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
-	time_t			n_mtime;	/* Prev modify time. */
+	struct timespec		n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
 	struct timespec		n_nctime;	/* Last neg cache entry (dir) */
 	time_t			n_expiry;	/* Lease expiry time */

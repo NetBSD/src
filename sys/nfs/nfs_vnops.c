@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.179 2003/09/25 23:10:58 enami Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.180 2003/09/26 11:51:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.179 2003/09/25 23:10:58 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.180 2003/09/26 11:51:53 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -498,12 +498,12 @@ nfs_open(v)
 			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 			if (error)
 				return (error);
-			np->n_mtime = vattr.va_mtime.tv_sec;
+			np->n_mtime = vattr.va_mtime;
 		} else {
 			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 			if (error)
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.tv_sec) {
+			if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 				if (vp->v_type == VDIR) {
 					nfs_invaldircache(vp, 0);
 					np->n_direofoffset = 0;
@@ -511,7 +511,7 @@ nfs_open(v)
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
-				np->n_mtime = vattr.va_mtime.tv_sec;
+				np->n_mtime = vattr.va_mtime;
 			}
 		}
 	}
@@ -1405,8 +1405,7 @@ retry:
 		} else
 			nfsm_loadattr(vp, (struct vattr *)0, NAC_NOTRUNC);
 		if (wccflag)
-			VTONFS(vp)->n_mtime =
-			    VTONFS(vp)->n_vattr->va_mtime.tv_sec;
+			VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr->va_mtime;
 		m_freem(mrep);
 		if (error)
 			break;
