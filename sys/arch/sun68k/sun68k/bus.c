@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1 2001/06/27 02:48:32 fredette Exp $	*/
+/*	$NetBSD: bus.c,v 1.2 2001/07/15 16:27:57 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -307,7 +307,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	vaddr_t va;
 	struct pglist *mlist;
 
