@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.71 2004/04/03 23:11:14 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.72 2004/04/10 19:22:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,7 +173,8 @@ struct regmap {
 struct segmap {
 	int	*sg_pte;		/* points to NPTESG PTEs */
 	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
-	u_char	sg_npte;		/* number of valid PTEs per seg */
+	u_char	sg_npte;		/* number of valid PTEs in sg_pte
+					 * (not used for 4m/4d kernel_map) */
 	int8_t	sg_nwired;		/* number of wired pages */
 };
 
