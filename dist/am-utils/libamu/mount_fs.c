@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.3 2001/05/13 18:07:00 veego Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.3.2.1 2002/11/16 09:14:38 he Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -114,6 +114,10 @@ struct opt_tab mnt_flags[] =
 #if defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK)
   {MNTTAB_OPT_NOLOCK, MNT2_NFS_OPT_NONLM},
 #endif /* defined(MNT2_NFS_OPT_NONLM) && defined(MNTTAB_OPT_NOLOCK) */
+
+#if defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE)
+  {MNTTAB_OPT_XLATECOOKIE, MNT2_NFS_OPT_XLATECOOKIE},
+#endif /* defined(MNT2_NFS_OPT_XLATECOOKIE) && defined(MNTTAB_OPT_XLATECOOKIE) */
 
   {0, 0}
 };
