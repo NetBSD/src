@@ -1,9 +1,9 @@
 #! /bin/sh
 #
-#	$NetBSD: yearistype.sh,v 1.2.10.1 2000/08/11 12:11:51 kleink Exp $
+#	$NetBSD: yearistype.sh,v 1.2.10.2 2001/04/21 19:18:46 he Exp $
 #
 
-: '@(#)yearistype.sh	7.6'
+: '@(#)yearistype.sh	7.7'
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
@@ -37,3 +37,4 @@ case $#-$2 in
 esac
 
 echo "$0: usage is $0 year even|odd|uspres|nonpres|nonuspres" >&2
+exit 1
