@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.3 2001/09/29 05:39:14 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4 2001/09/29 18:13:48 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -414,7 +414,9 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
 {
 	struct acpi_make_devnode_state *state = context;
+#ifdef ACPI_DEBUG
 	struct acpi_softc *sc = state->softc;
+#endif
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
 	ACPI_OBJECT_TYPE type;
@@ -474,9 +476,17 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
+	char *str;
 
-	if (pnp)
-		printf("%s at %s", aa->aa_node->ad_devinfo.HardwareId, pnp);
+	if (pnp) {
+		printf("%s ", aa->aa_node->ad_devinfo.HardwareId);
+		if (acpi_eval_string(aa->aa_node->ad_handle,
+		    "_STR", &str) == AE_OK) {
+			printf("[%s] ", str);
+			AcpiOsFree(str);
+		}
+		printf("at %s", pnp);
+	}
 
 	return (UNCONF);
 }
@@ -592,6 +602,45 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 			rv = AE_TYPE;
 	}
 
+	return (rv);
+}
+
+/*
+ * acpi_eval_string:
+ *
+ *	Evaluage a (Unicode) string object.
+ */
+ACPI_STATUS
+acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
+{
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+	ACPI_OBJECT param;
+
+	if (handle == NULL)
+		handle = ACPI_ROOT_OBJECT;
+
+	buf.Pointer = NULL;
+	buf.Length = 0;
+
+	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
+	if (rv != AE_BUFFER_OVERFLOW)
+		return (rv);
+
+	buf.Pointer = AcpiOsAllocate(buf.Length);
+	if (buf.Pointer == NULL)
+		return (AE_NO_MEMORY);
+
+	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
+	if (rv == AE_OK) {
+		if (param.Type == ACPI_TYPE_STRING) {
+			*stringp = buf.Pointer;
+			return (AE_OK);
+		}
+		rv = AE_TYPE;
+	}
+
+	AcpiOsFree(buf.Pointer);
 	return (rv);
 }
 
