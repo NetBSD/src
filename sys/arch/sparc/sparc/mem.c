@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.32 2002/10/23 09:12:11 jdolecek Exp $ */
+/*	$NetBSD: mem.c,v 1.33 2003/04/02 04:35:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,16 +125,16 @@ mmrw(dev, uio, flags)
 			    trunc_page(pa), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(),
-			    (vaddr_t)vmmap, (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap, (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 
 		case DEV_KMEM:
 			va = (vaddr_t)uio->uio_offset;
-			if (va >= MSGBUF_VA && va < MSGBUF_VA+NBPG) {
+			if (va >= MSGBUF_VA && va < MSGBUF_VA+PAGE_SIZE) {
 				c = min(iov->iov_len, 4096);
 			} else if (va >= prom_vstart && va < prom_vend &&
 				   uio->uio_rw == UIO_READ) {
@@ -173,10 +173,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(zeropage, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				bzero(zeropage, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 
