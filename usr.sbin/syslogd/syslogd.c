@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.38 2004/11/18 23:01:31 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.39 2004/11/18 23:10:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.38 2004/11/18 23:01:31 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.39 2004/11/18 23:10:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -560,13 +560,6 @@ getgroup:
 		ev = allocevchange();
 		EV_SET(ev, fklog, EVFILT_READ, EV_ADD | EV_ENABLE,
 		    0, 0, (intptr_t) dispatch_read_klog);
-	}
-	if (finet && !SecureMode) {
-		for (j = 0; j < *finet; j++) {
-			ev = allocevchange();
-			EV_SET(ev, finet[j+1], EVFILT_READ, EV_ADD | EV_ENABLE,
-			    0, 0, (intptr_t) dispatch_read_finet);
-		}
 	}
 	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
 		ev = allocevchange();
@@ -2075,6 +2068,7 @@ int *
 socksetup(int af)
 {
 	struct addrinfo hints, *res, *r;
+	struct kevent *ev;
 	int error, maxs, *s, *socks;
 	const int on = 1;
 
@@ -2115,10 +2109,16 @@ socksetup(int af)
 			close(*s);
 			continue;
 		}
-		if (!SecureMode && bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
-			logerror("bind() failed");
-			close (*s);
-			continue;
+
+		if (!SecureMode) {
+			if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+				logerror("bind() failed");
+				close(*s);
+				continue;
+			}
+			ev = allocevchange();
+			EV_SET(ev, *s, EVFILT_READ, EV_ADD | EV_ENABLE,
+			    0, 0, (intptr_t) dispatch_read_finet);
 		}
 
 		*socks = *socks + 1;
