@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.54 2002/10/02 05:15:49 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.55 2002/10/20 06:26:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.54 2002/10/02 05:15:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.55 2002/10/20 06:26:39 gmcgarry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -959,7 +959,7 @@ dcmmint(sc, port, mcnd)
 	delta = mcnd ^ sc->sc_mcndlast[port];
 	sc->sc_mcndlast[port] = mcnd;
 	if ((delta & MI_CTS) && (tp->t_state & TS_ISOPEN) &&
-	    (tp->t_flags & CCTS_OFLOW)) {
+	    (tp->t_cflag & CCTS_OFLOW)) {
 		if (mcnd & MI_CTS) {
 			tp->t_state &= ~TS_TTSTOP;
 			ttstart(tp);
