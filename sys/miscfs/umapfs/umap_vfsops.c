@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.27.4.2 2001/08/25 06:16:54 thorpej Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.27.4.3 2002/01/10 20:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,11 +44,13 @@
  * (See mount_umap(8) for a description of this layer.)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.27.4.3 2002/01/10 20:01:48 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -305,6 +307,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_fhtovp,
 	layerfs_vptofh,
 	layerfs_init,
+	NULL,
 	layerfs_done,
 	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */

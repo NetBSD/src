@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8.4.1 2001/09/12 17:33:25 thorpej Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.4.2 2002/01/10 19:58:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.8.4.2 2002/01/10 19:58:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -171,7 +174,7 @@ bppattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node, "burst-sizes", -1);
+	burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

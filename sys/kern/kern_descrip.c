@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.79.2.2 2001/08/03 04:13:40 lukem Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.79.2.3 2002/01/10 19:59:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kern_descrip.c	8.8 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.79.2.3 2002/01/10 19:59:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.41.2.1 2001/08/03 04:13:35 lukem Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.41.2.2 2002/01/10 19:58:50 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -68,6 +68,9 @@
 /*
  * Ported to NetBSD and somewhat rewritten by Lennart Augustsson.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.41.2.2 2002/01/10 19:58:50 thorpej Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -145,26 +148,40 @@ int	kuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static const struct kue_type kue_devs[] = {
+Static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
 	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT },
+	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BTX },
 	{ USB_VENDOR_AOX, USB_PRODUCT_AOX_USB101 },
+	{ USB_VENDOR_ASANTE, USB_PRODUCT_ASANTE_EA },
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC10T },
+	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_DSB650C },
 	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_ETHER_USB_T },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650C },
 	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_E45 },
+	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_XX1 },
+	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_XX2 },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBETT },
+	{ USB_VENDOR_JATON, USB_PRODUCT_JATON_EDA },
+	{ USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_XX1 },
 	{ USB_VENDOR_KLSI, USB_PRODUCT_KLSI_DUH3E10BT },
+	{ USB_VENDOR_KLSI, USB_PRODUCT_KLSI_DUH3E10BTN },
 	{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_USB10T },
+	{ USB_VENDOR_MOBILITY, USB_PRODUCT_MOBILITY_EA },
 	{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101 },
+	{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101X },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET2 },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET3 },
+	{ USB_VENDOR_PORTGEAR, USB_PRODUCT_PORTGEAR_EA8 },
+	{ USB_VENDOR_PORTGEAR, USB_PRODUCT_PORTGEAR_EA9 },
+	{ USB_VENDOR_PORTSMITH, USB_PRODUCT_PORTSMITH_EEA },
+	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
-	{ 0, 0 }
 };
+#define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
 USB_DECLARE_DRIVER(kue);
 
@@ -386,18 +403,14 @@ kue_reset(struct kue_softc *sc)
 USB_MATCH(kue)
 {
 	USB_MATCH_START(kue, uaa);
-	const struct kue_type			*t;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = kue_devs; t->kue_vid != 0; t++)
-		if (uaa->vendor == t->kue_vid && uaa->product == t->kue_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.29 2001/04/13 23:30:28 thorpej Exp $	*/
+/*	$NetBSD: iso.c,v 1.29.2.1 2002/01/10 20:03:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,9 @@ SOFTWARE.
 /*
  * iso.c: miscellaneous routines to support the iso address family
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.29.2.1 2002/01/10 20:03:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

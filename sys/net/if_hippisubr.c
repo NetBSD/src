@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.12.2.1 2001/08/03 04:13:50 lukem Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.12.2.2 2002/01/10 20:02:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.12.2.2 2002/01/10 20:02:06 thorpej Exp $");
 
 #include "opt_inet.h"
 

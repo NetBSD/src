@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.6 2000/05/24 03:44:46 itojun Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6.8.1 2002/01/10 19:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -49,6 +49,9 @@
  * be glued into this driver.  Rather, separate drivers should be written
  * for those devices, as we have in the ISA multi-port serial card case.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.8.1 2002/01/10 19:57:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

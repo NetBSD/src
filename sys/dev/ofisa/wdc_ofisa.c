@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.6 2001/03/04 03:22:23 matt Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.6.4.1 2002/01/10 19:56:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -36,6 +36,9 @@
 /*
  * OFW Attachment for 'wdc' disk controller driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.6.4.1 2002/01/10 19:56:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

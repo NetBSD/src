@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.1 2001/05/06 17:36:04 ragge Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -43,6 +43,9 @@
  *	Lou Salkind
  *	New York University
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 

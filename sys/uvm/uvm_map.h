@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.29.2.1 2001/09/13 01:16:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.29.2.2 2002/01/10 20:05:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -395,8 +395,8 @@ vm_map_lock(map)
 #ifdef DIAGNOSTIC
 #define	vm_map_lock_read(map)						\
 do {									\
-	if (map->flags & VM_MAP_INTRSAFE)				\
-		panic("vm_map_lock_read: intrsafe map");		\
+	if ((map)->flags & VM_MAP_INTRSAFE)				\
+		panic("vm_map_lock_read: intrsafe Map");		\
 	(void) lockmgr(&(map)->lock, LK_SHARED, NULL);			\
 } while (0)
 #else

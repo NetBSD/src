@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.90 2001/06/28 08:15:44 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.90.2.1 2002/01/10 20:04:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -114,6 +114,7 @@ struct statfs {
 #define	MOUNT_CODA	"coda"		/* Coda Filesystem */
 #define	MOUNT_FILECORE	"filecore"	/* Acorn Filecore Filesystem */
 #define	MOUNT_NTFS	"ntfs"		/* Windows/NT Filesystem */
+#define	MOUNT_SMBFS	"smbfs"		/* CIFS (SMB) */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
@@ -317,6 +318,7 @@ struct vfsops {
 				    struct vnode **vpp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
+	void	(*vfs_reinit)	__P((void));
 	void	(*vfs_done)	__P((void));
 	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
 				    size_t, struct proc *));
@@ -389,7 +391,7 @@ struct netexport {
 struct export_args {
 	int	ex_flags;		/* export related flags */
 	uid_t	ex_root;		/* mapping for root uid */
-	struct	ucred ex_anon;		/* mapping for anonymous user */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
 	struct	sockaddr *ex_addr;	/* net address to which exported */
 	int	ex_addrlen;		/* and the net address length */
 	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
@@ -430,6 +432,7 @@ int	vfs_rootmountalloc __P((char *, char *, struct mount **));
 void	vfs_unbusy __P((struct mount *));
 int	vfs_attach __P((struct vfsops *));
 int	vfs_detach __P((struct vfsops *));
+void	vfs_reinit __P((void));
 struct vfsops *vfs_getopsbyname __P((const char *));
 int	vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			struct proc *));

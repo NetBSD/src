@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.23.2.3 2001/09/13 01:15:46 thorpej Exp $
+$NetBSD: miidevs,v 1.23.2.4 2002/01/10 19:56:15 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ oui xxMARVELL			0x000ac2	Marvell Semiconductor
  */
 
 /* Altima Communications PHYs */
+/* Don't know the model for ACXXX */
+model ALTIMA ACXXX		0x0001 ACXXX 10/100 media interface
 model ALTIMA AC101		0x0021 AC101 10/100 media interface
 
 /* Advanced Micro Devices PHYs */

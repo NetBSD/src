@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.c,v 1.5 1997/10/28 06:18:36 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.5.28.1 2002/01/10 19:58:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -33,6 +33,9 @@
 /*
  * Keyboard translation tables.  (See kbd_tables.h)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd_tables.c,v 1.5.28.1 2002/01/10 19:58:33 thorpej Exp $");
 
 #include <sys/types.h>
 

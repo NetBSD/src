@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.28 2000/06/04 19:15:14 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.28.6.1 2002/01/10 19:58:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.28.6.1 2002/01/10 19:58:44 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 

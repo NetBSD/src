@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.5 2001/04/13 23:30:18 thorpej Exp $	 */
+/*	$NetBSD: at_control.c,v 1.5.2.1 2002/01/10 20:02:24 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -26,10 +26,12 @@
  *	netatalk@umich.edu
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.5.2.1 2002/01/10 20:02:24 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.8.2.1 2001/08/03 04:13:28 lukem Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.8.2.2 2002/01/10 19:57:54 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,11 +30,15 @@
  * Code for RAID level 6 (P + Q) disk array architecture.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.8.2.2 2002/01/10 19:57:54 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0)
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagffrd.h"

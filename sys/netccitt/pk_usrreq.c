@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.20 2001/04/13 23:30:21 thorpej Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.20.2.1 2002/01/10 20:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -42,6 +42,9 @@
  *
  *	@(#)pk_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.20.2.1 2002/01/10 20:02:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

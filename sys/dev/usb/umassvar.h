@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.3 2001/04/17 00:50:13 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.3.6.1 2002/01/10 19:59:02 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -59,15 +59,13 @@ extern int umassdebug;
 #define DIR_IN		1
 #define DIR_OUT		2
 
-/* The transfer speed determines the timeout value */
-#define UMASS_DEFAULT_TRANSFER_SPEED	150	/* in kb/s, conservative est. */
-#define UMASS_FLOPPY_TRANSFER_SPEED	20
-#define UMASS_ZIP100_TRANSFER_SPEED	650
-
-#define UMASS_SPINUP_TIME 10000	/* ms */
-
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)			      
 
+/* Endpoints for umass */
+#define	UMASS_BULKIN	0
+#define	UMASS_BULKOUT	1
+#define	UMASS_INTRIN	2
+#define	UMASS_NEP	3
 
 /* Bulk-Only features */
 
@@ -93,7 +91,8 @@ typedef struct {
 /* Command Status Wrapper */
 typedef struct {
 	uDWord		dCSWSignature;
-#define CSWSIGNATURE	0x53425355
+#define CSWSIGNATURE		0x53425355
+#define CSWSIGNATURE_OLYMPUS_C1	0x55425355
 	uDWord		dCSWTag;
 	uDWord		dCSWDataResidue;
 	uByte		bCSWStatus;
@@ -129,89 +128,62 @@ typedef union {
 
 struct umass_softc;		/* see below */
 
-typedef void (*transfer_cb_f)(struct umass_softc *sc, void *priv,
-			      int residue, int status);
+typedef void (*umass_callback)(struct umass_softc *, void *, int, int);
 #define STATUS_CMD_OK		0	/* everything ok */
 #define STATUS_CMD_UNKNOWN	1	/* will have to fetch sense */
 #define STATUS_CMD_FAILED	2	/* transfer was ok, command failed */
 #define STATUS_WIRE_FAILED	3	/* couldn't even get command across */
 
-typedef void (*wire_reset_f)(struct umass_softc *sc, int status);
-typedef void (*wire_transfer_f)(struct umass_softc *sc, int lun,
-				void *cmd, int cmdlen, void *data, int datalen, 
-				int dir, transfer_cb_f cb, void *priv);
-typedef void (*wire_state_f)(usbd_xfer_handle xfer,
-			     usbd_private_handle priv, usbd_status err);
+typedef void (*umass_wire_xfer)(struct umass_softc *, int, void *, int, void *,
+				int, int, u_int, umass_callback, void *);
+typedef void (*umass_wire_reset)(struct umass_softc *, int);
+typedef void (*umass_wire_state)(usbd_xfer_handle, usbd_private_handle,
+				 usbd_status);
 
+struct umass_wire_methods {
+	umass_wire_xfer		wire_xfer;
+	umass_wire_reset	wire_reset;
+	umass_wire_state	wire_state;
+};
+
+struct umassbus_softc {
+	device_ptr_t		sc_child;	/* child device, for detach */
+};
 
 /* the per device structure */
 struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
+	usbd_interface_handle	sc_iface;	/* interface */
+	int			sc_ifaceno;	/* interface number */
 
-	unsigned char		drive;
-#define DRIVE_GENERIC		0	/* use defaults for this one */
-#define ZIP_100			1	/* to be used for quirks */
-#define ZIP_250			2
-#define SHUTTLE_EUSB		3
-#define INSYSTEM_USBCABLE	4
-	unsigned char		quirks;
-	/* The drive does not support Test Unit Ready. Convert to
-	 * Start Unit.
-	 * Y-E Data
-	 * ZIP 100
-	 */
-#define NO_TEST_UNIT_READY	0x01
-	/* The drive does not reset the Unit Attention state after
-	 * REQUEST SENSE has been sent. The INQUIRY command does not reset
-	 * the UA either, and so CAM runs in circles trying to retrieve the
-	 * initial INQUIRY data.
-	 * Y-E Data
-	 */
-#define RS_NO_CLEAR_UA		0x02	/* no REQUEST SENSE on INQUIRY*/
-	/* The drive does not support START_STOP.
-	 * Shuttle E-USB
-	 */
-#define NO_START_STOP		0x04
-	/* Don't ask for full inquiry data (255 bytes).
-	 * Yano ATAPI-USB
-	 */
-#define FORCE_SHORT_INQUIRY      0x08
+	u_int8_t		sc_epaddr[UMASS_NEP];
+	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+	usb_device_request_t	sc_req;
 
-	u_int8_t	wire_proto;		/* USB wire protocol */
-#define WPROTO_BBB	1
-#define WPROTO_CBI	2
-#define WPROTO_CBI_I	3
-	u_int8_t	cmd_proto;		/* command protocol */
-#define CPROTO_SCSI	1
-#define CPROTO_ATAPI	2
-#define CPROTO_UFI	3
-#define CPROTO_RBC	4
+	const struct umass_wire_methods *sc_methods;
 
-	u_char			subclass;	/* interface subclass */
-	u_char			protocol;	/* interface protocol */
+	u_int8_t		sc_wire;	/* wire protocol */
+#define	UMASS_WPROTO_UNSPEC	0
+#define	UMASS_WPROTO_BBB	1
+#define	UMASS_WPROTO_CBI	2
+#define	UMASS_WPROTO_CBI_I	3
 
-	usbd_interface_handle	iface;		/* Mass Storage interface */
-	int			ifaceno;	/* MS iface number */
+	u_int8_t		sc_cmd;		/* command protocol */
+#define	UMASS_CPROTO_UNSPEC	0
+#define	UMASS_CPROTO_SCSI	1
+#define	UMASS_CPROTO_ATAPI	2
+#define	UMASS_CPROTO_UFI	3
+#define	UMASS_CPROTO_RBC	4
+#define UMASS_CPROTO_ISD_ATA	5
 
-	u_int8_t		bulkin;		/* bulk-in Endpoint Address */
-	u_int8_t		bulkout;	/* bulk-out Endpoint Address */
-	u_int8_t		intrin;		/* intr-in Endp. (CBI) */
-	usbd_pipe_handle	bulkin_pipe;
-	usbd_pipe_handle	bulkout_pipe;
-	usbd_pipe_handle	intrin_pipe;
+	u_int32_t		sc_quirks;
+#define	UMASS_QUIRK_RS_NO_CLEAR_UA	0x00000002
+#define	UMASS_QUIRK_NO_START_STOP	0x00000004
+#define	UMASS_QUIRK_FORCE_SHORT_INQUIRY	0x00000008
+#define	UMASS_QUIRK_WRONG_CSWSIG	0x00000010
 
-	/* Reset the device in a wire protocol specific way */
-	wire_reset_f		reset;
-
-	/* The start of a wire transfer. It prepares the whole transfer (cmd,
-	 * data, and status stage) and initiates it. It is up to the state
-	 * machine (below) to handle the various stages and errors in these
-	 */
-	wire_transfer_f		transfer;
-
-	/* The state machine, handling the various states during a transfer */
-	wire_state_f		state;
+	u_int32_t		sc_busquirks;
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
@@ -219,10 +191,6 @@ struct umass_softc {
 	/* CBI specific variables for transfers in progress */
 	umass_cbi_cbl_t		cbl;	/* command block */ 
 	umass_cbi_sbl_t		sbl;	/* status block */
-
-	/* generic variables for transfers in progress */
-	/* ctrl transfer requests */
-	usb_device_request_t	request;
 
 	/* xfer handles
 	 * Most of our operations are initiated from interrupt context, so
@@ -259,7 +227,7 @@ struct umass_softc {
 	void			*transfer_data;		/* data buffer */
 	int			transfer_datalen;	/* (maximum) length */
 	int			transfer_actlen;	/* actual length */ 
-	transfer_cb_f		transfer_cb;		/* callback */
+	umass_callback		transfer_cb;		/* callback */
 	void			*transfer_priv;		/* for callback */
 	int			transfer_status;
 
@@ -285,7 +253,6 @@ struct umass_softc {
 #define TSTATE_STATES			18	/* # of states above */
 
 
-	int			transfer_speed;		/* in kb/s */
 	int			timeout;		/* in msecs */
 
 	u_int8_t		maxlun;			/* max lun supported */
@@ -297,6 +264,7 @@ struct umass_softc {
 	int			sc_xfer_flags;
 	char			sc_dying;
 
-	struct umassbus_softc	bus;
+	struct umassbus_softc	*bus;		 /* bus dependent data */
 };
 
+#define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE

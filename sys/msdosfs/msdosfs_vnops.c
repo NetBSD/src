@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.2 2001/08/25 06:16:54 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.109.2.3 2002/01/10 20:01:55 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,9 @@
  *
  * October 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109.2.3 2002/01/10 20:01:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +312,7 @@ msdosfs_getattr(v)
 	vap->va_gid = pmp->pm_gid;
 	vap->va_nlink = 1;
 	vap->va_rdev = 0;
-	vap->va_size = dep->de_FileSize;
+	vap->va_size = ap->a_vp->v_size;
 	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
 		dos2unixtime(dep->de_ADate, 0, 0, &vap->va_atime);
@@ -356,7 +359,9 @@ msdosfs_setattr(v)
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
+	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
+	    (vap->va_uid != VNOVAL && vap->va_uid != pmp->pm_uid) || 
+	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
@@ -471,6 +476,8 @@ msdosfs_read(v)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
+	if (uio->uio_offset >= dep->de_FileSize)
+		return (0);
 
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
@@ -479,7 +486,7 @@ msdosfs_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -545,12 +552,10 @@ msdosfs_write(v)
 	u_long osize;
 	int error = 0;
 	u_long count;
-	daddr_t lastcn;
 	int ioflag = ap->a_ioflag;
 	void *win;
 	vsize_t bytelen;
 	off_t oldoff;
-	boolean_t rv;
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct vnode *vp = ap->a_vp;
@@ -619,9 +624,7 @@ msdosfs_write(v)
 		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
 		    (error != ENOSPC || (ioflag & IO_UNIT)))
 			goto errexit;
-		lastcn = dep->de_fc[FC_LASTFC].fc_frcn;
-	} else
-		lastcn = de_clcount(pmp, osize) - 1;
+	}
 
 	if (dep->de_FileSize < uio->uio_offset + resid) {
 		dep->de_FileSize = uio->uio_offset + resid;
@@ -630,20 +633,9 @@ msdosfs_write(v)
 
 	do {
 		oldoff = uio->uio_offset;
-		if (de_cluster(pmp, oldoff) > lastcn) {
-			error = ENOSPC;
-			break;
-		}
-		bytelen = MIN(dep->de_FileSize - oldoff, uio->uio_resid);
+		bytelen = uio->uio_resid;
 
-		/*
-		 * XXXUBC if file is mapped and this is the last block,
-		 * process one page at a time.
-		 */
-
-		if (bytelen == 0)
-			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, oldoff, &bytelen, UBC_READ);
+		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
@@ -655,20 +647,17 @@ msdosfs_write(v)
 		 * XXXUBC simplistic async flushing.
 		 */
 
-		if (ioflag & IO_SYNC) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, oldoff,
-			    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
-		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+		if (oldoff >> 16 != uio->uio_offset >> 16) {
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
+	if (error == 0 && ioflag & IO_SYNC) {
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(oldoff),
+		    round_page(oldoff + bytelen), PGO_CLEANIT | PGO_SYNCIO);
+	}
 	dep->de_flag |= DE_UPDATE;
 
 	/*
@@ -677,18 +666,12 @@ msdosfs_write(v)
 	 */
 errexit:
 	if (error) {
-		if (ioflag & IO_UNIT) {
-			detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
-			uio->uio_offset -= resid - uio->uio_resid;
-			uio->uio_resid = resid;
-		} else {
-			detrunc(dep, dep->de_FileSize, ioflag & IO_SYNC, NOCRED,
-			    NULL);
-			if (uio->uio_resid != resid)
-				error = 0;
-		}
+		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
+		uio->uio_offset -= resid - uio->uio_resid;
+		uio->uio_resid = resid;
 	} else if ((ioflag & IO_SYNC) == IO_SYNC)
 		error = deupdat(dep, 1);
+	KASSERT(vp->v_size == dep->de_FileSize);
 	return (error);
 }
 
@@ -758,7 +741,7 @@ msdosfs_remove(v)
 	else
 		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %p, v_usecount %ld\n",
+	printf("msdosfs_remove(), dep %p, v_usecount %d\n",
 		dep, ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)
@@ -1883,7 +1866,6 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
-	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc msdosfs_vnodeop_opv_desc =

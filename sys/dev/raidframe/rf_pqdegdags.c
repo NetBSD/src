@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.5.16.1 2001/08/03 04:13:28 lukem Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.5.16.2 2002/01/10 19:57:55 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,11 +32,15 @@
 */
 
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.5.16.2 2002/01/10 19:57:55 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagdegrd.h"

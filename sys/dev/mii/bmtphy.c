@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.2.4.2 2001/09/13 01:15:44 thorpej Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.2.4.3 2002/01/10 19:56:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  * drives the PHY on the 3Com 3c905C.  The 3c905C's PHY is described in
  * the 3c905C data sheet.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.2.4.3 2002/01/10 19:56:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

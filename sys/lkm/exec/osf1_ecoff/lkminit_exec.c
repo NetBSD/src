@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:14 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2.2.1 2002/01/10 20:01:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.2.2.1 2002/01/10 20:01:07 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -43,6 +46,7 @@
 #include <sys/exec_ecoff.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
@@ -50,12 +54,17 @@
 int exec_osf1_ecoff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_osf1_ecoff =
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
+	/* OSF/1 (Digital Unix) ECOFF */
+	{ ECOFF_HDR_SIZE,
+	  exec_ecoff_makecmds,
 	  { .ecoff_probe_func = osf1_exec_ecoff_probe },
-	  NULL, EXECSW_PRIO_ANY,
+	  NULL,
+	  EXECSW_PRIO_ANY,
   	  howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
-	  osf1_copyargs, cpu_exec_ecoff_setregs }; /* OSF1 ecoff binaries */
+	  osf1_copyargs,
+	  cpu_exec_ecoff_setregs,
+	  coredump_netbsd };
 
 /*
  * declare the exec

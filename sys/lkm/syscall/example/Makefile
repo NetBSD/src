@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/11 13:48:12 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2002/01/10 20:01:15 thorpej Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	syscall_example
-
-MKMAN=	no
 
 SRCS=	lkminit_syscall.c
 SRCS+=	example_syscall.c

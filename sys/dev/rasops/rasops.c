@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.36 2001/02/12 04:33:36 nathanw Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.36.4.1 2002/01/10 19:58:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.36 2001/02/12 04:33:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.36.4.1 2002/01/10 19:58:03 thorpej Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -114,7 +113,7 @@ static void	rasops_do_cursor __P((struct rasops_info *));
 static void	rasops_init_devcmap __P((struct rasops_info *));
 
 /*
- * Initalize a 'rasops_info' descriptor.
+ * Initialize a 'rasops_info' descriptor.
  */
 int
 rasops_init(ri, wantrows, wantcols)

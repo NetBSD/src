@@ -1,8 +1,8 @@
-# 	$NetBSD: files.wsfont,v 1.8.4.1 2001/09/13 01:16:15 thorpej Exp $
+# 	$NetBSD: files.wsfont,v 1.8.4.2 2002/01/10 19:59:21 thorpej Exp $
 
 file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay
 
-defopt	opt_wsfont.h		FONT_BOLD8x16
+defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_GALLANT12x22 
 				FONT_QVSS8x15
 				FONT_LUCIDA16x29

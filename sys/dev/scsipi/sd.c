@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.177.2.1 2001/08/03 04:13:32 lukem Exp $	*/
+/*	$NetBSD: sd.c,v 1.177.2.2 2002/01/10 19:58:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,10 +53,12 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.177.2.2 2002/01/10 19:58:25 thorpej Exp $");
+
 #include "opt_scsi.h"
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -758,7 +760,7 @@ sdstart(periph)
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
 		} else
-#endif
+#endif /* NSD_SCSIBUS > 0 */
 		{
 			/*
 			 * Need a large cdb.
@@ -912,6 +914,8 @@ sdioctl(dev, cmd, addr, flag, p)
 		case DIOCLOCK:
 		case DIOCEJECT:
 		case ODIOCEJECT:
+		case DIOCGCACHE:
+		case DIOCSCACHE:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1047,6 +1051,41 @@ sdioctl(dev, cmd, addr, flag, p)
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return (0);
 #endif
+
+	case DIOCGCACHE:
+		if (sd->sc_ops->sdo_getcache != NULL)
+			return ((*sd->sc_ops->sdo_getcache)(sd, (int *) addr));
+
+		/* Not supported on this device. */
+		*(int *) addr = 0;
+		return (0);
+
+	case DIOCSCACHE:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (sd->sc_ops->sdo_setcache != NULL)
+			return ((*sd->sc_ops->sdo_setcache)(sd, *(int *) addr));
+
+		/* Not supported on this device. */
+		return (EOPNOTSUPP);
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writeable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (((sd->flags & SDF_DIRTY) != 0 || *(int *)addr != 0) &&
+		    sd->sc_ops->sdo_flush != NULL) {
+			error = (*sd->sc_ops->sdo_flush)(sd, 0);
+			if (error)
+				sd->flags &= ~SDF_FLUSHING;
+			else
+				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+		} else
+			error = 0;
+		return (error);
 
 	default:
 		if (part != RAW_PART)

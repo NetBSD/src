@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.1.28.1 2002/01/10 19:56:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,9 @@
  * Author: Christopher G. Demetriou, May 17, 1998.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.1.28.1 2002/01/10 19:56:50 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

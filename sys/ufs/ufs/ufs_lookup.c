@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.33 2001/02/26 20:25:11 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.33.6.1 2002/01/10 20:05:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,6 +40,9 @@
  *	@(#)ufs_lookup.c	8.9 (Berkeley) 8/11/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.6.1 2002/01/10 20:05:23 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -50,7 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>
@@ -790,9 +792,31 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
 				blkoff += DIRBLKSIZ;
 			}
-			softdep_setup_directory_add(bp, dp, dp->i_offset,
-			    ufs_rw32(dirp->d_ino, needswap), newdirbp);
-			bdwrite(bp);
+			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
+			    ufs_rw32(dirp->d_ino, needswap), newdirbp, 1) == 0) {
+				bdwrite(bp);
+				TIMEVAL_TO_TIMESPEC(&time, &ts);
+				return VOP_UPDATE(dvp, &ts, &ts, UPDATE_DIROP);
+			}
+			/* We have just allocated a directory block in an
+			 * indirect block. Rather than tracking when it gets
+			 * claimed by the inode, we simply do a VOP_FSYNC
+			 * now to ensure that it is there (in case the user
+			 * does a future fsync). Note that we have to unlock
+			 * the inode for the entry that we just entered, as
+			 * the VOP_FSYNC may need to lock other inodes which
+			 * can lead to deadlock if we also hold a lock on
+			 * the newly entered node.
+			 */
+			error = VOP_BWRITE(bp);
+			if (error != 0)
+				return (error);
+			if (tvp != NULL)
+				VOP_UNLOCK(tvp, 0);
+			error = VOP_FSYNC(dvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
+			if (tvp != 0)
+				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
+			return (error);
 		} else {
 			error = VOP_BWRITE(bp);
 		}
@@ -892,7 +916,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	if (DOINGSOFTDEP(dvp)) {
 		softdep_setup_directory_add(bp, dp,
 		    dp->i_offset + (caddr_t)ep - dirbuf,
-			ufs_rw32(dirp->d_ino, needswap), newdirbp);
+			ufs_rw32(dirp->d_ino, needswap), newdirbp, 0);
 		bdwrite(bp);
 	} else {
 		error = VOP_BWRITE(bp);
@@ -938,6 +962,9 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	struct direct *ep;
 	struct buf *bp;
 	int error;
+#ifdef FFS_EI
+	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
+#endif
 
 	dp = VTOI(dvp);
 
@@ -949,7 +976,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 				     &bp);
 		if (error)
 			return (error);
-		ep->d_ino = ufs_rw32(WINO, UFS_MPNEEDSWAP(dvp->v_mount));
+		ep->d_ino = ufs_rw32(WINO, needswap);
 		ep->d_type = DT_WHT;
 		goto out;
 	}
@@ -968,9 +995,8 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		 * Collapse new free space into previous entry.
 		 */
 		ep->d_reclen =
-		    ufs_rw16(ufs_rw16(ep->d_reclen,
-				      UFS_MPNEEDSWAP(dvp->v_mount))
-			     + dp->i_reclen, UFS_MPNEEDSWAP(dvp->v_mount));
+		    ufs_rw16(ufs_rw16(ep->d_reclen, needswap) + dp->i_reclen,
+			needswap);
 	}
 out:
 	if (DOINGSOFTDEP(dvp)) {
@@ -1049,10 +1075,11 @@ ufs_dirempty(ip, parentino, cred)
 	struct direct *dp = (struct direct *)&dbuf;
 	int error, namlen;
 	size_t count;
+	const int needswap = UFS_IPNEEDSWAP(ip);
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
 	for (off = 0; off < ip->i_ffs_size;
-	    off += ufs_rw16(dp->d_reclen, UFS_IPNEEDSWAP(ip))) {
+	    off += ufs_rw16(dp->d_reclen, needswap)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*
@@ -1065,19 +1092,16 @@ ufs_dirempty(ip, parentino, cred)
 		if (dp->d_reclen == 0)
 			return (0);
 		/* skip empty entries */
-		if (dp->d_ino == 0 ||
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == WINO)
+		if (dp->d_ino == 0 || ufs_rw32(dp->d_ino, needswap) == WINO)
 			continue;
 		/* accept only "." and ".." */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || 
-		   UFS_IPNEEDSWAP(ip) != 0)
+		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
 			namlen = dp->d_namlen;
 		else
 			namlen = dp->d_type;
 #else
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 &&
-		    UFS_IPNEEDSWAP(ip) != 0)
+		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
 			namlen = dp->d_type;
 		else
 			namlen = dp->d_namlen;
@@ -1092,10 +1116,10 @@ ufs_dirempty(ip, parentino, cred)
 		 * char is also "."
 		 */
 		if (namlen == 1 &&
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == ip->i_number)
+		    ufs_rw32(dp->d_ino, needswap) == ip->i_number)
 			continue;
 		if (dp->d_name[1] == '.' &&
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == parentino)
+		    ufs_rw32(dp->d_ino, needswap) == parentino)
 			continue;
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.9 2001/06/19 13:42:18 wiz Exp $	*/
+/*	$NetBSD: rl.c,v 1.9.2.1 2002/01/10 19:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -41,6 +41,9 @@
  * Implementation comments:
  *	
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.9.2.1 2002/01/10 19:57:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.16 2001/04/18 01:35:06 tacha Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.16.2.1 2002/01/10 19:56:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -51,6 +51,9 @@
  * Joystick support
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.16.2.1 2002/01/10 19:56:29 thorpej Exp $");
+
 #include "midi.h"
 
 #include <sys/param.h>
@@ -60,7 +63,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcidevs.h>
@@ -148,6 +150,7 @@ struct audio_hw_if cs4280_hw_if = {
 	cs428x_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0

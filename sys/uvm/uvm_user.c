@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_user.c,v 1.10 2001/06/02 18:09:27 chs Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.10.2.1 2002/01/10 20:05:49 thorpej Exp $	*/
 
 /*
  *
@@ -38,6 +38,8 @@
  * uvm_user.c: high level uvm_allocate/uvm_deallocate interface into vm.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_user.c,v 1.10.2.1 2002/01/10 20:05:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

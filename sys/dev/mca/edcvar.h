@@ -1,4 +1,4 @@
-/*	$NetBSD: edcvar.h,v 1.3 2001/05/04 12:58:34 jdolecek Exp $	*/
+/*	$NetBSD: edcvar.h,v 1.3.4.1 2002/01/10 19:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,10 +34,13 @@
  */
 
 struct ed_attach_args {
-	int sc_devno;
-	bus_dma_tag_t sc_dmat;		/* DMA tag as passed by parent */
+	int	edc_drive;
 };
-	
+
+#define	edccf_unit	cf_loc[EDCCF_DRIVE]
+
 int	edc_run_cmd __P((struct edc_mca_softc *, int,
-				int, u_int16_t [], int, int, int));
-void	edc_add_disk __P((struct edc_mca_softc *, struct ed_softc *, int));
+		int, u_int16_t [], int, int));
+void	edc_add_disk __P((struct edc_mca_softc *, struct ed_softc *));
+int	edc_bio __P((struct edc_mca_softc *, struct ed_softc *,
+		void *, size_t, daddr_t, int, int));

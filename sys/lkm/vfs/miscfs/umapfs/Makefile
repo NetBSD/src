@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.22.1 2002/01/10 20:01:24 thorpej Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/miscfs/umapfs ${.CURDIR}/../..
-
-MKMAN=	no
 
 KMOD=	umapfs
 

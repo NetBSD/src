@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.64.2.2 2001/08/03 04:13:44 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.64.2.3 2002/01/10 20:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_syscalls.c	8.6 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.64.2.3 2002/01/10 20:00:15 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_new_pipe.h"
@@ -237,7 +240,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
 	}
-	/* if an error occured, free the file descriptor */
+	/* if an error occurred, free the file descriptor */
 	if (error) {
 		fdremove(fdp, fd);
 		ffree(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.52.4.1 2001/08/03 04:13:43 lukem Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.52.4.2 2002/01/10 20:00:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  *	@(#)uipc_mbuf.c	8.4 (Berkeley) 2/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.52.4.2 2002/01/10 20:00:13 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -85,11 +88,12 @@
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
+
 #include <net/if.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
 
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
@@ -221,8 +225,7 @@ mclpool_alloc(sz, flags, mtype)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
-	    waitok));
+	return ((void *)uvm_km_alloc_poolpage1(mb_map, NULL, waitok));
 }
 
 void

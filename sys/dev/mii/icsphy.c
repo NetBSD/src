@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.22.2.1 2001/09/13 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.22.2.2 2002/01/10 19:56:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Integrated Circuit Systems' ICS1890 ethernet 10/100 PHY
  * datasheet from www.icst.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.22.2.2 2002/01/10 19:56:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.67.2.2 2001/09/13 01:16:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.67.2.3 2002/01/10 20:03:01 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -114,6 +114,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  *	@(#)tcp_output.c	8.4 (Berkeley) 5/24/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.67.2.3 2002/01/10 20:03:01 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
@@ -187,6 +190,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	struct ifnet *ifp;
 	int size;
 	int iphlen;
+	int optlen;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -255,7 +259,12 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 		}
 	}
 #endif
-	size -= tcp_optlen(tp);
+	/*
+	 * Now we must make room for whatever extra TCP/IP options are in
+	 * the packet.
+	 */
+	optlen = tcp_optlen(tp);
+
 	/*
 	 * XXX tp->t_ourmss should have the right size, but without this code
 	 * fragmentation will occur... need more investigation
@@ -263,27 +272,28 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #ifdef INET
 	if (inp) {
 #ifdef IPSEC
-		size -= ipsec4_hdrsiz_tcp(tp);
+		optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
-		size -= ip_optlen(inp);
+		optlen += ip_optlen(inp);
 	}
 #endif
 #ifdef INET6
 #ifdef INET
 	if (in6p && tp->t_family == AF_INET) {
 #ifdef IPSEC
-		size -= ipsec4_hdrsiz_tcp(tp);
+		optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
 #ifdef IPSEC
-		size -= ipsec6_hdrsiz_tcp(tp);
+		optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
-		size -= ip6_optlen(in6p);
+		optlen += ip6_optlen(in6p);
 	}
 #endif
+	size -= optlen;
 
  out:
 	/*
@@ -294,8 +304,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	 * ipseclen is subtracted from both sides, this may not be right.
 	 * I'm not quite sure about this (could someone comment).
 	 */
-	*txsegsizep = min(tp->t_peermss, size);
-	*rxsegsizep = min(tp->t_ourmss, size);
+	*txsegsizep = min(tp->t_peermss - optlen, size);
+	*rxsegsizep = min(tp->t_ourmss - optlen, size);
 
 	if (*txsegsizep != tp->t_segsz) {
 		/*

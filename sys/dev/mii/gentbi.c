@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.2.2.3 2001/09/13 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.2.2.4 2002/01/10 19:56:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  *
  * All we have to do here is correctly report speed and duplex.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.2.2.4 2002/01/10 19:56:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

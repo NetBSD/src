@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/07/08 01:18:59 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2002/01/10 20:01:34 thorpej Exp $
 
 INCSDIR= /usr/include/miscfs/genfs
 
-INCS=	genfs.h layer.h
+INCS=	genfs.h genfs_node.h layer.h
 
 .include <bsd.kinc.mk>

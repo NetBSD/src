@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.19 2000/03/30 13:10:14 augustss Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.19.8.1 2002/01/10 20:03:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,9 @@ SOFTWARE.
 /*
  * In here is tp_ctloutput(), the guy called by [sg]etsockopt(),
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.19.8.1 2002/01/10 20:03:55 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -427,7 +430,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			return ENOBUFS;
 		}
 		m->m_len = 0;
-		m->m_act = 0;
+		m->m_nextpkt = 0;
 		*mp = m;
 	}
 	/*
@@ -695,7 +698,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 				goto done;
 			}
 			(*mp)->m_next = MNULL;
-			(*mp)->m_act = 0;
+			(*mp)->m_nextpkt = 0;
 			if (tpcb->tp_ucddata)
 				m_cat(tpcb->tp_ucddata, *mp);
 			else

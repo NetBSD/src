@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28 2001/06/08 12:51:18 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.2.1 2002/01/10 19:58:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,9 @@
  * [yet?]).  Translates incoming bytes to ASCII or to `firm_events' and
  * passes them up to the appropriate reader.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28.2.1 2002/01/10 19:58:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.54 2001/07/08 18:02:29 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.54.2.1 2002/01/10 19:56:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * PCI bus front-end for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.54.2.1 2002/01/10 19:56:46 thorpej Exp $");
 
 #include "opt_tlp.h"
 
@@ -908,8 +911,16 @@ tlp_pci_attach(parent, self, aux)
 		 * be in an ISV SROM anyhow, tho ISV can cope with
 		 * multi-port boards).
 		 */
-		if (tlp_isv_srom_enaddr(sc, enaddr))
+		if (!tlp_isv_srom_enaddr(sc, enaddr)) {
+#ifdef __sparc__
+			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
+			    !sc->sc_srom[22]) {
+				extern void myetheraddr __P((u_char *));
+				myetheraddr(enaddr);
+			} else 
+#endif
 			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
+		}
 
 		/*
 		 * Davicom chips all have an internal MII interface

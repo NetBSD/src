@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.5 2001/01/07 17:55:41 fvdl Exp $	*/
+/*	$NetBSD: dkio.h,v 1.5.4.1 2002/01/10 20:04:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -74,5 +74,18 @@
 #if defined(__HAVE_OLD_DISKLABEL) && defined(_KERNEL)
 #define	ODIOCGDEFLABEL	_IOR('d', 114, struct olddisklabel)
 #endif
+
+		/* disk cache enable/disable */
+#define	DIOCGCACHE	_IOR('d', 116, int)	/* get cache enables */
+#define	DIOCSCACHE	_IOW('d', 117, int)	/* set cache enables */
+
+#define	DKCACHE_READ	0x000001 /* read cache enabled */
+#define	DKCACHE_WRITE	0x000002 /* write(back) cache enabled */
+#define	DKCACHE_RCHANGE	0x000100 /* read enable is changeable */
+#define	DKCACHE_WCHANGE	0x000200 /* write enable is changeable */
+#define	DKCACHE_SAVE	0x010000 /* cache parameters are savable/save them */
+
+		/* sync disk cache */
+#define	DIOCCACHESYNC	_IOW('d', 118, int)	/* sync cache (force?) */
 
 #endif /* _SYS_DKIO_H_ */

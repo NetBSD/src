@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.33 2001/05/30 11:57:16 mrg Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.33.2.1 2002/01/10 20:01:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,6 +44,9 @@
  * /dev/fd Filesystem
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.33.2.1 2002/01/10 20:01:32 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
@@ -51,7 +54,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/filedesc.h>
@@ -344,6 +346,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
+	NULL,
 	fdesc_done,
 	fdesc_sysctl,
 	NULL,				/* vfs_mountroot */

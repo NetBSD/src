@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.48.2.1 2001/07/10 13:49:34 lukem Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.48.2.2 2002/01/10 20:00:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_vnops.c	8.14 (Berkeley) 6/15/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.48.2.2 2002/01/10 20:00:23 thorpej Exp $");
 
 #include "fs_union.h"
 
@@ -193,17 +196,17 @@ vn_writechk(vp)
 }
 
 /*
- * Mark a vnode as being the text image of a running process.
+ * Mark a vnode as having executable mappings.
  */
 void
-vn_marktext(vp)
+vn_markexec(vp)
 	struct vnode *vp;
 {
-	if ((vp->v_flag & VTEXT) == 0) {
-		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+	if ((vp->v_flag & VEXECMAP) == 0) {
+		uvmexp.filepages -= vp->v_uobj.uo_npages;
+		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag |= VTEXT;
+	vp->v_flag |= VEXECMAP;
 }
 
 /*
@@ -248,8 +251,13 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	struct iovec aiov;
 	int error;
 
-	if ((ioflg & IO_NODELOCKED) == 0)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if ((ioflg & IO_NODELOCKED) == 0) {
+		if (rw == UIO_READ) {
+			vn_lock(vp, LK_SHARED | LK_RETRY);
+		} else {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	}
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = base;
@@ -299,7 +307,7 @@ unionread:
 	auio.uio_segflg = segflg;
 	auio.uio_procp = p;
 	auio.uio_resid = count;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
@@ -384,7 +392,7 @@ vn_read(fp, offset, uio, cred, flags)
 		ioflag |= IO_SYNC;
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
@@ -616,13 +624,17 @@ vn_lock(vp, flags)
 		if ((flags & LK_INTERLOCK) == 0)
 			simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK) {
+			if (flags & LK_NOWAIT) {
+				simple_unlock(&vp->v_interlock);
+				return EBUSY;
+			}
 			vp->v_flag |= VXWANT;
-			ltsleep((caddr_t)vp, PINOD | PNORELOCK,
+			ltsleep(vp, PINOD | PNORELOCK,
 			    "vn_lock", 0, &vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
-			if (error == 0 || error == EDEADLK)
+			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
 		flags &= ~LK_INTERLOCK;

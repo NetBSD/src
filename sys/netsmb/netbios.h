@@ -1,7 +1,7 @@
-/*	$NetBSD: netbios.h,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: netbios.h,v 1.1.6.1 2002/01/10 20:04:11 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/netbios.h,v 1.1 2001/04/10 07:59:05 bp Exp
  */
-
 #ifndef _NETSMB_NETBIOS_H_
 #define	_NETSMB_NETBIOS_H_
 
@@ -65,10 +66,7 @@
  */
 #define	NBT_WKSTA	0x00
 #define	NBT_SERVER	0x20
-/*
- * socket options
- */
-#define	NB_HEADERS_ON_INPUT	0x0001
+
 /*
  * Session packet types
  */
@@ -79,15 +77,47 @@
 #define	NB_SSN_RTGRESP		0x84
 #define	NB_SSN_KEEPALIVE	0x85
 
+/*
+ * resolver: Opcodes
+ */
+#define	NBNS_OPCODE_QUERY	0x00
+#define	NBNS_OPCODE_REGISTER	0x05
+#define	NBNS_OPCODE_RELEASE	0x06
+#define	NBNS_OPCODE_WACK	0x07
+#define	NBNS_OPCODE_REFRESH	0x08
+#define	NBNS_OPCODE_RESPONSE	0x10	/* or'ed with other opcodes */
+
+/*
+ * resolver: NM_FLAGS
+ */
+#define	NBNS_NMFLAG_BCAST	0x01
+#define	NBNS_NMFLAG_RA		0x08	/* recursion available */
+#define	NBNS_NMFLAG_RD		0x10	/* recursion desired */
+#define	NBNS_NMFLAG_TC		0x20	/* truncation occured */
+#define	NBNS_NMFLAG_AA		0x40	/* authoritative answer */
+
+/* 
+ * resolver: Question types
+ */
+#define	NBNS_QUESTION_TYPE_NB		0x0020
+#define NBNS_QUESTION_TYPE_NBSTAT	0x0021
+
+/* 
+ * resolver: Question class 
+ */
+#define NBNS_QUESTION_CLASS_IN	0x0001
+
+/*
+ * resolver: Limits
+ */
+#define	NBNS_MAXREDIRECTS	3	/* maximum number of accepted redirects */
+#define	NBDG_MAXSIZE		576	/* maximum nbns datagram size */
 
 /*
  * NETBIOS addressing
  */
 union nb_tran {
 	struct sockaddr_in	x_in;
-#ifndef NetBSD
-	struct sockaddr_ipx	x_ipx;
-#endif
 };
 
 struct nb_name {
@@ -107,28 +137,5 @@ struct sockaddr_nb {
 };
 
 #define	snb_addrin	snb_tran.x_in
-/*#define	snb_scope	snb_name + 1 + NB_ENCNAMELEN*/
-
-#ifndef _KERNEL
-
-__BEGIN_DECLS
-
-int nb_name_len(struct nb_name *);
-int nb_name_encode(struct nb_name *, u_char *);
-int nb_encname_len(const char *);
-
-int  nb_snballoc(int namelen, struct sockaddr_nb **);
-void nb_snbfree(struct sockaddr*);
-int  nb_sockaddr(struct sockaddr *, struct nb_name *, struct sockaddr_nb **);
-
-int  nb_resolvehost_in(const char *, struct sockaddr **);
-int  nbns_resolvename(const char *, struct sockaddr **);
-int  nb_getlocalname(char *name);
-
-/*int  nbns_resolve(struct nb_name *, const char *, struct sockaddr **);*/
-
-__END_DECLS
-
-#endif /* !_KERNEL */
 
 #endif /* !_NETSMB_NETBIOS_H_ */

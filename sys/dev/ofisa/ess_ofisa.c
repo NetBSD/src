@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.6 2001/01/06 22:50:00 nathanw Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.6.4.1 2002/01/10 19:56:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.6.4.1 2002/01/10 19:56:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

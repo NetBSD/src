@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.h,v 1.3 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_fifo.h,v 1.3.22.1 2002/01/10 19:57:47 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,8 +36,9 @@
 #ifndef _RF__RF_FIFO_H_
 #define _RF__RF_FIFO_H_
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_diskqueue.h"
 
 typedef struct RF_FifoHeader_s {

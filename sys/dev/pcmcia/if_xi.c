@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.14 2001/07/07 16:51:47 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.14.2.1 2002/01/10 19:57:22 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -47,6 +47,9 @@
  * 1) Promiscuous mode doesn't work on at least the CE2.
  * 2) Slow. ~450KB/s.  Memory access would be better.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.14.2.1 2002/01/10 19:57:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,7 +155,7 @@ struct xi_softc {
 
 	bus_space_tag_t		sc_bst;		/* Bus cookie */
 	bus_space_handle_t	sc_bsh;		/* Bus I/O handle */
-	bus_addr_t		sc_offset;	/* Offset of registers */
+	bus_size_t		sc_offset;	/* Offset of registers */
 
 	u_int8_t	sc_rev;			/* Chip revision */
 	u_int32_t	sc_flags;		/* Misc. flags */
@@ -246,6 +249,12 @@ const struct xi_pcmcia_product {
 	{ PCMCIA_VENDOR_INTEL,		0x0143,
 	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
 	  PCMCIA_STR_INTEL_EEPRO100 },
+	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_XE2000,
+	  0,				XIFLAGS_MOHAWK,
+	  PCMCIA_STR_XIRCOM_XE2000 },
+	{ PCMCIA_VENDOR_XIRCOM,		PCMCIA_PRODUCT_XIRCOM_REM56,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_REM56 },
 #ifdef NOT_SUPPORTED
 	{ PCMCIA_VENDOR_XIRCOM,		0x1141,
 	  0,				XIFLAGS_MODEM,
@@ -349,6 +358,9 @@ xi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
+	    pa->product == 0x110a)
+		return (2); /* prevent attach to com_pcmcia */
 	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
 		return (0);
 
@@ -412,6 +424,15 @@ xi_pcmcia_attach(parent, self, aux)
 	}
 	psc->sc_resource |= XI_RES_IO_MAP;
 
+	xpp = xi_pcmcia_identify(parent,pa);
+	if (xpp == NULL) {
+		printf(": unrecognised model\n");
+		return;
+	}
+	sc->sc_flags = xpp->xpp_flags;
+
+	printf(": %s\n", xpp->xpp_name);
+
 	/*
 	 * Configuration as advised by DINGO documentation.
 	 * Dingo has some extra configuration registers in the CCR space.
@@ -452,15 +473,6 @@ xi_pcmcia_attach(parent, self, aux)
 		pcmcia_mem_unmap(psc->sc_pf, ccr_window);
 		pcmcia_mem_free(psc->sc_pf, &pcmh);
 	}
-
-	xpp = xi_pcmcia_identify(parent,pa);
-	if (xpp == NULL) {
-		printf(": unrecognised model\n");
-		return;
-	}
-	sc->sc_flags = xpp->xpp_flags;
-
-	printf(": %s\n", xpp->xpp_name);
 
 	/*
 	 * Get the ethernet address from FUNCE/LAN_NID tuple.
@@ -629,19 +641,19 @@ xi_pcmcia_enable(psc)
 
 	DPRINTF(XID_CONFIG,("xi_pcmcia_enable()\n"));
 
+	if (pcmcia_function_enable(psc->sc_pf))
+		return (1);
+	psc->sc_resource |= XI_RES_PCIC;
+
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, xi_intr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+		pcmcia_function_disable(psc->sc_pf);
+		psc->sc_resource &= ~XI_RES_PCIC;
 		return (1);
 	}
-
-	if (pcmcia_function_enable(psc->sc_pf)) {
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-		return (1);
-	}
-	psc->sc_resource |= XI_RES_PCIC;
 
 	xi_full_reset(sc);
 
@@ -656,8 +668,8 @@ xi_pcmcia_disable(psc)
 	DPRINTF(XID_CONFIG,("xi_pcmcia_disable()\n"));
 
 	if (psc->sc_resource & XI_RES_PCIC) {
-		pcmcia_function_disable(psc->sc_pf);
 		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		pcmcia_function_disable(psc->sc_pf);
 		psc->sc_resource &= ~XI_RES_PCIC;
 	}
 }
@@ -1063,7 +1075,7 @@ xi_mdi_probe(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	u_int8_t x;
 
 	/* Pull clock bit MDCK low... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.10.2.2 2001/08/25 06:17:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.10.2.3 2002/01/10 20:05:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -112,12 +112,15 @@ typedef int	boolean_t;
 #define	VM_NKMEMPAGES	4		/* kmem_map pages */
 #define	VM_UVMEXP2	5		/* struct uvmexp_sysctl */
 #define	VM_ANONMIN	6
-#define	VM_VTEXTMIN	7
-#define	VM_VNODEMIN	8
+#define	VM_EXECMIN	7
+#define	VM_FILEMIN	8
 #define	VM_MAXSLP	9
 #define	VM_USPACE	10
+#define	VM_ANONMAX	11
+#define	VM_EXECMAX	12
+#define	VM_FILEMAX	13
 
-#define	VM_MAXID	11		/* number of valid vm ids */
+#define	VM_MAXID	14		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -127,10 +130,13 @@ typedef int	boolean_t;
 	{ "nkmempages", CTLTYPE_INT }, \
 	{ "uvmexp2", CTLTYPE_STRUCT }, \
 	{ "anonmin", CTLTYPE_INT }, \
-	{ "vtextmin", CTLTYPE_INT }, \
-	{ "vnodemin", CTLTYPE_INT }, \
+	{ "execmin", CTLTYPE_INT }, \
+	{ "filemin", CTLTYPE_INT }, \
 	{ "maxslp", CTLTYPE_INT }, \
 	{ "uspace", CTLTYPE_INT }, \
+	{ "anonmax", CTLTYPE_INT }, \
+	{ "execmax", CTLTYPE_INT }, \
+	{ "filemax", CTLTYPE_INT }, \
 }
 
 #ifndef ASSEMBLER

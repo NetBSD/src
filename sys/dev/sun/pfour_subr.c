@@ -1,4 +1,4 @@
-/*	$NetBSD: pfour_subr.c,v 1.1 2000/08/22 21:18:14 pk Exp $ */
+/*	$NetBSD: pfour_subr.c,v 1.1.6.1 2002/01/10 19:58:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Support routines for pfour framebuffers.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pfour_subr.c,v 1.1.6.1 2002/01/10 19:58:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

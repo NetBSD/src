@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:36 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:00 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -44,15 +47,23 @@
 #include <sys/exec_elf.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/hpux/hpux_exec.h>
 
 int exec_hpux_aout_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_hpux_aout =
-	{ HPUX_EXEC_HDR_SIZE, exec_hpux_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, hpux_setregs };	/* HP-UX a.out */
+	/* HP-UX a.out for m68k (native word size) */
+	{ HPUX_EXEC_HDR_SIZE,
+	  exec_hpux_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.51.2.1 2001/08/03 04:14:04 lukem Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.51.2.2 2002/01/10 20:04:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,47 +47,50 @@
  *	http://www.sco.com/developer/gabi/latest/ch4.eheader.html
  */
 
-#include <machine/int_types.h>
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <inttypes.h>
+#endif /* _KERNEL || _STANDALONE */
 
-typedef	__uint8_t  	Elf_Byte;
+#include <machine/elf_machdep.h>
 
-typedef	__uint32_t	Elf32_Addr;
+typedef	uint8_t  	Elf_Byte;
+
+typedef	uint32_t	Elf32_Addr;
 #define	ELF32_FSZ_ADDR	4
-typedef	__uint32_t Elf32_Off;
+typedef	uint32_t	Elf32_Off;
 #define	ELF32_FSZ_OFF	4
-typedef	__int32_t   Elf32_Sword;
+typedef	int32_t		Elf32_Sword;
 #define	ELF32_FSZ_SWORD	4
-typedef	__uint32_t Elf32_Word;
+typedef	uint32_t	Elf32_Word;
 #define	ELF32_FSZ_WORD	4
-typedef	__uint16_t Elf32_Half;
+typedef	uint16_t	Elf32_Half;
 #define	ELF32_FSZ_HALF	2
 
-typedef	__uint64_t	Elf64_Addr;
+typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
-typedef	__uint64_t	Elf64_Off;
+typedef	uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	__int32_t	Elf64_Shalf;
+typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
-#ifdef __alpha__
-typedef	__int64_t	Elf64_Sword;
-#define	ELF64_FSZ_SWORD	8
-typedef	__uint64_t	Elf64_Word;
-#define	ELF64_FSZ_WORD	8
-#else
-typedef	__int32_t	Elf64_Sword;
+#ifndef ELF64_FSZ_SWORD
+typedef	int32_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
-typedef	__uint32_t	Elf64_Word;
+#endif /* ELF64_FSZ_SWORD */
+#ifndef ELF64_FSZ_WORD
+typedef	uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
-#endif /* __alpha__ */
+#endif /* ELF64_FSZ_WORD */
 
-typedef	__int64_t	Elf64_Sxword;
+typedef	int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint64_t	Elf64_Xword;
+typedef	uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint32_t	Elf64_Half;
+typedef	uint32_t	Elf64_Half;
 #define	ELF64_FSZ_HALF	4
-typedef	__uint16_t	Elf64_Quarter;
+typedef	uint16_t	Elf64_Quarter;
 #define	ELF64_FSZ_QUARTER 2
 
 /*
@@ -276,6 +279,8 @@ typedef struct {
 #define	EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
 #define	EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define	EM_XTENSA	94	/* Tensilica Xtensa Architecture */
+#define	EM_NS32K	97	/* National Semiconductor 32000 series */
+
 /* Unofficial machine types follow */
 #define	EM_ALPHA_EXP	36902	/* used by NetBSD/alpha; obsolete */
 #define	EM_NUM		36903
@@ -645,6 +650,60 @@ typedef struct {
 /* NetBSD-specific note name */
 #define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
 
+/*
+ * NetBSD-specific core file information.
+ *
+ * NetBSD ELF core files use notes to provide information about
+ * the process's state.  The note name is "NetBSD-CORE" for
+ * information that is global to the process, and "NetBSD-CORE@nn",
+ * where "nn" is the lwpid of the LWP that the information belongs
+ * to (such as register state).
+ *
+ * We use the following note identifiers:
+ *
+ *	ELF_NOTE_NETBSD_CORE_PROCINFO
+ *		Note is a "netbsd_elfcore_procinfo" structure.
+ *
+ * We also use ptrace(2) request numbers (the ones that exist in
+ * machine-dependent space) to identify register info notes.  The
+ * info in such notes is in the same format that ptrace(2) would
+ * export that information.
+ *
+ * Please try to keep the members of this structure nicely aligned,
+ * and if you add elements, add them to the end and bump the version.
+ */
+
+#define	ELF_NOTE_NETBSD_CORE_NAME	"NetBSD-CORE"
+
+#define	ELF_NOTE_NETBSD_CORE_PROCINFO	1
+
+#define	NETBSD_ELFCORE_PROCINFO_VERSION	1
+
+struct netbsd_elfcore_procinfo {
+	/* Version 1 fields start here. */
+	uint32_t	cpi_version;	/* netbsd_elfcore_procinfo version */
+	uint32_t	cpi_cpisize;	/* sizeof(netbsd_elfcore_procinfo) */
+	uint32_t	cpi_signo;	/* killing signal */
+	uint32_t	cpi_sigcode;	/* signal code */
+	uint32_t	cpi_sigpend[4];	/* pending signals */
+	uint32_t	cpi_sigmask[4];	/* blocked signals */
+	uint32_t	cpi_sigignore[4];/* blocked signals */
+	uint32_t	cpi_sigcatch[4];/* blocked signals */
+	int32_t		cpi_pid;	/* process ID */
+	int32_t		cpi_ppid;	/* parent process ID */
+	int32_t		cpi_pgrp;	/* process group ID */
+	int32_t		cpi_sid;	/* session ID */
+	uint32_t	cpi_ruid;	/* real user ID */
+	uint32_t	cpi_euid;	/* effective user ID */
+	uint32_t	cpi_svuid;	/* saved user ID */
+	uint32_t	cpi_rgid;	/* real group ID */
+	uint32_t	cpi_egid;	/* effective group ID */
+	uint32_t	cpi_svgid;	/* saved group ID */
+	uint32_t	cpi_nlwps;	/* number of LWPs */
+	int8_t		cpi_name[32];	/* copy of p->p_comm */
+	/* Add version 2 fields below here. */
+};
+
 #if defined(ELFSIZE)
 #define	CONCAT(x,y)	__CONCAT(x,y)
 #define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
@@ -652,8 +711,6 @@ typedef struct {
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
-
-#include <machine/elf_machdep.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr
@@ -733,6 +790,10 @@ struct elf_args {
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
 int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
+
+int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
 #endif
 
 #ifdef EXEC_ELF64
@@ -741,6 +802,10 @@ int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
     caddr_t, int));
 int	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
+
+int	coredump_elf64 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
 #endif
 
 /* common */

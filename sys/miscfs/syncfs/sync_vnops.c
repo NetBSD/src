@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.6 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.6.4.1 2002/01/10 20:01:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.6.4.1 2002/01/10 20:01:47 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -52,7 +55,8 @@ const struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
 	{ &vop_unlock_desc, sync_unlock },		/* unlock */
 	{ &vop_print_desc, sync_print },		/* print */
 	{ &vop_islocked_desc, sync_islocked },		/* islocked */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_putpages_desc, sync_putpages },		/* islocked */
+	{ NULL, NULL }
 };
 
 const struct vnodeopv_desc sync_vnodeop_opv_desc =
@@ -109,8 +113,10 @@ vfs_deallocate_syncvnode(mp)
 
 	vp = mp->mnt_syncer;
 	mp->mnt_syncer = NULL;
+	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
 	vrele(vp);
+	vgone(vp);
 }
 
 /*
@@ -174,8 +180,6 @@ sync_inactive(v)
 	struct vnode *vp = ap->a_vp;
 
 	VOP_UNLOCK(vp, 0);
-	if (vp->v_usecount == 0)
-		vgone(vp);
 	return (0);
 }
 
@@ -183,18 +187,8 @@ int
 sync_reclaim(v)
 	void *v;
 {
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	int s;
 
-	s = splbio();
-	vp->v_mount->mnt_syncer = NULL;
-	vn_syncer_remove_from_worklist(vp);
-	splx(s);
-
-	return 0;
+	return (0);
 }
 
 /*

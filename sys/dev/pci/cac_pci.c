@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.10.4.1 2002/01/10 19:56:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCI front-end for cac(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.4.1 2002/01/10 19:56:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

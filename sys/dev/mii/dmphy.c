@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.10.2.1 2001/09/13 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.10.2.2 2002/01/10 19:56:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Davicom's DM9101 ethernet 10/100 PHY
  * Data Sheet available from www.davicom8.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.10.2.2 2002/01/10 19:56:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

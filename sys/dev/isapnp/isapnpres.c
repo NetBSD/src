@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.10 2000/05/23 17:50:53 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.10.8.1 2002/01/10 19:55:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Resource parser for Plug and Play cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.10.8.1 2002/01/10 19:55:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

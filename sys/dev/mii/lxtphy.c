@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.24.2.1 2001/09/13 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.24.2.2 2002/01/10 19:56:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Level One's LXT-970 ethernet 10/100 PHY
  * datasheet from www.level1.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.24.2.2 2002/01/10 19:56:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

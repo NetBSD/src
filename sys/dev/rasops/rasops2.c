@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.6.6.1 2001/08/25 06:16:31 thorpej Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.6.6.2 2002/01/10 19:58:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.6.6.1 2001/08/25 06:16:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.6.6.2 2002/01/10 19:58:04 thorpej Exp $");
 
-#include <sys/types.h>
+#include "opt_rasops.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

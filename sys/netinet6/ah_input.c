@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.27 2001/04/13 23:30:24 thorpej Exp $	*/
-/*	$KAME: ah_input.c,v 1.53 2001/03/01 09:12:08 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.27.2.1 2002/01/10 20:03:07 thorpej Exp $	*/
+/*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,6 +33,9 @@
 /*
  * RFC1826/2402 authentication header.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.27.2.1 2002/01/10 20:03:07 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -104,6 +107,7 @@ ah4_input(m, va_alist)
 	int s;
 	int off, proto;
 	va_list ap;
+	size_t stripsiz = 0;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
@@ -249,7 +253,7 @@ ah4_input(m, va_alist)
 	 */
 	if ((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay) {
 		if (ipsec_chkreplay(ntohl(((struct newah *)ah)->ah_seq), sav))
-			; /*okey*/
+			; /* okey */
 		else {
 			ipsecstat.in_ahreplay++;
 			ipseclog((LOG_WARNING,
@@ -355,8 +359,8 @@ ah4_input(m, va_alist)
 		m->m_flags &= ~M_AUTHIPHDR;
 		m->m_flags &= ~M_AUTHIPDGM;
 	}
-#endif /*INET6*/
-#endif /*0*/
+#endif /* INET6 */
+#endif /* 0 */
 
 	if (m->m_flags & M_AUTHIPHDR
 	 && m->m_flags & M_AUTHIPDGM) {
@@ -384,6 +388,13 @@ ah4_input(m, va_alist)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
+	if (sav->flags & SADB_X_EXT_OLD) {
+		/* RFC 1826 */
+		stripsiz = sizeof(struct ah) + siz1;
+	} else {
+		/* RFC 2402 */
+		stripsiz = sizeof(struct newah) + siz1;
+	}
 	if (ipsec4_tunnel_validate(ip, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
@@ -392,17 +403,9 @@ ah4_input(m, va_alist)
 		 * XXX more sanity checks
 		 * XXX relationship with gif?
 		 */
-		size_t stripsiz = 0;
 		u_int8_t tos;
 
 		tos = ip->ip_tos;
-		if (sav->flags & SADB_X_EXT_OLD) {
-			/* RFC 1826 */
-			stripsiz = sizeof(struct ah) + siz1;
-		} else {
-			/* RFC 2402 */
-			stripsiz = sizeof(struct newah) + siz1;
-		}
 		m_adj(m, off + stripsiz);
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
@@ -422,14 +425,6 @@ ah4_input(m, va_alist)
 			ipsecstat.in_inval++;
 			goto fail;
 		}
-
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
-			goto fail;
-		}
-#endif
 
 #if 1
 		/*
@@ -470,22 +465,13 @@ ah4_input(m, va_alist)
 		}
 		IF_ENQUEUE(&ipintrq, m);
 		m = NULL;
-		schednetisr(NETISR_IP);	/*can be skipped but to make sure*/
+		schednetisr(NETISR_IP);	/* can be skipped but to make sure */
 		splx(s);
 		nxt = IPPROTO_DONE;
 	} else {
 		/*
 		 * strip off AH.
 		 */
-		size_t stripsiz = 0;
-
-		if (sav->flags & SADB_X_EXT_OLD) {
-			/* RFC 1826 */
-			stripsiz = sizeof(struct ah) + siz1;
-		} else {
-			/* RFC 2402 */
-			stripsiz = sizeof(struct newah) + siz1;
-		}
 
 		ip = mtod(m, struct ip *);
 #ifndef PULLDOWN_TEST
@@ -652,6 +638,7 @@ ah6_input(mp, offp, proto)
 	struct secasvar *sav = NULL;
 	u_int16_t nxt;
 	int s;
+	size_t stripsiz = 0;
 
 #ifndef PULLDOWN_TEST
 	IP6_EXTHDR_CHECK(m, off, sizeof(struct ah), IPPROTO_DONE);
@@ -667,7 +654,7 @@ ah6_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	nxt = ah->ah_nxt;
 
-	/* find the sassoc.  */
+	/* find the sassoc. */
 	spi = ah->ah_spi;
 
 	if (ntohs(ip6->ip6_plen) == 0) {
@@ -756,7 +743,7 @@ ah6_input(mp, offp, proto)
 	 */
 	if ((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay) {
 		if (ipsec_chkreplay(ntohl(((struct newah *)ah)->ah_seq), sav))
-			; /*okey*/
+			; /* okey */
 		else {
 			ipsec6stat.in_ahreplay++;
 			ipseclog((LOG_WARNING,
@@ -867,6 +854,13 @@ ah6_input(mp, offp, proto)
 	}
 
 	/* was it transmitted over the IPsec tunnel SA? */
+	if (sav->flags & SADB_X_EXT_OLD) {
+		/* RFC 1826 */
+		stripsiz = sizeof(struct ah) + siz1;
+	} else {
+		/* RFC 2402 */
+		stripsiz = sizeof(struct newah) + siz1;
+	}
 	if (ipsec6_tunnel_validate(ip6, nxt, sav)) {
 		/*
 		 * strip off all the headers that precedes AH.
@@ -875,17 +869,9 @@ ah6_input(mp, offp, proto)
 		 * XXX more sanity checks
 		 * XXX relationship with gif?
 		 */
-		size_t stripsiz = 0;
-		u_int32_t flowinfo;	/*net endian*/
+		u_int32_t flowinfo;	/* net endian */
 
 		flowinfo = ip6->ip6_flow;
-		if (sav->flags & SADB_X_EXT_OLD) {
-			/* RFC 1826 */
-			stripsiz = sizeof(struct ah) + siz1;
-		} else {
-			/* RFC 2402 */
-			stripsiz = sizeof(struct newah) + siz1;
-		}
 		m_adj(m, off + stripsiz);
 		if (m->m_len < sizeof(*ip6)) {
 			/*
@@ -911,14 +897,6 @@ ah6_input(mp, offp, proto)
 			goto fail;
 		}
 
-#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
-		/* drop it if it does not match the default policy */
-		if (ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
-			goto fail;
-		}
-#endif
-
 #if 1
 		/*
 		 * should the inner packet be considered authentic?
@@ -943,14 +921,13 @@ ah6_input(mp, offp, proto)
 		}
 		IF_ENQUEUE(&ip6intrq, m);
 		m = NULL;
-		schednetisr(NETISR_IPV6); /*can be skipped but to make sure*/
+		schednetisr(NETISR_IPV6); /* can be skipped but to make sure */
 		splx(s);
 		nxt = IPPROTO_DONE;
 	} else {
 		/*
 		 * strip off AH.
 		 */
-		size_t stripsiz = 0;
 		char *prvnxtp;
 
 		/*
@@ -960,14 +937,6 @@ ah6_input(mp, offp, proto)
 		 */
 		prvnxtp = ip6_get_prevhdr(m, off); /* XXX */
 		*prvnxtp = nxt;
-
-		if (sav->flags & SADB_X_EXT_OLD) {
-			/* RFC 1826 */
-			stripsiz = sizeof(struct ah) + siz1;
-		} else {
-			/* RFC 2402 */
-			stripsiz = sizeof(struct newah) + siz1;
-		}
 
 		ip6 = mtod(m, struct ip6_hdr *);
 #ifndef PULLDOWN_TEST

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.c,v 1.29.2.2 2001/08/25 06:16:56 thorpej Exp $	*/
-/*	$KAME: if_gif.c,v 1.67 2001/07/30 08:42:06 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.29.2.3 2002/01/10 20:02:05 thorpej Exp $	*/
+/*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.29.2.3 2002/01/10 20:02:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -83,12 +86,9 @@
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
-#include "gif.h"
 #include "bpfilter.h"
 
 #include <net/net_osdep.h>
-
-#if NGIF > 0
 
 void gifattach __P((int));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -909,8 +909,10 @@ gif_set_tunnel(ifp, src, dst)
 
  bad:
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	if (sc->gif_si)
+	if (sc->gif_si) {
 		softintr_disestablish(sc->gif_si);
+		sc->gif_si = NULL;
+	}
 #endif
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
@@ -931,8 +933,10 @@ gif_delete_tunnel(ifp)
 	s = splsoftnet();
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	if (sc->gif_si)
+	if (sc->gif_si) {
 		softintr_disestablish(sc->gif_si);
+		sc->gif_si = NULL;
+	}
 #endif
 	if (sc->gif_psrc) {
 		free((caddr_t)sc->gif_psrc, M_IFADDR);
@@ -1020,4 +1024,3 @@ gif_eon_decap(struct ifnet *ifp, struct mbuf *m)
 	return m;
 }
 #endif /*ISO*/
-#endif /*NGIF > 0*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_scanner.h,v 1.6 1998/02/13 08:28:38 enami Exp $	*/
+/*	$NetBSD: scsi_scanner.h,v 1.6.28.1 2002/01/10 19:58:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -50,17 +50,6 @@ struct scsi_rw_scanner {
 	u_int8_t byte2;
 #define	SRW_FIXED		0x01
 	u_int8_t len[3];
-	u_int8_t control;
-};
-
-struct scsipi_start_stop {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t how;
-#define	SSS_STOP		0x00
-#define	SSS_START		0x01
-#define	SSS_LOEJ		0x02
 	u_int8_t control;
 };
 

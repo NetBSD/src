@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.7 2001/05/18 02:03:54 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.7.2.1 2002/01/10 19:56:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ struct sip_desc {
 #define	CR_TXPRI1	0x00000400	/* Tx priority queue select */
 #define	CR_TXPRI0	0x00000200	/* Tx priority queue select */
 #endif /* DP83820 */
+#define	CR_RLD		0x00000400	/* reload from NVRAM */
 #define	CR_RST		0x00000100	/* software reset */
 #define	CR_SWI		0x00000080	/* software interrupt */
 #define	CR_RXR		0x00000020	/* receiver reset */
@@ -686,6 +687,13 @@ struct sip_desc {
 #define	SIP_WAKEMASK6	0xe8
 #define	SIP_WAKEMASK7	0xec
 #endif /* DP83820 */
+
+/*
+ * Revision codes for the SiS 630 chipset built-in Ethernet.
+ */
+#define	SIS_REV_630E	0x81
+#define	SIS_REV_630S	0x82
+#define	SIS_REV_630EA1	0x83
 
 /*
  * Serial EEPROM opcodes, including the start bit.

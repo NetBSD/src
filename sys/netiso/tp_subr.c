@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.12 2000/03/30 13:10:15 augustss Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.12.8.1 2002/01/10 20:03:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,9 @@ SOFTWARE.
  * (tp_sbdrop()),  and put incoming packet data into socket buffers
  * (tp_stash()).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_subr.c,v 1.12.8.1 2002/01/10 20:03:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,8 +710,8 @@ tp_packetize(tpcb, m, eotsdu)
 	if (tpcb->tp_oktonagle) {
 		if ((n = sb->sb_mb) == 0)
 			panic("tp_packetize");
-		while (n->m_act)
-			n = n->m_act;
+		while (n->m_nextpkt)
+			n = n->m_nextpkt;
 		if (n->m_flags & M_EOR)
 			panic("tp_packetize 2");
 		SEQ_INC(tpcb, tpcb->tp_sndnum);
@@ -796,7 +799,7 @@ tp_stash(tpcb, e)
 	if (E.e_eot) {
 		struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
-		n->m_act = 0;
+		n->m_nextpkt = 0;
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_STASH]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.4 2001/04/18 01:35:07 tacha Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.4.4.1 2002/01/10 19:56:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -42,13 +42,15 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.4.4.1 2002/01/10 19:56:30 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcidevs.h>
@@ -129,6 +131,7 @@ struct audio_hw_if cs4281_hw_if = {
 	cs428x_get_props,
 	cs4281_trigger_output,
 	cs4281_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0 && 0
@@ -649,7 +652,6 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int32_t fmt=0;
 	int dma_count;
 
-	printf("cs4281_trigger_input: not implemented yet\n");
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");
@@ -1228,7 +1230,7 @@ cs4281_init(sc, init)
 		0x00 <<  0;    /* PLSS[4:0] Left  PCM Playback */
 	BA0WRITE4(sc, CS4281_SRCSA, dat32);
 	
-	/* Set interrupt to occured at Half and Full terminal
+	/* Set interrupt to occurred at Half and Full terminal
 	 * count interrupt enable for DMA channel 0 and 1.
 	 * To keep DMA stop, set MSK.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.23.2.1 2001/09/13 01:15:47 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.23.2.2 2002/01/10 19:56:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for Seeq 80220/80221, 80223, and 80225 10/100 ethernet PHYs
  * datasheet from www.seeq.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.23.2.2 2002/01/10 19:56:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

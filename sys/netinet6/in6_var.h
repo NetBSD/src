@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.18.4.1 2001/08/03 04:13:59 lukem Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.18.4.2 2002/01/10 20:03:19 thorpej Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  * hour rule for hosts).  they should never be modified by nd6_timeout or
  * anywhere else.
  *	userland -> kernel: accept pltime/vltime
- *	kernel -> userland: throuw up everything
+ *	kernel -> userland: throw up everything
  *	in kernel: modify preferred/expire only
  */
 struct in6_addrlifetime {
@@ -491,7 +491,7 @@ struct	in6_multi {
 
 /*
  * Structure used by macros below to remember position when stepping through
- * all of eht in6_multi records.
+ * all of the in6_multi records.
  */
 struct	in6_multistep {
 	struct	in6_ifaddr *i_ia;
@@ -555,11 +555,12 @@ do {						\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (0)
 
-int	in6_ifinit __P((struct ifnet *,
-			struct in6_ifaddr *, struct sockaddr_in6 *, int));
 struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
 				     int *));
 void	in6_delmulti __P((struct in6_multi *));
+struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
+	int *));
+int in6_leavegroup __P((struct in6_multi_mship *));
 void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
 extern int in6_ifindex2scopeid __P((int));
 extern int in6_mask2len __P((struct in6_addr *));
@@ -576,7 +577,7 @@ void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
-char	*ip6_sprintf __P((struct in6_addr *));
+char	*ip6_sprintf __P((const struct in6_addr *));
 int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,

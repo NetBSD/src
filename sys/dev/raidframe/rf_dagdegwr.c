@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.6.4.1 2001/09/13 01:16:05 thorpej Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.6.4.2 2002/01/10 19:57:39 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,11 @@
  *
  */
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.6.4.2 2002/01/10 19:57:39 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.134.2.2 2001/08/25 06:17:12 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.134.2.3 2002/01/10 20:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,9 @@
  * vnode op calls for Sun NFS version 2 and 3
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.134.2.3 2002/01/10 20:04:28 thorpej Exp $");
+
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
 
@@ -59,6 +62,7 @@
 #include <sys/vnode.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
+#include <sys/hash.h>
 #include <sys/lockf.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -139,7 +143,7 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
-	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
@@ -197,7 +201,6 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
-	{ &vop_size_desc, spec_size },			/* size */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -250,6 +253,7 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
@@ -690,6 +694,8 @@ nfs_setattr(v)
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
  			uvm_vnp_setsize(vp, vap->va_size);
+ 			tsize = np->n_size;
+			np->n_size = vap->va_size;
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
@@ -697,11 +703,10 @@ nfs_setattr(v)
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
 			if (error) {
-				uvm_vnp_setsize(vp, np->n_size);
+				uvm_vnp_setsize(vp, tsize);
 				return (error);
 			}
- 			tsize = np->n_size;
- 			np->n_size = np->n_vattr->va_size = vap->va_size;
+ 			np->n_vattr->va_size = vap->va_size;
   		}
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
@@ -1209,7 +1214,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 		panic("writerpc readonly vp %p", vp);
 	}
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif
@@ -1792,7 +1797,7 @@ nfs_link(v)
 	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
-		VOP_ABORTOP(vp, cnp);
+		VOP_ABORTOP(dvp, cnp);
 		vput(dvp);
 		return (EXDEV);
 	}
@@ -2171,7 +2176,6 @@ nfs_readdirrpc(vp, uiop, cred)
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, bigenough = 1;
 	int attrflag, nrpcs = 0, reclen;
 	const int v3 = NFS_ISV3(vp);
-	nfsquad_t cookie;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -2204,7 +2208,6 @@ nfs_readdirrpc(vp, uiop, cred)
 		nfsm_fhtom(vp, v3);
 		if (v3) {
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-			cookie.qval = uiop->uio_offset;
 			if (nmp->nm_iflag & NFSMNT_SWAPCOOKIE) {
 				txdr_swapcookie3(uiop->uio_offset, tl);
 			} else {
@@ -2376,7 +2379,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	struct componentname *cnp = &ndp->ni_cnd;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsnode *dnp = VTONFS(vp), *np;
-	const unsigned char *hcp;
 	nfsfh_t *fhp;
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
@@ -2521,14 +2523,15 @@ nfs_readdirplusrpc(vp, uiop, cred)
 					newvp = NFSTOV(np);
 				}
 				if (!error) {
+				    const char *cp;
+
 				    nfs_loadattrcache(&newvp, &fattr, 0);
 				    dp->d_type =
 				        IFTODT(VTTOIF(np->n_vattr->va_type));
 				    ndp->ni_vp = newvp;
-				    cnp->cn_hash = 0;
-				    for (hcp = cnp->cn_nameptr, i = 1; i <= len;
-				        i++, hcp++)
-				        cnp->cn_hash += *hcp * i;
+				    cp = cnp->cn_nameptr + cnp->cn_namelen;
+				    cnp->cn_hash =
+					namei_hash(cnp->cn_nameptr, &cp);
 				    if (cnp->cn_namelen <= NCHNAMLEN)
 				        cache_enter(ndp->ni_dvp, ndp->ni_vp,
 						    cnp);
@@ -2796,14 +2799,14 @@ nfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int bshift = vp->v_mount->mnt_fs_bshift - vp->v_mount->mnt_dev_bshift;
 
-	/*
-	 * XXX vpp should be returned unlocked?
-	 */
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = vp;
 	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn * btodb(vp->v_mount->mnt_stat.f_iosize);
+		*ap->a_bnp = ap->a_bn << bshift;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 1024 * 1024; /* XXX */
 	return (0);
 }
 
@@ -2874,20 +2877,13 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct nfsnode *np = VTONFS(vp);
 	int error;
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
-	int rv;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	error = 0;
-	simple_lock(&uobj->vmobjlock);
-	rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
-	simple_unlock(&uobj->vmobjlock);
-	if (!rv) {
-		error = EIO;
-	}
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;
 		np->n_flag &= ~NWRITEERR;
@@ -2913,14 +2909,16 @@ nfs_pathconf(v)
 	} */ *ap = v;
 	struct nfsv3_pathconf *pcp;
 	struct vnode *vp = ap->a_vp;
-	struct nfsmount *nmp;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int32_t t1, t2;
 	u_int32_t *tl;
 	caddr_t bpos, dpos, cp, cp2;
 	int error = 0, attrflag;
+#ifndef NFS_V2_ONLY
+	struct nfsmount *nmp;
 	unsigned int l;
 	u_int64_t maxsize;
+#endif
 	const int v3 = NFS_ISV3(vp);
 
 	switch (ap->a_name) {
@@ -2971,6 +2969,7 @@ nfs_pathconf(v)
 		nfsm_reqdone;
 		break;
 	case _PC_FILESIZEBITS:
+#ifndef NFS_V2_ONLY
 		if (v3) {
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
@@ -2981,7 +2980,9 @@ nfs_pathconf(v)
 			    (maxsize >> l) > 0; l++)
 				;
 			*ap->a_retval = l + 1;
-		} else {
+		} else
+#endif
+		{
 			*ap->a_retval = 32;	/* NFS V2 limitation */
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.104.2.1 2001/08/03 04:14:03 lukem Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.104.2.2 2002/01/10 20:04:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_vfsops.c	8.12 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.104.2.2 2002/01/10 20:04:27 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,6 +111,7 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
+	nfs_vfs_reinit,
 	nfs_vfs_done,
 	nfs_sysctl,
 	nfs_mountroot,
@@ -156,8 +160,10 @@ nfs_statfs(mp, sbp, p)
 	vp = nmp->nm_vnode;
 	cred = crget();
 	cred->cr_ngroups = 0;
+#ifndef NFS_V2_ONLY
 	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	nfsm_reqhead(vp, NFSPROC_FSSTAT, NFSX_FH(v3));
 	nfsm_fhtom(vp, v3);
@@ -687,8 +693,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	mp->mnt_fs_bshift = DEV_BSHIFT;
-	mp->mnt_dev_bshift = -1;
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
@@ -700,6 +704,9 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_soproto = argp->proto;
 
 	nfs_decode_args(nmp, argp);
+
+	mp->mnt_fs_bshift = ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 
 	/*
 	 * For Connection based sockets (TCP,...) defer the connect until
@@ -881,9 +888,9 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) || 
+		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;

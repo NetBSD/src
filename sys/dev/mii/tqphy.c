@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.14.2.1 2001/09/13 01:15:48 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.14.2.2 2002/01/10 19:56:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  *
  * Documentation available at http://www.tsc.tdk.com/lan/78Q2120.pdf .
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.14.2.2 2002/01/10 19:56:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2000/12/17 16:21:12 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2002/01/10 20:00:58 thorpej Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/freebsd
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF32
-
-MKMAN=	no
 
 KMOD=	exec_freebsd_elf
 

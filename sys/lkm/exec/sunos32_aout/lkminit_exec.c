@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2001/02/07 13:35:39 mrg Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,12 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:08 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/sunos32/sunos32_exec.h>
@@ -49,9 +53,16 @@
 int exec_sunos32_aout_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_sunos32_aout =
-	{ SUNOS32_AOUT_HDR_SIZE, exec_sunos32_aout_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  0, netbsd32_copyargs, netbsd32_setregs }; /* SunOS a.out, 64-bit kernel */
+	/* 32-bit SunOS a.out on 64-bit */
+	{ SUNOS32_AOUT_HDR_SIZE,
+	  exec_sunos32_aout_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  netbsd32_copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

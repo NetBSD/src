@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91.2.1 2001/08/03 04:13:49 lukem Exp $	*/
+/*	$NetBSD: if.c,v 1.91.2.2 2002/01/10 20:02:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@
  *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.91.2.2 2002/01/10 20:02:00 thorpej Exp $");
+
 #include "opt_inet.h"
 
 #include "opt_compat_linux.h"
@@ -158,7 +161,10 @@ int if_clone_list __P((struct if_clonereq *));
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void if_detach_queues __P((struct ifnet *, struct ifqueue *));
+#endif
 
 /*
  * Network interface utility routines.
@@ -405,7 +411,8 @@ if_attach(ifp)
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
 
 	ifp->if_capenable = 0;
-	ifp->if_csum_flags = 0;
+	ifp->if_csum_flags_tx = 0;
+	ifp->if_csum_flags_rx = 0;
 
 #ifdef ALTQ
 	ifp->if_snd.altq_type = 0;
@@ -605,6 +612,8 @@ do { \
 	splx(s);
 }
 
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
+    defined(ISO) || defined(CCITT) || defined(NATM)
 static void
 if_detach_queues(ifp, q)
 	struct ifnet *ifp;
@@ -639,6 +648,7 @@ if_detach_queues(ifp, q)
 		IF_DROP(q);
 	}
 }
+#endif /* defined(INET) || ... */
 
 /*
  * Callback for a radix tree walk to delete all references to an
@@ -1302,17 +1312,34 @@ ifioctl(so, cmd, data, p)
 			ifp->if_capenable = ifcr->ifcr_capenable;
 
 			/* Pre-compute the checksum flags mask. */
-			ifp->if_csum_flags = 0;
-			if (ifp->if_capenable & IFCAP_CSUM_IPv4)
-				ifp->if_csum_flags |= M_CSUM_IPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv4)
-				ifp->if_csum_flags |= M_CSUM_TCPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv4)
-				ifp->if_csum_flags |= M_CSUM_UDPv4;
-			if (ifp->if_capenable & IFCAP_CSUM_TCPv6)
-				ifp->if_csum_flags |= M_CSUM_TCPv6;
-			if (ifp->if_capenable & IFCAP_CSUM_UDPv6)
-				ifp->if_csum_flags |= M_CSUM_UDPv6;
+			ifp->if_csum_flags_tx = 0;
+			ifp->if_csum_flags_rx = 0;
+			if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_IPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_IPv4;
+			}
+
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_TCPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+			} else if (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv4;
+
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv4) {
+				ifp->if_csum_flags_tx |= M_CSUM_UDPv4;
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+			} else if (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv4;
+
+			if (ifp->if_capenable & IFCAP_CSUM_TCPv6) {
+				ifp->if_csum_flags_tx |= M_CSUM_TCPv6;
+				ifp->if_csum_flags_rx |= M_CSUM_TCPv6;
+			}
+
+			if (ifp->if_capenable & IFCAP_CSUM_UDPv6) {
+				ifp->if_csum_flags_tx |= M_CSUM_UDPv6;
+				ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
+			}
 
 			/*
 			 * Only kick the interface if it's up.  If it's
@@ -1475,9 +1502,9 @@ ifconf(cmd, data)
 	int space = ifc->ifc_len, error = 0;
 
 	ifrp = ifc->ifc_req;
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
-		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
+		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset((caddr_t)&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= (int)sizeof (ifr)) {
 				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
@@ -1487,7 +1514,7 @@ ifconf(cmd, data)
 			}
 			space -= sizeof (ifr), ifrp++;
 		} else 
-		    for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+		    for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 			if (cmd == OSIOCGIFCONF) {

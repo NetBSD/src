@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.8 2001/07/07 22:58:00 wdk Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.8.2.1 2002/01/10 19:59:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -48,6 +48,11 @@
  * "Stub" to allow remote cpu to debug over a serial line using gdb.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.8.2.1 2002/01/10 19:59:58 thorpej Exp $");
+
+#include "opt_kgdb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kgdb.h>
@@ -55,15 +60,15 @@
 /* #define	DEBUG_KGDB XXX */
 
 /* XXX: Maybe these should be in the MD files? */
-#ifndef KGDBDEV
-#define KGDBDEV -1
+#ifndef KGDB_DEV
+#define KGDB_DEV NODEV
 #endif
-#ifndef KGDBRATE
-#define KGDBRATE 19200
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE 19200
 #endif
 
-int kgdb_dev = KGDBDEV;		/* remote debugging device (-1 if none) */
-int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
+int kgdb_dev = KGDB_DEV;	/* remote debugging device (NODEV if none) */
+int kgdb_rate = KGDB_DEVRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
@@ -83,6 +88,7 @@ static int (*kgdb_getc) __P((void *));
 static void (*kgdb_putc) __P((void *, int));
 static void *kgdb_ioarg;
 
+/* KGDB_BUFLEN must be at least (2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1) */
 static u_char buffer[KGDB_BUFLEN];
 static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
@@ -389,7 +395,7 @@ kgdb_trap(type, regs)
 #endif
 		kgdb_active = 1;
 	} else {
-		/* Tell remote host that an exception has occured. */
+		/* Tell remote host that an exception has occurred. */
 		sprintf(buffer, "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}
@@ -492,10 +498,12 @@ kgdb_trap(type, regs)
 			kgdb_send("OK");
 			continue;
 
+		case KGDB_DETACH:
 		case KGDB_KILL:
 			kgdb_active = 0;
 			printf("kgdb detached\n");
 			db_clear_single_step(regs);
+			kgdb_send("OK");
 			goto out;
 
 		case KGDB_CONT:

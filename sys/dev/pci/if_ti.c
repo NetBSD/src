@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.39.2.2 2001/08/25 06:16:23 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.39.2.3 2002/01/10 19:56:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -79,6 +79,9 @@
  *   convincing me to write this driver.
  * - Andrew Gallatin for providing FreeBSD/Alpha support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.39.2.3 2002/01/10 19:56:45 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2026,6 +2029,7 @@ static void ti_rxeof(sc)
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
+#ifdef INET
 		case ETHERTYPE_IP:
 		    {
 			struct ip *ip = (struct ip *) (eh + 1);
@@ -2064,6 +2068,7 @@ static void ti_rxeof(sc)
 			}
 			break;
 		    }
+#endif
 		default:
 			/* Nothing. */
 			break;

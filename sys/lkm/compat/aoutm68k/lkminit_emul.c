@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2000/12/13 11:18:38 enami Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.6.1 2002/01/10 20:00:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2.6.1 2002/01/10 20:00:46 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -47,6 +50,7 @@
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 
 /*
  * This module is different to other compat modules - it adds the
@@ -60,10 +64,16 @@ extern const struct emul emul_netbsd_aoutm68k;
 int compat_aoutm68k_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_netbsd_aoutm68k =
-	{ sizeof(struct exec), exec_aout_makecmds, { NULL },
+	/* Native a.out */
+	{ sizeof(struct exec),
+	  exec_aout_makecmds,
+	  { NULL },
 	  &emul_netbsd_aoutm68k,
 	  EXECSW_PRIO_FIRST,	/* Note: this differs from exec_conf.c entry */
-	  0, copyargs, setregs };	/* a.out binaries */
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the executable format

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid0.c,v 1.4 2000/01/07 03:41:02 oster Exp $	*/
+/*	$NetBSD: rf_raid0.c,v 1.4.8.1 2002/01/10 19:57:56 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,11 @@
  *
  ***************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.4.8.1 2002/01/10 19:57:56 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_raid0.h"
 #include "rf_dag.h"
@@ -41,7 +45,6 @@
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
 #include "rf_general.h"
-#include "rf_configure.h"
 #include "rf_parityscan.h"
 
 typedef struct RF_Raid0ConfigInfo_s {

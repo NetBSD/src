@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.5.8.1 2001/08/03 04:13:28 lukem Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.5.8.2 2002/01/10 19:58:02 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,11 +32,14 @@
  *
  ****************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.5.8.2 2002/01/10 19:58:02 thorpej Exp $");
 
 #include "rf_threadstuff.h"
 
 #include <sys/time.h>
 
+#include "rf_archs.h"
 #include "rf_utils.h"
 #include "rf_debugMem.h"
 #include "rf_alloclist.h"

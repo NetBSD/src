@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.9.2.1 2001/08/03 04:13:33 lukem Exp $ */
+/*	$NetBSD: ses.c,v 1.9.2.2 2002/01/10 19:58:27 thorpej Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -25,10 +25,11 @@
  * Author:	mjacob@nas.nasa.gov
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.9.2.2 2002/01/10 19:58:27 thorpej Exp $");
 
 #include "opt_scsi.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

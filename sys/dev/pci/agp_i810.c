@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.3.2.2 2001/09/13 01:15:50 thorpej Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.3.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -28,6 +28,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_i810.c,v 1.4 2001/07/05 21:28:47 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.3.2.3 2002/01/10 19:56:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,65 +90,24 @@ struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_memory,
 };
 
+/* XXXthorpej -- duplicated code (see arch/i386/pci/pchb.c) */
 static int
 agp_i810_vgamatch(struct pci_attach_args *pa)
 {
+
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
-		return 0;
+		return (0);
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_82810_GC:
 	case PCI_PRODUCT_INTEL_82810_DC100_GC:
 	case PCI_PRODUCT_INTEL_82810E_GC:
 	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
-		return 1;
-	};
-
-	return 0;
-}
-
-/*
- * Find bridge device.
- */
-int
-agp_i810_bridgematch(struct pci_attach_args *pa)
-{
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82810_MCH:
-	case PCI_PRODUCT_INTEL_82810_DC100_MCH:
-	case PCI_PRODUCT_INTEL_82810E_MCH:
-	case PCI_PRODUCT_INTEL_82815_FULL_HUB:
-		return 1;
+		return (1);
 	}
 
-	return 0;
-}
-
-int
-agp_i810_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args vga_pa, *pa = aux;
-	pcireg_t ramreg;
-
-	if (agp_i810_bridgematch(pa) == 0)
-		return 0;
-	/*
-	 * XXXXfvdl
-	 * this relies on the 'memory hub' and the VGA controller
-	 * being on the same bus, which is bad. Fortunately, we
-	 * know this to be the case with the i810.
-	 *
-	 * Could just have the attach fail later, leave as_chipc NULL
-	 * and fail any open() call.
-	 */
-	if (pci_find_device(&vga_pa, agp_i810_vgamatch) == 0)
-		return 0;
-
-	ramreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_I810_SMRAM);
-	if ((ramreg & 0xff) == 0)
-		return 0;
-	
-	return 1;
+	return (0);
 }
 
 int
@@ -166,6 +128,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	sc->as_methods = &agp_i810_methods;
 
 	if (pci_find_device(&isc->vga_pa, agp_i810_vgamatch) == 0) {
+		printf(": can't find internal VGA device config space\n");
 		free(isc, M_AGP);
 		return ENOENT;
 	}
@@ -175,6 +138,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	error = agp_map_aperture(&isc->vga_pa, sc);
 	if (error != 0) {
+		printf(": can't map aperture\n");
 		free(isc, M_AGP);
 		return error;
 	}
@@ -377,8 +341,9 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 			return NULL;
 		}
 	} else if (type != 1) {
-		if (bus_dmamap_create(sc->as_dmat, size, 1, size, 0,
-		    BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
+		if (bus_dmamap_create(sc->as_dmat, size, size / PAGE_SIZE + 1,
+				      size, 0, BUS_DMA_NOWAIT,
+				      &mem->am_dmamap) != 0) {
 			free(mem, M_AGP);
 			return NULL;
 		}
@@ -413,10 +378,30 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		     off_t offset)
 {
 	struct agp_i810_softc *isc = sc->as_chipc;
-	u_int32_t i;
+	u_int32_t regval, i;
 
-	if (mem->am_type == 2)
+	/*
+	 * XXX evil hack: the PGTBL_CTL appearently gets overwritten by the
+	 * X server for mysterious reasons which leads to crashes if we write
+	 * to the GTT through the MMIO window.
+	 * Until the issue is solved, simply restore it.
+	 */
+	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
+	if (regval != (isc->gatt->ag_physical | 1)) {
+		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
+		       regval);
+		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
+				  isc->gatt->ag_physical | 1);
+	}
+
+	if (mem->am_type == 2) {
+		WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4,
+		       mem->am_physical | 1);
+		mem->am_offset = offset;
+		mem->am_is_bound = 1;
 		return 0;
+	}
+
 	if (mem->am_type != 1)
 		return agp_generic_bind_memory(sc, mem, offset);
 
@@ -434,8 +419,14 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	struct agp_i810_softc *isc = sc->as_chipc;
 	u_int32_t i;
 
-	if (mem->am_type == 2)
+	if (mem->am_type == 2) {
+		WRITE4(AGP_I810_GTT +
+		       (u_int32_t)(mem->am_offset >> AGP_PAGE_SHIFT) * 4,
+		       0);
+		mem->am_offset = 0;
+		mem->am_is_bound = 0;
 		return 0;
+	}
 
 	if (mem->am_type != 1)
 		return agp_generic_unbind_memory(sc, mem);

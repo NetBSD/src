@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.45 2001/03/02 04:26:10 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.45.4.1 2002/01/10 20:02:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -225,6 +225,7 @@ struct mbuf *
 void	 ip_stripoptions __P((struct mbuf *, struct mbuf *));
 int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	 ipintr __P((void));
+void *	 rip_ctlinput __P((int, struct sockaddr *, void *));
 int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	 rip_init __P((void));
 void	 rip_input __P((struct mbuf *, ...));

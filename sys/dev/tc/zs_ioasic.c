@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.7 2001/05/30 15:24:25 lukem Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.7.2.1 2002/01/10 19:58:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7 2001/05/30 15:24:25 lukem Exp $");
-
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
  * handles Z8530 chips attached to the DECstation/Alpha IOASIC.  Modified
@@ -50,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7 2001/05/30 15:24:25 lukem Exp $");
  * Runs two serial lines per chip using slave drivers.
  * Plain tty/async lines use the zstty slave.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7.2.1 2002/01/10 19:58:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -284,6 +283,7 @@ zs_ioasic_attach(parent, self, aux)
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
 					M_DEVBUF, M_NOWAIT);
+			memset(cs, 0, sizeof(struct zs_chanstate));
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (void *)&zc->zc_csr;
 

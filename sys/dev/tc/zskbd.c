@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.1.6.1 2002/01/10 19:58:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * LK200/LK400 keyboard attached with channel A of the 2nd SCC
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.1.6.1 2002/01/10 19:58:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,6 +344,13 @@ zskbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_COMPLEXBELL:
 		lk201_bell(&sc->sc_itl->zsi_ks,
 			   (struct wskbd_bell_data *)data);
+		return 0;
+	case WSKBDIO_SETKEYCLICK:
+		lk201_set_keyclick(&sc->sc_itl->zsi_ks, *(int *)data);
+		return 0;
+	case WSKBDIO_GETKEYCLICK:
+		/* XXX don't dig in kbd internals */
+		*(int *)data = sc->sc_itl->zsi_ks.kcvol;
 		return 0;
 	}
 	return -1;

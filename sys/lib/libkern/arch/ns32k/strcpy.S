@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.2.28.1 2002/01/10 20:00:33 thorpej Exp $	*/
 
 /* 
  * Written by Randy Hyde, 1993
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.2.28.1 2002/01/10 20:00:33 thorpej Exp $")
 #endif
 
 /*
@@ -98,7 +98,7 @@ KENTRY(strcpy, 8)
 	.align	2,0xa2
 0:	movd	4(r1),r0		/* Get next 4 bytes to process */
 	movd	r5,0(r2)		/* Save away prev four bytes. */
-	addd	4,r1			/* addd is faster then addqd here */
+	addd	4,r1			/* addd is faster than addqd here */
 	addd	4,r2
 	movd	r0,r5			/* Save for storage if no zeros. */
 	subd	r3,r0

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.28 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: dz.c,v 1.28.2.1 2002/01/10 19:57:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28.2.1 2002/01/10 19:57:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 

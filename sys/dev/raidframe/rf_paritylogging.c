@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.10 2000/02/12 16:06:27 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.10.8.1 2002/01/10 19:57:53 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,11 +31,15 @@
   parity logging configuration, dag selection, and mapping is implemented here
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.10.8.1 2002/01/10 19:57:53 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

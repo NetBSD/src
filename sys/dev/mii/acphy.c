@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.1.2.3 2001/09/13 01:15:44 thorpej Exp $	*/
+/*	$NetBSD: acphy.c,v 1.1.2.4 2002/01/10 19:56:12 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Driver for the Altima AC101 PHY.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.1.2.4 2002/01/10 19:56:12 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -74,6 +77,10 @@ const struct mii_phy_funcs acphy_funcs = {
 const struct mii_phydesc acphys[] = {
 	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_AC101,
 	  MII_STR_ALTIMA_AC101 },
+
+	/* XXX This is reported to work, but it's not from any data sheet. */
+	{ MII_OUI_ALTIMA,		MII_MODEL_ALTIMA_ACXXX,
+	  MII_STR_ALTIMA_ACXXX },
 
 	{ 0,				0,
 	  NULL },

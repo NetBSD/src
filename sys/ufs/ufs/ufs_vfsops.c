@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.11 2000/03/30 12:41:15 augustss Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.11.10.1 2002/01/10 20:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_vfsops.c	8.8 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.11.10.1 2002/01/10 20:05:25 thorpej Exp $");
 
 #include "opt_quota.h"
 
@@ -231,6 +234,15 @@ ufs_init()
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
+#endif
+}
+
+void
+ufs_reinit()
+{
+	ufs_ihashreinit();
+#ifdef QUOTA
+	dqreinit();
 #endif
 }
 

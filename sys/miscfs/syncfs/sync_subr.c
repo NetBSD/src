@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.8 2000/11/27 08:39:46 chs Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.8.4.1 2002/01/10 20:01:46 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -30,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.8.4.1 2002/01/10 20:01:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +146,7 @@ vn_syncer_remove_from_worklist(vp)
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
+		vp->v_flag &= ~VONWORKLST;
 		LIST_REMOVE(vp, v_synclist);
 	}
 
@@ -180,8 +184,7 @@ sched_sync(v)
 		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			if (VOP_ISLOCKED(vp) == 0) {
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 				(void) VOP_FSYNC(vp, curproc->p_ucred,
 				    FSYNC_LAZY, 0, 0, curproc);
 				VOP_UNLOCK(vp, 0);

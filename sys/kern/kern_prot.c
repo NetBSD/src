@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.64 2001/04/12 03:08:42 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.64.2.1 2002/01/10 19:59:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -43,6 +43,9 @@
 /*
  * System calls related to processes and protection
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.64.2.1 2002/01/10 19:59:53 thorpej Exp $");
 
 #include "opt_compat_43.h"
 
@@ -719,6 +722,21 @@ crdup(cr)
 	*newcr = *cr;
 	newcr->cr_ref = 1;
 	return (newcr);
+}
+
+/*
+ * convert from userland credentials to kernel one
+ */
+void
+crcvt(uc, uuc)
+	struct ucred *uc;
+	const struct uucred *uuc;
+{
+	uc->cr_ref = 0;
+	uc->cr_uid = uuc->cr_uid;
+	uc->cr_gid = uuc->cr_gid;
+	uc->cr_ngroups = uuc->cr_ngroups;
+	(void)memcpy(uc->cr_groups, uuc->cr_groups, sizeof(uuc->cr_groups));
 }
 
 /*

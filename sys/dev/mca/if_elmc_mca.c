@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.6 2001/05/03 11:17:36 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.6.2.1 2002/01/10 19:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  * This driver uses generic i82586 stuff. See also ai(4), ef(4), ix(4).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.6.2.1 2002/01/10 19:56:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +226,8 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
+			  IE_SYSBUS_16BIT);
 
 	/* set up pointers to key structures */
 	elmc_mca_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);

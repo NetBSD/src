@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.14.2.1 2001/09/13 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.14.2.2 2002/01/10 19:58:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.14.2.2 2002/01/10 19:58:09 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -164,8 +166,8 @@ espattach_sbus(parent, self, aux)
 	esc->sc_bustag = sa->sa_bustag;
 	esc->sc_dmatag = sa->sa_dmatag;
 
-	sc->sc_id = getpropint(sa->sa_node, "initiator-id", 7);
-	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
+	sc->sc_id = PROM_getpropint(sa->sa_node, "initiator-id", 7);
+	sc->sc_freq = PROM_getpropint(sa->sa_node, "clock-frequency", -1);
 	if (sc->sc_freq < 0)
 		sc->sc_freq = ((struct sbus_softc *)
 		    sc->sc_dev.dv_parent)->sc_clockfreq;
@@ -226,7 +228,7 @@ espattach_sbus(parent, self, aux)
 		if (sbusburst == 0)
 			sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-		burst = getpropint(sa->sa_node, "burst-sizes", -1);
+		burst = PROM_getpropint(sa->sa_node, "burst-sizes", -1);
 
 #if ESP_SBUS_DEBUG
 		printf("espattach_sbus: burst 0x%x, sbus 0x%x\n",
@@ -362,8 +364,8 @@ espattach_dma(parent, self, aux)
 	esc->sc_bustag = sa->sa_bustag;
 	esc->sc_dmatag = sa->sa_dmatag;
 
-	sc->sc_id = getpropint(sa->sa_node, "initiator-id", 7);
-	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
+	sc->sc_id = PROM_getpropint(sa->sa_node, "initiator-id", 7);
+	sc->sc_freq = PROM_getpropint(sa->sa_node, "clock-frequency", -1);
 
 	esc->sc_dma = (struct lsi64854_softc *)parent;
 	esc->sc_dma->sc_client = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.8 2000/12/30 16:52:36 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.8.4.1 2002/01/10 19:57:11 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp */
 /*
@@ -47,6 +47,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.8.4.1 2002/01/10 19:57:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.10.2.1 2002/01/10 20:04:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -37,6 +37,9 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.10.2.1 2002/01/10 20:04:56 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
 #endif
@@ -51,7 +54,6 @@
 
 #include <uvm/uvm.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 
@@ -323,28 +325,16 @@ fail:
 }
 
 int
-ext2fs_ballocn(v)
-	void *v;
+ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
+    struct ucred *cred)
 {
-	struct vop_ballocn_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		off_t a_length;
-		struct ucred *a_cred;
-		int a_flags;
-	} */ *ap = v;
-	off_t off, len;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct m_ext2fs *fs = ip->i_e2fs;
 	int error, delta, bshift, bsize;
-	UVMHIST_FUNC("ext2fs_ballocn"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("ext2fs_gop_alloc"); UVMHIST_CALLED(ubchist);
 
 	bshift = fs->e2fs_bshift;
 	bsize = 1 << bshift;
-
-	off = ap->a_offset;
-	len = ap->a_length;
 
 	delta = off & (bsize - 1);
 	off -= delta;
@@ -355,8 +345,8 @@ ext2fs_ballocn(v)
 		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
 			    off, len, bsize, 0);
 
-		error = ext2fs_balloc(ip, lblkno(fs, off), bsize, ap->a_cred,
-		    NULL, ap->a_flags);
+		error = ext2fs_balloc(ip, lblkno(fs, off), bsize, cred,
+		    NULL, flags);
 		if (error) {
 			UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
 			return error;
@@ -371,9 +361,6 @@ ext2fs_ballocn(v)
 			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
 				    ip->i_e2fs_size, off + bsize,0,0);
 			ip->i_e2fs_size = off + bsize;
-			if (vp->v_uvm.u_size < ip->i_e2fs_size) {
-				uvm_vnp_setsize(vp, ip->i_e2fs_size);
-			}
 		}
 
 		off += bsize;
@@ -397,7 +384,7 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	int flags;
 {
 	off_t oldeof, eof, pagestart;
-	struct uvm_object *uobj;
+	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
@@ -405,12 +392,11 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	struct vm_page *pgs[ppb];
 	UVMHIST_FUNC("ext2fs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_uvm.u_size);
+		    vp, off, len, vp->v_size);
 
 	error = 0;
-	uobj = &vp->v_uvm.u_obj;
-	oldeof = vp->v_uvm.u_size;
-	eof = max(oldeof, off + len);
+	oldeof = vp->v_size;
+	eof = MAX(oldeof, off + len);
 	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
 	pgs[0] = NULL;
 
@@ -422,9 +408,9 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 */
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
-	npages = min(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
+	npages = MIN(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
 	memset(pgs, 0, npages);
-	simple_lock(&uobj->vmobjlock);
+	simple_lock(&vp->v_interlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
 	if (error) {
@@ -450,10 +436,10 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 * now allocate the range.
 	 */
 
-	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL);
-	error = VOP_BALLOCN(vp, off, len, cred, flags);
-	UVMHIST_LOG(ubchist, "ballocn %d", error,0,0,0);
-	lockmgr(&vp->v_glock, LK_RELEASE, NULL);
+	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	error = GOP_ALLOC(vp, off, len, flags, cred);
+	UVMHIST_LOG(ubchist, "alloc %d", error,0,0,0);
+	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 
 	/*
 	 * clear PG_RDONLY on any pages we are holding
@@ -462,17 +448,20 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	 */
 
 errout:
-	simple_lock(&uobj->vmobjlock);
-	if (error) {
-		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
-		    PGO_FREE);
-	}
-	if (pgs[0] != NULL) {
-		for (i = 0; i < npages; i++) {
-			pgs[i]->flags &= ~PG_RDONLY;
+	simple_lock(&vp->v_interlock);
+	for (i = 0; i < npages; i++) {
+		pgs[i]->flags &= ~PG_RDONLY;
+		if (error) {
+			pgs[i]->flags |= PG_RELEASED;
 		}
+	}
+	if (error) {
+		uvm_lock_pageq();
+		uvm_page_unbusy(pgs, npages);
+		uvm_unlock_pageq();
+	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	simple_unlock(&vp->v_interlock);
 	return (error);
 }

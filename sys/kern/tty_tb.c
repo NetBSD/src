@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.26 2001/03/31 00:35:23 enami Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.26.2.1 2002/01/10 20:00:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tty_tb.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.26.2.1 2002/01/10 20:00:12 thorpej Exp $");
 
 #include "tb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.15 2001/03/25 09:06:03 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.15.2.1 2002/01/10 20:03:17 thorpej Exp $	*/
 /*	$KAME: in6_prefix.c,v 1.47 2001/03/25 08:41:39 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in.c	8.2 (Berkeley) 11/15/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_prefix.c,v 1.15.2.1 2002/01/10 20:03:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

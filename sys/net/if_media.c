@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.14 2001/05/18 08:56:27 drochner Exp $	*/
+/*	$NetBSD: if_media.c,v 1.14.2.1 2002/01/10 20:02:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
  * Many thanks to Matt Thomas for providing the information necessary
  * to implement this interface.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.14.2.1 2002/01/10 20:02:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

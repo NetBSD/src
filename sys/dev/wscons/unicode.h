@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.1 1999/02/20 18:20:02 drochner Exp $ */
+/* $NetBSD: unicode.h,v 1.1.22.1 2002/01/10 19:59:15 thorpej Exp $ */
 
 /*
  * some private character definitions for stuff not found

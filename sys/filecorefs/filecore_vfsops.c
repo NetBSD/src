@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14 2001/05/30 11:42:13 mrg Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.2.1 2002/01/10 19:59:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -35,6 +35,9 @@
  *
  *	filecore_vfsops.c	1.1	1998/6/26
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.14.2.1 2002/01/10 19:59:25 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,11 +82,16 @@ struct vfsops filecore_vfsops = {
 	filecore_fhtovp,
 	filecore_vptofh,
 	filecore_init,
+	filecore_reinit,
 	filecore_done,
 	filecore_sysctl,
 	NULL,				/* filecore_mountroot */
 	filecore_checkexp,
 	filecore_vnodeopv_descs,
+};
+
+struct genfs_ops filecore_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -579,7 +587,7 @@ filecore_vget(mp, ino, vpp)
 		return (error);
 	}
 	ip = pool_get(&filecore_node_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct filecore_node));
+	memset(ip, 0, sizeof(struct filecore_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
@@ -666,6 +674,8 @@ filecore_vget(mp, ino, vpp)
 	 * XXX need generation number?
 	 */
 
+	genfs_node_init(vp, &filecore_genfsops);
+	vp->v_size = ip->i_size;
 	*vpp = vp;
 	return (0);
 }

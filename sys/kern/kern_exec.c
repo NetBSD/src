@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.142.2.2 2001/08/03 04:13:40 lukem Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.142.2.3 2002/01/10 19:59:46 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,6 +31,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.142.2.3 2002/01/10 19:59:46 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -140,6 +143,7 @@ const struct emul emul_netbsd = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
@@ -150,13 +154,13 @@ const struct emul emul_netbsd = {
 #endif
 };
 
+#ifdef LKM
 /*
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
 struct lock exec_lock;
  
-#ifdef LKM
 static const struct emul * emul_search(const char *);
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
@@ -361,7 +365,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
 
+#ifdef LKM
 	lockmgr(&exec_lock, LK_SHARED, NULL);
+#endif
 
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0)
@@ -642,7 +648,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_emul->e_setregs)(p, &pack, (u_long) stack);
+	if (pack.ep_es->es_setregs)
+		(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -672,6 +680,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* update p_emul, the old value is no longer needed */
 	p->p_emul = pack.ep_es->es_emul;
+
+	/* ...and the same for p_execsw */
+	p->p_execsw = pack.ep_es;
+
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
@@ -680,7 +692,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		ktremul(p);
 #endif
 
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	return (EJUSTRETURN);
 
@@ -700,13 +714,17 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	free(pack.ep_hdr, M_EXEC);
 	return error;
 
  exec_abort:
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
@@ -1011,7 +1029,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 /*
  * Initialize exec structures. If init_boot is true, also does necessary
  * one-time initialization (it's called from main() that way).
- * Once system is multiuser, this should be called with exec_lock hold,
+ * Once system is multiuser, this should be called with exec_lock held,
  * i.e. via exec_{add|remove}().
  */
 int
@@ -1103,8 +1121,6 @@ exec_init(int init_boot)
 #endif
 
 	/* do one-time initializations */
-	lockinit(&exec_lock, PWAIT, "execlck", 0, 0);
-
 	nexecs = nexecs_builtin;
 	execsw = malloc(nexecs*sizeof(struct execsw *), M_EXEC, M_WAITOK);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.1 2001/03/19 23:58:12 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.1.4.1 2002/01/10 19:57:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -35,9 +35,10 @@
  * having dodgy copyright status).  Let's try again.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.1.4.1 2002/01/10 19:57:30 thorpej Exp $");
 
-__RCSID("$NetBSD: if_ei.c,v 1.1 2001/03/19 23:58:12 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -205,8 +206,7 @@ ei_hwreset(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (struct ei_softc *)sc_ie;
 
-	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h,
-			  EI_CONTROL, EI_CTL_RESET);
+	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_RST);
 	DELAY(1000);
 	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, 0);
 	DELAY(1000);
@@ -232,7 +232,7 @@ ei_attn(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (void *)sc_ie;
 
-	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_ATTN);
+	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_CA);
 }
 
 /*

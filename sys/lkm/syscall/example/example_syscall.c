@@ -1,4 +1,4 @@
-/*	$NetBSD: example_syscall.c,v 1.1 2000/12/11 13:48:12 jdolecek Exp $	*/
+/*	$NetBSD: example_syscall.c,v 1.1.6.1 2002/01/10 20:01:16 thorpej Exp $	*/
 
 /*
  * example_syscall.c
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.1.6.1 2002/01/10 20:01:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

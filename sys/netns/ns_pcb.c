@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.16 2001/06/19 07:37:17 jdolecek Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.16.2.1 2002/01/10 20:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_pcb.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.16.2.1 2002/01/10 20:04:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.81.4.3 2001/09/13 01:16:30 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.81.4.4 2002/01/10 20:05:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_vfsops.c	8.31 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.81.4.4 2002/01/10 20:05:06 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -103,11 +106,18 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_reinit,
 	ffs_done,
 	ffs_sysctl,
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_vnodeopv_descs,
+};
+
+struct genfs_ops ffs_genfsops = {
+	ffs_gop_size,
+	ffs_gop_alloc,
+	genfs_gop_write,
 };
 
 struct pool ffs_inode_pool;
@@ -202,6 +212,14 @@ ffs_mount(mp, path, data, ndp, p)
 				error = softdep_flushfiles(mp, flags, p);
 			else
 				error = ffs_flushfiles(mp, flags, p);
+			if (fs->fs_pendingblocks != 0 ||
+			    fs->fs_pendinginodes != 0) {
+				printf("%s: update error: blocks %d files %d\n",
+				    fs->fs_fsmnt, fs->fs_pendingblocks,
+				    fs->fs_pendinginodes);
+				fs->fs_pendingblocks = 0;
+				fs->fs_pendinginodes = 0;
+			}
 			if (error == 0 &&
 			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
@@ -365,9 +383,13 @@ ffs_mount(mp, path, data, ndp, p)
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
-		else
+		else {
 			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
+			printf("%s: lost blocks %d files %d\n",
+			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
+			    fs->fs_pendinginodes);
+		}
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
 	return (0);
@@ -461,6 +483,10 @@ ffs_reload(mountp, cred, p)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+	}
 
 	ffs_statfs(mountp, &mountp->mnt_stat, p);
 	/*
@@ -648,6 +674,10 @@ ffs_mountfs(devvp, mp, p)
 		error = EINVAL;		/* XXX needs translation */
 		goto out2;
 	}
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+	}
 	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
 	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
 		error = EROFS;		/* XXX what should be returned? */
@@ -799,8 +829,9 @@ ffs_unmount(mp, mntflags, p)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
-	int error, flags;
+	int error, flags, penderr;
 
+	penderr = 0;
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -813,12 +844,25 @@ ffs_unmount(mp, mntflags, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
+		printf("%s: unmount pending error: blocks %d files %d\n",
+		    fs->fs_fsmnt, fs->fs_pendingblocks, fs->fs_pendinginodes);
+		fs->fs_pendingblocks = 0;
+		fs->fs_pendinginodes = 0;
+		penderr = 1;
+	}
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
-		if (mp->mnt_flag & MNT_SOFTDEP)
-			fs->fs_flags &= ~FS_DOSOFTDEP;
-		fs->fs_clean = FS_ISCLEAN;
+		/*
+		 * XXXX don't mark fs clean in the case of softdep
+		 * pending block errors, until they are fixed.
+		 */
+		if (penderr == 0) {
+			if (mp->mnt_flag & MNT_SOFTDEP)
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+			fs->fs_clean = FS_ISCLEAN;
+		}
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	if (ump->um_devvp->v_type != VBAD)
@@ -907,12 +951,13 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
 	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
-		fs->fs_cstotal.cs_nffree;
+		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
-	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
+	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree) +
+	    (u_int64_t) dbtofsb(fs, fs->fs_pendingblocks));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
-	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
+	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	if (sbp != &mp->mnt_stat) {
 		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
 		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
@@ -965,7 +1010,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uvm.u_obj.uo_npages == 0))
+		     vp->v_uobj.uo_npages == 0))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -1049,6 +1094,7 @@ ffs_vget(mp, ino, vpp)
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
+
 	do {
 		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
 			ungetnewvnode(vp);
@@ -1060,8 +1106,9 @@ ffs_vget(mp, ino, vpp)
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
 	 * XXX create another pool for MFS inodes?
 	 */
+
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct inode));
+	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;
@@ -1076,12 +1123,14 @@ ffs_vget(mp, ino, vpp)
 			ip->i_dquot[i] = NODQUOT;
 	}
 #endif
+
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
+
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
@@ -1089,12 +1138,14 @@ ffs_vget(mp, ino, vpp)
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
 	if (error) {
+
 		/*
 		 * The inode does not contain anything useful, so it would
 		 * be misleading to leave it on its hash chain. With mode
 		 * still zero, it will be unlinked and returned to the free
 		 * list by vput().
 		 */
+
 		vput(vp);
 		brelse(bp);
 		*vpp = NULL;
@@ -1117,27 +1168,27 @@ ffs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
-	if (error) {
-		vput(vp);
-		*vpp = NULL;
-		return (error);
-	}
+
+	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
+
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &ffs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
+
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_ffs_size);
-
 	*vpp = vp;
 	return (0);
 }
@@ -1203,6 +1254,13 @@ ffs_init()
 }
 
 void
+ffs_reinit()
+{
+	softdep_reinitialize();
+	ufs_reinit();
+}
+
+void
 ffs_done()
 {
 	if (--ffs_initcount > 0)
@@ -1223,7 +1281,7 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern int doclusterread, doclusterwrite, doreallocblks, doasyncfree;
+	extern int doasyncfree;
 	extern int ffs_log_changeopt;
 
 	/* all sysctl names at this level are terminal */
@@ -1231,15 +1289,6 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case FFS_CLUSTERREAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterread));
-	case FFS_CLUSTERWRITE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doclusterwrite));
-	case FFS_REALLOCBLKS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &doreallocblks));
 	case FFS_ASYNCFREE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
 	case FFS_LOG_CHANGEOPT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.1 2000/11/05 04:06:13 thorpej Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.1.6.1 2002/01/10 19:58:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,6 +40,9 @@
  * information, etc.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.1.6.1 2002/01/10 19:58:36 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
@@ -66,26 +69,16 @@ u_int	sysmon_envsys_next_sensor_index;
 int	sysmon_envsys_initialized;
 struct simplelock sysmon_envsys_initialized_slock = SIMPLELOCK_INITIALIZER;
 
-void	sysmon_envsys_init(void);
+#define	SYSMON_ENVSYS_LOCK()	\
+	lockmgr(&sysmon_envsys_lock, LK_EXCLUSIVE, NULL)
+
+#define SYSMON_ENVSYS_UNLOCK()		\
+	lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL)
 
 int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
-int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);
-
-/*
- * sysmon_envsys_init:
- *
- *	Initialize the system monitor.
- */
-void
-sysmon_envsys_init(void)
-{
-
-	lockinit(&sysmon_envsys_lock, PWAIT|PCATCH, "smenv", 0, 0);
-	sysmon_envsys_initialized = 1;
-}
 
 /*
  * sysmonopen_envsys:
@@ -95,18 +88,14 @@ sysmon_envsys_init(void)
 int
 sysmonopen_envsys(dev_t dev, int flag, int mode, struct proc *p)
 {
-	int error = 0;
-
 	simple_lock(&sysmon_envsys_initialized_slock);
-	if (sysmon_envsys_initialized == 0)
-		sysmon_envsys_init();
+	if (sysmon_envsys_initialized == 0) {
+		lockinit(&sysmon_envsys_lock, PWAIT|PCATCH, "smenv", 0, 0);
+		sysmon_envsys_initialized = 1;
+	}
+	simple_unlock(&sysmon_envsys_initialized_slock);
 
-	error = lockmgr(&sysmon_envsys_lock,
-	    LK_EXCLUSIVE | LK_INTERLOCK |
-	    ((flag & O_NONBLOCK) ? LK_NOWAIT : 0),
-	    &sysmon_envsys_initialized_slock);
-
-	return (error);
+	return (0);
 }
 
 /*
@@ -118,7 +107,7 @@ int
 sysmonclose_envsys(dev_t dev, int flag, int mode, struct proc *p)
 {
 
-	(void) lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL);
+	/* Nothing to do */
 	return (0);
 }
 
@@ -178,8 +167,11 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data, int flag,
 			break;
 		oidx = tred->sensor;
 		tred->sensor = SME_SENSOR_IDX(sme, tred->sensor);
-		if (tred->sensor < sme->sme_nsensors)
+		if (tred->sensor < sme->sme_nsensors) {
+			SYSMON_ENVSYS_LOCK();
 			error = (*sme->sme_gtredata)(sme, tred);
+			SYSMON_ENVSYS_UNLOCK();
+		}
 		tred->sensor = oidx;
 		sysmon_envsys_release(sme);
 		break;
@@ -196,9 +188,11 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data, int flag,
 		}
 		oidx = binfo->sensor;
 		binfo->sensor = SME_SENSOR_IDX(sme, binfo->sensor);
-		if (binfo->sensor < sme->sme_nsensors)
+		if (binfo->sensor < sme->sme_nsensors) {
+			SYSMON_ENVSYS_LOCK();
 			error = (*sme->sme_streinfo)(sme, binfo);
-		else
+			SYSMON_ENVSYS_UNLOCK();
+		} else
 			binfo->validflags = 0;
 		binfo->sensor = oidx;
 		sysmon_envsys_release(sme);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.6.2.2 2001/08/03 04:13:16 lukem Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6.2.3 2002/01/10 19:56:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for the Sundance Tech. TC9021 10/100/1000
  * Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.2.3 2002/01/10 19:56:44 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -516,8 +519,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * such chips to 1.
 	 */
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    STGE_NTXFRAGS, MCLBYTES, 0, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat,
+		    ETHER_MAX_LEN_JUMBO, STGE_NTXFRAGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -1560,8 +1563,8 @@ stge_init(struct ifnet *ifp)
 	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
 	 * empty again.
 	 */
-	bus_space_write_4(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_4(st, sh, STGE_FlowOffThresh, 0);
+	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
+	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.

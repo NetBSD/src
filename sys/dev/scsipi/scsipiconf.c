@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.13.2.1 2001/08/03 04:13:31 lukem Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.13.2.2 2002/01/10 19:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.13.2.2 2002/01/10 19:58:24 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

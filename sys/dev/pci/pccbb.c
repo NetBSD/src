@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.65.2.2 2001/09/13 01:15:56 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.65.2.3 2002/01/10 19:56:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.65.2.3 2002/01/10 19:56:53 thorpej Exp $");
+
 /*
 #define CBB_DEBUG
 #define SHOW_REGS
@@ -43,7 +46,6 @@
 #define LEVEL2
 */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -83,7 +85,7 @@ struct cfdriver cbb_cd = {
 };
 #endif
 
-#if defined CBB_DEBUG
+#ifdef CBB_DEBUG
 #define DPRINTF(x) printf x
 #define STATIC
 #else
@@ -422,6 +424,7 @@ pccbbattach(parent, self, aux)
 	bus_addr_t sockbase;
 	char devinfo[256];
 	int flags;
+	int pwrmgt_offs;
 
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
@@ -446,6 +449,22 @@ pccbbattach(parent, self, aux)
 #endif /* rbus */
 
 	sc->sc_base_memh = 0;
+
+	/* power management: set D0 state */
+	sc->sc_pwrmgt_offs = 0;
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pwrmgt_offs, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + 4);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
+		    reg & 0x100 /* PCI_PMCSR_PME_EN */) {
+			reg &= ~PCI_PMCSR_STATE_MASK;
+			reg |= PCI_PMCSR_STATE_D0;
+			reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+			pci_conf_write(pc, pa->pa_tag, pwrmgt_offs + 4, reg);
+		}
+
+		sc->sc_pwrmgt_offs = pwrmgt_offs;
+	}
 
 	/* 
 	 * MAP socket registers and ExCA registers on memory-space
@@ -579,9 +598,6 @@ pccbb_pci_callback(self)
 {
 	struct pccbb_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = sc->sc_pc;
-	bus_space_tag_t base_memt;
-	bus_space_handle_t base_memh;
-	u_int32_t maskreg;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_addr_t sockbase;
@@ -618,22 +634,12 @@ pccbb_pci_callback(self)
 		DPRINTF(("%s: CardBus resister address 0x%x -> 0x%x\n",
 		    sc->sc_dev.dv_xname, sock_base, pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
+		sc->sc_sockbase = sockbase;
 #endif
 	}
 
 	/* bus bridge initialization */
 	pccbb_chipinit(sc);
-
-	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
-	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
-
-	/* CSC Interrupt: Card detect interrupt on */
-	maskreg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
-	maskreg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
-	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, maskreg);
-	/* reset interrupt */
-	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT,
-	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT));
 
 	/* clear data structure for child device interrupt handlers */
 	sc->sc_pil = NULL;
@@ -665,8 +671,10 @@ pccbb_pci_callback(self)
 	powerhook_establish(pccbb_powerhook, sc);
 
 	{
-		u_int32_t sockstat =
-		    bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
+		u_int32_t sockstat;
+
+		sockstat = bus_space_read_4(sc->sc_base_memt,
+		    sc->sc_base_memh, CB_SOCKET_STAT);
 		if (0 == (sockstat & CB_SOCKET_STAT_CD)) {
 			sc->sc_flags |= CBB_CARDEXIST;
 		}
@@ -738,6 +746,9 @@ pccbb_pci_callback(self)
  *     2) PCI and CardBus latency timer,
  *     3) route PCI interrupt,
  *     4) close all memory and io windows.
+ *     5) turn off bus power.
+ *     6) card detect interrupt on.
+ *     7) clear interrupt
  */
 static void
 pccbb_chipinit(sc)
@@ -745,6 +756,8 @@ pccbb_chipinit(sc)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_tag;
+	bus_space_tag_t bmt = sc->sc_base_memt;
+	bus_space_handle_t bmh = sc->sc_base_memh;
 	pcireg_t reg;
 
 	/* 
@@ -836,6 +849,11 @@ pccbb_chipinit(sc)
 		reg &= ~(TOPIC97_SLOT_CTRL_STSIRQP | TOPIC97_SLOT_CTRL_IRQP);
 		DPRINTF(("0x%x\n", reg));
 		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		/* make sure to assert LV card support bits */
+		bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
+		    0x800 + 0x3e,
+		    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
+			0x800 + 0x3e) | 0x03);
 		break;
 	}
 
@@ -850,13 +868,19 @@ pccbb_chipinit(sc)
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT1, 0);
 
 	/* reset 16-bit pcmcia bus */
-	bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
-	    0x800 + PCIC_INTR,
-	    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
-		0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
+	bus_space_write_1(bmt, bmh, 0x800 + PCIC_INTR,
+	    bus_space_read_1(bmt, bmh, 0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
 
-	/* turn of power */
+	/* turn off power */
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
+	/* CSC Interrupt: Card detect interrupt on */
+	reg = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
+	reg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, reg);
+	/* reset interrupt */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
+	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
 }
 
 
@@ -1192,6 +1216,7 @@ pccbb_ctrl(ct, command)
 	case CARDBUS_MEM_DISABLE:     /* fallthrough */
 	case CARDBUS_BM_ENABLE:       /* fallthrough */
 	case CARDBUS_BM_DISABLE:      /* fallthrough */
+		/* XXX: I think we don't need to call this function below. */
 		return pccbb_cardenable(sc, command);
 		break;
 	}
@@ -2830,7 +2855,7 @@ pccbb_pcmcia_poll(arg)
 	{
 		if ((*poll->func) (poll->arg) > 0) {
 			++poll->count;
-//      printf("intr: reported from poller, 0x%x\n", spsr);
+/*      printf("intr: reported from poller, 0x%x\n", spsr); */
 #if defined LEVEL2
 		} else {
 			printf("intr: miss! 0x%x\n", spsr);
@@ -2932,6 +2957,9 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 	if (rb->rb_bt == sc->sc_memt) {
 		if (align < 16) {
 			return 1;
+		}
+		if (align < 0x1000) {
+			align = 0x1000;
 		}
 	} else if (rb->rb_bt == sc->sc_iot) {
 		if (align < 4) {
@@ -3244,7 +3272,7 @@ pccbb_powerhook(why, arg)
 	void *arg;
 {
 	struct pccbb_softc *sc = arg;
-	u_int32_t reg;
+	pcireg_t reg;
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
 	bus_space_handle_t base_memh = sc->sc_base_memh;
 
@@ -3262,6 +3290,32 @@ pccbb_powerhook(why, arg)
 	}
 
 	if (why == PWR_RESUME) {
+		if (sc->sc_pwrmgt_offs != 0) {
+			reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    sc->sc_pwrmgt_offs + 4);
+			if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
+			    reg & 0x100) {
+				/* powrstate != D0 */
+
+				printf("%s going back to D0 mode\n",
+				    sc->sc_dev.dv_xname);
+				reg &= ~PCI_PMCSR_STATE_MASK;
+				reg |= PCI_PMCSR_STATE_D0;
+				reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    sc->sc_pwrmgt_offs + 4, reg);
+
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    PCI_SOCKBASE, sc->sc_sockbase);
+				pci_conf_write(sc->sc_pc, sc->sc_tag,
+				    PCI_BUSNUM, sc->sc_busnum);
+				pccbb_chipinit(sc);
+				/* setup memory and io space window for CB */
+				pccbb_winset(0x1000, sc, sc->sc_memt);
+				pccbb_winset(0x04, sc, sc->sc_iot);
+			}
+		}
+
 		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */
 			pci_conf_write (sc->sc_pc, sc->sc_tag,

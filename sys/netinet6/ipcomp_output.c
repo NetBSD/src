@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_output.c,v 1.14 2000/10/02 03:55:43 itojun Exp $	*/
-/*	$KAME: ipcomp_output.c,v 1.20 2000/10/01 12:37:20 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.14.4.1 2002/01/10 20:03:24 thorpej Exp $	*/
+/*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,6 +33,9 @@
 /*
  * RFC2393 IP payload compression protocol (IPComp).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.14.4.1 2002/01/10 20:03:24 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -112,7 +115,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	struct secasvar *sav = isr->sav;
 	const struct ipcomp_algorithm *algo;
 	u_int16_t cpi;		/* host order */
-	size_t plen0, plen;	/*payload length to be compressed*/
+	size_t plen0, plen;	/* payload length to be compressed */
 	size_t compoff;
 	int afnumber;
 	int error = 0;
@@ -243,7 +246,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
-	size_t hlen = 0;	/*ip header len*/
+	size_t hlen = 0;	/* ip header len */
 	size_t complen = sizeof(struct ipcomp);
 
 	switch (af) {
@@ -357,7 +360,7 @@ ipcomp4_output(m, isr)
 	/* XXX assumes that m->m_next points to payload */
 	return ipcomp_output(m, &ip->ip_p, m->m_next, isr, AF_INET);
 }
-#endif /*INET*/
+#endif /* INET */
 
 #ifdef INET6
 int
@@ -375,4 +378,4 @@ ipcomp6_output(m, nexthdrp, md, isr)
 	}
 	return ipcomp_output(m, nexthdrp, md, isr, AF_INET6);
 }
-#endif /*INET6*/
+#endif /* INET6 */

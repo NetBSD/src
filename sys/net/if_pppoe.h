@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.1 2001/04/29 09:50:37 martin Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.1.4.1 2002/01/10 20:02:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -36,7 +36,31 @@ struct pppoediscparms {
 };
 
 #define	PPPOESETPARMS	_IOW('i', 110, struct pppoediscparms)
-#define	PPPOEGETPARMS	_IOR('i', 111, struct pppoediscparms)
+#define	PPPOEGETPARMS	_IOWR('i', 111, struct pppoediscparms)
+
+#define PPPOE_STATE_INITIAL	0
+#define PPPOE_STATE_PADI_SENT	1
+#define	PPPOE_STATE_PADR_SENT	2
+#define	PPPOE_STATE_SESSION	3
+#define	PPPOE_STATE_CLOSING	4
+
+struct pppoeconnectionstate {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int	state;			/* one of the PPPOE_STATE_ states above */
+	u_int	session_id;		/* if state == PPPOE_STATE_SESSION */
+	u_int	padi_retry_no;		/* number of retries already sent */
+	u_int	padr_retry_no;
+};
+
+#define PPPOEGETSESSION	_IOWR('i', 112, struct pppoeconnectionstate)
+
+struct pppoeidletimeoutcfg {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_long	idle_timeout;		/* idle timeout in seconds */
+};
+
+#define	PPPOEGETIDLETIMEOUT	_IOWR('i', 113, struct pppoeidletimeoutcfg)
+#define	PPPOESETIDLETIMEOUT	_IOW('i', 114, struct pppoeidletimeoutcfg)
 
 #ifdef _KERNEL
 

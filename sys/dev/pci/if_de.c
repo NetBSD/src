@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.102 2001/07/07 16:47:43 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.102.2.1 2002/01/10 19:56:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -36,6 +36,9 @@
  *   This driver supports the DEC DE435 or any other PCI
  *   board which support 21040, 21041, or 21140 (mostly).
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.102.2.1 2002/01/10 19:56:36 thorpej Exp $");
+
 #define	TULIP_HDR_DATA
 
 #ifdef __NetBSD__

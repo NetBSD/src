@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.6 2001/01/26 04:27:16 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.6.4.1 2002/01/10 19:57:37 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,11 +32,15 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.6.4.1 2002/01/10 19:57:37 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) 
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_chaindecluster.h"
 #include "rf_dag.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.27.4.1 2001/08/03 04:13:23 lukem Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.27.4.2 2002/01/10 19:57:20 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -49,11 +49,14 @@
  *	Given the nature of the buggy build 4 firmware there may be problems.
  *
  *	Authentication added by Steve Weiss <srw@alum.mit.edu> based on
- *	advice from Corey Thomas (author the the Linux RayLink driver).
+ *	advice from Corey Thomas (author of the Linux RayLink driver).
  *	Authentication is currently limited to adhoc networks, and was
  *	added to support a requirement of the newest Windows drivers for
  *	the RayLink.  Tested with Aviator Pro (firmware 5.63) on Win98.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.27.4.2 2002/01/10 19:57:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -515,7 +518,7 @@ ray_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa;
 	struct ray_softc *sc;
 	struct ifnet *ifp;
-	bus_addr_t memoff;
+	bus_size_t memoff;
 	char devinfo[256];
 
 	pa = aux;

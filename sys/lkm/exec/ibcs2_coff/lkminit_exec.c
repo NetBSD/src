@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:37 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:00 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -43,6 +46,7 @@
 #include <sys/exec_coff.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/ibcs2/ibcs2_exec.h>
 #include <machine/ibcs2_machdep.h>
@@ -50,9 +54,16 @@
 int exec_ibcs2_coff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_ibcs2_coff =
-	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, ibcs2_setregs };	/* coff binaries */
+	/* iBCS2 COFF (native word size) */
+	{ COFF_HDR_SIZE,
+	  exec_ibcs2_coff_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

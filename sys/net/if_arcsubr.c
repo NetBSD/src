@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.36 2001/06/14 05:44:23 itojun Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.36.2.1 2002/01/10 20:02:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -37,6 +37,10 @@
  *       @(#)if_ethersubr.c	8.1 (Berkeley) 6/10/93
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.36.2.1 2002/01/10 20:02:01 thorpej Exp $");
+
 #include "opt_inet.h"
 
 #include "bpfilter.h"
@@ -237,13 +241,8 @@ arc_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef OLDIP6OUTPUT
-		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)&adst))
-			return(0);	/* if not yet resolves */
-#else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
 			return(0); /* it must be impossible, but... */
-#endif /* OLDIP6OUTPUT */
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;

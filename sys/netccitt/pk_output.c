@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.13 2000/03/30 13:53:36 augustss Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.13.8.1 2002/01/10 20:02:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -42,6 +42,9 @@
  *
  *	@(#)pk_output.c	8.2(Berkeley) 9/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.13.8.1 2002/01/10 20:02:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +214,7 @@ nextpk(lcp)
 			return (NULL);
 
 		sb->sb_mb = m->m_nextpkt;
-		m->m_act = 0;
+		m->m_nextpkt = 0;
 		for (n = m; n; n = n->m_next)
 			sbfree(sb, n);
 	}

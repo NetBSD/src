@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.33.2.3 2001/09/13 01:16:03 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.33.2.4 2002/01/10 19:57:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,9 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.33.2.4 2002/01/10 19:57:05 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -48,6 +51,7 @@
 #include <dev/ic/bt485var.h>
 #include <dev/ic/bt463reg.h>
 #include <dev/ic/bt463var.h>
+#include <dev/ic/ibm561var.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
@@ -78,6 +82,7 @@ static void	tga_init __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 static int tga_matchcommon __P((bus_space_tag_t, pci_chipset_tag_t, pcitag_t));
 static void tga_mapaddrs __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	pcitag_t, bus_size_t *pcisize, struct tga_devconfig *dc));
+unsigned tga_getdotclock __P((struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
 
@@ -98,7 +103,7 @@ static void tga_putchar __P((void *c, int row, int col,
 				u_int uc, long attr));
 static void tga_eraserows __P((void *, int, int, long));
 static void	tga_erasecols __P((void *, int, int, int, long));
-void tga2_init __P((struct tga_devconfig *, int));
+void tga2_init __P((struct tga_devconfig *));
 
 static void tga_config_interrupts __P((struct device *));
 
@@ -286,12 +291,8 @@ tga_init(memt, pc, tag, dc)
 		panic("tga_init: TGA Revision not recognized");
 	}
 
-	if (dc->dc_tga2) {
-		int	monitor;
-
-		monitor = (~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f;
-		tga2_init(dc, monitor);
-	}
+	if (dc->dc_tga2)
+		tga2_init(dc);
 	
 	switch (TGARREG(dc, TGA_REG_VHCR) & 0x1ff) {		/* XXX */
 	case 0:
@@ -486,11 +487,18 @@ tgaattach(parent, self, aux)
 		sc->sc_dc->dc_ramdac_cookie = 
 			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc, 
 			tga_sched_update, tga2_ramdac_wr, tga2_ramdac_rd);
+
+		/* XXX this is a bit of a hack, setting the dotclock here */
+		if (sc->sc_dc->dc_tgaconf->ramdac_funcs != bt485_funcs)
+			(*sc->sc_dc->dc_ramdac_funcs->ramdac_set_dotclock)
+			    (sc->sc_dc->dc_ramdac_cookie,
+			    tga_getdotclock(sc->sc_dc));
 	}
 
 	/*
 	 * Initialize the RAMDAC.  Initialization includes disabling
-	 * cursor, setting a sane colormap, etc.
+	 * cursor, setting a sane colormap, etc.  We presume that we've
+	 * filled in the necessary dot clock for PowerStorm 4d20.
 	 */
 	(*sc->sc_dc->dc_ramdac_funcs->ramdac_init)(sc->sc_dc->dc_ramdac_cookie);
 	TGAWREG(sc->sc_dc, TGA_REG_SISR, 0x00000001); /* XXX */
@@ -550,7 +558,11 @@ tga_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->height = sc->sc_dc->dc_ht;
 		wsd_fbip->width = sc->sc_dc->dc_wid;
 		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
+#if 0
 		wsd_fbip->cmsize = 256;		/* XXX ??? */
+#else
+		wsd_fbip->cmsize = 1024;	/* XXX ??? */
+#endif
 #undef wsd_fbip
 		return (0);
 
@@ -745,10 +757,14 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	 * Initialization includes disabling cursor, setting a sane
 	 * colormap, etc.  It will be reinitialized in tgaattach().
 	 */
-	if (dcp->dc_tga2)
-		bt485_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
-		    tga2_ramdac_rd);
-	else {
+	if (dcp->dc_tga2) {
+		if (dcp->dc_tgaconf->ramdac_funcs == bt485_funcs)
+			bt485_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
+			    tga2_ramdac_rd);
+		else
+			ibm561_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
+			    tga2_ramdac_rd, tga_getdotclock(dcp));
+	} else {
 		if (dcp->dc_tgaconf->ramdac_funcs == bt485_funcs)
 			bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr,
 				tga_ramdac_rd);
@@ -1499,31 +1515,46 @@ void tga2_ics9110_wr __P((
 	int dotclock
 ));
 
-void
-tga2_init(dc, m)
-	struct tga_devconfig *dc;
-	int m;
-{
+struct monitor *tga_getmonitor __P((struct tga_devconfig *dc));
 
-	tga2_ics9110_wr(dc, decmonitors[m].dotclock);
+void
+tga2_init(dc)
+	struct tga_devconfig *dc;
+{
+	struct	monitor *m = tga_getmonitor(dc);
+
+	/* Deal with the dot clocks.
+	 */
+	if (dc->dc_tga_type == TGA_TYPE_POWERSTORM_4D20) {
+		/* Set this up as a reference clock for the
+		 * ibm561's PLL.
+		 */
+		tga2_ics9110_wr(dc, 14300000);
+		/* XXX Can't set up the dotclock properly, until such time
+		 * as the RAMDAC is configured.
+		 */
+	} else {
+		/* otherwise the ics9110 is our clock. */
+		tga2_ics9110_wr(dc, m->dotclock);
+	}
 #if 0
 	TGAWREG(dc, TGA_REG_VHCR, 
-	     ((decmonitors[m].hbp / 4) << 21) |
-	     ((decmonitors[m].hsync / 4) << 14) |
-	    (((decmonitors[m].hfp - 4) / 4) << 9) |
-	     ((decmonitors[m].cols + 4) / 4));
+	     ((m->hbp / 4) << 21) |
+	     ((m->hsync / 4) << 14) |
+	    (((m->hfp - 4) / 4) << 9) |
+	     ((m->cols + 4) / 4));
 #else
 	TGAWREG(dc, TGA_REG_VHCR, 
-	     ((decmonitors[m].hbp / 4) << 21) |
-	     ((decmonitors[m].hsync / 4) << 14) |
-	    (((decmonitors[m].hfp) / 4) << 9) |
-	     ((decmonitors[m].cols) / 4));
+	     ((m->hbp / 4) << 21) |
+	     ((m->hsync / 4) << 14) |
+	    (((m->hfp) / 4) << 9) |
+	     ((m->cols) / 4));
 #endif
 	TGAWREG(dc, TGA_REG_VVCR, 
-	    (decmonitors[m].vbp << 22) |
-	    (decmonitors[m].vsync << 16) |
-	    (decmonitors[m].vfp << 11) |
-	    (decmonitors[m].rows));
+	    (m->vbp << 22) |
+	    (m->vsync << 16) |
+	    (m->vfp << 11) |
+	    (m->rows));
 	TGAWREG(dc, TGA_REG_VVBR, 1);
 	TGAREGRWB(dc, TGA_REG_VHCR, 3);
 	TGAWREG(dc, TGA_REG_VVVR, TGARREG(dc, TGA_REG_VVVR) | 1);
@@ -1575,6 +1606,8 @@ tga2_ics9110_wr(dc, dotclock)
 		N = 0x60; M = 0x32; V = 0x1; X = 0x1; R = 0x2; break;
 	case 202500000:
 		N = 0x60; M = 0x32; V = 0x1; X = 0x1; R = 0x2; break;
+	case  14300000:		/* this one is just a ref clock */
+		N = 0x03; M = 0x03; V = 0x1; X = 0x1; R = 0x3; break;
 	default:
 		panic("unrecognized clock rate %d\n", dotclock);
 	}
@@ -1602,4 +1635,18 @@ tga2_ics9110_wr(dc, dotclock)
 		&clock); /* XXX */
 	bus_space_write_4(dc->dc_memt, clock, 0, 0x0);
 	bus_space_barrier(dc->dc_memt, clock, 0, 0, BUS_SPACE_BARRIER_WRITE);
+}
+
+struct monitor *
+tga_getmonitor(dc)
+	struct tga_devconfig *dc;
+{
+	return &decmonitors[(~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f];
+}
+
+unsigned
+tga_getdotclock(dc)
+	struct tga_devconfig *dc;
+{
+	return tga_getmonitor(dc)->dotclock;
 }

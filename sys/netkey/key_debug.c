@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.15.2.2 2001/08/25 06:17:11 thorpej Exp $	*/
-/*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.15.2.3 2002/01/10 20:04:04 thorpej Exp $	*/
+/*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,11 +30,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.15.2.3 2002/01/10 20:04:04 thorpej Exp $");
+
 #ifdef _KERNEL
 #include "opt_inet.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #ifdef _KERNEL
 #include <sys/systm.h>

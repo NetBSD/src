@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.76.2.1 2001/08/03 04:13:51 lukem Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.76.2.2 2002/01/10 20:02:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -62,6 +62,9 @@
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.76.2.2 2002/01/10 20:02:10 thorpej Exp $");
 
 #include "sl.h"
 #if NSL > 0

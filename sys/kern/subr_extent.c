@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.42.2.1 2001/09/13 01:16:17 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.42.2.2 2002/01/10 20:00:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * General purpose extent manager.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.42.2.2 2002/01/10 20:00:00 thorpej Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>

@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.2 2001/02/20 22:24:39 martin Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.2.6.1 2002/01/10 19:55:55 thorpej Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -55,6 +55,9 @@
  *	-hm	adjustments for FreeBSD < 2.2.6, no PnP support yet
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.2.6.1 2002/01/10 19:55:55 thorpej Exp $");
 
 #include "opt_isicpnp.h"  
 #ifdef ISICPNP_SEDLBAUER

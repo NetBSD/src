@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.4.1 2001/08/25 06:16:22 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.4.2 2002/01/10 19:56:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  * ftp://ftp.alsa-project.org/pub/manuals/general/ac97r21.pdf
  * ftp://ftp.alsa-project.org/pub/manuals/ad/AD1881_0.pdf (example AC'97 codec)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.4.2 2002/01/10 19:56:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +183,7 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_get_props,
 	auvia_trigger_output,
 	auvia_trigger_input,
+	NULL, /* dev_ioctl */
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);

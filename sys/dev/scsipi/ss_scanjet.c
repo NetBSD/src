@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.22.2.1 2001/08/03 04:13:33 lukem Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.22.2.2 2002/01/10 19:58:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -33,7 +33,9 @@
  * special functions for the HP ScanJet IIc and IIcx
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.22.2.2 2002/01/10 19:58:28 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>

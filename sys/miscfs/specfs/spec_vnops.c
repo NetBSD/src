@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.54.2.2 2001/08/25 06:16:53 thorpej Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.54.2.3 2002/01/10 20:01:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)spec_vnops.c	8.15 (Berkeley) 7/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.54.2.3 2002/01/10 20:01:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -228,7 +231,7 @@ spec_open(v)
 		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
-			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
+			vp->v_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;
 		}
 		return 0;
@@ -263,8 +266,8 @@ spec_read(v)
 	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
-	daddr_t bn, nextbn;
-	int bsize, bscale, ssize;
+	daddr_t bn;
+	int bsize, bscale;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -285,14 +288,13 @@ spec_read(v)
 		VOP_UNLOCK(vp, 0);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
 	case VBLK:
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
@@ -300,21 +302,13 @@ spec_read(v)
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
-			if (dpart.disklab->d_secsize != 0)
-				ssize = dpart.disklab->d_secsize;
 		}
-		bscale = bsize / ssize;
+		bscale = bsize >> DEV_BSHIFT;
 		do {
-			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
-			if (vp->v_lastr + bscale == bn) {
-				nextbn = bn + bscale;
-				error = breadn(vp, bn, bsize, &nextbn,
-					&bsize, 1, NOCRED, &bp);
-			} else
-				error = bread(vp, bn, bsize, NOCRED, &bp);
-			vp->v_lastr = bn;
+			error = bread(vp, bn, bsize, NOCRED, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
@@ -350,7 +344,7 @@ spec_write(v)
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	int bsize, bscale, ssize;
+	int bsize, bscale;
 	struct partinfo dpart;
 	int n, on, majordev;
 	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -378,7 +372,6 @@ spec_write(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		ssize = DEV_BSIZE;
 		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
 		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
@@ -386,12 +379,10 @@ spec_write(v)
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
 				    dpart.part->p_fsize;
-			if (dpart.disklab->d_secsize != 0)
-				ssize = dpart.disklab->d_secsize;
 		}
-		bscale = bsize / ssize;
+		bscale = bsize >> DEV_BSHIFT;
 		do {
-			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
+			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)
@@ -773,21 +764,4 @@ spec_advlock(v)
 	struct vnode *vp = ap->a_vp;
 
 	return lf_advlock(ap, &vp->v_speclockf, (off_t)0);
-}
-
-/*
- * glue for genfs_{get,put}pages()
- */
-int
-spec_size(v)
-	void *v;
-{
-	struct vop_size_args /* {
-		struct vnode *a_vp;
-		off_t a_size;
-		off_t *a_eobp;
-	} */ *ap = v;
-
-	*ap->a_eobp = ap->a_size;
-	return 0;
 }

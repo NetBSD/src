@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43.4.1 2001/08/03 04:13:53 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.43.4.2 2002/01/10 20:02:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,9 @@
  *
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.2 2002/01/10 20:02:21 thorpej Exp $");
 
 #include "opt_ns.h"
 
@@ -209,7 +212,7 @@ rtalloc1(dst, report)
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			if (rt->rt_ifp != NULL) {
 				info.rti_info[RTAX_IFP] = 
-				    rt->rt_ifp->if_addrlist.tqh_first->ifa_addr;
+				    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 			}
 			rt_missmsg(RTM_ADD, &info, rt->rt_flags, 0);
@@ -595,6 +598,10 @@ rtrequest1(req, info, ret_nrt)
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
 			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
+		}
+		if (rt->rt_parent) {
+			rt->rt_parent->rt_refcnt--;
+			rt->rt_parent = NULL;
 		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.5 2001/01/26 05:09:13 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.5.4.1 2002/01/10 19:57:48 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,11 +32,15 @@
  *
  ************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.5.4.1 2002/01/10 19:57:48 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if RF_INCLUDE_INTERDECLUSTER > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_interdecluster.h"
 #include "rf_dag.h"

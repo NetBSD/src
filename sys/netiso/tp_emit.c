@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.13.8.1 2002/01/10 20:03:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,6 +74,9 @@ SOFTWARE.
  * We don't do any concatenation. (There's a kludge to test the basic mechanism
  * of separation under the 'w' tpdebug option, that's all.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.13.8.1 2002/01/10 20:03:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +214,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		goto done;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_act = MNULL;
+	m->m_nextpkt = MNULL;
 
 	hdr = mtod(m, struct tpdu *);
 	bzero((caddr_t) hdr, sizeof(struct tpdu));
@@ -884,7 +887,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		return ENOBUFS;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_act = MNULL;
+	m->m_nextpkt = MNULL;
 
 	hdr = mtod(m, struct tpdu *);
 

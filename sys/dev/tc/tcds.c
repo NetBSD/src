@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.1.6.1 2001/08/25 06:16:37 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.1.6.2 2002/01/10 19:58:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.6.1 2001/08/25 06:16:37 thorpej Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.6.2 2002/01/10 19:58:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

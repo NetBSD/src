@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: main.c,v 1.7.2.1 2002/01/10 20:03:59 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -10,6 +10,9 @@
  * It was a ridiculously fast hack and needs rewriting.
  * However it does work...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.7.2.1 2002/01/10 20:03:59 thorpej Exp $");
 
 #include <stdio.h>
 #include <strings.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_tables.c,v 1.3 2001/01/18 20:28:19 jdolecek Exp $	*/
+/*	$NetBSD: ffs_tables.c,v 1.3.6.1 2002/01/10 20:05:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_tables.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_tables.c,v 1.3.6.1 2002/01/10 20:05:05 thorpej Exp $");
 
 #include <sys/param.h>
 

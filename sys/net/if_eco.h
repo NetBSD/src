@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.1.2.2 2001/09/13 01:16:21 thorpej Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.1.2.3 2002/01/10 20:02:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -30,7 +30,9 @@
 #ifndef _NET_IF_ECO_H_
 #define _NET_IF_ECO_H_
 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 
@@ -45,7 +47,9 @@
 #define ECO_ADDR_LEN	2	/* Length of an Econet address */
 #define ECO_HDR_LEN	6	/* Two addresses, a port and a control byte */
 #define ECO_SHDR_LEN	4	/* "Short" Econet header: just two addresses */
-#define ECO_MTU	8192	/* Default MTU */
+/* #define ECO_MTU	8192	 * Default MTU */
+#define ECO_IPMTU	1280	/* MTU for IP used by RISC iX */
+#define ECO_MTU		ECO_IPMTU
 
 struct eco_header {
 	u_int8_t	eco_dhost[ECO_ADDR_LEN];
@@ -94,15 +98,41 @@ struct eco_header {
 #define ECO_CTL_MACHINEPEEK	0x88
 #define ECO_CTL_GETREGISTERS	0x89
 
-/*
- * Common structure used to store state about an Econet interface.
- */
+/* Control bytes for IP */
+#define ECO_CTL_IP		0x81
+#define ECO_CTL_IPBCAST_REPLY	0x8E
+#define ECO_CTL_IPBCAST_REQUEST	0x8F
+#define ECO_CTL_ARP_REQUEST	0xA1
+#define ECO_CTL_ARP_REPLY	0xA2
+
+struct eco_arp {
+	u_int8_t ecar_spa[4];
+	u_int8_t ecar_tpa[4];
+};
+
 enum eco_state {
-	ECO_IDLE, ECO_SCOUT_RCVD,
+	ECO_UNKNOWN, ECO_IDLE, ECO_SCOUT_RCVD,
 	ECO_SCOUT_SENT, ECO_DATA_SENT, ECO_IMMED_SENT,
 	ECO_DONE
 };
 
+
+/*
+ * This structure contains a packet that might need retransmitting,
+ * together with a callout to trigger retransmission.  They're kept on
+ * a per-interface list so they can be freed when an interface is
+ * downed.
+ */
+struct eco_retry {
+	LIST_ENTRY(eco_retry)	er_link;
+	struct	callout er_callout;
+	struct	mbuf *er_packet;
+	struct	ifnet *er_ifp;
+};
+
+/*
+ * Common structure used to store state about an Econet interface.
+ */
 struct ecocom {
 	struct ifnet	ec_if;
 	int	(*ec_claimwire)(struct ifnet *);
@@ -110,11 +140,14 @@ struct ecocom {
 	enum eco_state	ec_state;
 	struct mbuf	*ec_scout;
 	struct mbuf	*ec_packet;
+	LIST_HEAD(, eco_retry)	ec_retries;
 };
 
 #ifdef _KERNEL
 void	eco_ifattach(struct ifnet *, const u_int8_t *);
 void	eco_ifdetach(struct ifnet *);
+int	eco_init(struct ifnet *);
+void	eco_stop(struct ifnet *, int);
 
 char	*eco_sprintf(const u_int8_t *);
 

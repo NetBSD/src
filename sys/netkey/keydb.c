@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.3 2000/06/12 10:40:48 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.3.8.1 2002/01/10 20:04:04 thorpej Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -30,12 +30,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.3.8.1 2002/01/10 20:04:04 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

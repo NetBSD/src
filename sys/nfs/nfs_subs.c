@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.95 2001/06/07 01:04:40 lukem Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.95.2.1 2002/01/10 20:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,6 +73,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.95.2.1 2002/01/10 20:04:25 thorpej Exp $");
+
 #include "fs_nfs.h"
 #include "opt_nfs.h"
 #include "opt_nfsserver.h"
@@ -95,6 +98,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/filedesc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
 
@@ -1489,14 +1493,13 @@ nfs_init()
 void
 nfs_vfs_init()
 {
-	int i;
-
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		nfs_iodwant[i] = (struct proc *)0;
-		nfs_iodmount[i] = (struct nfsmount *)0;
-	}
 	nfs_nhinit();			/* Init the nfsnode table */
+}
+
+void
+nfs_vfs_reinit()
+{
+	nfs_nhreinit();
 }
 
 void
@@ -1950,9 +1953,9 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 
 	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
 	ndp->ni_segflg = UIO_SYSSPACE;
+	ndp->ni_rootdir = rootvnode;
 
 	if (pubflag) {
-		ndp->ni_rootdir = rootvnode;
 		ndp->ni_loopcnt = 0;
 		if (cnp->cn_pnbuf[0] == '/')
 			dp = rootvnode;
@@ -2404,11 +2407,11 @@ nfs_clearcommit(mp)
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-		TAILQ_FOREACH(pg, &vp->v_uvm.u_obj.memq, listq) {
+		simple_lock(&vp->v_uobj.vmobjlock);
+		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
 	splx(s);
 }

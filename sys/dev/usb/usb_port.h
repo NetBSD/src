@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.44.2.1 2002/01/10 19:59:05 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -79,12 +80,19 @@
 #define UFTDI_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
+#define EHCI_DEBUG 1
+#define UIRDA_DEBUG 1
+#define USTIR_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UDSBR_DEBUG 1
 #define Static
 #else
 #define Static static
 #endif
 
 #define SCSI_MODE_SENSE		MODE_SENSE
+
+typedef struct proc *usb_proc_ptr;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -133,21 +141,13 @@ struct cfattach __CONCAT(dname,_ca) = { \
 }
 
 #define USB_MATCH(dname) \
-int \
-__CONCAT(dname,_match)(parent, match, aux) \
-	struct device *parent; \
-	struct cfdata *match; \
-	void *aux;
+int __CONCAT(dname,_match)(struct device *parent, struct cfdata *match, void *aux)
 
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
 #define USB_ATTACH(dname) \
-void \
-__CONCAT(dname,_attach)(parent, self, aux) \
-	struct device *parent; \
-	struct device *self; \
-	void *aux;
+void __CONCAT(dname,_attach)(struct device *parent, struct device *self, void *aux)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -161,10 +161,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_DETACH(dname) \
-int \
-__CONCAT(dname,_detach)(self, flags) \
-	struct device *self; \
-	int flags;
+int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DETACH_START(dname, sc) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -212,6 +209,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #endif
 
 #define Static
+
+typedef struct proc *usb_proc_ptr;
 
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
@@ -396,14 +395,15 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define DECLARE_USB_DMA_T typedef void * usb_dma_t
 
+typedef struct proc *usb_proc_ptr;
+
 /* XXX Change this when FreeBSD has memset
  */
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define usb_kthread_create1(function, sc, priv, string, name)
-#define usb_kthread_create(create_function, sc)
-#define usb_kthread_exit(err)
+#define kthread_create1(f, s, p, a0, a1) \
+		kthread_create((f), (s), (p), RFHIGHPID, (a0), (a1))
 
 typedef struct callout_handle usb_callout_t;
 #define usb_callout_init(h) callout_handle_init(&(h))
@@ -416,6 +416,8 @@ typedef struct callout_handle usb_callout_t;
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+#define config_detach(dev, flag) device_delete_child(device_get_parent(dev), dev)
 
 typedef struct malloc_type *usb_malloc_type;
 

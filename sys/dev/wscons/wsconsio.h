@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.39.2.2 2001/09/13 01:16:15 thorpej Exp $ */
+/* $NetBSD: wsconsio.h,v 1.39.2.3 2002/01/10 19:59:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -40,7 +40,8 @@
  *	0-31	keyboard ioctls (WSKBDIO)
  *	32-63	mouse ioctls (WSMOUSEIO)
  *	64-95	display ioctls (WSDISPLAYIO)
- *	96-255	reserved for future use
+ *	96-127	mux ioctls (WSMUXIO)
+ *	128-255	reserved for future use
  */
 
 #include <sys/types.h>
@@ -87,6 +88,8 @@ struct wscons_event {
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 #define		WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
+#define		WSKBD_TYPE_ADB		11	/* ADB */
+#define		WSKBD_TYPE_HIL		12	/* HIL keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -150,6 +153,9 @@ struct wskbd_map_data {
 #define		WSKBD_TRANSLATED	0
 #define		WSKBD_RAW		1
 
+#define	WSKBDIO_SETKEYCLICK	_IOW('W', 21, int)
+#define	WSKBDIO_GETKEYCLICK	_IOR('W', 22, int)
+
 /*
  * Mouse ioctls (32 - 63)
  */
@@ -164,6 +170,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
 #define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
+#define		WSMOUSE_TYPE_HIL	9	/* HIL mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
@@ -227,6 +234,13 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 #define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
+#define		WSDISPLAY_TYPE_GATOR	25	/* HP Gator */
+#define		WSDISPLAY_TYPE_TOPCAT	26	/* HP TopCat */
+#define		WSDISPLAY_TYPE_RENAISSANCE	27	/* HP Renaissance */
+#define		WSDISPLAY_TYPE_CATSEYE	28	/* HP CatsEye */
+#define		WSDISPLAY_TYPE_DAVINCI	29	/* HP DaVinci */
+#define		WSDISPLAY_TYPE_TIGER	30	/* HP Tiger */
+#define		WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -336,7 +350,7 @@ struct wsdisplay_usefontdata {
 };
 #define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
 
-/* Replaced by WSMUX_{ADD,REMOVE}_DEVICE */
+/* Obsolete, replaced by WSMUXIO_{ADD,REMOVE}_DEVICE */
 struct wsdisplay_kbddata {
 	int op;
 #define _O_WSDISPLAY_KBD_ADD 0
@@ -361,7 +375,8 @@ struct wsdisplay_param {
 /* Mapping information retrieval. */
 
 /* Mux ioctls (96 - 127) */
-#define WSMUX_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+#define WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+#define WSMUX_INJECTEVENT WSMUXIO_INJECTEVENT /* XXX compat */
 
 struct wsmux_device {
 	int type;
@@ -370,14 +385,17 @@ struct wsmux_device {
 #define WSMUX_MUX	3
 	int idx;
 };
-#define WSMUX_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
-#define WSMUX_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
+#define WSMUX_ADD_DEVICE WSMUXIO_ADD_DEVICE /* XXX compat */
+#define WSMUXIO_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define WSMUX_REMOVE_DEVICE WSMUXIO_REMOVE_DEVICE /* XXX compat */
 
 #define WSMUX_MAXDEV 32
 struct wsmux_device_list {
 	int ndevices;
 	struct wsmux_device devices[WSMUX_MAXDEV];
 };
-#define WSMUX_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+#define WSMUXIO_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+#define WSMUX_LIST_DEVICES WSMUXIO_LIST_DEVICES /* XXX compat */
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

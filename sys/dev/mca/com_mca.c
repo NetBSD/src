@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.4 2001/04/20 11:19:27 jdolecek Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.4.2.1 2002/01/10 19:55:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * This driver attaches serial port boards and internal modems.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.4.2.1 2002/01/10 19:55:57 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -86,7 +89,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>

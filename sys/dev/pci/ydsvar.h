@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.1 2001/03/30 14:32:09 minoura Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.1.8.1 2002/01/10 19:57:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -59,6 +59,7 @@ struct yds_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;
+	int			sc_revision;
 	void			*sc_ih;		/* interrupt vectoring */
 	bus_space_tag_t		memt;
 	bus_space_handle_t	memh;

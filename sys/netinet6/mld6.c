@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.13 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.13.4.1 2002/01/10 20:03:26 thorpej Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -68,6 +68,9 @@
  *
  *	@(#)igmp.c	8.1 (Berkeley) 7/19/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.13.4.1 2002/01/10 20:03:26 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -204,10 +207,12 @@ mld6_input(m, off)
 	/* source address validation */
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
 	if (!IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
+#if 0
 		log(LOG_ERR,
 		    "mld6_input: src %s is not link-local (grp=%s)\n",
 		    ip6_sprintf(&ip6->ip6_src),
 		    ip6_sprintf(&mldh->mld6_addr));
+#endif
 		/*
 		 * spec (RFC2710) does not explicitly
 		 * specify to discard the packet from a non link-local
@@ -229,7 +234,7 @@ mld6_input(m, off)
 	 * we have heard a report from another member, or MLD6_IREPORTEDLAST
 	 * if we sent the last report.
 	 */
-	switch(mldh->mld6_type) {
+	switch (mldh->mld6_type) {
 	case MLD6_LISTENER_QUERY:
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
@@ -333,7 +338,9 @@ mld6_input(m, off)
 			mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
 		break;
 	default:		/* this is impossible */
+#if 0
 		log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
+#endif
 		break;
 	}
 
@@ -383,7 +390,6 @@ mld6_sendpkt(in6m, type, dst)
 	struct ip6_moptions im6o;
 	struct in6_ifaddr *ia;
 	struct ifnet *ifp = in6m->in6m_ifp;
-	struct ifnet *outif = NULL;
 
 	/*
 	 * At first, find a link local address on the outgoing interface
@@ -435,7 +441,8 @@ mld6_sendpkt(in6m, type, dst)
 	mldh->mld6_addr = in6m->in6m_addr;
 	if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld6_addr))
 		mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
-	mldh->mld6_cksum = in6_cksum(mh, IPPROTO_ICMPV6, sizeof(struct ip6_hdr),
+	mldh->mld6_cksum = in6_cksum(mh, IPPROTO_ICMPV6,
+				     sizeof(struct ip6_hdr),
 				     sizeof(struct mld6_hdr));
 
 	/* construct multicast option */
@@ -452,19 +459,17 @@ mld6_sendpkt(in6m, type, dst)
 	/* increment output statictics */
 	icmp6stat.icp6s_outhist[type]++;
 
-	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, &outif);
-	if (outif) {
-		icmp6_ifstat_inc(outif, ifs6_out_msg);
-		switch(type) {
-		 case MLD6_LISTENER_QUERY:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldquery);
-			 break;
-		 case MLD6_LISTENER_REPORT:
-			 icmp6_ifstat_inc(outif, ifs6_out_mldreport);
-			 break;
-		 case MLD6_LISTENER_DONE:
-			 icmp6_ifstat_inc(outif, ifs6_out_mlddone);
-			 break;
-		}
+	ip6_output(mh, &ip6_opts, NULL, 0, &im6o, NULL);
+	icmp6_ifstat_inc(ifp, ifs6_out_msg);
+	switch (type) {
+	case MLD6_LISTENER_QUERY:
+		icmp6_ifstat_inc(ifp, ifs6_out_mldquery);
+		break;
+	case MLD6_LISTENER_REPORT:
+		icmp6_ifstat_inc(ifp, ifs6_out_mldreport);
+		break;
+	case MLD6_LISTENER_DONE:
+		icmp6_ifstat_inc(ifp, ifs6_out_mlddone);
+		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.53.2.1 2001/08/03 04:13:48 lukem Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.53.2.2 2002/01/10 20:01:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -39,13 +39,15 @@
  *	@(#)union_vnops.c	8.33 (Berkeley) 7/31/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.53.2.2 2002/01/10 20:01:50 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -94,6 +96,7 @@ int union_pathconf	__P((void *));
 int union_advlock	__P((void *));
 int union_strategy	__P((void *));
 int union_getpages	__P((void *));
+int union_putpages	__P((void *));
 
 static void union_fixup __P((struct union_node *));
 static int union_lookup1 __P((struct vnode *, struct vnode **,
@@ -144,6 +147,7 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, union_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, union_advlock },		/* advlock */
 	{ &vop_getpages_desc, union_getpages },		/* getpages */
+	{ &vop_putpages_desc, union_putpages },		/* putpages */
 #ifdef notdef
 	{ &vop_blkatoff_desc, union_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, union_valloc },		/* valloc */
@@ -1989,12 +1993,39 @@ union_getpages(v)
 	int error;
 
 	/*
-	 * just call into the underlying layer to get the pages.
+	 * just pass the request on to the underlying layer.
+	 */
+
+	if (ap->a_flags & PGO_LOCKED) {
+		return EBUSY;
+	}
+	ap->a_vp = OTHERVP(vp);
+	simple_unlock(&vp->v_interlock);
+	simple_lock(&ap->a_vp->v_interlock);
+	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	return error;
+}
+
+int
+union_putpages(v)
+	void *v;
+{
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int error;
+
+	/*
+	 * just pass the request on to the underlying layer.
 	 */
 
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
-	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	simple_unlock(&vp->v_interlock);
+	simple_lock(&ap->a_vp->v_interlock);
+	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

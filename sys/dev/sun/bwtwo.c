@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2 2000/08/20 19:58:53 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +296,6 @@ bwtwommap(dev, off, prot)
 	int prot;
 {
 	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
@@ -301,11 +303,7 @@ bwtwommap(dev, off, prot)
 	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_btype,
-			   sc->sc_paddr + sc->sc_pixeloffset + off,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, sc->sc_pixeloffset + off,
+		prot, BUS_SPACE_MAP_LINEAR));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.36 2000/12/19 01:09:16 mjl Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.36.4.1 2002/01/10 19:55:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.36.4.1 2002/01/10 19:55:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +136,7 @@ sb_isapnp_attach(parent, self, aux)
                 } else
                 	sc->sc_drq16 = ipa->ipa_drq[1].num;
         } else
-        	sc->sc_drq16 = DRQUNK;
+        	sc->sc_drq16 = ISACF_DRQ_DEFAULT;
 
 #if NMPU > 0
 	if (ipa->ipa_nio > 1) {

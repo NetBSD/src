@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.7 2000/03/30 13:10:16 augustss Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.7.8.1 2002/01/10 20:03:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,9 @@ SOFTWARE.
  * see. Unfortunately this gets too big pretty easily. Pcbs were removed from
  * the tracing when the kernel got too big to boot.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.7.8.1 2002/01/10 20:03:57 thorpej Exp $");
 
 #define TP_TRACEFILE
 

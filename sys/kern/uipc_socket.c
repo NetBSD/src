@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.56.2.2 2001/09/07 22:01:53 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.56.2.3 2002/01/10 20:00:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -35,7 +35,8 @@
  *	@(#)uipc_socket.c	8.6 (Berkeley) 5/2/95
  */
 
-#include "opt_compat_sunos.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.56.2.3 2002/01/10 20:00:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,13 +124,6 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		splx(s);
 		return (error);
 	}
-#ifdef COMPAT_SUNOS
-	{
-		extern struct emul emul_sunos;
-		if (p->p_emul == &emul_sunos && type == SOCK_DGRAM)
-			so->so_options |= SO_BROADCAST;
-	}
-#endif
 	splx(s);
 	*aso = so;
 	return (0);
@@ -367,8 +361,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 {
 	struct proc	*p;
 	struct mbuf	**mp, *m;
-	long		space, len, resid;
-	int		clen, error, s, dontroute, mlen, atomic;
+	long		space, len, resid, clen, mlen;
+	int		error, s, dontroute, atomic;
 
 	p = curproc;		/* XXX */
 	clen = 0;
@@ -461,19 +455,19 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 						goto nopages;
 					mlen = MCLBYTES;
 #ifdef	MAPPED_MBUFS
-					len = min(MCLBYTES, resid);
+					len = lmin(MCLBYTES, resid);
 #else
 					if (atomic && top == 0) {
-						len = min(MCLBYTES - max_hdr,
+						len = lmin(MCLBYTES - max_hdr,
 						    resid);
 						m->m_data += max_hdr;
 					} else
-						len = min(MCLBYTES, resid);
+						len = lmin(MCLBYTES, resid);
 #endif
 					space -= len;
 				} else {
 nopages:
-					len = min(min(mlen, resid), space);
+					len = lmin(lmin(mlen, resid), space);
 					space -= len;
 					/*
 					 * For datagram protocols, leave room
@@ -750,6 +744,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
+			if (error)
+				goto release;
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {

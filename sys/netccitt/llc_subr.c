@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.12.8.1 2001/08/25 06:17:00 thorpej Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.12.8.2 2002/01/10 20:02:31 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)llc_subr.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.12.8.2 2002/01/10 20:02:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2343,7 +2346,7 @@ llc_dellink(linkp)
 
 	/* drop queued packets */
 	for (m = linkp->llcl_writeqh; m;) {
-		n = m->m_act;
+		n = m->m_nextpkt;
 		m_freem(m);
 		m = n;
 	}

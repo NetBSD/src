@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.74.2.1 2001/08/03 04:13:30 lukem Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.74.2.2 2002/01/10 19:58:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.74.2.2 2002/01/10 19:58:19 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

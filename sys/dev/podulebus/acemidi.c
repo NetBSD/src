@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.2 2001/06/12 11:49:18 bjh21 Exp $ */
+/* $NetBSD: acemidi.c,v 1.2.2.1 2002/01/10 19:57:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -27,9 +27,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2.2.1 2002/01/10 19:57:29 thorpej Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2 2001/06/12 11:49:18 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>

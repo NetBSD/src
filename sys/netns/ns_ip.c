@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.28 2001/04/13 23:30:29 thorpej Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.28.2.1 2002/01/10 20:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -38,6 +38,9 @@
 /*
  * Software interface driver for encapsulating ns in ip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.28.2.1 2002/01/10 20:04:08 thorpej Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.19 2000/12/28 21:40:59 thorpej Exp $	*/
+/*	$NetBSD: pfil.c,v 1.19.4.1 2002/01/10 20:02:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.19.4.1 2002/01/10 20:02:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

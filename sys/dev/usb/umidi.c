@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.8 2001/05/28 20:52:06 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.8.2.1 2002/01/10 19:59:03 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.8.2.1 2002/01/10 19:59:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +137,6 @@ struct midi_hw_if umidi_hw_if = {
 };
 
 USB_DECLARE_DRIVER(umidi);
-int umidi_activate __P((device_ptr_t, enum devact));
-int umidi_detach __P((device_ptr_t, int));
 
 USB_MATCH(umidi)
 {
@@ -272,8 +273,8 @@ USB_DETACH(umidi)
 int
 umidi_open(void *addr,
 	   int flags,
-	   void (*iintr)__P((void *, int)),
-	   void (*ointr)__P((void *)),
+	   void (*iintr)(void *, int),
+	   void (*ointr)(void *),
 	   void *arg)
 {
 	struct umidi_mididev *mididev = addr;
@@ -352,12 +353,12 @@ alloc_pipe(struct umidi_endpoint *ep)
 	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
 	LIST_INIT(&ep->queue_head);
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (!ep->xfer) {
+	if (ep->xfer == NULL) {
 	    err = USBD_NOMEM;
 	    goto quit;
 	}
 	ep->buffer = usbd_alloc_buffer(ep->xfer, UMIDI_PACKET_SIZE);
-	if (!ep->buffer) {
+	if (ep->buffer == NULL) {
 	    usbd_free_xfer(ep->xfer);
 	    err = USBD_NOMEM;
 	    goto quit;
@@ -391,6 +392,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	usbd_status err;
 	struct umidi_endpoint *ep;
 	int i;
+
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_FIXED_EP)) {
 		err = alloc_all_endpoints_fixed_ep(sc);
 	} else if (UMQ_ISTYPE(sc, UMQ_TYPE_YAMAHA)) {
@@ -646,8 +648,8 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 		} else if (desc->bDescriptorType==UDESC_CS_ENDPOINT &&
 			   remain>=UMIDI_CS_ENDPOINT_DESCRIPTOR_SIZE &&
 			   epaddr!=-1) {
-			num_ep--;
 			if (num_ep>0) {
+				num_ep--;
 				p->sc = sc;
 				p->addr = epaddr;
 				p->num_jacks = TO_CSEPD(desc)->bNumEmbMIDIJack;
@@ -1143,7 +1145,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, UMIDI_PACKET_SIZE,
-			0, USBD_NO_TIMEOUT, in_intr);
+			USBD_NO_COPY, USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
 
@@ -1153,7 +1155,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, UMIDI_PACKET_SIZE,
-			0, USBD_NO_TIMEOUT, out_intr);
+			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	return usbd_transfer(ep->xfer);
 }
 

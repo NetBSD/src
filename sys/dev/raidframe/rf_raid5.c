@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.4 2000/01/08 22:57:30 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.4.8.1 2002/01/10 19:57:57 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,11 @@
  *
  *****************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.4.8.1 2002/01/10 19:57:57 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_raid5.h"
 #include "rf_dag.h"

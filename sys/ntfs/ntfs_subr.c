@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.30 2001/06/25 18:33:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.30.2.1 2002/01/10 20:04:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -28,8 +28,10 @@
  *	Id: ntfs_subr.c,v 1.4 1999/05/12 09:43:01 semenu Exp
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.30.2.1 2002/01/10 20:04:33 thorpej Exp $");
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>

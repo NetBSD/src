@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.4 1999/03/19 16:09:57 christos Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.4.22.1 2002/01/10 19:57:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.4.22.1 2002/01/10 19:57:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

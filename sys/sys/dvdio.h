@@ -1,4 +1,4 @@
-/*	$NetBSD: dvdio.h,v 1.4 2001/01/08 08:37:12 enami Exp $	*/
+/*	$NetBSD: dvdio.h,v 1.4.4.1 2002/01/10 20:04:40 thorpej Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
@@ -101,6 +101,8 @@ typedef union {
 #define DVD_LU_SEND_TITLE_KEY	7
 #define DVD_LU_SEND_ASF		8
 #define DVD_INVALIDATE_AGID	9
+#define DVD_LU_SEND_RPC_STATE	10
+#define DVD_HOST_SEND_RPC_STATE	11
 
 /* State data */
 typedef u_int8_t dvd_key[5];		/* 40-bit value, MSB is first elem. */
@@ -160,6 +162,19 @@ struct dvd_lu_send_asf {
 	unsigned asf		: 1;
 };
 
+struct dvd_host_send_rpcstate {
+	u_int8_t type;
+	u_int8_t pdrc;
+};
+ 
+struct dvd_lu_send_rpcstate {
+	u_int8_t type		: 2;
+	u_int8_t vra		: 3;
+	u_int8_t ucca		: 3;
+	u_int8_t region_mask;
+	u_int8_t rpc_scheme;
+};
+
 typedef union {
 	u_int8_t type;
 
@@ -170,4 +185,18 @@ typedef union {
 	struct dvd_send_key		hsk;
 	struct dvd_lu_send_title_key	lstk;
 	struct dvd_lu_send_asf		lsasf;
+	struct dvd_host_send_rpcstate	hrpcs;
+	struct dvd_lu_send_rpcstate	lrpcs;
 } dvd_authinfo;
+
+typedef struct {
+	u_int16_t report_key_length;
+	u_int8_t reserved1[2];                 
+	u_int8_t ucca		: 3;
+	u_int8_t vra		: 3;
+	u_int8_t type_code	: 2;
+	u_int8_t region_mask;
+	u_int8_t rpc_scheme;
+	u_int8_t reserved2;
+} dvd_rpc_state_t;
+

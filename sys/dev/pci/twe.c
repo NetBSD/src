@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.15.2.1 2001/08/03 04:13:22 lukem Exp $	*/
+/*	$NetBSD: twe.c,v 1.15.2.2 2002/01/10 19:57:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
 /*
  * Driver for the 3ware Escalade family of RAID controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.15.2.2 2002/01/10 19:57:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +462,7 @@ twe_intr(void *arg)
 
 	/*
 	 * Attention interrupts, signalled when a controller or child device
-	 * state change has occured.
+	 * state change has occurred.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
 		if ((sc->sc_flags & TWEF_AEN) == 0) {
@@ -820,7 +823,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
 		s = splvm();
 		/* XXX */
-		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, NULL,
 		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
 		splx(s);
 		data = (void *)ccb->ccb_abuf;

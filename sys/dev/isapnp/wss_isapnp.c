@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.10 1999/09/06 18:31:45 rh Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.10.16.1 2002/01/10 19:55:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.10.16.1 2002/01/10 19:55:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

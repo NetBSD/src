@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.c,v 1.4 2000/03/30 12:45:41 augustss Exp $	*/
+/*	$NetBSD: rf_nwayxor.c,v 1.4.8.1 2002/01/10 19:57:52 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * adapted from danner's longword_bxor code.
  *
  ************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_nwayxor.c,v 1.4.8.1 2002/01/10 19:57:52 thorpej Exp $");
 
 #include "rf_nwayxor.h"
 #include "rf_shutdown.h"

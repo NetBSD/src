@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.20.4.1 2001/08/03 04:13:14 lukem Exp $	*/
+/*	$NetBSD: eso.c,v 1.20.4.2 2002/01/10 19:56:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -31,6 +31,9 @@
 /*
  * ESS Technology Inc. Solo-1 PCI AudioDrive (ES1938/1946) device driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.20.4.2 2002/01/10 19:56:34 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -139,7 +142,8 @@ static struct audio_hw_if eso_hw_if = {
 	eso_mappage,
 	eso_get_props,
 	eso_trigger_output,
-	eso_trigger_input
+	eso_trigger_input,
+	NULL,			/* dev_ioctl */
 };
 
 static const char * const eso_rev2model[] = {

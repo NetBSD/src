@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.167.2.2 2001/09/13 01:16:17 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.167.2.3 2002/01/10 20:00:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,6 +40,9 @@
  *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.167.2.3 2002/01/10 20:00:22 thorpej Exp $");
+
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 
@@ -56,14 +59,11 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_flags __P((struct vnode *, u_long, struct proc *));
@@ -303,8 +303,8 @@ update:
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
 	mp->mnt_flag |= SCARG(uap, flags) & (MNT_NOSUID | MNT_NOEXEC |
 	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC |
-	    MNT_NOCOREDUMP | MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM |
-	    MNT_SOFTDEP);
+	    MNT_NOCOREDUMP | MNT_IGNORE | MNT_NOATIME | MNT_NODEVMTIME |
+	    MNT_SYMPERM | MNT_SOFTDEP);
 	/*
 	 * Mount the filesystem.
 	 */

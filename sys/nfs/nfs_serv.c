@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.59.4.1 2001/08/03 04:14:02 lukem Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.59.4.2 2002/01/10 20:04:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,6 +57,9 @@
  *	For Version 3, nfsm_reply() does not return for the error case, since
  *	most version 3 rpcs return more than the status for error cases.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.59.4.2 2002/01/10 20:04:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1312,7 +1315,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
+	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
 		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (dirp) {
@@ -1382,11 +1385,9 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	 */
 	if (nd.ni_vp == NULL) {
 		if (va.va_type == VREG || va.va_type == VSOCK) {
-			vrele(nd.ni_startdir);
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 			if (!error) {
-				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					VATTR_NULL(&va);
@@ -1402,8 +1403,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
 			    (error = suser(cred, (u_short *)0))) {
-				vrele(nd.ni_startdir);
-				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1414,7 +1413,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
 			    &va);
 			if (error) {
-				vrele(nd.ni_startdir);
 				nfsm_reply(0);
 			}
 			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
@@ -1426,16 +1424,12 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				nfsm_reply(0);
 			}
 		} else {
-			vrele(nd.ni_startdir);
-			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			error = ENXIO;
 		}
 		vp = nd.ni_vp;
 	} else {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		vp = nd.ni_vp;
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -1488,10 +1482,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 nfsmout:
 	if (dirp)
 		vrele(dirp);
-	if (nd.ni_cnd.cn_nameiop) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
-	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
 		vrele(nd.ni_dvp);
@@ -1537,7 +1527,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | SAVESTART;
+	nd.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
 		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (dirp)
@@ -1552,8 +1542,6 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		error = NFSERR_BADTYPE;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
@@ -1577,8 +1565,6 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	 * Iff doesn't exist, create it.
 	 */
 	if (nd.ni_vp) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		error = EEXIST;
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
@@ -1590,16 +1576,11 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	}
 	va.va_type = vtyp;
 	if (vtyp == VSOCK) {
-		vrele(nd.ni_startdir);
 		nqsrv_getl(nd.ni_dvp, ND_WRITE);
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-		if (!error)
-			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	} else {
 		if (va.va_type != VFIFO &&
 		    (error = suser(cred, (u_short *)0))) {
-			vrele(nd.ni_startdir);
-			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1607,14 +1588,11 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nqsrv_getl(nd.ni_dvp, ND_WRITE);
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (error) {
-			vrele(nd.ni_startdir);
 			goto out;
 		}
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		if (error)
 			goto out;
 		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
-			vrele(nd.ni_dvp);
 			vput(nd.ni_vp);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			error = EINVAL;
@@ -1642,10 +1620,6 @@ out:
 nfsmout:
 	if (dirp)
 		vrele(dirp);
-	if (nd.ni_cnd.cn_nameiop) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
-	}
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 	if (nd.ni_dvp == nd.ni_vp)
 		vrele(nd.ni_dvp);
@@ -2081,7 +2055,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
-	nd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART;
+	nd.ni_cnd.cn_flags = LOCKPARENT;
 	error = nfs_namei(&nd, fhp, len, slp, nam, &md, &dpos,
 		&dirp, procp, (nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (dirp) {
@@ -2116,8 +2090,6 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	}
 	*(pathcp + len2) = '\0';
 	if (nd.ni_vp) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
@@ -2129,9 +2101,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	}
 	nqsrv_getl(nd.ni_dvp, ND_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va, pathcp);
-	if (error)
-		vrele(nd.ni_startdir);
-	else {
+	if (!error) {
 	    if (v3) {
 		memset((caddr_t)fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
@@ -2141,10 +2111,8 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 					procp);
 		vput(nd.ni_vp);
 	    } else {
-		vrele(nd.ni_startdir);
 		vput(nd.ni_vp);
 	    }
-	    PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 out:
 	if (pathcp)
@@ -2163,10 +2131,6 @@ out:
 	}
 	return (0);
 nfsmout:
-	if (nd.ni_cnd.cn_nameiop) {
-		vrele(nd.ni_startdir);
-		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
-	}
 	if (dirp)
 		vrele(dirp);
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.5 2000/03/04 03:27:13 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.5.8.1 2002/01/10 19:57:47 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,11 @@
  *
  ***************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.5.8.1 2002/01/10 19:57:47 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"
 #include "rf_layout.h"
@@ -45,7 +49,6 @@
 #include "rf_general.h"
 #include "rf_options.h"
 #include "rf_raid.h"
-#include "rf_types.h"
 
 /* just malloc a header, zero it (via calloc), and return it */
 /*ARGSUSED*/

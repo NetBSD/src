@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2 2001/05/15 02:00:15 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2.2.1 2002/01/10 20:01:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.2.2.1 2002/01/10 20:01:11 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -43,16 +46,23 @@
 #include <sys/exec_ecoff.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/ultrix/ultrix_exec.h>
 
 int exec_ultrix_ecoff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_ultrix_ecoff =
-	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
+	/* Ultrix ECOFF */
+	{ ECOFF_HDR_SIZE,
+	  exec_ecoff_makecmds,
 	  { .ecoff_probe_func = ultrix_exec_ecoff_probe },
-	  NULL, EXECSW_PRIO_LAST, /* XXX probe func alw. succeeds */
-  	  0, copyargs, cpu_exec_ecoff_setregs }; /* Ultrix ecoff binaries */
+	  NULL,
+	  EXECSW_PRIO_LAST, /* XXX probe func alw. succeeds */
+  	  0,
+  	  copyargs,
+  	  cpu_exec_ecoff_setregs,
+	  coredump_netbsd };
 
 /*
  * declare the exec

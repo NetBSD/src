@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.5.2.1 2002/01/10 19:57:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,21 +37,37 @@
  */
 
 /*
- * Oak SCSI 1 driver using the generic NCR5380 driver
+ * Oak Solutions SCSI 1 driver using the generic NCR5380 driver.
  *
- * This driver is a bit crude, and only uses 8-bit PIO accesses to the
- * card.  It looks like the card can support pseudo-DMA, and can
- * handle converting between the 5380's 8-bit data bus and the 16-bit
- * podule bus in the process.  We support none of this cleverness.
+ * From <URL:http://foldoc.doc.ic.ac.uk/acorn/doc/scsi>:
+ * --------8<--------
+ * From: Hugo Fiennes
+ * [...]
+ * The oak scsi plays some other tricks to get max around 2.2Mb/sec:
+ * it is a 16- bit interface (using their own hardware and an 8-bit
+ * scsi controller to 'double-up' the data). What it does is: every
+ * 128 bytes it uses a polling loop (see above) to check data is
+ * present and the drive has reported no errors, etc.  Inside each 128
+ * byte block it just reads data as fast as it can: on a normal card
+ * this would result in disaster if the drive wasn't fast enough to
+ * feed the machine: on the oak card however, the hardware will not
+ * assert IOGT (IO grant), so hanging the machine in a wait state
+ * until data is ready. This can have problems: if the drive is to
+ * slow (unlikely) the machine will completely stiff as the ARM3 can't
+ * be kept in such a state for more than 10(?) us.
+ * -------->8--------
+ *
+ * So far, my attempts at doing this have failed, though.
  *
  * This card has to be polled: it doesn't have anything connected to
  * PIRQ*.  This seems to be a common failing of Archimedes disc
  * controllers.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5.2.1 2002/01/10 19:57:30 thorpej Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -70,8 +86,15 @@ __KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5 2001/07/04 16:36:52 bjh21 Exp $");
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>
 
+#include <dev/podulebus/oakreg.h>
+
 void oak_attach (struct device *, struct device *, void *);
 int  oak_match  (struct device *, struct cfdata *, void *);
+
+#if 0
+static int oak_pdma_in(struct ncr5380_softc *, int, int, u_char *);
+static int oak_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+#endif
 
 /*
  * Oak SCSI 1 softc structure.
@@ -82,6 +105,8 @@ int  oak_match  (struct device *, struct cfdata *, void *);
 
 struct oak_softc {
 	struct ncr5380_softc	sc_ncr5380;
+	bus_space_tag_t		sc_pdmat;
+	bus_space_handle_t	sc_pdmah;
 };
 
 struct cfattach oak_ca = {
@@ -127,7 +152,7 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
 	sc->sc_ncr5380.sc_min_dma_len = 0;
 	sc->sc_ncr5380.sc_no_disconnect = 0xff;
-	sc->sc_ncr5380.sc_parity_disable = 0xff;
+	sc->sc_ncr5380.sc_parity_disable = 0;
 
 	sc->sc_ncr5380.sc_dma_alloc = NULL;
 	sc->sc_ncr5380.sc_dma_free = NULL;
@@ -162,6 +187,9 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sci_r6 = iobase + 24;
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
 #endif
+	sc->sc_pdmat = pa->pa_mod_t;
+	bus_space_map(sc->sc_pdmat, pa->pa_mod_base + OAK_PDMA_OFFSET, 0x20, 0,
+	    &sc->sc_pdmah);
 
 	sc->sc_ncr5380.sc_rev = NCR_VARIANT_NCR5380;
 
@@ -180,3 +208,191 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 
 	ncr5380_attach(&sc->sc_ncr5380);
 }
+
+/*
+ * XXX The code below doesn't work correctly.  I probably need more
+ * details on how the card works.  [bjh21 20011202]
+ */
+#if 0
+
+#ifndef OAK_TSIZE_OUT
+#define OAK_TSIZE_OUT	128
+#endif
+
+#ifndef OAK_TSIZE_IN
+#define OAK_TSIZE_IN	128
+#endif
+
+#define TIMEOUT 1000000
+
+static __inline int
+oak_ready(struct ncr5380_softc *sc)
+{
+	int i;
+	int status;
+
+	for (i = TIMEOUT; i > 0; i--) {
+		status = NCR5380_READ(sc, sci_csr);
+		    if ((status & (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
+			(SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH))
+		    	return(1);
+
+		if ((status & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0)
+			return(0);
+	}
+	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
+	return(0);
+
+#if 0 /* The Linux driver does this: */
+	struct oak_softc *sc = (void *)ncr_sc;
+	bus_space_tag_t pdmat = sc->sc_pdmat;
+	bus_space_handle_t pdmah = sc->sc_pdmah;
+	int i, status;
+
+	for (i = TIMEOUT; i > 0; i--) {
+		status = bus_space_read_2(pdmat, pdmah, OAK_PDMA_STATUS);
+		if (status & 0x200)
+			return(0);
+		if (status & 0x100)
+			return(1);
+	}
+	printf("%s: ready timeout, status = 0x%x\n", ncr_sc->sc_dev.dv_xname,
+	    status);
+	return(0);
+#endif
+}
+
+
+
+/* Return zero on success. */
+static __inline void oak_wait_not_req(struct ncr5380_softc *sc)
+{
+	int timo;
+	for (timo = TIMEOUT; timo; timo--) {
+		if ((NCR5380_READ(sc, sci_bus_csr) & SCI_BUS_REQ) == 0 ||
+		    (NCR5380_READ(sc, sci_csr) & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0) {
+			return;
+		}
+	}
+	printf("%s: pdma not_req timeout\n", sc->sc_dev.dv_xname);
+}
+
+static int
+oak_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
+    u_char *data)
+{
+	struct oak_softc *sc = (void *)ncr_sc;
+	bus_space_tag_t pdmat = sc->sc_pdmat;
+	bus_space_handle_t pdmah = sc->sc_pdmah;
+	int s, resid, len;
+
+	s = splbio();
+
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) | SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_irecv, 0);
+
+	resid = datalen;
+	while (resid > 0) {
+		len = min(resid, OAK_TSIZE_IN);
+		if (oak_ready(ncr_sc) == 0)
+			goto interrupt;
+		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, u_int16_t));
+		bus_space_read_multi_2(pdmat, pdmah, OAK_PDMA_READ,
+		    (u_int16_t *)data, len/2);
+		data += len;
+		resid -= len;
+	}
+
+	oak_wait_not_req(ncr_sc);
+
+interrupt:
+	SCI_CLR_INTR(ncr_sc);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) & ~SCI_MODE_DMA);
+	splx(s);
+	return datalen - resid;
+}
+
+static int
+oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
+    u_char *data)
+{
+	struct oak_softc *sc = (void *)ncr_sc;
+	bus_space_tag_t pdmat = sc->sc_pdmat;
+	bus_space_handle_t pdmah = sc->sc_pdmah;
+	int i, s, icmd, resid;
+
+	s = splbio();
+	icmd = NCR5380_READ(ncr_sc, sci_icmd) & SCI_ICMD_RMASK;
+	NCR5380_WRITE(ncr_sc, sci_icmd, icmd | SCI_ICMD_DATA);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) | SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_dma_send, 0);
+
+	resid = datalen;
+	if (oak_ready(ncr_sc) == 0)
+		goto interrupt;
+
+	if (resid > OAK_TSIZE_OUT) {
+		/*
+		 * Because of the chips DMA prefetch, phase changes
+		 * etc, won't be detected until we have written at
+		 * least one byte more. We pre-write 4 bytes so
+		 * subsequent transfers will be aligned to a 4 byte
+		 * boundary. Assuming disconects will only occur on
+		 * block boundaries, we then correct for the pre-write
+		 * when and if we get a phase change. If the chip had
+		 * DMA byte counting hardware, the assumption would not
+		 * be necessary.
+		 */
+		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, u_int16_t));
+		bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
+		    (u_int16_t *)data, 4/2);
+		data += 4;
+		resid -= 4;
+		
+		for (; resid >= OAK_TSIZE_OUT; resid -= OAK_TSIZE_OUT) {
+			if (oak_ready(ncr_sc) == 0) {
+				resid += 4; /* Overshot */
+				goto interrupt;
+			}
+			bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
+			    (u_int16_t *)data, OAK_TSIZE_OUT/2);
+			data += OAK_TSIZE_OUT;
+		}
+		if (oak_ready(ncr_sc) == 0) {
+			resid += 4; /* Overshot */
+			goto interrupt;
+		}
+	}
+
+	if (resid) {
+		bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
+		    (u_int16_t *)data, resid/2);
+		resid = 0;
+	}
+	for (i = TIMEOUT; i > 0; i--) {
+		if ((NCR5380_READ(ncr_sc, sci_csr)
+		    & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
+		    != SCI_CSR_DREQ)
+			break;
+	}
+	if (i != 0)
+		bus_space_write_2(pdmat, pdmah, OAK_PDMA_WRITE, 0);
+	else
+		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
+			ncr_sc->sc_dev.dv_xname);
+
+	oak_wait_not_req(ncr_sc);
+interrupt:
+	SCI_CLR_INTR(ncr_sc);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) & ~SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_icmd, icmd);
+	splx(s);
+	return(datalen - resid);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.1 2000/08/20 14:33:25 pk Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.1.6.1 2002/01/10 19:58:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.6.1 2002/01/10 19:58:08 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -163,8 +166,8 @@ bwtwoattach_sbus(parent, self, args)
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
+	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 	fb->fb_type.fb_depth = 1;
@@ -190,14 +193,14 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_pixeloffset = BWREG_MEM;
 
 	isconsole = fb_is_console(node);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	/* Assume `bwtwo at sbus' only happens at sun4c's */
 	sc->sc_get_video = bwtwo_get_video;
 	sc->sc_set_video = bwtwo_set_video;
 
 	if (sa->sa_npromvaddrs != 0)
-		sc->sc_fb.fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
+		sc->sc_fb.fb_pixels = (caddr_t)(u_long)sa->sa_promvaddrs[0];
 	if (isconsole && sc->sc_fb.fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,

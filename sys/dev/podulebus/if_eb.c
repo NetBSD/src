@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.1 2001/03/25 01:09:36 bjh21 Exp $ */
+/* $NetBSD: if_eb.c,v 1.1.4.1 2002/01/10 19:57:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,9 +36,10 @@
  * if_eb.c - EtherB device driver
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.1.4.1 2002/01/10 19:57:29 thorpej Exp $");
 
-__RCSID("$NetBSD: if_eb.c,v 1.1 2001/03/25 01:09:36 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/socket.h>

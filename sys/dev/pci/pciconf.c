@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.5.2.1 2001/09/13 01:15:58 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.5.2.2 2002/01/10 19:56:55 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -64,6 +64,9 @@
  *      as a hint to where we put other devices)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.5.2.2 2002/01/10 19:56:55 thorpej Exp $");
+
 #include "opt_pci.h"
 
 #include <sys/param.h>
@@ -119,6 +122,7 @@ typedef struct _s_pciconf_bus_t {
 	int		busno_spacing;
 	int		max_mingnt;
 	int		min_maxlat;
+	int		cacheline_size;
 	int		prefetch;
 	int		fast_b2b;
 	int		freq_66;
@@ -313,6 +317,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	if (!pb)
 		panic("Unable to allocate memory for PCI configuration.");
 
+	pb->cacheline_size = parent->cacheline_size;
 	pb->parent_bus = parent;
 	alloc_busno(parent, pb);
 	if (pci_conf_debug)
@@ -322,7 +327,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	busreg  =  parent->busno << PCI_BRIDGE_BUS_PRIMARY_SHIFT;
 	busreg |=      pb->busno << PCI_BRIDGE_BUS_SECONDARY_SHIFT;
 	busreg |= pb->last_busno << PCI_BRIDGE_BUS_SUBORDINATE_SHIFT;
-	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
+	pci_conf_write(parent->pc, pd->tag, PCI_BRIDGE_BUS_REG, busreg);
 
 	pb->swiz = parent->swiz + dev;
 
@@ -334,7 +339,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->io_32bit = 0;
 	if (parent->io_32bit) {
-		io = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
+		io = pci_conf_read(parent->pc, pd->tag, PCI_BRIDGE_STATIO_REG);
 		if (PCI_BRIDGE_IO_32BITS(io)) {
 			pb->io_32bit = 1;
 		}
@@ -342,7 +347,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	pb->pmem_64bit = 0;
 	if (parent->pmem_64bit) {
-		pmem = pci_conf_read(pb->pc, pd->tag,
+		pmem = pci_conf_read(parent->pc, pd->tag,
 		    PCI_BRIDGE_PREFETCHMEM_REG);
 		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem)) {
 			pb->pmem_64bit = 1;
@@ -975,8 +980,11 @@ configure_bus(pciconf_bus_t *pb)
 		}
 		pci_conf_write(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG, cmd);
 
-		misc = (misc & ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT))
-		    | ((ltim & 0xff) << PCI_LATTIMER_SHIFT);
+		misc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
+		    (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
+		misc |= (ltim & PCI_LATTIMER_MASK) << PCI_LATTIMER_SHIFT;
+		misc |= (pb->cacheline_size & PCI_CACHELINE_MASK) <<
+		    PCI_CACHELINE_SHIFT;
 		pci_conf_write(pd->pc, pd->tag, PCI_BHLC_REG, misc);
 
 		if (pd->ppb) {
@@ -1022,16 +1030,18 @@ configure_bus(pciconf_bus_t *pb)
  */
 int
 pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
-    struct extent *memext, struct extent *pmemext)
+    struct extent *memext, struct extent *pmemext, int firstbus,
+    int cacheline_size)
 {
 	pciconf_bus_t	*pb;
 	int		rv;
 
 	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
-	pb->busno = 0;
+	pb->busno = firstbus;
 	pb->busno_spacing = PCI_BUSNO_SPACING;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
+	pb->cacheline_size = cacheline_size;
 	pb->parent_bus = NULL;
 	pb->swiz = 0;
 	pb->io_32bit = 1;

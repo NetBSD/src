@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.12 2000/03/30 13:10:07 augustss Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.12.8.1 2002/01/10 20:03:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.12.8.1 2002/01/10 20:03:46 thorpej Exp $");
 
 #include "opt_iso.h"
 
@@ -666,8 +669,8 @@ int
 clnp_badmtu(ifp, rt, line, file)
 	struct ifnet   *ifp;	/* outgoing interface */
 	struct rtentry *rt;	/* dst route */
-	int             line;	/* where the dirty deed occured */
-	char           *file;	/* where the dirty deed occured */
+	int             line;	/* where the dirty deed occurred */
+	char           *file;	/* where the dirty deed occurred */
 {
 	printf("sending on route %p with no mtu, line %d of file %s\n",
 	    rt, line, file);

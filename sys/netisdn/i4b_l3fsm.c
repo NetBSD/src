@@ -27,13 +27,16 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.3.2.1 2001/08/25 06:17:08 thorpej Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.3.2.2 2002/01/10 20:03:37 thorpej Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.3.2.2 2002/01/10 20:03:37 thorpej Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -945,7 +948,7 @@ static void F_DLEI(call_desc_t *cd)
 }
 
 /*---------------------------------------------------------------------------*
- *	L3 FSM any state event illegal event occured
+ *	L3 FSM any state event illegal event occurred
  *---------------------------------------------------------------------------*/	
 static void F_ILL(call_desc_t *cd)
 {

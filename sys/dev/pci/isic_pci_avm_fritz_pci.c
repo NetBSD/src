@@ -35,11 +35,14 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.4 2001/07/07 16:37:38 thorpej Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.4.2.1 2002/01/10 19:56:49 thorpej Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.4.2.1 2002/01/10 19:56:49 thorpej Exp $");
 
 #include "opt_isicpci.h"
 #ifdef ISICPCI_AVM_A1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.151.2.3 2001/09/13 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.151.2.4 2002/01/10 19:58:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -53,9 +53,11 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.151.2.4 2002/01/10 19:58:16 thorpej Exp $");
+
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1860,7 +1862,7 @@ dvd_auth(cd, a)
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
 		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
-		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
+		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
 		a->type = DVD_LU_SEND_KEY1;
@@ -1874,7 +1876,7 @@ dvd_auth(cd, a)
 		dvd_copy_key(&buf[4], a->hsk.key);
 		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
-		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
+		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error) {
 			a->type = DVD_AUTH_FAILURE;
 			return (error);
@@ -1887,6 +1889,35 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
 		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL, 0);
+		if (error)
+			return (error);
+		return (0);
+
+	case DVD_LU_SEND_RPC_STATE:
+		cmd.opcode = GPCMD_REPORT_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 8 | (0 << 6);
+		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		    CDRETRIES, 30000, NULL,
+		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
+		if (error)
+			return (error);
+		a->lrpcs.type = (buf[8] >> 6) & 3;
+		a->lrpcs.vra = (buf[8] >> 3) & 7;
+		a->lrpcs.ucca = (buf[8]) & 7;
+		a->lrpcs.region_mask = buf[9];
+		a->lrpcs.rpc_scheme = buf[10];
+		return (0);
+
+	case DVD_HOST_SEND_RPC_STATE:
+		cmd.opcode = GPCMD_SEND_KEY;
+		cmd.bytes[8] = 8;
+		cmd.bytes[9] = 6 | (0 << 6);
+		buf[1] = 6;
+		buf[4] = a->hrpcs.pdrc;
+		error = scsipi_command(cd->sc_periph, &cmd, 12, buf, 8,
+		    CDRETRIES, 30000, NULL,
+		    XS_CTL_DATA_OUT|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
 		return (0);

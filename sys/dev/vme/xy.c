@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.35.2.1 2001/08/03 04:13:38 lukem Exp $	*/
+/*	$NetBSD: xy.c,v 1.35.2.2 2002/01/10 19:59:14 thorpej Exp $	*/
 
 /*
  *
@@ -49,6 +49,9 @@
  *	       [6] David Jones <dej@achilles.net>'s unfinished 450/451 driver
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.35.2.2 2002/01/10 19:59:14 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1463,7 +1466,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	/* init iorq and load iopb from it */
 	xyc_rqinit(iorq, xycsc, xysc, XY_SUB_NORM | XY_MODE_VERBO, block,
 		   bp->b_bcount / XYFM_BPS,
-		   (caddr_t)iorq->dmamap->dm_segs[0].ds_addr,
+		   (caddr_t)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
 		   bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.19 2001/03/15 21:59:09 ross Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.19.2.1 2002/01/10 19:57:12 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -49,6 +49,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.19.2.1 2002/01/10 19:57:12 thorpej Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -58,7 +60,6 @@
 
 #define FIFO_RISC_DISABLED      0
 #define ALL_INTS_DISABLED       0
-
 
 /*******************/
 /* *** FreeBSD *** */
@@ -192,7 +193,16 @@ int bktr_debug = 0;
 #endif
 #endif
 
-
+/* Support for radio(4) under NetBSD */
+#ifdef __NetBSD__
+#include "radio.h"
+#if NRADIO > 0
+#include <sys/radioio.h>
+#include <dev/radio_if.h>
+#endif
+#else
+#define	NRADIO	0
+#endif
 
 /****************************/
 /* *** FreeBSD 4.x code *** */
@@ -572,7 +582,7 @@ bktr_open( dev_t dev, int flags, int fmt, struct proc *p )
 		return (ENXIO);
 	}
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return( ENXIO );	
 
 	/* Record that the device is now busy */
@@ -1073,7 +1083,7 @@ bktr_open( dev_t dev, int flags, int fmt, struct proc *p )
 
 	bktr = &(brooktree[ unit ]);
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return( ENXIO );	
 
 
@@ -1319,6 +1329,21 @@ struct cfdriver bktr_cd = {
 };
 #endif
 
+
+#if NRADIO > 0
+/* for radio(4) */
+int	bktr_get_info(void *, struct radio_info *);
+int	bktr_set_info(void *, struct radio_info *);
+
+struct radio_hw_if bktr_hw_if = {
+	NULL,	/* open */
+	NULL,	/* close */
+	bktr_get_info,
+	bktr_set_info,
+	NULL	/* search */
+};
+#endif
+
 int
 bktr_probe(parent, match, aux)
 	struct device *parent;
@@ -1500,6 +1525,12 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
         rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0x000000ff;
 
 	common_bktr_attach(bktr, unit, fun, rev);
+
+#if NRADIO > 0
+	/* attach to radio(4) */
+	if (bktr->card.tuner->pllControl[3] != 0x00)
+		radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
+#endif
 }
 
 
@@ -1620,12 +1651,12 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
 	unit = UNIT(dev);
 
 	/* unit out of range */
-	if ((unit > bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
+	if ((unit >= bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
 		return(ENXIO);
 
 	bktr = bktr_cd.cd_devs[unit];
 
-	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
+	if (!(bktr->flags & METEOR_INITIALIZED)) /* device not found */
 		return(ENXIO);	
 
 	switch (FUNCTION(dev)) {
@@ -1755,5 +1786,62 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 	return(i386_btop(vtophys(bktr->bigbuf) + offset));
 #endif
 }
+
+#if NRADIO > 0
+int
+bktr_set_info(void *v, struct radio_info *ri)
+{
+	struct bktr_softc *sc = v;
+	u_int32_t freq;
+
+	if (ri->mute) {
+		/* mute the audio stream by switching the mux */
+		set_audio(sc, AUDIO_MUTE);
+
+		/* disable drivers on the GPIO port that controls the MUXes */
+		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) &
+		    ~sc->card.gpio_mux_bits);
+	} else {
+		/* enable drivers on the GPIO port that controls the MUXes */
+		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) |
+		    sc->card.gpio_mux_bits);
+
+		/* unmute the audio stream */
+		set_audio(sc, AUDIO_UNMUTE);
+		init_audio_devices(sc);
+	}
+
+	freq = ri->freq / 10;
+	set_audio(sc, AUDIO_INTERN); /* use internal audio */
+	temp_mute(sc, TRUE);
+	ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
+	temp_mute(sc, FALSE);
+
+	return (0);
+}
+
+int
+bktr_get_info(void *v, struct radio_info *ri)
+{
+	struct bktr_softc *sc = v;
+	struct TVTUNER *tv = &sc->tuner;
+	int status;
+
+	status = get_tuner_status(sc);
+
+#define STATUSBIT_STEREO 0x10
+	ri->mute = (int)sc->audio_mute_state ? 1 : 0;
+	ri->stereo = (status & STATUSBIT_STEREO) ? 1 : 0;
+	ri->caps = RADIO_CAPS_DETECT_STEREO | RADIO_CAPS_HW_AFC;
+	ri->freq = tv->frequency * 10;
+	ri->info = (status & STATUSBIT_STEREO) ? RADIO_INFO_STEREO : 0;
+#undef STATUSBIT_STEREO
+
+	/* not yet supported */
+	ri->volume = ri->rfreq = ri->lock = 0;
+
+	return (0);
+}
+#endif
 
 #endif /* __NetBSD__ || __OpenBSD__ */

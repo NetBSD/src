@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.4.1 2002/01/10 19:58:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * SBus front-end device driver for the HME ethernet device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.4.1 2002/01/10 19:58:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +101,7 @@ hmeattach_sbus(parent, self, aux)
 	struct sbusdev *sd = &hsc->hsc_sbus;
 	u_int32_t burst, sbusburst;
 	int node;
+
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
@@ -106,6 +110,9 @@ hmeattach_sbus(parent, self, aux)
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
+
+	printf(": Sun Happy Meal Ethernet (%s)\n",
+	    sa->sa_name);
 
 	if (sa->sa_nreg < 5) {
 		printf("%s: only %d register sets\n",
@@ -128,7 +135,7 @@ hmeattach_sbus(parent, self, aux)
 			 (bus_addr_t)sa->sa_reg[0].sbr_offset,
 			 (bus_size_t)sa->sa_reg[0].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_seb) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map SEB registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
@@ -136,7 +143,7 @@ hmeattach_sbus(parent, self, aux)
 			 (bus_addr_t)sa->sa_reg[1].sbr_offset,
 			 (bus_size_t)sa->sa_reg[1].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_etx) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map ETX registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
@@ -144,7 +151,7 @@ hmeattach_sbus(parent, self, aux)
 			 (bus_addr_t)sa->sa_reg[2].sbr_offset,
 			 (bus_size_t)sa->sa_reg[2].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_erx) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map ERX registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
@@ -152,7 +159,7 @@ hmeattach_sbus(parent, self, aux)
 			 (bus_addr_t)sa->sa_reg[3].sbr_offset,
 			 (bus_size_t)sa->sa_reg[3].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mac) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map MAC registers\n", self->dv_xname);
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
@@ -160,7 +167,7 @@ hmeattach_sbus(parent, self, aux)
 			 (bus_addr_t)sa->sa_reg[4].sbr_offset,
 			 (bus_size_t)sa->sa_reg[4].sbr_size,
 			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_mif) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map MIF registers\n", self->dv_xname);
 		return;
 	}
 
@@ -177,7 +184,7 @@ hmeattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node, "burst-sizes", -1);
+	burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.11 2000/03/30 13:10:06 augustss Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.11.8.1 2002/01/10 20:03:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.11.8.1 2002/01/10 20:03:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

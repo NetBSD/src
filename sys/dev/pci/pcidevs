@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.336.2.3 2001/09/13 01:15:59 thorpej Exp $
+$NetBSD: pcidevs,v 1.336.2.4 2002/01/10 19:56:56 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -501,6 +501,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
+vendor INTERSIL		0x1260	Intersil
 vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
@@ -515,6 +516,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor USR		0x12b9	US Robotics (3Com)
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
+vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
@@ -522,6 +524,7 @@ vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor LEVELONE		0x1394	Level One
+vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -538,12 +541,15 @@ vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	SiByte, Inc.
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
+vendor COREGA		0x15e8	Corega
+vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -552,6 +558,7 @@ vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor MEDIAQ		0x4d51	MediaQ Inc.
+vendor GUILLEMOT	0x5046	Guillemot
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
@@ -566,6 +573,7 @@ vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
 vendor NETMOS		0x9710	Netmos
 vendor CHRYSALIS	0xcafe	Chrysalis-ITS
+vendor MIDDLE_DIGITAL	0xdeaf	Middle Digital, Inc.
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
 
@@ -609,6 +617,7 @@ product 3DFX VOODOO	0x0001	Voodoo
 product 3DFX VOODOO2	0x0002	Voodoo2
 product 3DFX BANSHEE	0x0003	Banshee
 product 3DFX VOODOO3	0x0005	Voodoo3
+product 3DFX VOODOO5	0x0009	Voodoo 4/5
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	GLINT 300SX
@@ -789,7 +798,6 @@ product ATI MACH64_CT		0x4354	Mach64 CT
 product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI MACH64_VT		0x4654	Mach64 VT
-product ATI MACH64_B		0x4750	Mach64 B
 product ATI MACH64_GB		0x4742	Mach64 GB
 product ATI MACH64_GD		0x4744	Mach64 GD
 product ATI MACH64_GI		0x4749	Mach64 GI
@@ -958,7 +966,10 @@ product CMEDIA CMI8738B		0x0112	CMI8738B PCI Audio Device
 product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
 
 /* Cogent Data Technologies products */
-product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
+product COGENT EM110TX		0x1400	EX110TX PCI Fast Ethernet Adapter
+
+/* Cologne Chip Designs */
+product COLOGNECHIP HFC		0x2bd0	HFC-S
 
 /* COMPAL products */
 product	COMPAL 38W2		0x0011	COMPAL 38W2 OEM Notebook
@@ -972,6 +983,9 @@ product	COMPAQ QVISION_V0	0x3032	QVision
 product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
+product COMPAQ CSA5300		0x4070	Smart Array 5300
+product COMPAQ CSA5i		0x4080	Smart Array 5i
+product COMPAQ CSA532		0x4082	Smart Array 532
 product COMPAQ USB		0x7020	USB Controller
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
 product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
@@ -998,6 +1012,9 @@ product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
 product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
+/* Corega products */
+product COREGA CGWLPCIA11	0x0130	CGWLPCIA11
+
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 
@@ -1015,6 +1032,9 @@ product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
 product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Cyclone Microsystems products */
+product CYCLONE PCI_700		0x0700	IQ80310 (PCI-700)
 
 /* Cyrix (now National) products */
 product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
@@ -1100,6 +1120,9 @@ product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 /* ESS Technology Inc products */
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
+/* Eumitcom products */
+product EUMITCOM WL11000	0x1100	WL11000
+
 /* O2 Micro Inc */
 product O2MICRO  OZ6729 0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO  OZ6730 0x673A	OZ6730 PCI-PCMCIA Bridge
@@ -1141,6 +1164,13 @@ product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
 
+/* Global Sun Tech products */
+product GLOBALSUN GL24110P	0x1101	GL24110P
+product GLOBALSUN GL24110P_2	0x1102	GL24110P
+
+/* Guillemot products */
+product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
+
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
 
@@ -1164,7 +1194,7 @@ product IBM SERVERAID	0x002e	ServeRAID
 product IBM OLYMPIC	0x003e	Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
-product IBM 405GP	0x0156	IBM 405GP PCI Bridge
+product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
@@ -1186,17 +1216,22 @@ product IMS 8849	0x8849	8849
 product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
-product INTEL 80312		0x030d	80310 I/O Companion Chip
+product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
 product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
+product INTEL GDT_RAID1		0x0600	GDT RAID
+product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
-product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
-product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL 82542		0x1000	i82452 Gigabit Ethernet
+product INTEL 82543_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
+product INTEL 82543_SC		0x1003	i82453-SC Gigabit Ethernet
+product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
+product INTEL 82544_XT		0x1008	i82544 Gigabit Ethernet (1000BASE-T)
+product INTEL 82544_XF		0x1009	i82544 Gigabit Ethernet (1000BASE-X)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
@@ -1258,12 +1293,28 @@ product INTEL 82801BA_SMB	0x2443	82801BA SMBus Controller
 product INTEL 82801BA_USB2	0x2444	82801BA USB Controller
 product INTEL 82801BA_ACA	0x2445	82801BA AC-97 Audio Controller
 product INTEL 82801BA_ACM	0x2446	82801BA AC-97 PCI Modem
+product INTEL 82801BAM_HPB	0x2448	82801BAM Hub-to-PCI Bridge
 product INTEL 82801BA_LAN	0x2449	82801BA LAN Controller
 product	INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
+product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
+product INTEL 82801CA_LPC	0x2480	82801CA LPC Interface
+product INTEL 82801CA_USB	0x2482	82801CA/CAM USB Controller
+product INTEL 82801CA_SMB	0x2483	82801CA/CAM SMBus Controller
+product INTEL 82801CA_USBB	0x2484	82801CA/CAM USB Controller
+product INTEL 82801CA_AC	0x2485	82801CA/CAM AC'97 Audio Controller
+product INTEL 82801CA_MOD	0x2486	82801CA/CAM Modem
+product INTEL 82801CA_USBC	0x2487	82801CA/CAM USB Controller
+product INTEL 82801CA_ATAA	0x248A	82801CA UltraATA IDE Controller
+product INTEL 82801CA_ATAB	0x248B	82801CA UltraATA IDE Controller
+product INTEL 82801CAM_LPC	0x2482	82801CAM LPC Interface
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
+product INTEL 82830MP_IO1	0x3575	82830MP CPU to I/O Bridge
+product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
+product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
+product INTEL 82830MP_IO2	0x3578	82830MP CPU to I/O Bridge
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
 product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
@@ -1302,6 +1353,9 @@ product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
+
+/* Intersil products */
+product INTERSIL MINI_PCI_WLAN	0x3873	Intersil PRISM2.5 Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
@@ -1388,10 +1442,16 @@ product MATROX G100_AGP		0x1001	MGA G100 AGP
 /* MediaQ Inc. products */
 product MEDIAQ MQ200		0x0200	MQ200
 
+/* Middle Digital, Inc. products */
+product MIDDLE_DIGITAL WEASEL_VGA     0x9050	Weasel Virtual VGA
+product MIDDLE_DIGITAL WEASEL_SERIAL  0x9051	Weasel Serial Port
+product MIDDLE_DIGITAL WEASEL_CONTROL 0x9052	Weasel Control
+
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
+product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
@@ -1473,8 +1533,9 @@ product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
-product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
-product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR GA620		0x620a	GA620 1000baseSX Gigabit Ethernet
+product NETGEAR GA620T		0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR MA301		0x4100	MA301
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
@@ -1536,6 +1597,10 @@ product PCTECH RZ1000	0x1000	RZ1000
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
 
+/* Powerhouse Systems products */
+product	POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC system controller
+product POWERHOUSE POWERPRO	0x6073	PowerPro PowerPC system controller
+
 /* ProLAN products - XXX better descriptions */
 product PROLAN NE2KETHER 0x1980 Ethernet
 
@@ -1546,6 +1611,8 @@ product PROMISE ULTRA66	0x4d38	Ultra66/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100TX2 0x4d68 Ultra100TX2/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA100TX2v2 0x6268 Ultra100TX2v2/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA133 0x4d69 Ultra133/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
@@ -1558,10 +1625,14 @@ product QLOGIC ISP2100	0x2100	ISP2100
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
+/* Rainbow Technologies products */
+product	RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
+
 /* Realtek (Creative Labs?) products */
-product	REALTEK	RT8029	0x8029	8029 Ethernet
-product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
-product REALTEK RT8139	0x8139	8139 10/100 Ethernet
+product	REALTEK	RT8029		0x8029	8029 Ethernet
+product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
+product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
+product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge
@@ -1657,6 +1728,11 @@ product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
+product SIS 645			0x0645	SiS 645 Host Bridge
+product SIS 630			0x0630	SiS 630 Host Bridge
+product SIS 650			0x0650	SiS 650 Host Bridge
+product SIS 730			0x0730	SiS 730 Host Bridge
+product SIS 735			0x0735	SiS 735 Host Bridge
 product SIS 900			0x0900	SiS 900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
@@ -1664,6 +1740,7 @@ product SIS 530VGA		0x6306	530 GUI Accelerator+3D
 product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
 product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
+product SIS 7018		0x7018	SiS 7018 Sound
 
 /* Silicon Motion products */
 product SILMOTION LYNX_EMP	0x0712	Lynx EM+
@@ -1737,6 +1814,7 @@ product TI	PCI4450LYNX	0x8011	PCI4450 OCHI IEEE 1394 HOST Controller w/ PCI-Card
 product TI	PCI4410LYNX	0x8017	PCI4410 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
 product	TI	TSB12LV23	0x8019	TSB12LV23 OHCI IEEE 1394 Host Controller
 product	TI	TSB12LV26	0x8020	TSB12LV26 OHCI IEEE 1394 Host Controller
+product	TI	TSB43AA22	0x8021	TSB43AA22 OHCI IEEE 1394 Host Controller
 product TI	PCI4451LYNX	0x8027	PCI4451 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
@@ -1785,6 +1863,8 @@ product TRANSMETA SDRAM		0x0396	SDRAM Controller
 product TRANSMETA BIOS_SCRATCH	0x0397	BIOS Scratchpad
 
 /* Trident products */
+product TRIDENT 4DWAVE_DX	0x2000	4DWAVE DX
+product TRIDENT 4DWAVE_NX	0x2001	4DWAVE NX
 product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
@@ -1844,6 +1924,7 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
+product VIATECH VT6305		0x0130	VT6305 OCHI IEEE 1394 Controller
 product VIATECH VT8363_HB	0x0305	VT8363 KT133 System Controller
 product	VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 MVP4 System Controller
@@ -1868,9 +1949,13 @@ product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
+product VIATECH VT6306		0x3044	VT3606 OCHI IEEE 1394 Controller
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
+product VIATECH VT8233_AC97	0x3059	VT8233 AC-97 Audio Controller
 product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
+product VIATECH VT8233		0x3074	VT8233 PCI-ISA Bridge
+product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
@@ -1878,60 +1963,76 @@ product	VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 PCI-AGP
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) PCI-AGP
+product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP
 
 /* Vortex Computer Systems products */
-/* GDT_PCI */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050
 product VORTEX GDT_6000B	0x0001	GDT6000B/6010
-/* GDT_PCINEW */
 product VORTEX GDT_6x10		0x0002	GDT6110/6510
 product VORTEX GDT_6x20		0x0003	GDT6120/6520
 product VORTEX GDT_6530		0x0004	GDT6530
 product VORTEX GDT_6550		0x0005	GDT6550
-/* GDT_PCINEW, wide/ultra SCSI controllers */
 product VORTEX GDT_6x17		0x0006	GDT6117/6517
 product VORTEX GDT_6x27		0x0007	GDT6127/6527
 product VORTEX GDT_6537		0x0008	GDT6537
 product VORTEX GDT_6557		0x0009	GDT6557/6557-ECC
-/* GDT_PCINEW, wide SCSI controllers */
 product VORTEX GDT_6x15		0x000a	GDT6115/6515
 product VORTEX GDT_6x25		0x000b	GDT6125/6525
 product VORTEX GDT_6535		0x000c	GDT6535
 product VORTEX GDT_6555		0x000d	GDT6555/6555-ECC
-/* GDT_MPR, RP series, wide/ultra SCSI */
-product VORTEX GDT_6x17RP	0x0100	GDT6117RP/GDT6517RP
-product VORTEX GDT_6x27RP	0x0101	GDT6127RP/GDT6527RP
+product VORTEX GDT_6x17RP	0x0100	GDT6[15]17RP
+product VORTEX GDT_6x27RP	0x0101	GDT6[15]27RP
 product VORTEX GDT_6537RP	0x0102	GDT6537RP
 product VORTEX GDT_6557RP	0x0103	GDT6557RP
-/* GDT_MPR, RP series, narrow/ultra SCSI */
-product VORTEX GDT_6x11RP	0x0104	GDT6111RP/GDT6511RP
-product VORTEX GDT_6x21RP	0x0105	GDT6121RP/GDT6521RP
-/* GDT_MPR, RD series, wide/ultra SCSI */
-product VORTEX GDT_6x17RD	0x0110	GDT6117RD/GDT6517RD
-product VORTEX GDT_6x27RD	0x0111	GDT6127RD/GDT6527RD
+product VORTEX GDT_6x11RP	0x0104	GDT6[15]11RP
+product VORTEX GDT_6x21RP	0x0105	GDT6[15]21RP
+product VORTEX GDT_6x17RD	0x0110	GDT6[15]17RD
+product VORTEX GDT_6x27RD	0x0111	GDT6[5]127RD
 product VORTEX GDT_6537RD	0x0112	GDT6537RD
 product VORTEX GDT_6557RD	0x0113	GDT6557RD
-/* GDT_MPR, RD series, narrow/ultra SCSI */
-product VORTEX GDT_6x11RD	0x0114	GDT6111RD/GDT6511RD
-product VORTEX GDT_6x21RD	0x0115	GDT6121RD/GDT6521RD
-/* GDT_MPR, RD series, wide/ultra2 SCSI */
-product VORTEX GDT_6x18RD	0x0118	GDT6118RD/GDT6518RD/GDT6618RD
-product VORTEX GDT_6x28RD	0x0119	GDT6128RD/GDT6528RD/GDT6628RD
-product VORTEX GDT_6x38RD	0x011a	GDT6538RD/GDT6638RD
-product VORTEX GDT_6x58RD	0x011b	GDT6558RD/GDT6658RD
-/* GDT_MPR, RS series, wide/ultra2 SCSI */
+product VORTEX GDT_6x11RD	0x0114	GDT6[15]11RD
+product VORTEX GDT_6x21RD	0x0115	GDT6[15]21RD
+product VORTEX GDT_6x18RD	0x0118	GDT6[156]18RD
+product VORTEX GDT_6x28RD	0x0119	GDT6[156]28RD
+product VORTEX GDT_6x38RD	0x011a	GDT6[56]38RD
+product VORTEX GDT_6x58RD	0x011b	GDT6[56]58RD
+product VORTEX GDT_6x17RP2	0x0120	GDT6[15]17RP2
+product VORTEX GDT_6x27RP2	0x0121	GDT6[15]27RP2
+product VORTEX GDT_6537RP2	0x0123	GDT6537RP2
+product VORTEX GDT_6x11RP2	0x0124	GDT6[15]11RP2
+product	VORTEX GDT_6x21RP2	0x0125	GDT6[15]21RP2
+product VORTEX GDT_6x13RS	0x0136	GDT6513RS
+product VORTEX GDT_6x23RS	0x0137	GDT6523RS
 product VORTEX GDT_6518RS	0x0138	GDT6518RS
-/* GDT_MPR, RN series (64-bit PCI), wide/ultra2 SCSI */
-product VORTEX GDT_7x18RN	0x0168	GDT7118RN/GDT7518RN/GDT7618RN
-product VORTEX GDT_7x28RN	0x0169	GDT7128RN/GDT7528RN/GDT7628RN
-product VORTEX GDT_7x38RN	0x016a	GDT7538RN/GDT7638RN
-product VORTEX GDT_7x58RN	0x016b	GDT7558RN/GDT7658RN
-/* GDT_MPR, RD series, Fibre Channel */
-product VORTEX GDT_6x19RD	0x0210	GDT6519RD/GDT6619RD
-product VORTEX GDT_6x29RD	0x0211	GDT6529RD/GDT6629RD
-/* GDT_MPR, RN series (64-bit PCI), Fibre Channel */
-product VORTEX GDT_7x19RN	0x0260	GDT7519RN/GDT7619RN
-product VORTEX GDT_7x29RN	0x0261	GDT7529RN/GDT7629RN
+product VORTEX GDT_6x28RS	0x0139	GDT6x28RS
+product VORTEX GDT_6x38RS	0x013a	GDT6x38RS
+product VORTEX GDT_6x58RS	0x013b	GDT6x58RS
+product VORTEX GDT_6x33RS	0x013c	GDT6x33RS
+product VORTEX GDT_6x43RS	0x013d	GDT6x43RS
+product VORTEX GDT_6x53RS	0x013e	GDT6x53RS
+product VORTEX GDT_6x63RS	0x013f	GDT6x63RS
+product VORTEX GDT_7x13RN	0x0166	GDT7x13RN
+product VORTEX GDT_7x23RN	0x0167	GDT7x23RN
+product VORTEX GDT_7x18RN	0x0168	GDT7[156]18RN
+product VORTEX GDT_7x28RN	0x0169	GDT7[156]28RN
+product VORTEX GDT_7x38RN	0x016a	GDT7[56]38RN
+product VORTEX GDT_7x58RN	0x016b	GDT7[56]58RN
+product VORTEX GDT_7x43RN	0x016d	GDT7[56]43RN
+product VORTEX GDT_7x53RN	0x016E	GDT7x53RN
+product VORTEX GDT_7x63RN	0x016F	GDT7x63RN
+product VORTEX GDT_4x13RZ	0x01D6	GDT4x13RZ
+product VORTEX GDT_4x23RZ	0x01D7	GDT4x23RZ
+product VORTEX GDT_8x13RZ	0x01F6	GDT8x13RZ
+product VORTEX GDT_8x23RZ	0x01F7	GDT8x23RZ
+product VORTEX GDT_8x33RZ	0x01FC	GDT8x33RZ
+product VORTEX GDT_8x43RZ	0x01FD	GDT8x43RZ
+product VORTEX GDT_8x53RZ	0x01FE	GDT8x53RZ
+product VORTEX GDT_8x63RZ	0x01FF	GDT8x63RZ
+product VORTEX GDT_6x19RD	0x0210	GDT6[56]19RD
+product VORTEX GDT_6x29RD	0x0211	GDT6[56]29RD
+product VORTEX GDT_7x19RN	0x0260	GDT7[56]19RN
+product VORTEX GDT_7x29RN	0x0261	GDT7[56]29RN
+product VORTEX GDT_ICP		0x0300	ICP
 
 /* VLSI products */
 product VLSI 82C592	0x0005	82C592 CPU Bridge

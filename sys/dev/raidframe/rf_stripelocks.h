@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.3.22.1 2002/01/10 19:58:01 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,8 +45,8 @@
 #define _RF__RF_STRIPELOCKS_H_
 
 #include <sys/buf.h>
+#include <dev/raidframe/raidframevar.h>
 
-#include "rf_types.h"
 #include "rf_threadstuff.h"
 #include "rf_general.h"
 

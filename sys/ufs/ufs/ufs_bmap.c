@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.10 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.10.6.1 2002/01/10 20:05:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -40,6 +40,9 @@
  *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.10.6.1 2002/01/10 20:05:22 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -51,7 +54,6 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -113,7 +115,6 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct vnode *devvp;
 	struct indir a[NIADDR + 1], *xap;
 	ufs_daddr_t daddr;
 	long metalbn;
@@ -138,14 +139,9 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		maxrun = MAXBSIZE / mp->mnt_stat.f_iosize - 1;
 	}
 
-	xap = ap == NULL ? a : ap;
-	if (!nump)
-		nump = &num;
-	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
-
-	num = *nump;
-	if (num == 0) {
+	if (bn >= 0 && bn < NDADDR) {
+		if (nump != NULL)
+			*nump = 0;
 		*bnp = blkptrtodb(ump, ufs_rw32(ip->i_ffs_db[bn],
 		    UFS_MPNEEDSWAP(vp->v_mount)));
 		if (*bnp == 0)
@@ -161,12 +157,18 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		return (0);
 	}
 
+	xap = ap == NULL ? a : ap;
+	if (!nump)
+		nump = &num;
+	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
+		return (error);
+
+	num = *nump;
 
 	/* Get disk address out of indirect block array */
 	daddr = ufs_rw32(ip->i_ffs_ib[xap->in_off],
 	    UFS_MPNEEDSWAP(vp->v_mount));
 
-	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* 
 		 * Exit the loop if there is no disk address assigned yet and
@@ -256,10 +258,7 @@ ufs_getlbns(vp, bn, ap, nump)
 	realbn = bn;
 	if ((long)bn < 0)
 		bn = -(long)bn;
-
-	/* The first NDADDR blocks are direct blocks. */
-	if (bn < NDADDR)
-		return (0);
+	KASSERT(bn >= NDADDR);
 
 	/* 
 	 * Determine the number of levels of indirection.  After this loop
@@ -311,7 +310,7 @@ ufs_getlbns(vp, bn, ap, nump)
 		ap->in_exists = 0;
 		++ap;
 
-		metalbn -= -1 + off * blockcnt;
+		metalbn -= -1 + (off << lbc);
 	}
 	if (nump)
 		*nump = numlevels;

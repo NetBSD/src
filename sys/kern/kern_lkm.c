@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.56 2001/06/05 12:36:08 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,9 @@
  * blocked in, etc.  In the long term, a solution should be come up
  * with, but "not right now." -- cgd
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 

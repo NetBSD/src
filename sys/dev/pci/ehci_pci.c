@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.3 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.3.6.1 2002/01/10 19:56:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.3.6.1 2002/01/10 19:56:31 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -46,6 +49,7 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -54,6 +58,13 @@
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
+
+#ifdef EHCI_DEBUG
+#define DPRINTF(x)	if (ehcidebug) printf x
+extern int ehcidebug;
+#else
+#define DPRINTF(x)
+#endif
 
 int	ehci_pci_match(struct device *, struct cfdata *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
@@ -98,6 +109,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
+	int ncomp;
+	struct usb_pci *up;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -109,9 +122,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	/* bus_space_write_2(sc->sc.iot, sc->sc.ioh, EHCI_INTR, 0); */
-
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
@@ -120,6 +130,11 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
+
+	/* Disable interrupts, so we don't get any spurious ones. */
+	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
+	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
+	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -139,14 +154,11 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
-		break;
 	case PCI_USBREV_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_1_0;
-		break;
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_1_1;
-		break;
+		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		printf("%s: pre-2.0 USB rev\n", devname);
+		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
 		break;
@@ -165,6 +177,22 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		sprintf(sc->sc.sc_vendor, "vendor 0x%04x",
 			PCI_VENDOR(pa->pa_id));
 	
+	/*
+	 * Find companion controllers.  According to the spec they always
+	 * have lower function numbers so they should be enumerated already.
+	 */
+	ncomp = 0;
+	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
+		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
+			DPRINTF(("ehci_pci_attach: companion %s\n",
+				 USBDEVNAME(up->usb->bdev)));
+			sc->sc.sc_comps[ncomp++] = up->usb;
+			if (ncomp >= EHCI_COMPANION_MAX)
+				break;
+		}
+	}
+	sc->sc.sc_ncomp = ncomp;
+
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);

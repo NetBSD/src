@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.19 2001/05/25 04:06:17 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.19.2.1 2002/01/10 20:05:47 thorpej Exp $	 */
 
 /*
  *
@@ -34,12 +34,15 @@
  * from: Id: uvm_stat.c,v 1.1.2.3 1997/12/19 15:01:00 mrg Exp
  */
 
-#include "opt_uvmhist.h"
-#include "opt_ddb.h"
-
 /*
  * uvm_stat.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.19.2.1 2002/01/10 20:05:47 thorpej Exp $");
+
+#include "opt_uvmhist.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,8 +163,6 @@ restart:
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
 	}
-
-	/* done! */
 	splx(s);
 }
 
@@ -218,11 +219,14 @@ uvmexp_print(void (*pr)(const char *, ...))
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
 	    uvmexp.free);
-	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
-	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
-	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
-	(*pr)("  pages  %d anon, %d vnode, %d vtext\n",
-	    uvmexp.anonpages, uvmexp.vnodepages, uvmexp.vtextpages);
+	(*pr)("  min  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
+	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.fileminpct,
+	    uvmexp.filemin, uvmexp.execminpct, uvmexp.execmin);
+	(*pr)("  max  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
+	    uvmexp.anonmaxpct, uvmexp.anonmax, uvmexp.filemaxpct,
+	    uvmexp.filemax, uvmexp.execmaxpct, uvmexp.execmax);
+	(*pr)("  pages  %d anon, %d file, %d exec\n",
+	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
 	    uvmexp.wiredmax);
@@ -257,9 +261,5 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.nfreeanon);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
-
-	(*pr)("  kernel pointers:\n");
-	(*pr)("    objs(kern/kmem/mb)=%p/%p/%p\n", uvm.kernel_object,
-	    uvmexp.kmem_object, uvmexp.mb_object);
 }
 #endif

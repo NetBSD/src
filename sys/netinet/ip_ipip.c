@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.15 2001/04/13 23:30:23 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.15.2.1 2002/01/10 20:02:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  * See: RFC 2003.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_ipip.c,v 1.15.2.1 2002/01/10 20:02:51 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

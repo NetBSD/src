@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.9.8.2 2001/09/13 01:16:03 thorpej Exp $ */
+/* $NetBSD: tgavar.h,v 1.9.8.3 2002/01/10 19:57:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -109,7 +109,8 @@ struct tga_softc {
 #define	TGA_TYPE_T32_04		4	/* 32bpp, 4MB */
 #define	TGA_TYPE_T32_08		5	/* 32bpp, 8MB */
 #define	TGA_TYPE_T32_88		6	/* 32bpp, 16MB */
-#define	TGA_TYPE_UNKNOWN	7	/* unknown */
+#define	TGA_TYPE_POWERSTORM_4D20	7	/* unknown */
+#define	TGA_TYPE_UNKNOWN	8	/* unknown */
 
 #define	DEVICE_IS_TGA(class, id)					\
 	    (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\

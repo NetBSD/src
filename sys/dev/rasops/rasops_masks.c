@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_masks.c,v 1.6 2001/01/12 23:03:52 bjh21 Exp $	*/
+/* 	$NetBSD: rasops_masks.c,v 1.6.4.1 2002/01/10 19:58:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rasops_masks.c,v 1.6.4.1 2002/01/10 19:58:05 thorpej Exp $");
 
 #include "rasops_masks.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $	*/
+/*	$NetBSD: zlib.c,v 1.13.4.1 2002/01/10 20:02:23 thorpej Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.13 2001/02/05 10:42:43 chs Exp $
+ * $Id: zlib.c,v 1.13.4.1 2002/01/10 20:02:23 thorpej Exp $
  */
 
 /* 
@@ -20,6 +20,9 @@
  * This marker is used by the Linux installation script to determine
  * whether an up-to-date version of this file is already installed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.13.4.1 2002/01/10 20:02:23 thorpej Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -54,10 +57,6 @@
 #include <sys/time.h>
 #include <sys/systm.h>
 #  define HAVE_MEMCPY
-#  define memcpy(d, s, n)	bcopy((s), (d), (n))
-#  define memset(d, v, n)	bzero((d), (n))
-#  define memcmp		bcmp
-
 #else
 #if defined(__KERNEL__)
 /* Assume this is a Linux kernel */
@@ -662,7 +661,7 @@ typedef struct config_s {
    compress_func func;
 } config;
 
-const local config configuration_table[10] = {
+local const config configuration_table[10] = {
 /*      good lazy nice chain */
 /* 0 */ {0,    0,  0,    0, deflate_stored},  /* store only */
 /* 1 */ {4,    4,  8,    4, deflate_fast}, /* maximum speed, no lazy matches */

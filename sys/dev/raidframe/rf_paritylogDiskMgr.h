@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.h,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.h,v 1.3.22.1 2002/01/10 19:57:53 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _RF__RF_PARITYLOGDISKMGR_H_
 #define _RF__RF_PARITYLOGDISKMGR_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 int     rf_ShutdownLogging(RF_Raid_t * raidPtr);
 int     rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr);

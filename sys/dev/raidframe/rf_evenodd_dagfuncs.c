@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.4.2 2001/09/13 01:16:05 thorpej Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.4.3 2002/01/10 19:57:46 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,11 +30,15 @@
  * Code for RAID-EVENODD  architecture.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.7.4.3 2002/01/10 19:57:46 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if RF_INCLUDE_EVENODD > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagffrd.h"
@@ -45,7 +49,6 @@
 #include "rf_dagfuncs.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_configure.h"
 #include "rf_parityscan.h"
 #include "rf_evenodd.h"
 #include "rf_evenodd_dagfuncs.h"

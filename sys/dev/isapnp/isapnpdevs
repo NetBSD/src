@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.41.2.1 2001/08/03 04:13:12 lukem Exp $
+$NetBSD: isapnpdevs,v 1.41.2.2 2002/01/10 19:55:53 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ driver	aha	Adaptec SCSI
 driver	aic	Adaptec SCSI
 driver	an	Aironet 802.11
 driver	com	National Semiconductor Serial
+driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
 driver	ep	3Com 3CXXX Ethernet
 driver	ess	ESS Audio Drive
 driver	joy	Generic Joystick
@@ -88,6 +89,7 @@ devlogic	com	USR0004		0	USR Sportster 14.4k
 devlogic	com	USR0006		0	USR Sportster 33.6k
 devlogic	com	USR2070		0	USR Sportster 56k
 devlogic	com	USR3031		0	USR 56k Faxmodem
+devlogic 	com	USR3090		0	USR 56K Voice INT
 devlogic	com	USR9190		0	USR 56k Voice INT
 devlogic	com	ZTIF761		0	Zoom ComStar 33.6
 devlogic	com	CIR3000		0	Cirrus Logic V43 
@@ -99,6 +101,11 @@ devlogic	com	GVC0505		0	GVC 56k Faxmodem
 devlogic	com	IOD0081		0	I-O DATA IFML-560
 devcompat	com	PNP0500		0	Generic 8250/16450
 devcompat	com	PNP0501		0	Generic 16550A
+
+/*
+ * cs
+ */
+devlogic	cs	IBM1010		0	IBM EtherJet ISA
 
 /*
  * ep
