@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1996/06/17 15:40:56 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -775,14 +775,11 @@ static void reboot_sync()
 	vfs_shutdown();
 }
 
-__dead void reboot2 __P((int, char *))
-    __attribute__((__noreturn__));
-
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
 __dead void
-reboot2(howto, user_boot_string)
+boot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -852,20 +849,6 @@ reboot2(howto, user_boot_string)
 	sun3_mon_reboot(bs);
 	for (;;) ;
 	/*NOTREACHED*/
-}
-
-/*
- * BSD reboot system call
- * XXX - Should be named: cpu_reboot maybe? -gwr
- * XXX - It would be nice to allow a second argument
- * that specifies a machine-dependent boot string that
- * is passed to the boot program if RB_STRING is set.
- */
-__dead void
-boot(howto)
-	int howto;
-{
-	reboot2(howto, NULL);
 }
 
 /*

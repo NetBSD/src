@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 1996/06/03 21:53:38 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.9 1996/08/09 10:30:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -104,8 +104,8 @@
 #define ACTION_KSHELL 0x04	/* Call kshell */
 #define ACTION_DUMP   0x08	/* Dump the system to the dump dev */
 
-#define HALT_ACTION	ACTION_HALT | ACTION_KSHELL	/* boot(RB_HALT) */
-#define REBOOT_ACTION	ACTION_REBOOT			/* boot(0) */
+#define HALT_ACTION	ACTION_HALT | ACTION_KSHELL	/* boot(RB_HALT,NULL)*/
+#define REBOOT_ACTION	ACTION_REBOOT			/* boot(0, NULL) */
 #define PANIC_ACTION	ACTION_HALT | ACTION_KSHELL	/* panic() */
 
 BootConfig bootconfig;		/* Boot config storage */
@@ -256,7 +256,7 @@ halt()
 
 
 /*
- * void boot(int howto)
+ * void boot(int howto, char *bootstr)
  *
  * Reboots the system
  *
@@ -278,8 +278,9 @@ extern u_int arm700bugcount;
 extern int ioctlconsolebug;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	int howto;
+	char *bootstr;
 {
 	int loop;
 	int action;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1996/05/20 00:40:18 chuck Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1110,8 +1110,9 @@ sys_sigreturn(p, v, retval)
 int	waittime = -1;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)

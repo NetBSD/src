@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.14 1995/04/26 23:30:08 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.15 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,7 +56,7 @@ static int
 no_mountroot()
 {
 	printf("swapgeneric: configuration error!\n");
-	boot(RB_HALT);
+	boot(RB_HALT, NULL);
 }
 
 #ifdef	FFS

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 1996/08/06 04:03:33 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -783,8 +783,9 @@ int     waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 	extern u_long MacOSROMBase;
 
