@@ -69,7 +69,7 @@ If you are installing onto a single root partition, proceed to the
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
-	base11, netbsd, and any other packages you wish to install at
+	base12, netbsd, and any other packages you wish to install at
 	this time (see the contents section for information about what's
 	in each package).  The installer will print out the filename of
 	each file as it is installed, and will take quite some time to
@@ -97,12 +97,9 @@ option in the "File" menu, then quit the application and restart.  Due
 to a long-standing bug, the preferences will not be saved unless you
 quit.
 
-If the system does not come up:
-	* Check the "diagnostic gray bars" check-box.
-	* Count the number of "gray bars" you see.
-	* Send mail to alice@cray-ymp.acm.stuorg.vt.edu describing
-	  your software, your hardware, and the number of bars that
-	  you saw.
+If the system does not come up, send mail to scottr@netbsd.org describing
+your software, your hardware, and as complete a description of the
+problem as you can.
 
 If the system does come up, congratulations, you have successfully
 installed NetBSD 1.2.  When you reboot into NetBSD, you should log
