@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.11.2.3 1993/11/10 19:57:06 mycroft Exp $
+ *	$Id: vnode.h,v 1.11.2.4 1993/11/26 12:01:23 deraadt Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -66,7 +66,7 @@ enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_ISOFS,
  * is used rather than a union structure to cut down on the
  * number of header files that must be included.
  */
-#define	VN_MAXPRIVATE	192
+#define	VN_MAXPRIVATE	roundup(192, sizeof(quad_t))
 
 struct vnode {
 	u_long		v_flag;			/* vnode flags (see below) */
@@ -93,7 +93,7 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 	enum vtagtype	v_tag;			/* type of underlying data */
-	char v_data[VN_MAXPRIVATE];		/* private data for fs */
+	quad_t v_data[VN_MAXPRIVATE/sizeof(quad_t)]; /* private data for fs */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
