@@ -1,7 +1,5 @@
-/*	$NetBSD: smb_subr.h,v 1.1 2000/12/07 03:48:11 deberg Exp $	*/
-
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,46 +28,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD: src/sys/netsmb/smb_subr.h,v 1.4 2001/12/10 08:09:48 obrien Exp $
  */
-
 #ifndef _NETSMB_SMB_SUBR_H_
 #define _NETSMB_SMB_SUBR_H_
+
+#ifndef _KERNEL
+#error "This file shouldn't be included from userland programs"
+#endif
 
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_SMBTEMP);
 #endif
 
-#if __FreeBSD_version > 500000
 #define	FB_CURRENT
-#else
-#  if __FreeBSD_version > 400000
-#  define	FB_RELENG4
-#  else
-#    if __FreeBSD_version > 300000
-#    define	FB_RELENG3
-#    else
-#      if __NetBSD_Version__ > 104000000
-#    define	FB_RELENG3
-#      define   NB_REL14
-#      else
-#      error "Unsupported version of FreeBSD or NetBSD"
-#      endif
-#    endif
-#  endif
-#endif
 
-#define	SMB_CS_NONE	0x0000
-#define	SMB_CS_UPPER	0x0001		/* convert passed string to upper case */
-#define	SMB_CS_LOWER	0x0002		/* convert passed string to lower case */
+#define SMBERROR(format, args...) printf("%s: "format, __func__ ,## args)
+#define SMBPANIC(format, args...) printf("%s: "format, __func__ ,## args)
 
-#define SMBERROR(format, args...) printf("%s: "format, __FUNCTION__ ,## args)
-#define SMBPANIC(format, args...) printf("%s: "format, __FUNCTION__ ,## args)
-
-/*  #define SMB_SOCKET_DEBUG */
 #ifdef SMB_SOCKET_DEBUG
-#define SMBSDEBUG(format, args...) printf("%s: "format, __FUNCTION__ ,## args)
+#define SMBSDEBUG(format, args...) printf("%s: "format, __func__ ,## args)
 #else
 #define SMBSDEBUG(format, args...)
+#endif
+
+#ifdef SMB_IOD_DEBUG
+#define SMBIODEBUG(format, args...) printf("%s: "format, __func__ ,## args)
+#else
+#define SMBIODEBUG(format, args...)
 #endif
 
 #ifdef SMB_SOCKETDATA_DEBUG
@@ -78,27 +65,27 @@ void m_dumpm(struct mbuf *m);
 #define m_dumpm(m)
 #endif
 
-#ifndef NetBSD
-#if __FreeBSD_version > 400009
 #define	SMB_SIGMASK(set) 						\
 	(SIGISMEMBER(set, SIGINT) || SIGISMEMBER(set, SIGTERM) ||	\
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
 #define	smb_suser(cred)	suser_xxx(cred, NULL, 0)
-#else
-#define	SMB_SIGMASK	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGKILL)| \
-			 sigmask(SIGHUP)|sigmask(SIGQUIT))
 
-#define	smb_suser(cred)	suser((cred), NULL)
-#endif
-#else
-#define	SMB_SIGMASK(set) 						\
-	(sigismember(set, SIGINT) || sigismember(set, SIGTERM) ||	\
-	 sigismember(set, SIGHUP) || sigismember(set, SIGKILL) ||	\
-	 sigismember(set, SIGQUIT))
-#define	smb_suser(cred)	suser((cred), NULL)
-#endif
+/*
+ * Compatibility wrappers for simple locks
+ */
+
+#include <sys/mutex.h>
+
+#define	smb_slock			mtx
+#define	smb_sl_init(mtx, desc)		mtx_init(mtx, desc, MTX_DEF)
+#define	smb_sl_destroy(mtx)		mtx_destroy(mtx)
+#define	smb_sl_lock(mtx)		mtx_lock(mtx)
+#define	smb_sl_unlock(mtx)		mtx_unlock(mtx)
+
+
+#define SMB_STRFREE(p)	do { if (p) smb_strfree(p); } while(0)
 
 /*
  * The simple try/catch/finally interface.
@@ -125,7 +112,7 @@ void m_dumpm(struct mbuf *m);
 				_catchlab:				\
 
 #define ithrow(t)	do {						\
-				if ((_tval = (int)t) != 0)		\
+				if ((_tval = (int)(t)) != 0)		\
 					goto _catchlab;			\
 			} while (0)
 
@@ -143,17 +130,17 @@ typedef	smb_unichar	*smb_uniptr;
  * Crediantials of user/process being processing in the connection procedures
  */
 struct smb_cred {
-	struct proc *	scr_p;
+	struct thread *	scr_td;
 	struct ucred *	scr_cred;
 };
 
 extern smb_unichar smb_unieol;
 
-struct smb_conn;
-struct mbdata;
+struct mbchain;
+struct smb_vc;
 struct smb_rq;
 
-void smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred);
+void smb_makescred(struct smb_cred *scred, struct thread *td, struct ucred *cred);
 int  smb_proc_intr(struct proc *);
 char *smb_strdup(const char *s);
 void *smb_memdup(const void *umem, int len);
@@ -162,16 +149,16 @@ void *smb_memdupin(void *umem, int len);
 void smb_strtouni(u_int16_t *dst, const char *src);
 void smb_strfree(char *s);
 void smb_memfree(void *s);
-int  smb_encrypt(u_char *apwd, u_char *C8, u_char *RN);
-int  smb_ntencrypt(u_char *apwd, u_char *C8, u_char *RN);
+void *smb_zmalloc(unsigned long size, struct malloc_type *type, int flags);
+
+int  smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN);
+int  smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN);
 int  smb_maperror(int eclass, int eno);
-int  smb_put_dmem(struct mbdata *mbp, struct smb_conn *scp,
+int  smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp,
 	const char *src, int len, int caseopt);
-int  smb_put_dstring(struct mbdata *mbp, struct smb_conn *scp,
+int  smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp,
 	const char *src, int caseopt);
 int  smb_put_string(struct smb_rq *rqp, const char *src);
 int  smb_put_asunistring(struct smb_rq *rqp, const char *src);
-
-struct sockaddr *dup_sockaddr(struct sockaddr *sa, int i);
 
 #endif /* !_NETSMB_SMB_SUBR_H_ */
