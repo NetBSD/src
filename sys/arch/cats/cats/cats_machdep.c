@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.22 2002/02/22 04:49:20 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.23 2002/02/22 15:57:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -483,9 +483,9 @@ initarm(bootargs)
 		} else {
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
 			    PT_SIZE / NBPG);
-			++loop1;
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
+			++loop1;
 		}
 	}
 
