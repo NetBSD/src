@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.27.2.1 2004/06/30 21:12:35 jdc Exp $
+#	$NetBSD: GENERICSBC,v 1.27.2.2 2004/07/02 17:40:50 he Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.27.2.1 $"
+#ident 		"GENERICSBC-$Revision: 1.27.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -36,6 +36,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
 
