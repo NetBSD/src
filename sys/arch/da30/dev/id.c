@@ -1,4 +1,4 @@
-/*	$NetBSD: id.c,v 1.4 1994/10/26 02:33:19 cgd Exp $	*/
+/*	$NetBSD: id.c,v 1.5 1995/04/10 08:13:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -1097,30 +1097,6 @@ idclose(dev, flags, fmt)
 #endif
     /*if (du->dk_open == 0) du->dk_state = CLOSED ; does not work */
     return(0);
-}
-
-int
-idread(dev, uio, flags)
-    dev_t dev;
-    struct uio *uio;
-    int flags;
-{
-    struct idsoftc *dv;
-
-    dv = (struct idsoftc *) idcd.cd_devs[idunit(dev)];
-    return raw_disk_io(dev, uio, dv->id_drive.dk_dd.d_secsize);
-}
-
-int
-idwrite(dev, uio, flags)
-    dev_t dev;
-    struct uio *uio;
-    int flags;
-{
-    struct idsoftc *dv;
-
-    dv = (struct idsoftc *) idcd.cd_devs[idunit(dev)];
-    return raw_disk_io(dev, uio, dv->id_drive.dk_dd.d_secsize);
 }
 
 idioctl(dev, cmd, addr, flag, p)
