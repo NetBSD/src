@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.5 2001/12/28 05:46:56 nathanw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.6 2003/01/14 21:02:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_AT		28
 #define	_REG_GP		29
 #define	_REG_SP		30
+#define	_REG_UNIQUE	31
 #define	_REG_PC		32
 #define	_REG_PS		33
 
@@ -97,6 +98,9 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+
+/* Machine-dependent uc_flags */
+#define _UC_UNIQUE	0x20	/* valid process-unique value in _REG_UNIQUE */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 
