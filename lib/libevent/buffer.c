@@ -1,3 +1,4 @@
+/*	$NetBSD: buffer.c,v 1.2 2004/12/06 13:16:36 wiz Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
