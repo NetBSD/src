@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2003/10/22 21:09:09 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13 2004/02/23 01:06:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2003/10/22 21:09:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2004/02/23 01:06:53 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,8 +183,10 @@ db_nextframe(
 			}
 		}
 
+#ifdef TRACE_DEBUG
 		printf("unknown instruction in prologue\n");
 		db_disasm(pc - 2, 0);
+#endif
 	}
 
  out:
