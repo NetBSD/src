@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.14 2002/10/01 17:06:53 wiz Exp $
+.\"	$NetBSD: regex.3,v 1.15 2003/02/05 23:13:07 kleink Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -52,11 +52,11 @@
 .Sh SYNOPSIS
 .Fd #include \*[Lt]regex.h\*[Gt]
 .Ft int
-.Fn regcomp "regex_t *preg" "const char *pattern" "int cflags"
+.Fn regcomp "regex_t * restrict preg" "const char * restrict pattern" "int cflags"
 .Ft int
-.Fn regexec "const regex_t *preg" "const char *string" "size_t nmatch" "regmatch_t pmatch[]" "int eflags"
+.Fn regexec "const regex_t * restrict preg" "const char * restrict string" "size_t nmatch" "regmatch_t pmatch[]" "int eflags"
 .Ft size_t
-.Fn regerror "int errcode" "const regex_t *preg" "char *errbuf" "size_t errbuf_size"
+.Fn regerror "int errcode" "const regex_t * restrict preg" "char * restrict errbuf" "size_t errbuf_size"
 .Ft void
 .Fn regfree "regex_t *preg"
 .Sh DESCRIPTION
