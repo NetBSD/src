@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 2002/03/16 16:55:58 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 2002/04/23 06:48:47 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,6 +102,7 @@ cdev_decl(arcbios_tty);
 cdev_decl(clockctl);
 
 cdev_decl(irix_kmem);
+cdev_decl(irix_usema);
 
 struct bdevsw bdevsw[] =
 {
@@ -205,6 +206,7 @@ struct cdevsw cdevsw[] =
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 60: clockctl pseudo device */
 #ifdef COMPAT_IRIX
 	cdev_irix_kmem_init(1,irix_kmem),	/* 61: IRIX kmem emulator */
+	cdev_irix_usema_init(1,irix_usema),	/* 62: IRIX usema emulator */
 #else
 	cdev_notdef(),			/* 61: */
 #endif
