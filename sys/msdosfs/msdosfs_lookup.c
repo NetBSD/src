@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.49 2000/03/27 09:44:45 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.50 2000/08/11 19:41:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -200,8 +200,7 @@ msdosfs_lookup(v)
 		slotcount = 0;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_lookup(): dos version of filename %.*s, ",
-	    (int)cnp->cn_namelen, dosfilename);
+	printf("msdosfs_lookup(): dos filename: %s\n", dosfilename);
 #endif
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
