@@ -1,12 +1,10 @@
-# $NetBSD: ALPHA,v 1.110 2000/01/19 06:09:03 cjs Exp $
+# $NetBSD: ALPHA,v 1.111 2000/01/19 13:53:47 cjs Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
-
-#makeoptions	DEBUG="-g"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -33,8 +31,9 @@ options 	KTRACE			# System call tracing support
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DEBUG			# Expensive debugging checks/support
 options 	KMEMSTATS		# Collect kmem usage statistics
-options 	DDB			# Kernel Dynamic Debugger
+options 	DDB			# kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#makeoptions	DEBUG="-g"
 
 # File systems
 file-system	FFS		# Fast file system
@@ -43,6 +42,7 @@ file-system	LFS		# Log-structured file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	ADOSFS		# AmigaDOS-compatible file system
 file-system	MSDOSFS		# MS-DOS-compatible file system
+file-system	NTFS		# Windows/NT file system (experimental)
 file-system	EXT2FS		# Linux ext2 file system
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	NULLFS		# Null file system layer
@@ -57,9 +57,27 @@ file-system	UNION		# union file system
 options 	QUOTA		# User and group quotas for the FFS
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
+
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
 
 # Networking options
 options 	INET		# Internet protocol suite
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite
 options 	CCITT,LLC,HDLC	# CCITT protocol suite
@@ -68,7 +86,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options 	TCP_COMPAT_42
@@ -105,13 +122,13 @@ options 	LKM
 
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
-#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
-options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
-#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
+options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -189,12 +206,15 @@ pci*	at	tsp?
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
+#options 	ADW_WDTR_DISABLE		# 	disable WDTR
+#options 	ADW_SDTR_DISABLE		# 	disable SDTR
+#options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
-dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
-#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
+dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
+eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
@@ -206,28 +226,29 @@ fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
+ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 rl*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 sv*	at	pci? dev ? function ?		# S3 SonicVibes
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
-ti*	at	pci? dev ? function ?		# Aleton Tigon Gig-E
+ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
 #options 	TLP_MATCH_21040
 #options 	TLP_MATCH_21041
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
-vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
-ohci*	at	pci? dev ? function ?		# USB Open Host Controller
+vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
-#audio*	at	eap?
+audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 
@@ -277,9 +298,15 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
+we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
+we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #audio*	at	wss?
 #midi*	at	wss?
+sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
+#sb*	at	isapnp?
+audio*	at	sb?
+#adv*	at	isa? port ? irq ? drq ?		# AdvanSys APB-514[02]
 aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
 bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
@@ -396,6 +423,10 @@ pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4
 pseudo-device	vnd		4
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
