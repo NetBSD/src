@@ -1,5 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.15 1999/01/14 09:03:37 castor Exp $	*/
-/*	$Id: setjmp.h,v 1.15 1999/01/14 09:03:37 castor Exp $ */
+/*	$NetBSD: setjmp.h,v 1.16 1999/01/14 09:05:46 castor Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
