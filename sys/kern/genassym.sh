@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.6 1997/03/13 22:47:20 gwr Exp $
+#	$NetBSD: genassym.sh,v 1.7 1997/06/25 03:09:06 thorpej Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -73,6 +73,22 @@ $0 ~ /^elif[ \t]/ ||
 $0 ~ /^endif/ {
 	printf("#%s\n", $0);
 	next;
+}
+
+/^struct[ \t]/ {
+	structname = $2;
+	$0 = "define " structname "_SIZEOF sizeof(struct " structname ")";
+	/* fall through */
+}
+
+/^member[ \t]/ {
+	$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
+	/* fall through */
+}
+
+/^export[ \t]/ {
+	$0 = "define " $2 " " $2;
+	/* fall through */
 }
 
 /^define[ \t]/ {
