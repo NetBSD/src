@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2000/03/13 08:21:36 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2000/03/16 18:44:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.14 2000/03/13 08:21:36 itohy Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2000/03/16 18:44:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ main(argc, argv)
 static void
 usage()
 {
+
 	(void)fprintf(stderr,
 "usage: find [-H | -L | -P] [-Xdhsx] [-f file] [file ...] [expression]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.32 1999/11/09 15:06:34 drochner Exp $	*/
+/*	$NetBSD: function.c,v 1.33 2000/03/16 18:44:29 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.32 1999/11/09 15:06:34 drochner Exp $");
+__RCSID("$NetBSD: function.c,v 1.33 2000/03/16 18:44:29 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,6 +311,7 @@ f_always_true(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (1);
 }
  
@@ -605,6 +606,7 @@ f_group(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (entry->fts_statp->st_gid == plan->g_data);
 }
  
@@ -644,6 +646,7 @@ f_inum(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	COMPARE(entry->fts_statp->st_ino, plan->i_data);
 }
  
@@ -673,6 +676,7 @@ f_links(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	COMPARE(entry->fts_statp->st_nlink, plan->l_data);
 }
  
@@ -702,6 +706,7 @@ f_ls(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	printlong(entry->fts_path, entry->fts_accpath, entry->fts_statp);
 	return (1);
 }
@@ -711,6 +716,7 @@ c_ls(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
     
@@ -795,6 +801,7 @@ f_name(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (!fnmatch(plan->c_data, entry->fts_name, 0));
 }
  
@@ -824,6 +831,7 @@ f_newer(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (entry->fts_statp->st_mtime > plan->t_data);
 }
  
@@ -907,6 +915,7 @@ f_path(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (!fnmatch(plan->c_data, entry->fts_path, 0));
 }
  
@@ -984,6 +993,7 @@ f_print(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	(void)printf("%s\n", entry->fts_path);
 	return (1);
 }
@@ -993,6 +1003,7 @@ f_print0(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	(void)fputs(entry->fts_path, stdout);
 	(void)fputc('\0', stdout);
 	return (1);
@@ -1014,7 +1025,7 @@ f_printx(plan, entry)
 	}
 
 	fputc('\n', stdout);
-	return 1;
+	return (1);
 }
  
 PLAN *
@@ -1022,6 +1033,7 @@ c_print(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	isoutput = 1;
 
 	return (palloc(N_PRINT, f_print));
@@ -1032,6 +1044,7 @@ c_print0(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	isoutput = 1;
 
 	return (palloc(N_PRINT0, f_print0));
@@ -1042,9 +1055,10 @@ c_printx(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	isoutput = 1;
 
-	return palloc(N_PRINTX, f_printx);
+	return (palloc(N_PRINTX, f_printx));
 }
  
 /*
@@ -1069,6 +1083,7 @@ c_prune(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	return (palloc(N_PRUNE, f_prune));
 }
 
@@ -1190,6 +1205,7 @@ f_type(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return ((entry->fts_statp->st_mode & S_IFMT) == plan->m_data);
 }
  
@@ -1262,6 +1278,7 @@ f_user(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
+
 	return (entry->fts_statp->st_uid == plan->u_data);
 }
  
@@ -1336,6 +1353,7 @@ c_openparen(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	return (palloc(N_OPENPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
  
@@ -1344,6 +1362,7 @@ c_closeparen(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	return (palloc(N_CLOSEPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
  
@@ -1371,6 +1390,7 @@ c_not(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	return (palloc(N_NOT, f_not));
 }
  
@@ -1405,6 +1425,7 @@ c_or(argvp, isok)
 	char ***argvp;
 	int isok;
 {
+
 	return (palloc(N_OR, f_or));
 }
 
@@ -1413,7 +1434,8 @@ c_null(argvp, isok)
 	char ***argvp;
 	int isok;
 {
-	return NULL;
+
+	return (NULL);
 }
 
 static PLAN *
