@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.12 1999/12/05 22:22:05 jdolecek Exp $	*/
+/*	$NetBSD: pac.c,v 1.13 2000/04/27 09:43:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.12 1999/12/05 22:22:05 jdolecek Exp $");
+__RCSID("$NetBSD: pac.c,v 1.13 2000/04/27 09:43:38 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,14 +121,14 @@ main(argc, argv)
 			/*
 			 * Printer name.
 			 */
-			printer = cp;
+			printer = optarg;
 			continue;
 
 		case 'p':
 			/*
 			 * get the price.
 			 */
-			price = atof(cp);
+			price = atof(optarg);
 			pflag = 1;
 			continue;
 
