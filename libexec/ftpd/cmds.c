@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.2 2000/06/16 23:17:41 explorer Exp $	*/
+/*	$NetBSD: cmds.c,v 1.3 2000/06/19 15:15:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.2 2000/06/16 23:17:41 explorer Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.3 2000/06/19 15:15:03 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,15 +133,13 @@ typedef struct {
 } factelem;
 
 static void	ack(const char *);
+static void	base64_encode(const char *, size_t, char *, int);
 static void	fact_type(const char *, FILE *, factelem *);
 static void	fact_size(const char *, FILE *, factelem *);
 static void	fact_modify(const char *, FILE *, factelem *);
 static void	fact_perm(const char *, FILE *, factelem *);
 static void	fact_unique(const char *, FILE *, factelem *);
-static void	fact_unix_group(const char *, FILE *, factelem *);
-static void	fact_unix_mode(const char *, FILE *, factelem *);
-static void	fact_unix_owner(const char *, FILE *, factelem *);
-static int	matchgroup(gid_t, gid_t *, int);
+static int	matchgroup(gid_t);
 static void	mlsname(FILE *, factelem *);
 static void	replydirname(const char *, const char *);
 
@@ -154,13 +152,11 @@ struct ftpfact {
 
 struct ftpfact facttab[] = {
 	{ "Type",	1, fact_type },
+#define	FACT_TYPE 0
 	{ "Size",	1, fact_size },
 	{ "Modify",	1, fact_modify },
 	{ "Perm",	1, fact_perm },
 	{ "Unique",	1, fact_unique },
-	{ "UNIX.mode",	1, fact_unix_mode },
-	{ "UNIX.owner",	0, fact_unix_owner },
-	{ "UNIX.group",	0, fact_unix_group },
 	/* "Create" */
 	/* "Lang" */
 	/* "Media-Type" */
@@ -199,16 +195,16 @@ feat(void)
 {
 	int i;
 
-	lreply(211, "Features supported");
-	lreply(-1,  " MDTM");
-	lreply(-2,  " MLST ");
+	reply(-211, "Features supported");
+	cprintf(stdout, " MDTM\r\n");
+	cprintf(stdout, " MLST ");
 	for (i = 0; facttab[i].name; i++)
-		lreply(-2, "%s%s;", facttab[i].name,
+		cprintf(stdout, "%s%s;", facttab[i].name,
 		    facttab[i].enabled ? "*" : "");
-	lreply(-1, "");
-	lreply(-1,  " REST STREAM");
-	lreply(-1,  " SIZE");
-	lreply(-1,  " TVFS");
+	cprintf(stdout, "\r\n");
+	cprintf(stdout, " REST STREAM\r\n");
+	cprintf(stdout, " SIZE\r\n");
+	cprintf(stdout, " TVFS\r\n");
 	reply(211,  "End");
 }
 
@@ -228,13 +224,15 @@ makedir(const char *name)
 void
 mlsd(const char *path)
 {
-	FILE *dout;
-	DIR *dirp;
-	struct dirent *dp;
-	struct stat sb, pdirstat;
-	char name[MAXPATHLEN];
+	struct dirent	*dp;
+	struct stat	 sb, pdirstat;
 	factelem f;
+	FILE	*dout;
+	DIR	*dirp;
+	char	name[MAXPATHLEN];
+	int	hastypefact;
 
+	hastypefact = facttab[FACT_TYPE].enabled;
 	if (path == NULL)
 		path = ".";
 	if (stat(path, &pdirstat) == -1) {
@@ -244,53 +242,48 @@ mlsd(const char *path)
 	}
 	if (! S_ISDIR(pdirstat.st_mode)) {
 		errno = ENOTDIR;
-		goto mlsdperror;
+		perror_reply(501, path);
+		return;
 	}
-#ifdef DEBUG		/* send mlsd to ctrl connection not data connection */
-	dout = stdout;
-	lreply(250, "MLSD %s", path);
-#else
 	dout = dataconn("MLSD", (off_t)-1, "w");
 	if (dout == NULL)
 		return;
-#endif
 
 	if ((dirp = opendir(path)) == NULL)
 		goto mlsdperror;
 	f.stat = &sb;
 	while ((dp = readdir(dirp)) != NULL) {
 		snprintf(name, sizeof(name), "%s/%s", path, dp->d_name);
-/* printf("got >%s< >%s<\n", dp->d_name, name); */
+		if (ISDOTDIR(dp->d_name)) {	/* special case curdir: */
+			if (! hastypefact)
+				continue;
+			f.pdirstat = NULL;	/*   require stat of parent */
+			f.display = path;	/*   set name to real name */
+			f.iscurdir = 1;		/*   flag name is curdir */
+		} else {
+			if (ISDOTDOTDIR(dp->d_name)) {
+				if (! hastypefact)
+					continue;
+				f.pdirstat = NULL;
+			} else
+				f.pdirstat = &pdirstat;	/* cache parent stat */
+			f.display = dp->d_name;
+			f.iscurdir = 0;
+		}
 		if (stat(name, &sb) == -1)
 			continue;
 		f.path = name;
-		if (ISDOTDIR(dp->d_name)) {	/* special case curdir: */
-			f.display = path;	/*   set name to real name */
-			f.iscurdir = 1;		/*   flag name is curdir */
-			f.pdirstat = NULL;	/*   require stat of parent */
-		} else {
-			f.display = dp->d_name;
-			f.iscurdir = 0;
-			if (ISDOTDOTDIR(dp->d_name))
-				f.pdirstat = NULL;
-			else
-				f.pdirstat = &pdirstat;	/* cache parent stat */
-		}
 		mlsname(dout, &f);
 	}
 	(void)closedir(dirp);
 
-#ifdef DEBUG
-	reply(250, "End");
-#else
 	if (ferror(dout) != 0)
 		perror_reply(550, "Data connection");
 	else
 		reply(226, "MLSD complete.");
-	(void) fclose(dout);
+	closedataconn(dout);
 	total_xfers_out++;
 	total_xfers++;
-#endif
 }
 
 void
@@ -305,12 +298,13 @@ mlst(const char *path)
 		perror_reply(550, path);
 		return;
 	}
-	lreply(250, "MLST %s", path);
+	reply(-250, "MLST %s", path);
 	f.path = path;
 	f.display = path;
 	f.stat = &sb;
 	f.pdirstat = NULL;
 	f.iscurdir = 0;
+	CPUTC(' ', stdout);
 	mlsname(stdout, &f);
 	reply(250, "End");
 }
@@ -341,37 +335,47 @@ opts(const char *command)
 
 			/* special case: MLST */
 	if (strcasecmp(command, "MLST") == 0) {
+		int	 enabled[sizeof(facttab) / sizeof(struct ftpfact)];
 		int	 i, onedone;
+		size_t	 len;
 		char	*p;
 
-		for (i = 0; facttab[i].name; i++)
-			facttab[i].enabled = 0;
+		for (i = 0; i < sizeof(enabled) / sizeof(int); i++)
+			enabled[i] = 0;
 		if (ep == NULL || *ep == '\0')
 			goto displaymlstopts;
 
 				/* don't like spaces, and need trailing ; */
-		if (strchr(ep, ' ') != NULL || ep[strlen(ep) - 1] != ';') {
+		len = strlen(ep);
+		if (strchr(ep, ' ') != NULL || ep[len - 1] != ';') {
+ badmlstopt:
 			reply(501, "Invalid MLST options");
 			return;
 		}
+		ep[len - 1] = '\0';
 		while ((p = strsep(&ep, ";")) != NULL) {
+			if (*p == '\0')
+				goto badmlstopt;
 			for (i = 0; facttab[i].name; i++)
 				if (strcasecmp(p, facttab[i].name) == 0) {
-					facttab[i].enabled = 1;
+					enabled[i] = 1;
 					break;
 				}
 		}
 
  displaymlstopts:
-		lreply(-2, "200 MLST OPTS");
+		for (i = 0; facttab[i].name; i++)
+			facttab[i].enabled = enabled[i];
+		cprintf(stdout, "200 MLST OPTS");
 		for (i = onedone = 0; facttab[i].name; i++) {
 			if (facttab[i].enabled) {
-				lreply(-2, "%s%s;", onedone ? "" : " ",
+				cprintf(stdout, "%s%s;", onedone ? "" : " ",
 				    facttab[i].name);
 				onedone++;
 			}
 		}
-		lreply(-1, "");
+		cprintf(stdout, "\r\n");
+		fflush(stdout);
 		return;
 	}
 
@@ -488,7 +492,8 @@ statfilecmd(const char *filename)
 
 	argv[2] = (char *)filename;
 	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
-	lreply(211, "status of %s:", filename);
+	reply(-211, "status of %s:", filename);
+/* XXX: use fgetln() or fparseln() here? */
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
 			if (ferror(stdout)){
@@ -502,13 +507,9 @@ statfilecmd(const char *filename)
 				(void) ftpd_pclose(fin);
 				return;
 			}
-			(void) putchar('\r');
-			total_bytes++;
-			total_bytes_out++;
+			CPUTC('\r', stdout);
 		}
-		(void) putchar(c);
-		total_bytes++;
-		total_bytes_out++;
+		CPUTC(c, stdout);
 	}
 	(void) ftpd_pclose(fin);
 	reply(211, "End of Status");
@@ -523,13 +524,40 @@ ack(const char *s)
 	reply(250, "%s command successful.", s);
 }
 
+/*
+ * Encode len bytes starting at clear using base64 encoding into encoded,
+ * which should be at least ((len + 2) * 4 / 3 + 1) in size.
+ * If nulterm is non-zero, terminate with \0 else pad to len with `='.
+ */
+static void
+base64_encode(const char *clear, size_t len, char *encoded, int nulterm)
+{
+	static const char enc[] =
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	char	*cp;
+	int	 i;
+
+	cp = encoded;
+	for (i = 0; i < len; i += 3) {
+		*(cp++) = enc[((clear[i + 0] >> 2))];
+		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
+			    | ((clear[i + 1] >> 4) & 0x0f)];
+		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
+			    | ((clear[i + 2] >> 6) & 0x03)];
+		*(cp++) = enc[((clear[i + 2]     ) & 0x3f)];
+	}
+	*cp = '\0';
+	while (i-- > len)
+		*(--cp) = nulterm ? '\0' : '=';
+}
+
 static void
 fact_modify(const char *fact, FILE *fd, factelem *fe)
 {
 	struct tm *t;
 
 	t = gmtime(&(fe->stat->st_mtime));
-	fprintf(fd, "%s=%04d%02d%02d%02d%02d%02d;", fact,
+	cprintf(fd, "%s=%04d%02d%02d%02d%02d%02d;", fact,
 	    TM_YEAR_BASE + t->tm_year,
 	    t->tm_mon+1, t->tm_mday,
 	    t->tm_hour, t->tm_min, t->tm_sec);
@@ -538,16 +566,14 @@ fact_modify(const char *fact, FILE *fd, factelem *fe)
 static void
 fact_perm(const char *fact, FILE *fd, factelem *fe)
 {
-	int		rok, wok, xok, pdirwok, ngid;
+	int		rok, wok, xok, pdirwok;
 	struct stat	*pdir;
-	gid_t		gids[NGROUPS_MAX];
 
-	ngid = getgroups(sizeof(gids), gids);
 	if (fe->stat->st_uid == geteuid()) {
 		rok = ((fe->stat->st_mode & S_IRUSR) != 0);
 		wok = ((fe->stat->st_mode & S_IWUSR) != 0);
 		xok = ((fe->stat->st_mode & S_IXUSR) != 0);
-	} else if (matchgroup(fe->stat->st_gid, gids, ngid)) {
+	} else if (matchgroup(fe->stat->st_gid)) {
 		rok = ((fe->stat->st_mode & S_IRGRP) != 0);
 		wok = ((fe->stat->st_mode & S_IWGRP) != 0);
 		xok = ((fe->stat->st_mode & S_IXGRP) != 0);
@@ -557,7 +583,7 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		xok = ((fe->stat->st_mode & S_IXOTH) != 0);
 	}
 
-	fprintf(fd, "%s=", fact);
+	cprintf(fd, "%s=", fact);
 
 			/*
 			 * if parent info not provided, look it up, but
@@ -571,7 +597,6 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 		struct stat	dir;
 
 		len = strlcpy(realdir, fe->path, sizeof(realdir));
-/* printf("[path=%s]", fe->path); */
 		if (len < sizeof(realdir) - 4) {
 			if (S_ISDIR(fe->stat->st_mode))
 				strlcat(realdir, "/..", sizeof(realdir));
@@ -585,7 +610,6 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 				} else
 					strlcpy(realdir, "..", sizeof(realdir));
 			}
-/* printf("[real=%s]", realdir); */
 			if (stat(realdir, &dir) == 0)
 				pdir = &dir;
 		}
@@ -594,22 +618,19 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 	if (pdir != NULL) {
 		if (pdir->st_uid == geteuid())
 			pdirwok = ((pdir->st_mode & S_IWUSR) != 0);
-		else if (matchgroup(pdir->st_gid, gids, ngid))
+		else if (matchgroup(pdir->st_gid))
 			pdirwok = ((pdir->st_mode & S_IWGRP) != 0);
 		else
 			pdirwok = ((pdir->st_mode & S_IWOTH) != 0);
 	}
 
-/* printf("[euid=%d,r%d,w%d,x%d,pw%d]", geteuid(), rok, wok, xok, pdirwok);
-*/
-
 			/* 'a': can APPE to file */
 	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
-		fputs("a", fd);
+		CPUTC('a', fd);
 
 			/* 'c': can create or append to files in directory */
 	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
-		fputs("c", fd);
+		CPUTC('c', fd);
 
 			/* 'd': can delete file or directory */
 	if (pdirwok && curclass.modify) {
@@ -634,38 +655,38 @@ fact_perm(const char *fact, FILE *fd, factelem *fe)
 			}
 		}
 		if (candel)
-			fputs("d", fd);
+			CPUTC('d', fd);
 	}
 
 			/* 'e': can enter directory */
 	if (xok && S_ISDIR(fe->stat->st_mode))
-		fputs("e", fd);
+		CPUTC('e', fd);
 
 			/* 'f': can rename file or directory */
 	if (pdirwok && curclass.modify)
-		fputs("f", fd);
+		CPUTC('f', fd);
 
 			/* 'l': can list directory */
 	if (rok && xok && S_ISDIR(fe->stat->st_mode))
-		fputs("l", fd);
+		CPUTC('l', fd);
 
 			/* 'm': can create directory */
 	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
-		fputs("m", fd);
+		CPUTC('m', fd);
 
 			/* 'p': can remove files in directory */
 	if (wok && curclass.modify && S_ISDIR(fe->stat->st_mode))
-		fputs("p", fd);
+		CPUTC('p', fd);
 
 			/* 'r': can RETR file */
 	if (rok && S_ISREG(fe->stat->st_mode))
-		fputs("r", fd);
+		CPUTC('r', fd);
 
 			/* 'w': can STOR file */
 	if (wok && curclass.upload && S_ISREG(fe->stat->st_mode))
-		fputs("w", fd);
+		CPUTC('w', fd);
 
-	fputc(';', fd);
+	CPUTC(';', fd);
 }
 
 static void
@@ -673,82 +694,65 @@ fact_size(const char *fact, FILE *fd, factelem *fe)
 {
 
 	if (S_ISREG(fe->stat->st_mode))
-		fprintf(fd, "%s=%lld;", fact, (long long)fe->stat->st_size);
+		cprintf(fd, "%s=%lld;", fact, (long long)fe->stat->st_size);
 }
 
 static void
 fact_type(const char *fact, FILE *fd, factelem *fe)
 {
 
-	fprintf(fd, "%s=", fact);
+	cprintf(fd, "%s=", fact);
 	switch (fe->stat->st_mode & S_IFMT) {
 	case S_IFDIR:
 		if (fe->iscurdir || ISDOTDIR(fe->display))
-			fputs("cdir", fd);
+			cprintf(fd, "cdir");
 		else if (ISDOTDOTDIR(fe->display))
-			fputs("pdir", fd);
+			cprintf(fd, "pdir");
 		else
-			fputs("dir", fd);
+			cprintf(fd, "dir");
 		break;
 	case S_IFREG:
-		fputs("file", fd);
+		cprintf(fd, "file");
 		break;
 	case S_IFIFO:
-		fputs("OS.unix=fifo", fd);
+		cprintf(fd, "OS.unix=fifo");
 		break;
-	case S_IFLNK:
-		fputs("OS.unix=slink", fd);
+	case S_IFLNK:		/* XXX: probably a NO-OP with stat() */
+		cprintf(fd, "OS.unix=slink");
 		break;
 	case S_IFSOCK:
-		fputs("OS.unix=socket", fd);
+		cprintf(fd, "OS.unix=socket");
 		break;
 	case S_IFBLK:
 	case S_IFCHR:
-		fprintf(fd, "OS.unix=%s-%d/%d",
+		cprintf(fd, "OS.unix=%s-%d/%d",
 		    S_ISBLK(fe->stat->st_mode) ? "blk" : "chr",
 		    major(fe->stat->st_rdev), minor(fe->stat->st_rdev));
 		break;
 	default:
-		fprintf(fd, "OS.unix=UNKNOWN(0%o)", fe->stat->st_mode & S_IFMT);
+		cprintf(fd, "OS.unix=UNKNOWN(0%o)", fe->stat->st_mode & S_IFMT);
 		break;
 	}
-	fputc(';', fd);
+	CPUTC(';', fd);
 }
 
 static void
 fact_unique(const char *fact, FILE *fd, factelem *fe)
 {
+	char obuf[(MAX(sizeof(dev_t),sizeof(ino_t)) + 2) * 4 / 3 + 2];
 
-	fprintf(fd, "%s=%04x%08x;", fact, fe->stat->st_dev, fe->stat->st_ino);
-}
-
-static void
-fact_unix_mode(const char *fact, FILE *fd, factelem *fe)
-{
-
-	fprintf(fd, "%s=%03o;", fact, fe->stat->st_mode & ACCESSPERMS);
-}
-
-static void
-fact_unix_owner(const char *fact, FILE *fd, factelem *fe)
-{
-
-	fprintf(fd, "%s=%d;", fact, (int)fe->stat->st_uid);
-}
-
-static void
-fact_unix_group(const char *fact, FILE *fd, factelem *fe)
-{
-
-	fprintf(fd, "%s=%d;", fact, (int)fe->stat->st_gid);
+	base64_encode((char *)&(fe->stat->st_dev), sizeof(dev_t), obuf, 1);
+	cprintf(fd, "%s=%s", fact, obuf);
+	base64_encode((char *)&(fe->stat->st_ino), sizeof(ino_t), obuf, 1);
+	cprintf(fd, "%s;", obuf);
 }
 
 static int
-matchgroup(gid_t gid, gid_t *gidlist, int ngids)
+matchgroup(gid_t gid)
 {
 	int	i;
 
-	for (i = 0; i < ngids; i++)
+	for (i = 0; i < gidcount; i++)
 		if (gid == gidlist[i])
 			return(1);
 	return (0);
@@ -759,12 +763,11 @@ mlsname(FILE *fp, factelem *fe)
 {
 	int i;
 
-	fputs(" ", fp);
 	for (i = 0; facttab[i].name; i++) {
 		if (facttab[i].enabled)
 			(facttab[i].display)(facttab[i].name, fp, fe);
 	}
-	fprintf(fp, " %s\r\n", fe->display);
+	cprintf(fp, " %s\r\n", fe->display);
 }
 
 static void

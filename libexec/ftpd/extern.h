@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2000/06/14 13:44:22 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2000/06/19 15:15:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,9 +101,11 @@
  */
 
 void	blkfree(char **);
+void	closedataconn(FILE *);
 char   *conffilename(const char *);
 char  **copyblk(char **);
 void	count_users(void);
+void	cprintf(FILE *, const char *, ...);
 void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
@@ -120,7 +122,6 @@ void	logcmd(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
 void	logwtmp(const char *, const char *, const char *);
 struct tab *lookup(struct tab *, const char *);
-void	lreply(int, const char *, ...);
 void	makedir(const char *);
 void	mlsd(const char *);
 void	mlst(const char *);
@@ -231,6 +232,8 @@ GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
 GLOBAL	jmp_buf		errcatch;
 GLOBAL	int		form;
+GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
+GLOBAL	gid_t		gidlist[NGROUPS_MAX];
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
 #ifdef KERBEROS5
@@ -267,6 +270,10 @@ extern	struct tab	cmdtab[];
 
 #define CMD_IMPLEMENTED(x)	((x)->flags != 0)
 #define CMD_HAS_OPTIONS(x)	((x)->flags == 2)
+
+#define	CPUTC(c, f)	do { \
+				putc(c, f); total_bytes++; total_bytes_out++; \
+			} while (0);
 
 #define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
 		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \

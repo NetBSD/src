@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.47 2000/06/14 13:44:23 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.47 2000/06/14 13:44:23 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.48 2000/06/19 15:15:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,12 +225,12 @@ cmd
 	| QUIT CRLF
 		{
 			if (logged_in) {
-				lreply(221, "");
-				lreply(0,
+				reply(-221, "");
+				reply(0,
 	    "Data traffic for this session was %qd byte%s in %qd file%s.",
 				    (qdfmt_t)total_data, PLURAL(total_data),
 				    (qdfmt_t)total_files, PLURAL(total_files));
-				lreply(0,
+				reply(0,
 	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
 				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
 				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
@@ -1015,7 +1015,7 @@ cmd
 				free($4);
 		}
 		
-	| MLST CRLF
+	| MLST check_login CRLF
 		{
 			mlst(NULL);
 		}
@@ -1028,7 +1028,7 @@ cmd
 				free($4);
 		}
 		
-	| MLSD CRLF
+	| MLSD check_login CRLF
 		{
 			mlsd(NULL);
 		}
@@ -1502,7 +1502,6 @@ lookup(struct tab *p, const char *cmd)
 char *
 getline(char *s, int n, FILE *iop)
 {
-	off_t b;
 	int c;
 	char *cs;
 
@@ -1535,9 +1534,7 @@ getline(char *s, int n, FILE *iop)
 				c = getc(iop);
 				total_bytes++;
 				total_bytes_in++;
-				b = printf("%c%c%c", IAC, DONT, 0377&c);
-				total_bytes += b;
-				total_bytes_out += b;
+				cprintf(stdout, "%c%c%c", IAC, DONT, 0377&c);
 				(void) fflush(stdout);
 				continue;
 			case DO:
@@ -1545,9 +1542,7 @@ getline(char *s, int n, FILE *iop)
 				c = getc(iop);
 				total_bytes++;
 				total_bytes_in++;
-				b = printf("%c%c%c", IAC, WONT, 0377&c);
-				total_bytes += b;
-				total_bytes_out += b;
+				cprintf(stdout, "%c%c%c", IAC, WONT, 0377&c);
 				(void) fflush(stdout);
 				continue;
 			case IAC:
@@ -1872,41 +1867,35 @@ help(struct tab *ctab, const char *s)
 		int i, j, w;
 		int columns, lines;
 
-		lreply(214, "");
-		lreply(0, "The following %scommands are recognized.", type);
-		lreply(0, "(`-' = not implemented, `+' = supports options)");
+		reply(-214, "");
+		reply(0, "The following %scommands are recognized.", type);
+		reply(0, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
 		lines = (NCMDS + columns - 1) / columns;
 		for (i = 0; i < lines; i++) {
-			lreply(-2, "    ");
+			cprintf(stdout, "    ");
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
-				lreply(-2, "%s", c->name);
+				cprintf(stdout, "%s", c->name);
 				w = strlen(c->name);
 				if (! CMD_IMPLEMENTED(c)) {
-					putchar('-');
-					total_bytes++;
-					total_bytes_out++;
+					CPUTC('-', stdout);
 					w++;
 				}
 				if (CMD_HAS_OPTIONS(c)) {
-					putchar('+');
-					total_bytes++;
-					total_bytes_out++;
+					CPUTC('+', stdout);
 					w++;
 				}
 				if (c + lines >= &ctab[NCMDS])
 					break;
 				while (w < width) {
-					putchar(' ');
-					total_bytes++;
-					total_bytes_out++;
+					CPUTC(' ', stdout);
 					w++;
 				}
 			}
-			lreply(-2, "\r\n");
+			cprintf(stdout, "\r\n");
 		}
 		(void) fflush(stdout);
 		reply(214, "Direct comments to ftp-bugs@%s.", hostname);
