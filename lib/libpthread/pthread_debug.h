@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.5 2003/02/15 04:33:45 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.6 2003/07/04 15:16:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,11 +126,11 @@ extern int pthread__dbg; /* Set by libpthread_dbg */
 #define PTHREADD_ADD(x) (pthread__debug_counters[(x)]++)
 
 #define DPRINTF(x) pthread__debuglog_printf x
-#else /* PTHREAD_DEBUG */
+#else /* PTHREAD__DEBUG */
 
 #define PTHREADD_ADD(x)
 #define DPRINTF(x)
 
-#endif /* PTHREAD_DEBUG */
+#endif /* PTHREAD__DEBUG */
 
 #endif /* _LIB_PTHREAD_DEBUG_H */
