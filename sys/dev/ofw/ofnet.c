@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.22 2001/10/20 08:19:47 billc Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.23 2001/11/13 07:26:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.23 2001/11/13 07:26:28 lukem Exp $");
+
 #include "ofnet.h"
 #include "opt_inet.h"
 #include "bpfilter.h"

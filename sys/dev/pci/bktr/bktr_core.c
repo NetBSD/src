@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.19 2001/09/28 12:36:48 chs Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.20 2001/11/13 07:29:36 lukem Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -95,6 +95,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.20 2001/11/13 07:29:36 lukem Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.6 2000/03/13 23:52:36 soren Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.7 2001/11/13 07:26:29 lukem Exp $	*/
 
 /*
  * Copyright 1998
@@ -32,6 +32,9 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.7 2001/11/13 07:26:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

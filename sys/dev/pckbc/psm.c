@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.12 2001/09/13 14:16:12 tshiozak Exp $ */
+/* $NetBSD: psm.c,v 1.13 2001/11/13 07:24:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -22,6 +22,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.13 2001/11/13 07:24:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_tuner.c,v 1.8 2001/01/18 20:28:24 jdolecek Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.9 2001/11/13 07:29:37 lukem Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp */
 
@@ -45,7 +45,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.9 2001/11/13 07:29:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.17 2001/11/08 17:05:42 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.18 2001/11/13 07:26:33 lukem Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -47,6 +47,9 @@
  * 1) Promiscuous mode doesn't work on at least the CE2.
  * 2) Slow. ~450KB/s.  Memory access would be better.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.18 2001/11/13 07:26:33 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
