@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.6 1999/03/15 12:51:49 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.7 1999/04/26 07:16:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.6 1999/03/15 12:51:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.7 1999/04/26 07:16:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ dec_5100_init()
 void
 dec_5100_os_init()
 {
+	extern void mips_set_wbflush __P((void (*)(void)));
+
 	/* set correct wbflush routine for this motherboard */
 	mips_set_wbflush(kn230_wbflush);
 
