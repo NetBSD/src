@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.17 2001/09/30 18:50:25 chs Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.18 2001/11/12 23:04:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -35,6 +35,9 @@
  *
  *	filecore_vfsops.c	1.1	1998/6/26
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.18 2001/11/12 23:04:11 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

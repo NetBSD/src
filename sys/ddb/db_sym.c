@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.27 2001/11/08 15:00:17 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.28 2001/11/12 22:54:06 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.28 2001/11/12 22:54:06 lukem Exp $");
 
 #include "opt_ddbparam.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.17 2000/12/20 15:42:37 jhawk Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.18 2001/11/12 22:54:07 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,10 @@
 /*
  * Trap entry point to kernel debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.18 2001/11/12 22:54:07 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 
