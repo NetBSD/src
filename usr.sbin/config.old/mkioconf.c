@@ -625,7 +625,11 @@ i386_ioconf()
   fprintf(fp, "#include \"sys/param.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "\n");
+  fprintf(fp, "#ifdef __STDC__\n");
   fprintf(fp, "#define VEC(s)	X##s\n");
+  fprintf(fp, "#else\n");
+  fprintf(fp, "#define VEC(s)	X/**/s\n");
+  fprintf(fp, "#endif\n");
   fprintf(fp, "#define C (caddr_t)\n\n");
   /*
    * First print the isa initialization structures
