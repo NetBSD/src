@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.2 2000/04/16 09:55:39 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.3 2000/06/04 02:14:42 matt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -247,7 +247,7 @@ niattach(parent, self, aux)
 	sc->sc_ioh = ba->ba_ioh;
 	sc->sc_dmat = ba->ba_dmat;
 
-	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, niintr, sc);
+	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, niintr, sc, NULL);
 
 	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb, 
 	    (paddr_t *)&sc->sc_pgvppqb);
