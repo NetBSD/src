@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.13 2001/11/27 04:10:23 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.14 2001/11/30 00:46:36 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -950,7 +950,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	if (received_signal) {
 		if (in_non_blocking_mode)	/* XXX */
 			leave_non_blocking();
-		fatal("Killed by signal %d.", received_signal);
+		fatal("Killed by signal %d.", (int) received_signal);
 	}
 
 	/*
