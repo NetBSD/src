@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/03/13 19:36:45 eeh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/03/15 20:59:23 eeh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
+#include <sys/properties.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -151,6 +152,7 @@ struct mem_region availmemr[MEMREGIONS];	/* Who's supposed to set these up? */
 
 int fake_mapiodev = 1;
 struct board_cfg_data board_data;
+struct propdb *board_info = NULL;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
@@ -471,6 +473,26 @@ cpu_startup(void)
 	 * Set up the buffers.
 	 */
 	bufinit();
+
+	/*
+	 * Set up the board properties database.
+	 */
+	if (!(board_info = propdb_create("board info")))
+		panic("Cannot create board info database");
+
+	if (board_info_set("mem-size", &board_data.mem_size, 
+		sizeof(&board_data.mem_size), PROP_CONST, 0))
+		panic("setting mem-size");
+	if (board_info_set("emac-mac-addr", &board_data.mac_address_local, 
+		sizeof(&board_data.mac_address_local), PROP_CONST, 0))
+		panic("setting emac-mac-addr");
+	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
+		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
+		panic("setting sip0-mac-addr");
+	if (board_info_set("processor-frequency", &board_data.processor_speed, 
+		sizeof(&board_data.processor_speed), PROP_CONST, 0))
+		panic("setting processor-frequency");
+
 }
 
 

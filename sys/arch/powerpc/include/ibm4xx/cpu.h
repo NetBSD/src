@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2002/03/13 23:59:58 eeh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2002/03/15 20:59:24 eeh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,5 +76,12 @@ struct board_cfg_data {
 
 extern struct board_cfg_data board_data;
 
+/* Board info database stuff */
+extern struct propdb *board_info;
+
+#define	board_info_set(n, v, l, f, w)	\
+	prop_set(board_info, 0, (n), (v), (l), (f), (w))
+#define	board_info_get(n, v, l)		\
+	prop_get(board_info, 0, (n), (v), (l), NULL)
 
 #endif	/* _IBM4XX_CPU_H_ */
