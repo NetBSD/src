@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/03/24 22:02:51 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/04/07 07:48:53 lukem Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
 .PATH:	${.CURDIR}/../man
@@ -14,6 +14,7 @@ FILES=ndc
 FILESMODE=${BINMODE}
 
 ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
+	rm ndc
 	sed -e "s|%PIDDIR%|${PIDDIR}|" \
 	    -e "s|%PS%|${PS}|" \
 	    -e "s|%DESTSBIN%|${BINDIR}|" \
