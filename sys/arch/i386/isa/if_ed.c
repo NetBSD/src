@@ -20,70 +20,9 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.15 1994/02/02 09:47:31 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.16 1994/02/02 10:44:25 mycroft Exp $
  */
 
-/*
- * Modification history
- *
- * Revision 2.11  1993/10/23  04:21:03  davidg
- * Novell probe changed to be invasive because of too many complaints
- * about some clone boards not being reset properly and thus not
- * found on a warmboot. Yuck.
- *
- * Revision 2.10  1993/10/23  04:07:12  davidg
- * increment output errors if the device times out (done via watchdog)
- *
- * Revision 2.9  1993/10/23  04:01:45  davidg
- * increment input error counter if a packet with a bad length is
- * detected.
- *
- * Revision 2.8  1993/10/15  10:59:56  davidg
- * increase maximum time to wait for transmit DMA to complete to 120us.
- * call ed_reset() if the time limit is reached instead of trying
- * to abort the remote DMA.
- *
- * Revision 2.7  1993/10/15  10:49:10  davidg
- * minor change to way the mbuf pointer temp variable is assigned in
- * ed_start (slightly improves code readability)
- *
- * Revision 2.6  93/10/02  01:12:20  davidg
- * use ETHER_ADDR_LEN in NE probe rather than '6'.
- * 
- * Revision 2.5  93/09/30  17:44:14  davidg
- * patch from vak@zebub.msk.su (Serge V.Vakulenko) to work around
- * a hardware bug in cheap WD clone boards where the PROM checksum
- * byte is always zero
- * 
- * Revision 2.4  93/09/29  21:24:30  davidg
- * Added software NIC reset in NE probe to work around a problem
- * with some NE boards where the 8390 doesn't reset properly on
- * power-up. Remove initialization of IMR/ISR in the NE probe
- * because this is inherent in the reset.
- * 
- * Revision 2.3  93/09/29  15:10:16  davidg
- * credit Charles Hannum
- * 
- * Revision 2.2  93/09/29  13:23:25  davidg
- * added no multi-buffer override for 3c503
- * 
- * Revision 2.1  93/09/29  12:32:12  davidg
- * changed multi-buffer count for 16bit 3c503's from 5 to 2 after
- * noticing that the transmitter becomes idle because of so many
- * packets to load.
- * 
- * Revision 2.0  93/09/29  00:00:19  davidg
- * many changes, rewrites, additions, etc. Now supports the
- * NE1000, NE2000, WD8003, WD8013, 3C503, 16bit 3C503, and
- * a variety of similar clones. 16bit 3c503 now does multi
- * transmit buffers. Nearly every part of the driver has
- * changed in some way since rev 1.30.
- * 
- * Revision 1.1  93/06/14  22:21:24  davidg
- * Beta release of device driver for SMC/WD80x3 and 3C503 ethernet boards.
- * 
- */
- 
 #include "ed.h"
 #include "bpfilter.h"
 
@@ -155,6 +94,7 @@ struct	ed_softc {
  */
 	u_char	wd_laar_proto;
 	u_char	isa16bit;	/* width of access to card 0=8 or 1=16 */
+	u_char	is790;		/* set by probe if NIC is a 790 */
 
 	caddr_t	bpf;		/* BPF "magic cookie" */
 	caddr_t	mem_start;	/* NIC memory start address */
@@ -224,7 +164,18 @@ static u_short ed_intr_mask[] = {
 	IRQ15,
 	IRQ4
 };
-	
+
+static u_short ed_790_intr_mask[] = {
+	0,
+	IRQ9,
+	IRQ3,
+	IRQ4,
+	IRQ5,
+	IRQ10,
+	IRQ11,
+	IRQ15
+};
+
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
@@ -304,6 +255,12 @@ ed_probe_WD80x3(ia, sc)
 
 	sc->asic_addr = ia->ia_iobase;
 	sc->nic_addr = sc->asic_addr + ED_WD_NIC_OFFSET;
+	sc->is790 = 0;
+
+#ifdef TOSH_ETHER
+	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_POW);
+	delay(10000);
+#endif
 
 	/*
 	 * Attempt to do a checksum over the station address PROM.
@@ -326,7 +283,11 @@ ed_probe_WD80x3(ia, sc)
 	}
 
 	/* reset card to force it into a known state. */
+#ifdef TOSH_ETHER
+	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_RST | ED_WD_MSR_POW);
+#else
 	outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_RST);
+#endif
 	delay(100);
 	outb(sc->asic_addr + ED_WD_MSR, inb(sc->asic_addr + ED_WD_MSR) & ~ED_WD_MSR_RST);
 	/* wait in the case this card is reading it's EEROM */
@@ -351,6 +312,11 @@ ed_probe_WD80x3(ia, sc)
 		break;
 	case ED_TYPE_WD8013EBT:
 		sc->type_str = "WD8013EBT";
+		memsize = 16384;
+		isa16bit = 1;
+		break;
+	case ED_TYPE_WD8013W:
+		sc->type_str = "WD8013W";
 		memsize = 16384;
 		isa16bit = 1;
 		break;
@@ -381,6 +347,30 @@ ed_probe_WD80x3(ia, sc)
 		memsize = 16384;
 		isa16bit = 1;
 		break;
+	case ED_TYPE_SMC8216C:
+		sc->type_str = "SMC8216/SMC8216C";
+		memsize = 16384;
+		isa16bit = 1;
+		sc->is790 = 1;
+		break;
+	case ED_TYPE_SMC8216T:
+		sc->type_str = "SMC8216T";
+		memsize = 16384;
+		isa16bit = 1;
+		sc->is790 = 1;
+		break;
+#ifdef TOSH_ETHER
+	case ED_TYPE_TOSHIBA1:
+		sc->type_str = "Toshiba1";
+		memsize = 32768;
+		isa16bit = 1;
+		break;
+	case ED_TYPE_TOSHIBA4:
+		sc->type_str = "Toshiba4";
+		memsize = 32768;
+		isa16bit = 1;
+		break;
+#endif
 	default:
 		sc->type_str = NULL;
 		memsize = 8192;
@@ -392,14 +382,17 @@ ed_probe_WD80x3(ia, sc)
 	 *	found in the ICR.
 	 */
 	if (isa16bit && (sc->type != ED_TYPE_WD8013EBT)
-		&& ((inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_16BIT) == 0)) {
+#ifdef TOSH_ETHER
+	    && (sc->type != ED_TYPE_TOSHIBA1) && (sc->type != ED_TYPE_TOSHIBA4)
+#endif
+	    && ((inb(sc->asic_addr + ED_WD_ICR) & ED_WD_ICR_16BIT) == 0)) {
 		isa16bit = 0;
 		memsize = 8192;
 	}
 
 #if ED_DEBUG
-	printf("type=%s isa16bit=%d memsize=%d ia_msize=%d\n",
-		sc->type_str,isa16bit,memsize,ia->ia_msize);
+	printf("type=%x type_str=%s isa16bit=%d memsize=%d ia_msize=%d\n",
+		sc->type, sc->type_str, isa16bit, memsize, ia->ia_msize);
 	for (i=0; i<8; i++)
 		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
 #endif
@@ -422,7 +415,27 @@ ed_probe_WD80x3(ia, sc)
 	 *	XXX - we could also check the IO address register. But why
 	 *		bother...if we get past this, it *has* to be correct.
 	 */
-	if (sc->type & ED_WD_SOFTCONFIG) {
+	if (sc->is790) {
+		/*
+		 * Assemble together the encoded interrupt number.
+		 */
+		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) | 0x80);
+		iptr = ((inb(ia->ia_iobase + 0x0d) & 0x0c) >> 2) |
+		       ((inb(ia->ia_iobase + 0x0d) & 0x40) >> 4);
+		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) & ~0x80);
+		/*
+		 * Translate it using translation table, and check against
+		 * kernel config.
+		 */
+		if (ia->ia_irq == IRQUNK)
+			ia->ia_irq = ed_790_intr_mask[iptr];
+		else if (ed_790_intr_mask[iptr] != ia->ia_irq) {
+			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
+				cf->cf_unit, ffs(ia->ia_irq) - 1,
+				ffs(ed_790_intr_mask[iptr]) - 1);
+			return 0;
+		}
+	} else if (sc->type & ED_WD_SOFTCONFIG) {
 		/*
 		 * Assemble together the encoded interrupt number.
 		 */
@@ -430,7 +443,8 @@ ed_probe_WD80x3(ia, sc)
 			((inb(ia->ia_iobase + ED_WD_IRR) &
 				(ED_WD_IRR_IR0 | ED_WD_IRR_IR1)) >> 5);
 		/*
-		 * Translate it using translation table, and check for correctness.
+		 * Translate it using translation table, and check against
+		 * kernel config.
 		 */
 		if (ia->ia_irq == IRQUNK)
 			ia->ia_irq = ed_intr_mask[iptr];
@@ -498,20 +512,52 @@ ed_probe_WD80x3(ia, sc)
 		/*
 		 * Set address and enable interface shared memory.
 		 */
-		outb(sc->asic_addr + ED_WD_MSR, ((kvtop(sc->mem_start) >> 13) &
-			ED_WD_MSR_ADDR) | ED_WD_MSR_MENB);
+		if (!sc->is790) {
+#ifdef TOSH_ETHER
+			outb(sc->asic_addr + ED_WD_MSR + 1,
+			     ((kvtop(sc->mem_start) >> 8) & 0xe0) | 4);
+			outb(sc->asic_addr + ED_WD_MSR + 2,
+			     ((kvtop(sc->mem_start) >> 16) & 0x0f));
+			outb(sc->asic_addr + ED_WD_MSR,
+			     ED_WD_MSR_MENB | ED_WD_MSR_POW);
+#else
+			outb(sc->asic_addr + ED_WD_MSR,
+			     ((kvtop(sc->mem_start) >> 13) & ED_WD_MSR_ADDR) | ED_WD_MSR_MENB);
+#endif
+		} else {
+			outb(sc->asic_addr + ED_WD_MSR, ED_WD_MSR_MENB);
+			outb(sc->asic_addr + 0x04,
+			     inb(sc->asic_addr + 0x04) | 0x80);
+			outb(sc->asic_addr + 0x0b,
+			     ((kvtop(sc->mem_start) >> 13) & 0x0f) |
+			     ((kvtop(sc->mem_start) >> 11) & 0x40) |
+			     (inb(sc->asic_addr + 0x0b) & 0xb0));
+			outb(sc->asic_addr + 0x04,
+			     inb(sc->asic_addr + 0x04) & ~0x80);
+		}
 
 		/*
 		 * Set upper address bits and 8/16 bit access to shared memory
 		 */
 		if (isa16bit) {
-			outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto =
-				ED_WD_LAAR_L16EN | ED_WD_LAAR_M16EN |
-				((kvtop(sc->mem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
-		} else  {
-			if ((sc->type & ED_WD_SOFTCONFIG) || (sc->type == ED_TYPE_WD8013EBT)) {
+			if (sc->is790) {
+				sc->wd_laar_proto = inb(sc->asic_addr + ED_WD_LAAR);
+				outb(sc->asic_addr + ED_WD_LAAR, ED_WD_LAAR_M16EN);
+			} else {
 				outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto =
-				((kvtop(sc->mem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
+				     ED_WD_LAAR_L16EN | ED_WD_LAAR_M16EN |
+				     ((kvtop(sc->mem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
+			}
+		} else  {
+			if ((sc->type & ED_WD_SOFTCONFIG) ||
+#ifdef TOSH_ETHER
+			    (sc->type == ED_TYPE_TOSHIBA1) ||
+			    (sc->type == ED_TYPE_TOSHIBA4) ||
+#endif
+			    (sc->type == ED_TYPE_WD8013EBT) &&
+			    !sc->is790) {
+				outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto =
+				     ((kvtop(sc->mem_start) >> 19) & ED_WD_LAAR_ADDRHI)));
 			}
 		}
 
@@ -709,7 +755,7 @@ ed_probe_3Com(ia, sc)
 	/*
 	 * select page 0 registers
 	 */
-        outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+       	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
 
 	/*
 	 * Attempt to clear WTS bit. If it doesn't clear, then this is a
@@ -733,7 +779,7 @@ ed_probe_3Com(ia, sc)
 	/*
 	 * select page 0 registers
 	 */
-        outb(sc->nic_addr + ED_P2_CR, ED_CR_RD2|ED_CR_STP);
+       	outb(sc->nic_addr + ED_P2_CR, ED_CR_RD2|ED_CR_STP);
 
 	sc->mem_start = ISA_HOLE_VADDR(ia->ia_maddr);
 	sc->mem_size = memsize;
@@ -1125,7 +1171,10 @@ ed_stop(sc)
 	/*
 	 * Stop everything on the interface, and select page 0 registers.
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STP);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
 
 	/*
 	 * Wait for interface to enter stopped state, but limit # of checks
@@ -1188,7 +1237,10 @@ ed_init(sc)
 	/*
 	 * Set interface for page 0, Remote DMA complete, Stopped
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STP);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
 
 	if (sc->isa16bit) {
 		/*
@@ -1231,6 +1283,9 @@ ed_init(sc)
 	 */
 	outb(sc->nic_addr + ED_P0_TPSR, sc->tx_page_start);
 	outb(sc->nic_addr + ED_P0_PSTART, sc->rec_page_start);
+	/* Set lower bits of byte addressable framing to 0 */
+	if (sc->is790)
+		outb(sc->nic_addr + 0x09, 0);
 
 	/*
 	 * Initialize Receiver (ring-buffer) Page Stop and Boundry
@@ -1256,7 +1311,10 @@ ed_init(sc)
 	/*
 	 * Program Command Register for page 1
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STP);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STP);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STP);
 
 	/*
 	 * Copy out our station address
@@ -1290,7 +1348,10 @@ ed_init(sc)
 	 * Set Command Register for page 0, Remote DMA complete,
 	 * 	and interface Start.
 	 */
-	outb(sc->nic_addr + ED_P1_CR, ED_CR_RD2|ED_CR_STA);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P1_CR, ED_CR_STA);
+	else
+		outb(sc->nic_addr + ED_P1_CR, ED_CR_RD2|ED_CR_STA);
 
 	/*
 	 * Clear all interrupts.
@@ -1354,7 +1415,10 @@ static inline void ed_xmit(ifp)
 	/*
 	 * Set NIC for page 0 register access
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
 	/*
 	 * Set TX buffer start page
@@ -1371,7 +1435,10 @@ static inline void ed_xmit(ifp)
 	/*
 	 * Set page 0, Remote DMA complete, Transmit Packet, and *Start*
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_TXP|ED_CR_STA);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_TXP|ED_CR_STA);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_TXP|ED_CR_STA);
 
 	sc->xmit_busy = 1;
 	
@@ -1607,7 +1674,10 @@ ed_rint(sc)
 	/*
 	 * Set NIC to page 1 registers to get 'current' pointer
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STA);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STA);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STA);
 
 	/*
 	 * 'sc->next_packet' is the logical beginning of the ring-buffer - i.e.
@@ -1669,7 +1739,10 @@ ed_rint(sc)
 		/*
 		 * Set NIC to page 0 registers to update boundry register
 		 */
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+		if (sc->is790)
+			outb(sc->nic_addr + ED_P0_CR, ED_CR_STA);
+		else
+			outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
 		outb(sc->nic_addr + ED_P0_BNRY, boundry);
 
@@ -1677,7 +1750,11 @@ ed_rint(sc)
 		 * Set NIC to page 1 registers before looping to top (prepare to
 		 *	get 'CURR' current pointer)
 		 */
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STA);
+		if (sc->is790)
+			outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STA);
+		else
+			outb(sc->nic_addr + ED_P0_CR,
+			     ED_CR_PAGE_1|ED_CR_RD2|ED_CR_STA);
 	}
 }
 
@@ -1695,7 +1772,10 @@ edintr(aux)
 	/*
 	 * Set NIC to page 0 registers
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	if (sc->is790)
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA);
+	else
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
 	if (!(isr = inb(sc->nic_addr + ED_P0_ISR)))
 		return 0;
@@ -1718,7 +1798,7 @@ edintr(aux)
 		 *	some conditions.
 		 */
 		if (isr & (ED_ISR_PTX|ED_ISR_TXE)) {
-			u_char collisions = inb(sc->nic_addr + ED_P0_NCR);
+			u_char collisions = inb(sc->nic_addr + ED_P0_NCR) & 0x0f;
 
 			/*
 			 * Check for transmit error. If a TX completed with an
@@ -1729,6 +1809,7 @@ edintr(aux)
 			 * course, with UDP we're screwed, but this is expected
 			 * when a network is heavily loaded.
 			 */
+			(void) inb(sc->nic_addr + ED_P0_TSR);
 			if (isr & ED_ISR_TXE) {
 
 				/*
@@ -1871,7 +1952,10 @@ edintr(aux)
 		 *	in the transmit routine, is *okay* - it is 'edge'
 		 *	triggered from low to high)
 		 */
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+		if (sc->is790)
+			outb(sc->nic_addr + ED_P0_CR, ED_CR_STA);
+		else
+			outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
 		/*
 		 * If the Network Talley Counters overflow, read them to
