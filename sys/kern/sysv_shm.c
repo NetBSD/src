@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.48 1998/08/15 03:02:49 mycroft Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.49 1998/10/19 22:19:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_sysv.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
