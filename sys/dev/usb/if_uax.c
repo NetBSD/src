@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.3 2003/02/16 17:18:47 augustss Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.4 2003/02/16 17:40:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.3 2003/02/16 17:18:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.4 2003/02/16 17:40:05 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -824,6 +824,8 @@ uax_send(struct uax_softc *sc, struct mbuf *m, int idx)
 	KASSERT(m->m_pkthdr.len <= UAX_BUFSZ);
 	m_copydata(m, 0, m->m_pkthdr.len, c->uch_buf);
 	c->uch_mbuf = m;
+
+	/* XXX Should we zero tail of buffer for short packets? */
 
 	usbd_setup_xfer(c->uch_xfer, sc->sc_ep[UAX_ENDPT_TX],
 	    c, c->uch_buf, m->m_pkthdr.len,
