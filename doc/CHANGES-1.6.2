@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.221 2003/10/26 18:39:41 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.222 2003/10/27 04:43:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2576,18 +2576,18 @@ sys/compat/linux/common/linux_misc.c		1.115
 	Don't allow non-page-aligned offsets.
 	[tv, ticket #1426]
 
-src/sys/compat/linux/arch/arm/syscalls.master	1.13
-src/sys/compat/linux/arch/i386/syscalls.master	1.65
-src/sys/compat/linux/arch/m68k/syscalls.master	1.41
-src/sys/compat/linux/arch/mips/syscalls.master	1.11
-src/sys/compat/linux/common/linux_misc.c	1.118 (hand patched)
-src/sys/compat/linux/common/linux_mmap.h	1.15 (hand patched)
+sys/compat/linux/arch/arm/syscalls.master	1.13
+sys/compat/linux/arch/i386/syscalls.master	1.65
+sys/compat/linux/arch/m68k/syscalls.master	1.41
+sys/compat/linux/arch/mips/syscalls.master	1.11
+sys/compat/linux/common/linux_misc.c		1.118 (hand patched)
+sys/compat/linux/common/linux_mmap.h		1.15 (hand patched)
 
 	Proper support for mmap2.
 	[tv, ticket #1427]
 
 
-src/sys/compat/linux/common/linux_misc.c	1.119
+sys/compat/linux/common/linux_misc.c		1.119
 
 	Implement MAP_TRYFIXED for linux emulation.
 	[tv, ticket #1428]
@@ -2688,4 +2688,272 @@ distrib/sets/lists/xbase4/shl.mi		1.5
 	Move shared version of "libXxf86dga" into architecture specific sets
 	because it is not build under NetBSD-sparc.
 	[tron, ticket #1542]
+
+dist/bind/README				1.9
+dist/bind/Version				1.5
+dist/bind/bin/named/ns_main.c			1.15
+dist/bind/lib/irs/gethostent.c			1.6
+dist/bind/lib/resolv/res_debug.c		1.7
+dist/bind/README				1.8
+dist/bind/Version				1.4
+dist/bind/bin/probe_ipv6			1.5
+dist/bind/bin/dig/dig.c				1.7
+dist/bind/bin/dnsquery/dnsquery.c		1.5
+dist/bind/bin/host/host.c			1.7
+dist/bind/bin/named/db_defs.h			1.7
+dist/bind/bin/named/db_load.c			1.7
+dist/bind/bin/named/ns_ctl.c			1.7
+dist/bind/bin/named/ns_maint.c			1.7
+dist/bind/bin/named/db_ixfr.c			1.5
+dist/bind/bin/named/ns_glob.h			1.5
+dist/bind/bin/named/ns_init.c			1.5
+dist/bind/bin/named/ns_lexer.c			1.5
+dist/bind/bin/named/db_sec.c			1.6
+dist/bind/bin/named/ns_forw.c			1.6
+dist/bind/bin/named/ns_ixfr.c			1.6
+dist/bind/bin/named/ns_ncache.c			1.6
+dist/bind/bin/named/ns_parser.y			1.6
+dist/bind/bin/named/ns_update.c			1.6
+dist/bind/bin/named/ns_config.c			1.8
+dist/bind/bin/named/ns_func.h			1.8
+dist/bind/bin/named/ns_req.c			1.8
+dist/bind/bin/named/ns_defs.h			1.9
+dist/bind/bin/named/ns_main.c			1.14
+dist/bind/bin/named/ns_resp.c			1.10
+dist/bind/bin/named-xfer/named-xfer.c		1.7
+dist/bind/bin/ndc/ndc.c				1.8
+dist/bind/bin/nslookup/getinfo.c		1.6
+dist/bind/bin/nslookup/main.c			1.4
+dist/bind/bin/nslookup/send.c			1.5
+dist/bind/bin/nsupdate/nsupdate.c		1.6 (hand patched)
+dist/bind/include/hesiod.h			1.2
+dist/bind/include/irp.h				1.2
+dist/bind/include/netgroup.h			1.2
+dist/bind/include/irs.h				1.4
+dist/bind/include/port_after.h			1.6
+dist/bind/include/resolv.h			1.8
+dist/bind/include/arpa/nameser.h		1.5
+dist/bind/include/arpa/nameser_compat.h		1.3
+dist/bind/include/isc/ctl.h			1.4
+dist/bind/include/isc/misc.h			1.4
+dist/bind/include/isc/dst.h			1.2
+dist/bind/include/isc/tree.h			1.2
+dist/bind/include/isc/eventlib.h		1.3
+dist/bind/include/isc/irpmarshall.h		1.3
+dist/bind/include/isc/logging.h			1.5
+dist/bind/lib/bsd/strtoul.c			1.2 (hand patched)
+dist/bind/lib/bsd/writev.c			1.2 (hand patched)
+dist/bind/lib/dst/bsafe_link.c			1.6
+dist/bind/lib/dst/dst_api.c			1.6
+dist/bind/lib/dst/cylink_link.c			1.5
+dist/bind/lib/dst/hmac_link.c			1.4
+dist/bind/lib/irs/dns_gr.c			1.3
+dist/bind/lib/irs/getnetgrent.c			1.3
+dist/bind/lib/irs/getnetgrent_r.c		1.3
+dist/bind/lib/irs/nis_gr.c			1.3
+dist/bind/lib/irs/nis_ho.c			1.3
+dist/bind/lib/irs/dns_ho.c			1.6 (hand patched)
+dist/bind/lib/irs/irs_data.c			1.6
+dist/bind/lib/irs/dns_nw.c			1.5
+dist/bind/lib/irs/getaddrinfo.c			1.5 (hand patched)
+dist/bind/lib/irs/gethostent.c			1.5
+dist/bind/lib/irs/getnameinfo.c			1.5
+dist/bind/lib/irs/gen_gr.c			1.4
+dist/bind/lib/irs/hesiod.c			1.4
+dist/bind/lib/irs/irp_p.h			1.4
+dist/bind/lib/isc/ctl_clnt.c			1.5
+dist/bind/lib/isc/ctl_srvr.c			1.5
+dist/bind/lib/isc/eventlib_p.h			1.5
+dist/bind/lib/isc/ev_files.c			1.4
+dist/bind/lib/isc/ev_waits.c			1.4
+dist/bind/lib/isc/logging.c			1.4
+dist/bind/lib/isc/ev_timers.c			1.7 (hand patched)
+dist/bind/lib/isc/eventlib.c			1.6 (hand patched)
+dist/bind/lib/nameser/ns_name.c			1.9 (hand patched)
+dist/bind/lib/nameser/ns_parse.c		1.5
+dist/bind/lib/nameser/ns_print.c		1.5
+dist/bind/lib/nameser/ns_samedomain.c		1.4
+dist/bind/lib/nameser/ns_sign.c			1.4
+dist/bind/lib/resolv/res_comp.c			1.2
+dist/bind/lib/resolv/res_private.h		1.2
+dist/bind/lib/resolv/res_debug.c		1.6
+dist/bind/lib/resolv/res_update.c		1.6
+dist/bind/lib/resolv/res_findzonecut.c		1.5
+dist/bind/lib/resolv/res_init.c			1.5
+dist/bind/lib/resolv/res_mkquery.c		1.3
+dist/bind/lib/resolv/res_mkupdate.c		1.4
+dist/bind/lib/resolv/res_query.c		1.4
+dist/bind/lib/resolv/res_send.c			1.7 (hand patched)
+dist/bind/man/dig.1				1.10 (hand patched)
+dist/bind/man/named-xfer.8			1.8 (hand patched)
+dist/bind/man/named.conf.5			1.13 (hand patched)
+dist/bind/lib/inet/inet_lnaof.c			1.2
+dist/bind/lib/inet/inet_makeaddr.c		1.2
+dist/bind/lib/bsd/strerror.c			(hand patched)
+dist/bind/lib/inet/inet_netof.c			1.2
+dist/bind/lib/inet/inet_network.c		1.3
+dist/bind/man/dnskeygen.1			1.5
+dist/bind/man/dnsquery.1			1.5
+dist/bind/man/host.1				1.9-1.10
+dist/bind/man/named.8				1.11-1.14
+dist/bind/man/nslookup.8			1.7-1.9
+dist/bind/man/nsupdate.8			1.7
+include/arpa/inet.h				1.15
+lib/libc/net/inet_lnaof.c			1.8
+lib/libc/net/inet_makeaddr.c			1.11
+lib/libc/net/inet_netof.c			1.8
+lib/libc/net/inet_network.c			1.15
+lib/libc/net/inet_pton.c			1.18
+share/man/man5/resolv.conf.5			1.23
+
+	Bring BIND up to 8.3.6
+	[itojun, ticket #1536]
+
+dist/dhcp/common/auth.c				removed
+dist/dhcp/common/dhcp-contrib.5			removed
+dist/dhcp/COPYRIGHT				1.2
+dist/dhcp/Makefile				1.2
+dist/dhcp/Makefile.conf				1.2-1.3
+dist/dhcp/Makefile.dist				1.2
+dist/dhcp/README				1.2-1.3
+dist/dhcp/RELNOTES				1.2-1.3
+dist/dhcp/configure				1.2
+dist/dhcp/client/Makefile.dist			1.2
+dist/dhcp/client/clparse.c			1.3-1.4
+dist/dhcp/client/dhclient-script.8		1.3-1.4
+dist/dhcp/client/dhclient.8			1.4-1.6
+dist/dhcp/client/dhclient.c			1.5-1.8
+dist/dhcp/client/dhclient.conf.5		1.3-1.6
+dist/dhcp/client/dhclient.leases.5		1.3-1.5
+dist/dhcp/client/scripts/freebsd		1.2-1.3
+dist/dhcp/client/scripts/linux			1.2-1.3
+dist/dhcp/common/Makefile.dist			1.2
+dist/dhcp/common/alloc.c			1.2-1.4
+dist/dhcp/common/bpf.c				1.4-1.6
+dist/dhcp/common/comapi.c			1.3-1.5
+dist/dhcp/common/conflex.c			1.2
+dist/dhcp/common/ctrace.c			1.2
+dist/dhcp/common/dhcp-eval.5			1.5-1.6
+dist/dhcp/common/dhcp-options.5			1.4-1.5
+dist/dhcp/common/discover.c			1.2.4.1->1.6
+dist/dhcp/common/dispatch.c			1.2
+dist/dhcp/common/dlpi.c				1.2
+dist/dhcp/common/dns.c				1.3-1.5
+dist/dhcp/common/ethernet.c			1.2
+dist/dhcp/common/execute.c			1.2-1.4
+dist/dhcp/common/fddi.c				1.3-1.4
+dist/dhcp/common/icmp.c				1.1.4.1=>1.5
+dist/dhcp/common/inet.c				1.2-1.3
+dist/dhcp/common/lpf.c				1.2
+dist/dhcp/common/memory.c			1.2-1.4
+dist/dhcp/common/nit.c				1.2
+dist/dhcp/common/options.c			1.2-1.4
+dist/dhcp/common/packet.c			1.3
+dist/dhcp/common/parse.c			1.3-1.5
+dist/dhcp/common/print.c			1.3-1.5
+dist/dhcp/common/raw.c				1.2-1.3
+dist/dhcp/common/resolv.c			1.2-1.3
+dist/dhcp/common/socket.c			1.1.4.1=>1.5
+dist/dhcp/common/tables.c			1.3-1.4
+dist/dhcp/common/tr.c				1.2
+dist/dhcp/common/tree.c				1.2-1.4
+dist/dhcp/common/upf.c				1.2
+dist/dhcp/dhcpctl/Makefile.dist			1.2
+dist/dhcp/dhcpctl/callback.c			1.2-1.3
+dist/dhcp/dhcpctl/cltest.c			1.2
+dist/dhcp/dhcpctl/dhcpctl.3			1.2
+dist/dhcp/dhcpctl/dhcpctl.c			1.2-1.4
+dist/dhcp/dhcpctl/dhcpctl.h			1.2
+dist/dhcp/dhcpctl/omshell.1			1.2
+dist/dhcp/dhcpctl/omshell.c			1.2-1.4
+dist/dhcp/dhcpctl/remote.c			1.2-1.4
+dist/dhcp/dst/Makefile.dist			1.2
+dist/dhcp/dst/base64.c				1.2
+dist/dhcp/dst/dst_api.c				1.2-1.3
+dist/dhcp/dst/dst_support.c			1.2
+dist/dhcp/dst/hmac_link.c			1.2=1.3
+dist/dhcp/dst/prandom.c				1.2-1.3
+dist/dhcp/includes/dhcp.h			1.3
+dist/dhcp/includes/dhcpd.h			1.2-1.6
+dist/dhcp/includes/dhctoken.h			1.3
+dist/dhcp/includes/failover.h			1.2
+dist/dhcp/includes/osdep.h			1.2
+dist/dhcp/includes/site.h			1.3
+dist/dhcp/includes/tree.h			1.2
+dist/dhcp/includes/version.h			1.2-1.3
+dist/dhcp/includes/arpa/nameser.h		1.2
+dist/dhcp/includes/arpa/nameser_compat.h	1.2
+dist/dhcp/includes/cf/freebsd.h			1.2
+dist/dhcp/includes/cf/linux.h			1.2
+dist/dhcp/includes/minires/resolv.h		1.2
+dist/dhcp/includes/netinet/if_ether.h		1.2
+dist/dhcp/includes/netinet/ip.h			1.2
+dist/dhcp/includes/netinet/ip_icmp.h		1.2
+dist/dhcp/includes/netinet/udp.h		1.2
+dist/dhcp/includes/omapip/alloc.h		1.2
+dist/dhcp/includes/omapip/hash.h		1.2
+dist/dhcp/includes/omapip/omapip.h		1.2-1.3
+dist/dhcp/minires/ns_name.c			1.2-1.3
+dist/dhcp/minires/ns_parse.c			1.4-1.5
+dist/dhcp/minires/ns_samedomain.c		1.3
+dist/dhcp/minires/ns_sign.c			1.3
+dist/dhcp/minires/res_comp.c			1.2
+dist/dhcp/minires/res_findzonecut.c		1.4
+dist/dhcp/minires/res_init.c			1.2
+dist/dhcp/minires/res_mkquery.c			1.2
+dist/dhcp/minires/res_mkupdate.c		1.1.4.1->1.3
+dist/dhcp/minires/res_query.c			1.2
+dist/dhcp/minires/res_send.c			1.2-1.3
+dist/dhcp/minires/res_update.c			1.2
+dist/dhcp/omapip/alloc.c			1.3-1.5
+dist/dhcp/omapip/array.c			1.2
+dist/dhcp/omapip/auth.c				1.2
+dist/dhcp/omapip/buffer.c			1.2
+dist/dhcp/omapip/connection.c			1.2-1.3
+dist/dhcp/omapip/convert.c			1.3
+dist/dhcp/omapip/dispatch.c			1.2
+dist/dhcp/omapip/generic.c			1.2
+dist/dhcp/omapip/handle.c			1.2
+dist/dhcp/omapip/hash.c				1.2-1.3
+dist/dhcp/omapip/inet_addr.c			1.2
+dist/dhcp/omapip/listener.c			1.2
+dist/dhcp/omapip/message.c			1.2-1.4
+dist/dhcp/omapip/mrtrace.c			1.2
+dist/dhcp/omapip/protocol.c			1.3-1.5
+dist/dhcp/omapip/result.c			1.3-1.4
+dist/dhcp/omapip/support.c			1.3-1.4
+dist/dhcp/omapip/trace.c			1.2
+dist/dhcp/relay/dhcrelay.8			1.4-1.5
+dist/dhcp/relay/dhcrelay.c			1.3-1.5
+dist/dhcp/server/Makefile.dist			1.2
+dist/dhcp/server/bootp.c			1.2-1.3
+dist/dhcp/server/class.c			1.2-1.3
+dist/dhcp/server/confpars.c			1.2-1.5
+dist/dhcp/server/db.c				1.2-1.4
+dist/dhcp/server/ddns.c				1.2-1.4
+dist/dhcp/server/dhcp.c				1.2-1.5
+dist/dhcp/server/dhcpd.8			1.3-1.6
+dist/dhcp/server/dhcpd.c			1.2-1.4
+dist/dhcp/server/dhcpd.conf			1.1.4.1->1.2
+dist/dhcp/server/dhcpd.conf.5			1.4-1.9
+dist/dhcp/server/dhcpd.leases.5			1.3-1.5
+dist/dhcp/server/failover.c			1.4-1.7
+dist/dhcp/server/mdb.c				1.2-1.3
+dist/dhcp/server/omapi.c			1.2-1.5
+dist/dhcp/server/salloc.c			1.2
+dist/dhcp/server/stables.c			1.2-1.3
+
+	Update dhcp to dhcp-3.0.1rc11
+	[mellon, ticket #1537]
+
+etc/defaults/rc.conf				1.51
+etc/rc.d/fsck					1.3-1.4
+share/man/man5/rc.conf.5			1.82
+
+	Allow custom fsck options via fsck_flags.
+	[martti, ticket #1543]
+
+doc/LAST_MINUTE                                 patched by hand
+
+        Null out in preparation for 1.6.2
 
