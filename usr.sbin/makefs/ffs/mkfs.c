@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.18.2.1 2004/06/22 07:22:16 tron Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.18.2.2 2004/06/25 02:34:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.18.2.1 2004/06/22 07:22:16 tron Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.18.2.2 2004/06/25 02:34:40 jmc Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -93,14 +93,14 @@ struct	csum *fscs;
 
 union {
 	struct cg cg;
-	char pad[MAXBSIZE];
+	char pad[FFS_MAXBSIZE];
 } cgun;
 #define	acg	cgun.cg
 
 char *iobuf;
 int iobufsize;
 
-char writebuf[MAXBSIZE];
+char writebuf[FFS_MAXBSIZE];
 
 static int     Oflag;	   /* format as an 4.3BSD file system */
 static int64_t fssize;	   /* file system size */
@@ -204,9 +204,9 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		    sblock.fs_bsize, MINBSIZE);
 		exit(19);
 	}
-	if (sblock.fs_bsize > MAXBSIZE) {
+	if (sblock.fs_bsize > FFS_MAXBSIZE) {
 		printf("block size %d is too large, maximum is %d\n",
-		    sblock.fs_bsize, MAXBSIZE);
+		    sblock.fs_bsize, FFS_MAXBSIZE);
 		exit(19);
 	}
 	if (sblock.fs_bsize < sblock.fs_fsize) {
