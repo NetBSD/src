@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.57 1999/09/22 03:01:54 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.58 1999/09/22 07:18:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.57 1999/09/22 03:01:54 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.58 1999/09/22 07:18:37 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1232,52 +1232,14 @@ void
 setupsockbufsize(sock)
 	int sock;
 {
-	static int sndbuf_default, rcvbuf_default;
-	int len, size;
 
-	/*
-	 * Get the default socket buffer sizes if we don't already
-	 * have them.  It doesn't matter which socket we do this
-	 * to, because on the first call no socket buffer sizes
-	 * will have been modified, so we are guaranteed to get
-	 * the system defaults.
-	 */
-	if (sndbuf_default == 0) {
-		len = sizeof(sndbuf_default);
-		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-		    (void *) &sndbuf_default, &len) < 0)
-			err(1, "unable to get default sndbuf size");
-		len = sizeof(rcvbuf_default);
-		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
-		    (void *) &rcvbuf_default, &len) < 0)
-			err(1, "unable to get default rcvbuf size");
+	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size,
+	    sizeof(rcvbuf_size)) < 0)
+		warn("unable to set sndbuf size %d", sndbuf_size);
 
-	}
-
-	size = sndbuf_size ? sndbuf_size : sndbuf_default;
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *) &size,
-	    sizeof(size)) < 0)
-		warn("unable to set sndbuf size %d", size);
-
-	size = rcvbuf_size ? rcvbuf_size : rcvbuf_default;
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (void *) &size,
-	    sizeof(size)) < 0)
-		warn("unable to set rcvbuf size %d", size);
-}
-
-/*
- * If the socket buffer sizes were not set manually (i.e. came from a
- * configuration file), reset them so the right thing will happen on
- * subsequent connections.
- */
-void
-resetsockbufsize()
-{
-
-	if (sndbuf_manual == 0)
-		sndbuf_size = 0;
-	if (rcvbuf_manual == 0)
-		rcvbuf_size = 0;
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size,
+	    sizeof(rcvbuf_size)) < 0)
+		warn("unable to set rcvbuf size %d", rcvbuf_size);
 }
 
 void
