@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.1 1998/06/29 20:56:21 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.2 1998/07/30 14:11:44 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,7 +71,6 @@
 /*
  * TODO (falling priority):
  * - test and get it to run.
- * - split off ISA probe/attach to ess_isa.c.
  * - add looping DMA (copy from sbdsp.c).
  * - avoid using wired in IRQ/DRQ levels.
  * - look over how the two channels are set up, it's rather messy now.
@@ -103,15 +102,24 @@
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (essdebug) printf x
+#define DPRINTFN(n,x)	if (essdebug>(n)) printf x
 int	essdebug = 0;
 #else
 #define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 
-int	ess_setup_sc __P((struct ess_softc *, struct isa_attach_args *, int));
+#if 0
+unsigned uuu;
+#define EREAD1(t, h, a) (uuu=bus_space_read_1(t, h, a),printf("EREAD  %02x=%02x\n", ((int)h&0xfff)+a, uuu),uuu)
+#define EWRITE1(t, h, a, d) (printf("EWRITE %02x=%02x\n", ((int)h & 0xfff)+a, d), bus_space_write_1(t, h, a, d))
+#else
+#define EREAD1(t, h, a) bus_space_read_1(t, h, a)
+#define EWRITE1(t, h, a, d) bus_space_write_1(t, h, a, d)
+#endif
 
-int	ess_probe __P((struct device *, struct cfdata *, void *));
-void	ess_attach __P((struct device *, struct device *, void *));
+
+int	ess_setup_sc __P((struct ess_softc *, int));
 
 int	ess_open __P((void *, int));
 void	ess_close __P((void *));
@@ -174,17 +182,6 @@ u_char	ess_read_mix_reg __P((struct ess_softc *, u_char));
 void	ess_write_mix_reg __P((struct ess_softc *, u_char, u_char));
 void	ess_clear_mreg_bits __P((struct ess_softc *, u_char, u_char));
 void	ess_set_mreg_bits __P((struct ess_softc *, u_char, u_char));
-
-
-struct cfattach ess_ca = {
-	sizeof(struct ess_softc), ess_probe, ess_attach
-};
-
-#if 0
-struct cfdriver ess_cd = {
-	NULL, "ess", DV_DULL
-};
-#endif
 
 static char *essmodel[] = {
 	"unsupported",
@@ -341,17 +338,17 @@ ess_config_addr(sc)
 	/*
 	 * Read the magic key sequence.
 	 */
-	bus_space_read_1(iot, ioh, 0);
-	bus_space_read_1(iot, ioh, 0);
-	bus_space_read_1(iot, ioh, 0);
+	EREAD1(iot, ioh, 0);
+	EREAD1(iot, ioh, 0);
+	EREAD1(iot, ioh, 0);
 
-	bus_space_read_1(iot, ioh, 2);
-	bus_space_read_1(iot, ioh, 0);
-	bus_space_read_1(iot, ioh, 2);
-	bus_space_read_1(iot, ioh, 0);
-	bus_space_read_1(iot, ioh, 0);
-	bus_space_read_1(iot, ioh, 2);
-	bus_space_read_1(iot, ioh, 0);
+	EREAD1(iot, ioh, 2);
+	EREAD1(iot, ioh, 0);
+	EREAD1(iot, ioh, 2);
+	EREAD1(iot, ioh, 0);
+	EREAD1(iot, ioh, 0);
+	EREAD1(iot, ioh, 2);
+	EREAD1(iot, ioh, 0);
 
 	/*
 	 * Unmap the configuration key registers.
@@ -370,7 +367,7 @@ ess_config_addr(sc)
 	/*
 	 * Read from the audio base address.
 	 */
-	bus_space_read_1(iot, ioh, 0);
+	EREAD1(iot, ioh, 0);
 
 	/*
 	 * Unmap the audio base address
@@ -432,14 +429,14 @@ ess_config_addr(sc)
 	}
 
 	/* Unlock the SCR. */
-	bus_space_write_1(iot, scr_access_ioh, ESS_SCR_UNLOCK, 0);
+	EWRITE1(iot, scr_access_ioh, ESS_SCR_UNLOCK, 0);
 
 	/* Write the base address information into SCR[0]. */
-	bus_space_write_1(iot, scr_ioh, ESS_SCR_INDEX, 0);
-	bus_space_write_1(iot, scr_ioh, ESS_SCR_DATA, scr_value);
+	EWRITE1(iot, scr_ioh, ESS_SCR_INDEX, 0);
+	EWRITE1(iot, scr_ioh, ESS_SCR_DATA, scr_value);
 	
 	/* Lock the SCR. */
-	bus_space_write_1(iot, scr_access_ioh, ESS_SCR_LOCK, 0);
+	EWRITE1(iot, scr_access_ioh, ESS_SCR_LOCK, 0);
 
 	/* Unmap the SCR access ports and the SCR data ports. */
 	bus_space_unmap(iot, scr_access_ioh, ESS_SCR_ACCESS_PORTS);
@@ -452,16 +449,26 @@ ess_config_addr(sc)
 
 /*
  * Configure the ESS chip for the desired IRQ and DMA channels.
+ * Shark interrupt mapping
+ * ESS  ISA
+ * --------
+ * IRQA irq9
+ * IRQB irq5
+ * IRQC irq7
+ * IRQD irq10
+ * IRQE irq15
+ * DRQA drq0
+ * DRQB drq1
+ * DRQC drq3
+ * DRQD drq5
  */
 void
 ess_config_intr(sc)
 	struct ess_softc *sc;
 {
-	int v;
+	int v = 0;
 
-	/*
-	 * Configure Audio 1 (record) for the appropriate IRQ line.
-	 */
+	/* Configure Audio 1 (record) for the appropriate IRQ line. */
 	switch(sc->sc_in.irq) {
 	case 5:
 		v = 0x54;
@@ -475,46 +482,22 @@ ess_config_intr(sc)
 	case 10:
 		v = 0x5c;
 		break;
+#ifdef DIAGNOSTIC
 	default:
 		printf("ess: configured irq %d not supported for Audio 1\n", 
 		       sc->sc_in.irq);
 		return;
-	}
-	ess_wdsp(sc, 0xb1);
-	ess_wdsp(sc, v);
-	
-
-	/* REVISIT: tidy up following which enables DMA, IRQ for Audio 2 */
-	/* note that for 1888/888 IRQ must be 15 and DRQ must be 5 */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 0x60);
-
-#if 0
-	/*
-	 * REVISIT: Only the ES1887 supports register 0x7d - for all
-	 *          other chips, DRQ is hardwired to 5 anyway.
-	 */
-	/* REVISIT: tidy up following which hardcodes DRQ to 5 */
-	if (sc->sc_model = ESS_1887) {
-		ess_set_mreg_bits(sc, 0x7d, 0x03);
-	}
-
-	/* REVISIT: Only the ES1887 supports register 0x7f */
-	/* REVISIT: tidy up following which hardcodes IRQ to 15 for Audio 2*/
-	ess_set_mreg_bits(sc, 0x7f, 0x03);
-	ess_clear_mreg_bits(sc, 0x7f, 0x0c);
 #endif
+	}
+	ess_write_x_reg(sc, 0xb1, v);
 	
 	/*
-	 * Configure Audio 1 (record) for DMA on the appropriate
-	 * channel.
-	 */
-	/*
-	 * REVISIT: Does bit 4 really need to be set? Reading the data
+	 * XXX:     Does bit 4 really need to be set? Reading the data
 	 *          sheet, it seems that this is only necessary for
 	 *          compatibility mode.
 	 */
-	switch(sc->sc_in.drq)
-	{
+	/* Configure Audio 1 (record) for DMA on the appropriate channel. */
+	switch(sc->sc_in.drq) {
 	case 0:
 		v = 0x54;
 		break;
@@ -524,15 +507,21 @@ ess_config_intr(sc)
 	case 3:
 		v = 0x5c;
 		break;
+#ifdef DIAGNOSTIC
 	default:
 		printf("essdsp: configured dma chan %d not supported for Audio 1\n", 
 		       sc->sc_in.drq);
 		return;
 	}
-	ess_wdsp(sc, 0xb2);
-	ess_wdsp(sc, v);
-}
+#endif
+	ess_write_x_reg(sc, 0xb2, v);
 
+	/* XXX hardcode audio2 to irq15 and drq1 since this is a mess anyway */
+	/* XXX assume 1887 */
+	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 0x60);
+	ess_write_mix_reg(sc, 0x7d, 0x05); /* DRQB */
+	ess_write_mix_reg(sc, 0x7f, 0x00); /* 1888 method */
+}
 
 /*
  * Determine the model of ESS chip we are talking to.  Currently we
@@ -677,36 +666,10 @@ ess_identify(sc)
  */
 
 int
-ess_setup_sc(sc, ia, doinit)
+ess_setup_sc(sc, doinit)
 	struct ess_softc *sc;
-	struct isa_attach_args *ia;
 	int doinit;
 {
-	/*
-	 * Map the device-specific address space. If the mapping
-	 * fails, then we can't talk to the device.
-	 */
-	if (bus_space_map(sc->sc_iot, sc->sc_iobase,
-			  ia->ia_iosize, 0, &sc->sc_ioh)) {
-		DPRINTF(("ess: can't map I/O space for device\n"));
-		return (1);
-	}
-
-	/*
-	 * Copy the appropriate ISA attach arguments to the ess softc
-	 * structure.
-	 */
-	sc->sc_iot = ia->ia_iot;
-	sc->sc_iobase = ia->ia_iobase;
-	/* REVISIT: how do we properly get IRQ/DRQ for record channel */
-	sc->sc_in.irq = 9;
-	sc->sc_in.drq = 0;
-	sc->sc_in.mode = ESS_DMA_SIZE(sc->sc_in.drq);
-	sc->sc_out.irq = ia->ia_irq;
-	sc->sc_out.drq = ia->ia_drq;
-	sc->sc_out.mode = ESS_DMA_SIZE(sc->sc_out.drq);
-	sc->sc_ic = ia->ia_ic;
-
 	/* Configure the ESS chip for the desired audio base address. */
 	if (doinit && ess_config_addr(sc))
 		return (1);
@@ -730,23 +693,16 @@ ess_setup_sc(sc, ia, doinit)
  * Probe for the ESS hardware.
  */
 int
-ess_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+essmatch(sc)
+	struct ess_softc *sc;
 {
-	struct ess_softc tempsc;
-	struct ess_softc *sc = &tempsc;
-	struct isa_attach_args *ia = aux;
-	int r = 0;
-
-	if (!ESS_BASE_VALID(ia->ia_iobase)) {
-		printf("ess: configured iobase 0x%x invalid\n", ia->ia_iobase);
+	if (!ESS_BASE_VALID(sc->sc_iobase)) {
+		printf("ess: configured iobase 0x%x invalid\n", sc->sc_iobase);
 		return (0);
 	}
 
-	if (ess_setup_sc(sc, ia, 1))
-		goto ret0;
+	if (ess_setup_sc(sc, 1)) 
+		return (0);
 
 	if (sc->sc_model == ESS_UNSUPPORTED) {
 		DPRINTF(("ess: Unsupported model\n"));
@@ -789,12 +745,10 @@ ess_probe(parent, cf, aux)
 		goto ret0;
 	/* XXX should we check IRQs as well? */
 
-	r = 1;
+	return (1);
 
  ret0:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, ia->ia_iosize);
-
-	return (r);
+	return (0);
 }
 
 
@@ -803,18 +757,14 @@ ess_probe(parent, cf, aux)
  * pseudo-device driver .
  */
 void
-ess_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+essattach(sc)
+	struct ess_softc *sc;
 {
-	struct ess_softc *sc = (struct ess_softc *)self;
-	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	struct audio_params pparams, rparams;
         int i;
         u_int v;
 
-	if (ess_setup_sc(sc, ia, 0)) {
+	if (ess_setup_sc(sc, 0)) {
 		printf("%s: setup failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -825,11 +775,11 @@ ess_attach(parent, self, aux)
 	 * the chip for interrupts, otherwise we might get a stray
 	 * interrupt.
 	 */
-	sc->sc_out.ih = isa_intr_establish(ia->ia_ic, sc->sc_out.irq,
-					   IST_LEVEL, IPL_AUDIO,
+	sc->sc_out.ih = isa_intr_establish(sc->sc_ic, sc->sc_out.irq,
+					   sc->sc_out.ist, IPL_AUDIO,
 					   ess_intr_output, sc);
-	sc->sc_in.ih = isa_intr_establish(ia->ia_ic, sc->sc_in.irq,
-					  IST_LEVEL, IPL_AUDIO,
+	sc->sc_in.ih = isa_intr_establish(sc->sc_ic, sc->sc_in.irq,
+					  sc->sc_in.ist, IPL_AUDIO,
 					  ess_intr_input, sc);
 
 	/* Create our DMA maps. */
@@ -903,6 +853,9 @@ ess_attach(parent, self, aux)
 		ess_set_gain(sc, i, 1);
 	}
 
+	/* Set up IRQs and DRQs. */
+	ess_config_intr(sc);
+
 	/* Disable the speaker until the device is opened.  */
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
@@ -911,6 +864,10 @@ ess_attach(parent, self, aux)
 	sprintf(ess_device.version, "0x%04x", sc->sc_version);
 
 	audio_attach_mi(&ess_hw_if, 0, sc, &sc->sc_dev);
+
+#ifdef AUDIO_DEBUG
+	ess_printsc(sc);
+#endif
 }
 
 /*
@@ -929,10 +886,6 @@ ess_open(addr, flags)
 	if (sc->sc_open != 0 || ess_reset(sc) != 0)
 		return ENXIO;
 
-	/*
-	 * Configure the ESS chip for the desired IRQ and DMA channel.
-	 * XXX
-	 */
 	ess_config_intr(sc);
 
 	sc->sc_open = 1;
@@ -1318,10 +1271,7 @@ ess_dma_output(addr, p, cc, intr, arg)
 {
 	struct ess_softc *sc = addr;
 
-#ifdef AUDIO_DEBUG
-	if (essdebug > 1)
-		printf("ess_dma_output: cc=%d %p (%p)\n", cc, intr, arg);
-#endif
+	DPRINTFN(1,("ess_dma_output: cc=%d %p (%p)\n", cc, intr, arg));
 #ifdef DIAGNOSTIC
 	if (sc->sc_out.channels == 2 && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
@@ -1331,10 +1281,7 @@ ess_dma_output(addr, p, cc, intr, arg)
 
 	isa_dmastart(sc->sc_ic, sc->sc_out.drq, p, cc,
 		     NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
-#if 0
-XXXXX
-	isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_out.drq);
-#endif
+
 	sc->sc_out.active = 1;
 	sc->sc_out.intr = intr;
 	sc->sc_out.arg = arg;
@@ -1390,10 +1337,7 @@ ess_dma_input(addr, p, cc, intr, arg)
 {
 	struct ess_softc *sc = addr;
 
-#ifdef AUDIO_DEBUG
-	if (essdebug > 1)
-		printf("ess_dma_input: cc=%d %p (%p)\n", cc, intr, arg);
-#endif
+	DPRINTFN(1,("ess_dma_input: cc=%d %p (%p)\n", cc, intr, arg));
 	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
 	ess_set_xreg_bits(sc, 0xB7, 0x80);
 
@@ -1498,10 +1442,7 @@ ess_intr_output(arg)
 {
 	struct ess_softc *sc = arg;
 
-#ifdef AUDIO_DEBUG
-	if (essdebug > 1)
-		printf("ess_intr_output: intr=%p\n", sc->sc_out.intr);
-#endif
+	DPRINTFN(1,("ess_intr_output: intr=%p\n", sc->sc_out.intr));
 
 	/* clear interrupt on Audio channel 2*/
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 0x80);
@@ -1524,10 +1465,7 @@ ess_intr_input(arg)
 	struct ess_softc *sc = arg;
 	u_char x;
 
-#ifdef AUDIO_DEBUG
-	if (essdebug > 1)
-		printf("ess_intr_input: intr=%p\n", sc->sc_in.intr);
-#endif
+	DPRINTFN(1,("ess_intr_input: intr=%p\n", sc->sc_in.intr));
 
 	/*
 	 * Disable DMA for Audio 1; it will be enabled again the next
@@ -1539,7 +1477,7 @@ ess_intr_input(arg)
 			    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
 
 	/* clear interrupt on Audio channel 1*/
-	x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
+	x = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
 
 	sc->sc_in.nintr++;
 
@@ -2032,9 +1970,9 @@ ess_reset(sc)
 	 * Gee, what a brilliant hardware design.
 	 */
 	/* REVISIT: need to properly document the use of 3 below */
-	bus_space_write_1(iot, ioh, ESS_DSP_RESET, 3);
+	EWRITE1(iot, ioh, ESS_DSP_RESET, 3);
 	delay(10000);
-	bus_space_write_1(iot, ioh, ESS_DSP_RESET, 0);
+	EWRITE1(iot, ioh, ESS_DSP_RESET, 0);
 	delay(30000);
 	if (ess_rdsp(sc) != ESS_MAGIC)
 		return -1;
@@ -2258,7 +2196,7 @@ ess_get_dsp_status(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	return (bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS));
+	return (EREAD1(iot, ioh, ESS_DSP_RW_STATUS));
 }
 
 
@@ -2301,13 +2239,9 @@ ess_rdsp(sc)
 
 	for (i = ESS_READ_TIMEOUT; i > 0; --i) {
 		if (ess_dsp_read_ready(sc)) {
-#if 1
-			return bus_space_read_1(iot, ioh, ESS_DSP_READ);
-#else
-			i = bus_space_read_1(iot, ioh, ESS_DSP_READ);
-			printf("ess_rdsp() = 0x%02x\n", i);
+			i = EREAD1(iot, ioh, ESS_DSP_READ);
+			DPRINTFN(8,("ess_rdsp() = 0x%02x\n", i));
 			return i;
-#endif
 		} else
 			delay(10);
 	}
@@ -2327,12 +2261,12 @@ ess_wdsp(sc, v)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-#if 0
-printf("ess_wdsp(0x%02x)\n", v);
-#endif
+
+	DPRINTFN(8,("ess_wdsp(0x%02x)\n", v));
+
 	for (i = ESS_WRITE_TIMEOUT; i > 0; --i) {
 		if (ess_dsp_write_ready(sc)) {
-			bus_space_write_1(iot, ioh, ESS_DSP_WRITE, v);
+			EWRITE1(iot, ioh, ESS_DSP_WRITE, v);
 			return (0);
 		} else
 			delay(10);
@@ -2353,6 +2287,7 @@ ess_write_x_reg(sc, reg, val)
 {
 	int error;
 
+	DPRINTFN(2,("ess_write_x_reg: %02x=%02x\n", reg, val));
 	if ((error = ess_wdsp(sc, reg)) == 0)
 		error = ess_wdsp(sc, val);
 
@@ -2368,13 +2303,16 @@ ess_read_x_reg(sc, reg)
 	u_char reg;
 {
 	int error;
+	int val;
 
 	if ((error = ess_wdsp(sc, 0xC0)) == 0)
 		error = ess_wdsp(sc, reg);
 	if (error)
 		DPRINTF(("Error reading extended register 0x%02x\n", reg));
 /* REVISIT: what if an error is returned above? */
-	return ess_rdsp(sc);
+	val = ess_rdsp(sc);
+	DPRINTFN(2,("ess_write_x_reg: %02x=%02x\n", reg, val));
+	return val;
 }
 
 void
@@ -2413,17 +2351,18 @@ ess_write_mix_reg(sc, reg, val)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
 
+	DPRINTFN(2,("ess_write_mix_reg: %x=%x\n", reg, val));
 	s = splaudio();
 
 	/*
 	 * Select the register to be written.
 	 */
-	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
+	EWRITE1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 
 	/*
 	 * Write the desired value.
 	 */
-	bus_space_write_1(iot, ioh, ESS_MIX_REG_DATA, val);
+	EWRITE1(iot, ioh, ESS_MIX_REG_DATA, val);
 
 	splx(s);
 }
@@ -2444,12 +2383,13 @@ ess_read_mix_reg(sc, reg)
 	s = splaudio();
 
 	/* Select the register to be read. */
-	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
+	EWRITE1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 
 	/* Read the current value. */
-	val = bus_space_read_1(iot, ioh, ESS_MIX_REG_DATA);
+	val = EREAD1(iot, ioh, ESS_MIX_REG_DATA);
 
 	splx(s);
+	DPRINTFN(2,("ess_read_mix_reg: %x=%x\n", reg, val));
 	return val;
 }
 
