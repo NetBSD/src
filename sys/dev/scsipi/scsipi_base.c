@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.4 1997/10/18 19:51:02 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.5 1998/02/10 19:48:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -355,6 +355,7 @@ scsipi_execute_xs(xs)
 	xs->flags &= ~ITSDONE;
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
+	xs->status = 0;
 
 retry:
 	/*
