@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2001/01/28 22:22:25 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2001/01/29 03:11:50 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.13 2001/01/28 22:22:25 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2001/01/29 03:11:50 jmc Exp $");
 #endif
 
 #include <sys/param.h>
@@ -132,9 +132,11 @@ main(argc, argv)
 	use_openprom = check_for_openprom();
 
 	if (use_openprom == 0) {
+#endif /* USE_OPENPROM */
 		ee_verifychecksums();
 		if (fix_checksum || cksumfail)
 			exit(cksumfail);
+#ifdef USE_OPENPROM
 	}
 #endif /* USE_OPENPROM */
 
