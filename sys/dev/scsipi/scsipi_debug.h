@@ -1,11 +1,8 @@
-/*	$NetBSD: scsipi_debug.h,v 1.11 1998/02/13 04:19:31 enami Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.12 1998/02/13 08:28:53 enami Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
  */
-
-#ifndef _DEV_SCSIPI_SCSIPI_DEBUG_H_
-#define _DEV_SCSIPI_SCSIPI_DEBUG_H_
 
 /*
  * These are the new debug bits.  (Sat Oct  2 12:46:46 WST 1993)
@@ -46,5 +43,3 @@ do {									\
 #define SC_DEBUG(A,B,C)
 #define SC_DEBUGN(A,B,C)
 #endif
-
-#endif /* _DEV_SCSIPI_SCSIPI_DEBUG_H_ */

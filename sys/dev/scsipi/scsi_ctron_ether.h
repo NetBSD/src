@@ -1,11 +1,8 @@
-/*	$NetBSD: scsi_ctron_ether.h,v 1.5 1998/02/13 04:19:22 enami Exp $	*/
+/*	$NetBSD: scsi_ctron_ether.h,v 1.6 1998/02/13 08:28:34 enami Exp $	*/
 
 /*
  * SCSI interface description
  */
-
-#ifndef _DEV_SCSIPI_SCSI_CTRON_ETHER_H_
-#define _DEV_SCSIPI_SCSI_CTRON_ETHER_H_
 
 
 /*
@@ -104,5 +101,3 @@ enum scsi_ctron_ether_media {
 	CMEDIA_SECONDARY=1,		/* coax */
 	CMEDIA_AUTOSENSE=2		/* set_media command only */
 };
-
-#endif /* _DEV_SCSIPI_SCSI_CTRON_ETHER_H_ */

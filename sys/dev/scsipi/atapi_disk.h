@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_disk.h,v 1.2 1998/02/13 04:19:15 enami Exp $	*/
+/*	$NetBSD: atapi_disk.h,v 1.3 1998/02/13 08:28:21 enami Exp $	*/
 
 /*
  * Copyright 1998
@@ -32,9 +32,6 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
-
-#ifndef _DEV_SCSIPI_ATAPI_DISK_H_
-#define _DEV_SCSIPI_ATAPI_DISK_H_
 
 /*
  * Definitions of commands and structures specific to ATAPI disks.
@@ -101,5 +98,3 @@ struct atapi_sd_mode_data {
 
 #define FLEXGEOMETRYPAGESIZE \
 	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_flex_geometry_page))
-
-#endif /* _DEV_SCSIPI_ATAPI_DISK_H_ */

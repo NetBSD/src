@@ -1,11 +1,8 @@
-/*	$NetBSD: scsi_disk.h,v 1.14 1998/02/13 04:19:23 enami Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.15 1998/02/13 08:28:36 enami Exp $	*/
 
 /*
  * SCSI-specific interface description
  */
-
-#ifndef _DEV_SCSIPI_SCSI_DISK_H_
-#define _DEV_SCSIPI_SCSI_DISK_H_
 
 /*
  * Some lines of this file come from a file of the name "scsi.h"
@@ -174,5 +171,3 @@ union scsi_disk_pages {
 		u_int8_t reserved4;
 	} flex_geometry;
 };
-
-#endif /* _DEV_SCSIPI_SCSI_DISK_H_ */

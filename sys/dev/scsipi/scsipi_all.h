@@ -1,11 +1,8 @@
-/*	$NetBSD: scsipi_all.h,v 1.6 1998/02/13 04:19:28 enami Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.7 1998/02/13 08:28:47 enami Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
  */
-
-#ifndef _DEV_SCSIPI_SCSIPI_ALL_H_
-#define _DEV_SCSIPI_SCSIPI_ALL_H_
 
 /*
  * Largely written by Julian Elischer (julian@tfs.com)
@@ -162,5 +159,3 @@ struct scsipi_inquiry_data {
 	char	revision[4];
 	u_int8_t extra[8];
 };
-
-#endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */
