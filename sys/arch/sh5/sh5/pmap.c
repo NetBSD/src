@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2003/03/19 11:37:58 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2003/04/02 02:45:36 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -249,8 +249,8 @@ PMSTR(pmap_t pm)
 /*
  * The Primary IPT consists of an array of Hash Buckets, called PTE Groups,
  * where each group is 8 PTEs in size. The number of groups is calculated
- * at boot time such that there is one group for every two NBPG-sized pages
- * of physical RAM.
+ * at boot time such that there is one group for every two PAGE_SIZE-sized
+ * pages of physical RAM.
  */
 pteg_t *pmap_pteg_table;	/* Primary IPT group */
 int pmap_pteg_cnt;		/* Number of PTE groups. A power of two */
@@ -421,7 +421,7 @@ static vaddr_t pmap_copy_page_src_kva;
 static vaddr_t pmap_copy_page_dst_kva;
 static vaddr_t pmap_kva_avail_start;
 static vaddr_t pmap_device_kva_start;
-#define	PMAP_BOOTSTRAP_DEVICE_KVA	(NBPG * 512)
+#define	PMAP_BOOTSTRAP_DEVICE_KVA	(PAGE_SIZE * 512)
 vaddr_t vmmap;
 paddr_t pmap_kseg0_pa;
 
@@ -654,7 +654,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made no-exec, rd-only.
 		 * Purge the data cache and invalidate insn cache.
 		 */
-		cpu_cache_dpurge_iinv(va, pa, NBPG);
+		cpu_cache_dpurge_iinv(va, pa, PAGE_SIZE);
 		break;
 
 	case SH5_PTEL_PR_W:
@@ -662,7 +662,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made read-only.
 		 * Purge the data-cache.
 		 */
-		cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, PAGE_SIZE);
 		break;
 
 	case SH5_PTEL_PR_X:
@@ -670,7 +670,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made no-exec.
 		 * Invalidate the instruction cache.
 		 */
-		cpu_cache_iinv(va, pa, NBPG);
+		cpu_cache_iinv(va, pa, PAGE_SIZE);
 		break;
 
 	case 0:
@@ -712,7 +712,7 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The page was executable, and possibly writable.
 		 * Purge the data cache and invalidate insn cache.
 		 */
-		cpu_cache_dpurge_iinv(va, pa, NBPG);
+		cpu_cache_dpurge_iinv(va, pa, PAGE_SIZE);
 		break;
 
 	case SH5_PTEL_PR_W:
@@ -720,7 +720,7 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The page was writable.
 		 * Purge the data-cache.
 		 */
-		cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, PAGE_SIZE);
 		break;
 
 	case 0:
@@ -734,7 +734,7 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The invalidate operation will actually cause a write-
 		 * protection fault (!!!!) in this case.
 		 */
-		cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, PAGE_SIZE);
 		break;
 	}
 }
@@ -1137,10 +1137,10 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	}
 
 	pmap_zero_page_kva = SH5_KSEG1_BASE;
-	pmap_copy_page_src_kva = pmap_zero_page_kva + NBPG;
-	pmap_copy_page_dst_kva = pmap_copy_page_src_kva + NBPG;
-	vmmap = pmap_copy_page_dst_kva + NBPG;
-	pmap_device_kva_start = vmmap + NBPG;
+	pmap_copy_page_src_kva = pmap_zero_page_kva + PAGE_SIZE;
+	pmap_copy_page_dst_kva = pmap_copy_page_src_kva + PAGE_SIZE;
+	vmmap = pmap_copy_page_dst_kva + PAGE_SIZE;
+	pmap_device_kva_start = vmmap + PAGE_SIZE;
 
 	pmap_kva_avail_start = pmap_device_kva_start +
 	    PMAP_BOOTSTRAP_DEVICE_KVA;
@@ -1190,9 +1190,9 @@ pmap_map_device(paddr_t pa, u_int len)
 
 		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx], ptel);
 
-		va += NBPG;
-		pa += NBPG;
-		len -= NBPG;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+		len -= PAGE_SIZE;
 	}
 
 	return (rv);
@@ -1267,7 +1267,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 
 	*start = pmap_kva_avail_start;
-	*end = SH5_KSEG1_BASE + ((KERNEL_IPT_SIZE - 1) * NBPG);
+	*end = SH5_KSEG1_BASE + ((KERNEL_IPT_SIZE - 1) * PAGE_SIZE);
 }
 
 /*
@@ -1527,7 +1527,7 @@ pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 		if (PVO_VADDR(pvo) < SH5_KSEG0_BASE && !PVO_PTEGIDX_ISSET(pvo))
 			continue;
 
-		cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, NBPG);
+		cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, PAGE_SIZE);
 
 		ev->ev_count++;
 
@@ -2398,7 +2398,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	 * We're doing a write-protect, and perhaps an execute-revoke.
 	 */
 
-	for (; va < endva; va += NBPG) {
+	for (; va < endva; va += PAGE_SIZE) {
 		s = splvm();
 		pvo = pmap_pvo_find_va(pm, va, &idx);
 		if (pvo == NULL) {
@@ -2867,7 +2867,8 @@ pmap_write_trap(struct proc *p, int usermode, vaddr_t va)
 		 */
 		if (SH5_PTEL_CACHEABLE(pvo->pvo_ptel)) {
 			cpu_cache_dpurge(PVO_VADDR(pvo),
-			    (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK), NBPG);
+			    (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK),
+			    PAGE_SIZE);
 		}
 
 		cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
@@ -2922,7 +2923,7 @@ pmap_unmap_poolpage(vaddr_t va)
 
 	if (mp->mr_size && mp->mr_kvastart < SH5_KSEG1_BASE) {
 		pa = mp->mr_start + (paddr_t)(va - mp->mr_kvastart);
-		cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, PAGE_SIZE);
 		return (pa);
 	}
 
@@ -3031,7 +3032,7 @@ dump_kipt(void)
 	printf("\nKernel KSEG1 mappings:\n\n");
 
 	for (pt = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
-	    pt != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; pt++, va += NBPG) {
+	    pt != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; pt++, va += PAGE_SIZE) {
 		if (pt->ptel && pt->ptel < 0x80000000u)
 			printf("KVA: 0x%lx -> PTEL: 0x%lx\n", va,
 			    (u_long)pt->ptel);
@@ -3052,7 +3053,8 @@ validate_kipt(int cookie)
 	int errors = 0;
 
 	for (kpte = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
-	    kpte != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; kpte++, va += NBPG) {
+	    kpte != &pmap_kernel_ipt[KERNEL_IPT_SIZE];
+	    kpte++, va += PAGE_SIZE) {
 		if ((pt = kpte->ptel) == 0)
 			continue;
 

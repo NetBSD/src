@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.27 2003/03/14 05:38:53 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28 2003/04/02 02:47:19 thorpej Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -157,7 +157,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		frame = (db_addr_t)ddb_regs.r[1];
 	}
 	for (;;) {
-		if (frame < NBPG)
+		if (frame < PAGE_SIZE)
 			break;
 #ifdef PPC_OEA
 		if (kernel_only && !cold &&
@@ -169,7 +169,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		frame = *(db_addr_t *)frame;
 	    next_frame:
 		args = (db_addr_t *)(frame + 8);
-		if (frame < NBPG)
+		if (frame < PAGE_SIZE)
 			break;
 #ifdef PPC_OEA
 		if (kernel_only && !cold &&
