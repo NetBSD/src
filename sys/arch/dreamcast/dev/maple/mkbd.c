@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.20 2005/02/19 15:37:35 tsutsui Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.21 2005/03/06 14:52:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.20 2005/02/19 15:37:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.21 2005/03/06 14:52:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -140,6 +140,14 @@ mkbdattach(struct device *parent, struct device *self, void *aux)
 		printf(": Unknown keyboard %d", kbdtype);
 	}
 	printf("\n");
+#ifdef MKBD_LAYOUT
+	/* allow user to override the default keymap */
+	mkbd_keymapdata.layout = MKBD_LAYOUT;
+#endif
+#ifdef MKBD_SWAPCTRLCAPS
+	/* allow user to specify swapctrlcaps with the default keymap */
+	mkbd_keymapdata.layout |= KB_SWAPCTRLCAPS;
+#endif
 
 #if NWSKBD > 0
 	if ((a.console = mkbd_is_console) != 0) {
