@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2004/03/23 19:09:01 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,12 +75,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2004/03/23 19:09:01 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_compat_netbsd.h"
+#include "opt_compat_ibcs2.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +176,10 @@ trap(frame)
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusuintrfailure[],
-		    resume_iret[], IDTVEC(oosyscall)[];
+		    resume_iret[];
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
+	extern char IDTVEC(oosyscall)[];
+#endif
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -312,8 +317,8 @@ copyfault:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): BUS at rip %lx addr %lx\n",
-		    p->p_pid, p->p_comm, frame->tf_rip, rcr2());
+		printf("pid %d (%s): BUS (%x) at rip %lx addr %lx\n",
+		    p->p_pid, p->p_comm, type, frame->tf_rip, rcr2());
 		frame_dump(frame);
 #endif
 		KSI_INIT_TRAP(&ksi);
@@ -550,6 +555,7 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 		/* Check whether they single-stepped into a lcall. */
 		if (frame->tf_rip == (int)IDTVEC(oosyscall))
 			return;
@@ -557,6 +563,7 @@ faultcommon:
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
+#endif
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
