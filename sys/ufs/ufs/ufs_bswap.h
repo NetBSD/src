@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.13 2003/10/05 17:48:50 bouyer Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.14 2004/08/15 07:19:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -41,13 +41,13 @@
 
 /* Macros to access UFS flags */
 #ifdef FFS_EI
-#define	UFS_MPNEEDSWAP(mp)	(VFSTOUFS(mp)->um_flags & UFS_NEEDSWAP)
+#define	UFS_MPNEEDSWAP(ump)	((ump)->um_flags & UFS_NEEDSWAP)
 #define UFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
-#define	UFS_IPNEEDSWAP(ip)	UFS_MPNEEDSWAP(ITOV(ip)->v_mount)
+#define	UFS_IPNEEDSWAP(ip)	UFS_MPNEEDSWAP((ip)->i_ump)
 #else
-#define	UFS_MPNEEDSWAP(mp) (0)
-#define UFS_FSNEEDSWAP(fs) (0)
-#define	UFS_IPNEEDSWAP(ip) (0)
+#define	UFS_MPNEEDSWAP(ump)	(0)
+#define UFS_FSNEEDSWAP(fs)	(0)
+#define	UFS_IPNEEDSWAP(ip)	(0)
 #endif
 
 #if !defined(_KERNEL) || defined(FFS_EI)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.142 2004/07/12 12:40:30 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.143 2004/08/15 07:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.142 2004/07/12 12:40:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.143 2004/08/15 07:19:54 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -718,13 +718,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 
 #ifndef NFS_V2_ONLY
 	if (argp->flags & NFSMNT_NQNFS)
-		/*
-		 * We have to set mnt_maxsymlink to a non-zero value so
-		 * that COMPAT_43 routines will know that we are setting
-		 * the d_type field in directories (and can zero it for
-		 * unsuspecting binaries).
-		 */
-		mp->mnt_maxsymlinklen = 1;
+		mp->mnt_iflag |= IMNT_DTYPE;
 #endif
 
 #ifndef NFS_V2_ONLY

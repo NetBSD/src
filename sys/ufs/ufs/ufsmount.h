@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.16 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.17 2004/08/15 07:20:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -98,6 +98,9 @@ struct ufsmount {
 	TAILQ_HEAD(, inode) um_snapshots;	/* list of active snapshots */
 	daddr_t	um_snaplistsize;		/* size of block hints list */
 	daddr_t	*um_snapblklist;		/* snapshot block hints list */
+	int	um_maxsymlinklen;
+	int	um_dirblksiz;
+	off_t	um_maxfilesize;
 };
 
 /* UFS-specific flags */
@@ -121,9 +124,9 @@ struct ufsmount {
 #define VFSTOUFS(mp)	((struct ufsmount *)((mp)->mnt_data))
 
 #ifdef APPLE_UFS
-#define UFS_MPISAPPLEUFS(mp)	(VFSTOUFS(mp)->um_flags & UFS_ISAPPLEUFS)
+#define UFS_MPISAPPLEUFS(ump)	((ump)->um_flags & UFS_ISAPPLEUFS)
 #else
-#define UFS_MPISAPPLEUFS(mp)	(0)
+#define UFS_MPISAPPLEUFS(ump)	(0)
 #endif
 
 /*

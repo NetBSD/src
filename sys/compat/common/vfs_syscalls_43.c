@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.27 2003/11/19 16:43:38 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.28 2004/08/15 07:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.27 2003/11/19 16:43:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.28 2004/08/15 07:19:54 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -389,7 +389,7 @@ unionread:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
-		if (vp->v_mount->mnt_maxsymlinklen <= 0) {
+		if ((vp->v_mount->mnt_iflag & IMNT_DTYPE) == 0) {
 			error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag,
 			    (off_t **)0, (int *)0);
 			fp->f_offset = auio.uio_offset;

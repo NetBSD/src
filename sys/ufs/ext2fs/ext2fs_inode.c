@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.42 2004/08/14 14:32:04 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.43 2004/08/15 07:19:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.42 2004/08/14 14:32:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.43 2004/08/15 07:19:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,56 +227,61 @@ ext2fs_truncate(v)
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
 	daddr_t lastblock;
-	struct inode *oip;
+	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	/* XXX ondisk32 */
 	int32_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct m_ext2fs *fs;
 	int offset, size, level;
-	long count, nblocks, blocksreleased = 0;
-	int i;
+	long count, blocksreleased = 0;
+	int i, ioflag, nblocks;
 	int error, allerror = 0;
 	off_t osize;
+	int sync;
+	struct ufsmount *ump = oip->i_ump;
 
 	if (length < 0)
 		return (EINVAL);
 
-	oip = VTOI(ovp);
 	if (ovp->v_type == VLNK &&
-		(oip->i_e2fs_size < ovp->v_mount->mnt_maxsymlinklen ||
-		 (ovp->v_mount->mnt_maxsymlinklen == 0 &&
-		  oip->i_e2fs_nblock == 0))) {
-#ifdef DIAGNOSTIC
-		if (length != 0)
-			panic("ext2fs_truncate: partial truncate of symlink");
-#endif
+	    (oip->i_e2fs_size < ump->um_maxsymlinklen ||
+	     (ump->um_maxsymlinklen == 0 && oip->i_e2fs_nblock == 0))) {
+		KDASSERT(length == 0);
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_e2fs_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	fs = oip->i_e2fs;
+	if (length > ump->um_maxfilesize)
+		return (EFBIG);
+
 	osize = oip->i_e2fs_size;
+	ioflag = ap->a_flags;
+
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
-#if 0 /* XXX */
-		if (length > fs->fs_maxfilesize)
-			return (EFBIG);
-#endif
-		ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-		    ap->a_flags & IO_SYNC ? B_SYNC : 0);
+		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
+		    ioflag & IO_SYNC ? B_SYNC : 0);
+		if (error) {
+			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
+			    ap->a_cred, ap->a_p);
+			return (error);
+		}
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		KASSERT(ovp->v_size == oip->i_size);
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -294,7 +299,6 @@ ext2fs_truncate(v)
 	}
 	oip->i_e2fs_size = length;
 	uvm_vnp_setsize(ovp, length);
-
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)
@@ -313,17 +317,26 @@ ext2fs_truncate(v)
 	 * normalized to -1 for calls to ext2fs_indirtrunc below.
 	 */
 	memcpy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
-	for (level = TRIPLE; level >= SINGLE; level--)
-		if (lastiblock[level] < 0) {
+	sync = 0;
+	for (level = TRIPLE; level >= SINGLE; level--) {
+		if (lastiblock[level] < 0 && oldblks[NDADDR + level] != 0) {
+			sync = 1;
 			oip->i_e2fs_blocks[NDADDR + level] = 0;
 			lastiblock[level] = -1;
 		}
-	for (i = NDADDR - 1; i > lastblock; i--)
-		oip->i_e2fs_blocks[i] = 0;
+	}
+	for (i = 0; i < NDADDR; i++) {
+		if (i > lastblock && oldblks[i] != 0) {
+			sync = 1;
+			oip->i_e2fs_blocks[i] = 0;
+		}
+	}
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
-	if (error && !allerror)
-		allerror = error;
+	if (sync) {
+		error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+		if (error && !allerror)
+			allerror = error;
+	}
 
 	/*
 	 * Having written the new inode to disk, save its new configuration
@@ -331,9 +344,9 @@ ext2fs_truncate(v)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
+
 	oip->i_e2fs_size = osize;
 	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
 	if (error && !allerror)
@@ -397,6 +410,7 @@ done:
 	oip->i_e2fs_size = length;
 	oip->i_e2fs_nblock -= blocksreleased;
 	oip->i_flag |= IN_CHANGE;
+	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_size);
 	return (allerror);
 }
 

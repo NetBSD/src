@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.84 2004/08/14 01:08:04 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.85 2004/08/15 07:19:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.84 2004/08/14 01:08:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.85 2004/08/15 07:19:56 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -230,7 +230,7 @@ lfs_truncate(void *v)
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
-	struct inode *oip;
+	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	/* XXX ondisk32 */
 	int32_t newblks[NDADDR + NIADDR];
@@ -247,10 +247,10 @@ lfs_truncate(void *v)
 	size_t bc;
 	int obufsize, odb;
 	int usepc;
+	struct ufsmount *ump = oip->i_ump;
 
 	if (length < 0)
 		return (EINVAL);
-	oip = VTOI(ovp);
 
 	/*
 	 * Just return and not update modification times.
@@ -259,8 +259,8 @@ lfs_truncate(void *v)
 		return (0);
 
 	if (ovp->v_type == VLNK &&
-	    (oip->i_size < ovp->v_mount->mnt_maxsymlinklen ||
-	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
+	    (oip->i_size < ump->um_maxsymlinklen ||
+	     (ump->um_maxsymlinklen == 0 &&
 	      oip->i_ffs1_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -290,7 +290,7 @@ lfs_truncate(void *v)
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
-		if (length > fs->lfs_maxfilesize)
+		if (length > ump->um_maxfilesize)
 			return (EFBIG);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)

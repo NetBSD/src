@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.32 2004/03/22 19:23:08 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.33 2004/08/15 07:19:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.32 2004/03/22 19:23:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.33 2004/08/15 07:19:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.32 2004/03/22 19:23:08 bouyer
 #include <sys/signalvar.h>
 
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
@@ -114,54 +115,53 @@ ext2fs_read(v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
+	struct ufsmount *ump;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	ump = ip->i_ump;
 	uio = ap->a_uio;
+	error = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("%s: mode", "ext2fs_read");
 
 	if (vp->v_type == VLNK) {
-		if ((int)ip->i_e2fs_size < vp->v_mount->mnt_maxsymlinklen ||
-			(vp->v_mount->mnt_maxsymlinklen == 0 &&
-			 ip->i_e2fs_nblock == 0))
+		if (ip->i_e2fs_size < ump->um_maxsymlinklen ||
+		    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0))
 			panic("%s: short symlink", "ext2fs_read");
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
 #endif
 	fs = ip->i_e2fs;
-	if ((u_int64_t)uio->uio_offset >
-		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
+	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
 	if (uio->uio_offset >= ip->i_e2fs_size)
-		return (0);
+		goto out;
 
 	if (vp->v_type == VREG) {
-		error = 0;
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(ip->i_e2fs_size - uio->uio_offset,
 			    uio->uio_resid);
-
-			if (bytelen == 0) {
+			if (bytelen == 0)
 				break;
-			}
+
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
-			if (error) {
+			if (error)
 				break;
-			}
 		}
 		goto out;
 	}
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
-		if ((bytesinfile = ip->i_e2fs_size - uio->uio_offset) <= 0)
+		bytesinfile = ip->i_e2fs_size - uio->uio_offset;
+		if (bytesinfile <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
@@ -239,14 +239,17 @@ ext2fs_write(v)
 	void *win;
 	off_t oldoff;
 	boolean_t async;
-	int extended=0;
+	int extended = 0;
+	struct ufsmount *ump;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	ump = ip->i_ump;
 	error = 0;
 
+	KASSERT(vp->v_size == ip->i_size);
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("%s: mode", "ext2fs_write");
@@ -257,7 +260,7 @@ ext2fs_write(v)
 		if (ioflag & IO_APPEND)
 			uio->uio_offset = ip->i_e2fs_size;
 		if ((ip->i_e2fs_flags & EXT2_APPEND) &&
-			uio->uio_offset != ip->i_e2fs_size)
+		    uio->uio_offset != ip->i_e2fs_size)
 			return (EPERM);
 		/* FALLTHROUGH */
 	case VLNK:
@@ -272,8 +275,7 @@ ext2fs_write(v)
 
 	fs = ip->i_e2fs;
 	if (uio->uio_offset < 0 ||
-		(u_int64_t)uio->uio_offset + uio->uio_resid >
-		((u_int64_t)0x80000000 * fs->e2fs_bsize - 1))
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
 		return (EFBIG);
 	/*
 	 * Maybe this should be above the vnode op call, but so long as
@@ -281,8 +283,8 @@ ext2fs_write(v)
 	 */
 	p = uio->uio_procp;
 	if (vp->v_type == VREG && p &&
-		uio->uio_offset + uio->uio_resid >
-		p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+	    uio->uio_offset + uio->uio_resid >
+	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
@@ -302,16 +304,14 @@ ext2fs_write(v)
 
 			error = ufs_balloc_range(vp, uio->uio_offset,
 			    bytelen, ap->a_cred, 0);
-			if (error) {
+			if (error)
 				break;
-			}
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
-			if (error) {
+			if (error)
 				break;
-			}
 
 			/*
 			 * update UVM's notion of the size now that we've
