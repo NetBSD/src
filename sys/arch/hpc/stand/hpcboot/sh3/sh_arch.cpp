@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.2 2001/02/21 16:01:54 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.3 2001/03/02 18:26:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -164,8 +164,13 @@ void
 SHArchitecture::systemInfo()
 {
 	u_int32_t reg;
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
 
 	Architecture::systemInfo();
+
+	// check debug level.
+	if (menu._cons_parameter == 0)
+		return;
 
 	_kmode = SetKMode(1);
 
@@ -212,7 +217,6 @@ SHArchitecture::systemInfo()
 
 	// HD64461
 	platid_t platform;
-	HpcMenuInterface &menu = HpcMenuInterface::Instance();
 	platform.dw.dw0 = menu._pref.platid_hi;
 	platform.dw.dw1 = menu._pref.platid_lo;
 	hd64461_dump(platform);
