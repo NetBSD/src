@@ -75,6 +75,7 @@
 #define	 RTCFDT_NONE	 0		/* none present */
 #define	 RTCFDT_360K	 0x10		/* 360K */
 #define	 RTCFDT_12M	 0x20		/* 1.2M */
+#define	 RTCFDT_720K	 0x30		/* 720K */
 #define	 RTCFDT_144M	 0x40		/* 1.44M */
 
 #define RTC_BASELO	0x15	/* low byte of basemem size */
