@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.7 2001/09/05 16:14:49 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.8 2001/09/16 08:51:17 chris Exp $	*/
 
 /*
  * xscale support code Copyright (c) 2001 Matt Thomas
@@ -646,8 +646,10 @@ ENTRY(sa110_cache_cleanD)
 #endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
+#ifdef DOUBLE_CACHE_CLEAN_BANK
 	eor	r0, r0, r1
 	str	r0, [r2]
+#endif
 
 Lsa110_cache_cleanD_loop:
 	ldr	r2, [r0], #32
@@ -675,8 +677,10 @@ ENTRY(sa110_cache_purgeID)
 #endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
+#ifdef DOUBLE_CACHE_CLEAN_BANK
 	eor	r0, r0, r1
 	str	r0, [r2]
+#endif
 
 Lsa110_cache_purgeID_loop:
 	ldr	r2, [r0], #32
@@ -705,8 +709,10 @@ ENTRY(sa110_cache_purgeD)
 #endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
+#ifdef DOUBLE_CACHE_CLEAN_BANK
 	eor	r0, r0, r1
 	str	r0, [r2]
+#endif
 
 Lsa110_cache_purgeD_loop:
 	ldr	r2, [r0], #32
@@ -853,8 +859,10 @@ ENTRY(sa110_cache_syncI)
 #endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
+#ifdef DOUBLE_CACHE_CLEAN_BANK
 	eor	r0, r0, r1
 	str	r0, [r2]
+#endif
 
 Lsa110_cache_syncI_loop:
 	ldr	r2, [r0], #32
