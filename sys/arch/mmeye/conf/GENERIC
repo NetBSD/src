@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.19 2000/09/24 15:59:35 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.20 2000/10/17 10:02:11 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	16		# estimated number of users
 
@@ -126,8 +126,8 @@ com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12
 
 # SH PCMCIA controllers
-shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x4000000
-shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x4000000
+shpcic0	at shb? port 0xb000000a iomem 0xb8000000 iosiz 0x1000000
+shpcic1	at shb? port 0xb000000c iomem 0xb9000000 iosiz 0x1000000
 
 # PCMCIA bus support
 pcmcia*	at shpcic? controller ? socket ?
