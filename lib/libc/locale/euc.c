@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(XPG4) || defined(DLRUNEMOD)
+#if defined(DLRUNEMOD)
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
@@ -236,4 +236,4 @@ CodeSet1:
 	}
 	return (len);
 }
-#endif  /* XPG4 || DLRUNEMOD */
+#endif  /* DLRUNEMOD */

@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libc/locale/collate.c,v 1.16.2.1 1999/08/29 14:47:12 peter Exp $
+ * $FreeBSD: src/lib/libc/locale/collate.c,v 1.20 2000/01/12 09:23:26 jasone Exp $
  */
 
 #if !defined(__FreeBSD__)
@@ -36,6 +36,7 @@
 #define __FUNCTION__ ""
 #endif
 #include "rune.h"
+#define _write(a,b,c) write(a,b,c)
 #else
 #include <rune.h>
 #endif
@@ -65,6 +66,7 @@ __reallocf(void *ptr, size_t size)
 #endif
 
 int __collate_load_error = 1;
+int __collate_substitute_nontrivial;
 char __collate_version[STR_LEN];
 u_char __collate_substitute_table[UCHAR_MAX + 1][STR_LEN];
 struct __collate_st_char_pri __collate_char_pri_table[UCHAR_MAX + 1];
@@ -86,7 +88,7 @@ __collate_load_tables(encoding)
 {
 	char buf[PATH_MAX];
 	FILE *fp;
-	int save_load_error;
+	int i, save_load_error;
 
 	save_load_error = __collate_load_error;
 	__collate_load_error = 1;
@@ -122,6 +124,16 @@ __collate_load_tables(encoding)
 	      fp);
 	fclose(fp);
 	__collate_load_error = 0;
+	
+	__collate_substitute_nontrivial = 0;
+	for (i = 0; i < UCHAR_MAX + 1; i++) {
+		if (__collate_substitute_table[i][0] != i ||
+		    __collate_substitute_table[i][1] != 0) {
+			__collate_substitute_nontrivial = 1;
+			break;
+		}
+	}
+
 	return 0;
 }
 
@@ -129,30 +141,33 @@ u_char *
 __collate_substitute(s)
 	const u_char *s;
 {
-	int dest_len = 0, len = 0;
+	int dest_len, len, nlen;
 	int delta = strlen(s);
 	u_char *dest_str = NULL;
 
 	if(s == NULL || *s == '\0')
 		return __collate_strdup("");
+	delta += delta / 8;
+	dest_str = malloc(dest_len = delta);
+	if(dest_str == NULL)
+		__collate_err(EX_OSERR, __FUNCTION__);
+	len = 0;
 	while(*s) {
-		len += strlen(__collate_substitute_table[*s]);
-		while(dest_len <= len) {
-			if(!dest_str)
-				dest_str = calloc(dest_len = delta, 1);
-			else
-				dest_str = reallocf(dest_str, dest_len += delta);
+		nlen = len + strlen(__collate_substitute_table[*s]);
+		if (dest_len <= nlen) {
+			dest_str = reallocf(dest_str, dest_len = nlen + delta);
 			if(dest_str == NULL)
 				__collate_err(EX_OSERR, __FUNCTION__);
 		}
-		strcat(dest_str, __collate_substitute_table[*s++]);
+		strcpy(dest_str + len, __collate_substitute_table[*s++]);
+		len = nlen;
 	}
 	return dest_str;
 }
 
 void
 __collate_lookup(t, len, prim, sec)
-	u_char *t;
+	const u_char *t;
 	int *len, *prim, *sec;
 {
 	struct __collate_st_chain_pri *p2;
@@ -190,14 +205,14 @@ __collate_err(int ex, const char *f)
 	int serrno = errno;
 
 	s = __progname;
-	write(STDERR_FILENO, s, strlen(s));
-	write(STDERR_FILENO, ": ", 2);
+	_write(STDERR_FILENO, s, strlen(s));
+	_write(STDERR_FILENO, ": ", 2);
 	s = f;
-	write(STDERR_FILENO, s, strlen(s));
-	write(STDERR_FILENO, ": ", 2);
+	_write(STDERR_FILENO, s, strlen(s));
+	_write(STDERR_FILENO, ": ", 2);
 	s = strerror(serrno);
-	write(STDERR_FILENO, s, strlen(s));
-	write(STDERR_FILENO, "\n", 1);
+	_write(STDERR_FILENO, s, strlen(s));
+	_write(STDERR_FILENO, "\n", 1);
 	exit(ex);
 }
 

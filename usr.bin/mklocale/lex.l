@@ -38,33 +38,14 @@
 #ifndef lint
 #ifndef __NetBSD__
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
-#endif
+static char rcsid[] = "$FreeBSD$";
+#endif /* not NetBSD */
 #endif /* not lint */
 
 #if !defined(__FreeBSD__)
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ _rune_t
 #include "runetype.h"
-#define	_A	___A
-#define	_C	___C
-#define	_D	___D
-#define	_G	___G
-#define	_L	___L
-#define	_P	___P
-#define	_S	___S
-#define	_U	___U
-#define	_X	___X
-#define	_B	___B
-#define	_R	___R
-#define	_I	___I
-#define	_T	___T
-#define	_Q	___Q
-#define	_SWM	___SWM
-#define	_SWS	___SWS
-#define	_SW0	___SW0
-#define	_SW1	___SW1
-#define	_SW2	___SW2
-#define	_SW3	___SW3
 #else
 #include <ctype.h>
 #endif
@@ -114,24 +95,38 @@ MAPUPPER			{ return(MAPUPPER); }
 TODIGIT				{ return(DIGITMAP); }
 INVALID				{ return(INVALID); }
 
-ALPHA				{ yylval.i = _A|_R|_G; return(LIST); }
-CONTROL				{ yylval.i = _C; return(LIST); }
-DIGIT				{ yylval.i = _D|_R|_G; return(LIST); }
-GRAPH				{ yylval.i = _G|_R; return(LIST); }
-LOWER				{ yylval.i = _L|_R|_G; return(LIST); }
-PUNCT				{ yylval.i = _P|_R|_G; return(LIST); }
-SPACE				{ yylval.i = _S; return(LIST); }
-UPPER				{ yylval.i = _U|_R|_G; return(LIST); }
-XDIGIT				{ yylval.i = _X|_R|_G; return(LIST); }
-BLANK				{ yylval.i = _B; return(LIST); }
-PRINT				{ yylval.i = _R; return(LIST); }
-IDEOGRAM			{ yylval.i = _I|_R|_G; return(LIST); }
-SPECIAL				{ yylval.i = _T|_R|_G; return(LIST); }
-PHONOGRAM			{ yylval.i = _Q|_R|_G; return(LIST); }
-SWIDTH0				{ yylval.i = _SW0; return(LIST); }
-SWIDTH1				{ yylval.i = _SW1; return(LIST); }
-SWIDTH2				{ yylval.i = _SW2; return(LIST); }
-SWIDTH3				{ yylval.i = _SW3; return(LIST); }
+ALPHA				{ yylval.i = _CTYPE_A|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+CONTROL				{ yylval.i = _CTYPE_C;
+				  return(LIST); }
+DIGIT				{ yylval.i = _CTYPE_D|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+GRAPH				{ yylval.i = _CTYPE_G|_CTYPE_R;
+				  return(LIST); }
+LOWER				{ yylval.i = _CTYPE_L|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+PUNCT				{ yylval.i = _CTYPE_P|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+SPACE				{ yylval.i = _CTYPE_S;
+				  return(LIST); }
+UPPER				{ yylval.i = _CTYPE_U|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+XDIGIT				{ yylval.i = _CTYPE_X|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+BLANK				{ yylval.i = _CTYPE_B;
+				  return(LIST); }
+PRINT				{ yylval.i = _CTYPE_R;
+				  return(LIST); }
+IDEOGRAM			{ yylval.i = _CTYPE_I|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+SPECIAL				{ yylval.i = _CTYPE_T|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+PHONOGRAM			{ yylval.i = _CTYPE_Q|_CTYPE_R|_CTYPE_G;
+				  return(LIST); }
+SWIDTH0				{ yylval.i = _CTYPE_SW0; return(LIST); }
+SWIDTH1				{ yylval.i = _CTYPE_SW1; return(LIST); }
+SWIDTH2				{ yylval.i = _CTYPE_SW2; return(LIST); }
+SWIDTH3				{ yylval.i = _CTYPE_SW3; return(LIST); }
 
 VARIABLE[\t ]			{ static char vbuf[1024];
 				  char *v = vbuf;

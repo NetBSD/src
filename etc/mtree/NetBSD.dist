@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.108.2.2 2000/05/29 14:01:40 minoura Exp $
+#	$NetBSD: NetBSD.dist,v 1.108.2.3 2000/06/23 16:58:51 minoura Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -93,6 +93,11 @@ postfix
 # ./etc/rc.d
 rc.d
 # ./etc/rc.d
+..
+
+# ./etc/rc.conf.d
+rc.conf.d
+# ./etc/rc.conf.d
 ..
 
 # ./etc/sliphome
@@ -3133,6 +3138,11 @@ larn		uname=games gname=games mode=0775
 # ./var/games/phantasia
 phantasia	uname=games gname=games mode=0775
 # ./var/games/phantasia
+..
+
+# ./var/games/sail
+sail		uname=games gname=games mode=0775
+# ./var/games/sail
 ..
 
 # ./var/games

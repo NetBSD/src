@@ -32,9 +32,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD$
  */
 
-#if defined(XPG4) || defined(DLRUNEMOD)
+#if defined(DLRUNEMOD)
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
@@ -164,4 +166,4 @@ _UTF2_sputrune(c, string, n, result, state)
 			return (1);
 		}
 }
-#endif  /* XPG4 || DLRUNEMOD */
+#endif  /* DLRUNEMOD */

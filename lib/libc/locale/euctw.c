@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: euctw.c,v 1.1.2.1 2000/05/28 22:41:04 minoura Exp $
+ *	$Id: euctw.c,v 1.1.2.2 2000/06/23 16:58:56 minoura Exp $
  */
 
 #if defined(XPG4) || defined(DLRUNEMOD)

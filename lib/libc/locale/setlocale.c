@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.17.4.1 2000/05/28 22:41:05 minoura Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.17.4.2 2000/06/23 16:58:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #ifndef __RCSID
 #define __RCSID(a)
 #endif
-__RCSID("$NetBSD: setlocale.c,v 1.17.4.1 2000/05/28 22:41:05 minoura Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.17.4.2 2000/06/23 16:58:58 minoura Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.17.4.1 2000/05/28 22:41:05 minoura Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #ifndef WITH_RUNE
 #include "ctypeio.h"
 #else
@@ -158,25 +159,22 @@ __setlocale_mb(category, locale)
 	}
 #else
 	if (_PathLocale == NULL) {
-#ifndef _NO_NATIVE_ISSETUGID
 		char *p = getenv("PATH_LOCALE");
 
 		if (p != NULL && !issetugid()) {
 			if (strlen(p) + 1/*"/"*/ + ENCODING_LEN +
-			    1/*"/"*/ + CATEGORY_LEN >= PATH_MAX)
-				return(EFAULT);
+			    1/*"/"*/ + CATEGORY_LEN >= PATH_MAX) {
+				errno = EFAULT;
+				return(NULL);
+			}
 			_PathLocale = strdup(p);
 			if (_PathLocale == NULL)
-				return (errno);
+				return (NULL);
 			_PathLocaleUnshared = _PathLocale;
 		} else {
 			_PathLocale = _PATH_LOCALE;
 			_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
 		}
-#else
-		_PathLocale = _PATH_LOCALE;
-		_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
-#endif
 	}
 #endif
 
@@ -316,7 +314,7 @@ loadlocale(category)
 				_tolower_tab_ = _C_tolower_;
 			}
 #ifdef WITH_RUNE
-                        (void)_xpg4_setrunelocale("C");
+			(void)_xpg4_setrunelocale("C");
 #endif
 		}
 
@@ -340,14 +338,14 @@ loadlocale(category)
 #ifndef WITH_RUNE
 		if (__loadctype(name)) {
 #else
-                if (!_xpg4_setrunelocale(new_categories[category])) {
-                        __runetable_to_netbsd_ctype();
+		if (!_xpg4_setrunelocale(new_categories[category])) {
+			__runetable_to_netbsd_ctype();
 #endif
 			(void)strncpy(current_categories[category],
 			    new_categories[category],
 			    sizeof(current_categories[category]) - 1);
 			return current_categories[category];
-                }
+		}
 		return NULL;
 
 	case LC_COLLATE:

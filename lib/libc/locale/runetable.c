@@ -33,22 +33,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libc/locale/table.c,v 1.11.2.1 1999/08/29 14:47:14 peter Exp $
+ * $FreeBSD: src/lib/libc/locale/table.c,v 1.13 2000/02/08 07:43:25 obrien Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
-#elif defined __RCSID
-__RCSID("$NetBSD: runetable.c,v 1.1.2.1 2000/05/28 22:41:05 minoura Exp $");
-#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
 #include <locale.h>
 #if !defined(__FreeBSD__)
-#define _BSD_RUNE_T_    int
-#define _BSD_CT_RUNE_T_ _rune_t
+#define _BSD_RUNE_T_	int
+#define _BSD_CT_RUNE_T_	_rune_t
 #include "rune.h"
 #else
 #include <rune.h>
@@ -57,77 +53,143 @@ __RCSID("$NetBSD: runetable.c,v 1.1.2.1 2000/05/28 22:41:05 minoura Exp $");
 extern _rune_t	_none_sgetrune
 		__P((const char *, size_t, char const **, void *));
 extern int	_none_sputrune __P((_rune_t, char *, size_t, char **, void *));
-extern int	_none_init __P((_RuneLocale *));
+extern int	_none_init __P((char *, char **));
 
 _RuneLocale _DefaultRuneLocale = {
     _RUNE_MAGIC_1,
-    "none",
+    "NONE",
     _none_sgetrune,
     _none_sputrune,
     0xFFFD,
 
-#if !defined(__FreeBSD__)
-#undef	_U
-#undef	_L
-#undef	_N
-#undef	_S
-#undef	_P
-#undef	_C
-#undef	_X
-#undef	_B
-#define	_A	___A  		/* Alpha */
-#define	_C	___C  		/* Control */
-#define	_D	___D  		/* Digit */
-#define	_G	___G  		/* Graph */
-#define	_L	___L  		/* Lower */
-#define	_P	___P  		/* Punct */
-#define	_S	___S  		/* Space */
-#define	_U	___U  		/* Upper */
-#define	_X	___X  		/* X digit */
-#define	_B	___B  		/* Blank */
-#define	_R	___R  		/* Print */
-#define	_I	___I  		/* Ideogram */
-#define	_T	___T  		/* Special */
-#define	_Q	___Q  		/* Phonogram */
-#define	_SWM	___SWM		/* Mask to get screen width data */
-#define	_SWS	___SWS		/* Bits to shift to get width */
-#define	_SW0	___SW0		/* 0 width character */
-#define	_SW1	___SW1		/* 1 width character */
-#define	_SW2	___SW2		/* 2 width character */
-#define	_SW3	___SW3		/* 3 width character */
-#endif /* __FreeBSD__ */
-    {	/*00*/	_C,		_C,		_C,		_C,
-		_C,		_C,		_C,		_C,
-	/*08*/	_C,		_C|_S|_B,	_C|_S,		_C|_S,
-		_C|_S,		_C|_S,		_C,		_C,
-	/*10*/	_C,		_C,		_C,		_C,
-		_C,		_C,		_C,		_C,
-	/*18*/	_C,		_C,		_C,		_C,
-		_C,		_C,		_C,		_C,
-	/*20*/	_S|_B|_R,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-		_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-	/*28*/	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-		_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-	/*30*/	_D|_R|_G|_X|0,	_D|_R|_G|_X|1,	_D|_R|_G|_X|2,	_D|_R|_G|_X|3,
-		_D|_R|_G|_X|4,	_D|_R|_G|_X|5,	_D|_R|_G|_X|6,	_D|_R|_G|_X|7,
-	/*38*/	_D|_R|_G|_X|8,	_D|_R|_G|_X|9,	_P|_R|_G,	_P|_R|_G,
-		_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-	/*40*/	_P|_R|_G, _U|_X|_R|_G|_A|10, _U|_X|_R|_G|_A|11, _U|_X|_R|_G|_A|12,
-		_U|_X|_R|_G|_A|13, _U|_X|_R|_G|_A|14, _U|_X|_R|_G|_A|15, _U|_R|_G|_A,
-	/*48*/	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,
-		_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,
-	/*50*/	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,
-		_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,
-	/*58*/	_U|_R|_G|_A,	_U|_R|_G|_A,	_U|_R|_G|_A,	_P|_R|_G,
-		_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_P|_R|_G,
-	/*60*/	_P|_R|_G, _L|_X|_R|_G|_A|10, _L|_X|_R|_G|_A|11, _L|_X|_R|_G|_A|12,
-		_L|_X|_R|_G|_A|13, _L|_X|_R|_G|_A|14, _L|_X|_R|_G|_A|15, _L|_R|_G|_A,
-	/*68*/	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,
-		_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,
-	/*70*/	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,
-		_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,
-	/*78*/	_L|_R|_G|_A,	_L|_R|_G|_A,	_L|_R|_G|_A,	_P|_R|_G,
-		_P|_R|_G,	_P|_R|_G,	_P|_R|_G,	_C,
+    {	/*00*/	_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+	/*08*/	_CTYPE_C,
+		_CTYPE_C|_CTYPE_S|_CTYPE_B,
+		_CTYPE_C|_CTYPE_S,
+		_CTYPE_C|_CTYPE_S,
+		_CTYPE_C|_CTYPE_S,
+		_CTYPE_C|_CTYPE_S,
+		_CTYPE_C,
+		_CTYPE_C,
+	/*10*/	_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+	/*18*/	_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+		_CTYPE_C,
+	/*20*/	_CTYPE_S|_CTYPE_B|_CTYPE_R,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+	/*28*/	_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+	/*30*/	_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|0,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|1,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|2,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|3,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|4,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|5,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|6,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|7,
+	/*38*/	_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|8,
+		_CTYPE_D|_CTYPE_R|_CTYPE_G|_CTYPE_X|9,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+	/*40*/	_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|10,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|11,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|12,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|13,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|14,
+		_CTYPE_U|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|15,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*48*/	_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*50*/	_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*58*/	_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_U|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+	/*60*/	_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|10,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|11,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|12,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|13,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|14,
+		_CTYPE_L|_CTYPE_X|_CTYPE_R|_CTYPE_G|_CTYPE_A|15,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*68*/	_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*70*/	_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+	/*78*/	_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_L|_CTYPE_R|_CTYPE_G|_CTYPE_A,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_P|_CTYPE_R|_CTYPE_G,
+		_CTYPE_C,
     },
     {	0x00,	0x01,	0x02,	0x03,	0x04,	0x05,	0x06,	0x07,
      	0x08,	0x09,	0x0a,	0x0b,	0x0c,	0x0d,	0x0e,	0x0f,
@@ -212,17 +274,17 @@ void **_StreamStateTable = NULL;
 int __mb_cur_max = 1;
 
 char	*_PathLocale;
-char	*_PathLocaleUnshared;
+char    *_PathLocaleUnshared;
 
 /*
  * Data path for each category.
  */
-char	**_LocalePaths[_LC_LAST] = {
-    &_PathLocale,			/* LC_ALL */
-    &_PathLocaleUnshared,		/* LC_COLLATE */
-    &_PathLocaleUnshared,		/* LC_CTYPE */
-    &_PathLocale,			/* LC_MONETARY */
-    &_PathLocale,			/* LC_NUMERIC */
-    &_PathLocale,			/* LC_TIME */
-    &_PathLocale,			/* LC_MESSAGES */
+char    **_LocalePaths[_LC_LAST] = {
+    &_PathLocale,                       /* LC_ALL */
+    &_PathLocaleUnshared,               /* LC_COLLATE */
+    &_PathLocaleUnshared,               /* LC_CTYPE */
+    &_PathLocale,                       /* LC_MONETARY */
+    &_PathLocale,                       /* LC_NUMERIC */
+    &_PathLocale,                       /* LC_TIME */
+    &_PathLocale,                       /* LC_MESSAGES */
 };

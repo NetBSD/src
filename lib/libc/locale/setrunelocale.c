@@ -34,10 +34,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __NetBSD__
-#define _NO_NATIVE_ISSETUGID
-#endif
-
 #if !defined(__FreeBSD__)
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ _rune_t
@@ -57,7 +53,6 @@ extern int __fl_rune_singlebyte;
 #define	LC_CTYPE	2	/* XXX */
 
 extern int		_none_init __P((_RuneLocale *));
-#ifdef XPG4 
 #ifndef DLRUNE
 extern int		_UTF2_init __P((_RuneLocale *));
 extern int		_EUC_init __P((_RuneLocale *));
@@ -65,7 +60,6 @@ extern int		_BIG5_init __P((_RuneLocale *));
 extern int		_MSKanji_init __P((_RuneLocale *));
 extern int		_ISO2022_init __P((_RuneLocale *));
 #endif /* !DLRUNE */
-#endif /* XPG4 */
 extern int              _xpg4_setrunelocale __P((char *));
 extern _RuneLocale      *_Read_RuneMagi __P((FILE *));
 
@@ -80,7 +74,6 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 	int ret;
         int (*init) __P((_RuneLocale *));
 	if (_PathModule == NULL) {
-#ifndef _NO_NATIVE_ISSETUGID
 		char *p = getenv("PATH_LOCALEMODULE");
 
 		if (p != NULL && !issetugid()) {
@@ -95,7 +88,6 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 			if (_PathModule == NULL)
 				return (errno);
 		} else
-#endif
 			_PathModule = _PATH_LOCALEMODULE;
 	}
 	/* Range checking not needed, encoding length already checked above */
@@ -129,17 +121,8 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 }
 #endif /* DLRUNE */
 
-#ifdef XPG4
 int
-setrunelocale(encoding)
-	char *encoding;
-{
-	return _xpg4_setrunelocale(encoding);
-}
-#endif
-
-int
-#if !defined(XPG4) && defined(__FreeBSD__)
+#if defined(__FreeBSD__)
 setrunelocale(encoding)
 #else
 _xpg4_setrunelocale(encoding)
@@ -165,7 +148,6 @@ _xpg4_setrunelocale(encoding)
 	}
 
 	if (_PathLocale == NULL) {
-#ifndef _NO_NATIVE_ISSETUGID
 		char *p = getenv("PATH_LOCALE");
 
 		if (p != NULL && !issetugid()) {
@@ -180,10 +162,6 @@ _xpg4_setrunelocale(encoding)
 			_PathLocale = _PATH_LOCALE;
 			_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
 		}
-#else
-		_PathLocale = _PATH_LOCALE;
-		_PathLocaleUnshared = _PATH_LOCALE_UNSHARED;
-#endif
 	}
 	/* Range checking not needed, encoding length already checked above */
 	(void) strcpy(name, *_LocalePaths[LC_CTYPE]);
@@ -218,7 +196,7 @@ _xpg4_setrunelocale(encoding)
 	else
 #endif
 		ret = loadrunemodule(rl, &module);
-#elif defined(XPG4)
+#else
 	else if (!strcmp(rl->encoding, "EUC"))
 		ret = _EUC_init(rl);
 	else if (!strcmp(rl->encoding, "BIG5"))
@@ -231,7 +209,6 @@ _xpg4_setrunelocale(encoding)
 		ret = _UTF2_init(rl);
 	else if (!strcmp(rl->encoding, "EUCTW"))
 		ret = _EUCTW_init(rl);
-#else
 	else
 		ret = EINVAL;
 #endif

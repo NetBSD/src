@@ -1,4 +1,4 @@
-%x string name charmap defn nchar subs
+%x string name charmap defn nchar subs subs2
 %{
 /*-
  * Copyright (c) 1995 Alex Tatmanjants <alex@elvisti.kiev.ua>
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: scan.l,v 1.1.2.1 2000/05/28 22:41:25 minoura Exp $
+ * $FreeBSD: src/usr.bin/colldef/scan.l,v 1.10 1999/08/28 00:59:44 peter Exp $
  */
 
 #include <ctype.h>
@@ -37,8 +37,7 @@
 #include "collate.h"
 #include "y.tab.h"
 
-int line_no = 1, save_no;
-int save_start;
+int line_no = 1, save_no, fromsubs;
 u_char buf[STR_LEN], *ptr;
 FILE *map_fp;
 extern char map_name[];
@@ -50,21 +49,22 @@ YYSTYPE yylval;
 #endif /* FLEX_DEBUG */
 %}
 %%
-<INITIAL,charmap,nchar,subs>[ \t]+      ;
-<subs>\"                { ptr = buf; BEGIN(string); }
-<INITIAL,subs>\<        { ptr = buf; save_start = YY_START; BEGIN(name); }
+<INITIAL,charmap,nchar,subs,subs2>[ \t]+      ;
+<subs2>\"               { ptr = buf; BEGIN(string); }
+<subs>\<                { ptr = buf; fromsubs = 1; BEGIN(name); }
+<INITIAL>\<             { ptr = buf; fromsubs = 0; BEGIN(name); }
 ^#.*\n			line_no++;
 ^\n			line_no++;
 <INITIAL>\\\n           line_no++;
-<INITIAL,nchar>\\t      { yylval.ch = '\t'; return CHAR; }
-<INITIAL,nchar>\\n      { yylval.ch = '\n'; return CHAR; }
-<INITIAL,nchar>\\b      { yylval.ch = '\b'; return CHAR; }
-<INITIAL,nchar>\\f      { yylval.ch = '\f'; return CHAR; }
-<INITIAL,nchar>\\v      { yylval.ch = '\v'; return CHAR; }
-<INITIAL,nchar>\\r      { yylval.ch = '\r'; return CHAR; }
-<INITIAL,nchar>\\a      { yylval.ch = '\a'; return CHAR; }
-<INITIAL,nchar>\\.      { yylval.ch = yytext[1]; return CHAR; }
-<subs>\n                {
+<INITIAL,nchar,subs>\\t      { yylval.ch = '\t'; return CHAR; }
+<INITIAL,nchar,subs>\\n      { yylval.ch = '\n'; return CHAR; }
+<INITIAL,nchar,subs>\\b      { yylval.ch = '\b'; return CHAR; }
+<INITIAL,nchar,subs>\\f      { yylval.ch = '\f'; return CHAR; }
+<INITIAL,nchar,subs>\\v      { yylval.ch = '\v'; return CHAR; }
+<INITIAL,nchar,subs>\\r      { yylval.ch = '\r'; return CHAR; }
+<INITIAL,nchar,subs>\\a      { yylval.ch = '\a'; return CHAR; }
+<INITIAL,nchar,subs>\\.      { yylval.ch = yytext[1]; return CHAR; }
+<subs2>\n               {
 	line_no++;
 	BEGIN(INITIAL);
 	return '\n';
@@ -79,18 +79,18 @@ YYSTYPE yylval;
 }
 <INITIAL>[;,{}()]       return *yytext;
 <INITIAL>substitute     { BEGIN(subs); return SUBSTITUTE; }
-<subs>with              return WITH;
+<subs>with              { BEGIN(subs2); return WITH; }
 <INITIAL>order          return ORDER;
 <INITIAL>charmap        BEGIN(charmap);
 <INITIAL>;[ \t]*\.\.\.[ \t]*;   return RANGE;
-<INITIAL,nchar>\\[0-7]{3}       {
+<INITIAL,nchar,subs>\\[0-7]{3}       {
 	u_int v;
 
 	sscanf(&yytext[1], "%o", &v);
 	yylval.ch = (u_char)v;
 	return CHAR;
 }
-<INITIAL,nchar>\\x[0-9a-z]{2}   {
+<INITIAL,nchar,subs>\\x[0-9a-z]{2}   {
 	u_int v;
 
 	sscanf(&yytext[2], "%x", &v);
@@ -103,15 +103,16 @@ YYSTYPE yylval;
 		return CHAR;
 	}
 	if(yyleng > STR_LEN - 1)
-		errx(EX_UNAVAILABLE, "chain buffer overflaw near line %u",
+		errx(EX_UNAVAILABLE, "chain buffer overflow near line %u",
 		     line_no);
 	strcpy(yylval.str, yytext);
 	return CHAIN;
 }
-<nchar>.                {
+<nchar,subs>.                {
 	yylval.ch = *yytext;
 	return CHAR;
 }
+<defn>^#.*\n            line_no++;
 <defn>[ \t]+            {
 	if (ptr == buf)
 		errx(EX_UNAVAILABLE, "map expected near line %u of %s",
@@ -123,19 +124,19 @@ YYSTYPE yylval;
 }
 <name>\/\/              {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "name buffer overflaw near line %u, character '/'",
+		errx(EX_UNAVAILABLE, "name buffer overflow near line %u, character '/'",
 		     line_no);
 	*ptr++ = '/';
 }
 <name>\/\>              {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "name buffer overflaw near line %u, character '>'",
+		errx(EX_UNAVAILABLE, "name buffer overflow near line %u, character '>'",
 		     line_no);
 	*ptr++ = '>';
 }
 <string>\\\"		{
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\"'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\"'",
 		     line_no);
 	*ptr++ = '"';
 }
@@ -153,13 +154,16 @@ YYSTYPE yylval;
 		buf, line_no);
 	findit:
 	yylval.ch = i;
-	BEGIN(save_start);
+	if (fromsubs)
+		BEGIN(subs);
+	else
+		BEGIN(INITIAL);
 	return CHAR;
 }
 <string>\"		{
 	*ptr = '\0';
 	strcpy(yylval.str, buf);
-	BEGIN(subs);
+	BEGIN(subs2);
 	return STRING;
 }
 <name,defn>.            {
@@ -169,49 +173,49 @@ YYSTYPE yylval;
 		errx(EX_UNAVAILABLE, "non-ASCII or non-printable character 0x%02x not allowed in the map/name near line %u of %s",
 		     *yytext, line_no, s);
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "map/name buffer overflaw near line %u of %s, character '%c'",
+		errx(EX_UNAVAILABLE, "map/name buffer overflow near line %u of %s, character '%c'",
 		     line_no, s, *yytext);
 	*ptr++ = *yytext;
 }
 <string>\\t             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\t'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\t'",
 		     line_no);
 	*ptr++ = '\t';
 }
 <string>\\b             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\b'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\b'",
 		     line_no);
 	*ptr++ = '\b';
 }
 <string>\\f             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\f'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\f'",
 		     line_no);
 	*ptr++ = '\f';
 }
 <string>\\v             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\v'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\v'",
 		     line_no);
 	*ptr++ = '\v';
 }
 <string>\\n             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\n'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\n'",
 		     line_no);
 	*ptr++ = '\n';
 }
 <string>\\r             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\r'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\r'",
 		     line_no);
 	*ptr++ = '\r';
 }
 <string>\\a             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '\\a'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '\\a'",
 		     line_no);
 	*ptr++ = '\a';
 }
@@ -239,13 +243,13 @@ YYSTYPE yylval;
 }
 <string>\\.             {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '%c'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '%c'",
 		     line_no, yytext[1]);
 	*ptr++ = yytext[1];
 }
 <string>.               {
 	if(ptr >= buf + sizeof(buf) - 1)
-		errx(EX_UNAVAILABLE, "string buffer overflaw near line %u, character '%c'",
+		errx(EX_UNAVAILABLE, "string buffer overflow near line %u, character '%c'",
 		     line_no, *yytext);
 	*ptr++ = *yytext;
 }

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(XPG4) || defined(DLRUNEMOD)
+#if defined(DLRUNEMOD)
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)big5.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
@@ -134,4 +134,4 @@ _BIG5_sputrune(c, string, n, result, state)
 	return (0);
 	
 }
-#endif /* XPG4 || DLRUNEMOD */
+#endif /* DLRUNEMOD */

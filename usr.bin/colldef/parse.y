@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: parse.y,v 1.1.2.1 2000/05/28 22:41:25 minoura Exp $
+ * $FreeBSD$
  */
 
 #include <err.h>
@@ -86,17 +86,25 @@ charmap : DEFN CHAR {
 }
 ;
 substitute : SUBSTITUTE CHAR WITH STRING {
+	if ($2 == '\0')
+		yyerror("NUL character can't be substituted");
+	if (strchr($4, $2) != NULL)
+		yyerror("Char 0x%02x substitution is recursive", $2);
 	strcpy(__collate_substitute_table[$2], $4);
 }
 ;
 order : ORDER order_list {
 	FILE *fp;
-	int ch, i;
+	int ch, i, substed, ordered;
 
 	for (ch = 0; ch < UCHAR_MAX + 1; ch++) {
 		for (i = 0; __collate_substitute_table[ch][i]; i++) {
-			if (!__collate_char_pri_table[__collate_substitute_table[ch][i]].prim)
-				yyerror("Char 0x%02x not present", ch);
+			substed = (__collate_substitute_table[ch][i] != ch);
+			ordered = !!__collate_char_pri_table[ch].prim;
+			if (!ordered && !substed)
+				yyerror("Char 0x%02x not found", ch);
+			if (substed && ordered)
+				yyerror("Char 0x%02x can't be ordered since substituted", ch);
 		}
 	}
 

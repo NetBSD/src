@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: wmemchr.c,v 1.1.2.1 2000/05/28 22:41:09 minoura Exp $
+ *	from: Id: wmemchr.c,v 1.1 1999/12/29 21:47:46 tshiozak Exp 
  */
 
 #include <wchar.h>
