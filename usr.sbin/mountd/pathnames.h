@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 1995/03/18 14:58:35 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 1999/06/06 01:50:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,4 +39,3 @@
 
 #define	_PATH_EXPORTS		"/etc/exports"
 #define	_PATH_RMOUNTLIST	"/var/db/mountdtab"
-#define _PATH_MOUNTDPID		"/var/run/mountd.pid"

@@ -31,11 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: pathnames.h,v 1.3 1996/01/02 17:30:29 perry Exp $
+ *	$NetBSD: pathnames.h,v 1.4 1999/06/06 01:55:58 thorpej Exp $
  */
 
 #include <paths.h>
 
 #define	_PATH_KLOG	"/dev/klog"
 #define	_PATH_LOGCONF	"/etc/syslog.conf"
-#define	_PATH_LOGPID	"/var/run/syslog.pid"
