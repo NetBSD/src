@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.1 2001/10/23 21:21:59 reinoud Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.2 2001/11/13 17:54:46 augustss Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -183,7 +183,7 @@ wskbd*          at rpckbd?              # wskbd on RiscPC keyboard
 wsqms*		at iomd?		# ws quadmouse driver
 wsmouse*	at wsqms?		# wsmouse on ws quadmouse
 
-pseudo-device	wsmux	1		# seems to be mandatory for now
+#pseudo-device	wsmux
 
 # The origional vidcconsole :
 # vidcconsole kbd at IOMD

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.14 2001/09/12 21:05:38 manu Exp $
+#	$NetBSD: GENERIC,v 1.15 2001/11/13 17:54:52 augustss Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -68,7 +68,7 @@ pseudo-device	bpfilter	8	# packet filter
 pseudo-device	loop
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator

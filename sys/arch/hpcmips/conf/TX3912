@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.30 2001/06/13 19:09:07 uch Exp $
+#	$NetBSD: TX3912,v 1.31 2001/11/13 17:54:49 augustss Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -270,7 +270,7 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
