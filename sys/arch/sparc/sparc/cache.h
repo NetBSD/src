@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.10 1997/03/20 21:16:20 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.11 1997/03/20 23:57:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -174,6 +174,7 @@ void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
 
 void	ms1_cache_flush __P((caddr_t, u_int));
 void	viking_pcache_flush_line __P((int, int));
+void	cypress_pcache_flush_line __P((int, int));
 
 extern void sparc_noop __P((void));
 
