@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_frag.c,v 1.9 1997/09/21 18:03:17 veego Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.10 1997/10/30 16:09:00 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_frag.c,v 2.0.2.14 1997/06/22 05:17:47 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.0.2.19 1997/10/23 15:18:48 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -71,7 +71,7 @@ int	ipfr_inuse = 0,
 #ifdef _KERNEL
 extern	int	ipfr_timer_id;
 #endif
-#if	SOLARIS && defined(_KERNEL)
+#if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern	kmutex_t	ipf_frag;
 extern	kmutex_t	ipf_natfrag;
 extern	kmutex_t	ipf_nat;
@@ -123,7 +123,6 @@ ipfr_t *table[];
 		if (!bcmp((char *)&frag.ipfr_src, (char *)&fr->ipfr_src,
 			  IPFR_CMPSZ)) {
 			ipfr_stats.ifs_exists++;
-			MUTEX_EXIT(&ipf_frag);
 			return NULL;
 		}
 
@@ -134,7 +133,6 @@ ipfr_t *table[];
 	KMALLOC(fr, ipfr_t *, sizeof(*fr));
 	if (fr == NULL) {
 		ipfr_stats.ifs_nomem++;
-		MUTEX_EXIT(&ipf_frag);
 		return NULL;
 	}
 
@@ -186,7 +184,7 @@ nat_t *nat;
 	MUTEX_ENTER(&ipf_natfrag);
 	if ((ipf = ipfr_new(ip, fin, pass, ipfr_nattab))) {
 		ipf->ipfr_data = nat;
-		nat->nat_frag = ipf;
+		nat->nat_data = ipf;
 	}
 	MUTEX_EXIT(&ipf_natfrag);
 	return ipf ? 0 : -1;
@@ -244,16 +242,16 @@ ipfr_t *table[];
 				table[idx] = f;
 			}
 			off = ip->ip_off;
-			atoff = (off & 0x1fff) - (fin->fin_dlen >> 3);
+			atoff = off + (fin->fin_dlen >> 3);
 			/*
 			 * If we've follwed the fragments, and this is the
 			 * last (in order), shrink expiration time.
 			 */
-			if (atoff == f->ipfr_off) {
+			if ((off & 0x1fff) == f->ipfr_off) {
 				if (!(off & IP_MF))
 					f->ipfr_ttl = 1;
 				else
-					f->ipfr_off = off;
+					f->ipfr_off = atoff;
 			}
 			ipfr_stats.ifs_hits++;
 			return f;
@@ -274,7 +272,17 @@ fr_info_t *fin;
 
 	MUTEX_ENTER(&ipf_natfrag);
 	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
-	nat = ipf ? ipf->ipfr_data : NULL;
+	if (ipf) {
+		nat = ipf->ipfr_data;
+		/*
+		 * This is the last fragment for this packet.
+		 */
+		if (ipf->ipfr_ttl == 1) {
+			nat->nat_data = NULL;
+			ipf->ipfr_data = NULL;
+		}
+	} else
+		nat = NULL;
 	MUTEX_EXIT(&ipf_natfrag);
 	return nat;
 }
@@ -295,6 +303,25 @@ fr_info_t *fin;
 	ret = ipf ? ipf->ipfr_pass : 0;
 	MUTEX_EXIT(&ipf_frag);
 	return ret;
+}
+
+
+/*
+ * forget any references to this external object.
+ */
+void ipfr_forget(nat)
+void *nat;
+{
+	ipfr_t	*fr;
+	int	idx;
+
+	MUTEX_ENTER(&ipf_natfrag);
+	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
+		for (fr = ipfr_heads[idx]; fr; fr = fr->ipfr_next)
+			if (fr->ipfr_data == nat)
+				fr->ipfr_data = NULL;
+
+	MUTEX_EXIT(&ipf_natfrag);
 }
 
 
@@ -321,8 +348,8 @@ void ipfr_unload()
 		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
 			if ((nat = (nat_t *)fr->ipfr_data)) {
-				if (nat->nat_frag == fr)
-					nat->nat_frag = NULL;
+				if (nat->nat_data == fr)
+					nat->nat_data = NULL;
 			}
 			KFREE(fr);
 		}
@@ -336,7 +363,7 @@ void ipfr_unload()
  * Slowly expire held state for fragments.  Timeouts are set * in expectation
  * of this being called twice per second.
  */
-# if (BSD >= 199306) || SOLARIS
+# if (BSD >= 199306) || SOLARIS || defined(__sgi)
 void ipfr_slowtimer()
 # else
 int ipfr_slowtimer()
@@ -346,8 +373,12 @@ int ipfr_slowtimer()
 	nat_t	*nat;
 	int	s, idx;
 
+#ifdef __sgi
+	ipfilter_sgi_intfsync();
+#endif
+
+	SPL_NET(s);
 	MUTEX_ENTER(&ipf_frag);
-	SPLNET(s);
 
 	/*
 	 * Go through the entire table, looking for entries to expire,
@@ -396,8 +427,8 @@ int ipfr_slowtimer()
 				ipfr_stats.ifs_expire++;
 				ipfr_inuse--;
 				if ((nat = (nat_t *)fr->ipfr_data)) {
-					if (nat->nat_frag == fr)
-						nat->nat_frag = NULL;
+					if (nat->nat_data == fr)
+						nat->nat_data = NULL;
 				}
 				KFREE(fr);
 			} else
@@ -405,7 +436,7 @@ int ipfr_slowtimer()
 		}
 	MUTEX_EXIT(&ipf_natfrag);
 	MUTEX_EXIT(&ipf_nat);
-	SPLX(s);
+	SPL_X(s);
 	fr_timeoutstate();
 	ip_natexpire();
 	fr_authexpire();
@@ -413,7 +444,7 @@ int ipfr_slowtimer()
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
 # else
 	ip_slowtimo();
-#  if BSD < 199306
+#  if (BSD < 199306) && !defined(__sgi)
 	return 0;
 #  endif
 # endif

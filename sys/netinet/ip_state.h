@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_state.h,v 1.8 1997/09/21 18:03:34 veego Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.9 1997/10/30 16:09:12 mrg Exp $	*/
 
 /*
- * (C)opyright 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.0.2.12 1997/08/05 13:39:40 darrenr Exp 
+ * Id: ip_state.h,v 2.0.2.14 1997/10/29 12:14:16 darrenr Exp 
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -130,7 +130,7 @@ extern	void	fr_timeoutstate __P((void));
 extern	void	fr_tcp_age __P((u_long *, u_char *, ip_t *, fr_info_t *, int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_short));
-#ifdef	__NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 extern	int	fr_state_ioctl __P((caddr_t, u_long, int));
 #else
 extern	int	fr_state_ioctl __P((caddr_t, int, int));
