@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.18 2003/06/23 11:01:06 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19 2003/09/13 14:31:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2003/06/23 11:01:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2003/09/13 14:31:34 chris Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -160,28 +160,26 @@ sendsig(int sig, sigset_t *mask, u_long code)
 	 * trampoline version numbers are coordinated with machine-
 	 * dependent code in libc.
 	 */
+
+	/*
+	 * this was all in the switch below, seemed daft to duplicate it, if
+	 * we do a new trampoline version it might change then
+	 */
+	tf->tf_r0 = sig;
+	tf->tf_r1 = code;
+	tf->tf_r2 = (int)&fp->sf_sc;
+	tf->tf_pc = (int)catcher;
+	tf->tf_usr_sp = (int)fp;
+	
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
-		tf->tf_r0 = sig;
-		tf->tf_r1 = code;
-		tf->tf_r2 = (int)&fp->sf_sc;
-		tf->tf_pc = (int)catcher;
-		tf->tf_usr_sp = (int)fp;
 		tf->tf_usr_lr = (int)p->p_sigctx.ps_sigcode;
 #ifndef acorn26
 		/* XXX This should not be needed. */
 		cpu_icache_sync_all();
 #endif
 		break;
-#endif /* COMPAT_16 */
-
 	case 1:
-		tf->tf_r0 = sig;
-		tf->tf_r1 = code;
-		tf->tf_r2 = (int)&fp->sf_sc;
-		tf->tf_pc = (int)catcher;
-		tf->tf_usr_sp = (int)fp;
 		tf->tf_usr_lr = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
