@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.13 1999/02/12 11:25:24 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.14 1999/02/20 18:27:53 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,6 +45,7 @@
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/unicode.h>
 
 #include <dev/ic/pcdisplay.h>
 
@@ -861,7 +862,8 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 
 #define NOTYET 0xffff
 static u_int16_t pcvt_unichars[0xa0] = {
-/* 0 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+/* 0 */	_e006U,
+	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET,
 	0x2409, /* SYMBOL FOR HORIZONTAL TABULATION */
 	0x240a, /* SYMBOL FOR LINE FEED */
@@ -869,11 +871,11 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x240c, /* SYMBOL FOR FORM FEED */
 	0x240d, /* SYMBOL FOR CARRIAGE RETURN */
 	NOTYET, NOTYET,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+/* 1 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 /* 2 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+/* 3 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
 /* 4 */	0x03c1, /* GREEK SMALL LETTER RHO */
 	0x03c8, /* GREEK SMALL LETTER PSI */
@@ -891,7 +893,7 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x03a5, /* GREEK CAPITAL LETTER UPSILON */
 	0x039e, /* GREEK CAPITAL LETTER XI */
 	0x03a8, /* GREEK CAPITAL LETTER PSI */
-	0x03a0, /* GREEK CAPITAL LETTER PI */
+/* 5 */	0x03a0, /* GREEK CAPITAL LETTER PI */
 	0x21d2, /* RIGHTWARDS DOUBLE ARROW */
 	0x21d4, /* LEFT RIGHT DOUBLE ARROW */
 	0x039b, /* GREEK CAPITAL LETTER LAMDA */
@@ -904,8 +906,14 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x222b, /* INTEGRAL */
 	0x2215, /* DIVISION SLASH */
 	0x2216, /* SET MINUS */
-	NOTYET, NOTYET, NOTYET,
-/* 6 */	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	_e00eU,
+	_e00dU,
+	_e00bU,
+/* 6 */	_e00cU,
+	_e007U,
+	_e008U,
+	_e009U,
+	_e00aU,
 	0x221a, /* SQUARE ROOT */
 	0x03c9, /* GREEK SMALL LETTER OMEGA */
 	0x00a5, /* YEN SIGN */
@@ -917,7 +925,7 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x00dd, /* LATIN CAPITAL LETTER Y WITH ACUTE */
 	0x00d7, /* MULTIPLICATION SIGN */
 	0x00d0, /* LATIN CAPITAL LETTER ETH */
-	0x00be, /* VULGAR FRACTION THREE QUARTERS */
+/* 7 */	0x00be, /* VULGAR FRACTION THREE QUARTERS */
 	0x00b8, /* CEDILLA */
 	0x00b4, /* ACUTE ACCENT */
 	0x00af, /* MACRON */
@@ -926,7 +934,11 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x00ac, /* NOT SIGN */
 	0x00a8, /* DIAERESIS */
 	0x2260, /* NOT EQUAL TO */
-	NOTYET, NOTYET, NOTYET, NOTYET, NOTYET,
+	_e005U,
+	_e004U,
+	_e003U,
+	_e002U,
+	_e001U,
 	0x03c5, /* GREEK SMALL LETTER UPSILON */
 	0x00f8, /* LATIN SMALL LETTER O WITH STROKE */
 /* 8 */	0x0153, /* LATIN SMALL LIGATURE OE */
@@ -945,7 +957,7 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x00cf, /* LATIN CAPITAL LETTER I WITH DIAERESIS */
 	0x00ce, /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX */
 	0x00cd, /* LATIN CAPITAL LETTER I WITH ACUTE */
-	0x00cc, /* LATIN CAPITAL LETTER I WITH GRAVE */
+/* 9 */	0x00cc, /* LATIN CAPITAL LETTER I WITH GRAVE */
 	0x00cb, /* LATIN CAPITAL LETTER E WITH DIAERESIS */
 	0x00ca, /* LATIN CAPITAL LETTER E WITH CIRCUMFLEX */
 	0x00c8, /* LATIN CAPITAL LETTER E WITH GRAVE */
@@ -960,7 +972,7 @@ static u_int16_t pcvt_unichars[0xa0] = {
 	0x00a9, /* COPYRIGHT SIGN */
 	0x00a4, /* CURRENCY SIGN */
 	0x03ba, /* GREEK SMALL LETTER KAPPA */
-	NOTYET
+	_e000U
 };
 
 static int vga_pcvt_mapchar __P((int, unsigned int *));
@@ -1036,8 +1048,8 @@ vga_mapchar(id, uni, index)
 		res2 = _vga_mapchar(id, scr->fontset2, uni, &idx2);
 	}
 	if (res2 > res1) {
-		*index = idx2;
-		return (res2 | 0x0800); /* attribute bit 3 */
+		*index = idx2 | 0x0800; /* attribute bit 3 */
+		return (res2);
 	}
 	*index = idx1;
 	return (res1);
