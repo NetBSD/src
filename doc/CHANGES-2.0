@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.129 2004/04/28 05:23:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.130 2004/04/28 05:26:07 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1374,3 +1374,12 @@ sys/dev/acpi/acpica/Subsystem/exmutex.c		1.13
 
 	A bugfix for Mutex handling.
 	[kochi, ticket #190]
+
+sys/dev/acpi/acpivar.h				1.16-1.17
+sys/dev/acpi/acpi_ec.c				1.23
+sys/dev/acpi/acpi.c				1.60-1.61
+sys/dev/acpi/files.acpi				1.23
+
+	Add ACPI ECDT (Embedded Controller Description Table) support.
+	This will enable usage of EC in early stage of ACPI initialization.
+	[kochi, ticket #191]
