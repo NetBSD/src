@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2002/05/24 21:40:59 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@ void consinit(void);
 void scbinit(void);
 int getsecs(void);
 void scb_stray(void *);
-void longjmp(int *);
+void longjmp(int *, int);
 void rtimer(void *);
 
 long *bootregs;
@@ -133,6 +133,17 @@ getsecs()
 struct ivec_dsp **scb;
 struct ivec_dsp *scb_vec;
 extern struct ivec_dsp idsptch;
+extern int jbuf[10];
+
+static void
+mcheck(void *arg)
+{
+	int off, *mfp = (int *)&arg;
+
+	off = (mfp[7]/4 + 8);
+	printf("Machine check, pc=%x, psl=%x\n", mfp[off], mfp[off+1]);
+	longjmp(jbuf, 1);
+}
 
 /*
  * Init the SCB and set up a handler for all vectors in the lower space,
@@ -163,6 +174,7 @@ scbinit()
 		scb_vec[i].ev = NULL;
 	}
 	scb_vec[0xc0/4].hoppaddr = rtimer;
+	scb_vec[4/4].hoppaddr = mcheck;
 
 	if (vax_boardtype != VAX_BTYP_VXT)
 		mtpr(-10000, PR_NICR);		/* Load in count register */
@@ -171,7 +183,6 @@ scbinit()
 	mtpr(20, PR_IPL);
 }
 
-extern int jbuf[10];
 extern int sluttid, senast, skip;
 
 void
@@ -188,7 +199,7 @@ rtimer(void *arg)
 		int nu = sluttid - getsecs();
 		if (senast != nu) {
 			mtpr(20, PR_IPL);
-			longjmp(jbuf);
+			longjmp(jbuf, 1);
 		}
 	}
 }
