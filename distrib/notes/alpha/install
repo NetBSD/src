@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.11 1998/07/05 13:59:25 ross Exp $	
+	$NetBSD: install,v 1.12 1998/08/23 12:42:17 hubertf Exp $	
 
 0. Introduction
 
@@ -409,25 +409,3 @@
 
 	cd /usr/local
 	tar xpfz .../toolchain.tgz
-
-
-5. Configuring NetBSD
-
-    Configuring your NetBSD system requires editing the /etc/rc.conf
-    file. Most of this file is fairly self-explanatory, but you
-    can `man rc.conf' for further explanations. Remember to set
-    `rc_configured' to YES so you will boot multi-user, set `hostname'
-    and possibly `defaultroute', and add an ifconfig_int for your
-    interface <int>, along the lines of
-
-        ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
-
-    or, if you have myname.my.dom in /etc/hosts:
-
-        ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
-
-    You will also want either to run named or add an /etc/resolv.conf
-    file (`man resolv.conf' for information on this), use `vipw' to add
-    accounts to your system, edit /etc/aliases to forward root mail to
-    the right place (run `newaliases' afterwards) and edit /etc/rc.local
-    to run any local daemons you use.
