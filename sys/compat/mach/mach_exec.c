@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.37 2003/11/18 14:11:33 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.38 2003/11/18 15:57:13 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.37 2003/11/18 14:11:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.38 2003/11/18 15:57:13 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -259,8 +259,11 @@ mach_e_proc_init(p, vmspace)
 			mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 		lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-		if (--med->med_bootstrap->mp_refcount == 0)
-			mach_port_put(med->med_bootstrap);
+		/*
+		 * Do not touch bootstrap port here, as it is 
+		 * shared between all processes in our implementation.
+		 * We do not want to release it.
+		 */
 		if (--med->med_kernel->mp_refcount == 0) 
 			mach_port_put(med->med_kernel);
 		if (--med->med_host->mp_refcount == 0)  
