@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.1 2001/06/19 00:21:18 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.2 2001/06/19 01:40:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Slightly adapted for NetBSD/x86_64 by fvdl@wasabisystems.com. A bit
  * of a minimal effort port, as this file will very likely have to
- * be redone for the real hardware (but not specs are available for that
+ * be redone for the real hardware (but no specs are available for that
  * yet).
  */
 #include "opt_ddb.h"
