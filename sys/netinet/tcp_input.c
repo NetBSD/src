@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.13 1997/06/28 00:59:31 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.14 1997/06/28 02:44:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -38,45 +38,13 @@
 /*
  *	TODO list for SYN cache stuff:
  *
- *	(a) Fix the socket queueing problem to not use SS_FORCE, which
- *	    effectively removes the queue limit.  Instead, use the
- *	    following approach:
- *
- *		(1) Shring sc_hash to 30 bits.  This isn't really a
- *		    noticeable loss.
- *		(2) Add a 1-bit field that indicates whether or not
- *		    the ACK has been recieved (i.e. whether it's in
- *		    SYN-RECEIVED or ESTABLISHED state).
- *		(3) When we receive an ACK (i.e. tranitioning from
- *		    SYN-RECEIVED to ESTABLISHED):
- *			(a) If the socket queue is not full already,
- *			    just do the normal processing.
- *			(b) If the socket queue is full, discard any
- *			    data in the packet (thus forcing a retransmit
- *			    by failing to ack it), set the aforementioned
- *			    bit, and leave the compressed TCB in the cache.
- *		(4) When we remove an entry from the socket queue, pull
- *		    the oldest cache entry in ESTABLISHED state and put it
- *		    at the end of the socket queue.
- *		(5) There is the problem that we end up discarding the window
- *		    size, so if we expand the TCB, accept() the connection,
- *		    and then toss some data at it, before receiving another
- *		    packet from the remote machine, we don't know how large
- *		    the window is.  This can be handled by, in this case
- *		    only, setting the initial window to 0, and letting the
- *		    zero window probe machinery take care of it.
- *
- *	(b) There's clearly a change to the tcp_respond() interface, but
+ *	(a) There's clearly a change to the tcp_respond() interface, but
  *	    it's not clear to me exactly what the new semantics are, or
  *	    that all of the callers get it correct.  Unfortunately, the
  *	    change isn't DOCUMENTED, and I don't have time to figure it
  *	    out.
  *
- *	(c) Needs KNF.
- *
- *	(d) SS_FORCE/SS_PRIV use needs to die.  (See (a) above.)
- *
- *	(e) The definition of "struct syn_cache" says:
+ *	(b) The definition of "struct syn_cache" says:
  *
  *		This structure should not exceeed 32 bytes.
  *
@@ -101,7 +69,7 @@
  *	    integreated these changes with one fo the IPv6 status that are
  *	    available?)
  *
- *	(f) Find room for a "state" field, which is needed to keep a
+ *	(c) Find room for a "state" field, which is needed to keep a
  *	    compressed state for TIME_WAIT TCBs.  It's been noted already
  *	    that this is fairly important for very high-volume web and
  *	    mail servers, which use a large number of short-lived
@@ -363,7 +331,6 @@ tcp_input(m, va_alist)
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	short ostate = 0;
 	struct in_addr laddr;
-	int dropsocket = 0;
 	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -497,7 +464,6 @@ findpcb:
 			tcp_saveti = *ti;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
-			struct socket *oso;
   			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
 				if (tiflags & TH_RST)
 					syn_cache_reset(ti);
@@ -516,47 +482,16 @@ findpcb:
 						goto after_listen;
 					}
   				}
-  				goto drop;
-  			}
-			oso = so;
-			so = sonewconn(so, 0);
-			/*
-			 * Don't add to the SYN cache if established
-			 * connections aren't being accept()ed.
-			 */
-			if (so == 0) {
-				if (oso->so_qlen < oso->so_qlimit &&
-				    syn_cache_add(oso, m, optp, optlen, &opti))
+  			} else {
+				/*
+				 * Received a SYN; create compressed
+				 * TCP state for it.
+				 */
+				if (so->so_qlen < so->so_qlimit &&
+				    syn_cache_add(so, m, optp, optlen, &opti))
 					m = NULL;
-				goto drop;
 			}
-			/*
-			 * This is ugly, but ....
-			 *
-			 * Mark socket as temporary until we're
-			 * committed to keeping it.  The code at
-			 * ``drop'' and ``dropwithreset'' check the
-			 * flag dropsocket to see if the temporary
-			 * socket created here should be discarded.
-			 * We mark the socket as discardable until
-			 * we're committed to it below in TCPS_LISTEN.
-			 */
-			dropsocket++;
-			inp = sotoinpcb(so);
-			inp->inp_laddr = ti->ti_dst;
-			inp->inp_lport = ti->ti_dport;
-			in_pcbstate(inp, INP_BOUND);
-#if BSD>=43
-			inp->inp_options = ip_srcroute();
-#endif
-			tp = intotcpcb(inp);
-			tp->t_state = TCPS_LISTEN;
-
-			/* Compute proper scaling value from buffer space
-			 */
-			while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-			   TCP_MAXWIN << tp->request_r_scale < so->so_rcv.sb_hiwat)
-				tp->request_r_scale++;
+			goto drop;
 		}
 	}
 
@@ -753,7 +688,6 @@ after_listen:
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			tp = tcp_drop(tp, ENOBUFS);
-			dropsocket = 0;		/* socket is already gone */
 			goto drop;
 		}
 		if (optp)
@@ -769,7 +703,6 @@ after_listen:
 		tp->t_flags |= TF_ACKNOW;
 		tp->t_state = TCPS_SYN_RECEIVED;
 		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		dropsocket = 0;		/* committed to socket */
 		tcpstat.tcps_accepts++;
 		tcp_mss(tp, opti.maxseg);
 		goto trimthenstep6;
@@ -1480,9 +1413,6 @@ dropwithreset:
 		(void)tcp_respond(tp, ti, m, ti->ti_seq+ti->ti_len, (tcp_seq)0,
 				  TH_RST|TH_ACK);
 	}
-	/* destroy temporarily created socket */
-	if (dropsocket)
-		(void) soabort(so);
 	return;
 
 drop:
@@ -1492,9 +1422,6 @@ drop:
 	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG))
 		tcp_trace(TA_DROP, ostate, tp, &tcp_saveti, 0);
 	m_freem(m);
-	/* destroy temporarily created socket */
-	if (dropsocket)
-		(void) soabort(so);
 	return;
 #ifndef TUBA_INCLUDE
 }
@@ -2072,7 +1999,7 @@ syn_cache_get(so, m)
 	 * connection when the SYN arrived.  If we can't create
 	 * the connection, abort it.
 	 */
-	so = sonewconn(so, SS_ISCONNECTED|SS_FORCE);
+	so = sonewconn(so, SS_ISCONNECTED);
 	if (so == NULL) {
 		(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
 		    (tcp_seq)0, TH_RST|TH_ACK);
