@@ -1,8 +1,11 @@
-/*	$NetBSD: strcmp.S,v 1.2 1999/03/13 11:20:55 drochner Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.3 1999/03/26 05:23:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jonathan Stone, Michael Hitch and Simon Burge.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
