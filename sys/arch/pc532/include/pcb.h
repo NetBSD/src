@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.10 1999/06/17 00:22:41 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11 2003/01/22 13:40:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@ struct pcb {
  * Software pcb (extension)
  */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
-	struct pmap *pcb_pmap;		/* back pointer to our pmap */
+	struct pmap *pcb_pmap;	/* back pointer to our pmap */
 };
 
 /*    
