@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.3 1999/11/21 15:23:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,8 +170,11 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 		tctrl_write(sc, TS102_REG_UCTRL_STS, TS102_UCTRL_STS_RXNE_STA);
 	}
 
-	(void)bus_intr_establish(sc->sc_memt, sa->sa_pri, 0, tctrl_intr, sc);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	if (sa->sa_nintr != 0) {
+		(void)bus_intr_establish(sc->sc_memt, sa->sa_pri,
+					 0, tctrl_intr, sc);
+		evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	}
 
 	/* See what the external status is
 	 */
