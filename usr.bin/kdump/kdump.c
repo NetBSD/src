@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.6 1995/03/21 14:22:38 mycroft Exp $";
+static char *rcsid = "$Id: kdump.c,v 1.7 1995/03/26 07:56:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -231,55 +231,57 @@ static char *ptrace_ops[] = {
 ktrsyscall(ktr)
 	register struct ktr_syscall *ktr;
 {
-	register narg = ktr->ktr_narg;
-	register int *ip;
+	register argsize = ktr->ktr_argsize;
+	register register_t *ap;
 	char *ioctlname();
 
 	if (ktr->ktr_code >= nsyscalls || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
 	else
 		(void)printf("%s", syscallnames[ktr->ktr_code]);
-	ip = (int *)((char *)ktr + sizeof(struct ktr_syscall));
-	if (narg) {
+	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
+	if (argsize) {
 		char c = '(';
 		if (fancy) {
 			if (ktr->ktr_code == SYS_ioctl) {
 				char *cp;
 				if (decimal)
-					(void)printf("(%d", *ip);
+					(void)printf("(%ld", (long)*ap);
 				else
-					(void)printf("(%#x", *ip);
-				ip++;
-				narg--;
-				if ((cp = ioctlname(*ip)) != NULL)
+					(void)printf("(%#lx", (long)*ap);
+				ap++;
+				argsize -= sizeof(register_t);
+				if ((cp = ioctlname(*ap)) != NULL)
 					(void)printf(",%s", cp);
 				else {
 					if (decimal)
-						(void)printf(",%d", *ip);
+						(void)printf(",%ld",
+						    (long)*ap);
 					else
-						(void)printf(",%#x ", *ip);
+						(void)printf(",%#lx ",
+						    (long)*ap);
 				}
 				c = ',';
-				ip++;
-				narg--;
+				ap++;
+				argsize -= sizeof(register_t);
 			} else if (ktr->ktr_code == SYS_ptrace) {
-				if (*ip <=sizeof(ptrace_ops)/sizeof(ptrace_ops[0]) && *ip >= 0)
-					(void)printf("(%s", ptrace_ops[*ip]);
+				if (*ap <=sizeof(ptrace_ops)/sizeof(ptrace_ops[0]) && *ap >= 0)
+					(void)printf("(%s", ptrace_ops[*ap]);
 				else
-					(void)printf("(%d", *ip);
+					(void)printf("(%ld", (long)*ap);
 				c = ',';
-				ip++;
-				narg--;
+				ap++;
+				argsize -= sizeof(register_t);
 			}
 		}
-		while (narg) {
+		while (argsize) {
 			if (decimal)
-				(void)printf("%c%d", c, *ip);
+				(void)printf("%c%ld", c, (long)*ap);
 			else
-				(void)printf("%c%#x", c, *ip);
+				(void)printf("%c%#lx", c, (long)*ap);
 			c = ',';
-			ip++;
-			narg--;
+			ap++;
+			argsize -= sizeof(register_t);
 		}
 		(void)putchar(')');
 	}
@@ -396,8 +398,8 @@ ktrpsig(psig)
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL\n");
 	else
-		(void)printf("caught handler=0x%x mask=0x%x code=0x%x\n",
-		    (u_int)psig->action, psig->mask, psig->code);
+		(void)printf("caught handler=0x%lx mask=0x%x code=0x%x\n",
+		    (u_long)psig->action, psig->mask, psig->code);
 }
 
 ktrcsw(cs)
