@@ -96,11 +96,14 @@ typedef enum {
 	oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
 	oPasswordAuthentication, oRSAAuthentication, oFallBackToRsh, oUseRsh,
 	oChallengeResponseAuthentication, oXAuthLocation,
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	oKerberosAuthentication,
-#endif /* KRB4 */
+#endif /* KRB4 || KRB5 */
+#ifdef KRB5
+	oKrb5TgtPassing,
+#endif /* KRB5 */
 #ifdef AFS
-	oKerberosTgtPassing, oAFSTokenPassing,
+	oKrb4TgtPassing, oAFSTokenPassing,
 #endif
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
 	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
@@ -133,11 +136,14 @@ static struct {
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	{ "kerberosauthentication", oKerberosAuthentication },
-#endif /* KRB4 */
+#endif /* KRB4 || KRB5 */
+#ifdef KRB5
+  	{ "kerberos5tgtpassing", oKrb5TgtPassing },
+#endif /* KRB5 */
 #ifdef AFS
-	{ "kerberostgtpassing", oKerberosTgtPassing },
+	{ "kerberos4tgtpassing", oKrb4TgtPassing },
 	{ "afstokenpassing", oAFSTokenPassing },
 #endif
 	{ "fallbacktorsh", oFallBackToRsh },
@@ -324,21 +330,27 @@ parse_flag:
 		intptr = &options->challenge_reponse_authentication;
 		goto parse_flag;
 
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	case oKerberosAuthentication:
 		intptr = &options->kerberos_authentication;
 		goto parse_flag;
-#endif /* KRB4 */
+#endif /* KRB4 || KRB5 */
+
+#ifdef KRB5
+	case oKrb5TgtPassing:
+		intptr = &options->krb5_tgt_passing;
+		goto parse_flag;
+#endif /* KRB5 */
 
 #ifdef AFS
-	case oKerberosTgtPassing:
-		intptr = &options->kerberos_tgt_passing;
+	case oKrb4TgtPassing:
+		intptr = &options->krb4_tgt_passing;
 		goto parse_flag;
 
 	case oAFSTokenPassing:
 		intptr = &options->afs_token_passing;
 		goto parse_flag;
-#endif
+#endif /* AFS */
 
 	case oFallBackToRsh:
 		intptr = &options->fallback_to_rsh;
@@ -681,13 +693,16 @@ initialize_options(Options * options)
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
 	options->challenge_reponse_authentication = -1;
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	options->kerberos_authentication = -1;
-#endif
+#endif /* KRB4 || KRB5 */
+#ifdef KRB5
+	options->krb5_tgt_passing = -1;
+#endif /* KRB5 */
 #ifdef AFS
-	options->kerberos_tgt_passing = -1;
+	options->krb4_tgt_passing = -1;
 	options->afs_token_passing = -1;
-#endif
+#endif /* AFS */
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
 	options->kbd_interactive_devices = NULL;
@@ -752,13 +767,17 @@ fill_default_options(Options * options)
 		options->pubkey_authentication = 1;
 	if (options->challenge_reponse_authentication == -1)
 		options->challenge_reponse_authentication = 0;
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 1;
-#endif /* KRB4 */
+#endif /* KRB4 || KRB5 */
+#ifdef KRB5
+	if (options->krb5_tgt_passing == -1)
+		options->krb5_tgt_passing = 1;
+#endif /* KRB5 */
 #ifdef AFS
-	if (options->kerberos_tgt_passing == -1)
-		options->kerberos_tgt_passing = 1;
+	if (options->krb4_tgt_passing == -1)
+		options->krb4_tgt_passing = 1;
 	if (options->afs_token_passing == -1)
 		options->afs_token_passing = 1;
 #endif /* AFS */

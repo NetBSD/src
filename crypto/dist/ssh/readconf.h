@@ -38,14 +38,17 @@ typedef struct {
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     challenge_reponse_authentication;
 					/* Try S/Key or TIS, authentication. */
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	int     kerberos_authentication;	/* Try Kerberos
 						 * authentication. */
-#endif
+#endif /* KRB4 || KRB5 */
+#ifdef KRB5
+	int	krb5_tgt_passing;
+#endif /* KRB5 */
 #ifdef AFS
-	int     kerberos_tgt_passing;	/* Try Kerberos tgt passing. */
+	int     krb4_tgt_passing;	/* Try Kerberos v4 tgt passing. */
 	int     afs_token_passing;	/* Try AFS token passing. */
-#endif
+#endif /* AFS */
 	int     password_authentication;	/* Try password
 						 * authentication. */
 	int     kbd_interactive_authentication; /* Try keyboard-interactive auth. */

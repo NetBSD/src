@@ -109,6 +109,10 @@ do_authentication2()
 
 	x_authctxt = authctxt;		/*XXX*/
 
+#if defined(KRB4) || defined(KRB5)
+	/* turn off kerberos, not supported by SSH2 */
+	options.kerberos_authentication = 0;
+#endif
 	/* challenge-reponse is implemented via keyboard interactive */
 	if (options.challenge_reponse_authentication)
 		options.kbd_interactive_authentication = 1;

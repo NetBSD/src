@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/02/14 01:06:50 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/03/04 00:41:28 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -23,9 +23,9 @@ MKPROFILE=	no
 libinstall::
 
 .if (${MKKERBEROS} != "no")
+CPPFLAGS+= -DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 CPPFLAGS+= -DKRB4 -I${DESTDIR}/usr/include/kerberosIV
-#CPPFLAGS+= -DAFS
-#SRCS+= radix.c
+SRCS+= radix.c
 .endif
 
 .include <bsd.lib.mk>
