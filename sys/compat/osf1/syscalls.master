@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1996/09/07 12:40:46 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.5 1996/09/07 14:22:00 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -147,7 +147,7 @@
 92	STD		{ int osf1_sys_fcntl(int fd, int cmd, void *arg); }
 93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
                             fd_set *ex, struct timeval *tv); }
-94	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+94	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }

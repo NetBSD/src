@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 1996/09/07 12:40:52 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.19 1996/09/07 14:22:02 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -154,7 +154,7 @@
 			    struct svr4_strbuf *dat, int *flags); }
 86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int flags); }
-87	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 88	STD		{ int svr4_sys_lstat(char *path, \
 			    struct svr4_stat *ub); }
