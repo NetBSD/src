@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.19 1994/07/08 07:57:53 lkestel Exp $
+ *	$Id: machdep.c,v 1.20 1994/07/09 06:36:11 briggs Exp $
  */
 
 #include <param.h>
@@ -117,6 +117,8 @@
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <dev/cons.h>
 
 #include "via.h"
 
@@ -2451,14 +2453,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
-/*
 		if (cn_tab != NULL)
 			consdev = cn_tab->cn_dev;
 		else
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
-*/
 	default:
 		return (EOPNOTSUPP);
 	}
