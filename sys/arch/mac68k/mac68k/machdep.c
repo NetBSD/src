@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 1996/05/06 01:06:57 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 1996/05/07 21:21:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1925,19 +1925,17 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACP600, "Performa", " 600 ", MACH_CLASSIIvx, &romvecs[2]},
 	{MACH_MACP460, "Performa", " 460 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACP550, "Performa", " 550 ", MACH_CLASSLC, &romvecs[11]},
+	{MACH_MACTV,   "TV ",      "",      MACH_CLASSLC, &romvecs[11]},
 
 /* The LCs... */
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ, &romvecs[9]},
+	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACCCLASSIC, "Color Classic ", "", MACH_CLASSLC, &romvecs[3]},
 /* Does this belong here? */
 	{MACH_MACCLASSICII, "Classic", " II ", MACH_CLASSLC, &romvecs[3]},
-
-/* The hopeless ones... */
-	{MACH_MACTV, "TV ", "", MACH_CLASSH, NULL},
 
 /* The unknown one and the end... */
 	{0, "Unknown", "", MACH_CLASSII, NULL},
