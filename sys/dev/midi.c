@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.19 2001/01/13 16:16:12 tshiozak Exp $	*/
+/*	$NetBSD: midi.c,v 1.20 2001/01/30 23:02:18 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -546,48 +546,56 @@ midi_start_output(sc, intr)
 	u_char *outp;
 	int error;
 	int s;
-	int i, mmax;
+	int i;
 
 	error = 0;
-	mmax = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAX_WRITE;
 
 	if (sc->dying)
 		return EIO;
 
-	s = splaudio();
 	if (sc->pbus && !intr) {
 		DPRINTFN(4, ("midi_start_output: busy\n"));
-		splx(s);
 		return 0;
 	}
-	sc->pbus = 1;
-	for (i = 0; i < mmax && mb->used > 0 && !error; i++) {
+	sc->pbus = (mb->used > 0)?1:0;
+	for (i = 0; i < MIDI_MAX_WRITE && mb->used > 0 &&
+		   (!error || error==EINPROGRESS); i++) {
 		outp = mb->outp;
-		splx(s);
 		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
 			     sc, i, *outp));
+		error = sc->hw_if->output(sc->hw_hdl, *outp);
+		s = splaudio();
+		outp++;
 #ifdef MIDI_SAVE
 		midisave.buf[midicnt] = *outp;
 		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
 #endif
-		error = sc->hw_if->output(sc->hw_hdl, *outp++);
 		if (outp >= mb->end)
 			outp = mb->start;
-		s = splaudio();
 		mb->outp = outp;
 		mb->used--;
+		splx(s);
+		if ((sc->props & MIDI_PROP_OUT_INTR) && error!=EINPROGRESS)
+			/* If ointr is enabled, midi_start_output()
+			 * normally writes only one byte,
+			 * except hw_if->output() returns EINPROGRESS.
+			 */
+			break;
 	}
 	midi_wakeup(&sc->wchan);
 	selwakeup(&sc->wsel);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
-	if (mb->used > 0) {
-		if (!(sc->props & MIDI_PROP_OUT_INTR))
+	if (!(sc->props & MIDI_PROP_OUT_INTR) || error==EINPROGRESS) {
+		if (mb->used > 0)
 			callout_reset(&sc->sc_callout, midi_wait,
-			    midi_timeout, sc);
-	} else
-		sc->pbus = 0;
-	splx(s);
+				      midi_timeout, sc);
+		else
+			sc->pbus = 0;
+	}
+	if ((sc->props & MIDI_PROP_OUT_INTR) && error==EINPROGRESS)
+		error = 0;
+
 	return error;
 }
 
