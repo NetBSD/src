@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2003/08/20 21:48:47 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1190,6 +1190,7 @@ IDTVEC(syscall)
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
+	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
@@ -1199,6 +1200,7 @@ IDTVEC(syscall)
 	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	1b
 2:
@@ -1288,6 +1290,7 @@ osyscall1:
 	movq	CPUVAR(CURLWP),%rdx
 	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
 	movq	L_PROC(%rdx),%rdx
+	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
@@ -1298,6 +1301,7 @@ _C_LABEL(osyscall_return):
 	CLEAR_ASTPENDING(%r11)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	2b
 iret_return:
