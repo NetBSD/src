@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.3 1999/02/12 15:49:43 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.4 1999/02/20 18:26:13 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -42,6 +42,8 @@
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
+
+#include <dev/wscons/unicode.h>
 
 #define CONTROL 1 /* XXX smiley */
 #define NOTPRINTABLE 4 /* diamond XXX watch out - not in ISO part! */
@@ -160,6 +162,7 @@ static struct {
 	{0x03a6, 0xe8}, /* GREEK CAPITAL LETTER PHI */
 	{0x03a9, 0xea}, /* GREEK CAPITAL LETTER OMEGA */
 	{0x03b1, 0xe0}, /* GREEK SMALL LETTER ALPHA */
+	{0x03b2, 0xe1}, /* GREEK SMALL LETTER BETA */
 	{0x03b4, 0xeb}, /* GREEK SMALL LETTER DELTA */
 	{0x03b5, 0xee}, /* GREEK SMALL LETTER EPSILON */
 	{0x03c0, 0xe3}, /* GREEK SMALL LETTER PI */
@@ -177,10 +180,11 @@ static struct {
 	{0x2194, 0x1d}, /* LEFT RIGHT ARROW */
 	{0x2195, 0x12}, /* UP DOWN ARROW */
 	{0x21a8, 0x17}, /* UP DOWN ARROW WITH BASE */
+	{0x2212, 0x2d}, /* MINUS SIGN XXX move to more general place */
+	{0x2215, 0x2f}, /* DIVISION SLASH XXX move to more general place */
 	{0x2219, 0xf9}, /* BULLET OPERATOR */
 	{0x221a, 0xfb}, /* SQUARE ROOT */
 	{0x221e, 0xec}, /* INFINITY */
-	{0x221f, 0x1c}, /* RIGHT ANGLE */
 	{0x2229, 0xef}, /* INTERSECTION */
 	{0x2248, 0xf7}, /* ALMOST EQUAL TO */
 	{0x2261, 0xf0}, /* IDENTICAL TO */
@@ -266,9 +270,42 @@ static struct {
 	u_char ibm;
 	int quality;
 } replacements[] = {
+	{0x00af, 0x2d, 3}, /* MACRON -> - */
+	{0x221f, 0xc0, 3}, /* RIGHT ANGLE -> light up and right */
+	{0x222a, 0x55, 3}, /* UNION -> U */
+	{0x223c, 0x7e, 3}, /* TILDE OPERATOR -> ~ */
+	{0x2308, 0xda, 3}, /* LEFT CEILING -> light down and right */
+	{0x2309, 0xbf, 3}, /* RIGHT CEILING -> light down and left */
+	{0x230a, 0xc0, 3}, /* LEFT FLOOR -> light up and right */
+	{0x230b, 0xd9, 3}, /* RIGHT FLOOR -> light up and left */
+	{0x2329, 0x3c, 3}, /* LEFT-POINTING ANGLE BRACKET -> < */
+	{0x232a, 0x3e, 3}, /* RIGHT-POINTING ANGLE BRACKET -> > */
+	{_e003U, 0x2d, 3}, /* scan 5 -> - */
+	{_e005U, 0x5f, 3}, /* scan 9 -> _ */
+	{_e00bU, 0x7b, 3}, /* braceleftmid -> { */
+	{_e00cU, 0x7d, 3}, /* bracerightmid -> } */
+	{_e00fU, 0xd9, 3}, /* mirrored not sign? -> light up and left */
+	{0x00d7, 0x78, 2}, /* MULTIPLICATION SIGN -> x */
 	{0x00d8, 0xe9, 2}, /* LATIN CAPITAL LETTER O WITH STROKE -> Theta */
 	{0x00f8, 0xed, 2}, /* LATIN SMALL LETTER O WITH STROKE -> phi */
+	{0x03a0, 0xe3, 2}, /* GREEK CAPITAL LETTER PI -> pi */
+	{0x03a5, 0x59, 2}, /* GREEK CAPITAL LETTER UPSILON -> Y */
+	{0x03b3, 0x59, 2}, /* GREEK SMALL LETTER GAMMA -> Y */
+	{0x03b8, 0xe9, 2}, /* GREEK SMALL LETTER THETA -> Theta */
+	{0x03bd, 0x76, 2}, /* GREEK SMALL LETTER NU -> v */
+	{0x03c9, 0x77, 2}, /* GREEK SMALL LETTER OMEGA -> w */
+	{0x20ac, 0x45, 2}, /* EURO SIGN -> E */
+	{_e002U, 0x2d, 2}, /* scan 3 -> - */
+	{_e004U, 0x2d, 2}, /* scan 7 -> - */
+	{_e007U, 0xda, 2}, /* bracelefttp -> light down and right */
+	{_e008U, 0xc0, 2}, /* braceleftbt -> light up and right */
+	{_e009U, 0xbf, 2}, /* bracerighttp -> light down and left */
+	{_e00aU, 0xd9, 2}, /* bracerighrbt -> light up and left */
+	{_e00dU, 0x3c, 2}, /* inverted angle? -> < */
+	{_e00eU, 0x3c, 2}, /* angle? -> < */
+	{_e00fU, 0xd9, 2}, /* mirrored not sign? -> light up and left */
 	{0x00a9, 0x63, 1}, /* COPYRIGHT SIGN -> c */
+	{0x00ae, 0x72, 1}, /* REGISTERED SIGN -> r */
 	{0x00b3, 0x33, 1}, /* SUPERSCRIPT THREE -> 3 */
 	{0x00b9, 0x39, 1}, /* SUPERSCRIPT ONE -> 1 */
 	{0x00c0, 0x41, 1}, /* LATIN CAPITAL LETTER A WITH GRAVE -> A */
@@ -282,6 +319,7 @@ static struct {
 	{0x00cd, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH ACUTE -> I */
 	{0x00ce, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH CIRCUMFLEX -> I */
 	{0x00cf, 0x49, 1}, /* LATIN CAPITAL LETTER I WITH DIAERESIS -> I */
+	{0x00d0, 0x44, 1}, /* LATIN CAPITAL LETTER ETH -> D */
 	{0x00d2, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH GRAVE -> O */
 	{0x00d3, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH ACUTE -> O */
 	{0x00d4, 0x4f, 1}, /* LATIN CAPITAL LETTER O WITH CIRCUMFLEX -> O */
