@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.444 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.445 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -250,3 +250,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		string. [ginsbach 20050311]
 	stf(4): Add support for changing the MTU. [tron 20050311]
 	sendmail(8): update to 8.13.3.  [atatat 20050315]
+	pkill(1): Add -i option to ignore case for both pgrep(1) and pkill(1).
+		[sketch 20050316]
