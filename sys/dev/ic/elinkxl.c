@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.66 2002/10/22 00:01:56 fair Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.67 2002/11/09 11:45:18 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.66 2002/10/22 00:01:56 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.67 2002/11/09 11:45:18 enami Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -709,7 +709,9 @@ ex_init(ifp)
 	return (error);
 }
 
-#define	ex_mchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) & 0xff)
+#define	MCHASHSIZE		256
+#define	ex_mchash(addr)		(ether_crc32_be((addr), ETHER_ADDR_LEN) & \
+				    (MCHASHSIZE - 1))
 
 /*
  * Set multicast receive filter. Also take care of promiscuous mode
@@ -726,28 +728,44 @@ ex_set_mc(sc)
 	int i;
 	u_int16_t mask = FIL_INDIVIDUAL | FIL_BRDCST;
 
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC) {
 		mask |= FIL_PROMISC;
-	
-	if (!(ifp->if_flags & IFF_MULTICAST))
-		goto out;
-
-	if (!(sc->ex_conf & EX_CONF_90XB) || ifp->if_flags & IFF_ALLMULTI) {
-		mask |= (ifp->if_flags & IFF_MULTICAST) ? FIL_MULTICAST : 0;
-	} else {
-		ETHER_FIRST_MULTI(estep, ec, enm);
-		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN) != 0)
-				goto out;
-			i = ex_mchash(enm->enm_addrlo);
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			    ELINK_COMMAND, ELINK_SETHASHFILBIT | i);
-			ETHER_NEXT_MULTI(estep, enm);
-		}
-		mask |= FIL_MULTIHASH;
+		goto allmulti;
 	}
- out:
+	
+	ETHER_FIRST_MULTI(estep, ec, enm);
+	if (enm == NULL)
+		goto nomulti;
+
+	if ((sc->ex_conf & EX_CONF_90XB) == 0)
+		/* No multicast hash filtering. */
+		goto allmulti;
+
+	for (i = 0; i < MCHASHSIZE; i++)
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    ELINK_COMMAND, ELINK_CLEARHASHFILBIT | i);
+
+	do {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+
+		i = ex_mchash(enm->enm_addrlo);
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		    ELINK_COMMAND, ELINK_SETHASHFILBIT | i);
+		ETHER_NEXT_MULTI(estep, enm);
+	} while (enm != NULL);
+	mask |= FIL_MULTIHASH;
+
+nomulti:
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND,
+	    SET_RX_FILTER | mask);
+	return;
+
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	mask |= FIL_MULTICAST;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND,
 	    SET_RX_FILTER | mask);
 }
