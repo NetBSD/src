@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.5 1997/10/19 05:50:36 mrg Exp $	*/
+/*	$NetBSD: touch.c,v 1.6 1997/10/19 13:40:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,28 +36,30 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: touch.c,v 1.5 1997/10/19 05:50:36 mrg Exp $";
+__RCSID("$NetBSD: touch.c,v 1.6 1997/10/19 13:40:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <ranlib.h>
 #include <ar.h>
-#include <time.h>
-#include <unistd.h>
+#include <err.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <ranlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <archive.h>
 
-extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
+#include "extern.h"
 
+int
 touch()
 {
 	int afd;
@@ -75,6 +77,7 @@ touch()
 	return(0);
 }
 
+void
 settime(afd)
 	int afd;
 {
@@ -84,8 +87,8 @@ settime(afd)
 
 	size = SARMAG + sizeof(hdr->ar_name);
 	if (lseek(afd, size, SEEK_SET) == (off_t)-1)
-		error(archive);
+		err(1, "%s", archive);
 	(void)sprintf(buf, "%-12ld", time((time_t *)NULL) + RANLIBSKEW);
 	if (write(afd, buf, sizeof(hdr->ar_date)) != sizeof(hdr->ar_date))
-		error(archive);
+		err(1, "%s", archive);
 }

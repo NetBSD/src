@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.10 1997/10/19 05:50:28 mrg Exp $	*/
+/*	$NetBSD: build.c,v 1.11 1997/10/19 13:40:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)build.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: build.c,v 1.10 1997/10/19 05:50:28 mrg Exp $";
+__RCSID("$NetBSD: build.c,v 1.11 1997/10/19 13:40:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,18 +51,17 @@ static char rcsid[] = "$NetBSD: build.c,v 1.10 1997/10/19 05:50:28 mrg Exp $";
 #include <a.out.h>
 #include <ar.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ranlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "archive.h"
-
-extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
-extern char *tname;			/* temporary file "name" */
+#include "extern.h"
 
 typedef struct _rlib {
 	struct _rlib *next;		/* next structure */
@@ -75,9 +75,10 @@ static FILE	*fp;
 static long	symcnt;			/* symbol count */
 static long	tsymlen;		/* total string length */
 
-static void	rexec(), symobj();
-extern void	*emalloc();
+static void	rexec __P((int, int));
+static void	symobj __P((void));
 
+int
 build()
 {
 	CF cf;
@@ -128,17 +129,19 @@ build()
  */
 static void
 rexec(rfd, wfd)
-	register int rfd;
+	int rfd;
 	int wfd;
 {
-	register RLIB *rp;
-	register long nsyms;
-	register int nr, symlen;
-	register char *strtab, *sym;
+	RLIB *rp;
+	long nsyms;
+	int nr, symlen;
+	char *strtab, *sym;
 	struct exec ebuf;
 	struct nlist nl;
 	off_t r_off, w_off;
 	long strsize;
+
+	strtab = NULL;
 
 	/* Get current offsets for original and tmp files. */
 	r_off = lseek(rfd, (off_t)0, SEEK_CUR);
@@ -155,7 +158,7 @@ rexec(rfd, wfd)
 
 	/* Seek to string table. */
 	if (lseek(rfd, r_off + N_STROFF(ebuf), SEEK_SET) == (off_t)-1)
-		error(archive);
+		err(1, "lseek %s", archive);
 
 	/* Read in size of the string table. */
 	nr = read(rfd, &strsize, sizeof(strsize));
@@ -168,7 +171,7 @@ rexec(rfd, wfd)
 	nr = read(rfd, strtab, strsize);
 	if (nr != strsize) {
 badread:	if (nr < 0)
-			error(archive);
+			err(1, "read %s", archive);
 		goto bad2;
 	}
 
@@ -182,7 +185,7 @@ badread:	if (nr < 0)
 		if (!fread(&nl, sizeof(struct nlist), 1, fp)) {
 			if (feof(fp))
 				badfmt();
-			error(archive);
+			err(1, "fread %s", archive);
 		}
 
 		/* Ignore if no name or local. */
@@ -202,7 +205,7 @@ badread:	if (nr < 0)
 
 		rp = (RLIB *)emalloc(sizeof(RLIB));
 		rp->sym = (char *)emalloc(symlen);
-		bcopy(sym, rp->sym, symlen);
+		memmove(rp->sym, sym, symlen);
 		rp->symlen = symlen;
 		rp->pos = w_off;
 
@@ -226,7 +229,7 @@ bad1:	(void)lseek(rfd, r_off, SEEK_SET);
 static void
 symobj()
 {
-	register RLIB *rp, *rnext;
+	RLIB *rp, *rnext;
 	struct ranlib rn;
 	off_t ransize;
 	long size, stroff;
@@ -234,7 +237,7 @@ symobj()
 
 	/* Rewind the archive, leaving the magic number. */
 	if (fseek(fp, (long)SARMAG, SEEK_SET))
-		error(archive);
+		err(1, "fseek %s", archive);
 
 	/* Size of the ranlib archive file, pad if necessary. */
 	ransize = sizeof(long) +
@@ -250,12 +253,12 @@ symobj()
 	(void)sprintf(hb, HDR2, RANLIBMAG, 0L, getuid(), getgid(),
 	    DEFMODE & ~umask(0), (off_t)ransize, ARFMAG);
 	if (!fwrite(hb, sizeof(struct ar_hdr), 1, fp))
-		error(tname);
+		err(1, "fwrite %s", tname);
 
 	/* First long is the size of the ranlib structure section. */
 	size = symcnt * sizeof(struct ranlib);
 	if (!fwrite(&size, sizeof(size), 1, fp))
-		error(tname);
+		err(1, "fwrite %s", tname);
 
 	/* Offset of the first archive file. */
 	size = SARMAG + sizeof(struct ar_hdr) + ransize;
@@ -270,24 +273,24 @@ symobj()
 		stroff += rp->symlen;
 		rn.ran_off = size + rp->pos;
 		if (!fwrite(&rn, sizeof(struct ranlib), 1, fp))
-			error(archive);
+			err(1, "fwrite %s", archive);
 	}
 
 	/* Second long is the size of the string table. */
 	if (!fwrite(&tsymlen, sizeof(tsymlen), 1, fp))
-		error(tname);
+		err(1, "fwrite %s", tname);
 
 	/* Write out the string table. */
 	for (rp = rhead; rp; rp = rnext) {
 		if (!fwrite(rp->sym, rp->symlen, 1, fp))
-			error(tname);
+			err(1, "fwrite %s", tname);
 		rnext = rp->next;
 		free(rp);
 	}
 	rhead = NULL;
 
 	if (pad && !fwrite(&pad, sizeof(pad), 1, fp))
-		error(tname);
+		err(1, "fwrite %s", tname);
 
 	(void)fflush(fp);
 }
