@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2002/04/14 11:41:43 martin Exp $ */
+/* $NetBSD: main.c,v 1.3 2002/09/20 15:23:06 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -377,19 +377,17 @@ kbdrdhdl(void)
 static void
 mloop()
 {
+	struct pollfd set[2];
+
+	set[0].fd = STDIN_FILENO;
+	set[0].events = POLLIN;
+	set[1].fd = monsock;
+	set[1].events = POLLIN;
 	for(;;)
 	{
-		fd_set rd, wr, ex;
+		poll(set, 2, INFTIM);
 
-		FD_ZERO(&rd);
-		FD_ZERO(&wr);
-		FD_ZERO(&ex);
-		FD_SET(fileno(stdin), &rd);
-		FD_SET(monsock, &rd);
-
-		select(monsock+1, &rd, &wr, &ex, NULL);
-
-		if(FD_ISSET(fileno(stdin), &rd))
+		if(set[0].revents & POLLIN)
 		{
 #ifndef WIN32
 			if(fullscreen && curses_ready)
@@ -402,7 +400,7 @@ mloop()
 				getchar();
 		}
 
-		if(FD_ISSET(monsock, &rd))
+		if(set[1].revents & POLLIN)
 		{
 			u_int8_t buf[8192];
 			int bytes, ret;
