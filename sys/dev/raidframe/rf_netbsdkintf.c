@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.135 2002/09/22 03:46:40 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.136 2002/09/22 03:56:08 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.135 2002/09/22 03:46:40 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.136 2002/09/22 03:56:08 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -211,9 +211,6 @@ struct raidbuf {
 
 /* component buffer pool */
 struct pool raidframe_cbufpool;
-
-#define RAIDGETBUF(rs) pool_get(&raidframe_cbufpool, PR_NOWAIT)
-#define	RAIDPUTBUF(rs, cbp) pool_put(&raidframe_cbufpool, cbp)
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that... 
@@ -1788,7 +1785,7 @@ rf_DispatchKernelIO(queue, req)
 		bp->b_error = 0;
 	}
 #endif
-	raidbp = RAIDGETBUF(rs);
+	raidbp = pool_get(&raidframe_cbufpool, PR_NOWAIT);
 
 	/*
 	 * context for raidiodone
@@ -1866,8 +1863,6 @@ KernelWakeupFunc(vbp)
 	RF_DiskQueue_t *queue;
 	struct raidbuf *raidbp = (struct raidbuf *) vbp;
 	struct buf *bp;
-	struct raid_softc *rs;
-	int     unit;
 	int s;
 
 	s = splbio();
@@ -1900,9 +1895,6 @@ KernelWakeupFunc(vbp)
 	}
 	bp->b_bcount = raidbp->rf_buf.b_bcount;	/* XXXX ?? */
 
-	unit = queue->raidPtr->raidid;	/* *Much* simpler :-> */
-
-
 	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
 	 * ballistic, and mark the component as hosed... */
 
@@ -1912,7 +1904,8 @@ KernelWakeupFunc(vbp)
 		if (queue->raidPtr->Disks[queue->row][queue->col].status ==
 		    rf_ds_optimal) {
 			printf("raid%d: IO Error.  Marking %s as failed.\n",
-			    unit, queue->raidPtr->Disks[queue->row][queue->col].devname);
+			       queue->raidPtr->raidid,
+			       queue->raidPtr->Disks[queue->row][queue->col].devname);
 			queue->raidPtr->Disks[queue->row][queue->col].status =
 			    rf_ds_failed;
 			queue->raidPtr->status[queue->row] = rf_rs_degraded;
@@ -1924,8 +1917,7 @@ KernelWakeupFunc(vbp)
 
 	}
 
-	rs = &raid_softc[unit];
-	RAIDPUTBUF(rs, raidbp);
+	pool_put(&raidframe_cbufpool, raidbp);
 
 	rf_DiskIOComplete(queue, req, (bp->b_flags & B_ERROR) ? 1 : 0);
 	(req->CompleteFunc) (req->argument, (bp->b_flags & B_ERROR) ? 1 : 0);
