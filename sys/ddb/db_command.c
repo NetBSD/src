@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.64 2002/02/15 07:33:50 simonb Exp $	*/
+/*	$NetBSD: db_command.c,v 1.65 2002/02/15 11:18:26 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.64 2002/02/15 07:33:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.65 2002/02/15 11:18:26 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -39,11 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.64 2002/02/15 07:33:50 simonb Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/pool.h>
-#include <sys/namei.h>
-#include <sys/malloc.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -96,25 +97,26 @@ db_addr_t	db_next;
  */
 static boolean_t db_ed_style = TRUE;
 
+static void	db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_cmd_list(const struct db_command *);
 static int	db_cmd_search(const char *, const struct db_command *,
 		    const struct db_command **);
-static void	db_cmd_list(const struct db_command *);
 static void	db_command(const struct db_command **,
 		    const struct db_command *);
-static void	db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_event_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_fncall(db_expr_t, int, db_expr_t, char *);
 static void	db_malloc_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_namecache_print_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_object_print_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_page_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_pool_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_namecache_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
-static void	db_fncall(db_expr_t, int, db_expr_t, char *);
 static void	db_reboot_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_sifting_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
 static void	db_sync_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
+static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
 
 /*
  * 'show' commands
@@ -133,6 +135,8 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
+	{ "event",	db_event_print_cmd,	0,	NULL },
+	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
@@ -142,7 +146,6 @@ static const struct db_command db_show_cmds[] = {
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
-	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
 
@@ -535,6 +538,18 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		full = TRUE;
 
 	vfs_buf_print((struct buf *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_event_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	event_print(full, db_printf);
 }
 
 /*ARGSUSED*/
