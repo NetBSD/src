@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/11/19 21:07:23 briggs Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/11/20 18:31:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -52,25 +52,7 @@
 
 #define GETC(reg)					  \
 	stw	 r1, (_REG_R0 +  1*4)(reg)		; \
-	stw	 r2, (_REG_R0 +  2*4)(reg)		; \
-	stw	r14, (_REG_R0 + 14*4)(reg)		; \
-	stw	r15, (_REG_R0 + 15*4)(reg)		; \
-	stw	r16, (_REG_R0 + 16*4)(reg)		; \
-	stw	r17, (_REG_R0 + 17*4)(reg)		; \
-	stw	r18, (_REG_R0 + 18*4)(reg)		; \
-	stw	r19, (_REG_R0 + 19*4)(reg)		; \
-	stw	r20, (_REG_R0 + 20*4)(reg)		; \
-	stw	r21, (_REG_R0 + 21*4)(reg)		; \
-	stw	r22, (_REG_R0 + 22*4)(reg)		; \
-	stw	r23, (_REG_R0 + 23*4)(reg)		; \
-	stw	r24, (_REG_R0 + 24*4)(reg)		; \
-	stw	r25, (_REG_R0 + 25*4)(reg)		; \
-	stw	r26, (_REG_R0 + 26*4)(reg)		; \
-	stw	r27, (_REG_R0 + 27*4)(reg)		; \
-	stw	r28, (_REG_R0 + 28*4)(reg)		; \
-	stw	r29, (_REG_R0 + 29*4)(reg)		; \
-	stw	r30, (_REG_R0 + 30*4)(reg)		; \
-	stw	r31, (_REG_R0 + 31*4)(reg)		; \
+	stmw	r14, (_REG_R0 + 14*4)(reg)		; \
 	mfcr	 r0					; \
 	stw	 r0, _REG_CR(reg)			; \
 	mflr	 r0					; \
@@ -87,36 +69,14 @@
 	stw	 r9, (UC_FLAGS)(reg)
 
 #define SETC						  \
+	li	 r9, 1					; \
+	slwi	 r9, r9, _UC_USER_BIT			; \
+	lwz	 r3, (UC_FLAGS)(r4)			; \
+	and.	 r3, r3, r9				; \
+	beq	 1f					; \
+							; \
 	lwz	 r1, (_REG_R0 +  1*4)(r4)		; \
-	lwz	 r2, (_REG_R0 +  2*4)(r4)		; \
-	lwz	 r3, (_REG_R0 +  3*4)(r4)		; \
-	lwz	 r5, (_REG_R0 +  5*4)(r4)		; \
-	lwz	 r6, (_REG_R0 +  6*4)(r4)		; \
-	lwz	 r7, (_REG_R0 +  7*4)(r4)		; \
-	lwz	 r8, (_REG_R0 +  8*4)(r4)		; \
-	lwz	 r9, (_REG_R0 +  9*4)(r4)		; \
-	lwz	r10, (_REG_R0 + 10*4)(r4)		; \
-	lwz	r11, (_REG_R0 + 11*4)(r4)		; \
-	lwz	r12, (_REG_R0 + 12*4)(r4)		; \
-	lwz	r13, (_REG_R0 + 13*4)(r4)		; \
-	lwz	r14, (_REG_R0 + 14*4)(r4)		; \
-	lwz	r15, (_REG_R0 + 15*4)(r4)		; \
-	lwz	r16, (_REG_R0 + 16*4)(r4)		; \
-	lwz	r17, (_REG_R0 + 17*4)(r4)		; \
-	lwz	r18, (_REG_R0 + 18*4)(r4)		; \
-	lwz	r19, (_REG_R0 + 19*4)(r4)		; \
-	lwz	r20, (_REG_R0 + 20*4)(r4)		; \
-	lwz	r21, (_REG_R0 + 21*4)(r4)		; \
-	lwz	r22, (_REG_R0 + 22*4)(r4)		; \
-	lwz	r23, (_REG_R0 + 23*4)(r4)		; \
-	lwz	r24, (_REG_R0 + 24*4)(r4)		; \
-	lwz	r25, (_REG_R0 + 25*4)(r4)		; \
-	lwz	r26, (_REG_R0 + 26*4)(r4)		; \
-	lwz	r27, (_REG_R0 + 27*4)(r4)		; \
-	lwz	r28, (_REG_R0 + 28*4)(r4)		; \
-	lwz	r29, (_REG_R0 + 29*4)(r4)		; \
-	lwz	r30, (_REG_R0 + 30*4)(r4)		; \
-	lwz	r31, (_REG_R0 + 31*4)(r4)		; \
+	lmw	r14, (_REG_R0 + 14*4)(r4)		; \
 	lwz	 r0, _REG_CR(r4)			; \
 	mtcr	 r0					; \
 	lwz	 r0, _REG_LR(r4)			; \
@@ -127,8 +87,10 @@
 	mtctr	 r0					; \
 	lwz	 r0, _REG_XER(r4)			; \
 	mtxer	 r0					; \
-	lwz	 r4, (_REG_R0 +  4*4)(r4)		; \
 	bctr						; \
+1:							; \
+	mr	r3, r4					; \
+	b	PIC_PLT(_C_LABEL(setcontext))		; \
 	/* NOTREACHED */
 
 ENTRY(_getcontext_u)

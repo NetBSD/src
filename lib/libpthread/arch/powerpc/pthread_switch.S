@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2001/11/19 21:07:23 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2001/11/20 18:31:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -172,19 +172,21 @@ ENTRY(pthread__upcall_switch)
  *              saved r4		(          4 bytes) *
  *              saved r3		(          4 bytes) *
  *              context			(RND_CTXSIZE bytes) *
+ *              padding to 16 bytes	(          8 bytes) *
  *              space for callee ra	(          4 bytes) *
  * low addr     p__l_s saved r1		(          4 bytes) *
  *
  *     STACKSPACE is the space between the bottom of the stack and
- * the ucontext on the stack.  i.e., 8.
+ * the ucontext on the stack.  i.e., 8, but we want to keep the stack
+ * rounded to a multiple of 16, so it's really 16.
  */
 ENTRY(pthread__locked_switch)
 	stwu	r1, -(RND_CTXSIZE + 32)(r1)	/* alloc stack space */
 	mflr	r0
-	stw	r31,(RND_CTXSIZE + 20)(r1)	/* saved r31 */
-	stw	r5, (RND_CTXSIZE + 16)(r1)	/* lock */
-	stw	r4, (RND_CTXSIZE + 12)(r1)	/* next */
-	stw	r3, (RND_CTXSIZE +  8)(r1)	/* self */
+	stw	r31,(RND_CTXSIZE + 28)(r1)	/* saved r31 */
+	stw	r5, (RND_CTXSIZE + 24)(r1)	/* lock */
+	stw	r4, (RND_CTXSIZE + 20)(r1)	/* next */
+	stw	r3, (RND_CTXSIZE + 16)(r1)	/* self */
 	stw	r0, (RND_CTXSIZE + 36)(r1)	/* Save return address */
 	addi	r31, r1, 8			/* r31 = ucontext */
 	
@@ -197,9 +199,9 @@ ENTRY(pthread__locked_switch)
 	stw	r31, PT_UC(r3)
 	mr	r3, r31
 	bl	PIC_PLT(_C_LABEL(_getcontext_u))
-	lwz	r3, (RND_CTXSIZE +  8)(r1)
-	lwz	r4, (RND_CTXSIZE + 12)(r1)
-	lwz	r5, (RND_CTXSIZE + 16)(r1)
+	lwz	r3, (RND_CTXSIZE + 16)(r1)
+	lwz	r4, (RND_CTXSIZE + 20)(r1)
+	lwz	r5, (RND_CTXSIZE + 24)(r1)
 
 	/*
 	 * Exit the context to make it continue at locked_return instead of
@@ -283,7 +285,7 @@ ENTRY(pthread__locked_switch)
 	NOTREACHED
 
 locked_return:
-	lwz	r31, (RND_CTXSIZE + 20)(r1)
+	lwz	r31, (RND_CTXSIZE + 28)(r1)
 	addi	r1, r1, (RND_CTXSIZE + 32)
 	lwz	r0, 4(r1)
 	mtlr	r0
