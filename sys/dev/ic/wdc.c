@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.53 1998/12/08 13:29:31 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.54 1998/12/16 13:02:03 bouyer Exp $ */
 
 
 /*
@@ -884,6 +884,49 @@ wdc_probe_caps(drvp)
 			drvp->drive_flags |= DRIVE_UDMA | DRIVE_MODE;
 		}
 	}
+}
+
+/*
+ * downgrade the transfert mode of a drive after an error. return 1 if
+ * downgrade was possible, 0 otherwise.
+ */
+int
+wdc_downgrade_mode(drvp)
+	struct ata_drive_datas *drvp;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+	struct device *drv_dev = drvp->drv_softc;
+	struct wdc_softc *wdc = chp->wdc;
+	int cf_flags = drv_dev->dv_cfdata->cf_flags;
+
+	/* if drive or controller don't know its mode, we can't do much */
+	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
+	    (wdc->cap & WDC_CAPABILITY_MODE) == 0)
+		return 0;
+	/* current drive mode was set by a config flag, let it this way */
+	if ((cf_flags & ATA_CONFIG_PIO_SET) ||
+	    (cf_flags & ATA_CONFIG_DMA_SET) ||
+	    (cf_flags & ATA_CONFIG_UDMA_SET))
+		return 0;
+
+	if (drvp->drive_flags & DRIVE_UDMA) {
+		drvp->drive_flags &= ~DRIVE_UDMA;
+		drvp->drive_flags |= DRIVE_DMA;
+		drvp->DMA_mode = drvp->DMA_cap;
+		printf("%s: transfert error, downgrading to DMA mode %d\n",
+		    drv_dev->dv_xname, drvp->DMA_mode);
+	} else if (drvp->drive_flags & DRIVE_DMA) {
+		drvp->drive_flags &= ~DRIVE_DMA;
+		drvp->PIO_mode = drvp->PIO_cap;
+		printf("%s: transfert error, downgrading to PIO mode %d\n",
+		    drv_dev->dv_xname, drvp->PIO_mode);
+	} else /* already using PIO, can't downgrade */
+		return 0;
+
+	wdc->set_modes(chp);
+	/* reset the channel, which will shedule all drives for setup */
+	wdc_reset_channel(drvp);
+	return 1;
 }
 
 int
