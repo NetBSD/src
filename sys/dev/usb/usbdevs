@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.153 2001/03/26 15:26:54 augustss Exp $
+$NetBSD: usbdevs,v 1.154 2001/03/28 18:36:07 ichiro Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -621,6 +621,8 @@ product MACALLY MOUSE1		0x0101	mouse
 /* MCT Corp. */
 product MCT HUB0100		0x0100	Hub
 product MCT USB232		0x0210	USB-232 Interface
+product MCT SITECOM_USB232	0x0230	Sitecom USB-232 Products
+product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP USB BAY Hub
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
