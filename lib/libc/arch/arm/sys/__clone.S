@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.1 2001/07/22 18:56:34 chris Exp $ */
+/* $NetBSD: __clone.S,v 1.2 2002/08/17 19:54:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -42,7 +42,7 @@ ENTRY(__clone)
 	/* test stack and function are not null */
 	teq	r0, #0x00
 	teqne	r1, #0x00
-	beq	Leinval
+	beq	.Leinval
 
 	/* place the func and it's arg onto the child's stack */
 	stmfd	r1!, {r0, r3} 
@@ -73,7 +73,7 @@ ENTRY(__clone)
 	ldmfd	sp!, {r1, r2}
 
 	/* setup return address */
-	add	lr, pc, #Lreturnhere - . - 8
+	add	lr, pc, #.Lreturnhere - . - 8
 
 	/* place arg in r0 */
 	mov	r0, r2
@@ -81,13 +81,13 @@ ENTRY(__clone)
 	/* call the function */
 	mov	pc, r1
 
-Lreturnhere:
+.Lreturnhere:
 	/* call _exit with the returned value */
 	b	_C_LABEL(_exit)
 
 	/* NOTREACHED */
 
 	/* error handler if func or stack is NULL */
-Leinval:
+.Leinval:
 	mov	R0, #EINVAL
 	b	PIC_SYM(CERROR, PLT)
