@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.24 2000/11/01 04:31:21 mycroft Exp $
+#	$NetBSD: POWERMAC,v 1.25 2000/11/01 04:34:41 mycroft Exp $
 #
 # POWERMAC config file
 #
@@ -83,7 +83,6 @@ ams*	at adb?				# ADB mouse
 nvram*	at obio?			# nvram
 zsc*	at obio?
 zstty*	at zsc? channel ?
-awacs*	at obio?			# Apple audio device
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
