@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.30 2000/01/17 00:01:01 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.31 2000/03/20 22:57:00 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -228,6 +228,16 @@ wdc_atapi_send_cmd(sc_xfer)
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
+
+	if ((wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+		sc_xfer->xs_status |= XS_STS_DONE;
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		scsipi_done(sc_xfer);
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
+			return (SUCCESSFULLY_QUEUED);
+		else
+			return (COMPLETE);
+	}
 
 	xfer = wdc_get_xfer((flags & XS_CTL_NOSLEEP) ?
 	    WDC_NOSLEEP : WDC_CANSLEEP);
