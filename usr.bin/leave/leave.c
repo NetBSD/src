@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.9 2000/07/03 02:51:22 matt Exp $	*/
+/*	$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.9 2000/07/03 02:51:22 matt Exp $");
+__RCSID("$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,10 @@ __RCSID("$NetBSD: leave.c,v 1.9 2000/07/03 02:51:22 matt Exp $");
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+
+#define	SECOND	1
+#define MINUTE	(SECOND * 60)
+#define	HOUR	(MINUTE * 60) 
 
 /*
  * leave [[+]hhmm]
@@ -113,17 +117,19 @@ main(argc, argv)
 	if (minutes < 0 || minutes > 59)
 		usage();
 	if (plusnow)
-		secs = hours * 60 * 60 + minutes * 60;
+		secs = (hours * HOUR) + (minutes * MINUTE);
 	else {
 		if (hours > 23)
 			usage();
 		if (t->tm_hour >= 12)
 			t->tm_hour -= 12;
+		if (hours >= 12)
+			hours -= 12;
 		if (t->tm_hour > hours ||
 		    (t->tm_hour == hours && minutes <= t->tm_min))
 			hours += 12;
-		secs = (hours - t->tm_hour) * 60 * 60;
-		secs += (minutes - t->tm_min) * 60;
+		secs = (hours - t->tm_hour) * HOUR;
+		secs += (minutes - t->tm_min) * MINUTE;
 	}
 	doalarm(secs);
 	exit(0);
@@ -150,7 +156,7 @@ doalarm(secs)
 	 * if write fails, we've lost the terminal through someone else
 	 * causing a vhangup by logging in.
 	 */
-#define	FIVEMIN	(5 * 60)
+#define	FIVEMIN	(5 * MINUTE)
 #define	MSG2	"\07\07You have to leave in 5 minutes.\n"
 	if (secs >= FIVEMIN) {
 		sleep(secs - FIVEMIN);
@@ -160,7 +166,7 @@ doalarm(secs)
 		secs = FIVEMIN;
 	}
 
-#define	ONEMIN	(60)
+#define	ONEMIN	(MINUTE)
 #define	MSG3	"\07\07Just one more minute!\n"
 	if (secs >= ONEMIN) {
 		sleep(secs - ONEMIN);
