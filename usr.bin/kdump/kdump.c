@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.34 2000/12/28 11:11:34 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.35 2001/02/16 23:28:44 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.34 2000/12/28 11:11:34 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.35 2001/02/16 23:28:44 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: kdump.c,v 1.34 2000/12/28 11:11:34 jdolecek Exp $");
 int timestamp, decimal, fancy = 1, tail, maxdata;
 const char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
+int emul_changed = 0;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
@@ -369,14 +370,21 @@ void
 ktrsysret(ktr)
 	struct ktr_sysret *ktr;
 {
+	const struct emulation *revelant;
 	register_t ret = ktr->ktr_retval;
 	int error = ktr->ktr_error;
 	int code = ktr->ktr_code;
 
-	if (code >= current->nsysnames || code < 0)
+	if (emul_changed) 
+		revelant = previous;
+	else
+		revelant = current;
+	emul_changed = 0;
+
+	if (code >= revelant->nsysnames || code < 0)
 		(void)printf("[%d] ", code);
 	else
-		(void)printf("%s ", current->sysnames[code]);
+		(void)printf("%s ", revelant->sysnames[code]);
 
 	switch (error) {
 	case 0:
@@ -463,6 +471,7 @@ ktremul(name, len, bufsize)
 
 	name[len] = '\0';
 	setemul(name, ktr_header.ktr_pid, 1);
+	emul_changed = 1;
 
 	(void)printf("\"%s\"\n", name);
 }
