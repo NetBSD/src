@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.154 1999/08/24 21:32:25 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.155 1999/08/27 23:27:39 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.147 1999/08/24 21:32:04 soren Exp 
+ *	NetBSD: pcidevs,v 1.148 1999/08/27 23:25:36 thorpej Exp 
  */
 
 /*
@@ -1145,6 +1145,9 @@
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE/MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE/MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
+
+/* Samgsung Semiconductor products */
+#define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
