@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2000/02/29 15:21:49 nonaka Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2001/05/28 15:53:51 kleink Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,6 +29,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #define	ispart(c)	((c) >= 'a' && (c) <= 'h')
 
