@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.4 2003/09/26 17:37:56 christos Exp $
+# $NetBSD: defs.mk,v 1.5 2003/09/26 19:49:41 skrll Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -86,7 +86,7 @@ m2-typeprint.o \
 m2-valprint.o \
 macrocmd.o \
 macroexp.o \
-macroscope.c \
+macroscope.o \
 macrotab.o \
 main.o \
 maint.o \
