@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
+#	$NetBSD: GENERIC,v 1.53 1997/01/25 22:41:40 scottr Exp $
 #
 # GENERIC
 
@@ -7,10 +7,10 @@ include	"arch/mac68k/conf/std.mac68k"
 maxusers	16
 
 # Standard system options
-options 	DIAGNOSTIC		# DEBUG for extra kernel debugging
-options 	KTRACE			# system call tracing support
-#options 	KGDB			# support for kernel gdb
-#options 	GDB			# support for normal gdb
+options 	DIAGNOSTIC	# DEBUG for extra kernel debugging
+options 	KTRACE		# system call tracing support
+#options 	KGDB		# support for kernel gdb
+#options 	GDB		# support for normal gdb
 #options 	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 
 # Filesystem options
@@ -46,6 +46,9 @@ options 	NS
 options 	MAPMEM
 options 	SYSVSHM,SYSVSEM,SYSVMSG
 options 	PPP_BSDCOMP,PPP_DEFLATE
+
+# Loadable Kernel Modules
+options 	LKM
 
 # Mac-specific options
 options 	M68040
