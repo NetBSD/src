@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.52 2004/01/03 23:59:58 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.53 2004/03/02 13:13:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.52 2004/01/03 23:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53 2004/03/02 13:13:57 fvdl Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -234,6 +234,7 @@ wdc_ata_bio_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
+		DELAY(10);
 		errstring = "wait";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
 			goto ctrltimeout;
