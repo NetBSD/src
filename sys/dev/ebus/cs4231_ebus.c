@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.2 2002/03/12 06:00:42 uwe Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.3 2002/03/21 04:09:27 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -57,8 +57,9 @@ int cs4231_ebus_debug = 0;
 struct cs4231_ebus_softc {
 	struct cs4231_softc sc_cs4231;
 
-	volatile struct	ebus_dmac_reg	*sc_pdmareg; /* playback DMA */
-	volatile struct	ebus_dmac_reg	*sc_rdmareg; /* record DMA */
+	bus_space_tag_t sc_bt;
+	bus_space_handle_t sc_pdmareg; /* playback DMA */
+	bus_space_handle_t sc_cdmareg; /* record DMA */
 };
 
 
@@ -114,15 +115,16 @@ struct audio_hw_if audiocs_ebus_hw_if = {
 static void	cs4231_ebus_regdump(char *, struct cs4231_ebus_softc *);
 #endif
 
-static int	cs4231_ebus_dma_reset(volatile struct ebus_dmac_reg *);
+static int	cs4231_ebus_dma_reset(bus_space_tag_t, bus_space_handle_t);
 static int	cs4231_ebus_trigger_transfer(struct cs4231_softc *,
-			struct cs_transfer *, volatile struct ebus_dmac_reg *,
+			struct cs_transfer *,
+			bus_space_tag_t, bus_space_handle_t,
 			int, void *, void *, int, void (*)(void *), void *,
 			struct audio_params *);
 static void	cs4231_ebus_dma_advance(struct cs_transfer *,
-					volatile struct ebus_dmac_reg *);
+					bus_space_tag_t, bus_space_handle_t);
 static int	cs4231_ebus_dma_intr(struct cs_transfer *,
-				     volatile struct ebus_dmac_reg *);
+				     bus_space_tag_t, bus_space_handle_t);
 static int	cs4231_ebus_intr(void *);
 
 
@@ -156,7 +158,7 @@ cs4231_ebus_attach(parent, self, aux)
 	bus_space_handle_t bh;
 	int i;
 
-	sc->sc_bustag = ea->ea_bustag;
+	sc->sc_bustag = ebsc->sc_bt = ea->ea_bustag;
 	sc->sc_dmatag = ea->ea_dmatag;
 
 	/*
@@ -175,8 +177,7 @@ cs4231_ebus_attach(parent, self, aux)
 		if (bus_space_map(ea->ea_bustag,
 				  EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 				  ea->ea_reg[0].size,
-				  BUS_SPACE_MAP_LINEAR,
-				  &bh) != 0)
+				  0, &bh) != 0)
 		{
 			printf("%s: unable to map registers\n",
 			       self->dv_xname);
@@ -187,9 +188,8 @@ cs4231_ebus_attach(parent, self, aux)
 	/* XXX: map playback DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
 			  BUS_ADDR(0x14, 0x702000), /* XXX: magic num */
-			  sizeof(struct ebus_dmac_reg),
-			  BUS_SPACE_MAP_LINEAR,
-			  (bus_space_handle_t *)&ebsc->sc_pdmareg) != 0)
+			  EBUS_DMAC_SIZE,
+			  0, &ebsc->sc_pdmareg) != 0)
 	{
 		printf("%s: unable to map playback DMA registers\n",
 		       self->dv_xname);
@@ -199,9 +199,8 @@ cs4231_ebus_attach(parent, self, aux)
 	/* XXX: map capture DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
 			  BUS_ADDR(0x14, 0x704000), /* XXX: magic num */
-			  sizeof(struct ebus_dmac_reg),
-			  BUS_SPACE_MAP_LINEAR,
-			  (bus_space_handle_t *)&ebsc->sc_rdmareg) != 0)
+			  EBUS_DMAC_SIZE,
+			  0, &ebsc->sc_cdmareg) != 0)
 	{
 		printf("%s: unable to map capture DMA registers\n",
 		       self->dv_xname);
@@ -239,39 +238,49 @@ cs4231_ebus_regdump(label, ebsc)
 
 /* XXX: nothing CS4231-specific in this code... */
 static int
-cs4231_ebus_dma_reset(dmac)
-	volatile struct ebus_dmac_reg *dmac;
+cs4231_ebus_dma_reset(dt, dh)
+	bus_space_tag_t dt;
+	bus_space_handle_t dh;
 {
+	u_int32_t csr;
 	int timo;
 
-	dmac->dcsr = EBDMA_RESET | EBDMA_TC; /* also clear TC, just in case */
+	/* reset, also clear TC, just in case */
+	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR, EBDMA_RESET | EBDMA_TC);
 
-	for (timo = 50000; timo != 0; --timo)
-		if ((dmac->dcsr & (EBDMA_CYC_PEND | EBDMA_DRAIN)) == 0)
+	for (timo = 50000; timo != 0; --timo) {
+		csr = bus_space_read_4(dt, dh, EBUS_DMAC_DCSR);
+		if ((csr & (EBDMA_CYC_PEND | EBDMA_DRAIN)) == 0)
 			break;
+	}
 
 	if (timo == 0) {
-		printf("cs4231_ebus_dma_reset: dcsr = %x, reset timed out\n",
-		       dmac->dcsr);
+		char bits[128];
+
+		printf("cs4231_ebus_dma_reset: timed out: csr=%s\n",
+		       bitmask_snprintf(csr, EBUS_DCSR_BITS,
+					bits, sizeof(bits)));
 		return (ETIMEDOUT);
 	}
 
-	dmac->dcsr &= ~EBDMA_RESET;
+	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR, csr & ~EBDMA_RESET);
 	return (0);
 }
 
 
 static void
-cs4231_ebus_dma_advance(t, dmac)
+cs4231_ebus_dma_advance(t, dt, dh)
 	struct cs_transfer *t;
-	volatile struct ebus_dmac_reg *dmac;
+	bus_space_tag_t dt;
+	bus_space_handle_t dh;
 {
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
 
 	cs4231_transfer_advance(t, &dmaaddr, &dmasize);
-	dmac->dbcr = (u_int32_t)dmasize;
-	dmac->dacr = (u_int32_t)dmaaddr;
+
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNBR, (u_int32_t)dmasize);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNAR, (u_int32_t)dmaaddr);
 }
 
 
@@ -280,12 +289,13 @@ cs4231_ebus_dma_advance(t, dmac)
  * "iswrite" defines direction of the transfer.
  */
 static int
-cs4231_ebus_trigger_transfer(sc, t, dmac, iswrite,
+cs4231_ebus_trigger_transfer(sc, t, dt, dh, iswrite,
 			     start, end, blksize,
 			     intr, arg, param)
 	struct cs4231_softc *sc;
 	struct cs_transfer *t;
-	volatile struct ebus_dmac_reg *dmac;
+	bus_space_tag_t dt;
+	bus_space_handle_t dh;
 	int iswrite;
 	void *start, *end;
 	int blksize;
@@ -293,6 +303,7 @@ cs4231_ebus_trigger_transfer(sc, t, dmac, iswrite,
 	void *arg;
 	struct audio_params *param;
 {
+	u_int32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
 	int ret;
@@ -302,19 +313,21 @@ cs4231_ebus_trigger_transfer(sc, t, dmac, iswrite,
 	if (ret != 0)
 		return (ret);
 
-	ret = cs4231_ebus_dma_reset(dmac);
+	ret = cs4231_ebus_dma_reset(dt, dh);
 	if (ret != 0)
 		return (ret);
 
-	dmac->dcsr |= EBDMA_EN_NEXT | (iswrite ? EBDMA_WRITE : 0)
-		| EBDMA_EN_DMA | EBDMA_EN_CNT | EBDMA_INT_EN;
+	csr = bus_space_read_4(dh, dh, EBUS_DMAC_DCSR);
+	bus_space_write_4(dh, dh, EBUS_DMAC_DCSR,
+			  csr | EBDMA_EN_NEXT | (iswrite ? EBDMA_WRITE : 0)
+			  | EBDMA_EN_DMA | EBDMA_EN_CNT | EBDMA_INT_EN);
 
-	/* first load: goes to DACR/DBCR */
-	dmac->dbcr = (u_int32_t)dmasize;
-	dmac->dacr = (u_int32_t)dmaaddr;
+	/* first load: propagated to DACR/DBCR */
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNBR, (u_int32_t)dmasize);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DNAR, (u_int32_t)dmaaddr);
 
 	/* next load: goes to DNAR/DNBR */
-	cs4231_ebus_dma_advance(t, dmac);
+	cs4231_ebus_dma_advance(t, dt, dh);
 
 	return (0);
 }
@@ -331,15 +344,13 @@ cs4231_ebus_trigger_output(addr, start, end, blksize, intr, arg, param)
 {
 	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
-	struct cs_transfer *t = &sc->sc_playback;
-	volatile struct ebus_dmac_reg *dma = ebsc->sc_pdmareg;
-	int cfg;
-	int ret;
+	int cfg, ret;
 
-	ret = cs4231_ebus_trigger_transfer(sc, t, dma, 0,
+	ret = cs4231_ebus_trigger_transfer(sc, &sc->sc_playback,
+					   ebsc->sc_bt, ebsc->sc_pdmareg,
+					   0, /* iswrite */
 					   start, end, blksize,
-					   intr, arg,
-					   param);
+					   intr, arg, param);
 	if (ret != 0)
 		return (ret);
 
@@ -347,7 +358,7 @@ cs4231_ebus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ad_write(&sc->sc_ad1848, SP_UPPER_BASE_COUNT, 0xff);
 
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (cfg | PLAYBACK_ENABLE));
+	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, cfg | PLAYBACK_ENABLE);
 
 	return (0);
 }
@@ -364,15 +375,13 @@ cs4231_ebus_trigger_input(addr, start, end, blksize, intr, arg, param)
 {
 	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
-	struct cs_transfer *t = &sc->sc_capture;
-	volatile struct ebus_dmac_reg *dmac = ebsc->sc_rdmareg;
-	int cfg;
-	int ret;
+	int cfg, ret;
 
-	ret = cs4231_ebus_trigger_transfer(sc, t, dmac, 1,
+	ret = cs4231_ebus_trigger_transfer(sc, &sc->sc_capture,
+					   ebsc->sc_bt, ebsc->sc_cdmareg,
+					   1, /* iswrite */
 					   start, end, blksize,
-					   intr, arg,
-					   param);
+					   intr, arg, param);
 	if (ret != 0)
 		return (ret);
 
@@ -380,7 +389,7 @@ cs4231_ebus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	ad_write(&sc->sc_ad1848, CS_UPPER_REC_CNT, 0xff);
 
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (cfg | CAPTURE_ENABLE));
+	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, cfg | CAPTURE_ENABLE);
 
 	return (0);
 }
@@ -390,15 +399,20 @@ static int
 cs4231_ebus_halt_output(addr)
 	void *addr;
 {
-	struct cs4231_ebus_softc *ebsc = (struct cs4231_ebus_softc *)addr;
+	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	u_int32_t csr;
 	int cfg;
 
 	sc->sc_playback.t_active = 0;
-	ebsc->sc_pdmareg->dcsr &= ~EBDMA_EN_DMA;
+
+	csr = bus_space_read_4(ebsc->sc_bt, ebsc->sc_pdmareg, EBUS_DMAC_DCSR);
+	bus_space_write_4(ebsc->sc_bt, ebsc->sc_pdmareg, EBUS_DMAC_DCSR,
+			  csr & ~EBDMA_EN_DMA);
 
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,(cfg & ~PLAYBACK_ENABLE));
+	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,
+		 cfg & ~PLAYBACK_ENABLE);
 
 	return (0);
 }
@@ -408,24 +422,30 @@ static int
 cs4231_ebus_halt_input(addr)
 	void *addr;
 {
-	struct cs4231_ebus_softc *ebsc = (struct cs4231_ebus_softc *)addr;
+	struct cs4231_ebus_softc *ebsc = addr;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
+	u_int32_t csr;
 	int cfg;
 
 	sc->sc_capture.t_active = 0;
-	ebsc->sc_pdmareg->dcsr &= ~EBDMA_EN_DMA;
+
+	csr = bus_space_read_4(ebsc->sc_bt, ebsc->sc_cdmareg, EBUS_DMAC_DCSR);
+	bus_space_write_4(ebsc->sc_bt, ebsc->sc_cdmareg, EBUS_DMAC_DCSR,
+			  csr & ~EBDMA_EN_DMA);
 
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (cfg & ~CAPTURE_ENABLE));
+	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,
+		 cfg & ~CAPTURE_ENABLE);
 
 	return (0);
 }
 
 
 static int
-cs4231_ebus_dma_intr(t, dmac)
+cs4231_ebus_dma_intr(t, dt, dh)
 	struct cs_transfer *t;
-	volatile struct ebus_dmac_reg *dmac;
+	bus_space_tag_t dt;
+	bus_space_handle_t dh;
 {
 	u_int32_t csr;
 #ifdef AUDIO_DEBUG
@@ -433,15 +453,15 @@ cs4231_ebus_dma_intr(t, dmac)
 #endif
 
 	/* read DMA status, clear TC bit by writing it back */
-	csr = dmac->dcsr;
-	dmac->dcsr = csr;
+	csr = bus_space_read_4(dt, dh, EBUS_DMAC_DCSR);
+	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR, csr);
 	DPRINTF(("audiocs: %s dcsr=%s\n", t->t_name,
 		 bitmask_snprintf(csr, EBUS_DCSR_BITS, bits, sizeof(bits))));
 
 	if (csr & EBDMA_ERR_PEND) {
 		++t->t_ierrcnt.ev_count;
 		printf("audiocs: %s DMA error, resetting\n", t->t_name);
-		cs4231_ebus_dma_reset(dmac);
+		cs4231_ebus_dma_reset(dt, dh);
 		/* how to notify audio(9)??? */
 		return (1);
 	}
@@ -459,7 +479,7 @@ cs4231_ebus_dma_intr(t, dmac)
 	if (!t->t_active)
 		return (1);
 
-	cs4231_ebus_dma_advance(t, dmac);
+	cs4231_ebus_dma_advance(t, dt, dh);
 
 	/* call audio(9) framework while dma is chugging along */
 	if (t->t_intr != NULL)
@@ -472,7 +492,7 @@ static int
 cs4231_ebus_intr(arg)
 	void *arg;
 {
-	struct cs4231_ebus_softc *ebsc = (struct cs4231_ebus_softc *)arg;
+	struct cs4231_ebus_softc *ebsc = arg;
 	struct cs4231_softc *sc = &ebsc->sc_cs4231;
 	int status;
 	int ret;
@@ -504,12 +524,16 @@ cs4231_ebus_intr(arg)
 
 	ret = 0;
 
-	if (cs4231_ebus_dma_intr(&sc->sc_capture, ebsc->sc_rdmareg)) {
+	if (cs4231_ebus_dma_intr(&sc->sc_capture,
+				 ebsc->sc_bt, ebsc->sc_cdmareg) != 0)
+	{
 		++sc->sc_intrcnt.ev_count;
 		ret = 1;
 	}
 
-	if (cs4231_ebus_dma_intr(&sc->sc_playback, ebsc->sc_pdmareg)) {
+	if (cs4231_ebus_dma_intr(&sc->sc_playback,
+				 ebsc->sc_bt, ebsc->sc_pdmareg) != 0)
+	{
 		++sc->sc_intrcnt.ev_count;
 		ret = 1;
 	}
