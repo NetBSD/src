@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.4 2003/10/20 12:56:18 yamt Exp $	*/
+/*	$NetBSD: iconv.c,v 1.5 2004/02/21 09:16:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.4 2003/10/20 12:56:18 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.5 2004/02/21 09:16:25 jdolecek Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -50,6 +50,15 @@ usage(void)
 	exit(1);
 }
 
+/*
+ * qsort() helper function
+ */
+static int
+scmp(const void *s1, const void *s2)
+{
+	return strcasecmp(*(const char **)s1, *(const char **)s2);
+}
+
 static void
 show_codesets(void)
 {
@@ -58,6 +67,8 @@ show_codesets(void)
 
 	if (__iconv_get_list(&list, &sz))
 		err(EXIT_FAILURE, "__iconv_get_list()");
+
+	qsort(list, sz, sizeof(char *), scmp);
 
 	for (i=0; i<sz; i++) {
 		printf("%s\n", list[i]);
