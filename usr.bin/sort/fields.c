@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.8 2001/02/19 19:41:31 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.9 2001/02/19 19:52:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.8 2001/02/19 19:41:31 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.9 2001/02/19 19:52:27 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -191,9 +191,9 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 				*tablepos++ = lweight[1];
 				*tablepos++ = lweight[*start ? 2 : 1];
 			} else {
-				*tablepos++ = lweight[*start];
-				if (tablepos == endkey)
+				if (tablepos+1 >= endkey)
 					return (NULL);
+				*tablepos++ = lweight[*start];
 			}
 		}
 	*tablepos++ = lweight[0];
