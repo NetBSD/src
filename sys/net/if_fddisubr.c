@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.31 2000/03/30 09:45:35 augustss Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.32 2000/05/28 02:49:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -463,11 +463,20 @@ fddi_output(ifp, m0, dst, rt0)
 
 	case pseudo_AF_HDRCMPLT:
 	{
-		struct ether_header *eh;
+		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
 		hdrcmplt = 1;
-		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof (esrc));
-		/* FALLTHROUGH */
+		bcopy((caddr_t)fh->fddi_shost, (caddr_t)esrc, sizeof (esrc));
+		/*FALLTHROUGH*/
+	}
+
+	case AF_LINK:
+	{
+		struct fddi_header *fh = (struct fddi_header *)dst->sa_data;
+ 		bcopy((caddr_t)fh->fddi_dhost, (caddr_t)edst, sizeof (edst));
+		if (*edst & 1)
+			m->m_flags |= (M_BCAST|M_MCAST);
+		etype = 0;
+		break;
 	}
 
 	case AF_UNSPEC:
