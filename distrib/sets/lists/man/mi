@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.385 2001/07/25 22:34:22 thorpej Exp $
+# $NetBSD: mi,v 1.386 2001/07/25 23:47:23 assar Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -146,8 +146,10 @@
 ./usr/share/man/cat1/id.0			man-util-catman
 ./usr/share/man/cat1/ident.0			man-util-catman
 ./usr/share/man/cat1/indent.0			man-c-catman
+./usr/share/man/cat1/info.0			man-texinfo-catman
 ./usr/share/man/cat1/innetgr.0			man-nis-catman
 ./usr/share/man/cat1/install.0			man-util-catman
+./usr/share/man/cat1/install-info.0		man-texinfo-catman
 ./usr/share/man/cat1/intro.0			man-sys-catman
 ./usr/share/man/cat1/ipcrm.0			man-util-catman
 ./usr/share/man/cat1/ipcs.0			man-util-catman
@@ -197,6 +199,7 @@
 ./usr/share/man/cat1/mailq.0			man-mailwrapper-catman
 ./usr/share/man/cat1/mailx.0			man-mail-catman
 ./usr/share/man/cat1/make.0			man-util-catman
+./usr/share/man/cat1/makeinfo.0			man-texinfo-catman
 ./usr/share/man/cat1/man.0			man-man-catman
 ./usr/share/man/cat1/md2.0			man-util-catman
 ./usr/share/man/cat1/md4.0			man-util-catman
@@ -358,6 +361,8 @@
 ./usr/share/man/cat1/tee.0			man-util-catman
 ./usr/share/man/cat1/telnet.0			man-netutil-catman
 ./usr/share/man/cat1/test.0			man-util-catman
+./usr/share/man/cat1/texi2dvi.0			man-texinfo-catman
+./usr/share/man/cat1/texindex.0			man-texinfo-catman
 ./usr/share/man/cat1/tftp.0			man-netutil-catman
 ./usr/share/man/cat1/time.0			man-util-catman
 ./usr/share/man/cat1/tip.0			man-uucp-catman
@@ -1006,6 +1011,7 @@
 ./usr/share/man/cat5/ifconfig.if.0		man-net-catman
 ./usr/share/man/cat5/inetd.conf.0		man-netutil-catman
 ./usr/share/man/cat5/inode.0			man-sys-catman
+./usr/share/man/cat5/info.0			man-texinfo-catman
 ./usr/share/man/cat5/intro.0			man-sys-catman
 ./usr/share/man/cat5/ipf.0			man-ipf-catman
 ./usr/share/man/cat5/ipf.conf.0			man-ipf-catman
@@ -1064,6 +1070,7 @@
 ./usr/share/man/cat5/stab.0			man-sys-catman
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/termcap.0			man-sys-catman
+./usr/share/man/cat5/texinfo.0			man-texinfo-catman
 ./usr/share/man/cat5/transport.0		man-postfix-catman
 ./usr/share/man/cat5/ttyaction.0		man-sys-catman
 ./usr/share/man/cat5/ttys.0			man-sys-catman
@@ -1694,8 +1701,10 @@
 ./usr/share/man/man1/id.1			man-util-man
 ./usr/share/man/man1/ident.1			man-util-man
 ./usr/share/man/man1/indent.1			man-c-man
+./usr/share/man/man1/info.1			man-texinfo-man
 ./usr/share/man/man1/innetgr.1			man-nis-man
 ./usr/share/man/man1/install.1			man-util-man
+./usr/share/man/man1/install-info.1		man-texinfo-man
 ./usr/share/man/man1/intro.1			man-sys-man
 ./usr/share/man/man1/ipcrm.1			man-util-man
 ./usr/share/man/man1/ipcs.1			man-util-man
@@ -1745,6 +1754,7 @@
 ./usr/share/man/man1/mailq.1			man-mailwrapper-man
 ./usr/share/man/man1/mailx.1			man-mail-man
 ./usr/share/man/man1/make.1			man-util-man
+./usr/share/man/man1/makeinfo.1			man-texinfo-man
 ./usr/share/man/man1/man.1			man-man-man
 ./usr/share/man/man1/md2.1			man-util-man
 ./usr/share/man/man1/md4.1			man-util-man
@@ -1906,6 +1916,8 @@
 ./usr/share/man/man1/tee.1			man-util-man
 ./usr/share/man/man1/telnet.1			man-netutil-man
 ./usr/share/man/man1/test.1			man-util-man
+./usr/share/man/man1/texi2dvi.1			man-texinfo-man
+./usr/share/man/man1/texindex.1			man-texinfo-man
 ./usr/share/man/man1/tftp.1			man-netutil-man
 ./usr/share/man/man1/time.1			man-util-man
 ./usr/share/man/man1/tip.1			man-uucp-man
@@ -2553,6 +2565,7 @@
 ./usr/share/man/man5/ifaliases.5		man-net-man
 ./usr/share/man/man5/ifconfig.if.5		man-net-man
 ./usr/share/man/man5/inetd.conf.5		man-netutil-man
+./usr/share/man/man5/info.5			man-texinfo-man
 ./usr/share/man/man5/inode.5			man-sys-man
 ./usr/share/man/man5/intro.5			man-sys-man
 ./usr/share/man/man5/ipf.5			man-ipf-man
@@ -2612,6 +2625,7 @@
 ./usr/share/man/man5/stab.5			man-sys-man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/termcap.5			man-sys-man
+./usr/share/man/man5/texinfo.5			man-texinfo-man
 ./usr/share/man/man5/transport.5		man-postfix-man
 ./usr/share/man/man5/ttyaction.5		man-sys-man
 ./usr/share/man/man5/ttys.5			man-sys-man
