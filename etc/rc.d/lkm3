@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm3,v 1.6 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: lkm3,v 1.7 2002/10/08 16:21:52 atatat Exp $
 #
 
 # PROVIDE: aftermountlkm
@@ -22,6 +22,8 @@ do_lkm3()
 		lkmstage=AFTERMOUNT
 		set $1 ; . /etc/rc.lkm
 	fi
+
+	/etc/rc.d/sysdb devdb
 }
 
 load_rc_config lkm

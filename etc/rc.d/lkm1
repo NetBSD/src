@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm1,v 1.6 2000/10/09 06:11:38 nisimura Exp $
+# $NetBSD: lkm1,v 1.7 2002/10/08 16:21:52 atatat Exp $
 #
 
 # PROVIDE: beforenetlkm
@@ -25,6 +25,8 @@ lkm1_start()
 			set start ; . /etc/rc.lkm
 		fi
 	fi
+
+	/etc/rc.d/sysdb devdb
 }
 
 lkm1_stop()

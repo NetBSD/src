@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lkm2,v 1.4 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: lkm2,v 1.5 2002/10/08 16:21:52 atatat Exp $
 #
 
 # PROVIDE: beforemountlkm
@@ -23,6 +23,8 @@ lkm2_start()
 	else
 		warn "/etc/rc.lkm not found; LKMs not loaded."
 	fi
+
+	/etc/rc.d/sysdb devdb
 }
 
 lkm2_stop()
