@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.95 1996/03/30 21:45:14 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.96 1996/04/22 01:46:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -61,7 +61,6 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <scsi/scsi_all.h>

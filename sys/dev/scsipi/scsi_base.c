@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.34 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.35 1996/04/22 01:46:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -43,7 +43,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.55 1996/03/21 03:29:40 scottr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.56 1996/04/22 01:46:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -51,7 +51,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
