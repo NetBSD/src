@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.6 2002/08/02 00:24:56 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.7 2002/08/02 01:15:22 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.6 2002/08/02 00:24:56 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.7 2002/08/02 01:15:22 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.6 2002/08/02 00:24:56 oster Exp $")
 static void TransferDagMemory(RF_DagHeader_t *, RF_DagHeader_t *);
 #endif
 
-static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *, int);
+static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
 static void UpdateNodeHdrPtr(RF_DagHeader_t *, RF_DagNode_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
@@ -63,10 +63,9 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
  *
  *****************************************************************************/
 static int 
-InitHdrNode(hdr, raidPtr, memChunkEnable)
+InitHdrNode(hdr, raidPtr)
 	RF_DagHeader_t **hdr;
 	RF_Raid_t *raidPtr;
-	int     memChunkEnable;
 {
 	/* create and initialize dag hdr */
 	*hdr = rf_AllocDAGHeader();
@@ -317,7 +316,7 @@ rf_SelectAlgorithm(desc, flags)
 						for (k = 0; k < physPtr->numSector; k++) {
 							/* create a dag for
 							 * this block */
-							InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+							InitHdrNode(&tempdag_h, raidPtr);
 							desc->dagArray[i].numDags++;
 							if (dag_h == NULL) {
 								dag_h = tempdag_h;
@@ -334,7 +333,7 @@ rf_SelectAlgorithm(desc, flags)
 						stripeUnitNum++;
 					} else {
 						/* create a dag for this unit */
-						InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+						InitHdrNode(&tempdag_h, raidPtr);
 						desc->dagArray[i].numDags++;
 						if (dag_h == NULL) {
 							dag_h = tempdag_h;
@@ -353,7 +352,7 @@ rf_SelectAlgorithm(desc, flags)
 				stripeNum++;
 			} else {
 				/* Create a dag for this parity stripe */
-				InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+				InitHdrNode(&tempdag_h, raidPtr);
 				desc->dagArray[i].numDags++;
 				if (dag_h == NULL) {
 					dag_h = tempdag_h;
