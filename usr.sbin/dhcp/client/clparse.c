@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.8 2000/04/22 07:11:29 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.2 2000/04/23 18:39:00 thorpej Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -587,7 +587,7 @@ void parse_option_list (cfile, list)
 		r = new_pair (MDL);
 		if (!r)
 			log_fatal ("can't allocate pair for option code.");
-		r -> car = (caddr_t)i;
+		r -> car = (caddr_t) ((unsigned long) i);
 		r -> cdr = (pair)0;
 		if (p)
 			q -> cdr = r;
@@ -611,7 +611,8 @@ void parse_option_list (cfile, list)
 		else {
 			ix = 0;
 			for (q = p; q; q = q -> cdr)
-				(*list) [ix++] = (u_int32_t)q -> car;
+				(*list) [ix++] =
+				    (u_int32_t) ((unsigned long) q -> car);
 			(*list) [ix] = 0;
 		}
 		while (p) {
