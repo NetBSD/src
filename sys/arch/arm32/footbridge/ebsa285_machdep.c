@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.1 1998/09/06 02:23:36 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.2 1998/10/05 02:40:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -43,6 +43,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -71,6 +72,11 @@
 #include <arm32/footbridge/dc21285reg.h>
 
 #include "ipkdb.h"
+
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
+#endif
 
 #define VERBOSE_INIT_ARM
 
@@ -144,6 +150,11 @@ struct user *proc0paddr;
 
 void consinit		__P((void));
 
+int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
+int fcomcndetach __P((void));
+
+void isa_cats_init __P((u_int iobase, u_int membase));
+
 void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
 			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -168,9 +179,23 @@ extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 extern void dumpsys		__P((void));
-void kick_console 		__P((u_int, u_int));
 
 extern int cold;
+
+/* A load of console goo. */
+#include "com.h"
+#if (NCOM > 0)
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#ifndef CONCOMADDR
+#define CONCOMADDR 0x3f8
+#endif
+#endif
+
+#ifndef CONSDEVNAME
+#define CONSDEVNAME "fcom"
+#endif
+
 #define CONSPEED B38400
 #ifndef CONSPEED
 #define CONSPEED B9600	/* TTYDEF_SPEED */
@@ -181,7 +206,6 @@ extern int cold;
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
-extern bus_space_handle_t fcomconsioh;
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -283,7 +307,6 @@ struct l1_sec_map {
 	/* Map 128MB of 32 bit PCI address space for MEM accesses */
 	{ DC21285_PCI_MEM_VBASE,		DC21285_PCI_MEM_BASE,
 	    DC21285_PCI_MEM_VSIZE,		0 },
-/*	{ , , , },*/
 	{ 0, 0, 0, 0 }
 };
 
@@ -335,16 +358,18 @@ initarm(bootinfo)
 	    - ebsabootinfo.bt_memstart) / NBPG;
 
 	/*
-	 * Initialise the physical console
-	 * This is done in main() but for the moment we do it here so that
-	 * we can use printf in initarm() before main() has been called.
+	 * Initialise the diagnostic serial console
+	 * This allows a means of generating output during initarm().
+	 * Once all the memory map changes are complete we can call consinit()
+	 * and not have to worry about things moving.
 	 */
-	consinit();
+	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
 
 	/* Talk to the user */
 	printf("NetBSD/arm32 booting ...\n");
 
-	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER)
+	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_EBSA
+	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
 		panic("Incompatible magic number passed in boot args\n");
 
 /*	{
@@ -442,7 +467,7 @@ initarm(bootinfo)
 	(var) = physical_freestart;		\
 	physical_freestart += ((np) * NBPG);	\
 	free_pages -= (np);			\
-	bzero((char *)(var), ((np) * NBPG));
+	memset((char *)(var), 0, ((np) * NBPG));
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
@@ -628,15 +653,24 @@ initarm(bootinfo)
 
 	setttb(kernel_l1pt.physical);
 
-	fcomconsioh = DC21285_ARMCSR_VBASE;
-	kick_console(DC21285_PCI_IO_VBASE, DC21285_PCI_MEM_VBASE);
+	/*
+	 * Ok the DC21285 CSR registers have just moved.
+	 * Detach the diagnostic serial port and reattach at the new address.
+	 */
+	fcomcndetach();
+
+	/*
+	 * XXX this should only be done in main() but it useful to
+	 * have output earlier ...
+	 */
+	consinit();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
 #endif
 
 	/* Right set up the vectors at the bottom of page 0 */
-	bcopy(page0, (char *)0x00000000, page0_end - page0);
+	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
 	cpu_cache_syncI();
@@ -778,9 +812,38 @@ arm32_cachectl(va, len, flags)
 #endif
 
 void
-kick_console(iobase, membase)
-	u_int iobase, membase;
+consinit(void)
 {
+	static int consinit_called = 0;
+	char *console = CONSDEVNAME;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+
+#if NISA > 0
+	/* Initialise the ISA subsystem early ... */
+
+	isa_cats_init(DC21285_PCI_IO_VBASE, DC21285_PCI_MEM_VBASE);
+#endif
+
+	get_bootconf_option(boot_args, "console", BOOTOPT_TYPE_STRING,
+	    &console);
+
+	if (strncmp(console, "fcom", 4) == 0
+	    || strncmp(console, "diag", 4) == 0)
+		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
+#if (NCOM > 0)
+	else if (strncmp(console, "com", 3) == 0) {
+		if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
+		    COM_FREQ, comcnmode))
+			panic("can't init serial console @%x", CONCOMADDR);
+	}
+#endif
+	/* Don't know what console was requested so use the fall back. */
+	else
+		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 }
 
 /* End of ebsa285_machdep.c */
