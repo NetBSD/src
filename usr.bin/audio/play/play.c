@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.17 2000/02/27 08:20:01 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.17.4.1 2001/03/11 21:30:28 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -48,7 +48,7 @@
 int main __P((int, char *[]));
 void usage __P((void));
 void play_fd __P((int, char *));
-ssize_t audioctl_write_fromhdr __P((void *, size_t, int));
+ssize_t audioctl_write_fromhdr __P((void *, size_t, int, size_t *));
 
 audio_info_t	info;
 int	volume;
@@ -65,6 +65,7 @@ int	channels;
 char	const *play_errstring = NULL;
 size_t	bufsize;
 int	audiofd, ctlfd;
+size_t	datasize;
 
 int
 main(argc, argv)
@@ -229,7 +230,7 @@ main(argc, argv)
 			 * get the header length and set up the audio device
 			 */
 			if ((hdrlen = audioctl_write_fromhdr(addr,
-			    (size_t)filesize, ctlfd)) < 0) {
+			    (size_t)filesize, ctlfd, &datasize)) < 0) {
 				if (play_errstring)
 					errx(1, "%s: %s", play_errstring, *argv);
 				else
@@ -238,14 +239,18 @@ main(argc, argv)
 
 			filesize -= hdrlen;
 			addr = (char *)addr + hdrlen;
+			if (filesize < datasize || datasize == 0) {
+				warn("bogus datasize:%u", datasize);
+				datasize = filesize;
+			}
 
-			while (filesize > bufsize) {
+			while (datasize > bufsize) {
 				if (write(audiofd, addr, bufsize) != bufsize)
 					err(1, "write failed");
 				addr = (char *)addr + bufsize;
-				filesize -= bufsize;
+				datasize -= bufsize;
 			}
-			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
+			if (write(audiofd, addr, (size_t)datasize) != (ssize_t)datasize)
 				err(1, "final write failed");
 
 			if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
@@ -273,7 +278,9 @@ play_fd(fd, file)
 {
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
-	int     n, m;
+	int     n;
+	size_t	datasize;
+	size_t	datainbuf;
 
 	if (buffer == NULL)
 		err(1, "malloc of read buffer failed");
@@ -285,7 +292,7 @@ play_fd(fd, file)
 	if (n == 0)
 		errx(1, "EOF on standard input");
 
-	hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd);
+	hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd, &datasize);
 	if (hdrlen < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
@@ -300,17 +307,26 @@ play_fd(fd, file)
 			err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
 
 		memmove(buffer, buffer + hdrlen, n - hdrlen);
-
-		m = read(fd, buffer + n, hdrlen);
-		n += m;
 	}
-	/* read until EOF or error */
+
+	datainbuf = n;
 	do {
-		if (n == -1)
-			err(1, "read of standard input failed");
-		if (write(audiofd, buffer, n) != n)
+		if (datasize < datainbuf) {
+			datainbuf = datasize;
+		}
+		else {
+			n = read(fd, buffer + datainbuf, MIN(bufsize - datainbuf, datasize));
+			if (n == -1)
+				err(1, "read of %s failed", file);
+			datainbuf += n;
+		}
+		if (write(audiofd, buffer, datainbuf) != datainbuf)
 			err(1, "write failed");
-	} while ((n = read(fd, buffer, bufsize)));
+
+		datasize -= datainbuf;
+		datainbuf = 0;
+	}
+	while (datasize);
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
@@ -323,10 +339,11 @@ play_fd(fd, file)
  * uses the local "info" variable. blah... fix me!
  */
 ssize_t
-audioctl_write_fromhdr(hdr, fsz, fd)
+audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 	void	*hdr;
 	size_t	fsz;
 	int	fd;
+	size_t	*datasize;
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len;
@@ -347,11 +364,12 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 		info.play.channels = ntohl(sunhdr->channels);
 		hdr_len = ntohl(sunhdr->hdr_size); 
 
+		*datasize = ntohl(sunhdr->data_size);
 		goto set_audio_mode;
 	}
 
 	hdr_len = audio_parse_wav_hdr(hdr, fsz, &info.play.encoding,
-	    &info.play.precision, &info.play.sample_rate, &info.play.channels);
+	    &info.play.precision, &info.play.sample_rate, &info.play.channels, datasize);
 
 	switch (hdr_len) {
 	case AUDIO_ESHORTHDR:
