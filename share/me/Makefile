@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.3 1993/07/31 15:27:47 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/09/30 23:04:06 jtc Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -10,27 +10,15 @@ TMSRCS=	tmac.e
 MAN7=	me.0
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}${MELIB} ]; then \
-                /bin/rm -f ${DESTDIR}${MELIB} ; \
-                mkdir -p ${DESTDIR}${MELIB} ; \
-                chown root.wheel ${DESTDIR}${MELIB} ; \
-                chmod 755 ${DESTDIR}${MELIB} ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${MELIB}
+	@install -d -o root -g wheel -m 755 ${DESTDIR}${TMLIB}
+
+realinstall:
 	cd ${.CURDIR}; for i in ${MESRCS}; do \
 		sed -f strip.sed < $$i > ${DESTDIR}${MELIB}/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${MELIB}/$$i; \
 		chmod 444 ${DESTDIR}${MELIB}/$$i; \
 	done
-	@if [ ! -d ${DESTDIR}${TMLIB} ]; then \
-                /bin/rm -f ${DESTDIR}${TMLIB} ; \
-                mkdir -p ${DESTDIR}${TMLIB} ; \
-                chown root.wheel ${DESTDIR}${TMLIB} ; \
-                chmod 755 ${DESTDIR}${TMLIB} ; \
-        else \
-                true ; \
-        fi
 	cd ${.CURDIR}; for i in ${TMSRCS}; do \
 		sed -f strip.sed < $$i > ${DESTDIR}${TMLIB}/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${TMLIB}/$$i; \
