@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.10 1997/05/17 19:32:08 pk Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.11 1997/05/23 22:09:48 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.10 1997/05/17 19:32:08 pk Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.11 1997/05/23 22:09:48 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -1166,8 +1166,7 @@ upper(s)
 	char *s;
 {
 	while (*s != '\0') {
-		if (islower(*s))
-			*s = toupper(*s);
+		*s = toupper(*s);
 		s++;
 	}
 }
