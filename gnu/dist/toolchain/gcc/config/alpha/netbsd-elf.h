@@ -30,3 +30,13 @@ Boston, MA 02111-1307, USA.  */
 { "elf_dynamic_linker", ELF_DYNAMIC_LINKER },
 
 #define ELF_DYNAMIC_LINKER	"/usr/libexec/ld.elf_so"
+
+#undef LINK_SPEC
+#define LINK_SPEC "-m elf64alpha %{G*} %{relax:-relax}		\
+  %{O*:-O3} %{!O*:-O1}						\
+  %{shared:-shared}						\
+  %{!shared:							\
+    %{!static:							\
+      %{rdynamic:-export-dynamic}				\
+      %{!dynamic-linker:-dynamic-linker %(elf_dynamic_linker)}}	\
+    %{static:-static}} --traditional-format"
