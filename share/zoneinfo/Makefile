@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1995/03/11 01:27:43 jtc Exp $
+#	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -73,7 +73,7 @@ realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
-	find ${TZDIR} -type f | xargs chmod a-w
+	find ${TZDIR} -type f | xargs chmod a=r
 
 .PATH:	${.CURDIR}/datfiles
 .include <bsd.prog.mk>
