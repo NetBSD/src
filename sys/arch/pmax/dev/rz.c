@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.63 2001/04/25 17:53:20 bouyer Exp $	*/
+/*	$NetBSD: rz.c,v 1.64 2001/07/07 07:52:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.63 2001/04/25 17:53:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.64 2001/07/07 07:52:02 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -219,7 +219,7 @@ int	rzdebug = RZB_ERROR;
 #define rzpart(x)	(minor(x) & 0x7)
 
 struct scsi_mode_sense_data {
-	struct scsi_mode_header header;
+	struct scsipi_mode_header header;
 	struct scsi_blk_desc blk_desc;
 	union scsi_disk_pages pages;
 };
@@ -1410,7 +1410,7 @@ rz_mode_sense(sd, scsipi_sense, page, pagelen, flags)
 	struct scsi_mode_sense_data *scsipi_sense;
 	int page, pagelen, flags;
 {
-	struct scsi_mode_sense scsipi_cmd;
+	struct scsipi_mode_sense scsipi_cmd;
 	int nbytes;
 
 	/*
@@ -1423,7 +1423,7 @@ rz_mode_sense(sd, scsipi_sense, page, pagelen, flags)
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = SCSI_MODE_SENSE;
 	scsipi_cmd.page = page;
-	scsipi_cmd.length = 0x20;	/* XXX verbatim from MI scsi sd.c */
+	scsipi_cmd.u_len.scsi.length = 0x20;	/* XXX verbatim from MI scsi sd.c */
 
 	/*
 	 * If the command worked, use the results to fill out
