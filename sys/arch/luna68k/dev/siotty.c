@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.5 2000/11/02 00:37:57 eeh Exp $ */
+/* $NetBSD: siotty.c,v 1.6 2000/11/07 09:23:21 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.5 2000/11/02 00:37:57 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.6 2000/11/07 09:23:21 nisimura Exp $");
 
 #include "opt_ddb.h"
 
@@ -189,7 +189,7 @@ siottyintr(chan)
 		sio->sio_cmd = WR0_RSTPEND;
 		if (tp != NULL) {
 			tp->t_state &= ~(TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
+			if (tp->t_linesw)
 				(*tp->t_linesw->l_start)(tp);
 			else
 				siostart(tp);
