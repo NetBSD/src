@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.5.4.1 2000/10/20 20:00:33 tv Exp $ */
+.\" $NetBSD: userdel.8,v 1.5.4.2 2002/06/26 17:20:44 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .Dd November 30, 1999
 .Dt USERDEL 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm userdel
 .Nd remove a user from the system
@@ -50,8 +50,14 @@ The
 utility removes a user from the system, optionally
 removing that user's home diretory and any subdirectories.
 .Pp
-The first format of the command shown above (utilising the -D option)
-sets and displays the defaults for the
+Default values are taken from the information provided in the
+.Pa /etc/usermgmt.conf
+file, which, if running as root, is created using the built-in defaults if
+it does not exist.
+.Pp
+The first form of the command shown above (utilising the
+.Fl D
+option) sets and displays the defaults for the
 .Nm
 utility.
 .Bl -tag -width Ds
@@ -60,7 +66,8 @@ without any further options,
 .Fl D
 will show the current defaults which will be used by the
 .Nm
-utility. Together with one of the options shown for the first version
+utility.
+Together with one of the options shown for the first version
 of the command,
 .Fl D
 will set the default to be the new value.
@@ -71,7 +78,10 @@ sets the preservation value. If this value is one of
 or a non-zero number, then the user login information will be preserved.
 .El
 .Pp
-The following command line options are recognised:
+In the second form of the command,
+after setting any defaults, and then reading values from
+.Pa /etc/usermgmt.conf ,
+the following command line options are processed:
 .Bl -tag -width Ds
 .It Fl p
 preserve the user information in the password file,
@@ -79,8 +89,8 @@ but do not allow the user to login, by switching the
 password to an
 .Dq impossible
 one, and by setting the
-user's shell to the 
-.Xr false 1
+user's shell to the
+.Xr nologin 8
 program. This option can be helpful in preserving a user's
 files for later use by members of that person's
 group after the user has moved on.
@@ -99,16 +109,27 @@ and any files and other entries in them.
 perform any actions in a verbose manner.
 .El
 .Pp
+Once the information has been verified,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the user database.  This is run in the background, and,
+at very large sites could take several minutes.  Until this update
+is completed, the password file is unavailable for other updates
+and the new information is not available to programs.
+.Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
 .El
 .Sh SEE ALSO
-.Xr false 1 ,
-.Xr passwd 5
+.Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
+.Xr nologin 8 ,
+.Xr pwd_mkdb 8
 .Sh HISTORY
 The
 .Nm
@@ -117,7 +138,10 @@ utility first appeared in
 It is based on the
 .Ar addnerd
 package by the same author.
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
+.Sh BUGS
+.Nm
+does not remove users from supplementary groups.
