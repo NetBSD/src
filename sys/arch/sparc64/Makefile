@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/31 22:17:05 eeh Exp $
+#	$NetBSD: Makefile,v 1.9 2000/09/28 15:19:56 eeh Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
 TSPARC64=	../sparc64/tags
-SSPARC64=	../sparc64/dev/*.[ch] ../../sparc/sparc/fpu/*.[ch] \
+SSPARC64=	../sparc64/dev/*.[ch] ../sparc/fpu/*.[ch] \
 	../sparc64/include/*.[ch] ../sparc64/sparc64/*.[ch]
 ASPARC64=	../sparc64/sparc64/*.s
 # CSPARC64=	../../compat/*/*.[ch]
