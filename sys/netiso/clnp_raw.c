@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.21 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.22 2004/04/25 21:13:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.21 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.22 2004/04/25 21:13:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -102,13 +102,7 @@ struct sockproto rclnp_proto = {PF_ISO, 0};
  *			indicating no protocol.
  */
 void
-#if __STDC__
 rclnp_input(struct mbuf *m, ...)
-#else
-rclnp_input(m, va_alist)
-	struct mbuf    *m;	/* ptr to packet */
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src;	/* ptr to src address */
 	struct sockaddr_iso *dst;	/* ptr to dest address */
