@@ -1,4 +1,4 @@
-#	$NetBSD: rc.local,v 1.14 1995/12/17 02:01:13 thorpej Exp $
+#	$NetBSD: rc.local,v 1.15 1997/01/05 12:01:57 mrg Exp $
 #
 # site-specific startup actions, daemons
 #
@@ -15,11 +15,6 @@ echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
 cmp -s $T /etc/motd || cp $T /etc/motd
 rm -f $T
-
-if [ -f /sbin/ldconfig ]; then
-	echo 'creating runtime link editor directory cache.'
-	ldconfig
-fi 
 
 echo -n 'starting local daemons:'
 

@@ -1,44 +1,7 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.26 1996/12/04 12:55:34 mrg Exp $
+#	$NetBSD: netstart,v 1.27 1997/01/05 12:01:54 mrg Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
-
-# set these to "NO" to turn them off.  otherwise, they're used as flags
-routed_flags=-q
-mrouted_flags=NO	# for 'normal' use: mrouted_flags=""
-rarpd_flags=NO		# for 'normal' use: rarpd_flags="-a"
-bootparamd_flags=NO	# for 'normal' use: bootparamd_flags=""
-rbootd_flags=NO		# for 'normal' use: rbootd_flags=""
-sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
-named_flags=NO		# for 'normal' use: named_flags=""
-dhcpd_flags=NO		# for 'normal' use: dhcpd_flags=""
-timed_flags=
-inetd_flags=		# for libwrap logging, use: inetd_flags=-l
-
-# If your system is to be a YP server, you need to enable ypserv
-# and (optionally) rpc.yppasswdd.  Set these variables to "NO"
-# to turn them off, otherwise they're used as flags.
-ypserv_flags=NO		# for 'normal' use: ypserv_flags="-d"
-yppasswdd_flags=NO	# for 'normal' use: yppasswdd_flags=""
-
-# If your system is to be a YP client, you need to enable ypbind.
-# Set these variables to "NO" to turn them off, otherwise they're
-# used as flags.
-ypbind_flags=NO		# for 'normal' use: ypbind_flags=""
-
-# set the following to "YES" to turn them on
-rwhod=NO
-nfs_server=NO
-nfs_client=NO
-gated=NO
-kerberos_server=NO
-amd=NO
-
-# miscellaneous other flags
-# only used if the appropriate server is marked YES above
-gated_flags=
-amd_dir=/amd			# AMD's mount directory
-amd_master=/etc/amd/master	# AMD 'master' map
 
 # /etc/myname contains my symbolic name
 #
@@ -46,6 +9,12 @@ hostname=`cat /etc/myname`
 hostname $hostname
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
+fi
+
+# install and enable packet filter rules before configuring interfaces.
+if [ "X$ipfilter" != XNO -a -f /etc/ipf.conf ]; then
+	echo 'installing packet filter rules ... '
+	ipf -f /etc/ipf.conf -E
 fi
 
 # configure all of the interfaces which we know about.
@@ -118,15 +87,20 @@ fi
 # /etc/ifaliases, if it exists, contains the names of additional IP
 # addresses for each interface. It is formatted as a series of lines
 # that contain
-# address interface
+#	address interface netmask
 if [ -f /etc/ifaliases ]; then
 (
-    set -- `cat /etc/ifaliases`
+	while read addr int net; do
+		if [ x"$net" = x ]; then
+			ifconfig $int inet alias $addr
+		else
+			ifconfig $int inet alias $addr netmask $net
+		fi
+		route add $addr localhost
+	done
+) < /etc/ifaliases
+fi
 
-    while [ $# -ge 2 ] ; do
-	ifconfig $2 inet alias $1
-	route add $1 localhost
-        shift 2
-    done
- )
+if [ -s /etc/netstart.local ]; then
+	. /etc/netstart.local
 fi
