@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.3 2002/01/24 03:34:28 thorpej Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.4 2002/01/30 03:59:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -182,7 +182,7 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 iq80310_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
-	static char irqstr[sizeof("iq80310 irq xx")];
+	static char irqstr[IRQNAMESIZE];
 
 	sprintf(irqstr, "iq80310 irq %ld", ih);
 	return (irqstr);

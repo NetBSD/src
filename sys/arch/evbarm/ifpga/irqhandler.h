@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.4 2001/12/20 01:20:27 thorpej Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.1 2002/01/30 03:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,6 +40,13 @@
  * Created      : 30/09/94
  */
 
+/*
+ * XXX This allows the Integrator code to continue using the old
+ * XXX arm32 interrupt code.  Eventually, Integrator should be
+ * XXX changed to use something more like what the IQ80310 code
+ * XXX uses.
+ */
+
 #ifndef _ARM32_IRQHANDLER_H_
 #define _ARM32_IRQHANDLER_H_
 
@@ -54,8 +61,6 @@
 #define IRQ_INSTRUCT	-1
 #define NIRQS		0x20
 
-#include <machine/intr.h>
-
 #ifndef _LOCORE
 typedef struct irqhandler {
 	int (*ih_func) __P((void *arg));/* handler function */
@@ -69,8 +74,10 @@ typedef struct irqhandler {
 	struct irqhandler *ih_next;	/* next handler */
 } irqhandler_t;
 
+#include <machine/intr.h>
+
 #ifdef _KERNEL
-extern u_int irqmasks[IPL_LEVELS];
+extern u_int irqmasks[NIPL];
 extern irqhandler_t *irqhandlers[NIRQS];
 
 void irq_init __P((void));

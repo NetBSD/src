@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.6 2001/12/09 05:00:44 atatat Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.7 2002/01/30 03:59:40 thorpej Exp $
 
 .if (${BOARDTYPE} == "integrator")
 GENASSYM_EXTRAS+=	${THISARM}/ifpga/genassym.cf
@@ -11,7 +11,6 @@ SYSTEM_LD_TAIL_EXTRA=; \
 	${DBSYM} $@ || true
 
 .if (${BOARDTYPE} == "iq80310")
-GENASSYM_EXTRAS+=	${THISARM}/iq80310/genassym.cf
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O srec $@ $@.srec; \
 	${OBJCOPY} -S -O srec $@ $@.srec

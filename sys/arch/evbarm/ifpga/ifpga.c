@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.5 2001/11/30 19:43:20 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.6 2002/01/30 03:59:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -48,6 +48,7 @@
 #include <dev/pci/pciconf.h>
 
 #include <machine/intr.h>
+#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 
 #include <arm/cpufunc.h>
 

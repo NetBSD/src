@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/09/05 04:53:40 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2002/01/30 03:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 
 struct device *booted_device;
 int booted_partition;
@@ -74,6 +75,11 @@ void
 cpu_configure(void)
 {
 	struct mainbus_attach_args maa;
+
+#ifndef __OLD_INTERRUPT_CODE
+	/* Initialize software interrupts. */
+	softintr_init();
+#endif
 
 	maa.ma_name = "mainbus";
 
