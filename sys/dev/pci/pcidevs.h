@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.285 2000/12/27 15:36:42 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.286 2000/12/29 17:15:04 eeh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1557,7 +1557,8 @@
 #define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* PCIO Happy Meal Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
-#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
+#define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI bus controller */
+#define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* Psycho+ PCI bus conrtoller */
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */
