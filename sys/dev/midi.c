@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.16 2000/05/06 14:35:28 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.17 2000/07/06 00:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -344,14 +344,14 @@ midiopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc;
 	struct midi_hw_if *hw;
 	int error;
 
-	if (unit >= midi_cd.cd_ndevs ||
-	    (sc = midi_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
 	DPRINTF(("midiopen %p\n", sc));
 
 	hw = sc->hw_if;
@@ -726,12 +726,12 @@ midi_getinfo(dev, mi)
 	dev_t dev;
 	struct midi_info *mi;
 {
-	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc;
 
-	if (unit >= midi_cd.cd_ndevs ||
-	    (sc = midi_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
+	if (sc == NULL)
 		return;
+
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
 }
 
