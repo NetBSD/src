@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.34 1996/05/27 00:10:40 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.35 1996/06/16 23:28:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -436,27 +436,35 @@ fdcattach(parent, self, aux)
 	 */
 	fa.fa_bootpath = 0;
 	if ((bp = ca->ca_ra.ra_bp) && strcmp(bp->name, OBP_FDNAME) == 0) {
-		/*
-		 * WOAH THERE!  It looks like we can get the bootpath
-		 * in several different formats!!  The faked
-		 * bootpath (and some v2?) looks like /fd@0,0
-		 * but the real bootpath on some v2 OpenPROM
-		 * systems looks like /fd0.  In the case of
-		 * a floppy controller on obio (such as on the sun4m),
-		 * we use "slot, offset" to determine if this is the
-		 * right one.  --thorpej
-		 */
+
 		switch (ca->ca_bustype) {
 		case BUS_MAIN:
-			if (((bp->val[0] == 0) &&	/* /fd@0,0 */
+			/*
+			 * We can get the bootpath in several different
+			 * formats! The faked v1 bootpath looks like /fd@0,0.
+			 * The v2 bootpath is either just /fd0, in which case
+			 * `bp->val[0]' will have been set to -1, or /fd@x,y
+			 * where <x,y> is the prom address specifier.
+			 */
+			if (((bp->val[0] == ca->ca_ra.ra_iospace) &&
+			     (bp->val[1] == (int)ca->ca_ra.ra_paddr)) ||
+
+			    ((bp->val[0] == -1) &&	/* v2: /fd0 */
 			     (bp->val[1] == 0)) ||
-			    ((bp->val[0] == -1) &&	/* /fd0 */
-			     (bp->val[1] == 0)))
+
+			    ((bp->val[0] == 0) &&	/* v1: /fd@0,0 */
+			     (bp->val[1] == 0))
+			   )
 				fa.fa_bootpath = bp;
 			break;
 
 		case BUS_OBIO:
-			/* /obio0/SUNW,fdtwo@0,700000 */
+			/*
+			 * floppy controller on obio (such as on the sun4m),
+			 * e.g.: `/obio0/SUNW,fdtwo@0,700000'.
+			 * We use "slot, offset" to determine if this is the
+			 * right one.
+			 */
 			if ((bp->val[0] == ca->ca_slot) &&
 			    (bp->val[1] == ca->ca_offset))
 				fa.fa_bootpath = bp;
