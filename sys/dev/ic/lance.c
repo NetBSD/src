@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.12 2000/05/12 16:45:42 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.13 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -465,7 +465,6 @@ lance_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -486,31 +485,13 @@ lance_read(sc, boff, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-#ifndef LANCE_REVC_BUG
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr)) {
-			m_freem(m);
-			return;
-		}
-#endif
-	}
 #endif
 
 #ifdef LANCE_REVC_BUG

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.24 1999/11/30 17:02:39 tron Exp $ */
+/* $NetBSD: if_eb.c,v 1.25 2000/10/01 23:32:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1329,12 +1329,10 @@ ebread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	register struct ether_header *eh;
 	struct ifnet *ifp;
 	struct mbuf *m;
 
 	ifp = &sc->sc_ethercom.ec_if;
-	eh = (struct ether_header *)buf;
 
 	/* Pull packet off interface. */
 	m = ebget(buf, len, ifp);
@@ -1348,22 +1346,8 @@ ebread(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);

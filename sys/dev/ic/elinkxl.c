@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.40 2000/09/19 01:15:28 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.41 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1200,9 +1200,7 @@ ex_intr(arg)
 				 * instead.
 				 */
 				if (ex_add_rxbuf(sc, rxd) == 0) {
-					struct ether_header *eh;
 					u_int16_t total_len;
-
 
 					if (pktstat & EX_UPD_ERR) {
 						ifp->if_ierrors++;
@@ -1218,29 +1216,10 @@ ex_intr(arg)
 					}
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len = total_len;
-					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-					if (ifp->if_bpf) {
-						bpf_tap(ifp->if_bpf,
-						    mtod(m, caddr_t),
-						    total_len); 
-						/*
-						 * Only pass this packet up
-						 * if it is for us.
-						 */
-						if ((ifp->if_flags &
-						    IFF_PROMISC) &&
-						    (eh->ether_dhost[0] & 1)
-						    == 0 &&
-						    bcmp(eh->ether_dhost,
-							LLADDR(ifp->if_sadl),
-							sizeof(eh->ether_dhost))
-							    != 0) {
-							m_freem(m);
-							goto rcvloop;
-						}
-					}
-#endif /* NBPFILTER > 0 */
+					if (ifp->if_bpf)
+						bpf_mtap(ifp->if_bpf, m);
+#endif
 					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
