@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.22 2003/02/20 22:39:42 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.23 2003/02/28 09:30:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -217,6 +217,25 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_destroy_reply_t;
 
+/* port_request_notification */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_notify;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_msg_id_t req_msgid;
+	mach_port_mscount_t req_count;
+} port_request_notification_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_previous;
+	mach_msg_trailer_t rep_trailer;
+} port_request_notification_reply_t;
+
 int mach_port_deallocate(struct mach_trap_args *);
 int mach_port_allocate(struct mach_trap_args *);
 int mach_port_insert_right(struct mach_trap_args *);
@@ -273,8 +292,8 @@ struct mach_port {
 };
 
 /* mp_flags for struct mach_port */
-#define MACH_MP_INKERNEL	0x1	/* Receiver is inside the kernel */
-#define MACH_MP_DATA_ALLOCATED	0x2	/* mp_data was malloc'ed */
+#define MACH_MP_INKERNEL	0x01	/* Receiver is inside the kernel */
+#define MACH_MP_DATA_ALLOCATED	0x02	/* mp_data was malloc'ed */
 
 /* mp_datatype for struct mach_port */
 #define	MACH_MP_NONE		0x0	/* No data */
