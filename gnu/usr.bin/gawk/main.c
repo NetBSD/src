@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -23,8 +23,8 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "getopt.h"
 #include "awk.h"
+#include "getopt.h"
 #include "patchlevel.h"
 
 static void usage P((int exitval));
@@ -63,12 +63,15 @@ char *RS;
 char *OFS;
 char *ORS;
 char *OFMT;
-char *CONVFMT;
 
 /*
- * The parse tree and field nodes are stored here.  Parse_end is a dummy item
- * used to free up unneeded fields without freeing the program being run 
+ * CONVFMT is a convenience pointer for the current number to string format.
+ * We must supply an initial value to avoid recursion problems of
+ *	set_CONVFMT -> fmt_index -> r_force_string: gets NULL CONVFMT
+ * Fun, fun, fun, fun.
  */
+char *CONVFMT = "%.6g";
+
 int errcount = 0;	/* error counter, used by yyerror() */
 
 /* The global null string */
@@ -90,7 +93,7 @@ int exit_val = 0;		/* optional exit value */
 extern int yydebug;
 #endif
 
-struct src *srcfiles = NULL;		/* source file name(s) */
+struct src *srcfiles = NULL;	/* source file name(s) */
 int numfiles = -1;		/* how many source files */
 
 int do_unix = 0;		/* turn off gnu extensions */
@@ -105,6 +108,7 @@ int output_is_tty = 0;		/* control flushing of output */
 
 extern char *version_string;	/* current version, for printing */
 
+/* The parse tree is stored here.  */
 NODE *expression_value;
 
 static struct option optab[] = {
@@ -173,6 +177,13 @@ char **argv;
 	Nnull_string->type = Node_val;
 	Nnull_string->flags = (PERM|STR|STRING|NUM|NUMBER);
 
+	/*
+	 * Tell the regex routines how they should work.
+	 * Do this before initializing variables, since
+	 * they could want to do a regexp compile.
+	 */
+	resetup();
+
 	/* Set up the special variables */
 	/*
 	 * Note that this must be done BEFORE arg parsing else -F
@@ -183,9 +194,6 @@ char **argv;
 	/* worst case */
 	emalloc(srcfiles, struct src *, argc * sizeof(struct src), "main");
 	memset(srcfiles, '\0', argc * sizeof(struct src));
-
-	/* Tell the regex routines how they should work. . . */
-	resetup();
 
 	/* we do error messages ourselves on invalid options */
 	opterr = 0;
@@ -347,6 +355,8 @@ out:
 	/* Read in the program */
 	if (yyparse() || errcount)
 		exit(1);
+	/* recover any space from C based alloca */
+	(void) alloca(0);
 
 	/* Set up the field variables */
 	init_fields();
@@ -494,6 +504,10 @@ char **argv;
 
 /*
  * Set all the special variables to their initial values.
+ * Note that some of the variables that have set_FOO routines should
+ * *N*O*T* have those routines called upon initialization, and thus
+ * they have NULL entries in that field. This is notably true of FS
+ * and IGNORECASE.
  */
 struct varinit {
 	NODE **spec;
@@ -504,18 +518,18 @@ struct varinit {
 	Func_ptr assign;
 };
 static struct varinit varinit[] = {
+{&CONVFMT_node,	"CONVFMT",	Node_CONVFMT,		"%.6g",	0,  set_CONVFMT },
 {&NF_node,	"NF",		Node_NF,		0,	-1, set_NF },
 {&FIELDWIDTHS_node, "FIELDWIDTHS", Node_FIELDWIDTHS,	"",	0,  0 },
 {&NR_node,	"NR",		Node_NR,		0,	0,  set_NR },
 {&FNR_node,	"FNR",		Node_FNR,		0,	0,  set_FNR },
 {&FS_node,	"FS",		Node_FS,		" ",	0,  0 },
 {&RS_node,	"RS",		Node_RS,		"\n",	0,  set_RS },
-{&IGNORECASE_node, "IGNORECASE", Node_IGNORECASE,	0,	0,  set_IGNORECASE },
+{&IGNORECASE_node, "IGNORECASE", Node_IGNORECASE,	0,	0,  0 },
 {&FILENAME_node, "FILENAME",	Node_var,		"",	0,  0 },
 {&OFS_node,	"OFS",		Node_OFS,		" ",	0,  set_OFS },
 {&ORS_node,	"ORS",		Node_ORS,		"\n",	0,  set_ORS },
 {&OFMT_node,	"OFMT",		Node_OFMT,		"%.6g",	0,  set_OFMT },
-{&CONVFMT_node,	"CONVFMT",	Node_CONVFMT,		"%.6g",	0,  set_CONVFMT },
 {&RLENGTH_node, "RLENGTH",	Node_var,		0,	0,  0 },
 {&RSTART_node,	"RSTART",	Node_var,		0,	0,  0 },
 {&SUBSEP_node,	"SUBSEP",	Node_var,		"\034",	0,  0 },

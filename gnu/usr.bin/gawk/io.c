@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -75,13 +75,15 @@ extern FILE	*fdopen();
 #include "popen.h"
 #define popen(c,m)	os_popen(c,m)
 #define pclose(f)		os_pclose(f)
-#elif defined (OS2)	/* OS/2, but not family mode */
+#else
+#if defined (OS2)	/* OS/2, but not family mode */
 #if defined (_MSC_VER)
 #define popen(c,m)   _popen(c,m)
 #define pclose(f)    _pclose(f)
 #endif
 #else
 extern FILE	*popen();
+#endif
 #endif
 
 static struct redirect *red_head = NULL;
@@ -188,10 +190,10 @@ IOBUF *iop;
 		cnt = 0;
 		retval = 1;
 	} else {
-		    NR += 1;
-		    FNR += 1;
+		NR += 1;
+		FNR += 1;
+		set_record(begin, cnt, 1);
 	}
-	set_record(begin, cnt, 1);
 
 	return retval;
 }
@@ -524,8 +526,13 @@ int exitwarn;
 	if (status) {
 		char *s = strerror(errno);
 
-		warning("failure status (%d) on %s close of \"%s\" (%s)",
-			status, what, rp->value, s);
+		/*
+		 * Too many people have complained about this.
+		 * As of 2.15.6, it is now under lint control.
+		 */
+		if (do_lint)
+			warning("failure status (%d) on %s close of \"%s\" (%s)",
+				status, what, rp->value, s);
 
 		if (! do_unix) {
 			/* set ERRNO too so that program can get at it */
@@ -646,7 +653,8 @@ devopen(name, mode)
 const char *name, *mode;
 {
 	int openfd = INVALID_HANDLE;
-	const char *cp, *ptr;
+	const char *cp;
+	char *ptr;
 	int flag = 0;
 	struct stat buf;
 	extern double strtod();
@@ -806,7 +814,7 @@ const char *name, *mode;
 	char tbuf[BUFSIZ], *cp;
 	int i;
 #if defined(NGROUPS_MAX) && NGROUPS_MAX > 0
-#if defined(atarist) || defined(__svr4__) || defined(__osf__) || defined(__NetBSD__)
+#if defined(atarist) || defined(__svr4__) || defined(__osf__) || defined(__bsdi__) || defined(__NetBSD__)
 	gid_t groupset[NGROUPS_MAX];
 #else
 	int groupset[NGROUPS_MAX];
