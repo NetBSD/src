@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.23 2001/02/04 21:37:29 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.24 2001/05/07 21:17:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -97,6 +97,7 @@ char	*temp;		/* name of the file for doing rewrite of dumpdates */
 char	lastlevel;	/* dump level of previous dump */
 char	level;		/* dump level of this dump */
 int	uflag;		/* update flag */
+int	eflag;		/* eject flag */
 int	diskfd;		/* disk file descriptor */
 int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
