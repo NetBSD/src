@@ -1,4 +1,4 @@
-/*	$NetBSD: alphaled.c,v 1.1 2002/11/23 09:05:03 scw Exp $	*/
+/*	$NetBSD: alphaled.c,v 1.2 2003/07/14 23:25:41 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: alphaled.c,v 1.2 2003/07/14 23:25:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

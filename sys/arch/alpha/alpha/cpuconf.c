@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.28 2002/09/27 15:35:33 provos Exp $ */
+/* $NetBSD: cpuconf.c,v 1.29 2003/07/14 23:25:37 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.29 2003/07/14 23:25:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
