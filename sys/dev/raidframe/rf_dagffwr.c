@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.26 2004/03/23 21:55:23 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.26.2.1 2004/04/11 11:19:25 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.26 2004/03/23 21:55:23 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.26.2.1 2004/04/11 11:19:25 tron Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -351,7 +351,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 	if ((!allowBufferRecycle) || (i == nRodNodes)) {
-		xorNode->results[0] = rf_AllocBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit), allocList);
+		xorNode->results[0] = rf_AllocBuffer(raidPtr, dag_h, rf_RaidAddressToByte(raidPtr, raidPtr->Layout.sectorsPerStripeUnit));
 	} else {
 		/* this works because the only way we get here is if
 		   allowBufferRecycle is true and we went through the
@@ -692,7 +692,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* physical disk addr desc */
 		tmpreadDataNode->params[0].p = pda;
 		/* buffer to hold old data */
-		tmpreadDataNode->params[1].p = rf_AllocBuffer(raidPtr, pda->numSector << raidPtr->logBytesPerSector, allocList);
+		tmpreadDataNode->params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);
 		tmpreadDataNode->params[2].v = parityStripeID;
 		tmpreadDataNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
@@ -715,7 +715,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			    dag_h, "Rop", allocList);
 		tmpreadParityNode->params[0].p = pda;
 		/* buffer to hold old parity */
-		tmpreadParityNode->params[1].p = rf_AllocBuffer(raidPtr, pda->numSector << raidPtr->logBytesPerSector, allocList);
+		tmpreadParityNode->params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);
 		tmpreadParityNode->params[2].v = parityStripeID;
 		tmpreadParityNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
