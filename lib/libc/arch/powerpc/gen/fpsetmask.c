@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.5 2004/04/04 19:28:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,12 +54,13 @@ __weak_alias(fpsetmask,_fpsetmask)
 fp_except
 fpsetmask(fp_except mask)
 {
-	u_int64_t fpscr;
+	uint64_t fpscr;
 	fp_except old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = ((fp_rnd)fpscr & MASKBITS) >> MASKSHFT;
-	fpscr = (fpscr & ~MASKBITS) | ((mask << MASKSHFT) & MASKBITS);
+	old = ((uint32_t)fpscr & MASKBITS) >> MASKSHFT;
+	fpscr &= ~MASKBITS;
+	fpscr |= ((uint32_t)mask << MASKSHFT) & MASKBITS;
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
