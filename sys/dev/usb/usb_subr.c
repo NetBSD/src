@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.27 1999/01/08 11:58:25 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.28 1999/01/10 19:13:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -728,6 +728,10 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
+	/* 
+	 * XXX uaa is a static var. Not a problem as it _should_ be used only
+	 * during probe and attach. Should be changed however.
+	 */
 	bdevice bdev;
 	bdev = device_add_child(*parent, NULL, -1, &uaa);
 	if (!bdev) {
