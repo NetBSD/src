@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.38 2004/01/25 14:46:44 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.39 2004/03/13 17:52:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.38 2004/01/25 14:46:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.39 2004/03/13 17:52:02 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -88,14 +88,23 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.38 2004/01/25 14:46:44 bjh21 Exp $")
 #include <arm/iomd/vidcaudiovar.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/vidc.h>
 #include <arm/mainbus/mainbus.h>
 
-#include "rpckbd.h"
-#include "vt.h"
+#include "pckbd.h"
+#if NPCKBD > 0
+#include <dev/pckbport/pckbdvar.h>
+#endif
 
+#include "rpckbd.h"
+#if NRPCKBD > 0
+#include <arm/iomd/rpckbdvar.h>
+#endif
+
+#include "vt.h"
+#if NVT > 0
 extern void vt_hookup_bell(void (*)(void *, u_int, u_int, u_int, int), void *);
+#endif
 
 extern int *vidc_base;
 
@@ -252,6 +261,9 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 	disable_irq(sc->sc_dma_intr);
 
 	beepdev = audio_attach_mi(&vidcaudio_hw_if, sc, self);
+#if NPCKBD > 0
+	pckbd_hookup_bell(audiobell, beepdev);
+#endif
 #if NRPCKBD > 0
 	rpckbd_hookup_bell(audiobell, beepdev);
 #endif
