@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.19 1996/08/10 05:29:24 mycroft Exp $
+#	$NetBSD: Makefile.alpha,v 1.20 1996/08/10 06:07:57 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ TOUCH?=	touch -f -c
 S!=	cd ../../../..; pwd
 ALPHA=	$S/arch/alpha
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dalpha
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -mno-fp-regs
@@ -67,6 +67,8 @@ DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C_C=	${NORMAL_C_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
 
 %OBJS
 
@@ -106,7 +108,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${ALPHA}/alpha/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c

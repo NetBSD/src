@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.23 1996/08/10 05:29:55 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.24 1996/08/10 06:10:18 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,7 @@ TOUCH?=	touch -f -c
 S!=	cd ../../../..; pwd
 VAX=	$S/arch/vax
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
 CWARNFLAGS=	-Werror
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 
@@ -68,6 +68,8 @@ DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C_C=	${NORMAL_C_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
 
 %OBJS
 
