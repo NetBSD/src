@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.486 2002/11/08 05:43:23 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.487 2002/11/09 07:39:55 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -887,6 +887,7 @@
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI	0x4c49		/* 3D Rage LT Pro */
 #define	PCI_PRODUCT_ATI_RAGE_MOBILITY	0x4c4d		/* Rage Mobility */
 #define	PCI_PRODUCT_ATI_RAGE_LT_PRO	0x4c50		/* 3D Rage LT Pro */
+#define	PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI	0x4c52		/* Rage Mobility M1 */
 #define	PCI_PRODUCT_ATI_RAGE1PCI	0x5041		/* Rage 128 Pro PCI */
 #define	PCI_PRODUCT_ATI_RAGE1AGP2X	0x5042		/* Rage 128 Pro AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGE1AGP4X	0x5043		/* Rage 128 Pro AGP 4x */
