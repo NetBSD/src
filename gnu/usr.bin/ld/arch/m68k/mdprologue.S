@@ -1,3 +1,5 @@
+/*	$NetBSD: mdprologue.S,v 1.8 1998/01/05 22:00:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Mackerras
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mdprologue.S,v 1.7 1995/05/07 13:22:12 briggs Exp $
  */
 
 /*

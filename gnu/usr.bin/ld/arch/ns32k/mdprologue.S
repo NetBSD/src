@@ -1,3 +1,5 @@
+/*	$NetBSD: mdprologue.S,v 1.7 1998/01/05 22:00:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Matthias Pfaller.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mdprologue.S,v 1.6 1997/07/11 23:39:56 matthias Exp $
  */
 
 /*

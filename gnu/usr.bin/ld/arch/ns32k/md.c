@@ -1,4 +1,5 @@
-/*	$NetBSD: md.c,v 1.6 1994/11/30 06:20:42 phil Exp $  */
+/*	$NetBSD: md.c,v 1.7 1998/01/05 22:00:42 cgd Exp $  */
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
