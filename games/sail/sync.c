@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
+/*	$NetBSD: sync.c,v 1.10 1998/09/11 14:15:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $");
+__RCSID("$NetBSD: sync.c,v 1.10 1998/09/11 14:15:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ makemsg(va_alias)
 }
 int
 sync_exists(game)
+	int game;
 {
 	char buf[sizeof sync_file];
 	struct stat s;

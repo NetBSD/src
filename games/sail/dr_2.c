@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.7 1998/07/25 10:52:14 hubertf Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.8 1998/09/11 14:13:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.7 1998/07/25 10:52:14 hubertf Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.8 1998/09/11 14:13:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ char *drift;
 void
 try(command, temp, ma, ta, af, vma, dir, f, t, high, rakeme)
 struct ship *f, *t;
-int ma, ta, af, *high, rakeme;
+int ma, ta, af, vma, dir, *high, rakeme;
 char command[], temp[];
 {
 	int new, n;

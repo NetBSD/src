@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.4 1997/10/12 11:45:56 lukem Exp $	*/
+/*	$NetBSD: room.c,v 1.5 1998/09/11 14:11:57 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.4 1997/10/12 11:45:56 lukem Exp $");
+__RCSID("$NetBSD: room.c,v 1.5 1998/09/11 14:11:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ light_up_room(rn)
 
 void
 light_passage(row, col)
+	int row, col;
 {
 	short i, j, i_end, j_end;
 
