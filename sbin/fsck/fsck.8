@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.15 1996/10/22 15:30:56 christos Exp $
+.\"	$NetBSD: fsck.8,v 1.16 1996/11/09 01:49:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Nm fsck
-command invokes filesystem-specific programs to check the 
+command invokes filesystem-specific programs to check
 the special devices listed in the 
 .Xr fstab 5
 file or in the command line for consistency.
@@ -73,8 +73,8 @@ The options are as follows:
 .It Fl d
 Debugging mode. Just print the commands without executing them. Available
 only if
-.Nm
-fsck is compiled to support it.
+.Nm fsck
+is compiled to support it.
 .It Fl f
 Force checking of filesystems, even when they are marked clean (for filesystems
 that support this).
@@ -103,7 +103,7 @@ as the answer to all operator questions.
 .It Fl T Ar fstype:fsoptions
 List of comma separated file system specific options for the specified
 file system type, in the same format as
-.Xr mount 8
+.Xr mount 8 .
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
