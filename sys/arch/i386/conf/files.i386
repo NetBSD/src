@@ -1,107 +1,137 @@
-#	$NetBSD: files.i386,v 1.55 1994/11/03 15:55:40 mycroft Exp $
+#	$NetBSD: files.i386,v 1.56 1995/04/28 08:19:40 cgd Exp $
 #
-arch/i386/i386/autoconf.c	standard
-arch/i386/i386/conf.c		standard
-arch/i386/i386/db_disasm.c	optional ddb
-arch/i386/i386/db_interface.c	optional ddb
-arch/i386/i386/db_trace.c	optional ddb
-arch/i386/i386/disksubr.c	standard
-arch/i386/i386/in_cksum.c	optional inet
-arch/i386/i386/machdep.c	standard config-dependent
-arch/i386/i386/math_emulate.c	optional math_emulate
-arch/i386/i386/mem.c		standard
-arch/i386/i386/microtime.s	standard
-arch/i386/i386/ns_cksum.c	optional ns
-arch/i386/i386/pmap.c		standard
-arch/i386/i386/process_machdep.c	standard
-arch/i386/i386/random.s		standard
-arch/i386/i386/sys_machdep.c	standard
-arch/i386/i386/trap.c		standard
-arch/i386/i386/vm_machdep.c	standard
-dev/cons.c			standard
+# new style config file for i386 architecture
 #
-# Generic SCSI drivers
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 16 64
+
+file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/conf.c
+file	arch/i386/i386/db_disasm.c	ddb
+file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/disksubr.c	disk
+file	arch/i386/i386/in_cksum.c	inet
+file	arch/i386/i386/machdep.c
+file	arch/i386/i386/math_emulate.c	math_emulate
+file	arch/i386/i386/mem.c
+file	arch/i386/i386/microtime.s
+file	arch/i386/i386/ns_cksum.c	ns
+file	arch/i386/i386/pmap.c
+file	arch/i386/i386/process_machdep.c
+file	arch/i386/i386/random.s
+file	arch/i386/i386/sys_machdep.c
+file	arch/i386/i386/trap.c
+file	arch/i386/i386/vm_machdep.c
+file	dev/cons.c
+file	dev/cninit.c
+major	{vnd = 14}
+
 #
-scsi/scsi_base.c		optional scsi
-scsi/scsi_ioctl.c		optional scsi
-scsi/scsiconf.c			optional scsi
+# Machine-independent SCSI drivers
 #
-scsi/cd.c			optional cd device-driver requires scsi
-scsi/ch.c			optional ch device-driver requires scsi
-scsi/sd.c			optional sd device-driver requires scsi
-scsi/st.c			optional st device-driver requires scsi
-scsi/su.c			optional su device-driver requires scsi
-scsi/uk.c			optional uk device-driver requires scsi
+
+include "../../../scsi/files.scsi"
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+
+#
+# System bus types
+#
+
+device	isa at root {[port = -1], [size = 0],
+		     [iomem = -1], [iosiz = 0],
+		     [irq = -1], [drq = -1]}
+#device	eisa at root {...}
+device	pci at root {[bus = -1], [dev = -1]}
+#device	mca at root {...}
+
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
-arch/i386/isa/clock.c		optional isa
-arch/i386/isa/dma.c		optional isa
-arch/i386/isa/intr.c		optional isa
-arch/i386/isa/isa.c		optional isa device-driver
-#
-arch/i386/isa/aha1542.c		optional aha requires isa scsi not bt
-arch/i386/isa/aic6360.c		optional aic requires isa scsi
-arch/i386/isa/ast.c		optional ast device-driver requires com isa
-arch/i386/isa/bsd_audio.c	optional audio device-driver
-arch/i386/isa/bt742a.c		optional bt requires isa scsi not aha
-arch/i386/isa/com.c		optional com device-driver requires isa
-arch/i386/isa/cy.c		optional cy device-driver requires isa
-arch/i386/isa/elink.c		optional ep or ie
-arch/i386/isa/fd.c		optional fd device-driver requires isa
-arch/i386/isa/if_ed.c		optional ed requires ether isa
-arch/i386/isa/if_eg.c		optional eg requires ether isa
-arch/i386/isa/if_el.c		optional el requires ether isa
-arch/i386/isa/if_ep.c		optional ep requires ether isa
-arch/i386/isa/if_hp.c		optional hp device-driver requires ether isa
-arch/i386/isa/if_ie.c		optional ie requires ether isa
-arch/i386/isa/if_ix.c		optional ix requires ether isa
-arch/i386/isa/if_le.c		optional le requires ether isa 
-arch/i386/isa/lms.c		optional lms device-driver requires isa
-arch/i386/isa/lpt.c		optional lpt device-driver requires isa
-arch/i386/isa/mcd.c		optional mcd device-driver requires isa
-arch/i386/isa/mms.c		optional mms device-driver requires isa
-arch/i386/isa/npx.c		optional npx device-driver requires isa
-arch/i386/isa/pccons.c		optional pc device-driver requires isa not vt
-arch/i386/isa/pcvt/pcvt_drv.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pcvt/pcvt_ext.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pcvt/pcvt_kbd.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pcvt/pcvt_out.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pcvt/pcvt_sup.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pcvt/pcvt_vtf.c	optional vt device-driver requires isa not pc
-arch/i386/isa/pms.c		optional pms device-driver requires isa
-arch/i386/isa/rtfps.c		optional rtfps device-driver requires com isa
-arch/i386/isa/sb.c		optional sb device-driver requires isa
-arch/i386/isa/seagate.c		optional sea requires isa scsi
-arch/i386/isa/spkr.c		optional speaker device-driver requires isa
-arch/i386/isa/ultra14f.c	optional uha requires isa scsi
-arch/i386/isa/wd.c		optional wd device-driver requires isa
-arch/i386/isa/wd7000.c		optional wds requires isa scsi
-arch/i386/isa/wt.c		optional wt device-driver requires isa
+
+include "../../../dev/isa/files.isa"
+major	{mcd = 7}
+#major	{scd = 15}
+major	{wd = 0}
+major	{wt = 3}
+
+file	arch/i386/isa/isa_machdep.c	isa
+
+# PC clock
+file	arch/i386/isa/clock.c		isa
+
+# Numeric Processing Extension; Math Co-processor
+device	npx at isa
+file	arch/i386/isa/npx.c		npx needs-flag
+
+# PC console support a la "pccons"
+device	pc at isa: tty
+file	arch/i386/isa/pccons.c		pc needs-flag
+
+# PC console support a la "pcvt"
+device	vt at isa: tty
+file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
+
+# PC Mice; Logitech-style, Microsoft-style, and PS/2-style
+device	lms at isa
+file	arch/i386/isa/lms.c		lms needs-flag
+device	mms at isa
+file	arch/i386/isa/mms.c		mms needs-flag
+device	pms at isa
+file	arch/i386/isa/pms.c		pms needs-flag
+
+# Floppy disk controller
+device	fdc at isa {drive = -1}
+device	fd at fdc: disk, isadma
+file	arch/i386/isa/fd.c		fdc needs-flag
+major	{fd = 2}
+
+# PC speaker
+device	spkr at isa: tty
+file	arch/i386/isa/spkr.c		speaker needs-flag
+
+# AMD am7990 (Lance) -based boards
+# (BICC Isolan, NE2100, DEPCA)
+# XXX conflicts with other ports; can't be in files.isa
+device	le at isa: ether, ifnet, isadma
+file	dev/isa/if_le.c			le
+
 #
 # EISA-only drivers
 #
-arch/i386/eisa/aha1742.c	optional ahb requires isa scsi
+
+include "../../../dev/eisa/files.eisa"
+# XXX not yet:
+# file	arch/i386/eisa/eisa_machdep.c	eisa
+
 #
 # PCI-only drivers
 #
-arch/i386/pci/pci.c		optional pci
-arch/i386/pci/pci_machdep.c	optional pci requires isa
-#
-arch/i386/pci/ncr.c		optional ncr requires pci scsi
+
+include "../../../dev/pci/files.pci"
+file	arch/i386/pci/pci_machdep.c	pci
+
 #
 # Compatibility modules
 #
-compat/svr4/svr4_exec.c		optional compat_svr4
-compat/svr4/svr4_fcntl.c	optional compat_svr4
-compat/svr4/svr4_ioctl.c	optional compat_svr4
-compat/svr4/svr4_misc.c		optional compat_svr4
-compat/svr4/svr4_signal.c	optional compat_svr4
-compat/svr4/svr4_stat.c		optional compat_svr4
-compat/svr4/svr4_syscalls.c	optional compat_svr4
-compat/svr4/svr4_sysent.c	optional compat_svr4
-compat/svr4/svr4_util.c		optional compat_svr4
-compat/ibcs2/ibcs2_exec.c	optional compat_ibcs2
-compat/ibcs2/ibcs2_ioctl.c	optional compat_ibcs2
-compat/ibcs2/ibcs2_misc.c	optional compat_ibcs2
-compat/ibcs2/ibcs2_sysent.c	optional compat_ibcs2
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "../../../compat/svr4/files.svr4"
+file	arch/i386/i386/svr4_machdep.c	compat_svr4
+
+# iBCS-2 Binary Compatibility (COMPAT_IBCS2)
+include "../../../compat/ibcs2/files.ibcs2"
+
+# Linux Binary Compatibility (COMPAT_LINUX)
+include "../../../compat/linux/files.linux"
+file	arch/i386/i386/linux_machdep.c	compat_linux
