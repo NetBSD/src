@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.25 1998/10/05 00:49:14 mark Exp $
+#	$NetBSD: RC7500,v 1.26 1998/10/12 16:13:03 bouyer Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -149,7 +149,10 @@ vt5     at vidc?
 # IDE disk controller
 #wdc0    at mainbus? base 0x002107c0 irq 9
 #wdc0    at mainbus? base 0x0022B000 irq 23
-#wd*     at wdc? drive ?
+#wd*	at wdc? channel ? drive ?
+#atapibus* at wdc? channel ?
+#cd*	at atapibus? drive ?
+#sd*	at atapibus? drive ?
 
 # Floppy disk controller
 #fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
