@@ -40,6 +40,11 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#ifndef lint
+static char copyright[] =
+"$Id: inet.c,v 1.1.1.4 1999/04/26 15:43:07 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+#endif /* not lint */
+
 #include "dhcpd.h"
 
 /* Return just the network number of an internet address... */
