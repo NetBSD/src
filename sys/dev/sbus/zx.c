@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.1 2002/09/13 14:03:53 ad Exp $	*/
+/*	$NetBSD: zx.c,v 1.2 2002/09/18 18:42:06 ad Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.1 2002/09/13 14:03:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.2 2002/09/18 18:42:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,10 +343,10 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (cm->index > 256 || cm->count > 256 - cm->index)
 			return (EINVAL);
 		rv = copyout(sc->sc_cmap + cm->index, cm->red, cm->count);
-		if (rv != 0)
+		if (rv == 0)
 			rv = copyout(sc->sc_cmap + 256 + cm->index, cm->green,
 			    cm->count);
-		if (rv != 0)
+		if (rv == 0)
 			rv = copyout(sc->sc_cmap + 512 + cm->index, cm->blue,
 			    cm->count);
 		return (rv);
@@ -356,13 +356,12 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (cm->index > 256 || cm->count > 256 - cm->index)
 			return (EINVAL);
 		rv = copyin(cm->red, sc->sc_cmap + cm->index, cm->count);
-		if (rv != 0)
+		if (rv == 0)
 			rv = copyin(cm->green, sc->sc_cmap + 256 + cm->index,
 			    cm->count);
-		if (rv != 0)
+		if (rv == 0)
 			rv = copyin(cm->blue, sc->sc_cmap + 512 + cm->index,
 			    cm->count);
-
 		zx_cmap_put(sc);
 		return (rv);
 
@@ -512,6 +511,8 @@ zx_reset(struct zx_softc *sc)
 	i |= ZX_SS1_MISC_ENABLE;
 	SETREG(sc->sc_zd_ss1->zd_misc, i);
 
+	SETREG(zd->zd_wid, 0xffffffff);
+	SETREG(zd->zd_widclip, 0);
 	SETREG(zd->zd_wmask, 0xffff);
 	SETREG(zd->zd_vclipmin, 0);
 	SETREG(zd->zd_vclipmax,
@@ -519,7 +520,6 @@ zx_reset(struct zx_softc *sc)
 	SETREG(zd->zd_fg, 0);
 	SETREG(zd->zd_planemask, 0xff000000);
 	SETREG(zd->zd_rop, ZX_STD_ROP);
-	SETREG(zd->zd_widclip, 0);
 
 	SETREG(zc->zc_extent,
 	    (fbt->fb_width - 1) | ((fbt->fb_height - 1) << 11));
@@ -651,9 +651,13 @@ zx_cursor_set(struct zx_softc *sc)
 	int i, j, data;
 
 	zcu = sc->sc_zcu;
-	SETREG(zcu->zcu_type, 0);
+
+	if ((sc->sc_flags & ZX_CURSOR) != 0)
+		SETREG(zcu->zcu_misc, zcu->zcu_misc & ~0x80);
 
 	for (j = 0; j < 2; j++) {
+		SETREG(zcu->zcu_type, 0x20 << i);
+
 		for (i = sc->sc_shifty; i < 32; i++) {
 			data = sc->sc_curbits[j][i];
 			SETREG(zcu->zcu_data, data >> sc->sc_shiftx);
@@ -661,6 +665,9 @@ zx_cursor_set(struct zx_softc *sc)
 		for (i = sc->sc_shifty; i != 0; i--)
 			SETREG(zcu->zcu_data, 0);
 	}
+
+	if ((sc->sc_flags & ZX_CURSOR) != 0)
+		SETREG(zcu->zcu_misc, zcu->zcu_misc | 0x80);
 }
 
 void
@@ -743,9 +750,9 @@ zxmmap(dev_t dev, off_t off, int prot)
 {
 	struct zx_softc *sc;
 	const struct zx_mmo *mm, *max;
-	
+
 	sc = device_lookup(&zx_cd, minor(dev));
-	off = round_page(off);
+	off = trunc_page(off);
 	mm = zx_mmo;
 	max = mm + sizeof(zx_mmo) / sizeof(zx_mmo[0]);
 
