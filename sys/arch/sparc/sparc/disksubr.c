@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2000/01/11 13:01:52 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.25 2000/01/18 19:48:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -57,8 +57,6 @@
 static	char *disklabel_sun_to_bsd __P((char *, struct disklabel *));
 static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
-#define b_cylin		b_resid
-
 extern struct device *bootdv;
 
 void
@@ -109,7 +107,7 @@ readdisklabel(dev, strat, lp, clp)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -226,7 +224,7 @@ writedisklabel(dev, strat, lp, clp)
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
