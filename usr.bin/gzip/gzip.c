@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.53 2004/07/11 05:40:51 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.54 2004/07/11 06:20:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.53 2004/07/11 05:40:51 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.54 2004/07/11 06:20:29 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -578,7 +578,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 {
 	z_stream z;
 	char outbuf[BUFLEN], inbuf[BUFLEN];
-	off_t out_tot, in_tot;
+	off_t out_tot, out_sub_tot, in_tot;
 	enum {
 		GZSTATE_MAGIC0,
 		GZSTATE_MAGIC1,
@@ -597,6 +597,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 	} state = GZSTATE_MAGIC0;
 	int flags = 0, skip_count = 0;
 	int error, done_reading = 0;
+	uLong crc;
 
 #define ADVANCE()       { z.next_in++; z.avail_in--; }
 
@@ -632,6 +633,10 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 			in_tot += in_size;
 		}
+		if (z.avail_in == 0) {
+			maybe_warnx("%s: unexpected end of file", filename);
+			goto stop;
+		}
 		switch (state) {
 		case GZSTATE_MAGIC0:
 			if (*z.next_in != GZIP_MAGIC0) {
@@ -641,6 +646,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			}
 			ADVANCE();
 			state++;
+			out_sub_tot = 0;
+			crc = crc32(0L, Z_NULL, 0);
 			break;
 
 		case GZSTATE_MAGIC1:
@@ -758,6 +765,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				if (wr == 0)
 					goto stop;
 
+				crc = crc32(crc, outbuf, wr);
+
 				if (
 #ifndef SMALL
 				    /* don't write anything with -t */
@@ -770,13 +779,41 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				}
 
 				out_tot += wr;
+				out_sub_tot += wr;
 
 				if (error == Z_STREAM_END) {
+					uLong origcrc, origlen;
+
 					inflateEnd(&z);
 					state = GZSTATE_MAGIC0;
-					/* Why 8? */
-					z.next_in += 8;
+
+					/*
+					 * check CRC and length
+					 */
+
+					if (z.avail_in < 8) {
+						maybe_warnx("truncated input");
+						goto stop;
+					}
+					origcrc = z.next_in[0] |
+						z.next_in[1] << 8 |
+					    	z.next_in[2] << 16 |
+						z.next_in[3] << 24;
+					origlen = z.next_in[4] |
+						z.next_in[5] << 8 |
+						z.next_in[6] << 16 |
+						z.next_in[7] << 24;
+
+					if (origlen != out_sub_tot)
+						maybe_warnx("invalid compressed"
+						     " data--length error");
+					if (origcrc != crc)
+						maybe_warnx("invalid compressed"
+						     " data--crc error");
+					
 					z.avail_in -= 8;
+					z.next_in += 8;
+
 					if (!z.avail_in)
 						goto stop;
 				}
