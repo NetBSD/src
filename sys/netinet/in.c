@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.99 2004/07/26 13:43:14 yamt Exp $	*/
+/*	$NetBSD: in.c,v 1.100 2004/08/08 09:52:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.99 2004/07/26 13:43:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.100 2004/08/08 09:52:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -326,6 +326,7 @@ in_control(so, cmd, data, ifp, p)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
+	int newifaddr = 0;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -380,6 +381,10 @@ in_control(so, cmd, data, ifp, p)
 		if (cmd == SIOCGIFALIAS)
 			break;
 
+		if (ia == NULL &&
+		    (cmd == SIOCSIFNETMASK || cmd == SIOCSIFDSTADDR))
+			return (EADDRNOTAVAIL);
+
 		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 
@@ -404,6 +409,7 @@ in_control(so, cmd, data, ifp, p)
 			}
 			ia->ia_ifp = ifp;
 			LIST_INIT(&ia->ia_multiaddrs);
+			newifaddr = 1;
 		}
 		break;
 
@@ -420,6 +426,7 @@ in_control(so, cmd, data, ifp, p)
 			return (EADDRNOTAVAIL);
 		break;
 	}
+	error = 0;
 	switch (cmd) {
 
 	case SIOCGIFADDR:
@@ -473,19 +480,18 @@ in_control(so, cmd, data, ifp, p)
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
 #endif
-		return error;
+		break;
 
 	case SIOCSIFNETMASK:
 		in_ifscrub(ifp, ia);
 		ia->ia_sockmask = *satosin(&ifr->ifr_addr);
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		error = in_ifinit(ifp, ia, NULL, 0);
-		return (error);
+		break;
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		hostIsNew = 1;
-		error = 0;
 		if (ia->ia_addr.sin_family == AF_INET) {
 			if (ifra->ifra_addr.sin_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
@@ -517,7 +523,7 @@ in_control(so, cmd, data, ifp, p)
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 #endif
-		return (error);
+		break;
 
 	case SIOCGIFALIAS:
 		ifra->ifra_mask = ia->ia_sockmask;
@@ -530,7 +536,7 @@ in_control(so, cmd, data, ifp, p)
 		else
 			bzero(&ifra->ifra_broadaddr,
 			      sizeof(ifra->ifra_broadaddr));
-		return 0;
+		break;
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa, ifp);
@@ -543,7 +549,8 @@ in_control(so, cmd, data, ifp, p)
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
 	case SIOCGETSGCNT:
-		return (mrt_ioctl(so, cmd, data));
+		error = mrt_ioctl(so, cmd, data);
+		break;
 #endif /* MROUTING */
 
 	default:
@@ -551,9 +558,15 @@ in_control(so, cmd, data, ifp, p)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		in_setmaxmtu();
-		return (error);
+		break;
 	}
-	return (0);
+
+	if (error && newifaddr) {
+		KASSERT(ia != NULL);
+		in_purgeaddr(&ia->ia_ifa, ifp);
+	}
+
+	return error;
 }
 
 void
