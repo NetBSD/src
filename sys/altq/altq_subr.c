@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.3 2000/12/14 18:07:30 thorpej Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.4 2000/12/14 18:08:09 thorpej Exp $	*/
 /*	$KAME: altq_subr.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/queue.h>
 
