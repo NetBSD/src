@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.31 1998/04/30 00:05:41 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.32 1998/05/04 12:54:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -68,6 +68,11 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#endif
+
+#ifdef IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
 #endif
 
 #ifdef ISO
@@ -253,6 +258,18 @@ ether_output(ifp, m0, dst, rt0)
  		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
+			return (looutput(ifp, m, dst, rt));
+		/* If broadcasting on a simplex interface, loopback a copy */
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+			mcopy = m_copy(m, 0, (int)M_COPYALL);
+		break;
+#endif
+#ifdef IPX
+	case AF_IPX:
+		etype = ETHERTYPE_IPX;
+ 		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
+		    (caddr_t)edst, sizeof (edst));
+		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -471,6 +488,12 @@ ether_input(ifp, eh, m)
 		inq = &nsintrq;
 		break;
 
+#endif
+#ifdef IPX
+	case ETHERTYPE_IPX:
+		schednetisr(NETISR_IPX);
+		inq = &ipxintrq;
+		break;
 #endif
 #ifdef NETATALK
         case ETHERTYPE_AT:

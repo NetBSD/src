@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.16 1998/02/09 17:43:54 perry Exp $	*/
+/*	$NetBSD: netisr.h,v 1.17 1998/05/04 12:54:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -63,6 +63,7 @@
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
 #define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
+#define NETISR_IPX	23		/* same as AF_IPX */
 #define NETISR_ISDN	26		/* same as AF_E164 */
 #define NETISR_NATM	27		/* same as AF_NATM */
 #define NETISR_PPP	28		/* for PPP processing */
