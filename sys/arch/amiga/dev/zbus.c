@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.49 2002/10/02 04:55:53 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.50 2003/01/01 00:16:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.49 2002/10/02 04:55:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.50 2003/01/01 00:16:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -332,12 +332,13 @@ zbusprint(void *auxp, const char *pnp)
 	zap = auxp;
 
 	if (pnp) {
-		printf("%s at %s:", aconflookup(zap->manid, zap->prodid),
-		    pnp);
+		aprint_normal("%s at %s:",
+		    aconflookup(zap->manid, zap->prodid), pnp);
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" pa %8p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
+	aprint_normal(" pa %8p man/pro %d/%d", zap->pa, zap->manid,
+	    zap->prodid);
 	return(rv);
 }
 
