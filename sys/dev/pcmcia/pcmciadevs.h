@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.137 2001/09/17 09:15:12 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.138 2001/09/18 11:08:05 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.137 2001/09/17 09:07:53 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.138 2001/09/18 11:07:33 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -495,7 +495,7 @@
 #define	PCMCIA_PRODUCT_SAMSUNG_SWL_2000N	0x02
 #define	PCMCIA_STR_SAMSUNG_SWL_2000N	"Samsung MagicLAN SWL-2000N"
 
-/* Samsung */
+/* Symbol */
 #define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SYMBOL_LA4100	0x0001
 #define	PCMCIA_STR_SYMBOL_LA4100	"Symbol Spectrum24 LA4100 Series WLAN"
