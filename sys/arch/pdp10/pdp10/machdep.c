@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2003/12/06 03:16:49 atatat Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -222,13 +222,6 @@ cpu_reboot(int howto, char *b)
 	printf("cpu_reboot\n");
 	asm("jrst 4,0765432");
 	panic("foo");
-}
-
-int
-cpu_sysctl(int *a, u_int b, void *c, size_t *d, void *e,
-    size_t f, struct proc *g)
-{
-	return (EOPNOTSUPP);
 }
 
 int

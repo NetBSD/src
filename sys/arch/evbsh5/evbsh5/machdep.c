@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/07/15 01:37:40 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/12/06 03:16:48 atatat Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/07/15 01:37:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/06 03:16:48 atatat Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -410,18 +410,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	return (EOPNOTSUPP);
 }
 
 void
