@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.6 2000/05/14 22:53:38 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.6.4.1 2000/07/26 23:19:00 mycroft Exp $	*/
 
 #include "file.h"
 
@@ -20,7 +20,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.12 2000/04/11 02:32:35 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.6 2000/05/14 22:53:38 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.6.4.1 2000/07/26 23:19:00 mycroft Exp $");
 #endif
 #endif
 
@@ -384,7 +384,7 @@ tryelf(fd, buf, nbytes)
 
 		u.l = 1;
 		(void) memcpy(&elfhdr, buf, sizeof elfhdr);
-		swap = (u.c[sizeof(long) - 1] + 1) != elfhdr.e_ident[5];
+		swap = (u.c[sizeof(int32) - 1] + 1) != elfhdr.e_ident[5];
 
 		if (getu16(swap, elfhdr.e_type) == ET_CORE) 
 #ifdef ELFCORE
@@ -421,7 +421,7 @@ tryelf(fd, buf, nbytes)
 
 		u.l = 1;
 		(void) memcpy(&elfhdr, buf, sizeof elfhdr);
-		swap = (u.c[sizeof(long) - 1] + 1) != elfhdr.e_ident[5];
+		swap = (u.c[sizeof(int32) - 1] + 1) != elfhdr.e_ident[5];
 
 		if (getu16(swap, elfhdr.e_type) == ET_CORE) 
 #ifdef ELFCORE
