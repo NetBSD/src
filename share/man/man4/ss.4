@@ -1,6 +1,6 @@
-.\"	$NetBSD: ss.4,v 1.2 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: ss.4,v 1.3 2004/03/11 21:17:12 jdc Exp $
 .\"
-.Dd June 10, 1998
+.Dd March 11, 2004
 .Dt SS 4
 .Os
 .Sh NAME
@@ -34,7 +34,17 @@ bus scanner unit
 operations only.
 .El
 .Sh SEE ALSO
-.Xr scsi 4
+.Xr scsi 4 ,
+.Xr uk 4
 .Sh AUTHORS
 Kenneth Stailey,
 Joachim Koenig
+.Sh BUGS
+Only a limited number of 
+.Tn HP Scanjet
+and
+.Tn Mustek scanners are supported.
+Other scanners can probably be accessed using the
+.Tn SCSI
+.Xr uk 4
+driver instead.
