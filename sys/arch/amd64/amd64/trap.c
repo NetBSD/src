@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2003/06/23 11:01:03 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2003/07/14 23:32:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * 386 Trap and System call handling
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6 2003/07/14 23:32:33 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 2003/07/14 23:32:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,9 @@
  *	Set the process's program counter.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2003/07/14 23:32:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
