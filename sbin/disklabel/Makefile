@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 4/1/91
-#	$Id: Makefile,v 1.7 1993/08/01 05:38:22 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/02/12 17:49:32 chopps Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c
@@ -7,6 +7,9 @@ MAN8=	disklabel.0
 BINGRP=operator
 BINMODE=2550
 CLEANFILES=disklabel.5.0
+.if (${MACHINE} == "amiga")
+CFLAGS+=-D${MACHINE}
+.endif
 
 .if !defined(NOMAN)
 all: disklabel.5.0
