@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.36 2001/01/23 22:06:25 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.37 2001/04/02 13:18:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1092,9 +1092,12 @@ ucom_cleanup(struct ucom_softc *sc)
 int
 ucomprint(void *aux, const char *pnp)
 {
+	struct ucom_attach_args *uca = aux;
 
 	if (pnp)
-		printf("ucom at %s\n", pnp);
+		printf("ucom at %s", pnp);
+	if (uca->portno != UCOM_UNK_PORTNO)
+		printf(" portno %d", uca->portno);
 	return (UNCONF);
 }
 
