@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.2,v 1.6 1998/04/25 10:42:33 kleink Exp $
+.\"	$NetBSD: shutdown.2,v 1.7 1998/04/27 13:43:23 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,11 +70,15 @@ The call succeeds unless:
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.
+.It Bq Er EINVAL
+The
+.Fa how
+argument is invalid.
+.It Bq Er ENOTCONN
+The specified socket is not connected.
 .It Bq Er ENOTSOCK
 .Fa S
 is a file, not a socket.
-.It Bq Er ENOTCONN
-The specified socket is not connected.
 .El
 .Sh SEE ALSO
 .Xr connect 2 ,
