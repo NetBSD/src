@@ -1,0 +1,50 @@
+#	$NetBSD: Makefile.mdset,v 1.1 2002/04/11 15:28:14 lukem Exp $
+#
+# Makefile snippet to ${MDSETIMAGE} file system images into kernels
+#
+
+#
+# Required variables:
+#	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
+#	TARGETS		List of images to ${MDSETIMAGE} into kernels:
+#				KERNEL	IMAGE
+#
+# Optional variables:
+#	MDSETDIR	where to install kernels 
+#	${IMAGE}.post	run on netbsd.tmp after ${MDSETIMAGE},${NM},${STRIP}
+#	
+#
+
+.include <bsd.kernobj.mk>
+
+.for _KERNEL _IMAGE in ${TARGETS}			# {
+
+KERNELS+=	netbsd.${_KERNEL}.gz
+KERNELSYMS+=	netbsd.${_KERNEL}.symbols.gz
+
+netbsd.${_KERNEL}.gz: .NOTMAIN ${KERNOBJDIR}/${_KERNEL}/netbsd ${_IMAGE}
+	@echo "Populating ${_KERNEL} with ${_IMAGE}"
+	rm -f netbsd.tmp netbsd.tmp.gz
+	cp ${KERNOBJDIR}/${_KERNEL}/netbsd netbsd.tmp
+	${MDSETIMAGE} -v netbsd.tmp ${_IMAGE}
+	${NM} netbsd.tmp | gzip -9 > netbsd.${_KERNEL}.symbols.gz
+	${STRIP} netbsd.tmp
+.if defined(${_KERNEL}.post)
+	${${_KERNEL}.post}
+.endif
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+
+.endfor							# }
+
+CLEANFILES+=	netbsd.tmp netbsd.tmp.gz ${KERNELS} ${KERNELSYMS}
+
+realall: ${KERNELS}
+
+.if defined(MDSETDIR)
+release: check_RELEASEDIR .WAIT ${KERNELS}
+	-mkdir -p ${RELEASEDIR}/${MDSETDIR}
+	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/${MDSETDIR}
+.endif
+
+.include <bsd.prog.mk>
