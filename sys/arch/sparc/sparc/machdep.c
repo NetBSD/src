@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 1999/07/08 18:08:59 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.153 1999/08/09 18:35:58 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,9 +130,13 @@
 
 #include "fb.h"
 #include "power.h"
+#include "tctrl.h"
 
 #if NPOWER > 0
 #include <sparc/dev/power.h>
+#endif
+#if NTCTRL > 0
+#include <sparc/dev/tctrlvar.h>
 #endif
 
 vm_map_t exec_map = NULL;
@@ -657,6 +661,11 @@ cpu_reboot(howto, user_boot_string)
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NPOWER > 0
 		powerdown();
+#endif
+#if NTCTRL > 0
+		tadpole_powerdown();
+#endif
+#if NPOWER > 0 || NTCTRL > 0
 		printf("WARNING: powerdown failed!\n");
 #endif
 		/*
