@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.87 2004/12/02 16:41:11 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.88 2005/03/12 16:17:33 salo Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd January 14, 2004
+.Dd March 12, 2005
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ List of sites carrying binary pkgs.
 .It LOCALPATCHES
 Directory for local patches that aren't part of pkgsrc.
 See
-.Pa pkgsrc/Packages.txt
+.Pa pkgsrc/doc/pkgsrc.txt
 for more information.
 .Dq rel
 and
@@ -874,7 +874,7 @@ Generate
 .It readme
 Create a README.html file describing the category or package.
 See
-.Pa ${PKGSRCDIR}/Packages.txt
+.Pa ${PKGSRCDIR}/doc/pkgsrc.txt
 for more details.
 .It mirror-distfiles
 Mirror the distfile(s) if they are freely re-distributable.
@@ -895,12 +895,12 @@ targets unless you want to open a major can of worms.
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr mk.conf 5 ,
-.Pa ${PKGSRCDIR}/mk/bsd.pkg.defaults.mk
+.Pa ${PKGSRCDIR}/mk/defaults/mk.conf
 and
 .Rs
 .%T "Documentation on the NetBSD Package System"
 .Re
-.Pa ${PKGSRCDIR}/Packages.txt
+.Pa ${PKGSRCDIR}/doc/pkgsrc.txt
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
