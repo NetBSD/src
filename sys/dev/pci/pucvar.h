@@ -1,7 +1,7 @@
-/*	$NetBSD: pucvar.h,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  * Author: Christopher G. Demetriou, May 14, 1998.
  */
 
-#define	PUC_MAX_PORTS		2
+#define	PUC_MAX_PORTS		8
 
 struct puc_device_description {
 	const char		*name;
@@ -46,6 +46,7 @@ struct puc_device_description {
 	struct {
 		int	type;
 		int	bar;
+		int	offset;
 	}			ports[PUC_MAX_PORTS];
 };
 
@@ -70,7 +71,6 @@ struct puc_attach_args {
 	pci_intr_handle_t	intrhandle;
 
 	bus_addr_t		a;
-	bus_size_t		s;
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 };
