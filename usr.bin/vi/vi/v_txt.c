@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.9.2.1 2003/06/19 02:29:09 grant Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.9.2.2 2005/03/19 02:11:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.9.2.1 2003/06/19 02:29:09 grant Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.9.2.2 2005/03/19 02:11:59 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -2234,8 +2234,8 @@ txt_fc_col(sp, argc, argv)
 
 	/* If the largest file name is too large, just print them. */
 	if (colwidth > sp->cols) {
-		p = msg_print(sp, av[0]->bp + prefix, &nf);
 		for (ac = argc, av = argv; ac > 0; --ac, ++av) {
+			p = msg_print(sp, av[0]->bp + prefix, &nf);
 			(void)ex_printf(sp, "%s\n", p);
 			if (F_ISSET(gp, G_INTERRUPTED))
 				break;
