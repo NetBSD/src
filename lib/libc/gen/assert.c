@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.c,v 1.13 2001/02/19 22:22:16 cgd Exp $	*/
+/*	$NetBSD: assert.c,v 1.14 2001/02/20 01:17:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: assert.c,v 1.13 2001/02/19 22:22:16 cgd Exp $");
+__RCSID("$NetBSD: assert.c,v 1.14 2001/02/20 01:17:37 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,6 @@ __RCSID("$NetBSD: assert.c,v 1.13 2001/02/19 22:22:16 cgd Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
-
-#include "namespace.h"
 
 void
 __assert13(file, line, function, failedexpr)
