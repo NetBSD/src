@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.685 2005/01/15 13:21:31 skrll Exp $
+$NetBSD: pcidevs,v 1.686 2005/01/18 06:23:01 tsubai Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -925,6 +925,18 @@ product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
 product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
 product APPLE KAUAI		0x003b	Kauai ATA Controller
 product APPLE INTREPID		0x003e	Intrepid I/O Controller
+product APPLE INTREPID_USB	0x003f	Intrepid USB Controller
+product APPLE K2_USB		0x0040	K2 USB Controller
+product APPLE K2		0x0041	K2 MAC-IO Controller
+product APPLE K2_FW		0x0042	K2 Firewire
+product APPLE K2_UATA		0x0043	K2 UATA Controller
+product APPLE U3_PPB1		0x0045	U3 PCI-PCI bridge
+product APPLE U3_PPB2		0x0046	U3 PCI-PCI bridge
+product APPLE U3_PPB3		0x0047	U3 PCI-PCI bridge
+product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
+product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
+product APPLE U3_AGP		0x004b	U3 AGP Interface
+product APPLE K2_GMAC		0x004c	GMAC Ethernet
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
