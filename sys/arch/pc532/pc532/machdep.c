@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1994/12/05 19:27:40 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1994/12/30 05:09:00 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -749,7 +749,7 @@ boot(arghowto)
 	/*NOTREACHED*/
 }
 
-
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
@@ -1183,5 +1183,4 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 int
 dk_establish()
 {
-  printf ("dk_establish ??? \n");
 }
