@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 2003/03/13 13:44:20 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 2003/03/19 11:37:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -102,7 +102,6 @@ label_t *onfault;
 
 
 #ifdef DEBUG
-int sh5_syscall_debug;
 int sh5_trap_debug;
 #endif
 
@@ -140,11 +139,6 @@ trap(struct lwp *l, struct trapframe *tf)
 	int sig = 0;
 	u_long ucode = 0;
 
-#ifdef DEBUG
-	static register_t last_tea, last_expevt;
-	static int last_count;
-#endif
-
 	uvmexp.traps++;
 
 	traptype = tf->tf_state.sf_expevt;
@@ -158,33 +152,6 @@ trap(struct lwp *l, struct trapframe *tf)
 
 	p = l->l_proc;
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
-
-#ifdef DEBUG
-	if (sh5_trap_debug) {
-		if (last_tea == tf->tf_state.sf_tea &&
-		    last_expevt == tf->tf_state.sf_expevt) {
-			if (last_count++ == 10) {
-				printf("Repetitive fault. curvsid = 0x%x\n",
-				    curcpu()->ci_curvsid);
-				printf("\ntrap: %s in %s mode\n",
-				    trap_type(traptype),
-				    USERMODE(tf) ? "user" : "kernel");
-				printf(
-				   "SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
-				    (u_int)tf->tf_state.sf_ssr,
-				    (uintptr_t)tf->tf_state.sf_spc,
-				    (uintptr_t)tf->tf_state.sf_tea,
-				    (u_int)tf->tf_state.sf_tra);
-				kdb_trap(traptype, tf);
-				last_count = 0;
-			}
-		} else
-			last_count = 0;
-
-		last_tea = tf->tf_state.sf_tea;
-		last_expevt = tf->tf_state.sf_expevt;
-	}
-#endif
 
 	switch (traptype) {
 	default:
@@ -388,10 +355,12 @@ trap(struct lwp *l, struct trapframe *tf)
 	case T_NMI|T_USER:
 		printf("trap: NMI detected\n");
 		sh5_nmi_clear();
+		/*FALLTHROUGH*/
+
 #ifdef DDB
-		if (kdb_trap(traptype, tf)) {
+	case T_BREAK:
+		if (kdb_trap(traptype, tf))
 			return;
-		}
 #endif
 		goto dopanic;
 	}
@@ -406,45 +375,16 @@ trap(struct lwp *l, struct trapframe *tf)
 void
 trapa(struct lwp *l, struct trapframe *tf)
 {
-	struct proc *p;
-	u_int trapcode;
+
 #ifdef DIAGNOSTIC
-	const char *pstr;
-#endif
+	if (!USERMODE(tf) || l == NULL) {
+		const char *pstr;
 
-#ifdef DDB
-	/*
-	 * Kernel breakpoints use "trapa r63".
-	 *
-	 * XXX: May want to change this to "illegal" in order to avoid
-	 * polluting the syscall() path.
-	 */
-	if (!USERMODE(tf) && tf->tf_state.sf_tra == 0) {
-		if (kdb_trap(T_BREAK, tf))
-			return;
-	}
-#endif
-
-#ifdef DEBUG
-	if (sh5_syscall_debug) {
-		printf("trapa: TRAPA in %s mode ",
-		    USERMODE(tf) ? "user" : "kernel");
-		if (l != NULL)
-			printf("pid=%d cmd=%s, usp=0x%lx\n",
-			    l->l_proc->p_pid, l->l_proc->p_comm,
-			    (uintptr_t)tf->tf_caller.r15);
+		if (l == NULL)
+			pstr = "trapa: NULL lwp!";
 		else
-			printf("curlwp == NULL ");
-		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x, R0=%d\n",
-		    (uintptr_t)tf->tf_state.sf_spc, (u_int)tf->tf_state.sf_ssr,
-		    (u_int)tf->tf_state.sf_tra, (u_int)tf->tf_caller.r0);
-	}
-#endif
+			pstr = "trapa: TRAPA in kernel mode!";
 
-#ifdef DIAGNOSTIC
-	if (!USERMODE(tf)) {
-		pstr = "trapa: TRAPA in kernel mode!";
-trapa_panic:
 		if (l != NULL)
 			printf("pid=%d cmd=%s, usp=0x%lx ",
 			    l->l_proc->p_pid, l->l_proc->p_comm,
@@ -458,23 +398,14 @@ trapa_panic:
 		panic(pstr);
 		/*NOTREACHED*/
 	}
-
-	if (l == NULL) {
-		pstr = "trapa: NULL lwp!";
-		goto trapa_panic;
-	}
 #endif
 
 	uvmexp.traps++;
-
-	p = l->l_proc;
 	l->l_md.md_regs = tf;
-	trapcode = tf->tf_state.sf_tra;
 
-	switch (trapcode) {
+	switch (tf->tf_state.sf_tra) {
 	case TRAPA_SYSCALL:
-		tf->tf_state.sf_spc += 4;	/* Skip over the trapa */
-		(p->p_md.md_syscall)(l, tf);
+		(l->l_proc->p_md.md_syscall)(l, tf);
 		break;
 
 	default:

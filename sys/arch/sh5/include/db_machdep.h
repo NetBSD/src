@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 2002/11/23 09:25:54 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 2003/03/19 11:37:57 scw Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -54,7 +54,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	PC_REGS(r)	((db_addr_t)(r)->tf_state.sf_spc & ~1)
 #define	PC_ADVANCE(r)	((r)->tf_state.sf_spc += BKPT_SIZE)
 
-#define	BKPT_INST	0x6ff1fff0	/* breakpoint instruction (trapa r63) */
+#define	BKPT_INST	0x6ff5fff0	/* breakpoint instruction (BRK) */
 #define	BKPT_SIZE	4		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	BKPT_INST
 
