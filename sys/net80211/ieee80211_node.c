@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.30 2004/07/29 22:28:05 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.31 2004/07/29 22:59:19 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.30 2004/07/29 22:28:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.31 2004/07/29 22:59:19 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -533,7 +533,8 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	 * more importantly, we'll incorrectly deauthenticate
 	 * ourself because the inactivity timer will kick us off. 
 	 */
-	if (ic->ic_opmode != IEEE80211_M_STA)
+	if (ic->ic_opmode != IEEE80211_M_STA &&
+	    TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	IEEE80211_NODE_UNLOCK_BH(ic);
 }
