@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.4 1993/08/01 18:26:27 mycroft Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.5 1993/08/03 01:25:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -165,6 +165,8 @@ main(argc, argv, arge)
 	if (all) {
 		rval = 0;
 		while (fs = getfsent()) {
+			if (fs->fs_mntops && getnoauto(fs->fs_mntops))
+				continue;
 			if (BADTYPE(fs->fs_type))
 				continue;
 			if (badvfsname(fs->fs_vfstype, vfslist))
@@ -458,6 +460,21 @@ usage()
 		"[ -afrwu ] [ -t nfs | ufs | external_type ]",
 		"[ -frwu ] special | node");
 	exit(1);
+}
+
+getnoauto(options)
+	char *options;
+{
+	register char *opt;
+	int noauto = 0;
+	char optbuf[BUFSIZ];
+	(void)strcpy(optbuf, options);
+	for (opt = strtok(optbuf, ","); opt; opt = strtok((char *)NULL, ","))
+		if (!strcasecmp(opt, "noauto"))
+			noauto = 1;
+		else if (!strcasecmp(opt, "auto"))
+			noauto = 0;
+	return noauto;
 }
 
 getstdopts(options, flagp)
