@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.15 1998/09/28 15:44:18 ws Exp $
+.\"	$NetBSD: fdisk.8,v 1.16 1998/10/15 15:23:23 ws Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -12,6 +12,7 @@
 .Op Fl 0 | 1 | 2 | 3
 .Op Fl b Ar cylinders/heads/sectors
 .Op Fl s Ar id/start/size
+.Op Fl c Ar bootcode
 .Op Ar device
 .Sh PROLOGUE
 In order for the BIOS to boot the kernel, certain conventions must be
@@ -163,6 +164,15 @@ explicitly requests initialization of the master boot code,
 even if the magic number in the first sector is ok.
 The partition table is left alone by this (but see above).
 .Pp
+You can use
+.Fl c
+to specify the filename that
+.Nm
+should read the bootcode from.  The default is to read from
+.Em /usr/mdec/mbr ,
+if run on an i386, end leave the bootcode empty for other
+machines.
+.Pp
 The flags
 .Fl 0 ,
 .Fl 1 ,
@@ -232,6 +242,11 @@ lose all the data in that partition.
 .Pp
 You should run this program interactively once or twice to see how it works.
 This is completely safe as long as you answer the last question in the negative.
+.Sh FILES
+.Bl -tag -width /usr/mdec/mbrxx -compact
+.It Pa /usr/mdec/mbr
+Default location of i386 bootcode
+.El
 .Sh SEE ALSO
 .Xr disklabel 8
 .Sh BUGS
