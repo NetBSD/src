@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.608 2004/01/26 13:23:26 blymn Exp $
+$NetBSD: pcidevs,v 1.609 2004/01/26 14:18:13 blymn Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -37,6 +37,13 @@ $NetBSD: pcidevs,v 1.608 2004/01/26 13:23:26 blymn Exp $
  *	http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
+ *
+ * NOTE: As per tron@NetBSD.org, the proper update procedure is
+ *
+ * 1.) Change "src/sys/dev/pci/pcidevs".
+ * 2.) Commit "src/sys/dev/pci/pcidevs".
+ * 3.) Execute "make -f Makefile.pcidevs" in "src/sys/dev/pci".
+ * 4.) Commit "src/sys/dev/pci/pcidevs.h" and "src/sys/dev/pci/pcidevs_data.h".
  */
 
 /*
