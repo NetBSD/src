@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.1 2001/10/05 22:27:41 reinoud Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.2 2002/02/18 19:05:35 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -73,5 +73,7 @@ struct kbd_softc {
 
 int kbdreset __P((struct kbd_softc *sc));
 int kbdintr __P((void *arg));
+
+int getkey_polled __P((void));
 
 /* End of kbdvar.h */
