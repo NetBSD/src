@@ -1,0 +1,10 @@
+# IPv4/v6 addresses
+10.160.94.3	mekmitasdigoat
+172.16.1.133	0x12345678
+194.100.55.1	whatcertificatereally
+3ffe:501:410:ffff:200:86ff:fe05:80fa	mekmitasdigoat
+3ffe:501:410:ffff:210:4bff:fea2:8baa	mekmitasdigoat
+# USER_FQDN
+foo@kame.net	mekmitasdigoat
+# FQDN
+foo.kame.net	hoge
