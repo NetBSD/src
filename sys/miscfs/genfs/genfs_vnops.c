@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.25 2001/01/22 16:39:54 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.26 2001/02/05 12:26:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -439,7 +439,8 @@ genfs_getpages(v)
 		int a_flags;
 	} */ *ap = v;
 
-	off_t eof, offset, origoffset, startoffset, endoffset, raoffset;
+	off_t newsize, eof;
+	off_t offset, origoffset, startoffset, endoffset, raoffset;
 	daddr_t lbn, blkno;
 	int s, i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
@@ -461,7 +462,16 @@ genfs_getpages(v)
 		return EINVAL;
 	}
 
-	error = VOP_SIZE(vp, vp->v_uvm.u_size, &eof);
+	error = 0;
+	origoffset = ap->a_offset;
+	orignpages = *ap->a_count;
+	if (flags & PGO_PASTEOF) {
+		newsize = MAX(vp->v_uvm.u_size,
+			      origoffset + (orignpages << PAGE_SHIFT));
+	} else {
+		newsize = vp->v_uvm.u_size;
+	}
+	error = VOP_SIZE(vp, newsize, &eof);
 	if (error) {
 		return error;
 	}
@@ -471,7 +481,7 @@ genfs_getpages(v)
 		panic("genfs_getpages: centeridx %d out of range",
 		      ap->a_centeridx);
 	}
-	if (ap->a_offset & (PAGE_SIZE - 1) || ap->a_offset < 0) {
+	if (origoffset & (PAGE_SIZE - 1) || origoffset < 0) {
 		panic("genfs_getpages: offset 0x%x", (int)ap->a_offset);
 	}
 	if (*ap->a_count < 0) {
@@ -482,9 +492,6 @@ genfs_getpages(v)
 	/*
 	 * Bounds-check the request.
 	 */
-
-	error = 0;
-	origoffset = ap->a_offset;
 
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= eof &&
 	    (flags & PGO_PASTEOF) == 0) {
@@ -524,16 +531,17 @@ genfs_getpages(v)
 	dev_bsize = 1 << dev_bshift;
 	KASSERT((eof & (dev_bsize - 1)) == 0);
 
-	orignpages = min(*ap->a_count,
-	    round_page(eof - origoffset) >> PAGE_SHIFT);
-	if (flags & PGO_PASTEOF) {
-		orignpages = *ap->a_count;
+	if ((flags & PGO_PASTEOF) == 0) {
+		orignpages = MIN(orignpages,
+		    round_page(eof - origoffset) >> PAGE_SHIFT);
 	}
 	npages = orignpages;
 	startoffset = origoffset & ~(fs_bsize - 1);
 	endoffset = round_page((origoffset + (npages << PAGE_SHIFT)
 				+ fs_bsize - 1) & ~(fs_bsize - 1));
-	endoffset = min(endoffset, round_page(eof));
+	if ((flags & PGO_PASTEOF) == 0) {
+		endoffset = MIN(endoffset, round_page(eof));
+	}
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	memset(pgs, 0, sizeof(pgs));
@@ -557,6 +565,7 @@ genfs_getpages(v)
 			}
 			pg->flags &= ~(PG_RDONLY);
 		}
+		npages += ridx;
 		goto out;
 	}
 
@@ -575,6 +584,7 @@ genfs_getpages(v)
 	if (i == npages) {
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
 		raoffset = origoffset + (orignpages << PAGE_SHIFT);
+		npages += ridx;
 		goto raout;
 	}
 
@@ -616,7 +626,7 @@ genfs_getpages(v)
 	 */
 
 	totalbytes = npages << PAGE_SHIFT;
-	bytes = min(totalbytes, eof - startoffset);
+	bytes = MIN(totalbytes, eof - startoffset);
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
@@ -666,7 +676,7 @@ genfs_getpages(v)
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
-			b = min(PAGE_SIZE, bytes);
+			b = MIN(PAGE_SIZE, bytes);
 			offset += b;
 			bytes -= b;
 			skipbytes += b;
@@ -699,15 +709,15 @@ genfs_getpages(v)
 		 * overwriting pages with valid data.
 		 */
 
-		iobytes =
-		    min((((off_t)lbn + 1 + run) << fs_bshift) - offset, bytes);
+		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
+		    bytes);
 		if (offset + iobytes > round_page(offset)) {
 			pcount = 1;
 			while (pidx + pcount < npages &&
 			       pgs[pidx + pcount]->flags & PG_FAKE) {
 				pcount++;
 			}
-			iobytes = min(iobytes, (pcount << PAGE_SHIFT) -
+			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
 				      (offset - trunc_page(offset)));
 		}
 
@@ -856,13 +866,18 @@ out:
 			}
 			UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
 				    pgs[i], pgs[i]->flags, 0,0);
-			if ((pgs[i]->flags & PG_FAKE) == 0) {
-				continue;
-			}
 			if (pgs[i]->flags & PG_WANTED) {
 				wakeup(pgs[i]);
 			}
-			uvm_pagefree(pgs[i]);
+			if (pgs[i]->flags & PG_RELEASED) {
+				uvm_unlock_pageq();
+				(uobj->pgops->pgo_releasepg)(pgs[i], NULL);
+				uvm_lock_pageq();
+				continue;
+			}
+			if (pgs[i]->flags & PG_FAKE) {
+				uvm_pagefree(pgs[i]);
+			}
 		}
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
@@ -871,6 +886,7 @@ out:
 	}
 
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
+	uvm_lock_pageq();
 	for (i = 0; i < npages; i++) {
 		if (pgs[i] == NULL) {
 			continue;
@@ -893,13 +909,18 @@ out:
 			if (pgs[i]->flags & PG_WANTED) {
 				wakeup(pgs[i]);
 			}
-			if (pgs[i]->wire_count == 0) {
-				uvm_pageactivate(pgs[i]);
+			if (pgs[i]->flags & PG_RELEASED) {
+				uvm_unlock_pageq();
+				(uobj->pgops->pgo_releasepg)(pgs[i], NULL);
+				uvm_lock_pageq();
+				continue;
 			}
+			uvm_pageactivate(pgs[i]);
 			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pgs[i], NULL);
 		}
 	}
+	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
@@ -953,7 +974,7 @@ genfs_putpages(v)
 
 	pg = ap->a_m[0];
 	startoffset = pg->offset;
-	bytes = min(npages << PAGE_SHIFT, eof - startoffset);
+	bytes = MIN(npages << PAGE_SHIFT, eof - startoffset);
 	skipbytes = 0;
 	KASSERT(bytes != 0);
 
@@ -988,8 +1009,8 @@ genfs_putpages(v)
 			break;
 		}
 
-		iobytes =
-		    min((((off_t)lbn + 1 + run) << fs_bshift) - offset, bytes);
+		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
+		    bytes);
 		if (blkno == (daddr_t)-1) {
 			skipbytes += iobytes;
 			continue;
