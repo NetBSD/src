@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.8 1997/08/15 02:07:39 mikel Exp $	*/
+/*	$NetBSD: kvm.c,v 1.9 1998/02/03 19:12:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.8 1997/08/15 02:07:39 mikel Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.9 1998/02/03 19:12:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,7 @@ _kvm_syserr(kd, program, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	register int n;
+	int n;
 
 #if __STDC__
 	va_start(ap, fmt);
@@ -147,7 +147,7 @@ _kvm_syserr(kd, program, fmt, va_alist)
 		(void)vfprintf(stderr, fmt, ap);
 		(void)fprintf(stderr, ": %s\n", strerror(errno));
 	} else {
-		register char *cp = kd->errbuf;
+		char *cp = kd->errbuf;
 
 		(void)vsnprintf(cp, sizeof(kd->errbuf), (char *)fmt, ap);
 		n = strlen(cp);
@@ -159,8 +159,8 @@ _kvm_syserr(kd, program, fmt, va_alist)
 
 void *
 _kvm_malloc(kd, n)
-	register kvm_t *kd;
-	register size_t n;
+	kvm_t *kd;
+	size_t n;
 {
 	void *p;
 
@@ -171,7 +171,7 @@ _kvm_malloc(kd, n)
 
 static kvm_t *
 _kvm_open(kd, uf, mf, sf, flag, errout)
-	register kvm_t *kd;
+	kvm_t *kd;
 	const char *uf;
 	const char *mf;
 	const char *sf;
@@ -292,7 +292,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 	int flag;
 	char *errout;
 {
-	register kvm_t *kd;
+	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
 		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
@@ -310,7 +310,7 @@ kvm_open(uf, mf, sf, flag, program)
 	int flag;
 	const char *program;
 {
-	register kvm_t *kd;
+	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
 		(void)fprintf(stderr, "%s: %s\n", program, strerror(errno));
@@ -324,7 +324,7 @@ int
 kvm_close(kd)
 	kvm_t *kd;
 {
-	register int error = 0;
+	int error = 0;
 
 	if (kd->pmfd >= 0)
 		error |= close(kd->pmfd);
@@ -417,8 +417,8 @@ kvm_nlist(kd, nl)
 	kvm_t *kd;
 	struct nlist *nl;
 {
-	register struct nlist *p;
-	register int nvalid, rv;
+	struct nlist *p;
+	int nvalid, rv;
 
 	/*
 	 * If we can't use the data base, revert to the 
@@ -437,7 +437,7 @@ kvm_nlist(kd, nl)
 	 */
 	nvalid = 0;
 	for (p = nl; p->n_name && p->n_name[0]; ++p) {
-		register int len;
+		int len;
 		DBT rec;
 
 		if ((len = strlen(p->n_name)) > 4096) {
@@ -471,12 +471,12 @@ kvm_nlist(kd, nl)
 ssize_t
 kvm_read(kd, kva, buf, len)
 	kvm_t *kd;
-	register u_long kva;
-	register void *buf;
-	register size_t len;
+	u_long kva;
+	void *buf;
+	size_t len;
 {
-	register int cc;
-	register void *cp;
+	int cc;
+	void *cp;
 
 	if (ISALIVE(kd)) {
 		/*
@@ -535,11 +535,11 @@ kvm_read(kd, kva, buf, len)
 ssize_t
 kvm_write(kd, kva, buf, len)
 	kvm_t *kd;
-	register u_long kva;
-	register const void *buf;
-	register size_t len;
+	u_long kva;
+	const void *buf;
+	size_t len;
 {
-	register int cc;
+	int cc;
 
 	if (ISALIVE(kd)) {
 		/*

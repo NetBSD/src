@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.7 1997/07/22 07:36:52 mikel Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.8 1998/02/03 19:12:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.7 1997/07/22 07:36:52 mikel Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.8 1998/02/03 19:12:29 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,11 +50,11 @@ __RCSID("$NetBSD: mvwin.c,v 1.7 1997/07/22 07:36:52 mikel Exp $");
  */
 int
 mvwin(win, by, bx)
-	register WINDOW *win;
-	register int by, bx;
+	WINDOW *win;
+	int by, bx;
 {
-	register WINDOW *orig;
-	register int dy, dx;
+	WINDOW *orig;
+	int dy, dx;
 
 	if (by + win->maxy > LINES || bx + win->maxx > COLS)
 		return (ERR);

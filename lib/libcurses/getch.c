@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.8 1997/07/22 07:36:42 mikel Exp $	*/
+/*	$NetBSD: getch.c,v 1.9 1998/02/03 19:12:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.8 1997/07/22 07:36:42 mikel Exp $");
+__RCSID("$NetBSD: getch.c,v 1.9 1998/02/03 19:12:24 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: getch.c,v 1.8 1997/07/22 07:36:42 mikel Exp $");
  */
 int
 wgetch(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int inp, weset;
+	int inp, weset;
 
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1)

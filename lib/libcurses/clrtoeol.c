@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.8 1997/07/22 07:36:29 mikel Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.9 1998/02/03 19:12:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.8 1997/07/22 07:36:29 mikel Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.9 1998/02/03 19:12:18 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: clrtoeol.c,v 1.8 1997/07/22 07:36:29 mikel Exp $");
  */
 int
 wclrtoeol(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int minx, x, y;
-	register __LDATA *end, *maxx, *sp;
+	int minx, x, y;
+	__LDATA *end, *maxx, *sp;
 
 	y = win->cury;
 	x = win->curx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.4 1997/01/23 14:03:07 mrg Exp $	*/
+/*	$NetBSD: put.c,v 1.5 1998/02/03 19:12:47 perry Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -2278,7 +2278,7 @@ static void
 
 static void
  standard (word)
-  register char *word;
+  char *word;
 {
   while (*word)
   {

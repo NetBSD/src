@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.8 1997/07/22 07:36:54 mikel Exp $	*/
+/*	$NetBSD: overlay.c,v 1.9 1998/02/03 19:12:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)overlay.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overlay.c,v 1.8 1997/07/22 07:36:54 mikel Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.9 1998/02/03 19:12:30 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: overlay.c,v 1.8 1997/07/22 07:36:54 mikel Exp $");
  */
 int
 overlay(win1, win2)
-	register WINDOW *win1, *win2;
+	WINDOW *win1, *win2;
 {
 
-	register int x, y, y1, y2, endy, endx, starty, startx;
-	register __LDATA *sp, *end;
+	int x, y, y1, y2, endy, endx, starty, startx;
+	__LDATA *sp, *end;
 
 #ifdef DEBUG
 	__CTRACE("overlay: (%0.2o, %0.2o);\n", win1, win2);

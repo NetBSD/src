@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.3 1997/07/06 18:25:22 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.4 1998/02/03 19:12:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.3 1997/07/06 18:25:22 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.4 1998/02/03 19:12:37 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -175,8 +175,8 @@ cv__isword(p)
  */
 protected char *
 c__prev_word(p, low, n, wtest) 
-    register char *p, *low;
-    register int n;
+    char *p, *low;
+    int n;
     int (*wtest) __P((int));
 {
     p--;
@@ -202,8 +202,8 @@ c__prev_word(p, low, n, wtest)
  */
 protected char *
 c__next_word(p, high, n, wtest)
-    register char *p, *high;
-    register int n;
+    char *p, *high;
+    int n;
     int (*wtest) __P((int));
 {
     while (n--) {
@@ -224,8 +224,8 @@ c__next_word(p, high, n, wtest)
 protected char *
 cv_next_word(el, p, high, n, wtest)
     EditLine *el;
-    register char *p, *high;
-    register int n;
+    char *p, *high;
+    int n;
     int (*wtest) __P((int));
 {
     int test;
@@ -257,8 +257,8 @@ cv_next_word(el, p, high, n, wtest)
 protected char *
 cv_prev_word(el, p, low, n, wtest)
     EditLine *el;
-    register char *p, *low;
-    register int n;
+    char *p, *low;
+    int n;
     int (*wtest) __P((int));
 {
     int test;
@@ -300,8 +300,8 @@ c__number(p, num, dval)
     int *num;	/* Return value	*/
     int dval;	/* dval is the number to subtract from like $-3 */
 {
-    register int i;
-    register int sign = 1;
+    int i;
+    int sign = 1;
 
     if (*++p == '^') {
 	*num = 1;
@@ -329,7 +329,7 @@ protected void
 cv_delfini(el)		
     EditLine *el;
 {
-    register int size;
+    int size;
     int oaction;
 
     if (el->el_chared.c_vcmd.action & INSERT)

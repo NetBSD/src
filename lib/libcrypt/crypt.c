@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.9 1997/11/04 03:31:45 cgd Exp $	*/
+/*	$NetBSD: crypt.c,v 1.10 1998/02/03 19:12:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.9 1997/11/04 03:31:45 cgd Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.10 1998/02/03 19:12:14 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -623,11 +623,11 @@ des_cipher(in, out, salt, num_iter)
 {
 	/* variables that we want in registers, most important first */
 #if defined(pdp11)
-	register int j;
+	int j;
 #endif
-	register int32_t L0, L1, R0, R1, k;
-	register C_block *kp;
-	register int ks_inc, loop_count;
+	int32_t L0, L1, R0, R1, k;
+	C_block *kp;
+	int ks_inc, loop_count;
 	C_block B;
 
 	L0 = salt;
@@ -682,7 +682,7 @@ des_cipher(in, out, salt, num_iter)
 			/* use this if your "long" int indexing is slow */
 #define	DOXOR(x,y,i)	j=B.b[i]; x^=SPTAB(SPE[0][i],j); y^=SPTAB(SPE[1][i],j);
 #else
-			/* use this if "k" is allocated to a register ... */
+			/* use this if "k" is allocated to a ... */
 #define	DOXOR(x,y,i)	k=B.b[i]; x^=SPTAB(SPE[0][i],k); y^=SPTAB(SPE[1][i],k);
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.5 1997/07/22 07:36:33 mikel Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.6 1998/02/03 19:12:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.5 1997/07/22 07:36:33 mikel Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.6 1998/02/03 19:12:20 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -54,7 +54,7 @@ __hash(s, len)
 	char *s;
 	int len;
 {
-        register u_int	h, g, i;
+        u_int	h, g, i;
 
 	h = 0;
 	i = 0;
