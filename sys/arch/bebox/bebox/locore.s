@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 2000/05/31 05:09:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 2000/08/21 18:46:03 tsubai Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include "opt_ddb.h"
 #include "fs_kernfs.h"
 #include "opt_ipkdb.h"
+#include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "assym.h"
 
@@ -178,25 +179,33 @@ loop:	b	loop			/* XXX not reached */
 /*
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
+ * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while
-					   manipulating runque */
-	mtmsr	3
-
 	lis	8,_C_LABEL(sched_whichqs)@ha
 	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
 	bne-	.Lsw1			/* at least one queue non-empty */
 	
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	mfmsr	3
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
 	
 /* May do some power saving here? */
 
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
+	mtmsr	3
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 	b	_ASM_LABEL(Idle)
 
 /*
@@ -214,6 +223,10 @@ ENTRY(switchexit)
 	 * already in r3).
 	 */
 	bl	_C_LABEL(exit2)
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 /* Fall through to cpu_switch to actually select another proc */
 	li	3,0			/* indicate exited process */
@@ -237,17 +250,26 @@ ENTRY(cpu_switch)
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* Release the sched_lock before processing interrupts. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
 	xor	3,3,3
 	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
-/* Find a new process */
+/* Lock the scheduler. */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l		/* disable interrupts while
 					   manipulating runque */
 	mtmsr	3
 	isync
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
+/* Find a new process */
 	lis	8,_C_LABEL(sched_whichqs)@ha
 	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
@@ -280,6 +302,11 @@ ENTRY(cpu_switch)
 	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/* Unlock the sched_lock, but leave interrupts off, for now. */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
 
 #if defined(MULTIPROCESSOR)
 	/*

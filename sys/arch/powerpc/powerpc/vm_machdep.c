@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 2000/06/29 07:48:18 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 2000/08/21 18:46:04 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -180,6 +180,7 @@ cpu_exit(p)
 	if (p == fpuproc)	/* release the fpu */
 		fpuproc = 0;
 
+	splsched();
 	switchexit(p);
 }
 
