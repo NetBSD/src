@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.36 2002/10/23 09:10:29 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.37 2003/04/01 21:26:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36 2002/10/23 09:10:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2003/04/01 21:26:27 thorpej Exp $");
 
 /*
  * Memory special file
@@ -128,10 +128,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			    (vm_offset_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			continue;
 
@@ -141,7 +141,7 @@ mmrw(dev, uio, flags)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			if (v < NBPG) {
+			if (v < PAGE_SIZE) {
 #ifdef DEBUG
 				/*
 				 * For now, return zeros on read of page 0
@@ -150,11 +150,11 @@ mmrw(dev, uio, flags)
 				if (uio->uio_rw == UIO_READ) {
 					if (devzeropage == NULL) {
 						devzeropage = (caddr_t)
-						    malloc(NBPG, M_TEMP,
+						    malloc(PAGE_SIZE, M_TEMP,
 						    M_WAITOK);
-						bzero(devzeropage, NBPG);
+						bzero(devzeropage, PAGE_SIZE);
 					}
-					c = min(c, NBPG - (int)v);
+					c = min(c, PAGE_SIZE - (int)v);
 					v = (vm_offset_t) devzeropage;
 				} else
 #endif
@@ -180,10 +180,10 @@ mmrw(dev, uio, flags)
 			}
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				bzero(devzeropage, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 
