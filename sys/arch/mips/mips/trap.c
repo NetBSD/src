@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144 2000/07/20 18:14:48 jeffs Exp $	*/
+/*	$NetBSD: trap.c,v 1.145 2000/08/14 04:36:34 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2000/07/20 18:14:48 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2000/08/14 04:36:34 wdk Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -711,7 +711,9 @@ netintr()
 	int n;
 	n = netisr; netisr = 0;
 
+#ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
 	intrcnt[SOFTNET_INTR]++;
+#endif
 
 #include <net/netisr_dispatch.h>
 
