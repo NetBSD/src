@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.14 2002/05/26 11:48:02 wiz Exp $	*/
+/*	$NetBSD: SYS.h,v 1.15 2002/05/26 12:24:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,8 +42,12 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
+#ifdef __STDC__
 #define	IMMEDIATE	#
 #define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,%d0; trap IMMEDIATE 0
+#else
+#define SYSTRAP(x)	movl #SYS_/**/x,%d0; trap #0
+#endif
 
 #ifdef __ELF__
 #define CERROR		_C_LABEL(__cerror)
