@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.21 2001/03/08 02:59:25 fair Exp $
+.\"	$NetBSD: su.1,v 1.22 2001/04/04 09:44:35 wiz Exp $
 .\"
 .Dd March 7, 2001
 .Dt SU 1
@@ -205,16 +205,16 @@ su username -c "command args"
 .Ed
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr kinit 1 ,
 .Xr login 1 ,
 .Xr sh 1 ,
 .Xr skey 1 ,
-.Xr kinit 1 ,
-.Xr kerberos 1 ,
 .Xr setusercontext 3 ,
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr group 5 ,
-.Xr environ 7
+.Xr environ 7 ,
+.Xr kerberos 8
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm "" :
