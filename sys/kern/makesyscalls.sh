@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.51 2001/10/30 21:52:27 manu Exp $
+#	$NetBSD: makesyscalls.sh,v 1.52 2001/11/12 14:57:02 lukem Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -177,8 +177,10 @@ BEGIN {
 }
 NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysdcl
+	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"\$NetBSD\$\");\n\n" > sysdcl
 
 	printf " * created from%s\n */\n\n", $0 > sysnames
+	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"\$NetBSD\$\");\n\n" > sysnames
 
 	# System call names are included by userland (kdump(1)), so
 	# hide the include files from it.
