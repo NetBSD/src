@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.7 2002/09/27 20:42:03 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.8 2002/10/01 01:28:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.7 2002/09/27 20:42:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.8 2002/10/01 01:28:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ int vmedetach __P((struct device*));
 
 #define VME_NUMCFRANGES 3 /* cf. "files.vme" */
 
-const struct cfattach vme_ca = {
-	sizeof(struct vmebus_softc), vmematch, vmeattach,
-};
+CFATTACH_DECL(vme, sizeof(struct vmebus_softc),
+    vmematch, vmeattach, NULL, NULL)
 
 const struct cfattach vme_slv_ca = {
 	0	/* never used */

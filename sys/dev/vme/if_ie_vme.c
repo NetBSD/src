@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.15 2002/09/27 20:42:01 thorpej Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.16 2002/10/01 01:28:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.15 2002/09/27 20:42:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.16 2002/10/01 01:28:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,9 +244,8 @@ struct ie_vme_softc {
 	bus_space_handle_t ievh;
 };
 
-const struct cfattach ie_vme_ca = {
-	sizeof(struct ie_vme_softc), ie_vme_match, ie_vme_attach
-};
+CFATTACH_DECL(ie_vme, sizeof(struct ie_vme_softc),
+    ie_vme_match, ie_vme_attach, NULL, NULL)
 
 #define read_iev(sc, reg) \
   bus_space_read_2(sc->ievt, sc->ievh, offsetof(struct ievme, reg))
