@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.443 2002/05/28 11:35:40 itojun Exp $
+#	$NetBSD: mi,v 1.444 2002/05/30 21:40:49 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -6060,6 +6060,7 @@
 ./usr/share/mk/bsd.README		comp-util-share
 ./usr/share/mk/bsd.dep.mk		comp-util-share
 ./usr/share/mk/bsd.doc.mk		comp-util-share
+./usr/share/mk/bsd.endian.mk		comp-util-share
 ./usr/share/mk/bsd.files.mk		comp-util-share
 ./usr/share/mk/bsd.hostlib.mk		comp-util-share
 ./usr/share/mk/bsd.hostprog.mk		comp-util-share

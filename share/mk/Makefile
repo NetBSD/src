@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2001/12/14 05:46:47 explorer Exp $
+#	$NetBSD: Makefile,v 1.34 2002/05/30 21:40:48 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -6,7 +6,7 @@ NOOBJ=	# defined
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILES=	bsd.README bsd.doc.mk bsd.dep.mk bsd.files.mk bsd.hostlib.mk \
+FILES=	bsd.README bsd.doc.mk bsd.dep.mk bsd.endian.mk bsd.files.mk bsd.hostlib.mk \
 	bsd.hostprog.mk bsd.inc.mk bsd.info.mk bsd.init.mk bsd.kernobj.mk \
 	bsd.kinc.mk bsd.kmod.mk bsd.lib.mk bsd.links.mk bsd.man.mk \
 	bsd.nls.mk bsd.obj.mk bsd.own.mk bsd.prog.mk bsd.subdir.mk \
