@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.16 1994/05/07 06:32:17 mycroft Exp $
+ *	$Id: trap.c,v 1.17 1994/05/13 00:57:41 mycroft Exp $
  */
 
 #include "param.h"
@@ -128,12 +128,12 @@ userret(p, pc, oticks)
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
+		 * If that happened after we setrunqueue ourselves but before
+		 * we swtch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
 		s = splclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		splx(s);
