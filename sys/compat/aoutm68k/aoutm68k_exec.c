@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.11 2002/11/01 19:26:24 jdolecek Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.12 2002/11/10 20:59:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.11 2002/11/01 19:26:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.12 2002/11/10 20:59:04 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -62,10 +62,12 @@ void aoutm68k_syscall_intern __P((struct proc *));
 struct emul emul_netbsd_aoutm68k = {
 	"aoutm68k",
 	"/emul/aout",
+#ifndef __HAVE_MINIMAL_EMUL
 	EMUL_HAS_SYS___syscall,
 	NULL,
 	AOUTM68K_SYS_syscall,
 	AOUTM68K_SYS_NSYSENT,
+#endif
 	aoutm68k_sysent,
 #ifdef SYSCALL_DEBUG
 	aoutm68k_syscallnames,
