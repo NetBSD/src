@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 1999/05/03 05:19:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -57,7 +57,7 @@ extern __volatile int astpending;
 
 extern char *bootpath;
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32
 #endif
 
