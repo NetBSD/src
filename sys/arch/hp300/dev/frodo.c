@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.6 2001/11/17 23:35:31 gmcgarry Exp $	*/
+/*	$NetBSD: frodo.c,v 1.7 2001/12/08 03:34:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ frodoattach(parent, self, aux)
 	printf("\n");
 
 	/* Clear all of the interrupt handlers. */
-	bzero(sc->sc_intr, sizeof(sc->sc_intr));
+	memset(sc->sc_intr, 0, sizeof(sc->sc_intr));
 	sc->sc_refcnt = 0;
 
 	/*

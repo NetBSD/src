@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.5 1997/10/09 09:06:53 jtc Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.6 2001/12/08 03:34:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ grfdev_attach(sc, init, regs, sw)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		bzero(sc->sc_data, sizeof(struct grf_data));
+		memset(sc->sc_data, 0, sizeof(struct grf_data));
 
 		/* Initialize the framebuffer hardware. */
 		if ((*init)(sc->sc_data, sc->sc_scode, regs) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.43 2001/11/17 23:53:37 gmcgarry Exp $	*/
+/*	$NetBSD: hil.c,v 1.44 2001/12/08 03:34:39 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -511,7 +511,7 @@ hilioctl(dev, cmd, data, flag, p)
 #endif
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
-	bzero((caddr_t)hilp->hl_cmdbuf, HILBUFSIZE);
+	memset((caddr_t)hilp->hl_cmdbuf, 0, HILBUFSIZE);
 	hilp->hl_cmddev = HILUNIT(dev);
 	error = 0;
 	switch (cmd) {
@@ -550,7 +550,7 @@ hilioctl(dev, cmd, data, flag, p)
 	case HILIOCRS:
 	case HILIOCED:
 	  	send_hildev_cmd(hilp, HILUNIT(dev), (cmd & 0xFF));
-		bcopy(hilp->hl_cmdbuf, data, hilp->hl_cmdbp-hilp->hl_cmdbuf);
+		memcpy(data, hilp->hl_cmdbuf, hilp->hl_cmdbp-hilp->hl_cmdbuf);
 	  	break;
 
         case HILIOCAROFF:
@@ -643,7 +643,7 @@ hpuxhilioctl(dev, cmd, data, flag)
 	hilp = device_lookup(&hil_cd, HILLOOP(dev));
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
-	bzero((caddr_t)hilp->hl_cmdbuf, HILBUFSIZE);
+	memset((caddr_t)hilp->hl_cmdbuf, 0, HILBUFSIZE);
 	hilp->hl_cmddev = HILUNIT(dev);
 	switch (cmd) {
 
@@ -669,7 +669,7 @@ hpuxhilioctl(dev, cmd, data, flag)
 	case HILA7:
 	case HILA:
 		send_hildev_cmd(hilp, HILUNIT(dev), (cmd & 0xFF));
-		bcopy(hilp->hl_cmdbuf, data, hilp->hl_cmdbp-hilp->hl_cmdbuf);
+		memcpy(data, hilp->hl_cmdbuf, hilp->hl_cmdbp-hilp->hl_cmdbuf);
 	  	break;
 
         case HILDKR:
