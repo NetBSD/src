@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 2000/01/23 21:01:51 soda Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 2000/02/01 02:59:30 nisimura Exp $	*/
 /*	$OpenBSD: conf.c,v 1.17 1997/05/21 18:31:31 pefo Exp $ */
 
 /*
@@ -265,7 +265,7 @@ iszerodev(dev)
 }
 
 
-#define MAXDEV	57
+#define MAXDEV	36
 static int chrtoblktbl[MAXDEV] =  {
       /* VCHR */      /* VBLK */
 	/* 0 */		NODEV,
@@ -276,21 +276,21 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 5 */		NODEV,
 	/* 6 */		NODEV,
 	/* 7 */		NODEV,
-	/* 8 */		NODEV,
-	/* 9 */		0,
+	/* 8 */		3,		/* cd */
+	/* 9 */		0,		/* sd */
 	/* 10 */	NODEV,
-	/* 11 */	2,
+	/* 11 */	2,		/* vnd */
 	/* 12 */	NODEV,
-	/* 13 */	7,
+	/* 13 */	7,		/* fd */
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	4,
-	/* 19 */	5,
+	/* 18 */	4,		/* wd */
+	/* 19 */	NODEV,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
-	/* 22 */	8,
+	/* 22 */	8,		/* md */
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
@@ -304,27 +304,6 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
-	/* 36 */	NODEV,
-	/* 37 */	NODEV,
-	/* 38 */	NODEV,
-	/* 39 */	NODEV,
-	/* 40 */	NODEV,
-	/* 41 */	NODEV,
-	/* 42 */	NODEV,
-	/* 43 */	NODEV,
-	/* 44 */	NODEV,
-	/* 45 */	NODEV,
-	/* 46 */	NODEV,
-	/* 47 */	NODEV,
-	/* 48 */	NODEV,
-	/* 49 */	NODEV,
-	/* 50 */	NODEV,
-	/* 51 */	NODEV,
-	/* 52 */	NODEV,
-	/* 53 */	NODEV,
-	/* 54 */	NODEV,
-	/* 55 */	NODEV,
-	/* 56 */	NODEV,
 };
 /*
  * Routine to convert from character to block device number.
