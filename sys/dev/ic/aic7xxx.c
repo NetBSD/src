@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.73 2001/06/19 12:59:17 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.74 2001/06/26 12:19:49 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -3853,7 +3853,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		xs = arg;
 		periph = xs->xs_periph;
 
-		SC_DEBUG(xs->xs_periph, SDEV_DB3, ("ahc_action\n"));
+		SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("ahc_action\n"));
 
 		/* must protect the queue */
 		s = splbio();
@@ -4118,7 +4118,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
-	SC_DEBUG(xs->xs_periph, SDEV_DB3, ("cmd_poll\n"));
+	SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {
 			if (!(xs->xs_control & XS_CTL_SILENT))
