@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.21 1996/04/15 18:55:31 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.22 1996/05/05 19:49:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
@@ -64,9 +65,10 @@ struct rtfps_softc {
 	bus_io_handle_t sc_slaveioh[NSLAVES];
 };
 
-int rtfpsprobe();
-void rtfpsattach();
+int rtfpsprobe __P((struct device *, void *, void *));
+void rtfpsattach __P((struct device *, struct device *, void *));
 int rtfpsintr __P((void *));
+int rtfpsprint __P((void *, char *));
 
 struct cfattach rtfps_ca = {
 	sizeof(struct rtfps_softc), rtfpsprobe, rtfpsattach
@@ -78,7 +80,8 @@ struct cfdriver rtfps_cd = {
 
 int
 rtfpsprobe(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	void *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -154,7 +157,8 @@ rtfpsattach(parent, self, aux)
 		IOBASEUNK,     0x2f2,     0x6f2,     0x6f3,
 		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK
 	};
-	int i, subunit;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	int i;
 
 	sc->sc_bc = ia->ia_bc;
 	sc->sc_iobase = ia->ia_iobase;
@@ -176,8 +180,6 @@ rtfpsattach(parent, self, aux)
 	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
-		struct cfdata *match;
-
 		ca.ca_slave = i;
 		ca.ca_bc = sc->sc_bc;
 		ca.ca_ioh = sc->sc_slaveioh[i];

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.13 1996/04/15 18:55:28 cgd Exp $	*/
+/*	$NetBSD: boca.c,v 1.14 1996/05/05 19:49:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,6 +34,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 
@@ -62,9 +63,10 @@ struct boca_softc {
 	bus_io_handle_t sc_slaveioh[NSLAVES];
 };
 
-int bocaprobe();
-void bocaattach();
+int bocaprobe __P((struct device *, void *, void *));
+void bocaattach __P((struct device *, struct device *, void *));
 int bocaintr __P((void *));
+int bocaprint __P((void *, char *));
 
 struct cfattach boca_ca = {
 	sizeof(struct boca_softc), bocaprobe, bocaattach,
@@ -76,7 +78,8 @@ struct cfdriver boca_cd = {
 
 int
 bocaprobe(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	void *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
@@ -146,7 +149,8 @@ bocaattach(parent, self, aux)
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
-	int i, subunit;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	int i;
 
 	sc->sc_bc = ia->ia_bc;
 	sc->sc_iobase = ia->ia_iobase;
@@ -159,7 +163,6 @@ bocaattach(parent, self, aux)
 	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
-		struct cfdata *match;
 
 		ca.ca_slave = i;
 		ca.ca_bc = sc->sc_bc;
