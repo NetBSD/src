@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 1998/05/19 19:00:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1998/10/19 22:49:04 tron Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -64,6 +64,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
