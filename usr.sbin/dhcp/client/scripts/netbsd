@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.13 2001/04/11 21:22:53 christos Exp $
+# $NetBSD: netbsd,v 1.14 2001/04/11 21:53:26 christos Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -38,15 +38,15 @@ add_new_routes() {
 
 delete_old_routes() {
 	for router in $old_routers; do
-		route delete default $router >/dev/null 2>&1
+		route delete default $router
+	done >/dev/null 2>&1
+
+	set -- $old_static_routes
+	while [ $# -gt 1 ]; do
+		route delete $1 $2
+		shift; shift
 	done
-	if [ ! -z "$old_static_routes" ]; then
-		set -- $old_static_routes
-		while [ $# -gt 1 ]; do
-			route delete $1 $2
-			shift; shift
-		done
-	fi
+
 	arp -n -a | sed -n -e 's/^.*(\(.*\)) at .*$/arp -n -d \1/p' | sh
 }
 
