@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.5 2001/11/27 23:28:42 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.6 2001/11/28 03:58:25 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -135,7 +135,7 @@ TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
 LINKDATA?=	${DATAADDR:C/.+/-Tdata &/}
 ENTRYPOINT?=	start
-LINKENTRY?=	${ENTRYPOINT:C:/.+/-e &/}
+LINKENTRY?=	${ENTRYPOINT:C/.+/-e &/}
 LINKFLAGS?=	${LINKFORMAT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
