@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 1999/08/23 10:34:53 agc Exp $
+# $NetBSD: Makefile.inc,v 1.10 1999/08/30 04:20:22 christos Exp $
 # Original from Freebsd, no rcs id.
 
 LIBINSTALL != cd ${.CURDIR}/../lib;\
@@ -6,7 +6,13 @@ LIBINSTALL != cd ${.CURDIR}/../lib;\
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 
 .if !defined(OPSYS)
+.if exists(/usr/bin/uname)
 OPSYS!= /usr/bin/uname -s
+.elif exists(/bin/uname)
+OPSYS!= /bin/uname -s
+.else
+OPSYS="unknown"
+.endif
 .endif
 
 .if ${OPSYS} == "NetBSD"
