@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.20 2001/05/10 01:23:51 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.21 2001/05/10 01:30:55 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -324,7 +324,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
 		((struct ip*)gh)->ip_ttl = ttl;
 		((struct ip*)gh)->ip_tos = inp->ip_tos;
-	    gh->gi_len = m->m_pkthdr.len;
+		gh->gi_len = m->m_pkthdr.len;
 	}
 
 	ifp->if_opackets++;
