@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.141 2004/07/05 07:28:45 pk Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.142 2004/07/12 12:40:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.141 2004/07/05 07:28:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.142 2004/07/12 12:40:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -282,6 +282,8 @@ nfs_fsinfo(nmp, vp, cred, p)
 		maxfsize = fxdr_hyper(&fsp->fs_maxfilesize);
 		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
 			nmp->nm_maxfilesize = maxfsize;
+		nmp->nm_mountp->mnt_fs_bshift =
+		    ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
 		nmp->nm_iflag |= NFSMNT_GOTFSINFO;
 	}
 	nfsm_reqdone;
