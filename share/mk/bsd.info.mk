@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.26 2002/03/01 15:42:10 pk Exp $
+#	$NetBSD: bsd.info.mk,v 1.26.2.1 2003/06/24 12:45:48 grant Exp $
 
 .include <bsd.init.mk>
 
@@ -77,9 +77,11 @@ infoinstall::	${_F}
 .endif # ${MKINFO} != "no"
 
 ##### Clean rules
+CLEANFILES+=	${INFOFILES}
+
 cleaninfo:
-.if !empty(INFOFILES)
-	rm -f ${INFOFILES}
+.if !empty(CLEANFILES)
+	rm -f ${CLEANFILES}
 .endif
 
 ##### Pull in related .mk logic
