@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.7 2000/02/29 18:24:31 itojun Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.8 2000/04/24 09:27:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -39,6 +40,16 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(inet6_rthdr_add,_inet6_rthdr_add)
+__weak_alias(inet6_rthdr_getaddr,_inet6_rthdr_getaddr)
+__weak_alias(inet6_rthdr_getflags,_inet6_rthdr_getflags)
+__weak_alias(inet6_rthdr_init,_inet6_rthdr_init)
+__weak_alias(inet6_rthdr_lasthop,_inet6_rthdr_lasthop)
+__weak_alias(inet6_rthdr_segments,_inet6_rthdr_segments)
+__weak_alias(inet6_rthdr_space,_inet6_rthdr_space)
+#endif
 
 size_t
 inet6_rthdr_space(type, seg)
