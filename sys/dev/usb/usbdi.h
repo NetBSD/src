@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.43 2000/06/01 14:29:02 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.44 2000/09/23 21:02:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -142,6 +142,9 @@ usbd_status usbd_do_request_async(usbd_device_handle pipe,
 usbd_status usbd_do_request_flags(usbd_device_handle pipe,
 				  usb_device_request_t *req, 
 				  void *data, u_int16_t flags, int *);
+usbd_status usbd_do_request_flags_pipe(
+	usbd_device_handle dev, usbd_pipe_handle pipe,
+	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen);
 usb_interface_descriptor_t *usbd_get_interface_descriptor
 				(usbd_interface_handle iface);
 usb_config_descriptor_t *usbd_get_config_descriptor(usbd_device_handle dev);
