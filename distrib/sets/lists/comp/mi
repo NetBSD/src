@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.558 2003/04/07 07:11:21 gmcgarry Exp $
+#	$NetBSD: mi,v 1.559 2003/04/08 06:02:18 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2609,6 +2609,7 @@
 ./usr/share/man/cat3/mvwgetnstr.0		comp-c-catman
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman
 ./usr/share/man/cat3/mvwhline.0		comp-c-catman
+./usr/share/man/cat3/mvwin.0		comp-c-catman
 ./usr/share/man/cat3/mvwvline.0		comp-c-catman
 ./usr/share/man/cat3/napms.0		comp-c-catman
 ./usr/share/man/cat3/nc_perror.0	comp-c-catman
@@ -5723,6 +5724,7 @@
 ./usr/share/man/man3/mvgetstr.3		comp-c-man
 ./usr/share/man/man3/mvhline.3		comp-c-man
 ./usr/share/man/man3/mvvline.3		comp-c-man
+./usr/share/man/man3/mvwin.3		comp-c-man
 ./usr/share/man/man3/mvwgetnstr.3		comp-c-man
 ./usr/share/man/man3/mvwgetstr.3		comp-c-man
 ./usr/share/man/man3/mvwhline.3		comp-c-man
