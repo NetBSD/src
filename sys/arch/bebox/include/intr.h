@@ -1,4 +1,5 @@
-/*	$NetBSD: intr.h,v 1.1 1997/10/14 06:48:22 sakamoto Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.1 1997/11/28 19:43:24 mellon Exp $	*/
+/*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -53,7 +54,125 @@
 
 #ifndef _LOCORE
 
-int imask[NIPL];
+/*
+ * Interrupt handler chains.  intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+struct intrhand {
+	int	(*ih_fun) __P((void *));
+	void	*ih_arg;
+	u_long	ih_count;
+	struct	intrhand *ih_next;
+	int	ih_level;
+	int	ih_irq;
+};
+
+void setsoftclock __P((void));
+void clearsoftclock __P((void));
+int  splsoftclock __P((void));
+void setsoftnet   __P((void));
+void clearsoftnet __P((void));
+int  splsoftnet   __P((void));
+
+void do_pending_int __P((void));
+
+
+extern volatile int cpl, ipending, astpending, tickspending;
+extern int imask[];
+
+/*
+ *  Reorder protection in the following inline functions is
+ * achived with the "eieio" instruction which the assembler
+ * seems to detect and then doen't move instructions past....
+ */
+static __inline int
+splraise(newcpl)
+	int newcpl;
+{
+	int oldcpl;
+
+	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	oldcpl = cpl;
+	cpl = oldcpl | newcpl;
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	return(oldcpl);
+}
+
+static __inline void
+splx(newcpl)
+	int newcpl;
+{
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	cpl = newcpl;
+	if(ipending & ~newcpl)
+		do_pending_int();
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+}
+
+static __inline int
+spllower(newcpl)
+	int newcpl;
+{
+	int oldcpl;
+
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	oldcpl = cpl;
+	cpl = newcpl;
+	if(ipending & ~newcpl)
+		do_pending_int();
+	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	return(oldcpl);
+}
+
+/* Following code should be implemented with lwarx/stwcx to avoid
+ * the disable/enable. i need to read the manual once more.... */
+static __inline void
+set_sint(pending)
+	int	pending;
+{
+	int	msrsave;
+
+	__asm__ ("mfmsr %0" : "=r"(msrsave));
+	__asm__ volatile ("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	ipending |= pending;
+	__asm__ volatile ("mtmsr %0" :: "r"(msrsave));
+}
+
+#define	ICU_LEN		32
+#define	IRQ_SLAVE	2
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
+
+#define	MOTHER_BOARD_REG	0x7ffff000
+#define	CPU0_INT_MASK	0x0f0
+#define	CPU1_INT_MASK	0x1f0
+#define	INT_STATE_REG	0x2f0
+
+#define	SINT_CLOCK	0x10000000
+#define	SINT_NET	0x20000000
+#define	SINT_TTY	0x40000000
+#define	SPL_CLOCK	0x80000000
+#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_TTY)
+
+#define	CNT_SINT_NET	29
+#define	CNT_SINT_CLOCK	30
+#define	CNT_CLOCK	31
+
+#define splbio()	splraise(imask[IPL_BIO])
+#define splnet()	splraise(imask[IPL_NET])
+#define spltty()	splraise(imask[IPL_TTY])
+#define splclock()	splraise(SPL_CLOCK|SINT_CLOCK|SINT_NET)
+#define splimp()	splraise(imask[IPL_IMP])
+#define splstatclock()	splhigh()
+#define	splsoftclock()	spllower(SINT_CLOCK)
+#define	splsoftnet()	splraise(SINT_NET)
+#define	splsofttty()	splraise(SINT_TTY)
+
+#define	setsoftclock()	set_sint(SINT_CLOCK);
+#define	setsoftnet()	set_sint(SINT_NET);
+#define	setsofttty()	set_sint(SINT_TTY);
+
+#define	splhigh()	splraise(0xffffffff)
+#define	spl0()		spllower(0)
 
 #endif /* !_LOCORE */
 
