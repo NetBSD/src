@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.6 2003/04/16 13:32:58 martin Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.7 2003/06/23 11:53:37 agc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,12 @@
 /*
  * dkctl(8) -- a program to manipulate disks.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: dkctl.c,v 1.7 2003/06/23 11:53:37 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.32 2003/04/15 07:36:14 itojun Exp $   */
+/*      $NetBSD: raidctl.c,v 1.33 2003/06/23 11:53:40 agc Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@
  * This program is the user-land interface to the RAIDframe kernel
  * driver in NetBSD.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: raidctl.c,v 1.33 2003/06/23 11:53:40 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
