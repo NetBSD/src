@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.22 2005/01/16 08:51:55 mycroft Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.23 2005/01/27 02:44:59 jmcneill Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -164,6 +164,7 @@ struct pccbb_softc {
 	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
 
 	int sc_pwrmgt_offs;	/* Offset for power management capability */
+	struct pci_conf_state sc_pciconf;
 };
 
 /*
