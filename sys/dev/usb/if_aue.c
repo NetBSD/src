@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.56 2001/04/13 11:17:11 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.57 2001/06/07 10:55:15 enami Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -977,7 +977,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		sc->aue_intr_errs++;
 		if (usbd_ratecheck(&sc->aue_rx_notice)) {
 			printf("%s: %u usb errors on intr: %s\n",
-			    USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
+			    USBDEVNAME(sc->aue_dev), sc->aue_intr_errs,
 			    usbd_errstr(status));
 			sc->aue_intr_errs = 0;
 		}
