@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lcmd2.c	3.23 (Berkeley) 6/17/90";*/
-static char rcsid[] = "$Id: lcmd2.c,v 1.4 1994/12/24 17:07:45 cgd Exp $";
+static char rcsid[] = "$Id: lcmd2.c,v 1.5 1995/03/21 14:16:29 mycroft Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -117,11 +117,7 @@ register struct value *a;
 	}
 
 	(void) gettimeofday(&timeval, (struct timezone *)0);
-	timeval.tv_sec -= starttime.tv_sec;
-	if ((timeval.tv_usec -= starttime.tv_usec) < 0) {
-		timeval.tv_sec--;
-		timeval.tv_usec += 1000000;
-	}
+	timersub(&timeval, &starttime, &timeval);
 	(void) getrusage(a->v_type == V_STR
 			&& str_match(a->v_str, "children", 1)
 		? RUSAGE_CHILDREN : RUSAGE_SELF, &rusage);

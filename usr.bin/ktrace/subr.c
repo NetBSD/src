@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: subr.c,v 1.3 1995/01/03 07:06:42 glass Exp $";
+static char *rcsid = "$Id: subr.c,v 1.4 1995/03/21 14:20:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,33 +78,4 @@ getpoints(s)
 		s++;
 	}
 	return (facs);
-}
-
-timevaladd(t1, t2)
-	struct timeval *t1, *t2;
-{
-	t1->tv_sec += t2->tv_sec;
-	t1->tv_usec += t2->tv_usec;
-	timevalfix(t1);
-}
-
-timevalsub(t1, t2)
-	struct timeval *t1, *t2;
-{
-	t1->tv_sec -= t2->tv_sec;
-	t1->tv_usec -= t2->tv_usec;
-	timevalfix(t1);
-}
-
-timevalfix(t1)
-	struct timeval *t1;
-{
-	if (t1->tv_usec < 0) {
-		t1->tv_sec--;
-		t1->tv_usec += 1000000;
-	}
-	if (t1->tv_usec >= 1000000) {
-		t1->tv_sec++;
-		t1->tv_usec -= 1000000;
-	}
 }

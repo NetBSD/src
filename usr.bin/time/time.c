@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.5 1994/12/08 09:36:59 jtc Exp $	*/
+/*	$NetBSD: time.c,v 1.6 1995/03/21 14:16:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: time.c,v 1.5 1994/12/08 09:36:59 jtc Exp $";
+static char rcsid[] = "$NetBSD: time.c,v 1.6 1995/03/21 14:16:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,10 +109,7 @@ main(argc, argv)
 	gettimeofday(&after, (struct timezone *)NULL);
 	if (!WIFEXITED(status))
 		fprintf(stderr, "Command terminated abnormally.\n");
-	after.tv_sec -= before.tv_sec;
-	after.tv_usec -= before.tv_usec;
-	if (after.tv_usec < 0)
-		after.tv_sec--, after.tv_usec += 1000000;
+	timersub(&after, &before, &after);
 
 	if (portableflag) {
 		fprintf (stderr, "real %9ld.%02ld\n", 
