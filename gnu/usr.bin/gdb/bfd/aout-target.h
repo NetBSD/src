@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: aout-target.h,v 1.2 1994/04/29 20:46:50 pk Exp $
+	$Id: aout-target.h,v 1.3 1994/05/25 11:23:50 pk Exp $
 */
 
 #include "aout/aout64.h"
@@ -50,13 +50,16 @@ DEFUN(MY(callback),(abfd),
 
   /*
    * XXX - A few hacks to be able to read .o files and kernels.
+   *       should probably be done in `netbsd.h' by better macro
+   *       definitions (see also `include/aout/aout64.h')
    */
   if ((execp->a_entry & ~(N_SEGSIZE(x)-1)) > obj_textsec (abfd)->vma) {
     obj_textsec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
     obj_datasec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
     obj_bsssec (abfd)->vma += (execp->a_entry & ~(N_SEGSIZE(x)-1)) - N_TXTADDR(*execp);
   }
-  if (execp->a_entry == 0 && N_MAGIC(*execp) == OMAGIC) {
+  if (execp->a_entry == 0 && N_MAGIC(*execp) == OMAGIC ||
+      execp->a_entry < N_SEGSIZE(x) && N_MAGIC(*execp) == ZMAGIC ) {
     obj_textsec (abfd)->vma -= N_TXTADDR(*execp);
     obj_datasec (abfd)->vma -= N_TXTADDR(*execp);
     obj_bsssec (abfd)->vma -= N_TXTADDR(*execp);

@@ -1,4 +1,4 @@
-/*	$Id: sysdep.h,v 1.2 1994/05/19 15:56:29 pk Exp $ */
+/*	$Id: sysdep.h,v 1.3 1994/05/25 11:24:16 pk Exp $ */
 
 #ifndef hosts_sparc_H
 #define hosts_sparc_H
@@ -37,6 +37,9 @@
 #define TRAD_UNIX_CORE_FILE_FAILING_SIGNAL(core_bfd) \
   ((core_bfd)->tdata.trad_core_data->u.u_sig)
 #define u_comm u_kproc.kp_proc.p_comm
-#define TRAD_CORE_REGPOS(core_bfd) ((bfd_vma)(core_bfd)->tdata.trad_core_data->u.u_kproc.kp_proc.p_md.md_tf)
+#define TRAD_CORE_REGPOS(core_bfd) \
+  ((bfd_vma)(core_bfd)->tdata.trad_core_data->u.u_kproc.kp_proc.p_md.md_tf)
+
+#define CORE_FPU_OFFSET	(sizeof(struct trapframe))
 
 #endif
