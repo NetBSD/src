@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.137 2003/03/06 15:31:14 darrenr Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.138 2003/03/29 22:48:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.137 2003/03/06 15:31:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.138 2003/03/29 22:48:39 wiz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1478,7 +1478,7 @@ postsig(int signum)
 #endif
 		/*
 		 * Set the new mask value and also defer further
-		 * occurences of this signal.
+		 * occurrences of this signal.
 		 *
 		 * Special case: user has done a sigpause.  Here the
 		 * current mask is not of interest, but rather the
