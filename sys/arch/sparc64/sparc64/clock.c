@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.64 2003/10/15 05:16:36 petrov Exp $ */
+/*	$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2003/10/15 05:16:36 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -301,7 +301,7 @@ clock_wenable(handle, onoff)
 	}
 	ci = (struct clock_info *)handle->bus_cookie;
 	va = (vaddr_t)bus_space_vaddr(ci->ci_bt, ci->ci_bh);
-	if (va == NULL) {
+	if (va == 0UL) {
 		printf("clock_wenable: WARNING -- cannot get va\n");
 		return EIO;
 	}
