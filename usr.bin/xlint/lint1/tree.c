@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.33 2002/10/22 21:09:35 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.34 2002/10/22 22:50:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.33 2002/10/22 21:09:35 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.34 2002/10/22 22:50:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3346,7 +3346,7 @@ constant(tnode_t *tn, int required)
  * for the expression.
  */
 void
-expr(tnode_t *tn, int vctx, int tctx)
+expr(tnode_t *tn, int vctx, int tctx, int freeblk)
 {
 
 	if (tn == NULL && nerr == 0)
@@ -3383,7 +3383,8 @@ expr(tnode_t *tn, int vctx, int tctx)
 		displexpr(tn, 0);
 
 	/* free the tree memory */
-	tfreeblk();
+	if (freeblk)
+		tfreeblk();
 }
 
 static void
