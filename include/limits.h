@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.22 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: limits.h,v 1.23 2004/11/10 04:02:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -89,6 +89,10 @@
 #define NL_NMAX			1
 #define NL_SETMAX		255
 #define NL_TEXTMAX		2048
+
+	/* IEEE Std 1003.1-2001 TSF */
+#define	_GETGR_R_SIZE_MAX	1024
+#define	_GETPW_R_SIZE_MAX	1024
 
 /* Always ensure that this is consistent with <stdio.h> */
 #ifndef TMP_MAX
