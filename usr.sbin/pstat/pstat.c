@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.57 2001/01/05 03:27:28 lukem Exp $	*/
+/*	$NetBSD: pstat.c,v 1.58 2001/02/11 02:44:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.57 2001/01/05 03:27:28 lukem Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.58 2001/02/11 02:44:27 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,14 +153,16 @@ struct {
 	KGET1(idx, &var, sizeof(var), SVAR(var))
 #define	KGET1(idx, p, s, msg)						\
 	KGET2(nl[idx].n_value, p, s, msg)
-#define	KGET2(addr, p, s, msg)						\
+#define	KGET2(addr, p, s, msg) do {					\
 	if (kvm_read(kd, (u_long)(addr), p, s) != s)			\
-		warnx("cannot read %s: %s", msg, kvm_geterr(kd))
-#define	KGETRET(addr, p, s, msg)					\
+		warnx("cannot read %s: %s", msg, kvm_geterr(kd));	\
+} while (/* CONSTCOND */0)
+#define	KGETRET(addr, p, s, msg) do {					\
 	if (kvm_read(kd, (u_long)(addr), p, s) != s) {			\
 		warnx("cannot read %s: %s", msg, kvm_geterr(kd));	\
 		return (0);						\
-	}
+	}								\
+} while (/* CONSTCOND */0)
 
 void	filemode __P((void));
 int	getfiles __P((char **, int *));
