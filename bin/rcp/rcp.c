@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.30 2002/11/22 21:46:02 ragge Exp $	*/
+/*	$NetBSD: rcp.c,v 1.31 2003/04/16 07:10:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.30 2002/11/22 21:46:02 ragge Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.31 2003/04/16 07:10:00 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,9 @@ main(argc, argv)
 #ifdef	KERBEROS
 		case 'k':
 			dest_realm = dst_realm_buf;
-			(void)strncpy(dst_realm_buf, optarg, REALM_SZ);
+			if (strlcpy(dst_realm_buf, optarg,
+			    sizeof(dst_realm_buf)) >= sizeof(dst_realm_buf))
+				errx(1, "Argument `realm' is too long");
 			break;
 #ifdef CRYPT
 		case 'x':
