@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.4 1993/05/27 09:35:18 deraadt Exp $
+ *	$Id: ite.c,v 1.5 1993/06/06 23:04:45 cgd Exp $
  */
 
 /*
@@ -343,7 +343,7 @@ itestart(tp)
 	while (--cc >= 0) {
 		register int c;
 
-		c = getc(&tp->t_out);
+		c = rbgetc(&tp->t_out);
 		/*
 		 * iteputchar() may take a long time and we don't want to
 		 * block all interrupts for long periods of time.  Since

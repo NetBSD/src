@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty_ring.c,v 1.7 1993/05/27 09:29:40 deraadt Exp $
+ *	$Id: tty_ring.c,v 1.8 1993/06/06 23:05:16 cgd Exp $
  */
 
 #include "param.h"
@@ -77,7 +77,7 @@ struct ringb *rbp;
 	return(0);
 }
 
-getc(rbp)
+rbgetc(rbp)
 struct ringb *rbp;
 {
 	rbchar c;
@@ -107,7 +107,7 @@ rbchar **cpp;
 	}
 }
 
-ungetc(c, rbp)
+rbungetc(c, rbp)
 struct ringb *rbp;
 {
 	rbchar *backp;

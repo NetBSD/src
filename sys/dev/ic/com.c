@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.8 1993/05/26 10:11:01 deraadt Exp $
+ *	$Id: com.c,v 1.9 1993/06/06 23:05:03 cgd Exp $
  */
 
 #include "com.h"
@@ -541,12 +541,12 @@ comstart(tp)
 	if (RB_LEN(&tp->t_out) == 0)
 		goto out;
 	if (inb(com+com_lsr) & LSR_TXRDY) {
-		c = getc(&tp->t_out);
+		c = rbgetc(&tp->t_out);
 		tp->t_state |= TS_BUSY;
 		outb(com+com_data, c);
 		if (com_hasfifo & (1 << unit))
 			for (c = 1; c < 16 && RB_LEN(&tp->t_out); ++c)
-				outb(com+com_data, getc(&tp->t_out));
+				outb(com+com_data, rbgetc(&tp->t_out));
 	}
 out:
 	splx(s);
