@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.33 2000/03/13 23:52:39 soren Exp $	*/
+/*	$NetBSD: route.c,v 1.34 2000/03/22 16:51:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -461,11 +461,6 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	case RTM_ADD:
 		if ((ifa = ifa_ifwithroute(flags, dst, gateway)) == 0)
 			senderr(ENETUNREACH);
-
-		/* The interface found in the previous statement may
-		 * be overridden later by rt_setif.  See the code
-		 * for case RTM_ADD in rtsock.c:route_output.
-		 */
 	makeroute:
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == 0)
