@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.3 1999/10/13 20:13:29 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.4 1999/10/14 01:18:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <dev/usb/uaudioreg.h>
 
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 #define DPRINTF(x)	if (uaudiodebug) logprintf x
 #define DPRINTFN(n,x)	if (uaudiodebug>(n)) logprintf x
 int	uaudiodebug = 0;
@@ -518,7 +518,7 @@ uaudio_mixer_add_ctl(sc, mc)
 
 	sc->sc_ctls[sc->sc_nctls++] = *mc;
 
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	if (uaudiodebug > 2) {
 		int i;
 		DPRINTF(("uaudio_mixer_add_ctl: wValue=%04x",mc->wValue[0]));
@@ -615,7 +615,7 @@ uaudio_add_input(sc, v, dps)
 	usb_descriptor_t *v;
 	usb_descriptor_t **dps;
 {
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	struct usb_audio_input_terminal *d = 
 		(struct usb_audio_input_terminal *)v;
 
@@ -634,7 +634,7 @@ uaudio_add_output(sc, v, dps)
 	usb_descriptor_t *v;
 	usb_descriptor_t **dps;
 {
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	struct usb_audio_output_terminal *d = 
 		(struct usb_audio_output_terminal *)v;
 
@@ -717,7 +717,7 @@ uaudio_add_selector(sc, v, dps)
 	usb_descriptor_t *v;
 	usb_descriptor_t **dps;
 {
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	struct usb_audio_selector_unit *d =
 		(struct usb_audio_selector_unit *)v;
 
@@ -859,7 +859,7 @@ uaudio_add_processing(sc, v, dps)
 	usb_descriptor_t *v;
 	usb_descriptor_t **dps;
 {
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	struct usb_audio_processing_unit *d = 
 		(struct usb_audio_processing_unit *)v;
 
@@ -1463,7 +1463,7 @@ uaudio_set(sc, which, type, wValue, wIndex, len, val)
 		    "wIndex=0x%04x len=%d, val=%d\n", 
 		    type, which, wValue, wIndex, len, val & 0xffff));
 	r = usbd_do_request(sc->sc_udev, &req, &data);
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	if (r != USBD_NORMAL_COMPLETION)
 		DPRINTF(("uaudio_set: r=%d\n", r));
 #endif
@@ -1708,7 +1708,7 @@ uaudio_chan_open(sc, ch)
 		return (r);
 
 	/* Some devices do not support this request, so ignore errors. */
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	r = uaudio_set_speed(sc, endpt, ch->sample_rate);
 	DPRINTF(("uaudio_chan_open: set_speed failed r=%s\n",
 		 usbd_errstr(r)));
@@ -1823,7 +1823,7 @@ uaudio_chan_transfer(ch)
 		ch->cur += total;
 	}
 
-#ifdef USB_DEBUG
+#ifdef UAUDIO_DEBUG
 	if (uaudiodebug > 8) {
 		DPRINTF(("uaudio_chan_transfer: buffer=%p, residue=0.%03d\n",
 			 cb->buffer, ch->residue));
