@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.16 1998/03/02 19:28:07 thorpej Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.17 1998/04/26 14:45:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -644,7 +644,17 @@ redo:
 			bawrite(last_bp);
 		} else if (len) {
 			bp = getblk(vp, start_lbn, size, 0, 0);
-			bawrite(bp);
+			/*
+			 * The buffer may have been in the process of being
+			 * reclaimed, and is no longer valid.  If so, we'll
+			 * get a new buffer here, which won't have B_DELWRI
+			 * set.  Detect this and just drop the buffer on the
+			 * floor rather than writing it out.
+			 */
+			if (!(bp->b_flags & B_DELWRI))
+				brelse(bp);
+			else
+				bawrite(bp);
 		}
 		return;
 	}
