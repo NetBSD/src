@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rec_put.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: rec_put.c,v 1.3 1993/08/26 00:44:03 jtc Exp $";
+/* from: static char sccsid[] = "@(#)rec_put.c	8.2 (Berkeley) 9/7/93"; */
+static char *rcsid = "$Id: rec_put.c,v 1.4 1993/09/09 02:42:26 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,12 @@ __rec_put(dbp, key, data, flags)
 	int status;
 
 	t = dbp->internal;
+
+	/* Toss any page pinned across calls. */
+	if (t->bt_pinned != NULL) {
+		mpool_put(t->bt_mp, t->bt_pinned, 0);
+		t->bt_pinned = NULL;
+	}
 
 	switch (flags) {
 	case R_CURSOR:
