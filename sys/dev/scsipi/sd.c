@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.173 2001/04/28 09:33:25 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.174 2001/05/06 18:30:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ sddetach(self, flags)
 {
 	struct sd_softc *sd = (struct sd_softc *) self;
 	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
 	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
@@ -281,9 +281,11 @@ sddetach(self, flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = SDMINOR(self->dv_unit, 0);
-	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
-	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = SDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
