@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.12 2004/12/21 11:25:43 yamt Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.13 2005/02/10 19:03:51 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.12 2004/12/21 11:25:43 yamt Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.13 2005/02/10 19:03:51 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -572,7 +572,7 @@ _ISO2022_sgetwchar(_ISO2022EncodingInfo * __restrict ei,
 	int i;
 
 	_DIAGASSERT(ei != NULL);
-	_DIAGASSERT(state != NULL);
+	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(string != NULL);
 	/* result may be NULL */
 
