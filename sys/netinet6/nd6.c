@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.62 2002/06/03 00:51:47 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.63 2002/06/03 02:09:37 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.62 2002/06/03 00:51:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.63 2002/06/03 02:09:37 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ nd6_setmtu0(ifp, ndi)
 	 * Decreasing the interface MTU under IPV6 minimum MTU may cause
 	 * undesirable situation.  We thus notify the operator of the change
 	 * explicitly.  The check for omaxmtu is necessary to restrict the
-	 * log to the case of changing the MTU, not initializing it. 
+	 * log to the case of changing the MTU, not initializing it.
 	 */
 	if (omaxmtu >= IPV6_MMTU && ndi->maxmtu < IPV6_MMTU) {
 		log(LOG_NOTICE, "nd6_setmtu0: "
@@ -374,7 +374,7 @@ nd6_timer(ignored_arg)
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
 	long time_second = time.tv_sec;
-	
+
 	s = splsoftnet();
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
@@ -483,7 +483,7 @@ nd6_timer(ignored_arg)
 		}
 		ln = next;
 	}
-	
+
 	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
@@ -1432,7 +1432,7 @@ nd6_ioctl(cmd, data, ifp)
 		nbi->isrouter = ln->ln_router;
 		nbi->expire = ln->ln_expire;
 		splx(s);
-		
+
 		break;
 	    }
 	case SIOCGDEFIFACE_IN6:	/* XXX: should be implemented as a sysctl? */
@@ -1876,7 +1876,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		}
 	}
 	return(0);
-	
+
   sendpkt:
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
@@ -1889,7 +1889,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	if (m)
 		m_freem(m);
 	return (error);
-}	
+}
 #undef senderr
 
 int
@@ -1928,7 +1928,7 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
-		case IFT_FDDI:			
+		case IFT_FDDI:
 			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
 						 desten);
 			return(1);
