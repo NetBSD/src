@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.13 2003/02/23 22:20:05 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.14 2003/02/23 22:31:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -143,7 +143,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		return EINVAL;
 	}
 	smb_makescred(&scred, p, p->p_ucred);
-	error = smb_dev2share(args.dev, SMBM_EXEC, &scred, &ssp);
+	error = smb_dev2share(args.dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
 	smb_share_unlock(ssp, 0);
