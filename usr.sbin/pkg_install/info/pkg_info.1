@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.44 2004/08/23 19:45:36 snj Exp $
+.\" $NetBSD: pkg_info.1,v 1.45 2004/11/10 17:40:41 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd August 23, 2004
+.Dd November 10, 2004
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -219,6 +219,7 @@ and sorts before a release candidate.
 The magic string ``rc'' equates to
 .Pa release candidate
 and sorts before a release.
+The magic string ``pre'', short for ``pre-release'', is a synonym for ``rc''.
 For example,
 .Pa name-1.3rc3
 will sort before
