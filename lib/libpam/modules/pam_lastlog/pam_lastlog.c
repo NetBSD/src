@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.6 2005/03/05 20:32:41 christos Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.7 2005/03/31 15:11:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.6 2005/03/05 20:32:41 christos Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.7 2005/03/31 15:11:54 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -97,18 +97,20 @@ PAM_EXTERN int
 pam_sm_open_session(pam_handle_t *pamh, int flags,
     int argc __unused, const char *argv[] __unused)
 {
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct timeval now;
 	const char *user, *rhost, *tty, *nuser;
 	const void *vrhost, *vtty, *vss, *vnuser;
 	const struct sockaddr_storage *ss;
 	int pam_err;
+	char pwbuf[1024];
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
 		return pam_err;
 
-	if (user == NULL || (pwd = getpwnam(user)) == NULL)
+	if (user == NULL ||
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return PAM_SERVICE_ERR;
 
 	PAM_LOG("Got user: %s", user);
