@@ -39,6 +39,7 @@
 ./usr/include/bfd/ansidecl.h
 ./usr/include/bfd/bfd.h
 ./usr/include/bfd/libiberty.h
+./usr/include/bzlib.h
 ./usr/include/bitstring.h
 ./usr/include/bm.h
 ./usr/include/cpio.h
@@ -892,6 +893,7 @@
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a
+./usr/lib/libbz2.a
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libcompat.a
