@@ -1,4 +1,6 @@
-/*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
+/* $NetBSD: setkey.c,v 1.3 2005/02/23 15:17:51 manu Exp $ /
+
+/*	KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
