@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $	*/
+/*	$NetBSD: announce.c,v 1.8 1997/06/29 19:13:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $");
+__RCSID("$NetBSD: announce.c,v 1.8 1997/06/29 19:13:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +49,6 @@ __RCSID("$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $");
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <protocols/talkd.h>
-#include <sgtty.h>
 #include <errno.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -59,6 +57,8 @@ __RCSID("$NetBSD: announce.c,v 1.7 1997/06/29 18:01:13 christos Exp $");
 #include <string.h>
 #include <vis.h>
 #include <paths.h>
+#include <util.h>
+#include "extern.h"
 
 extern char hostname[];
 
@@ -70,19 +70,19 @@ extern char hostname[];
  * See if the user is accepting messages. If so, announce that 
  * a talk is requested.
  */
+int
 announce(request, remote_machine)
 	CTL_MSG *request;
 	char *remote_machine;
 {
 	char full_tty[32];
-	FILE *tf;
 	struct stat stbuf;
 
 	(void)snprintf(full_tty, sizeof(full_tty),
 	    "%s%s", _PATH_DEV, request->r_tty);
 	if (stat(full_tty, &stbuf) < 0 || (stbuf.st_mode&020) == 0)
 		return (PERMISSION_DENIED);
-	return (print_mesg(request->r_tty, tf, request, remote_machine));
+	return (print_mesg(request->r_tty, request, remote_machine));
 }
 
 #define max(a,b) ( (a) > (b) ? (a) : (b) )
@@ -95,9 +95,9 @@ announce(request, remote_machine)
  * try to keep the message in one piece if the recipient
  * in in vi at the time
  */
-print_mesg(tty, tf, request, remote_machine)
+int
+print_mesg(tty, request, remote_machine)
 	char *tty;
-	FILE *tf;
 	CTL_MSG *request;
 	char *remote_machine;
 {
