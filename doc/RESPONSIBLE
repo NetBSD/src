@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.28 2003/04/29 00:24:23 hubertf Exp $
+#	$NetBSD: RESPONSIBLE,v 1.29 2003/05/03 20:50:27 perry Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -169,6 +169,7 @@ bebox		sakamoto
 cats		chris
 cobalt		soren
 hp300		thorpej
+hp700		fredette
 hpcmips		takemura
 i386		fvdl
 luna68k		nisimura
