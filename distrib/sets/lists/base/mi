@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.135 1999/11/28 16:13:27 veego Exp $
+# $NetBSD: mi,v 1.136 1999/12/08 09:47:45 soren Exp $
 .
 ./altroot
 ./bin
@@ -548,6 +548,10 @@
 ./usr/sbin/fsinfo
 ./usr/sbin/gifconfig
 ./usr/sbin/greconfig
+./usr/sbin/group
+./usr/sbin/groupadd
+./usr/sbin/groupdel
+./usr/sbin/groupmod
 ./usr/sbin/hlfsd
 ./usr/sbin/ifmcstat
 ./usr/sbin/inetd
@@ -663,6 +667,10 @@
 ./usr/sbin/trsp
 ./usr/sbin/unlink
 ./usr/sbin/usbdevs
+./usr/sbin/user
+./usr/sbin/useradd
+./usr/sbin/userdel
+./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/wiconfig
