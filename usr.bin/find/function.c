@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.37 2001/09/18 05:11:15 simonb Exp $	*/
+/*	$NetBSD: function.c,v 1.38 2001/09/21 07:11:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.37 2001/09/18 05:11:15 simonb Exp $");
+__RCSID("$NetBSD: function.c,v 1.38 2001/09/21 07:11:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ f_exec(plan, entry)
 	for (cnt = 0; plan->e_argv[cnt]; ++cnt)
 		if (plan->e_len[cnt])
 			brace_subst(plan->e_orig[cnt], &plan->e_argv[cnt],
-			    entry->fts_path, plan->e_len[cnt]);
+			    entry->fts_path, &plan->e_len[cnt]);
 
 	if (plan->flags == F_NEEDOK && !queryuser(plan->e_argv))
 		return (0);

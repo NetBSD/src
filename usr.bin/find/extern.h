@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2000/03/10 11:46:04 itohy Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2001/09/21 07:11:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-void	 brace_subst __P((char *, char **, char *, int));
+void	 brace_subst __P((char *, char **, char *, int *));
 void	*emalloc __P((unsigned int));
 PLAN	*find_create __P((char ***));
 int	 find_execute __P((PLAN *, char **));
