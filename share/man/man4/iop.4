@@ -1,6 +1,6 @@
-.\"	$NetBSD: iop.4,v 1.12 2001/09/22 00:57:41 wiz Exp $
+.\"	$NetBSD: iop.4,v 1.13 2001/09/22 16:29:35 ad Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -43,8 +43,10 @@
 .Tn I2O adapter driver
 .Sh SYNOPSIS
 .Cd "iop* at pci? dev ? function ?"
-.Cd "iopsp*" at iop? tid ?
-.Cd "ld*" at iop? tid ?
+.Cd "iopsp* at iop? tid ?"
+.Cd "ld* at iop? tid ?"
+.Cd "dpti* at iop? tid 0"
+.Pp
 .Cd options I2OVERBOSE
 .Sh DESCRIPTION
 The
@@ -83,7 +85,7 @@ Random block storage devices (disks).
 .It
 Sequential storage devices (tapes).
 .It
-LAN interfaces, including Ethernet, FDDI, Token Ring and FC.
+LAN interfaces, including Ethernet, FDDI, and Token Ring.
 .It
 Bus ports (SCSI).
 .It
@@ -182,6 +184,7 @@ control device for IOP unit
 .Ar u
 .El
 .Sh SEE ALSO
+.Xr dpti 4 ,
 .Xr intro 4 ,
 .Xr iopsp 4 ,
 .Xr ld 4 ,
