@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.42 2003/12/05 21:12:43 jdolecek Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.43 2003/12/06 15:15:19 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.42 2003/12/05 21:12:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.43 2003/12/06 15:15:19 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -216,6 +216,7 @@ mach_e_proc_fork1(p, parent, allocate)
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
+	int i;
 
 	/*
 	 * For Darwin binaries, p->p_emuldata has already been
@@ -230,8 +231,17 @@ mach_e_proc_fork1(p, parent, allocate)
 	med1 = p->p_emuldata;
 	med2 = parent->p_emuldata;
 
-	/* Exception ports are inherited between forks. */
-	(void)memcpy(med1->med_exc, med2->med_exc, sizeof(med1->med_exc));
+	/* 
+	 * Exception ports are inherited between forks,
+	 * but we need to double their reference counts, 
+	 * since the ports are referenced by rights in the
+	 * parent and in the child.
+	 */
+	for (i = 0; i <= MACH_EXC_MAX; i++) {
+		med1->med_exc[i] = med2->med_exc[i];
+		if (med1->med_exc[i] !=  NULL)
+			med1->med_exc[i]->mp_refcount *= 2;
+	}
 
 	return;
 }
@@ -344,6 +354,7 @@ mach_e_proc_exit(p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	int i;
 
 	mach_semaphore_cleanup(p);
 
@@ -354,18 +365,17 @@ mach_e_proc_exit(p)
 		mach_right_put_exclocked(mr, MACH_PORT_TYPE_ALL_RIGHTS);
 	lockmgr(&med->med_rightlock, LK_RELEASE, NULL);
 
-	if (--med->med_bootstrap->mp_refcount == 0)
+	if (--med->med_bootstrap->mp_refcount <= 0)
 		mach_port_put(med->med_bootstrap);
-	if (--med->med_kernel->mp_refcount == 0) 
+	if (--med->med_kernel->mp_refcount <= 0) 
 		mach_port_put(med->med_kernel);
-	if (--med->med_host->mp_refcount == 0)  
+	if (--med->med_host->mp_refcount <= 0)  
 		mach_port_put(med->med_host);  
 
-	/*
-	 * Exceptions ports have been released when we
-	 * released all the ports rights asociated with
-	 * the process, so do not touch them now. 
-	 */
+	for (i = 0; i <= MACH_EXC_MAX; i++)
+		if ((med->med_exc[i] != NULL) &&
+		    (--med->med_exc[i]->mp_refcount <= 0))
+			mach_port_put(med->med_exc[i]);
 
 	free(med, M_EMULDATA);
 	p->p_emuldata = NULL;

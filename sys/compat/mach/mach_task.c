@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.44 2003/11/30 20:42:03 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.45 2003/12/06 15:15:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.44 2003/11/30 20:42:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.45 2003/12/06 15:15:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.44 2003/11/30 20:42:03 manu Exp $");
 #endif
 
 #define ISSET(t, f)     ((t) & (f))
+
+static void 
+update_exception_port(struct mach_emuldata *, int exc, struct mach_port *);
 
 int 
 mach_task_get_special_port(args)
@@ -400,6 +403,23 @@ mach_task_get_exception_ports(args)
 	return 0;
 }
 
+static void 
+update_exception_port(med, exc, mp)
+	struct mach_emuldata *med;
+	int exc;
+	struct mach_port *mp;
+{
+	if (med->med_exc[exc] != NULL) {
+		med->med_exc[exc]->mp_refcount--;
+		if (med->med_exc[exc]->mp_refcount <= 0)
+			mach_port_put(med->med_exc[exc]);
+	}
+	med->med_exc[exc] = mp;
+	mp->mp_refcount++;
+
+	return;
+}
+
 int
 mach_task_set_exception_ports(args)
 	struct mach_trap_args *args;
@@ -429,23 +449,23 @@ mach_task_set_exception_ports(args)
 
 	med = tl->l_proc->p_emuldata;
 	if (req->req_mask & MACH_EXC_MASK_BAD_ACCESS)
-		med->med_exc[MACH_EXC_BAD_ACCESS] = mp;
+		update_exception_port(med, MACH_EXC_BAD_ACCESS, mp);
 	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
-		med->med_exc[MACH_EXC_BAD_INSTRUCTION] = mp;
+		update_exception_port(med, MACH_EXC_BAD_INSTRUCTION, mp);
 	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC) 
-		med->med_exc[MACH_EXC_ARITHMETIC] = mp;
+		update_exception_port(med, MACH_EXC_ARITHMETIC, mp);
 	if (req->req_mask & MACH_EXC_MASK_EMULATION)
-		med->med_exc[MACH_EXC_EMULATION] = mp;
+		update_exception_port(med, MACH_EXC_EMULATION, mp);
 	if (req->req_mask & MACH_EXC_MASK_SOFTWARE)
-		med->med_exc[MACH_EXC_SOFTWARE] = mp;
+		update_exception_port(med, MACH_EXC_SOFTWARE, mp);
 	if (req->req_mask & MACH_EXC_MASK_BREAKPOINT)
-		med->med_exc[MACH_EXC_BREAKPOINT] = mp;
+		update_exception_port(med, MACH_EXC_BREAKPOINT, mp);
 	if (req->req_mask & MACH_EXC_MASK_SYSCALL)
-		med->med_exc[MACH_EXC_SYSCALL] = mp;
+		update_exception_port(med, MACH_EXC_SYSCALL, mp);
 	if (req->req_mask & MACH_EXC_MASK_MACH_SYSCALL)
-		med->med_exc[MACH_EXC_MACH_SYSCALL] = mp;
+		update_exception_port(med, MACH_EXC_MACH_SYSCALL, mp);
 	if (req->req_mask & MACH_EXC_MASK_RPC_ALERT)
-		med->med_exc[MACH_EXC_RPC_ALERT] = mp;
+		update_exception_port(med, MACH_EXC_RPC_ALERT, mp);
 
 #ifdef DEBUG_MACH
 	if (req->req_mask & (MACH_EXC_ARITHMETIC | 
