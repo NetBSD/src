@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.77 2000/06/05 21:47:13 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.78 2000/07/19 14:00:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.77 2000/06/05 21:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.78 2000/07/19 14:00:24 nathanw Exp $");
 
 #include "assym.h"
 
@@ -844,11 +844,11 @@ cpu_switch_queuescan:
 	addq	t1, t0, t0			/* t0 = qp = &qs[firstbit] */
 
 	ldq	t4, PH_LINK(t0)			/* t4 = p = highest pri proc */
-	ldq	t5, P_FORW(t4)			/* t5 = p->p_forw */
 	bne	t4, 4f				/* make sure p != NULL */
 	PANIC("cpu_switch",Lcpu_switch_pmsg)	/* nothing in queue! */
 
 4:
+	ldq	t5, P_FORW(t4)			/* t5 = p->p_forw */
 	stq	t5, PH_LINK(t0)			/* qp->ph_link = p->p_forw */
 	stq	t0, P_BACK(t5)			/* p->p_forw->p_back = qp */
 	stq	zero, P_BACK(t4)		/* firewall: p->p_back = NULL */
