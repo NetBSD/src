@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.12 2003/09/08 16:19:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.12 2003/09/08 16:19:40 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -168,16 +168,22 @@ login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
+		if (res)
+			free(res);
 		return (e);
 	default:
 		if (status >= 0) 
 			return (res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
+		if (res)
+			free(res);
 		return (e);
 	}
 }
@@ -198,11 +204,15 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	default:
 		if (status >= 0) 
@@ -210,6 +220,8 @@ login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	}
 
@@ -228,6 +240,7 @@ invalid:
 			syslog(LOG_ERR, "%s:%s=%s: invalid time",
 			    lc->lc_class, cap, sres);
 			errno = ERANGE;
+			free(sres);
 			return (e);
 		}
 		switch (*ep++) {
@@ -257,6 +270,7 @@ invalid:
 		res = ep;
 		q += r;
 	}
+	free(sres);
 	return (q);
 }
 
@@ -276,11 +290,15 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	default:
 		if (status >= 0) 
@@ -288,6 +306,8 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	}
 
@@ -301,8 +321,10 @@ login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		syslog(LOG_ERR, "%s:%s=%s: invalid number",
 		    lc->lc_class, cap, res);
 		errno = ERANGE;
+		free(res);
 		return (e);
 	}
+	free(res);
 	return (q);
 }
 
@@ -323,11 +345,15 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	default:
 		if (status >= 0) 
@@ -335,6 +361,8 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
+		if (res)
+			free(res);
 		return (e);
 	}
 
@@ -345,8 +373,10 @@ login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 		syslog(LOG_ERR, "%s:%s=%s: invalid size",
 		    lc->lc_class, cap, res);
 		errno = ERANGE;
+		free(res);
 		return (e);
 	}
+	free(res);
 	return (q);
 }
 
