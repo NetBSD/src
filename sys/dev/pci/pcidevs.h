@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.437 2002/05/28 17:08:57 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.438 2002/05/28 17:46:24 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.432 2002/05/28 17:08:19 tron Exp 
+ *	NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp 
  */
 
 /*
@@ -561,6 +561,7 @@
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics, Inc. */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */

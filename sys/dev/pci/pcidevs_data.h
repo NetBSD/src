@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.435 2002/05/28 17:08:58 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.436 2002/05/28 17:46:24 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.432 2002/05/28 17:08:19 tron Exp 
+ *	NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp 
  */
 
 /*
@@ -10555,6 +10555,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COREGA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Corega",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ACTIONTEC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Action Tec Electronics, Inc.",
 	    NULL,
 	},
 	{
