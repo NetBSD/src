@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.2 2003/04/07 21:09:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.3 2004/10/21 06:46:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.2 2003/04/07 21:09:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.3 2004/10/21 06:46:36 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -129,7 +129,8 @@ pthread_atfork(void (*prepare)(void), void (*parent)(void),
 	return 0;
 }
 
-pid_t fork(void)
+pid_t
+fork(void)
 {
 	struct atfork_callback *iter;
 	pid_t ret;
