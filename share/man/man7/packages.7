@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.15 1999/03/10 09:31:18 erh Exp $
+.\"	$NetBSD: packages.7,v 1.16 1999/07/22 11:08:30 lukem Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd June 4, 1998
+.Dd July 22, 1998
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -20,8 +20,8 @@ and individual packages.
 .Sh COMMON VARIABLES
 This section documents variables that typically apply to all packages.
 Many of these may be set in
-.Xr make.conf 5 .
-.Bl -tag -indent XXXXXXXX -width XXXXXXXX
+.Xr mk.conf 5 .
+.Bl -tag -indent -width XXXXXXXXX
 .It ARCH
 The architecture, as returned by
 .Dq uname -m .
@@ -30,6 +30,22 @@ See
 .It OPSYS
 The operating system name, as returned by 
 .Dq uname -s .
+.It LOCALBASE
+Where non-X11 based packages will be installed.
+The default is
+.Pa /usr/pkg .
+.It CROSSBASE
+Where
+.Dq cross
+category packages will be installed.
+The default is
+.Pa ${LOCALBASE}/cross .
+.It X11BASE
+Where X11 is installed on the system, and where
+.Dq X11
+category packages will be installed.
+The default is
+.Pa /usr/X11R6 .
 .It DISTDIR
 Where to get gzip'd, tarballed copies of original sources.  The default is
 .Pa ${PKGSRCDIR}/distfiles .
@@ -603,6 +619,9 @@ is:  fetch checksum extract patch configure build.
 NEVER override the
 .Dq regular
 targets unless you want to open a major can of worms.
+.Sh SEE ALSO
+.Xr make 1 ,
+.Xr mk.conf 5
 .Sh HISTORY
 This manual page is based upon the comments in the
 .Pa bsd.pkg.mk
