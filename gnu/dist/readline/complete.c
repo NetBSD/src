@@ -340,7 +340,7 @@ print_filename (to_print, full_pathname)
   return 0;
 #else  
   char *s, *new_full_pathname;
-  int c, int extension_char, slen, tlen;
+  int c, extension_char, slen, tlen;
 
   for (s = to_print; c = *s; s++)
     {
