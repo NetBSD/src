@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.44 1995/07/24 03:18:42 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.45 1995/08/13 22:53:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -111,8 +111,15 @@ sigaction(p, uap, retval)
 			sa->sa_flags |= SA_ONSTACK;
 		if ((ps->ps_sigintr & bit) == 0)
 			sa->sa_flags |= SA_RESTART;
-		if (p->p_flag & P_NOCLDSTOP)
-			sa->sa_flags |= SA_NOCLDSTOP;
+		if ((ps->ps_sigreset & bit) != 0)
+			sa->sa_flags |= SA_RESETHAND;
+		if (signum == SIGCHLD) {
+			if ((p->p_flag & P_NOCLDSTOP) != 0)
+				sa->sa_flags |= SA_NOCLDSTOP;
+		}
+		if ((sa->sa_mask & bit) == 0)
+			sa->sa_flags |= SA_NODEFER;
+		sa->sa_mask &= ~bit;
 		if (error = copyout((caddr_t)sa, (caddr_t)SCARG(uap, osa),
 		    sizeof (vec)))
 			return (error);
@@ -140,12 +147,24 @@ setsigvec(p, signum, sa)
 	 */
 	(void) splhigh();
 	ps->ps_sigact[signum] = sa->sa_handler;
+	if ((sa->sa_flags & SA_NODEFER) == 0)
+		sa->sa_mask |= sigmask(signum);
 	ps->ps_catchmask[signum] = sa->sa_mask &~ sigcantmask;
+	if (signum == SIGCHLD) {
+		if (sa->sa_flags & SA_NOCLDSTOP)
+			p->p_flag |= P_NOCLDSTOP;
+		else
+			p->p_flag &= ~P_NOCLDSTOP;
+	}
+	if ((sa->sa_flags & SA_RESETHAND) != 0)
+		ps->ps_sigreset |= bit;
+	else
+		ps->ps_sigreset &= ~bit;
 	if ((sa->sa_flags & SA_RESTART) == 0)
 		ps->ps_sigintr |= bit;
 	else
 		ps->ps_sigintr &= ~bit;
-	if (sa->sa_flags & SA_ONSTACK)
+	if ((sa->sa_flags & SA_ONSTACK) != 0)
 		ps->ps_sigonstack |= bit;
 	else
 		ps->ps_sigonstack &= ~bit;
@@ -158,12 +177,6 @@ setsigvec(p, signum, sa)
 			ps->ps_usertramp &= ~bit;
 	}
 #endif
-	if (signum == SIGCHLD) {
-		if (sa->sa_flags & SA_NOCLDSTOP)
-			p->p_flag |= P_NOCLDSTOP;
-		else
-			p->p_flag &= ~P_NOCLDSTOP;
-	}
 	/*
 	 * Set bit in p_sigignore for signals that are set to SIG_IGN,
 	 * and for signals set to SIG_DFL where the default is to ignore.
@@ -231,7 +244,7 @@ execsigs(p)
 	 * Reset stack state to the user stack.
 	 * Clear set of signals caught on the signal stack.
 	 */
-	ps->ps_sigstk.ss_flags = SA_DISABLE;
+	ps->ps_sigstk.ss_flags = SS_DISABLE;
 	ps->ps_sigstk.ss_size = 0;
 	ps->ps_sigstk.ss_base = 0;
 	ps->ps_flags = 0;
@@ -335,7 +348,7 @@ sigaltstack(p, uap, retval)
 
 	psp = p->p_sigacts;
 	if ((psp->ps_flags & SAS_ALTSTACK) == 0)
-		psp->ps_sigstk.ss_flags |= SA_DISABLE;
+		psp->ps_sigstk.ss_flags |= SS_DISABLE;
 	if (SCARG(uap, oss) && (error = copyout((caddr_t)&psp->ps_sigstk,
 	    (caddr_t)SCARG(uap, oss), sizeof (struct sigaltstack))))
 		return (error);
@@ -344,8 +357,8 @@ sigaltstack(p, uap, retval)
 	if (error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
 	    sizeof (ss)))
 		return (error);
-	if (ss.ss_flags & SA_DISABLE) {
-		if (psp->ps_sigstk.ss_flags & SA_ONSTACK)
+	if (ss.ss_flags & SS_DISABLE) {
+		if (psp->ps_sigstk.ss_flags & SS_ONSTACK)
 			return (EINVAL);
 		psp->ps_flags &= ~SAS_ALTSTACK;
 		psp->ps_sigstk.ss_flags = ss.ss_flags;
@@ -501,8 +514,13 @@ trapsignal(p, signum, code)
 				p->p_sigmask, code);
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
-					 p->p_sigmask, code);
-		p->p_sigmask |= ps->ps_catchmask[signum] | mask;
+		    p->p_sigmask, code);
+		p->p_sigmask |= ps->ps_catchmask[signum];
+		if ((ps->ps_sigreset & mask) != 0) {
+			ps->ps_sigcatch &= ~mask;
+			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
+				p->p_sigignore |= mask;
+		}
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
 		psignal(p, signum);
@@ -945,7 +963,12 @@ postsig(signum)
 			ps->ps_flags &= ~SAS_OLDMASK;
 		} else
 			returnmask = p->p_sigmask;
-		p->p_sigmask |= ps->ps_catchmask[signum] | mask;
+		p->p_sigmask |= ps->ps_catchmask[signum];
+		if ((ps->ps_sigreset & mask) != 0) {
+			ps->ps_sigcatch &= ~mask;
+			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
+				p->p_sigignore |= mask;
+		}
 		(void) spl0();
 		p->p_stats->p_ru.ru_nsignals++;
 		if (ps->ps_sig != signum) {
