@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.5 2000/07/17 02:25:02 thorpej Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.6 2001/01/06 23:36:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,8 @@
 #include "encrypt.h"
 #include "auth.h"
 #include "misc.h"
+
+extern int net;
 
 int forward_flags;	/* Flags get set in telnet/main.c on -f and -F */
 int got_forwarded_creds;/* Tell telnetd to pass -F or -f to login. */
@@ -168,7 +170,6 @@ kerberos5_send(Authenticator *ap)
 	int ap_opts;
 	krb5_data cksum_data;
 	char foo[2];
-	extern int net;
 
 	printf("[ Trying KERBEROS5 ... ]\r\n");
 
