@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.4 2003/03/24 17:07:17 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.5 2003/04/27 10:42:50 ragge Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ __start:
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#if defined(DDB) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(LKM) || defined(KERNFS)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)

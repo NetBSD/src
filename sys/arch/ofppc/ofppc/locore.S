@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 2003/02/03 17:09:59 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.32 2003/04/27 10:42:52 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,8 @@
 
 #include <powerpc/spr.h>
 
+#include "ksyms.h"
+
 /*
  * Some instructions gas doesn't understand (yet?)
  */
@@ -90,7 +92,7 @@ __start:
 	isync
 
 	/* compute end of kernel memory */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f

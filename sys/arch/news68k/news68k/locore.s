@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 2003/04/08 22:57:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 2003/04/27 10:42:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include "ksyms.h"
 
 /*
  * Temporary stack for a variety of purposes.
@@ -151,7 +152,7 @@ ASENTRY_NOPROFILE(start)
 	movl %a0@(188),_ASM_LABEL(monitor)| save trap #15 to return PROM monitor
 
 	RELOC(esym, %a0)
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	movl	%d2,%a0@		| store end of symbol table
 #else
 	clrl	%a0@
@@ -327,7 +328,7 @@ Lstart1:
  */
 	.globl	_Sysseg, _pmap_bootstrap, _avail_start
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d2
 	jne	Lstart2

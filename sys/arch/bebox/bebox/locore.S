@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2003/03/18 16:40:18 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2003/04/27 10:42:49 ragge Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_ppcparam.h"
 #include "assym.h"
+#include "ksyms.h"
 
 #include <sys/syscall.h>
 
@@ -148,7 +149,7 @@ __start_cpu1_loop:
 __start_cpu0:
 
 /* compute end of kernel memory */
-#if defined(DDB) || defined(KERNFS)
+#if defined(DDB) || defined(KERNFS) || NKSYMS || defined(LKM)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)

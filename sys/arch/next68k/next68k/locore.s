@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 2003/04/08 22:57:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 2003/04/27 10:42:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -64,6 +64,8 @@
 #if (!defined(M68040))
 #error "M68040 is not defined! (check that the generated assym.h is not empty)"
 #endif
+
+#include "ksyms.h"
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -263,7 +265,7 @@ Lstart2:
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
 /* configure kernel and lwp0 VA space so we can get going */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart3

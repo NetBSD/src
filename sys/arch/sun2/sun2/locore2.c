@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.9 2003/04/01 15:47:48 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.10 2003/04/27 10:42:53 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@
 #include <sun2/sun2/machdep.h>
 #include <sun68k/sun68k/vector.h>
 
+#include "ksyms.h"
+
 /* This is defined in locore.s */
 extern char kernel_text[];
 
@@ -106,11 +108,11 @@ void _bootstrap __P((void));
 static void _verify_hardware __P((void));
 static void _vm_init __P((void));
 
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 static void _save_symtab __P((void));
 
 /*
- * Preserve DDB symbols and strings by setting esym.
+ * Preserve symbols and strings by setting esym.
  */
 static void
 _save_symtab()
@@ -174,7 +176,7 @@ _vm_init()
 	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
 	esym = end + 4;
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* This will advance esym past the symbols. */
 	_save_symtab();
 #endif
