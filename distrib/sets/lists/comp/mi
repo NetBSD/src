@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.672 2004/02/16 02:40:52 lukem Exp $
+#	$NetBSD: mi,v 1.673 2004/02/18 13:37:40 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5143,6 +5143,7 @@
 ./usr/share/man/cat9/sched_unlock_idle.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/scheduler.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
+./usr/share/man/cat9/selnotify.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selrecord.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selwakeup.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
@@ -8753,6 +8754,7 @@
 ./usr/share/man/man9/sched_unlock_idle.9	comp-sys-man		.man
 ./usr/share/man/man9/scheduler.9		comp-sys-man		.man
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
+./usr/share/man/man9/selnotify.9		comp-sys-man		.man
 ./usr/share/man/man9/selrecord.9		comp-sys-man		.man
 ./usr/share/man/man9/selwakeup.9		comp-sys-man		.man
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
