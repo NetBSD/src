@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.17 2002/12/19 23:31:54 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.18 2003/02/02 20:33:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.17 2002/12/19 23:31:54 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.18 2003/02/02 20:33:07 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -173,12 +173,39 @@ sysconf(name)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_MONOTONIC_CLOCK;
 		goto yesno;
+	case _SC_SEMAPHORES:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_SEMAPHORES;
+		goto yesno;
+	case _SC_TIMERS:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_TIMERS;
+		goto yesno;
 
 /* 1003.1c */
 	case _SC_LOGIN_NAME_MAX:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_LOGIN_NAME_MAX;
 		break;
+	case _SC_THREADS:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_THREADS;
+		goto yesno;
+
+/* 1003.1j */
+	case _SC_BARRIERS:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_BARRIERS;
+		goto yesno;
+	case _SC_SPIN_LOCKS:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_SPIN_LOCKS;
+		goto yesno;
+	/* Historical; Threads option in 1003.1-2001 */
+	case _SC_READER_WRITER_LOCKS:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_POSIX_READER_WRITER_LOCKS;
+		goto yesno;
 
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
