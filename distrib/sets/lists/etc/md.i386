@@ -1,3 +1,3 @@
-# $NetBSD: md.i386,v 1.9 2002/05/04 19:44:29 jdolecek Exp $
-./etc/ld.so.conf	etc-sys-etc
-./etc/ttyaction		etc-sys-etc
+# $NetBSD: md.i386,v 1.10 2004/01/11 09:59:49 lukem Exp $
+./etc/ld.so.conf				etc-sys-etc
+./etc/ttyaction					etc-sys-etc

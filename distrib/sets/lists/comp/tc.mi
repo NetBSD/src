@@ -1,5 +1,5 @@
-#	$NetBSD: tc.mi,v 1.9 2004/01/11 08:55:56 lukem Exp $
-./usr/bin/readelf				comp-util-bin	bfd
+#	$NetBSD: tc.mi,v 1.10 2004/01/11 10:13:43 lukem Exp $
+./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
@@ -158,4 +158,4 @@
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-cxx-include
-./usr/lib/libgcc_p.a				comp-c-proflib	profile
+./usr/lib/libgcc_p.a				comp-c-proflib		profile
