@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.15 2003/05/12 15:17:36 dsl Exp $	*/
+/*	$NetBSD: select.h,v 1.16 2003/06/28 14:22:22 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@ struct selinfo {
 #ifdef _KERNEL
 struct proc;
 
-void	selrecord(struct proc *selector, struct selinfo *);
+void	selrecord(struct lwp *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.14 2003/04/02 10:39:45 fvdl Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.15 2003/06/28 14:22:29 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.14 2003/04/02 10:39:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.15 2003/06/28 14:22:29 darrenr Exp $");
 
 #include "opt_quota.h"
 
@@ -69,10 +69,10 @@ int ufs_initcount = 0;
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, p)
+ufs_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
@@ -82,14 +82,15 @@ ufs_start(mp, flags, p)
  * Return the root of a filesystem.
  */
 int
-ufs_root(mp, vpp)
+ufs_root(mp, vpp, l)
 	struct mount *mp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)ROOTINO, &nvp, l)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -99,19 +100,21 @@ ufs_root(mp, vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(mp, cmds, uid, arg, p)
+ufs_quotactl(mp, cmds, uid, arg, l)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
 	caddr_t arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 #ifndef QUOTA
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;
+	struct proc *p;
 
+	p = l->l_proc;
 	if (uid == -1)
 		uid = p->p_cred->p_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
@@ -137,11 +140,11 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	switch (cmd) {
 
 	case Q_QUOTAON:
-		error = quotaon(p, mp, type, arg);
+		error = quotaon(l, mp, type, arg);
 		break;
 
 	case Q_QUOTAOFF:
-		error = quotaoff(p, mp, type);
+		error = quotaoff(l, mp, type);
 		break;
 
 	case Q_SETQUOTA:
@@ -157,7 +160,7 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 		break;
 
 	case Q_SYNC:
-		error = qsync(mp);
+		error = qsync(l, mp);
 		break;
 
 	default:
@@ -199,16 +202,17 @@ ufs_check_export(mp, nam, exflagsp, credanonp)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(mp, ufhp, vpp)
+ufs_fhtovp(mp, ufhp, vpp, l)
 	struct mount *mp;
 	struct ufid *ufhp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp, l)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.65 2003/05/15 20:25:31 kristerw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.66 2003/06/28 14:22:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.65 2003/05/15 20:25:31 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.66 2003/06/28 14:22:24 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -699,7 +699,7 @@ ffs_valloc(v)
 	ino = (ino_t)ffs_hashalloc(pip, cg, ipref, mode, ffs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
+	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp, curlwp);
 	if (error) {
 		VOP_VFREE(pvp, ino, mode);
 		return (error);

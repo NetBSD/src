@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.39 2003/04/16 21:44:22 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.39 2003/04/16 21:44:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,31 +64,32 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.39 2003/04/16 21:44:22 christos E
 #include <miscfs/fdesc/fdesc.h>
 
 int	fdesc_mount __P((struct mount *, const char *, void *,
-			 struct nameidata *, struct proc *));
-int	fdesc_start __P((struct mount *, int, struct proc *));
-int	fdesc_unmount __P((struct mount *, int, struct proc *));
+			 struct nameidata *, struct lwp *));
+int	fdesc_start __P((struct mount *, int, struct lwp *));
+int	fdesc_unmount __P((struct mount *, int, struct lwp *));
 int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			    struct proc *));
-int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
-int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+			    struct lwp *));
+int	fdesc_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int	fdesc_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int	fdesc_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **,
+			    struct lwp *));
 int	fdesc_checkexp __P((struct mount *, struct mbuf *, int *,
 			    struct ucred **));
 int	fdesc_vptofh __P((struct vnode *, struct fid *));
 int	fdesc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			  struct proc *));
+			  struct lwp *));
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-fdesc_mount(mp, path, data, ndp, p)
+fdesc_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	struct fdescmount *fmp;
@@ -122,19 +123,19 @@ fdesc_mount(mp, path, data, ndp, p)
 }
 
 int
-fdesc_start(mp, flags, p)
+fdesc_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (0);
 }
 
 int
-fdesc_unmount(mp, mntflags, p)
+fdesc_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 	int flags = 0;
@@ -171,9 +172,10 @@ fdesc_unmount(mp, mntflags, p)
 }
 
 int
-fdesc_root(mp, vpp)
+fdesc_root(mp, vpp, l)
 	struct mount *mp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct vnode *vp;
 
@@ -188,24 +190,25 @@ fdesc_root(mp, vpp)
 }
 
 int
-fdesc_quotactl(mp, cmd, uid, arg, p)
+fdesc_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-fdesc_statfs(mp, sbp, p)
+fdesc_statfs(mp, sbp, l)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct filedesc *fdp;
+	struct proc *p;
 	int lim;
 	int i;
 	int last;
@@ -217,6 +220,7 @@ fdesc_statfs(mp, sbp, p)
 	 * limit is ever reduced below the current number
 	 * of open files... ]
 	 */
+	p = l->l_proc;
 	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
 	fdp = p->p_fd;
 	last = min(fdp->fd_nfiles, lim);
@@ -250,11 +254,11 @@ fdesc_statfs(mp, sbp, p)
 
 /*ARGSUSED*/
 int
-fdesc_sync(mp, waitfor, uc, p)
+fdesc_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *uc;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
@@ -265,10 +269,11 @@ fdesc_sync(mp, waitfor, uc, p)
  * Currently unsupported.
  */
 int
-fdesc_vget(mp, ino, vpp)
+fdesc_vget(mp, ino, vpp, l)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -277,10 +282,11 @@ fdesc_vget(mp, ino, vpp)
 
 /*ARGSUSED*/
 int
-fdesc_fhtovp(mp, fhp, vpp)
+fdesc_fhtovp(mp, fhp, vpp, l)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -308,14 +314,14 @@ fdesc_vptofh(vp, fhp)
 }
 
 int
-fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.28 2003/06/03 20:09:37 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.29 2003/06/28 14:21:23 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.28 2003/06/03 20:09:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.29 2003/06/28 14:21:23 darrenr Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -387,7 +387,7 @@ mach_sys_map_fd(l, v, retval)
 	evc.ev_vp = vp;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = (*evc.ev_proc)(p, &evc)) != 0) {
+	if ((error = (*evc.ev_proc)(l, &evc)) != 0) {
 		VOP_UNLOCK(vp, 0);
 
 		DPRINTF(("mach_sys_map_fd: mapping at %p failed\n", va));
@@ -417,12 +417,12 @@ mach_sys_map_fd(l, v, retval)
 
 		DPRINTF(("mach_sys_map_fd: trying at %p\n", va));
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+		if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 			goto bad1;
 	}
 
 	vput(vp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	DPRINTF(("mach_sya_map_fd: mapping at %p\n", (void *)evc.ev_addr));
 
 	va = (mach_vm_offset_t *)evc.ev_addr;
@@ -436,7 +436,7 @@ bad1:
 	VOP_UNLOCK(vp, 0);
 bad2:	
 	vrele(vp);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	DPRINTF(("mach_sys_map_fd: mapping at %p failed, error = %d\n", 
 	    (void *)evc.ev_addr, error));
 	return error;

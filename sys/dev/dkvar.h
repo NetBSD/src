@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.1 2002/10/04 18:02:00 elric Exp $ */
+/* $NetBSD: dkvar.h,v 1.2 2003/06/28 14:21:31 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,8 +85,8 @@ struct dk_softc {
 struct dk_intf {
 	int	  di_dtype;			/* disk type */
 	char	 *di_dkname;			/* disk type name */
-	int	(*di_open)(dev_t, int, int, struct proc *);
-	int	(*di_close)(dev_t, int, int, struct proc *);
+	int	(*di_open)(dev_t, int, int, struct lwp *);
+	int	(*di_close)(dev_t, int, int, struct lwp *);
 	void	(*di_strategy)(struct buf *);
 	void	(*di_diskstart)(struct dk_softc *, struct buf *);
 };
@@ -103,17 +103,17 @@ struct dk_intf {
 void	dk_sc_init(struct dk_softc *, void *, char *);
 
 int	dk_open(struct dk_intf *, struct dk_softc *, dev_t,
-		int, int, struct proc *);
+		int, int, struct lwp *);
 int	dk_close(struct dk_intf *, struct dk_softc *, dev_t,
-		 int, int, struct proc *);
+		 int, int, struct lwp *);
 void	dk_strategy(struct dk_intf *, struct dk_softc *, struct buf *);
 int	dk_size(struct dk_intf *, struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_intf *, struct dk_softc *, dev_t,
-		 u_long, caddr_t, int, struct proc *);
+		 u_long, caddr_t, int, struct lwp *);
 int	dk_dump(struct dk_intf *, struct dk_softc *, dev_t,
 		daddr_t, caddr_t, size_t);
 void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
 
-int	dk_lookup(char *, struct proc *, struct vnode **);
+int	dk_lookup(char *, struct lwp *, struct vnode **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.14 2002/03/17 19:40:53 atatat Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.15 2003/06/28 14:21:17 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.14 2002/03/17 19:40:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.15 2003/06/28 14:21:17 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,12 +99,12 @@ void ttcompatsetlflags __P((struct tty *, struct termios *));
 
 /*ARGSUSED*/
 int
-ttcompat(tp, com, data, flag, p)
+ttcompat(tp, com, data, flag, l)
 	struct tty *tp;
 	u_long com;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	switch (com) {
@@ -147,7 +147,7 @@ ttcompat(tp, com, data, flag, p)
 		tp->t_flags = (ttcompatgetflags(tp)&0xffff0000) | (sg->sg_flags&0xffff);
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA,
-			(caddr_t)&term, flag, p));
+			(caddr_t)&term, flag, l));
 	}
 
 	case TIOCGETC: {
@@ -220,7 +220,7 @@ ttcompat(tp, com, data, flag, p)
 			break;
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, p));
+		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag, l));
 	}
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
@@ -237,12 +237,12 @@ ttcompat(tp, com, data, flag, p)
 
 		return (ttioctl(tp, TIOCSETD,
 			*(int *)data == 2 ? (caddr_t)&ldisczero : data, flag,
-			p));
+			l));
 	    }
 
 	case OTIOCCONS:
 		*(int *)data = 1;
-		return (ttioctl(tp, TIOCCONS, data, flag, p));
+		return (ttioctl(tp, TIOCCONS, data, flag, l));
 
 	case TIOCHPCL:
 		SET(tp->t_cflag, HUPCL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.c,v 1.5 2003/03/21 21:13:53 dsl Exp $	*/
+/*	$NetBSD: linux_fdio.c,v 1.6 2003/06/28 14:21:21 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.5 2003/03/21 21:13:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.6 2003/06/28 14:21:21 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.5 2003/03/21 21:13:53 dsl Exp $");
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
+linux_ioctl_fdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		 register_t *retval)
 {
 	struct filedesc *fdp;
 	struct file *fp;
 	int error;
-	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
+	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	u_long com;
 	struct fdformat_parms fparams;
 	struct linux_floppy_struct lflop;
@@ -77,7 +77,7 @@ linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 
 	com = (u_long)SCARG(uap, data);
 
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
@@ -107,7 +107,7 @@ linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = copyout(&ldrive, SCARG(uap, data), sizeof ldrive);
 		break;
 	case LINUX_FDGETPRM:
-		error = ioctlf(fp, FDIOCGETFORMAT, (caddr_t)&fparams, p);
+		error = ioctlf(fp, FDIOCGETFORMAT, (caddr_t)&fparams, l);
 		if (error != 0)
 			break;
 		lflop.size = fparams.ncyl * fparams.nspt * fparams.ntrk;
@@ -168,7 +168,7 @@ linux_ioctl_fdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = EINVAL;
 	}
 
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.10 2001/10/02 22:41:22 augustss Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.11 2003/06/28 14:21:31 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct midi_hw_if {
 	void	(*close)(void *);		/* close hardware */
 	int	(*output)(void *, int);	/* output a byte */
 	void	(*getinfo)(void *, struct midi_info *);
-	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);
+	int	(*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
 };
 
 void	midi_attach(struct midi_softc *, struct device *);

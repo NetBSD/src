@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.19 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.20 2003/06/28 14:21:17 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.19 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.20 2003/06/28 14:21:17 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = recvit(p, SCARG(uap, s), &msg,
+	error = recvit(l, SCARG(uap, s), &msg,
 	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
 
 	/*
@@ -415,7 +415,7 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		msg.msg_controllen = 0;
 	}
 
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);

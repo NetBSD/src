@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.24 2003/04/02 10:39:35 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.25 2003/06/28 14:22:24 darrenr Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.24 2003/04/02 10:39:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.25 2003/06/28 14:22:24 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ ext2fs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -487,7 +487,7 @@ searchloop:
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp)) != 0)
 			return (error);
 		/*
 		 * Return an indication of where the new directory
@@ -569,7 +569,7 @@ found:
 		/*
 		 * Write access to directory required to delete files.
 		 */
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
+		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp)) != 0)
 			return (error);
 		/*
 		 * Return pointer to current entry in dp->i_offset,
@@ -586,7 +586,8 @@ found:
 			*vpp = vdp;
 			return (0);
 		}
-		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp,
+		    cnp->cn_lwp)) != 0)
 			return (error);
 		/*
 		 * If directory is "sticky", then user must own
@@ -617,7 +618,7 @@ found:
 	 */
 	if (nameiop == RENAME && wantparent &&
 		(flags & ISLASTCN)) {
-		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
+		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
 		if (error)
 			return (error);
 		/*
@@ -626,7 +627,7 @@ found:
 		 */
 		if (dp->i_number == foundino)
 			return (EISDIR);
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
 		if (error)
 			return (error);
 		*vpp = tdp;
@@ -661,7 +662,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -679,7 +680,8 @@ found:
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, foundino, &tdp,
+		    cnp->cn_lwp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
@@ -801,7 +803,7 @@ ext2fs_direnter(ip, dvp, cnp)
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = (struct proc *)0;
+		auio.uio_lwp = (struct lwp *)0;
 		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksize >
 			VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_bsize)
@@ -880,7 +882,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < dp->i_e2fs_size)
 		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC,
-		    cnp->cn_cred, cnp->cn_proc);
+		    cnp->cn_cred, cnp->cn_lwp);
 	return (error);
 }
 
@@ -988,7 +990,7 @@ ext2fs_dirempty(ip, parentino, cred)
 
 	for (off = 0; off < ip->i_e2fs_size; off += fs2h16(dp->e2d_reclen)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
-		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
+		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct lwp *)0);
 		/*
 		 * Since we read MINDIRSIZ, residual must
 		 * be 0 unless we're at end of file.
@@ -1027,9 +1029,10 @@ ext2fs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ext2fs_checkpath(source, target, cred)
+ext2fs_checkpath(source, target, cred, l)
 	struct inode *source, *target;
 	struct ucred *cred;
+	struct lwp *l;
 {
 	struct vnode *vp;
 	int error, rootino, namlen;
@@ -1054,7 +1057,7 @@ ext2fs_checkpath(source, target, cred)
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
 			sizeof (struct ext2fs_dirtemplate), (off_t)0,
 			UIO_SYSSPACE, IO_NODELOCKED, cred, (size_t *)0,
-			(struct proc *)0);
+			(struct lwp *)0);
 		if (error != 0)
 			break;
 		namlen = dirbuf.dotdot_namlen;
@@ -1072,7 +1075,7 @@ ext2fs_checkpath(source, target, cred)
 		if (ino == rootino)
 			break;
 		vput(vp);
-		error = VFS_VGET(vp->v_mount, ino, &vp);
+		error = VFS_VGET(vp->v_mount, ino, &vp, l);
 		if (error != 0) {
 			vp = NULL;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.200 2003/05/13 03:00:07 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.201 2003/06/28 14:21:44 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.200 2003/05/13 03:00:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.201 2003/06/28 14:21:44 darrenr Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -360,10 +360,10 @@ sdunlock(sd)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int
-sdopen(dev, flag, fmt, p)
+sdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sd_softc *sd;
 	struct scsipi_periph *periph;
@@ -515,10 +515,10 @@ bad4:
  * device.  Convenient now but usually a pain.
  */
 int 
-sdclose(dev, flag, fmt, p)
+sdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -904,12 +904,12 @@ sdwrite(dev, uio, ioflag)
  * Knows about the internals of this device
  */
 int
-sdioctl(dev, cmd, addr, flag, p)
+sdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1126,7 +1126,7 @@ bad:
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
-		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(periph, dev, cmd, addr, flag, l));
 	}
 
 #ifdef DIAGNOSTIC

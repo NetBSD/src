@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.16 2001/10/04 15:58:54 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.17 2003/06/28 14:21:42 darrenr Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -47,7 +47,7 @@ int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 #define RF_NORMAL_COMPONENT_UPDATE 0
 #define RF_FINAL_COMPONENT_UPDATE 1
 void rf_update_component_labels(RF_Raid_t *, int);
-int raidlookup(char *, struct proc *, struct vnode **);
+int raidlookup(char *, struct lwp *, struct vnode **);
 int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
 int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
 void raid_init_component_label(RF_Raid_t *, RF_ComponentLabel_t *);

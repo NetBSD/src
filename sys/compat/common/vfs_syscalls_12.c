@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.12 2003/06/28 14:21:17 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.12 2003/06/28 14:21:17 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,12 +120,12 @@ compat_12_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
 	loff = fp->f_offset;
 
 	error = vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
-			SCARG(uap, count), &done, p, 0, 0);
+			SCARG(uap, count), &done, l, 0, 0);
 
 	error = copyout(&loff, SCARG(uap, basep), sizeof(long));
 	*retval = done;
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -140,17 +140,16 @@ compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat12 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -171,17 +170,16 @@ compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat12 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
+	error = vn_stat(nd.ni_vp, &sb, l);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -213,8 +211,8 @@ compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	if (error == 0) {
 		cvtstat(&ub, &oub);

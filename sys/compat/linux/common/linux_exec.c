@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.62 2003/03/01 04:36:39 thorpej Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.63 2003/06/28 14:21:20 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.62 2003/03/01 04:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.63 2003/06/28 14:21:20 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ linux_sys_execve(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);

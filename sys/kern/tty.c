@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.152 2003/04/10 22:35:00 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.153 2003/06/28 14:21:57 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.152 2003/04/10 22:35:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.153 2003/06/28 14:21:57 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,9 +765,10 @@ ttyoutput(int c, struct tty *tp)
  */
 /* ARGSUSED */
 int
-ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
+ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
+	struct proc *p = l->l_proc;
 	struct linesw	*lp;
 	int		s, error;
 	struct nameidata nd;
@@ -865,10 +866,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 				return EBUSY;
 
 			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-			    "/dev/console", p);  
+			    "/dev/console", l);
 			if ((error = namei(&nd)) != 0)
 				return error;
-			error = VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, p); 
+			error = VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, l);
 			vput(nd.ni_vp);
 			if (error)
 				return error;
@@ -1117,7 +1118,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	default:
 #ifdef COMPAT_OLDTTY
-		return (ttcompat(tp, cmd, data, flag, p));
+		return (ttcompat(tp, cmd, data, flag, l));
 #else
 		return (EPASSTHROUGH);
 #endif
@@ -1126,7 +1127,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-ttpoll(struct tty *tp, int events, struct proc *p)
+ttpoll(struct tty *tp, int events, struct lwp *l)
 {
 	int	revents, s;
 
@@ -1147,10 +1148,10 @@ ttpoll(struct tty *tp, int events, struct proc *p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLHUP | POLLRDNORM))
-			selrecord(p, &tp->t_rsel);
+			selrecord(l, &tp->t_rsel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &tp->t_wsel);
+			selrecord(l, &tp->t_wsel);
 	}
 
 	TTY_UNLOCK(tp);

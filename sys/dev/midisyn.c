@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.10 2002/01/13 19:28:08 tsutsui Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.11 2003/06/28 14:21:31 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.10 2002/01/13 19:28:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.11 2003/06/28 14:21:31 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -79,7 +79,7 @@ int	midisyn_open(void *, int,
 void	midisyn_close(void *);
 int	midisyn_output(void *, int);
 void	midisyn_getinfo(void *, struct midi_info *);
-int	midisyn_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	midisyn_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
@@ -134,12 +134,12 @@ midisyn_getinfo(void *addr, struct midi_info *mi)
 }
 
 int
-midisyn_ioctl(void *maddr, u_long cmd, caddr_t addr, int flag, struct proc *p)
+midisyn_ioctl(void *maddr, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	midisyn *ms = maddr;
 
 	if (ms->mets->ioctl)
-		return (ms->mets->ioctl(ms, cmd, addr, flag, p));
+		return (ms->mets->ioctl(ms, cmd, addr, flag, l));
 	else
 		return (EINVAL);
 }

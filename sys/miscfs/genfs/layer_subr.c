@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.11 2002/02/20 06:16:22 enami Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.12 2003/06/28 14:22:02 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.11 2002/02/20 06:16:22 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.12 2003/06/28 14:22:02 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ loop:
 			 * that we will end up with the upper node and
 			 * the lower node locked once.
 			 */
-			if (vget(vp, LK_EXCLUSIVE | LK_CANRECURSE)) {
+			if (vget(vp, LK_EXCLUSIVE | LK_CANRECURSE, curlwp)) {
 				printf ("layer_node_find: vget failed.\n");
 				goto loop;
 			};

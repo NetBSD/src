@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.79 2003/06/19 06:25:41 itojun Exp $	*/
+/*	$NetBSD: bpf.c,v 1.80 2003/06/28 14:22:06 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.79 2003/06/19 06:25:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.80 2003/06/28 14:22:06 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -355,11 +355,11 @@ bpfilterattach(n)
  */
 /* ARGSUSED */
 int
-bpfopen(dev, flag, mode, p)
+bpfopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpf_d *d;
 
@@ -386,11 +386,11 @@ bpfopen(dev, flag, mode, p)
  */
 /* ARGSUSED */
 int
-bpfclose(dev, flag, mode, p)
+bpfclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s;
@@ -620,12 +620,12 @@ extern struct bpf_insn *bpf_udp_filter;
  */
 /* ARGSUSED */
 int
-bpfioctl(dev, cmd, addr, flag, p)
+bpfioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
@@ -879,7 +879,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 	case TIOCSPGRP:		/* Process or group to send signals to */
 		pgid = *(int *)addr;
 		if (pgid != 0)
-			error = pgid_in_session(p, pgid);
+			error = pgid_in_session(l->l_proc, pgid);
 		if (error == 0)
 			d->bd_pgid = pgid;
 		break;
@@ -1040,10 +1040,10 @@ bpf_ifname(ifp, ifr)
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
-bpfpoll(dev, events, p)
+bpfpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s = splnet();
@@ -1057,7 +1057,7 @@ bpfpoll(dev, events, p)
 		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &d->bd_sel);
+			selrecord(l, &d->bd_sel);
 	}
 
 	splx(s);

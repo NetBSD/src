@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.14 2001/11/13 00:12:58 lukem Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.15 2003/06/28 14:22:08 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.14 2001/11/13 00:12:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.15 2003/06/28 14:22:08 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,12 +73,13 @@ pk_accton(path)
 	struct vnode *vp = NULL;
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p;
 	int error;
 
 	if (path == 0)
 		goto close;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
 	if ((error = vn_open (&nd, FWRITE, 0644)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -90,7 +91,8 @@ pk_accton(path)
 	pkacctp = vp;
 	if (oacctp) {
 	close:
-		error = vn_close (oacctp, FWRITE, p -> p_ucred, p);
+		p = l->l_proc;
+		error = vn_close (oacctp, FWRITE, p->p_ucred, l);
 	}
 	return (error);
 }
@@ -147,5 +149,5 @@ pk_acct(lcp)
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
 		curproc -> p_ucred, (size_t *)0,
-		(struct proc *)0);
+		(struct lwp *)0);
 }

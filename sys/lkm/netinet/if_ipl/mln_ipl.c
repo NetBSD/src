@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.29 2002/09/06 16:56:13 gehenna Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.30 2003/06/28 14:22:00 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.29 2002/09/06 16:56:13 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.30 2003/06/28 14:22:00 darrenr Exp $");
 
 #include <sys/param.h>
 
@@ -210,7 +210,7 @@ static int ipl_remove()
 	int error, i;
 
         for (i = 0; (name = ipf_devfiles[i]); i++) {
-		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curlwp);
 		if ((error = namei(&nd)))
 			return (error);
 		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
@@ -261,7 +261,7 @@ static int ipl_load()
 		return error;
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
-		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curlwp);
 		if ((error = namei(&nd)))
 			return error;
 		if (nd.ni_vp != NULL) {

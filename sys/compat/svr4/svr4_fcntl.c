@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.43 2003/02/23 14:37:33 pk Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.44 2003/06/28 14:21:26 darrenr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.43 2003/02/23 14:37:33 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.44 2003/06/28 14:21:26 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ fd_revoke(l, fd, retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
 		goto out;
 
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
@@ -326,7 +326,7 @@ fd_truncate(l, fd, flp, retval)
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
 		return error;
 
 	length = vattr.va_size;
@@ -376,9 +376,9 @@ svr4_sys_open(l, v, retval)
 	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
 
 	if (SCARG(&cup, flags) & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -397,7 +397,7 @@ svr4_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
+			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, l);
 	}
 	return 0;
 }
@@ -420,11 +420,10 @@ svr4_sys_creat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_creat_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args cup;
 
-	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(l->l_proc, 0);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
@@ -474,11 +473,10 @@ svr4_sys_access(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_access_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_access_args cup;
 
-	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(l->l_proc, 0);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, flags) = SCARG(uap, flags);

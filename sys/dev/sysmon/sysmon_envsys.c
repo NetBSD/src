@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.4 2002/12/31 05:26:56 explorer Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.5 2003/06/28 14:21:45 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.4 2002/12/31 05:26:56 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.5 2003/06/28 14:21:45 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -75,7 +75,7 @@ struct simplelock sysmon_envsys_initialized_slock = SIMPLELOCK_INITIALIZER;
 #define SYSMON_ENVSYS_UNLOCK()		\
 	lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL)
 
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct lwp *);
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);
@@ -86,7 +86,7 @@ void	sysmon_envsys_release(struct sysmon_envsys *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_envsys(dev_t dev, int flag, int mode, struct proc *p)
+sysmonopen_envsys(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	simple_lock(&sysmon_envsys_initialized_slock);
 	if (sysmon_envsys_initialized == 0) {
@@ -104,7 +104,7 @@ sysmonopen_envsys(dev_t dev, int flag, int mode, struct proc *p)
  *	Close the system monitor device.
  */
 int
-sysmonclose_envsys(dev_t dev, int flag, int mode, struct proc *p)
+sysmonclose_envsys(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	/* Nothing to do */
@@ -118,7 +118,7 @@ sysmonclose_envsys(dev_t dev, int flag, int mode, struct proc *p)
  */
 int
 sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data, int flag,
-    struct proc *p)
+    struct lwp *l)
 {
 	struct sysmon_envsys *sme;
 	int error = 0;

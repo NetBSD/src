@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.108 2003/04/06 07:02:08 gmcgarry Exp $	*/
+/*	$NetBSD: vnode.h,v 1.109 2003/06/28 14:22:23 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -541,15 +541,15 @@ void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **); 
 int	vflush(struct mount *mp, struct vnode *vp, int flags);
 void	vflushbuf(struct vnode *vp, int sync);
-int 	vget(struct vnode *vp, int lockflag);
+int 	vget(struct vnode *vp, int lockflag, struct lwp *l);
 void 	vgone(struct vnode *vp);
-void	vgonel(struct vnode *vp, struct proc *p);
+void	vgonel(struct vnode *vp, struct lwp *p);
 int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
-	    struct proc *p, int slpflag, int slptimeo);
+	    struct lwp *p, int slpflag, int slptimeo);
 void	vprint(char *label, struct vnode *vp);
 void 	vput(struct vnode *vp);
 int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
-	    struct proc *p);
+	    struct lwp *p);
 void 	vrele(struct vnode *vp);
 int	vtruncbuf(struct vnode *vp, daddr_t lbn,
 	    int slpflag, int slptimeo);
@@ -558,20 +558,20 @@ void	vwakeup(struct buf *);
 /* see vnsubr(9) */
 int	vn_bwrite(void *ap);
 int 	vn_close(struct vnode *vp,
-	    int flags, struct ucred *cred, struct proc *p);
-int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
+	    int flags, struct ucred *cred, struct lwp *p);
+int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct lwp *p);
 int	vn_lock(struct vnode *vp, int flags);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
 int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, size_t *aresid, struct proc *p);
+	    struct ucred *cred, size_t *aresid, struct lwp *p);
 int	vn_readdir(struct file *fp, char *, int segflg, u_int count,
-	    int *done, struct proc *p, off_t **cookies, int *ncookies);
+	    int *done, struct lwp *p, off_t **cookies, int *ncookies);
 void	vn_restorerecurse(struct vnode *vp, u_int flags);
 u_int	vn_setrecurse(struct vnode *vp);
-int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
+int	vn_stat(struct vnode *vp, struct stat *sb, struct lwp *p);
 int	vn_kqfilter(struct file *fp, struct knote *kn);
 int	vn_writechk(struct vnode *vp);
 
