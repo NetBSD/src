@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.17 1997/08/11 22:53:26 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.18 1997/11/26 06:28:50 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -56,6 +56,7 @@ static void	adbattach __P((struct device *, struct device *, void *));
  * Global variables.
  */
 int     adb_polling = 0;	/* Are we polling?  (Debugger mode) */
+int     adb_initted = 0;	/* adb_init() has completed successfully */
 
 /*
  * Local variables.
@@ -99,7 +100,14 @@ adbmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	static int adb_matched = 0;
+
+	/* Allow only one instance. */
+	if (adb_matched)
+		return (0);
+
+	adb_matched = 1;
+	return (1);
 }
 
 static void
@@ -108,6 +116,7 @@ adbattach(parent, dev, aux)
 	void   *aux;
 {
 	printf(" (ADB event device)\n");
+	adb_init();
 }
 
 void 
@@ -403,7 +412,7 @@ adbopen(dev, flag, mode, p)
 	int s;
 
 	unit = minor(dev);
-	if (unit != 0)
+	if (unit != 0 || !adb_initted)
 		return (ENXIO);
 
 	s = spladb();

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1997/11/01 21:11:07 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 1997/11/26 06:28:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,6 @@ configure()
 
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before adb_init() */
-	adb_init();		/* ADB device subsystem & driver */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
