@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.12 1998/03/22 12:53:55 drochner Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.13 1998/06/08 06:47:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,11 +49,7 @@
 
 #include <i386/isa/joyvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	joy_isapnp_match __P((struct device *, void *, void *));
-#else
 int	joy_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	joy_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach joy_isapnp_ca = {
@@ -63,11 +59,7 @@ struct cfattach joy_isapnp_ca = {
 int
 joy_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;
