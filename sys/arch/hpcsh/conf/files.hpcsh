@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.36 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.hpcsh,v 1.37 2004/05/28 17:52:07 tsarna Exp $
 #
 maxpartitions 8
 
@@ -70,9 +70,10 @@ device	j6x0pwr
 attach	j6x0pwr at adc
 file	arch/hpcsh/dev/j6x0pwr.c		j6x0pwr
 
+include	"dev/wscons/files.wscons"
 include "dev/hpc/files.hpctp"
 
-device	j6x0tp: tpcalib, wsmousedev, wskbddev
+device	j6x0tp: hpctpanel, wsmousedev, wskbddev
 attach	j6x0tp at adc
 file	arch/hpcsh/dev/j6x0tp.c			j6x0tp
 defflag	opt_j6x0tp.h		J6X0TP_DEBUG
@@ -130,7 +131,6 @@ file	arch/hpcsh/dev/hd6446x/hd6446x_subr.S	hd64461if | hd64465if
 file	arch/hpcsh/dev/hd6446x/hd6446xintc.c	hd64461if | hd64465if
 
 #include "dev/usb/files.usb"
-include	"dev/wscons/files.wscons"
 
 #
 # Machine-independent PCMCIA drivers

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.32 2003/12/27 07:28:21 shin Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.33 2004/05/28 17:52:07 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.32 2003/12/27 07:28:21 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.33 2004/05/28 17:52:07 tsarna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.32 2003/12/27 07:28:21 shin Exp $");
 #include <machine/platid_mask.h>
 #include <machine/config_hook.h>
 
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 #include <dev/hpc/hpcbatteryvar.h>
 #include <dev/hpc/hpcbatterytable.h>
@@ -518,10 +518,6 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	DPRINTF(("%s(%d): vrpiu_tp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		break;
-		
 	case WSMOUSEIO_SRES:
 	{
 		int tp_enable;
@@ -552,15 +548,10 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 	break;
 
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
-		
 	default:
-		return (EPASSTHROUGH);
+		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 	}
-	return (0);
+	return 0;
 }
 
 /*

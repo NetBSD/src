@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.93 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.hpcmips,v 1.94 2004/05/28 17:52:07 tsarna Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -65,6 +65,11 @@ defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 defparam opt_memsize.h			MEMSIZE
 
 #
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+
+#
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
@@ -81,11 +86,6 @@ include "arch/hpc/conf/files.debug"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
 
 #
 # power management
@@ -165,9 +165,9 @@ file arch/hpcmips/vr/vrled.c			vrled needs-flag
 define	vrpiu_common
 file arch/hpcmips/vr/vrpiu.c			vrpiu_common
 device vrpiu: wsmousedev
-attach vrpiu at vripif: tpcalib, vrpiu_common
+attach vrpiu at vripif: hpctpanel, vrpiu_common
 device vrc4173piu: wsmousedev
-attach vrc4173piu at vripif: tpcalib, vrpiu_common
+attach vrc4173piu at vripif: hpctpanel, vrpiu_common
 
 device vrdsiu_mouse: wsmousedev
 attach vrdsiu_mouse at vripif
@@ -282,7 +282,7 @@ attach ucb at txsibif
 file arch/hpcmips/dev/ucb1200.c		ucb
 
 device ucbtp: wsmousedev
-attach ucbtp at ucbif: tpcalib
+attach ucbtp at ucbif: hpctpanel
 file arch/hpcmips/dev/ucbtp.c		ucbtp
 
 device ucbsnd

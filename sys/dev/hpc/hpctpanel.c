@@ -1,7 +1,7 @@
-/*	$NetBSD: tpcalibvar.h,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: hpctpanel.c,v 1.1 2004/05/28 17:52:07 tsarna Exp $	*/
 
 /*
- * Copyright (c) 1999 Shin Takemura All rights reserved.
+ * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,56 @@
  *
  */
 
-struct tpcalib_softc {
-	int sc_minx, sc_miny;
-	int sc_maxx, sc_maxy;
-	int sc_ax, sc_bx, sc_cx;
-	int sc_ay, sc_by, sc_cy;
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.1 2004/05/28 17:52:07 tsarna Exp $");
 
-	struct wsmouse_calibcoords sc_saved;
-};
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/hpc/hpctpanelvar.h>
 
-int	tpcalib_init(struct tpcalib_softc *);
-void	tpcalib_reset(struct tpcalib_softc *);
-void	tpcalib_trans(struct tpcalib_softc*, int, int, int*, int*);
-int	tpcalib_ioctl(struct tpcalib_softc *, u_long, caddr_t, int,
-	    struct proc *);
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
+int
+hpc_tpanel_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
+{
+	struct wsmouse_id *id;
+	char *idstr;
+	int s;
+
+	switch (cmd) {
+        case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+		return (0);
+
+	case WSMOUSEIO_GETID:
+		/*
+		 * return unique ID string,
+		 * "<vendor> <model> <serial number>"
+		 */
+		id = (struct wsmouse_id *)data;
+		if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
+			return (EINVAL);
+		idstr = platid_name(&platid);
+		s = strlen(idstr);
+		if (WSMOUSE_ID_MAXLEN - 10 < s)
+			s = WSMOUSE_ID_MAXLEN - 10;
+		memcpy(id->data, idstr, s);
+		strcpy(&id->data[s], " SN000000");
+		id->length = s + 9;
+		break;
+
+        case WSMOUSEIO_SCALIBCOORDS:
+        case WSMOUSEIO_GCALIBCOORDS:
+                return tpcalib_ioctl(sc, cmd, data, flag, p);
+        
+	default:
+		return EPASSTHROUGH;
+	}
+	
+	return 0;
+}

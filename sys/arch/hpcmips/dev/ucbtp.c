@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.12 2003/07/15 02:29:31 lukem Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.13 2004/05/28 17:52:07 tsarna Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.12 2003/07/15 02:29:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.13 2004/05/28 17:52:07 tsarna Exp $");
 
 #include "opt_use_poll.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.12 2003/07/15 02:29:31 lukem Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39sibvar.h>
@@ -723,23 +723,14 @@ ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	DPRINTF(("%s(%d): ucbtp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		break;
-		
 	case WSMOUSEIO_SRES:
 		printf("%s(%d): WSMOUSRIO_SRES is not supported",
 		    __FILE__, __LINE__);
 		break;
 
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-                return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
-		
 	default:
-		return (EPASSTHROUGH);
+		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 	}
 
-	return (0);
+	return 0;
 }
