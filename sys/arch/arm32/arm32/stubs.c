@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.6 1996/06/03 22:44:36 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.7 1996/06/12 20:12:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -69,8 +69,6 @@
 
 #include "fdc.h" 
 #include "rd.h" 
-
-#define VM_MAXKERN_ADDRESS 0xf3000000
 
 extern int ffs_mountroot();
 extern int cd9660_mountroot();
@@ -248,75 +246,29 @@ copyoutstr(kaddr, udaddr, len, done)
 	return(copystrinout(kaddr, udaddr, len, done));
 }
 
-int bcopyinout __P((void *, void *, u_int));
-  
-int
-copyin(udaddr, kaddr, len)
-	void *udaddr;
-	void *kaddr;
-	u_int len;
-{
-	int error;
-    
-	if (udaddr < (void *)VM_MIN_ADDRESS
-	    || udaddr >= (void *)VM_MAXUSER_ADDRESS) {
-		printf("akt: copyin: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	if (kaddr < (void *)VM_MAXUSER_ADDRESS
-	    || kaddr >= (void *)VM_MAXKERN_ADDRESS) {
-		printf("akt: copyin: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	error = bcopyinout(udaddr, kaddr, len);
-	if (error)
-		printf("akt: copyin(%08x,%08x,%08x) failed\n",
-		    (u_int)udaddr, (u_int)kaddr, len);
-	return(error);
-}
-  
-int
-copyout(kaddr, udaddr, len)
-	void *kaddr;
-	void *udaddr;
-	u_int len;
-{
-	int error;
-    
-	if (udaddr < (void*)VM_MIN_ADDRESS
-	    || udaddr >= (void*)VM_MAXUSER_ADDRESS) {
-		printf("akt: copyout: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	if (kaddr < (void *)VM_MAXUSER_ADDRESS
-	    || kaddr >= (void *)VM_MAXKERN_ADDRESS) {
-		printf("akt: copyout: udaddr=%08x kaddr=%08x\n",
-		    (u_int)udaddr, (u_int)kaddr);
-		return(EFAULT);
-	}
-	error = bcopyinout(kaddr, udaddr, len);
-	if (error) {
-		printf("akt: copyout(%08x,%08x,%08x) failed\n",
-		    (u_int)kaddr, (u_int)udaddr, len);
-		traceback();
-	}
-	return(error);
-}
-
 void
 setsoftintr(irqmask)
 	u_int irqmask;
 {
+	u_int oldcpsr;
+
+	oldcpsr = disable_interrupts(I32_bit);
 	soft_interrupts |= irqmask;
+	restore_interrupts(oldcpsr);
+}
+
+/* Eventually this will become macros */
+
+void
+setsoftclock()
+{
+	setsoftintr(IRQMASK_SOFTCLOCK);
 }
 
 void
 setsoftnet()
 {
-	soft_interrupts |= IRQMASK_SOFTNET;
+	setsoftintr(IRQMASK_SOFTNET);
 }
 
 int astpending;
@@ -534,47 +486,6 @@ beep_generate()
 #endif /* NBEEP */
 
 
-#if XXX1
-/* Debugging functions to dump the buffers linked to a vnode */
-
-void
-dumpvndbuf(vp)
-	register struct vnode *vp;
-{
-	register struct buf *bp, *nbp;
-	int s;
-
-	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-
-		printf("buf=%08x\n", (u_int)bp);
-		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, (u_int)bp->b_proc, bp->b_bufsize, bp->b_dev);
-		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", (u_int)bp->b_vp, bp->b_resid, bp->b_bcount, (u_int)bp->b_un.b_addr);
-	}
-	(void)splx(s);
-}
-
-
-void
-dumpvncbuf(vp)
-	register struct vnode *vp;
-{
-	register struct buf *bp, *nbp;
-	int s;
-
-	s = splbio();
-	for (bp = vp->v_cleanblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-
-		printf("buf=%08x\n", bp);
-		printf("flags=%08x proc=%08x bufsize=%08x dev=%04x\n", bp->b_flags, (u_int)bp->b_proc, bp->b_bufsize, bp->b_dev);
-		printf("vp=%08x resid=%08x count=%08x addr=%08x\n", (u_int)bp->b_vp, bp->b_resid, bp->b_bcount, (u_int)bp->b_un.b_addr);
-	}
-	(void)splx(s);
-}
-#endif /* XXX1 */
-
 extern u_int spl_mask;
 
 int current_spl_level = SPL_0;
@@ -586,7 +497,7 @@ void
 set_spl_masks()
 {
 	spl_masks[SPL_0]	= 0xffffffff;
-	spl_masks[SPL_SOFT]	= ~IRQMASK_SOFTNET;
+	spl_masks[SPL_SOFT]	= ~(IRQMASK_SOFTNET | IRQMASK_SOFTCLOCK | IRQMASK_SOFTPLIP);
 	spl_masks[SPL_BIO]	= irqmasks[IPL_BIO];
 	spl_masks[SPL_NET]	= irqmasks[IPL_NET];
 	spl_masks[SPL_TTY]	= irqmasks[IPL_TTY];
@@ -619,8 +530,8 @@ dump_spl_masks()
 int
 splsoftclock()
 {
-/*	return(lowerspl(SPL_SOFT));*/
-	return(current_spl_level);
+	return(lowerspl(SPL_SOFT));
+/*	return(current_spl_level);*/
 }
 
 /* End of stubs.c */
