@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.33 1999/11/18 19:02:33 kristerw Exp $
+.\"	$NetBSD: sysctl.8,v 1.34 1999/12/17 05:01:26 garbled Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -310,13 +310,13 @@ privilege can change the value.
 .Sh EXAMPLES
 .Pp
 For example, to retrieve the maximum number of processes allowed
-in the system, one would use the follow request:
+in the system, one would use the following request:
 .Bd -literal -offset indent -compact
 sysctl kern.maxproc
 .Ed
 .Pp
 To set the maximum number of processes allowed
-in the system to 1000, one would use the follow request:
+in the system to 1000, one would use the following request:
 .Bd -literal -offset indent -compact
 sysctl -w kern.maxproc=1000
 .Ed
@@ -326,7 +326,7 @@ Information about the system clock rate may be obtained with:
 sysctl kern.clockrate
 .Ed
 .Pp
-Information about the load average history may be obtained with
+Information about the load average history may be obtained with:
 .Bd -literal -offset indent -compact
 sysctl vm.loadavg
 .Ed
@@ -336,7 +336,7 @@ the request:
 .Bd -literal -offset indent -compact
 sysctl proc.$$
 .Ed
-can be used if the shell interpreter remplaces $$ with it's pid (this is true
+can be used if the shell interpreter replaces $$ with it's pid (this is true
 for most shells).
 .Pp
 To redirect core dumps to the /var/tmp/<username> directory,
