@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.7 2002/11/07 20:05:02 tron Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.8 2002/11/08 08:50:24 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -296,6 +296,7 @@ do {									\
 
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -467,6 +468,30 @@ const struct wm_product {
 	  "Intel i82544GC (LOM) 1000BASE-T Ethernet",
 	  WM_T_82544,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM,
+	  "Intel i82540EM 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_COPPER,
+	  "Intel i82545EM 1000BASE-T Ethernet",
+	  WM_T_82545,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
+	  "Intel i82546EB 1000BASE-T Ethernet",
+	  WM_T_82546,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_FIBER,
+	  "Intel i82545EM 1000BASE-X Ethernet",
+	  WM_T_82545,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_FIBER,
+	  "Intel i82546EB 1000BASE-X Ethernet",
+	  WM_T_82546,		WMP_F_1000X },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM_LOM,
+	  "Intel i82540EM (LOM) 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -563,6 +588,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if (preg < 3)
 			sc->sc_type = WM_T_82542_2_0;
 	}
+
+	/*
+	 * Some chips require a handshake to access the EEPROM.
+	 */
+	if (sc->sc_type >= WM_T_82540)
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
 
 	/*
 	 * Map the device.
@@ -710,6 +741,15 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	enaddr[3] = myea[1] >> 8;
 	enaddr[4] = myea[2] & 0xff;
 	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Toggle the LSB of the MAC address on the second port
+	 * of the i82546.
+	 */
+	if (sc->sc_type == WM_T_82546) {
+		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
+			enaddr[5] ^= 1;
+	}
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
@@ -2130,18 +2170,53 @@ void
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg;
-	int i, x;
+	int i, x, addrbits = 6;
 
 	for (i = 0; i < wordcnt; i++) {
-		/* Send CHIP SELECT for one clock tick. */
-		CSR_WRITE(sc, WMREG_EECD, EECD_CS);
+		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
+			reg = CSR_READ(sc, WMREG_EECD);
+
+			/* Get number of address bits. */
+			if (reg & EECD_EE_SIZE)
+				addrbits = 8;
+
+			/* Request EEPROM access. */
+			reg |= EECD_EE_REQ;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+
+			/* ..and wait for it to be granted. */
+			for (x = 0; x < 100; x++) {
+				reg = CSR_READ(sc, WMREG_EECD);
+				if (reg & EECD_EE_GNT)
+					break;
+				delay(5);
+			}
+			if ((reg & EECD_EE_GNT) == 0) {
+				printf("%s: could not acquire EEPROM GNT\n",
+				    sc->sc_dev.dv_xname);
+				*data = 0xffff;
+				reg &= ~EECD_EE_REQ;
+				CSR_WRITE(sc, WMREG_EECD, reg);
+				continue;
+			}
+		} else
+			reg = 0;
+
+		/* Clear SK and DI. */
+		reg &= ~(EECD_SK | EECD_DI);
+		CSR_WRITE(sc, WMREG_EECD, reg);
+
+		/* Set CHIP SELECT. */
+		reg |= EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
 		delay(2);
 
 		/* Shift in the READ command. */
 		for (x = 3; x > 0; x--) {
-			reg = EECD_CS;
 			if (UWIRE_OPC_READ & (1 << (x - 1)))
 				reg |= EECD_DI;
+			else
+				reg &= ~EECD_DI;
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			delay(2);
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2151,10 +2226,11 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Shift in address. */
-		for (x = 6; x > 0; x--) {
-			reg = EECD_CS; 
+		for (x = addrbits; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				reg |= EECD_DI;
+			else
+				reg &= ~EECD_DI;
 			CSR_WRITE(sc, WMREG_EECD, reg);
 			delay(2);
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2164,7 +2240,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Shift out the data. */
-		reg = EECD_CS;
+		reg &= ~EECD_DI;
 		data[i] = 0;
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
@@ -2176,7 +2252,15 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		}
 
 		/* Clear CHIP SELECT. */
-		CSR_WRITE(sc, WMREG_EECD, 0);
+		reg &= ~EECD_CS;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+
+		if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
+			/* Release the EEPROM. */
+			reg &= ~EECD_EE_REQ;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+		}
 	}
 }
 
