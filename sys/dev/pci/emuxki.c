@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.13 2002/12/24 10:53:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.12 2002/10/02 16:51:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.13 2002/12/24 10:53:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1519,6 +1519,7 @@ emuxki_intr(void *arg)
 	struct emuxki_softc *sc = arg;
 	u_int32_t       ipr, curblk;
 	struct emuxki_voice *voice;
+	int claim = 0;
 
 	while ((ipr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EMU_IPR))) {
 		if (ipr & EMU_IPR_INTERVALTIMER) {
@@ -1540,9 +1541,11 @@ emuxki_intr(void *arg)
 
 		/* Got interrupt */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EMU_IPR, ipr);
+
+		claim = 1;
 	}
 
-	return (0);
+	return (claim);
 }
 
 
