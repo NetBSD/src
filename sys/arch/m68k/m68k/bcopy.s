@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.1 1997/03/17 19:44:33 gwr Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.2 1998/02/27 21:38:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,17 +49,9 @@
 
 /*
  * {ov}bcopy(from, to, len)
- * memcpy(to, from, len)
  *
  * Works for counts up to 128K.
  */
-ALTENTRY(memmove, _memcpy)
-ENTRY(memcpy)
-	movl	sp@(12),d0		| get count
-	jeq	Lbccpyexit		| if zero, return
-	movl	sp@(8), a0		| src address
-	movl	sp@(4), a1		| dest address
-	jra	Lbcdocopy		| jump into bcopy
 ALTENTRY(ovbcopy, _bcopy)
 ENTRY(bcopy)
 	movl	sp@(12),d0		| get count
