@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.21.4.2 1997/02/11 20:21:12 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.21.4.3 1997/02/12 16:52:14 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -164,7 +164,9 @@ ether_output(ifp, m0, dst, rt0)
 			bcopy((caddr_t)ar_tha(ah),
 				(caddr_t)edst, sizeof(edst));
 		
-		switch(ah->ar_op) {
+		ah->ar_hrd = htons(ARPHRD_ETHER);
+
+		switch(ntohs(ah->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			etype = htons(ETHERTYPE_REVARP);

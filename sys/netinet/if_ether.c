@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.1 1997/02/07 18:08:57 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.2 1997/02/12 16:52:16 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -268,31 +268,27 @@ arprequest(ifp, sip, tip, enaddr)
 	register u_int8_t *enaddr;
 {
 	register struct mbuf *m;
-	register struct ether_header *eh;
-	register struct ether_arp *ea;
+	struct arphdr *ah;
 	struct sockaddr sa;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
-	m->m_len = sizeof(*ea);
-	m->m_pkthdr.len = sizeof(*ea);
-	MH_ALIGN(m, sizeof(*ea));
-	ea = mtod(m, struct ether_arp *);
-	eh = (struct ether_header *)sa.sa_data;
-	bzero((caddr_t)ea, sizeof (*ea));
-	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
-	    sizeof(eh->ether_dhost));
-	eh->ether_type = htons(ETHERTYPE_ARP);	/* if_output will not swap */
-	ea->arp_hrd = htons(ARPHRD_ETHER);
-	ea->arp_pro = htons(ETHERTYPE_IP);
-	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
-	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
-	ea->arp_op = htons(ARPOP_REQUEST);
-	bcopy((caddr_t)enaddr, (caddr_t)ea->arp_sha, sizeof(ea->arp_sha));
-	bcopy((caddr_t)sip, (caddr_t)ea->arp_spa, sizeof(ea->arp_spa));
-	bcopy((caddr_t)tip, (caddr_t)ea->arp_tpa, sizeof(ea->arp_tpa));
-	sa.sa_family = AF_UNSPEC;
-	sa.sa_len = sizeof(sa);
+	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
+	    2*ifp->if_data.ifi_addrlen;
+	m->m_pkthdr.len = m->m_len;
+	MH_ALIGN(m, m->m_len);
+	ah = mtod(m, struct arphdr *);
+	bzero((caddr_t)ah, m->m_len);
+	ah->ar_pro = htons(ETHERTYPE_IP);
+	ah->ar_hln = ifp->if_data.ifi_addrlen;	/* hardware address length */
+	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
+	ah->ar_op = htons(ARPOP_REQUEST);
+	bcopy((caddr_t)enaddr, (caddr_t)ar_sha(ah), ah->ar_hln);
+	bcopy((caddr_t)sip, (caddr_t)ar_spa(ah), ah->ar_pln);
+	bcopy((caddr_t)tip, (caddr_t)ar_tpa(ah), ah->ar_pln);
+	sa.sa_family = AF_ARP;
+	sa.sa_len = 2;
+	m->m_flags |= M_BCAST;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 }
 
