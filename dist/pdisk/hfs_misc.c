@@ -196,20 +196,20 @@ get_HFS_name(partition_map *entry, int *kind)
     data = entry->data;
     if (strcmp(data->dpme_type, kHFSType) == 0) {
 	if (read_partition_block(entry, 2, (char *)mdb) == 0) {
-	    //error(-1, "Can't read block %d from partition %d", 2, entry->disk_address);
+	    error(-1, "Can't read block %d from partition %d", 2, entry->disk_address);
 	    goto not_hfs;
 	}
 	if (mdb->drSigWord == HFS_PLUS_SIG) {
 	    // pure HFS Plus
-	    // printf("%d HFS Plus\n", entry->disk_address);
+	    // printf("%lu HFS Plus\n", entry->disk_address);
 	    *kind = kHFS_plus;
 	} else if (mdb->drSigWord != HFS_SIG) {
 	    // not HFS !!!
-	    // printf("%d not HFS\n", entry->disk_address);
+	    printf("%lu not HFS\n", entry->disk_address);
 	    *kind = kHFS_not;
 	} else if (mdb->drEmbedSigWord != HFS_PLUS_SIG) {
 	    // HFS
-	    // printf("%d HFS\n", entry->disk_address);
+	    // printf("%lu HFS\n", entry->disk_address);
 	    *kind = kHFS_std;
 	    len = mdb->drVN[0];
 	    name = (char *) malloc(len+1);
@@ -217,7 +217,7 @@ get_HFS_name(partition_map *entry, int *kind)
 	    name[len] = 0;
 	} else {
 	    // embedded HFS plus
-	    // printf("%d embedded HFS Plus\n", entry->disk_address);
+	    // printf("%lu embedded HFS Plus\n", entry->disk_address);
 	    *kind = kHFS_embed;
 	    len = mdb->drVN[0];
 	    name = (char *) malloc(len+1);
