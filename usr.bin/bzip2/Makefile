@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2000/07/03 02:51:15 matt Exp $
+#	$NetBSD: Makefile,v 1.4 2001/02/05 01:35:45 christos Exp $
 
 PROG=      bzip2
-WARNS=	   0
-CWARNFLAGS+=-Wall -Wstrict-prototypes -Wpointer-arith
 LDSTATIC?= -static
 LDADD+=	   -lbz2
 DPADD+=	   ${LIBBZ2}
