@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.26 2003/08/07 16:30:07 agc Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26.10.1 2005/02/12 15:47:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.26 2003/08/07 16:30:07 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.26.10.1 2005/02/12 15:47:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -198,7 +198,7 @@ le_ibus_attach(parent, self, aux)
 	sc->sc_am7990.lsc.sc_nocarrier = NULL;
 
 	sc->sc_am7990.lsc.sc_mem =
-	    (void *)uvm_km_valloc(kernel_map, (128 * 1024));
+	    (void *)uvm_km_alloc(kernel_map, (128 * 1024), 0, UVM_KMF_VAONLY);
 	if (sc->sc_am7990.lsc.sc_mem == 0)
 		return;
 
