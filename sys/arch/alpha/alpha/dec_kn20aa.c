@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.47 2001/06/05 04:53:12 thorpej Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.48 2001/08/29 14:14:33 itohy Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.47 2001/06/05 04:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.48 2001/08/29 14:14:33 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.47 2001/06/05 04:53:12 thorpej Exp 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/alpha.h>
+#include <machine/logout.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -74,6 +76,12 @@ static int comcnrate = CONSPEED;
 void dec_kn20aa_init __P((void));
 static void dec_kn20aa_cons_init __P((void));
 static void dec_kn20aa_device_register __P((struct device *, void *));
+
+static void dec_kn20aa_mcheck_handler
+	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
+
+static void dec_kn20aa_mcheck __P((unsigned long, unsigned long,
+				     unsigned long, struct trapframe *));
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -106,6 +114,7 @@ dec_kn20aa_init()
 	platform.iobus = "cia";
 	platform.cons_init = dec_kn20aa_cons_init;
 	platform.device_register = dec_kn20aa_device_register;
+	platform.mcheck_handler = dec_kn20aa_mcheck_handler;
 }
 
 static void
@@ -287,5 +296,56 @@ dec_kn20aa_device_register(dev, aux)
 			found = 1;
 			return;
 		}
+	}
+}
+
+static void
+dec_kn20aa_mcheck(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	struct mchkinfo *mcp;
+	mc_hdr_ev5 *hdr;
+	mc_uc_ev5 *mptr;
+
+	/*
+	 * If we expected a machine check, just go handle it in common code.
+	 */
+	mcp = &curcpu()->ci_mcinfo;
+	if (mcp->mc_expected) {
+		machine_check(mces, framep, type, logout);
+		return;
+	}
+
+	hdr = (mc_hdr_ev5 *) logout;
+	mptr = (mc_uc_ev5 *) (logout + sizeof (*hdr));
+
+	/*
+	 * Now we can finally print some stuff...
+	 */
+	ev5_logout_print(hdr, mptr);
+
+	machine_check(mces, framep, type, logout);
+}
+
+static void
+dec_kn20aa_mcheck_handler(mces, framep, vector, param)
+	unsigned long mces;
+	struct trapframe *framep;
+	unsigned long vector;
+	unsigned long param;
+{
+
+	switch (vector) {
+	case ALPHA_SYS_MCHECK:
+	case ALPHA_PROC_MCHECK:
+		dec_kn20aa_mcheck(mces, vector, param, framep);
+		break;
+	default:
+		printf("KN20AA_MCHECK: unknown check vector 0x%lx\n", vector);
+		machine_check(mces, framep, vector, param);
+		break;
 	}
 }
