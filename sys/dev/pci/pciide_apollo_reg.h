@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.8 2001/01/05 18:04:43 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.9 2001/05/04 15:25:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -80,7 +80,7 @@
 /* Ultra-DMA/33 control (586A/B only) */
 #define APO_UDMA 0x50
 #define APO_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
-#define APO_UDMA_TIME(channel, drive, x) (((x) & 0x3) << \
+#define APO_UDMA_TIME(channel, drive, x) (((x) & 0xf) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_PIO_MODE(channel, drive) (0x20 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
@@ -90,6 +90,8 @@
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_CLK66(channel) (0x08 << ((1 - (channel)) << 4))
 
-static int8_t apollo_udma_tim[] = {0x03, 0x02, 0x00, 0x02, 0x00};
+static int8_t apollo_udma100_tim[] = {0x0f, 0x07, 0x04, 0x02, 0x01, 0x00}; /* XXX check modes others than 2, 4, 5 */
+static int8_t apollo_udma66_tim[] = {0x03, 0x03, 0x02, 0x01, 0x00};
+static int8_t apollo_udma33_tim[] = {0x03, 0x02, 0x00};
 static int8_t apollo_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
 static int8_t apollo_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
