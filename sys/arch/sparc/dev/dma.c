@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.28 1996/05/21 19:07:30 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.28.2.1 1996/06/12 20:48:31 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -394,7 +394,7 @@ int
 espdmaintr(sc)
 	struct dma_softc *sc;
 {
-	int trans = 0, resid = 0;
+	int trans, resid;
 	u_long csr;
 	csr = DMACSR(sc);
 
@@ -434,20 +434,35 @@ espdmaintr(sc)
 		return 0;
 	}
 
+	resid = 0;
+	/*
+	 * If a transfer onto the SCSI bus gets interrupted by the device
+	 * (e.g. for a SAVEPOINTER message), the data in the FIFO counts
+	 * as residual since the ESP counter registers get decremented as
+	 * bytes are clocked into the FIFO.
+	 */
 	if (!(csr & D_WRITE) &&
 	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
 		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 	}
 
-	resid += ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-		 (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
-		 (sc->sc_esp->sc_rev > ESP100A
-			? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16) : 0);
+	if ((sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0) {
+		/*
+		 * `Terminal count' is off, so read the residue
+		 * out of the ESP counter registers.
+		 */
+		resid += ( ESP_READ_REG(sc->sc_esp, ESP_TCL) |
+			  (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
+			   ((sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
+				? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16)
+				: 0));
 
-	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
-	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
-		resid = 65536;
+		if (resid == 0 && sc->sc_dmasize == 65536 &&
+		    (sc->sc_esp->sc_cfg2 & ESPCFG2_FE) == 0)
+			/* A transfer of 64K is encoded as `TCL=TCM=0' */
+			resid = 65536;
+	}
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
@@ -459,7 +474,7 @@ espdmaintr(sc)
 	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
 		ESP_READ_REG(sc->sc_esp, ESP_TCL),
 		ESP_READ_REG(sc->sc_esp, ESP_TCM),
-		sc->sc_esp->sc_rev > ESP100A
+		(sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
 			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
 		trans, resid));
 
