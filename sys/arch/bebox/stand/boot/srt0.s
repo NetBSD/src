@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -102,30 +102,9 @@ endaddr:
 
 /*
  * Execute
- * run(entry)
- *        r3
+ * run(startsym, endsym, args, bootinfo, entry)
  */
  	.globl	run
 run:
-	mr	9, 3
-	lis	8, startsym@ha		/* startsym -> r3 */
-	addi	8, 8, startsym@l
-	lwz	3, 0(8)
-	lis	8, endsym@ha		/* endsym -> r4 */
-	addi	8, 8, endsym@l
-	lwz	4, 0(8)
-	lis	8, args@ha		/* args -> r5 */
-	addi	8, 8, args@l
-	lwz	5, 0(8)
-	lis	8, bootinfo@ha		/* bootinfo -> r6 */
-	addi	8, 8, bootinfo@l
-	lwz	6, 0(8)
-	mtctr	9			/* Entry point */
+	mtctr	7			/* Entry point */
 	bctr
-
-/*
- * _rtt
- */
-	.globl	_rtt
-_rtt:
-	bl	_rtt

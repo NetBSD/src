@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -33,19 +33,20 @@
  */
 
 #include <sys/param.h>
-#include "stand.h"
+#include <stand.h>
+#include "boot.h"
 
 /*---------------------------------------------------------------------------*
  *			Floppy Disk Controller Define			     *
  *---------------------------------------------------------------------------*/
-/* Floppy Disk Controller Registers */ 
+/* Floppy Disk Controller Registers */
 int FDC_PORT[] = {				/* fdc base I/O port */
 		0x3f0, /* primary */
 		};
-#define FDC_DOR(x)	(FDC_PORT[x] + 0x2)	/* motor drive control bits */
-#define FDC_STATUS(x)	(FDC_PORT[x] + 0x4)	/* fdc main status register */
-#define FDC_DATA(x)	(FDC_PORT[x] + 0x5)	/* fdc data register */
-#define FDC_RATE(x)	(FDC_PORT[x] + 0x7)	/* transfer rate register */
+#define	FDC_DOR(x)	(FDC_PORT[x] + 0x2)	/* motor drive control bits */
+#define	FDC_STATUS(x)	(FDC_PORT[x] + 0x4)	/* fdc main status register */
+#define	FDC_DATA(x)	(FDC_PORT[x] + 0x5)	/* fdc data register */
+#define	FDC_RATE(x)	(FDC_PORT[x] + 0x7)	/* transfer rate register */
 
 #define	FDC_IRQ		6
 #define	FD_DMA_CHAN	2
@@ -53,7 +54,7 @@ int FDC_PORT[] = {				/* fdc base I/O port */
 /* fdc main status register */
 #define	RQM	  0x80	/* the host can transfer data if set */
 #define	DIO	  0x40	/* direction of data transfer. write required if set */
-#define NON_DMA   0x20  /* fdc have date for transfer in non dma mode */
+#define	NON_DMA   0x20  /* fdc have date for transfer in non dma mode */
 #define	CMD_BUSY  0x10	/* command busy if set */
 
 /* fdc result status */
@@ -84,7 +85,7 @@ int FDC_PORT[] = {				/* fdc base I/O port */
 
 /* fdc result */
 #define	STATUS_MAX	16	/* result status max number */
-#define RESULT_VERSION	0x90	/* enhanced controller */
+#define	RESULT_VERSION	0x90	/* enhanced controller */
 #define	RESULT_SEEK	0x20	/* seek & recalibrate complete flag on status0 */
 
 /*---------------------------------------------------------------------------*
@@ -107,7 +108,7 @@ struct	fdd_type {
 };
 typedef struct	fdd_type FDDTYPE;
 
-#define FDTYPE_MAX	5
+#define	FDTYPE_MAX	5
 FDDTYPE fdd_types[FDTYPE_MAX] = {
 	{ 18,2,0xff,0x1b,0x54,80,2880,1,0,2,0x6c,0,"2HQ" }, /* 2HD (PC/AT) */
 	{  8,3,0xff,0x35,0x74,77,1232,1,0,2,0x54,1,"2HD" }, /* 2HD (98) */
@@ -124,7 +125,7 @@ int	fdsectors[] = {128, 256, 512, 1024, 2048, 4096};
 #define	START_SECTOR	1
 
 #define	DELAY(x)	delay(100000 * x)		/* about 100ms */
-#define INT_TIMEOUT     3000000
+#define	INT_TIMEOUT	3000000
 
 /*---------------------------------------------------------------------------*
  *			FDC Device Driver Define			     *
@@ -143,12 +144,12 @@ struct	fd_unit {
 typedef	struct fd_unit FD_UNIT;
 FD_UNIT	fd_unit[CTLR_MAX][UNIT_MAX];
 
-/* 
+/*
  *	un_flags flags
  */
-#define INT_ALIVE	0x00000001	/* Device is Alive and Available */
-#define INT_READY	0x00000002	/* Device is Ready */
-#define INT_BUSY	0x00000004	/* Device is busy */
+#define	INT_ALIVE	0x00000001	/* Device is Alive and Available */
+#define	INT_READY	0x00000002	/* Device is Ready */
+#define	INT_BUSY	0x00000004	/* Device is busy */
 
 /*---------------------------------------------------------------------------*
  *				Misc define				     *
@@ -156,51 +157,55 @@ FD_UNIT	fd_unit[CTLR_MAX][UNIT_MAX];
 #define	TIMEOUT		10000000
 #define	ND_TIMEOUT	10000000
 
-#define SUCCESS		0
-#define FAIL		-1
+#define	SUCCESS		0
+#define	FAIL		-1
 
 /*
  *	function declaration
  */
-int fdc_out(int, int);
-int fdc_in(int, unsigned char *);
-int fdc_intr_wait();
-int fd_check(FD_UNIT *);
-void motor_on(int, int);
-void motor_off(int, int);
-void fdReset(int);
-void fdRecalibrate(int, int);
-void fdSpecify(int);
-void fdDriveStatus(int, int, int, int *);
-int fdSeek(int, int, int);
-int fdSenseInt(int, int *);
-int fdReadWrite(FD_UNIT *, int, int, int, int, u_char *);
+int fdc_out __P((int, int));
+int fdc_in __P((int, u_char *));
+int fdc_intr_wait __P((void));
+int fd_check __P((FD_UNIT *));
+void motor_on __P((int, int));
+void motor_off __P((int, int));
+void fdReset __P((int));
+void fdRecalibrate __P((int, int));
+void fdSpecify __P((int));
+void fdDriveStatus __P((int, int, int, int *));
+int fdSeek __P((int, int, int));
+int fdSenseInt __P((int, int *));
+int fdReadWrite __P((FD_UNIT *, int, int, int, int, u_char *));
+void irq_init __P((void));
+int irq_polling __P((int, int));
+void dma_setup __P((u_char *, int, int, int));
+int dma_finished __P((int));
 
 /*===========================================================================*
  *				   fdinit				     *
  *===========================================================================*/
+int
 fdinit(un)
 	FD_UNIT	*un;
 {
-	int i;
 	int ctlr = un->ctlr;
-	unsigned char result;
+	u_char result;
 
 #if 0
 	irq_init();
 #endif 0
 	fdReset(ctlr);
-	
+
 	if (fdc_out(ctlr, CMD_VERSION) != SUCCESS) {  /* version check */
-		printf ("fdc%d:fatal error: CMD_VERSION cmd fail\n",ctlr);
+		printf ("fdc%d:fatal error: CMD_VERSION cmd fail\n", ctlr);
 		return (FAIL);
 	}
 	if (fdc_in(ctlr, &result) != SUCCESS) {
-		printf ("fdc%d:fatal error: CMD_VERSION exec fail\n",ctlr);
+		printf ("fdc%d:fatal error: CMD_VERSION exec fail\n", ctlr);
 		return (FAIL);
 	}
-	if (result != (unsigned char)RESULT_VERSION) {
-		printf ("fdc%d:fatal error: unknown version fdc\n",ctlr);
+	if (result != (u_char)RESULT_VERSION) {
+		printf ("fdc%d:fatal error: unknown version fdc\n", ctlr);
 		return (FAIL);
 	}
 
@@ -211,6 +216,7 @@ fdinit(un)
 /*===========================================================================*
  *				   fdopen				     *
  *===========================================================================*/
+int
 fdopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
@@ -250,6 +256,7 @@ fdopen(f, ctlr, unit, part)
 /*===========================================================================*
  *				   fdclose				     *
  *===========================================================================*/
+int
 fdclose(f)
 	struct open_file *f;
 {
@@ -265,15 +272,13 @@ fdclose(f)
 /*===========================================================================*
  *				   fdioctl				     *
  *===========================================================================*/
+int
 fdioctl(f, cmd, arg)
 	struct open_file *f;
 	u_long cmd;
 	void *arg;
 {
-	FD_UNIT *un = f->f_devdata;
-	int *stat = un->stat;
-
-	switch(cmd) {
+	switch (cmd) {
 	default:
 		return (EIO);
 	}
@@ -284,6 +289,7 @@ fdioctl(f, cmd, arg)
 /*===========================================================================*
  *				   fdstrategy				     *
  *===========================================================================*/
+int
 fdstrategy(devdata, func, blk, size, buf, rsize)
 	void *devdata;	/* device uniq data */
 	int func;	/* function (read or write) */
@@ -301,7 +307,7 @@ fdstrategy(devdata, func, blk, size, buf, rsize)
 	int fd_skip = 0;
 	char *cbuf = (char *)buf;
 
-	if(un->un_flags & INT_BUSY) {
+	if (un->un_flags & INT_BUSY) {
 		return (ENXIO);
 	}
 	fdDriveStatus(ctlr, unit, 0, stat);
@@ -339,7 +345,7 @@ fdstrategy(devdata, func, blk, size, buf, rsize)
 	return (SUCCESS);
 
 bad:
-	return(FAIL);
+	return (FAIL);
 }
 
 /*===========================================================================*
@@ -406,7 +412,7 @@ fdc_out(ctlr, cmd)
 	while (((status = inb(FDC_STATUS(ctlr))) & (RQM | DIO))
 		!= (RQM | 0) && time_out-- > 0);
 	if (time_out <= 0) {
-		printf("fdc_out: timeout  status = 0x%x\n", status);	
+		printf("fdc_out: timeout  status = 0x%x\n", status);
 		return (FAIL);
 	}
 
@@ -421,7 +427,7 @@ fdc_out(ctlr, cmd)
 int
 fdc_in(ctlr, data)
 	int ctlr;	/* controller no */
-	unsigned char *data;
+	u_char *data;
 {
 	volatile int status;
 	int time_out;
@@ -440,7 +446,7 @@ fdc_in(ctlr, data)
 		return (FAIL);
 	}
 
-	if (data) *data = (unsigned char)inb(FDC_DATA(ctlr));
+	if (data) *data = (u_char)inb(FDC_DATA(ctlr));
 
 	return (SUCCESS);
 }
@@ -451,7 +457,7 @@ fdc_in(ctlr, data)
 int
 fdc_intr_wait()
 {
-	return (irq_polling(FDC_IRQ, INT_TIMEOUT));     /* wait interrupt */
+	return (irq_polling(FDC_IRQ, INT_TIMEOUT));	/* wait interrupt */
 }
 
 /*===========================================================================*
@@ -472,8 +478,8 @@ motor_off(ctlr, unit)
 	int ctlr;
 	int unit;
 {
-        outb(FDC_DOR(ctlr), DOR_RESET);    /* reset & motor off */
-	if (fdc_intr_wait() == FAIL)   /* wait interrupt */
+        outb(FDC_DOR(ctlr), DOR_RESET);		/* reset & motor off */
+	if (fdc_intr_wait() == FAIL)		/* wait interrupt */
 		printf("fdc: motor off failed.\n");
 }
 
@@ -491,8 +497,6 @@ fdRecalibrate(ctlr, unit)
 	int ctlr;
 	int unit;
 {
-	int ret_val = 0;
-
 	fdc_out(ctlr, CMD_RECALIBRATE);
 	fdc_out(ctlr, unit);
 
@@ -515,7 +519,7 @@ fdDriveStatus(ctlr, unit, head, stat)
 	register int	unit, head;
 	register int	*stat;
 {
-	unsigned char result;
+	u_char result;
 
 	fdc_out(ctlr, CMD_DRV_SENSE);
 	fdc_out(ctlr, (head << 2) | unit);
@@ -535,7 +539,7 @@ fdSeek(ctlr, unit, cyl)
 	fdc_out(ctlr, unit);
 	fdc_out(ctlr, cyl);
 
-        if (fdc_intr_wait() == FAIL) {    /* wait interrupt */
+        if (fdc_intr_wait() == FAIL) {		/* wait interrupt */
 		printf("fdc: fdSeek Timeout\n");
 		ret_val = FAIL;
 	}
@@ -548,7 +552,7 @@ fdSenseInt(ctlr, stat)
 	int ctlr;
 	int *stat;
 {
-	unsigned char result;
+	u_char result;
 
 	fdc_out(ctlr, CMD_SENSE_INT);
 
@@ -557,7 +561,7 @@ fdSenseInt(ctlr, stat)
 	fdc_in(ctlr, &result);
 	*stat++ = (int)(result & 0xff);
 
-	return(0);
+	return (0);
 }
 
 int
@@ -573,8 +577,7 @@ fdReadWrite(un, func, cyl, head, sec, adrs)
 	int ctlr = un->ctlr;
 	int unit = un->unit;
 	int *stat = un->stat;
-	int read_bytes;
-	unsigned char result;
+	u_char result;
 
 #if 0
 printf("%s:", (func == F_READ ? "READ" : "WRITE"));
@@ -635,27 +638,27 @@ bad:
  */
 
 /* 8259A interrupt controller register */
-#define INT_CTL0	0x20
-#define INT_CTL1	0x21
-#define INT2_CTL0	0xA0
-#define INT2_CTL1	0xA1
+#define	INT_CTL0	0x20
+#define	INT_CTL1	0x21
+#define	INT2_CTL0	0xA0
+#define	INT2_CTL1	0xA1
 
 #define	CASCADE_IRQ	2
 
-#define ICW1_AT         0x11    /* edge triggered, cascade, need ICW4 */
-#define ICW4_AT         0x01    /* not SFNM, not buffered, normal EOI, 8086 */
+#define	ICW1_AT		0x11    /* edge triggered, cascade, need ICW4 */
+#define	ICW4_AT		0x01    /* not SFNM, not buffered, normal EOI, 8086 */
 #define	OCW3_PL		0x0e	/* polling mode */
 #define	OCW2_CLEAR	0x20	/* interrupt clear */
 
 /*
- * IRC programing sequence 
+ * IRC programing sequence
  *
  * after reset
  * 1.	ICW1 (write port:INT_CTL0 data:bit4=1)
  * 2.	ICW2 (write port:INT_CTL1)
  * 3.	ICW3 (write port:INT_CTL1)
  * 4.	ICW4 (write port:INT_CTL1)
- * 
+ *
  * after ICW
  *	OCW1 (write port:INT_CTL1)
  *	OCW2 (write port:INT_CTL0 data:bit3=0,bit4=0)
@@ -667,12 +670,13 @@ bad:
  *	PL   (read port:INT_CTL0)	OCW3(bit2=1,bit1=1)
  */
 
-unsigned int INT_MASK;
-unsigned int INT2_MASK;
+u_int INT_MASK;
+u_int INT2_MASK;
 
 /*===========================================================================*
  *                             irq initialize                                *
  *===========================================================================*/
+void
 irq_init()
 {
 	outb(INT_CTL0, ICW1_AT);		/* ICW1 */
@@ -694,6 +698,7 @@ irq_init()
 /*===========================================================================*
  *                           irq polling check                               *
  *===========================================================================*/
+int
 irq_polling(irq_no, timeout)
 	int	irq_no;
 	int	timeout;
@@ -707,7 +712,7 @@ irq_polling(irq_no, timeout)
 
 	outb(irc_no ? INT2_CTL1 : INT_CTL1, ~(1 << (irq_no >> (irc_no * 3))));
 
-	while(--timeout > 0) {
+	while (--timeout > 0) {
 		outb(irc_no ? INT2_CTL0 : INT_CTL0, OCW3_PL);
 						/* set polling mode */
 		data = inb(irc_no ? INT2_CTL0 : INT_CTL0);
@@ -737,42 +742,42 @@ irq_polling(irq_no, timeout)
  *			DMA Controller Define			 	     *
  *---------------------------------------------------------------------------*/
 /* DMA Controller Registers */
-#define DMA_ADDR	0x004    /* port for low 16 bits of DMA address */
-#define DMA_LTOP	0x081    /* port for top low 8bit DMA addr(ch2) */
-#define DMA_HTOP	0x481    /* port for top high 8bit DMA addr(ch2) */
-#define DMA_COUNT	0x005    /* port for DMA count (count =  bytes - 1) */
+#define	DMA_ADDR	0x004    /* port for low 16 bits of DMA address */
+#define	DMA_LTOP	0x081    /* port for top low 8bit DMA addr(ch2) */
+#define	DMA_HTOP	0x481    /* port for top high 8bit DMA addr(ch2) */
+#define	DMA_COUNT	0x005    /* port for DMA count (count =  bytes - 1) */
 #define	DMA_DEVCON	0x008    /* DMA device control register */
 #define	DMA_SR		0x008    /* DMA status register */
 #define	DMA_RESET	0x00D    /* DMA software reset register */
-#define DMA_FLIPFLOP	0x00C    /* DMA byte pointer flip-flop */
-#define DMA_MODE	0x00B    /* DMA mode port */
-#define DMA_INIT	0x00A    /* DMA init port */
+#define	DMA_FLIPFLOP	0x00C    /* DMA byte pointer flip-flop */
+#define	DMA_MODE	0x00B    /* DMA mode port */
+#define	DMA_INIT	0x00A    /* DMA init port */
 
-#define DMA_RESET_VAL	0x06
+#define	DMA_RESET_VAL	0x06
 /* DMA channel commands. */
-#define DMA_READ        0x46    /* DMA read opcode */
-#define DMA_WRITE       0x4A    /* DMA write opcode */
+#define	DMA_READ	0x46    /* DMA read opcode */
+#define	DMA_WRITE	0x4A    /* DMA write opcode */
 
 /*===========================================================================*
  *				dma_setup				     *
  *===========================================================================*/
-int
+void
 dma_setup(buf, size, func, chan)
-	unsigned char *buf;
+	u_char *buf;
 	int size;
 	int func;
 	int chan;
 {
-	unsigned long pbuf = local_to_PCI((unsigned long)buf);
+	u_long pbuf = local_to_PCI((u_long)buf);
 
 #if 0
 	outb(DMA_RESET, 0);
 	DELAY(1);
 	outb(DMA_DEVCON, 0x00);
-	outb(DMA_INIT, DMA_RESET_VAL);    /* reset the dma controller */
+	outb(DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
 #endif
 	outb(DMA_MODE, func == F_READ ? DMA_READ : DMA_WRITE);
-	outb(DMA_FLIPFLOP, 0);            /* write anything to reset it */
+	outb(DMA_FLIPFLOP, 0);		/* write anything to reset it */
 
 	outb(DMA_ADDR, (int)pbuf >>  0);
 	outb(DMA_ADDR, (int)pbuf >>  8);
@@ -781,7 +786,7 @@ dma_setup(buf, size, func, chan)
 
 	outb(DMA_COUNT, (size - 1) >> 0);
 	outb(DMA_COUNT, (size - 1) >> 8);
-	outb(DMA_INIT, chan);        /* some sort of enable */
+	outb(DMA_INIT, chan);		/* some sort of enable */
 }
 
 int

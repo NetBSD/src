@@ -1,4 +1,4 @@
-/*	$NetBSD: video.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: video.c,v 1.4 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -32,6 +32,7 @@
 
 #ifdef CONS_BE
 #include <stand.h>
+#include "boot.h"
 #include "iso_font.h"
 
 #define	FONT_WIDTH	8
@@ -42,8 +43,8 @@
 #define	ROW	(VRAM_WIDTH / FONT_WIDTH)
 #define	COL	(VRAM_HEIGHT / FONT_HEIGHT)
 
-unsigned char *VramBase;
-unsigned char save_cursor[FONT_WIDTH];
+u_char *VramBase;
+u_char save_cursor[FONT_WIDTH];
 
 /*
  * The current state of virtual displays
@@ -60,13 +61,14 @@ struct screen {
 	int	*accp;		/* pointer to the current processed argument */
 	int	row;
 	int	col;
-	unsigned char fgcolor;
-	unsigned char bgcolor;
+	u_char fgcolor;
+	u_char bgcolor;
 } screen;
 
 
 void
-video_init(unsigned char *buffer)
+video_init(buffer)
+	u_char *buffer;
 {
 	struct screen *d = &screen;
 
@@ -81,9 +83,11 @@ video_init(unsigned char *buffer)
 }
 
 static void
-wrtchar(unsigned char c, struct screen *d)
+wrtchar(c, d)
+	u_char c;
+	struct screen *d;
 {
-	unsigned char *p = VramBase +
+	u_char *p = VramBase +
 		(d->col * VRAM_WIDTH * FONT_HEIGHT) + (d->row * FONT_WIDTH);
 	int fontbase = c * 16;
 	int x, y;
@@ -100,12 +104,14 @@ wrtchar(unsigned char c, struct screen *d)
 }
 
 static void
-cursor(struct screen *d, int flag)
+cursor(d, flag)
+	struct screen *d;
+	int flag;
 {
 	int x;
 	int y = FONT_HEIGHT - 1;
 
-	unsigned char *p = VramBase +
+	u_char *p = VramBase +
 		(d->col * VRAM_WIDTH * FONT_HEIGHT) + (d->row * FONT_WIDTH);
 	for (x = 0; x < FONT_WIDTH - 1; x++) {
 		if (flag) {
@@ -125,11 +131,10 @@ cursor(struct screen *d, int flag)
  * or 0 if the current regular color for that screen is to be used.
  */
 void 
-video_putc(u_char c)
+video_putc(c)
+	int c;
 {
 	struct screen *d = &screen;
-	int i, j;
-	unsigned char *pp;
 
 	cursor(d, 0);
 
@@ -178,6 +183,11 @@ video_putc(u_char c)
 			}
 			break;
 		}
+		break;
+
+	case ESC:
+	case EBRAC:
+	case EBRACEQ:
 		break;
 	}
 	if (d->col >= COL) {		/* scroll check */

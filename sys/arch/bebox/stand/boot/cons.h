@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.3 1999/06/24 01:10:31 sakamoto Exp $	*/
+/*	$NetBSD: cons.h,v 1.4 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

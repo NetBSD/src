@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.4 1999/06/24 01:10:31 sakamoto Exp $	*/
+/*	$NetBSD: cons.c,v 1.5 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include <sys/param.h>
+#include "boot.h"
 #include "cons.h"
 
 #ifdef CONS_BE
@@ -70,15 +71,15 @@ int siocngetchar(), siocnscan();
 struct consdev constab[] = {
 #ifdef CONS_BE
 	{ "be", 0xd0000000, 0,
-	  becnprobe, becninit, becngetchar, becnputchar, becnscan },
+	    becnprobe, becninit, becngetchar, becnputchar, becnscan },
 #endif
 #ifdef CONS_VGA
 	{ "vga", 0xc0000000, 0,
-	  vgacnprobe, vgacninit, vgacngetchar, vgacnputchar, vgacnscan },
+	    vgacnprobe, vgacninit, vgacngetchar, vgacnputchar, vgacnscan },
 #endif
 #ifdef CONS_SERIAL
 	{ "com", COMPORT, COMSPEED,
-	  siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
+	    siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
 #endif
 	{ 0 }
 };
@@ -103,10 +104,10 @@ cninit(addr, speed)
 		(*cn_tab->cn_init)(cn_tab);
 		*addr = cn_tab->address;
 		*speed = cn_tab->speed;
-		return cn_tab->cn_name;
+		return (cn_tab->cn_name);
 	}
 
-	return NULL;
+	return (NULL);
 }
 
 int
@@ -148,7 +149,7 @@ void
 becninit(cp)
 	struct consdev *cp;
 {
-	video_init((unsigned char *)cp->address);
+	video_init((u_char *)cp->address);
 	kbdreset();
 }
 
@@ -190,8 +191,8 @@ void
 vgacninit(cp)
 	struct consdev *cp;
 {
-	vga_reset((unsigned char *)cp->address);
-	vga_init((unsigned char *)cp->address);
+	vga_reset((u_char *)cp->address);
+	vga_init((u_char *)cp->address);
 	kbdreset();
 }
 

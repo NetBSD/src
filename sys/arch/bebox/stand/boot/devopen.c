@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1998/01/19 03:01:00 sakamoto Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -28,13 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stand.h"
-
+#include <stand.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 
 #define	ispart(c)	((c) >= 'a' && (c) <= 'h')
 
+int
 atoi(cp)
 	char *cp;
 {
@@ -45,6 +45,7 @@ atoi(cp)
 	return (val);
 }
 
+int
 devlookup(d)
 	char *d;
 {
@@ -67,6 +68,7 @@ devlookup(d)
  * Parse a device spec in one of two forms.
  *   dev(ctlr, unit, part)file
  */
+int
 devparse(fname, dev, adapt, ctlr, unit, part, file)
 	const char *fname;
 	int *dev;
@@ -130,17 +132,19 @@ baddev:
 	return (EINVAL);
 }
 
+int
 devopen(f, fname, file)
 	struct open_file *f;
 	const char *fname;
 	char **file;
 {
-	int n, error;
+	int error;
 	int dev = 0, ctlr = 0, unit = 0, part = 0;
 	int adapt = 0;
 	struct devsw *dp = &devsw[0];
 
-	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
+	if ((error =
+	    devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file)) != 0)
 		return (error);
 
 	dp = &devsw[dev];

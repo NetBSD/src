@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1999/06/24 01:10:31 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stand.h>
 #include <sys/param.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
@@ -41,10 +42,10 @@ mftb()
 {
 	u_long scratch;
 	u_quad_t tb;
-	
+
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
-	return tb;
+	return (tb);
 }
 
 /*
@@ -52,7 +53,7 @@ mftb()
  */
 void
 delay(n)
-	int n;
+	u_int n;
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
@@ -61,6 +62,6 @@ delay(n)
 	tb += (n * 1000 + NS_PER_TICK - 1) / NS_PER_TICK;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw %0,%2; blt 1b; 2:"
-	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:"
+		:: "r"(scratch), "r"(tbh), "r"(tbl));
 }

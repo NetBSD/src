@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: vga.c,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -33,8 +33,8 @@
  */
 
 #ifdef CONS_VGA
-typedef unsigned short u_short;
-typedef unsigned char  u_char;
+#include <stand.h>
+#include "boot.h"
 
 #define	COL		80
 #define	ROW		25
@@ -44,11 +44,11 @@ typedef unsigned char  u_char;
 #define CGA_BASE	0x3D4
 #define CGA_BUF		0xB8000
 
-unsigned char background = 0;  /* Black */
-unsigned char foreground = 7;  /* White */
+u_char background = 0;  /* Black */
+u_char foreground = 7;  /* White */
 
-unsigned int addr_6845;
-unsigned short *Crtat;
+u_int addr_6845;
+u_short *Crtat;
 int lastpos;
 int scroll;
 
@@ -83,8 +83,8 @@ struct screen {
 #define	CATTR(x) (x)		/* store color/attributes un-shifted */
 #define	ATTR_ADDR(which) (((u_char *)&(which))+1) /* address of attributes */
 
-unsigned short	pccolor;		/* color/attributes for tty output */
-unsigned short	pccolor_so;		/* color/attributes, standout mode */
+u_short	pccolor;		/* color/attributes for tty output */
+u_short	pccolor_so;		/* color/attributes, standout mode */
 
 /*
  * cursor() sets an offset (0-1999) into the 80x25 text area   
@@ -123,15 +123,18 @@ initscreen()
 	d->row++; \
 }
 
-fillw(unsigned short val, unsigned short *buf, int num)
+void
+fillw(val, buf, num)
+	u_short val;
+	u_short *buf;
+	int num;
 {
 	/* Need to byte swap value */
-	unsigned short tmp;
+	u_short tmp;
+
 	tmp = val;
 	while (num-- > 0)
-	{
 		*buf++ = tmp;
-	}
 }
 
 /*
@@ -142,7 +145,7 @@ fillw(unsigned short val, unsigned short *buf, int num)
  * or 0 if the current regular color for that screen is to be used.
  */
 void 
-vga_putc(u_char c)
+vga_putc(int c)
 {
 	struct screen *d = &screen;
 	u_short *base;
@@ -389,33 +392,41 @@ void
 vga_puts(char *s)
 {
 	char c;
-	while (c = *s++)
-	{
+	while ((c = *s++)) {
 		vga_putc(c);
 	}
 }
 
+void
 video_on()
-{ /* Enable video */
+{
+
+	/* Enable video */
 	outb(0x3C4, 0x01);
-	outb(0x3C5, inb(0x3C5)&~0x20);
+	outb(0x3C5, inb(0x3C5) & ~0x20);
 }
 
+void
 video_off()
-{ /* Disable video */
+{
+
+	/* Disable video */
 	outb(0x3C4, 0x01);
-	outb(0x3C5, inb(0x3C5)|0x20);
+	outb(0x3C5, inb(0x3C5) | 0x20);
 }
 
-vga_init(unsigned char *ISA_mem)
+void
+vga_init(ISA_mem)
+	u_char *ISA_mem;
 {
 	struct screen *d = &screen;
-	bzero(d, sizeof(screen));
+
+	memset(d, 0, sizeof (screen));
 	video_on();
+
 	d->cp = Crtat = (u_short *)&ISA_mem[0x0B8000];
 	addr_6845 = CGA_BASE;
 	initscreen();
 	fillw(pccolor|(' '<<8), d->cp, COL * ROW);
-	return (1);
 }
 #endif /* CONS_VGA */

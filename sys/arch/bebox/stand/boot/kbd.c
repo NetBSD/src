@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -31,6 +31,9 @@
  */
 
 #if defined(CONS_BE) || defined(CONS_VGA)
+#include <stand.h>
+#include "boot.h"
+
 /*
  * Keyboard handler
  */
@@ -47,7 +50,7 @@
 
 #include "pcconstab.US"
 
-unsigned char shfts, ctls, alts, caps, num, stp;
+u_char shfts, ctls, alts, caps, num, stp;
 
 #define	KBDATAP		0x60	/* kbd data port */
 #define	KBSTATUSPORT	0x61	/* kbd status */
@@ -55,9 +58,9 @@ unsigned char shfts, ctls, alts, caps, num, stp;
 #define	KBINRDY		0x01
 #define	KBOUTRDY	0x02
 
-#define _x__ 0x00  /* Unknown / unmapped */
+#define	_x__ 0x00  /* Unknown / unmapped */
 
-const unsigned char keycode[] = {
+const u_char keycode[] = {
 	_x__, 0x43, 0x41, 0x3F, 0x3D, 0x3B, 0x3C, _x__, /* 0x00-0x07 */
 	_x__, 0x44, 0x42, 0x40, 0x3E, 0x0F, 0x29, _x__, /* 0x08-0x0F */
 	_x__, 0x38, 0x2A, _x__, 0x1D, 0x10, 0x02, _x__, /* 0x10-0x17 */
@@ -76,19 +79,19 @@ const unsigned char keycode[] = {
 	_x__, 0x4E, 0x51, 0x4A, _x__, 0x49, 0x46, 0x54, /* 0x78-0x7F */
 };
 
-static NOP() {}
-
 int
 kbd(noblock)
 	int noblock;
 {
-	unsigned char dt, brk, act;
-	int first = 1;	
+	u_char dt, brk, act;
+	int first = 1;
+
 loop:
 	if (noblock) {
 		if ((inb(KBSTATP) & KBINRDY) == 0)
 			return (-1);
-	} else while((inb(KBSTATP) & KBINRDY) == 0) ;
+	} else while ((inb(KBSTATP) & KBINRDY) == 0)
+		;
 
 	dt = inb(KBDATAP);
 
@@ -96,35 +99,41 @@ loop:
 	dt = dt & 0x7f;		/* keycode */
 
 	act = action[dt];
-	if (act&SHF)
+	if (act & SHF)
 		shfts = brk ? 0 : 1;
-	if (act&ALT)
+	if (act & ALT)
 		alts = brk ? 0 : 1;
-	if (act&NUM)
-		if (act&L) {
+	if (act & NUM) {
+		if (act & L) {
 			/* NUM lock */
-			if(!brk)
+			if (!brk)
 				num = !num;
-		} else
+		} else {
 			num = brk ? 0 : 1;
-	if (act&CTL)
+		}
+	}
+	if (act & CTL)
 		ctls = brk ? 0 : 1;
-	if (act&CPS)
-		if (act&L) {
+	if (act & CPS) {
+		if (act & L) {
 			/* CAPS lock */
-			if(!brk)
+			if (!brk)
 				caps = !caps;
-		} else
+		} else {
 			caps = brk ? 0 : 1;
-	if (act&STP)
-		if (act&L) {
-			if(!brk)
+		}
+	}
+	if (act & STP) {
+		if (act & L) {
+			if (!brk)
 				stp = !stp;
-		} else
+		} else {
 			stp = brk ? 0 : 1;
+		}
+	}
 
-	if ((act&ASCII) && !brk) {
-		unsigned char chr;
+	if ((act & ASCII) && !brk) {
+		u_char chr;
 
 		if (shfts)
 			chr = shift[dt];
@@ -137,15 +146,16 @@ loop:
 			chr |= 0x80;
 
 		if (caps && (chr >= 'a' && chr <= 'z'))
-			chr -= 'a' - 'A' ;
-#define CTRL(s) (s & 0x1F)			
+			chr -= 'a' - 'A';
+#define	CTRL(s) (s & 0x1F)
 		if ((chr == '\r') || (chr == '\n') ||
 		    (chr == CTRL('A')) || (chr == CTRL('S'))) {
 
 			/* Wait for key up */
 			while (1)
 			{
-				while((inb(KBSTATP) & KBINRDY) == 0) ;
+				while ((inb(KBSTATP) & KBINRDY) == 0)
+					;
 				dt = inb(KBDATAP);
 				if (dt & 0x80) /* key up */ break;
 			}
@@ -158,28 +168,36 @@ loop:
 	goto loop;
 }
 
+void
 kbdreset()
 {
-	unsigned char c;
+	u_char c;
 	int i;
 
 	/* Send self-test */
-	while (inb(KBSTATP) & KBOUTRDY) ;
-	outb(KBSTATP,0xAA);
-	while ((inb(KBSTATP) & KBINRDY) == 0) ;	/* wait input ready */
+	while (inb(KBSTATP) & KBOUTRDY)
+		;
+	outb(KBSTATP, 0xAA);
+	while ((inb(KBSTATP) & KBINRDY) == 0)	/* wait input ready */
+		;
 	if ((c = inb(KBDATAP)) != 0x55) {
 		printf("Keyboard self test failed - result: %x\n", c);
 	}
 	/* Enable interrupts and keyboard controller */
-	while (inb(KBSTATP) & KBOUTRDY) ;
-	outb(KBSTATP,0x60);	
-	while (inb(KBSTATP) & KBOUTRDY) ;
-	outb(KBDATAP,0x45);
-	for (i = 0;  i < 10000;  i++) NOP();
-	while (inb(KBSTATP) & KBOUTRDY) ;
-	outb(KBSTATP,0xAE);
+	while (inb(KBSTATP) & KBOUTRDY)
+		;
+	outb(KBSTATP, 0x60);
+	while (inb(KBSTATP) & KBOUTRDY)
+		;
+	outb(KBDATAP, 0x45);
+	for (i = 0;  i < 10000;  i++)
+		;
+	while (inb(KBSTATP) & KBOUTRDY)
+		;
+	outb(KBSTATP, 0xAE);
 }
 
+int
 kbd_getc()
 {
 	int c;
@@ -188,6 +206,7 @@ kbd_getc()
 	return (c);
 }
 
+int
 kbd_test()
 {
 	return ((inb(KBSTATP) & KBINRDY) != 0);
