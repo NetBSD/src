@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.7 2003/01/07 18:54:08 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.8 2003/01/10 14:58:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -404,7 +404,12 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 			redlo |= IOAPIC_REDLO_LEVEL;
 		else
 			redlo &= ~IOAPIC_REDLO_LEVEL;
-		/* XXX polarity goo, too */
+		if (map != NULL && ((map->flags & 3) == MPS_INTPO_DEF)) {
+			if (pp->ip_type == IST_LEVEL)
+				redlo |= IOAPIC_REDLO_ACTLO;
+			else
+				redlo &= ~IOAPIC_REDLO_ACTLO;
+		}
 	}
 	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
