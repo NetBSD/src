@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.7 2001/11/13 07:26:29 lukem Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.8 2003/01/06 13:26:27 wiz Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.7 2001/11/13 07:26:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.8 2003/01/06 13:26:27 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ of_decode_int(p)
  *			indicates compatibility.
  *
  * Return Value:
- *	-1 if none of the strings are found in phandle's "compatiblity"
+ *	-1 if none of the strings are found in phandle's "compatibility"
  *	property, or the index of the string in "strings" of the first
  *	string found in phandle's "compatibility" property.
  *
