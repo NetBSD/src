@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.362 2001/06/04 22:25:17 wiz Exp $
+# $NetBSD: mi,v 1.363 2001/06/07 15:27:52 mrg Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1140,6 +1140,7 @@
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman
 ./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman
+./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman
 ./usr/share/man/cat8/compat_osf1.0		man-sys-catman
 ./usr/share/man/cat8/compat_pecoff.0		man-sys-catman
 ./usr/share/man/cat8/compat_sco.0		man-sys-catman
@@ -2651,6 +2652,7 @@
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man
 ./usr/share/man/man8/compat_ibcs2.8		man-sys-man
 ./usr/share/man/man8/compat_linux.8		man-sys-man
+./usr/share/man/man8/compat_netbsd32.8		man-sys-man
 ./usr/share/man/man8/compat_osf1.8		man-sys-man
 ./usr/share/man/man8/compat_pecoff.8		man-sys-man
 ./usr/share/man/man8/compat_sco.8		man-sys-man
