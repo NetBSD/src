@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.260 2000/09/04 20:44:37 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.261 2000/09/07 23:26:41 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.254 2000/09/04 20:30:50 soren Exp 
+ *	NetBSD: pcidevs,v 1.255 2000/09/07 23:26:28 soren Exp 
  */
 
 /*
@@ -478,7 +478,7 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
-#define	PCI_VENDOR_LUCENT	0x11c1		/* AT&T Microelectronics */
+#define	PCI_VENDOR_LUCENT	0x11c1		/* Lucent Technologies */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
 #define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
@@ -1134,7 +1134,7 @@
 #define	PCI_PRODUCT_LITEON_82C168	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
 #define	PCI_PRODUCT_LITEON_82C115	0xc115		/* 82C115 (PNIC II) 10/100 Ethernet */
 
-/* Lucent products */
+/* Lucent Technologies products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0440	0x0440		/* K56flex DSVD LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0441	0x0441		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0442	0x0442		/* LTMODEM */
