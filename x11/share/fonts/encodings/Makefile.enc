@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.enc,v 1.4 2003/11/08 13:57:30 lukem Exp $
+#	$NetBSD: Makefile.enc,v 1.5 2004/02/09 04:30:05 lukem Exp $
 
 FILESDIR=	${X11FONTDIR}/${ENCDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/${ENCDIR}
@@ -16,9 +16,7 @@ CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
 
 realall: ${FILES}
 
-
-MKFONTDIRDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontdir && ${PRINTOBJDIR}
-MKFONTDIR=	${MKFONTDIRDIR}/mkfontdir
+.include "${NETBSDSRCDIR}/x11/tools/mkfontdir/Makefile.mkfontdir"
 
 afterinstall:
 	${_MKMSG_CREATE} ${DESTDIR}${FILESDIR}/encodings.dir
