@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.66 2002/04/22 21:05:19 ad Exp $
+.\"	$NetBSD: pci.4,v 1.67 2002/04/26 02:05:07 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -120,6 +120,8 @@ interfaces.
 .El
 .Ss Disk and tape controllers
 .Bl -tag -width pcdisplay -offset indent
+.It aac
+The Adaptec AAC family of RAID controllers.
 .It cac
 Compaq array controllers.
 .It icp
@@ -322,6 +324,7 @@ VIA VT82C686A hardware monitors.
 VGA graphics boards.
 .El
 .Sh SEE ALSO
+.Xr aac 4 ,
 .Xr adv 4 ,
 .Xr adw 4 ,
 .Xr agp 4 ,
