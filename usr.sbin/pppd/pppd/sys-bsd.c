@@ -19,7 +19,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.7 1994/12/23 17:00:29 cgd Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.8 1995/01/07 10:49:35 pk Exp $";
 #endif
 
 /*
@@ -619,7 +619,7 @@ get_ether_addr(ipaddr, hwaddr)
 	     */
 	    if (ioctl(s, SIOCGIFNETMASK, &ifreq) < 0)
 		continue;
-	    mask = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
+	    mask = ((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr.s_addr;
 	    if ((ipaddr & mask) != (ina & mask))
 		continue;
 
