@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.109.2.6 2000/09/21 17:09:22 bjh21 Exp $
+.\"	$NetBSD: options.4,v 1.109.2.7 2000/10/16 22:12:11 tv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1423,7 +1423,7 @@ or co-processor.
 .It Cd options VM86
 Include support for virtual 8086 mode, used by
 .Tn DOS
-emulators.
+emulators and X servers to run BIOS code, e.g. for some VESA routines.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
