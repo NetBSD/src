@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.5 2001/09/25 16:31:13 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.6 2001/11/17 00:37:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -201,6 +201,11 @@ struct proc {
 	void		*p_emuldata;	/* Per-process emulation data, or NULL.
 					 * Malloc type M_EMULDATA 
 					 */
+	
+	void 		(*p_userret)(struct lwp *l, void *arg); 
+					/* Function to call at userret(). */ 
+	void		*p_userret_arg;
+	
 
 /*
  * End area that is zeroed on creation
