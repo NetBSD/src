@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/22 14:18:11 pk Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/08 16:52:20 tron Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -27,16 +27,16 @@ MINIROOT_IMAGE!=cd ${MINIROOT}; \
 all: ${INSTFS}
 
 ${INSTFS}: ${MINIROOT_IMAGE}
-	vnconfig -v -c ${VND_CDEV} ${MINIROOT_IMAGE}
+	vnconfig -v -c ${VND} ${MINIROOT_IMAGE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	(cd ${MOUNT_POINT}; \
 		tar -z -X ${.CURDIR}/exclude -c -f ${.OBJDIR}/${.TARGET} .)
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${INSTFS}
 
 clean cleandir distclean:
