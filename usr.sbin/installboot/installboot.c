@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.12 2003/04/29 09:39:23 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.13 2003/05/08 20:33:44 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.12 2003/04/29 09:39:23 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.13 2003/05/08 20:33:44 petrov Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -351,7 +351,7 @@ parseoptions(ib_params *params, const char *option)
 				break;
 			continue;
 		default:
-			errx(1, "Internal error: option `%s' has invalid type",
+			errx(1, "Internal error: option `%s' has invalid type %d",
 				opt->name, opt->type);
 		}
 		warnx("Invalid option value `%s=%.*s'", opt->name, len, option);
