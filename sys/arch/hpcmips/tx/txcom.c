@@ -1,7 +1,7 @@
-/*	$NetBSD: txcom.c,v 1.23 2003/12/26 11:10:08 shin Exp $ */
+/*	$NetBSD: txcom.c,v 1.24 2004/06/12 15:39:33 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.23 2003/12/26 11:10:08 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.24 2004/06/12 15:39:33 uch Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -147,7 +147,7 @@ void	txcomstart(struct tty *);
 int	txcomparam(struct tty *, struct termios *);
 
 void	txcom_reset	(struct txcom_chip *);
-int	txcom_enable	(struct txcom_chip *);
+int	txcom_enable	(struct txcom_chip *, boolean_t);
 void	txcom_disable	(struct txcom_chip *);
 void	txcom_setmode	(struct txcom_chip *);
 void	txcom_setbaudrate(struct txcom_chip *);
@@ -330,7 +330,7 @@ txcom_reset(struct txcom_chip *chip)
 }
 
 int
-txcom_enable(struct txcom_chip *chip)
+txcom_enable(struct txcom_chip *chip, boolean_t console)
 {
 	tx_chipset_tag_t tc;
 	txreg_t reg;
@@ -340,10 +340,15 @@ txcom_enable(struct txcom_chip *chip)
 	slot = chip->sc_slot;
 	ofs = TX39_UARTCTRL1_REG(slot);
 
-	/* External power supply (if any) */
-	config_hook_call(CONFIG_HOOK_POWERCONTROL,
-	    CONFIG_HOOK_POWERCONTROL_COM0, PWCTL_ON);
-	delay(3);
+	/*
+	 * External power supply (if any)
+	 * When serial console, Windows CE already powered on it.
+	 */
+	if (!console) {
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_COM0, PWCTL_ON);
+		delay(3);
+	}
 
 	/* Supply clock */
 	reg = tx_conf_read(tc, TX39_CLOCKCTRL_REG);
@@ -574,7 +579,7 @@ txcom_cnattach(int slot, int speed, int cflag)
 	txcom_setmode(&txcom_chip);
 	txcom_setbaudrate(&txcom_chip);
 
-	if (txcom_enable(&txcom_chip))
+	if (txcom_enable(&txcom_chip, TRUE) != 0)
 		return 1;
 
 	return 0;
@@ -799,7 +804,7 @@ txcomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	s = spltty();
 
-	if (txcom_enable(sc->sc_chip)) {
+	if (txcom_enable(sc->sc_chip, FALSE)) {
 		splx(s);
 		goto out;
 	}
