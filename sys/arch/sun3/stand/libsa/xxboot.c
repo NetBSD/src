@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 1998/06/29 20:17:03 gwr Exp $ */
+/*	$NetBSD: xxboot.c,v 1.1 1998/07/01 22:51:43 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,20 +42,30 @@
 #include <stand.h>
 #include "libsa.h"
 
-#define XX "ufs"
+/*
+ * Note that extname is edited based on the running machine type
+ * (sun3 vs sun3x).  EXTNAMEX is the position of the 'x'.
+ */
+char	extname[] = "netbsd.sun3x";
+#define EXTNAMEX (sizeof(extname)-2)
 
 /*
- * If the kernel name was not specified, try the extended name,
- * and if that is not found, try the default name, and if that
- * is not found, ask the user for help.
+ * If the PROM did not give us a specific kernel name to use,
+ * and did not specify the -a flag (ask), then try the names
+ * in the following list.
  */
-char	defname[32] = "netbsd";
-char	extname[32] = "netbsd.sun3";
+char *kernelnames[] = {
+	"netbsd",
+	"netbsd.old",
+	extname,
+	NULL
+};
 char	line[80];
 
 main()
 {
 	struct open_file	f;
+	char **npp;
 	char *cp, *file;
 	char *entry;
 	int	io, x;
@@ -74,48 +84,61 @@ main()
 		return;
 	}
 
-	/* If running on a Sun3X, append an x. */
-	if (_is3x)
-		extname[11] = 'x';
-	file = extname;
+	/*
+	 * Edit the "extended" kernel name based on
+	 * the type of machine we are running on.
+	 */
+	if (_is3x == 0)
+		extname[EXTNAMEX] = 0;
 
-	/* If the PROM gave us a file name, use it. */
+	/* If we got the "-a" flag, ask for the name. */
+	if (prom_boothow & RB_ASKNAME)
+		goto just_ask;
+
+	/*
+	 * If the PROM gave us a file name,
+	 * it means the user asked for that
+	 * kernel name explicitly.
+	 */
 	cp = prom_bootfile;
-	if (cp && *cp)
+	if (cp && *cp) {
 		file = cp;
+		goto try_open;
+	}
 
-	for (;;) {
-		if (prom_boothow & RB_ASKNAME) {
-			printf("filename? [%s]: ", defname);
-			gets(line);
-			if (line[0])
-				file = line;
-			else
-				file = defname;
+	/*
+	 * Try the default kernel names.
+	 */
+	for (npp = kernelnames; *npp; npp++) {
+		file = *npp;
+		printf(XX "boot: trying %s\n", file);
+		if ((io = open(file, 0)) >= 0) {
+			/* The open succeeded. */
+			goto try_load;
 		}
+	}
 
-#ifdef DEBUG
-		printf(XX "boot: trying \"%s\"\n", file);
-#endif
+	/*
+	 * Ask what kernel name to load.
+	 */
+	for (;;) {
 
+	just_ask:
+		file = kernelnames[0];
+		printf("filename? [%s]: ", file);
+		gets(line);
+		if (line[0])
+			file = line;
+
+	try_open:
 		/* Can we open the file? */
 		io = open(file, 0);
-		if (io < 0) {
-			/*
-			 * Failed to open the file.  If we were
-			 * trying the extended name (first time)
-			 * then quietly retry with the plain name.
-			 */
-			if (file == extname) {
-				file = defname;
-				continue;
-			}
+		if (io < 0)
 			goto err;
-		}
 
+	try_load:
 		/* The open succeeded.  Try loading. */
-		if (file != line)
-			printf(XX "boot: loading %s\n", file);
+		printf(XX "boot: loading %s\n", file);
 		x = load_sun(io, (char *)LOADADDR, &entry);
 		close(io);
 		if (x == 0)
@@ -123,7 +146,6 @@ main()
 
 	err:
 		printf(XX "boot: %s: %s\n", file, strerror(errno));
-		prom_boothow |= RB_ASKNAME;
 	}
 
 	/* Do the "last close" on the underlying device. */
