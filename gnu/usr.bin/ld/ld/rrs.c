@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.17 1995/06/05 01:01:51 pk Exp $
+ *	$Id: rrs.c,v 1.18 1995/08/04 21:49:08 pk Exp $
  */
 
 #include <sys/param.h>
@@ -36,13 +36,12 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
 #include <fcntl.h>
-#include <ar.h>
-#include <ranlib.h>
 #include <a.out.h>
 #include <stab.h>
 #include <string.h>
@@ -75,6 +74,8 @@ static int	rrs_symbol_size;
 
 static int	current_jmpslot_offset;
 static int	current_got_offset;
+static int	max_got_offset;
+static int	min_got_offset;
 static int	got_origin;
 static int	current_reloc_offset;
 static int	current_hash_index;
@@ -431,7 +432,7 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 		/* GOT offset 0 is reserved */
 		current_got_offset += sizeof(got_t);
 
-	if (current_got_offset > MAX_GOTOFF)
+	if (current_got_offset > max_got_offset)
 		errx(1, "%s: GOT overflow on symbol `%s' at %#x",
 		      get_file_name(entry), sp->name, RELOC_ADDRESS(rp));
 
@@ -538,7 +539,7 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 		/* GOT offset 0 is reserved */
 		current_got_offset += sizeof(got_t);
 
-	if (current_got_offset > MAX_GOTOFF)
+	if (current_got_offset > max_got_offset)
 		errx(1, "%s: GOT overflow for relocation at %#x",
 		      get_file_name(entry), RELOC_ADDRESS(rp));
 
@@ -846,6 +847,7 @@ consider_rrs_section_lengths()
 void
 relocate_rrs_addresses()
 {
+	int gotsize;
 
 	dynamic_symbol->value = 0;
 
@@ -856,16 +858,16 @@ relocate_rrs_addresses()
 	 */
 	current_jmpslot_offset = sizeof(jmpslot_t);
 	current_got_offset = 0;
+	max_got_offset = MAX_GOTOFF(pic_type);
+	min_got_offset = MIN_GOTOFF(pic_type);
+	gotsize = number_of_gotslots * sizeof(got_t);
 
-	if (1 /* Not "-fPIC" seen */) {
-		int gotsize = number_of_gotslots * sizeof(got_t);
+	if (gotsize + min_got_offset - (int)sizeof(got_t) > max_got_offset)
+		warnx("Global Offset Table overflow (use `-fPIC')");
 
-		if (gotsize + MIN_GOTOFF - (int)sizeof(got_t) > MAX_GOTOFF)
-			warnx("Global Offset Table overflow");
-		if (gotsize > MAX_GOTOFF)
-			/* Position at "two-complements" origin */
-			current_got_offset += MIN_GOTOFF;
-	}
+	if (gotsize > max_got_offset)
+		/* Position at "two-complements" origin */
+		current_got_offset += min_got_offset;
 
 	got_origin = -current_got_offset;
 

@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.43 1995/06/30 12:33:56 pk Exp $
+ *	$Id: ld.c,v 1.44 1995/08/04 21:49:00 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -120,6 +121,7 @@ int	set_sect_start;		/* start of set element vectors */
 int	set_sect_size;		/* size of above */
 
 int	link_mode;		/* Current link mode */
+int	pic_type;		/* PIC type */
 
 /*
  * When loading the text and data, we can avoid doing a close
@@ -2051,6 +2053,11 @@ consider_relocation(entry, dataseg)
 
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			alloc_rrs_gotslot(entry, reloc, lsp);
+			if (pic_type != PIC_TYPE_NONE &&
+			    RELOC_PIC_TYPE(reloc) != pic_type)
+				errx(1, "%s: illegal reloc type mix",
+					get_file_name(entry));
+			pic_type = RELOC_PIC_TYPE(reloc);
 
 		} else if (RELOC_EXTERN_P(reloc)) {
 
