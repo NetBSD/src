@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.23.2.5 2000/08/27 18:22:56 itojun Exp $	*/
-/*	$KAME: key.c,v 1.144 2000/07/25 20:16:54 sakane Exp $	*/
+/*	$NetBSD: key.c,v 1.23.2.6 2000/09/29 06:42:43 itojun Exp $	*/
+/*	$KAME: key.c,v 1.160 2000/09/22 16:04:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -400,10 +400,12 @@ static int key_delete __P((struct socket *, struct mbuf *,
 static int key_get __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 
+static void key_getcomb_setlifetime __P((struct sadb_comb *));
 #ifdef IPSEC_ESP
 static struct mbuf *key_getcomb_esp __P((void));
 #endif
 static struct mbuf *key_getcomb_ah __P((void));
+static struct mbuf *key_getcomb_ipcomp __P((void));
 static struct mbuf *key_getprop __P((const struct secasindex *));
 
 static int key_acquire __P((struct secasindex *, struct secpolicy *));
@@ -941,7 +943,7 @@ key_freesav(sav)
 
 	sav->refcnt--;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP freesav cause refcnt--:%d SA:%p SPI %d\n",
+		printf("DP freesav cause refcnt--:%d SA:%p SPI %u\n",
 			sav->refcnt, sav, (u_int32_t)ntohl(sav->spi)));
 
 	if (sav->refcnt == 0)
@@ -1166,9 +1168,7 @@ key_msg2sp(xpl0, len, error)
 			switch (xisr->sadb_x_ipsecrequest_proto) {
 			case IPPROTO_ESP:
 			case IPPROTO_AH:
-#if 1	/*nonstandard*/
 			case IPPROTO_IPCOMP:
-#endif
 				break;
 			default:
 #ifdef IPSEC_DEBUG
@@ -1664,8 +1664,10 @@ key_spdadd(so, m, mhp)
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
-			/* reset counter in order to deletion by timehander. */
-			spacq->tick = key_blockacq_lifetime;
+			/* reset counter in order to deletion by timehandler. */
+			struct timeval tv;
+			microtime(&tv);
+			spacq->created = tv.tv_sec;
 			spacq->count = 0;
 		}
     	}
@@ -2438,8 +2440,12 @@ key_newsav(m, mhp, sah, errp)
 		}
 	}
 
-	/* reset tick */
-	newsav->tick = 0;
+	/* reset created */
+    {
+	struct timeval tv;
+	microtime(&tv);
+	newsav->created = tv.tv_sec;
+    }
 
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
@@ -2474,33 +2480,38 @@ key_delsav(sav)
 	if (sav->key_auth != NULL) {
 		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
+		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
 		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
+		sav->key_enc = NULL;
 	}
 	if (sav->sched) {
 		bzero(sav->sched, sav->schedlen);
 		KFREE(sav->sched);
+		sav->sched = NULL;
 	}
-	if (sav->replay != NULL)
+	if (sav->replay != NULL) {
 		keydb_delsecreplay(sav->replay);
-	if (sav->lft_c != NULL)
+		sav->replay = NULL;
+	}
+	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
-	if (sav->lft_h != NULL)
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
 		KFREE(sav->lft_h);
-	if (sav->lft_s != NULL)
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
 		KFREE(sav->lft_s);
-	if (sav->iv != NULL)
+		sav->lft_s = NULL;
+	}
+	if (sav->iv != NULL) {
 		KFREE(sav->iv);
-#if notyet
-	if (sav->misc1 != NULL)
-		KFREE(sav->misc1);
-	if (sav->misc2 != NULL)
-		KFREE(sav->misc2);
-	if (sav->misc3 != NULL)
-		KFREE(sav->misc3);
-#endif
+		sav->iv = NULL;
+	}
 
 	KFREE(sav);
 
@@ -2639,11 +2650,6 @@ key_setsaval(sav, m, mhp)
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
-#if notyet
-	sav->misc1 = NULL;
-	sav->misc2 = NULL;
-	sav->misc3 = NULL;
-#endif
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -2730,11 +2736,26 @@ key_setsaval(sav, m, mhp)
 		switch (mhp->msg->sadb_msg_satype) {
 		case SADB_SATYPE_ESP:
 			if (len == PFKEY_ALIGN8(sizeof(struct sadb_key)) &&
-			    sav->alg_enc != SADB_EALG_NULL)
+			    sav->alg_enc != SADB_EALG_NULL) {
 				error = EINVAL;
+				break;
+			}
+			sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
+			if (sav->key_enc == NULL) {
+#ifdef IPSEC_DEBUG
+				printf("key_setsaval: No more memory.\n");
+#endif
+				error = ENOBUFS;
+				goto fail;
+			}
+			break;
+		case SADB_X_SATYPE_IPCOMP:
+			if (len != PFKEY_ALIGN8(sizeof(struct sadb_key)))
+				error = EINVAL;
+			sav->key_enc = NULL;	/*just in case*/
 			break;
 		case SADB_SATYPE_AH:
-		case SADB_X_SATYPE_IPCOMP:
+		default:
 			error = EINVAL;
 			break;
 		}
@@ -2742,15 +2763,6 @@ key_setsaval(sav, m, mhp)
 #ifdef IPSEC_DEBUG
 			printf("key_setsatval: invalid key_enc value.\n");
 #endif
-			goto fail;
-		}
-
-		sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
-		if (sav->key_enc == NULL) {
-#ifdef IPSEC_DEBUG
-			printf("key_setsaval: No more memory.\n");
-#endif
-			error = ENOBUFS;
 			goto fail;
 		}
 	}
@@ -2763,7 +2775,7 @@ key_setsaval(sav, m, mhp)
 #ifdef IPSEC_ESP
 		algo = esp_algorithm_lookup(sav->alg_enc);
 		if (algo && algo->ivlen)
-			sav->ivlen = (*algo->ivlen)(sav);
+			sav->ivlen = (*algo->ivlen)(algo, sav);
 		if (sav->ivlen == 0)
 			break;
 		KMALLOC(sav->iv, caddr_t, sav->ivlen);
@@ -2787,9 +2799,7 @@ key_setsaval(sav, m, mhp)
 		break;
 #endif
 	case SADB_SATYPE_AH:
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
-#endif
 		break;
 	default:
 #ifdef IPSEC_DEBUG
@@ -2799,8 +2809,9 @@ key_setsaval(sav, m, mhp)
 		goto fail;
 	}
 
-	/* reset tick */
-	sav->tick = 0;
+	/* reset created */
+	microtime(&tv);
+	sav->created = tv.tv_sec;
 
 	/* make lifetime for CURRENT */
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
@@ -2864,65 +2875,42 @@ key_setsaval(sav, m, mhp)
 	}
     }
 
-#if notyet
-	/* pre-processing for DES */
-	switch (sav->alg_enc) {
-	case SADB_EALG_DESCBC:
-        	if (des_key_sched((C_Block *)_KEYBUF(sav->key_enc),
-		                  (des_key_schedule)sav->misc1) != 0) {
-#ifdef IPSEC_DEBUG
-			printf("key_setsaval: error des_key_sched.\n");
-#endif
-			sav->misc1 = NULL;
-			/* THROUGH */
-		}
-		break;
-	case SADB_EALG_3DESCBC:
-        	if (des_key_sched((C_Block *)_KEYBUF(sav->key_enc),
-		                  (des_key_schedule)sav->misc1) != 0
-        	 || des_key_sched((C_Block *)(_KEYBUF(sav->key_enc) + 8),
-		                  (des_key_schedule)sav->misc2) != 0
-        	 || des_key_sched((C_Block *)(_KEYBUF(sav->key_enc) + 16),
-		                  (des_key_schedule)sav->misc3) != 0) {
-#ifdef IPSEC_DEBUG
-			printf("key_setsaval: error des_key_sched.\n");
-#endif
-			sav->misc1 = NULL;
-			sav->misc2 = NULL;
-			sav->misc3 = NULL;
-			/* THROUGH */
-		}
-	}
-#endif
-
 	return 0;
 
  fail:
 	/* initialization */
-	if (sav->replay != NULL)
+	if (sav->replay != NULL) {
 		keydb_delsecreplay(sav->replay);
-	if (sav->key_auth != NULL)
+		sav->replay = NULL;
+	}
+	if (sav->key_auth != NULL) {
 		KFREE(sav->key_auth);
-	if (sav->key_enc != NULL)
+		sav->key_auth = NULL;
+	}
+	if (sav->key_enc != NULL) {
 		KFREE(sav->key_enc);
-	if (sav->sched)
+		sav->key_enc = NULL;
+	}
+	if (sav->sched) {
 		KFREE(sav->sched);
-	if (sav->iv != NULL)
+		sav->sched = NULL;
+	}
+	if (sav->iv != NULL) {
 		KFREE(sav->iv);
-	if (sav->lft_c != NULL)
+		sav->iv = NULL;
+	}
+	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
-	if (sav->lft_h != NULL)
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
 		KFREE(sav->lft_h);
-	if (sav->lft_s != NULL)
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
 		KFREE(sav->lft_s);
-#if notyet
-	if (sav->misc1 != NULL)
-		KFREE(sav->misc1);
-	if (sav->misc2 != NULL)
-		KFREE(sav->misc2);
-	if (sav->misc3 != NULL)
-		KFREE(sav->misc3);
-#endif
+		sav->lft_s = NULL;
+	}
 
 	return error;
 }
@@ -2943,11 +2931,17 @@ key_mature(sav)
 	mature = 0;
 
 	/* check SPI value */
-	if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+	switch (sav->sah->saidx.proto) {
+	case IPPROTO_ESP:
+	case IPPROTO_AH:
+		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
 #ifdef IPSEC_DEBUG
-		printf("key_mature: illegal range of SPI %d.\n", sav->spi);
+			printf("key_mature: illegal range of SPI %u.\n",
+			    (u_int32_t)ntohl(sav->spi));
 #endif
-		return EINVAL;
+			return EINVAL;
+		}
+		break;
 	}
 
 	/* check satype */
@@ -2987,7 +2981,6 @@ key_mature(sav)
 		checkmask = 2;
 		mustmask = 2;
 		break;
-#if 1	/*nonstandard*/
 	case IPPROTO_IPCOMP:
 		if (sav->alg_auth != SADB_AALG_NONE) {
 #ifdef IPSEC_DEBUG
@@ -3006,7 +2999,6 @@ key_mature(sav)
 		checkmask = 4;
 		mustmask = 4;
 		break;
-#endif
 	default:
 #ifdef IPSEC_DEBUG
 		printf("key_mature: Invalid satype.\n");
@@ -3110,28 +3102,13 @@ key_mature(sav)
 
 	/* check compression algorithm */
 	if ((checkmask & 4) != 0) {
-		struct ipcomp_algorithm *algo;
-
-		switch (sav->alg_enc) {
-		case SADB_X_CALG_NONE:
-		case SADB_X_CALG_OUI:
-		case SADB_X_CALG_DEFLATE:
-		case SADB_X_CALG_LZS:
-			break;
-		default:
-#ifdef IPSEC_DEBUG
-			printf("key_mature: unknown compression algorithm.\n");
-#endif
-			return EINVAL;
-		}
+		const struct ipcomp_algorithm *algo;
 
 		/* algorithm-dependent check */
-		algo = &ipcomp_algorithms[sav->alg_enc];
-
-		if (!(algo->compress && algo->decompress)) {
+		algo = ipcomp_algorithm_lookup(sav->alg_enc);
+		if (!algo) {
 #ifdef IPSEC_DEBUG
-			printf("key_mature: "
-				"unsupported compression algorithm.\n");
+			printf("key_mature: unknown compression algorithm.\n");
 #endif
 			return EINVAL;
 		}
@@ -3957,12 +3934,16 @@ key_bbcmp(p1, p2, bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
+ * XXX: year 2038 problem may remain.
  */
 void
 key_timehandler(void)
 {
 	u_int dir;
 	int s;
+	struct timeval tv;
+
+	microtime(&tv);
 
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -4007,9 +3988,7 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
-			if (key_larval_lifetime < sav->tick) {
+			if (tv.tv_sec - sav->created > key_larval_lifetime) {
 				key_freesav(sav);
 			}
 		}
@@ -4024,8 +4003,6 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
 				continue;
@@ -4039,9 +4016,9 @@ key_timehandler(void)
 				continue;
 			}
 
-			/* compare SOFT lifetime and tick */
+			/* check SOFT lifetime */
 			if (sav->lft_s->sadb_lifetime_addtime != 0
-			 && sav->lft_s->sadb_lifetime_addtime < sav->tick) {
+			 && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * check SA to be used whether or not.
 				 * when SA hasn't been used, delete it.
@@ -4086,8 +4063,6 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
 				continue;
@@ -4101,9 +4076,8 @@ key_timehandler(void)
 				continue;
 			}
 
-			/* compare HARD lifetime and tick */
 			if (sav->lft_h->sadb_lifetime_addtime != 0
-			 && sav->lft_h->sadb_lifetime_addtime < sav->tick) {
+			 && tv.tv_sec - sav->created > sav->lft_h->sadb_lifetime_addtime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				key_freesav(sav);
 				sav = NULL;
@@ -4111,7 +4085,7 @@ key_timehandler(void)
 #if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
 			else if (sav->lft_s != NULL
 			      && sav->lft_s->sadb_lifetime_addtime != 0
-			      && sav->lft_s->sadb_lifetime_addtime < sav->tick) {
+			      && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * XXX: should be checked to be
 				 * installed the valid SA.
@@ -4172,9 +4146,8 @@ key_timehandler(void)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		acq->tick++;
-
-		if (key_blockacq_lifetime < acq->tick && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4192,9 +4165,8 @@ key_timehandler(void)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		acq->tick++;
-
-		if (key_blockacq_lifetime < acq->tick && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4285,11 +4257,9 @@ key_satype2proto(satype)
 		return IPPROTO_AH;
 	case SADB_SATYPE_ESP:
 		return IPPROTO_ESP;
-#if 1	/*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
 		return IPPROTO_IPCOMP;
 		break;
-#endif
 	default:
 		return 0;
 	}
@@ -4310,11 +4280,9 @@ key_proto2satype(proto)
 		return SADB_SATYPE_AH;
 	case IPPROTO_ESP:
 		return SADB_SATYPE_ESP;
-#if 1	/*nonstandard*/
 	case IPPROTO_IPCOMP:
 		return SADB_X_SATYPE_IPCOMP;
 		break;
-#endif
 	default:
 		return 0;
 	}
@@ -4458,7 +4426,9 @@ key_getspi(so, m, mhp)
 		struct secacq *acq;
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehander. */
-			acq->tick = key_blockacq_lifetime;
+			struct timeval tv;
+			microtime(&tv);
+			acq->created = tv.tv_sec;
 			acq->count = 0;
 		}
     	}
@@ -5023,6 +4993,7 @@ key_setident(sah, m, mhp)
 	KMALLOC(sah->identd, struct sadb_ident *, iddstlen);
 	if (sah->identd == NULL) {
 		KFREE(sah->idents);
+		sah->idents = NULL;
 #ifdef IPSEC_DEBUG
 		printf("key_setident: No more memory.\n");
 #endif
@@ -5280,11 +5251,26 @@ key_get(so, m, mhp)
     }
 }
 
+/* XXX make it sysctl-configurable? */
+static void
+key_getcomb_setlifetime(comb)
+	struct sadb_comb *comb;
+{
+
+	comb->sadb_comb_soft_allocations = 1;
+	comb->sadb_comb_hard_allocations = 1;
+	comb->sadb_comb_soft_bytes = 0;
+	comb->sadb_comb_hard_bytes = 0;
+	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
+	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+}
+
 #ifdef IPSEC_ESP
 /*
  * XXX reorder combinations by preference
  * XXX no idea if the user wants ESP authentication or not
- * XXX lifetime - should be in policy?
  */
 static struct mbuf *
 key_getcomb_esp()
@@ -5343,6 +5329,8 @@ key_getcomb_esp()
 				goto fail;
 			}
 			comb = (struct sadb_comb *)(mtod(n, caddr_t) + o);
+			bzero(comb, sizeof(*comb));
+			key_getcomb_setlifetime(comb);
 			comb->sadb_comb_encrypt = i;
 			comb->sadb_comb_encrypt_minbits = encmin;
 			comb->sadb_comb_encrypt_maxbits = algo->keymax;
@@ -5365,7 +5353,6 @@ key_getcomb_esp()
 
 /*
  * XXX reorder combinations by preference
- * XXX lifetime - should be in policy?
  */
 static struct mbuf *
 key_getcomb_ah()
@@ -5413,9 +5400,54 @@ key_getcomb_ah()
 
 		comb = mtod(m, struct sadb_comb *);
 		bzero(comb, sizeof(*comb));
+		key_getcomb_setlifetime(comb);
 		comb->sadb_comb_auth = i;
 		comb->sadb_comb_auth_minbits = min;
 		comb->sadb_comb_auth_maxbits = algo->keymax;
+	}
+
+	return m;
+}
+
+/*
+ * XXX reorder combinations by preference
+ */
+static struct mbuf *
+key_getcomb_ipcomp()
+{
+	struct sadb_comb *comb;
+	const struct ipcomp_algorithm *algo;
+	struct mbuf *m;
+	int i;
+	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
+
+	m = NULL;
+	for (i = 1; i <= SADB_X_CALG_MAX; i++) {
+		algo = ipcomp_algorithm_lookup(i);
+		if (!algo)
+			continue;
+
+		if (!m) {
+#ifdef DIAGNOSTIC
+			if (l > MLEN)
+				panic("assumption failed in key_getcomb_ah");
+#endif
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m) {
+				M_ALIGN(m, l);
+				m->m_len = l;
+				m->m_next = NULL;
+			}
+		} else
+			M_PREPEND(m, l, M_DONTWAIT);
+		if (!m)
+			return NULL;
+
+		comb = mtod(m, struct sadb_comb *);
+		bzero(comb, sizeof(*comb));
+		key_getcomb_setlifetime(comb);
+		comb->sadb_comb_encrypt = i;
+		/* what should we set into sadb_comb_*_{min,max}bits? */
 	}
 
 	return m;
@@ -5443,6 +5475,9 @@ key_getprop(saidx)
 #endif
 	case IPPROTO_AH:
 		m = key_getcomb_ah();
+		break;
+	case IPPROTO_IPCOMP:
+		m = key_getcomb_ipcomp();
 		break;
 	default:
 		return NULL;
@@ -5478,7 +5513,9 @@ key_getprop(saidx)
  *   <base, src address, dst address, (SPI range)> with SADB_GETSPI
  * from KMD by PF_KEY.
  *
- * sensitivity is not supported.
+ * XXX sensitivity is not supported.
+ * XXX proposal is considered to be optional for now, due to the lack of
+ * ipcomp support in RFC2367.
  *
  * OUT:
  *    0     : succeed
@@ -5620,11 +5657,24 @@ key_acquire(saidx, sp)
 
 	/* create proposal/combination extension */
 	m = key_getprop(saidx);
+#if 0
+	/*
+	 * spec conformant: always attach proposal/combination extension,
+	 * the problem is that we have no way to attach it for ipcomp,
+	 * due to the way sadb_comb is declared in RFC2367.
+	 */
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
 	}
 	m_cat(result, m);
+#else
+	/*
+	 * outside of spec; make proposal/combination extension optional.
+	 */
+	if (m)
+		m_cat(result, m);
+#endif
 
 	if ((result->m_flags & M_PKTHDR) == 0) {
 		error = EINVAL;
@@ -5660,6 +5710,7 @@ key_newacq(saidx)
 	struct secasindex *saidx;
 {
 	struct secacq *newacq;
+	struct timeval tv;
 
 	/* get new entry */
 	KMALLOC(newacq, struct secacq *, sizeof(struct secacq));
@@ -5674,7 +5725,8 @@ key_newacq(saidx)
 	/* copy secindex */
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->tick = 0;
+	microtime(&tv);
+	newacq->created = tv.tv_sec;
 	newacq->count = 0;
 
 	return newacq;
@@ -5714,6 +5766,7 @@ key_newspacq(spidx)
 	struct secpolicyindex *spidx;
 {
 	struct secspacq *acq;
+	struct timeval tv;
 
 	/* get new entry */
 	KMALLOC(acq, struct secspacq *, sizeof(struct secspacq));
@@ -5727,7 +5780,8 @@ key_newspacq(spidx)
 
 	/* copy secindex */
 	bcopy(spidx, &acq->spidx, sizeof(acq->spidx));
-	acq->tick = 0;
+	microtime(&tv);
+	acq->created = tv.tv_sec;
 	acq->count = 0;
 
 	return acq;
@@ -5786,6 +5840,7 @@ key_acquire2(so, m, mhp)
 	if (mhp->msg->sadb_msg_len == PFKEY_UNIT64(sizeof(struct sadb_msg))) {
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 		struct secacq *acq;
+		struct timeval tv;
 
 		/* check sequence number */
 		if (mhp->msg->sadb_msg_seq == 0) {
@@ -5797,16 +5852,17 @@ key_acquire2(so, m, mhp)
 		}
 
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) == NULL) {
-#ifdef IPSEC_DEBUG
-			printf("key_acquire2: "
-				"invalid sequence number is passed.\n");
-#endif
+			/*
+			 * the specified larval SA is already gone, or we got
+			 * a bogus sequence number.  we can silently ignore it.
+			 */
 			m_freem(m);
 			return 0;
 		}
 
 		/* reset acq counter in order to deletion by timehander. */
-		acq->tick = key_blockacq_lifetime;
+		microtime(&tv);
+		acq->created = tv.tv_sec;
 		acq->count = 0;
 #endif
 		m_freem(m);
@@ -5887,7 +5943,7 @@ key_acquire2(so, m, mhp)
  * to KMD by PF_KEY.
  * If socket is detached, must free from regnode.
  *
- * m will always e freed.
+ * m will always be freed.
  */
 static int
 key_register(so, m, mhp)
@@ -6032,7 +6088,8 @@ key_register(so, m, mhp)
 				 * give NULL to get the value preferred by
 				 * algorithm XXX SADB_X_EXT_DERIV ?
 				 */
-				alg->sadb_alg_ivlen = (*ealgo->ivlen)(NULL);
+				alg->sadb_alg_ivlen =
+				    (*ealgo->ivlen)(ealgo, NULL);
 			} else
 				alg->sadb_alg_ivlen = 0;
 			alg->sadb_alg_minbits = ealgo->keymin;
@@ -6605,9 +6662,7 @@ key_parse(m, so)
 		break;
 	case SADB_SATYPE_AH:
 	case SADB_SATYPE_ESP:
-#if 1 /*nonstandard*/
 	case SADB_X_SATYPE_IPCOMP:
-#endif
 		switch (msg->sadb_msg_type) {
 		case SADB_X_SPDADD:
 		case SADB_X_SPDDELETE:

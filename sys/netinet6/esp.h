@@ -1,5 +1,5 @@
-/*	$NetBSD: esp.h,v 1.8.2.2 2000/07/30 05:38:49 itojun Exp $	*/
-/*	$KAME: esp.h,v 1.11 2000/07/23 08:23:29 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.8.2.3 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$KAME: esp.h,v 1.15 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,21 +74,27 @@ struct secasvar;
 
 struct esp_algorithm {
 	size_t padbound;	/* pad boundary, in byte */
+	int ivlenval;		/* iv length, in byte */
 	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	size_t schedlen;
+	int (*schedlen) __P((const struct esp_algorithm *));
 	const char *name;
-	int (*ivlen) __P((struct secasvar *));
+	int (*ivlen) __P((const struct esp_algorithm *, struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
 		struct secasvar *, const struct esp_algorithm *, int));
 	int (*encrypt) __P((struct mbuf *, size_t, size_t,
 		struct secasvar *, const struct esp_algorithm *, int));
 	/* not supposed to be called directly */
 	int (*schedule) __P((const struct esp_algorithm *, struct secasvar *));
+	int (*blockdecrypt) __P((const struct esp_algorithm *,
+		struct secasvar *, u_int8_t *, u_int8_t *));
+	int (*blockencrypt) __P((const struct esp_algorithm *,
+		struct secasvar *, u_int8_t *, u_int8_t *));
 };
 
 extern const struct esp_algorithm *esp_algorithm_lookup __P((int));
+extern int esp_max_ivlen __P((void));
 
 /* crypt routines */
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
