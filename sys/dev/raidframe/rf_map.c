@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.15 2002/09/19 23:23:19 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.16 2002/09/21 01:12:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.15 2002/09/19 23:23:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.16 2002/09/21 01:12:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -432,16 +432,6 @@ rf_FreePDAList(l_start, l_end, count)
 	RF_FREELIST_FREE_N(rf_pda_freelist, l_start, next, (RF_PhysDiskAddr_t *), count);
 }
 
-RF_AccessStripeMap_t *
-rf_AllocAccessStripeMapComponent()
-{
-	RF_AccessStripeMap_t *p;
-
-	RF_FREELIST_GET(rf_asm_freelist, p, next, (RF_AccessStripeMap_t *));
-	memset((char *) p, 0, sizeof(RF_AccessStripeMap_t));
-
-	return (p);
-}
 /* this is essentially identical to AllocPDAList.  I should combine the two.
  * when we have to call calloc, we do it one component at a time to simplify
  * the process of freeing the list at program shutdown.  This should not be
