@@ -1,4 +1,4 @@
-.\"	$NetBSD: hesiod.conf.5,v 1.1 1999/01/25 03:48:35 lukem Exp $
+.\"	$NetBSD: hesiod.conf.5,v 1.2 1999/01/25 22:37:06 lukem Exp $
 .\"
 .\" from: #Id: hesiod.conf.5,v 1.1 1996/12/08 21:36:38 ghudson Exp #
 .\"
@@ -45,7 +45,7 @@ values are IN (the preferred class) and HS (the deprecated class,
 still used by some sites).  You may specify both classes separated by
 a comma to try one class first and then the other if no entry is
 available in the first class.  The default value of the classes
-variable is ``HS''.
+variable is ``IN,HS''.
 .SH SEE ALSO
 hesiod(3)
 .SH BUGS
