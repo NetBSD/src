@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.8 1999/09/07 19:29:52 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.9 1999/11/19 18:26:22 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.7 1999/09/04 23:58:55 soren Exp 
+ *	NetBSD: miidevs,v 1.9 1999/11/19 18:26:09 thorpej Exp 
  */
 
 /*-
@@ -56,6 +56,7 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
