@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.11 1996/02/02 18:07:40 mycroft Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.12 1996/02/15 19:13:11 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -97,6 +97,7 @@ xcfb needs dtop device
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
@@ -135,7 +136,7 @@ struct fbinfo	xcfbfi;	/*XXX*/
 extern struct cfdriver cfb;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NXCFB * CMAP_BITS];	/* One colormap per cfb... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 #define XCFB_FB_SIZE 0x100000	/* size of raster (mapped into userspace) */
 
@@ -189,18 +190,12 @@ xcfbmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	static int nxcfbs = 1;
 
 	/* Make sure that it's an xcfb. */
 	if (!TC_BUS_MATCHNAME(ca, "PMAG-DV ")  &&
 	    strcmp(ca->ca_name, "xcfb") != 0)
 		return (0);
 
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nxcfbs)
-		return (0);
-#endif
 	return (1);
 }
 
@@ -233,8 +228,21 @@ xcfbinit(fi, base, unit, silent)
 {
 	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
 
-	if (fi == 0) fi = &xcfbfi;
-	unit = 0;	/*XXX*/ /* FIXME */
+	/*XXX*/
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &xcfbfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	} else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			return (0);
+		}
+	}
 
 	/*XXX*/
 	/*
@@ -254,7 +262,6 @@ xcfbinit(fi, base, unit, silent)
 	fi->fi_linebytes = 1024;
 	fi->fi_driver = &xcfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_XCFB;

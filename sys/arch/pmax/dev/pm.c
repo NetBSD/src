@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.12 1996/02/02 18:07:29 mycroft Exp $	*/
+/*	$NetBSD: pm.c,v 1.13 1996/02/15 19:13:08 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@ pm needs dc device
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
@@ -147,7 +148,7 @@ void genKbdEvent(), genMouseEvent(), genMouseButtons();
 extern void pmEventQueueInit __P((pmEventQueue *qe));
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NPM * CMAP_BITS];	/* One colormap per pm... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 
 /*
@@ -184,7 +185,6 @@ pmmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	static int npms = 1;
 	caddr_t pmaddr = (caddr_t)ca->ca_addr;
 
 	/* make sure that we're looking for this type of device. */
@@ -194,11 +194,6 @@ pmmatch(parent, match, aux)
 	if (badaddr(pmaddr, 4))
 		return (0);
 
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= npms)
-		return (0);
-#endif
 	return (1);
 }
 
@@ -231,7 +226,21 @@ pminit(fi, unit, silent)
 {
 	register PCCRegs *pcc = (PCCRegs *)MACH_PHYS_TO_UNCACHED(KN01_SYS_PCC);
 
-	if (fi == 0) fi = &pmfi;
+	/*XXX*/
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &pmfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	} else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			return (0);
+		}
+	}
 
 	/* Set address of frame buffer... */
 	fi->fi_pixels = (caddr_t)MACH_PHYS_TO_UNCACHED(KN01_PHYS_FBUF_START);
@@ -305,7 +314,7 @@ pminit(fi, unit, silent)
 	/*
 	 * Initialize the color map, the screen, and the mouse.
 	 */
-	bt478init(&pmfi);
+	bt478init(fi);
 
 	/*
 	 * Initialize old-style pmax screen info.
@@ -321,7 +330,7 @@ pminit(fi, unit, silent)
 
 
 #ifdef notanymore
-	bt478InitColorMap(&pmfi);	/* done inside bt478init() */
+	bt478InitColorMap(fi);	/* done inside bt478init() */
 #endif
 
 	/*
