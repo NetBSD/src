@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.50 2003/03/01 05:41:56 atatat Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.51 2003/03/19 11:36:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.50 2003/03/01 05:41:56 atatat Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.51 2003/03/19 11:36:34 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -555,7 +555,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_sid = kp->kp_eproc.e_sid;
 			kp2p->p__pgid = kp->kp_eproc.e_pgid;
 
-			kp2p->p_tpgid = 30001 /* XXX NO_PID! */;
+			kp2p->p_tpgid = -1 /* XXX NO_PGID! */;
 
 			kp2p->p_uid = kp->kp_eproc.e_ucred.cr_uid;
 			kp2p->p_ruid = kp->kp_eproc.e_pcred.p_ruid;

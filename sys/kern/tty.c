@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.149 2003/02/17 22:23:14 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.150 2003/03/19 11:36:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.149 2003/02/17 22:23:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.150 2003/03/19 11:36:32 dsl Exp $");
 
 #include "opt_uconsole.h"
 
@@ -894,7 +894,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCGPGRP:			/* get pgrp of tty */
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
+		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 		break;
 	case TIOCGSID:			/* get sid of tty */
 		if (!isctty(p, tp))
