@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 1997/10/20 06:13:25 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 1997/10/22 15:28:33 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,6 +203,7 @@ int	get_geom __P((char *, struct disklabel *));
 /* from net.c */
 int	get_via_ftp __P((void));
 int	get_via_nfs __P((void));
+int	config_network __P((void));
 void	mnt_net_config __P((void));
 
 /* From run.c */

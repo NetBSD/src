@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7 1997/10/20 06:13:35 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.8 1997/10/22 15:28:59 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,20 +56,20 @@ If you booted from a floppy, you may now remove the disk.
 Thank you for using NetBSD!
 }
 
-message upgr
-{Sorry, the upgrade part of this is not working.
-}
-
 message installusure
 {Ok, lets get NetBSD installed on your hard disk.  As always, this will
 change information on your hard disk.  You should have made a full backup
 before this procedure!  Do you really want to install NetBSD?
+(You get one more warning before this procedure writes anything to your
+disk.)
 }
 
 message upgradeusure
-{Ok, lets get NetBSD upgraded your hard disk.  As always, this will
+{Ok, lets upgrade NetBSD on your hard disk.  As always, this will
 change information on your hard disk.  You should have made a full backup
 before this procedure!  Do you really want to upgrade NetBSD?
+(This is your last warning before this procedure starts modifying your
+disks.)
 }
 
 message nodisk
@@ -231,13 +231,16 @@ message dotar
 {Populating filesystems with bootstrapping binaries and config files...\n}
 
 message instcomplete
-{The installation of NetBSD-@@VERSION@@ is now complete.  You may
-reboot your machine and NetBSD should boot from your hard drive.
+{The installation of NetBSD-@@VERSION@@ is now complete.  The system
+should boot from hard disk.  Follow the instructions in the INSTALL
+document about final configuration of your system.
 }
 
 message upgrcomplete
-{The upgrade to NetBSD-@@VERSION@@ is now complete.  You may
-reboot your machine and NetBSD should boot from your hard drive.
+{The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
+now need to follow the instructions in the INSTALL document as to 
+what you need to do to get your system re-configured for your
+situation.  Your old /etc has been saved as /etc.old.
 }
 
 message distmedium
@@ -414,7 +417,7 @@ message makedev
 
 message badfs
 {It appears that %s%s is not a BSD file system or the fsck was
-not successfull.  The upgrade has been aborted.
+not successfull.  The upgrade has been aborted.  (Error number %d.)
 }
 
 message badmount
@@ -443,7 +446,6 @@ message fdremount
     Not load any more files from floppy and abort the process.
 }
 
-
 message mntnetconfig
 {Is the network information you entered accurate for this machine
-in regular operation and do you want it installed in etc? }
+in regular operation and do you want it installed in /etc? }
