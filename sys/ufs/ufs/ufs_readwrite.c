@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.17 1998/06/09 07:46:34 scottr Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18 1998/08/02 18:57:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -78,6 +78,7 @@ READ(v)
 	register struct uio *uio;
 	register FS *fs;
 	struct buf *bp;
+	struct timespec ts;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
@@ -161,8 +162,13 @@ READ(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
-	if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
+		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
+			TIMEVAL_TO_TIMESPEC(&time, &ts);
+			error = VOP_UPDATE(vp, &ts, &ts, 1);
+		}
+	}
 	return (error);
 }
 
@@ -308,7 +314,7 @@ WRITE(v)
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		error = VOP_UPDATE(vp, &ts, &ts, 1);
 	}
