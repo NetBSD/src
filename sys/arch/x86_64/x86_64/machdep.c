@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/08/12 08:35:33 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/11/20 08:43:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
 

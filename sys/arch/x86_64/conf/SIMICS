@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.3 2001/07/09 15:05:24 soren Exp $
+#	$NetBSD: SIMICS,v 1.4 2001/11/20 08:43:42 lukem Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -52,10 +52,10 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-#options 	DDB		# in-kernel debugger
+#options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-#options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB			# remote debugger
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
