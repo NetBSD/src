@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.7 2000/03/10 09:05:01 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.8 2000/03/11 09:11:33 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -129,7 +129,7 @@ vrgiu_attach(parent, self, aux)
 	 *  Disable all interrupts.
 	 */
 	sc->sc_intr_mask = 0;
-	printf(\n");
+	printf("\n");
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else
