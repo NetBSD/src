@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.c,v 1.3 2001/02/22 07:11:11 chs Exp $ */
+/*	$NetBSD: xxboot.c,v 1.4 2001/03/26 11:54:50 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,7 +70,7 @@ xxboot_main(const char *boot_type)
 	char **npp;
 	char *file;
 	void *entry;
-	int error;
+	int fd;
 	u_long marks[MARK_MAX];
 
 	memset(marks, 0, sizeof(marks));
@@ -106,8 +106,8 @@ xxboot_main(const char *boot_type)
 	 */
 	file = prom_bootfile;
 	if (file && *file) {
-		error = loadfile(file, marks, LOAD_KERNEL);
-		if (error) {
+		fd = loadfile(file, marks, LOAD_KERNEL);
+		if (fd == -1) {
 			goto err;
 		} else {
 			goto gotit;
@@ -120,12 +120,9 @@ xxboot_main(const char *boot_type)
 	for (npp = kernelnames; *npp; npp++) {
 		file = *npp;
 		printf("%s: trying %s\n", boot_type, file);
-		error = loadfile(file, marks, LOAD_KERNEL);
-		if (error) {
-			goto err;
-		} else {
+		fd = loadfile(file, marks, LOAD_KERNEL);
+		if (fd != -1)
 			goto gotit;
-		}
 	}
 
 	/*
@@ -140,12 +137,12 @@ xxboot_main(const char *boot_type)
 		if (line[0])
 			file = line;
 
-		error = loadfile(file, marks, LOAD_KERNEL);
-		if (error == 0)
+		fd = loadfile(file, marks, LOAD_KERNEL);
+		if (fd != -1)
 			break;
 
 	err:
-		printf("%s: %s: %s\n", boot_type, file, strerror(error));
+		printf("%s: %s: loadfile() failed.\n", boot_type, file);
 	}
 
 gotit:
