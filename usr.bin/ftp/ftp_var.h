@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.19 1997/08/23 07:32:53 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.20 1997/09/13 09:05:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -122,8 +122,8 @@ int	  editing;		/* command line editing enabled */
 EditLine *el;			/* editline(3) status structure */
 History  *hist;			/* editline(3) history structure */
 char	 *cursor_pos;		/* cursor position we're looking for */
-int	  cursor_argc;		/* location of cursor in margv */
-int	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
+size_t	  cursor_argc;		/* location of cursor in margv */
+size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
 #endif /* !SMALL */
 
 off_t	bytes;			/* current # of bytes read */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.28 1997/09/13 09:05:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.28 1997/09/13 09:05:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -716,7 +716,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	sig_t oldinti, oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
-	static int bufsize;
+	static size_t bufsize;
 	static char *buf;
 	volatile off_t hashbytes;
 	struct stat st;
@@ -780,7 +780,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	oldintr = signal(SIGINT, abortrecv);
 	oldinti = signal(SIGINFO, psummary);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
-		if (access(local, 2) < 0) {
+		if (access(local, W_OK) < 0) {
 			char *dir = strrchr(local, '/');
 
 			if (errno != ENOENT && errno != EACCES) {
@@ -792,7 +792,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			}
 			if (dir != NULL)
 				*dir = 0;
-			d = access(dir == local ? "/" : dir ? local : ".", 2);
+			d = access(dir == local ? "/" : dir ? local : ".", W_OK);
 			if (dir != NULL)
 				*dir = '/';
 			if (d < 0) {
@@ -1523,7 +1523,7 @@ gunique(local)
 
 	if (cp)
 		*cp = '\0';
-	d = access(cp == local ? "/" : cp ? local : ".", 2);
+	d = access(cp == local ? "/" : cp ? local : ".", W_OK);
 	if (cp)
 		*cp = '/';
 	if (d < 0) {
@@ -1544,7 +1544,7 @@ gunique(local)
 			ext = '0';
 		else
 			ext++;
-		if ((d = access(new, 0)) < 0)
+		if ((d = access(new, F_OK)) < 0)
 			break;
 		if (ext != '0')
 			cp--;
