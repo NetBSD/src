@@ -1,7 +1,7 @@
-/*	$NetBSD: if_vlan.c,v 1.30 2001/01/29 01:51:05 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.31 2001/04/07 18:41:42 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -232,6 +232,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vlan_start;
 	ifp->if_ioctl = vlan_ioctl;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	vlan_reset_linkname(ifp);
@@ -675,13 +676,35 @@ vlan_start(struct ifnet *ifp)
 	struct ifnet *p = ifv->ifv_p;
 	struct ethercom *ec = (void *) ifv->ifv_p;
 	struct mbuf *m;
+	int error;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	ifp->if_flags |= IFF_OACTIVE;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+#ifdef ALTQ
+		/*
+		 * If ALTQ is enabled on the parent interface, do
+		 * classification; the queueing discipline might
+		 * not require classification, but might require
+		 * the address family/header pointer in the pktattr.
+		 */
+		if (ALTQ_IS_ENABLED(&p->if_snd)) {
+			switch (p->if_type) {
+			case IFT_ETHER:
+				altq_etherclassify(&p->if_snd, m, &pktattr);
+				break;
+#ifdef DIAGNOSTIC
+			default:
+				panic("vlan_start: impossible (altq)");
+#endif
+			}
+		}
+#endif /* ALTQ */
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -753,19 +776,16 @@ vlan_start(struct ifnet *ifp)
 		 * Send it, precisely as the parent's output routine
 		 * would have.  We are already running at splimp.
 		 */
-		if (IF_QFULL(&p->if_snd)) {
-			IF_DROP(&p->if_snd);
-			/* XXX stats */
+		IFQ_ENQUEUE(&p->if_snd, m, &pktattr, error);
+		if (error) {
+			/* mbuf is already freed */
 			ifp->if_oerrors++;
-			m_freem(m);
 			continue;
 		}
-	
-		IF_ENQUEUE(&p->if_snd, m);
+
 		ifp->if_opackets++;
-		if ((p->if_flags & IFF_OACTIVE) == 0) {
+		if ((p->if_flags & IFF_OACTIVE) == 0)
 			(*p->if_start)(p);
-		}
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
