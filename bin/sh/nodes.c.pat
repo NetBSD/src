@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c.pat,v 1.11 2003/08/07 09:05:36 agc Exp $	*/
+/*	$NetBSD: nodes.c.pat,v 1.12 2004/06/15 22:57:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -145,7 +145,7 @@ nodesavestr(s)
 	register char *q = funcstring;
 	char   *rtn = funcstring;
 
-	while ((*q++ = *p++) != '\0')
+	while ((*q++ = *p++) != 0)
 		continue;
 	funcstring = q;
 	return rtn;
