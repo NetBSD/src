@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	sis_drv
 MAN=	sis.4
@@ -14,8 +12,6 @@ SRCS=	sis_driver.c sis_dac.c sis_cursor.c sis_accel.c sis_setup.c \
 	sis300_accel.c sis310_accel.c sis_vga.c sis_vb.c \
 	sis_opt.c sis_dga.c sis_video.c init.c init301.c sis_shadow.c \
 	sis6326_video.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/sis \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

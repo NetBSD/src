@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/23 10:04:14 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:04 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	bitmap
 .PATH:	${X11SRCDIR.xc}/lib/font/bitmap
@@ -12,8 +10,6 @@ LIB=	bitmap
 
 SRCS=	bdfread.c bdfutils.c bitmap.c bitmaputil.c bitscale.c bitmapfunc.c \
 	pcfread.c pcfwrite.c snfread.c fontink.c bitmapmod.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/lib/font/include \

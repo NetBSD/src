@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:10 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	s3_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/s3
@@ -12,8 +10,6 @@ MODULE=	s3_drv
 SRCS=	s3_driver.c s3_IBMRGB.c s3_Trio64DAC.c s3_accel_newmmio.c \
 	s3_accel_pio.c s3_cursor.c s3_bios.c s3_video.c s3_dga.c \
 	s3_Ti.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/s3 \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
