@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.6 2000/11/10 17:47:55 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -187,6 +187,18 @@ pconswrite(dev, uio, flag)
 	struct tty *tp = sc->of_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
+}
+
+int
+pconspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->of_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

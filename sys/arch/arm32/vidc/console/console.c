@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.23 2001/03/18 17:03:26 rearnsha Exp $	*/
+/*	$NetBSD: console.c,v 1.24 2001/05/02 10:32:14 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -511,6 +511,24 @@ physconwrite(dev, uio, flag)
 	}
 
 	return((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+physconpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct tty *tp;
+
+	tp = find_tp(dev);
+
+	if (tp == NULL) {
+		printf("physconpoll: tp=0 dev=%04x\n", dev);
+		return(ENXIO);
+	}
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.16 2001/03/31 00:35:22 enami Exp $	*/
+/*	$NetBSD: dl.c,v 1.17 2001/05/02 10:32:10 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -353,6 +353,18 @@ dlwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dlpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.16 2001/05/02 10:32:10 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -1133,6 +1133,23 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
+}
+
+/*
+ * czttypoll:
+ *
+ *	Poll a Cyclades-Z serial port.
+ */
+int
+czttypoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct cztty_softc *sc = CZTTY_SOFTC(dev);
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*

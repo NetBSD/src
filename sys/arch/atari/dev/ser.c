@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.13 2001/04/11 14:45:07 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.14 2001/05/02 10:32:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -539,6 +539,18 @@ serwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+serpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

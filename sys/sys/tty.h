@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.50 2000/11/01 23:38:57 eeh Exp $	*/
+/*	$NetBSD: tty.h,v 1.51 2001/05/02 10:32:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -216,7 +216,7 @@ int	 ttioctl __P((struct tty *tp, u_long com, caddr_t data, int flag,
 	    struct proc *p));
 int	 ttread __P((struct tty *tp, struct uio *uio, int flag));
 void	 ttrstrt __P((void *tp));
-int	 ttpoll __P((dev_t device, int events, struct proc *p));
+int	 ttpoll __P((struct tty *tp, int events, struct proc *p));
 void	 ttsetwater __P((struct tty *tp));
 int	 ttspeedtab __P((int speed, struct speedtab *table));
 int	 ttstart __P((struct tty *tp));
