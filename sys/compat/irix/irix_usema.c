@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.2 2002/05/22 05:14:03 manu Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.3 2002/05/26 21:37:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.2 2002/05/22 05:14:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.3 2002/05/26 21:37:13 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,13 +55,17 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.2 2002/05/22 05:14:03 manu Exp $");
 #include <sys/queue.h>
 
 #include <miscfs/genfs/genfs.h>
+
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_extern.h>
 
+#include <compat/irix/irix_types.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_usema.h>
 #include <compat/irix/irix_ioctl.h>
+#include <compat/irix/irix_syscallargs.h>
 
 #include <machine/irix_machdep.h>
 
@@ -72,9 +76,22 @@ const dev_t irix_usemaclonedev =
     makedev(IRIX_USEMADEV_MAJOR, IRIX_USEMACLNDEV_MINOR);
 
 /*
- * THis table keeps track of the semaphore address for a given vnode.
+ * semaphore list, and operations on the list
  */
 static LIST_HEAD(irix_usema_reclist, irix_usema_rec) irix_usema_reclist;
+
+static struct irix_usema_rec *iur_lookup_by_vn __P((struct vnode *));
+static struct irix_usema_rec *iur_lookup_by_sem __P((struct irix_semaphore *));
+static struct irix_usema_rec *iur_insert 
+	__P((struct irix_semaphore *, struct vnode *, struct proc *));
+static void iur_remove __P((struct irix_usema_rec *));
+static struct irix_waiting_proc_rec *iur_proc_queue 
+	__P((struct irix_usema_rec *, struct proc *));
+static void iur_proc_dequeue 
+	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
+static int iur_proc_isinqueue __P((struct irix_usema_rec *, struct proc *));
+static struct irix_waiting_proc_rec *iur_proc_getfirst 
+	__P((struct irix_usema_rec *));
 
 /*
  * In order to define a custom vnode operation vector for the usemaclone
@@ -130,7 +147,7 @@ struct irix_usema_softc {
 };
 
 /*
- * Initialize the usema driver: prepare the irix_usema_reclist chained list,
+ * Initialize the usema driver: prepare the chained lists
  * and attach the dummy filesystem we need to use custom vnode operations.
  */
 void
@@ -178,6 +195,7 @@ irix_usema_ioctl(v)
 	caddr_t data = ap->a_data;
 	struct vnode *vp = ap->a_vp;
 	struct irix_usema_rec *iur;
+	struct irix_waiting_proc_rec *iwpr;
 	struct irix_ioctl_usrdata iiu;
 	register_t *retval;
 	int error;
@@ -202,41 +220,28 @@ irix_usema_ioctl(v)
 
 	switch (cmd) {
 	case IRIX_UIOCABLOCKQ: /* semaphore has been blocked */
-		return 0;
+		if ((iur = iur_lookup_by_vn(vp)) == NULL)
+			return EBADF;
+		
+		(void *)iur_proc_queue(iur, ap->a_p);
 		break;
 
 	case IRIX_UIOCAUNBLOCKQ: /* semaphore has been unblocked */
-		LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
-			if (iur->iur_vn == vp) {
-				iur->iur_wakeup = 1;
-				wakeup((void *)&selwait);
-				break;
-			}
-		if (iur == NULL) /* Nothing was found */
+		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
-		return 0;
 
-		break;
-
-	case IRIX_UIOCGETCOUNT: { /* get semaphore value */
-		struct irix_semaphore is;
-
-		LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
-			if (iur->iur_vn == vp) {
-				if ((error = copyin(iur->iur_sem, 
-				    &is, sizeof(is))) != 0)
-					return error;
-				if (is.is_val < 0)
-					*retval = -1;
-				break;
-			}
+		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
+			iur_proc_dequeue(iur, iwpr);
+			wakeup((void *)&selwait);
 		}
-		if (iur == NULL) /* Nothing found */
+		break;
+
+	case IRIX_UIOCGETCOUNT: /* get semaphore value */
+		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
 
-		return 0;
+		*retval = -iur->iur_waiting_count;
 		break;
-	}
 
 	case IRIX_UIOCIDADDR: { /* register address of sem. owner field */
 		struct irix_usema_idaddr iui;
@@ -253,14 +258,8 @@ irix_usema_ioctl(v)
 		isp = (struct irix_semaphore *)((u_long)(isp) -
 		    (u_long)(&isp->is_oid) + (u_long)iui.iui_oidp);
 
-		iur = (struct irix_usema_rec *)
-		    malloc(sizeof(struct irix_usema_rec), M_DEVBUF, M_WAITOK);
-		iur->iur_vn = vp;
-		iur->iur_sem = isp;
-		iur->iur_wakeup = 0;
-		LIST_INSERT_HEAD(&irix_usema_reclist, iur, iur_list);
-		
-		return 0;
+		if ((iur_insert(isp, vp, ap->a_p)) == NULL)
+			return EFAULT;
 		break;
 	}
 	default:
@@ -283,22 +282,22 @@ irix_usema_poll(v)
 	} */ *ap = v;
 	int events = ap->a_events;
 	struct vnode *vp = ap->a_vp;
-	int ret = 0;
 	struct irix_usema_rec *iur;
 	int check = POLLIN|POLLRDNORM|POLLRDBAND|POLLPRI;
 
 #ifdef DEBUG_IRIX
 	printf("irix_usema_poll() vn = %p, events = %d\n", vp, events);
 #endif
-	if (events & check) 
-		LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
-			if (iur->iur_vn == vp && iur->iur_wakeup != 0) {
-				ret = events & check;
-				iur->iur_wakeup = 0;
-				break;
-			}
-		}
-	return ret;
+	if ((events & check) == 0)
+		return 0;
+
+	if ((iur = iur_lookup_by_vn(vp)) == NULL)
+		return 0;
+
+	if (iur_proc_isinqueue(iur, ap->a_p))
+		return 0;
+		
+	return (events & check);
 }
 
 int
@@ -333,15 +332,8 @@ irix_usema_close(v)
 	error = VOP_CLOSE(rvp, ap->a_fflag, ap->a_cred, ap->a_p);
 	vput(rvp);
 
-restart:
-	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
-		if (iur->iur_vn == vp) {
-			LIST_REMOVE(iur, iur_list);
-			free(iur, M_DEVBUF);
-			/* current iur is now invalid, restart */
-			goto restart;
-		}
-	}
+	if ((iur = iur_lookup_by_vn(vp)) != NULL)
+		iur_remove(iur);
 
 	simple_unlock(&vp->v_interlock);
 
@@ -415,3 +407,236 @@ __CONCAT(irix_usema_,op)(v)					\
 IRIX_USEMA_VNOP_WRAP(access)
 IRIX_USEMA_VNOP_WRAP(getattr)
 IRIX_USEMA_VNOP_WRAP(fcntl)
+
+/* 
+ * The usync_ctnl system call is not par of the usema driver, 
+ * but it is closely related to it.
+ */
+int
+irix_sys_usync_cntl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_usync_cntl_args /* {
+		syscallarg(int) cmd;
+		syscallarg(void *) arg;
+	} */ *uap = v;
+	int error;
+	struct irix_usync_arg iua;
+	struct irix_usema_rec *iur;
+	struct irix_waiting_proc_rec *iwpr;
+
+	switch (SCARG(uap, cmd)) {
+	case IRIX_USYNC_BLOCK:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		if ((iur = iur_insert(iua.iua_sem, NULL, p)) == NULL)
+			return EFAULT;
+
+		iwpr = iur_proc_queue(iur, p);
+		(void)tsleep(iwpr, PZERO, "irix_usema", 0);
+		break;	
+
+	case IRIX_USYNC_INTR_BLOCK:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		if ((iur = iur_insert(iua.iua_sem, NULL, p)) == NULL)
+			return EFAULT;
+
+		iwpr = iur_proc_queue(iur, p);
+		(void)tsleep(iwpr, PZERO|PCATCH, "irix_usema", 0);
+		break;	
+
+	case IRIX_USYNC_UNBLOCK_ALL:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		if ((iur = iur_lookup_by_sem(iua.iua_sem)) == 0)
+			return EINVAL;
+
+		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
+			wakeup((void *)iwpr);
+			iur_proc_dequeue(iur, iwpr);
+		}
+		iur_remove(iur);
+		break;
+
+	case IRIX_USYNC_UNBLOCK: 
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		if ((iur = iur_lookup_by_sem(iua.iua_sem)) == 0)
+			return EINVAL;
+
+		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
+			wakeup((void *)iwpr);
+			iur_proc_dequeue(iur, iwpr);
+		}
+		if ((iwpr = iur_proc_getfirst(iur)) == NULL)
+			iur_remove(iur);
+		break;
+
+	case IRIX_USYNC_GET_STATE:
+		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
+			return error;
+
+		if ((iur = iur_lookup_by_sem(iua.iua_sem)) == NULL)
+			return 0; /* Not blocked, return 0 */
+
+		*retval = -iur->iur_waiting_count;
+		break;
+	default:
+		printf("Warning: unimplemented IRIX usync_cntl command %d\n",
+		    SCARG(uap, cmd));
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+/* Operation on irix_usema_reclist */
+static struct irix_usema_rec *
+iur_lookup_by_vn(vp)
+	struct vnode *vp;
+{
+	struct irix_usema_rec *iur;
+
+	LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
+		if (iur->iur_vn == vp)
+			break;
+	return iur;
+}
+
+static struct irix_usema_rec *
+iur_lookup_by_sem(sem)
+	struct irix_semaphore *sem;
+{
+	struct irix_usema_rec *iur;
+	struct irix_semaphore is;
+	int error;
+	
+	if ((error = copyin(sem, &is, sizeof(is))) != 0)
+		return NULL;
+
+	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) 
+		if (iur->iur_sem == sem && iur->iur_shid == is.is_shid)
+			break;
+	
+	return iur;
+}
+
+static struct irix_usema_rec *
+iur_insert(sem, vp, p)
+	struct irix_semaphore *sem;
+	struct vnode *vp;
+	struct proc *p;
+{
+	struct irix_usema_rec *iur;
+	struct irix_semaphore is;
+	int error;
+
+	if ((iur = iur_lookup_by_sem(sem)) != NULL)
+		return iur;
+
+	if ((error = copyin(sem, &is, sizeof(is))) != 0)
+		return NULL;
+
+	iur = malloc(sizeof(struct irix_usema_rec), M_DEVBUF, M_WAITOK);
+	iur->iur_sem = sem;
+	iur->iur_vn = vp;
+	iur->iur_shid = is.is_shid;
+	iur->iur_p = p;
+	iur->iur_waiting_count = 0;
+	TAILQ_INIT(&iur->iur_waiting_p);
+	LIST_INSERT_HEAD(&irix_usema_reclist, iur, iur_list);
+	return iur;
+}
+
+static void
+iur_remove(iur)
+	struct irix_usema_rec *iur;
+{
+	struct irix_waiting_proc_rec *iwpr;
+
+	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
+		TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
+		free(iwpr, M_DEVBUF);
+	}
+
+	LIST_REMOVE(iur, iur_list);
+	free(iur, M_DEVBUF);
+	return;
+}
+
+static struct irix_waiting_proc_rec *
+iur_proc_queue(iur, p)
+	struct irix_usema_rec *iur;
+	struct proc *p;
+{
+	struct irix_waiting_proc_rec *iwpr;
+
+	iwpr = malloc(sizeof(struct irix_waiting_proc_rec), M_DEVBUF, M_WAITOK);
+	iwpr->iwpr_p = p;
+	TAILQ_INSERT_TAIL(&iur->iur_waiting_p, iwpr, iwpr_list);
+	iur->iur_waiting_count++;
+	return iwpr;
+}
+
+static void
+iur_proc_dequeue(iur, iwpr)
+	struct irix_usema_rec *iur;
+	struct irix_waiting_proc_rec *iwpr;
+{
+	iur->iur_waiting_count--;
+	TAILQ_REMOVE(&iur->iur_waiting_p, iwpr, iwpr_list);
+	free(iwpr, M_DEVBUF);
+	return;
+}
+
+static int
+iur_proc_isinqueue(iur, p)
+	struct irix_usema_rec *iur;
+	struct proc *p;
+{
+	struct irix_waiting_proc_rec *iwpr;
+
+	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list)
+		if (iwpr->iwpr_p == p)
+			return 1;
+	return 0;
+
+}
+
+static struct irix_waiting_proc_rec *
+iur_proc_getfirst(iur)
+	struct irix_usema_rec *iur;
+{
+	return iur->iur_waiting_p.tqh_first;
+}
+
+#ifdef DEBUG_IRIX
+void
+irix_usema_debug(void)
+{
+	struct irix_usema_rec *iur;
+	struct irix_waiting_proc_rec *iwpr;
+
+	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
+		printf("iur %p\n", iur);
+		printf("  iur->iur_vn = %p\n", iur->iur_vn);
+		printf("  iur->iur_sem = %p\n", iur->iur_sem);
+		printf("  iur->iur_shid = 0x%08x\n", iur->iur_shid);
+		printf("  iur->iur_p = %p\n", iur->iur_p);
+		printf("  iur->iur_waiting_count = %d\n", 
+		    iur->iur_waiting_count);
+		printf("  Waiting processes\n");
+		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
+			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n", 
+			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
+		}
+	}
+}
+#endif /* DEBUG_IRIX */
