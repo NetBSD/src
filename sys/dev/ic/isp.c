@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.8.2.1 1997/07/01 17:35:06 bouyer Exp $	*/
+/*	$NetBSD: isp.c,v 1.8.2.2 1997/07/30 16:23:31 bouyer Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -989,7 +989,7 @@ isp_mboxcmd(isp, mbp)
 	 * Wait until RISC int is set
 	 */
 	loops = MBOX_DELAY_COUNT;
-	while ((ISP_READ(isp, BIU_ISR) & BIU_ISR_RISC_INT) != 0) {
+	while ((ISP_READ(isp, BIU_ISR) & BIU_ISR_RISC_INT) == 0) {
 		delay(100);
 		if (--loops < 0) {
 			printf("%s: isp_mboxcmd timeout #2\n", isp->isp_name);

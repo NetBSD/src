@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.36.2.1 1997/07/01 17:34:31 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.36.2.2 1997/07/30 16:23:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -507,7 +507,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef DEBUG
 		if (si_debug) {
-			printf("si_minphys len = %x.\n", MAX_DMA_LEN);
+			printf("si_minphys len = 0x%x.\n", MAX_DMA_LEN);
 			Debugger();
 		}
 #endif
@@ -688,7 +688,7 @@ found:
 	dh->dh_dvma = (long)kdvma_mapin((caddr_t)addr, xlen, 0);
 	if (dh->dh_dvma == 0) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %p/%x, doing PIO\n",
+		printf("si_dma_alloc: can't remap %p/0x%x, doing PIO\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;

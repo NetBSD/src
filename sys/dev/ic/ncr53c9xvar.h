@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.6.2.2 1997/07/22 12:21:13 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.6.2.3 1997/07/30 16:23:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -228,6 +228,8 @@ struct ncr53c9x_softc {
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
+	int	sc_cfflags;			/* Copy of config flags */
+
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
 	u_char	sc_cfg2;			/* Config 2, not ESP100 */
@@ -379,5 +381,7 @@ void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
 int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
+
+extern	int ncr53c9x_dmaselect;
 
 extern int ncr53c9x_dmaselect;

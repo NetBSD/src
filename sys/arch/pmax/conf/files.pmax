@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.44.2.2 1997/07/22 12:21:19 bouyer Exp $
+#	$NetBSD: files.pmax,v 1.44.2.3 1997/07/30 16:23:52 bouyer Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pica,v 1.6.2.2 1997/07/22 12:21:18 bouyer Exp $
+#	$NetBSD: files.pica,v 1.6.2.3 1997/07/30 16:23:49 bouyer Exp $
 maxpartitions 8
 maxusers 2 8 64
 

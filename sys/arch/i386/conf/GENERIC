@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82.2.2 1997/07/17 13:42:32 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.82.2.3 1997/07/30 16:23:09 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -176,7 +176,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
