@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.182 2003/09/06 03:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.183 2003/09/10 00:58:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.182 2003/09/06 03:12:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.183 2003/09/10 00:58:29 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1012,12 +1012,15 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC) || defined(FAST_IPSEC)
-		if (inp && ipsec4_in_reject(m, inp)) {
+		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec4_in_reject(m, inp)) {
 			ipsecstat.in_polvio++;
 			goto drop;
 		}
 #ifdef INET6
-		else if (in6p && ipsec4_in_reject_so(m, in6p->in6p_socket)) {
+		else if (in6p &&
+		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec4_in_reject_so(m, in6p->in6p_socket)) {
 			ipsecstat.in_polvio++;
 			goto drop;
 		}
@@ -1052,7 +1055,8 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC) || defined(FAST_IPSEC)
-		if (ipsec6_in_reject(m, in6p)) {
+		if ((in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec6_in_reject(m, in6p)) {
 			ipsec6stat.in_polvio++;
 			goto drop;
 		}
@@ -1348,6 +1352,37 @@ findpcb:
 					}
 				}
 #endif
+
+#ifdef IPSEC
+				switch (af) {
+				case AF_INET:
+					if (ipsec4_in_reject_so(m, so)) {
+						ipsecstat.in_polvio++;
+						tp = NULL;
+						goto dropwithreset;
+					}
+					break;
+#ifdef INET6
+				case AF_INET6:
+					if (ipsec6_in_reject_so(m, so)) {
+						ipsec6stat.in_polvio++;
+						tp = NULL;
+						goto dropwithreset;
+					}
+					break;
+#endif
+				}
+#endif
+
+				if (af == AF_INET6 && !ip6_use_deprecated) {
+					struct in6_ifaddr *ia6;
+					if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif,
+					    &ip6->ip6_dst)) &&
+					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
+						tp = NULL;
+						goto dropwithreset;
+					}
+				}
 
 				/*
 				 * LISTEN socket received a SYN
