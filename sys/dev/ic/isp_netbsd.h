@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18.2.2 1999/10/19 21:38:27 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.3 1999/10/20 20:41:27 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -68,9 +68,6 @@ struct isposinfo {
 	struct scsipi_adapter   _adapter;
 	struct scsipi_channel	_channels[2];
 	int			seed;
-	int			blocked;
-
-	struct scsipi_xfer_queue waitq;
 };
 
 #define	MAXISPREQUEST	256
