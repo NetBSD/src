@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.50 2000/10/09 07:33:31 nisimura Exp $ */
+/* $NetBSD: locore.h,v 1.51 2000/10/31 21:21:10 jeffs Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -229,6 +229,8 @@ extern int	mips_L2CachePresent;
 extern u_int	mips_L2CacheLSize;
 extern u_int	mips_CacheAliasMask;
 extern u_int	mips_CachePreferMask;
+
+#define mips_indexof(addr)	(((int)(addr)) & mips_CacheAliasMask)
 
 #ifdef MIPS3
 extern int	mips3_L1TwoWayCache;
