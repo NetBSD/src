@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1999/12/22 05:55:25 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1999/12/26 09:05:39 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,9 +60,13 @@
 #define ZS_DELAY() (*zs_delay)()
 
 int zs_print __P((void *, const char *name));
+int zshard __P((void *));
+void zssoft __P((void *));
 int zs_get_speed __P((struct zs_chanstate *));
 void Debugger __P((void));
 void (*zs_delay) __P((void));
+
+extern struct cfdriver zsc_cd;
 
 /*
  * Some warts needed by z8530tty.c -
@@ -86,6 +90,82 @@ zs_print(aux, name)
 		printf(" channel %d", args->channel);
 
 	return UNCONF;
+}
+
+static volatile int zssoftpending;
+
+#define setsoftserial()			\
+{					\
+	int s;				\
+	extern int softisr;		\
+					\
+	s = splhigh();			\
+	softisr |= SOFTISR_ZS;		\
+	splx(s);			\
+}
+
+/*
+ * Our ZS chips all share a common, autovectored interrupt,
+ * so we have to look at all of them on each interrupt.
+ */
+int
+zshard(arg)
+	void *arg;
+{
+	register struct zsc_softc *zsc;
+	register int unit, rval, softreq;
+
+	rval = softreq = 0;
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
+		zsc = zsc_cd.cd_devs[unit];
+		if (zsc == NULL)
+			continue;
+		rval |= zsc_intr_hard(zsc);
+		softreq |= zsc->zsc_cs[0]->cs_softreq;
+		softreq |= zsc->zsc_cs[1]->cs_softreq;
+	}
+
+	/* We are at splzs here, so no need to lock. */
+	if (softreq && (zssoftpending == 0)) {
+		zssoftpending = 1;
+		setsoftserial();
+	}
+
+	return rval;
+}
+
+/*
+ * Similar scheme as for zshard (look at all of them)
+ */
+void
+zssoft(arg)
+	void *arg;
+{
+	register struct zsc_softc *zsc;
+	register int s, unit;
+
+	/* This is not the only ISR on this IPL. */
+	if (zssoftpending == 0)
+		return;
+
+	/*
+	 * The soft intr. bit will be set by zshard only if
+	 * the variable zssoftpending is zero.  The order of
+	 * these next two statements prevents our clearing
+	 * the soft intr bit just after zshard has set it.
+	 */
+	/* clearsoftnet(); */
+	zssoftpending = 0;
+
+	/* Make sure we call the tty layer at spltty. */
+	s = spltty();
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
+		zsc = zsc_cd.cd_devs[unit];
+		if (zsc == NULL)
+			continue;
+		(void)zsc_intr_soft(zsc);
+	}
+	splx(s);
 }
 
 /*
