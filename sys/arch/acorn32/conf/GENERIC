@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.29 2003/10/08 11:00:38 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.30 2003/10/11 03:04:34 christos Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.29 $"
+#ident		"GENERIC-$Revision: 1.30 $"
 
 # estimated number of users
 maxusers	32
@@ -230,7 +230,7 @@ wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
 atabus*	at wdc? channel ?
 
-wd*	at atabus? ? drive ?
+wd*	at atabus? drive ?
 atapibus* at atabus?
 cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
@@ -293,7 +293,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown device
 ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 dtide*	at podulebus?			# D.T. Software IDE card
-atabus*	at dtide? channel
+atabus*	at dtide? channel ?
 
 hcide*	at podulebus?			# HCCS IDE card
 atabus* at hcide? channel ?
