@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.28 1998/12/17 13:05:06 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.29 1999/01/19 10:57:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -192,10 +192,7 @@ struct scsipi_link {
 #define	SDEV_NOLUNS		0x0010	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x0020	/* prehistoric drive/ctlr groks LUNs */
 #define SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT	0x0080	/*
-					 * Do not issue START UNIT
-					 * requests in sd.c
-					 */
+#define SDEV_NOSTARTUNIT	0x0080	/* Do not issue START UNIT requests */
 #define	SDEV_NOSYNCCACHE	0x0100	/* does not grok SYNCHRONIZE CACHE */
 #define ADEV_CDROM		0x0200	/* device is a CD-ROM */
 #define ADEV_LITTLETOC		0x0400	/* Audio TOC uses wrong byte order */

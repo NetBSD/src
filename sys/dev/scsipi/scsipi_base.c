@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.17 1999/01/10 06:26:23 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.18 1999/01/19 10:57:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -494,6 +494,9 @@ scsipi_start(sc_link, type, flags)
 	int type, flags;
 {
 	struct scsipi_start_stop scsipi_cmd;
+
+	if (sc_link->quirks & SDEV_NOSTARTUNIT)
+		return 0;
 
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = START_STOP;
