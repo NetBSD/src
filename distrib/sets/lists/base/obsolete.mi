@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.48 2002/06/20 12:37:10 dsainty Exp $
+# $NetBSD: obsolete.mi,v 1.49 2002/06/20 13:14:26 wiz Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -20,7 +20,6 @@
 /usr/include/compat
 /usr/include/gssapi/rpc
 /usr/include/ss
-/usr/include/usb.h
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
 /usr/lib/runemodule
