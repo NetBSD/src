@@ -53,7 +53,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#define DWARF2_UNWIND_INFO 0
+#undef DWARF2_UNWIND_INFO
 
 /* Some defines for CPP.  arm32 is the NetBSD port name, so we always (only)
    define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
