@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.4 1998/03/26 20:05:13 mark Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.5 1998/04/01 22:53:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -63,7 +63,7 @@
  *	r13 - scratch (loop counter)
  */
 
-ENTRY(floppy_read_fiq)
+ENTRY_NP(floppy_read_fiq)
 	subs	r10, r10, #0x00000001
 	addeq	r12, r12, #0x00018000
 	ldrb	r8, [r12]
@@ -93,7 +93,7 @@ _floppy_read_fiq_end:
  *	r13 - scratch (loop counter)
  */
 
-ENTRY(floppy_write_fiq)
+ENTRY_NP(floppy_write_fiq)
 	subs	r10, r10, #0x00000001
 	addeq	r12, r12, #0x00018000
 	ldrb	r8, [r11], #0x0001
