@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.8 1994/10/26 02:04:44 cgd Exp $	*/
+/*	$NetBSD: sci.c,v 1.9 1994/12/28 09:25:50 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -196,6 +196,7 @@ sci_donextcmd(dev)
 		scireset(dev);
 
 	dev->sc_stat[0] = -1;
+	xs->cmd->bytes[0] |= slp->lun << 5;
 	if (phase == STATUS_PHASE || flags & SCSI_NOMASK) 
 		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen, phase);

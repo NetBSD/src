@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 1994/12/01 17:24:54 chopps Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1994/12/28 09:25:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/dev/rtc.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 #if defined(PROF) && defined(PROFTIMER)
 #include <sys/PROF.h>

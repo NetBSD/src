@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.6 1994/12/01 17:25:24 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.7 1994/12/28 09:25:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -46,7 +46,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/scireg.h>
 #include <amiga/dev/scivar.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int ivscprint __P((void *auxp, char *));
 void ivscattach __P((struct device *, struct device *, void *));
@@ -99,7 +99,7 @@ ivscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -143,7 +143,7 @@ ivscattach(pdp, dp, auxp)
 {
 	volatile u_char *rp;
 	struct sci_softc *sc;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1994/12/01 17:25:16 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1994/12/28 09:25:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <amiga/amiga/device.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 #include <amiga/dev/if_lereg.h>
 
 /*
@@ -97,6 +97,8 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;	/* LANCE registers */
 	struct	lereg2 *sc_r2;	/* dual-port RAM */
 	int	sc_rmd;		/* predicted next rmd to process */
+	int	sc_tmd;		/* next tmd to use */
+	int	sc_no_td;	/* number of tmds in use */
 	int	sc_runt;
 	int	sc_jab;
 	int	sc_merr;
@@ -147,9 +149,9 @@ lematch(pdp, cfp, auxp)
 	void *auxp;
 {
 
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
-	zap = (struct ztwobus_args *)auxp;
+	zap = (struct zbus_args *)auxp;
 
 	/* Commodore ethernet card */
 	if ( zap->manid == 514 && zap->prodid == 112)
@@ -174,7 +176,7 @@ leattach(pdp, dp, auxp)
 {
 	register struct lereg0 *ler0;
 	register struct lereg2 *ler2;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 	struct lereg2 *lemem = (struct lereg2 *) 0x8000;
 	struct le_softc *le = &le_softc[dp->dv_unit];
 	struct ifnet *ifp = &le->sc_if;
@@ -183,7 +185,7 @@ leattach(pdp, dp, auxp)
 	unsigned long ser;
 	int s = splhigh ();
 
-	zap =(struct ztwobus_args *)auxp;
+	zap =(struct zbus_args *)auxp;
 
 	/*
 	 * Make config msgs look nicer.
@@ -218,8 +220,12 @@ leattach(pdp, dp, auxp)
 	le->sc_addr[4] = (ser >>  8) & 0xff;
 	le->sc_addr[5] = (ser      ) & 0xff;
 
-	printf("le%d: hardware address %s\n", dp->dv_unit,
-		ether_sprintf(le->sc_addr));
+#ifdef LE_USE_16K
+	printf("le%d: hardware address %s 16K\n",
+#else
+	printf("le%d: hardware address %s 32K\n",
+#endif
+	dp->dv_unit, ether_sprintf(le->sc_addr));
 
 	/*
 	 * Setup for transmit/receive
@@ -310,7 +316,7 @@ lereset(unit)
 
 	 ledrinit(le->sc_r2);
 
-	 le->sc_rmd = 0;
+	 le->sc_rmd = le->sc_tmd = le->sc_no_td = 0;
 	 ler1->ler1_rap =  LE_CSR1;
 	 ler1->ler1_rdp =  (int)&lemem->ler2_mode;
 	 ler1->ler1_rap =  LE_CSR2;
@@ -363,6 +369,9 @@ leinit(unit)
 	return;
 }
 
+#define LENEXTTMP \
+	if (++bix == LETBUF) bix = 0, tmd = le->sc_r2->ler2_tmd; else ++tmd
+
 /*
  * Start output on interface.  Get another datagram to send
  * off of the interface queue, and copy it to the interface
@@ -372,6 +381,7 @@ lestart(ifp)
 	struct ifnet *ifp;
 {
 	register struct le_softc *le = &le_softc[ifp->if_unit];
+	register int bix;
 	register struct letmd *tmd;
 	register struct mbuf *m;
 	int len;
@@ -379,26 +389,40 @@ lestart(ifp)
 	if ((le->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
 
-	IF_DEQUEUE(&le->sc_if.if_snd, m);
-	if (m == 0)
-		return (0);
+	bix = le->sc_tmd;
+	tmd = &le->sc_r2->ler2_tmd[bix];
 
-	len = leput(le->sc_r2->ler2_tbuf[0], m);
+	for (;;) {
+		if (le->sc_no_td >= LETBUF) {
+			le->sc_if.if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IF_DEQUEUE(&le->sc_if.if_snd, m);
+		if (m == 0)
+			break;
+
+		++le->sc_no_td;
+
+		len = leput(le->sc_r2->ler2_tbuf[bix], m);
 
 #if NBPFILTER > 0
-	/*
-	 * If bpf is listening on this interface, let it
-	 * see the packet before we commit it to the wire.
-	 */
-	if (le->sc_bpf)
-                bpf_tap(le->sc_bpf, le->sc_r2->ler2_tbuf[0], len);
+		/*
+		 * If bpf is listening on this interface, let it
+		 * see the packet before we commit it to the wire.
+		 */
+		if (le->sc_bpf)
+        	        bpf_tap(le->sc_bpf, le->sc_r2->ler2_tbuf[bix], len);
 #endif
 
-	tmd = le->sc_r2->ler2_tmd;
-	tmd->tmd3 = 0;
-	tmd->tmd2 = -len;
-	tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
-	le->sc_if.if_flags |= IFF_OACTIVE;
+		tmd->tmd3 = 0;
+		tmd->tmd2 = -len;
+		tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
+
+		LENEXTTMP;
+	}
+
+	le->sc_tmd = bix;
 
 	return (0);
 }
@@ -464,41 +488,52 @@ lexint(unit)
 	register int unit;
 {
 	register struct le_softc *le = &le_softc[unit];
-	register struct letmd *tmd = le->sc_r2->ler2_tmd;
+	register int bix = (le->sc_tmd - le->sc_no_td + LETBUF) % LETBUF;
+	register struct letmd *tmd = &le->sc_r2->ler2_tmd[bix];
 
 	if ((le->sc_if.if_flags & IFF_OACTIVE) == 0) {
 		le->sc_xint++;
 		return;
 	}
 	if (tmd->tmd1 & LE_OWN) {
+printf("le%d: extra xint\n", unit);
 		le->sc_xown++;
 		return;
 	}
-	if (tmd->tmd1 & LE_ERR) {
-err:
-		lexerror(unit);
-		le->sc_if.if_oerrors++;
-		if (tmd->tmd3 & (LE_TBUFF|LE_UFLO)) {
-			le->sc_uflo++;
-			lereset(unit);
-		}
-		else if (tmd->tmd3 & LE_LCOL)
-			le->sc_if.if_collisions++;
-		else if (tmd->tmd3 & LE_RTRY)
-			le->sc_if.if_collisions += 16;
-	}
-	else if (tmd->tmd3 & LE_TBUFF)
-		/* XXX documentation says BUFF not included in ERR */
-		goto err;
-	else if (tmd->tmd1 & LE_ONE)
-		le->sc_if.if_collisions++;
-	else if (tmd->tmd1 & LE_MORE)
-		/* what is the real number? */
-		le->sc_if.if_collisions += 2;
-	else
-		le->sc_if.if_opackets++;
-
 	le->sc_if.if_flags &= ~IFF_OACTIVE;
+
+	do {
+		if (le->sc_no_td <= 0)
+			break;
+		--le->sc_no_td;
+
+		if (tmd->tmd1 & LE_ERR) {
+err:
+printf("le%d: xint error\n", unit);
+			lexerror(unit);
+			le->sc_if.if_oerrors++;
+			if (tmd->tmd3 & (LE_TBUFF|LE_UFLO)) {
+				le->sc_uflo++;
+				lereset(unit);
+				return;
+			}
+			else if (tmd->tmd3 & LE_LCOL)
+				le->sc_if.if_collisions++;
+			else if (tmd->tmd3 & LE_RTRY)
+				le->sc_if.if_collisions += 16;
+		}
+		else if (tmd->tmd3 & LE_TBUFF)
+			/* XXX documentation says BUFF not included in ERR */
+			goto err;
+		else if (tmd->tmd1 & LE_ONE)
+			le->sc_if.if_collisions++;
+		else if (tmd->tmd1 & LE_MORE)
+			/* what is the real number? */
+			le->sc_if.if_collisions += 2;
+		else
+			le->sc_if.if_opackets++;
+		LENEXTTMP;
+	} while ((tmd->tmd1 & LE_OWN) == 0);
 
 	(void) lestart(&le->sc_if);
 }
@@ -887,13 +922,15 @@ lexerror(unit)
 	int unit;
 {
 	register struct le_softc *le = &le_softc[unit];
+	int bix;
 	register struct letmd *tmd;
 	int len;
 
 	if (!ledebug)
 		return;
 
-	tmd = le->sc_r2->ler2_tmd;
+	bix = (le->sc_tmd - le->sc_no_td + LETBUF) % LETBUF;
+	tmd = &le->sc_r2->ler2_tmd[bix];
 	len = -tmd->tmd2;
 
 	log(LOG_WARNING,

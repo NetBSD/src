@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.17 1994/10/26 02:04:56 cgd Exp $	*/
+/*	$NetBSD: siop.c,v 1.18 1994/12/28 09:25:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -67,7 +67,7 @@ extern u_int	kvtop();
 #define	SCSI_DATA_WAIT	500000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	500000	/* wait per step (both) during init */
 
-int  siopicmd __P((struct siop_softc *, int, void *, int, void *, int));
+int  siopicmd __P((struct siop_softc *, int, int, void *, int, void *, int));
 int  siopgo __P((struct siop_softc *, struct scsi_xfer *));
 int  siopgetsense __P((struct siop_softc *, struct scsi_xfer *));
 void siopabort __P((struct siop_softc *, siop_regmap_p, char *));
@@ -80,171 +80,51 @@ void siop_donextcmd __P((struct siop_softc *));
 int  siopintr __P((struct siop_softc *));
 
 /* 53C710 script */
-unsigned long scripts[] = {
-	0x47000000, 0x000002d0,			/* 000 -   0 */
-	0x838b0000, 0x000000d0,			/* 008 -   8 */
-	0x7a1b1000, 0x00000000,			/* 010 -  16 */
-	0x828a0000, 0x00000088,			/* 018 -  24 */
-	0x9e020000, 0x0000ff01,			/* 020 -  32 */
-	0x72350000, 0x00000000,			/* 028 -  40 */
-	0x808c0000, 0x00000048,			/* 030 -  48 */
-	0x58000008, 0x00000000,			/* 038 -  56 */
-	0x1e000024, 0x00000024,			/* 040 -  64 */
-	0x838b0000, 0x00000090,			/* 048 -  72 */
-	0x1f00002c, 0x0000002c,			/* 050 -  80 */
-	0x838b0000, 0x00000080,			/* 058 -  88 */
-	0x868a0000, 0xffffffd0,			/* 060 -  96 */
-	0x838a0000, 0x00000070,			/* 068 - 104 */
-	0x878a0000, 0x00000158,			/* 070 - 112 */
-	0x80880000, 0x00000028,			/* 078 - 120 */
-	0x1e000004, 0x00000004,			/* 080 - 128 */
-	0x838b0000, 0x00000050,			/* 088 - 136 */
-	0x868a0000, 0xffffffe8,			/* 090 - 144 */
-	0x838a0000, 0x00000040,			/* 098 - 152 */
-	0x878a0000, 0x00000128,			/* 0a0 - 160 */
-	0x9a020000, 0x0000ff02,			/* 0a8 - 168 */
-	0x1a00000c, 0x0000000c,			/* 0b0 - 176 */
-	0x878b0000, 0x00000168,			/* 0b8 - 184 */
-	0x838a0000, 0x00000018,			/* 0c0 - 192 */
-	0x818a0000, 0x000000e8,			/* 0c8 - 200 */
-	0x808a0000, 0x000000b8,			/* 0d0 - 208 */
-	0x98080000, 0x0000ff03,			/* 0d8 - 216 */
-	0x1b000014, 0x00000014,			/* 0e0 - 224 */
-	0x72090000, 0x00000000,			/* 0e8 - 232 */
-	0x6a340000, 0x00000000,			/* 0f0 - 240 */
-	0x9f030000, 0x0000ff04,			/* 0f8 - 248 */
-	0x1f00001c, 0x0000001c,			/* 100 - 256 */
-	0x808c0007, 0x00000050,			/* 108 - 264 */
-	0x98040000, 0x0000ff26,			/* 110 - 272 */
-	0x60000040, 0x00000000,			/* 118 - 280 */
-	0x48000000, 0x00000000,			/* 120 - 288 */
-	0x7c1bef00, 0x00000000,			/* 128 - 296 */
-	0x72340000, 0x00000000,			/* 130 - 304 */
-	0x980c0002, 0x0000fffc,			/* 138 - 312 */
-	0x980c0008, 0x0000fffb,			/* 140 - 320 */
-	0x980c0018, 0x0000fffd,			/* 148 - 328 */
-	0x98040000, 0x0000fffe,			/* 150 - 336 */
-	0x98080000, 0x0000ff00,			/* 158 - 344 */
-	0x60000008, 0x00000000,			/* 160 - 352 */
-	0x98080000, 0x0000ff26,			/* 168 - 360 */
-	0x60000040, 0x00000000,			/* 170 - 368 */
-	0x828b0000, 0xffffff28,			/* 178 - 376 */
-	0x838b0000, 0xffffff58,			/* 180 - 384 */
-	0x878b0000, 0xffffff68,			/* 188 - 392 */
-	0x18000034, 0x00000034,			/* 190 - 400 */
-	0x808b0000, 0x000001c0,			/* 198 - 408 */
-	0x838b0000, 0xffffff38,			/* 1a0 - 416 */
-	0x878a0000, 0x000000d0,			/* 1a8 - 424 */
-	0x98080000, 0x0000ff05,			/* 1b0 - 432 */
-	0x19000034, 0x00000034,			/* 1b8 - 440 */
-	0x818b0000, 0x00000160,			/* 1c0 - 448 */
-	0x80880000, 0xffffffd0,			/* 1c8 - 456 */
-	0x1f00001c, 0x0000001c,			/* 1d0 - 464 */
-	0x808c0001, 0x00000018,			/* 1d8 - 472 */
-	0x980c0002, 0x0000ff08,			/* 1e0 - 480 */
-	0x808c0004, 0x00000020,			/* 1e8 - 488 */
-	0x98080000, 0x0000ff06,			/* 1f0 - 496 */
-	0x60000040, 0x00000000,			/* 1f8 - 504 */
-	0x1f00002c, 0x0000002c,			/* 200 - 512 */
-	0x98080000, 0x0000ff07,			/* 208 - 520 */
-	0x60000040, 0x00000000,			/* 210 - 528 */
-	0x48000000, 0x00000000,			/* 218 - 536 */
-	0x98080000, 0x0000ff09,			/* 220 - 544 */
-	0x1f00001c, 0x0000001c,			/* 228 - 552 */
-	0x808c0001, 0x00000018,			/* 230 - 560 */
-	0x980c0002, 0x0000ff10,			/* 238 - 568 */
-	0x808c0004, 0x00000020,			/* 240 - 576 */
-	0x98080000, 0x0000ff11,			/* 248 - 584 */
-	0x60000040, 0x00000000,			/* 250 - 592 */
-	0x1f00002c, 0x0000002c,			/* 258 - 600 */
-	0x98080000, 0x0000ff12,			/* 260 - 608 */
-	0x60000040, 0x00000000,			/* 268 - 616 */
-	0x48000000, 0x00000000,			/* 270 - 624 */
-	0x98080000, 0x0000ff13,			/* 278 - 632 */
-	0x1f00001c, 0x0000001c,			/* 280 - 640 */
-	0x808c0001, 0x00000018,			/* 288 - 648 */
-	0x980c0002, 0x0000ff14,			/* 290 - 656 */
-	0x808c0004, 0x00000020,			/* 298 - 664 */
-	0x98080000, 0x0000ff15,			/* 2a0 - 672 */
-	0x60000040, 0x00000000,			/* 2a8 - 680 */
-	0x1f00002c, 0x0000002c,			/* 2b0 - 688 */
-	0x98080000, 0x0000ff16,			/* 2b8 - 696 */
-	0x60000040, 0x00000000,			/* 2c0 - 704 */
-	0x48000000, 0x00000000,			/* 2c8 - 712 */
-	0x98080000, 0x0000ff17,			/* 2d0 - 720 */
-	0x54000000, 0x00000040,			/* 2d8 - 728 */
-	0x9f030000, 0x0000ff18,			/* 2e0 - 736 */
-	0x1f00001c, 0x0000001c,			/* 2e8 - 744 */
-	0x990b0000, 0x0000ff19,			/* 2f0 - 752 */
-	0x980a0000, 0x0000ff20,			/* 2f8 - 760 */
-	0x9f0a0000, 0x0000ff21,			/* 300 - 768 */
-	0x9b0a0000, 0x0000ff22,			/* 308 - 776 */
-	0x9e0a0000, 0x0000ff23,			/* 310 - 784 */
-	0x98080000, 0x0000ff24,			/* 318 - 792 */
-	0x98080000, 0x0000ff25,			/* 320 - 800 */
-	0x76100800, 0x00000000,			/* 328 - 808 */
-	0x80840700, 0x00000008,			/* 330 - 816 */
-	0x7e110100, 0x00000000,			/* 338 - 824 */
-	0x6a100000, 0x00000000,			/* 340 - 832 */
-	0x19000034, 0x00000034,			/* 348 - 840 */
-	0x818b0000, 0xffffffd0,			/* 350 - 848 */
-	0x98080000, 0x0000ff27,			/* 358 - 856 */
-	0x76100800, 0x00000000,			/* 360 - 864 */
-	0x80840700, 0x00000008,			/* 368 - 872 */
-	0x7e110100, 0x00000000,			/* 370 - 880 */
-	0x6a100000, 0x00000000,			/* 378 - 888 */
-	0x18000034, 0x00000034,			/* 380 - 896 */
-	0x808b0000, 0xffffffd0,			/* 388 - 904 */
-	0x98080000, 0x0000ff27	/* 390 - 912 */
-};
-
-#define	Ent_msgout	0x00000018
-#define	Ent_cmd	0x000000a8
-#define	Ent_status	0x000000e0
-#define	Ent_msgin	0x000000f8
-#define	Ent_dataout	0x00000190
-#define	Ent_datain	0x000001b8
+#include <amiga/dev/siop_script.out>
 
 /* default to not inhibit sync negotiation on any drive */
-/* XXXX - unit 2 inhibits sync for my WangTek tape drive - mlh */
 u_char siop_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0 }; /* initialize, so patchable */
+u_char siop_allow_disc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 int siop_no_dma = 0;
 
-int siop_reset_delay = 2000;	/* delay after reset, in milleseconds */
+int siop_reset_delay = 250;	/* delay after reset, in milleseconds */
 int siop_sync_period = 50;	/* synchronous transfer period, in nanoseconds */
 
 int siop_cmd_wait = SCSI_CMD_WAIT;
 int siop_data_wait = SCSI_DATA_WAIT;
 int siop_init_wait = SCSI_INIT_WAIT;
 
+/*
+ * sync period transfer lookup - only valid for 66Mhz clock
+ */
 static struct {
 	unsigned char x;	/* period from sync request message */
 	unsigned char y;	/* siop_period << 4 | sbcl */
 } xxx[] = {
-	{0x0f, 0x01},
-	{0x13, 0x11},
-	{0x17, 0x21},
-/*	{0x17, 0x02},	*/
-	{0x1b, 0x31},
-	{0x1d, 0x12},
-	{0x1e, 0x41},
-/*	{0x1e, 0x03},	*/
-	{0x22, 0x51},
-	{0x23, 0x22},
-	{0x26, 0x61},
-/*	{0x26, 0x13},	*/
-	{0x29, 0x32},
-	{0x2a, 0x71},
-	{0x2d, 0x23},
-	{0x2e, 0x42},
-	{0x34, 0x52},
-	{0x35, 0x33},
-	{0x3a, 0x62},
-	{0x3c, 0x43},
-	{0x40, 0x72},
-	{0x44, 0x53},
-	{0x4b, 0x63},
-	{0x53, 0x73}
+	{ 60/4, 0<<4 | 1},
+	{ 76/4, 1<<4 | 1},
+	{ 92/4, 2<<4 | 1},
+	{ 92/4, 0<<4 | 2},
+	{108/4, 3<<4 | 1},
+	{116/4, 1<<4 | 2},
+	{120/4, 4<<4 | 1},
+	{120/4, 0<<4 | 3},
+	{136/4, 5<<4 | 1},
+	{140/4, 2<<4 | 2},
+	{152/4, 6<<4 | 1},
+	{152/4, 1<<4 | 3},
+	{164/4, 3<<4 | 2},
+	{168/4, 7<<4 | 1},
+	{180/4, 2<<4 | 3},
+	{184/4, 4<<4 | 2},
+	{208/4, 5<<4 | 2},
+	{212/4, 3<<4 | 3},
+	{232/4, 6<<4 | 2},
+	{240/4, 4<<4 | 3},
+	{256/4, 7<<4 | 2},
+	{272/4, 5<<4 | 3},
+	{300/4, 6<<4 | 3},
+	{332/4, 7<<4 | 3}
 };
 
 #ifdef DEBUG
@@ -256,12 +136,16 @@ static struct {
  *	0x08 - phase mismatch
  *	0x10 - panic on phase mismatch
  *	0x20 - panic on unhandled exceptions
+ *	0x100 - disconnect/reconnect
  */
 int	siop_debug = 0;
 int	siopsync_debug = 0;
 int	siopdma_hits = 0;
 int	siopdma_misses = 0;
 int	siopchain_ints = 0;
+int	siopstarts = 0;
+int	siopints = 0;
+int	siopphmm = 0;
 #else
 #define QPRINTF(a)
 #endif
@@ -294,9 +178,6 @@ siop_adinfo()
 /*
  * used by specific siop controller
  *
- * it appears that the higher level code does nothing with LUN's
- * so I will too.  I could plug it in, however so could they
- * in scsi_scsi_cmd().
  */
 int
 siop_scsicmd(xs)
@@ -305,7 +186,7 @@ siop_scsicmd(xs)
 	struct siop_pending *pendp;
 	struct siop_softc *dev;
 	struct scsi_link *slp;
-	int flags, s;
+	int flags, s, i;
 
 	slp = xs->sc_link;
 	dev = slp->adapter_softc;
@@ -353,36 +234,39 @@ siop_donextcmd(dev)
 {
 	struct scsi_xfer *xs;
 	struct scsi_link *slp;
-	int flags, phase, stat;
+	int flags, stat, i;
 
 	xs = dev->sc_xs;
 	slp = xs->sc_link;
 	flags = xs->flags;
 
-#if 0
-	if (flags & SCSI_DATA_IN)
-		phase = DATA_IN_PHASE;
-	else if (flags & SCSI_DATA_OUT)
-		phase = DATA_OUT_PHASE;
-	else
-		phase = STATUS_PHASE;
-#endif
-
 	if (flags & SCSI_RESET)
 		siopreset(dev);
 
-	dev->sc_stat[0] = -1;
+	xs->cmd->bytes[0] |= slp->lun << 5;
+	for (i = 0; i < 2; ++i) {
+		if (dev->sc_iob[i].sc_xs == NULL) {
+			dev->sc_iob[i].sc_xs = xs;
+			dev->sc_cur = & dev->sc_iob[i];
+			dev->sc_iob[i].sc_stat[0] = -1;
+			break;
+		}
+	}
+	if (dev->sc_cur == NULL)
+		panic ("siop: too many I/O's");
+	++dev->sc_active;
 #if 0
-	if (phase == STATUS_PHASE || flags & SCSI_NOMASK) 
-#else
-	if (flags & SCSI_NOMASK || siop_no_dma) 
+if (dev->sc_active > 1) {
+  printf ("active count %d\n", dev->sc_active);
+}
 #endif
-		stat = siopicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
-		    xs->data, xs->datalen/*, phase*/);
+	if (flags & SCSI_NOMASK || siop_no_dma) 
+		stat = siopicmd(dev, slp->target, slp->lun, xs->cmd,
+		    xs->cmdlen, xs->data, xs->datalen);
 	else if (siopgo(dev, xs) == 0)
 		return;
 	else 
-		stat = dev->sc_stat[0];
+		stat = dev->sc_cur->sc_stat[0];
 	
 	siop_scsidone(dev, stat);
 }
@@ -427,6 +311,15 @@ siop_scsidone(dev, stat)
 	}
 	xs->flags |= ITSDONE;
 
+	--dev->sc_active;
+	dev->sc_cur->sc_xs = NULL;
+	dev->sc_cur = NULL;
+	/*
+	 * if another command is already pending (i.e. it was pre-empted
+	 * by a reconnecting device), make it the current command and
+	 * continue
+	 */
+
 	/*
 	 * grab next command before scsi_done()
 	 * this way no single device can hog scsi resources.
@@ -447,6 +340,10 @@ siop_scsidone(dev, stat)
 
 	if (donext)
 		siop_donextcmd(dev);
+	else if (dev->sc_active && dev->sc_xs == NULL) {
+/*		printf ("siop_scsidone: still active %d\n", dev->sc_active);*/
+/*		dev->sc_siopp->siop_dsp = dev->sc_scriptspa + Ent_wait_reselect;*/
+	}
 }
 
 int
@@ -472,8 +369,8 @@ siopgetsense(dev, xs)
 		rqs.length = sizeof (xs->sense);
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 	
-	return(siopicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
-	    rqs.length));
+	return(siopicmd(dev, slp->target, slp->lun, &rqs, sizeof(rqs),
+	    &xs->sense, rqs.length));
 }
 
 void
@@ -482,12 +379,13 @@ siopabort(dev, regs, where)
 	siop_regmap_p regs;
 	char *where;
 {
+	int i;
 
 	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n", 
 	    dev->sc_dev.dv_xname,
 	    where, regs->siop_dstat, regs->siop_sstat0, regs->siop_sbcl);
 
-	if (dev->sc_flags & SIOP_SELECTED) {
+	if (dev->sc_active > 0) {
 #ifdef TODO
       SET_SBIC_cmd (regs, SBIC_CMD_ABORT);
       WAIT_CIP (regs);
@@ -517,35 +415,14 @@ siopabort(dev, regs, where)
 
 		/* lets just hope it worked.. */
 		dev->sc_flags &= ~SIOP_SELECTED;
-	}
-}
-
-/*
- * XXX Set/reset long delays.
- *
- * if delay == 0, reset default delays
- * if delay < 0,  set both delays to default long initialization values
- * if delay > 0,  set both delays to this value
- *
- * Used when a devices is expected to respond slowly (e.g. during
- * initialization).
- */
-void
-siop_delay(delay)
-	int delay;
-{
-	static int saved_cmd_wait, saved_data_wait;
-
-	if (delay) {
-		saved_cmd_wait = siop_cmd_wait;
-		saved_data_wait = siop_data_wait;
-		if (delay > 0)
-			siop_cmd_wait = siop_data_wait = delay;
-		else
-			siop_cmd_wait = siop_data_wait = siop_init_wait;
-	} else {
-		siop_cmd_wait = saved_cmd_wait;
-		siop_data_wait = saved_data_wait;
+		for (i = 0; i < 2; ++i) {
+			if (dev->sc_iob[i].sc_xs && &dev->sc_iob[i] !=
+			    dev->sc_cur) {
+				printf ("siopabort: cleanup!\n");
+				dev->sc_iob[i].sc_xs = NULL;
+			}
+		}
+		dev->sc_active = 0;
 	}
 }
 
@@ -556,14 +433,16 @@ siopinitialize(dev)
 	/*
 	 * Need to check that scripts is on a long word boundary
 	 * and that DS is on a long word boundary.
-	 * Also need to verify that dev doesn't non-contiguous
+	 * Also need to verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
 	dev->sc_scriptspa = kvtop(scripts);
+#if 0
 	dev->sc_dspa = kvtop(&dev->sc_ds);
-	dev->sc_lunpa = kvtop(&dev->sc_lun);
+	dev->sc_lunpa = kvtop(&dev->sc_msgout);
 	dev->sc_statuspa = kvtop(&dev->sc_stat[0]);
 	dev->sc_msgpa = kvtop(&dev->sc_msg[0]);
+#endif
 	siopreset (dev);
 }
 
@@ -573,7 +452,7 @@ siopreset(dev)
 {
 	siop_regmap_p regs;
 	u_int i, s;
-	u_char  my_id, csr;
+	u_char  my_id, dummy;
 
 	regs = dev->sc_siopp;
 
@@ -589,20 +468,21 @@ siopreset(dev)
 	 * Reset the chip
 	 * XXX - is this really needed?
 	 */
+	regs->siop_istat |= SIOP_ISTAT_ABRT;	/* abort current script */
+	regs->siop_istat |= SIOP_ISTAT_RST;		/* reset chip */
+	regs->siop_istat &= ~SIOP_ISTAT_RST;
+	/*
+	 * Reset SCSI bus (do we really want this?)
+	 */
 	regs->siop_sien &= ~SIOP_SIEN_RST;
 	regs->siop_scntl1 |= SIOP_SCNTL1_RST;
-	for (i = 0; i < 1000; ++i)
-		;
+	delay(1);
 	regs->siop_scntl1 &= ~SIOP_SCNTL1_RST;
-	regs->siop_sien |= SIOP_SIEN_RST;
+/*	regs->siop_sien |= SIOP_SIEN_RST;*/
 
 	/*
 	 * Set up various chip parameters
 	 */
-	regs->siop_istat = 0x40;
-	for (i = 0; i < 1000; ++i)
-		;
-	regs->siop_istat = 0x00;
 	regs->siop_scntl0 = SIOP_ARB_FULL | SIOP_SCNTL0_EPC | SIOP_SCNTL0_EPG;
 	regs->siop_dcntl = dev->sc_clock_freq & 0xff;
 	regs->siop_dmode = 0x80;	/* burst length = 4 */
@@ -610,16 +490,22 @@ siopreset(dev)
 	regs->siop_dien = 0x00;	/* don't enable interrupts yet */
 	regs->siop_scid = 1 << my_id;
 	regs->siop_dwt = 0x00;
-	regs->siop_ctest0 |= 0x20;	/* Enable Active Negation ?? */
+	regs->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
 	regs->siop_ctest7 |= (dev->sc_clock_freq >> 8) & 0xff;
 
 	/* will need to re-negotiate sync xfers */
 	bzero(&dev->sc_sync, sizeof (dev->sc_sync));
 
+	i = regs->siop_istat;
+	if (i & SIOP_ISTAT_SIP)
+		dummy = regs->siop_sstat0;
+	if (i & SIOP_ISTAT_DIP)
+		dummy = regs->siop_dstat;
+
 	splx (s);
 
  	delay (siop_reset_delay * 1000);
-	printf("siop id %d reset\n", my_id);
+	printf("siop id %d reset V%d\n", my_id, regs->siop_ctest8 >> 4);
 	dev->sc_flags |= SIOP_ALIVE;
 	dev->sc_flags &= ~(SIOP_SELECTED | SIOP_DMA);
 }
@@ -629,9 +515,10 @@ siopreset(dev)
  */
 
 void
-siop_setup (dev, target, cbuf, clen, buf, len)
+siop_setup (dev, target, lun, cbuf, clen, buf, len)
 	struct siop_softc *dev;
 	int target;
+	int lun;
 	u_char *cbuf;
 	int clen;
 	u_char *buf;
@@ -642,23 +529,53 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 	int nchain;
 	int count, tcount;
 	char *addr, *dmaend;
+	struct siop_iob *iob = dev->sc_cur;
 
+#ifdef DEBUG
+	if (regs->siop_sbcl & SIOP_BSY) {
+		printf ("ACK! siop was busy: regs %x script %x dsa %x\n",
+		    regs, &scripts, &iob->sc_ds);
+		/*Debugger();*/
+	}
+	i = regs->siop_istat;
+	if (i & SIOP_ISTAT_DIP) {
+		int dstat;
+		dstat = regs->siop_dstat;
+	}
+	if (i & SIOP_ISTAT_SIP) {
+		int sstat;
+		sstat = regs->siop_sstat0;
+	}
+#endif
 	dev->sc_istat = 0;
-	dev->sc_lun = 0x80;			/* XXX */
-	dev->sc_stat[0] = -1;
-	dev->sc_msg[0] = -1;
-	dev->sc_ds.scsi_addr = (0x10000 << target) | (dev->sc_sync[target].period << 8);
-	dev->sc_ds.idlen = 1;
-	dev->sc_ds.idbuf = (char *) dev->sc_lunpa;
-	dev->sc_ds.cmdlen = clen;
-	dev->sc_ds.cmdbuf = (char *) kvtop(cbuf);
-	dev->sc_ds.stslen = 1;
-	dev->sc_ds.stsbuf = (char *) dev->sc_statuspa;
-	dev->sc_ds.msglen = 1;
-	dev->sc_ds.msgbuf = (char *) dev->sc_msgpa;
-	dev->sc_ds.sdtrolen = 0;
-	dev->sc_ds.sdtrilen = 0;
-	bzero(&dev->sc_ds.chain, sizeof (dev->sc_ds.chain));
+	iob->sc_msgout[0] = MSG_IDENTIFY | lun;
+/*
+ * HACK - if no data transfer, allow disconnects
+ */
+	if (/*len == 0 || */ siop_allow_disc[target]) {
+		iob->sc_msgout[0] = MSG_IDENTIFY_DR | lun;
+		regs->siop_scntl1 |= SIOP_SCNTL1_ESR;
+	}
+	iob->sc_status = 0;
+	iob->sc_stat[0] = -1;
+	iob->sc_msg[0] = -1;
+	iob->sc_ds.scsi_addr = (0x10000 << target) | (dev->sc_sync[target].period << 8);
+	iob->sc_ds.idlen = 1;
+	iob->sc_ds.idbuf = (char *) kvtop(&iob->sc_msgout[0]);
+	iob->sc_ds.cmdlen = clen;
+	iob->sc_ds.cmdbuf = (char *) kvtop(cbuf);
+	iob->sc_ds.stslen = 1;
+	iob->sc_ds.stsbuf = (char *) kvtop(&iob->sc_stat[0]);
+	iob->sc_ds.msglen = 1;
+	iob->sc_ds.msgbuf = (char *) kvtop(&iob->sc_msg[0]);
+	iob->sc_msg[1] = -1;
+	iob->sc_ds.msginlen = 1;
+	iob->sc_ds.extmsglen = 1;
+	iob->sc_ds.synmsglen = 3;
+	iob->sc_ds.msginbuf = (char *) kvtop(&iob->sc_msg[1]);
+	iob->sc_ds.extmsgbuf = (char *) kvtop(&iob->sc_msg[2]);
+	iob->sc_ds.synmsgbuf = (char *) kvtop(&iob->sc_msg[3]);
+	bzero(&iob->sc_ds.chain, sizeof (iob->sc_ds.chain));
 
 	if (dev->sc_sync[target].state == SYNC_START) {
 		if (siop_inhibit_sync[target]) {
@@ -671,15 +588,13 @@ siop_setup (dev, target, cbuf, clen, buf, len)
 #endif
 		}
 		else {
-			dev->sc_msg[1] = MSG_IDENTIFY;
-			dev->sc_msg[2] = MSG_EXT_MESSAGE;
-			dev->sc_msg[3] = 3;
-			dev->sc_msg[4] = MSG_SYNC_REQ;
-			dev->sc_msg[5] = siop_sync_period / 4;
-			dev->sc_msg[6] = SIOP_MAX_OFFSET;
-			dev->sc_ds.sdtrolen = 6;
-			dev->sc_ds.sdtrilen = 6;
-			dev->sc_ds.sdtrobuf = dev->sc_ds.sdtribuf = (char *) (dev->sc_msgpa + 1);
+			iob->sc_msg[2] = -1;
+			iob->sc_msgout[1] = MSG_EXT_MESSAGE;
+			iob->sc_msgout[2] = 3;
+			iob->sc_msgout[3] = MSG_SYNC_REQ;
+			iob->sc_msgout[4] = siop_sync_period / 4;
+			iob->sc_msgout[5] = SIOP_MAX_OFFSET;
+			iob->sc_ds.idlen = 6;
 			dev->sc_sync[target].state = SYNC_SENT;
 #ifdef DEBUG
 			if (siopsync_debug)
@@ -692,59 +607,69 @@ siop_setup (dev, target, cbuf, clen, buf, len)
  * If length is > 1 page, check for consecutive physical pages
  * Need to set up chaining if not
  */
+	iob->iob_buf = buf;
+	iob->iob_len = len;
+	iob->iob_curbuf = iob->iob_curlen = 0;
 	nchain = 0;
 	count = len;
 	addr = buf;
 	dmaend = NULL;
 	while (count > 0) {
-		dev->sc_ds.chain[nchain].databuf = (char *) kvtop (addr);
+		iob->sc_ds.chain[nchain].databuf = (char *) kvtop (addr);
 		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
 			tcount = count;
-		dev->sc_ds.chain[nchain].datalen = tcount;
+		iob->sc_ds.chain[nchain].datalen = tcount;
 		addr += tcount;
 		count -= tcount;
-		if (dev->sc_ds.chain[nchain].databuf == dmaend) {
-			dmaend += dev->sc_ds.chain[nchain].datalen;
-			dev->sc_ds.chain[--nchain].datalen += tcount;
+		if (iob->sc_ds.chain[nchain].databuf == dmaend) {
+			dmaend += iob->sc_ds.chain[nchain].datalen;
+			iob->sc_ds.chain[--nchain].datalen += tcount;
 #ifdef DEBUG
 			++siopdma_hits;
 #endif
 		}
 		else {
-			dmaend = dev->sc_ds.chain[nchain].databuf +
-			    dev->sc_ds.chain[nchain].datalen;
-			dev->sc_ds.chain[nchain].datalen = tcount;
+			dmaend = iob->sc_ds.chain[nchain].databuf +
+			    iob->sc_ds.chain[nchain].datalen;
+			iob->sc_ds.chain[nchain].datalen = tcount;
 #ifdef DEBUG
 			if (nchain)	/* Don't count miss on first one */
 				++siopdma_misses;
 #endif
 		}
 		++nchain;
-		if (nchain < DMAMAXIO)	/* force error if buffer too small */
-			dev->sc_ds.chain[nchain].datalen = 0;
 	}
 #ifdef DEBUG
 	if (nchain != 1 && len != 0 && siop_debug & 3) {
 		printf ("DMA chaining set: %d\n", nchain);
 		for (i = 0; i < nchain; ++i) {
-			printf ("  [%d] %8x %4x\n", i, dev->sc_ds.chain[i].databuf,
-			    dev->sc_ds.chain[i].datalen);
+			printf ("  [%d] %8x %4x\n", i, iob->sc_ds.chain[i].databuf,
+			    iob->sc_ds.chain[i].datalen);
 		}
+	}
+	if (regs->siop_sbcl & SIOP_BSY) {
+		printf ("ACK! siop was busy at start: regs %x script %x dsa %x\n",
+		    regs, &scripts, &iob->sc_ds);
+		/*Debugger();*/
 	}
 #endif
 
-	regs->siop_sbcl = dev->sc_sync[target].offset;
-	if (dev->sc_ds.sdtrolen)
-		regs->siop_scratch = regs->siop_scratch | 0x100;
-	else
-		regs->siop_scratch = regs->siop_scratch & ~0xff00;
-	regs->siop_dsa = dev->sc_dspa;
-	/* push data case on things the 53c710 needs to access */
+	/* push data case on data the 53c710 needs to access */
 	dma_cachectl (dev, sizeof (struct siop_softc));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
-	regs->siop_dsp = dev->sc_scriptspa;
+	if (dev->sc_active <= 1) {
+		regs->siop_sbcl = dev->sc_sync[target].offset;
+		regs->siop_dsa = kvtop(&iob->sc_ds);
+/* XXX if disconnected devices pending, this may not work */
+		regs->siop_dsp = dev->sc_scriptspa;
+	} else {
+		regs->siop_istat = SIOP_ISTAT_SIGP;
+	}
+#ifdef DEBUG
+	++siopstarts;
+#endif
 }
 
 /*
@@ -760,25 +685,33 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 	int	*status;
 {
 	siop_regmap_p regs = dev->sc_siopp;
+	struct siop_iob *iob = dev->sc_cur;
 	int	target;
+	int	dfifo, dbc, sstat1;
 
-	regs->siop_ctest8 |= 0x04;
+	dfifo = regs->siop_dfifo;
+	dbc = regs->siop_dbc0;
+	sstat1 = regs->siop_sstat1;
+	regs->siop_ctest8 |= SIOP_CTEST8_CLF;
 	while ((regs->siop_ctest1 & SIOP_CTEST1_FMT) == 0)
 		;
-	regs->siop_ctest8 &= ~0x04;
+	regs->siop_ctest8 &= ~SIOP_CTEST8_CLF;
 #ifdef DEBUG
-	if (siop_debug & 1) {
-		DCIAS(dev->sc_statuspa);	/* XXX */
+	++siopints;
+	if (siop_debug & 0x100) {
+		DCIAS(&iob->sc_stat[0]);	/* XXX */
 		printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
-		    istat, dstat, sstat0, regs->siop_dsps, regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);
+		    istat, dstat, sstat0, regs->siop_dsps, regs->siop_sbcl, iob->sc_stat[0], iob->sc_msg[0]);
+		printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
+		    iob->sc_msg[0], iob->sc_msg[1], iob->sc_msg[2],
+		    iob->sc_msg[3], iob->sc_msg[4], iob->sc_msg[5]);
 	}
 #endif
-	if (dstat & SIOP_DSTAT_SIR && (regs->siop_dsps == 0xff00 ||
-	    regs->siop_dsps == 0xfffc)) {
+	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff00) {
 		/* Normal completion status, or check condition */
-		if (regs->siop_dsa != dev->sc_dspa) {
+		if (regs->siop_dsa != kvtop(&iob->sc_ds)) {
 			printf ("siop: invalid dsa: %x %x\n", regs->siop_dsa,
-			    dev->sc_dspa);
+			    kvtop(&iob->sc_ds));
 			panic("*** siop DSA invalid ***");
 		}
 		target = dev->sc_slave;
@@ -786,24 +719,26 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 #ifdef DEBUG
 			if (siopsync_debug)
 				printf ("sync msg in: %02x %02x %02x %02x %02x %02x\n",
-				    dev->sc_msg[1], dev->sc_msg[2], dev->sc_msg[3],
-				    dev->sc_msg[4], dev->sc_msg[5], dev->sc_msg[6]);
+				    iob->sc_msg[0], iob->sc_msg[1], iob->sc_msg[2],
+				    iob->sc_msg[3], iob->sc_msg[4], iob->sc_msg[5]);
 #endif
-			if (dev->sc_msg[0] == MSG_REJECT)
-				printf ("target %d sync request was rejected\n",
-				    target);
+			if (iob->sc_msg[1] == 0xff)
+				printf ("%s: target %d ignored sync request\n",
+				    dev->sc_dev.dv_xname, target);
+			else if (iob->sc_msg[1] == MSG_REJECT)
+				printf ("%s: target %d rejected sync request\n",
+				    dev->sc_dev.dv_xname, target);
 			dev->sc_sync[target].state = SYNC_DONE;
 			dev->sc_sync[target].period = 0;
 			dev->sc_sync[target].offset = 0;
-			if (dev->sc_msg[1] == MSG_EXT_MESSAGE &&
-			    dev->sc_msg[2] == 3 &&
-			    dev->sc_msg[3] == MSG_SYNC_REQ &&
-			    dev->sc_msg[5] != 0) {
-				if (dev->sc_msg[4] && dev->sc_msg[4] < 100 / 4) {
+			if (iob->sc_msg[2] == 3 &&
+			    iob->sc_msg[3] == MSG_SYNC_REQ &&
+			    iob->sc_msg[5] != 0) {
+				if (iob->sc_msg[4] && iob->sc_msg[4] < 100 / 4) {
 #ifdef DEBUG
 					printf ("%d: target %d wanted %dns period\n",
 					    dev->sc_dev.dv_xname, target,
-					    dev->sc_msg[4] * 4);
+					    iob->sc_msg[4] * 4);
 #endif
 					/*
 					 * Kludge for Maxtor XT8580S
@@ -814,30 +749,58 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 					 * If the device says it can do less than
 					 * 100ns, then we limit it to 100ns.
 					 */
-					if (dev->sc_msg[4] == siop_sync_period / 4)
-						dev->sc_msg[4] = 208 / 4;
+					if (iob->sc_msg[4] == siop_sync_period / 4)
+						iob->sc_msg[4] = 208 / 4;
 					else
-						dev->sc_msg[4] = 100 / 4;
+						iob->sc_msg[4] = 100 / 4;
 				}
 				printf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
 				    dev->sc_dev.dv_xname, target,
-				    dev->sc_msg[4] * 4, dev->sc_msg[5]);
+				    iob->sc_msg[4] * 4, iob->sc_msg[5]);
 				scsi_period_to_siop (dev, target);
 			}
 		}
 #if 0
 		DCIAS(dev->sc_statuspa);	/* XXX */
 #else
-		dma_cachectl(&dev->sc_stat[0], 1);
+		dma_cachectl(&iob->sc_stat[0], 1);
 #endif
-		*status = dev->sc_stat[0];
+		*status = iob->sc_stat[0];
+#ifdef DEBUG
+		if (regs->siop_sbcl & SIOP_BSY) {
+			/*printf ("ACK! siop was busy at end: regs %x script %x dsa %x\n",
+			    regs, &scripts, &iob->sc_ds);*/
+			/*Debugger();*/
+		}
+#endif
+		if (dev->sc_active > 1)
+			regs->siop_dcntl |= SIOP_DCNTL_STD;
 		return 1;
 	}
 	if (sstat0 & SIOP_SSTAT0_M_A) {		/* Phase mismatch */
 #ifdef DEBUG
+		++siopphmm;
+		if (iob->iob_len) {
+			int adjust;
+			adjust = ((dfifo - (dbc & 0x7f)) & 0x7f);
+			if (sstat1 & SIOP_SSTAT1_ORF)
+				++adjust;
+			if (sstat1 & SIOP_SSTAT1_OLF)
+				++adjust;
+			iob->iob_curlen = *((long *)&regs->siop_dcmd) & 0xffffff;
+			iob->iob_curlen += adjust;
+			iob->iob_curbuf = *((long *)&regs->siop_dnad);
+#ifdef DEBUG
+			if (siop_debug & 0x100)
+				printf ("Phase mismatch: dnad %x dbc %x dfifo %x dbc %x sstat1 %x adjust %x sbcl %x\n",
+				    iob->iob_curbuf, iob->iob_curlen, dfifo, dbc, sstat1, adjust, regs->siop_sbcl);
+#endif
+		}
 		if (siop_debug & 9)
-			printf ("Phase mismatch: %x dsp +%x\n", regs->siop_sbcl,
-			    regs->siop_dsp - dev->sc_scriptspa);
+			printf ("Phase mismatch: %x dsp +%x dcmd %x\n",
+			    regs->siop_sbcl,
+			    regs->siop_dsp - dev->sc_scriptspa,
+			    *((long *)&regs->siop_dcmd));
 		if (siop_debug & 0x10)
 			panic ("53c710 phase mismatch");
 #endif
@@ -848,27 +811,13 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 /*
  * For data out and data in phase, check for DMA chaining
  */
-
-/*
- * for message in, check for possible reject for sync request
- */
-		case 0:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_dataout;
-			break;
-		case 1:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_datain;
-			break;
-		case 2:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_cmd;
-			break;
-		case 3:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_status;
-			break;
-		case 6:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_msgout;
-			break;
-		case 7:
-			regs->siop_dsp = dev->sc_scriptspa + Ent_msgin;
+		case 0:		/* data out */
+		case 1:		/* data in */
+		case 2:		/* status */
+		case 3:		/* command */
+		case 6:		/* message in */
+		case 7:		/* message out */
+			regs->siop_dsp = dev->sc_scriptspa + Ent_switch;
 			break;
 		default:
 			goto bad_phase;
@@ -876,49 +825,33 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		return 0;
 	}
 	if (sstat0 & SIOP_SSTAT0_STO) {		/* Select timed out */
-		*status = -1;
-		return 1;
-	}
-	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff05 &&
-	    (regs->siop_sbcl & (SIOP_MSG | SIOP_CD)) == 0) {
-		printf ("DMA chaining failed\n");
-		siopreset (dev);
-		*status = -1;
-		return 1;
-	}
-	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff27) {
 #ifdef DEBUG
-		if (siop_debug & 3)
-			printf ("DMA chaining completed: dsa %x dnad %x addr %x\n",
-				regs->siop_dsa,	regs->siop_dnad, regs->siop_addr);
-		++siopchain_ints;
+		if (regs->siop_sbcl & SIOP_BSY) {
+			printf ("ACK! siop was busy at timeout: regs %x script %x dsa %x\n",
+			    regs, &scripts, &iob->sc_ds);
+			printf(" sbcl %x sdid %x istat %x dstat %x sstat0 %x\n",
+			    regs->siop_sbcl, regs->siop_sdid, istat, dstat, sstat0);
+if (!(regs->siop_sbcl & SIOP_BSY)) {
+	printf ("Yikes, it's not busy now!\n");
+#if 0
+	*status = -1;
+	if (dev->sc_active > 1)
+		regs->siop_dsp = dev->sc_scriptspa + Ent_wait_reselect;
+	return 1;
 #endif
-		regs->siop_dsa = dev->sc_dspa;
-		regs->siop_dsp = dev->sc_scriptspa + Ent_status;
-		return 0;
+}
+/*			regs->siop_dcntl |= SIOP_DCNTL_STD;*/
+			return (0);
+			Debugger();
+		}
+#endif
+		*status = -1;
+		if (dev->sc_active > 1)
+			regs->siop_dsp = dev->sc_scriptspa + Ent_wait_reselect;
+		return 1;
 	}
 	target = dev->sc_slave;
-	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff26 &&
-	    dev->sc_msg[0] == MSG_REJECT && dev->sc_sync[target].state == SYNC_SENT) {
-		dev->sc_sync[target].state = SYNC_DONE;
-		dev->sc_sync[target].period = 0;
-		dev->sc_sync[target].offset = 0;
-		dev->sc_ds.sdtrolen = 0;
-		dev->sc_ds.sdtrilen = 0;
-#ifdef DEBUG
-		if (siopsync_debug || 1)
-			printf ("target %d rejected sync, going asynchronous\n", target);
-#endif
-		siop_inhibit_sync[target] = -1;
-		if ((regs->siop_sbcl & 7) == 6) {
-			regs->siop_dsp = dev->sc_scriptspa + Ent_msgout;
-			return (0);
-		}
-		regs->siop_dcntl |= SIOP_DCNTL_STD;
-		return (0);
-	}
-	if ((dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff13) ||
-	    sstat0 & SIOP_SSTAT0_UDC) {
+	if (sstat0 & SIOP_SSTAT0_UDC) {
 #ifdef DEBUG
 		printf ("%s: target %d disconnected unexpectedly\n",
 		   dev->sc_dev.dv_xname, target);
@@ -927,26 +860,127 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		siopabort (dev, regs, "siopchkintr");
 #endif
 		*status = STS_BUSY;
+		if (dev->sc_active > 1)
+			regs->siop_dsp = dev->sc_scriptspa + Ent_wait_reselect;
 		return 1;
 	}
-	if (dstat & SIOP_DSTAT_SIR &&regs->siop_dsps == 0xfffb) {
-#if 0
-		printf ("%s: target %d busy\n", dev->sc_dev.dv_xname, target);
+	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff0a) {
+#ifdef DEBUG
+		if (siop_debug & 0x100)
+			printf ("%s: ID %x disconnected TEMP %x (+%d) buf %x len %x buf %x len %x dfifo %x dbc %x sstat1 %x\n",
+			    dev->sc_dev.dv_xname, 1 << target, regs->siop_temp,
+			    regs->siop_temp - dev->sc_scriptspa,
+			    iob->iob_curbuf, iob->iob_curlen,
+			    iob->sc_ds.chain[0].databuf, iob->sc_ds.chain[0].datalen, dfifo, dbc, sstat1);
 #endif
-#if 0
-		siopabort (dev, regs, "siopchkintr");
+		/*
+		 * 	HACK!
+		 * set current entry in disconnect state
+		 * clear current
+		 * if another iob available and another request pending,
+		 * start another
+		 */
+		iob->sc_status = dev->sc_flags & (SIOP_SELECTED|SIOP_DMA);
+		dev->sc_flags &= ~(SIOP_SELECTED|SIOP_DMA);
+		dev->sc_cur = NULL;		/* no current device */
+		dev->sc_xs = NULL;
+		/* continue script to wait for reconnect */
+		regs->siop_dcntl |= SIOP_DCNTL_STD;
+		if (dev->sc_active < 2) {
+			struct siop_pending *pendp;
+			int s = splbio();
+			/*
+			 * can start another I/O, see if there are
+			 * any pending and start them
+			 */
+			if (pendp = dev->sc_xslist.tqh_first) {
+				TAILQ_REMOVE(&dev->sc_xslist, pendp, link);
+				dev->sc_xs = pendp->xs;
+				pendp->xs = NULL;
+				splx(s);
+#ifdef DEBUG
+				if (siop_debug & 0x100)
+					printf ("starting a pending command %x\n", dev->sc_xs);
 #endif
-		*status = STS_BUSY;
-		return 1;
+				siop_donextcmd(dev);
+			}
+			splx(s);
+		}
+		return (0);
+	}
+	if (dstat & SIOP_DSTAT_SIR && (regs->siop_dsps == 0xff09 ||
+	    regs->siop_dsps == 0xff06)) {
+		int i;
+#ifdef DEBUG
+		if (siop_debug & 0x100)
+			printf ("%s: target reselected %x %x\n",
+			     dev->sc_dev.dv_xname, regs->siop_lcrc,
+			     regs->siop_dsps);
+#endif
+		if (dev->sc_cur) {
+			printf ("siop: oops - reconnect before current done\n");
+/*			panic ("siop: what now?");*/
+		}
+		/*
+		 * locate iob of reconnecting device
+		 * set dev->sc_cur to iob
+		 */
+		for (i = 0, iob = NULL; i < 2; ++i) {
+			if (dev->sc_iob[i].sc_xs == NULL)
+				continue;
+			if (!dev->sc_iob[i].sc_status)
+				continue;
+			if (!(regs->siop_lcrc & (dev->sc_iob[i].sc_ds.scsi_addr >> 16)))
+				continue;
+			iob = &dev->sc_iob[i];
+			dev->sc_cur = iob;
+			dev->sc_xs = iob->sc_xs;
+			dev->sc_flags |= iob->sc_status;
+			iob->sc_status = 0;
+			DCIAS(kvtop(&iob->sc_stat[0]));
+			regs->siop_dsa = kvtop(&iob->sc_ds);
+			if (iob->iob_curlen) {
+if (iob->iob_curbuf <= (u_long) iob->sc_ds.chain[0].databuf ||
+    iob->iob_curbuf >= (u_long)(iob->sc_ds.chain[0].databuf + iob->sc_ds.chain[0].datalen))
+	printf ("%s: saved data pointer not in chain[0]\n");
+				iob->sc_ds.chain[0].databuf = (char *) iob->iob_curbuf;
+				iob->sc_ds.chain[0].datalen = iob->iob_curlen;
+#ifdef DEBUG
+				if (siop_debug & 0x100)
+					printf ("%s: reselect buf %x len %x\n",
+					    dev->sc_dev.dv_xname, iob->iob_curbuf,
+					    iob->iob_curlen);
+#endif
+				DCIAS(kvtop(&iob->sc_ds.chain));
+			}
+		}
+		if (iob == NULL)
+			panic("unable to find reconnecting device");
+		regs->siop_dcntl |= SIOP_DCNTL_STD;
+		return (0);
+	}
+	if (dstat & SIOP_DSTAT_SIR && regs->siop_dsps == 0xff07) {
+		/* reselect was interrupted */
+#ifdef DEBUG
+		if (siop_debug & 0x100 &&
+		    (regs->siop_sfbr & SIOP_CTEST2_SIGP) == 0)
+			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x\n",
+			    dev->sc_dev.dv_xname, regs->siop_scntl1, regs->siop_ctest2, regs->siop_sfbr);
+#endif
+		target = dev->sc_xs->sc_link->target;
+		regs->siop_dsa = kvtop(&dev->sc_cur->sc_ds);
+		regs->siop_sbcl = dev->sc_sync[target].offset;
+		regs->siop_dcntl |= SIOP_DCNTL_STD;
+		return (0);
 	}
 	if (sstat0 == 0 && dstat & SIOP_DSTAT_SIR) {
 #if 0
 		DCIAS(dev->sc_statuspa);
 #else
-		dma_cachectl (&dev->sc_stat[0], 1);
+		dma_cachectl (&iob->sc_stat[0], 1);
 #endif
 		printf ("SIOP interrupt: %x sts %x msg %x sbcl %x\n",
-		    regs->siop_dsps, dev->sc_stat[0], dev->sc_msg[0],
+		    regs->siop_dsps, iob->sc_stat[0], iob->sc_msg[0],
 		    regs->siop_sbcl);
 		siopreset (dev);
 		*status = -1;
@@ -956,8 +990,8 @@ siop_checkintr(dev, istat, dstat, sstat0, status)
 		printf ("SIOP: SCSI Gross Error\n");
 	if (sstat0 & SIOP_SSTAT0_PAR)
 		printf ("SIOP: Parity Error\n");
-	if (dstat & SIOP_DSTAT_OPC)
-		printf ("SIOP: Invalid SCRIPTS Opcode\n");
+	if (dstat & SIOP_DSTAT_IID)
+		printf ("SIOP: Invalid instruction detected\n");
 bad_phase:
 	/*
 	 * temporary panic for unhandled conditions
@@ -965,13 +999,13 @@ bad_phase:
 	 * then panics.
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
-	printf ("siopchkintr: target %x ds %x\n", target, &dev->sc_ds);
+	printf ("siopchkintr: target %x ds %x\n", target, &iob->sc_ds);
 	printf ("scripts %x ds %x regs %x dsp %x dcmd %x\n", dev->sc_scriptspa,
-	    dev->sc_dspa, kvtop(regs), regs->siop_dsp,
+	    kvtop(&dev->sc_iob), kvtop(regs), regs->siop_dsp,
 	    *((long *)&regs->siop_dcmd));
 	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %x dsa %x sbcl %x sts %x msg %x\n",
 	    istat, dstat, sstat0, regs->siop_dsps, regs->siop_dsa,
-	     regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);
+	     regs->siop_sbcl, iob->sc_stat[0], iob->sc_msg[0]);
 #ifdef DEBUG
 	if (siop_debug & 0x20)
 		panic("siopchkintr: **** temp ****");
@@ -997,15 +1031,17 @@ bad_phase:
  *
  */
 int
-siopicmd(dev, target, cbuf, clen, buf, len)
+siopicmd(dev, target, lun, cbuf, clen, buf, len)
 	struct siop_softc *dev;
 	int target;
+	int lun;
 	void *cbuf;
 	int clen;
 	void *buf;
 	int len;
 {
 	siop_regmap_p regs = dev->sc_siopp;
+	struct siop_iob *iob = dev->sc_cur;
 	int i;
 	int status;
 	u_char istat;
@@ -1022,10 +1058,10 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 	dev->sc_slave = target;
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("siopicmd: target %x cmd %02x ds %x\n", target,
-		    *((char *)cbuf), &dev->sc_ds);
+		printf ("siopicmd: target %x/%x cmd %02x ds %x\n", target,
+		    lun, *((char *)cbuf), &iob->sc_ds);
 #endif
-	siop_setup (dev, target, cbuf, clen, buf, len);
+	siop_setup (dev, target, lun, cbuf, clen, buf, len);
 
 	for (;;) {
 		/* use cmd_wait values? */
@@ -1037,20 +1073,20 @@ siopicmd(dev, target, cbuf, clen, buf, len)
 				    target, *((char *)cbuf),
 				    regs->siop_sbcl, regs->siop_dsp,
 				    regs->siop_dsp - dev->sc_scriptspa,
-				    *((long *)&regs->siop_dcmd), &dev->sc_ds);
+				    *((long *)&regs->siop_dcmd), &iob->sc_ds);
 				i = siop_cmd_wait << 2;
 				/* XXXX need an upper limit and reset */
 			}
-			delay(1);
+			delay(10);
 		}
 		dstat = regs->siop_dstat;
 		sstat0 = regs->siop_sstat0;
 #ifdef DEBUG
 		if (siop_debug & 1) {
-			DCIAS(dev->sc_statuspa);	/* XXX should just invalidate dev->sc_stat */
+			DCIAS(kvtop(iob->sc_stat[0]));	/* XXX should just invalidate dev->sc_stat */
 			printf ("siopicmd: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 			    istat, dstat, sstat0, regs->siop_dsps, regs->siop_sbcl,
-			    dev->sc_stat[0], dev->sc_msg[0]);
+			    iob->sc_stat[0], iob->sc_msg[0]);
 		}
 #endif
 		if (siop_checkintr(dev, istat, dstat, sstat0, &status)) {
@@ -1095,16 +1131,16 @@ siopgo(dev, xs)
 	dev->sc_slave = xs->sc_link->target;
 	regs = dev->sc_siopp;
 	/* enable SCSI and DMA interrupts */
-	regs->siop_sien = SIOP_SIEN_M_A | SIOP_SIEN_STO | SIOP_SIEN_SEL | SIOP_SIEN_SGE |
+	regs->siop_sien = SIOP_SIEN_M_A | SIOP_SIEN_STO | /*SIOP_SIEN_SEL |*/ SIOP_SIEN_SGE |
 	    SIOP_SIEN_UDC | SIOP_SIEN_RST | SIOP_SIEN_PAR;
-	regs->siop_dien = 0x20 | SIOP_DIEN_ABRT | SIOP_DIEN_SIR | SIOP_DIEN_WTD |
-	    SIOP_DIEN_OPC;
+	regs->siop_dien = SIOP_DIEN_BF | SIOP_DIEN_ABRT | SIOP_DIEN_SIR |
+	    /*SIOP_DIEN_WTD |*/ SIOP_DIEN_IID;
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("siopgo: target %x cmd %02x ds %x\n", dev->sc_slave, xs->cmd->opcode, &dev->sc_ds);
+		printf ("siopgo: target %x cmd %02x ds %x\n", dev->sc_slave, xs->cmd->opcode, &dev->sc_cur->sc_ds);
 #endif
 
-	siop_setup(dev, dev->sc_slave, xs->cmd, xs->cmdlen, xs->data, xs->datalen);
+	siop_setup(dev, dev->sc_slave, xs->sc_link->lun, xs->cmd, xs->cmdlen, xs->data, xs->datalen);
 
 	return (0);
 }
@@ -1129,7 +1165,7 @@ siopintr (dev)
 		return;
 	if ((dev->sc_flags & (SIOP_DMA | SIOP_SELECTED)) == SIOP_SELECTED)
 		return;	/* doing non-interrupt I/O */
-		/* Got a valid interrupt on this device */
+	/* Got a valid interrupt on this device */
 	dstat = dev->sc_dstat;
 	sstat0 = dev->sc_sstat0;
 	dev->sc_istat = 0;
@@ -1137,39 +1173,50 @@ siopintr (dev)
 	if (siop_debug & 1)
 		printf ("%s: intr istat %x dstat %x sstat0 %x\n",
 		    dev->sc_dev.dv_xname, istat, dstat, sstat0);
-	if ((dev->sc_flags & SIOP_DMA) == 0) {
-		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x\n",
-		    dev->sc_dev.dv_xname, istat, dstat, sstat0);
+	if (!dev->sc_active) {
+		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x status %x\n",
+		    dev->sc_dev.dv_xname, istat, dstat, sstat0, dev->sc_cur->sc_stat[0]);
 	}
 #endif
 
 #ifdef DEBUG
 	if (siop_debug & 5) {
-		DCIAS(dev->sc_statuspa);
+		DCIAS(kvtop(&dev->sc_cur->sc_stat[0]));
 		printf ("siopintr%d: istat %x dstat %x sstat0 %x dsps %x sbcl %x sts %x msg %x\n",
 		    unit, istat, dstat, sstat0, regs->siop_dsps,
-		    regs->siop_sbcl, dev->sc_stat[0], dev->sc_msg[0]);
+		    regs->siop_sbcl, dev->sc_cur->sc_stat[0], dev->sc_cur->sc_msg[0]);
 	}
 #endif
 	if (siop_checkintr (dev, istat, dstat, sstat0, &status)) {
 #if 1
-		regs->siop_sien = 0;
-		regs->siop_dien = 0;
+		if (dev->sc_active <= 1) {	/* more HACK */
+			regs->siop_sien = 0;
+			regs->siop_dien = 0;
+		}
 		if (status == 0xff)
 			printf ("siopintr: status == 0xff\n");
 #endif
-		dev->sc_flags &= ~(SIOP_DMA | SIOP_SELECTED);
-		siop_scsidone(dev, dev->sc_stat[0]);
+		if (dev->sc_flags & SIOP_DMA) {
+			dev->sc_flags &= ~(SIOP_DMA | SIOP_SELECTED);
+if (regs->siop_sbcl & SIOP_BSY)
+    printf ("siopintr: SCSI bus busy at I/O completion\n");
+			siop_scsidone(dev, dev->sc_cur->sc_stat[0]);
+		}
 	}
 }
 
+/*
+ * This is based on the Progressive Peripherals Zeus driver and may
+ * not be correct for other 53c710 boards.
+ *
+ */
 scsi_period_to_siop (dev, target)
 	struct siop_softc *dev;
 {
 	int period, offset, i, sxfer;
 
-	period = dev->sc_msg[4];
-	offset = dev->sc_msg[5];
+	period = dev->sc_cur->sc_msg[4];
+	offset = dev->sc_cur->sc_msg[5];
 	sxfer = 0;
 	if (offset <= SIOP_MAX_OFFSET)
 		sxfer = offset;

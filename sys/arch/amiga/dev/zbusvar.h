@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbusvar.h,v 1.4 1994/12/28 09:25:23 chopps Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.1 1994/12/28 09:26:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,35 +29,49 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _GVPBUSVAR_H_
-#define _GVPBUSVAR_H_
+#ifndef _ZBUSVAR_H_
+#define _ZBUSVAR_H_
 
-enum gvpbusprod {
-	GVP_GFORCE_040 = 0x20,
-	GVP_GFORCE_040_SCSI = 0x30,
-	GVP_GFORCE_030 = 0xa0,
-	GVP_GFORCE_030_SCSI = 0xb0,
-	GVP_COMBO_R4 = 0x60,
-	GVP_COMBO_R4_SCSI = 0x70,
-	GVP_COMBO_R3 = 0xe0,
-	GVP_COMBO_R3_SCSI = 0xf0,
-	GVP_SERIESII = 0xf8,
-	GVP_IOEXTEND = 0x98,
+struct zbus_args {
+	void *pa;
+	void *va;
+	int size;
+	int slot;
+	int manid;
+	int prodid;
+	int serno;
 };
+vm_offset_t	ZTWOROMADDR;
+vm_offset_t	ZTWOMEMADDR;
+u_int		NZTWOMEMPG;
+vm_offset_t	ZBUSADDR;	/* kva of Zorro bus I/O pages */
+u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
+#define ZTWOROMBASE	(0x00D80000)
+#define ZTWOROMTOP	(0x00F80000)
+#define NZTWOROMPG	btoc(ZTWOROMTOP-ZTWOROMBASE)
 
-enum gvpbusflags {
-	GVP_IO = 0x1,
-	GVP_ACCEL = 0x2,
-	GVP_SCSI = 0x4,
-	GVP_24BITDMA = 0x8,
-	GVP_25BITDMA = 0x10,
-	GVP_NOBANK = 0x20,
-};
+/* 
+ * maps a ztwo and/or A3000 builtin address into the mapped kva address
+ */
+#define ztwomap(pa) \
+    ((volatile void *)((u_int)ZTWOROMADDR - ZTWOROMBASE + (u_int)(pa)))
+#define ztwopa(va) ((caddr_t)(ZTWOROMBASE + (u_int)(va) - (u_int)ZTWOROMADDR))
 
-struct gvpbus_args {
-	struct zbus_args zargs;
-	enum gvpbusprod prod;
-	int  flags;
-};
+/*
+ * tests whether the address lies in our zorro2 rom space
+ */
+#define isztwokva(kva) \
+    ((u_int)(kva) >= ZTWOROMADDR && \
+    (u_int)(kva) < \
+    (ZTWOROMADDR + ZTWOROMTOP - ZTWOROMBASE))
+#define isztwopa(pa) ((u_int)(pa) >= ZTWOROMBASE && (u_int)(pa) <= ZTWOROMTOP)
+#define isztwomem(kva) \
+    (ZTWOMEMADDR && (u_int)(kva) >= ZTWOMEMADDR && \
+    (u_int)(kva) < (ZTWOMEMADDR + NZTWOMEMPG * NBPG))
 
-#endif
+#define ZTHREEBASE	(0x40000000)
+#define ZTHREETOP	((u_long)0x80000000)
+#define NZTHREEPG	btoc(ZTHREETOP - ZTHREEBASE)
+
+#define iszthreepa(pa) ((u_int)(pa) >= ZTHREEBASE && (u_int)(pa) <= ZTHREETOP)
+#endif /* _ZBUS_H_ */

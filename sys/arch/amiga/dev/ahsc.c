@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.5 1994/12/01 17:24:51 chopps Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.6 1994/12/28 09:24:57 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -48,7 +48,7 @@
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
 #include <amiga/dev/ahscreg.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int ahscprint __P((void *auxp, char *));
 void ahscattach __P((struct device *, struct device *, void *));

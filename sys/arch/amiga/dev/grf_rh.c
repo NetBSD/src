@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.4 1994/12/01 17:25:04 chopps Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.5 1994/12/28 09:25:09 chopps Exp $	*/
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -18,7 +18,7 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rhreg.h>
-#include <amiga/dev/zthreebusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int rh_mondefok __P((struct MonDef *));
 
@@ -1236,7 +1236,7 @@ grfrhmatch(pdp, cfp, auxp)
 #ifdef RETINACONSOLE
 	static int rhconunit = -1;
 #endif
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -1273,7 +1273,7 @@ grfrhattach(pdp, dp, auxp)
 {
 	static struct grf_softc congrf;
 	static int coninited;
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 	struct grf_softc *gp;
 
 	zap = auxp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.5 1994/12/01 17:25:12 chopps Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.6 1994/12/28 09:25:22 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <amiga/amiga/device.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
 
 void gvpbusattach __P((struct device *, struct device *, void *));
@@ -49,7 +49,7 @@ gvpbusmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -70,12 +70,12 @@ gvpbusattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 	struct gvpbus_args ga;
 	u_char *idreg;
 
 	zap = auxp;
-	bcopy(zap, &ga.zargs, sizeof(struct ztwobus_args));
+	bcopy(zap, &ga.zargs, sizeof(struct zbus_args));
 	ga.flags = 0;
 	
 	/*
@@ -122,6 +122,7 @@ gvpbusattach(pdp, dp, auxp)
 		ga.flags |= GVP_IO;
 		break;
 	default:
+		printf(": unknown Series II %x", ga.prod);
 	}
 	printf("\n");
 	/*

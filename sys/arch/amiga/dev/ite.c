@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.24 1994/12/01 17:25:19 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.25 1994/12/28 09:25:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,9 +131,7 @@ itematch(pdp, cdp, auxp)
 	 * and thus no unit number.
 	 */
 	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == 
-		    (int (*)__P((dev_t,int,int,struct proc *,struct file*)))
-		    iteopen)
+		if (cdevsw[maj].d_open == iteopen)
 			break;
 	gp->g_itedev = makedev(maj, cdp->cf_unit);
 	return(1);
@@ -174,6 +172,7 @@ iteattach(pdp, dp, auxp)
 		ip->grf = gp;
 		splx(s);
 
+		alloc_sicallback();
 		iteinit(gp->g_itedev);
 		printf(": rows %d cols %d", ip->rows, ip->cols);
 		printf(" repeat at (%d/100)s next at (%d/100)s",
@@ -297,6 +296,13 @@ ite_cnputc(dev, c)
 		paniced = 1;
 	}
 	iteputchar(ch, ip);
+}
+
+void
+ite_cnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.7 1994/12/01 17:25:26 chopps Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.8 1994/12/28 09:25:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
-#include <amiga/dev/zthreebusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int mgnscprint __P((void *auxp, char *));
 void mgnscattach __P((struct device *, struct device *, void *));
@@ -88,7 +88,7 @@ mgnscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 	if (zap->manid == 1058 && zap->prodid == 17)
@@ -102,7 +102,7 @@ mgnscattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct siop_softc *sc;
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 	siop_regmap_p rp;
 
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.8 1994/12/01 17:25:10 chopps Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.9 1994/12/28 09:25:21 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -48,7 +48,7 @@
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
 #include <amiga/dev/gtscreg.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
 
 void gtscattach __P((struct device *, struct device *, void *));

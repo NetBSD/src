@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.3 1994/12/01 17:24:49 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.4 1994/12/28 09:24:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
-#include <amiga/dev/zthreebusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int afscprint __P((void *auxp, char *));
 void afscattach __P((struct device *, struct device *, void *));
@@ -89,7 +89,7 @@ afscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 	if (zap->manid == 514 && zap->prodid == 84)
@@ -103,7 +103,7 @@ afscattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct siop_softc *sc;
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 	siop_regmap_p rp;
 
 	printf("\n");
