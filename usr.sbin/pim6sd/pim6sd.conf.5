@@ -1,5 +1,6 @@
-.\"	$NetBSD: pim6sd.conf.5,v 1.2 2000/05/19 10:43:50 itojun Exp $
-.\" 
+.\"	$NetBSD: pim6sd.conf.5,v 1.3 2000/07/10 08:58:31 itojun Exp $
+.\"	$KAME: pim6sd.conf.5,v 1.13 2000/07/10 08:53:00 itojun Exp $
+.\"
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
 .\" 
@@ -27,8 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: pim6sd.conf.5,v 1.9 2000/05/05 14:57:14 sumikawa Exp
-.\"
 .Dd Oct 6, 1999
 .Dt PIM6SD.CONF 5
 .Os
@@ -38,7 +37,7 @@
 .\"
 .Sh DESCRIPTION
 The
-.Nm pim6sd
+.Nm
 configuration file consists of a sequence of statements terminated
 by a semi-colon (`;'), each of which specifies how the daemon treats
 each interface on the system, specifies some parameters of the PIM
@@ -51,7 +50,7 @@ Lines beginning with
 are comments.
 .\".Pp
 .\"Note that
-.\".Nm pim6sd
+.\".Xr pim6sd 8
 .\"works even without the configuration file, although the daemon
 .\"will warn that there is no configuration file.
 .\"In such a case, the daemon will automatically set the default value
@@ -105,10 +104,9 @@ By default, a hostname is not resolved.
 .Ic ;
 .Xc
 Specifies
-.Nm
+.Xr pim6sd 8
 to ignore the interface even if the interface is multicast-capable.
-Note that PIM will be activated on all interfaces by default(including
-the case where there is no configuration file).
+Note that PIM will be activated on all interfaces by default.
 Interfaces are specified in the form of "name unit", such as
 .Ar gif0
 and
@@ -126,7 +124,7 @@ assert message on the interface.
 If another optional parameter
 .Ic nolistener
 is specified,
-.Nm pim6sd
+.Xr pim6sd 8
 will not send any MLD packets on the interface.
 This option is usually meaningless but will be useful when
 MLD messages are noisy (e.g. when debugging) and there is surely no
@@ -137,17 +135,22 @@ listner on the interface.
 .Xc
 Specifies a default preference value when sending a PIM assert message.
 Preferences are used by assert elections to determine upstream routers.
+Specifies a default preference value when sending a PIM assert message.
+Preferences are used by assert elections to determine upstream routers.
 Currently
-.Nm pim6sd
-cannot reliably obtain preferences and metrics from the
-unicast routing protocols, so a default value may be configured.
+.Xr pim6sd 8
+does not have an effective method to obtain preferences and metrics from the
+unicast routing protocols, so you may want to set a default value by hand.
 The default preference is 1024.
 .\"
 .It Ic default_source_metric Ar metric;
 Specifies a default metric value when sending a PIM assert message.
-It is recommended that preferences be set such that metrics are never
-consulted. However, default metrics may also be set and will default to
-1024.
+Since
+.Xr pim6sd 8
+cannot get an effective metric of unicast routing,
+it is recommended that preferences is set such that metrics are never
+consulted. However, default metrics may also be set, and
+its default value is 1024.
 .\"
 .It Xo
 .Ic granularity Ar second;
@@ -222,7 +225,7 @@ The default value is 180.
 .Op Ic priority Ar priority
 .Ic ;
 .Xc
-Specifies to act as a candidate Rendezvous Point(RP).
+Specifies to act as a Candidate Rendezvous Point(RP).
 It is recommended to specify
 .Ic cand_rp
 only in typical usage.
@@ -230,7 +233,7 @@ All other parameters are optional and will be set automatically.
 If an
 .Ar interface
 is specified,
-.Nm pim6sd
+.Xr pim6sd 8
 will search for a global address on the specified interface
 and set the address in Candidate RP Advertisements.
 An optional parameter
@@ -260,7 +263,7 @@ specifies a group prefix that the RP will handle.
 .Op Ic masklen Ar masklen
 .Ic ;
 .Xc
-Specifies to act as a candidate bootstrap router(BSR).
+Specifies to act as a Candidate Bootstrap Router(BSR).
 It is recommended to specify
 .Ic cand_bootstrap_router
 only in typical usage.
@@ -268,7 +271,7 @@ All other parameters are optional and will be set automatically.
 If an
 .Ar interface
 is specified,
-.Nm pim6sd
+.Xr pim6sd 8
 will search for a global address on the specified interface
 and set the address in Bootstrap messages.
 An optional parameter
@@ -277,7 +280,7 @@ specifies the interval of two succeeding bootstraps in seconds.
 Its default value is 60.
 Another optional parameter
 .Ic priority
-specifies the priority of the RP.
+specifies the priority of the BSR.
 The default value is 0, which means the lowest priority.
 Hash mask length can also be specified by the
 .Ic masklen
@@ -323,13 +326,13 @@ cand_rp;
 .Xr pim6sd 8
 .Sh HISTORY
 The
-.Nm pim6sd
+.Xr pim6sd 8
 command is developed by Mickael Hoerdt at LSIIT Laboratory.
 It is based on IPv4 PIM sparse-mode
 .Nm pimd
 developed at University of Southern California,
 which has also been derived from
-.Nm mrouted.
-.Nm Mrouted
+.Nm mrouted .
+.Nm mrouted
 is COPYRIGHT 1989 by The Board of Trustees of
 Leland Stanford Junior University.
