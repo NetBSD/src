@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.10 1995/01/29 07:37:00 cgd Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.11 1995/04/11 05:10:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -122,8 +122,8 @@ int egintr __P((struct eg_softc *));
 static void eginit __P((struct eg_softc *));
 static int egioctl __P((struct ifnet *, u_long, caddr_t));
 static int egrecv __P((struct eg_softc *));
-static int egstart __P((struct ifnet *));
-static int egwatchdog __P((int));
+static void egstart __P((struct ifnet *));
+static void egwatchdog __P((int));
 static void egreset __P((struct eg_softc *));
 static inline void egread __P((struct eg_softc *, caddr_t, int));
 static struct mbuf *egget __P((caddr_t, int, struct ifnet *));
@@ -392,7 +392,6 @@ egattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = egcd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
@@ -483,7 +482,7 @@ egrecv(sc)
 	}
 }
 
-static int
+static void
 egstart(ifp)
 	struct ifnet *ifp;
 {
@@ -747,9 +746,8 @@ egioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			eginit(sc);     /* before arpwhohas */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			eginit(sc);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
@@ -825,7 +823,7 @@ egreset(sc)
 	splx(s);
 }
 
-static int
+static void
 egwatchdog(unit)
 	int     unit;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.21 1995/01/29 07:37:02 cgd Exp $	*/
+/*	$NetBSD: if_el.c,v 1.22 1995/04/11 05:10:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -85,8 +85,8 @@ struct el_softc {
 int elintr __P((struct el_softc *));
 static int el_init __P((struct el_softc *));
 static int el_ioctl __P((struct ifnet *, u_long, caddr_t));
-static int el_start __P((struct ifnet *));
-static int el_watchdog __P((int));
+static void el_start __P((struct ifnet *));
+static void el_watchdog __P((int));
 static void el_reset __P((struct el_softc *));
 static void el_stop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *, int));
@@ -187,7 +187,6 @@ elattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = elcd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = el_start;
 	ifp->if_ioctl = el_ioctl;
 	ifp->if_watchdog = el_watchdog;
@@ -312,7 +311,7 @@ el_init(sc)
  * giving the receiver a chance between datagrams.  Call only from splimp or
  * interrupt level!
  */
-static int
+static void
 el_start(ifp)
 	struct ifnet *ifp;
 {
@@ -684,15 +683,8 @@ el_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			el_init(sc);	/* before arpwhohas */
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			el_init(sc);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
@@ -752,14 +744,14 @@ el_ioctl(ifp, cmd, data)
 	default:
 		error = EINVAL;
 	}
-	(void) splx(s);
+	splx(s);
 	return error;
 }
 
 /*
  * Device timeout routine.
  */
-static int
+static void
 el_watchdog(unit)
 	int unit;
 {
