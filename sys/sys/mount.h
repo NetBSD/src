@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.52 1997/01/30 09:53:59 tls Exp $	*/
+/*	$NetBSD: mount.h,v 1.53 1997/01/31 03:02:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -207,6 +207,7 @@ struct vfsops {
 				    int *exflagsp, struct ucred **credanonp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
+	int	(*vfs_mountroot) __P((void));
 	int	vfs_refcount;
 };
 
@@ -410,11 +411,13 @@ struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
 int	vfs_lock __P((struct mount *));	    /* lock a vfs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
+int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
 void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((void));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *));
 void	vfs_unbusy __P((struct mount *));
+struct vfsops *vfs_getopsbyname __P((const char *));
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
