@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1983, 1987, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: vacation.c,v 8.68.4.4 2000/07/18 05:10:29 gshapiro Exp";
+static char id[] = "@(#)Id: vacation.c,v 8.68.4.16 2001/02/14 05:02:21 gshapiro Exp";
 #endif /* ! lint */
 
 #include <ctype.h>
@@ -48,6 +48,11 @@ static char id[] = "@(#)Id: vacation.c,v 8.68.4.4 2000/07/18 05:10:29 gshapiro E
 #define ONLY_ONCE	((time_t) 0)	/* send at most one reply */
 #define INTERVAL_UNDEF	((time_t) (-1))	/* no value given */
 
+#ifndef TRUE
+# define TRUE	1
+# define FALSE	0
+#endif /* ! TRUE */
+
 uid_t	RealUid;
 gid_t	RealGid;
 char	*RealUserName;
@@ -72,11 +77,6 @@ BITMAP256 DontBlameSendmail;
 #define	VMSG	".vacation.msg"		/* vacation message */
 #define SECSPERDAY	(60 * 60 * 24)
 #define DAYSPERWEEK	7
-
-#ifndef TRUE
-# define TRUE	1
-# define FALSE	0
-#endif /* ! TRUE */
 
 #ifndef __P
 # ifdef __STDC__
@@ -106,6 +106,13 @@ static void debuglog __P((int, const char *, ...));
 # define msglog		syslog
 #endif /* _FFR_DEBUG */
 
+static void eatmsg __P((void));
+
+/* exit after reading input */
+#define EXITIT(excode)	{ \
+				eatmsg(); \
+				return excode; \
+			}
 int
 main(argc, argv)
 	int argc;
@@ -118,6 +125,7 @@ main(argc, argv)
 	int mfail = 0, ufail = 0;
 	int ch;
 	int result;
+	long sff;
 	time_t interval;
 	struct passwd *pw;
 	ALIAS *cur;
@@ -130,11 +138,24 @@ main(argc, argv)
 	extern char *optarg;
 	extern void usage __P((void));
 	extern void setinterval __P((time_t));
-	extern void readheaders __P((void));
+	extern int readheaders __P((void));
 	extern bool recent __P((void));
 	extern void setreply __P((char *, time_t));
 	extern void sendmessage __P((char *, char *, bool));
 	extern void xclude __P((FILE *));
+#if _FFR_LISTDB
+#define EXITM(excode)	{ \
+				if (!iflag && !lflag) \
+					eatmsg(); \
+				exit(excode); \
+			}
+#else /* _FFR_LISTDB */
+#define EXITM(excode)	{ \
+				if (!iflag) \
+					eatmsg(); \
+				exit(excode); \
+			}
+#endif /* _FFR_LISTDB */
 
 	/* Vars needed to link with smutil */
 	clrbitmap(DontBlameSendmail);
@@ -261,7 +282,7 @@ main(argc, argv)
 	{
 		msglog(LOG_NOTICE,
 		       "vacation: can't allocate memory for alias.\n");
-		exit(EX_TEMPFAIL);
+		EXITM(EX_TEMPFAIL);
 	}
 	if (ufail != 0)
 		usage();
@@ -278,7 +299,7 @@ main(argc, argv)
 		{
 			msglog(LOG_ERR,
 			       "vacation: no such user uid %u.\n", getuid());
-			exit(EX_NOUSER);
+			EXITM(EX_NOUSER);
 		}
 	}
 #if _FFR_BLACKBOX
@@ -287,14 +308,14 @@ main(argc, argv)
 	else if ((pw = getpwnam(*argv)) == NULL)
 	{
 		msglog(LOG_ERR, "vacation: no such user %s.\n", *argv);
-		exit(EX_NOUSER);
+		EXITM(EX_NOUSER);
 	}
 	name = pw->pw_name;
 	if (chdir(pw->pw_dir) != 0)
 	{
 		msglog(LOG_NOTICE,
 		       "vacation: no such directory %s.\n", pw->pw_dir);
-		exit(EX_NOINPUT);
+		EXITM(EX_NOINPUT);
 	}
 #endif /* _FFR_BLACKBOX */
 	user_info.smdbu_id = pw->pw_uid;
@@ -302,15 +323,23 @@ main(argc, argv)
 	(void) strlcpy(user_info.smdbu_name, pw->pw_name,
 		       SMDB_MAX_USER_NAME_LEN);
 
+	sff = SFF_CREAT;
+#if _FFR_BLACKBOX
+	if (getegid() != getgid())
+		RunAsGid = user_info.smdbu_group_id = getegid();
+
+	sff |= SFF_NOPATHCHECK|SFF_OPENASROOT;
+#endif /* _FFR_BLACKBOX */
+
 	result = smdb_open_database(&Db, dbfilename,
 				    O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
-				    S_IRUSR|S_IWUSR, SFF_CREAT,
+				    S_IRUSR|S_IWUSR, sff,
 				    SMDB_TYPE_DEFAULT, &user_info, NULL);
 	if (result != SMDBE_OK)
 	{
 		msglog(LOG_NOTICE, "vacation: %s: %s\n", dbfilename,
 		       errstring(result));
-		exit(EX_DATAERR);
+		EXITM(EX_DATAERR);
 	}
 
 #if _FFR_LISTDB
@@ -319,7 +348,7 @@ main(argc, argv)
 		static void listdb __P((void));
 
 		listdb();
-		(void)Db->smdb_close(Db);
+		(void) Db->smdb_close(Db);
 		exit(EX_OK);
 	}
 #endif /* _FFR_LISTDB */
@@ -327,45 +356,66 @@ main(argc, argv)
 	if (interval != INTERVAL_UNDEF)
 		setinterval(interval);
 
-	if (iflag)
+	if (iflag && !exclude)
 	{
-		result = Db->smdb_close(Db);
-		if (!exclude)
-			exit(EX_OK);
+		(void) Db->smdb_close(Db);
+		exit(EX_OK);
 	}
 
 	if (exclude)
 	{
 		xclude(stdin);
-		result = Db->smdb_close(Db);
-		exit(EX_OK);
+		(void) Db->smdb_close(Db);
+		EXITM(EX_OK);
 	}
 
 	if ((cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))) == NULL)
 	{
 		msglog(LOG_NOTICE,
 		       "vacation: can't allocate memory for username.\n");
-		exit(EX_OSERR);
+		(void) Db->smdb_close(Db);
+		EXITM(EX_OSERR);
 	}
 	cur->name = name;
 	cur->next = Names;
 	Names = cur;
 
-	readheaders();
-	if (!recent())
+	result = readheaders();
+	if (result == EX_OK && !recent())
 	{
 		time_t now;
 
 		(void) time(&now);
 		setreply(From, now);
-		result = Db->smdb_close(Db);
+		(void) Db->smdb_close(Db);
 		sendmessage(name, msgfilename, emptysender);
 	}
 	else
-		result = Db->smdb_close(Db);
-	exit(EX_OK);
-	/* NOTREACHED */
-	return EX_OK;
+		(void) Db->smdb_close(Db);
+	if (result == EX_NOUSER)
+		result = EX_OK;
+	exit(result);
+}
+
+/*
+** EATMSG -- read stdin till EOF
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		nothing.
+**
+*/
+static void
+eatmsg()
+{
+	/*
+	**  read the rest of the e-mail and ignore it to avoid problems
+	**  with EPIPE in sendmail
+	*/
+	while (getc(stdin) != EOF)
+		continue;
 }
 
 /*
@@ -375,10 +425,14 @@ main(argc, argv)
 **		none.
 **
 **	Returns:
-**		nothing.
+**		a exit code: NOUSER if no reply, OK if reply, * if error
+**
+**	Side Effects:
+**		may exit().
 **
 */
-void
+
+int
 readheaders()
 {
 	bool tome, cont;
@@ -410,7 +464,7 @@ readheaders()
 						{
 							msglog(LOG_NOTICE,
 							       "vacation: badly formatted \"From \" line.\n");
-							exit(EX_DATAERR);
+							EXITIT(EX_DATAERR);
 						}
 					}
 					else if (*p == '"')
@@ -425,18 +479,18 @@ readheaders()
 				{
 					msglog(LOG_NOTICE,
 					       "vacation: badly formatted \"From \" line.\n");
-					exit(EX_DATAERR);
+					EXITIT(EX_DATAERR);
 				}
 				*p = '\0';
 
 				/* ok since both strings have MAXLINE length */
 				if (*From == '\0')
-					(void)strlcpy(From, buf + 5,
-						      sizeof From);
+					(void) strlcpy(From, buf + 5,
+						       sizeof From);
 				if ((p = strchr(buf + 5, '\n')) != NULL)
 					*p = '\0';
 				if (junkmail(buf + 5))
-					exit(EX_OK);
+					EXITIT(EX_NOUSER);
 			}
 			break;
 
@@ -456,7 +510,7 @@ readheaders()
 			if (strncasecmp(p, "junk", 4) == 0 ||
 			    strncasecmp(p, "bulk", 4) == 0 ||
 			    strncasecmp(p, "list", 4) == 0)
-				exit(EX_OK);
+				EXITIT(EX_NOUSER);
 			break;
 
 		  case 'C':		/* "Cc:" */
@@ -487,12 +541,13 @@ findme:
 		}
 	}
 	if (!tome)
-		exit(EX_OK);
+		EXITIT(EX_NOUSER);
 	if (*From == '\0')
 	{
 		msglog(LOG_NOTICE, "vacation: no initial \"From \" line.\n");
-		exit(EX_DATAERR);
+		EXITIT(EX_DATAERR);
 	}
+	EXITIT(EX_OK);
 }
 
 /*
@@ -547,52 +602,142 @@ nsearch(name, str)
 **		is this some automated/junk/bulk/list mail?
 **
 */
+
+struct ignore
+{
+	char	*name;
+	size_t	len;
+};
+
+typedef struct ignore IGNORE_T;
+
+#define MAX_USER_LEN 256	/* maximum length of local part (sender) */
+
+/* delimiters for the local part of an address */
+#define isdelim(c)	((c) == '%' || (c) == '@' || (c) == '+')
+
 bool
 junkmail(from)
 	char *from;
 {
-	register size_t len;
-	register char *p;
-	register struct ignore *cur;
-	static struct ignore
+	bool quot;
+	char *e;
+	size_t len;
+	IGNORE_T *cur;
+	char sender[MAX_USER_LEN];
+	static IGNORE_T ignore[] =
 	{
-		char	*name;
-		size_t	len;
-	} ignore[] =
-	{
-		{ "-request",		8	},
 		{ "postmaster",		10	},
 		{ "uucp",		4	},
 		{ "mailer-daemon",	13	},
 		{ "mailer",		6	},
+		{ NULL,			0	}
+	};
+
+	static IGNORE_T ignorepost[] =
+	{
+		{ "-request",		8	},
 		{ "-relay",		6	},
+		{ "-owner",		6	},
+		{ NULL,			0	}
+	};
+
+	static IGNORE_T ignorepre[] =
+	{
+		{ "owner-",		6	},
 		{ NULL,			0	}
 	};
 
 	/*
-	 * This is mildly amusing, and I'm not positive it's right; trying
-	 * to find the "real" name of the sender, assuming that addresses
-	 * will be some variant of:
-	 *
-	 * From site!site!SENDER%site.domain%site.domain@site.domain
-	 */
-	if ((p = strchr(from, '%')) == NULL &&
-	    (p = strchr(from, '@')) == NULL)
+	**  This is mildly amusing, and I'm not positive it's right; trying
+	**  to find the "real" name of the sender, assuming that addresses
+	**  will be some variant of:
+	**
+	**  From site!site!SENDER%site.domain%site.domain@site.domain
+	*/
+
+	quot = FALSE;
+	e = from;
+	len = 0;
+	while (*e != '\0' && (quot || !isdelim(*e)))
 	{
-		if ((p = strrchr(from, '!')) != NULL)
-			++p;
-		else
-			p = from;
-		for (; *p; ++p)
+		if (*e == '"')
+		{
+			quot = !quot;
+			++e;
 			continue;
+		}
+		if (*e == '\\')
+		{
+			if (*(++e) == '\0')
+			{
+				/* '\\' at end of string? */
+				break;
+			}
+			if (len < MAX_USER_LEN)
+				sender[len++] = *e;
+			++e;
+			continue;
+		}
+		if (*e == '!' && !quot)
+		{
+			len = 0;
+			sender[len] = '\0';
+		}
+		else
+			if (len < MAX_USER_LEN)
+				sender[len++] = *e;
+		++e;
 	}
-	len = p - from;
-	for (cur = ignore; cur->name != NULL; ++cur)
+	if (len < MAX_USER_LEN)
+		sender[len] = '\0';
+	else
+		sender[MAX_USER_LEN - 1] = '\0';
+
+	if (len <= 0)
+		return FALSE;
+#if 0
+	if (quot)
+		return FALSE;	/* syntax error... */
+#endif /* 0 */
+
+	/* test prefixes */
+	for (cur = ignorepre; cur->name != NULL; ++cur)
 	{
 		if (len >= cur->len &&
-		    strncasecmp(cur->name, p - cur->len, cur->len) == 0)
+		    strncasecmp(cur->name, sender, cur->len) == 0)
 			return TRUE;
 	}
+
+	/*
+	**  If the name is truncated, don't test the rest.
+	**	We could extract the "tail" of the sender address and
+	**	compare it it ignorepost, however, it seems not worth
+	**	the effort.
+	**	The address surely can't match any entry in ignore[]
+	**	(as long as all of them are shorter than MAX_USER_LEN).
+	*/
+
+	if (len > MAX_USER_LEN)
+		return FALSE;
+
+	/* test full local parts */
+	for (cur = ignore; cur->name != NULL; ++cur)
+	{
+		if (len == cur->len &&
+		    strncasecmp(cur->name, sender, cur->len) == 0)
+			return TRUE;
+	}
+
+	/* test postfixes */
+	for (cur = ignorepost; cur->name != NULL; ++cur)
+	{
+		if (len >= cur->len &&
+		    strncasecmp(cur->name, e - cur->len - 1,
+				cur->len) == 0)
+			return TRUE;
+	}
+
 	return FALSE;
 }
 
@@ -622,27 +767,27 @@ recent()
 	memset(&data, '\0', sizeof data);
 
 	/* get interval time */
-	key.data.data = VIT;
-	key.data.size = sizeof(VIT);
+	key.data = VIT;
+	key.size = sizeof(VIT);
 
 	st = Db->smdb_get(Db, &key, &data, 0);
 	if (st != SMDBE_OK)
 		next = SECSPERDAY * DAYSPERWEEK;
 	else
-		memmove(&next, data.data.data, sizeof(next));
+		memmove(&next, data.data, sizeof(next));
 
 	memset(&data, '\0', sizeof data);
 
 	/* get record for this address */
-	key.data.data = From;
-	key.data.size = strlen(From);
+	key.data = From;
+	key.size = strlen(From);
 
 	do
 	{
 		st = Db->smdb_get(Db, &key, &data, 0);
 		if (st == SMDBE_OK)
 		{
-			memmove(&then, data.data.data, sizeof(then));
+			memmove(&then, data.data, sizeof(then));
 			if (next == ONLY_ONCE || then == ONLY_ONCE ||
 			    then + next > time(NULL))
 				return TRUE;
@@ -650,8 +795,8 @@ recent()
 		if ((trydomain = !trydomain) &&
 		    (domain = strchr(From, '@')) != NULL)
 		{
-			key.data.data = domain;
-			key.data.size = strlen(domain);
+			key.data = domain;
+			key.size = strlen(domain);
 		}
 	} while (trydomain);
 	return FALSE;
@@ -679,11 +824,11 @@ setinterval(interval)
 	memset(&key, '\0', sizeof key);
 	memset(&data, '\0', sizeof data);
 
-	key.data.data = VIT;
-	key.data.size = sizeof(VIT);
-	data.data.data = (char*) &interval;
-	data.data.size = sizeof(interval);
-	(void)(Db->smdb_put)(Db, &key, &data, 0);
+	key.data = VIT;
+	key.size = sizeof(VIT);
+	data.data = (char*) &interval;
+	data.size = sizeof(interval);
+	(void) (Db->smdb_put)(Db, &key, &data, 0);
 }
 
 /*
@@ -710,11 +855,11 @@ setreply(from, when)
 	memset(&key, '\0', sizeof key);
 	memset(&data, '\0', sizeof data);
 
-	key.data.data = from;
-	key.data.size = strlen(from);
-	data.data.data = (char*) &when;
-	data.data.size = sizeof(when);
-	(void)(Db->smdb_put)(Db, &key, &data, 0);
+	key.data = from;
+	key.size = strlen(from);
+	data.data = (char*) &when;
+	data.size = sizeof(when);
+	(void) (Db->smdb_put)(Db, &key, &data, 0);
 }
 
 /*
@@ -801,8 +946,8 @@ sendmessage(myname, msgfn, emptysender)
 		(void) fclose(mfp);
 		if (emptysender)
 			myname = "<>";
-		(void) execl(_PATH_SENDMAIL, "sendmail", "-f", myname, "--",
-		      From, NULL);
+		(void) execl(_PATH_SENDMAIL, "sendmail", "-oi",
+			     "-f", myname, "--", From, NULL);
 		msglog(LOG_ERR, "vacation: can't exec %s: %s",
 			_PATH_SENDMAIL, errstring(errno));
 		exit(EX_UNAVAILABLE);
@@ -879,28 +1024,26 @@ listdb()
 					   SMDB_CURSOR_GET_NEXT)) == SMDBE_OK)
 	{
 		/* skip magic VIT entry */
-		if ((int)db_key.data.size -1 == strlen(VIT) &&
-		    strncmp((char *)db_key.data.data, VIT,
-			    (int)db_key.data.size - 1) == 0)
+		if ((int)db_key.size -1 == strlen(VIT) &&
+		    strncmp((char *)db_key.data, VIT,
+			    (int)db_key.size - 1) == 0)
 			continue;
 
 		/* skip bogus values */
-		if (db_value.data.size != sizeof t)
+		if (db_value.size != sizeof t)
 		{
 			fprintf(stderr, "vacation: %.*s invalid time stamp\n",
-				(int) db_key.data.size,
-				(char *) db_key.data.data);
+				(int) db_key.size, (char *) db_key.data);
 			continue;
 		}
 
-		memcpy(&t, db_value.data.data, sizeof t);
+		memcpy(&t, db_value.data, sizeof t);
 
-		if (db_key.data.size > 40)
-			db_key.data.size = 40;
+		if (db_key.size > 40)
+			db_key.size = 40;
 
 		printf("%-40.*s %-10s",
-		       (int) db_key.data.size, (char *) db_key.data.data,
-		       ctime(&t));
+		       (int) db_key.size, (char *) db_key.data, ctime(&t));
 
 		memset(&db_key, '\0', sizeof db_key);
 		memset(&db_value, '\0', sizeof db_value);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -12,14 +12,14 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: mail.local.c,v 8.143.4.13 2000/07/18 05:41:38 gshapiro Exp";
+static char id[] = "@(#)Id: mail.local.c,v 8.143.4.57 2001/02/11 20:08:20 gshapiro Exp";
 #endif /* ! lint */
 
 /*
@@ -32,215 +32,205 @@ static char id[] = "@(#)Id: mail.local.c,v 8.143.4.13 2000/07/18 05:41:38 gshapi
 */
 
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/file.h>
+/* additional mode for open() */
+# define EXTRA_MODE 0
 
-#include <netinet/in.h>
-#include <arpa/nameser.h>
+# include <sys/types.h>
+# include <sys/param.h>
+# include <sys/stat.h>
+# include <sys/socket.h>
+# include <sys/file.h>
 
-#include <fcntl.h>
-#include <netdb.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
-#include <time.h>
-#include <unistd.h>
-#ifdef EX_OK
-# undef EX_OK		/* unistd.h may have another use for this */
-#endif /* EX_OK */
-#include <sysexits.h>
-#include <ctype.h>
+# include <netinet/in.h>
+# include <arpa/nameser.h>
 
-#ifndef __P
-# include "sendmail/cdefs.h"
-#endif /* ! __P */
-#include "sendmail/useful.h"
+# include <fcntl.h>
+# include <netdb.h>
+#  include <pwd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <syslog.h>
+# include <time.h>
+# include <unistd.h>
+# ifdef EX_OK
+#  undef EX_OK		/* unistd.h may have another use for this */
+# endif /* EX_OK */
+# include <sysexits.h>
+# include <ctype.h>
+
+# ifndef __P
+#  include "sendmail/cdefs.h"
+# endif /* ! __P */
+# include "sendmail/useful.h"
 
 extern size_t	strlcpy __P((char *, const char *, size_t));
 extern size_t	strlcat __P((char *, const char *, size_t));
 
-#if defined(BSD4_4) || defined(__osf__) || defined(__GNU_LIBRARY__) || defined(IRIX64) || defined(IRIX5) || defined(IRIX6)
-# ifndef HASSTRERROR
-#  define HASSTRERROR	1
-# endif /* ! HASSTRERROR */
-#endif /* defined(BSD4_4) || defined(__osf__) || defined(__GNU_LIBRARY__) ||
-	  defined(IRIX64) || defined(IRIX5) || defined(IRIX6) */
+# if defined(BSD4_4) || defined(__osf__) || defined(__GNU_LIBRARY__) || defined(IRIX64) || defined(IRIX5) || defined(IRIX6)
+#  ifndef HASSTRERROR
+#   define HASSTRERROR	1
+#  endif /* ! HASSTRERROR */
+# endif /* defined(BSD4_4) || defined(__osf__) || defined(__GNU_LIBRARY__) || defined(IRIX64) || defined(IRIX5) || defined(IRIX6) */
 
-#include "sendmail/errstring.h"
+# include "sendmail/errstring.h"
 
+# ifndef LOCKTO_RM
+#  define LOCKTO_RM	300	/* timeout for stale lockfile removal */
+# endif /* ! LOCKTO_RM */
+# ifndef LOCKTO_GLOB
+#  define LOCKTO_GLOB	400	/* global timeout for lockfile creation */
+# endif /* ! LOCKTO_GLOB */
 
-#ifndef LOCKTO_RM
-# define LOCKTO_RM	300	/* timeout for stale lockfile removal */
-#endif /* LOCKTO_RM */
-#ifndef LOCKTO_GLOB
-# define LOCKTO_GLOB	400	/* global timeout for lockfile creation */
-#endif /* LOCKTO_GLOB */
-
-#ifdef __STDC__
-# include <stdarg.h>
-# define REALLOC(ptr, size)	realloc(ptr, size)
-#else /* __STDC__ */
-# include <varargs.h>
+# ifdef __STDC__
+#  include <stdarg.h>
+#  define REALLOC(ptr, size)	realloc(ptr, size)
+# else /* __STDC__ */
+#  include <varargs.h>
 /* define a realloc() which works for NULL pointers */
-# define REALLOC(ptr, size)	(((ptr) == NULL) ? malloc(size) : realloc(ptr, size))
-#endif /* __STDC__ */
+#  define REALLOC(ptr, size)	(((ptr) == NULL) ? malloc(size) : realloc(ptr, size))
+# endif /* __STDC__ */
 
-#if (defined(sun) && defined(__svr4__)) || defined(__SVR4)
-# define USE_LOCKF	1
-# define USE_SETEUID	1
-#  define _PATH_MAILDIR	"/var/mail"
-#endif /* (defined(sun) && defined(__svr4__)) || defined(__SVR4) */
+# if (defined(sun) && defined(__svr4__)) || defined(__SVR4)
+#  define USE_LOCKF	1
+#  define USE_SETEUID	1
+#   define _PATH_MAILDIR	"/var/mail"
+# endif /* (defined(sun) && defined(__svr4__)) || defined(__SVR4) */
 
-#ifdef NCR_MP_RAS3
-# define USE_LOCKF	1
-# define HASSNPRINTF	1
-#  define _PATH_MAILDIR	"/var/mail"
-#endif /* NCR_MP_RAS3 */
+# ifdef NCR_MP_RAS3
+#  define USE_LOCKF	1
+#  define HASSNPRINTF	1
+#   define _PATH_MAILDIR	"/var/mail"
+# endif /* NCR_MP_RAS3 */
 
-#if defined(_AIX)
-# define USE_LOCKF	1
-# define USE_SETEUID	1
-# define USE_VSYSLOG	0
-#endif /* defined(_AIX) */
+# if defined(_AIX)
+#  define USE_LOCKF	1
+#  define USE_SETEUID	1
+# endif /* defined(_AIX) */
 
-#if defined(__hpux)
-# define USE_LOCKF	1
-# define USE_SETRESUID	1
-# define USE_VSYSLOG	0
-#endif /* defined(__hpux) */
+# if defined(__hpux)
+#  define USE_LOCKF	1
+#  define USE_SETRESUID	1
+# endif /* defined(__hpux) */
 
-#ifdef DGUX
-# define HASSNPRINTF	1
-# define USE_LOCKF	1
-# define USE_VSYSLOG	0
-#endif /* DGUX */
+# ifdef DGUX
+#  define HASSNPRINTF	1
+#  define USE_LOCKF	1
+# endif /* DGUX */
 
-#if defined(_CRAY)
-# if !defined(MAXPATHLEN)
-#  define MAXPATHLEN PATHSIZE
-# endif /* !defined(MAXPATHLEN) */
-# define USE_VSYSLOG   0
-#  define _PATH_MAILDIR	"/usr/spool/mail"
-#endif /* defined(_CRAY) */
+# if defined(_CRAY)
+#  if !defined(MAXPATHLEN)
+#   define MAXPATHLEN PATHSIZE
+#  endif /* !defined(MAXPATHLEN) */
+#   define _PATH_MAILDIR	"/usr/spool/mail"
+# endif /* defined(_CRAY) */
 
-#if defined(ultrix)
-# define USE_VSYSLOG	0
-#endif /* defined(ultrix) */
+# if defined(NeXT) && !defined(__APPLE__)
+#  include <libc.h>
+#   define _PATH_MAILDIR	"/usr/spool/mail"
+#  define S_IRUSR	S_IREAD
+#  define S_IWUSR	S_IWRITE
+# endif /* defined(NeXT) && !defined(__APPLE__) */
 
-#if defined(__osf__)
-# define USE_VSYSLOG	0
-#endif /* defined(__osf__) */
-
-#if defined(NeXT) && !defined(__APPLE__)
-# include <libc.h>
-#  define _PATH_MAILDIR	"/usr/spool/mail"
-# define S_IRUSR	S_IREAD
-# define S_IWUSR	S_IWRITE
-#endif /* defined(NeXT) && !defined(__APPLE__) */
-
-#if defined(IRIX64) || defined(IRIX5) || defined(IRIX6)
-#  include <paths.h>
-#endif /* defined(IRIX64) || defined(IRIX5) || defined(IRIX6) */
+# if defined(IRIX64) || defined(IRIX5) || defined(IRIX6)
+#   include <paths.h>
+# endif /* defined(IRIX64) || defined(IRIX5) || defined(IRIX6) */
 
 /*
  * If you don't have flock, you could try using lockf instead.
  */
 
-#ifdef USE_LOCKF
-# define flock(a, b)	lockf(a, b, 0)
-# ifdef LOCK_EX
-#  undef LOCK_EX
-# endif /* LOCK_EX */
-# define LOCK_EX	F_LOCK
-#endif /* USE_LOCKF */
+# ifdef USE_LOCKF
+#  define flock(a, b)	lockf(a, b, 0)
+#  ifdef LOCK_EX
+#   undef LOCK_EX
+#  endif /* LOCK_EX */
+#  define LOCK_EX	F_LOCK
+# endif /* USE_LOCKF */
 
-#ifndef USE_VSYSLOG
-# define USE_VSYSLOG	1
-#endif /* ! USE_VSYSLOG */
+# ifndef LOCK_EX
+#  include <sys/file.h>
+# endif /* ! LOCK_EX */
 
-#ifndef LOCK_EX
-# include <sys/file.h>
-#endif /* ! LOCK_EX */
+# if defined(BSD4_4) || defined(__GLIBC__)
+#   include <paths.h>
+#  define _PATH_LOCTMP	"/tmp/local.XXXXXX"
+# endif /* defined(BSD4_4) || defined(__GLIBC__) */
 
-#if defined(BSD4_4) || defined(__GLIBC__)
-#  include <paths.h>
-# define _PATH_LOCTMP	"/tmp/local.XXXXXX"
-#endif /* defined(BSD4_4) || defined(__GLIBC__) */
+# ifdef BSD4_4
+#  define HAS_ST_GEN	1
+# else /* BSD4_4 */
+#  ifndef _BSD_VA_LIST_
+#   define _BSD_VA_LIST_	va_list
+#  endif /* ! _BSD_VA_LIST_ */
+# endif /* BSD4_4 */
 
-#ifdef BSD4_4
-# define HAS_ST_GEN	1
-#else /* BSD4_4 */
-# ifndef _BSD_VA_LIST_
-#  define _BSD_VA_LIST_	va_list
-# endif /* ! _BSD_VA_LIST_ */
-#endif /* BSD4_4 */
-
-#if defined(BSD4_4) || defined(linux)
-# define HASSNPRINTF	1
-#else /* defined(BSD4_4) || defined(linux) */
-# ifndef ultrix
+# if defined(BSD4_4) || defined(linux)
+#  define HASSNPRINTF	1
+# else /* defined(BSD4_4) || defined(linux) */
+#  ifndef ultrix
 extern FILE	*fdopen __P((int, const char *));
-# endif /* ! ultrix */
-#endif /* defined(BSD4_4) || defined(linux) */
+#  endif /* ! ultrix */
+# endif /* defined(BSD4_4) || defined(linux) */
 
-#if SOLARIS >= 20300 || (SOLARIS < 10000 && SOLARIS >= 203)
-# define CONTENTLENGTH	1	/* Needs the Content-Length header */
-#endif /* SOLARIS >= 20300 || (SOLARIS < 10000 && SOLARIS >= 203) */
+# if SOLARIS >= 20300 || (SOLARIS < 10000 && SOLARIS >= 203)
+#  define CONTENTLENGTH	1	/* Needs the Content-Length header */
+# endif /* SOLARIS >= 20300 || (SOLARIS < 10000 && SOLARIS >= 203) */
 
-#if SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
-# define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
-#endif /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
+# if SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206)
+#  define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
+# endif /* SOLARIS >= 20600 || (SOLARIS < 10000 && SOLARIS >= 206) */
 
-#ifdef HPUX11
-# define HASSNPRINTF	1		/* has snprintf starting in 2.6 */
-#endif /* HPUX11 */
+# ifdef HPUX11
+#  define HASSNPRINTF	1		/* has snprintf starting in 11.X */
+# endif /* HPUX11 */
 
-#if _AIX4 >= 40300
-# define HASSNPRINTF	1		/* has snprintf starting in 4.3 */
-#endif /* _AIX4 >= 40300 */
+# if _AIX4 >= 40300
+#  define HASSNPRINTF	1		/* has snprintf starting in 4.3 */
+# endif /* _AIX4 >= 40300 */
 
-#if !HASSNPRINTF
+# if !HASSNPRINTF && !SFIO
 extern int	snprintf __P((char *, size_t, const char *, ...));
-# ifndef _CRAY
+#  ifndef _CRAY
 extern int	vsnprintf __P((char *, size_t, const char *, ...));
-# endif /* ! _CRAY */
-#endif /* !HASSNPRINTF */
+#  endif /* ! _CRAY */
+# endif /* !HASSNPRINTF && !SFIO */
 
 /*
 **  If you don't have setreuid, and you have saved uids, and you have
 **  a seteuid() call that doesn't try to emulate using setuid(), then
 **  you can try defining USE_SETEUID.
 */
-#ifdef USE_SETEUID
-# define setreuid(r, e)		seteuid(e)
-#endif /* USE_SETEUID */
+
+# ifdef USE_SETEUID
+#  define setreuid(r, e)		seteuid(e)
+# endif /* USE_SETEUID */
 
 /*
 **  And of course on hpux you have setresuid()
 */
-#ifdef USE_SETRESUID
-# define setreuid(r, e)		setresuid(-1, e, -1)
-#endif /* USE_SETRESUID */
 
-#ifndef _PATH_LOCTMP
-# define _PATH_LOCTMP	"/tmp/local.XXXXXX"
-#endif /* ! _PATH_LOCTMP */
-# ifndef _PATH_MAILDIR
-#  define _PATH_MAILDIR	"/var/spool/mail"
-# endif /* ! _PATH_MAILDIR */
+# ifdef USE_SETRESUID
+#  define setreuid(r, e)		setresuid(-1, e, -1)
+# endif /* USE_SETRESUID */
 
-#ifndef S_ISREG
-# define S_ISREG(mode)	(((mode) & _S_IFMT) == S_IFREG)
-#endif /* ! S_ISREG */
+# ifndef _PATH_LOCTMP
+#  define _PATH_LOCTMP	"/tmp/local.XXXXXX"
+# endif /* ! _PATH_LOCTMP */
+#  ifndef _PATH_MAILDIR
+#   define _PATH_MAILDIR	"/var/spool/mail"
+#  endif /* ! _PATH_MAILDIR */
 
-#ifdef MAILLOCK
-# include <maillock.h>
-#endif /* MAILLOCK */
+# ifndef S_ISREG
+#  define S_ISREG(mode)	(((mode) & _S_IFMT) == S_IFREG)
+# endif /* ! S_ISREG */
+
+# ifdef MAILLOCK
+#  include <maillock.h>
+# endif /* MAILLOCK */
+
+# define U_UID pw->pw_uid
+# define U_GID pw->pw_gid
 
 #ifndef INADDRSZ
 # define INADDRSZ	4		/* size of an IPv4 address in bytes */
@@ -257,19 +247,21 @@ off_t	BodyLength;
 #endif /* CONTENTLENGTH */
 
 bool	EightBitMime = TRUE;		/* advertise 8BITMIME in LMTP */
+char	ErrBuf[10240];			/* error buffer */
 int	ExitVal = EX_OK;		/* sysexits.h error value. */
+bool	HoldErrs = FALSE;		/* Hold errors in ErrBuf */
 bool	LMTPMode = FALSE;
-bool	bouncequota = FALSE;		/* permanent error when over quota */
+bool	BounceQuota = FALSE;		/* permanent error when over quota */
 
-void	deliver __P((int, char *, bool));
+void	deliver __P((int, char *));
 int	e_to_sys __P((int));
 void	notifybiff __P((char *));
-int	store __P((char *, int));
+int	store __P((char *, int, bool *));
 void	usage __P((void));
-void	vwarn __P((const char *, _BSD_VA_LIST_));
 int	lockmbox __P((char *));
 void	unlockmbox __P((void));
 void	mailerr __P((const char *, const char *, ...));
+void	flush_error __P((void));
 
 
 int
@@ -283,7 +275,6 @@ main(argc, argv)
 	char *from;
 	extern char *optarg;
 	extern int optind;
-	extern void dolmtp __P((bool));
 
 
 	/* make sure we have some open file descriptors */
@@ -309,7 +300,7 @@ main(argc, argv)
 			break;
 
 		  case 'b':		/* bounce mail when over quota. */
-			bouncequota = TRUE;
+			BounceQuota = TRUE;
 			break;
 
 		  case 'd':		/* Backward compatible. */
@@ -319,7 +310,7 @@ main(argc, argv)
 		  case 'r':		/* Backward compatible. */
 			if (from != NULL)
 			{
-				mailerr(NULL, "multiple -f options");
+				mailerr(NULL, "Multiple -f options");
 				usage();
 			}
 			from = optarg;
@@ -341,8 +332,21 @@ main(argc, argv)
 	notifybiff(NULL);
 
 	if (LMTPMode)
-		dolmtp(bouncequota);
+	{
+		extern void dolmtp __P((void));
 
+		if (argc > 0)
+		{
+			mailerr("421", "Users should not be specified in command line if LMTP required");
+			exit(EX_TEMPFAIL);
+		}
+
+		dolmtp();
+		/* NOTREACHED */
+		exit(EX_OK);
+	}
+
+	/* Non-LMTP from here on out */
 	if (*argv == '\0')
 		usage();
 
@@ -351,6 +355,7 @@ main(argc, argv)
 	**  uid matches, otherwise, use the name from the password file
 	**  corresponding to the uid.
 	*/
+
 	uid = getuid();
 
 	if (from == NULL && ((from = getlogin()) == NULL ||
@@ -367,8 +372,17 @@ main(argc, argv)
 	**  failures.  This results in the delivery being reattempted later
 	**  at the expense of repeated failures and multiple deliveries.
 	*/
-	for (fd = store(from, 0); *argv; ++argv)
-		deliver(fd, *argv, bouncequota);
+
+	HoldErrs = TRUE;
+	fd = store(from, 0, NULL);
+	HoldErrs = FALSE;
+	if (fd < 0)
+	{
+		flush_error();
+		exit(ExitVal);
+	}
+	for (; *argv != NULL; ++argv)
+		deliver(fd, *argv);
 	exit(ExitVal);
 	/* NOTREACHED */
 	return ExitVal;
@@ -456,7 +470,7 @@ parseaddr(s, rcpt)
 	p = malloc(l);
 	if (p == NULL)
 	{
-		printf("421 4.3.0 memory exhausted\r\n");
+		mailerr("421 4.3.0", "Memory exhausted");
 		exit(EX_TEMPFAIL);
 	}
 
@@ -469,15 +483,14 @@ process_recipient(addr)
 	char *addr;
 {
 	if (getpwnam(addr) == NULL)
-		return "550 5.1.1 user unknown";
+		return "550 5.1.1 User unknown";
 	return NULL;
 }
 
 #define RCPT_GROW	30
 
 void
-dolmtp(bouncequota)
-	bool bouncequota;
+dolmtp()
 {
 	char *return_path = NULL;
 	char **rcpt_addr = NULL;
@@ -491,7 +504,10 @@ dolmtp(bouncequota)
 	char myhostname[1024];
 	char buf[4096];
 
+	memset(myhostname, '\0', sizeof myhostname);
 	(void) gethostname(myhostname, sizeof myhostname - 1);
+	if (myhostname[0] == '\0')
+		strlcpy(myhostname, "localhost", sizeof myhostname);
 
 	printf("220 %s LMTP ready\r\n", myhostname);
 	for (;;)
@@ -511,23 +527,37 @@ dolmtp(bouncequota)
 		  case 'D':
 			if (strcasecmp(buf, "data") == 0)
 			{
+				bool inbody = FALSE;
+
 				if (rcpt_num == 0)
 				{
-					printf("503 5.5.1 No recipients\r\n");
+					mailerr("503 5.5.1", "No recipients");
 					continue;
 				}
-				msgfd = store(return_path, rcpt_num);
-				if (msgfd == -1)
+				HoldErrs = TRUE;
+				msgfd = store(return_path, rcpt_num, &inbody);
+				HoldErrs = FALSE;
+				if (msgfd < 0 && !inbody)
+				{
+					flush_error();
 					continue;
+				}
 
 				for (i = 0; i < rcpt_num; i++)
 				{
+					if (msgfd < 0)
+					{
+						/* print error for rcpt */
+						flush_error();
+						continue;
+					}
 					p = strchr(rcpt_addr[i], '+');
 					if (p != NULL)
-						*p++ = '\0';
-					deliver(msgfd, rcpt_addr[i], bouncequota);
+						*p = '\0';
+					deliver(msgfd, rcpt_addr[i]);
 				}
-				(void) close(msgfd);
+				if (msgfd >= 0)
+					(void) close(msgfd);
 				goto rset;
 			}
 			goto syntaxerr;
@@ -541,7 +571,7 @@ dolmtp(bouncequota)
 				/* check for duplicate per RFC 1651 4.2 */
 				if (gotlhlo)
 				{
-					printf("503 %s Duplicate LHLO\r\n",
+					mailerr("503", "%s Duplicate LHLO",
 					       myhostname);
 					continue;
 				}
@@ -563,17 +593,19 @@ dolmtp(bouncequota)
 			{
 				if (return_path != NULL)
 				{
-					printf("503 5.5.1 Nested MAIL command\r\n");
+					mailerr("503 5.5.1",
+						"Nested MAIL command");
 					continue;
 				}
 				if (strncasecmp(buf+5, "from:", 5) != 0 ||
 				    ((return_path = parseaddr(buf + 10,
 							      FALSE)) == NULL))
 				{
-					printf("501 5.5.4 Syntax error in parameters\r\n");
+					mailerr("501 5.5.4",
+						"Syntax error in parameters");
 					continue;
 				}
-				printf("250 2.5.0 ok\r\n");
+				printf("250 2.5.0 Ok\r\n");
 				continue;
 			}
 			goto syntaxerr;
@@ -584,7 +616,7 @@ dolmtp(bouncequota)
 		  case 'N':
 			if (strcasecmp(buf, "noop") == 0)
 			{
-				printf("250 2.0.0 ok\r\n");
+				printf("250 2.0.0 Ok\r\n");
 				continue;
 			}
 			goto syntaxerr;
@@ -595,7 +627,7 @@ dolmtp(bouncequota)
 		  case 'Q':
 			if (strcasecmp(buf, "quit") == 0)
 			{
-				printf("221 2.0.0 bye\r\n");
+				printf("221 2.0.0 Bye\r\n");
 				exit(EX_OK);
 			}
 			goto syntaxerr;
@@ -608,19 +640,21 @@ dolmtp(bouncequota)
 			{
 				if (return_path == NULL)
 				{
-					printf("503 5.5.1 Need MAIL command\r\n");
+					mailerr("503 5.5.1",
+						"Need MAIL command");
 					continue;
 				}
 				if (rcpt_num >= rcpt_alloc)
 				{
 					rcpt_alloc += RCPT_GROW;
 					rcpt_addr = (char **)
-						REALLOC((char *)rcpt_addr,
+						REALLOC((char *) rcpt_addr,
 							rcpt_alloc *
 							sizeof(char **));
 					if (rcpt_addr == NULL)
 					{
-						printf("421 4.3.0 memory exhausted\r\n");
+						mailerr("421 4.3.0",
+							"Memory exhausted");
 						exit(EX_TEMPFAIL);
 					}
 				}
@@ -628,24 +662,26 @@ dolmtp(bouncequota)
 				    ((rcpt_addr[rcpt_num] = parseaddr(buf + 8,
 								      TRUE)) == NULL))
 				{
-					printf("501 5.5.4 Syntax error in parameters\r\n");
+					mailerr("501 5.5.4",
+						"Syntax error in parameters");
 					continue;
 				}
-				if ((err = process_recipient(rcpt_addr[rcpt_num])) != NULL)
+				err = process_recipient(rcpt_addr[rcpt_num]);
+				if (err != NULL)
 				{
-					printf("%s\r\n", err);
+					mailerr(NULL, "%s", err);
 					continue;
 				}
 				rcpt_num++;
-				printf("250 2.1.5 ok\r\n");
+				printf("250 2.1.5 Ok\r\n");
 				continue;
 			}
 			else if (strcasecmp(buf, "rset") == 0)
 			{
-				printf("250 2.0.0 ok\r\n");
+				printf("250 2.0.0 Ok\r\n");
 
 rset:
-				while (rcpt_num)
+				while (rcpt_num > 0)
 					free(rcpt_addr[--rcpt_num]);
 				if (return_path != NULL)
 					free(return_path);
@@ -660,7 +696,7 @@ rset:
 		  case 'V':
 			if (strncasecmp(buf, "vrfy ", 5) == 0)
 			{
-				printf("252 2.3.3 try RCPT to attempt delivery\r\n");
+				printf("252 2.3.3 Try RCPT to attempt delivery\r\n");
 				continue;
 			}
 			goto syntaxerr;
@@ -669,7 +705,7 @@ rset:
 
 		  default:
   syntaxerr:
-			printf("500 5.5.2 Syntax error\r\n");
+			mailerr("500 5.5.2", "Syntax error");
 			continue;
 			/* NOTREACHED */
 			break;
@@ -678,9 +714,10 @@ rset:
 }
 
 int
-store(from, lmtprcpts)
+store(from, lmtprcpts, inbody)
 	char *from;
 	int lmtprcpts;
+	bool *inbody;
 {
 	FILE *fp = NULL;
 	time_t tval;
@@ -691,28 +728,25 @@ store(from, lmtprcpts)
 	int fd;
 	char tmpbuf[sizeof _PATH_LOCTMP + 1];
 
+	if (inbody != NULL)
+		*inbody = FALSE;
+
 	(void) umask(0077);
 	(void) strlcpy(tmpbuf, _PATH_LOCTMP, sizeof tmpbuf);
-	if ((fd = mkstemp(tmpbuf)) == -1 || (fp = fdopen(fd, "w+")) == NULL)
+	if ((fd = mkstemp(tmpbuf)) < 0 || (fp = fdopen(fd, "w+")) == NULL)
 	{
-		if (lmtprcpts)
-		{
-			printf("451 4.3.0 unable to open temporary file\r\n");
-			return -1;
-		}
-		else
-		{
-			mailerr("451 4.3.0", "unable to open temporary file");
-			exit(ExitVal);
-		}
+		mailerr("451 4.3.0", "Unable to open temporary file");
+		return -1;
 	}
 	(void) unlink(tmpbuf);
 
 	if (LMTPMode)
 	{
-		printf("354 go ahead\r\n");
+		printf("354 Go ahead\r\n");
 		(void) fflush(stdout);
 	}
+	if (inbody != NULL)
+		*inbody = TRUE;
 
 	(void) time(&tval);
 	(void) fprintf(fp, "From %s %s", from, ctime(&tval));
@@ -724,7 +758,7 @@ store(from, lmtprcpts)
 
 	line[0] = '\0';
 	eline = TRUE;
-	while (fgets(line, sizeof(line), stdin) != (char *)NULL)
+	while (fgets(line, sizeof(line), stdin) != (char *) NULL)
 	{
 		size_t line_len = 0;
 		int peek;
@@ -735,7 +769,7 @@ store(from, lmtprcpts)
 		line_len++;
 
 		/* Check for dot-stuffing */
-		if (prevfl && lmtprcpts && line[0] == '.')
+		if (prevfl && LMTPMode && line[0] == '.')
 		{
 			if (line[1] == '\n' ||
 			    (line[1] == '\r' && line[2] == '\n'))
@@ -779,7 +813,8 @@ store(from, lmtprcpts)
 		if (prevfl && line[0] == '\n' && HeaderLength == 0)
 		{
 			eline = FALSE;
-			HeaderLength = ftell(fp);
+			if (fp != NULL)
+				HeaderLength = ftell(fp);
 			if (HeaderLength <= 0)
 			{
 				/*
@@ -797,8 +832,9 @@ store(from, lmtprcpts)
 		else
 		{
 			if (eline && line[0] == 'F' &&
+			    fp != NULL &&
 			    !memcmp(line, "From ", 5))
-				(void)putc('>', fp);
+				(void) putc('>', fp);
 			eline = FALSE;
 #ifdef CONTENTLENGTH
 			/* discard existing "Content-Length:" headers */
@@ -816,40 +852,39 @@ store(from, lmtprcpts)
 #endif /* CONTENTLENGTH */
 
 		}
-		(void) fwrite(line, sizeof(char), line_len, fp);
-		if (ferror(fp))
+		if (fp != NULL)
 		{
-			if (lmtprcpts)
-			{
-				while (lmtprcpts--)
-					printf("451 4.3.0 temporary file write error\r\n");
-				(void) fclose(fp);
-				return -1;
-			}
-			else
+			(void) fwrite(line, sizeof(char), line_len, fp);
+			if (ferror(fp))
 			{
 				mailerr("451 4.3.0",
-					"temporary file write error");
+					"Temporary file write error");
 				(void) fclose(fp);
-				exit(ExitVal);
+				fp = NULL;
+				continue;
 			}
 		}
 	}
 
-	if (lmtprcpts)
+	/* check if an error occurred */
+	if (fp == NULL)
+		return -1;
+
+	if (LMTPMode)
 	{
 		/* Got a premature EOF -- toss message and exit */
 		exit(EX_OK);
 	}
 
 	/* If message not newline terminated, need an extra. */
-	if (strchr(line, '\n') == NULL)
+	if (fp != NULL && strchr(line, '\n') == NULL)
 		(void) putc('\n', fp);
 
   lmtpdot:
 
 #ifdef CONTENTLENGTH
-	BodyLength = ftell(fp);
+	if (fp != NULL)
+		BodyLength = ftell(fp);
 	if (HeaderLength == 0 && BodyLength > 0)	/* empty body */
 	{
 		HeaderLength = BodyLength;
@@ -866,7 +901,8 @@ store(from, lmtprcpts)
 			snprintf(line, sizeof line, "%s\n",
 				 quad_to_string(BodyLength));
 		else
-			snprintf(line, sizeof line, "%ld\n", (long) BodyLength);
+			snprintf(line, sizeof line, "%ld\n",
+				 (long) BodyLength);
 		strlcpy(&ContentHdr[16], line, sizeof(ContentHdr) - 16);
 	}
 	else
@@ -874,39 +910,31 @@ store(from, lmtprcpts)
 #endif /* CONTENTLENGTH */
 
 	/* Output a newline; note, empty messages are allowed. */
-	(void) putc('\n', fp);
+	if (fp != NULL)
+		(void) putc('\n', fp);
 
-	if (fflush(fp) == EOF || ferror(fp) != 0)
+	if (fp == NULL || fflush(fp) == EOF || ferror(fp) != 0)
 	{
-		if (lmtprcpts)
-		{
-			while (lmtprcpts--)
-				printf("451 4.3.0 temporary file write error\r\n");
+		mailerr("451 4.3.0", "Temporary file write error");
+		if (fp != NULL)
 			(void) fclose(fp);
-			return -1;
-		}
-		else
-		{
-			mailerr("451 4.3.0", "temporary file write error");
-			(void) fclose(fp);
-			exit(ExitVal);
-		}
+		return -1;
 	}
 	return fd;
 }
 
 void
-deliver(fd, name, bouncequota)
+deliver(fd, name)
 	int fd;
 	char *name;
-	bool bouncequota;
 {
 	struct stat fsb;
 	struct stat sb;
 	struct passwd *pw;
 	char path[MAXPATHLEN];
-	int mbfd, nr = 0, nw, off;
+	int mbfd = -1, nr = 0, nw, off;
 	char *p;
+	char *errcode;
 	off_t curoff;
 #ifdef CONTENTLENGTH
 	off_t headerbytes;
@@ -920,27 +948,17 @@ deliver(fd, name, bouncequota)
 	**  Disallow delivery to unknown names -- special mailboxes can be
 	**  handled in the sendmail aliases file.
 	*/
+
 	if ((pw = getpwnam(name)) == NULL)
 	{
-		if (ExitVal != EX_TEMPFAIL)
-			ExitVal = EX_UNAVAILABLE;
-		if (LMTPMode)
-		{
-			if (ExitVal == EX_TEMPFAIL)
-				printf("451 4.3.0 cannot lookup name: %s\r\n", name);
-			else
-				printf("550 5.1.1 unknown name: %s\r\n", name);
-		}
+		if (ExitVal == EX_TEMPFAIL)
+			errcode = "451 4.3.0";
 		else
 		{
-			char *errcode = NULL;
-
-			if (ExitVal == EX_TEMPFAIL)
-				errcode = "451 4.3.0";
-			else
-				errcode = "550 5.1.1";
-			mailerr(errcode, "unknown name: %s", name);
+			ExitVal = EX_UNAVAILABLE;
+			errcode = "550 5.1.1";
 		}
+		mailerr(errcode, "Unknown name: %s", name);
 		return;
 	}
 	endpwent();
@@ -1000,16 +1018,13 @@ tryagain:
 		if (off == EX_TEMPFAIL || e_to_sys(off) == EX_TEMPFAIL)
 		{
 			ExitVal = EX_TEMPFAIL;
-			mailerr("451 4.3.0",
-				"lockmailbox %s failed; error code %d %s",
-				p, off, errno > 0 ? errstring(errno) : "");
+			errcode = "451 4.3.0";
 		}
 		else
-		{
-			mailerr("551 5.3.0",
-				"lockmailbox %s failed; error code %d %s",
-				p, off, errno > 0 ? errstring(errno) : "");
-		}
+			errcode = "551 5.3.0";
+
+		mailerr(errcode, "lockmailbox %s failed; error code %d %s",
+			p, off, errno > 0 ? errstring(errno) : "");
 		return;
 	}
 
@@ -1017,7 +1032,7 @@ tryagain:
 	{
 		int save_errno;
 		int mode = S_IRUSR|S_IWUSR;
-		gid_t gid = pw->pw_gid;
+		gid_t gid = U_GID;
 
 #ifdef MAILGID
 		(void) umask(0007);
@@ -1025,8 +1040,8 @@ tryagain:
 		mode |= S_IRGRP|S_IWGRP;
 #endif /* MAILGID */
 
-		mbfd = open(path, O_APPEND|O_CREAT|O_EXCL|O_WRONLY, mode);
-
+		mbfd = open(path, O_APPEND|O_CREAT|O_EXCL|O_WRONLY|EXTRA_MODE,
+			    mode);
 		save_errno = errno;
 
 		if (lstat(path, &sb) < 0)
@@ -1036,18 +1051,34 @@ tryagain:
 				"%s: lstat: file changed after open", path);
 			goto err1;
 		}
-		else
-			sb.st_uid = pw->pw_uid;
-		if (mbfd == -1)
+		if (mbfd < 0)
 		{
 			if (save_errno == EEXIST)
 				goto tryagain;
+
+			/* open failed, don't try again */
+			mailerr("450 4.2.0", "%s: %s", path,
+				errstring(save_errno));
+			goto err0;
 		}
-		else if (fchown(mbfd, pw->pw_uid, gid) < 0)
+		else if (fchown(mbfd, U_UID, gid) < 0)
 		{
 			mailerr("451 4.3.0", "chown %u.%u: %s",
-				pw->pw_uid, gid, name);
+				U_UID, gid, name);
 			goto err1;
+		}
+		else
+		{
+			/*
+			**  open() was successful, now close it so can
+			**  be opened as the right owner again.
+			**  Paranoia: reset mbdf since the file descriptor
+			**  is no longer valid; better safe than sorry.
+			*/
+
+			sb.st_uid = U_UID;
+			(void) close(mbfd);
+			mbfd = -1;
 		}
 	}
 	else if (sb.st_nlink != 1 || !S_ISREG(sb.st_mode))
@@ -1055,17 +1086,26 @@ tryagain:
 		mailerr("550 5.2.0", "%s: irregular file", path);
 		goto err0;
 	}
-	else if (sb.st_uid != pw->pw_uid)
+	else if (sb.st_uid != U_UID)
 	{
 		ExitVal = EX_CANTCREAT;
 		mailerr("550 5.2.0", "%s: wrong ownership (%d)",
 			path, sb.st_uid);
 		goto err0;
 	}
-	else
-		mbfd = open(path, O_APPEND|O_WRONLY, 0);
 
-	if (mbfd == -1)
+	/* change UID for quota checks */
+	if (setreuid(0, U_UID) < 0)
+	{
+		mailerr("450 4.2.0", "setreuid(0, %d): %s (r=%d, e=%d)",
+			U_UID, errstring(errno), getuid(), geteuid());
+		goto err1;
+	}
+#ifdef DEBUG
+	fprintf(stderr, "new euid = %d\n", geteuid());
+#endif /* DEBUG */
+	mbfd = open(path, O_APPEND|O_WRONLY|EXTRA_MODE, 0);
+	if (mbfd < 0)
 	{
 		mailerr("450 4.2.0", "%s: %s", path, errstring(errno));
 		goto err0;
@@ -1076,9 +1116,9 @@ tryagain:
 		 !S_ISREG(fsb.st_mode) ||
 		 sb.st_dev != fsb.st_dev ||
 		 sb.st_ino != fsb.st_ino ||
-#if HAS_ST_GEN && 0		/* AFS returns random values for st_gen */
+# if HAS_ST_GEN && 0		/* AFS returns random values for st_gen */
 		 sb.st_gen != fsb.st_gen ||
-#endif /* HAS_ST_GEN && 0 */
+# endif /* HAS_ST_GEN && 0 */
 		 sb.st_uid != fsb.st_uid)
 	{
 		ExitVal = EX_TEMPFAIL;
@@ -1096,29 +1136,23 @@ tryagain:
 	}
 
 	/* Get the starting offset of the new message for biff. */
-	curoff = lseek(mbfd, (off_t)0, SEEK_END);
+	curoff = lseek(mbfd, (off_t) 0, SEEK_END);
 	if (sizeof curoff > sizeof(long))
-		(void)snprintf(biffmsg, sizeof(biffmsg), "%s@%s\n",
-			       name, quad_to_string(curoff));
+		(void) snprintf(biffmsg, sizeof(biffmsg), "%s@%s\n",
+				name, quad_to_string(curoff));
 	else
-		(void)snprintf(biffmsg, sizeof(biffmsg), "%s@%ld\n",
-			       name, (long) curoff);
+		(void) snprintf(biffmsg, sizeof(biffmsg), "%s@%ld\n",
+				name, (long) curoff);
 
 	/* Copy the message into the file. */
-	if (lseek(fd, (off_t)0, SEEK_SET) == (off_t)-1)
+	if (lseek(fd, (off_t) 0, SEEK_SET) == (off_t) -1)
 	{
-		mailerr("450 4.2.0", "temporary file: %s",
+		mailerr("450 4.2.0", "Temporary file: %s",
 			errstring(errno));
 		goto err1;
 	}
-	if (setreuid(0, pw->pw_uid) < 0)
-	{
-		mailerr("450 4.2.0", "setreuid(0, %d): %s (r=%d, e=%d)",
-		     pw->pw_uid, errstring(errno), getuid(), geteuid());
-		goto err1;
-	}
 #ifdef DEBUG
-	fprintf(stderr, "new euid = %d\n", geteuid());
+	fprintf(stderr, "before writing: euid = %d\n", geteuid());
 #endif /* DEBUG */
 #ifdef CONTENTLENGTH
 	headerbytes = (BodyLength >= 0) ? HeaderLength : -1 ;
@@ -1150,13 +1184,12 @@ tryagain:
 		{
 			if ((nw = write(mbfd, buf + off, nr - off)) < 0)
 			{
+				errcode = "450 4.2.0";
 #ifdef EDQUOT
-				if (errno == EDQUOT && bouncequota)
-					mailerr("552 5.2.2", "%s: %s",
-						path, errstring(errno));
-				else
+				if (errno == EDQUOT && BounceQuota)
+					errcode = "552 5.2.2";
 #endif /* EDQUOT */
-				mailerr("450 4.2.0", "%s: %s",
+				mailerr(errcode, "%s: %s",
 					path, errstring(errno));
 				goto err3;
 			}
@@ -1164,7 +1197,7 @@ tryagain:
 	}
 	if (nr < 0)
 	{
-		mailerr("450 4.2.0", "temporary file: %s",
+		mailerr("450 4.2.0", "Temporary file: %s",
 			errstring(errno));
 		goto err3;
 	}
@@ -1174,20 +1207,13 @@ tryagain:
 	{
 		mailerr("450 4.2.0", "%s: %s", path, errstring(errno));
 err3:
-		if (setreuid(0, 0) < 0)
-		{
-#if 0
-			/* already printed an error above for this recipient */
-			(void) e_to_sys(errno);
-			mailerr("450 4.2.0", "setreuid(0, 0): %s",
-				errstring(errno));
-#endif /* 0 */
-		}
+		(void) setreuid(0, 0);
 #ifdef DEBUG
 		fprintf(stderr, "reset euid = %d\n", geteuid());
 #endif /* DEBUG */
 		(void) ftruncate(mbfd, curoff);
-err1:		(void) close(mbfd);
+err1:		if (mbfd >= 0)
+			(void) close(mbfd);
 err0:		unlockmbox();
 		return;
 	}
@@ -1195,12 +1221,12 @@ err0:		unlockmbox();
 	/* Close and check -- NFS doesn't write until the close. */
 	if (close(mbfd))
 	{
+		errcode = "450 4.2.0";
 #ifdef EDQUOT
-		if (errno == EDQUOT && bouncequota)
-			mailerr("552 5.2.2", "%s: %s", path, errstring(errno));
-		else
+		if (errno == EDQUOT && BounceQuota)
+			errcode = "552 5.2.2";
 #endif /* EDQUOT */
-		mailerr("450 4.2.0", "%s: %s", path, errstring(errno));
+		mailerr(errcode, "%s: %s", path, errstring(errno));
 		(void) truncate(path, curoff);
 	}
 	else
@@ -1217,7 +1243,7 @@ err0:		unlockmbox();
 #endif /* DEBUG */
 	unlockmbox();
 	if (LMTPMode)
-		printf("250 2.1.5 %s OK\r\n", name);
+		printf("250 2.1.5 %s Ok\r\n", name);
 }
 
 /*
@@ -1234,7 +1260,7 @@ int
 lockmbox(name)
 	char *name;
 {
-	int r;
+	int r = 0;
 
 	if (Locked)
 		return 0;
@@ -1372,7 +1398,7 @@ notifybiff(msg)
 	if (addr.sin_family == AF_UNSPEC)
 		return;
 
-	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 		return;
 	len = strlen(msg) + 1;
 	(void) sendto(f, msg, len, 0, (struct sockaddr *) &addr, sizeof(addr));
@@ -1382,7 +1408,7 @@ void
 usage()
 {
 	ExitVal = EX_USAGE;
-	mailerr(NULL, "usage: mail.local [-l] [-f from] user ...");
+	mailerr(NULL, "usage: mail.local [-7] [-b] [-l] [-f from] user ...");
 	exit(ExitVal);
 }
 
@@ -1396,61 +1422,53 @@ mailerr(hdr, fmt, va_alist)
 	va_dcl
 #endif /* __STDC__ */
 {
+	size_t len = 0;
 	va_list ap;
+
+	(void) e_to_sys(errno);
 
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else /* __STDC__ */
 	va_start(ap);
 #endif /* __STDC__ */
+
 	if (LMTPMode)
 	{
 		if (hdr != NULL)
-			printf("%s ", hdr);
-		(void) vprintf(fmt, ap);
-		(void) printf("\r\n");
+		{
+			snprintf(ErrBuf, sizeof ErrBuf, "%s ", hdr);
+			len = strlen(ErrBuf);
+		}
 	}
-	else
-	{
-		(void) e_to_sys(errno);
-		vwarn(fmt, ap);
-	}
+	(void) vsnprintf(&ErrBuf[len], sizeof ErrBuf - len, fmt, ap);
+
+	if (!HoldErrs)
+		flush_error();
+
+	/* Log the message to syslog. */
+	if (!LMTPMode)
+		syslog(LOG_ERR, "%s", ErrBuf);
 }
 
 void
-vwarn(fmt, ap)
-	const char *fmt;
-	_BSD_VA_LIST_ ap;
+flush_error()
 {
-	/*
-	**  Log the message to stderr.
-	**
-	**  Don't use LOG_PERROR as an openlog() flag to do this,
-	**  it's not portable enough.
-	*/
-
-	if (ExitVal != EX_USAGE)
-		(void) fprintf(stderr, "mail.local: ");
-	(void) vfprintf(stderr, fmt, ap);
-	(void) fprintf(stderr, "\n");
-
-#if USE_VSYSLOG
-	/* Log the message to syslog. */
-	vsyslog(LOG_ERR, fmt, ap);
-#else /* USE_VSYSLOG */
+	if (LMTPMode)
+		printf("%s\r\n", ErrBuf);
+	else
 	{
-		char fmtbuf[10240];
-
-		(void) vsnprintf(fmtbuf, sizeof fmtbuf, fmt, ap);
-		syslog(LOG_ERR, "%s", fmtbuf);
+		if (ExitVal != EX_USAGE)
+			(void) fprintf(stderr, "mail.local: ");
+		fprintf(stderr, "%s\n", ErrBuf);
 	}
-#endif /* USE_VSYSLOG */
 }
 
 /*
  * e_to_sys --
  *	Guess which errno's are temporary.  Gag me.
  */
+
 int
 e_to_sys(num)
 	int num;
@@ -1463,7 +1481,7 @@ e_to_sys(num)
 	{
 #ifdef EDQUOT
 	  case EDQUOT:		/* Disc quota exceeded */
-		if (bouncequota)
+		if (BounceQuota)
 		{
 			ExitVal = EX_UNAVAILABLE;
 			break;
@@ -1604,15 +1622,6 @@ mkstemp(path)
 	return (_gettemp(path, &fd) ? fd : -1);
 }
 
-# if 0
-char *
-mktemp(path)
-	char *path;
-{
-	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
-}
-# endif /* 0 */
-
 static
 _gettemp(path, doopen)
 	char *path;
@@ -1658,8 +1667,8 @@ _gettemp(path, doopen)
 	{
 		if (doopen)
 		{
-			if ((*doopen =
-			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0)
+			if ((*doopen = open(path, O_CREAT|O_EXCL|O_RDWR,
+					    0600)) >= 0)
 				return(1);
 			if (errno != EEXIST)
 				return(0);

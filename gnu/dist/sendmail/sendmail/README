@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988
@@ -9,7 +9,7 @@
 # the sendmail distribution.
 #
 #
-#	Id: README,v 8.263.2.1.2.19 2000/07/15 17:35:18 gshapiro Exp
+#	Id: README,v 8.263.2.1.2.32 2001/01/29 23:45:22 gshapiro Exp
 #
 
 This directory contains the source files for sendmail(TM).
@@ -580,6 +580,8 @@ EGD		Define this if your system has EGD installed, see
 		seed the PRNG for STARTTLS if HASURANDOMDEV is not defined.
 STARTTLS	Enables SMTP STARTTLS (RFC 2487). This requires OpenSSL
 		(http://www.OpenSSL.org/) and sfio (see below).
+		Use OpenSSL 0.9.5a or later (if compatible with this
+		version), do not use 0.9.3.
 		See STARTTLS COMPILATION AND CONFIGURATION for further
 		information.
 TLS_NO_RSA	Turn off support for RSA algorithms in STARTTLS.
@@ -591,9 +593,8 @@ SFIO		Uses sfio instead of stdio. sfio is available from AT&T
 		stdio.h must be installed in a subdirectory called sfio,
 		i.e., if you install sfio in /usr/local, stdio.h should
 		be in /usr/local/include/sfio, and libsfio.a should be in
-		/usr/local/lib.  Notice: you may run into problems if
-		you use sfio2000 (the body of a message is lost).  Use
-		sfio1999 instead.
+		/usr/local/lib.  Notice: read the sfio section in
+		OPERATING SYSTEM AND COMPILE QUIRKS.
 
 
 +---------------------+
@@ -627,6 +628,13 @@ different version of the database internally that does not include
 wildcard MX records that match your domain.  ANYTHING ELSE WILL GIVE
 YOU HEADACHES!
 
+When attempting to canonify a hostname, some broken name servers will
+return SERVFAIL (a temporary failure) on T_AAAA (IPv6) lookups.  If you
+want to excuse this behavior, compile sendmail with
+-D_FFR_WORKAROUND_BROKEN_NAMESERVERS and add WorkAroundBrokenAAAA to your
+ResolverOptions setting.  However, instead, we recommend catching the
+problem and reporting it to the name server administrator so we can rid the
+world of broken name servers.
 
 +----------------------------------------+
 | STARTTLS COMPILATION AND CONFIGURATION |
@@ -916,6 +924,25 @@ Solaris 7 (SunOS 5.7)
 	to ldap_set_option for LDAP_OPT_REFERRALS in ldapmap_setopts if
 	LDAP support is compiled in sendmail.
 
+Solaris
+	If you are using dns for hostname resolution on Solaris, make sure
+	that the 'dns' entry is last on the hosts line in
+	'/etc/nsswitch.conf'.  For example, use:
+
+		hosts:	nisplus files dns
+
+	Do not use:
+
+		host:  nisplus dns [NOTFOUND=return] files
+
+	Note that 'nisplus' above is an illustration.  The same comment
+	applies no matter what naming services you are using.  If you have
+	anything other than dns last, even after "[NOTFOUND=return]",
+	sendmail may not be able to determine whether an error was
+	temporary or permanent.  The error returned by the solaris
+	gethostbyname() is the error for the last lookup used, and other
+	naming services do not have the same concept of temporary failure.
+
 Ultrix
 	By default, the IDENT protocol is turned off on Ultrix.  If you
 	are running Ultrix 4.4 or later, or if you have included patch
@@ -1012,6 +1039,12 @@ IRIX 6.x
 	If you are using XFS filesystem, avoid using the -32 ABI switch to
 	the cc compiler if possible.
 
+	Broken inet_aton and inet_ntoa on IRIX using gcc: There's
+	a problem with gcc on IRIX, i.e., gcc can't pass structs
+	less than 16 bits long unless they are 8 bits; IRIX 6.2 has
+	some other sized structs.  See
+	http://www.bitmechanic.com/mail-archives/mysql/current/0418.html
+
 IRIX 6.4
 	The IRIX 6.5.4 version of /bin/m4 does not work properly with
 	sendmail.  Either install fw_m4.sw.m4 off the Freeware_May99 CD and
@@ -1070,8 +1103,10 @@ BSDI (BSD/386) 1.0, NetBSD 0.9, FreeBSD 1.0
 	determined to continue to use your old, buggy version (or as
 	a shortcut to get sendmail working -- I'm sure you have the
 	best intentions to port a modern version of BIND), you can
-	copy ../contrib/oldbind.compat.c into sendmail and add
-	oldbind.compat.o to OBJADD in the Makefile.
+	copy ../contrib/oldbind.compat.c into sendmail and add the
+	following to devtools/Site/site.config.m4:
+
+	APPENDDEF(`confOBJADD', `oldbind.compat.o')
 
 A/UX
 	Date: Tue, 12 Oct 1993 18:28:28 -0400 (EDT)
@@ -1210,6 +1245,17 @@ Linux
 	"#include <syslog.h>" to the SFIO version of stdio.h as the very
 	first line.
 
+glibc
+	glibc 2.2.1 (and possibly other versions) changed the value of
+	__RES in resolv.h but failed to actually provide the IPv6 API
+	changes that the change implied.  Therefore, compiling with
+	-DNETINET6 fails.
+
+	Workarounds:
+	1) Compile without -DNETINET6
+	2) Build against a real BIND 8.2.2 include/lib tree
+	3) Wait for glibc to fix it
+
 AIX 4.X
 	The AIX 4.X linker uses library paths specified during compilation
 	using -L for run-time shared library searches.  Therefore, it is
@@ -1236,16 +1282,16 @@ AIX 4.3.3
 	Date: Sun, 02 Jul 2000 03:58:02 -0400
 
 	Under AIX 4.3.3, after applying bos.adt.include 4.3.3.12 to close the
-	BIND 8.2.2 security holes, you can no lonber build with  -DNETINET6
+	BIND 8.2.2 security holes, you can no longer build with  -DNETINET6
 	because they changed the value of __RES in resolv.h but failed to
 	actually provide the API changes that the change implied.
 
 	Workarounds:
 	1) Compile without -DNETINET6
-	2) Build against a real Bind 8.2.2 include/lib tree
+	2) Build against a real BIND 8.2.2 include/lib tree
 	3) Wait for IBM to fix it
 
-AIX 4.2
+AIX 4.X
 	The AIX m4 implements a different mechanism for ifdef which is
 	inconsistent with other versions of m4.  Therefore, it will not
 	work properly with the sendmail Build architecture or m4
@@ -1465,10 +1511,33 @@ OpenSSL
 	OpenSSL versions prior to 0.9.6 use a macro named Free which
 	conflicts with existing macro names on some platforms, such as
 	AIX.
+	Do not use 0.9.3, but OpenSSL 0.9.5a or later if compatible with
+	0.9.5a.
+
+sfio
+	You may run into problems if you use sfio2000 (the body of a
+	message is lost).  Use sfio1999 instead; however, it also has
+	a bug that can cause sendmail to fail.  A patch has been provided
+	by Petr Lampa of Brno University of Technology, which is given here:
+
+diff -rc ../../../../sfio/src/lib/sfio/sfputr.c ./sfputr.c
+*** ../../../../sfio/src/lib/sfio/sfputr.c      Tue May 16 18:25:49 2000
+--- ./sfputr.c  Wed Sep 20 09:06:01 2000
+***************
+*** 24,29 ****
+--- 24,30 ----
+        for(w = 0; (*s || rc >= 0); )
+        {       SFWPEEK(f,ps,p);
+
++               if(p == -1) return -1;  /* PL */
+                if(p == 0 || (f->flags&SF_WHOLE) )
+                {       n = strlen(s);
+                        if(p >= (n + (rc < 0 ? 0 : 1)) )
+
 
 PH
 	PH support is provided by Mark Roth <roth@uiuc.edu>.  The map is
-	described at http://www-wsg.cso.uiuc.edu/sendmail/patches/ .
+	described at http://www-dev.cso.uiuc.edu/sendmail/ .
 	Please contact Mark Roth for support and questions regarding the
 	map.
 
@@ -1619,4 +1688,4 @@ util.c		Some general purpose routines used by sendmail.
 version.c	The version number and information about this
 		version of sendmail.
 
-(Version Revision: 8.263.2.1.2.19, last update Date: 2000/07/15 17:35:18 )
+(Version Revision: 8.263.2.1.2.32, last update Date: 2001/01/29 23:45:22 )
