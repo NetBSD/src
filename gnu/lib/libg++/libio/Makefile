@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/12/20 01:04:23 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/10/25 09:27:22 lukem Exp $
 
 LIB=	io
 
@@ -12,7 +12,7 @@ iostrerror.c ioungetc.c iovfprintf.c iovfscanf.c iovsprintf.c iovsscanf.c \
 outfloat.c str.cc stdfiles.c strops.c 
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include 
-CFLAGS+=	-I$(.CURDIR)
+CPPFLAGS+=	-I$(.CURDIR)
 NOMAN=		noman
 NOLINT=		nolint
 
