@@ -1,4 +1,33 @@
-/* $NetBSD: isp.c,v 1.59 2000/08/11 21:31:20 tls Exp $ */
+/* $NetBSD: isp.c,v 1.60 2000/08/14 07:05:28 mjacob Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -981,6 +1010,13 @@ isp_scsi_channel_init(isp, channel)
 			}
 		}
 	}
+	for (tgt = 0; tgt < MAX_TARGETS; tgt++) {
+		if (sdp->isp_devparam[tgt].dev_refresh) {
+			isp->isp_sendmarker |= (1 << channel);
+			isp->isp_update |= (1 << channel);
+			break;
+		}
+	}
 }
 
 /*
@@ -1027,6 +1063,11 @@ isp_fibre_init(isp)
 	if (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(1, 17, 0)) {
 		fcp->isp_fwoptions |= ICBOPT_FULL_LOGIN;
 	}
+
+	/*
+	 * Insist on Port Database Update Async notifications
+	 */
+	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
 
 	/*
 	 * We don't set ICBOPT_PORTNAME because we want our
@@ -1086,6 +1127,8 @@ isp_fibre_init(isp)
 	icbp->icb_rqstaddr[RQRSP_ADDR1631] = DMA_MSW(isp->isp_rquest_dma);
 	icbp->icb_respaddr[RQRSP_ADDR0015] = DMA_LSW(isp->isp_result_dma);
 	icbp->icb_respaddr[RQRSP_ADDR1631] = DMA_MSW(isp->isp_result_dma);
+	isp_prt(isp, ISP_LOGDEBUG1,
+	    "isp_fibre_init: fwoptions 0x%x", fcp->isp_fwoptions);
 	ISP_SWIZZLE_ICB(isp, icbp);
 
 	/*
@@ -2187,14 +2230,14 @@ isp_start(xs)
 		if (XS_TAG_P(xs)) {
 			t2reqp->req_flags = XS_TAG_TYPE(xs);
 		} else {
+			/*
+			 * If we don't know what tag to use, use HEAD OF QUEUE
+			 * for Request Sense or Ordered (for safety's sake).
+			 */
 			if (XS_CDBP(xs)[0] == 0x3)	/* REQUEST SENSE */
 				t2reqp->req_flags = REQFLAG_HTAG;
 			else
-				if((xs->bp != NULL) &&
-				    xs->bp->b_flags & B_ASYNC)
-					t2reqp->req_flags = REQFLAG_STAG;
-				else
-					t2reqp->req_flags = REQFLAG_OTAG;
+				t2reqp->req_flags = REQFLAG_OTAG;
 		}
 	} else {
 		sdparam *sdp = (sdparam *)isp->isp_param;
@@ -2395,12 +2438,16 @@ isp_control(isp, ctl, arg)
 				}
 				fcp->isp_fwoptions &= ~ICBOPT_TGT_ENABLE;
 			}
-			isp->isp_state = ISP_RESETSTATE;
-			isp_fibre_init(isp);
+			isp->isp_state = ISP_NILSTATE;
+			isp_reset(isp);
+			if (isp->isp_state != ISP_RESETSTATE) {
+				break;
+			}
+			isp_init(isp);
 			if (isp->isp_state != ISP_INITSTATE) {
 				break;
 			}
-				
+			isp->isp_state = ISP_RUNSTATE;
 		}
 		return (0);
 	}
@@ -2899,10 +2946,10 @@ isp_parse_async(isp, mbox)
 		break;
 
 	case ASYNC_LIP_OCCURRED:
-		((fcparam *) isp->isp_param)->isp_lipseq =
+		FCPARAM(isp)->isp_lipseq =
 		    ISP_READ(isp, OUTMAILBOX1);
-		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_LIP_RCVD;
+		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
+		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 		isp->isp_sendmarker = 1;
 		isp_mark_getpdb_all(isp);
 		isp_prt(isp, ISP_LOGINFO, "LIP occurred");
@@ -2913,8 +2960,8 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_LOOP_UP:
 		isp->isp_sendmarker = 1;
-		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_LIP_RCVD;
+		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
+		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_UP, NULL);
 #ifdef	ISP_TARGET_MODE
@@ -2924,8 +2971,8 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_LOOP_DOWN:
 		isp->isp_sendmarker = 1;
-		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_NIL;
+		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
+		FCPARAM(isp)->isp_loopstate = LOOP_NIL;
 		isp_mark_getpdb_all(isp);
 		isp_async(isp, ISPASYNC_LOOP_DOWN, NULL);
 #ifdef	ISP_TARGET_MODE
@@ -2935,8 +2982,8 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_LOOP_RESET:
 		isp->isp_sendmarker = 1;
-		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_NIL;
+		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
+		FCPARAM(isp)->isp_loopstate = LOOP_NIL;
 		isp_mark_getpdb_all(isp);
 		isp_prt(isp, ISP_LOGINFO, "Loop RESET");
 #ifdef	ISP_TARGET_MODE
@@ -2946,7 +2993,7 @@ isp_parse_async(isp, mbox)
 
 	case ASYNC_PDB_CHANGED:
 		isp->isp_sendmarker = 1;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_PDB_RCVD;
+		FCPARAM(isp)->isp_loopstate = LOOP_PDB_RCVD;
 		isp_mark_getpdb_all(isp);
 		isp_prt(isp, ISP_LOGINFO, "Port Database Changed");
 		break;
@@ -2956,19 +3003,19 @@ isp_parse_async(isp, mbox)
 		/*
 		 * Not correct, but it will force us to rescan the loop.
 		 */
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_PDB_RCVD;
+		FCPARAM(isp)->isp_loopstate = LOOP_PDB_RCVD;
 		isp_async(isp, ISPASYNC_CHANGE_NOTIFY, NULL);
 		break;
 
 	case ASYNC_PTPMODE:
-		if (((fcparam *) isp->isp_param)->isp_onfabric)
-			((fcparam *) isp->isp_param)->isp_topo = TOPO_N_PORT;
+		if (FCPARAM(isp)->isp_onfabric)
+			FCPARAM(isp)->isp_topo = TOPO_N_PORT;
 		else
-			((fcparam *) isp->isp_param)->isp_topo = TOPO_F_PORT;
+			FCPARAM(isp)->isp_topo = TOPO_F_PORT;
 		isp_mark_getpdb_all(isp);
 		isp->isp_sendmarker = 1;
-		((fcparam *) isp->isp_param)->isp_fwstate = FW_CONFIG_WAIT;
-		((fcparam *) isp->isp_param)->isp_loopstate = LOOP_LIP_RCVD;
+		FCPARAM(isp)->isp_fwstate = FW_CONFIG_WAIT;
+		FCPARAM(isp)->isp_loopstate = LOOP_LIP_RCVD;
 #ifdef	ISP_TARGET_MODE
 		isp_target_async(isp, bus, mbox);
 #endif
@@ -3023,7 +3070,6 @@ isp_handle_other_response(isp, sp, optrp)
 	case RQSTYPE_STATUS_CONT:
 		isp_prt(isp, ISP_LOGINFO, "Ignored Continuation Response");
 		return (0);
-		break;
 	case RQSTYPE_ATIO:
 	case RQSTYPE_CTIO:
 	case RQSTYPE_ENABLE_LUN:
@@ -3417,9 +3463,9 @@ isp_fastpost_complete(isp, fph)
 	if (XS_XFRLEN(xs)) {
 		ISP_DMAFREE(isp, xs, fph);
 	}
-	isp_done(xs);
 	if (isp->isp_nactive)
 		isp->isp_nactive--;
+	isp_done(xs);
 }
 
 #define	HIBYT(x)			((x) >> 0x8)
@@ -4048,8 +4094,8 @@ isp_update(isp)
 	for (bus = 0, upmask = isp->isp_update; upmask != 0; bus++) {
 		if (upmask & (1 << bus)) {
 			isp_update_bus(isp, bus);
-			upmask &= ~(1 << bus);
 		}
+		upmask &= ~(1 << bus);
 	}
 }
 
@@ -4062,22 +4108,23 @@ isp_update_bus(isp, bus)
 	mbreg_t mbs;
 	sdparam *sdp;
 
+	isp->isp_update &= ~(1 << bus);
 	if (IS_FC(isp)) {
 		/*
 		 * There are no 'per-bus' settings for Fibre Channel.
 		 */
 		return;
 	}
-
 	sdp = isp->isp_param;
 	sdp += bus;
-	isp->isp_update &= ~(1 << bus);
 
 	for (tgt = 0; tgt < MAX_TARGETS; tgt++) {
 		u_int16_t flags, period, offset;
 		int get;
 
 		if (sdp->isp_devparam[tgt].dev_enable == 0) {
+			sdp->isp_devparam[tgt].dev_update = 0;
+			sdp->isp_devparam[tgt].dev_refresh = 0;
 			isp_prt(isp, ISP_LOGDEBUG1,
 	 		    "skipping target %d bus %d update", tgt, bus);
 			continue;
@@ -4096,8 +4143,6 @@ isp_update_bus(isp, bus)
 			mbs.param[0] = MBOX_GET_TARGET_PARAMS;
 			sdp->isp_devparam[tgt].dev_refresh = 0;
 			get = 1;
-			if (sdp->isp_devparam[tgt].dev_update)
-				isp->isp_update |= (1 << bus);
 		} else if (sdp->isp_devparam[tgt].dev_update) {
 			mbs.param[0] = MBOX_SET_TARGET_PARAMS;
 			/*
@@ -4126,8 +4171,9 @@ isp_update_bus(isp, bus)
 			}
 			/*
 			 * A command completion later that has
-			 * RQSTF_NEGOTIATION set will cause
-			 * the dev_refresh/announce cycle.
+			 * RQSTF_NEGOTIATION set canl cause
+			 * the dev_refresh/announce cycle also.
+			 &
 			 *
 			 * Note: It is really important to update our current
 			 * flags with at least the state of TAG capabilities-
@@ -4138,12 +4184,12 @@ isp_update_bus(isp, bus)
 			sdp->isp_devparam[tgt].cur_dflags &= ~DPARM_TQING;
 			sdp->isp_devparam[tgt].cur_dflags |=
 			    (sdp->isp_devparam[tgt].dev_flags & DPARM_TQING);
-			sdp->isp_devparam[tgt].dev_refresh = 1;
-			sdp->isp_devparam[tgt].dev_update = 0;
-			isp_prt(isp, ISP_LOGDEBUG1,
+			isp_prt(isp, ISP_LOGDEBUG2,
 			    "bus %d set tgt %d flags 0x%x off 0x%x period 0x%x",
 			    bus, tgt, mbs.param[2], mbs.param[3] >> 8,
 			    mbs.param[3] & 0xff);
+			sdp->isp_devparam[tgt].dev_update = 0;
+			sdp->isp_devparam[tgt].dev_refresh = 1;
 			get = 0;
 		} else {
 			continue;
@@ -4162,6 +4208,14 @@ isp_update_bus(isp, bus)
 		sdp->isp_devparam[tgt].cur_offset = offset;
 		get = (bus << 16) | tgt;
 		(void) isp_async(isp, ISPASYNC_NEW_TGT_PARAMS, &get);
+	}
+
+	for (tgt = 0; tgt < MAX_TARGETS; tgt++) {
+		if (sdp->isp_devparam[tgt].dev_update ||
+		    sdp->isp_devparam[tgt].dev_refresh) {
+			isp->isp_update |= (1 << bus);
+			break;
+		}
 	}
 }
 
@@ -4363,7 +4417,7 @@ isp_setdfltparm(isp, channel)
 			}
 		}
 		isp_prt(isp, ISP_LOGDEBUG1,
-		    "bus %d tgt %d flags %x offset %x period %x",
+		    "Initial bus %d tgt %d flags %x offset %x period %x",
 		    channel, tgt, sdp->isp_devparam[tgt].dev_flags,
 		    sdp->isp_devparam[tgt].sync_offset,
 		    sdp->isp_devparam[tgt].sync_period);
