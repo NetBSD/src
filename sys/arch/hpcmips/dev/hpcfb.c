@@ -1,9 +1,9 @@
-/*	$NetBSD: hpcfb.c,v 1.37 2001/01/24 09:34:26 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.38 2001/02/02 08:31:04 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
- * Copyright (c) 2000
+ * Copyright (c) 2000,2001
  *         SATO Kazumi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.37 2001/01/24 09:34:26 sato Exp $";
+    "$Id: hpcfb.c,v 1.38 2001/02/02 08:31:04 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
