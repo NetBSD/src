@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.6 2001/03/22 18:16:15 uch Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.7 2001/04/20 10:15:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -60,6 +60,14 @@ extern platid_t platid_mask_CPU_MIPS_VR_4111;
 extern platid_t platid_mask_CPU_MIPS_VR_4121;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_MIPS_VR_4121 ((int)&platid_mask_CPU_MIPS_VR_4121)
+#endif
+extern platid_t platid_mask_CPU_MIPS_VR_4181;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_VR_4181 ((int)&platid_mask_CPU_MIPS_VR_4181)
+#endif
+extern platid_t platid_mask_CPU_MIPS_VR_4122;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_VR_4122 ((int)&platid_mask_CPU_MIPS_VR_4122)
 #endif
 extern platid_t platid_mask_CPU_MIPS_TX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

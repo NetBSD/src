@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.6 2001/03/22 18:16:14 uch Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.7 2001/04/20 10:15:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -61,6 +61,14 @@ platid_t platid_mask_CPU_MIPS_VR_4111 = {{
 }};
 platid_t platid_mask_CPU_MIPS_VR_4121 = {{
 	PLATID_CPU_MIPS_VR_4121,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_MIPS_VR_4181 = {{
+	PLATID_CPU_MIPS_VR_4181,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_MIPS_VR_4122 = {{
+	PLATID_CPU_MIPS_VR_4122,
 	PLATID_WILD
 }};
 platid_t platid_mask_CPU_MIPS_TX = {{

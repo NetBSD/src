@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.6 2001/03/22 18:16:15 uch Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.7 2001/04/20 10:15:03 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -52,6 +52,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("MIPS VR 4111") },
 	{ &platid_mask_CPU_MIPS_VR_4121,
 	 TEXT("MIPS VR 4121") },
+	{ &platid_mask_CPU_MIPS_VR_4181,
+	 TEXT("MIPS VR 4181") },
+	{ &platid_mask_CPU_MIPS_VR_4122,
+	 TEXT("MIPS VR 4122") },
 	{ &platid_mask_CPU_MIPS_TX,
 	 TEXT("MIPS TX") },
 	{ &platid_mask_CPU_MIPS_TX_3900,
