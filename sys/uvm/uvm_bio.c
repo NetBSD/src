@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.14 2001/05/26 21:27:20 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.15 2001/06/13 06:06:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -128,6 +128,12 @@ ubc_init(void)
 	struct ubc_map *umap;
 	vaddr_t va;
 	int i;
+
+	/*
+	 * Make sure ubc_winshift is sane.
+	 */
+	if (ubc_winshift < PAGE_SHIFT)
+		ubc_winshift = PAGE_SHIFT;
 
 	/*
 	 * init ubc_object.
