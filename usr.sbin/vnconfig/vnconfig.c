@@ -45,7 +45,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <dev/vnioctl.h>
+#include <dev/vndioctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -53,8 +53,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define VN_CONFIG	1
-#define VN_UNCONFIG	2
+#define VND_CONFIG	1
+#define VND_UNCONFIG	2
 
 int verbose = 0;
 
@@ -65,15 +65,15 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch, rv, action = VN_CONFIG;
+	int ch, rv, action = VND_CONFIG;
 
 	while ((ch = getopt(argc, argv, "cuv")) != -1) {
 		switch (ch) {
 		case 'c':
-			action = VN_CONFIG;
+			action = VND_CONFIG;
 			break;
 		case 'u':
-			action = VN_UNCONFIG;
+			action = VND_UNCONFIG;
 			break;
 		case 'v':
 			verbose = 1;
@@ -87,9 +87,9 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (action == VN_CONFIG && argc == 2)
+	if (action == VND_CONFIG && argc == 2)
 		rv = config(argv[0], argv[1], action);
-	else if (action == VN_UNCONFIG && argc == 1)
+	else if (action == VND_UNCONFIG && argc == 1)
 		rv = config(argv[0], NULL, action);
 	else
 		usage();
@@ -101,7 +101,7 @@ config(dev, file, action)
 	char *file;
 	int action;
 {
-	struct vn_ioctl vnio;
+	struct vnd_ioctl vndio;
 	FILE *f;
 	char *rdev;
 	int rv;
@@ -112,27 +112,28 @@ config(dev, file, action)
 		warn(rdev);
 		return (1);
 	}
-	vnio.vn_file = file;
+	vndio.vnd_file = file;
 
 	/*
 	 * Clear (un-configure) the device
 	 */
-	if (action == VN_UNCONFIG) {
-		rv = ioctl(fileno(f), VNIOCCLR, &vnio);
+	if (action == VND_UNCONFIG) {
+		rv = ioctl(fileno(f), VNDIOCCLR, &vndio);
 		if (rv)
-			warn("VNIOCCLR");
+			warn("VNDIOCCLR");
 		else if (verbose)
 			printf("%s: cleared\n", dev);
 	}
 	/*
 	 * Configure the device
 	 */
-	if (action == VN_CONFIG) {
-		rv = ioctl(fileno(f), VNIOCSET, &vnio);
+	if (action == VND_CONFIG) {
+		rv = ioctl(fileno(f), VNDIOCSET, &vndio);
 		if (rv)
-			warn("VNIOCSET");
+			warn("VNDIOCSET");
 		else if (verbose)
-			printf("%s: %d bytes on %s\n", dev, vnio.vn_size, file);
+			printf("%s: %d bytes on %s\n", dev, vndio.vnd_size,
+			    file);
 	}
 done:
 	fclose(f);
@@ -166,7 +167,8 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: vnconfig -c [-v] special-file regular-file\n");
-	(void)fprintf(stderr, "       vnconfig -u [-v] special-file\n");
+	(void)fprintf(stderr, "%s%s",
+	    "usage: vnconfig -c [-v] special-file regular-file\n",
+	    "       vnconfig -u [-v] special-file\n");
 	exit(1);
 }
