@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.2 2003/04/02 07:53:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #ifndef _X86_MPBIOSVAR_H_
 #define _X86_MPBIOSVAR_H_
 
-#define MP_TRAMPOLINE  (2 * NBPG)
+#define MP_TRAMPOLINE  (2 * PAGE_SIZE)
 
 #if !defined(_LOCORE)
 
