@@ -1,4 +1,4 @@
-.\" $NetBSD: mbsrtowcs.3,v 1.2 2002/03/18 07:56:29 wiz Exp $
+.\" $NetBSD: mbsrtowcs.3,v 1.3 2002/03/25 19:22:13 yamt Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -123,11 +123,7 @@ The
 .Fn mbsrtowcs
 returns
 .Bl -tag -width 012345678901
-.It 0
-The pointer object pointed by
-.Fa s
-points a null character.
-.It positive
+.It 0 or positive
 The value returned is the number of elements stored to the array pointed by
 .Fa pwcs ,
 except for a terminate null wide character (if any).
